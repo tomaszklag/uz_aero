@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PilotListItemDto } from '../../api/dto';
-import {
-  createBodyOf,
+import {
   deleteBlocker,
   draftKey,
   draftOf,
@@ -17,7 +16,7 @@ const pilot: PilotListItemDto = {
   id: 'p-1',
   code: 'TMK',
   name: 'Tomasz Małkiewicz',
-  email: 't.malkiewicz@uzaero.pl',
+  email: 't.malkiewicz@ninerdeck.pl',
   active: true,
   role: 'pilot',
 };
@@ -85,15 +84,6 @@ describe('werdykt', () => {
 });
 
 describe('ciało żądania', () => {
-  it('POST niesie kod wersalikami i przycięte pola', () => {
-    expect(createBodyOf({ code: ' tmk ', name: ' Anna Wrzosek ', email: ' a@b.pl ', role: 'admin' })).toEqual({
-      code: 'TMK',
-      name: 'Anna Wrzosek',
-      email: 'a@b.pl',
-      role: 'admin',
-    });
-  });
-
   it('PATCH niesie WYŁĄCZNIE to, co się zmieniło', () => {
     const draft = { ...draftOf(pilot), role: 'admin' as const };
     expect(updateBodyOf(pilot, draft)).toEqual({ role: 'admin' });
@@ -133,24 +123,24 @@ describe('ciało żądania', () => {
   });
 });
 
-describe('kiedy wolno usunąć konto', () => {
+describe('kiedy wolno usunąć z klubu', () => {
   const off = { ...pilot, active: false };
 
-  it('konto wyłączone i cudze - próba ma sens', () => {
+  it('członkostwo wyłączone i cudze - próba ma sens', () => {
     expect(deleteBlocker(off, 'inny-admin')).toBeNull();
   });
 
-  it('konto Z DOSTĘPEM blokuje, bo usuwanie jest dwustopniowe', () => {
-    // Telefon nie kasuje wierszy, więc konto usunięte „na gorąco" zostałoby na nim
+  it('członkostwo Z DOSTĘPEM blokuje, bo usuwanie jest dwustopniowe', () => {
+    // Telefon nie kasuje wierszy, więc członek usunięty „na gorąco" zostałby na nim
     // jako aktywne. Wyłączenie dociera normalną drogą i dopiero po nim wolno kasować.
-    expect(deleteBlocker(pilot, 'inny-admin')).toBe('Najpierw wyłącz konto.');
+    expect(deleteBlocker(pilot, 'inny-admin')).toBe('Najpierw wyłącz członkostwo.');
   });
 
-  it('WŁASNE konto blokuje, nawet gdy jest już wyłączone', () => {
-    // Kolejność sprawdzeń ma znaczenie: „to Twoje konto" jest odpowiedzią trafniejszą
-    // niż „najpierw wyłącz", bo wyłączenie własnego konta i tak jest zabronione.
-    expect(deleteBlocker(off, off.id)).toBe('To Twoje konto.');
-    expect(deleteBlocker(pilot, pilot.id)).toBe('To Twoje konto.');
+  it('WŁASNE członkostwo blokuje, nawet gdy jest już wyłączone', () => {
+    // Kolejność sprawdzeń ma znaczenie: „to Twoje członkostwo" jest odpowiedzią trafniejszą
+    // niż „najpierw wyłącz", bo wyłączenie własnego członkostwa i tak jest zabronione.
+    expect(deleteBlocker(off, off.id)).toBe('To Twoje członkostwo.');
+    expect(deleteBlocker(pilot, pilot.id)).toBe('To Twoje członkostwo.');
   });
 
   it('nie orzeka o HISTORII - tego panel nie wie', () => {
@@ -161,20 +151,16 @@ describe('kiedy wolno usunąć konto', () => {
 });
 
 describe('klucz synchronizacji szkicu', () => {
-  it('nowe konto ma klucz od razu', () => {
-    expect(draftKey(true, null)).toBe('nowy');
-  });
-
   it('BRAK klucza, dopóki konta nie ma na liście', () => {
     // To jest cała treść tej funkcji: przy wejściu z linku szuflada montuje się PRZED
     // listą. Bez tego formularz przestawiał się raz, na pusty, i taki zostawał -
     // z blokadą „wpisz kod pilota" nad kontem, które istnieje. Złapane w przeglądarce.
-    expect(draftKey(false, null)).toBeNull();
+    expect(draftKey(null)).toBeNull();
   });
 
   it('klucz to TOŻSAMOŚĆ konta, więc odświeżenie listy go nie rusza', () => {
     // Dzięki temu przeładowanie danych po zapisie nie kasuje wpisanych zmian.
-    expect(draftKey(false, pilot)).toBe('p-1');
-    expect(draftKey(false, { ...pilot, name: 'Inne nazwisko' })).toBe('p-1');
+    expect(draftKey(pilot)).toBe('p-1');
+    expect(draftKey({ ...pilot, name: 'Inne nazwisko' })).toBe('p-1');
   });
 });

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - replay śladu kalibracyjnego przez detektor (faza 5).
+ * Ninerdeck - replay śladu kalibracyjnego przez detektor (faza 5).
  *
  *   npx tsx scripts/replay.ts traces/sess-1.ndjson [ELEWACJA_FT]
  *
@@ -20,7 +20,7 @@ import {
   createDetectorState,
   runDetector,
   type GpsFix,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 // ── progi do eksperymentów: nadpisz wybrane i porównaj wynik ─────────────────
 const overrides: Partial<typeof GPS_THRESHOLDS> = {

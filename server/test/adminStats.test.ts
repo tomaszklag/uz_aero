@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - STATYSTYKI floty i pilotów (`GET /admin/api/stats`, mockup `A10`).
+ * Ninerdeck (serwer) - STATYSTYKI floty i pilotów (`GET /admin/api/stats`, mockup `A10`).
  *
  * Konstytucja ekranu (zdanie z góry mockupu) w postaci wykonywalnej:
  *

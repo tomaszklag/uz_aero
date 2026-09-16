@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel 2.0 · Organizacje: lista klubów (superadministrator)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">ORGANIZACJE · LISTA</span>
+  <span class="slug">panel/organizacje-lista · #/organizacje · O1</span>
+  <span class="canvas-meta"><span class="pulse"></span>Rama superadministratora</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty i sąsiedzi tego ekranu</div>
+  <a class="vp-item active" href="organizacje-lista.html">
+    <span class="vp-badge">O1</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista klubów</span>
+      <span class="vp-when">Jedyny ekran ramy superadministratora: wszystkie kluby na serwerze, liczby członków i maszyn, pierwszy administrator, stan. Klub wyłączony jest przygaszony i stoi na końcu, jak konto wyłączone na liście pilotów.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="organizacje-klub.html">
+    <span class="vp-badge">O2</span>
+    <span class="vp-body">
+      <span class="vp-name">Szuflada: nowy klub / karta klubu</span>
+      <span class="vp-when">„Załóż klub" otwiera formularz z nazwą, adresem (slug) i PIERWSZYM administratorem - klub bez administratora nie ma jak zacząć. Wiersz listy otwiera kartę istniejącego klubu z wyłączeniem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00a-wybor-klubu.html">
+    <span class="vp-badge amber">00A</span>
+    <span class="vp-body">
+      <span class="vp-name">Skąd się tu wchodzi</span>
+      <span class="vp-when">Superadministrator bez członkostw trafia tu wprost po zalogowaniu; z członkostwem admin wybiera „Organizacje" na liście klubów.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA SUPERADMINISTRATORA ══
+     Ta sama rama, ale kolumna boczna ma DWIE pozycje (Organizacje, Zgłoszenia)
+     i zamiast kontekstu klubu kafel zakresu (`.sidebar-context.scope`).
+     Superadministrator NIE WCHODZI do danych klubu (docs/wielofirmowosc.md §3.3) -
+     pozycje Dziennik/Piloci/Samoloty nie mają tu czego pokazać, więc ich nie ma;
+     brak pozycji jest odpowiedzią, nie pozycja z odmową (panel-2.0 §3.3: brak
+     uprawnień = brak przycisku). Zgłoszenia błędów są od issue #99 (C6) modułem
+     PLATFORMY: jedna kolejka dla całego serwera, klub w kolumnie. -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - organizacje">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/organizacje
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="organizacje-lista.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <span class="who">
+          <span class="avatar" aria-hidden="true">TK</span>
+          <span class="who-name">Tomasz Klag</span>
+        </span>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst zakresu superadministratora
+           nad pozycjami modułów. Kanoniczna postać: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień zakres">
+          <span class="context-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
+          <span class="context-body">
+            <span class="context-kind">Superadministrator</span>
+            <span class="context-name">Wszystkie kluby</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="organizacje-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            Organizacje
+          </a>
+          <a class="nav-item" href="zgloszenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>
+            Zgłoszenia
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Organizacje</h1>
+          <p class="page-sub">Kluby na tym serwerze. Każdy klub widzi wyłącznie swoje dane - ta lista jest jedynym miejscem, z którego widać je wszystkie naraz, i pokazuje same liczby.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="organizacje-klub.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Załóż klub
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value="" placeholder="Szukaj: nazwa, adres, administrator" aria-label="Szukaj klubu">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszystkie</button>
+        <button type="button" class="chip" aria-pressed="false">Aktywne</button>
+      </div>
+
+      <!-- Kolumny: Klub (nazwa + slug w drugiej linii - slug jest ADRESEM kart arkusza,
+           więc stoi mono) · Członkowie · Samoloty (liczby mono do prawej) · Administrator
+           (pierwszy z listy; przy kilku „+n") · Założony · Status · akcja.
+           Liczby są jedynym, co superadministrator widzi z wnętrza klubu - i to
+           celowo: „nic nie wycieka" obejmuje także tę listę. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Organizacje</caption>
+          <thead>
+            <tr>
+              <th class="sortable" aria-sort="ascending"><button type="button">Klub<span class="arrow" aria-hidden="true">↑</span></button></th>
+              <th class="num">Członkowie</th>
+              <th class="num">Samoloty</th>
+              <th>Administrator</th>
+              <th>Założony</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Aeroklub Krakowski</span>
+                <span class="cell-sub mono">aeroklub-krakowski</span>
+              </td>
+              <td class="num">3</td>
+              <td class="num">2</td>
+              <td>Ewa Dąbek</td>
+              <td><span class="cell-sub">7 WRZ 2026</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="organizacje-klub.html#karta">Otwórz</a></td>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Aeroklub Zielonogórski</span>
+                <span class="cell-sub mono">aeroklub-zielonogorski</span>
+              </td>
+              <td class="num">14</td>
+              <td class="num">4</td>
+              <td>Tomasz Małkiewicz <span class="cell-sub">+1</span></td>
+              <td><span class="cell-sub">26 SIE 2026</span></td>
+              <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="organizacje-klub.html#karta">Otwórz</a></td>
+            </tr>
+            <!-- Klub założony, ale administrator jeszcze się nie zalogował: członkostwo
+                 admin już jest, konto Google podepnie się przy pierwszym logowaniu.
+                 Plakietka mówi to WPROST, bo to jedyny stan, w którym superadministrator
+                 ma coś do zrobienia (przypomnieć się). -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Klub Spadochronowy Gliwice</span>
+                <span class="cell-sub mono">ks-gliwice</span>
+              </td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td>Piotr Wróbel <span class="cell-sub warn">nie zalogował się</span></td>
+              <td><span class="cell-sub">8 WRZ 2026</span></td>
+              <td><span class="pill amber"><span class="dot"></span>Administrator nie wszedł</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="organizacje-klub.html#karta">Otwórz</a></td>
+            </tr>
+            <tr class="clickable muted">
+              <td>
+                <span class="cell-strong">Aeroklub Testowy</span>
+                <span class="cell-sub mono">aeroklub-testowy</span>
+              </td>
+              <td class="num">2</td>
+              <td class="num">1</td>
+              <td>Tomasz Klag</td>
+              <td><span class="cell-sub">26 SIE 2026</span></td>
+              <td><span class="pill dim">Wyłączony</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="organizacje-klub.html#karta">Otwórz</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+            </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00a-wybor-klubu.html">← 00A Wybór klubu</a>
+  <span>·</span>
+  <a href="organizacje-lista.html" class="active">O1 Organizacje</a>
+  <span>·</span>
+  <a href="organizacje-klub.html">O2 Klub →</a>
+  <span>·</span>
+  <a href="piloci-lista.html">P1 Piloci</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

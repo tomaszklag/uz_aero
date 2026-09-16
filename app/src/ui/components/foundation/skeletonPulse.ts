@@ -1,5 +1,5 @@
 /**
- * UZ Aero - WSPÓLNY RYTM SKELETONÓW (issue #33, wzorzec `design/LOADERY.html` reguła 7).
+ * Ninerdeck - WSPÓLNY RYTM SKELETONÓW (issue #33, wzorzec `design/LOADERY.html` reguła 7).
  *
  * Jedna `Animated.Value` na całą aplikację, nie jedna na plamkę. Powód jest wizualny:
  * plamek na ekranie ładowania są dziesiątki (trzy wiersze logu to już czternaście),

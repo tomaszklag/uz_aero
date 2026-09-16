@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test logiki ZMIANY ZAŁOGI (ekran 07).
+ * Ninerdeck - test logiki ZMIANY ZAŁOGI (ekran 07).
  *
  * Kluczowa jest atrybucja block time per pilot: Dual wchodzący w połowie dnia dostaje
  * czas WYŁĄCZNIE z cykli po swoim wejściu. Do dokumentów każdy wpisuje własny czas -

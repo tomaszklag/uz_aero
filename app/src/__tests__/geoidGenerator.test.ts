@@ -1,5 +1,5 @@
 /**
- * UZ Aero - generator wycinka siatki undulacji EGM96 (`scripts/geoid/`).
+ * Ninerdeck - generator wycinka siatki undulacji EGM96 (`scripts/geoid/`).
  *
  * Parser dostaje syntetyczny plik o PEŁNYCH wymiarach świata (721×1441), bo jego
  * kontrakt jest z definicji światowy - nagłówek i liczność są częścią walidacji.

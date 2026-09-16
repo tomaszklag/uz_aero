@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz daty lotu (mockup `design/15e-reczny-data.html`, krok 1 wpisu
+ * Ninerdeck - arkusz daty lotu (mockup `design/15e-reczny-data.html`, krok 1 wpisu
  * ręcznego).
  *
  * Od issue #58 sercem arkusza jest KALENDARZ MIESIĘCZNY (`CalendarGrid`) - zgłoszenie

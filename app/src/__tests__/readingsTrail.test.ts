@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test szlaku odczytu w arkuszach wpisu ręcznego (issue #84 pkt 1, 2 i 4).
+ * Ninerdeck - test szlaku odczytu w arkuszach wpisu ręcznego (issue #84 pkt 1, 2 i 4).
  *
  * Moduł nic nie liczy, więc testujemy dokładnie to, co może się zepsuć po cichu:
  * WYBÓR SĄSIADA (pole „zastane" pyta o poprzednika, „po locie" o następcę - zamiana

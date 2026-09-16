@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test osi wpisu ręcznego (issue #62 pkt 8, 9 i 10).
+ * Ninerdeck - test osi wpisu ręcznego (issue #62 pkt 8, 9 i 10).
  *
  * Trzy rzeczy, o które prosiło zgłoszenie z urządzenia, i wszystkie trzy da się
  * sprawdzić bez urządzenia - bo są kształtem danych, nie rysunkiem:

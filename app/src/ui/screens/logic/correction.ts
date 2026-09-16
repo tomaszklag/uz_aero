@@ -1,5 +1,5 @@
 /**
- * UZ Aero - logika ekranu 04c (korekta zdarzenia), czysta i testowalna bez RN.
+ * Ninerdeck - logika ekranu 04c (korekta zdarzenia), czysta i testowalna bez RN.
  *
  * Najważniejsza jest tu rzetelność wiersza „Wpływ na czas lotu: 0:53 → 0:56". Nie
  * liczymy go „na piechotę" obok projekcji - budujemy KANDYDATA korekty, przepuszczamy

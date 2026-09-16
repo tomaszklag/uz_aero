@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KeyboardCollapse
+ * Ninerdeck - KeyboardCollapse
  *
  * Płynnie zwija dekorację, gdy wysuwa się klawiatura (issue #54 pkt 4). Ekran kurczy
  * się o wysokość klawiatury (`Screen` + `useKeyboardHeight`), więc wyśrodkowana

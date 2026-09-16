@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - kontrakt analityki zużycia (`A10a`, `A10b`).
+ * Ninerdeck (serwer) - kontrakt analityki zużycia (`A10a`, `A10b`).
  *
  * Byty policzone przez domenę (`ConsumptionModel`, `MhModel`, `ConsumptionSummary`,
  * `FuelInterval`) jadą do panelu JAKO TYPY DOMENOWE, nie jako ich kopie - to reguła
@@ -17,7 +17,7 @@ import type {
   FuelInterval,
   MhFormat,
   MhModel,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { AdminStatsRange } from './stats.ts';
 

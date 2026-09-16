@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - lista dni i karta dnia panelu
+ * Ninerdeck (serwer) - lista dni i karta dnia panelu
  * (`GET /admin/api/sessions`, `GET /admin/api/sessions/:uuid`; mockupy `A02`, `A02a`).
  *
  * Ten sam wzorzec co reszta: PGlite w procesie, prawdziwe klasy, `app.inject`, zero

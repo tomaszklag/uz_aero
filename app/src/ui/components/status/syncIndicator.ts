@@ -1,5 +1,5 @@
 /**
- * UZ Aero - stan wskaźnika łączności i treść arkusza synchronizacji.
+ * Ninerdeck - stan wskaźnika łączności i treść arkusza synchronizacji.
  *
  * Stoi przy komponencie, nie w `ui/screens/logic/`, z tego samego powodu co `syncStamp`:
  * chip wisi na wszystkich ekranach, więc nie należy do żadnego. `.tsx` eksportuje

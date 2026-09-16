@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wiersz projekcji + złączenia → DTO listy dni (`A02`).
+ * Ninerdeck (serwer) - wiersz projekcji + złączenia → DTO listy dni (`A02`).
  *
  * Osobny, nazwany moduł z tego samego powodu co `application/sessionRow.ts` po stronie
  * zapisu: to CZYSTA funkcja, więc testuje się ją na liczbach bez bazy, a zapytanie
@@ -13,7 +13,7 @@
  * projekcji wypełniana przez `sessionRowFrom`.
  */
 
-import { operationSignature } from '@uzaero/domain';
+import { operationSignature } from '@ninerdeck/domain';
 
 import type { AdminSessionListItem } from '../contracts/sessions.ts';
 import type { AdminSessionJoin } from '../ports.ts';

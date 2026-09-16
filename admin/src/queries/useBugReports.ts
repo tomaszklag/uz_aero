@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: zgłoszenia błędów - lista i zmiana statusu (issue #87).
+ * Ninerdeck - panel 2.0: zgłoszenia błędów - lista i zmiana statusu (issue #87).
  *
  * Mutacja deklaruje SWOJE unieważnienia tutaj, nie na ekranie: przestawienie statusu
  * zmienia i skład listy (filtr), i liczniki nad nią, więc unieważnia CAŁY korzeń

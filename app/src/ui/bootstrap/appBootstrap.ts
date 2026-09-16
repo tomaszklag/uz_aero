@@ -1,5 +1,5 @@
 /**
- * UZ Aero - COMPOSITION ROOT aplikacji.
+ * Ninerdeck - COMPOSITION ROOT aplikacji.
  *
  * Jedyne miejsce, w którym warstwy schodzą się w całość: adapter natywny (SQLite)
  * → repozytorium → komendy/zapytania → store UI. Reszta kodu nie wie, skąd biorą się
@@ -95,7 +95,13 @@ export function useAppBootstrap(): BootstrapStatus {
         // serwis i od razu czyta magazyn - to on przełącza bramkę login/aplikacja;
         // silnik idzie do store'u sesji, skąd żyją pętla okazji i ekran 11.
         const server = new HttpServerApi(apiBaseUrl());
-        const auth = new AuthService(server, new SecureCredentials(), new PinCrypto());
+        // KLUB AKTYWNY (wielofirmowość §7): każda para tokenów jest parą DLA KLUBU,
+        // więc serwis poświadczeń melduje go magazynowi - to nim stemplują się nowe
+        // operacje i po nim zawęża się flota. Funkcja, nie port: `AuthService` nie ma
+        // prawa wiedzieć, że pod spodem jest SQLite.
+        const auth = new AuthService(server, new SecureCredentials(), new PinCrypto(), async (org) => {
+          await repo.setActiveOrg(org.id);
+        });
         useAuthStore.getState().attach(auth);
         void useAuthStore.getState().restore();
 

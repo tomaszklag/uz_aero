@@ -1,5 +1,5 @@
 /**
- * UZ Aero - geometria na kuli: pozycja i odległość.
+ * Ninerdeck - geometria na kuli: pozycja i odległość.
  *
  * Osobny moduł, bo z tych dwóch rzeczy korzystają teraz trzy niezależne tory detekcji
  * (geofence lądowania, test plauzybilności skoku, kotwica postoju przy kołowaniu).

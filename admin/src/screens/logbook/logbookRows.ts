@@ -1,16 +1,16 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 1 - maszyna z serwera na WIERSZ TABELI.
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 1 - maszyna z serwera na WIERSZ TABELI.
  *
  * Moduł CZYSTY (bez Reacta): decyzje o treści komórek są tu, pod testem, a nie w JSX-ie.
  *
  * ══ FORMATUJEMY, NIGDY NIE LICZYMY ══
  * Wszystkie liczby przyszły policzone z serwera; tutaj dobieramy im wyłącznie postać
- * (`@uzaero/format`, wspólny z aplikacją pilota). Ani jednego dodawania, dzielenia
+ * (`@ninerdeck/format`, wspólny z aplikacją pilota). Ani jednego dodawania, dzielenia
  * ani „średnio na godzinę" - taka liczba rozjechałaby się z analityką zużycia,
  * która liczy to samo inaczej i na innych danych.
  */
 
-import { hhmm } from '@uzaero/format';
+import { hhmm } from '@ninerdeck/format';
 
 import type { LogAircraftDto } from '../../api/dto';
 // Kreska braku i formatery, które ją stawiają - półpauza panelu, nie dywiz telefonu.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
+ * Ninerdeck - przebieg analityki zużycia po REALNEJ historii (kalibracja progów).
  *
  *   DATABASE_URL=... npx tsx scripts/consumptionReplay.ts [REJESTRACJA]
  *
@@ -30,7 +30,7 @@ import {
   fitMhModel,
   type FuelInterval,
   type MhEquation,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
@@ -61,8 +61,10 @@ const phases = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
 const now = Date.now();
 const range = { fromMs: now - YEAR_MS, toMs: now };
 
-const fleet = await pool.query<{ id: string; reg: string; type: string }>(
-  'SELECT id, reg, type FROM aircraft ORDER BY reg',
+// Klub maszyny jedzie z wiersza floty: adaptery od epiku C (issue #99) pytają o dane
+// KLUBU, a skrypt przegląda całą bazę - klub po klubie, maszyna po maszynie.
+const fleet = await pool.query<{ id: string; org_id: string; reg: string; type: string }>(
+  'SELECT id, org_id, reg, type FROM aircraft ORDER BY org_id, reg',
 );
 
 console.log('═'.repeat(78));
@@ -76,9 +78,10 @@ let anyPublished = false;
 for (const aircraft of fleet.rows) {
   if (only != null && aircraft.reg.toUpperCase() !== only) continue;
 
-  const page = await consumption.closedSessions(pool, aircraft.id, range, 1000);
+  const page = await consumption.closedSessions(pool, aircraft.org_id, aircraft.id, range, 1000);
   const streams = await events.sessionStreams(
     pool,
+    aircraft.org_id,
     page.sessions.map((s) => s.sessionUuid),
   );
 

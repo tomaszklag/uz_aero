@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy RODZAJU OPERACJI: co mówi o trasie i jak się nazywa.
+ * Ninerdeck - testy RODZAJU OPERACJI: co mówi o trasie i jak się nazywa.
  *
  * Dwie rzeczy, które łatwo rozjechać przy dokładaniu kolejnej operacji do katalogu:
  *

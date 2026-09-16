@@ -1,5 +1,5 @@
 /**
- * UZ Aero - projekcje sesji (docs/_main.md.txt §5.2, §3.7).
+ * Ninerdeck - projekcje sesji (docs/_main.md.txt §5.2, §3.7).
  *
  * „Stan bieżącej sesji i statystyki dnia to PROJEKCJE liczone w pamięci ze strumienia
  * zdarzeń - przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne" (§5.2).

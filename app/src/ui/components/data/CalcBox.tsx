@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CalcBox (`.calc-box` z mockupu 06)
+ * Ninerdeck - CalcBox (`.calc-box` z mockupu 06)
  *
  * Pudełko z rozpisanym RACHUNKIEM: kilka wierszy „skąd to wiemy", linia
  * i wyróżniony wiersz wyniku.

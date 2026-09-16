@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /me/task-suggestions` (issue #14, ekran 02e).
+ * Ninerdeck (serwer) - zapytanie `GET /me/task-suggestions` (issue #14, ekran 02e).
  *
  * Preflight pyta o dwie rzeczy naraz, bo wypełnia się je w jednym miejscu i w jednej
  * chwili: czym pilot oznaczał klienta i co wpisywał w notatce dnia. Dwa endpointy
@@ -11,7 +11,7 @@
  * jest - po prostu historia jeszcze nic nie zawiera.
  */
 
-import type { OperationType } from '@uzaero/domain';
+import type { OperationType } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { TaskSuggestionsPort } from '../ports.ts';
@@ -40,10 +40,10 @@ export class TaskSuggestionQueries {
    * `picId` pochodzi WYŁĄCZNIE z tokenu (trasa `/me/*`) - pilot nie ma jak zapytać
    * o cudze notatki, bo nie ma gdzie podać cudzej tożsamości.
    */
-  async get(picId: string): Promise<TaskSuggestionsView> {
+  async get(orgId: string, picId: string): Promise<TaskSuggestionsView> {
     const [clients, notes] = await Promise.all([
-      this.suggestions.clients(this.db, TASK_SUGGESTION_LIMIT),
-      this.suggestions.notes(this.db, picId, TASK_SUGGESTION_LIMIT),
+      this.suggestions.clients(this.db, orgId, TASK_SUGGESTION_LIMIT),
+      this.suggestions.notes(this.db, orgId, picId, TASK_SUGGESTION_LIMIT),
     ]);
 
     return {

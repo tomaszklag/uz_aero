@@ -1,5 +1,5 @@
 /**
- * UZ Aero - interpolacja dwuliniowa siatki undulacji (`geoid/grid.ts`).
+ * Ninerdeck - interpolacja dwuliniowa siatki undulacji (`geoid/grid.ts`).
  *
  * Siatki syntetyczne, bo tu testujemy GEOMETRIĘ: trafienie w węzeł, uśrednianie
  * wewnątrz oczka, domknięte krawędzie i uczciwe `null` poza pokryciem. Wartości

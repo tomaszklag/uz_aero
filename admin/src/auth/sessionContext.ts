@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: kontekst sesji i jego JEDYNY czytnik.
+ * Ninerdeck - panel: kontekst sesji i jego JEDYNY czytnik.
  *
  * Osobny plik od `SessionProvider.tsx` i to nie z upodobania do małych plików, tylko
  * z twardego powodu narzędziowego: **Fast Refresh odświeża moduł tylko wtedy, gdy ten
@@ -29,7 +29,7 @@ import type { PanelSessionDto } from '../api/dto';
  * Stan sesji PANELU: kto jest zalogowany i czy już to wiemy.
  *
  * Przedrostek `Panel` nie jest ozdobą - `SessionState` w tym repozytorium jest już
- * zajęte przez projekcję dnia lotnego z `@uzaero/domain` (silnik, loty, paliwo,
+ * zajęte przez projekcję dnia lotnego z `@ninerdeck/domain` (silnik, loty, paliwo,
  * motogodziny). Obie nazwy spotykają się w `screens/day/DayScreen.tsx`, więc
  * gołe `SessionState` znaczyłoby tam dwie zupełnie różne rzeczy. Ta sama konwencja
  * co `PanelSessionDto` w `api/dto.ts`.

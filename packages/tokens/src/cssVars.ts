@@ -1,5 +1,5 @@
 /**
- * UZ Aero - motyw jako ZMIENNE CSS (dla panelu webowego).
+ * Ninerdeck - motyw jako ZMIENNE CSS (dla panelu webowego).
  *
  * Aplikacja mobilna czyta tokeny jako obiekt (`Theme`), bo React Native nie ma CSS.
  * Przeglądarka woli zmienne: mockupy w `design/admin/` są napisane na `var(--green)`,

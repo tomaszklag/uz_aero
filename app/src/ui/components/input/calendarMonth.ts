@@ -1,5 +1,5 @@
 /**
- * UZ Aero - matematyka kalendarza miesięcznego (arkusz daty lotu, issue #58).
+ * Ninerdeck - matematyka kalendarza miesięcznego (arkusz daty lotu, issue #58).
  *
  * Czysta arytmetyka na dobach UTC - zero Reacta, zero zegara systemowego. Komponent
  * `CalendarGrid` tylko rysuje to, co stąd dostanie; testowalne jest wszystko, co

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - NIESPÓJNOŚCI LOGU SESJI (issue #43, baner trybu edycji `design/10d`).
+ * Ninerdeck - NIESPÓJNOŚCI LOGU SESJI (issue #43, baner trybu edycji `design/10d`).
  *
  * ══ CZYM TO SIĘ RÓŻNI OD `checkAppend` ══
  * `checkAppend` pyta o KANDYDATA do zapisu: „czy wolno dopisać to zdarzenie?". Odpowiada

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - Spis widoków</title>
+<title>Ninerdeck - Spis widoków</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -288,11 +288,9 @@
 
 <div class="hero">
   <div class="hero-icon">
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
-    </svg>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--green)" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
   </div>
-  <h1>UZ <span>AERO</span></h1>
+  <h1>NINER<span>DECK</span></h1>
   <div class="hero-sub">Automatyczny logbook lotniczy · Design System v0.2</div>
   <div class="hero-tag"><span class="dot"></span> Specyfikacja UI - zatwierdzona, wdrażana w app/</div>
 </div>
@@ -438,8 +436,16 @@
     <div class="card-num">00D</div>
     <div class="card-body">
       <div class="card-title">00d-odrzucone</div>
-      <div class="card-desc">Zgłoszenie odrzucone przez administratora - powód zacytowany na ekranie (dlatego w panelu jest wymagany). Jedyne wyjście: inne konto</div>
+      <div class="card-desc">Zgłoszenie do klubu odrzucone przez jego administratora - powód zacytowany na ekranie (dlatego w panelu jest wymagany). Dwa wyjścia: inny kod klubu (00E) albo inne konto</div>
       <div class="card-tags"><span class="tag">rejestracja</span><span class="tag">stan</span></div>
+    </div>
+  </a>
+  <a href="00e-bez-klubu.html" class="card amber">
+    <div class="card-num">00E</div>
+    <div class="card-body">
+      <div class="card-title">00e-bez-klubu</div>
+      <div class="card-desc">Konto Google potwierdzone, ale osoba nie należy do żadnego klubu: jedno pole na kod klubu (8 znaków, od administratora) - od 2026-09-09 jedyna droga do klubu. Kod daje zgłoszenie (00C), o przyjęciu decyduje administrator. Druga ramka: nieznany kod, błąd przy polu. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag amber">rejestracja</span><span class="tag">stan</span><span class="tag">kluby</span></div>
     </div>
   </a>
   <a href="01a-moj-dzien-pusty.html" class="card">
@@ -464,6 +470,14 @@
       <div class="card-title">01d-sync-stoi</div>
       <div class="card-desc">Kolejka stoi, choć sieć JEST - serwer odpowiedział i odmówił (albo sesja wygasła). Czerwony pill „SYNC STOI · n" zamiast bursztynowego OFFLINE, bo ten stan sam nie przejdzie: baner nazywa powód i daje drogę wyjścia. Do 2026-08-30 wyświetlał się jako offline z obietnicą „wyślą się same, gdy wróci sieć"</div>
       <div class="card-tags"><span class="tag red">sync stoi</span><span class="tag">arkusz syncu</span></div>
+    </div>
+  </a>
+  <a href="01e-moj-dzien-dwa-kluby.html" class="card">
+    <div class="card-num">01E</div>
+    <div class="card-body">
+      <div class="card-title">01e-moj-dzien-dwa-kluby</div>
+      <div class="card-desc">Pilot z więcej niż jednym członkostwem: kafelek operacji niesie plakietkę z nazwą klubu, a sygnatura kod pilota z TEGO klubu (TMK w jednym, TOM w drugim). Lista pokazuje operacje wszystkich klubów niezależnie od klubu aktywnego w ustawieniach; przy jednym członkostwie plakietki nie ma. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag">kluby</span><span class="tag">stan</span></div>
     </div>
   </a>
   <a href="02d-preflight-offline.html" class="card amber">
@@ -830,8 +844,16 @@
     <div class="card-num">13</div>
     <div class="card-body">
       <div class="card-title">13-ustawienia</div>
-      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) - motyw (przełącznik ciemny/jasny), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, status synchronizacji (wejście do 11), diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
+      <div class="card-desc">Ustawienia (zębatka na „Mój dzień" - jedyne wejście od issue #82) - motyw (przełącznik ciemny/jasny), synchronizacja z jednym stemplem, diagnostyka GPS, o aplikacji, na końcu PIN i konto z ochroną wylogowania przy niewysłanych zapisach</div>
       <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
+    </div>
+  </a>
+  <a href="13a-ustawienia-klub.html" class="card">
+    <div class="card-num">13A</div>
+    <div class="card-body">
+      <div class="card-title">13a-ustawienia-klub</div>
+      <div class="card-desc">Ustawienia pilota z więcej niż jednym członkostwem: pierwsza sekcja „Klub" to lista kart z kodem pilota w każdym klubie i wejście „Dołącz do innego klubu" - arkusz z polem na kod klubu, to samo pole, co na 00E (jedyna droga do klubu od 2026-09-09); zgłoszenie staje na liście jako wiersz „czeka na zatwierdzenie". Przełączenie wymaga internetu i wysłanych zapisów klubu, z którego się wychodzi (dołączenie - samego internetu); zmiana klubu zmienia flotę na 02, a „Mój dzień" pokazuje operacje wszystkich klubów (01E). Cztery ramki: przełącznik, zgłoszenie czekające na liście i dwa stany zablokowane - zaległe zapisy klubu oraz maszyna w ręce. Wielofirmowość 2.0.0</div>
+      <div class="card-tags"><span class="tag">ustawienia</span><span class="tag">kluby</span><span class="tag amber">wymaga sieci</span></div>
     </div>
   </a>
 </div>
@@ -904,7 +926,7 @@
     <div class="card-num">IK</div>
     <div class="card-body">
       <div class="card-title">ikona-aplikacji - 6 wariantów</div>
-      <div class="card-desc">Propozycje ikony aplikacji: ślad, delta, karta, slot, sygnał, horyzont. Każdy wariant w rozmiarach launchera (64–28 px), na jasnym tle i w wersji monochrome, ze strefą bezpieczną adaptive icon. Znak neutralny nazwowo - produkt docelowo wychodzi poza UZ Aero. Do wyboru</div>
+      <div class="card-desc">Propozycje ikony aplikacji: ślad, delta, karta, slot, sygnał, horyzont. Każdy wariant w rozmiarach launchera (64–28 px), na jasnym tle i w wersji monochrome, ze strefą bezpieczną adaptive icon. Znak neutralny nazwowo - produkt docelowo wychodzi poza Ninerdeck. Do wyboru</div>
       <div class="card-tags"><span class="tag amber">propozycja</span><span class="tag">ikona</span><span class="tag">6 wariantów</span></div>
     </div>
   </a>
@@ -954,7 +976,7 @@
   </a>
 </div>
 
-<footer>UZ Aero · Design System v0.2 · zatwierdzona specyfikacja - wdrażana w app/</footer>
+<footer>Ninerdeck · Design System v0.2 · zatwierdzona specyfikacja - wdrażana w app/</footer>
 
 </body>
 </html>

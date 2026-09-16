@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - ślad sesji w panelu (`GET /admin/api/sessions/:uuid/track`).
+ * Ninerdeck (serwer) - ślad sesji w panelu (`GET /admin/api/sessions/:uuid/track`).
  *
  * ══ DLACZEGO SESJA, A NIE LOT ══
  * Do panelu 2.0 stała tu trasa `/sessions/:uuid/track/:flight` - ślad JEDNEGO lotu,
@@ -38,11 +38,11 @@ export function registerAdminTrackRoutes(
     app,
     gate,
     { method: 'GET', url: '/sessions/:uuid/track', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const parsed = params.safeParse(req.params);
       if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const outcome = await tracks.bySession(parsed.data.uuid);
+      const outcome = await tracks.bySession(actor.orgId, parsed.data.uuid);
       if (!outcome.ok) return reply.code(404).send({ error: outcome.reason });
 
       // `picId` zostaje po stronie serwera: panel wie, kto latał, z karty sesji

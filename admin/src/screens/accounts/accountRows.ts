@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: konto z serwera -> WIERSZ TABELI.
+ * Ninerdeck - panel 2.0: konto z serwera -> WIERSZ TABELI.
  *
  * Moduł CZYSTY (bez Reacta), bo to są decyzje o treści komórek - a te chcemy mieć
  * pod testem, nie w JSX-ie. Komponent dostaje gotowy wiersz i wyłącznie go rysuje.
@@ -30,7 +30,9 @@ export const roleTone = (role: PilotRole): PillTone => ROLES[role].tone;
 /** Jedno zdanie o tym, co rola OTWIERA - do kart wyboru w formularzu. */
 const ROLE_NOTES: Record<PilotRole, string> = {
   pilot: 'Tylko aplikacja na telefonie.',
-  admin: 'Panel w całości, razem z pilotami i samolotami.',
+  // „tego klubu" nie jest ozdobą: rola należy do CZŁONKOSTWA, więc administrator
+  // jednego klubu nie widzi drugiego (wielofirmowość 2.0.0).
+  admin: 'Panel tego klubu w całości, razem z pilotami i samolotami.',
 };
 
 export const roleNote = (role: PilotRole): string => ROLE_NOTES[role];

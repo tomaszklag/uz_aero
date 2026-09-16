@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SKELETON LISTY: n plamek w geometrii wierszy, które za chwilę przyjdą.
+ * Ninerdeck - SKELETON LISTY: n plamek w geometrii wierszy, które za chwilę przyjdą.
  *
  * Najczęstszy kształt czekania w tej aplikacji - karta dnia w historii (12), pozycja
  * floty na 02, wiersz diagnostyki w ustawieniach. Ekran podaje wysokość wiersza

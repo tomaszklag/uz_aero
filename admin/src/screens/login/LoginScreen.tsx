@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: logowanie.
+ * Ninerdeck - panel 2.0: logowanie.
  *
  * Ekran ma jedno zadanie i tyle na nim stoi: znak i JEDEN przycisk Google. Czego tu
  * NIE MA i dlaczego (to jest cała treść tej przebudowy, podtrzymana po wejściu Google):
@@ -26,8 +26,9 @@ import { renderGoogleButton } from '../../auth/googleIdentity';
 import { useSessionState } from '../../auth/sessionContext';
 import { useGoogleClient, useLogin } from '../../queries/useSession';
 import { Banner } from '../../ui/components';
-import { PlaneIcon } from '../../ui/components/icons';
-import { HOME } from '../../ui/shell/tabs';
+import { BrandMark } from '../../ui/components/icons';
+import { homeFor } from '../../ui/shell/nav';
+import { scopeCount, SCOPE_PICK } from '../../ui/shell/scope';
 import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
@@ -62,7 +63,14 @@ export function LoginScreen() {
 
   // Sesja żyje -> na ekranie logowania nie ma czego robić. Dotyczy też powrotu
   // „wstecz" po zalogowaniu, nie tylko wklejonego adresu.
-  if (session != null) return <Navigate to={HOME} replace />;
+  //
+  // Kilka zakresów (kluby administratora, platforma) => DRUGI KROK logowania: wybór
+  // zakresu (issue #101, E2). Serwer wybrał już jeden deterministycznie, więc pominięcie
+  // tego ekranu wpuszczałoby administratora dwóch klubów zawsze do tego samego - i to
+  // bez powiedzenia mu, do którego.
+  if (session != null) {
+    return <Navigate to={scopeCount(session) > 1 ? SCOPE_PICK : homeFor(session.capabilities)} replace />;
+  }
 
   const message =
     login.error != null
@@ -77,9 +85,9 @@ export function LoginScreen() {
     <div className="login">
       <div className="login-mark">
         <span className="login-badge">
-          <PlaneIcon size={28} />
+          <BrandMark size={28} />
         </span>
-        <span className="login-title">UZ AERO</span>
+        <span className="login-title">NINERDECK</span>
         <span className="login-note">Panel administracyjny</span>
       </div>
 

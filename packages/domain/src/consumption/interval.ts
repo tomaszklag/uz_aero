@@ -1,5 +1,5 @@
 /**
- * UZ Aero - typy analityki zużycia: interwał paliwowy i równanie motogodzin.
+ * Ninerdeck - typy analityki zużycia: interwał paliwowy i równanie motogodzin.
  *
  * PO CO TO ISTNIEJE: przepływomierza w samolocie nie ma, więc zużycia „w locie"
  * ani „na ziemi" nikt nigdy nie zmierzył. Zmierzone są wyłącznie **odczyty

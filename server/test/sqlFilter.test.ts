@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - składanie `WHERE` z filtrów opcjonalnych.
+ * Ninerdeck (serwer) - składanie `WHERE` z filtrów opcjonalnych.
  *
  * Ten moduł zastępuje query builder, więc jego testy muszą pokrywać to, czego builder
  * by nie pozwolił zepsuć: NUMERACJĘ parametrów. Przesunięcie `$n` o jeden nie jest

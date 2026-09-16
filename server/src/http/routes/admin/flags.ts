@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasy flag panelu (`/admin/api/flags*`, mockup `A03a-flaga.html`).
+ * Ninerdeck (serwer) - trasy flag panelu (`/admin/api/flags*`, mockup `A03a-flaga.html`).
  *
  * Cienkie jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji,
  * ani audytu, ani reguły „kiedy re-eksport" - to wszystko jest w komendzie.
@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { FLAG_TYPES } from '@uzaero/domain';
+import { FLAG_TYPES } from '@ninerdeck/domain';
 
 import type { AdminFlagCommands, ResolveFlagResult } from '../../../application/admin/commands/flags.ts';
 import type { AdminFlagQueries } from '../../../application/admin/queries/flags.ts';
@@ -77,13 +77,13 @@ export function registerAdminFlagRoutes(
     // `panel.access`, nie `flags.resolve`: skrzynkę CZYTA każdy, kto ma wejście do
     // panelu - zamyka sprawę węższa zdolność, i to jest cały podział.
     { method: 'GET', url: '/flags', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = listQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
       const q = query.data;
       return reply.send(
-        await queries.list({
+        await queries.list(actor.orgId, {
           status: q.status,
           type: q.type,
           aircraftId: q.aircraftId,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - metryki zbiorcze zużycia: ilorazy sum, rozrzut i trend miesięczny.
+ * Ninerdeck - metryki zbiorcze zużycia: ilorazy sum, rozrzut i trend miesięczny.
  *
  * ══ ILORAZ SUM, NIGDY ŚREDNIA ILORAZÓW ══
  * Reguła całego tego modułu mieści się w jednym zdaniu i jest ważniejsza niż wygląda:

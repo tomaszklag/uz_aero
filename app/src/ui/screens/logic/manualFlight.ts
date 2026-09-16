@@ -1,5 +1,5 @@
 /**
- * UZ Aero - logika wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
+ * Ninerdeck - logika wpisu ręcznego (ekrany 15 → 15C, przebudowa 2026-08-16).
  *
  * Wpis CAŁEGO lotu po fakcie: telefon został w kurtce, bateria padła, lot spisany
  * na papierze. Od przebudowy wpis jest STEPPEREM o czterech krokach (jak lot normalny

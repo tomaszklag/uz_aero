@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
+ * Ninerdeck (serwer) - adapter ODCZYTU dziennika audytu (`AdminAuditReadPort`, `A09`).
  *
  * Osobny plik od `auditRepo.ts` z tego samego powodu, dla którego port jest osobny:
  * tamten ma jedną metodę i jeden `INSERT`, wołany z wnętrza `AuditedWrite` w gorącej
@@ -93,10 +93,13 @@ const SELECT = `
          a.target_id,
          a.details,
          a.ip,
-         p.code AS actor_code,
-         p.name AS actor_name
+         -- Kod sprawcy Z CZŁONKOSTWA w klubie wpisu (wielofirmowość); wpis platformowy
+         -- (org_id NULL) nie ma kodu - superadministrator kodu nie ma z definicji.
+         m.code  AS actor_code,
+         p.name  AS actor_name
     FROM admin_audit a
-    LEFT JOIN pilots p ON p.id = a.actor_pilot_id`;
+    LEFT JOIN pilots      p ON p.id = a.actor_pilot_id
+    LEFT JOIN memberships m ON m.pilot_id = a.actor_pilot_id AND m.org_id = a.org_id`;
 
 const toJoin = (r: AuditDbRow): AdminAuditJoin => ({
   // `Number(...)` na `BIGSERIAL`: identyfikator dziennika mieści się w bezpiecznym
@@ -121,13 +124,17 @@ const toJoin = (r: AuditDbRow): AdminAuditJoin => ({
 export class PgAdminAuditReadRepo implements AdminAuditReadPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: AuditListFilter,
   ): Promise<{ items: AdminAuditJoin[]; nextCursor: string | null; total: number | null } | null> {
     const shape = shapeOf(filter.direction);
     const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
 
+    // Klub PIERWSZY, przed filtrami z ekranu: dziennik klubu nie zna wpisów platformowych
+    // (`org_id` pusty) ani cudzych - to warunek, nie filtr do wyboru.
     const page = new SqlFilter();
+    page.add('a.org_id = ?', orgId);
     applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
@@ -146,7 +153,7 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
         ? encodeCursor({ k1: last.createdAt.toISOString(), k2: String(last.id) }, shape)
         : null;
 
-    return { items, nextCursor, total: await this.count(db, filter, cursor != null) };
+    return { items, nextCursor, total: await this.count(db, orgId, filter, cursor != null) };
   }
 
   /**
@@ -173,12 +180,14 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
    */
   private async count(
     db: Queryable,
+    orgId: string,
     filter: AuditListFilter,
     paged: boolean,
   ): Promise<number | null> {
     if (paged) return null;
 
     const conditions = new SqlFilter();
+    conditions.add('a.org_id = ?', orgId);
     applyFilters(conditions, filter);
 
     const counted = await db.query<{ n: string }>(

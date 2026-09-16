@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
+ * Ninerdeck (serwer) - testy przyjmowania zdarzeń i łańcucha MH (M2, §4.3–4.5).
  *
  * Scenariusze jadą przez PRAWDZIWY endpoint na PRAWDZIWYM Postgresie (PGlite),
  * a projekcję liczy ten sam `projectSession`, co telefon - więc liczby kanonicznego
@@ -574,6 +574,9 @@ describe('GET /aircraft/:id/state i sync-status', () => {
     expect(body.flags.map((f: { type: string }) => f.type)).toEqual(['mh_gap']);
     // Eksport jest domyślnie WŁĄCZONY (adapter bazodanowy): zamknięty dzień ma link.
     // `mh_gap` nie blokuje eksportu - arkusz wstrzymuje wyłącznie `aircraft_overlap` (§4.7).
-    expect(body.exportUrl).toBe(`${TEST_BASE_URL}/sheets/2026-06-22_SP-AXA`);
+    // Adres karty niesie slug i sekret klubu (issue #99, C5) - to samo, co w `sheets.test.ts`.
+    expect(body.exportUrl).toBe(
+      `${TEST_BASE_URL}/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=${'a'.repeat(32)}`,
+    );
   });
 });

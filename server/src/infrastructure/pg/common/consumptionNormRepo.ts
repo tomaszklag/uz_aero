@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
+ * Ninerdeck (serwer) - adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
  *
  * Tabela `aircraft_consumption` jest MATERIALIZACJĄ modelu, nie źródłem prawdy: każdy
  * jej wiersz da się odtworzyć ze strumienia zdarzeń, więc skasowanie tabeli jest
@@ -10,13 +10,14 @@
  * kształtu `ConsumptionNorm` (a ten urośnie o fazy pionowe).
  */
 
-import type { ConsumptionNorm } from '@uzaero/domain';
+import type { ConsumptionNorm } from '@ninerdeck/domain';
 
 import type { ConsumptionNormPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgConsumptionNormRepo implements ConsumptionNormPort {
   async closedSessionUuids(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<string[]> {
@@ -25,46 +26,54 @@ export class PgConsumptionNormRepo implements ConsumptionNormPort {
     const { rows } = await db.query<{ session_uuid: string }>(
       `SELECT session_uuid
          FROM sessions
-        WHERE aircraft_id = $1 AND status = 'closed' AND close_time BETWEEN $2 AND $3
+        WHERE org_id = $1 AND aircraft_id = $2 AND status = 'closed'
+          AND close_time BETWEEN $3 AND $4
         ORDER BY close_time DESC`,
-      [aircraftId, range.fromMs, range.toMs],
+      [orgId, aircraftId, range.fromMs, range.toMs],
     );
     return rows.map((row) => row.session_uuid);
   }
 
   async save(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     windowDays: number,
     norm: ConsumptionNorm | null,
     computedAt: Date,
   ): Promise<void> {
     if (norm == null) {
-      await db.query('DELETE FROM aircraft_consumption WHERE aircraft_id = $1', [aircraftId]);
+      await db.query('DELETE FROM aircraft_consumption WHERE org_id = $1 AND aircraft_id = $2', [
+        orgId,
+        aircraftId,
+      ]);
       return;
     }
 
     await db.query(
-      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at, org_id)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (aircraft_id) DO UPDATE SET
          window_days = EXCLUDED.window_days,
          model = EXCLUDED.model,
-         computed_at = EXCLUDED.computed_at`,
-      [aircraftId, windowDays, JSON.stringify(norm), computedAt],
+         computed_at = EXCLUDED.computed_at,
+         org_id = EXCLUDED.org_id`,
+      [aircraftId, windowDays, JSON.stringify(norm), computedAt, orgId],
     );
   }
 
-  async all(db: Queryable): Promise<Map<string, ConsumptionNorm>> {
+  async all(db: Queryable, orgId: string): Promise<Map<string, ConsumptionNorm>> {
     const { rows } = await db.query<{ aircraft_id: string; model: ConsumptionNorm }>(
-      'SELECT aircraft_id, model FROM aircraft_consumption',
+      'SELECT aircraft_id, model FROM aircraft_consumption WHERE org_id = $1',
+      [orgId],
     );
     return new Map(rows.map((row) => [row.aircraft_id, row.model]));
   }
 
-  async latestComputedAt(db: Queryable): Promise<Date | null> {
+  async latestComputedAt(db: Queryable, orgId: string): Promise<Date | null> {
     const { rows } = await db.query<{ last: string | null }>(
-      'SELECT MAX(computed_at) AS last FROM aircraft_consumption',
+      'SELECT MAX(computed_at) AS last FROM aircraft_consumption WHERE org_id = $1',
+      [orgId],
     );
     return rows[0]?.last != null ? new Date(rows[0].last) : null;
   }

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa pulpitu (`GET /admin/api/dashboard`, mockupy `A01`/`A01a`).
+ * Ninerdeck (serwer) - trasa pulpitu (`GET /admin/api/dashboard`, mockupy `A01`/`A01a`).
  *
  * Najcieńsza trasa panelu: bez parametrów, bez zoda, bez wariantów. Pulpit odpowiada
  * na jedno pytanie („czy coś wymaga mojej uwagi teraz") i nie ma go czym zawęzić -
@@ -38,6 +38,6 @@ export function registerAdminDashboardRoutes(
     app,
     gate,
     { method: 'GET', url: '/dashboard', capability: 'panel.access' },
-    async (_req, reply) => reply.send(await queries.load()),
+    async (_req, reply, actor) => reply.send(await queries.load(actor.orgId)),
   );
 }

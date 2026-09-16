@@ -1,5 +1,5 @@
 /**
- * UZ Aero - rejestrator śladu kalibracyjnego (faza 5).
+ * Ninerdeck - rejestrator śladu kalibracyjnego (faza 5).
  *
  * ZAWSZE WŁĄCZONY przy pracującym silniku (decyzja 2026-07-29): anomalia z definicji
  * jest nieplanowana - przełącznik gwarantowałby, że najciekawszy lot będzie

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
+ * Ninerdeck (serwer) - trasa korekty administracyjnej (`/admin/api/sessions/:uuid/corrections`,
  * mockup `A02b-korekta.html`).
  *
  * Cienka jak reszta repo: zod → komenda → status. Trasa nie zna ani transakcji, ani
@@ -16,7 +16,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { EventCorrectionPayload } from '@uzaero/domain';
+import type { EventCorrectionPayload } from '@ninerdeck/domain';
 
 import type {
   AdminCorrectionCommands,
@@ -144,14 +144,14 @@ export function registerAdminCorrectionRoutes(
     app,
     gate,
     { method: 'POST', url: '/sessions/:uuid/corrections/preview', capability: 'events.correct' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const params = correctionParams.safeParse(req.params);
       if (!params.success) return reply.code(400).send({ error: 'bad_request' });
 
       const body = correctionShape.safeParse(req.body);
       if (!body.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const outcome = await preview.preview({
+      const outcome = await preview.preview(actor.orgId, {
         sessionUuid: params.data.uuid,
         correction: payloadOf(body.data),
       });

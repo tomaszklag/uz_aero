@@ -1,5 +1,5 @@
 /**
- * UZ Aero - model widoku ekranu 01 „Mój dzień" (`design/01-moj-dzien.html`, issue #23).
+ * Ninerdeck - model widoku ekranu 01 „Mój dzień" (`design/01-moj-dzien.html`, issue #23).
  *
  * Czysta warstwa między projekcją dnia pilota (`projectPilotDay`) a widokiem: bierze
  * `PilotDay` i oddaje gotowe napisy oraz stany, których ekran nie musi już wyliczać.
@@ -68,6 +68,7 @@ export function buildMyDay(
   day: PilotDay,
   regOf: (id: string) => string | null = () => null,
   signatureOf: (sessionUuid: string) => string | null = () => null,
+  clubOf: (sessionUuid: string) => string | null = () => null,
 ): MyDayVm {
   return {
     sessions: day.sessions.map((session) => ({
@@ -84,6 +85,10 @@ export function buildMyDay(
       stats: sessionStats(session.flightCount, session.blockMs, session.flightMs),
       manual: session.manualEntry,
       adminClosed: session.closedByAdmin,
+      // Klub operacji (wielofirmowość §7.2): doba pilota obejmuje wszystkie jego kluby,
+      // więc kafelek musi powiedzieć, w którym z nich się to odbyło. Regułę „wyłącznie
+      // przy >1 członkostwie" trzyma `useOperationClub`, nie ten model.
+      club: clubOf(session.sessionUuid),
     })),
     totals: {
       // Suma z SESJI, nie `day.takeoffCount`: liczba w rzędzie sum ma się zgadzać

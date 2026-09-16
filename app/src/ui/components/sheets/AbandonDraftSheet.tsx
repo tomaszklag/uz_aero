@@ -1,5 +1,5 @@
 /**
- * UZ Aero - AbandonDraftSheet (`design/02h-preflight-rezygnacja.html`)
+ * Ninerdeck - AbandonDraftSheet (`design/02h-preflight-rezygnacja.html`)
  *
  * Arkusz pod „wstecz" z PIERWSZEGO kroku formularza, który jeszcze nic nie zapisał:
  * pyta, czy pilot na pewno rezygnuje, ZANIM wybory przepadną. Ta sama mechanika co

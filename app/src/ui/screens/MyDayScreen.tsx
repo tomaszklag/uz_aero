@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a` + `01c`).
+ * Ninerdeck - 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a` + `01c`).
  *
  * EKRAN DOMOWY po issue #23: do pilota w danej dobie przypisana jest LISTA SESJI
  * i nic ponadto. Log dnia jest płaską osią czasu (kafelek = jedna sesja, rejestracja
@@ -36,7 +36,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { REFERENCE_META_CHECKED_AT } from '../../application';
+import { referenceCheckedAt } from '../../application';
 import {
   ActionButton,
   AppText,
@@ -65,6 +65,7 @@ import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
+import { useOperationClub } from '../hooks/useOperationClub';
 import { buildMyDay, myDayActions, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
 
@@ -116,7 +117,15 @@ export function MyDayScreen({
      bez tego kafelek pokazywał UUID (zgłoszenie z urządzenia 2026-08-30). */
   const regOf = useAircraftRegistrations();
   const signatureOf = useOperationSignatures();
-  const vm = pilotDay != null ? buildMyDay(pilotDay, regOf) : null;
+  // Plakietka klubu - wyłącznie przy więcej niż jednym członkostwie (mockup 01e).
+  const clubOf = useOperationClub();
+  // SYGNATURA I KLUB WCHODZĄ DO MODELU, nie do propsów kafelka: „Mój dzień" i historia
+  // dzielą `SessionCardVm` (issue #42), więc wartość spoza projekcji wstrzykuje się
+  // funkcją - inaczej oba ekrany rozjeżdżają się przy pierwszej zmianie reguły.
+  // Sygnatura NIE DOCHODZIŁA tu wcale (kafelek 01 pokazywał sam numer operacji),
+  // choć `buildMyDay` umiał ją policzyć od issue #68, a mockupy 01/01e rysują ją
+  // na każdym kafelku.
+  const vm = pilotDay != null ? buildMyDay(pilotDay, regOf, signatureOf, clubOf) : null;
 
   // Decyzje administratora o moich operacjach (issue #81) - z lokalnego rejestru,
   // z pamięcią potwierdzeń; komunikat mówi kto, kiedy, dlaczego i co z zapisami.
@@ -150,8 +159,8 @@ export function MyDayScreen({
   useEffect(() => {
     if (repo == null) return;
     let alive = true;
-    void repo.getMeta(REFERENCE_META_CHECKED_AT).then((value) => {
-      if (alive) setRefCheckedAt(value != null ? Number(value) : null);
+    void referenceCheckedAt(repo).then((value) => {
+      if (alive) setRefCheckedAt(value);
     });
     return () => {
       alive = false;
@@ -265,6 +274,8 @@ export function MyDayScreen({
                 <DayCard
                   key={session.sessionUuid}
                   title={session.title}
+                  signature={session.signature}
+                  club={session.club}
                   aircraft={session.aircraft}
                   times={session.times}
                   stats={session.stats}

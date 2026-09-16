@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy `GET /me/events` (§4.9, issue #32).
+ * Ninerdeck (serwer) - testy `GET /me/events` (§4.9, issue #32).
  *
  * Scenariusz, dla którego ta trasa istnieje: pilot wyczyścił pamięć aplikacji i stracił
  * na telefonie WSZYSTKO, choć jego dni leżą kompletne na serwerze. Trasa oddaje mu

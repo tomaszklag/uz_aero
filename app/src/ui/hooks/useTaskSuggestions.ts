@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ostatnio używane oznaczenia klientów i notatki (`GET /me/task-suggestions`).
+ * Ninerdeck - ostatnio używane oznaczenia klientów i notatki (`GET /me/task-suggestions`).
  *
  * Jedyna treść formularza zadania, która przychodzi Z SERWERA - i jedyna, której brak
  * niczego nie zmienia: bez zasięgu pilot wpisuje wartość z palca dokładnie jak dotąd

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: „czekamy" jako KOMPONENT, nie jako `if` na ekranie.
+ * Ninerdeck - panel 2.0: „czekamy" jako KOMPONENT, nie jako `if` na ekranie.
  *
  * Trzyma obie granice z `skeletonGate.ts`: plamki pojawiają się dopiero po progu
  * (odpowiedź w 90 ms nie ma prawa mrugnąć) i zostają co najmniej minimum (skeleton

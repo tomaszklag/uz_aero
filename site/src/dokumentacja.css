@@ -1,4 +1,4 @@
-/* UZ Aero - dokumentacja (uzaero/dokumentacja/, generowana z docs/podrecznik/ skryptem
+/* Ninerdeck - dokumentacja (/dokumentacja/, generowana z docs/podrecznik/ skryptem
    tools/render-docs.mjs). Tokeny, nagłówek, stopka i rama telefonu (.device) z site.css. */
 .wrap.docs { max-width: 1320px; display: grid; grid-template-columns: 250px minmax(0, 1fr) 210px; gap: 44px; align-items: start; padding-top: 28px; }
 

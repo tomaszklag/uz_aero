@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /me/events` (§4.9, issue #32).
+ * Ninerdeck (serwer) - zapytanie `GET /me/events` (§4.9, issue #32).
  *
  * ODTWORZENIE REJESTRU TELEFONU: strona własnych zdarzeń pilota, stronicowana kursorem
  * po czasie przyjęcia. To jest druga połowa outboxa - `POST /events` wysyła, ta trasa
@@ -21,7 +21,7 @@
  * znaczy, że aplikacja nie ma drugiej definicji zdarzenia dla drogi powrotnej.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import type { Database } from '../../common/ports.ts';
 import type { MyEventsPort } from '../ports.ts';
@@ -69,8 +69,13 @@ export class MyEventQueries {
    * i `task-suggestions.ts`) - pilot nie ma gdzie podać cudzej tożsamości, więc
    * endpoint odtwarzający własny rejestr nie może stać się czytnikiem cudzego.
    */
-  async page(picId: string, cursor: string | null, limit: number): Promise<MyEventsOutcome> {
-    const result = await this.events.page(this.db, picId, cursor, limit);
+  async page(
+    orgId: string,
+    picId: string,
+    cursor: string | null,
+    limit: number,
+  ): Promise<MyEventsOutcome> {
+    const result = await this.events.page(this.db, orgId, picId, cursor, limit);
     if (result == null) return { ok: false, reason: 'bad_cursor' };
 
     return {

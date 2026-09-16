@@ -1,5 +1,5 @@
 /**
- * UZ Aero - drabinka fokusu pola w arkuszu (issue #58 pkt 7/8, DRUGA tura zgłoszenia).
+ * Ninerdeck - drabinka fokusu pola w arkuszu (issue #58 pkt 7/8, DRUGA tura zgłoszenia).
  *
  * Historia dwóch nieudanych podejść, żeby trzecie nie wróciło do żadnego z nich:
  *  1. `autoFocus` - odpala się przy montowaniu, ZANIM okno modala w ogóle istnieje;

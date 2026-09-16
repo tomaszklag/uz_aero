@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ZNACZNIKI ŚLADU NA OBU WYKRESACH (issue #47 pkt 2).
+ * Ninerdeck - ZNACZNIKI ŚLADU NA OBU WYKRESACH (issue #47 pkt 2).
  *
  * Jedno źródło (`SessionTrackMarker` z zapytania), dwie postacie - bo mapa i profil
  * odpowiadają na inne pytanie:

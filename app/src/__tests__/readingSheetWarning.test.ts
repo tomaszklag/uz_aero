@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy ostrzeżeń w arkuszu odczytu (uwaga z urządzenia, 2026-08-29).
+ * Ninerdeck - testy ostrzeżeń w arkuszu odczytu (uwaga z urządzenia, 2026-08-29).
  *
  * Zgłoszenie prosiło o dwie rzeczy naraz: sufit zbiornika i rozjazd z poprzednikiem -
  * i obie miały paść PRZY POLU, nie w podsumowaniu kroku 4. Test pilnuje treści zdań

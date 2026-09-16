@@ -1,10 +1,10 @@
 /**
- * UZ Aero (serwer) - ANALITYKA ZUŻYCIA jednego samolotu (`A10a`, `A10b`), strona odczytu.
+ * Ninerdeck (serwer) - ANALITYKA ZUŻYCIA jednego samolotu (`A10a`, `A10b`), strona odczytu.
  *
  * ══ DLACZEGO TO ZAPYTANIE CZYTA STRUMIEŃ ZDARZEŃ ══
  * Reguła §7.2 mówi: „nowa liczba w panelu = nowa kolumna projekcji, nigdy nowe wyrażenie
  * SQL". Trzyma się jej i to zapytanie - nie liczymy TU niczego SQL-em, całą arytmetykę
- * wykonuje `@uzaero/domain`. Czytamy natomiast rejestr, bo granice interwałów paliwowych
+ * wykonuje `@ninerdeck/domain`. Czytamy natomiast rejestr, bo granice interwałów paliwowych
  * wyznaczają odczyty z payloadów (`preflight_confirm`, `refuel`, `day_close`), a tych
  * projekcja nie niesie i nieść nie powinna: jest ich kilka na sesję, więc nie są
  * wartością wiersza. Stawka `r_przelot` też nie należy do żadnego dnia - opisuje OKNO.
@@ -25,7 +25,7 @@ import type {
   EventsStorePort,
   PhaseTimelinePort,
 } from '../../common/ports.ts';
-import type { PhaseSegment } from '@uzaero/domain';
+import type { PhaseSegment } from '@ninerdeck/domain';
 
 import type { AdminConsumptionReport } from '../contracts/consumption.ts';
 import type { AdminStatsRange } from '../contracts/stats.ts';
@@ -71,12 +71,16 @@ export class AdminConsumptionQueries {
     private readonly phases: PhaseTimelinePort | null = null,
   ) {}
 
-  async load(aircraftId: string, filter: ConsumptionFilter = {}): Promise<ConsumptionOutcome> {
+  async load(
+    orgId: string,
+    aircraftId: string,
+    filter: ConsumptionFilter = {},
+  ): Promise<ConsumptionOutcome> {
     const at = this.clock.now();
     const range = rangeFrom(filter, at.getTime());
     if (range == null) return { ok: false, reason: 'bad_range' };
 
-    const aircraft = await this.consumption.aircraft(this.db, aircraftId);
+    const aircraft = await this.consumption.aircraft(this.db, orgId, aircraftId);
     // Jednostka spoza floty to wada ŻĄDANIA, nie pusty wynik: raport o samolocie,
     // którego nie ma, nie ma poprawnej treści (inaczej niż raport o samolocie, który
     // po prostu nie latał - ten jest legalnie pusty).
@@ -84,12 +88,12 @@ export class AdminConsumptionQueries {
 
     const scope = { fromMs: range.fromMs, toMs: range.toMs };
     const [page, openSessions] = await Promise.all([
-      this.consumption.closedSessions(this.db, aircraftId, scope, CONSUMPTION_SESSION_LIMIT),
-      this.consumption.openSessions(this.db, aircraftId, scope),
+      this.consumption.closedSessions(this.db, orgId, aircraftId, scope, CONSUMPTION_SESSION_LIMIT),
+      this.consumption.openSessions(this.db, orgId, aircraftId, scope),
     ]);
 
     const sessionUuids = page.sessions.map((session) => session.sessionUuid);
-    const streams = await this.events.sessionStreams(this.db, sessionUuids);
+    const streams = await this.events.sessionStreams(this.db, orgId, sessionUuids);
 
     // Osie faz pionowych ze śladów - każda z pliku pobocznego (kilkaset bajtów), więc
     // koszt jest liniowy i mały. Sesja bez nagrania oddaje pustą oś i jej interwały

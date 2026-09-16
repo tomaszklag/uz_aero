@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CheckIcon (prymityw DS)
+ * Ninerdeck - CheckIcon (prymityw DS)
  *
  * Ptaszek „✓" rysowany dwiema krawędziami obróconego prostokąta - bez `react-native-svg`
  * i bez fontu ikon. DLACZEGO tak: obie te zależności to moduły natywne, a dokładanie

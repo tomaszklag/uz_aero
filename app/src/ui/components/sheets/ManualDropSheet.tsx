@@ -1,5 +1,5 @@
 /**
- * UZ Aero - arkusz zrzutu wpisu ręcznego (sekcja „Zrzuty" na kroku 3, mockup 15B).
+ * Ninerdeck - arkusz zrzutu wpisu ręcznego (sekcja „Zrzuty" na kroku 3, mockup 15B).
  *
  * NIE jest to `DropSheet` z kokpitu i to nie jest duplikat: tamten arkusz potwierdza
  * zrzut, który dzieje się TERAZ (czas z zegara, wysokość z GPS, skład z załadunku),

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - mechanika gestu przytrzymania (issue #67).
+ * Ninerdeck - mechanika gestu przytrzymania (issue #67).
  *
  * Do issue #67 przytrzymanie żyło w całości wewnątrz `ActionButton` i miało jednego
  * konsumenta (START ENGINE). Odkąd wymagają go także przyciski paska akcji kokpitu

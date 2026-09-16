@@ -1,12 +1,12 @@
 /**
- * UZ Aero - panel 2.0: COMPOSITION ROOT.
+ * Ninerdeck - panel 2.0: COMPOSITION ROOT.
  *
  * Jedyne miejsce, które zna wszystkie konkrety naraz: klienta zapytań, router,
  * kontekst sesji i arkusze stylów. Reszta kodu dostaje wszystko propsami albo hookiem -
  * dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
  *
  * Kolejność arkuszy jest ZNACZĄCA i dlatego stoi tu, a nie w `index.html`:
- * `fonts.css` (@font-face, self-host) → `tokens.css` (generowany z `@uzaero/tokens`)
+ * `fonts.css` (@font-face, self-host) → `tokens.css` (generowany z `@ninerdeck/tokens`)
  * → `base.css` (reset i korzeń) → `layout.css` (rama) → komponenty. Zmienne i kroje
  * muszą istnieć, zanim ktokolwiek po nie sięgnie.
  */

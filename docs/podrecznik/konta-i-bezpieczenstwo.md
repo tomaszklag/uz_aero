@@ -1,26 +1,28 @@
 # Konta, logowanie i bezpieczeństwo danych
 
-> Konto zakłada się kontem Google, dostęp daje zatwierdzenie w panelu klubu, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, role i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
+> Konto zakłada się kontem Google, wstęp do klubu daje kod klubu i decyzja administratora, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, role i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
 
-## Trzy kroki do konta
+## Trzy kroki: konto, klub, PIN
 
-1. **Google.** **Kontynuuj z Google** potwierdza tożsamość u Google; aplikacja dostaje stały identyfikator konta, adres e-mail i nazwę. Haseł nie ma nigdzie - ani w aplikacji, ani w panelu - więc nie ma też ich resetów.
-2. **Zatwierdzenie.** Nieznane konto Google staje się zgłoszeniem w module Piloci. Administrator zatwierdza je, nadając kod pilota (np. `TMK`, stoi potem w sygnaturze każdej operacji) i rolę, albo odrzuca z powodem - wymaganym, bo pilot czyta go na swoim ekranie. Do decyzji aplikacja pokazuje „Czeka na zatwierdzenie" i sprawdza stan sama, także przyciskiem **SPRAWDŹ PONOWNIE**; „Zaloguj innym kontem Google" jest wyjściem dla tych, którzy weszli prywatnym kontem zamiast klubowego.
+1. **Google.** **Kontynuuj z Google** potwierdza tożsamość u Google; aplikacja dostaje stały identyfikator konta, adres e-mail i nazwę. Haseł nie ma nigdzie - ani w aplikacji, ani w panelu - więc nie ma też ich resetów. Samo zalogowanie nie daje jeszcze wstępu do żadnego klubu: zakłada Cię jako osobę i tyle.
+2. **Kod klubu i decyzja.** Wstęp do klubu daje **kod klubu**, który dostajesz od administratora - wpisujesz go w aplikacji i tak powstaje zgłoszenie. Administrator przyjmuje je, nadając kod pilota (np. `TMK`, stoi potem w sygnaturze każdej operacji) i rolę, albo odrzuca z powodem - wymaganym, bo pilot czyta go na swoim ekranie. Do decyzji aplikacja pokazuje „Czeka na zatwierdzenie" i sprawdza stan sama, także przyciskiem **SPRAWDŹ PONOWNIE**; po odmowie zostaje **DOŁĄCZ INNYM KODEM** albo zalogowanie innym kontem Google. Cała droga z ekranami: [kluby i dołączanie](kluby-i-dolaczanie).
 3. **PIN.** Po zatwierdzeniu aplikacja prosi o PIN i od tej chwili nim się wchodzi. PIN sprawdza telefon, bez sieci; zmienia się go w [ustawieniach](ustawienia). **Nie pamiętam PIN** oznacza ponowne logowanie kontem Google - z internetem.
 
-@screen 00a-login-full "Kontynuuj z Google" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00d-odrzucone "Odrzucone z powodem"
+@screen 00a-login-full "Kontynuuj z Google" | 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00d-odrzucone "Odrzucone z powodem"
 
-Zgłoszenie składa się wyłącznie z aplikacji; nieznane konto Google w panelu dostaje odmowę z prośbą o dodanie przez administratora. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
+Zgłoszenie do klubu składa się wyłącznie z aplikacji; konto, które nie należy do żadnego klubu, dostaje w panelu odmowę. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
 
-> **Założenie.** Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google. Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do zatwierdzenia konta pilota po prostu nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
+> **Założenie.** Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google. Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do decyzji pilota po prostu w tym klubie nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
 
-### Konto założone zawczasu
+### Pierwszy administrator klubu
 
-Gdy administrator wpisał w panelu adres e-mail konta Google (nowe konto zakłada się wyłącznie z adresem), pierwsze logowanie tym kontem podpina się bez kolejki - także gdy zgłoszenie już czeka. Liczy się tylko adres potwierdzony przez Google, a po podpięciu tożsamością jest samo konto Google. Tą drogą wchodzi też pierwszy administrator, wskazany adresem przy uruchomieniu serwera.
+Z panelu klubu **nie da się nikogo dopisać** - każdy wchodzi kodem klubu i decyzją. Jedynym wyjątkiem jest **pierwszy administrator**: zakłada go opiekun platformy razem z klubem, podając adres jego konta Google, imię i kod pilota, a członkostwo powstaje od razu. Konto podpina się przy pierwszym logowaniu tym adresem - liczy się wyłącznie adres potwierdzony przez Google. Tą samą drogą wchodzi sam opiekun platformy przy uruchomieniu serwera.
 
-## Role: pilot i administrator
+## Role: pilot, administrator, opiekun platformy
 
-Role są dwie. **Pilot** ma aplikację. **Administrator** ma aplikację i panel klubu, do którego loguje się tym samym kontem Google. Konto pilota logujące się do panelu dostaje odmowę z komunikatem, nie awarię.
+Rola należy do **członkostwa**, nie do człowieka: w jednym klubie możesz być administratorem, a w drugim pilotem. **Pilot** ma aplikację. **Administrator** ma aplikację i panel swojego klubu, do którego loguje się tym samym kontem Google; konto bez roli administratora dostaje w panelu odmowę z komunikatem, nie awarię.
+
+Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda do żadnego dziennika - zakłada kluby razem z ich pierwszym administratorem i prowadzi kolejkę zgłoszeń błędów z aplikacji. Gdy klub potrzebuje pomocy w swoich danych, dodaje go u siebie jak każdego innego członka.
 
 ## Sesje
 
@@ -32,9 +34,11 @@ Role są dwie. **Pilot** ma aplikację. **Administrator** ma aplikację i panel 
 
 > **Dlaczego tak.** Wylogowanie zamyka profil pilota na tym telefonie. Zapisy, które nie doszły do klubu, istnieją tylko tam - przy niepustej kolejce przepadłyby bez śladu. Ponowne logowanie wymaga internetu, więc to jedyna rzecz w ustawieniach, której nie da się cofnąć bez sieci.
 
-## Wyłączenie konta
+## Wyłączenie członkostwa
 
-Administrator nie kasuje konta z historią lotów - wyłącza je. Wyłączenie działa natychmiast: zrywa sesje w aplikacji i w panelu, a logowanie kontem Google odpowiada wprost, że konto jest wyłączone. Ponowne włączenie przywraca konto; pilot loguje się jeszcze raz. Konto z jakąkolwiek operacją da się tylko wyłączyć, nigdy usunąć - wpisy w dzienniku zostają.
+Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
+
+Człowieka jako osoby nie kasuje nikt - dziennik musi umieć przypisać każdy wpis do autora. Blokada obejmująca wszystkie kluby naraz należy do opiekuna platformy i jest osobną decyzją.
 
 ## Jakie dane, kto je widzi
 
@@ -43,9 +47,9 @@ Administrator nie kasuje konta z historią lotów - wyłącza je. Wyłączenie d
 | identyfikator konta Google, e-mail, nazwa | z Google, do założenia i podpięcia konta | administrator (zgłoszenia, karta konta) |
 | dziennik lotów: operacje, odczyty, korekty z autorem i powodem, notatki | z aplikacji, w chwili zdarzenia | pilot - swoje; administrator - całą flotę |
 | ślad GPS | tylko w trakcie operacji: od uruchomienia do wyłączenia silnika telefon nagrywa ślad i pokazuje o tym powiadomienie; po wysłaniu kasuje kopię | pilot - swoje; administrator - w dzienniku |
-| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarty arkusz, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | administrator (moduł Zgłoszenia) |
+| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarty arkusz, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | opiekun platformy - jedna kolejka dla całego serwera, z nazwą klubu przy zgłoszeniu; administrator klubu tej zakładki nie ma |
 
-Poza operacją aplikacja nie zapisuje położenia; w ustawieniach jest tylko diagnostyka GPS na żądanie. Dane trafiają na serwer klubu, utrzymywany u dostawcy hostingu, a dziennik jest dokumentem klubu: to klub zakłada konta, poprawia i unieważnia wpisy. Pełny opis: [polityka prywatności](~/prywatnosc.html).
+Poza operacją aplikacja nie zapisuje położenia; w ustawieniach jest tylko diagnostyka GPS na żądanie. Dane trafiają na serwer klubu, utrzymywany u dostawcy hostingu, a dziennik jest dokumentem klubu: to klub przyjmuje pilotów, poprawia i unieważnia wpisy. Pełny opis: [polityka prywatności](~/prywatnosc.html).
 
 @screen 14-slad "Ślad nagrany w operacji"
 

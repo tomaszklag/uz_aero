@@ -1,5 +1,5 @@
 /**
- * UZ Aero - adapter `ThemePrefsPort`: rekord motywu PER PILOT w magazynie klucz→wartość
+ * Ninerdeck - adapter `ThemePrefsPort`: rekord motywu PER PILOT w magazynie klucz→wartość
  * (produkcyjnie AsyncStorage; decyzja 2026-07-29: motyw jest preferencją pilota).
  *
  * Klasa dostaje magazyn KONSTRUKTOREM (strukturalny podzbiór AsyncStorage), więc sama
@@ -7,11 +7,11 @@
  * dokładnie jak `schema.ts` na `node:sqlite`. Wołający podaje AsyncStorage wprost:
  *   `new ThemePrefsStore(AsyncStorage)`.
  *
- * Klucz `uzaero.theme.<pilotId>` - ta sama konwencja co banery edu
- * (`uzaero.edu.<pilotId>.<bannerId>`): na wspólnym telefonie pracuje kilku pilotów
+ * Klucz `ninerdeck.theme.<pilotId>` - ta sama konwencja co banery edu
+ * (`ninerdeck.edu.<pilotId>.<bannerId>`): na wspólnym telefonie pracuje kilku pilotów
  * i preferencja jednego nie może przemalowywać ekranu drugiemu.
  *
- * MIGRACJA ŁAGODNA: przed tą decyzją motyw żył per TELEFON pod kluczem `uzaero.theme`
+ * MIGRACJA ŁAGODNA: przed tą decyzją motyw żył per TELEFON pod kluczem `ninerdeck.theme`
  * (goła nazwa motywu, nie JSON). Pierwszy odczyt pilota bez własnego klucza przejmuje
  * go jako punkt startowy z `updatedAt = 0` i `dirty = false`: nie fabrykujemy stempla
  * DECYZJI (nikt jej wtedy nie podejmował per profil), więc każdy PRAWDZIWY wybór -
@@ -28,7 +28,7 @@ export interface KeyValueStorage {
 }
 
 /** Klucz sprzed decyzji 2026-07-29 (motyw per telefon) - czytany tylko do migracji. */
-export const LEGACY_THEME_KEY = 'uzaero.theme';
+export const LEGACY_THEME_KEY = 'ninerdeck.theme';
 
 const key = (pilotId: string): string => `${LEGACY_THEME_KEY}.${pilotId}`;
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - testy DZIENNIKA ŻĄDAŃ (`http/requestLog.ts`).
+ * Ninerdeck (serwer) - testy DZIENNIKA ŻĄDAŃ (`http/requestLog.ts`).
  *
  * Dziennik jest narzędziem do patrzenia na żywy serwer, więc jego jedyna twarda reguła
  * dotyczy tego, czego w nim NIE MA: query stringu. Dziś nie nosi on sekretów, ale linia

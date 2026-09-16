@@ -1,4 +1,4 @@
-# UZ Aero - panel administracyjny 2.0
+# Ninerdeck - panel administracyjny 2.0
 
 Dokument decyzji. Szczegóły warstw, zależności i wzorców danych zostają
 w `architektura-panelu-frontend.md` - tam opisany jest ten sam szkielet, na którym
@@ -41,9 +41,9 @@ Szkielet okazał się dobry i nie ma powodu go ruszać:
 - **jedne drzwi do sieci** - `api/httpClient.ts` jako jedyne miejsce z `fetch`,
   nagłówek CSRF przy każdej mutacji, odpowiedzi spoza 2xx jako `HttpError` ze statusem;
 - **własne DTO** zamiast importu z `server/src` (panel nie widzi wnętrza serwera);
-- **z `@uzaero/domain` wolno brać wyłącznie TYPY** - panel nie liczy po swojemu.
+- **z `@ninerdeck/domain` wolno brać wyłącznie TYPY** - panel nie liczy po swojemu.
   W 2.0 ta reguła nie ma już ani jednego wyjątku;
-- **tokeny, kroje i tło** - `@uzaero/tokens`, motyw `night`, `tokens.css` generowany;
+- **tokeny, kroje i tło** - `@ninerdeck/tokens`, motyw `night`, `tokens.css` generowany;
 - **testy granic** (`test/architecture.test.ts`) - kierunki zależności, `.tsx`
   eksportuje wyłącznie komponenty, zero arytmetyki w widoku, nazwa klasy CSS nie
   powstaje przez sklejenie;
@@ -98,6 +98,10 @@ z konkretnej listy i na długość ponad 160 znaków. Test nie ocenia, czy zdani
 potrzebne - tego nie da się wykonać maszyną; broni granicy, nie pisze tekstu.
 
 ### 3.2 Pasek górny zamiast kolumny bocznej
+
+> **ODWRÓCONE 2026-09-08 (issue #107, styl lekki - §3.8):** kolumna boczna wróciła,
+> ale jako PŁASKA lista czterech pozycji z ikonami i kontekstem klubu nad nimi - nie
+> jako jedenaście pozycji w czterech grupach. Zapis niżej zostaje jako historia decyzji.
 
 Kolumna 236 px z jedenastoma pozycjami w czterech grupach (w tym grupa z JEDNĄ
 pozycją) przy dwóch modułach oddawałaby ćwierć okna pod dwa słowa. Nawigacja 2.0 to
@@ -243,10 +247,19 @@ w **`design/panel/`** (`SZABLON.html` + `panel.css` + ekrany); `design/admin/` (
 zostaje archiwum panelu 1.0 i nie jest specyfikacją niczego.
 
 **Co obowiązuje odtąd:** nowy ekran panelu zaczyna się od skopiowania
-`design/panel/SZABLON.html`; nowy komponent dokładamy do `design/panel/panel.css`,
-a dopiero potem przenosimy do `admin/src/styles/`. Wątpliwość do makiety = rozmowa przed
-implementacją, nie cicha zmiana w kodzie. Makiety są też ilustracją podręcznika: strony
-panelu osadzają je w ramce okna przeglądarki (dyrektywa `@panel` w `docs/podrecznik/`).
+`design/panel/SZABLON.html`. Wątpliwość do makiety = rozmowa przed implementacją, nie
+cicha zmiana w kodzie. Makiety są też ilustracją podręcznika: strony panelu osadzają je
+w ramce okna przeglądarki (dyrektywa `@panel` w `docs/podrecznik/`).
+
+**Arkusz jest JEDEN i generowany (od issue #107, 2026-09-08).** Do tego dnia stało tu:
+„nowy komponent dokładamy do `design/panel/panel.css`, a dopiero potem przenosimy do
+`admin/src/styles/`" - czyli utrzymywanie kopii, która rozjeżdża się przy pierwszej
+poprawce jednej strony. Odtąd `design/panel/panel.css` SKŁADA generator
+(`npm run panel:css` w `admin/`) z arkuszy `admin/src/styles/` w kolejności kaskady
+z `main.tsx` plus `design/panel/rama.css` (kanwa, okno przeglądarki, inwentarz - klasy,
+których panel nie ma). Nowy komponent dokłada się do arkusza w `admin/src/styles/components/`
+i uruchamia generator; makieta widzi go w tej samej chwili, co panel. Równość pliku
+ze źródłem przybija `admin/test/panelCss.generated.test.ts` - bliźniak testu tokenów.
 
 **Poprzedni zapis i dlaczego upadł.** Do 2026-09-07 stało tu: „makieta zastępuje oglądanie
 rzeczy, której nie da się jeszcze uruchomić - a panel widać w przeglądarce w chwili zapisania
@@ -257,8 +270,87 @@ zapadały w JSX. Pierwsze makiety 2.0 odwzorowują stan zastany (panel już istn
 prowadzi kod.
 
 Test `classInventory.test.ts`, który przybijał inwentarz klas CSS do szablonu, zniknął razem
-z panelem 1.0 i na razie nie wraca - zgodność makiet z kodem trzyma dziś wspólna lista klas
-w `panel.css` i przegląd, nie automat.
+z panelem 1.0 i nie wraca - zgodność ARKUSZA trzyma generator z testem równości (wyżej),
+a zgodność ZNACZNIKÓW makiety z JSX ekranu dalej przegląd, nie automat.
+
+### 3.8 Styl lekki: kolumna boczna, okruszki, typografia (issue #107, 2026-09-08)
+
+Zgłoszenie właściciela: *„Chcemy migrować wygląd panelu admina do podobnego stylu
+(lekkiego) takiego jaki teraz jest promowany. Coś takiego jak ma GitLab. Należy przepisać
+obecne widoki oraz pliki design. Wszystkie późniejsze powinny być w zadanym stylu."*
+Pięć zrzutów GitLaba w motywie ciemnym: kolumna nawigacji po lewej, pasek górny
+z wyszukiwarką, okruszki, płaskie listy z cienkimi separatorami, przyciski 32 px.
+
+**Kolory zostają** (decyzja właściciela w trakcie: *„kolory możemy zachować te co mamy,
+niech będą spójne z obecnym design system"*). Tokeny `night` z `packages/tokens` bez
+zmian, zero nowych zmiennych - lekkość wychodzi z UKŁADU i TYPOGRAFII, nie z palety.
+Zmienił się za to PODZIAŁ tonów (uwaga właściciela przy przeglądzie: *„główny kontent
+powinien być tak jakby w oknie o zaokrąglonych krawędziach, tak jakby warstwa wyżej"*):
+chrome - pasek i kolumna - stoi na `--bg`, a obszar treści leży NA NIM jako kontener
+wyżej na `--surface`: oba górne rogi zaokrąglone, włos `--border` na trzech krawędziach,
+odstęp 8 px od prawej krawędzi okna, dół dociągnięty do krawędzi (tam jest przewijanie -
+zaokrąglony dół czytałby się jak koniec strony). Pasek i kolumna nie mają własnych
+linii: „nie chcemy pasków, gdzie nagłówek i menu są sekcjami - to ma być tło, a kontent
+zaokrąglony kontener w warstwie ponad" (właściciel). Granicę rysuje krawędź kontenera.
+Tło chrome'u ma LEKKI GRADIENT (*„tło z lekkim gradientem daje efekt nowoczesności"*):
+zmienna ramy `--chrome-bg` w `layout.css` - zielona poświata `--green-muted` przy znaku
+w lewym górnym rogu i chłodny `--bg-tint` u góry, oba gasnące w `--bg`; same tokeny,
+żadnego nowego koloru. Pasek i kolumna są przezroczyste, gradient maluje korzeń
+dokumentu (w makiecie: `.browser`), a ekran logowania przepuszcza ten sam gradient
+zamiast mieć własny, jak w 2.0. Karty
+i tabele na warstwie treści rysuje sama ramka - to jest sens stylu lekkiego. Szuflada
+stoi w tonie warstwy treści, nie chrome'u.
+
+Co się zmieniło - i dlaczego akurat to:
+
+1. **Rama: pasek 48 px + kolumna 240 px** (`layout.css`, `shell.css`, `AppShell.tsx`,
+   `ui/shell/nav.ts`). Pasek niesie WYŁĄCZNIE markę (link na ekran startowy)
+   i zalogowanego (kółko z inicjałami + nazwisko + „Wyloguj"); kolumna - kontekst klubu
+   (`.sidebar-context`, wielofirmowość 2.0.0; w kodzie opcjonalny, dopóki sesja nie zna
+   klubu) nad płaską listą pozycji z ikonami (`.nav-item`). Rama superadministratora
+   ma ten sam kafel z podpisem zakresu (`.sidebar-context.scope`) i jedną pozycję.
+   Argument §3.2 („kolumna przy dwóch modułach oddaje ćwierć okna") upadł, gdy modułów
+   zrobiło się cztery, a nad nimi stanął kontekst klubu, dla którego w pasku nie było miejsca.
+   Wyszukiwarki w pasku NIE MA: GitLab ma ją, bo nawiguje po tysiącach projektów; panel
+   ma cztery moduły, a wyszukiwanie w liście mieszka w pasku zawężeń nad tabelą - globalna
+   wyszukiwarka byłaby afordancją bez funkcji.
+2. **Okruszki (`Breadcrumbs`) wyłącznie w dzienniku** od poziomu maszyny w dół, w miejsce
+   przycisków „← Dziennik" z nagłówka: ekran leży pod innym ekranem, więc droga powrotu
+   jest ścieżką, nie akcją. Na liście modułu okruszek opisywałby jedno kliknięcie
+   w kolumnie obok - dokładnie to, za co §3.2 wyrzucił okruszki z paska. Ostatni człon
+   (sygnatura) jest bieżącą stroną; linki niosą zakres dat, z którego się przyszło.
+3. **Bebas Neue zostaje w marce i na logowaniu.** Tytuły stron, kart i szuflad przeszły na
+   Archivo 600 w PISOWNI ZDANIOWEJ („Dziennik", „Anna Kowal", „Zgłoszenia · 2"): tytuł
+   strony jest zdaniem, a nie znakiem. Etykiety pól (`.label`), nagłówki tabel, klucze
+   `.kv-k`, opisy kart wyboru i podpisy komórek (`.cell-sub`) z mono-wersalików 8,5–9 px
+   na krój tekstowy 12–13 px. Mono zostaje przy tym, co jest wartością MASZYNOWĄ: liczby,
+   kody, sygnatury, adresy e-mail (`.cell-sub.mono`). Plakietki (`.pill`) bez ramki i bez
+   wersalików, z wielkiej litery - napisy w kodzie i makietach poprawione tam, gdzie były
+   małą („ręcznie" → „Ręcznie", „wymagany" → „Wymagany").
+4. **Zaznaczenie jest ODWRÓCONE** (jasne tło, ciemny napis) - aktywna pozycja kolumny
+   i włączony chip filtra mówią „wybrane" tym samym sygnałem; zieleń zostaje dla stanu
+   „w normie", akcji głównej i zaznaczonej karty wyboru (ramka, nie tło).
+5. **Komponenty lżejsze:** promienie 6–8 px zamiast 10–14; przycisk 32 px, `ghost` bez
+   ramki, `danger`/`ok` obramówką z wypełnieniem dopiero pod kursorem; pole 34 px z ramką
+   `--border-strong` i pierścieniem fokusu; nagłówek tabeli na tym samym tle, co wiersze
+   (literał `#101010` zniknął, razem z `#0f1216` płótna mapy - w arkuszach panelu nie ma
+   już ani jednego literału koloru); szuflada na `--bg` z lekkim cieniem i tytułem krojem
+   tekstowym; logowanie bez poświaty i gradientu; stan pusty i „brak dostępu" z tytułem
+   w pisowni zdaniowej. Stopień pisma bazowego 14 px (było 12,5–13 w tabelach) - panel
+   czyta się jak strona, nie jak kokpit.
+6. **`td.cell-sub` nie wypada z wiersza.** Przy okazji naprawiona usterka kodu: kolumny
+   „E-mail", „Kiedy", „Rok" mają `cellClass: 'cell-sub'`, a reguła `.cell-sub { display:
+   block }` wyjmowała komórkę z tabeli. Makiety naprawiono przy epiku A (`<td class=
+   "cell-sub">` → `span`), kod nie; odtąd `td.cell-sub { display: table-cell }`.
+
+**Czego styl lekki NIE zmienia:** reguł treści z §3.1 (ekran odpowiada, nie tłumaczy),
+§3.3 (brak uprawnień = brak przycisku), §3.5 (skeleton), listy kart zamiast `<select>`,
+„liczby mono i do prawej", banerów niezamykalnych - i ani jednego tokenu koloru.
+
+**Makiety:** wszystkie 17 plików `design/panel/` przepisane pod nową ramę (pasek, kolumna,
+`.content > .page`, okruszki w dzienniku), `SZABLON.html` z inwentarzem ramy
+(AppShell, Breadcrumbs) i przykładem obu ram (klub, superadministrator). Podręcznik
+osadza te same pliki, więc ilustracje zmieniły się razem z nimi.
 
 ## 4. Liczby
 
@@ -336,8 +428,9 @@ W adresie stoi **rejestracja, nie identyfikator** - `#/dziennik/SP-KLM` człowie
 przeczyta i wpisze z pamięci, a o to w wymogu „do wklejenia" chodziło. Zakres dat jedzie
 w adresie ZAWSZE, także domyślny, żeby każdy adres z paska przeglądarki był kompletny.
 
-Dziennik jest PIERWSZĄ zakładką i przejmuje ekran startowy: konta i flotę zakłada się
-raz na sezon, dziennik ogląda się co tydzień.
+Dziennik jest PIERWSZĄ pozycją nawigacji (do issue #107 zakładką, odtąd pozycją kolumny)
+i przejmuje ekran startowy: konta i flotę zakłada się raz na sezon, dziennik ogląda się
+co tydzień.
 
 ### 9.2 Siedemnaście danych, dziewięć kolumn
 
@@ -831,3 +924,68 @@ z hasłami.
 ścieżką po stronie serwera (`application/common/ports.ts`, nie `domain/`), bo status
 tożsamości jest kształtem magazynu, nie regułą klubu. Powód lustra ten sam: status
 dodany na serwerze i nieznany panelowi wyciekłby na ekran surowym napisem.
+
+## 13. Dwa rodzaje sesji: klub i platforma (wielofirmowość, issue #99 C6, 2026-09-10)
+
+Do 2.0.0 panel miał JEDEN rodzaj sesji - administratora klubu - więc kolumna boczna
+mogła być stałą listą czterech modułów. Wielofirmowość dodała drugi: superadministrator
+platformy, który **nie wchodzi do danych żadnego klubu** (`docs/wielofirmowosc.md` §3.3).
+Nie ma dziennika, nie ma floty, nie ma pilotów; ma Zgłoszenia (i od epiku E Organizacje).
+
+- **kolumna jest LISTĄ PRZEFILTROWANĄ, nie stałą** (`navItemsFor(capabilities)`
+  w `ui/shell/nav.ts`). Zdolność stoi PRZY POZYCJI, nie w warunku w `AppShell`: pozycja
+  bez prawa wejścia i trasa bez prawa wejścia to jedna decyzja, a rozdzielone rozjadą
+  się przy piątym module
+- **pozycja bez zdolności jest UKRYTA, nie wyszarzona** - to §3.3 dociągnięte do końca,
+  z trzecim powodem. Kłódka mówi „istnieje ekran, do którego możesz dostać prawo";
+  triaż zgłoszeń to prawo, którego administrator klubu nie może dostać w ogóle, bo
+  `bugs.triage` jest zdolnością PLATFORMY. Kłódka byłaby więc obietnicą bez pokrycia
+- **ekran startowy liczy się z tych samych zdolności** (`homeFor`): stała `/dziennik`
+  odsyłała superadministratora na trasę, która odpowiada jego sesji `401`, czyli na
+  pustą tabelę z błędem. Ta sama funkcja obsługuje goły adres, adres spoza mapy tras
+  (`HomeRedirect`) i powrót po marce
+- **trasa modułu platformy pyta o zdolność** (`RequireCapability`) - wklejony adres
+  `#/zgloszenia` odsyła administratora klubu na jego ekran startowy, zamiast pokazać mu
+  ramę modułu z błędem 401 pod spodem. To nie jest zabezpieczenie (dane wydaje serwer),
+  tylko odpowiedź na pytanie „czy ja tu mam czego szukać"
+- **lista zgłoszeń ma kolumnę „Klub"** i klub w podtytule szuflady: kolejka jest jedna
+  dla całego serwera, a kod pilota jest jedyny W KLUBIE - bez tego dwa zgłoszenia od
+  dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
+  stoi na końcu listy kontekstu, razem z chwilą przyjęcia: oba pola pochodzą od SERWERA,
+  a nie z kontekstu, który przysłał telefon - i lista ma tego nie mieszać
+- **filtra po klubie NIE MA** - kolejka fazy testów ma kilkanaście pozycji, a chip
+  dzielący robotę na kluby kazałby przeglądać ją tyle razy, ile jest klubów
+
+---
+
+## 14. Panel w kontekście klubu (issue #101, epik E wielofirmowości, 2026-09-10)
+
+Wielofirmowość dołożyła panelowi CZWARTY moduł (Organizacje - dla platformy), drugi
+rodzaj sesji i wybór klubu. Decyzje mieszkają w `docs/wielofirmowosc.md` (§8 przepływy,
+§14 E odstępstwa wdrożenia) i **nie są tu powtórzone**: jedno źródło prawdy dla milestone,
+żeby nie rozjechało się przy pierwszej poprawce jednej z kopii. Tutaj zostaje to, co
+zmienia się w REGUŁACH TEGO dokumentu:
+
+- **§3.2 (pasek zamiast kolumny) był już odwrócony przez §3.8**; kolumna dostaje teraz
+  nad pozycjami kafel kontekstu: klub albo zakres platformy. Stoi ZAWSZE - nazwa klubu
+  odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale LINKIEM jest dopiero
+  wtedy, gdy jest dokąd przełączyć. Ekran wyboru z jedną kartą obiecywałby wybór,
+  którego nie ma, więc kafel bez przełącznika nie jest klikalny (`ui/shell/scope.ts`).
+- **§3.3 (brak uprawnień = brak przycisku) obejmuje ekran wyboru klubu**: klub, w którym
+  ta osoba jest tylko pilotem, na liście się NIE POJAWIA. Karta „bez dostępu"
+  obiecywałaby wejście, którego reguły odmówią - a o takim klubie i tak mówi telefon.
+- **§3.4 (stan operacyjny osobno od konfiguracji) dostaje trzeci kształt szuflady
+  w module Piloci**: obok karty członka i karty kodu klubu stoi KOLEJKA zgłoszeń -
+  zadanie do zrobienia, więc nad listą, a nie w niej. Pusta kolejka nie dostaje karty
+  z zerem (reguła SyncChipa): stan domyślny nie zajmuje ekranu.
+- **§3.6 (jedna reguła, jedno zdanie) rozstrzyga słownik karty pilota**: „konto" ustąpiło
+  „członkostwu" wszędzie, gdzie zdanie dotyczy KLUBU („Wyłącz członkostwo", „Usuń
+  z klubu", „Najpierw wyłącz członkostwo"). Adres konta Google zszedł do odczytu - to
+  poświadczenie osoby, a nie klubu, i klub nie ma nad nim władzy.
+- **czego panel nie umie i nie obiecuje (§5)**: **superadministrator nie przegląda innych
+  klubów** - z ich wnętrza widzi liczby i administratorów, a wejścia do panelu klubu nie
+  ma i mieć nie będzie (decyzja właściciela 2026-09-10, `docs/wielofirmowosc.md` §3.3;
+  operator, który ma pomóc, dostaje od klubu członkostwo - jawnie i z audytem). Nie zmienia
+  też adresu klubu ani nie rotuje kodu klubu. Imienia osoby nie blokujemy przy drugim
+  członkostwie (propozycja z §8.3 czeka na kontrakt - lista członków nie niesie informacji
+  o innych klubach tej osoby).

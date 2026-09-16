@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 04B KOKPIT · PODGLĄD READ-ONLY
+ * Ninerdeck - 04B KOKPIT · PODGLĄD READ-ONLY
  *
  * Odwzorowanie mockupu `design/04b-cockpit-readonly.html`, sekcja po sekcji:
  * [AppBar: samolot · trasa · SyncChip] → [baner „PODGLĄD - TYLKO ODCZYT" ze stopką

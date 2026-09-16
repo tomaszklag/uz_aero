@@ -1,5 +1,5 @@
 /**
- * UZ Aero - HistoryLink: wejście w historię zmian (issue #43, arkusz `design/10i`).
+ * Ninerdeck - HistoryLink: wejście w historię zmian (issue #43, arkusz `design/10i`).
  *
  * Wiersz, nie rozwinięta lista: przy pierwszej korekcie historia ma jeden wpis i
  * rozwinięta zajmowałaby miejsce, nie dając nic.

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - 00A LOGOWANIE (pierwsze logowanie / provisioning urządzenia).
+ * Ninerdeck - 00A LOGOWANIE (pierwsze logowanie / provisioning urządzenia).
  *
  * Odwzorowanie mockupu `design/00a-login-full.html`: znak marki → JEDEN przycisk
  * „Kontynuuj z Google". Pól loginu i hasła nie ma - hasła zniknęły z produktu

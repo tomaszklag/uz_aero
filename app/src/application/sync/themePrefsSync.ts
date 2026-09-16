@@ -1,5 +1,5 @@
 /**
- * UZ Aero - uzgadnianie MOTYWU PILOTA z serwerem przez `/me/prefs`
+ * Ninerdeck - uzgadnianie MOTYWU PILOTA z serwerem przez `/me/prefs`
  * (decyzja 2026-07-29: motyw jest preferencją pilota i wędruje między urządzeniami).
  *
  * Wzorzec `ReferenceSync`: czysta klasa wołana przez pętlę okazji, offline-first

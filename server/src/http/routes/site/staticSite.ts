@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strona publiczna pod `/` (landing, pobieranie, wydania, dokumentacja).
+ * Ninerdeck (serwer) - strona publiczna pod `/` (landing, pobieranie, wydania, dokumentacja).
  *
  * Do 2026-09-07 stała na GitHub Pages w OSOBNYM repozytorium, do którego kopiowało się
  * wynik renderowania - razem z 71 makietami z `design/`. Odtąd jest tu: źródła w `site/src/`,
@@ -48,7 +48,7 @@ const SITE_DIST = fileURLToPath(new URL('../../../../../site/dist', import.meta.
  * `'unsafe-inline'` jest tu warte tyle, ile pewność, że w `site/dist` nie ma cudzej treści.
  * Dziś jej nie ma - wszystko wchodzi z `site/src`, `docs/` i `design/`. Właściwym
  * domknięciem jest osobna nazwa hosta dla strony po podpięciu własnej domeny
- * (`uzaero.pl` dla strony, `app.uzaero.pl` dla panelu i API); ciasteczko panelu jest
+ * (`ninerdeck.pl` dla strony, `app.ninerdeck.pl` dla panelu i API); ciasteczko panelu jest
  * `httpOnly` i `SameSite=Strict`, co ryzyko ogranicza, ale go nie kasuje.
  */
 const SITE_CSP =

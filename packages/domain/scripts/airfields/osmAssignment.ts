@@ -1,5 +1,5 @@
 /**
- * UZ Aero - który pas z OSM należy do którego lotniska.
+ * Ninerdeck - który pas z OSM należy do którego lotniska.
  *
  * Overpass pytamy JEDNYM zapytaniem o wszystkie `aeroway=runway` w granicach Polski
  * (~830 wayów) zamiast o promień wokół każdego lotniska osobno: jedno zapytanie zamiast

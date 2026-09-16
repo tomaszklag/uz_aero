@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 00C Zgłoszenie czeka na zatwierdzenie</title>
+<title>Ninerdeck - 00C Zgłoszenie czeka na zatwierdzenie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,6 +75,7 @@
   .status-head { display:flex; align-items:center; gap:9px; }
   .status-title { font-family:var(--font-display); font-size:21px; letter-spacing:2.4px; color:var(--amber); line-height:1; }
   .status-body { font-size:13px; line-height:1.55; color:var(--text-primary); }
+  .status-body b { color:var(--amber); font-weight:600; }
   .status-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-muted); }
 
   /* ===== KONTO GOOGLE ===== */
@@ -134,8 +135,8 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 00C</span>
-  <span class="slug">logowanie · zgłoszenie czeka</span>
+  <span class="film-strip">NINERDECK - 00C</span>
+  <span class="slug">logowanie · zgłoszenie kodem klubu czeka</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
 </header>
 
@@ -155,10 +156,10 @@
       <div class="brand">
         <div class="brand-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
+            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
           </svg>
         </div>
-        <div class="brand-name">UZ <span>AERO</span></div>
+        <div class="brand-name">NINER<span>DECK</span></div>
       </div>
 
       <!--
@@ -175,11 +176,16 @@
           </svg>
           <span class="status-title">CZEKA NA ZATWIERDZENIE</span>
         </div>
+        <!-- KLUB JEST NAZWANY (wielofirmowość, 2026-09-08): zgłoszenie kodem klubu czeka
+             na administratora KONKRETNEGO klubu, a osoba może mieć w drugim klubie
+             członkostwo aktywne. Nazwa klubu w zdaniu, nie w osobnym wierszu - to
+             jedna wiadomość, a nie formularz. -->
         <div class="status-body">
-          Administrator klubu musi potwierdzić Twoje konto i nadać Ci kod pilota.
-          Zgłoszenie już do niego trafiło - nie trzeba wysyłać go drugi raz.
+          Administrator klubu <b>Aeroklub Zielonogórski</b> musi potwierdzić Twoje
+          członkostwo i nadać Ci kod pilota. Zgłoszenie już do niego trafiło - nie
+          trzeba wysyłać go drugi raz.
         </div>
-        <div class="status-meta">Zgłoszono dziś 09:38 UTC</div>
+        <div class="status-meta">Zgłoszono kodem klubu · dziś 09:38 UTC</div>
       </div>
 
       <div class="acct-card">
@@ -229,7 +235,7 @@
     <span class="vp-badge amber">00C</span>
     <span class="vp-body">
       <span class="vp-name">Czeka na zatwierdzenie</span>
-      <span class="vp-when">Konto Google zweryfikowane, ale administrator jeszcze nie zatwierdził zgłoszenia. Konta pilota jeszcze nie ma.</span>
+      <span class="vp-when">Zgłoszenie kodem klubu (00E albo 13A) czeka na administratora TEGO klubu. Członkostwa jeszcze nie ma, więc nie ma kodu pilota ani floty. Od 2026-09-09 to jedyna droga do klubu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -238,6 +244,13 @@
     <span class="vp-body">
       <span class="vp-name">Zgłoszenie odrzucone</span>
       <span class="vp-when">Administrator odrzucił zgłoszenie - z powodem widocznym na ekranie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00e-bez-klubu.html">
+    <span class="vp-badge amber">00E</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie należysz do żadnego klubu</span>
+      <span class="vp-when">Konto Google potwierdzone, ale bez członkostwa w żadnym klubie - jedno pole na kod klubu od administratora.</span>
     </span>
   </a>
 </aside>
@@ -250,6 +263,7 @@
   <a href="00b-login-offline.html">← 00B Offline</a>
   <a href="00c-oczekiwanie.html" class="active">00C Czeka</a>
   <a href="00d-odrzucone.html">00D Odrzucone →</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu</a>
 </nav>
 
 </body>

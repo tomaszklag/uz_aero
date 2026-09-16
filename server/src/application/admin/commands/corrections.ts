@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - korekta zdarzenia po oknie 24 h (panel, mockup `A02b-korekta.html`).
+ * Ninerdeck (serwer) - korekta zdarzenia po oknie 24 h (panel, mockup `A02b-korekta.html`).
  *
  * Trzeci pionowy przekrój panelu. Jedyne miejsce w całym systemie, w którym zdarzenie
  * trafia do rejestru NIE z telefonu pilota - i dlatego jedyne, które wolno wołać
@@ -44,7 +44,7 @@ import {
   type EventCorrectionPayload,
   type RuleViolation,
   type SessionState,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import {
   correctionCandidate,
@@ -183,14 +183,21 @@ export class AdminCorrectionCommands {
         // - zdarzenie zostałoby w rejestrze, a liczby dnia cofnęłyby się po cichu.
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
 
-        const stream = await this.events.sessionEvents(tx, input.sessionUuid);
+        // Klub operacji = klub ADMINISTRATORA (wielofirmowość): projekcja pyta o sesję
+        // W KLUBIE, więc sesja cudzego klubu jest dla niego nieistniejąca (404, nie 403 -
+        // patrz `commands/fleet.ts`), a korekta dopisuje zdarzenie pod tym samym klubem.
+        const orgId = actor.orgId;
+        const row = await this.sessions.get(tx, orgId, input.sessionUuid);
+        if (row == null) throw new SessionNotFound();
+
+        const stream = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         if (stream.length === 0) throw new SessionNotFound();
 
         const before = projectSession(stream);
 
         const candidate = correctionCandidate(before, stream, input.correction, this.newId(), at);
         const limits: AircraftLimits = {
-          capacityL: await this.aircraft.capacityL(tx, candidate.aircraftId),
+          capacityL: await this.aircraft.capacityL(tx, orgId, candidate.aircraftId),
           // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) - do tego czasu
           // reguły olejowe przy korekcie administratora śpią, jak przy nieznanym samolocie.
           oilMinL: null,
@@ -211,14 +218,14 @@ export class AdminCorrectionCommands {
         // Znacznik zapisu panelu jedzie ze wspólnego modułu, bo ma DRUGIEGO czytelnika:
         // po nim adapter osi zdarzeń poznaje, że korektę wykonał administrator, a nie
         // pilot w oknie 24 h (`application/admin/sourceDevice.ts`).
-        await this.events.insertBatch(tx, [candidate], adminSourceDevice(actor.pilotId));
+        await this.events.insertBatch(tx, orgId, [candidate], adminSourceDevice(actor.pilotId));
 
         // Projekcję przeliczamy z PEŁNEGO strumienia, nie przyrostowo - korekta zmienia
         // przeszłość dnia (czas cyklu, liczbę lotów), więc żadna arytmetyka „dodaj
         // różnicę" nie byłaby równoważna `projectSession`.
-        const after = await this.events.sessionEvents(tx, input.sessionUuid);
+        const after = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
         const state = projectSession(after);
-        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after));
+        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
         /*
          * FLAGI ŁAŃCUCHA PRZELICZAMY - ale tylko po korekcie, która ruszyła ODCZYTY.
@@ -240,7 +247,7 @@ export class AdminCorrectionCommands {
          */
         if (touchesReadings(input.correction)) {
           const aircraftId = candidate.aircraftId;
-          const links: ChainLink[] = (await this.sessions.listByAircraft(tx, aircraftId)).map(
+          const links: ChainLink[] = (await this.sessions.listByAircraft(tx, orgId, aircraftId)).map(
             (s) => ({
               sessionUuid: s.sessionUuid,
               mhStart: s.mhStart,
@@ -251,7 +258,7 @@ export class AdminCorrectionCommands {
             }),
           );
           for (const flag of chainFlags(links, limits.capacityL)) {
-            await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+            await this.flags.ensureOpen(tx, { ...flag, orgId, aircraftId });
           }
         }
         return {
@@ -290,7 +297,7 @@ export class AdminCorrectionCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(input.sessionUuid),
+        reexport: await this.reexport(actor.orgId, input.sessionUuid),
       },
     };
   }
@@ -302,9 +309,9 @@ export class AdminCorrectionCommands {
    * nie zapisać; eksport WEWNĄTRZ transakcji pozwoliłby awarii arkusza cofnąć decyzję
    * człowieka, poprawną niezależnie od tego, czy karta się zapisała.
    */
-  private async reexport(sessionUuid: string): Promise<ExportOutcome | null> {
+  private async reexport(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
     try {
-      return await this.exporter.exportSession(sessionUuid);
+      return await this.exporter.exportSession(orgId, sessionUuid);
     } catch (err) {
       console.error(`re-eksport karty sesji ${sessionUuid} nie powiódł się:`, err);
       return null;

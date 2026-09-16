@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test NOTATEK SESJI (ekran 10, issue #40 pkt 5).
+ * Ninerdeck - test NOTATEK SESJI (ekran 10, issue #40 pkt 5).
  *
  * Zgłoszenie brzmiało krótko: „brakuje pola z dodanymi notatkami". Tekst wpisany przez
  * pilota - przy zadaniu (02e) albo przy wpisie ręcznym (08, 15) - nie wracał do niego

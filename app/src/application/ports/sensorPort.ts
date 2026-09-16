@@ -1,5 +1,5 @@
 /**
- * UZ Aero - PORT czujników pokładowych telefonu (barometr, akcelerometr, żyroskop).
+ * Ninerdeck - PORT czujników pokładowych telefonu (barometr, akcelerometr, żyroskop).
  *
  * Osobny port obok `GpsPort`, bo to inne źródło o innych właściwościach: nie ma własnego
  * zegara (stempluje zegar urządzenia, nie GPS), bywa fizycznie NIEOBECNY (barometru nie

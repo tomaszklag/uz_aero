@@ -1,8 +1,14 @@
-# UZ Aero - instrukcje dla Claude Code
+# Ninerdeck - instrukcje dla Claude Code
 
 ## Nazwa aplikacji
-Aplikacja nazywa się zawsze **UZ Aero** (mixed case w tekście, **UZ AERO** w nagłówkach display/Bebas Neue).
-Stare nazwy - `e-Chronometraż`, `e-CHRONO`, `CHRONO` - są błędne, nigdy ich nie używaj.
+Aplikacja nazywa się zawsze **Ninerdeck** (mixed case w tekście, **NINERDECK** w nagłówkach
+display/Bebas Neue). Nigdy `NinerDeck`, `Niner Deck` ani `9DECK` - domena jest jednym słowem,
+a `9DECK` czyta się „nine deck". Monogram `9` służy za znak w ikonie i faviconie; obok niego
+stoi zawsze pełne `NINERDECK`.
+Stare nazwy - `UZ Aero`, `UZ AERO`, `e-Chronometraż`, `e-CHRONO`, `CHRONO` - są błędne,
+nigdy ich nie używaj. „UZ Aero" było nazwą roboczą do 2026-09-08 i zostaje wyłącznie
+w narracji historycznej (nazwa repozytorium `tomaszklag/uz_aero`, pierwotna specyfikacja
+`docs/Aplikacja UZ AERO.pdf`).
 
 ## Projekt
 Aplikacja Android (React Native + Expo) - elektroniczny system lotniczy dla pilotów.
@@ -13,13 +19,13 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólne pakiety w `packages/`** -
-`@uzaero/domain` (zdarzenia, reguły, projekcje, detekcja), `@uzaero/tokens` (palety
+`@ninerdeck/domain` (zdarzenia, reguły, projekcje, detekcja), `@ninerdeck/tokens` (palety
 dwóch motywów: ciemnego i jasnego, skale, typografia, emiter zmiennych CSS)
-i `@uzaero/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
+i `@ninerdeck/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
-Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami, z paskiem górnym zamiast kolumny bocznej. Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
+Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami; od issue #107 (2026-09-08) w STYLU LEKKIM: kolumna boczna z ikonami i kontekstem klubu, okruszki w dzienniku, typografia zdaniowa - sekcja „Styl lekki panelu". Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
 **Analityka zużycia** (2026-08-05) - wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
 (ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
@@ -246,21 +252,40 @@ błąd, bursztyn = uwaga), a przy jasności 22-30% wszystkie cztery czytały si�
 - `Archivo` - body text, etykiety, przyciski
 - `JetBrains Mono` - cyfry timerów, kody ICAO, wartości GPS, kody pilotów
 
-### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04)
-Wypełniony samolot `PlaneIcon` (`admin/src/ui/components/icons.tsx`) w `--green` na
+### Ikona aplikacji = ZNAK Z EKRANU LOGOWANIA PANELU (2026-09-04, monogram od 2026-09-10)
+Monogram `9` (`BrandMark` w `admin/src/ui/components/icons.tsx`) w `--green` na
 ciemnozielonym tle z poświatą - ten sam znak, który stoi w plakietce `.login-badge`
 panelu. Jedna marka na dwóch powierzchniach, więc znaku NIE rysujemy drugi raz.
+- **`BrandMark` to ZNAK, `PlaneIcon` to IKONA FLOTY** i od issue #103 są to dwie różne
+  rzeczy. Do 2026-09-10 samolot był jednym i drugim naraz, więc podmiana znaku zabrałaby
+  samolot listom maszyn i dziennikowi
+- **cyfra jest geometryczna, nie wzięta z kroju**: oczko o promieniu 6,1 z obwodem
+  grubości 3,3 i ogon tej samej szerokości, więc jego lewa krawędź siada na okręgu
+  wewnętrznym, a prawa jest pionową styczną do zewnętrznego. Bebas Neue jest za wąska na
+  monogram - w 48 px faviconu oczko zlewałoby się z obwodem
+- **znak ma DZIURĘ, więc generator wypełnia regułą niezerowego nawinięcia**: parzystość
+  przecięć (którą rysowało się samolot) wycina każdy obszar objęty dwoma konturami, a tu
+  drugi kontur ma wyciąć TYLKO oczko. Dziurę robi jego przeciwny kierunek
 - **pliki w `app/assets/` są GENEROWANE** (`npm run icons` → `app/scripts/build-icons.js`):
   `icon.png` 1024, para adaptive Androida (`foreground` na 40% boku - bezpieczna strefa,
-  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam)
-  i `favicon.png` 48. Poprawka wchodzi przez generator i regenerację, nie ręczną edycją
-  PNG - ta sama reguła, co przy katalogu lotnisk (`packages/domain/scripts/`)
+  `background` = sam gradient), `monochrome` 432 BIAŁĄ sylwetką (system barwi ją sam),
+  `favicon.png` 48, `brand-mark.png` 256 dla komponentu `Brand` ORAZ `site/src/favicon.png`
+  (jedyny plik pisany poza `app/assets/` - do 2026-09-10 był ręczną kopią, czyli drugim
+  znakiem czekającym na rozjechanie się z pierwszym). Poprawka wchodzi przez generator
+  i regenerację, nie ręczną edycją PNG - ta sama reguła, co przy katalogu lotnisk
+  (`packages/domain/scripts/`)
+- **znak w aplikacji jedzie OBRAZKIEM, nie cyfrą złożoną krojem display**: RN nie ma
+  renderera SVG (projekt nie dokłada modułów natywnych), a cyfra napisana drugi raz
+  byłaby drugim znakiem marki. `brand-mark.png` jest BIAŁY i barwi go `tintColor`, bo
+  zieleń różni się między motywami (`#2ECC71` w ciemnym, `#027E2B` w jasnym) - znak
+  zapieczony w kolorze ciemnego motywu zniknąłby w słońcu
 - **bez zależności i bez modułu natywnego**: rasteryzacja wielokąta z antyaliasingiem
   (poziomo analitycznie, pionowo 8 podwierszy) i koder PNG na `zlib` ze stdlib. Sharpa
-  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla pięciu plików
+  ani ImageMagicka w tym repozytorium nie ma i nie dokładamy ich dla siedmiu plików
 - **ścieżkę SVG trzyma generator, nie import z panelu**: `admin/` jest osobnym modułem
-  z TSX, a skrypt ma działać gołym `node`. Zmiana `PlaneIcon` w panelu wymaga więc
-  przeniesienia ścieżki ręcznie - jedyny koszt tego rozwiązania i dlatego stoi tu zapisany
+  z TSX, a skrypt ma działać gołym `node`. Zmiana `BrandMark` w panelu wymaga więc
+  przeniesienia geometrii ręcznie (stała `NINE` w generatorze) - jedyny koszt tego
+  rozwiązania i dlatego stoi tu zapisany
 - **ikona zapieka się w APK**: podmiana widać dopiero w nowym buildzie EAS, w Expo Go
   nie zmieni się wcale
 - **podgląd `design/IKONA.html` też jest GENEROWANY** (`app/scripts/build-icon-preview.js`):
@@ -281,19 +306,61 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 
 Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
 (działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
-Struktura: `.canvas-label` → `.browser` (`.chrome` → treść) → `.nav-strip`. Panel 2.0 nie
-ma kolumny bocznej - całą ramą jest pasek górny z czterema zakładkami.
+Struktura: `.canvas-label` → `.browser` (`.chrome` → `.shell`: `.topbar` + `.workspace`
+= `.sidebar` + `.content > .page`) → `.nav-strip`. Od stylu lekkiego (issue #107, sekcja
+niżej) rama to pasek górny z marką i zalogowanym ORAZ kolumna boczna z kontekstem klubu
+i pozycjami modułów.
 - **nowy ekran panelu zaczyna się od skopiowania `design/panel/SZABLON.html`** - tam stoi
-  kanoniczny pasek górny i INWENTARZ komponentów (tabela, plakietki, chipy filtrów,
-  szuflada, karta, baner, stan pusty, plamki ładowania)
-- **style makiet mieszkają w `design/panel/panel.css`**, wspólnym dla wszystkich makiet
-  panelu (makiety telefonu trzymają je w `<head>`, ale panelowych będzie kilkanaście).
-  Nazwy klas są DOKŁADNIE te, co w `admin/src/styles/` - to warunek przenoszenia w obie
-  strony. Nowy komponent dokładamy do `panel.css`, potem do kodu panelu
+  kanoniczna rama (pasek, kolumna, okruszki) i INWENTARZ komponentów (tabela, plakietki,
+  chipy filtrów, szuflada, karta, baner, stan pusty, plamki ładowania)
+- **arkusz makiet `design/panel/panel.css` jest GENEROWANY** (`npm run panel:css`
+  w `admin/`): składa się z arkuszy `admin/src/styles/` w kolejności kaskady z `main.tsx`
+  plus `design/panel/rama.css` (kanwa, okno przeglądarki, inwentarz - klasy, których panel
+  nie ma). Nowy komponent dokłada się do `admin/src/styles/components/*.css` i uruchamia
+  generator - makieta i panel widzą go w tej samej chwili. Równość pilnuje
+  `admin/test/panelCss.generated.test.ts`. Ręczna poprawka w `panel.css` znika przy
+  najbliższym przebiegu - to nie jest miejsce na edycję
 - **makiety panelu ilustrują podręcznik**: strony panelu w `docs/podrecznik/` osadzają je
   dyrektywą `@panel` (ramka okna przeglądarki), tak jak strony aplikacji osadzają `@screen`
 - panel ma JEDEN motyw (`night`) i nie ma przełącznika - jasny istnieje dla kokpitu
   w słońcu, a administrator siedzi przy biurku
+
+### Styl lekki panelu (issue #107, 2026-09-08)
+Zgłoszenie: „migrować wygląd panelu admina do stylu lekkiego, jak ma GitLab; przepisać
+obecne widoki i pliki design; wszystkie późniejsze w zadanym stylu". Pełne decyzje
+i uzasadnienia: **`docs/panel-2.0.md` §3.8**. Reguły obowiązujące KAŻDY nowy ekran panelu:
+- **kolory bez zmian** (decyzja właściciela: „kolory możemy zachować te co mamy") -
+  tokeny `night`, zero nowych zmiennych, zero literałów koloru w `admin/src/styles/`.
+  Lekkość wychodzi z układu i typografii, nie z palety
+- **treść jest WARSTWĄ WYŻEJ** (uwaga właściciela: „główny kontent w oknie o zaokrąglonych
+  krawędziach, jakby warstwa wyżej"): pasek i kolumna NIE są sekcjami z liniami, tylko
+  jednym tłem na `--bg`; `.content` to kontener na `--surface` z oboma górnymi rogami
+  zaokrąglonymi, włosem na trzech krawędziach i odstępem od prawej krawędzi okna, dołem
+  dociągnięty do krawędzi (tam jest przewijanie). Karty i tabele na tej warstwie rysuje
+  sama ramka; szuflada w tonie treści. Tło chrome'u ma LEKKI GRADIENT (`--chrome-bg`
+  w `layout.css`: zielona poświata przy znaku + `--bg-tint` gasnące w `--bg`, same
+  tokeny) - pasek i kolumna są przezroczyste, maluje go korzeń; logowanie przepuszcza
+  ten sam gradient zamiast mieć własny
+- **rama = pasek 48 px (marka + zalogowany) i kolumna 240 px** (`.sidebar`: kontekst klubu
+  `.sidebar-context` nad płaską listą `.nav-item` z ikonami; pozycje w `ui/shell/nav.ts`,
+  ikony jako KLUCZE - moduł zostaje czysty). Rama superadministratora: `.sidebar-context.scope`
+  + jedna pozycja. Wyszukiwarki w pasku NIE MA - byłaby afordancją bez funkcji
+- **okruszki (`Breadcrumbs`) WYŁĄCZNIE pod innym ekranem** - dziś dziennik od poziomu
+  maszyny w dół, w miejsce „← Dziennik". Na liście modułu okruszek opisywałby jedno
+  kliknięcie w kolumnie obok
+- **Bebas Neue tylko w marce i na logowaniu.** Tytuły stron, kart i szuflad: Archivo 600
+  w PISOWNI ZDANIOWEJ („Dziennik", nie „DZIENNIK"). Etykiety, nagłówki tabel, `.kv-k`,
+  `.cell-sub`, `.opt-desc`: krój tekstowy, nie mono-wersaliki. Mono zostaje przy wartości
+  MASZYNOWEJ (liczby, kody, sygnatury, e-maile - `.cell-sub.mono`). Plakietki bez ramki,
+  bez wersalików, z wielkiej litery - napis w kodzie pisze się już z wielkiej
+- **zaznaczenie jest odwrócone** (jasne tło, ciemny napis): aktywna pozycja kolumny
+  i włączony chip. Zieleń = stan w normie, akcja główna, ramka zaznaczonej karty wyboru
+- **lżejsze komponenty**: promienie 6–8 px, przycisk 32 px (`ghost` bez ramki, `danger`/`ok`
+  obramówką), pole 34 px z pierścieniem fokusu, nagłówek tabeli na tle wierszy, szuflada
+  na `--bg` z lekkim cieniem, logowanie bez poświaty, stopień bazowy 14 px
+- **`td.cell-sub` ma `display: table-cell`** - klasa bywa klasą całej komórki (kolumny
+  „E-mail", „Kiedy") i `display: block` wyjmowało ją z wiersza (usterka z 2.0 naprawiona
+  przy okazji)
 
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo - inne urządzenie, ten sam produkt.
 
@@ -622,7 +689,7 @@ i dokumentacja.
   mechaniczna i dlatego wymagała jednego strażnika - patrz niżej
 - **„SESJA" MA W TYM PROJEKCIE DRUGIE ZNACZENIE i ono ZOSTAJE**: sesja logowania
   (panelu, przeglądarki, telefonu). „Sesja wygasła. Zaloguj się jeszcze raz",
-  `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `uzaero_admin` - tam „sesja"
+  `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `ninerdeck_admin` - tam „sesja"
   znaczy dostęp, nie lot. Przemianowanie ich byłoby błędem rzeczowym
 - **`design/admin/` (archiwum panelu 1.0) NIE zostało przemianowane** - to zamrożony
   zapis decyzji sprzed 2026-08-30, nie specyfikacja
@@ -930,7 +997,7 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
 - **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
   2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
   numerycznej - a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę
-  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@uzaero/format`):
+  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@ninerdeck/format`):
   kropka, przecinek i dwukropek znaczą TO SAMO, maska zamienia je na znak właściwy dla
   formatu licznika i pilnuje, żeby był dokładnie jeden. Tryb `text` w `ReadingSheet`
   został usunięty - nie ma go do czego przywracać
@@ -1037,7 +1104,7 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
     da się POPRAWIĆ, to ten sam błąd, który issue #43 nazwało regułą „wejście nie może
     znikać razem z rzeczą, której dotyczy". Podpis pod polem mówi, ile z tego wychodzi
     LĄDOWAŃ - zamiana „4" na „5" w głowie jest rachunkiem, którego formularz ma oszczędzić.
-    Odmiana idzie przez `landingsCount` w `@uzaero/format`, wspólną z osią
+    Odmiana idzie przez `landingsCount` w `@ninerdeck/format`, wspólną z osią
 - **wpis bez ani jednego lotu OSTRZEGA, nie blokuje** (uwaga z urządzenia, 2026-08-29 -
   odwraca decyzję z przebudowy 15). Blokada „Dodaj przynajmniej jeden lot" stała na
   uzasadnieniu „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią", a ono było
@@ -1190,7 +1257,7 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   musiał się uczyć. Skróty „Wczoraj"/„Dzisiaj" zostają NAD siatką (obsługują niemal
   każdy wpis); tydzień od PONIEDZIAŁKU, doby = północe UTC, dni przyszłe wygaszone,
   dni sąsiednich miesięcy nierysowane, strzałka „nowszy" gaśnie na bieżącym miesiącu.
-  Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@uzaero/format`)
+  Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@ninerdeck/format`)
 - **wymóg Duala działa TAKŻE we wpisie ręcznym**: An-2 z kartki podlega temu samemu
   prawu, co na preflightcie - bursztynowa plakietka „wymagany · załoga 2-os." przy
   nagłówku i powód W PRZYCISKU (`logic/dualRequirement.ts` - patrz sekcja niżej;
@@ -1583,7 +1650,7 @@ i minimum oleju) **były wdrożone przy issue #60** - doszły punkty 1 i 4.
 - **TO SĄ DWA RODZAJE LICZB** - `fuelNormLPerH` jest KONFIGURACJĄ: liczbą z instrukcji
   użytkowania, prawdziwą póki silnik ten sam, siostrą `oilNormLPerH`. `initialMh` /
   `initialFuelL` / `initialOilL` opisują JEDNĄ CHWILĘ - co pokazywały przyrządy, gdy
-  jednostka trafiła do UZ Aero. **Zero znaczy w nich co innego**: norma zerowa jest
+  jednostka trafiła do Ninerdeck. **Zero znaczy w nich co innego**: norma zerowa jest
   literówką (silnik bez paliwa nie istnieje), startowe zero - zwyczajnym faktem (nowy
   silnik, puste zbiorniki). Rozróżnienie żyje w WALIDACJI; „dwie karty w panelu"
   (2026-09-01) przeżyły jeden dzień - patrz „uwagi z przeglądu" niżej
@@ -2451,7 +2518,7 @@ decyzji: **`design/ZGLOSZENIA.html`**.
 - **POTWIERDZENIE MÓWI „ZAPISANE", NIE „WYSŁANE"** - drugi stan tego samego arkusza.
   W chwili tapnięcia telefon nie wie, czy paczka dojdzie; zniknięcie arkusza bez słowa
   wygląda tak samo przy sukcesie i przy awarii (reguła „każda akcja zostawia ślad")
-- **PANEL: moduł „Zgłoszenia"** (`#/zgloszenia`, czwarta zakładka) - lista z licznikami
+- **PANEL: moduł „Zgłoszenia"** (`#/zgloszenia`, czwarta pozycja nawigacji) - lista z licznikami
   wszystkich statusów i szuflada z pełnym opisem, kontekstem i zmianą statusu.
   Cztery statusy: **nowe → w toku → rozwiązane / odrzucone**; widok domyślny to
   „do zrobienia", bo archiwum przykryłoby robotę. Odczyt na `panel.access`, zmiana
@@ -2467,7 +2534,7 @@ decyzji: **`design/ZGLOSZENIA.html`**.
   (`app/src/ui/components/bug/bugReporter.ts`) gasi przycisk we wszystkich trzech
   ramach naraz. Usunięcie w całości: katalog `components/bug/`, `bugReportPort.ts`,
   `bugReportSync.ts`, migracja SQLite 8, cztery wywołania w ramach, moduł
-  `admin/src/screens/bugs/` z arkuszem `styles/components/bugs.css` i zakładką,
+  `admin/src/screens/bugs/` z arkuszem `styles/components/bugs.css` i pozycją w `ui/shell/nav.ts`,
   po stronie serwera migracja 6 z trasami. Narzędzie fazy testów ma dać się usunąć
   decyzją, a nie archeologią
 
@@ -2554,6 +2621,635 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Wielofirmowość 2.0.0 - epik A: decyzje i makiety (issue #97, 2026-09-08, gałąź `feature-97-wielofirmowosc-projekt`)
+Jeden serwer dla wielu klubów, superadministrator zakłada kluby, **nic nie wycieka między
+klubami**. Dokument decyzji: **`docs/wielofirmowosc.md`** (model danych, przepływy, migracja
+z backfillem, ryzyka, etapy A–F ↔ issue #97–#102). Epik A wyprzedza kod: reguła
+design-first obowiązuje tu tak samo w aplikacji, jak w panelu.
+- **decyzje właściciela (2026-09-08), nie wracać do nich w dyskusji**: klub = `organizations`
+  (tenant) z `org_id` denormalizowanym na tabelach zależnych; pilot = OSOBA globalna,
+  a **kod pilota i rola żyją na CZŁONKOSTWIE** (`memberships` - `pilots.code` i
+  `pilots.role` znikają); superadmin = `pilots.platform_role` bez klubu; telefon
+  w kontekście JEDNEGO aktywnego klubu (przełącznik w 13 tylko przy >1 członkostwie,
+  „Mój dzień" pokazuje WSZYSTKIE operacje); produkcja = pierwotnie **migracja
+  z backfillem**, **ZMIENIONE 2026-09-10 na NOWĄ INSTANCJĘ** (sekcja „Nowa instancja
+  zamiast migracji" niżej); drogi dołączenia: pierwotnie trzy - **ZMIENIONE
+  2026-09-09 na JEDNĄ: kod klubu z zatwierdzeniem** (sekcja „JEDNA droga dołączenia"
+  niżej; link osobisty i adres e-mail WYCOFANE); bez wysyłki e-maili w 2.0.0; pakiet
+  Android `com.ninerdeck.app`
+- **ROZSTRZYGNIĘTE 2026-09-08: klub jest W TOKENIE** (`sub`, `org`, `code`, `role`;
+  `refresh_tokens.org_id`), a **przełączenie klubu i dołączenie do klubu WYMAGAJĄ
+  SIECI** - offline-first dotyczy pracy w klubie, nie zmiany klubu. Przełączenie =
+  `POST /auth/switch` (nowa para tokenów) + PUSTA kolejka wysyłki, jak wylogowanie;
+  na 13A offline/zaległości = karty zablokowane z powodem. Propozycja nagłówka `X-Org`
+  (przełączanie offline) ODRZUCONA - nie proponować ponownie
+- **propozycje dokumentu DO POTWIERDZENIA przed epikami B–F** (§13 dokumentu): superadmin
+  NIE wchodzi do danych klubu; token odczytu kart arkusza; kształt kodu klubu
+  (`AZG-7K4M`). Migracja 9 nie istnieje (rozstrzygnięte w epiku B), termin linku
+  odpadł razem z linkiem (2026-09-09)
+- **bramką jest BRAK CZŁONKOSTWA** - ta sama zasada, co „brak konta" z logowania Google,
+  piętro wyżej: osoba bez klubu ma wiersz w `pilots`, ale żadna trasa klubowa jej nie
+  wpuszcza. Statusy `pending`/`rejected` przenoszą się z `external_identities` na
+  `memberships.status`, bo dotyczą KLUBU, nie tożsamości
+- **makiety telefonu**: NOWE `00e-bez-klubu` (pole na kod klubu; od 2026-09-09 BEZ „albo
+  wklej link" - przebudowane;
+  druga ramka: nieznany kod - błąd przy polu), `01e-moj-dzien-dwa-kluby` (plakietka
+  klubu na kafelku TYLKO przy >1 członkostwie; sygnatura niesie kod z TEGO klubu),
+  `13a-ustawienia-klub` (sekcja „Klub" jako pierwsza, lista kart z kodem w każdym
+  klubie; ramka ONLINE, bo przełączenie wymaga sieci); ZMIENIONE `00c`/`00d` (klub nazwany w zdaniu; 00D ma drugie
+  wyjście „DOŁĄCZ INNYM KODEM" → 00E). Wpisy w `index.html` i panelach wariantów
+  całej rodziny 00/01/13
+- **makiety panelu** (`design/panel/`): NOWE `00a-wybor-klubu` (drugi krok logowania przy
+  >1 członkostwie admin; superadmin widzi „Organizacje" jako pierwszą kartę),
+  `organizacje-lista` + `organizacje-klub` (rama superadministratora: JEDNA pozycja w kolumnie,
+  kafel zakresu `.sidebar-context.scope` zamiast kontekstu klubu; nowy klub = nazwa + stały slug + pierwszy
+  administrator: adres Google + imię + kod, członkostwo `admin` od razu, podpięcie przy
+  pierwszym logowaniu; karta klubu z kodem klubu do odczytu), `piloci-kod-klubu` (dawne
+  `piloci-zaproszenie`, przebudowane 2026-09-09: zamiast trzech kart JEDNA karta „Kod klubu" -
+  kod, od kiedy, ile zgłoszeń czeka, „Wygeneruj nowy" i „Wyłącz dołączanie kodem"
+  z potwierdzeniem inline; P4a = stan wyłączony);
+  ZMIENIONE `piloci-lista` (karta ZGŁOSZENIA KODEM KLUBU nad listą, znika pusta; karty
+  ZAPROSZENIA od 2026-09-09 NIE MA; „Dodaj pilota" USUNIĘTE - było drogą e-mail w innym
+  ubraniu), `piloci-zgloszenie` („Zatwierdź i przyjmij do klubu"), `piloci-konto`
+  (szuflada CZŁONKOSTWA: osoba do odczytu, kod i rola w tym klubie, „Wyłącz
+  członkostwo" - inne kluby osoby bez zmian; bez `#/piloci/nowy`, nowy członek = kod
+  klubu + zatwierdzenie P3). **`.sidebar-context`
+  (kontekst klubu na szczycie kolumny bocznej - do issue #107 `.topbar-org` za znakiem) stoi w KAŻDEJ ramie klubowej**, także przy jednym
+  członkostwie - nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym
+  linku. Komponent `.club-code` czeka w `design/panel/rama.css` (sekcja
+  „wielofirmowość") na kod epików B–F - stamtąd idzie do `admin/src/styles/` pod tą
+  samą nazwą; `.linkbox` WYCIĘTY z `rama.css` i `SZABLON` (link osobisty wycofany 2026-09-09); kontekst
+  klubu (`.sidebar-context`) jest już w `shell.css`
+- **strona `site/src/dolacz/index.html` WYCOFANA 2026-09-09** razem z linkiem osobistym:
+  plik do skasowania w epiku D, trasa `GET /dolacz/*` NIE powstaje (reguła „bez
+  fallbacku SPA" zostaje bez wyjątku), schemat `ninerdeck` w `app.json` służy wyłącznie
+  powrotowi z logowania Google (epik R)
+- **podręcznik**: rozdział `docs/podrecznik/kluby-i-dolaczanie.md` (szkic - opisuje
+  stan PO wdrożeniu epików B–F; przy każdym epiku sprawdzić stronę), osadza nowe makiety
+  przez `@screen` i `@panel`
+
+## Wielofirmowość 2.0.0 - JEDNA droga dołączenia: kod klubu (decyzja 2026-09-09, zmienia decyzję 6 z issue #97)
+Przegląd 2026-09-09 (pytanie właściciela o zaproszenia e-mailem → hasła → Apple/Facebook
+→ kod klubu) zostawił z trzech dróg JEDNĄ. Pełny zapis i tabela odrzuconych wariantów:
+**`docs/wielofirmowosc.md` §3.8 i §15**; zadania: issue #100. Reguły obowiązujące odtąd:
+- **do klubu wchodzi się WYŁĄCZNIE kodem klubu**: `organizations.join_code` (jawny tekst,
+  `UNIQUE` na serwerze, `NULL` = dołączanie wyłączone) + `join_code_since`; pilot loguje
+  się Googlem, wpisuje kod na 00E (albo „Dołącz do innego klubu" na 13A) → członkostwo
+  `pending` → 00C → administrator klubu zatwierdza z kodem pilota i rolą (P3) albo
+  odrzuca z powodem (00D). **Tabeli `invitations` NIE MA** - WYCIĘTA z migracji 8
+  2026-09-09 (D0; epik B jest w `develop` po PR #110, ale nie na produkcji, więc migracja 8
+  zmieniła się W MIEJSCU, bez migracji 9; baza dev od nowa); `memberships.joined_via` =
+  `code | panel | platform | backfill` - `panel` (dopisanie wprost z panelu klubu) żyje
+  do D3, gdzie `POST /pilots` przechodzi do modułu Organizacje i wartość zamienia się
+  w `platform`; martwe klasy `.secret*` (po hasłach) wycięte z `surfaces.css` (D8)
+- **człowiek decyduje PRZED wejściem** - to główna przewaga nad linkiem, który wpuszczał
+  od razu. Zgłoszenie `pending` NIE wygasa samo (kończy je decyzja); administrator klubu
+  może wyłączyć dołączanie kodem (kasuje kod - wtedy nikt nie dołączy, bo innej drogi
+  nie ma); „Wygeneruj nowy" nie rusza złożonych zgłoszeń
+- **pierwszego administratora klubu dodaje SUPERADMINISTRATOR** przy zakładaniu klubu
+  (adres Google + imię + kod): osoba + członkostwo `admin` od razu, tożsamość podpina
+  się przy pierwszym logowaniu (`claimByVerifiedEmail` - ten sam bootstrap, co
+  `SEED_ADMIN_EMAIL`). To wyjątek klasy bootstrap, nie druga droga: z panelu KLUBU nikogo
+  nie da się dopisać adresem, `POST /admin/api/pilots` przechodzi do modułu Organizacje
+- **`POST /auth/join { code }`**: `202` pending / `403` rejected z powodem / `409` już
+  w klubie / `404` dla kodu nieznanego, wyłączonego I klubu nieaktywnego (jedna odpowiedź,
+  nic się nie ujawnia) / `429` ograniczenie tempa per osoba i adres
+- **rozstrzygnięte 2026-09-09 przy przebudowie makiet** (nie wracać): kształt kodu
+  `XXX-XXXX` = 7 symboli z alfabetu 32 znaków (litery bez O/I, cyfry bez 0/1; myślnik
+  i wielkość liter są ZAPISEM - serwer przyjmuje `azg7k4m`), limity tempa `POST /auth/join`
+  = 10 prób/osoba i 30/adres IP na 15 min (`429` z czasem odczekania), superadministrator
+  widzi kod klubu na karcie klubu DO ODCZYTU (kod jest konfiguracją klubu, nie jego
+  danymi; generuje i wyłącza go wyłącznie panel klubu)
+- **NIE WRACAJĄ** (odrzucone z powodami w §15): zaproszenie e-mailem z linkiem i dostawca
+  poczty (możliwe rozszerzenie PO 2.0.0, gdy klub poprosi), link osobisty, dopasowanie
+  po adresie jako droga dla pilotów, e-mail + hasło (nigdy), Facebook (wcale), Apple
+  (wyłącznie razem z iOS). Logowanie kodem z e-maila bez hasła - po 2.0.0, gdy pojawi
+  się pilot bez konta Google. Nie proponować ponownie
+- **makiety PRZEBUDOWANE 2026-09-09** (design-first, przed kodem): `00e` (samo pole kodu,
+  odmowy serwera w komentarzu drugiej ramki), `13a` („Dołącz do innego klubu" - arkusz
+  z polem jak na 00E, zgłoszenie jako wiersz `pending` na liście klubów),
+  `piloci-kod-klubu` (dawne `piloci-zaproszenie`: karta „Kod klubu" z potwierdzeniami
+  inline, P4a = stan wyłączony z kreskami `.club-code.off`), `piloci-lista` (bez karty
+  ZAPROSZENIA, akcja główna „Kod klubu"), `piloci-konto`, `organizacje-klub`/`-lista`
+  (pierwszy administrator „nie zalogował się" zamiast „zaproszenie czeka", karta „Kod
+  klubu" do odczytu), `00c`/`00d`, oba spisy, `SZABLON` (inwentarz „Kod klubu" zamiast
+  LinkBox) i `rama.css` (`.linkbox` wycięty, `.club-code.off` dodany; `panel.css`
+  wygenerowany na nowo). Strona `site/src/dolacz/` do skasowania; `registrations.ts` z #89
+  do skasowania (kolejka żyje na członkostwach)
+
+## Wielofirmowość 2.0.0 - epik B: serwer, model klubów (issue #98, 2026-09-08, gałąź `feature-98-serwer-kluby`)
+Migracja 8 + domena ról + porty + adaptery + komendy; **pierwsza migracja Z BACKFILLEM
+na bazie produkcyjnej** - pułapki w `docs/architektura-panelu-serwer.md` §7.9, odstępstwa
+od dokumentu decyzji w `docs/wielofirmowosc.md` §14 (B). Reguły obowiązujące odtąd KAŻDY
+plik serwera:
+- **osoba jest jedna, kod i rola są CZŁONKOSTWA** (`memberships (org_id, pilot_id)`):
+  `pilots.code` i `pilots.role` NIE ISTNIEJĄ. Każde złączenie po kodzie pilota to
+  `LEFT JOIN memberships m ON m.pilot_id = X AND m.org_id = <klub wiersza>` plus
+  `LEFT JOIN pilots` po nazwisko - nigdy sam `pilots.code`. `pilots.active` znaczy
+  blokadę PLATFORMOWĄ (superadministrator); „wyłącz konto" w panelu = `memberships.status
+  = 'disabled'` + `memberships.credentials_valid_from`, a brama sprawdza OBIE daty
+- **klub jest W TOKENIE** (`Identity.orgId`; claim `org`): token bez `org` - każdy sprzed
+  2.0.0 - jest NIEWAŻNY (`verify()` → `null`), telefon odświeża go refreshem, który klub
+  zna (`refresh_tokens.org_id`). Rotacja zostaje w tym samym klubie; przełączenie
+  (`POST /auth/switch`) i dołączanie (`POST /auth/join`) to epiki F i D. Logowanie wybiera
+  klub aktywny: ostatnio używany (najświeższy refresh) → pierwszy alfabetycznie;
+  osoba bez aktywnego członkostwa → `403 no_membership`
+- **TRZY rodzaje tokenów, rozłączne claimem `purpose`**: klubu (bez `purpose`),
+  rejestracyjny (`registration`), PLATFORMOWY (`platform` - superadministrator bez klubu,
+  `signPlatform`/`verifyPlatform`). Każda weryfikacja odrzuca dwa pozostałe rodzaje
+- **bramy**: `authorize` (token klubu, trasy telefonu - bez bazy), `authorizeOrg`
+  (dawne `authorizeAccount`: członkostwo `(org, sub)` czytane przy KAŻDYM żądaniu panelu -
+  osoba aktywna I klub aktywny I członkostwo `active`, obie daty unieważnienia),
+  `authorizePlatform` (`pilots.platform_role`, zdolność `platform.manage` - jedyna
+  zdolność platformowa, NIE MA jej żaden administrator klubu). `adminRoute` jest trasą
+  KLUBU i daje handlerowi `Actor` z `orgId`; `PlatformActor` (bez klubu) zna wyłącznie
+  `AuditedWrite`, który pisze wtedy `admin_audit.org_id = NULL`
+- **`org_id` NOT NULL na każdej tabeli klubu** (`aircraft`, `events`, `sessions`, `flags`,
+  `export_log`, `exported_sheets`, `aircraft_readings`, `aircraft_consumption`,
+  `bug_reports`, `refresh_tokens`), nullowalne WYŁĄCZNIE w `admin_audit`. Każdy zapis
+  podaje klub JAWNIE parametrem portu (`insertBatch(tx, orgId, …)`, `SessionRow.orgId`,
+  `FlagRecord.orgId`, `writeDaySheet(orgId, …)`, `insertMany(db, orgId, …)`), bo `Event`
+  i `SessionState` z domeny klubu nie znają i znać nie mają (§2 dokumentu). Klub
+  zdarzenia = klub tokenu telefonu; klub korekty/unieważnienia/zakończenia z panelu =
+  klub WIERSZA PROJEKCJI sesji (sesja cudzego klubu → 404, nie 403 - jak maszyna)
+- **jedyna nowa odmowa ingestu: `aircraft_not_in_org`** (403, cała paczka) - maszyna
+  z paczki należy do innego klubu niż token, albo sesja już istniejąca należy do innego
+  klubu. Twarda, bez miękkiej wersji: flaga w cudzym dzienniku byłaby już wyciekiem.
+  Maszyna NIEZNANA rejestrowi floty przechodzi (rejestr przyjmuje to, co przyszło)
+- **unikaty klubu**: `(org_id, reg)`, `(org_id, code)`, `(org_id, tab)` - ta sama wartość
+  w dwóch klubach to dwa byty. `uniqueConflictOn` widzi `idx_memberships_code`, bo
+  separatorem jest podkreślenie. Sygnatura numeruje dobę pilota W KLUBIE
+  (`AND x.org_id = s.org_id` w partycji `PgAdminSessionsRepo`)
+- **`/reference` = flota i CZŁONKOWIE klubu z tokenu** (kod z członkostwa, `active`
+  = członkostwo aktywne, ETag z klubem); `GET /sheets/:tab` czyta kartę w kluczu klubu
+  z tokenu (cudza o tej samej nazwie → 404). Panel: `AdminPilotListItem` to CZŁONKOSTWO
+  (`orgId`, kod i rola w klubie sesji), `POST /pilots` z e-mailem osoby z INNEGO klubu
+  dopisuje jej członkostwo zamiast zakładać drugą osobę (`insert` oddaje id osoby;
+  audyt `existingPerson`), `remove` odbija także osobę z członkostwem gdzie indziej
+- **seed = SUPERADMINISTRATOR bez klubu** (`pilots.platform_role`), zero klubów na świeżej
+  bazie; kluby zakłada moduł Organizacje (epik E). Backfill migracji 8 wymaga
+  `SEED_ORG_NAME`/`SEED_ORG_SLUG` WYŁĄCZNIE na bazie z danymi 1.x (`MigrationContext.seedOrg`
+  → `set_config`, `current_setting` w bloku `DO`); bez nich runner odmawia startu na
+  takiej bazie, świeża przechodzi bez zmiennych. Na bazie z backfillem `admin` zostaje
+  administratorem klubu domyślnego I dostaje rolę platformową - to dziś ta sama osoba
+- **panel bez klubu dla superadministratora**: `panelLoginWithProvider` daje sesję
+  PLATFORMOWĄ (`kind: 'platform'`, wire `{ pilot: { code: null, role: 'superadmin' },
+  org: null, capabilities: ['platform.manage'] }`), która NIE otwiera `GET /me` ani
+  żadnej trasy klubu - moduł Organizacje przychodzi w epiku E. Do tego czasu świeża baza
+  dev (superadmin, zero klubów) nie ma jak wejść do panelu klubu; testy stoją na
+  `test/testWorld.ts` z DWOMA klubami (Alfa: dotychczasowy świat; Beta: SP-BBB, BAD, BPI;
+  PWI w obu pod kodami `PWI`/`PWB` - klub aktywny PWI = Alfa alfabetycznie)
+- **test architektury ma imienny wyjątek** dla `infrastructure/pg/schema.ts` na `UPDATE`
+  tabel append-only (backfill `SET org_id = club WHERE org_id IS NULL`, z asercją treści) -
+  dopisanie drugiego pliku jest decyzją, nie refaktorem
+- **czego epik B świadomie NIE ROBI** (idzie dalej): filtr `WHERE org_id` w KAŻDYM
+  odczycie i test izolacji każdej trasy (C), adres kart ze slugiem i token odczytu (C),
+  kontrola członkostwa per żądanie telefonu (C), `POST /auth/join { code }` i kolejka
+  `pending` na członkostwach (D - od 2026-09-09 jedyna droga, sekcja wyżej; tabela
+  `invitations` WYCIĘTA z migracji 8 W MIEJSCU tego samego dnia - epik B jest w `develop`,
+  PR #110, ale nie na produkcji), moduł Organizacje i wybór klubu w panelu (E), klub
+  w aplikacji (F). Panel web dostał wyłącznie lustro: `platform.manage` w `dto.ts`
+  i `can.ts`, `org` w `PanelSessionDto`
+
+## Wielofirmowość 2.0.0 - epik D, D1 + D4: dołączanie kodem klubu na serwerze (issue #100, 2026-09-09, gałąź `feature-100-dolaczanie-kodem`)
+Domyka B4 z issue #98: kolejka zgłoszeń żyje na CZŁONKOSTWACH, a moduł zgłoszeń
+rejestracyjnych z #89 (`registrations.ts` po obu stronach) jest SKASOWANY. Reguły
+obowiązujące odtąd:
+- **OSOBA POWSTAJE PRZY PIERWSZYM LOGOWANIU GOOGLEM, bez żadnego członkostwa**
+  (`docs/wielofirmowosc.md` §4). Nazwisko i adres idą z profilu; adres trafia na osobę
+  WYŁĄCZNIE potwierdzony przez dostawcę (`email_verified`) i wolny - `pilots.email` jest
+  listą, po której panel dopisuje członkostwo do istniejącej osoby, więc adres
+  niepotwierdzony byłby drogą do podszycia się. Podpięcie po adresie wpisanym zawczasu
+  (`claimByVerifiedEmail`) działa jak dotąd. `ExternalIdentitiesPort.createPerson` to
+  JEDNA transakcja (osoba + tożsamość); przegrany wyścig dwóch pierwszych logowań
+  oddaje `null` i wołający czyta wiersz zwycięzcy
+- **`external_identities` BEZ statusów**: `pilot_id NOT NULL`, kolumny `status`,
+  `reject_reason`, `decided_at`, `decided_by` skasowane migracją 8 W MIEJSCU (nie ma jej na
+  produkcji; baza dev od nowa). Backfill zgłoszeń 1.x → osoby + członkostwa
+  `pending`/`rejected` w klubie domyślnym; dwie pułapki (kolumny kasowane na końcu tej
+  samej migracji jeszcze stoją, pętla zamiast `INSERT…SELECT`) w `docs/architektura-
+  panelu-serwer.md` §7.9 (h)
+- **TOKEN OSOBY** (`purpose: 'person'`, `sub` = id osoby, 30 dni) zastępuje rejestracyjny.
+  Otwiera DOKŁADNIE DWIE trasy bez klubu: `GET /auth/memberships` i `POST /auth/join`.
+  Rozłączność `verify`/`verifyPerson`/`verifyPlatform` w obie strony, z testami.
+  `POST /auth/google` bez aktywnego członkostwa odpowiada **`202`** `{ status:
+  'pending' | 'rejected' | 'none', personToken, memberships }` - `403 no_membership`
+  ZNIKNĘŁO; panel: `not_registered` ZNIKNĘŁO (osoba bez klubu = `no_panel_access`)
+- **`GET /auth/memberships`** przyjmuje token osoby ALBO dowolnego klubu (13A pokazuje
+  z niej listę); tokeny klubu wydaje WYŁĄCZNIE tokenowi osoby i DOKŁADNIE RAZ - trzy
+  bramy z audytu #89 przeniesione 1:1: wejście do klubu (`last_login_at`) późniejsze niż
+  wydanie tokenu, `credentials_valid_from` osoby ALBO członkostwa, stempel przed wydaniem.
+  Stan zbiorczy: `active` > `pending` > `rejected` > `none` (`clubsView` w `commands/auth.ts`
+  - jedna funkcja dla logowania, stanu zgłoszeń i kodu klubu)
+- **`POST /auth/join { code }`** (`application/mobile/commands/join.ts`, adapter
+  `infrastructure/pg/mobile/clubJoinRepo.ts`, trasa `http/routes/mobile/join.ts`):
+  `202` pending (także przy powtórce - `ON CONFLICT (org_id, pilot_id) DO NOTHING`, bez
+  drugiego wiersza), `403 membership_rejected` z powodem, `409 already_member` /
+  `membership_disabled`, **`404 unknown_code` dla kodu nieznanego = wyłączonego (`join_code
+  NULL`) = klubu nieaktywnego = złego kształtu** (jedna odpowiedź co do bajtu),
+  `429 too_many_attempts` z `Retry-After` i `retryAfterSec`. Pilot pisze do `memberships`
+  SAM, poza panelem i bez audytu - ślad powstaje przy decyzji (D2)
+- **KOD KLUBU w bazie ZNORMALIZOWANY** (`domain/clubCode.ts`: 7 znaków z alfabetu 32,
+  wersaliki, bez myślnika - `AZG7K4M`); `XXX-XXXX` jest zapisem do wyświetlenia
+  (`formatClubCode`). Wpis pilota normalizuje `normalizeClubCode` (myślniki, spacje,
+  wielkość liter), zły kształt → `null` → to samo `404`. Generowanie kodu - D2
+- **OGRANICZENIE TEMPA W PAMIĘCI PROCESU** (`application/mobile/attemptLimiter.ts`, czysty,
+  na porcie `Clock`): okno przesuwne 15 min, 10 prób na osobę i 30 na adres IP naraz;
+  liczą się próby DOZWOLONE (udane i nieudane), odbita `429` nie przedłuża blokady;
+  `retryAfterMs` = do wygaśnięcia najstarszej z ostatnich `limit` prób. Jedna instancja
+  serwera (§8.8 architektury), więc tabela byłaby kosztem bez zysku
+- **`credentialsRevoked` przeniesione do `domain/credentials.ts`** - potrzebują go trzy
+  miejsca (brama panelu, token osoby, dołączanie), a warstwa aplikacji nie importuje
+  z `http/`. `PilotAccount` niesie odtąd `credentialsValidFrom`; `Membership` -
+  `rejectReason`, `createdAt`, `decidedAt`
+- **audyt**: `registration.approve/reject` → `membership.approve/reject` (emituje D2)
+- **panel stracił kolejkę zgłoszeń i szufladę zatwierdzania** (wracają 1:1 z makiet
+  `piloci-lista`/`piloci-zgloszenie`/`piloci-kod-klubu` w epiku E na kontrakcie
+  członkostw); lustro `RegistrationStatusDto` wycięte z `mirrors.test.ts`
+- **aplikacja pilota NIE jest tknięta** - woła stare `GET /auth/registration`
+  i `registrationToken` do epiku F; na `develop` nic się nie buduje, więc rozjazd jest
+  przyjęty. D9 (podręcznik, `docs/logowanie-google.md`, `_main.md.txt`, changelog) idzie
+  razem z resztą epiku
+- testy: `joinClub.test.ts` (cała tabela odpowiedzi z §5 + oba limity na sterowanym
+  zegarze), `attemptLimiter.test.ts`, `clubCode.test.ts`, blok „osoba BEZ klubu"
+  w `auth.test.ts`, backfill tożsamości w `organizations.test.ts`
+
+## Wielofirmowość 2.0.0 - epik C: izolacja danych między klubami (issue #99, 2026-09-10, gałąź `feature-99-izolacja-klubow`)
+Epik B dał model (klub w tokenie, `org_id` na tabelach); epik C zamyka pytanie „czy to
+naprawdę nie wycieka". Reguły obowiązujące odtąd KAŻDĄ nową trasę i KAŻDE nowe zapytanie:
+- **klub jest ARGUMENTEM PORTU, nie polem filtra**: `list(db, orgId, filter)`,
+  `byId(db, orgId, id)`, `latest(db, orgId, uuid)`. Pole filtra dałoby się pominąć
+  i nikt by nie zauważył; argument wymusza kompilator. W predykacie klub stoi jako
+  PIERWSZY warunek (`filter.add('s.org_id = ?', orgId)` przed czymkolwiek innym)
+- **KLUB POWTARZA SIĘ W KAŻDYM PODZAPYTANIU I ZŁĄCZENIU**, nawet gdy zewnętrzne `WHERE`
+  zawęziło już wiersz nadrzędny (`AND f.org_id = s.org_id`, `LEFT JOIN aircraft a ON
+  a.id = s.aircraft_id AND a.org_id = s.org_id`). Bez tego izolacja wisi na GLOBALNEJ
+  jedyności identyfikatora - a uuid operacji nadaje TELEFON, nie serwer. Strażnik
+  z `architecture.test.ts` znalazł jedenaście takich miejsc przy pierwszym przebiegu;
+  wszystkie dostały jawny predykat po jednej linijce
+- **CUDZA RZECZ ODPOWIADA 404, NIE 403**: operacja, maszyna, flaga, karta i norma innego
+  klubu są dla tokenu NIEISTNIEJĄCE. `403` mówiłoby „to istnieje, ale nie dla ciebie",
+  czyli potwierdzałoby cudzy zasób. `sync-status` cudzej operacji oddaje kształt
+  „nieznana serwerowi" (`received: 0`, `status: 'unknown'`, `flags: []`), bo telefon
+  musi umieć to przeczytać bez wyjątku
+- **INGEST WAŻY CZŁONKOSTWO PER ZDARZENIE, nie per paczka**: zapis do maszyny albo
+  operacji innego klubu wraca w `withheld[]` (mechanizm z issue #81), a reszta paczki
+  wchodzi. Odmowa całej paczki (`aircraft_not_in_org` z epiku B) dawała cudzej operacji
+  władzę nad synchronizacją WŁASNYCH zapisów pilota. Jedyna twarda odmowa ingestu
+  zostaje `not_session_pic` (jeden piszący, §4.1)
+- **BRAMA TELEFONU PYTA BAZĘ O CZŁONKOSTWO PRZY KAŻDYM ŻĄDANIU** (`authorizeMember`
+  + `MemberGate`/`memberFromRequest` w `http/memberGate.ts`): wyłączenie członkostwa
+  zamyka trasy natychmiast, nie po godzinie życia tokenu. Panel miał to od epiku B
+  (`authorizeOrg`), a teraz obie bramy liczą to samo jednym kodem
+- **KARTA ARKUSZA MA ADRES Z KLUBEM I SEKRETEM**: `GET /sheets/<slug>/<tab>?k=<sekret>`,
+  gdzie sekretem jest `organizations.sheets_key` (losuje baza przy założeniu klubu).
+  Trasa NIE MA SESJI i to jest jej sens - link musi otworzyć się skarbnikowi bez konta.
+  Każda rozbieżność (slug, sekret, nazwa karty, klub wyłączony) to TEN SAM `404`, więc
+  adres nie potwierdza istnienia ani klubu, ani karty; porównanie sekretu czasowo stałe.
+  Adres sprzed 2.0.0 (`/sheets/:tab`) zostaje dla linków zapisanych w dzienniku eksportu
+  i czyta kartę w klubie Z TOKENU. Nazwa karty (`sheetTab`) bez zmian
+- **ZGŁOSZENIA BŁĘDÓW SĄ MODUŁEM PLATFORMY**: `bugs.triage` wyszło z roli klubowej
+  `admin` i weszło do `PLATFORM_CAPABILITIES` obok `platform.manage`. Opis błędu niesie
+  kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego serwera -
+  więc decyzja o CUDZYM zgłoszeniu nie należy do klubu. W panelu: pozycji „Zgłoszenia"
+  w kolumnie klubu NIE MA WCALE (nie jest wyszarzona - `navItemsFor` w `ui/shell/nav.ts`
+  bramkuje pozycje ZDOLNOŚCIĄ), trasa pyta o zdolność (`RequireCapability`), a wiersz
+  listy niesie kolumnę „Klub", bo kolejka jest jedna dla serwera, a kod pilota jedyny
+  w klubie. Ekran startowy liczy `homeFor(capabilities)` - stała `/dziennik` odsyłałaby
+  superadministratora na trasę, która odpowie mu 401
+- **SYGNATURA NUMERUJE DOBĘ PILOTA W KLUBIE**: osoba w dwóch klubach ma tego samego dnia
+  dwa niezależne numerowania i dwa kody (`PWI` w Alfie, `PWB` w Becie) - kod pochodzi
+  z CZŁONKOSTWA w klubie OPERACJI, nie z klubu tokenu, którym ktoś patrzy
+- **`/me/events` JEDZIE Z KLUBU TOKENU**: osoba w dwóch klubach odtwarza rejestr osobno
+  w każdym z nich. Odtworzenie wszystkich naraz wymagałoby, żeby telefon trzymał
+  operacje spoza klubu aktywnego - to decyzja epiku F, nie C
+- **DWA STRAŻNIKI, KTÓRE TRZEBA ZNAĆ PRZED DOPISANIEM TRASY** (opis: `docs/architektura-
+  panelu-serwer.md` §7.10):
+  1. `server/test/tenantIsolation.test.ts` bierze listę tras z REJESTRU FASTIFY
+     (`app.routeCatalog`) i wymaga, żeby każda miała przypadek izolacji albo imienny
+     wyjątek z powodem. **Nowa trasa bez jednego z dwóch wywala ten test** - i to jest
+     zamierzone, bo dokument dezaktualizuje się po cichu, a rejestr tras nie;
+  2. strażnik w `server/test/architecture.test.ts`: każda metoda adaptera, która dotyka
+     tabeli skopowanej, musi mówić `org_id`. Jednostką jest METODA (nie plik, nie
+     literał - `SqlFilter` rozbija predykat na osobny napis), a szablony `${SELECT}`
+     z modułu wklejają się do wołającego. Sprawdzenie jest TEKSTOWE: gwarantuje, że
+     o klubie ktoś pomyślał, nie że pomyślał dobrze - poprawność bierze na siebie test
+     izolacji. Wyjątki są imienne i mają kontrolę „nie zgnij": metoda z listy musi
+     istnieć i nadal pomijać klub. Dziś jest jeden (`bugReportsRepo.countByStatus`)
+- **czego epik C świadomie NIE ROBI**: nakładek na maszynę współdzieloną między klubami
+  (`aircraft_overlap` liczy się w obrębie klubu), przełączania klubu w panelu (epik E)
+  i klubu w aplikacji pilota (epik F)
+
+## Wielofirmowość 2.0.0 - epik D domknięty: kolejka zgłoszeń, kod klubu, Organizacje (issue #100, 2026-09-10, gałąź `feature-100-kolejka-i-organizacje`)
+D1+D4 dały drogę PILOTA (`POST /auth/join`, token osoby); ten PR daje drugą połowę -
+DECYZJĘ KLUBU i zakładanie klubów - oraz kasuje drogi, które zostały po 1.x. Decyzje
+i odstępstwa: `docs/wielofirmowosc.md` §14 D. Reguły obowiązujące odtąd:
+- **TRZY KOMENDY DECYZJI, KAŻDA W JEDNĄ STRONĘ** (`commands/memberships.ts`,
+  `accounts.manage`): `approve` (`pending` → `active` z kodem i rolą), `reject`
+  (`pending` → `rejected`, **powód WYMAGANY** - pilot czyta go na 00D), `reopen`
+  (`rejected` → `pending`, kasuje KOMPLET decyzji: powód, chwilę, autora - wiersz opisuje
+  STAN, historię trzyma audyt). **Zatwierdzenie NIE przyjmuje `rejected`**: wpuszczenie
+  odrzuconego jednym ruchem pomijałoby chwilę, w której ktoś świadomie zdejmuje cudzą
+  decyzję. Odmowa z innego stanu to `409 wrong_status` ZE STANEM - administrator z otwartą
+  szufladą nie wie, że drugi rozstrzygnął minutę temu, a „nie można" bez powodu wygląda
+  jak awaria
+- **KOLEJKA I KOD KLUBU MAJĄ WŁASNE TRASY**, nie pola w `GET /pilots`: tamta lista jedzie
+  na `panel.access` (czyta ją każdy z wejściem do panelu, jest też słownikiem pilotów dla
+  filtrów innych ekranów), a kolejka z adresami ludzi spoza klubu i włącznik drogi do
+  klubu - na `accounts.manage`. Zdolność jest ATRYBUTEM TRASY i doklejenie ich do tamtej
+  odpowiedzi oddałoby je każdemu, kto czyta listę
+- **„ILE ZGŁOSZEŃ CZEKA TYM KODEM" LICZY SIĘ OD `join_code_since`** - `memberships` nie
+  zapisuje, którym kodem ktoś wszedł, i zapisywać nie ma po co (kod jest jeden na klub,
+  a jego zmiana ma stempel). Stąd DWIE różne liczby na ekranie i to jest zamierzone: karta
+  kodu mówi o BIEŻĄCYM kodzie, karta ZGŁOSZENIA o całej kolejce. Rotacja zgłoszeń NIE RUSZA
+- **KODU NIE DA SIĘ WPISAĆ Z RĘKI - tylko wylosować** (`clubCodeFrom` w domenie, bajty
+  z `randomBytes` przez konstruktor): klub dobierający sobie kody wybierałby łatwe do
+  zgadnięcia. `% 32` nie ma obciążenia (256/32 = 8 dokładnie) i to jest powód długości
+  alfabetu. Zderzenie z kodem innego klubu (`UNIQUE` na serwerze) = LOSUJ PONOWNIE,
+  **nową transakcją**: po błędzie unikalności transakcja Postgresa jest odrzucona, więc
+  pętla stoi WOKÓŁ `write.run`, nie w jego wnętrzu; nieudana próba nie zostawia ani kodu,
+  ani wpisu w dzienniku
+- **MODUŁ ORGANIZACJE UMIE CZTERY RZECZY** (`platform.manage`, `platformRoute`): lista
+  (liczby członków i maszyn + administratorzy z flagą „nie zalogował się"), **założenie
+  klubu razem z kodem i PIERWSZYM administratorem** (jedno, nierozdzielne zamówienie -
+  klub bez administratora nie ma jak zacząć, bo kodem nie miałby kto zatwierdzić), zmiana
+  NAZWY i wyłączenie klubu. Czego NIE umie: kasowania klubu (dziennik jest jego
+  dokumentem), zmiany sluga (adres kart arkusza, nadawany raz), rotacji kodu (to panel
+  KLUBU) i wejścia w dane klubu (§3.3 - z wnętrza oddaje LICZBY i administratorów).
+  `sheets_key` losuje BAZA (`DEFAULT`), żeby sekret nie powstawał w dwóch miejscach
+- **SESJA KLUBU DOSTAJE NA TRASACH PLATFORMY 401, NIE 403** - to nie jest ten rodzaj
+  tokenu (`authorizePlatform`). Ta sama asymetria, co przy zgłoszeniach błędów (issue #99)
+- **`POST /admin/api/pilots` USUNIĘTE** razem z `joined_via = 'panel'` (CHECK w migracji 8
+  zmieniony W MIEJSCU - nie ma jej na produkcji) i ze ścieżką „Dodaj pilota" w panelu web
+  (przycisk, `#/piloci/nowy`, `useCreatePilot`, `createBodyOf`). Z panelu KLUBU nie da się
+  nikogo dopisać ani adresem, ani linkiem; jedyny wyjątek jest klasy bootstrap i należy do
+  platformy. Pusta lista pilotów mówi odtąd, CO ma się stać („podaj pilotom kod klubu"),
+  a nie oferuje akcji, której serwer nie ma - ekran „Kod klubu" wchodzi w epiku E
+- **`pilot.deactivate` → `membership.disable`** w katalogu audytu: od wielofirmowości
+  odcina się CZŁONKOSTWO, nie osobę (ta lata dalej w pozostałych klubach). Dawny kod
+  ZOSTAJE w katalogu dla wierszy 1.x - precedens `pilot.password_reset`. Przywrócenie
+  dostępu własnego kodu NIE MA (`pilot.update`) i to ta sama asymetria, co przy klubie
+  (`organization.disable` kontra `organization.update`)
+- **WYJŚCIE Z KLUBU TO WYŁĄCZENIE CZŁONKOSTWA i NIE MA własnego kodu** (D6): wszystkie
+  cztery skutki wynikają z bramy członkostwa (epik C) i z append-only rejestru - trasy
+  telefonu i refresh zamykają się natychmiast, rejestr i dziennik zostają nietknięte,
+  zaległe zapisy do tamtego klubu wracają we `withheld` pod tokenem drugiego klubu,
+  a okno korekty pilota gaśnie razem z dostępem. Dostały za to test (`test/leaveClub.test.ts`),
+  bo niepilnowana własność jest własnością do czasu. **„Opuść klub" z telefonu NIE
+  ISTNIEJE**: pilot mógłby wyjść z otwartą operacją i niewysłaną kolejką
+- **KAŻDA NOWA TRASA PŁACI ZA OBA STRAŻNIKI Z EPIKU C** (`tenantIsolation.test.ts`
+  z rejestru Fastify + `org_id` w SQL-u): dwanaście tras tego PR-a dostało przypadki
+  izolacji, a świat testowy - dwa nowe znaczniki klubu B (kandydat w kolejce Bety i kod
+  klubu Bety), bo bez danych po tamtej stronie „czysta" odpowiedź nie dowodzi niczego
+- pułapki SQL-a z tego epiku (`CASE` z `NULL` bierze typ z parametru; stempel „obowiązuje
+  od" musi iść z zegara APLIKACJI): `docs/architektura-panelu-serwer.md` §7.9 (i), (j)
+
+## Wielofirmowość 2.0.0 - epik E: panel w kontekście klubu (issue #101, 2026-09-10, gałąź `feature-101-panel-kluby`)
+Epiki B–D dały model, izolację i drogi wejścia; epik E daje POWIERZCHNIĘ: moduł
+Organizacje, wybór klubu, członkowie, zgłoszenia i kod klubu. Decyzje i odstępstwa:
+`docs/wielofirmowosc.md` §14 E. Reguły obowiązujące odtąd:
+- **ADRES PANELU JEST PŁASKI, KLUB SIEDZI W SESJI** (decyzja właściciela 2026-09-10 -
+  odrzuca `#/k/<slug>/…` z listy zadań issue #101, potwierdza §8.2). `#/dziennik` znaczy
+  to samo przez całą sesję, wybór zakresu stoi pod `#/klub`, a kafel kolumny bocznej
+  prowadzi tam z powrotem. Prefiks ze slugiem kupowałby link przenośny MIĘDZY klubami -
+  przypadek administratora dwóch klubów - kosztem przepisania każdej trasy i każdego
+  linku panelu oraz drugiego źródła prawdy o klubie obok sesji. **Nie proponować ponownie.**
+- **TRZY TRASY SESJI, KTÓRE EPIKI B–D ODŁOŻYŁY**: `GET /me` odpowiada odtąd OBU rodzajom
+  sesji (nowe `sessionRoute` w `adminRoute.ts`) - bez tego superadministrator po
+  odświeżeniu karty lądował na ekranie logowania, z którego przed chwilą wszedł;
+  `POST /admin/api/auth/switch { orgId | null }` wydaje NOWĄ sesję dla klubu albo dla
+  platformy (`null`), ten sam token Google w tle. `sessionRoute` jest deklaracją dla
+  pytań, które zadaje SAMA SESJA, a nie moduł - trzeciej takiej trasy nie dokładaj bez
+  tego rachunku.
+- **ZAKRESY JADĄ W KAŻDEJ ODPOWIEDZI O SESJI** (`PanelScopes`: kluby z rolą panelu +
+  flaga platformy), a nie osobną trasą: panel pyta o to przy KAŻDYM wczytaniu (czy kafel
+  jest linkiem, czy po zalogowaniu iść na wybór). Osobna trasa znaczyłaby drugie żądanie
+  przy każdym starcie panelu - i to o odpowiedź, która przy jednym członkostwie nic nie
+  zmienia. Koszt: jeden odczyt członkostw przy `GET /me`, czyli ten sam rachunek, co
+  `authorizeOrg`.
+- **PRZEŁĄCZENIE SPRAWDZA CEL OD ZERA, ŹRÓDŁA PYTA WYŁĄCZNIE O TOŻSAMOŚĆ**: administrator
+  wyłączony w klubie A ma prawo przejść do B - o wejściu rozstrzyga członkostwo w CELU.
+  Ciasteczko starsze niż `credentials_valid_from` OSOBY albo CELU nie mieni nowej sesji;
+  bez tego wyłączenie członkostwa dałoby się obejść przełączeniem tam i z powrotem
+  ciasteczkiem sprzed wyłączenia (ta sama reguła, którą audyt 2026-09-05 nałożył na token
+  osoby). Zakres, którego ta osoba nie ma - cudzy klub ALBO platforma bez roli
+  platformowej - to **404**, nie 403 (epik C: 403 potwierdzałoby, że taki klub jest).
+- **KAFEL KONTEKSTU STOI ZAWSZE, PRZEŁĄCZNIK - NIE** (`ui/shell/scope.ts`, z testami):
+  nazwa klubu odpowiada na „czyj to dziennik" przy każdym wklejonym linku, więc kafel jest
+  też przy jednym zakresie - ale wtedy jest `div`, nie linkiem. Ekran wyboru z jedną kartą
+  obiecywałby wybór, którego nie ma. **Platforma liczy się jako ZAKRES**, inaczej operator
+  z jednym klubem nie miałby jak zejść do niego ani wrócić (przypadek 00A′ z makiety).
+- **`homeFor` DECYDUJE O EKRANIE STARTOWYM I ZALEŻY OD KOLEJNOŚCI `NAV_ITEMS`**:
+  Organizacje stoją PRZED Zgłoszeniami, więc superadministrator ląduje w Organizacjach.
+  Dopisując moduł platformy, sprawdź, czy nie przestawiasz tym ekranu startowego.
+- **MODUŁ PILOCI MA TRZY SZUFLADY NAD JEDNĄ LISTĄ** i każda ma własny adres, bo każda
+  opisuje inny byt: członek (`#/piloci/:id`), KANDYDAT z kolejki (`#/piloci/zgloszenia/:id`
+  - osoba bez kodu) i KOD KLUBU (`#/piloci/kod` - konfiguracja klubu, nie człowiek).
+  Rozstrzyga TRASA (prop `drawer`), a nie ekran czytający adres w środku: `zgloszenia`
+  i `kod` byłyby dla `:id?` zwykłym identyfikatorem konta.
+- **KOLEJKA I KOD PYTAJĄ SERWER TYLKO Z `accounts.manage`** (`enabled` na hookach): to są
+  adresy ludzi spoza klubu i włącznik jedynej drogi do niego, więc bez tej zdolności
+  odpowiedź byłaby 403 - czyli baner błędu na ekranie, na którym nic złego się nie stało.
+  Nieudany odczyt KOLEJKI mówi o sobie tak samo jak nieudany odczyt listy: bez tego karta
+  po prostu by nie wjechała, a awaria wyglądałaby jak „nikt nie czeka".
+- **PRZEŁĄCZENIE CZYŚCI CACHE DOKŁADNIE JAK WYLOGOWANIE**: po zmianie klubu każda pobrana
+  lista opisuje inny świat, a wiersz cudzego dziennika, który mignąłby przed odświeżeniem,
+  byłby wyciekiem - tym samym, przed którym broni cały epik C. Kolejność też ta sama:
+  najpierw nowa sesja (to ona przestawia ramę), potem reszta do kosza.
+- **ZATWIERDZENIE NIE PRZYJMUJE ODRZUCONEGO** - w panelu tak samo jak na serwerze:
+  „Cofnij odrzucenie" jest OSOBNYM przyciskiem w karcie po decyzji (P3b), bo zdjęcie cudzej
+  odmowy i wpuszczenie do klubu to dwie decyzje i każda ma własny wpis w dzienniku.
+- **KOD KLUBU STOI JAWNIE I NA STAŁE**: nie jest sekretem (daje wyłącznie zgłoszenie do
+  rozpatrzenia), więc nie ma „pokaż raz", zasłony ani przycisku „Kopiuj" - administrator
+  czyta go z ekranu i dyktuje. Karta pokazuje DWIE różne liczby i to jest zamierzone: podpis
+  mówi, ile zgłoszeń czeka BIEŻĄCYM kodem (od jego wygenerowania), a karta ZGŁOSZENIA nad
+  listą - ile czeka w ogóle.
+- **MAKIETY DOSTAŁY BRAKUJĄCE RAMKI** (O2 „nowy klub", P3 zatwierdzenie, P3b po decyzji):
+  panele wariantów obiecywały je od epiku A, a kotwice prowadziły donikąd. Z kolumny
+  bocznej makiet KLUBOWYCH zeszła przy okazji pozycja „Zgłoszenia" - należy do platformy
+  od epiku C (C6), a `SZABLON.html` miał już postać właściwą. Komponent `.club-code`
+  przeszedł z `design/panel/rama.css` do `admin/src/styles/components/surfaces.css` pod
+  TĄ SAMĄ nazwą, jak zapowiadał tamten plik; `panel.css` przegenerowany.
+- **SUPERADMINISTRATOR NIE PRZEGLĄDA INNYCH KLUBÓW** (decyzja właściciela 2026-09-10;
+  §3.3 przestał być propozycją). Z wnętrza klubu widzi DOKŁADNIE: nazwę, adres, stan,
+  datę założenia, LICZBĘ członków, LICZBĘ maszyn, kod klubu i administratorów (do kogo
+  dzwonić). Ani wiersza dziennika, ani maszyny, ani pilota poza administratorami. Nie ma
+  też trasy, którą sesja platformowa otwierałaby panel klubu - `POST /auth/switch`
+  przełącza wyłącznie do klubu z AKTYWNYM członkostwem i rolą panelu. Operator, który ma
+  pomóc klubowi, dostaje od niego członkostwo - jawnie i z audytem. **Punkt „wejście do
+  panelu klubu" z listy zadań issue #101 wypadł razem z tą decyzją; nie proponuj go
+  ponownie.** Kolejka zgłoszeń błędów nie jest wyjątkiem: opisuje APLIKACJĘ, nie klub
+  (issue #99, C6).
+- **czego epik E świadomie NIE ROBI**: zmiany sluga i rotacji kodu z platformy (kod
+  prowadzi klub), edycji administratorów klubu z modułu Organizacje. Zostaje epik F
+  (aplikacja pilota, issue #102).
+
+## Wielofirmowość 2.0.0 - epik F: aplikacja pilota w kontekście klubu (issue #102, 2026-09-10, gałąź `feature-102-aplikacja-kluby`)
+Telefon pracuje w JEDNYM aktywnym klubie, ale rejestr należy do PILOTA - i z tej asymetrii
+bierze się cały epik. Decyzje i odstępstwa: `docs/wielofirmowosc.md` §14 F. Reguły
+obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
+- **KLUB JEST KONTEKSTEM FLOTY I WYSYŁKI, NIE REJESTRU**: `getAircraft()` i `getPilots()`
+  oddają dane KLUBU AKTYWNEGO (kod pilota należy do członkostwa - ten sam człowiek jest
+  w Alfie `TMK`, a w Becie `TMB`), a „Mój dzień", historia i sumy doby pokazują operacje
+  WSZYSTKICH klubów. Stąd `getAircraftById` i NOWE `getAllAircraft()` idą BEZ zawężenia:
+  kafelek operacji z drugiego klubu musi mieć czym się podpisać, inaczej wraca na ekran
+  surowy identyfikator z panelu. Do WYBORU maszyny służy `aircraft()` i tylko ono.
+- **KLUB OPERACJI STAWIA JEJ PIERWSZE ZDARZENIE I NIKT GO POTEM NIE ZMIENIA**
+  (`session_orgs`, `INSERT OR IGNORE`). Korekta operacji z klubu A, dopisana wtedy, gdy
+  aktywny jest klub B, ZOSTAJE zapisem klubu A - bo wysłana tokenem klubu B wróciłaby
+  jako `withheld` (epik C waży członkostwo per zdarzenie), czyli przepadłaby na zawsze.
+- **KOLEJKA WYSYŁKI JEST PER KLUB, LICZNIK - NIE**: `getOutbox()` oddaje wyłącznie zapisy
+  klubu aktywnego (plus operacje bez klubu, czyli sprzed 2.0.0), a `getOutboxCount()`
+  liczy WSZYSTKO, bo SyncChip i blokada wylogowania pytają „czego serwer jeszcze nie ma".
+  Trzeci licznik, `pendingInActiveOrg()`, obsługuje blokadę przełączenia klubu.
+- **PRZEŁĄCZENIE KLUBU BLOKUJE TYLKO KOLEJKA KLUBU BIEŻĄCEGO** (decyzja właściciela
+  2026-09-10, zawęża §6 dokumentu). Dosłowne „pusta kolejka" dawało ZAKLESZCZENIE:
+  korekta z klubu A czekałaby na powrót do A, a powrót do A blokowałaby właśnie ona.
+  Blokujemy tym, co osieroci WYJŚCIE z klubu. Kolejność powagi w `clubSwitchBlock`:
+  trzymana maszyna → zaległe zapisy → brak sieci.
+- **`GET /me/events` ZOSTAJE PER KLUB** (decyzja właściciela 2026-09-10): po reinstalacji
+  telefon odtwarza rejestr klubu aktywnego, historię drugiego dostaje po przełączeniu.
+- **SQLite 9 NIE RUSZA `events`**: `ALTER TABLE … ADD COLUMN` nie jest idempotentne
+  (`sqliteSchema.test.ts`), a rejestr jest jedyną tabelą, której nie wolno zgubić.
+  Klub operacji mieszka w `session_orgs`, cache referencyjny (pięć tabel) leci
+  `DROP` + `CREATE` z `org_id` - to materiał roboczy i wraca jednym `GET /reference`.
+  `reference_pilots` ma odtąd klucz `(org_id, id)`.
+- **KLUB MELDUJE SIĘ MAGAZYNOWI PRZY KAŻDYM WYDANIU PARY TOKENÓW** (`AuthService`
+  → `onActiveClub` → `EventsRepo.setActiveOrg`): logowanie, zatwierdzenie w międzyczasie,
+  przełączenie i ROTACJA. Ta ostatnia jest drogą telefonu aktualizowanego z 1.x (§11):
+  stary profil klubu nie zna, a pierwsze odświeżenie tokenów przynosi go razem z parą
+  i przygarnia wszystkie operacje bez klubu.
+- **PRZEŁĄCZENIE NIE ZERUJE PIN-u** - zmienia kontekst pracy, nie tożsamość urządzenia;
+  inaczej pilot dwóch klubów ustawiałby PIN po każdej zmianie. Zeruje go WYŁĄCZNIE
+  świadomy provisioning (§3.0).
+- **`POST /auth/switch` PRZYJMUJE WYŁĄCZNIE TOKEN KLUBU** (serwer): kto go ma, już raz
+  wszedł. Token OSOBY ma własną, JEDNORAZOWĄ drogę do tokenów klubu
+  (`GET /auth/memberships`, stempel `lastLoginAt`) - gdyby przechodził przełączeniem,
+  byłby fabryką par tokenów z pominięciem tamtej bramy (audyt 2026-09-05).
+- **NUMER SYGNATURY LICZY SIĘ W KLUBIE, NUMER KAFELKA - W DOBIE PILOTA**: to jedyne
+  miejsce, w którym rozjeżdżają się liczby, o których issue #68 mówiło „ten sam numer" -
+  i tak rysuje to makieta `01e` („OPERACJA 3" nad sygnaturą `…/TOM/1`). Klub przynosi
+  WOŁAJĄCY (`operationIndexes(states, picId, orgOf)`), bo domena klubu nie zna (§2) -
+  ta sama granica, co przy oknach lotów w `trackPhaseRuns`.
+- **PLAKIETKA KLUBU I PRZEŁĄCZNIK ISTNIEJĄ WYŁĄCZNIE PRZY >1 CZŁONKOSTWIE** (reguła
+  SyncChipa z issue #12); zgłoszenie `pending` liczy się do tej dwójki, bo pilot, który
+  właśnie wpisał kod, ma prawo zobaczyć, że czeka. Podpis karty klubu nie pisze
+  „0 samolotów" dla klubu, którego floty telefon nigdy nie widział - to byłoby zdanie
+  o flocie, a jest zdaniem o pustym cache'u.
+- **KLUB JEDZIE PRZEZ WSPÓLNY `SessionCardVm`, NIE PRZEZ PROPS EKRANU** - jak sygnatura:
+  kafelek ma na 01 i 12 JEDEN kształt (issue #42), a wartość spoza projekcji wstrzykuje
+  się funkcją (`clubOf`, `signatureOf`). Regułę „>1 członkostwo" trzyma `useOperationClub`,
+  więc oba ekrany nie mają jak jej powiedzieć inaczej. Pierwsza wersja przekazywała klub
+  propsem i **strażnik kształtu w `myDay.test.ts` tego nie widział** - to on wymusił
+  poprawkę, gdy pole weszło do modelu.
+- **SYGNATURA WRÓCIŁA NA KAFELEK 01** (dług sprzed 2.0.0, znaleziony przy tym epiku):
+  `buildMyDay` umiał ją policzyć od issue #68, ale ekran wołał go BEZ `signatureOf`,
+  więc kafelek „Mojego dnia" pokazywał sam numer operacji - wbrew mockupom 01/01e i wbrew
+  karcie w historii, gdzie stała od początku. Rachunek był, brakowało jednego argumentu.
+- **00C/00D/00E TO TRZY STANY JEDNEGO EKRANU** (`ClubGateScreen`, dawny
+  `RegistrationPendingScreen`): treść liczy `logic/clubGateView.ts`, kod klubu maskuje
+  `logic/clubCode.ts` (myślnik i wielkość liter są ZAPISEM). Maska NIE filtruje alfabetu
+  kodów - pole, które połyka wciśnięty klawisz, nie mówi dlaczego; kod spoza alfabetu
+  dostaje od serwera to samo „Nie znam takiego kodu", co kod nieznany.
+- **PLAKIETKA KONTA NA 00C/00D/00E JEDZIE Z SERWERA** (`ClubsView.person`): token osoby
+  niesie identyfikator, nie profil, a wyłuskiwanie imienia z tokenu Google byłoby drugim,
+  niesprawdzanym źródłem tych samych napisów.
+- **MAKIETA 13A MA CZTERY RAMKI**: przełącznik (stan, w którym działa), zgłoszenie
+  czekające na liście (`.club-opt.pending` - przygaszony, nieklikalny, podpis
+  bursztynem) i DWA stany zablokowane - zaległe zapisy klubu oraz maszyna w ręce.
+  Trzy powody blokady mają jedno miejsce i jedną kolejność: **maszyna w ręce → zaległe
+  zapisy → brak sieci**; brak sieci zmienia w tej ramce samo zdanie, więc własnej nie
+  dostał. Ramka „maszyna w ręce" rysuje stan DZIŚ NIEOSIĄGALNY (kokpit jest modalny,
+  a zębatka stoi tylko na 01) i to jest świadome: brzmienie powodu jest decyzją
+  produktową i ma stać w specyfikacji, a nie tylko w kodzie - inaczej pierwszy, kto
+  je zobaczy, napisze je drugi raz po swojemu.
+- **czego epik F świadomie NIE ROBI**: odtwarzania rejestru wszystkich klubów naraz,
+  „opuść klub" z telefonu (D6: wychodzi się przez panel).
+
+## Wielofirmowość 2.0.0 - NOWA INSTANCJA zamiast migracji produkcji (decyzja 2026-09-10)
+**2.0.0 startuje na PUSTEJ bazie w nowym projekcie, a stara instancja dożywa.** Odwraca
+decyzję 5 z issue #97 („produkcja = migracja z backfillem"). Pełny zapis i konsekwencje:
+`docs/wielofirmowosc.md` §10; zadania: issue #106 i #120.
+- **argument za migracją był fałszywy**: backfill `org_id` to operacja JEDNORAZOWA dla jednej
+  bazy 1.x i nigdy się nie powtórzy - przyszły klub zakłada superadministrator w module
+  Organizacje, na bazie już wielofirmowej. Migracja testowała ścieżkę martwą; pusta baza
+  testuje TĘ, którą przejdzie każdy klient (seed → Organizacje → klub → kod klubu → piloci)
+- **dwie instancje przez okres przejściowy**: stara (`uzaeroserver-production`, pakiet
+  `com.tomekklag.uzaero`, stary klient OAuth) stoi nietknięta, dopóki testerzy nie przejdą
+  na 2.0.0; nowa na `app.ninerdeck.pl`. **Nowy serwer nie musi rozumieć tokenu bez `org`** -
+  kompatybilność wsteczną z §11 zdejmuje sam fakt, że stary serwer dalej odpowiada
+- **migracja 8 zostaje w kodzie nietknięta**, tylko nigdy nie zobaczy danych; `SEED_ORG_NAME`
+  i `SEED_ORG_SLUG` przestają być potrzebne na produkcji. W1 z epiku W (próba generalna
+  `pg_dump` → migracja na kopii → sumy kontrolne) ODPADA - istniał, żeby obronić backfill
+- **zrzut starej bazy idzie do ARCHIWUM, nie do nowej instancji**: to jedyne prawdziwe dane
+  z lotu, jakie projekt ma, i materiał kalibracyjny (§3.6b) - `consumptionReplay.ts`
+  i `replay.ts` czytają go bez żywej bazy
+- **cena jest jedna i realna**: flotę wpisuje się od nowa (normy paliwa i oleju, pojemności,
+  minima, format licznika, stany początkowe), piloci rejestrują się ponownie, a dokumenty
+  klubu z okresu testów zostają po starej stronie
+- **do rozstrzygnięcia po wygaszeniu starej instancji**: czy wyciąć backfill z migracji 8
+  razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`
+
+## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 4.0.0 (decyzje 2026-09-15)
+Rebranding stawiamy od zera po OBU stronach naraz - serwer i aplikacja. Rozstrzyga to
+pytanie „nowy projekt EAS czy przemianowanie obecnego" (#120 §5) i zdejmuje Play z drogi
+krytycznej 2.0.0.
+- **nowy projekt EAS**, nie przemianowanie: własny `projectId`, własny adres aktualizacji
+  i własne kanały `production`/`development`
+- **nowy pakiet** `com.ninerdeck.app` = osobna instalacja, osobne dane lokalne, osobna
+  ikona. To jest ta sama ochrona, o którą prosiło R7: klucze magazynu, PIN, poświadczenia
+  i zadanie GPS zmieniły nazwy, więc aktualizacja istniejącej instalacji zostawiłaby
+  osieroconą usługę `uzaero-location` i pusty rejestr na telefonie
+- **2.0.0 NIE JEST aktualizacją niczego** - to pierwsze wydanie nowej linii. OTA z niej
+  do telefonów z 1.1.0 nie dojdzie i nie ma dojść; stara linia (projekt EAS, pakiet,
+  instancja, klient OAuth) dożywa równolegle do W4
+- **PUBLIKACJA W PLAY SCHODZI DO 4.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
+  strony pobierania. Dzięki temu **R3 potrzebuje JEDNEGO odcisku SHA-1** (klucz EAS);
+  drugi odcisk, Play App Signing, był jedyną pozycją wiążącą wydanie z kontem organizacji
+  w Play i procedurą D-U-N-S (do 30 dni)
+- **„klient Android z dwoma SHA-1" będzie przy 4.0.0 ZMIANĄ W KODZIE, nie wpisem
+  w konsoli**: aplikacja woła `Google.useAuthRequest({ androidClientId })`, więc `aud`
+  tokenu to identyfikator klienta ANDROID, a konsola wiąże jeden klient z jednym odciskiem.
+  Klucz EAS i klucz Play dają dwa różne `aud`, a serwer przyjmuje dziś dokładnie jeden
+  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 4.0.0
+
+- **WŁASNA DOMENA TEŻ SCHODZI DO 4.0.0** (ta sama decyzja): 2.0.0 stoi na adresie nadanym
+  przez Railway, a `ninerdeck.pl` (strona) i `app.ninerdeck.pl` (panel + API) przychodzą
+  razem ze sklepem. `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta Web i adres
+  polityki w ekranie zgody wskazują do tego czasu adres Railway. **R2 wypada z drogi
+  krytycznej 2.0.0**: zostają na niej nowy projekt Railway z pustą bazą, nowy projekt Google
+  Cloud (klient Web + klient Android na JEDNYM odcisku, kluczu EAS) i nowy projekt EAS -
+  ani domen, ani D-U-N-S, ani konta Play
+- **przeniesienie będzie OTA, nie nowym APK**: `EXPO_PUBLIC_API_URL` jest wkompilowany
+  w bundle, a `eas update` buduje nowy bundle (krok 0 skilla `wydanie`)
+- **co przeniesienie zostawia otwarte do 4.0.0**: (1) luka CSP z docblocka `staticSite.ts` -
+  strona ma luźniejszą politykę niż panel WYŁĄCZNIE dlatego, że dzielą origin, a rozdział
+  hostów był jej jedynym domknięciem; (2) **linki do kart arkusza zapisane w dzienniku
+  eksportu niosą adres BEZWZGLĘDNY** (`dayExporter` zapisuje `sheetUrl` złożony
+  z `PUBLIC_BASE_URL`), więc po zmianie domeny stary host musi odpowiadać albo linki trzeba
+  przepisać - rozstrzygnięcie należy do 4.0.0
+
+## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
+```
+feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
+hotfix-…  → main → develop                          (poprawka dla obecnych telefonów)
+```
+- **`develop` = gałąź integracyjna**. Od milestone 3 leży na niej niedokończona
+  przebudowa wielofirmowa, więc **nigdy nie buduje się z niej APK ani nie wysyła OTA** -
+  pilot dostałby pół przebudowy, przy OTA bez reinstalacji i bez ostrzeżenia
+- **`ninerdeck_x_x_x` = gałąź wydaniowa** o nazwie z numerem wersji: dostaje zawartość
+  `develop`, gdy zakres milestone jest domknięty, i odtąd przyjmuje wyłącznie
+  stabilizację (podbicie wersji, changelog, poprawki z testów wydania). Build produkcyjny
+  robi się z NIEJ. Gałęzie wydaniowe **ZOSTAJĄ po wydaniu** jako zapis każdej wersji:
+  `ninerdeck_1_0_0` = pierwsze wydanie (stan `main` z 2026-09-08, binarka „1.1.0
+  (build 2)"), `ninerdeck_2_0_0` = gałąź milestone 3 (issue #97–#106)
+- **`main` = produkcja**: merge gałęzi wydaniowej wdraża serwer, panel i stronę (Railway).
+  Zaraz po nim `main` → `develop`, żeby wersja, changelog i link do pobrania nie zginęły
+- **poprawka dla telefonów, które JUŻ mają aplikację, NIE idzie przez `develop`**:
+  gałąź `hotfix-…` od `main`, PR do `main`, OTA z checkoutu `main`, potem `main` → `develop`
+- procedurę wydania (OTA czy APK, wersja, changelog, APK na stronie) prowadzi skill
+  `wydanie` (`.claude/skills/wydanie/SKILL.md`) - tam sekcja „Gałęzie" z tym samym obiegiem
+
 ## Wydania, changelog i strona publiczna (2026-09-06; przeprowadzka 2026-09-07)
 Wchodzimy w fazę testów i wersjonowania. Punkt wejścia dla pilotów, testerów i klubów:
 landing sprzedażowy, `pobierz/` = adres APK, `wydania/` = changelog,
@@ -2584,8 +3280,8 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
 - **CSP strony jest LUŹNIEJSZA niż panelu w dwóch miejscach** (`script-src`
   `'unsafe-inline'` - makiety mają skrypty w treści pliku; fonty z Google). Strona nie ma
   sesji ani pola do wpisywania, ale stoi na TYM SAMYM origin co panel, więc właściwym
-  domknięciem jest osobna nazwa hosta po podpięciu własnej domeny (`uzaero.pl` strona,
-  `app.uzaero.pl` panel i API) - powód stoi w docblocku `staticSite.ts`
+  domknięciem jest osobna nazwa hosta po podpięciu własnej domeny (`ninerdeck.pl` strona,
+  `app.ninerdeck.pl` panel i API) - powód stoi w docblocku `staticSite.ts`
 - **`docs/CHANGELOG.md` jest ŹRÓDŁEM strony wydań** - pisany dla pilotów i klubów językiem
   korzyści, bez nazw plików i identyfikatorów. Sekcja „W przygotowaniu" rośnie razem
   z PR-ami (każdy PR, który zmienia coś widocznego, dopisuje punkt); przy buildzie
@@ -2601,7 +3297,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   ani drugiego wdrożenia nie ma.
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
-  pod trwałym `releases/latest/download/uzaero.apk`
+  pod trwałym `releases/latest/download/ninerdeck.apk`
 - **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
   kanały `production`/`development` w `eas.json`. Odtąd „wydanie" znaczy DWIE różne
   rzeczy, a pomylenie ich kosztuje reinstalację u wszystkich testerów:
@@ -2666,7 +3362,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   w przycisku, nie ruszać ich
 
 ## Pilot i samolot - UX
-- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero zatwierdzenie w panelu - patrz sekcja „Logowanie przez Google" niżej
+- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach
@@ -2734,9 +3430,12 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 1. Pełne design tokeny CSS z `:root` (z sekcji wyżej)
 2. Szablon ramki właściwej dla powierzchni: aplikacja pilota → phone frame (393×852px,
-   `--phone-scale`, Dynamic Island). **Dla panelu makiet nie zlecamy** - od 2.0 ekran
-   powstaje wprost w `admin/` i ogląda się go w przeglądarce (`docs/panel-2.0.md` §3.7)
-3. Informację że aplikacja = UZ Aero
+   `--phone-scale`, Dynamic Island); panel → kopia ramy z `design/panel/SZABLON.html`
+   (okno 1440×900, pasek górny, kolumna boczna z kontekstem klubu, `.content > .page`),
+   BEZ własnego bloku `<style>` - style panelu są jednym generowanym arkuszem
+   (`panel.css`), a nowy komponent wchodzi do `admin/src/styles/components/` i do
+   inwentarza szablonu (sekcje „Browser frame" i „Styl lekki panelu" wyżej)
+3. Informację że aplikacja = Ninerdeck
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera - stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** - plakietka istnieje wyłącznie offline

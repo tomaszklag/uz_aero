@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: LUSTRA UNII TYPOW muszą być tym, co zna serwer.
+ * Ninerdeck - panel 2.0: LUSTRA UNII TYPOW muszą być tym, co zna serwer.
  *
  * Panel nigdy nie importuje z wnętrza serwera, więc trzy unie z `server/src/domain/`
  * mają w `api/dto.ts` swoją kopię. Kopia bez testu rozjeżdża się przy pierwszej nowej
@@ -99,15 +99,14 @@ const MIRRORS = [
     server: 'BUG_SEVERITIES',
     read: () => constIn(join(SERVER, 'bugReports.ts'), 'BUG_SEVERITIES'),
   },
-  // Zgłoszenia rejestracyjne (logowanie Google, 2026-09-04). Status jest `TEXT`-em
-  // z `CHECK`-iem w bazie, a jego definicja mieszka POZA `domain/` - w portach warstwy
-  // wspólnej - bo to kształt magazynu tożsamości, nie reguła klubu. Ścieżka jest
-  // przez to inna niż w pozostałych lustrach, ale powód lustra ten sam.
+  // Stan CZŁONKOSTWA (issue #101, E3) - następca lustra statusu zgłoszenia
+  // rejestracyjnego, które odeszło w epiku D razem ze statusami na tożsamości Google.
+  // Kolumna jest zwykłym `TEXT`-em z CHECK-iem, więc bez tego lustra stan dodany na
+  // serwerze wyciekłby na ekran klubu surowym napisem.
   {
-    panel: 'RegistrationStatusDto',
-    server: 'IdentityStatus',
-    read: () =>
-      unionIn(join(SERVER, '..', 'application', 'common', 'ports.ts'), 'IdentityStatus'),
+    panel: 'MembershipStatusDto',
+    server: 'MEMBERSHIP_STATUSES',
+    read: () => constIn(join(SERVER, 'memberships.ts'), 'MEMBERSHIP_STATUSES'),
   },
 ] as const;
 

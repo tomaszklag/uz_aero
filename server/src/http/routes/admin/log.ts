@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - LOG DNIA, poziom 1 (`GET /admin/api/log`).
+ * Ninerdeck (serwer) - LOG DNIA, poziom 1 (`GET /admin/api/log`).
  *
  * Cienka jak reszta repo: zod -> zapytanie -> status. Poziomu 2 i 3 nie ma tutaj i to
  * jest świadome - grid sesji jednej maszyny obsługuje `GET /sessions?aircraftId=…`,
@@ -31,11 +31,11 @@ export function registerAdminLogRoutes(
     app,
     gate,
     { method: 'GET', url: '/log', capability: 'panel.access' },
-    async (req, reply) => {
+    async (req, reply, actor) => {
       const query = rangeQuery.safeParse(req.query);
       if (!query.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const outcome = await log.load({
+      const outcome = await log.load(actor.orgId, {
         fromMs: query.data.from,
         // Górną granicę domykamy do końca doby - `do=2026-07-31` ma obejmować cały
         // 31 lipca, a nie jego północ. Ta sama funkcja, co w pozostałych trasach.

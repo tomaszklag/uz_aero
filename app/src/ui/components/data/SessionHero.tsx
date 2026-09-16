@@ -1,5 +1,5 @@
 /**
- * UZ Aero - SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
+ * Ninerdeck - SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
  *
  * Wyśrodkowana karta z jedną liczbą podaną wielkim krojem: czas blokowy SESJI, pod nim
  * zakres, z którego powstał („przejęty 08:04 → zdany 11:20 UTC · 2 loty").

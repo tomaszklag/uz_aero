@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ODCZYTY STARTOWE PODSTAWIANE Z SĄSIADA (issue #62, siódma i ósma tura).
+ * Ninerdeck - ODCZYTY STARTOWE PODSTAWIANE Z SĄSIADA (issue #62, siódma i ósma tura).
  *
  * „System wykrywa ilość paliwa w oparciu o poprzedzający lot" - a odkąd trasa
  * `readings-chain` niesie razem z litrami także stan licznika, ta sama odpowiedź

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KOMENDY dnia lotnego (przypadki użycia strony zapisu).
+ * Ninerdeck - KOMENDY dnia lotnego (przypadki użycia strony zapisu).
  *
  * Jedno miejsce, w którym intencja pilota („chcę wystartować", „tankuję 48 L") zamienia
  * się w zdarzenie. Każda komenda przechodzi tę samą, jedyną ścieżkę zapisu:

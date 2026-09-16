@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: karta „Poprawa odczytów" w szufladzie samolotu (issue #81).
+ * Ninerdeck - panel 2.0: karta „Poprawa odczytów" w szufladzie samolotu (issue #81).
  *
  * ══ OSOBNA AKCJA, NIE POLA „AKTUALNY STAN" ══
  * Gdy maszynę prowadzi dziennik, pola stanu są do odczytu (uwagi do issue #66) - ta
@@ -15,7 +15,7 @@
  */
 
 import { useState } from 'react';
-import type { MhFormat } from '@uzaero/domain';
+import type { MhFormat } from '@ninerdeck/domain';
 
 import type { AircraftListItemDto } from '../../api/dto';
 import { useRecordReading } from '../../queries/useFleet';

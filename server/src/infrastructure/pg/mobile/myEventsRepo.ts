@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
+ * Ninerdeck (serwer) - adapter odtworzenia rejestru telefonu (`MyEventsPort`, §4.9).
  *
  * Osobny plik od `common/eventsStore.ts` z tego samego powodu, dla którego port jest
  * osobny: tamten obsługuje INGEST i czyta strumień JEDNEJ sesji (albo garści sesji)
@@ -7,11 +7,11 @@
  * kursorem, w porządku przyjęcia - to inne pytanie i inny indeks.
  *
  * Czego tu NIE MA: `UPDATE`, `DELETE` i strażnika typów. Rejestr jest append-only,
- * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@uzaero/domain`) -
+ * a `events.type` celowo nie ma `CHECK`-a (katalog typów mieszka w `@ninerdeck/domain`) -
  * telefon ma odzyskać to, co kiedyś zapisał, także gdy katalog zdążył się zmienić.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type { MyEventsPort } from '../../../application/mobile/ports.ts';
@@ -83,6 +83,7 @@ const toEvent = (r: EventDbRow): Event =>
 export class PgMyEventsRepo implements MyEventsPort {
   async page(
     db: Queryable,
+    orgId: string,
     picId: string,
     cursor: string | null,
     limit: number,
@@ -90,7 +91,11 @@ export class PgMyEventsRepo implements MyEventsPort {
     const key = cursor == null ? null : decodeCursor(cursor, SHAPE);
     if (cursor != null && key == null) return null;
 
+    // Rejestr KLUBU z tokenu, nie „wszystko, co ten pilot kiedykolwiek zapisał" (issue #99):
+    // telefon odtwarza rejestr klubu, w którym właśnie pracuje, a operacje drugiego klubu
+    // odtworzy pod jego tokenem, własnym kursorem (epik F).
     const filter = new SqlFilter();
+    filter.add('org_id = ?', orgId);
     filter.add('pic_id = ?', picId);
     keysetPredicate(KEY, key, filter, SHAPE);
 

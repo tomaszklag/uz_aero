@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wynik komendy.
+ * Ninerdeck - wynik komendy.
  *
  * Komenda kończy się na dwa sposoby:
  *  - sukces → `CommandResult` ze zdarzeniem, które trafiło do strumienia, i listą

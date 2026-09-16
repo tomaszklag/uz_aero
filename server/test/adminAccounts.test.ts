@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
+ * Ninerdeck (serwer) - konta pilotów w panelu (`/admin/api/pilots*`, `A06` i `A06a`).
  *
  * Przekrój, który powstał z awarii: 2026-08-01 administrator nie mógł się zalogować,
  * bo w produkcie nie było ŻADNEJ ścieżki zmiany hasła. Ten plik pilnuje, żeby ścieżka
@@ -31,6 +31,7 @@ import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts'
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A, TEST_PILOTS, TEST_PILOTS_B } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -55,8 +56,37 @@ const listPilots = (app: Harness['app'], token: string, query = '') =>
     headers: { authorization: `Bearer ${token}` },
   });
 
-const createPilot = (app: Harness['app'], token: string, body: Body) =>
-  app.inject({ method: 'POST', url: '/admin/api/pilots', headers: admin(token), payload: body });
+/**
+ * NOWY CZŁONEK KLUBU - jedyną drogą, jaka została po issue #100: zgłoszenie kodem klubu
+ * (wiersz `memberships` w stanie `pending`) zatwierdzone przez administratora.
+ *
+ * Osobę i zgłoszenie wstawiamy WPROST do bazy, bo `POST /auth/join` ma własny test
+ * (`joinClub.test.ts`) - tu przedmiotem są reguły kont, nie droga do kolejki.
+ * Zatwierdzenie idzie już trasą panelu, żeby członek powstał dokładnie tak, jak w produkcji.
+ */
+async function addMember(
+  app: Harness['app'],
+  db: Harness['db'],
+  token: string,
+  member: { id: string; code: string; name: string; email?: string },
+): Promise<void> {
+  await db.query('INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)', [
+    member.id,
+    member.name,
+    member.email ?? null,
+  ]);
+  await db.query(
+    `INSERT INTO memberships (org_id, pilot_id, status, joined_via) VALUES ($1, $2, 'pending', 'code')`,
+    [ORG_A, member.id],
+  );
+  const approved = await app.inject({
+    method: 'POST',
+    url: `/admin/api/memberships/${member.id}/approve`,
+    headers: admin(token),
+    payload: { code: member.code, role: 'pilot' },
+  });
+  expect(approved.statusCode, approved.body).toBe(200);
+}
 
 const patchPilot = (app: Harness['app'], token: string, id: string, body: Body) =>
   app.inject({
@@ -85,9 +115,9 @@ async function panelSession(app: Harness['app'], who: string): Promise<{ cookie:
     headers: ADMIN_CSRF_HEADERS,
     payload: { idToken: googleTokenFor(who) },
   });
-  const cookie = res.cookies.find((c) => c.name === 'uzaero_admin');
+  const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin');
   if (cookie == null) throw new Error(`logowanie do panelu nie wydało ciasteczka (${who})`);
-  return { cookie: `uzaero_admin=${cookie.value}` };
+  return { cookie: `ninerdeck_admin=${cookie.value}` };
 }
 
 const panelMe = (app: Harness['app'], session: { cookie: string }) =>
@@ -140,7 +170,10 @@ function pilotCommands(
 }
 
 /** `Actor` administratora - komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
-const actor = (pilotId: string) => ({ pilotId, role: 'admin' as const, ip: null });
+const actor = (pilotId: string) => ({ pilotId, orgId: ORG_A, role: 'admin' as const, ip: null });
+
+/** Osoby w świecie bazowym (oba kluby) - „nic nie powstało" mierzy się wobec tej liczby. */
+const WORLD_PERSONS = TEST_PILOTS.length + TEST_PILOTS_B.length;
 
 async function auditRows(db: Harness['db']) {
   const { rows } = await db.query<{
@@ -197,6 +230,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         'flyingDays',
         'id',
         'name',
+        'orgId',
         'role',
         'updatedAt',
       ]);
@@ -261,142 +295,6 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
   });
 });
 
-describe('POST /admin/api/pilots - zakładanie konta', () => {
-  it('konto powstaje BEZ poświadczenia, a dostęp daje dopiero podpięcie konta Google', async () => {
-    const { app, identityProvider } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-
-    const created = await createPilot(app, token, {
-      code: 'kza',
-      name: 'Katarzyna Zawadzka',
-      email: 'k.zawadzka@uzaero.pl',
-      role: 'pilot',
-    });
-
-    expect(created.statusCode).toBe(201);
-    const { pilot } = created.json();
-    // Kod normalizuje się do wersalików: „kza" i „KZA" to w intencji ten sam kod.
-    expect(pilot.code).toBe('KZA');
-    expect(pilot.active).toBe(true);
-    // `id` NIE jest kodem - zdarzenia wiążą się z `id`, więc zmiana kodu nie może
-    // odrywać konta od jego nalotu (mockup A06: „kod jest etykietą, nie kluczem").
-    expect(pilot.id).not.toBe(pilot.code);
-    // Odpowiedź nie niesie ŻADNEGO poświadczenia - nie ma już czego wydawać.
-    expect(created.json().password).toBeUndefined();
-
-    // I to jest cała treść przekroju: konto założone w panelu NAPRAWDĘ się loguje -
-    // ale dopiero kontem Google o wpisanym wyżej adresie (`docs/logowanie-google.md` §6).
-    identityProvider.register('token-kza', {
-      provider: 'google',
-      subject: 'google-sub-kza',
-      email: 'k.zawadzka@uzaero.pl',
-      emailVerified: true,
-      name: 'Katarzyna Zawadzka',
-    });
-    const logged = await app.inject({
-      method: 'POST',
-      url: '/auth/google',
-      payload: { idToken: 'token-kza' },
-    });
-
-    expect(logged.statusCode).toBe(200);
-    expect(logged.json().pilot.code).toBe('KZA');
-    expect(logged.json().pilot.role).toBe('pilot');
-  });
-
-  it('audyt niesie tożsamość konta i E-MAIL, bo to on rozstrzyga o podpięciu', async () => {
-    const { app, db } = await testHarness();
-    const created = await createPilot(app, await tokenOf(app, 'TMK'), {
-      code: 'KZA',
-      name: 'Katarzyna Zawadzka',
-      email: 'k.zawadzka@uzaero.pl',
-      role: 'pilot',
-    });
-    const { pilot } = created.json();
-
-    const rows = await auditRows(db);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
-      action: 'pilot.create',
-      actor_pilot_id: 'TMK',
-      actor_role: 'admin',
-      target_type: 'pilot',
-      target_id: pilot.id,
-    });
-    // E-mail w dzienniku jest po wejściu Google NAJWAŻNIEJSZY: to on rozstrzyga,
-    // czyje konto Google podepnie się pod ten wiersz przy pierwszym logowaniu.
-    expect(rows[0]?.details).toMatchObject({
-      code: 'KZA',
-      role: 'pilot',
-      email: 'k.zawadzka@uzaero.pl',
-    });
-    // Hasha nie ma gdzie sprawdzać: kolumna `password_hash` zniknęła migracją 7
-    // (pilnuje tego lista kolumn w `schema.test.ts`), więc konto bez poświadczenia
-    // jest tu jedynym możliwym kształtem, a nie stanem do udowodnienia.
-  });
-
-  it('zajęty kod i zajęty e-mail → 409 z NAZWĄ pola, nie „naruszenie unikalności"', async () => {
-    const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-
-    const sameCode = await createPilot(app, token, {
-      code: 'TMK',
-      name: 'Ktoś Inny',
-      email: 'ktos@uzaero.pl',
-    });
-    expect(sameCode.statusCode).toBe(409);
-    expect(sameCode.json()).toEqual({ error: 'conflict', field: 'code' });
-
-    const sameEmail = await createPilot(app, token, {
-      code: 'XYZ',
-      name: 'Ktoś Inny',
-      email: 'tomasz@uzaero.pl',
-    });
-    expect(sameEmail.statusCode).toBe(409);
-    expect(sameEmail.json()).toEqual({ error: 'conflict', field: 'email' });
-  });
-
-  it('odrzucone żądanie nie zostawia ani konta, ani wpisu w audycie', async () => {
-    const { app, db } = await testHarness();
-    await createPilot(app, await tokenOf(app, 'TMK'), {
-      code: 'TMK',
-      name: 'Ktoś Inny',
-      email: 'ktos@uzaero.pl',
-    });
-
-    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
-    expect(Number(rows[0]?.n)).toBe(5);
-    expect(await auditRows(db)).toEqual([]);
-  });
-
-  it('konto bez `accounts.manage` nie zakłada kont - 403 z podaną zdolnością', async () => {
-    const { app, db } = await testHarness();
-    const res = await createPilot(app, await tokenOf(app, 'PWI'), {
-      code: 'NEW',
-      name: 'Nowe Konto',
-      email: 'nowe@uzaero.pl',
-    });
-
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'forbidden', required: 'accounts.manage' });
-    expect(await auditRows(db)).toEqual([]);
-  });
-
-  it('walidacja: kod ze spacją, e-mail bez małpy, rola spoza słownika → 400', async () => {
-    const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
-
-    for (const body of [
-      { code: 'A B', name: 'Ktoś Nowy', email: 'a@b.pl' },
-      { code: 'ABC', name: 'Ktoś Nowy', email: 'nie-email' },
-      { code: 'ABC', name: 'Ktoś Nowy', email: 'a@b.pl', role: 'superadmin' },
-      { code: 'ABC', name: 'X', email: 'a@b.pl' },
-    ]) {
-      expect((await createPilot(app, token, body)).statusCode).toBe(400);
-    }
-  });
-});
-
 describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
   it('zapisuje zmianę i wpisuje do audytu DIFF, nie stan po zmianie', async () => {
     const { app, db } = await testHarness();
@@ -444,9 +342,10 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(res.json().pilot).toMatchObject({ id: 'PWI', code: 'PWN' });
 
     // Zdarzenia wiążą się z `id`, więc po zmianie kodu nadal wskazują to konto.
+    // Kod mieszka na CZŁONKOSTWIE (wielofirmowość), więc pytamy o nie w klubie aktora.
     const { rows } = await db.query<{ id: string; code: string }>(
-      'SELECT id, code FROM pilots WHERE id = $1',
-      ['PWI'],
+      'SELECT pilot_id AS id, code FROM memberships WHERE pilot_id = $1 AND org_id = $2',
+      ['PWI', ORG_A],
     );
     expect(rows[0]).toEqual({ id: 'PWI', code: 'PWN' });
   });
@@ -459,7 +358,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(res.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ role: string }>(
-      "SELECT role FROM pilots WHERE id = 'TMK'",
+      "SELECT role FROM memberships WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
     );
     expect(rows[0]?.role).toBe('admin');
     expect(await auditRows(db)).toEqual([]);
@@ -477,7 +376,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
     // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
     // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
-    await db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
     await patchPilot(app, token, 'PWI', { role: 'admin' });
@@ -492,7 +391,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     expect(refused.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM pilots WHERE active AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -547,7 +446,7 @@ describe('wyścig o populację administratorów', () => {
 
     // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
     // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
-    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Dwóch administratorów: TMK (seed) i PWI.
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
@@ -561,7 +460,7 @@ describe('wyścig o populację administratorów', () => {
 
     // I to jest cała stawka: klub NADAL ma administratora.
     const { rows } = await harness.db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM pilots WHERE active AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -572,7 +471,7 @@ describe('wyścig o populację administratorów', () => {
 
     // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
     // ostatniego, a to jego dotyczy ten przypadek.
-    await harness.db.query("UPDATE pilots SET role = 'pilot' WHERE id = 'AKO'");
+    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
     expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
@@ -581,7 +480,7 @@ describe('wyścig o populację administratorów', () => {
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
 
     const { rows } = await harness.db.query<{ active: boolean }>(
-      "SELECT active FROM pilots WHERE id = 'PWI'",
+      "SELECT (status = 'active') AS active FROM memberships WHERE pilot_id = 'PWI' AND org_id = 'org-a'",
     );
     expect(rows[0]?.active).toBe(true);
   });
@@ -602,25 +501,22 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     const harness = await testHarness();
     const commands = pilotCommands(harness, { blindConflictCheck: true });
 
-    const sameCode = await commands.create(actor('TMK'), {
-      code: 'TMK',
-      name: 'Ktoś Inny',
-      email: 'ktos@uzaero.pl',
-      role: 'pilot',
-    });
+    // Po issue #100 wyścig rozgrywa się na EDYCJI, nie na zakładaniu konta
+    // (`POST /pilots` już nie ma): dwóch administratorów nadaje dwóm członkom ten sam
+    // kod. Błąd przychodzi z PRAWDZIWEGO indeksu `idx_memberships_code`.
+    const sameCode = await commands.update(actor('TMK'), 'PWI', { code: 'AKO' });
     expect(sameCode).toEqual({ ok: false, reason: 'conflict', field: 'code' });
 
-    const sameEmail = await commands.create(actor('TMK'), {
-      code: 'XYZ',
-      name: 'Ktoś Inny',
-      email: 'tomasz@uzaero.pl',
-      role: 'pilot',
+    const sameEmail = await commands.update(actor('TMK'), 'PWI', {
+      email: 'tomasz@ninerdeck.pl',
     });
     expect(sameEmail).toEqual({ ok: false, reason: 'conflict', field: 'email' });
 
-    // Odbita transakcja nie zostawia ani konta, ani wpisu w dzienniku.
-    const { rows } = await harness.db.query<{ n: string }>('SELECT COUNT(*) AS n FROM pilots');
-    expect(Number(rows[0]?.n)).toBe(5);
+    // Odbita transakcja nie zmienia wiersza ani nie zostawia wpisu w dzienniku.
+    const { rows } = await harness.db.query<{ code: string }>(
+      `SELECT code FROM memberships WHERE pilot_id = 'PWI' AND org_id = '${ORG_A}'`,
+    );
+    expect(rows[0]?.code).toBe('PWI');
     expect(await auditRows(harness.db)).toEqual([]);
   });
 
@@ -674,7 +570,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     expect(refreshed.statusCode).toBe(401);
 
     const rows = await auditRows(db);
-    expect(rows[0]).toMatchObject({ action: 'pilot.deactivate', target_id: 'PWI' });
+    expect(rows[0]).toMatchObject({ action: 'membership.disable', target_id: 'PWI' });
     expect(rows[0]?.details).toMatchObject({
       code: 'PWI',
       revokedSessions: 2,
@@ -683,17 +579,28 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   });
 
   it('deaktywowane konto nie zaloguje się ani w aplikacji, ani w panelu', async () => {
+    // Od wielofirmowości „wyłącz konto" w panelu klubu wyłącza CZŁONKOSTWO, nie osobę
+    // (`docs/wielofirmowosc.md` §3.2): telefon dostaje 202 z tokenem OSOBY i wierszem
+    // `disabled` na liście klubów (z nim da się wpisać kod innego klubu - epik D), panel -
+    // 403 „konto nie obejmuje panelu". W obu ZERO tokenów klubu; 401 `account_disabled`
+    // zostało dla blokady platformowej osoby (`pilots.active`).
     const { app } = await testHarness();
     await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
 
-    expect((await login(app, 'AKO')).statusCode).toBe(401);
+    const mobile = await login(app, 'AKO');
+    expect(mobile.statusCode).toBe(202);
+    expect(mobile.json().status).toBe('none');
+    expect(mobile.json().memberships).toMatchObject([{ status: 'disabled' }]);
+    expect(mobile.json().token).toBeUndefined();
     const panel = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/login',
       headers: ADMIN_CSRF_HEADERS,
       payload: { idToken: googleTokenFor('AKO') },
     });
-    expect(panel.statusCode).toBe(401);
+    expect(panel.statusCode).toBe(403);
+    expect(panel.json()).toEqual({ error: 'no_panel_access' });
+    expect(panel.headers['set-cookie']).toBeUndefined();
   });
 
   it('DEAKTYWACJA ODCINA PANEL NATYCHMIAST - nie po ośmiu godzinach sesji', async () => {
@@ -725,7 +632,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('aktywacja wraca jako `pilot.update` - katalog akcji nie ma `pilot.activate`', async () => {
+  it('aktywacja wraca jako `pilot.update` - katalog akcji nie ma `membership.enable`', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
@@ -736,7 +643,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     expect(res.json()).toMatchObject({ pilot: { active: true }, revokedSessions: 0 });
 
     const rows = await auditRows(db);
-    expect(rows.map((r) => r.action)).toEqual(['pilot.deactivate', 'pilot.update']);
+    expect(rows.map((r) => r.action)).toEqual(['membership.disable', 'pilot.update']);
     expect(rows[1]?.details).toMatchObject({
       changes: { active: { from: false, to: true } },
     });
@@ -750,7 +657,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     const again = await setActive(app, token, 'PWI', false);
 
     expect(again.statusCode).toBe(400);
-    expect((await auditRows(db)).filter((r) => r.action === 'pilot.deactivate')).toHaveLength(1);
+    expect((await auditRows(db)).filter((r) => r.action === 'membership.disable')).toHaveLength(1);
   });
 });
 
@@ -781,13 +688,13 @@ describe('unieważnianie sesji - po wejściu Google jedyną drogą jest deaktywa
 });
 
 describe('CSRF i sesja przeglądarkowa', () => {
-  it('mutacja bez nagłówka `X-UZ-Admin` nie przechodzi', async () => {
+  it('mutacja bez nagłówka `X-Ninerdeck-Admin` nie przechodzi', async () => {
     const { app, db } = await testHarness();
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots',
       headers: { authorization: `Bearer ${await tokenOf(app, 'TMK')}` },
-      payload: { code: 'NEW', name: 'Nowe Konto', email: 'nowe@uzaero.pl' },
+      payload: { code: 'NEW', name: 'Nowe Konto', email: 'nowe@ninerdeck.pl' },
     });
 
     expect(res.statusCode).toBe(403);
@@ -813,24 +720,27 @@ describe('usunięcie konta', () => {
     over: { uuid: string; picId: string; dualId?: string | null },
   ) =>
     db.query(
-      `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
+      `INSERT INTO events (org_id, uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
                            device_time, payload, schema_version)
-       VALUES ($1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
+       VALUES ('${ORG_A}', $1, 's-1', 'SP-AXA', $2, $3, 'engine_start', 1, '{}'::jsonb, 1)`,
       [over.uuid, over.picId, over.dualId ?? null],
     );
 
   /** Konto świeże i już wyłączone - jedyny stan, z którego usunięcie ma prawo przejść. */
-  async function disposable(app: Harness['app'], token: string): Promise<string> {
-    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
-    const id = created.json().pilot.id as string;
-    await setActive(app, token, id, false);
-    return id;
+  async function disposable(
+    app: Harness['app'],
+    db: Harness['db'],
+    token: string,
+  ): Promise<string> {
+    await addMember(app, db, token, { id: 'TMP-ID', code: 'TMP', name: 'Konto Pomyłkowe' });
+    await setActive(app, token, 'TMP-ID', false);
+    return 'TMP-ID';
   }
 
   it('kasuje konto BEZ historii - wiersz znika, a audyt niesie tożsamość', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
-    const id = await disposable(app, token);
+    const id = await disposable(app, db, token);
 
     const res = await deletePilot(app, token, id);
 
@@ -851,8 +761,8 @@ describe('usunięcie konta', () => {
     // drogą przez `GET /reference` i aplikacja po nim filtruje.
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
-    const created = await createPilot(app, token, { code: 'TMP', name: 'Konto Pomyłkowe' });
-    const id = created.json().pilot.id as string;
+    await addMember(app, db, token, { id: 'TMP-ID', code: 'TMP', name: 'Konto Pomyłkowe' });
+    const id = 'TMP-ID';
 
     const res = await deletePilot(app, token, id);
 
@@ -865,7 +775,7 @@ describe('usunięcie konta', () => {
   it('ODMAWIA kontu, które latało jako PIC', async () => {
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
-    const id = await disposable(app, token);
+    const id = await disposable(app, db, token);
     await insertEvent(db, { uuid: 'e-pic', picId: id });
 
     const res = await deletePilot(app, token, id);
@@ -879,7 +789,7 @@ describe('usunięcie konta', () => {
     // a mimo to stoi w cudzym rejestrze i w karcie arkusza.
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
-    const id = await disposable(app, token);
+    const id = await disposable(app, db, token);
     await insertEvent(db, { uuid: 'e-dual', picId: 'TMK', dualId: id });
 
     const res = await deletePilot(app, token, id);
@@ -893,10 +803,10 @@ describe('usunięcie konta', () => {
     // tożsamości sprawcy przestaje być dziennikiem.
     const { app, db } = await testHarness();
     const token = await tokenOf(app, 'TMK');
-    const id = await disposable(app, token);
+    const id = await disposable(app, db, token);
     await db.query(
-      `INSERT INTO admin_audit (actor_pilot_id, actor_role, action, target_type, target_id)
-       VALUES ($1, 'admin', 'flag.resolve', 'flag', '1')`,
+      `INSERT INTO admin_audit (org_id, actor_pilot_id, actor_role, action, target_type, target_id)
+       VALUES ('${ORG_A}', $1, 'admin', 'flag.resolve', 'flag', '1')`,
       [id],
     );
 
@@ -926,7 +836,7 @@ describe('usunięcie konta', () => {
   it('konto bez zdolności `accounts.manage` dostaje 403 i niczego nie kasuje', async () => {
     const { app, db } = await testHarness();
     const admin = await tokenOf(app, 'TMK');
-    const id = await disposable(app, admin);
+    const id = await disposable(app, db, admin);
 
     const res = await deletePilot(app, await tokenOf(app, 'PWI'), id);
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy matematyki kalendarza miesięcznego (arkusz daty lotu, issue #58).
+ * Ninerdeck - testy matematyki kalendarza miesięcznego (arkusz daty lotu, issue #58).
  *
  * Kalendarz potrafi się pomylić w trzech miejscach i wszystkie trzy są tu przybite:
  * wyrównanie pierwszego dnia do PONIEDZIAŁKU (getUTCDay liczy od niedzieli), długość

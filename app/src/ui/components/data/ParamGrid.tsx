@@ -1,5 +1,5 @@
 /**
- * UZ Aero - ParamGrid (`.param-grid` z mockupu 05)
+ * Ninerdeck - ParamGrid (`.param-grid` z mockupu 05)
  *
  * Siatka 2×2 parametrów GPS w locie: prędkość po ziemi, wysokość, paliwo, czas lotu.
  * Komórki stykają się i są rozdzielone włosową linią, a nie osobnymi ramkami - dzięki

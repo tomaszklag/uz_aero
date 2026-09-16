@@ -1,5 +1,5 @@
 /**
- * UZ Aero - CZYJA TO BINARKA: z faktów o zainstalowanym pakiecie wyprowadza wydanie
+ * Ninerdeck - CZYJA TO BINARKA: z faktów o zainstalowanym pakiecie wyprowadza wydanie
  * NASZEJ aplikacji albo `null`.
  *
  * Moduł CZYSTY - fakty dostaje w argumencie, więc jest testowalny w Node bez

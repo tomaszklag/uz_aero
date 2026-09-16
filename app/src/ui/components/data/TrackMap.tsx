@@ -1,5 +1,5 @@
 /**
- * UZ Aero - mapa śladu lotu (mockup `14-slad.html`).
+ * Ninerdeck - mapa śladu lotu (mockup `14-slad.html`).
  *
  * **Bez kafelków** (decyzja 2026-08-04). Ślad rysuje się na siatce współrzędnych,
  * a odniesienie w terenie dają LOTNISKA z katalogu (`packages/domain/src/airfields.ts`):

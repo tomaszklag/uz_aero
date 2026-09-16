@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - złożenie warstwy HTTP (Fastify).
+ * Ninerdeck (serwer) - złożenie warstwy HTTP (Fastify).
  *
  * Trasy mieszkają w `routes/` per zasób; ten plik tylko je rejestruje. Zależności
  * przychodzą z zewnątrz (composition root w `index.ts`, testy składają własne
@@ -19,6 +19,9 @@ import type { AdminExportCommands } from '../application/admin/commands/exports.
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
 import type { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
+import type { AdminClubCodeCommands } from '../application/admin/commands/clubCode.ts';
+import type { AdminMembershipCommands } from '../application/admin/commands/memberships.ts';
+import type { PlatformOrganizationCommands } from '../application/admin/commands/organizations.ts';
 import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts';
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminBugReportQueries } from '../application/admin/queries/bugReports.ts';
@@ -30,6 +33,9 @@ import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
+import type { AdminClubCodeQueries } from '../application/admin/queries/clubCode.ts';
+import type { AdminMembershipQueries } from '../application/admin/queries/memberships.ts';
+import type { PlatformOrganizationQueries } from '../application/admin/queries/organizations.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
@@ -46,7 +52,9 @@ import type { ReferenceQueries } from '../application/mobile/queries/reference.t
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
-import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
+import type { TraceCommands } from '../application/mobile/commands/traces.ts';
+import type { PilotsPort, TokenService } from '../application/common/ports.ts';
+import type { MemberGate } from './memberGate.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
 import { registerRequestLog } from './requestLog.ts';
 import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
@@ -54,9 +62,9 @@ import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
-import { registerAdminRegistrationRoutes } from './routes/admin/registrations.ts';
-import type { AdminRegistrationCommands } from '../application/admin/commands/registrations.ts';
-import type { AdminRegistrationQueries } from '../application/admin/queries/registrations.ts';
+import type { JoinCommands } from '../application/mobile/commands/join.ts';
+import { registerJoinRoutes } from './routes/mobile/join.ts';
+import { registerSwitchRoutes } from './routes/mobile/switch.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
@@ -66,6 +74,9 @@ import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
 import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
+import { registerAdminClubCodeRoutes } from './routes/admin/clubCode.ts';
+import { registerAdminMembershipRoutes } from './routes/admin/memberships.ts';
+import { registerPlatformOrganizationRoutes } from './routes/admin/organizations.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
@@ -86,6 +97,12 @@ import { registerTracesRoutes } from './routes/mobile/traces.ts';
 
 export interface ServerDeps {
   auth: AuthCommands;
+  /**
+   * Dołączenie do klubu kodem (`POST /auth/join`, wielofirmowość §3.8) - jedyna droga,
+   * którą pilot SAM pisze do `memberships`; poza panelem, poza audytem, z ograniczeniem
+   * tempa w pamięci procesu.
+   */
+  join: JoinCommands;
   reference: ReferenceQueries;
   ingest: IngestCommands;
   /**
@@ -96,7 +113,11 @@ export interface ServerDeps {
   myEvents: MyEventQueries;
   state: StateQueries;
   sheets: SheetQueries;
-  traces: TraceSinkPort;
+  /**
+   * Przyjęcie śladu kalibracyjnego (`POST /traces`) - od epiku C wielofirmowości komenda,
+   * nie goły port zapisu: sesja z paczki musi należeć do klubu i pilota z tokenu.
+   */
+  traces: TraceCommands;
   /**
    * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) - kierunek
    * powrotny wysyłki nagrania. Telefon oddaje surowe fixy i kasuje swoją kopię, więc
@@ -139,6 +160,23 @@ export interface ServerDeps {
   adminSessionClose: AdminSessionCloseCommands;
   adminPilots: AdminPilotCommands;
   /**
+   * Decyzje o zgłoszeniach kodem klubu (issue #100, D2): zatwierdzenie z kodem i rolą,
+   * odrzucenie z powodem, cofnięcie odrzucenia. Osobna komenda od `adminPilots`, bo
+   * kolejka i lista to dwa byty na ekranie - kandydat nie ma jeszcze kodu pilota.
+   */
+  adminMemberships: AdminMembershipCommands;
+  /**
+   * Kod klubu - włącznik i wyłącznik JEDYNEJ drogi do klubu (§3.8). Osobna komenda, bo
+   * osobna tabela: kod jest konfiguracją klubu, nie własnością jego członków.
+   */
+  adminClubCode: AdminClubCodeCommands;
+  /**
+   * Moduł Organizacje (`platform.manage`, §8.1): założenie klubu razem z pierwszym
+   * administratorem, zmiana nazwy, wyłączenie klubu. Jedyna komenda panelu działająca
+   * POZA klubem - jej wpis audytu ma puste `org_id`.
+   */
+  platformOrganizations: PlatformOrganizationCommands;
+  /**
    * Konfiguracja floty (`A07`, `A07a`) - jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
    * pojemności zbiorników (próg `FUEL_MISMATCH`), formatu motogodzin, wymogu Duala
    * i stanu służby. Zmiana wychodzi do telefonów wyłącznie przez ETag `GET /reference`.
@@ -167,6 +205,12 @@ export interface ServerDeps {
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
+  /** Kolejka zgłoszeń kodem klubu - karta ZGŁOSZENIA nad listą pilotów (`accounts.manage`). */
+  adminMembershipQueries: AdminMembershipQueries;
+  /** Kod klubu do odczytu: wartość, od kiedy obowiązuje, ile zgłoszeń nim czeka. */
+  adminClubCodeQueries: AdminClubCodeQueries;
+  /** Lista klubów i karta klubu dla superadministratora - same liczby z wnętrza klubu. */
+  platformOrganizationQueries: PlatformOrganizationQueries;
   adminFleetQueries: AdminFleetQueries;
   /** Monitor eksportu (`A05`) - lista dni od strony arkusza, historia rewizji, podgląd karty. */
   adminExportQueries: AdminExportQueries;
@@ -209,15 +253,32 @@ export interface ServerDeps {
    */
   adminBugReportQueries: AdminBugReportQueries;
   adminBugReports: AdminBugReportCommands;
-  /** Zgłoszenia rejestracyjne (logowanie Google) - lista, zatwierdzenie, odrzucenie. */
-  adminRegistrationQueries: AdminRegistrationQueries;
-  adminRegistrations: AdminRegistrationCommands;
   /**
    * Identyfikator klienta Google WEB - jedyna konfiguracja, jakiej panel potrzebuje
    * PRZED zalogowaniem (`GET /admin/api/auth/google-client`). Nie sekret: stoi
    * w każdym żądaniu do Google; konta chroni weryfikacja `aud`, nie tajność liczby.
    */
   googleWebClientId: string;
+}
+
+/**
+ * Jedna zarejestrowana trasa - wpis REJESTRU TRAS, który serwer prowadzi sam.
+ *
+ * Istnieje dla testu izolacji klubów (`test/tenantIsolation.test.ts`, issue #99 C3):
+ * test bierze listę tras Z FASTIFY, nie z własnej tablicy, więc nowa trasa bez
+ * przypadku izolacji wywala go, zamiast przejść niezauważona. Hook `onRoute` widzi
+ * także trasy wtyczek statycznych (dzieci kontekstu), więc lista jest kompletna.
+ */
+export interface RouteCatalogEntry {
+  method: string;
+  url: string;
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Wszystkie trasy tego serwera - patrz `RouteCatalogEntry`. */
+    routeCatalog: readonly RouteCatalogEntry[];
+  }
 }
 
 export interface ServerOptions {
@@ -250,6 +311,15 @@ export async function buildServer(
 ): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, trustProxy: options.trustProxy === true });
 
+  // Rejestr tras - PRZED wszystkim, co rejestruje trasy (także wtyczkami), żeby żadna
+  // nie powstała poza nim. `onRoute` dziedziczą konteksty potomne, więc statyczny
+  // build panelu i strona też się tu wpisują.
+  const catalog: RouteCatalogEntry[] = [];
+  app.addHook('onRoute', (route) => {
+    for (const method of [route.method].flat()) catalog.push({ method, url: route.url });
+  });
+  app.decorate('routeCatalog', catalog);
+
   // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
   // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
   if (options.requestLog !== false) registerRequestLog(app);
@@ -270,7 +340,7 @@ export async function buildServer(
   //
   // **BREACH tu nie sięga** i to jest warunek, pod którym kompresja odpowiedzi
   // uwierzytelnionych jest bezpieczna: ochrona CSRF panelu to STAŁY nagłówek
-  // `X-UZ-Admin` (`adminCsrf.ts`), a nie token w treści; serwer nie wysyła żadnych
+  // `X-Ninerdeck-Admin` (`adminCsrf.ts`), a nie token w treści; serwer nie wysyła żadnych
   // nagłówków CORS, więc obca strona nie odczyta odpowiedzi; żadna trasa nie odbija
   // danych od atakującego obok sekretu. Gdyby kiedyś zaczęła - to jest miejsce,
   // w którym trzeba tę trasę z kompresji wyjąć.
@@ -299,14 +369,22 @@ export async function buildServer(
   registerAdminCsrfGuard(app);
 
   registerAuthRoutes(app, deps.auth);
-  registerReferenceRoutes(app, deps.reference, deps.tokens);
-  registerEventsRoutes(app, deps.ingest, deps.myEvents, deps.tokens);
-  registerStateRoutes(app, deps.state, deps.tokens);
-  registerSheetsRoutes(app, deps.sheets, deps.tokens);
-  registerTracesRoutes(app, deps.traces, deps.sessionTrack, deps.tokens);
-  registerPrefsRoutes(app, deps.prefs, deps.tokens);
-  registerBugReportRoutes(app, deps.bugReports, deps.tokens);
-  registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
+  registerJoinRoutes(app, deps.auth, deps.join);
+  registerSwitchRoutes(app, deps.auth);
+
+  // Trasy TELEFONU - jedna brama (`memberFromRequest`): token klubu I aktywne członkostwo
+  // czytane przy każdym żądaniu, jak w panelu (epik C wielofirmowości, issue #99).
+  // Ten sam `pilots`, co brama panelu niżej - to ci sami ludzie i ta sama tabela.
+  const memberGate: MemberGate = { tokens: deps.tokens, accounts: deps.pilots };
+
+  registerReferenceRoutes(app, deps.reference, memberGate);
+  registerEventsRoutes(app, deps.ingest, deps.myEvents, memberGate);
+  registerStateRoutes(app, deps.state, memberGate);
+  registerSheetsRoutes(app, deps.sheets, memberGate);
+  registerTracesRoutes(app, deps.traces, deps.sessionTrack, memberGate);
+  registerPrefsRoutes(app, deps.prefs, memberGate);
+  registerBugReportRoutes(app, deps.bugReports, memberGate);
+  registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.
@@ -317,8 +395,8 @@ export async function buildServer(
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
   const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots };
 
-  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId);
-  registerAdminMeRoutes(app, deps.adminMeQueries, gate);
+  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
+  registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
@@ -327,6 +405,15 @@ export async function buildServer(
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
+  registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
+  registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
+  // Moduł PLATFORMY - `platformRoute` z inną bramą i innym działającym (bez klubu).
+  registerPlatformOrganizationRoutes(
+    app,
+    deps.platformOrganizations,
+    deps.platformOrganizationQueries,
+    gate,
+  );
   registerAdminFleetRoutes(
     app,
     deps.adminFleet,
@@ -342,12 +429,6 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminRegistrationRoutes(
-    app,
-    deps.adminRegistrationQueries,
-    deps.adminRegistrations,
-    gate,
-  );
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

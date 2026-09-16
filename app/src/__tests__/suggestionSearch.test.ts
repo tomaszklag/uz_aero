@@ -1,5 +1,5 @@
 /**
- * UZ Aero - testy przeszukiwania historii wpisów (`ui/components/sheets/suggestionSearch.ts`).
+ * Ninerdeck - testy przeszukiwania historii wpisów (`ui/components/sheets/suggestionSearch.ts`).
  *
  * Dwie rzeczy są tu treścią, nie szczegółem:
  *

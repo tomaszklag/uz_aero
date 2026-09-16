@@ -1,19 +1,29 @@
 /**
- * UZ Aero - panel 2.0: karta pilota - nowe konto i zmiana istniejącego (`#/piloci/:id`).
+ * Ninerdeck - panel 2.0: karta pilota - zmiana członkostwa w klubie (`#/piloci/:id`).
  *
  * Trzy sekcje i tyle: kim jest, co mu wolno, czy ma dostęp. Panel 1.0 miał w tym miejscu
  * pięć sekcji, sześć banerów i 2 700 znaków prozy tłumaczącej budowę systemu - w tym
  * cztery wiersze o rodzajach sesji, których pilot nigdy nie zobaczy.
  *
+ * == KARTA OPISUJE CZŁONKOSTWO, NIE CZŁOWIEKA (wielofirmowość, issue #101 E3) ==
+ * Stąd podział na „Osobę" (imię i konto Google - wspólne dla wszystkich jej klubów)
+ * i „W tym klubie" (kod, rola, dostęp - własność członkostwa). Ta sama osoba w drugim
+ * klubie ma inny kod i może mieć inną rolę, więc wyłączenie tutaj odcina ją od TEGO
+ * klubu i od żadnego innego.
+ *
+ * == ZAKLADANIA KONTA TU NIE MA (issue #100, D3) ==
+ * Karta zmienia członkostwo, które już istnieje. Nowy członek wchodzi WYŁĄCZNIE kodem
+ * klubu, a zatwierdza go administrator w karcie ZGŁOSZENIA (`RequestDrawer`); z panelu
+ * klubu nie da się nikogo dopisać ani adresem, ani linkiem.
+ *
  * == HASLA ZNIKLY (2026-09-04, `docs/logowanie-google.md`) ==
- * Karta nie pokazuje już hasła i nie ma „Ustaw nowe hasło": konto nie dostaje żadnego
- * poświadczenia. Dostęp daje PIERWSZE logowanie kontem Google o wpisanym e-mailu -
- * dlatego przy zakładaniu konta e-mail jest wymagany (konto bez niego nie ma jak
- * wejść), a podsumowanie po założeniu mówi dokładnie to jedno zdanie.
+ * Karta nie pokazuje hasła i nie ma „Ustaw nowe hasło": osoba nie dostaje od klubu
+ * żadnego poświadczenia. Dostęp daje logowanie jej kontem Google.
  *
  * == SKUTEK MOWIMY PRZED AKCJA, NIE PO NIEJ ==
- * Wyłączenie konta pyta o potwierdzenie i w pytaniu mówi obie rzeczy, które trzeba
- * wiedzieć: co z dostępem i co z danymi. Po akcji zostaje jedno zdanie potwierdzenia.
+ * Wyłączenie członkostwa pyta o potwierdzenie i w pytaniu mówi trzy rzeczy, które trzeba
+ * wiedzieć: co z dostępem, co z danymi i co z innymi klubami tej osoby. Po akcji zostaje
+ * jedno zdanie potwierdzenia.
  * Odwrotna kolejność (baner po fakcie, tłumaczący co się właśnie stało) była w 1.0
  * i jest odwróceniem ról: człowiek dowiadywał się o skutku, gdy nie mógł już nic zrobić.
  */
@@ -23,7 +33,6 @@ import { Link } from 'react-router-dom';
 
 import type { PilotListItemDto } from '../../api/dto';
 import {
-  useCreatePilot,
   useDeletePilot,
   useSetPilotActive,
   useUpdatePilot,
@@ -31,7 +40,6 @@ import {
 import { Banner, Button, Card, Drawer, Field, OptionButton, Pill, TextInput } from '../../ui/components';
 import { conflictField, errorMessage, refusalOf } from '../common/apiMessage';
 import {
-  createBodyOf,
   deleteBlocker,
   draftKey,
   draftOf,
@@ -42,11 +50,11 @@ import {
   verdictOf,
   type AccountDraft,
 } from './accountForm';
-import { accountConflictMessage, accountRefusalMessage } from './accountRefusal';
+import { accountConflictMessage, accountRefusalMessage, SELF_ACCOUNT } from './accountRefusal';
 import { roleLabel, roleNote, ROLE_ORDER } from './accountRows';
 
 interface AccountDrawerProps {
-  /** `nowy` albo identyfikator konta z listy. */
+  /** Identyfikator OSOBY z listy członków klubu. */
   id: string;
   /** `null` = lista jeszcze nie przyszła; pusta tablica = przyszła i jest pusta. */
   pilots: PilotListItemDto[] | null;
@@ -64,15 +72,9 @@ export function AccountDrawer({
   selfId,
   onClose,
 }: AccountDrawerProps) {
-  const creating = id === 'nowy';
-  const pilot = creating ? null : (pilots?.find((item) => item.id === id) ?? null);
+  const pilot = pilots?.find((item) => item.id === id) ?? null;
 
   const [draft, setDraft] = useState<AccountDraft>(EMPTY_ACCOUNT);
-  /**
-   * Konto właśnie powstało - karta zamienia się w podsumowanie: formularz znika, bo
-   * drugie kliknięcie „Utwórz konto" założyłoby drugie konto o tym samym nazwisku.
-   */
-  const [created, setCreated] = useState<PilotListItemDto | null>(null);
   /**
    * Które potwierdzenie jest otwarte. JEDEN stan, nie dwie flagi: dwa pytania „czy na
    * pewno" naraz w jednej karcie to dwa czerwone bloki, z których człowiek odpowiada
@@ -87,27 +89,27 @@ export function AccountDrawer({
   // zapisie klucza nie zmienia, więc nie kasuje wpisanych zmian.
   const synced = useRef<string | null>(null);
   useEffect(() => {
-    const key = draftKey(creating, pilot);
-    if (key == null || synced.current === key) return;
+    const key = draftKey(pilot);
+    // `key == null` znaczy dokładnie `pilot == null`; warunek na obiekcie stoi obok,
+    // żeby kompilator widział zawężenie bez wykrzyknika.
+    if (pilot == null || synced.current === key) return;
     synced.current = key;
-    setDraft(pilot == null ? EMPTY_ACCOUNT : draftOf(pilot));
+    setDraft(draftOf(pilot));
     setConfirm(null);
     setDone(null);
-  }, [creating, pilot]);
+  }, [pilot]);
 
-  const create = useCreatePilot();
   const update = useUpdatePilot();
   const setActive = useSetPilotActive();
   const remove = useDeletePilot();
 
-  const pending = create.isPending || update.isPending || setActive.isPending || remove.isPending;
-  const error = create.error ?? update.error ?? setActive.error ?? remove.error;
+  const pending = update.isPending || setActive.isPending || remove.isPending;
+  const error = update.error ?? setActive.error ?? remove.error;
 
   const verdict = verdictOf(draft);
-  // Przy ZAKŁADANIU e-mail jest wymagany: bez adresu Google konto nie ma jak wejść.
-  // Przy edycji nie - wymóg blokowałby niezwiązaną poprawkę na starym wierszu.
-  const missingEmail = creating && draft.email.trim() === '';
-  const changed = pilot == null ? true : hasChanges(pilot, draft);
+  // `pilot == null` znaczy tu „wklejony link do konta spoza bieżącego zawężenia" -
+  // nie ma czego zapisać, więc zapis jest nieczynny (karta mówi to niżej osobno).
+  const changed = pilot != null && hasChanges(pilot, draft);
   const readOnly = !manages;
 
   const field = conflictField(error);
@@ -121,46 +123,15 @@ export function AccountDrawer({
     error == null || conflict != null || refusalText != null ? null : errorMessage(error);
 
   const save = (): void => {
-    if (pilot == null) {
-      create.mutate(createBodyOf(draft), {
-        onSuccess: (result) => {
-          setCreated(result.pilot);
-          setDone(null);
-        },
-      });
-      return;
-    }
+    if (pilot == null) return;
     update.mutate(
       { id: pilot.id, body: updateBodyOf(pilot, draft) },
       { onSuccess: () => setDone('Zapisano.') },
     );
   };
 
-  const title = creating ? 'NOWY PILOT' : (pilot?.name ?? 'PILOT').toUpperCase();
-  const sub = pilot == null ? 'Nowe konto' : subtitleOf(pilot);
-
-  // Konto właśnie powstało: karta pokazuje, JAK ten człowiek wejdzie, i wyjście.
-  // Formularz pod spodem obiecywałby drugi zapis, a on założyłby drugie konto.
-  if (created != null) {
-    return (
-      <Drawer
-        title={title}
-        sub={`${created.name} · konto założone`}
-        onClose={onClose}
-        footer={
-          <Button variant="primary" onClick={onClose}>
-            Zamknij
-          </Button>
-        }
-      >
-        <Banner tone="ok" live>
-          Konto {created.code} założone. {created.name} wchodzi do aplikacji i panelu
-          kontem Google {created.email ?? ''} - przy pierwszym logowaniu konto podepnie
-          się samo.
-        </Banner>
-      </Drawer>
-    );
-  }
+  const title = pilot?.name ?? 'Pilot';
+  const sub = pilot == null ? 'Konto spoza listy' : subtitleOf(pilot);
 
   return (
     <Drawer
@@ -168,7 +139,7 @@ export function AccountDrawer({
       sub={
         <>
           {sub}
-          {readOnly ? <Pill tone="dim">tylko podgląd</Pill> : null}
+          {readOnly ? <Pill tone="dim">Tylko podgląd</Pill> : null}
         </>
       }
       onClose={onClose}
@@ -181,19 +152,17 @@ export function AccountDrawer({
             <Button
               variant="primary"
               onClick={save}
-              disabled={
-                pending || !verdict.complete || missingEmail || verdict.blocker != null || !changed
-              }
+              disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : creating ? 'Utwórz konto' : 'Zapisz'}
+              {pending ? 'Zapisuję…' : 'Zapisz'}
             </Button>
           </>
         )
       }
     >
       {/* Konto spoza listy: wklejony link do kogoś, kogo bieżące zawężenie nie pokazuje. */}
-      {!creating && pilot == null && !listPending ? (
+      {pilot == null && !listPending ? (
         <Card title="Nie ma go na liście">
           <p className="hint">
             Wyszukiwanie albo zawężenie ukrywa to konto.{' '}
@@ -218,7 +187,8 @@ export function AccountDrawer({
         </Banner>
       )}
 
-      <Card title="Dane pilota">
+      {/* OSOBA: to, co jest wspólne dla WSZYSTKICH klubów tego człowieka. */}
+      <Card title="Osoba">
         <Field htmlFor="name" label="Imię i nazwisko">
           <TextInput
             id="name"
@@ -229,7 +199,26 @@ export function AccountDrawer({
           />
         </Field>
 
-        <Field htmlFor="code" label="Kod pilota" hint="Krótki skrót przy każdym locie, np. TMK.">
+        {/* E-MAIL JEST DO ODCZYTU: to konto Google, którym osoba się loguje, a klub nie ma
+            nad nim władzy - adres nadaje dostawca przy pierwszym logowaniu. Do 2.0.0 pole
+            było edytowalne, bo wpisany zawczasu adres podpinał konto; ta droga należy dziś
+            do platformy (pierwszy administrator klubu), a członek wchodzi kodem. */}
+        <Field
+          htmlFor="email"
+          label="Konto Google"
+          hint="Adres, którym się loguje. Nadaje go Google - klub go nie zmienia."
+        >
+          <TextInput id="email" mono value={draft.email} disabled />
+        </Field>
+      </Card>
+
+      {/* W TYM KLUBIE: własność CZŁONKOSTWA. Kod jest jedyny w klubie, nie na serwerze. */}
+      <Card title="W tym klubie">
+        <Field
+          htmlFor="code"
+          label="Kod pilota"
+          hint="Krótki skrót przy każdym locie, np. TMK. Jedyny w tym klubie - w innym klubie ta osoba może mieć inny."
+        >
           <TextInput
             id="code"
             mono
@@ -240,25 +229,9 @@ export function AccountDrawer({
           />
         </Field>
         {field === 'code' && conflict != null ? <p className="hint danger">{conflict}</p> : null}
-
-        <Field
-          htmlFor="email"
-          label="E-mail konta Google"
-          hint="Tym adresem pilot loguje się do aplikacji - bez niego konto nie ma jak wejść."
-        >
-          <TextInput
-            id="email"
-            mono
-            value={draft.email}
-            disabled={readOnly}
-            invalid={verdict.invalid.includes('email') || field === 'email'}
-            onChange={(event) => setDraft({ ...draft, email: event.target.value })}
-          />
-        </Field>
-        {field === 'email' && conflict != null ? <p className="hint danger">{conflict}</p> : null}
       </Card>
 
-      <Card title="Rola">
+      <Card title="Rola w klubie">
         <div className="opt-list" role="radiogroup" aria-label="Rola konta">
           {ROLE_ORDER.map((role) => (
             <OptionButton
@@ -276,16 +249,16 @@ export function AccountDrawer({
       {pilot == null || readOnly ? null : (
         <Card title="Dostęp">
           <div className="access-row">
-            <span className="kv-k">Konto</span>
+            <span className="kv-k">Członkostwo w klubie</span>
             {pilot.active ? (
               <Button
                 variant="danger"
                 size="sm"
                 disabled={pending || pilot.id === selfId}
-                reason={pilot.id === selfId ? 'to Twoje konto' : undefined}
+                reason={pilot.id === selfId ? SELF_ACCOUNT : undefined}
                 onClick={() => setConfirm('disable')}
               >
-                Wyłącz konto
+                Wyłącz członkostwo
               </Button>
             ) : (
               <Button
@@ -295,11 +268,11 @@ export function AccountDrawer({
                 onClick={() =>
                   setActive.mutate(
                     { id: pilot.id, active: true },
-                    { onSuccess: () => setDone(`Konto ${pilot.name} włączone.`) },
+                    { onSuccess: () => setDone(`${pilot.name} znów jest w klubie.`) },
                   )
                 }
               >
-                Włącz konto
+                Włącz członkostwo
               </Button>
             )}
           </div>
@@ -312,10 +285,13 @@ export function AccountDrawer({
                   „Małkiewicz" → „Małkiewicza"), więc szablon obiecywał brzmienie,
                   którego panel nie umie wyprodukować. Dwukropek stawia nazwisko
                   w mianowniku i jest poprawny dla KAŻDEGO. */}
-              <p className="confirm-q">Wyłączyć konto: {pilot.name}?</p>
+              <p className="confirm-q">Wyłączyć członkostwo: {pilot.name}?</p>
+              {/* Trzy rzeczy, po które sięga administrator: dostęp (od razu), dane
+                  (zostają) i INNE KLUBY tej osoby (bez zmian) - trzecia jest nowa
+                  w 2.0.0 i bez niej wyłączenie czytałoby się jak zablokowanie człowieka. */}
               <p className="hint">
-                Przestanie się logować od razu - na telefonie i w panelu. Zapisane loty
-                zostają w systemie.
+                Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty
+                zostają w dzienniku klubu; członkostwa w innych klubach bez zmian.
               </p>
               <div className="confirm-actions">
                 <Button variant="ghost" size="sm" onClick={() => setConfirm(null)}>
@@ -331,23 +307,25 @@ export function AccountDrawer({
                       {
                         onSuccess: () => {
                           setConfirm(null);
-                          setDone(`Konto ${pilot.name} wyłączone.`);
+                          setDone(`${pilot.name} nie jest już w klubie.`);
                         },
                       },
                     )
                   }
                 >
-                  Wyłącz konto
+                  Wyłącz członkostwo
                 </Button>
               </div>
             </div>
           ) : null}
 
           <div className="access-row">
-            <span className="kv-k">Usuń trwale</span>
-            {/* Powód blokady stoi W PRZYCISKU, bo widać go z listy: konto ma plakietkę
-                „Aktywny". Drugiego warunku (brak historii) panel nie zna - lista nie
-                niesie liczby lotów - więc ten wraca odmową serwera z nazwanym powodem. */}
+            <span className="kv-k">Usuń z klubu</span>
+            {/* Powód blokady stoi W PRZYCISKU, bo widać go z listy: członkostwo ma
+                plakietkę „Aktywny". Drugiego warunku (brak lotów w TYM klubie) panel nie
+                zna - lista nie niesie ich liczby - więc ten wraca odmową serwera.
+                Usunięcie dotyczy CZŁONKOSTWA: osoba zostaje na serwerze ze swoimi innymi
+                klubami, a osobę bez żadnego członkostwa sprząta superadministrator. */}
             <Button
               variant="danger"
               size="sm"
@@ -355,16 +333,16 @@ export function AccountDrawer({
               reason={deleteBlocker(pilot, selfId) ?? undefined}
               onClick={() => setConfirm('delete')}
             >
-              Usuń konto
+              Usuń z klubu
             </Button>
           </div>
 
           {confirm === 'delete' ? (
             <div className="confirm">
-              <p className="confirm-q">Usunąć konto: {pilot.name}?</p>
+              <p className="confirm-q">Usunąć z klubu: {pilot.name}?</p>
               <p className="hint">
-                Zniknie z listy na zawsze - tego nie da się cofnąć. Jeśli konto ma
-                zapisane loty, zostanie tylko wyłączone.
+                Zniknie z listy klubu na zawsze - tego nie da się cofnąć. Jeśli ma tu
+                zapisane loty, członkostwo zostanie tylko wyłączone.
               </p>
               <div className="confirm-actions">
                 <Button variant="ghost" size="sm" onClick={() => setConfirm(null)}>
@@ -374,11 +352,11 @@ export function AccountDrawer({
                   variant="danger"
                   size="sm"
                   disabled={pending}
-                  // Po udanym usunięciu ZAMYKAMY kartę: konta, którego dotyczyła, już
-                  // nie ma, a formularz nad nieistniejącym wierszem obiecuje zapis.
+                  // Po udanym usunięciu ZAMYKAMY kartę: członkostwa, którego dotyczyła,
+                  // już nie ma, a formularz nad nieistniejącym wierszem obiecuje zapis.
                   onClick={() => remove.mutate(pilot.id, { onSuccess: onClose })}
                 >
-                  Usuń konto
+                  Usuń z klubu
                 </Button>
               </div>
             </div>
@@ -392,6 +370,6 @@ export function AccountDrawer({
 /** Podtytuł karty: kod, e-mail i - gdy trzeba - stan konta. */
 function subtitleOf(pilot: PilotListItemDto): string {
   const parts = [pilot.code, pilot.email ?? 'bez adresu Google'];
-  if (!pilot.active) parts.push('konto wyłączone');
+  if (!pilot.active) parts.push('członkostwo wyłączone');
   return parts.join(' · ');
 }

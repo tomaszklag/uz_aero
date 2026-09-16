@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - `BugReportRecord` (port) → `AdminBugReport` (kontrakt panelu).
+ * Ninerdeck (serwer) - `BugReportRecord` (port) → `AdminBugReport` (kontrakt panelu).
  *
  * Czysta funkcja, jak reszta katalogu: cała różnica między jednym a drugim to daty
  * zamienione na ISO. Granica typów istnieje mimo to i nie jest ozdobą - port opisuje,
@@ -17,6 +17,7 @@ export const bugReport = (r: BugReportRecord): AdminBugReport => ({
   pilotId: r.pilotId,
   pilotCode: r.pilotCode,
   pilotName: r.pilotName,
+  org: { id: r.org.id, slug: r.org.slug, name: r.org.name },
   severity: r.severity,
   description: r.description,
   screen: r.screen,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
+ * Ninerdeck (serwer) - GRANICE, KTÓRYCH NIE PILNUJE KOMPILATOR.
  *
  * Lustro `app/src/__tests__/architecture.test.ts` i ta sama zasada: reguła architektury
  * jest warta tyle, ile jej egzekucja. Trzy własności niżej są w kodzie niewidoczne -
@@ -92,6 +92,106 @@ const writesTo = (table: string): RegExp =>
 const upsertsInto = (table: string): RegExp =>
   new RegExp(String.raw`INSERT\s+INTO\s+${table}\b[\s\S]*?ON\s+CONFLICT`, 'i');
 
+/**
+ * TABELE SKOPOWANE KLUBEM (wielofirmowość, epik C - issue #99 C4). Każda niesie
+ * `org_id`, więc każde zapytanie, które ich dotyka, musi powiedzieć O KTÓRY KLUB pyta.
+ * `pilots`, `organizations` i `external_identities` na liście NIE MA: osoba jest globalna,
+ * a klub jest tu wierszem, nie kolumną.
+ */
+const SCOPED_TABLES = [
+  'aircraft',
+  'events',
+  'sessions',
+  'flags',
+  'export_log',
+  'exported_sheets',
+  'aircraft_readings',
+  'aircraft_consumption',
+  'admin_audit',
+  'bug_reports',
+  'refresh_tokens',
+  'memberships',
+] as const;
+
+/**
+ * Zapytanie DOTYKA tabeli - po słowie wiążącym SQL-a, nie po samej nazwie. Bez tego
+ * wzorzec łapałby zmienną `events` i pole `sessions` w każdym pliku warstwy aplikacji,
+ * a lista naruszeń byłaby szumem, którego nikt nie czyta.
+ */
+const touches = (table: string): RegExp =>
+  new RegExp(String.raw`\b(?:FROM|JOIN|INTO|UPDATE)\s+${table}\b`, 'i');
+
+/**
+ * Szablony SQL trzymane w module - `const SELECT = \`…\``. Metody wklejają je przez
+ * `${SELECT}`, więc strażnik musi je widzieć razem z metodą: klub bywa w jednej połowie
+ * (`WHERE s.org_id = $1` w metodzie), a tabela w drugiej (`FROM sessions` w szablonie).
+ */
+function sqlTemplatesOf(code: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const re = /(?:^|\n)const\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*`([\s\S]*?)`/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) out.set(match[1]!, match[2]!);
+  return out;
+}
+
+/** Treść z wklejonymi szablonami, na które metoda się powołuje (przechodnio). */
+function withTemplates(body: string, templates: Map<string, string>): string {
+  let text = body;
+  for (let pass = 0; pass < 4; pass += 1) {
+    let grew = false;
+    for (const [name, value] of templates) {
+      if (text.includes(`\${${name}}`) && !text.includes(value)) {
+        text += `\n${value}`;
+        grew = true;
+      }
+    }
+    if (!grew) break;
+  }
+  return text;
+}
+
+/**
+ * Plik pocięty na JEDNOSTKI WYKONANIA: metody klasy i funkcje modułu. Strażnik `org_id`
+ * pracuje na tym poziomie, a nie na poziomie pliku ani pojedynczego literału - `SqlFilter`
+ * rozbija warunek klubu na osobny napis (`filter.add('org_id = ?', orgId)`), więc
+ * w literale z `SELECT` klubu nie ma i nigdy nie będzie. Cały plik z kolei przechodziłby
+ * dzięki JEDNEJ skopowanej metodzie, choć obok stałaby dziesiąta nieskopowana.
+ *
+ * Szablon SQL-a w module (`const SELECT = \`…\``) jednostką NIE JEST - to materiał, który
+ * dostaje wklejony wołający (patrz `withTemplates`). Rozpoznajemy go po braku `=>`:
+ * napis z SQL-em strzałki nie zawiera, funkcja strzałkowa zawiera ją z definicji.
+ */
+function unitsOf(code: string): { name: string; body: string }[] {
+  const lines = code.split('\n');
+  const starts: { name: string; line: number }[] = [];
+  const member =
+    /^ {2}(?:(?:private|public|protected|readonly|static)\s+)*(?:async\s+)?(?:get\s+|set\s+)?([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\(/;
+  const fn = /^(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/;
+  const arrow = /^(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*(?::[^=]*)?=\s*(.*)$/;
+
+  lines.forEach((line, index) => {
+    const asMember = member.exec(line);
+    if (asMember && !/^ {2}(?:if|for|while|switch|catch|return|constructor)\b/.test(line)) {
+      starts.push({ name: asMember[1]!, line: index });
+      return;
+    }
+    const asFn = fn.exec(line);
+    if (asFn) {
+      starts.push({ name: asFn[1]!, line: index });
+      return;
+    }
+    const asArrow = arrow.exec(line);
+    // Stała z SQL-em nie jest jednostką - jest materiałem do wklejenia (docblock wyżej).
+    if (asArrow && asArrow[2]!.includes('=>')) starts.push({ name: asArrow[1]!, line: index });
+  });
+
+  const templates = sqlTemplatesOf(code);
+  return starts.map(({ name, line }, i) => ({
+    name,
+    body: withTemplates(lines.slice(line, starts[i + 1]?.line ?? lines.length).join('\n'), templates),
+  }));
+}
+
 describe('granice, których nie pilnuje kompilator', () => {
   // Bez tego zielony wynik pozostałych przypadków nic nie znaczy: pusta lista plików
   // albo zepsuty regex dałyby „brak naruszeń" przy dowolnie połamanej architekturze.
@@ -121,9 +221,14 @@ describe('granice, których nie pilnuje kompilator', () => {
       false,
     );
 
-    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę - obie strony naraz.
+    // Zdejmowanie komentarzy nie zjada kodu i zjada prozę - obie strony naraz. Prozą jest
+    // zdanie z docblocku `admin_audit` („żaden plik w src/ nie ma prawa zawierać UPDATE
+    // admin_audit ani DELETE FROM admin_audit"); kodem - DDL tabeli. Od migracji 8 kod
+    // ZAWIERA `UPDATE admin_audit` (backfill `org_id`), więc kontrola prozy idzie po
+    // frazie, która występuje WYŁĄCZNIE w komentarzu.
     expect(codeOf('infrastructure/pg/schema.ts')).toContain('CREATE TABLE IF NOT EXISTS admin_audit');
-    expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('UPDATE admin_audit');
+    expect(read('infrastructure/pg/schema.ts')).toContain('ani DELETE FROM admin_audit');
+    expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('ani DELETE FROM admin_audit');
 
     // Wyciąganie nazw z importów działa na pliku, który `Database` faktycznie bierze.
     expect(importedNames(read('application/mobile/commands/ingest.ts'))).toContain('Database');
@@ -132,7 +237,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     // przypadek „kontrakty importują wyłącznie domenę" przechodziłby na pustej liście.
     expect(filesUnder('application/admin/contracts').length).toBeGreaterThan(2);
     expect(importedFrom(read('application/admin/contracts/sessions.ts'))).toContain(
-      '@uzaero/domain',
+      '@ninerdeck/domain',
     );
 
     // Skaner nagłówka `Authorization` faktycznie coś widzi - w JEDYNYM pliku, który
@@ -141,15 +246,35 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(filesUnder('http/routes/admin')).toContain('http/routes/admin/auth.ts');
   });
 
+  /**
+   * JEDYNY plik, któremu wolno napisać `UPDATE` na tabelach append-only: skrypt migracji.
+   *
+   * Backfill migracji 8 (wielofirmowość, 2026-09-08) dopisuje `org_id` do KAŻDEGO
+   * istniejącego wiersza `events`, `admin_audit`, `export_log` i `exported_sheets` -
+   * raz, w tej samej transakcji co DDL, nie zmieniając ani jednej wartości, którą te
+   * tabele niosły. To nie jest „edycja rejestru", tylko nadanie wierszom przynależności,
+   * której schemat 1.x nie znał; bez niej kolumna nie mogłaby być `NOT NULL`, a filtr
+   * `WHERE org_id = $1` cicho pomijałby całą historię klubu.
+   *
+   * Wyjątek jest WYMIENIONY IMIENNIE, nie opisany wzorcem (jak `publicByDesign` niżej):
+   * dopisanie tu drugiego pliku ma być decyzją widoczną w diffie. Reguła dla całego
+   * kodu poza migracjami zostaje nietknięta.
+   */
+  const MIGRATION_SCRIPT = 'infrastructure/pg/schema.ts';
+  const appCode = (): string[] => filesUnder('.').filter((f) => f !== MIGRATION_SCRIPT);
+
   it('rejestr `events` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
-    const offenders = filesUnder('.').filter((f) => writesTo('events').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('events').test(codeOf(f)));
     expect(offenders).toEqual([]);
+    // Kontrola wyjątku: skrypt migracji NAPRAWDĘ zawiera backfill, więc wyłączenie go
+    // z listy nie jest martwe - i jedyne, co tam stoi, to dopisanie klubu.
+    expect(codeOf(MIGRATION_SCRIPT)).toMatch(/UPDATE events\s+SET org_id = club WHERE org_id IS NULL/);
   });
 
   it('dziennik `admin_audit` jest append-only - nigdzie w src/ nie ma UPDATE ani DELETE', () => {
     // Docelowo pilnuje tego GRANT bez UPDATE/DELETE dla roli aplikacyjnej; do czasu
     // rozdzielenia connection stringów to jest jedyna wykonywalna gwarancja.
-    const offenders = filesUnder('.').filter((f) => writesTo('admin_audit').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('admin_audit').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
@@ -161,7 +286,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     // Do 2026-08-01 inwariant był ZACHOWANY, ale niepilnowany: nic nie broniło następnej
     // osobie „naprawić" wyścigu rewizji przez `ON CONFLICT DO UPDATE`, a wtedy wszystkie
     // trzy zdania wyżej stałyby się nieprawdą po cichu.
-    const offenders = filesUnder('.').filter(
+    const offenders = appCode().filter(
       (f) => writesTo('export_log').test(codeOf(f)) || upsertsInto('export_log').test(codeOf(f)),
     );
     expect(offenders).toEqual([]);
@@ -182,7 +307,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     );
     // …ale UPDATE i DELETE nie mają tu wstępu tak samo: treść nadpisuje wyłącznie
     // ścieżka eksportu, przez `writeDaySheet`, a nie zapytanie z boku.
-    const offenders = filesUnder('.').filter((f) => writesTo('exported_sheets').test(codeOf(f)));
+    const offenders = appCode().filter((f) => writesTo('exported_sheets').test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 
@@ -256,7 +381,7 @@ describe('granice, których nie pilnuje kompilator', () => {
   });
 
   it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {
-    // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@uzaero/server/admin-contracts`).
+    // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@ninerdeck/server/admin-contracts`).
     // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera - w skrajnym
     // przypadku `pg` do przeglądarki - a przy okazji przywiązałby panel do kształtu
     // projekcji, czyli do rzeczy, która ma się swobodnie zmieniać.
@@ -264,7 +389,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     for (const file of filesUnder('application/admin/contracts')) {
       for (const from of importedFrom(codeOf(file))) {
         const ownFamily = from.startsWith('./');
-        if (from !== '@uzaero/domain' && !ownFamily) offenders.push(`${file} → ${from}`);
+        if (from !== '@ninerdeck/domain' && !ownFamily) offenders.push(`${file} → ${from}`);
       }
     }
     expect(offenders).toEqual([]);
@@ -371,5 +496,81 @@ describe('granice, których nie pilnuje kompilator', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  /**
+   * STRAŻNIK KLUBU: zapytanie na tabeli skopowanej MUSI mówić `org_id` (issue #99 C4).
+   *
+   * To jest reguła, której złamanie jest najcichsze w całym serwerze: zapytanie bez
+   * `WHERE org_id` kompiluje się, przechodzi typy, zwraca wiersze i wygląda dobrze -
+   * tylko zwraca ich za dużo, o cudzym klubie. Test izolacji (`tenantIsolation.test.ts`)
+   * łapie to na trasach, które sonduje; ten strażnik łapie to jedno piętro niżej,
+   * w KAŻDEJ metodzie adaptera, także takiej, do której jeszcze nie prowadzi trasa.
+   *
+   * Sprawdzenie jest TEKSTOWE i taka jest cena: gwarantuje, że o klubie w tym zapytaniu
+   * ktoś pomyślał, nie że pomyślał dobrze. Poprawność predykatu bierze na siebie test
+   * izolacji - te dwa chwyty są komplementarne i żaden nie zastępuje drugiego.
+   */
+  it('SQL na tabelach skopowanych klubem niesie `org_id`', () => {
+    /**
+     * Metody świadomie PONAD klubami - każda z powodem. Wpis tutaj jest decyzją widoczną
+     * w diffie: „ta tabela ma org_id, a to zapytanie go pomija, bo…".
+     */
+    const ABOVE_CLUBS: Record<string, string> = {
+      // Zgłoszenia błędów czyta SUPERADMINISTRATOR ponad klubami (issue #99 C6), a te
+      // liczniki opisują dokładnie TĘ listę: zawężone do jednego klubu kłamałyby o niej.
+      // Sama lista wyjątku nie potrzebuje - niesie `org_id` w wierszu, jako kolumnę `org`.
+      'infrastructure/pg/common/bugReportsRepo.ts#countByStatus':
+        'liczniki statusów listy PLATFORMOWEJ - zawężenie do klubu przeczyłoby jej treści',
+    };
+
+    const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {
+      const out: string[] = [];
+      for (const unit of unitsOf(code)) {
+        const table = SCOPED_TABLES.find((t) => touches(t).test(unit.body));
+        if (table == null || allow(unit.name)) continue;
+        if (!unit.body.includes('org_id')) out.push(`${unit.name} → ${table}`);
+      }
+      return out;
+    };
+
+    // ── kontrola samego strażnika ─────────────────────────────────────────────────
+    // Bez niej „zero naruszeń" mogłoby znaczyć „skaner nic nie widzi".
+    const sessionsRepo = codeOf('infrastructure/pg/admin/sessionsRepo.ts');
+    const units = unitsOf(sessionsRepo).map((u) => u.name);
+    expect(units).toContain('byUuid');
+    expect(units).toContain('list');
+    // Wklejanie szablonów działa: `byUuid` widzi `FROM sessions` z modułowego `${SELECT}`.
+    const byUuid = unitsOf(sessionsRepo).find((u) => u.name === 'byUuid')!;
+    expect(touches('sessions').test(byUuid.body)).toBe(true);
+    // Słowo wiążące jest warunkiem: nazwa sama z siebie nie jest zapytaniem.
+    expect(touches('sessions').test('FROM sessions s')).toBe(true);
+    expect(touches('sessions').test('const sessions = await this.load()')).toBe(false);
+    // I strażnik NAPRAWDĘ odbija podrzuconego winowajcę - metodę bez klubu.
+    const planted = [
+      'class Sabotage {',
+      '  all(db: Queryable) {',
+      '    return db.query(`SELECT * FROM sessions ORDER BY started_at DESC`);',
+      '  }',
+      '}',
+    ].join('\n');
+    expect(scopedOffenders(planted, () => false)).toEqual(['all → sessions']);
+
+    // ── reguła ────────────────────────────────────────────────────────────────────
+    const offenders: string[] = [];
+    for (const file of appCode()) {
+      const allowed = (unit: string): boolean => `${file}#${unit}` in ABOVE_CLUBS;
+      for (const hit of scopedOffenders(codeOf(file), allowed)) offenders.push(`${file}#${hit}`);
+    }
+    expect(offenders).toEqual([]);
+
+    // Wyjątki nie mogą zgnić: metoda wymieniona imiennie musi istnieć i NADAL pomijać
+    // klub. Wpis o metodzie, która dawno się skopowała, uśpiłby strażnika na przyszłość.
+    for (const key of Object.keys(ABOVE_CLUBS)) {
+      const [file, unit] = key.split('#') as [string, string];
+      const found = unitsOf(codeOf(file)).find((u) => u.name === unit);
+      expect(found, `wyjątek bez metody: ${key}`).toBeDefined();
+      expect(found!.body.includes('org_id'), `wyjątek już skopowany: ${key}`).toBe(false);
+    }
   });
 });

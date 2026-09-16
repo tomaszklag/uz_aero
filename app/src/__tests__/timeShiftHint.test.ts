@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test PODPISU pod kontrolką czasu (`TimeStepper`).
+ * Ninerdeck - test PODPISU pod kontrolką czasu (`TimeStepper`).
  *
  * Zdanie „o ile przesunąłem to zdarzenie" pisały wcześniej dwa arkusze osobno i każdy
  * trochę inaczej. Po scaleniu kontrolki (uwaga z urządzenia, 2026-08-14: „korekta czasu

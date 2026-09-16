@@ -1,5 +1,5 @@
 /**
- * UZ Aero - REJESTR OTWARTYCH ARKUSZY: czy nad ekranem stoi w tej chwili `SheetSurface`.
+ * Ninerdeck - REJESTR OTWARTYCH ARKUSZY: czy nad ekranem stoi w tej chwili `SheetSurface`.
  *
  * ══ PO CO ══
  * Bo zdarzenia klawiatury w React Native są GLOBALNE dla aplikacji, a arkusz żyje we

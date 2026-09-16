@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
+ * Ninerdeck - panel 2.0: klucze zapytań TanStack Query, wszystkie w JEDNYM miejscu.
  *
  * Hierarchicznie, żeby unieważnianie prefiksem było jednolinijkowe: mutacja, która
  * zmienia skład listy, unieważnia korzeń zasobu i nie musi znać żadnego konkretnego
@@ -9,24 +9,14 @@
 import type { FleetListQuery } from '../api/fleet';
 import type { LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
+import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
-import type { RegistrationListQuery } from '../api/registrations';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
   me: ['me'] as const,
   /** Identyfikator klienta Google dla przycisku logowania - konfiguracja, nie dane. */
   googleClient: ['googleClient'] as const,
-
-  /**
-   * Zgłoszenia rejestracyjne (logowanie Google). KORZEŃ obejmuje wszystko, jak przy
-   * zgłoszeniach błędów: jedno pytanie o jednej naturze (kolejka z licznikami).
-   * Zatwierdzenie unieważnia TAKŻE `pilots.all`, bo zakłada konto.
-   */
-  registrations: {
-    all: ['registrations'] as const,
-    list: (query: RegistrationListQuery) => ['registrations', 'list', query] as const,
-  },
 
   /**
    * Konta pilotów.
@@ -38,6 +28,36 @@ export const keys = {
   pilots: {
     all: ['pilots'] as const,
     list: (query: PilotListQuery) => ['pilots', 'list', query] as const,
+  },
+
+  /**
+   * Kolejka zgłoszeń kodem klubu (issue #101, E3).
+   *
+   * OSOBNY korzeń od `pilots`, choć oba ekrany stoją na jednej stronie: to inna trasa,
+   * inna zdolność i inny byt (kandydat kontra członek). Decyzja unieważnia OBA - i to
+   * jest jedyne miejsce, w którym się spotykają.
+   */
+  memberships: {
+    all: ['memberships'] as const,
+    pending: ['memberships', 'pending'] as const,
+  },
+
+  /**
+   * Kod klubu. Bez parametru, bo klub bierze się z SESJI, nie z adresu - panel klubu
+   * prowadzi swój kod i tylko swój.
+   */
+  clubCode: ['clubCode'] as const,
+
+  /**
+   * Kluby na serwerze (moduł PLATFORMY, issue #101, E1).
+   *
+   * `detail` istnieje, inaczej niż przy kontach: karta klubu niesie KOD KLUBU, którego
+   * wiersz listy nie ma, więc otwarcie karty naprawdę pyta serwer o coś nowego.
+   */
+  organizations: {
+    all: ['organizations'] as const,
+    list: (query: OrganizationListQuery) => ['organizations', 'list', query] as const,
+    detail: (id: string) => ['organizations', 'detail', id] as const,
   },
 
   fleet: {

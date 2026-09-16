@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - strumień zdarzeń → wiersz projekcji `sessions`.
+ * Ninerdeck (serwer) - strumień zdarzeń → wiersz projekcji `sessions`.
  *
  * Jedyne mapowanie domena→magazyn w warstwie aplikacji, w jedną stronę (w drugą nie ma
  * potrzeby: projekcja jest zawsze odtwarzalna ze strumienia). Wydzielone z komendy
@@ -30,14 +30,21 @@
  *    w modelu w ogóle: dzień pilota to lista sesji (`projectPilotDay`).
  */
 
-import { projectSession, type Event } from '@uzaero/domain';
+import { projectSession, type Event } from '@ninerdeck/domain';
 
 import type { SessionRow } from '../ports.ts';
 
-export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow {
+/**
+ * `orgId` przychodzi OSOBNO od strumienia (wielofirmowość §2): `Event` klubu nie zna
+ * i znać nie ma - żadna reguła domeny go nie czyta. Klub jest własnością WIERSZA
+ * rejestru, a rozstrzyga o nim wołający: ingest bierze go z tokenu telefonu, korekta
+ * z panelu - z wiersza projekcji sesji, przebudowa - z kolumny `events.org_id`.
+ */
+export function sessionRowFrom(sessionUuid: string, stream: Event[], orgId: string): SessionRow {
   const s = projectSession(stream);
   return {
     sessionUuid,
+    orgId,
     aircraftId: s.aircraftId ?? stream[0]!.aircraftId,
     picId: s.sessionPicId ?? stream[0]!.picId,
     dualId: s.dualId,

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - bramka kroku liczników (02a): powód, dla którego ROZPOCZNIJ LOT stoi.
+ * Ninerdeck - bramka kroku liczników (02a): powód, dla którego ROZPOCZNIJ LOT stoi.
  *
  * Decyzja użytkownika (2026-08-27, issue #60): POMIAR OLEJU JEST KROKIEM WYMAGANYM
  * przy przejęciu - jak odczyty paliwa i motogodzin. Wymagalność jest stanem domyślnym

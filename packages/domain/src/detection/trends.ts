@@ -1,5 +1,5 @@
 /**
- * UZ Aero - cechy trendowe liczone z okna fixów.
+ * Ninerdeck - cechy trendowe liczone z okna fixów.
  *
  * SEDNO ZMIANY WZGLĘDEM PIERWSZEJ WERSJI DETEKCJI: progi nakładane na pojedynczy
  * odczyt biorą całą nieprecyzję odbiornika na siebie. Te same zjawiska widziane

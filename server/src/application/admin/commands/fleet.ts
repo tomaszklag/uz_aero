@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
+ * Ninerdeck (serwer) - konfiguracja floty: dodanie jednostki, edycja, wyłączenie ze
  * służby (panel, mockupy `A07-flota.html` i `A07a-samolot.html`).
  *
  * ══ CO TA KOMENDA NAPRAWDĘ ZMIENIA ══
@@ -55,7 +55,7 @@
  * śladu audytu, bo nie ma uchwytu do bazy (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
-import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@uzaero/domain';
+import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@ninerdeck/domain';
 
 import {
   refuseCapacity,
@@ -132,7 +132,11 @@ interface FieldDiff {
   to: unknown;
 }
 
-/** Pola konfiguracji, które w ogóle podlegają zmianie - jedna lista dla diffa i patcha. */
+/**
+ * Pola konfiguracji, które w ogóle podlegają zmianie - jedna lista dla diffa i patcha.
+ * `orgId` celowo poza listą: maszyna nie zmienia klubu przez `PATCH` (sprzedaż do drugiego
+ * klubu to NOWY wiersz z własną historią, wielofirmowość §3.6).
+ */
 const FIELDS = [
   'reg',
   'type',
@@ -185,10 +189,16 @@ export class AdminFleetCommands {
         const initial = refuseInitialState(input);
         if (initial != null) throw new Refused(initial);
 
-        const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: null });
+        // Maszyna należy do klubu administratora, który ją zakłada (wielofirmowość §3.5);
+        // rejestracja jest jedyna W TYM klubie, nie na serwerze.
+        const clash = await this.fleet.conflict(tx, {
+          orgId: actor.orgId,
+          reg: input.reg,
+          exceptId: null,
+        });
         if (clash != null) throw new Conflict();
 
-        const created: AdminAircraft = { id, ...input };
+        const created: AdminAircraft = { id, orgId: actor.orgId, ...input };
         await this.fleet.insert(tx, created);
 
         return {
@@ -244,7 +254,11 @@ export class AdminFleetCommands {
         // przestaje być dowodem. Ta sama rola, co `lockAdminPopulation` przy kontach.
         await this.fleet.lockAircraft(tx, id);
 
-        const before = await this.fleet.byId(tx, id);
+        // Maszyna cudzego klubu jest dla tego administratora NIEISTNIEJĄCA (wielofirmowość):
+        // 404, nie 403 - potwierdzenie „jest, ale nie twoja" byłoby odpowiedzią na pytanie,
+        // którego pytający nie ma prawa zadać. Port pyta o jednostkę W KLUBIE, więc `null`
+        // załatwia oba przypadki naraz.
+        const before = await this.fleet.byId(tx, actor.orgId, id);
         if (before == null) throw new AircraftNotFound();
 
         const changes = diffOf(before, input);
@@ -294,17 +308,21 @@ export class AdminFleetCommands {
           // telefon otwierający dzień blokuje sesję, nie samolot.
           const refusal = refuseDisable({
             nextStatus: input.serviceStatus,
-            openSessions: await this.fleet.openSessions(tx, id),
+            openSessions: await this.fleet.openSessions(tx, actor.orgId, id),
           });
           if (refusal != null) throw new Refused(refusal);
         }
 
         if (input.reg !== undefined) {
-          const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: id });
+          const clash = await this.fleet.conflict(tx, {
+            orgId: before.orgId,
+            reg: input.reg,
+            exceptId: id,
+          });
           if (clash != null) throw new Conflict();
         }
 
-        await this.fleet.update(tx, id, input);
+        await this.fleet.update(tx, actor.orgId, id, input);
         const after: AdminAircraft = { ...before, ...stripUndefined(input) };
 
         return {
@@ -358,16 +376,16 @@ export class AdminFleetCommands {
       const aircraft = await this.write.run(actor, async (tx) => {
         await this.fleet.lockAircraft(tx, id);
 
-        const before = await this.fleet.byId(tx, id);
+        const before = await this.fleet.byId(tx, actor.orgId, id);
         if (before == null) throw new AircraftNotFound();
 
         const refusal = refuseDeleteAircraft({
           inService: before.serviceStatus !== 'disabled',
-          references: await this.fleet.references(tx, id),
+          references: await this.fleet.references(tx, actor.orgId, id),
         });
         if (refusal != null) throw new Refused(refusal);
 
-        await this.fleet.delete(tx, id);
+        await this.fleet.delete(tx, actor.orgId, id);
 
         return {
           result: before,

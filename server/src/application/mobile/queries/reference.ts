@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - zapytanie `GET /reference` (§4.6, §4.8).
+ * Ninerdeck (serwer) - zapytanie `GET /reference` (§4.6, §4.8).
  *
  * Strona ODCZYTU: migawka floty i pilotów + stan claim/przekazanie z projekcji sesji.
  * To domknięcie zaległości z audytu - cache referencyjny telefonu (§5.2) ma kolumny
@@ -12,7 +12,7 @@
  * świeżo policzoną normę (przeliczenie z panelu nie rusza ani floty, ani sesji).
  */
 
-import type { ConsumptionNorm, Event, ReferenceAircraft } from '@uzaero/domain';
+import type { ConsumptionNorm, Event, ReferenceAircraft } from '@ninerdeck/domain';
 
 import {
   activeClaim,
@@ -48,22 +48,26 @@ export class ReferenceQueries {
     private readonly readings: AircraftReadingsPort,
   ) {}
 
-  async get(): Promise<ReferenceView> {
-    const snapshot = await this.reference.snapshot();
+  /** Migawka KLUBU z tokenu (wielofirmowość §7.1): flota, członkowie, przekazania. */
+  async get(orgId: string): Promise<ReferenceView> {
+    const snapshot = await this.reference.snapshot(orgId);
 
     // Sesje per samolot - jednym przebiegiem, nie zapytaniem per maszyna.
     const byAircraft = new Map<string, SessionRow[]>();
     for (const aircraft of snapshot.aircraft) {
-      byAircraft.set(aircraft.id, await this.sessions.listByAircraft(this.db, aircraft.id));
+      byAircraft.set(
+        aircraft.id,
+        await this.sessions.listByAircraft(this.db, orgId, aircraft.id),
+      );
     }
 
     // Normy CAŁEJ floty jednym zapytaniem - telefon i tak pobiera całą listę samolotów,
     // a pytanie per maszyna byłoby N+1 na ścieżce odpytywanej co kwadrans.
-    const norms: Map<string, ConsumptionNorm> = await this.norms.all(this.db);
+    const norms: Map<string, ConsumptionNorm> = await this.norms.all(this.db, orgId);
 
     // Odczyty wpisane ręką administratora (issue #81) - całej floty jednym zapytaniem,
     // jak normy. Konkurują ze zdaniem w łańcuchu MH; rozstrzyga `pickHandover`.
-    const overrides = await this.readings.latestAll(this.db);
+    const overrides = await this.readings.latestAll(this.db, orgId);
 
     // Stan początkowy z panelu (issue #66) wchodzi TYLKO wtedy, gdy maszyna nie ma
     // ani jednej zdanej sesji - rozstrzyga to `pickHandover`, nie ten wiersz.
@@ -86,7 +90,9 @@ export class ReferenceQueries {
       .map((pick) => pick?.sessionUuid ?? null)
       .filter((uuid): uuid is string => uuid != null);
     const streams: Map<string, Event[]> =
-      baseUuids.length > 0 ? await this.events.sessionStreams(this.db, baseUuids) : new Map();
+      baseUuids.length > 0
+        ? await this.events.sessionStreams(this.db, orgId, baseUuids)
+        : new Map();
 
     const aircraft: ReferenceAircraft[] = snapshot.aircraft.map((a) => {
       const sessions = byAircraft.get(a.id) ?? [];
@@ -115,14 +121,16 @@ export class ReferenceQueries {
 
     const refStamp = snapshot.updatedAt?.getTime() ?? 0;
     const sessStamp = sessionsStamp([...byAircraft.values()].flat());
-    const normStamp = (await this.norms.latestComputedAt(this.db))?.getTime() ?? 0;
+    const normStamp = (await this.norms.latestComputedAt(this.db, orgId))?.getTime() ?? 0;
     // Wpis administratora zmienia przekazanie, więc musi zmienić ETag - inaczej 304
     // zamrażałoby na telefonach odczyty sprzed poprawki (issue #81).
-    const readingStamp = (await this.readings.latestAt(this.db))?.getTime() ?? 0;
+    const readingStamp = (await this.readings.latestAt(this.db, orgId))?.getTime() ?? 0;
 
+    // Klub w ETagu, bo ten sam telefon po przełączeniu klubu (epik F) pyta o INNĄ
+    // migawkę - znacznik bez klubu mógłby przez przypadek zrównać dwie odpowiedzi.
     return {
       snapshot: { ...snapshot, aircraft },
-      etag: `W/"ref-${refStamp}-${sessStamp}-${normStamp}-${readingStamp}"`,
+      etag: `W/"ref-${orgId}-${refStamp}-${sessStamp}-${normStamp}-${readingStamp}"`,
     };
   }
 }

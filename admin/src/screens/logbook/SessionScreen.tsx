@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 3 - jedna operacja (`#/dziennik/SP-KLM/<uuid>`).
  *
  * ══ PEŁNA STRONA, NIE SZUFLADA ══
  * Szuflady panelu 2.0 (konto, samolot) są formularzami JEDNEGO rekordu; tutaj treścią
@@ -11,7 +11,7 @@
  * wklejony komuś, kto poziomu 2 nigdy nie widział.
  */
 
-import { dateUtcShort } from '@uzaero/format';
+import { dateUtcShort } from '@ninerdeck/format';
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
@@ -22,11 +22,11 @@ import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
 import { useSession } from '../../queries/useSession';
 import {
   Banner,
+  Breadcrumbs,
   Button,
   Card,
   EmptyState,
   Field,
-  LinkButton,
   Loadable,
   OptionButton,
   PageHead,
@@ -48,7 +48,8 @@ import { trackMarkers } from './trackMarkers';
 export function SessionScreen() {
   const { reg = '', uuid } = useParams();
   const [params] = useSearchParams();
-  const back = `/dziennik/${reg}?od=${params.get('od') ?? ''}&do=${params.get('do') ?? ''}`;
+  const range = `?od=${params.get('od') ?? ''}&do=${params.get('do') ?? ''}`;
+  const back = `/dziennik/${reg}${range}`;
 
   const detail = useSessionDetail(uuid);
   const session = detail.data?.session;
@@ -78,22 +79,30 @@ export function SessionScreen() {
 
   return (
     <>
+      {/* OKRUSZKI (styl lekki, issue #107) w miejsce przycisku „← Dziennik SP-AXA":
+          trzy poziomy dziennika czyta się jako ścieżkę; oba linki niosą zakres dat,
+          z którego się przyszło. Ostatni człon - sygnatura - jest bieżącą stroną. */}
+      <Breadcrumbs
+        items={[
+          { label: 'Dziennik', to: `/dziennik${range}` },
+          { label: reg.toUpperCase(), to: back },
+          { label: identity === '' ? '…' : identity },
+        ]}
+      />
+
       <PageHead
         title={reg.toUpperCase()}
         sub={session == null ? undefined : `${identity} · silnik ${engine}`}
         actions={
           <>
-            {session?.manualEntry === true ? <Pill tone="dim">ręcznie</Pill> : null}
-            {session?.status === 'voided' ? <Pill tone="red">unieważniona</Pill> : null}
-            {session?.status === 'active' ? <Pill tone="amber">w toku</Pill> : null}
+            {session?.manualEntry === true ? <Pill tone="dim">Ręcznie</Pill> : null}
+            {session?.status === 'voided' ? <Pill tone="red">Unieważniona</Pill> : null}
+            {session?.status === 'active' ? <Pill tone="amber">W toku</Pill> : null}
             {/* Zakończenie administracyjne (issue #81) - stan operacji, nie ostrzeżenie
                 o danych: kreski w odczytach końcowych mają swój powód i on tu stoi. */}
             {session?.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
-              <Pill tone="amber">zakończona przez administratora</Pill>
+              <Pill tone="amber">Zakończona przez administratora</Pill>
             ) : null}
-            <LinkButton to={back} variant="ghost">
-              ← Dziennik {reg.toUpperCase()}
-            </LinkButton>
           </>
         }
       />

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysyłka śladu kalibracyjnego (faza 5).
+ * Ninerdeck - wysyłka śladu kalibracyjnego (faza 5).
  *
  * Osobny, NISKOPRIORYTETOWY tor obok outboxa zdarzeń: pętla okazji woła go na końcu
  * przebiegu (po zdarzeniach i cache referencyjnym), jedna paczka na okazję - ślad

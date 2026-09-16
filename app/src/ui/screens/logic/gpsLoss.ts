@@ -1,5 +1,5 @@
 /**
- * UZ Aero - napisy stanu „GPS: brak sygnału" (mockup `design/05g-cockpit-no-gps.html`).
+ * Ninerdeck - napisy stanu „GPS: brak sygnału" (mockup `design/05g-cockpit-no-gps.html`).
  *
  * Czysta logika prezentacji banera-przyrządu i adnotacji siatki GPS - osobno od
  * ekranu z tego samego powodu co `statsDay.ts`: to jedyne nietrywialne zdania tego
@@ -50,7 +50,7 @@ export function gpsAcquiringText(): string {
 export function gpsPermissionText(): string {
   return (
     'Aplikacja nie ma uprawnienia lokalizacji. Nadaj je w ustawieniach systemu ' +
-    '(Aplikacje → UZ Aero → Uprawnienia → Lokalizacja) i wróć do kokpitu.'
+    '(Aplikacje → Ninerdeck → Uprawnienia → Lokalizacja) i wróć do kokpitu.'
   );
 }
 

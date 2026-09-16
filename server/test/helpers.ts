@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - wspólny zestaw testowy: PGlite + prawdziwe warstwy.
+ * Ninerdeck (serwer) - wspólny zestaw testowy: PGlite + prawdziwe warstwy.
  *
  * PGlite to Postgres skompilowany do WASM, działający W PROCESIE testu - ten sam trik,
  * co `node:sqlite` w aplikacji: prawdziwy silnik (parser, planner, JSONB), zero Dockera
@@ -9,7 +9,7 @@
  * Zegar jest sterowany ręcznie - bez tego testy wygasania tokenów musiałyby spać.
  */
 
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -32,14 +32,15 @@ import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from '../src/application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from '../src/application/admin/commands/bugReports.ts';
-import { AdminRegistrationCommands } from '../src/application/admin/commands/registrations.ts';
 import { PgAircraftReadingsRepo } from '../src/infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { PgBugReportsRepo } from '../src/infrastructure/pg/common/bugReportsRepo.ts';
 import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
+import { AdminClubCodeCommands } from '../src/application/admin/commands/clubCode.ts';
+import { AdminMembershipCommands } from '../src/application/admin/commands/memberships.ts';
+import { PlatformOrganizationCommands } from '../src/application/admin/commands/organizations.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from '../src/application/admin/queries/bugReports.ts';
-import { AdminRegistrationQueries } from '../src/application/admin/queries/registrations.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from '../src/application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from '../src/application/admin/queries/events.ts';
@@ -48,6 +49,9 @@ import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
+import { AdminClubCodeQueries } from '../src/application/admin/queries/clubCode.ts';
+import { AdminMembershipQueries } from '../src/application/admin/queries/memberships.ts';
+import { PlatformOrganizationQueries } from '../src/application/admin/queries/organizations.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
@@ -58,6 +62,7 @@ import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
+import { TraceCommands } from '../src/application/mobile/commands/traces.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
 import { MySessionTrackQueries } from '../src/application/mobile/queries/sessionTrack.ts';
@@ -77,7 +82,11 @@ import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
-import { PgAdminRegistrationsRepo } from '../src/infrastructure/pg/admin/registrationsRepo.ts';
+import { PgClubCodeRepo } from '../src/infrastructure/pg/admin/clubCodeRepo.ts';
+import { PgOrganizationsRepo } from '../src/infrastructure/pg/admin/organizationsRepo.ts';
+import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
+import { JOIN_WINDOW_MS, JoinCommands } from '../src/application/mobile/commands/join.ts';
+import { PgClubJoinRepo } from '../src/infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
@@ -120,14 +129,14 @@ export class TestClock implements Clock {
  * Stoi tu, a nie w każdym teście z osobna, żeby zmiana nazwy nagłówka była jedną
  * poprawką, a nie polowaniem po plikach.
  */
-export const ADMIN_CSRF_HEADERS = { 'x-uz-admin': '1' } as const;
+export const ADMIN_CSRF_HEADERS = { 'x-ninerdeck-admin': '1' } as const;
 
 /** Identyfikator klienta Google WEB w testach - panel pobiera go z `GET /admin/api/auth/google-client`. */
 export const TEST_GOOGLE_WEB_CLIENT_ID = 'test-web-client.apps.googleusercontent.com';
 
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 /** Celowo sztuczny host - nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
-export const TEST_BASE_URL = 'http://uzaero.test';
+export const TEST_BASE_URL = 'http://ninerdeck.test';
 
 /**
  * `audit` podmienia się z jednego powodu: żeby WYMUSIĆ awarię zapisu śladu i pokazać,
@@ -144,6 +153,13 @@ export async function testHarness(
     sheets?: SheetsPort;
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
+    /**
+     * Losowe bajty KODU KLUBU (issue #100, D2) - podmieniane tam, gdzie test musi znać
+     * wygenerowany kod co do znaku (rotacja, zderzenie z kodem innego klubu). Bez
+     * podmiany jedzie PRAWDZIWY generator, jak w produkcji: kod ma być nieprzewidywalny,
+     * a test bez podmiany sprawdza KSZTAŁT kodu, nie jego wartość.
+     */
+    clubCodeBytes?: (count: number) => Uint8Array;
     /**
      * Podmiana katalogu buildu panelu - wyłącznie `adminStatic.test.ts`. Bez podmiany
      * rejestracja (bezwarunkowa od 2026-08-26) wskazuje realne `admin/dist`, którego
@@ -203,7 +219,7 @@ export async function testHarness(
 
   // Zrzut śladu (faza 5) - prawdziwy adapter plikowy na katalogu tymczasowym;
   // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
-  const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
+  const tracesDir = mkdtempSync(join(tmpdir(), 'ninerdeck-traces-'));
   // Osie faz pionowych czytają ślady z TEGO SAMEGO katalogu, co ich zapis - pliki
   // poboczne lądują obok nagrań i znikają razem z katalogiem tymczasowym testu.
   const phaseTimeline = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
@@ -215,6 +231,10 @@ export async function testHarness(
   // Konta mają DWA adaptery, jak w produkcji: logowanie czyta `PgPilotsRepo` (hash),
   // panel pisze `PgAdminPilotsRepo` (transakcja śladu audytu).
   const adminPilotsRepo = new PgAdminPilotsRepo();
+  // Kod klubu i kluby mają własne adaptery `organizations`, jak w produkcyjnym
+  // composition root: pierwszy należy do panelu klubu, drugi do platformy.
+  const clubCodeRepo = new PgClubCodeRepo();
+  const organizationsRepo = new PgOrganizationsRepo();
   // Flota ma własny adapter obok `PgReferenceRepo` i `PgAircraftConfigRepo` - jak
   // w produkcyjnym composition root.
   const adminFleetRepo = new PgAdminFleetRepo();
@@ -228,9 +248,6 @@ export async function testHarness(
   // Odczyty administratora (issue #81) - jeden adapter dla telefonu i panelu, jak w produkcji.
   const aircraftReadings = new PgAircraftReadingsRepo();
   const bugReportsRepo = new PgBugReportsRepo();
-  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
-  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
-  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
   const adminFleetQueries = new AdminFleetQueries(
     db,
     adminFleetRepo,
@@ -254,6 +271,15 @@ export async function testHarness(
       identityProvider,
       tokens,
       clock,
+      randomUUID,
+    ),
+    // Dołączanie kodem klubu - prawdziwy adapter i licznik prób na sterowanym zegarze,
+    // więc test okna ograniczenia tempa przesuwa czas jawnie, bez spania.
+    join: new JoinCommands(
+      pilots,
+      new PgClubJoinRepo(db),
+      new AttemptLimiter(clock, JOIN_WINDOW_MS),
+      clock,
     ),
     reference: new ReferenceQueries(
       new PgReferenceRepo(db),
@@ -268,9 +294,10 @@ export async function testHarness(
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
     myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
-    state: new StateQueries(db, events, sessions, flags, exportLog),
+    state: new StateQueries(db, events, sessions, flags, exportLog, aircraftConfig),
     sheets: new SheetQueries(pgSheets),
-    traces: new FsTraceSink(tracesDir),
+    // Ślad przez komendę (issue #99): jak w produkcji, z tą samą projekcją sesji.
+    traces: new TraceCommands(db, sessions, new FsTraceSink(tracesDir)),
     // Droga POWROTNA nagrania (issue #47) - ten sam katalog co zapis, więc test wysyła
     // ślad przez `POST /traces` i odbiera go przez `GET /me/sessions/:uuid/track`,
     // czyli przechodzi dokładnie drogę telefonu po skasowaniu lokalnej kopii.
@@ -311,6 +338,26 @@ export async function testHarness(
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+    // Kolejka zgłoszeń kodem klubu (issue #100) - ten sam adapter członkostw, co lista.
+    adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
+    adminMembershipQueries: new AdminMembershipQueries(db, adminPilotsRepo),
+    adminClubCode: new AdminClubCodeCommands(
+      auditedWrite,
+      clubCodeRepo,
+      options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
+    // Moduł Organizacje - `randomUUID` i losowe bajty jak w produkcji; test czyta
+    // identyfikator klubu z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd.
+    platformOrganizations: new PlatformOrganizationCommands(
+      auditedWrite,
+      organizationsRepo,
+      randomUUID,
+      options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
     // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
@@ -415,16 +462,6 @@ export async function testHarness(
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
-    // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
-    // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
-    adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
-    adminRegistrations: new AdminRegistrationCommands(
-      auditedWrite,
-      adminRegistrationsRepo,
-      adminPilotsRepo,
-      randomUUID,
-      clock,
-    ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

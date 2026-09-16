@@ -1,5 +1,5 @@
 /**
- * UZ Aero - projekcja ŚLADU LOTU: surowe wpisy + okno czasowe lotu → trasa do narysowania.
+ * Ninerdeck - projekcja ŚLADU LOTU: surowe wpisy + okno czasowe lotu → trasa do narysowania.
  *
  * KLUCZOWA DECYZJA (2026-08-03): lot i ślad wiąże CZAS, nie żaden nowy identyfikator.
  * `Flight` z `projections/session.ts` niesie `takeoffAt` i `landingAt`, a każdy wpis

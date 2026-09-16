@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - liczenie i zapis NORMY ZUŻYCIA samolotu.
+ * Ninerdeck (serwer) - liczenie i zapis NORMY ZUŻYCIA samolotu.
  *
  * ══ DLACZEGO W `common/`, A NIE W `admin/` ══
  * Normę produkuje analityka panelu, ale konsumuje ją aplikacja pilota (`GET /reference`,
@@ -25,7 +25,7 @@ import {
   type Event,
   type FuelInterval,
   type MhEquation,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type {
   ConsumptionNormPort,
@@ -66,14 +66,16 @@ export interface ConsumptionNormPorts {
  */
 export async function recomputeConsumptionNorm(
   db: Queryable,
+  /** Klub maszyny - materializacja normy niesie go jak każda tabela klubu. */
+  orgId: string,
   aircraftId: string,
   ports: ConsumptionNormPorts,
   now: Date,
 ): Promise<ConsumptionNorm | null> {
   const range = { fromMs: now.getTime() - NORM_WINDOW_DAYS * DAY_MS, toMs: now.getTime() };
 
-  const sessionUuids = await ports.norms.closedSessionUuids(db, aircraftId, range);
-  const streams = await ports.events.sessionStreams(db, sessionUuids);
+  const sessionUuids = await ports.norms.closedSessionUuids(db, orgId, aircraftId, range);
+  const streams = await ports.events.sessionStreams(db, orgId, sessionUuids);
 
   const intervals: FuelInterval[] = [];
   // Równania licznika - jedno na ZDANĄ sesję (`MhEquation`). Do issue #38 były tu
@@ -100,6 +102,6 @@ export async function recomputeConsumptionNorm(
     now.getTime(),
   );
 
-  await ports.norms.save(db, aircraftId, NORM_WINDOW_DAYS, norm, now);
+  await ports.norms.save(db, orgId, aircraftId, NORM_WINDOW_DAYS, norm, now);
   return norm;
 }

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
+ * Ninerdeck (serwer) - adapter listy dni lotnych panelu (`SessionsAdminPort`, `A02`).
  *
  * Osobny adapter od `pg/sessionsProjection.ts` z tego samego powodu, co osobny port:
  * tamten obsługuje ZAPIS projekcji w gorącej transakcji ingestu (`upsert` + odczyty
@@ -22,7 +22,7 @@
  * może, bo ingest widzi JEDNĄ operację, a numer zależy od pozostałych operacji doby.
  */
 
-import { isFlagType, type FlagType, type MhFormat } from '@uzaero/domain';
+import { isFlagType, type FlagType, type MhFormat } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {
@@ -87,7 +87,7 @@ const SELECT = `
          -- projekcji ze strumienia. Nie da się jej też wypełnić przy zapisie, bo numer
          -- jest miejscem wiersza wśród SĄSIADÓW, a ingest widzi jedną operację.
          --
-         -- Reguła musi zgadzać się co do znaku z operationIndexes (@uzaero/domain),
+         -- Reguła musi zgadzać się co do znaku z operationIndexes (@ninerdeck/domain),
          -- bo telefon liczy ten sam numer u siebie, offline. Stąd te same warunki:
          -- ten sam pilot, bez unieważnionych, wyłącznie operacje z KOTWICĄ
          -- (issue #75: uruchomienie silnika, a bez biegu - przejęcie zapisu zdanego
@@ -103,6 +103,9 @@ const SELECT = `
            SELECT COUNT(*)
              FROM sessions x
             WHERE x.pic_id = s.pic_id
+              -- Numer jest jednoznaczny W KLUBIE (wielofirmowość §3.6): ten sam pilot
+              -- w dwóch klubach jednej doby ma dwa niezależne numerowania.
+              AND x.org_id = s.org_id
               AND x.status <> 'voided'
               AND ${anchorSql('x')} IS NOT NULL
               AND ${anchorSql('x')} / 86400000 = ${anchorSql('s')} / 86400000
@@ -114,21 +117,32 @@ const SELECT = `
          a.reg                AS reg,
          a.type               AS aircraft_type,
          a.mh_format          AS mh_format,
+         -- Kod pilota Z CZŁONKOSTWA w klubie TEJ operacji (wielofirmowość): osoba jest
+         -- jedna, kod należy do klubu. Nazwisko zostaje własnością osoby.
          p.code               AS pic_code,
-         p.name               AS pic_name,
+         pp.name              AS pic_name,
          d.code               AS dual_code,
-         d.name               AS dual_name,
+         dp.name              AS dual_name,
+         -- Klub POWTARZA SIĘ w każdym podzapytaniu i w każdym złączeniu (issue #99 C4).
+         -- Uuid operacji jest dziś kluczem głównym, więc formalnie wystarczyłby on sam -
+         -- ale wtedy izolacja klubów wisi na globalnej jedyności identyfikatora
+         -- nadawanego przez TELEFON. Jawny predykat kosztuje jedną linijkę i nie
+         -- zależy od tego, kto nadaje uuidy.
          (SELECT array_agg(f.type ORDER BY f.id)
             FROM flags f
-           WHERE f.status = 'open'
+           WHERE f.org_id = s.org_id
+             AND f.status = 'open'
              AND s.session_uuid = ANY (f.session_uuids))          AS open_flags,
          (SELECT MAX(e.revision)
             FROM export_log e
-           WHERE e.session_uuid = s.session_uuid)                 AS export_revision
+           WHERE e.org_id = s.org_id
+             AND e.session_uuid = s.session_uuid)                 AS export_revision
     FROM sessions s
-    LEFT JOIN aircraft a ON a.id = s.aircraft_id
-    LEFT JOIN pilots   p ON p.id = s.pic_id
-    LEFT JOIN pilots   d ON d.id = s.dual_id`;
+    LEFT JOIN aircraft    a  ON a.id = s.aircraft_id AND a.org_id = s.org_id
+    LEFT JOIN pilots      pp ON pp.id = s.pic_id
+    LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
+    LEFT JOIN pilots      dp ON dp.id = s.dual_id
+    LEFT JOIN memberships d  ON d.pilot_id = s.dual_id AND d.org_id = s.org_id`;
 
 const toMhFormat = (value: string | null): MhFormat | null =>
   value === 'decimal' || value === 'hhmm' ? value : null;
@@ -165,6 +179,7 @@ const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
 export class PgAdminSessionsRepo implements SessionsAdminPort {
   async list(
     db: Queryable,
+    orgId: string,
     filter: SessionListFilter,
   ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null> {
     const shape = shapeOf(filter.direction);
@@ -172,11 +187,14 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     if (filter.cursor != null && cursor == null) return null;
 
     // Warunki BEZ kursora - te same jadą do `COUNT(*)`, żeby licznik „pokazano 50
-    // z ~1 291" opisywał cały wynik filtra, a nie resztę po kursorze.
+    // z ~1 291" opisywał cały wynik filtra, a nie resztę po kursorze. Klub stoi
+    // w obu jako PIERWSZY warunek - nie jest polem filtra, którego mogłoby nie być.
     const conditions = new SqlFilter();
+    conditions.add('s.org_id = ?', orgId);
     this.applyFilters(conditions, filter);
 
     const page = new SqlFilter();
+    page.add('s.org_id = ?', orgId);
     this.applyFilters(page, filter);
     keysetPredicate(KEY, cursor, page, shape);
 
@@ -207,10 +225,11 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0) };
   }
 
-  async byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null> {
-    const { rows } = await db.query<JoinedDbRow>(`${SELECT} WHERE s.session_uuid = $1`, [
-      sessionUuid,
-    ]);
+  async byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null> {
+    const { rows } = await db.query<JoinedDbRow>(
+      `${SELECT} WHERE s.org_id = $1 AND s.session_uuid = $2`,
+      [orgId, sessionUuid],
+    );
     return rows[0] == null ? null : toJoin(rows[0]);
   }
 
@@ -241,15 +260,20 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
       filter.add('(s.pic_id = ? OR s.dual_id = ?)', f.pilotId, f.pilotId);
     }
 
+    // Oba podzapytania niosą klub, choć zewnętrzne `WHERE` zawęziło już `s` do jednego
+    // (issue #99 C4): `NOT EXISTS` odwraca sens: bez predykatu cudza flaga na operacji
+    // o tym samym uuidzie wypychałaby WŁASNĄ operację z listy „bez uwag".
     if (f.flagged !== undefined) {
       const exists = `EXISTS (SELECT 1 FROM flags f
-                               WHERE f.status = 'open'
+                               WHERE f.org_id = s.org_id
+                                 AND f.status = 'open'
                                  AND s.session_uuid = ANY (f.session_uuids))`;
       filter.add(f.flagged ? exists : `NOT ${exists}`);
     }
 
     if (f.exported !== undefined) {
-      const exists = `EXISTS (SELECT 1 FROM export_log e WHERE e.session_uuid = s.session_uuid)`;
+      const exists = `EXISTS (SELECT 1 FROM export_log e
+                               WHERE e.org_id = s.org_id AND e.session_uuid = s.session_uuid)`;
       filter.add(f.exported ? exists : `NOT ${exists}`);
     }
   }

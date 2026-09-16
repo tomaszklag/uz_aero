@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
+ * Ninerdeck - panel 2.0: KOPERTY ODPOWIEDZI `/admin/api/*` jako własne typy.
  *
  * Dlaczego własne, a nie importowane z serwera: `server/` to workspace z `type: module`,
  * rozszerzeniami `.ts` w importach, typami Fastify i `pg`. Import stamtąd wciągnąłby
@@ -7,7 +7,7 @@
  * warstw serwera. **Nigdy nie importujemy z `server/src`** - a kształty odpowiedzi
  * po stronie serwera przybijają jego własne testy tras.
  *
- * Byty domenowe biorzemy jako TYPY z `@uzaero/domain` (`import type`, nigdy wartości).
+ * Byty domenowe biorzemy jako TYPY z `@ninerdeck/domain` (`import type`, nigdy wartości).
  *
  * == TEN PLIK OPISUJE TO, CZEGO PANEL 2.0 UZYWA ==
  * Serwer przysyła w tych samych kopertach WIĘCEJ, niż jest tu wymienione: przy kontach
@@ -25,7 +25,7 @@ import type {
   ServiceStatus,
   SessionState,
   SessionTrackPayload,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
@@ -58,25 +58,68 @@ export type Capability =
   | 'thresholds.manage'
   | 'audit.read'
   | 'maintenance.run'
-  | 'bugs.triage';
+  | 'bugs.triage'
+  /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
+  | 'platform.manage';
 
-/** Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji. */
+/**
+ * Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji.
+ *
+ * Od wielofirmowości `code` i `role` są kodem i rolą Z CZŁONKOSTWA w klubie sesji
+ * (`PanelSessionDto.org`). Sesja superadministratora (epik E) niesie `code: null`
+ * i rolę platformową - panel 2.0 takiej sesji jeszcze nie rysuje.
+ */
 export interface PanelPilotDto {
   id: string;
-  code: string;
+  code: string | null;
   name: string;
+  role: PilotRole | 'superadmin';
+}
+
+/** Klub sesji panelu (wielofirmowość §8.2) - nazwa do kolumny bocznej. */
+export interface OrganizationRefDto {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+/**
+ * Klub, do którego wolno PRZEŁĄCZYĆ tę sesję (mockup `00a-wybor-klubu`; issue #101, E2).
+ *
+ * Kod i rola opisują drugą linię karty wyboru („administrator · Twój kod TMK") i tylko
+ * ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla tego klubu.
+ */
+export interface PanelScopeClubDto {
+  org: OrganizationRefDto;
+  code: string;
   role: PilotRole;
 }
 
 /**
- * Odpowiedź `POST /admin/api/auth/login` i `GET /admin/api/me` - TEN SAM kształt.
+ * Zakresy sesji: kluby z rolą panelu i - osobno - platforma.
+ *
+ * Jedzie w KAŻDEJ odpowiedzi o sesji, bo panel pyta o to przy każdym wczytaniu: czy
+ * kafel klubu w kolumnie bocznej jest linkiem (jest co przełączyć) i czy po zalogowaniu
+ * iść na ekran wyboru. Osobna trasa znaczyłaby drugie żądanie przy każdym starcie.
+ */
+export interface PanelScopesDto {
+  clubs: PanelScopeClubDto[];
+  platform: boolean;
+}
+
+/**
+ * Odpowiedź `POST /admin/api/auth/login`, `POST /admin/api/auth/switch`
+ * i `GET /admin/api/me` - TEN SAM kształt.
  *
  * Tokenu tu nie ma i być nie może: sesja jedzie ciasteczkiem `HttpOnly`, którego
  * JavaScript panelu nie widzi. To nie jest niedopatrzenie kontraktu, tylko jego treść.
  */
 export interface PanelSessionDto {
   pilot: PanelPilotDto;
+  /** Klub sesji; `null` wyłącznie w sesji superadministratora (`platform.manage`). */
+  org: OrganizationRefDto | null;
   capabilities: Capability[];
+  scopes: PanelScopesDto;
 }
 
 // -- odmowy ---------------------------------------------------------------------
@@ -118,10 +161,18 @@ export interface ApiErrorDto {
   error: string;
   /** 403 z bramy zdolności: KTOREJ zdolności zabrakło. */
   required?: Capability;
-  /** 409 `conflict`: KTORE pole jest zajęte - bez tego formularz nie wie, co poprawić. */
-  field?: 'code' | 'email' | 'reg';
-  /** 409 `already_decided` (zgłoszenie rejestracyjne): JAKĄ decyzję już podjęto. */
-  status?: string;
+  /**
+   * 409 `conflict`: KTORE pole jest zajęte - bez tego formularz nie wie, co poprawić.
+   * `slug` dochodzi z modułem Organizacje (adres klubu jest jedyny na SERWERZE, nie
+   * w klubie), `email` wskazuje tam osobę, która jest już administratorem tego klubu.
+   */
+  field?: 'code' | 'email' | 'reg' | 'slug';
+  /**
+   * 409 `wrong_status` (decyzja o członkostwie): W JAKIM STANIE jest zgłoszenie teraz.
+   * Administrator z otwartą szufladą nie wie, że drugi rozstrzygnął je minutę temu -
+   * „nie można" bez podania stanu wygląda jak awaria.
+   */
+  status?: MembershipStatusDto | string;
   /** 409 `refused`: DLACZEGO odmówiono. Odmowa bez powodu każe zgadywać, czy to awaria. */
   reason?: PilotRefusalDto | FleetRefusalDto;
   /**
@@ -178,44 +229,143 @@ export interface PilotChangeDto {
   pilot: PilotListItemDto;
 }
 
-// -- zgłoszenia rejestracyjne (logowanie Google) ---------------------------------
+// -- zgłoszenia kodem klubu: kolejka i decyzje (issue #101, E3) -----------------
 
 /**
- * Stan zgłoszenia. LUSTRO `RegistrationStatusWire` z kontraktu serwera
- * (`server/src/application/admin/contracts/registrations.ts`).
- */
-export type RegistrationStatusDto = 'pending' | 'linked' | 'rejected';
-
-/**
- * Jedno zgłoszenie - wiersz kolejki I treść karty w jednym kształcie.
+ * Stan członkostwa. LUSTRO `MEMBERSHIP_STATUSES` z `server/src/domain/memberships.ts`,
+ * przybite `test/mirrors.test.ts`.
  *
- * `email` i `name` pochodzą Z GOOGLE: to jest to, co administrator widzi przy decyzji.
- * Imię klubowe i kod nadaje dopiero zatwierdzenie; po nim `pilotCode` mówi, kim
- * ta osoba jest w klubie.
+ * Kolumna w bazie jest zwykłym `TEXT`-em z CHECK-iem, więc bez lustra stan dodany na
+ * serwerze wyciekłby na ekran klubu surowym napisem - dokładnie ten sam tryb awarii,
+ * przed którym broni lustro statusu zgłoszenia błędu.
  */
-export interface RegistrationDto {
-  provider: string;
-  /** `sub` od dostawcy - identyfikator w adresie trasy decyzji i w adresie karty. */
-  subject: string;
-  email: string;
+export type MembershipStatusDto = 'pending' | 'active' | 'disabled' | 'rejected';
+
+/**
+ * Jedno zgłoszenie w kolejce klubu (karta ZGŁOSZENIA na `piloci-lista`).
+ *
+ * Imię i adres pochodzą z konta GOOGLE: osoba założyła się sama przy pierwszym
+ * logowaniu, więc administrator czyta to, co podał dostawca. Kodu ani roli tu NIE MA -
+ * nadaje się je dopiero przy zatwierdzeniu (P3), i to jest cała różnica między
+ * kandydatem a wierszem listy członków.
+ */
+export interface MembershipRequestDto {
+  /** Identyfikator OSOBY - adres decyzji (`POST /memberships/:pilotId/approve`). */
+  pilotId: string;
   name: string;
-  status: RegistrationStatusDto;
-  /** Powód odrzucenia - pilot czyta go na ekranie `00d`, dlatego jest wymagany. */
-  rejectReason: string | null;
-  /** ISO 8601 UTC - pierwsze logowanie tym kontem Google. */
-  createdAt: string;
-  lastLoginAt: string | null;
-  decidedAt: string | null;
-  /** KOD administratora, który zdecydował; `null` = jeszcze bez decyzji. */
-  decidedBy: string | null;
-  pilotId: string | null;
-  pilotCode: string | null;
+  email: string | null;
+  /** ISO 8601 UTC - „czeka od" na karcie ZGŁOSZENIA. */
+  requestedAt: string;
 }
 
-export interface RegistrationPageDto {
-  items: RegistrationDto[];
-  /** Liczniki po CAŁEJ tabeli - także statusów, których filtr nie pokazuje. */
-  counts: Record<RegistrationStatusDto, number>;
+/**
+ * Kolejka bez licznika i bez kursora: `items.length` JEST liczbą w tytule karty
+ * („Zgłoszenia kodem klubu · 2"), a druga liczba w odpowiedzi mogłaby się z nią rozjechać.
+ */
+export interface MembershipQueueDto {
+  items: MembershipRequestDto[];
+}
+
+/** Stan członkostwa PO decyzji - odpowiedź odrzucenia i cofnięcia odrzucenia. */
+export interface MembershipDecisionDto {
+  pilotId: string;
+  status: MembershipStatusDto;
+  /** ISO 8601 UTC; `null` po cofnięciu odrzucenia - zgłoszenie znów czeka. */
+  decidedAt: string | null;
+  /** Powód, który pilot czyta na swoim telefonie; `null` poza stanem `rejected`. */
+  rejectReason: string | null;
+}
+
+/** Zatwierdzenie: kod pilota W TYM klubie i rola. Oba wymagane - aktywny ⟺ ma kod. */
+export interface MembershipApprovalBody {
+  code: string;
+  role: PilotRole;
+}
+
+// -- kod klubu: JEDYNA droga do klubu (issue #101, E3) --------------------------
+
+/**
+ * Kod klubu na karcie „Kod klubu" (mockup `piloci-kod-klubu`).
+ *
+ * `code: null` = dołączanie kodem WYŁĄCZONE; karta pokazuje wtedy kreski i „Wygeneruj
+ * kod". `formatted` jest zapisem kanonicznym `XXX-XXXX` - panel go NIE SKŁADA sam, bo
+ * to ta sama reguła, przez którą nazwę karty arkusza liczy wyłącznie serwer.
+ */
+export interface ClubCodeDto {
+  code: string | null;
+  formatted: string | null;
+  /** ISO 8601 UTC - „Obowiązuje od"; `null` razem z kodem. */
+  since: string | null;
+  /** Zgłoszenia złożone TYM kodem i czekające na decyzję - nie cała kolejka. */
+  pendingWithCode: number;
+}
+
+// -- organizacje: moduł PLATFORMY (issue #101, E1) ------------------------------
+
+/**
+ * Administrator klubu na liście platformy - odpowiedź na pytanie „do kogo dzwonić".
+ *
+ * `signedIn: false` = członkostwo `admin` istnieje, ale nikt się jeszcze tym adresem nie
+ * zalogował, więc tożsamość Google nie jest podpięta. To jedyny stan, w którym
+ * superadministrator ma coś do zrobienia - przypomnieć się.
+ */
+export interface OrganizationAdminDto {
+  pilotId: string;
+  name: string;
+  email: string | null;
+  /** Kod pilota W TYM klubie - z członkostwa, nie z osoby. */
+  code: string;
+  signedIn: boolean;
+}
+
+/**
+ * Wiersz listy klubów (mockup `organizacje-lista`).
+ *
+ * Z wnętrza klubu niesie SAME LICZBY i administratorów: „nic nie wycieka między klubami"
+ * obejmuje także tę listę (`docs/wielofirmowosc.md` §3.3).
+ */
+export interface OrganizationListItemDto {
+  id: string;
+  name: string;
+  /** Jedyny PUBLICZNY identyfikator klubu - adres kart arkusza, stały od założenia. */
+  slug: string;
+  active: boolean;
+  /** ISO 8601 UTC - „Założony". */
+  createdAt: string;
+  members: number;
+  aircraft: number;
+  admins: OrganizationAdminDto[];
+}
+
+/** Karta klubu (mockup `organizacje-klub`) - wiersz listy + KOD KLUBU DO ODCZYTU. */
+export interface OrganizationDetailDto extends OrganizationListItemDto {
+  joinCode: string | null;
+  joinCodeFormatted: string | null;
+  joinCodeSince: string | null;
+}
+
+/** Lista bez kursora: klubów na serwerze jest tyle, ile klubów - nie tyle, ile lotów. */
+export interface OrganizationPageDto {
+  items: OrganizationListItemDto[];
+  /** Liczniki chipów „Wszystkie"/„Aktywne" - po WSZYSTKICH klubach, nie po filtrze. */
+  counts: { total: number; active: number };
+}
+
+/** Odpowiedź założenia i zmiany klubu - karta, nie wiersz listy. */
+export interface OrganizationChangeDto {
+  organization: OrganizationDetailDto;
+}
+
+/**
+ * Założenie klubu: nazwa, adres i PIERWSZY administrator.
+ *
+ * Administrator jest polem WYMAGANYM, bo klub bez niego nie ma jak zacząć: kodem klubu
+ * nie miałby go kto zatwierdzić, a drugiej drogi do klubu nie ma.
+ */
+export interface OrganizationDraftBody {
+  name: string;
+  slug: string;
+  admin: { name: string; email: string; code: string };
 }
 
 // -- flota ----------------------------------------------------------------------
@@ -224,7 +374,7 @@ export interface RegistrationPageDto {
  * Jedna jednostka - wiersz `GET /admin/api/fleet`.
  *
  * `fuelToleranceL` LICZY SERWER i to jest treść tej trasy: próg flagi rozjazdu paliwa
- * to `max(10 L, 5% pojemności)`, a panelowi wolno importować z `@uzaero/domain` wyłącznie
+ * to `max(10 L, 5% pojemności)`, a panelowi wolno importować z `@ninerdeck/domain` wyłącznie
  * TYPY. Gdyby serwer nie podawał wyniku, panel musiałby trzymać drugą kopię reguły.
  */
 export interface AircraftListItemDto {
@@ -569,6 +719,12 @@ export interface BugReportDto {
   /** `null` = konta już nie ma; zgłoszenie zostaje, bo opisuje aplikację. */
   pilotCode: string | null;
   pilotName: string | null;
+  /**
+   * KLUB zgłoszenia (wielofirmowość, issue #99 C6). Kolejka jest jedna dla całego
+   * serwera - czyta ją superadministrator - a kod pilota jest jedyny W KLUBIE, nie na
+   * serwerze: bez tego pola `TMA` z dwóch klubów byłoby nieodróżnialne.
+   */
+  org: OrganizationRefDto;
   severity: BugSeverityDto | null;
   description: string;
   /** Czytelna etykieta miejsca („KOKPIT (04/05) · arkusz TANKOWANIE"). */

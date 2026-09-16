@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
+ * Ninerdeck - panel: sesja przeglądarkowa (`/admin/api/auth/*`, `/admin/api/me`).
  *
  * Jeden plik = jeden zasób = jeden prefiks trasy, tak jak `server/src/http/routes/`.
  * Warstwa `api/` nie zna Reacta i nie zna cache'u - zwraca obietnice, a co z nimi
@@ -29,6 +29,17 @@ export function login(input: LoginInput): Promise<PanelSessionDto> {
 
 export function logout(): Promise<null> {
   return apiPost<null>('/auth/logout');
+}
+
+/**
+ * Przełączenie zakresu sesji: `orgId` = klub, `null` = platforma (moduł Organizacje).
+ *
+ * Nowe ciasteczko, ten sam token Google w tle - „Zmień klub" NIE każe logować się od
+ * nowa. Klub, którego ta osoba nie ma, odpowiada 404: cudzy klub jest dla niej
+ * nieistniejący, a 403 potwierdzałoby, że taki klub jest (issue #99).
+ */
+export function switchScope(orgId: string | null): Promise<PanelSessionDto> {
+  return apiPost<PanelSessionDto>('/auth/switch', { orgId });
 }
 
 /**

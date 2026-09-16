@@ -1,5 +1,5 @@
 /**
- * UZ Aero - test LOGU KOKPITU (mockupy 04, 04B, 05).
+ * Ninerdeck - test LOGU KOKPITU (mockupy 04, 04B, 05).
  *
  * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot - jeśli pokaże złe czasy,
  * błąd nie objawi się niczym innym niż niepoprawnym wpisem w arkuszu na koniec miesiąca.

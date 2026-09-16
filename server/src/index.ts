@@ -1,12 +1,12 @@
 /**
- * UZ Aero (serwer) - composition root.
+ * Ninerdeck (serwer) - composition root.
  *
  * Jedyne miejsce, które zna WSZYSTKIE konkrety naraz: config z env, pulę Postgresa,
  * adaptery i złożenie ich w komendy/zapytania. Reszta kodu dostaje zależności
  * konstruktorem - dokładnie jak `bootstrap/` w aplikacji mobilnej.
  */
 
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -19,12 +19,16 @@ import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminAircraftReadingCommands } from './application/admin/commands/aircraftReadings.ts';
 import { AdminBugReportCommands } from './application/admin/commands/bugReports.ts';
-import { AdminRegistrationCommands } from './application/admin/commands/registrations.ts';
+import { AdminClubCodeCommands } from './application/admin/commands/clubCode.ts';
+import { AdminMembershipCommands } from './application/admin/commands/memberships.ts';
+import { PlatformOrganizationCommands } from './application/admin/commands/organizations.ts';
 import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
-import { AdminRegistrationQueries } from './application/admin/queries/registrations.ts';
+import { AdminClubCodeQueries } from './application/admin/queries/clubCode.ts';
+import { AdminMembershipQueries } from './application/admin/queries/memberships.ts';
+import { PlatformOrganizationQueries } from './application/admin/queries/organizations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminEventQueries } from './application/admin/queries/events.ts';
@@ -44,7 +48,10 @@ import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
+import { AttemptLimiter } from './application/mobile/attemptLimiter.ts';
+import { JOIN_WINDOW_MS, JoinCommands } from './application/mobile/commands/join.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
+import { TraceCommands } from './application/mobile/commands/traces.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
 import { MySessionTrackQueries } from './application/mobile/queries/sessionTrack.ts';
@@ -53,9 +60,12 @@ import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggesti
 import { SessionTrackQueries } from './application/common/queries/sessionTrack.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
+import { ORG_SLUG_PATTERN } from './domain/organizations.ts';
 import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
+import { PgClubCodeRepo } from './infrastructure/pg/admin/clubCodeRepo.ts';
+import { PgOrganizationsRepo } from './infrastructure/pg/admin/organizationsRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
 import { PgAdminEventsReadRepo } from './infrastructure/pg/admin/eventsReadRepo.ts';
@@ -65,7 +75,6 @@ import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
-import { PgAdminRegistrationsRepo } from './infrastructure/pg/admin/registrationsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRepo.ts';
@@ -80,6 +89,7 @@ import { PgFlagsRepo } from './infrastructure/pg/common/flagsRepo.ts';
 import { PgSessionsProjection } from './infrastructure/pg/common/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
 import { seed } from './infrastructure/pg/seed.ts';
+import { PgClubJoinRepo } from './infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
@@ -115,8 +125,18 @@ const env = z
      */
     SEED_ADMIN_EMAIL: z.string().email().optional(),
     /**
+     * Klub DOMYŚLNY dla backfillu migracji 8 (wielofirmowość, `docs/wielofirmowosc.md`
+     * §10): baza z danymi jednego klubu sprzed 2.0.0 dostaje przy tej migracji wiersz
+     * `organizations` o tej nazwie i slugu, a każdy istniejący wiersz - jego `org_id`.
+     * Wymagane WYŁĄCZNIE na takiej bazie (runner odmówi startu bez nich); świeża baza
+     * i baza już zmigrowana ich nie czytają. Slug wchodzi do adresów kart arkusza
+     * i nie zmienia się już nigdy - stąd walidacja kształtu, a nie tylko obecności.
+     */
+    SEED_ORG_NAME: z.string().trim().min(1).optional(),
+    SEED_ORG_SLUG: z.string().regex(ORG_SLUG_PATTERN).optional(),
+    /**
      * NASZE identyfikatory klienta Google - kontrola oddzielająca „ktoś zalogował się
-     * do UZ Aero" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
+     * do Ninerdeck" od „ktoś ma dowolny token Google" (`aud` w weryfikacji tokenu).
      *
      * **Web jest WYMAGANY**: to nim loguje się panel i to jego panel pobiera z serwera,
      * żeby narysować przycisk (`GET /admin/api/auth/google-client`). Android jest
@@ -133,12 +153,19 @@ const clock = { now: () => new Date() };
 const pool = new Pool({ connectionString: env.DATABASE_URL });
 const db = new PgDatabase(pool);
 
-await migrate(db);
+await migrate(db, undefined, {
+  seedOrg:
+    env.SEED_ORG_NAME != null && env.SEED_ORG_SLUG != null
+      ? { name: env.SEED_ORG_NAME, slug: env.SEED_ORG_SLUG }
+      : null,
+});
 
-// Bootstrap konta administratora - patrz docblock SEED_ADMIN_EMAIL w schemacie env.
+// Bootstrap konta superadministratora - patrz docblock SEED_ADMIN_EMAIL w schemacie env.
 if (env.SEED_ADMIN_EMAIL != null) {
   await seed(db, { adminEmail: env.SEED_ADMIN_EMAIL });
-  console.log(`Seed: konto „admin" czeka na podpięcie konta Google ${env.SEED_ADMIN_EMAIL}.`);
+  console.log(
+    `Seed: konto superadministratora „admin" czeka na podpięcie konta Google ${env.SEED_ADMIN_EMAIL}.`,
+  );
 }
 
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
@@ -183,6 +210,12 @@ const adminFlagsRepo = new PgAdminFlagsRepo();
 // `PgPilotsRepo` (hash, własny uchwyt do bazy), panel pisze `PgAdminPilotsRepo`
 // (transakcja śladu audytu). Ścieżka logowania nie ma jak zregresować od panelu kont.
 const adminPilotsRepo = new PgAdminPilotsRepo();
+// Kod klubu i moduł Organizacje mają własne adaptery tej samej tabeli `organizations`
+// i to jest ta sama decyzja, co przy kontach: inna władza, inne pytanie. Pierwszy
+// należy do panelu KLUBU (klub prowadzi swoją drogę dołączania, `accounts.manage`),
+// drugi do PLATFORMY (superadministrator zakłada i wyłącza kluby, `platform.manage`).
+const clubCodeRepo = new PgClubCodeRepo();
+const organizationsRepo = new PgOrganizationsRepo();
 // Flota ma TRZECI adapter tej samej tabeli i to jest ta sama decyzja, co przy kontach:
 // `PgReferenceRepo` buduje migawkę pod cache telefonów, `PgAircraftConfigRepo` oddaje
 // jedną liczbę w transakcji ingestu, a ten pisze konfigurację w transakcji audytu.
@@ -209,9 +242,6 @@ const aircraftReadings = new PgAircraftReadingsRepo();
 // panel czyta i przestawia status. Druga kopia zapytania byłaby pierwszym miejscem,
 // w którym lista zaczęłaby pokazywać co innego niż szuflada.
 const bugReports = new PgBugReportsRepo();
-  // Zgłoszenia rejestracyjne (logowanie Google) - adapter DECYZJI, osobny od adaptera
-  // ścieżki logowania (`PgExternalIdentitiesRepo`), jak przy kontach.
-  const adminRegistrationsRepo = new PgAdminRegistrationsRepo();
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -241,6 +271,16 @@ const app = await buildServer({
     ),
     tokens,
     clock,
+    // Identyfikator NOWEJ osoby przy pierwszym logowaniu (wielofirmowość §4).
+    randomUUID,
+  ),
+  // Dołączanie kodem klubu (§3.8): adapter z własnym uchwytem do bazy (pilot pisze sam,
+  // poza audytem) i licznik prób w pamięci procesu - instancja jest jedna (§8.8).
+  join: new JoinCommands(
+    pilots,
+    new PgClubJoinRepo(db),
+    new AttemptLimiter(clock, JOIN_WINDOW_MS),
+    clock,
   ),
   reference: new ReferenceQueries(
     new PgReferenceRepo(db),
@@ -255,9 +295,12 @@ const app = await buildServer({
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
   // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
   myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
-  state: new StateQueries(db, events, sessions, flags, exportLog),
+  // Stan maszyny pyta rejestr floty o KLUB maszyny (issue #99): cudza jest 404, nie pusta.
+  state: new StateQueries(db, events, sessions, flags, exportLog, aircraftConfig),
   sheets: new SheetQueries(sheets),
-  traces: new FsTraceSink(env.TRACES_DIR),
+  // Ślad kalibracyjny przechodzi przez komendę: sesja z paczki musi należeć do klubu
+  // i pilota z tokenu (issue #99), zanim adapter plikowy cokolwiek dopisze.
+  traces: new TraceCommands(db, sessions, new FsTraceSink(env.TRACES_DIR)),
   // Droga POWROTNA nagrania (issue #47) - telefon oddaje ślad i kasuje swoją kopię,
   // więc ekran 14 pobiera gotową geometrię stąd. Cienka warstwa nad wspólnym zapytaniem:
   // dokłada JEDNO zdanie o uprawnieniu („to nie jest twoja sesja") i nic poza tym.
@@ -301,6 +344,25 @@ const app = await buildServer({
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Decyzje o zgłoszeniach kodem klubu (issue #100): ten sam adapter członkostw, co
+  // lista - kolejka i lista czytają jedną tabelę, a rozdziela je stan wiersza.
+  adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
+  adminMembershipQueries: new AdminMembershipQueries(db, adminPilotsRepo),
+  // Kod klubu: `randomBytes` jako funkcja, nie port - losowość nie jest domeną, a kod
+  // musi być nieprzewidywalny, bo wisi w hangarze przez cały sezon.
+  adminClubCode: new AdminClubCodeCommands(auditedWrite, clubCodeRepo, randomBytes, clock),
+  adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
+  // Moduł Organizacje - jedyna komenda panelu działająca POZA klubem (`PlatformActor`,
+  // wpis audytu z pustym `org_id`). Zakłada klub razem z pierwszym administratorem,
+  // bo klub bez niego nie ma jak zacząć (§8.1).
+  platformOrganizations: new PlatformOrganizationCommands(
+    auditedWrite,
+    organizationsRepo,
+    randomUUID,
+    randomBytes,
+    clock,
+  ),
+  platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
   // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki - rejestracja jest
   // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
   // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.
@@ -422,16 +484,6 @@ const app = await buildServer({
   // komenda - bramę audytu: przestawienie statusu jest decyzją o CUDZYM zgłoszeniu.
   adminBugReportQueries: new AdminBugReportQueries(db, bugReports),
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
-  // Zgłoszenia rejestracyjne: zapytania czytają `db` wprost, komenda idzie przez bramę
-  // audytu i dostaje adapter KONT - zatwierdzenie zakłada konto tą samą drogą, co A06.
-  adminRegistrationQueries: new AdminRegistrationQueries(db, adminRegistrationsRepo),
-  adminRegistrations: new AdminRegistrationCommands(
-    auditedWrite,
-    adminRegistrationsRepo,
-    adminPilotsRepo,
-    randomUUID,
-    clock,
-  ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
@@ -448,4 +500,4 @@ const app = await buildServer({
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });
-console.log(`UZ Aero server: http://localhost:${env.PORT}`);
+console.log(`Ninerdeck server: http://localhost:${env.PORT}`);

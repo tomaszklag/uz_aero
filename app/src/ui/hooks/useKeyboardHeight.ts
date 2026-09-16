@@ -1,5 +1,5 @@
 /**
- * UZ Aero - wysokość klawiatury ekranowej.
+ * Ninerdeck - wysokość klawiatury ekranowej.
  *
  * Potrzebna, bo arkusze (`Sheet`) żyją w `Modal` z `statusBarTranslucent`, a takie okno
  * NIE kurczy się przy wysuwaniu klawiatury - systemowy `adjustResize` zmienia rozmiar

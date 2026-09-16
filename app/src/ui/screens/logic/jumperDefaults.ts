@@ -1,5 +1,5 @@
 /**
- * UZ Aero - domyślny skład skoczków na kroku „zadanie" (02e, 2026-08-17).
+ * Ninerdeck - domyślny skład skoczków na kroku „zadanie" (02e, 2026-08-17).
  *
  * Dwie małe decyzje wydzielone z JSX, bo obie mają regułę, nie tylko formatowanie:
  *  • suma zero NIE JEST deklaracją - ta sama zasada co przy `declaredJumpers` w komendach

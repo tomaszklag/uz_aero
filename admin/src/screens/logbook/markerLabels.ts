@@ -1,5 +1,5 @@
 /**
- * UZ Aero - panel 2.0: KTÓRY znacznik śladu dostaje podpis (moduł CZYSTY).
+ * Ninerdeck - panel 2.0: KTÓRY znacznik śladu dostaje podpis (moduł CZYSTY).
  *
  * ══ SKĄD SIĘ WZIĄŁ ══
  * Dzień skokowy to kilkanaście startów i lądowań na TYM SAMYM placu: w kadrze mapy

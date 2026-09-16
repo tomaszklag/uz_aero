@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PORTY warstwy aplikacji dla panelu administracyjnego.
+ * Ninerdeck (serwer) - PORTY warstwy aplikacji dla panelu administracyjnego.
  *
  * Osobny plik od `application/ports.ts`, i to nie dla symetrii: tamten ma docblock
  * mówiący, czym jest - kontraktem powierzchni TELEFONU. Panel jest drugą powierzchnią,
@@ -18,11 +18,12 @@ import type {
   MhFormat,
   OperationType,
   ServiceStatus,
-} from '@uzaero/domain';
+} from '@ninerdeck/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
-import type { PilotRole } from '../../domain/roles.ts';
-import type { FlagRecord, IdentityStatus, Queryable, SessionRow } from '../common/ports.ts';
+import type { MembershipStatus } from '../../domain/memberships.ts';
+import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
+import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
@@ -37,12 +38,46 @@ import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
  * `role` jest rolą Z CHWILI AKCJI i tak trafia do `admin_audit`. Role się zmieniają;
  * odczytanie ich później z konta odpowiadałoby na inne pytanie niż „kto miał wtedy
  * prawo to zrobić".
+ *
+ * `orgId` to KLUB, w którym akcja zachodzi (wielofirmowość, issue #98) - z tokenu sesji
+ * panelu, po sprawdzeniu członkostwa. Każda komenda klubu pisze do tabel tego klubu
+ * i tylko jego; brak `orgId` w tym typie jest niemożliwy, bo panel klubu nie ma jak
+ * wpuścić kogoś bez klubu.
  */
 export interface Actor {
   pilotId: string;
+  orgId: string;
   role: PilotRole;
   /** `null` = akcja spoza żądania HTTP (skrypt administracyjny). */
   ip: string | null;
+}
+
+/**
+ * SUPERADMINISTRATOR działający NA PLATFORMIE, poza klubami (wielofirmowość §3.3) -
+ * zakłada klub, wyłącza klub, zaprasza pierwszego administratora (epik E).
+ *
+ * Osobny typ zamiast `orgId: string | null` w `Actor`: komendy klubu dostają `Actor`
+ * i nigdy nie muszą pytać, czy klub jest; komendy platformy dostają ten typ i nigdy
+ * nie muszą udawać, że jakiś klub mają. Wspólny mianownik obu (`AuditActor`) zna
+ * wyłącznie brama audytu, bo tylko ona pisze wpis dla obu.
+ */
+export interface PlatformActor {
+  pilotId: string;
+  platformRole: PlatformRole;
+  ip: string | null;
+}
+
+/** Kogo przyjmuje `AuditedWrite` - działający w klubie ALBO na platformie. */
+export type AuditActor = Actor | PlatformActor;
+
+/**
+ * ZAKRES danych działającego: klub administratora albo `null` = cały serwer
+ * (superadministrator). Jedyne miejsce, w którym z aktora wyprowadza się „bez klubu" -
+ * korzystają z niego wyłącznie operacje serwisowe (`A11`), które superadministrator
+ * uruchamia ze skryptu na całym rejestrze, a administrator z panelu na swoim klubie.
+ */
+export function orgScopeOf(actor: AuditActor): string | null {
+  return 'orgId' in actor ? actor.orgId : null;
 }
 
 // ── dziennik audytu ─────────────────────────────────────────────────────────────
@@ -60,10 +95,13 @@ export interface AuditEntry {
   details: Record<string, unknown>;
 }
 
-/** Kompletny wiersz dziennika: opis akcji + kto, kiedy i skąd. */
+/** Kompletny wiersz dziennika: opis akcji + kto, kiedy, skąd i W KTÓRYM KLUBIE. */
 export interface AuditRecord extends AuditEntry {
   actorPilotId: string;
-  actorRole: PilotRole;
+  /** Rola klubu albo rola platformowa - wpis historyczny, więc napis, nie unia. */
+  actorRole: PilotRole | PlatformRole;
+  /** `null` = akcja platformowa superadministratora (jedyna kolumna klubu bywająca pusta). */
+  orgId: string | null;
   ip: string | null;
   createdAt: Date;
 }
@@ -152,8 +190,14 @@ export interface AdminAuditJoin {
  * oddają `null` i to klient niesie liczbę z pierwszej.
  */
 export interface AdminAuditReadPort {
+  /**
+   * Dziennik KLUBU (`admin_audit.org_id = orgId`). Wpisy platformowe superadministratora
+   * mają `org_id` pusty i do żadnego klubu nie wpadają - klub widzi wyłącznie to, co
+   * zrobiono w jego panelu (issue #99).
+   */
   list(
     db: Queryable,
+    orgId: string,
     filter: AuditListFilter,
   ): Promise<{ items: AdminAuditJoin[]; nextCursor: string | null; total: number | null } | null>;
 }
@@ -222,16 +266,25 @@ export interface FlagsAdminPort {
    * z wyniesieniem spraw blokujących na górę - flaga leżąca trzeci dzień jest
    * problemem sama w sobie, ale karta dnia stojąca poza arkuszem jest pilniejsza.
    */
-  list(db: Queryable, filter: FlagListFilter): Promise<{ items: AdminFlagJoin[]; total: number }>;
-  byId(db: Queryable, id: number): Promise<AdminFlag | null>;
+  list(
+    db: Queryable,
+    orgId: string,
+    filter: FlagListFilter,
+  ): Promise<{ items: AdminFlagJoin[]; total: number }>;
+  /** Flaga KLUBU po id; `null` także dla flagi cudzego klubu - dla panelu nie istnieje. */
+  byId(db: Queryable, orgId: string, id: number): Promise<AdminFlag | null>;
   /**
    * Zamknięcie flagi z OPTYMISTYCZNĄ współbieżnością: warunek `status='open'` siedzi
    * w SQL-u, więc dwie osoby klikające „Rozwiąż i odblokuj kartę" nie prześcigną się
    * timingiem - druga dostaje `null` i trasa odpowiada 409 z aktualnym stanem flagi.
    * Blokad pesymistycznych przy dwóch użytkownikach nie wprowadzamy.
+   *
+   * Klub jest częścią warunku `UPDATE`: flaga cudzego klubu daje `null` tak samo, jak
+   * już rozwiązana - a komenda odróżnia oba przypadki odczytem `byId` w tym samym klubie.
    */
   resolve(
     tx: Queryable,
+    orgId: string,
     id: number,
     by: string,
     note: string,
@@ -312,16 +365,17 @@ export interface AdminSessionJoin {
 
 export interface SessionsAdminPort {
   /**
-   * Strona listy dni. `null` = **kursor nieczytelny** - odmowa jest wariantem wyniku,
-   * nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi z zewnątrz,
-   * więc jego uszkodzenie to 400, a nie 500.
+   * Strona listy dni KLUBU. `null` = **kursor nieczytelny** - odmowa jest wariantem
+   * wyniku, nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi
+   * z zewnątrz, więc jego uszkodzenie to 400, a nie 500.
    */
   list(
     db: Queryable,
+    orgId: string,
     filter: SessionListFilter,
   ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null>;
-  /** Pojedynczy dzień ze złączeniami; `null` = nie ma takiej sesji w projekcji. */
-  byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null>;
+  /** Pojedynczy dzień klubu ze złączeniami; `null` = nie ma takiej sesji w tym klubie. */
+  byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null>;
 }
 
 // ── eksport kart dziennych (A05) ────────────────────────────────────────────────
@@ -388,6 +442,8 @@ export interface ExportListFilter {
  */
 export interface AdminExportJoin {
   sessionUuid: string;
+  /** Klub operacji - karta jest dokumentem KLUBU, więc podgląd czyta się w jego kluczu. */
+  orgId: string;
   aircraftId: string;
   reg: string | null;
   aircraftType: string | null;
@@ -451,10 +507,11 @@ export interface ExportsAdminPort {
    */
   list(
     db: Queryable,
+    orgId: string,
     filter: ExportListFilter,
   ): Promise<{ items: AdminExportJoin[]; counts: AdminExportCounts; matched: number }>;
-  /** Pojedynczy dzień; `null` = nie ma takiej sesji w projekcji. */
-  byUuid(db: Queryable, sessionUuid: string): Promise<AdminExportJoin | null>;
+  /** Pojedynczy dzień klubu; `null` = nie ma takiej sesji w tym klubie. */
+  byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportJoin | null>;
   /**
    * WSZYSTKIE wiersze dziennika tej sesji, od najstarszej rewizji.
    *
@@ -463,7 +520,7 @@ export interface ExportsAdminPort {
    * a rozwinięcie wiersza ma pokazać HISTORIĘ, nie jej początek. Stronicowanie czegoś,
    * czego sens polega na kompletności, byłoby wadą udającą ostrożność.
    */
-  history(db: Queryable, sessionUuid: string): Promise<AdminExportRevision[]>;
+  history(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminExportRevision[]>;
 }
 
 // ── rejestr zdarzeń (metadane zapisu, panel) ────────────────────────────────────
@@ -487,7 +544,11 @@ export interface EventsAdminPort {
    * w rejestrze; wewnętrzne = zdarzenie jest, ale bez pola (wpisy sprzed kolumny).
    * Dwie różne odpowiedzi na dwa różne pytania, więc opakowane, a nie sklejone.
    */
-  sourceDeviceOf(db: Queryable, eventUuid: string): Promise<{ sourceDevice: string | null } | null>;
+  sourceDeviceOf(
+    db: Queryable,
+    orgId: string,
+    eventUuid: string,
+  ): Promise<{ sourceDevice: string | null } | null>;
 
   /**
    * Uuidy tych zdarzeń `event_correction` sesji, które zapisał PANEL.
@@ -500,7 +561,7 @@ export interface EventsAdminPort {
    * Rozróżnia je `source_device` (`application/admin/sourceDevice.ts`) i to jest jedyne
    * miejsce, w którym ten fakt jest zapisany.
    */
-  adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]>;
+  adminCorrectionUuids(db: Queryable, orgId: string, sessionUuid: string): Promise<string[]>;
 }
 
 // ── rejestr zdarzeń (lista śledcza, A04) ────────────────────────────────────────
@@ -572,7 +633,7 @@ export interface AdminEventRow {
  * Strona rejestru RAZEM z korektami celującymi w jej wiersze.
  *
  * ══ DLACZEGO KOREKTY JADĄ OSOBNO, A NIE JAKO GOTOWA FLAGA `voided` ══
- * Bo o tym, czy zdarzenie zaszło, rozstrzyga `applyCorrections` z `@uzaero/domain`
+ * Bo o tym, czy zdarzenie zaszło, rozstrzyga `applyCorrections` z `@ninerdeck/domain`
  * - razem z regułą „gdy jedno zdarzenie ma kilka korekt, wygrywa ostatnia" i z parą
  * `void` → `retime`, która przywraca zdarzenie do życia. Ta reguła ma mieć JEDNĄ
  * implementację; `CASE` w SQL-u byłby jej drugą i rozjechałby się przy pierwszej
@@ -591,6 +652,7 @@ export interface AdminEventRow {
 export interface AdminEventsReadPort {
   list(
     db: Queryable,
+    orgId: string,
     filter: EventListFilter,
     /** Próg `CLOCK_DRIFT` (ms) - jedzie z domeny, żeby SQL nie miał własnej kopii. */
     driftThresholdMs: number,
@@ -605,15 +667,21 @@ export interface AdminEventsReadPort {
 // ── konta pilotów (A06, A06a) ───────────────────────────────────────────────────
 
 /**
- * Konto tak, jak widzi je PANEL: bez `passwordHash`.
+ * CZŁONEK KLUBU tak, jak widzi go PANEL: osoba + jej członkostwo w klubie z tokenu.
  *
- * Osobny typ od `PilotAccount` (`application/common/ports.ts`) i to jest jego cała
- * treść. Tamten istnieje dla LOGOWANIA, więc niesie hash - a hash nie ma prawa wjechać
- * do komendy, która go nie weryfikuje, ani tym bardziej do mapowania na kontrakt.
- * Jeden brak pola jest tu tańszy niż dyscyplina „pamiętaj, żeby go nie serializować".
+ * Do wielofirmowości typ nazywał konto; dziś nazywa CZŁONKOSTWO (`id` zostaje
+ * identyfikatorem OSOBY, bo nim wiążą się zdarzenia; `code`, `role` i `active` są
+ * własnością klubu). `active` = członkostwo `active` - dawne „wyłącz konto" w panelu
+ * klubu jest wyłączeniem członkostwa, osoba w innym klubie lata dalej.
+ *
+ * Osobny typ od `PilotAccount` (`application/common/ports.ts`) i od `Membership`: tamte
+ * istnieją dla LOGOWANIA i niosą to, czego panel nie pokazuje (rola platformowa, klub
+ * w komplecie), a nie niosą tego, co panel pokazuje w jednym wierszu.
  */
 export interface AdminPilotAccount {
+  /** Identyfikator OSOBY - klucz zdarzeń, wspólny dla wszystkich jej klubów. */
   id: string;
+  orgId: string;
   code: string;
   name: string;
   email: string | null;
@@ -705,43 +773,48 @@ export interface PilotScopeCounts {
   panel: number;
 }
 
-/** Nowe konto - hash liczy komenda, adapter go wyłącznie zapisuje. */
-export interface NewPilotAccount {
-  id: string;
-  code: string;
-  name: string;
-  email: string | null;
-  role: PilotRole;
-}
-
 /** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
 export interface PilotPatch {
+  /** Kod W TYM KLUBIE (członkostwo). */
   code?: string;
+  /** Imię i nazwisko OSOBY - widoczne we wszystkich jej klubach. */
   name?: string;
   email?: string | null;
+  /** Rola W TYM KLUBIE (członkostwo). */
   role?: PilotRole;
 }
 
 /**
- * Port kont po stronie PANELU - osobny od `PilotsPort`, nie jego rozszerzenie.
+ * Port członków klubu po stronie PANELU - osobny od `PilotsPort`, nie jego rozszerzenie.
  *
- * `PilotsPort` jest portem LOGOWANIA: dwie metody odczytu, adapter z własnym uchwytem
- * do bazy, wołany poza transakcją. Panel pisze i musi to robić W TRANSAKCJI śladu
- * audytu, więc każda metoda bierze `tx` z zewnątrz. Precedens i uzasadnienie takie
- * samo jak przy `FlagsAdminPort` vs `FlagsPort`: osobny port wtedy, gdy inny jest
- * POWÓD istnienia - a korzyścią uboczną jest to, że ścieżka logowania nie ma jak
- * zregresować od zmian w panelu kont.
+ * `PilotsPort` jest portem LOGOWANIA: metody odczytu, adapter z własnym uchwytem do bazy,
+ * wołany poza transakcją. Panel pisze i musi to robić W TRANSAKCJI śladu audytu, więc
+ * każda metoda bierze `tx` z zewnątrz. Precedens i uzasadnienie takie samo jak przy
+ * `FlagsAdminPort` vs `FlagsPort`: osobny port wtedy, gdy inny jest POWÓD istnienia -
+ * a korzyścią uboczną jest to, że ścieżka logowania nie ma jak zregresować od zmian
+ * w panelu kont.
+ *
+ * ══ KAŻDE PYTANIE NAZYWA KLUB (wielofirmowość) ══
+ * Lista, liczniki, kolizja kodu i „ostatni administrator" są pytaniami O KLUB
+ * z tokenu administratora - ten sam człowiek w drugim klubie jest innym wierszem
+ * tej listy, z innym kodem i inną rolą. `orgId` idzie parametrem, nie polem adaptera,
+ * bo adapter jest jeden dla wszystkich klubów.
  */
 export interface PilotsAdminPort {
-  list(db: Queryable, filter: PilotListFilter): Promise<{ items: AdminPilotJoin[]; total: number }>;
+  list(
+    db: Queryable,
+    orgId: string,
+    filter: PilotListFilter,
+  ): Promise<{ items: AdminPilotJoin[]; total: number }>;
   /** Liczniki po CAŁYM klubie; okno dotyczy wyłącznie `flyingDays`. */
-  counts(db: Queryable, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
+  counts(db: Queryable, orgId: string, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
   /**
    * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
    * `search` nieustawione = po całym klubie (wtedy zgadzają się z `counts`).
    */
-  scopeCounts(db: Queryable, filter: { search?: string }): Promise<PilotScopeCounts>;
-  byId(db: Queryable, id: string): Promise<AdminPilotAccount | null>;
+  scopeCounts(db: Queryable, orgId: string, filter: { search?: string }): Promise<PilotScopeCounts>;
+  /** Członek klubu po identyfikatorze OSOBY; `null` = nie należy do tego klubu. */
+  byId(db: Queryable, orgId: string, id: string): Promise<AdminPilotAccount | null>;
   /**
    * Kolizja unikalności PRZED zapisem: `'code'` albo `'email'`, albo `null`.
    *
@@ -749,24 +822,28 @@ export interface PilotsAdminPort {
    * pole jest zajęte - komunikat „naruszenie unikalności" przy formularzu z trzema
    * polami nie jest odpowiedzią. Sprawdzenie i zapis jadą tą samą transakcją, więc
    * wyścig kończy się i tak błędem bazy, a nie cichym nadpisaniem.
+   *
+   * Kod jest zajęty, gdy ma go INNE członkostwo TEGO klubu; e-mail - gdy osoba o tym
+   * adresie JUŻ JEST członkiem tego klubu (osoba z innego klubu to nie kolizja, tylko
+   * dołączenie - patrz `insert`).
    */
   conflict(
     tx: Queryable,
+    orgId: string,
     values: { code: string; email: string | null; exceptId: string | null },
   ): Promise<'code' | 'email' | null>;
-  insert(tx: Queryable, account: NewPilotAccount): Promise<void>;
-  update(tx: Queryable, id: string, patch: PilotPatch): Promise<void>;
+  update(tx: Queryable, orgId: string, id: string, patch: PilotPatch): Promise<void>;
   /**
-   * `at` = chwila DEAKTYWACJI, zapisywana jako `pilots.credentials_valid_from`.
+   * `at` = chwila WYŁĄCZENIA, zapisywana jako `memberships.credentials_valid_from`.
    * Bez niej odebranie dostępu nie dotykałoby sesji PANELU, bo ta nie ma wiersza
    * w bazie - kasowanie `refresh_tokens` zrywa wyłącznie sesje telefonu.
    * Aktywacja znacznika NIE cofa: token sprzed odcięcia ma zostać martwy.
    */
-  setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void>;
-  /** Ile kont AKTYWNYCH ma rolę `admin` - wejście do `domain/accountGuards.ts`. */
-  countActiveAdmins(tx: Queryable): Promise<number>;
+  setActive(tx: Queryable, orgId: string, id: string, active: boolean, at: Date): Promise<void>;
+  /** Ile członkostw AKTYWNYCH ma rolę `admin` W KLUBIE - wejście do `domain/accountGuards.ts`. */
+  countActiveAdmins(tx: Queryable, orgId: string): Promise<number>;
   /**
-   * Blokada advisory na STAŁYM kluczu „populacja administratorów", ważna do końca
+   * Blokada advisory na kluczu „populacja administratorów KLUBU", ważna do końca
    * transakcji. Wołana PRZED `countActiveAdmins` przez każdą mutację zmieniającą tę
    * populację.
    *
@@ -776,27 +853,112 @@ export interface PilotsAdminPort {
    * niczego widocznego, tylko cicho wyłącza szeregowanie. Nazwa klucza jest szczegółem
    * Postgresa i mieszka w adapterze, tak jak kształt kursora.
    */
-  lockAdminPopulation(tx: Queryable): Promise<void>;
+  lockAdminPopulation(tx: Queryable, orgId: string): Promise<void>;
   /**
-   * Czy cokolwiek odwołuje się do tego konta - wejście do `refuseDelete`.
+   * Czy cokolwiek odwołuje się do tej OSOBY - wejście do `refuseDelete`.
    *
    * **Zero znaczy „nic", każda wartość dodatnia znaczy „coś".** Liczba jest liczbą
    * ŹRÓDEŁ, nie wierszy: adapter pyta `EXISTS`, bo regule wystarczy zero/niezero,
    * a liczenie lotów konta z całym sezonem byłoby pełnym skanem po nic.
    *
    * Źródła: zdarzenia (jako PIC **i jako drugi pilot**, także po korekcie w payloadzie),
-   * sesje oraz wpisy dziennika audytu, w których konto jest SPRAWCĄ. NIE liczy
-   * `refresh_tokens`: to sesje telefonu, a nie historia - kasujemy je razem z kontem.
+   * sesje, wpisy dziennika audytu, w których konto jest SPRAWCĄ, oraz - od
+   * wielofirmowości - członkostwa w INNYCH klubach: osoby, która lata gdzie indziej,
+   * nie kasuje się z jej klubu. NIE liczy `refresh_tokens`: to sesje telefonu, a nie
+   * historia.
    *
    * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
    * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
    */
-  references(tx: Queryable, id: string): Promise<number>;
+  references(tx: Queryable, orgId: string, id: string): Promise<number>;
   /**
-   * TRWAŁE skasowanie wiersza konta. Wołane WYŁĄCZNIE po `refuseDelete`, w tej samej
-   * transakcji - port nie sprawdza niczego sam.
+   * TRWAŁE skasowanie członkostwa RAZEM z osobą. Wołane WYŁĄCZNIE po `refuseDelete`,
+   * w tej samej transakcji - port nie sprawdza niczego sam; `references` już
+   * zagwarantowało, że osoba nie ma innych klubów ani historii.
    */
-  delete(tx: Queryable, id: string): Promise<void>;
+  delete(tx: Queryable, orgId: string, id: string): Promise<void>;
+
+  // ── kolejka zgłoszeń kodem klubu (issue #100, D2) ─────────────────────────────
+
+  /**
+   * Członkostwa `pending` klubu, najdłużej czekające pierwsze - karta ZGŁOSZENIA nad
+   * listą (mockup `piloci-lista`).
+   *
+   * Bez filtra i bez kursora, jak lista członków: kolejka klubu ma kilka wierszy,
+   * a karta nad listą nie ma gdzie pokazać strony drugiej.
+   */
+  pending(db: Queryable, orgId: string): Promise<MembershipRequest[]>;
+  /**
+   * Członkostwo W DOWOLNYM stanie - wejście do decyzji (zatwierdzenie, odrzucenie,
+   * cofnięcie odrzucenia).
+   *
+   * Osobna metoda od `byId`, choć obie czytają ten sam wiersz, i to jest jej jedyna
+   * treść: `byId` widzi WYŁĄCZNIE członkostwa z listy (`active`/`disabled`), bo lista
+   * ma nie mieszać kolejki z klubem. Decyzja pyta o dokładnie to, czego tamta metoda nie
+   * pokazuje - stan `pending`/`rejected` - więc współdzielenie jej wymagałoby parametru
+   * „a teraz pokaż też kolejkę", czyli bramki, którą wołający może zapomnieć ustawić.
+   */
+  decisionTarget(tx: Queryable, orgId: string, pilotId: string): Promise<MembershipDecisionTarget | null>;
+  /** `pending` → `active` z kodem i rolą; stempluje decyzję (`decided_at`, `decided_by`). */
+  approve(tx: Queryable, orgId: string, pilotId: string, decision: MembershipApproval): Promise<void>;
+  /** `pending` → `rejected` z powodem, który pilot czyta na 00D. */
+  reject(tx: Queryable, orgId: string, pilotId: string, decision: MembershipRejection): Promise<void>;
+  /**
+   * `rejected` → `pending`: zgłoszenie wraca do kolejki, a KOMPLET decyzji gaśnie
+   * (powód, chwila, autor).
+   *
+   * Powód kasujemy, bo pilot czyta go na 00D jako stan bieżący („nie wpuszczono cię,
+   * bo…"), a po cofnięciu to zdanie przestaje być prawdziwe - zgłoszenie czeka. Chwilę
+   * i autora z tego samego powodu: wiersz opisuje STAN, nie historię. Ślad odmowy
+   * i jej cofnięcia zostaje w dzienniku audytu, czyli tam, gdzie historia decyzji należy.
+   */
+  reopen(tx: Queryable, orgId: string, pilotId: string): Promise<void>;
+}
+
+/**
+ * Jedno ZGŁOSZENIE w kolejce klubu - wiersz `memberships` w stanie `pending` złączony
+ * z osobą.
+ *
+ * Niesie dokładnie to, co karta ZGŁOSZENIA pokazuje i na czym administrator opiera
+ * decyzję: imię i adres **z konta Google** (osoba założyła się sama przy pierwszym
+ * logowaniu, §4) oraz chwilę zgłoszenia. Kodu pilota tu nie ma i nie może być - kod
+ * nadaje się dopiero przy zatwierdzeniu.
+ */
+export interface MembershipRequest {
+  pilotId: string;
+  name: string;
+  email: string | null;
+  requestedAt: Date;
+}
+
+/**
+ * Cel decyzji: stan członkostwa + tożsamość osoby + jej aktywność PLATFORMOWA.
+ *
+ * `personActive` jest tu dlatego, że bez niego `refuseApprove` nie miałby czego pytać,
+ * a zatwierdzenie osoby zablokowanej na serwerze produkowałoby członkostwo `active`,
+ * którym i tak nie da się wejść (`docs/wielofirmowosc.md` §3.3).
+ */
+export interface MembershipDecisionTarget {
+  pilotId: string;
+  status: MembershipStatus;
+  name: string;
+  email: string | null;
+  personActive: boolean;
+  requestedAt: Date;
+}
+
+export interface MembershipApproval {
+  code: string;
+  role: PilotRole;
+  at: Date;
+  /** Administrator, który wpuścił - `memberships.decided_by`. */
+  by: string;
+}
+
+export interface MembershipRejection {
+  reason: string;
+  at: Date;
+  by: string;
 }
 
 /**
@@ -806,77 +968,176 @@ export interface PilotsAdminPort {
  * ══ DLACZEGO TO W OGÓLE ISTNIEJE ══
  * Bez tego „Deaktywuj" jest obietnicą bez pokrycia: konto przestaje się logować, ale
  * pilot z żywym refresh tokenem pracuje dalej przez 90 dni (`REFRESH_TTL_DAYS`).
- * `AuthCommands.refresh` sprawdza wprawdzie `account.active` i odmawia - ale dopiero
- * przy próbie rotacji, a JWT wydany wcześniej żyje jeszcze godzinę. Reset hasła też
- * musi zrywać sesje, inaczej stara sesja przeżywa zmianę poświadczeń, czyli dokładnie
- * to, przed czym reset ma chronić.
+ * `AuthCommands.refresh` sprawdza wprawdzie członkostwo i odmawia - ale dopiero
+ * przy próbie rotacji, a JWT wydany wcześniej żyje jeszcze godzinę.
  *
  * Liczba unieważnionych tokenów jedzie do audytu (mockup A06a: „Aktywne sesje pilota -
  * unieważnione"), bo odpowiada na pytanie, którego wpis bez niej nie zamyka: czy ktoś
  * jeszcze pracował na tym koncie w chwili odcięcia.
+ *
+ * PER KLUB (wielofirmowość §3.4): wyłączenie członkostwa w klubie A zrywa sesje wydane
+ * dla A i tylko je - w klubie B człowiek dalej jest członkiem.
  */
 export interface RefreshTokensAdminPort {
-  revokeAllFor(tx: Queryable, pilotId: string): Promise<number>;
+  revokeAllFor(tx: Queryable, pilotId: string, orgId: string): Promise<number>;
 }
 
-// ── zgłoszenia rejestracyjne (logowanie Google, 2026-09-04) ─────────────────────
+// Kolejki zgłoszeń rejestracyjnych TU NIE MA od epiku D (issue #100): zgłoszenie jest
+// członkostwem `pending` (`memberships`), a decyzje o nim - zatwierdzenie z kodem i rolą,
+// odrzucenie z powodem - siedzą w `PilotsAdminPort` wyżej.
+
+// ── kod klubu (wielofirmowość §3.8; issue #100, D2) ─────────────────────────────
 
 /**
- * Zgłoszenie tak, jak widzi je PANEL: wiersz `external_identities` z dołączonymi
- * KODAMI - konta zatwierdzonego i administratora, który zdecydował. Kody, nie
- * identyfikatory, bo to lista dla człowieka.
+ * KOD KLUBU tak, jak widzi go panel klubu: wartość, od kiedy obowiązuje i ile zgłoszeń
+ * nim czeka.
+ *
+ * `code: null` = dołączanie kodem WYŁĄCZONE (`join_code IS NULL`) - wtedy do klubu nie
+ * wchodzi nikt, bo innej drogi nie ma. `since` jest wtedy też `null`.
  */
-export interface RegistrationRecord {
-  provider: string;
-  subject: string;
-  /** Z tokenu Google - do decyzji; po zatwierdzeniu staje się `pilots.email`. */
-  email: string;
-  /** Imię z profilu Google - NIE `pilots.name`, to nadaje administrator. */
-  name: string;
-  status: IdentityStatus;
-  rejectReason: string | null;
-  createdAt: Date;
-  lastLoginAt: Date | null;
-  decidedAt: Date | null;
-  decidedByCode: string | null;
-  pilotId: string | null;
-  pilotCode: string | null;
-}
-
-/**
- * Decyzje o zgłoszeniach - osobny port od `ExternalIdentitiesPort` (ścieżka logowania)
- * z tego samego powodu, dla którego konta mają `PilotsPort` i `PilotsAdminPort`: inne
- * pytanie, inny rytm (transakcja audytu), a logowanie nie ma jak zregresować od panelu.
- */
-export interface RegistrationsAdminPort {
-  /** Kolejka: najstarsze pierwsze. `statuses` puste = wszystkie. */
-  list(
-    db: Queryable,
-    filter: { statuses: readonly IdentityStatus[]; limit: number },
-  ): Promise<RegistrationRecord[]>;
-  find(db: Queryable, provider: string, subject: string): Promise<RegistrationRecord | null>;
-  /** Liczniki po CAŁEJ tabeli - plakietka przy zakładce PILOCI. */
-  countByStatus(db: Queryable): Promise<Record<IdentityStatus, number>>;
+export interface ClubCodeState {
+  code: string | null;
+  since: Date | null;
   /**
-   * Przejście `pending → linked` z kontem `pilotId`. Zwraca `false`, gdy zgłoszenia nie
-   * ma ALBO ma już decyzję - warunek `status = 'pending'` siedzi w SQL-u i to ON
-   * rozstrzyga wyścig dwóch decyzji, nie odczyt przed zapisem.
+   * Zgłoszenia `pending` złożone OD CHWILI `since`, czyli tym kodem.
+   *
+   * Liczba jest z `created_at >= since`, bo `memberships` nie zapisuje, którym kodem
+   * ktoś wszedł - i zapisywać nie ma po co: kod jest jeden na klub, a jego zmiana ma
+   * w bazie stempel. Zgłoszenia sprzed rotacji zostają w kolejce (karta ZGŁOSZENIA
+   * pokazuje WSZYSTKIE) i to jest właśnie różnica między tymi dwiema liczbami.
    */
-  link(
-    tx: Queryable,
-    key: { provider: string; subject: string },
-    pilotId: string,
-    by: string,
-    at: Date,
-  ): Promise<boolean>;
-  /** Przejście `pending → rejected` z powodem; ta sama semantyka `false`, co w `link`. */
-  reject(
-    tx: Queryable,
-    key: { provider: string; subject: string },
-    reason: string,
-    by: string,
-    at: Date,
-  ): Promise<boolean>;
+  pendingWithCode: number;
+}
+
+/**
+ * Port KODU KLUBU - osobny od `PilotsAdminPort`, choć obsługuje ten sam ekran.
+ *
+ * Powód jest ten sam, co zawsze w tym repozytorium: inna TABELA i inne pytanie. Kod
+ * klubu jest kolumną `organizations`, czyli konfiguracją KLUBU - a nie jego członków;
+ * dopisanie go do portu członków kazałoby tamtemu portowi mówić o dwóch różnych
+ * rzeczach, z których jedna nie ma nic wspólnego z nazwiskami na liście.
+ *
+ * Zapisy biorą `tx` z zewnątrz, bo każda zmiana kodu jest decyzją ze śladem audytu
+ * (`club_code.rotate`, `club_code.disable`).
+ */
+export interface ClubCodeAdminPort {
+  state(db: Queryable, orgId: string): Promise<ClubCodeState>;
+  /**
+   * Nowy kod (albo `null` = wyłączenie dołączania). Zderzenie z kodem innego klubu
+   * wychodzi z adaptera jako błąd unikalności bazy - komenda losuje wtedy ponownie
+   * (`organizations.join_code` jest jedyny na SERWERZE, §3.8).
+   */
+  setCode(tx: Queryable, orgId: string, code: string | null, at: Date): Promise<void>;
+}
+
+// ── moduł Organizacje: platforma (wielofirmowość §8.1; issue #100, D3) ──────────
+
+/**
+ * Klub na liście superadministratora - same LICZBY z wnętrza klubu i pierwsi
+ * administratorzy.
+ *
+ * „Nic nie wycieka między klubami" obejmuje także tę listę (§3.3): superadministrator
+ * widzi, ILE klub ma członków i maszyn, ale nie widzi ani jednego wiersza dziennika,
+ * floty czy kolejki. Administratorzy są wyjątkiem z jednego powodu - odpowiadają na
+ * pytanie „do kogo dzwonić", gdy klub prosi o pomoc.
+ */
+export interface OrganizationSummary {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  createdAt: Date;
+  members: number;
+  aircraft: number;
+  admins: OrganizationAdmin[];
+}
+
+/**
+ * Administrator klubu widziany z platformy. `signedIn` rozstrzyga jedyny stan, w którym
+ * superadministrator ma coś do zrobienia: klub założony, członkostwo `admin` gotowe,
+ * a człowiek jeszcze nie wszedł - czyli tożsamość Google nie podpięła się pod ten adres
+ * (mockup `organizacje-lista`: plakietka „Administrator nie wszedł").
+ */
+export interface OrganizationAdmin {
+  pilotId: string;
+  name: string;
+  email: string | null;
+  code: string;
+  signedIn: boolean;
+}
+
+/** Klub + jego kod, czytany DO ODCZYTU na karcie klubu (§8.1). */
+export interface OrganizationDetail extends OrganizationSummary {
+  joinCode: string | null;
+  joinCodeSince: Date | null;
+}
+
+/**
+ * Nowy klub razem z PIERWSZYM administratorem - jedno, nierozdzielne zamówienie.
+ *
+ * `sheetsKey` tu NIE MA: sekret adresu kart arkusza losuje BAZA (`DEFAULT` na kolumnie,
+ * epik C). Przeniesienie tego do warstwy aplikacji byłoby drugim miejscem, w którym
+ * powstaje ten sam sekret - a jedyny powód, dla którego warstwa aplikacji miałaby go
+ * znać, to pokazanie go w panelu, czego ta trasa nie robi.
+ */
+export interface NewOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  joinCode: string;
+  /** Superadministrator, który klub założył (`organizations.created_by`). */
+  createdBy: string;
+  /**
+   * Chwila założenia - ta sama dla `created_at` i `join_code_since`.
+   *
+   * Z zegara aplikacji, nie z `now()` SQL-a: w testach stempel szedłby wtedy z zegara
+   * systemowego, a porównania z czasem sterowanym odpowiadałyby na pytanie o dwa różne
+   * czasy (ta sama decyzja, co przy `PilotsAdminPort.setActive`).
+   */
+  at: Date;
+  /**
+   * Pierwszy administrator: adres konta Google (WYMAGANY - tym adresem podepnie się
+   * tożsamość przy pierwszym logowaniu), nazwisko i kod pilota w tym klubie.
+   *
+   * `pilotId` to identyfikator PROPONOWANY: gdy osoba o tym adresie już jest na serwerze
+   * (lata w innym klubie), adapter dopisuje członkostwo DO NIEJ - `pilots.email` jest
+   * jedyny na serwerze, bo osoba jest jedna (§3.6).
+   */
+  admin: { pilotId: string; name: string; email: string; code: string };
+}
+
+/** Zmiana klubu z karty. Slug i kod klubu NIE są tu polami - patrz `OrganizationsPlatformPort`. */
+export interface OrganizationPatch {
+  name?: string;
+}
+
+/**
+ * Port modułu Organizacje - jedyny port, którego pytania NIE MAJĄ `orgId` w sensie
+ * „klub żądania": to on klubami zarządza.
+ *
+ * ══ CZEGO TEN PORT CELOWO NIE UMIE ══
+ *  • **zmienić sluga** - jest adresem kart arkusza, nadawanym raz (§3.1);
+ *  • **wygenerować kodu klubu po założeniu** - rotacja i wyłączenie należą do panelu
+ *    KLUBU (`ClubCodeAdminPort`, §8.1: „kod jest konfiguracją klubu, nie jego danymi");
+ *  • **skasować klubu** - dziennik jest dokumentem klubu, więc wyłączenie (`setActive`)
+ *    jest jedyną drogą, dokładnie jak przy koncie z historią.
+ */
+export interface OrganizationsPlatformPort {
+  list(db: Queryable, filter: { search?: string; active?: boolean }): Promise<OrganizationSummary[]>;
+  byId(db: Queryable, id: string): Promise<OrganizationDetail | null>;
+  /**
+   * Klub + osoba pierwszego administratora (albo dopisanie członkostwa do istniejącej)
+   * + członkostwo `admin` `active` z `joined_via = 'platform'`. Zwraca identyfikator
+   * OSOBY, pod którą podpięto członkostwo.
+   */
+  insert(tx: Queryable, org: NewOrganization): Promise<{ adminPilotId: string }>;
+  update(tx: Queryable, id: string, patch: OrganizationPatch): Promise<void>;
+  /**
+   * Wyłączenie klubu albo włączenie go z powrotem. Bez znacznika unieważnienia
+   * poświadczeń: brama czyta `organizations.active` przy KAŻDYM żądaniu (epik C), więc
+   * wyłączenie działa natychmiast i bez pomocy stempla.
+   */
+  setActive(tx: Queryable, id: string, active: boolean): Promise<void>;
 }
 
 // ── flota (A07, A07a) ───────────────────────────────────────────────────────────
@@ -884,7 +1145,7 @@ export interface RegistrationsAdminPort {
 /**
  * Samolot tak, jak widzi go PANEL - czysta konfiguracja, bez stanu z telefonów.
  *
- * Osobny typ od `ReferenceAircraft` (`@uzaero/domain`) i to jest jego treść: tamten
+ * Osobny typ od `ReferenceAircraft` (`@ninerdeck/domain`) i to jest jego treść: tamten
  * jest KSZTAŁTEM CACHE'U telefonu, więc niesie `claimPicId`, `handover` i `fetchedAt`
  * - pola, które przy zapisie konfiguracji nie znaczą nic i których komenda nie ma prawa
  * dotknąć. Wpuszczenie tamtego typu do komendy dałoby `update`, który potrafi „zapisać"
@@ -892,6 +1153,8 @@ export interface RegistrationsAdminPort {
  */
 export interface AdminAircraft {
   id: string;
+  /** Klub właściciel (wielofirmowość §3.5) - z tokenu administratora przy założeniu. */
+  orgId: string;
   reg: string;
   type: string;
   year: number | null;
@@ -914,7 +1177,7 @@ export interface AdminAircraft {
    */
   fuelNormLPerH: number | null;
   /**
-   * STAN POCZĄTKOWY - co pokazywały przyrządy, gdy jednostkę wprowadzono do UZ Aero
+   * STAN POCZĄTKOWY - co pokazywały przyrządy, gdy jednostkę wprowadzono do Ninerdeck
    * (issue #66). To NIE jest konfiguracja, tylko zerowe ogniwo łańcucha odczytów:
    * pierwszy pilot dostaje je jako podpowiedź, a od pierwszej zdanej sesji przestają
    * cokolwiek znaczyć (`aircraftStateView.pickHandover`). Każde pole osobno `null`,
@@ -1006,31 +1269,39 @@ export interface AircraftPatch {
  * mają jak zregresować od zmian w ekranie floty.
  */
 export interface FleetAdminPort {
-  list(db: Queryable, filter: FleetListFilter): Promise<AdminAircraftJoin[]>;
-  counts(db: Queryable): Promise<FleetCounts>;
+  /** Flota KLUBU - każde pytanie tego portu nazywa klub, jak `PilotsAdminPort`. */
+  list(db: Queryable, orgId: string, filter: FleetListFilter): Promise<AdminAircraftJoin[]>;
+  counts(db: Queryable, orgId: string): Promise<FleetCounts>;
   /**
    * Liczniki CHIPÓW - te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
    * `search` nieustawione = po całej flocie (wtedy zgadzają się z `counts`).
    */
-  scopeCounts(db: Queryable, filter: { search?: string }): Promise<FleetCounts>;
-  byId(db: Queryable, id: string): Promise<AdminAircraft | null>;
+  scopeCounts(db: Queryable, orgId: string, filter: { search?: string }): Promise<FleetCounts>;
+  /** Jednostka KLUBU; `null` także dla maszyny cudzego klubu - dla panelu nie istnieje. */
+  byId(db: Queryable, orgId: string, id: string): Promise<AdminAircraft | null>;
   /** Wiersz listy dla POJEDYNCZEJ jednostki - odpowiedź mutacji bez drugiej listy. */
-  joinById(db: Queryable, id: string): Promise<AdminAircraftJoin | null>;
+  joinById(db: Queryable, orgId: string, id: string): Promise<AdminAircraftJoin | null>;
   /**
    * Kolizja unikalności rejestracji PRZED zapisem; `null` = wolna.
    *
    * Sprawdzenie zamiast samego łapania `23505`, dokładnie jak przy kontach: panel ma
    * dostać nazwę POLA do poprawienia, a nie „naruszenie unikalności". Wyścig i tak
    * kończy się błędem bazy i tam jest tłumaczony na ten sam wynik.
+   *
+   * Rejestracja jest jedyna W KLUBIE (wielofirmowość §3.6) - maszyna sprzedana do
+   * drugiego klubu nie jest kolizją, tylko drugim wierszem z własną historią.
    */
-  conflict(tx: Queryable, values: { reg: string; exceptId: string | null }): Promise<'reg' | null>;
+  conflict(
+    tx: Queryable,
+    values: { orgId: string; reg: string; exceptId: string | null },
+  ): Promise<'reg' | null>;
   insert(tx: Queryable, aircraft: AdminAircraft): Promise<void>;
-  update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void>;
+  update(tx: Queryable, orgId: string, id: string, patch: AircraftPatch): Promise<void>;
   /**
    * Ile sesji tego samolotu nie ma `day_close` - wejście do `domain/fleetGuards.ts`.
    * Czytane w TEJ SAMEJ transakcji co zapis, po wzięciu blokady niżej.
    */
-  openSessions(tx: Queryable, aircraftId: string): Promise<number>;
+  openSessions(tx: Queryable, orgId: string, aircraftId: string): Promise<number>;
   /**
    * Czy cokolwiek odwołuje się do tej jednostki - wejście do `refuseDeleteAircraft`.
    *
@@ -1041,12 +1312,12 @@ export interface FleetAdminPort {
    * Jedna liczba, nie rozbicie na tabele: reguła brzmi „cokolwiek się odwołuje - nie
    * kasujemy", więc panel nie ma czego zrobić z informacją, KTÓRA tabela trzyma wiersz.
    */
-  references(tx: Queryable, aircraftId: string): Promise<number>;
+  references(tx: Queryable, orgId: string, aircraftId: string): Promise<number>;
   /**
    * TRWAŁE skasowanie wiersza jednostki. Wołane WYŁĄCZNIE po `refuseDeleteAircraft`,
    * w tej samej transakcji - port nie sprawdza niczego sam.
    */
-  delete(tx: Queryable, aircraftId: string): Promise<void>;
+  delete(tx: Queryable, orgId: string, aircraftId: string): Promise<void>;
   /**
    * Blokada advisory na konfiguracji JEDNEJ jednostki, ważna do końca transakcji.
    *
@@ -1117,8 +1388,18 @@ export interface MaintenanceAdminPort {
    * nie tabela `sessions`, i to jest cały sens tej metody. Sesja, która jest
    * w rejestrze, a nie ma wiersza projekcji, to najcięższy przypadek dryfu; lista
    * budowana z projekcji nie umiałaby go zobaczyć.
+   *
+   * Razem z KLUBEM sesji (wielofirmowość): przebudowa pisze wiersz projekcji, a ten
+   * niesie `org_id`, którego z samego strumienia domena nie odczyta.
+   *
+   * `orgId` = klub administratora (jego sesje) albo `null` = CAŁY rejestr - wyłącznie
+   * dla superadministratora ze skryptu `rebuild-projections`. To jedyne miejsce, w którym
+   * pytanie o dane bez klubu jest legalne, i jest nim dlatego, że działający nie ma klubu.
    */
-  sessionUuids(db: Queryable): Promise<string[]>;
+  sessionUuids(
+    db: Queryable,
+    orgId: string | null,
+  ): Promise<{ sessionUuid: string; orgId: string }[]>;
 
   /**
    * Ile tokenów leży w tabeli i ile z nich jest MARTWYCH wobec podanej chwili.
@@ -1126,11 +1407,15 @@ export interface MaintenanceAdminPort {
    * `at` jest parametrem, a nie `now()` w SQL-u, bo granica „wygasły" musi być tą samą
    * chwilą w podglądzie i w audycie skasowania - a zegar aplikacji jest sterowalny
    * (testy), zegar bazy nie.
+   *
+   * `orgId` jak w `sessionUuids`: tokeny KLUBU (`refresh_tokens.org_id`), `null` = wszystkie.
+   * Liczba sesji cudzego klubu jest informacją o cudzym klubie i do panelu nie wchodzi.
    */
-  scanRefreshTokens(db: Queryable, at: Date): Promise<RefreshTokenScan>;
+  scanRefreshTokens(db: Queryable, orgId: string | null, at: Date): Promise<RefreshTokenScan>;
 
   /**
-   * Kasuje WYŁĄCZNIE wiersze, których `expires_at` już minęło.
+   * Kasuje WYŁĄCZNIE wiersze, których `expires_at` już minęło - w klubie (`orgId`)
+   * albo w całej tabeli (`null`, superadministrator).
    *
    * ══ WARUNEK JEST W SQL-U I TAM MA ZOSTAĆ ══
    * Token WAŻNY skasowany przez pomyłkę wylogowuje pilota w terenie, a ponowne
@@ -1138,7 +1423,7 @@ export interface MaintenanceAdminPort {
    * wpisany po stronie aplikacji („pobierz i skasuj te, które…") miałby dwie okazje
    * do pomyłki i jedno okno wyścigu; tutaj jest jedno polecenie i jeden predykat.
    */
-  purgeExpiredRefreshTokens(tx: Queryable, at: Date): Promise<PurgedTokens>;
+  purgeExpiredRefreshTokens(tx: Queryable, orgId: string | null, at: Date): Promise<PurgedTokens>;
 
   /**
    * Migracje znane KODOWI, wzbogacone o chwilę zastosowania z `schema_migrations`.
@@ -1282,17 +1567,17 @@ export interface AdminStatsClientRow {
  * tego portu ma swoją kolumnę w `sessions`, a brak kolumny = brak liczby.
  */
 export interface StatsAdminPort {
-  totals(db: Queryable, range: StatsRange): Promise<AdminStatsTotalsRow>;
+  totals(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsTotalsRow>;
   /** Dni OTWARTE - licznik pominiętych (w zakresie + bez daty), nie składnik sum. */
-  openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
+  openSessions(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
   /** Tylko doby NIEPUSTE - zer nie zmyśla baza, dopełnia je warstwa aplikacji. */
-  daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]>;
-  byAircraft(db: Queryable, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
-  byPilot(db: Queryable, range: StatsRange): Promise<AdminStatsPilotRow[]>;
-  byOperation(db: Queryable, range: StatsRange): Promise<AdminStatsOperationRow[]>;
+  daily(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDailyRow[]>;
+  byAircraft(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
+  byPilot(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsPilotRow[]>;
+  byOperation(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsOperationRow[]>;
   /** Strona przychodowa - zakres zawężony do `operation = 'skoki'` (podpis mockupu). */
-  drops(db: Queryable, range: StatsRange): Promise<AdminStatsDropsRow>;
-  dropsByClient(db: Queryable, range: StatsRange): Promise<AdminStatsClientRow[]>;
+  drops(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsDropsRow>;
+  dropsByClient(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsClientRow[]>;
 }
 
 // ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────
@@ -1355,24 +1640,29 @@ export interface DashboardAdminPort {
    */
   inflow(
     db: Queryable,
+    orgId: string,
     window: { fromMs: number; toMs: number; bucketMs: number },
   ): Promise<{ bucket: number; count: number }[]>;
 
-  /** Ostatnio przyjęte zdarzenia, od najnowszego. Pusta tablica = pusty rejestr. */
-  recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]>;
+  /** Ostatnio przyjęte zdarzenia klubu, od najnowszego. Pusta tablica = pusty rejestr. */
+  recent(db: Queryable, orgId: string, limit: number): Promise<AdminRecentEventRow[]>;
 
   /**
    * Sumy doby `[fromMs, toMs]` - dni lotne po czasie przejęcia, zdarzenia po przyjęciu.
    * Dwa różne zegary w jednym wyniku i to jest świadome: kontrakt nazywa je osobno.
    */
-  dayTotals(db: Queryable, range: { fromMs: number; toMs: number }): Promise<AdminDayTotalsRow>;
+  dayTotals(
+    db: Queryable,
+    orgId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<AdminDayTotalsRow>;
 
   /**
-   * Czas przejęcia NAJNOWSZEGO dnia lotnego (epoch ms UTC); `null` = projekcja jest
+   * Czas przejęcia NAJNOWSZEGO dnia lotnego klubu (epoch ms UTC); `null` = projekcja jest
    * pusta albo żadna sesja nie ma daty. Po nim pulpit wskazuje „ostatni dzień lotny",
    * gdy dziś nic nie lata.
    */
-  lastFlyingDayStart(db: Queryable): Promise<number | null>;
+  lastFlyingDayStart(db: Queryable, orgId: string): Promise<number | null>;
 }
 
 // ── analityka zużycia (A10a, A10b) ──────────────────────────────────────────────
@@ -1417,8 +1707,8 @@ export interface ConsumptionSessionsPage {
 }
 
 export interface ConsumptionAdminPort {
-  /** Jednostka po identyfikatorze; `null` = nie ma takiej we flocie. */
-  aircraft(db: Queryable, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
+  /** Jednostka klubu po identyfikatorze; `null` = nie ma takiej we flocie TEGO klubu. */
+  aircraft(db: Queryable, orgId: string, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
 
   /**
    * Zamknięte dni samolotu w oknie, od najnowszego. `limit` jest bezpiecznikiem
@@ -1427,6 +1717,7 @@ export interface ConsumptionAdminPort {
    */
   closedSessions(
     db: Queryable,
+    orgId: string,
     aircraftId: string,
     range: StatsRange,
     limit: number,
@@ -1437,7 +1728,7 @@ export interface ConsumptionAdminPort {
    * nie ma `close_time`. Ich zużycia nie znamy (brak odczytu końcowego), więc do modelu
    * nie wchodzą; ekran mówi, ile ich pominął, zamiast milczeć o różnicy.
    */
-  openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
+  openSessions(db: Queryable, orgId: string, aircraftId: string, range: StatsRange): Promise<number>;
 }
 
 /**
@@ -1477,5 +1768,9 @@ export interface LogAdminPort {
    * inną liczbę sesji, a narzędzie nadzoru, które samo ze sobą się nie zgadza,
    * przestaje być narzędziem.
    */
-  byAircraft(db: Queryable, range: { fromMs: number; toMs: number }): Promise<LogAircraftAggregate[]>;
+  byAircraft(
+    db: Queryable,
+    orgId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<LogAircraftAggregate[]>;
 }

@@ -1,5 +1,5 @@
 /**
- * UZ Aero - dokąd idzie paczka fixów z taska lokalizacji (usługa w tle).
+ * Ninerdeck - dokąd idzie paczka fixów z taska lokalizacji (usługa w tle).
  *
  * Jedno miejsce PRAWDY o kolejności rozstrzygania: żywy sink > zapis headless > kosz.
  * Task sprawdza sink synchronicznie, a sesję zna dopiero writer (odczyt meta jest

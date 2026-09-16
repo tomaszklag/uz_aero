@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - PRZELICZENIE I PORÓWNANIE projekcji `sessions` ze strumieniem.
+ * Ninerdeck (serwer) - PRZELICZENIE I PORÓWNANIE projekcji `sessions` ze strumieniem.
  *
  * ══ DLACZEGO TO STOI OBOK KOMENDY, A NIE W NIEJ ══
  * Ekran `A11` opisuje przebudowę jako DWA KROKI: najpierw „Przelicz i porównaj - bez
@@ -82,21 +82,25 @@ export interface ProjectionScan {
  */
 export async function scanProjections(
   db: Queryable,
+  /** Klub, którego dziennik porównujemy; `null` = cały rejestr (superadministrator). */
+  scope: string | null,
   ports: ProjectionScanPorts,
 ): Promise<ProjectionScan> {
-  const uuids = await ports.maintenance.sessionUuids(db);
+  const uuids = await ports.maintenance.sessionUuids(db, scope);
   const diffs: ProjectionRowDiff[] = [];
   let rowsDiffering = 0;
   let fieldsDiffering = 0;
 
-  for (const sessionUuid of uuids) {
-    const stream = await ports.events.sessionEvents(db, sessionUuid);
+  for (const { sessionUuid, orgId } of uuids) {
+    const stream = await ports.events.sessionEvents(db, orgId, sessionUuid);
     // Rejestr jest źródłem listy, więc pusty strumień znaczy tylko tyle, że sesja
     // zniknęła między zapytaniami - nie ma z czego liczyć projekcji.
     if (stream.length === 0) continue;
 
-    const computed = sessionRowFrom(sessionUuid, stream);
-    const stored = await ports.sessions.get(db, sessionUuid);
+    // Klub z kolumny rejestru (`events.org_id`) - jedynego miejsca, które go zna;
+    // strumień domenowy klubu nie niesie (wielofirmowość §2).
+    const computed = sessionRowFrom(sessionUuid, stream, orgId);
+    const stored = await ports.sessions.get(db, orgId, sessionUuid);
 
     const fields = stored == null ? [] : projectionDiff(stored, computed);
     if (stored != null && fields.length === 0) continue;
@@ -106,6 +110,7 @@ export async function scanProjections(
     if (diffs.length < PROJECTION_DIFF_LIMIT) {
       diffs.push({
         sessionUuid,
+        orgId,
         aircraftId: computed.aircraftId,
         day: computed.claimTime == null ? null : sheetDay(computed.claimTime),
         // `true` = wiersza projekcji NIE MA w ogóle, choć sesja jest w rejestrze.

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 13A Ustawienia - przełącznik klubu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%), linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone { width:393px; height:852px; border-radius:54px; background:var(--bg); border:10px solid #0D0E12; box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03); overflow:hidden; position:relative; isolation:isolate; flex-shrink:0; transform:scale(var(--phone-scale)); transform-origin:top center; margin-bottom:calc((var(--phone-scale) - 1) * 852px); }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .wifi-off { color:var(--amber); }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* app header */
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .back-btn { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); text-decoration:none; padding:8px 10px; border-radius:8px; border:1px solid var(--border); min-height:38px; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .offline-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--amber-muted); border:1px solid var(--amber-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+
+  /* sekcja - wzorzec formularzy z 09 */
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+  .form-section-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; }
+  .form-section-title::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
+  .section-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); line-height:1.6; }
+  .section-note b { color:var(--green); font-weight:700; }
+
+  /* ── KLUB - lista kart, WYŁĄCZNIE przy więcej niż jednym członkostwie ──
+     (wielofirmowość, docs/wielofirmowosc.md §7). Karta = nazwa klubu + kod pilota
+     W TYM klubie (ten sam człowiek ma w dwóch klubach dwa kody). Wybrana zielona,
+     obie widoczne naraz - jak każdy wybór w tej aplikacji (nigdy select, nigdy
+     suwak). Przełączenie WYMAGA INTERNETU i wysłanych zapisów KLUBU BIEŻĄCEGO (decyzja
+     właściciela 2026-09-08: offline-first dotyczy pracy w klubie, nie zmiany klubu)
+     - serwer wydaje nową parę tokenów dla wybranego klubu, jak przy logowaniu.
+     Bez sieci albo z zaległościami karty są zablokowane Z POWODEM pod listą
+     (kategoria 3 z sekcji Offline-first: nigdy cichy błąd) - patrz `.club-blocked`. */
+  .club-list { display:flex; flex-direction:column; gap:8px; }
+  .club-opt {
+    display:flex; align-items:center; gap:12px; width:100%;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:11px 13px; cursor:pointer; min-height:56px; text-align:left;
+    color:var(--text-primary); font-family:var(--font-body);
+  }
+  .club-opt:hover { background:var(--surface-hover); }
+  .club-opt.selected { border:1.5px solid var(--green-border); background:var(--green-muted); }
+  .club-body { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .club-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .club-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .club-check { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:transparent; }
+  .club-opt.selected .club-check { background:var(--green); border-color:var(--green); color:#0D0D0D; }
+  /* Stan zablokowany (offline albo zaległe zapisy tego klubu): karty przygaszone, a POWÓD
+     jednym zdaniem pod listą - wzorzec .outbox-guard z sekcji Konto. Nie pokazany
+     w ramce (ta jest online), opisany tu, żeby kod nie musiał zgadywać. */
+  .club-list.blocked .club-opt { opacity:0.45; pointer-events:none; }
+  .club-blocked { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--amber); line-height:1.6; }
+  /* ── DOŁĄCZ DO INNEGO KLUBU (2026-09-09: kod klubu = JEDYNA droga) ──
+     Zgłoszenie stoi na liście jako wiersz `pending`: przygaszony, nieklikalny (członkostwa
+     jeszcze nie ma), podpis bursztynem. Arkusz z polem = pole z 00E, te same metryki. */
+  .club-opt.pending { opacity:0.75; pointer-events:none; }
+  .club-opt.pending .club-sub { color:var(--amber); }
+  .club-opt.pending .club-check { border-style:dashed; }
+  .join-field { width:100%; display:flex; flex-direction:column; gap:7px; }
+  .join-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
+  .join-input { width:100%; min-height:52px; padding:14px 15px; border-radius:12px; background:var(--surface); border:1.5px solid var(--border-strong); font-family:var(--font-mono); font-size:16px; letter-spacing:1.5px; color:var(--text-primary); }
+  .join-input:focus { outline:none; border-color:var(--green-border); }
+  .join-input::placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder, var(--text-muted)); }
+  .join-btn { display:flex; align-items:center; justify-content:center; width:100%; padding:16px; border-radius:14px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:21px; letter-spacing:3px; border:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.28); }
+  /* Pusty wpis blokuje BEZ zdania (issue #55): blokadę widać z pola nad przyciskiem. */
+  .join-btn.disabled { background:var(--surface); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; }
+
+  /* ── MOTYW - przełącznik jasności: dwie pozycje obok siebie (issue #72) ── */
+  /* Obie odpowiedzi widoczne naraz, jak wszędzie w tej aplikacji (nigdy select,     */
+  /* nigdy suwak, po którym trzeba zgadywać, co zrobi przesunięcie). Wybrana pozycja */
+  /* zielona; cel dotykowy 52 px, jak wiersz akcji niżej.                            */
+  .theme-switch { display:flex; gap:8px; }
+  .theme-opt {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:10px 12px; cursor:pointer; min-height:52px;
+    color:var(--text-muted); font-family:var(--font-body); font-size:13px; font-weight:600;
+  }
+  .theme-opt:hover { background:var(--surface-hover); }
+  .theme-opt.selected { border:1.5px solid var(--green-border); background:var(--green-muted); color:var(--text-primary); }
+  .theme-opt svg { flex-shrink:0; }
+  .theme-opt.selected svg { color:var(--green); }
+
+  /* ── wiersz akcji (PIN, wylogowanie) ── */
+  .action-item {
+    display:flex; align-items:center; gap:11px;
+    background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px;
+    padding:12px 14px; cursor:pointer; min-height:50px; width:100%;
+    color:var(--text-primary); font-family:var(--font-body); text-align:left;
+  }
+  .action-item:hover { background:var(--surface-hover); }
+  .action-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); }
+  .action-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .action-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .action-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .action-chevron { color:var(--text-muted); flex-shrink:0; }
+  .action-item.disabled { opacity:0.45; cursor:not-allowed; }
+  .action-item.disabled:hover { background:var(--surface-raised); }
+
+  /* ── konto ── */
+  .profile-chip { display:flex; align-items:center; gap:12px; background:var(--surface-raised); border:1px solid var(--border); border-radius:14px; padding:11px 14px; }
+  .avatar { width:44px; height:44px; border-radius:50%; background:var(--green-muted); border:1px solid var(--green-border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:14px; color:var(--green); flex-shrink:0; }
+  .profile-text { display:flex; flex-direction:column; gap:3px; }
+  .profile-name { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1; }
+  .profile-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* Ochrona wylogowania (3.0) - wzorzec .outbox-guard z 00-login */
+  .outbox-guard {
+    display:flex; align-items:flex-start; gap:8px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:10px; padding:9px 11px;
+    font-size:10.5px; color:var(--text-secondary); line-height:1.5; text-align:left;
+  }
+  .outbox-guard svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
+  .outbox-guard b { color:var(--amber); font-weight:600; }
+
+  /* ── diagnostyka GPS ── */
+  .diag-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .diag-row:last-of-type { border-bottom:none; }
+  .diag-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
+  .diag-val { font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--text-primary); text-align:right; }
+  .diag-val.green { color:var(--green); }
+  .diag-val.amber { color:var(--amber); }
+  .diag-val small { font-size:9px; font-weight:400; color:var(--text-secondary); }
+  .btn-refresh { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:44px; padding:12px; border-radius:12px; background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid var(--border-strong); cursor:pointer; }
+  .btn-refresh:hover { background:var(--surface-hover); color:var(--text-primary); }
+
+  /* ── o aplikacji ── */
+
+  /* ── ARKUSZ ZMIANY PIN - offline, dwa kroki ── */
+  .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:none; flex-direction:column; justify-content:flex-end; }
+  .sheet-overlay.open { display:flex; }
+  /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
+     dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
+  .sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; align-items:center; gap:12px; border-top:1px solid var(--border-strong);  max-height:calc(100% - 56px); overflow-y:auto; }
+  .sheet-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); }
+  .sheet-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--text-primary); align-self:flex-start; }
+  .pin-step { font-family:var(--font-mono); font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); min-height:14px; }
+  .pin-step.ok { color:var(--green); }
+  .pin-dots { display:flex; gap:18px; margin:4px 0 8px; }
+  .pin-dots span { width:13px; height:13px; border-radius:50%; border:1.5px solid var(--border-strong); background:transparent; transition:all 0.15s ease; }
+  .pin-dots span.filled { background:var(--green); border-color:var(--green); box-shadow:0 0 12px var(--green-glow); }
+  .numpad { display:grid; grid-template-columns:repeat(3, 78px); gap:10px 16px; justify-content:center; }
+  .num-btn { height:58px; border-radius:14px; background:var(--surface); border:1px solid var(--border); color:var(--text-primary); font-family:var(--font-mono); font-size:20px; font-weight:500; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.12s ease; user-select:none; }
+  .num-btn:hover { background:var(--surface-hover); border-color:var(--border-strong); }
+  .num-btn:active { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .num-btn.ghost { background:transparent; border-color:transparent; color:var(--text-muted); }
+  .sheet-cancel { margin-top:4px; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:none; border:none; cursor:pointer; padding:10px 16px; min-height:40px; }
+  .sheet-cancel:hover { color:var(--text-primary); }
+  .sheet-offline-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--green); display:flex; align-items:center; gap:6px; }
+
+  /* ===== PANEL „DOKĄD STĄD?" ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 13A</span>
+  <span class="slug">ustawienia · pilot w DWÓCH klubach · przełącznik i dołączenie</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 13</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Ustawienia">
+  <div class="status-bar">
+    <span>12:47</span>
+    <span class="status-right">
+      <!-- ONLINE (inaczej niż na 13): przełącznik klubu wymaga sieci, więc pierwsza
+           ramka pokazuje stan, w którym działa. Stany, w których NIE działa, mają własne
+           ramki niżej: zgłoszenie czekające na liście i przełączenie zablokowane. -->
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <!-- Online: SyncChip nie rysuje NIC (issue #12). -->
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ══ KLUB - tylko przy >1 członkostwie (decyzja właściciela, 2026-09-08) ══
+           Sekcja stoi PIERWSZA, bo zmienia to, co pokazuje cała aplikacja (flota na 02,
+           przekazania, normy), a nie jeden wiersz ustawień. Przy jednym członkostwie
+           sekcji NIE MA - patrz 13: przełącznik o jednej pozycji niczego by nie
+           przełączał. Z kokpitu tu nie ma wejścia (kokpit jest modalny), więc
+           przełączenie z maszyną w ręce jest niewyrażalne - operacja należy do klubu,
+           w którym ją zaczęto. „Mój dzień" pokazuje operacje OBU klubów niezależnie
+           od wyboru (01E).
+           WYMAGA INTERNETU I PUSTEJ KOLEJKI (jak wylogowanie): tapnięcie karty
+           pobiera nowe tokeny dla klubu. Offline: <div class="club-list blocked">
+           + <div class="club-blocked">Zmiana klubu wymaga internetu</div>; przy
+           zaległościach: „Najpierw wyślij 3 zapisy - należą do klubu, w którym
+           powstały". Bez sieci pilot pracuje dalej w klubie, w którym jest. -->
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list">
+          <button class="club-opt selected" onclick="pickClub(this)">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt" onclick="pickClub(this)">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+
+        <!-- ══ DOŁĄCZ DO INNEGO KLUBU (2026-09-09: kod klubu jest JEDYNĄ drogą) ══
+             To samo pole, co na 00E, dla pilota, który już lata w innym klubie. Wejście
+             otwiera arkusz z kodem; zgłoszenie dopisuje się do listy wyżej jako wiersz
+             „czeka na zatwierdzenie" (nieklikalny - członkostwa jeszcze nie ma), a pilot
+             pracuje dalej w dotychczasowym klubie. WYMAGA INTERNETU jak przełączenie:
+             offline przycisk arkusza jest zablokowany z powodem w środku (issue #55). -->
+        <button class="action-item" onclick="openJoin()">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- ══ MOTYW ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Motyw wyświetlacza</div>
+
+        <div class="theme-switch">
+          <button class="theme-opt selected" id="th-night" onclick="pickTheme('night')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Ciemny
+          </button>
+          <button class="theme-opt" id="th-solar" onclick="pickTheme('solar')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            Jasny
+          </button>
+        </div>
+      </div>
+
+      <!-- ══ SYNCHRONIZACJA - STAN, nie osobny ekran ══
+           Ekran 11 USUNIĘTY (2026-08-12): był trzecim widokiem tej samej operacji
+           (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka
+           i ostatnia wysyłka = arkusz pod SyncChipem). Zostało to, czego nie ma
+           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie synchronizacji -
+           od issue #55 OBU kierunków: przycisk dopycha kolejkę wysyłki i pobiera
+           świeże dane referencyjne (flota, przekazania) z pominięciem bramy wieku,
+           bo pilot sięgający po niego pyta „co serwer wie TERAZ".
+           Mieszka tutaj, bo Ustawienia są widoczne ZAWSZE - SyncChip pojawia się
+           wyłącznie offline, więc flaga wystawiona po udanej wysyłce nie miałaby
+           się gdzie pokazać. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val">pusta</span>
+          </div>
+          <!-- JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): „czemu mam dwa czasy, które się
+               różnią, czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno
+               być jakoś to samo, w sensie jeden mechanizm synchronizacji?"
+
+               Racja, i to trafiona w usterkę: wysyłka aktualizowała swój stempel
+               WYŁĄCZNIE wtedy, gdy było co wysłać, więc pilot bez zaległości widział
+               godzinę sprzed kilku godzin obok świeżego stempla danych referencyjnych.
+               Jedna godzina odpowiada na pytanie, które naprawdę pada: od kiedy telefon
+               nie rozmawiał z serwerem. Data dochodzi poza bieżącą dobą UTC. -->
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia synchronizacja</span>
+            <span class="diag-val">09:41 UTC</span>
+          </div>
+          <!-- Wiersz „Uwagi serwera" USUNIĘTY (issue #82): „co to są «Uwagi serwera»
+               oraz «dwa telefony piszą do jednej maszyny»? […] wyświetlamy taką
+               informację, ale nie bardzo jest co z tym zrobić - widzę takie ostrzeżenie
+               i nie wiem, co mam dalej zrobić i zareagować." Flagi §4.5 są narzędziem
+               ADMINISTRATORA i rozstrzyga je panel; pilot dostawał listę rzeczy, których
+               nie naprawi. Ta sama kategoria, którą issue #72 wyrzuciło z ustawień,
+               a issue #84 z kokpitu (rozjazd zegara). -->
+        </div>
+        <button class="btn-refresh">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Synchronizuj teraz
+        </button>
+      </div>
+
+      <!-- ══ DIAGNOSTYKA GPS - czujnik lokalny, oś niezależna od sieci ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Diagnostyka GPS</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Status</span>
+            <span class="diag-val green">FIX 3D · 11 satelitów</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatni fix</span>
+            <span class="diag-val" id="fixTime">12:47:29 UTC <small id="fixAge">· 2 s temu</small></span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Dokładność</span>
+            <span class="diag-val">± 4 m</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Pozycja</span>
+            <span class="diag-val">50°04.7'N 019°47.1'E</span>
+          </div>
+        </div>
+        <button class="btn-refresh" onclick="refreshFix()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Odśwież
+        </button>
+      </div>
+
+      <!-- ══ O APLIKACJI ══ -->
+      <div class="form-section">
+        <div class="form-section-title">O aplikacji</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Aplikacja</span>
+            <span class="diag-val">Ninerdeck</span>
+          </div>
+          <!-- WERSJA I NUMER BUILDA (2026-09-06, faza testów): „wersja (build N)" - dokładnie
+               tym zdaniem opisują wydania docs/CHANGELOG.md i strona wydań, więc tester ma
+               umieć odczytać je z telefonu bez tłumaczenia. Źródłem jest ZAINSTALOWANY pakiet
+               (expo-application: versionName + versionCode), nie konfiguracja Expo, która
+               numeru builda nie zna; ten sam napis jedzie w zgłoszeniu błędu. W Expo Go
+               (pakiet nie nasz) i bez danych w wierszu stoi kreska „-". Wersja zeszła
+               z wiersza „Aplikacja" - jedna liczba stoi na karcie raz. -->
+          <div class="diag-row">
+            <span class="diag-key">Wersja</span>
+            <span class="diag-val">1.0.0 (build 1)</span>
+          </div>
+          <!-- Wiersz „Samolot operacji" USUNIĘTY (issue #82: „nie pisz tam «samolot
+               operacji» - to jest do usunięcia"). Mówił, którą maszynę pilot ma w ręce,
+               czyli to, co pasek kokpitu i kafelek na 01 niosą w kółko - a w aplikacji
+               pisał przy tym SUROWY identyfikator z panelu.
+
+               Stempel `.ref-sync` też stąd zszedł: jest jednym z dwóch kierunków
+               synchronizacji, więc mieszka w jej jedynej godzinie wyżej. -->
+        </div>
+      </div>
+
+      <!-- ══ NA KOŃCU: PIN, A POD NIM WYLOGOWANIE (issue #82) ══
+           „W ustawieniach daj wylogowanie na samym końcu, a przed nim zmianę PIN-u."
+           Obie sekcje dotyczą DOSTĘPU do aplikacji, więc stoją razem, a wylogowanie -
+           jedyna rzecz w tych ustawieniach, której nie da się cofnąć bez internetu -
+           zamyka ekran. Na górze stały na drodze każdego, kto przyszedł tu po
+           cokolwiek innego. -->
+      <!-- ══ PIN ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Bezpieczeństwo</div>
+        <button class="action-item" onclick="openPin()">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Zmień PIN</span>
+            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- ══ KONTO ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Konto</div>
+        <div class="profile-chip">
+          <div class="avatar">TM</div>
+          <div class="profile-text">
+            <span class="profile-name">Tomasz Małkiewicz</span>
+            <!-- Kod pilota z AKTYWNEGO klubu - w drugim ten sam człowiek ma inny. -->
+            <span class="profile-sub">TMK · Aeroklub Zielonogórski · tomasz@ninerdeck.pl</span>
+          </div>
+        </div>
+
+        <!-- Online, pusta kolejka: wylogowanie odblokowane (stan zablokowany - patrz 13). -->
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Wyloguj i zmień konto</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> - konta zakłada administrator.</div>
+      </div>
+
+    </div>
+
+    <!-- ═══ ARKUSZ ZMIANY PIN - dwa kroki, w pełni offline ═══ -->
+    <div class="sheet-overlay" id="pinSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">ZMIEŃ PIN</div>
+        <div class="pin-step" id="pinStep">Wpisz obecny PIN</div>
+        <div class="pin-dots" id="pinDots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="numpad">
+          <div class="num-btn" onclick="press()">1</div>
+          <div class="num-btn" onclick="press()">2</div>
+          <div class="num-btn" onclick="press()">3</div>
+          <div class="num-btn" onclick="press()">4</div>
+          <div class="num-btn" onclick="press()">5</div>
+          <div class="num-btn" onclick="press()">6</div>
+          <div class="num-btn" onclick="press()">7</div>
+          <div class="num-btn" onclick="press()">8</div>
+          <div class="num-btn" onclick="press()">9</div>
+          <div class="num-btn ghost"></div>
+          <div class="num-btn" onclick="press()">0</div>
+          <div class="num-btn ghost" onclick="back()" title="Usuń cyfrę">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+          </div>
+        </div>
+        <div class="sheet-offline-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Sprawdzane lokalnie - bez zasięgu też działa
+        </div>
+        <button class="sheet-cancel" onclick="closePin()">Anuluj</button>
+      </div>
+    </div>
+
+    <!-- ═══ ARKUSZ „DOŁĄCZ DO KLUBU" - pole na kod, jak 00E; wymaga sieci ═══
+         Bez placeholdera-instrukcji poza „np. AZG-7K4M": skąd wziąć kod, mówi podpis
+         wejścia na ekranie; arkusz ma jedno pytanie. Odmowy serwera jak na 00E
+         (nieznany kod - zdanie przy polu; 429 - powód w przycisku). -->
+    <div class="sheet-overlay" id="joinSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">DOŁĄCZ DO KLUBU</div>
+        <div class="join-field">
+          <span class="join-label">Kod klubu</span>
+          <input class="join-input" id="joinCode" value="" placeholder="np. AZG-7K4M" aria-label="Kod klubu" oninput="joinChanged()">
+        </div>
+        <button class="join-btn disabled" id="joinBtn" onclick="join()">DOŁĄCZ</button>
+        <button class="sheet-cancel" onclick="closeJoin()">Anuluj</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ DRUGA RAMKA: ZGŁOSZENIE DO TRZECIEGO KLUBU CZEKA ═══
+     Pilot wpisał kod w arkuszu wyżej. Zgłoszenie dopisuje się do TEJ SAMEJ listy jako
+     wiersz `pending`: przygaszony, NIEKLIKALNY (członkostwa jeszcze nie ma, więc nie ma
+     dokąd przełączać), podpis bursztynem, kółko wyboru przerywane. Pilot pracuje dalej
+     w klubie, który miał - zgłoszenie nie zmienia ani ekranu, ani floty.
+     Decyzję klubu widać dopiero wtedy, gdy administrator ją podejmie (P3); do tego czasu
+     wiersz wygląda tak samo po każdym wejściu w ustawienia. -->
+<header class="canvas-label" id="zgloszenie">
+  <span class="film-strip">NINERDECK - 13A</span>
+  <span class="slug">stan: zgłoszenie do trzeciego klubu czeka</span>
+  <span class="canvas-meta">Wiersz `pending` · nieklikalny</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zgłoszenie do klubu czeka">
+  <div class="status-bar">
+    <span>12:49</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <!-- Bez kodu pilota i bez liczby maszyn: jednego nie nadał jeszcze administrator,
+               drugiej telefon nie zna, bo floty tego klubu nigdy nie widział. „0 samolotów"
+               byłoby zdaniem o flocie, a jest zdaniem o pustym cache'u. -->
+          <button class="club-opt pending">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Gamma</span>
+              <span class="club-sub">Czeka na zatwierdzenie</span>
+            </span>
+            <span class="club-check"></span>
+          </button>
+        </div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Motyw wyświetlacza</div>
+        <div class="theme-switch">
+          <button class="theme-opt selected">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Ciemny
+          </button>
+          <button class="theme-opt">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            Jasny
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ TRZECIA RAMKA: PRZEŁĄCZENIE ZABLOKOWANE ═══
+     Karty klubów są przygaszone i nieklikalne, a POWÓD stoi POD listą - tam, gdzie pilot
+     go napotyka (issue #55: nigdy cichy błąd, §4.1 kategoria 3 - akcja wymagająca sieci
+     jest zablokowana z podanym powodem).
+
+     TRZY POWODY, JEDNO MIEJSCE. Kolejność jest kolejnością POWAGI, bo pilot ma widzieć
+     ten, który musi naprawić NAJPIERW:
+       1. „Najpierw zdaj samolot - operacja należy do klubu, w którym ją zaczęto"
+          Powód NAJWYŻSZY - wygrywa z dwoma pozostałymi; ma własną ramkę niżej
+          (#maszyna), bo brzmienie powodu jest decyzją produktową i ma stać
+          w specyfikacji, a nie tylko w kodzie.
+       2. „Najpierw wyślij 3 zapisy - należą do klubu, w którym powstały" - TA RAMKA.
+          Zapisy powstałe w klubie wyjdą WYŁĄCZNIE jego kluczem; wysłane kluczem
+          drugiego klubu wróciłyby odrzucone i przepadły. Blokują zapisy KLUBU
+          BIEŻĄCEGO - zapisy innych klubów nie blokują, bo przełączenie jest właśnie
+          drogą do ich wysłania (decyzja właściciela 2026-09-10).
+       3. „Zmiana klubu wymaga internetu" - bez zasięgu; ten sam układ, sam napis inny.
+     Wpis „Dołącz do innego klubu" ZOSTAJE czynny: arkusz ma własną blokadę w przycisku,
+     a pilot ma prawo wpisać kod, nawet gdy kolejka stoi. -->
+<header class="canvas-label" id="zablokowane">
+  <span class="film-strip">NINERDECK - 13A</span>
+  <span class="slug">stan: przełączenie zablokowane - kolejka wysyłki stoi</span>
+  <span class="canvas-meta">Powód pod listą · karty nieklikalne</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Przełączenie klubu zablokowane">
+  <div class="status-bar">
+    <span>12:51</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <!-- Sieć JEST (zapisy stoją z innego powodu), więc SyncChip nie rysuje nic -
+           kolejka, która opróżni się sama przy najbliższej okazji, jest stanem
+           domyślnym (issue #12). O zaległości mówi wiersz „Kolejka wysyłki" niżej. -->
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list blocked">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+        <div class="club-blocked">Najpierw wyślij 3 zapisy - należą do klubu, w którym powstały</div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Sekcja synchronizacji stoi tu dla kontekstu: to ona mówi, ILE zapisów czeka
+           i to z niej pilot wysyła je ręcznie, zamiast czekać na okazję. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val amber">3 zdarzenia czekają</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia synchronizacja</span>
+            <span class="diag-val">09:41 UTC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ CZWARTA RAMKA: MASZYNA W RĘCE ═══
+     Trzeci - i NAJWYŻSZY - powód blokady przełączenia. Wygrywa z dwoma pozostałymi
+     i dlatego ma własną ramkę: sieć jest, kolejka pusta, a przełączyć się i tak nie da.
+
+     DLACZEGO TAK: operacja należy do klubu, w którym ją ZACZĘTO - maszyna jest w jego
+     flocie, a kod pilota w sygnaturze jest kodem z tego klubu. Przełączenie w połowie
+     operacji zostawiłoby jej zapisy bez klucza, którym mogą wyjść na serwer. Droga
+     wyjścia jest jedna i pilot zna ją z flow: ZDAJ SAMOLOT (09B).
+
+     TEN EKRAN JEST DZIŚ NIEOSIĄGALNY I TO JEST ZAMIERZONE. Kokpit jest stanem modalnym
+     (`CLAUDE.md`): dopóki pilot trzyma maszynę, nie ma z niego drogi bokiem, a zębatka
+     stoi wyłącznie na 01 (issue #82). Restart w środku operacji też wraca do kokpitu,
+     nie na 01 (`resumeTarget`). Ramka istnieje mimo to z dwóch powodów:
+       1. BRZMIENIE POWODU jest decyzją produktową i ma stać w specyfikacji, a nie tylko
+          w kodzie - inaczej pierwszy, kto go zobaczy, napisze je drugi raz po swojemu;
+       2. gdyby kiedykolwiek powstała DRUGA droga do ustawień, reguła jest już narysowana
+          i nie trzeba jej wymyślać pod presją.
+     W kodzie ten warunek stoi jako pas bezpieczeństwa z tym samym uzasadnieniem. -->
+<header class="canvas-label" id="maszyna">
+  <span class="film-strip">NINERDECK - 13A</span>
+  <span class="slug">stan: maszyna w ręce - przełączenie niewyrażalne</span>
+  <span class="canvas-meta">Powód najwyższy · dziś nieosiągalny</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Przełączenie klubu z maszyną w ręce">
+  <div class="status-bar">
+    <span>12:53</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Mój dzień
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <!-- Sieć jest i kolejka pusta - SyncChip nie rysuje nic (issue #12). Blokada nie
+           ma z siecią nic wspólnego: to stan OPERACJI, nie łączności. -->
+      <span></span>
+    </div>
+
+    <div class="scroll">
+      <div class="form-section">
+        <div class="form-section-title">Klub</div>
+        <div class="club-list blocked">
+          <button class="club-opt selected">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Zielonogórski</span>
+              <span class="club-sub">Twój kod: TMK · 4 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button class="club-opt">
+            <span class="club-body">
+              <span class="club-name">Aeroklub Krakowski</span>
+              <span class="club-sub">Twój kod: TOM · 2 samoloty</span>
+            </span>
+            <span class="club-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+        <!-- POWÓD NAZYWA CZYNNOŚĆ, nie stan aplikacji: „zdaj samolot" pilot zna z flow
+             i wie, gdzie ją zrobić (09B). „Operacja w toku" opisywałoby to samo słowami,
+             z których nie wynika, co teraz zrobić. -->
+        <div class="club-blocked">Najpierw zdaj samolot - operacja należy do klubu, w którym ją zaczęto</div>
+
+        <button class="action-item">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Dołącz do innego klubu</span>
+            <span class="action-sub">kod klubu od jego administratora</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Kolejka PUSTA i stempel świeży - i to jest cała treść tej ramki: blokada nie
+           mówi o sieci ani o zaległościach, tylko o maszynie, którą pilot ma w ręce. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val green">pusta</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia synchronizacja</span>
+            <span class="diag-val">12:52 UTC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dokąd stąd?</div>
+  <a class="vp-item" href="13-ustawienia.html">
+    <span class="vp-badge">13</span>
+    <span class="vp-body">
+      <span class="vp-name">Ustawienia - jeden klub</span>
+      <span class="vp-when">Wejście zębatką z „Mój dzień" (01) - JEDYNE w całej aplikacji od issue #82; kokpit ma w tym miejscu przełącznik jasności. Standard: pilot z JEDNYM członkostwem - sekcji „Klub" nie ma wcale.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="13a-ustawienia-klub.html">
+    <span class="vp-badge">13A</span>
+    <span class="vp-body">
+      <span class="vp-name">Ustawienia - przełącznik klubu</span>
+      <span class="vp-when">Pilot z więcej niż jednym członkostwem: pierwsza sekcja to lista klubów z kodem pilota w każdym. Przełączenie wymaga internetu i wysłanych zapisów klubu, z którego się wychodzi - zapisy INNYCH klubów nie blokują, bo przełączenie jest właśnie drogą do ich wysłania (stan zablokowany: ramka niżej) i zmienia flotę na 02; „Mój dzień" i tak pokazuje operacje wszystkich klubów (01E). Pod listą: „Dołącz do innego klubu" - arkusz z polem na kod klubu (jedyna droga do klubu od 2026-09-09); zgłoszenie staje na liście jako wiersz „czeka na zatwierdzenie". Cztery ramki: przełącznik, zgłoszenie na liście i dwa stany zablokowane (zaległe zapisy, maszyna w ręce).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="01-moj-dzien.html">
+    <span class="vp-badge">01</span>
+    <span class="vp-body">
+      <span class="vp-name">Mój dzień - powrót</span>
+      <span class="vp-when">Strzałka wstecz wraca na listę operacji dnia - jedyne miejsce, z którego się tu wchodzi.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">← 01 Mój dzień</a>
+  <a href="04-cockpit-ground.html">04 Kokpit ground</a>
+  <a href="05-cockpit-running.html">05 Kokpit lot</a>
+  <a href="13-ustawienia.html">13 Ustawienia</a>
+  <a href="13a-ustawienia-klub.html" class="active">13A Klub</a>
+  <a href="01e-moj-dzien-dwa-kluby.html">01E Dwa kluby</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu</a>
+  <a href="#zgloszenie">↓ zgłoszenie czeka</a>
+  <a href="#zablokowane">↓ zablokowane</a>
+  <a href="#maszyna">↓ maszyna w ręce</a>
+</nav>
+
+<script>
+  // ── Dołącz do innego klubu: arkusz z kodem → zgłoszenie jako wiersz `pending` na liście ──
+  function openJoin() { document.getElementById('joinSheet').classList.add('open'); document.getElementById('joinCode').focus(); }
+  function closeJoin() { document.getElementById('joinSheet').classList.remove('open'); }
+  function joinChanged() {
+    const v = document.getElementById('joinCode').value.trim();
+    document.getElementById('joinBtn').classList.toggle('disabled', v.length < 8);
+  }
+  function join() {
+    closeJoin();
+    const row = document.createElement('div');
+    row.className = 'club-opt pending';
+    row.innerHTML = '<span class="club-body"><span class="club-name">Aeroklub Gdański</span><span class="club-sub">Zgłoszenie czeka na zatwierdzenie</span></span><span class="club-check"></span>';
+    document.querySelector('.club-list').appendChild(row);
+  }
+  function pickClub(el) {
+    document.querySelectorAll(".club-opt").forEach(b => b.classList.remove("selected"));
+    el.classList.add("selected");
+  }
+  // ── Motyw: dwie pozycje, zaznaczenie = zielona obramówka (issue #72) ──
+  function pickTheme(t) {
+    ['night','solar'].forEach(k =>
+      document.getElementById('th-' + k).classList.toggle('selected', k === t));
+  }
+
+  // ── Diagnostyka GPS: odświeżenie fixa (czujnik lokalny - zero sieci) ──
+  function refreshFix() {
+    document.getElementById('fixTime').childNodes[0].textContent = '12:47:41 UTC ';
+    document.getElementById('fixAge').textContent = '· przed chwilą';
+  }
+
+  // ── Zmiana PIN: dwa kroki (obecny → nowy), sprawdzane lokalnie (3.0) ──
+  const dots = [...document.querySelectorAll('#pinDots span')];
+  const stepEl = document.getElementById('pinStep');
+  let pin = '', phase = 'current';
+  function render() { dots.forEach((el, i) => el.classList.toggle('filled', i < pin.length)); }
+  function openPin() {
+    pin = ''; phase = 'current';
+    stepEl.textContent = 'Wpisz obecny PIN'; stepEl.classList.remove('ok');
+    render();
+    document.getElementById('pinSheet').classList.add('open');
+  }
+  function closePin() { document.getElementById('pinSheet').classList.remove('open'); }
+  function press() {
+    if (pin.length >= 4) return;
+    pin += '•'; render();
+    if (pin.length === 4) {
+      if (phase === 'current') {
+        phase = 'new';
+        setTimeout(() => { pin = ''; render(); stepEl.textContent = 'Ustaw nowy PIN'; }, 380);
+      } else {
+        stepEl.textContent = 'PIN zmieniony ✓'; stepEl.classList.add('ok');
+        setTimeout(closePin, 900);
+      }
+    }
+  }
+  function back() { pin = pin.slice(0, -1); render(); }
+</script>
+
+</body>
+</html>

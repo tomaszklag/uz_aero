@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) - SESJA PRZEGLĄDARKOWA panelu (`/admin/api/auth/*`, `GET /admin/api/me`).
+ * Ninerdeck (serwer) - SESJA PRZEGLĄDARKOWA panelu (`/admin/api/auth/*`, `GET /admin/api/me`).
  *
  * Cztery własności, których złamanie jest luką, a nie usterką:
  *  1. token wychodzi WYŁĄCZNIE ciasteczkiem `HttpOnly` - ciało odpowiedzi go nie niesie;
@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, TEST_GOOGLE_WEB_CLIENT_ID, testHarness } from './helpers.ts';
 import { googleTokenFor, googleTokenForStranger } from './testIdentityProvider.ts';
+import { ORG_A, ORG_B } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -38,9 +39,9 @@ function setCookieHeader(res: { headers: Record<string, unknown> }): string {
 }
 
 function sessionCookie(res: { headers: Record<string, unknown> }): string {
-  const value = /uzaero_admin=([^;]*)/.exec(setCookieHeader(res))?.[1];
+  const value = /ninerdeck_admin=([^;]*)/.exec(setCookieHeader(res))?.[1];
   if (value == null) throw new Error('Odpowiedź nie ustawiła ciasteczka sesji panelu');
-  return `uzaero_admin=${value}`;
+  return `ninerdeck_admin=${value}`;
 }
 
 describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
@@ -54,6 +55,9 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       pilot: { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', role: 'admin' },
+      // Klub sesji (wielofirmowość): panel pisze go w kolumnie bocznej i pyta nim
+      // o każdą listę - kod i rola wyżej są kodem i rolą W TYM klubie.
+      org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
       capabilities: [
         'panel.access',
         'flags.resolve',
@@ -68,10 +72,23 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         // z `capabilitiesOf('admin')`: porównanie z tą samą funkcją, którą trasa
         // woła, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
         'maintenance.run',
-        // Obsługa zgłoszeń błędów (moduł „Zgłoszenia") - dopisana 2026-09-04
-        // razem z trasami issue #87.
-        'bugs.triage',
+        // `bugs.triage` (moduł „Zgłoszenia", issue #87) ZESZŁO z tej listy w epiku C
+        // wielofirmowości (issue #99, C6): zgłoszenia obsługuje superadministrator
+        // na platformie, administrator klubu ich nie widzi.
       ],
+      // Zakresy sesji (issue #101, E2) - z nich panel wie, czy kafel klubu w kolumnie
+      // bocznej jest linkiem. TMK jest administratorem wyłącznie w Alfie, więc lista
+      // ma jedną pozycję i przełączać nie ma dokąd.
+      scopes: {
+        clubs: [
+          {
+            org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
+            code: 'TMK',
+            role: 'admin',
+          },
+        ],
+        platform: false,
+      },
     });
 
     // Token NIGDZIE w ciele - inaczej panel mógłby go „na chwilę" odłożyć do
@@ -85,7 +102,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     return testHarness().then(async ({ app }) => {
       const header = setCookieHeader(await panelLogin(app, 'TMK'));
 
-      expect(header).toMatch(/^uzaero_admin=/);
+      expect(header).toMatch(/^ninerdeck_admin=/);
       expect(header).toMatch(/HttpOnly/i);
       expect(header).toMatch(/Secure/i);
       expect(header).toMatch(/SameSite=Strict/i);
@@ -113,14 +130,15 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     expect(setCookieHeader(badToken)).toBe('');
   });
 
-  it('konto Google BEZ konta pilota → 403 `not_registered`, nie „złe poświadczenia"', async () => {
-    // Odrębna wiadomość od `no_panel_access`: tam konto istnieje i nie obejmuje panelu,
-    // tu konta jeszcze nie ma, bo zgłoszenie czeka na zatwierdzenie.
+  it('konto Google BEZ klubu → 403 `no_panel_access`, nie „złe poświadczenia"', async () => {
+    // Od epiku D osoba powstaje przy pierwszym logowaniu, więc „konta nie ma" przestało
+    // istnieć jako stan: nieznajomy jest osobą bez członkostwa i dla panelu znaczy dokładnie
+    // to, co pilot bez roli - w żadnym klubie nie jest administratorem.
     const { app } = await testHarness();
     const res = await panelLogin(app, 'nieznajomy', googleTokenForStranger('obcy'));
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'not_registered' });
+    expect(res.json()).toEqual({ error: 'no_panel_access' });
     expect(setCookieHeader(res)).toBe('');
   });
 });
@@ -247,6 +265,144 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
   });
 });
 
+/**
+ * PRZEŁĄCZENIE ZAKRESU sesji panelu (`POST /admin/api/auth/switch`; issue #101, E2).
+ *
+ * Cztery własności: nowa sesja bez ponownego logowania, cudzy klub nieistniejący (404),
+ * platforma jako osobny zakres i - najważniejsza - ciasteczko sprzed unieważnienia
+ * członkostwa NIE MIENI nowej sesji. Ostatnia jest tą samą regułą, którą audyt
+ * 2026-09-05 nałożył na token osoby: poświadczenie, którego nikt jeszcze nie
+ * zrealizował, też ma ginąć razem z dostępem.
+ */
+describe('przełączenie zakresu sesji panelu', () => {
+  /** Członkostwo `admin` w Becie dla TMK - świat bazowy nie ma nikogo w dwóch klubach. */
+  const makeAdminInBeta = (db: Harness['db']) =>
+    db.query(
+      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
+       VALUES ($1, 'TMK', 'TMB', 'admin', 'active', 'platform')`,
+      [ORG_B],
+    );
+
+  const switchTo = (app: Harness['app'], cookie: string, orgId: string | null) =>
+    app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/switch',
+      headers: { cookie, ...ADMIN_CSRF_HEADERS },
+      payload: { orgId },
+    });
+
+  it('administrator w dwóch klubach dostaje NOWĄ sesję dla wybranego klubu', async () => {
+    const { app, db } = await testHarness();
+    await makeAdminInBeta(db);
+    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+
+    const res = await switchTo(app, cookie, ORG_B);
+
+    expect(res.statusCode).toBe(200);
+    // Klub, kod i rola są klubu DOCELOWEGO - w Becie ta sama osoba ma inny kod.
+    expect(res.json()).toMatchObject({
+      pilot: { id: 'TMK', code: 'TMB', role: 'admin' },
+      org: { id: ORG_B, name: 'Aeroklub Beta' },
+    });
+    // Zakresy niosą OBA kluby - kolumna boczna ma dokąd prowadzić w każdą stronę.
+    expect(res.json().scopes.clubs.map((c: { org: { id: string } }) => c.org.id)).toEqual([
+      ORG_A,
+      ORG_B,
+    ]);
+    // Nowe ciasteczko, a nie „to samo z inną treścią": bez niego następne żądanie
+    // wróciłoby do starego klubu i przełącznik kłamałby przy pierwszym odświeżeniu.
+    const next = sessionCookie(res);
+    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie: next } });
+    expect(me.json().org.id).toBe(ORG_B);
+  });
+
+  it('klub, w którym ta osoba jest tylko PILOTEM, nie istnieje dla panelu (404)', async () => {
+    const { app, db } = await testHarness();
+    // PWI jest pilotem w obu klubach - ale panel jest dla administratora, więc nie ma
+    // czego mu pokazać. Bierzemy jednak administratora Alfy i celujemy w Betę, gdzie
+    // członkostwa nie ma wcale: obie drogi mają dać TĘ SAMĄ odpowiedź.
+    await db.query(
+      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
+       VALUES ($1, 'TMK', 'TMB', 'pilot', 'active', 'platform')`,
+      [ORG_B],
+    );
+    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+
+    const res = await switchTo(app, cookie, ORG_B);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: 'not_found' });
+    // Klub bez roli panelu nie stoi też na liście wyboru - karta „bez dostępu"
+    // obiecywałaby wejście, którego reguły odmówią.
+    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
+    expect(me.json().scopes.clubs).toHaveLength(1);
+  });
+
+  it('CIASTECZKO SPRZED WYŁĄCZENIA CZŁONKOSTWA nie mieni nowej sesji', async () => {
+    const { app, db, clock } = await testHarness();
+    await makeAdminInBeta(db);
+    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+
+    // Administrator Bety wyłącza to członkostwo - `credentials_valid_from` przesuwa się
+    // na teraz, czyli ZA chwilę wydania ciasteczka.
+    clock.advance(60_000);
+    await db.query(
+      `UPDATE memberships SET status = 'disabled', credentials_valid_from = $2
+       WHERE org_id = $1 AND pilot_id = 'TMK'`,
+      [ORG_B, clock.now()],
+    );
+
+    const res = await switchTo(app, cookie, ORG_B);
+
+    // 404, nie 200: gdyby przełączenie przechodziło, wyłączenie członkostwa dałoby się
+    // obejść ciasteczkiem sprzed wyłączenia - i to bez ani jednego nowego logowania.
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('superadministrator schodzi na klub i wraca na PLATFORMĘ tym samym ciasteczkiem', async () => {
+    const { app, db } = await testHarness();
+    // Operator, który jest też administratorem Alfy - dokładnie przypadek 00A′ z makiety.
+    await db.query(`UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'`);
+    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+
+    // Logowanie wybiera KLUB (członkostwo admin wygrywa), a platforma jest zakresem obok.
+    const club = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
+    expect(club.json().org.id).toBe(ORG_A);
+    expect(club.json().scopes.platform).toBe(true);
+
+    const platform = await switchTo(app, cookie, null);
+    expect(platform.statusCode).toBe(200);
+    expect(platform.json()).toMatchObject({ org: null, pilot: { role: 'superadmin', code: null } });
+
+    // I z powrotem - tym razem ciasteczkiem PLATFORMOWYM, czyli drugą gałęzią bramy.
+    const back = await switchTo(app, sessionCookie(platform), ORG_A);
+    expect(back.statusCode).toBe(200);
+    expect(back.json().org.id).toBe(ORG_A);
+  });
+
+  it('administrator BEZ roli platformowej nie ma zakresu platformy (404, nie 403)', async () => {
+    const { app } = await testHarness();
+    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+
+    const res = await switchTo(app, cookie, null);
+
+    // 404 z tego samego powodu, co przy cudzym klubie: zakres, którego ta osoba nie ma,
+    // jest dla niej nieistniejący. 403 mówiłoby „to istnieje, ale nie dla ciebie".
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('bez sesji → 401', async () => {
+    const { app } = await testHarness();
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/switch',
+      headers: ADMIN_CSRF_HEADERS,
+      payload: { orgId: ORG_A },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+});
+
 describe('wylogowanie', () => {
   it('kasuje ciasteczko - przeglądarka dostaje pustą wartość i wygasłą datę', async () => {
     const { app } = await testHarness();
@@ -260,7 +416,7 @@ describe('wylogowanie', () => {
 
     expect(out.statusCode).toBe(204);
     const header = setCookieHeader(out);
-    expect(header).toMatch(/uzaero_admin=;/);
+    expect(header).toMatch(/ninerdeck_admin=;/);
     expect(header).toMatch(/Path=\/admin/i);
     // Ta sama ścieżka co przy wydaniu - inaczej „wylogowanie" nie trafiłoby
     // w to ciasteczko i zostawiłoby żywą sesję przy zielonym komunikacie.
@@ -278,7 +434,7 @@ describe('wylogowanie', () => {
 });
 
 describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
-  it('logowanie bez `X-UZ-Admin` jest odrzucane, choć poświadczenia są dobre', async () => {
+  it('logowanie bez `X-Ninerdeck-Admin` jest odrzucane, choć poświadczenia są dobre', async () => {
     const { app } = await testHarness();
     const res = await app.inject({
       method: 'POST',

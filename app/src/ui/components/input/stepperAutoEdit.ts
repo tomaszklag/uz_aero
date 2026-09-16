@@ -1,5 +1,5 @@
 /**
- * UZ Aero - KIEDY KONTROLKA OTWIERA SIĘ OD RAZU DO WPISU (uwaga z urządzenia, 2026-08-29).
+ * Ninerdeck - KIEDY KONTROLKA OTWIERA SIĘ OD RAZU DO WPISU (uwaga z urządzenia, 2026-08-29).
  *
  * Trzecia tura issue #62 kazała arkuszowi czasu otwierać się Z KLAWIATURĄ, bo „jest
  * formularzem o jednym pytaniu, więc pilot i tak tapie w wartość". To było prawdą dla
