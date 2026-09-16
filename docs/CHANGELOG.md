@@ -34,6 +34,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 2.0.0 (build 3) · 16 września 2026
+
 ### Nowości
 
 - **Aplikacja nazywa się Ninerdeck.** Nowa nazwa i nowy znak - monogram `9` - wchodzą wszędzie naraz: na ekran logowania, do panelu klubu, na stronę i na ikonę w telefonie. „UZ Aero" było nazwą roboczą; poza zmianą napisów i ikony nie zmienia się nic, czego pilot dotyka w locie.
@@ -118,16 +120,6 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ## Plan wydań
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
-
-### 2.0.0 · wrzesień 2026
-
-> Jeden serwer dla wielu klubów, nowa nazwa i nowa instalacja.
-
-- [x] Kluby: każdy widzi wyłącznie swoje maszyny, pilotów, operacje i dokumenty
-- [x] Dołączanie do klubu kodem klubu, z decyzją administratora
-- [x] Nowa nazwa i nowy znak: Ninerdeck
-- [ ] Nowy serwer i nowa aplikacja postawione od zera
-- [ ] Klub wpisuje flotę i wydaje pilotom kod klubu
 
 ### 2.1.0 · po pierwszych tygodniach testów
 
