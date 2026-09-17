@@ -113,10 +113,25 @@ describe('rozdział hostów - decyzja', () => {
     expect(decide('ninerdeck.pl', 'api', 'POST', '/events')).toEqual({ kind: 'not_found' });
   });
 
-  it('inny host: panel i API przechodzą, strona odsyła na swój host', () => {
+  it('inny host: korzeń odsyła do panelu, reszta strony na jej host, panel i API przechodzą', () => {
+    // `app.ninerdeck.pl` wpisuje ktoś, kto idzie do panelu - korzeń hosta aplikacji jest
+    // jego wejściem, a przekierowanie jest WZGLĘDNE (zostaje na tym samym hoście).
     expect(decide('app.ninerdeck.pl', 'site', 'GET', '/')).toEqual({
       kind: 'redirect',
-      location: `${SITE}/`,
+      location: '/admin/',
+    });
+    expect(decide('app.ninerdeck.pl', 'site', 'HEAD', '/?powrot=1')).toEqual({
+      kind: 'redirect',
+      location: '/admin/',
+    });
+    expect(decide('x.up.railway.app', 'site', 'GET', '/')).toEqual({
+      kind: 'redirect',
+      location: '/admin/',
+    });
+    // Treść strony pod innym adresem niż korzeń to dalej strona - i tam odsyła.
+    expect(decide('app.ninerdeck.pl', 'site', 'GET', '/pobierz/')).toEqual({
+      kind: 'redirect',
+      location: `${SITE}/pobierz/`,
     });
     expect(decide('x.up.railway.app', 'site', 'GET', '/dokumentacja/')).toEqual({
       kind: 'redirect',
@@ -186,7 +201,7 @@ describe('rozdział hostów - serwer', () => {
     expect(events.statusCode).toBe(404);
   });
 
-  it('host aplikacji: panel i API jak dotąd, strona odsyła na swój host', async () => {
+  it('host aplikacji: panel i API jak dotąd, korzeń odsyła do panelu, reszta strony na swój host', async () => {
     const { app } = await harness();
     const host = onHost('app.ninerdeck.pl');
 
@@ -197,9 +212,10 @@ describe('rozdział hostów - serwer', () => {
     expect((await app.inject({ method: 'GET', url: '/admin/api/me', headers: host })).statusCode).toBe(401);
     expect((await app.inject({ method: 'GET', url: '/reference', headers: host })).statusCode).toBe(401);
 
+    // Korzeń hosta aplikacji jest wejściem panelu - przekierowanie względne, na tym hoście.
     const index = await app.inject({ method: 'GET', url: '/', headers: host });
     expect(index.statusCode).toBe(301);
-    expect(index.headers.location).toBe(`${SITE}/`);
+    expect(index.headers.location).toBe('/admin/');
     expect(index.body).not.toContain('NINERDECK');
     const download = await app.inject({ method: 'GET', url: '/pobierz/?src=qr', headers: host });
     expect(download.statusCode).toBe(301);
@@ -214,7 +230,10 @@ describe('rozdział hostów - serwer', () => {
       expect(panel.statusCode, host).toBe(200);
       const index = await app.inject({ method: 'GET', url: '/', headers: onHost(host) });
       expect(index.statusCode, host).toBe(301);
-      expect(index.headers.location, host).toBe(`${SITE}/`);
+      expect(index.headers.location, host).toBe('/admin/');
+      const download = await app.inject({ method: 'GET', url: '/pobierz/', headers: onHost(host) });
+      expect(download.statusCode, host).toBe(301);
+      expect(download.headers.location, host).toBe(`${SITE}/pobierz/`);
     }
   });
 

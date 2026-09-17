@@ -1705,9 +1705,16 @@ na origin strony, a `app.ninerdeck.pl/` landing na origin panelu. Rozdział robi
 | host       | pliki strony (`/*`)      | panel (`/admin`, `/admin/*`) | API i trasy telefonu | `/health`  |
 | ---------- | ------------------------ | ---------------------------- | -------------------- | ---------- |
 | strony     | przechodzą               | 301 na `PUBLIC_BASE_URL`     | 404                  | przechodzi |
-| każdy inny | 301 na `PUBLIC_SITE_URL` | przechodzą                   | przechodzą           | przechodzi |
+| każdy inny | `/` → 301 na `/admin/`; reszta → 301 na `PUBLIC_SITE_URL` | przechodzą | przechodzą | przechodzi |
 
 Decyzje:
+
+- **korzeń hosta aplikacji odsyła do PANELU, nie na stronę** (decyzja właściciela
+  2026-09-17): `app.ninerdeck.pl` wpisuje ktoś, kto idzie do panelu, a odesłanie na landing
+  kazałoby mu wracać i dopisywać `/admin/`. Przekierowanie jest WZGLĘDNE (`/admin/`), więc
+  zostaje na hoście, na który ktoś wszedł - także na domenie nadanej przez hosting.
+  Pozostała treść strony (`/pobierz/`, `/dokumentacja/…`, `site.css`) to dalej strona
+  i odsyła na `PUBLIC_SITE_URL`;
 
 - **rodzaj trasy z WZORCA routera** (`request.routeOptions.url`), nie z prefiksu ścieżki:
   `/admin/api/…` zaczyna się od `/admin/`, a jest API, a druga lista tras obok routera

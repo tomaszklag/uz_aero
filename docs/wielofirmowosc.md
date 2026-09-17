@@ -542,7 +542,8 @@ zmienić adres"). Trzy rzeczy z listy wyżej rozstrzygnęły się tak:
   pod obydwoma. Domyka go serwer: `PUBLIC_SITE_URL` (`https://ninerdeck.pl`) obok
   `PUBLIC_BASE_URL` (`https://app.ninerdeck.pl`) włącza `http/hostSplit.ts` - na hoście
   strony wyłącznie strona (`GET /admin` odsyła na host aplikacji, API odpowiada 404), na
-  każdym innym hoście strony nie ma (`GET /` odsyła na stronę). Bez zmiennej jeden host,
+  każdym innym hoście strony nie ma (`GET /` odsyła do panelu `/admin/` - korzeń hosta
+  aplikacji jest jego wejściem; inne ścieżki strony odsyłają na stronę). Bez zmiennej jeden host,
   jak dotąd; połowiczna konfiguracja = odmowa startu. Luka CSP z `staticSite.ts` jest tym
   zamknięta (`docs/architektura-panelu-serwer.md` §8.9);
 - **linków do kart nikt nie przepisuje i stary host nie musi odpowiadać** - w dzienniku

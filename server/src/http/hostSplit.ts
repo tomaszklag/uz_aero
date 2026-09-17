@@ -27,8 +27,12 @@
  *                                              `ninerdeck.pl/admin` z ręki)
  *                 API, trasy telefonu       → 404, nie 401: na tym hoście te trasy
  *                                              NIE ISTNIEJĄ, a 401 potwierdzałoby, że są
- *   inny host     pliki strony GET          → 301 na host strony (`app.ninerdeck.pl/`
- *                                              prowadzi na landing, nie na 404)
+ *   inny host     `/` GET                   → 301 na `/admin/` - korzeń hosta aplikacji jest
+ *                                              wejściem PANELU: kto wpisuje `app.ninerdeck.pl`,
+ *                                              szuka panelu, nie landingu (decyzja
+ *                                              właściciela 2026-09-17)
+ *                 inne pliki strony GET     → 301 na host strony (`/pobierz/`,
+ *                                              `/dokumentacja/…` to treść strony, nie 404)
  *                 reszta                    → przechodzi
  *   każdy host    `/health`                 → przechodzi (sonda hostingu pyta bez
  *                                              nagłówka `Host` własnej domeny)
@@ -84,7 +88,16 @@ const NOT_FOUND: HostSplitDecision = { kind: 'not_found' };
 /** Metody, które przekierowujemy: nawigacja przeglądarki. `POST` na stronę nie ma sensu. */
 const READ_METHODS = new Set(['GET', 'HEAD']);
 
+/**
+ * Cel korzenia hosta aplikacji - WZGLĘDNY, więc zostaje na tym hoście, na który ktoś wszedł
+ * (także na domenie hostingu), zamiast przepisywać go na `PUBLIC_BASE_URL`.
+ */
+const PANEL_ENTRY = '/admin/';
+
 const stripTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
+
+/** Sama ścieżka z `request.url` - bez zapytania; `/?x=1` jest nadal korzeniem. */
+const pathOf = (url: string): string => url.split('?')[0] ?? url;
 
 /**
  * Konfiguracja rozdziału z env. `null` = jeden host dla wszystkiego (dev, testy).
@@ -140,6 +153,9 @@ export function decideHostSplit(split: HostSplit, req: HostSplitRequest): HostSp
   }
 
   if (req.route === 'site' && navigates) {
+    // Korzeń hosta aplikacji to wejście panelu, nie strony; pozostała treść strony
+    // (`/pobierz/`, `/dokumentacja/…`) odsyła tam, gdzie mieszka.
+    if (pathOf(req.url) === '/') return { kind: 'redirect', location: PANEL_ENTRY };
     return { kind: 'redirect', location: `${split.siteUrl}${req.url}` };
   }
   return PASS;
