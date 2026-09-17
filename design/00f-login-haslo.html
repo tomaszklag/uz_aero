@@ -65,7 +65,9 @@
   .link-out.signup b { color:var(--text-primary); font-weight:600; }
 
   /* ===== BRAND - mniejszy niż na 00A: treścią ekranu jest formularz, nie marka (jak 00E) ===== */
-  .brand { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:22px; }
+  /* Odstęp pod marką większy niż na 00G/00H (22 px): tu pod marką stoi od razu nagłówek
+     formularza, a nie karta, i przy 22 px logo kleiło się do formularza (przegląd 2026-09-17). */
+  .brand { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:34px; }
   .brand-icon {
     width:56px; height:56px; border-radius:16px;
     background:linear-gradient(135deg, #1A2E1A 0%, #0D1A0D 100%);
@@ -97,7 +99,7 @@
      (kod pilota rozwiązuje się w nim po cichu - trzecia ramka). Zna WIĘCEJ → pigułka
      z nazwą bieżącego klubu pod marką, a w stopce „Zmień klub" (00I). Bez zdania „kod
      pilota działa w klubie" - nazwa klubu mówi to sama. */
-  .club-ctx { display:inline-flex; align-items:center; gap:7px; margin:-8px 0 18px; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-secondary); }
+  .club-ctx { display:inline-flex; align-items:center; gap:7px; margin:-10px 0 28px; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-secondary); }
   .club-ctx svg { flex-shrink:0; color:var(--text-muted); }
   .foot-row { display:flex; align-items:center; gap:10px; }
   .foot-row .dot { color:var(--border-strong); font-size:12px; }
