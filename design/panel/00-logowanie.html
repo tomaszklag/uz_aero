@@ -15,7 +15,7 @@
 <header class="canvas-label">
   <span class="film-strip">LOGOWANIE</span>
   <span class="slug">panel/00-logowanie · #/logowanie · ekran przed ramą</span>
-  <span class="canvas-meta"><span class="pulse"></span>Jeden przycisk · haseł nie ma</span>
+  <span class="canvas-meta"><span class="pulse"></span>E-mail i hasło · Google pod spodem</span>
 </header>
 
 <aside class="variants-panel">
@@ -23,16 +23,30 @@
   <a class="vp-item active" href="00-logowanie.html">
     <span class="vp-badge">00</span>
     <span class="vp-body">
-      <span class="vp-name">Spoczynek - jeden przycisk Google</span>
-      <span class="vp-when">Stan domyślny. Ekran ma jedno zadanie i tyle na nim stoi: znak, nazwa i przycisk. Nie ma tu wykładu o uprawnieniach ani zdania „konta zakłada administrator" - kto nie może wejść, dowie się tego po wybraniu konta.</span>
+      <span class="vp-name">Spoczynek - formularz i Google w jednej karcie</span>
+      <span class="vp-when">Stan domyślny od 2.1.0 (2026-09-16): e-mail, hasło, „Zaloguj się" i „Nie pamiętam hasła", pod separatorem „albo" przycisk Google. Hasło jest DRUGĄ metodą tej samej osoby, nie zamiennikiem Google - obie kończą się tą samą sesją. Nie ma tu wykładu o uprawnieniach ani zdania „konta zakłada administrator": kto nie może wejść, dowie się tego jednym zdaniem po próbie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="00-logowanie.html#haslo">
+    <span class="vp-badge">HASŁO</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie pamiętam hasła</span>
+      <span class="vp-when"><code>#/logowanie/haslo</code>: pole adresu i „Wyślij link". Odpowiedź jest ZAWSZE ta sama („jeśli ten adres jest w systemie, link już idzie"), więc formularz nie wylicza kont. Nowego hasła NIE ustawia się w panelu - ustawia się je na stronie z linku, na dowolnym urządzeniu. Trzecie okno niżej.</span>
+    </span>
   </a>
   <a class="vp-item" href="00-logowanie.html#odmowa">
     <span class="vp-badge amber">ODMOWA</span>
     <span class="vp-body">
-      <span class="vp-name">Konto rozpoznane, wejścia nie ma</span>
-      <span class="vp-when">Trzy różne odmowy, trzy różne drogi wyjścia - drugie okno niżej i sekcja „Wszystkie stany". Baner wchodzi MIĘDZY znak a kartę, więc nic nie skacze.</span>
+      <span class="vp-name">Serwer odmówił</span>
+      <span class="vp-when">Baner wchodzi MIĘDZY znak a kartę, więc nic nie skacze; pola zostają wypełnione. Drugie okno pokazuje <code>401 invalid_credentials</code> - jedno zdanie na trzy stany (login nieznany, bez hasła, złe hasło). Komplet odmów i awarii w sekcji „Wszystkie stany".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="konto.html">
+    <span class="vp-badge">K1</span>
+    <span class="vp-body">
+      <span class="vp-name">Po zalogowaniu: własne konto</span>
+      <span class="vp-when">Osoba, która weszła Googlem i hasła jeszcze nie ma, ustawia je w <code>#/konto</code> (wejście z nazwiska w pasku). To jest droga na wspólny tablet dla kogoś, kto na własnym telefonie loguje się Googlem.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-flota.html">
@@ -46,7 +60,7 @@
     <span class="vp-badge amber">BAZA</span>
     <span class="vp-body">
       <span class="vp-name">Szablon i inwentarz komponentów</span>
-      <span class="vp-when">Uwaga: ten ekran jako JEDYNY nie używa paska górnego - przed zalogowaniem nie wiadomo, kto patrzy, więc nie ma czego w nim napisać.</span>
+      <span class="vp-when">Uwaga: ten ekran jako JEDYNY nie używa paska górnego - przed zalogowaniem nie wiadomo, kto patrzy, więc nie ma czego w nim napisać. Klasy formularza logowania (separator, pole hasła z „pokaż", link) są w inwentarzu.</span>
     </span>
   </a>
 </aside>
@@ -55,7 +69,7 @@
      Wewnątrz `.shell` nie ma paska ani kolumny: nazwa klubu, pozycje modułów i nazwisko
      zalogowanego opisują kogoś, kogo jeszcze nie znamy. `.login` bierze całą wysokość
      okna i jest jedynym miejscem w panelu z dużą marką - reszta jest gęsta z zawodu
-     (back-office), a tu na ekranie stoi jedna akcja: gęstość nie ma czego oszczędzać. -->
+     (back-office), a tu na ekranie stoi jedna karta: gęstość nie ma czego oszczędzać. -->
 <main class="browser" role="region" aria-label="Logowanie do panelu Ninerdeck">
 
   <div class="chrome">
@@ -78,12 +92,48 @@
       </div>
 
       <div class="login-card">
+        <!-- DWIE METODY, JEDNA KARTA (2.1.0, docs/logowanie-haslem.md D1, §5.2, §7.2).
+             Hasło jest DRUGĄ metodą tej samej osoby - logowanie hasłem kończy się dokładnie
+             tam, gdzie logowanie Googlem (ta sama sesja, ten sam klub). Formularz stoi
+             NA WIERZCHU, bo administrator klubu założonego bez konta Google (D8) nie ma
+             innej drogi i to on musi ją zobaczyć pierwszy; Google zostaje pod separatorem
+             dla każdego, kto je ma. Panel loguje WYŁĄCZNIE e-mailem (przed zalogowaniem
+             nie ma kontekstu klubu, więc kod pilota tu nie działa - inaczej niż na 00F
+             telefonu). Pole hasła: wklejanie dozwolone, przełącznik „pokaż", bez wymogów
+             co do rodzaju znaków (D4) - żadnej podpowiedzi polityki, bo tu hasła się nie
+             ustawia, tylko podaje. -->
+        <form action="#" autocomplete="on">
+          <div class="field">
+            <label class="label" for="l-email">E-mail</label>
+            <input class="input mono" id="l-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+          </div>
+          <div class="field">
+            <label class="label" for="l-pass">Hasło</label>
+            <div class="input-pass">
+              <input class="input" id="l-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
+              <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn primary block">Zaloguj się</button>
+          <!-- JEDEN link, nie „nie pamiętam" i „nie mam jeszcze": pilot z Googlem, który
+               hasła nigdy nie ustawił, idzie TĄ SAMĄ drogą - link z e-maila ustawia hasło
+               niezależnie od tego, czy jakieś było (D5). -->
+          <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+        </form>
+
+        <div class="login-divider" role="separator">albo</div>
+
         <!-- PRZYCISK RYSUJE GOOGLE, NIE MY. `.login-google` jest pustym kontenerem,
              w który skrypt Google Identity Services wstawia własny przycisk. Poniżej
              stoi ATRAPA (`.login-google-mock`) - klasa istniejąca wyłącznie w makiecie,
              żeby było widać, co użytkownik naprawdę zobaczy. Identyfikator klienta
-             przychodzi z serwera, a nie z builda: panel to statyczne pliki i te same
-             pliki mają działać na każdym wdrożeniu. -->
+             przychodzi z serwera (`GET /admin/api/auth/methods`), a nie z builda: panel
+             to statyczne pliki i te same pliki mają działać na każdym wdrożeniu.
+             GDY SERWER NIE ZNA KLIENTA GOOGLE (`google: null`), separator i ten
+             kontener ZNIKAJĄ w całości - zostaje sam formularz. To opis stanu, nie
+             osobna ramka: różnica to brak dwóch elementów pod przyciskiem. -->
         <div class="login-google">
           <button type="button" class="login-google-mock">
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -106,32 +156,34 @@
   <span>·</span>
   <a href="00-logowanie.html" class="active">Logowanie</a>
   <span>·</span>
+  <a href="00-logowanie.html#haslo">↓ Nie pamiętam hasła</a>
+  <span>·</span>
+  <a href="00-logowanie.html#odmowa">↓ Odmowa</a>
+  <span>·</span>
+  <a href="konto.html">K1 Moje konto</a>
+  <span>·</span>
   <a href="dziennik-flota.html">Dziennik · flota →</a>
-  <span>·</span>
-  <a href="dziennik-maszyna.html">Dziennik · maszyna</a>
-  <span>·</span>
-  <a href="dziennik-operacja.html">Dziennik · operacja</a>
   <span>·</span>
   <a href="piloci-lista.html">Piloci</a>
   <span>·</span>
   <a href="samoloty-lista.html">Samoloty</a>
-  <span>·</span>
-  <a href="zgloszenia-lista.html">Zgłoszenia</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
 
 <!-- ══ DRUGIE OKNO: ODMOWA ══
      Baner wchodzi MIĘDZY znak a kartę i trzyma szerokość karty, żeby kolumna miała
-     jedną krawędź. Przycisk zostaje na miejscu: odmowa dotycząca JEDNEGO konta nie
-     odbiera prawa spróbowania z innego. -->
+     jedną krawędź. Pola ZOSTAJĄ wypełnione: literówka w haśle nie ma kosztować
+     przepisywania adresu, a odpowiedź serwera jest jedna na trzy stany (login nieznany,
+     osoba bez hasła, złe hasło - docs/logowanie-haslem.md §5.1), więc panel nie wie,
+     KTÓRE pole poprawić, i nie udaje, że wie. Ton czerwony: warto spróbować jeszcze raz. -->
 <header class="canvas-label" id="odmowa">
   <span class="film-strip">ODMOWA</span>
-  <span class="slug">panel/00-logowanie · konto Google bez konta w klubie</span>
-  <span class="canvas-meta">Ton bursztynowy · idź po administratora</span>
+  <span class="slug">panel/00-logowanie · 401 invalid_credentials</span>
+  <span class="canvas-meta">Ton czerwony · spróbuj jeszcze raz · pola zostają</span>
 </header>
 
-<main class="browser" role="region" aria-label="Logowanie - konto spoza klubu">
+<main class="browser" role="region" aria-label="Logowanie - nieprawidłowy e-mail lub hasło">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -153,13 +205,33 @@
       </div>
 
       <div class="login-banner">
-        <div class="banner warn" role="alert">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>W klubie nie ma konta z tym adresem Google. Poproś administratora o jego dodanie.</span>
+        <div class="banner danger" role="alert">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span>Nieprawidłowy e-mail lub hasło.</span>
         </div>
       </div>
 
       <div class="login-card">
+        <form action="#" autocomplete="on">
+          <div class="field">
+            <label class="label" for="l2-email">E-mail</label>
+            <input class="input mono" id="l2-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+          </div>
+          <div class="field">
+            <label class="label" for="l2-pass">Hasło</label>
+            <div class="input-pass">
+              <input class="input" id="l2-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
+              <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn primary block">Zaloguj się</button>
+          <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+        </form>
+
+        <div class="login-divider" role="separator">albo</div>
+
         <div class="login-google">
           <button type="button" class="login-google-mock">
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -180,9 +252,77 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Spis makiet panelu</a>
   <span>·</span>
-  <a href="00-logowanie.html" class="active">Logowanie</a>
+  <a href="00-logowanie.html">↑ Logowanie</a>
   <span>·</span>
-  <a href="dziennik-flota.html">Dziennik · flota →</a>
+  <a href="00-logowanie.html#odmowa" class="active">Odmowa</a>
+  <span>·</span>
+  <a href="00-logowanie.html#haslo">↓ Nie pamiętam hasła</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ TRZECIE OKNO: NIE PAMIĘTAM HASŁA ══
+     Jedno pytanie i jedna akcja: adres i „Wyślij link". Hasła tu NIE MA - ani pola na
+     nowe, ani kodu do przepisania: nowe hasło ustawia się na stronie z linku (`/haslo/`),
+     na dowolnym urządzeniu, także na telefonie, na którym czyta się pocztę
+     (docs/logowanie-haslem.md §3.3). Adres jest podstawiony z formularza logowania,
+     jeśli ktoś go już wpisał - to samo pytanie, nie ma po co pytać drugi raz.
+     Ta sama droga służy osobie, która hasła JESZCZE NIE MA (D5). -->
+<header class="canvas-label" id="haslo">
+  <span class="film-strip">NIE PAMIĘTAM HASŁA</span>
+  <span class="slug">panel/00-logowanie · #/logowanie/haslo · link z e-maila</span>
+  <span class="canvas-meta">Jedno pole · jedna odpowiedź · bez pola hasła</span>
+</header>
+
+<main class="browser" role="region" aria-label="Nie pamiętam hasła - wyślij link">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/logowanie/haslo
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-mark">
+        <span class="login-badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="login-title">NINERDECK</span>
+        <span class="login-note">Panel administracyjny</span>
+      </div>
+
+      <div class="login-card">
+        <form action="#">
+          <!-- Tytuł karty krojem tekstowym, jak każdy tytuł karty w panelu (styl lekki:
+               Bebas tylko w marce); lead jest jednym zdaniem o tym, CO SIĘ STANIE -
+               nie o tym, jak działa token. -->
+          <div class="card-title">Link do ustawienia hasła</div>
+          <p class="login-note">Wyślemy link na adres konta. Otwórz go na dowolnym urządzeniu i ustaw hasło - potem zaloguj się tutaj.</p>
+          <div class="field">
+            <label class="label" for="f-email">E-mail</label>
+            <input class="input mono" id="f-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+          </div>
+          <button type="submit" class="btn primary block">Wyślij link</button>
+          <a class="login-link" href="00-logowanie.html">Wróć do logowania</a>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">↑ Logowanie</a>
+  <span>·</span>
+  <a href="00-logowanie.html#haslo" class="active">Nie pamiętam hasła</a>
+  <span>·</span>
+  <a href="konto.html">K1 Moje konto →</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
@@ -194,10 +334,28 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Zanim Google narysuje przycisk</span>
-        <span class="inv-when">Skrypt dostawcy jedzie z sieci, więc przez chwilę tego przycisku po prostu nie ma w drzewie. W jego miejscu stoi PLAMKA w jego geometrii (44 px, pigułka) - nigdy spinner i nigdy pustka, ta sama reguła, co przy tabelach. Bez niej karta skakałaby w chwili wjazdu przycisku.</span>
+        <span class="inv-when">Formularz e-mail i hasło NIE CZEKA - jest znany lokalnie i stoi od pierwszej klatki (reguła „co znamy lokalnie, nie czeka"). Czeka wyłącznie przycisk Google: skrypt dostawcy jedzie z sieci, więc przez chwilę tego przycisku po prostu nie ma w drzewie. W jego miejscu stoi PLAMKA w jego geometrii (44 px, pigułka) - nigdy spinner i nigdy pustka. Bez niej karta skakałaby w chwili wjazdu przycisku.</span>
       </div>
       <div class="inv-demo">
         <div class="login-card">
+          <form action="#">
+            <div class="field">
+              <label class="label" for="s1-email">E-mail</label>
+              <input class="input mono" id="s1-email" type="email" autocomplete="username" placeholder="imie.nazwisko@…">
+            </div>
+            <div class="field">
+              <label class="label" for="s1-pass">Hasło</label>
+              <div class="input-pass">
+                <input class="input" id="s1-pass" type="password" autocomplete="current-password">
+                <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn primary block">Zaloguj się</button>
+            <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+          </form>
+          <div class="login-divider" role="separator">albo</div>
           <div class="login-google-skeleton" aria-hidden="true"></div>
           <div class="login-google pending"></div>
         </div>
@@ -206,42 +364,80 @@
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">Konto wybrane, serwer sprawdza podpis</span>
-        <span class="inv-when">Podpis tokenu weryfikuje serwer, więc między wyborem konta a wejściem jest realna chwila. Zdanie stoi POD przyciskiem i mówi, co się dzieje - to nie jest blokada, tylko postęp czynności, o którą człowiek właśnie poprosił.</span>
+        <span class="inv-name">Serwer sprawdza poświadczenie</span>
+        <span class="inv-when">Między „Zaloguj się" a wejściem jest realna chwila: serwer liczy skrót hasła (albo sprawdza podpis tokenu Google). Zdanie stoi POD przyciskiem, którego dotyczy, i mówi, co się dzieje - to nie jest blokada, tylko postęp czynności, o którą człowiek właśnie poprosił. Przy Google to samo zdanie stoi pod przyciskiem Google.</span>
       </div>
       <div class="inv-demo">
         <div class="login-card">
-          <div class="login-google">
-            <button type="button" class="login-google-mock">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#4285F4" d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.63h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.55z"/>
-                <path fill="#34A853" d="M12 24c3.11 0 5.72-1.03 7.62-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.02-6.45-4.74H1.7v2.98A11.5 11.5 0 0 0 12 24z"/>
-                <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
-                <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
-              </svg>
-              Zaloguj się przez Google
-            </button>
-          </div>
+          <form action="#">
+            <div class="field">
+              <label class="label" for="s2-email">E-mail</label>
+              <input class="input mono" id="s2-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+            </div>
+            <div class="field">
+              <label class="label" for="s2-pass">Hasło</label>
+              <div class="input-pass">
+                <input class="input" id="s2-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
+                <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn primary block" disabled>Zaloguj się</button>
+          </form>
           <p class="login-status">Logowanie…</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Link wysłany - potwierdzenie</span>
+        <span class="inv-when">Drugi stan okna „Nie pamiętam hasła": baner <code>ok</code> nad kartą, adres do odczytu, powrót do logowania. Zdanie jest ZAWSZE to samo - także dla adresu, którego serwer nie zna, i po przekroczeniu limitu wysyłek - bo inna odpowiedź wyliczałaby konta (§5.4). Żadnego pola hasła ani kodu w panelu: hasło ustawia strona <code>/haslo/</code> z linku, a ta karta tylko wysyła i potwierdza.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="login-banner">
+          <div class="banner ok" role="status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+            <span>Jeśli ten adres jest w systemie, link już idzie - ważny godzinę.</span>
+          </div>
+        </div>
+        <div class="login-card">
+          <form action="#">
+            <div class="card-title">Link do ustawienia hasła</div>
+            <div class="field">
+              <label class="label" for="s3-email">E-mail</label>
+              <input class="input mono" id="s3-email" type="email" value="tomasz.malkiewicz@ninerdeck.pl" disabled>
+            </div>
+            <a class="login-link" href="00-logowanie.html">Wróć do logowania</a>
+          </form>
         </div>
       </div>
     </article>
 
     <article class="inv full">
       <div class="inv-head">
-        <span class="inv-name">Trzy odmowy, trzy zdania</span>
-        <span class="inv-when">Po wejściu Google „złe hasło" przestało istnieć: tożsamości dowodzi podpisany token, więc na poziomie poświadczeń została JEDNA odmowa („tego tokenu nie umiem sprawdzić"). Wszystkie pozostałe dotyczą KONTA, które serwer już rozpoznał - i każda ma inną drogę wyjścia, więc każda ma własne zdanie. Ton bursztynowy znaczy „idź po administratora", czerwony - „spróbuj jeszcze raz". Konto wyłączone mówi się WPROST: tożsamość jest już potwierdzona podpisem, więc nie ma czego ukrywać.</span>
+        <span class="inv-name">Cztery odmowy, cztery zdania</span>
+        <span class="inv-when">Hasła wróciły w 2.1.0 (2026-09-16) jako druga metoda, więc wróciła też odmowa POŚWIADCZEŃ - i jest JEDNA na trzy stany: login nieznany, osoba bez hasła, złe hasło dają to samo zdanie i ten sam czas odpowiedzi (serwer liczy skrót także dla nieznanego adresu), żeby formularz nie wyliczał kont. Ton czerwony: warto spróbować jeszcze raz. Za dużo prób to bursztyn z CZASEM w zdaniu - „za chwilę" nie mówi, czy chwila to minuta, czy godzina. Pozostałe odmowy dotyczą KONTA, które serwer już rozpoznał (Googlem albo hasłem), i każda ma inną drogę wyjścia, więc każda ma własne zdanie; ton bursztynowy znaczy „idź po administratora". Konto wyłączone mówi się WPROST: tożsamość jest już dowiedziona, więc nie ma czego ukrywać. Dawne <code>403 not_registered</code> zniknęło razem z tokenem osoby (2026-09-10): osoba bez klubu to dla panelu <code>no_panel_access</code>.</span>
       </div>
       <div class="inv-demo">
-        <span class="inv-mark">403 not_registered - konto Google poprawne, w klubie nie ma konta z tym adresem</span>
+        <span class="inv-mark">401 invalid_credentials - login nieznany / bez hasła / złe hasło: jedno zdanie, pola zostają</span>
         <div class="login-banner">
-          <div class="banner warn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>W klubie nie ma konta z tym adresem Google. Poproś administratora o jego dodanie.</span>
+          <div class="banner danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Nieprawidłowy e-mail lub hasło.</span>
           </div>
         </div>
 
-        <span class="inv-mark">403 no_panel_access - konto jest, ale to konto pilota</span>
+        <span class="inv-mark">429 too_many_attempts - 10 prób na login albo 30 na adres IP w 15 min; czas z `retryAfterSec`</span>
+        <div class="login-banner">
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Za dużo prób - spróbuj za 3 min.</span>
+          </div>
+        </div>
+
+        <span class="inv-mark">403 no_panel_access - konto jest, ale nie ma roli panelu w żadnym klubie (także osoba bez klubu)</span>
         <div class="login-banner">
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -262,10 +458,10 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Awarie - ton czerwony, bo warto spróbować jeszcze raz</span>
-        <span class="inv-when">Trzy różne miejsca, w których coś może paść, i trzy różne zdania: sam token, serwer i skrypt dostawcy. Przy nieznanej odmowie KOD ZOSTAJE W ZDANIU - to jedyna rzecz, którą człowiek może przekazać dalej, a „coś poszło nie tak" nie pomaga nikomu.</span>
+        <span class="inv-when">Trzy różne miejsca, w których coś może paść, i trzy różne zdania: token Google, serwer i skrypt dostawcy. Awaria skryptu Google NIE ODBIERA drogi hasłem - formularz stoi wyżej i działa; znika sam przycisk pod separatorem. Przy nieznanej odmowie KOD ZOSTAJE W ZDANIU - to jedyna rzecz, którą człowiek może przekazać dalej, a „coś poszło nie tak" nie pomaga nikomu.</span>
       </div>
       <div class="inv-demo">
-        <span class="inv-mark">401 - podpisu tokenu nie da się potwierdzić</span>
+        <span class="inv-mark">401 - podpisu tokenu Google nie da się potwierdzić</span>
         <div class="login-banner">
           <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -281,11 +477,11 @@
           </div>
         </div>
 
-        <span class="inv-mark">skrypt Google nie dojechał - przycisku nie będzie wcale</span>
+        <span class="inv-mark">skrypt Google nie dojechał - przycisku nie będzie wcale; hasło działa dalej</span>
         <div class="login-banner">
           <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            <span>Nie udało się wczytać logowania Google. Sprawdź połączenie z internetem.</span>
+            <span>Nie udało się wczytać logowania Google. Sprawdź połączenie z internetem albo zaloguj się hasłem.</span>
           </div>
         </div>
 
@@ -302,7 +498,7 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Czego na tym ekranie NIE MA</span>
-        <span class="inv-when">Lista jest częścią specyfikacji, bo każda z tych rzeczy tu kiedyś stała: <b>pola loginu i hasła</b> (haseł nie ma w produkcie od 2026-09-04 - ani w panelu, ani na telefonie; zerwanie sesji ma jedną drogę, którą jest wyłączenie konta), <b>zdanie „konta zakłada administrator"</b> (opis budowy produktu pokazywany komuś, kto chce się zalogować), <b>wykład o uprawnieniach</b> przed wyborem konta, <b>odnośnik „nie pamiętam hasła"</b> i <b>samodzielna rejestracja z formularzem</b> - zgłoszenie powstaje przez ten sam przycisk Google, a decyzję o nim podejmuje administrator w module PILOCI.</span>
+        <span class="inv-when">Lista jest częścią specyfikacji, bo każda z tych rzeczy tu kiedyś stała albo mogłaby stanąć: <b>samodzielna rejestracja z formularzem</b> (osoba powstaje przy pierwszym logowaniu Googlem albo z ręki superadministratora - D9; do klubu wchodzi się kodem klubu), <b>wykład o uprawnieniach</b> przed zalogowaniem, <b>zdanie „konta zakłada administrator"</b> (opis budowy produktu pokazywany komuś, kto chce się zalogować), <b>kod jednorazowy do przepisania</b> (wycięty przeglądem właściciela 2026-09-16 - dublował link innym kształtem), <b>pole na nowe hasło</b> (ustawia się je na stronie z linku, nie tu), <b>hasło tymczasowe od administratora</b> (link nigdy nie daje sesji - sesję daje dopiero hasło, które zna wyłącznie jego właściciel), <b>kod pilota jako login</b> (jest jedyny w klubie, nie na serwerze, a panel nie zna klubu przed zalogowaniem), <b>wymogi co do znaków i wskaźnik siły</b> (D4 - hasła tu się podaje, a nie ustawia). Natomiast <b>pola e-mail i hasła oraz „Nie pamiętam hasła" SĄ</b> - od 2.1.0 (2026-09-16); od 2026-09-04 do tego dnia nie było ich wcale (haseł nie było w produkcie), a wróciły z powodu, którego tamta decyzja nie przewidziała: wspólnego tabletu w samolocie.</span>
       </div>
     </article>
 
@@ -313,6 +509,8 @@
   <a href="index.html">↩ Spis makiet panelu</a>
   <span>·</span>
   <a href="00-logowanie.html" class="active">Logowanie</a>
+  <span>·</span>
+  <a href="konto.html">K1 Moje konto</a>
   <span>·</span>
   <a href="dziennik-flota.html">Dziennik · flota →</a>
   <span>·</span>

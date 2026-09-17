@@ -336,8 +336,8 @@
     <div class="card-num">00</div>
     <div class="card-body">
       <div class="card-title">00-login</div>
-      <div class="card-desc">Logowanie - codzienne odblokowanie PIN-em (działa offline); konto nadaje administrator. Tożsamość PIC znana dla całej sesji</div>
-      <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span></div>
+      <div class="card-desc">Logowanie - codzienne odblokowanie PIN-em (działa offline); do klubu wchodzi się kodem klubu z zatwierdzeniem. Tożsamość PIC znana dla całej operacji. Druga ramka: sesja zakończona przez administratora - baner Status nad klawiaturą, PIN dalej otwiera aplikację, wysyłka stoi do ponownego zalogowania (2.1.0)</div>
+      <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span><span class="tag amber">sesja</span></div>
     </div>
   </a>
   <a href="01-moj-dzien.html" class="card">
@@ -412,8 +412,8 @@
     <div class="card-num">00A</div>
     <div class="card-body">
       <div class="card-title">00a-login-full</div>
-      <div class="card-desc">Logowanie przez Google - jeden przycisk, bez loginu i hasła; tworzy lokalny profil, wymaga internetu. Hasła znikły z produktu (docs/logowanie-google.md)</div>
-      <div class="card-tags"><span class="tag">logowanie</span><span class="tag">nowy profil</span></div>
+      <div class="card-desc">Logowanie przez Google - pierwszy przycisk na telefonie osobistym; pod nim drugi, „Zaloguj się hasłem" (00F) dla wspólnego tabletu w samolocie. Tworzy lokalny profil, wymaga internetu. Hasło jest drugą metodą tej samej osoby, nie zamiennikiem Google (docs/logowanie-haslem.md D1)</div>
+      <div class="card-tags"><span class="tag">logowanie</span><span class="tag">nowy profil</span><span class="tag">hasło</span></div>
     </div>
   </a>
   <a href="00b-login-offline.html" class="card amber">
@@ -446,6 +446,22 @@
       <div class="card-title">00e-bez-klubu</div>
       <div class="card-desc">Konto Google potwierdzone, ale osoba nie należy do żadnego klubu: jedno pole na kod klubu (8 znaków, od administratora) - od 2026-09-09 jedyna droga do klubu. Kod daje zgłoszenie (00C), o przyjęciu decyduje administrator. Druga ramka: nieznany kod, błąd przy polu. Wielofirmowość 2.0.0</div>
       <div class="card-tags"><span class="tag amber">rejestracja</span><span class="tag">stan</span><span class="tag">kluby</span></div>
+    </div>
+  </a>
+  <a href="00f-login-haslo.html" class="card">
+    <div class="card-num">00F</div>
+    <div class="card-body">
+      <div class="card-title">00f-login-haslo</div>
+      <div class="card-desc">Logowanie hasłem dla wspólnego tabletu w samolocie: jedno pole „E-mail albo kod pilota" (kod działa w klubie, który urządzenie pamięta po wylogowaniu), hasło z przełącznikiem „pokaż", „ZALOGUJ" kończy tam, gdzie Google. Jeden link na „zapomniałem" i „jeszcze nie mam" (00G). Trzy ramki: spoczynek, odmowa (jedna odpowiedź na trzy stany, błąd przy polu), offline (powód w przycisku, pola czynne). Wydanie 2.1.0</div>
+      <div class="card-tags"><span class="tag">logowanie</span><span class="tag">hasło</span><span class="tag">wspólny tablet</span></div>
+    </div>
+  </a>
+  <a href="00g-link-hasla.html" class="card amber">
+    <div class="card-num">00G</div>
+    <div class="card-body">
+      <div class="card-title">00g-link-hasla</div>
+      <div class="card-desc">Nie pamiętam hasła - JEDEN mechanizm: adres → link z e-maila (ważny godzinę) → nowe hasło na stronie, z dowolnego urządzenia. Ta sama droga dla osoby, która hasła jeszcze nie ma; kodu od administratora nie ma. Dwie ramki: wysyłka i potwierdzenie „Sprawdź pocztę" - odpowiedź zawsze ta sama, bez wyliczania kont. Wydanie 2.1.0</div>
+      <div class="card-tags"><span class="tag amber">reset hasła</span><span class="tag">stan</span><span class="tag">hasło</span></div>
     </div>
   </a>
   <a href="01a-moj-dzien-pusty.html" class="card">
@@ -844,8 +860,8 @@
     <div class="card-num">13</div>
     <div class="card-body">
       <div class="card-title">13-ustawienia</div>
-      <div class="card-desc">Ustawienia (zębatka na „Mój dzień" - jedyne wejście od issue #82) - motyw (przełącznik ciemny/jasny), synchronizacja z jednym stemplem, diagnostyka GPS, o aplikacji, na końcu PIN i konto z ochroną wylogowania przy niewysłanych zapisach</div>
-      <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
+      <div class="card-desc">Ustawienia (zębatka na „Mój dzień" - jedyne wejście od issue #82) - motyw (przełącznik ciemny/jasny), synchronizacja z jednym stemplem, diagnostyka GPS, o aplikacji, na końcu PIN, sekcja „Hasło" (ustaw / zmień hasło do wspólnego tabletu - arkusz 13B, wymaga sieci) i konto z ochroną wylogowania przy niewysłanych zapisach. Druga ramka: sesja zakończona przez administratora (baner Status w sekcji Konto, chip SYNC STOI). Wydanie 2.1.0</div>
+      <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span><span class="tag">hasło</span></div>
     </div>
   </a>
   <a href="13a-ustawienia-klub.html" class="card">

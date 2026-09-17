@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ustaw hasło - Ninerdeck</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+<!--
+  STRONA „USTAW HASŁO" - cel linku z e-maila (docs/logowanie-haslem.md §3.3, §5.4; epik H-F).
+
+  Dlaczego STRONA, a nie ekran aplikacji: pilot na wspólnym tablecie czyta pocztę na
+  WŁASNYM telefonie - link kliknięty tam otworzyłby aplikację na niewłaściwym urządzeniu
+  albo nie otworzyłby nic. Strona działa wszędzie, gdzie działa poczta, a po ustawieniu
+  hasła mówi, gdzie się zalogować.
+
+  Token jedzie we FRAGMENCIE adresu (`/haslo/#<token>`): nie trafia do logów serwera
+  ani do nagłówka Referer. Strona pyta nim `POST /auth/password/reset { token, password }`
+  → 204. Sesji NIE wydaje - człowiek loguje się potem hasłem tam, gdzie pracuje, więc
+  token z e-maila nigdy nie staje się poświadczeniem.
+
+  TRZY STANY jednej strony (przełącza `data-state` na <main>): formularz / link wygasł
+  albo został użyty / hasło ustawione. W szkicu H-A stany podglądowe wywołuje się
+  kotwicą `#wygasl` i `#gotowe`; każdy inny fragment jest tokenem. Styl formularza stoi
+  tu inline do czasu przeniesienia do site.css w H-F.
+
+  Polityka hasła (D4, NIST 800-63B): minimum 12 znaków, maksimum 128, BEZ reguł
+  złożoności, BEZ wygasania. Ta sama reguła, którą stosuje telefon i panel
+  (`@ninerdeck/domain`); tu powtórzona wprost, bo strona nie ma bundlera - H-F rozstrzyga,
+  czy buduje pakiet do site/, czy trzyma lustro z testem równości.
+-->
+<style>
+  .haslo { max-width: 520px; }
+  .haslo .lead { max-width: none; }
+  .haslo form { display: grid; gap: 18px; margin: 28px 0 8px; }
+  .haslo .field { display: grid; gap: 7px; }
+  .haslo label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); }
+  .haslo .pass { position: relative; }
+  .haslo input { width: 100%; min-height: 52px; padding: 14px 52px 14px 15px; border-radius: 12px; background: var(--surface-raised); border: 1.5px solid var(--border-strong); color: var(--text-primary); font-family: var(--font-mono); font-size: 16px; letter-spacing: 1.5px; }
+  .haslo input:focus { outline: none; border-color: var(--green-border); }
+  .haslo input.invalid { border-color: var(--red); }
+  /* Przełącznik „pokaż" - w polu, po prawej. Wklejanie dozwolone (NIST: nie utrudniamy). */
+  .haslo .eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 9px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .haslo .eye:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+  /* Podpowiedź polityki - pojawia się PO wpisie i mówi, co jest, nie czego brakuje w ogóle. */
+  .haslo .hint { font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; min-height: 20px; }
+  .haslo .hint.bad { color: var(--red); }
+  .haslo .hint.ok { color: var(--green); }
+  .haslo .btn.primary { justify-content: center; }
+  .haslo .btn.primary[disabled] { background: var(--surface-raised); color: var(--text-muted); box-shadow: none; border: 1px solid var(--border-strong); cursor: not-allowed; }
+  .haslo .state { display: none; }
+  .haslo[data-state="form"] .state-form,
+  .haslo[data-state="expired"] .state-expired,
+  .haslo[data-state="done"] .state-done { display: block; }
+  .haslo .status { border-left: 3px solid var(--green); background: var(--green-muted); padding: 16px 20px; border-radius: 0 14px 14px 0; margin: 24px 0; }
+  .haslo .status.warn { border-left-color: var(--amber); background: var(--amber-muted); }
+  .haslo .status b { display: block; font-family: var(--font-display); font-weight: 400; font-size: 24px; letter-spacing: 1.5px; margin-bottom: 6px; color: var(--text-primary); }
+  .haslo .status p { margin: 0; }
+  .haslo .where { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../" aria-label="Ninerdeck - strona główna">
+    <span class="mark"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg></span>
+    <span class="brand-name">NINER<em>DECK</em></span>
+  </a>
+  <nav aria-label="Nawigacja"><a href="../">Strona główna</a><a href="../pobierz/">Pobierz</a><a href="../dokumentacja/">Dokumentacja</a></nav>
+</div></header>
+<div class="wrap">
+<main class="doc haslo" data-state="form">
+
+  <!-- ══ STAN 1: FORMULARZ ══ -->
+  <section class="state state-form">
+    <p class="eyebrow">Konto Ninerdeck</p>
+    <h1>Ustaw hasło</h1>
+    <p class="lead">Tym hasłem zalogujesz się w aplikacji na wspólnym tablecie i w panelu klubu. Nie zastępuje ono PIN-u, którym odblokowujesz aplikację na swoim telefonie.</p>
+
+    <form id="reset" novalidate>
+      <div class="field">
+        <label for="pass">Nowe hasło</label>
+        <div class="pass">
+          <input id="pass" type="password" autocomplete="new-password" minlength="12" maxlength="128" spellcheck="false" aria-describedby="pass-hint">
+          <button type="button" class="eye" data-toggle="pass" aria-label="Pokaż hasło">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <!-- Zdanie pojawia się PO wpisie (puste pole nie dostaje wykładu) i mówi o TYM haśle. -->
+        <p class="hint" id="pass-hint" aria-live="polite"></p>
+      </div>
+
+      <div class="field">
+        <label for="pass2">Powtórz hasło</label>
+        <div class="pass">
+          <input id="pass2" type="password" autocomplete="new-password" maxlength="128" spellcheck="false" aria-describedby="pass2-hint">
+          <button type="button" class="eye" data-toggle="pass2" aria-label="Pokaż hasło">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="hint" id="pass2-hint" aria-live="polite"></p>
+      </div>
+
+      <!-- Przycisk zablokowany BEZ zdania, dopóki formularz jest pusty - powód widać z pól.
+           Zdanie dostaje wyłącznie odmowa serwera (poniżej, w stanie „wygasł"). -->
+      <p class="cta"><button type="submit" class="btn primary" id="submit" disabled>Ustaw hasło <span class="arr">→</span></button></p>
+    </form>
+  </section>
+
+  <!-- ══ STAN 2: LINK WYGASŁ ALBO ZOSTAŁ UŻYTY ══
+       Jedna odpowiedź na token obcy, przeterminowany i zużyty (`401 invalid_token`) -
+       strona nie rozstrzyga, który to, bo żaden z tych stanów nie ma innej drogi
+       wyjścia niż nowy link. -->
+  <section class="state state-expired">
+    <p class="eyebrow">Konto Ninerdeck</p>
+    <h1>Ten link już nie działa</h1>
+    <div class="status warn">
+      <b>Link wygasł albo został użyty</b>
+      <p>Link do ustawienia hasła jest ważny godzinę i działa raz. Poproś o nowy - w aplikacji albo w panelu wybierz „Nie pamiętam hasła" i podaj swój adres.</p>
+    </div>
+    <p>Jeśli to zaproszenie do klubu, poproś opiekuna platformy o wysłanie go ponownie.</p>
+  </section>
+
+  <!-- ══ STAN 3: GOTOWE ══
+       Bez logowania z tej strony: człowiek loguje się tam, gdzie pracuje. Dwa wyjścia,
+       bo hasło otwiera dwie powierzchnie. -->
+  <section class="state state-done">
+    <p class="eyebrow">Konto Ninerdeck</p>
+    <h1>Hasło ustawione</h1>
+    <div class="status">
+      <b>Możesz się zalogować</b>
+      <p>W aplikacji: wpisz e-mail albo kod pilota i nowe hasło. W panelu klubu: e-mail i hasło. Pozostałe urządzenia, na których to konto było zalogowane, zostały wylogowane.</p>
+    </div>
+    <p class="where"><a class="btn ghost" href="../pobierz/">Aplikacja na Androida <span class="arr">→</span></a><a class="btn ghost" href="../admin/">Panel klubu <span class="arr">→</span></a></p>
+  </section>
+
+</main>
+<footer>
+  <span>Ninerdeck · 2026</span>
+  <nav><a href="../">Strona główna</a><a href="../dokumentacja/">Dokumentacja</a><a href="../prywatnosc.html">Polityka prywatności</a><a href="../regulamin.html">Regulamin</a></nav>
+</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var main = document.querySelector('main.haslo');
+  var pass = document.getElementById('pass');
+  var pass2 = document.getElementById('pass2');
+  var hint = document.getElementById('pass-hint');
+  var hint2 = document.getElementById('pass2-hint');
+  var submit = document.getElementById('submit');
+  var MIN = 12, MAX = 128;
+
+  // Fragment: token linku albo kotwica stanu podglądowego (szkic H-A).
+  var frag = (location.hash || '').slice(1);
+  if (frag === 'wygasl') main.dataset.state = 'expired';
+  else if (frag === 'gotowe') main.dataset.state = 'done';
+  else if (frag.length < 20) main.dataset.state = 'expired'; // bez tokenu nie ma czego ustawiać
+  var token = frag;
+
+  // Ta sama reguła, którą liczy telefon i panel (packages/domain: passwordPolicy) -
+  // tu lustro, bo strona nie ma bundlera. H-F pilnuje równości testem.
+  function verdict(value) {
+    if (value.length === 0) return null;
+    if (value.length < MIN) return { ok: false, text: 'Co najmniej ' + MIN + ' znaków - masz ' + value.length + '.' };
+    if (value.length > MAX) return { ok: false, text: 'Najwyżej ' + MAX + ' znaków.' };
+    return { ok: true, text: 'W porządku - bez wymogów co do rodzaju znaków.' };
+  }
+
+  function refresh() {
+    var v = verdict(pass.value);
+    hint.textContent = v ? v.text : '';
+    hint.className = 'hint' + (v ? (v.ok ? ' ok' : ' bad') : '');
+    pass.classList.toggle('invalid', !!v && !v.ok);
+
+    var same = pass2.value.length > 0 && pass2.value === pass.value;
+    var showMismatch = pass2.value.length > 0 && !same;
+    hint2.textContent = showMismatch ? 'Hasła się różnią.' : '';
+    hint2.className = 'hint' + (showMismatch ? ' bad' : '');
+    pass2.classList.toggle('invalid', showMismatch);
+
+    submit.disabled = !(v && v.ok && same);
+  }
+  pass.addEventListener('input', refresh);
+  pass2.addEventListener('input', refresh);
+
+  document.querySelectorAll('.eye').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.dataset.toggle);
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-label', show ? 'Ukryj hasło' : 'Pokaż hasło');
+    });
+  });
+
+  document.getElementById('reset').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (submit.disabled) return;
+    submit.disabled = true;
+    submit.textContent = 'Ustawianie…';
+    // H-F: POST /auth/password/reset { token, password } → 204 = gotowe; 401 = wygasł.
+    fetch('../auth/password/reset', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token: token, password: pass.value })
+    }).then(function (res) {
+      main.dataset.state = res.status === 204 ? 'done' : 'expired';
+    }).catch(function () {
+      submit.disabled = false;
+      submit.textContent = 'Ustaw hasło →';
+      hint2.textContent = 'Nie ma połączenia z serwerem. Spróbuj za chwilę.';
+      hint2.className = 'hint bad';
+    });
+  });
+
+  refresh();
+})();
+</script>
+</body>
+</html>

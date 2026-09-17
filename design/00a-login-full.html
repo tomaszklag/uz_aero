@@ -92,6 +92,23 @@
   .btn-google:hover { background: var(--surface-hover); border-color: var(--green-border); }
   .g-mark { width: 20px; height: 20px; flex-shrink: 0; }
 
+  /*
+    ===== DRUGA DROGA: HASŁO (2.1.0, docs/logowanie-haslem.md D1) =====
+    Rodzina `button_small` z pakietu tokenów (Bebas 16, odstęp 2 px), NIE drugi zielony:
+    zieleń jest akcentem głównym, a dwa główne przyciski obok siebie nie tworzą
+    hierarchii. Obramówka i tło jak przycisk Google - to ta sama półka: obie drogi
+    prowadzą do tej samej osoby, różni je urządzenie, nie ranga. Odstęp 12 px od
+    Google, pełna szerokość, ~48 px wysokości - cel dotykowy, nie link.
+  */
+  .btn-secondary {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: 48px; padding: 13px 16px; margin-top: 12px; border-radius: 14px;
+    background: var(--surface-raised); border: 1px solid var(--border-strong);
+    color: var(--text-primary); font-family: var(--font-display); font-size: 16px; letter-spacing: 2px;
+    text-decoration: none; cursor: pointer; transition: all 0.18s ease;
+  }
+  .btn-secondary:hover { background: var(--surface-hover); border-color: var(--green-border); }
+
   /* ===== VARIANTS PANEL (canvas - skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
@@ -147,14 +164,29 @@
       </div>
 
       <!--
-        JEDEN PRZYCISK I NIC WIĘCEJ.
+        DWA PRZYCISKI, JEDNA HIERARCHIA (do 2.1.0: „JEDEN PRZYCISK I NIC WIĘCEJ").
 
-        Ekran nie tłumaczy, że pierwsze logowanie zakłada zgłoszenie czekające na
-        administratora - to prawda dla garstki pierwszych wejść, a dla wszystkich
+        GOOGLE ZOSTAJE PIERWSZĄ DROGĄ na telefonie OSOBISTYM (docs/logowanie-haslem.md
+        D1 - decyzja z 2026-09-04 nie jest odwracana). HASŁO jest DRUGĄ metodą TEJ
+        SAMEJ osoby i istnieje dla wspólnego tabletu w samolocie: ten, kto leci,
+        loguje się na swoje konto, a logowanie Googlem na cudzym urządzeniu znaczyłoby
+        dodanie własnego konta Google do cudzej przeglądarki - nikt tego nie zrobi.
+        Stąd drugi przycisk pod Googlem, w rodzinie `button_small` (00F).
+
+        Dwie odmiany tego ekranu OPISANE, nie rysowane (ten sam kształt, inny skład):
+          - urządzenie, które PAMIĘTA KLUB po wylogowaniu (wspólny tablet, D10),
+            startuje WPROST na 00F - tego ekranu w ogóle nie widzi;
+          - gdy serwer nie zna klienta Google (`GET /auth/methods` bez `google`, §5.7),
+            hasło jest jedyną drogą i WCHODZI NA MIEJSCE Google: jeden przycisk,
+            zamiast zdania po tapnięciu w przycisk, który nie zadziała.
+
+        Ekran nadal nie tłumaczy, że pierwsze logowanie zakłada zgłoszenie czekające
+        na administratora - to prawda dla garstki pierwszych wejść, a dla wszystkich
         pozostałych szum (reguła SyncChipa z issue #12: stan domyślny nie dostaje
-        zdania). Zgłoszenie opisuje ekran 00C, czyli dokładnie wtedy, gdy staje się
-        faktem. Zniknęła też podpowiedź „Konto i reset hasła - u administratora":
-        po wejściu Google nie ma ani hasła, ani jego resetu.
+        zdania). Zgłoszenie opisuje ekran 00C, gdy staje się faktem. Nie ma tu też
+        „Nie pamiętam hasła": ten link należy do formularza hasła (00F), bo tam pada
+        pytanie - a reset i tak jest samoobsługowy (link z e-maila, 00G), nie
+        „u administratora".
       -->
       <a href="01-moj-dzien.html" class="btn-google">
         <svg class="g-mark" viewBox="0 0 48 48" aria-hidden="true">
@@ -165,6 +197,10 @@
         </svg>
         Kontynuuj z Google
       </a>
+
+      <!-- Napis przycisku = tytuł ekranu, na który prowadzi (00F „ZALOGUJ SIĘ HASŁEM"):
+           pilot ma widzieć, że trafił tam, gdzie tapnął. -->
+      <a href="00f-login-haslo.html" class="btn-secondary">ZALOGUJ SIĘ HASŁEM</a>
 
     </div>
   </div>
@@ -212,7 +248,21 @@
     <span class="vp-badge amber">00E</span>
     <span class="vp-body">
       <span class="vp-name">Nie należysz do żadnego klubu</span>
-      <span class="vp-when">Konto Google potwierdzone, ale bez członkostwa w żadnym klubie - pole na kod klubu albo link z zaproszenia od administratora.</span>
+      <span class="vp-when">Konto potwierdzone (Google albo hasło), ale bez członkostwa w żadnym klubie - jedno pole na kod klubu od administratora.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00f-login-haslo.html">
+    <span class="vp-badge">00F</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie hasłem</span>
+      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta klub po wylogowaniu, więc wystarczy kod pilota.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00g-link-hasla.html">
+    <span class="vp-badge amber">00G</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie pamiętam hasła</span>
+      <span class="vp-when">Adres → link z e-maila → nowe hasło na stronie. Jedna droga dla „zapomniałem" i „jeszcze nie mam"; kodu od administratora nie ma.</span>
     </span>
   </a>
 </aside>
@@ -226,6 +276,8 @@
   <a href="00c-oczekiwanie.html">00C Czeka →</a>
   <a href="00d-odrzucone.html">00D Odrzucone →</a>
   <a href="00e-bez-klubu.html">00E Bez klubu</a>
+  <a href="00f-login-haslo.html">00F Hasło →</a>
+  <a href="00g-link-hasla.html">00G Link hasła</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>

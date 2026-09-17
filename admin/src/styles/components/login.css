@@ -135,3 +135,92 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/**
+ * ══ LOGOWANIE HASŁEM (2.1.0, `docs/logowanie-haslem.md` §5.2, §7.2) ══
+ *
+ * Hasło jest DRUGĄ metodą tej samej osoby (D1), więc formularz i przycisk Google stoją
+ * w JEDNEJ karcie, rozdzielone separatorem „albo" - nie w dwóch kartach i nie za
+ * przełącznikiem. Formularz jest na wierzchu, bo administrator klubu założonego bez
+ * Google (D8) nie ma innej drogi; Google zostaje pod spodem dla każdego, kto je ma.
+ */
+
+/* Separator między dwiema metodami logowania: dwie linie i słowo między nimi. Mono,
+   ale bez wersalików i bez rozstrzelenia - „albo" jest słowem, nie etykietą przyrządu
+   (styl lekki, issue #107). Odstęp niesie SEPARATOR, nie karta: karta ma dalej dzieci
+   o różnej naturze (formularz, kontener Google, plamka), a wspólny `gap` rozsuwałby
+   też pusty kontener `pending`. */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+/**
+ * Pole hasła z przełącznikiem „pokaż" (D4: wklejanie dozwolone, przełącznik widoczności).
+ * Przycisk jest RODZEŃSTWEM pola w pozycjonowanym opakowaniu, bo `<input>` nie ma dzieci;
+ * pole dostaje prawy margines wewnętrzny na jego szerokość, żeby wpisane hasło nie
+ * wjeżdżało pod ikonę. Powstało dla logowania, ale to jest pole hasła jako takie -
+ * `#/konto` (zmiana hasła) używa tej samej pary klas i nie ma tam własnej.
+ */
+.input-pass {
+  position: relative;
+  display: flex;
+}
+
+.input-pass .input {
+  padding-right: 42px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.eye-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+/* Hasło ODSŁONIĘTE: ikona w pełnym kontraście mówi, że pole pokazuje jawny tekst. */
+.eye-btn[aria-pressed='true'] {
+  color: var(--text-primary);
+}
+
+/* Link pod przyciskiem („Nie pamiętam hasła", „Wróć do logowania"): jedna linia,
+   wyśrodkowana, w błękicie linku z `base.css` - to jedyny kolor, którego użytkownik
+   przeglądarki nie musi się uczyć. Podkreślenie dopiero pod kursorem. */
+.login-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
