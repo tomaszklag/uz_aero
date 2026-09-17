@@ -11,6 +11,7 @@
  * transakcją audytu, bo nie jest akcją panelu.
  */
 
+import { normalizeEmail } from '../../../domain/email.ts';
 import type {
   Database,
   ExternalIdentitiesPort,
@@ -81,7 +82,10 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
                          AND NOT EXISTS (SELECT 1 FROM pilots WHERE lower(email) = lower($3))
                         THEN $3::text ELSE NULL END,
                    TRUE)`,
-          [personId, profile.name, profile.email, profile.emailVerified],
+          // Adres na OSOBIE jest loginem, więc idzie znormalizowany (§4.4); wiersz
+          // tożsamości niżej zostaje przy tym, co przysłał dostawca - to zapis o cudzym
+          // koncie, materiał dla administratora, a nie login.
+          [personId, profile.name, normalizeEmail(profile.email), profile.emailVerified],
         );
         const { rows } = await tx.query<IdentityRow>(
           `INSERT INTO external_identities (provider, subject, pilot_id, email, name)
@@ -122,13 +126,17 @@ export class PgExternalIdentitiesRepo implements ExternalIdentitiesPort {
       `INSERT INTO external_identities (provider, subject, pilot_id, email, name)
        SELECT $1, $2, p.id, $3, $4
          FROM pilots p
-        WHERE lower(p.email) = lower($3)
+        WHERE lower(p.email) = $5
           AND NOT EXISTS (
                 SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id
               )
        ON CONFLICT (provider, subject) DO NOTHING
        RETURNING ${COLUMNS}`,
-      [profile.provider, profile.subject, profile.email, profile.name],
+      // Porównanie idzie po adresie ZNORMALIZOWANYM ($5), zapis tożsamości po surowym
+      // ($3): kolumna `pilots.email` jest loginem i stoi znormalizowana (§4.4), a odstęp
+      // w profilu od dostawcy nie ma prawa rozminąć konta z jego własnym adresem.
+      // `lower(p.email)` zostaje mimo to - w bazie mogą stać wiersze sprzed migracji 9.
+      [profile.provider, profile.subject, profile.email, profile.name, normalizeEmail(profile.email)],
     );
     return rows[0] ? toIdentity(rows[0]) : null;
   }

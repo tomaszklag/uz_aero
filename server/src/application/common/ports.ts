@@ -144,6 +144,18 @@ export interface MembershipAuthSnapshot {
 export interface PilotsPort {
   findById(id: string): Promise<PilotAccount | null>;
   /**
+   * Osoba po adresie e-mail - LOGIN hasłem (2.1.0, §5.1) i cel listu „ustaw hasło".
+   * Porównanie bez względu na wielkość liter (`idx_pilots_email_lower`); `null` = nikt.
+   */
+  findByEmail(email: string): Promise<PilotAccount | null>;
+  /**
+   * Osoba po KODZIE PILOTA w klubie - druga postać loginu hasłem: kod jest jedyny
+   * W KLUBIE, nie na serwerze, więc bez klubu pytanie nie ma odpowiedzi. Członkostwo
+   * w DOWOLNYM stanie: o dostępie rozstrzyga potem wspólny rdzeń logowania, nie to
+   * wyszukanie. `null` = nikt w tym klubie nie ma tego kodu.
+   */
+  findByCode(orgId: string, code: string): Promise<PilotAccount | null>;
+  /**
    * Wszystkie członkostwa osoby, w porządku nazwy klubu - logowanie wybiera z nich
    * klub aktywny, ekran 13a pokazuje przełącznik przy więcej niż jednym.
    */
@@ -152,6 +164,20 @@ export interface PilotsPort {
   membership(pilotId: string, orgId: string): Promise<Membership | null>;
   /** Projekcja dla bramy panelu: rola, aktywność i znaczniki unieważnienia w klubie z tokenu. */
   authSnapshot(pilotId: string, orgId: string): Promise<MembershipAuthSnapshot | null>;
+  /**
+   * NOWA OSOBA z rejestracji e-mailem (§5.4a) - bez członkostwa, jak po pierwszym
+   * logowaniu Googlem. W cudzej transakcji, bo powstaje RAZEM z hasłem przy realizacji
+   * linku. Gdy adres w międzyczasie zajęła inna osoba (wyścig z pierwszym logowaniem
+   * Googlem), oddaje JEJ identyfikator - kliknięcie w link dowiodło władzy nad skrzynką,
+   * a o nic więcej ustawienie hasła nie pyta.
+   */
+  insertPerson(tx: Queryable, person: { id: string; name: string; email: string }): Promise<{ pilotId: string }>;
+  /**
+   * Unieważnia KAŻDE poświadczenie osoby wydane przed `at` (`pilots.credentials_valid_from`):
+   * token dostępu, token osoby i sesja panelu sprzed tej chwili nie przechodzą bramy.
+   * Reset hasła zakłada, że stare hasło mogło wyciec (§4.2), więc zrywa wszystko.
+   */
+  revokeCredentials(tx: Queryable, pilotId: string, at: Date): Promise<void>;
 }
 
 /**
@@ -306,6 +332,132 @@ export interface RefreshTokensPort {
    * jednym członkostwie (§5), zamiast pytać pilota za każdym razem.
    */
   lastOrgFor(pilotId: string): Promise<string | null>;
+  /**
+   * Kasuje WSZYSTKIE refreshe osoby, we wszystkich klubach - reset hasła (2.1.0, §4.2)
+   * zrywa każdą sesję telefonu, bo zakłada, że stare hasło mogło wyciec. W cudzej
+   * transakcji: kasowanie idzie razem z zapisem nowego skrótu, żeby nie było chwili,
+   * w której hasło jest już nowe, a stara sesja jeszcze działa. Zwraca liczbę wierszy.
+   */
+  revokeAllOf(tx: Queryable, pilotId: string): Promise<number>;
+}
+
+// ── hasło jako druga metoda logowania (2.1.0, issue #132) ───────────────────────
+
+/**
+ * Skrót hasła - `infrastructure/auth/scryptHasher.ts`. Port, bo koszt (parametry scrypt)
+ * ustala composition root: produkcja liczy N=2¹⁷ (~100 ms i 128 MiB na próbę), testy
+ * schodzą niżej, a zapis PHC niesie parametry w napisie, więc obie strony czytają
+ * cudze skróty bez migracji.
+ */
+export interface PasswordHasher {
+  /** Nowy skrót w zapisie PHC (`$scrypt$ln=…,r=…,p=…$sól$skrót`). */
+  hash(password: string): Promise<string>;
+  /** Porównanie w czasie stałym; skrót w obcym zapisie = `false`, nie wyjątek. */
+  verify(password: string, phc: string): Promise<boolean>;
+  /** Czy skrót policzono słabszymi parametrami niż bieżące - wtedy logowanie liczy go od nowa. */
+  needsRehash(phc: string): boolean;
+  /**
+   * Skrót ZASTĘPCZY do porównania przy loginie NIEZNANYM albo osobie BEZ hasła: ten sam
+   * koszt, wynik zawsze `false`. Bez niego czas odpowiedzi mówiłby, czy adres jest
+   * w systemie (§8 pkt 1).
+   */
+  dummyHash(): string;
+}
+
+/** Skąd hasło: ustawienia (`self`) albo link z e-maila (`link`) - `password_credentials.set_via`. */
+export type PasswordSetVia = 'self' | 'link';
+
+export interface PasswordCredential {
+  pilotId: string;
+  hash: string;
+  setAt: Date;
+  setVia: PasswordSetVia;
+}
+
+/**
+ * Poświadczenie hasłem - JEDNO na osobę (`password_credentials`). Brak wiersza = osoba
+ * loguje się wyłącznie Googlem. Osobny port od `PilotsPort` z tego samego powodu, co
+ * osobna tabela: hasło jest DOWODEM tożsamości, nie cechą osoby.
+ */
+export interface PasswordCredentialsPort {
+  find(pilotId: string): Promise<PasswordCredential | null>;
+  /** Ustawienie albo zmiana - w cudzej transakcji (razem z unieważnieniem sesji). */
+  upsert(tx: Queryable, credential: { pilotId: string; hash: string; setVia: PasswordSetVia; at: Date }): Promise<void>;
+  /** Sam skrót po re-hashu przy logowaniu - `set_at` i `set_via` bez zmian, bo hasło jest to samo. */
+  rehash(pilotId: string, hash: string, at: Date): Promise<void>;
+}
+
+/** `reset` ustawia hasło ISTNIEJĄCEJ osobie; `signup` zakłada NOWĄ przy realizacji (00H). */
+export type ResetTokenKind = 'reset' | 'signup';
+
+/** Kto wyzwolił list - kolumna audytowa, mechanizm jest JEDEN (§5.4). */
+export type ResetTrigger = 'self' | 'admin' | 'platform' | 'cli';
+
+export type ResetTokenIssue =
+  | {
+      kind: 'reset';
+      pilotId: string;
+      triggeredBy: ResetTrigger;
+      /** Administrator albo superadministrator; `null` przy `self` i `cli`. */
+      createdBy: string | null;
+      now: Date;
+      expiresAt: Date;
+    }
+  | {
+      kind: 'signup';
+      /** Znormalizowany adres nowej osoby - z niego powstanie `pilots.email`. */
+      email: string;
+      displayName: string;
+      now: Date;
+      expiresAt: Date;
+    };
+
+export interface IssuedResetToken {
+  /** Surowy token do adresu `/haslo/#<token>` - poza tą wartością zwrotną nie istnieje nigdzie. */
+  token: string;
+  expiresAt: Date;
+}
+
+/** Token odczytany po skrócie - to, z czego realizacja składa hasło albo osobę. */
+export type ResetTokenView =
+  | { kind: 'reset'; pilotId: string; triggeredBy: ResetTrigger }
+  | { kind: 'signup'; email: string; displayName: string };
+
+/**
+ * Tokeny linku „ustaw hasło" (`password_reset_tokens`). Adapter losuje token, liczy
+ * `sha256` i pilnuje jednorazowości - warstwa aplikacji nigdy nie dotyka kryptografii,
+ * jak przy refreshach.
+ */
+export interface PasswordResetTokensPort {
+  /**
+   * Nowy token; poprzednie NIEZUŻYTE tokeny tej osoby (`reset`) albo tego adresu
+   * (`signup`) zużywa w tej samej transakcji - nowy link unieważnia stary (§4.2).
+   */
+  issue(tx: Queryable, input: ResetTokenIssue): Promise<IssuedResetToken>;
+  /** Podgląd bez zużycia: `null` dla tokenu obcego, przeterminowanego i zużytego - jednakowo. */
+  peek(token: string, now: Date): Promise<ResetTokenView | null>;
+  /**
+   * Zużycie w cudzej transakcji - `null`, gdy w międzyczasie ktoś zużył go pierwszy
+   * (dwa kliknięcia w ten sam link): tylko jedno z nich ustawia hasło.
+   */
+  consume(tx: Queryable, token: string, now: Date): Promise<ResetTokenView | null>;
+}
+
+/** List tekstowy - tyle, ile potrzebuje link „ustaw hasło". HTML-a nie ma i nie potrzebuje. */
+export interface MailMessage {
+  to: string;
+  subject: string;
+  text: string;
+}
+
+/**
+ * Poczta wychodząca - WYMAGANIE serwera od 2.1.0 (`MAIL_PROVIDER`), bo „Nie pamiętam
+ * hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie wstał.
+ * Adapter dostawcy (H-F) i `LogMail` dla dev (`infrastructure/mail/logMail.ts`).
+ * Awaria = wyjątek: wołający decyduje, czy to `502`, czy cicha odmowa (§5.4).
+ */
+export interface MailPort {
+  send(message: MailMessage): Promise<void>;
 }
 
 // ── tożsamości zewnętrzne (logowanie Google) ────────────────────────────────────

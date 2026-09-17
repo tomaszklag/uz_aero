@@ -24,6 +24,7 @@ import type {
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import { SqlFilter } from '../sqlFilter.ts';
+import { normalizeEmail } from '../../../domain/email.ts';
 
 interface OrgRow {
   id: string;
@@ -147,16 +148,17 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
       [org.id, org.name, org.slug, org.joinCode, at, org.createdBy],
     );
 
-    const existing = await tx.query<{ id: string }>(
-      'SELECT id FROM pilots WHERE lower(email) = lower($1)',
-      [org.admin.email],
-    );
+    // Adres jest loginem (§4.4): jeden napis i do wyszukania osoby, i do zapisu.
+    const adminEmail = normalizeEmail(org.admin.email);
+    const existing = await tx.query<{ id: string }>('SELECT id FROM pilots WHERE lower(email) = $1', [
+      adminEmail,
+    ]);
     let pilotId = existing.rows[0]?.id ?? org.admin.pilotId;
     if (existing.rows[0] == null) {
       await tx.query('INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)', [
         pilotId,
         org.admin.name,
-        org.admin.email,
+        adminEmail,
       ]);
     }
 

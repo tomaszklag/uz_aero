@@ -522,6 +522,11 @@ describe('granice, których nie pilnuje kompilator', () => {
       // Sama lista wyjątku nie potrzebuje - niesie `org_id` w wierszu, jako kolumnę `org`.
       'infrastructure/pg/common/bugReportsRepo.ts#countByStatus':
         'liczniki statusów listy PLATFORMOWEJ - zawężenie do klubu przeczyłoby jej treści',
+      // Reset hasła (2.1.0, issue #132) jest decyzją o OSOBIE: stare hasło mogło wyciec,
+      // więc giną sesje telefonu we WSZYSTKICH jej klubach. Kasowanie per klub zostaje
+      // przy panelu (`admin/refreshTokensRepo.ts#revokeAllFor`), gdzie decyduje klub.
+      'infrastructure/pg/common/refreshTokensRepo.ts#revokeAllOf':
+        'reset hasła zrywa sesje osoby we wszystkich klubach - zawężenie do klubu zostawiłoby otwarte pozostałe',
     };
 
     const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {

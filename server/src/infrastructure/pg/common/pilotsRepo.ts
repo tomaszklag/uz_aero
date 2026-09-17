@@ -2,8 +2,11 @@
  * Ninerdeck (serwer) - adapter osób i członkostw na ścieżce LOGOWANIA (`PilotsPort`).
  *
  * Konta powstają przez zatwierdzenie zgłoszenia albo w panelu, więc adapter jest
- * czystym ODCZYTEM ścieżki logowania i bramy; zapis mieszka w seedzie
- * i w `PgAdminPilotsRepo`.
+ * ODCZYTEM ścieżki logowania i bramy; zapis mieszka w seedzie i w `PgAdminPilotsRepo`.
+ * Dwa wyjątki od 2.1.0 (issue #132) i oba są ścieżką LOGOWANIA: `insertPerson` zakłada
+ * osobę z rejestracji e-mailem przy realizacji linku (jak `createPerson` tożsamości
+ * Google przy pierwszym logowaniu), a `revokeCredentials` stempluje unieważnienie
+ * poświadczeń osoby po resecie hasła.
  *
  * ══ OD WIELOFIRMOWOŚCI (issue #98) DWIE TABELE, JEDNO PYTANIE ══
  * Osoba (`pilots`) jest jedna; to, KIM jest w klubie, stoi w `memberships`. Kod i rola
@@ -20,6 +23,7 @@ import type {
   Queryable,
 } from '../../../application/common/ports.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
+import { normalizeEmail } from '../../../domain/email.ts';
 import { DEFAULT_ROLE, isPilotRole, isPlatformRole } from '../../../domain/roles.ts';
 
 interface PilotRow {
@@ -86,15 +90,70 @@ const MEMBERSHIP_SELECT = `
     FROM memberships m
     JOIN organizations o ON o.id = m.org_id`;
 
+/** Kolumny OSOBY wypisane imiennie - jedno źródło dla trzech wyszukań (id, adres, kod). */
+const ACCOUNT_SELECT =
+  'SELECT id, name, email, active, platform_role, credentials_valid_from FROM pilots';
+
 export class PgPilotsRepo implements PilotsPort {
   constructor(private readonly db: Queryable) {}
 
   async findById(id: string): Promise<PilotAccount | null> {
     const { rows } = await this.db.query<PilotRow>(
-      'SELECT id, name, email, active, platform_role, credentials_valid_from FROM pilots WHERE id = $1',
+      `${ACCOUNT_SELECT} WHERE id = $1`,
       [id],
     );
     return rows[0] ? toAccount(rows[0]) : null;
+  }
+
+  async findByEmail(email: string): Promise<PilotAccount | null> {
+    // `lower()` po obu stronach - dokładnie predykat indeksu `idx_pilots_email_lower`.
+    const { rows } = await this.db.query<PilotRow>(
+      `${ACCOUNT_SELECT} WHERE email IS NOT NULL AND lower(email) = lower($1)`,
+      [email.trim()],
+    );
+    return rows[0] ? toAccount(rows[0]) : null;
+  }
+
+  async findByCode(orgId: string, code: string): Promise<PilotAccount | null> {
+    // Kod jest własnością CZŁONKOSTWA w klubie (wielofirmowość) - złączenie po parze
+    // `(org_id, code)`, czyli po unikacie `idx_memberships_code`. Kody w bazie są
+    // wersalikami; wpis z ekranu porównujemy bez względu na wielkość liter.
+    const { rows } = await this.db.query<PilotRow>(
+      `SELECT p.id, p.name, p.email, p.active, p.platform_role, p.credentials_valid_from
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND m.code IS NOT NULL AND upper(m.code) = upper($2)`,
+      [orgId, code.trim()],
+    );
+    return rows[0] ? toAccount(rows[0]) : null;
+  }
+
+  async insertPerson(tx: Queryable, person: { id: string; name: string; email: string }): Promise<{ pilotId: string }> {
+    // Adres ZNORMALIZOWANY (§4.4) - od 2.1.0 jest loginem, a indeks porównuje po
+    // `lower()`. Wyścig z pierwszym logowaniem Googlem tym adresem rozstrzyga odczyt
+    // W TEJ SAMEJ transakcji: gdy osoba już jest, oddajemy ją.
+    const email = normalizeEmail(person.email);
+    const existing = await tx.query<{ id: string }>(
+      'SELECT id FROM pilots WHERE lower(email) = $1',
+      [email],
+    );
+    if (existing.rows[0] != null) return { pilotId: existing.rows[0].id };
+
+    await tx.query('INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)', [
+      person.id,
+      person.name,
+      email,
+    ]);
+    return { pilotId: person.id };
+  }
+
+  async revokeCredentials(tx: Queryable, pilotId: string, at: Date): Promise<void> {
+    // Stempel z ZEGARA aplikacji, nie `now()` bazy - brama porównuje go z chwilą wydania
+    // tokenu, a ta też idzie z zegara aplikacji (ta sama reguła, co `setActive` członkostwa).
+    await tx.query('UPDATE pilots SET credentials_valid_from = $2, updated_at = now() WHERE id = $1', [
+      pilotId,
+      at.toISOString(),
+    ]);
   }
 
   async memberships(pilotId: string): Promise<Membership[]> {

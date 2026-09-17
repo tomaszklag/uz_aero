@@ -17,7 +17,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 
-import type { Clock, Database, RefreshTokensPort } from '../../../application/common/ports.ts';
+import type { Clock, Database, Queryable, RefreshTokensPort } from '../../../application/common/ports.ts';
 
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
@@ -65,6 +65,19 @@ export class PgRefreshTokens implements RefreshTokensPort {
    * `now()` bazy (patrz `issue`/`rotate`): w testach oba muszą mówić o tym samym czasie,
    * inaczej „ostatnio używany" znaczyłby „ostatnio wstawiony przez system operacyjny".
    */
+  /**
+   * WSZYSTKIE kluby naraz - świadomie bez `org_id` (imienny wyjątek w `architecture.test.ts`):
+   * reset hasła jest decyzją o OSOBIE, nie o członkostwie. Panel kasuje per klub
+   * (`PgAdminRefreshTokensRepo.revokeAllFor`), bo tam decyduje administrator klubu.
+   */
+  async revokeAllOf(tx: Queryable, pilotId: string): Promise<number> {
+    const { rows } = await tx.query<{ token_hash: string }>(
+      'DELETE FROM refresh_tokens WHERE pilot_id = $1 RETURNING token_hash',
+      [pilotId],
+    );
+    return rows.length;
+  }
+
   async lastOrgFor(pilotId: string): Promise<string | null> {
     const { rows } = await this.db.query<{ org_id: string }>(
       `SELECT org_id FROM refresh_tokens

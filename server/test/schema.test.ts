@@ -80,6 +80,15 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // `reject_reason`, `decided_at`, `decided_by` ZNIKŁY migracją 8 - decyzja o zgłoszeniu
     // jest wierszem `memberships`, nie stanem tożsamości.
     ['external_identities', ['provider', 'subject', 'pilot_id', 'email', 'name', 'created_at', 'last_login_at']],
+    // Hasło jako DRUGIE poświadczenie osoby (migracja 9, 2.1.0, issue #132) - osobna
+    // tabela, jak tożsamość Google, a nie kolumna na `pilots` (tak było do migracji 7).
+    ['password_credentials', ['pilot_id', 'hash', 'set_at', 'set_via', 'updated_at']],
+    // Tokeny linku „ustaw hasło": `kind`/`email`/`display_name` niosą rejestrację e-mailem
+    // (osoba powstaje przy realizacji), `triggered_by` - który z czterech wyzwalaczy.
+    [
+      'password_reset_tokens',
+      ['token_hash', 'kind', 'pilot_id', 'email', 'display_name', 'triggered_by', 'created_at', 'created_by', 'expires_at', 'consumed_at'],
+    ],
 
     [
       'aircraft',
@@ -168,6 +177,40 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(byName.get('uq_aircraft_org_reg')).toMatch(/UNIQUE.*\(org_id, reg\)/);
     expect(byName.get('idx_memberships_code')).toMatch(/UNIQUE.*\(org_id, code\)/);
     expect(byName.get('exported_sheets_pkey')).toMatch(/\(org_id, tab\)/);
+  });
+
+  it('e-mail osoby jest jedyny BEZ WZGLĘDU NA WIELKOŚĆ LITER (migracja 9, `idx_pilots_email_lower`)', async () => {
+    // Od 2.1.0 adres jest LOGINEM, a odczyty robią `lower()`: `Jan@x.pl` i `jan@x.pl`
+    // muszą być jedną osobą. Do migracji 9 `pilots.email UNIQUE` przepuszczało oba.
+    const db = await migrated();
+    await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-a', 'A', 'Jan@x.pl', TRUE)`);
+    await expect(
+      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-b', 'B', 'jan@X.PL', TRUE)`),
+    ).rejects.toThrow();
+    // Puste adresy indeks pomija - osoba bez e-maila nie blokuje drugiej bez e-maila.
+    await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-c', 'C', NULL, TRUE)`);
+    await expect(
+      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-d', 'D', NULL, TRUE)`),
+    ).resolves.toBeDefined();
+  });
+
+  it('token linku „ustaw hasło" ma kształt zgodny z rodzajem (CHECK `password_reset_token_shape`)', async () => {
+    const db = await migrated();
+    await db.query(`INSERT INTO pilots (id, name, active) VALUES ('p-t', 'T', TRUE)`);
+    const insert = (values: string): Promise<unknown> =>
+      db.query(
+        `INSERT INTO password_reset_tokens (token_hash, kind, pilot_id, email, display_name, triggered_by, created_at, expires_at)
+         VALUES ${values}`,
+      );
+    // `reset` z osobą - dobrze; `reset` bez osoby - odmowa.
+    await expect(insert(`('h1', 'reset', 'p-t', NULL, NULL, 'self', now(), now())`)).resolves.toBeDefined();
+    await expect(insert(`('h2', 'reset', NULL, NULL, NULL, 'self', now(), now())`)).rejects.toThrow();
+    // `signup` z adresem i imieniem, BEZ osoby - dobrze; z osobą albo bez imienia - odmowa.
+    await expect(insert(`('h3', 'signup', NULL, 'nowy@x.pl', 'Nowa Osoba', 'self', now(), now())`)).resolves.toBeDefined();
+    await expect(insert(`('h4', 'signup', 'p-t', 'nowy@x.pl', 'Nowa Osoba', 'self', now(), now())`)).rejects.toThrow();
+    await expect(insert(`('h5', 'signup', NULL, 'nowy@x.pl', NULL, 'self', now(), now())`)).rejects.toThrow();
+    // Wyzwalacz spoza czwórki - odmowa (kod jednorazowy administratora nie istnieje).
+    await expect(insert(`('h6', 'reset', 'p-t', NULL, NULL, 'code', now(), now())`)).rejects.toThrow();
   });
 
   it('`joined_via` zna TRZY drogi do klubu - `panel` odeszło razem z dopisywaniem członka', async () => {

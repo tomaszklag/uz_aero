@@ -25,9 +25,19 @@ import type {
 } from '../../../application/common/commands/auth.ts';
 import { capabilitiesOf, platformCapabilitiesOf } from '../../../domain/roles.ts';
 import { ADMIN_SESSION_COOKIE, tokenFromRequest } from '../../tokenFromRequest.ts';
+import { passwordField, tooManyAttempts } from '../common/password.ts';
 import { sessionRoute, ADMIN_API_PREFIX, type AdminGate } from './adminRoute.ts';
 
 const loginBody = z.object({ idToken: z.string().min(1).max(4096) });
+
+/**
+ * Logowanie HASŁEM (2.1.0, `docs/logowanie-haslem.md` §5.2) - panel loguje WYŁĄCZNIE
+ * e-mailem, bo przed sesją nie ma klubu, w którym kod pilota cokolwiek by znaczył.
+ */
+const passwordLoginBody = z.object({
+  email: z.string().trim().min(3).max(200),
+  password: passwordField,
+});
 
 /**
  * Cel przełączenia: identyfikator klubu albo `null` = platforma.
@@ -152,6 +162,34 @@ export function registerAdminAuthRoutes(
   app.get(`${ADMIN_API_PREFIX}/auth/google-client`, async (_req, reply) =>
     reply.send({ clientId: googleWebClientId }),
   );
+
+  /**
+   * Metody logowania panelu (2.1.0, §5.7) - następca `google-client`, który zostaje
+   * do wygaszenia razem z panelem, który go pyta. Publiczne z tego samego powodu.
+   */
+  app.get(`${ADMIN_API_PREFIX}/auth/methods`, async (_req, reply) =>
+    reply.send({ google: { clientId: googleWebClientId }, password: true }),
+  );
+
+  /**
+   * Logowanie HASŁEM (§5.2, mockup `00-logowanie`): po dowodzie hasła TEN SAM wynik
+   * i to samo ciasteczko, co po Google. `401 invalid_credentials` jest jedną odpowiedzią
+   * na login nieznany / bez hasła / złe hasło; `429` z `Retry-After` pada na sam login.
+   */
+  app.post(`${ADMIN_API_PREFIX}/auth/password`, async (req, reply) => {
+    const parsed = passwordLoginBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    const result = await auth.panelLoginWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      ip: req.ip ?? null,
+    });
+    if (result.ok) return sendSession(reply, result.session);
+    if (result.reason === 'rate_limited') return tooManyAttempts(reply, result.retryAfterSec);
+    // 403 dla konta ROZPOZNANEGO bez wstępu - ten sam rachunek, co przy Google niżej.
+    return reply.code(result.reason === 'no_panel_access' ? 403 : 401).send({ error: result.reason });
+  });
 
   app.post(`${ADMIN_API_PREFIX}/auth/login`, async (req, reply) => {
     const parsed = loginBody.safeParse(req.body);

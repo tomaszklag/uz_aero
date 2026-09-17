@@ -59,6 +59,13 @@ import { AdminLogQueries } from '../src/application/admin/queries/log.ts';
 import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
+import { PASSWORD_WINDOW_MS, PasswordCommands } from '../src/application/common/commands/passwords.ts';
+import { AdminPasswordLinkCommands } from '../src/application/admin/commands/passwordLinks.ts';
+import { BaseUrlPasswordLinks } from '../src/infrastructure/auth/resetLinks.ts';
+import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
+import { PgPasswordCredentialsRepo } from '../src/infrastructure/pg/common/passwordCredentialsRepo.ts';
+import { PgPasswordResetTokensRepo } from '../src/infrastructure/pg/common/passwordResetTokensRepo.ts';
+import { FakeMail } from './fakeMail.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
@@ -84,7 +91,7 @@ import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenan
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgClubCodeRepo } from '../src/infrastructure/pg/admin/clubCodeRepo.ts';
 import { PgOrganizationsRepo } from '../src/infrastructure/pg/admin/organizationsRepo.ts';
-import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
+import { AttemptLimiter } from '../src/application/common/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from '../src/application/mobile/commands/join.ts';
 import { PgClubJoinRepo } from '../src/infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
@@ -206,6 +213,29 @@ export async function testHarness(
   const pilots = new PgPilotsRepo(db);
   const identities = new PgExternalIdentitiesRepo(db);
   const identityProvider = new TestIdentityProvider();
+  const refreshTokens = new PgRefreshTokens(db, clock);
+
+  // Hasło (2.1.0): PRAWDZIWY scrypt na tanich parametrach (ln=10 - ten sam kod, kilkaset
+  // razy mniej pracy), prawdziwe adaptery tokenów i poświadczeń, licznik prób na sterowanym
+  // zegarze. Atrapą jest WYŁĄCZNIE poczta (`FakeMail`): test czyta z niej list i wyjmuje
+  // link, czyli przechodzi dokładnie drogę człowieka ze skrzynką.
+  const passwordHasher = new ScryptHasher({ ln: 10 });
+  const passwordCredentials = new PgPasswordCredentialsRepo(db);
+  const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+  const mail = new FakeMail();
+  const passwords = new PasswordCommands(
+    db,
+    pilots,
+    passwordCredentials,
+    new PgPasswordResetTokensRepo(db),
+    refreshTokens,
+    passwordHasher,
+    mail,
+    new BaseUrlPasswordLinks(TEST_BASE_URL),
+    passwordLimiter,
+    clock,
+    randomUUID,
+  );
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
   // i pisze karty bazodanowym `PgSheets` - te same klasy co produkcja. Testy trybu
@@ -273,13 +303,24 @@ export async function testHarness(
     // bo to cudza kryptografia (uzasadnienie w `testIdentityProvider.ts`).
     auth: new AuthCommands(
       pilots,
-      new PgRefreshTokens(db, clock),
+      refreshTokens,
       identities,
       identityProvider,
       tokens,
       clock,
       randomUUID,
+      { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
     ),
+    passwords,
+    adminPasswordLinks: new AdminPasswordLinkCommands(
+      auditedWrite,
+      adminPilotsRepo,
+      organizationsRepo,
+      passwords,
+    ),
+    // Telefon bez builda z Google (jak dziś na produkcji): `GET /auth/methods` mówi
+    // `google: null`, więc test może przybić kształt obu gałęzi.
+    googleAndroidClientId: null,
     // Dołączanie kodem klubu - prawdziwy adapter i licznik prób na sterowanym zegarze,
     // więc test okna ograniczenia tempa przesuwa czas jawnie, bez spania.
     join: new JoinCommands(
@@ -490,5 +531,21 @@ export async function testHarness(
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.
-  return { app, db, clock, tokens, tracesDir, auditedWrite, events, sessions, identityProvider };
+  // `mail` i `passwordHasher` dla testów hasła: pierwszy oddaje wysłane listy (z nich test
+  // wyjmuje link), drugi pozwala policzyć skrót wprost do bazy i podejrzeć wywołania
+  // `verify` (dowód skrótu zastępczego przy nieznanym loginie).
+  return {
+    app,
+    db,
+    clock,
+    tokens,
+    tracesDir,
+    auditedWrite,
+    events,
+    sessions,
+    identityProvider,
+    mail,
+    passwordHasher,
+    passwords,
+  };
 }

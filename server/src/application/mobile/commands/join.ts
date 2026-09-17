@@ -30,7 +30,7 @@ import {
   type PersonRequest,
 } from '../../common/commands/auth.ts';
 import type { Clock, PilotsPort } from '../../common/ports.ts';
-import type { AttemptLimiter } from '../attemptLimiter.ts';
+import type { AttemptLimiter } from '../../common/attemptLimiter.ts';
 import type { ClubJoinPort } from '../ports.ts';
 
 /** Okno ograniczenia tempa (§3.8): 15 minut. */

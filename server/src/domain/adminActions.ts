@@ -167,6 +167,16 @@ export const ADMIN_ACTIONS = [
    * (`organization.update`).
    */
   'organization.disable',
+  /**
+   * WYSŁANIE LINKU „USTAW HASŁO" z panelu (2.1.0, `docs/logowanie-haslem.md` §5.4):
+   * administrator klubu członkowi swojego klubu (`triggeredBy: 'admin'`) albo
+   * superadministrator pierwszemu administratorowi klubu (`'platform'` - zaproszenie
+   * przy założeniu klubu i „Wyślij ponownie"). `details` niosą wyzwalacz, adres
+   * i termin ważności - NIGDY tokenu (§8 pkt 4): dziennik ma mówić, że list poszedł,
+   * a nie umożliwiać jego ponowne złożenie. „Nie pamiętam hasła" wołane przez samego
+   * pilota wpisu nie dostaje - to nie jest decyzja administratora.
+   */
+  'password.link_sent',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

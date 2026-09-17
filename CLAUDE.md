@@ -2700,11 +2700,58 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
   Ta sama tura: link na 00F to samo „Nie pamiętam hasła" (bez „albo jeszcze go nie mam" -
   list i tak USTAWIA hasło osobie z Googlem), a klub urządzenia zszedł spod pola do pigułki
   pod marką + „Zmień klub" (00I), widocznych WYŁĄCZNIE przy więcej niż jednym znanym klubie
-- **migracja 9 WYŁĄCZNIE addytywna** (produkcja 2.0.0 żyje od 2026-09-16): `password_credentials`,
-  `password_reset_tokens`, `login_sessions`, `refresh_tokens.session_id`,
-  `idx_pilots_email_lower` (dziś `pilots.email UNIQUE` jest wrażliwe na wielkość liter,
-  a odczyty robią `lower()`). Telefon dostaje zmianę **OTA** (bez modułów natywnych); serwer
-  z migracją 9 i zmiennymi `MAIL_*` idzie PRZED aktualizacją telefonów
+- **migracje 9 i 10 WYŁĄCZNIE addytywne** (produkcja 2.0.0 żyje od 2026-09-16): **9 (H-B)** =
+  `password_credentials`, `password_reset_tokens`, `idx_pilots_email_lower` (dziś
+  `pilots.email UNIQUE` jest wrażliwe na wielkość liter, a odczyty robią `lower()`;
+  migracja sprawdza duplikaty PRZED indeksem i pada nazwanym błędem); **10 (H-C)** =
+  `login_sessions`, `refresh_tokens.session_id`. Dokument zapowiadał jedną migrację 9 -
+  epiki idą osobnymi PR-ami, każdy niesie własny DDL. Telefon dostaje zmianę **OTA** (bez
+  modułów natywnych); serwer z migracjami i zmiennymi `MAIL_*` idzie PRZED aktualizacją telefonów
+- **etap H-B (serwer: hasła i link) WYKONANY 2026-09-17** (gałąź `feature-132-serwer-hasla`,
+  issue #132) - reguły obowiązujące odtąd:
+  - **hasło NIGDY nie omija rdzenia**: `AuthCommands.loginWithPassword` /
+    `panelLoginWithPassword` robią WYŁĄCZNIE dowód (`verifyPassword`: limit PRZED skrótem →
+    osoba po adresie albo po kodzie w klubie urządzenia → scrypt ZAWSZE, na skrócie
+    zastępczym dla nieznanego loginu → jedno `invalid_credentials` → `account_disabled`
+    dopiero po dowodzie → re-hash), a potem wołają `enterMobile` / `enterPanel` - TE SAME
+    metody, którymi kończy Google. Nowy sposób logowania = nowy dowód + te dwie metody,
+    nigdy trzecia kopia wyboru klubu
+  - **link „ustaw hasło" ma JEDNO źródło**: `PasswordCommands` składa token i list
+    (`issueLink` + `deliver`); `AdminPasswordLinkCommands` (panel) dokłada wyłącznie zakres,
+    zdolność i audyt `password.link_sent` (bez tokenu w `details`). Treści listów to czyste
+    funkcje w `application/common/mail/passwordMails.ts`; atrapą w testach jest WYŁĄCZNIE
+    poczta (`test/fakeMail.ts` - test czyta list i wyjmuje token jak człowiek ze skrzynki)
+  - **realizacja linku: `peek` → polityka → JEDNA transakcja** (`consume`, osoba przy
+    `signup`, skrót `set_via: 'link'`, `revokeAllOf` refreshy WSZYSTKICH klubów, stempel
+    `pilots.credentials_valid_from`). Słabe hasło NIE spala linku; sesji strona nie dostaje
+  - **W OTWARTEJ TRANSAKCJI CZYTA SIĘ WYŁĄCZNIE PRZEZ `tx`** - odczyt cudzym uchwytem
+    (`PgPilotsRepo.findById` z `this.db` wewnątrz `write.run`) w PGlite CZEKA na koniec
+    transakcji i test kończy się limitem czasu zamiast odpowiedzi (pierwszy przebieg
+    `passwordLinks.ts`). Dane do komendy panelu bierze się z portu, który już ma `tx`
+    (`PilotsAdminPort.byId`, `OrganizationsPlatformPort.byId`), albo PRZED transakcją
+  - **ADRES E-MAIL ZAPISUJE SIĘ ZNORMALIZOWANY** (`domain/email.ts`, §4.4): od 2.1.0 adres
+    jest LOGINEM, a migracja 9 liczy unikalność po `lower(email)` - więc `lower(trim())`
+    wchodzi na KAŻDEJ z pięciu dróg zapisu do `pilots.email` (pierwsze logowanie Googlem,
+    pierwszy administrator klubu, edycja członka w panelu, rejestracja e-mailem, seed).
+    Nowa droga zapisu woła `normalizeEmail`, inaczej w kolumnie stanie drugi napis na tę
+    samą osobę. **ODCZYTY zostają przy `lower()` po obu stronach** - w bazie mogą stać
+    wiersze sprzed migracji 9. `external_identities.email` zostaje SUROWY: to zapis
+    o cudzym koncie u dostawcy, nie login. Pilnuje tego `test/emailNormalization.test.ts`
+    (jeden plik na jedną regułę - cztery z sześciu przypadków upadały przed poprawką)
+  - `AttemptLimiter` przeszedł do `application/common/` (używa go telefon, panel i wysyłka
+    linku); jeden egzemplarz dla haseł, klucze rozróżnia przedrostek (`password:login:`,
+    `password:send:`, `password:admin-send:`, `password:change:`)
+  - **`MAIL_PROVIDER` jest WYMAGANY już teraz** (`log` do czasu adaptera Resend z H-F);
+    `MailPort`, `LogMail` i treści listów powstały w H-B, nie w H-F
+  - **`/haslo/` musi być serwowane NA HOŚCIE APLIKACJI** (zadanie H-F): link składa się
+    z `PUBLIC_BASE_URL`, bo strona woła `POST /auth/password/reset` względnie, a na hoście
+    strony API nie istnieje (`hostSplit.ts`)
+  - `refreshTokensRepo.ts#revokeAllOf` ma imienny wyjątek od strażnika `org_id`
+    (reset zrywa sesje osoby we WSZYSTKICH klubach); `adminRoute` zna metodę `PUT`
+  - **pułapka worktree**: `node_modules/@ninerdeck/*` w worktree wskazywało GŁÓWNY checkout
+    (`main`), więc nowy eksport z `packages/domain` nie istniał dla testów - linki
+    przepięte na `packages/` worktree (`New-Item -ItemType Junction`); po `npm install`
+    w worktree sprawdzić cel linków
 - **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
   HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
   kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`

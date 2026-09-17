@@ -317,22 +317,25 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
     const root = await panelCookie(app, 'ROOT');
     const created = await create(app, root, NEW_CLUB);
 
+    // DWA wpisy od 2.1.0: założenie klubu i zaproszenie pierwszego administratora
+    // (`password.link_sent`, list z linkiem „ustaw hasło" - `passwordReset.test.ts`).
     const rows = await auditRows(db);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
-      action: 'organization.create',
+    expect(rows.map((r) => r.action).sort()).toEqual(['organization.create', 'password.link_sent']);
+    const createRow = rows.find((r) => r.action === 'organization.create')!;
+    expect(createRow).toMatchObject({
       target_id: created.json().organization.id,
       // Akcja platformowa nie dzieje się w żadnym klubie - dziennik klubu jej nie widzi.
       org_id: null,
       actor_pilot_id: 'ROOT',
       actor_role: 'superadmin',
     });
-    expect(rows[0]!.details).toMatchObject({
+    expect(createRow.details).toMatchObject({
       name: 'Klub Spadochronowy Gliwice',
       slug: 'ks-gliwice',
       admin: { name: 'Piotr Wróbel', email: 'piotr.wrobel@gmail.com', code: 'PWR' },
       existingPerson: false,
     });
+    expect(rows.find((r) => r.action === 'password.link_sent')).toMatchObject({ org_id: null, actor_pilot_id: 'ROOT' });
   });
 
   it('walidacja: adres z wielkimi literami i spacją, brak administratora, zły kod → 400', async () => {

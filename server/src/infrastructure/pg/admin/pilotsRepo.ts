@@ -39,6 +39,7 @@ import type {
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
+import { normalizeEmailOrNull } from '../../../domain/email.ts';
 import { DEFAULT_ROLE, isPilotRole, PILOT_ROLES } from '../../../domain/roles.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
@@ -304,7 +305,9 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
                 email = CASE WHEN $4 THEN $3 ELSE email END,
                 updated_at = now()
           WHERE id = $1`,
-        [id, patch.name ?? null, patch.email ?? null, patch.email !== undefined],
+        // Adres jest loginem (§4.4) - schodzi do małych liter; `null` dalej znaczy
+        // „wyczyść pole", a pusty napis z formularza zamienia się w `null` w walidatorze.
+        [id, patch.name ?? null, normalizeEmailOrNull(patch.email), patch.email !== undefined],
       );
     }
     if (patch.code !== undefined || patch.role !== undefined) {

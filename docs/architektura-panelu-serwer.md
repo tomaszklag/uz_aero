@@ -1486,6 +1486,19 @@ z `now()` SQL-a, bo porównuje się go z `memberships.created_at`, który też i
 aplikacji - świat testowy na sterowanym zegarze mieszał te dwie osie i liczba „zgłoszeń
 tym kodem" wychodziła zerem przy niepustej kolejce.
 
+**(k) W OTWARTEJ TRANSAKCJI CZYTA SIĘ WYŁĄCZNIE PRZEZ `tx` - odczyt cudzym uchwytem CZEKA
+(2026-09-17, H-B hasła).** Komenda panelu w `write.run(actor, tx => …)` zawołała
+`PgPilotsRepo.findById(id)` - adapter z WŁASNYM uchwytem do bazy (`this.db`). W produkcji
+(pula `pg`) to drugie połączenie i zapytanie by przeszło; w PGlite jest jedno połączenie,
+więc zapytanie spoza transakcji ustawia się w kolejce ZA nią i czeka na commit, którego
+nie będzie, bo transakcja czeka na to zapytanie. Objaw nie jest błędem, tylko LIMITEM
+CZASU testu (30 s) - i to na każdej trasie, która tę komendę woła (padł także test
+izolacji klubów, bo dopiero co dostał przypadek dla tej trasy). Reguła: dane potrzebne
+komendzie panelu w transakcji biorą się z portu, który JUŻ dostał `tx`
+(`PilotsAdminPort.byId(tx, …)`, `OrganizationsPlatformPort.byId(tx, …)`), albo czyta się
+je PRZED transakcją. Test architektury „komendy panelu nie mają uchwytu do bazy" tego nie
+łapie - komenda nie importowała `Database`, tylko port, który go miał w środku.
+
 
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 

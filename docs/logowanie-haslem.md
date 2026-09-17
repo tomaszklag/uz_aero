@@ -149,7 +149,12 @@ aktywny klub zostaje po wylogowaniu jako podpowiedź urządzenia), więc para (k
 wskazuje osobę jednoznacznie. Na telefonie osobistym po wylogowaniu podpowiedź też jest -
 i nie przeszkadza.
 
-## 4. Model danych - migracja 9 (WYŁĄCZNIE addytywna)
+## 4. Model danych - migracje 9 i 10 (WYŁĄCZNIE addytywne)
+
+> **Wykonanie (2026-09-17, H-B):** dokument zapowiadał JEDNĄ migrację 9 z całym modelem.
+> Epiki idą osobnymi PR-ami i każdy niesie własny DDL, więc **migracja 9 (H-B) = §4.1, §4.2,
+> §4.4** (hasło, tokeny linku, indeks adresu), a **migracja 10 (H-C) = §4.3** (`login_sessions`,
+> `refresh_tokens.session_id`, backfill). Obie addytywne; kolejność wdrożenia bez zmian.
 
 Baza produkcyjna 2.0.0 istnieje od 2026-09-16 i dostaje prawdziwe dane (W2a w #125), więc
 `SCHEMA_VERSION = 9` dokłada, niczego nie zmienia w miejscu.
@@ -640,16 +645,30 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
 - **H-A Projekt** (#131) - ten dokument, makiety telefonu (00A′, 00F, 00G, 00H, 00I, 13/13b, baner 00)
   i panelu (00-logowanie, piloci-konto, organizacje-klub, konto, SZABLON), sekcja
   w `CLAUDE.md`, szkic podręcznika.
-- **H-B Serwer: hasła i link „ustaw hasło"** (#132) - migracja 9 (§4.1, §4.2, §4.4),
+- **H-B Serwer: hasła i link „ustaw hasło"** (#132; **WYKONANE 2026-09-17**, gałąź
+  `feature-132-serwer-hasla`) - migracja 9 (§4.1, §4.2, §4.4),
   `ScryptHasher` (PHC), `packages/domain/src/auth/passwordPolicy.ts` (+ lista zablokowanych,
   testy), `AuthCommands.loginWithPassword` / `panelLoginWithPassword`, `PasswordCommands`
-  (set/change, `sendResetLink` z czterema wyzwalaczami: self / admin / platform / cli,
-  `resetByLink`, `signUp(name, email)` - token `signup`, osoba powstaje przy realizacji,
-  §5.4a), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, audyt
-  `password.link_sent`, limity, skrót zastępczy, testy (w tym „jedna odpowiedź na trzy
-  stany", `202` bez wycieku istnienia adresu i test czasu odpowiedzi). Wysyłkę woła przez
-  `MailPort` z H-F - na atrapie portu w testach.
-- **H-C Serwer: sesje logowania** (#133) - migracja 9 (§4.3, backfill), `sid` w tokenach,
+  (`change`, `forgot`, `signUp(name, email)` - token `signup`, osoba powstaje przy realizacji,
+  §5.4a; `resetByLink`; `issueLink` + `deliver` dla wyzwalaczy admin / platform / cli),
+  `AdminPasswordLinkCommands` (przycisk członka, zaproszenie z platformy, audyt
+  `password.link_sent`), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, limity,
+  skrót zastępczy, normalizacja adresu przy zapisie (`domain/email.ts` - pięć dróg zapisu
+  do `pilots.email`; odczyty zostają przy `lower()`, bo w bazie mogą stać wiersze sprzed
+  migracji 9, a `external_identities.email` zostaje surowy), testy (`passwordLogin`,
+  `passwordReset`, `signUp`, `scryptHasher`, `emailNormalization`: „jedna odpowiedź na
+  trzy stany", `202` bez wycieku istnienia adresu, skrót zastępczy dla nieznanego loginu,
+  skrót ze słabszych parametrów dalej się weryfikuje).
+  **Odstępstwa od planu**: (1) `MailPort`, adapter `log` i TREŚCI listów
+  (`application/common/mail/passwordMails.ts`) powstały tu, nie w H-F - list nie da się
+  wysłać bez treści; H-F zostaje adapter dostawcy (Resend), `MAIL_PROVIDER=resend`
+  i strona `/haslo/`; (2) `MAIL_PROVIDER` jest już WYMAGANY (`z.enum(['log'])`);
+  (3) unieważnienie „pozostałych sesji" przy zmianie hasła w ustawieniach czeka na `sid`
+  z H-C (hak w `PasswordCommands.change`); (4) link składa się z `PUBLIC_BASE_URL` (host
+  aplikacji), więc H-F musi serwować `/haslo/` NA HOŚCIE APLIKACJI (`hostSplit.ts` odsyła
+  dziś ścieżki strony na host strony, gdzie API nie istnieje) - inaczej strona nie ma do kogo
+  zawołać `POST /auth/password/reset`.
+- **H-C Serwer: sesje logowania** (#133) - migracja 10 (§4.3, backfill), `sid` w tokenach,
   `login_sessions` w `issueFor`/`orgSession`/`platformSession`/`switchClub`/`refresh`,
   brama z `sessionRevokedAt` i `401 session_revoked`, przepustnica `last_seen_at`,
   `POST /auth/logout`, stemplowanie przy `/admin/api/auth/logout`, trasy §5.6, audyt

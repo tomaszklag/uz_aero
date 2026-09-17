@@ -76,7 +76,11 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
      kart arkusza klikanych z telefonu; po kroku 5),
    - `PUBLIC_SITE_URL` = `https://ninerdeck.pl` (adres strony; włącza rozdział hostów.
      Bez niej wszystko stoi pod jednym hostem; z nią serwer NIE WSTANIE, gdy brakuje
-     `PUBLIC_BASE_URL` albo oba adresy wskazują ten sam host).
+     `PUBLIC_BASE_URL` albo oba adresy wskazują ten sam host),
+   - `MAIL_PROVIDER` (od 2.1.0, WYMAGANY - bez niego serwer nie wstaje): poczta wychodząca
+     dla linków „ustaw hasło" (`docs/logowanie-haslem.md` §5.4). Do czasu adaptera dostawcy
+     (epik H-F, issue #136) jedyną wartością jest `log` - list ląduje w logu serwera, więc
+     NIE nadaje się na produkcję z pilotami; produkcja dostanie `resend` i zmienne `MAIL_*`.
    `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu i stronę serwer
    znajduje sam (ścieżki wbudowane w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
@@ -130,6 +134,14 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    zmiany w JS (ekrany, reguły, `packages/*`) wypuszcza się przez `npm run update:prod`
    i docierają same przy następnym uruchomieniu. Nowy APK dopiero przy zmianie NATYWNEJ -
    szczegóły i pułapki w `CLAUDE.md`, sekcja o aktualizacjach OTA.
+10. **Procedura awaryjna - hasło, gdy Google I poczta padły** (od 2.1.0,
+    `docs/logowanie-haslem.md` §5.4, §8 pkt 12): z konsoli serwera (Railway → usługa → Shell,
+    albo lokalnie z `DATABASE_URL` = `DATABASE_PUBLIC_URL` i `PUBLIC_BASE_URL`)
+    `npm run seed -- --reset-link <e-mail osoby>` DRUKUJE na stdout link `/haslo/#…` ważny
+    72 h - ten sam, który normalnie idzie pocztą. Przekaż go bezpiecznym kanałem; po
+    ustawieniu hasła wszystkie dotychczasowe sesje tej osoby zostają wylogowane. W drugą
+    stronę (zapomniane hasło superadministratora): „Nie pamiętam hasła" w panelu, Google
+    z tym samym adresem albo ta sama komenda. Kodów jednorazowych do dyktowania NIE MA.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

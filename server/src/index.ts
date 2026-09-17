@@ -48,7 +48,7 @@ import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
-import { AttemptLimiter } from './application/mobile/attemptLimiter.ts';
+import { AttemptLimiter } from './application/common/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from './application/mobile/commands/join.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { TraceCommands } from './application/mobile/commands/traces.ts';
@@ -62,6 +62,13 @@ import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { ORG_SLUG_PATTERN } from './domain/organizations.ts';
 import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
+import { BaseUrlPasswordLinks } from './infrastructure/auth/resetLinks.ts';
+import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { LogMail } from './infrastructure/mail/logMail.ts';
+import { PgPasswordCredentialsRepo } from './infrastructure/pg/common/passwordCredentialsRepo.ts';
+import { PgPasswordResetTokensRepo } from './infrastructure/pg/common/passwordResetTokensRepo.ts';
+import { AdminPasswordLinkCommands } from './application/admin/commands/passwordLinks.ts';
+import { PASSWORD_WINDOW_MS, PasswordCommands } from './application/common/commands/passwords.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgClubCodeRepo } from './infrastructure/pg/admin/clubCodeRepo.ts';
@@ -159,6 +166,13 @@ const env = z
      */
     GOOGLE_WEB_CLIENT_ID: z.string().min(1),
     GOOGLE_ANDROID_CLIENT_ID: z.string().min(1).optional(),
+    /**
+     * POCZTA WYCHODZĄCA - WYMAGANA od 2.1.0 (`docs/logowanie-haslem.md` §5.4): „Nie pamiętam
+     * hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie wstał.
+     * `log` drukuje list do konsoli (dev; link da się kliknąć z terminala) - adapter
+     * dostawcy (`resend`) przychodzi z epikiem H-F (issue #136).
+     */
+    MAIL_PROVIDER: z.enum(['log']),
   })
   .parse(process.env);
 
@@ -198,6 +212,29 @@ const pilots = new PgPilotsRepo(db);
 // decyzje administratora o zgłoszeniach mają własny, w transakcji audytu - ta sama
 // zasada, co przy kontach (`PgPilotsRepo` czyta, `PgAdminPilotsRepo` pisze).
 const identities = new PgExternalIdentitiesRepo(db);
+const refreshTokens = new PgRefreshTokens(db, clock);
+
+// Hasło jako DRUGA metoda logowania (2.1.0, issue #132). Jeden licznik prób dla logowania,
+// zmiany hasła i wysyłki linku - klucze rozróżnia przedrostek; jeden skrót (scrypt N=2¹⁷)
+// i jedna poczta. `MAIL_PROVIDER=log` jest adapterem DEV: list ląduje w konsoli serwera.
+const publicBaseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
+const passwordHasher = new ScryptHasher();
+const passwordCredentials = new PgPasswordCredentialsRepo(db);
+const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+const mail = new LogMail();
+const passwords = new PasswordCommands(
+  db,
+  pilots,
+  passwordCredentials,
+  new PgPasswordResetTokensRepo(db),
+  refreshTokens,
+  passwordHasher,
+  mail,
+  new BaseUrlPasswordLinks(publicBaseUrl),
+  passwordLimiter,
+  clock,
+  randomUUID,
+);
 
 // Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
 // w `exported_sheets` → wpis w `export_log` → link w sync-status, serwowany pod
@@ -206,7 +243,7 @@ const identities = new PgExternalIdentitiesRepo(db);
 // `PUBLIC_BASE_URL` = adres panelu i API widziany z zewnątrz - linki do kart muszą być
 // klikalne z telefonu, nie z localhosta serwera. Przy rozdziale hostów (issue #124) to
 // jest host APLIKACJI, nie strony: trasa `/sheets/…` na hoście strony nie istnieje.
-const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
+const sheets = new PgSheets(db, publicBaseUrl, clock);
 // Eksporter dostaje projekcję sesji, bo karta jest DOBĄ SAMOLOTU (§4.7): jej skład -
 // które zmiany przejęły maszynę tego dnia i czy zostały zdane - czyta się z `sessions`,
 // a nie ze strumienia. Strumień wchodzi dopiero per sesja, po tabelę lotów.
@@ -277,7 +314,7 @@ const app = await buildServer({
   // podstawiają weryfikator z kluczem w procesie zamiast chodzić do Google.
   auth: new AuthCommands(
     pilots,
-    new PgRefreshTokens(db, clock),
+    refreshTokens,
     identities,
     new GoogleIdTokens(
       { panel: env.GOOGLE_WEB_CLIENT_ID, mobile: env.GOOGLE_ANDROID_CLIENT_ID ?? null },
@@ -287,7 +324,18 @@ const app = await buildServer({
     clock,
     // Identyfikator NOWEJ osoby przy pierwszym logowaniu (wielofirmowość §4).
     randomUUID,
+    { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
   ),
+  passwords,
+  // Link „ustaw hasło" z panelu - ta sama brama audytu, te same adaptery członków
+  // i klubów, co reszta panelu, plus wspólna komenda hasła (jeden list, jeden token).
+  adminPasswordLinks: new AdminPasswordLinkCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    organizationsRepo,
+    passwords,
+  ),
+  googleAndroidClientId: env.GOOGLE_ANDROID_CLIENT_ID ?? null,
   // Dołączanie kodem klubu (§3.8): adapter z własnym uchwytem do bazy (pilot pisze sam,
   // poza audytem) i licznik prób w pamięci procesu - instancja jest jedna (§8.8).
   join: new JoinCommands(
