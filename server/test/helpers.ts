@@ -110,6 +110,7 @@ import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftCo
 import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
+import type { HostSplit } from '../src/http/hostSplit.ts';
 import { buildServer } from '../src/http/server.ts';
 import { seedTestWorld } from './testWorld.ts';
 import { TestIdentityProvider } from './testIdentityProvider.ts';
@@ -172,6 +173,12 @@ export async function testHarness(
      * żaden inny test nie ma prawa polegać na tym, że coś tam leży.
      */
     siteDistDir?: string;
+    /**
+     * Rozdział hostów (`http/hostSplit.ts`, issue #124) - wyłącznie `hostSplit.test.ts`.
+     * Bez podmiany serwer testowy stoi pod jednym hostem, jak dev: żaden inny test nie
+     * podaje nagłówka `Host` i nie ma prawa od niego zależeć.
+     */
+    hostSplit?: HostSplit;
   } = {},
 ) {
   const pglite = new PGlite();
@@ -478,6 +485,7 @@ export async function testHarness(
     requestLog: false,
     adminDistDir: options.adminDistDir,
     siteDistDir: options.siteDistDir,
+    hostSplit: options.hostSplit ?? null,
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych

@@ -56,6 +56,7 @@ import type { TraceCommands } from '../application/mobile/commands/traces.ts';
 import type { PilotsPort, TokenService } from '../application/common/ports.ts';
 import type { MemberGate } from './memberGate.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
+import { registerHostSplit, type HostSplit } from './hostSplit.ts';
 import { registerRequestLog } from './requestLog.ts';
 import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
@@ -303,6 +304,13 @@ export interface ServerOptions {
    * wierzyć nagłówkowi, który klient wpisuje sam.
    */
   trustProxy?: boolean;
+  /**
+   * Rozdział hostów (`http/hostSplit.ts`, issue #124): strona publiczna wyłącznie na
+   * hoście `siteUrl`, panel i API na każdym innym. `null`/nieustawione = jeden host dla
+   * wszystkiego (dev, testy, usługa bez własnej domeny). Wartość składa `hostSplitFrom`
+   * z `PUBLIC_SITE_URL` i `PUBLIC_BASE_URL` w composition root.
+   */
+  hostSplit?: HostSplit | null;
 }
 
 export async function buildServer(
@@ -323,6 +331,11 @@ export async function buildServer(
   // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
   // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
   if (options.requestLog !== false) registerRequestLog(app);
+
+  // Rozdział hostów (issue #124) - PRZED trasami, jak strażnik CSRF: hook na całej
+  // instancji obejmuje także wtyczki statyczne, więc dopisana trasa nie ma jak go ominąć.
+  // Za dziennikiem żądań, żeby odbite żądania też zostawiały linię.
+  registerHostSplit(app, options.hostSplit ?? null);
 
   // KOMPRESJA ODPOWIEDZI - jedna wtyczka na trzy powierzchnie naraz (2026-09-07).
   //

@@ -1692,6 +1692,46 @@ Minimalna forma wystarczająca przy tej skali: licznik w pamięci per IP i per l
 (okno 15 min, ~10 prób), bo instancja jest jedna. Gdy instancji będzie więcej -
 licznik w Postgresie; dopóki jest jedna, tabela to koszt bez zysku.
 
+### 8.9 Dwa hosty: strona osobno od panelu i API (issue #124, 2026-09-16)
+
+Strona publiczna (`/`, `http/routes/site/staticSite.ts`) ma CSP luźniejszą niż panel
+(`script-src 'unsafe-inline'` dla makiet, fonty Google), a jedynym domknięciem tego ryzyka
+była od początku osobna nazwa hosta. **Dwie domeny wskazujące na jedną usługę same
+niczego nie rozdzielają** - bez ingerencji serwera `ninerdeck.pl/admin/` podałoby panel
+na origin strony, a `app.ninerdeck.pl/` landing na origin panelu. Rozdział robi więc hook
+`http/hostSplit.ts`, włączany zmienną `PUBLIC_SITE_URL` (`https://ninerdeck.pl`) obok
+`PUBLIC_BASE_URL` (`https://app.ninerdeck.pl`):
+
+| host       | pliki strony (`/*`)      | panel (`/admin`, `/admin/*`) | API i trasy telefonu | `/health`  |
+| ---------- | ------------------------ | ---------------------------- | -------------------- | ---------- |
+| strony     | przechodzą               | 301 na `PUBLIC_BASE_URL`     | 404                  | przechodzi |
+| każdy inny | 301 na `PUBLIC_SITE_URL` | przechodzą                   | przechodzą           | przechodzi |
+
+Decyzje:
+
+- **rodzaj trasy z WZORCA routera** (`request.routeOptions.url`), nie z prefiksu ścieżki:
+  `/admin/api/…` zaczyna się od `/admin/`, a jest API, a druga lista tras obok routera
+  rozjechałaby się z nim po cichu;
+- **404, nie 401 dla API na hoście strony** - ta sama zasada, co przy cudzym klubie
+  (§7.10, epik C): 401 potwierdzałoby, że trasa istnieje, tylko wymaga logowania;
+- **„każdy inny host" = wszystko poza hostem strony**, także domena nadana przez hosting
+  i `localhost`: wyjątkowy jest host strony, bo to on niesie luźniejszą politykę, a API
+  nie musi znać listy swoich adresów;
+- **przekierowanie tylko dla GET/HEAD** (nawigacja przeglądarki) i zawsze 301 z pełną
+  ścieżką i zapytaniem - adresy są stałe z definicji;
+- **połowiczna konfiguracja = odmowa startu** (`hostSplitFrom` rzuca): `PUBLIC_SITE_URL`
+  bez `PUBLIC_BASE_URL` albo oba o tym samym hoście. Bez `PUBLIC_SITE_URL` zachowanie
+  sprzed #124 - jeden host (dev, testy);
+- hook stoi na całej instancji PRZED trasami, jak strażnik CSRF (§8.3), i nie rejestruje
+  tras - rejestr tras i test izolacji klubów (§7.10) go nie widzą. Własne testy:
+  `test/hostSplit.test.ts` (czysta tabela decyzji + `inject` z nagłówkiem `Host`).
+
+Ciasteczko panelu bez zmian (`Path=/admin`, bez `Domain`) - po przeniesieniu administrator
+loguje się raz jeszcze, na nowym hoście. CORS-u dalej nie ma (§8.3): panel i API dzielą
+`app.ninerdeck.pl`, a strona z API nie rozmawia. `PUBLIC_BASE_URL` znaczy odtąd „adres
+panelu i API": to host aplikacji jest bazą linków do kart arkusza, bo `/sheets/…` na hoście
+strony nie istnieje.
+
 ---
 
 ## 9. Testy - co MUSI być pokryte
