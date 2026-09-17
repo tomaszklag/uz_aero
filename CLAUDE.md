@@ -3242,8 +3242,12 @@ linków do kart, bez czekania z adresem w `eas.json`. Reguły obowiązujące odt
   instancji (przed trasami, jak strażnik CSRF). Host STRONY: pliki strony przechodzą,
   `GET /admin*` → 301 na host aplikacji, API i trasy telefonu → **404, nie 401** (401
   potwierdzałoby, że trasa istnieje - ta sama zasada, co przy cudzym klubie). KAŻDY INNY
-  host (aplikacja, domena hostingu, localhost): pliki strony → 301 na stronę, reszta
-  przechodzi. `/health` przechodzi wszędzie (sonda hostingu nie zna własnej domeny)
+  host (aplikacja, domena hostingu, localhost): samo `/` → 301 na `/admin/` (korzeń hosta
+  aplikacji jest wejściem PANELU - kto wpisuje `app.ninerdeck.pl`, szuka panelu, nie
+  landingu; decyzja właściciela 2026-09-17; przekierowanie WZGLĘDNE, więc zostaje na tym
+  hoście, także na domenie hostingu), inne pliki strony (`/pobierz/`, `/dokumentacja/…`)
+  → 301 na stronę, reszta przechodzi. `/health` przechodzi wszędzie (sonda hostingu nie
+  zna własnej domeny)
 - **rodzaj trasy czyta się z WZORCA routera** (`request.routeOptions.url`: `/*` strona,
   `/admin` + `/admin/*` panel), nie z prefiksu ścieżki - `/admin/api/…` zaczyna się od
   `/admin/`, a jest API. Hook nie rejestruje tras, więc `tenantIsolation.test.ts` go nie

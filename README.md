@@ -116,8 +116,9 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    → strona (landing, `/pobierz/`, `/wydania/`, `/dokumentacja/`);
    `https://app.ninerdeck.pl/admin/` → logowanie panelu kontem Google z kroku 7. Rozdział
    hostów: `https://ninerdeck.pl/admin/` odsyła na host aplikacji, `https://app.ninerdeck.pl/`
-   odsyła na stronę, a `https://ninerdeck.pl/admin/api/me` odpowiada 404. Flotę i konta
-   pilotów załóż w panelu.
+   odsyła na `/admin/` (korzeń hosta aplikacji jest wejściem panelu),
+   `https://app.ninerdeck.pl/pobierz/` odsyła na stronę, a `https://ninerdeck.pl/admin/api/me`
+   odpowiada 404. Flotę i konta pilotów załóż w panelu.
 9. **Aplikacja pilota**: adres serwera i klient Google stoją w `eas.json` →
    `build.production.env` (`EXPO_PUBLIC_API_URL=https://app.ninerdeck.pl`,
    `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` z kroku 6; czyta je
