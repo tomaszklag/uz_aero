@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 00G Nie pamiętam hasła · link z e-maila</title>
+<title>Ninerdeck - 00I Wybierz klub · urządzenie zna kilka klubów</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -106,6 +106,30 @@
   .input::placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder); }
   .field-error { font-family:var(--font-body); font-size:12.5px; color:var(--red); line-height:1.45; }
 
+  /* ===== TYTUŁ + LISTA KLUBÓW - karty do wyboru, jak lista klubów na 13A (nie select) =====
+     Wybrana karta ma zieloną ramkę i ptaszek (zaznaczenie kształtem, nie samym kolorem);
+     druga linia niesie, kiedy ostatnio logowano się na tym urządzeniu w tym klubie -
+     to jedyna rzecz, która odróżnia dwie karty poza nazwą. */
+  .form-heading { align-self:flex-start; font-family:var(--font-display); font-size:22px; letter-spacing:2.5px; line-height:1; color:var(--text-primary); margin-bottom:16px; }
+  .club-list { width:100%; display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .club-opt {
+    display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; border-radius:14px;
+    background:var(--surface-raised); border:1.5px solid var(--border-strong); text-decoration:none; color:inherit;
+    transition:border-color .15s;
+  }
+  .club-opt:hover { border-color:var(--text-muted); }
+  .club-opt.selected { border-color:var(--green); background:var(--green-muted); }
+  .club-opt-icon { width:36px; height:36px; border-radius:10px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0; }
+  .club-opt.selected .club-opt-icon { color:var(--green); border-color:var(--green-border); }
+  .club-opt-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .club-opt-name { font-size:15px; font-weight:600; color:var(--text-primary); }
+  .club-opt-sub { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .club-opt-check { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--green); flex-shrink:0; opacity:0; }
+  .club-opt.selected .club-opt-check { opacity:1; }
+  /* Jedno zdanie z DROGĄ WYJŚCIA (nie opis budowy aplikacji): kto nie widzi swojego klubu,
+     loguje się adresem - bez listy, bez kodu pilota. */
+  .club-hint { width:100%; font-size:12px; color:var(--text-secondary); line-height:1.5; text-align:center; }
+
   /* ===== AKCJE ===== */
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
@@ -152,12 +176,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 00G</span>
-  <span class="slug">logowanie · nie pamiętam hasła · link z e-maila</span>
+  <span class="film-strip">NINERDECK - 00I</span>
+  <span class="slug">logowanie · wybierz klub urządzenia · tylko przy kilku klubach</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Nie pamiętam hasła">
+<main class="phone" role="region" aria-label="Mockup - Wybierz klub">
   <div class="status-bar">
     <span>9:43</span>
     <span class="status-right">
@@ -180,58 +204,57 @@
       </div>
 
       <!--
-        JEDEN MECHANIZM ZAPOMNIANEGO HASŁA: LINK Z E-MAILA (docs/logowanie-haslem.md D5, §5.4).
-        Ta sama droga obsługuje też osobę z Googlem, która hasła jeszcze nie ustawiła
-        (list USTAWIA hasło, nie tylko je zmienia) - ale link na 00F tego nie dopowiada
-        (przegląd właściciela 2026-09-17: „po co pisać, że jeszcze go nie mam"); ten ekran
-        niczego nie rozróżnia: pyta o adres i tyle. Kto konta nie ma wcale, zakłada je na
-        00H - tym samym listem i tą samą stroną (§5.4a). KODU JEDNORAZOWEGO OD
-        ADMINISTRATORA NIE MA (przegląd właściciela
-        2026-09-16): administrator w panelu wysyła TEN SAM list - inny wyzwalacz, ten
-        sam mechanizm - więc ekran nie ma trzeciego stanu ani pola na kod.
+        KLUB URZĄDZENIA (docs/logowanie-haslem.md D10; przegląd makiet 2026-09-17: „«Zmień
+        klub» ma swój ekran, gdzie wybieram spośród dostępnych dla mnie klubów; jeśli jestem
+        tylko w jednym klubie, nie ma sensu w ogóle tego podawać"). Urządzenie pamięta
+        KLUBY, z których się na nim logowano - PRZED zalogowaniem to jedyna lista, jaką
+        zna (osoby jeszcze nie ma). Kod pilota rozwiązuje się w WYBRANYM klubie; wybór
+        wraca na 00F pigułką pod marką.
 
-        NA TYM EKRANIE NIE MA ŻADNEGO POLA HASŁA. Nowe hasło ustawia się NA STRONIE
-        z linku (§3.3): pilot na wspólnym tablecie czyta pocztę na WŁASNYM telefonie,
-        więc link musi działać wszędzie, gdzie działa poczta - a nie otwierać aplikację
-        na niewłaściwym urządzeniu. Stąd zdanie „na dowolnym urządzeniu".
+        EKRAN ISTNIEJE WYŁĄCZNIE PRZY WIĘCEJ NIŻ JEDNYM KLUBIE: przy jednym 00F nie ma ani
+        pigułki, ani „Zmień klub" w stopce - nie ma czego wybierać. Typowy tablet
+        w samolocie jednego aeroklubu nigdy tego ekranu nie zobaczy; zobaczy go telefon
+        pilota latającego w dwóch klubach albo tablet, na którym logowali się goście.
 
-        Karta jest NIEBIESKA - to instrukcja, co się stanie, nie ostrzeżenie. Ekran
-        ma prawo tłumaczyć tyle: gdzie trafi link i co z nim zrobić (instrukcja do
-        wykonania, issue #72). Nic o tokenach, ważności w bazie ani o tym, kto wysyła.
+        Lista KART (nie select - reguła całej aplikacji), wybrana z zieloną ramką
+        i ptaszkiem; druga linia mówi, kiedy ostatnio logowano się tu w tym klubie.
+        Wybór nie wymaga sieci (lista jest lokalna) i nie zapisuje niczego poza kontekstem.
+        Pod listą JEDNO zdanie z drogą wyjścia: kto nie widzi swojego klubu, loguje się
+        adresem e-mail - bez zdania „kod pilota działa w klubie", które właściciel wyciął.
       -->
-      <div class="status-card info">
-        <div class="status-head">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-          <span class="status-title">LINK DO USTAWIENIA HASŁA</span>
-        </div>
-        <div class="status-body">
-          Wyślemy link na Twój adres. Otwórz go na dowolnym urządzeniu i ustaw hasło -
-          potem zaloguj się tutaj.
-        </div>
+      <div class="form-heading">WYBIERZ KLUB</div>
+
+      <div class="club-list" role="radiogroup" aria-label="Klub urządzenia">
+        <a href="00f-login-haslo.html" class="club-opt selected" role="radio" aria-checked="true">
+          <span class="club-opt-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          </span>
+          <span class="club-opt-body">
+            <span class="club-opt-name">Aeroklub Zielonogórski</span>
+            <span class="club-opt-sub">ostatnie logowanie · dziś 07:50</span>
+          </span>
+          <span class="club-opt-check">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </a>
+        <a href="00f-login-haslo.html" class="club-opt" role="radio" aria-checked="false">
+          <span class="club-opt-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          </span>
+          <span class="club-opt-body">
+            <span class="club-opt-name">Aeroklub Krakowski</span>
+            <span class="club-opt-sub">ostatnie logowanie · 12 WRZ</span>
+          </span>
+          <span class="club-opt-check">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </a>
       </div>
 
-      <!--
-        POLE E-MAIL - podstawione z 00F, jeśli pilot wpisał tam ADRES (ten sam wpis,
-        drugi raz go nie przepisuje). Po KODZIE PILOTA pole startuje puste
-        (placeholder): kod nie jest adresem, a serwer z kodu adresu nie zdradzi -
-        odpowiedź na wysyłkę nie może mówić, czy ktoś taki istnieje (§8 pkt 2).
-        Klawiatura e-mail, bez autokapitalizacji.
-      -->
-      <div class="field">
-        <span class="field-label">E-mail</span>
-        <input class="input" type="text" inputmode="email" autocapitalize="none" spellcheck="false" autocomplete="email" value="t.malkiewicz@gmail.com" aria-label="E-mail" placeholder="adres e-mail">
-      </div>
+      <span class="club-hint">Nie ma Twojego klubu? Zaloguj się adresem e-mail.</span>
 
-      <!-- WYŚLIJ LINK → potwierdzenie (druga ramka). Pusty adres blokuje BEZ zdania
-           (issue #55). OFFLINE: przycisk `.btn-primary.disabled` z `.btn-reason`
-           „Wymaga internetu" W ŚRODKU, pole czynne - dokładnie jak trzecia ramka 00F;
-           osobnej ramki nie rysujemy, bo to ten sam kształt. -->
-      <a href="#wyslano" class="btn-primary">WYŚLIJ LINK</a>
-
-      <!-- Wyjście MUSI być (00C/00E): ktoś, kto tapnął tu przez pomyłkę, wraca bez
-           wysyłania czegokolwiek. -->
+      <!-- Wyjście bez zmiany: tapnięcie w kartę też wraca na 00F, ale kto wszedł przez
+           pomyłkę, ma wrócić bez ruszania wyboru. -->
       <a href="00f-login-haslo.html" class="link-out">Wróć do logowania</a>
 
     </div>
@@ -286,16 +309,15 @@
     <span class="vp-badge">00F</span>
     <span class="vp-body">
       <span class="vp-name">Logowanie hasłem</span>
-      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta kluby, z których się na nim logowano - kod pilota działa w bieżącym; przy więcej niż jednym klubie pigułka z nazwą i „Zmień klub" (00I).</span>
+      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta klub po wylogowaniu, więc wystarczy kod pilota.</span>
     </span>
   </a>
-  <a class="vp-item active" href="00g-link-hasla.html">
+  <a class="vp-item" href="00g-link-hasla.html">
     <span class="vp-badge amber">00G</span>
     <span class="vp-body">
       <span class="vp-name">Nie pamiętam hasła</span>
       <span class="vp-when">Adres → link z e-maila → nowe hasło na stronie, z dowolnego urządzenia. Działa też dla osoby z Googlem, która hasła jeszcze nie ustawiła; kodu od administratora nie ma. Konto zakłada się osobno (00H).</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="00h-zaloz-konto.html">
     <span class="vp-badge amber">00H</span>
@@ -304,103 +326,25 @@
       <span class="vp-when">Osoba bez konta i bez Google: imię i nazwisko + e-mail → link z e-maila → hasło na stronie; konto powstaje dopiero przy ustawieniu hasła. Potem logowanie (00F) i kod klubu (00E).</span>
     </span>
   </a>
-  <a class="vp-item" href="00i-wybor-klubu.html">
+  <a class="vp-item active" href="00i-wybor-klubu.html">
     <span class="vp-badge">00I</span>
     <span class="vp-body">
       <span class="vp-name">Wybierz klub</span>
       <span class="vp-when">Ze stopki 00F, wyłącznie gdy urządzenie zna więcej niż jeden klub: lista klubów, z których się na nim logowano - wybrany staje się kontekstem kodu pilota. Przy jednym klubie ekranu ani wejścia nie ma.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="00a-login-full.html">← 00A Google</a>
   <a href="00f-login-haslo.html">← 00F Hasło</a>
-  <a href="00g-link-hasla.html" class="active">00G Link hasła</a>
+  <a href="00i-wybor-klubu.html" class="active">00I Wybierz klub</a>
+  <a href="00g-link-hasla.html">00G Link hasła</a>
   <a href="00h-zaloz-konto.html">00H Załóż konto</a>
-  <a href="00i-wybor-klubu.html">00I Wybierz klub</a>
   <span>·</span>
-  <a href="#wyslano">↓ wysłano</a>
-</nav>
-
-<!-- ══ DRUGA RAMKA: POTWIERDZENIE ══
-     ODPOWIEDŹ JEST ZAWSZE TA SAMA (§5.4, §8 pkt 2): serwer odpowiada `202` niezależnie
-     od tego, czy adres jest w systemie, i niezależnie od limitu wysyłek (3 na adres,
-     10 na IP w 15 min - przekroczenie też daje `202`, list po prostu nie wychodzi).
-     Formularz, który mówiłby „nie znam tego adresu", wyliczałby konta klubu każdemu,
-     kto ma klawiaturę. Stąd tryb warunkowy w zdaniu: „JEŚLI ten adres jest w systemie".
-
-     „WYŚLIJ PONOWNIE" NIE MA: byłoby przyciskiem, którego skutku pilot nie zobaczy
-     (limit wysyłek albo adres spoza systemu dają to samo `202`). Kto musi, wraca na
-     pierwszą ramkę i wysyła znów - świadomie, nie odruchowo.
-
-     Karta ZIELONA: czynność wykonana. Adres powtórzony wierszem mono, żeby literówkę
-     dało się zobaczyć TERAZ, a nie po godzinie czekania na list, który nie przyjdzie.
-     Ekran nie loguje - po ustawieniu hasła na stronie pilot wraca tu i loguje się
-     hasłem (00F). Stąd jedyny przycisk. -->
-<header class="canvas-label" id="wyslano">
-  <span class="film-strip">NINERDECK - 00G</span>
-  <span class="slug">stan: wysłano</span>
-  <span class="canvas-meta">Potwierdzenie · zawsze ta sama odpowiedź</span>
-</header>
-
-<main class="phone" role="region" aria-label="Mockup - Link wysłany">
-  <div class="status-bar">
-    <span>9:43</span>
-    <span class="status-right">
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
-      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
-    </span>
-  </div>
-
-  <div class="screen">
-    <div class="login-wrap">
-
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
-          </svg>
-        </div>
-        <div class="brand-name">NINER<span>DECK</span></div>
-      </div>
-
-      <div class="status-card ok">
-        <div class="status-head">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-          <span class="status-title">SPRAWDŹ POCZTĘ</span>
-        </div>
-        <div class="status-body">
-          Jeśli ten adres jest w systemie, link już idzie - ważny godzinę. Otwórz go
-          na dowolnym urządzeniu, ustaw hasło i zaloguj się tutaj.
-        </div>
-      </div>
-
-      <div class="mail-card">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-        </svg>
-        <span class="mail-addr">t.malkiewicz@gmail.com</span>
-      </div>
-
-      <a href="00f-login-haslo.html" class="btn-primary">WRÓĆ DO LOGOWANIA</a>
-
-    </div>
-  </div>
-</main>
-
-<nav class="nav-strip">
-  <a href="index.html">↩ Index</a>
-  <span>·</span>
-  <a href="00f-login-haslo.html">← 00F Hasło</a>
-  <a href="00g-link-hasla.html" class="active">00G Link hasła</a>
-  <a href="00h-zaloz-konto.html">00H Załóż konto</a>
-  <a href="00i-wybor-klubu.html">00I Wybierz klub</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu →</a>
 </nav>
 
 </body>

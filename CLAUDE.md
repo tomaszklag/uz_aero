@@ -2634,8 +2634,11 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
   `AuthCommands` (aktywne członkostwo → tokeny klubu; brak → `202` token osoby → 00C/00D/00E;
   panel → `no_panel_access`). Osoba z Googlem i hasłem = jeden wiersz `pilots`
 - **login = e-mail ALBO kod pilota w klubie, który urządzenie zna**: kod pilota jest jedyny
-  W KLUBIE, nie na serwerze, więc sam loginem być nie może; po wylogowaniu telefon pamięta
-  KLUB (nie osobę - `deviceClubHint`) i 00F podpowiada „kod pilota w klubie X · to nie mój klub"
+  W KLUBIE, nie na serwerze, więc sam loginem być nie może; urządzenie pamięta KLUBY,
+  z których się na nim logowano (nie osoby), a kod rozwiązuje się w bieżącym. **Przegląd
+  makiet 2026-09-17: zna JEDEN klub → 00F nic o nim nie mówi** („po co to pisać"); zna
+  więcej → pigułka z nazwą bieżącego pod marką i „Zmień klub" w stopce → ekran 00I z listą
+  tych klubów. Zdania „kod pilota działa w klubie X" ani przycisku „to nie mój klub" NIE MA
 - **scrypt z `node:crypto`** (N=2¹⁷, r=8, p=1) w zapisie PHC z parametrami (re-hash przy
   logowaniu zamiast migracji; Argon2id wymagałby modułu natywnego). Przy nieznanym loginie
   liczy się skrót ZASTĘPCZY - czas odpowiedzi nie wylicza kont. JEDNA odpowiedź
@@ -2687,16 +2690,28 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
   ponownie". Podpięcie Googlem po tym samym adresie DALEJ działa
 - **wspólny tablet = „Wyloguj i zmień konto" ze strażnikiem outboxa** (zapisy pilota A wychodzą
   wyłącznie tokenem A); zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - OSOBNY temat
-  po 2.1.0. Rejestracja e-mailem (osoba bez Google) - po 2.1.0
+  po 2.1.0
+- **REJESTRACJA E-MAILEM WCHODZI DO 2.1.0** (przegląd makiet 2026-09-17: „powinna być opcja
+  rejestracji, jeśli jeszcze nie mam konta" - odwraca D9 z 2026-09-16) i jest TYM SAMYM
+  mechanizmem linku: 00H „Załóż konto" (imię i nazwisko + e-mail) → `POST /auth/signup`
+  zawsze `202` → list → `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres
+  potwierdzony kliknięciem; zajęty adres dostaje list resetu zamiast odmowy) → logowanie
+  hasłem → 00E i kod klubu. Bez członkostwa, bez omijania zatwierdzenia, bez trasy w panelu.
+  Ta sama tura: link na 00F to samo „Nie pamiętam hasła" (bez „albo jeszcze go nie mam" -
+  list i tak USTAWIA hasło osobie z Googlem), a klub urządzenia zszedł spod pola do pigułki
+  pod marką + „Zmień klub" (00I), widocznych WYŁĄCZNIE przy więcej niż jednym znanym klubie
 - **migracja 9 WYŁĄCZNIE addytywna** (produkcja 2.0.0 żyje od 2026-09-16): `password_credentials`,
   `password_reset_tokens`, `login_sessions`, `refresh_tokens.session_id`,
   `idx_pilots_email_lower` (dziś `pilots.email UNIQUE` jest wrażliwe na wielkość liter,
   a odczyty robią `lower()`). Telefon dostaje zmianę **OTA** (bez modułów natywnych); serwer
   z migracją 9 i zmiennymi `MAIL_*` idzie PRZED aktualizacją telefonów
-- **etap H-A (makiety, design-first) W TOKU**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
-  HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, podpowiedź klubu urządzenia, odmowa
-  przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla` (adres → „WYŚLIJ LINK" →
-  potwierdzenie; ŻADNEGO pola hasła), `13` sekcja „Hasło" + arkusz `13b`, `00` baner sesji
+- **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
+  HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
+  kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`
+  (adres → „WYŚLIJ LINK" → potwierdzenie; ŻADNEGO pola hasła), NOWE `00h-zaloz-konto`
+  (imię i nazwisko + e-mail → link; potwierdzenie w trybie warunkowym), NOWE `00i-wybor-klubu`
+  (lista klubów urządzenia ze stopki 00F), `13` sekcja „Hasło"
+  + arkusz `13b`, `00` baner sesji
   unieważnionej; panel `00-logowanie` (formularz + „albo" + Google), `piloci-konto`
   („Logowanie" z plakietkami Google/hasło, „Wyślij link", karta Sesje), `organizacje-klub`
   (E-mail + zaproszenie), NOWE `konto` (`#/konto`: zmiana hasła, moje sesje); strona

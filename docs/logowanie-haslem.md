@@ -21,6 +21,14 @@ link"); (2) **kodu jednorazowego od administratora NIE MA WCALE** - „działani
 powinno być takie samo, jak to, że kliknę w e-mail z resetem, tylko inny punkt wyzwolenia".
 Skutek: JEDEN mechanizm (link) z kilkoma wyzwalaczami, a poczta wychodząca (epik H-F)
 wchodzi do RDZENIA 2.1.0, a nie „za flagą".
+**Przegląd makiet 2026-09-17** - trzecia poprawka: **rejestracja e-mailem WCHODZI do 2.1.0**
+(„powinna być opcja rejestracji, jeśli jeszcze nie mam konta"; odwraca D9) jako TEN SAM
+mechanizm linku - ekran 00H, list, strona `/haslo/`, a osoba powstaje dopiero przy
+ustawieniu hasła (§5.4a). Przy okazji: link na 00F brzmi „Nie pamiętam hasła" bez dopisku
+„albo jeszcze go nie mam", a klub urządzenia przestał być podpisem pod polem: urządzenie
+pamięta KLUBY, z których się na nim logowano - przy jednym 00F nic o klubie nie mówi
+(„po co to pisać"), przy kilku pokazuje nazwę bieżącego pod marką, a „Zmień klub"
+w stopce prowadzi na NOWY ekran 00I z listą tych klubów (D10).
 
 ---
 
@@ -88,8 +96,8 @@ ten sam link drukuje zamiast wysyłać.
 | D6 | Sesje logowania | Tabela **`login_sessions`** dla KAŻDEJ powierzchni (telefon, panel klubu, platforma), `sid` w tokenie, `refresh_tokens.session_id`. Brama sprawdza unieważnienie w TYM SAMYM zapytaniu, które dziś czyta członkostwo (`authSnapshot`). `last_seen_at` pisany z przepustnicą 60 s. | rozstrzygnięte 2026-09-16 |
 | D7 | Zdalne wylogowanie a offline-first | Unieważnienie działa **na serwerze natychmiast** (każde żądanie odbija, refresh odmawia z powodem `session_revoked`). Telefon dowiaduje się przy najbliższym kontakcie: przestaje wysyłać i pobierać, pokazuje na PIN-ie i w ustawieniach zdanie „Sesja zakończona - zaloguj się ponownie", ale **PIN dalej otwiera aplikację**, a niewysłane zapisy zostają na urządzeniu do ponownego zalogowania TEGO SAMEGO pilota. Wyrzucenie do ekranu logowania kasowałoby dane dnia - to jest dokładnie to, przed czym chroni §3.0. | rozstrzygnięte 2026-09-16 |
 | D8 | Nowy klub bez Google | Formularz O2: „Konto Google" → **„E-mail"**. Razem z klubem wychodzi **e-mail „ustaw hasło" z linkiem** do pierwszego administratora (jak zaproszenie w każdym systemie); karta klubu pokazuje „wysłano na …" i „Wyślij ponownie" dopóki administrator się nie zalogował; adres da się poprawić, dopóki nie wszedł (jak dziś). Podpięcie Googlem po tym samym adresie DALEJ działa (jeśli adres jest kontem Google, administrator może po prostu kliknąć Google). | rozstrzygnięte 2026-09-16 |
-| D9 | Rejestracja e-mailem (osoba bez Google) | **Nie w 2.1.0.** Mechanika po H-F jest gotowa (weryfikacja adresu linkiem to ten sam mechanizm), ale to osobna decyzja produktowa - dziś osoba powstaje przy pierwszym logowaniu Googlem albo z ręki superadministratora (pierwszy administrator klubu). | rozstrzygnięte 2026-09-16 |
-| D10 | Wspólny tablet | Przełączanie kont = „Wyloguj i zmień konto" z **zachowanym strażnikiem outboxa** (zapisy pilota A wychodzą wyłącznie tokenem A). Po wylogowaniu urządzenie pamięta KLUB (nie osobę) - stąd logowanie kodem pilota (D2). Profil PIN-u należy do zalogowanego: zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - osobny temat. | rozstrzygnięte 2026-09-16 |
+| D9 | Rejestracja e-mailem (osoba bez Google) | **W 2.1.0** - decyzja właściciela z przeglądu makiet 2026-09-17 („powinna być opcja rejestracji, jeśli jeszcze nie mam konta"; pierwsza wersja odkładała to po 2.1.0). Mechanizm jest TEN SAM, co przy zapomnianym haśle: ekran 00H („Załóż konto": imię i nazwisko + e-mail) → `POST /auth/signup` → zawsze `202` → list z linkiem → strona `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres potwierdzony kliknięciem, jak `email_verified` u Google) → logowanie hasłem → 00E i kod klubu. Adres zajęty dostaje list resetu zamiast odmowy (bez wyliczania kont). Rejestracja NIE tworzy członkostwa i nie omija zatwierdzenia w klubie; w panelu jej nie ma (§5.4a). | rozstrzygnięte 2026-09-17 (odwrócone przy przeglądzie makiet) |
+| D10 | Wspólny tablet | Przełączanie kont = „Wyloguj i zmień konto" z **zachowanym strażnikiem outboxa** (zapisy pilota A wychodzą wyłącznie tokenem A). Urządzenie pamięta **KLUBY, z których się na nim logowano** (nie osoby) - to w bieżącym z nich rozwiązuje się kod pilota (D2). **Zna jeden klub → 00F nic o nim nie mówi** (przegląd makiet 2026-09-17: „w jednym klubie nie ma sensu tego podawać"); zna więcej → nazwa bieżącego pod marką i „Zmień klub" w stopce → ekran **00I** z listą tych klubów. Zdania „kod pilota działa w klubie X" nie ma nigdzie. Profil PIN-u należy do zalogowanego: zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - osobny temat. | rozstrzygnięte 2026-09-16; kontekst klubu doprecyzowany 2026-09-17 |
 | D11 | Wylogowanie telefonu | NOWA trasa **`POST /auth/logout`**: unieważnia refresh i sesję na serwerze. Dziś telefon tylko czyści magazyn, a refresh żyje 90 dni - to luka, którą sesje obnażają i domykają. Offline: czyścimy lokalnie, unieważnienie zostaje administratorowi (§9). | rozstrzygnięte 2026-09-16 |
 | D12 | Dystrybucja | **OTA, nie APK**: zmiana nie dotyka modułów natywnych (`expo-secure-store` jest, pole hasła to `TextInput` z `secureTextEntry`). Serwer z migracją 9 WCZEŚNIEJ niż aktualizacja telefonów. | rozstrzygnięte przez kod |
 
@@ -168,17 +176,27 @@ hasło (klucz główny). Brak wiersza = osoba loguje się wyłącznie Googlem.
 ```sql
 CREATE TABLE password_reset_tokens (
   token_hash  TEXT PRIMARY KEY,           -- sha256(token); token losowy (256 bitów), więc sam SHA wystarcza
-  pilot_id    TEXT NOT NULL REFERENCES pilots(id) ON DELETE CASCADE,
-  -- KTO WYZWOLIŁ: sam pilot („Nie pamiętam hasła"), administrator klubu (karta członka),
-  -- platforma (zaproszenie pierwszego administratora), operator serwera (CLI). Mechanizm
-  -- jest jeden; kolumna odpowiada wyłącznie na pytanie audytu „skąd ten list".
+  -- RODZAJ (2026-09-17, D9): 'reset' ustawia hasło ISTNIEJĄCEJ osobie (pilot_id);
+  -- 'signup' zakłada NOWĄ (rejestracja e-mailem, 00H) - osoba powstaje dopiero przy
+  -- realizacji, więc token niesie to, z czego ją złożyć: adres i imię z formularza.
+  -- Adres jest potwierdzony samym kliknięciem w link, jak `email_verified` u Google.
+  kind        TEXT NOT NULL DEFAULT 'reset' CHECK (kind IN ('reset', 'signup')),
+  pilot_id    TEXT REFERENCES pilots(id) ON DELETE CASCADE,   -- NULL wyłącznie przy 'signup'
+  email       TEXT,                        -- 'signup': znormalizowany adres nowej osoby
+  display_name TEXT,                       -- 'signup': imię i nazwisko z formularza
+  CHECK ((kind = 'reset' AND pilot_id IS NOT NULL)
+      OR (kind = 'signup' AND email IS NOT NULL AND display_name IS NOT NULL)),
+  -- KTO WYZWOLIŁ: sam pilot („Nie pamiętam hasła", „Załóż konto"), administrator klubu
+  -- (karta członka), platforma (zaproszenie pierwszego administratora), operator serwera
+  -- (CLI). Mechanizm jest jeden; kolumna odpowiada wyłącznie na pytanie audytu „skąd ten list".
   triggered_by TEXT NOT NULL CHECK (triggered_by IN ('self', 'admin', 'platform', 'cli')),
   created_at  TIMESTAMPTZ NOT NULL,
   created_by  TEXT REFERENCES pilots(id), -- administrator / superadministrator; NULL przy 'self' i 'cli'
-  expires_at  TIMESTAMPTZ NOT NULL,       -- 60 min (reset), 72 h (zaproszenie pierwszego administratora, CLI)
+  expires_at  TIMESTAMPTZ NOT NULL,       -- 60 min (reset, signup), 72 h (zaproszenie pierwszego administratora, CLI)
   consumed_at TIMESTAMPTZ
 );
 CREATE INDEX idx_password_reset_tokens_pilot ON password_reset_tokens (pilot_id) WHERE consumed_at IS NULL;
+CREATE INDEX idx_password_reset_tokens_email ON password_reset_tokens (email) WHERE kind = 'signup' AND consumed_at IS NULL;
 ```
 
 - Token = 32 losowe bajty w `base64url` w adresie `/haslo/#<token>`. Bez limitu prób na sam
@@ -186,6 +204,11 @@ CREATE INDEX idx_password_reset_tokens_pilot ON password_reset_tokens (pilot_id)
 - Wydanie nowego tokenu zużywa poprzednie niezużyte tokeny tej osoby. Realizacja USTAWIA
   hasło (§5.4) i unieważnia WSZYSTKIE sesje osoby - reset zakłada, że stare hasło mogło wyciec.
 - `password_credentials.set_via` = `'self'` (ustawienia) albo `'link'` (ta tabela).
+- Token `signup` zużywa poprzednie niezużyte tokeny `signup` na ten sam adres. Realizacja
+  ZAKŁADA osobę (`pilots` z adresem i imieniem, bez członkostwa) razem z `password_credentials`
+  w jednej transakcji. Gdy adres w międzyczasie zajął ktoś inny (pierwsze logowanie Googlem
+  z tym adresem), token działa jak `reset` dla TEJ osoby: kliknięcie w link dowiodło władzy
+  nad skrzynką, a o nic więcej reset nie pyta (§5.4a).
 
 ### 4.3 `login_sessions` - sesje logowania wszystkich powierzchni
 
@@ -243,8 +266,9 @@ adres do `lower(trim())`, jak dziś robią to odczyty.
 { login: string, password: string, orgId?: string }
 ```
 
-`login` z `@` = e-mail; bez `@` = kod pilota, wymaga `orgId` (podpowiedź klubu urządzenia,
-§7.1) - bez `orgId` odpowiedź jest taka sama, jak dla złego hasła. Kolejność w komendzie:
+`login` z `@` = e-mail; bez `@` = kod pilota, wymaga `orgId` (BIEŻĄCY klub urządzenia - z listy
+klubów, z których się na nim logowano; przy kilku wybierany na 00I, D10) - bez `orgId`
+odpowiedź jest taka sama, jak dla złego hasła. Kolejność w komendzie:
 ograniczenie tempa PRZED czymkolwiek (10 prób na login i 30 na adres IP w 15 min, ten sam
 `AttemptLimiter`, co `POST /auth/join`) → wyszukanie osoby → weryfikacja skrótu. **Przy
 nieznanym loginie serwer liczy scrypt na skrócie zastępczym**, żeby czas odpowiedzi nie
@@ -341,6 +365,35 @@ z terminala). Zmienna `MAIL_PROVIDER` (`resend` | `brevo` | `log`) jest **WYMAGA
 nic nie wysyła, jest gorsze niż serwer, który nie wstał. Listy są tekstowe, po polsku,
 z nazwą klubu przy zaproszeniu i zdaniem „jeśli to nie Ty, zignoruj".
 
+### 5.4a Załóż konto (rejestracja e-mailem, 00H): ten sam list, nowa osoba
+
+Decyzja właściciela z przeglądu makiet 2026-09-17 („powinna być opcja rejestracji, jeśli
+jeszcze nie mam konta") odwraca D9: osoba bez Google zakłada konto SAMA, a mechanizm jest
+dokładnie ten, co przy zapomnianym haśle - list z linkiem i strona `/haslo/`.
+
+**`POST /auth/signup { name, email }`** (telefon, bez sesji; panel tej trasy NIE MA -
+administrator powstaje z zaproszenia platformy, pilot rejestruje się w aplikacji):
+odpowiedź **ZAWSZE `202`**, te same limity wysyłki, co `forgot` (3/adres, 10/IP w 15 min).
+Adres WOLNY → token `kind: 'signup'` z adresem i imieniem (`triggered_by: 'self'`, 60 min),
+list „Załóż hasło do nowego konta w Ninerdeck". Adres ZAJĘTY → serwer wysyła zwykły list
+RESETU do tej osoby ze zdaniem „masz już konto w Ninerdeck - ten link ustawia hasło" zamiast
+odmowy: formularz nie może wyliczać kont, a człowiek, który zapomniał, że już się
+rejestrował, i tak dostaje to, po co przyszedł. Ekran 00H mówi to jednym zdaniem w trybie
+warunkowym („Jeśli adres jest wolny, link już idzie; jeśli konto z tym adresem istnieje,
+list mówi, jak się zalogować").
+
+Strona `/haslo/` nie rozróżnia rodzaju tokenu - pyta o hasło i powtórkę jak zawsze. Serwer
+przy realizacji tokenu `signup` w JEDNEJ transakcji: `pilots` (adres, imię i nazwisko, BEZ
+członkostwa - jak osoba po pierwszym logowaniu Googlem, `docs/wielofirmowosc.md` §4),
+`password_credentials` (`set_via: 'link'`), `consumed_at`. Osoba loguje się potem hasłem na
+00F i trafia na 00E po kod klubu: bramką zostaje BRAK CZŁONKOSTWA, nie sposób założenia
+konta. Google podpina się do takiej osoby po tym samym adresie (`claimByVerifiedEmail`)
+tak, jak do osoby założonej przez panel.
+
+Czego rejestracja NIE robi: nie tworzy członkostwa, nie omija zatwierdzenia w klubie, nie
+istnieje w panelu. Imię i nazwisko z formularza są własnością osoby i poprawia je ona sama
+(albo administrator klubu, w którym jest jedynym członkiem - reguła z wielofirmowości).
+
 ### 5.5 Wylogowanie telefonu: `POST /auth/logout { refreshToken }`
 
 Kasuje refresh i stempluje sesję `revoked_by: 'self'`. Telefon woła to PRZED wyczyszczeniem
@@ -410,12 +463,22 @@ znaczy link.
   ekran ląduje wprost na 00F (urządzenie pamięta klub).
 - **00F NOWY** (`00f-login-haslo.html`): pole „E-mail albo kod pilota" (mono, klawiatura
   e-mail), pole „Hasło" (`secureTextEntry`, przełącznik „pokaż", wklejanie dozwolone),
-  „ZALOGUJ" (zielony), pod nim JEDEN link „Nie pamiętam hasła albo jeszcze go nie mam"
-  (→ 00G; pilot z Googlem, który nigdy nie ustawił hasła, wchodzi tą samą drogą - to jest
-  jego pierwsze wejście na wspólny tablet), na dole „Zaloguj kontem Google". Gdy urządzenie zna klub: podpis pod polem „kod pilota
-  w klubie Aeroklub Zielonogórski · to nie mój klub" - drugi link kasuje podpowiedź. Błąd
-  PRZY POLU („Nieprawidłowy e-mail, kod albo hasło"), `429` W PRZYCISKU z czasem (wzór 00E).
-  Wariant 00F-offline = przycisk zablokowany z powodem „Wymaga internetu", pola czynne.
+  „ZALOGUJ" (zielony), pod nim link „Nie pamiętam hasła" (→ 00G; pilot z Googlem, który
+  nigdy nie ustawił hasła, wchodzi tą samą drogą - list USTAWIA hasło - ale link tego nie
+  dopowiada: przegląd makiet 2026-09-17, „po co pisać, że jeszcze go nie mam"). W stopce
+  „Nie masz konta? Załóż konto" (→ 00H), a pod nim w jednym wierszu „Zmień klub" (→ 00I)
+  i „Zaloguj kontem Google". KONTEKST KLUBU (D10): urządzenie zna JEDEN klub → ekran nic
+  o nim nie mówi; zna WIĘCEJ → pigułka z nazwą bieżącego klubu pod marką i „Zmień klub"
+  w stopce (pierwsza wersja miała podpis „kod pilota w klubie X · to nie mój klub", druga
+  wiersz z przyciskiem - właściciel: „po co to pisać; nazwę wyżej, «Zmień klub» na dole
+  z własnym ekranem, w jednym klubie nic"). Błąd PRZY POLU („Nieprawidłowy e-mail, kod albo
+  hasło"), `429` W PRZYCISKU z czasem (wzór 00E). Wariant 00F-offline = przycisk zablokowany
+  z powodem „Wymaga internetu", pola czynne - ta ramka pokazuje też urządzenie z jednym klubem.
+- **00I NOWY** (`00i-wybor-klubu.html`): „WYBIERZ KLUB" - lista kart klubów, z których
+  logowano się na tym urządzeniu (nazwa, ostatnio używany), wybrany zielona ramka; wybór
+  wraca na 00F i staje się kontekstem kodu pilota. Pod listą jedno zdanie z drogą wyjścia:
+  „Nie ma Twojego klubu? Zaloguj się adresem e-mail." Ekran istnieje WYŁĄCZNIE, gdy
+  urządzenie zna więcej niż jeden klub - przy jednym nie ma ani ekranu, ani wejścia.
 - **00G NOWY** (`00g-link-hasla.html`): DWA stany tego samego ekranu - (1) „Wyślemy link
   na adres": pole e-mail + „WYŚLIJ LINK" (adres podstawiony z 00F, jeśli pilot go wpisał;
   offline - przycisk zablokowany z powodem); (2) potwierdzenie: „Jeśli ten adres jest
@@ -423,6 +486,13 @@ znaczy link.
   hasło, potem zaloguj się tutaj" + „WRÓĆ DO LOGOWANIA"; odpowiedź jest zawsze ta sama,
   bez wyliczania kont. Nowego hasła NIE ustawia się w aplikacji - ustawia się je na stronie
   z linku (§3.3); 00G tylko wysyła i potwierdza, więc nie ma na nim żadnego pola hasła.
+- **00H NOWY** (`00h-zaloz-konto.html`, D9 odwrócone 2026-09-17): „ZAŁÓŻ KONTO" - karta
+  z instrukcją (link na adres → hasło na stronie → logowanie tutaj → kod klubu od
+  administratora), pola „Imię i nazwisko" i „E-mail", „WYŚLIJ LINK", „Mam już konto -
+  zaloguj się" (→ 00F); w stopce „Masz konto Google? Zaloguj się nim" (→ 00A). Druga ramka:
+  potwierdzenie „Sprawdź pocztę" w trybie warunkowym (adres wolny → link; adres zajęty →
+  list mówi, jak się zalogować) + „WRÓĆ DO LOGOWANIA". Żadnego pola hasła - hasło ustawia
+  strona z linku (§5.4a). Offline jak 00G: przycisk zablokowany z powodem, pola czynne.
 - **Strona `/haslo/`** (`site/src/haslo/`, poza `design/` - to strona publiczna, jak
   `pobierz/`): nowe hasło + powtórz + „USTAW HASŁO", wskaźnik polityki, stan „link wygasł",
   stan „gotowe" z odsyłaczami do aplikacji i panelu. Styl strony publicznej (`site.css`),
@@ -462,7 +532,9 @@ znaczy link.
 1. Skrót scrypt z parametrami w napisie; porównanie `timingSafeEqual`; skrót zastępczy
    przy nieznanym loginie (czas odpowiedzi nie wylicza kont).
 2. Jedna odpowiedź `401 invalid_credentials` na login nieznany / bez hasła / złe hasło;
-   `202` na „wyślij link" niezależnie od istnienia adresu i od limitu wysyłek.
+   `202` na „wyślij link" niezależnie od istnienia adresu i od limitu wysyłek; `202` na
+   „załóż konto" niezależnie od tego, czy adres jest wolny (zajęty dostaje list resetu,
+   nie odmowę - §5.4a).
 3. Ograniczenie tempa PRZED skrótem: logowanie 10/login i 30/IP na 15 min; wysyłka linku
    3/adres i 10/IP (przekroczenie = to samo `202`); wyzwalacz administratora 5/osoba;
    `Retry-After` w odpowiedzi tam, gdzie odmowa nie zdradza istnienia konta.
@@ -565,14 +637,15 @@ B+C+F, W zamyka. Litery `H-` (hasła), żeby nie zderzyć się z A–F wielofirm
 Issue (założone 2026-09-16, milestone #6): H-A #131 · H-B #132 · H-C #133 · H-D #134 ·
 H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i decyzje - #130.
 
-- **H-A Projekt** (#131) - ten dokument, makiety telefonu (00A′, 00F, 00G, 13/13b, baner 00)
+- **H-A Projekt** (#131) - ten dokument, makiety telefonu (00A′, 00F, 00G, 00H, 00I, 13/13b, baner 00)
   i panelu (00-logowanie, piloci-konto, organizacje-klub, konto, SZABLON), sekcja
   w `CLAUDE.md`, szkic podręcznika.
 - **H-B Serwer: hasła i link „ustaw hasło"** (#132) - migracja 9 (§4.1, §4.2, §4.4),
   `ScryptHasher` (PHC), `packages/domain/src/auth/passwordPolicy.ts` (+ lista zablokowanych,
   testy), `AuthCommands.loginWithPassword` / `panelLoginWithPassword`, `PasswordCommands`
   (set/change, `sendResetLink` z czterema wyzwalaczami: self / admin / platform / cli,
-  `resetByLink`), trasy §5.1–§5.4 i §5.7, `seed -- --reset-link <email>`, audyt
+  `resetByLink`, `signUp(name, email)` - token `signup`, osoba powstaje przy realizacji,
+  §5.4a), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, audyt
   `password.link_sent`, limity, skrót zastępczy, testy (w tym „jedna odpowiedź na trzy
   stany", `202` bez wycieku istnienia adresu i test czasu odpowiedzi). Wysyłkę woła przez
   `MailPort` z H-F - na atrapie portu w testach.
@@ -588,13 +661,16 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   (zmiana hasła, moje sesje), komunikaty (`loginMessage`), testy modułów czystych.
 - **H-E Aplikacja** (#135) - `ServerPort.loginWithPassword/forgotPassword/setPassword/logout`,
   `AuthService` z drugim wejściem i znacznikiem `revoked`, podpowiedź klubu urządzenia
-  po wylogowaniu, ekrany 00F/00G (wyślij link → potwierdzenie), sekcja „Hasło" na 13
+  po wylogowaniu (LISTA klubów urządzenia, nie jeden - D10), ekrany 00F/00G/00H/00I
+  (wyślij link → potwierdzenie; 00H = rejestracja e-mailem, §5.4a; 00I = wybór klubu
+  urządzenia, tylko przy więcej niż jednym), sekcja „Hasło" na 13
   z arkuszem 13b, obsługa `session_revoked` w syncu i na PIN-ie, `POST /auth/logout` przy
   wylogowaniu, nagłówek `X-Ninerdeck-Device`, `GET /auth/methods` na 00A, testy
   `AuthService` i logiki ekranów.
 - **H-F Poczta i strona `/haslo/`** (#136; zadanie właściciela #137 NA DRODZE KRYTYCZNEJ) -
   `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev, `MAIL_PROVIDER`
-  wymagany przy starcie, listy po polsku (reset, zaproszenie administratora), strona
+  wymagany przy starcie, listy po polsku (reset, zaproszenie administratora, założenie
+  konta i „masz już konto" dla zajętego adresu), strona
   `site/src/haslo/` z polityką hasła i trzema stanami, `POST /auth/password/reset`.
 - **H-W Wydanie 2.1.0** (#138) - dokumentacja za kodem (`_main.md.txt` §3.0, `architektura-panelu-serwer.md`
   §8.4 - sesja panelu MA odtąd wiersz, `logowanie-google.md` nota, podręcznik: konta,
@@ -652,7 +728,7 @@ lista, ŻEBY W-2 nie zgadywało zakresu:
 | „Najnowsze standardy" | Skrót scrypt z parametrami w zapisie (droga do Argon2id bez migracji), brak wyliczania kont (także przy „wyślij link"), limity tempa, JEDEN mechanizm resetu - link 256-bitowy we fragmencie adresu, który nigdy nie staje się sesją - zamiast haseł tymczasowych i kodów, sesje z `sid` i zdalnym unieważnieniem, zmiana hasła wylogowuje inne urządzenia, wszystko z testami. | D3, D6, §8 |
 
 **Rozstrzygnięte 2026-09-16** (przegląd właściciela w dwóch turach): D2, D3, D4, D6, D7,
-D9, D10, D11 i termin 2026-09-30 przyjęte; **D5 poprawione dwa razy** - (1) reset linkiem
+D10, D11 i termin 2026-09-30 przyjęte; **D9 odwrócone 2026-09-17** przy przeglądzie makiet („powinna być opcja rejestracji, jeśli jeszcze nie mam konta" - rejestracja e-mailem w 2.1.0 tym samym mechanizmem linku, §5.4a); **D5 poprawione dwa razy** - (1) reset linkiem
 z e-maila jest drogą główną („normalnie systemy działają tak, że klikam przycisk i na mail
 przychodzi link"); (2) kodu od administratora nie ma wcale - „działanie administratora
 powinno być takie samo, jak to, że kliknę w e-mail z resetem, tylko inny punkt triggera".
