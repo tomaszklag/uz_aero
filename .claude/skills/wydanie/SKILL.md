@@ -79,6 +79,13 @@ Najkrótsza droga i domyślna po rozpoczęciu testów z pilotami.
    `npm run update:prod -- -m "krótki opis zmiany"`
 5. Zmerguj `main` → `develop`.
 
+`update:prod` to `app/scripts/eas-update.js`, nie gołe `eas-cli update`: czyta profil
+`production` z `eas.json` i wstrzykuje jego `env` (adres serwera, klient Google) do
+środowiska `eas-cli`. `eas update` samo pola `build.<profil>.env` NIE CZYTA - brałoby
+zmienne z lokalnego `app/.env`, gdzie adres serwera jest w dev zakomentowany, i wysłało
+telefonom bundle z fallbackiem na localhost. Runner odmawia bez adresu `https://` i bez
+klienta Google; `eas.json` jest jedynym źródłem tych wartości dla builda i OTA.
+
 OTA pakuje **lokalne drzewo** jak build, więc wysłana z `develop` zaniosłaby pilotom
 niedokończoną pracę nad następną wersją - i to bez reinstalacji, przy następnym
 uruchomieniu. Dlatego krok 4 stoi na `main`, nie „gdziekolwiek, byle zacommitowane".
@@ -216,6 +223,12 @@ przeinstalować — pilot nie ma skąd tego wiedzieć.
 
 ## Pułapki, które już raz kosztowały
 
+- **`eas update` nie czyta `env` z `eas.json`** (znalezione 2026-09-16 przy własnej
+  domenie, issue #124). Gołe `eas-cli update --branch production` pakowało bundle ze
+  zmiennymi z `app/.env` - adres serwera zakomentowany, klient Google ze starego projektu -
+  czyli telefony dostałyby aplikację rozmawiającą z `http://localhost:3000`. Dlatego
+  `update:prod` idzie przez `app/scripts/eas-update.js`; nie wracaj do gołego polecenia
+  i nie ustawiaj adresu w `app/.env` „żeby zadziałało" - to ma działać z `eas.json`.
 - **Build albo OTA z `develop` wysyła pilotom niedokończoną wersję.** Do 2026-09-08
   `develop` był stanem gotowym do wydania i procedura kończyła się merge `develop` →
   `main`; odkąd leży na nim przebudowa wielofirmowa, wydanie idzie przez gałąź wydaniową,

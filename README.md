@@ -56,10 +56,13 @@ curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d
 ## Wdrożenie: Railway
 
 Jeden obraz Dockera (`Dockerfile` w korzeniu) niesie trzy rzeczy: **API**, **statyczny
-build panelu** (`/admin/` - ten sam origin, więc ciasteczko `SameSite=Strict` działa jak
-w dev za proxy Vite) i **stronę publiczną** pod `/` (landing, pobieranie, wydania,
+build panelu** (`/admin/` - ten sam origin co API, więc ciasteczko `SameSite=Strict` działa
+jak w dev za proxy Vite) i **stronę publiczną** pod `/` (landing, pobieranie, wydania,
 dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, patrz
-`site/README.md`). Konfiguracja buildu i healthcheck: `railway.json`.
+`site/README.md`). Na produkcji strona stoi na WŁASNYM hoście (`ninerdeck.pl`), a panel
+i API na drugim (`app.ninerdeck.pl`) - rozdział egzekwuje serwer
+(`server/src/http/hostSplit.ts`, issue #124), bo dwie domeny wskazujące na jedną usługę
+same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`.
 
 1. **Projekt**: railway.com → New Project → Deploy from GitHub repo (`uz_aero`).
    Railway wykryje `Dockerfile` przez `railway.json`.
@@ -69,26 +72,37 @@ dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, pa
    - `JWT_SECRET` = losowe ≥32 znaki,
    - `TRUST_PROXY` = `1` (serwer stoi za proxy TLS Railway; bez tego dziennik audytu
      widzi adres proxy zamiast człowieka),
-   - `PUBLIC_BASE_URL` = `https://<domena-uslugi>` (po kroku 5 - linki do kart arkusza
-     klikane z telefonu).
+   - `PUBLIC_BASE_URL` = `https://app.ninerdeck.pl` (adres panelu i API - baza linków do
+     kart arkusza klikanych z telefonu; po kroku 5),
+   - `PUBLIC_SITE_URL` = `https://ninerdeck.pl` (adres strony; włącza rozdział hostów.
+     Bez niej wszystko stoi pod jednym hostem; z nią serwer NIE WSTANIE, gdy brakuje
+     `PUBLIC_BASE_URL` albo oba adresy wskazują ten sam host).
    `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu i stronę serwer
    znajduje sam (ścieżki wbudowane w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
    Telefon kasuje nagranie po wysyłce (issue #47) - kopia na serwerze jest JEDYNĄ,
    bez wolumenu ginie przy każdym deployu.
-5. **Domena**: Settings → Networking → Generate Domain (port 3000). Wpisz ją w
-   `PUBLIC_BASE_URL` (krok 3).
+5. **Domeny**: Settings → Public Networking → „+ Custom Domain" (port 3000) -
+   `app.ninerdeck.pl` i `ninerdeck.pl`. Railway podaje dla każdej DWA rekordy DNS, CNAME
+   i TXT, i wymaga obu. Apex `ninerdeck.pl` potrzebuje u dostawcy DNS CNAME flattening
+   albo rekordu ALIAS (Railway nie daje rekordu A); gdy rejestrator tego nie ma -
+   nameservery na Cloudflare (przy włączonym proxy SSL/TLS = **Full**, nie Full strict).
+   Plan Hobby dopuszcza dwie domeny na usługę, czyli dokładnie te dwie - `www` odpada.
+   Certyfikat wystawia się do godziny od propagacji DNS. Domenę wygenerowaną przez
+   Railway można potem usunąć - kod jej nie potrzebuje.
 6. **Logowanie Google** (`docs/logowanie-google.md`): w Google Cloud załóż projekt,
    ekran zgody OAuth i identyfikatory klienta - **Web** (panel + weryfikacja `aud`)
    oraz **Android** (package `com.ninerdeck.app` + odcisk SHA-1 z poświadczeń EAS).
    Wpisz je jako `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - loguje się nim panel) i
    `GOOGLE_ANDROID_CLIENT_ID` (od builda aplikacji z Google); **bez pierwszego serwer
    nie wstanie** (pusty zbiór odbiorców przepuszczałby każdy token Google).
-   Ekran zgody pyta o adres polityki prywatności i regulaminu - od przeprowadzki strony
-   są to `https://<domena>/prywatnosc.html` i `https://<domena>/regulamin.html`, a domena
-   musi być na liście **Authorized domains** (weryfikacja w Search Console). To jest
-   argument za własną domeną: adres wygenerowany przez Railway trzeba by weryfikować
-   plikiem, a przy każdej zmianie hostingu - od nowa.
+   Klient Web musi mieć origin panelu `https://app.ninerdeck.pl` w „Authorized JavaScript
+   origins" - bez tego skrypt Google nie narysuje przycisku. Ekran zgody pyta o adres
+   polityki prywatności i regulaminu - `https://ninerdeck.pl/prywatnosc.html`
+   i `https://ninerdeck.pl/regulamin.html` - a `ninerdeck.pl` musi być na liście
+   **Authorized domains**, co wymaga potwierdzenia własności w Search Console (właściwość
+   „Domena", rekord TXT w DNS). To był argument za własną domeną: adres wygenerowany
+   przez hosting trzeba by weryfikować plikiem, a przy każdej zmianie hostingu - od nowa.
 7. **Seed konta `admin`**: dopisz `SEED_ADMIN_EMAIL` - ADRES KONTA GOOGLE administratora.
    Serwer przy starcie zapewni konto `admin` BEZ hasła, a Twoje pierwsze logowanie tym
    kontem Google je PODPINA (idempotentnie: powtórny start nie zrywa podpięcia, dokłada
@@ -98,14 +112,19 @@ dokumentacja; od 2026-09-07 - wcześniej GitHub Pages w osobnym repozytorium, pa
    podpina się przy jego pierwszym logowaniu bez kolejki.
    Alternatywa bez redeployu (wymaga TCP Proxy na usłudze Postgres): lokalnie
    `$env:SEED_ADMIN_EMAIL='…'; $env:DATABASE_URL='<DATABASE_PUBLIC_URL>'; npm run seed`.
-8. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/`
-   → strona (landing, `/pobierz/`, `/wydania/`, `/dokumentacja/`), `https://<domena>/admin/`
-   → logowanie panelu kontem Google z kroku 7. Flotę i konta pilotów załóż w A07/A06.
-9. **Aplikacja pilota**: build EAS z adresem serwera -
-   `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`)
-   ORAZ `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` (klient Android z kroku 6; dopisz do
-   `eas.json` → `build.production.env`, a lokalnie do `app/.env` wg `app/.env.example`).
-   Build jest NOWY z konieczności: `scheme` w `app.json` to zmiana natywna.
+8. **Sprawdzian**: `https://app.ninerdeck.pl/health` → `{"ok":true}`; `https://ninerdeck.pl/`
+   → strona (landing, `/pobierz/`, `/wydania/`, `/dokumentacja/`);
+   `https://app.ninerdeck.pl/admin/` → logowanie panelu kontem Google z kroku 7. Rozdział
+   hostów: `https://ninerdeck.pl/admin/` odsyła na host aplikacji, `https://app.ninerdeck.pl/`
+   odsyła na stronę, a `https://ninerdeck.pl/admin/api/me` odpowiada 404. Flotę i konta
+   pilotów załóż w panelu.
+9. **Aplikacja pilota**: adres serwera i klient Google stoją w `eas.json` →
+   `build.production.env` (`EXPO_PUBLIC_API_URL=https://app.ninerdeck.pl`,
+   `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` z kroku 6; czyta je
+   `app/src/infrastructure/api/apiBaseUrl.ts`). To JEDYNE źródło tych wartości dla
+   telefonów pilotów: build czyta je sam, a `npm run update:prod` wstrzykuje je do
+   `eas update`, które pola `env` z `eas.json` nie zna (`app/scripts/eas-update.js`).
+   Lokalny `app/.env` służy wyłącznie Metro w dev i do telefonów nie trafia.
    **Kolejne poprawki nie wymagają już builda**: od 1.1.0 aplikacja ma EAS Update, więc
    zmiany w JS (ekrany, reguły, `packages/*`) wypuszcza się przez `npm run update:prod`
    i docierają same przy następnym uruchomieniu. Nowy APK dopiero przy zmianie NATYWNEJ -
