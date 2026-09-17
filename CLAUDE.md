@@ -3265,7 +3265,9 @@ linków do kart, bez czekania z adresem w `eas.json`. Reguły obowiązujące odt
   `app/scripts/eas-update.js`: czyta profil `production` z `eas.json`, odmawia bez adresu
   `https://` i bez klienta Google (`eas-profile-env.js`, z testami) i wstrzykuje komplet do
   środowiska `eas-cli` - zmienne procesu wygrywają z plikami `.env` Expo. `eas.json` jest
-  JEDYNYM źródłem adresu dla builda I OTA; `app/.env` służy wyłącznie Metro
+  JEDYNYM źródłem adresu dla builda I OTA; `app/.env` służy wyłącznie Metro. Skrypt podaje
+  też `--platform android` (pierwsze OTA 2026-09-17 padło bez tego na eksporcie web:
+  projekt nie ma `react-native-web`, a `eas update` domyślnie eksportuje wszystkie platformy)
 - **adres produkcyjny aplikacji: `https://app.ninerdeck.pl`** (`eas.json`, przybite
   testem `easProfileEnv.test.ts`). Zmiana adresu = OTA (bundle), nie nowy APK
 - po stronie właściciela: dwie domeny na usłudze Railway (CNAME + TXT dla każdej, apex

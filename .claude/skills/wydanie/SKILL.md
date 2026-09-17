@@ -84,7 +84,9 @@ Najkrótsza droga i domyślna po rozpoczęciu testów z pilotami.
 środowiska `eas-cli`. `eas update` samo pola `build.<profil>.env` NIE CZYTA - brałoby
 zmienne z lokalnego `app/.env`, gdzie adres serwera jest w dev zakomentowany, i wysłało
 telefonom bundle z fallbackiem na localhost. Runner odmawia bez adresu `https://` i bez
-klienta Google; `eas.json` jest jedynym źródłem tych wartości dla builda i OTA.
+klienta Google; `eas.json` jest jedynym źródłem tych wartości dla builda i OTA. Podaje też
+`--platform android`: bez tego `eas update` eksportuje również web, a projekt nie ma
+`react-native-web` - eksport padał na „trying to use web support" (2026-09-17).
 
 OTA pakuje **lokalne drzewo** jak build, więc wysłana z `develop` zaniosłaby pilotom
 niedokończoną pracę nad następną wersją - i to bez reinstalacji, przy następnym

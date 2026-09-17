@@ -10,6 +10,12 @@
  * lokalny plik nie ma jak podmienić adresu po cichu. Argumenty lecą dalej:
  * `npm run update:prod -- -m "opis zmiany"`.
  *
+ * Platforma jest ZAWSZE podana (`--platform android`, chyba że wołający poda własną):
+ * bez niej `eas update` eksportuje bundle dla wszystkich platform, także web, a projekt
+ * nie ma `react-native-web` - aplikacja jest wyłącznie androidowa, jak `eas build`
+ * (`build:prod` też mówi `--platform android`). Eksport padał wtedy na „trying to use web
+ * support" i aktualizacja nie wychodziła wcale (2026-09-17, pierwsze OTA po własnej domenie).
+ *
  * Skrypt niczego nie commituje i nie podnosi wersji - to zostaje decyzją człowieka
  * (skill `wydanie`, ścieżka A).
  */
@@ -24,6 +30,12 @@ const { profileEnv } = require('./eas-profile-env');
 const appRoot = path.resolve(__dirname, '..');
 const PROFILE = 'production';
 const BRANCH = 'production';
+const PLATFORM = 'android';
+
+const passedArgs = process.argv.slice(2);
+const platformArgs = passedArgs.some((arg) => arg === '--platform' || arg === '-p' || arg.startsWith('--platform='))
+  ? []
+  : ['--platform', PLATFORM];
 
 let env;
 try {
@@ -34,13 +46,15 @@ try {
   process.exit(1);
 }
 
-console.log(`eas update --branch ${BRANCH} ze zmiennymi profilu "${PROFILE}" z eas.json:`);
+console.log(
+  `eas update --branch ${BRANCH} ${platformArgs.join(' ')} ze zmiennymi profilu "${PROFILE}" z eas.json:`.replace(/\s+/g, ' '),
+);
 for (const [name, value] of Object.entries(env)) console.log(`  ${name}=${value}`);
 console.log('');
 
 const result = spawnSync(
   'npx',
-  ['eas-cli', 'update', '--branch', BRANCH, ...process.argv.slice(2)],
+  ['eas-cli', 'update', '--branch', BRANCH, ...platformArgs, ...passedArgs],
   {
     cwd: appRoot,
     stdio: 'inherit',
