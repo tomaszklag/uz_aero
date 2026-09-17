@@ -40,7 +40,8 @@ Issue #130 niesie trzy rzeczy i warto je rozdzielić, bo każda ma inną cenę:
    Googlem (`claimByVerifiedEmail`). Bez Google trzeba mu dać INNE pierwsze wejście.
 
 Do tego cztery pytania właściciela: co przy zapomnianym haśle, polityka wygasania, reset
-przez pocztę czy SMS, „najnowsze standardy i bezpieczeństwo". Odpowiedzi w §3 i §13.
+przez pocztę czy SMS, „najnowsze standardy i bezpieczeństwo". Odpowiedzi w §3 i §14.
+Wynik przeglądu bezpieczeństwa przed wdrożeniem (H-W, W6) wejdzie jako §15.
 
 ## 1. Zmiana w trzech zdaniach
 
@@ -620,7 +621,26 @@ Przy okazji: `docs/CHANGELOG.md` „Plan wydań" opisuje dziś 2.1.0 jako „pop
 i kalibracja normy". Po decyzji z #130 kalibracja i analityka oleju przechodzą do 2.2.0,
 a 2.1.0 dostaje treść tego dokumentu - to część H-W.
 
-## 13. Pytania do właściciela - odpowiedzi w tym dokumencie
+## 13. Podręcznik i polityka prywatności - szkic zmian (zadanie A4, wykonanie w H-W)
+
+Podręcznik opisuje PRODUKT WYDANY (strona buduje się z `docs/podrecznik/` przy każdym
+wdrożeniu `main`), więc strony zmieniają się dopiero w epiku H-W razem z kodem. Tu stoi
+lista, ŻEBY W-2 nie zgadywało zakresu:
+
+| strona | co się zmienia |
+|---|---|
+| `konta-i-bezpieczenstwo.md` | wstęp: „Konto zakłada się kontem Google **albo e-mailem i hasłem**"; „Trzy kroki" → krok 1 dostaje dwie drogi; NOWA sekcja „Hasło i wspólny tablet" (dlaczego hasło obok Google, że nie zastępuje PIN-u, zmiana w ustawieniach, polityka: 12 znaków, bez wygasania); sekcja „Sesje": lista urządzeń w karcie członka i w `#/konto`, zdalne wylogowanie i co ono znaczy dla telefonu; tabela danych: skrót hasła, wiersz sesji (urządzenie, adres IP, ostatnia aktywność); zdanie „Haseł nie ma nigdzie" WYPADA |
+| `pierwsze-logowanie.md` | krok 1 w dwóch odmianach (telefon osobisty: Google; wspólny tablet: e-mail albo kod pilota + hasło); NOWA sekcja „Nie pamiętam hasła" (adres → link z e-maila ważny godzinę → strona → logowanie; „jeszcze nie mam hasła" to ta sama droga); „Częste problemy": „nie dostałem linku" (spam, adres, limit 3 na kwadrans, poproś administratora o wysłanie z panelu), „link wygasł" |
+| `ustawienia.md` | sekcja „Hasło" (Ustaw / Zmień; wymaga internetu; zmiana wylogowuje pozostałe urządzenia); usunięcie zdania „konta zakłada administrator"; baner „Sesja zakończona" w sekcji Konto |
+| `panel-piloci.md` | karta członka: „Logowanie" (adres, metody), przycisk „Wyślij link do ustawienia hasła" (ten sam list, który pilot wysłałby sobie sam), karta „Sesje" z wylogowaniem zdalnym i jego skutkiem na telefonie |
+| `panel-wprowadzenie.md` | logowanie do panelu e-mailem i hasłem albo Googlem; „Nie pamiętam hasła"; `#/konto` (zmiana hasła, moje sesje) |
+| `kluby-i-dolaczanie.md` | zakładanie klubu: pierwszy administrator dostaje **e-mail z zaproszeniem** (nie musi mieć konta Google); reszta bez zmian - do klubu wchodzi się kodem klubu |
+| `czeste-pytania.md` | „Zapomniałem hasła", „Jeden tablet w samolocie - jak się przelogować", „Administrator mnie wylogował - czy stracę zapisy?" (nie) |
+| `slownik.md` | „link ustawienia hasła", „sesja logowania", „wspólny tablet" |
+| `site/src/prywatnosc.html` | sekcja 2 „Logowanie kontem Google" → „Logowanie": Google ALBO e-mail i hasło; dane: skrót hasła (nigdy hasło), wiersz sesji logowania (urządzenie, system, wersja aplikacji, adres IP, ostatnia aktywność - po co: lista urządzeń i zdalne wylogowanie), wysyłka listów przez dostawcę poczty jako podmiot przetwarzający (jakie dane: adres, treść listu z linkiem) - treść do zatwierdzenia przez właściciela (#137) |
+| `site/src/pobierz/index.html` | krok 2 instalacji: „zaloguj się kontem Google **albo e-mailem i hasłem**" |
+
+## 14. Pytania do właściciela - odpowiedzi w tym dokumencie
 
 | pytanie z issue | odpowiedź | gdzie |
 |---|---|---|
