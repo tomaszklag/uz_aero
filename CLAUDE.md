@@ -2621,6 +2621,102 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Logowanie hasłem i sesje logowania - 2.1.0 (issue #130, 2026-09-16, gałąź `feature-130-logowanie-haslem`)
+**Odwraca „e-mail + hasło - nigdy" z 2026-09-09** (`docs/wielofirmowosc.md` §15) z powodu,
+którego tamta decyzja nie przewidziała: **w samolocie jest JEDEN tablet wspólny dla kilku
+pilotów**, a logowanie Googlem na cudzym urządzeniu znaczy dodanie własnego konta do cudzej
+przeglądarki. **NIE odwraca Google** (2026-09-04): Google zostaje pierwszą drogą na telefonie
+osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-A…H-F + H-W
+= issue #131–#138, zadanie właściciela #137. Decyzje właściciela z 2026-09-16 - nie wracać:
+- **hasło jest DRUGĄ metodą TEJ SAMEJ osoby** - poświadczenie w osobnej tabeli
+  `password_credentials` (jak `external_identities`), NIE kolumna na `pilots`. Logowanie
+  hasłem kończy się DOKŁADNIE tam, gdzie Google: od chwili ustalenia osoby wspólny rdzeń
+  `AuthCommands` (aktywne członkostwo → tokeny klubu; brak → `202` token osoby → 00C/00D/00E;
+  panel → `no_panel_access`). Osoba z Googlem i hasłem = jeden wiersz `pilots`
+- **login = e-mail ALBO kod pilota w klubie, który urządzenie zna**: kod pilota jest jedyny
+  W KLUBIE, nie na serwerze, więc sam loginem być nie może; urządzenie pamięta KLUBY,
+  z których się na nim logowano (nie osoby), a kod rozwiązuje się w bieżącym. **Przegląd
+  makiet 2026-09-17: zna JEDEN klub → 00F nic o nim nie mówi** („po co to pisać"); zna
+  więcej → pigułka z nazwą bieżącego pod marką i „Zmień klub" w stopce → ekran 00I z listą
+  tych klubów. Zdania „kod pilota działa w klubie X" ani przycisku „to nie mój klub" NIE MA
+- **scrypt z `node:crypto`** (N=2¹⁷, r=8, p=1) w zapisie PHC z parametrami (re-hash przy
+  logowaniu zamiast migracji; Argon2id wymagałby modułu natywnego). Przy nieznanym loginie
+  liczy się skrót ZASTĘPCZY - czas odpowiedzi nie wylicza kont. JEDNA odpowiedź
+  `401 invalid_credentials` na login nieznany / bez hasła / złe hasło. Limity PRZED skrótem
+  (`AttemptLimiter` z `POST /auth/join`: 10/login, 30/IP w 15 min)
+- **polityka NIST SP 800-63B**: min 12 znaków, max 128, BEZ reguł złożoności, **BEZ wygasania**
+  (zmianę wymusza wyłącznie unieważnienie albo reset), lista zablokowanych + fragmenty
+  e-maila i nazwiska, wklejanie dozwolone, przełącznik „pokaż". JEDNA implementacja
+  w `packages/domain/src/auth/passwordPolicy.ts` dla serwera, telefonu, panelu (i lustro
+  w `site/src/haslo/` z testem równości - decyzja H-F)
+- **ZAPOMNIANE HASŁO = JEDEN MECHANIZM: link z e-maila** („Nie pamiętam hasła albo jeszcze go
+  nie mam" → adres → `202` ZAWSZE → list z `/haslo/#<token>` ważnym godzinę → strona
+  `site/src/haslo/` ustawia hasło przez `POST /auth/password/reset` → `204`, BEZ sesji →
+  logowanie). Strona, nie ekran aplikacji: pocztę czyta się na WŁASNYM telefonie, a loguje
+  na wspólnym tablecie. Token we FRAGMENCIE adresu (poza logami i Referer), 256 bitów,
+  `sha256` w bazie (`password_reset_tokens`), jednorazowy, nowy zużywa stary. **Cztery
+  WYZWALACZE tego samego listu**: pilot (`self`) / administrator klubu - przycisk „Wyślij link
+  do ustawienia hasła" w karcie członka (`admin`) / platforma - zaproszenie pierwszego
+  administratora przy założeniu klubu i „Wyślij ponownie" (`platform`, 72 h) / operator -
+  `seed -- --reset-link <email>` DRUKUJE adres zamiast wysyłać (`cli`; jedyna droga poza
+  pocztą, gdy Google i poczta padły). **KODU JEDNORAZOWEGO DO PRZEPISYWANIA NIE MA I NIE
+  PROPONOWAĆ** - dwie pierwsze wersje dokumentu go miały (najpierw jako drogę główną, potem
+  awaryjną), właściciel wyciął oba razy: „działanie administratora powinno być takie samo,
+  jak kliknięcie w e-mail z resetem, tylko inny punkt triggera". Panel NIE pokazuje linków ani
+  kodów (link do wklejenia w komunikator to ten sam kanał ręczny innym kształtem). Reset
+  unieważnia WSZYSTKIE sesje osoby; zmiana hasła w ustawieniach - wszystkie poza bieżącą.
+  **SMS odrzucony** (koszt, numery telefonów jako nowe dane, słabszy kanał)
+- **poczta wychodząca jest WYMAGANIEM serwera** (`MAIL_PROVIDER` = `resend` | `log`, bez niego
+  serwer nie wstaje - „Nie pamiętam hasła", które po cichu nic nie wysyła, jest gorsze niż
+  serwer, który nie wstał). `MailPort` + adapter HTTP dostawcy przez `fetch` (zero
+  zależności) + `LogMail` dla dev. **#137 na drodze krytycznej**: rekordy DNS poczty
+  (SPF/DKIM/DMARC) na `ninerdeck.pl` w Cloudflare, konto Resend, zmienne `MAIL_*` na Railway.
+  Domena JUŻ JEST od #124 (wdrożone 2026-09-17) - pierwsza wersja dokumentu (2026-09-16)
+  miała jej rejestrację jako pierwszy krok #137, ten punkt odpadł
+- **`login_sessions` dla KAŻDEJ powierzchni** (telefon, panel klubu, platforma; token osoby
+  sesji NIE zakłada), `sid` w claimach, `refresh_tokens.session_id` (backfill `legacy`
+  w migracji 9). Brama sprawdza unieważnienie W TYM SAMYM zapytaniu, co członkostwo
+  (`authSnapshot` + `LEFT JOIN`); brak `sid` przyjmowany WYŁĄCZNIE do wygaśnięcia tokenów
+  sprzed wdrożenia. `last_seen_at` z przepustnicą 60 s w pamięci procesu. NOWE
+  `POST /auth/logout` - dziś telefon przy wylogowaniu NIE woła serwera i refresh żyje 90 dni.
+  Panel: lista sesji członka W KLUBIE aktora („Wyloguj", „Wyloguj wszędzie w tym klubie"),
+  `#/konto` z własnymi sesjami wszystkich powierzchni, „ostatnio aktywny" z sesji
+- **zdalne wylogowanie NIE kasuje danych z tabletu** (§3.0 zostaje): serwer odbija od razu
+  (`401 session_revoked`, także na refreshu), telefon przestaje wysyłać i mówi dlaczego
+  (baner Status na 00 i w Koncie 13), **PIN dalej otwiera**, zaległe zapisy czekają na
+  ponowne logowanie TEGO SAMEGO pilota. Wyrzucenie do logowania kasowałoby dane dnia
+- **nowy klub bez Google**: O2 pyta o „E-mail" (nie „Konto Google"), a razem z klubem wychodzi
+  e-mail z zaproszeniem; karta klubu: „zaproszenie wysłano na … · ważne 72 h", „Wyślij
+  ponownie". Podpięcie Googlem po tym samym adresie DALEJ działa
+- **wspólny tablet = „Wyloguj i zmień konto" ze strażnikiem outboxa** (zapisy pilota A wychodzą
+  wyłącznie tokenem A); zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - OSOBNY temat
+  po 2.1.0
+- **REJESTRACJA E-MAILEM WCHODZI DO 2.1.0** (przegląd makiet 2026-09-17: „powinna być opcja
+  rejestracji, jeśli jeszcze nie mam konta" - odwraca D9 z 2026-09-16) i jest TYM SAMYM
+  mechanizmem linku: 00H „Załóż konto" (imię i nazwisko + e-mail) → `POST /auth/signup`
+  zawsze `202` → list → `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres
+  potwierdzony kliknięciem; zajęty adres dostaje list resetu zamiast odmowy) → logowanie
+  hasłem → 00E i kod klubu. Bez członkostwa, bez omijania zatwierdzenia, bez trasy w panelu.
+  Ta sama tura: link na 00F to samo „Nie pamiętam hasła" (bez „albo jeszcze go nie mam" -
+  list i tak USTAWIA hasło osobie z Googlem), a klub urządzenia zszedł spod pola do pigułki
+  pod marką + „Zmień klub" (00I), widocznych WYŁĄCZNIE przy więcej niż jednym znanym klubie
+- **migracja 9 WYŁĄCZNIE addytywna** (produkcja 2.0.0 żyje od 2026-09-16): `password_credentials`,
+  `password_reset_tokens`, `login_sessions`, `refresh_tokens.session_id`,
+  `idx_pilots_email_lower` (dziś `pilots.email UNIQUE` jest wrażliwe na wielkość liter,
+  a odczyty robią `lower()`). Telefon dostaje zmianę **OTA** (bez modułów natywnych); serwer
+  z migracją 9 i zmiennymi `MAIL_*` idzie PRZED aktualizacją telefonów
+- **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
+  HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
+  kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`
+  (adres → „WYŚLIJ LINK" → potwierdzenie; ŻADNEGO pola hasła), NOWE `00h-zaloz-konto`
+  (imię i nazwisko + e-mail → link; potwierdzenie w trybie warunkowym), NOWE `00i-wybor-klubu`
+  (lista klubów urządzenia ze stopki 00F), `13` sekcja „Hasło"
+  + arkusz `13b`, `00` baner sesji
+  unieważnionej; panel `00-logowanie` (formularz + „albo" + Google), `piloci-konto`
+  („Logowanie" z plakietkami Google/hasło, „Wyślij link", karta Sesje), `organizacje-klub`
+  (E-mail + zaproszenie), NOWE `konto` (`#/konto`: zmiana hasła, moje sesje); strona
+  `site/src/haslo/` (trzy stany: formularz / link wygasł / gotowe)
+
 ## Wielofirmowość 2.0.0 - epik A: decyzje i makiety (issue #97, 2026-09-08, gałąź `feature-97-wielofirmowosc-projekt`)
 Jeden serwer dla wielu klubów, superadministrator zakłada kluby, **nic nie wycieka między
 klubami**. Dokument decyzji: **`docs/wielofirmowosc.md`** (model danych, przepływy, migracja
@@ -3410,7 +3506,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   w przycisku, nie ruszać ich
 
 ## Pilot i samolot - UX
-- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
+- Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach

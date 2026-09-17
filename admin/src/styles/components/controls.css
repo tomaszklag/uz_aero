@@ -306,12 +306,18 @@
  *
  * Nie tabela klucz-wartość, bo po prawej stronie nie stoi WARTOŚĆ, tylko przycisk -
  * a wiersz, w którym jedno i drugie wygląda tak samo, uczy klikać w liczby.
+ *
+ * Wiersz ZAWIJA SIĘ, bo bywa trzecie dziecko: potwierdzenie wysyłki (`.sent-note`,
+ * `surfaces.css`) o pełnej szerokości staje w drugiej linii POD nazwą i akcją - w tej
+ * samej ramce między włosami, bo mówi o skutku tej właśnie akcji. Odstęp między
+ * liniami jest mniejszy niż między kolumnami: potwierdzenie czyta się razem z wierszem.
  */
 .access-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 4px 12px;
   padding: 9px 0;
   border-bottom: 1px solid var(--hairline);
 }

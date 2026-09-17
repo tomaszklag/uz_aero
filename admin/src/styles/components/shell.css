@@ -69,11 +69,27 @@
 
 /* Zalogowany: kółko z inicjałami i nazwisko. Inicjały, nie zdjęcie - panel nie ma
    awatarów i nie ciągnie obrazków z Google; kółko jest tu wyłącznie po to, żeby oko
-   znalazło „kto" w tym samym rogu, co w każdej innej aplikacji. */
+   znalazło „kto" w tym samym rogu, co w każdej innej aplikacji.
+   Od 2.1.0 jest LINKIEM na własne konto (`#/konto`: hasło, sesje) - wejście z nazwiska
+   w pasku, jak w każdej aplikacji web; bez własnej barwy linku, bo nazwisko nie jest
+   treścią, a odwrócone tło pod kursorem mówi „to jest do kliknięcia" tak samo, jak
+   przy kaflu kontekstu klubu w kolumnie. */
 .who {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 2px 8px 2px 2px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.who:hover {
+  background: var(--surface-raised);
+}
+
+.who:hover .who-name {
+  color: var(--text-primary);
 }
 
 .avatar {

@@ -918,6 +918,17 @@ nie proponował odrzuconych wariantów drugi raz:
 | logowanie kodem z e-maila (bez hasła) | po 2.0.0, gdy pojawi się pilot bez konta Google | jedyna metoda niezależna od Google bez hasła; wymaga dostawcy poczty; kod do przepisania, nie link (skanery poczty zużywają linki) |
 | Apple / Facebook | Apple wyłącznie razem z iOS (wymóg App Store), Facebook wcale | produkt jest na Androida, więc każdy telefon ma konto Google; kolejny dostawca mnoży pomyłki „zalogowałem się nie tym" bez wiarygodnego łączenia po adresie (Apple ukrywa adres, Facebook go nie potwierdza) |
 
+> **Dwa wiersze tej tabeli ZMIENIŁY SIĘ 2026-09-16 (issue #130, `docs/logowanie-haslem.md`)**
+> i tabela zostaje jako zapis historyczny: (1) **„e-mail + hasło - odrzucone, nie wraca"
+> ODWRÓCONE** - hasło wraca jako DRUGA metoda logowania tej samej osoby, bo w samolocie jest
+> jeden tablet wspólny dla kilku pilotów; argument tabeli („reset stałby się główną drogą,
+> a reset to i tak kod w e-mailu") okazał się prawdziwy i przyjęty świadomie - reset jest
+> linkiem z e-maila i jedynym mechanizmem odzyskania hasła; (2) **poczta wychodząca
+> WCHODZI** (dostawca, domena nadawcy, DNS) jako wymaganie 2.1.0 - to, co ten wiersz
+> odkładał „gdy klub o to poprosi". NIE zmienia się: kod klubu pozostaje jedyną drogą DO KLUBU
+> (hasło jest drogą do KONTA, nie do klubu), linku osobistego dalej nie ma, Apple/Facebook
+> bez zmian, logowanie kodem z e-maila bez hasła zostaje odłożone.
+
 Z tego wynika §3.8 (kolumna `organizations.join_code` zamiast tabeli `invitations`),
 §5 (`POST /auth/join { code }`), §7 (00E bez pola na link, bez deep linku), §8.3 (karta
 „Kod klubu" zamiast szuflady z trzema kartami), §9 (strona `dolacz/` usunięta) i lista

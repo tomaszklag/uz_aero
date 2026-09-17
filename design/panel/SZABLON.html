@@ -85,10 +85,13 @@
       </a>
 
       <div class="topbar-right">
-        <span class="who">
+        <!-- Nazwisko zalogowanego jest LINKIEM na własne konto (`#/konto`, 2.1.0: hasło
+             i sesje). Wejście z nazwiska w pasku, jak w każdej aplikacji web - bez
+             własnej barwy linku, odwrócone tło pod kursorem mówi „to jest do kliknięcia". -->
+        <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">TM</span>
           <span class="who-name">Tomasz Małkiewicz</span>
-        </span>
+        </a>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
           Wyloguj
@@ -301,8 +304,8 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">AppShell · pasek górny i kolumna boczna</span>
-        <span class="inv-when">Układ jak w GitLabie (issue #107): pasek 48 px niesie WYŁĄCZNIE markę i zalogowanego; nawigacja stoi w kolumnie 240 px z kontekstem klubu nad pozycjami modułów. Pozycja aktywna jest ODWRÓCONA (jasne tło, ciemny napis) - ten sam sygnał, którym „wybrane" mówi chip filtra. Kolory bez zmian wobec panelu 2.0, zmienił się PODZIAŁ: pasek i kolumna NIE są sekcjami z liniami, tylko jednym tłem na <code>--bg</code>, a treść to KONTENER W WARSTWIE PONAD na <code>--surface</code> - oba górne rogi zaokrąglone, włos krawędzi, odstęp od prawej krawędzi okna, dół dociągnięty do krawędzi - jak panel treści w GitLabie. Tło chrome'u ma lekki gradient (<code>--chrome-bg</code> z samych tokenów: zielona poświata przy znaku, <code>--bg-tint</code> u góry), pasek i kolumna są przezroczyste. Lekkość ma wyjść z układu i typografii, nie z palety. Bebas Neue zostaje w znaku marki i na logowaniu; wszystko poniżej paska jedzie krojem tekstowym w pisowni zdaniowej.</span>
-        <span class="inv-classes"><b>.topbar</b> · .brand · .brand-mark · .brand-name · .topbar-right · .who · .avatar · .who-name · <b>.workspace</b> · <b>.sidebar</b> · .sidebar-context · .sidebar-context.scope · .context-mark · .context-body · .context-kind · .context-name · .context-switch · <b>.sidebar-nav</b> · .nav-item · .nav-item.active · <b>.content</b> · .page</span>
+        <span class="inv-when">Układ jak w GitLabie (issue #107): pasek 48 px niesie WYŁĄCZNIE markę i zalogowanego; nawigacja stoi w kolumnie 240 px z kontekstem klubu nad pozycjami modułów. Pozycja aktywna jest ODWRÓCONA (jasne tło, ciemny napis) - ten sam sygnał, którym „wybrane" mówi chip filtra. Kolory bez zmian wobec panelu 2.0, zmienił się PODZIAŁ: pasek i kolumna NIE są sekcjami z liniami, tylko jednym tłem na <code>--bg</code>, a treść to KONTENER W WARSTWIE PONAD na <code>--surface</code> - oba górne rogi zaokrąglone, włos krawędzi, odstęp od prawej krawędzi okna, dół dociągnięty do krawędzi - jak panel treści w GitLabie. Tło chrome'u ma lekki gradient (<code>--chrome-bg</code> z samych tokenów: zielona poświata przy znaku, <code>--bg-tint</code> u góry), pasek i kolumna są przezroczyste. Lekkość ma wyjść z układu i typografii, nie z palety. Bebas Neue zostaje w znaku marki i na logowaniu; wszystko poniżej paska jedzie krojem tekstowym w pisowni zdaniowej. <b>Nazwisko zalogowanego (<code>.who</code>) jest LINKIEM na <code>#/konto</code></b> (2.1.0): własne hasło i sesje - wejście z nazwiska, jak w każdej aplikacji web; bez własnej barwy linku, odwrócone tło pod kursorem mówi „to jest do kliknięcia" tak samo, jak przy kaflu kontekstu w kolumnie. „Wyloguj" zostaje osobnym przyciskiem obok: wyjście nie może chować się za wejściem w konto.</span>
+        <span class="inv-classes"><b>.topbar</b> · .brand · .brand-mark · .brand-name · .topbar-right · a.who · .avatar · .who-name · <b>.workspace</b> · <b>.sidebar</b> · .sidebar-context · .sidebar-context.scope · .context-mark · .context-body · .context-kind · .context-name · .context-switch · <b>.sidebar-nav</b> · .nav-item · .nav-item.active · <b>.content</b> · .page</span>
       </div>
       <div class="inv-demo chrome-demo">
         <div class="sidebar-demo">
@@ -531,6 +534,121 @@
   </div>
 </section>
 
+<!-- ══ LOGOWANIE HASŁEM I SESJE (2.1.0, issue #131, docs/logowanie-haslem.md §7.2) ══
+     Trzy komponenty, które doszły razem z hasłem jako DRUGĄ metodą tej samej osoby.
+     Dokładane TU, nie do jednego ekranu: wiersz sesji stoi na karcie członka (P2)
+     i na `#/konto` (K1), potwierdzenie wysyłki - na P2 i O2a, formularz logowania
+     ma jedno miejsce, ale jego pole hasła z „pokaż" wraca w zmianie hasła (K1). -->
+<section class="canvas-section">
+  <div class="canvas-section-title">Logowanie hasłem i sesje · 2.1.0</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Formularz logowania · pole hasła z „pokaż"</span>
+        <span class="inv-when">Hasło jest DRUGĄ metodą tej samej osoby (D1), więc formularz i przycisk Google stoją w JEDNEJ karcie, rozdzielone separatorem „albo" - formularz na wierzchu (administrator klubu bez Google nie ma innej drogi), Google pod spodem; gdy serwer nie zna klienta Google, separator i kontener znikają. Pole hasła: wklejanie dozwolone, przełącznik „pokaż" jako przycisk-ikona W POLU (stan <code>aria-pressed</code>), bez wymogów co do znaków. JEDEN link „Nie pamiętam hasła" - służy też osobie, która hasła jeszcze nie ma. Ta sama para <code>.input-pass</code> + <code>.eye-btn</code> stoi w zmianie hasła na <code>#/konto</code>.</span>
+        <span class="inv-classes"><b>.login-card</b> · .login-card form · .field · .input.mono · <b>.input-pass</b> · <b>.eye-btn</b> · .eye-btn[aria-pressed] · .btn.primary.block · <b>.login-link</b> · <b>.login-divider</b> · .login-google · .login-banner · .login-status</span>
+      </div>
+      <div class="inv-demo">
+        <div class="login-card">
+          <form action="#">
+            <div class="field">
+              <label class="label" for="t-email">E-mail</label>
+              <input class="input mono" id="t-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+            </div>
+            <div class="field">
+              <label class="label" for="t-pass">Hasło</label>
+              <div class="input-pass">
+                <input class="input" id="t-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
+                <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn primary block">Zaloguj się</button>
+            <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+          </form>
+          <div class="login-divider" role="separator">albo</div>
+          <div class="login-google-skeleton" aria-hidden="true"></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wiersz sesji</span>
+        <span class="inv-when">Jedno urządzenie, na którym osoba jest zalogowana - JEDEN kształt na dwóch ekranach: karta członka (sesje W TYM KLUBIE, <code>accounts.manage</code>) i <code>#/konto</code> (własne, ze wszystkich powierzchni). Ikona mówi rodzaj urządzenia, pierwsza linia - które, druga (mono) - metodę, od kiedy i kiedy ostatnio (<code>last_seen_at</code> z przepustnicą 60 s - to jest dokładność tej listy). Akcja „Wyloguj" w kolumnie akcji, jak w każdym wierszu panelu; BIEŻĄCA sesja (<code>.current</code>) ma zieloną ikonę i plakietkę „to urządzenie" zamiast akcji - własnego okna nie wylogowuje się z listy. Bez potwierdzenia inline: skutek jest odwracalny ponownym zalogowaniem, a zapisy na urządzeniu nie znikają (D7).</span>
+        <span class="inv-classes"><b>.session-list</b> · <b>.session-row</b> · .session-row.current · .session-icon · .session-body · .session-device · .session-meta</span>
+      </div>
+      <div class="inv-demo">
+        <div class="session-list">
+          <div class="session-row current">
+            <span class="session-icon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+            </span>
+            <span class="session-body">
+              <span class="session-device">Chrome · Windows · panel</span>
+              <span class="session-meta">Google · od dziś 08:12</span>
+            </span>
+            <span class="pill green">To urządzenie</span>
+          </div>
+          <div class="session-row">
+            <span class="session-icon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            </span>
+            <span class="session-body">
+              <span class="session-device">Android 14 · Pixel 7 · Ninerdeck 2.1.0</span>
+              <span class="session-meta">hasło · od 12 WRZ 08:04 · ostatnio 3 min temu</span>
+            </span>
+            <button type="button" class="btn ghost sm">Wyloguj</button>
+          </div>
+          <div class="session-row">
+            <span class="session-icon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+            </span>
+            <span class="session-body">
+              <span class="session-device">Android 13 · Galaxy Tab A9 · Ninerdeck 2.1.0</span>
+              <span class="session-meta">hasło · od dziś 07:50 · ostatnio 41 min temu</span>
+            </span>
+            <button type="button" class="btn ghost sm">Wyloguj</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Potwierdzenie wysyłki</span>
+        <span class="inv-when">Stan po „Wyślij link do ustawienia hasła" (karta członka) i po „Wyślij ponownie" (zaproszenie administratora klubu). Mówi DOKĄD poszedł list i JAK DŁUGO jest ważny - i nic więcej: <b>nigdy nie pokazuje linku ani kodu</b>, bo administrator WYSYŁA, a nie dyktuje (D5). Staje POD wierszem akcji jako jego trzecie dziecko (<code>.access-row</code> się zawija), więc zostaje w tej samej ramce między włosami. Mono, bo treścią jest adres i termin; ptaszek zielony to jedyna informacja o skutku, jaką ten wiersz niesie. Przy osobie bez adresu przycisk jest zablokowany z powodem doklejonym do etykiety.</span>
+        <span class="inv-classes"><b>.sent-note</b> · .access-row &gt; .sent-note</span>
+      </div>
+      <div class="inv-demo">
+        <div class="access-row">
+          <span class="kv-k">Hasło</span>
+          <button type="button" class="btn ghost sm">Wyślij link do ustawienia hasła</button>
+          <span class="sent-note" role="status">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            wysłano na anna.kowal@gmail.com · ważny godzinę
+          </span>
+        </div>
+        <div class="access-row">
+          <span>Piotr Wróbel <span class="cell-sub">piotr.wrobel@example.pl · kod PWR</span></span>
+          <button type="button" class="btn ghost sm">Wyślij ponownie</button>
+          <span class="sent-note" role="status">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            zaproszenie wysłano 8 WRZ 2026 · ważne 72 h
+          </span>
+        </div>
+        <div class="access-row">
+          <span class="kv-k">Hasło</span>
+          <button type="button" class="btn ghost sm" disabled title="Ta osoba nie ma adresu e-mail.">Wyślij link - ta osoba nie ma adresu e-mail</button>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
 <section class="canvas-section">
   <div class="canvas-section-title">Formularz</div>
   <div class="inv-grid">
@@ -622,7 +740,7 @@
       <div class="inv-head">
         <span class="inv-name">Pill</span>
         <span class="inv-when">Stan rzeczy w jednym słowie - przy tytule karty albo w komórce tabeli. Bez ramki i bez wersalików: kolor tła mówi ton, napis stan - pisany jak zdanie, z wielkiej litery. Kropka pulsująca (<code>.dot.live</code>) WYŁĄCZNIE dla stanu trwającego (maszyna w powietrzu): ruch na ekranie ma znaczyć, że coś się właśnie dzieje.</span>
-        <span class="inv-classes"><b>.pill</b> · .pill.green · .pill.amber · .pill.red · .pill.blue · .pill.dim · .dot · .dot.live</span>
+        <span class="inv-classes"><b>.pill</b> · .pill.green · .pill.amber · .pill.red · .pill.blue · .pill.dim · .dot · .dot.live · <b>.pill-row</b> (kilka stanów jednej rzeczy obok siebie - metody logowania osoby)</span>
       </div>
       <div class="inv-demo">
         <div class="inv-row">
@@ -636,6 +754,11 @@
           <span class="pill green"><span class="dot live"></span>Operacja w toku</span>
           <span class="pill amber"><span class="dot"></span>Czeka na decyzję</span>
         </div>
+        <span class="inv-mark">.pill-row - metody logowania w karcie członka i na #/konto</span>
+        <div class="pill-row" aria-label="Metody logowania">
+          <span class="pill dim">Google</span>
+          <span class="pill dim">hasło</span>
+        </div>
       </div>
     </article>
 
@@ -643,7 +766,7 @@
       <div class="inv-head">
         <span class="inv-name">Card · wiersz klucz-wartość</span>
         <span class="inv-when">Karta grupuje to, co czyta się razem. Tytuł jest nagłówkiem sekcji krojem tekstowym - bez zielonej kreski i bez wersalików; slot <code>.spacer</code> odsuwa plakietkę stanu na prawą krawędź. Wiersz <code>.kv</code> stawia wartość po prawej, mono - kolumnę liczb czyta się w dół.</span>
-        <span class="inv-classes"><b>.card</b> · .card-title · .spacer · .kv · .kv-k · .kv-v · .kv-v.green|amber|red|blue · .kv-v small · .kv-v .was</span>
+        <span class="inv-classes"><b>.card</b> · .card-title · .spacer · .kv · .kv-k · .kv-v · .kv-v.green|amber|red|blue · .kv-v small · .kv-v .was · <b>.card-grid</b> · .card-grid .span-2 (siatka kart STRONY w dwóch kolumnach, zawężona do 720 px - <code>#/konto</code>; w szufladzie karty idą kolumną)</span>
       </div>
       <div class="inv-demo">
         <div class="card">
@@ -896,7 +1019,7 @@
       <div class="inv-head">
         <span class="inv-name">Klasy w arkuszu, których żaden ekran nie używa</span>
         <span class="inv-when">Arkusz jest wierną kopią <code>admin/src/styles/</code>, więc niesie także reguły po ekranach panelu 1.0. <b>Nie sięgaj po nie przy nowej makiecie</b> - każda z nich została wycofana z powodem. Gdy któraś ma wrócić, wraca razem z modułem, który jej potrzebuje.</span>
-        <span class="inv-classes">.tiles · .tile · .tile-key · .tile-val — kafle z licznikami (1.0 miał ich osiem, 2.0 ma zero: liczba wymagająca przypisu wypada razem z przypisem)<br>.secret · .secret-value — wartość pokazana jeden raz; haseł nie ma od 2026-09-04, `.linkbox` robi to samo z adresem zaproszenia<br>.det · .det-row · .det-k · .det-v — rozwinięcie payloadu w rejestrze zdarzeń<br>.clock-val · .cell-age · tbody tr.flagged · .row-expand — skrzynka flag i rejestr zdarzeń<br>.code-ref — odwołanie do pliku źródłowego na ekranie<br>.field-row · .opt-grid — bez ekranu, który by ich używał</span>
+        <span class="inv-classes">.tiles · .tile · .tile-key · .tile-val — kafle z licznikami (1.0 miał ich osiem, 2.0 ma zero: liczba wymagająca przypisu wypada razem z przypisem)<br>(dawne .secret · .secret-value — „wartość pokazana jeden raz" — WYCIĘTE z arkusza 2026-09-09 razem z hasłami startowymi; hasła wróciły w 2.1.0 jako druga metoda, ale panel ŻADNEGO hasła, linku ani kodu nie pokazuje - wysyła list i potwierdza go `.sent-note`, więc klasa nie wraca)<br>.det · .det-row · .det-k · .det-v — rozwinięcie payloadu w rejestrze zdarzeń<br>.clock-val · .cell-age · tbody tr.flagged · .row-expand — skrzynka flag i rejestr zdarzeń<br>.code-ref — odwołanie do pliku źródłowego na ekranie<br>.field-row · .opt-grid — bez ekranu, który by ich używał</span>
       </div>
       <div class="inv-demo">
         <div class="banner status">

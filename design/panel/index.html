@@ -105,7 +105,7 @@
       <span class="idx-body">
         <span class="idx-name">piloci-konto</span>
         <span class="idx-route">#/piloci/&lt;id&gt;</span>
-        <span class="idx-when">Szuflada członkostwa: osoba (imię i nazwisko, konto Google do odczytu), „W tym klubie" (kod pilota, rola) i „Dostęp" z wyłączeniem członkostwa - inne kluby tej osoby bez zmian. Haseł nie ma; skutek mówi się przed akcją, nie banerem po niej.</span>
+        <span class="idx-when">Szuflada członkostwa: osoba (imię i nazwisko, „Logowanie" - adres do odczytu i plakietki metod Google / hasło), „W tym klubie" (kod pilota, rola), „Dostęp" (od 2.1.0 „Wyślij link do ustawienia hasła" - ten sam list, który pilot wysłałby sobie sam, potwierdzenie „wysłano na … · ważny godzinę"; wyłączenie członkostwa - inne kluby tej osoby bez zmian) i „Sesje" w tym klubie z „Wyloguj" przy urządzeniu i „Wyloguj wszędzie w tym klubie". Panel żadnego hasła ani kodu nie pokazuje; skutek mówi się przed akcją, nie banerem po niej.</span>
       </span>
     </a>
     <a class="idx-card" href="piloci-zgloszenie.html">
@@ -187,21 +187,29 @@
       <span class="idx-body">
         <span class="idx-name">organizacje-klub</span>
         <span class="idx-route">#/organizacje/nowy · #/organizacje/&lt;id&gt;</span>
-        <span class="idx-when">Nowy klub: nazwa, stały adres (slug) i pierwszy administrator (adres Google, imię, kod pilota - członkostwo od razu, konto podpina się przy pierwszym logowaniu); razem z klubem powstaje kod klubu. Karta istniejącego klubu: liczby, administratorzy i czy już weszli, kod klubu do odczytu, wyłączenie klubu z potwierdzeniem.</span>
+        <span class="idx-when">Nowy klub: nazwa, stały adres (slug) i pierwszy administrator (e-mail - od 2.1.0 dowolny, nie tylko Google; imię, kod pilota - członkostwo od razu, a razem z klubem wychodzi do niego list z linkiem do ustawienia hasła, ważny 72 h); razem z klubem powstaje kod klubu. Karta istniejącego klubu: liczby, administratorzy i czy już weszli („zaproszenie wysłano … · ważne 72 h" i „Wyślij ponownie", dopóki nie wszedł), kod klubu do odczytu, wyłączenie klubu z potwierdzeniem.</span>
       </span>
     </a>
   </div>
 </section>
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Logowanie</div>
+  <div class="canvas-section-title">Logowanie i konto</div>
   <div class="idx-grid">
     <a class="idx-card" href="00-logowanie.html">
       <span class="idx-badge">00</span>
       <span class="idx-body">
         <span class="idx-name">00-logowanie</span>
         <span class="idx-route">#/logowanie</span>
-        <span class="idx-when">Ekran przed ramą - nie ma paska górnego, bo nie wiadomo, kto patrzy. Jeden przycisk Google (rysuje go skrypt dostawcy, więc do czasu jego wjazdu stoi plamka w jego geometrii), znak marki z poświatą i - w razie odmowy - jedno zdanie mówiące, co zrobić. Jedyne miejsce w panelu z gradientem.</span>
+        <span class="idx-when">Ekran przed ramą - nie ma paska górnego, bo nie wiadomo, kto patrzy. Od 2.1.0 (2026-09-16) jedna karta z DWIEMA metodami tej samej osoby: formularz e-mail + hasło z „Zaloguj się" i „Nie pamiętam hasła" (link z e-maila, ważny godzinę - hasło ustawia się na stronie z linku, nie tu), pod separatorem „albo" przycisk Google (rysuje go skrypt dostawcy, więc do czasu jego wjazdu stoi plamka w jego geometrii). W razie odmowy jedno zdanie między znakiem a kartą; „Nieprawidłowy e-mail lub hasło" jest jedną odpowiedzią na trzy stany. Trzy okna: spoczynek, odmowa, „Nie pamiętam hasła".</span>
+      </span>
+    </a>
+    <a class="idx-card" href="konto.html">
+      <span class="idx-badge">K1</span>
+      <span class="idx-body">
+        <span class="idx-name">konto</span>
+        <span class="idx-route">#/konto</span>
+        <span class="idx-when">Własne konto zalogowanego - wejście z nazwiska w pasku górnym, w ramie klubu i superadministratora. Trzy karty: „Logowanie" (adres, metody), „Hasło" (zmiana z obecnym hasłem albo „Ustaw hasło" dla osoby, która wchodziła dotąd Googlem - droga na wspólny tablet; zapis wylogowuje pozostałe urządzenia) i „Moje sesje" ze wszystkich powierzchni i klubów, z „Wyloguj" przy każdej poza bieżącą.</span>
       </span>
     </a>
     <a class="idx-card" href="00a-wybor-klubu.html">

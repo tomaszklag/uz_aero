@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 00E Nie należysz do żadnego klubu</title>
+<title>Ninerdeck - 00H Załóż konto · e-mail + link</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,6 +15,7 @@
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,7 +25,7 @@
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(52,152,219,0.05) 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
@@ -52,9 +53,16 @@
   .status-right { display:inline-flex; align-items:center; gap:6px; }
 
   .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
-  .login-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 24px 40px; }
+  .login-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 24px 16px; }
+  /* Stopka: wyjście na Google poza formularzem, jak na 00F - osoba z kontem Google
+     nie zakłada drugiego konta, tylko loguje się nim (00A). */
+  .login-foot { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:14px; padding:0 24px 34px; }
+  .login-foot .link-out { margin-top:0; }
+  /* Imię i nazwisko to zdanie pilota, nie wartość maszynowa - skład tekstowy, jak pola
+     klienta i notatki w aplikacji (issue #58); mono zostaje przy adresie e-mail. */
+  .input.text { font-family:var(--font-body); font-size:15px; letter-spacing:0; }
 
-  /* ===== BRAND - mniejszy niż na 00A: treścią ekranu jest stan, nie marka (jak 00C) ===== */
+  /* ===== BRAND - mniejszy niż na 00A: treścią ekranu jest stan, nie marka (jak 00C/00E) ===== */
   .brand { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:22px; }
   .brand-icon {
     width:56px; height:56px; border-radius:16px;
@@ -65,33 +73,33 @@
   .brand-name { font-family:var(--font-display); font-size:30px; letter-spacing:4px; line-height:1; color:var(--text-primary); }
   .brand-name span { color:var(--green); }
 
-  /* ===== BANER STATUSU (typ „Status" - nigdy zamykalny) ===== */
+  /* ===== KARTA STATUSU (typ „Status" - nigdy zamykalna) W DWU TONACH =====
+     Ten sam kształt, co bursztynowa karta 00C/00E, ale w tonie treści: NIEBIESKI to
+     informacja („co się teraz stanie"), nie ostrzeżenie - bursztyn przy zwykłej
+     instrukcji uczyłby oko, że każdy stan jest problemem. ZIELONY na potwierdzeniu:
+     czynność wykonana, stan w normie. */
   .status-card {
-    width:100%; background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:18px; padding:18px 18px 16px; display:flex; flex-direction:column; gap:9px;
-    margin-bottom:14px;
+    width:100%; border-radius:18px; padding:18px 18px 16px;
+    display:flex; flex-direction:column; gap:9px; margin-bottom:14px;
   }
+  .status-card.info { background:var(--blue-muted); border:1px solid var(--blue-border); }
+  .status-card.ok { background:var(--green-muted); border:1px solid var(--green-border); }
   .status-head { display:flex; align-items:center; gap:9px; }
-  .status-title { font-family:var(--font-display); font-size:21px; letter-spacing:2.4px; color:var(--amber); line-height:1; }
+  .status-title { font-family:var(--font-display); font-size:21px; letter-spacing:2.4px; line-height:1; }
+  .status-card.info .status-title { color:var(--blue); }
+  .status-card.ok .status-title { color:var(--green); }
   .status-body { font-size:13px; line-height:1.55; color:var(--text-primary); }
 
-  /* ===== KONTO GOOGLE (ten sam kafelek, co 00C/00D) ===== */
-  .acct-card {
+  /* ===== WIERSZ ADRESU na potwierdzeniu - mono, jak `.acct-mail` na 00C ===== */
+  .mail-card {
     width:100%; background:var(--surface); border:1px solid var(--border);
-    border-radius:18px; padding:14px 16px; display:flex; align-items:center; gap:13px;
+    border-radius:14px; padding:13px 16px; display:flex; align-items:center; gap:11px;
     margin-bottom:14px;
   }
-  .acct-avatar {
-    width:42px; height:42px; border-radius:50%; flex-shrink:0;
-    background:var(--surface-raised); border:1px solid var(--border-strong);
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-secondary);
-  }
-  .acct-body { display:flex; flex-direction:column; gap:3px; min-width:0; }
-  .acct-name { font-size:14.5px; font-weight:600; color:var(--text-primary); }
-  .acct-mail { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mail-card svg { flex-shrink:0; color:var(--text-muted); }
+  .mail-addr { font-family:var(--font-mono); font-size:13px; letter-spacing:0.5px; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-  /* ===== POLE KODU KLUBU - wzorzec formularzy ===== */
+  /* ===== POLE ADRESU - wzorzec formularzy (00E) ===== */
   .field { width:100%; display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
   .input {
@@ -108,15 +116,18 @@
   /* ===== AKCJE ===== */
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
-    width:100%; padding:16px; border-radius:14px;
+    width:100%; padding:16px; border-radius:14px; margin-top:6px;
     background:var(--green); color:#0D0D0D;
     font-family:var(--font-display); font-size:21px; letter-spacing:3px;
     border:none; text-decoration:none; cursor:pointer;
     box-shadow:0 0 20px rgba(46,204,113,0.28); transition:all .18s ease;
   }
   .btn-primary:hover { background:#3DDC82; box-shadow:0 0 36px rgba(46,204,113,0.5); }
-  /* Pusty wpis blokuje BEZ zdania (issue #55): blokadę widać z pola nad przyciskiem. */
-  .btn-primary.disabled { background:var(--surface-raised); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; }
+  /* Powód blokady WEWNĄTRZ przycisku (issue #55) - kolumna: napis, pod nim bursztyn.
+     Pusty adres blokuje BEZ zdania: blokadę widać z pola nad przyciskiem. */
+  .btn-primary.disabled { background:var(--surface-raised); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-label { display:flex; align-items:center; justify-content:center; gap:10px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
   .link-out {
     margin-top:16px; font-size:12.5px; color:var(--text-muted);
     text-decoration:none; border-bottom:1px solid var(--border-strong); padding-bottom:2px;
@@ -148,14 +159,14 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 00E</span>
-  <span class="slug">logowanie · bez klubu · kod klubu</span>
+  <span class="film-strip">NINERDECK - 00H</span>
+  <span class="slug">logowanie · załóż konto · e-mail + link</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Nie należysz do żadnego klubu">
+<main class="phone" role="region" aria-label="Mockup - Załóż konto">
   <div class="status-bar">
-    <span>9:41</span>
+    <span>9:43</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -176,55 +187,74 @@
       </div>
 
       <!--
-        TRZECI STAN RODZINY 00C/00D (docs/wielofirmowosc.md §7): konto Google jest
-        potwierdzone, osoba istnieje, ale nie należy do żadnego klubu - więc nie ma
-        floty, kodu pilota ani czego zapisać. Ekran MA PRAWO TŁUMACZYĆ (blokada
-        z powodem, issue #72): pilot musi wiedzieć, skąd wziąć kod. Nie mówi za to
-        ani słowa o tym, jak zbudowana jest kolejka zgłoszeń (statusy członkostwa, tokeny).
+        REJESTRACJA E-MAILEM = TEN SAM MECHANIZM, CO ZAPOMNIANE HASŁO (docs/logowanie-haslem.md
+        D9 odwrócone 2026-09-17, §5.4a). Przegląd makiet: „powinna być opcja rejestracji,
+        jeśli jeszcze nie mam konta" - osoba bez Google zakłada konto SAMA: podaje imię,
+        nazwisko i adres, dostaje list z linkiem, ustawia hasło NA STRONIE (§3.3) i dopiero
+        wtedy powstaje osoba - adres jest potwierdzony samym kliknięciem w link, jak
+        `email_verified` u Google. Potem loguje się hasłem (00F) i trafia na 00E po kod
+        klubu od administratora: bramką zostaje BRAK CZŁONKOSTWA, nie sposób założenia konta.
+
+        NA TYM EKRANIE NIE MA ŻADNEGO POLA HASŁA - hasło ustawia strona z linku, na
+        dowolnym urządzeniu (pilot na wspólnym tablecie czyta pocztę na WŁASNYM telefonie).
+        Nie ma też kodu klubu: dołączanie do klubu jest osobnym krokiem (00E) i osobną
+        decyzją administratora - rejestracja niczego w klubie nie omija.
+
+        Karta jest NIEBIESKA - instrukcja, co się stanie, nie ostrzeżenie. Ekran tłumaczy
+        tyle: gdzie trafi link, co z nim zrobić i że klub przychodzi potem (instrukcja do
+        wykonania, issue #72). Nic o tokenach, ważności w bazie ani o tym, kto wysyła.
       -->
-      <div class="status-card">
+      <div class="status-card info">
         <div class="status-head">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
           </svg>
-          <span class="status-title">NIE NALEŻYSZ DO ŻADNEGO KLUBU</span>
+          <span class="status-title">ZAŁÓŻ KONTO</span>
         </div>
         <div class="status-body">
-          Wpisz kod klubu - dostaniesz go od administratora klubu, w którym latasz.
-          O przyjęciu zdecyduje administrator.
-        </div>
-      </div>
-
-      <div class="acct-card">
-        <div class="acct-avatar">TM</div>
-        <div class="acct-body">
-          <div class="acct-name">Tomasz Małkiewicz</div>
-          <div class="acct-mail">t.malkiewicz@gmail.com</div>
+          Wyślemy link na Twój adres. Otwórz go na dowolnym urządzeniu i ustaw hasło -
+          potem zaloguj się tutaj. Do klubu wejdziesz kodem od administratora.
         </div>
       </div>
 
       <!--
-        JEDNO POLE NA KOD KLUBU - od 2026-09-09 JEDYNA droga do klubu (docs/wielofirmowosc.md
-        §3.8, §15): 8 znaków bez 0/O/1/I, z myślnikiem po trzech, wpisywany z klawiatury.
-        Linku ani pola na link NIE MA. Kod nie jest sekretem: daje wyłącznie ZGŁOSZENIE,
-        a do klubu wpuszcza administrator (00C → P3). To samo pole stoi na 13A pod
-        „Dołącz do innego klubu" - dla pilota, który już lata w innym klubie.
+        IMIĘ I NAZWISKO - jedyna rzecz, której serwer nie ma skąd wziąć (Google daje ją
+        z profilu). Własność OSOBY, widoczna w każdym jej klubie; poprawia ją potem ona
+        sama. Skład tekstowy (`.input.text`), autokapitalizacja słów, `autocomplete="name"`.
       -->
       <div class="field">
-        <span class="field-label">Kod klubu</span>
-        <input class="input" value="AZG-7K4M" aria-label="Kod klubu" placeholder="np. AZG-7K4M">
+        <span class="field-label">Imię i nazwisko</span>
+        <input class="input text" type="text" autocapitalize="words" autocomplete="name" value="Tomasz Małkiewicz" aria-label="Imię i nazwisko" placeholder="imię i nazwisko">
       </div>
 
-      <!-- Kod klubu → zgłoszenie (00C) → decyzja administratora klubu (P3).
-           DOŁĄCZ prowadzi na 00C; pusty wpis blokuje bez zdania (issue #55).
-           DOŁĄCZENIE WYMAGA INTERNETU (decyzja właściciela 2026-09-08) - jak cała rodzina
-           00A–00D. Bez sieci przycisk jest zablokowany z powodem W ŚRODKU („Wymaga
-           internetu", issue #55), a pole zostaje czynne: wpis nie ginie. -->
-      <a href="00c-oczekiwanie.html" class="btn-primary">DOŁĄCZ</a>
+      <!--
+        POLE E-MAIL - podstawione z 00F, jeśli pilot wpisał tam ADRES (ten sam wpis,
+        drugi raz go nie przepisuje). Serwer NIE MÓWI, czy adres jest wolny (§8 pkt 2):
+        odpowiedź jest zawsze ta sama, a przy zajętym adresie wychodzi list resetu ze
+        zdaniem „masz już konto" - człowiek, który zapomniał, że już się rejestrował,
+        i tak dostaje to, po co przyszedł. Klawiatura e-mail, bez autokapitalizacji.
+      -->
+      <div class="field">
+        <span class="field-label">E-mail</span>
+        <input class="input" type="text" inputmode="email" autocapitalize="none" spellcheck="false" autocomplete="email" value="t.malkiewicz@gmail.com" aria-label="E-mail" placeholder="adres e-mail">
+      </div>
 
-      <!-- Wyjście MUSI być - ten sam powód, co na 00C. -->
-      <a href="00a-login-full.html" class="link-out">Zaloguj innym kontem Google</a>
+      <!-- WYŚLIJ LINK → potwierdzenie (druga ramka). Puste pole blokuje BEZ zdania
+           (issue #55). OFFLINE: przycisk `.btn-primary.disabled` z `.btn-reason`
+           „Wymaga internetu" W ŚRODKU, pola czynne - dokładnie jak trzecia ramka 00F;
+           osobnej ramki nie rysujemy, bo to ten sam kształt. -->
+      <a href="#wyslano" class="btn-primary">WYŚLIJ LINK</a>
 
+      <!-- Wyjście MUSI być (00C/00E): ktoś, kto ma już konto albo tapnął tu przez
+           pomyłkę, wraca bez wysyłania czegokolwiek. -->
+      <a href="00f-login-haslo.html" class="link-out">Mam już konto - zaloguj się</a>
+
+    </div>
+
+    <!-- Osoba z kontem Google nie zakłada drugiego konta - loguje się Googlem (00A),
+         a hasło ustawia potem w ustawieniach (13B) albo linkiem z 00G. -->
+    <div class="login-foot">
+      <a href="00a-login-full.html" class="link-out">Masz konto Google? Zaloguj się nim</a>
     </div>
   </div>
 </main>
@@ -242,7 +272,7 @@
     <span class="vp-badge">00A</span>
     <span class="vp-body">
       <span class="vp-name">Logowanie Google</span>
-      <span class="vp-when">Pierwsze uruchomienie na tym telefonie albo reset PIN-u. Wymaga internetu.</span>
+      <span class="vp-when">Pierwsze uruchomienie na tym telefonie albo reset PIN-u. Wymaga internetu. Pod Googlem drugi przycisk: „Zaloguj się hasłem" (00F).</span>
     </span>
   </a>
   <a class="vp-item" href="00b-login-offline.html">
@@ -266,19 +296,18 @@
       <span class="vp-when">Administrator klubu odrzucił zgłoszenie - z powodem widocznym na ekranie. Wyjście: inny kod albo inne konto.</span>
     </span>
   </a>
-  <a class="vp-item active" href="00e-bez-klubu.html">
+  <a class="vp-item" href="00e-bez-klubu.html">
     <span class="vp-badge amber">00E</span>
     <span class="vp-body">
       <span class="vp-name">Nie należysz do żadnego klubu</span>
-      <span class="vp-when">Konto potwierdzone (Google albo hasło), ale osoba nie ma członkostwa w żadnym klubie - ani aktywnego, ani oczekującego. Jedno pole: kod klubu od administratora. Kod daje zgłoszenie (00C); o przyjęciu decyduje administrator klubu.</span>
+      <span class="vp-when">Konto potwierdzone (Google albo hasło), ale osoba nie ma członkostwa w żadnym klubie - jedno pole na kod klubu od administratora.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="00f-login-haslo.html">
     <span class="vp-badge">00F</span>
     <span class="vp-body">
       <span class="vp-name">Logowanie hasłem</span>
-      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta kluby, z których się na nim logowano - kod pilota działa w bieżącym; przy więcej niż jednym klubie pigułka z nazwą i „Zmień klub" (00I). Wzorzec formularza tego ekranu: pole, przycisk, błąd przy polu.</span>
+      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta kluby, z których się na nim logowano - kod pilota działa w bieżącym; przy więcej niż jednym klubie pigułka z nazwą i „Zmień klub" (00I).</span>
     </span>
   </a>
   <a class="vp-item" href="00g-link-hasla.html">
@@ -288,12 +317,13 @@
       <span class="vp-when">Adres → link z e-maila → nowe hasło na stronie, z dowolnego urządzenia. Działa też dla osoby z Googlem, która hasła jeszcze nie ustawiła; kodu od administratora nie ma. Konto zakłada się osobno (00H).</span>
     </span>
   </a>
-  <a class="vp-item" href="00h-zaloz-konto.html">
+  <a class="vp-item active" href="00h-zaloz-konto.html">
     <span class="vp-badge amber">00H</span>
     <span class="vp-body">
       <span class="vp-name">Załóż konto</span>
       <span class="vp-when">Osoba bez konta i bez Google: imię i nazwisko + e-mail → link z e-maila → hasło na stronie; konto powstaje dopiero przy ustawieniu hasła. Potem logowanie (00F) i kod klubu (00E).</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="00i-wybor-klubu.html">
     <span class="vp-badge">00I</span>
@@ -307,38 +337,40 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="00-login.html">← 00 PIN</a>
-  <a href="00a-login-full.html">← 00A Google</a>
-  <a href="00c-oczekiwanie.html">00C Czeka →</a>
-  <a href="00d-odrzucone.html">00D Odrzucone</a>
-  <a href="00e-bez-klubu.html" class="active">00E Bez klubu</a>
-  <a href="00f-login-haslo.html">00F Hasło</a>
-  <a href="00g-link-hasla.html">00G Link hasła</a>
-  <a href="00h-zaloz-konto.html">00H Załóż konto</a>
+  <a href="00f-login-haslo.html">← 00F Hasło</a>
+  <a href="00g-link-hasla.html">← 00G Link hasła</a>
+  <a href="00h-zaloz-konto.html" class="active">00H Załóż konto</a>
   <a href="00i-wybor-klubu.html">00I Wybierz klub</a>
-  <a href="#nieznany">↓ nieznany kod</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu →</a>
+  <span>·</span>
+  <a href="#wyslano">↓ wysłano</a>
 </nav>
 
-<!-- ══ DRUGA RAMKA: NIEZNANY KOD ══
-     Błąd stoi PRZY POLU, którego dotyczy (czerwona ramka + zdanie), nie w banerze
-     nad formularzem. Odpowiedzi serwera (docs/wielofirmowosc.md §5), każda z inną drogą wyjścia:
-       404 kod nieznany / wyłączony / klub nieaktywny → JEDNO zdanie: „Nie znam takiego kodu.
-           Sprawdź, czy przepisujesz go w całości." (trzy stany, jedna odpowiedź - klub, który
-           wyłączył dołączanie, nie ma powodu się ujawniać). Myślnik i wielkość liter to zapis:
-           serwer przyjmuje `azg7k4m`, a pole pokazuje wpis w zapisie kanonicznym `XXX-XXXX`.
-       403 zgłoszenie odrzucone → ekran 00D z powodem
-       409 już w tym klubie / członkostwo wyłączone → zdanie przy polu
-       429 za dużo prób → powód z czasem odczekania W PRZYCISKU (issue #55)
-     Pola NIE czyścimy: pilot poprawia to, co wpisał, a nie pisze od nowa. -->
-<header class="canvas-label" id="nieznany">
-  <span class="film-strip">NINERDECK - 00E</span>
-  <span class="slug">stan: nieznany kod</span>
-  <span class="canvas-meta">Odmowa 404 · błąd przy polu</span>
+<!-- ══ DRUGA RAMKA: POTWIERDZENIE ══
+     ODPOWIEDŹ JEST ZAWSZE TA SAMA (§5.4a, §8 pkt 2): serwer odpowiada `202` niezależnie
+     od tego, czy adres jest wolny, i niezależnie od limitu wysyłek (te same, co przy
+     „Nie pamiętam hasła": 3 na adres, 10 na IP w 15 min - przekroczenie też daje `202`).
+     Formularz, który mówiłby „ten adres jest już zajęty", wyliczałby konta każdemu, kto
+     ma klawiaturę. Stąd tryb warunkowy: adres WOLNY → list „załóż hasło do nowego konta";
+     adres ZAJĘTY → zwykły list resetu ze zdaniem „masz już konto" - w obu przypadkach
+     człowiek dostaje link, który ustawia hasło, i loguje się tutaj.
+
+     „WYŚLIJ PONOWNIE" NIE MA (jak na 00G): byłoby przyciskiem, którego skutku pilot nie
+     zobaczy. Kto musi, wraca na pierwszą ramkę i wysyła znów - świadomie, nie odruchowo.
+
+     Karta ZIELONA: czynność wykonana. Adres powtórzony wierszem mono, żeby literówkę
+     dało się zobaczyć TERAZ. Ekran nie loguje i nie zakłada konta - konto powstaje
+     dopiero na stronie, przy ustawieniu hasła; pilot wraca tu i loguje się hasłem (00F),
+     a potem podaje kod klubu (00E). Stąd jedyny przycisk. -->
+<header class="canvas-label" id="wyslano">
+  <span class="film-strip">NINERDECK - 00H</span>
+  <span class="slug">stan: wysłano</span>
+  <span class="canvas-meta">Potwierdzenie · zawsze ta sama odpowiedź</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Nieznany kod klubu">
+<main class="phone" role="region" aria-label="Mockup - Link wysłany">
   <div class="status-bar">
-    <span>9:42</span>
+    <span>9:43</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -358,35 +390,28 @@
         <div class="brand-name">NINER<span>DECK</span></div>
       </div>
 
-      <div class="status-card">
+      <div class="status-card ok">
         <div class="status-head">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
-          <span class="status-title">NIE NALEŻYSZ DO ŻADNEGO KLUBU</span>
+          <span class="status-title">SPRAWDŹ POCZTĘ</span>
         </div>
         <div class="status-body">
-          Wpisz kod klubu - dostaniesz go od administratora klubu, w którym latasz.
-          O przyjęciu zdecyduje administrator.
+          Jeśli ten adres jest wolny, link już idzie - ważny godzinę. Jeśli konto z tym
+          adresem już istnieje, list mówi, jak się zalogować. Otwórz link na dowolnym
+          urządzeniu, ustaw hasło i zaloguj się tutaj.
         </div>
       </div>
 
-      <div class="acct-card">
-        <div class="acct-avatar">TM</div>
-        <div class="acct-body">
-          <div class="acct-name">Tomasz Małkiewicz</div>
-          <div class="acct-mail">t.malkiewicz@gmail.com</div>
-        </div>
+      <div class="mail-card">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <span class="mail-addr">t.malkiewicz@gmail.com</span>
       </div>
 
-      <div class="field">
-        <span class="field-label">Kod klubu</span>
-        <input class="input invalid" value="AZG-7K4" aria-invalid="true" aria-label="Kod klubu">
-        <span class="field-error">Nie znam takiego kodu. Sprawdź, czy przepisujesz go w całości.</span>
-      </div>
-
-      <a href="00c-oczekiwanie.html" class="btn-primary">DOŁĄCZ</a>
-      <a href="00a-login-full.html" class="link-out">Zaloguj innym kontem Google</a>
+      <a href="00f-login-haslo.html" class="btn-primary">WRÓĆ DO LOGOWANIA</a>
 
     </div>
   </div>
@@ -395,8 +420,11 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="00e-bez-klubu.html" class="active">00E Bez klubu</a>
-  <a href="00c-oczekiwanie.html">00C Czeka →</a>
+  <a href="00f-login-haslo.html">← 00F Hasło</a>
+  <a href="00g-link-hasla.html">← 00G Link hasła</a>
+  <a href="00h-zaloz-konto.html" class="active">00H Załóż konto</a>
+  <a href="00i-wybor-klubu.html">00I Wybierz klub</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu →</a>
 </nav>
 
 </body>

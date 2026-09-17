@@ -384,3 +384,130 @@
 .club-code.off {
   color: var(--text-muted);
 }
+
+/* Rząd plakietek - kilka stanów jednej rzeczy obok siebie (metody logowania osoby:
+   „Google" i „hasło"). Sam układ, bez tonu: ton niesie każda plakietka z osobna. */
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/**
+ * Siatka kart strony (`#/konto`): dwie kolumny, karta na całą szerokość przez `.span-2`.
+ * Zawężona do 720 px, bo trzy karty konta niosą po kilka wierszy - rozciągnięte na
+ * 1200 px stałyby jako trzy wyspy na pustym tle.
+ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 720px;
+}
+
+.card-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+/**
+ * ══ SESJE LOGOWANIA I POTWIERDZENIE WYSYŁKI (2.1.0, `docs/logowanie-haslem.md` §5.6, §6) ══
+ */
+
+/**
+ * POTWIERDZENIE WYSYŁKI - stan po „Wyślij link do ustawienia hasła" / „Wyślij ponownie".
+ *
+ * Mówi DOKĄD poszedł list i JAK DŁUGO jest ważny - i nic więcej: panel nie pokazuje ani
+ * linku, ani kodu, bo administrator WYSYŁA, a nie dyktuje (D5, §3.2). Mono, bo treścią
+ * jest adres i termin; ptaszek zielony, bo to jedyna informacja o SKUTKU akcji, jaką
+ * ten wiersz niesie. W `.access-row` staje POD wierszem, którego dotyczy - jako trzecie
+ * dziecko o pełnej szerokości (wiersz się zawija), więc zostaje w tej samej ramce
+ * między włosami.
+ */
+.sent-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.sent-note svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.access-row > .sent-note {
+  flex-basis: 100%;
+}
+
+/**
+ * WIERSZ SESJI - jedno urządzenie, na którym ta osoba jest zalogowana.
+ *
+ * Jeden kształt na dwóch ekranach: karta członka (sesje W TYM KLUBIE) i `#/konto`
+ * (własne sesje ze wszystkich powierzchni). Ikona mówi RODZAJ urządzenia (telefon,
+ * tablet, przeglądarka), pierwsza linia - które to urządzenie, druga (mono) - metodę
+ * logowania, od kiedy i kiedy ostatnio; akcja „Wyloguj" stoi w kolumnie akcji jak
+ * w każdym wierszu panelu. Sesja BIEŻĄCA (`.current`) ma zieloną ikonę i plakietkę
+ * zamiast akcji: własnego okna nie wylogowuje się z listy.
+ */
+.session-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.session-row:last-child {
+  border-bottom: none;
+}
+
+.session-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.session-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.session-device {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.session-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.session-row.current .session-icon {
+  color: var(--green);
+  background: var(--green-muted);
+  border-color: var(--green-border);
+}
