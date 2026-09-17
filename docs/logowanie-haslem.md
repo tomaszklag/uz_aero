@@ -536,17 +536,19 @@ znaczy link.
 1. ~~Potwierdzić propozycje z §3~~ - **zrobione 2026-09-16** (jedna poprawka: D5).
 2. **Termin milestone'u** - 2026-09-30 (§12; przestawiony w GitHubie 2026-09-16).
 3. **Poczta wychodząca - NA DRODZE KRYTYCZNEJ** (#137, `ownerside`), bo reset linkiem jest
-   drogą główną. Trzy kroki, żaden nie czeka na 4.0.0:
-   - **domena `ninerdeck.pl` zarejestrowana TERAZ**, wyłącznie pod DNS poczty (SPF, DKIM,
-     DMARC - trzy rekordy TXT). Przeniesienie strony, panelu i API pod tę domenę zostaje
-     w 4.0.0 (#124) - rejestracja domeny nie zależy od niczego i trwa dzień;
+   drogą główną. Trzy kroki, wszystkie po stronie właściciela:
+   - **rekordy DNS poczty na `ninerdeck.pl`** (SPF, DKIM od dostawcy, DMARC - trzy rekordy
+     TXT w Cloudflare). Domena JUŻ JEST: #124 wdrożono 2026-09-17 (strona `ninerdeck.pl`,
+     panel i API `app.ninerdeck.pl`, DNS w Cloudflare), więc „rejestracja domeny" z pierwszej
+     wersji tego punktu (2026-09-16) odpadła - zostaje sama konfiguracja poczty, która nie
+     zależy od niczego innego;
    - **dostawca z API HTTP**: rekomendacja **Resend** (prosty JSON przez `fetch`, darmowy
      próg wystarczy klubom na lata, weryfikacja domeny rekordami TXT); alternatywy Brevo /
      Postmark. Bez SMTP i bez zależności w serwerze;
    - klucz API → `MAIL_API_KEY`, nadawca → `MAIL_FROM` (np. `Ninerdeck <konto@ninerdeck.pl>`),
      `MAIL_PROVIDER=resend` na Railway. Odbiór: list z Resend przychodzi do skrzynki
      właściciela, nie do spamu.
-   Wariant awaryjny (gdyby domena się opóźniła): weryfikacja pojedynczego adresu
+   Wariant awaryjny (gdyby weryfikacja domeny u dostawcy się opóźniła): weryfikacja pojedynczego adresu
    u dostawcy - działa, ale dostarczalność jest gorsza i to nie jest stan do wydania.
 4. **Polityka prywatności** (`site/src/prywatnosc.html`): nowe kategorie - skrót hasła,
    wiersz sesji (urządzenie, adres IP, ostatnia aktywność), wysyłka listów przez dostawcę
@@ -646,7 +648,7 @@ lista, ŻEBY W-2 nie zgadywało zakresu:
 |---|---|---|
 | Co, gdy zapomnę hasła? | Klikam „Nie pamiętam hasła", podaję adres, dostaję e-mail z linkiem ważnym godzinę, ustawiam nowe hasło na stronie i loguję się. Administrator może wysłać mi TEN SAM list z panelu - to jedyna rzecz, jaką może zrobić, i nic innego nie jest potrzebne. Osobno: Google, jeśli podpięte. Gdy Google i poczta padły: `seed -- --reset-link` drukuje link w konsoli serwera. | D5, §3.2, §3.3, §5.4 |
 | Polityka wygasania haseł? | **Brak wygasania** - NIST 800-63B zakazuje okresowej zmiany bez dowodu kompromitacji; zmianę wymusza unieważnienie sesji przez administratora albo reset. Minimum 12 znaków, bez reguł złożoności, lista zablokowanych. | D4 |
-| Reset przez pocztę czy SMS? | **Poczta, jako droga główna**; SMS odrzucony (koszt, numery telefonów jako nowe dane, słabszy kanał). Poczta wymaga nadawcy z własnej domeny (SPF/DKIM) → domena `ninerdeck.pl` do zarejestrowania TERAZ pod sam DNS poczty; przeniesienie serwisu pod domenę zostaje w 4.0.0. | D5, §3.1, §10 |
+| Reset przez pocztę czy SMS? | **Poczta, jako droga główna**; SMS odrzucony (koszt, numery telefonów jako nowe dane, słabszy kanał). Poczta wymaga nadawcy z własnej domeny (SPF/DKIM) → rekordy DNS poczty na `ninerdeck.pl` (domena i DNS w Cloudflare są od #124, 2026-09-17). | D5, §3.1, §10 |
 | „Najnowsze standardy" | Skrót scrypt z parametrami w zapisie (droga do Argon2id bez migracji), brak wyliczania kont (także przy „wyślij link"), limity tempa, JEDEN mechanizm resetu - link 256-bitowy we fragmencie adresu, który nigdy nie staje się sesją - zamiast haseł tymczasowych i kodów, sesje z `sid` i zdalnym unieważnieniem, zmiana hasła wylogowuje inne urządzenia, wszystko z testami. | D3, D6, §8 |
 
 **Rozstrzygnięte 2026-09-16** (przegląd właściciela w dwóch turach): D2, D3, D4, D6, D7,

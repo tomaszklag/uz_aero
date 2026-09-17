@@ -2666,9 +2666,10 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
 - **poczta wychodząca jest WYMAGANIEM serwera** (`MAIL_PROVIDER` = `resend` | `log`, bez niego
   serwer nie wstaje - „Nie pamiętam hasła", które po cichu nic nie wysyła, jest gorsze niż
   serwer, który nie wstał). `MailPort` + adapter HTTP dostawcy przez `fetch` (zero
-  zależności) + `LogMail` dla dev. **#137 na drodze krytycznej**: domena `ninerdeck.pl`
-  rejestrowana TERAZ wyłącznie pod DNS poczty (SPF/DKIM/DMARC); przeniesienie strony, panelu
-  i API pod domenę ZOSTAJE w 4.0.0 (#124)
+  zależności) + `LogMail` dla dev. **#137 na drodze krytycznej**: rekordy DNS poczty
+  (SPF/DKIM/DMARC) na `ninerdeck.pl` w Cloudflare, konto Resend, zmienne `MAIL_*` na Railway.
+  Domena JUŻ JEST od #124 (wdrożone 2026-09-17) - pierwsza wersja dokumentu (2026-09-16)
+  miała jej rejestrację jako pierwszy krok #137, ten punkt odpadł
 - **`login_sessions` dla KAŻDEJ powierzchni** (telefon, panel klubu, platforma; token osoby
   sesji NIE zakłada), `sid` w claimach, `refresh_tokens.session_id` (backfill `legacy`
   w migracji 9). Brama sprawdza unieważnienie W TYM SAMYM zapytaniu, co członkostwo
