@@ -57,7 +57,7 @@ export interface AdminGate {
 }
 
 export interface AdminRouteSpec {
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Ścieżka WZGLĘDEM `ADMIN_API_PREFIX`, np. `/flags/:id/resolve`. */
   url: string;
   capability: Capability;

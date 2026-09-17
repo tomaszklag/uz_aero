@@ -874,6 +874,48 @@ const CASES: Record<string, Probe> = {
   },
 
   // ── platforma (superadministrator) ───────────────────────────────────────────
+  /**
+   * LINK „USTAW HASŁO" DO CZŁONKA (2.1.0, issue #132): administrator Alfy wysyła list
+   * pilotowi Bety → 404 (cudzy pilot jest nieistniejący) i ŻADNEGO tokenu dla niego
+   * w bazie; własnemu członkowi → 200 (kontrola pozytywna - test na pustej bazie niczego
+   * by nie dowiódł).
+   */
+  'POST /admin/api/pilots/:id/password-link': async ({ app, db, a }) => {
+    const foreign = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/BPI/password-link',
+      headers: writer(a),
+    });
+    expect(foreign.statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM password_reset_tokens WHERE pilot_id = 'BPI'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+
+    const own = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/JSE/password-link',
+      headers: writer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().sentTo).toBe('jan@ninerdeck.pl');
+    expect(own.body).not.toContain('haslo/#');
+  },
+
+  /** Zaproszenie administratora klubu to trasa PLATFORMY - sesja klubu jej nie otwiera. */
+  'POST /admin/api/organizations/:id/admins/:pilotId/invite': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/organizations/${ORG_B}/admins/BAD/invite`,
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(401);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM password_reset_tokens WHERE pilot_id = 'BAD'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   'GET /admin/api/organizations': async ({ app, a }) => {
     // Trasa PLATFORMY: sesja klubu jej nie otwiera, więc lista klubów nie jest drogą
     // do zobaczenia, kto jeszcze jest na tym serwerze.
@@ -1003,6 +1045,16 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'GET /auth/memberships': 'lista klubów OSOBY z tokenu - to jej własne członkostwa',
   'POST /auth/refresh': 'rotacja refresha w klubie, dla którego go wydano',
   'POST /auth/join': 'zgłoszenie do klubu kodem - token osoby, bez danych klubu',
+  // Hasło (2.1.0, issue #132): poświadczenia OSOBY, jeszcze bez klubu - jak `/auth/google`.
+  'POST /auth/password': 'logowanie hasłem - poświadczenia osoby, klub wybiera dopiero wspólny rdzeń',
+  'POST /auth/password/forgot': '„Nie pamiętam hasła" - zawsze 202, bez danych; list idzie do adresu z formularza',
+  'POST /auth/signup': 'rejestracja e-mailem - zawsze 202, osoba powstaje bez klubu przy realizacji linku',
+  'POST /auth/password/reset': 'realizacja linku z e-maila - ustawia hasło osobie, bez sesji i bez klubu',
+  'GET /auth/methods': 'metody logowania telefonu - konfiguracja serwera, publiczna z definicji',
+  'PUT /me/password': 'własne hasło zalogowanego - poświadczenie osoby, nie dane klubu',
+  'POST /admin/api/auth/password': 'logowanie panelu hasłem - poświadczenia osoby',
+  'GET /admin/api/auth/methods': 'metody logowania panelu - konfiguracja serwera, publiczna z definicji',
+  'PUT /admin/api/me/password': 'własne hasło zalogowanego w panelu - poświadczenie osoby, nie dane klubu',
   'GET /admin/api/auth/google-client': 'identyfikator klienta Google - publiczny z definicji',
   'GET /admin/api/maintenance/schema': 'numer wersji schematu bazy - jeden na serwer, bez danych klubu',
   'POST /admin/api/auth/login': 'logowanie panelu - poświadczenia dostawcy',

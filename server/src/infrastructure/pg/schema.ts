@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1085,6 +1085,101 @@ export const MIGRATION_8 = `
   ALTER TABLE external_identities ALTER COLUMN pilot_id SET NOT NULL;
 `;
 
+/**
+ * Migracja 9 - HASŁO JAKO DRUGA METODA LOGOWANIA (2.1.0, issue #132;
+ * `docs/logowanie-haslem.md` §4.1, §4.2, §4.4).
+ *
+ * ══ WYŁĄCZNIE ADDYTYWNA ══
+ * Produkcja 2.0.0 żyje od 2026-09-16, więc ta migracja niczego nie przepisuje ani nie
+ * kasuje: dwie nowe tabele i jeden indeks. Sesje logowania (`login_sessions`,
+ * `refresh_tokens.session_id`) przychodzą OSOBNĄ migracją razem z epikiem H-C (issue #133)
+ * - dokument decyzji zapowiadał je w tej, ale epiki idą osobnymi PR-ami i każdy niesie
+ * własny DDL.
+ *
+ * ══ HASŁO JEST POŚWIADCZENIEM, NIE CECHĄ OSOBY ══
+ * Osobna tabela `password_credentials`, jak `external_identities` - do migracji 7 hasło
+ * było kolumną na `pilots` i zniknęło razem z produktem bez haseł. Wraca obok Google jako
+ * DRUGA metoda TEJ SAMEJ osoby: jeden wiersz `pilots`, dwa dowody. Brak wiersza = osoba
+ * loguje się wyłącznie Googlem. Skrót w zapisie PHC z parametrami
+ * (`$scrypt$ln=17,r=8,p=1$sól$skrót`), więc zmiana kosztu to re-hash przy logowaniu,
+ * nie migracja.
+ *
+ * ══ JEDEN MECHANIZM „USTAW HASŁO": LINK Z E-MAILA ══
+ * `password_reset_tokens` niesie ZUŻYWALNY token linku `/haslo/#<token>` - w bazie sam
+ * `sha256`, bo token ma 256 losowych bitów. Cztery WYZWALACZE tego samego listu
+ * (`triggered_by`: pilot, administrator klubu, platforma przy założeniu klubu, operator
+ * z konsoli) i DWA RODZAJE (`kind`): `reset` ustawia hasło istniejącej osobie
+ * (`pilot_id`), `signup` zakłada NOWĄ przy realizacji (rejestracja e-mailem, 00H -
+ * decyzja z przeglądu makiet 2026-09-17), więc niesie adres i imię, z których osoba
+ * powstanie. CHECK spina rodzaj z kolumnami: token bez osoby i bez adresu nie ma czego
+ * ustawić. Kodu jednorazowego do przepisywania NIE MA i ta tabela go nie przewiduje.
+ *
+ * ══ E-MAIL JEDYNY BEZ WZGLĘDU NA WIELKOŚĆ LITER ══
+ * `pilots.email UNIQUE` jest wrażliwe na wielkość liter, a każdy odczyt robi `lower()`
+ * - od 2.1.0 adres jest LOGINEM, więc `Jan@x.pl` i `jan@x.pl` muszą być jedną osobą.
+ * Blok `DO` PRZED indeksem szuka duplikatów różniących się wielkością liter i pada
+ * z nazwanym błędem zamiast zostawić bazę w połowie: świeża produkcja ich nie ma, ale
+ * gdyby miała, decyzja „które konto zostaje" należy do człowieka.
+ */
+export const MIGRATION_9 = `
+  -- ═══ HASŁO (2.1.0, issue #132) ═════════════════════════════════════════════════
+  CREATE TABLE IF NOT EXISTS password_credentials (
+    pilot_id   TEXT PRIMARY KEY REFERENCES pilots(id) ON DELETE CASCADE,
+    -- PHC: $scrypt$ln=17,r=8,p=1$<sól b64>$<skrót b64>; parametry W NAPISIE - re-hash
+    -- przy logowaniu, gdy composition root podniesie koszt.
+    hash       TEXT NOT NULL,
+    set_at     TIMESTAMPTZ NOT NULL,
+    -- 'self' = ustawienia (13B, #/konto), 'link' = link z e-maila (password_reset_tokens).
+    set_via    TEXT NOT NULL CHECK (set_via IN ('self', 'link')),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    -- sha256(token); token to 32 losowe bajty base64url w adresie /haslo/#<token>.
+    token_hash   TEXT PRIMARY KEY,
+    -- 'reset' ustawia hasło ISTNIEJĄCEJ osobie; 'signup' zakłada NOWĄ przy realizacji.
+    kind         TEXT NOT NULL DEFAULT 'reset' CHECK (kind IN ('reset', 'signup')),
+    pilot_id     TEXT REFERENCES pilots(id) ON DELETE CASCADE,
+    -- 'signup': znormalizowany adres i imię z formularza 00H - z tego powstanie osoba.
+    email        TEXT,
+    display_name TEXT,
+    -- Skąd ten list: pilot / administrator klubu / platforma / operator z konsoli.
+    triggered_by TEXT NOT NULL CHECK (triggered_by IN ('self', 'admin', 'platform', 'cli')),
+    created_at   TIMESTAMPTZ NOT NULL,
+    -- Administrator albo superadministrator, który list wyzwolił; NULL przy 'self' i 'cli'.
+    -- SET NULL, bo usunięcie konta administratora nie ma prawa zablokować się o cudzy token.
+    created_by   TEXT REFERENCES pilots(id) ON DELETE SET NULL,
+    -- 60 min (reset, signup); 72 h (zaproszenie pierwszego administratora, CLI).
+    expires_at   TIMESTAMPTZ NOT NULL,
+    consumed_at  TIMESTAMPTZ,
+    CONSTRAINT password_reset_token_shape CHECK (
+      (kind = 'reset' AND pilot_id IS NOT NULL)
+      OR (kind = 'signup' AND pilot_id IS NULL AND email IS NOT NULL AND display_name IS NOT NULL)
+    )
+  );
+  CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_pilot
+    ON password_reset_tokens (pilot_id) WHERE consumed_at IS NULL;
+  CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_email
+    ON password_reset_tokens (lower(email)) WHERE kind = 'signup' AND consumed_at IS NULL;
+
+  -- ═══ E-MAIL JEDYNY BEZ WZGLĘDU NA WIELKOŚĆ LITER (§4.4) ═══════════════════════
+  DO $$
+  DECLARE
+    dup TEXT;
+  BEGIN
+    SELECT lower(email) INTO dup
+      FROM pilots
+     WHERE email IS NOT NULL
+     GROUP BY lower(email)
+    HAVING COUNT(*) > 1
+     LIMIT 1;
+    IF dup IS NOT NULL THEN
+      RAISE EXCEPTION 'Migracja 9: adres % wystepuje w pilots wiecej niz raz (konta roznia sie wielkoscia liter). Od 2.1.0 adres jest loginem - scal albo popraw te konta i uruchom ponownie.', dup;
+    END IF;
+  END $$;
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_pilots_email_lower ON pilots (lower(email)) WHERE email IS NOT NULL;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1094,6 +1189,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_6,
   MIGRATION_7,
   MIGRATION_8,
+  MIGRATION_9,
 ];
 
 /**
@@ -1123,4 +1219,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
   'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
   'Wielofirmowość (issue #98, #100): kluby jako tenant, członkostwa z kodem i rolą per klub, kod klubu jako jedyna droga dołączenia, superadministrator, org_id na danych klubu, tożsamość Google zawsze podpięta do osoby i backfill jednego klubu z danych 1.x',
+  'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
 ];

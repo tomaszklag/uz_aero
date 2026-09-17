@@ -42,6 +42,11 @@ import type { AdminConsumptionQueries } from '../application/admin/queries/consu
 import type { AdminLogQueries } from '../application/admin/queries/log.ts';
 import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
+import type { PasswordCommands } from '../application/common/commands/passwords.ts';
+import type { AdminPasswordLinkCommands } from '../application/admin/commands/passwordLinks.ts';
+import { registerPasswordRoutes } from './routes/common/password.ts';
+import { registerMePasswordRoutes } from './routes/mobile/mePassword.ts';
+import { registerAdminMePasswordRoutes } from './routes/admin/mePassword.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
@@ -260,6 +265,22 @@ export interface ServerDeps {
    * w każdym żądaniu do Google; konta chroni weryfikacja `aud`, nie tajność liczby.
    */
   googleWebClientId: string;
+  /**
+   * Identyfikator klienta Google ANDROID dla `GET /auth/methods` (2.1.0, §5.7) - `null`
+   * do czasu builda aplikacji z Google; telefon rysuje wtedy sam przycisk hasła.
+   */
+  googleAndroidClientId: string | null;
+  /**
+   * Hasło jako druga metoda logowania (2.1.0, issue #132): link z e-maila, rejestracja
+   * e-mailem, ustawienie i zmiana hasła - `routes/common/password.ts`,
+   * `routes/mobile/mePassword.ts`, `routes/admin/mePassword.ts`.
+   */
+  passwords: PasswordCommands;
+  /**
+   * Link „ustaw hasło" wysyłany Z PANELU: członkowi klubu (`accounts.manage`) i pierwszemu
+   * administratorowi klubu z platformy (`platform.manage`) - z wpisem audytu.
+   */
+  adminPasswordLinks: AdminPasswordLinkCommands;
 }
 
 /**
@@ -382,6 +403,7 @@ export async function buildServer(
   registerAdminCsrfGuard(app);
 
   registerAuthRoutes(app, deps.auth);
+  registerPasswordRoutes(app, deps.auth, deps.passwords, deps.googleAndroidClientId);
   registerJoinRoutes(app, deps.auth, deps.join);
   registerSwitchRoutes(app, deps.auth);
 
@@ -396,6 +418,7 @@ export async function buildServer(
   registerSheetsRoutes(app, deps.sheets, memberGate);
   registerTracesRoutes(app, deps.traces, deps.sessionTrack, memberGate);
   registerPrefsRoutes(app, deps.prefs, memberGate);
+  registerMePasswordRoutes(app, deps.passwords, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
@@ -410,6 +433,7 @@ export async function buildServer(
 
   registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
+  registerAdminMePasswordRoutes(app, deps.passwords, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
@@ -417,7 +441,7 @@ export async function buildServer(
   registerAdminSessionCloseRoutes(app, deps.adminSessionClose, gate);
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
-  registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
+  registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, deps.adminPasswordLinks, gate);
   registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
   registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
   // Moduł PLATFORMY - `platformRoute` z inną bramą i innym działającym (bez klubu).
@@ -425,6 +449,7 @@ export async function buildServer(
     app,
     deps.platformOrganizations,
     deps.platformOrganizationQueries,
+    deps.adminPasswordLinks,
     gate,
   );
   registerAdminFleetRoutes(

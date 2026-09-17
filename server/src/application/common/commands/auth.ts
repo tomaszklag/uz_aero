@@ -10,11 +10,15 @@
  * i ROTOWANY (jednorazowy - zużycie wydaje następny). Wygasły JWT nie wylogowuje:
  * telefon po prostu odświeża przy najbliższej sieci.
  *
- * ══ HASŁA ZNIKŁY (2026-09-04, `docs/logowanie-google.md`) ══
- * Jedyną drogą do konta jest dostawca zewnętrzny. Konsekwencja, którą widać w tym
- * pliku: `verifyCredentials` i wyrównywanie czasu odpowiedzi przy nieznanym loginie
- * przestały istnieć, bo nie ma już sekretu, którego trzeba bronić przed enumeracją -
- * tożsamości dowodzi podpisany token Google, a nie coś, co użytkownik wpisuje.
+ * ══ HASŁA ZNIKŁY (2026-09-04) I WRÓCIŁY JAKO DRUGA METODA (2.1.0, issue #132) ══
+ * Od 2026-09-04 jedyną drogą do konta był dostawca zewnętrzny. Wspólny tablet w kabinie
+ * (`docs/logowanie-haslem.md` §1) przywrócił hasło - jako DRUGI dowód TEJ SAMEJ osoby
+ * (`password_credentials`), nie jako drugą osobę. Reguła jest jedna: logowanie hasłem
+ * kończy się DOKŁADNIE tam, gdzie Google - od chwili ustalenia osoby jedzie ten sam
+ * rdzeń (`enterMobile` / `enterPanel`). Różni je wyłącznie sposób dowodzenia:
+ * `verifyPassword` z limitem PRZED skrótem, JEDNĄ odpowiedzią na trzy stany (login
+ * nieznany / bez hasła / złe hasło) i skrótem ZASTĘPCZYM przy nieznanym loginie -
+ * to jest ta kontrola czasu odpowiedzi, którą 2026-09-04 wycięto razem z hasłami.
  *
  * ══ TU ZAPADA DECYZJA O DOSTĘPIE I MA DOKŁADNIE JEDEN KSZTAŁT ══
  * Aktywne CZŁONKOSTWO → tokeny KLUBU. Wszystko inne → BRAK tokenu pilota. Nie ma tu
@@ -47,6 +51,7 @@ import {
   type PilotRole,
   type PlatformRole,
 } from '../../../domain/roles.ts';
+import type { AttemptLimiter } from '../attemptLimiter.ts';
 import type {
   Clock,
   ExternalIdentitiesPort,
@@ -54,11 +59,64 @@ import type {
   IdentityProviderPort,
   LoginSurface,
   Membership,
+  PasswordCredentialsPort,
+  PasswordHasher,
   PilotAccount,
   PilotsPort,
   RefreshTokensPort,
   TokenService,
 } from '../ports.ts';
+
+/** Próby logowania hasłem w oknie `PASSWORD_WINDOW_MS` (§5.1): na login i na adres IP. */
+export const PASSWORD_LOGIN_PER_LOGIN = 10;
+export const PASSWORD_LOGIN_PER_IP = 30;
+
+/**
+ * Zależności logowania HASŁEM - w jednym worku, bo są trzy i przychodzą razem: poświadczenie
+ * (tabela), skrót (koszt scryptu) i limit (pamięć procesu, ten sam egzemplarz, co
+ * `PasswordCommands`). Osobno od pozostałych argumentów konstruktora, żeby było widać,
+ * co jest DRUGĄ metodą, a co wspólnym rdzeniem.
+ */
+export interface PasswordLoginDeps {
+  credentials: PasswordCredentialsPort;
+  hasher: PasswordHasher;
+  limiter: AttemptLimiter;
+}
+
+export interface PasswordLoginInput {
+  /** E-mail (z `@`) albo kod pilota w klubie `orgId` (bez `@`). */
+  login: string;
+  password: string;
+  /** Bieżący klub URZĄDZENIA - bez niego kod pilota nie ma czego rozwiązać (§5.1). */
+  orgId: string | null;
+  ip: string | null;
+}
+
+/**
+ * Wynik logowania hasłem TELEFONU: po ustaleniu osoby ten sam, co przy Google (`ok`,
+ * `no_club`, `account_disabled`); przed - dwie odmowy własne hasła. `invalid_credentials`
+ * jest JEDNĄ odpowiedzią na login nieznany, osobę bez hasła i złe hasło (§8 pkt 2).
+ */
+export type PasswordLoginResult =
+  | MobileEntry
+  | { ok: false; reason: 'invalid_credentials' }
+  | { ok: false; reason: 'rate_limited'; retryAfterSec: number };
+
+/** To samo dla PANELU (§5.2) - loguje wyłącznie e-mailem, bo przed sesją nie ma klubu. */
+export type PanelPasswordLoginResult =
+  | PanelEntry
+  | { ok: false; reason: 'invalid_credentials' }
+  | { ok: false; reason: 'rate_limited'; retryAfterSec: number };
+
+/** Wynik wspólnego rdzenia OD CHWILI USTALENIA OSOBY - bez odmów dowodu tożsamości. */
+type MobileEntry = Exclude<ProviderLoginResult, { reason: 'invalid_token' }>;
+type PanelEntry = Exclude<PanelLoginResult, { reason: 'invalid_token' }>;
+
+type PasswordVerdict =
+  | { kind: 'ok'; account: PilotAccount }
+  | { kind: 'invalid_credentials' }
+  | { kind: 'account_disabled' }
+  | { kind: 'rate_limited'; retryAfterSec: number };
 
 /** Czas życia JWT (s) - krótki, bo odświeżenie jest tanie i automatyczne. */
 export const ACCESS_TTL_SEC = 60 * 60;
@@ -317,6 +375,8 @@ export class AuthCommands {
      * a drugiej implementacji nie ma.
      */
     private readonly newId: () => string,
+    /** Druga metoda logowania (2.1.0) - patrz `PasswordLoginDeps`. */
+    private readonly passwords: PasswordLoginDeps,
   ) {}
 
   /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo token osoby bez klubu. */
@@ -324,6 +384,42 @@ export class AuthCommands {
     const resolved = await this.resolve(idToken, 'mobile');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
     const { account, identity } = resolved;
+
+    const result = await this.enterMobile(account);
+    if (result.ok) await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
+    return result;
+  }
+
+  /**
+   * Logowanie telefonu HASŁEM (2.1.0, `docs/logowanie-haslem.md` §5.1): e-mail albo kod
+   * pilota w klubie urządzenia + hasło. Po `verifyPassword` jedzie TEN SAM rdzeń, co
+   * przy Google - stąd ten sam kształt wyniku od chwili ustalenia osoby.
+   */
+  async loginWithPassword(input: PasswordLoginInput): Promise<PasswordLoginResult> {
+    const verdict = await this.verifyPassword(input.login, input.password, input.orgId, input.ip);
+    if (verdict.kind !== 'ok') return refusalOf(verdict);
+    return this.enterMobile(verdict.account);
+  }
+
+  /**
+   * Logowanie PANELU hasłem (§5.2) - wyłącznie e-mailem: przed sesją panel nie ma klubu,
+   * w którym kod pilota cokolwiek by znaczył.
+   */
+  async panelLoginWithPassword(input: {
+    email: string;
+    password: string;
+    ip: string | null;
+  }): Promise<PanelPasswordLoginResult> {
+    const verdict = await this.verifyPassword(input.email, input.password, null, input.ip);
+    if (verdict.kind !== 'ok') return refusalOf(verdict);
+    return this.enterPanel(verdict.account);
+  }
+
+  /**
+   * Wspólny rdzeń wejścia TELEFONU od chwili ustalenia osoby - dla Google i dla hasła.
+   * Aktywne członkostwo → tokeny klubu; brak → token OSOBY na 00C/00D/00E.
+   */
+  private async enterMobile(account: PilotAccount): Promise<MobileEntry> {
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
     const memberships = await this.pilots.memberships(account.id);
@@ -340,8 +436,54 @@ export class AuthCommands {
       };
     }
 
-    await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
     return { ok: true, tokens: await this.issueFor(account, active) };
+  }
+
+  /**
+   * Dowód hasłem (§5.1, §8 pkt 1–3) - w tej kolejności i ŻADNEJ innej:
+   *  1. limit PRZED skrótem (10 na login, 30 na adres IP w 15 min) - odbicie `429`
+   *     nie zdradza istnienia konta, bo pada na sam login;
+   *  2. osoba: e-mail (z `@`) albo kod pilota w klubie urządzenia (bez `orgId` kod
+   *     nie ma czego rozwiązać i kończy się jak złe hasło);
+   *  3. scrypt ZAWSZE - także dla loginu nieznanego i osoby bez hasła, na skrócie
+   *     zastępczym: czas odpowiedzi ma być ten sam w każdym z trzech stanów;
+   *  4. JEDNA odmowa `invalid_credentials` na te trzy stany; `account_disabled` dopiero
+   *     PO dowodzie (tożsamość jest już dowiedziona, jak przy Google);
+   *  5. re-hash po udanym dowodzie, gdy skrót jest ze słabszych parametrów.
+   */
+  private async verifyPassword(
+    login: string,
+    password: string,
+    orgId: string | null,
+    ip: string | null,
+  ): Promise<PasswordVerdict> {
+    const normalized = login.trim().toLowerCase();
+    const verdict = this.passwords.limiter.attempt([
+      { key: `password:login:${normalized}`, limit: PASSWORD_LOGIN_PER_LOGIN },
+      { key: `password:ip:${ip ?? 'unknown'}`, limit: PASSWORD_LOGIN_PER_IP },
+    ]);
+    if (!verdict.allowed) {
+      return { kind: 'rate_limited', retryAfterSec: Math.ceil(verdict.retryAfterMs / 1000) };
+    }
+
+    const account = normalized.includes('@')
+      ? await this.pilots.findByEmail(normalized)
+      : orgId != null
+        ? await this.pilots.findByCode(orgId, login.trim())
+        : null;
+    const credential = account == null ? null : await this.passwords.credentials.find(account.id);
+
+    const matches = await this.passwords.hasher.verify(
+      password,
+      credential?.hash ?? this.passwords.hasher.dummyHash(),
+    );
+    if (account == null || credential == null || !matches) return { kind: 'invalid_credentials' };
+    if (!account.active) return { kind: 'account_disabled' };
+
+    if (this.passwords.hasher.needsRehash(credential.hash)) {
+      await this.passwords.credentials.rehash(account.id, await this.passwords.hasher.hash(password), this.clock.now());
+    }
+    return { kind: 'ok', account };
   }
 
   /**
@@ -370,21 +512,25 @@ export class AuthCommands {
   async panelLoginWithProvider(idToken: string): Promise<PanelLoginResult> {
     const resolved = await this.resolve(idToken, 'panel');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
-    if (!resolved.account.active) return { ok: false, reason: 'account_disabled' };
-
     const { account, identity } = resolved;
+
+    const result = await this.enterPanel(account);
+    if (result.ok) await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
+    return result;
+  }
+
+  /** Wspólny rdzeń wejścia do PANELU od chwili ustalenia osoby - dla Google i dla hasła. */
+  private async enterPanel(account: PilotAccount): Promise<PanelEntry> {
+    if (!account.active) return { ok: false, reason: 'account_disabled' };
+
     const memberships = await this.pilots.memberships(account.id);
     const admin = await this.pickActive(account.id, memberships, (m) => can(m.role, 'panel.access'));
-
     const scopes = panelScopesOf(memberships, account.platformRole);
 
     if (admin == null) {
       if (account.platformRole == null) return { ok: false, reason: 'no_panel_access' };
-      await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
       return { ok: true, session: platformSession(this.tokens, account, account.platformRole, scopes) };
     }
-
-    await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
     return { ok: true, session: orgSession(this.tokens, account, admin, scopes) };
   }
 
@@ -693,6 +839,16 @@ export class AuthCommands {
 type Resolved =
   | { kind: 'invalid' }
   | { kind: 'linked'; identity: ExternalIdentity; account: PilotAccount };
+
+/** Odmowa hasła → wynik logowania; jeden kształt dla telefonu i panelu. */
+function refusalOf(
+  verdict: Exclude<PasswordVerdict, { kind: 'ok' }>,
+): { ok: false; reason: 'invalid_credentials' | 'account_disabled' } | { ok: false; reason: 'rate_limited'; retryAfterSec: number } {
+  if (verdict.kind === 'rate_limited') {
+    return { ok: false, reason: 'rate_limited', retryAfterSec: verdict.retryAfterSec };
+  }
+  return { ok: false, reason: verdict.kind };
+}
 
 /**
  * Członkostwo, które DAJE DOSTĘP: `active` z kodem, w klubie, który działa. Kod jest
