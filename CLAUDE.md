@@ -2729,6 +2729,15 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     transakcji i test kończy się limitem czasu zamiast odpowiedzi (pierwszy przebieg
     `passwordLinks.ts`). Dane do komendy panelu bierze się z portu, który już ma `tx`
     (`PilotsAdminPort.byId`, `OrganizationsPlatformPort.byId`), albo PRZED transakcją
+  - **ADRES E-MAIL ZAPISUJE SIĘ ZNORMALIZOWANY** (`domain/email.ts`, §4.4): od 2.1.0 adres
+    jest LOGINEM, a migracja 9 liczy unikalność po `lower(email)` - więc `lower(trim())`
+    wchodzi na KAŻDEJ z pięciu dróg zapisu do `pilots.email` (pierwsze logowanie Googlem,
+    pierwszy administrator klubu, edycja członka w panelu, rejestracja e-mailem, seed).
+    Nowa droga zapisu woła `normalizeEmail`, inaczej w kolumnie stanie drugi napis na tę
+    samą osobę. **ODCZYTY zostają przy `lower()` po obu stronach** - w bazie mogą stać
+    wiersze sprzed migracji 9. `external_identities.email` zostaje SUROWY: to zapis
+    o cudzym koncie u dostawcy, nie login. Pilnuje tego `test/emailNormalization.test.ts`
+    (jeden plik na jedną regułę - cztery z sześciu przypadków upadały przed poprawką)
   - `AttemptLimiter` przeszedł do `application/common/` (używa go telefon, panel i wysyłka
     linku); jeden egzemplarz dla haseł, klucze rozróżnia przedrostek (`password:login:`,
     `password:send:`, `password:admin-send:`, `password:change:`)

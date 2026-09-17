@@ -653,8 +653,12 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   §5.4a; `resetByLink`; `issueLink` + `deliver` dla wyzwalaczy admin / platform / cli),
   `AdminPasswordLinkCommands` (przycisk członka, zaproszenie z platformy, audyt
   `password.link_sent`), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, limity,
-  skrót zastępczy, testy (`passwordLogin`, `passwordReset`, `signUp`: „jedna odpowiedź na
-  trzy stany", `202` bez wycieku istnienia adresu, skrót zastępczy dla nieznanego loginu).
+  skrót zastępczy, normalizacja adresu przy zapisie (`domain/email.ts` - pięć dróg zapisu
+  do `pilots.email`; odczyty zostają przy `lower()`, bo w bazie mogą stać wiersze sprzed
+  migracji 9, a `external_identities.email` zostaje surowy), testy (`passwordLogin`,
+  `passwordReset`, `signUp`, `scryptHasher`, `emailNormalization`: „jedna odpowiedź na
+  trzy stany", `202` bez wycieku istnienia adresu, skrót zastępczy dla nieznanego loginu,
+  skrót ze słabszych parametrów dalej się weryfikuje).
   **Odstępstwa od planu**: (1) `MailPort`, adapter `log` i TREŚCI listów
   (`application/common/mail/passwordMails.ts`) powstały tu, nie w H-F - list nie da się
   wysłać bez treści; H-F zostaje adapter dostawcy (Resend), `MAIL_PROVIDER=resend`

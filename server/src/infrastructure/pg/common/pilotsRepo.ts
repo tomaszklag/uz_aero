@@ -23,6 +23,7 @@ import type {
   Queryable,
 } from '../../../application/common/ports.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
+import { normalizeEmail } from '../../../domain/email.ts';
 import { DEFAULT_ROLE, isPilotRole, isPlatformRole } from '../../../domain/roles.ts';
 
 interface PilotRow {
@@ -128,10 +129,10 @@ export class PgPilotsRepo implements PilotsPort {
   }
 
   async insertPerson(tx: Queryable, person: { id: string; name: string; email: string }): Promise<{ pilotId: string }> {
-    // Adres ZNORMALIZOWANY (`lower(trim())`, §4.4) - od 2.1.0 jest loginem, a indeks
-    // porównuje po `lower()`. Wyścig z pierwszym logowaniem Googlem tym adresem
-    // rozstrzyga odczyt W TEJ SAMEJ transakcji: gdy osoba już jest, oddajemy ją.
-    const email = person.email.trim().toLowerCase();
+    // Adres ZNORMALIZOWANY (§4.4) - od 2.1.0 jest loginem, a indeks porównuje po
+    // `lower()`. Wyścig z pierwszym logowaniem Googlem tym adresem rozstrzyga odczyt
+    // W TEJ SAMEJ transakcji: gdy osoba już jest, oddajemy ją.
+    const email = normalizeEmail(person.email);
     const existing = await tx.query<{ id: string }>(
       'SELECT id FROM pilots WHERE lower(email) = $1',
       [email],

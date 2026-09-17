@@ -31,6 +31,7 @@
  */
 
 import type { Queryable } from '../../application/common/ports.ts';
+import { normalizeEmail } from '../../domain/email.ts';
 
 /**
  * Stały `id` - świadomie, jak w dawnym seedzie scenariusza: upsert potrzebuje STAŁEGO
@@ -41,7 +42,9 @@ import type { Queryable } from '../../application/common/ports.ts';
 const SUPERADMIN = { id: 'admin', name: 'Administrator', platformRole: 'superadmin' } as const;
 
 export async function seed(db: Queryable, options: { adminEmail: string }): Promise<void> {
-  const email = options.adminEmail.trim();
+  // Adres jest loginem od 2.1.0 (§4.4), a `idx_pilots_email_lower` liczy unikalność po
+  // `lower(email)` - bootstrap zapisuje więc dokładnie to, co potem porówna logowanie.
+  const email = normalizeEmail(options.adminEmail);
 
   // Kolizja z e-mailem INNEJ osoby wywróci to zapytanie (`pilots.email` jest UNIQUE)
   // i serwer nie wstanie. Tak ma być: to jest błąd konfiguracji wdrożenia, a cichy

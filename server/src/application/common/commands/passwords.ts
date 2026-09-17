@@ -43,6 +43,7 @@
 
 import { checkPassword, type PasswordWeakness } from '@ninerdeck/domain';
 
+import { normalizeEmail } from '../../../domain/email.ts';
 import type { AttemptLimiter } from '../attemptLimiter.ts';
 import { existingAccountMail, inviteMail, resetMail, signupMail } from '../mail/passwordMails.ts';
 import type {
@@ -300,6 +301,3 @@ export class PasswordCommands {
     ]).allowed;
   }
 }
-
-/** Adres jako login i klucz limitu: małe litery, bez odstępów (§4.4). */
-export const normalizeEmail = (email: string): string => email.trim().toLowerCase();
