@@ -331,11 +331,31 @@ mówi „lecę o 07:00 UTC", tylko „w sobotę o dziewiątej". Przy dwóch zmia
 kalendarz pisany w UTC przesuwałby siatkę dnia o godzinę dwa razy w roku - i to dokładnie
 w sezonie.
 
-**Propozycja (do potwierdzenia, §15 P1):** kalendarz i formularz rezerwacji pokazują czas
+**ROZSTRZYGNIĘTE 2026-09-18 (P1):** kalendarz i formularz rezerwacji pokazują czas
 w strefie KLUBU (`organizations.timezone`, domyślnie `Europe/Warsaw`); baza trzyma
 `TIMESTAMPTZ`, czyli nadal chwilę bezwzględną. Log operacji, oś zdarzeń i karta arkusza
-zostają w UTC bez zmian. Gdzie obie osie się spotykają (kafelek „Twoja rezerwacja
-o 09:00"), godzina jest jawnie oznaczona.
+zostają w UTC bez zmian. **Gdy strefa urządzenia RÓŻNI SIĘ od klubowej, przy godzinie
+staje drobna adnotacja z czasem lokalnym** - wzorzec `TimeStepper.localTime` („14:30 LT",
+issue #62). Przy strefach zgodnych - a to jest 99% przypadków - adnotacji nie ma wcale
+(reguła SyncChipa: stan domyślny nie dostaje zdania).
+
+**PRZECHOWYWANIE NIE BYŁO PRZEDMIOTEM WYBORU** - pytanie brzmiało, CZYJA strefa rysuje
+siatkę: klubu czy urządzenia, na którym ktoś patrzy. Cztery powody, dla których klubu:
+
+1. **kalendarz jest wspólnym zasobem, więc siatka musi znaczyć to samo dla wszystkich.**
+   Pilot rezerwujący z Grecji wpisuje „sobota 9:00", myśląc o dziewiątej w klubie; w strefie
+   urządzenia zapisałby 8:00 czasu lotniska. Dwie osoby rozmawiają wtedy o dwóch różnych
+   godzinach, patrząc na ten sam wiersz. Samolot stoi w JEDNYM miejscu na ziemi;
+2. **wspólny tablet** (2.1.0) bywa bez karty SIM i z ręcznie ustawioną strefą, której nikt
+   nie pilnuje - „strefa urządzenia" znaczy wtedy „strefa, którą ktoś kiedyś klepnął";
+3. **granice dnia i sugestie slotów** liczą się w oknie doby lotnej klubu (§7). Rezerwacja
+   o 23:30 czasu klubu widziana z innej strefy wskakuje na sąsiedni dzień siatki;
+4. **panel** otwiera się w przeglądarce gdziekolwiek, a dziennik i kalendarz klubu mają
+   podawać jedną godzinę.
+
+Cena jest realna i dlatego to było pytanie: wariant „strefa urządzenia" byłby DARMOWY -
+`timeLocal` w `packages/format` liczy czas lokalny jednym `getHours()`, bez `Intl` i bez
+danych stref. Strefa klubu wymaga konwersji UTC → strefa IANA (ryzyko niżej).
 
 **Ryzyko techniczne:** aplikacja nie używa dziś `Intl` ani żadnej biblioteki stref
 (`packages/format` liczy wszystko sam na milisekundach). `Intl.DateTimeFormat` z opcją
@@ -558,8 +578,9 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 
 ## 15. Decyzje DO POTWIERDZENIA przed R-B
 
-- **P1 - strefa czasu kalendarza.** Propozycja: czas klubu (`organizations.timezone`,
-  domyślnie `Europe/Warsaw`), rejestr bez zmian w UTC (§6).
+- ~~**P1 - strefa czasu kalendarza**~~ - **rozstrzygnięte 2026-09-18**: siatkę rysuje
+  strefa KLUBU (`organizations.timezone`), rejestr bez zmian w UTC, a czas lokalny
+  urządzenia dochodzi adnotacją WYŁĄCZNIE przy różnicy stref (§6).
 - **P2 - okno dnia klubu.** Sugestie slotów potrzebują granic („od 06:00 do 21:00")
   - konfiguracja klubu czy stała w domenie? Propozycja: konfiguracja z domyślną wartością,
   bo aeroklub podhalański i nadmorski mają inne doby lotne.
