@@ -844,3 +844,63 @@ z e-maila jest drogą główną („normalnie systemy działają tak, że klikam
 przychodzi link"); (2) kodu od administratora nie ma wcale - „działanie administratora
 powinno być takie samo, jak to, że kliknę w e-mail z resetem, tylko inny punkt triggera".
 Poczta wchodzi do rdzenia 2.1.0 (§10 pkt 3, #137 na drodze krytycznej).
+
+## 15. Przegląd bezpieczeństwa - wynik (zadanie W6, 2026-09-18)
+
+Dwanaście punktów listy z §8 sprawdzonych w kodzie, po jednym. Wzór: `logowanie-google.md`
+§14. **Nie znaleziono ani jednej podatności** - poniżej stoi, CO to znaczy dla każdego
+punktu i CZYM jest to pilnowane, bo przegląd, który mówi wyłącznie „sprawdzone", jest
+wart tyle, co brak przeglądu.
+
+Jedno ustalenie doszło: dwie własności strony `/haslo/` trzymały się bez żadnego
+strażnika (pkt 4 i 7 niżej).
+
+| # | punkt §8 | stan | czym pilnowane |
+|---|---|---|---|
+| 1 | scrypt PHC, `timingSafeEqual`, skrót zastępczy | ✅ | `scryptHasher.test.ts`; `verifyPassword` liczy scrypt ZAWSZE - na `dummyHash()` przy nieznanym loginie |
+| 2 | jedna odmowa 401, `202` zawsze | ✅ | `passwordLogin.test.ts`, `passwordReset.test.ts`, `signUp.test.ts` (wolny i zajęty adres dostają identyczną odpowiedź, różnią się listy) |
+| 3 | limity PRZED skrótem | ✅ | limit stoi w pierwszych liniach `verifyPassword`, przed odczytem konta; komplet stałych: 10/login, 30/IP, 3/adres, 10/IP wysyłki, 5/osoba z panelu, 5/osoba przy zmianie |
+| 4 | linki: 256 bitów, fragment, `sha256`, jednorazowe, nigdy w audycie ani logu | ✅ | `passwordReset.test.ts` (token jednorazowy, nowy zużywa stary, audyt bez tokenu); `requestLog.ts` nie loguje nagłówków, ciasteczek, treści ani query stringu; `logger: false` w Fastify |
+| 5 | reset i zmiana hasła unieważniają sesje | ✅ | `resetByLink` gasi refreshe, sesje i stempluje `credentials_valid_from`; `change` gasi wszystkie POZA bieżącą (`Actor.sessionId`) |
+| 6 | `sid` w bramie razem z członkostwem | ✅ | `authSnapshot` - JEDNO zapytanie, `LEFT JOIN` po TRÓJCE (sesja, osoba, klub); `$3::text IS NOT NULL` odróżnia „token sprzed 2.1.0" od „sesji, której nie ma" |
+| 7 | hasło nigdy w logu, audycie, adresie ani magazynie telefonu | ✅ | j.w. + `passwordPage.test.ts` (patrz ustalenie niżej) |
+| 8 | pole hasła: atrybuty i „pokaż" | ✅ | panel: `PasswordInput` ma `autoComplete` jako prop WYMAGANY o dwóch dozwolonych wartościach - nie da się go zapomnieć; telefon: `PasswordField`; strona: `passwordPage.test.ts` |
+| 9 | panel pod nagłówkiem CSRF | ✅ | `registerAdminCsrfGuard` jest hookiem na CAŁEJ instancji dla każdej mutacji `/admin/api/*`, więc `POST /admin/api/auth/password` jest objęte z konstrukcji, a nie z pamiętliwości |
+| 10 | polityka po obu stronach z jednej funkcji | ✅ | `packages/domain` dla serwera, telefonu i panelu; strona ma LUSTRO z testem równości (`passwordPolicyMirror.test.ts`) - inaczej się nie dało, `site/` jest bez zależności |
+| 11 | izolacja i `org_id` | ✅ | `tenantIsolation.test.ts` wymaga przypadku dla KAŻDEJ trasy z rejestru Fastify; `login_sessions` i `memberships` są na liście tabel skopowanych w `architecture.test.ts` |
+| 12 | procedura awaryjna w README | ✅ | README „Wdrożenie: Railway" pkt 11 - obie strony (Google padło / poczta padła), bez kodów do dyktowania |
+
+### Ustalenie: dwa niezmienniki strony `/haslo/` bez strażnika
+
+Strona z linku jest jedynym miejscem, w którym człowiek wpisuje hasło POZA aplikacją
+i panelem, i jedynym plikiem strony na origin panelu (H-F F3). Trzymały ją dwie własności,
+których nic nie pilnowało, a każdą łamie jedna odruchowa poprawka:
+
+1. **Zero skryptu i stylu w treści pliku.** Jej ścisła polityka (`PASSWORD_PAGE_CSP`) nie
+   ma `'unsafe-inline'`, więc dopisany `<script>` nie wykona się - a awaria byłaby CICHA:
+   strona wygląda tak samo, tylko formularz przestaje działać.
+2. **Pola hasła bez `name`.** Gdyby skrypt nie wstał, Enter w polu uruchomiłby wysyłkę
+   NATYWNĄ, a domyślną metodą formularza jest GET - czyli hasło w adresie, w historii
+   przeglądarki i w logu każdego pośrednika. Dziś nie przeszłoby, bo pola `name` nie mają,
+   ale jest to własność PRZYPADKOWA: `name` dopisuje się odruchowo.
+
+**To nie była podatność** - obie własności w chwili przeglądu obowiązywały. Były
+natomiast niezapisane. Odtąd pilnuje ich `app/src/__tests__/passwordPage.test.ts`
+(osiem asercji, w tym „strona nie prosi o nic poza hasłem": pole na token zamieniłoby
+link w kod do dyktowania, czego świadomie nie ma - D5). Formularz dostał przy okazji
+`method="post"` jako pas bezpieczeństwa na wypadek, gdyby `name` kiedyś doszło.
+
+### Czego przegląd świadomie NIE zmienił
+
+- **`POST /auth/password/reset` nie ma ograniczenia tempa** i to jest wybór, nie
+  przeoczenie: token ma 256 bitów, więc zgadywanie jest nieosiągalne, a odmowa przy
+  nieznanym tokenie kończy się na jednym odczycie po indeksie - `peek` stoi PRZED
+  polityką i przed skrótem, więc obcy token nie kupuje sobie ani jednego scryptu.
+  Limiter na tej trasie chroniłby przed niczym, a dołożyłby stan w pamięci procesu.
+- **`password_credentials` i `password_reset_tokens` NIE są tabelami skopowanymi klubem** -
+  poświadczenie należy do OSOBY, która bywa w kilku klubach naraz. Ta sama zasada, przez
+  którą na liście nie ma `pilots` ani `external_identities`.
+- **Kod pilota w loginie porównuje się bez zmiany wielkości liter po stronie klienta**
+  (aplikacja normalizuje do wersalików przed wysłaniem), a klucz limitu jest liczony
+  z loginu małymi literami - dzięki temu `AKO` i `ako` dzielą jeden kubełek prób
+  i zmiana wielkości liter nie mnoży limitu.

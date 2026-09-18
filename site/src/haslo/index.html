@@ -62,7 +62,13 @@
     <h1>Ustaw hasło</h1>
     <p class="lead">Tym hasłem zalogujesz się w aplikacji na wspólnym tablecie i w panelu klubu. Nie zastępuje ono PIN-u, którym odblokowujesz aplikację na swoim telefonie.</p>
 
-    <form id="reset" novalidate>
+    <!-- `method="post"` przy formularzu, który i tak wysyła `haslo.js`, jest PASEM
+         BEZPIECZEŃSTWA: gdyby skrypt nie wstał (zła polityka, błąd sieci przy `haslo.js`),
+         Enter w polu hasła uruchomiłby wysyłkę NATYWNĄ - a domyślną metodą jest GET,
+         czyli pola w adresie, w historii przeglądarki i w logu każdego pośrednika.
+         Dziś nie przeszłoby i tak, bo pola nie mają `name`, ale to jest własność
+         PRZYPADKOWA: `name` dopisuje się odruchowo. Pilnuje tego `passwordPage.test.ts`. -->
+    <form id="reset" method="post" novalidate>
       <div class="field">
         <label for="pass">Nowe hasło</label>
         <div class="pass">

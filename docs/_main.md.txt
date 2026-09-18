@@ -105,10 +105,30 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do aplikacji
 (codzienne odblokowanie):
 
-- logowanie **wyłącznie przez Google** (decyzja 2026-09-04, `docs/logowanie-google.md`);
-  haseł nie ma ani w aplikacji, ani w panelu. **Pierwsze logowanie wymaga sieci** -
-  weryfikacja tokenu na serwerze tworzy lokalny profil pilota: tożsamość, JWT + refresh
-  (`expo-secure-store`), PIN, cache referencyjny
+- logowanie przez **Google ALBO hasłem** (Google od 2026-09-04, `docs/logowanie-google.md`;
+  hasło od 2.1.0, decyzja 2026-09-16, `docs/logowanie-haslem.md`). **Pierwsze logowanie
+  wymaga sieci** - weryfikacja na serwerze tworzy lokalny profil pilota: tożsamość,
+  JWT + refresh (`expo-secure-store`), PIN, cache referencyjny
+- **hasło jest DRUGĄ metodą TEJ SAMEJ osoby, nie drugim kontem** - i istnieje dla
+  WSPÓLNEGO TABLETU w samolocie, gdzie logowanie Googlem znaczyłoby dodanie własnego konta
+  do cudzej przeglądarki. Loginem jest e-mail ALBO kod pilota; kod jest jedyny W KLUBIE,
+  nie na serwerze, więc rozwiązuje się w klubie, który URZĄDZENIE zna (pamięta kluby,
+  z których się na nim logowano - nie osoby). Od chwili ustalenia osoby jedzie ten sam
+  rdzeń, co przy Google: aktywne członkostwo → tokeny klubu, brak → token osoby i `00c`/
+  `00d`/`00e`. **Hasło NIE zastępuje PIN-u**: PIN otwiera TEN telefon offline każdego dnia,
+  hasło loguje tę samą osobę na cudzym urządzeniu
+- **zapomniane hasło odzyskuje się linkiem z e-maila i jest to JEDYNY mechanizm** (§5.4
+  tamtego dokumentu): adres → list z linkiem ważnym godzinę → strona `/haslo/` ustawia
+  hasło → logowanie. Ta sama droga USTAWIA pierwsze hasło osobie, która wchodzi Googlem,
+  i tą samą drogą zakłada się konto e-mailem (00H). Kodu jednorazowego do przepisania
+  NIE MA i nie będzie; panel nie pokazuje ani linków, ani kodów - przycisk administratora
+  wysyła TEN SAM list, co pilot sobie sam
+- **każda żywa sesja ma wiersz** (`login_sessions`, `sid` w tokenie): pilot widzi swoje
+  urządzenia we własnym koncie, administrator - w karcie członka, i każde da się wylogować
+  osobno. **Zdalne wylogowanie NIE kasuje danych z urządzenia**: telefon przestaje wysyłać
+  i mówi o tym wprost (baner na 00 i w ustawieniach), PIN dalej otwiera, a zaległe zapisy
+  czekają na ponowne zalogowanie TEJ SAMEJ osoby - wyrzucenie do logowania skasowałoby
+  dzień, którego serwer jeszcze nie ma
 - **rejestracja jest otwarta, dostęp nie**: pierwsze logowanie nieznanym kontem Google
   zakłada OSOBĘ bez ani jednego klubu - **bramką jest brak członkostwa, nie rola**
   (od 2.0.0; wcześniej: brak konta, `docs/logowanie-google.md` §4). Do klubu wchodzi się
@@ -129,7 +149,11 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
   praca lokalna nie wymaga ważnego tokenu, refresh następuje przy najbliższej sieci;
   aplikacja nigdy sama nie wyrzuca użytkownika do ekranu logowania
 - **wylogowanie jest chronione**: zablokowane przy niepustym outboxie (ochrona przed
-  utratą niewysłanych zdarzeń) + ostrzeżenie "ponowne logowanie wymaga internetu"
+  utratą niewysłanych zdarzeń) + ostrzeżenie "ponowne logowanie wymaga internetu".
+  Od 2.1.0 woła też serwer (`POST /auth/logout`) PRZED czyszczeniem magazynu - wcześniej
+  refresh żył po wylogowaniu jeszcze 90 dni, a na wspólnym tablecie „wyloguj" ma znaczyć
+  koniec sesji, nie jej ukrycie. Bez sieci czyścimy i tyle: pilot oddaje tablet następnemu
+  i nie ma na co czekać
 - świeża instalacja / nowy telefon bez sieci = twarda granica (tożsamości nie da się
   zweryfikować offline) - akceptowany trade-off; 00-login pokazuje wtedy czytelny
   komunikat "Pierwsze logowanie wymaga internetu - zaloguj się przed wylotem w teren"
