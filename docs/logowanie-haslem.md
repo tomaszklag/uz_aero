@@ -691,10 +691,35 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   rozstrzyga rotacja, a token, który dożył do bramy z martwą sesją, i tak znika w ciągu
   godziny; (4) `Actor` i `PlatformActor` niosą odtąd `sessionId` - potrzebują go zmiana
   hasła („poza bieżącą") i lista własnych sesji („to urządzenie").
-- **H-D Panel** (#134) - formularz logowania z Google pod spodem, `GET /auth/methods`, „Nie pamiętam
-  hasła" (adres → link → potwierdzenie), karta członka: „Wyślij link do ustawienia hasła"
-  + sesje, karta klubu: e-mail + zaproszenie („wysłano", „Wyślij ponownie"), `#/konto`
-  (zmiana hasła, moje sesje), komunikaty (`loginMessage`), testy modułów czystych.
+- **H-D Panel** (#134) - **WYKONANY 2026-09-18**. Formularz logowania z Google pod
+  separatorem (`GET /admin/api/auth/methods`; bez klienta Google separator i przycisk
+  znikają w całości), `#/logowanie/haslo` (adres → link → JEDNO potwierdzenie, także po
+  odmowie serwera), karta członka: „Wyślij link do ustawienia hasła", plakietki metod
+  i karta „Sesje" („Wyloguj" przy wierszu, „Wyloguj wszędzie w tym klubie"), karta klubu:
+  „E-mail" zamiast „Konto Google" + zaproszenie („wysłano … · ważne 72 h", „Wyślij
+  ponownie"), `#/konto` (Logowanie / Hasło / Moje sesje, wejście z nazwiska w pasku),
+  moduły czyste z testami (`loginMessage`, `forgotPasswordForm`, `sessionRows`,
+  `passwordAccess`, `passwordForm`), `PasswordInput` z przełącznikiem „pokaż".
+  **Odstępstwa od planu**: (1) H-D okazał się potrzebować TRZECH pól z serwera, których
+  B i C nie wystawiły, więc epik niesie także cienki plaster serwera: `loginMethods`
+  w wierszu listy członków (plakietki „Google"/„hasło" - dwa `EXISTS` w zapytaniu listy),
+  `GET /admin/api/me/account` (adres i metody zalogowanego - OSOBNO od `GET /me`, bo
+  tożsamość sesji przestawia całą ramę i panel trzyma ją bez terminu ważności, a metody
+  zmieniają się przy ustawieniu hasła) oraz `invite` przy administratorze klubu
+  (najświeższy NIEZUŻYTY link z platformy - bez tego nota „zaproszenie wysłano" znikałaby
+  po odświeżeniu strony i kazała wysyłać drugi list); (2) przy okazji poprawione
+  `signedIn` na karcie klubu: do 2.1.0 pytało WYŁĄCZNIE o tożsamość Google, więc
+  administrator, który wszedł z linku i HASŁEM, zostawałby „tym, który się nie
+  zalogował" - odtąd liczy się też wiersz w `login_sessions`; (3) o terminie zaproszenia
+  rozstrzyga PANEL, nie zapytanie: stempel postawił zegar aplikacji, a `now()` w SQL-u
+  jest zegarem bazy (pułapka `architektura-panelu-serwer.md` §7.9 (j)); (4) wiersz sesji
+  ma DWIE ikony (przeglądarka / telefon), choć mockup rysuje trzy - rozstrzyga
+  powierzchnia sesji, która jest danymi, a „tablet czy telefon" byłoby domysłem z nazwy
+  urządzenia; (5) panel przestał wołać `GET /admin/api/auth/google-client` - zastąpiło je
+  `auth/methods`; trasa zostaje na serwerze do wygaszenia przy wydaniu; (6) `checkPassword`
+  z `@ninerdeck/domain` to DRUGI imienny wyjątek od zakazu importu wartości domeny
+  w panelu (`admin/test/architecture.test.ts`) - to ta sama decyzja, co D4: jedna
+  implementacja polityki dla serwera, telefonu, panelu i strony.
 - **H-E Aplikacja** (#135) - `ServerPort.loginWithPassword/forgotPassword/setPassword/logout`,
   `AuthService` z drugim wejściem i znacznikiem `revoked`, podpowiedź klubu urządzenia
   po wylogowaniu (LISTA klubów urządzenia, nie jeden - D10), ekrany 00F/00G/00H/00I

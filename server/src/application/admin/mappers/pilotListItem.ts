@@ -24,6 +24,9 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
     role: account.role,
     updatedAt: join.updatedAt.toISOString(),
     lastSeenAt: join.lastSeenAt?.toISOString() ?? null,
+    // Przepisanie 1:1 - lustro kontraktu jest podzbiorem typu domeny, więc rozjazd
+    // („dopisaliśmy trzecią metodę i zapomnieliśmy o panelu") łapie tu kompilator.
+    loginMethods: [...join.methods],
     flyingDays: join.flyingDays,
   };
 }

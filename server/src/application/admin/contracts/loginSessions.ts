@@ -24,6 +24,16 @@ export type SessionSurfaceWire = 'mobile' | 'panel';
 /** Lustro `LOGIN_METHODS`; `legacy` = poświadczenie sprzed 2.1.0, o którym rejestr nie wie. */
 export type LoginMethodWire = 'google' | 'password' | 'legacy';
 
+/**
+ * Czym ta OSOBA może dziś wejść - plakietki „Google" i „hasło" w karcie członka (P2)
+ * i na `#/konto` (K1). Lustro `IssuedLoginMethod`.
+ *
+ * Wyprowadzone z `LoginMethodWire`, żeby związek między nimi był w typie, a nie
+ * w komentarzu: sesja ma METODĘ, którą się nią zalogowano, a konto ma METODY, którymi
+ * wolno się logować - i te pierwsze są podzbiorem drugich powiększonym o przeszłość.
+ */
+export type AccountMethodWire = Exclude<LoginMethodWire, 'legacy'>;
+
 export interface AdminLoginSession {
   id: string;
   surface: SessionSurfaceWire;

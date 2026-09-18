@@ -23,11 +23,18 @@ import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
+import { AccountScreen } from './screens/me/AccountScreen';
+import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
+import { ACCOUNT, FORGOT_PASSWORD } from './ui/shell/nav';
 import { OrganizationsScreen } from './screens/organizations/OrganizationsScreen';
 
 export const router = createHashRouter([
   { path: '/logowanie', element: <LoginScreen /> },
+  // „Nie pamiętam hasła" (2.1.0) stoi POZA ramą z tego samego powodu, co logowanie:
+  // sesji jeszcze nie ma. Pod `/logowanie/`, bo to jest krok logowania - nie moduł
+  // i nie ustawienie konta (tamto jest na `#/konto`, już w ramie).
+  { path: FORGOT_PASSWORD, element: <ForgotPasswordScreen /> },
   // Wybór zakresu stoi POZA ramą, jak logowanie: klub nie jest jeszcze wybrany, więc
   // pasek górny i kolumna boczna nie miałyby czego w sobie napisać. To drugi krok
   // logowania (mockup `00a-wybor-klubu`), nie moduł.
@@ -90,6 +97,12 @@ export const router = createHashRouter([
           </RequireCapability>
         ),
       },
+
+      // MOJE KONTO (2.1.0) - w ramie, ale BEZ zdolności i bez pozycji w kolumnie:
+      // hasło i własne urządzenia ma każdy zalogowany, także superadministrator bez
+      // klubu. Adres stoi przy kanonicznej liście tras (`ui/shell/nav.ts`), bo wejście
+      // jest z paska górnego, a nie z kolumny.
+      { path: ACCOUNT.slice(1), element: <AccountScreen /> },
 
       // Adres spoza mapy prowadzi na ekran startowy. Osobnej strony „nie znaleziono"
       // nie ma świadomie: modułów jest kilka i żaden nie ma podstron, więc taka strona

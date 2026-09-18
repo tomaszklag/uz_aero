@@ -184,11 +184,15 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
         />
       ) : (
         <>
-          {/* OSOBA jest do odczytu w całości: imię i adres podał Google, a osoba istnieje
-              na serwerze od swojego pierwszego logowania. Decyzja dotyczy CZŁONKOSTWA. */}
+          {/* OSOBA jest do odczytu w całości: podała się sama, zakładając konto -
+              Googlem albo adresem (2.1.0) - a na serwerze istnieje od tamtej chwili.
+              Decyzja dotyczy CZŁONKOSTWA.
+
+              Etykieta nie mówi już „Imię u Google": od 2.1.0 konto zakłada się też
+              e-mailem, a panel nie wie którędy - i nie ma po co wiedzieć. */}
           <Card title="Osoba">
             <div className="access-row">
-              <span className="kv-k">Imię u Google</span>
+              <span className="kv-k">Imię i nazwisko</span>
               <span>{row?.name}</span>
             </div>
             <div className="access-row">

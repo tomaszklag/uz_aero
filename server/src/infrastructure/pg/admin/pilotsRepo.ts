@@ -38,6 +38,7 @@ import type {
   PilotsAdminPort,
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
+import type { IssuedLoginMethod } from '../../../domain/loginSessions.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
 import { normalizeEmailOrNull } from '../../../domain/email.ts';
 import { DEFAULT_ROLE, isPilotRole, PILOT_ROLES } from '../../../domain/roles.ts';
@@ -54,6 +55,9 @@ interface MemberDbRow {
   updated_at: string | Date;
   /** Najświeższa ŻYWA sesja w tym klubie; `null` = żadnej (2.1.0, issue #133). */
   last_seen_at: string | Date | null;
+  /** Czym ta osoba może wejść (2.1.0, issue #134) - patrz `ACCOUNT_METHOD_COLUMNS`. */
+  has_google: boolean;
+  has_password: boolean;
   /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   flying_days: string | number;
 }
@@ -96,8 +100,36 @@ const toJoin = (r: MemberDbRow): AdminPilotJoin => ({
   account: toAccount(r),
   updatedAt: new Date(r.updated_at),
   lastSeenAt: r.last_seen_at == null ? null : new Date(r.last_seen_at),
+  methods: accountMethods(r),
   flyingDays: Number(r.flying_days),
 });
+
+/**
+ * Kolejność jest KOLEJNOŚCIĄ PLAKIETEK w karcie członka: najpierw Google, potem hasło.
+ * Składamy ją tu, a nie w mapperze kontraktu, bo to dwie kolumny jednego wiersza -
+ * a nie dwie decyzje.
+ */
+const accountMethods = (r: { has_google: boolean; has_password: boolean }): IssuedLoginMethod[] => {
+  const methods: IssuedLoginMethod[] = [];
+  if (r.has_google) methods.push('google');
+  if (r.has_password) methods.push('password');
+  return methods;
+};
+
+/**
+ * Czym ta osoba może wejść (2.1.0, issue #134 D4).
+ *
+ * `external_identities` = tożsamość u dostawcy, `password_credentials` = hasło. Obie
+ * tabele należą do OSOBY, nie do klubu, więc nie ma tu czego zawężać `org_id` - i to
+ * jest poprawne: hasło jest jedno dla wszystkich klubów tego człowieka, tak jak adres.
+ *
+ * `EXISTS`, a nie `LEFT JOIN`: tożsamość jest dziś jedna na osobę, ale złączenie
+ * mnożyłoby wiersz listy, gdyby kiedyś przestała być - a lista członków ma mieć jeden
+ * wiersz na członkostwo niezależnie od tego, ile ktoś ma poświadczeń.
+ */
+const ACCOUNT_METHOD_COLUMNS = `
+  EXISTS (SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id) AS has_google,
+  EXISTS (SELECT 1 FROM password_credentials c WHERE c.pilot_id = p.id) AS has_password`;
 
 /** Członkostwa, które SĄ na liście klubu - kolejka `pending`/`rejected` to osobna karta. */
 const LISTED = "m.status IN ('active', 'disabled')";
@@ -154,6 +186,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
               (SELECT MAX(s.last_seen_at) FROM login_sessions s
                 WHERE s.pilot_id = p.id AND s.org_id = m.org_id AND s.revoked_at IS NULL)
                 AS last_seen_at,
+              ${ACCOUNT_METHOD_COLUMNS},
               COALESCE(d.days, 0) AS flying_days
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id

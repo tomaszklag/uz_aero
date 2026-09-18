@@ -1158,6 +1158,7 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'POST /auth/logout': 'wylogowanie telefonu - zużywa własny refresh, bez danych klubu',
   'GET /admin/api/me/sessions': 'moje urządzenia we WSZYSTKICH klubach - zakres osoby, nie klubu',
   'DELETE /admin/api/me/sessions/:sid': 'wyłączenie WŁASNEJ sesji - zakres osoby, nie klubu',
+  'GET /admin/api/me/account': 'mój adres i metody logowania - poświadczenia osoby, nie dane klubu',
   'GET /admin': 'przekierowanie na statyczny build panelu',
   'GET /admin/*': 'statyczny build panelu - pliki, bez danych',
   'GET /*': 'strona publiczna - pliki, bez danych',

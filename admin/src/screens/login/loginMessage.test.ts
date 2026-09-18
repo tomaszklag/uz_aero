@@ -1,10 +1,40 @@
 import { describe, expect, it } from 'vitest';
 
 import { HttpError } from '../../api/httpClient';
-import { loginMessage } from './loginMessage';
+import { loginMessage, retryAfterText } from './loginMessage';
 
-const http = (status: number, error: string): HttpError =>
-  new HttpError(status, { error } as never);
+const http = (status: number, error: string, extra: Record<string, unknown> = {}): HttpError =>
+  new HttpError(status, { error, ...extra } as never);
+
+describe('nieudane logowanie hasłem (2.1.0)', () => {
+  it('login nieznany, osoba bez hasła i złe hasło dają JEDNO zdanie', () => {
+    // Serwer odpowiada na te trzy stany identycznie i w identycznym czasie (§5.2),
+    // więc ekran nie ma prawa ich rozróżnić - inaczej formularz wyliczałby konta.
+    const message = loginMessage(http(401, 'invalid_credentials'));
+    expect(message.tone).toBe('danger');
+    expect(message.text).toBe('Nieprawidłowy e-mail lub hasło.');
+    expect(message.text).not.toContain('konta Google');
+  });
+
+  it('za dużo prób: zdanie niesie CZAS, nie „chwilę"', () => {
+    const message = loginMessage(http(429, 'too_many_attempts', { retryAfterSec: 175 }));
+    expect(message.tone).toBe('warn');
+    expect(message.text).toContain('za 3 min');
+  });
+
+  it('bez `retryAfterSec` mówi „za minutę" zamiast milczeć o czasie', () => {
+    // Stary serwer albo odmowa bez ciała - zdanie ma dalej mówić, kiedy próbować.
+    expect(loginMessage(http(429, 'too_many_attempts')).text).toContain('za minutę');
+  });
+
+  it('czas zaokrągla się W GÓRĘ i nigdy nie schodzi pod minutę', () => {
+    // Sekundy zapraszałyby do liczenia i do trzeciej próby, która blokadę przedłuży.
+    expect(retryAfterText(12)).toBe('za minutę');
+    expect(retryAfterText(60)).toBe('za minutę');
+    expect(retryAfterText(61)).toBe('za 2 min');
+    expect(retryAfterText(900)).toBe('za 15 min');
+  });
+});
 
 describe('nieudane logowanie (Google)', () => {
   it('token nie do sprawdzenia: „spróbuj jeszcze raz", bez wskazywania konta', () => {

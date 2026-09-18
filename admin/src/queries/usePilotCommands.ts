@@ -14,10 +14,14 @@
  * żądanie i nie kosztuje ani jednej niespójności.
  */
 
-import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import {
   deletePilot,
+  pilotSessions,
+  revokeAllPilotSessions,
+  revokePilotSession,
+  sendPasswordLink,
   setPilotActive,
   updatePilot,
   type UpdatePilotBody,
@@ -64,6 +68,59 @@ export function useDeletePilot() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deletePilot(id),
+    onSuccess: () => invalidatePilots(qc),
+  });
+}
+
+// -- dostęp członka: link „ustaw hasło" i urządzenia (2.1.0, issue #134 D4) -----
+
+/**
+ * „Wyślij link do ustawienia hasła".
+ *
+ * Bez unieważnień i to jest treść, nie przeoczenie: list nie zmienia w klubie NICZEGO -
+ * metody logowania urosną dopiero wtedy, gdy adresat naprawdę ustawi hasło, a tego
+ * panel nie zobaczy bez odświeżenia listy przy najbliższej okazji. Potwierdzenie
+ * („wysłano na … · ważny godzinę") trzyma ekran, bo dotyczy TEGO kliknięcia.
+ */
+export function useSendPasswordLink() {
+  return useMutation({ mutationFn: (id: string) => sendPasswordLink(id) });
+}
+
+/**
+ * Urządzenia członka w tym klubie.
+ *
+ * `enabled` wyłącza zapytanie bez `accounts.manage`: bez tej zdolności odpowiedź byłaby
+ * 403, czyli czerwony baner na karcie, na której nic złego się nie stało - ta sama
+ * reguła, co przy kolejce zgłoszeń i kodzie klubu.
+ */
+export function usePilotSessions(id: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: keys.pilots.sessions(id ?? ''),
+    queryFn: () => pilotSessions(id!),
+    enabled: enabled && id != null,
+  });
+}
+
+/**
+ * „Wyloguj" przy wierszu i „Wyloguj wszędzie w tym klubie".
+ *
+ * Obie unieważniają korzeń `pilots`, nie samą listę urządzeń: „ostatnio aktywny"
+ * w wierszu listy członków liczy się z TYCH SAMYCH sesji, więc lista, która nie
+ * wie o wylogowaniu, pisałaby „ostatnio 3 min temu" o urządzeniu właśnie odciętym.
+ */
+export function useRevokePilotSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, sessionId }: { id: string; sessionId: string }) =>
+      revokePilotSession(id, sessionId),
+    onSuccess: () => invalidatePilots(qc),
+  });
+}
+
+export function useRevokeAllPilotSessions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => revokeAllPilotSessions(id),
     onSuccess: () => invalidatePilots(qc),
   });
 }

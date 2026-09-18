@@ -437,7 +437,7 @@ const app = await buildServer({
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
-  adminMeQueries: new AdminMeQueries(pilots),
+  adminMeQueries: new AdminMeQueries(pilots, identities, passwordCredentials),
   // Konta (A06/A06a). Po wejściu Google konto nie dostaje żadnego poświadczenia:
   // dostęp daje dopiero podpięcie konta Google o wpisanym tu adresie e-mail.
   adminPilots: new AdminPilotCommands(

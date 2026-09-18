@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PilotListItemDto } from '../../api/dto';
-import {
+import {
   deleteBlocker,
   draftKey,
   draftOf,
@@ -19,6 +19,8 @@ const pilot: PilotListItemDto = {
   email: 't.malkiewicz@ninerdeck.pl',
   active: true,
   role: 'pilot',
+  lastSeenAt: null,
+  loginMethods: ['google'],
 };
 
 const filled = { ...EMPTY_ACCOUNT, code: 'TMK', name: 'Tomasz Małkiewicz' };

@@ -1,20 +1,25 @@
 /**
- * Ninerdeck - panel 2.0: nieudane logowanie -> zdanie i ton banera.
+ * Ninerdeck - panel: nieudane logowanie -> zdanie i ton banera.
  *
  * Moduł CZYSTY (bez Reacta): to jest decyzja o treści, a treść tego ekranu ma
  * dokładnie jedno zadanie - powiedzieć, czy człowiek ma spróbować jeszcze raz,
  * czy pójść po administratora.
  *
- * == PO WEJSCIU GOOGLE (2026-09-04) NIE MA JUZ „ZLEGO HASLA" ==
- * Tożsamości dowodzi podpisany token Google, więc na poziomie poświadczeń zostaje
- * jedna odmowa: „tego tokenu nie umiem sprawdzić" (`401 invalid_token`). Wszystkie
- * pozostałe odmowy dotyczą OSOBY, którą serwer już rozpoznał - i każda z nich ma
- * inną drogę wyjścia, więc każda ma własne zdanie:
- *  • `403 no_panel_access` - osoba jest, ale w żadnym klubie nie jest administratorem:
- *    zwykły pilot albo ktoś, kto dopiero zalogował się pierwszy raz i nie ma klubu
- *    (od epiku D wielofirmowości osoba powstaje przy pierwszym logowaniu, więc dawne
- *    `not_registered` - „konta jeszcze nie ma" - przestało istnieć jako stan);
+ * == DWIE METODY, JEDNA TABELA ODMOW (2.1.0, `docs/logowanie-haslem.md` §5.2) ==
+ * Hasło wróciło jako druga metoda, więc wróciła też odmowa POŚWIADCZEŃ - i jest JEDNA
+ * na trzy stany: login nieznany, osoba bez hasła i złe hasło dają to samo zdanie
+ * (serwer liczy skrót także dla nieznanego adresu), żeby formularz nie wyliczał kont.
+ * Ton czerwony, bo warto spróbować jeszcze raz.
+ *
+ * Pozostałe odmowy dotyczą OSOBY, którą serwer już rozpoznał - Googlem albo hasłem -
+ * i każda ma inną drogę wyjścia, więc każda ma własne zdanie; ton bursztynowy znaczy
+ * „idź po administratora":
+ *  • `429 too_many_attempts` - za dużo prób. Zdanie niesie CZAS, nie „chwilę": minuta
+ *    i kwadrans to dwie różne decyzje człowieka stojącego przy tablecie;
+ *  • `403 no_panel_access` - osoba jest, ale w żadnym klubie nie jest administratorem
+ *    (zwykły pilot albo ktoś, kto nie ma jeszcze klubu);
  *  • `401 account_disabled` - osoba zablokowana; próbowanie ponownie nic nie zmieni.
+ *    Mówimy to WPROST, bo tożsamość jest już dowiedziona - nie ma czego ukrywać.
  */
 
 import { isHttpError } from '../../api/httpClient';
@@ -25,10 +30,29 @@ export interface LoginMessage {
   text: string;
 }
 
+/**
+ * „za 3 min" z sekund `Retry-After`.
+ *
+ * Zaokrąglamy W GÓRĘ i nigdy nie schodzimy poniżej minuty: „spróbuj za 12 s" zaprasza
+ * do liczenia sekund i do trzeciej nieudanej próby, która przedłuży blokadę.
+ */
+export function retryAfterText(seconds: number | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 60) return 'za minutę';
+  return `za ${Math.ceil(seconds / 60)} min`;
+}
+
 export function loginMessage(error: unknown): LoginMessage {
   // Awaria sieci to nie odpowiedź serwera - `fetch` rzuca `TypeError`, statusu nie ma.
   if (!isHttpError(error)) {
     return { tone: 'danger', text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
+  }
+
+  if (error.status === 401 && error.body.error === 'invalid_credentials') {
+    return { tone: 'danger', text: 'Nieprawidłowy e-mail lub hasło.' };
+  }
+
+  if (error.status === 429) {
+    return { tone: 'warn', text: `Za dużo prób - spróbuj ${retryAfterText(error.body.retryAfterSec)}.` };
   }
 
   if (error.status === 403) {

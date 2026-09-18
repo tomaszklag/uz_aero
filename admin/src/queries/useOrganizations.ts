@@ -22,6 +22,7 @@ import {
   createOrganization,
   getOrganization,
   listOrganizations,
+  resendInvite,
   setOrganizationActive,
   updateOrganization,
   type OrganizationListQuery,
@@ -86,5 +87,23 @@ export function useSetOrganizationActive() {
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       setOrganizationActive(id, active),
     onSuccess: (change) => applyChange(qc, change),
+  });
+}
+
+/**
+ * „Wyślij ponownie" zaproszenie administratora klubu (2.1.0, issue #134 D5).
+ *
+ * Unieważnia KARTĘ, nie listę: nowy list przesuwa termin zaproszenia, który karta
+ * pokazuje („ważne 72 h"), a wiersz listy o zaproszeniach nic nie mówi. Odpowiedź
+ * (adres i termin) zostaje przy ekranie - to potwierdzenie TEGO kliknięcia.
+ */
+export function useResendInvite(orgId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (pilotId: string) => resendInvite(orgId!, pilotId),
+    onSuccess: () => {
+      if (orgId == null) return;
+      void qc.invalidateQueries({ queryKey: keys.organizations.detail(orgId) });
+    },
   });
 }

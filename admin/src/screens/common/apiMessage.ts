@@ -33,11 +33,19 @@ export function conflictField(error: unknown): ConflictField | null {
   return error.body.field ?? null;
 }
 
-/** Powód odmowy reguły (`409 refused`); `null` = to nie ten przypadek. */
+/**
+ * Powód odmowy reguły (`409 refused`); `null` = to nie ten przypadek.
+ *
+ * Zawężenie do `409 refused` jest tu WARUNKIEM POPRAWNOŚCI, nie ostrożnością: od 2.1.0
+ * pole `reason` niesie także powód odrzucenia hasła przez politykę (`400 weak_password`),
+ * a to jest zupełnie inna wiadomość - mapa komunikatów odmów konta i floty nie ma dla
+ * niej zdania i mieć nie powinna. Rzutowanie poniżej jest bezpieczne dokładnie dzięki
+ * temu warunkowi.
+ */
 export function refusalOf(error: unknown): PilotRefusalDto | FleetRefusalDto | null {
   if (!isHttpError(error)) return null;
   if (error.status !== 409 || error.body.error !== 'refused') return null;
-  return error.body.reason ?? null;
+  return (error.body.reason as PilotRefusalDto | FleetRefusalDto | undefined) ?? null;
 }
 
 /**
