@@ -21,14 +21,15 @@ site/             strona publiczna: landing, pobieranie, wydania, dokumentacja
 npm run setup
 ```
 
-(instaluje zależności i tworzy `server/.env` z `server/.env.example` - wartości dev
-możesz zostawić, na produkcji zmień `JWT_SECRET`, `GOOGLE_CLIENT_IDS` i `SEED_ADMIN_EMAIL`).
+(instaluje zależności i tworzy `server/.env` z `server/.env.example` - uzupełnij
+`GOOGLE_WEB_CLIENT_ID` i `SEED_ADMIN_EMAIL`, bo bez nich nie zalogujesz się do panelu;
+na produkcji zmień też `JWT_SECRET`).
 
 ## Codzienna praca
 
 | Polecenie | Co robi |
 |---|---|
-| `npm run app` | Metro bundler - telefon z dev clientem łapie go sam / QR |
+| `npm run app` | Metro bundler - telefon z dev buildem łapie go sam / QR; wariant dev bierze z `app/.env` (`APP_VARIANT=development`) |
 | `npm run server` | backend na `http://localhost:3000` (watch) |
 | `npm run admin` | panel na `http://localhost:5173/admin/` (proxy `/admin/api` → serwer; **wymaga uruchomionego serwera**) |
 | `npm run site` | strona publiczna do `site/dist` (landing, wydania, podręcznik z żywymi ekranami) - otwórz `site/dist/index.html` albo wejdź na `http://localhost:3000/` przy uruchomionym serwerze |
@@ -37,7 +38,8 @@ możesz zostawić, na produkcji zmień `JWT_SECRET`, `GOOGLE_CLIENT_IDS` i `SEED
 | `npm run seed` | migracje + konto administratora (`admin`, BEZ hasła - podpina się kontem Google z `SEED_ADMIN_EMAIL`) |
 | `npm test` | wszystkie testy: aplikacja (Jest) + serwer (Vitest na PGlite) |
 | `npm run typecheck` | TypeScript w całym repo |
-| `npm run android` | przebudowa dev clienta (telefon po USB) - tylko po zmianie modułów natywnych (ostatnio: `expo-task-manager` + plugin `expo-location` dla usługi GPS w tle, 2026-08-03) |
+| `npm run build:dev` | dev build na EAS (`expo-dev-client`, pakiet `com.ninerdeck.app.dev` - stoi na telefonie OBOK produkcyjnego APK) - tylko po zmianie modułów natywnych; procedura w „Dev build aplikacji" niżej |
+| `npm run update:stg` | aktualizacja OTA na kanał dev builda, wskazana na **staging** (`docs/staging.md`) - tester bez Metro bierze z niej bundle |
 
 Kolejność przy pracy z serwerem: `db:up` → `seed` (raz) → `server`.
 
@@ -47,11 +49,37 @@ ekrany A06/A07). Świeży świat = `docker rm -f ninerdeck-pg` → `db:up` → `
 Dane demo zostały usunięte w całości; generator (`server/scripts/demo/`) jest
 w historii gita, gdyby kiedyś wrócił temat syntetycznych danych do kalibracji.
 
-Szybki sprawdzian serwera:
+Szybki sprawdzian serwera (haseł nie ma od 2026-09-04 - logowanie idzie przez Google,
+druga trasa oddaje klienta Web, którym panel rysuje przycisk):
 
 ```bash
-curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d '{"login":"admin","password":"test1234"}'
+curl -s localhost:3000/health && curl -s localhost:3000/admin/api/auth/google-client
 ```
+
+### Dev build aplikacji (Expo dev client)
+
+Aplikację testuje się na telefonie przez **dev build** z EAS, nie przez Expo Go: Expo Go
+nie zna pakietu, do którego Google przypina logowanie, ani usługi GPS w tle. Dev build to
+OSOBNY pakiet `com.ninerdeck.app.dev` o nazwie „Ninerdeck Dev" (`app/app.config.js` przy
+`APP_VARIANT=development`, reguła w `app/scripts/app-variant.js`), więc stoi na telefonie
+obok produkcyjnego APK i ma własne dane. Raz, i po każdej zmianie modułów natywnych:
+
+1. `npm run build:dev` - EAS buduje profil `development` (kilkanaście minut). Poświadczenia
+   EAS są per pakiet, więc pierwszy build generuje nowy klucz - z innym odciskiem niż produkcja.
+2. Odcisk SHA-1 tego klucza: `npx eas-cli credentials -p android` w `app/` (pakiet
+   `com.ninerdeck.app.dev` → Keystore) albo zakładka Credentials projektu na expo.dev.
+   `keytool -printcert -jarfile` na pobranym APK NIE zadziała: EAS podpisuje wyłącznie
+   schematem v2, a keytool czyta tylko podpis v1.
+3. Google Cloud (ten sam projekt, co produkcja) → klient OAuth typu **Android**: package
+   `com.ninerdeck.app.dev` + ten SHA-1.
+4. Identyfikator klienta wpisz do `app/.env` (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`) i do
+   `server/.env` (`GOOGLE_ANDROID_CLIENT_ID`). Do logowania w panelu lokalnie klient **Web**
+   musi mieć origin `http://localhost:5173` w „Authorized JavaScript origins".
+5. Zainstaluj APK z EAS na telefonie, uruchom `npm run server` i `npm run app`, zeskanuj QR.
+
+Na co dzień wystarcza `npm run app`: dev build ładuje JS z Metro, a serwer znajduje pod IP
+komputera na :3000. Build produkcyjny i OTA (`build:prod`, `update:prod`) biorą
+`APP_VARIANT=production` z `eas.json`, więc lokalny `.env` nie ma jak podmienić pakietu.
 
 ## Wdrożenie: Railway
 
@@ -166,6 +194,19 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
     ustawieniu hasła wszystkie dotychczasowe sesje tej osoby zostają wylogowane. W drugą
     stronę (zapomniane hasło superadministratora): „Nie pamiętam hasła" w panelu, Google
     z tym samym adresem albo ta sama komenda. Kodów jednorazowych do dyktowania NIE MA.
+
+### Staging - przedwydaniowa kopia produkcji
+
+Wydanie przechodzi próbę generalną na osobnym środowisku Railway (własna usługa, własny
+Postgres, własny wolumen) pod adresami `stg.ninerdeck.pl` i `app.stg.ninerdeck.pl`.
+Obraz, migracje i poczta są te same, co na produkcji - różnią się wyłącznie zmienne,
+więc serwer nie ma dla staging ani jednej gałęzi w kodzie. Aplikację reprezentuje tam
+**dev build** (`com.ninerdeck.app.dev`), a bundle wysyła się na jego kanał przez
+`npm run update:stg`. Środowisko śledzi `develop`, a na czas stabilizacji przełącza się
+je na gałąź wydaniową - wtedy deploy jest zarazem próbą generalną migracji.
+
+Pełny runbook (zmienne, rozruch, sprawdziany, kopia produkcji ze scrubbingiem adresów,
+koszt): **`docs/staging.md`**; checklista wdrożenia: issue #155.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

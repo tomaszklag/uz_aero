@@ -1249,6 +1249,22 @@ decyzja świadoma, bo wtedy numer widziany przez testera stoi w repozytorium i d
 przypisać do commita. Reguła mieszka tutaj, bo JSON nie przyjmuje komentarza. Bez
 podbicia dwa różne APK przedstawią się testerowi tym samym „build N".
 
+**WARIANT DEWELOPERSKI = OSOBNY PAKIET** (2026-09-17). `app.json` zostaje bazą, a
+`app.config.js` przestawia ją przy `APP_VARIANT=development` (`scripts/app-variant.js`,
+czysty CommonJS z testami): nazwa „Ninerdeck Dev", pakiet `com.ninerdeck.app.dev`, schemat
+adresu równy pakietowi; wersja, `versionCode`, ikony i projekt EAS bez zmian. Powód: dev
+build (`expo-dev-client`) z pakietem produkcyjnym zastępowałby na telefonie APK z produkcji,
+a zapisane w nim tokeny produkcji jechałyby do lokalnego serwera. Zmienną ustawia `app/.env`
+(Metro), profil `development` w `eas.json` (build) i JAWNIE `production` w profilu
+produkcyjnym - `eas update` eksportuje na komputerze, gdzie `.env` mówi `development`,
+a zmienne procesu wygrywają (pilnuje `easProfileEnv.test.ts`). `nativeRelease.ts` liczy
+wzorzec pakietu dev z tego samego helpera (nie z `Constants.expoConfig` - manifest z Metro
+odzwierciedla `.env` komputera, nie binarkę), a `ownRelease` oddaje `dev: true`, z którego
+`appVersion.ts` składa „2.0.0 (build 3) · dev": dwie binarki o tej samej wersji i tym samym
+numerze builda nie mają prawa opisywać się jednym zdaniem. Poświadczenia EAS są per pakiet,
+więc dev build ma własny klucz, własny SHA-1 i własny klient OAuth Android - procedura
+w README „Dev build aplikacji".
+
 **`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
 Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni
 (`gps/gpsFanout.ts`, regresja `gpsFanout.test.ts`). Reguła jest twarda, bo słuchaczy jest

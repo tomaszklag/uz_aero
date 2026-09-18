@@ -351,7 +351,13 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
    bo identyfikator Web ma ROLĘ (jedzie do panelu), a pozycja na liście roli nie niesie.
    W kliencie Web trzeba dodać origin panelu - od issue #124 `https://app.ninerdeck.pl`
    (do tego czasu domenę nadaną przez hosting) - do „Authorized JavaScript origins";
-   bez tego skrypt Google odmówi narysowania przycisku.
+   bez tego skrypt Google odmówi narysowania przycisku. Do pracy LOKALNEJ ten sam klient
+   Web potrzebuje na tej liście także `http://localhost:5173` (panel z Vite).
+   **Dev build aplikacji** (2026-09-17; `npm run build:dev`, pakiet `com.ninerdeck.app.dev` -
+   README „Dev build aplikacji") ma WŁASNY klucz EAS, bo poświadczenia EAS są per pakiet,
+   więc dostaje OSOBNY klient Android: package `com.ninerdeck.app.dev` + jego SHA-1.
+   Ten identyfikator idzie do `app/.env` (Metro) i do `GOOGLE_ANDROID_CLIENT_ID` lokalnego
+   serwera - nigdy do `eas.json`, które niesie wyłącznie klienta produkcyjnego.
 3. Publiczny adres polityki prywatności - wymagany przez ekran zgody. Od issue #124 to
    `https://ninerdeck.pl/prywatnosc.html` (regulamin: `https://ninerdeck.pl/regulamin.html`),
    a `ninerdeck.pl` stoi na liście „Authorized domains" po weryfikacji w Search Console.

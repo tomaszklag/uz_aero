@@ -21,11 +21,18 @@
  * ══ EXPO GO ══
  * Tam `expo-application` opisuje Expo Go - stąd `applicationId` obok wersji i wzorzec
  * z `app.json`; porównanie robi `ownRelease`, a ekran pokazuje kreskę.
+ *
+ * ══ WARIANT DEWELOPERSKI (2026-09-17) ══
+ * `app.json` jest bazą, a `app.config.js` przestawia pakiet na `.dev` przy
+ * `APP_VARIANT=development` (`scripts/app-variant.js`). Wzorzec wariantu liczymy z TEGO
+ * SAMEGO helpera co konfiguracja - nie z `Constants.expoConfig`, bo manifest z Metro
+ * odzwierciedla `.env` komputera, a nie binarkę, która naprawdę stoi na telefonie.
  */
 
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
+import { devPackage } from '../../../scripts/app-variant';
 import { ownRelease, type AppRelease } from './ownRelease';
 
 // Konfiguracja Expo - `android.package` to identyfikator, który prebuild wpisuje do APK.
@@ -42,6 +49,12 @@ function ownApplicationId(): string | null {
   return appConfig?.expo?.android?.package ?? null;
 }
 
+/** Pakiet wariantu deweloperskiego - ten sam wzorzec z sufiksem, którym buduje `app.config.js`. */
+function devApplicationId(): string | null {
+  const own = ownApplicationId();
+  return own == null ? null : devPackage(own);
+}
+
 /** Wydanie NASZEJ aplikacji albo `null` (Expo Go, web, brak danych). */
 export function appRelease(): AppRelease | null {
   return ownRelease({
@@ -49,5 +62,6 @@ export function appRelease(): AppRelease | null {
     build: Application.nativeBuildVersion,
     applicationId: Application.applicationId,
     ownApplicationId: ownApplicationId(),
+    devApplicationId: devApplicationId(),
   });
 }
