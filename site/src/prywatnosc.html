@@ -24,7 +24,7 @@
 <main class="doc">
   <p class="eyebrow">Dokument</p>
   <h1>Polityka prywatności</h1>
-  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel administratora · obowiązuje od 5 września 2026</p>
+  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel administratora · obowiązuje od 30 września 2026</p>
 
   <h2>1. Kto przetwarza dane</h2>
   <p>Operatorem aplikacji Ninerdeck i administratorem danych jest Tomasz Klag, prowadzący aplikację
@@ -38,6 +38,9 @@
   potwierdzenia tożsamości tej samej osoby. Druga droga istnieje dlatego, że w samolocie bywa
   jedno urządzenie wspólne dla kilku pilotów, a logowanie kontem Google oznaczałoby dodanie
   własnego konta do cudzego sprzętu.</p>
+  <p>W aplikacji zamiast adresu można podać swój <strong>kod pilota</strong> nadany w klubie
+  (np. <code>TMK</code>); urządzenie rozpoznaje wtedy klub, dla którego pracuje. W panelu logujemy
+  się wyłącznie adresem e-mail.</p>
 
   <h3>2.1. Logowanie kontem Google</h3>
   <p>Z Google otrzymujemy tylko dane potrzebne do uwierzytelnienia:</p>
@@ -85,45 +88,98 @@
   celów. Link jest ważny godzinę (zaproszenie do klubu - 72 godziny), działa raz, a każdy nowy
   unieważnia poprzedni.</p>
 
-  <h2>3. Zgłoszenie i zatwierdzenie</h2>
-  <p>Samo zalogowanie - kontem Google albo hasłem - nie daje dostępu do aplikacji. Tworzy
-  zgłoszenie, które widzi administrator klubu i które zatwierdza albo odrzuca. Do czasu decyzji
-  przechowujemy wyłącznie dane z tabel powyżej. Zgłoszenie odrzucone możesz w każdej chwili
+  <h2>3. Konto, klub i zatwierdzenie</h2>
+  <p>Samo zalogowanie - kontem Google albo hasłem - <strong>nie daje dostępu do żadnego klubu</strong>.
+  Zakłada konto osoby i na tym się kończy; do czasu dołączenia do klubu przechowujemy wyłącznie
+  dane z punktów 2.1-2.3.</p>
+  <p>Do klubu wchodzi się, wpisując <strong>kod klubu</strong> otrzymany od jego administratora.
+  Dopiero wtedy powstaje zgłoszenie, które administrator tego klubu zatwierdza - nadając kod
+  pilota i rolę - albo odrzuca z powodem, który czytasz na swoim ekranie. Administrator widzi
+  wówczas Twoje imię, nazwisko i adres e-mail. Zgłoszenie odrzucone możesz w każdej chwili
   poprosić o usunięcie.</p>
 
   <h2>4. Dane zapisywane w dzienniku lotów</h2>
-  <p>Po zatwierdzeniu aplikacja zapisuje dane operacji lotniczych, które wprowadzasz lub które
+  <p>Po przyjęciu do klubu aplikacja zapisuje dane operacji lotniczych, które wprowadzasz lub które
   rejestruje telefon w trakcie operacji:</p>
   <ul>
     <li>czasy uruchomienia i zatrzymania silnika, startów i lądowań, zadanie, załoga, uwagi;</li>
     <li>odczyty paliwa, oleju i licznika motogodzin przy przejęciu i zdaniu samolotu, tankowania;</li>
-    <li>pozycja GPS, wysokość i prędkość w trakcie operacji (od uruchomienia do zatrzymania silnika) -
-        do wykrywania faz lotu i rysowania śladu; poza operacją lokalizacja nie jest rejestrowana;</li>
-    <li>zgłoszenia błędów wysłane z aplikacji wraz z kontekstem technicznym (ekran, wersja aplikacji,
-        model telefonu, stan synchronizacji).</li>
+    <li>pozycja GPS, wysokość i prędkość <strong>wyłącznie w trakcie operacji</strong> - od
+        uruchomienia do zatrzymania silnika - do wykrywania faz lotu i rysowania śladu. Poza
+        operacją aplikacja nie rejestruje lokalizacji; w ustawieniach jest tylko diagnostyka
+        odbiornika GPS pokazywana na żądanie i nigdzie niezapisywana.</li>
   </ul>
-  <p>Te dane są dziennikiem eksploatacji samolotów klubu. Widzi je administrator klubu w panelu,
-  a w zakresie własnych operacji - pilot w aplikacji.</p>
+  <p>Te dane są dziennikiem eksploatacji samolotów klubu. Widzi je administrator klubu, w którym
+  odbyła się operacja, a w zakresie własnych operacji - pilot w aplikacji. Klub widzi wyłącznie
+  swoje operacje: jeśli latasz w dwóch klubach, żaden z nich nie widzi lotów wykonanych w drugim.</p>
+
+  <h3>4.1. Zapis surowych odczytów do strojenia wykrywania faz lotu</h3>
+  <p>Równolegle z powyższym, <strong>również tylko przy pracującym silniku</strong>, telefon
+  nagrywa surowe odczyty swoich czujników i przesyła je na serwer. Służą one wyłącznie do
+  strojenia progów automatycznego wykrywania kołowania, startu i lądowania - na prawdziwych
+  lotach, a nie na danych wymyślonych przy biurku.</p>
+  <ul>
+    <li>surowe odczyty odbiornika GPS (pozycja, wysokość, prędkość, dokładność) - także te
+        odrzucone przez filtr jakości, bo to one najwięcej mówią o progach;</li>
+    <li>odczyty barometru i czujników ruchu telefonu (przyspieszeniomierz, żyroskop).</li>
+  </ul>
+  <p>Po przesłaniu telefon <strong>kasuje swoją kopię</strong> tego zapisu. Odczyty czujników nie
+  wpływają na to, co trafia do dziennika - są wyłącznie nagrywane.</p>
+
+  <h3>4.2. Zgłoszenia błędów z aplikacji</h3>
+  <p>Przycisk zgłoszenia błędu jest dostępny na czas testów z pilotami. Wysyła Twój opis wraz
+  z kontekstem zbieranym automatycznie: ekran i otwarte okno, operacja (jej oznaczenie, samolot,
+  zadanie, stan silnika, liczba lotów), Twój kod pilota i nazwisko, klub, wersja aplikacji,
+  system i model telefonu, wybrany motyw, stan synchronizacji oraz czas i strefa czasowa
+  zgłoszenia. <strong>Zrzutu ekranu nie wysyłamy.</strong> Lista dołączanych danych jest
+  pokazywana w aplikacji przed wysłaniem.</p>
+  <p>Zgłoszenia trafiają do <strong>operatora aplikacji</strong> (punkt 1), a nie do administratora
+  Twojego klubu - to jedna kolejka dla całego serwera i klub nie ma do niej dostępu.</p>
 
   <h2>5. Gdzie i jak długo</h2>
-  <p>Dane są przechowywane na serwerze aplikacji u dostawcy infrastruktury chmurowej oraz - do
-  czasu wysłania - lokalnie na telefonie pilota. Dziennik operacji jest rejestrem prowadzonym
-  przez czas działania klubu; dane konta usuwamy na Twoje żądanie, o ile nie są potrzebne do
-  zachowania integralności dziennika operacji, w których brałeś udział (wtedy konto zostaje
-  dezaktywowane). Danych nie sprzedajemy ani nie przekazujemy podmiotom trzecim poza dostawcami
-  infrastruktury niezbędnymi do działania usługi (dostawca hostingu oraz dostawca wysyłki
-  poczty - patrz punkt 2.4).</p>
+  <p>Dane są przechowywane na serwerze aplikacji u dostawcy infrastruktury chmurowej oraz
+  <strong>lokalnie na telefonie pilota</strong>. Zapis lokalny nie znika po wysłaniu i nie ma
+  takiego znikać: to on pozwala aplikacji działać bez zasięgu i z niego liczą się „Mój dzień"
+  i historia. Wyjątkiem jest zapis surowych odczytów z punktu 4.1 - jego kopię telefon kasuje
+  zaraz po przesłaniu.</p>
+  <p>Dziennik operacji jest rejestrem prowadzonym przez czas działania klubu i jest
+  <strong>dopisywalny, a nie nadpisywalny</strong>: poprawka albo unieważnienie wpisu dokłada się
+  do historii razem z autorem, chwilą i powodem, zamiast kasować poprzedni stan. Dane konta
+  usuwamy na Twoje żądanie, o ile nie są potrzebne do zachowania integralności dziennika operacji,
+  w których brałeś udział - wtedy członkostwo zostaje wyłączone, a wpisy pozostają w dzienniku
+  klubu jako dokument eksploatacji samolotów.</p>
+  <p>Danych nie sprzedajemy ani nie przekazujemy podmiotom trzecim poza dostawcami infrastruktury
+  niezbędnymi do działania usługi: dostawcą hostingu, na którym stoi serwer i baza, oraz dostawcą
+  wysyłki poczty (punkt 2.4).</p>
 
-  <h2>6. Pliki cookie</h2>
+  <h2>6. Pliki cookie i dane na urządzeniu</h2>
   <p>Panel administratora używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.
   Nie stosujemy plików cookie analitycznych ani reklamowych; aplikacja i panel nie zawierają
-  narzędzi śledzących. Ta strona informacyjna ładuje wyłącznie kroje pisma z Google Fonts.</p>
+  narzędzi śledzących, nie profilują i nie podejmują decyzji w sposób zautomatyzowany wobec osób.</p>
+  <p>Aplikacja przechowuje dane <strong>na samym urządzeniu</strong>: dziennik operacji (punkt 5),
+  poświadczenia logowania i skrót PIN-u w bezpiecznym magazynie systemu Android, kopię listy
+  samolotów i pilotów klubu potrzebną do pracy bez zasięgu oraz drobne ustawienia (motyw,
+  ostatnio wybrane zadanie). Na urządzeniu dzielonym zapisana jest dodatkowo lista klubów,
+  z których na nim logowano - <strong>bez żadnych danych osób</strong>, wyłącznie po to, żeby kod
+  pilota miał się w czym rozwiązać. Wylogowanie kasuje poświadczenia i PIN; lista klubów zostaje,
+  bo opisuje urządzenie, a nie człowieka.</p>
+  <p>Strona internetowa Ninerdeck ładuje wyłącznie kroje pisma z Google Fonts i nie ustawia
+  własnych plików cookie.</p>
 
   <h2>7. Twoje prawa</h2>
   <p>Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania
   oraz sprzeciwu. W tym celu skontaktuj się z administratorem klubu albo operatorem aplikacji
-  (pkt 1). Dostęp konta Google do aplikacji możesz też cofnąć samodzielnie w ustawieniach
-  swojego konta Google (Bezpieczeństwo → Połączenia z aplikacjami i usługami innych firm).</p>
+  (pkt 1).</p>
+  <p>Część z tego zrobisz sam, bez niczyjej pomocy:</p>
+  <ul>
+    <li><strong>zobaczyć i zakończyć swoje sesje</strong> - w panelu, na stronie „Moje konto";</li>
+    <li><strong>zmienić hasło</strong> - w ustawieniach aplikacji albo na tej samej stronie panelu;
+        zmiana wylogowuje pozostałe urządzenia;</li>
+    <li><strong>cofnąć dostęp konta Google</strong> - w ustawieniach swojego konta Google
+        (Bezpieczeństwo → Połączenia z aplikacjami i usługami innych firm);</li>
+    <li><strong>usunąć dane z urządzenia</strong> - wylogowując się w aplikacji (wcześniej poczekaj,
+        aż zapisy dojdą do klubu) albo odinstalowując ją.</li>
+  </ul>
 
   <h2>8. Zmiany</h2>
   <p>O zmianach tej polityki informujemy na tej stronie, podając datę obowiązywania nowej wersji.</p>
