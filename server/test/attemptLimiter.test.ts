@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
+import { AttemptLimiter } from '../src/application/common/attemptLimiter.ts';
 import { TestClock } from './helpers.ts';
 
 const WINDOW = 60_000;

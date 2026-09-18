@@ -34,7 +34,7 @@ import {
   SwitchIcon,
 } from '../components/icons';
 import { initials } from './initials';
-import { homeFor, navItemsFor, type NavIcon } from './nav';
+import { ACCOUNT, homeFor, navItemsFor, type NavIcon } from './nav';
 import type { ShellScope } from './scope';
 
 const ICONS: Record<NavIcon, (props: { size?: number }) => React.ReactNode> = {
@@ -81,12 +81,15 @@ export function AppShell({
         </Link>
 
         <div className="topbar-right">
-          <span className="who">
+          {/* NAZWISKO JEST WEJŚCIEM NA `#/konto` (2.1.0, issue #134 D6). Konto nie jest
+              modułem klubu, więc nie ma pozycji w kolumnie - a wejście z nazwiska w pasku
+              jest tym miejscem, w którym każdy szuka go z innych aplikacji web. */}
+          <Link className="who" to={ACCOUNT} title="Moje konto">
             <span className="avatar" aria-hidden="true">
               {initials(who)}
             </span>
             <span className="who-name">{who}</span>
-          </span>
+          </Link>
           <button type="button" className="btn ghost sm" onClick={onLogout} disabled={logoutPending}>
             <SignOutIcon size={13} />
             Wyloguj

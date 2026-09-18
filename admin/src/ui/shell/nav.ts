@@ -78,3 +78,20 @@ export function homeFor(capabilities: readonly Capability[] | undefined): string
  * (przekierowanie z ekranu logowania, gdy sesji jeszcze nie ma).
  */
 export const HOME = NAV_ITEMS[0]!.to;
+
+/**
+ * MOJE KONTO (2.1.0, issue #134 D6) - jedyny ekran panelu, który jest O OSOBIE
+ * PATRZĄCEJ, a nie o klubie.
+ *
+ * Dlatego NIE MA go w `NAV_ITEMS`: kolumna boczna wymienia moduły klubu, a konto
+ * modułem nie jest - pozycja obok „Dziennika" obiecywałaby czwarty moduł. Wejście jest
+ * z nazwiska w pasku górnym, jak w każdej aplikacji web, więc adres stoi tu, przy
+ * kanonicznej liście tras, a nie w komponencie paska.
+ */
+export const ACCOUNT = '/konto';
+
+/**
+ * „Nie pamiętam hasła" (2.1.0, issue #134 D3) - ekran PRZED ramą, jak logowanie
+ * i wybór klubu: sesji jeszcze nie ma, więc pasek i kolumna nie miałyby czego napisać.
+ */
+export const FORGOT_PASSWORD = '/logowanie/haslo';

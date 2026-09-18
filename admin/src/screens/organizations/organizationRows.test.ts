@@ -9,6 +9,8 @@ const admin = (name: string, signedIn: boolean): OrganizationAdminDto => ({
   email: `${name}@gmail.com`,
   code: name.slice(0, 3).toUpperCase(),
   signedIn,
+  lastSeenAt: null,
+  invite: null,
 });
 
 const organization = (over: Partial<OrganizationListItemDto> = {}): OrganizationListItemDto => ({

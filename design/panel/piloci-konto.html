@@ -24,7 +24,7 @@
     <span class="vp-badge">P2</span>
     <span class="vp-body">
       <span class="vp-name">Członkostwo istniejące, potwierdzenie wyłączenia otwarte</span>
-      <span class="vp-when">Stan pokazany niżej. Od 2.0.0 szuflada edytuje CZŁONKOSTWO w tym klubie (kod, rola, dostęp), a osobę - imię, nazwisko, konto Google - tylko pokazuje. Pytanie o wyłączenie stoi W MIEJSCU, w którym kliknięto, i niesie obie rzeczy, po które człowiek sięga: co z dostępem i co z danymi. <b>Skutek mówi się PRZED akcją</b>, nie banerem po niej.</span>
+      <span class="vp-when">Stan pokazany niżej. Od 2.0.0 szuflada edytuje CZŁONKOSTWO w tym klubie (kod, rola, dostęp), a osobę - imię, nazwisko, adres i metody logowania - tylko pokazuje. Od 2.1.0 (2026-09-16) dochodzą dwie rzeczy: w „Dostępie" przycisk <b>„Wyślij link do ustawienia hasła"</b> (TEN SAM list, który pilot wysłałby sobie sam - administrator wysyła, nie dyktuje; potwierdzenie „wysłano na … · ważny godzinę") i karta <b>„Sesje"</b> z urządzeniami, na których ta osoba jest zalogowana W TYM KLUBIE, z „Wyloguj" przy każdym i „Wyloguj wszędzie w tym klubie" pod listą. Podtytuł niesie „ostatnio aktywna" z tych samych sesji. Pytanie o wyłączenie stoi W MIEJSCU, w którym kliknięto, i niesie obie rzeczy, po które człowiek sięga: co z dostępem i co z danymi. <b>Skutek mówi się PRZED akcją</b>, nie banerem po niej.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -79,10 +79,12 @@
       </a>
 
       <div class="topbar-right">
-        <span class="who">
+        <!-- Nazwisko w pasku jest LINKIEM na własne konto (`#/konto`, 2.1.0): hasło i sesje
+             zalogowanego. Wejście z nazwiska, jak w każdej aplikacji web. -->
+        <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">TM</span>
           <span class="who-name">Tomasz Małkiewicz</span>
-        </span>
+        </a>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
           Wyloguj
@@ -206,20 +208,28 @@
     </div>
 
     <!-- ══ SZUFLADA CZŁONKOSTWA (wielofirmowość 2.0.0, docs/wielofirmowosc.md §8.3) ══
-         Trzy sekcje: KIM JEST (osoba - wspólna dla wszystkich klubów), KIM JEST W TYM
-         KLUBIE (kod, rola - własność członkostwa) i CZY MA DOSTĘP do klubu. Haseł NIE MA
-         (2026-09-04); e-mail jest odtąd adresem konta Google, którym osoba się loguje -
-         panel go pokazuje, nie wpisuje - z panelu klubu adresu nie wpisuje się wcale,
+         Cztery sekcje: KIM JEST (osoba - wspólna dla wszystkich klubów), KIM JEST W TYM
+         KLUBIE (kod, rola - własność członkostwa), CZY MA DOSTĘP do klubu i NA CZYM JEST
+         ZALOGOWANA (sesje w tym klubie). E-mail jest adresem osoby, którym się loguje -
+         panel go pokazuje, nie wpisuje; z panelu klubu adresu nie wpisuje się wcale,
          do klubu wchodzi się kodem klubu (P4) i decyzją (P3).
-         Zerwanie sesji w klubie ma JEDNĄ drogę: „Wyłącz członkostwo" (i włączenie
-         z powrotem); inne kluby tej osoby tego nie widzą. -->
+         HASŁA WRÓCIŁY W 2.1.0 (2026-09-16, docs/logowanie-haslem.md) jako DRUGA metoda
+         tej samej osoby, ale panel ŻADNEGO hasła nie zna i nie pokazuje: administrator
+         może wyłącznie WYSŁAĆ list z linkiem do ustawienia hasła - ten sam, który pilot
+         wysłałby sobie sam przez „Nie pamiętam hasła" (D5: inny wyzwalacz, ten sam
+         mechanizm). Zerwanie dostępu w klubie ma odtąd DWA stopnie: „Wyloguj" (sesja,
+         odwracalne ponownym zalogowaniem) i „Wyłącz członkostwo" (dostęp); inne kluby
+         tej osoby nie widzą ani jednego, ani drugiego. -->
     <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Anna Kowal">
 
       <div class="drawer-head">
         <div>
           <div class="drawer-title">Anna Kowal</div>
-          <div class="drawer-sub">AKO · anna.kowal@gmail.com · w klubie od 26 SIE 2026</div>
+          <!-- „Ostatnio aktywna" liczy się z `login_sessions` (§6): najświeższe `last_seen_at`
+               wśród sesji tej osoby W TYM KLUBIE, z rodzajem urządzenia. To cały „status
+               użytkownika" 2.1.0 - bez wskaźnika „online" i bez kolumny w liście. -->
+          <div class="drawer-sub">AKO · anna.kowal@gmail.com · w klubie od 26 SIE 2026 · ostatnio aktywna 3 min temu · telefon</div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -231,9 +241,13 @@
         <!-- OSOBA: to, co jest wspólne dla wszystkich klubów. Imię i nazwisko edytuje
              się TYLKO, gdy ta osoba ma jedno członkostwo (propozycja, docs §8.3) - tu
              Anna Kowal jest wyłącznie w tym klubie, więc pole jest czynne; wariant
-             z blokadą opisany pod ramką (P2a). E-mail jest DO ODCZYTU: to konto Google,
-             którym osoba się loguje, i klub nie ma nad nim władzy - pole wyłączone
-             z podpisem SKĄD jest wartość, jak „Aktualny stan" na karcie samolotu. -->
+             z blokadą opisany pod ramką (P2a). E-mail jest DO ODCZYTU: to adres, którym
+             osoba się loguje (Googlem, hasłem albo jednym i drugim), i klub nie ma nad nim
+             władzy - pole wyłączone, jak „Aktualny stan" na karcie samolotu. Etykieta
+             „Logowanie", nie „Konto Google" (2.1.0): adres przestał być wyłącznie adresem
+             Google. Pod polem RZĄD PLAKIETEK mówi, KTÓRYMI METODAMI ta osoba wchodzi -
+             to informacja o stanie konta, nie ustawienie: klub nie włącza ani nie
+             wyłącza metod, a osoba bez hasła ma jedną plakietkę („Google"). -->
         <div class="card">
           <div class="card-title">Osoba</div>
 
@@ -243,9 +257,13 @@
           </div>
 
           <div class="field">
-            <label class="label" for="email">Konto Google</label>
+            <label class="label" for="email">Logowanie</label>
             <input class="input mono" id="email" value="anna.kowal@gmail.com" disabled>
-            <span class="hint">Adres, którym się loguje. Nadaje go Google - klub go nie zmienia.</span>
+            <div class="pill-row" aria-label="Metody logowania">
+              <span class="pill dim">Google</span>
+              <span class="pill dim">hasło</span>
+            </div>
+            <span class="hint">Adres, którym się loguje. Klub go nie zmienia.</span>
           </div>
         </div>
 
@@ -287,6 +305,27 @@
         <div class="card">
           <div class="card-title">Dostęp</div>
 
+          <!-- HASŁO: JEDEN PRZYCISK, KTÓRY WYSYŁA LIST (2.1.0, docs/logowanie-haslem.md D5,
+               §3.2, §5.4). To DOKŁADNIE ten sam list, który pilot wysłałby sobie sam przez
+               „Nie pamiętam hasła" - inny wyzwalacz, ten sam token, ta sama strona
+               `/haslo/`. Administrator WYSYŁA, nie dyktuje: żadnego kodu ani linku do
+               pokazania (kod jednorazowy wycięty przeglądem właściciela 2026-09-16 - był
+               tym samym linkiem w innym kształcie). Służy też osobie, która hasła JESZCZE
+               NIE MA (pilot z Googlem, który ma latać ze wspólnego tabletu). Potwierdzenie
+               `.sent-note` mówi DOKĄD i JAK DŁUGO ważny - staje pod wierszem, w tej samej
+               ramce. Przy osobie BEZ adresu (`pilots.email IS NULL`) przycisk jest
+               zablokowany z powodem doklejonym do etykiety, jak „Usuń z klubu" niżej:
+               „Wyślij link - ta osoba nie ma adresu e-mail" (serwer: `409 email_required`;
+               tu wolno powiedzieć wprost, bo pyta administrator o członka swojego klubu). -->
+          <div class="access-row">
+            <span class="kv-k">Hasło</span>
+            <button type="button" class="btn ghost sm">Wyślij link do ustawienia hasła</button>
+            <span class="sent-note" role="status">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              wysłano na anna.kowal@gmail.com · ważny godzinę
+            </span>
+          </div>
+
           <div class="access-row">
             <span class="kv-k">Członkostwo w klubie</span>
             <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
@@ -325,6 +364,50 @@
           </div>
         </div>
 
+        <!-- ══ SESJE (2.1.0, docs/logowanie-haslem.md §5.6, §6) ══
+             Klub widzi WYŁĄCZNIE sesje tej osoby W SWOIM KLUBIE (`org_id = actor.orgId`):
+             urządzeń, na których Anna Kowal jest zalogowana w innym klubie, tu nie ma
+             i mieć nie może - to dane tamtego klubu. Wiersz = urządzenie (z nagłówka
+             `X-Ninerdeck-Device` telefonu albo `User-Agent` panelu) · metoda · od kiedy
+             · ostatnio widziana (`last_seen_at`, pisany z przepustnicą 60 s, więc „3 min
+             temu" jest dokładnością tej listy). „Wyloguj" przy każdym wierszu, bo pytanie
+             brzmi zwykle „który tablet" - a „wszędzie" pod listą dla dnia, w którym ktoś
+             zapomniał się wylogować i nie wiadomo gdzie. Bez potwierdzenia inline: skutek
+             jest odwracalny ponownym zalogowaniem, a zdanie pod przyciskiem mówi to, co
+             administrator musi wiedzieć - że zapisy na urządzeniu NIE ZNIKAJĄ (D7). -->
+        <div class="card">
+          <div class="card-title">Sesje</div>
+
+          <div class="session-list">
+            <div class="session-row">
+              <span class="session-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+              </span>
+              <span class="session-body">
+                <span class="session-device">Android 14 · Pixel 7 · Ninerdeck 2.1.0</span>
+                <span class="session-meta">hasło · od 12 WRZ 08:04 · ostatnio 3 min temu</span>
+              </span>
+              <button type="button" class="btn ghost sm">Wyloguj</button>
+            </div>
+            <div class="session-row">
+              <span class="session-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+              </span>
+              <span class="session-body">
+                <span class="session-device">Android 13 · Galaxy Tab A9 · Ninerdeck 2.1.0</span>
+                <span class="session-meta">hasło · od dziś 07:50 · ostatnio 41 min temu</span>
+              </span>
+              <button type="button" class="btn ghost sm">Wyloguj</button>
+            </div>
+          </div>
+
+          <div class="access-row">
+            <span class="kv-k">Wszystkie urządzenia w tym klubie</span>
+            <button type="button" class="btn danger sm">Wyloguj wszędzie w tym klubie</button>
+          </div>
+          <span class="hint">Zdalne wylogowanie zatrzymuje wysyłkę z urządzenia; zapisy zostają na nim do ponownego zalogowania. Sesje tej osoby w innych klubach bez zmian.</span>
+        </div>
+
       </div>
 
       <!-- Stopka: anuluj, potem akcja. „Zapisz" jest zablokowany BEZ ZDANIA, bo nic
@@ -358,7 +441,96 @@
   <a href="dziennik-operacja.html">L3 Operacja →</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
+  <span>·</span>
+  <a href="#dostep-i-sesje">↓ Dostęp i sesje</a>
+  <span>·</span>
+  <a href="#druga-przynaleznosc">↓ P2a</a>
 </nav>
+
+<!-- ══ P2 · DÓŁ SZUFLADY (po przewinięciu) ══
+     Okno makiety ma 900 px, a szuflada członkostwa jest dłuższa: karty „Dostęp" i „Sesje"
+     stoją w ramce wyżej POD krawędzią okna, więc bez tego fragmentu specyfikacja nie
+     pokazywałaby dwóch rzeczy, które 2.1.0 do szuflady dokłada. To KOPIA dolnej części
+     `.drawer-body` z ramki P2 (nie osobny stan) - zmieniając kartę w ramce, zmień ją i tu. -->
+<section class="canvas-section" id="dostep-i-sesje">
+  <div class="canvas-section-title">P2 · dół szuflady po przewinięciu · karty „Dostęp" i „Sesje" (2.1.0)</div>
+  <div class="inv-grid">
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta „Dostęp" - link ustawienia hasła obok wyłączenia członkostwa</span>
+        <span class="inv-when">Jeden przycisk, który WYSYŁA list z linkiem (docs/logowanie-haslem.md D5, §5.4) - ten sam, który pilot wysłałby sobie przez „Nie pamiętam hasła"; panel nie pokazuje ani linku, ani kodu. Potwierdzenie `.sent-note` mówi dokąd i jak długo ważny. Osoba bez adresu e-mail: przycisk zablokowany z powodem doklejonym do etykiety („Wyślij link - ta osoba nie ma adresu e-mail"). Reszta karty jak w 2.0.0: wyłączenie członkostwa z potwierdzeniem w miejscu, „Usuń z klubu" zablokowane, dopóki członkostwo aktywne.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Dostęp</div>
+          <div class="access-row">
+            <span class="kv-k">Hasło</span>
+            <button type="button" class="btn ghost sm">Wyślij link do ustawienia hasła</button>
+            <span class="sent-note" role="status">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              wysłano na anna.kowal@gmail.com · ważny godzinę
+            </span>
+          </div>
+          <div class="access-row">
+            <span class="kv-k">Członkostwo w klubie</span>
+            <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
+          </div>
+          <div class="confirm">
+            <p class="confirm-q">Wyłączyć członkostwo: Anna Kowal?</p>
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
+            <div class="confirm-actions">
+              <button type="button" class="btn ghost sm">Anuluj</button>
+              <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
+            </div>
+          </div>
+          <div class="access-row">
+            <span class="kv-k">Usuń z klubu</span>
+            <button type="button" class="btn danger sm" disabled title="Najpierw wyłącz członkostwo.">Usuń z klubu - najpierw wyłącz członkostwo</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta „Sesje" - urządzenia tej osoby W TYM KLUBIE</span>
+        <span class="inv-when">Klub widzi wyłącznie sesje w swoim klubie (docs/logowanie-haslem.md §5.6, §6): wiersz = urządzenie · metoda · od kiedy · ostatnio widziane (`last_seen_at` z przepustnicą 60 s). „Wyloguj" przy każdym wierszu, „Wyloguj wszędzie w tym klubie" pod listą. Bez potwierdzenia w miejscu: skutek jest odwracalny ponownym zalogowaniem, a zdanie pod przyciskiem mówi to, co trzeba wiedzieć - zapisy na urządzeniu NIE ZNIKAJĄ (D7).</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Sesje</div>
+          <div class="session-list">
+            <div class="session-row">
+              <span class="session-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+              </span>
+              <span class="session-body">
+                <span class="session-device">Android 14 · Pixel 7 · Ninerdeck 2.1.0</span>
+                <span class="session-meta">hasło · od 12 WRZ 08:04 · ostatnio 3 min temu</span>
+              </span>
+              <button type="button" class="btn ghost sm">Wyloguj</button>
+            </div>
+            <div class="session-row">
+              <span class="session-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+              </span>
+              <span class="session-body">
+                <span class="session-device">Android 13 · Galaxy Tab A9 · Ninerdeck 2.1.0</span>
+                <span class="session-meta">hasło · od dziś 07:50 · ostatnio 41 min temu</span>
+              </span>
+              <button type="button" class="btn ghost sm">Wyloguj</button>
+            </div>
+          </div>
+          <div class="access-row">
+            <span class="kv-k">Wszystkie urządzenia w tym klubie</span>
+            <button type="button" class="btn danger sm">Wyloguj wszędzie w tym klubie</button>
+          </div>
+          <span class="hint">Zdalne wylogowanie zatrzymuje wysyłkę z urządzenia; zapisy zostają na nim do ponownego zalogowania. Sesje tej osoby w innych klubach bez zmian.</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 
 <!-- ══ P2a: OSOBA NALEŻY TEŻ DO INNEGO KLUBU ══
      Różnica względem ramki wyżej jest DOKŁADNIE JEDNA: pole „Imię i nazwisko" jest

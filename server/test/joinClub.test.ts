@@ -284,7 +284,7 @@ describe('POST /auth/join - odmowy', () => {
 
     expect((await join(app, null, ORG_A_CODE)).statusCode).toBe(401);
 
-    const platform = tokens.signPlatform({ pilotId: 'admin' }, 3600);
+    const platform = tokens.signPlatform({ pilotId: 'admin', sessionId: '' }, 3600);
     expect((await join(app, platform, ORG_A_CODE)).statusCode).toBe(401);
 
     const token = await personTokenOf(app, 'kandydat8');

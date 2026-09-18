@@ -5,6 +5,7 @@ export * from './gpsPort';
 export * from './sensorPort';
 export * from './serverPort';
 export * from './credentialsPort';
+export * from './deviceClubsPort';
 export * from './pinCryptoPort';
 export * from './tracePort';
 export * from './bugReportPort';

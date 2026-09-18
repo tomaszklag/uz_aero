@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel 2.0 · Moje konto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">MOJE KONTO</span>
+  <span class="slug">panel/konto · #/konto · K1 · wejście z nazwiska w pasku</span>
+  <span class="canvas-meta"><span class="pulse"></span>Hasło · własne sesje · 2.1.0</span>
+</header>
+
+<!-- ══ K1 = WŁASNE KONTO ZALOGOWANEGO (2.1.0, docs/logowanie-haslem.md §5.3, §5.6, §7.2) ══
+     Jedyny ekran panelu, który jest O OSOBIE PATRZĄCEJ, a nie o klubie - dlatego nie ma
+     pozycji w kolumnie bocznej (nie jest modułem) i wchodzi się do niego z nazwiska
+     w pasku górnym, jak w każdej aplikacji web. Ta sama strona w ramie klubu
+     i w ramie superadministratora: hasło i sesje ma każdy zalogowany.
+     Trzy karty, trzy pytania: CZYM się loguję (adres, metody), JAK ZMIENIĆ HASŁO
+     (albo ustawić pierwsze - droga na wspólny tablet dla kogoś, kto wchodzi Googlem)
+     i GDZIE JESTEM ZALOGOWANY (własne sesje ze WSZYSTKICH powierzchni i klubów).
+     Czego tu NIE MA: zmiany adresu (klub go nie zmienia, osoba też nie - adres jest
+     tożsamością), odpinania Google, „Wyloguj wszędzie" (własne sesje wylogowuje się
+     pojedynczo; komplet POZOSTAŁYCH wylogowuje zmiana hasła - §5.3). -->
+<aside class="variants-panel">
+  <div class="vp-title">Warianty i sąsiedzi tego ekranu</div>
+  <a class="vp-item active" href="konto.html">
+    <span class="vp-badge">K1</span>
+    <span class="vp-body">
+      <span class="vp-name">Osoba z Googlem i hasłem</span>
+      <span class="vp-when">Stan pokazany niżej: obie metody, karta „Hasło" jako ZMIANA (z obecnym hasłem), trzy sesje - bieżąca przeglądarka bez akcji, telefon i tablet klubu z „Wyloguj". „Zapisz hasło" stoi zablokowany BEZ zdania: formularz jest pusty i to widać z pól nad przyciskiem (reguła issue #55).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#ustaw">
+    <span class="vp-badge">K1a</span>
+    <span class="vp-body">
+      <span class="vp-name">Osoba bez hasła - „Ustaw hasło"</span>
+      <span class="vp-when">Każdy, kto dotąd wchodził wyłącznie Googlem. Karta nazywa się „Ustaw hasło", pola „Obecne hasło" NIE MA (nie ma czego podać), plakietka metod jest jedna. To jest droga na wspólny tablet w samolocie: hasło ustawia się tu, po zalogowaniu Googlem na własnym urządzeniu. Pod ramką, razem ze stanami zapisu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="piloci-konto.html">
+    <span class="vp-badge">P2</span>
+    <span class="vp-body">
+      <span class="vp-name">Karta członka - sesje W KLUBIE</span>
+      <span class="vp-when">Ten sam wiersz sesji, inny zakres: administrator widzi sesje członka wyłącznie w swoim klubie i ma „Wyloguj wszędzie w tym klubie". Tu, na własnym koncie, lista obejmuje wszystkie powierzchnie i kluby tej osoby - bo to jej urządzenia, a nie dane klubu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00-logowanie.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie - dokąd prowadzi hasło</span>
+      <span class="vp-when">Hasło ustawione tutaj działa w formularzu logowania panelu i na 00F telefonu (wspólny tablet). Zapomniane odzyskuje się linkiem z e-maila („Nie pamiętam hasła"), nigdy z tej karty.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Panel Ninerdeck - moje konto">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/konto
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <!-- WEJŚCIE NA TĘ STRONĘ: nazwisko w pasku jest linkiem na `#/konto` (2.1.0) -
+             tu prowadzi do siebie. Bez własnej barwy linku, odwrócone tło pod kursorem. -->
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">TM</span>
+          <span class="who-name">Tomasz Małkiewicz</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst klubu nad pozycjami modułów,
+           kanoniczna postać w SZABLON.html. ŻADNA pozycja nie jest aktywna: konto nie
+           jest modułem klubu, więc kolumna nie ma czego podświetlić. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+          <!-- Bez okruszków: konto nie leży pod żadnym ekranem (okruszki wyłącznie
+               w dzienniku). Podtytuł mówi, KIM tu jestem - bo to jest strona o mnie. -->
+          <div class="page-head">
+            <div>
+              <h1 class="page-title">Moje konto</h1>
+              <p class="page-sub">Tomasz Małkiewicz · administrator w klubie Aeroklub Zielonogórski · kod TMA</p>
+            </div>
+          </div>
+
+          <!-- Siatka dwóch kolumn zawężona do 720 px: trzy karty po kilka wierszy na pełnych
+               1200 px stałyby jako wyspy. Sesje biorą całą szerokość (`.span-2`), bo ich
+               wiersz niesie trzy rzeczy w poziomie. -->
+          <div class="card-grid">
+
+            <!-- LOGOWANIE - czym ta osoba wchodzi. Adres DO ODCZYTU (jest tożsamością,
+                 nie ustawieniem), metody jako plakietki - informacja, nie przełączniki:
+                 Google podpina się samo po zweryfikowanym adresie, hasło ustawia karta obok. -->
+            <div class="card">
+              <div class="card-title">Logowanie</div>
+              <div class="kv"><span class="kv-k">E-mail</span><span class="kv-v">tomasz.malkiewicz@ninerdeck.pl</span></div>
+              <div class="kv">
+                <span class="kv-k">Metody</span>
+                <span class="pill-row" aria-label="Metody logowania">
+                  <span class="pill dim">Google</span>
+                  <span class="pill dim">hasło</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- HASŁO (§5.3, D4). Osoba Z hasłem podaje obecne (błędne → ta sama odmowa,
+                 co przy logowaniu, z limitem prób); osoba BEZ hasła nie ma tego pola,
+                 a karta nazywa się „Ustaw hasło" (K1a niżej). Polityka to JEDNO zdanie pod
+                 nowym hasłem - NIST SP 800-63B: minimum 12 znaków, żadnych wymogów co do
+                 rodzaju znaków, żadnego wskaźnika siły, żadnego wygasania. Ta sama reguła
+                 liczy się na serwerze, w telefonie i na stronie z linku; odmowa serwera
+                 (`400 weak_password`) wraca pod pole tym samym zdaniem, które ekran pokazał
+                 przy wpisie. Przycisk zablokowany BEZ zdania: pusty formularz widać z pól
+                 nad nim (issue #55). Zapis wylogowuje POZOSTAŁE urządzenia - to skutek,
+                 który trzeba znać przed kliknięciem, więc stoi pod przyciskiem. -->
+            <div class="card">
+              <div class="card-title">Hasło</div>
+              <div class="field">
+                <label class="label" for="p-current">Obecne hasło</label>
+                <div class="input-pass">
+                  <input class="input" id="p-current" type="password" autocomplete="current-password">
+                  <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="p-next">Nowe hasło</label>
+                <div class="input-pass">
+                  <input class="input" id="p-next" type="password" autocomplete="new-password">
+                  <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <span class="hint">Co najmniej 12 znaków. Bez wymogów co do rodzaju znaków.</span>
+              </div>
+              <div class="field">
+                <label class="label" for="p-repeat">Powtórz hasło</label>
+                <div class="input-pass">
+                  <input class="input" id="p-repeat" type="password" autocomplete="new-password">
+                  <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="access-row">
+                <span class="hint">Zapis wyloguje pozostałe urządzenia - to okno zostaje.</span>
+                <button type="button" class="btn primary" disabled>Zapisz hasło</button>
+              </div>
+            </div>
+
+            <!-- MOJE SESJE (§5.6, `GET /admin/api/me/sessions`): własne sesje ze WSZYSTKICH
+                 powierzchni (panel, telefon) i wszystkich klubów - to urządzenia tej osoby,
+                 nie dane klubu. Bieżąca przeglądarka ma plakietkę „to urządzenie" i ŻADNEJ
+                 akcji: własnego okna nie wylogowuje się z listy (od tego jest „Wyloguj"
+                 w pasku). Bez „Wyloguj wszędzie": pozostałe urządzenia zdejmuje za jednym
+                 razem zmiana hasła. Klub przy wierszu pojawiłby się WYŁĄCZNIE przy więcej
+                 niż jednym członkostwie (reguła plakietki klubu z 01E) - Tomasz jest w jednym,
+                 więc go nie ma. Ostatnia aktywność z `last_seen_at`, pisanego z przepustnicą
+                 60 s - dokładniej ta lista nie mówi i nie udaje, że mówi. -->
+            <div class="card span-2">
+              <div class="card-title">Moje sesje</div>
+              <div class="session-list">
+                <div class="session-row current">
+                  <span class="session-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                  </span>
+                  <span class="session-body">
+                    <span class="session-device">Chrome · Windows · panel</span>
+                    <span class="session-meta">Google · od dziś 08:12</span>
+                  </span>
+                  <span class="pill green">To urządzenie</span>
+                </div>
+                <div class="session-row">
+                  <span class="session-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                  </span>
+                  <span class="session-body">
+                    <span class="session-device">Android 14 · Pixel 7 · Ninerdeck 2.1.0</span>
+                    <span class="session-meta">Google · od 12 WRZ 08:04 · ostatnio 2 h temu</span>
+                  </span>
+                  <button type="button" class="btn ghost sm">Wyloguj</button>
+                </div>
+                <div class="session-row">
+                  <span class="session-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/></svg>
+                  </span>
+                  <span class="session-body">
+                    <span class="session-device">Android 13 · Galaxy Tab A9 · Ninerdeck 2.1.0</span>
+                    <span class="session-meta">hasło · od 14 WRZ 07:50 · ostatnio wczoraj 19:40</span>
+                  </span>
+                  <button type="button" class="btn ghost sm">Wyloguj</button>
+                </div>
+              </div>
+              <span class="hint">Wylogowane urządzenie przestaje wysyłać i pobierać; zapisy zostają na nim do ponownego zalogowania.</span>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">← 00 Logowanie</a>
+  <span>·</span>
+  <a href="konto.html" class="active">K1 Moje konto</a>
+  <span>·</span>
+  <a href="#ustaw">↓ K1a Ustaw hasło</a>
+  <span>·</span>
+  <a href="piloci-konto.html">P2 Członkostwo →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ K1a I STANY ZAPISU ══
+     Warianty karty „Hasło" - jednej karty, nie całego ekranu: reszta strony jest
+     identyczna, więc nie rysujemy drugiej ramy dla jednego pola mniej. -->
+<section class="canvas-section" id="ustaw">
+  <div class="canvas-section-title">K1a · Ustaw hasło i stany zapisu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Osoba bez hasła - „Ustaw hasło"</span>
+        <span class="inv-when">Każdy, kto wchodzi wyłącznie Googlem (dziś: wszyscy). Pola „Obecne hasło" NIE MA - nie ma czego podać - a tytuł karty nazywa czynność, nie rzecz. Poza PIN-em nie pyta o nic więcej: ktoś z odblokowaną sesją ma i tak dostęp, a ponowne Google byłoby tarciem bez zysku (§9). Plakietka metod w karcie „Logowanie" jest wtedy jedna: „Google". To jest droga na wspólny tablet: hasło ustawia się TU, po zalogowaniu Googlem na własnym urządzeniu, a potem wpisuje na tablecie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Ustaw hasło</div>
+          <div class="field">
+            <label class="label" for="u-next">Nowe hasło</label>
+            <div class="input-pass">
+              <input class="input" id="u-next" type="password" autocomplete="new-password">
+              <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="hint">Co najmniej 12 znaków. Bez wymogów co do rodzaju znaków.</span>
+          </div>
+          <div class="field">
+            <label class="label" for="u-repeat">Powtórz hasło</label>
+            <div class="input-pass">
+              <input class="input" id="u-repeat" type="password" autocomplete="new-password">
+              <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="access-row">
+            <span class="hint">Od tej chwili zalogujesz się też hasłem - w panelu i na wspólnym tablecie.</span>
+            <button type="button" class="btn primary" disabled>Ustaw hasło</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Hasło odrzucone przez politykę - przy polu</span>
+        <span class="inv-when">Odmowa stoi POD POLEM, którego dotyczy, nie w banerze nad kartą: czerwona ramka mówi KTÓRE, zdanie mówi DLACZEGO. To samo zdanie daje polityka w przeglądarce przy wpisie i serwer w <code>400 weak_password</code> - jedna implementacja po obu stronach (D4), więc nie ma jak powiedzieć czego innego. Pokazane: hasło z listy zablokowanych (fragment adresu). Drugi przypadek - powtórka niezgodna - stoi pod „Powtórz hasło" tą samą klasą. Przycisk zostaje zablokowany bez zdania: powód widać z pola nad nim.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Hasło</div>
+          <div class="field">
+            <label class="label" for="w-next">Nowe hasło</label>
+            <div class="input-pass">
+              <input class="input invalid" id="w-next" type="text" autocomplete="new-password" value="malkiewicz2026" aria-invalid="true">
+              <button type="button" class="eye-btn" aria-label="Ukryj hasło" aria-pressed="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="hint danger">Za łatwe do odgadnięcia - zawiera Twoje nazwisko.</span>
+          </div>
+          <div class="field">
+            <label class="label" for="w-repeat">Powtórz hasło</label>
+            <div class="input-pass">
+              <input class="input" id="w-repeat" type="password" autocomplete="new-password" value="malkiewicz2026">
+              <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="access-row">
+            <span class="hint">Zapis wyloguje pozostałe urządzenia - to okno zostaje.</span>
+            <button type="button" class="btn primary" disabled>Zapisz hasło</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Po zapisie</span>
+        <span class="inv-when">Baner <code>ok</code> nad kartami, pola puste, a lista sesji SKRÓCONA do bieżącej: zmiana hasła unieważniła pozostałe (§5.3, standard - zmiana hasła wylogowuje inne urządzenia), to okno zostało. Zdanie nazywa oba skutki, bo drugi jest tym, o który ktoś zapyta za godzinę przy tablecie. Baner nie jest zamykalny i nie zostaje: opisuje akcję, która właśnie się skończyła.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner ok" role="status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+          <span>Hasło zapisane. Pozostałe urządzenia zostały wylogowane - zaloguj się na nich ponownie.</span>
+        </div>
+        <div class="card">
+          <div class="card-title">Moje sesje</div>
+          <div class="session-list">
+            <div class="session-row current">
+              <span class="session-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+              </span>
+              <span class="session-body">
+                <span class="session-device">Chrome · Windows · panel</span>
+                <span class="session-meta">Google · od dziś 08:12</span>
+              </span>
+              <span class="pill green">To urządzenie</span>
+            </div>
+          </div>
+          <span class="hint">Wylogowane urządzenie przestaje wysyłać i pobierać; zapisy zostają na nim do ponownego zalogowania.</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">← 00 Logowanie</a>
+  <span>·</span>
+  <a href="konto.html" class="active">K1 Moje konto</a>
+  <span>·</span>
+  <a href="piloci-konto.html">P2 Członkostwo →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

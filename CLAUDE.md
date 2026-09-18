@@ -2621,6 +2621,267 @@ model danych, ryzyka i etapy: **`docs/logowanie-google.md`**.
   zatwierdzać" zostawiała człowieka w kolejce na zawsze. Nowy `LoginSurface` w portach;
   atrapa testowa ignoruje powierzchnię celowo (rozdział testuje prawdziwy weryfikator)
 
+## Logowanie hasłem i sesje logowania - 2.1.0 (issue #130, 2026-09-16, gałąź `feature-130-logowanie-haslem`)
+**Odwraca „e-mail + hasło - nigdy" z 2026-09-09** (`docs/wielofirmowosc.md` §15) z powodu,
+którego tamta decyzja nie przewidziała: **w samolocie jest JEDEN tablet wspólny dla kilku
+pilotów**, a logowanie Googlem na cudzym urządzeniu znaczy dodanie własnego konta do cudzej
+przeglądarki. **NIE odwraca Google** (2026-09-04): Google zostaje pierwszą drogą na telefonie
+osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-A…H-F + H-W
+= issue #131–#138, zadanie właściciela #137. Decyzje właściciela z 2026-09-16 - nie wracać:
+- **hasło jest DRUGĄ metodą TEJ SAMEJ osoby** - poświadczenie w osobnej tabeli
+  `password_credentials` (jak `external_identities`), NIE kolumna na `pilots`. Logowanie
+  hasłem kończy się DOKŁADNIE tam, gdzie Google: od chwili ustalenia osoby wspólny rdzeń
+  `AuthCommands` (aktywne członkostwo → tokeny klubu; brak → `202` token osoby → 00C/00D/00E;
+  panel → `no_panel_access`). Osoba z Googlem i hasłem = jeden wiersz `pilots`
+- **login = e-mail ALBO kod pilota w klubie, który urządzenie zna**: kod pilota jest jedyny
+  W KLUBIE, nie na serwerze, więc sam loginem być nie może; urządzenie pamięta KLUBY,
+  z których się na nim logowano (nie osoby), a kod rozwiązuje się w bieżącym. **Przegląd
+  makiet 2026-09-17: zna JEDEN klub → 00F nic o nim nie mówi** („po co to pisać"); zna
+  więcej → pigułka z nazwą bieżącego pod marką i „Zmień klub" w stopce → ekran 00I z listą
+  tych klubów. Zdania „kod pilota działa w klubie X" ani przycisku „to nie mój klub" NIE MA
+- **scrypt z `node:crypto`** (N=2¹⁷, r=8, p=1) w zapisie PHC z parametrami (re-hash przy
+  logowaniu zamiast migracji; Argon2id wymagałby modułu natywnego). Przy nieznanym loginie
+  liczy się skrót ZASTĘPCZY - czas odpowiedzi nie wylicza kont. JEDNA odpowiedź
+  `401 invalid_credentials` na login nieznany / bez hasła / złe hasło. Limity PRZED skrótem
+  (`AttemptLimiter` z `POST /auth/join`: 10/login, 30/IP w 15 min)
+- **polityka NIST SP 800-63B**: min 12 znaków, max 128, BEZ reguł złożoności, **BEZ wygasania**
+  (zmianę wymusza wyłącznie unieważnienie albo reset), lista zablokowanych + fragmenty
+  e-maila i nazwiska, wklejanie dozwolone, przełącznik „pokaż". JEDNA implementacja
+  w `packages/domain/src/auth/passwordPolicy.ts` dla serwera, telefonu, panelu (i lustro
+  w `site/src/haslo/` z testem równości - decyzja H-F)
+- **ZAPOMNIANE HASŁO = JEDEN MECHANIZM: link z e-maila** („Nie pamiętam hasła albo jeszcze go
+  nie mam" → adres → `202` ZAWSZE → list z `/haslo/#<token>` ważnym godzinę → strona
+  `site/src/haslo/` ustawia hasło przez `POST /auth/password/reset` → `204`, BEZ sesji →
+  logowanie). Strona, nie ekran aplikacji: pocztę czyta się na WŁASNYM telefonie, a loguje
+  na wspólnym tablecie. Token we FRAGMENCIE adresu (poza logami i Referer), 256 bitów,
+  `sha256` w bazie (`password_reset_tokens`), jednorazowy, nowy zużywa stary. **Cztery
+  WYZWALACZE tego samego listu**: pilot (`self`) / administrator klubu - przycisk „Wyślij link
+  do ustawienia hasła" w karcie członka (`admin`) / platforma - zaproszenie pierwszego
+  administratora przy założeniu klubu i „Wyślij ponownie" (`platform`, 72 h) / operator -
+  `seed -- --reset-link <email>` DRUKUJE adres zamiast wysyłać (`cli`; jedyna droga poza
+  pocztą, gdy Google i poczta padły). **KODU JEDNORAZOWEGO DO PRZEPISYWANIA NIE MA I NIE
+  PROPONOWAĆ** - dwie pierwsze wersje dokumentu go miały (najpierw jako drogę główną, potem
+  awaryjną), właściciel wyciął oba razy: „działanie administratora powinno być takie samo,
+  jak kliknięcie w e-mail z resetem, tylko inny punkt triggera". Panel NIE pokazuje linków ani
+  kodów (link do wklejenia w komunikator to ten sam kanał ręczny innym kształtem). Reset
+  unieważnia WSZYSTKIE sesje osoby; zmiana hasła w ustawieniach - wszystkie poza bieżącą.
+  **SMS odrzucony** (koszt, numery telefonów jako nowe dane, słabszy kanał)
+- **poczta wychodząca jest WYMAGANIEM serwera** (`MAIL_PROVIDER` = `resend` | `log`, bez niego
+  serwer nie wstaje - „Nie pamiętam hasła", które po cichu nic nie wysyła, jest gorsze niż
+  serwer, który nie wstał). `MailPort` + adapter HTTP dostawcy przez `fetch` (zero
+  zależności) + `LogMail` dla dev. **#137 na drodze krytycznej**: rekordy DNS poczty
+  (SPF/DKIM/DMARC) na `ninerdeck.pl` w Cloudflare, konto Resend, zmienne `MAIL_*` na Railway.
+  Domena JUŻ JEST od #124 (wdrożone 2026-09-17) - pierwsza wersja dokumentu (2026-09-16)
+  miała jej rejestrację jako pierwszy krok #137, ten punkt odpadł
+- **`login_sessions` dla KAŻDEJ powierzchni** (telefon, panel klubu, platforma; token osoby
+  sesji NIE zakłada), `sid` w claimach, `refresh_tokens.session_id` (backfill `legacy`
+  w migracji 9). Brama sprawdza unieważnienie W TYM SAMYM zapytaniu, co członkostwo
+  (`authSnapshot` + `LEFT JOIN`); brak `sid` przyjmowany WYŁĄCZNIE do wygaśnięcia tokenów
+  sprzed wdrożenia. `last_seen_at` z przepustnicą 60 s w pamięci procesu. NOWE
+  `POST /auth/logout` - dziś telefon przy wylogowaniu NIE woła serwera i refresh żyje 90 dni.
+  Panel: lista sesji członka W KLUBIE aktora („Wyloguj", „Wyloguj wszędzie w tym klubie"),
+  `#/konto` z własnymi sesjami wszystkich powierzchni, „ostatnio aktywny" z sesji
+- **zdalne wylogowanie NIE kasuje danych z tabletu** (§3.0 zostaje): serwer odbija od razu
+  (`401 session_revoked`, także na refreshu), telefon przestaje wysyłać i mówi dlaczego
+  (baner Status na 00 i w Koncie 13), **PIN dalej otwiera**, zaległe zapisy czekają na
+  ponowne logowanie TEGO SAMEGO pilota. Wyrzucenie do logowania kasowałoby dane dnia
+- **nowy klub bez Google**: O2 pyta o „E-mail" (nie „Konto Google"), a razem z klubem wychodzi
+  e-mail z zaproszeniem; karta klubu: „zaproszenie wysłano na … · ważne 72 h", „Wyślij
+  ponownie". Podpięcie Googlem po tym samym adresie DALEJ działa
+- **wspólny tablet = „Wyloguj i zmień konto" ze strażnikiem outboxa** (zapisy pilota A wychodzą
+  wyłącznie tokenem A); zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - OSOBNY temat
+  po 2.1.0
+- **REJESTRACJA E-MAILEM WCHODZI DO 2.1.0** (przegląd makiet 2026-09-17: „powinna być opcja
+  rejestracji, jeśli jeszcze nie mam konta" - odwraca D9 z 2026-09-16) i jest TYM SAMYM
+  mechanizmem linku: 00H „Załóż konto" (imię i nazwisko + e-mail) → `POST /auth/signup`
+  zawsze `202` → list → `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres
+  potwierdzony kliknięciem; zajęty adres dostaje list resetu zamiast odmowy) → logowanie
+  hasłem → 00E i kod klubu. Bez członkostwa, bez omijania zatwierdzenia, bez trasy w panelu.
+  Ta sama tura: link na 00F to samo „Nie pamiętam hasła" (bez „albo jeszcze go nie mam" -
+  list i tak USTAWIA hasło osobie z Googlem), a klub urządzenia zszedł spod pola do pigułki
+  pod marką + „Zmień klub" (00I), widocznych WYŁĄCZNIE przy więcej niż jednym znanym klubie
+- **migracje 9 i 10 WYŁĄCZNIE addytywne** (produkcja 2.0.0 żyje od 2026-09-16): **9 (H-B)** =
+  `password_credentials`, `password_reset_tokens`, `idx_pilots_email_lower` (dziś
+  `pilots.email UNIQUE` jest wrażliwe na wielkość liter, a odczyty robią `lower()`;
+  migracja sprawdza duplikaty PRZED indeksem i pada nazwanym błędem); **10 (H-C)** =
+  `login_sessions`, `refresh_tokens.session_id`. Dokument zapowiadał jedną migrację 9 -
+  epiki idą osobnymi PR-ami, każdy niesie własny DDL. Telefon dostaje zmianę **OTA** (bez
+  modułów natywnych); serwer z migracjami i zmiennymi `MAIL_*` idzie PRZED aktualizacją telefonów
+- **etap H-B (serwer: hasła i link) WYKONANY 2026-09-17** (gałąź `feature-132-serwer-hasla`,
+  issue #132) - reguły obowiązujące odtąd:
+  - **hasło NIGDY nie omija rdzenia**: `AuthCommands.loginWithPassword` /
+    `panelLoginWithPassword` robią WYŁĄCZNIE dowód (`verifyPassword`: limit PRZED skrótem →
+    osoba po adresie albo po kodzie w klubie urządzenia → scrypt ZAWSZE, na skrócie
+    zastępczym dla nieznanego loginu → jedno `invalid_credentials` → `account_disabled`
+    dopiero po dowodzie → re-hash), a potem wołają `enterMobile` / `enterPanel` - TE SAME
+    metody, którymi kończy Google. Nowy sposób logowania = nowy dowód + te dwie metody,
+    nigdy trzecia kopia wyboru klubu
+  - **link „ustaw hasło" ma JEDNO źródło**: `PasswordCommands` składa token i list
+    (`issueLink` + `deliver`); `AdminPasswordLinkCommands` (panel) dokłada wyłącznie zakres,
+    zdolność i audyt `password.link_sent` (bez tokenu w `details`). Treści listów to czyste
+    funkcje w `application/common/mail/passwordMails.ts`; atrapą w testach jest WYŁĄCZNIE
+    poczta (`test/fakeMail.ts` - test czyta list i wyjmuje token jak człowiek ze skrzynki)
+  - **realizacja linku: `peek` → polityka → JEDNA transakcja** (`consume`, osoba przy
+    `signup`, skrót `set_via: 'link'`, `revokeAllOf` refreshy WSZYSTKICH klubów, stempel
+    `pilots.credentials_valid_from`). Słabe hasło NIE spala linku; sesji strona nie dostaje
+  - **W OTWARTEJ TRANSAKCJI CZYTA SIĘ WYŁĄCZNIE PRZEZ `tx`** - odczyt cudzym uchwytem
+    (`PgPilotsRepo.findById` z `this.db` wewnątrz `write.run`) w PGlite CZEKA na koniec
+    transakcji i test kończy się limitem czasu zamiast odpowiedzi (pierwszy przebieg
+    `passwordLinks.ts`). Dane do komendy panelu bierze się z portu, który już ma `tx`
+    (`PilotsAdminPort.byId`, `OrganizationsPlatformPort.byId`), albo PRZED transakcją
+  - **ADRES E-MAIL ZAPISUJE SIĘ ZNORMALIZOWANY** (`domain/email.ts`, §4.4): od 2.1.0 adres
+    jest LOGINEM, a migracja 9 liczy unikalność po `lower(email)` - więc `lower(trim())`
+    wchodzi na KAŻDEJ z pięciu dróg zapisu do `pilots.email` (pierwsze logowanie Googlem,
+    pierwszy administrator klubu, edycja członka w panelu, rejestracja e-mailem, seed).
+    Nowa droga zapisu woła `normalizeEmail`, inaczej w kolumnie stanie drugi napis na tę
+    samą osobę. **ODCZYTY zostają przy `lower()` po obu stronach** - w bazie mogą stać
+    wiersze sprzed migracji 9. `external_identities.email` zostaje SUROWY: to zapis
+    o cudzym koncie u dostawcy, nie login. Pilnuje tego `test/emailNormalization.test.ts`
+    (jeden plik na jedną regułę - cztery z sześciu przypadków upadały przed poprawką)
+  - `AttemptLimiter` przeszedł do `application/common/` (używa go telefon, panel i wysyłka
+    linku); jeden egzemplarz dla haseł, klucze rozróżnia przedrostek (`password:login:`,
+    `password:send:`, `password:admin-send:`, `password:change:`)
+  - **`MAIL_PROVIDER` jest WYMAGANY już teraz** (`log` do czasu adaptera Resend z H-F);
+    `MailPort`, `LogMail` i treści listów powstały w H-B, nie w H-F
+  - **`/haslo/` musi być serwowane NA HOŚCIE APLIKACJI** (zadanie H-F): link składa się
+    z `PUBLIC_BASE_URL`, bo strona woła `POST /auth/password/reset` względnie, a na hoście
+    strony API nie istnieje (`hostSplit.ts`)
+  - `refreshTokensRepo.ts#revokeAllOf` ma imienny wyjątek od strażnika `org_id`
+    (reset zrywa sesje osoby we WSZYSTKICH klubach); `adminRoute` zna metodę `PUT`
+  - **pułapka worktree**: `node_modules/@ninerdeck/*` w worktree wskazywało GŁÓWNY checkout
+    (`main`), więc nowy eksport z `packages/domain` nie istniał dla testów - linki
+    przepięte na `packages/` worktree (`New-Item -ItemType Junction`); po `npm install`
+    w worktree sprawdzić cel linków
+- **etap H-C (serwer: sesje logowania) WYKONANY 2026-09-18** (gałąź
+  `feature-133-sesje-logowania`, issue #133) - reguły obowiązujące odtąd:
+  - **KAŻDA ŻYWA SESJA MA WIERSZ** (`login_sessions`, migracja 10), a jej identyfikator
+    jedzie w claimie `sid` tokenu klubu, platformowego i ciasteczka panelu. Do 2.1.0 sesja
+    telefonu była wierszem `refresh_tokens` bez metadanych, a sesja panelu NIE MIAŁA
+    WIERSZA WCALE - jedynym zdalnym wylogowaniem był młot `credentials_valid_from`,
+    zrywający wszystko naraz. Nowa droga logowania MUSI założyć sesję: bez `sid` nie ma
+    czym podpisać tokenu, a `Identity.sessionId` jest wymagane przy podpisywaniu
+  - **ROTACJA ZACHOWUJE SESJĘ, PRZEŁĄCZENIE KLUBU ZAKŁADA NOWĄ** (metoda dziedziczona ze
+    źródłowej): para tokenów jest parą DLA KLUBU, więc sesja też. Gdyby rotacja zakładała
+    wiersz, lista urządzeń w panelu byłaby dziennikiem odświeżeń
+  - **BRAK `sid` PRZECHODZI, `sid` NIEZNANY ODBIJA** - to dwa różne stany i muszą takie
+    zostać: brak znaczy „token sprzed 2.1.0" (wdrożenie nie ma prawa wylogować wszystkich
+    naraz), nieznany znaczy „ktoś wskazuje sesję, której nie ma". Weryfikacja oddaje
+    `null` zamiast pustego napisu, a `sign` pustego `sid` NIE WPISUJE do payloadu -
+    dzięki temu token z testu bramy jest bajt w bajt poświadczeniem sprzed wdrożenia
+  - **`/auth/refresh` SPRAWDZA SESJĘ PRZED ROTACJĄ** i odmawia z powodem
+    (`401 session_revoked`). Po rotacji byłoby za późno: każda próba synca wylogowanego
+    telefonu zostawiałaby świeży, nikomu niedoręczony refresh na kolejne 90 dni
+  - **TRASY TELEFONU MAJĄ JEDNO `401`**, a powód pada z odświeżenia (§6) - aplikacja na
+    każde 401 sięga po refresh. PANEL dostaje `session_revoked` od razu, bo nie ma czego
+    odświeżyć. Nie dokładaj drugiego ciała 401 do tras telefonu
+  - **UNIEWAŻNIANIE TOWARZYSZY INNYM DECYZJOM i idzie TĄ SAMĄ transakcją**: zmiana hasła
+    gasi wszystkie sesje POZA BIEŻĄCĄ (`Actor.sessionId`), realizacja linku - wszystkie,
+    wyłączenie członkostwa - wszystkie w TYM klubie. Sprawca (`revoked_by`) to `self`,
+    `admin`, `platform` albo `system`; `system` znaczy „skutek uboczny innej decyzji"
+  - **PANEL KLUBU WIDZI I GASI WYŁĄCZNIE SESJE U SIEBIE** - zawężenie po osobie I klubie
+    stoi w SQL-u (`revoke`, `revokeAll`, `list`), nie w sprawdzeniu przed zapisem. Własne
+    sesje osoby (`/me/sessions`) mają zakres OSOBY, nie klubu, i dlatego są imiennym
+    wyjątkiem w `tenantIsolation`. Bieżącej sesji nie da się wyłączyć tą trasą
+  - **AUDYT NIE NIESIE `sid`** (jak `password.link_sent` nie niesie tokenu): `session.revoke`
+    i `session.revoke_all` zapisują kod pilota, powierzchnię i etykietę urządzenia
+  - **„OSTATNIO AKTYWNY" MA PRZEPUSTNICĘ** (`LastSeenThrottle`, 60 s, pamięć procesu jak
+    `AttemptLimiter`) i stempluje się w BRAMIE, nie w komendzie - to warstwa HTTP zna
+    żądanie (adres, nagłówek `X-Ninerdeck-Device`). `null` w kontrakcie znaczy „nie ma
+    czynnej sesji", a NIE „nigdy się nie logował"
+  - **KONTRAKTY PANELU MAJĄ LUSTRA UNII, NIE IMPORTY DOMENY SERWERA**
+    (`SessionSurfaceWire`, `LoginMethodWire`) - `contracts/` jest powierzchnią dla
+    klienta i strażnik architektury tego pilnuje; rozjazd łapie kompilator przy mapowaniu
+- **etap H-D (panel: hasło, link i sesje) WYKONANY 2026-09-18** (gałąź
+  `feature-134-panel-haslo`, issue #134) - reguły obowiązujące odtąd KAŻDY ekran panelu
+  dotykający poświadczeń:
+  - **DWIE METODY, JEDNA KARTA I JEDNA SESJA**: formularz e-mail + hasło stoi NA WIERZCHU
+    (administrator klubu założonego bez Google nie ma innej drogi), Google pod separatorem
+    „albo". Bez klienta Google (`methods.google == null`) separator i kontener znikają
+    W CAŁOŚCI - nie ma wyszarzonego przycisku. Panel loguje WYŁĄCZNIE e-mailem: przed
+    sesją nie ma klubu, w którym kod pilota cokolwiek by znaczył
+  - **JEDNA ODMOWA NA TRZY STANY**: „Nieprawidłowy e-mail lub hasło" dla loginu
+    nieznanego, osoby bez hasła i złego hasła - ekran nie ma prawa ich rozróżnić, bo
+    serwer starannie tego nie robi. `429` mówi CZAS („za 3 min"), nie „za chwilę"
+  - **„NIE PAMIĘTAM HASŁA" ODPOWIADA TAK SAMO PO ODMOWIE SERWERA**: `202` i `429` dają to
+    samo zdanie („jeśli ten adres jest w systemie, link już idzie - ważny godzinę"), bo
+    druga odpowiedź byłaby jedyną różnicą między adresem znanym a obcym. Wyjątkiem jest
+    AWARIA SIECI - „nie wiem, czy wysłano" to inna wiadomość niż „wysłano"
+  - **PANEL NIE POKAZUJE ANI LINKU, ANI KODU** - ani administratorowi klubu, ani
+    superadministratorowi. Potwierdzenie mówi DOKĄD poszedł list i JAK DŁUGO jest ważny,
+    a termin liczy się z odpowiedzi serwera, nie ze stałej w panelu (reset ma godzinę,
+    zaproszenie 72 h)
+  - **WIERSZ SESJI MA DWIE IKONY, NIE TRZY**: rozstrzyga POWIERZCHNIA (`panel`/`mobile`),
+    bo to są dane; kształtu obudowy („tablet czy telefon") rejestr nie zna, a wyprowadzanie
+    go z nazwy urządzenia byłoby domysłem postawionym obok faktów. Człon powierzchni
+    dokleja się WYŁĄCZNIE do etykiety przeglądarki - etykietę telefonu składa aplikacja
+    i nazywa w niej siebie. Sesja `legacy` MILCZY o metodzie zamiast pisać o wydaniach
+  - **`#/konto` NIE JEST MODUŁEM**: nie ma pozycji w kolumnie (kolumna wymienia moduły
+    KLUBU), wchodzi się z nazwiska w pasku górnym, a adres stoi przy kanonicznej liście
+    tras (`ui/shell/nav.ts`). Ta sama strona w ramie klubu i superadministratora
+  - **POLITYKĘ HASŁA LICZY DOMENA, NIE PANEL** - `checkPassword` jest DRUGIM imiennym
+    wyjątkiem od zakazu importu wartości z `@ninerdeck/domain` (`admin/test/architecture.test.ts`).
+    Kopia reguły dałaby ekran mówiący „hasło dobre" przy serwerze odpowiadającym
+    `weak_password`; odmowa serwera wraca POD POLE tym samym zdaniem, które pokazała
+    przeglądarka
+  - **TRZY POLA DOSZŁY NA SERWERZE** (H-D niesie cienki plaster serwera, bo B i C ich nie
+    wystawiły): `loginMethods` w wierszu listy członków, `GET /admin/api/me/account`
+    (adres i metody zalogowanego - OSOBNO od `GET /me`, które przestawia całą ramę
+    i nie starzeje się nigdy) oraz `invite` przy administratorze klubu. Przy okazji
+    `signedIn` na karcie klubu przestało pytać WYŁĄCZNIE o tożsamość Google - inaczej
+    administrator, który wszedł z linku i hasłem, zostawałby „tym, który się nie zalogował"
+- **etap H-E (aplikacja pilota) WYKONANY 2026-09-18** (PR #150, issue #135) - reguły
+  obowiązujące odtąd KAŻDY ekran logowania w aplikacji:
+  - **HASŁO KOŃCZY SIĘ TAM, GDZIE GOOGLE**: `AuthService.loginWithPassword` robi WYŁĄCZNIE
+    dowód i wpada w ten sam provisioning (`signed_in` / `no_club`). Nowy sposób logowania
+    = nowy dowód, nigdy trzecia kopia wyboru klubu
+  - **URZĄDZENIE PAMIĘTA KLUBY, NIE OSOBY** (`DeviceClubsPort` + `DeviceClubsStore`):
+    lista w ZWYKŁYM magazynie i pod JEDNYM kluczem bez pilota, bo ma PRZEŻYĆ wylogowanie -
+    opisuje samolot, a nie człowieka. Kod pilota rozwiązuje się w klubie bieżącym; przy
+    JEDNYM znanym klubie 00F o nim MILCZY (reguła SyncChipa), przy kilku - pigułka
+    z nazwą i „Zmień klub" (00I). Urządzenie znające klub startuje po wylogowaniu
+    wprost na 00F
+  - **`logout` WOŁA SERWER PRZED czyszczeniem magazynu**, a bez sieci czyści i tyle (§9):
+    pilot oddaje tablet następnemu i nie ma na co czekać
+  - **`session_revoked` ≠ `invalid_refresh`**: pierwsze jest DECYZJĄ CZŁOWIEKA, więc
+    `rotate()` stawia znacznik `revoked` w magazynie (przeżywa restart), a `SyncEngine`
+    oddaje `auth_revoked` obok `auth_expired`. ŻADNE nie kasuje poświadczeń ani PIN-u:
+    zdalne wylogowanie zatrzymuje WYSYŁKĘ, nie kasuje dnia, którego serwer jeszcze nie ma
+  - **pięć ekranów przed bramką prowadzi `ui/navigation/SignInFlow.tsx` zwykłym stanem** -
+    `RootNavigator` mieszka ZA bramką i opisuje aplikację pilota, a tam nikt nie jest
+    jeszcze pilotem
+  - **`GET /me/account` = cienki plaster serwera H-E** (jak trzy pola w H-D): wiersz
+    „Ustaw hasło" / „Zmień hasło" nie miał z czego wyjść. Odczyt w `application/common/
+    queries/account.ts`, bo o to samo pyta panel; OSOBNO od `GET /reference`, bo to cache
+    KLUBU z ETagiem, a metody należą do OSOBY
+- **etap H-F (poczta i strona `/haslo/`) WYKONANY 2026-09-18** (PR #147 i #151, issue #136):
+  - **`/haslo/` MIESZKA NA HOŚCIE APLIKACJI** (`hostSplit.ts`, `PASSWORD_PAGE`) - jedyny
+    plik strony rozpoznawany po ŚCIEŻCE. Bez tego droga z listu była PRZERWANA: link
+    składa się z `PUBLIC_BASE_URL`, a plik strony był stamtąd odsyłany na host strony,
+    gdzie `POST /auth/password/reset` nie istnieje
+  - **ceną jest plik strony na origin panelu, więc ma WŁASNĄ, ścisłą politykę**
+    (`PASSWORD_PAGE_CSP`) bez `'unsafe-inline'`. Uzasadnienie luzu reszty strony („nie ma
+    pola, w które ktokolwiek cokolwiek wpisuje") przestało jej dotyczyć przy polu hasła.
+    **To jedyna strona w `site/` bez skryptu i stylu w treści pliku** - dopisanie ich
+    ją psuje, i pilnuje tego `app/src/__tests__/passwordPage.test.ts`
+  - **polityka hasła na stronie to LUSTRO z testem równości** (`site/src/haslo/policy.js`
+    ↔ `passwordPolicyMirror.test.ts`), bo `site/` jest świadomie poza workspace'ami
+    i bez zależności. Lustro jest WĘŻSZE: `contains_email`/`contains_name` zna tylko
+    serwer i wracają jako `400 weak_password { reason }`, które ZOSTAJE NA FORMULARZU -
+    odmowa polityki linku nie spala
+- **przegląd bezpieczeństwa (W6) 2026-09-18**: dwanaście punktów §8 sprawdzonych,
+  ZERO podatności; wynik i to, czego świadomie nie zmieniono, w `docs/logowanie-haslem.md` §15
+- **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
+  HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
+  kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`
+  (adres → „WYŚLIJ LINK" → potwierdzenie; ŻADNEGO pola hasła), NOWE `00h-zaloz-konto`
+  (imię i nazwisko + e-mail → link; potwierdzenie w trybie warunkowym), NOWE `00i-wybor-klubu`
+  (lista klubów urządzenia ze stopki 00F), `13` sekcja „Hasło"
+  + arkusz `13b`, `00` baner sesji
+  unieważnionej; panel `00-logowanie` (formularz + „albo" + Google), `piloci-konto`
+  („Logowanie" z plakietkami Google/hasło, „Wyślij link", karta Sesje), `organizacje-klub`
+  (E-mail + zaproszenie), NOWE `konto` (`#/konto`: zmiana hasła, moje sesje); strona
+  `site/src/haslo/` (trzy stany: formularz / link wygasł / gotowe)
+
 ## Wielofirmowość 2.0.0 - epik A: decyzje i makiety (issue #97, 2026-09-08, gałąź `feature-97-wielofirmowosc-projekt`)
 Jeden serwer dla wielu klubów, superadministrator zakłada kluby, **nic nie wycieka między
 klubami**. Dokument decyzji: **`docs/wielofirmowosc.md`** (model danych, przepływy, migracja
@@ -3410,7 +3671,7 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   w przycisku, nie ruszać ich
 
 ## Pilot i samolot - UX
-- Pierwsze logowanie: **wyłącznie Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22 - haseł nie ma nigdzie; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
+- Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) - pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej operacji - NIE pytamy o kod pilota w formularzach

@@ -258,3 +258,46 @@ export function KeyIcon({ size = 13 }: IconProps) {
     </Stroke>
   );
 }
+
+/**
+ * Oko - przełącznik „pokaż hasło" (2.1.0, mockupy `00-logowanie` i `konto`).
+ *
+ * JEDNA ikona w obu stanach, a nie oko i oko przekreślone: o tym, czy hasło jest
+ * odsłonięte, mówi kontrast (`.eye-btn[aria-pressed='true']` w `login.css`) i sama
+ * treść pola. Druga ścieżka kazałaby czytać ikonę, zamiast patrzeć na to, co pod nią.
+ */
+export function EyeIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size} width={2}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+    </Stroke>
+  );
+}
+
+/**
+ * Przeglądarka i telefon - RODZAJ urządzenia w wierszu sesji (2.1.0, §5.6).
+ *
+ * DWIE ikony, nie trzy: rozstrzyga POWIERZCHNIA sesji (`panel` / `mobile`), która jest
+ * danymi, a nie kształt obudowy, którego rejestr nie zna. Mockup rysuje przy tablecie
+ * własną ikonę, ale wziąć ją byłoby skąd wyłącznie z nazwy urządzenia - a zgadywanie
+ * „w napisie jest «Tab», więc to tablet" jest domysłem postawionym obok faktów.
+ */
+export function MonitorIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size} width={2}>
+      <rect width="20" height="14" x="2" y="3" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="8" x2="16" y1="21" y2="21" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="12" x2="12" y1="17" y2="21" strokeLinecap="round" strokeLinejoin="round" />
+    </Stroke>
+  );
+}
+
+export function PhoneIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size} width={2}>
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 18h.01" strokeLinecap="round" strokeLinejoin="round" />
+    </Stroke>
+  );
+}

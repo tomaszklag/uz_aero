@@ -6,11 +6,12 @@
  * decyduje `queries/`.
  *
  * == HASLA NIE MA W ZADNYM ZADANIU - ANI W ZADNEJ ODPOWIEDZI ==
- * Hasła zniknęły z produktu 2026-09-04 (`docs/logowanie-google.md`). Konto założone
- * tutaj nie dostaje żadnego poświadczenia: dostęp daje dopiero PIERWSZE logowanie
- * kontem Google o wpisanym `email` - serwer podpina wtedy tożsamość do tego wiersza.
- * Dlatego e-mail jest w tym formularzu jedynym polem, od którego zależy, czy konto
- * w ogóle da się użyć.
+ * I to zdanie zostaje w mocy także po powrocie haseł w 2.1.0. Klub nie nadaje
+ * poświadczeń: `sendPasswordLink` WYSYŁA list, a hasło ustawia jego adresat na stronie
+ * z linku. W odpowiedzi jest adres i termin - nigdy link, nigdy kod do podyktowania
+ * (`docs/logowanie-haslem.md` §5.4). Dostęp daje więc albo logowanie Googlem kontem
+ * o wpisanym `email`, albo hasło ustawione z tego listu - w obu wypadkach e-mail jest
+ * polem, od którego zależy, czy konto w ogóle da się użyć.
  *
  * == DOSTEPNOSC KONTA TO OSOBNE ZADANIE ==
  * `active` nie jedzie w `PATCH`-u i to jest decyzja serwera, nie uproszczenie panelu:
@@ -18,7 +19,13 @@
  * granicę ważności poświadczeń. To inna operacja niż poprawienie nazwiska.
  */
 
-import type { PilotChangeDto, PilotPageDto, PilotRole } from './dto';
+import type {
+  LoginSessionDto,
+  PasswordLinkSentDto,
+  PilotChangeDto,
+  PilotPageDto,
+  PilotRole,
+} from './dto';
 import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
 
 /**
@@ -87,4 +94,48 @@ export function setPilotActive(id: string, active: boolean): Promise<PilotChange
  */
 export function deletePilot(id: string): Promise<void> {
   return apiDelete(`/pilots/${encodeURIComponent(id)}`);
+}
+
+// -- dostęp członka: link „ustaw hasło" i urządzenia (2.1.0, issue #134 D4) -----
+
+/**
+ * „Wyślij link do ustawienia hasła" w karcie członka.
+ *
+ * TEN SAM list, który ten człowiek wysłałby sobie sam przez „Nie pamiętam hasła" -
+ * inny wyzwalacz, ten sam token, ta sama strona. Służy też osobie, która hasła jeszcze
+ * NIE MA (pilot z Googlem, który ma latać ze wspólnego tabletu).
+ *
+ * Odmowy, które ekran musi umieć nazwać: `409 email_required` (osoba bez adresu -
+ * tu wolno powiedzieć wprost, bo pyta administrator o członka swojego klubu),
+ * `429 too_many_attempts`, `502 mail_failed` (token jest, list nie doszedł).
+ */
+export function sendPasswordLink(id: string): Promise<PasswordLinkSentDto> {
+  return apiPost<PasswordLinkSentDto>(`/pilots/${encodeURIComponent(id)}/password-link`);
+}
+
+/**
+ * Urządzenia członka W TYM klubie - i wyłącznie w tym.
+ *
+ * Sesji tej osoby w innym klubie tu nie ma i mieć nie może: to dane tamtego klubu.
+ * Zawężenie robi serwer w zapytaniu, nie panel po odpowiedzi.
+ */
+export function pilotSessions(id: string): Promise<LoginSessionDto[]> {
+  return apiGet<LoginSessionDto[]>(`/pilots/${encodeURIComponent(id)}/sessions`);
+}
+
+/** „Wyloguj" przy wierszu urządzenia. Cudza albo nieznana sesja → 404. */
+export function revokePilotSession(id: string, sessionId: string): Promise<void> {
+  return apiDelete(
+    `/pilots/${encodeURIComponent(id)}/sessions/${encodeURIComponent(sessionId)}`,
+  );
+}
+
+/**
+ * „Wyloguj wszędzie w tym klubie".
+ *
+ * Liczba w odpowiedzi jest jedyną odpowiedzią na „co się właśnie stało": zero znaczy
+ * „nie było czego wylogować", a nie „nie udało się".
+ */
+export function revokeAllPilotSessions(id: string): Promise<{ revoked: number }> {
+  return apiPost<{ revoked: number }>(`/pilots/${encodeURIComponent(id)}/sessions/revoke-all`);
 }

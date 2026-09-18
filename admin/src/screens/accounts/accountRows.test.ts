@@ -10,6 +10,8 @@ const pilot: PilotListItemDto = {
   email: 't.malkiewicz@ninerdeck.pl',
   active: true,
   role: 'pilot',
+  lastSeenAt: null,
+  loginMethods: ['google'],
 };
 
 describe('komórki', () => {

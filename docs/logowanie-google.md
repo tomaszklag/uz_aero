@@ -1,5 +1,15 @@
 # Ninerdeck - logowanie przez Google (decyzje)
 
+> **CO SIĘ ZMIENIA W 2.1.0 (issue #130, decyzje właściciela 2026-09-16).** Zdanie „hasła
+> znikają z produktu w całości" (§1) przestaje obowiązywać: **hasło wraca jako DRUGA metoda
+> TEJ SAMEJ osoby**, obok Google - bo w samolocie jest jeden tablet wspólny dla kilku
+> pilotów i nikt nie doda do niego własnego konta Google. Google zostaje pierwszą drogą na
+> telefonie osobistym i w panelu; wszystko poniżej o weryfikacji tokenu, `aud`, podpięciu po
+> zweryfikowanym adresie i PIN-ie zostaje w mocy. Zapomniane hasło odzyskuje się WYŁĄCZNIE
+> linkiem z e-maila (jeden mechanizm, cztery wyzwalacze - w tym przycisk administratora
+> i zaproszenie pierwszego administratora klubu); ryzyko z §11 „awaria Google = nikt nie
+> wchodzi" dostaje przez to drugą drogę. Pełne decyzje: **`docs/logowanie-haslem.md`**.
+
 > **CO SIĘ ZMIENIŁO W 2.0.0 (wielofirmowość, epik D - issue #100).** Samo logowanie
 > Googlem działa dokładnie tak, jak opisuje ten dokument; przeniosły się DWIE rzeczy
 > i trzeba o nich wiedzieć, czytając resztę:

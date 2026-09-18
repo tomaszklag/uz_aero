@@ -24,7 +24,7 @@
     <span class="vp-badge">O2</span>
     <span class="vp-body">
       <span class="vp-name">Nowy klub</span>
-      <span class="vp-when">Trzy rzeczy i nic więcej: nazwa, adres (slug - podpowiedziany z nazwy, potem stały) i PIERWSZY administrator - adres konta Google, imię i nazwisko, kod pilota. Jego członkostwo powstaje OD RAZU, a konto podpina się przy pierwszym logowaniu tym adresem: jedyny wyjątek od kodu klubu, klasa bootstrap (2026-09-09). Razem z klubem powstaje kod klubu. Bez floty, bez ustawień - to zakłada już administrator u siebie.</span>
+      <span class="vp-when">Trzy rzeczy i nic więcej: nazwa, adres (slug - podpowiedziany z nazwy, potem stały) i PIERWSZY administrator - <b>e-mail</b> (od 2.1.0 dowolny, nie tylko Google - D8), imię i nazwisko, kod pilota. Jego członkostwo powstaje OD RAZU, a razem z klubem WYCHODZI DO NIEGO LIST z linkiem do ustawienia hasła (ważny 72 h) - jak zaproszenie w każdym systemie; jeśli adres jest kontem Google, może zamiast tego kliknąć Google. Jedyny wyjątek od kodu klubu, klasa bootstrap (2026-09-09). Razem z klubem powstaje kod klubu. Bez floty, bez ustawień - to zakłada już administrator u siebie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -32,7 +32,7 @@
     <span class="vp-badge">O2a</span>
     <span class="vp-body">
       <span class="vp-name">Karta istniejącego klubu</span>
-      <span class="vp-when">Otwiera ją wiersz listy. Liczby, administratorzy (kto ma tam wstęp i czy już się zalogował), kod klubu do odczytu i sekcja „Dostęp" z wyłączeniem klubu - druga ramka niżej.</span>
+      <span class="vp-when">Otwiera ją wiersz listy. Liczby, administratorzy (kto ma tam wstęp i czy już się zalogował; dopóki nie wszedł - „zaproszenie wysłano … · ważne 72 h" i „Wyślij ponownie", ten sam list co reset hasła), kod klubu do odczytu i sekcja „Dostęp" z wyłączeniem klubu - druga ramka niżej.</span>
     </span>
   </a>
   <a class="vp-item" href="organizacje-lista.html">
@@ -69,10 +69,12 @@
       </a>
 
       <div class="topbar-right">
-        <span class="who">
+        <!-- Nazwisko w pasku jest LINKIEM na własne konto (`#/konto`, 2.1.0) - także
+             w ramie superadministratora: hasło i sesje ma każdy zalogowany. -->
+        <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">TK</span>
           <span class="who-name">Tomasz Klag</span>
-        </span>
+        </a>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
           Wyloguj
@@ -166,13 +168,20 @@
         <!-- PIERWSZY ADMINISTRATOR JEST POLEM WYMAGANYM, nie opcją: kodem klubu nie
              miałby kto zatwierdzić pierwszego pilota, a drugiej drogi do klubu nie ma.
              To jedyne miejsce w systemie, w którym członkostwo powstaje z ADRESU -
-             klasa bootstrap, nie druga droga (docs/wielofirmowosc.md §3.8). -->
+             klasa bootstrap, nie druga droga (docs/wielofirmowosc.md §3.8).
+             OD 2.1.0 ADRES NIE MUSI BYĆ KONTEM GOOGLE (docs/logowanie-haslem.md D8):
+             razem z klubem wychodzi do niego list z linkiem do ustawienia hasła (ważny
+             72 h - ten sam mechanizm, co „Nie pamiętam hasła", inny wyzwalacz), więc
+             etykieta brzmi „E-mail", a podpis mówi o SKUTKU: co dostanie i jak wejdzie.
+             Podpięcie Googlem po tym samym adresie działa dalej - jeśli to konto Google,
+             może po prostu kliknąć Google. Superadministrator nie widzi ani linku, ani
+             kodu: wysyła, nie dyktuje. -->
         <div class="card">
           <div class="card-title">Pierwszy administrator</div>
           <div class="field">
-            <label class="label" for="n-email">Konto Google</label>
-            <input class="input mono" id="n-email" value="piotr.wrobel@gmail.com">
-            <span class="hint">Tym adresem się zaloguje. Konto podepnie się przy pierwszym logowaniu - zaproszenia nie wysyłamy.</span>
+            <label class="label" for="n-email">E-mail</label>
+            <input class="input mono" id="n-email" type="email" value="piotr.wrobel@example.pl">
+            <span class="hint">Tym adresem się zaloguje. Dostanie e-mail z linkiem do ustawienia hasła; jeśli to adres Google, może też kliknąć Google.</span>
           </div>
           <div class="field">
             <label class="label" for="n-admin">Imię i nazwisko</label>
@@ -221,7 +230,7 @@
 <header class="canvas-label" id="karta">
   <span class="film-strip">ORGANIZACJE · KARTA KLUBU</span>
   <span class="slug">panel/organizacje-klub · #/organizacje/&lt;id&gt; · O2a</span>
-  <span class="canvas-meta">Kod klubu DO ODCZYTU · wyłączenie klubu</span>
+  <span class="canvas-meta">Zaproszenie wysłane · kod klubu DO ODCZYTU · wyłączenie klubu</span>
 </header>
 
 <main class="browser" role="region" aria-label="Panel Ninerdeck - karta klubu">
@@ -245,10 +254,12 @@
       </a>
 
       <div class="topbar-right">
-        <span class="who">
+        <!-- Nazwisko w pasku jest LINKIEM na własne konto (`#/konto`, 2.1.0) - także
+             w ramie superadministratora: hasło i sesje ma każdy zalogowany. -->
+        <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">TK</span>
           <span class="who-name">Tomasz Klag</span>
-        </span>
+        </a>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
           Wyloguj
@@ -294,7 +305,11 @@
           </thead>
           <tbody>
             <tr class="clickable"><td><span class="cell-strong">Aeroklub Zielonogórski</span><span class="cell-sub mono">aeroklub-zielonogorski</span></td><td class="num">14</td><td class="num">4</td><td>Tomasz Małkiewicz <span class="cell-sub">+1</span></td><td><span class="pill green"><span class="dot"></span>Aktywny</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
-            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">nie zalogował się</span></td><td><span class="pill amber"><span class="dot"></span>Administrator nie wszedł</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
+            <!-- Podpis „zaproszenie wysłane" (2.1.0), nie „nie zalogował się": mówi, co JUŻ
+                 się stało i czego się czeka - list wyszedł, administrator ma go otworzyć.
+                 Bursztyn zostaje, bo to jedyny stan klubu, w którym superadministrator ma
+                 coś do zrobienia (przypomnieć się, poprawić adres, wysłać ponownie). -->
+            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">zaproszenie wysłane</span></td><td><span class="pill amber"><span class="dot"></span>Administrator nie wszedł</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -333,7 +348,15 @@
         </div>
 
         <!-- Administratorzy = jedyne osoby z klubu widoczne dla superadministratora:
-             odpowiadają na pytanie „do kogo dzwonić". Reszta członków zostaje w klubie. -->
+             odpowiadają na pytanie „do kogo dzwonić". Reszta członków zostaje w klubie.
+             ZAPROSZENIE (2.1.0, docs/logowanie-haslem.md D8, §5.4): to TEN SAM mechanizm,
+             co reset hasła - link „ustaw hasło" z dłuższą ważnością (72 h) i nazwą klubu
+             w treści listu. Dopóki administrator nie wszedł, wiersz niesie potwierdzenie
+             wysyłki (`.sent-note`: kiedy i jak długo ważne) i „Wyślij ponownie" (nowy list
+             zużywa poprzedni link). Superadministrator NIE WIDZI ani linku, ani kodu -
+             link do wklejenia w komunikator byłby tym samym kanałem ręcznym, który
+             przegląd właściciela odrzucił razem z kodem jednorazowym. Po pierwszym
+             logowaniu wiersz mówi „ostatnio aktywny …" (§6), a przycisk znika. -->
         <div class="card">
           <div class="card-title">
             Administratorzy
@@ -341,10 +364,14 @@
             <span class="pill amber">Nie zalogował się</span>
           </div>
           <div class="access-row">
-            <span>Piotr Wróbel <span class="cell-sub">piotr.wrobel@gmail.com · kod PWR</span></span>
-            <span class="cell-sub warn">nie zalogował się jeszcze</span>
+            <span>Piotr Wróbel <span class="cell-sub">piotr.wrobel@example.pl · kod PWR</span></span>
+            <button type="button" class="btn ghost sm">Wyślij ponownie</button>
+            <span class="sent-note" role="status">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              zaproszenie wysłano 8 WRZ 2026 · ważne 72 h
+            </span>
           </div>
-          <span class="hint">Członkostwo administratora już istnieje - konto Google podepnie się przy jego pierwszym logowaniu tym adresem. Adres można poprawić, dopóki nie wszedł.</span>
+          <span class="hint">Administrator wchodzi z linku w e-mailu - ustawia hasło i loguje się do panelu. Adres można poprawić, dopóki nie wszedł.</span>
         </div>
 
         <!-- KOD KLUBU powstaje razem z klubem (2026-09-09, docs/wielofirmowosc.md §3.8):

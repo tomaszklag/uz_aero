@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 00I Wybierz klub · urządzenie zna kilka klubów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5C5C5C;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(52,152,219,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .login-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 24px 40px; }
+
+  /* ===== BRAND - mniejszy niż na 00A: treścią ekranu jest stan, nie marka (jak 00C/00E) ===== */
+  /* Pod marką stoi od razu nagłówek, nie karta - większy odstęp niż na 00G/00H, jak na 00F. */
+  .brand { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:34px; }
+  .brand-icon {
+    width:56px; height:56px; border-radius:16px;
+    background:linear-gradient(135deg, #1A2E1A 0%, #0D1A0D 100%);
+    border:1px solid var(--green-border); box-shadow:0 0 26px rgba(46,204,113,0.16);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-name { font-family:var(--font-display); font-size:30px; letter-spacing:4px; line-height:1; color:var(--text-primary); }
+  .brand-name span { color:var(--green); }
+
+  /* ===== KARTA STATUSU (typ „Status" - nigdy zamykalna) W DWU TONACH =====
+     Ten sam kształt, co bursztynowa karta 00C/00E, ale w tonie treści: NIEBIESKI to
+     informacja („co się teraz stanie"), nie ostrzeżenie - bursztyn przy zwykłej
+     instrukcji uczyłby oko, że każdy stan jest problemem. ZIELONY na potwierdzeniu:
+     czynność wykonana, stan w normie. */
+  .status-card {
+    width:100%; border-radius:18px; padding:18px 18px 16px;
+    display:flex; flex-direction:column; gap:9px; margin-bottom:14px;
+  }
+  .status-card.info { background:var(--blue-muted); border:1px solid var(--blue-border); }
+  .status-card.ok { background:var(--green-muted); border:1px solid var(--green-border); }
+  .status-head { display:flex; align-items:center; gap:9px; }
+  .status-title { font-family:var(--font-display); font-size:21px; letter-spacing:2.4px; line-height:1; }
+  .status-card.info .status-title { color:var(--blue); }
+  .status-card.ok .status-title { color:var(--green); }
+  .status-body { font-size:13px; line-height:1.55; color:var(--text-primary); }
+
+  /* ===== WIERSZ ADRESU na potwierdzeniu - mono, jak `.acct-mail` na 00C ===== */
+  .mail-card {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:13px 16px; display:flex; align-items:center; gap:11px;
+    margin-bottom:14px;
+  }
+  .mail-card svg { flex-shrink:0; color:var(--text-muted); }
+  .mail-addr { font-family:var(--font-mono); font-size:13px; letter-spacing:0.5px; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ===== POLE ADRESU - wzorzec formularzy (00E) ===== */
+  .field { width:100%; display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
+  .input {
+    width:100%; min-height:52px; padding:14px 15px; border-radius:12px;
+    background:var(--surface-raised); border:1.5px solid var(--border-strong);
+    font-family:var(--font-mono); font-size:16px; letter-spacing:1.5px; color:var(--text-primary);
+  }
+  .input:focus { outline:none; border-color:var(--green-border); }
+  .input.invalid { border-color:var(--red-border); }
+  /* Placeholder = INSTRUKCJA, składem tekstowym (issue #58): nie dziedziczy kroju liczb. */
+  .input::placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder); }
+  .field-error { font-family:var(--font-body); font-size:12.5px; color:var(--red); line-height:1.45; }
+
+  /* ===== TYTUŁ + LISTA KLUBÓW - karty do wyboru, jak lista klubów na 13A (nie select) =====
+     Wybrana karta ma zieloną ramkę i ptaszek (zaznaczenie kształtem, nie samym kolorem);
+     druga linia niesie, kiedy ostatnio logowano się na tym urządzeniu w tym klubie -
+     to jedyna rzecz, która odróżnia dwie karty poza nazwą. */
+  .form-heading { align-self:flex-start; font-family:var(--font-display); font-size:22px; letter-spacing:2.5px; line-height:1; color:var(--text-primary); margin-bottom:16px; }
+  .club-list { width:100%; display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .club-opt {
+    display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; border-radius:14px;
+    background:var(--surface-raised); border:1.5px solid var(--border-strong); text-decoration:none; color:inherit;
+    transition:border-color .15s;
+  }
+  .club-opt:hover { border-color:var(--text-muted); }
+  .club-opt.selected { border-color:var(--green); background:var(--green-muted); }
+  .club-opt-icon { width:36px; height:36px; border-radius:10px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0; }
+  .club-opt.selected .club-opt-icon { color:var(--green); border-color:var(--green-border); }
+  .club-opt-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .club-opt-name { font-size:15px; font-weight:600; color:var(--text-primary); }
+  .club-opt-sub { font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .club-opt-check { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--green); flex-shrink:0; opacity:0; }
+  .club-opt.selected .club-opt-check { opacity:1; }
+  /* Jedno zdanie z DROGĄ WYJŚCIA (nie opis budowy aplikacji): kto nie widzi swojego klubu,
+     loguje się adresem - bez listy, bez kodu pilota. */
+  .club-hint { width:100%; font-size:12px; color:var(--text-secondary); line-height:1.5; text-align:center; }
+
+  /* ===== AKCJE ===== */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:16px; border-radius:14px; margin-top:6px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:21px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 20px rgba(46,204,113,0.28); transition:all .18s ease;
+  }
+  .btn-primary:hover { background:#3DDC82; box-shadow:0 0 36px rgba(46,204,113,0.5); }
+  /* Powód blokady WEWNĄTRZ przycisku (issue #55) - kolumna: napis, pod nim bursztyn.
+     Pusty adres blokuje BEZ zdania: blokadę widać z pola nad przyciskiem. */
+  .btn-primary.disabled { background:var(--surface-raised); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-label { display:flex; align-items:center; justify-content:center; gap:10px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
+  .link-out {
+    margin-top:16px; font-size:12.5px; color:var(--text-muted);
+    text-decoration:none; border-bottom:1px solid var(--border-strong); padding-bottom:2px;
+    transition:color .15s;
+  }
+  .link-out:hover { color:var(--green); border-color:var(--green-border); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 00I</span>
+  <span class="slug">logowanie · wybierz klub urządzenia · tylko przy kilku klubach</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Wybierz klub">
+  <div class="status-bar">
+    <span>9:43</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="login-wrap">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
+          </svg>
+        </div>
+        <div class="brand-name">NINER<span>DECK</span></div>
+      </div>
+
+      <!--
+        KLUB URZĄDZENIA (docs/logowanie-haslem.md D10; przegląd makiet 2026-09-17: „«Zmień
+        klub» ma swój ekran, gdzie wybieram spośród dostępnych dla mnie klubów; jeśli jestem
+        tylko w jednym klubie, nie ma sensu w ogóle tego podawać"). Urządzenie pamięta
+        KLUBY, z których się na nim logowano - PRZED zalogowaniem to jedyna lista, jaką
+        zna (osoby jeszcze nie ma). Kod pilota rozwiązuje się w WYBRANYM klubie; wybór
+        wraca na 00F pigułką pod marką.
+
+        EKRAN ISTNIEJE WYŁĄCZNIE PRZY WIĘCEJ NIŻ JEDNYM KLUBIE: przy jednym 00F nie ma ani
+        pigułki, ani „Zmień klub" w stopce - nie ma czego wybierać. Typowy tablet
+        w samolocie jednego aeroklubu nigdy tego ekranu nie zobaczy; zobaczy go telefon
+        pilota latającego w dwóch klubach albo tablet, na którym logowali się goście.
+
+        Lista KART (nie select - reguła całej aplikacji), wybrana z zieloną ramką
+        i ptaszkiem; druga linia mówi, kiedy ostatnio logowano się tu w tym klubie.
+        Wybór nie wymaga sieci (lista jest lokalna) i nie zapisuje niczego poza kontekstem.
+        Pod listą JEDNO zdanie z drogą wyjścia: kto nie widzi swojego klubu, loguje się
+        adresem e-mail - bez zdania „kod pilota działa w klubie", które właściciel wyciął.
+      -->
+      <div class="form-heading">WYBIERZ KLUB</div>
+
+      <div class="club-list" role="radiogroup" aria-label="Klub urządzenia">
+        <a href="00f-login-haslo.html" class="club-opt selected" role="radio" aria-checked="true">
+          <span class="club-opt-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          </span>
+          <span class="club-opt-body">
+            <span class="club-opt-name">Aeroklub Zielonogórski</span>
+            <span class="club-opt-sub">ostatnie logowanie · dziś 07:50</span>
+          </span>
+          <span class="club-opt-check">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </a>
+        <a href="00f-login-haslo.html" class="club-opt" role="radio" aria-checked="false">
+          <span class="club-opt-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          </span>
+          <span class="club-opt-body">
+            <span class="club-opt-name">Aeroklub Krakowski</span>
+            <span class="club-opt-sub">ostatnie logowanie · 12 WRZ</span>
+          </span>
+          <span class="club-opt-check">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <span class="club-hint">Nie ma Twojego klubu? Zaloguj się adresem e-mail.</span>
+
+      <!-- Wyjście bez zmiany: tapnięcie w kartę też wraca na 00F, ale kto wszedł przez
+           pomyłkę, ma wrócić bez ruszania wyboru. -->
+      <a href="00f-login-haslo.html" class="link-out">Wróć do logowania</a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty ekranu logowania - kiedy który?</div>
+  <a class="vp-item" href="00-login.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Odblokowanie PIN</span>
+      <span class="vp-when">Codzienne wejście - na telefonie jest już profil pilota. W pełni offline.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00a-login-full.html">
+    <span class="vp-badge">00A</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie Google</span>
+      <span class="vp-when">Pierwsze uruchomienie na tym telefonie albo reset PIN-u. Wymaga internetu. Pod Googlem drugi przycisk: „Zaloguj się hasłem" (00F).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00b-login-offline.html">
+    <span class="vp-badge amber">00B</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline bez profilu</span>
+      <span class="vp-when">Jak 00A, ale bez sieci - logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00c-oczekiwanie.html">
+    <span class="vp-badge amber">00C</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zatwierdzenie</span>
+      <span class="vp-when">Zgłoszenie kodem klubu czeka na administratora TEGO klubu. Członkostwa jeszcze nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00d-odrzucone.html">
+    <span class="vp-badge red">00D</span>
+    <span class="vp-body">
+      <span class="vp-name">Zgłoszenie odrzucone</span>
+      <span class="vp-when">Administrator klubu odrzucił zgłoszenie - z powodem widocznym na ekranie. Wyjście: inny kod albo inne konto.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00e-bez-klubu.html">
+    <span class="vp-badge amber">00E</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie należysz do żadnego klubu</span>
+      <span class="vp-when">Konto potwierdzone (Google albo hasło), ale osoba nie ma członkostwa w żadnym klubie - jedno pole na kod klubu od administratora.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00f-login-haslo.html">
+    <span class="vp-badge">00F</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie hasłem</span>
+      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta klub po wylogowaniu, więc wystarczy kod pilota.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00g-link-hasla.html">
+    <span class="vp-badge amber">00G</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie pamiętam hasła</span>
+      <span class="vp-when">Adres → link z e-maila → nowe hasło na stronie, z dowolnego urządzenia. Działa też dla osoby z Googlem, która hasła jeszcze nie ustawiła; kodu od administratora nie ma. Konto zakłada się osobno (00H).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00h-zaloz-konto.html">
+    <span class="vp-badge amber">00H</span>
+    <span class="vp-body">
+      <span class="vp-name">Załóż konto</span>
+      <span class="vp-when">Osoba bez konta i bez Google: imię i nazwisko + e-mail → link z e-maila → hasło na stronie; konto powstaje dopiero przy ustawieniu hasła. Potem logowanie (00F) i kod klubu (00E).</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="00i-wybor-klubu.html">
+    <span class="vp-badge">00I</span>
+    <span class="vp-body">
+      <span class="vp-name">Wybierz klub</span>
+      <span class="vp-when">Ze stopki 00F, wyłącznie gdy urządzenie zna więcej niż jeden klub: lista klubów, z których się na nim logowano - wybrany staje się kontekstem kodu pilota. Przy jednym klubie ekranu ani wejścia nie ma.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="00f-login-haslo.html">← 00F Hasło</a>
+  <a href="00i-wybor-klubu.html" class="active">00I Wybierz klub</a>
+  <a href="00g-link-hasla.html">00G Link hasła</a>
+  <a href="00h-zaloz-konto.html">00H Załóż konto</a>
+  <span>·</span>
+  <a href="00e-bez-klubu.html">00E Bez klubu →</a>
+</nav>
+
+</body>
+</html>

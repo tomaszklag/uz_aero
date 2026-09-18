@@ -61,7 +61,10 @@
 ## Sieć i dane
 
 - **Kolejka wysyłki** - zapisy czekające na telefonie na wysłanie do klubu. Wskaźnik **OFFLINE · n** pokazuje ich liczbę, gdy ostatnia próba nie dotarła.
-- **SYNC STOI** - czerwony wskaźnik: serwer odpowiedział i odmówił albo wygasła sesja, więc kolejka sama nie ruszy. Zapisy zostają nietknięte na telefonie.
+- **SYNC STOI** - czerwony wskaźnik: serwer odpowiedział i odmówił, wygasła sesja albo administrator ją zakończył, więc kolejka sama nie ruszy. Zapisy zostają nietknięte na telefonie.
+- **Link ustawienia hasła** - jednorazowy adres przysłany e-mailem, ważny godzinę (zaproszenie do klubu - trzy doby). Otwiera stronę, na której ustawia się hasło; działa na dowolnym urządzeniu i po użyciu przestaje działać. Każdy nowy link unieważnia poprzedni.
+- **Sesja logowania** - jedno zalogowane urządzenie: model albo przeglądarka, czym się zalogowano, od kiedy i kiedy było ostatnio aktywne. Swoje widzisz w panelu na „Moje konto", administrator widzi Twoje w swoim klubie; każdą da się wylogować osobno.
+- **Wspólny tablet** - urządzenie w samolocie używane przez kilku pilotów. Loguje się na nim hasłem (kodem pilota albo adresem), bo konta Google nie dodaje się do cudzego sprzętu. Tablet pamięta kluby, z których na nim logowano - nie pamięta osób.
 - **Dane referencyjne** - kopia floty, pilotów i przekazania pobrana z panelu na telefon. Bez sieci aplikacja pracuje na niej, z adnotacją o dacie ostatniego połączenia.
 - **Zgłoszenie z aplikacji** - uwaga albo błąd wysłany przyciskiem z rogu ekranu, razem z kontekstem: ekran, operacja, samolot, wersja aplikacji.
 

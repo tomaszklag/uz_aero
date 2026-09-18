@@ -60,3 +60,4 @@ export * from './consumption/ratio';
 export * from './consumption/norm';
 export * from './consumption/expectation';
 export * from './consumption/phaseTimeline';
+export * from './auth/passwordPolicy';

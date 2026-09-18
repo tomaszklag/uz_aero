@@ -19,18 +19,28 @@ import type {
   TokenService,
 } from '../application/common/ports.ts';
 import { authorizeMember } from './authorize.ts';
+import { touchSession, type SessionActivity } from './sessionTouch.ts';
 import { tokenFromRequest } from './tokenFromRequest.ts';
 
-export interface MemberGate {
+export interface MemberGate extends SessionActivity {
   tokens: TokenService;
   /** Członkostwa czytane PRZY KAŻDYM ŻĄDANIU telefonu - patrz `authorizeMember`. */
   accounts: PilotsPort;
 }
 
-/** Aktywny członek klubu z tokenu żądania; `null` = 401. */
-export function memberFromRequest(
+/**
+ * Aktywny członek klubu z tokenu żądania; `null` = 401.
+ *
+ * Po udanym przejściu stempluje SESJĘ (2.1.0, §6) - stąd bierze się „ostatnio aktywny"
+ * w karcie członka. Stempel pada TUTAJ, a nie w `authorizeMember`, bo tamta funkcja jest
+ * czystą decyzją o dostępie i dzieli ją z bramą panelu; tu jesteśmy już w warstwie HTTP,
+ * czyli w jedynym miejscu, które zna żądanie (adres, nagłówek urządzenia).
+ */
+export async function memberFromRequest(
   gate: MemberGate,
   req: FastifyRequest,
 ): Promise<MembershipAuthSnapshot | null> {
-  return authorizeMember(gate.tokens, gate.accounts, tokenFromRequest(req));
+  const account = await authorizeMember(gate.tokens, gate.accounts, tokenFromRequest(req));
+  if (account != null) await touchSession(gate, req, account.sessionId);
+  return account;
 }

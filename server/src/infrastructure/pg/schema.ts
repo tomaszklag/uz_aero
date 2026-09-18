@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 10;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1085,6 +1085,194 @@ export const MIGRATION_8 = `
   ALTER TABLE external_identities ALTER COLUMN pilot_id SET NOT NULL;
 `;
 
+/**
+ * Migracja 9 - HASŁO JAKO DRUGA METODA LOGOWANIA (2.1.0, issue #132;
+ * `docs/logowanie-haslem.md` §4.1, §4.2, §4.4).
+ *
+ * ══ WYŁĄCZNIE ADDYTYWNA ══
+ * Produkcja 2.0.0 żyje od 2026-09-16, więc ta migracja niczego nie przepisuje ani nie
+ * kasuje: dwie nowe tabele i jeden indeks. Sesje logowania (`login_sessions`,
+ * `refresh_tokens.session_id`) przychodzą OSOBNĄ migracją razem z epikiem H-C (issue #133)
+ * - dokument decyzji zapowiadał je w tej, ale epiki idą osobnymi PR-ami i każdy niesie
+ * własny DDL.
+ *
+ * ══ HASŁO JEST POŚWIADCZENIEM, NIE CECHĄ OSOBY ══
+ * Osobna tabela `password_credentials`, jak `external_identities` - do migracji 7 hasło
+ * było kolumną na `pilots` i zniknęło razem z produktem bez haseł. Wraca obok Google jako
+ * DRUGA metoda TEJ SAMEJ osoby: jeden wiersz `pilots`, dwa dowody. Brak wiersza = osoba
+ * loguje się wyłącznie Googlem. Skrót w zapisie PHC z parametrami
+ * (`$scrypt$ln=17,r=8,p=1$sól$skrót`), więc zmiana kosztu to re-hash przy logowaniu,
+ * nie migracja.
+ *
+ * ══ JEDEN MECHANIZM „USTAW HASŁO": LINK Z E-MAILA ══
+ * `password_reset_tokens` niesie ZUŻYWALNY token linku `/haslo/#<token>` - w bazie sam
+ * `sha256`, bo token ma 256 losowych bitów. Cztery WYZWALACZE tego samego listu
+ * (`triggered_by`: pilot, administrator klubu, platforma przy założeniu klubu, operator
+ * z konsoli) i DWA RODZAJE (`kind`): `reset` ustawia hasło istniejącej osobie
+ * (`pilot_id`), `signup` zakłada NOWĄ przy realizacji (rejestracja e-mailem, 00H -
+ * decyzja z przeglądu makiet 2026-09-17), więc niesie adres i imię, z których osoba
+ * powstanie. CHECK spina rodzaj z kolumnami: token bez osoby i bez adresu nie ma czego
+ * ustawić. Kodu jednorazowego do przepisywania NIE MA i ta tabela go nie przewiduje.
+ *
+ * ══ E-MAIL JEDYNY BEZ WZGLĘDU NA WIELKOŚĆ LITER ══
+ * `pilots.email UNIQUE` jest wrażliwe na wielkość liter, a każdy odczyt robi `lower()`
+ * - od 2.1.0 adres jest LOGINEM, więc `Jan@x.pl` i `jan@x.pl` muszą być jedną osobą.
+ * Blok `DO` PRZED indeksem szuka duplikatów różniących się wielkością liter i pada
+ * z nazwanym błędem zamiast zostawić bazę w połowie: świeża produkcja ich nie ma, ale
+ * gdyby miała, decyzja „które konto zostaje" należy do człowieka.
+ */
+export const MIGRATION_9 = `
+  -- ═══ HASŁO (2.1.0, issue #132) ═════════════════════════════════════════════════
+  CREATE TABLE IF NOT EXISTS password_credentials (
+    pilot_id   TEXT PRIMARY KEY REFERENCES pilots(id) ON DELETE CASCADE,
+    -- PHC: $scrypt$ln=17,r=8,p=1$<sól b64>$<skrót b64>; parametry W NAPISIE - re-hash
+    -- przy logowaniu, gdy composition root podniesie koszt.
+    hash       TEXT NOT NULL,
+    set_at     TIMESTAMPTZ NOT NULL,
+    -- 'self' = ustawienia (13B, #/konto), 'link' = link z e-maila (password_reset_tokens).
+    set_via    TEXT NOT NULL CHECK (set_via IN ('self', 'link')),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    -- sha256(token); token to 32 losowe bajty base64url w adresie /haslo/#<token>.
+    token_hash   TEXT PRIMARY KEY,
+    -- 'reset' ustawia hasło ISTNIEJĄCEJ osobie; 'signup' zakłada NOWĄ przy realizacji.
+    kind         TEXT NOT NULL DEFAULT 'reset' CHECK (kind IN ('reset', 'signup')),
+    pilot_id     TEXT REFERENCES pilots(id) ON DELETE CASCADE,
+    -- 'signup': znormalizowany adres i imię z formularza 00H - z tego powstanie osoba.
+    email        TEXT,
+    display_name TEXT,
+    -- Skąd ten list: pilot / administrator klubu / platforma / operator z konsoli.
+    triggered_by TEXT NOT NULL CHECK (triggered_by IN ('self', 'admin', 'platform', 'cli')),
+    created_at   TIMESTAMPTZ NOT NULL,
+    -- Administrator albo superadministrator, który list wyzwolił; NULL przy 'self' i 'cli'.
+    -- SET NULL, bo usunięcie konta administratora nie ma prawa zablokować się o cudzy token.
+    created_by   TEXT REFERENCES pilots(id) ON DELETE SET NULL,
+    -- 60 min (reset, signup); 72 h (zaproszenie pierwszego administratora, CLI).
+    expires_at   TIMESTAMPTZ NOT NULL,
+    consumed_at  TIMESTAMPTZ,
+    CONSTRAINT password_reset_token_shape CHECK (
+      (kind = 'reset' AND pilot_id IS NOT NULL)
+      OR (kind = 'signup' AND pilot_id IS NULL AND email IS NOT NULL AND display_name IS NOT NULL)
+    )
+  );
+  CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_pilot
+    ON password_reset_tokens (pilot_id) WHERE consumed_at IS NULL;
+  CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_email
+    ON password_reset_tokens (lower(email)) WHERE kind = 'signup' AND consumed_at IS NULL;
+
+  -- ═══ E-MAIL JEDYNY BEZ WZGLĘDU NA WIELKOŚĆ LITER (§4.4) ═══════════════════════
+  DO $$
+  DECLARE
+    dup TEXT;
+  BEGIN
+    SELECT lower(email) INTO dup
+      FROM pilots
+     WHERE email IS NOT NULL
+     GROUP BY lower(email)
+    HAVING COUNT(*) > 1
+     LIMIT 1;
+    IF dup IS NOT NULL THEN
+      RAISE EXCEPTION 'Migracja 9: adres % wystepuje w pilots wiecej niz raz (konta roznia sie wielkoscia liter). Od 2.1.0 adres jest loginem - scal albo popraw te konta i uruchom ponownie.', dup;
+    END IF;
+  END $$;
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_pilots_email_lower ON pilots (lower(email)) WHERE email IS NOT NULL;
+`;
+
+/**
+ * Migracja 10 - SESJE LOGOWANIA (2.1.0, issue #133; `docs/logowanie-haslem.md` §4.3, §6).
+ *
+ * ══ WYŁĄCZNIE ADDYTYWNA ══
+ * Jedna nowa tabela, jedna nowa kolumna i backfill, który niczego nie nadpisuje: każdy
+ * istniejący refresh dostaje sesję, żeby `session_id` mogło być `NOT NULL` od razu.
+ * Dokument zapowiadał to w migracji 9 - dziewiątkę wziął epik H-B, bo epiki idą osobnymi
+ * PR-ami i każdy niesie własny DDL.
+ *
+ * ══ SESJA JEST PARĄ TOKENÓW ALBO CIASTECZKIEM, NIE LOGOWANIEM ══
+ * Do 2.1.0 sesja telefonu była wierszem `refresh_tokens` bez metadanych, a sesja panelu
+ * NIE MIAŁA WIERSZA WCALE - żyła w podpisanym ciasteczku, więc jedynym zdalnym
+ * wylogowaniem był młot `credentials_valid_from` (zrywa WSZYSTKO, łącznie z telefonem
+ * w powietrzu). Odtąd każda żywa sesja obu powierzchni ma wiersz, a jej `id` jedzie
+ * w claimie `sid`: brama porównuje go przy każdym żądaniu, więc „Wyloguj to urządzenie"
+ * odbija następne żądanie natychmiast, zamiast czekać na wygaśnięcie tokenu.
+ *
+ * ROTACJA refresha ZACHOWUJE sesję (to dalej to samo urządzenie), a przełączenie klubu
+ * (`POST /auth/switch`) zakłada NOWĄ - para tokenów jest parą DLA KLUBU, więc sesja też.
+ * Token OSOBY (`purpose: 'person'`) sesji nie zakłada: nie jest tożsamością w klubie
+ * i otwiera dwie trasy, więc nie ma czego wylogowywać.
+ *
+ * ══ `method` MA TRZY WARTOŚCI, NIE CZTERY ══
+ * `google`, `password` i `legacy` (wiersze z backfillu - o sposobie ich powstania rejestr
+ * nic nie wie). Wcześniejsza wersja listy zadań wymieniała jeszcze `code`, ale kod
+ * jednorazowy do przepisywania został wycięty decyzją właściciela (§5.4) i nie ma go
+ * w produkcie. Ustawienie hasła z linku sesji NIE zakłada - strona oddaje `204`, a człowiek
+ * loguje się potem hasłem - więc dla resetu wartość nie jest potrzebna.
+ *
+ * ══ `org_id` JEST NULL-OWALNY, ALE TABELA JEST SKOPOWANA ══
+ * `NULL` znaczy sesję PLATFORMOWĄ (superadministrator nie ma klubu). Dla strażnika
+ * z `architecture.test.ts` to mimo to tabela klubu: panel klubu czyta sesje członka
+ * WYŁĄCZNIE w klubie aktora (`org_id = actor.orgId`), bo klub nie ma prawa widzieć
+ * urządzeń pilota w innym klubie. Wyjątkiem imiennym są własne sesje osoby
+ * (`GET /admin/api/me/sessions`) - tam kluczem jest `pilot_id`, jak przy
+ * `bugReportsRepo.countByStatus`.
+ *
+ * ══ BACKFILL IDZIE PĘTLĄ, NIE `INSERT … SELECT` ══
+ * Bo każdy wiersz potrzebuje WŁASNEGO identyfikatora sesji i trzeba go zaraz wpisać do
+ * refresha - `RETURNING` z `INSERT … SELECT` nie mówi, z którego wiersza źródłowego
+ * powstał który. Ta sama pułapka, co przy backfillu tożsamości w migracji 8
+ * (`docs/architektura-panelu-serwer.md` §7.9 (h)). Identyfikator jest LOSOWY, a nie
+ * wyprowadzony z `token_hash`: po pierwszej rotacji `sid` pojedzie w claimach nowego
+ * tokenu, a skrót refresha nie ma prawa wyjść na zewnątrz w czytelnym payloadzie.
+ */
+export const MIGRATION_10 = `
+  -- ═══ SESJE LOGOWANIA (2.1.0, issue #133) ═══════════════════════════════════════
+  CREATE TABLE IF NOT EXISTS login_sessions (
+    -- uuid = claim \`sid\` w tokenie klubu, platformowym i w ciasteczku panelu.
+    id           TEXT PRIMARY KEY,
+    pilot_id     TEXT NOT NULL REFERENCES pilots(id) ON DELETE CASCADE,
+    -- NULL = sesja PLATFORMOWA (superadministrator nie ma klubu).
+    org_id       TEXT REFERENCES organizations(id),
+    surface      TEXT NOT NULL CHECK (surface IN ('mobile', 'panel')),
+    -- 'legacy' = wiersz z backfillu; o sposobie logowania sprzed 2.1.0 rejestr nie wie.
+    method       TEXT NOT NULL CHECK (method IN ('google', 'password', 'legacy')),
+    created_at   TIMESTAMPTZ NOT NULL,
+    -- Przepustnica w pamięci procesu: zapis najwyżej raz na 60 s na sesję.
+    last_seen_at TIMESTAMPTZ NOT NULL,
+    -- Telefon: termin refresha (90 dni). Panel: TTL ciasteczka.
+    expires_at   TIMESTAMPTZ NOT NULL,
+    revoked_at   TIMESTAMPTZ,
+    revoked_by   TEXT CHECK (revoked_by IN ('self', 'admin', 'platform', 'system')),
+    -- „Android 14 · Pixel 7" (nagłówek X-Ninerdeck-Device) / „Chrome · Windows" (User-Agent).
+    device_label TEXT,
+    ip           TEXT,
+    -- Unieważnienie jest PARĄ: chwila bez sprawcy (i odwrotnie) opisywałaby stan,
+    -- którego nie da się pokazać w panelu ani wytłumaczyć w audycie.
+    CONSTRAINT login_session_revocation CHECK ((revoked_at IS NULL) = (revoked_by IS NULL))
+  );
+  CREATE INDEX IF NOT EXISTS idx_login_sessions_pilot
+    ON login_sessions (pilot_id, org_id) WHERE revoked_at IS NULL;
+
+  ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS session_id TEXT REFERENCES login_sessions(id);
+
+  DO $$
+  DECLARE
+    r RECORD;
+    sid TEXT;
+  BEGIN
+    FOR r IN SELECT token_hash, pilot_id, org_id, created_at, expires_at
+               FROM refresh_tokens WHERE session_id IS NULL LOOP
+      sid := gen_random_uuid()::text;
+      INSERT INTO login_sessions
+             (id, pilot_id, org_id, surface, method, created_at, last_seen_at, expires_at)
+      VALUES (sid, r.pilot_id, r.org_id, 'mobile', 'legacy', r.created_at, r.created_at, r.expires_at);
+      UPDATE refresh_tokens SET session_id = sid WHERE token_hash = r.token_hash;
+    END LOOP;
+  END $$;
+
+  ALTER TABLE refresh_tokens ALTER COLUMN session_id SET NOT NULL;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1094,6 +1282,8 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_6,
   MIGRATION_7,
   MIGRATION_8,
+  MIGRATION_9,
+  MIGRATION_10,
 ];
 
 /**
@@ -1123,4 +1313,6 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Zgłoszenia błędów z aplikacji pilota (issue #87): opis, waga, kontekst okna i status obsługi - kanał zwrotny na czas testów z pilotami',
   'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
   'Wielofirmowość (issue #98, #100): kluby jako tenant, członkostwa z kodem i rolą per klub, kod klubu jako jedyna droga dołączenia, superadministrator, org_id na danych klubu, tożsamość Google zawsze podpięta do osoby i backfill jednego klubu z danych 1.x',
+  'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
+  'Sesje logowania (2.1.0, issue #133): wiersz dla każdej żywej sesji telefonu i panelu z urządzeniem, metodą i ostatnią aktywnością, identyfikator sesji w tokenach - zdalne wylogowanie pojedynczego urządzenia zamiast zrywania wszystkich poświadczeń osoby',
 ];

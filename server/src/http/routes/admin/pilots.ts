@@ -22,10 +22,13 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import type { AdminPasswordLinkCommands } from '../../../application/admin/commands/passwordLinks.ts';
 import type { AdminPilotCommands } from '../../../application/admin/commands/pilots.ts';
 import type { AdminPilotQueries } from '../../../application/admin/queries/pilots.ts';
 import { PAGE_LIMIT_MAX } from '../../../application/admin/ports.ts';
+import { tooManyAttempts } from '../common/password.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
+import { passwordLinkRefusal } from './passwordLinkWire.ts';
 import { dayParam, endOfDay } from './dayRange.ts';
 import {
   accountToWire,
@@ -70,8 +73,31 @@ export function registerAdminPilotRoutes(
   app: FastifyInstance,
   pilots: AdminPilotCommands,
   queries: AdminPilotQueries,
+  passwordLinks: AdminPasswordLinkCommands,
   gate: AdminGate,
 ): void {
+  /**
+   * „Wyślij link do ustawienia hasła" w karcie członka (2.1.0, `docs/logowanie-haslem.md`
+   * §5.4; mockup `piloci-konto`). TEN SAM list, co „Nie pamiętam hasła" - tylko inny punkt
+   * wyzwolenia; odpowiedź niesie adres i termin, NIGDY link. Cudzy pilot → 404.
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'POST', url: '/pilots/:id/password-link', capability: 'accounts.manage' },
+    async (req, reply, actor) => {
+      const params = pilotIdParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await passwordLinks.sendToMember(actor, params.data.id);
+      if (!outcome.ok) {
+        if (outcome.reason === 'rate_limited') return tooManyAttempts(reply, outcome.retryAfterSec);
+        return passwordLinkRefusal(reply, outcome.reason);
+      }
+      return reply.send({ sentTo: outcome.result.sentTo, expiresAt: outcome.result.expiresAt.toISOString() });
+    },
+  );
+
   adminRoute(
     app,
     gate,

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 00F Logowanie hasłem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5C5C5C;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .wifi-off { color:var(--amber); }
+
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .login-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 24px 16px; }
+  /* Stopka ekranu: DRUGA droga logowania stoi na samym dole, poza formularzem.
+     Formularz jest treścią ekranu i centruje się w pozostałej przestrzeni; link do
+     Google nie jest jego częścią, tylko wyjściem - jak „Zaloguj innym kontem Google"
+     na 00C/00E. */
+  .login-foot { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:14px; padding:0 24px 34px; }
+  .login-foot .link-out { margin-top:0; }
+  /* Rejestracja stoi w stopce razem z Googlem (oba są wyjściami poza formularz), ale
+     mocniej: druga połowa zdania jasnym pismem, bo to jedyna droga osoby bez konta. */
+  .link-out.signup b { color:var(--text-primary); font-weight:600; }
+
+  /* ===== BRAND - mniejszy niż na 00A: treścią ekranu jest formularz, nie marka (jak 00E) ===== */
+  /* Odstęp pod marką większy niż na 00G/00H (22 px): tu pod marką stoi od razu nagłówek
+     formularza, a nie karta, i przy 22 px logo kleiło się do formularza (przegląd 2026-09-17). */
+  .brand { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:34px; }
+  .brand-icon {
+    width:56px; height:56px; border-radius:16px;
+    background:linear-gradient(135deg, #1A2E1A 0%, #0D1A0D 100%);
+    border:1px solid var(--green-border); box-shadow:0 0 26px rgba(46,204,113,0.16);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-name { font-family:var(--font-display); font-size:30px; letter-spacing:4px; line-height:1; color:var(--text-primary); }
+  .brand-name span { color:var(--green); }
+
+  /* ===== TYTUŁ FORMULARZA - to samo zdanie, co na przycisku 00A, który tu prowadzi ===== */
+  .form-heading { align-self:flex-start; font-family:var(--font-display); font-size:22px; letter-spacing:2.5px; line-height:1; color:var(--text-primary); margin-bottom:16px; }
+
+  /* ===== POLA - wzorzec formularzy (00E) ===== */
+  .field { width:100%; display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
+  .input {
+    width:100%; min-height:52px; padding:14px 15px; border-radius:12px;
+    background:var(--surface-raised); border:1.5px solid var(--border-strong);
+    font-family:var(--font-mono); font-size:16px; letter-spacing:1.5px; color:var(--text-primary);
+  }
+  .input:focus { outline:none; border-color:var(--green-border); }
+  .input.invalid { border-color:var(--red-border); }
+  /* Placeholder = INSTRUKCJA, składem tekstowym (issue #58): nie dziedziczy kroju liczb. */
+  .input::placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder); }
+  .field-error { font-family:var(--font-body); font-size:12.5px; color:var(--red); line-height:1.45; }
+  /* KONTEKST KLUBU nad formularzem (D2/D10; przegląd właściciela 2026-09-17: „daj nazwę
+     klubu wyżej, a na dole «Zmień klub»; w jednym klubie nie ma sensu tego podawać").
+     Urządzenie pamięta KLUBY, z których się na nim logowano. Zna JEDEN → nic nie pokazuje
+     (kod pilota rozwiązuje się w nim po cichu - trzecia ramka). Zna WIĘCEJ → pigułka
+     z nazwą bieżącego klubu pod marką, a w stopce „Zmień klub" (00I). Bez zdania „kod
+     pilota działa w klubie" - nazwa klubu mówi to sama. */
+  .club-ctx { display:inline-flex; align-items:center; gap:7px; margin:-10px 0 28px; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-secondary); }
+  .club-ctx svg { flex-shrink:0; color:var(--text-muted); }
+  .foot-row { display:flex; align-items:center; gap:10px; }
+  .foot-row .dot { color:var(--border-strong); font-size:12px; }
+
+  /* Pole hasła: przełącznik „pokaż" W POLU, po prawej (D4: wklejanie dozwolone,
+     przełącznik „pokaż"). Cel dotykowy 40 px w polu o wysokości 52 - ikona oka
+     jest jedynym znakiem afordancji, bez napisu: napis „pokaż" obok kropek czytałby
+     się jak druga wartość. */
+  .input-wrap { position:relative; width:100%; }
+  .input-wrap .input { padding-right:54px; }
+  .eye-btn {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:40px; height:40px; border-radius:10px; border:none; background:transparent;
+    color:var(--text-muted); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .eye-btn:hover { color:var(--text-primary); background:var(--surface-hover); }
+
+  /* ===== AKCJE ===== */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:16px; border-radius:14px; margin-top:6px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:21px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 20px rgba(46,204,113,0.28); transition:all .18s ease;
+  }
+  .btn-primary:hover { background:#3DDC82; box-shadow:0 0 36px rgba(46,204,113,0.5); }
+  /* Powód blokady stoi WEWNĄTRZ przycisku (issue #55): zablokowany przycisk układa
+     się w KOLUMNĘ - napis, pod nim bursztynowe zdanie. Bez przygaszenia opacity -
+     bursztyn pod nią przestaje być ostrzeżeniem, a wyszarzenie niosą kolory tła
+     i napisu. Pusty wpis blokuje BEZ zdania: blokadę widać z pola nad przyciskiem. */
+  .btn-primary.disabled { background:var(--surface-raised); color:var(--text-muted); box-shadow:none; border:1px solid var(--border-strong); pointer-events:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-label { display:flex; align-items:center; justify-content:center; gap:10px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
+  .link-out {
+    margin-top:16px; font-size:12.5px; color:var(--text-muted);
+    text-decoration:none; border-bottom:1px solid var(--border-strong); padding-bottom:2px;
+    transition:color .15s; text-align:center;
+  }
+  .link-out:hover { color:var(--green); border-color:var(--green-border); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 00F</span>
+  <span class="slug">logowanie · e-mail lub kod pilota + hasło · wspólny tablet</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 00</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Logowanie hasłem">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="login-wrap">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
+          </svg>
+        </div>
+        <div class="brand-name">NINER<span>DECK</span></div>
+      </div>
+
+      <!--
+        DRUGA DROGA LOGOWANIA TEJ SAMEJ OSOBY (docs/logowanie-haslem.md D1, §5.1) - dla
+        WSPÓLNEGO TABLETU w samolocie. Ten, kto leci, loguje się na SWOJE konto; Google
+        na cudzym urządzeniu znaczyłoby dodanie własnego konta do cudzej przeglądarki,
+        więc na tablecie pierwszą drogą jest hasło. Na telefonie osobistym Google zostaje
+        pierwszym przyciskiem (00A), a tu wchodzi się z drugiego.
+
+        Na urządzeniu, które PAMIĘTA KLUB po wylogowaniu (D10), aplikacja startuje wprost
+        na tym ekranie - bez 00A po drodze.
+
+        Tytuł formularza powtarza napis przycisku, który tu prowadzi („ZALOGUJ SIĘ HASŁEM"
+        na 00A): pilot ma widzieć, że trafił tam, gdzie tapnął. Nic o tokenach, sesjach
+        ani o tym, że hasło sprawdza serwer - ekran mówi tylko, co wpisać (issue #72).
+      -->
+      <!-- Pigułka klubu urządzenia - TYLKO gdy urządzenie zna więcej niż jeden klub
+           (ta ramka: dwa). Nazwa mówi sama, w którym klubie zadziała kod pilota. -->
+      <div class="club-ctx" aria-label="Klub urządzenia">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+        Aeroklub Zielonogórski
+      </div>
+      <div class="form-heading">ZALOGUJ SIĘ HASŁEM</div>
+
+      <!--
+        JEDNO POLE NA DWA IDENTYFIKATORY (D2): e-mail jest jedynym globalnym
+        identyfikatorem osoby, a kod pilota działa tylko w klubie, który urządzenie zna -
+        więc dwa osobne pola pytałyby o rzeczy, z których pilot wpisuje jedną. Wpis
+        z „@" idzie jako adres, bez „@" jako kod pilota (§5.1). Klawiatura e-mail
+        (ma „@" i kropkę), bez autokapitalizacji - kod pilota i tak normalizuje się
+        do wersalików.
+
+        KONTEKST KLUBU (D2/D10; przegląd właściciela 2026-09-17, dwie tury: najpierw „daj
+        lepiej wyświetlanie, że to nie mój aeroklub", potem „kod pilota działa w klubie -
+        po co to pisać; nazwę klubu wyżej, na dole «Zmień klub» z własnym ekranem; w jednym
+        klubie nie podawać wcale"). Urządzenie pamięta KLUBY, z których się na nim
+        logowano - nie osobę. Zna JEDEN klub → ekran NIC o nim nie mówi, kod pilota
+        rozwiązuje się w nim po cichu (tak wygląda trzecia ramka). Zna WIĘCEJ → pigułka
+        z nazwą BIEŻĄCEGO klubu stoi pod marką (wyżej), a w stopce „Zmień klub" prowadzi
+        na 00I (lista klubów znanych urządzeniu). Bez znanego klubu (pierwsze uruchomienie)
+        ekran wygląda jak trzecia ramka, a kod pilota nie ma czego wskazać - działa adres.
+        Pod polem NIE MA żadnego podpisu o klubie.
+      -->
+      <div class="field">
+        <span class="field-label">E-mail albo kod pilota</span>
+        <input class="input" type="text" inputmode="email" autocapitalize="none" spellcheck="false" autocomplete="username" value="TMK" aria-label="E-mail albo kod pilota" placeholder="adres e-mail albo kod pilota" id="loginInput">
+      </div>
+
+      <!--
+        HASŁO: `secureTextEntry`, `autoComplete="current-password"`, WKLEJANIE DOZWOLONE
+        (D4 / §8 pkt 8 - menedżer haseł na tablecie jest sojusznikiem, nie zagrożeniem).
+        Przełącznik „pokaż" jako oko W POLU: pilot na tablecie w kabinie nie widzi, czy
+        trafił w klawisz, a hasło ma co najmniej 12 znaków.
+      -->
+      <div class="field">
+        <span class="field-label">Hasło</span>
+        <div class="input-wrap">
+          <input class="input" type="password" autocomplete="current-password" value="zielona-gora-2026" aria-label="Hasło" placeholder="hasło">
+          <button class="eye-btn" type="button" aria-label="Pokaż hasło" onclick="toggleEye(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ZALOGUJ kończy DOKŁADNIE tam, gdzie Google (§1): aktywne członkostwo → 01;
+           brak klubu → 00C/00D/00E, jak po Googlu. Pusty formularz blokuje BEZ zdania
+           (issue #55): blokadę widać z pól nad przyciskiem. -->
+      <a href="01-moj-dzien.html" class="btn-primary">ZALOGUJ</a>
+
+      <!--
+        „NIE PAMIĘTAM HASŁA" (D5) → 00G: adres → link z e-maila → hasło na stronie. Ta sama
+        droga obsługuje osobę z Googlem, która hasła jeszcze nie ustawiła (list USTAWIA
+        hasło, nie tylko je zmienia) - ale link nie musi tego mówić (przegląd właściciela
+        2026-09-17: „po co pisać, że jeszcze go nie mam"). Kto konta nie ma wcale, ma
+        osobne wejście w stopce: „Załóż konto" (00H).
+      -->
+      <a href="00g-link-hasla.html" class="link-out">Nie pamiętam hasła</a>
+
+    </div>
+
+    <!-- Stopka = wyjścia poza formularz: REJESTRACJA (00H - osoba bez konta i bez Google;
+         przegląd właściciela 2026-09-17: „powinna być opcja rejestracji, jeśli jeszcze nie
+         mam konta" - odwraca D9), „ZMIEŃ KLUB" (00I - WYŁĄCZNIE gdy urządzenie zna więcej
+         niż jeden klub; przy jednym wiersz znika razem z pigułką klubu) i Google (na
+         wspólnym tablecie droga rzadka, ale MUSI być - osoba z Googlem, która czyta pocztę
+         właśnie tutaj). -->
+    <div class="login-foot">
+      <a href="00h-zaloz-konto.html" class="link-out signup">Nie masz konta? <b>Załóż konto</b></a>
+      <span class="foot-row">
+        <a href="00i-wybor-klubu.html" class="link-out">Zmień klub</a>
+        <span class="dot">·</span>
+        <a href="00a-login-full.html" class="link-out">Zaloguj kontem Google</a>
+      </span>
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty ekranu logowania - kiedy który?</div>
+  <a class="vp-item" href="00-login.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Odblokowanie PIN</span>
+      <span class="vp-when">Codzienne wejście - na telefonie jest już profil pilota. W pełni offline.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00a-login-full.html">
+    <span class="vp-badge">00A</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie Google</span>
+      <span class="vp-when">Pierwsze uruchomienie na tym telefonie albo reset PIN-u. Wymaga internetu. Pod Googlem drugi przycisk: „Zaloguj się hasłem" (00F).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00b-login-offline.html">
+    <span class="vp-badge amber">00B</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline bez profilu</span>
+      <span class="vp-when">Jak 00A, ale bez sieci - logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00c-oczekiwanie.html">
+    <span class="vp-badge amber">00C</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zatwierdzenie</span>
+      <span class="vp-when">Zgłoszenie kodem klubu czeka na administratora TEGO klubu. Członkostwa jeszcze nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00d-odrzucone.html">
+    <span class="vp-badge red">00D</span>
+    <span class="vp-body">
+      <span class="vp-name">Zgłoszenie odrzucone</span>
+      <span class="vp-when">Administrator klubu odrzucił zgłoszenie - z powodem widocznym na ekranie. Wyjście: inny kod albo inne konto.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00e-bez-klubu.html">
+    <span class="vp-badge amber">00E</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie należysz do żadnego klubu</span>
+      <span class="vp-when">Konto potwierdzone (Google albo hasło), ale osoba nie ma członkostwa w żadnym klubie - jedno pole na kod klubu od administratora.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="00f-login-haslo.html">
+    <span class="vp-badge">00F</span>
+    <span class="vp-body">
+      <span class="vp-name">Logowanie hasłem</span>
+      <span class="vp-when">E-mail albo kod pilota + hasło - dla wspólnego tabletu w samolocie. Wymaga internetu. Urządzenie pamięta kluby, z których się na nim logowano - kod pilota działa w bieżącym; przy więcej niż jednym klubie pigułka z nazwą i „Zmień klub" (00I).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="00g-link-hasla.html">
+    <span class="vp-badge amber">00G</span>
+    <span class="vp-body">
+      <span class="vp-name">Nie pamiętam hasła</span>
+      <span class="vp-when">Adres → link z e-maila → nowe hasło na stronie, z dowolnego urządzenia. Działa też dla osoby z Googlem, która hasła jeszcze nie ustawiła; kodu od administratora nie ma. Konto zakłada się osobno (00H).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00h-zaloz-konto.html">
+    <span class="vp-badge amber">00H</span>
+    <span class="vp-body">
+      <span class="vp-name">Załóż konto</span>
+      <span class="vp-when">Osoba bez konta i bez Google: imię i nazwisko + e-mail → link z e-maila → hasło na stronie; konto powstaje dopiero przy ustawieniu hasła. Potem logowanie (00F) i kod klubu (00E).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00i-wybor-klubu.html">
+    <span class="vp-badge">00I</span>
+    <span class="vp-body">
+      <span class="vp-name">Wybierz klub</span>
+      <span class="vp-when">Ze stopki 00F, wyłącznie gdy urządzenie zna więcej niż jeden klub: lista klubów, z których się na nim logowano - wybrany staje się kontekstem kodu pilota. Przy jednym klubie ekranu ani wejścia nie ma.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="00-login.html">← 00 PIN</a>
+  <a href="00a-login-full.html">← 00A Google</a>
+  <a href="00f-login-haslo.html" class="active">00F Hasło</a>
+  <a href="00g-link-hasla.html">00G Link hasła →</a>
+  <a href="00h-zaloz-konto.html">00H Załóż konto →</a>
+  <a href="00i-wybor-klubu.html">00I Wybierz klub →</a>
+  <a href="00e-bez-klubu.html">00E Bez klubu</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień →</a>
+  <span>·</span>
+  <a href="#odmowa">↓ odmowa</a>
+  <a href="#offline">↓ offline</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: ODMOWA ══
+     Błąd stoi PRZY POLU, którego dotyczy, nie w banerze nad formularzem (wzór 00E).
+     Serwer daje JEDNĄ odpowiedź `401 invalid_credentials` na TRZY stany - login
+     nieznany / osoba bez hasła / złe hasło (§5.1, §8 pkt 2): formularz nie może
+     wyliczać kont, więc ekran nie wie, KTÓRE z dwóch pól jest złe - i dlatego czerwoną
+     ramkę dostają OBA, a zdanie nazywa wszystkie trzy możliwości. Osoba, która hasła
+     nigdy nie ustawiła, dostaje tę samą odmowę - jej drogą jest „Nie pamiętam hasła"
+     pod przyciskiem (list ustawia hasło); osoba bez konta - „Załóż konto" w stopce.
+     Pozostałe odpowiedzi serwera:
+       401 account_disabled → zdanie przy polu: „To konto jest wyłączone." (tożsamość
+           jest już dowiedziona, więc wolno powiedzieć wprost)
+       429 za dużo prób → powód z czasem W PRZYCISKU (issue #55): „Za dużo prób -
+           spróbuj za 3 min"; pola czynne, przycisk `.btn-primary.disabled` z `.btn-reason`
+           jak w ramce offline niżej - czwartej ramki nie rysujemy, bo to ten sam kształt
+           z innym zdaniem
+     Pola NIE czyścimy: pilot poprawia to, co wpisał, a nie pisze od nowa. Hasła NIE
+     odsłaniamy po odmowie - „pokaż" zostaje decyzją pilota. -->
+<header class="canvas-label" id="odmowa">
+  <span class="film-strip">NINERDECK - 00F</span>
+  <span class="slug">stan: odmowa</span>
+  <span class="canvas-meta">Odmowa 401 · błąd przy polu</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Logowanie hasłem, odmowa">
+  <div class="status-bar">
+    <span>9:42</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="login-wrap">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
+          </svg>
+        </div>
+        <div class="brand-name">NINER<span>DECK</span></div>
+      </div>
+
+      <div class="club-ctx" aria-label="Klub urządzenia">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+        Aeroklub Zielonogórski
+      </div>
+      <div class="form-heading">ZALOGUJ SIĘ HASŁEM</div>
+
+      <div class="field">
+        <span class="field-label">E-mail albo kod pilota</span>
+        <input class="input invalid" type="text" inputmode="email" autocapitalize="none" spellcheck="false" autocomplete="username" value="TMK" aria-invalid="true" aria-label="E-mail albo kod pilota">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Hasło</span>
+        <div class="input-wrap">
+          <input class="input invalid" type="password" autocomplete="current-password" value="zielona-gora-2025" aria-invalid="true" aria-label="Hasło">
+          <button class="eye-btn" type="button" aria-label="Pokaż hasło" onclick="toggleEye(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="field-error">Nieprawidłowy e-mail, kod albo hasło.</span>
+      </div>
+
+      <a href="01-moj-dzien.html" class="btn-primary">ZALOGUJ</a>
+      <a href="00g-link-hasla.html" class="link-out">Nie pamiętam hasła</a>
+
+    </div>
+    <div class="login-foot">
+      <a href="00h-zaloz-konto.html" class="link-out signup">Nie masz konta? <b>Załóż konto</b></a>
+      <span class="foot-row">
+        <a href="00i-wybor-klubu.html" class="link-out">Zmień klub</a>
+        <span class="dot">·</span>
+        <a href="00a-login-full.html" class="link-out">Zaloguj kontem Google</a>
+      </span>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="00f-login-haslo.html" class="active">00F Hasło</a>
+  <a href="00g-link-hasla.html">00G Link hasła →</a>
+  <a href="00h-zaloz-konto.html">00H Załóż konto →</a>
+  <a href="00i-wybor-klubu.html">00I Wybierz klub →</a>
+  <a href="#offline">↓ offline</a>
+</nav>
+
+<!-- ══ TRZECIA RAMKA: OFFLINE ══
+     Logowanie jest JEDYNYM świadomym wyjątkiem od offline-first (§3.0, D12 „PIN
+     i offline-first bez zmian"): hasło sprawdza serwer, telefon zapamiętuje tokeny -
+     bez sieci nie ma czego zapamiętać. Powód stoi W PRZYCISKU („Wymaga internetu",
+     issue #55), nie w banerze nad formularzem: baner opisywałby stan całego ekranu,
+     a zablokowana jest jedna rzecz - wysłanie. POLA ZOSTAJĄ CZYNNE: pilot wpisuje,
+     sieć wraca, tapie - wpis nie ginie. To ta sama reguła, którą 00E stosuje do kodu
+     klubu, i INNA niż na 00B (tam przycisk Google jest wygaszony bez własnego zdania,
+     bo powód niesie baner - Google nie ma pola, w które dałoby się cokolwiek wpisać
+     w oczekiwaniu na sieć). Link do Google prowadzi tu na 00B, bo tam jest Google
+     bez sieci.
+     TA RAMKA POKAZUJE TEŻ URZĄDZENIE ZNAJĄCE JEDEN KLUB (tablet w samolocie jednego
+     aeroklubu - przypadek typowy): bez pigułki klubu pod marką i bez „Zmień klub"
+     w stopce. Kod pilota rozwiązuje się w tym klubie po cichu. -->
+<header class="canvas-label" id="offline">
+  <span class="film-strip">NINERDECK - 00F</span>
+  <span class="slug">stan: offline</span>
+  <span class="canvas-meta">Offline · powód w przycisku</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Logowanie hasłem, offline">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="login-wrap">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/>
+          </svg>
+        </div>
+        <div class="brand-name">NINER<span>DECK</span></div>
+      </div>
+
+      <div class="form-heading">ZALOGUJ SIĘ HASŁEM</div>
+
+      <div class="field">
+        <span class="field-label">E-mail albo kod pilota</span>
+        <input class="input" type="text" inputmode="email" autocapitalize="none" spellcheck="false" autocomplete="username" value="TMK" aria-label="E-mail albo kod pilota" placeholder="adres e-mail albo kod pilota">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Hasło</span>
+        <div class="input-wrap">
+          <input class="input" type="password" autocomplete="current-password" value="zielona-gora-2026" aria-label="Hasło" placeholder="hasło">
+          <button class="eye-btn" type="button" aria-label="Pokaż hasło" onclick="toggleEye(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Przycisk zablokowany z powodem W ŚRODKU - kolumna: napis, pod nim bursztyn.
+           Ten sam kształt obsługuje `429` („Za dużo prób - spróbuj za 3 min"). -->
+      <span class="btn-primary disabled" aria-disabled="true">
+        <span class="btn-label">ZALOGUJ</span>
+        <span class="btn-reason">Wymaga internetu</span>
+      </span>
+      <a href="00g-link-hasla.html" class="link-out">Nie pamiętam hasła</a>
+
+    </div>
+    <div class="login-foot">
+      <a href="00h-zaloz-konto.html" class="link-out signup">Nie masz konta? <b>Załóż konto</b></a>
+      <a href="00b-login-offline.html" class="link-out">Zaloguj kontem Google</a>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="00b-login-offline.html">← 00B Google offline</a>
+  <a href="00f-login-haslo.html" class="active">00F Hasło</a>
+  <a href="00g-link-hasla.html">00G Link hasła →</a>
+  <a href="00h-zaloz-konto.html">00H Załóż konto →</a>
+  <a href="00i-wybor-klubu.html">00I Wybierz klub →</a>
+</nav>
+
+<script>
+  // ── „pokaż" - przełącznik widoczności hasła W POLU (D4). Ikona mówi, CO ZROBI
+  //    tapnięcie (oko = pokaż, oko przekreślone = ukryj) - jak przełącznik jasności
+  //    w kokpicie (issue #82): pilot nie ma zgadywać, co zrobi kontrolka.
+  const EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  function toggleEye(btn) {
+    const input = btn.parentElement.querySelector('input');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? EYE_OFF : EYE;
+    btn.setAttribute('aria-label', show ? 'Ukryj hasło' : 'Pokaż hasło');
+  }
+
+  // Zmiana klubu urządzenia nie jest już akcją tego ekranu - ma własny ekran (00I),
+  // a wybór wraca tu pigułką pod marką.
+</script>
+
+</body>
+</html>

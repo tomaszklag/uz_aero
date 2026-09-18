@@ -25,7 +25,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_BASE_URL, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, TEST_BASE_URL, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_SHEETS_KEY, ORG_B, ORG_B_SHEETS_KEY, seedBetaFleet } from './testWorld.ts';
 
@@ -103,6 +103,25 @@ function day(
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 const writer = (t: string) => ({ ...bearer(t), ...ADMIN_CSRF_HEADERS });
 
+/**
+ * Żywe sesje osoby W KLUBIE - wprost z bazy, bo sondy sesji (2.1.0, issue #133) muszą
+ * porównywać się ze stanem, a nie z liczbą wpisaną w test: świat dwóch klubów zakłada
+ * PWI sesje dwiema drogami naraz (zaległy refresh z `seedRefresh` i logowanie), więc
+ * każda stała liczba rozjechałaby się przy pierwszej zmianie tamtego seeda.
+ */
+async function liveSessionIds(
+  db: Harness['db'],
+  pilotId: string,
+  orgId: string,
+): Promise<string[]> {
+  const { rows } = await db.query<{ id: string }>(
+    `SELECT id FROM login_sessions
+      WHERE pilot_id = $1 AND org_id = $2 AND revoked_at IS NULL ORDER BY id`,
+    [pilotId, orgId],
+  );
+  return rows.map((r) => r.id);
+}
+
 async function tokenOf(app: App, who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
@@ -141,8 +160,10 @@ interface World {
   a: string;
   /** Administrator klubu B (BAD). */
   b: string;
-  /** PWI w klubie A - osoba, która ma operację także w B. */
+  /** PWI w klubie A - osoba, która ma operację i SESJĘ także w B. */
   pwiA: string;
+  /** Ta sama osoba w klubie B - do sond, w których dwie sesje jednej osoby muszą zostać osobno. */
+  pwiB: string;
   /** Flaga klubu B - identyfikator do sond „po adresie". */
   flagB: number;
   /** Flaga klubu A - kontrola pozytywna (własne dane widać). */
@@ -166,18 +187,22 @@ async function twoClubs(): Promise<World> {
   const bpi = await tokenOf(app, 'BPI');
 
   // PWI: token klubu B (świeższy refresh w B przestawia klub aktywny), potem klubu A.
-  await db.query(
-    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-     VALUES ('pwi-b', 'PWI', $1, $2, $3)`,
-    [ORG_B, new Date(harness.clock.now().getTime() + 86_400_000), harness.clock.now()],
-  );
+  await seedRefresh(db, {
+    tokenHash: 'pwi-b',
+    pilotId: 'PWI',
+    orgId: ORG_B,
+    expiresAt: new Date(harness.clock.now().getTime() + 86_400_000),
+    createdAt: harness.clock.now(),
+  });
   const pwiB = await tokenOf(app, 'PWI');
   harness.clock.advance(60_000);
-  await db.query(
-    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-     VALUES ('pwi-a', 'PWI', $1, $2, $3)`,
-    [ORG_A, new Date(harness.clock.now().getTime() + 86_400_000), harness.clock.now()],
-  );
+  await seedRefresh(db, {
+    tokenHash: 'pwi-a',
+    pilotId: 'PWI',
+    orgId: ORG_A,
+    expiresAt: new Date(harness.clock.now().getTime() + 86_400_000),
+    createdAt: harness.clock.now(),
+  });
   const pwiA = await tokenOf(app, 'PWI');
 
   const post = (token: string, events: unknown[]) =>
@@ -262,7 +287,7 @@ async function twoClubs(): Promise<World> {
   );
   await db.query(`UPDATE organizations SET join_code = 'BETAKDE', join_code_since = now() WHERE id = $1`, [ORG_B]);
 
-  return { app, db, a, b, pwiA, flagA, flagB, pendingB: 'kandydat-b' };
+  return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
 }
 
 /** Odpowiedź bez ani jednego znacznika klubu B. */
@@ -423,6 +448,26 @@ const CASES: Record<string, Probe> = {
     // Preferencje OSOBY (motyw) - bez danych klubu; brama członkostwa działa jak wszędzie.
     expect((await app.inject({ method: 'GET', url: '/me/prefs', headers: bearer(a) })).statusCode).toBe(200);
     expect((await app.inject({ method: 'GET', url: '/me/prefs' })).statusCode).toBe(401);
+  },
+
+  'GET /me/account': async ({ app, a, pwiA, pwiB }) => {
+    // Czym osoba może się zalogować (2.1.0, issue #135 E7) - własność OSOBY, nie klubu.
+    // Izolacja znaczy tu coś innego niż zwykle: nie „nie pokazuj cudzego", tylko „nie
+    // różnicuj po klubie". PWI jest w OBU klubach, więc oba jej tokeny muszą dostać
+    // odpowiedź co do bajtu tę samą - adres i metody logowania należą do człowieka,
+    // a klub nie ma ich jak zmienić.
+    const inA = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(pwiA) });
+    const inB = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(pwiB) });
+    expect(inA.statusCode).toBe(200);
+    expect(inB.statusCode).toBe(200);
+    expect(inA.json()).toEqual(inB.json());
+
+    // Kontrola pozytywna: trasa odpowiada o TYM, kto pyta - inny człowiek, inne konto.
+    const other = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(a) });
+    expect(other.json().email).not.toBe(inA.json().email);
+
+    // Brama członkostwa jak wszędzie na trasach telefonu.
+    expect((await app.inject({ method: 'GET', url: '/me/account' })).statusCode).toBe(401);
   },
 
   'PUT /me/prefs': async ({ app, a }) => {
@@ -693,11 +738,13 @@ const CASES: Record<string, Probe> = {
 
   'POST /admin/api/maintenance/refresh-tokens/purge': async ({ app, db, a }) => {
     // Wygasły token klubu B PRZEŻYWA sprzątanie zlecone z panelu klubu A.
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('stale-b', 'BAD', $1, '2020-01-01T00:00:00Z', '2019-01-01T00:00:00Z')`,
-      [ORG_B],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'stale-b',
+      pilotId: 'BAD',
+      orgId: ORG_B,
+      expiresAt: '2020-01-01T00:00:00Z',
+      createdAt: '2019-01-01T00:00:00Z',
+    });
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/maintenance/refresh-tokens/purge',
@@ -874,6 +921,113 @@ const CASES: Record<string, Probe> = {
   },
 
   // ── platforma (superadministrator) ───────────────────────────────────────────
+  /**
+   * LINK „USTAW HASŁO" DO CZŁONKA (2.1.0, issue #132): administrator Alfy wysyła list
+   * pilotowi Bety → 404 (cudzy pilot jest nieistniejący) i ŻADNEGO tokenu dla niego
+   * w bazie; własnemu członkowi → 200 (kontrola pozytywna - test na pustej bazie niczego
+   * by nie dowiódł).
+   */
+  'POST /admin/api/pilots/:id/password-link': async ({ app, db, a }) => {
+    const foreign = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/BPI/password-link',
+      headers: writer(a),
+    });
+    expect(foreign.statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM password_reset_tokens WHERE pilot_id = 'BPI'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+
+    const own = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/JSE/password-link',
+      headers: writer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().sentTo).toBe('jan@ninerdeck.pl');
+    expect(own.body).not.toContain('haslo/#');
+  },
+
+  /**
+   * Sesje CZŁONKA (2.1.0, issue #133; §5.6) - trzy trasy, jedna reguła: klub widzi
+   * i gasi WYŁĄCZNIE urządzenia zalogowane U SIEBIE.
+   *
+   * PWI jest w obu klubach i ma sesję w każdym, więc to najostrzejszy możliwy przypadek:
+   * gdyby zawężenie po klubie wypadło, administrator Alfy zobaczyłby (i wyłączył)
+   * urządzenie, którym ten sam człowiek pracuje w Becie.
+   */
+  'GET /admin/api/pilots/:id/sessions': async ({ app, db, a }) => {
+    // Kontrola pozytywna i negatywna w jednym: lista ma zawierać DOKŁADNIE żywe sesje
+    // PWI w ALFIE - ani mniej (bo wtedy nic by nie dowodziła), ani jednej z Bety.
+    const own = await app.inject({
+      method: 'GET',
+      url: '/admin/api/pilots/PWI/sessions',
+      headers: bearer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect((own.json() as Array<{ id: string }>).map((s) => s.id).sort()).toEqual(
+      await liveSessionIds(db, 'PWI', ORG_A),
+    );
+
+    // Członek TYLKO Bety jest dla Alfy nieistniejący - pusta lista, nie cudze urządzenia.
+    const foreign = await app.inject({
+      method: 'GET',
+      url: '/admin/api/pilots/BPI/sessions',
+      headers: bearer(a),
+    });
+    expect(foreign.statusCode).toBe(200);
+    expect(foreign.json()).toEqual([]);
+  },
+
+  'DELETE /admin/api/pilots/:id/sessions/:sid': async ({ app, db, a, pwiB }) => {
+    // Identyfikator sesji PWI w BECIE - administrator Alfy nie ma go skąd wziąć, ale
+    // test owszem: to jest dokładnie ten scenariusz, przed którym broni zawężenie w SQL-u.
+    const beta = await liveSessionIds(db, 'PWI', ORG_B);
+    expect(beta.length).toBeGreaterThan(0);
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/admin/api/pilots/PWI/sessions/${beta[0]!}`,
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(404);
+    // …i sesja w Becie DALEJ DZIAŁA - odmowa nie może być odmową „na papierze".
+    expect(await liveSessionIds(db, 'PWI', ORG_B)).toEqual(beta);
+    expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(pwiB) })).statusCode).toBe(200);
+  },
+
+  'POST /admin/api/pilots/:id/sessions/revoke-all': async ({ app, db, a, pwiB }) => {
+    const alfa = await liveSessionIds(db, 'PWI', ORG_A);
+    const beta = await liveSessionIds(db, 'PWI', ORG_B);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/PWI/sessions/revoke-all',
+      headers: writer(a),
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    // Zerwane WYŁĄCZNIE sesje Alfy; Beta zostaje co do jednej.
+    expect(res.json()).toEqual({ revoked: alfa.length });
+    expect(await liveSessionIds(db, 'PWI', ORG_A)).toEqual([]);
+    expect(await liveSessionIds(db, 'PWI', ORG_B)).toEqual(beta);
+    expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(pwiB) })).statusCode).toBe(200);
+  },
+
+  /** Zaproszenie administratora klubu to trasa PLATFORMY - sesja klubu jej nie otwiera. */
+  'POST /admin/api/organizations/:id/admins/:pilotId/invite': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/admin/api/organizations/${ORG_B}/admins/BAD/invite`,
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(401);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM password_reset_tokens WHERE pilot_id = 'BAD'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   'GET /admin/api/organizations': async ({ app, a }) => {
     // Trasa PLATFORMY: sesja klubu jej nie otwiera, więc lista klubów nie jest drogą
     // do zobaczenia, kto jeszcze jest na tym serwerze.
@@ -1003,10 +1157,28 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'GET /auth/memberships': 'lista klubów OSOBY z tokenu - to jej własne członkostwa',
   'POST /auth/refresh': 'rotacja refresha w klubie, dla którego go wydano',
   'POST /auth/join': 'zgłoszenie do klubu kodem - token osoby, bez danych klubu',
+  // Hasło (2.1.0, issue #132): poświadczenia OSOBY, jeszcze bez klubu - jak `/auth/google`.
+  'POST /auth/password': 'logowanie hasłem - poświadczenia osoby, klub wybiera dopiero wspólny rdzeń',
+  'POST /auth/password/forgot': '„Nie pamiętam hasła" - zawsze 202, bez danych; list idzie do adresu z formularza',
+  'POST /auth/signup': 'rejestracja e-mailem - zawsze 202, osoba powstaje bez klubu przy realizacji linku',
+  'POST /auth/password/reset': 'realizacja linku z e-maila - ustawia hasło osobie, bez sesji i bez klubu',
+  'GET /auth/methods': 'metody logowania telefonu - konfiguracja serwera, publiczna z definicji',
+  'PUT /me/password': 'własne hasło zalogowanego - poświadczenie osoby, nie dane klubu',
+  'POST /admin/api/auth/password': 'logowanie panelu hasłem - poświadczenia osoby',
+  'GET /admin/api/auth/methods': 'metody logowania panelu - konfiguracja serwera, publiczna z definicji',
+  'PUT /admin/api/me/password': 'własne hasło zalogowanego w panelu - poświadczenie osoby, nie dane klubu',
   'GET /admin/api/auth/google-client': 'identyfikator klienta Google - publiczny z definicji',
   'GET /admin/api/maintenance/schema': 'numer wersji schematu bazy - jeden na serwer, bez danych klubu',
   'POST /admin/api/auth/login': 'logowanie panelu - poświadczenia dostawcy',
-  'POST /admin/api/auth/logout': 'kasowanie ciasteczka, bez danych',
+  'POST /admin/api/auth/logout': 'kasowanie ciasteczka i stempel WŁASNEJ sesji, bez danych klubu',
+  // Sesje logowania (2.1.0, issue #133). WŁASNE urządzenia są pytaniem o OSOBĘ, nie
+  // o klub: człowiek w dwóch klubach ma jedną listę „gdzie jestem zalogowany", więc
+  // zawężenie po klubie byłoby tu błędem, a nie ochroną. Urządzenia CZŁONKA to co innego
+  // i mają przypadki izolacji w `CASES`.
+  'POST /auth/logout': 'wylogowanie telefonu - zużywa własny refresh, bez danych klubu',
+  'GET /admin/api/me/sessions': 'moje urządzenia we WSZYSTKICH klubach - zakres osoby, nie klubu',
+  'DELETE /admin/api/me/sessions/:sid': 'wyłączenie WŁASNEJ sesji - zakres osoby, nie klubu',
+  'GET /admin/api/me/account': 'mój adres i metody logowania - poświadczenia osoby, nie dane klubu',
   'GET /admin': 'przekierowanie na statyczny build panelu',
   'GET /admin/*': 'statyczny build panelu - pliki, bez danych',
   'GET /*': 'strona publiczna - pliki, bez danych',

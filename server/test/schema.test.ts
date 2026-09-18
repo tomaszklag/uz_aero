@@ -80,13 +80,29 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // `reject_reason`, `decided_at`, `decided_by` ZNIKŁY migracją 8 - decyzja o zgłoszeniu
     // jest wierszem `memberships`, nie stanem tożsamości.
     ['external_identities', ['provider', 'subject', 'pilot_id', 'email', 'name', 'created_at', 'last_login_at']],
+    // Hasło jako DRUGIE poświadczenie osoby (migracja 9, 2.1.0, issue #132) - osobna
+    // tabela, jak tożsamość Google, a nie kolumna na `pilots` (tak było do migracji 7).
+    ['password_credentials', ['pilot_id', 'hash', 'set_at', 'set_via', 'updated_at']],
+    // Sesje logowania (migracja 10) - jeden wiersz na żywą sesję telefonu I panelu.
+    [
+      'login_sessions',
+      ['id', 'pilot_id', 'org_id', 'surface', 'method', 'created_at', 'last_seen_at', 'expires_at', 'revoked_at', 'revoked_by', 'device_label', 'ip'],
+    ],
+    // Tokeny linku „ustaw hasło": `kind`/`email`/`display_name` niosą rejestrację e-mailem
+    // (osoba powstaje przy realizacji), `triggered_by` - który z czterech wyzwalaczy.
+    [
+      'password_reset_tokens',
+      ['token_hash', 'kind', 'pilot_id', 'email', 'display_name', 'triggered_by', 'created_at', 'created_by', 'expires_at', 'consumed_at'],
+    ],
 
     [
       'aircraft',
       // `org_id` na KOŃCU każdej tabeli klubu - dołożony `ALTER`-em migracją 8.
       ['id', 'reg', 'type', 'year', 'capacity_l', 'mh_format', 'dual_required', 'service_status', 'updated_at', 'oil_min_l', 'oil_capacity_l', 'oil_norm_l_per_h', 'fuel_norm_l_per_h', 'initial_mh', 'initial_fuel_l', 'initial_oil_l', 'org_id'],
     ],
-    ['refresh_tokens', ['token_hash', 'pilot_id', 'expires_at', 'created_at', 'org_id']],
+    // `session_id` NOT NULL od migracji 10: każdy refresh należy do sesji logowania,
+    // także te sprzed 2.1.0 (backfill zakłada im sesję `mobile`/`legacy`).
+    ['refresh_tokens', ['token_hash', 'pilot_id', 'expires_at', 'created_at', 'org_id', 'session_id']],
     [
       'events',
       ['uuid', 'session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'type', 'device_time', 'gps_time', 'payload', 'schema_version', 'received_at', 'source_device', 'org_id'],
@@ -131,15 +147,18 @@ describe('schemat PostgreSQL (kontrakt)', () => {
   it('`org_id` jest NOT NULL na każdej tabeli klubu poza `admin_audit` (akcje platformowe)', async () => {
     // Denormalizacja z `docs/wielofirmowosc.md` §3.5 działa wyłącznie wtedy, gdy kolumna
     // nie bywa pusta - `WHERE org_id = $1` z pustą kolumną cicho pomijałoby wiersze.
-    // `admin_audit` jest jedynym świadomym wyjątkiem: założenie klubu nie dzieje się
-    // w żadnym klubie.
+    // `admin_audit` jest świadomym wyjątkiem: założenie klubu nie dzieje się w żadnym
+    // klubie. `login_sessions` (migracja 10) jest drugim i z tego samego powodu: sesja
+    // PLATFORMOWA należy do superadministratora, który klubu nie ma. Zawężenia po klubie
+    // to nie luzuje - panel klubu czyta sesje WYŁĄCZNIE z `org_id = actor.orgId`, więc
+    // wiersz platformowy nie wpada tam nigdy (`tenantIsolation.test.ts`).
     const db = await migrated();
     const { rows } = await db.query<{ table_name: string; is_nullable: string }>(
       `SELECT table_name, is_nullable FROM information_schema.columns
         WHERE column_name = 'org_id' ORDER BY table_name`,
     );
     const nullable = rows.filter((r) => r.is_nullable === 'YES').map((r) => r.table_name);
-    expect(nullable).toEqual(['admin_audit']);
+    expect(nullable).toEqual(['admin_audit', 'login_sessions']);
     expect(rows.map((r) => r.table_name)).toEqual([
       'admin_audit',
       'aircraft',
@@ -150,6 +169,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'export_log',
       'exported_sheets',
       'flags',
+      'login_sessions',
       'memberships',
       'refresh_tokens',
       'sessions',
@@ -168,6 +188,90 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(byName.get('uq_aircraft_org_reg')).toMatch(/UNIQUE.*\(org_id, reg\)/);
     expect(byName.get('idx_memberships_code')).toMatch(/UNIQUE.*\(org_id, code\)/);
     expect(byName.get('exported_sheets_pkey')).toMatch(/\(org_id, tab\)/);
+  });
+
+  it('e-mail osoby jest jedyny BEZ WZGLĘDU NA WIELKOŚĆ LITER (migracja 9, `idx_pilots_email_lower`)', async () => {
+    // Od 2.1.0 adres jest LOGINEM, a odczyty robią `lower()`: `Jan@x.pl` i `jan@x.pl`
+    // muszą być jedną osobą. Do migracji 9 `pilots.email UNIQUE` przepuszczało oba.
+    const db = await migrated();
+    await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-a', 'A', 'Jan@x.pl', TRUE)`);
+    await expect(
+      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-b', 'B', 'jan@X.PL', TRUE)`),
+    ).rejects.toThrow();
+    // Puste adresy indeks pomija - osoba bez e-maila nie blokuje drugiej bez e-maila.
+    await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-c', 'C', NULL, TRUE)`);
+    await expect(
+      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('p-d', 'D', NULL, TRUE)`),
+    ).resolves.toBeDefined();
+  });
+
+  it('token linku „ustaw hasło" ma kształt zgodny z rodzajem (CHECK `password_reset_token_shape`)', async () => {
+    const db = await migrated();
+    await db.query(`INSERT INTO pilots (id, name, active) VALUES ('p-t', 'T', TRUE)`);
+    const insert = (values: string): Promise<unknown> =>
+      db.query(
+        `INSERT INTO password_reset_tokens (token_hash, kind, pilot_id, email, display_name, triggered_by, created_at, expires_at)
+         VALUES ${values}`,
+      );
+    // `reset` z osobą - dobrze; `reset` bez osoby - odmowa.
+    await expect(insert(`('h1', 'reset', 'p-t', NULL, NULL, 'self', now(), now())`)).resolves.toBeDefined();
+    await expect(insert(`('h2', 'reset', NULL, NULL, NULL, 'self', now(), now())`)).rejects.toThrow();
+    // `signup` z adresem i imieniem, BEZ osoby - dobrze; z osobą albo bez imienia - odmowa.
+    await expect(insert(`('h3', 'signup', NULL, 'nowy@x.pl', 'Nowa Osoba', 'self', now(), now())`)).resolves.toBeDefined();
+    await expect(insert(`('h4', 'signup', 'p-t', 'nowy@x.pl', 'Nowa Osoba', 'self', now(), now())`)).rejects.toThrow();
+    await expect(insert(`('h5', 'signup', NULL, 'nowy@x.pl', NULL, 'self', now(), now())`)).rejects.toThrow();
+    // Wyzwalacz spoza czwórki - odmowa (kod jednorazowy administratora nie istnieje).
+    await expect(insert(`('h6', 'reset', 'p-t', NULL, NULL, 'code', now(), now())`)).rejects.toThrow();
+  });
+
+  it('unieważnienie sesji jest PARĄ: chwila i sprawca (CHECK `login_session_revocation`)', async () => {
+    // Połowiczny stempel opisywałby sesję, której panel nie umie pokazać („wyłączona,
+    // ale nie wiadomo przez kogo") ani audyt wytłumaczyć. CHECK jest tu jedyną obroną,
+    // bo stemplują cztery różne komendy (C8) i każda robi to własnym `UPDATE`.
+    const db = await migrated();
+    await db.query(`INSERT INTO pilots (id, name, active) VALUES ('p-s', 'S', TRUE)`);
+    const insert = (id: string, revoked: string): Promise<unknown> =>
+      db.query(
+        `INSERT INTO login_sessions (id, pilot_id, surface, method, created_at, last_seen_at, expires_at, revoked_at, revoked_by)
+         VALUES ('${id}', 'p-s', 'mobile', 'password', now(), now(), now(), ${revoked})`,
+      );
+    await expect(insert('s1', 'NULL, NULL')).resolves.toBeDefined();
+    await expect(insert('s2', `now(), 'admin'`)).resolves.toBeDefined();
+    await expect(insert('s3', 'now(), NULL')).rejects.toThrow();
+    await expect(insert('s4', `NULL, 'admin'`)).rejects.toThrow();
+    // Sprawca spoza czwórki - odmowa.
+    await expect(insert('s5', `now(), 'pilot'`)).rejects.toThrow();
+  });
+
+  it('migracja 10 zakłada sesję KAŻDEMU refreshowi sprzed 2.1.0 (backfill `legacy`)', async () => {
+    // `session_id` jest `NOT NULL`, więc bez backfillu migracja wywróciłaby się na
+    // produkcji, w której refreshe żyją 90 dni. Test jedzie schematem SPRZED tej migracji
+    // (migracje 1–9), dokłada refresh jak żywy telefon i dopiero wtedy stosuje dziesiątkę.
+    const pglite = new PGlite();
+    const db = {
+      query: (text: string, params?: unknown[]) => pglite.query(text, params as never) as never,
+      exec: (sql: string) => pglite.exec(sql),
+    } as unknown as Queryable & { exec(sql: string): Promise<unknown> };
+    for (const sql of MIGRATIONS.slice(0, 9)) await db.exec(sql);
+
+    await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('o-b', 'Klub B', 'klub-b')`);
+    await db.query(`INSERT INTO pilots (id, name, active) VALUES ('p-b', 'B', TRUE)`);
+    await db.query(
+      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
+       VALUES ('stary-skrot', 'p-b', 'o-b', now() + interval '90 days', now())`,
+    );
+
+    await db.exec(MIGRATIONS[9]!);
+
+    const { rows } = await db.query<{ session_id: string; method: string; surface: string; org_id: string }>(
+      `SELECT r.session_id, s.method, s.surface, s.org_id
+         FROM refresh_tokens r JOIN login_sessions s ON s.id = r.session_id`,
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ method: 'legacy', surface: 'mobile', org_id: 'o-b' });
+    // Identyfikator sesji jest LOSOWY, nie wyprowadzony ze skrótu refresha - po pierwszej
+    // rotacji pojedzie w czytelnym payloadzie tokenu.
+    expect(rows[0]!.session_id).not.toContain('stary-skrot');
   });
 
   it('`joined_via` zna TRZY drogi do klubu - `panel` odeszło razem z dopisywaniem członka', async () => {

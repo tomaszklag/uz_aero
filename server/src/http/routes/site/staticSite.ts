@@ -26,6 +26,7 @@
  *    to 404, a nie landing udający, że wszystko jest w porządku.
  */
 
+import { relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import fastifyStatic from '@fastify/static';
@@ -64,6 +65,47 @@ const SITE_CSP =
   "object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'";
 
 /**
+ * CSP STRONY `/haslo/` - ŚCIŚLEJSZA niż reszta strony (2.1.0, H-F F3).
+ *
+ * ══ DLACZEGO OSOBNA ══
+ * Uzasadnienie luzu wyżej kończy się na zdaniu „strona nie ma sesji, ciasteczka ani pola,
+ * w które ktokolwiek cokolwiek wpisuje". `/haslo/` ma POLE HASŁA - pierwsze i jedyne na
+ * całej stronie - a od H-F stoi w dodatku na origin PANELU (`hostSplit.ts`, `PASSWORD_PAGE`),
+ * bo pyta API adresem względnym. Zostawić jej `'unsafe-inline'` znaczyłoby odtworzyć
+ * dokładnie to ryzyko, które zamknęło issue #124, i to na stronie, na której człowiek
+ * wpisuje nowe hasło.
+ *
+ * ══ CO Z TEGO WYNIKA DLA PLIKU ══
+ * `script-src 'self'` i `style-src` bez `'unsafe-inline'` znaczą, że ta strona NIE MOŻE
+ * mieć skryptu ani stylu w treści - stąd `haslo.js` i `haslo.css` obok niej. To jedyna
+ * strona w `site/` z tym wymaganiem i dlatego jedyna, która ma własne pliki.
+ *
+ * ══ CZEGO NIE ZMIENIAMY I DLACZEGO ══
+ * Kroje pisma nadal z Google Fonts, jak reszta strony: ta strona nie ma ciasteczka ani
+ * sesji, a arkusz stylów z zewnątrz nie sięgnie ani do fragmentu adresu (token), ani do
+ * pola - to robi skrypt, a tego `script-src 'self'` już nie wpuszcza. Panel self-hostuje
+ * kroje, bo administrator siedzi w nim NA SESJI; tu nie ma czego ukraść.
+ * `frame-ancestors 'none'` zamiast `'self'`: osadzanie tej strony w ramce nie ma żadnego
+ * zastosowania, a reszta strony ma `'self'` wyłącznie dla żywych makiet w podręczniku.
+ */
+const PASSWORD_PAGE_CSP =
+  "default-src 'self'; " +
+  "script-src 'self'; " +
+  "style-src 'self' https://fonts.googleapis.com; " +
+  "font-src 'self' https://fonts.gstatic.com; " +
+  "img-src 'self' data:; " +
+  "connect-src 'self'; " +
+  "object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+
+/**
+ * Czy podawany plik należy do `/haslo/`. Rozstrzyga ŚCIEŻKA NA DYSKU, którą podaje
+ * `fastify-static` - a nie adres żądania: to ta sama rzecz, ale ścieżka pliku jest już
+ * rozwiązana (`/haslo` → `haslo/index.html`), więc nie trzeba powtarzać jej reguł.
+ */
+const isPasswordPageFile = (filePath: string, distDir: string): boolean =>
+  relative(distDir, filePath).split(sep)[0] === 'haslo';
+
+/**
  * Cache: `no-cache` (rewalidacja przy każdym wejściu) na WSZYSTKIM.
  *
  * Inaczej niż w panelu, gdzie Vite hashuje nazwy w `assets/` i rok `immutable` jest
@@ -85,8 +127,11 @@ export function registerPublicSiteStatic(app: FastifyInstance, distDir: string =
     // Wtyczka dokłada własny `cache-control` PO `setHeaders` i ten by wygrał - nagłówek
     // stawiamy w całości sami (ta sama pułapka, co przy panelu).
     cacheControl: false,
-    setHeaders: (res) => {
-      res.setHeader('content-security-policy', SITE_CSP);
+    setHeaders: (res, filePath) => {
+      res.setHeader(
+        'content-security-policy',
+        isPasswordPageFile(filePath, distDir) ? PASSWORD_PAGE_CSP : SITE_CSP,
+      );
       res.setHeader('cache-control', SITE_CACHE);
     },
   });

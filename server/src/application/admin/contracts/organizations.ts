@@ -68,6 +68,30 @@ export interface AdminOrganizationAdmin {
   /** Kod pilota W TYM klubie - z członkostwa, nie z osoby. */
   code: string;
   signedIn: boolean;
+  /**
+   * OSTATNIA AKTYWNOŚĆ (2.1.0, issue #133 C9), ISO 8601; `null` = nie ma czynnej sesji.
+   *
+   * Razem z `signedIn` daje trzy stany zamiast dwóch i dopiero komplet mówi
+   * superadministratorowi, czy jest co robić: „nie zalogował się" (przypomnieć się),
+   * „ostatnio aktywny wczoraj" (klub żyje) i „wszedł kiedyś, ale dziś nigdzie go nie ma"
+   * (`signedIn` z pustą aktywnością).
+   */
+  lastSeenAt: string | null;
+  /**
+   * ZAPROSZENIE (2.1.0, issue #134 D5) - najświeższy NIEZUŻYTY list „ustaw hasło"
+   * wysłany z platformy: przy zakładaniu klubu albo przyciskiem „Wyślij ponownie".
+   * `null` = nic w drodze (nigdy nie wysłano albo link został zrealizowany).
+   *
+   * O tym, czy termin jeszcze biegnie, rozstrzyga CZYTELNIK - stąd `expiresAt` zamiast
+   * flagi. Panel i tak pisze ten termin na karcie, a filtr po stronie zapytania musiałby
+   * porównać stempel z zegara aplikacji z zegarem bazy.
+   *
+   * ══ SAM TERMIN, NIGDY LINK ══
+   * Odpowiedź nie niesie ani tokenu, ani adresu strony i nie ma po co: link do
+   * wklejenia w komunikator jest tym samym kanałem ręcznym, który przegląd właściciela
+   * odrzucił razem z kodem jednorazowym. Superadministrator wysyła, nie dyktuje.
+   */
+  invite: { sentAt: string; expiresAt: string } | null;
 }
 
 /**

@@ -15,9 +15,48 @@
 
 import type { PilotsPort } from '../../common/ports.ts';
 import type { PanelPilot } from '../../common/commands/auth.ts';
+import type { AccountQuery } from '../../common/queries/account.ts';
+import type { AccountMethodWire } from '../contracts/loginSessions.ts';
+
+/**
+ * Czym zalogowany może wejść i pod jakim adresem - karta „Logowanie" na `#/konto`
+ * (2.1.0, issue #134 D6; mockup `konto`).
+ *
+ * Adres jest DO ODCZYTU: to tożsamość, a nie ustawienie - klub go nie zmienia, osoba
+ * też nie. Panel czyta stąd jeszcze jedną rzecz, choć nie widać jej wprost: obecność
+ * `password` rozstrzyga, czy karta obok nazywa się „Zmień hasło" (z polem na obecne),
+ * czy „Ustaw hasło" (bez niego).
+ */
+export interface PanelAccount {
+  email: string | null;
+  methods: AccountMethodWire[];
+}
 
 export class AdminMeQueries {
-  constructor(private readonly pilots: PilotsPort) {}
+  constructor(
+    private readonly pilots: PilotsPort,
+    private readonly accounts: AccountQuery,
+  ) {}
+
+  /**
+   * Konto zalogowanego - OSOBNA trasa, nie pola w `GET /me` (powód w docblocku
+   * `AccountQuery`).
+   *
+   * Sam ODCZYT mieszka od H-E w `common/`, bo to samo pytanie zadaje telefon
+   * (`GET /me/account`, issue #135 E7). Tutaj zostaje wyłącznie złożenie WIRE panelu -
+   * słownik plakietek należy do kontraktu powierzchni, nie do zapytania.
+   */
+  async account(pilotId: string): Promise<PanelAccount | null> {
+    const account = await this.accounts.of(pilotId);
+    if (account == null) return null;
+
+    // Kolejność jest kolejnością plakietek w mockupie - Google, potem hasło.
+    const methods: AccountMethodWire[] = [];
+    if (account.hasGoogle) methods.push('google');
+    if (account.hasPassword) methods.push('password');
+
+    return { email: account.email, methods };
+  }
 
   /**
    * `null` = token przeżył konto albo członkostwo (skasowane / wyłączone po wydaniu

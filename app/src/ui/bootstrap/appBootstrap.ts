@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEventsRepo, ThemePrefsStore } from '../../infrastructure';
+import { createEventsRepo, DeviceClubsStore, ThemePrefsStore } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
@@ -31,6 +31,8 @@ import {
   TraceRecorder,
   TraceSync,
 } from '../../application';
+import { deviceLabel } from '../../application/auth/deviceLabel';
+import { deviceRelease } from '../components/bug/deviceRelease';
 import { defaultClock } from '../../infrastructure/clock';
 import { ExpoSensorsAdapter } from '../../infrastructure/sensors/expoSensorsAdapter';
 import type { GpsPort, SensorPort } from '../../application/ports';
@@ -94,14 +96,28 @@ export function useAppBootstrap(): BootstrapStatus {
         // Warstwa synca (M3): HTTP → serwis poświadczeń → silnik. Store auth dostaje
         // serwis i od razu czyta magazyn - to on przełącza bramkę login/aplikacja;
         // silnik idzie do store'u sesji, skąd żyją pętla okazji i ekran 11.
-        const server = new HttpServerApi(apiBaseUrl());
+        // Etykieta urządzenia (2.1.0, §6): telefon podaje się serwerowi sam, żeby lista
+        // sesji w panelu dała się przeczytać („czy to moje urządzenie"). Fakty zbiera
+        // `deviceRelease()` - ten sam moduł, co dla zgłoszeń błędów - bo warstwa
+        // `infrastructure` nie ma prawa importować `ui`, a `Platform.constants` mieszka
+        // tam. Composition root jest jedynym miejscem, w którym oba końce się widzą.
+        const server = new HttpServerApi(apiBaseUrl(), deviceLabel(deviceRelease()));
         // KLUB AKTYWNY (wielofirmowość §7): każda para tokenów jest parą DLA KLUBU,
         // więc serwis poświadczeń melduje go magazynowi - to nim stemplują się nowe
         // operacje i po nim zawęża się flota. Funkcja, nie port: `AuthService` nie ma
         // prawa wiedzieć, że pod spodem jest SQLite.
-        const auth = new AuthService(server, new SecureCredentials(), new PinCrypto(), async (org) => {
-          await repo.setActiveOrg(org.id);
-        });
+        const auth = new AuthService(
+          server,
+          new SecureCredentials(),
+          new PinCrypto(),
+          async (org) => {
+            await repo.setActiveOrg(org.id);
+          },
+          // KLUBY URZĄDZENIA (2.1.0, D10) w ZWYKŁYM magazynie, nie w bezpiecznym: lista
+          // ma PRZEŻYĆ wylogowanie, bo opisuje samolot, a nie człowieka - to z niej
+          // ekran 00F bierze klub, w którym rozwiąże się wpisany kod pilota.
+          new DeviceClubsStore(AsyncStorage),
+        );
         useAuthStore.getState().attach(auth);
         void useAuthStore.getState().restore();
 

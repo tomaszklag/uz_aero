@@ -13,6 +13,7 @@
 | **Diagnostyka GPS** | Stan odbiornika, godzina i wiek ostatniego odczytu, dokładność w metrach, pozycja, licznik nagranych punktów śladu oraz **Odśwież**. |
 | **O aplikacji** | Wersja aplikacji - do porównania ze [stroną pobierania](~/pobierz/). |
 | **Bezpieczeństwo** | **Zmień PIN**: najpierw obecny, potem nowy. Po zmianie stary PIN przestaje działać od razu. |
+| **Hasło** | **Ustaw hasło** (gdy go jeszcze nie masz) albo **Zmień hasło**. Wymaga internetu - hasło sprawdza i zapisuje klub. |
 | **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
 
 @screen 01-moj-dzien "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
@@ -35,9 +36,21 @@ Sekcja czyta odbiornik telefonu wprost i z siecią nie ma nic wspólnego. Zaglą
 
 ## PIN i konto
 
-Obie sekcje dotyczą dostępu do aplikacji i dlatego stoją razem, na końcu. PIN zmienia się bez internetu - sprawdza go telefon. Wylogowanie internetu wymaga, bo ponowne wejście to logowanie kontem Google, a konta zakłada administrator klubu. Więcej: [pierwsze logowanie](pierwsze-logowanie).
+Trzy sekcje dotyczą dostępu do aplikacji i dlatego stoją razem, na końcu.
 
-@screen 00-login "Codzienne wejście PIN-em" | 00a-login-full "Ponowne logowanie kontem Google"
+**PIN** zmienia się bez internetu - sprawdza go telefon.
+
+**Hasło** internetu wymaga, bo sprawdza je i zapisuje klub. Nie zastępuje PIN-u: PIN otwiera ten telefon każdego dnia, hasło loguje Cię na **innym** urządzeniu - wspólnym tablecie w samolocie albo w panelu klubu. Arkusz pyta o nowe hasło i powtórkę, a gdy hasło już masz - najpierw o obecne. Wymagane jest **co najmniej 12 znaków** i nic poza tym; hasło zawierające Twój adres albo nazwisko zostanie odrzucone. Zmiana wylogowuje pozostałe urządzenia, a to, na którym ją robisz, zostaje zalogowane. Jeśli hasła nie pamiętasz, nie zmieniasz go tutaj - używasz **Nie pamiętam hasła** na ekranie logowania ([pierwsze logowanie](pierwsze-logowanie)).
+
+**Wylogowanie** internetu wymaga, bo ponowne wejście to logowanie kontem Google albo hasłem.
+
+@screen 00-login "Codzienne wejście PIN-em" | 13-ustawienia "Hasło między PIN-em a kontem" | 00f-login-haslo "Logowanie hasłem"
+
+## Gdy administrator zakończył sesję
+
+W sekcji **Konto** może stanąć baner **Sesja zakończona przez administratora**. Znaczy dokładnie tyle: to urządzenie przestało wysyłać zapisy do klubu. **Nic z telefonu nie zniknęło** - PIN dalej otwiera aplikację, dzień lotny masz cały, a zapisy, które nie zdążyły dojść, wyjdą po ponownym zalogowaniu **tej samej osoby**. Ten sam baner stoi na ekranie PIN, a kolejka pokazuje wtedy czerwone **SYNC STOI**.
+
+Sekcja **Hasło** jest w tym stanie nieczynna z podanym powodem - hasło zapisuje klub, a klub tej sesji już nie uznaje. Zaloguj się ponownie.
 
 > **Dlaczego tak.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
 

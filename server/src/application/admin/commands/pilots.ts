@@ -56,7 +56,7 @@ import {
   type AccountRefusal,
 } from '../../../domain/accountGuards.ts';
 import type { PilotRole } from '../../../domain/roles.ts';
-import type { Clock } from '../../common/ports.ts';
+import type { Clock, LoginSessionsPort } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
 import type {
@@ -141,6 +141,13 @@ export class AdminPilotCommands {
     private readonly write: AuditedWrite,
     private readonly pilots: PilotsAdminPort,
     private readonly sessions: RefreshTokensAdminPort,
+    /**
+     * Sesje logowania (2.1.0, issue #133) - wyłączenie członkostwa stempluje je TĄ SAMĄ
+     * transakcją, co status. Bez tego panel klubu, w którym ktoś właśnie siedzi,
+     * przeżywałby wyłączenie o osiem godzin: przeglądarka refresha nie ma, więc
+     * kasowanie `refresh_tokens` jej nie dotyczy.
+     */
+    private readonly loginSessions: LoginSessionsPort,
     /**
      * Identyfikator OSOBY jako FUNKCJA w konstruktorze, nie port: nie ma tu adaptera
      * do podmiany (composition root podaje `randomUUID`), a port bez drugiej
@@ -274,9 +281,21 @@ export class AdminPilotCommands {
         // Sesje zrywamy TĄ SAMĄ transakcją, co zmianę statusu. Rozdzielenie
         // zostawiałoby okno, w którym członkostwo jest już wyłączone, a token jeszcze
         // działa - czyli dokładnie stan, którego ta operacja ma nie dopuścić.
-        const revokedSessions = active
-          ? 0
-          : await this.sessions.revokeAllFor(tx, id, actor.orgId);
+        // Dwie tabele, bo sesja ma dwie połowy: refresh telefonu ZNIKA (nie ma czym
+        // odświeżyć), a wiersz sesji dostaje stempel - to on zamyka trasy natychmiast,
+        // także panelowi, który refresha nigdy nie miał. Liczba w audycie mówi o WIERSZACH
+        // SESJI, czyli o urządzeniach: od 2.1.0 to ona jest odpowiedzią na pytanie
+        // „ile osób wyleciało", bo obejmuje też przeglądarkę.
+        let revokedSessions = 0;
+        if (!active) {
+          await this.sessions.revokeAllFor(tx, id, actor.orgId);
+          revokedSessions = await this.loginSessions.revokeAll(
+            tx,
+            { pilotId: id, orgId: actor.orgId },
+            this.clock.now(),
+            'admin',
+          );
+        }
 
         return {
           result: { account: { ...before, active }, revokedSessions },

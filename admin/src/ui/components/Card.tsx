@@ -12,12 +12,20 @@ interface CardProps {
   actions?: ReactNode;
   /** Szerokość karty formularza z mockupu (A00: 420 px). Wyłącznie wymiar układu. */
   style?: CSSProperties;
+  /**
+   * Karta na OBIE kolumny siatki `.card-grid` (`.span-2` z mockupu `konto`).
+   *
+   * Prop, a nie styl inline u wołającego: klasa jest w arkuszu, więc makieta i panel
+   * mówią o tej samej regule układu jedną nazwą - a `gridColumn` wpisany w JSX byłby
+   * drugą definicją tego samego, niewidoczną dla generatora `panel.css`.
+   */
+  span2?: boolean;
   children: ReactNode;
 }
 
-export function Card({ title, actions, style, children }: CardProps) {
+export function Card({ title, actions, style, span2 = false, children }: CardProps) {
   return (
-    <div className="card" style={style}>
+    <div className={span2 ? 'card span-2' : 'card'} style={style}>
       {title == null ? null : (
         <div className="card-title">
           {title}

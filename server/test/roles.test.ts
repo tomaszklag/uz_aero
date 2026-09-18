@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 import { credentialsRevoked } from '../src/domain/credentials.ts';
 import { authorizeOrg, authorizePlatform } from '../src/http/authorize.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
+import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
 import { can, platformCan, platformCapabilitiesOf } from '../src/domain/roles.ts';
 import { TEST_SECRET, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
@@ -42,10 +43,22 @@ const CLUB_CAPABILITIES = [
  */
 const PLATFORM_CAPABILITIES = ['platform.manage', 'bugs.triage'] as const;
 
+/**
+ * Tokeny tego pliku NIE NIOSĄ SESJI - pusty identyfikator znaczy „claim `sid` nie
+ * powstaje", czyli token w kształcie sprzed 2.1.0 (patrz `sidClaim` w `hs256Tokens.ts`).
+ *
+ * To jest świadome i to jest jedyny sensowny wybór: ten plik bada ROLE i ZDOLNOŚCI, więc
+ * sesja byłaby tu tłem, a identyfikator wymyślony odbijałby każdy przypadek - brama
+ * odmawia tokenowi wskazującemu sesję, której nie ma, i tak ma być. Zachowanie bramy
+ * wobec sesji żywej i unieważnionej sprawdza `loginSessions.test.ts`; tutaj przy okazji
+ * przechodzi druga strona tamtej reguły: poświadczenie sprzed wdrożenia dalej działa.
+ */
+const NO_SESSION = '';
+
 const asAdmin = (pilotId: string, orgId = ORG_A) =>
-  ({ pilotId, orgId, code: pilotId, role: 'admin' }) as const;
+  ({ pilotId, orgId, code: pilotId, role: 'admin', sessionId: NO_SESSION }) as const;
 const asPilot = (pilotId: string, orgId = ORG_A) =>
-  ({ pilotId, orgId, code: pilotId, role: 'pilot' }) as const;
+  ({ pilotId, orgId, code: pilotId, role: 'pilot', sessionId: NO_SESSION }) as const;
 
 describe('mapa uprawnień', () => {
   it('pilot nie ma w panelu NICZEGO - z wejściem i platformą włącznie', () => {
@@ -236,6 +249,11 @@ describe('brama uprawnień tras panelu klubu', () => {
       'orgId',
       'pilotId',
       'role',
+      // 2.1.0: brama sprawdza też SESJĘ z claimu `sid` - tym samym zapytaniem, co
+      // członkostwo, więc oba pola jadą tą samą projekcją. `sessionId` wraca echem
+      // argumentu: z niego bierze się stempel aktywności i `Actor.sessionId`.
+      'sessionId',
+      'sessionRevoked',
     ]);
     expect(outcome.account.orgId).toBe(ORG_A);
   });
@@ -347,6 +365,10 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
       // …a brak `iat` czyta się jako `0`, czyli „wydany przed czasem" - wartość, która
       // przegrywa z każdym znacznikiem unieważnienia (przypadek niżej).
       issuedAt: 0,
+      // Brak `sid` = token sprzed 2.1.0. `null`, a nie pusty napis, bo brama musi
+      // odróżnić „ten token nie zna sesji" od „wskazuje sesję, której nie ma": pierwsze
+      // przechodzi do wygaśnięcia, drugie odbija (`loginSessions.test.ts`).
+      sessionId: null,
     });
     expect((await authorizeOrg(tokens, new PgPilotsRepo(db), token, 'panel.access')).ok).toBe(
       true,
@@ -410,7 +432,7 @@ describe('token PLATFORMOWY superadministratora', () => {
     // kogoś bez klubu otwierałoby trasy telefonu, a `POST /events` pisałby zdarzenia
     // do klubu, którego w tokenie nie ma.
     const { tokens } = await testHarness();
-    const platform = tokens.signPlatform({ pilotId: 'admin' }, 3600);
+    const platform = tokens.signPlatform({ pilotId: 'admin', sessionId: NO_SESSION }, 3600);
     const club = tokens.sign(asAdmin('TMK'), 3600);
 
     expect(tokens.verify(platform)).toBeNull();
@@ -421,35 +443,39 @@ describe('token PLATFORMOWY superadministratora', () => {
   });
 
   it('brama platformowa pyta OSOBĘ o rolę - nie token, nie członkostwo', async () => {
-    const { db, tokens } = await testHarness();
+    const { db, clock, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.signPlatform({ pilotId: 'TMK' }, 3600);
+    const sessions = new PgLoginSessions(db, clock);
+    const token = tokens.signPlatform({ pilotId: 'TMK', sessionId: NO_SESSION }, 3600);
 
     // TMK jest administratorem KLUBU, a nie superadministratorem: token platformowy
     // z jego identyfikatorem jest poprawną kopertą, ale rola z osoby go nie przepuszcza.
-    expect(await authorizePlatform(tokens, accounts, token, 'platform.manage')).toEqual({
+    expect(await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).toEqual({
       ok: false,
       status: 403,
       body: { error: 'forbidden', required: 'platform.manage' },
     });
 
     await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'");
-    expect((await authorizePlatform(tokens, accounts, token, 'platform.manage')).ok).toBe(true);
+    expect((await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).ok).toBe(true);
 
     // Osoba zablokowana platformowo - 401, jak wszędzie: nikt za tym poświadczeniem nie stoi.
     await db.query("UPDATE pilots SET active = FALSE WHERE id = 'TMK'");
-    expect((await authorizePlatform(tokens, accounts, token, 'platform.manage')).ok).toBe(false);
+    expect((await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).ok).toBe(false);
   });
 
   it('token klubu NIE otwiera bramy platformowej, a platformowy - bramy klubu', async () => {
-    const { db, tokens } = await testHarness();
+    const { db, clock, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
+    const sessions = new PgLoginSessions(db, clock);
     await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'");
 
     const club = tokens.sign(asAdmin('TMK'), 3600);
-    const platform = tokens.signPlatform({ pilotId: 'TMK' }, 3600);
+    const platform = tokens.signPlatform({ pilotId: 'TMK', sessionId: NO_SESSION }, 3600);
 
-    expect((await authorizePlatform(tokens, accounts, club, 'platform.manage')).ok).toBe(false);
+    expect(
+      (await authorizePlatform(tokens, accounts, sessions, club, 'platform.manage')).ok,
+    ).toBe(false);
     expect((await authorizeOrg(tokens, accounts, platform, 'panel.access')).ok).toBe(false);
   });
 });

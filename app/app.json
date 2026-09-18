@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ninerdeck",
     "slug": "ninerdeck",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -31,7 +31,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.ninerdeck.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
