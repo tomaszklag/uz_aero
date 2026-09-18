@@ -28,6 +28,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { Actor, PlatformActor } from '../../../application/admin/ports.ts';
 import type {
+  LoginSessionsPort,
   MembershipAuthSnapshot,
   PilotsPort,
   TokenService,
@@ -54,6 +55,12 @@ export interface AdminGate {
    * tabelę członkostw, bo to ci sami ludzie.
    */
   accounts: PilotsPort;
+  /**
+   * Sesje logowania (2.1.0) - brama KLUBU dostaje je razem z członkostwem, jednym
+   * zapytaniem (`authSnapshot`), ale brama PLATFORMOWA nie ma członkostwa, do którego
+   * mogłaby je dokleić, więc pyta tym portem.
+   */
+  sessions: LoginSessionsPort;
 }
 
 export interface AdminRouteSpec {
@@ -152,7 +159,13 @@ export function sessionRoute(
     handler: async (req, reply) => {
       const token = tokenFromRequest(req);
       if (token != null && gate.tokens.verifyPlatform(token) != null) {
-        const outcome = await authorizePlatform(gate.tokens, gate.accounts, token, 'platform.manage');
+        const outcome = await authorizePlatform(
+          gate.tokens,
+          gate.accounts,
+          gate.sessions,
+          token,
+          'platform.manage',
+        );
         if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
         return handlers.platform(req, reply, {
@@ -183,6 +196,7 @@ export function platformRoute(
       const outcome = await authorizePlatform(
         gate.tokens,
         gate.accounts,
+        gate.sessions,
         tokenFromRequest(req),
         spec.capability,
       );

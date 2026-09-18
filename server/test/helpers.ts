@@ -110,6 +110,7 @@ import { PgPilotPrefsRepo } from '../src/infrastructure/pg/mobile/pilotPrefsRepo
 import { PgExternalIdentitiesRepo } from '../src/infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
 import { PgMyEventsRepo } from '../src/infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from '../src/infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -156,6 +157,44 @@ export const TEST_BASE_URL = 'http://ninerdeck.test';
  * projekcji ze strumienia". Dekorator opakowuje PRAWDZIWY adapter, więc test nadal
  * jedzie na prawdziwym SQL-u - podmieniamy obserwację, nie zachowanie.
  */
+/**
+ * Refresh w bazie RAZEM z jego SESJĄ - od migracji 10 (issue #133) `session_id` jest
+ * `NOT NULL`, bo każda para tokenów należy do sesji logowania.
+ *
+ * Testy, które chcą „telefon z zapisanym refreshem" (czyszczenie wygasłych z A11, wybór
+ * klubu ostatnio używanego, wyjście z klubu), potrzebują odtąd DWÓCH wierszy. Helper stoi
+ * tu, a nie w każdym z nich, bo pomyłka w tej parze wygląda jak błąd schematu, a nie jak
+ * literówka w teście - i dlatego nie ma sensu, żeby każdy plik pisał ją sam.
+ *
+ * Sesja dostaje `legacy`: te wiersze udają poświadczenia, które w bazie po prostu SĄ,
+ * a nie takie, które właśnie powstały przez logowanie.
+ */
+export async function seedRefresh(
+  db: Queryable,
+  row: {
+    tokenHash: string;
+    pilotId: string;
+    orgId: string;
+    expiresAt: Date | string;
+    createdAt?: Date | string;
+  },
+): Promise<string> {
+  const sessionId = `sesja-${row.tokenHash}`;
+  const createdAt = row.createdAt ?? new Date();
+  await db.query(
+    `INSERT INTO login_sessions
+           (id, pilot_id, org_id, surface, method, created_at, last_seen_at, expires_at)
+     VALUES ($1, $2, $3, 'mobile', 'legacy', $4, $4, $5)`,
+    [sessionId, row.pilotId, row.orgId, createdAt, row.expiresAt],
+  );
+  await db.query(
+    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, session_id, expires_at, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [row.tokenHash, row.pilotId, row.orgId, sessionId, row.expiresAt, createdAt],
+  );
+  return sessionId;
+}
+
 export async function testHarness(
   options: {
     sheets?: SheetsPort;
@@ -214,6 +253,7 @@ export async function testHarness(
   const identities = new PgExternalIdentitiesRepo(db);
   const identityProvider = new TestIdentityProvider();
   const refreshTokens = new PgRefreshTokens(db, clock);
+const loginSessions = new PgLoginSessions(db, clock);
 
   // Hasło (2.1.0): PRAWDZIWY scrypt na tanich parametrach (ln=10 - ten sam kod, kilkaset
   // razy mniej pracy), prawdziwe adaptery tokenów i poświadczeń, licznik prób na sterowanym
@@ -310,8 +350,10 @@ export async function testHarness(
       clock,
       randomUUID,
       { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
+      loginSessions,
     ),
     passwords,
+    loginSessions,
     adminPasswordLinks: new AdminPasswordLinkCommands(
       auditedWrite,
       adminPilotsRepo,

@@ -184,7 +184,11 @@ export class PgPilotsRepo implements PilotsPort {
    * `NULL` wyłącznie przy `pending`, a wtedy `active` jest `false` i brama odbija wiersz,
    * zanim ktokolwiek przeczyta kod.
    */
-  async authSnapshot(pilotId: string, orgId: string): Promise<MembershipAuthSnapshot | null> {
+  async authSnapshot(
+    pilotId: string,
+    orgId: string,
+    sessionId: string | null,
+  ): Promise<MembershipAuthSnapshot | null> {
     const { rows } = await this.db.query<{
       pilot_id: string;
       org_id: string;
@@ -194,17 +198,27 @@ export class PgPilotsRepo implements PilotsPort {
       role: string;
       credentials_valid_from: string | Date | null;
       membership_credentials_valid_from: string | Date | null;
+      session_revoked: boolean;
     }>(
+      // Sesja wchodzi `LEFT JOIN`-em po TRÓJCE (identyfikator, osoba, klub), a nie po
+      // samym `sid`: `sid` z tokenu jest już podpisany przez nas, ale zawężenie do osoby
+      // i klubu wiersza czyni podstawienie cudzej sesji niewyrażalnym, zamiast tylko
+      // nieprawdopodobnym. `$3::text IS NOT NULL` odróżnia „token bez sesji" (przed 2.1.0,
+      // przechodzi) od „sesji, której nie ma" (odbija).
       `SELECT m.pilot_id, m.org_id, m.code, p.name,
               (p.active AND o.active AND m.status = 'active') AS active,
               m.role,
               p.credentials_valid_from,
-              m.credentials_valid_from AS membership_credentials_valid_from
+              m.credentials_valid_from AS membership_credentials_valid_from,
+              ($3::text IS NOT NULL AND (s.id IS NULL OR s.revoked_at IS NOT NULL))
+                AS session_revoked
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id
          JOIN organizations o ON o.id = m.org_id
+         LEFT JOIN login_sessions s
+                ON s.id = $3 AND s.pilot_id = m.pilot_id AND s.org_id = m.org_id
         WHERE m.pilot_id = $1 AND m.org_id = $2`,
-      [pilotId, orgId],
+      [pilotId, orgId, sessionId],
     );
 
     const row = rows[0];
@@ -218,6 +232,7 @@ export class PgPilotsRepo implements PilotsPort {
       role: isPilotRole(row.role) ? row.role : DEFAULT_ROLE,
       credentialsValidFrom: at(row.credentials_valid_from),
       membershipCredentialsValidFrom: at(row.membership_credentials_valid_from),
+      sessionRevoked: row.session_revoked,
     };
   }
 }

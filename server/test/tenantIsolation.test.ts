@@ -25,7 +25,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, TEST_BASE_URL, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, TEST_BASE_URL, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_SHEETS_KEY, ORG_B, ORG_B_SHEETS_KEY, seedBetaFleet } from './testWorld.ts';
 
@@ -166,18 +166,22 @@ async function twoClubs(): Promise<World> {
   const bpi = await tokenOf(app, 'BPI');
 
   // PWI: token klubu B (świeższy refresh w B przestawia klub aktywny), potem klubu A.
-  await db.query(
-    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-     VALUES ('pwi-b', 'PWI', $1, $2, $3)`,
-    [ORG_B, new Date(harness.clock.now().getTime() + 86_400_000), harness.clock.now()],
-  );
+  await seedRefresh(db, {
+    tokenHash: 'pwi-b',
+    pilotId: 'PWI',
+    orgId: ORG_B,
+    expiresAt: new Date(harness.clock.now().getTime() + 86_400_000),
+    createdAt: harness.clock.now(),
+  });
   const pwiB = await tokenOf(app, 'PWI');
   harness.clock.advance(60_000);
-  await db.query(
-    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-     VALUES ('pwi-a', 'PWI', $1, $2, $3)`,
-    [ORG_A, new Date(harness.clock.now().getTime() + 86_400_000), harness.clock.now()],
-  );
+  await seedRefresh(db, {
+    tokenHash: 'pwi-a',
+    pilotId: 'PWI',
+    orgId: ORG_A,
+    expiresAt: new Date(harness.clock.now().getTime() + 86_400_000),
+    createdAt: harness.clock.now(),
+  });
   const pwiA = await tokenOf(app, 'PWI');
 
   const post = (token: string, events: unknown[]) =>
@@ -693,11 +697,13 @@ const CASES: Record<string, Probe> = {
 
   'POST /admin/api/maintenance/refresh-tokens/purge': async ({ app, db, a }) => {
     // Wygasły token klubu B PRZEŻYWA sprzątanie zlecone z panelu klubu A.
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('stale-b', 'BAD', $1, '2020-01-01T00:00:00Z', '2019-01-01T00:00:00Z')`,
-      [ORG_B],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'stale-b',
+      pilotId: 'BAD',
+      orgId: ORG_B,
+      expiresAt: '2020-01-01T00:00:00Z',
+      createdAt: '2019-01-01T00:00:00Z',
+    });
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/maintenance/refresh-tokens/purge',

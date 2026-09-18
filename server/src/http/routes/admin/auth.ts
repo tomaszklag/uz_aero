@@ -24,6 +24,7 @@ import type {
   PanelSession,
 } from '../../../application/common/commands/auth.ts';
 import { capabilitiesOf, platformCapabilitiesOf } from '../../../domain/roles.ts';
+import { deviceFrom } from '../../device.ts';
 import { ADMIN_SESSION_COOKIE, tokenFromRequest } from '../../tokenFromRequest.ts';
 import { passwordField, tooManyAttempts } from '../common/password.ts';
 import { sessionRoute, ADMIN_API_PREFIX, type AdminGate } from './adminRoute.ts';
@@ -136,7 +137,7 @@ async function switchScope(
     return reply.code(401).send({ error: 'unauthorized' });
   }
 
-  const outcome = await auth.panelSwitch(request, body.data.orgId);
+  const outcome = await auth.panelSwitch(request, body.data.orgId, deviceFrom(req));
   if (!outcome.ok) {
     return reply
       .code(outcome.reason === 'not_found' ? 404 : 401)
@@ -183,7 +184,7 @@ export function registerAdminAuthRoutes(
     const result = await auth.panelLoginWithPassword({
       email: parsed.data.email,
       password: parsed.data.password,
-      ip: req.ip ?? null,
+      device: deviceFrom(req),
     });
     if (result.ok) return sendSession(reply, result.session);
     if (result.reason === 'rate_limited') return tooManyAttempts(reply, result.retryAfterSec);
@@ -195,7 +196,7 @@ export function registerAdminAuthRoutes(
     const parsed = loginBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
-    const result = await auth.panelLoginWithProvider(parsed.data.idToken);
+    const result = await auth.panelLoginWithProvider(parsed.data.idToken, deviceFrom(req));
     if (!result.ok) {
       // 403 dla konta ROZPOZNANEGO, które nie ma wstępu: tożsamość jest poprawna
       // i człowiek ma prawo wiedzieć, dlaczego go nie wpuszczamy - w żadnym klubie nie

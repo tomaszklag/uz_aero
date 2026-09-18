@@ -58,7 +58,11 @@ import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSu
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { TraceCommands } from '../application/mobile/commands/traces.ts';
-import type { PilotsPort, TokenService } from '../application/common/ports.ts';
+import type {
+  LoginSessionsPort,
+  PilotsPort,
+  TokenService,
+} from '../application/common/ports.ts';
 import type { MemberGate } from './memberGate.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
 import { registerHostSplit, type HostSplit } from './hostSplit.ts';
@@ -276,6 +280,8 @@ export interface ServerDeps {
    * `routes/mobile/mePassword.ts`, `routes/admin/mePassword.ts`.
    */
   passwords: PasswordCommands;
+  /** Sesje logowania (2.1.0, issue #133) - brama platformowa i trasy sesji panelu. */
+  loginSessions: LoginSessionsPort;
   /**
    * Link „ustaw hasło" wysyłany Z PANELU: członkowi klubu (`accounts.manage`) i pierwszemu
    * administratorowi klubu z platformy (`platform.manage`) - z wpisem audytu.
@@ -429,7 +435,7 @@ export async function buildServer(
   // konta czyta `pilots` przy każdym żądaniu (`http/authorize.ts`). Gdyby któraś trasa
   // dostała samo `tokens`, deaktywacja działałaby na niej dopiero po 8 godzinach -
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
-  const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots };
+  const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots, sessions: deps.loginSessions };
 
   registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);

@@ -27,23 +27,54 @@ export class PgRefreshTokens implements RefreshTokensPort {
     private readonly clock: Clock,
   ) {}
 
-  async issue(pilotId: string, orgId: string, expiresAt: Date): Promise<string> {
+  async issue(
+    pilotId: string,
+    orgId: string,
+    sessionId: string,
+    expiresAt: Date,
+  ): Promise<string> {
     const token = randomBytes(32).toString('base64url');
     await this.db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [hashToken(token), pilotId, orgId, expiresAt.toISOString(), this.clock.now().toISOString()],
+      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, session_id, expires_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        hashToken(token),
+        pilotId,
+        orgId,
+        sessionId,
+        expiresAt.toISOString(),
+        this.clock.now().toISOString(),
+      ],
     );
     return token;
   }
 
+  async sessionOf(token: string): Promise<string | null> {
+    const { rows } = await this.db.query<{ session_id: string }>(
+      'SELECT session_id FROM refresh_tokens WHERE token_hash = $1',
+      [hashToken(token)],
+    );
+    return rows[0]?.session_id ?? null;
+  }
+
+  /**
+   * Rotacja ZACHOWUJE sesję: to dalej to samo urządzenie, więc `sid` w nowym tokenie
+   * dostępu ma być ten sam, co przed odświeżeniem. Nowa sesja przy każdej rotacji
+   * zamieniłaby listę urządzeń w panelu w dziennik odświeżeń.
+   */
   async rotate(
     token: string,
     newExpiresAt: Date,
-  ): Promise<{ pilotId: string; orgId: string; token: string } | null> {
+  ): Promise<{ pilotId: string; orgId: string; sessionId: string; token: string } | null> {
     return this.db.transaction(async (tx) => {
-      const { rows } = await tx.query<{ pilot_id: string; org_id: string; expires_at: string }>(
-        'DELETE FROM refresh_tokens WHERE token_hash = $1 RETURNING pilot_id, org_id, expires_at',
+      const { rows } = await tx.query<{
+        pilot_id: string;
+        org_id: string;
+        session_id: string;
+        expires_at: string;
+      }>(
+        `DELETE FROM refresh_tokens WHERE token_hash = $1
+         RETURNING pilot_id, org_id, session_id, expires_at`,
         [hashToken(token)],
       );
       const row = rows[0];
@@ -52,11 +83,23 @@ export class PgRefreshTokens implements RefreshTokensPort {
 
       const next = randomBytes(32).toString('base64url');
       await tx.query(
-        `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [hashToken(next), row.pilot_id, row.org_id, newExpiresAt.toISOString(), this.clock.now().toISOString()],
+        `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, session_id, expires_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          hashToken(next),
+          row.pilot_id,
+          row.org_id,
+          row.session_id,
+          newExpiresAt.toISOString(),
+          this.clock.now().toISOString(),
+        ],
       );
-      return { pilotId: row.pilot_id, orgId: row.org_id, token: next };
+      return {
+        pilotId: row.pilot_id,
+        orgId: row.org_id,
+        sessionId: row.session_id,
+        token: next,
+      };
     });
   }
 

@@ -101,6 +101,7 @@ import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgLoginSessions } from './infrastructure/pg/common/loginSessionsRepo.ts';
 import { PgMyEventsRepo } from './infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from './infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -213,6 +214,7 @@ const pilots = new PgPilotsRepo(db);
 // zasada, co przy kontach (`PgPilotsRepo` czyta, `PgAdminPilotsRepo` pisze).
 const identities = new PgExternalIdentitiesRepo(db);
 const refreshTokens = new PgRefreshTokens(db, clock);
+const loginSessions = new PgLoginSessions(db, clock);
 
 // Hasło jako DRUGA metoda logowania (2.1.0, issue #132). Jeden licznik prób dla logowania,
 // zmiany hasła i wysyłki linku - klucze rozróżnia przedrostek; jeden skrót (scrypt N=2¹⁷)
@@ -325,8 +327,10 @@ const app = await buildServer({
     // Identyfikator NOWEJ osoby przy pierwszym logowaniu (wielofirmowość §4).
     randomUUID,
     { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
+    loginSessions,
   ),
   passwords,
+  loginSessions,
   // Link „ustaw hasło" z panelu - ta sama brama audytu, te same adaptery członków
   // i klubów, co reszta panelu, plus wspólna komenda hasła (jeden list, jeden token).
   adminPasswordLinks: new AdminPasswordLinkCommands(

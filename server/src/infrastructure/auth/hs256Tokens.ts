@@ -31,6 +31,7 @@ import type {
   VerifiedPersonIdentity,
   VerifiedPlatformIdentity,
 } from '../../application/common/ports.ts';
+import { isLoginMethod } from '../../domain/loginSessions.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
 const b64url = (data: Buffer | string): string =>
@@ -74,8 +75,46 @@ interface Claims {
    * Nieobecna w tokenach wydanych wcześniej - patrz `verify`.
    */
   iat?: number;
+  /**
+   * SESJA LOGOWANIA (2.1.0 §6) - identyfikator wiersza `login_sessions`, który brama
+   * sprawdza przy każdym żądaniu. W tokenie KLUBU i PLATFORMOWYM; token osoby go nie ma,
+   * bo sesji nie zakłada.
+   *
+   * Nieobecny w tokenach wydanych przed 2.1.0 - i to jest jedyny powód, dla którego pole
+   * jest opcjonalne. Brak `sid` przyjmuje brama DO WYGAŚNIĘCIA tokenu (1 h dostępu, 8 h
+   * ciasteczka), bo wdrożenie nie ma prawa wylogować wszystkich naraz. `sid` NIEZNANY
+   * bazie znaczy co innego niż jego brak i musi odbić - stąd weryfikacja oddaje `null`
+   * zamiast pustego napisu, a decyzję podejmuje brama, nie ten plik.
+   */
+  sid?: string;
+  /**
+   * METODA LOGOWANIA - wyłącznie w tokenie OSOBY. Sesji nie zakłada on sam, ale
+   * `GET /auth/memberships` wymienia go na tokeny klubu i dopiero tam sesja powstaje;
+   * bez tego claimu nie byłoby czym jej podpisać (patrz `PersonIdentity.method`).
+   */
+  method?: string;
   exp: number;
 }
+
+/**
+ * `sid` z claimów: brak i pusty napis znaczą to samo - „token sprzed 2.1.0". Pustego
+ * nie wydajemy, ale weryfikacja nie ma prawa przepuścić go jako identyfikatora sesji:
+ * `WHERE id = ''` nie trafiłoby w żaden wiersz, więc brama uznałaby sesję za nieznaną
+ * i odbiła token, który jest w porządku.
+ */
+const sidOf = (claims: Claims): string | null =>
+  typeof claims.sid === 'string' && claims.sid !== '' ? claims.sid : null;
+
+/**
+ * Pusty identyfikator sesji ZNIKA z payloadu, zamiast wjechać tam jako `""`.
+ *
+ * Produkcja zawsze podaje uuid, więc jedynym wołającym z pustą wartością jest test, który
+ * chce tokenu W KSZTAŁCIE SPRZED 2.1.0 - a taki token ma nie mieć claimu `sid` WCALE, nie
+ * mieć go pustego. Dzięki temu poświadczenie z testu bramy jest bajt w bajt tym samym, co
+ * poświadczenie wydane przed wdrożeniem, a nie jego przybliżeniem.
+ */
+const sidClaim = (sessionId: string): string | undefined =>
+  sessionId === '' ? undefined : sessionId;
 
 export class Hs256Tokens implements TokenService {
   constructor(
@@ -144,6 +183,7 @@ export class Hs256Tokens implements TokenService {
       org: claims.orgId,
       code: claims.code,
       role: claims.role,
+      sid: sidClaim(claims.sessionId),
       iat: issuedAt,
       exp: issuedAt + ttlSec,
     });
@@ -154,6 +194,7 @@ export class Hs256Tokens implements TokenService {
     return this.seal({
       sub: claims.pilotId,
       purpose: PERSON_PURPOSE,
+      method: claims.method,
       iat: issuedAt,
       exp: issuedAt + ttlSec,
     });
@@ -164,6 +205,7 @@ export class Hs256Tokens implements TokenService {
     return this.seal({
       sub: claims.pilotId,
       purpose: PLATFORM_PURPOSE,
+      sid: sidClaim(claims.sessionId),
       iat: issuedAt,
       exp: issuedAt + ttlSec,
     });
@@ -177,7 +219,7 @@ export class Hs256Tokens implements TokenService {
     // `iat` jak w `verify`: brak → 0, czyli „wydany przed czasem" - przegrywa z każdym
     // unieważnieniem poświadczeń, które ten token miałby otworzyć.
     const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
-    return { pilotId: claims.sub, issuedAt };
+    return { pilotId: claims.sub, issuedAt, method: isLoginMethod(claims.method) ? claims.method : null };
   }
 
   verifyPlatform(token: string): VerifiedPlatformIdentity | null {
@@ -185,7 +227,7 @@ export class Hs256Tokens implements TokenService {
     if (claims == null) return null;
     if (claims.purpose !== PLATFORM_PURPOSE) return null;
     const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
-    return { pilotId: claims.sub, issuedAt };
+    return { pilotId: claims.sub, issuedAt, sessionId: sidOf(claims) };
   }
 
   verify(token: string): VerifiedIdentity | null {
@@ -216,6 +258,13 @@ export class Hs256Tokens implements TokenService {
     // poświadczeń taki token przegrywa - domyślną wartością jest ta, która odbiera
     // dostęp, nigdy ta, która go przyznaje.
     const issuedAt = typeof claims.iat === 'number' ? claims.iat : 0;
-    return { pilotId: claims.sub, orgId: claims.org, code: claims.code, role, issuedAt };
+    return {
+      pilotId: claims.sub,
+      orgId: claims.org,
+      code: claims.code,
+      role,
+      issuedAt,
+      sessionId: sidOf(claims),
+    };
   }
 }

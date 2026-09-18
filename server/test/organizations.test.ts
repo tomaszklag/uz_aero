@@ -24,7 +24,7 @@ import { describe, expect, it } from 'vitest';
 import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { MIGRATIONS } from '../src/infrastructure/pg/schema.ts';
-import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_B, seedBetaFleet } from './testWorld.ts';
 
@@ -384,11 +384,13 @@ describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
     const { app, db, clock, tokens } = await testHarness();
     await login(app, 'PWI');
     clock.advance(60_000);
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('recent-b', 'PWI', $1, $2, $3)`,
-      [ORG_B, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'recent-b',
+      pilotId: 'PWI',
+      orgId: ORG_B,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
 
     const body = (await login(app, 'PWI')).json();
     expect(body.org.id).toBe(ORG_B);
@@ -401,11 +403,13 @@ describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
     const first = (await login(app, 'PWI')).json();
     // Członkostwo w B jest świeższe w refreshach? Nie - to nie ma znaczenia: rotacja
     // zostaje w klubie, dla którego wydano ZUŻYWANY refresh.
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('recent-b', 'PWI', $1, now() + interval '1 day', now() + interval '1 hour')`,
-      [ORG_B],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'recent-b',
+      pilotId: 'PWI',
+      orgId: ORG_B,
+      expiresAt: new Date(Date.now() + 86_400_000),
+      createdAt: new Date(Date.now() + 3_600_000),
+    });
 
     const rotated = await app.inject({
       method: 'POST',
@@ -766,11 +770,13 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
     const { app, db, clock } = await testHarness();
     await seedBetaFleet(db);
     // Token PWI dla Bety: najświeższy refresh w B przestawia klub aktywny.
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('recent-b', 'PWI', $1, $2, $3)`,
-      [ORG_B, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'recent-b',
+      pilotId: 'PWI',
+      orgId: ORG_B,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
     const inBeta = (await login(app, 'PWI')).json();
     expect(inBeta.org.id).toBe(ORG_B);
     const [claim, ...rest] = day('sess-pwi', 'SP-BBB', 'PWI');
@@ -778,11 +784,13 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
 
     // Teraz PWI „przełącza się" do Alfy (świeższy refresh w A) i próbuje dosłać resztę.
     clock.advance(60_000);
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('recent-a', 'PWI', $1, $2, $3)`,
-      [ORG_A, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'recent-a',
+      pilotId: 'PWI',
+      orgId: ORG_A,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
     const inAlfa = (await login(app, 'PWI')).json();
     expect(inAlfa.org.id).toBe(ORG_A);
 

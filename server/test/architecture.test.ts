@@ -110,6 +110,10 @@ const SCOPED_TABLES = [
   'admin_audit',
   'bug_reports',
   'refresh_tokens',
+  // Sesje logowania (2.1.0, issue #133) - `org_id` jest tam NULL-owalne (sesja
+  // platformowa nie ma klubu), ale odczyty PANELU KLUBU muszą je zawężać: klub nie ma
+  // prawa zobaczyć ani wyłączyć urządzenia, którym ta osoba loguje się gdzie indziej.
+  'login_sessions',
   'memberships',
 ] as const;
 
@@ -527,6 +531,19 @@ describe('granice, których nie pilnuje kompilator', () => {
       // przy panelu (`admin/refreshTokensRepo.ts#revokeAllFor`), gdzie decyduje klub.
       'infrastructure/pg/common/refreshTokensRepo.ts#revokeAllOf':
         'reset hasła zrywa sesje osoby we wszystkich klubach - zawężenie do klubu zostawiłoby otwarte pozostałe',
+      // Sesje logowania (2.1.0, issue #133). Trzy metody kluczują się IDENTYFIKATOREM
+      // SESJI odczytanym ze zweryfikowanego tokenu, a nie z adresu żądania - zawężenie
+      // po klubie nie dokładałoby kontroli (kto ma ten `sid`, ma już nasz podpis pod nim),
+      // a sesja PLATFORMOWA klubu nie ma z definicji. Odczyty panelu klubu (`list`,
+      // `revoke`, `revokeAll`) wyjątku nie mają i mieć nie mogą.
+      'infrastructure/pg/common/refreshTokensRepo.ts#sessionOf':
+        'kluczem jest skrót samego refresha - poświadczenie, nie dane klubu',
+      'infrastructure/pg/common/loginSessionsRepo.ts#touch':
+        'stempel aktywności sesji z `sid` w tokenie; sesja platformowa nie ma klubu',
+      'infrastructure/pg/common/loginSessionsRepo.ts#find':
+        'metoda i żywotność sesji z `sid` w tokenie - dla rotacji i przełączenia klubu',
+      'infrastructure/pg/common/loginSessionsRepo.ts#isRevoked':
+        'brama PLATFORMOWA pyta o sesję bez klubu - superadministrator go nie ma',
     };
 
     const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {
