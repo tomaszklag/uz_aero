@@ -7,8 +7,9 @@
  *
  * Bazą jest adres PANELU I API (`PUBLIC_BASE_URL`), nie strony: strona `/haslo/` woła
  * `POST /auth/password/reset` względnym adresem, a na hoście strony trasy API nie
- * istnieją (rozdział hostów, issue #124). Serwowanie `/haslo/` na hoście aplikacji
- * domyka epik H-F razem ze stroną.
+ * istnieją (rozdział hostów, issue #124). Od H-F F3 hook rozdziału wie o tym wprost -
+ * `/haslo/` jest tam jedynym plikiem strony z hosta APLIKACJI (`hostSplit.ts`,
+ * `PASSWORD_PAGE`), więc ten adres prowadzi dokładnie tam, gdzie strona działa.
  */
 
 export interface PasswordLinks {

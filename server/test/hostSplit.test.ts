@@ -80,6 +80,20 @@ describe('rozdział hostów - konfiguracja z env', () => {
 });
 
 describe('rozdział hostów - rodzaj trasy z WZORCA routera, nie ze ścieżki', () => {
+  it('`/haslo/` to JEDYNY plik strony rozpoznawany po ścieżce - bo mieszka na hoście aplikacji', () => {
+    // Wzorzec routera jest dla niej ten sam `/*`, co dla reszty strony; różnicę robi
+    // ścieżka i tylko ona (`PASSWORD_PAGE`). Wyjątek ma zostać wąski.
+    expect(routeKindOf('/*', '/haslo')).toBe('app_page');
+    expect(routeKindOf('/*', '/haslo/')).toBe('app_page');
+    expect(routeKindOf('/*', '/haslo/haslo.js')).toBe('app_page');
+
+    // Sąsiedztwo nazwy go nie łapie - `/hasla-cos/` jest zwykłą stroną.
+    expect(routeKindOf('/*', '/haslo-inne/')).toBe('site');
+    expect(routeKindOf('/*', '/pobierz/')).toBe('site');
+    // Bez ścieżki zostaje rozpoznanie z samego wzorca - jak przed 2.1.0.
+    expect(routeKindOf('/*')).toBe('site');
+  });
+
   it('rozpoznaje stronę, panel, sondę i API', () => {
     expect(routeKindOf('/*')).toBe('site');
     expect(routeKindOf('/admin')).toBe('panel');
@@ -111,6 +125,24 @@ describe('rozdział hostów - decyzja', () => {
     });
     expect(decide('ninerdeck.pl', 'api', 'GET', '/admin/api/me')).toEqual({ kind: 'not_found' });
     expect(decide('ninerdeck.pl', 'api', 'POST', '/events')).toEqual({ kind: 'not_found' });
+  });
+
+  it('`/haslo/` odsyła z hosta strony na host aplikacji RAZEM Z FRAGMENTEM tokenu', () => {
+    // Fragment nie jedzie w żądaniu - niesie go przeglądarka i dokleja po przekierowaniu.
+    // Testujemy więc to, co serwer widzi: ścieżkę z zapytaniem, bez gubienia niczego.
+    expect(decide('ninerdeck.pl', 'app_page', 'GET', '/haslo/')).toEqual({
+      kind: 'redirect',
+      location: `${APP}/haslo/`,
+    });
+    expect(decide('ninerdeck.pl', 'app_page', 'GET', '/haslo/haslo.js')).toEqual({
+      kind: 'redirect',
+      location: `${APP}/haslo/haslo.js`,
+    });
+  });
+
+  it('`/haslo/` przechodzi na hoście aplikacji - to jej host, bo pyta API względnie', () => {
+    expect(decide('app.ninerdeck.pl', 'app_page', 'GET', '/haslo/')).toEqual({ kind: 'pass' });
+    expect(decide('x.up.railway.app', 'app_page', 'GET', '/haslo/')).toEqual({ kind: 'pass' });
   });
 
   it('inny host: korzeń odsyła do panelu, reszta strony na jej host, panel i API przechodzą', () => {
