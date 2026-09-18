@@ -2752,6 +2752,45 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     (`main`), więc nowy eksport z `packages/domain` nie istniał dla testów - linki
     przepięte na `packages/` worktree (`New-Item -ItemType Junction`); po `npm install`
     w worktree sprawdzić cel linków
+- **etap H-C (serwer: sesje logowania) WYKONANY 2026-09-18** (gałąź
+  `feature-133-sesje-logowania`, issue #133) - reguły obowiązujące odtąd:
+  - **KAŻDA ŻYWA SESJA MA WIERSZ** (`login_sessions`, migracja 10), a jej identyfikator
+    jedzie w claimie `sid` tokenu klubu, platformowego i ciasteczka panelu. Do 2.1.0 sesja
+    telefonu była wierszem `refresh_tokens` bez metadanych, a sesja panelu NIE MIAŁA
+    WIERSZA WCALE - jedynym zdalnym wylogowaniem był młot `credentials_valid_from`,
+    zrywający wszystko naraz. Nowa droga logowania MUSI założyć sesję: bez `sid` nie ma
+    czym podpisać tokenu, a `Identity.sessionId` jest wymagane przy podpisywaniu
+  - **ROTACJA ZACHOWUJE SESJĘ, PRZEŁĄCZENIE KLUBU ZAKŁADA NOWĄ** (metoda dziedziczona ze
+    źródłowej): para tokenów jest parą DLA KLUBU, więc sesja też. Gdyby rotacja zakładała
+    wiersz, lista urządzeń w panelu byłaby dziennikiem odświeżeń
+  - **BRAK `sid` PRZECHODZI, `sid` NIEZNANY ODBIJA** - to dwa różne stany i muszą takie
+    zostać: brak znaczy „token sprzed 2.1.0" (wdrożenie nie ma prawa wylogować wszystkich
+    naraz), nieznany znaczy „ktoś wskazuje sesję, której nie ma". Weryfikacja oddaje
+    `null` zamiast pustego napisu, a `sign` pustego `sid` NIE WPISUJE do payloadu -
+    dzięki temu token z testu bramy jest bajt w bajt poświadczeniem sprzed wdrożenia
+  - **`/auth/refresh` SPRAWDZA SESJĘ PRZED ROTACJĄ** i odmawia z powodem
+    (`401 session_revoked`). Po rotacji byłoby za późno: każda próba synca wylogowanego
+    telefonu zostawiałaby świeży, nikomu niedoręczony refresh na kolejne 90 dni
+  - **TRASY TELEFONU MAJĄ JEDNO `401`**, a powód pada z odświeżenia (§6) - aplikacja na
+    każde 401 sięga po refresh. PANEL dostaje `session_revoked` od razu, bo nie ma czego
+    odświeżyć. Nie dokładaj drugiego ciała 401 do tras telefonu
+  - **UNIEWAŻNIANIE TOWARZYSZY INNYM DECYZJOM i idzie TĄ SAMĄ transakcją**: zmiana hasła
+    gasi wszystkie sesje POZA BIEŻĄCĄ (`Actor.sessionId`), realizacja linku - wszystkie,
+    wyłączenie członkostwa - wszystkie w TYM klubie. Sprawca (`revoked_by`) to `self`,
+    `admin`, `platform` albo `system`; `system` znaczy „skutek uboczny innej decyzji"
+  - **PANEL KLUBU WIDZI I GASI WYŁĄCZNIE SESJE U SIEBIE** - zawężenie po osobie I klubie
+    stoi w SQL-u (`revoke`, `revokeAll`, `list`), nie w sprawdzeniu przed zapisem. Własne
+    sesje osoby (`/me/sessions`) mają zakres OSOBY, nie klubu, i dlatego są imiennym
+    wyjątkiem w `tenantIsolation`. Bieżącej sesji nie da się wyłączyć tą trasą
+  - **AUDYT NIE NIESIE `sid`** (jak `password.link_sent` nie niesie tokenu): `session.revoke`
+    i `session.revoke_all` zapisują kod pilota, powierzchnię i etykietę urządzenia
+  - **„OSTATNIO AKTYWNY" MA PRZEPUSTNICĘ** (`LastSeenThrottle`, 60 s, pamięć procesu jak
+    `AttemptLimiter`) i stempluje się w BRAMIE, nie w komendzie - to warstwa HTTP zna
+    żądanie (adres, nagłówek `X-Ninerdeck-Device`). `null` w kontrakcie znaczy „nie ma
+    czynnej sesji", a NIE „nigdy się nie logował"
+  - **KONTRAKTY PANELU MAJĄ LUSTRA UNII, NIE IMPORTY DOMENY SERWERA**
+    (`SessionSurfaceWire`, `LoginMethodWire`) - `contracts/` jest powierzchnią dla
+    klienta i strażnik architektury tego pilnuje; rozjazd łapie kompilator przy mapowaniu
 - **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
   HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
   kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`

@@ -54,9 +54,12 @@ import {
 import type { AttemptLimiter } from '../attemptLimiter.ts';
 import type {
   Clock,
+  Database,
   ExternalIdentitiesPort,
   ExternalIdentity,
   IdentityProviderPort,
+  LoginEntry,
+  LoginSessionsPort,
   LoginSurface,
   Membership,
   PasswordCredentialsPort,
@@ -64,8 +67,10 @@ import type {
   PilotAccount,
   PilotsPort,
   RefreshTokensPort,
+  SessionDevice,
   TokenService,
 } from '../ports.ts';
+import type { LoginMethod } from '../../../domain/loginSessions.ts';
 
 /** Próby logowania hasłem w oknie `PASSWORD_WINDOW_MS` (§5.1): na login i na adres IP. */
 export const PASSWORD_LOGIN_PER_LOGIN = 10;
@@ -89,7 +94,12 @@ export interface PasswordLoginInput {
   password: string;
   /** Bieżący klub URZĄDZENIA - bez niego kod pilota nie ma czego rozwiązać (§5.1). */
   orgId: string | null;
-  ip: string | null;
+  /**
+   * Skąd przyszło żądanie. Adres IP jest tu podwójnie potrzebny: najpierw jako klucz
+   * limitu prób (§5.1), a po udanym dowodzie - jako kolumna sesji. Jedna wartość zamiast
+   * dwóch pól, żeby te dwa zastosowania nie mogły się rozjechać.
+   */
+  device: SessionDevice;
 }
 
 /**
@@ -313,6 +323,19 @@ export interface PersonRequest {
   pilotId: string;
   issuedAt: number;
   kind: 'person' | 'club';
+  /**
+   * Sesja, z której to żądanie przyszło - WYŁĄCZNIE przy `kind: 'club'` (token osoby
+   * sesji nie zakłada). `null` też przy tokenie klubu sprzed 2.1.0. Przełączenie klubu
+   * kopiuje z niej metodę do sesji docelowej, żeby lista urządzeń nie zapomniała, czym
+   * ten człowiek się zalogował.
+   */
+  sessionId: string | null;
+  /**
+   * Metoda zapisana w TOKENIE OSOBY - jedyne miejsce, które ją zna, dopóki sesja nie
+   * powstanie (`GET /auth/memberships` dopiero ją zakłada). `null` przy tokenie klubu
+   * i przy tokenie osoby sprzed 2.1.0.
+   */
+  method: LoginMethod | null;
 }
 
 /**
@@ -323,9 +346,21 @@ export interface PersonRequest {
  * schodzi z platformy do klubu. Rodzaj tokenu, którym przyszedł, nie ma tu znaczenia -
  * znaczenie ma to, czy w CELU jest aktywne członkostwo z rolą panelu.
  */
+/**
+ * Wynik rotacji. Do 2.1.0 było tu `AuthTokens | null`, a telefon miał na jedno `null`
+ * dwie różne odpowiedzi do napisania: „token wygasł, zaloguj się" i „administrator
+ * zakończył tę sesję". Odmowa z POWODEM jest warunkiem D7 - telefon ma powiedzieć,
+ * DLACZEGO sync stoi, zamiast pokazywać zwykłe „OFFLINE".
+ */
+export type RefreshResult =
+  | { ok: true; tokens: AuthTokens }
+  | { ok: false; reason: 'invalid_refresh' | 'session_revoked' };
+
 export interface PanelRequest {
   pilotId: string;
   issuedAt: number;
+  /** Sesja ciasteczka; `null` = ciasteczko sprzed 2.1.0. Wylogowanie stempluje właśnie ją. */
+  sessionId: string | null;
 }
 
 /**
@@ -377,15 +412,91 @@ export class AuthCommands {
     private readonly newId: () => string,
     /** Druga metoda logowania (2.1.0) - patrz `PasswordLoginDeps`. */
     private readonly passwords: PasswordLoginDeps,
+    /**
+     * Sesje logowania (2.1.0, issue #133). Każde wejście - Googlem, hasłem, z tokenu
+     * osoby i przez przełączenie klubu - zakłada wiersz, a `sid` jedzie w tokenie.
+     */
+    private readonly sessions: LoginSessionsPort,
+    /**
+     * Uchwyt do bazy - WYŁĄCZNIE dla wylogowania (§5.5): skasowanie refresha i stempel
+     * sesji to jedna decyzja i muszą wejść jedną transakcją. Reszta tej klasy pracuje
+     * portami, bo reszta pisze do jednej tabeli naraz.
+     */
+    private readonly db: Database,
   ) {}
 
+  /**
+   * Wylogowanie TELEFONU (§5.5, `POST /auth/logout`): refresh znika z bazy, a sesja
+   * dostaje stempel `self`.
+   *
+   * Do 2.1.0 telefon przy wylogowaniu NIE WOŁAŁ serwera wcale - kasował magazyn u siebie,
+   * a refresh żył po nim jeszcze 90 dni. Odtąd znika po obu stronach.
+   *
+   * Nieznany token kończy się CISZĄ, nie błędem: „wyloguj" to jedyna operacja, którą
+   * człowiek robi także wtedy, gdy jego poświadczenie jest już martwe, a odmowa
+   * zostawiałaby go zalogowanym w aplikacji, z której właśnie chciał wyjść.
+   */
+  async logout(refreshToken: string): Promise<void> {
+    const now = this.clock.now();
+    await this.db.transaction(async (tx) => {
+      const revoked = await this.refreshTokens.revoke(tx, refreshToken);
+      if (revoked == null) return;
+      await this.sessions.revoke(
+        tx,
+        { id: revoked.sessionId, pilotId: revoked.pilotId },
+        now,
+        'self',
+      );
+    });
+  }
+
+  /**
+   * „Wyloguj to urządzenie" z listy WŁASNYCH sesji (`#/konto`, §5.6).
+   *
+   * Stoi tutaj, a nie w komendach panelu, z dwóch powodów naraz: to nie jest decyzja
+   * o innym człowieku (więc nie ma audytu, a komendy panelu z definicji piszą przez
+   * `AuditedWrite`), i zakres jest OSOBY, nie klubu - „moje urządzenia" obejmują
+   * wszystkie kluby i obie powierzchnie.
+   *
+   * BIEŻĄCEJ sesji wyłączyć się nie da. Panel jej nie oferuje (kontrakt oznacza ją
+   * `current`), ale serwer nie ma prawa na to liczyć: od wylogowania siebie jest
+   * „Wyloguj" w pasku, a ta sama czynność zrobiona tędy zostawiłaby człowieka na ekranie,
+   * który po cichu przestał działać.
+   */
+  async revokeOwnSession(
+    pilotId: string,
+    sessionId: string,
+    currentSessionId: string | null,
+  ): Promise<boolean> {
+    if (sessionId === currentSessionId) return false;
+    return this.sessions.revoke(this.db, { id: sessionId, pilotId }, this.clock.now(), 'self');
+  }
+
+  /**
+   * Wylogowanie PANELU (§5.5) - ciasteczko kasuje trasa, a tu ginie wiersz sesji.
+   *
+   * Ciasteczka wygasłego albo uszkodzonego nie ma po czym rozpoznać, więc `null` jest
+   * normalnym wejściem i kończy się ciszą: trasa i tak wyczyści ciasteczko. Ta sama
+   * zasada, co przy telefonie.
+   */
+  async panelLogout(request: PanelRequest | null): Promise<void> {
+    const sessionId = request?.sessionId;
+    if (request == null || sessionId == null) return;
+    await this.sessions.revoke(
+      this.db,
+      { id: sessionId, pilotId: request.pilotId },
+      this.clock.now(),
+      'self',
+    );
+  }
+
   /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo token osoby bez klubu. */
-  async loginWithProvider(idToken: string): Promise<ProviderLoginResult> {
+  async loginWithProvider(idToken: string, device: SessionDevice): Promise<ProviderLoginResult> {
     const resolved = await this.resolve(idToken, 'mobile');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
     const { account, identity } = resolved;
 
-    const result = await this.enterMobile(account);
+    const result = await this.enterMobile(account, { method: 'google', device });
     if (result.ok) await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
     return result;
   }
@@ -396,9 +507,14 @@ export class AuthCommands {
    * przy Google - stąd ten sam kształt wyniku od chwili ustalenia osoby.
    */
   async loginWithPassword(input: PasswordLoginInput): Promise<PasswordLoginResult> {
-    const verdict = await this.verifyPassword(input.login, input.password, input.orgId, input.ip);
+    const verdict = await this.verifyPassword(
+      input.login,
+      input.password,
+      input.orgId,
+      input.device.ip,
+    );
     if (verdict.kind !== 'ok') return refusalOf(verdict);
-    return this.enterMobile(verdict.account);
+    return this.enterMobile(verdict.account, { method: 'password', device: input.device });
   }
 
   /**
@@ -408,18 +524,18 @@ export class AuthCommands {
   async panelLoginWithPassword(input: {
     email: string;
     password: string;
-    ip: string | null;
+    device: SessionDevice;
   }): Promise<PanelPasswordLoginResult> {
-    const verdict = await this.verifyPassword(input.email, input.password, null, input.ip);
+    const verdict = await this.verifyPassword(input.email, input.password, null, input.device.ip);
     if (verdict.kind !== 'ok') return refusalOf(verdict);
-    return this.enterPanel(verdict.account);
+    return this.enterPanel(verdict.account, { method: 'password', device: input.device });
   }
 
   /**
    * Wspólny rdzeń wejścia TELEFONU od chwili ustalenia osoby - dla Google i dla hasła.
    * Aktywne członkostwo → tokeny klubu; brak → token OSOBY na 00C/00D/00E.
    */
-  private async enterMobile(account: PilotAccount): Promise<MobileEntry> {
+  private async enterMobile(account: PilotAccount, entry: LoginEntry): Promise<MobileEntry> {
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
     const memberships = await this.pilots.memberships(account.id);
@@ -428,15 +544,22 @@ export class AuthCommands {
       // Osoba bez klubu (§4): token OSOBY na ekrany 00C/00D/00E. Nie stemplujemy
       // `lastLoginAt` - ten stempel jest JEDNORAZOWOŚCIĄ tokenu osoby (patrz
       // `membershipStatus`), więc pada dopiero przy wejściu do klubu.
+      //
+      // SESJI TEŻ NIE ZAKŁADAMY (§4.3): token osoby nie jest tożsamością w klubie
+      // i nie ma czego wylogowywać. METODĘ niesie jednak on sam - to jedyne miejsce,
+      // które ją zna, gdy `GET /auth/memberships` będzie zakładać sesję właściwą.
       return {
         ok: false,
         reason: 'no_club',
-        personToken: this.tokens.signPerson({ pilotId: account.id }, PERSON_TTL_DAYS * 24 * 3600),
+        personToken: this.tokens.signPerson(
+          { pilotId: account.id, method: entry.method },
+          PERSON_TTL_DAYS * 24 * 3600,
+        ),
         clubs: clubsView(memberships, personOf(account)),
       };
     }
 
-    return { ok: true, tokens: await this.issueFor(account, active) };
+    return { ok: true, tokens: await this.issueFor(account, active, entry) };
   }
 
   /**
@@ -509,18 +632,21 @@ export class AuthCommands {
    * Osoba bez klubu NIE dostaje tu tokenu osoby: ekrany oczekiwania i kodu klubu są
    * funkcją aplikacji pilota, a nie back-office'u - dla panelu to `no_panel_access`.
    */
-  async panelLoginWithProvider(idToken: string): Promise<PanelLoginResult> {
+  async panelLoginWithProvider(
+    idToken: string,
+    device: SessionDevice,
+  ): Promise<PanelLoginResult> {
     const resolved = await this.resolve(idToken, 'panel');
     if (resolved.kind === 'invalid') return { ok: false, reason: 'invalid_token' };
     const { account, identity } = resolved;
 
-    const result = await this.enterPanel(account);
+    const result = await this.enterPanel(account, { method: 'google', device });
     if (result.ok) await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
     return result;
   }
 
   /** Wspólny rdzeń wejścia do PANELU od chwili ustalenia osoby - dla Google i dla hasła. */
-  private async enterPanel(account: PilotAccount): Promise<PanelEntry> {
+  private async enterPanel(account: PilotAccount, entry: LoginEntry): Promise<PanelEntry> {
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
     const memberships = await this.pilots.memberships(account.id);
@@ -529,9 +655,37 @@ export class AuthCommands {
 
     if (admin == null) {
       if (account.platformRole == null) return { ok: false, reason: 'no_panel_access' };
-      return { ok: true, session: platformSession(this.tokens, account, account.platformRole, scopes) };
+      const sid = await this.openPanelSession(account.id, null, entry);
+      return {
+        ok: true,
+        session: platformSession(this.tokens, account, account.platformRole, scopes, sid),
+      };
     }
-    return { ok: true, session: orgSession(this.tokens, account, admin, scopes) };
+    const sid = await this.openPanelSession(account.id, admin.orgId, entry);
+    return { ok: true, session: orgSession(this.tokens, account, admin, scopes, sid) };
+  }
+
+  /**
+   * Sesja PANELU - żyje tyle, co ciasteczko (§4.3), bo panel nie ma pary tokenów ani
+   * rotacji: jedno ciasteczko, jeden token, jeden termin. `orgId: null` = sesja
+   * platformowa. Oddaje `sid`, bo to on musi wejść do claimów podpisywanych zaraz potem.
+   */
+  private async openPanelSession(
+    pilotId: string,
+    orgId: string | null,
+    entry: LoginEntry,
+  ): Promise<string> {
+    const id = this.newId();
+    await this.sessions.open({
+      id,
+      pilotId,
+      orgId,
+      surface: 'panel',
+      method: entry.method,
+      device: entry.device,
+      expiresAt: new Date(this.clock.now().getTime() + ADMIN_SESSION_TTL_SEC * 1000),
+    });
+    return id;
   }
 
   /**
@@ -559,9 +713,17 @@ export class AuthCommands {
   identifyPanel(token: string | null): PanelRequest | null {
     if (token == null) return null;
     const club = this.tokens.verify(token);
-    if (club != null) return { pilotId: club.pilotId, issuedAt: club.issuedAt };
+    if (club != null) {
+      return { pilotId: club.pilotId, issuedAt: club.issuedAt, sessionId: club.sessionId };
+    }
     const platform = this.tokens.verifyPlatform(token);
-    if (platform != null) return { pilotId: platform.pilotId, issuedAt: platform.issuedAt };
+    if (platform != null) {
+      return {
+        pilotId: platform.pilotId,
+        issuedAt: platform.issuedAt,
+        sessionId: platform.sessionId,
+      };
+    }
     return null;
   }
 
@@ -580,7 +742,11 @@ export class AuthCommands {
    * i z powrotem ciasteczkiem sprzed wyłączenia - a to jest dokładnie ten scenariusz,
    * który audyt 2026-09-05 znalazł przy tokenie rejestracyjnym.
    */
-  async panelSwitch(request: PanelRequest, target: string | null): Promise<PanelSwitchResult> {
+  async panelSwitch(
+    request: PanelRequest,
+    target: string | null,
+    device: SessionDevice,
+  ): Promise<PanelSwitchResult> {
     const account = await this.pilots.findById(request.pilotId);
     if (account == null || !account.active) return { ok: false, reason: 'unauthorized' };
     if (credentialsRevoked(account.credentialsValidFrom, request.issuedAt)) {
@@ -589,12 +755,17 @@ export class AuthCommands {
 
     const memberships = await this.pilots.memberships(account.id);
     const scopes = panelScopesOf(memberships, account.platformRole);
+    // Przełączenie zakresu wydaje NOWE ciasteczko, więc i nową sesję - jak przy telefonie.
+    // Poprzedniej NIE unieważniamy: to ta sama karta przeglądarki, a stare ciasteczko
+    // zostaje nadpisane w tej samej odpowiedzi i nikt go już nie zobaczy.
+    const entry: LoginEntry = { method: await this.inheritedMethod(request), device };
 
     if (target == null) {
       if (account.platformRole == null) return { ok: false, reason: 'not_found' };
+      const sid = await this.openPanelSession(account.id, null, entry);
       return {
         ok: true,
-        session: platformSession(this.tokens, account, account.platformRole, scopes),
+        session: platformSession(this.tokens, account, account.platformRole, scopes, sid),
       };
     }
 
@@ -608,7 +779,8 @@ export class AuthCommands {
       return { ok: false, reason: 'not_found' };
     }
 
-    return { ok: true, session: orgSession(this.tokens, account, membership, scopes) };
+    const sid = await this.openPanelSession(account.id, membership.orgId, entry);
+    return { ok: true, session: orgSession(this.tokens, account, membership, scopes, sid) };
   }
 
   /**
@@ -622,9 +794,25 @@ export class AuthCommands {
   identifyPerson(token: string | null): PersonRequest | null {
     if (token == null) return null;
     const person = this.tokens.verifyPerson(token);
-    if (person != null) return { pilotId: person.pilotId, issuedAt: person.issuedAt, kind: 'person' };
+    if (person != null) {
+      return {
+        pilotId: person.pilotId,
+        issuedAt: person.issuedAt,
+        kind: 'person',
+        sessionId: null,
+        method: person.method,
+      };
+    }
     const club = this.tokens.verify(token);
-    if (club != null) return { pilotId: club.pilotId, issuedAt: club.issuedAt, kind: 'club' };
+    if (club != null) {
+      return {
+        pilotId: club.pilotId,
+        issuedAt: club.issuedAt,
+        kind: 'club',
+        sessionId: club.sessionId,
+        method: null,
+      };
+    }
     return null;
   }
 
@@ -649,7 +837,26 @@ export class AuthCommands {
    *    poświadczenie, które jeszcze nikt nie zrealizował;
    *  • stempel `lastLoginAt` pada PRZED wydaniem: to on zamyka drogę drugiemu wywołaniu.
    */
-  async membershipStatus(request: PersonRequest): Promise<MembershipStatusResult> {
+  /**
+   * Metoda dla sesji zakładanej Z ISTNIEJĄCEGO poświadczenia - przy przełączeniu klubu
+   * i przy wymianie tokenu osoby na tokeny klubu (§4.3: „`method` skopiowany ze źródłowej").
+   *
+   * Trzy źródła w kolejności pewności: claim tokenu OSOBY (on jeden ją pamięta, zanim
+   * jakakolwiek sesja powstanie) → sesja, z której przyszło żądanie → `legacy`. Ostatnia
+   * wartość opisuje poświadczenie sprzed 2.1.0 i jest uczciwsza niż zgadywanie: serwer
+   * naprawdę nie wie, czym ten człowiek się wtedy zalogował.
+   */
+  private async inheritedMethod(request: PersonRequest | PanelRequest): Promise<LoginMethod> {
+    if ('method' in request && request.method != null) return request.method;
+    if (request.sessionId == null) return 'legacy';
+    const source = await this.sessions.find(request.sessionId, this.clock.now());
+    return source?.method ?? 'legacy';
+  }
+
+  async membershipStatus(
+    request: PersonRequest,
+    device: SessionDevice,
+  ): Promise<MembershipStatusResult> {
     const account = await this.pilots.findById(request.pilotId);
     if (account == null || !account.active) return { kind: 'unknown' };
     if (credentialsRevoked(account.credentialsValidFrom, request.issuedAt)) {
@@ -670,7 +877,13 @@ export class AuthCommands {
     }
 
     await this.identities.markLogin(identity.provider, identity.subject, this.clock.now());
-    return { kind: 'approved', tokens: await this.issueFor(account, active) };
+    return {
+      kind: 'approved',
+      tokens: await this.issueFor(account, active, {
+        method: await this.inheritedMethod(request),
+        device,
+      }),
+    };
   }
 
   /**
@@ -696,7 +909,11 @@ export class AuthCommands {
    * konto), a klub aktywny przy następnym logowaniu i tak jest ten, na który
    * przełączono: `lastOrgFor` czyta NAJŚWIEŻSZY wiersz, a ten powstał przed chwilą tutaj.
    */
-  async switchClub(request: PersonRequest, orgId: string): Promise<ClubSwitchResult> {
+  async switchClub(
+    request: PersonRequest,
+    orgId: string,
+    device: SessionDevice,
+  ): Promise<ClubSwitchResult> {
     if (request.kind !== 'club') return { ok: false, reason: 'unauthorized' };
 
     const account = await this.pilots.findById(request.pilotId);
@@ -714,7 +931,16 @@ export class AuthCommands {
       return { ok: false, reason: 'not_found' };
     }
 
-    return { ok: true, tokens: await this.issueFor(account, membership) };
+    // NOWA sesja dla klubu docelowego - para tokenów jest parą DLA KLUBU, więc sesja też
+    // (§4.3). Metoda idzie ze źródłowej: człowiek nie logował się po raz drugi, tylko
+    // zmienił klub, a lista urządzeń ma o tym mówić prawdę.
+    return {
+      ok: true,
+      tokens: await this.issueFor(account, membership, {
+        method: await this.inheritedMethod(request),
+        device,
+      }),
+    };
   }
 
   /**
@@ -725,22 +951,41 @@ export class AuthCommands {
    * Członkostwo czytamy Z BAZY, nie ze starego tokenu - odebranie roli i wyłączenie
    * członkostwa mają zadziałać przy najbliższym odświeżeniu, a nie po wygaśnięciu refresha.
    */
-  async refresh(refreshToken: string): Promise<AuthTokens | null> {
-    const expiresAt = new Date(
-      this.clock.now().getTime() + REFRESH_TTL_DAYS * 24 * 3_600_000,
-    );
+  async refresh(refreshToken: string, device: SessionDevice): Promise<RefreshResult> {
+    const now = this.clock.now();
+    // ══ SESJĘ SPRAWDZAMY PRZED ROTACJĄ ══
+    // Rotacja KASUJE stary refresh i wydaje nowy; gdyby sesja okazała się martwa dopiero
+    // po niej, każda próba synca wylogowanego telefonu zostawiałaby w bazie świeży,
+    // nikomu niedoręczony token na kolejne 90 dni. Odmowa ma przy tym własny POWÓD:
+    // telefon musi umieć napisać „sesja zakończona przez administratora", a nie „zły
+    // token" - to jest cała różnica między D7 a wyrzuceniem pilota do logowania.
+    const sessionId = await this.refreshTokens.sessionOf(refreshToken);
+    if (sessionId != null) {
+      const session = await this.sessions.find(sessionId, now);
+      if (session == null || !session.live) return { ok: false, reason: 'session_revoked' };
+    }
+
+    const expiresAt = new Date(now.getTime() + REFRESH_TTL_DAYS * 24 * 3_600_000);
     const rotated = await this.refreshTokens.rotate(refreshToken, expiresAt);
-    if (rotated == null) return null;
+    if (rotated == null) return { ok: false, reason: 'invalid_refresh' };
 
     const account = await this.pilots.findById(rotated.pilotId);
     // Konto skasowane/wyłączone PO rotacji: token przepada razem z odmową - i dobrze,
     // dezaktywacja ma odcinać dostęp, nie zostawiać zapasowego refresha.
-    if (account == null || !account.active) return null;
+    if (account == null || !account.active) return { ok: false, reason: 'invalid_refresh' };
 
     const membership = await this.pilots.membership(rotated.pilotId, rotated.orgId);
-    if (membership == null || !isActive(membership)) return null;
+    if (membership == null || !isActive(membership)) {
+      return { ok: false, reason: 'invalid_refresh' };
+    }
 
-    return this.tokensFor(account, membership, rotated.token);
+    // Odświeżenie jest znakiem życia urządzenia - i jedynym, jaki serwer widzi od telefonu
+    // bez ruchu. Bez przepustnicy, bo rotacja pada raz na godzinę, a nie przy każdym żądaniu.
+    await this.sessions.touch(rotated.sessionId, now, device);
+    return {
+      ok: true,
+      tokens: await this.tokensFor(account, membership, rotated.token, rotated.sessionId),
+    };
   }
 
   /**
@@ -806,12 +1051,31 @@ export class AuthCommands {
   private async issueFor(
     account: PilotAccount,
     membership: Membership & { code: string },
+    entry: LoginEntry,
   ): Promise<AuthTokens> {
     const expiresAt = new Date(
       this.clock.now().getTime() + REFRESH_TTL_DAYS * 24 * 3_600_000,
     );
-    const refreshToken = await this.refreshTokens.issue(account.id, membership.orgId, expiresAt);
-    return this.tokensFor(account, membership, refreshToken);
+    // Sesja POWSTAJE PIERWSZA, refresh jest jej śladem: `refresh_tokens.session_id` jest
+    // `NOT NULL`, a i tak nie byłoby czym podpisać tokenu dostępu bez `sid`. Termin sesji
+    // = termin refresha: para żyje tak długo, jak jej dłuższy koniec.
+    const sessionId = this.newId();
+    await this.sessions.open({
+      id: sessionId,
+      pilotId: account.id,
+      orgId: membership.orgId,
+      surface: 'mobile',
+      method: entry.method,
+      device: entry.device,
+      expiresAt,
+    });
+    const refreshToken = await this.refreshTokens.issue(
+      account.id,
+      membership.orgId,
+      sessionId,
+      expiresAt,
+    );
+    return this.tokensFor(account, membership, refreshToken, sessionId);
   }
 
   /** Para tokenów + tożsamość w klubie + komplet klubów osoby (na przełącznik 13a). */
@@ -819,13 +1083,20 @@ export class AuthCommands {
     account: PilotAccount,
     membership: Membership & { code: string },
     refreshToken: string,
+    sessionId: string,
   ): Promise<AuthTokens> {
     const memberships = (await this.pilots.memberships(account.id))
       .filter((m): m is Membership & { code: string } => isActive(m))
       .map((m) => ({ org: orgRefOf(m), code: m.code, role: m.role }));
     return {
       token: this.tokens.sign(
-        { pilotId: account.id, orgId: membership.orgId, code: membership.code, role: membership.role },
+        {
+          pilotId: account.id,
+          orgId: membership.orgId,
+          code: membership.code,
+          role: membership.role,
+          sessionId,
+        },
         ACCESS_TTL_SEC,
       ),
       refreshToken,
@@ -906,6 +1177,7 @@ function orgSession(
   account: PilotAccount,
   membership: Membership & { code: string },
   scopes: PanelScopes,
+  sessionId: string,
 ): PanelSession {
   return {
     kind: 'org',
@@ -915,6 +1187,7 @@ function orgSession(
         orgId: membership.orgId,
         code: membership.code,
         role: membership.role,
+        sessionId,
       },
       ADMIN_SESSION_TTL_SEC,
     ),
@@ -937,10 +1210,11 @@ function platformSession(
   account: PilotAccount,
   platformRole: PlatformRole,
   scopes: PanelScopes,
+  sessionId: string,
 ): PanelSession {
   return {
     kind: 'platform',
-    token: tokens.signPlatform({ pilotId: account.id }, ADMIN_SESSION_TTL_SEC),
+    token: tokens.signPlatform({ pilotId: account.id, sessionId }, ADMIN_SESSION_TTL_SEC),
     ttlSec: ADMIN_SESSION_TTL_SEC,
     pilot: { id: account.id, name: account.name, platformRole },
     capabilities: platformCapabilitiesOf(platformRole),

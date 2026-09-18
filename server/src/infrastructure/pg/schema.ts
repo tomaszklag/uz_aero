@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1180,6 +1180,99 @@ export const MIGRATION_9 = `
   CREATE UNIQUE INDEX IF NOT EXISTS idx_pilots_email_lower ON pilots (lower(email)) WHERE email IS NOT NULL;
 `;
 
+/**
+ * Migracja 10 - SESJE LOGOWANIA (2.1.0, issue #133; `docs/logowanie-haslem.md` §4.3, §6).
+ *
+ * ══ WYŁĄCZNIE ADDYTYWNA ══
+ * Jedna nowa tabela, jedna nowa kolumna i backfill, który niczego nie nadpisuje: każdy
+ * istniejący refresh dostaje sesję, żeby `session_id` mogło być `NOT NULL` od razu.
+ * Dokument zapowiadał to w migracji 9 - dziewiątkę wziął epik H-B, bo epiki idą osobnymi
+ * PR-ami i każdy niesie własny DDL.
+ *
+ * ══ SESJA JEST PARĄ TOKENÓW ALBO CIASTECZKIEM, NIE LOGOWANIEM ══
+ * Do 2.1.0 sesja telefonu była wierszem `refresh_tokens` bez metadanych, a sesja panelu
+ * NIE MIAŁA WIERSZA WCALE - żyła w podpisanym ciasteczku, więc jedynym zdalnym
+ * wylogowaniem był młot `credentials_valid_from` (zrywa WSZYSTKO, łącznie z telefonem
+ * w powietrzu). Odtąd każda żywa sesja obu powierzchni ma wiersz, a jej `id` jedzie
+ * w claimie `sid`: brama porównuje go przy każdym żądaniu, więc „Wyloguj to urządzenie"
+ * odbija następne żądanie natychmiast, zamiast czekać na wygaśnięcie tokenu.
+ *
+ * ROTACJA refresha ZACHOWUJE sesję (to dalej to samo urządzenie), a przełączenie klubu
+ * (`POST /auth/switch`) zakłada NOWĄ - para tokenów jest parą DLA KLUBU, więc sesja też.
+ * Token OSOBY (`purpose: 'person'`) sesji nie zakłada: nie jest tożsamością w klubie
+ * i otwiera dwie trasy, więc nie ma czego wylogowywać.
+ *
+ * ══ `method` MA TRZY WARTOŚCI, NIE CZTERY ══
+ * `google`, `password` i `legacy` (wiersze z backfillu - o sposobie ich powstania rejestr
+ * nic nie wie). Wcześniejsza wersja listy zadań wymieniała jeszcze `code`, ale kod
+ * jednorazowy do przepisywania został wycięty decyzją właściciela (§5.4) i nie ma go
+ * w produkcie. Ustawienie hasła z linku sesji NIE zakłada - strona oddaje `204`, a człowiek
+ * loguje się potem hasłem - więc dla resetu wartość nie jest potrzebna.
+ *
+ * ══ `org_id` JEST NULL-OWALNY, ALE TABELA JEST SKOPOWANA ══
+ * `NULL` znaczy sesję PLATFORMOWĄ (superadministrator nie ma klubu). Dla strażnika
+ * z `architecture.test.ts` to mimo to tabela klubu: panel klubu czyta sesje członka
+ * WYŁĄCZNIE w klubie aktora (`org_id = actor.orgId`), bo klub nie ma prawa widzieć
+ * urządzeń pilota w innym klubie. Wyjątkiem imiennym są własne sesje osoby
+ * (`GET /admin/api/me/sessions`) - tam kluczem jest `pilot_id`, jak przy
+ * `bugReportsRepo.countByStatus`.
+ *
+ * ══ BACKFILL IDZIE PĘTLĄ, NIE `INSERT … SELECT` ══
+ * Bo każdy wiersz potrzebuje WŁASNEGO identyfikatora sesji i trzeba go zaraz wpisać do
+ * refresha - `RETURNING` z `INSERT … SELECT` nie mówi, z którego wiersza źródłowego
+ * powstał który. Ta sama pułapka, co przy backfillu tożsamości w migracji 8
+ * (`docs/architektura-panelu-serwer.md` §7.9 (h)). Identyfikator jest LOSOWY, a nie
+ * wyprowadzony z `token_hash`: po pierwszej rotacji `sid` pojedzie w claimach nowego
+ * tokenu, a skrót refresha nie ma prawa wyjść na zewnątrz w czytelnym payloadzie.
+ */
+export const MIGRATION_10 = `
+  -- ═══ SESJE LOGOWANIA (2.1.0, issue #133) ═══════════════════════════════════════
+  CREATE TABLE IF NOT EXISTS login_sessions (
+    -- uuid = claim \`sid\` w tokenie klubu, platformowym i w ciasteczku panelu.
+    id           TEXT PRIMARY KEY,
+    pilot_id     TEXT NOT NULL REFERENCES pilots(id) ON DELETE CASCADE,
+    -- NULL = sesja PLATFORMOWA (superadministrator nie ma klubu).
+    org_id       TEXT REFERENCES organizations(id),
+    surface      TEXT NOT NULL CHECK (surface IN ('mobile', 'panel')),
+    -- 'legacy' = wiersz z backfillu; o sposobie logowania sprzed 2.1.0 rejestr nie wie.
+    method       TEXT NOT NULL CHECK (method IN ('google', 'password', 'legacy')),
+    created_at   TIMESTAMPTZ NOT NULL,
+    -- Przepustnica w pamięci procesu: zapis najwyżej raz na 60 s na sesję.
+    last_seen_at TIMESTAMPTZ NOT NULL,
+    -- Telefon: termin refresha (90 dni). Panel: TTL ciasteczka.
+    expires_at   TIMESTAMPTZ NOT NULL,
+    revoked_at   TIMESTAMPTZ,
+    revoked_by   TEXT CHECK (revoked_by IN ('self', 'admin', 'platform', 'system')),
+    -- „Android 14 · Pixel 7" (nagłówek X-Ninerdeck-Device) / „Chrome · Windows" (User-Agent).
+    device_label TEXT,
+    ip           TEXT,
+    -- Unieważnienie jest PARĄ: chwila bez sprawcy (i odwrotnie) opisywałaby stan,
+    -- którego nie da się pokazać w panelu ani wytłumaczyć w audycie.
+    CONSTRAINT login_session_revocation CHECK ((revoked_at IS NULL) = (revoked_by IS NULL))
+  );
+  CREATE INDEX IF NOT EXISTS idx_login_sessions_pilot
+    ON login_sessions (pilot_id, org_id) WHERE revoked_at IS NULL;
+
+  ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS session_id TEXT REFERENCES login_sessions(id);
+
+  DO $$
+  DECLARE
+    r RECORD;
+    sid TEXT;
+  BEGIN
+    FOR r IN SELECT token_hash, pilot_id, org_id, created_at, expires_at
+               FROM refresh_tokens WHERE session_id IS NULL LOOP
+      sid := gen_random_uuid()::text;
+      INSERT INTO login_sessions
+             (id, pilot_id, org_id, surface, method, created_at, last_seen_at, expires_at)
+      VALUES (sid, r.pilot_id, r.org_id, 'mobile', 'legacy', r.created_at, r.created_at, r.expires_at);
+      UPDATE refresh_tokens SET session_id = sid WHERE token_hash = r.token_hash;
+    END LOOP;
+  END $$;
+
+  ALTER TABLE refresh_tokens ALTER COLUMN session_id SET NOT NULL;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1190,6 +1283,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_7,
   MIGRATION_8,
   MIGRATION_9,
+  MIGRATION_10,
 ];
 
 /**
@@ -1220,4 +1314,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Logowanie przez Google (2026-09-04): tożsamości zewnętrzne ze zgłoszeniem do zatwierdzenia przez administratora; hasło przestaje być wymagane',
   'Wielofirmowość (issue #98, #100): kluby jako tenant, członkostwa z kodem i rolą per klub, kod klubu jako jedyna droga dołączenia, superadministrator, org_id na danych klubu, tożsamość Google zawsze podpięta do osoby i backfill jednego klubu z danych 1.x',
   'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
+  'Sesje logowania (2.1.0, issue #133): wiersz dla każdej żywej sesji telefonu i panelu z urządzeniem, metodą i ostatnią aktywnością, identyfikator sesji w tokenach - zdalne wylogowanie pojedynczego urządzenia zamiast zrywania wszystkich poświadczeń osoby',
 ];

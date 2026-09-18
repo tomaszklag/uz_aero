@@ -50,6 +50,13 @@ export interface Actor {
   role: PilotRole;
   /** `null` = akcja spoza żądania HTTP (skrypt administracyjny). */
   ip: string | null;
+  /**
+   * SESJA, z której przyszło żądanie (2.1.0, issue #133); `null` = poświadczenie sprzed
+   * 2.1.0 albo akcja spoza HTTP. Potrzebują jej dwie rzeczy: zmiana hasła, która ma
+   * wylogować wszystkie sesje POZA BIEŻĄCĄ (§5.3), i lista własnych sesji w panelu,
+   * która musi oznaczyć „to urządzenie" i nie dać go wyłączyć samemu sobie (§5.6).
+   */
+  sessionId: string | null;
 }
 
 /**
@@ -65,6 +72,8 @@ export interface PlatformActor {
   pilotId: string;
   platformRole: PlatformRole;
   ip: string | null;
+  /** Sesja żądania - jak w `Actor`. */
+  sessionId: string | null;
 }
 
 /** Kogo przyjmuje `AuditedWrite` - działający w klubie ALBO na platformie. */
@@ -701,6 +710,13 @@ export interface AdminPilotAccount {
 export interface AdminPilotJoin {
   account: AdminPilotAccount;
   updatedAt: Date;
+  /**
+   * Ostatnia aktywność ŻYWEJ sesji w tym klubie (2.1.0, issue #133 C9); `null` = żadnej
+   * czynnej. To NIE jest „ostatnie logowanie": po wygaśnięciu sesji wraca `null`, bo
+   * rejestr nie przechowuje historii wejść - a zgadywanie jej z `refresh_tokens` dałoby
+   * inną wielkość pod tą samą etykietą (patrz nagłówek `contracts/pilots.ts`).
+   */
+  lastSeenAt: Date | null;
   flyingDays: number;
 }
 
@@ -1064,6 +1080,8 @@ export interface OrganizationAdmin {
   email: string | null;
   code: string;
   signedIn: boolean;
+  /** Najświeższa ŻYWA sesja w tym klubie (2.1.0, issue #133 C9); `null` = żadnej. */
+  lastSeenAt: Date | null;
 }
 
 /** Klub + jego kod, czytany DO ODCZYTU na karcie klubu (§8.1). */

@@ -46,6 +46,8 @@ interface AdminRow {
   name: string;
   email: string | null;
   signed_in: boolean;
+  /** Najświeższa ŻYWA sesja w tym klubie; `null` = żadnej (2.1.0, issue #133 C9). */
+  last_seen_at: string | Date | null;
 }
 
 /**
@@ -203,7 +205,10 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
 
     const { rows } = await db.query<AdminRow>(
       `SELECT m.org_id, m.pilot_id, m.code, p.name, p.email,
-              EXISTS (SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id) AS signed_in
+              EXISTS (SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id) AS signed_in,
+              (SELECT MAX(s.last_seen_at) FROM login_sessions s
+                WHERE s.pilot_id = p.id AND s.org_id = m.org_id AND s.revoked_at IS NULL)
+                AS last_seen_at
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id
         WHERE m.org_id = ANY($1) AND m.role = 'admin' AND m.status = 'active'
@@ -219,6 +224,7 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
         email: row.email,
         code: row.code,
         signedIn: row.signed_in,
+        lastSeenAt: row.last_seen_at == null ? null : new Date(row.last_seen_at),
       });
       out.set(row.org_id, admins);
     }

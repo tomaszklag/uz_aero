@@ -20,6 +20,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { AuthCommands } from '../../../application/common/commands/auth.ts';
+import { deviceFrom } from '../../device.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /**
@@ -37,7 +38,7 @@ export function registerSwitchRoutes(app: FastifyInstance, auth: AuthCommands): 
     const person = auth.identifyPerson(tokenFromRequest(req));
     if (person == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const result = await auth.switchClub(person, parsed.data.orgId);
+    const result = await auth.switchClub(person, parsed.data.orgId, deviceFrom(req));
     if (result.ok) return reply.send(result.tokens);
     return result.reason === 'not_found'
       ? reply.code(404).send({ error: 'not_found' })

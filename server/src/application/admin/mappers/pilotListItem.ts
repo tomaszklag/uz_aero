@@ -23,6 +23,7 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
     active: account.active,
     role: account.role,
     updatedAt: join.updatedAt.toISOString(),
+    lastSeenAt: join.lastSeenAt?.toISOString() ?? null,
     flyingDays: join.flyingDays,
   };
 }
@@ -39,7 +40,7 @@ export function pilotCounts(counts: PilotCounts): AdminPilotCounts {
     total: counts.total,
     active: counts.active,
     inactive: counts.inactive,
-    admin: counts.byRole.admin,
+    admin: counts.byRole.admin,
     pilot: counts.byRole.pilot,
     flyingDays: counts.flyingDays,
   };

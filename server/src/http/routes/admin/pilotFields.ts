@@ -71,4 +71,7 @@ export const accountToWire = (account: AdminPilotAccount, at: Date): AdminPilotL
   role: account.role,
   updatedAt: at.toISOString(),
   flyingDays: 0,
+  // `null` z tego samego powodu, co `flyingDays: 0`: mutacja oddaje tożsamość
+  // i status członkostwa, a nie jego aktywność - tę przynosi odświeżona lista.
+  lastSeenAt: null,
 });

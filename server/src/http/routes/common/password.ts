@@ -26,6 +26,7 @@ import type {
   ChangePasswordOutcome,
   PasswordCommands,
 } from '../../../application/common/commands/passwords.ts';
+import { deviceFrom } from '../../device.ts';
 import { membershipToWire } from './auth.ts';
 
 /**
@@ -101,7 +102,7 @@ export function registerPasswordRoutes(
       login: parsed.data.login,
       password: parsed.data.password,
       orgId: parsed.data.orgId ?? null,
-      ip: req.ip ?? null,
+      device: deviceFrom(req),
     });
     if (result.ok) return reply.send(result.tokens);
 

@@ -140,6 +140,10 @@ describe('GET /admin/api/organizations - lista klubów', () => {
         email: 'piotr.wrobel@gmail.com',
         code: 'PWR',
         signedIn: false,
+        // „Ostatnio aktywny" (2.1.0, issue #133 C9): `null`, bo administrator, który
+        // jeszcze nie wszedł, nie ma czynnej sesji. Razem z `signedIn` daje trzy stany
+        // zamiast dwóch - patrz `AdminOrganizationAdmin`.
+        lastSeenAt: null,
       },
     ]);
     const alfa = items.find((i) => i.slug === 'aeroklub-alfa')!;

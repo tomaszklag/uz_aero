@@ -19,6 +19,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { AuthCommands, ClubMembershipView } from '../../../application/common/commands/auth.ts';
+import { deviceFrom } from '../../device.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /**
@@ -50,7 +51,7 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     const parsed = googleBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
-    const result = await auth.loginWithProvider(parsed.data.idToken);
+    const result = await auth.loginWithProvider(parsed.data.idToken, deviceFrom(req));
     if (result.ok) return reply.send(result.tokens);
 
     // Osoba jest, aktywnego klubu nie ma (wielofirmowość §4, §5): 202 z tokenem OSOBY
@@ -79,7 +80,7 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     const person = auth.identifyPerson(tokenFromRequest(req));
     if (person == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const status = await auth.membershipStatus(person);
+    const status = await auth.membershipStatus(person, deviceFrom(req));
     if (status.kind === 'unknown') return reply.code(404).send({ error: 'not_found' });
     if (status.kind === 'approved') {
       // Zatwierdzono w międzyczasie - pilot wchodzi do aplikacji BEZ ponownego
@@ -97,8 +98,28 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     const parsed = refreshBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
-    const tokens = await auth.refresh(parsed.data.refreshToken);
-    if (tokens == null) return reply.code(401).send({ error: 'invalid_refresh' });
-    return reply.send(tokens);
+    // Dwa różne `401` i to jest cała zmiana 2.1.0 na tej trasie: `session_revoked` mówi
+    // telefonowi, że urządzenie wylogowano ZDALNIE, więc ekran ma napisać powód zamiast
+    // zwykłego „OFFLINE" (D7). Dane pilota zostają na telefonie - tu nie kasuje się nic.
+    const result = await auth.refresh(parsed.data.refreshToken, deviceFrom(req));
+    if (!result.ok) return reply.code(401).send({ error: result.reason });
+    return reply.send(result.tokens);
+  });
+
+  /**
+   * Wylogowanie telefonu (2.1.0, §5.5). Do tej wersji telefon NIE WOŁAŁ serwera wcale -
+   * czyścił magazyn u siebie, a refresh żył po nim jeszcze 90 dni.
+   *
+   * `204` ZAWSZE, także dla tokenu nieznanego: „wyloguj" człowiek klika również wtedy,
+   * gdy jego poświadczenie jest już martwe, a odmowa zostawiłaby go w aplikacji, z której
+   * właśnie chciał wyjść. Trasa nie ma bramy z tego samego powodu - sam refresh jest tu
+   * dowodem, a wygasła sesja to stan, w którym ta operacja jest najbardziej potrzebna.
+   */
+  app.post('/auth/logout', async (req, reply) => {
+    const parsed = refreshBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    await auth.logout(parsed.data.refreshToken);
+    return reply.code(204).send();
   });
 }

@@ -17,7 +17,7 @@
 import { operationIndexes, projectSession, type Event } from '@ninerdeck/domain';
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, testHarness } from './helpers.ts';
 import { ORG_A, ORG_B, seedBetaFleet } from './testWorld.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 
@@ -347,11 +347,13 @@ describe('sygnatura operacji w panelu', () => {
     await seedBetaFleet(db);
 
     // Beta jest klubem aktywnym PWI, dopóki nie wjedzie świeższy refresh dla Alfy.
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('sig-b', 'PWI', $1, $2, $3)`,
-      [ORG_B, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'sig-b',
+      pilotId: 'PWI',
+      orgId: ORG_B,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
     const inBeta = await token(app, 'PWI');
 
     // W Becie DWIE operacje tej doby, w Alfie jedna - i to ta w ŚRODKU (10:00), więc
@@ -363,11 +365,13 @@ describe('sygnatura operacji w panelu', () => {
     expect(beta.statusCode, JSON.stringify(beta.json())).toBe(200);
 
     clock.advance(60_000);
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('sig-a', 'PWI', $1, $2, $3)`,
-      [ORG_A, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'sig-a',
+      pilotId: 'PWI',
+      orgId: ORG_A,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
     const inAlfa = await token(app, 'PWI');
     const alfa = await post(app, inAlfa, [
       ...operation({ sessionUuid: 'sig-a1', aircraftId: 'SP-AXA', picId: 'PWI', engineStartH: 10 }),

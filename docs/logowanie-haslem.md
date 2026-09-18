@@ -242,8 +242,10 @@ ALTER TABLE refresh_tokens ADD COLUMN session_id TEXT REFERENCES login_sessions(
   skopiowanym ze źródłowej (stary refresh świadomie zostaje ważny - patrz `AuthCommands.switchClub`).
   Ustawienie hasła z linku sesji NIE zakłada (strona odpowiada `204`, człowiek loguje się
   potem hasłem) - stąd `method` nie ma wartości dla resetu.
-- **Backfill w migracji 9:** każdy istniejący wiersz `refresh_tokens` dostaje sesję
-  `mobile`/`legacy`, żeby `session_id` mogło być `NOT NULL` od razu. Tokeny dostępu
+- **Backfill w migracji 10:** każdy istniejący wiersz `refresh_tokens` dostaje sesję
+  `mobile`/`legacy` z LOSOWYM identyfikatorem, żeby `session_id` mogło być `NOT NULL`
+  od razu (wyprowadzony ze skrótu refresha wyszedłby po pierwszej rotacji w czytelnym
+  payloadzie tokenu). Tokeny dostępu
   i ciasteczka wydane przed wdrożeniem nie niosą `sid` - brama przyjmuje brak `sid` do ich
   wygaśnięcia (1 h / 8 h), a każdy nowy token `sid` niesie.
 - **Token osoby** (`purpose: 'person'`) sesji NIE zakłada: nie jest tożsamością i otwiera
@@ -668,12 +670,27 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   aplikacji), więc H-F musi serwować `/haslo/` NA HOŚCIE APLIKACJI (`hostSplit.ts` odsyła
   dziś ścieżki strony na host strony, gdzie API nie istnieje) - inaczej strona nie ma do kogo
   zawołać `POST /auth/password/reset`.
-- **H-C Serwer: sesje logowania** (#133) - migracja 10 (§4.3, backfill), `sid` w tokenach,
-  `login_sessions` w `issueFor`/`orgSession`/`platformSession`/`switchClub`/`refresh`,
-  brama z `sessionRevokedAt` i `401 session_revoked`, przepustnica `last_seen_at`,
-  `POST /auth/logout`, stemplowanie przy `/admin/api/auth/logout`, trasy §5.6, audyt
-  `session.revoke*`, unieważnianie przy `membership.disable` / blokadzie osoby / zmianie
-  hasła / realizacji kodu, wpisy w `tenantIsolation` i `architecture`.
+- **H-C Serwer: sesje logowania** (#133) - **WYKONANY 2026-09-18**. Migracja 10 (§4.3,
+  backfill pętlą `DO`), `sid` w tokenach klubu, platformowym i w ciasteczku, sesja
+  w `issueFor`/`orgSession`/`platformSession`/`switchClub` (nowa, metoda dziedziczona)
+  i zachowana przy rotacji, brama z `LEFT JOIN` w `authSnapshot`, `/auth/refresh`
+  sprawdzający sesję PRZED rotacją, przepustnica `last_seen_at` (60 s, pamięć procesu),
+  `POST /auth/logout`, stemplowanie przy `/admin/api/auth/logout`, trasy §5.6 z audytem
+  `session.revoke`/`session.revoke_all`, unieważnianie przy zmianie hasła (poza bieżącą),
+  realizacji LINKU (wszystkie) i wyłączeniu członkostwa (w tym klubie), „ostatnio aktywny"
+  w karcie członka i przy administratorze klubu, `loginSessions.test.ts` oraz wpisy
+  w `tenantIsolation` i `architecture`.
+  **Odstępstwa od planu**: (1) trasy TELEFONU zostają przy jednym `401 unauthorized`,
+  a nazwany `session_revoked` pada z `POST /auth/refresh` - tak opisuje ten przepływ §6
+  („telefon reaguje na 401 jak na wygaśnięcie, a refresh odmawia z tego samego powodu"),
+  a drugie ciało 401 na szesnastu trasach telefonu byłoby polem, którego aplikacja nie
+  czyta; PANEL dostaje powód od razu, bo tam nie ma czego odświeżyć; (2) `method` ma TRZY
+  wartości (`google`, `password`, `legacy`) - `code` z listy zadań odpadło razem z kodem
+  jednorazowym (§5.4), więc „realizacja kodu" z C3/C8 znaczy tu realizację LINKU;
+  (3) brama oddaje `sessionRevoked` (flaga), nie `sessionRevokedAt` - o terminie sesji
+  rozstrzyga rotacja, a token, który dożył do bramy z martwą sesją, i tak znika w ciągu
+  godziny; (4) `Actor` i `PlatformActor` niosą odtąd `sessionId` - potrzebują go zmiana
+  hasła („poza bieżącą") i lista własnych sesji („to urządzenie").
 - **H-D Panel** (#134) - formularz logowania z Google pod spodem, `GET /auth/methods`, „Nie pamiętam
   hasła" (adres → link → potwierdzenie), karta członka: „Wyślij link do ustawienia hasła"
   + sesje, karta klubu: e-mail + zaproszenie („wysłano", „Wyślij ponownie"), `#/konto`

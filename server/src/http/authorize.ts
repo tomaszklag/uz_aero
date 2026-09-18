@@ -22,6 +22,7 @@
  */
 
 import type {
+  LoginSessionsPort,
   MembershipAuthSnapshot,
   PilotsPort,
   TokenService,
@@ -62,7 +63,14 @@ export async function authorizeMember(
 ): Promise<MembershipAuthSnapshot | null> {
   const identity = authorize(tokens, token);
   if (identity == null) return null;
-  return activeMembership(accounts, identity);
+  const account = await activeMembership(accounts, identity);
+  // ══ TELEFON DOSTAJE JEDNO 401, A POWÓD CZYTA Z ODŚWIEŻENIA ══
+  // Zdalne wylogowanie odbija tu tak samo, jak wygasły token - i tak ma być: aplikacja
+  // na każde 401 sięga po `POST /auth/refresh`, a to ONO odpowiada `session_revoked`
+  // i uruchamia baner z powodem (D7). Drugie ciało 401 na szesnastu trasach telefonu
+  // byłoby polem, którego nikt po tamtej stronie nie czyta. Panel ma inaczej - patrz
+  // `authorizeOrg`: tam nie ma czego odświeżać, więc powód musi paść od razu.
+  return account == null || account.sessionRevoked ? null : account;
 }
 
 /**
@@ -75,7 +83,11 @@ async function activeMembership(
   accounts: PilotsPort,
   identity: VerifiedIdentity,
 ): Promise<MembershipAuthSnapshot | null> {
-  const account = await accounts.authSnapshot(identity.pilotId, identity.orgId);
+  const account = await accounts.authSnapshot(
+    identity.pilotId,
+    identity.orgId,
+    identity.sessionId,
+  );
   if (account == null || !account.active) return null;
   if (
     credentialsRevoked(account.credentialsValidFrom, identity.issuedAt) ||
@@ -86,16 +98,24 @@ async function activeMembership(
   return account;
 }
 
+/**
+ * `session_revoked` obok `unauthorized` (2.1.0, §6): panel nie ma czego odświeżyć, więc
+ * powód musi paść od razu - inaczej administrator wylogowany zdalnie widzi ekran
+ * logowania bez słowa wyjaśnienia i próbuje wejść drugi raz tym samym ciasteczkiem.
+ */
 export type AuthOutcome =
   | { ok: true; account: MembershipAuthSnapshot }
-  | { ok: false; status: 401; body: { error: 'unauthorized' } }
+  | { ok: false; status: 401; body: { error: 'unauthorized' | 'session_revoked' } }
   | { ok: false; status: 403; body: { error: 'forbidden'; required: Capability } };
 
 /** Wynik bramy PLATFORMOWEJ - ten sam kształt odmów, inna tożsamość po `ok`. */
 export type PlatformAuthOutcome =
   | { ok: true; identity: VerifiedPlatformIdentity; platformRole: PlatformRole }
-  | { ok: false; status: 401; body: { error: 'unauthorized' } }
+  | { ok: false; status: 401; body: { error: 'unauthorized' | 'session_revoked' } }
   | { ok: false; status: 403; body: { error: 'forbidden'; required: Capability } };
+
+const UNAUTHORIZED = { ok: false, status: 401, body: { error: 'unauthorized' } } as const;
+const SESSION_REVOKED = { ok: false, status: 401, body: { error: 'session_revoked' } } as const;
 
 /**
  * Brama uprawnień dla tras panelu KLUBU. Zwraca gotowy status i ciało odpowiedzi, żeby
@@ -131,8 +151,14 @@ export async function authorizeOrg(
   token: string | null,
   capability: Capability,
 ): Promise<AuthOutcome> {
-  const account = await authorizeMember(tokens, accounts, token);
-  if (account == null) return { ok: false, status: 401, body: { error: 'unauthorized' } };
+  // Nie przez `authorizeMember`: tamta droga zwija zdalne wylogowanie do zwykłego 401,
+  // bo telefon i tak sięga po odświeżenie. Panel potrzebuje POWODU, więc czyta ten sam
+  // odczyt wprost.
+  const identity = authorize(tokens, token);
+  if (identity == null) return UNAUTHORIZED;
+  const account = await activeMembership(accounts, identity);
+  if (account == null) return UNAUTHORIZED;
+  if (account.sessionRevoked) return SESSION_REVOKED;
 
   if (!can(account.role, capability)) {
     return { ok: false, status: 403, body: { error: 'forbidden', required: capability } };
@@ -152,15 +178,20 @@ export async function authorizeOrg(
 export async function authorizePlatform(
   tokens: TokenService,
   accounts: PilotsPort,
+  sessions: LoginSessionsPort,
   token: string | null,
   capability: Capability,
 ): Promise<PlatformAuthOutcome> {
   const identity = token == null ? null : tokens.verifyPlatform(token);
-  if (identity == null) return { ok: false, status: 401, body: { error: 'unauthorized' } };
+  if (identity == null) return UNAUTHORIZED;
 
   const account = await accounts.findById(identity.pilotId);
-  if (account == null || !account.active) {
-    return { ok: false, status: 401, body: { error: 'unauthorized' } };
+  if (account == null || !account.active) return UNAUTHORIZED;
+  // Sesja platformowa nie ma członkostwa, więc nie doczepi się do `authSnapshot` -
+  // pyta osobno. To jest najwrażliwsza sesja na serwerze i jedyna, która otwiera moduł
+  // Organizacje, więc kosztu jednego odczytu po kluczu głównym nie ma tu co żałować.
+  if (identity.sessionId != null && (await sessions.isRevoked(identity.sessionId, account.id))) {
+    return SESSION_REVOKED;
   }
   if (!platformCan(account.platformRole, capability) || account.platformRole == null) {
     return { ok: false, status: 403, body: { error: 'forbidden', required: capability } };

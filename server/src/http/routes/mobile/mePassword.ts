@@ -31,7 +31,13 @@ export function registerMePasswordRoutes(
 
     return sendChangeOutcome(
       reply,
-      await passwords.change(who.pilotId, parsed.data.current ?? null, parsed.data.next),
+      await passwords.change(
+        who.pilotId,
+        parsed.data.current ?? null,
+        parsed.data.next,
+        // Sesja tego telefonu PRZEŻYWA zmianę hasła - giną pozostałe urządzenia (§5.3).
+        who.sessionId,
+      ),
     );
   });
 }

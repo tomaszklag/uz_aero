@@ -21,6 +21,7 @@ const admin = (row: OrganizationAdmin): AdminOrganizationAdmin => ({
   email: row.email,
   code: row.code,
   signedIn: row.signedIn,
+  lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
 });
 
 export function organizationListItem(org: OrganizationSummary): AdminOrganizationListItem {

@@ -47,6 +47,10 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
       // CHWILA WYDANIA (`iat`, sekundy epoki) - bez niej brama panelu nie umiałaby
       // odpowiedzieć na pytanie „czy to poświadczenie jest starsze niż unieważnienie".
       issuedAt: Math.floor(clock.now().getTime() / 1000),
+      // SESJA (`sid`, 2.1.0): każde logowanie zakłada wiersz `login_sessions`, a brama
+      // sprawdza go przy każdym żądaniu - stąd „Wyloguj to urządzenie" działa od razu.
+      // Wartość jest uuidem z composition rootu, więc test pyta o KSZTAŁT, nie o treść.
+      sessionId: expect.stringMatching(/^[0-9a-f-]{36}$/),
     });
     // …a refresh wystarczająco długi, żeby nie dało się go zgadywać.
     expect(String(body.refreshToken).length).toBeGreaterThanOrEqual(40);
@@ -332,7 +336,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     const { app, tokens } = await testHarness();
     expect((await app.inject({ method: 'GET', url: '/auth/memberships' })).statusCode).toBe(401);
 
-    const platform = tokens.signPlatform({ pilotId: 'admin' }, 3600);
+    const platform = tokens.signPlatform({ pilotId: 'admin', sessionId: '' }, 3600);
     const res = await app.inject({
       method: 'GET',
       url: '/auth/memberships',
