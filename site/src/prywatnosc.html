@@ -32,9 +32,15 @@
   przez profil <a href="https://github.com/tomaszklag" rel="noopener">github.com/tomaszklag</a>
   albo bezpośrednio przez administratora klubu.</p>
 
-  <h2>2. Logowanie kontem Google</h2>
-  <p>Do aplikacji i panelu loguje się wyłącznie kontem Google („Zaloguj się przez Google").
-  Z Google otrzymujemy tylko dane potrzebne do uwierzytelnienia:</p>
+  <h2>2. Logowanie</h2>
+  <p>Do aplikacji i panelu można zalogować się na dwa sposoby: <strong>kontem Google</strong>
+  albo <strong>adresem e-mail i hasłem</strong>. To nie są dwa konta - to dwa sposoby
+  potwierdzenia tożsamości tej samej osoby. Druga droga istnieje dlatego, że w samolocie bywa
+  jedno urządzenie wspólne dla kilku pilotów, a logowanie kontem Google oznaczałoby dodanie
+  własnego konta do cudzego sprzętu.</p>
+
+  <h3>2.1. Logowanie kontem Google</h3>
+  <p>Z Google otrzymujemy tylko dane potrzebne do uwierzytelnienia:</p>
   <table>
     <tr><th>Dane</th><th>Po co</th></tr>
     <tr><td>stały identyfikator konta Google</td><td>rozpoznanie tego samego konta przy kolejnych logowaniach</td></tr>
@@ -48,10 +54,42 @@
   <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>,
   w tym z wymogami ograniczonego użycia (Limited Use).</p>
 
+  <h3>2.2. Logowanie hasłem</h3>
+  <p>Jeśli ustawisz hasło, przechowujemy <strong>wyłącznie jego jednokierunkowy skrót</strong>
+  (algorytm scrypt, z losową solą dla każdego konta). <strong>Samego hasła nie zapisujemy
+  nigdzie</strong> - nie ma go w bazie, w dzienniku zdarzeń ani w logach serwera, nie pokazuje
+  go żaden ekran i nie zna go administrator klubu. Ze skrótu nie da się odtworzyć hasła.</p>
+  <p>Hasło ustawia i zmienia wyłącznie jego właściciel: w ustawieniach aplikacji, na stronie
+  „Moje konto" w panelu albo przez link przysłany e-mailem. Administrator klubu może wysłać
+  Ci taki link, ale nie widzi ani nie ustala hasła.</p>
+
+  <h3>2.3. Sesje logowania</h3>
+  <p>Każde zalogowanie zapisuje wiersz opisujący urządzenie, żeby dało się zobaczyć własne
+  sesje i zdalnie je zakończyć:</p>
+  <table>
+    <tr><th>Dane</th><th>Po co</th></tr>
+    <tr><td>opis urządzenia (model i system telefonu z wersją aplikacji albo nazwa przeglądarki i systemu)</td><td>rozpoznanie własnego urządzenia na liście sesji</td></tr>
+    <tr><td>adres IP</td><td>rozpoznanie sesji, której nie kojarzysz, i zakończenie jej</td></tr>
+    <tr><td>sposób zalogowania, początek sesji i ostatnia aktywność</td><td>lista urządzeń oraz informacja „ostatnio aktywny" w karcie członka</td></tr>
+  </table>
+  <p>Własne sesje widzisz w panelu na stronie „Moje konto". Administrator klubu widzi Twoje
+  sesje <strong>wyłącznie w swoim klubie</strong> i może je zakończyć - nie widzi urządzeń,
+  którymi logujesz się w innym klubie. Zakończenie sesji zatrzymuje wysyłanie danych z tego
+  urządzenia, ale <strong>niczego z niego nie usuwa</strong>.</p>
+
+  <h3>2.4. Wysyłka wiadomości e-mail</h3>
+  <p>Link do ustawienia hasła oraz zaproszenie administratora nowego klubu wysyłamy pocztą
+  elektroniczną. Korzystamy przy tym z zewnętrznego dostawcy usługi wysyłki, który występuje
+  jako <strong>podmiot przetwarzający</strong> i otrzymuje wyłącznie adres odbiorcy oraz treść
+  wiadomości (zawierającą jednorazowy link). Dostawca nie wykorzystuje tych danych do własnych
+  celów. Link jest ważny godzinę (zaproszenie do klubu - 72 godziny), działa raz, a każdy nowy
+  unieważnia poprzedni.</p>
+
   <h2>3. Zgłoszenie i zatwierdzenie</h2>
-  <p>Zalogowanie kontem Google nie daje dostępu do aplikacji. Tworzy zgłoszenie, które widzi
-  administrator klubu i które zatwierdza albo odrzuca. Do czasu decyzji przechowujemy wyłącznie
-  dane z tabeli powyżej. Zgłoszenie odrzucone możesz w każdej chwili poprosić o usunięcie.</p>
+  <p>Samo zalogowanie - kontem Google albo hasłem - nie daje dostępu do aplikacji. Tworzy
+  zgłoszenie, które widzi administrator klubu i które zatwierdza albo odrzuca. Do czasu decyzji
+  przechowujemy wyłącznie dane z tabel powyżej. Zgłoszenie odrzucone możesz w każdej chwili
+  poprosić o usunięcie.</p>
 
   <h2>4. Dane zapisywane w dzienniku lotów</h2>
   <p>Po zatwierdzeniu aplikacja zapisuje dane operacji lotniczych, które wprowadzasz lub które
@@ -73,7 +111,8 @@
   przez czas działania klubu; dane konta usuwamy na Twoje żądanie, o ile nie są potrzebne do
   zachowania integralności dziennika operacji, w których brałeś udział (wtedy konto zostaje
   dezaktywowane). Danych nie sprzedajemy ani nie przekazujemy podmiotom trzecim poza dostawcami
-  infrastruktury niezbędnymi do działania usługi.</p>
+  infrastruktury niezbędnymi do działania usługi (dostawca hostingu oraz dostawca wysyłki
+  poczty - patrz punkt 2.4).</p>
 
   <h2>6. Pliki cookie</h2>
   <p>Panel administratora używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.

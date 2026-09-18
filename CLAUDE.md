@@ -2829,6 +2829,47 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     i nie starzeje się nigdy) oraz `invite` przy administratorze klubu. Przy okazji
     `signedIn` na karcie klubu przestało pytać WYŁĄCZNIE o tożsamość Google - inaczej
     administrator, który wszedł z linku i hasłem, zostawałby „tym, który się nie zalogował"
+- **etap H-E (aplikacja pilota) WYKONANY 2026-09-18** (PR #150, issue #135) - reguły
+  obowiązujące odtąd KAŻDY ekran logowania w aplikacji:
+  - **HASŁO KOŃCZY SIĘ TAM, GDZIE GOOGLE**: `AuthService.loginWithPassword` robi WYŁĄCZNIE
+    dowód i wpada w ten sam provisioning (`signed_in` / `no_club`). Nowy sposób logowania
+    = nowy dowód, nigdy trzecia kopia wyboru klubu
+  - **URZĄDZENIE PAMIĘTA KLUBY, NIE OSOBY** (`DeviceClubsPort` + `DeviceClubsStore`):
+    lista w ZWYKŁYM magazynie i pod JEDNYM kluczem bez pilota, bo ma PRZEŻYĆ wylogowanie -
+    opisuje samolot, a nie człowieka. Kod pilota rozwiązuje się w klubie bieżącym; przy
+    JEDNYM znanym klubie 00F o nim MILCZY (reguła SyncChipa), przy kilku - pigułka
+    z nazwą i „Zmień klub" (00I). Urządzenie znające klub startuje po wylogowaniu
+    wprost na 00F
+  - **`logout` WOŁA SERWER PRZED czyszczeniem magazynu**, a bez sieci czyści i tyle (§9):
+    pilot oddaje tablet następnemu i nie ma na co czekać
+  - **`session_revoked` ≠ `invalid_refresh`**: pierwsze jest DECYZJĄ CZŁOWIEKA, więc
+    `rotate()` stawia znacznik `revoked` w magazynie (przeżywa restart), a `SyncEngine`
+    oddaje `auth_revoked` obok `auth_expired`. ŻADNE nie kasuje poświadczeń ani PIN-u:
+    zdalne wylogowanie zatrzymuje WYSYŁKĘ, nie kasuje dnia, którego serwer jeszcze nie ma
+  - **pięć ekranów przed bramką prowadzi `ui/navigation/SignInFlow.tsx` zwykłym stanem** -
+    `RootNavigator` mieszka ZA bramką i opisuje aplikację pilota, a tam nikt nie jest
+    jeszcze pilotem
+  - **`GET /me/account` = cienki plaster serwera H-E** (jak trzy pola w H-D): wiersz
+    „Ustaw hasło" / „Zmień hasło" nie miał z czego wyjść. Odczyt w `application/common/
+    queries/account.ts`, bo o to samo pyta panel; OSOBNO od `GET /reference`, bo to cache
+    KLUBU z ETagiem, a metody należą do OSOBY
+- **etap H-F (poczta i strona `/haslo/`) WYKONANY 2026-09-18** (PR #147 i #151, issue #136):
+  - **`/haslo/` MIESZKA NA HOŚCIE APLIKACJI** (`hostSplit.ts`, `PASSWORD_PAGE`) - jedyny
+    plik strony rozpoznawany po ŚCIEŻCE. Bez tego droga z listu była PRZERWANA: link
+    składa się z `PUBLIC_BASE_URL`, a plik strony był stamtąd odsyłany na host strony,
+    gdzie `POST /auth/password/reset` nie istnieje
+  - **ceną jest plik strony na origin panelu, więc ma WŁASNĄ, ścisłą politykę**
+    (`PASSWORD_PAGE_CSP`) bez `'unsafe-inline'`. Uzasadnienie luzu reszty strony („nie ma
+    pola, w które ktokolwiek cokolwiek wpisuje") przestało jej dotyczyć przy polu hasła.
+    **To jedyna strona w `site/` bez skryptu i stylu w treści pliku** - dopisanie ich
+    ją psuje, i pilnuje tego `app/src/__tests__/passwordPage.test.ts`
+  - **polityka hasła na stronie to LUSTRO z testem równości** (`site/src/haslo/policy.js`
+    ↔ `passwordPolicyMirror.test.ts`), bo `site/` jest świadomie poza workspace'ami
+    i bez zależności. Lustro jest WĘŻSZE: `contains_email`/`contains_name` zna tylko
+    serwer i wracają jako `400 weak_password { reason }`, które ZOSTAJE NA FORMULARZU -
+    odmowa polityki linku nie spala
+- **przegląd bezpieczeństwa (W6) 2026-09-18**: dwanaście punktów §8 sprawdzonych,
+  ZERO podatności; wynik i to, czego świadomie nie zmieniono, w `docs/logowanie-haslem.md` §15
 - **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
   HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
   kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`

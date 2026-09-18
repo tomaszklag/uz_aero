@@ -143,7 +143,18 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 2.1.0 · po pierwszych tygodniach testów
+### 2.1.0 · wrzesień 2026
+
+> Logowanie e-mailem i hasłem obok konta Google - dla wspólnego tabletu w samolocie.
+
+- [x] Logowanie hasłem w aplikacji i w panelu; na tablecie wystarczy kod pilota
+- [x] Zapomniane hasło odzyskuje się samodzielnie - linkiem z e-maila, na dowolnym urządzeniu
+- [x] Konto zakłada się e-mailem, bez konta Google; nowy klub też
+- [x] Lista urządzeń i zdalne wylogowanie - w panelu i we własnym koncie
+- [x] Hasło ustawia się w ustawieniach aplikacji; nie zastępuje PIN-u
+- [ ] Sprawdzenie na urządzeniu i odbiór na produkcji
+
+### 2.2.0 · po pierwszych tygodniach testów
 
 > Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
 

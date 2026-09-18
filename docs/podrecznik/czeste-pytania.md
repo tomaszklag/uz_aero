@@ -6,7 +6,23 @@
 
 ### Jak założyć konto?
 
-W aplikacji jest jeden przycisk: **Kontynuuj z Google**. Jeśli klub nie zna Twojego adresu, powstaje zgłoszenie, a administrator zatwierdza je, nadając Ci kod pilota - do tej chwili aplikacja pokazuje ekran oczekiwania i sprawdza stan sama. Potem codziennym wejściem jest PIN, a **Nie pamiętam PIN** pod klawiaturą oznacza ponowne logowanie kontem Google, czyli internet. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
+Są dwie drogi: **Kontynuuj z Google** albo **Załóż konto** e-mailem - wtedy podajesz imię, nazwisko i adres, a konto powstaje w chwili, gdy ustawisz hasło z linku przysłanego na ten adres. Jedno i drugie daje to samo konto osoby. Do klubu i tak wchodzisz kodem klubu: administrator zatwierdza zgłoszenie, nadając Ci kod pilota - do tej chwili aplikacja pokazuje ekran oczekiwania i sprawdza stan sama. Potem codziennym wejściem jest PIN, a **Nie pamiętam PIN** pod klawiaturą oznacza ponowne logowanie, czyli internet. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
+
+### Zapomniałem hasła
+
+Na ekranie logowania hasłem wybierz **Nie pamiętam hasła** i podaj swój adres. Przyjdzie na niego link ważny godzinę - otwórz go **na dowolnym urządzeniu**, także na telefonie, na którym czytasz pocztę, ustaw hasło i wróć zalogować się tam, gdzie pracujesz. Tą samą drogą ustawia się PIERWSZE hasło, jeśli dotąd wchodziłeś tylko kontem Google.
+
+Administrator nie zna Twojego hasła i nie może go podać - może natomiast wysłać Ci z panelu **ten sam list**, który wysłałbyś sobie sam. Kodów do przepisywania przez telefon nie ma w ogóle.
+
+### Jeden tablet w samolocie - jak się przelogować?
+
+Poprzedni pilot wybiera w ustawieniach **Wyloguj i zmień konto** (zadziała dopiero, gdy jego zapisy dojdą do klubu). Tablet staje wtedy od razu na logowaniu hasłem i pamięta, dla jakiego klubu pracuje - następny pilot wpisuje **swój kod pilota** i hasło, ustawia swój PIN i leci. Kodu klubu nie trzeba wpisywać drugi raz.
+
+Jeśli tablet obsługuje kilka klubów, pod logo stoi nazwa tego bieżącego, a **Zmień klub** pozwala wybrać inny z listy tych, z których na nim logowano.
+
+### Administrator mnie wylogował - czy stracę zapisy?
+
+**Nie.** Telefon przestaje wysyłać do klubu i mówi o tym wprost - baner na ekranie PIN i w ustawieniach, czerwone **SYNC STOI** przy kolejce. Ale PIN dalej otwiera aplikację, dzień lotny masz cały, a zapisy, które nie zdążyły dojść, wyjdą po ponownym zalogowaniu **tej samej osoby**. Aplikacja nie wyrzuca do ekranu logowania i nie kasuje niczego z telefonu.
 
 ### Zgłoszenie zostało odrzucone. Co dalej?
 
@@ -18,7 +34,7 @@ Możesz zalogować się na innym telefonie (wymaga internetu), ale zapisy powsta
 
 ### Kto widzi moje dane?
 
-Klub, w którym latasz: administrator widzi w panelu dziennik operacji, ślady i zgłoszenia z aplikacji. Z konta Google aplikacja bierze imię i adres e-mail - do założenia i rozpoznania konta. Szczegóły: [konta i bezpieczeństwo](konta-i-bezpieczenstwo) oraz [polityka prywatności](~/prywatnosc.html).
+Klub, w którym latasz: administrator widzi w panelu dziennik operacji, ślady i zgłoszenia z aplikacji, a także listę Twoich urządzeń **w swoim klubie** (żeby dało się je zdalnie wylogować). Z konta Google aplikacja bierze imię i adres e-mail - do założenia i rozpoznania konta. Jeśli masz hasło, zapisany jest wyłącznie jego jednokierunkowy skrót; **samego hasła nie ma nigdzie** i nie pokazuje go żaden ekran. Szczegóły: [konta i bezpieczeństwo](konta-i-bezpieczenstwo) oraz [polityka prywatności](~/prywatnosc.html).
 
 ## Dzień lotny
 
