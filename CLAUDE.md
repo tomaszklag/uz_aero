@@ -3373,6 +3373,66 @@ linków do kart, bez czekania z adresem w `eas.json`. Reguły obowiązujące odt
   (Search Console) i polityka pod `https://ninerdeck.pl/prywatnosc.html` - komplet
   w README „Wdrożenie: Railway"
 
+## Wariant deweloperski aplikacji = OSOBNY PAKIET (2026-09-17, gałąź `feature-wariant-dev`)
+Prośba właściciela po własnej domenie: testować aplikację lokalnie na nowej instancji i mieć
+osobny dev build do pracy z Expo. Reguły obowiązujące odtąd:
+- **`app.json` jest bazą, `app.config.js` ją przestawia**: przy `APP_VARIANT=development`
+  nazwa „Ninerdeck Dev", pakiet `com.ninerdeck.app.dev`, schemat adresu równy pakietowi
+  (`app/scripts/app-variant.js` - czysty CommonJS z testami, bo czytają go dwa miejsca).
+  Wersja, `versionCode`, ikony i projekt EAS BEZ ZMIAN - to ta sama aplikacja pod innym
+  adresem. Każda inna wartość zmiennej (albo brak) znaczy produkcję
+- **dlaczego osobny pakiet**: dev build z pakietem produkcyjnym zastępowałby na telefonie APK
+  z produkcji, a zapisane w nim tokeny produkcji jechałyby do lokalnego serwera. Koszt:
+  poświadczenia EAS są PER PAKIET, więc dev build ma własny klucz, własny SHA-1 i WŁASNY
+  klient OAuth Android w Google Cloud - jego identyfikator stoi w `app/.env` (Metro)
+  i w `GOOGLE_ANDROID_CLIENT_ID` lokalnego serwera, NIGDY w `eas.json`
+- **kto ustawia `APP_VARIANT`**: `app/.env` (Metro, `expo run:android`), profil `development`
+  w `eas.json` (build) i JAWNIE `production` w profilu produkcyjnym - `eas update` eksportuje
+  na komputerze, gdzie `.env` mówi `development`, a zmienne procesu wygrywają. Pilnuje tego
+  `easProfileEnv.test.ts`. Profil `development` NIE niesie adresu serwera ani klienta
+  Google: dev client bierze JS z Metro, więc te wartości i tak idą z `app/.env`
+- **dev build to nasza binarka, ale NAZWANA**: `ownRelease` oddaje `dev: true`, a napis
+  wersji brzmi „2.0.0 (build 3) · dev" (ekran 13, zgłoszenie błędu, kolumna w panelu).
+  Wzorzec pakietu dev `nativeRelease.ts` liczy z tego samego helpera, nie
+  z `Constants.expoConfig` - manifest z Metro odzwierciedla `.env` komputera, nie binarkę
+- **Expo Go nie jest drogą testów**: nie zna pakietu, do którego Google przypina logowanie,
+  ani usługi GPS w tle. Lokalnego Android SDK w projekcie nie ma, więc `npm run build:dev`
+  (EAS) jest jedyną drogą do dev builda; procedura krok po kroku w README „Dev build aplikacji"
+- **lokalne środowisko = nowa instancja od zera** (ta sama decyzja, co §10 wielofirmowości):
+  baza `ninerdeck` w kontenerze `ninerdeck-pg`, klient Web z NOWEGO projektu Google (ten
+  sam, którym loguje się `app.ninerdeck.pl`), seed superadministratora. Komplet zmiennych
+  opisują `.env.example` obu stron; dev build nie jest wydaniem (skill `wydanie`)
+
+## Staging = przedwydaniowa kopia produkcji (issue #155, 2026-09-18)
+Wydanie niesie od 2.1.0 migracje bazy i listy wychodzące - dwie rzeczy, których nie cofa
+się zdjęciem builda, a jedyną próbą generalną była do tej pory produkcja. Runbook
+(zmienne, rozruch, sprawdziany, kopia produkcji, koszt): **`docs/staging.md`**.
+- **serwer NIE MA dla staging ani jednej gałęzi w kodzie** - całą różnicę niosą zmienne
+  (`PUBLIC_BASE_URL`, `PUBLIC_SITE_URL`, `MAIL_FROM`, `JWT_SECRET`, `SEED_ADMIN_EMAIL`).
+  Gdyby kiedyś kusiło dopisanie `if (staging)`, to jest znak, że różnica siedzi w złym
+  miejscu
+- **dwa hosty, jak na produkcji** (`stg.ninerdeck.pl` strona, `app.stg.ninerdeck.pl` panel
+  i API): przy jednym haście rozdział hostów i rozdział origin CSP (`hostSplit.ts`, #124)
+  pierwszy raz działałyby dopiero na produkcji
+- **aplikację reprezentuje DEV BUILD** (`com.ninerdeck.app.dev`), nie osobny wariant
+  `.stg`. Świadoma cena: release'owy bundle i kanał `production` startują pierwszy raz
+  na produkcji. Furtka (profil `staging` + pakiet `.stg` + rozpoznanie go w `ownRelease`)
+  jest opisana w `docs/staging.md` §7 i nie wymaga cofania niczego
+- **gałąź publikacji OTA = KANAŁ profilu z `eas.json`** (`eas-profile-env.js`), nie druga
+  stała obok: dwie wartości opisujące jedno wydanie rozjeżdżają się po cichu, a cichy
+  rozjazd tutaj znaczy aktualizację wysłaną tam, gdzie nikt jej nie czeka. Stąd jeden
+  runner na dwa kierunki - `update:prod` (profil `production`) i `update:stg` (profil
+  `development`, adres staging)
+- **wymagalność zmiennych zależy od KANAŁU**: `production` żąda adresu i klienta Google
+  (telefon pilota nie ma innej drogi logowania), `development` samego adresu - na staging
+  loguje się hasłem, a klient Google jest związany z pakietem dev i bywa go po prostu brak
+- **baza staging stoi OD ZERA** (`SEED_ADMIN_EMAIL` → klub → kod klubu → flota). Kopia
+  produkcji tylko pod migrację wymagającą realnego wolumenu i ZAWSZE ze scrubbingiem
+  adresów, inaczej staging wysyła listy prawdziwym pilotom (`docs/staging.md` §8)
+- **staging śledzi `develop`**, a na czas stabilizacji przełącza się go na
+  `ninerdeck_x_x_x` - wtedy deploy jest próbą generalną migracji. Kolejność w skillu
+  `wydanie` (krok 0b)
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
