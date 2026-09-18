@@ -77,10 +77,12 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    - `PUBLIC_SITE_URL` = `https://ninerdeck.pl` (adres strony; włącza rozdział hostów.
      Bez niej wszystko stoi pod jednym hostem; z nią serwer NIE WSTANIE, gdy brakuje
      `PUBLIC_BASE_URL` albo oba adresy wskazują ten sam host),
-   - `MAIL_PROVIDER` (od 2.1.0, WYMAGANY - bez niego serwer nie wstaje): poczta wychodząca
-     dla linków „ustaw hasło" (`docs/logowanie-haslem.md` §5.4). Do czasu adaptera dostawcy
-     (epik H-F, issue #136) jedyną wartością jest `log` - list ląduje w logu serwera, więc
-     NIE nadaje się na produkcję z pilotami; produkcja dostanie `resend` i zmienne `MAIL_*`.
+   - `MAIL_PROVIDER` = `resend` (od 2.1.0 WYMAGANY - bez niego serwer nie wstaje): poczta
+     wychodząca dla linków „ustaw hasło" (`docs/logowanie-haslem.md` §5.4). Wartość `log`
+     drukuje list do logu serwera - dobre w dev, na produkcji byłoby tokenem linku poza
+     pocztą,
+   - `MAIL_API_KEY` i `MAIL_FROM` (np. `Ninerdeck <konto@ninerdeck.pl>`) - WYMAGANE przy
+     `resend`, komplet albo serwer nie wstaje (krok 7),
    `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu i stronę serwer
    znajduje sam (ścieżki wbudowane w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
@@ -107,7 +109,29 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    **Authorized domains**, co wymaga potwierdzenia własności w Search Console (właściwość
    „Domena", rekord TXT w DNS). To był argument za własną domeną: adres wygenerowany
    przez hosting trzeba by weryfikować plikiem, a przy każdej zmianie hostingu - od nowa.
-7. **Seed konta `admin`**: dopisz `SEED_ADMIN_EMAIL` - ADRES KONTA GOOGLE administratora.
+7. **Poczta wychodząca** (Resend; issue #137) - bez niej nie działa „Nie pamiętam hasła",
+   zaproszenie pierwszego administratora klubu ani rejestracja e-mailem, a serwer 2.1.0
+   nie wstaje:
+   1. resend.com → **Domains → Add Domain** → `ninerdeck.pl` (region EU - Irlandia).
+      Resend wypisze rekordy dla poddomeny wysyłkowej (`send` - ścieżka zwrotna i SPF)
+      oraz klucz DKIM (`resend._domainkey`). Kształt bierz Z JEGO EKRANU, nie stąd:
+      dostawca przestawiał już infrastrukturę i raz podaje CNAME, raz parę MX + TXT.
+   2. W Cloudflare (DNS domeny) dodaj je **dokładnie tak, jak podaje Resend**, z ikoną
+      chmurki **DNS only** (proxy Cloudflare dotyczy HTTP i psułoby pocztę). Nazwy skracaj
+      do części przed `ninerdeck.pl` - Cloudflare dokleja domenę sam (wklejenie pełnej
+      nazwy daje `send.ninerdeck.pl.ninerdeck.pl`).
+   3. Dołóż **DMARC**: TXT `_dmarc` = `v=DMARC1; p=none; rua=mailto:<twój adres>`.
+      `p=none` na start (samo raportowanie); zaostrzenie do `quarantine` dopiero, gdy
+      raporty potwierdzą, że wysyłamy wyłącznie przez Resend.
+   4. W Resend **Verify DNS Records** (zwykle minuty, do 72 h) → **API Keys → Create**,
+      uprawnienie **Sending access**. Klucz widać RAZ - od razu do Railway.
+   5. Zmienne usługi: `MAIL_PROVIDER=resend`, `MAIL_API_KEY=re_…`,
+      `MAIL_FROM=Ninerdeck <konto@ninerdeck.pl>`.
+   6. **Próba doręczenia**: po wdrożeniu „Nie pamiętam hasła" na własny adres - list ma
+      wpaść do folderu głównego, nie do spamu. W Resend → Emails widać status doręczenia.
+   Wariant awaryjny (weryfikacja domeny się opóźnia): Resend pozwala zweryfikować sam
+   adres nadawcy - działa, ale dostarczalność jest gorsza i nie jest to stan do wydania.
+8. **Seed konta `admin`**: dopisz `SEED_ADMIN_EMAIL` - ADRES KONTA GOOGLE administratora.
    Serwer przy starcie zapewni konto `admin` BEZ hasła, a Twoje pierwsze logowanie tym
    kontem Google je PODPINA (idempotentnie: powtórny start nie zrywa podpięcia, dokłada
    najwyżej rolę admin). Baza staje **od zera** (decyzja 2026-09-05), więc poza
@@ -116,25 +140,25 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    podpina się przy jego pierwszym logowaniu bez kolejki.
    Alternatywa bez redeployu (wymaga TCP Proxy na usłudze Postgres): lokalnie
    `$env:SEED_ADMIN_EMAIL='…'; $env:DATABASE_URL='<DATABASE_PUBLIC_URL>'; npm run seed`.
-8. **Sprawdzian**: `https://app.ninerdeck.pl/health` → `{"ok":true}`; `https://ninerdeck.pl/`
+9. **Sprawdzian**: `https://app.ninerdeck.pl/health` → `{"ok":true}`; `https://ninerdeck.pl/`
    → strona (landing, `/pobierz/`, `/wydania/`, `/dokumentacja/`);
-   `https://app.ninerdeck.pl/admin/` → logowanie panelu kontem Google z kroku 7. Rozdział
+   `https://app.ninerdeck.pl/admin/` → logowanie panelu kontem Google z kroku 8. Rozdział
    hostów: `https://ninerdeck.pl/admin/` odsyła na host aplikacji, `https://app.ninerdeck.pl/`
    odsyła na `/admin/` (korzeń hosta aplikacji jest wejściem panelu),
    `https://app.ninerdeck.pl/pobierz/` odsyła na stronę, a `https://ninerdeck.pl/admin/api/me`
    odpowiada 404. Flotę i konta pilotów załóż w panelu.
-9. **Aplikacja pilota**: adres serwera i klient Google stoją w `eas.json` →
-   `build.production.env` (`EXPO_PUBLIC_API_URL=https://app.ninerdeck.pl`,
-   `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` z kroku 6; czyta je
-   `app/src/infrastructure/api/apiBaseUrl.ts`). To JEDYNE źródło tych wartości dla
-   telefonów pilotów: build czyta je sam, a `npm run update:prod` wstrzykuje je do
-   `eas update`, które pola `env` z `eas.json` nie zna (`app/scripts/eas-update.js`).
-   Lokalny `app/.env` służy wyłącznie Metro w dev i do telefonów nie trafia.
-   **Kolejne poprawki nie wymagają już builda**: od 1.1.0 aplikacja ma EAS Update, więc
-   zmiany w JS (ekrany, reguły, `packages/*`) wypuszcza się przez `npm run update:prod`
-   i docierają same przy następnym uruchomieniu. Nowy APK dopiero przy zmianie NATYWNEJ -
-   szczegóły i pułapki w `CLAUDE.md`, sekcja o aktualizacjach OTA.
-10. **Procedura awaryjna - hasło, gdy Google I poczta padły** (od 2.1.0,
+10. **Aplikacja pilota**: adres serwera i klient Google stoją w `eas.json` →
+    `build.production.env` (`EXPO_PUBLIC_API_URL=https://app.ninerdeck.pl`,
+    `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` z kroku 6; czyta je
+    `app/src/infrastructure/api/apiBaseUrl.ts`). To JEDYNE źródło tych wartości dla
+    telefonów pilotów: build czyta je sam, a `npm run update:prod` wstrzykuje je do
+    `eas update`, które pola `env` z `eas.json` nie zna (`app/scripts/eas-update.js`).
+    Lokalny `app/.env` służy wyłącznie Metro w dev i do telefonów nie trafia.
+    **Kolejne poprawki nie wymagają już builda**: od 1.1.0 aplikacja ma EAS Update, więc
+    zmiany w JS (ekrany, reguły, `packages/*`) wypuszcza się przez `npm run update:prod`
+    i docierają same przy następnym uruchomieniu. Nowy APK dopiero przy zmianie NATYWNEJ -
+    szczegóły i pułapki w `CLAUDE.md`, sekcja o aktualizacjach OTA.
+11. **Procedura awaryjna - hasło, gdy Google I poczta padły** (od 2.1.0,
     `docs/logowanie-haslem.md` §5.4, §8 pkt 12): z konsoli serwera (Railway → usługa → Shell,
     albo lokalnie z `DATABASE_URL` = `DATABASE_PUBLIC_URL` i `PUBLIC_BASE_URL`)
     `npm run seed -- --reset-link <e-mail osoby>` DRUKUJE na stdout link `/haslo/#…` ważny

@@ -65,6 +65,7 @@ import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
 import { BaseUrlPasswordLinks } from './infrastructure/auth/resetLinks.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
 import { LogMail } from './infrastructure/mail/logMail.ts';
+import { ResendMail } from './infrastructure/mail/resendMail.ts';
 import { PgPasswordCredentialsRepo } from './infrastructure/pg/common/passwordCredentialsRepo.ts';
 import { PgPasswordResetTokensRepo } from './infrastructure/pg/common/passwordResetTokensRepo.ts';
 import { AdminPasswordLinkCommands } from './application/admin/commands/passwordLinks.ts';
@@ -169,10 +170,33 @@ const env = z
     /**
      * POCZTA WYCHODZĄCA - WYMAGANA od 2.1.0 (`docs/logowanie-haslem.md` §5.4): „Nie pamiętam
      * hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie wstał.
-     * `log` drukuje list do konsoli (dev; link da się kliknąć z terminala) - adapter
-     * dostawcy (`resend`) przychodzi z epikiem H-F (issue #136).
+     * `log` drukuje list do konsoli (dev; link da się kliknąć z terminala i NIE nadaje
+     * się na produkcję), `resend` wysyła naprawdę (`infrastructure/mail/resendMail.ts`).
      */
-    MAIL_PROVIDER: z.enum(['log']),
+    MAIL_PROVIDER: z.enum(['log', 'resend']),
+    /**
+     * Klucz API dostawcy i nadawca (`Ninerdeck <konto@ninerdeck.pl>`) - WYMAGANE przy
+     * `MAIL_PROVIDER=resend`, nieczytane przy `log`. Wymóg jest WARUNKOWY, bo to samo
+     * `.env` obsługuje dev bez konta u dostawcy i produkcję, która bez tych dwóch
+     * wartości nie wyśle ani jednego linku „ustaw hasło" (zadanie właściciela #137).
+     */
+    MAIL_API_KEY: z.string().min(1).optional(),
+    MAIL_FROM: z.string().min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    // Konfiguracja POŁOWICZNA ma zatrzymać START, a nie pierwszy reset hasła o 22:00:
+    // adapter bez klucza albo bez nadawcy nie wyśle niczego, a odkryłoby się to dopiero
+    // wtedy, gdy ktoś zapomni hasła. Ta sama zasada, co przy rozdziale hostów niżej.
+    if (value.MAIL_PROVIDER !== 'resend') return;
+    for (const key of ['MAIL_API_KEY', 'MAIL_FROM'] as const) {
+      if (value[key] == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} jest wymagany przy MAIL_PROVIDER=resend`,
+        });
+      }
+    }
   })
   .parse(process.env);
 
@@ -221,7 +245,12 @@ const publicBaseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
 const passwordHasher = new ScryptHasher();
 const passwordCredentials = new PgPasswordCredentialsRepo(db);
 const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
-const mail = new LogMail();
+// Wybór adaptera poczty jest JAWNY i tylko tutaj: `log` drukuje token linku do konsoli,
+// więc nie ma prawa włączyć się sam z braku innej konfiguracji (`logMail.ts`).
+const mail =
+  env.MAIL_PROVIDER === 'resend'
+    ? new ResendMail(env.MAIL_API_KEY ?? '', env.MAIL_FROM ?? '')
+    : new LogMail();
 const passwords = new PasswordCommands(
   db,
   pilots,
