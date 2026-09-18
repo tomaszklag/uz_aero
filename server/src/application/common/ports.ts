@@ -152,6 +152,16 @@ export interface MembershipAuthSnapshot {
    * Termin bada `LoginSessionsPort.find` na ścieżce rotacji, gdzie naprawdę waży.
    */
   sessionRevoked: boolean;
+  /**
+   * SESJA, z której przyszło żądanie (claim `sid`); `null` = poświadczenie sprzed 2.1.0.
+   *
+   * Echo argumentu, a nie kolumna z wiersza - i to jest różnica istotna: gdyby brać
+   * `login_sessions.id` ze złączenia, sesja NIEZNANA dawałaby tu `null`, czyli to samo,
+   * co jej brak. Wołający potrzebują odwrotnej informacji: „to żądanie przyszło z TEJ
+   * sesji" - żeby ją ostemplować jako aktywną (§6) i żeby zmiana hasła umiała wylogować
+   * wszystkie POZA NIĄ (§5.3).
+   */
+  sessionId: string | null;
 }
 
 export interface PilotsPort {
@@ -379,6 +389,13 @@ export interface RefreshTokensPort {
    * niedoręczony refresh na kolejne 90 dni. `null` = tokenu nie ma.
    */
   sessionOf(token: string): Promise<string | null>;
+  /**
+   * Zużywa JEDEN refresh i oddaje, czyj był - wylogowanie z telefonu (`POST /auth/logout`).
+   * W cudzej transakcji, bo kasowanie tokenu i ostemplowanie sesji to jedna decyzja:
+   * refresh skasowany bez stempla zostawiłby w panelu urządzenie widoczne jako żywe,
+   * choć nie ma już czym wejść. `null` = tokenu nie ma (odpowiedź i tak `204`).
+   */
+  revoke(tx: Queryable, token: string): Promise<{ pilotId: string; sessionId: string } | null>;
   /**
    * ATOMOWA rotacja: unieważnia stary i wydaje nowy w jednej transakcji.
    * Rozdzielone consume+issue (audyt) zostawiały okno, w którym crash/zgubiona

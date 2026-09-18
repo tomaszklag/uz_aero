@@ -83,12 +83,19 @@ if (person == null) {
 // Działający: superadministrator (akcja platformowa) albo administrator klubu z REBUILD_ORG.
 const actor: AuditActor | null =
   person.platformRole != null
-    ? { pilotId: person.id, platformRole: person.platformRole, ip: null }
+    ? { pilotId: person.id, platformRole: person.platformRole, ip: null, sessionId: null }
     : await (async () => {
         if (env.REBUILD_ORG == null) return null;
         const membership = await pilots.membership(person.id, env.REBUILD_ORG);
         if (membership == null || membership.status !== 'active') return null;
-        return { pilotId: person.id, orgId: membership.orgId, role: membership.role, ip: null };
+        return {
+          pilotId: person.id,
+          orgId: membership.orgId,
+          role: membership.role,
+          ip: null,
+          // Skrypt nie ma sesji - to akcja z konsoli, nie z przeglądarki.
+          sessionId: null,
+        };
       })();
 if (actor == null) {
   console.error(

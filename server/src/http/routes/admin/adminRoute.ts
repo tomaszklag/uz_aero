@@ -35,6 +35,7 @@ import type {
 } from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
 import { authorizeOrg, authorizePlatform } from '../../authorize.ts';
+import { touchSession, type SessionActivity } from '../../sessionTouch.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /** Ścieżka API panelu. Statyczny build panelu stanie pod `/admin/*`. */
@@ -47,7 +48,7 @@ export const ADMIN_API_PREFIX = '/admin/api';
  * dwa wejścia (weryfikacja tokenu i odczyt członkostwa), a trzecie - gdyby kiedyś
  * doszło - ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
  */
-export interface AdminGate {
+export interface AdminGate extends SessionActivity {
   tokens: TokenService;
   /**
    * Członkostwa czytane PRZY KAŻDYM ŻĄDANIU panelu - patrz `authorizeOrg`. To ten sam
@@ -85,6 +86,7 @@ function actorFrom(account: MembershipAuthSnapshot, req: FastifyRequest): Actor 
     orgId: account.orgId,
     role: account.role,
     ip: req.ip ?? null,
+    sessionId: account.sessionId,
   };
 }
 
@@ -111,6 +113,7 @@ export function adminRoute(
       );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+      await touchSession(gate, req, outcome.account.sessionId);
       return handler(req, reply, actorFrom(outcome.account, req));
     },
   });
@@ -168,15 +171,19 @@ export function sessionRoute(
         );
         if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+        await touchSession(gate, req, outcome.identity.sessionId);
         return handlers.platform(req, reply, {
           pilotId: outcome.identity.pilotId,
           platformRole: outcome.platformRole,
           ip: req.ip ?? null,
+          sessionId: outcome.identity.sessionId,
         });
       }
 
       const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, 'panel.access');
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
+
+      await touchSession(gate, req, outcome.account.sessionId);
 
       return handlers.org(req, reply, actorFrom(outcome.account, req));
     },
@@ -202,10 +209,12 @@ export function platformRoute(
       );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+      await touchSession(gate, req, outcome.identity.sessionId);
       return handler(req, reply, {
         pilotId: outcome.identity.pilotId,
         platformRole: outcome.platformRole,
         ip: req.ip ?? null,
+        sessionId: outcome.identity.sessionId,
       });
     },
   });

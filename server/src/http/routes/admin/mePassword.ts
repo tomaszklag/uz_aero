@@ -19,13 +19,15 @@ async function changePassword(
   req: FastifyRequest,
   reply: FastifyReply,
   pilotId: string,
+  /** Sesja tej karty przeglądarki - JEDYNA, która przeżywa zmianę hasła (§5.3). */
+  sessionId: string | null,
 ): Promise<unknown> {
   const parsed = changePasswordBody.safeParse(req.body);
   if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
 
   return sendChangeOutcome(
     reply,
-    await passwords.change(pilotId, parsed.data.current ?? null, parsed.data.next),
+    await passwords.change(pilotId, parsed.data.current ?? null, parsed.data.next, sessionId),
   );
 }
 
@@ -35,7 +37,9 @@ export function registerAdminMePasswordRoutes(
   gate: AdminGate,
 ): void {
   sessionRoute(app, gate, { method: 'PUT', url: '/me/password' }, {
-    org: (req, reply, actor) => changePassword(passwords, req, reply, actor.pilotId),
-    platform: (req, reply, actor) => changePassword(passwords, req, reply, actor.pilotId),
+    org: (req, reply, actor) =>
+      changePassword(passwords, req, reply, actor.pilotId, actor.sessionId),
+    platform: (req, reply, actor) =>
+      changePassword(passwords, req, reply, actor.pilotId, actor.sessionId),
   });
 }

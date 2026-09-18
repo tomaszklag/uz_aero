@@ -44,6 +44,15 @@ export interface AdminPilotListItem {
   /** ISO 8601 UTC - ostatnia zmiana wiersza konta (nie: ostatnie logowanie). */
   updatedAt: string;
   /**
+   * OSTATNIA AKTYWNOŚĆ (2.1.0, issue #133) - najświeższa żywa sesja tego członka w tym
+   * klubie, ISO 8601; `null` = nie ma czynnej sesji.
+   *
+   * To nie jest „ostatnie logowanie" z punktu 3 nagłówka i nie udaje nim być: po
+   * wygaśnięciu sesji wraca `null`, bo rejestr nie trzyma historii wejść. Panel pisze
+   * z tego „ostatnio aktywny · 3 min temu", a przy `null` - kreskę.
+   */
+  lastSeenAt: string | null;
+  /**
    * Dni lotne w oknie `daysFrom`–`daysTo`: sesje ZAMKNIĘTE, w których konto było
    * PIC-em albo Dualem. Liczy serwer agregatem po projekcji `sessions`.
    */

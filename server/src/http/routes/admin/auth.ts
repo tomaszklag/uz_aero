@@ -236,7 +236,12 @@ export function registerAdminAuthRoutes(
    * klika „Wyloguj" - odbicie go 401 zostawiłoby martwe ciasteczko w przeglądarce.
    * Bramą przed wylogowaniem z cudzej strony jest nagłówek CSRF (`http/adminCsrf.ts`).
    */
-  app.post(`${ADMIN_API_PREFIX}/auth/logout`, async (_req, reply) =>
-    reply.clearCookie(ADMIN_SESSION_COOKIE, COOKIE_OPTIONS).code(204).send(),
-  );
+  app.post(`${ADMIN_API_PREFIX}/auth/logout`, async (req, reply) => {
+    // Od 2.1.0 ginie też WIERSZ sesji (§5.5) - inaczej urządzenie zostawałoby na liście
+    // „moje sesje" jako żywe, choć ciasteczka nie ma już w przeglądarce. Ciasteczko
+    // nieczytelne albo wygasłe kończy się ciszą: nie ma czego stemplować, a wyczyszczenie
+    // ciasteczka i tak musi się odbyć.
+    await auth.panelLogout(auth.identifyPanel(tokenFromRequest(req)));
+    return reply.clearCookie(ADMIN_SESSION_COOKIE, COOKIE_OPTIONS).code(204).send();
+  });
 }

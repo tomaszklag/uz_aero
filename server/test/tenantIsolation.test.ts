@@ -103,6 +103,25 @@ function day(
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 const writer = (t: string) => ({ ...bearer(t), ...ADMIN_CSRF_HEADERS });
 
+/**
+ * Żywe sesje osoby W KLUBIE - wprost z bazy, bo sondy sesji (2.1.0, issue #133) muszą
+ * porównywać się ze stanem, a nie z liczbą wpisaną w test: świat dwóch klubów zakłada
+ * PWI sesje dwiema drogami naraz (zaległy refresh z `seedRefresh` i logowanie), więc
+ * każda stała liczba rozjechałaby się przy pierwszej zmianie tamtego seeda.
+ */
+async function liveSessionIds(
+  db: Harness['db'],
+  pilotId: string,
+  orgId: string,
+): Promise<string[]> {
+  const { rows } = await db.query<{ id: string }>(
+    `SELECT id FROM login_sessions
+      WHERE pilot_id = $1 AND org_id = $2 AND revoked_at IS NULL ORDER BY id`,
+    [pilotId, orgId],
+  );
+  return rows.map((r) => r.id);
+}
+
 async function tokenOf(app: App, who: string): Promise<string> {
   const res = await app.inject({
     method: 'POST',
@@ -141,8 +160,10 @@ interface World {
   a: string;
   /** Administrator klubu B (BAD). */
   b: string;
-  /** PWI w klubie A - osoba, która ma operację także w B. */
+  /** PWI w klubie A - osoba, która ma operację i SESJĘ także w B. */
   pwiA: string;
+  /** Ta sama osoba w klubie B - do sond, w których dwie sesje jednej osoby muszą zostać osobno. */
+  pwiB: string;
   /** Flaga klubu B - identyfikator do sond „po adresie". */
   flagB: number;
   /** Flaga klubu A - kontrola pozytywna (własne dane widać). */
@@ -266,7 +287,7 @@ async function twoClubs(): Promise<World> {
   );
   await db.query(`UPDATE organizations SET join_code = 'BETAKDE', join_code_since = now() WHERE id = $1`, [ORG_B]);
 
-  return { app, db, a, b, pwiA, flagA, flagB, pendingB: 'kandydat-b' };
+  return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
 }
 
 /** Odpowiedź bez ani jednego znacznika klubu B. */
@@ -908,6 +929,71 @@ const CASES: Record<string, Probe> = {
     expect(own.body).not.toContain('haslo/#');
   },
 
+  /**
+   * Sesje CZŁONKA (2.1.0, issue #133; §5.6) - trzy trasy, jedna reguła: klub widzi
+   * i gasi WYŁĄCZNIE urządzenia zalogowane U SIEBIE.
+   *
+   * PWI jest w obu klubach i ma sesję w każdym, więc to najostrzejszy możliwy przypadek:
+   * gdyby zawężenie po klubie wypadło, administrator Alfy zobaczyłby (i wyłączył)
+   * urządzenie, którym ten sam człowiek pracuje w Becie.
+   */
+  'GET /admin/api/pilots/:id/sessions': async ({ app, db, a }) => {
+    // Kontrola pozytywna i negatywna w jednym: lista ma zawierać DOKŁADNIE żywe sesje
+    // PWI w ALFIE - ani mniej (bo wtedy nic by nie dowodziła), ani jednej z Bety.
+    const own = await app.inject({
+      method: 'GET',
+      url: '/admin/api/pilots/PWI/sessions',
+      headers: bearer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect((own.json() as Array<{ id: string }>).map((s) => s.id).sort()).toEqual(
+      await liveSessionIds(db, 'PWI', ORG_A),
+    );
+
+    // Członek TYLKO Bety jest dla Alfy nieistniejący - pusta lista, nie cudze urządzenia.
+    const foreign = await app.inject({
+      method: 'GET',
+      url: '/admin/api/pilots/BPI/sessions',
+      headers: bearer(a),
+    });
+    expect(foreign.statusCode).toBe(200);
+    expect(foreign.json()).toEqual([]);
+  },
+
+  'DELETE /admin/api/pilots/:id/sessions/:sid': async ({ app, db, a, pwiB }) => {
+    // Identyfikator sesji PWI w BECIE - administrator Alfy nie ma go skąd wziąć, ale
+    // test owszem: to jest dokładnie ten scenariusz, przed którym broni zawężenie w SQL-u.
+    const beta = await liveSessionIds(db, 'PWI', ORG_B);
+    expect(beta.length).toBeGreaterThan(0);
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/admin/api/pilots/PWI/sessions/${beta[0]!}`,
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(404);
+    // …i sesja w Becie DALEJ DZIAŁA - odmowa nie może być odmową „na papierze".
+    expect(await liveSessionIds(db, 'PWI', ORG_B)).toEqual(beta);
+    expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(pwiB) })).statusCode).toBe(200);
+  },
+
+  'POST /admin/api/pilots/:id/sessions/revoke-all': async ({ app, db, a, pwiB }) => {
+    const alfa = await liveSessionIds(db, 'PWI', ORG_A);
+    const beta = await liveSessionIds(db, 'PWI', ORG_B);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/PWI/sessions/revoke-all',
+      headers: writer(a),
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    // Zerwane WYŁĄCZNIE sesje Alfy; Beta zostaje co do jednej.
+    expect(res.json()).toEqual({ revoked: alfa.length });
+    expect(await liveSessionIds(db, 'PWI', ORG_A)).toEqual([]);
+    expect(await liveSessionIds(db, 'PWI', ORG_B)).toEqual(beta);
+    expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(pwiB) })).statusCode).toBe(200);
+  },
+
   /** Zaproszenie administratora klubu to trasa PLATFORMY - sesja klubu jej nie otwiera. */
   'POST /admin/api/organizations/:id/admins/:pilotId/invite': async ({ app, db, a }) => {
     const res = await app.inject({
@@ -1064,7 +1150,14 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'GET /admin/api/auth/google-client': 'identyfikator klienta Google - publiczny z definicji',
   'GET /admin/api/maintenance/schema': 'numer wersji schematu bazy - jeden na serwer, bez danych klubu',
   'POST /admin/api/auth/login': 'logowanie panelu - poświadczenia dostawcy',
-  'POST /admin/api/auth/logout': 'kasowanie ciasteczka, bez danych',
+  'POST /admin/api/auth/logout': 'kasowanie ciasteczka i stempel WŁASNEJ sesji, bez danych klubu',
+  // Sesje logowania (2.1.0, issue #133). WŁASNE urządzenia są pytaniem o OSOBĘ, nie
+  // o klub: człowiek w dwóch klubach ma jedną listę „gdzie jestem zalogowany", więc
+  // zawężenie po klubie byłoby tu błędem, a nie ochroną. Urządzenia CZŁONKA to co innego
+  // i mają przypadki izolacji w `CASES`.
+  'POST /auth/logout': 'wylogowanie telefonu - zużywa własny refresh, bez danych klubu',
+  'GET /admin/api/me/sessions': 'moje urządzenia we WSZYSTKICH klubach - zakres osoby, nie klubu',
+  'DELETE /admin/api/me/sessions/:sid': 'wyłączenie WŁASNEJ sesji - zakres osoby, nie klubu',
   'GET /admin': 'przekierowanie na statyczny build panelu',
   'GET /admin/*': 'statyczny build panelu - pliki, bez danych',
   'GET /*': 'strona publiczna - pliki, bez danych',

@@ -54,6 +54,7 @@ import {
 import type { AttemptLimiter } from '../attemptLimiter.ts';
 import type {
   Clock,
+  Database,
   ExternalIdentitiesPort,
   ExternalIdentity,
   IdentityProviderPort,
@@ -416,7 +417,78 @@ export class AuthCommands {
      * osoby i przez przełączenie klubu - zakłada wiersz, a `sid` jedzie w tokenie.
      */
     private readonly sessions: LoginSessionsPort,
+    /**
+     * Uchwyt do bazy - WYŁĄCZNIE dla wylogowania (§5.5): skasowanie refresha i stempel
+     * sesji to jedna decyzja i muszą wejść jedną transakcją. Reszta tej klasy pracuje
+     * portami, bo reszta pisze do jednej tabeli naraz.
+     */
+    private readonly db: Database,
   ) {}
+
+  /**
+   * Wylogowanie TELEFONU (§5.5, `POST /auth/logout`): refresh znika z bazy, a sesja
+   * dostaje stempel `self`.
+   *
+   * Do 2.1.0 telefon przy wylogowaniu NIE WOŁAŁ serwera wcale - kasował magazyn u siebie,
+   * a refresh żył po nim jeszcze 90 dni. Odtąd znika po obu stronach.
+   *
+   * Nieznany token kończy się CISZĄ, nie błędem: „wyloguj" to jedyna operacja, którą
+   * człowiek robi także wtedy, gdy jego poświadczenie jest już martwe, a odmowa
+   * zostawiałaby go zalogowanym w aplikacji, z której właśnie chciał wyjść.
+   */
+  async logout(refreshToken: string): Promise<void> {
+    const now = this.clock.now();
+    await this.db.transaction(async (tx) => {
+      const revoked = await this.refreshTokens.revoke(tx, refreshToken);
+      if (revoked == null) return;
+      await this.sessions.revoke(
+        tx,
+        { id: revoked.sessionId, pilotId: revoked.pilotId },
+        now,
+        'self',
+      );
+    });
+  }
+
+  /**
+   * „Wyloguj to urządzenie" z listy WŁASNYCH sesji (`#/konto`, §5.6).
+   *
+   * Stoi tutaj, a nie w komendach panelu, z dwóch powodów naraz: to nie jest decyzja
+   * o innym człowieku (więc nie ma audytu, a komendy panelu z definicji piszą przez
+   * `AuditedWrite`), i zakres jest OSOBY, nie klubu - „moje urządzenia" obejmują
+   * wszystkie kluby i obie powierzchnie.
+   *
+   * BIEŻĄCEJ sesji wyłączyć się nie da. Panel jej nie oferuje (kontrakt oznacza ją
+   * `current`), ale serwer nie ma prawa na to liczyć: od wylogowania siebie jest
+   * „Wyloguj" w pasku, a ta sama czynność zrobiona tędy zostawiłaby człowieka na ekranie,
+   * który po cichu przestał działać.
+   */
+  async revokeOwnSession(
+    pilotId: string,
+    sessionId: string,
+    currentSessionId: string | null,
+  ): Promise<boolean> {
+    if (sessionId === currentSessionId) return false;
+    return this.sessions.revoke(this.db, { id: sessionId, pilotId }, this.clock.now(), 'self');
+  }
+
+  /**
+   * Wylogowanie PANELU (§5.5) - ciasteczko kasuje trasa, a tu ginie wiersz sesji.
+   *
+   * Ciasteczka wygasłego albo uszkodzonego nie ma po czym rozpoznać, więc `null` jest
+   * normalnym wejściem i kończy się ciszą: trasa i tak wyczyści ciasteczko. Ta sama
+   * zasada, co przy telefonie.
+   */
+  async panelLogout(request: PanelRequest | null): Promise<void> {
+    const sessionId = request?.sessionId;
+    if (request == null || sessionId == null) return;
+    await this.sessions.revoke(
+      this.db,
+      { id: sessionId, pilotId: request.pilotId },
+      this.clock.now(),
+      'self',
+    );
+  }
 
   /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo token osoby bez klubu. */
   async loginWithProvider(idToken: string, device: SessionDevice): Promise<ProviderLoginResult> {

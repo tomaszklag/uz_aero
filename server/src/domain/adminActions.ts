@@ -134,6 +134,18 @@ export const ADMIN_ACTIONS = [
    */
   'membership.disable',
   /**
+   * WYLOGOWANIE JEDNEGO URZĄDZENIA członka (2.1.0, issue #133; §5.6).
+   *
+   * Osobny kod od `membership.disable`, bo to inna decyzja: tamta odbiera DOSTĘP DO KLUBU,
+   * ta zamyka jedną sesję, zostawiając człowieka członkiem. Pytanie, na które odpowiada
+   * w dzienniku, brzmi „kto wylogował mi telefon we wtorek", a nie „dlaczego nie wchodzę".
+   * `details` niosą kod pilota, powierzchnię i etykietę urządzenia - NIGDY identyfikatora
+   * sesji: ten jedzie w claimie tokenu, a dziennik audytu czyta więcej osób niż brama.
+   */
+  'session.revoke',
+  /** To samo dla WSZYSTKICH sesji członka w tym klubie - `details` niosą ich liczbę. */
+  'session.revoke_all',
+  /**
    * NOWY KOD KLUBU (`organizations.join_code`, wielofirmowość §3.8; issue #100, D2).
    *
    * Rotacja unieważnia poprzedni kod w tej samej chwili, więc jest decyzją o dostępie do

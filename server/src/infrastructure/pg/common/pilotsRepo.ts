@@ -233,6 +233,7 @@ export class PgPilotsRepo implements PilotsPort {
       credentialsValidFrom: at(row.credentials_valid_from),
       membershipCredentialsValidFrom: at(row.membership_credentials_valid_from),
       sessionRevoked: row.session_revoked,
+      sessionId,
     };
   }
 }

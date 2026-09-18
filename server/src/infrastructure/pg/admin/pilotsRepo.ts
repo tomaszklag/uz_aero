@@ -52,6 +52,8 @@ interface MemberDbRow {
   status: string;
   role: string;
   updated_at: string | Date;
+  /** Najświeższa ŻYWA sesja w tym klubie; `null` = żadnej (2.1.0, issue #133). */
+  last_seen_at: string | Date | null;
   /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   flying_days: string | number;
 }
@@ -93,6 +95,7 @@ const toAccount = (r: {
 const toJoin = (r: MemberDbRow): AdminPilotJoin => ({
   account: toAccount(r),
   updatedAt: new Date(r.updated_at),
+  lastSeenAt: r.last_seen_at == null ? null : new Date(r.last_seen_at),
   flyingDays: Number(r.flying_days),
 });
 
@@ -142,8 +145,15 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
 
     const limitParam = sql.bind(filter.limit);
     const { rows } = await db.query<MemberDbRow>(
+      // „Ostatnio aktywny" (2.1.0, issue #133 C9): NAJŚWIEŻSZA żywa sesja tego członka
+      // W TYM KLUBIE. Podzapytanie, nie złączenie, bo sesji bywa kilka (telefon
+      // i przeglądarka), a wiersz listy ma być jeden. `NULL` = nie ma czynnej sesji
+      // i panel pisze wtedy kreskę - „nigdy" byłoby nieprawdą, bo sesja mogła wygasnąć.
       `SELECT ${MEMBER_COLUMNS},
               GREATEST(p.updated_at, m.updated_at) AS updated_at,
+              (SELECT MAX(s.last_seen_at) FROM login_sessions s
+                WHERE s.pilot_id = p.id AND s.org_id = m.org_id AND s.revoked_at IS NULL)
+                AS last_seen_at,
               COALESCE(d.days, 0) AS flying_days
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id

@@ -538,6 +538,8 @@ describe('granice, których nie pilnuje kompilator', () => {
       // `revoke`, `revokeAll`) wyjątku nie mają i mieć nie mogą.
       'infrastructure/pg/common/refreshTokensRepo.ts#sessionOf':
         'kluczem jest skrót samego refresha - poświadczenie, nie dane klubu',
+      'infrastructure/pg/common/refreshTokensRepo.ts#revoke':
+        'wylogowanie zużywa KONKRETNY refresh po jego skrócie - kto go ma, ten go zużywa',
       'infrastructure/pg/common/loginSessionsRepo.ts#touch':
         'stempel aktywności sesji z `sid` w tokenie; sesja platformowa nie ma klubu',
       'infrastructure/pg/common/loginSessionsRepo.ts#find':

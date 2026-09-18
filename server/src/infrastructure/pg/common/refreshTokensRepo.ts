@@ -49,6 +49,18 @@ export class PgRefreshTokens implements RefreshTokensPort {
     return token;
   }
 
+  async revoke(
+    tx: Queryable,
+    token: string,
+  ): Promise<{ pilotId: string; sessionId: string } | null> {
+    const { rows } = await tx.query<{ pilot_id: string; session_id: string }>(
+      'DELETE FROM refresh_tokens WHERE token_hash = $1 RETURNING pilot_id, session_id',
+      [hashToken(token)],
+    );
+    const row = rows[0];
+    return row == null ? null : { pilotId: row.pilot_id, sessionId: row.session_id };
+  }
+
   async sessionOf(token: string): Promise<string | null> {
     const { rows } = await this.db.query<{ session_id: string }>(
       'SELECT session_id FROM refresh_tokens WHERE token_hash = $1',

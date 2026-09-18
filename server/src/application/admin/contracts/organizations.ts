@@ -68,6 +68,15 @@ export interface AdminOrganizationAdmin {
   /** Kod pilota W TYM klubie - z członkostwa, nie z osoby. */
   code: string;
   signedIn: boolean;
+  /**
+   * OSTATNIA AKTYWNOŚĆ (2.1.0, issue #133 C9), ISO 8601; `null` = nie ma czynnej sesji.
+   *
+   * Razem z `signedIn` daje trzy stany zamiast dwóch i dopiero komplet mówi
+   * superadministratorowi, czy jest co robić: „nie zalogował się" (przypomnieć się),
+   * „ostatnio aktywny wczoraj" (klub żyje) i „wszedł kiedyś, ale dziś nigdzie go nie ma"
+   * (`signedIn` z pustą aktywnością).
+   */
+  lastSeenAt: string | null;
 }
 
 /**

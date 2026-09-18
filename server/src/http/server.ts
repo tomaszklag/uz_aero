@@ -34,6 +34,8 @@ import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminClubCodeQueries } from '../application/admin/queries/clubCode.ts';
+import type { AdminLoginSessionQueries } from '../application/admin/queries/loginSessions.ts';
+import type { AdminLoginSessionCommands } from '../application/admin/commands/loginSessions.ts';
 import type { AdminMembershipQueries } from '../application/admin/queries/memberships.ts';
 import type { PlatformOrganizationQueries } from '../application/admin/queries/organizations.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
@@ -58,7 +60,9 @@ import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSu
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { TraceCommands } from '../application/mobile/commands/traces.ts';
+import type { LastSeenThrottle } from '../application/common/lastSeenThrottle.ts';
 import type {
+  Clock,
   LoginSessionsPort,
   PilotsPort,
   TokenService,
@@ -85,6 +89,7 @@ import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
 import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminClubCodeRoutes } from './routes/admin/clubCode.ts';
+import { registerAdminLoginSessionRoutes } from './routes/admin/loginSessions.ts';
 import { registerAdminMembershipRoutes } from './routes/admin/memberships.ts';
 import { registerPlatformOrganizationRoutes } from './routes/admin/organizations.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
@@ -219,6 +224,9 @@ export interface ServerDeps {
   adminMembershipQueries: AdminMembershipQueries;
   /** Kod klubu do odczytu: wartość, od kiedy obowiązuje, ile zgłoszeń nim czeka. */
   adminClubCodeQueries: AdminClubCodeQueries;
+  /** Sesje logowania w panelu (2.1.0, issue #133): moje urządzenia i urządzenia członka. */
+  adminLoginSessionQueries: AdminLoginSessionQueries;
+  adminLoginSessions: AdminLoginSessionCommands;
   /** Lista klubów i karta klubu dla superadministratora - same liczby z wnętrza klubu. */
   platformOrganizationQueries: PlatformOrganizationQueries;
   adminFleetQueries: AdminFleetQueries;
@@ -282,6 +290,14 @@ export interface ServerDeps {
   passwords: PasswordCommands;
   /** Sesje logowania (2.1.0, issue #133) - brama platformowa i trasy sesji panelu. */
   loginSessions: LoginSessionsPort;
+  /**
+   * Przepustnica stempla „ostatnio aktywny" - JEDEN egzemplarz na proces, wspólny dla
+   * bramy telefonu i panelu: dwie kopie liczyłyby własne okna i zapisywałyby dwa razy
+   * częściej, niż mówi reguła (§6).
+   */
+  lastSeen: LastSeenThrottle;
+  /** Zegar bramy - stempel aktywności idzie z zegara APLIKACJI, jak reszta znaczników. */
+  clock: Clock;
   /**
    * Link „ustaw hasło" wysyłany Z PANELU: członkowi klubu (`accounts.manage`) i pierwszemu
    * administratorowi klubu z platformy (`platform.manage`) - z wpisem audytu.
@@ -416,7 +432,13 @@ export async function buildServer(
   // Trasy TELEFONU - jedna brama (`memberFromRequest`): token klubu I aktywne członkostwo
   // czytane przy każdym żądaniu, jak w panelu (epik C wielofirmowości, issue #99).
   // Ten sam `pilots`, co brama panelu niżej - to ci sami ludzie i ta sama tabela.
-  const memberGate: MemberGate = { tokens: deps.tokens, accounts: deps.pilots };
+  const memberGate: MemberGate = {
+    tokens: deps.tokens,
+    accounts: deps.pilots,
+    sessions: deps.loginSessions,
+    lastSeen: deps.lastSeen,
+    clock: deps.clock,
+  };
 
   registerReferenceRoutes(app, deps.reference, memberGate);
   registerEventsRoutes(app, deps.ingest, deps.myEvents, memberGate);
@@ -435,7 +457,13 @@ export async function buildServer(
   // konta czyta `pilots` przy każdym żądaniu (`http/authorize.ts`). Gdyby któraś trasa
   // dostała samo `tokens`, deaktywacja działałaby na niej dopiero po 8 godzinach -
   // i nikt by tego nie zauważył, bo wyglądałoby to jak działający panel.
-  const gate: AdminGate = { tokens: deps.tokens, accounts: deps.pilots, sessions: deps.loginSessions };
+  const gate: AdminGate = {
+    tokens: deps.tokens,
+    accounts: deps.pilots,
+    sessions: deps.loginSessions,
+    lastSeen: deps.lastSeen,
+    clock: deps.clock,
+  };
 
   registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
@@ -450,6 +478,13 @@ export async function buildServer(
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, deps.adminPasswordLinks, gate);
   registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
   registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
+  registerAdminLoginSessionRoutes(
+    app,
+    deps.adminLoginSessionQueries,
+    deps.adminLoginSessions,
+    deps.auth,
+    gate,
+  );
   // Moduł PLATFORMY - `platformRoute` z inną bramą i innym działającym (bez klubu).
   registerPlatformOrganizationRoutes(
     app,

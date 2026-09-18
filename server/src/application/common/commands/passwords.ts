@@ -50,6 +50,7 @@ import type {
   Clock,
   Database,
   IssuedResetToken,
+  LoginSessionsPort,
   MailPort,
   PasswordCredentialsPort,
   PasswordHasher,
@@ -120,6 +121,13 @@ export class PasswordCommands {
     private readonly clock: Clock,
     /** Identyfikator NOWEJ osoby z rejestracji e-mailem. */
     private readonly newId: () => string,
+    /**
+     * Sesje logowania (2.1.0, issue #133) - domykają obietnicę §5.3 i §5.4: reset zrywa
+     * WSZYSTKIE sesje osoby, a zmiana hasła wszystkie POZA BIEŻĄCĄ. Do 2.1.0 ginęły tu
+     * wyłącznie refreshe telefonu, więc sesja panelu, w której ktoś obcy siedział,
+     * przeżywała zmianę hasła o osiem godzin.
+     */
+    private readonly sessions: LoginSessionsPort,
   ) {}
 
   /**
@@ -198,8 +206,11 @@ export class PasswordCommands {
 
       await this.credentials.upsert(tx, { pilotId, hash, setVia: 'link', at: now });
       // Reset zakłada, że stare hasło mogło wyciec: WSZYSTKIE sesje osoby giną - refreshe
-      // telefonu z tabeli, sesje panelu i token osoby przez stempel unieważnienia.
+      // telefonu z tabeli, wiersze sesji obu powierzchni i token osoby przez stempel
+      // unieważnienia. `system`, bo za tym unieważnieniem nie stoi czyjeś kliknięcie
+      // w konkretną sesję, tylko skutek uboczny innej decyzji.
       await this.refreshTokens.revokeAllOf(tx, pilotId);
+      await this.sessions.revokeAll(tx, { pilotId }, now, 'system');
       await this.pilots.revokeCredentials(tx, pilotId, now);
       return true;
     });
@@ -210,7 +221,18 @@ export class PasswordCommands {
    * Ustawienie albo zmiana hasła przez zalogowanego (13B, `#/konto`). `current` jest
    * wymagane WYŁĄCZNIE, gdy hasło już jest - osoba z Googlem ustawia pierwsze bez niego.
    */
-  async change(pilotId: string, current: string | null, next: string): Promise<ChangePasswordOutcome> {
+  async change(
+    pilotId: string,
+    current: string | null,
+    next: string,
+    /**
+     * Sesja, z której przyszło żądanie - JEDYNA, która ma przeżyć (§5.3). `null` =
+     * poświadczenie sprzed 2.1.0: wtedy giną wszystkie, łącznie z bieżącą, i to jest
+     * właściwy wybór - lepiej kazać się zalogować raz, niż zostawić żywą sesję, której
+     * nie da się nazwać.
+     */
+    currentSessionId: string | null,
+  ): Promise<ChangePasswordOutcome> {
     const account = await this.pilots.findById(pilotId);
     if (account == null) return { ok: false, reason: 'invalid_credentials' };
     if (account.email == null) return { ok: false, reason: 'email_required' };
@@ -231,9 +253,15 @@ export class PasswordCommands {
 
     const now = this.clock.now();
     const hash = await this.hasher.hash(next);
-    await this.db.transaction((tx) => this.credentials.upsert(tx, { pilotId, hash, setVia: 'self', at: now }));
-    // Hak H-C (issue #133): tu wejdzie unieważnienie pozostałych sesji osoby poza bieżącą
-    // (`login_sessions` + `sid` z żądania). Bez `sid` nie ma jak odróżnić bieżącej.
+    // Zmiana hasła wylogowuje POZOSTAŁE urządzenia, nie to, przy którym człowiek siedzi
+    // (§5.3) - inaczej „zmień hasło" kończyłoby się ekranem logowania i wyglądało jak
+    // błąd. Refreshy nie kasujemy hurtem z tego samego powodu: telefon, z którego padła
+    // zmiana, ma pracować dalej; pozostałe odbije brama po `sid`, a ich refresh -
+    // `/auth/refresh`, który sprawdza sesję przed rotacją.
+    await this.db.transaction(async (tx) => {
+      await this.credentials.upsert(tx, { pilotId, hash, setVia: 'self', at: now });
+      await this.sessions.revokeAll(tx, { pilotId, exceptId: currentSessionId ?? undefined }, now, 'system');
+    });
     return { ok: true };
   }
 

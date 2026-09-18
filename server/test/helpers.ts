@@ -50,6 +50,8 @@ import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminClubCodeQueries } from '../src/application/admin/queries/clubCode.ts';
+import { AdminLoginSessionQueries } from '../src/application/admin/queries/loginSessions.ts';
+import { AdminLoginSessionCommands } from '../src/application/admin/commands/loginSessions.ts';
 import { AdminMembershipQueries } from '../src/application/admin/queries/memberships.ts';
 import { PlatformOrganizationQueries } from '../src/application/admin/queries/organizations.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
@@ -111,6 +113,7 @@ import { PgExternalIdentitiesRepo } from '../src/infrastructure/pg/common/extern
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
+import { LastSeenThrottle } from '../src/application/common/lastSeenThrottle.ts';
 import { PgMyEventsRepo } from '../src/infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from '../src/infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -254,6 +257,8 @@ export async function testHarness(
   const identityProvider = new TestIdentityProvider();
   const refreshTokens = new PgRefreshTokens(db, clock);
 const loginSessions = new PgLoginSessions(db, clock);
+// Przepustnica stempla „ostatnio aktywny" - JEDEN egzemplarz, wspólny dla obu bram.
+const lastSeen = new LastSeenThrottle();
 
   // Hasło (2.1.0): PRAWDZIWY scrypt na tanich parametrach (ln=10 - ten sam kod, kilkaset
   // razy mniej pracy), prawdziwe adaptery tokenów i poświadczeń, licznik prób na sterowanym
@@ -275,6 +280,7 @@ const loginSessions = new PgLoginSessions(db, clock);
     passwordLimiter,
     clock,
     randomUUID,
+    loginSessions,
   );
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
@@ -351,9 +357,12 @@ const loginSessions = new PgLoginSessions(db, clock);
       randomUUID,
       { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
       loginSessions,
+      db,
     ),
     passwords,
     loginSessions,
+    lastSeen,
+    clock,
     adminPasswordLinks: new AdminPasswordLinkCommands(
       auditedWrite,
       adminPilotsRepo,
@@ -424,6 +433,7 @@ const loginSessions = new PgLoginSessions(db, clock);
       auditedWrite,
       adminPilotsRepo,
       new PgAdminRefreshTokensRepo(),
+      loginSessions,
       randomUUID,
       clock,
     ),
@@ -435,6 +445,13 @@ const loginSessions = new PgLoginSessions(db, clock);
       auditedWrite,
       clubCodeRepo,
       options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    adminLoginSessionQueries: new AdminLoginSessionQueries(db, loginSessions),
+    adminLoginSessions: new AdminLoginSessionCommands(
+      auditedWrite,
+      adminPilotsRepo,
+      loginSessions,
       clock,
     ),
     adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),

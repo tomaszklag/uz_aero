@@ -27,6 +27,8 @@ import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
 import { AdminClubCodeQueries } from './application/admin/queries/clubCode.ts';
+import { AdminLoginSessionQueries } from './application/admin/queries/loginSessions.ts';
+import { AdminLoginSessionCommands } from './application/admin/commands/loginSessions.ts';
 import { AdminMembershipQueries } from './application/admin/queries/memberships.ts';
 import { PlatformOrganizationQueries } from './application/admin/queries/organizations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
@@ -102,6 +104,7 @@ import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIde
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgLoginSessions } from './infrastructure/pg/common/loginSessionsRepo.ts';
+import { LastSeenThrottle } from './application/common/lastSeenThrottle.ts';
 import { PgMyEventsRepo } from './infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from './infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -215,6 +218,8 @@ const pilots = new PgPilotsRepo(db);
 const identities = new PgExternalIdentitiesRepo(db);
 const refreshTokens = new PgRefreshTokens(db, clock);
 const loginSessions = new PgLoginSessions(db, clock);
+// Przepustnica stempla „ostatnio aktywny" - JEDEN egzemplarz, wspólny dla obu bram.
+const lastSeen = new LastSeenThrottle();
 
 // Hasło jako DRUGA metoda logowania (2.1.0, issue #132). Jeden licznik prób dla logowania,
 // zmiany hasła i wysyłki linku - klucze rozróżnia przedrostek; jeden skrót (scrypt N=2¹⁷)
@@ -236,6 +241,7 @@ const passwords = new PasswordCommands(
   passwordLimiter,
   clock,
   randomUUID,
+  loginSessions,
 );
 
 // Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
@@ -328,9 +334,12 @@ const app = await buildServer({
     randomUUID,
     { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
     loginSessions,
+    db,
   ),
   passwords,
   loginSessions,
+  lastSeen,
+  clock,
   // Link „ustaw hasło" z panelu - ta sama brama audytu, te same adaptery członków
   // i klubów, co reszta panelu, plus wspólna komenda hasła (jeden list, jeden token).
   adminPasswordLinks: new AdminPasswordLinkCommands(
@@ -406,6 +415,7 @@ const app = await buildServer({
     auditedWrite,
     adminPilotsRepo,
     new PgAdminRefreshTokensRepo(),
+    loginSessions,
     randomUUID,
     clock,
   ),
@@ -417,6 +427,13 @@ const app = await buildServer({
   // Kod klubu: `randomBytes` jako funkcja, nie port - losowość nie jest domeną, a kod
   // musi być nieprzewidywalny, bo wisi w hangarze przez cały sezon.
   adminClubCode: new AdminClubCodeCommands(auditedWrite, clubCodeRepo, randomBytes, clock),
+  adminLoginSessionQueries: new AdminLoginSessionQueries(db, loginSessions),
+  adminLoginSessions: new AdminLoginSessionCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    loginSessions,
+    clock,
+  ),
   adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
   // Moduł Organizacje - jedyna komenda panelu działająca POZA klubem (`PlatformActor`,
   // wpis audytu z pustym `org_id`). Zakłada klub razem z pierwszym administratorem,

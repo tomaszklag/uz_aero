@@ -250,7 +250,9 @@ describe('brama uprawnień tras panelu klubu', () => {
       'pilotId',
       'role',
       // 2.1.0: brama sprawdza też SESJĘ z claimu `sid` - tym samym zapytaniem, co
-      // członkostwo, więc pole jedzie tą samą projekcją.
+      // członkostwo, więc oba pola jadą tą samą projekcją. `sessionId` wraca echem
+      // argumentu: z niego bierze się stempel aktywności i `Actor.sessionId`.
+      'sessionId',
       'sessionRevoked',
     ]);
     expect(outcome.account.orgId).toBe(ORG_A);

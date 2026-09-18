@@ -105,4 +105,21 @@ export function registerAuthRoutes(app: FastifyInstance, auth: AuthCommands): vo
     if (!result.ok) return reply.code(401).send({ error: result.reason });
     return reply.send(result.tokens);
   });
+
+  /**
+   * Wylogowanie telefonu (2.1.0, §5.5). Do tej wersji telefon NIE WOŁAŁ serwera wcale -
+   * czyścił magazyn u siebie, a refresh żył po nim jeszcze 90 dni.
+   *
+   * `204` ZAWSZE, także dla tokenu nieznanego: „wyloguj" człowiek klika również wtedy,
+   * gdy jego poświadczenie jest już martwe, a odmowa zostawiłaby go w aplikacji, z której
+   * właśnie chciał wyjść. Trasa nie ma bramy z tego samego powodu - sam refresh jest tu
+   * dowodem, a wygasła sesja to stan, w którym ta operacja jest najbardziej potrzebna.
+   */
+  app.post('/auth/logout', async (req, reply) => {
+    const parsed = refreshBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    await auth.logout(parsed.data.refreshToken);
+    return reply.code(204).send();
+  });
 }

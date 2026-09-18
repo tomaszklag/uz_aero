@@ -29,6 +29,7 @@ import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
+import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, TEST_PILOTS, TEST_PILOTS_B } from './testWorld.ts';
@@ -164,13 +165,22 @@ function pilotCommands(
     new AuditedWrite(db, new PgAdminAuditRepo(), harness.clock),
     repo,
     new PgAdminRefreshTokensRepo(),
+    new PgLoginSessions(harness.db, harness.clock),
     randomUUID,
     harness.clock,
   );
 }
 
 /** `Actor` administratora - komenda pyta o `pilotId`, resztę dokłada dziennik audytu. */
-const actor = (pilotId: string) => ({ pilotId, orgId: ORG_A, role: 'admin' as const, ip: null });
+// `sessionId: null` - te przypadki wołają komendę WPROST, z pominięciem warstwy HTTP,
+// więc sesji nie ma skąd wziąć; zachowują się jak poświadczenie sprzed 2.1.0.
+const actor = (pilotId: string) => ({
+  pilotId,
+  orgId: ORG_A,
+  role: 'admin' as const,
+  ip: null,
+  sessionId: null,
+});
 
 /** Osoby w świecie bazowym (oba kluby) - „nic nie powstało" mierzy się wobec tej liczby. */
 const WORLD_PERSONS = TEST_PILOTS.length + TEST_PILOTS_B.length;
@@ -229,6 +239,9 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         'email',
         'flyingDays',
         'id',
+        // „Ostatnio aktywny" (2.1.0, issue #133): najświeższa żywa sesja w tym klubie.
+        // Nie jest poświadczeniem i nie daje się nim podszyć - to sam znacznik czasu.
+        'lastSeenAt',
         'name',
         'orgId',
         'role',
