@@ -23,6 +23,8 @@ const IDLE: SyncOutcome = { kind: 'idle' };
 const OFFLINE: SyncOutcome = { kind: 'offline' };
 const REJECTED: SyncOutcome = { kind: 'rejected', code: 'bad_payload' };
 const EXPIRED: SyncOutcome = { kind: 'auth_expired' };
+/** Sesja zerwana ZDALNIE (2.1.0, D7) - ten sam stan chipa, inne zdanie. */
+const REVOKED: SyncOutcome = { kind: 'auth_revoked' };
 
 describe('syncIndicator - stan wskaźnika', () => {
   it('serwer odmówił przy działającej sieci: blocked, NIE offline', () => {
@@ -30,6 +32,7 @@ describe('syncIndicator - stan wskaźnika', () => {
     // „offline" wysyłało pilota po zasięg, którego mu nie brakowało.
     expect(syncIndicator(2, REJECTED)).toBe('blocked');
     expect(syncIndicator(2, EXPIRED)).toBe('blocked');
+    expect(syncIndicator(2, REVOKED)).toBe('blocked');
   });
 
   it('ostatnia próba nie znalazła serwera: offline', () => {
@@ -89,6 +92,16 @@ describe('syncReport - baner arkusza', () => {
     expect(r.text).not.toContain('administrator');
   });
 
+  it('sesja ZAKOŃCZONA PRZEZ ADMINISTRATORA nazywa decyzję, a nie awarię', () => {
+    // Droga wyjścia jest ta sama, co przy wygaśnięciu, ale POWÓD inny - a pilot,
+    // który czyta „wygasła", szuka usterki tam, gdzie jej nie ma.
+    const r = syncReport('blocked', 1, REVOKED);
+    expect(r.text).toContain('zakończona przez administratora');
+    expect(r.text).toContain('Zaloguj się ponownie');
+    expect(r.text).toContain('bezpieczne w telefonie');
+    expect(r.text).not.toContain('wygasła');
+  });
+
   it('stan zablokowany uspokaja o ZAPISACH - one są całe', () => {
     // Kolejka stoi, ale rejestr na telefonie jest kompletny (§4.1). Bez tego zdania
     // czerwony baner czyta się jak utrata danych.
@@ -137,6 +150,7 @@ describe('attemptStamp - dowód, że ponowienie się odbyło', () => {
   it('każdy wynik ma własne słowo - cisza nie może znaczyć dwóch rzeczy', () => {
     expect(attemptStamp(REJECTED, AT)?.value).toBe('17:42 UTC - odrzucone');
     expect(attemptStamp(EXPIRED, AT)?.value).toBe('17:42 UTC - sesja wygasła');
+    expect(attemptStamp(REVOKED, AT)?.value).toBe('17:42 UTC - sesja zakończona');
     expect(attemptStamp(SYNCED, AT)?.value).toBe('17:42 UTC - wysłano 3');
     expect(attemptStamp(IDLE, AT)?.value).toBe('17:42 UTC - nie było czego wysłać');
   });

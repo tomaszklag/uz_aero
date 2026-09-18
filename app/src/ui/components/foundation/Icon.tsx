@@ -66,6 +66,30 @@ const REGISTRY = {
    */
   help: f('help-circle'),
   peek: f('eye'), // podgląd read-only cudzego samolotu (04B)
+  /**
+   * Przełącznik „pokaż hasło" (2.1.0, 00F i 13B). Ten sam GLIF, co `peek`, ale inne
+   * ZNACZENIE - a rejestr jest znaczeniowy, więc ekran ma mówić, o co mu chodzi.
+   *
+   * Dwie nazwy, bo IKONA POKAZUJE SKUTEK TAPNIĘCIA, nie stan (reguła przełącznika
+   * jasności z issue #82): przy zakrytym haśle stoi oko („pokaż"), przy odkrytym -
+   * oko przekreślone („ukryj"). Stan i tak widać, bo są nim same kropki w polu.
+   */
+  'password-show': f('eye'),
+  'password-hide': f('eye-off'),
+  /**
+   * KLUB (aeroklub) - pigułka kontekstu na 00F i karty wyboru na 00I. Feather `home`,
+   * dokładnie ta ścieżka, którą wklejają obie makiety: klub jest dla pilota HANGAREM,
+   * do którego wraca, a nie abstrakcyjną „organizacją".
+   */
+  club: f('home'),
+  /** Link „ustaw hasło" wysyłany e-mailem - karta instrukcji na 00G. */
+  link: f('link-2'),
+  /** Adres, na który poszedł list - karta potwierdzenia na 00G i 00H. */
+  mail: f('mail'),
+  /** Rejestracja e-mailem (00H) - ta sama sylwetka co `crew`, z plusem. */
+  signup: f('user-plus'),
+  /** Rzecz się UDAŁA (potwierdzenie wysyłki listu), inaczej niż `check` = „wybrane". */
+  done: f('check-circle'),
   // Przejęcie samolotu (`.takeover-btn` z 04B) - strzałki rozchodzące się na zewnątrz.
   // To dokładnie ten kształt, który mockup wkleja jako SVG (Feather `maximize-2`):
   // ruch „na zewnątrz podglądu", a nie kolejna strzałka w prawo, która myliłaby się

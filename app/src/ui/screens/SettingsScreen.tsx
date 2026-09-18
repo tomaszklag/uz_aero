@@ -52,6 +52,7 @@ import {
   JoinClubSheet,
   KeyValueRow,
   OutboxGuard,
+  PasswordSheet,
   PinChangeSheet,
   ProfileChip,
   Screen,
@@ -68,6 +69,7 @@ import { versionRowValue } from './logic/appVersion';
 import { fixAge } from './logic/gpsLoss';
 import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
 import { clubCards, clubSwitchBlock, showsClubSection } from './logic/clubSwitch';
+import { passwordBlock, passwordRow } from './logic/passwordForm';
 import { holdsAircraft } from '../navigation/resumeTarget';
 
 export function SettingsScreen({
@@ -99,6 +101,20 @@ export function SettingsScreen({
 
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
+
+  // ── sekcja „Hasło" (2.1.0, 13B) ───────────────────────────────────────────
+  // Obecność hasła przychodzi z serwera (`GET /me/account`), bo tylko on ją zna;
+  // `null` = jeszcze nie wiemy, i wtedy wiersz stoi w stanie neutralnym.
+  const account = useAuthStore((s) => s.account);
+  const loadAccount = useAuthStore((s) => s.loadAccount);
+  const setPassword = useAuthStore((s) => s.setPassword);
+  const revoked = useAuthStore((s) => s.revoked);
+  const [pwSheet, setPwSheet] = useState(false);
+  const [pwChanged, setPwChanged] = useState(false);
+
+  useEffect(() => {
+    void loadAccount();
+  }, [loadAccount]);
 
   // ── sekcja „Klub" (13A) ───────────────────────────────────────────────────
   const [joinSheet, setJoinSheet] = useState(false);
@@ -156,6 +172,13 @@ export function SettingsScreen({
   // Powód, dla którego przełączenie jest teraz zablokowane - stoi PRZY karcie klubu,
   // bo tam pilot go napotyka (issue #55).
   const switchBlock = clubSwitchBlock(pendingHere, offline, holdsAircraft(projection));
+
+  // Wiersz sekcji „Hasło": JEDEN wiersz, dwa napisy. Dopóki serwer nie odpowiedział,
+  // stoi stan neutralny („Ustaw hasło") - jedyna odpowiedź, która nie kłamie o żadnym
+  // z dwóch przypadków, bo nie obiecuje pola „Obecne" ani nie zapowiada nadpisania.
+  const hasPassword = account?.hasPassword === true;
+  const passwordBlocked = passwordBlock(revoked, !offline);
+  const passwordRowView = passwordRow(hasPassword, passwordBlocked);
 
   // ── diagnostyka GPS: żywa subskrypcja na czas otwarcia ekranu ─────────────
   const [fix, setFix] = useState<GpsFix | null>(null);
@@ -412,6 +435,37 @@ export function SettingsScreen({
           )}
         </Card>
 
+        {/* ══ HASŁO (2.1.0, §5.3, §7.1) - OSOBNA sekcja, nie wiersz w „Bezpieczeństwie" ══
+            HASŁO NIE ZASTĘPUJE PIN-U: PIN otwiera aplikację na TYM telefonie, offline,
+            każdego dnia; hasło loguje TĘ SAMĄ osobę na INNYM urządzeniu - wspólnym
+            tablecie w samolocie (00F). Dwie rzeczy o różnym zasięgu, więc dwie sekcje.
+
+            WYMAGA SIECI (hasło sprawdza i zapisuje serwer) - to druga akcja w tych
+            ustawieniach obok wylogowania, która nie działa offline. Wygaszenie NIE jest
+            zakazanym „wyszarzonym przyciskiem" (10B): akcja jest dozwolona i zadziała,
+            tylko nie teraz - a powód stoi W WIERSZU. */}
+        <Card title="Hasło" header="inline">
+          <SettingsAction
+            icon="lock"
+            name={passwordRowView.name}
+            sub={passwordRowView.sub}
+            disabled={passwordBlocked != null}
+            onPress={() => {
+              setPwChanged(false);
+              setPwSheet(true);
+            }}
+          />
+          {pwChanged && (
+            <Banner
+              kind="status"
+              tone="green"
+              icon="check"
+              title={hasPassword ? 'Hasło zmienione' : 'Hasło ustawione'}
+              text="Możesz się nim zalogować na wspólnym tablecie w samolocie."
+            />
+          )}
+        </Card>
+
         {/* ── konto (§3.0: ochrona wylogowania) ─────────────────────────────── */}
         <Card title="Konto" header="inline">
           {pilot != null && (
@@ -422,6 +476,19 @@ export function SettingsScreen({
               // kod należy do klubu, więc przy dwóch trzeba wiedzieć, którego dotyczy.
               club={memberships.length > 1 ? (org?.name ?? null) : null}
               style={styles.profile}
+            />
+          )}
+          {/* SESJA ZAKOŃCZONA ZDALNIE (2.1.0, D7) - baner typu „Status": niezamykalny,
+              bo to przyrząd, nie wyjaśnienie. Zdanie mówi o LOSIE ZAPISÓW, bo to jedyne,
+              o co pilot naprawdę się tu boi: nic z telefonu nie zniknęło, PIN dalej
+              otwiera, a zaległości wyjdą po ponownym zalogowaniu TEJ SAMEJ osoby. */}
+          {revoked && (
+            <Banner
+              kind="status"
+              tone="amber"
+              icon="warning"
+              title="Sesja zakończona przez administratora"
+              text="Zapisy zostają na telefonie i wyjdą po ponownym zalogowaniu tej samej osoby."
             />
           )}
           <SettingsAction
@@ -439,7 +506,10 @@ export function SettingsScreen({
           {logoutError != null && (
             <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
           )}
-          <SectionNote text="Ponowne logowanie wymaga internetu - konta zakłada administrator." />
+          {/* PRZYPIS „konta zakłada administrator" USUNIĘTY (2.1.0): od rejestracji
+              e-mailem (00H) jest po prostu NIEPRAWDZIWY - osoba bez Google zakłada konto
+              sama, a do klubu i tak wchodzi kodem z decyzją administratora. Powód, dla
+              którego wylogowanie jest decyzją, niesie podpis wiersza wyżej. */}
         </Card>
       </View>
 
@@ -461,6 +531,22 @@ export function SettingsScreen({
           setPinChanged(true);
         }}
         onCancel={() => setPinSheet(false)}
+      />
+
+      {/* ── arkusz 13B: ustawienie albo zmiana hasła (WYMAGA SIECI) ──────────── */}
+      <PasswordSheet
+        visible={pwSheet}
+        hasPassword={hasPassword}
+        identity={{ email: account?.email ?? null, name: pilot?.name ?? '' }}
+        save={(current, next) => setPassword(current, next)}
+        onDone={() => {
+          setPwSheet(false);
+          setPwChanged(true);
+          // Wiersz musi przestać mówić „Ustaw hasło" - i dowiaduje się o tym od serwera,
+          // a nie z założenia, że zapis się udał. Jedno źródło prawdy o metodach.
+          void loadAccount();
+        }}
+        onCancel={() => setPwSheet(false)}
       />
     </Screen>
   );

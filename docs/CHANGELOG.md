@@ -43,11 +43,18 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **„Moje konto" w panelu** - pod nazwiskiem w pasku górnym. Można tam ustawić albo zmienić hasło i zobaczyć, na jakich urządzeniach jest się zalogowanym; każde da się wylogować osobno. Zmiana hasła wylogowuje pozostałe urządzenia, a okno, w którym się ją robi, zostaje.
 - **Karta pilota pokazuje jego urządzenia i pozwala je wylogować** - pojedynczo albo wszystkie w tym klubie naraz. Widać przy niej, czym ten pilot się loguje i kiedy był ostatnio aktywny. **Zdalne wylogowanie nie kasuje danych z telefonu**: urządzenie przestaje wysyłać, a niewysłane zapisy czekają na nim do ponownego zalogowania.
 - **Hasło pilota ustawia wyłącznie on sam.** Administrator klubu wysyła mu ten sam list, który pilot wysłałby sobie przez „Nie pamiętam hasła" - panel nie pokazuje ani linku, ani kodu nikomu, także administratorowi.
+- **Do aplikacji można wejść hasłem - dla wspólnego tabletu w samolocie.** Loguje się kodem pilota albo adresem e-mail, a tablet pamięta kluby, z których go używano, więc następny pilot wpisuje same swoje trzy litery. Po wylogowaniu aplikacja od razu staje na formularzu hasła, bez dodatkowego tapnięcia. Na własnym telefonie Google zostaje pierwszą drogą, a hasło - drugim przyciskiem pod nim.
+- **Hasło do aplikacji ustawia się w ustawieniach**, w nowej sekcji między PIN-em a kontem. Hasło nie zastępuje PIN-u: PIN otwiera ten telefon offline każdego dnia, hasło loguje tę samą osobę na cudzym urządzeniu.
+- **Zapomniane hasło i zakładanie konta działają też z aplikacji.** Jedno i drugie kończy się linkiem wysłanym na adres - hasło ustawia się na stronie, na dowolnym urządzeniu. Konto założone tą drogą nie omija klubu: po zalogowaniu pilot trafia na pole kodu klubu, jak każdy inny.
+- **Tablet z kilkoma klubami pozwala wybrać, w którym szukać kodu pilota** - osobnym ekranem z listą klubów, których na nim używano. Przy jednym klubie nie ma ani wyboru, ani wzmianki o nim.
+- **Zdalne wylogowanie nie zabiera pilotowi dnia.** Telefon przestaje wysyłać i mówi o tym wprost - na ekranie PIN-u i w ustawieniach - ale PIN dalej otwiera aplikację, a zapisy czekają na niej do ponownego zalogowania tej samej osoby.
+- **Wylogowanie z aplikacji kończy sesję także po stronie serwera**, zamiast zostawiać ją żywą przez kolejne tygodnie.
 
 ### Dla testerów
 
 - Aplikacja dostaje nowy adres serwera aktualizacją w tle - przy następnym uruchomieniu z internetem. Nowa instalacja nie jest potrzebna.
 - Hasło ma minimum 12 znaków i żadnych wymogów co do rodzaju znaków - długość jest jedyną miarą. Wklejanie z menedżera haseł jest dozwolone, a przełącznik przy polu pokazuje wpisywane hasło.
+- Lista urządzeń w panelu nazywa telefon modelem, systemem i wersją aplikacji („Android 14 · Pixel 7a · Ninerdeck 1.1.0"), a przeglądarkę - dwoma słowami z jej podpisu.
 
 ## 2.0.0 (build 3) · 16 września 2026
 

@@ -152,6 +152,72 @@ describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
   });
 });
 
+describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
+  /**
+   * Telefon pyta o to z jednego powodu: wiersz w sekcji „Hasło" nazywa się „Ustaw hasło"
+   * albo „Zmień hasło", a różnicę robi obecność poświadczenia. Bez tej trasy aplikacja
+   * musiałaby zgadywać - a zgadnięcie w jedną stronę znaczy formularz proszący o hasło,
+   * którego nie ma, w drugą - milczące nadpisanie istniejącego.
+   */
+  it('mówi DWOMA „tak/nie", a po ustawieniu hasła zmienia odpowiedź', async () => {
+    const { app } = await testHarness();
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
+    });
+    expect(login.statusCode, login.body).toBe(200);
+    const token = login.json().token as string;
+
+    const before = await app.inject({
+      method: 'GET',
+      url: '/me/account',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(before.statusCode, before.body).toBe(200);
+    expect(before.json()).toEqual({
+      email: 'tomasz@ninerdeck.pl',
+      hasGoogle: true,
+      hasPassword: false,
+    });
+
+    const set = await app.inject({
+      method: 'PUT',
+      url: '/me/password',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { next: PASSWORD },
+    });
+    expect(set.statusCode, set.body).toBe(204);
+
+    const after = await app.inject({
+      method: 'GET',
+      url: '/me/account',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(after.json()).toEqual({
+      email: 'tomasz@ninerdeck.pl',
+      hasGoogle: true,
+      hasPassword: true,
+    });
+  });
+
+  it('nie niesie ani skrótu hasła, ani niczego, czym dałoby się wejść', async () => {
+    const { app } = await testHarness();
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/google',
+      payload: { idToken: googleTokenFor('TMK') },
+    });
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/account',
+      headers: { authorization: `Bearer ${login.json().token}` },
+    });
+    expect(res.body).not.toContain('scrypt$');
+    expect(res.body).not.toContain('/haslo/');
+  });
+});
+
 describe('zaproszenie na karcie klubu (D5)', () => {
   it('żyje na karcie do czasu realizacji linku, a „wszedł" obejmuje wejście HASŁEM', async () => {
     const { app, clock, mail } = await testHarness();

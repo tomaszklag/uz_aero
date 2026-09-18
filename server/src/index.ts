@@ -39,6 +39,7 @@ import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
+import { AccountQuery } from './application/common/queries/account.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
@@ -252,6 +253,10 @@ const publicBaseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
 const passwordHasher = new ScryptHasher();
 const passwordCredentials = new PgPasswordCredentialsRepo(db);
 const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+// Czym osoba może się zalogować (2.1.0, §5.3) - JEDNO zapytanie dla panelu (`#/konto`)
+// i telefonu (ustawienia, sekcja „Hasło"): obie powierzchnie pytają o to samo, bo
+// obecność hasła rozstrzyga u nich napis „Ustaw" kontra „Zmień".
+const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
 // Wybór adaptera poczty jest JAWNY i tylko tutaj: `log` drukuje token linku do konsoli,
 // więc nie ma prawa włączyć się sam z braku innej konfiguracji (`logMail.ts`).
 const mail =
@@ -437,7 +442,10 @@ const app = await buildServer({
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
-  adminMeQueries: new AdminMeQueries(pilots, identities, passwordCredentials),
+  adminMeQueries: new AdminMeQueries(pilots, accountQuery),
+  // Czym osoba może się zalogować - JEDEN egzemplarz dla obu powierzchni (2.1.0):
+  // panel czyta go przez `AdminMeQueries.account`, telefon trasą `GET /me/account`.
+  accounts: accountQuery,
   // Konta (A06/A06a). Po wejściu Google konto nie dostaje żadnego poświadczenia:
   // dostęp daje dopiero podpięcie konta Google o wpisanym tu adresie e-mail.
   adminPilots: new AdminPilotCommands(

@@ -45,9 +45,11 @@ import type { AdminLogQueries } from '../application/admin/queries/log.ts';
 import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { PasswordCommands } from '../application/common/commands/passwords.ts';
+import type { AccountQuery } from '../application/common/queries/account.ts';
 import type { AdminPasswordLinkCommands } from '../application/admin/commands/passwordLinks.ts';
 import { registerPasswordRoutes } from './routes/common/password.ts';
 import { registerMePasswordRoutes } from './routes/mobile/mePassword.ts';
+import { registerMeAccountRoutes } from './routes/mobile/meAccount.ts';
 import { registerAdminMePasswordRoutes } from './routes/admin/mePassword.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
@@ -288,6 +290,11 @@ export interface ServerDeps {
    * `routes/mobile/mePassword.ts`, `routes/admin/mePassword.ts`.
    */
   passwords: PasswordCommands;
+  /**
+   * Czym osoba może się zalogować (2.1.0). JEDEN egzemplarz dla obu powierzchni:
+   * telefon czyta go trasą `GET /me/account`, panel przez `AdminMeQueries.account`.
+   */
+  accounts: AccountQuery;
   /** Sesje logowania (2.1.0, issue #133) - brama platformowa i trasy sesji panelu. */
   loginSessions: LoginSessionsPort;
   /**
@@ -447,6 +454,7 @@ export async function buildServer(
   registerTracesRoutes(app, deps.traces, deps.sessionTrack, memberGate);
   registerPrefsRoutes(app, deps.prefs, memberGate);
   registerMePasswordRoutes(app, deps.passwords, memberGate);
+  registerMeAccountRoutes(app, deps.accounts, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 

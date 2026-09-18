@@ -13,12 +13,9 @@
  * „kim jestem" ma odtąd dopełnienie „w którym klubie".
  */
 
-import type {
-  ExternalIdentitiesPort,
-  PasswordCredentialsPort,
-  PilotsPort,
-} from '../../common/ports.ts';
+import type { PilotsPort } from '../../common/ports.ts';
 import type { PanelPilot } from '../../common/commands/auth.ts';
+import type { AccountQuery } from '../../common/queries/account.ts';
 import type { AccountMethodWire } from '../contracts/loginSessions.ts';
 
 /**
@@ -38,36 +35,27 @@ export interface PanelAccount {
 export class AdminMeQueries {
   constructor(
     private readonly pilots: PilotsPort,
-    private readonly identities: ExternalIdentitiesPort,
-    private readonly credentials: PasswordCredentialsPort,
+    private readonly accounts: AccountQuery,
   ) {}
 
   /**
-   * Konto zalogowanego - OSOBNA trasa, nie pola w `GET /me`.
+   * Konto zalogowanego - OSOBNA trasa, nie pola w `GET /me` (powód w docblocku
+   * `AccountQuery`).
    *
-   * `/me` przestawia całą ramę panelu i panel trzyma je bez terminu ważności, a metody
-   * zmieniają się dokładnie wtedy, gdy ktoś ustawi sobie hasło na tej stronie. Doklejone
-   * tam, kazałyby po każdej zmianie hasła unieważnić tożsamość sesji - czyli przerysować
-   * kolumnę i pasek po to, żeby zapaliła się plakietka.
-   *
-   * Trzy odczyty zamiast jednego zapytania, bo każdy z nich to gotowy port i żaden nie
-   * jest po nic: `pilots` niesie adres, pozostałe dwa odpowiadają obecnością wiersza.
+   * Sam ODCZYT mieszka od H-E w `common/`, bo to samo pytanie zadaje telefon
+   * (`GET /me/account`, issue #135 E7). Tutaj zostaje wyłącznie złożenie WIRE panelu -
+   * słownik plakietek należy do kontraktu powierzchni, nie do zapytania.
    */
   async account(pilotId: string): Promise<PanelAccount | null> {
-    const person = await this.pilots.findById(pilotId);
-    if (person == null || !person.active) return null;
-
-    const [google, password] = await Promise.all([
-      this.identities.findByPilot(pilotId),
-      this.credentials.find(pilotId),
-    ]);
+    const account = await this.accounts.of(pilotId);
+    if (account == null) return null;
 
     // Kolejność jest kolejnością plakietek w mockupie - Google, potem hasło.
     const methods: AccountMethodWire[] = [];
-    if (google != null) methods.push('google');
-    if (password != null) methods.push('password');
+    if (account.hasGoogle) methods.push('google');
+    if (account.hasPassword) methods.push('password');
 
-    return { email: person.email, methods };
+    return { email: account.email, methods };
   }
 
   /**

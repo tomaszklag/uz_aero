@@ -64,6 +64,9 @@ export function syncIndicator(outboxCount: number, last: SyncOutcome | null): Sy
       return 'offline';
     case 'rejected':
     case 'auth_expired':
+    // Zdalne wylogowanie (2.1.0, D7) jest tym samym STANEM chipa - kolejka stoi i sama
+    // nie ruszy. Różni je wyłącznie zdanie w banerze, bo różny jest powód.
+    case 'auth_revoked':
       return 'blocked';
     // `synced` i `idle` z niepustą kolejką znaczą „dopisano coś PO tamtej próbie" -
     // najbliższa okazja to zabierze i pilot nie ma tu nic do roboty.
@@ -117,6 +120,17 @@ export function syncReport(
   }
 
   if (indicator === 'blocked') {
+    // SESJA ZERWANA ZDALNIE (2.1.0, D7) - zdanie NAZYWA decyzję, zamiast mówić
+    // „wygasła": pilot ma wiedzieć, że nic się nie zepsuło, tylko ktoś tak postanowił.
+    // Droga wyjścia jest ta sama, więc kończy się tak samo.
+    if (last?.kind === 'auth_revoked') {
+      return {
+        tone: 'red',
+        text:
+          `Sesja zakończona przez administratora - ${queued} ${wait} w kolejce i nie wyślą się same. ` +
+          'Twoje zapisy są bezpieczne w telefonie. Zaloguj się ponownie.',
+      };
+    }
     return last?.kind === 'auth_expired'
       ? {
           tone: 'red',
@@ -174,6 +188,9 @@ export function attemptStamp(last: SyncOutcome | null, at: number | null): Attem
       return { value: `${time} - brak sieci`, tone: 'amber' };
     case 'auth_expired':
       return { value: `${time} - sesja wygasła`, tone: 'red' };
+    case 'auth_revoked':
+      // Inne zdanie niż „wygasła": to nie jest usterka, którą naprawi ponowienie.
+      return { value: `${time} - sesja zakończona`, tone: 'red' };
     case 'rejected':
       return { value: `${time} - odrzucone`, tone: 'red' };
   }

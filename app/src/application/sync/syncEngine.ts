@@ -48,6 +48,16 @@ export type SyncOutcome =
   | { kind: 'offline' }
   /** Refresh odrzucony - sync stoi do ponownego zalogowania. */
   | { kind: 'auth_expired' }
+  /**
+   * SESJA ZERWANA ZDALNIE (2.1.0, D7) - administrator wylogował to urządzenie z panelu.
+   *
+   * Osobno od `auth_expired`, bo to są dwa różne zdania do powiedzenia pilotowi:
+   * poświadczenie, które się zestarzało, naprawia się przy okazji i nic się nie stało;
+   * DECYZJA CZŁOWIEKA ma zostać nazwana - inaczej pilot widzi „sync stoi" i szuka usterki
+   * tam, gdzie jej nie ma. Skutek dla danych jest w obu przypadkach ten sam i to jest
+   * ważniejsze niż różnica: rejestr zostaje na telefonie, PIN dalej otwiera.
+   */
+  | { kind: 'auth_revoked' }
   /** Serwer odmówił merytorycznie (np. 403 single-writer) - do pokazania. */
   | { kind: 'rejected'; code: string };
 
@@ -144,6 +154,17 @@ export class SyncEngine {
     return authorizedFetch(this.auth, (token) => this.server.getTaskSuggestions(token));
   }
 
+  /**
+   * Który z dwóch stanów „sync stoi na poświadczeniach" właśnie zaszedł.
+   *
+   * Znacznik stawia `AuthService.rotate()` przy `401 session_revoked` i zapisuje go
+   * w magazynie, więc przeżywa restart - baner na 00 ma stać także wtedy, gdy pilot
+   * zamknął aplikację po zdalnym wylogowaniu.
+   */
+  private async authOutcome(): Promise<SyncOutcome> {
+    return (await this.auth.revoked()) ? { kind: 'auth_revoked' } : { kind: 'auth_expired' };
+  }
+
   private async drain(trigger: SyncTrigger): Promise<SyncOutcome> {
     // NIEZMIENNIK (issue #81): outbox nigdy nie niesie zapisu do operacji, którą
     // administrator zakończył albo unieważnił. Przemiatamy PRZED wysyłką, na aktualnym
@@ -152,7 +173,7 @@ export class SyncEngine {
     await this.repo.withholdAdminEnded();
 
     let token = await this.auth.freshToken();
-    if (token == null) return { kind: 'auth_expired' };
+    if (token == null) return await this.authOutcome();
 
     let pushed = 0;
     const flags: PushResult['flags'] = [];
@@ -180,7 +201,10 @@ export class SyncEngine {
             if (rotateError instanceof ServerUnreachableError) return { kind: 'offline' };
             throw rotateError;
           }
-          if (rotated == null) return { kind: 'auth_expired' };
+          // Rotacja zawiodła - ale POWÓD jest dwojaki i znaczy dwa różne zdania.
+          // `AuthService` postawił już znacznik w magazynie, więc pytamy o niego,
+          // zamiast rozstrzygać to drugi raz po kodzie błędu.
+          if (rotated == null) return await this.authOutcome();
           token = rotated;
           continue;
         }
