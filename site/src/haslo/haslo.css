@@ -1,0 +1,99 @@
+/**
+ * Ninerdeck - strona `/haslo/`: formularz ustawienia hasła (2.1.0, H-F F3).
+ *
+ * OSOBNY ARKUSZ, nie blok w treści strony: ta jedna strona ma ścisłą politykę
+ * bezpieczeństwa bez `'unsafe-inline'` (`staticSite.ts`, `PASSWORD_PAGE_CSP`), bo jako
+ * jedyna na całej stronie ma pole HASŁA i stoi na origin panelu.
+ *
+ * Nie wchodzi do `site.css` z tego samego powodu, dla którego nie wchodzi do treści:
+ * te reguły obsługują JEDEN ekran, a `site.css` pobiera każda inna strona. Tokeny
+ * (`--surface-raised`, `--green-border`) przychodzą stamtąd - tu są tylko kształty
+ * formularza.
+ */
+
+.haslo { max-width: 520px; }
+.haslo .lead { max-width: none; }
+.haslo form { display: grid; gap: 18px; margin: 28px 0 8px; }
+.haslo .field { display: grid; gap: 7px; }
+.haslo label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.haslo .pass { position: relative; }
+.haslo input {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 52px 14px 15px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 1.5px;
+}
+.haslo input:focus { outline: none; border-color: var(--green-border); }
+.haslo input.invalid { border-color: var(--red); }
+
+/* Przełącznik „pokaż" - w polu, po prawej. Wklejanie dozwolone (NIST: nie utrudniamy). */
+.haslo .eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.haslo .eye:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+
+/* Podpowiedź polityki - pojawia się PO wpisie i mówi, co jest, nie czego brakuje w ogóle.
+   `min-height` rezerwuje wiersz, żeby formularz nie skakał przy pierwszym znaku. */
+.haslo .hint { font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; min-height: 20px; }
+.haslo .hint.bad { color: var(--red); }
+.haslo .hint.ok { color: var(--green); }
+
+.haslo .btn.primary { justify-content: center; }
+.haslo .btn.primary[disabled] {
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  box-shadow: none;
+  border: 1px solid var(--border-strong);
+  cursor: not-allowed;
+}
+
+/* Trzy stany jednej strony - przełącza je `data-state` na <main>. */
+.haslo .state { display: none; }
+.haslo[data-state='form'] .state-form,
+.haslo[data-state='expired'] .state-expired,
+.haslo[data-state='done'] .state-done { display: block; }
+
+.haslo .status {
+  border-left: 3px solid var(--green);
+  background: var(--green-muted);
+  padding: 16px 20px;
+  border-radius: 0 14px 14px 0;
+  margin: 24px 0;
+}
+.haslo .status.warn { border-left-color: var(--amber); background: var(--amber-muted); }
+.haslo .status b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.haslo .status p { margin: 0; }
+.haslo .where { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }

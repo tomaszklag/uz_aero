@@ -187,6 +187,34 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
     expect((await passwordLogin(app, 'jan@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
   });
 
+  it('list z panelu jest CO DO ZNAKU tym samym listem, co „Nie pamiętam hasła" (F4)', async () => {
+    // To jest cała treść decyzji D5: administrator NIE dyktuje kodu i nie wysyła
+    // niczego własnego - uruchamia TEN SAM mechanizm, tylko z innego miejsca. Gdyby
+    // listy się rozjechały, „inny punkt triggera" zamieniłby się w drugą drogę do hasła,
+    // a przy drugiej drodze pilnowanie jednej przestaje cokolwiek znaczyć.
+    const { app, mail } = await testHarness();
+
+    expect((await forgot(app, 'jan@ninerdeck.pl')).statusCode).toBe(202);
+    const bySelf = mail.lastTo('jan@ninerdeck.pl')!;
+
+    const cookie = await panelCookie(app, 'TMK');
+    const sent = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/JSE/password-link',
+      headers: ADMIN_CSRF_HEADERS,
+      cookies: { ninerdeck_admin: cookie },
+    });
+    expect(sent.statusCode, sent.body).toBe(200);
+    const byAdmin = mail.lastTo('jan@ninerdeck.pl')!;
+
+    expect(byAdmin.subject).toBe(bySelf.subject);
+    // Tokeny MUSZĄ się różnić (drugi link zużywa pierwszy), więc porównujemy treść
+    // z wyciętym tokenem - reszta ma być identyczna, ze zdaniem o wylogowaniu włącznie.
+    const withoutToken = (text: string): string => text.replace(/\/haslo\/#[A-Za-z0-9_-]+/, '/haslo/#');
+    expect(withoutToken(byAdmin.text)).toBe(withoutToken(bySelf.text));
+    expect(tokenIn(byAdmin)).not.toBe(tokenIn(bySelf));
+  });
+
   it('członek bez adresu → 409 `email_required` (tu wolno powiedzieć wprost)', async () => {
     const { app, db, mail } = await testHarness();
     const cookie = await panelCookie(app, 'TMK');

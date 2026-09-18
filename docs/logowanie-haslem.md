@@ -755,11 +755,34 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   z wielkiej litery (granica Fast Refresh, `app/src/__tests__/architecture.test.ts`);
   (6) **przypis „konta zakłada administrator" USUNIĘTY z ustawień** - od rejestracji
   e-mailem (00H) jest po prostu nieprawdziwy.
-- **H-F Poczta i strona `/haslo/`** (#136; zadanie właściciela #137 NA DRODZE KRYTYCZNEJ) -
-  `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev, `MAIL_PROVIDER`
-  wymagany przy starcie, listy po polsku (reset, zaproszenie administratora, założenie
-  konta i „masz już konto" dla zajętego adresu), strona
+- **H-F Poczta i strona `/haslo/`** (#136) - **WYKONANY 2026-09-18** (F1 osobno, PR #147;
+  #137 zamknięte). `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev,
+  `MAIL_PROVIDER` wymagany przy starcie, listy po polsku (reset, zaproszenie
+  administratora, założenie konta i „masz już konto" dla zajętego adresu), strona
   `site/src/haslo/` z polityką hasła i trzema stanami, `POST /auth/password/reset`.
+  **Odstępstwa od planu**: (1) **F2 i F4 przyszły już z H-B** - cztery treści listów
+  i pięć wyzwalaczy były spięte od PR #146; H-F dołożył im to, czego lista zadań wymagała,
+  a czego nie było: TESTY treści (`passwordMails.test.ts`) i dowód, że list resetu jest
+  CO DO ZNAKU ten sam z „Nie pamiętam hasła" i z przycisku administratora - bo to jest
+  cała treść D5 („inny punkt triggera, ten sam mechanizm"), a rozjazd zamieniłby ją
+  w drugą drogę do hasła; (2) **`/haslo/` mieszka na hoście APLIKACJI, nie strony**
+  (`hostSplit.ts`, `PASSWORD_PAGE`) - bez tego link z listu, składany z `PUBLIC_BASE_URL`,
+  był przekierowywany na host strony, gdzie `POST /auth/password/reset` nie istnieje:
+  droga była PRZERWANA. Alternatywa (wołanie API przez origin) znaczyłaby CORS na trasie
+  uwierzytelniania; (3) **ceną jest plik strony na origin panelu, więc `/haslo/` dostała
+  WŁASNĄ, ścisłą politykę bezpieczeństwa** bez `'unsafe-inline'` - uzasadnienie luzu dla
+  reszty strony („nie ma pola, w które ktokolwiek cokolwiek wpisuje") przestało jej
+  dotyczyć w chwili, gdy dostała pole hasła. Stąd `haslo.js` i `haslo.css` obok strony:
+  to jedyna strona w `site/` bez skryptu i stylu w treści pliku; (4) **polityka hasła to
+  LUSTRO z testem równości** (`site/src/haslo/policy.js` ↔
+  `app/src/__tests__/passwordPolicyMirror.test.ts`), nie domena zbudowana do `site/` -
+  `site/` jest świadomie poza workspace'ami i bez zależności, a transpilacja TS byłaby
+  pierwszą. Lustro jest przy tym WĘŻSZE od domeny i to jest zamierzone: strona nie zna
+  ani adresu, ani nazwiska (token niczego o człowieku nie zdradza), więc `contains_email`
+  i `contains_name` rozstrzyga serwer i wracają jako `400 weak_password { reason }`;
+  (5) **szkic H-A pokazywał na `400` stan „link nie działa"** - czyli odsyłał po nowy list
+  kogoś, kto miał sprawny link i tylko słabe hasło (odmowa polityki linku NIE spala).
+  Odtąd `400` zostaje na formularzu z powodem pod polem.
 - **H-W Wydanie 2.1.0** (#138) - dokumentacja za kodem (`_main.md.txt` §3.0, `architektura-panelu-serwer.md`
   §8.4 - sesja panelu MA odtąd wiersz, `logowanie-google.md` nota, podręcznik: konta,
   pierwsze logowanie, ustawienia, panel-piloci, FAQ; polityka prywatności; CHANGELOG
