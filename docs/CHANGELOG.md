@@ -34,6 +34,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 2.1.0 (build 4) · 18 września 2026
+
+> Logowanie e-mailem i hasłem obok konta Google - dla wspólnego tabletu w samolocie. Do tego własny adres Ninerdeck i lista urządzeń, z których każde da się wylogować zdalnie.
+
 ### Nowości
 
 - **Własny adres Ninerdeck**: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`. Adres nadany przez hosting przestaje obowiązywać.
@@ -52,9 +56,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Dla testerów
 
-- Aplikacja dostaje nowy adres serwera aktualizacją w tle - przy następnym uruchomieniu z internetem. Nowa instalacja nie jest potrzebna.
+- **To wydanie wymaga zainstalowania nowego pliku ze strony pobierania.** Aktualizacja w tle nie wystarczy, bo zmienia się numer wersji aplikacji - a to on wiąże telefon z wydaniem. Dane z telefonu zostają na miejscu.
 - Hasło ma minimum 12 znaków i żadnych wymogów co do rodzaju znaków - długość jest jedyną miarą. Wklejanie z menedżera haseł jest dozwolone, a przełącznik przy polu pokazuje wpisywane hasło.
-- Lista urządzeń w panelu nazywa telefon modelem, systemem i wersją aplikacji („Android 14 · Pixel 7a · Ninerdeck 1.1.0"), a przeglądarkę - dwoma słowami z jej podpisu.
+- Lista urządzeń w panelu nazywa telefon modelem, systemem i wersją aplikacji („Android 14 · Pixel 7a · Ninerdeck 2.1.0"), a przeglądarkę - dwoma słowami z jej podpisu.
+- Polityka prywatności opisuje teraz wszystkie dane, które opuszczają telefon - razem z zapisem surowych odczytów czujników, który służy do strojenia wykrywania startu i lądowania.
 
 ## 2.0.0 (build 3) · 16 września 2026
 
@@ -142,17 +147,6 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ## Plan wydań
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
-
-### 2.1.0 · wrzesień 2026
-
-> Logowanie e-mailem i hasłem obok konta Google - dla wspólnego tabletu w samolocie.
-
-- [x] Logowanie hasłem w aplikacji i w panelu; na tablecie wystarczy kod pilota
-- [x] Zapomniane hasło odzyskuje się samodzielnie - linkiem z e-maila, na dowolnym urządzeniu
-- [x] Konto zakłada się e-mailem, bez konta Google; nowy klub też
-- [x] Lista urządzeń i zdalne wylogowanie - w panelu i we własnym koncie
-- [x] Hasło ustawia się w ustawieniach aplikacji; nie zastępuje PIN-u
-- [ ] Sprawdzenie na urządzeniu i odbiór na produkcji
 
 ### 2.2.0 · po pierwszych tygodniach testów
 
