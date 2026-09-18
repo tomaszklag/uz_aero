@@ -149,7 +149,12 @@ aktywny klub zostaje po wylogowaniu jako podpowiedź urządzenia), więc para (k
 wskazuje osobę jednoznacznie. Na telefonie osobistym po wylogowaniu podpowiedź też jest -
 i nie przeszkadza.
 
-## 4. Model danych - migracja 9 (WYŁĄCZNIE addytywna)
+## 4. Model danych - migracje 9 i 10 (WYŁĄCZNIE addytywne)
+
+> **Wykonanie (2026-09-17, H-B):** dokument zapowiadał JEDNĄ migrację 9 z całym modelem.
+> Epiki idą osobnymi PR-ami i każdy niesie własny DDL, więc **migracja 9 (H-B) = §4.1, §4.2,
+> §4.4** (hasło, tokeny linku, indeks adresu), a **migracja 10 (H-C) = §4.3** (`login_sessions`,
+> `refresh_tokens.session_id`, backfill). Obie addytywne; kolejność wdrożenia bez zmian.
 
 Baza produkcyjna 2.0.0 istnieje od 2026-09-16 i dostaje prawdziwe dane (W2a w #125), więc
 `SCHEMA_VERSION = 9` dokłada, niczego nie zmienia w miejscu.
@@ -237,8 +242,10 @@ ALTER TABLE refresh_tokens ADD COLUMN session_id TEXT REFERENCES login_sessions(
   skopiowanym ze źródłowej (stary refresh świadomie zostaje ważny - patrz `AuthCommands.switchClub`).
   Ustawienie hasła z linku sesji NIE zakłada (strona odpowiada `204`, człowiek loguje się
   potem hasłem) - stąd `method` nie ma wartości dla resetu.
-- **Backfill w migracji 9:** każdy istniejący wiersz `refresh_tokens` dostaje sesję
-  `mobile`/`legacy`, żeby `session_id` mogło być `NOT NULL` od razu. Tokeny dostępu
+- **Backfill w migracji 10:** każdy istniejący wiersz `refresh_tokens` dostaje sesję
+  `mobile`/`legacy` z LOSOWYM identyfikatorem, żeby `session_id` mogło być `NOT NULL`
+  od razu (wyprowadzony ze skrótu refresha wyszedłby po pierwszej rotacji w czytelnym
+  payloadzie tokenu). Tokeny dostępu
   i ciasteczka wydane przed wdrożeniem nie niosą `sid` - brama przyjmuje brak `sid` do ich
   wygaśnięcia (1 h / 8 h), a każdy nowy token `sid` niesie.
 - **Token osoby** (`purpose: 'person'`) sesji NIE zakłada: nie jest tożsamością i otwiera
@@ -640,38 +647,142 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
 - **H-A Projekt** (#131) - ten dokument, makiety telefonu (00A′, 00F, 00G, 00H, 00I, 13/13b, baner 00)
   i panelu (00-logowanie, piloci-konto, organizacje-klub, konto, SZABLON), sekcja
   w `CLAUDE.md`, szkic podręcznika.
-- **H-B Serwer: hasła i link „ustaw hasło"** (#132) - migracja 9 (§4.1, §4.2, §4.4),
+- **H-B Serwer: hasła i link „ustaw hasło"** (#132; **WYKONANE 2026-09-17**, gałąź
+  `feature-132-serwer-hasla`) - migracja 9 (§4.1, §4.2, §4.4),
   `ScryptHasher` (PHC), `packages/domain/src/auth/passwordPolicy.ts` (+ lista zablokowanych,
   testy), `AuthCommands.loginWithPassword` / `panelLoginWithPassword`, `PasswordCommands`
-  (set/change, `sendResetLink` z czterema wyzwalaczami: self / admin / platform / cli,
-  `resetByLink`, `signUp(name, email)` - token `signup`, osoba powstaje przy realizacji,
-  §5.4a), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, audyt
-  `password.link_sent`, limity, skrót zastępczy, testy (w tym „jedna odpowiedź na trzy
-  stany", `202` bez wycieku istnienia adresu i test czasu odpowiedzi). Wysyłkę woła przez
-  `MailPort` z H-F - na atrapie portu w testach.
-- **H-C Serwer: sesje logowania** (#133) - migracja 9 (§4.3, backfill), `sid` w tokenach,
-  `login_sessions` w `issueFor`/`orgSession`/`platformSession`/`switchClub`/`refresh`,
-  brama z `sessionRevokedAt` i `401 session_revoked`, przepustnica `last_seen_at`,
-  `POST /auth/logout`, stemplowanie przy `/admin/api/auth/logout`, trasy §5.6, audyt
-  `session.revoke*`, unieważnianie przy `membership.disable` / blokadzie osoby / zmianie
-  hasła / realizacji kodu, wpisy w `tenantIsolation` i `architecture`.
-- **H-D Panel** (#134) - formularz logowania z Google pod spodem, `GET /auth/methods`, „Nie pamiętam
-  hasła" (adres → link → potwierdzenie), karta członka: „Wyślij link do ustawienia hasła"
-  + sesje, karta klubu: e-mail + zaproszenie („wysłano", „Wyślij ponownie"), `#/konto`
-  (zmiana hasła, moje sesje), komunikaty (`loginMessage`), testy modułów czystych.
-- **H-E Aplikacja** (#135) - `ServerPort.loginWithPassword/forgotPassword/setPassword/logout`,
-  `AuthService` z drugim wejściem i znacznikiem `revoked`, podpowiedź klubu urządzenia
-  po wylogowaniu (LISTA klubów urządzenia, nie jeden - D10), ekrany 00F/00G/00H/00I
-  (wyślij link → potwierdzenie; 00H = rejestracja e-mailem, §5.4a; 00I = wybór klubu
-  urządzenia, tylko przy więcej niż jednym), sekcja „Hasło" na 13
-  z arkuszem 13b, obsługa `session_revoked` w syncu i na PIN-ie, `POST /auth/logout` przy
-  wylogowaniu, nagłówek `X-Ninerdeck-Device`, `GET /auth/methods` na 00A, testy
-  `AuthService` i logiki ekranów.
-- **H-F Poczta i strona `/haslo/`** (#136; zadanie właściciela #137 NA DRODZE KRYTYCZNEJ) -
-  `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev, `MAIL_PROVIDER`
-  wymagany przy starcie, listy po polsku (reset, zaproszenie administratora, założenie
-  konta i „masz już konto" dla zajętego adresu), strona
+  (`change`, `forgot`, `signUp(name, email)` - token `signup`, osoba powstaje przy realizacji,
+  §5.4a; `resetByLink`; `issueLink` + `deliver` dla wyzwalaczy admin / platform / cli),
+  `AdminPasswordLinkCommands` (przycisk członka, zaproszenie z platformy, audyt
+  `password.link_sent`), trasy §5.1–§5.4a i §5.7, `seed -- --reset-link <email>`, limity,
+  skrót zastępczy, normalizacja adresu przy zapisie (`domain/email.ts` - pięć dróg zapisu
+  do `pilots.email`; odczyty zostają przy `lower()`, bo w bazie mogą stać wiersze sprzed
+  migracji 9, a `external_identities.email` zostaje surowy), testy (`passwordLogin`,
+  `passwordReset`, `signUp`, `scryptHasher`, `emailNormalization`: „jedna odpowiedź na
+  trzy stany", `202` bez wycieku istnienia adresu, skrót zastępczy dla nieznanego loginu,
+  skrót ze słabszych parametrów dalej się weryfikuje).
+  **Odstępstwa od planu**: (1) `MailPort`, adapter `log` i TREŚCI listów
+  (`application/common/mail/passwordMails.ts`) powstały tu, nie w H-F - list nie da się
+  wysłać bez treści; H-F zostaje adapter dostawcy (Resend), `MAIL_PROVIDER=resend`
+  i strona `/haslo/`; (2) `MAIL_PROVIDER` jest już WYMAGANY (`z.enum(['log'])`);
+  (3) unieważnienie „pozostałych sesji" przy zmianie hasła w ustawieniach czeka na `sid`
+  z H-C (hak w `PasswordCommands.change`); (4) link składa się z `PUBLIC_BASE_URL` (host
+  aplikacji), więc H-F musi serwować `/haslo/` NA HOŚCIE APLIKACJI (`hostSplit.ts` odsyła
+  dziś ścieżki strony na host strony, gdzie API nie istnieje) - inaczej strona nie ma do kogo
+  zawołać `POST /auth/password/reset`.
+- **H-C Serwer: sesje logowania** (#133) - **WYKONANY 2026-09-18**. Migracja 10 (§4.3,
+  backfill pętlą `DO`), `sid` w tokenach klubu, platformowym i w ciasteczku, sesja
+  w `issueFor`/`orgSession`/`platformSession`/`switchClub` (nowa, metoda dziedziczona)
+  i zachowana przy rotacji, brama z `LEFT JOIN` w `authSnapshot`, `/auth/refresh`
+  sprawdzający sesję PRZED rotacją, przepustnica `last_seen_at` (60 s, pamięć procesu),
+  `POST /auth/logout`, stemplowanie przy `/admin/api/auth/logout`, trasy §5.6 z audytem
+  `session.revoke`/`session.revoke_all`, unieważnianie przy zmianie hasła (poza bieżącą),
+  realizacji LINKU (wszystkie) i wyłączeniu członkostwa (w tym klubie), „ostatnio aktywny"
+  w karcie członka i przy administratorze klubu, `loginSessions.test.ts` oraz wpisy
+  w `tenantIsolation` i `architecture`.
+  **Odstępstwa od planu**: (1) trasy TELEFONU zostają przy jednym `401 unauthorized`,
+  a nazwany `session_revoked` pada z `POST /auth/refresh` - tak opisuje ten przepływ §6
+  („telefon reaguje na 401 jak na wygaśnięcie, a refresh odmawia z tego samego powodu"),
+  a drugie ciało 401 na szesnastu trasach telefonu byłoby polem, którego aplikacja nie
+  czyta; PANEL dostaje powód od razu, bo tam nie ma czego odświeżyć; (2) `method` ma TRZY
+  wartości (`google`, `password`, `legacy`) - `code` z listy zadań odpadło razem z kodem
+  jednorazowym (§5.4), więc „realizacja kodu" z C3/C8 znaczy tu realizację LINKU;
+  (3) brama oddaje `sessionRevoked` (flaga), nie `sessionRevokedAt` - o terminie sesji
+  rozstrzyga rotacja, a token, który dożył do bramy z martwą sesją, i tak znika w ciągu
+  godziny; (4) `Actor` i `PlatformActor` niosą odtąd `sessionId` - potrzebują go zmiana
+  hasła („poza bieżącą") i lista własnych sesji („to urządzenie").
+- **H-D Panel** (#134) - **WYKONANY 2026-09-18**. Formularz logowania z Google pod
+  separatorem (`GET /admin/api/auth/methods`; bez klienta Google separator i przycisk
+  znikają w całości), `#/logowanie/haslo` (adres → link → JEDNO potwierdzenie, także po
+  odmowie serwera), karta członka: „Wyślij link do ustawienia hasła", plakietki metod
+  i karta „Sesje" („Wyloguj" przy wierszu, „Wyloguj wszędzie w tym klubie"), karta klubu:
+  „E-mail" zamiast „Konto Google" + zaproszenie („wysłano … · ważne 72 h", „Wyślij
+  ponownie"), `#/konto` (Logowanie / Hasło / Moje sesje, wejście z nazwiska w pasku),
+  moduły czyste z testami (`loginMessage`, `forgotPasswordForm`, `sessionRows`,
+  `passwordAccess`, `passwordForm`), `PasswordInput` z przełącznikiem „pokaż".
+  **Odstępstwa od planu**: (1) H-D okazał się potrzebować TRZECH pól z serwera, których
+  B i C nie wystawiły, więc epik niesie także cienki plaster serwera: `loginMethods`
+  w wierszu listy członków (plakietki „Google"/„hasło" - dwa `EXISTS` w zapytaniu listy),
+  `GET /admin/api/me/account` (adres i metody zalogowanego - OSOBNO od `GET /me`, bo
+  tożsamość sesji przestawia całą ramę i panel trzyma ją bez terminu ważności, a metody
+  zmieniają się przy ustawieniu hasła) oraz `invite` przy administratorze klubu
+  (najświeższy NIEZUŻYTY link z platformy - bez tego nota „zaproszenie wysłano" znikałaby
+  po odświeżeniu strony i kazała wysyłać drugi list); (2) przy okazji poprawione
+  `signedIn` na karcie klubu: do 2.1.0 pytało WYŁĄCZNIE o tożsamość Google, więc
+  administrator, który wszedł z linku i HASŁEM, zostawałby „tym, który się nie
+  zalogował" - odtąd liczy się też wiersz w `login_sessions`; (3) o terminie zaproszenia
+  rozstrzyga PANEL, nie zapytanie: stempel postawił zegar aplikacji, a `now()` w SQL-u
+  jest zegarem bazy (pułapka `architektura-panelu-serwer.md` §7.9 (j)); (4) wiersz sesji
+  ma DWIE ikony (przeglądarka / telefon), choć mockup rysuje trzy - rozstrzyga
+  powierzchnia sesji, która jest danymi, a „tablet czy telefon" byłoby domysłem z nazwy
+  urządzenia; (5) panel przestał wołać `GET /admin/api/auth/google-client` - zastąpiło je
+  `auth/methods`; trasa zostaje na serwerze do wygaszenia przy wydaniu; (6) `checkPassword`
+  z `@ninerdeck/domain` to DRUGI imienny wyjątek od zakazu importu wartości domeny
+  w panelu (`admin/test/architecture.test.ts`) - to ta sama decyzja, co D4: jedna
+  implementacja polityki dla serwera, telefonu, panelu i strony.
+- **H-E Aplikacja** (#135) - **WYKONANY 2026-09-18** (poza sprawdzeniem NA URZĄDZENIU,
+  E11 druga połowa - należy do właściciela).
+  `ServerPort.loginWithPassword/forgotPassword/signUp/setPassword/logout/methods/account`,
+  `AuthService` z drugim wejściem i znacznikiem `revoked`, kluby urządzenia
+  (`DeviceClubsPort` + `DeviceClubsStore` - LISTA, nie jeden klub; D10), ekrany
+  00F/00G/00H/00I (wyślij link → potwierdzenie; 00H = rejestracja e-mailem, §5.4a;
+  00I = wybór klubu urządzenia, tylko przy więcej niż jednym), „ZALOGUJ SIĘ HASŁEM"
+  na 00A, sekcja „Hasło" na 13 z arkuszem 13B, `auth_revoked` w syncu i baner na 00,
+  `POST /auth/logout` przy wylogowaniu, nagłówek `X-Ninerdeck-Device`, moduły czyste
+  z testami (`deviceLabel`, `passwordLogin`, `deviceClubs`, `forgotPassword`, `signUp`,
+  `passwordForm`, `loginMessage`).
+  **Odstępstwa od planu**: (1) **H-E niesie CIENKI PLASTER SERWERA**, dokładnie z tego
+  samego powodu co H-D: wiersz sekcji „Hasło" nazywa się „Ustaw hasło" albo „Zmień hasło",
+  a telefon nie miał skąd wiedzieć, które - `GET /me/account` (za bramą członkostwa)
+  oddaje mu `email` i dwa „tak/nie". Sam ODCZYT przeniósł się przy okazji do
+  `application/common/queries/account.ts`, bo o to samo pyta panel (`#/konto`): dwie kopie
+  tej pary odczytów znaczyłyby formularz proszący o hasło, którego nie ma - albo milcząco
+  je nadpisujący. Trasa jest przy tym OSOBNA od `GET /reference`, które jest cache'em
+  KLUBU z ETagiem, a metody należą do OSOBY; (2) **brak nowej klasy błędu na
+  `session_revoked`** - `ServerRejectedError` niesie już `.code`, więc `AuthService.rotate()`
+  czyta je wprost i stawia znacznik w magazynie; podklasa byłaby drugim sposobem
+  powiedzenia tego samego. `SyncEngine` pyta o znacznik (`auth_revoked` obok
+  `auth_expired`), zamiast rozstrzygać powód drugi raz; (3) **dwie usterki adaptera
+  naprawione w trakcie**: `forgotPassword`/`signUp` szły przez `request`, który rzuca na
+  `429` - a wtedy wyczerpany limit byłby JEDYNĄ różnicą między adresem znanym a obcym;
+  `PUT /me/password` odpowiada `401` i na złe obecne hasło, i na wygasły token, więc
+  mapowanie wszystkiego na `invalid_credentials` mówiłoby pilotowi „złe hasło" godzinę
+  po zalogowaniu (rozdzielone po kodzie błędu, token idzie przez rotację);
+  (4) **`.status-card` wyniesiona do wspólnego komponentu** (`StatusCard`) - tę samą kartę
+  rysują 00C/00D/00E i nowe 00G/00H, a składana w ekranie gubiła ikonę, którą makiety
+  rysują od początku; (5) **pole hasła bierze uchwyt PROPSEM, nie `forwardRef`** - ten
+  drugi wymusza `export const`, a `.tsx` w aplikacji eksportuje wyłącznie `export function`
+  z wielkiej litery (granica Fast Refresh, `app/src/__tests__/architecture.test.ts`);
+  (6) **przypis „konta zakłada administrator" USUNIĘTY z ustawień** - od rejestracji
+  e-mailem (00H) jest po prostu nieprawdziwy.
+- **H-F Poczta i strona `/haslo/`** (#136) - **WYKONANY 2026-09-18** (F1 osobno, PR #147;
+  #137 zamknięte). `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev,
+  `MAIL_PROVIDER` wymagany przy starcie, listy po polsku (reset, zaproszenie
+  administratora, założenie konta i „masz już konto" dla zajętego adresu), strona
   `site/src/haslo/` z polityką hasła i trzema stanami, `POST /auth/password/reset`.
+  **Odstępstwa od planu**: (1) **F2 i F4 przyszły już z H-B** - cztery treści listów
+  i pięć wyzwalaczy były spięte od PR #146; H-F dołożył im to, czego lista zadań wymagała,
+  a czego nie było: TESTY treści (`passwordMails.test.ts`) i dowód, że list resetu jest
+  CO DO ZNAKU ten sam z „Nie pamiętam hasła" i z przycisku administratora - bo to jest
+  cała treść D5 („inny punkt triggera, ten sam mechanizm"), a rozjazd zamieniłby ją
+  w drugą drogę do hasła; (2) **`/haslo/` mieszka na hoście APLIKACJI, nie strony**
+  (`hostSplit.ts`, `PASSWORD_PAGE`) - bez tego link z listu, składany z `PUBLIC_BASE_URL`,
+  był przekierowywany na host strony, gdzie `POST /auth/password/reset` nie istnieje:
+  droga była PRZERWANA. Alternatywa (wołanie API przez origin) znaczyłaby CORS na trasie
+  uwierzytelniania; (3) **ceną jest plik strony na origin panelu, więc `/haslo/` dostała
+  WŁASNĄ, ścisłą politykę bezpieczeństwa** bez `'unsafe-inline'` - uzasadnienie luzu dla
+  reszty strony („nie ma pola, w które ktokolwiek cokolwiek wpisuje") przestało jej
+  dotyczyć w chwili, gdy dostała pole hasła. Stąd `haslo.js` i `haslo.css` obok strony:
+  to jedyna strona w `site/` bez skryptu i stylu w treści pliku; (4) **polityka hasła to
+  LUSTRO z testem równości** (`site/src/haslo/policy.js` ↔
+  `app/src/__tests__/passwordPolicyMirror.test.ts`), nie domena zbudowana do `site/` -
+  `site/` jest świadomie poza workspace'ami i bez zależności, a transpilacja TS byłaby
+  pierwszą. Lustro jest przy tym WĘŻSZE od domeny i to jest zamierzone: strona nie zna
+  ani adresu, ani nazwiska (token niczego o człowieku nie zdradza), więc `contains_email`
+  i `contains_name` rozstrzyga serwer i wracają jako `400 weak_password { reason }`;
+  (5) **szkic H-A pokazywał na `400` stan „link nie działa"** - czyli odsyłał po nowy list
+  kogoś, kto miał sprawny link i tylko słabe hasło (odmowa polityki linku NIE spala).
+  Odtąd `400` zostaje na formularzu z powodem pod polem.
 - **H-W Wydanie 2.1.0** (#138) - dokumentacja za kodem (`_main.md.txt` §3.0, `architektura-panelu-serwer.md`
   §8.4 - sesja panelu MA odtąd wiersz, `logowanie-google.md` nota, podręcznik: konta,
   pierwsze logowanie, ustawienia, panel-piloci, FAQ; polityka prywatności; CHANGELOG
@@ -733,3 +844,63 @@ z e-maila jest drogą główną („normalnie systemy działają tak, że klikam
 przychodzi link"); (2) kodu od administratora nie ma wcale - „działanie administratora
 powinno być takie samo, jak to, że kliknę w e-mail z resetem, tylko inny punkt triggera".
 Poczta wchodzi do rdzenia 2.1.0 (§10 pkt 3, #137 na drodze krytycznej).
+
+## 15. Przegląd bezpieczeństwa - wynik (zadanie W6, 2026-09-18)
+
+Dwanaście punktów listy z §8 sprawdzonych w kodzie, po jednym. Wzór: `logowanie-google.md`
+§14. **Nie znaleziono ani jednej podatności** - poniżej stoi, CO to znaczy dla każdego
+punktu i CZYM jest to pilnowane, bo przegląd, który mówi wyłącznie „sprawdzone", jest
+wart tyle, co brak przeglądu.
+
+Jedno ustalenie doszło: dwie własności strony `/haslo/` trzymały się bez żadnego
+strażnika (pkt 4 i 7 niżej).
+
+| # | punkt §8 | stan | czym pilnowane |
+|---|---|---|---|
+| 1 | scrypt PHC, `timingSafeEqual`, skrót zastępczy | ✅ | `scryptHasher.test.ts`; `verifyPassword` liczy scrypt ZAWSZE - na `dummyHash()` przy nieznanym loginie |
+| 2 | jedna odmowa 401, `202` zawsze | ✅ | `passwordLogin.test.ts`, `passwordReset.test.ts`, `signUp.test.ts` (wolny i zajęty adres dostają identyczną odpowiedź, różnią się listy) |
+| 3 | limity PRZED skrótem | ✅ | limit stoi w pierwszych liniach `verifyPassword`, przed odczytem konta; komplet stałych: 10/login, 30/IP, 3/adres, 10/IP wysyłki, 5/osoba z panelu, 5/osoba przy zmianie |
+| 4 | linki: 256 bitów, fragment, `sha256`, jednorazowe, nigdy w audycie ani logu | ✅ | `passwordReset.test.ts` (token jednorazowy, nowy zużywa stary, audyt bez tokenu); `requestLog.ts` nie loguje nagłówków, ciasteczek, treści ani query stringu; `logger: false` w Fastify |
+| 5 | reset i zmiana hasła unieważniają sesje | ✅ | `resetByLink` gasi refreshe, sesje i stempluje `credentials_valid_from`; `change` gasi wszystkie POZA bieżącą (`Actor.sessionId`) |
+| 6 | `sid` w bramie razem z członkostwem | ✅ | `authSnapshot` - JEDNO zapytanie, `LEFT JOIN` po TRÓJCE (sesja, osoba, klub); `$3::text IS NOT NULL` odróżnia „token sprzed 2.1.0" od „sesji, której nie ma" |
+| 7 | hasło nigdy w logu, audycie, adresie ani magazynie telefonu | ✅ | j.w. + `passwordPage.test.ts` (patrz ustalenie niżej) |
+| 8 | pole hasła: atrybuty i „pokaż" | ✅ | panel: `PasswordInput` ma `autoComplete` jako prop WYMAGANY o dwóch dozwolonych wartościach - nie da się go zapomnieć; telefon: `PasswordField`; strona: `passwordPage.test.ts` |
+| 9 | panel pod nagłówkiem CSRF | ✅ | `registerAdminCsrfGuard` jest hookiem na CAŁEJ instancji dla każdej mutacji `/admin/api/*`, więc `POST /admin/api/auth/password` jest objęte z konstrukcji, a nie z pamiętliwości |
+| 10 | polityka po obu stronach z jednej funkcji | ✅ | `packages/domain` dla serwera, telefonu i panelu; strona ma LUSTRO z testem równości (`passwordPolicyMirror.test.ts`) - inaczej się nie dało, `site/` jest bez zależności |
+| 11 | izolacja i `org_id` | ✅ | `tenantIsolation.test.ts` wymaga przypadku dla KAŻDEJ trasy z rejestru Fastify; `login_sessions` i `memberships` są na liście tabel skopowanych w `architecture.test.ts` |
+| 12 | procedura awaryjna w README | ✅ | README „Wdrożenie: Railway" pkt 11 - obie strony (Google padło / poczta padła), bez kodów do dyktowania |
+
+### Ustalenie: dwa niezmienniki strony `/haslo/` bez strażnika
+
+Strona z linku jest jedynym miejscem, w którym człowiek wpisuje hasło POZA aplikacją
+i panelem, i jedynym plikiem strony na origin panelu (H-F F3). Trzymały ją dwie własności,
+których nic nie pilnowało, a każdą łamie jedna odruchowa poprawka:
+
+1. **Zero skryptu i stylu w treści pliku.** Jej ścisła polityka (`PASSWORD_PAGE_CSP`) nie
+   ma `'unsafe-inline'`, więc dopisany `<script>` nie wykona się - a awaria byłaby CICHA:
+   strona wygląda tak samo, tylko formularz przestaje działać.
+2. **Pola hasła bez `name`.** Gdyby skrypt nie wstał, Enter w polu uruchomiłby wysyłkę
+   NATYWNĄ, a domyślną metodą formularza jest GET - czyli hasło w adresie, w historii
+   przeglądarki i w logu każdego pośrednika. Dziś nie przeszłoby, bo pola `name` nie mają,
+   ale jest to własność PRZYPADKOWA: `name` dopisuje się odruchowo.
+
+**To nie była podatność** - obie własności w chwili przeglądu obowiązywały. Były
+natomiast niezapisane. Odtąd pilnuje ich `app/src/__tests__/passwordPage.test.ts`
+(osiem asercji, w tym „strona nie prosi o nic poza hasłem": pole na token zamieniłoby
+link w kod do dyktowania, czego świadomie nie ma - D5). Formularz dostał przy okazji
+`method="post"` jako pas bezpieczeństwa na wypadek, gdyby `name` kiedyś doszło.
+
+### Czego przegląd świadomie NIE zmienił
+
+- **`POST /auth/password/reset` nie ma ograniczenia tempa** i to jest wybór, nie
+  przeoczenie: token ma 256 bitów, więc zgadywanie jest nieosiągalne, a odmowa przy
+  nieznanym tokenie kończy się na jednym odczycie po indeksie - `peek` stoi PRZED
+  polityką i przed skrótem, więc obcy token nie kupuje sobie ani jednego scryptu.
+  Limiter na tej trasie chroniłby przed niczym, a dołożyłby stan w pamięci procesu.
+- **`password_credentials` i `password_reset_tokens` NIE są tabelami skopowanymi klubem** -
+  poświadczenie należy do OSOBY, która bywa w kilku klubach naraz. Ta sama zasada, przez
+  którą na liście nie ma `pilots` ani `external_identities`.
+- **Kod pilota w loginie porównuje się bez zmiany wielkości liter po stronie klienta**
+  (aplikacja normalizuje do wersalików przed wysłaniem), a klucz limitu jest liczony
+  z loginu małymi literami - dzięki temu `AKO` i `ako` dzielą jeden kubełek prób
+  i zmiana wielkości liter nie mnoży limitu.

@@ -23,7 +23,7 @@ import type {
 import type { EventsStorePort } from '../src/application/common/ports.ts';
 import { PROJECTION_DIFF_LIMIT } from '../src/application/admin/projectionScan.ts';
 import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
-import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A } from './testWorld.ts';
 
@@ -511,12 +511,13 @@ describe('A11 · wygasłe refresh tokeny - jedyna operacja, która kasuje', () =
     // PRAWDZIWY refresh token. Bez tego liczby w asercjach opisywałyby zestaw testowy,
     // a nie scenariusz, o który pyta ekran.
     await harness.db.query('DELETE FROM refresh_tokens');
-    await harness.db.query(
-      `INSERT INTO refresh_tokens (org_id, token_hash, pilot_id, expires_at) VALUES
-         ('${ORG_A}', 'hash-martwy-stary',  'TMK', '2026-03-12T03:41:00.000Z'),
-         ('${ORG_A}', 'hash-martwy-swiezy', 'TMK', '2026-06-20T09:02:00.000Z'),
-         ('${ORG_A}', 'hash-zywy',          'TMK', '2026-09-01T00:00:00.000Z')`,
-    );
+    for (const [tokenHash, expiresAt] of [
+      ['hash-martwy-stary', '2026-03-12T03:41:00.000Z'],
+      ['hash-martwy-swiezy', '2026-06-20T09:02:00.000Z'],
+      ['hash-zywy', '2026-09-01T00:00:00.000Z'],
+    ] as const) {
+      await seedRefresh(harness.db, { tokenHash, pilotId: 'TMK', orgId: ORG_A, expiresAt });
+    }
   }
 
   const scan = async (harness: Harness, headers: Record<string, string>) =>

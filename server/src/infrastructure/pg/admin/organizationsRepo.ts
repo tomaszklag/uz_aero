@@ -24,6 +24,7 @@ import type {
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import { SqlFilter } from '../sqlFilter.ts';
+import { normalizeEmail } from '../../../domain/email.ts';
 
 interface OrgRow {
   id: string;
@@ -45,6 +46,11 @@ interface AdminRow {
   name: string;
   email: string | null;
   signed_in: boolean;
+  /** Najświeższa ŻYWA sesja w tym klubie; `null` = żadnej (2.1.0, issue #133 C9). */
+  last_seen_at: string | Date | null;
+  /** Żywe zaproszenie z platformy; oba `null` razem (2.1.0, issue #134 D5). */
+  invite_sent_at: string | Date | null;
+  invite_expires_at: string | Date | null;
 }
 
 /**
@@ -147,16 +153,17 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
       [org.id, org.name, org.slug, org.joinCode, at, org.createdBy],
     );
 
-    const existing = await tx.query<{ id: string }>(
-      'SELECT id FROM pilots WHERE lower(email) = lower($1)',
-      [org.admin.email],
-    );
+    // Adres jest loginem (§4.4): jeden napis i do wyszukania osoby, i do zapisu.
+    const adminEmail = normalizeEmail(org.admin.email);
+    const existing = await tx.query<{ id: string }>('SELECT id FROM pilots WHERE lower(email) = $1', [
+      adminEmail,
+    ]);
     let pilotId = existing.rows[0]?.id ?? org.admin.pilotId;
     if (existing.rows[0] == null) {
       await tx.query('INSERT INTO pilots (id, name, email, active) VALUES ($1, $2, $3, TRUE)', [
         pilotId,
         org.admin.name,
-        org.admin.email,
+        adminEmail,
       ]);
     }
 
@@ -200,8 +207,37 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
     if (orgIds.length === 0) return out;
 
     const { rows } = await db.query<AdminRow>(
+      // „WSZEDŁ" TO ODTĄD DWIE DROGI, NIE JEDNA (2.1.0, issue #134 D5). Do 2.1.0 pytanie
+      // brzmiało „czy ma tożsamość Google", bo innej drogi nie było. Od chwili, w której
+      // pierwszy administrator klubu wchodzi z linku i HASŁEM, sam warunek na
+      // `external_identities` opisywałby człowieka pracującego w panelu od miesiąca jako
+      // „nie zalogował się" - i kazałby wysyłać mu zaproszenie za zaproszeniem.
+      // Wiersz w `login_sessions` (żywy albo wygasły - te się nie kasują) odpowiada na to
+      // wprost: ktoś tym kontem wszedł.
       `SELECT m.org_id, m.pilot_id, m.code, p.name, p.email,
-              EXISTS (SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id) AS signed_in
+              (EXISTS (SELECT 1 FROM external_identities e WHERE e.pilot_id = p.id)
+               OR EXISTS (SELECT 1 FROM login_sessions g WHERE g.pilot_id = p.id)) AS signed_in,
+              (SELECT MAX(s.last_seen_at) FROM login_sessions s
+                WHERE s.pilot_id = p.id AND s.org_id = m.org_id AND s.revoked_at IS NULL)
+                AS last_seen_at,
+              -- ZAPROSZENIE: najświeższy NIEZUŻYTY link „ustaw hasło" wysłany Z PLATFORMY.
+              -- Wyzwalacz 'platform' odróżnia je od listu, który ta osoba wysłała sobie
+              -- sama - „zaproszenie wysłano" przy cudzym resecie hasła byłoby zdaniem
+              -- o czymś innym.
+              --
+              -- TERMINU NIE FILTRUJEMY TUTAJ i to nie jest niedopatrzenie: teraźniejszość
+              -- zna tu wyłącznie zegar BAZY, a ten stempel postawił zegar APLIKACJI
+              -- (pułapka docs/architektura-panelu-serwer.md §7.9 (j)). Zapytanie oddaje
+              -- więc termin, a rozstrzyga o nim czytelnik - panel i tak musi go napisać
+              -- („ważne 72 h"), więc tam ta liczba już jest.
+              (SELECT t.created_at FROM password_reset_tokens t
+                WHERE t.pilot_id = p.id AND t.triggered_by = 'platform'
+                  AND t.consumed_at IS NULL
+                ORDER BY t.created_at DESC LIMIT 1) AS invite_sent_at,
+              (SELECT t.expires_at FROM password_reset_tokens t
+                WHERE t.pilot_id = p.id AND t.triggered_by = 'platform'
+                  AND t.consumed_at IS NULL
+                ORDER BY t.created_at DESC LIMIT 1) AS invite_expires_at
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id
         WHERE m.org_id = ANY($1) AND m.role = 'admin' AND m.status = 'active'
@@ -217,6 +253,16 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
         email: row.email,
         code: row.code,
         signedIn: row.signed_in,
+        lastSeenAt: row.last_seen_at == null ? null : new Date(row.last_seen_at),
+        // Para albo nic: zaproszenie bez terminu ważności nie ma o czym powiedzieć
+        // karcie klubu, a termin bez chwili wysłania nie mówi, czy to jeszcze to samo.
+        invite:
+          row.invite_sent_at == null || row.invite_expires_at == null
+            ? null
+            : {
+                sentAt: new Date(row.invite_sent_at),
+                expiresAt: new Date(row.invite_expires_at),
+              },
       });
       out.set(row.org_id, admins);
     }

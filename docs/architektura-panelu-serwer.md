@@ -1486,6 +1486,19 @@ z `now()` SQL-a, bo porównuje się go z `memberships.created_at`, który też i
 aplikacji - świat testowy na sterowanym zegarze mieszał te dwie osie i liczba „zgłoszeń
 tym kodem" wychodziła zerem przy niepustej kolejce.
 
+**(k) W OTWARTEJ TRANSAKCJI CZYTA SIĘ WYŁĄCZNIE PRZEZ `tx` - odczyt cudzym uchwytem CZEKA
+(2026-09-17, H-B hasła).** Komenda panelu w `write.run(actor, tx => …)` zawołała
+`PgPilotsRepo.findById(id)` - adapter z WŁASNYM uchwytem do bazy (`this.db`). W produkcji
+(pula `pg`) to drugie połączenie i zapytanie by przeszło; w PGlite jest jedno połączenie,
+więc zapytanie spoza transakcji ustawia się w kolejce ZA nią i czeka na commit, którego
+nie będzie, bo transakcja czeka na to zapytanie. Objaw nie jest błędem, tylko LIMITEM
+CZASU testu (30 s) - i to na każdej trasie, która tę komendę woła (padł także test
+izolacji klubów, bo dopiero co dostał przypadek dla tej trasy). Reguła: dane potrzebne
+komendzie panelu w transakcji biorą się z portu, który JUŻ dostał `tx`
+(`PilotsAdminPort.byId(tx, …)`, `OrganizationsPlatformPort.byId(tx, …)`), albo czyta się
+je PRZED transakcją. Test architektury „komendy panelu nie mają uchwytu do bazy" tego nie
+łapie - komenda nie importowała `Database`, tylko port, który go miał w środku.
+
 
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 
@@ -1633,6 +1646,21 @@ rotacji w przeglądarce, brak wierszy w `refresh_tokens` z sesji biurkowych,
 **Czego NIE robić:** nie wydawać przeglądarce refresh tokenu „dla symetrii z telefonem".
 Symetria kupiłaby tu wyłącznie powierzchnię ataku.
 
+> **UZUPEŁNIENIE 2.1.0 (issue #133): sesja panelu MA ODTĄD WIERSZ.** „Bez refresh tokenu"
+> zostaje bez zmian - dochodzi natomiast `login_sessions` i claim `sid` w ciasteczku.
+> To nie jest drugie poświadczenie, tylko **nazwa** dla tego jednego: do 2.1.0 sesja panelu
+> nie istniała nigdzie poza podpisem, więc jedynym zdalnym wylogowaniem był młot
+> `credentials_valid_from`, zrywający wszystko naraz, na wszystkich urządzeniach.
+>
+> Z wiersza biorą się trzy rzeczy, których wcześniej nie dało się zrobić: lista urządzeń
+> w karcie członka i na `#/konto`, wylogowanie POJEDYNCZEJ sesji oraz „ostatnio aktywny".
+> Brama sprawdza unieważnienie W TYM SAMYM zapytaniu, co członkostwo (`authSnapshot`,
+> `LEFT JOIN` po trójce: sesja, osoba, klub) - drugie zapytanie na żądanie byłoby kosztem
+> bez zysku. **Brak `sid` PRZECHODZI** (token sprzed 2.1.0 - wdrożenie nie ma prawa
+> wylogować wszystkich naraz), **`sid` nieznany ODBIJA**: to dwa różne stany i mają takie
+> zostać. Panel dostaje `401 session_revoked` od razu, bo nie ma czego odświeżyć; trasy
+> telefonu zostają przy jednym `401`, a powód pada z odświeżenia (§6 tamtego dokumentu).
+
 ### 8.5 Świeża rola przy każdym żądaniu panelu
 
 8-godzinny JWT z rolą w claimach oznaczałby, że odebranie uprawnień działa dopiero
@@ -1691,6 +1719,25 @@ w sposób, w jaki API telefonu nigdy nie było. Rate-limit na `/auth/*`
 Minimalna forma wystarczająca przy tej skali: licznik w pamięci per IP i per login
 (okno 15 min, ~10 prób), bo instancja jest jedna. Gdy instancji będzie więcej -
 licznik w Postgresie; dopóki jest jedna, tabela to koszt bez zysku.
+
+> **UZUPEŁNIENIE 2.1.0: limity obejmują CAŁĄ rodzinę `/auth/password*`** i jest ich pięć,
+> bo pięć różnych rzeczy da się tu nadużyć (`application/common/attemptLimiter.ts`,
+> jeden egzemplarz, klucze rozróżnia przedrostek):
+>
+> | co | limit w oknie 15 min |
+> |---|---|
+> | logowanie hasłem | 10 na login, 30 na adres IP |
+> | „Nie pamiętam hasła" i „Załóż konto" | 3 na adres, 10 na adres IP |
+> | „Wyślij link" z panelu | 5 na osobę |
+> | zmiana hasła przez zalogowanego | 5 na osobę |
+>
+> **Limit stoi PRZED skrótem**, w pierwszych liniach `verifyPassword` - inaczej sam koszt
+> scryptu (N = 2¹⁷) byłby wektorem: dziesięć żądań na sekundę zajęłoby procesor, zanim
+> którekolwiek doszłoby do odmowy. Przekroczenie limitu wysyłki oddaje **to samo `202`**,
+> co wysyłka udana: inna odpowiedź byłaby jedyną różnicą między adresem znanym a obcym.
+> `POST /auth/password/reset` limitu NIE MA świadomie - token ma 256 bitów, a obcy token
+> odbija się na jednym odczycie po indeksie, przed polityką i przed skrótem (§15 pkt
+> „czego przegląd świadomie nie zmienił").
 
 ### 8.9 Dwa hosty: strona osobno od panelu i API (issue #124, 2026-09-16)
 

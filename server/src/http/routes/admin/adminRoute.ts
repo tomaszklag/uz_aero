@@ -28,12 +28,14 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { Actor, PlatformActor } from '../../../application/admin/ports.ts';
 import type {
+  LoginSessionsPort,
   MembershipAuthSnapshot,
   PilotsPort,
   TokenService,
 } from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
 import { authorizeOrg, authorizePlatform } from '../../authorize.ts';
+import { touchSession, type SessionActivity } from '../../sessionTouch.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /** Ścieżka API panelu. Statyczny build panelu stanie pod `/admin/*`. */
@@ -46,7 +48,7 @@ export const ADMIN_API_PREFIX = '/admin/api';
  * dwa wejścia (weryfikacja tokenu i odczyt członkostwa), a trzecie - gdyby kiedyś
  * doszło - ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
  */
-export interface AdminGate {
+export interface AdminGate extends SessionActivity {
   tokens: TokenService;
   /**
    * Członkostwa czytane PRZY KAŻDYM ŻĄDANIU panelu - patrz `authorizeOrg`. To ten sam
@@ -54,10 +56,16 @@ export interface AdminGate {
    * tabelę członkostw, bo to ci sami ludzie.
    */
   accounts: PilotsPort;
+  /**
+   * Sesje logowania (2.1.0) - brama KLUBU dostaje je razem z członkostwem, jednym
+   * zapytaniem (`authSnapshot`), ale brama PLATFORMOWA nie ma członkostwa, do którego
+   * mogłaby je dokleić, więc pyta tym portem.
+   */
+  sessions: LoginSessionsPort;
 }
 
 export interface AdminRouteSpec {
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Ścieżka WZGLĘDEM `ADMIN_API_PREFIX`, np. `/flags/:id/resolve`. */
   url: string;
   capability: Capability;
@@ -78,6 +86,7 @@ function actorFrom(account: MembershipAuthSnapshot, req: FastifyRequest): Actor 
     orgId: account.orgId,
     role: account.role,
     ip: req.ip ?? null,
+    sessionId: account.sessionId,
   };
 }
 
@@ -104,6 +113,7 @@ export function adminRoute(
       );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+      await touchSession(gate, req, outcome.account.sessionId);
       return handler(req, reply, actorFrom(outcome.account, req));
     },
   });
@@ -152,18 +162,28 @@ export function sessionRoute(
     handler: async (req, reply) => {
       const token = tokenFromRequest(req);
       if (token != null && gate.tokens.verifyPlatform(token) != null) {
-        const outcome = await authorizePlatform(gate.tokens, gate.accounts, token, 'platform.manage');
+        const outcome = await authorizePlatform(
+          gate.tokens,
+          gate.accounts,
+          gate.sessions,
+          token,
+          'platform.manage',
+        );
         if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+        await touchSession(gate, req, outcome.identity.sessionId);
         return handlers.platform(req, reply, {
           pilotId: outcome.identity.pilotId,
           platformRole: outcome.platformRole,
           ip: req.ip ?? null,
+          sessionId: outcome.identity.sessionId,
         });
       }
 
       const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, 'panel.access');
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
+
+      await touchSession(gate, req, outcome.account.sessionId);
 
       return handlers.org(req, reply, actorFrom(outcome.account, req));
     },
@@ -183,15 +203,18 @@ export function platformRoute(
       const outcome = await authorizePlatform(
         gate.tokens,
         gate.accounts,
+        gate.sessions,
         tokenFromRequest(req),
         spec.capability,
       );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
+      await touchSession(gate, req, outcome.identity.sessionId);
       return handler(req, reply, {
         pilotId: outcome.identity.pilotId,
         platformRole: outcome.platformRole,
         ip: req.ip ?? null,
+        sessionId: outcome.identity.sessionId,
       });
     },
   });

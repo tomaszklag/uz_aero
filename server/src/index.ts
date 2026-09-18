@@ -27,6 +27,8 @@ import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminBugReportQueries } from './application/admin/queries/bugReports.ts';
 import { AdminClubCodeQueries } from './application/admin/queries/clubCode.ts';
+import { AdminLoginSessionQueries } from './application/admin/queries/loginSessions.ts';
+import { AdminLoginSessionCommands } from './application/admin/commands/loginSessions.ts';
 import { AdminMembershipQueries } from './application/admin/queries/memberships.ts';
 import { PlatformOrganizationQueries } from './application/admin/queries/organizations.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
@@ -37,6 +39,7 @@ import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
+import { AccountQuery } from './application/common/queries/account.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
@@ -48,7 +51,7 @@ import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { BugReportCommands } from './application/mobile/commands/bugReports.ts';
-import { AttemptLimiter } from './application/mobile/attemptLimiter.ts';
+import { AttemptLimiter } from './application/common/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from './application/mobile/commands/join.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { TraceCommands } from './application/mobile/commands/traces.ts';
@@ -62,6 +65,14 @@ import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { ORG_SLUG_PATTERN } from './domain/organizations.ts';
 import { GoogleIdTokens } from './infrastructure/auth/googleIdTokens.ts';
+import { BaseUrlPasswordLinks } from './infrastructure/auth/resetLinks.ts';
+import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { LogMail } from './infrastructure/mail/logMail.ts';
+import { ResendMail } from './infrastructure/mail/resendMail.ts';
+import { PgPasswordCredentialsRepo } from './infrastructure/pg/common/passwordCredentialsRepo.ts';
+import { PgPasswordResetTokensRepo } from './infrastructure/pg/common/passwordResetTokensRepo.ts';
+import { AdminPasswordLinkCommands } from './application/admin/commands/passwordLinks.ts';
+import { PASSWORD_WINDOW_MS, PasswordCommands } from './application/common/commands/passwords.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgClubCodeRepo } from './infrastructure/pg/admin/clubCodeRepo.ts';
@@ -94,6 +105,8 @@ import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgExternalIdentitiesRepo } from './infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgLoginSessions } from './infrastructure/pg/common/loginSessionsRepo.ts';
+import { LastSeenThrottle } from './application/common/lastSeenThrottle.ts';
 import { PgMyEventsRepo } from './infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from './infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -159,6 +172,36 @@ const env = z
      */
     GOOGLE_WEB_CLIENT_ID: z.string().min(1),
     GOOGLE_ANDROID_CLIENT_ID: z.string().min(1).optional(),
+    /**
+     * POCZTA WYCHODZĄCA - WYMAGANA od 2.1.0 (`docs/logowanie-haslem.md` §5.4): „Nie pamiętam
+     * hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie wstał.
+     * `log` drukuje list do konsoli (dev; link da się kliknąć z terminala i NIE nadaje
+     * się na produkcję), `resend` wysyła naprawdę (`infrastructure/mail/resendMail.ts`).
+     */
+    MAIL_PROVIDER: z.enum(['log', 'resend']),
+    /**
+     * Klucz API dostawcy i nadawca (`Ninerdeck <konto@ninerdeck.pl>`) - WYMAGANE przy
+     * `MAIL_PROVIDER=resend`, nieczytane przy `log`. Wymóg jest WARUNKOWY, bo to samo
+     * `.env` obsługuje dev bez konta u dostawcy i produkcję, która bez tych dwóch
+     * wartości nie wyśle ani jednego linku „ustaw hasło" (zadanie właściciela #137).
+     */
+    MAIL_API_KEY: z.string().min(1).optional(),
+    MAIL_FROM: z.string().min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    // Konfiguracja POŁOWICZNA ma zatrzymać START, a nie pierwszy reset hasła o 22:00:
+    // adapter bez klucza albo bez nadawcy nie wyśle niczego, a odkryłoby się to dopiero
+    // wtedy, gdy ktoś zapomni hasła. Ta sama zasada, co przy rozdziale hostów niżej.
+    if (value.MAIL_PROVIDER !== 'resend') return;
+    for (const key of ['MAIL_API_KEY', 'MAIL_FROM'] as const) {
+      if (value[key] == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} jest wymagany przy MAIL_PROVIDER=resend`,
+        });
+      }
+    }
   })
   .parse(process.env);
 
@@ -198,6 +241,42 @@ const pilots = new PgPilotsRepo(db);
 // decyzje administratora o zgłoszeniach mają własny, w transakcji audytu - ta sama
 // zasada, co przy kontach (`PgPilotsRepo` czyta, `PgAdminPilotsRepo` pisze).
 const identities = new PgExternalIdentitiesRepo(db);
+const refreshTokens = new PgRefreshTokens(db, clock);
+const loginSessions = new PgLoginSessions(db, clock);
+// Przepustnica stempla „ostatnio aktywny" - JEDEN egzemplarz, wspólny dla obu bram.
+const lastSeen = new LastSeenThrottle();
+
+// Hasło jako DRUGA metoda logowania (2.1.0, issue #132). Jeden licznik prób dla logowania,
+// zmiany hasła i wysyłki linku - klucze rozróżnia przedrostek; jeden skrót (scrypt N=2¹⁷)
+// i jedna poczta. `MAIL_PROVIDER=log` jest adapterem DEV: list ląduje w konsoli serwera.
+const publicBaseUrl = env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`;
+const passwordHasher = new ScryptHasher();
+const passwordCredentials = new PgPasswordCredentialsRepo(db);
+const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+// Czym osoba może się zalogować (2.1.0, §5.3) - JEDNO zapytanie dla panelu (`#/konto`)
+// i telefonu (ustawienia, sekcja „Hasło"): obie powierzchnie pytają o to samo, bo
+// obecność hasła rozstrzyga u nich napis „Ustaw" kontra „Zmień".
+const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
+// Wybór adaptera poczty jest JAWNY i tylko tutaj: `log` drukuje token linku do konsoli,
+// więc nie ma prawa włączyć się sam z braku innej konfiguracji (`logMail.ts`).
+const mail =
+  env.MAIL_PROVIDER === 'resend'
+    ? new ResendMail(env.MAIL_API_KEY ?? '', env.MAIL_FROM ?? '')
+    : new LogMail();
+const passwords = new PasswordCommands(
+  db,
+  pilots,
+  passwordCredentials,
+  new PgPasswordResetTokensRepo(db),
+  refreshTokens,
+  passwordHasher,
+  mail,
+  new BaseUrlPasswordLinks(publicBaseUrl),
+  passwordLimiter,
+  clock,
+  randomUUID,
+  loginSessions,
+);
 
 // Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
 // w `exported_sheets` → wpis w `export_log` → link w sync-status, serwowany pod
@@ -206,7 +285,7 @@ const identities = new PgExternalIdentitiesRepo(db);
 // `PUBLIC_BASE_URL` = adres panelu i API widziany z zewnątrz - linki do kart muszą być
 // klikalne z telefonu, nie z localhosta serwera. Przy rozdziale hostów (issue #124) to
 // jest host APLIKACJI, nie strony: trasa `/sheets/…` na hoście strony nie istnieje.
-const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
+const sheets = new PgSheets(db, publicBaseUrl, clock);
 // Eksporter dostaje projekcję sesji, bo karta jest DOBĄ SAMOLOTU (§4.7): jej skład -
 // które zmiany przejęły maszynę tego dnia i czy zostały zdane - czyta się z `sessions`,
 // a nie ze strumienia. Strumień wchodzi dopiero per sesja, po tabelę lotów.
@@ -277,7 +356,7 @@ const app = await buildServer({
   // podstawiają weryfikator z kluczem w procesie zamiast chodzić do Google.
   auth: new AuthCommands(
     pilots,
-    new PgRefreshTokens(db, clock),
+    refreshTokens,
     identities,
     new GoogleIdTokens(
       { panel: env.GOOGLE_WEB_CLIENT_ID, mobile: env.GOOGLE_ANDROID_CLIENT_ID ?? null },
@@ -287,7 +366,23 @@ const app = await buildServer({
     clock,
     // Identyfikator NOWEJ osoby przy pierwszym logowaniu (wielofirmowość §4).
     randomUUID,
+    { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
+    loginSessions,
+    db,
   ),
+  passwords,
+  loginSessions,
+  lastSeen,
+  clock,
+  // Link „ustaw hasło" z panelu - ta sama brama audytu, te same adaptery członków
+  // i klubów, co reszta panelu, plus wspólna komenda hasła (jeden list, jeden token).
+  adminPasswordLinks: new AdminPasswordLinkCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    organizationsRepo,
+    passwords,
+  ),
+  googleAndroidClientId: env.GOOGLE_ANDROID_CLIENT_ID ?? null,
   // Dołączanie kodem klubu (§3.8): adapter z własnym uchwytem do bazy (pilot pisze sam,
   // poza audytem) i licznik prób w pamięci procesu - instancja jest jedna (§8.8).
   join: new JoinCommands(
@@ -347,13 +442,17 @@ const app = await buildServer({
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
-  adminMeQueries: new AdminMeQueries(pilots),
+  adminMeQueries: new AdminMeQueries(pilots, accountQuery),
+  // Czym osoba może się zalogować - JEDEN egzemplarz dla obu powierzchni (2.1.0):
+  // panel czyta go przez `AdminMeQueries.account`, telefon trasą `GET /me/account`.
+  accounts: accountQuery,
   // Konta (A06/A06a). Po wejściu Google konto nie dostaje żadnego poświadczenia:
   // dostęp daje dopiero podpięcie konta Google o wpisanym tu adresie e-mail.
   adminPilots: new AdminPilotCommands(
     auditedWrite,
     adminPilotsRepo,
     new PgAdminRefreshTokensRepo(),
+    loginSessions,
     randomUUID,
     clock,
   ),
@@ -365,6 +464,13 @@ const app = await buildServer({
   // Kod klubu: `randomBytes` jako funkcja, nie port - losowość nie jest domeną, a kod
   // musi być nieprzewidywalny, bo wisi w hangarze przez cały sezon.
   adminClubCode: new AdminClubCodeCommands(auditedWrite, clubCodeRepo, randomBytes, clock),
+  adminLoginSessionQueries: new AdminLoginSessionQueries(db, loginSessions),
+  adminLoginSessions: new AdminLoginSessionCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    loginSessions,
+    clock,
+  ),
   adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
   // Moduł Organizacje - jedyna komenda panelu działająca POZA klubem (`PlatformActor`,
   // wpis audytu z pustym `org_id`). Zakłada klub razem z pierwszym administratorem,

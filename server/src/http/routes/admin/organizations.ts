@@ -16,10 +16,13 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
 import type { PlatformOrganizationCommands } from '../../../application/admin/commands/organizations.ts';
+import type { AdminPasswordLinkCommands } from '../../../application/admin/commands/passwordLinks.ts';
 import { organizationDetail } from '../../../application/admin/mappers/organizationListItem.ts';
 import type { PlatformOrganizationQueries } from '../../../application/admin/queries/organizations.ts';
 import { isOrgSlug, ORG_SLUG_MAX_LENGTH } from '../../../domain/organizations.ts';
+import { tooManyAttempts } from '../common/password.ts';
 import { platformRoute, type AdminGate } from './adminRoute.ts';
+import { passwordLinkRefusal } from './passwordLinkWire.ts';
 import { pilotCode, pilotName } from './pilotFields.ts';
 
 /**
@@ -69,12 +72,42 @@ const listQuery = z.object({
 
 const idParams = z.object({ id: z.string().min(1).max(100) });
 
+const inviteParams = z.object({
+  id: z.string().min(1).max(100),
+  pilotId: z.string().min(1).max(100),
+});
+
 export function registerPlatformOrganizationRoutes(
   app: FastifyInstance,
   organizations: PlatformOrganizationCommands,
   queries: PlatformOrganizationQueries,
+  /** Zaproszenie pierwszego administratora (2.1.0, D8) - ten sam list, co reset hasła. */
+  passwordLinks: AdminPasswordLinkCommands,
   gate: AdminGate,
 ): void {
+  /**
+   * „Wyślij ponownie" na karcie klubu (mockup `organizacje-klub`; 2.1.0,
+   * `docs/logowanie-haslem.md` §5.4, D8): list z linkiem „ustaw hasło" ważnym 72 h do
+   * administratora TEGO klubu. Cudzy klub i osoba, która nie jest jego administratorem,
+   * to jedno `404`. Odpowiedź niesie adres i termin - nigdy link.
+   */
+  platformRoute(
+    app,
+    gate,
+    { method: 'POST', url: '/organizations/:id/admins/:pilotId/invite', capability: 'platform.manage' },
+    async (req, reply, actor) => {
+      const params = inviteParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await passwordLinks.invite(actor, params.data.id, params.data.pilotId);
+      if (!outcome.ok) {
+        if (outcome.reason === 'rate_limited') return tooManyAttempts(reply, outcome.retryAfterSec);
+        return passwordLinkRefusal(reply, outcome.reason);
+      }
+      return reply.send({ sentTo: outcome.result.sentTo, expiresAt: outcome.result.expiresAt.toISOString() });
+    },
+  );
+
   platformRoute(
     app,
     gate,
@@ -104,10 +137,24 @@ export function registerPlatformOrganizationRoutes(
       const outcome = await organizations.create(actor, body.data);
       if (!outcome.ok) return refusal(reply, outcome);
 
+      // Zaproszenie PIERWSZEGO administratora (2.1.0, D8) - list z linkiem „ustaw hasło"
+      // (72 h) idzie razem z założeniem klubu, ale PO nim: klub jest faktem niezależnie
+      // od poczty. Gdy list nie wyszedł, karta klubu pokazuje to samo „Wyślij ponownie",
+      // co przy wygasłym zaproszeniu - stąd `invite: null` zamiast odmowy.
+      const wanted = body.data.admin.email.toLowerCase();
+      const admin = outcome.result.admins.find((a) => a.email?.toLowerCase() === wanted);
+      const invited = admin == null ? null : await passwordLinks.invite(actor, outcome.result.id, admin.pilotId);
+
       // Mapper TEN SAM, co na liście: kod klubu w zapisie kanonicznym i stemple jako
       // ISO 8601 składa serwer, więc odpowiedź mutacji ma kształt wiersza, który panel
       // właśnie odświeży. Oddanie tu modelu portu dałoby dwa kształty jednego klubu.
-      return reply.code(201).send({ organization: organizationDetail(outcome.result) });
+      return reply.code(201).send({
+        organization: organizationDetail(outcome.result),
+        invite:
+          invited?.ok === true
+            ? { sentTo: invited.result.sentTo, expiresAt: invited.result.expiresAt.toISOString() }
+            : null,
+      });
     },
   );
 

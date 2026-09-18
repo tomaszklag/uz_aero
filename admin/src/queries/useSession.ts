@@ -12,27 +12,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PanelSessionDto } from '../api/dto';
 import { isHttpError } from '../api/httpClient';
 import {
-  googleClient,
+  changePassword,
+  forgotPassword,
   login,
+  loginWithPassword,
   logout,
   me,
+  methods,
+  myAccount,
+  mySessions,
+  revokeMySession,
   switchScope,
+  type ChangePasswordInput,
   type LoginInput,
+  type PasswordLoginInput,
 } from '../api/session';
 import { keys } from './keys';
-
-/**
- * Identyfikator klienta Google - konfiguracja, nie dane: nie zmienia się w trakcie
- * życia strony, więc `staleTime: Infinity`. Bez niego ekran logowania nie ma jak
- * narysować przycisku, a błąd pobrania jest błędem sieci, nie logowania.
- */
-export function useGoogleClient() {
-  return useQuery({
-    queryKey: keys.googleClient,
-    queryFn: () => googleClient(),
-    staleTime: Infinity,
-  });
-}
 
 /**
  * Sesja jako zapytanie, nie jako stan.
@@ -59,6 +54,20 @@ export function useSession() {
   });
 }
 
+/**
+ * Metody logowania tego wdrożenia (2.1.0) - pytanie zadawane PRZED sesją.
+ *
+ * `staleTime: Infinity`, jak przy identyfikatorze klienta: to konfiguracja serwera,
+ * a nie dane, więc w trakcie życia strony nie ma jak się zmienić.
+ */
+export function useAuthMethods() {
+  return useQuery({
+    queryKey: keys.authMethods,
+    queryFn: () => methods(),
+    staleTime: Infinity,
+  });
+}
+
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
@@ -67,6 +76,68 @@ export function useLogin() {
       // Odpowiedź logowania JEST sesją - wpisujemy ją wprost, zamiast dokładać
       // drugie żądanie `/me` i migotanie ekranu tuż po wejściu.
       qc.setQueryData(keys.me, session);
+    },
+  });
+}
+
+/**
+ * Logowanie hasłem - kończy się dokładnie tam, gdzie Google, więc i tutaj odpowiedź
+ * JEST sesją. Dwie mutacje zamiast jednej z wariantem, bo mają różne ciała i różne
+ * odmowy; wspólne jest wyłącznie to, co dzieje się PO sukcesie.
+ */
+export function usePasswordLogin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: PasswordLoginInput) => loginWithPassword(input),
+    onSuccess: (session) => {
+      qc.setQueryData(keys.me, session);
+    },
+  });
+}
+
+/**
+ * „Nie pamiętam hasła". Bez unieważnień: ta mutacja niczego w panelu nie zmienia -
+ * wysyła list i tyle. Powodzenie znaczy WYŁĄCZNIE „serwer przyjął prośbę", bo
+ * odpowiedź jest ta sama dla adresu znanego i nieznanego.
+ */
+export function useForgotPassword() {
+  return useMutation({ mutationFn: (email: string) => forgotPassword(email) });
+}
+
+/** Moje konto: adres i metody logowania (`#/konto`, karta „Logowanie"). */
+export function useMyAccount() {
+  return useQuery({ queryKey: keys.account.profile, queryFn: () => myAccount() });
+}
+
+/** Moje urządzenia - wszystkie powierzchnie i kluby tej osoby. */
+export function useMySessions() {
+  return useQuery({ queryKey: keys.account.sessions, queryFn: () => mySessions() });
+}
+
+/**
+ * Ustawienie albo zmiana hasła.
+ *
+ * Unieważnia CAŁY korzeń konta, bo zapis zmienia OBIE jego części naraz: dokłada
+ * metodę („hasło") i gasi pozostałe sesje. Lista urządzeń skróci się dzięki temu sama -
+ * a to jest właśnie ta rzecz, którą ekran obiecuje pod przyciskiem.
+ */
+export function useChangePassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ChangePasswordInput) => changePassword(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.account.all });
+    },
+  });
+}
+
+/** „Wyloguj" przy wierszu własnego urządzenia. */
+export function useRevokeMySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => revokeMySession(sessionId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.account.sessions });
     },
   });
 }

@@ -99,6 +99,14 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
 }
 
 /**
+ * `PUT`, a nie `PATCH`: hasło nie ma części, więc nie ma czego opisywać różnicą -
+ * żądanie podaje wartość docelową w komplecie (`PUT /me/password`, 2.1.0).
+ */
+export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return (await request(path, mutation('PUT', body))) as T;
+}
+
+/**
  * `DELETE` - jedyna mutacja bez ciała po obu stronach.
  *
  * Serwer odpowiada `204`, więc `parse` oddaje `null` i typ zwrotny jest `void`:
@@ -109,7 +117,7 @@ export async function apiDelete(path: string): Promise<void> {
 }
 
 /** Nagłówek CSRF i JSON-owe ciało w jednym miejscu - mutacje różnią się metodą. */
-function mutation(method: 'POST' | 'PATCH' | 'DELETE', body: unknown): RequestInit {
+function mutation(method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', body: unknown): RequestInit {
   return {
     method,
     headers: {

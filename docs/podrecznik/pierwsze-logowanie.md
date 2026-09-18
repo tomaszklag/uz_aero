@@ -1,10 +1,14 @@
 # Pierwsze logowanie i PIN
 
-> Konto zakłada się kontem Google, a do klubu wchodzi się kodem klubu - o przyjęciu decyduje jego administrator. Na co dzień aplikację odblokowuje PIN, także bez internetu.
+> Konto zakłada się kontem Google **albo e-mailem i hasłem**, a do klubu wchodzi się kodem klubu - o przyjęciu decyduje jego administrator. Na co dzień aplikację odblokowuje PIN, także bez internetu.
 
 ## Jak to przebiega
 
-1. **Zaloguj się kontem Google.** Tapnij **Kontynuuj z Google** i wybierz konto. Aplikacja bierze z niego tylko imię i adres e-mail - żeby administrator wiedział, kto się zgłasza. Haseł nie ma ani w aplikacji, ani w panelu.
+1. **Zaloguj się.** Są dwie drogi i obie prowadzą do tego samego konta:
+   - **na własnym telefonie - kontem Google.** Tapnij **Kontynuuj z Google** i wybierz konto. Aplikacja bierze z niego tylko imię i adres e-mail - żeby administrator wiedział, kto się zgłasza.
+   - **na wspólnym tablecie w samolocie - e-mailem albo kodem pilota i hasłem.** Tapnij **ZALOGUJ SIĘ HASŁEM**. Na cudzym urządzeniu nie dodajesz swojego konta Google, a tablet i tak pamięta, dla jakiego klubu pracuje - więc wystarczą Twoje trzy litery kodu pilota i hasło. Hasło ustawia się raz, [w ustawieniach](ustawienia) albo linkiem z e-maila (niżej).
+
+   @screen 00a-login-full "Logowanie Google" | 00f-login-haslo "Logowanie hasłem"
 2. **Wpisz kod klubu.** Kod dostajesz od administratora - z tablicy w hangarze, z grupy klubowej albo z ręki; to siedem znaków z myślnikiem w środku, np. `AZG-7K4M`. Wielkość liter i myślnik nie mają znaczenia. Po wpisaniu powstaje zgłoszenie do tego klubu. Szerzej: [kluby i dołączanie](kluby-i-dolaczanie).
 3. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `TMK`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
 4. **Ustaw PIN.** Po zatwierdzeniu aplikacja prosi o PIN. Od tej chwili to nim wchodzisz do aplikacji - bez internetu.
@@ -26,6 +30,18 @@ Google potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w 
 > **Dlaczego tak.** Rejestracja jest otwarta dla każdego, kto ma konto Google, ale bramką jest przyjęcie do klubu - klub zna swoich pilotów, a administrator nie musi nikomu przekazywać haseł ani ich resetować. Kod klubu otwiera drzwi do poczekalni; do klubu wpuszcza człowiek.
 
 > **Dlaczego tak.** Logowanie to jednorazowe zaufanie telefonowi i wymaga sieci; codzienne wejście nie może od niej zależeć, bo dzień lotny często zaczyna się bez zasięgu. Stąd PIN.
+
+## Nie pamiętam hasła
+
+Na ekranie logowania hasłem wybierz **Nie pamiętam hasła**, podaj swój adres e-mail i tapnij **WYŚLIJ LINK**. Na skrzynkę przyjdzie list z linkiem ważnym godzinę. Otwórz go **na dowolnym urządzeniu** - także na własnym telefonie, na którym czytasz pocztę - ustaw hasło na stronie i wróć zalogować się tam, gdzie pracujesz.
+
+Ta sama droga USTAWIA pierwsze hasło, jeśli go jeszcze nie masz, bo dotąd wchodziłeś kontem Google. Nie trzeba niczego „przypominać" - link po prostu ustawia nowe.
+
+@screen 00g-link-hasla "Prośba o link" | 00h-zaloz-konto "Zakładanie konta"
+
+Aplikacja odpowiada zawsze tym samym zdaniem, niezależnie od tego, czy zna podany adres. Nie jest to wykręt: inna odpowiedź mówiłaby każdemu, kto zna ten ekran, czy dana osoba ma tu konto.
+
+> **Nie masz jeszcze konta?** Na ekranie logowania hasłem wybierz **Załóż konto**, podaj imię, nazwisko i adres. Konto powstanie w chwili, gdy ustawisz hasło z linku - adres jest wtedy potwierdzony samym kliknięciem. Potem zalogujesz się hasłem i aplikacja poprosi o kod klubu, jak każdego innego: **założenie konta nie omija decyzji administratora**.
 
 ## Nie pamiętam PIN-u
 
@@ -50,3 +66,7 @@ Wylogowanie jest w [ustawieniach](ustawienia), na samym końcu. Nie zadziała, d
 - **„Za dużo prób"** → kodu nie da się zgadywać: po kilku nieudanych próbach aplikacja każe odczekać kilkanaście minut i mówi, ile.
 - **Aplikacja mówi, że konto jest wyłączone** → administrator wyłączył Twoje członkostwo w tym klubie; sprawa do wyjaśnienia w klubie. W pozostałych swoich klubach latasz dalej.
 - **Nie mogę się wylogować ani użyć „Nie pamiętam PIN"** → na telefonie czekają niewysłane zapisy. Wróć do zasięgu, poczekaj, aż plakietka OFFLINE zniknie, i spróbuj ponownie.
+- **Nie dostałem listu z linkiem** → zajrzyj do spamu i sprawdź, czy podałeś adres, który klub ma zapisany (ten sam, na który przychodzą inne wiadomości z Ninerdeck). Listów wychodzi najwyżej trzy na adres w kwadransie - jeśli prosiłeś kilka razy, poczekaj i spróbuj raz. Administrator klubu może wysłać ten sam list z panelu.
+- **„Link wygasł albo został użyty"** → link działa godzinę i tylko raz, a każdy nowy unieważnia poprzedni - jeśli prosiłeś dwa razy, działa wyłącznie ten z ostatniego listu. Poproś o nowy.
+- **„Nieprawidłowy e-mail, kod albo hasło"** → to jedna odpowiedź na trzy sytuacje: nie ma takiego loginu, konto nie ma jeszcze hasła albo hasło jest inne. Jeśli dotąd wchodziłeś kontem Google, prawdopodobnie zachodzi druga - ustaw hasło przez **Nie pamiętam hasła**.
+- **Wpisuję kod pilota, a aplikacja go nie zna** → kod pilota działa w klubie, dla którego pracuje to urządzenie. Jeśli tablet obsługuje kilka klubów, sprawdź pigułkę z nazwą klubu pod logo i w razie potrzeby wybierz **Zmień klub**. Na świeżym urządzeniu, które nie zna jeszcze żadnego klubu, zaloguj się adresem e-mail.

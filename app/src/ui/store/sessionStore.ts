@@ -606,6 +606,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         // KAŻDY przebieg, także nieudany - to jest cała treść tego pola.
         lastAttemptAt: Date.now(),
       }));
+      // SESJA ZERWANA ZDALNIE (2.1.0, D7) - baner stoi na 00 i w ustawieniach, czyli
+      // poza tym store'em. Stan tożsamości należy do `authStore`, a ten dowiaduje się
+      // o zdarzeniu WYŁĄCZNIE tędy: sam z siebie nie rozmawia z serwerem po starcie.
+      // Znacznik siedzi już w magazynie (postawił go `AuthService.rotate`), więc to
+      // jest odświeżenie widoku, a nie druga definicja tego samego faktu.
+      if (outcome.kind === 'auth_revoked') useAuthStore.setState({ revoked: true });
     },
 
     async syncNow(trigger) {

@@ -16,3 +16,4 @@ export * from './gps/replayGpsAdapter';
 // Czyste klasy (magazyn wstrzykiwany) - AsyncStorage podaje wołający, barrel go nie wciąga.
 export * from './prefs/themePrefsStore';
 export * from './prefs/taskMemoryStore';
+export * from './prefs/deviceClubsStore';

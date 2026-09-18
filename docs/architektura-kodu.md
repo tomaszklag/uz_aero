@@ -1447,6 +1447,38 @@ w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie pro
 
 Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i komendy nie mogą się dowiedzieć, że coś się zmieniło.
 
+### Nowa metoda logowania (2.1.0, `docs/logowanie-haslem.md`)
+
+Produkt ma dziś dwie - Google i hasło - i to jest cała nauka z dołożenia drugiej:
+**metoda dostarcza DOWÓD, a nie dostęp.** Wszystko, co dzieje się po ustaleniu osoby,
+jest wspólne i nowa metoda nie ma prawa tego powtórzyć.
+
+1. **Serwer: nowy dowód, ten sam rdzeń.** Napisz funkcję, która z czegokolwiek (token
+   dostawcy, hasło, cokolwiek przyjdzie) wyprowadza `PilotAccount` albo odmowę - i zakończ
+   ją wywołaniem `AuthCommands.enterMobile` / `enterPanel`. To one wybierają klub, sprawdzają
+   członkostwo, zakładają sesję i wydają tokeny. **Trzecia kopia wyboru klubu jest trzecim
+   miejscem, w którym ktoś napisze go po swojemu** - `loginWithGoogle` i `loginWithPassword`
+   różnią się DOKŁADNIE dowodem i niczym więcej.
+2. **Odmowa nie ma prawa wyliczać kont.** Jedna odpowiedź na „nie znam", „nie ma
+   poświadczenia" i „złe poświadczenie"; koszt odmowy taki sam jak przyjęcia (skrót
+   ZASTĘPCZY przy nieznanym loginie); limit PRZED kosztowną częścią, nie po niej.
+3. **Aplikacja: odmowy są WYNIKAMI, nie wyjątkami.** `ServerPort` oddaje unię
+   (`PasswordLoginResult`), bo każda odmowa ma na ekranie inne miejsce - przy polu albo
+   w przycisku (issue #55). Wyjątek zostaje dla braku sieci i dla rzeczy, których ekran
+   nie umie nazwać.
+4. **`GET /auth/methods` mówi, co UMIE WDROŻENIE**, a ekran to czyta zamiast zakładać.
+   Bez klienta Google przycisk Google znika W CAŁOŚCI, a nie jest wyszarzony (zasada z 02G
+   i 10B). Dopóki odpowiedzi nie ma, stoją OBIE drogi: metoda znana lokalnie nie może
+   zniknąć przez nieudany odczyt.
+5. **Każda żywa sesja ma wiersz** (`login_sessions`, `sid` w claimach) - inaczej nie da
+   się jej ani pokazać, ani wyłączyć pojedynczo. Rotacja ZACHOWUJE sesję, przełączenie
+   klubu zakłada NOWĄ: para tokenów jest parą DLA KLUBU.
+6. **Nowa trasa płaci za dwa strażniki serwera**: przypadek w `tenantIsolation.test.ts`
+   (albo imienny wyjątek z powodem) i `org_id` w SQL-u, jeśli dotyka tabeli skopowanej.
+7. **Polityka poświadczenia mieszka w domenie**, a liczą ją obie strony z tej samej funkcji.
+   Powierzchnia bez dostępu do `@ninerdeck/domain` (strona `/haslo/`) trzyma LUSTRO
+   z testem równości - nigdy drugą implementację bez strażnika.
+
 ---
 
 ## 8. Testy

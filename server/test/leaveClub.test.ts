@@ -24,7 +24,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, seedRefresh, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_B, seedBetaFleet } from './testWorld.ts';
 
@@ -172,11 +172,13 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
 
     // Telefon przełącza się na klub, w którym PWI nadal jest (najświeższy refresh).
     clock.advance(60_000);
-    await db.query(
-      `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, expires_at, created_at)
-       VALUES ('pwi-beta', 'PWI', $1, $2, $3)`,
-      [ORG_B, new Date(clock.now().getTime() + 86_400_000), clock.now()],
-    );
+    await seedRefresh(db, {
+      tokenHash: 'pwi-beta',
+      pilotId: 'PWI',
+      orgId: ORG_B,
+      expiresAt: new Date(clock.now().getTime() + 86_400_000),
+      createdAt: clock.now(),
+    });
     const inBeta = await login(app, 'PWI');
     expect(inBeta.json().org.id).toBe(ORG_B);
 

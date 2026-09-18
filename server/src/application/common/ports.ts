@@ -25,6 +25,7 @@ import type {
 
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
+import type { LoginMethod, RevokedBy, SessionSurface } from '../../domain/loginSessions.ts';
 import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
@@ -139,10 +140,44 @@ export interface MembershipAuthSnapshot {
   credentialsValidFrom: Date | null;
   /** To samo dla CZŁONKOSTWA (`memberships.credentials_valid_from`, §3.4). */
   membershipCredentialsValidFrom: Date | null;
+  /**
+   * Czy SESJA z tokenu już nie żyje (2.1.0, §6): token niósł `sid`, a wiersza nie ma
+   * albo ma stempel unieważnienia. `false` także wtedy, gdy token `sid`-a NIE MIAŁ -
+   * to poświadczenie sprzed 2.1.0 i przechodzi do wygaśnięcia, bo wdrożenie nie ma
+   * prawa wylogować wszystkich naraz.
+   *
+   * TERMINU sesji ta flaga nie sprawdza i nie musi: sesja panelu wygasa razem
+   * z ciasteczkiem, a sesja telefonu razem z refreshem, który jest DŁUŻSZY niż token
+   * dostępu - więc token, który dożył tu z martwą sesją, i tak znika w ciągu godziny.
+   * Termin bada `LoginSessionsPort.find` na ścieżce rotacji, gdzie naprawdę waży.
+   */
+  sessionRevoked: boolean;
+  /**
+   * SESJA, z której przyszło żądanie (claim `sid`); `null` = poświadczenie sprzed 2.1.0.
+   *
+   * Echo argumentu, a nie kolumna z wiersza - i to jest różnica istotna: gdyby brać
+   * `login_sessions.id` ze złączenia, sesja NIEZNANA dawałaby tu `null`, czyli to samo,
+   * co jej brak. Wołający potrzebują odwrotnej informacji: „to żądanie przyszło z TEJ
+   * sesji" - żeby ją ostemplować jako aktywną (§6) i żeby zmiana hasła umiała wylogować
+   * wszystkie POZA NIĄ (§5.3).
+   */
+  sessionId: string | null;
 }
 
 export interface PilotsPort {
   findById(id: string): Promise<PilotAccount | null>;
+  /**
+   * Osoba po adresie e-mail - LOGIN hasłem (2.1.0, §5.1) i cel listu „ustaw hasło".
+   * Porównanie bez względu na wielkość liter (`idx_pilots_email_lower`); `null` = nikt.
+   */
+  findByEmail(email: string): Promise<PilotAccount | null>;
+  /**
+   * Osoba po KODZIE PILOTA w klubie - druga postać loginu hasłem: kod jest jedyny
+   * W KLUBIE, nie na serwerze, więc bez klubu pytanie nie ma odpowiedzi. Członkostwo
+   * w DOWOLNYM stanie: o dostępie rozstrzyga potem wspólny rdzeń logowania, nie to
+   * wyszukanie. `null` = nikt w tym klubie nie ma tego kodu.
+   */
+  findByCode(orgId: string, code: string): Promise<PilotAccount | null>;
   /**
    * Wszystkie członkostwa osoby, w porządku nazwy klubu - logowanie wybiera z nich
    * klub aktywny, ekran 13a pokazuje przełącznik przy więcej niż jednym.
@@ -151,7 +186,30 @@ export interface PilotsPort {
   /** Członkostwo w JEDNYM klubie; `null` = osoba nie należy do tego klubu. */
   membership(pilotId: string, orgId: string): Promise<Membership | null>;
   /** Projekcja dla bramy panelu: rola, aktywność i znaczniki unieważnienia w klubie z tokenu. */
-  authSnapshot(pilotId: string, orgId: string): Promise<MembershipAuthSnapshot | null>;
+  /**
+   * `sessionId` z claimu `sid`; `null` = token sprzed 2.1.0. Sesja dołącza się do TEGO
+   * SAMEGO zapytania (`LEFT JOIN`), a nie drugim odczytem: brama pada przy każdym żądaniu
+   * panelu i telefonu, więc jej koszt jest kosztem całego serwera.
+   */
+  authSnapshot(
+    pilotId: string,
+    orgId: string,
+    sessionId: string | null,
+  ): Promise<MembershipAuthSnapshot | null>;
+  /**
+   * NOWA OSOBA z rejestracji e-mailem (§5.4a) - bez członkostwa, jak po pierwszym
+   * logowaniu Googlem. W cudzej transakcji, bo powstaje RAZEM z hasłem przy realizacji
+   * linku. Gdy adres w międzyczasie zajęła inna osoba (wyścig z pierwszym logowaniem
+   * Googlem), oddaje JEJ identyfikator - kliknięcie w link dowiodło władzy nad skrzynką,
+   * a o nic więcej ustawienie hasła nie pyta.
+   */
+  insertPerson(tx: Queryable, person: { id: string; name: string; email: string }): Promise<{ pilotId: string }>;
+  /**
+   * Unieważnia KAŻDE poświadczenie osoby wydane przed `at` (`pilots.credentials_valid_from`):
+   * token dostępu, token osoby i sesja panelu sprzed tej chwili nie przechodzą bramy.
+   * Reset hasła zakłada, że stare hasło mogło wyciec (§4.2), więc zrywa wszystko.
+   */
+  revokeCredentials(tx: Queryable, pilotId: string, at: Date): Promise<void>;
 }
 
 /**
@@ -195,6 +253,15 @@ export interface Identity {
   orgId: string;
   code: string;
   role: PilotRole;
+  /**
+   * SESJA LOGOWANIA (claim `sid`, 2.1.0 §6) - wiersz `login_sessions`, który brama
+   * sprawdza przy KAŻDYM żądaniu. Dzięki niemu „Wyloguj to urządzenie" odbija następne
+   * żądanie od razu, zamiast czekać na wygaśnięcie tokenu albo zrywać wszystkie
+   * poświadczenia osoby (`credentials_valid_from` - młot, który zdejmuje też telefon
+   * w powietrzu). Obowiązkowy przy podpisywaniu: token bez sesji umie wydać wyłącznie
+   * serwer sprzed 2.1.0.
+   */
+  sessionId: string;
 }
 
 /**
@@ -204,7 +271,7 @@ export interface Identity {
  * podpisuje, i sam ją wpisuje z zegara. Osobny typ zamiast pola opcjonalnego w
  * `Identity`, żeby żaden wołający `sign` nie mógł tej wartości podać ani zapomnieć.
  */
-export interface VerifiedIdentity extends Identity {
+export interface VerifiedIdentity extends Omit<Identity, 'sessionId'> {
   /**
    * `iat` w SEKUNDACH epoki (RFC 7519). `0` = token sprzed wprowadzenia claimu
    * (`pilots.credentials_valid_from`) - czyli „wydany przed czasem", więc każde
@@ -212,6 +279,13 @@ export interface VerifiedIdentity extends Identity {
    * go obejmuje. Domyślna wartość idzie w stronę BEZPIECZNĄ, nigdy w stronę zaufania.
    */
   issuedAt: number;
+  /**
+   * `null` = token wydany PRZED 2.1.0, czyli bez sesji w bazie. Brama przyjmuje taki
+   * token do jego wygaśnięcia (1 h dostępu, 8 h ciasteczka panelu) - inaczej wdrożenie
+   * wylogowałoby wszystkich naraz - ale `sid` NIEZNANY albo unieważniony odbija zawsze.
+   * Te dwa stany muszą zostać rozróżnialne, stąd `null` zamiast pustego napisu.
+   */
+  sessionId: string | null;
 }
 
 /**
@@ -226,6 +300,15 @@ export interface VerifiedIdentity extends Identity {
  */
 export interface PersonIdentity {
   pilotId: string;
+  /**
+   * CZYM ta osoba się zalogowała - niesione przez token, bo nie ma tego gdzie przeczytać.
+   *
+   * Token osoby sesji NIE ZAKŁADA (nie ma czego wylogowywać), ale `GET /auth/memberships`
+   * wymienia go na tokeny KLUBU i dopiero tam sesja powstaje - a wtedy jedynym miejscem,
+   * które pamięta, czy człowiek wszedł Googlem czy hasłem, jest ten token. Bez tego claimu
+   * każda sesja z tej drogi musiałaby kłamać jedną z dwóch wartości albo udawać `legacy`.
+   */
+  method: LoginMethod;
 }
 
 /**
@@ -233,8 +316,10 @@ export interface PersonIdentity {
  * `issuedAt` = `iat` w sekundach epoki; `0` = brak claimu, czyli „wydany przed czasem" -
  * domyślna wartość odbiera dostęp, nigdy go nie przyznaje.
  */
-export interface VerifiedPersonIdentity extends PersonIdentity {
+export interface VerifiedPersonIdentity extends Omit<PersonIdentity, 'method'> {
   issuedAt: number;
+  /** `null` = token osoby sprzed 2.1.0; sesja z niego dostaje `legacy`. */
+  method: LoginMethod | null;
 }
 
 /**
@@ -247,10 +332,14 @@ export interface VerifiedPersonIdentity extends PersonIdentity {
  */
 export interface PlatformIdentity {
   pilotId: string;
+  /** Sesja logowania - jak w `Identity`. To najwrażliwsza sesja na serwerze, więc ma wiersz. */
+  sessionId: string;
 }
 
-export interface VerifiedPlatformIdentity extends PlatformIdentity {
+export interface VerifiedPlatformIdentity extends Omit<PlatformIdentity, 'sessionId'> {
   issuedAt: number;
+  /** `null` = ciasteczko sprzed 2.1.0, przyjmowane do wygaśnięcia (jak w `VerifiedIdentity`). */
+  sessionId: string | null;
 }
 
 export interface TokenService {
@@ -287,8 +376,26 @@ export interface TokenService {
  * unieważnić po stronie serwera; JWT z natury unieważnić się nie da.
  */
 export interface RefreshTokensPort {
-  /** Para tokenów jest parą DLA KLUBU (§6) - refresh niesie klub, dla którego ją wydano. */
-  issue(pilotId: string, orgId: string, expiresAt: Date): Promise<string>;
+  /**
+   * Para tokenów jest parą DLA KLUBU (§6) - refresh niesie klub, dla którego ją wydano,
+   * i od 2.1.0 SESJĘ, do której należy. Sesja jest tu argumentem, a nie czymś, co adapter
+   * dobiera sam: to ona powstaje pierwsza, a refresh jest jej materialnym śladem.
+   */
+  issue(pilotId: string, orgId: string, sessionId: string, expiresAt: Date): Promise<string>;
+  /**
+   * Sesja tego refresha BEZ rotacji - żeby `/auth/refresh` mógł odmówić urządzeniu
+   * wylogowanemu zdalnie, ZANIM zużyje token. Bez tego kroku odmowa i tak by padła, ale
+   * po rotacji: każda próba synca takiego telefonu zostawiałaby w bazie świeży, nikomu
+   * niedoręczony refresh na kolejne 90 dni. `null` = tokenu nie ma.
+   */
+  sessionOf(token: string): Promise<string | null>;
+  /**
+   * Zużywa JEDEN refresh i oddaje, czyj był - wylogowanie z telefonu (`POST /auth/logout`).
+   * W cudzej transakcji, bo kasowanie tokenu i ostemplowanie sesji to jedna decyzja:
+   * refresh skasowany bez stempla zostawiłby w panelu urządzenie widoczne jako żywe,
+   * choć nie ma już czym wejść. `null` = tokenu nie ma (odpowiedź i tak `204`).
+   */
+  revoke(tx: Queryable, token: string): Promise<{ pilotId: string; sessionId: string } | null>;
   /**
    * ATOMOWA rotacja: unieważnia stary i wydaje nowy w jednej transakcji.
    * Rozdzielone consume+issue (audyt) zostawiały okno, w którym crash/zgubiona
@@ -299,13 +406,252 @@ export interface RefreshTokensPort {
   rotate(
     token: string,
     newExpiresAt: Date,
-  ): Promise<{ pilotId: string; orgId: string; token: string } | null>;
+  ): Promise<{ pilotId: string; orgId: string; sessionId: string; token: string } | null>;
   /**
    * Klub OSTATNIO używany przez osobę - z najświeższego refresha; `null` = nigdy nie
    * logowała się na telefonie. Logowanie wybiera z tego klub aktywny przy więcej niż
    * jednym członkostwie (§5), zamiast pytać pilota za każdym razem.
    */
   lastOrgFor(pilotId: string): Promise<string | null>;
+  /**
+   * Kasuje WSZYSTKIE refreshe osoby, we wszystkich klubach - reset hasła (2.1.0, §4.2)
+   * zrywa każdą sesję telefonu, bo zakłada, że stare hasło mogło wyciec. W cudzej
+   * transakcji: kasowanie idzie razem z zapisem nowego skrótu, żeby nie było chwili,
+   * w której hasło jest już nowe, a stara sesja jeszcze działa. Zwraca liczbę wierszy.
+   */
+  revokeAllOf(tx: Queryable, pilotId: string): Promise<number>;
+}
+
+// ── sesje logowania (2.1.0, issue #133) ─────────────────────────────────────────
+
+/**
+ * SKĄD przyszło żądanie - do wiersza sesji i do listy urządzeń w panelu.
+ *
+ * `label` składa warstwa HTTP (`http/device.ts`): telefon podaje go nagłówkiem
+ * `X-Ninerdeck-Device`, przeglądarka nie podaje nic, więc panel skleja dwa słowa
+ * z `User-Agent`. `null` w obu polach jest normalnym stanem, nie awarią - lista sesji
+ * pisze wtedy „urządzenie nieznane", a nie zmyśla.
+ */
+export interface SessionDevice {
+  label: string | null;
+  ip: string | null;
+}
+
+/**
+ * CZYM i SKĄD ktoś właśnie wszedł - komplet, jakiego potrzebuje założenie sesji.
+ *
+ * Jeden argument zamiast dwóch, bo te dwie wartości nigdy nie chodzą osobno: sesja bez
+ * metody nie ma czego pokazać w panelu, a bez urządzenia nie da się odpowiedzieć na
+ * pytanie „czy to ja". Rdzeń wejścia (`enterMobile`/`enterPanel`) przekazuje go dalej
+ * bez zaglądania do środka.
+ */
+export interface LoginEntry {
+  method: LoginMethod;
+  device: SessionDevice;
+}
+
+export interface LoginSessionOpen extends LoginEntry {
+  /**
+   * Identyfikator nadaje KOMENDA, nie adapter - ta sama decyzja, co przy `insertPerson`:
+   * w testach musi dać się podstawić, a w produkcji jest to `randomUUID` z composition
+   * rootu. Adapter, który losuje sam, nie miałby jak oddać wartości przed zapisem.
+   */
+  id: string;
+  pilotId: string;
+  /** `null` = sesja PLATFORMOWA (superadministrator nie ma klubu). */
+  orgId: string | null;
+  surface: SessionSurface;
+  /** Telefon: termin refresha (90 dni). Panel: TTL ciasteczka. */
+  expiresAt: Date;
+}
+
+/** Wiersz sesji dla panelu - bez niczego, czym dałoby się tę sesję podszyć. */
+export interface LoginSessionView {
+  id: string;
+  orgId: string | null;
+  surface: SessionSurface;
+  method: LoginMethod;
+  createdAt: Date;
+  lastSeenAt: Date;
+  expiresAt: Date;
+  deviceLabel: string | null;
+  ip: string | null;
+}
+
+/** Kogo unieważniamy hurtem: osobę w JEDNYM klubie albo wszędzie, z wyjątkiem bieżącej. */
+export interface SessionRevokeFilter {
+  pilotId: string;
+  /** `undefined` = wszystkie kluby I sesja platformowa; wartość = wyłącznie ten klub. */
+  orgId?: string;
+  /** Sesja, która ma PRZEŻYĆ - zmiana hasła nie wylogowuje tego, kto ją właśnie zrobił. */
+  exceptId?: string;
+}
+
+/**
+ * Sesje logowania - jeden wiersz na żywą parę tokenów (telefon) albo ciasteczko (panel).
+ *
+ * Unieważnianie idzie przez `tx`, bo nigdy nie jest samodzielną decyzją: towarzyszy
+ * zmianie hasła, wyłączeniu członkostwa albo realizacji linku i musi wejść tą samą
+ * transakcją, co one. Odczyty i `touch` mają własny uchwyt - są poza transakcjami.
+ */
+export interface LoginSessionsPort {
+  open(session: LoginSessionOpen): Promise<void>;
+  /**
+   * Ostatnia aktywność razem z adresem i urządzeniem. PRZEPUSTNICA JEST WYŻEJ
+   * (`lastSeenThrottle`): ten port zapisuje zawsze, gdy go zawołać - decyzja „czy już
+   * pora" nie należy do adaptera, bo zależy od pamięci procesu, a nie od bazy.
+   */
+  touch(id: string, at: Date, device: SessionDevice): Promise<void>;
+  /**
+   * Sesja po identyfikatorze - METODA i ŻYWOTNOŚĆ, bez niczego więcej. Odpowiada dwóm
+   * pytaniom, które padają POZA bramą tokenu dostępu: rotacja pyta, czy sesja jeszcze
+   * żyje (`/auth/refresh` ma odmówić Z POWODEM, nie zwykłym „zły token"), a przełączenie
+   * klubu - czym człowiek się zalogował, bo nowa sesja dziedziczy metodę po źródłowej.
+   * `null` = sesji nie ma wcale.
+   */
+  find(id: string, at: Date): Promise<{ method: LoginMethod; live: boolean } | null>;
+  /**
+   * Czy sesja tej OSOBY już nie żyje - wiersza nie ma albo nosi stempel unieważnienia.
+   *
+   * Dla bramy PLATFORMOWEJ, która nie ma członkostwa, więc nie ma się czego doczepić
+   * w `authSnapshot`. Terminu nie bada z tego samego powodu, co tamta: sesja panelu
+   * wygasa razem z ciasteczkiem, więc token, który tu dotarł, ma i jedno, i drugie żywe.
+   */
+  isRevoked(id: string, pilotId: string): Promise<boolean>;
+  /**
+   * `false` = sesji nie ma, należy do kogoś innego, stoi w innym klubie albo była już
+   * unieważniona; panel odpowiada wtedy 404. OSOBA i klub są częścią celu, a nie
+   * sprawdzeniem w komendzie: identyfikator sesji przychodzi z adresu żądania, więc
+   * zawężenie musi stać w tym samym zapytaniu, co zapis.
+   */
+  revoke(
+    tx: Queryable,
+    target: { id: string; pilotId: string; orgId?: string },
+    at: Date,
+    by: RevokedBy,
+  ): Promise<boolean>;
+  revokeAll(tx: Queryable, filter: SessionRevokeFilter, at: Date, by: RevokedBy): Promise<number>;
+  /** Żywe sesje osoby; `orgId` zawęża do jednego klubu (panel klubu widzi tylko swój). */
+  list(db: Queryable, pilotId: string, orgId?: string): Promise<LoginSessionView[]>;
+}
+
+// ── hasło jako druga metoda logowania (2.1.0, issue #132) ───────────────────────
+
+/**
+ * Skrót hasła - `infrastructure/auth/scryptHasher.ts`. Port, bo koszt (parametry scrypt)
+ * ustala composition root: produkcja liczy N=2¹⁷ (~100 ms i 128 MiB na próbę), testy
+ * schodzą niżej, a zapis PHC niesie parametry w napisie, więc obie strony czytają
+ * cudze skróty bez migracji.
+ */
+export interface PasswordHasher {
+  /** Nowy skrót w zapisie PHC (`$scrypt$ln=…,r=…,p=…$sól$skrót`). */
+  hash(password: string): Promise<string>;
+  /** Porównanie w czasie stałym; skrót w obcym zapisie = `false`, nie wyjątek. */
+  verify(password: string, phc: string): Promise<boolean>;
+  /** Czy skrót policzono słabszymi parametrami niż bieżące - wtedy logowanie liczy go od nowa. */
+  needsRehash(phc: string): boolean;
+  /**
+   * Skrót ZASTĘPCZY do porównania przy loginie NIEZNANYM albo osobie BEZ hasła: ten sam
+   * koszt, wynik zawsze `false`. Bez niego czas odpowiedzi mówiłby, czy adres jest
+   * w systemie (§8 pkt 1).
+   */
+  dummyHash(): string;
+}
+
+/** Skąd hasło: ustawienia (`self`) albo link z e-maila (`link`) - `password_credentials.set_via`. */
+export type PasswordSetVia = 'self' | 'link';
+
+export interface PasswordCredential {
+  pilotId: string;
+  hash: string;
+  setAt: Date;
+  setVia: PasswordSetVia;
+}
+
+/**
+ * Poświadczenie hasłem - JEDNO na osobę (`password_credentials`). Brak wiersza = osoba
+ * loguje się wyłącznie Googlem. Osobny port od `PilotsPort` z tego samego powodu, co
+ * osobna tabela: hasło jest DOWODEM tożsamości, nie cechą osoby.
+ */
+export interface PasswordCredentialsPort {
+  find(pilotId: string): Promise<PasswordCredential | null>;
+  /** Ustawienie albo zmiana - w cudzej transakcji (razem z unieważnieniem sesji). */
+  upsert(tx: Queryable, credential: { pilotId: string; hash: string; setVia: PasswordSetVia; at: Date }): Promise<void>;
+  /** Sam skrót po re-hashu przy logowaniu - `set_at` i `set_via` bez zmian, bo hasło jest to samo. */
+  rehash(pilotId: string, hash: string, at: Date): Promise<void>;
+}
+
+/** `reset` ustawia hasło ISTNIEJĄCEJ osobie; `signup` zakłada NOWĄ przy realizacji (00H). */
+export type ResetTokenKind = 'reset' | 'signup';
+
+/** Kto wyzwolił list - kolumna audytowa, mechanizm jest JEDEN (§5.4). */
+export type ResetTrigger = 'self' | 'admin' | 'platform' | 'cli';
+
+export type ResetTokenIssue =
+  | {
+      kind: 'reset';
+      pilotId: string;
+      triggeredBy: ResetTrigger;
+      /** Administrator albo superadministrator; `null` przy `self` i `cli`. */
+      createdBy: string | null;
+      now: Date;
+      expiresAt: Date;
+    }
+  | {
+      kind: 'signup';
+      /** Znormalizowany adres nowej osoby - z niego powstanie `pilots.email`. */
+      email: string;
+      displayName: string;
+      now: Date;
+      expiresAt: Date;
+    };
+
+export interface IssuedResetToken {
+  /** Surowy token do adresu `/haslo/#<token>` - poza tą wartością zwrotną nie istnieje nigdzie. */
+  token: string;
+  expiresAt: Date;
+}
+
+/** Token odczytany po skrócie - to, z czego realizacja składa hasło albo osobę. */
+export type ResetTokenView =
+  | { kind: 'reset'; pilotId: string; triggeredBy: ResetTrigger }
+  | { kind: 'signup'; email: string; displayName: string };
+
+/**
+ * Tokeny linku „ustaw hasło" (`password_reset_tokens`). Adapter losuje token, liczy
+ * `sha256` i pilnuje jednorazowości - warstwa aplikacji nigdy nie dotyka kryptografii,
+ * jak przy refreshach.
+ */
+export interface PasswordResetTokensPort {
+  /**
+   * Nowy token; poprzednie NIEZUŻYTE tokeny tej osoby (`reset`) albo tego adresu
+   * (`signup`) zużywa w tej samej transakcji - nowy link unieważnia stary (§4.2).
+   */
+  issue(tx: Queryable, input: ResetTokenIssue): Promise<IssuedResetToken>;
+  /** Podgląd bez zużycia: `null` dla tokenu obcego, przeterminowanego i zużytego - jednakowo. */
+  peek(token: string, now: Date): Promise<ResetTokenView | null>;
+  /**
+   * Zużycie w cudzej transakcji - `null`, gdy w międzyczasie ktoś zużył go pierwszy
+   * (dwa kliknięcia w ten sam link): tylko jedno z nich ustawia hasło.
+   */
+  consume(tx: Queryable, token: string, now: Date): Promise<ResetTokenView | null>;
+}
+
+/** List tekstowy - tyle, ile potrzebuje link „ustaw hasło". HTML-a nie ma i nie potrzebuje. */
+export interface MailMessage {
+  to: string;
+  subject: string;
+  text: string;
+}
+
+/**
+ * Poczta wychodząca - WYMAGANIE serwera od 2.1.0 (`MAIL_PROVIDER`), bo „Nie pamiętam
+ * hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie wstał.
+ * Adapter dostawcy (H-F) i `LogMail` dla dev (`infrastructure/mail/logMail.ts`).
+ * Awaria = wyjątek: wołający decyduje, czy to `502`, czy cicha odmowa (§5.4).
+ */
+export interface MailPort {
+  send(message: MailMessage): Promise<void>;
 }
 
 // ── tożsamości zewnętrzne (logowanie Google) ────────────────────────────────────

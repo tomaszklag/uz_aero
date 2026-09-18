@@ -49,7 +49,10 @@ import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
+import { AccountQuery } from '../src/application/common/queries/account.ts';
 import { AdminClubCodeQueries } from '../src/application/admin/queries/clubCode.ts';
+import { AdminLoginSessionQueries } from '../src/application/admin/queries/loginSessions.ts';
+import { AdminLoginSessionCommands } from '../src/application/admin/commands/loginSessions.ts';
 import { AdminMembershipQueries } from '../src/application/admin/queries/memberships.ts';
 import { PlatformOrganizationQueries } from '../src/application/admin/queries/organizations.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
@@ -59,6 +62,13 @@ import { AdminLogQueries } from '../src/application/admin/queries/log.ts';
 import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
+import { PASSWORD_WINDOW_MS, PasswordCommands } from '../src/application/common/commands/passwords.ts';
+import { AdminPasswordLinkCommands } from '../src/application/admin/commands/passwordLinks.ts';
+import { BaseUrlPasswordLinks } from '../src/infrastructure/auth/resetLinks.ts';
+import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
+import { PgPasswordCredentialsRepo } from '../src/infrastructure/pg/common/passwordCredentialsRepo.ts';
+import { PgPasswordResetTokensRepo } from '../src/infrastructure/pg/common/passwordResetTokensRepo.ts';
+import { FakeMail } from './fakeMail.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
@@ -84,7 +94,7 @@ import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenan
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgClubCodeRepo } from '../src/infrastructure/pg/admin/clubCodeRepo.ts';
 import { PgOrganizationsRepo } from '../src/infrastructure/pg/admin/organizationsRepo.ts';
-import { AttemptLimiter } from '../src/application/mobile/attemptLimiter.ts';
+import { AttemptLimiter } from '../src/application/common/attemptLimiter.ts';
 import { JOIN_WINDOW_MS, JoinCommands } from '../src/application/mobile/commands/join.ts';
 import { PgClubJoinRepo } from '../src/infrastructure/pg/mobile/clubJoinRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
@@ -103,6 +113,8 @@ import { PgPilotPrefsRepo } from '../src/infrastructure/pg/mobile/pilotPrefsRepo
 import { PgExternalIdentitiesRepo } from '../src/infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
+import { LastSeenThrottle } from '../src/application/common/lastSeenThrottle.ts';
 import { PgMyEventsRepo } from '../src/infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from '../src/infrastructure/pg/mobile/taskSuggestionsRepo.ts';
@@ -149,6 +161,44 @@ export const TEST_BASE_URL = 'http://ninerdeck.test';
  * projekcji ze strumienia". Dekorator opakowuje PRAWDZIWY adapter, więc test nadal
  * jedzie na prawdziwym SQL-u - podmieniamy obserwację, nie zachowanie.
  */
+/**
+ * Refresh w bazie RAZEM z jego SESJĄ - od migracji 10 (issue #133) `session_id` jest
+ * `NOT NULL`, bo każda para tokenów należy do sesji logowania.
+ *
+ * Testy, które chcą „telefon z zapisanym refreshem" (czyszczenie wygasłych z A11, wybór
+ * klubu ostatnio używanego, wyjście z klubu), potrzebują odtąd DWÓCH wierszy. Helper stoi
+ * tu, a nie w każdym z nich, bo pomyłka w tej parze wygląda jak błąd schematu, a nie jak
+ * literówka w teście - i dlatego nie ma sensu, żeby każdy plik pisał ją sam.
+ *
+ * Sesja dostaje `legacy`: te wiersze udają poświadczenia, które w bazie po prostu SĄ,
+ * a nie takie, które właśnie powstały przez logowanie.
+ */
+export async function seedRefresh(
+  db: Queryable,
+  row: {
+    tokenHash: string;
+    pilotId: string;
+    orgId: string;
+    expiresAt: Date | string;
+    createdAt?: Date | string;
+  },
+): Promise<string> {
+  const sessionId = `sesja-${row.tokenHash}`;
+  const createdAt = row.createdAt ?? new Date();
+  await db.query(
+    `INSERT INTO login_sessions
+           (id, pilot_id, org_id, surface, method, created_at, last_seen_at, expires_at)
+     VALUES ($1, $2, $3, 'mobile', 'legacy', $4, $4, $5)`,
+    [sessionId, row.pilotId, row.orgId, createdAt, row.expiresAt],
+  );
+  await db.query(
+    `INSERT INTO refresh_tokens (token_hash, pilot_id, org_id, session_id, expires_at, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [row.tokenHash, row.pilotId, row.orgId, sessionId, row.expiresAt, createdAt],
+  );
+  return sessionId;
+}
+
 export async function testHarness(
   options: {
     sheets?: SheetsPort;
@@ -206,6 +256,34 @@ export async function testHarness(
   const pilots = new PgPilotsRepo(db);
   const identities = new PgExternalIdentitiesRepo(db);
   const identityProvider = new TestIdentityProvider();
+  const refreshTokens = new PgRefreshTokens(db, clock);
+const loginSessions = new PgLoginSessions(db, clock);
+// Przepustnica stempla „ostatnio aktywny" - JEDEN egzemplarz, wspólny dla obu bram.
+const lastSeen = new LastSeenThrottle();
+
+  // Hasło (2.1.0): PRAWDZIWY scrypt na tanich parametrach (ln=10 - ten sam kod, kilkaset
+  // razy mniej pracy), prawdziwe adaptery tokenów i poświadczeń, licznik prób na sterowanym
+  // zegarze. Atrapą jest WYŁĄCZNIE poczta (`FakeMail`): test czyta z niej list i wyjmuje
+  // link, czyli przechodzi dokładnie drogę człowieka ze skrzynką.
+  const passwordHasher = new ScryptHasher({ ln: 10 });
+  const passwordCredentials = new PgPasswordCredentialsRepo(db);
+  const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+  const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
+  const mail = new FakeMail();
+  const passwords = new PasswordCommands(
+    db,
+    pilots,
+    passwordCredentials,
+    new PgPasswordResetTokensRepo(db),
+    refreshTokens,
+    passwordHasher,
+    mail,
+    new BaseUrlPasswordLinks(TEST_BASE_URL),
+    passwordLimiter,
+    clock,
+    randomUUID,
+    loginSessions,
+  );
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
   // i pisze karty bazodanowym `PgSheets` - te same klasy co produkcja. Testy trybu
@@ -273,13 +351,29 @@ export async function testHarness(
     // bo to cudza kryptografia (uzasadnienie w `testIdentityProvider.ts`).
     auth: new AuthCommands(
       pilots,
-      new PgRefreshTokens(db, clock),
+      refreshTokens,
       identities,
       identityProvider,
       tokens,
       clock,
       randomUUID,
+      { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
+      loginSessions,
+      db,
     ),
+    passwords,
+    loginSessions,
+    lastSeen,
+    clock,
+    adminPasswordLinks: new AdminPasswordLinkCommands(
+      auditedWrite,
+      adminPilotsRepo,
+      organizationsRepo,
+      passwords,
+    ),
+    // Telefon bez builda z Google (jak dziś na produkcji): `GET /auth/methods` mówi
+    // `google: null`, więc test może przybić kształt obu gałęzi.
+    googleAndroidClientId: null,
     // Dołączanie kodem klubu - prawdziwy adapter i licznik prób na sterowanym zegarze,
     // więc test okna ograniczenia tempa przesuwa czas jawnie, bez spania.
     join: new JoinCommands(
@@ -333,7 +427,10 @@ export async function testHarness(
       new PgAdminEventsRepo(),
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
-    adminMeQueries: new AdminMeQueries(pilots),
+    adminMeQueries: new AdminMeQueries(pilots, accountQuery),
+    // Czym osoba może się zalogować - JEDEN egzemplarz na obie powierzchnie, jak
+    // w produkcji: panel czyta go przez `AdminMeQueries`, telefon trasą `GET /me/account`.
+    accounts: accountQuery,
     // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem - testy czytają
     // wartość z odpowiedzi, a jeden z przypadków sprawdza właśnie to, że nie ma jej
     // nigdzie indziej (ani w `details` audytu, ani w bazie poza hashem).
@@ -341,6 +438,7 @@ export async function testHarness(
       auditedWrite,
       adminPilotsRepo,
       new PgAdminRefreshTokensRepo(),
+      loginSessions,
       randomUUID,
       clock,
     ),
@@ -352,6 +450,13 @@ export async function testHarness(
       auditedWrite,
       clubCodeRepo,
       options.clubCodeBytes ?? randomBytes,
+      clock,
+    ),
+    adminLoginSessionQueries: new AdminLoginSessionQueries(db, loginSessions),
+    adminLoginSessions: new AdminLoginSessionCommands(
+      auditedWrite,
+      adminPilotsRepo,
+      loginSessions,
       clock,
     ),
     adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
@@ -490,5 +595,21 @@ export async function testHarness(
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.
-  return { app, db, clock, tokens, tracesDir, auditedWrite, events, sessions, identityProvider };
+  // `mail` i `passwordHasher` dla testów hasła: pierwszy oddaje wysłane listy (z nich test
+  // wyjmuje link), drugi pozwala policzyć skrót wprost do bazy i podejrzeć wywołania
+  // `verify` (dowód skrótu zastępczego przy nieznanym loginie).
+  return {
+    app,
+    db,
+    clock,
+    tokens,
+    tracesDir,
+    auditedWrite,
+    events,
+    sessions,
+    identityProvider,
+    mail,
+    passwordHasher,
+    passwords,
+  };
 }

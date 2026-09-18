@@ -25,8 +25,12 @@ import type {
   ClubsView,
   GoogleLoginResult,
   JoinClubResult,
+  AccountMethods,
+  LoginMethods,
   MembershipStatusResult,
   OrgRef,
+  PasswordLoginResult,
+  SetPasswordResult,
   RemoteBugReport,
   PushResult,
   ReferenceFetch,
@@ -40,7 +44,7 @@ import type {
 } from '../../application/ports';
 import { ServerRejectedError, ServerUnreachableError } from '../../application/ports';
 import type { SyncTrigger } from '../../application/ports';
-import type { Event, SessionTrackPayload } from '../../domain';
+import type { Event, PasswordWeakness, SessionTrackPayload } from '../../domain';
 
 /** Pętla okazji - krótko, bo zaraz wróci. */
 const TIMEOUT_MS = 8_000;
@@ -52,7 +56,21 @@ function timeoutFor(trigger: SyncTrigger | undefined): number {
 }
 
 export class HttpServerApi implements ServerPort {
-  constructor(private readonly baseUrl: string) {}
+  /**
+   * `device` to napis, po którym CZŁOWIEK rozpozna swój tablet na liście sesji
+   * w panelu („Android 14 · Pixel 7 · Ninerdeck 2.1.0"). Jedzie z KAŻDYM żądaniem,
+   * bo serwer używa go dwa razy: przy zakładaniu sesji i przy odświeżaniu stempla
+   * „ostatnio aktywny" w bramie (2.1.0, §6).
+   *
+   * Podaje go WOŁAJĄCY, a nie ten adapter: model i wersję zna React Native, a warstwa
+   * infrastruktury nie importuje UI (`architecture.test.ts`). `null` = nie wiemy -
+   * wtedy nagłówka po prostu nie ma i panel napisze „urządzenie nieznane", zamiast
+   * dostać zmyśloną nazwę.
+   */
+  constructor(
+    private readonly baseUrl: string,
+    private readonly device: string | null = null,
+  ) {}
 
   /**
    * Dwie odpowiedzi serwera, dwa stany - i to jest jedyne miejsce w aplikacji, które
@@ -76,6 +94,149 @@ export class HttpServerApi implements ServerPort {
       return { kind: 'no_club', personToken: body.personToken, clubs: clubsOf(body) };
     }
     throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  /** Co to wdrożenie umie - publiczne, bo pyta o to ekran bez sesji. */
+  async methods(): Promise<LoginMethods> {
+    return this.request<LoginMethods>('GET', '/auth/methods', {
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+  }
+
+  /** Czym może się zalogować TA osoba - ustawienia, sekcja „Hasło" (§5.3). */
+  async account(token: string): Promise<AccountMethods> {
+    return this.request<AccountMethods>('GET', '/me/account', { token });
+  }
+
+  /**
+   * Logowanie hasłem - te same dwa wyjścia, co Google, plus trzy odmowy jako WYNIKI.
+   *
+   * Przez `send`, nie `request`, z dwóch powodów naraz: `202` nie jest błędem (osoba
+   * bez klubu), a odmowy mają na 00F różne drogi wyjścia - zdanie przy polu albo czas
+   * w przycisku. Limit jak przy Google: pilot stoi nad tabletem, a serwer liczy scrypt
+   * (N = 2¹⁷, czyli ułamek sekundy, ale instancja mogła się uśpić).
+   */
+  async loginWithPassword(input: {
+    login: string;
+    password: string;
+    orgId?: string | null;
+  }): Promise<PasswordLoginResult> {
+    const response = await this.send('POST', '/auth/password', {
+      body: {
+        login: input.login,
+        password: input.password,
+        // Klub urządzenia jedzie TYLKO, gdy jest: `orgId: null` w ciele to dla zoda
+        // po drugiej stronie wartość, a nie brak pola.
+        ...(input.orgId != null ? { orgId: input.orgId } : {}),
+      },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+
+    if (response.status === 200) {
+      return { kind: 'signed_in', tokens: (await response.json()) as AuthTokens };
+    }
+    if (response.status === 202) {
+      const body = (await response.json()) as ClubsWire & { personToken: string };
+      return { kind: 'no_club', personToken: body.personToken, clubs: clubsOf(body) };
+    }
+
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string; retryAfterSec?: number }
+      | null;
+    if (response.status === 429) {
+      return { kind: 'rate_limited', retryAfterSec: retryAfterOf(response, body) };
+    }
+    if (response.status === 401 && body?.error === 'account_disabled') {
+      return { kind: 'account_disabled' };
+    }
+    // Każda inna odmowa 401 to `invalid_credentials`: serwer ma dla trzech stanów
+    // (login nieznany / bez hasła / złe hasło) JEDNĄ odpowiedź i adapter nie ma prawa
+    // jej rozbijać. `400 bad_request` zostaje wyjątkiem - to błąd nasz, nie pilota.
+    if (response.status === 401) return { kind: 'invalid_credentials' };
+    throw new ServerRejectedError(response.status, body?.error ?? (await errorCode(response)));
+  }
+
+  /**
+   * Prośba o link „ustaw hasło". Odpowiedź `202` jest jedyną, jaką serwer daje dla
+   * adresu - znanego i nieznanego - więc nie ma czego zwracać i nie ma czego rozróżniać.
+   *
+   * `429` TEŻ NIE JEST TU BŁĘDEM i to nie jest wygoda, tylko ta sama reguła, przez którą
+   * serwer odpowiada `202` na wszystko: gdyby wyczerpany limit dawał na 00G inne zdanie
+   * niż wysłany list, byłby JEDYNĄ różnicą widoczną z zewnątrz - a ekran stoi przed
+   * każdym, kto zna adres aplikacji. Wyjątkiem zostaje brak sieci, bo wtedy list
+   * naprawdę nie poszedł (`send` rzuca `ServerUnreachableError`).
+   */
+  async forgotPassword(email: string): Promise<void> {
+    await this.sendLink('/auth/password/forgot', { email });
+  }
+
+  /** „Załóż konto" - ten sam list, nowa osoba powstaje przy realizacji linku (§5.4a). */
+  async signUp(input: { name: string; email: string }): Promise<void> {
+    await this.sendLink('/auth/signup', { name: input.name, email: input.email });
+  }
+
+  /**
+   * Wspólny ogon obu próśb o list. Jedna funkcja, bo obie mają odpowiadać CO DO ZNAKU
+   * tak samo - rozjazd między nimi wyliczałby konta jedną stroną formularza.
+   */
+  private async sendLink(path: string, body: Record<string, string>): Promise<void> {
+    const response = await this.send('POST', path, { body, timeoutMs: MANUAL_TIMEOUT_MS });
+    if (response.ok || response.status === 429) return;
+    throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  /**
+   * Ustawienie albo zmiana własnego hasła (arkusz 13B). Odmowy są WYNIKAMI, bo każda
+   * ma w arkuszu inne miejsce: złe obecne hasło - przy polu „Obecne", polityka - przy
+   * „Nowe", limit - w przycisku.
+   */
+  async setPassword(
+    token: string,
+    input: { current?: string; next: string },
+  ): Promise<SetPasswordResult> {
+    const response = await this.send('PUT', '/me/password', {
+      token,
+      body: { ...(input.current != null ? { current: input.current } : {}), next: input.next },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
+    if (response.status === 204) return { kind: 'ok' };
+
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string; reason?: PasswordWeakness; retryAfterSec?: number }
+      | null;
+    if (response.status === 429) {
+      return { kind: 'rate_limited', retryAfterSec: retryAfterOf(response, body) };
+    }
+    if (response.status === 400 && body?.error === 'weak_password' && body.reason != null) {
+      return { kind: 'weak_password', reason: body.reason };
+    }
+    if (response.status === 409 && body?.error === 'email_required') {
+      return { kind: 'email_required' };
+    }
+    // `401` PADA TU Z DWÓCH RÓŻNYCH POWODÓW i wolno zamienić na wynik tylko jeden:
+    // `invalid_credentials` mówi o OBECNYM HAŚLE, a `unauthorized` - o tokenie, który
+    // wygasł albo został unieważniony. Zwinięte w jedno, arkusz 13B mówiłby pilotowi
+    // „złe obecne hasło" godzinę po zalogowaniu, zamiast po cichu odświeżyć token
+    // i ponowić (ta sama droga, co w syncu).
+    if (response.status === 401 && body?.error === 'invalid_credentials') {
+      return { kind: 'invalid_credentials' };
+    }
+    throw new ServerRejectedError(response.status, body?.error ?? (await errorCode(response)));
+  }
+
+  /**
+   * Wylogowanie po stronie serwera - kasuje refresh i stempluje sesję.
+   *
+   * ODMOWY NIE SĄ TU BŁĘDEM: serwer oddaje `204` także dla poświadczenia martwego, a
+   * gdyby kiedyś oddał co innego, wylogowanie na telefonie i tak ma się odbyć. Jedyne,
+   * co wołający musi wiedzieć, to czy serwer odpowiedział - stąd wyjątek zostaje
+   * wyłącznie przy BRAKU SIECI (`send` rzuca `ServerUnreachableError`).
+   */
+  async logout(refreshToken: string): Promise<void> {
+    await this.send('POST', '/auth/logout', {
+      body: { refreshToken },
+      timeoutMs: MANUAL_TIMEOUT_MS,
+    });
   }
 
   async membershipStatus(token: string): Promise<MembershipStatusResult> {
@@ -133,11 +294,7 @@ export class HttpServerApi implements ServerPort {
         : { kind: 'already_member', org: body.org };
     }
     if (response.status === 429) {
-      // Bez `retryAfterSec` w ciele zostaje nagłówek, a bez niego minuta: powód
-      // w przycisku ma podać czas, a nie powiedzieć „kiedyś".
-      const header = Number(response.headers.get('retry-after'));
-      const sec = body?.retryAfterSec ?? (Number.isFinite(header) ? header : 60);
-      return { kind: 'rate_limited', retryAfterSec: Math.max(1, Math.round(sec)) };
+      return { kind: 'rate_limited', retryAfterSec: retryAfterOf(response, body) };
     }
     throw new ServerRejectedError(response.status, body?.error ?? (await errorCode(response)));
   }
@@ -306,6 +463,10 @@ export class HttpServerApi implements ServerPort {
         headers: {
           ...(options.body != null ? { 'content-type': 'application/json' } : {}),
           ...(options.token != null ? { authorization: `Bearer ${options.token}` } : {}),
+          // Telefon PODAJE SIĘ SAM - przeglądarka nie ma jak, więc serwer składa jej
+          // etykietę z `User-Agent`. Nasza jest krótka i rozpoznawalna, bo ma
+          // odpowiedzieć na jedno pytanie: „czy to moje urządzenie".
+          ...(this.device != null ? { 'x-ninerdeck-device': this.device } : {}),
           ...options.headers,
         },
         ...(options.body != null ? { body: JSON.stringify(options.body) } : {}),
@@ -337,6 +498,19 @@ const clubsOf = (body: ClubsWire): ClubsView => ({
 });
 
 /** Kod błędu z ciała odpowiedzi; brak/nie-JSON → sam status wystarczy. */
+/**
+ * Ile odczekać po `429`. Bez `retryAfterSec` w ciele zostaje nagłówek `Retry-After`,
+ * a bez niego minuta: powód w przycisku ma podać CZAS, a nie powiedzieć „kiedyś".
+ *
+ * Jedno miejsce, bo limity ma dziś troje: kod klubu, logowanie hasłem i zmiana hasła -
+ * a trzy kopie tego samego rachunku rozjechałyby się przy pierwszej poprawce jednej.
+ */
+function retryAfterOf(response: Response, body: { retryAfterSec?: number } | null): number {
+  const header = Number(response.headers.get('retry-after'));
+  const sec = body?.retryAfterSec ?? (Number.isFinite(header) ? header : 60);
+  return Math.max(1, Math.round(sec));
+}
+
 async function errorCode(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as { error?: string };

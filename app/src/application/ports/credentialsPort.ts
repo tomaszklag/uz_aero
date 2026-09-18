@@ -41,6 +41,18 @@ export interface StoredCredentials {
    * odróżniała (reguła SyncChipa z issue #12).
    */
   memberships?: ClubMembership[];
+  /**
+   * SESJA UNIEWAŻNIONA ZDALNIE (2.1.0, §7.1, D7) - administrator wylogował to urządzenie
+   * z panelu, więc serwer odbija `401 session_revoked` także na odświeżeniu.
+   *
+   * To ZNACZNIK, nie kasowanie: poświadczenia i PIN ZOSTAJĄ, bo zdalne wylogowanie nie
+   * ma prawa czyścić danych z tabletu (§3.0). PIN dalej otwiera aplikację, zaległe zapisy
+   * czekają na ponowne zalogowanie TEGO SAMEGO pilota, a sync staje z nazwanym powodem -
+   * wyrzucenie do logowania skasowałoby dzień, którego serwer jeszcze nie ma.
+   *
+   * Gaśnie przy każdym wydaniu pary tokenów: świeża para znaczy żywą sesję.
+   */
+  revoked?: boolean;
 }
 
 /**

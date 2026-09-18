@@ -81,6 +81,35 @@ class PullServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   }
 
+  // Trasy LOGOWANIA HASŁEM (2.1.0) - te przekroje ich nie dotykają.
+  async account(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async methods(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async loginWithPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async forgotPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async signUp(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async setPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async logout(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
   async membershipStatus(): Promise<never> {
     throw new Error('nieużywane w tych testach');

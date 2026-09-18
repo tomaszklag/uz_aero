@@ -50,4 +50,25 @@ export function registerAdminMeRoutes(
       );
     },
   });
+
+  /**
+   * `GET /admin/api/me/account` - adres i metody logowania zalogowanego (2.1.0,
+   * issue #134 D6; mockup `konto`, karta „Logowanie").
+   *
+   * Osobno od `/me` z powodu opisanego przy `AdminMeQueries.account`. Obie odmiany
+   * sesji, bo hasło i metody ma każdy zalogowany - superadministrator tak samo jak
+   * administrator klubu.
+   */
+  sessionRoute(app, gate, { method: 'GET', url: '/me/account' }, {
+    org: async (_req, reply, actor) => {
+      const account = await me.account(actor.pilotId);
+      if (account == null) return reply.code(401).send({ error: 'unauthorized' });
+      return reply.send(account);
+    },
+    platform: async (_req, reply, actor) => {
+      const account = await me.account(actor.pilotId);
+      if (account == null) return reply.code(401).send({ error: 'unauthorized' });
+      return reply.send(account);
+    },
+  });
 }

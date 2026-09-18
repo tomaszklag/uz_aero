@@ -34,13 +34,32 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 2.1.0 (build 4) · 18 września 2026
+
+> Logowanie e-mailem i hasłem obok konta Google - dla wspólnego tabletu w samolocie. Do tego własny adres Ninerdeck i lista urządzeń, z których każde da się wylogować zdalnie.
+
 ### Nowości
 
 - **Własny adres Ninerdeck**: strona pod `ninerdeck.pl`, panel i aplikacja pod `app.ninerdeck.pl`. Adres nadany przez hosting przestaje obowiązywać.
+- **Do panelu można wejść e-mailem i hasłem**, obok przycisku Google. To nie są dwa konta, tylko dwa sposoby, w jakie ta sama osoba potwierdza, że to ona - jedno i drugie kończy się tą samą sesją w tym samym klubie.
+- **Zapomniane hasło odzyskuje się samodzielnie.** „Nie pamiętam hasła" pyta o adres i wysyła link ważny godzinę; hasło ustawia się na stronie z linku, na dowolnym urządzeniu - także na telefonie, na którym czyta się pocztę. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, którego nie zna.
+- **Nowe konto administratora klubu nie musi być kontem Google.** Przy zakładaniu klubu podaje się dowolny adres, a razem z klubem wychodzi na niego zaproszenie z linkiem do ustawienia hasła (ważne 72 godziny). Karta klubu mówi, kiedy list poszedł i jak długo jest ważny, i pozwala wysłać go ponownie, dopóki administrator nie wejdzie.
+- **„Moje konto" w panelu** - pod nazwiskiem w pasku górnym. Można tam ustawić albo zmienić hasło i zobaczyć, na jakich urządzeniach jest się zalogowanym; każde da się wylogować osobno. Zmiana hasła wylogowuje pozostałe urządzenia, a okno, w którym się ją robi, zostaje.
+- **Karta pilota pokazuje jego urządzenia i pozwala je wylogować** - pojedynczo albo wszystkie w tym klubie naraz. Widać przy niej, czym ten pilot się loguje i kiedy był ostatnio aktywny. **Zdalne wylogowanie nie kasuje danych z telefonu**: urządzenie przestaje wysyłać, a niewysłane zapisy czekają na nim do ponownego zalogowania.
+- **Hasło pilota ustawia wyłącznie on sam.** Administrator klubu wysyła mu ten sam list, który pilot wysłałby sobie przez „Nie pamiętam hasła" - panel nie pokazuje ani linku, ani kodu nikomu, także administratorowi.
+- **Do aplikacji można wejść hasłem - dla wspólnego tabletu w samolocie.** Loguje się kodem pilota albo adresem e-mail, a tablet pamięta kluby, z których go używano, więc następny pilot wpisuje same swoje trzy litery. Po wylogowaniu aplikacja od razu staje na formularzu hasła, bez dodatkowego tapnięcia. Na własnym telefonie Google zostaje pierwszą drogą, a hasło - drugim przyciskiem pod nim.
+- **Hasło do aplikacji ustawia się w ustawieniach**, w nowej sekcji między PIN-em a kontem. Hasło nie zastępuje PIN-u: PIN otwiera ten telefon offline każdego dnia, hasło loguje tę samą osobę na cudzym urządzeniu.
+- **Zapomniane hasło i zakładanie konta działają też z aplikacji.** Jedno i drugie kończy się linkiem wysłanym na adres - hasło ustawia się na stronie, na dowolnym urządzeniu. Konto założone tą drogą nie omija klubu: po zalogowaniu pilot trafia na pole kodu klubu, jak każdy inny.
+- **Tablet z kilkoma klubami pozwala wybrać, w którym szukać kodu pilota** - osobnym ekranem z listą klubów, których na nim używano. Przy jednym klubie nie ma ani wyboru, ani wzmianki o nim.
+- **Zdalne wylogowanie nie zabiera pilotowi dnia.** Telefon przestaje wysyłać i mówi o tym wprost - na ekranie PIN-u i w ustawieniach - ale PIN dalej otwiera aplikację, a zapisy czekają na niej do ponownego zalogowania tej samej osoby.
+- **Wylogowanie z aplikacji kończy sesję także po stronie serwera**, zamiast zostawiać ją żywą przez kolejne tygodnie.
 
 ### Dla testerów
 
-- Aplikacja dostaje nowy adres serwera aktualizacją w tle - przy następnym uruchomieniu z internetem. Nowa instalacja nie jest potrzebna.
+- **To wydanie wymaga zainstalowania nowego pliku ze strony pobierania.** Aktualizacja w tle nie wystarczy, bo zmienia się numer wersji aplikacji - a to on wiąże telefon z wydaniem. Dane z telefonu zostają na miejscu.
+- Hasło ma minimum 12 znaków i żadnych wymogów co do rodzaju znaków - długość jest jedyną miarą. Wklejanie z menedżera haseł jest dozwolone, a przełącznik przy polu pokazuje wpisywane hasło.
+- Lista urządzeń w panelu nazywa telefon modelem, systemem i wersją aplikacji („Android 14 · Pixel 7a · Ninerdeck 2.1.0"), a przeglądarkę - dwoma słowami z jej podpisu.
+- Polityka prywatności opisuje teraz wszystkie dane, które opuszczają telefon - razem z zapisem surowych odczytów czujników, który służy do strojenia wykrywania startu i lądowania.
 
 ## 2.0.0 (build 3) · 16 września 2026
 
@@ -129,7 +148,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 2.1.0 · po pierwszych tygodniach testów
+### 2.2.0 · po pierwszych tygodniach testów
 
 > Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
 
