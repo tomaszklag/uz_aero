@@ -17,7 +17,7 @@ import { NONE } from '../common/values';
 
 export interface RequestRow {
   pilotId: string;
-  /** Imię z konta GOOGLE - osoba założyła się sama przy pierwszym logowaniu. */
+  /** Imię, którym osoba założyła się sama - Googlem albo adresem (2.1.0). */
   name: string;
   email: string;
   /** „6 WRZ 18:22 UTC" - jak długo czeka. */

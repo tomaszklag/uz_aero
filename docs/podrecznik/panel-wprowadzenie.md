@@ -1,22 +1,39 @@
 # Panel klubu: wprowadzenie
 
-> Panel to strona w przeglądarce dla administratora klubu: konta pilotów, karty samolotów i dziennik operacji. Loguje się do niego tym samym kontem Google, co do aplikacji pilota.
+> Panel to strona w przeglądarce dla administratora klubu: konta pilotów, karty samolotów i dziennik operacji. Loguje się do niego tym samym kontem, co do aplikacji pilota - Googlem albo hasłem.
 
 ## Dostęp
 
-Adres panelu klub dostaje przy wdrożeniu. Do panelu wchodzi się wyłącznie kontem Google - haseł nie ma ani tu, ani w aplikacji. Pierwszego administratora wskazuje się adresem e-mail przy wdrożeniu: loguje się tym kontem Google i zakłada resztę klubu. Kolejnych administratorów i pilotów prowadzi się w module [Piloci](panel-piloci).
+Adres panelu klub dostaje przy wdrożeniu. Wejść można **na dwa sposoby i oba prowadzą do tej samej sesji**: e-mailem i hasłem albo przyciskiem Google. To nie są dwa konta - to dwa sposoby, w jakie ta sama osoba może potwierdzić, że to ona.
 
-Panel jest dla administratorów. Jeśli po wybraniu konta Google panel nie może wpuścić, mówi to jednym zdaniem:
+Pierwszego administratora wskazuje się adresem e-mail przy zakładaniu klubu. Adres **nie musi być kontem Google**: razem z klubem wychodzi na niego list z linkiem do ustawienia hasła, ważnym 72 godziny. Administrator klika, ustawia hasło i loguje się; jeśli to jednak konto Google, może zamiast tego kliknąć Google. Kolejnych administratorów i pilotów prowadzi się w module [Piloci](panel-piloci).
+
+**Zapomniane hasło odzyskuje się samodzielnie**: „Nie pamiętam hasła" pod formularzem pyta o adres i wysyła na niego link ważny godzinę. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, którego nie zna - inaczej sam formularz mówiłby obcym, kto ma w klubie konto. Tą samą drogą ustawia hasło ktoś, kto dotąd wchodził wyłącznie Googlem i nigdy hasła nie miał.
+
+Panel jest dla administratorów. Jeśli po logowaniu panel nie może wpuścić, mówi to jednym zdaniem:
 
 | Co widzisz | Co to znaczy |
 |---|---|
-| „W klubie nie ma konta z tym adresem Google" | konto Google jest poprawne, ale w klubie nie ma konta z tym adresem - administrator musi je założyć albo wpisać ten adres w istniejącym koncie |
-| „To konto nie ma dostępu do panelu" | konto istnieje, ale ma rolę pilota; panel go nie obejmuje |
-| „To konto jest wyłączone" | konto wyłączono w module Piloci - kolejne próby nic nie zmienią, dopóki administrator go nie włączy |
+| „Nieprawidłowy e-mail lub hasło" | jedna odpowiedź na trzy sytuacje: nie znamy tego adresu, konto nie ma hasła albo hasło jest inne. Panel ich nie rozróżnia, żeby formularz nie wyliczał kont |
+| „Za dużo prób - spróbuj za …" | po kilkunastu nieudanych próbach logowanie z tego adresu odpoczywa; zdanie mówi, jak długo |
+| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma roli administratora; panel go nie obejmuje |
+| „To konto jest wyłączone" | członkostwo wyłączono w module Piloci - kolejne próby nic nie zmienią, dopóki administrator go nie włączy |
 
-Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie konta w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
+Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie członkostwa w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
 
-@panel 00-logowanie "Logowanie kontem Google"
+@panel 00-logowanie "Logowanie: e-mail i hasło, pod spodem Google"
+
+## Moje konto
+
+Nazwisko w pasku górnym prowadzi na **Moje konto** - jedyną stronę panelu, która mówi o Tobie, a nie o klubie. Są na niej trzy rzeczy:
+
+- **Logowanie** - Twój adres (klub go nie zmienia) i plakietki metod, którymi wchodzisz: Google, hasło albo obie;
+- **Hasło** - ustawienie pierwszego albo zmiana istniejącego. Minimum 12 znaków i żadnych wymogów co do rodzaju znaków: długość jest jedyną miarą, a wymuszone „duża litera, cyfra i znak" produkuje hasła, które słowniki znają lepiej niż ludzie. **Zapis wylogowuje Twoje pozostałe urządzenia** - to okno zostaje;
+- **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów i obu powierzchni. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, plakietka „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
+
+Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to głównie jest: logowanie Googlem na cudzym urządzeniu znaczyłoby dodanie własnego konta do cudzej przeglądarki.
+
+@panel konto "Moje konto: hasło i własne urządzenia"
 
 ## Moduły
 

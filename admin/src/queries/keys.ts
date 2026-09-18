@@ -15,8 +15,27 @@ import type { PilotListQuery } from '../api/pilots';
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
   me: ['me'] as const,
-  /** Identyfikator klienta Google dla przycisku logowania - konfiguracja, nie dane. */
-  googleClient: ['googleClient'] as const,
+
+  /**
+   * Metody logowania tego wdrożenia (2.1.0) - konfiguracja serwera, pytana PRZED sesją.
+   * Osobno od tożsamości sesji: to pytanie zadaje się PRZED zalogowaniem.
+   */
+  authMethods: ['authMethods'] as const,
+
+  /**
+   * MOJE KONTO (2.1.0): adres, metody logowania i własne urządzenia.
+   *
+   * Osobny korzeń od `me`, choć oba mówią o zalogowanym - i to jest cała różnica
+   * między nimi: `me` przestawia ramę panelu i nie starzeje się nigdy, a to tutaj
+   * starzeje się przy każdej zmianie hasła i każdym „Wyloguj" w liście urządzeń.
+   * Wspólny korzeń kazałby przerysować kolumnę i pasek po to, żeby zapaliła się
+   * plakietka metody.
+   */
+  account: {
+    all: ['account'] as const,
+    profile: ['account', 'profile'] as const,
+    sessions: ['account', 'sessions'] as const,
+  },
 
   /**
    * Konta pilotów.
@@ -28,6 +47,12 @@ export const keys = {
   pilots: {
     all: ['pilots'] as const,
     list: (query: PilotListQuery) => ['pilots', 'list', query] as const,
+    /**
+     * Urządzenia JEDNEGO członka W TYM klubie (2.1.0) - jedyne pytanie o pilota, które
+     * naprawdę pyta serwer o coś, czego nie ma na liście. Pod prefiksem `pilots`, bo
+     * starzeje się od tej samej rzeczy: wyłączenie członkostwa gasi też sesje.
+     */
+    sessions: (id: string) => ['pilots', 'sessions', id] as const,
   },
 
   /**

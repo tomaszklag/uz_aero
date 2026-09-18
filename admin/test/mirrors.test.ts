@@ -108,6 +108,26 @@ const MIRRORS = [
     server: 'MEMBERSHIP_STATUSES',
     read: () => constIn(join(SERVER, 'memberships.ts'), 'MEMBERSHIP_STATUSES'),
   },
+  // SESJE LOGOWANIA (2.1.0, issue #134). Trzy katalogi z jednego pliku domeny, bo
+  // panel pisze z nich napisy przy każdym wierszu listy urządzeń: powierzchnię
+  // („panel" / „telefon"), metodę („Google" / „hasło") i plakietki metod konta.
+  // Bez lustra metoda dodana na serwerze wypadłaby ze słownika napisów i wiersz
+  // pokazałby surowe `passkey` - ten sam tryb awarii, co przy statusie zgłoszenia.
+  {
+    panel: 'SessionSurfaceDto',
+    server: 'SESSION_SURFACES',
+    read: () => constIn(join(SERVER, 'loginSessions.ts'), 'SESSION_SURFACES'),
+  },
+  {
+    panel: 'SessionMethodDto',
+    server: 'LOGIN_METHODS',
+    read: () => constIn(join(SERVER, 'loginSessions.ts'), 'LOGIN_METHODS'),
+  },
+  {
+    panel: 'AccountMethodDto',
+    server: 'LOGIN_METHODS_ISSUED',
+    read: () => constIn(join(SERVER, 'loginSessions.ts'), 'LOGIN_METHODS_ISSUED'),
+  },
 ] as const;
 
 describe('lustra unii: panel <-> serwer', () => {

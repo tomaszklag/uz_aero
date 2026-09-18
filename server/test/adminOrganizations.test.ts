@@ -144,6 +144,10 @@ describe('GET /admin/api/organizations - lista klubów', () => {
         // jeszcze nie wszedł, nie ma czynnej sesji. Razem z `signedIn` daje trzy stany
         // zamiast dwóch - patrz `AdminOrganizationAdmin`.
         lastSeenAt: null,
+        // ZAPROSZENIE (2.1.0, issue #134 D5): klub powstał przed chwilą trasą platformy,
+        // więc list z linkiem „ustaw hasło" już poszedł i karta ma o czym powiedzieć -
+        // to jest dokładnie ten stan, w którym superadministrator wysyła go ponownie.
+        invite: { sentAt: expect.any(String), expiresAt: expect.any(String) },
       },
     ]);
     const alfa = items.find((i) => i.slug === 'aeroklub-alfa')!;

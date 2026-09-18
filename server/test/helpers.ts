@@ -425,7 +425,7 @@ const lastSeen = new LastSeenThrottle();
       new PgAdminEventsRepo(),
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
-    adminMeQueries: new AdminMeQueries(pilots),
+    adminMeQueries: new AdminMeQueries(pilots, identities, passwordCredentials),
     // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem - testy czytają
     // wartość z odpowiedzi, a jeden z przypadków sprawdza właśnie to, że nie ma jej
     // nigdzie indziej (ani w `details` audytu, ani w bazie poza hashem).

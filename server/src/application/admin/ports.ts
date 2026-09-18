@@ -21,6 +21,7 @@ import type {
 } from '@ninerdeck/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
+import type { IssuedLoginMethod } from '../../domain/loginSessions.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
@@ -717,6 +718,12 @@ export interface AdminPilotJoin {
    * inną wielkość pod tą samą etykietą (patrz nagłówek `contracts/pilots.ts`).
    */
   lastSeenAt: Date | null;
+  /**
+   * Czym ta osoba może wejść (2.1.0, issue #134 D4): obecność tożsamości u dostawcy
+   * i obecność hasła. Czyta się to DWOMA `EXISTS` w zapytaniu listy, a nie osobnym
+   * odpytaniem per wiersz - kilkanaście członków klubu to kilkanaście żądań.
+   */
+  methods: IssuedLoginMethod[];
   flyingDays: number;
 }
 
@@ -1082,6 +1089,16 @@ export interface OrganizationAdmin {
   signedIn: boolean;
   /** Najświeższa ŻYWA sesja w tym klubie (2.1.0, issue #133 C9); `null` = żadnej. */
   lastSeenAt: Date | null;
+  /**
+   * ZAPROSZENIE tej osoby (2.1.0, issue #134 D5) - najświeższy NIEZUŻYTY link „ustaw
+   * hasło" wysłany Z PLATFORMY; `null` = nic w drodze. O terminie rozstrzyga czytelnik.
+   *
+   * Karta klubu pisze z tego „zaproszenie wysłano … · ważne 72 h" i dlatego to musi
+   * przyjść z bazy, a nie z odpowiedzi na kliknięcie: nota, która znika po odświeżeniu
+   * strony, każe superadministratorowi wysyłać drugi list, żeby się dowiedzieć, że
+   * pierwszy jeszcze żyje.
+   */
+  invite: { sentAt: Date; expiresAt: Date } | null;
 }
 
 /** Klub + jego kod, czytany DO ODCZYTU na karcie klubu (§8.1). */

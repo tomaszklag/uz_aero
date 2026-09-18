@@ -18,15 +18,25 @@
  * §3.3.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import type { OrganizationAdminDto, PasswordLinkSentDto } from '../../api/dto';
 import {
   useCreateOrganization,
   useOrganization,
+  useResendInvite,
   useSetOrganizationActive,
   useUpdateOrganization,
 } from '../../queries/useOrganizations';
 import { Banner, Button, Card, Drawer, Field, Pill, TextInput } from '../../ui/components';
+import { CheckIcon } from '../../ui/components/icons';
+import {
+  linkBlocker,
+  linkFailureText,
+  linkSentText,
+  linkValidity,
+} from '../accounts/passwordAccess';
+import { lastSeenText } from '../accounts/sessionRows';
 import { conflictField, errorMessage } from '../common/apiMessage';
 import { dateWithYear, NONE } from '../common/values';
 import {
@@ -232,7 +242,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
         </Card>
       ) : (
         <>
-          <AdminsCard admins={created.admins} />
+          <AdminsCard orgId={created.id} admins={created.admins} justInvited={create.data?.invite ?? null} />
 
           <Card title="Kod klubu">
             <div className="club-code-row">
@@ -340,10 +350,14 @@ function FirstAdminCard({
 }) {
   return (
     <Card title="Pierwszy administrator">
+      {/* ADRES NIE MUSI BYĆ KONTEM GOOGLE (2.1.0, `docs/logowanie-haslem.md` D8): razem
+          z klubem wychodzi do niego list z linkiem do ustawienia hasła (72 h), więc
+          etykieta brzmi „E-mail", a podpis mówi o SKUTKU - co ten człowiek dostanie
+          i jak wejdzie. Podpięcie Googlem po tym samym adresie działa dalej. */}
       <Field
         htmlFor="org-admin-email"
-        label="Konto Google"
-        hint="Tym adresem się zaloguje. Konto podepnie się przy pierwszym logowaniu - zaproszenia nie wysyłamy."
+        label="E-mail"
+        hint="Tym adresem się zaloguje. Dostanie e-mail z linkiem do ustawienia hasła; jeśli to adres Google, może też kliknąć Google."
       >
         <TextInput
           id="org-admin-email"
@@ -388,15 +402,60 @@ function FirstAdminCard({
 /**
  * Administratorzy = jedyne osoby z klubu widoczne dla superadministratora: odpowiadają
  * na pytanie „do kogo dzwonić". Reszta członków zostaje w klubie.
+ *
+ * ══ ZAPROSZENIE (2.1.0, `docs/logowanie-haslem.md` D8, §5.4) ══
+ * To TEN SAM mechanizm, co reset hasła: link „ustaw hasło" z dłuższą ważnością (72 h)
+ * i nazwą klubu w treści listu. Dopóki administrator nie wszedł, wiersz niesie
+ * potwierdzenie wysyłki (kiedy i jak długo ważne) oraz „Wyślij ponownie" - nowy list
+ * zużywa poprzedni link.
+ *
+ * Superadministrator NIE WIDZI ani linku, ani kodu i to jest decyzja, nie brak: link do
+ * wklejenia w komunikator byłby tym samym kanałem ręcznym, który przegląd właściciela
+ * odrzucił razem z kodem jednorazowym. Po pierwszym wejściu wiersz mówi „ostatnia
+ * aktywność …", a przycisk znika.
  */
-function AdminsCard({ admins }: { admins: { pilotId: string; name: string; email: string | null; code: string; signedIn: boolean }[] }) {
+function AdminsCard({
+  orgId,
+  admins,
+  justInvited,
+}: {
+  orgId: string;
+  admins: OrganizationAdminDto[];
+  /**
+   * Zaproszenie z odpowiedzi ZAŁOŻENIA klubu.
+   *
+   * Potrzebne, bo list wychodzi PO zapisie klubu: administrator w tej odpowiedzi jest
+   * jeszcze bez zaproszenia, choć list właśnie poszedł. Bez tego karta tuż po założeniu
+   * milczałaby o wysyłce i kazała wysyłać drugą.
+   */
+  justInvited: PasswordLinkSentDto | null;
+}) {
   const waiting = admins.length > 0 && admins.every((a) => !a.signedIn);
+  const resend = useResendInvite(orgId);
+  /** Potwierdzenie OSTATNIEJ wysyłki z tego okna - stan ekranu, nie danych karty. */
+  const [sent, setSent] = useState<Record<string, PasswordLinkSentDto>>({});
+  const now = Date.now();
+
+  const noteSource = (person: OrganizationAdminDto): PasswordLinkSentDto | null => {
+    const clicked = sent[person.pilotId];
+    if (clicked != null) return clicked;
+    const address = person.email?.toLowerCase();
+    return justInvited != null && address != null && justInvited.sentTo.toLowerCase() === address
+      ? justInvited
+      : null;
+  };
 
   return (
     <Card
       title="Administratorzy"
       actions={waiting ? <Pill tone="amber">Nie zalogował się</Pill> : undefined}
     >
+      {resend.error == null ? null : (
+        <Banner tone="warn" live>
+          {linkFailureText(resend.error)}
+        </Banner>
+      )}
+
       {admins.length === 0 ? (
         <span className="hint">Ten klub nie ma administratora - nie ma kto zatwierdzać zgłoszeń.</span>
       ) : (
@@ -408,18 +467,76 @@ function AdminsCard({ admins }: { admins: { pilotId: string; name: string; email
                 {person.email ?? NONE} · kod {person.code}
               </span>
             </span>
-            {person.signedIn ? null : (
-              <span className="cell-sub warn">nie zalogował się jeszcze</span>
+            {person.signedIn ? (
+              // Wszedł - zostaje odpowiedź na pytanie „czy ten klub żyje". `null` znaczy
+              // „nie ma teraz czynnej sesji", a nie „nigdy nie wszedł", więc milczymy.
+              person.lastSeenAt == null ? null : (
+                <span className="cell-sub">
+                  ostatnia aktywność {lastSeenText(person.lastSeenAt, now)}
+                </span>
+              )
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={resend.isPending || linkBlocker(person.email) != null}
+                reason={linkBlocker(person.email) ?? undefined}
+                onClick={() =>
+                  resend.mutate(person.pilotId, {
+                    onSuccess: (result) => setSent((prev) => ({ ...prev, [person.pilotId]: result })),
+                  })
+                }
+              >
+                Wyślij ponownie
+              </Button>
             )}
+
+            {/* Nota wysyłki: najpierw ta z TEGO kliknięcia, w jej braku - zaproszenie,
+                które serwer trzyma w bazie. Bez drugiego źródła nota znikałaby po
+                odświeżeniu strony, a superadministrator wysyłałby drugi list po to,
+                żeby się dowiedzieć, że pierwszy jeszcze żyje. */}
+            {inviteNote(noteSource(person), person.invite, now)}
           </div>
         ))
       )}
       {!waiting ? null : (
         <span className="hint">
-          Członkostwo administratora już istnieje - konto Google podepnie się przy jego
-          pierwszym logowaniu tym adresem.
+          Administrator wchodzi z linku w e-mailu - ustawia hasło i loguje się do panelu.
+          Adres można poprawić, dopóki nie wszedł.
         </span>
       )}
     </Card>
+  );
+}
+
+/**
+ * Potwierdzenie wysyłki pod wierszem administratora; `null` = nic nie wysłano.
+ *
+ * Zaproszenie PO TERMINIE nie jest „w drodze" i nie udaje, że jest: mówi to wprost,
+ * bo to jedyny stan, w którym „Wyślij ponownie" naprawdę trzeba kliknąć.
+ */
+function inviteNote(
+  justSent: PasswordLinkSentDto | null,
+  stored: { sentAt: string; expiresAt: string } | null,
+  now: number,
+): ReactNode {
+  if (justSent != null) {
+    return (
+      <span className="sent-note" role="status">
+        <CheckIcon size={13} />
+        zaproszenie {linkSentText(justSent, now)}
+      </span>
+    );
+  }
+  if (stored == null) return null;
+
+  const expired = new Date(stored.expiresAt).getTime() <= now;
+  return (
+    <span className="sent-note" role="status">
+      {expired ? null : <CheckIcon size={13} />}
+      {expired
+        ? `zaproszenie wysłano ${dateWithYear(stored.sentAt)} · już wygasło`
+        : `zaproszenie wysłano ${dateWithYear(stored.sentAt)} · ważne ${linkValidity(stored.expiresAt, now)}`}
+    </span>
   );
 }

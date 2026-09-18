@@ -17,6 +17,7 @@ import type {
   OrganizationDetailDto,
   OrganizationDraftBody,
   OrganizationPageDto,
+  PasswordLinkSentDto,
 } from './dto';
 import { apiGet, apiPatch, apiPost } from './httpClient';
 
@@ -76,4 +77,23 @@ export function setOrganizationActive(
   return apiPost<OrganizationChangeDto>(`/organizations/${encodeURIComponent(id)}/active`, {
     active,
   });
+}
+
+/**
+ * „Wyślij ponownie" zaproszenie administratora klubu (2.1.0, `docs/logowanie-haslem.md`
+ * D8, §5.4) - PIĄTA rzecz, którą umie ten moduł, i mieści się w jego granicach: dotyczy
+ * dostępu do klubu, a nie danych z jego wnętrza.
+ *
+ * To TEN SAM list, co reset hasła - z dłuższą ważnością (72 h) i nazwą klubu w treści.
+ * Nowy zużywa poprzedni link. Superadministrator NIE WIDZI ani linku, ani kodu: w
+ * odpowiedzi jest adres i termin, bo link do wklejenia w komunikator byłby tym samym
+ * kanałem ręcznym, który przegląd właściciela odrzucił.
+ */
+export function resendInvite(
+  orgId: string,
+  pilotId: string,
+): Promise<PasswordLinkSentDto> {
+  return apiPost<PasswordLinkSentDto>(
+    `/organizations/${encodeURIComponent(orgId)}/admins/${encodeURIComponent(pilotId)}/invite`,
+  );
 }

@@ -130,9 +130,14 @@ export function verdictOf(draft: OrganizationDraft, mode: OrganizationMode): Org
     if (adminName === '') missing();
     else if (adminName.length < 2) fail('adminName', 'Imię i nazwisko: co najmniej 2 znaki.');
 
-    // E-mail administratora jest WYMAGANY, inaczej niż przy zwykłym członku: to on
-    // podpina konto Google przy pierwszym logowaniu, więc bez niego klub ma
-    // administratora, który nie ma jak wejść.
+    // E-mail administratora jest WYMAGANY, inaczej niż przy zwykłym członku: to na niego
+    // idzie zaproszenie z linkiem do ustawienia hasła (2.1.0), a przy koncie Google to on
+    // podpina tożsamość przy pierwszym logowaniu. Bez niego klub ma administratora, który
+    // nie ma jak wejść ŻADNĄ z dwóch dróg.
+    //
+    // Sprawdzamy KSZTAŁT adresu i nic więcej: od 2.1.0 nie musi to być konto Google
+    // (`docs/logowanie-haslem.md` D8), więc pytanie „czy ta domena to Gmail" byłoby
+    // zawężeniem, którego produkt już nie robi.
     const adminEmail = draft.adminEmail.trim();
     if (adminEmail === '') missing();
     else if (!EMAIL_PATTERN.test(adminEmail)) {

@@ -214,7 +214,7 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('z `@ninerdeck/domain` wolno importować WYŁĄCZNIE typy - poza JEDNYM plikiem', () => {
+  it('z `@ninerdeck/domain` wolno importować WYŁĄCZNIE typy - poza DWOMA plikami', () => {
     // Zakaz ma jeden konkretny cel: odciąć panelowi możliwość liczenia. Skoro
     // `projectSession` jest nieosiągalne, jedynym źródłem liczby jest odpowiedź
     // serwera (`docs/architektura-panelu-frontend.md` §5.1).
@@ -231,32 +231,45 @@ describe('granice warstw panelu', () => {
     // obie mapy wyglądałyby poprawnie. Przy narzędziu, którego wartość polega na
     // wspólnej rozmowie o TYM SAMYM locie, to najgorszy możliwy rodzaj różnicy.
     //
-    // **Dopisanie drugiej pozycji jest decyzją produktową, nie refaktorem.** Wyjątek
-    // pilnuje też ZAKRESU: gdyby ten plik sięgnął po `projectSession` albo regułę
-    // domeny, test niżej ma go złapać po nazwie importu.
-    const allowed = 'screens/logbook/trackChart.ts';
+    // **Dopisanie kolejnej pozycji jest decyzją produktową, nie refaktorem.** Wyjątek
+    // pilnuje też ZAKRESU: gdyby któryś z tych plików sięgnął po `projectSession` albo
+    // regułę domeny, lista imion niżej ma go złapać.
+    //
+    // ══ WYJĄTEK DRUGI: POLITYKA HASŁA (2.1.0, issue #134 D6) ══
+    // `passwordForm.ts` liczy tę samą regułę, co serwer, telefon i strona z linku -
+    // i to jest DOKŁADNIE powód, dla którego wolno mu ją zaimportować, a nie przepisać.
+    // Kopia znaczyłaby ekran mówiący „hasło dobre" przy serwerze odpowiadającym
+    // `weak_password`, czyli formularz, którego nie da się wypełnić i który nie mówi
+    // dlaczego. Decyzja stoi w `docs/logowanie-haslem.md` D4: JEDNA implementacja.
+    const allowed: Record<string, string[]> = {
+      // Geometria wykresu i nic więcej. `trackPhaseRuns` (issue #75 pkt 4) mieści się
+      // w tym zakresie z tego samego powodu, co odwzorowanie: dzieli listę CZASÓW na
+      // przebiegi wg okien lotów z DTO - kopia tego podziału w panelu znaczyłaby, że
+      // kołowanie kończy się administratorowi w innym punkcie trasy niż pilotowi.
+      'screens/logbook/trackChart.ts': [
+        'airfieldsInView',
+        'boundsOf',
+        'fitBounds',
+        'scaleBar',
+        'toScreen',
+        'trackPhaseRuns',
+      ],
+      // Sama polityka i jej próg - żadnej innej reguły domeny.
+      'screens/me/passwordForm.ts': ['PASSWORD_MIN_LENGTH', 'checkPassword'],
+    };
 
     const offenders = filesUnder('.')
       .filter((f) => valueImportsFrom(codeOf(f), '@ninerdeck/domain'))
-      .filter((f) => f !== allowed);
+      .filter((f) => allowed[f] === undefined);
     expect(offenders).toEqual([]);
 
-    // Co dokładnie wolno przez tę furtkę przejść - geometria wykresu i nic więcej.
-    // `trackPhaseRuns` (issue #75 pkt 4) mieści się w jej zakresie z tego samego powodu,
-    // co odwzorowanie: dzieli listę CZASÓW na przebiegi wg okien lotów z DTO - kopia
-    // tego podziału w panelu znaczyłaby, że kołowanie kończy się administratorowi
-    // w innym punkcie trasy niż pilotowi.
-    const imported = [...codeOf(allowed).matchAll(/^\s{2}([a-zA-Z][a-zA-Z0-9]*),$/gm)].map(
-      (m) => m[1],
-    );
-    expect(imported.sort()).toEqual([
-      'airfieldsInView',
-      'boundsOf',
-      'fitBounds',
-      'scaleBar',
-      'toScreen',
-      'trackPhaseRuns',
-    ]);
+    // Co dokładnie wolno przez każdą z tych furtek przejść.
+    for (const [file, names] of Object.entries(allowed)) {
+      const imported = [...codeOf(file).matchAll(/^\s{2}([a-zA-Z][a-zA-Z0-9_]*),$/gm)].map(
+        (m) => m[1],
+      );
+      expect(imported.sort(), file).toEqual([...names].sort());
+    }
   });
 
   it('nigdzie nie importujemy z `server/src` - panel nie widzi wnętrza serwera', () => {

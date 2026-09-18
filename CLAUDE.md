@@ -2791,6 +2791,44 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
   - **KONTRAKTY PANELU MAJĄ LUSTRA UNII, NIE IMPORTY DOMENY SERWERA**
     (`SessionSurfaceWire`, `LoginMethodWire`) - `contracts/` jest powierzchnią dla
     klienta i strażnik architektury tego pilnuje; rozjazd łapie kompilator przy mapowaniu
+- **etap H-D (panel: hasło, link i sesje) WYKONANY 2026-09-18** (gałąź
+  `feature-134-panel-haslo`, issue #134) - reguły obowiązujące odtąd KAŻDY ekran panelu
+  dotykający poświadczeń:
+  - **DWIE METODY, JEDNA KARTA I JEDNA SESJA**: formularz e-mail + hasło stoi NA WIERZCHU
+    (administrator klubu założonego bez Google nie ma innej drogi), Google pod separatorem
+    „albo". Bez klienta Google (`methods.google == null`) separator i kontener znikają
+    W CAŁOŚCI - nie ma wyszarzonego przycisku. Panel loguje WYŁĄCZNIE e-mailem: przed
+    sesją nie ma klubu, w którym kod pilota cokolwiek by znaczył
+  - **JEDNA ODMOWA NA TRZY STANY**: „Nieprawidłowy e-mail lub hasło" dla loginu
+    nieznanego, osoby bez hasła i złego hasła - ekran nie ma prawa ich rozróżnić, bo
+    serwer starannie tego nie robi. `429` mówi CZAS („za 3 min"), nie „za chwilę"
+  - **„NIE PAMIĘTAM HASŁA" ODPOWIADA TAK SAMO PO ODMOWIE SERWERA**: `202` i `429` dają to
+    samo zdanie („jeśli ten adres jest w systemie, link już idzie - ważny godzinę"), bo
+    druga odpowiedź byłaby jedyną różnicą między adresem znanym a obcym. Wyjątkiem jest
+    AWARIA SIECI - „nie wiem, czy wysłano" to inna wiadomość niż „wysłano"
+  - **PANEL NIE POKAZUJE ANI LINKU, ANI KODU** - ani administratorowi klubu, ani
+    superadministratorowi. Potwierdzenie mówi DOKĄD poszedł list i JAK DŁUGO jest ważny,
+    a termin liczy się z odpowiedzi serwera, nie ze stałej w panelu (reset ma godzinę,
+    zaproszenie 72 h)
+  - **WIERSZ SESJI MA DWIE IKONY, NIE TRZY**: rozstrzyga POWIERZCHNIA (`panel`/`mobile`),
+    bo to są dane; kształtu obudowy („tablet czy telefon") rejestr nie zna, a wyprowadzanie
+    go z nazwy urządzenia byłoby domysłem postawionym obok faktów. Człon powierzchni
+    dokleja się WYŁĄCZNIE do etykiety przeglądarki - etykietę telefonu składa aplikacja
+    i nazywa w niej siebie. Sesja `legacy` MILCZY o metodzie zamiast pisać o wydaniach
+  - **`#/konto` NIE JEST MODUŁEM**: nie ma pozycji w kolumnie (kolumna wymienia moduły
+    KLUBU), wchodzi się z nazwiska w pasku górnym, a adres stoi przy kanonicznej liście
+    tras (`ui/shell/nav.ts`). Ta sama strona w ramie klubu i superadministratora
+  - **POLITYKĘ HASŁA LICZY DOMENA, NIE PANEL** - `checkPassword` jest DRUGIM imiennym
+    wyjątkiem od zakazu importu wartości z `@ninerdeck/domain` (`admin/test/architecture.test.ts`).
+    Kopia reguły dałaby ekran mówiący „hasło dobre" przy serwerze odpowiadającym
+    `weak_password`; odmowa serwera wraca POD POLE tym samym zdaniem, które pokazała
+    przeglądarka
+  - **TRZY POLA DOSZŁY NA SERWERZE** (H-D niesie cienki plaster serwera, bo B i C ich nie
+    wystawiły): `loginMethods` w wierszu listy członków, `GET /admin/api/me/account`
+    (adres i metody zalogowanego - OSOBNO od `GET /me`, które przestawia całą ramę
+    i nie starzeje się nigdy) oraz `invite` przy administratorze klubu. Przy okazji
+    `signedIn` na karcie klubu przestało pytać WYŁĄCZNIE o tożsamość Google - inaczej
+    administrator, który wszedł z linku i hasłem, zostawałby „tym, który się nie zalogował"
 - **etap H-A (makiety, design-first) - PR #144**: telefon `00a` (drugi przycisk „ZALOGUJ SIĘ
   HASŁEM"), NOWE `00f-login-haslo` (e-mail/kod + hasło, pigułka klubu urządzenia tylko przy
   kilku znanych klubach, odmowa przy polu, offline z powodem w przycisku), NOWE `00g-link-hasla`

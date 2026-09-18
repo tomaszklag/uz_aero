@@ -22,7 +22,7 @@ export function PendingCard({ queue }: { queue: MembershipQueueDto | undefined }
   if (rows.length === 0) return null;
 
   const columns: Column<RequestRow>[] = [
-    { key: 'name', header: 'Imię u Google', cellClass: 'cell-strong', render: (row) => row.name },
+    { key: 'name', header: 'Imię i nazwisko', cellClass: 'cell-strong', render: (row) => row.name },
     { key: 'email', header: 'E-mail', cellClass: 'cell-sub', render: (row) => row.email },
     { key: 'waiting', header: 'Czeka od', cellClass: 'cell-sub', render: (row) => row.waiting },
     {

@@ -35,7 +35,19 @@ Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google)
 - **Usuń konto** działa dopiero wtedy, gdy konto jest **już wyłączone** i nie ma za sobą ani jednego zapisu - także jako drugi pilot. W każdym innym przypadku panel mówi powód: w przycisku albo odmową („To konto ma zapisane loty - możesz je tylko wyłączyć").
 - **Własnego konta nie da się wyłączyć ani usunąć**, a ostatniemu aktywnemu administratorowi nie da się odebrać roli. Obie blokady chronią przed tym samym: klubem, który został bez nikogo z dostępem do panelu.
 
-@panel piloci-konto "Szuflada konta pilota"
+### Hasło: wysyłasz, nie dyktujesz
+
+W sekcji **Dostęp** stoi jeden przycisk: **Wyślij link do ustawienia hasła**. To dokładnie ten sam list, który pilot wysłałby sobie sam przez „Nie pamiętam hasła" - różni je tylko to, kto go wywołał. Po wysłaniu panel potwierdza, **dokąd** poszedł i **jak długo** jest ważny; samego linku ani żadnego kodu nie pokazuje nikomu, także Tobie. Hasło zna wyłącznie jego właściciel i to jest cała treść tego rozwiązania - hasło podyktowane przez telefon zna już dwoje ludzi.
+
+Tą samą drogą ustawia hasło pilot, który dotąd wchodził wyłącznie Googlem, a ma latać ze wspólnego tabletu. Pod adresem w sekcji **Osoba** widać plakietki metod: „Google", „hasło" albo obie; przy koncie, do którego nikt jeszcze nie wszedł, nie ma żadnej. Osoba bez adresu e-mail nie ma dokąd dostać listu i przycisk mówi to wprost.
+
+### Sesje: które urządzenie i „wyloguj wszędzie"
+
+Karta **Sesje** wymienia urządzenia, na których ta osoba jest zalogowana **w Twoim klubie** - urządzeń, którymi pracuje w innym klubie, tu nie ma i mieć nie może. Każdy wiersz mówi, co to za urządzenie, czym się zalogowano, od kiedy i kiedy było ostatnio aktywne; „Wyloguj" przy wierszu wystarcza na zwykłe pytanie „który tablet", a **Wyloguj wszędzie w tym klubie** na dzień, w którym ktoś zapomniał się wylogować i nie wiadomo gdzie.
+
+**Zdalne wylogowanie nie kasuje danych z telefonu.** Urządzenie przestaje wysyłać i pobierać, a zapisy, których nie zdążyło odesłać, czekają na nim do ponownego zalogowania tej samej osoby. Ostatnia aktywność stoi też w podtytule karty - to cały „status pilota" w tym wydaniu: bez wskaźnika „online" i bez kolumny na liście.
+
+@panel piloci-konto "Szuflada konta pilota: dostęp i sesje"
 
 ## Jak to działa
 

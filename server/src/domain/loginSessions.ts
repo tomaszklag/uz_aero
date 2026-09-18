@@ -26,6 +26,15 @@ export type LoginMethod = (typeof LOGIN_METHODS)[number];
 /** Metody, którymi wolno OZNACZYĆ nową sesję - `legacy` opisuje wyłącznie przeszłość. */
 export const LOGIN_METHODS_ISSUED = ['google', 'password'] as const;
 
+/**
+ * Metoda, którą osoba MOŻE DZIŚ WEJŚĆ - czyli to samo, co da się o niej powiedzieć
+ * w karcie członka i na `#/konto` („loguje się Googlem i hasłem").
+ *
+ * Osobny typ, a nie `LoginMethod`, bo `legacy` nie jest metodą, tylko brakiem
+ * odpowiedzi o przeszłości: plakietka „legacy" nie znaczyłaby nic dla nikogo.
+ */
+export type IssuedLoginMethod = (typeof LOGIN_METHODS_ISSUED)[number];
+
 export const isLoginMethod = (value: unknown): value is LoginMethod =>
   typeof value === 'string' && (LOGIN_METHODS as readonly string[]).includes(value);
 

@@ -74,4 +74,8 @@ export const accountToWire = (account: AdminPilotAccount, at: Date): AdminPilotL
   // `null` z tego samego powodu, co `flyingDays: 0`: mutacja oddaje tożsamość
   // i status członkostwa, a nie jego aktywność - tę przynosi odświeżona lista.
   lastSeenAt: null,
+  // Pusto z tego samego powodu: zmiana nazwiska ani wyłączenie członkostwa nie ruszają
+  // poświadczeń, więc mutacja nie ma o nich nic do powiedzenia. Panel czyta plakietki
+  // z listy, którą odświeża po zapisie.
+  loginMethods: [],
 });

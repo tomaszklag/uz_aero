@@ -21,6 +21,8 @@
  *     etykietą. Pozycja do decyzji: migracja + zapis na ścieżce logowania.
  */
 
+import type { AccountMethodWire } from './loginSessions.ts';
+
 /** Lustro `PILOT_ROLES` z `domain/roles.ts` - patrz nagłówek pliku. */
 export type PilotRoleWire = 'pilot' | 'admin';
 
@@ -52,6 +54,19 @@ export interface AdminPilotListItem {
    * z tego „ostatnio aktywny · 3 min temu", a przy `null` - kreskę.
    */
   lastSeenAt: string | null;
+  /**
+   * CZYM ta osoba może wejść (2.1.0, issue #134 D4) - plakietki pod adresem w karcie
+   * członka. Kolejność jest kolejnością mockupu: najpierw Google, potem hasło.
+   *
+   * Tablica PUSTA jest stanem prawdziwym i nierzadkim: osoba dopisana adresem, która
+   * jeszcze nie kliknęła ani Google, ani linku „ustaw hasło". Dlatego nie ma tu pary
+   * flag - pusty rząd plakietek mówi to sam, a `hasGoogle: false, hasPassword: false`
+   * kazałoby ekranowi składać z dwóch zaprzeczeń jedno zdanie.
+   *
+   * Czego tu NIE MA: `legacy`. To nie jest metoda, tylko brak odpowiedzi o sesji sprzed
+   * 2.1.0 - a karta członka mówi o KONCIE, nie o jego historii logowań.
+   */
+  loginMethods: AccountMethodWire[];
   /**
    * Dni lotne w oknie `daysFrom`–`daysTo`: sesje ZAMKNIĘTE, w których konto było
    * PIC-em albo Dualem. Liczy serwer agregatem po projekcji `sessions`.

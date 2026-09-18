@@ -77,6 +77,21 @@ export interface AdminOrganizationAdmin {
    * (`signedIn` z pustą aktywnością).
    */
   lastSeenAt: string | null;
+  /**
+   * ZAPROSZENIE (2.1.0, issue #134 D5) - najświeższy NIEZUŻYTY list „ustaw hasło"
+   * wysłany z platformy: przy zakładaniu klubu albo przyciskiem „Wyślij ponownie".
+   * `null` = nic w drodze (nigdy nie wysłano albo link został zrealizowany).
+   *
+   * O tym, czy termin jeszcze biegnie, rozstrzyga CZYTELNIK - stąd `expiresAt` zamiast
+   * flagi. Panel i tak pisze ten termin na karcie, a filtr po stronie zapytania musiałby
+   * porównać stempel z zegara aplikacji z zegarem bazy.
+   *
+   * ══ SAM TERMIN, NIGDY LINK ══
+   * Odpowiedź nie niesie ani tokenu, ani adresu strony i nie ma po co: link do
+   * wklejenia w komunikator jest tym samym kanałem ręcznym, który przegląd właściciela
+   * odrzucił razem z kodem jednorazowym. Superadministrator wysyła, nie dyktuje.
+   */
+  invite: { sentAt: string; expiresAt: string } | null;
 }
 
 /**

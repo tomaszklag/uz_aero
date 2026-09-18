@@ -22,6 +22,7 @@ import type {
   Event,
   MhFormat,
   OperationType,
+  PasswordWeakness,
   ServiceStatus,
   SessionState,
   SessionTrackPayload,
@@ -122,6 +123,84 @@ export interface PanelSessionDto {
   scopes: PanelScopesDto;
 }
 
+// -- logowanie hasłem, link i sesje (2.1.0, issue #134) -------------------------
+
+/**
+ * Metody logowania panelu - `GET /admin/api/auth/methods`.
+ *
+ * `google: null` znaczy „to wdrożenie nie ma klienta Google": ekran logowania gasi
+ * wtedy separator „albo" i przycisk pod nim W CAŁOŚCI, zamiast pokazywać kontrolkę,
+ * która nie zadziała. `password` jest dziś zawsze `true` - hasło nie ma konfiguracji,
+ * ale pole zostaje, bo panel ma czytać odpowiedź, a nie zakładać jej treść.
+ */
+export interface PanelMethodsDto {
+  google: { clientId: string } | null;
+  password: boolean;
+}
+
+/**
+ * Czym OSOBA może wejść. LUSTRO `LOGIN_METHODS_ISSUED` z `server/src/domain/loginSessions.ts`.
+ *
+ * Plakietki „Google" i „hasło" - w karcie członka i na `#/konto`. Bez `legacy`: to nie
+ * jest metoda, tylko brak odpowiedzi o sesji sprzed 2.1.0.
+ */
+export type AccountMethodDto = 'google' | 'password';
+
+/** Moje konto - `GET /admin/api/me/account` (karta „Logowanie" na `#/konto`). */
+export interface PanelAccountDto {
+  /** `null` = konta bez adresu; taka osoba nie odzyska hasła linkiem. */
+  email: string | null;
+  methods: AccountMethodDto[];
+}
+
+/**
+ * Gdzie ta sesja żyje. LUSTRO `SESSION_SURFACES` z `server/src/domain/loginSessions.ts`.
+ */
+export type SessionSurfaceDto = 'mobile' | 'panel';
+
+/**
+ * Czym zalogowano TĘ sesję. LUSTRO `LOGIN_METHODS`.
+ *
+ * `legacy` opisuje wyłącznie przeszłość - sesje sprzed 2.1.0, o których rejestr nie wie.
+ * Panel pisze przy nich samo urządzenie, bez członu metody: „wcześniejsze wydanie"
+ * powiedziałoby człowiekowi o wydaniach aplikacji, a nie o jego tablecie.
+ */
+export type SessionMethodDto = 'google' | 'password' | 'legacy';
+
+/**
+ * Jedno urządzenie na liście sesji (`/me/sessions`, `/pilots/:id/sessions`).
+ *
+ * Czego tu NIE MA: niczego, czym dałoby się tę sesję podszyć. `id` służy WYŁĄCZNIE do
+ * kliknięcia „Wyloguj" - brama pyta o podpisany token, w którym ten identyfikator jest
+ * jednym z claimów.
+ */
+export interface LoginSessionDto {
+  id: string;
+  surface: SessionSurfaceDto;
+  method: SessionMethodDto;
+  /** ISO 8601 UTC - „od kiedy". */
+  createdAt: string;
+  /** ISO 8601 UTC - ostatnia aktywność; serwer pisze ją z przepustnicą 60 s. */
+  lastSeenAt: string;
+  /** `null` = urządzenie nieznane; panel pisze wtedy „urządzenie nieznane", nie zmyśla. */
+  device: string | null;
+  ip: string | null;
+  /** Ta karta przeglądarki - „To urządzenie" i BRAK przycisku „Wyloguj". */
+  current: boolean;
+}
+
+/**
+ * Wynik wysłania linku „ustaw hasło" - z karty członka i z karty klubu.
+ *
+ * Adres i termin, NIGDY link ani kod: administrator wysyła, nie dyktuje
+ * (`docs/logowanie-haslem.md` §5.4). Panel pisze z tego „wysłano na … · ważny godzinę".
+ */
+export interface PasswordLinkSentDto {
+  sentTo: string;
+  /** ISO 8601 UTC - termin ważności linku (godzina; zaproszenie z platformy: 72 h). */
+  expiresAt: string;
+}
+
 // -- odmowy ---------------------------------------------------------------------
 
 /**
@@ -173,8 +252,23 @@ export interface ApiErrorDto {
    * „nie można" bez podania stanu wygląda jak awaria.
    */
   status?: MembershipStatusDto | string;
-  /** 409 `refused`: DLACZEGO odmówiono. Odmowa bez powodu każe zgadywać, czy to awaria. */
-  reason?: PilotRefusalDto | FleetRefusalDto;
+  /**
+   * DLACZEGO odmówiono - `409 refused` (konto, flota) i `400 weak_password` (polityka
+   * hasła, 2.1.0). Odmowa bez powodu każe zgadywać, czy to awaria.
+   *
+   * Powód polityki hasła bierzemy jako TYP z domeny, a nie jako lustro: tę samą regułę
+   * liczy przeglądarka przed wysłaniem (`checkPassword`), więc obie strony i tak muszą
+   * mówić tym samym słownikiem - a kopia unii mogłaby się z nim rozjechać w ciszy.
+   */
+  reason?: PilotRefusalDto | FleetRefusalDto | PasswordWeakness;
+  /**
+   * 429 `too_many_attempts`: ZA ILE wolno spróbować ponownie (sekundy, 2.1.0).
+   *
+   * Bez tej liczby ekran napisałby „spróbuj za chwilę", a chwila znaczy co innego
+   * przy minucie i przy kwadransie - człowiek przy tablecie musi wiedzieć, czy czekać,
+   * czy iść po administratora.
+   */
+  retryAfterSec?: number;
   /**
    * 422 `rule_violation`: naruszenia REGUŁ REJESTRU, po polsku i wprost od domeny.
    *
@@ -190,10 +284,11 @@ export interface ApiErrorDto {
 /**
  * Jedno konto - wiersz `GET /admin/api/pilots`.
  *
- * Czego tu NIE MA i nie będzie: **hasła** (hasła zniknęły z produktu 2026-09-04 -
- * tożsamości dowodzi konto Google) i **ostatniego logowania** (kolumny nie ma
- * w `pilots` i nikt jej nie zapisuje - wyliczenie jej z rotacji tokenów byłoby inną
- * wielkością pod tą samą etykietą).
+ * Czego tu NIE MA i nie będzie: **hasła** (ani samego, ani jego skrótu - od 2.1.0
+ * hasło jest metodą, o której wiersz mówi NAZWĄ w `loginMethods`, i niczym więcej)
+ * oraz **ostatniego logowania** (kolumny nie ma w `pilots` i nikt jej nie zapisuje -
+ * wyliczenie jej z rotacji tokenów byłoby inną wielkością pod tą samą etykietą;
+ * „ostatnio aktywny" niżej odpowiada na inne pytanie).
  */
 export interface PilotListItemDto {
   id: string;
@@ -201,13 +296,21 @@ export interface PilotListItemDto {
   code: string;
   name: string;
   /**
-   * Adres konta Google, którym pilot się loguje - JEDYNE poświadczenie konta.
-   * `null` = konto bez adresu, czyli takie, do którego nikt nie wejdzie, dopóki
-   * administrator go nie wpisze (`docs/logowanie-google.md` §6).
+   * Adres, którym ta osoba się loguje - Googlem, hasłem albo jednym i drugim.
+   * `null` = konto bez adresu, czyli takie, do którego nikt nie wejdzie i któremu
+   * nie da się wysłać linku „ustaw hasło".
    */
   email: string | null;
   active: boolean;
   role: PilotRole;
+  /**
+   * Ostatnia aktywność ŻYWEJ sesji tego członka W TYM klubie (2.1.0), ISO 8601;
+   * `null` = nie ma czynnej sesji. To nie jest „nigdy nie wszedł" - po wygaśnięciu
+   * sesji wraca `null`, więc panel pisze wtedy kreskę, a nie zdanie o przeszłości.
+   */
+  lastSeenAt: string | null;
+  /** Czym ta osoba może wejść - plakietki pod adresem w karcie członka (2.1.0). */
+  loginMethods: AccountMethodDto[];
 }
 
 /** Lista kont. Bez kursora - klub ma kilkanaście kont, `limit` starcza na komplet. */
@@ -244,10 +347,10 @@ export type MembershipStatusDto = 'pending' | 'active' | 'disabled' | 'rejected'
 /**
  * Jedno zgłoszenie w kolejce klubu (karta ZGŁOSZENIA na `piloci-lista`).
  *
- * Imię i adres pochodzą z konta GOOGLE: osoba założyła się sama przy pierwszym
- * logowaniu, więc administrator czyta to, co podał dostawca. Kodu ani roli tu NIE MA -
- * nadaje się je dopiero przy zatwierdzeniu (P3), i to jest cała różnica między
- * kandydatem a wierszem listy członków.
+ * Imię i adres wzięły się z ZAŁOŻENIA KONTA, którego ta osoba dokonała sama - Googlem
+ * albo adresem i hasłem (2.1.0). Administrator czyta więc to, co ona podała, a nie to,
+ * co sam wpisał. Kodu ani roli tu NIE MA - nadaje się je dopiero przy zatwierdzeniu (P3),
+ * i to jest cała różnica między kandydatem a wierszem listy członków.
  */
 export interface MembershipRequestDto {
   /** Identyfikator OSOBY - adres decyzji (`POST /memberships/:pilotId/approve`). */
@@ -316,6 +419,14 @@ export interface OrganizationAdminDto {
   /** Kod pilota W TYM klubie - z członkostwa, nie z osoby. */
   code: string;
   signedIn: boolean;
+  /** Ostatnia aktywność żywej sesji w tym klubie (2.1.0), ISO 8601; `null` = brak. */
+  lastSeenAt: string | null;
+  /**
+   * ZAPROSZENIE w drodze (2.1.0) - niezużyty list „ustaw hasło" wysłany z platformy.
+   * `null` = nic nie wysłano albo link został zrealizowany. O tym, czy termin jeszcze
+   * biegnie, rozstrzyga karta klubu - stąd `expiresAt` zamiast flagi.
+   */
+  invite: { sentAt: string; expiresAt: string } | null;
 }
 
 /**
@@ -354,6 +465,16 @@ export interface OrganizationPageDto {
 /** Odpowiedź założenia i zmiany klubu - karta, nie wiersz listy. */
 export interface OrganizationChangeDto {
   organization: OrganizationDetailDto;
+  /**
+   * ZAPROSZENIE pierwszego administratora - wyłącznie w odpowiedzi ZAŁOŻENIA klubu
+   * (2.1.0, `docs/logowanie-haslem.md` D8). List wychodzi razem z klubem, ale PO nim:
+   * klub jest faktem niezależnie od poczty, więc `null` znaczy „klub jest, listu nie
+   * ma" i karta pokazuje wtedy to samo „Wyślij ponownie", co przy wygasłym zaproszeniu.
+   *
+   * Pola nie ma we `PATCH`-u ani przy włączaniu klubu - stąd `?`, a nie `| null`
+   * z wymuszeniem: zmiana nazwy nie ma o zaproszeniu nic do powiedzenia.
+   */
+  invite?: PasswordLinkSentDto | null;
 }
 
 /**

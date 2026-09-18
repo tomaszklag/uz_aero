@@ -20,6 +20,7 @@ export { Loadable } from './Loadable';
 export { NoAccess } from './NoAccess';
 export { OptionButton } from './OptionButton';
 export { PageHead } from './PageHead';
+export { PasswordInput } from './PasswordInput';
 export { Pill, type PillTone } from './Pill';
 export { SearchInput } from './SearchInput';
 export { TableSkeleton } from './TableSkeleton';

@@ -242,6 +242,10 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         // „Ostatnio aktywny" (2.1.0, issue #133): najświeższa żywa sesja w tym klubie.
         // Nie jest poświadczeniem i nie daje się nim podszyć - to sam znacznik czasu.
         'lastSeenAt',
+        // Czym ta osoba może wejść (2.1.0, issue #134): plakietki „Google" / „hasło".
+        // Nazwy metod, nigdy poświadczeń - hash nie ma tędy jak wyjechać, bo port go
+        // nie niesie.
+        'loginMethods',
         'name',
         'orgId',
         'role',
