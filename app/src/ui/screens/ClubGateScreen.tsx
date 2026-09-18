@@ -30,7 +30,7 @@
 import React, { useEffect, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 
-import { ActionButton, AppText, Avatar, Brand, Screen, TextField } from '../components';
+import { ActionButton, AppText, Avatar, Brand, Screen, StatusCard, TextField } from '../components';
 import { toneColors } from '../components/tone';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../theme';
@@ -92,28 +92,19 @@ export function ClubGateScreen() {
         <Brand tagline={false} style={styles.brand} />
 
         {/* ── karta stanu (`.status-card`) - typ „Status": nigdy zamykalna ──────── */}
-        <View
-          style={[
-            styles.status,
-            // Odmowa jest WYCISZONA: czerwień w ramce i tytule, nie zalewa karty -
-            // to decyzja administratora, a nie awaria aplikacji (00D).
-            state === 'rejected'
-              ? { backgroundColor: theme.colors.surface, borderColor: tone.border }
-              : { backgroundColor: tone.muted, borderColor: tone.border },
-          ]}
-        >
-          <AppText variant="display" style={[styles.statusTitle, { color: tone.accent }]}>
-            {view.title}
-          </AppText>
-          <AppText variant="body" style={styles.statusBody}>
-            {view.body}
-          </AppText>
-          {view.meta != null && (
-            <AppText variant="micro" tone="muted" style={styles.meta}>
-              {view.meta}
-            </AppText>
-          )}
-        </View>
+        <StatusCard
+          // Ikona wróciła przy 2.1.0 razem ze wspólnym komponentem: makiety 00C/00D/00E
+          // rysują ją od początku, a karta składana w tym ekranie ją gubiła.
+          icon={state === 'rejected' ? 'blocker' : state === 'none' ? 'club' : 'clock'}
+          title={view.title}
+          body={view.body}
+          meta={view.meta}
+          tone={state === 'rejected' ? 'red' : state === 'none' ? 'blue' : 'amber'}
+          // Odmowa jest WYCISZONA: czerwień w ramce i tytule, nie zalewa karty -
+          // to decyzja administratora, a nie awaria aplikacji (00D).
+          tinted={state !== 'rejected'}
+          style={styles.status}
+        />
 
         {/* ── powód od administratora (`.reason`) - CYTAT, tylko przy odrzuceniu ── */}
         {view.reason != null && (
@@ -238,10 +229,7 @@ const emptyClubs = (clubs: NonNullable<ReturnType<typeof useAuthStore.getState>[
 const styles = StyleSheet.create({
   wrap: { flex: 1, justifyContent: 'center', paddingBottom: 40 },
   brand: { marginBottom: 26 },
-  status: { borderWidth: 1, borderRadius: 18, padding: 18, paddingBottom: 16, gap: 9, marginBottom: 14 },
-  statusTitle: { fontSize: 21, letterSpacing: 2.4, lineHeight: 24 },
-  statusBody: { fontSize: 13, lineHeight: 20 },
-  meta: { letterSpacing: 1.4 },
+  status: { marginBottom: 14 },
   reason: {
     borderWidth: 1,
     borderLeftWidth: 2,

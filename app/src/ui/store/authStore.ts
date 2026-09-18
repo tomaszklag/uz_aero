@@ -22,9 +22,24 @@
 import { create } from 'zustand';
 
 import type { AuthService } from '../../application/auth/authService';
-import type { ClubMembership, ClubsView, OrgRef, StoredCredentials } from '../../application/ports';
+import type {
+  AccountMethods,
+  ClubMembership,
+  ClubsView,
+  DeviceClubsRecord,
+  LoginMethods,
+  OrgRef,
+  StoredCredentials,
+} from '../../application/ports';
 import { clubSwitchBlock } from '../screens/logic/clubSwitch';
-import { loginMessage } from '../screens/logic/loginMessage';
+import {
+  loginMessage,
+  passwordLoginNotice,
+  setPasswordNotice,
+  waitReason,
+  type LoginNotice,
+  type SetPasswordNotice,
+} from '../screens/logic/loginMessage';
 import { useCurrentPilot } from './currentPilot';
 
 export type AuthStatus =
@@ -68,11 +83,55 @@ interface AuthStore {
   clubsNote: string | null;
   busy: boolean;
 
+  /**
+   * Co UMIE TO WDROŻENIE (`GET /auth/methods`, 2.1.0). `null` = jeszcze nie pytaliśmy
+   * albo serwer nie odpowiedział - i wtedy 00A pokazuje OBIE drogi, bo hasło jest znane
+   * lokalnie, a niedostępny skrypt Google nie ma prawa odebrać drugiej.
+   */
+  methods: LoginMethods | null;
+  /**
+   * Kluby znane URZĄDZENIU (D10) - z tego 00F rozstrzyga pigułkę klubu i wejście
+   * „Zmień klub", a 00I rysuje karty. Czyta się offline: lista jest lokalna.
+   */
+  device: DeviceClubsRecord | null;
+  /**
+   * Czym MOŻE SIĘ ZALOGOWAĆ ta osoba (ustawienia, sekcja „Hasło"). `null` = nie wiemy -
+   * wiersz stoi wtedy w stanie neutralnym, bo to jedyna odpowiedź, która nie kłamie
+   * o żadnym z dwóch przypadków.
+   */
+  account: AccountMethods | null;
+  /**
+   * SESJA ZERWANA ZDALNIE (D7). Nie zmienia `status` i to jest cała decyzja: PIN dalej
+   * otwiera, dane dnia zostają, a pilot dostaje baner „Status" na 00 i powód przy chipie
+   * syncu. Wyrzucenie do logowania skasowałoby zapisy, których serwer jeszcze nie ma.
+   */
+  revoked: boolean;
+
   attach(service: AuthService): void;
   /** Odczyt magazynu przy starcie - ustala bramkę. */
   restore(): Promise<void>;
   /** Logowanie tokenem Google - wynik przełącza bramkę (profil / kluby / błąd). */
   loginWithGoogle(idToken: string): Promise<void>;
+  /**
+   * Logowanie HASŁEM (00F) - te same dwa wyjścia, co Google. Odmowy wracają jako
+   * `LoginNotice`, bo mają na ekranie dwa różne miejsca (przy polu / w przycisku),
+   * a wpisu NIE czyszczą: pilot poprawia literówkę.
+   */
+  loginWithPassword(login: string, password: string): Promise<LoginNotice>;
+  /** „Nie pamiętam hasła" (00G). `false` = list nie wyszedł, bo nie ma sieci. */
+  forgotPassword(email: string): Promise<boolean>;
+  /** „Załóż konto" (00H) - ten sam list, ta sama odpowiedź (§5.4a). */
+  signUp(name: string, email: string): Promise<boolean>;
+  /** Ustawienie albo zmiana hasła (13B). Pusty `current` = osoba hasła jeszcze nie ma. */
+  setPassword(current: string | null, next: string): Promise<SetPasswordNotice>;
+  /** Odczyt `GET /auth/methods` - cichy: brak odpowiedzi zostawia obie drogi widoczne. */
+  loadMethods(): Promise<void>;
+  /** Odczyt `GET /me/account` - ustawienia pytają przy wejściu i po zapisie hasła. */
+  loadAccount(): Promise<void>;
+  /** Odczyt klubów urządzenia (offline) - 00F i 00I. */
+  loadDeviceClubs(): Promise<void>;
+  /** Wybór klubu na 00I - kontekst, w którym rozwiąże się wpisany kod pilota. */
+  useDeviceClub(orgId: string): Promise<void>;
   /**
    * Niepowodzenie PRZED serwerem (okno Google zamknięte, brak konfiguracji) - ten sam
    * baner, co odmowa serwera; anulowanie przez pilota czyści baner zamiast go stawiać.
@@ -137,6 +196,8 @@ export const useAuthStore = create<AuthStore>((set) => {
       clubs: null,
       clubsNote: null,
       busy: false,
+      // Świeża para tokenów znaczy żywą sesję, więc baner „Sesja zakończona" gaśnie sam.
+      revoked: stored.revoked === true,
     });
   };
 
@@ -149,6 +210,10 @@ export const useAuthStore = create<AuthStore>((set) => {
     loginError: null,
     clubsNote: null,
     busy: false,
+    methods: null,
+    account: null,
+    device: null,
+    revoked: false,
 
     attach(s) {
       service = s;
@@ -164,6 +229,9 @@ export const useAuthStore = create<AuthStore>((set) => {
             pilot: stored.pilot,
             org: stored.org ?? null,
             memberships: stored.memberships ?? [],
+            // Znacznik PRZEŻYWA restart, bo mieszka w magazynie: baner na 00 ma stać
+            // także wtedy, gdy pilot zamknął aplikację po zdalnym wylogowaniu.
+            revoked: stored.revoked === true,
           });
           return;
         }
@@ -194,6 +262,97 @@ export const useAuthStore = create<AuthStore>((set) => {
       } catch (error) {
         set({ busy: false, loginError: loginMessage(error) });
       }
+    },
+
+    async loginWithPassword(login, password) {
+      set({ busy: true, loginError: null });
+      try {
+        const outcome = await requireService().loginWithPassword({ login, password });
+        if (outcome.kind === 'signed_in') {
+          enter(outcome.stored);
+          return { fieldError: null, blockReason: null };
+        }
+        if (outcome.kind === 'no_club') {
+          set({ status: 'no_club', clubs: outcome.clubs, clubsNote: null, busy: false });
+          return { fieldError: null, blockReason: null };
+        }
+        set({ busy: false });
+        return passwordLoginNotice(outcome);
+      } catch (error) {
+        // Odmowa, której adapter nie przewidział - jedno zdanie PRZY POLU, bo tam pilot
+        // patrzy. Baner `loginError` należy do 00A i tam by go nikt nie zobaczył.
+        set({ busy: false });
+        return { fieldError: loginMessage(error) ?? 'Nie udało się zalogować.', blockReason: null };
+      }
+    },
+
+    async forgotPassword(email) {
+      set({ busy: true });
+      try {
+        const outcome = await requireService().forgotPassword(email);
+        set({ busy: false });
+        return outcome.kind === 'sent';
+      } catch {
+        // Każda inna odmowa jest dla tego ekranu tym samym, co brak sieci: nie wiemy,
+        // czy list poszedł. Rozróżnianie ich TREŚCIĄ wyliczałoby konta.
+        set({ busy: false });
+        return false;
+      }
+    },
+
+    async signUp(name, email) {
+      set({ busy: true });
+      try {
+        const outcome = await requireService().signUp({ name, email });
+        set({ busy: false });
+        return outcome.kind === 'sent';
+      } catch {
+        set({ busy: false });
+        return false;
+      }
+    },
+
+    async setPassword(current, next) {
+      set({ busy: true });
+      try {
+        const outcome = await requireService().setPassword({
+          ...(current != null && current !== '' ? { current } : {}),
+          next,
+        });
+        set({ busy: false });
+        return setPasswordNotice(outcome);
+      } catch (error) {
+        set({ busy: false });
+        return {
+          fieldError: null,
+          currentError: null,
+          blockReason: loginMessage(error) ?? 'Nie udało się zapisać hasła',
+        };
+      }
+    },
+
+    async loadMethods() {
+      try {
+        set({ methods: await requireService().methods() });
+      } catch {
+        // CICHO i to jest decyzja: `methods` steruje wyłącznie tym, czy pokazać przycisk
+        // Google. Awaria tego odczytu nie ma prawa odebrać drogi HASŁEM, która jest znana
+        // lokalnie - a baner „nie wiem, co serwer umie" nie mówi pilotowi nic, co mógłby
+        // z tym zrobić.
+      }
+    },
+
+    async loadAccount() {
+      set({ account: await requireService().account() });
+    },
+
+    async loadDeviceClubs() {
+      set({ device: await requireService().deviceClubs() });
+    },
+
+    async useDeviceClub(orgId) {
+      await requireService().useDeviceClub(orgId);
+      set({ device: await requireService().deviceClubs() });
     },
 
     reportLoginFailure(error) {
@@ -348,7 +507,17 @@ export const useAuthStore = create<AuthStore>((set) => {
     async logout(outboxCount) {
       const block = await requireService().logout(outboxCount);
       if (block == null) {
-        set({ status: 'signed_out', pilot: null, org: null, memberships: [], loginError: null });
+        set({
+          status: 'signed_out',
+          pilot: null,
+          org: null,
+          memberships: [],
+          loginError: null,
+          revoked: false,
+          // Kluby urządzenia PRZEŻYWAJĄ wylogowanie i to jest ich sens - odświeżamy je,
+          // bo 00F bierze stąd klub, w którym rozwiąże się kod NASTĘPNEGO pilota.
+          device: await requireService().deviceClubs(),
+        });
       }
       return block;
     },
@@ -358,11 +527,3 @@ export const useAuthStore = create<AuthStore>((set) => {
 /** Stan po odmowie - `AuthService` zapisał go w magazynie, więc czytamy stamtąd. */
 const clubsAfterJoin = async (): Promise<ClubsView | null> =>
   (await requireService().person())?.clubs ?? null;
-
-/**
- * „Spróbuj za 3 min" - ograniczenie tempa `POST /auth/join` (10 prób na osobę w 15 min).
- * Powód stoi W PRZYCISKU (issue #55) i MUSI podawać czas: „za dużo prób" bez liczby
- * każe pilotowi zgadywać, kiedy wrócić.
- */
-const waitReason = (sec: number): string =>
-  sec < 60 ? `Za dużo prób - spróbuj za ${sec} s` : `Za dużo prób - spróbuj za ${Math.ceil(sec / 60)} min`;

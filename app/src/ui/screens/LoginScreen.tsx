@@ -18,21 +18,39 @@
  *
  * Trzy wyniki logowania (profil / zgłoszenie / odmowa) rozstrzyga store: ten ekran
  * przekazuje mu wyłącznie token z Google albo powód, dla którego tokenu nie ma.
+ *
+ * ══ OD 2.1.0 DRUGI PRZYCISK: „ZALOGUJ SIĘ HASŁEM" (00F) ══
+ * Napis powtarza tytuł ekranu, na który prowadzi - pilot ma widzieć, że trafił tam,
+ * gdzie tapnął. „Nie pamiętam hasła" TU NIE STOI: ten link należy do formularza hasła,
+ * bo tam pada pytanie.
+ *
+ * Gdy wdrożenie NIE MA klienta Google (`methods.google == null`), przycisk Google znika
+ * W CAŁOŚCI, a hasło wchodzi na jego miejsce jako droga PIERWSZA - wyszarzonego przycisku
+ * do konta, którego nie da się użyć, nie zostawiamy (zasada z 02G i 10B). Dopóki
+ * odpowiedzi nie ma, stoją OBA: hasło jest znane lokalnie, a niedostępny odczyt nie ma
+ * prawa odebrać drogi, która działa.
  */
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Banner, Brand, GoogleButton, Screen } from '../components';
+import { ActionButton, Banner, Brand, GoogleButton, Screen } from '../components';
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn';
 import { useAuthStore } from '../store/authStore';
 import type { GoogleSignInError } from './logic/googleSignInError';
 
-export function LoginScreen() {
+export interface LoginScreenProps {
+  /** „ZALOGUJ SIĘ HASŁEM" → 00F. */
+  onPasswordLogin: () => void;
+}
+
+export function LoginScreen({ onPasswordLogin }: LoginScreenProps) {
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const reportLoginFailure = useAuthStore((s) => s.reportLoginFailure);
   const busy = useAuthStore((s) => s.busy);
   const loginError = useAuthStore((s) => s.loginError);
+  const methods = useAuthStore((s) => s.methods);
+  const hasGoogle = methods == null || methods.google != null;
 
   const google = useGoogleSignIn(
     useCallback((idToken: string) => void loginWithGoogle(idToken), [loginWithGoogle]),
@@ -47,10 +65,22 @@ export function LoginScreen() {
         {/* Przycisk gaśnie tylko na czas ładowania żądania (ułamek sekundy po
             starcie). Build BEZ identyfikatora klienta zostawia go czynnym - powód
             pada po tapnięciu jako zdanie, a nie jako wyszarzony przycisk bez słowa. */}
-        <GoogleButton
-          onPress={() => void google.signIn()}
-          busy={busy}
-          disabled={google.available && !google.ready}
+        {hasGoogle && (
+          <GoogleButton
+            onPress={() => void google.signIn()}
+            busy={busy}
+            disabled={google.available && !google.ready}
+          />
+        )}
+
+        <ActionButton
+          label="ZALOGUJ SIĘ HASŁEM"
+          // Bez Google hasło JEST drogą główną, więc dostaje pełny zielony `solid`;
+          // obok Google zostaje `.btn-secondary` z makiety - sam kontur, mniejszy napis.
+          tone="green"
+          variant={hasGoogle ? 'secondary' : 'solid'}
+          size={hasGoogle ? 'md' : 'lg'}
+          onPress={onPasswordLogin}
         />
 
         {loginError != null && (

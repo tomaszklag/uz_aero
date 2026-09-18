@@ -54,6 +54,15 @@ export interface FieldProps {
   /** Podpowiedź pod polem - do czego ta wartość służy. */
   hint?: string;
   /**
+   * Ton podpowiedzi. Domyślnie przygaszony, bo podpowiedź jest INSTRUKCJĄ.
+   *
+   * Bursztyn dokładamy tam, gdzie ta sama linijka mówi o WARTOŚCI, która wymogu jeszcze
+   * nie spełnia (polityka hasła w 13B: „co najmniej 12 znaków" świeci, dopóki jest
+   * krócej). To wciąż nie jest `error`: wpis nie został odrzucony, tylko nie jest jeszcze
+   * gotowy - a czerwień w trakcie pisania byłaby zarzutem postawionym za wcześnie.
+   */
+  hintTone?: 'muted' | 'amber';
+  /**
    * Zdanie o BŁĘDNEJ wartości, czerwone, PRZY POLU (`.field-error` z mockupów; 00E).
    *
    * Stoi tam, gdzie błąd - nie w banerze nad formularzem: pilot poprawia to, co
@@ -65,7 +74,16 @@ export interface FieldProps {
   style?: ViewStyle;
 }
 
-export function Field({ label, tag, labelNote, hint, error, children, style }: FieldProps) {
+export function Field({
+  label,
+  tag,
+  labelNote,
+  hint,
+  hintTone = 'muted',
+  error,
+  children,
+  style,
+}: FieldProps) {
   return (
     <View style={[{ gap: 5 }, style]}>
       {(label != null || labelNote != null || tag != null) && (
@@ -92,7 +110,7 @@ export function Field({ label, tag, labelNote, hint, error, children, style }: F
         </AppText>
       ) : (
         hint != null && (
-          <AppText variant="mono" tone="muted" style={styles.hint}>
+          <AppText variant="mono" tone={hintTone} style={styles.hint}>
             {hint}
           </AppText>
         )

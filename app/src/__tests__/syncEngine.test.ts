@@ -74,6 +74,35 @@ class ScriptedServer implements ServerPort {
     return { kind: 'signed_in' as const, tokens: { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] } };
   }
 
+  // Trasy LOGOWANIA HASŁEM (2.1.0) - te przekroje ich nie dotykają.
+  async account(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async methods(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async loginWithPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async forgotPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async signUp(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async setPassword(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
+  async logout(): Promise<never> {
+    throw new Error('nieużywane w tych testach');
+  }
+
   // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
   async membershipStatus(): Promise<never> {
     throw new Error('nieużywane w tych testach');
@@ -284,6 +313,29 @@ describe('SyncEngine.syncOnce', () => {
 
     expect(await engineWith(repo, server).syncOnce()).toEqual({ kind: 'auth_expired' });
     expect(await repo.getOutboxCount()).toBe(2); // praca lokalna trwa; sync czeka na login
+  });
+
+  it('sesja ZERWANA ZDALNIE = auth_revoked, nie auth_expired - i nic nie znika', async () => {
+    // DWA różne „nie" i dwa różne zdania dla pilota (2.1.0, D7): poświadczenie, które
+    // się zestarzało, naprawia się przy okazji; DECYZJĘ CZŁOWIEKA trzeba nazwać, bo
+    // inaczej pilot widzi „sync stoi" i szuka usterki tam, gdzie jej nie ma.
+    const repo = await repoWithEvents(2);
+    const credentials = new MemoryCredentials(CREDS);
+    const server = new ScriptedServer(
+      [new ServerRejectedError(401, 'unauthorized')],
+      new ServerRejectedError(401, 'session_revoked'),
+    );
+    const auth = new AuthService(server, credentials, new PinCrypto());
+
+    expect(await new SyncEngine(repo, server, auth).syncOnce()).toEqual({ kind: 'auth_revoked' });
+
+    // Zdalne wylogowanie NIE KASUJE niczego z urządzenia (§3.0): zapisy dnia czekają
+    // na ponowne zalogowanie tej samej osoby, a PIN dalej ma czym otwierać aplikację.
+    expect(await repo.getOutboxCount()).toBe(2);
+    expect((await credentials.load())?.refreshToken).toBe('r1');
+    // Znacznik siedzi w MAGAZYNIE, więc przeżyje restart - baner na 00 ma stać także
+    // wtedy, gdy pilot zamknął aplikację po zdalnym wylogowaniu.
+    expect(await auth.revoked()).toBe(true);
   });
 
   it('sieć znika między 401 a rotacją → offline, nie auth_expired', async () => {

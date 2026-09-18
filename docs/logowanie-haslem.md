@@ -720,14 +720,41 @@ H-E #135 · H-F #136 · zadanie właściciela (poczta) #137 · H-W #138; plan i 
   z `@ninerdeck/domain` to DRUGI imienny wyjątek od zakazu importu wartości domeny
   w panelu (`admin/test/architecture.test.ts`) - to ta sama decyzja, co D4: jedna
   implementacja polityki dla serwera, telefonu, panelu i strony.
-- **H-E Aplikacja** (#135) - `ServerPort.loginWithPassword/forgotPassword/setPassword/logout`,
-  `AuthService` z drugim wejściem i znacznikiem `revoked`, podpowiedź klubu urządzenia
-  po wylogowaniu (LISTA klubów urządzenia, nie jeden - D10), ekrany 00F/00G/00H/00I
-  (wyślij link → potwierdzenie; 00H = rejestracja e-mailem, §5.4a; 00I = wybór klubu
-  urządzenia, tylko przy więcej niż jednym), sekcja „Hasło" na 13
-  z arkuszem 13b, obsługa `session_revoked` w syncu i na PIN-ie, `POST /auth/logout` przy
-  wylogowaniu, nagłówek `X-Ninerdeck-Device`, `GET /auth/methods` na 00A, testy
-  `AuthService` i logiki ekranów.
+- **H-E Aplikacja** (#135) - **WYKONANY 2026-09-18** (poza sprawdzeniem NA URZĄDZENIU,
+  E11 druga połowa - należy do właściciela).
+  `ServerPort.loginWithPassword/forgotPassword/signUp/setPassword/logout/methods/account`,
+  `AuthService` z drugim wejściem i znacznikiem `revoked`, kluby urządzenia
+  (`DeviceClubsPort` + `DeviceClubsStore` - LISTA, nie jeden klub; D10), ekrany
+  00F/00G/00H/00I (wyślij link → potwierdzenie; 00H = rejestracja e-mailem, §5.4a;
+  00I = wybór klubu urządzenia, tylko przy więcej niż jednym), „ZALOGUJ SIĘ HASŁEM"
+  na 00A, sekcja „Hasło" na 13 z arkuszem 13B, `auth_revoked` w syncu i baner na 00,
+  `POST /auth/logout` przy wylogowaniu, nagłówek `X-Ninerdeck-Device`, moduły czyste
+  z testami (`deviceLabel`, `passwordLogin`, `deviceClubs`, `forgotPassword`, `signUp`,
+  `passwordForm`, `loginMessage`).
+  **Odstępstwa od planu**: (1) **H-E niesie CIENKI PLASTER SERWERA**, dokładnie z tego
+  samego powodu co H-D: wiersz sekcji „Hasło" nazywa się „Ustaw hasło" albo „Zmień hasło",
+  a telefon nie miał skąd wiedzieć, które - `GET /me/account` (za bramą członkostwa)
+  oddaje mu `email` i dwa „tak/nie". Sam ODCZYT przeniósł się przy okazji do
+  `application/common/queries/account.ts`, bo o to samo pyta panel (`#/konto`): dwie kopie
+  tej pary odczytów znaczyłyby formularz proszący o hasło, którego nie ma - albo milcząco
+  je nadpisujący. Trasa jest przy tym OSOBNA od `GET /reference`, które jest cache'em
+  KLUBU z ETagiem, a metody należą do OSOBY; (2) **brak nowej klasy błędu na
+  `session_revoked`** - `ServerRejectedError` niesie już `.code`, więc `AuthService.rotate()`
+  czyta je wprost i stawia znacznik w magazynie; podklasa byłaby drugim sposobem
+  powiedzenia tego samego. `SyncEngine` pyta o znacznik (`auth_revoked` obok
+  `auth_expired`), zamiast rozstrzygać powód drugi raz; (3) **dwie usterki adaptera
+  naprawione w trakcie**: `forgotPassword`/`signUp` szły przez `request`, który rzuca na
+  `429` - a wtedy wyczerpany limit byłby JEDYNĄ różnicą między adresem znanym a obcym;
+  `PUT /me/password` odpowiada `401` i na złe obecne hasło, i na wygasły token, więc
+  mapowanie wszystkiego na `invalid_credentials` mówiłoby pilotowi „złe hasło" godzinę
+  po zalogowaniu (rozdzielone po kodzie błędu, token idzie przez rotację);
+  (4) **`.status-card` wyniesiona do wspólnego komponentu** (`StatusCard`) - tę samą kartę
+  rysują 00C/00D/00E i nowe 00G/00H, a składana w ekranie gubiła ikonę, którą makiety
+  rysują od początku; (5) **pole hasła bierze uchwyt PROPSEM, nie `forwardRef`** - ten
+  drugi wymusza `export const`, a `.tsx` w aplikacji eksportuje wyłącznie `export function`
+  z wielkiej litery (granica Fast Refresh, `app/src/__tests__/architecture.test.ts`);
+  (6) **przypis „konta zakłada administrator" USUNIĘTY z ustawień** - od rejestracji
+  e-mailem (00H) jest po prostu nieprawdziwy.
 - **H-F Poczta i strona `/haslo/`** (#136; zadanie właściciela #137 NA DRODZE KRYTYCZNEJ) -
   `MailPort` + adapter HTTP dostawcy (Resend) + adapter `log` dla dev, `MAIL_PROVIDER`
   wymagany przy starcie, listy po polsku (reset, zaproszenie administratora, założenie

@@ -24,6 +24,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
+  Banner,
   Brand,
   Numpad,
   OutboxGuard,
@@ -44,6 +45,7 @@ export function PinScreen() {
   const unlock = useAuthStore((s) => s.unlock);
   const setPin = useAuthStore((s) => s.setPin);
   const requestRelogin = useAuthStore((s) => s.requestRelogin);
+  const revoked = useAuthStore((s) => s.revoked);
   const outboxCount = useSessionStore((s) => s.outboxCount);
 
   const setup = status === 'pin_setup';
@@ -120,6 +122,29 @@ export function PinScreen() {
 
         {pilot != null && <ProfileChip name={pilot.name} code={pilot.code} style={styles.profile} />}
 
+        {/* ══ SESJA ZERWANA ZDALNIE (2.1.0, D7) - baner typu „Status", niezamykalny ══
+            Administrator wylogował ten telefon z panelu. Telefon PRZESTAJE WYSYŁAĆ, ale
+            NIE wyrzuca pilota do logowania i NIE kasuje danych: wyrzucenie skasowałoby
+            niewysłane zapisy dnia, czyli dokładnie to, przed czym broni reguła
+            „aplikacja nigdy sama nie wyrzuca pilota" (§3.0).
+
+            Zdanie mówi TRZY rzeczy i nic ponadto: co się stało, że PIN działa, że wysyłka
+            czeka. Nie mówi, KTO unieważnił ani dlaczego - pilot niczego z tym nie zrobi,
+            a powód należy do rozmowy z administratorem, nie do klawiatury PIN.
+
+            Przy USTAWIANIU PIN-u banera nie ma: tam właśnie trwa świeży provisioning,
+            więc znacznik i tak zaraz zgaśnie. */}
+        {revoked && !setup && (
+          <Banner
+            kind="status"
+            tone="amber"
+            icon="warning"
+            title="Sesja zakończona - zaloguj się ponownie"
+            text="PIN dalej otwiera aplikację, ale wysyłka stoi do ponownego zalogowania."
+            style={styles.session}
+          />
+        )}
+
         <AppText variant="micro" tone="muted" style={styles.label}>
           {label}
         </AppText>
@@ -176,6 +201,9 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
   brand: { marginBottom: 26 },
   profile: { marginBottom: 26 },
+  // Baner sesji wchodzi MIĘDZY plakietkę a etykietę PIN-u. Osobno od `guard` niżej,
+  // bo tamten jest strażnikiem outboxa pod linkami i ma inną geometrię.
+  session: { marginBottom: 20 },
   // `.pin-label` wyraźnie chce szersze światło niż token micro (2.5 vs 1.5) - override.
   label: { letterSpacing: 2.5, marginBottom: 14 },
   dots: { marginBottom: 30 },

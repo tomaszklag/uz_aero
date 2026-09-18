@@ -44,6 +44,35 @@ class BugServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  // Trasy LOGOWANIA HASŁEM (2.1.0) - te przekroje ich nie dotykają.
+  async account(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async methods(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async loginWithPassword(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async forgotPassword(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async signUp(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setPassword(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async logout(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   // Trasy BEZ KLUBU (wielofirmowość §6) - te przekroje ich nie dotykają.
   async membershipStatus(): Promise<never> {
     throw new Error('nieużywane');

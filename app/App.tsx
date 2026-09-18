@@ -40,7 +40,7 @@ import { useSessionStore } from './src/ui/store/sessionStore';
 import { useBackgroundTracking } from './src/ui/hooks/useBackgroundTracking';
 import { useSkeleton } from './src/ui/hooks/useSkeleton';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
-import { LoginScreen } from './src/ui/screens/LoginScreen';
+import { SignInFlow } from './src/ui/navigation/SignInFlow';
 import { PinScreen } from './src/ui/screens/PinScreen';
 import { ClubGateScreen } from './src/ui/screens/ClubGateScreen';
 
@@ -180,7 +180,10 @@ function AuthGate() {
     );
   }
 
-  if (status === 'signed_out') return <LoginScreen />;
+  // Od 2.1.0 wylogowany telefon ma PIĘĆ ekranów (Google, hasło, link, rejestracja, wybór
+  // klubu), a nie jeden - prowadzi między nimi `SignInFlow`, bo `RootNavigator` mieszka
+  // ZA tą bramką i opisuje aplikację pilota.
+  if (status === 'signed_out') return <SignInFlow />;
   // Konto Google potwierdzone, konta pilota jeszcze nie ma (logowanie Google,
   // 2026-09-04): zgłoszenie czeka na administratora albo zostało odrzucone. To NIE jest
   // profil - PIN-u nie ma czego chronić, więc bramka omija go w całości.

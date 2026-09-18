@@ -450,6 +450,26 @@ const CASES: Record<string, Probe> = {
     expect((await app.inject({ method: 'GET', url: '/me/prefs' })).statusCode).toBe(401);
   },
 
+  'GET /me/account': async ({ app, a, pwiA, pwiB }) => {
+    // Czym osoba może się zalogować (2.1.0, issue #135 E7) - własność OSOBY, nie klubu.
+    // Izolacja znaczy tu coś innego niż zwykle: nie „nie pokazuj cudzego", tylko „nie
+    // różnicuj po klubie". PWI jest w OBU klubach, więc oba jej tokeny muszą dostać
+    // odpowiedź co do bajtu tę samą - adres i metody logowania należą do człowieka,
+    // a klub nie ma ich jak zmienić.
+    const inA = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(pwiA) });
+    const inB = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(pwiB) });
+    expect(inA.statusCode).toBe(200);
+    expect(inB.statusCode).toBe(200);
+    expect(inA.json()).toEqual(inB.json());
+
+    // Kontrola pozytywna: trasa odpowiada o TYM, kto pyta - inny człowiek, inne konto.
+    const other = await app.inject({ method: 'GET', url: '/me/account', headers: bearer(a) });
+    expect(other.json().email).not.toBe(inA.json().email);
+
+    // Brama członkostwa jak wszędzie na trasach telefonu.
+    expect((await app.inject({ method: 'GET', url: '/me/account' })).statusCode).toBe(401);
+  },
+
   'PUT /me/prefs': async ({ app, a }) => {
     const res = await app.inject({
       method: 'PUT',

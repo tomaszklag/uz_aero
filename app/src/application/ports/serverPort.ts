@@ -23,6 +23,7 @@ import type {
   Handover,
   OilHandover,
   OperationType,
+  PasswordWeakness,
   ReferenceAircraft,
   ReferencePilot,
   SessionFlag,
@@ -112,6 +113,70 @@ export interface ClubsView {
 export type GoogleLoginResult =
   | { kind: 'signed_in'; tokens: AuthTokens }
   | { kind: 'no_club'; personToken: string; clubs: ClubsView };
+
+/**
+ * Metody logowania TEGO wdrożenia (`GET /auth/methods`, 2.1.0 §5.7) - ekran 00A rysuje
+ * z tego przyciski, zamiast zakładać, co serwer umie.
+ *
+ * `google: null` znaczy „to wdrożenie nie ma klienta Google" i wtedy hasło wchodzi na
+ * jego miejsce jako droga PIERWSZA. `password` jest dziś zawsze `true` - hasło nie ma
+ * konfiguracji - ale pole zostaje, bo aplikacja ma czytać odpowiedź, a nie zakładać
+ * jej treść.
+ */
+export interface LoginMethods {
+  google: { clientId: string } | null;
+  password: boolean;
+}
+
+/**
+ * CZYM ZALOGOWANY MOŻE SIĘ ZALOGOWAĆ (`GET /me/account`, 2.1.0 §5.3).
+ *
+ * Inne pytanie niż `LoginMethods`: tamto opisuje WDROŻENIE („czy ten serwer ma Google"),
+ * to - OSOBĘ („czy ja mam już hasło"). Ustawienia potrzebują właśnie drugiego: obecność
+ * hasła rozstrzyga, czy wiersz nazywa się „Ustaw hasło" (bez pola na obecne), czy
+ * „Zmień hasło" (z nim). Zgadnięcie w jedną stronę znaczy formularz proszący o hasło,
+ * którego nie ma; w drugą - milczące nadpisanie istniejącego.
+ *
+ * Odpowiedź należy do OSOBY, więc jest ta sama w każdym jej klubie - i dlatego nie jedzie
+ * w `GET /reference`, które jest cache'em KLUBU z ETagiem.
+ */
+export interface AccountMethods {
+  email: string | null;
+  hasGoogle: boolean;
+  hasPassword: boolean;
+}
+
+/**
+ * Wynik `POST /auth/password` (2.1.0, §5.1) - DRUGA droga tej samej osoby.
+ *
+ * Dwa pierwsze stany są DOKŁADNIE tymi samymi, co po Google: hasło kończy się tam,
+ * gdzie kończy Google, bo od chwili ustalenia osoby jedzie wspólny rdzeń serwera.
+ * Trzy pozostałe to ODMOWY, które na 00F mają różne drogi wyjścia, więc są WYNIKAMI,
+ * nie wyjątkami (ta sama zasada, co przy `JoinClubResult`):
+ *  • `invalid_credentials` - JEDNA odpowiedź na login nieznany, osobę bez hasła i złe
+ *    hasło. Serwer starannie ich nie rozróżnia (§5.1), więc ekran nie ma prawa;
+ *  • `account_disabled` - osoba zablokowana; próbowanie ponownie nic nie zmieni;
+ *  • `rate_limited` - powód z CZASEM w przycisku (wzór 00E).
+ */
+export type PasswordLoginResult =
+  | { kind: 'signed_in'; tokens: AuthTokens }
+  | { kind: 'no_club'; personToken: string; clubs: ClubsView }
+  | { kind: 'invalid_credentials' }
+  | { kind: 'account_disabled' }
+  | { kind: 'rate_limited'; retryAfterSec: number };
+
+/**
+ * Wynik `PUT /me/password` (§5.3) - ustawienie PIERWSZEGO hasła albo zmiana istniejącego.
+ *
+ * `weak_password` niesie POWÓD z domeny, bo tę samą politykę liczy ekran przed wysłaniem
+ * (`checkPassword`): dwa różne zdania o tej samej wartości znaczyłyby dwie kopie reguły.
+ */
+export type SetPasswordResult =
+  | { kind: 'ok' }
+  | { kind: 'invalid_credentials' }
+  | { kind: 'email_required' }
+  | { kind: 'weak_password'; reason: PasswordWeakness }
+  | { kind: 'rate_limited'; retryAfterSec: number };
 
 /**
  * Wynik `GET /auth/memberships`. `approved` niesie TOKENY - pilot zatwierdzony
@@ -340,6 +405,68 @@ export interface ServerPort {
    * jak ponowienie z ręki pilota: człowiek stoi i patrzy, a serwer mógł się uśpić.
    */
   loginWithGoogle(idToken: string): Promise<GoogleLoginResult>;
+  /**
+   * Co to wdrożenie umie (`GET /auth/methods`) - PUBLICZNE, bo pyta o to ekran
+   * logowania, czyli ktoś bez sesji.
+   */
+  methods(): Promise<LoginMethods>;
+  /**
+   * Czym MOŻE SIĘ ZALOGOWAĆ TA OSOBA (`GET /me/account`, §5.3) - ustawienia, sekcja
+   * „Hasło". Za bramą członkostwa: hasło ustawia ktoś, kto już wszedł do klubu.
+   */
+  account(token: string): Promise<AccountMethods>;
+  /**
+   * Logowanie hasłem (`POST /auth/password`, 2.1.0 §5.1) - DRUGA droga tej samej osoby,
+   * dla WSPÓLNEGO TABLETU w samolocie.
+   *
+   * `login` to e-mail ALBO kod pilota; rozstrzyga sam napis (wpis z „@" jest adresem),
+   * a kod pilota rozwiązuje się w klubie, który URZĄDZENIE zna - stąd `orgId`. Bez niego
+   * serwer umie odpowiedzieć wyłącznie na adres, i to jest poprawne: kod pilota jest
+   * jedyny w klubie, nie na serwerze.
+   *
+   * Limit jak przy Google: człowiek stoi i patrzy, a serwer liczy scrypt.
+   */
+  loginWithPassword(input: {
+    login: string;
+    password: string;
+    orgId?: string | null;
+  }): Promise<PasswordLoginResult>;
+  /**
+   * „Nie pamiętam hasła" (`POST /auth/password/forgot`, §5.4) - prośba o list z linkiem.
+   *
+   * Nie ma czego zwracać i to jest treść, nie brak: serwer odpowiada `202` ZAWSZE -
+   * dla adresu znanego, nieznanego i po wyczerpaniu limitu wysyłek. Inna odpowiedź
+   * wyliczałaby konta, a ten ekran stoi przed każdym, kto zna adres aplikacji.
+   * Brak sieci zostaje wyjątkiem, bo wtedy list NIE poszedł.
+   */
+  forgotPassword(email: string): Promise<void>;
+  /**
+   * „Załóż konto" (`POST /auth/signup`, §5.4a) - rejestracja e-mailem, TYM SAMYM linkiem.
+   *
+   * Osoba powstaje dopiero przy REALIZACJI linku, więc adres jest potwierdzony
+   * kliknięciem. `202` zawsze, z tego samego powodu co wyżej; adres zajęty dostaje list
+   * „masz już konto" zamiast odmowy.
+   */
+  signUp(input: { name: string; email: string }): Promise<void>;
+  /**
+   * Ustawienie albo zmiana WŁASNEGO hasła (`PUT /me/password`, §5.3) - arkusz 13B.
+   *
+   * `current` pomija się WYŁĄCZNIE wtedy, gdy osoba hasła jeszcze nie ma (dziś: każdy,
+   * kto wchodzi Googlem). Zapis unieważnia pozostałe sesje tej osoby - bieżąca zostaje.
+   */
+  setPassword(
+    token: string,
+    input: { current?: string; next: string },
+  ): Promise<SetPasswordResult>;
+  /**
+   * Wylogowanie (`POST /auth/logout`, §5.5) - kasuje refresh po stronie SERWERA
+   * i stempluje sesję.
+   *
+   * Do 2.1.0 telefon przy wylogowaniu nie wołał serwera wcale, więc refresh żył po nim
+   * jeszcze 90 dni. Odpowiedź jest `204` także dla poświadczenia martwego: „wyloguj"
+   * klika się również wtedy, gdy token już nie działa.
+   */
+  logout(refreshToken: string): Promise<void>;
   /**
    * Stan osoby wobec klubów (`GET /auth/memberships`) - ekran `00c` pyta o to co
    * kilkanaście sekund i pod „SPRAWDŹ PONOWNIE", a 13A raz przy otwarciu.

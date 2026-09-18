@@ -49,6 +49,7 @@ import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
+import { AccountQuery } from '../src/application/common/queries/account.ts';
 import { AdminClubCodeQueries } from '../src/application/admin/queries/clubCode.ts';
 import { AdminLoginSessionQueries } from '../src/application/admin/queries/loginSessions.ts';
 import { AdminLoginSessionCommands } from '../src/application/admin/commands/loginSessions.ts';
@@ -267,6 +268,7 @@ const lastSeen = new LastSeenThrottle();
   const passwordHasher = new ScryptHasher({ ln: 10 });
   const passwordCredentials = new PgPasswordCredentialsRepo(db);
   const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
+  const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
   const mail = new FakeMail();
   const passwords = new PasswordCommands(
     db,
@@ -425,7 +427,10 @@ const lastSeen = new LastSeenThrottle();
       new PgAdminEventsRepo(),
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
-    adminMeQueries: new AdminMeQueries(pilots, identities, passwordCredentials),
+    adminMeQueries: new AdminMeQueries(pilots, accountQuery),
+    // Czym osoba może się zalogować - JEDEN egzemplarz na obie powierzchnie, jak
+    // w produkcji: panel czyta go przez `AdminMeQueries`, telefon trasą `GET /me/account`.
+    accounts: accountQuery,
     // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem - testy czytają
     // wartość z odpowiedzi, a jeden z przypadków sprawdza właśnie to, że nie ma jej
     // nigdzie indziej (ani w `details` audytu, ani w bazie poza hashem).
