@@ -584,6 +584,19 @@
 </nav>
 </div>
 
+
+<!-- ═══ ZAKŁADEK TU NIE MA I BYĆ NIE MOŻE (3.0.0, issue #145) ═══
+     Od 3.0.0 aplikacja ma dolny pasek zakładek (Pulpit · Kalendarz · Historia), ale
+     KOKPIT JEST STANEM MODALNYM: dopóki pilot trzyma samolot, z kokpitu nie prowadzi
+     żadna droga bokiem (CLAUDE.md „Kokpit jest stanem modalnym"; issue #82 usunęło
+     stąd ostatni wyjątek, którym były ustawienia).
+
+     Flow lotu (02 → 02E → 02A → kokpit → 09B) żyje w stosie NAD zakładkami. Maszynę
+     oddaje się przez „Zdaj samolot" i to ona wraca na Pulpit. Zakładka w tym miejscu
+     nie byłaby zmianą nawigacji, tylko skasowaniem modalności.
+
+     Ta notka stoi tutaj, bo brak elementu jest decyzją, której nie widać na rysunku. -->
+
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
