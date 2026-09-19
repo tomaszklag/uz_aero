@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1273,6 +1273,130 @@ export const MIGRATION_10 = `
   ALTER TABLE refresh_tokens ALTER COLUMN session_id SET NOT NULL;
 `;
 
+/**
+ * ══ REZERWACJE I KALENDARZ FLOTY (3.0.0, issue #145) ═════════════════════════════
+ *
+ * Migracja ADDYTYWNA - produkcja 2.1.0 żyje od 2026-09-16, więc nic nie jest kasowane
+ * i nic nie zmienia znaczenia. Decyzje, model i odrzucone warianty: `docs/rezerwacje.md`.
+ *
+ * JEDNA TABELA NA DWA RODZAJE ZAJĘTOŚCI (§3.1). Rezerwacja pilota i wyłączenie maszyny
+ * z użytku mają inne pola, inne uprawnienia i inny cykl życia - kusi, żeby je rozdzielić.
+ * Przeciw stoi argument rozstrzygający: wykluczenie nakładania musi objąć OBA rodzaje
+ * naraz, a ograniczenie wykluczające działa w obrębie jednej tabeli. Przy dwóch tabelach
+ * „nie zarezerwujesz maszyny, która jest w tym czasie na przeglądzie" byłoby sprawdzeniem
+ * w kodzie - czyli dyscypliną zamiast niezmiennika.
+ *
+ * ROZSZERZENIE `btree_gist` jest „trusted" od PG 13, więc tworzy je właściciel bazy bez
+ * uprawnień superużytkownika. W testach (PGlite) wymaga jawnego załadowania w konstruktorze
+ * - patrz `test/pglite.ts`.
+ */
+export const MIGRATION_11 = `
+  -- ═══ KONFIGURACJA KLUBU DLA KALENDARZA ═════════════════════════════════════════
+  -- Strefa, w której liczy się kalendarz (P1, §6): rezerwacja jest umową między ludźmi
+  -- o godzinie, a nie pomiarem - rejestr operacji zostaje w UTC bez zmian.
+  ALTER TABLE organizations ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'Europe/Warsaw';
+  -- Lotnisko macierzyste: z jego współrzędnych liczy się doba lotna (P2, §7.1 - wschód
+  -- i zachód słońca). NULL = klub bez konfiguracji; okno schodzi wtedy do domyślnego,
+  -- bo brak ustawienia nie może zablokować rezerwacji.
+  ALTER TABLE organizations ADD COLUMN IF NOT EXISTS home_icao TEXT;
+
+  CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+  -- ═══ ZAJĘTOŚĆ MASZYNY ══════════════════════════════════════════════════════════
+  CREATE TABLE IF NOT EXISTS bookings (
+    -- uuid NADANY PRZEZ KLIENTA - to on jest całą idempotencją zapisu, jak przy
+    -- zdarzeniach rejestru: powtórzony POST wraca tym samym wierszem, nie drugim.
+    id           TEXT PRIMARY KEY,
+    org_id       TEXT NOT NULL REFERENCES organizations(id),
+    aircraft_id  TEXT NOT NULL REFERENCES aircraft(id),
+    -- 'flight' = rezerwacja pilota, 'block' = wyłączenie maszyny z użytku. Drugie jest
+    -- przedłużeniem \`aircraft.service_status\` w czasie, stąd inna zdolność w panelu.
+    kind         TEXT NOT NULL CHECK (kind IN ('flight', 'block')),
+    -- \`pending\` istnieje dopiero od 3.1.0 (ścieżka akceptacji); \`released\` = slot zwolniony
+    -- po godzinie bez przejęcia maszyny (§4.1) - to nie decyzja człowieka, więc nie
+    -- \`cancelled\`, a rezerwacja zostaje w zapisie. \`fulfilled\` nadaje przyjęcie
+    -- \`session_claim\` z \`reservationId\`.
+    status       TEXT NOT NULL CHECK (status IN
+                   ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled', 'released')),
+    starts_at    TIMESTAMPTZ NOT NULL,
+    ends_at      TIMESTAMPTZ NOT NULL,
+    CONSTRAINT booking_order CHECK (ends_at > starts_at),
+
+    -- ── wyłącznie kind = 'flight' ────────────────────────────────────────────────
+    pilot_id        TEXT REFERENCES pilots(id),
+    dual_id         TEXT REFERENCES pilots(id),
+    operation       TEXT,
+    from_icao       TEXT,
+    to_icao         TEXT,
+    -- Plan, nie pomiar: spodziewany czas w powietrzu i paliwo do zabrania. Fakty mają
+    -- swoje miejsce w rejestrze operacji i to one wchodzą do rozliczenia.
+    planned_air_min INTEGER CHECK (planned_air_min IS NULL OR planned_air_min > 0),
+    planned_fuel_l  REAL CHECK (planned_fuel_l IS NULL OR planned_fuel_l >= 0),
+    -- Operacja, która ją zrealizowała - JEDYNE połączenie rejestru z rezerwacją
+    -- i tylko w jedną stronę (§14 R7).
+    session_uuid    TEXT,
+
+    -- ── wyłącznie kind = 'block' ────────────────────────────────────────────────
+    block_reason TEXT CHECK (block_reason IN ('maintenance', 'defect', 'other')),
+
+    note          TEXT,
+    created_by    TEXT NOT NULL REFERENCES pilots(id),
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Chwila i powód wyjścia ze stanu czynnego. Powód jest WYMAGANY, gdy rezerwację
+    -- odwołuje ktoś inny niż jej właściciel - pilot czyta go w aplikacji.
+    closed_at     TIMESTAMPTZ,
+    close_reason  TEXT,
+
+    -- Kolumny nullowalne spina CHECK wiążący je z rodzajem - ten sam wzorzec, co
+    -- \`password_reset_tokens\` wiąże swoje z \`kind\` ('reset' / 'signup').
+    CONSTRAINT booking_flight_fields CHECK (
+      kind <> 'flight' OR (pilot_id IS NOT NULL AND operation IS NOT NULL)),
+    CONSTRAINT booking_block_fields CHECK (
+      kind <> 'block'  OR (block_reason IS NOT NULL AND pilot_id IS NULL))
+  );
+
+  -- ═══ NAKŁADANIE WYKLUCZA BAZA, NIE KOD (§3.2) ══════════════════════════════════
+  -- Zakres PÓŁOTWARTY \`[)\`: rezerwacja 10:00-12:00 nie koliduje z 08:00-10:00, bo
+  -- zetknięcie co do minuty NIE JEST nakładką - ta sama reguła, którą issue #100 (D4)
+  -- przyjęło dla operacji.
+  --
+  -- Predykat częściowy sprawia, że odwołana, odrzucona i ZWOLNIONA rezerwacja oddaje
+  -- termin natychmiast, zostając w tabeli jako zapis.
+  --
+  -- Sprawdzenie w kodzie zamiast tego ograniczenia przepuściłoby dwa równoczesne zapisy:
+  -- oba przeczytałyby wolny slot, zanim którykolwiek zdążył go zająć.
+  --
+  -- KLUCZ NIE NIESIE \`org_id\` i to jest decyzja, nie przeoczenie: egzemplarz należy do
+  -- dokładnie jednego klubu (klucz obcy \`aircraft.org_id\`), więc klub niczego by tu nie
+  -- zawęził. Gorzej: sugerowałby, że ten sam płatowiec da się zająć dwa razy pod dwiema
+  -- nazwami. Izolacja klubów stoi w ODCZYTACH (§3.3), bo tam jest czym wyciec.
+  DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bookings_no_overlap') THEN
+      ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
+        EXCLUDE USING gist (
+          aircraft_id WITH =,
+          tstzrange(starts_at, ends_at, '[)') WITH &&
+        ) WHERE (status IN ('pending', 'confirmed'));
+    END IF;
+  END $$;
+
+  -- Okno kalendarza: klub, maszyna, początek. Częściowy, bo listy pokazują wyłącznie
+  -- zajętości czynne - reszta to zapis, po który sięga się adresem.
+  CREATE INDEX IF NOT EXISTS idx_bookings_window
+    ON bookings (org_id, aircraft_id, starts_at)
+    WHERE status IN ('pending', 'confirmed');
+
+  -- Zwalnianie slotów (§4.1) szuka po czasie w obrębie klubu, bez maszyny.
+  CREATE INDEX IF NOT EXISTS idx_bookings_due
+    ON bookings (starts_at)
+    WHERE status IN ('pending', 'confirmed') AND kind = 'flight';
+
+  -- Rezerwacja zrealizowana: wejście po operacji, dla dziennika i dla \`fulfilled\`.
+  CREATE INDEX IF NOT EXISTS idx_bookings_session
+    ON bookings (session_uuid) WHERE session_uuid IS NOT NULL;
+`;
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1284,6 +1408,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_8,
   MIGRATION_9,
   MIGRATION_10,
+  MIGRATION_11,
 ];
 
 /**
@@ -1315,4 +1440,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Wielofirmowość (issue #98, #100): kluby jako tenant, członkostwa z kodem i rolą per klub, kod klubu jako jedyna droga dołączenia, superadministrator, org_id na danych klubu, tożsamość Google zawsze podpięta do osoby i backfill jednego klubu z danych 1.x',
   'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
   'Sesje logowania (2.1.0, issue #133): wiersz dla każdej żywej sesji telefonu i panelu z urządzeniem, metodą i ostatnią aktywnością, identyfikator sesji w tokenach - zdalne wylogowanie pojedynczego urządzenia zamiast zrywania wszystkich poświadczeń osoby',
+  'Rezerwacje i kalendarz floty (3.0.0, issue #145): zajętość maszyny jako rezerwacja pilota albo wyłączenie z użytku, nakładanie wykluczone przez bazę na zakresach czasu, strefa i lotnisko macierzyste klubu dla doby lotnej',
 ];

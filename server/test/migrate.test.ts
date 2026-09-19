@@ -13,13 +13,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { PGlite } from '@electric-sql/pglite';
 
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import type { Queryable } from '../src/application/common/ports.ts';
+import { newPglite } from './pglite';
 
 function freshDb(): Queryable {
-  const pglite = new PGlite();
+  const pglite = newPglite();
   return {
     query: (text: string, params?: unknown[]) => pglite.query(text, params as never) as never,
     exec: (sql: string) => pglite.exec(sql),
