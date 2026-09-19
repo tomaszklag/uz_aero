@@ -46,6 +46,7 @@ import {
 } from '../../common/consumptionNorm.ts';
 import type { DayExporter } from '../../common/export/dayExporter.ts';
 import type {
+  BookingsPort,
   AircraftConfigPort,
   Clock,
   Database,
@@ -101,6 +102,12 @@ export class IngestCommands {
      */
     private readonly norms: ConsumptionNormPorts | null,
     private readonly clock: Clock,
+    /**
+     * Rezerwacje (3.0.0) - `null` = wyłączone. Ingest dotyka ich w JEDNYM miejscu
+     * i w jedną stronę: `session_claim` z `reservationId` przestawia rezerwację na
+     * `fulfilled`. Rejestr nie wie o rezerwacjach nic poza tym identyfikatorem.
+     */
+    private readonly bookings: BookingsPort | null = null,
   ) {}
 
   async ingest(
@@ -272,6 +279,26 @@ export class IngestCommands {
         }
       }
 
+      /*
+       * REZERWACJA ZREALIZOWANA (3.0.0, issue #158 B7; `docs/rezerwacje.md` §14 R7).
+       *
+       * Jedyne miejsce, w którym rejestr dotyka rezerwacji - i tylko w jedną stronę.
+       * Nieznany albo już zamknięty identyfikator NIE JEST błędem i niczego nie
+       * wstrzymuje: rezerwacja nie jest warunkiem lotu (§2.3), a pilot mógł wejść
+       * w lot z rezerwacji odwołanej w międzyczasie przez administratora. Zapis lotu
+       * jest wtedy ważniejszy niż porządek w kalendarzu.
+       *
+       * Ta sama transakcja, co zdarzenia: rezerwacja oznaczona jako zrealizowana
+       * przy paczce, która się nie zapisała, wskazywałaby operację, której nie ma.
+       */
+      if (this.bookings != null) {
+        for (const event of toInsert) {
+          if (event.type !== 'session_claim') continue;
+          const id = (event.payload as { reservationId?: string | null }).reservationId;
+          if (typeof id !== 'string' || id === '') continue;
+          await this.bookings.fulfil(tx, orgId, id, event.sessionUuid, this.clock.now());
+        }
+      }
       const flags = await openFlagsFor(this.flags, tx, orgId, sessionUuids);
       return { accepted, duplicates, flags, closedNow, withheld: [...withheld] };
     });
