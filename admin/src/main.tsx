@@ -30,6 +30,7 @@ import './styles/components/drawer.css';
 import './styles/components/skeleton.css';
 import './styles/components/login.css';
 import './styles/components/logbook.css';
+import './styles/components/calendar.css';
 import './styles/components/track.css';
 import './styles/components/bugs.css';
 

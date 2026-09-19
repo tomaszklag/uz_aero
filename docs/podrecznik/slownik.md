@@ -26,6 +26,28 @@
 - **Doba UTC** - jednostka dnia w całym produkcie. Operacja należy do doby, w której uruchomiono silnik, więc lot z późnego wieczoru bywa pod inną datą niż w kalendarzu na ścianie.
 - **UTC** - czas uniwersalny, domyślny wszędzie. Czas nieoznaczony jest czasem UTC; czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 
+## Rezerwacje i kalendarz
+
+- **Rezerwacja** - zajęcie samolotu na konkretne godziny. Opisuje PLAN, a nie fakt: lot
+  zapisuje się osobno, w rejestrze operacji. Rezerwacja niczego nie warunkuje - można
+  polecieć bez niej, także bez zasięgu.
+- **Zajętość** - wszystko, co stoi w kalendarzu maszyny: rezerwacje pilotów i wyłączenia
+  z użytku. Dwa rodzaje jednego wpisu, dlatego nie da się zarezerwować maszyny, która
+  w tym czasie jest na przeglądzie.
+- **Wyłączenie z użytku** - maszyna niedostępna w danym okresie: przegląd, usterka, inny
+  powód. Wpisuje je administrator w panelu; w kalendarzu widać ją jako pasmo w skos.
+- **Slot** - pasmo czasu, na które da się zarezerwować maszynę. Aplikacja podpowiada
+  sloty przylegające do istniejących zajętości, żeby nie zostawiać dziur zbyt krótkich
+  na jakikolwiek lot.
+- **Czas klubu** - strefa czasowa, w której liczy się kalendarz. Rezerwacja jest umową
+  między ludźmi o godzinie, więc mówi czasem lotniska, a nie UTC; rejestr operacji
+  zostaje w UTC bez zmian. Gdy telefon ma inną strefę niż klub, przy godzinie staje
+  drobna adnotacja z czasem lokalnym.
+- **Okno doby lotnej** - godziny, w których klub lata; poza nimi kalendarz nie proponuje
+  slotów.
+- **Ścieżka akceptacji** *(3.1.0)* - kolejność osób, które muszą zgodzić się na
+  rezerwację, zanim stanie się potwierdzona. Klub bez ścieżki nie zatwierdza niczego -
+  rezerwacja jest gotowa od razu. Odrzucenie wymaga powodu, a pilot czyta go w aplikacji.
 ## Liczniki, paliwo i olej
 
 - **Motogodziny (MH)** - licznik pracy silnika maszyny. Odczyt przy przejęciu i przy zdaniu tworzy łańcuch: ile jeden pilot zostawił, tyle następny powinien zastać.

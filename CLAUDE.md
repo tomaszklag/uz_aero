@@ -3730,6 +3730,57 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
   w przycisku, nie ruszać ich
 
+## Rezerwacja samolotu i kalendarz floty (3.0.0, issue #145, gałąź `feature-145-projekt-rezerwacji`)
+Pierwsza funkcja Ninerdeck, która nie opisuje przeszłości, tylko PRZYSZŁOŚĆ. Decyzje,
+model danych, API i odrzucone warianty: **`docs/rezerwacje.md`**; epiki R-A…R-W =
+issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
+
+- **REZERWACJA NIE JEST ZDARZENIEM REJESTRU** (§2.1) i to jest decyzja, z której wynika
+  reszta. Rejestr ma JEDNEGO piszącego, jest append-only i opisuje FAKTY; rezerwacja jest
+  przedmiotem konkurencji dwóch pilotów, jest mutowalna i opisuje ZAMIAR. Rzecz, o którą
+  się konkuruje, potrzebuje arbitra - a arbiter musi być JEDEN, więc **zapis wymaga
+  sieci**, dokładnie jak przełączenie i dołączenie do klubu. Wysyłka przez outbox
+  znaczyłaby „twój slot przepadł" godzinę po tym, jak pilot go zarezerwował.
+- **ODCZYT DZIAŁA Z CACHE** (§2.2) jak dane referencyjne §4.8: kalendarz bez zasięgu
+  pokazuje ostatnią migawkę z adnotacją wieku. Bez sieci blokuje się WYŁĄCZNIE zapis,
+  a przycisk niesie powód wewnątrz siebie (issue #55).
+- **REZERWACJA NIE WARUNKUJE LOTU** (§2.3, decyzja właściciela): „ROZPOCZNIJ LOT" działa
+  jak dziś, także bez zasięgu i bez rezerwacji. Rezerwacja wypełnia kroki przejęcia
+  i OSTRZEGA przy cudzej kolizji - nigdy nie blokuje.
+- **NAKŁADANIE WYKLUCZA BAZA, NIE KOD** (§3.2): `EXCLUDE USING gist` na `tstzrange`
+  z zakresem `[)` (zetknięcie co do minuty przechodzi, jak przy operacjach). Rezerwacje
+  i wyłączenia maszyny z użytku siedzą w JEDNEJ tabeli `bookings` z dyskryminatorem
+  `kind` właśnie dlatego, że jedno ograniczenie ma objąć oba rodzaje naraz.
+- **KALENDARZ MÓWI CZASEM KLUBU, REJESTR ZOSTAJE W UTC** (§6): reguła „UTC wszędzie"
+  broni POMIARÓW, a rezerwacja jest umową między ludźmi o godzinie. Siatkę rysuje strefa
+  KLUBU (`organizations.timezone`), czas lokalny urządzenia dochodzi adnotacją TYLKO przy
+  różnicy stref.
+- **NAWIGACJA: PULPIT · KALENDARZ · HISTORIA** (§9.1). Ekran startowy przestał być „Mój
+  dzień": Pulpit niesie SUMY doby, najbliższą rezerwację i akcje, a listy operacji NIE MA
+  - kafelki i korekta w oknie 24 h przeniosły się do Historii, która obejmuje odtąd także
+  dziś (odejście od issue #35). **KOKPIT ZOSTAJE MODALNY**: zakładek w nim nie ma, flow
+  lotu żyje NAD nimi, a zakładka wyprowadzająca z kokpitu byłaby skasowaniem modalności.
+- **HISTORIA: dzień nagłówkiem, operacje zwartymi wierszami** (makieta `24`, nie `12`).
+  Ikona po prawej niesie skutek tapnięcia (ołówek - okno korekty, oko - podgląd po oknie).
+  Domyślnie widać tylko to, co można poprawić; archiwum stoi pod przyciskiem.
+- **GRANICA ZWIJANIA**: zwijamy to, czego pilot NIE SZUKA, wchodząc na ekran. Dlatego
+  archiwum w historii jest zwinięte, a maszyny wyłączone z użytku w kalendarzu ZOSTAJĄ
+  widoczne - tam schowana byłaby odpowiedź na „czemu nie ma czym latać".
+- **PULPIT NIE POWTARZA KALENDARZA**: paska zajętości floty na nim NIE MA, bo zakładka
+  Kalendarz stoi widoczna przez cały czas.
+- **KONTROLKA POMOCNICZA NIE DOSTAJE WAGI TREŚCI**: chip filtra maszyn jest cichy (ikona
+  lejka i liczba w tonie podpisu), a zawężenie niesie SAMA LICZBA („6 z 12" kontra „12").
+  Zieleń i odwrócone zaznaczenie odpadły jako dwa kolejne kroki tej samej pomyłki - zieleń
+  znaczy tu stan w normie albo akcję główną, a odwrócenie jest najmocniejszym kontrastem
+  na ekranie.
+- **MAKIETY 3.0 MAJĄ NOWE NUMERY** (20-24), a `01` i `12` zostają specyfikacją linii 2.x
+  aż do wydania - podręcznik osadza rodzinę `01` w 13 miejscach i opisuje wersję, którą
+  piloci mają w telefonach. Plan przejścia i los tych plików (archiwum w miejscu, jak
+  `design/admin/`): `docs/rezerwacje.md` §9.1a.
+- **PANEL PATRZY SZERZEJ NIŻ TELEFON**: na telefonie osią kalendarza jest JEDNA DOBA całej
+  floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
+  wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
+  w `admin/src/styles/components/calendar.css` i idą do makiet generatorem `panel:css`.
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
