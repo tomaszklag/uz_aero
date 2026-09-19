@@ -14,15 +14,15 @@
  * świadomie, żeby to porównanie dało się zrobić.
  */
 
-import { describe, expect, it } from 'vitest';
-import { PGlite } from '@electric-sql/pglite';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { MIGRATIONS, MIGRATION_TITLES, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import type { Queryable } from '../src/application/common/ports.ts';
+import { newPglite } from './pglite';
 
 async function migrated(): Promise<Queryable & { exec(sql: string): Promise<unknown> }> {
-  const pglite = new PGlite();
+  const pglite = newPglite();
   const db = {
     query: (text: string, params?: unknown[]) => pglite.query(text, params as never) as never,
     exec: (sql: string) => pglite.exec(sql),
@@ -71,7 +71,9 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // Wielofirmowość (migracja 8, issue #98): klub jako tenant, członkostwo, kod klubu
     // (`join_code` - jedyna droga dołączenia od 2026-09-09; tabeli `invitations` NIE MA).
     // `sheets_key` (issue #99, C5): sekret adresu kart arkusza, losowany per klub.
-    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since', 'sheets_key']],
+    // `timezone` i `home_icao` (migracja 11): kalendarz rezerwacji liczy się w strefie
+    // KLUBU, a dobę lotną wyznacza wschód i zachód słońca nad lotniskiem macierzystym.
+    ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since', 'sheets_key', 'timezone', 'home_icao']],
     [
       'memberships',
       ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
@@ -87,6 +89,12 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     [
       'login_sessions',
       ['id', 'pilot_id', 'org_id', 'surface', 'method', 'created_at', 'last_seen_at', 'expires_at', 'revoked_at', 'revoked_by', 'device_label', 'ip'],
+    ],
+    // Zajętość maszyny (migracja 11, issue #145): JEDNA tabela na rezerwację pilota
+    // i wyłączenie z użytku, bo ograniczenie wykluczające musi objąć oba rodzaje naraz.
+    [
+      'bookings',
+      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason'],
     ],
     // Tokeny linku „ustaw hasło": `kind`/`email`/`display_name` niosą rejestrację e-mailem
     // (osoba powstaje przy realizacji), `triggered_by` - który z czterech wyzwalaczy.
@@ -164,6 +172,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'aircraft',
       'aircraft_consumption',
       'aircraft_readings',
+      'bookings',
       'bug_reports',
       'events',
       'export_log',
@@ -247,7 +256,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // `session_id` jest `NOT NULL`, więc bez backfillu migracja wywróciłaby się na
     // produkcji, w której refreshe żyją 90 dni. Test jedzie schematem SPRZED tej migracji
     // (migracje 1–9), dokłada refresh jak żywy telefon i dopiero wtedy stosuje dziesiątkę.
-    const pglite = new PGlite();
+    const pglite = newPglite();
     const db = {
       query: (text: string, params?: unknown[]) => pglite.query(text, params as never) as never,
       exec: (sql: string) => pglite.exec(sql),
@@ -297,5 +306,114 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       await expect(membership(via), via).resolves.toBeDefined();
     }
     await expect(membership('panel')).rejects.toThrow();
+  });
+
+  /**
+   * ZAJĘTOŚĆ MASZYNY (migracja 11, issue #145) - nakładanie wyklucza BAZA.
+   *
+   * Te testy są jedynym miejscem, w którym widać, że ograniczenie ma właściwą
+   * SEMANTYKĘ, a nie tylko istnieje: półotwarty zakres przepuszcza zetknięcie co do
+   * minuty, predykat częściowy oddaje termin po zwolnieniu, a nakładka odbija się
+   * niezależnie od rodzaju wpisu - rezerwacja pilota i wyłączenie z użytku siedzą
+   * w jednej tabeli właśnie po to.
+   *
+   * PRAWDZIWEGO WYŚCIGU NIE DA SIĘ TU ODEGRAĆ: PGlite ma jedno połączenie i szereguje
+   * transakcje własnym mutexem (ta sama uwaga stoi w `adminExports.test.ts`). Testy
+   * sprawdzają więc, że ograniczenie ISTNIEJE i odbija sekwencyjnie; o równoległość
+   * dba baza produkcyjna - po to jest ograniczenie zamiast sprawdzenia w kodzie.
+   */
+  describe('zajętość maszyny: wykluczenie nakładania', () => {
+    // `migrated()` daje schemat BEZ danych (świat testowy mieszka w `helpers.ts`), więc
+    // ten blok zakłada sobie minimum sam. Baza wstaje RAZ, a testy rozdziela WŁASNA
+    // MASZYNA dla każdego: klucz wykluczenia zaczyna się od maszyny, więc dwa terminy
+    // z sąsiednich testów nie mają jak się o siebie odbić.
+    let db: Awaited<ReturnType<typeof migrated>>;
+    let seq = 0;
+
+    beforeAll(async () => {
+      db = await migrated();
+      await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org', 'Klub', 'klub')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt', 'Tomasz Małkiewicz')`);
+    });
+
+    async function aircraft(): Promise<string> {
+      const id = `ac${++seq}`;
+      await db.query(
+        `INSERT INTO aircraft (id, reg, type, capacity_l, mh_format, org_id)
+         VALUES ($1, $2, 'C172', 200, 'decimal', 'org')`,
+        [id, `SP-A${String(seq).padStart(2, '0')}`],
+      );
+      return id;
+    }
+
+    const insert = (ac: string, from: string, to: string, status = 'confirmed') =>
+      db.query(
+        `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+         VALUES (gen_random_uuid()::text, 'org', $1, 'flight', $2, $3, $4, 'plt', 'przelot', 'plt')`,
+        [ac, status, from, to],
+      );
+
+    it('zetknięcie co do minuty PRZECHODZI (zakres półotwarty)', async () => {
+      const ac = await aircraft();
+      await insert(ac, '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z');
+      await expect(insert(ac, '2026-10-01T10:00:00Z', '2026-10-01T12:00:00Z')).resolves.toBeDefined();
+    });
+
+    it('nakładka odbija się o bazę', async () => {
+      const ac = await aircraft();
+      await insert(ac, '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z');
+      await expect(insert(ac, '2026-10-01T09:00:00Z', '2026-10-01T11:00:00Z')).rejects.toThrow(
+        /exclusion constraint|bookings_no_overlap/,
+      );
+    });
+
+    it('druga MASZYNA w tym samym oknie przechodzi', async () => {
+      // Klucz wykluczenia zaczyna się od maszyny i na niej kończy - `org_id` w nim
+      // NIE STOI, bo egzemplarz należy do dokładnie jednego klubu (klucz obcy
+      // `aircraft.org_id`). Dołożenie klubu do klucza nic by nie zawęziło, a sugerowałoby,
+      // że ten sam płatowiec da się zarezerwować dwa razy pod dwiema nazwami.
+      const a = await aircraft();
+      const b = await aircraft();
+      await insert(a, '2026-10-02T08:00:00Z', '2026-10-02T10:00:00Z');
+      await expect(insert(b, '2026-10-02T08:00:00Z', '2026-10-02T10:00:00Z')).resolves.toBeDefined();
+    });
+
+    it('zwolniona i odwołana ODDAJĄ termin (predykat częściowy)', async () => {
+      const ac = await aircraft();
+      await insert(ac, '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z', 'released');
+      await insert(ac, '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z', 'cancelled');
+      // Ten sam termin wchodzi po raz trzeci, tym razem jako czynna rezerwacja.
+      await expect(insert(ac, '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z')).resolves.toBeDefined();
+    });
+
+    it('wyłączenie z użytku blokuje rezerwację tej samej maszyny', async () => {
+      const ac = await aircraft();
+      await db.query(
+        `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, block_reason, created_by)
+         VALUES (gen_random_uuid()::text, 'org', $1, 'block', 'confirmed', '2026-10-05T06:00:00Z', '2026-10-08T20:00:00Z', 'maintenance', 'plt')`,
+        [ac],
+      );
+      await expect(insert(ac, '2026-10-06T09:00:00Z', '2026-10-06T11:00:00Z')).rejects.toThrow(
+        /exclusion constraint|bookings_no_overlap/,
+      );
+    });
+
+    it('kolumny rodzaju spina CHECK: rezerwacja bez pilota nie istnieje', async () => {
+      const ac = await aircraft();
+      await expect(
+        db.query(
+          `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, created_by)
+           VALUES (gen_random_uuid()::text, 'org', $1, 'flight', 'confirmed', '2026-10-01T08:00:00Z', '2026-10-01T10:00:00Z', 'plt')`,
+          [ac],
+        ),
+      ).rejects.toThrow(/booking_flight_fields/);
+    });
+
+    it('koniec musi być po początku', async () => {
+      const ac = await aircraft();
+      await expect(insert(ac, '2026-10-01T10:00:00Z', '2026-10-01T08:00:00Z')).rejects.toThrow(
+        /booking_order/,
+      );
+    });
   });
 });

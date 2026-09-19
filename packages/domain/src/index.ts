@@ -58,6 +58,8 @@ export * from './consumption/mhModel';
 export * from './consumption/summary';
 export * from './consumption/ratio';
 export * from './consumption/norm';
+export * from './booking/policy';
+export * from './booking/release';
 export * from './consumption/expectation';
 export * from './consumption/phaseTimeline';
 export * from './auth/passwordPolicy';

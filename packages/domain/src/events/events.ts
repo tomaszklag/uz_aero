@@ -135,6 +135,21 @@ export interface SessionClaimPayload {
    * wszystkie naraz). `undefined` = zapis z kokpitu.
    */
   manualEntry?: boolean;
+  /**
+   * Rezerwacja, z której pilot wszedł w lot (3.0.0, `docs/rezerwacje.md` §14 R7).
+   *
+   * ══ JEDYNE ZETKNIĘCIE REJESTRU Z REZERWACJĄ I TYLKO W JEDNĄ STRONĘ ══
+   * Rezerwacja NIE jest zdarzeniem rejestru (§2.1) i rejestr o niej nic nie wie
+   * poza tym jednym identyfikatorem. Serwer przestawia nim rezerwację na
+   * `fulfilled`; DOMENA nie robi z nim NIC - nie sprawdza, czy taka rezerwacja
+   * istnieje, nie liczy z niej niczego i nie odmawia, gdy jej nie ma. Inaczej lot
+   * zaczęty bez rezerwacji albo z rezerwacją odwołaną w międzyczasie nie dałby się
+   * zapisać - a rezerwacja NIE JEST warunkiem lotu (§2.3).
+   *
+   * `undefined` = pilot wszedł w lot z pulpitu, nie z kalendarza. To normalny
+   * i najczęstszy przypadek.
+   */
+  reservationId?: string | null;
 }
 
 /** `preflight_confirm` - trasa, operacja, odczyt FOB+MH, korekty z powodem. */

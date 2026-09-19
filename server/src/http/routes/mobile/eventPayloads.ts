@@ -60,6 +60,10 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     // Znacznik sesji wpisanej ręcznie po fakcie (ekran 15, 2026-08-16) - zasila
     // plakietkę „RĘCZNIE"; brak pola = zapis z kokpitu.
     manualEntry: z.boolean().optional(),
+    // Rezerwacja, z której pilot wszedł w lot (3.0.0). Serwer przestawia nią
+    // rezerwację na `fulfilled` i nie robi z nią nic więcej - nieznany
+    // identyfikator NIE odrzuca paczki, bo rezerwacja nie jest warunkiem lotu.
+    reservationId: z.string().max(100).nullable().optional(),
   }),
 
   preflight_confirm: z.object({

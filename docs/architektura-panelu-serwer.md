@@ -1500,6 +1500,22 @@ je PRZED transakcją. Test architektury „komendy panelu nie mają uchwytu do b
 łapie - komenda nie importowała `Database`, tylko port, który go miał w środku.
 
 
+**(l) ODMOWA OGRANICZENIA UNIEWAŻNIA CAŁĄ TRANSAKCJĘ - zapis idzie w `SAVEPOINT`
+(2026-09-19, R-B rezerwacje).** `bookings_no_overlap` (`EXCLUDE USING gist`) odbija
+nakładającą się rezerwację błędem `23P01`. Adapter łapie go i chce zaraz potem dociągnąć
+KOLIDUJĄCY wiersz, żeby ekran mógł napisać, co stoi w tym czasie - a w panelu dołożyć
+jeszcze ślad audytu tą samą transakcją. Nic z tego nie przechodzi: po odmowie
+ograniczenia transakcja jest odrzucona i każde następne zapytanie w niej dostaje
+`current transaction is aborted`. Objawem był `500` zamiast `409` - na trasie, która
+logicznie działała, bo baza zrobiła DOKŁADNIE to, co miała zrobić.
+
+Reguła: zapis, po którego ODMOWIE chcemy jeszcze coś przeczytać albo zapisać, biegnie
+między `SAVEPOINT` a `ROLLBACK TO SAVEPOINT` - punkt zapisu cofa wyłącznie nieudane
+zapytanie i zostawia transakcję żywą. Dotyczy to ograniczeń wykluczających i unikalności
+wszędzie tam, gdzie odmowa nie jest końcem obsługi żądania. Tam, gdzie po odmowie kończy
+się wszystko (`uniqueConflictOn` w `fleet.ts` - odpowiedź `409` i koniec), punkt zapisu
+nie jest potrzebny i go nie ma.
+
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 
 Reguła jest jednym zdaniem: **żadnemu zapytaniu nie wolno przepuścić wiersza innego

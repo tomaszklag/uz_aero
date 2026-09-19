@@ -3781,6 +3781,52 @@ issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
   floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
   wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
   w `admin/src/styles/components/calendar.css` i idą do makiet generatorem `panel:css`.
+## Rezerwacje 3.0.0 - epik R-B: serwer, model zajętości i API (issue #158, 2026-09-19)
+Migracja 11 + domena + porty + trasy telefonu i panelu + zadanie okresowe. Decyzje
+i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
+- **NAKŁADANIE ODBIJA BAZA, A ADAPTER TŁUMACZY JEJ ODMOWĘ**: `bookings_no_overlap` rzuca
+  `23P01`, `PgBookingsRepo` zamienia to na `slot_taken` i DOCIĄGA kolidujący wiersz -
+  ekran ma powiedzieć, CO stoi w tym czasie, a nie samo „nie da się". Zapis idzie
+  w **`SAVEPOINT`** i to nie jest ostrożność: odmowa ograniczenia unieważnia CAŁĄ
+  transakcję, więc bez punktu zapisu ani dociągnięcie kolizji, ani ślad audytu panelu
+  nie miałyby jak powstać
+- **KLUCZ WYKLUCZENIA NIE NIESIE `org_id`**: egzemplarz należy do jednego klubu (klucz
+  obcy `aircraft.org_id`), więc klub niczego by nie zawęził, a sugerowałby, że ten sam
+  płatowiec da się zająć dwa razy pod dwiema nazwami
+- **`aircraft_not_found` JEST OSOBNĄ ODMOWĄ OD `aircraft_disabled`** i kosztowała dziurę:
+  wyłączenie z użytku nie pyta o stan służby (przegląd na maszynie stojącej w serwisie
+  to norma), więc razem ze stanem przestawało sprawdzać ISTNIENIE - i panel klubu A
+  zakładał blokadę na maszynie klubu B, odbierając jej właścicielowi własny samolot.
+  Złapał to `tenantIsolation.test.ts`, nie przegląd kodu. Jeden kod na „skasowana"
+  i „cudza", bo odróżnienie ich potwierdzałoby istnienie cudzego egzemplarza
+- **`GET /bookings` ODDAJE GRANICE DÓB, NIE OFFSETY** (§6.1) - i to jest odpowiedź na
+  pytanie B0 o `Intl` na telefonie, NIEZALEŻNA od wyniku sondy: telefon liczy położenie
+  na siatce, godzinę z formularza i podpis osi samym odejmowaniem, a doba zmiany czasu
+  wychodzi poprawnie sama, bo jest krótsza albo dłuższa. Offset per doba kłamałby
+  w takim dniu w którejś połowie, bo offsety są tam DWA (`domain/clubTime.ts`)
+- **REGUŁA TERMINU STOI NA JEGO KOŃCU, NIE POCZĄTKU**: rezerwacja zaczynająca się
+  kwadrans temu jest normalna (pilot bierze maszynę TERAZ i wpisuje, do której
+  godziny); odrzucamy dopiero termin, który CAŁY minął
+- **ZAPIS Z TELEFONU NIE MA ŚLADU W AUDYCIE, Z PANELU MA**: rezerwacja własna to zwykła
+  praca pilota, jak wpisanie lotu. Trzy akcje panelu (`booking.create`, `booking.cancel`,
+  `booking.block`) dotyczą CUDZYCH spraw; odwołanie cudzej wymaga POWODU (P4)
+- **NOWA ZDOLNOŚĆ `reservations.manage`** (władza nad cudzym planem), a wyłączenie
+  z użytku idzie na istniejące `fleet.manage` - to stan MASZYNY w czasie
+- **`session_claim.reservationId` JEST JEDYNYM ZETKNIĘCIEM REJESTRU Z REZERWACJĄ**
+  i tylko w jedną stronę. Nieznany identyfikator NIE odrzuca paczki: rezerwacja nie
+  jest warunkiem lotu (§2.3), a pilot mógł wejść w lot z rezerwacji odwołanej
+  w międzyczasie. Domena nie robi z tym polem NIC
+- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min): slot
+  zwalnia się sam po godzinie bez przejęcia maszyny. `setInterval`, nie kolejka - jedna
+  instancja (§8.8 architektury); wyłączalny `BOOKING_RELEASE=0`, bo przebieg zmienia
+  dane w tle i testy nie mają go dostać przypadkiem. Status `released`, nie `cancelled`,
+  i BEZ powodu: `close_reason` niesie zdanie CZŁOWIEKA, a tu upłynął czas
+- **PGlite WYMAGA JAWNEGO `btree_gist`** w konstruktorze (`server/test/pglite.ts`) -
+  bez tego `CREATE EXTENSION` odmawia i cała migracja 11 nie wchodzi
+- **czego epik R-B świadomie NIE ROBI**: `GET /bookings/suggestions` (czeka na
+  `packages/domain/src/booking/slots.ts` z epiku R-C, #159) i okna doby lotnej
+  z efemeryd - `organizations.home_icao` już jest, ale nikt go jeszcze nie czyta
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

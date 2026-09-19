@@ -47,6 +47,12 @@ import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { PgAircraftReadingsRepo } from './infrastructure/pg/common/aircraftReadingsRepo.ts';
+import { BookingReleaseJob } from './application/common/commands/bookingRelease.ts';
+import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
+import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
+import { BookingQueries } from './application/common/queries/bookings.ts';
+import { BookingCommands } from './application/mobile/commands/bookings.ts';
+import { AdminBookingCommands } from './application/admin/commands/bookings.ts';
 import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
@@ -140,6 +146,13 @@ const env = z
     TRACES_DIR: z.string().default('./traces'),
     /** `1` = serwer stoi ZA proxy TLS (Railway itp.) i wierzy `X-Forwarded-*`. */
     TRUST_PROXY: z.string().optional(),
+    /**
+     * `0` = zadanie okresowe zwalniania slotów NIE RUSZA (3.0.0, §4.1). Domyślnie
+     * chodzi: rezerwacja, po którą nikt nie przyszedł, ma oddać maszynę sama.
+     * Wyłącznik istnieje dla stagingu i dla awarii - przebieg zmienia dane w tle,
+     * więc musi dać się zatrzymać bez wdrożenia nowej wersji.
+     */
+    BOOKING_RELEASE: z.string().optional(),
     /**
      * Ustawione = serwer przy KAŻDYM starcie zapewnia konto `admin` (ten sam
      * idempotentny `seed()`, co `npm run seed`). Droga dla hostingu bez ręki na
@@ -335,6 +348,12 @@ const aircraftReadings = new PgAircraftReadingsRepo();
 // panel czyta i przestawia status. Druga kopia zapytania byłaby pierwszym miejscem,
 // w którym lista zaczęłaby pokazywać co innego niż szuflada.
 const bugReports = new PgBugReportsRepo();
+// Zajętość maszyny (3.0.0) - JEDEN adapter dla obu powierzchni: kalendarz telefonu
+// i kalendarz panelu mają rysować tę samą sobotę, więc czytają jednym zapytaniem.
+const bookingsRepo = new PgBookingsRepo();
+const clubSettings = new PgClubSettingsRepo();
+// Okno kalendarza jest wspólne, więc składamy je RAZ i podajemy obu stronom.
+const calendar = new BookingQueries(db, bookingsRepo, clubSettings);
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -399,7 +418,7 @@ const app = await buildServer({
     events,
     aircraftReadings,
   ),
-  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo),
   // Droga POWROTNA outboxa (§4.9, issue #32) - własny adapter obok `PgEventsStore`,
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
   // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
@@ -418,6 +437,10 @@ const app = await buildServer({
   // Zgłoszenia z telefonu (issue #87) - bez transakcji i bez projekcji: zgłoszenie
   // opisuje aplikację, nie lot, więc nie ma czego uzgadniać z rejestrem.
   bugReports: new BugReportCommands(db, bugReports),
+  // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
+  // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock),
+  calendar,
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
   // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
@@ -604,6 +627,9 @@ const app = await buildServer({
   // komenda - bramę audytu: przestawienie statusu jest decyzją o CUDZYM zgłoszeniu.
   adminBugReportQueries: new AdminBugReportQueries(db, bugReports),
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
+  // Kalendarz panelu - przez bramę audytu: rezerwacja za pilota, odwołanie cudzej
+  // i wyłączenie maszyny z użytku to trzy decyzje o cudzych sprawach.
+  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
@@ -621,6 +647,12 @@ const app = await buildServer({
   // gdy `PUBLIC_SITE_URL` stoi bez `PUBLIC_BASE_URL` albo oba wskazują ten sam host.
   hostSplit: hostSplitFrom(env.PUBLIC_SITE_URL, env.PUBLIC_BASE_URL),
 });
+
+// Zwalnianie slotów (§4.1) - PIERWSZY wątek okresowy w tym serwerze. Startuje po
+// `listen`, bo jest porządkowaniem kalendarza, a nie warunkiem przyjmowania żądań.
+if (env.BOOKING_RELEASE !== '0') {
+  new BookingReleaseJob(db, bookingsRepo, sessions, clock).start();
+}
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });
 console.log(`Ninerdeck server: http://localhost:${env.PORT}`);

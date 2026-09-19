@@ -268,6 +268,34 @@ CREATE TABLE push_tokens (
 );
 ```
 
+
+### 3.5 Co naprawdę stanęło w migracji 11 (epik R-B)
+
+Poza tabelą `bookings` i ograniczeniem wykluczającym:
+
+- **`organizations.timezone`** (domyślnie `Europe/Warsaw`) i **`organizations.home_icao`**
+  - strefa rysuje siatkę (§6), lotnisko macierzyste wyznacza dobę lotną (§7.1). Oba mogą
+  być puste i oba mają wtedy wartość domyślną: brak konfiguracji nie może zablokować
+  rezerwacji;
+- **`CREATE EXTENSION btree_gist`** - bez niego `EXCLUDE USING gist` na równości tekstu
+  nie istnieje. W PGlite rozszerzenie wymaga JAWNEGO załadowania w konstruktorze
+  (`new PGlite({ extensions: { btree_gist } })`, `server/test/pglite.ts`);
+- **trzy indeksy częściowe**: okno kalendarza `(org_id, aircraft_id, starts_at)`,
+  kandydaci do zwolnienia `(starts_at)` i wejście po operacji `(session_uuid)`.
+
+**KLUCZ WYKLUCZENIA NIE NIESIE `org_id`** i to jest decyzja: egzemplarz należy do
+dokładnie jednego klubu (klucz obcy `aircraft.org_id`), więc klub niczego by tu nie
+zawęził - a sugerowałby, że ten sam płatowiec da się zająć dwa razy pod dwiema nazwami.
+Izolacja klubów stoi w ODCZYTACH (§3.3), bo tam jest czym wyciec.
+
+**Odmowy zapisu są CZTERY, nie trzy** (`server/src/domain/bookings.ts`): do `slot_taken`,
+`aircraft_disabled` i `booking_in_past` doszło **`aircraft_not_found`** - maszyna
+skasowana albo z cudzego klubu, jeden kod na oba przypadki, bo odróżnienie ich
+potwierdzałoby istnienie cudzego egzemplarza. Osobny od `aircraft_disabled`, i to nie
+jest pedanteria: wyłączenie z użytku NIE pyta o stan służby (przegląd na maszynie
+stojącej w serwisie to norma), więc razem ze stanem przestawało sprawdzać ISTNIENIE -
+i panel klubu A mógł zająć terminem maszynę klubu B, odbierając jej właścicielowi
+własny samolot. Złapał to test izolacji tras, nie przegląd kodu.
 ## 4. Cykl życia rezerwacji
 
 ```
@@ -394,6 +422,32 @@ danych stref. Strefa klubu wymaga konwersji UTC → strefa IANA (ryzyko niżej).
 w epiku R-A. Plan awaryjny bez `Intl`: serwer zwraca przy oknie kalendarza offset strefy
 w minutach dla każdego dnia zakresu, a telefon tylko dodaje - reguł czasu letniego nie
 musi wtedy znać nikt poza serwerem.
+
+### 6.1 Kontrakt `GET /bookings`: GRANICE DÓB, nie offsety (rozstrzygnięte przy R-B)
+
+Pytanie brzmiało: czy trasa oddaje same chwile UTC (telefon liczy strefę sam), czy do
+każdego dnia okna dochodzi offset w minutach, bo reguł czasu letniego nie ma jak
+odtworzyć na urządzeniu bez danych ICU. **Odpowiedź jest trzecia i nie zależy od wyniku
+sondy stref (B0): trasa oddaje GRANICE KAŻDEJ DOBY jako pary chwil UTC, a telefon nie
+konwertuje stref w ogóle.**
+
+```
+days: [{ date: "2026-10-01", startsAt: "2026-09-30T22:00:00Z", endsAt: "2026-10-01T22:00:00Z" }, …]
+```
+
+- położenie rezerwacji na siatce = `(startsAt - dayStart) / godzina`;
+- godzina z formularza w chwilę = `dayStart + godzina * godzina`;
+- podpis osi = ta sama różnica.
+
+Żadne z tych trzech działań nie potrzebuje `Intl`, tablicy stref ani reguł czasu
+letniego. **Doba zmiany czasu wychodzi poprawnie sama**, bo jest po prostu krótsza
+albo dłuższa (23 albo 25 godzin) - a offset per doba byłby w takim dniu KŁAMSTWEM
+w którejś połowie, bo offsety są tam dwa. Liczy to `server/src/domain/clubTime.ts`
+(`Intl` na serwerze jest pełne), a testy stoją dokładnie na tych dwóch dniach.
+
+**Sonda stref (B0) zostaje mimo to warta uruchomienia**, ale przestała być warunkiem
+wstępnym epiku R-B: jej wynik rozstrzyga, czy telefon może formatować daty i nazwy
+miesięcy przez `Intl`, a nie kształt kontraktu kalendarza.
 
 ## 7. Sugestie slotów („jak w kinie")
 

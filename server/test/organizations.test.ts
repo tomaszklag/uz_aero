@@ -18,7 +18,6 @@
  * epiku C - tu stoją własności MODELU, na których tamten test się oprze.
  */
 
-import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 
 import type { Database, Queryable } from '../src/application/common/ports.ts';
@@ -27,6 +26,7 @@ import { MIGRATIONS } from '../src/infrastructure/pg/schema.ts';
 import { ADMIN_CSRF_HEADERS, seedRefresh, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_B, seedBetaFleet } from './testWorld.ts';
+import { newPglite } from './pglite';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -105,7 +105,7 @@ const post = (app: Harness['app'], token: string, events: unknown[]) =>
 // ══ 1. MIGRACJA 8: BACKFILL JEDNEGO KLUBU Z DANYCH 1.x ═══════════════════════════════
 
 function freshDb(): Database & { exec: (sql: string) => Promise<unknown> } {
-  const pglite = new PGlite();
+  const pglite = newPglite();
   return {
     query: (text, params) => pglite.query(text, params as never) as never,
     exec: (sql) => pglite.exec(sql),

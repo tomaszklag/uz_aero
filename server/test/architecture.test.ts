@@ -115,6 +115,9 @@ const SCOPED_TABLES = [
   // prawa zobaczyć ani wyłączyć urządzenia, którym ta osoba loguje się gdzie indziej.
   'login_sessions',
   'memberships',
+  // Zajętość maszyny (3.0.0, issue #158) - rezerwacje i wyłączenia z użytku. Kalendarz
+  // jest wspólnym zasobem KLUBU: wiersz z cudzego klubu nie ma prawa trafić na siatkę.
+  'bookings',
 ] as const;
 
 /**
