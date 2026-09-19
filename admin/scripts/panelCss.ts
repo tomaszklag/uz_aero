@@ -48,6 +48,7 @@ const SHEETS: readonly { file: string; title: string }[] = [
   { file: 'components/skeleton.css', title: 'PLAMKI ŁADOWANIA' },
   { file: 'components/login.css', title: 'EKRAN LOGOWANIA' },
   { file: 'components/logbook.css', title: 'DZIENNIK - PARY, BRAKI, ZAKRES DAT' },
+  { file: 'components/calendar.css', title: 'KALENDARZ FLOTY - OŚ MASZYN I DNI' },
   { file: 'components/track.css', title: 'ŚLAD GPS - MAPA I PROFIL PIONOWY' },
   { file: 'components/bugs.css', title: 'ZGŁOSZENIA BŁĘDÓW' },
 ];

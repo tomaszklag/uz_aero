@@ -83,6 +83,11 @@
 
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
+  /* Dzieci przewijanej kolumny NIE KURCZĄ SIĘ. Bez tego flex ściska karty, gdy treść
+     jest dłuższa niż ekran, a że karty mają overflow widoczny - tekst wylewa się poza
+     nie i nachodzi na sąsiednie (zgłoszenie z urządzenia, 2026-09-19, ekran 12). Treść
+     ma WYJECHAĆ poza ekran do przewinięcia, a nie zostać ściśnięta. */
+  .scroll > * { flex-shrink: 0; }
 
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 14px; display: flex; flex-direction: column; gap: 12px; }
   .section-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }

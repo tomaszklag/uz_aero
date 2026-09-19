@@ -36,7 +36,7 @@
  * (wariant 05g); tu jest warsztat do sprawdzenia „czy GPS w ogóle żyje" na ziemi.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
@@ -66,6 +66,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
 import { versionRowValue } from './logic/appVersion';
+import { probeTimeZones, type ProbeCheck } from './logic/timeZoneProbe';
 import { fixAge } from './logic/gpsLoss';
 import { eventsCount, lastContactAt, lastContactLabel } from './logic/syncStatus';
 import { clubCards, clubSwitchBlock, showsClubSection } from './logic/clubSwitch';
@@ -244,6 +245,12 @@ export function SettingsScreen({
   // w zgłoszeniu błędu; `null` = Expo Go albo brak danych, wiersz pokazuje kreskę.
   const release = appRelease();
 
+  /* Sonda stref czasowych (issue #157 A2) - liczy się RAZ na wejście w ekran i tylko
+     w wariancie deweloperskim. To narzędzie do jednej odpowiedzi („czy Hermes umie
+     strefy"), a nie funkcja produktu: pilot nie ma z niej co zrobić, a wynik rozstrzyga
+     kontrakt trasy kalendarza w 3.0.0. Znika razem z tym pytaniem. */
+  const timeZones = useMemo(() => (release?.dev === true ? probeTimeZones() : null), [release?.dev]);
+
   return (
     <Screen
       scroll
@@ -409,6 +416,43 @@ export function SettingsScreen({
             ma umieć powiedzieć, co ma na telefonie. W Expo Go (pakiet nie nasz) i bez
             danych stoi kreska. Wersja zeszła z wiersza „Aplikacja": jedna liczba stoi
             na karcie raz. */}
+        {/* ══ DIAGNOSTYKA STREF CZASOWYCH (issue #157 A2) - TYLKO DEV BUILD ══
+            Kalendarz rezerwacji rysuje siatkę w strefie KLUBU (docs/rezerwacje.md §6),
+            a aplikacja nie używa dziś `Intl` ani razu - `packages/format` liczy wszystko
+            na milisekundach. Hermes bywa budowany bez danych ICU i wtedy PRZYJMUJE opcję
+            `timeZone`, po czym formatuje w UTC: odpowiada, tylko źle. Dlatego sonda nie
+            pyta „czy się nie wywala", tylko liczy znane godziny i porównuje wyniki.
+
+            Od odpowiedzi zależy KONTRAKT TRASY kalendarza: albo telefon liczy strefę sam,
+            albo serwer dosyła offsety dla każdego dnia okna. Sekcji nie ma w produkcji -
+            `release.dev` jest jedynym warunkiem (ustawienia nie tłumaczą budowy aplikacji,
+            issue #72). */}
+        {timeZones != null && (
+          <Card title="Diagnostyka stref czasowych" header="inline">
+            <Banner
+              kind="status"
+              tone={timeZones.verdict === 'ok' ? 'green' : 'amber'}
+              icon={timeZones.verdict === 'ok' ? 'check' : 'warning'}
+              title={timeZones.verdict === 'ok' ? 'Strefy działają' : 'Strefy nie działają'}
+              text={timeZones.summary}
+            />
+            {timeZones.checks.map((check: ProbeCheck) => (
+              <KeyValueRow
+                key={check.name}
+                divider
+                labelVariant="mono"
+                label={check.name}
+                valueTone={check.passed ? 'green' : 'red'}
+                value={check.passed ? check.actual : `${check.actual} (≠ ${check.expected})`}
+              />
+            ))}
+            <KeyValueRow
+              labelVariant="mono"
+              label="Strefa urządzenia"
+              value={timeZones.deviceZone ?? '-'}
+            />
+          </Card>
+        )}
         <Card title="O aplikacji" header="inline">
           <KeyValueRow divider label="Aplikacja" value="Ninerdeck" />
           <KeyValueRow label="Wersja" value={versionRowValue(release)} />

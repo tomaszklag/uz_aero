@@ -121,7 +121,9 @@ CREATE TABLE bookings (
   aircraft_id  TEXT NOT NULL REFERENCES aircraft(id),
   kind         TEXT NOT NULL CHECK (kind IN ('flight', 'block')),
   status       TEXT NOT NULL CHECK (status IN
-                 ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled')),
+                 -- `released` = slot zwolniony po godzinie bez przejęcia (§4.1); to nie jest
+                 -- decyzja człowieka, więc nie `cancelled`, a rezerwacja zostaje w zapisie.
+                 ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled', 'released')),
   starts_at    TIMESTAMPTZ NOT NULL,
   ends_at      TIMESTAMPTZ NOT NULL,
   CONSTRAINT booking_order CHECK (ends_at > starts_at),
@@ -179,7 +181,7 @@ ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
   EXCLUDE USING gist (
     aircraft_id WITH =,
     tstzrange(starts_at, ends_at, '[)') WITH &&
-  ) WHERE (status IN ('pending', 'confirmed'));
+  ) WHERE (status IN ('pending', 'confirmed'));   -- `released` wypada z predykatu (§4.1)
 ```
 
 **Sprawdzone empirycznie 2026-09-18** na PGlite (baza testów serwera) - trzy własności,
@@ -288,6 +290,35 @@ utworzenie ────────►│                                       
 - rezerwacja, która minęła bez operacji, NIE zmienia stanu automatem. Kalendarz liczy
   „minęła" z zegara; osobny stan `no_show` to materiał na osobną decyzję (§15 P5).
 
+
+### 4.1 Slot zwalnia się sam po godzinie (P5, decyzja 2026-09-19)
+
+Rezerwacja, po którą nikt nie przyszedł, blokowała maszynę do końca slotu - w sobotę
+to godziny, w których ktoś inny mógłby polecieć. **Po 60 minutach od początku rezerwacji
+serwer zwalnia slot**, jeśli nie widzi ani przejęcia maszyny, ani biegu silnika.
+
+- **status `released`**, nie `cancelled`: to nie jest decyzja człowieka, tylko upłynięcie
+  czasu, a rezerwacja ma zostać w zapisie („był plan, nikt nie przyszedł"). Status wypada
+  z predykatu ograniczenia wykluczającego (§3.2), więc slot wraca do puli natychmiast;
+- **liczy to zadanie okresowe serwera** (co 5 minut), bo ograniczenie w bazie jest
+  statyczne i samo z siebie nie wie, że minęła godzina. To pierwszy taki wątek w tym
+  serwerze - jedna instancja (§8.8 architektury), więc `setInterval` wystarczy
+  i nie potrzeba kolejki;
+- **próg 60 minut jest DO KALIBRACJI** (`booking/policy.ts`) razem z resztą progów.
+
+**TO JEST ŚWIADOMY WYŁOM W ROZDZIALE REJESTRU I REZERWACJI** (§2.1), jedyny w 3.0.0:
+rezerwacja zaczyna zależeć od ZDARZEŃ - od tego, czy przyszło `session_claim` albo
+`engine_start` tej maszyny. Cena jest realna i trzeba ją nazwać: **pilot lecący bez
+zasięgu wysyła zdarzenia dopiero po locie**, więc z punktu widzenia serwera „nie
+przyszedł" - i jego slot zwolni się w trakcie lotu.
+
+Dlaczego mimo to jest to do przyjęcia: zwolnienie nie kasuje rezerwacji ani nie przerywa
+lotu, a maszyny fizycznie nie ma w hangarze - kolejny pilot zderzy się z tym samym,
+z czym zderzyłby się bez żadnej rezerwacji. Gdy zdarzenia dojdą, rezerwacja dostaje
+`fulfilled` po `reservationId` i wraca do zapisu jako zrealizowana.
+
+Wariant bezpieczniejszy - liczyć zwolnienie dopiero, gdy telefon POTWIERDZI brak lotu -
+nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zostanie.
 ## 5. API
 
 ### 5.1 Telefon (token klubu, brama członkostwa)
@@ -331,11 +362,31 @@ mówi „lecę o 07:00 UTC", tylko „w sobotę o dziewiątej". Przy dwóch zmia
 kalendarz pisany w UTC przesuwałby siatkę dnia o godzinę dwa razy w roku - i to dokładnie
 w sezonie.
 
-**Propozycja (do potwierdzenia, §15 P1):** kalendarz i formularz rezerwacji pokazują czas
+**ROZSTRZYGNIĘTE 2026-09-18 (P1):** kalendarz i formularz rezerwacji pokazują czas
 w strefie KLUBU (`organizations.timezone`, domyślnie `Europe/Warsaw`); baza trzyma
 `TIMESTAMPTZ`, czyli nadal chwilę bezwzględną. Log operacji, oś zdarzeń i karta arkusza
-zostają w UTC bez zmian. Gdzie obie osie się spotykają (kafelek „Twoja rezerwacja
-o 09:00"), godzina jest jawnie oznaczona.
+zostają w UTC bez zmian. **Gdy strefa urządzenia RÓŻNI SIĘ od klubowej, przy godzinie
+staje drobna adnotacja z czasem lokalnym** - wzorzec `TimeStepper.localTime` („14:30 LT",
+issue #62). Przy strefach zgodnych - a to jest 99% przypadków - adnotacji nie ma wcale
+(reguła SyncChipa: stan domyślny nie dostaje zdania).
+
+**PRZECHOWYWANIE NIE BYŁO PRZEDMIOTEM WYBORU** - pytanie brzmiało, CZYJA strefa rysuje
+siatkę: klubu czy urządzenia, na którym ktoś patrzy. Cztery powody, dla których klubu:
+
+1. **kalendarz jest wspólnym zasobem, więc siatka musi znaczyć to samo dla wszystkich.**
+   Pilot rezerwujący z Grecji wpisuje „sobota 9:00", myśląc o dziewiątej w klubie; w strefie
+   urządzenia zapisałby 8:00 czasu lotniska. Dwie osoby rozmawiają wtedy o dwóch różnych
+   godzinach, patrząc na ten sam wiersz. Samolot stoi w JEDNYM miejscu na ziemi;
+2. **wspólny tablet** (2.1.0) bywa bez karty SIM i z ręcznie ustawioną strefą, której nikt
+   nie pilnuje - „strefa urządzenia" znaczy wtedy „strefa, którą ktoś kiedyś klepnął";
+3. **granice dnia i sugestie slotów** liczą się w oknie doby lotnej klubu (§7). Rezerwacja
+   o 23:30 czasu klubu widziana z innej strefy wskakuje na sąsiedni dzień siatki;
+4. **panel** otwiera się w przeglądarce gdziekolwiek, a dziennik i kalendarz klubu mają
+   podawać jedną godzinę.
+
+Cena jest realna i dlatego to było pytanie: wariant „strefa urządzenia" byłby DARMOWY -
+`timeLocal` w `packages/format` liczy czas lokalny jednym `getHours()`, bez `Intl` i bez
+danych stref. Strefa klubu wymaga konwersji UTC → strefa IANA (ryzyko niżej).
 
 **Ryzyko techniczne:** aplikacja nie używa dziś `Intl` ani żadnej biblioteki stref
 (`packages/format` liczy wszystko sam na milisekundach). `Intl.DateTimeFormat` z opcją
@@ -372,6 +423,40 @@ ocena:    kara za każdą powstałą RESZTKĘ krótszą niż MIN_USEFUL_SLOT
   serwera na trasie `GET /bookings/suggestions` - ten sam kod z `packages/domain`, więc
   odpowiedzi nie mają jak się rozjechać.
 
+
+### 7.1 Okno doby lotnej: wschód i zachód słońca (P2, decyzja 2026-09-19)
+
+Sugestie slotów potrzebują granic dnia, a kalendarz - zakresu siatki. **Liczą się
+z EFEMERYD nad lotniskiem macierzystym klubu**, nie ze stałych godzin: w grudniu doba
+lotna ma osiem godzin, w czerwcu siedemnaście, a stała 06-21 kłamałaby w obie strony -
+latem odcinałaby pierwszy poranny lot, zimą proponowała slot po zmroku.
+
+**Okno to zmierzch CYWILNY, nie sam wschód-zachód:** od 30 minut przed wschodem do
+30 minut po zachodzie. Tak liczy się dzień w lotnictwie VFR i tak wygląda praktyka
+klubu - ostatni lot ląduje po zachodzie słońca, a nie przed nim. Margines stoi
+w `booking/policy.ts` razem z resztą progów DO KALIBRACJI.
+
+Czego ta decyzja wymaga (zakres #158 i #159 rośnie):
+
+- **`organizations.home_icao`** - lotnisko macierzyste klubu, dziś nieistniejące.
+  Migracja 11, pole na karcie klubu w module Organizacje. Współrzędne przychodzą
+  z katalogu lotnisk (`packages/domain/src/airfields.ts`), więc klub podaje sam kod;
+- **`packages/domain/src/booking/solar.ts`** - czysta funkcja liczącą wschód i zachód
+  z szerokości, długości i daty (algorytm NOAA, ~60 linii, zero zależności). Precedens
+  w tym pakiecie już jest: `geoid/` liczy undulację, `magneticDeclination.ts` deklinację -
+  obliczenia astronomiczno-geodezyjne mieszkają w domenie i mają testy;
+- **siatka kalendarza przestaje być stała**, więc oś telefonu rysuje zakres dnia,
+  a nie sztywne 06-21; w panelu kolumny dni zostają równe, bo tam osią są DNI,
+  a nie godziny. Makiety `21` i `kalendarz-flota` pokazują dziś 06-21 jako placeholder
+  i wymagają poprawki przy wdrożeniu;
+- **klub bez lotniska macierzystego** (stare wiersze, świeżo założony) dostaje okno
+  domyślne 06-21. Brak konfiguracji nie może zablokować rezerwacji - to ta sama zasada,
+  przez którą brak normy zużycia nie blokuje lotu, tylko wyłącza werdykt.
+
+**Loty nocne (NVFR) zostają poza 3.0.0** i to jest świadome zawężenie: klub z takimi
+uprawnieniami nie zarezerwuje slotu po zmierzchu. Gdy się pojawi, właściwym ruchem jest
+przełącznik „doba lotna" na karcie klubu (efemerydy / pełna doba / własne godziny),
+a nie rozciąganie marginesu zmierzchu.
 ## 8. Uprawnienia
 
 Katalog `Capability` nazywa ZASOBY (`server/src/domain/roles.ts`), a rezerwacja jest
@@ -397,15 +482,48 @@ jest na nią gotowy; do tego czasu kluby wskazują ludzi.
 
 ### 9.1 Nawigacja: trzy zakładki, kokpit nad nimi
 
-Ekran startowy przestaje być „Mój dzień" (zgłoszenie #145). Propozycja: dolny pasek
-zakładek (`@react-navigation/bottom-tabs` - czysty JS na `react-native-screens`, które już
-jest, więc zmiana jedzie OTA):
+Ekran startowy przestaje być „Mój dzień" (zgłoszenie #145). Dolny pasek zakładek
+(`@react-navigation/bottom-tabs` - czysty JS na `react-native-screens`, które już jest,
+więc zmiana jedzie OTA):
 
 | Zakładka | Treść |
 | --- | --- |
-| **Dziś** (start) | najbliższa MOJA rezerwacja z odliczaniem i „ROZPOCZNIJ LOT", dzisiejsze operacje, pasek zajętości floty na dziś, (3.1) rzeczy czekające na moją decyzję |
-| **Kalendarz** | oś maszyn × czas, zakres dni, wejście w rezerwację i w nową rezerwację |
-| **Loty** | dzisiejsze operacje i historia - dzisiejsze „Mój dzień" (01) i „Poprzednie dni" (12) scalone, bo od zawsze są tym samym kafelkiem (issue #42) |
+| **Pulpit** (start) | „MÓJ DZIEŃ" - sumy doby (Loty · Blok · Lot) z wejściem w operacje, POD NIM najbliższa rezerwacja z odliczaniem, „ROZPOCZNIJ LOT" i wpis ręczny, (3.1) rzeczy czekające na moją decyzję |
+| **Kalendarz** | oś maszyn × czas, zakres dni, wejście w rezerwację i w nową rezerwację - JEDYNE miejsce z zajętością floty |
+| **Historia** | WSZYSTKIE operacje - dzisiejsze i z poprzednich dni, z korektą w oknie 24 h. Dzień jest NAGŁÓWKIEM grupy, operacje zwartymi wierszami (makieta 24, nie 12) |
+
+**PULPIT NIE MA LISTY OPERACJI** (decyzja właściciela 2026-09-19). Ekran startowy
+odpowiada na dwa pytania: „jak mi dziś poszło" i „co mam przed sobą" - przebieg
+pojedynczej operacji jest pytaniem trzecim, zadawanym rzadziej. Zamiast kafelków stoi
+jedna karta z sumami dnia.
+
+**KOLEJNOŚĆ: „MÓJ DZIEŃ" NAD REZERWACJĄ** (ta sama decyzja): pilot otwiera aplikację
+w kontekście tego, co dziś lata, a plan jest odpowiedzią na pytanie zadawane raz - rano
+albo przy układaniu tygodnia. Karta nosi tę samą nazwę, co dotychczasowy ekran domowy
+(01), bo to ta sama rzecz: doba pilota z sumami.
+
+**PULPIT NIE POWTARZA KALENDARZA** (uwaga właściciela 2026-09-19). Pierwsza wersja miała
+pasek zajętości floty na dziś; wyleciał, bo odpowiadał na pytanie, które ma własną
+zakładkę widoczną przez cały czas - „jak będę chciał sprawdzić, to wejdę w kalendarz".
+Sygnałem było już uzasadnienie tego paska w makiecie: nie potrzebował przycisku „zobacz
+więcej", bo zakładka stała centymetr niżej. Ekran startowy niesie odtąd wyłącznie to,
+czego nie ma nigdzie indziej: sumy dnia, najbliższą rezerwację i akcje.
+
+**Przed pierwszym lotem „Mój dzień" kurczy się do JEDNEJ LINIJKI** („dziś bez lotów",
+wariant 20A) zamiast pokazywać trzy zera - zera znaczyłyby zmierzony wynik, a nie brak
+pomiaru (reguła z 01A: „- -", nigdy zera). To jest też warunek praktyczny tej kolejności:
+pełnowymiarowa karta z zerami spychałaby rezerwację poza pierwszy ekran dokładnie rano,
+czyli wtedy, kiedy jest najbardziej potrzebna.
+
+Konsekwencja, którą trzeba było domknąć razem z tą decyzją: **kafelek operacji był
+JEDYNYMI drzwiami do korekty dzisiejszego lotu** w oknie 24 h (issue #23, #43). Skoro
+znika z ekranu startowego, drzwi przejmuje zakładka Historia - i dlatego obejmuje ona
+odtąd także dzisiejsze operacje, wbrew issue #35 („dzisiejszych operacji tam nie ma, bo
+mieszkają na 01"). Karta podsumowania jest linkiem, który tam prowadzi. Zakładki nadal
+nie dublują list: Pulpit pokazuje SUMY, Historia POZYCJE.
+
+Podział nazw poszedł za tym samym rachunkiem: zakładka nazywa się **Historia**, a nie
+„Loty", bo „Loty" obok zakładki z dzisiejszymi sumami sugerowałoby dwa różne zbiory lotów. Pierwsza zakładka nazywa się PULPIT, a nie „Dziś" (decyzja właściciela 2026-09-19): niesie najbliższą rezerwację, która bywa jutrzejsza, więc nazwa czasowa obiecywałaby węższy zakres, niż daje. „Start" i „Przegląd" odpadły przez kolizję ze słownikiem - to w tej aplikacji zdarzenie na osi operacji i stan maszyny.
 
 **KOKPIT ZOSTAJE MODALNY I ZAKŁADEK W NIM NIE MA.** To jest reguła, której ta przebudowa
 nie ma prawa naruszyć (CLAUDE.md „Kokpit jest stanem modalnym"): dopóki pilot trzyma
@@ -413,6 +531,34 @@ samolot, z kokpitu nie prowadzi żadna droga bokiem - ani zakładka, ani pasek. 
 (02 → 02e → 02a → kokpit → 09b) żyje w stosie NAD zakładkami, a `usePreventRemove` działa
 jak dziś. Zakładka, która wyprowadza z kokpitu, to nie jest zmiana nawigacji, tylko
 skasowanie modalności.
+
+### 9.1a Co się dzieje z ekranem „Mój dzień" (01)
+
+Pulpit zastępuje ekran domowy, więc rodzina `01` staje się nieaktualna - ale **nie
+z chwilą narysowania makiet, tylko z chwilą WYDANIA 3.0.0**. Do tego czasu `01` jest
+prawdą: opisuje aplikację, którą piloci mają w telefonach (2.1.0), i to on jest
+specyfikacją dla poprawek w tej linii.
+
+To jest ważne przez podręcznik: `docs/podrecznik/` osadza rodzinę `01` w **13 miejscach
+na 9 stronach** (`czym-jest-ninerdeck`, `moj-dzien`, `model-operacji`, `poprzednie-dni`,
+`praca-bez-zasiegu`, `synchronizacja`, `ustawienia`, `zdanie-samolotu`, `instalacja`,
+`kluby-i-dolaczanie`). Podręcznik opisuje wersję WDROŻONĄ, więc podmiana osadzeń przed
+wydaniem dałaby dokumentację ekranu, którego nikt nie ma.
+
+**Do zrobienia w R-A** (żeby przy wydaniu było czym podmienić): rodzina Pulpitu musi mieć
+komplet stanów, które dziś ma rodzina `01` - `20a` (bez rezerwacji), **`20c`** (offline
+z arkuszem synchronizacji, dziś `01c`), **`20d`** (`SYNC STOI`, dziś `01d`). Wariant
+`01e` (dwa kluby) przenosi się do **Historii**, bo to kafelek operacji niesie plakietkę
+klubu - na Pulpicie zostaje jej ślad w karcie rezerwacji, która też należy do klubu.
+
+**Do zrobienia w R-W** (wydanie): podmiana 13 osadzeń w podręczniku, przepisanie stron
+`moj-dzien` i `poprzednie-dni` pod Pulpit i Historię, screen flow w `CLAUDE.md`
+i `docs/design-notes.md` oraz nav-stripy 32 makiet linkujących do `01`.
+
+**Same pliki `01*` ZOSTAJĄ W MIEJSCU jako ARCHIWUM** (decyzja właściciela 2026-09-19,
+P8) - z banerem „archiwum linii 2.x, nie jest specyfikacją", dokładnie jak `design/admin/`
+po panelu 2.0. Po wydaniu APK linia 2.x żyje na telefonach tygodniami, bo nie każdy
+aktualizuje od razu, a zgłoszenie z takiego telefonu trzeba mieć z czym zestawić.
 
 ### 9.2 Rezerwacja = ten sam formularz, co lot
 
@@ -428,10 +574,79 @@ przycisku.
 ### 9.3 Ekrany do zaprojektowania (design-first)
 
 Makiety powstają PRZED kodem (`design/*.html`, ramka telefonu 393×852):
-`20-dzis`, `21-kalendarz` (flota / jedna maszyna / stan pusty / offline z cache),
-`22-rezerwacja` (dwa kroki + arkusz czasu z sugestiami slotów), `23-rezerwacja-szczegoly`
-(z odwołaniem), `20a` - „Dziś" bez rezerwacji, `21a` - kolizja przy przejęciu.
-W 3.1.0 dochodzą: `24-powiadomienia` (skrzynka), `25-decyzja` (zgoda/odmowa z powodem).
+`20-pulpit` (+ `20a` bez rezerwacji, `20c` offline, `20d` `SYNC STOI`), `21-kalendarz`
+(+ `21b` offline z cache, `21c` doba pusta, **`21d` filtr maszyn**), `22-rezerwacja`
+(krok 1 - termin i maszyna; `22a` krok 2 - zadanie; `22b` arkusz czasu; `22c` slot zajęty),
+`23-rezerwacja-szczegoly` (+ `23a` kolizja przy przejęciu), **`24-historia`** (+ `24a`
+archiwum rozwinięte; zakładka -
+nowy numer, bo `12` zostaje specyfikacją linii 2.x). W 3.1.0 dochodzą: `25-powiadomienia`
+(skrzynka), `26-decyzja` (zgoda/odmowa z powodem).
+
+**LOG HISTORII: DZIEŃ JAKO NAGŁÓWEK, OPERACJE JAKO ZWARTE WIERSZE** (decyzja właściciela
+2026-09-19). Do 3.0.0 każda operacja była pełnym kafelkiem z własną datą i własnym pasem
+akcji - dzień z dwiema operacjami powtarzał przez to datę (na zrzucie z urządzenia
+„11 SIERPNIA 2026" stało dwa razy pod rząd), a przycisk „OTWÓRZ I POPRAW" dokładał 44 px
+do każdej pozycji, choć cała karta prowadziła w to samo miejsce. Odtąd data pada RAZ,
+w nagłówku grupy; na ekran wchodzi około trzy
+razy więcej pozycji, co ma znaczenie, odkąd lista obejmuje także dziś.
+
+- **ikona po prawej niesie SKUTEK tapnięcia**, który przedtem niósł pas akcji: ołówek
+  (operacja w oknie korekty) albo oko (podgląd po oknie, ekran 10B). Cały wiersz jest
+  celem dotknięcia, ikona nie jest drugim;
+- **liczby stoją BEZ ETYKIET** (uwaga właściciela 2026-09-19: podpisy Loty · Blok · Lot
+  w nagłówku każdej grupy były powtórzeniem). Trójka jest znana z kafelka, ze stopki osi
+  i z rozliczenia, a jej kolejność jest w aplikacji stała: liczba całkowita to loty, dwa
+  czasy to blok i czas w powietrzu;
+- **suma dnia tylko przy dniu z kilkoma operacjami** - przy jednej byłaby przepisaniem
+  wiersza wyżej;
+- **plakietki wyłącznie przy stanie odchylonym** (wpis ręczny, zaległość wysyłki, gasnące
+  okno korekty z terminem). „Wysłane" i „można poprawić" nie istnieją - to stany domyślne
+  (issue #35, reguła SyncChipa);
+- **domyślnie widać TYLKO to, co można poprawić** - dziś i dzień poprzedni, czyli
+  operacje w oknie korekty 24 h. Reszta stoi zwinięta za przyciskiem „Starsze operacje"
+  z liczbą (`24a` - stan rozwinięty). Zwinięcie jest CHWILOWE: pytanie „co mogę
+  poprawić" wraca przy każdym wejściu, a „co latałem w maju" pada raz na jakiś czas.
+  Gdy okno korekty jest puste, lista rozwija się sama - nie ma czego chować za
+  przyciskiem, skoro przed nim nic nie stoi;
+- **GRANICA ZWIJANIA** - tego samego dnia zwijanie zostało w kalendarzu ZAKAZANE
+  (maszyny wyłączone z użytku), a w historii NAKAZANE, i to nie jest sprzeczność:
+  w kalendarzu chowana byłaby informacja operacyjna potrzebna TERAZ („czemu nie ma czym
+  latać"), w historii chowa się zapis, po który sięga się świadomie. **Zwijamy to, czego
+  pilot nie szuka, wchodząc na ekran**;
+- **sygnatura NIE JEST ZIELONA** (uwaga właściciela 2026-09-19). Na kafelku z linii 2.x
+  zieleń była śladem po znaku maszyny, który sygnatura zastąpiła (issue #68) - ale tam
+  stała raz na karcie. W zwartym logu świeci przy każdym wierszu, czyli niczego nie
+  odróżnia (reguła SyncChipa), a przy okazji obiecuje stan, bo zieleń znaczy w tej
+  aplikacji „w normie" albo akcję główną. Identyfikator dostaje ton danej maszynowej;
+- **ekran 3.0 ma NOWY NUMER (24)**, a `12-historia.html` zostaje specyfikacją linii 2.x -
+  ta sama zasada, co przy `01` (§9.1a): podręcznik i telefony pilotów opisują wersję
+  wdrożoną aż do wydania.
+
+**FILTR MASZYN NA OSI** (uwaga właściciela 2026-09-19: „samolotów może być dużo - nawet
+kilkanaście"). Przy dwunastu maszynach oś przestaje odpowiadać na „co jest wolne", bo
+odpowiedzi trzeba szukać przewijaniem. Chip w nagłówku osi otwiera arkusz wyboru (`21d`):
+
+- **wybór jest PREFERENCJĄ PATRZENIA**, nie danymi klubu - mieszka lokalnie per pilot
+  i klub, jak motyw. Nikt nikomu niczego nie chowa;
+- **chip jest CICHY: ikona lejka i liczba w tonie podpisu**, bez tła i bez ramki - ten sam
+  wzorzec, co zębatka i przycisk zgłoszenia błędu (issue #87). Kontrolka stojąca w rogu
+  każdego ekranu nie może krzyczeć, bo uczy oko pomijać ten róg. **Sygnał zawężenia niesie
+  SAMA LICZBA** („6 z 12" kontra „12"), a rozjaśnienie napisu jest dodatkiem, nie
+  komunikatem;
+- dwie wersje odrzucone tego samego dnia, obie uwagą właściciela: **zielony chip** („nie
+  sugeruje, że to filtr" - zieleń znaczy w tej aplikacji stan w normie albo akcję główną,
+  więc czytał się jak wynik pomiaru; stąd ikona lejka, ustalona afordancja) i **chip
+  odwrócony**, czyli jasne tło z ciemnym napisem („strasznie rzuca się w oczy i jest za
+  duży" - to był najmocniejszy kontrast na ekranie, mocniejszy niż zielony przycisk
+  akcji). Odwrócenie zostaje tam, gdzie opisuje WYBÓR W LIŚCIE (wybrany dzień, pozycja
+  kolumny w panelu), a nie kontrolkę w rogu;
+- **maszyny wyłączone z użytku ZOSTAJĄ WIDOCZNE na osi** (uwaga właściciela: „te
+  wyłączenia były spoko, że były widoczne - nie zwijaj tak"). Pierwsza wersja zwijała je
+  w jedną linijkę, żeby oszczędzić wiersze; to było błędem, bo pilot patrzy na kalendarz
+  także po to, żeby wiedzieć, CZEMU nie ma czym latać. Filtr służy do chowania maszyn,
+  na których się nie lata - nie tych, które akurat stoją w hangarze;
+- **akcje arkusza są PRZYPIĘTE**, przewija się lista (reguła ramy arkuszy: skraca się to,
+  co pilot doczyta przewinięciem, nie rząd akcji).
 
 ## 10. Panel: moduł „Kalendarz"
 
@@ -487,7 +702,7 @@ systemu albo odrzucony na Androidzie 13+ (`POST_NOTIFICATIONS`) - a prośba o zg
 przepadła, znaczy pilota czekającego na odpowiedź, która nigdy nie przyszła. Dlatego:
 
 - **skrzynka** (`notifications` + `GET /me/notifications`) jest kompletna, ma historię
-  i działa offline z cache. Licznik nieprzeczytanych stoi przy zakładce „Dziś";
+  i działa offline z cache. Licznik nieprzeczytanych stoi przy zakładce Pulpit;
 - **push** niesie tylko „masz coś w skrzynce" i otwiera właściwy ekran. Brak push nie gubi
   ani jednej informacji.
 
@@ -533,7 +748,7 @@ Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zale
 3. **R-C - domena slotów** (`packages/domain/src/booking/`) - może iść RÓWNOLEGLE z R-B,
    bo nie dotyka bazy; R-B tylko ją woła.
 4. **R-D - panel** (moduł Kalendarz, wyłączenia z użytku) - po R-B.
-5. **R-E - aplikacja: nawigacja** (zakładki, ekran „Dziś", kokpit nadal modalny) - zależy
+5. **R-E - aplikacja: nawigacja** (zakładki, ekran startowy, kokpit nadal modalny) - zależy
    tylko od makiet, więc może iść równolegle z R-B/R-D.
 6. **R-F - aplikacja: kalendarz i rezerwacja** (cache SQLite 10, formularz, sugestie,
    wejście w lot z rezerwacji) - po R-B, R-C i R-E.
@@ -558,22 +773,33 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 
 ## 15. Decyzje DO POTWIERDZENIA przed R-B
 
-- **P1 - strefa czasu kalendarza.** Propozycja: czas klubu (`organizations.timezone`,
-  domyślnie `Europe/Warsaw`), rejestr bez zmian w UTC (§6).
-- **P2 - okno dnia klubu.** Sugestie slotów potrzebują granic („od 06:00 do 21:00")
-  - konfiguracja klubu czy stała w domenie? Propozycja: konfiguracja z domyślną wartością,
-  bo aeroklub podhalański i nadmorski mają inne doby lotne.
+- ~~**P1 - strefa czasu kalendarza**~~ - **rozstrzygnięte 2026-09-18**: siatkę rysuje
+  strefa KLUBU (`organizations.timezone`), rejestr bez zmian w UTC, a czas lokalny
+  urządzenia dochodzi adnotacją WYŁĄCZNIE przy różnicy stref (§6).
+- ~~**P2 - okno dnia klubu**~~ - **rozstrzygnięte 2026-09-19**: okno liczy się
+  z **WSCHODU I ZACHODU SŁOŃCA nad lotniskiem macierzystym klubu** (§7.1), a nie ze
+  stałych godzin. Konsekwencje w §7.1 - to najdroższa z decyzji tej tury i zmienia
+  zakres #158 oraz #159.
 - **P3 - kroki akceptacji po kolei czy równolegle** (§11.2). Propozycja: po kolei.
-- **P4 - kto może odwołać cudzą rezerwację** poza administratorem - czy właściciel
-  maszyny/klubu ma jakąkolwiek dodatkową drogę? Propozycja: nie, `reservations.manage`
-  i tyle.
-- **P5 - rezerwacja, z której nikt nie poleciał** („no-show") - zostawiamy bez stanu,
-  czy klub chce to widzieć? Propozycja: 3.0.0 bez tego; wraca, gdy klub poprosi.
+- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19**:
+  administrator (`reservations.manage`) **oraz osoby akceptujące** (`reservations.approve`,
+  od 3.1.0). W 3.0.0 znaczy to „tylko administrator", bo akceptujących jeszcze nie ma -
+  zdolność dochodzi razem ze ścieżką akceptacji. Powód jest WYMAGANY w obu wypadkach:
+  odwołujący sięga po cudzy plan, a pilot czyta powód w aplikacji.
+- ~~**P5 - „no-show"**~~ - **rozstrzygnięte 2026-09-19**: slot **zwalnia się sam po
+  60 minutach** od początku rezerwacji, jeśli serwer nie widzi ani przejęcia maszyny,
+  ani biegu silnika. Maszyna nie stoi bezczynnie w sobotę. Mechanizm, jego cena
+  i zderzenie z offline-first: §4.1.
 - ~~**P6 - zakres wobec terminu**~~ - **rozstrzygnięte 2026-09-18**: termin 3 października,
   zakres 3.0.0 bez zmian (§14 R1).
-- **P7 - maksymalny horyzont rezerwacji** (ile dni w przód) i **limit na pilota** (ile
-  otwartych naraz) - czy klub ma je ustawiać? Propozycja: 3.0.0 bez limitów; to reguła
-  społeczna, a nie techniczna, dopóki klub nie pokaże, że jej potrzebuje.
+- ~~**P7 - horyzont i limity**~~ - **rozstrzygnięte 2026-09-19**: w 3.0.0 BEZ limitów.
+  Ile i jak daleko w przód wolno rezerwować, to reguła społeczna klubu, nie techniczna;
+  limity dokładamy, gdy klub pokaże, że ich potrzebuje.
+- ~~**P8 - los plików `01*` przy wydaniu 3.0.0**~~ - **rozstrzygnięte 2026-09-19**:
+  zostają W MIEJSCU jako ARCHIWUM z banerem, dokładnie jak `design/admin/` po panelu 2.0
+  (§9.1a). Powód: po wydaniu APK linia 2.x żyje na telefonach tygodniami, bo nie każdy
+  aktualizuje od razu - zgłoszenie z takiego telefonu trzeba mieć z czym zestawić.
+  Dodatkowo 32 makiety linkujące do `01` nie wymagają wtedy ruszania.
 
 ## 16. Odrzucone warianty - nie wracać
 

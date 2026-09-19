@@ -56,6 +56,10 @@
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .mode-badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); padding:4px 10px; border-radius:999px; }
   .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  /* Dzieci przewijanej kolumny NIE KURCZĄ SIĘ - patrz 12-historia.html (zgłoszenie
+     z urządzenia, 2026-09-19): flex ściska karty przy dłuższej treści, a tekst wylewa
+     się poza nie i nachodzi na sąsiednie. */
+  .scroll > * { flex-shrink: 0; }
   .section-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
   .section-card-head { padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
   .section-card-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
