@@ -121,7 +121,9 @@ CREATE TABLE bookings (
   aircraft_id  TEXT NOT NULL REFERENCES aircraft(id),
   kind         TEXT NOT NULL CHECK (kind IN ('flight', 'block')),
   status       TEXT NOT NULL CHECK (status IN
-                 ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled')),
+                 -- `released` = slot zwolniony po godzinie bez przejęcia (§4.1); to nie jest
+                 -- decyzja człowieka, więc nie `cancelled`, a rezerwacja zostaje w zapisie.
+                 ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled', 'released')),
   starts_at    TIMESTAMPTZ NOT NULL,
   ends_at      TIMESTAMPTZ NOT NULL,
   CONSTRAINT booking_order CHECK (ends_at > starts_at),
@@ -179,7 +181,7 @@ ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
   EXCLUDE USING gist (
     aircraft_id WITH =,
     tstzrange(starts_at, ends_at, '[)') WITH &&
-  ) WHERE (status IN ('pending', 'confirmed'));
+  ) WHERE (status IN ('pending', 'confirmed'));   -- `released` wypada z predykatu (§4.1)
 ```
 
 **Sprawdzone empirycznie 2026-09-18** na PGlite (baza testów serwera) - trzy własności,
@@ -288,6 +290,35 @@ utworzenie ────────►│                                       
 - rezerwacja, która minęła bez operacji, NIE zmienia stanu automatem. Kalendarz liczy
   „minęła" z zegara; osobny stan `no_show` to materiał na osobną decyzję (§15 P5).
 
+
+### 4.1 Slot zwalnia się sam po godzinie (P5, decyzja 2026-09-19)
+
+Rezerwacja, po którą nikt nie przyszedł, blokowała maszynę do końca slotu - w sobotę
+to godziny, w których ktoś inny mógłby polecieć. **Po 60 minutach od początku rezerwacji
+serwer zwalnia slot**, jeśli nie widzi ani przejęcia maszyny, ani biegu silnika.
+
+- **status `released`**, nie `cancelled`: to nie jest decyzja człowieka, tylko upłynięcie
+  czasu, a rezerwacja ma zostać w zapisie („był plan, nikt nie przyszedł"). Status wypada
+  z predykatu ograniczenia wykluczającego (§3.2), więc slot wraca do puli natychmiast;
+- **liczy to zadanie okresowe serwera** (co 5 minut), bo ograniczenie w bazie jest
+  statyczne i samo z siebie nie wie, że minęła godzina. To pierwszy taki wątek w tym
+  serwerze - jedna instancja (§8.8 architektury), więc `setInterval` wystarczy
+  i nie potrzeba kolejki;
+- **próg 60 minut jest DO KALIBRACJI** (`booking/policy.ts`) razem z resztą progów.
+
+**TO JEST ŚWIADOMY WYŁOM W ROZDZIALE REJESTRU I REZERWACJI** (§2.1), jedyny w 3.0.0:
+rezerwacja zaczyna zależeć od ZDARZEŃ - od tego, czy przyszło `session_claim` albo
+`engine_start` tej maszyny. Cena jest realna i trzeba ją nazwać: **pilot lecący bez
+zasięgu wysyła zdarzenia dopiero po locie**, więc z punktu widzenia serwera „nie
+przyszedł" - i jego slot zwolni się w trakcie lotu.
+
+Dlaczego mimo to jest to do przyjęcia: zwolnienie nie kasuje rezerwacji ani nie przerywa
+lotu, a maszyny fizycznie nie ma w hangarze - kolejny pilot zderzy się z tym samym,
+z czym zderzyłby się bez żadnej rezerwacji. Gdy zdarzenia dojdą, rezerwacja dostaje
+`fulfilled` po `reservationId` i wraca do zapisu jako zrealizowana.
+
+Wariant bezpieczniejszy - liczyć zwolnienie dopiero, gdy telefon POTWIERDZI brak lotu -
+nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zostanie.
 ## 5. API
 
 ### 5.1 Telefon (token klubu, brama członkostwa)
@@ -392,6 +423,40 @@ ocena:    kara za każdą powstałą RESZTKĘ krótszą niż MIN_USEFUL_SLOT
   serwera na trasie `GET /bookings/suggestions` - ten sam kod z `packages/domain`, więc
   odpowiedzi nie mają jak się rozjechać.
 
+
+### 7.1 Okno doby lotnej: wschód i zachód słońca (P2, decyzja 2026-09-19)
+
+Sugestie slotów potrzebują granic dnia, a kalendarz - zakresu siatki. **Liczą się
+z EFEMERYD nad lotniskiem macierzystym klubu**, nie ze stałych godzin: w grudniu doba
+lotna ma osiem godzin, w czerwcu siedemnaście, a stała 06-21 kłamałaby w obie strony -
+latem odcinałaby pierwszy poranny lot, zimą proponowała slot po zmroku.
+
+**Okno to zmierzch CYWILNY, nie sam wschód-zachód:** od 30 minut przed wschodem do
+30 minut po zachodzie. Tak liczy się dzień w lotnictwie VFR i tak wygląda praktyka
+klubu - ostatni lot ląduje po zachodzie słońca, a nie przed nim. Margines stoi
+w `booking/policy.ts` razem z resztą progów DO KALIBRACJI.
+
+Czego ta decyzja wymaga (zakres #158 i #159 rośnie):
+
+- **`organizations.home_icao`** - lotnisko macierzyste klubu, dziś nieistniejące.
+  Migracja 11, pole na karcie klubu w module Organizacje. Współrzędne przychodzą
+  z katalogu lotnisk (`packages/domain/src/airfields.ts`), więc klub podaje sam kod;
+- **`packages/domain/src/booking/solar.ts`** - czysta funkcja liczącą wschód i zachód
+  z szerokości, długości i daty (algorytm NOAA, ~60 linii, zero zależności). Precedens
+  w tym pakiecie już jest: `geoid/` liczy undulację, `magneticDeclination.ts` deklinację -
+  obliczenia astronomiczno-geodezyjne mieszkają w domenie i mają testy;
+- **siatka kalendarza przestaje być stała**, więc oś telefonu rysuje zakres dnia,
+  a nie sztywne 06-21; w panelu kolumny dni zostają równe, bo tam osią są DNI,
+  a nie godziny. Makiety `21` i `kalendarz-flota` pokazują dziś 06-21 jako placeholder
+  i wymagają poprawki przy wdrożeniu;
+- **klub bez lotniska macierzystego** (stare wiersze, świeżo założony) dostaje okno
+  domyślne 06-21. Brak konfiguracji nie może zablokować rezerwacji - to ta sama zasada,
+  przez którą brak normy zużycia nie blokuje lotu, tylko wyłącza werdykt.
+
+**Loty nocne (NVFR) zostają poza 3.0.0** i to jest świadome zawężenie: klub z takimi
+uprawnieniami nie zarezerwuje slotu po zmierzchu. Gdy się pojawi, właściwym ruchem jest
+przełącznik „doba lotna" na karcie klubu (efemerydy / pełna doba / własne godziny),
+a nie rozciąganie marginesu zmierzchu.
 ## 8. Uprawnienia
 
 Katalog `Capability` nazywa ZASOBY (`server/src/domain/roles.ts`), a rezerwacja jest
@@ -711,20 +776,25 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 - ~~**P1 - strefa czasu kalendarza**~~ - **rozstrzygnięte 2026-09-18**: siatkę rysuje
   strefa KLUBU (`organizations.timezone`), rejestr bez zmian w UTC, a czas lokalny
   urządzenia dochodzi adnotacją WYŁĄCZNIE przy różnicy stref (§6).
-- **P2 - okno dnia klubu.** Sugestie slotów potrzebują granic („od 06:00 do 21:00")
-  - konfiguracja klubu czy stała w domenie? Propozycja: konfiguracja z domyślną wartością,
-  bo aeroklub podhalański i nadmorski mają inne doby lotne.
+- ~~**P2 - okno dnia klubu**~~ - **rozstrzygnięte 2026-09-19**: okno liczy się
+  z **WSCHODU I ZACHODU SŁOŃCA nad lotniskiem macierzystym klubu** (§7.1), a nie ze
+  stałych godzin. Konsekwencje w §7.1 - to najdroższa z decyzji tej tury i zmienia
+  zakres #158 oraz #159.
 - **P3 - kroki akceptacji po kolei czy równolegle** (§11.2). Propozycja: po kolei.
-- **P4 - kto może odwołać cudzą rezerwację** poza administratorem - czy właściciel
-  maszyny/klubu ma jakąkolwiek dodatkową drogę? Propozycja: nie, `reservations.manage`
-  i tyle.
-- **P5 - rezerwacja, z której nikt nie poleciał** („no-show") - zostawiamy bez stanu,
-  czy klub chce to widzieć? Propozycja: 3.0.0 bez tego; wraca, gdy klub poprosi.
+- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19**:
+  administrator (`reservations.manage`) **oraz osoby akceptujące** (`reservations.approve`,
+  od 3.1.0). W 3.0.0 znaczy to „tylko administrator", bo akceptujących jeszcze nie ma -
+  zdolność dochodzi razem ze ścieżką akceptacji. Powód jest WYMAGANY w obu wypadkach:
+  odwołujący sięga po cudzy plan, a pilot czyta powód w aplikacji.
+- ~~**P5 - „no-show"**~~ - **rozstrzygnięte 2026-09-19**: slot **zwalnia się sam po
+  60 minutach** od początku rezerwacji, jeśli serwer nie widzi ani przejęcia maszyny,
+  ani biegu silnika. Maszyna nie stoi bezczynnie w sobotę. Mechanizm, jego cena
+  i zderzenie z offline-first: §4.1.
 - ~~**P6 - zakres wobec terminu**~~ - **rozstrzygnięte 2026-09-18**: termin 3 października,
   zakres 3.0.0 bez zmian (§14 R1).
-- **P7 - maksymalny horyzont rezerwacji** (ile dni w przód) i **limit na pilota** (ile
-  otwartych naraz) - czy klub ma je ustawiać? Propozycja: 3.0.0 bez limitów; to reguła
-  społeczna, a nie techniczna, dopóki klub nie pokaże, że jej potrzebuje.
+- ~~**P7 - horyzont i limity**~~ - **rozstrzygnięte 2026-09-19**: w 3.0.0 BEZ limitów.
+  Ile i jak daleko w przód wolno rezerwować, to reguła społeczna klubu, nie techniczna;
+  limity dokładamy, gdy klub pokaże, że ich potrzebuje.
 - ~~**P8 - los plików `01*` przy wydaniu 3.0.0**~~ - **rozstrzygnięte 2026-09-19**:
   zostają W MIEJSCU jako ARCHIWUM z banerem, dokładnie jak `design/admin/` po panelu 2.0
   (§9.1a). Powód: po wydaniu APK linia 2.x żyje na telefonach tygodniami, bo nie każdy
