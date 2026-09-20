@@ -1443,6 +1443,44 @@ się rozmiarem pliku źródłowego i wersją formatu - a korekta czasu startu (1
 unieważnia, bo okno lotu nie wchodzi do tego rachunku. Podbij `TIMELINE_VERSION`
 w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie progów fazy.
 
+### Nowa funkcja planowania (3.0.0, `docs/rezerwacje.md` §7)
+
+Planowanie różni się od reszty domeny jedną rzeczą: **opisuje PRZYSZŁOŚĆ**, więc nie ma
+strumienia zdarzeń, z którego dałoby się ją wyliczyć, ani faktu, którym dałoby się ją
+sprawdzić. Cała poprawność siedzi w regule i w testach tej reguły.
+
+1. **Funkcja mieszka w `packages/domain/src/booking/`** i jest CZYSTA - bez importów
+   z RN i DOM, bez bazy, bez zegara systemowego. Powód jest ten sam, co przy detekcji:
+   ten sam kod liczy sugestie na telefonie (offline, z cache’owanych zajętości)
+   i na serwerze (`GET /bookings/suggestions`). Dwie implementacje rozjechałyby się
+   przy pierwszej kalibracji, a rozjazd byłby cichy - obie odpowiedzi „wyglądają dobrze".
+2. **Progi i wagi idą do `booking/policy.ts`, nie do ciała funkcji.** Wszystkie są
+   **DO KALIBRACJI** - ta sama zasada, co w `consumption/policy.ts` i przy progach
+   detekcji: nie stroimy ich w dyskusji, tylko na danych klubu po sezonie. Plik ma
+   mówić także o RELACJACH między liczbami, bo to one niosą regułę (kara za martwą
+   resztkę jest większa niż premia za jedno przyleganie - i to jest decyzja, nie
+   przypadek).
+3. **Wejścia, których funkcja nie umie policzyć, przychodzą ARGUMENTEM.** Okno doby
+   lotnej składa `booking/dayWindow.ts` z efemeryd i progów, a `slots.ts` dostaje je
+   gotowe i o jego pochodzeniu nie wie nic. Ta sama granica, co przy kopercie śladu,
+   która niesie samą geometrię (issue #47): gdy przyjdą loty nocne, zmienia się JEDNA
+   funkcja, a nie wszystko, co jej używa.
+4. **Wynik niesie POWÓD, nie samą liczbę.** Ekran ma umieć napisać, dlaczego proponuje
+   właśnie ten slot - inaczej sugestia wygląda na wyrocznię i pilot albo ją przyjmuje
+   bez zrozumienia, albo przestaje jej ufać. `SlotSuggestion.reason` jest częścią
+   kontraktu, nie ozdobą.
+5. **Pusta odpowiedź NIE JEST błędem.** Dzień bywa pełny; funkcja planowania ma prawo
+   powiedzieć „nic nie proponuję" i wołający ma to umieć narysować.
+6. **Chwila bieżąca idzie z portu `Clock`**, nigdy z `Date.now()`. Planowanie odcina to,
+   co już minęło, więc „teraz" jest WEJŚCIEM rachunku - a wejście z zegara systemowego
+   jest niesprawdzalne testem (ta usterka powstała i została złapana przy #159).
+7. **Testy w `app/src/__tests__/`** (tam żyją testy `@ninerdeck/domain`) i **oba zestawy
+   uruchamiane**, bo zmiana w `packages/` dotyka obu stron. Przy obliczeniach
+   astronomiczno-geodezyjnych kotwicz test na czymś NIEZALEŻNIE weryfikowalnym
+   (południe słoneczne z długości geograficznej, długość dnia z kąta godzinnego) -
+   asercja przepisana z tej samej formuły, którą testujesz, jest kołem w powietrzu.
+8. Eksport z `packages/domain/src/index.ts`.
+
 ### Nowy adapter (np. serwer sync)
 
 Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i komendy nie mogą się dowiedzieć, że coś się zmieniło.

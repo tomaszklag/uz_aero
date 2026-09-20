@@ -66,6 +66,20 @@ const patch = z
 const cancel = z.object({ reason: z.string().trim().max(NOTE_MAX).nullable().optional() });
 
 /**
+ * Sugestie slotów. `day` to DOWOLNA chwila doby, o którą pytamy - trasa i tak sprowadzi
+ * ją do granic doby w strefie klubu, a telefon ma wtedy jedną rzecz mniej do policzenia.
+ *
+ * Sufit długości to doba: slot dłuższy niż dzień nie istnieje, a liczba bez sufitu
+ * kazałaby funkcji przemielić okno w poszukiwaniu czegoś, czego nie ma.
+ */
+const suggestions = z.object({
+  aircraftId: z.string().min(1).max(100),
+  day: z.string().datetime(),
+  minutes: z.coerce.number().int().positive().max(24 * 60),
+  preferredAt: z.string().datetime().optional(),
+});
+
+/**
  * Zajętość na drucie. `createdBy`, `updatedAt` i `closeReason` zostają po stronie
  * serwera - telefon rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian.
  */
@@ -138,6 +152,45 @@ export function registerBookingRoutes(
     });
   });
 
+  app.get('/bookings/suggestions', async (req, reply) => {
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
+
+    const parsed = suggestions.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+    const q = parsed.data;
+
+    const view = await calendar.suggestions(
+      who.orgId,
+      q.aircraftId,
+      Date.parse(q.day),
+      q.minutes * 60_000,
+      { preferredAt: q.preferredAt == null ? null : Date.parse(q.preferredAt) },
+    );
+    if (view == null) return reply.code(404).send({ error: 'not_found' });
+
+    // Pusta lista NIE JEST błędem: dzień bywa pełny, i to jest odpowiedź. ETagu tu nie
+    // ma - sugestie zależą od chwili bieżącej, więc znacznik starzałby się co minutę.
+    return reply.send({
+      day: {
+        date: view.day.date,
+        startsAt: new Date(view.day.startsAt).toISOString(),
+        endsAt: new Date(view.day.endsAt).toISOString(),
+      },
+      window: {
+        from: new Date(view.window.from).toISOString(),
+        to: new Date(view.window.to).toISOString(),
+        basis: view.window.basis,
+      },
+      suggestions: view.suggestions.map((s) => ({
+        startsAt: new Date(s.startsAt).toISOString(),
+        endsAt: new Date(s.endsAt).toISOString(),
+        reason: s.reason,
+        gapBeforeMin: Math.round(s.gapBeforeMs / 60_000),
+        gapAfterMin: Math.round(s.gapAfterMs / 60_000),
+      })),
+    });
+  });
   app.post('/bookings', async (req, reply) => {
     const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });

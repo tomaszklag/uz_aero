@@ -511,6 +511,47 @@ Czego ta decyzja wymaga (zakres #158 i #159 rośnie):
 uprawnieniami nie zarezerwuje slotu po zmierzchu. Gdy się pojawi, właściwym ruchem jest
 przełącznik „doba lotna" na karcie klubu (efemerydy / pełna doba / własne godziny),
 a nie rozciąganie marginesu zmierzchu.
+### 7.2 Co naprawdę stanęło w module planowania (epik R-C)
+
+Cztery pliki w `packages/domain/src/booking/`, każdy z jednym pytaniem:
+
+| Plik | Odpowiada na |
+| --- | --- |
+| `solar.ts` | kiedy wschodzi i zachodzi Słońce (NOAA, zero zależności) |
+| `dayWindow.ts` | jakie są granice doby lotnej - składa efemerydy z progami |
+| `slots.ts` | które sloty proponujemy i DLACZEGO |
+| `policy.ts` | wszystkie liczby, wszystkie DO KALIBRACJI |
+
+**`slots.ts` dostaje okno ARGUMENTEM i o jego pochodzeniu nie wie nic.** Rozdział jest
+celowy: gdy przyjdą loty nocne (NVFR, świadomie poza 3.0.0), zmienia się `dayWindow.ts`,
+a upakowanie dnia zostaje nietknięte. Ta sama granica, co przy kopercie śladu.
+
+**Kandydaci nie nakładają się nawzajem** i to jest własność, nie optymalizacja: bez niej
+pusty dzień oddawałby cztery propozycje odległe o kwadrans, czyli jedną propozycję
+powiedzianą cztery razy. Pilot ma dostać wybór, a nie listę zaokrągleń.
+
+**Przyleganie NIE MUSI trafić w ziarno.** Rezerwacja kończąca się o 10:07 daje
+przyleganie o 10:07, a siatka liczona co kwadrans by je minęła - czyli zgubiłaby
+dokładnie ten slot, o który w całej regule chodzi. Stąd kandydaci z obu krawędzi dziury
+wchodzą JAWNIE, obok siatki.
+
+**Granica dnia nie liczy się jako przyleganie.** Świt i zmrok są ścianą, nie sąsiadem;
+premiowanie ich kazałoby proponować lot o pierwszej możliwej minucie po wschodzie.
+
+**Relacja progów niesie regułę**: kara za martwą resztkę (1,5) jest WIĘKSZA niż premia
+za jedno przyleganie (1). Slot doklejony do cudzej rezerwacji, który zostawia po drugiej
+stronie pół godziny na nic, psuje dzień bardziej, niż pomaga - i ma przegrać ze slotem
+stojącym luzem. Zmieniając którąkolwiek z tych liczb, sprawdź, czy ta nierówność zostaje.
+
+**HORYZONTU NIE MA** (P7): lista zadań #159 wymieniała go w C3, bo powstała przed
+decyzją właściciela z 2026-09-19. W 3.0.0 nie ma limitów horyzontu ani liczby rezerwacji
+na pilota.
+
+**Trasa `GET /bookings/suggestions` przyszła z R-B** (B5) i wylądowała w tym epiku razem
+z funkcją, którą woła. Chwila bieżąca idzie z portu `Clock`, nie z `Date.now()` -
+planowanie odcina to, co minęło, więc „teraz" jest wejściem rachunku, a wejście z zegara
+systemowego jest niesprawdzalne testem.
+
 ## 8. Uprawnienia
 
 Katalog `Capability` nazywa ZASOBY (`server/src/domain/roles.ts`), a rezerwacja jest

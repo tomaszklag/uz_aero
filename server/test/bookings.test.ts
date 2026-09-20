@@ -512,3 +512,110 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
     expect(rows[0]!.status).toBe('confirmed');
   });
 });
+
+describe('rezerwacje: sugestie slotów', () => {
+  const pytaj = (app: App, token: string, minutes: number, over: Record<string, string> = {}) =>
+    app.inject({
+      method: 'GET',
+      url:
+        '/bookings/suggestions?' +
+        new URLSearchParams({
+          aircraftId: 'SP-AXA',
+          day: iso(JUTRO),
+          minutes: String(minutes),
+          ...over,
+        }).toString(),
+      headers: bearer(token),
+    });
+
+  it('PUSTY DZIEŃ daje propozycje i mówi, skąd wzięło się okno', async () => {
+    const { app } = await testHarness();
+    const tmk = await login(app, 'TMK');
+
+    const res = await pytaj(app, tmk, 120);
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().suggestions.length).toBeGreaterThan(0);
+    // Świat testowy nie ma lotniska macierzystego, więc okno jest DOMYŚLNE - i trasa
+    // to mówi, zamiast udawać rachunek z efemeryd, którego nie było.
+    expect(res.json().window.basis).toBe('default');
+    expect(res.json().day.date).toBe(iso(JUTRO).slice(0, 10));
+  });
+
+  it('SUGESTIA PRZYLEGA do cudzej rezerwacji, a nie stoi na środku pustego rzędu', async () => {
+    const { app } = await testHarness();
+    const tmk = await login(app, 'TMK');
+    const pwi = await login(app, 'PWI');
+
+    // Ktoś trzyma maszynę przez dwie godziny. Propozycja dla kolejnego pilota ma
+    // PRZYLEGAĆ do tej rezerwacji, a nie stanąć gdziekolwiek w wolnym dniu.
+    const zajete = { from: JUTRO + 8 * H, to: JUTRO + 10 * H };
+    await create(app, pwi, zajete.from, zajete.to);
+
+    const res = await pytaj(app, tmk, 120);
+    const pierwsza = res.json().suggestions[0];
+    // Dokleja się od strony, po której zostaje dość miejsca: okno doby lotnej kończy
+    // się niedługo po tej rezerwacji, więc dwie godziny mieszczą się tylko PRZED nią.
+    expect(Date.parse(pierwsza.endsAt)).toBe(zajete.from);
+    expect(pierwsza.reason).toBe('next-to-booking');
+    expect(pierwsza.gapAfterMin).toBe(0);
+  });
+
+  it('WYŁĄCZENIE Z UŻYTKU liczy się jak każda inna zajętość', async () => {
+    const { app } = await testHarness();
+    const session = await panelCookie(app, 'TMK');
+    const tmk = await login(app, 'TMK');
+
+    const blok = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings/blocks',
+      headers: session,
+      payload: {
+        id: nextId(),
+        aircraftId: 'SP-AXA',
+        // Od poprzedniego wieczora, bo okno doby lotnej zaczyna się o szóstej rano
+        // CZASU KLUBU, czyli o 04:00 UTC - na długo przed `JUTRO`.
+        startsAt: iso(JUTRO - 12 * H),
+        endsAt: iso(JUTRO + 2 * 86_400_000),
+        blockReason: 'maintenance',
+      },
+    });
+
+    expect(blok.statusCode, blok.body).toBe(201);
+
+    // Maszyna stoi w serwisie całą dobę - sugestii z tego dnia być nie może, a pusta
+    // lista NIE JEST błędem.
+    const res = await pytaj(app, tmk, 60);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().suggestions).toEqual([]);
+  });
+
+  it('PORA DNIA przesuwa propozycje, gdy pilot ją poda', async () => {
+    const { app } = await testHarness();
+    const tmk = await login(app, 'TMK');
+
+    // Pora musi leżeć W OKNIE doby lotnej - prośba o godzinę po zmroku nie ma czego
+    // przesunąć, bo tam i tak nie ma kandydatów.
+    const bez = await pytaj(app, tmk, 60);
+    const z = await pytaj(app, tmk, 60, { preferredAt: iso(JUTRO + 6 * H) });
+    expect(Date.parse(z.json().suggestions[0].startsAt)).toBeGreaterThan(
+      Date.parse(bez.json().suggestions[0].startsAt),
+    );
+  });
+
+  it('żądanie bez sensu odbija się 400, a nie pustą listą', async () => {
+    const { app } = await testHarness();
+    const tmk = await login(app, 'TMK');
+
+    expect((await pytaj(app, tmk, 0)).statusCode).toBe(400);
+    expect((await pytaj(app, tmk, 60, { day: 'wczoraj' })).statusCode).toBe(400);
+  });
+
+  it('bez tokenu → 401', async () => {
+    const { app } = await testHarness();
+    const res = await app.inject({
+      method: 'GET',
+      url: '/bookings/suggestions?aircraftId=SP-AXA&day=' + iso(JUTRO) + '&minutes=60',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+});

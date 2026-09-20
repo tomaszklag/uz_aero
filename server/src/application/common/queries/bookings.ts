@@ -14,9 +14,17 @@
  * i dlaczego to lepsze niż offset per doba: `domain/clubTime.ts`.
  */
 
+import {
+  airfieldByIcao,
+  flightDayWindow,
+  suggestSlots,
+  type SlotSuggestion,
+} from '@ninerdeck/domain';
+
 import { clubDays, safeZone, type ClubDay } from '../../../domain/clubTime.ts';
 import type {
   BookingRecord,
+  Clock,
   BookingsPort,
   ClubSettingsPort,
   Database,
@@ -39,11 +47,31 @@ export interface CalendarView {
  */
 export const MAX_WINDOW_DAYS = 62;
 
+/** Sugestie dla JEDNEJ maszyny w JEDNEJ dobie - razem z oknem, z którego wyszły. */
+export interface SuggestionsView {
+  /** Doba, o którą pytano, w strefie klubu. */
+  day: ClubDay;
+  /**
+   * Okno doby lotnej i to, skąd wzięły się jego granice. Ekran ma umieć napisać
+   * „doba lotna 04:02-21:31" przy oknie liczonym z efemeryd i przemilczeć to przy
+   * domyślnym - inaczej sugestia w klubie bez lotniska macierzystego wyglądałaby
+   * na wynik rachunku, którego nie było.
+   */
+  window: { from: number; to: number; basis: 'solar' | 'default' };
+  suggestions: SlotSuggestion[];
+}
+
 export class BookingQueries {
   constructor(
     private readonly db: Database,
     private readonly bookings: BookingsPort,
     private readonly clubs: ClubSettingsPort,
+    /**
+     * Zegar z portu, nie `Date.now()`: sugestie odcinają sloty, które już się
+     * zaczęły, więc chwila bieżąca jest WEJŚCIEM tego rachunku - a wejście liczone
+     * z zegara systemowego jest niesprawdzalne testem.
+     */
+    private readonly clock: Clock,
   ) {}
 
   /** `null`, gdy klubu nie ma - trasa robi z tego 404, a nie pustej siatki. */
@@ -80,6 +108,58 @@ export class BookingQueries {
       // rośnie wtedy w klubie, ale gdyby zmiana wyszła poza okno, znacznik zostałby ten
       // sam przy innej treści. Klub i okno też - ten sam telefon pyta o kilka dni.
       etag: `W/"${orgId}:${span.from}-${span.to}:${aircraftId ?? '*'}:${changed ?? 0}:${rows.length}"`,
+    };
+  }
+
+  /**
+   * Sugestie slotów dla maszyny w danej dobie (§7). `null` = klubu nie ma.
+   *
+   * ══ TEN SAM KOD LICZY TO NA TELEFONIE ══
+   * `suggestSlots` mieszka w `@ninerdeck/domain`, więc aplikacja policzy sugestie
+   * OFFLINE z cache\u2019owanych zajętości i dostanie tę samą odpowiedź. Trasa istnieje
+   * dla telefonu, który akurat ma sieć, i dla panelu - a nie dlatego, że serwer ma
+   * tu jakąś wiedzę, której aplikacja nie ma.
+   *
+   * Wyłączenia z użytku liczą się jak każda inna zajętość: maszyna w serwisie nie
+   * lata i sugestii z tego dnia być nie może.
+   */
+  async suggestions(
+    orgId: string,
+    aircraftId: string,
+    dayAt: number,
+    durationMs: number,
+    opts: { preferredAt?: number | null } = {},
+  ): Promise<SuggestionsView | null> {
+    const settings = await this.clubs.calendar(this.db, orgId);
+    if (settings == null) return null;
+
+    const timezone = safeZone(settings.timezone);
+    const day = clubDays(timezone, dayAt, dayAt + 1)[0];
+    if (day == null) return null;
+
+    // Lotnisko macierzyste podaje się KODEM, a współrzędne przychodzą z katalogu -
+    // klub nie wpisuje szerokości i długości, bo nie ma po co.
+    const home = airfieldByIcao(settings.homeIcao);
+    const window = flightDayWindow(day, home == null ? null : { lat: home.lat, lon: home.lon });
+
+    // Zajętości CAŁEJ doby, nie samego okna: rezerwacja zaczęta przed świtem nadal
+    // zajmuje maszynę o dziewiątej.
+    const busy = await this.bookings.list(this.db, orgId, {
+      from: day.startsAt,
+      to: day.endsAt,
+      aircraftId,
+    });
+
+    return {
+      day,
+      window,
+      suggestions: suggestSlots({
+        window,
+        busy,
+        duration: durationMs,
+        preferredAt: opts.preferredAt ?? null,
+        now: this.clock.now().getTime(),
+      }),
     };
   }
 }

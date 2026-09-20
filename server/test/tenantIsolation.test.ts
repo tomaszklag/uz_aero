@@ -685,6 +685,25 @@ const CASES: Record<string, Probe> = {
     expect(res.json().timezone).toBe('Europe/Warsaw');
   },
 
+  'GET /bookings/suggestions': async ({ app, a }) => {
+    // Maszyna klubu B z tokenu klubu A: sugestie liczą się dla maszyny, której ten
+    // klub nie ma, więc muszą wyjść tak, jakby była WOLNA CAŁY DZIEŃ - a nie zdradzić
+    // rezerwacji Bety godzinami, w których „nie ma miejsca".
+    const res = await app.inject({
+      method: 'GET',
+      url: `/bookings/suggestions?aircraftId=SP-BBB&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expectClean(res, '/bookings/suggestions');
+    // Kontrola pozytywna: własna maszyna też odpowiada, i to sugestiami.
+    const own = await app.inject({
+      method: 'GET',
+      url: `/bookings/suggestions?aircraftId=SP-AXA&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().suggestions.length).toBeGreaterThan(0);
+  },
   'POST /bookings': async ({ app, db, a }) => {
     // Rezerwacja maszyny klubu B z tokenu A: maszyna jest dla tego tokenu
     // NIEISTNIEJĄCA, więc 404 - ta sama odpowiedź, którą dostałby pilot pytający

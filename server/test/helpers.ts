@@ -319,7 +319,7 @@ const lastSeen = new LastSeenThrottle();
   // Zajętość maszyny (3.0.0) - jeden adapter i JEDNO okno kalendarza dla obu
   // powierzchni, dokładnie jak w `src/index.ts`.
   const bookingsRepo = new PgBookingsRepo();
-  const calendar = new BookingQueries(db, bookingsRepo, new PgClubSettingsRepo());
+  const calendar = new BookingQueries(db, bookingsRepo, new PgClubSettingsRepo(), clock);
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
   // Jeden adapter flag dla komend i zapytań - tak jak w produkcyjnym composition root.
   const adminFlagsRepo = new PgAdminFlagsRepo();
