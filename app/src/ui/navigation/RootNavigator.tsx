@@ -22,6 +22,7 @@
 import React from 'react';
 import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 
 import { useTheme } from '../theme';
 import { setBugRoute } from '../components/bug/bugReporter';
@@ -36,18 +37,21 @@ import {
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
-import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { MyDayScreen } from '../screens/MyDayScreen';
+import { TabsNavigator, type TabsParamList } from './TabsNavigator';
 import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 
 export type RootStackParamList = {
-  /** 01 - EKRAN DOMOWY: płaski log sesji doby, przekrojowo po maszynach (issue #23). */
-  MyDay: undefined;
-  /** 12 - historia dni z oknem korekty; wejście z 01. */
-  History: undefined;
+  /**
+   * ZAKŁADKI (3.0.0): Pulpit · Kalendarz · Historia - cały ekran domowy aplikacji.
+   *
+   * Stoją jako JEDEN ekran stosu, a flow lotu leży NAD nimi. To nie jest szczegół
+   * montowania: kokpit jest stanem modalnym (CLAUDE.md, issue #82), więc wejście
+   * w lot ma przykryć pasek W CAŁOŚCI, bez ani jednej linijki warunku w kokpicie.
+   */
+  Tabs: NavigatorScreenParams<TabsParamList> | undefined;
   Cockpit: undefined;
   /** Nowy lot w trzech krokach (§3.1): kto i czym → zadanie → odczyty i „ROZPOCZNIJ LOT". */
   PreflightAircraft: undefined;
@@ -88,12 +92,29 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * Nazwa trasy, na której pilot NAPRAWDĘ stoi.
+ *
+ * Od zakładek (3.0.0) czubek stosu bywa nawigatorem, nie ekranem: `state.routes[i].name`
+ * oddawało wtedy „Tabs" dla Pulpitu, Kalendarza i Historii naraz - czyli zgłoszenie
+ * błędu (issue #87) przestawało mówić, KTÓRY ekran pilot miał przed sobą. Schodzimy
+ * więc do najgłębszego stanu; `state` zagnieżdżonego nawigatora ma ten sam kształt.
+ */
+function activeRoute(state: NavigationState | undefined): string | null {
+  let route = state?.routes[state.index ?? 0];
+  while (route?.state != null) {
+    const child = route.state as NavigationState;
+    route = child.routes[child.index ?? 0];
+  }
+  return route?.name ?? null;
+}
+
 export function RootNavigator({
-  initialRouteName = 'MyDay',
+  initialRouteName = 'Tabs',
 }: {
   /**
    * Punkt wejścia zależy od stanu dnia: otwarta sesja po restarcie wraca prosto do
-   * kokpitu (`App.tsx` sprawdza `session_meta`, §5.2), świeży start zaczyna od 01.
+   * kokpitu (`App.tsx` sprawdza `session_meta`, §5.2), świeży start zaczyna od zakładek.
    */
   initialRouteName?: keyof RootStackParamList;
 }) {
@@ -119,8 +140,8 @@ export function RootNavigator({
       /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87). Tutaj, a nie
          w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter istnieje,
          a nowy ekran dostaje kontekst w chwili dopisania do stosu. */
-      onStateChange={(state) => setBugRoute(state?.routes[state.index ?? 0]?.name ?? null)}
-      onReady={() => setBugRoute(initialRouteName)}
+      onStateChange={(state) => setBugRoute(activeRoute(state))}
+      onReady={() => setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName)}
     >
       <Stack.Navigator
         initialRouteName={initialRouteName}
@@ -134,8 +155,7 @@ export function RootNavigator({
           contentStyle: { backgroundColor: theme.colors.bg },
         }}
       >
-        <Stack.Screen name="MyDay" component={MyDayScreen} />
-        <Stack.Screen name="History" component={HistoryScreen} />
+        <Stack.Screen name="Tabs" component={TabsNavigator} />
         <Stack.Screen name="Cockpit" component={CockpitScreen} />
         <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
         <Stack.Screen name="PreflightTask" component={PreflightTaskScreen} />

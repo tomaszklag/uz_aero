@@ -71,6 +71,7 @@ import { fuelReleaseTrail, mhReleaseTrail } from './logic/releaseTrail';
 import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
 import { engineTimeInWindow, estimateFob, lastFuelReference } from './logic/refuelMath';
 import type { NoFlightReason } from '../../domain';
+import { goHome } from '../navigation/goHome';
 
 /**
  * Siatka powodów (`.reason-grid` z 09C) - karty z ikonami, nigdy natywny `<select>`
@@ -182,7 +183,7 @@ export function ReleaseAircraftScreen({
       );
       // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
       // a dzień pilota trwa dalej.
-      navigation.navigate('MyDay');
+      goHome(navigation);
     } catch {
       // Powód jest w `lastError` - pokazany banerem niżej.
     } finally {
@@ -190,7 +191,7 @@ export function ReleaseAircraftScreen({
     }
   }, [navigation, note, reading.fuelL, reading.mh, reason, releaseAircraft]);
 
-  if (vm == null) return <NoAircraft onBack={() => navigation.navigate('MyDay')} />;
+  if (vm == null) return <NoAircraft onBack={() => goHome(navigation)} />;
 
   const withoutLeg = vm.withoutLeg;
   const blocker = releaseBlocker(projection, reading, reason);

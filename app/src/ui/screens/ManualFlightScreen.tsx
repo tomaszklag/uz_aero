@@ -127,6 +127,7 @@ import { fuelSheetWarning, mhSheetWarning } from './logic/readingSheetWarning';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" - ta sama, co na 02E (issue #62 pkt 1). */
 import { airfieldValueProps } from '../components/input/airfieldMark';
+import { goHome } from '../navigation/goHome';
 
 /** Kolejność kroków - indeks w tej tablicy jest numerem w plakietce „n / 4". */
 const STEPS: ManualFlightStep[] = ['aircraft', 'task', 'times', 'readings'];
@@ -360,7 +361,7 @@ export function ManualFlightScreen({
     setError(null);
     try {
       await manualFlight(input);
-      navigation.navigate('MyDay');
+      goHome(navigation);
     } catch (e) {
       // Powód odmowy domeny wprost przy przycisku - nigdy cichy błąd (§6 pkt 3).
       setError(e instanceof Error ? e.message : String(e));
@@ -524,10 +525,10 @@ export function ManualFlightScreen({
              które zachowują się różnie, to była pierwsza połowa zgłoszenia. */
           onBack={() => {
             if (stepIndex > 0) setStepIndex(stepIndex - 1);
-            else if (dirty) exit.ask(CommonActions.navigate('MyDay'));
-            else navigation.navigate('MyDay');
+            else if (dirty) exit.ask(CommonActions.navigate('Tabs'));
+            else goHome(navigation);
           }}
-          backLabel={stepIndex === 0 ? 'Mój dzień' : 'Wróć'}
+          backLabel={stepIndex === 0 ? 'Pulpit' : 'Wróć'}
           right={<SyncChip />}
         />
       }

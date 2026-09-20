@@ -219,9 +219,9 @@ function ResumeGate() {
           return;
         }
       } catch {
-        // Uszkodzone meta nie może zablokować wejścia - najwyżej zaczniemy od 01.
+        // Uszkodzone meta nie może zablokować wejścia - najwyżej zaczniemy od Pulpitu.
       }
-      if (alive) setInitial('MyDay');
+      if (alive) setInitial('Tabs');
     })();
     return () => {
       alive = false;
