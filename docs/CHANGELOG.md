@@ -34,6 +34,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Kalendarz floty w panelu klubu** - kto ma zaplanowany lot, na której maszynie i w które
+  dni, w widoku na tydzień, dwa tygodnie albo miesiąc. Administrator zarezerwuje termin za
+  pilota i wyłączy maszynę z użytku na czas przeglądu albo usterki - wtedy znika ona pilotom
+  z kalendarza. Zajętości, które kolidują z wpisywanym terminem, widać jeszcze przed zapisem.
+
 ## 2.1.0 (build 4) · 18 września 2026
 
 > Logowanie e-mailem i hasłem obok konta Google - dla wspólnego tabletu w samolocie. Do tego własny adres Ninerdeck i lista urządzeń, z których każde da się wylogować zdalnie.

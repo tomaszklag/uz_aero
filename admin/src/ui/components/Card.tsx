@@ -20,12 +20,19 @@ interface CardProps {
    * drugą definicją tego samego, niewidoczną dla generatora `panel.css`.
    */
   span2?: boolean;
+  /**
+   * Ton karty niosącej decyzję (`danger` - odwołanie, `warn` - uprzedzenie).
+   * Ton siedzi we WŁOSIE I TLE, nie w wypełnieniu: karta w pełnym kolorze byłaby
+   * najgłośniejszym elementem szuflady, a intencją wchodzącego jest przeczytanie
+   * szczegółów, nie kasowanie.
+   */
+  tone?: 'danger' | 'warn';
   children: ReactNode;
 }
 
-export function Card({ title, actions, style, span2 = false, children }: CardProps) {
+export function Card({ title, actions, style, span2 = false, tone, children }: CardProps) {
   return (
-    <div className={span2 ? 'card span-2' : 'card'} style={style}>
+    <div className={['card', span2 ? 'span-2' : null, tone].filter((c) => c != null).join(' ')} style={style}>
       {title == null ? null : (
         <div className="card-title">
           {title}

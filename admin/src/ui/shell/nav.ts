@@ -25,7 +25,7 @@
 
 import type { Capability } from '../../api/dto';
 
-export type NavIcon = 'logbook' | 'people' | 'plane' | 'bug' | 'building';
+export type NavIcon = 'logbook' | 'people' | 'plane' | 'calendar' | 'bug' | 'building';
 
 export interface NavItem {
   /** Ścieżka hasha (`#/piloci`) - po polsku, bo bywa wklejana w rozmowie. */
@@ -42,6 +42,10 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/dziennik', label: 'Dziennik', icon: 'logbook', capability: 'panel.access' },
   { to: '/piloci', label: 'Piloci', icon: 'people', capability: 'panel.access' },
   { to: '/samoloty', label: 'Samoloty', icon: 'plane', capability: 'panel.access' },
+  // Kalendarz stoi PO Samolotach i to nie jest kwestia gustu: `homeFor` bierze
+  // PIERWSZĄ dostępną pozycję, więc kolejność tej tablicy rozstrzyga, gdzie ląduje
+  // administrator po zalogowaniu. Dziennik ma zostać ekranem startowym.
+  { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', capability: 'panel.access' },
   // ── PLATFORMA ────────────────────────────────────────────────────────────────
   // Dwie pozycje niżej należą do sesji superadministratora i w kolumnie klubu NIE MA
   // ich wcale. Organizacje stoją PRZED Zgłoszeniami, bo `homeFor` bierze pierwszą

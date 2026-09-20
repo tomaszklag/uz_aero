@@ -361,6 +361,15 @@ i uzasadnienia: **`docs/panel-2.0.md` §3.8**. Reguły obowiązujące KAŻDY now
 - **`td.cell-sub` ma `display: table-cell`** - klasa bywa klasą całej komórki (kolumny
   „E-mail", „Kiedy") i `display: block` wyjmowało ją z wiersza (usterka z 2.0 naprawiona
   przy okazji)
+- **WYBÓR Z DŁUGIEJ LISTY IDZIE NATYWNYM `<select>`** (decyzja właściciela 2026-09-20,
+  przy kalendarzu 3.0.0) - to JEDYNY wyjątek od reguły „zawsze lista kart" i obowiązuje
+  WYŁĄCZNIE w panelu. Tamta reguła powstała dla telefonu: kciuk w rękawicy, słońce,
+  wybór spośród kilku maszyn. Panel to mysz i biurko, a klub z dwunastoma maszynami
+  dostałby dwanaście kart w szufladzie. Granica jest w DŁUGOŚCI listy, nie w powierzchni:
+  zbiór ZAMKNIĘTY i krótki (powód wyłączenia z użytku, rodzaj operacji, rola) zostaje
+  listą kart `OptionButton` także w panelu, bo tam widoczność wszystkich opcji naraz jest
+  całą wartością. Zbiór rosnący z klubem (maszyna, pilot) dostaje `<select class="input">`,
+  tak jak rysują to makiety `design/panel/kalendarz-*.html`
 
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo - inne urządzenie, ten sam produkt.
 

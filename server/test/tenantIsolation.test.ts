@@ -832,10 +832,10 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(0);
   },
 
-  'DELETE /admin/api/bookings/:id': async ({ app, db, a }) => {
+  'POST /admin/api/bookings/:id/cancel': async ({ app, db, a }) => {
     const res = await app.inject({
-      method: 'DELETE',
-      url: '/admin/api/bookings/book-b',
+      method: 'POST',
+      url: '/admin/api/bookings/book-b/cancel',
       headers: writer(a),
       payload: { reason: 'nie moja sprawa' },
     });

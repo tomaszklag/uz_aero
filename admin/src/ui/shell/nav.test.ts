@@ -21,7 +21,7 @@ const routes = (capabilities: readonly Capability[] | undefined): string[] =>
 
 describe('pozycje kolumny bocznej', () => {
   it('sesja KLUBU dostaje moduły klubu i ani jednego modułu platformy', () => {
-    expect(routes(CLUB)).toEqual(['/dziennik', '/piloci', '/samoloty']);
+    expect(routes(CLUB)).toEqual(['/dziennik', '/piloci', '/samoloty', '/kalendarz']);
   });
 
   it('sesja PLATFORMY dostaje wyłącznie swoje moduły', () => {

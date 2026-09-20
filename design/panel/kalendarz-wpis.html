@@ -139,11 +139,9 @@
            Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go kliknięto
            (reguła z dziennika). -->
       <div class="filters">
-        <div class="chips">
-          <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
-          <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
-          <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
-        </div>
+        <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
+        <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
+        <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
       </div>
 
       <div class="card">
@@ -190,7 +188,7 @@
           <div class="cal-cells">
             <div class="cal-cell off"></div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
               <a class="cal-item" href="kalendarz-wpis.html">J. Nowak</a>
             </div>
             <div class="cal-cell">
@@ -201,7 +199,7 @@
               <a class="cal-item pending" href="kalendarz-wpis.html">M. Wilk</a>
             </div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
             </div>
             <div class="cal-cell off"></div>
           </div>
@@ -220,7 +218,7 @@
             </div>
             <div class="cal-cell off"></div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
             </div>
             <div class="cal-cell off"></div>
             <div class="cal-cell off"></div>
@@ -342,28 +340,26 @@
 
       <div class="drawer-body">
         <section class="card">
-          <div class="card-head"><h2 class="card-title">Rezerwacja</h2></div>
-          <div class="kv-list">
-            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Tomasz Małkiewicz <span class="cell-sub mono">TMK</span></span></div>
-            <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowalska <span class="cell-sub mono">AKO</span></span></div>
-            <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
-            <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPKK → EPRJ</span></div>
-            <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 120 L</span></div>
-            <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części w Jasionce, powrót tego samego dnia.</span></div>
-            <div class="kv"><span class="kv-k">Założona</span><span class="kv-v">18 WRZ 20:14 <span class="cell-sub">przez pilota, z aplikacji</span></span></div>
-          </div>
+          <h2 class="card-title">Rezerwacja</h2>
+          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Tomasz Małkiewicz <span class="cell-sub mono">TMK</span></span></div>
+          <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowalska <span class="cell-sub mono">AKO</span></span></div>
+          <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+          <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPKK → EPRJ</span></div>
+          <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 120 L</span></div>
+          <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części w Jasionce, powrót tego samego dnia.</span></div>
+          <div class="kv"><span class="kv-k">Założona</span><span class="kv-v">18 WRZ 20:14 <span class="cell-sub">przez pilota, z aplikacji</span></span></div>
         </section>
 
         <!-- Operacja, która ją zrealizowała - pojawia się DOPIERO po locie, bo wiąże je
              `session_claim.reservationId`, czyli zdarzenie z rejestru. Do tego czasu
              wiersza NIE MA (pusty byłby zdaniem o przyszłości). -->
         <section class="card">
-          <div class="card-head"><h2 class="card-title">Realizacja</h2></div>
+          <h2 class="card-title">Realizacja</h2>
           <div class="empty">Lot jeszcze się nie odbył. Po zdaniu samolotu stanie tu operacja z dziennika.</div>
         </section>
 
         <section class="card danger">
-          <div class="card-head"><h2 class="card-title">Odwołanie rezerwacji</h2></div>
+          <h2 class="card-title">Odwołanie rezerwacji</h2>
           <p class="card-note">Pilot zobaczy powód w aplikacji. Termin zwolni się natychmiast.</p>
           <label class="field">
             <span class="field-label">Powód</span>

@@ -59,6 +59,7 @@ export type Capability =
   | 'thresholds.manage'
   | 'audit.read'
   | 'maintenance.run'
+  | 'reservations.manage'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';
@@ -878,4 +879,78 @@ export interface BugReportDto {
 export interface BugReportPageDto {
   items: BugReportDto[];
   counts: Record<BugStatusDto, number>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * KALENDARZ ZAJĘTOŚCI (moduł Kalendarz, milestone 3.0.0; `docs/rezerwacje.md` §10)
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+export type BookingKindDto = 'flight' | 'block';
+
+export type BookingStatusDto =
+  | 'pending'
+  | 'confirmed'
+  | 'rejected'
+  | 'cancelled'
+  | 'fulfilled'
+  | 'released';
+
+export type BlockReasonDto = 'maintenance' | 'defect' | 'other';
+
+/**
+ * Jedna zajętość maszyny. Rezerwacja pilota i wyłączenie z użytku jadą JEDNYM
+ * kształtem, bo w kalendarzu są jednym: paskiem na osi maszyny. Rozróżnia je `kind`,
+ * a pola drugiego rodzaju stoją wtedy puste.
+ *
+ * ══ IDENTYFIKATORY, NIE NAPISY ══
+ * `pilotId` i `aircraftId` to identyfikatory - nazwisko i znak rejestracyjny panel
+ * rozwiązuje z list, które i tak ma (`usePilots`, `useFleet`). Doklejenie ich do tej
+ * odpowiedzi znaczyłoby drugie źródło tych samych napisów, a przy pierwszej zmianie
+ * nazwiska - dwa różne nazwiska w dwóch miejscach ekranu.
+ */
+export interface BookingDto {
+  id: string;
+  aircraftId: string;
+  kind: BookingKindDto;
+  status: BookingStatusDto;
+  startsAt: string;
+  endsAt: string;
+  /** `null` przy wyłączeniu z użytku - ono nie ma właściciela. */
+  pilotId: string | null;
+  dualId: string | null;
+  operation: string | null;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  /** Operacja, która ją zrealizowała; `null` = lot jeszcze się nie odbył. */
+  sessionUuid: string | null;
+  blockReason: BlockReasonDto | null;
+  note: string | null;
+  createdBy: string;
+  createdAt: string;
+  closedAt: string | null;
+  closeReason: string | null;
+}
+
+/**
+ * Doba kalendarza w strefie KLUBU - granice jako chwile bezwzględne.
+ *
+ * Panel dostaje je gotowe z tego samego powodu, co telefon: doba zmiany czasu ma 23
+ * albo 25 godzin, a przeglądarka administratora stoi czasem w innej strefie niż klub.
+ * Liczenie tego po stronie klienta dałoby siatkę przesuniętą o godzinę dwa razy w roku.
+ */
+export interface CalendarDayDto {
+  /** `YYYY-MM-DD` w strefie klubu. */
+  date: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface CalendarDto {
+  /** Strefa klubu - NAPIS do wyświetlenia, nie materiał do rachunku. */
+  timezone: string;
+  homeIcao: string | null;
+  days: CalendarDayDto[];
+  bookings: BookingDto[];
 }
