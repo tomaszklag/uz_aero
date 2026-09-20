@@ -3827,6 +3827,43 @@ i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
   `packages/domain/src/booking/slots.ts` z epiku R-C, #159) i okna doby lotnej
   z efemeryd - `organizations.home_icao` już jest, ale nikt go jeszcze nie czyta
 
+## Rezerwacje 3.0.0 - epik R-C: sugestie slotów i doba lotna (issue #159, 2026-09-19)
+Czysta domena planowania w `packages/domain/src/booking/` - ten sam kod liczy sugestie
+na telefonie (OFFLINE, z cache’owanych zajętości) i na serwerze. Decyzje:
+`docs/rezerwacje.md` §7.2; przepis „nowa funkcja planowania": `docs/architektura-kodu.md` §7.
+- **CZTERY PLIKI, KAŻDY Z JEDNYM PYTANIEM**: `solar.ts` (kiedy wschodzi Słońce - NOAA,
+  zero zależności), `dayWindow.ts` (granice doby lotnej - składa efemerydy z progami),
+  `slots.ts` (które sloty i DLACZEGO), `policy.ts` (wszystkie liczby, DO KALIBRACJI)
+- **`slots.ts` DOSTAJE OKNO ARGUMENTEM i o jego pochodzeniu nie wie nic** - ta sama
+  granica, co przy kopercie śladu niosącej samą geometrię (issue #47). Gdy przyjdą loty
+  nocne (NVFR, poza 3.0.0), zmienia się `dayWindow.ts`, a upakowanie dnia zostaje
+- **KANDYDACI NIE NAKŁADAJĄ SIĘ NAWZAJEM** i to jest własność, nie optymalizacja: bez
+  niej pusty dzień oddawał cztery propozycje odległe o kwadrans, czyli jedną propozycję
+  powiedzianą cztery razy. Pilot ma dostać WYBÓR, a nie listę zaokrągleń
+- **PRZYLEGANIE NIE MUSI TRAFIĆ W ZIARNO**: rezerwacja kończąca się o 10:07 daje
+  przyleganie o 10:07, a siatka co kwadrans by je minęła - czyli zgubiłaby dokładnie ten
+  slot, o który w całej regule chodzi. Oba kandydaty z krawędzi dziury wchodzą JAWNIE
+- **GRANICA DNIA NIE JEST PRZYLEGANIEM**: świt i zmrok to ściana, nie sąsiad -
+  premiowanie ich kazałoby proponować lot o pierwszej minucie po wschodzie
+- **RELACJA PROGÓW NIESIE REGUŁĘ**: kara za martwą resztkę (1,5) jest WIĘKSZA niż premia
+  za jedno przyleganie (1), więc slot zostawiający pół godziny na nic przegrywa ze slotem
+  luzem. Zmieniasz którąś liczbę - sprawdź, czy ta nierówność zostaje
+- **WYNIK NIESIE POWÓD** (`SlotSuggestion.reason`), bo ekran ma umieć napisać, dlaczego
+  proponuje właśnie to. Pusta lista NIE JEST błędem - dzień bywa pełny
+- **CHWILA BIEŻĄCA IDZIE Z PORTU `Clock`, NIGDY Z `Date.now()`**: planowanie odcina to,
+  co minęło, więc „teraz" jest WEJŚCIEM rachunku, a wejście z zegara systemowego jest
+  niesprawdzalne testem. Ta usterka powstała przy tym epiku i złapał ją test izolacji
+- **TEST EFEMERYD KOTWICZY SIĘ NA CZYMŚ NIEZALEŻNIE WERYFIKOWALNYM** (południe słoneczne
+  z długości geograficznej, długość dnia z kąta godzinnego) - asercja przepisana z tej
+  samej formuły, którą testuje, jest kołem w powietrzu. Pierwsza wersja testu padła na
+  wartościach „z pamięci", które okazały się wewnętrznie sprzeczne z geometrią
+- **HORYZONTU NIE MA** (P7, decyzja właściciela): lista zadań #159 wymieniała go w C3, bo
+  powstała przed tą decyzją. W 3.0.0 nie ma limitów horyzontu ani liczby rezerwacji
+- **KLUB BEZ LOTNISKA MACIERZYSTEGO** dostaje okno domyślne 06-21, a odpowiedź MÓWI, że
+  jest domyślne (`window.basis`) - inaczej sugestia wyglądałaby na wynik rachunku
+  z efemeryd, którego nie było. Dwa razy w roku to okno jest o godzinę obok (doba zmiany
+  czasu) i to jest przyjęte: poprawka wymagałaby konwersji stref na telefonie
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

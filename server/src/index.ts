@@ -353,7 +353,7 @@ const bugReports = new PgBugReportsRepo();
 const bookingsRepo = new PgBookingsRepo();
 const clubSettings = new PgClubSettingsRepo();
 // Okno kalendarza jest wspólne, więc składamy je RAZ i podajemy obu stronom.
-const calendar = new BookingQueries(db, bookingsRepo, clubSettings);
+const calendar = new BookingQueries(db, bookingsRepo, clubSettings, clock);
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
