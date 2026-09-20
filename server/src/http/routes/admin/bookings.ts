@@ -185,7 +185,13 @@ export function registerAdminBookingRoutes(
   adminRoute(
     app,
     gate,
-    { method: 'DELETE', url: '/bookings/:id', capability: 'reservations.manage' },
+    // `POST /:id/cancel`, a NIE `DELETE /:id` z ciałem - ta sama forma, co
+    // `POST /sessions/:uuid/void`, i z tego samego powodu: powód jest tu WYMAGANY
+    // przy cudzej rezerwacji, a ciało żądania `DELETE` bywa wycinane przez
+    // pośredniki. Kosztem byłaby odmowa `reason_required` widoczna wyłącznie na
+    // produkcji, przy zielonych testach. Telefon zostaje przy `DELETE`: tam powód
+    // jest opcjonalny, bo pilot odwołuje WŁASNĄ rezerwację i nie ma komu tłumaczyć.
+    { method: 'POST', url: '/bookings/:id/cancel', capability: 'reservations.manage' },
     async (req, reply, actor) => {
       const p = params.safeParse(req.params);
       if (!p.success) return reply.code(400).send({ error: 'bad_request' });

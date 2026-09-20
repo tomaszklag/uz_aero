@@ -6,6 +6,7 @@
  * filtra. Klucze dochodzą razem z ekranami, które ich używają - nigdy „na zapas".
  */
 
+import type { CalendarRange } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
 import type { LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
@@ -128,6 +129,19 @@ export const keys = {
    * więc zmiana statusu ma prawo unieważnić je w całości - inaczej niż przy
    * flocie, gdzie obok listy mieszka próg będący funkcją czystą.
    */
+  /**
+   * Kalendarz zajętości (3.0.0). ZAKRES DAT jest częścią tożsamości pytania - „ten
+   * tydzień" i „miesiąc" to dwa różne obrazy i oba mają prawo żyć w cache obok siebie,
+   * żeby przełączanie chipów wracało do policzonej odpowiedzi. Tak samo jak w dzienniku.
+   *
+   * KORZEŃ unieważnia każdy zapis: wyłączenie z użytku na trzy dni dotyka trzech kolumn
+   * w każdym zakresie naraz, więc odświeżenie jednego z nich zostawiłoby pozostałe
+   * z obrazem sprzed decyzji.
+   */
+  calendar: {
+    all: ['calendar'] as const,
+    range: (query: CalendarRange) => ['calendar', query] as const,
+  },
   bugs: {
     all: ['bugs'] as const,
     list: (query: BugListQuery) => ['bugs', 'list', query] as const,

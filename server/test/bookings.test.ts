@@ -338,8 +338,8 @@ describe('rezerwacje: panel', () => {
     const id = made.json().id as string;
 
     const bezPowodu = await app.inject({
-      method: 'DELETE',
-      url: `/admin/api/bookings/${id}`,
+      method: 'POST',
+      url: `/admin/api/bookings/${id}/cancel`,
       headers: session,
       payload: {},
     });
@@ -347,8 +347,8 @@ describe('rezerwacje: panel', () => {
     expect(bezPowodu.json().error).toBe('reason_required');
 
     const zPowodem = await app.inject({
-      method: 'DELETE',
-      url: `/admin/api/bookings/${id}`,
+      method: 'POST',
+      url: `/admin/api/bookings/${id}/cancel`,
       headers: session,
       payload: { reason: 'przegląd 100 h wchodzi na tę sobotę' },
     });
