@@ -7,14 +7,17 @@
  *
  * Reguła: **pilot wraca tam, gdzie stoi jego samolot.** Trzyma maszynę → kokpit,
  * bo restart w środku dnia lotnego nie może kosztować tapnięcia w drodze do STOP ENGINE.
- * Nie trzyma → „Mój dzień" (01), czyli ekran domowy nowego flow - tam jest cała doba
- * i wszystkie wejścia dalej.
+ * Nie trzyma → ZAKŁADKI (3.0.0), czyli Pulpit z sumami doby, najbliższą rezerwacją
+ * i akcjami - a obok niego Kalendarz i Historia.
+ *
+ * Wejście do kokpitu OMIJA zakładki i to jest cała reguła: pilot trzymający maszynę
+ * wraca do niej, a nie na ekran startowy z paskiem, z którego musiałby się przeklikać.
  */
 
 import type { SessionState } from '../../domain';
 
 /** Trasy startowe, jakie ta decyzja umie wskazać. */
-export type ResumeTarget = 'Cockpit' | 'MyDay';
+export type ResumeTarget = 'Cockpit' | 'Tabs';
 
 /**
  * Czy pilot nadal trzyma samolot z wczytanej sesji.
@@ -38,5 +41,5 @@ export function holdsAircraft(state: SessionState): boolean {
 
 /** Ekran startowy po wznowieniu. */
 export function resumeTarget(state: SessionState | null): ResumeTarget {
-  return state != null && holdsAircraft(state) ? 'Cockpit' : 'MyDay';
+  return state != null && holdsAircraft(state) ? 'Cockpit' : 'Tabs';
 }

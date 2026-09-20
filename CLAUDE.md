@@ -3873,6 +3873,51 @@ na telefonie (OFFLINE, z cache’owanych zajętości) i na serwerze. Decyzje:
   z efemeryd, którego nie było. Dwa razy w roku to okno jest o godzinę obok (doba zmiany
   czasu) i to jest przyjęte: poprawka wymagałaby konwersji stref na telefonie
 
+## Rezerwacje 3.0.0 - epik R-E: zakładki i nowy ekran startowy (issue #161, 2026-09-20)
+Ekran startowy przestał być logiem dnia. Aplikacja dostała dolny pasek **Pulpit ·
+Kalendarz · Historia**, a flow lotu żyje NAD nim. Decyzje: `docs/rezerwacje.md` §9.1.
+Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
+- **KOKPIT NIE MA ZAKŁADKI I MIEĆ NIE MOŻE.** Zakładki są JEDNYM ekranem stosu
+  (`Tabs`), a 02 → 02E → 02A → kokpit → 09B leżą NAD nimi - wejście w lot przykrywa
+  pasek w całości, bez ani jednej linijki warunku w kokpicie. Dopisanie pozycji do
+  `ui/navigation/tabs.ts` to jedna niewinnie wyglądająca linijka, więc pilnuje tego
+  TEST (`src/__tests__/tabs.test.ts`), nie komentarz: `TABS` nie może zawierać żadnej
+  trasy z `FLOW_ROUTES`. Zakładka wyprowadzająca z kokpitu nie jest zmianą nawigacji,
+  tylko skasowaniem modalności (issue #82)
+- **NAZWY ZAKŁADEK SĄ ROZSTRZYGNIĘTE** (decyzja właściciela 2026-09-19, `rezerwacje.md`
+  §9.1): PULPIT, nie „Dziś" - niesie najbliższą rezerwację, która bywa jutrzejsza, więc
+  nazwa czasowa obiecywałaby węższy zakres; HISTORIA, nie „Loty" - „Loty" obok zakładki
+  z dzisiejszymi sumami sugerowałoby dwa różne zbiory lotów. „Start" i „Przegląd"
+  odpadły przez kolizję ze słownikiem. **Lista zadań w issue #161 jest STARSZA niż ta
+  decyzja i mówi „Dziś · Kalendarz · Loty" - nie wracać do tamtych nazw**
+- **PULPIT NIE MA LISTY OPERACJI I NIE POWTARZA KALENDARZA**: same sumy doby, najbliższa
+  rezerwacja i akcje. Kafelek operacji był JEDYNYMI drzwiami do korekty w oknie 24 h
+  (issue #23, #43), więc drzwi przejęła HISTORIA - i dlatego obejmuje ona odtąd także
+  DZIŚ, wbrew issue #35. Karta „Mój dzień" jest linkiem, który tam prowadzi. Paska
+  zajętości floty nie ma: powtarzał zakładkę stojącą centymetr niżej
+- **BEZ REZERWACJI KARTY NIE MA WCALE** (wariant `20a`) - pusta karta „brak rezerwacji"
+  byłaby zdaniem o niczym. Do epiku R-F (#162) ekran dostaje `null` i wygląda dokładnie
+  jak ten wariant; zaślepki „wkrótce" nie ma
+- **POWRÓT NA EKRAN DOMOWY IDZIE PRZEZ `goHome()`** (`ui/navigation/goHome.ts`) - to
+  jedyne miejsce znające zagnieżdżony kształt trasy (`navigate('Tabs', { screen })`).
+  `navigate` przyjmuje dowolny napis, więc literówka w którymkolwiek z sześciu wyjść
+  z flow objawiłaby się dopiero w locie
+- **HISTORIA: dzień NAGŁÓWKIEM, operacje zwartymi wierszami** (makieta `24`). Data pada
+  RAZ, liczby stoją BEZ ETYKIET (kolejność Loty · Blok · Lot jest w aplikacji stała),
+  suma doby wchodzi dopiero przy KILKU operacjach, a ikona po prawej niesie SKUTEK
+  tapnięcia: ołówek (okno korekty) albo oko (podgląd po oknie). Archiwum jest zwinięte
+  i zwija się przy KAŻDYM wejściu - pytanie „co mogę poprawić" wraca za każdym razem,
+  a „co latałem w maju" pada raz na jakiś czas
+- **`MyDayScreen` (01) SKASOWANY**, a `buildHistory`/`editableBadge`/`remainingLabel`
+  umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
+  archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
+  i opisuje wersję, którą piloci mają w telefonach
+- **zmiana jedzie OTA**: `@react-navigation/bottom-tabs` to czysty JS na
+  `react-native-screens`, które projekt już ma - bez nowego APK
+- **czego R-E świadomie NIE ROBI**: treści zakładki Kalendarz i danych najbliższej
+  rezerwacji (epik R-F, #162), podmiany 13 osadzeń podręcznika i screen flow w tym
+  pliku (epik R-W, #163 - podręcznik opisuje wersję WDROŻONĄ)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

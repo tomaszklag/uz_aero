@@ -88,6 +88,7 @@ import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { oilCard } from './logic/sessionOil';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
+import { goHome } from '../navigation/goHome';
 
 /** Wysokość miniatury śladu - proporcje z mockupu 10 przy szerokości telefonu. */
 const THUMB_HEIGHT = 168;
@@ -202,10 +203,15 @@ export function StatsScreen({
    */
   const readOnly = !window24h.open;
   /**
-   * Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" - tam też prowadzi wyjście.
-   * Wejście z kokpitu (issue #43) podaje `from` i wraca dokładnie tam, skąd przyszło.
+   * Wyjście wraca do HISTORII, bo stamtąd się tu wchodzi - od 3.0.0 lista operacji
+   * ma jedno miejsce i jest nim ta zakładka (Pulpit pokazuje same sumy, §9.1).
+   * Do 3.0.0 wejście w okno korekty prowadziło z „Mojego dnia", a po oknie
+   * z „Poprzednich dni" - dwa ekrany, więc i dwa wyjścia.
+   *
+   * Wejście z KOKPITU (issue #43) podaje `from` i wraca dokładnie tam, skąd przyszło:
+   * kokpit jest stanem modalnym, więc poprawka danych nie ma prawa z niego wyprowadzić.
    */
-  const backScreen = route?.params?.from ?? (readOnly ? 'History' : 'MyDay');
+  const backTo = route?.params?.from;
 
   /**
    * Tryb edycji (issue #43). Po oknie 24 h nie da się w niego wejść - nie ma przycisku,
@@ -229,7 +235,7 @@ export function StatsScreen({
       await voidSession(voidReason.trim() === '' ? null : voidReason.trim());
       setVoidOpen(false);
       // Wpisu już nie ma w dniu pilota, więc nie ma na co wracać na tym ekranie.
-      navigation.navigate('MyDay');
+      goHome(navigation, 'History');
     } finally {
       setVoiding(false);
     }
@@ -339,7 +345,7 @@ export function StatsScreen({
           size="md"
           // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
           // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
-          onBack={() => navigation.navigate(backScreen)}
+          onBack={() => (backTo != null ? navigation.navigate(backTo) : goHome(navigation, 'History'))}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
           subtitle={header.subtitle}
           right={

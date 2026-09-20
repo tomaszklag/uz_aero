@@ -120,6 +120,18 @@ export function dateTimeUtcShort(t: EpochMillis): string {
 }
 
 /**
+ * „22 CZERWCA" - dzień i PEŁNA nazwa miesiąca, bez roku.
+ *
+ * Osobno od `dateUtcDayMonth` („22 CZE") i od `dateUtcLong` („22 CZERWCA 2026"), bo
+ * odpowiada na trzecie pytanie: nagłówek grupy dni w historii (makieta 24) stoi obok
+ * słowa „Dzisiaj"/„Wczoraj", więc skrót czytałby się jak kod, a rok przy dzisiejszej
+ * dacie byłby szumem. Rok wraca dopiero przy dniach starszych - tam `dateUtcLong`.
+ */
+export function dateUtcDayMonthLong(t: EpochMillis): string {
+  const d = new Date(t);
+  return `${d.getUTCDate()} ${MONTHS_PL[d.getUTCMonth()]}`;
+}
+/**
  * Data jako „06 SIE" (UTC) - dzień i skrót miesiąca BEZ roku; podtytuł nagłówka śladu
  * (mockup 14: „Lot 3 · 06 SIE · SP-KLM"). Rok tam nie mieści się obok rejestracji,
  * a ślad ogląda się w kontekście dnia, który i tak jest na ekranie obok. Skrót jest

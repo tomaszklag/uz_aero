@@ -36,6 +36,12 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Nowości
 
+- **Nowy ekran startowy aplikacji i dolne zakładki: Pulpit · Kalendarz · Historia.**
+  Pulpit odpowiada na dwa pytania - jak poszło dziś (sumy doby) i co masz przed sobą
+  (najbliższa rezerwacja z odliczaniem). Historia zebrała wszystkie loty w jednym
+  miejscu: dzień jest nagłówkiem, operacje zwartymi wierszami, a starsze czekają
+  zwinięte, więc na ekran wchodzi ich około trzy razy więcej niż dotąd. W kokpicie
+  zakładek nie ma - dopóki trzymasz samolot, nic nie wyprowadza Cię z niego bokiem.
 - **Kalendarz floty w panelu klubu** - kto ma zaplanowany lot, na której maszynie i w które
   dni, w widoku na tydzień, dwa tygodnie albo miesiąc. Administrator zarezerwuje termin za
   pilota i wyłączy maszynę z użytku na czas przeglądu albo usterki - wtedy znika ona pilotom

@@ -132,8 +132,13 @@ export interface BugContextView {
  * nowy ekran ma być widoczny jako `ManualFlightPart2`, a nie ukryty pod „nieznany".
  */
 export const ROUTE_LABELS: Record<string, string> = {
+  Dashboard: 'PULPIT (20)',
+  Calendar: 'KALENDARZ (21)',
+  History: 'HISTORIA (24)',
+  // Trasy linii 2.x - zgłoszenie z telefonu, który nie dostał jeszcze 3.0.0, ma się
+  // czytać tak samo jak wtedy, gdy powstało (aplikacja żyje na telefonach tygodniami
+  // po wydaniu, `docs/rezerwacje.md` §9.1a).
   MyDay: 'MÓJ DZIEŃ (01)',
-  History: 'POPRZEDNIE DNI (12)',
   Cockpit: 'KOKPIT (04/05)',
   CockpitReadonly: 'PODGLĄD MASZYNY (04B)',
   PreflightAircraft: 'NOWY LOT · SAMOLOT (02)',

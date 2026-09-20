@@ -90,6 +90,7 @@ import {
 import { operationTag, routeLabel } from './logic/operations';
 import { isJumpOperation, isSameFieldOperation } from '../../domain';
 import type { Event, FlightPhase } from '../../domain';
+import { goHome } from '../navigation/goHome';
 
 /** Co ile odświeżamy SZACUNKI paliwa i oleju (uwaga z urządzenia: „wystarczy co 5 minut"). */
 const ESTIMATE_REFRESH_MS = 5 * 60_000;
@@ -222,7 +223,7 @@ export function CockpitScreen({
    */
   const endedByAdmin = context != null && (projection.closedByAdmin || projection.voidedByAdmin);
   useEffect(() => {
-    if (endedByAdmin) navigation.navigate('MyDay');
+    if (endedByAdmin) goHome(navigation);
   }, [endedByAdmin, navigation]);
 
   const engineOn = projection.engineRunning;

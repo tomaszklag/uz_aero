@@ -111,6 +111,13 @@ const REGISTRY = {
   sync: f('refresh-cw'),
   offline: f('wifi-off'),
   clock: f('clock'),
+  // Zakładki 3.0.0 (rezerwacje, issue #145) - glify wprost z makiet `20-pulpit`:
+  // dach domu na Pulpicie i kartka kalendarza. Historia bierze `clock`, bo tak rysuje
+  // ją makieta; na zakładce zegar znaczy CZAS MINIONY, a nie termin - i to jest inna
+  // rzecz niż `history` (strzałka cofająca się), która opisuje przeszłe wersje JEDNEJ
+  // danej w arkuszu 10I.
+  home: f('home'),
+  calendar: f('calendar'),
   fuel: f('droplet'),
   // Historia zmian zdarzenia (issue #43, arkusz 10I) - strzałka cofająca się w czasie,
   // nie zegar: `clock` znaczy w tej aplikacji TERMIN (okno korekty, godzina zdarzenia),
