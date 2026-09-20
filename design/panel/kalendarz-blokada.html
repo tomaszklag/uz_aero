@@ -139,11 +139,9 @@
            Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go kliknięto
            (reguła z dziennika). -->
       <div class="filters">
-        <div class="chips">
-          <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
-          <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
-          <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
-        </div>
+        <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
+        <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
+        <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
       </div>
 
       <div class="card">
@@ -190,7 +188,7 @@
           <div class="cal-cells">
             <div class="cal-cell off"></div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
               <a class="cal-item" href="kalendarz-wpis.html">J. Nowak</a>
             </div>
             <div class="cal-cell">
@@ -201,7 +199,7 @@
               <a class="cal-item pending" href="kalendarz-wpis.html">M. Wilk</a>
             </div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
             </div>
             <div class="cal-cell off"></div>
           </div>
@@ -220,7 +218,7 @@
             </div>
             <div class="cal-cell off"></div>
             <div class="cal-cell">
-              <a class="cal-item" href="kalendarz-wpis.html">TMK</a>
+              <a class="cal-item" href="kalendarz-wpis.html">T. Małkiewicz</a>
             </div>
             <div class="cal-cell off"></div>
             <div class="cal-cell off"></div>
@@ -341,7 +339,7 @@
 
       <div class="drawer-body">
         <section class="card">
-          <div class="card-head"><h2 class="card-title">Zakres</h2></div>
+          <h2 class="card-title">Zakres</h2>
           <label class="field">
             <span class="field-label">Samolot</span>
             <select class="input">
@@ -357,7 +355,7 @@
         </section>
 
         <section class="card">
-          <div class="card-head"><h2 class="card-title">Powód</h2></div>
+          <h2 class="card-title">Powód</h2>
           <div class="opt-list">
             <label class="opt on"><span class="opt-body"><span class="opt-name">Przegląd</span><span class="opt-desc">Obsługa okresowa, przegląd 100 h, remont</span></span></label>
             <label class="opt"><span class="opt-body"><span class="opt-name">Usterka</span><span class="opt-desc">Maszyna niezdatna do lotu</span></span></label>
@@ -372,11 +370,9 @@
         <!-- Ostrzeżenie o kolizji: baza i tak odrzuci nakładający się wpis, więc pytanie
              pada TERAZ, a nie po tapnięciu w „Wyłącz". -->
         <section class="card warn">
-          <div class="card-head"><h2 class="card-title">W tym oknie stoją rezerwacje</h2></div>
-          <div class="kv-list">
-            <div class="kv"><span class="kv-k">16 WRZ 10:00</span><span class="kv-v">A. Kowalska · Szkolenie</span></div>
-            <div class="kv"><span class="kv-k">17 WRZ 14:00</span><span class="kv-v">J. Nowak · Przelot</span></div>
-          </div>
+          <h2 class="card-title">W tym oknie stoją rezerwacje</h2>
+          <div class="kv"><span class="kv-k">16 WRZ 10:00</span><span class="kv-v">A. Kowalska · Szkolenie</span></div>
+          <div class="kv"><span class="kv-k">17 WRZ 14:00</span><span class="kv-v">J. Nowak · Przelot</span></div>
           <p class="card-note">Wyłączenie ich nie odwoła. Odwołaj je z kalendarza albo skróć zakres.</p>
         </section>
       </div>

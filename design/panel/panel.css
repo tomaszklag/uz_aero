@@ -966,6 +966,51 @@ a {
   margin-left: auto;
 }
 
+/* ── karta z TONEM ──
+   Karta niosąca decyzję, po której nie ma odwrotu (odwołanie rezerwacji), i karta
+   uprzedzająca o tym, w co wchodzi administrator (rezerwacje stojące w wybranym
+   oknie). Ton niesie WŁOS I TŁO, nie wypełnienie: karta w pełnym kolorze byłaby
+   najgłośniejszym elementem szuflady, a intencją wchodzącego jest przeczytanie
+   szczegółów, nie kasowanie. Ta sama zasada, co przy koszu w linii tytułu arkusza
+   w aplikacji pilota.
+
+   Klasy pochodzą wprost z makiet kalendarza (`kalendarz-wpis`, `kalendarz-blokada`),
+   które używały ich, zanim istniały - do wdrożenia modułu Kalendarz karty „danger"
+   i „warn" rysowały się jak każde inne. */
+.card.danger {
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.card.warn {
+  border-color: var(--amber-border);
+  background: var(--amber-muted);
+}
+
+.card.danger > .card-title {
+  color: var(--red);
+  border-bottom-color: var(--red-border);
+}
+
+.card.warn > .card-title {
+  color: var(--amber);
+  border-bottom-color: var(--amber-border);
+}
+
+/* Zdanie o SKUTKU decyzji, nie przypis o budowie panelu: stoi między tytułem karty
+   a kontrolką, której dotyczy. */
+.card-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.card-note.danger {
+  color: var(--red);
+}
+
 /* ── plakietki stanu ──
    Bez ramki i bez wersalików: kolor tła mówi ton, napis mówi stan - pisany jak zdanie,
    z wielkiej litery. Plakietka z obwódką i literami rozstrzelonymi na 1,2 px była
