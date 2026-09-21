@@ -82,6 +82,7 @@ export * from './sheets/DropSheet';
 export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';
 export * from './sheets/JoinClubSheet';
+export * from './sheets/FleetFilterSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
 // ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu
@@ -109,6 +110,12 @@ export * from './sheets/AbandonDraftSheet';
 
 // Dane i akcje
 export * from './data/DayCard';
+// Kalendarz rezerwacji (3.0.0): pasek dni, oś floty, karta własnej rezerwacji
+// i cichy chip filtra maszyn.
+export * from './data/DayChips';
+export * from './data/FleetAxis';
+export * from './data/FilterChip';
+export * from './data/ReservationCard';
 // `SummaryHero` i `SummaryGrid` USUNIĘTE 2026-08-12 - były komponentami ekranu 03
 // (podsumowanie preflightu), a ten zniknął przy skróceniu przejęcia do trzech kroków
 // (etap C4: „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu). Rolę siatki klucz/wartość

@@ -95,6 +95,39 @@ const MONTHS_PL_NOMINATIVE = [
   'GRUDZIEŃ',
 ];
 
+/**
+ * Dni tygodnia po polsku - własna tablica, NIE `Intl`.
+ *
+ * ══ DLACZEGO NIE `Intl` ══
+ * Hermes bez danych ICU przyjmuje opcje formatowania i po cichu oddaje wynik w UTC
+ * i po angielsku - czyli ODPOWIADA, tylko źle. Kalendarz floty pokazywałby wtedy
+ * niewłaściwy dzień tygodnia u części pilotów i nikt by tego nie zgłosił jako błędu,
+ * bo ekran wyglądałby poprawnie. Siedem napisów jest tańsze niż ta niepewność, a przy
+ * okazji zdejmuje sondę stref (#162 F0) z drogi krytycznej kalendarza.
+ *
+ * To ta sama decyzja, co przy miesiącach: pakiet ma własny słownik dat, żeby telefon,
+ * serwer i panel pisały daty identycznie.
+ */
+const WEEKDAYS_PL = ['NIEDZIELA', 'PONIEDZIAŁEK', 'WTOREK', 'ŚRODA', 'CZWARTEK', 'PIĄTEK', 'SOBOTA'];
+
+/** Skróty do chipa doby - „ND", „PN", „WT", „ŚR", „CZW", „PT", „SOB". */
+const WEEKDAYS_PL_SHORT = ['ND', 'PN', 'WT', 'ŚR', 'CZW', 'PT', 'SOB'];
+
+/**
+ * Dzień tygodnia chwili (UTC): „SOBOTA".
+ *
+ * Czyta UTC, więc wołający, który pyta o dobę KLUBU, podaje chwilę leżącą w jej
+ * środku - granica doby klubu wypada przed północą UTC i `getUTCDay()` trafiłby
+ * wtedy w dzień poprzedni.
+ */
+export function weekdayUtc(t: EpochMillis): string {
+  return WEEKDAYS_PL[new Date(t).getUTCDay()]!;
+}
+
+/** Skrócony dzień tygodnia (UTC): „SOB". Ta sama reguła o środku doby, co wyżej. */
+export function weekdayShortUtc(t: EpochMillis): string {
+  return WEEKDAYS_PL_SHORT[new Date(t).getUTCDay()]!;
+}
 /** Nagłówek miesiąca kalendarza jako „SIERPIEŃ 2026" (UTC). */
 export function monthYearUtc(t: EpochMillis): string {
   const d = new Date(t);

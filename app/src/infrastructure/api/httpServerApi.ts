@@ -31,6 +31,11 @@ import type {
   OrgRef,
   PasswordLoginResult,
   SetPasswordResult,
+  BookingWriteResult,
+  RemoteBooking,
+  RemoteBookingDraft,
+  RemoteCalendar,
+  RemoteSlotSuggestions,
   RemoteBugReport,
   PushResult,
   ReferenceFetch,
@@ -425,8 +430,80 @@ export class HttpServerApi implements ServerPort {
   }
 
   /** Ścieżka standardowa: 2xx z JSON-em albo wyjątek portu. */
+  getBookings(
+    token: string,
+    params: { from: number; to: number; aircraftId?: string },
+  ): Promise<RemoteCalendar> {
+    const query = new URLSearchParams({
+      from: new Date(params.from).toISOString(),
+      to: new Date(params.to).toISOString(),
+    });
+    if (params.aircraftId != null) query.set('aircraftId', params.aircraftId);
+    return this.request('GET', `/bookings?${query.toString()}`, { token });
+  }
+
+  getSlotSuggestions(
+    token: string,
+    params: { aircraftId: string; day: number; minutes: number; preferredAt?: number },
+  ): Promise<RemoteSlotSuggestions> {
+    const query = new URLSearchParams({
+      aircraftId: params.aircraftId,
+      day: new Date(params.day).toISOString(),
+      minutes: String(params.minutes),
+    });
+    if (params.preferredAt != null) {
+      query.set('preferredAt', new Date(params.preferredAt).toISOString());
+    }
+    return this.request('GET', `/bookings/suggestions?${query.toString()}`, { token });
+  }
+
+  /**
+   * Zapis rezerwacji idzie przez `send`, a nie `request`, i to nie jest szczegół:
+   * `request` zamienia każdą odmowę w wyjątek z samym kodem, a tutaj ODMOWA NIESIE
+   * TREŚĆ - przy `slot_taken` serwer dokłada kolidującą zajętość, kosztem punktu
+   * zapisu w transakcji (epik R-B). Ekran ma powiedzieć, CO stoi w tym czasie.
+   *
+   * Awarie SIECI zostają wyjątkiem (`send` mapuje je na `ServerUnreachableError`):
+   * „nie wiem, czy zapisano" to inna wiadomość niż „slot zajęty".
+   */
+  async createBooking(token: string, draft: RemoteBookingDraft): Promise<BookingWriteResult> {
+    return this.write(await this.send('POST', '/bookings', { token, body: draft }));
+  }
+
+  async cancelBooking(
+    token: string,
+    id: string,
+    reason: string | null,
+  ): Promise<BookingWriteResult> {
+    const response = await this.send(
+      'DELETE',
+      `/bookings/${encodeURIComponent(id)}`,
+      { token, body: reason == null ? {} : { reason } },
+    );
+    return this.write(response);
+  }
+
+  /** Odpowiedź zapisu → wynik: sukces z wierszem albo odmowa z tym, co koliduje. */
+  private async write(response: Response): Promise<BookingWriteResult> {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string; taken?: RemoteBooking }
+      | RemoteBooking
+      | null;
+
+    if (response.ok) {
+      if (body == null) throw new ServerRejectedError(response.status, `http_${response.status}`);
+      return { ok: true, booking: body as RemoteBooking };
+    }
+
+    const refusal = (body as { error?: string } | null)?.error;
+    // Bez nazwanego powodu to nie jest odmowa REGUŁY, tylko awaria - i tak ma
+    // wyglądać na ekranie (401 po wygaśnięciu tokenu, 500, odpowiedź nie-JSON).
+    if (refusal == null) throw new ServerRejectedError(response.status, `http_${response.status}`);
+    return { ok: false, refusal, taken: (body as { taken?: RemoteBooking }).taken ?? null };
+  }
+
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     options: { token?: string; body?: unknown; timeoutMs?: number },
   ): Promise<T> {
@@ -443,7 +520,7 @@ export class HttpServerApi implements ServerPort {
    * interpretację statusu zostawia wołającemu - `getReference` musi odróżnić 304 od błędu.
    */
   private async send(
-    method: 'GET' | 'POST' | 'PUT',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     options: {
       token?: string;

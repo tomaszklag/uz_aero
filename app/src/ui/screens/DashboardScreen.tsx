@@ -33,6 +33,7 @@ import {
 } from '../components';
 import { useAdminNotices } from '../hooks/useAdminNotices';
 import { adminNoticeText } from './logic/adminNotices';
+import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { useTheme, type Theme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -54,15 +55,6 @@ import {
 
 type Nav = { navigate: (screen: string, params?: object) => void };
 
-/** Tick raz na minutę - doba UTC w nagłówku i odliczanie rezerwacji muszą się przekręcać. */
-function useMinuteTicker(): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-  return now;
-}
 
 export function DashboardScreen({ navigation }: { navigation: Nav }) {
   const { theme } = useTheme();

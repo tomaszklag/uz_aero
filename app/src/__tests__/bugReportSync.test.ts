@@ -40,6 +40,22 @@ class MemoryCredentials {
 }
 
 class BugServer implements ServerPort {
+  // Kalendarz rezerwacji (epik R-F) - te przekroje go nie dotykają.
+  async getBookings(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async createBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async cancelBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
   async loginWithGoogle(): Promise<never> {
     throw new Error('nieużywane');
   }
