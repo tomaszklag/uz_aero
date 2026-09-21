@@ -47,6 +47,13 @@ export interface CalendarView {
  */
 export const MAX_WINDOW_DAYS = 62;
 
+/** Jedna zajętość z dobą, w której stoi - odpowiedź `GET /bookings/:id`. */
+export interface BookingDetailView {
+  timezone: string;
+  booking: BookingRecord;
+  day: ClubDay;
+}
+
 /** Sugestie dla JEDNEJ maszyny w JEDNEJ dobie - razem z oknem, z którego wyszły. */
 export interface SuggestionsView {
   /** Doba, o którą pytano, w strefie klubu. */
@@ -73,6 +80,35 @@ export class BookingQueries {
      */
     private readonly clock: Clock,
   ) {}
+
+  /**
+   * JEDNA zajętość razem z dobą, w której stoi.
+   *
+   * Doba jedzie z odpowiedzią, bo karta rezerwacji pisze godziny CZASEM KLUBU
+   * (§6), a telefon liczy je odejmowaniem od granic doby - bez nich musiałby znać
+   * strefę, czyli dokładnie to, czego kontrakt kalendarza mu oszczędza.
+   *
+   * `null` znaczy „nie ma jej w tym klubie" i trasa robi z tego 404 - cudza
+   * rezerwacja jest dla tego tokenu NIEISTNIEJĄCA (epik C wielofirmowości).
+   */
+  async byId(orgId: string, id: string): Promise<BookingDetailView | null> {
+    const settings = await this.clubs.calendar(this.db, orgId);
+    if (settings == null) return null;
+
+    const row = await this.bookings.byId(this.db, orgId, id);
+    if (row == null) return null;
+
+    const timezone = safeZone(settings.timezone);
+    // Doba SAMEJ zajętości. Okno ma MILISEKUNDĘ szerokości i to nie jest sztuczka:
+    // `clubDays` oddaje doby PRZECIĘTE oknem, a okno zerowej szerokości nie przecina
+    // żadnej. Pytamy więc o najwęższe, które zawiera początek rezerwacji - wychodzi
+    // z tego dokładnie jedna doba.
+    const days = clubDays(timezone, row.startsAt, row.startsAt + 1, 1);
+    const day = days[0];
+    if (day == null) return null;
+
+    return { timezone, booking: row, day };
+  }
 
   /** `null`, gdy klubu nie ma - trasa robi z tego 404, a nie pustej siatki. */
   async window(
