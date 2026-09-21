@@ -34,6 +34,24 @@ export function operationLabel(operation: OperationType): string {
 }
 
 /**
+ * Nazwa operacji z wartości NIEZAUFANEJ - kolumna `bookings.operation` jest zwykłym
+ * tekstem bez ograniczenia (migracja 11), bo rezerwację zakłada też panel.
+ *
+ * Wartość nieznana daje `null`, a nie surowy identyfikator: wiersz „ferry" na karcie
+ * rezerwacji byłby tą samą klasą błędu, co guid w nagłówku - napisem z wnętrza bazy
+ * pokazanym pilotowi. Brak wiersza jest uczciwszy niż wiersz o niczym.
+ */
+export function operationLabelOf(value: string | null): string | null {
+  const type = operationTypeOf(value);
+  return type == null ? null : LABELS[type];
+}
+
+/** Ta sama bramka, gdy wołającemu potrzebny jest TYP, a nie napis (kształt trasy). */
+export function operationTypeOf(value: string | null): OperationType | null {
+  return value != null && value in LABELS ? (value as OperationType) : null;
+}
+
+/**
  * Ta sama nazwa WERSALIKAMI - pasek dnia lotnego, plakietka podsumowania i tag podglądu
  * piszą operację jak kod (`CLAUDE.md`: wartości czytane jednym spojrzeniem).
  */

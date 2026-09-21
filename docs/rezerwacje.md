@@ -74,22 +74,42 @@ sieci (`docs/wielofirmowosc.md` §6 - „offline-first dotyczy pracy w klubie, n
 klubu"). Rezerwacja należy do tej samej kategorii: to nie jest praca pilota w terenie,
 tylko ustalenie z innymi ludźmi, kto kiedy leci.
 
-### 2.2 Odczyt kalendarza działa bez sieci, zapis nie
+### 2.2 Cały moduł rezerwacji wymaga sieci
 
-Podział jest dokładnie ten z §4.8 (cache referencyjny):
+**Decyzja właściciela 2026-09-20 - ODWRACA pierwotne §2.2 („odczyt kalendarza działa
+bez sieci").** Uzasadnienie w jednym zdaniu: *„rezerwację raczej robimy w domu, gdzie
+zasięg jest"*.
 
-- **odczyt** - telefon trzyma migawkę zajętości na najbliższe dni (cache SQLite,
-  odświeżany przy okazji, ETag jak `/reference`). Kalendarz bez zasięgu pokazuje ostatnią
-  znaną zajętość Z ADNOTACJĄ WIEKU („· z cache · sync 21 WRZ 17:30"). Pilot w hangarze
-  bez zasięgu ma odpowiedź na „czy w sobotę coś stoi wolne";
-- **zapis** - `POST`/`PATCH`/`DELETE` wymagają sieci. Bez niej przycisk niesie POWÓD
-  WEWNĄTRZ SIEBIE (reguła issue #55 - powód blokady nigdy nie stoi pod przyciskiem):
-  „Rezerwacja wymaga połączenia - slot potwierdza serwer".
+To jest JEDYNY moduł aplikacji z takim rozstrzygnięciem i dlatego trzeba je czytać
+razem z §4.1 („brak sieci NIGDY nie blokuje pracy pilota"). Tamta reguła broni PRACY
+W LOCIE: rejestru zdarzeń, czasów, odczytów, zdania samolotu - wszystkiego, co powstaje
+przy samolocie i czego nikt poza pilotem nie odtworzy. Rezerwacja nie należy do tej
+kategorii: jest UMOWĄ MIĘDZY LUDŹMI składaną przy biurku, a nie pomiarem robionym
+w kabinie.
 
-**Cache kalendarza NIE jest rejestrem** i nie wolno go nim uczynić: przy migracji leci
-`DROP` + `CREATE`, jak pięć tabel cache'u referencyjnego (SQLite 9). To materiał roboczy,
-który wraca jednym zapytaniem.
+- **zapis** (`POST`/`PATCH`/`DELETE`) wymaga sieci, bo slot jest przedmiotem
+  konkurencji i potrzebuje arbitra (§2.1). Bez niej przycisk niesie POWÓD WEWNĄTRZ
+  SIEBIE (issue #55): „Rezerwacja wymaga połączenia - slot potwierdza serwer";
+- **odczyt** też wymaga sieci: kalendarz floty, sugestie slotów i karta najbliższej
+  rezerwacji na Pulpicie pytają serwer przy wejściu. Bez zasięgu ekran mówi to wprost
+  i nie rysuje pustej siatki, która wyglądałaby na wolną flotę.
 
+**CO TA DECYZJA KOSZTUJE** - trzy rzeczy dzieją się PRZY SAMOLOCIE, czyli tam, gdzie
+zasięg bywa najgorszy, i bez cache’u przestają działać. Wszystkie trzy degradują się
+łagodnie, bo żadna nie jest warunkiem lotu (§2.3):
+
+| Co | Bez zasięgu |
+| --- | --- |
+| karta „Twoja rezerwacja" na Pulpicie | karty nie ma - tak samo, jak przy braku rezerwacji |
+| wypełnienie kroków przejęcia rezerwacją | kroki są puste, pilot wpisuje jak dotąd |
+| ostrzeżenie o cudzej rezerwacji przy przejęciu | ostrzeżenia nie ma; nigdy nie blokowało, więc lot idzie dalej |
+
+**Czego NIE MA i nie wolno dorobić po cichu**: tabeli zajętości w SQLite, pobierania
+z ETagiem, adnotacji wieku („· z cache · sync …") i wariantów offline pokazujących
+ostatnią migawkę. Gdyby któraś z tych trzech rzeczy okazała się w testach z pilotami
+realnie potrzebna, wraca tu decyzja, a nie cache dopisany przy okazji - bo cache
+zajętości, raz dodany, natychmiast rodzi pytanie „jak stara jest ta odpowiedź", na które
+kalendarz musi wtedy odpowiadać na każdym ekranie.
 ### 2.3 Rezerwacja nie warunkuje lotu
 
 **Decyzja właściciela 2026-09-18.** „ROZPOCZNIJ LOT" działa dokładnie jak dziś - także
@@ -354,6 +374,7 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 | Trasa | Znaczenie |
 | --- | --- |
 | `GET /bookings?from=&to=` | zajętość floty w oknie dat; ETag, bo kalendarz odpytuje często |
+| `GET /bookings/:id` | JEDNA zajętość razem z jej dobą - karta rezerwacji (23) i karta na Pulpicie |
 | `POST /bookings` | nowa rezerwacja (uuid klienta = idempotencja); `409 slot_taken` |
 | `PATCH /bookings/:id` | przesunięcie i zmiana zadania - WŁASNEJ rezerwacji |
 | `DELETE /bookings/:id` | odwołanie własnej (zapis zostaje, `status = 'cancelled'`) |
@@ -366,6 +387,21 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 Odmowy: `409 slot_taken` (nakładka - z danymi kolidującej zajętości, żeby ekran mógł
 powiedzieć CO stoi w tym czasie), `409 aircraft_disabled`, `403 not_your_booking`,
 `404` na cudzy klub.
+
+**Ciało odmowy niesie `takenAt` OBOK `taken`**, a nie w środku: „weszła 3 min temu"
+znaczy wyścig o slot, a cudzy plan sprzed tygodnia - zwykły stan kalendarza, którego
+pilot nie zauważył (makieta 22C). Na siatce kalendarza wiek wiersza nie znaczy nic,
+więc do wspólnego kształtu zajętości nie wchodzi - inaczej jechałby w każdej
+odpowiedzi, której nikt o to nie pyta.
+
+**`PATCH` nie przyjmuje maszyny i to jest decyzja, nie luka**: rezerwacja należy do
+konkretnego egzemplarza. Przeniesienie jej na inny jest NOWĄ rezerwacją i telefon
+robi wtedy dwa zapisy - **najpierw zakłada nowy termin, a stary odwołuje dopiero po
+jego potwierdzeniu** (decyzja właściciela 2026-09-21). Odwrotna kolejność oddawałaby
+slot, zanim wiadomo, czy jest co wziąć w zamian; obie rezerwacje stoją na RÓŻNYCH
+maszynach, więc nie mają jak zderzyć się ze sobą. Nieudane odwołanie nie cofa zapisu:
+pilot ma wtedy dwa terminy i dowiaduje się o tym z karty starego - to jest lepszy
+stan niż utrata nowego.
 
 ### 5.2 Panel (sesja klubu, `adminRoute`)
 
@@ -445,9 +481,25 @@ albo dłuższa (23 albo 25 godzin) - a offset per doba byłby w takim dniu KŁAM
 w którejś połowie, bo offsety są tam dwa. Liczy to `server/src/domain/clubTime.ts`
 (`Intl` na serwerze jest pełne), a testy stoją dokładnie na tych dwóch dniach.
 
-**Sonda stref (B0) zostaje mimo to warta uruchomienia**, ale przestała być warunkiem
-wstępnym epiku R-B: jej wynik rozstrzyga, czy telefon może formatować daty i nazwy
-miesięcy przez `Intl`, a nie kształt kontraktu kalendarza.
+**Sonda stref (B0/F0) przestała być warunkiem wstępnym epiku R-B**, a po domknięciu
+R-F nie rozstrzyga już niczego - i to jest fakt sprawdzalny w kodzie, nie domysł.
+
+Zostało jej jedno pytanie: czy telefon może formatować daty i nazwy miesięcy przez
+`Intl`. **Odpowiedź brzmi: nie ma to znaczenia, bo NIE FORMATUJE ICH PRZEZ `Intl`.**
+Sprawdzone 2026-09-21 na całym drzewie: `Intl.` nie pada w `app/src` ani
+w `packages/*/src` ANI RAZU poza samą sondą (`ui/screens/logic/timeZoneProbe.ts`).
+Dni tygodnia (`weekdayUtc`, `weekdayShortUtc`), nazwy miesięcy (`MONTHS_PL`,
+`MONTHS_PL_NOMINATIVE`) i wszystkie napisy dat liczą się z WŁASNYCH TABLIC
+w `@ninerdeck/format`, na `getUTC*` i milisekundach.
+
+Wariant awaryjny, który zadanie wymienia jako skutek wyniku negatywnego („własny
+formater w `@ninerdeck/format`"), jest więc tym, co już się wysyła - BEZWARUNKOWO.
+Żaden wynik sondy nie zmieni ani jednej linijki kodu.
+
+Uruchomienie sondy na dev buildzie zostaje warte zachodu z jednego powodu: jako
+ZAPIS, ile ICU ma Hermes w tym buildzie. Pierwszy kod, który sięgnie po `Intl`,
+będzie miał wtedy gotową odpowiedź zamiast zakładu - ale dzisiaj nic na nią nie
+czeka, a diagnostyka stoi w Ustawieniach (tylko dev build).
 
 ## 7. Sugestie slotów („jak w kinie")
 

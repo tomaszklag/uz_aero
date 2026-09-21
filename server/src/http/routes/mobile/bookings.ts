@@ -191,6 +191,32 @@ export function registerBookingRoutes(
       })),
     });
   });
+  /**
+   * JEDNA zajętość - karta rezerwacji (23) i karta najbliższej rezerwacji na Pulpicie.
+   *
+   * Osobna trasa, a nie szukanie w oknie kalendarza: termin bywa za dwa miesiące,
+   * więc telefon musiałby pytać o okno, którego nie pokazuje, żeby znaleźć jeden
+   * wiersz. ETagu nie ma - to jest odczyt POJEDYNCZEGO wiersza, a nie siatki, którą
+   * telefon odświeża przy każdym wejściu.
+   */
+  app.get<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
+
+    const view = await calendar.byId(who.orgId, req.params.id);
+    if (view == null) return reply.code(404).send({ error: 'not_found' });
+
+    return reply.send({
+      timezone: view.timezone,
+      day: {
+        date: view.day.date,
+        startsAt: new Date(view.day.startsAt).toISOString(),
+        endsAt: new Date(view.day.endsAt).toISOString(),
+      },
+      booking: bookingWire(view.booking),
+    });
+  });
+
   app.post('/bookings', async (req, reply) => {
     const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
@@ -268,6 +294,12 @@ function refuse(
 ): unknown {
   return reply.code(STATUS[refusal]).send({
     error: refusal,
-    ...(taken == null ? {} : { taken: bookingWire(taken) }),
+    // `takenAt` stoi OBOK zajętości, a nie w niej: `bookingWire` opisuje zajętość na
+    // siatce kalendarza, gdzie wiek wiersza nie znaczy nic. Przy kolizji znaczy -
+    // ekran pisze „rezerwacja weszła 3 minuty temu" (makieta 22C), bo to jest różnica
+    // między cudzym planem sprzed tygodnia a slotem zajętym w trakcie wypełniania
+    // formularza. Dokładanie pola do wspólnego kształtu kazałoby wozić je w każdej
+    // odpowiedzi kalendarza.
+    ...(taken == null ? {} : { taken: bookingWire(taken), takenAt: new Date(taken.createdAt).toISOString() }),
   });
 }

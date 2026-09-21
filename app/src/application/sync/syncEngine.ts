@@ -25,6 +25,12 @@ import {
   ServerUnreachableError,
   type PushResult,
   type RemoteAircraftState,
+  type BookingWriteResult,
+  type RemoteBookingDetail,
+  type RemoteBookingDraft,
+  type RemoteBookingPatch,
+  type RemoteCalendar,
+  type RemoteSlotSuggestions,
   type RemoteReadingsChain,
   type RemoteTaskSuggestions,
   type ServerPort,
@@ -140,6 +146,77 @@ export class SyncEngine {
         ...(exceptSessionUuid != null ? { exceptSessionUuid } : {}),
       }),
     );
+  }
+
+  /**
+   * ZAJĘTOŚĆ FLOTY w oknie dat (`GET /bookings`, rezerwacje 3.0.0).
+   *
+   * ══ TO JEST WYŁOM OD `null` ZNACZĄCEGO „MILCZ" ══
+   * Przy podpowiedziach i łańcuchu odczytów `null` znaczy „ekran o tym milczy",
+   * bo tam odpowiedź serwera była DODATKIEM do danych, które telefon ma u siebie.
+   * Tutaj jest odwrotnie: zajętość floty jest CAŁĄ treścią ekranu i nie ma jej
+   * w pamięci telefonu (decyzja właściciela 2026-09-20, `docs/rezerwacje.md` §2.2),
+   * więc `null` znaczy „nie wiem" i ekran MUSI to powiedzieć wprost. Pusta siatka
+   * wyglądałaby dokładnie jak flota wolna na wylot - „brak danych" i „wszystko wolne"
+   * to dwie różne odpowiedzi (makieta 21B).
+   */
+  fetchCalendar(params: {
+    from: number;
+    to: number;
+    aircraftId?: string;
+  }): Promise<RemoteCalendar | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getBookings(token, params));
+  }
+
+  /**
+   * JEDNA rezerwacja razem z jej dobą (`GET /bookings/:id`).
+   *
+   * Osobno od okna kalendarza, bo termin bywa za dwa miesiące: szukanie go w oknie
+   * znaczyłoby pytanie o siatkę, której ten ekran w ogóle nie rysuje.
+   */
+  fetchBooking(id: string): Promise<RemoteBookingDetail | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getBooking(token, id));
+  }
+
+  /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
+  fetchSlots(params: {
+    aircraftId: string;
+    day: number;
+    minutes: number;
+    preferredAt?: number;
+  }): Promise<RemoteSlotSuggestions | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getSlotSuggestions(token, params));
+  }
+
+  /**
+   * Nowa rezerwacja (`POST /bookings`) - ZAPIS, więc nie przechodzi przez outbox.
+   *
+   * Rezerwacja nie jest zdarzeniem rejestru (§2.1): jest przedmiotem konkurencji
+   * dwóch pilotów, więc arbiter musi być jeden i musi odpowiedzieć TERAZ. Wysyłka
+   * w tle znaczyłaby „twój termin przepadł" godzinę po tym, jak pilot go zajął.
+   *
+   * Trzy różne odpowiedzi i każda jest inną wiadomością na ekranie:
+   *  • `{ ok: true }`  - zapisano, wiersz wraca z serwera,
+   *  • `{ ok: false }` - REGUŁA odmówiła i mówi, co stoi w tym czasie,
+   *  • `null`          - nie wiadomo, czy zapisano (brak sieci, wygasła sesja).
+   */
+  createBooking(draft: RemoteBookingDraft): Promise<BookingWriteResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.createBooking(token, draft));
+  }
+
+  /**
+   * Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi.
+   *
+   * Przesunięcie terminu jest tym samym wyścigiem, co jego zakładanie: nowe godziny
+   * mogą być już zajęte, więc odmowa niesie kolidującą zajętość i ekran mówi, co stoi.
+   */
+  patchBooking(id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.patchBooking(token, id, patch));
+  }
+
+  /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); ta sama trójka odpowiedzi. */
+  cancelBooking(id: string, reason: string | null): Promise<BookingWriteResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.cancelBooking(token, id, reason));
   }
 
   /**

@@ -129,6 +129,10 @@ describe('rezerwacje: zapis z telefonu', () => {
     // czy czekać na wyjście maszyny z przeglądu.
     expect(kolizja.json().taken.pilotId).toBe('TMK');
     expect(kolizja.json().taken.kind).toBe('flight');
+    // WIEK kolidującej zajętości stoi OBOK niej: „weszła 3 minuty temu" znaczy co
+    // innego niż „stoi od tygodnia", a na siatce kalendarza ta liczba nie znaczy nic,
+    // więc do wspólnego kształtu zajętości nie wchodzi.
+    expect(Number.isFinite(Date.parse(kolizja.json().takenAt))).toBe(true);
   });
 
   it('ZETKNIĘCIE CO DO MINUTY PRZECHODZI', async () => {

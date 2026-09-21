@@ -175,6 +175,10 @@ export function PreflightReadingsScreen({
         dualId: draft.dualId,
         mode: decision.mode,
         previousPicId: decision.previousPicId ?? undefined,
+        // Jedyne zetknięcie rejestru z modułem rezerwacji i tylko w jedną stronę
+        // (#162 F8). Lot bez planu nie niesie tu nic - rezerwacja nigdy go nie
+        // warunkowała (§2.3).
+        reservationId: draft.reservationId,
       });
 
       // 2. Preflight - odczyty liczników stają się początkiem łańcucha MH (§4.5).

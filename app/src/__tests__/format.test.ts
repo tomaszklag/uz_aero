@@ -18,6 +18,8 @@ import {
   duration,
   litres,
   monthYearUtc,
+  weekdayShortUtc,
+  weekdayUtc,
   maskDateUtcInput,
   maskTimeUtcInput,
   parseDateUtc,
@@ -341,5 +343,26 @@ describe('wiek względny (skrzynka flag panelu)', () => {
     // ma wtedy pokazać najmniejszą prawdziwą wartość, nie minus.
     expect(relativeAge(-5 * min)).toBe('0 min');
     expect(relativeAge(30_000)).toBe('0 min');
+  });
+});
+
+describe('dni tygodnia', () => {
+  it('nazywa dzień po polsku, czytając UTC', () => {
+    expect(weekdayUtc(Date.parse('2026-09-19T12:00:00Z'))).toBe('SOBOTA');
+    expect(weekdayShortUtc(Date.parse('2026-09-19T12:00:00Z'))).toBe('SOB');
+  });
+
+  it('pokrywa cały tydzień - własna tablica zamiast `Intl`, bo Hermes bez ICU milczy o błędzie', () => {
+    const poniedzialek = Date.parse('2026-09-14T12:00:00Z');
+    const dni = [0, 1, 2, 3, 4, 5, 6].map((i) => weekdayUtc(poniedzialek + i * 86_400_000));
+    expect(dni).toEqual([
+      'PONIEDZIAŁEK',
+      'WTOREK',
+      'ŚRODA',
+      'CZWARTEK',
+      'PIĄTEK',
+      'SOBOTA',
+      'NIEDZIELA',
+    ]);
   });
 });

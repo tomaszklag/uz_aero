@@ -103,6 +103,8 @@ const REGISTRY = {
   // zgłoszenie z urządzenia mówiło wprost, że po polu tekstowym „nie widać, że tam jest
   // przeszukiwanie" - ikona jest pierwszym miejscem, w którym to widać (issue #14).
   search: f('search'),
+  // Lejek filtra osi kalendarza (21D) - ten sam glif, co w makiecie.
+  filter: f('filter'),
   next: f('arrow-right'),
   // Powrót to `chevron-left`, nie `arrow-left` - tak jest w `.back-btn` mockupów.
   // Strzałka jest zarezerwowana dla ruchu naprzód („DALEJ"), żeby dwa kierunki

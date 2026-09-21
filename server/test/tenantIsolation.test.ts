@@ -299,6 +299,13 @@ async function twoClubs(): Promise<World> {
   // Zajętość maszyny klubu B (3.0.0): rezerwacja pilota i wyłączenie z użytku. Terminy
   // stoją W PRZYSZŁOŚCI względem świata testowego, bo kalendarz pokazuje to, co przed
   // pilotem - a sondy mają pytać o okno, w którym te wiersze naprawdę są.
+  // Własna rezerwacja klubu A - bez niej sonda „czysta odpowiedź" nie miałaby czego
+  // sprawdzić: 404 na cudzej dowodzi tyle samo, co trasa, która nie działa wcale.
+  await db.query(
+    `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'TMK', 'przelot', 'TMK')`,
+    [ORG_A, new Date(BOOK_FROM), new Date(BOOK_FROM + 7_200_000)],
+  );
   await db.query(
     `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
      VALUES ('book-b', $1, 'SP-BBB', 'flight', 'confirmed', $2, $3, 'BPI', 'skoki', 'BPI')`,
@@ -747,6 +754,16 @@ const CASES: Record<string, Probe> = {
     expect(org.rows[0]!.org_id).toBe(ORG_A);
     // Sondy dzielą jeden świat, więc ta, która go zmienia, po sobie sprząta.
     await db.query(`DELETE FROM bookings WHERE id = 'iso-book-wlasny'`);
+  },
+
+  'GET /bookings/:id': async ({ app, a }) => {
+    const res = await app.inject({ url: '/bookings/book-b', headers: bearer(a) });
+    // Karta CUDZEJ rezerwacji ma nie istnieć - 404 nie potwierdza nawet, że wiersz jest.
+    expect(res.statusCode).toBe(404);
+
+    const swoja = await app.inject({ url: '/bookings/book-a', headers: bearer(a) });
+    expect(swoja.statusCode).toBe(200);
+    expectClean(swoja, '/bookings/:id');
   },
 
   'PATCH /bookings/:id': async ({ app, db, a }) => {

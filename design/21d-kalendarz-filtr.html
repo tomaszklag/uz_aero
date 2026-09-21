@@ -167,7 +167,14 @@
   }
   .busy:hover { border-color:var(--text-muted); color:var(--text-primary); }
   /* MOJA rezerwacja - jedyny pasek w kolorze akcentu, bo jedyny, na który pilot ma
-     wpływ. Cudze są neutralne: informacja, nie stan. */
+     wpływ. Cudze są neutralne: informacja, nie stan.
+
+     NAPIS JEST TEN SAM, CO NA CUDZYCH: skrócone nazwisko (decyzja właściciela
+     2026-09-21). Pierwsza wersja rysowała tu KOD pilota - kolor i tak mówi „twoja",
+     a kod mieści się w wąskim pasku - ale w jednym rzędzie wychodziły z tego dwie
+     konwencje naraz, a oś czyta się poziomo. Jedna konwencja waży więcej niż kilka
+     znaków; ta sama stoi w gridzie kalendarza w panelu. Przycięcie napisu na krótkim
+     pasku jest przyjęte - godzina to ~7% szerokości ekranu. */
   .busy.mine { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   /* Czeka na akceptację (3.1.0) - ten sam ton, ale PRZERYWANĄ ramką: stan przejściowy
      odróżnia się KSZTAŁTEM, nie samym kolorem. */
@@ -314,7 +321,13 @@
       <!-- ═══ WYBÓR DOBY ═══
            Kropka pod dniem = pilot ma w nim własną rezerwację. Nie liczba rezerwacji
            klubu: kalendarz klubu w sezonie ma wpisy każdego dnia, więc licznik przy
-           każdym chipie niczego by nie odróżniał (reguła SyncChipa z issue #12). -->
+           każdym chipie niczego by nie odróżniał (reguła SyncChipa z issue #12).
+
+           PASEK SIĘGA CZTERNASTU DÓB, a nie siedmiu tu narysowanych (decyzja
+           właściciela 2026-09-21): siedem to tyle, ile MIEŚCI SIĘ na ekranie, a nie
+           tyle, ile jest - reszta dojeżdża kciukiem w bok. Rezerwacja robiona
+           „na następny weekend" ma być widoczna tam, gdzie pilot jej szuka.
+           Dalsze terminy wybiera się kalendarzem miesięcznym w formularzu. -->
       <div class="days">
         <a href="21-kalendarz.html" class="day-chip on">
           <span class="dc-dow">Sob</span><span class="dc-day">19</span><span class="dc-dot"></span>
@@ -340,9 +353,16 @@
       </div>
 
       <!-- ═══ OŚ FLOTY ═══
-           Wiersz na maszynę, pasek na zajętość. Tapnięcie w wolne pasmo zakłada
-           rezerwację z podstawioną godziną i maszyną (22), tapnięcie w pasek otwiera
-           jego szczegóły (23) - w obu wypadkach pilot nie przepisuje niczego ręcznie. -->
+           Wiersz na maszynę, pasek na zajętość. Tapnięcie w pasek otwiera jego
+           szczegóły (23), a tapnięcie w WOLNE PASMO otwiera formularz rezerwacji (22)
+           z wybraną maszyną.
+
+           WSKAZANA GODZINA NIE STAJE SIĘ TERMINEM, tylko PREFEROWANĄ PORĄ: podstawiona
+           w kontrolce wyglądałaby jak wpisana (ta sama reguła, przez którą kontrolka
+           czasu nie ma wartości domyślnej - issue #62), a pilot celował kciukiem
+           w pasek, nie w minutę. Chwila jedzie więc tam, gdzie ma sens jako życzenie:
+           do sugestii godzin, które premiują sloty blisko niej. Pilot dostaje
+           propozycje wokół godziny, w którą wycelował, i wybiera jedną tapnięciem. -->
       <div class="grid-card">
         <!-- ═══ FILTR MASZYN ═══ (uwaga właściciela 2026-09-19: „samolotów może być dużo
              - nawet kilkanaście")
@@ -371,7 +391,7 @@
           <span class="row-reg"><span class="reg">SP-AXA</span><span class="reg-type">C172</span></span>
           <span class="track">
             <span class="ticks"></span><span class="ticks3"></span>
-            <a href="23-rezerwacja-szczegoly.html" class="busy mine" style="left:20%; width:13.3%;">TMK</a>
+            <a href="23-rezerwacja-szczegoly.html" class="busy mine" style="left:20%; width:13.3%;">T. Małkiewicz</a>
             <a href="23-rezerwacja-szczegoly.html" class="busy" style="left:46.7%; width:20%;">J. Nowak</a>
             <span class="now" style="left:11.7%;"></span>
           </span>
@@ -610,8 +630,8 @@
   <a class="vp-item" href="21b-kalendarz-offline.html">
     <span class="vp-badge amber">21B</span>
     <span class="vp-body">
-      <span class="vp-name">Bez zasięgu - zajętość z cache</span>
-      <span class="vp-when">Odczyt kalendarza działa offline z ostatniej migawki i mówi to wprost adnotacją wieku. „ZAREZERWUJ" niesie wtedy powód blokady WEWNĄTRZ przycisku (issue #55): slot potwierdza serwer, bo rezerwacja jest arbitrażem między pilotami.</span>
+      <span class="vp-name">Bez zasięgu - kalendarz wymaga sieci</span>
+      <span class="vp-when">Cały moduł rezerwacji wymaga sieci (decyzja właściciela 2026-09-20): rezerwację składa się w domu, a telefon nie trzyma zajętości floty. Ekran mówi to wprost zamiast rysować pustą siatkę, która wyglądałaby na flotę wolną na wylot. Przycisku „ZAREZERWUJ" tu nie ma - wyszarzony obiecywałby akcję, której reguły nie dopuszczą (zasada z 10B i 02G).</span>
     </span>
   </a>
   <a class="vp-item" href="21c-kalendarz-pusty.html">

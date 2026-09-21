@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 
-import { isSameFieldOperation } from '../../domain';
+import { withRouteShape } from '../screens/logic/routeShape';
 import type { JumperCounts, MhFormat, OperationType, ReferenceAircraft } from '../../domain';
 
 export interface PreflightDraft {
@@ -76,6 +76,14 @@ export interface PreflightDraft {
    * świeżo wpisaną trasę, bo ekran montuje się od nowa i znowu „pomagał".
    */
   taskTouched: boolean;
+  /**
+   * Rezerwacja, z której pilot wszedł w lot (#162 F8); `null` = lot bez rezerwacji.
+   *
+   * Jedzie do `session_claim` i jest JEDYNYM zetknięciem rejestru z modułem
+   * rezerwacji - w jedną stronę. Rezerwacja NIGDY nie warunkuje lotu (§2.3), więc
+   * puste pole nie znaczy tu nic złego: znaczy lot, który zaczął się bez planu.
+   */
+  reservationId: string | null;
 }
 
 /** Pola opisujące ZADANIE dnia - ich zmiana wyłącza podpowiadanie (patrz `taskTouched`). */
@@ -86,22 +94,20 @@ const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
   'client',
 ];
 
+
 /**
- * Trasa skoków to JEDNA wartość w dwóch polach rekordu (issue #13).
- *
- * Formularz pyta o jedno lotnisko - bo skoki startują i lądują na tym samym placu
- * (`isSameFieldOperation`) - ale szkic trzyma obie wartości równe. Dzięki temu ani
- * projekcja, ani karta arkusza, ani panel nie muszą znać wyjątku „przy skokach patrz
- * tylko na start": `departureIcao` i `arrivalIcao` znaczą zawsze to samo co dotąd.
- *
- * Egzekwowane w JEDNYM miejscu - przy każdym zapisie do szkicu - bo inwariant pilnowany
- * przez pamiętanie o nim w trzech miejscach ekranu jest inwariantem tylko do pierwszej
- * zmiany w tym ekranie.
+ * Czym rezerwacja wypełnia przejęcie. Maszyna przychodzi CAŁYM wierszem floty, bo
+ * szkic trzyma z niej normy, pojemności i format licznika - sam identyfikator
+ * kazałby ekranowi szukać ich po raz drugi.
  */
-function withRouteShape(draft: PreflightDraft): PreflightDraft {
-  if (!isSameFieldOperation(draft.operation)) return draft;
-  if (draft.arrivalIcao === draft.departureIcao) return draft;
-  return { ...draft, arrivalIcao: draft.departureIcao };
+export interface BookingSeed {
+  aircraft: ReferenceAircraft;
+  reservationId: string;
+  operation: OperationType | null;
+  departureIcao: string;
+  arrivalIcao: string;
+  dualId: string | null;
+  notes: string | null;
 }
 
 interface PreflightDraftStore extends PreflightDraft {
@@ -118,6 +124,14 @@ interface PreflightDraftStore extends PreflightDraft {
    * wyborem pilota, więc liczy się jako dotknięcie zadania: podpowiedź nie wraca przy
    * następnym wejściu na ekran. Notatki NIE rusza - nigdy nie była podpowiedzią.
    */
+  /**
+   * Wypełnienie przejęcia REZERWACJĄ (#162 F8) - maszyna, zadanie, trasa i Dual.
+   *
+   * Liczy się jako DOTKNIĘCIE zadania, inaczej niż podpowiedź z ostatniego dnia:
+   * pilot zaplanował ten lot świadomie, więc pamięć zadania nie ma prawa wejść na
+   * ekran i przykryć jego planu własnym domysłem.
+   */
+  fromBooking(seed: BookingSeed): void;
   clearTask(): void;
   reset(): void;
   /** Format MH wybranego samolotu - steruje wyświetlaniem (§5.4). */
@@ -151,6 +165,7 @@ function initial(): PreflightDraft {
     readingSource: 'manual',
     suggested: false,
     taskTouched: false,
+    reservationId: null,
   };
 }
 
@@ -190,6 +205,23 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     // Podpowiedź z ostatniego dnia też przechodzi przez kształt trasy: zapamiętana para
     // „EPKK → EPWA" przy operacji skoki opisywałaby dzień, którego się nie da polecieć.
     set((state) => withRouteShape({ ...state, ...task, ...route, suggested: true }));
+  },
+
+  fromBooking(seed) {
+    // Przez `setAircraft`, a nie `set`: wybór maszyny podstawia odczyty
+    // z przekazania i format licznika, a rezerwacja nie jest wyjątkiem od tego.
+    get().setAircraft(seed.aircraft);
+    set({
+      reservationId: seed.reservationId,
+      // Rodzaj spoza tego wydania zostawia wybór pilotowi - podstawiony surowy
+      // kod byłby napisem z wnętrza bazy pokazanym na siatce kart.
+      ...(seed.operation == null ? {} : { operation: seed.operation }),
+      departureIcao: seed.departureIcao,
+      arrivalIcao: seed.arrivalIcao,
+      dualId: seed.dualId,
+      notes: seed.notes,
+      taskTouched: true,
+    });
   },
 
   clearTask() {

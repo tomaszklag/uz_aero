@@ -283,7 +283,13 @@
       <!-- ═══ WYBÓR DOBY ═══
            Kropka pod dniem = pilot ma w nim własną rezerwację. Nie liczba rezerwacji
            klubu: kalendarz klubu w sezonie ma wpisy każdego dnia, więc licznik przy
-           każdym chipie niczego by nie odróżniał (reguła SyncChipa z issue #12). -->
+           każdym chipie niczego by nie odróżniał (reguła SyncChipa z issue #12).
+
+           PASEK SIĘGA CZTERNASTU DÓB, a nie siedmiu tu narysowanych (decyzja
+           właściciela 2026-09-21): siedem to tyle, ile MIEŚCI SIĘ na ekranie, a nie
+           tyle, ile jest - reszta dojeżdża kciukiem w bok. Rezerwacja robiona
+           „na następny weekend" ma być widoczna tam, gdzie pilot jej szuka.
+           Dalsze terminy wybiera się kalendarzem miesięcznym w formularzu. -->
       <div class="days">
         <a href="21-kalendarz.html" class="day-chip on">
           <span class="dc-dow">Sob</span><span class="dc-day">19</span><span class="dc-dot"></span>
@@ -309,9 +315,16 @@
       </div>
 
       <!-- ═══ OŚ FLOTY ═══
-           Wiersz na maszynę, pasek na zajętość. Tapnięcie w wolne pasmo zakłada
-           rezerwację z podstawioną godziną i maszyną (22), tapnięcie w pasek otwiera
-           jego szczegóły (23) - w obu wypadkach pilot nie przepisuje niczego ręcznie. -->
+           Wiersz na maszynę, pasek na zajętość. Tapnięcie w pasek otwiera jego
+           szczegóły (23), a tapnięcie w WOLNE PASMO otwiera formularz rezerwacji (22)
+           z wybraną maszyną.
+
+           WSKAZANA GODZINA NIE STAJE SIĘ TERMINEM, tylko PREFEROWANĄ PORĄ: podstawiona
+           w kontrolce wyglądałaby jak wpisana (ta sama reguła, przez którą kontrolka
+           czasu nie ma wartości domyślnej - issue #62), a pilot celował kciukiem
+           w pasek, nie w minutę. Chwila jedzie więc tam, gdzie ma sens jako życzenie:
+           do sugestii godzin, które premiują sloty blisko niej. Pilot dostaje
+           propozycje wokół godziny, w którą wycelował, i wybiera jedną tapnięciem. -->
       <div class="grid-card">
         <!-- ═══ FILTR MASZYN ═══ (uwaga właściciela 2026-09-19: „samolotów może być dużo
              - nawet kilkanaście")
@@ -443,8 +456,8 @@
   <a class="vp-item" href="21b-kalendarz-offline.html">
     <span class="vp-badge amber">21B</span>
     <span class="vp-body">
-      <span class="vp-name">Bez zasięgu - zajętość z cache</span>
-      <span class="vp-when">Odczyt kalendarza działa offline z ostatniej migawki i mówi to wprost adnotacją wieku. „ZAREZERWUJ" niesie wtedy powód blokady WEWNĄTRZ przycisku (issue #55): slot potwierdza serwer, bo rezerwacja jest arbitrażem między pilotami.</span>
+      <span class="vp-name">Bez zasięgu - kalendarz wymaga sieci</span>
+      <span class="vp-when">Cały moduł rezerwacji wymaga sieci (decyzja właściciela 2026-09-20): rezerwację składa się w domu, a telefon nie trzyma zajętości floty. Ekran mówi to wprost zamiast rysować pustą siatkę, która wyglądałaby na flotę wolną na wylot. Przycisku „ZAREZERWUJ" tu nie ma - wyszarzony obiecywałby akcję, której reguły nie dopuszczą (zasada z 10B i 02G).</span>
     </span>
   </a>
   <a class="vp-item active" href="21c-kalendarz-pusty.html">

@@ -64,6 +64,8 @@ export interface SessionContext {
 export interface ClaimInput extends SessionContext {
   mode: SessionClaimMode;
   previousPicId?: string | null;
+  /** Rezerwacja, z której pilot wszedł w lot (#162 F8); pominięta = lot bez planu. */
+  reservationId?: string | null;
   /** Jawny czas GPS (`null` = brak fixa); pominięty → z zegara. */
   gpsTime?: EpochMillis | null;
 }
@@ -198,7 +200,13 @@ export class SessionCommands {
    */
   async claim(input: ClaimInput): Promise<CommandResult> {
     const result = await this.execute(input, 'session_claim', () => ({
-      payload: { mode: input.mode, previousPicId: input.previousPicId ?? null },
+      payload: {
+        mode: input.mode,
+        previousPicId: input.previousPicId ?? null,
+        // Pole wchodzi do payloadu TYLKO z wartością: `null` przy każdym locie bez
+        // rezerwacji byłby zapisem o niczym w rejestrze append-only.
+        ...(input.reservationId == null ? {} : { reservationId: input.reservationId }),
+      },
       gpsTime: input.gpsTime,
     }));
     // Dopiero po udanym claimie zapamiętujemy sesję w `session_meta` - restart aplikacji

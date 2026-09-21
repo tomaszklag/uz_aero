@@ -246,17 +246,27 @@
 
     <div class="scroll">
 
-      <!-- Odmowa przyszła PO tapnięciu „DALEJ": slot był wolny, gdy pilot otwierał
-           formularz, i zajął się w międzyczasie. To jest cena arbitrażu po stronie
-           serwera (§2.1) - i dokładnie dlatego wykluczenie nakładania trzyma BAZA,
-           a nie sprawdzenie w aplikacji, które przy dwóch równoczesnych zapisach
-           przepuściłoby oba. -->
+      <!-- Odmowa przyszła PO tapnięciu „ZAREZERWUJ": slot był wolny, gdy pilot
+           otwierał formularz, i zajął się w międzyczasie. To jest cena arbitrażu po
+           stronie serwera (§2.1) - i dokładnie dlatego wykluczenie nakładania trzyma
+           BAZA, a nie sprawdzenie w aplikacji, które przy dwóch równoczesnych
+           zapisach przepuściłoby oba.
+
+           NAZWISKO STOI ZA SEPARATOREM, W MIANOWNIKU: „zarezerwowana przez
+           J. Nowaka" wymaga dopełniacza, a odmiany nie da się wyprowadzić regułą
+           (Nowak → Nowaka, Kowalska → Kowalskiej). Ta sama decyzja, co przy
+           powodach sugestii i przy ostrzeżeniu o kolizji na 23A.
+
+           WIEK KOLIZJI JEST CZĘŚCIĄ ODPOWIEDZI: „weszła 3 min temu" znaczy wyścig
+           o slot, a cudzy plan sprzed tygodnia - zwykły stan kalendarza, którego
+           pilot nie zauważył. Serwer podaje go OBOK zajętości (`takenAt` w ciele
+           odmowy), bo na siatce kalendarza ta liczba nie znaczy nic. -->
       <div class="deny">
         <div class="deny-head">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
           <span class="deny-title">Ten termin właśnie zajęto</span>
         </div>
-        <div class="deny-body">SP-AXA jest zarezerwowana <span class="deny-who">11:00 → 13:00</span> przez <span class="deny-who">J. Nowaka</span>. Rezerwacja weszła 3 minuty temu.</div>
+        <div class="deny-body">SP-AXA jest zajęta <span class="deny-who">11:00 → 13:00</span> · rezerwację ma <span class="deny-who">J. Nowak</span>. Weszła 3 min temu.</div>
         <a href="22-rezerwacja.html" class="deny-fix">
           <span class="deny-fix-label">Najbliższe wolne 2 h</span>
           <span class="deny-fix-val">13:00 → 15:00</span>

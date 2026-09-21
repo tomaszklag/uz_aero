@@ -38,6 +38,14 @@ export interface KeyValueRowProps {
   /** Krój etykiety: 'micro' (9 px, wersaliki - 13) / 'mono' (10 px - 11a).
    *  Rozmiar wartości idzie w parze: 11 px przy `micro`, 10 px przy `mono`. */
   labelVariant?: 'micro' | 'mono';
+  /**
+   * Druga linia POD wartością - rozwinięcie tego, co mówi wartość („Cessna 172 · C172"
+   * pod znakiem, nazwa lotniska pod kodem ICAO; karta rezerwacji 23).
+   *
+   * Rozwinięcie, nie druga informacja: wiersz zostaje odpowiedzią na JEDNO pytanie,
+   * a linia pod spodem tłumaczy skrót, którego pilot mógł nie znać.
+   */
+  sub?: string | null;
   /** Ton wartości (np. green/red dla statusu diagnostyki); domyślnie secondary. */
   valueTone?: AppTextTone;
   /** Linia pod wierszem + paddingVertical 7 (`.diag-row`). */
@@ -50,6 +58,7 @@ export function KeyValueRow({
   value,
   pendingWidth = 96,
   labelVariant = 'micro',
+  sub = null,
   valueTone = 'secondary',
   divider = false,
   style,
@@ -83,9 +92,16 @@ export function KeyValueRow({
         // 10 px przy `mono`. Wiersz ma się nie drgnąć, gdy odczyt dojdzie.
         <Skeleton width={pendingWidth} height={micro ? 11 : 10} />
       ) : (
-        <AppText variant="mono" tone={valueTone} style={micro ? styles.microValue : styles.monoValue}>
-          {value}
-        </AppText>
+        <View style={styles.valueBox}>
+          <AppText variant="mono" tone={valueTone} style={micro ? styles.microValue : styles.monoValue}>
+            {value}
+          </AppText>
+          {sub != null && sub !== '' && (
+            <AppText tone="muted" style={styles.sub}>
+              {sub}
+            </AppText>
+          )}
+        </View>
       )}
     </View>
   );
@@ -103,4 +119,8 @@ const styles = StyleSheet.create({
   // `.row` (11a) - 10 px po obu stronach; kurczy się etykieta, odczyt zostaje cały.
   monoLabel: { fontSize: 10, flexShrink: 1 },
   monoValue: { fontSize: 10, textAlign: 'right' },
+  // Wartość i jej rozwinięcie trzymają się prawej krawędzi jako JEDNA kolumna -
+  // inaczej druga linia rozpychałaby wiersz na całą szerokość.
+  valueBox: { flexShrink: 1, alignItems: 'flex-end', gap: 1 },
+  sub: { fontSize: 10, lineHeight: 13, textAlign: 'right' },
 });
