@@ -467,26 +467,31 @@ po lewej ani tytułem na środku bez powrotu - 01 był takim wyjątkiem i przest
 LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`, usunięty razem z klamrą (issue #23).
 Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
 
-## Screen flow (kolejność ekranów - model 2026-08-10, bez klamry od issue #23)
+## Screen flow (zakładki od 3.0.0; model operacji 2026-08-10, bez klamry od issue #23)
 ```
-00-login → 01-moj-dzien (EKRAN DOMOWY - płaski log operacji dnia; warianty: 01a pusty,
-  01c offline + arkusz szczegółów synchronizacji)
-01-moj-dzien → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+00-login → ZAKŁADKI: 20-pulpit · 21-kalendarz · 24-historia (EKRAN DOMOWY; flow lotu
+  leży NAD nimi, kokpit zakładek nie ma - patrz „epik R-E" niżej)
+20-pulpit (sumy doby + najbliższa rezerwacja; warianty: 20a bez rezerwacji,
+  20c offline + arkusz synchronizacji, 20d SYNC STOI)
+20-pulpit → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+  (rezerwacja na TERAZ wypełnia krok 1; 23a ostrzega o cudzym planie, nigdy nie blokuje)
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
 → START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
 → STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
   drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
-  wariant 09c: zdanie bez lotu) → 01-moj-dzien
-01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
+  wariant 09c: zdanie bez lotu) → 20-pulpit
+20-pulpit → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
   2026-08-16: 15 data+samolot+Dual (data pierwsza - issue #58) → 15a zadanie →
   15b czasy i loty → 15c liczniki; arkusze: 15d czas zdarzenia na TimeStepperze,
   15e data lotu na KALENDARZU miesięcznym)
-01-moj-dzien → 12-historia („Poprzednie dni" - operacje spoza dzisiejszej doby);
-  KAFELEK operacji → 10-statystyki (ekran OPERACJI: detale i korekty TEJ operacji)
-12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
+24-historia (WSZYSTKIE operacje - dziś i wcześniej; dzień nagłówkiem, archiwum
+  zwinięte w 24a); WIERSZ operacji → 10-statystyki (detale i korekty TEJ operacji)
+24-historia → wiersz w oknie 24 h → 10-statystyki; wiersz po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
+21-kalendarz → wolne pasmo → 22/22a (rezerwacja w dwóch krokach; 22b arkusz czasu,
+  22c termin zajęty) · pasek zajętości → 23 (karta rezerwacji: przesunięcie i odwołanie)
 10-statystyki → „EDYTUJ DANE" → 10d (TRYB EDYCJI tego samego ekranu - issue #43;
   ołówek przy każdym wierszu osi, arkusze: 10e czas zdarzenia · 10f paliwo i MH przy
   przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis · 10i historia zmian)
@@ -503,19 +508,19 @@ EKRANU 11 NIE MA (usunięty 2026-08-12) - stan wysyłki, uwagi serwera i awaryjn
   „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
   pokazuje też arkusz pod SyncChipem
 ```
-**Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
+**Wszystko wraca na PULPIT, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszą operacją i NICZYM się nie domyka - „Zamknij dzień",
 ekran 01b i klamra służby zostały usunięte (issue #23). Wyjście działa też offline -
 niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
 ### Kokpit jest stanem modalnym (decyzja 2026-08-10)
 **Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** - z 04/05 nie prowadzi
-żadna droga na 01. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na 01;
+żadna droga na Pulpit - paska zakładek w kokpicie NIE MA. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na Pulpit;
 akcje ground (06/07/08) i 09 wracają do kokpitu. **Od issue #82 nie ma już ani jednego
 wyjątku**: ustawienia (13) były ostatnim i zniknęły z paska kokpitu - zębatka stoi
-wyłącznie na 01, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
+wyłącznie na Pulpicie, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
 Konsekwencje przy każdej zmianie kokpitu:
-- **nie dokładaj linków na 01** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
+- **nie dokładaj linków na Pulpit** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
   operacji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
   z 04/04A (żyje wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę i nie prowadzi nikąd)
 - z tego samego powodu kokpit nie powtarza tego, co mówi już pasek górny (maszyna, trasa)
@@ -569,7 +574,7 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
   Zmiana załogi tylko PRZED uruchomieniem - po biegu nowa załoga = nowe przejęcie.
 - kokpit pokazuje WYŁĄCZNIE bieżącą operację - bez „Log dnia", bez „CYKL n", bez harmonijki
   wielu cykli. Kokpit pozostaje stanem modalnym (sekcja wyżej).
-- na 01 lista operacji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
+- na Pulpicie sumy doby i najbliższa rezerwacja; lista operacji (różne zadania, różne maszyny) w Historii (24), a ręczny wpis CAŁEGO lotu (15) z Pulpitu.
 - zysk uboczny analityki: każda operacja domknięta odczytami z OBU stron - znika patologia
   interwałów degeneracyjnych między ostatnim `leg_close` a zdaniem (§3.6b).
 

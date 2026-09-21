@@ -299,7 +299,7 @@
 <div class="flow-arrow">
   <a href="00-login.html" class="flow-step">00 Login</a>
   <span class="flow-sep">→</span>
-  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
+  <a href="20-pulpit.html" class="flow-step">20 Pulpit</a>
   <span class="flow-sep">→</span>
   <a href="02-preflight.html" class="flow-step">02 Nowy lot 1/3</a>
   <span class="flow-sep">→</span>
@@ -315,19 +315,19 @@
   <span class="flow-sep">→</span>
   <a href="09b-zdaj-samolot.html" class="flow-step">09B Zdaj samolot</a>
   <span class="flow-sep">→</span>
-  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
+  <a href="20-pulpit.html" class="flow-step">20 Pulpit</a>
 </div>
 <!-- OPERACJA = JEDEN BIEG SILNIKA (2026-08-10): po STOP ENGINE nie ma drugiego startu -
      kokpit (04) prowadzi wyłącznie do zdania z obowiązkowymi odczytami (09B), a kolejny
      lot to NOWE przejęcie. Ekrany 09 i 09A usunięte. Statystyki (10) i status
-     synchronizacji (11) wiszą pod „Mój dzień" - nie są etapem dnia. -->
+     synchronizacji (11) wiszą pod ZAKŁADKAMI - nie są etapem dnia. -->
 <div class="flow-arrow" style="margin-top:10px;">
-  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
+  <a href="20-pulpit.html" class="flow-step">20 Pulpit</a>
   <span class="flow-sep">→</span>
   <a href="10-statystyki.html" class="flow-step">10 Operacja</a>
   <span class="flow-sep">·</span>
   <span class="flow-sep">·</span>
-  <a href="12-historia.html" class="flow-step">12 Poprzednie dni</a>
+  <a href="24-historia.html" class="flow-step">24 Historia</a>
 </div>
 
 
@@ -388,8 +388,8 @@
     <div class="card-num">01</div>
     <div class="card-body">
       <div class="card-title">01-moj-dzien</div>
-      <div class="card-desc">Ekran domowy pilota - płaska oś czasu OPERACJI dnia (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka), sumy Blok / Loty. Kafelek to TEN SAM komponent, co na „Poprzednich dniach" (issue #42), z numerem operacji zamiast daty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista operacji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
-      <div class="card-tags"><span class="tag green">home</span><span class="tag">log dnia</span><span class="tag">operacje dnia</span></div>
+      <div class="card-desc"><b>ARCHIWUM linii 2.x</b> - ekran domowy do wydania 3.0.0, zastąpiony przez Pulpit (20). Zostaje jako specyfikacja poprawek w wersji, którą piloci mają w telefonach. Płaska oś czasu OPERACJI dnia (kafelek = jeden bieg silnika z lotami w środku, rejestracja jako informacja kafelka), sumy Blok / Loty. Kafelek to TEN SAM komponent, co na „Poprzednich dniach" (issue #42), z numerem operacji zamiast daty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista operacji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
+      <div class="card-tags"><span class="tag">archiwum 2.x</span><span class="tag">log dnia</span><span class="tag">operacje dnia</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
@@ -528,7 +528,7 @@
     <div class="card-num">01A</div>
     <div class="card-body">
       <div class="card-title">01a-moj-dzien-pusty</div>
-      <div class="card-desc">Mój dzień przed pierwszą operacją - pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą operacją (issue #23)</div>
+      <div class="card-desc"><b>ARCHIWUM linii 2.x</b> - Mój dzień przed pierwszą operacją - pusty log dnia („- -", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą operacją (issue #23)</div>
       <div class="card-tags"><span class="tag">stan pusty</span></div>
     </div>
   </a>
@@ -536,7 +536,7 @@
     <div class="card-num">01C</div>
     <div class="card-body">
       <div class="card-title">01c-moj-dzien-offline</div>
-      <div class="card-desc">Mój dzień bez sieci - amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, WYNIK OSTATNIEJ PRÓBY, ostatni udany sync, wiek danych referencyjnych) i przycisk „Ponów próbę". Wzorzec obowiązuje każdy ekran z SyncChipem</div>
+      <div class="card-desc"><b>ARCHIWUM linii 2.x</b> - Mój dzień bez sieci - amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, WYNIK OSTATNIEJ PRÓBY, ostatni udany sync, wiek danych referencyjnych) i przycisk „Ponów próbę". Wzorzec obowiązuje każdy ekran z SyncChipem</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">arkusz syncu</span></div>
     </div>
   </a>
@@ -544,7 +544,7 @@
     <div class="card-num">01D</div>
     <div class="card-body">
       <div class="card-title">01d-sync-stoi</div>
-      <div class="card-desc">Kolejka stoi, choć sieć JEST - serwer odpowiedział i odmówił (albo sesja wygasła). Czerwony pill „SYNC STOI · n" zamiast bursztynowego OFFLINE, bo ten stan sam nie przejdzie: baner nazywa powód i daje drogę wyjścia. Do 2026-08-30 wyświetlał się jako offline z obietnicą „wyślą się same, gdy wróci sieć"</div>
+      <div class="card-desc"><b>ARCHIWUM linii 2.x</b> - Kolejka stoi, choć sieć JEST - serwer odpowiedział i odmówił (albo sesja wygasła). Czerwony pill „SYNC STOI · n" zamiast bursztynowego OFFLINE, bo ten stan sam nie przejdzie: baner nazywa powód i daje drogę wyjścia. Do 2026-08-30 wyświetlał się jako offline z obietnicą „wyślą się same, gdy wróci sieć"</div>
       <div class="card-tags"><span class="tag red">sync stoi</span><span class="tag">arkusz syncu</span></div>
     </div>
   </a>
@@ -552,7 +552,7 @@
     <div class="card-num">01E</div>
     <div class="card-body">
       <div class="card-title">01e-moj-dzien-dwa-kluby</div>
-      <div class="card-desc">Pilot z więcej niż jednym członkostwem: kafelek operacji niesie plakietkę z nazwą klubu, a sygnatura kod pilota z TEGO klubu (TMK w jednym, TOM w drugim). Lista pokazuje operacje wszystkich klubów niezależnie od klubu aktywnego w ustawieniach; przy jednym członkostwie plakietki nie ma. Wielofirmowość 2.0.0</div>
+      <div class="card-desc"><b>ARCHIWUM linii 2.x</b> - Pilot z więcej niż jednym członkostwem: kafelek operacji niesie plakietkę z nazwą klubu, a sygnatura kod pilota z TEGO klubu (TMK w jednym, TOM w drugim). Lista pokazuje operacje wszystkich klubów niezależnie od klubu aktywnego w ustawieniach; przy jednym członkostwie plakietki nie ma. Wielofirmowość 2.0.0</div>
       <div class="card-tags"><span class="tag">kluby</span><span class="tag">stan</span></div>
     </div>
   </a>

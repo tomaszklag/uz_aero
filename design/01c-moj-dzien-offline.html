@@ -30,6 +30,13 @@
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
   }
+  /* ARCHIWUM linii 2.x - baner na KANWIE, nie w telefonie: opisuje status PLIKU,
+     a nie stan ekranu. W ramce wyglądałby jak komunikat aplikacji. */
+  .archiwum { width:100%; max-width:460px; margin:0 0 18px; padding:12px 14px; border-radius:12px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    font-family:var(--font-mono); font-size:11px; line-height:1.6; color:var(--amber); letter-spacing:0.5px; }
+  .archiwum b { color:var(--text-primary); }
+  .archiwum a { color:var(--amber); }
   .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -208,6 +215,13 @@
 </style>
 </head>
 <body>
+
+<div class="archiwum">
+  <b>ARCHIWUM linii 2.x.</b> Ten ekran opisuje wersję, którą piloci mają w telefonach
+  do czasu wydania 3.0.0. W wersji bieżącej zastąpił go
+  <a href="20-pulpit.html">Pulpit offline (20C)</a>.
+  Nie wdrażaj z tego pliku - jest specyfikacją poprawek w linii 2.x, nie wersji bieżącej.
+</div>
 
 <header class="canvas-label">
   <span class="film-strip">NINERDECK - 01C</span>
