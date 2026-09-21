@@ -2,24 +2,27 @@
 
 Środowisko, na którym wydanie przechodzi próbę generalną, zanim dotknie klubów: ten sam
 obraz, ten sam rozdział hostów, ta sama poczta - **własna baza**. Od 2.1.0 wydanie niesie
-migracje bazy i listy wychodzące, czyli dwie rzeczy, których nie cofa się zdjęciem builda,
-a jedyną próbą generalną była do tej pory produkcja.
+migracje bazy i listy wychodzące, a od 3.0.0 także rozszerzenie Postgresa i zadanie
+okresowe - czyli rzeczy, których nie cofa się zdjęciem builda, a jedyną próbą generalną
+była do tej pory produkcja.
 
 Checklista wdrożenia (zadania właściciela + zadania w repo): **issue #155**.
 
 Czym staging NIE jest: drugim środowiskiem deweloperskim (od tego jest lokalny serwer
 i dev build z Metro) ani kopią danych klubów (baza stoi od zera - patrz §8).
 
-## 1. Decyzje (2026-09-18) - nie wracać do nich w dyskusji
+## 1. Decyzje (2026-09-18, uzupełnione 2026-09-21) - nie wracać do nich w dyskusji
 
 1. **Serwer nie wymaga zmian w kodzie.** Staging to komplet zmiennych środowiskowych;
    wszystko, co go odróżnia, jest konfiguracją (`server/src/index.ts` czyta env i tyle).
 2. **Aplikacja na staging = istniejący dev build** `com.ninerdeck.app.dev`, nie osobny
-   wariant `.stg`. Stoi na telefonie obok produkcyjnego APK i ma własne dane - cena tej
-   decyzji w §7.
+   wariant `.stg` (potwierdzone przez właściciela 2026-09-21). Stoi na telefonie obok
+   produkcyjnego APK i ma własne dane - cena tej decyzji w §7.
 3. **Dwa hosty, jak na produkcji**: `stg.ninerdeck.pl` (strona) i `app.stg.ninerdeck.pl`
    (panel i API). Jeden host oznaczałby, że rozdział hostów i rozdział origin CSP
    (`server/src/http/hostSplit.ts`, issue #124) pierwszy raz działają dopiero na produkcji.
+   **Adres hosta aplikacji jest wydany w `eas.json`** (profil `development`, od 3.0.0
+   w telefonach), więc jego zmiana kosztuje odtąd nowy bundle, a nie edycję pliku.
 4. **Baza czysta + `SEED_ADMIN_EMAIL`.** Świat klubu budujesz raz i trzymasz między
    wydaniami; kopia produkcji dopiero pod migrację, która wymaga realnego wolumenu (§8).
 5. **Staging śledzi `develop`**, a na czas stabilizacji przełącza się śledzoną gałąź na
@@ -68,6 +71,19 @@ Trzy rzeczy, które kosztowały już czas gdzie indziej:
 - **`MAIL_PROVIDER=log` na staging przekreśla sens ćwiczenia**: cała ścieżka „nie pamiętam
   hasła" i rejestracji e-mailem to link z poczty. Staging ma wysyłać naprawdę.
 
+Czego na tej liście nie ma, a od 3.0.0 musi być w środowisku:
+
+- **Postgres musi umieć `CREATE EXTENSION btree_gist`** - migracja 11 stawia na nim
+  wykluczanie nakładających się rezerwacji (`EXCLUDE USING gist`), więc baza bez tego
+  rozszerzenia nie przyjmie migracji i serwer nie wstanie. Obraz Railway to potrafi:
+  sprawdzone na produkcji przy wydaniu 3.0.0. Warto o tym pamiętać przy każdym innym
+  hostingu - PGlite w testach wymaga podania rozszerzenia jawnie i o to samo potyka się
+  każda okrojona dystrybucja Postgresa.
+- **`BOOKING_RELEASE` zostaje NIEUSTAWIONE**, czyli zadanie zwalniające nieodebrane
+  rezerwacje chodzi (co 5 min). To pierwszy wątek okresowy w tym serwerze i staging jest
+  jedynym miejscem, gdzie da się go zobaczyć przed produkcją; `0` wpisuje się wyłącznie
+  wtedy, gdy przeszkadza w konkretnym teście.
+
 ## 4. Rozruch od zera
 
 1. `curl https://app.stg.ninerdeck.pl/health` → `{"ok":true}`.
@@ -76,9 +92,15 @@ Trzy rzeczy, które kosztowały już czas gdzie indziej:
    2.1.0: dostawca poczty → link → strona `/haslo/` na hoście aplikacji → logowanie.
 3. Rozdział hostów - trzy sprawdziany: `stg.ninerdeck.pl/admin/` odsyła na host aplikacji,
    `app.stg.ninerdeck.pl/` odsyła na `/admin/`, `stg.ninerdeck.pl/admin/api/me` → 404.
-4. Organizacje → klub → kod klubu → flota (normy paliwa i oleju, pojemności, minima, stany
-   początkowe, format licznika). Ten świat zostaje między wydaniami.
-5. Telefon (§5): dołączenie kodem klubu, operacja end-to-end, opróżnienie outboxa. Ślad GPS
+4. Organizacje → klub → **lotnisko macierzyste i strefa czasowa klubu** → kod klubu → flota
+   (normy paliwa i oleju, pojemności, minima, stany początkowe, format licznika). Ten świat
+   zostaje między wydaniami. Konfiguracja kalendarza nie jest ozdobą: bez lotniska doba
+   lotna schodzi do domyślnych 06-21 zamiast liczyć się z efemeryd, a bez strefy siatka
+   rysuje się w cudzych godzinach - dokładnie ta dziura wyszła w stabilizacji 3.0.0.
+5. Kalendarz i rezerwacja end-to-end: załóż termin, spróbuj nałożyć na niego drugi i odwołaj
+   pierwszy. To dowód, że migracja 11 przeszła, a wykluczanie nakładek działa na TYM
+   Postgresie - na PGlite z testów nie znaczy jeszcze, że na hostingu.
+6. Telefon (§5): dołączenie kodem klubu, operacja end-to-end, opróżnienie outboxa. Ślad GPS
    sprawdza się PO kolejnym deployu - to dowód, że wolumen działa.
 
 ## 5. Aplikacja pilota na staging
@@ -104,7 +126,8 @@ brak (`app/scripts/eas-profile-env.js`).
 - Otwarcie gałęzi `ninerdeck_x_x_x` → przełączenie śledzonej gałęzi staging na nią. Deploy
   uruchamia migracje przy starcie serwera, więc **to jest próba generalna migracji**.
 - Na staging przechodzi się checklistę wydania PRZED merge do `main`: logowanie hasłem
-  i Googlem, link „ustaw hasło", operacja z telefonu, karty arkusza, panel.
+  i Googlem, link „ustaw hasło", operacja z telefonu, rezerwacja i kalendarz, karty
+  arkusza, panel.
 - Po merge do `main` staging wraca na `develop`.
 
 Procedura wydania prowadzi przez to sama: `.claude/skills/wydanie/SKILL.md`, krok 0.

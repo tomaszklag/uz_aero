@@ -17,7 +17,7 @@
  *                                     strona pobierania, arkusze stylów, favicon);
  *   2. render-docs.mjs              - `docs/podrecznik/` → `dokumentacja/`, plus żywe
  *                                     ekrany kopiowane z `design/` do `screens/`/`panels/`
- *                                     (także te, które osadza landing - patrz `screensIn`);
+ *                                     (także te, które osadza landing - patrz `embedsIn`);
  *   3. render-changelog.mjs         - `docs/CHANGELOG.md` → `wydania/`.
  *
  * Renderery jadą jako OSOBNE PROCESY, a nie przez `import`: czytają `process.argv`, więc
@@ -45,20 +45,23 @@ if (!existsSync(srcDir)) throw new Error(`brak źródeł strony: ${srcDir}`);
 
 /**
  * Makiety osadzone w stronach RĘCZNYCH (dziś: landing). `render-docs.mjs` kopiuje
- * z `design/` wyłącznie to, co wymienia podręcznik dyrektywą @screen, więc bez tego
- * kroku ekrany landingu byłyby pustymi ramkami telefonu. Zbieramy je ZE ŹRÓDŁA, a nie
+ * z `design/` wyłącznie to, co wymienia podręcznik dyrektywami @screen i @panel, więc bez
+ * tego kroku byłyby na nim puste ramki. Zbieramy je ZE ŹRÓDŁA, a nie
  * z listy wpisanej tutaj: lista rozjechałaby się z landingiem przy pierwszej zmianie
  * makiety i nikt by tego nie zauważył - iframe nie krzyczy, tylko nic nie pokazuje.
+ *
+ * Dwa katalogi, bo dwie ramy: `screens/` to telefon, `panels/` okno przeglądarki.
  */
+const PANEL_REF = /(?:src|href)="panels\/([^"]+)\.html"/g;
 const SCREEN_REF = /(?:src|href)="screens\/([^"]+)\.html"/g;
 
-function screensIn(dir) {
+function embedsIn(dir, pattern) {
   const found = new Set();
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) for (const name of screensIn(full)) found.add(name);
+    if (entry.isDirectory()) for (const name of embedsIn(full, pattern)) found.add(name);
     else if (entry.name.endsWith('.html')) {
-      for (const match of readFileSync(full, 'utf8').matchAll(SCREEN_REF)) found.add(match[1]);
+      for (const match of readFileSync(full, 'utf8').matchAll(pattern)) found.add(match[1]);
     }
   }
   return found;
@@ -71,9 +74,10 @@ rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
 cpSync(srcDir, dist, { recursive: true });
 
-const extra = [...screensIn(srcDir)].sort().join(',');
+const extraScreens = [...embedsIn(srcDir, SCREEN_REF)].sort().join(',');
+const extraPanels = [...embedsIn(srcDir, PANEL_REF)].sort().join(',');
 const run = (script, args) => execFileSync(process.execPath, [join(here, script), ...args], { stdio: 'inherit' });
-run('render-docs.mjs', ['--out', dist, '--extra', extra]);
+run('render-docs.mjs', ['--out', dist, '--extra', extraScreens, '--extra-panels', extraPanels]);
 run('render-changelog.mjs', ['--out', dist]);
 
 console.log(`OK: strona w ${dist}`);
