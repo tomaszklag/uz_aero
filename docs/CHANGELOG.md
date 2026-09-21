@@ -35,7 +35,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
-## 3.0.0 (build 5) · 21 września 2026
+## 3.0.0 (build 5) · 3 października 2026
 
 > Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.
 
