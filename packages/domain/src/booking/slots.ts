@@ -107,6 +107,27 @@ export function suggestSlots(query: SlotQuery): SlotSuggestion[] {
   return picked;
 }
 
+/**
+ * WOLNE PASMA maszyny w oknie - zajętości scalone i odwrócone.
+ *
+ * Ta sama odpowiedź, z której `suggestSlots` wybiera kandydatów, tylko oddana wprost:
+ * karta samolotu przy zakładaniu rezerwacji pisze z niej „wolne: 06:00-13:00 ·
+ * 16:00-21:00". Bez tego ekran scalałby zajętości sam i miałby własną definicję
+ * słowa „wolne" - a dwie definicje rozjeżdżają się przy pierwszej poprawce.
+ *
+ * Pasma krótsze niż cokolwiek sensownego NIE są tu odsiewane: to jest opis okna,
+ * a nie propozycja terminu. Odsiewa wołający, jeśli chce - próg zależy od tego, na co
+ * patrzy (kwadrans między lotami bywa treścią, a nie szumem).
+ */
+export function freeSpans(
+  window: { from: number; to: number },
+  busy: readonly BusySpan[],
+): BusySpan[] {
+  return freeGaps(mergeBusy(busy, window.from, window.to), window.from, window.to).map(
+    (gap) => ({ startsAt: gap.from, endsAt: gap.to }),
+  );
+}
+
 /** Zajętości scalone i przycięte do okna - nakładki i zetknięcia znikają. */
 function mergeBusy(busy: readonly BusySpan[], from: number, to: number): BusySpan[] {
   const clipped = busy

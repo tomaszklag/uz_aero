@@ -36,6 +36,7 @@ import {
 } from '../screens/CockpitReadonlyScreen';
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
+import { NewBookingScreen } from '../screens/NewBookingScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { TabsNavigator, type TabsParamList } from './TabsNavigator';
@@ -68,6 +69,12 @@ export type RootStackParamList = {
    */
   /** 15 - ręczny wpis CAŁEGO lotu z 01: kompletna sesja po fakcie (model 2026-08-10). */
   ManualFlight: undefined;
+  /**
+   * Nowa rezerwacja (22 → 22A). Parametry PODSTAWIAJĄ termin i maszynę: tapnięcie
+   * w wolne pasmo kalendarza ma wejść w formularz z już ustawionym slotem, a nie
+   * kazać pilotowi przepisywać to, w co przed chwilą wycelował.
+   */
+  NewBooking: { aircraftId?: string; startsAt?: number } | undefined;
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -164,6 +171,7 @@ export function RootNavigator({
         <Stack.Screen name="Refuel" component={RefuelScreen} />
         <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
+        <Stack.Screen name="NewBooking" component={NewBookingScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

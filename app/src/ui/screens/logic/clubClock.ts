@@ -66,3 +66,28 @@ export function clubDayAt(days: readonly ClubDayBounds[], at: number): ClubDayBo
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
+
+/**
+ * Przesunięcie strefy klubu wyczytane Z GRANIC DOBY - bez tablicy stref i bez `Intl`.
+ *
+ * Doba klubu `2026-09-20` zaczyna się dla klubu w +02:00 o `2026-09-19T22:00Z`, więc
+ * różnica między północą UTC tej daty a początkiem doby JEST offsetem. To jedyne
+ * miejsce, w którym go w ogóle potrzebujemy - reszta modułu liczy godziny odejmowaniem.
+ */
+export function clubOffset(day: ClubDayBounds): number {
+  return Date.parse(`${day.date}T00:00:00Z`) - day.startsAt;
+}
+
+/**
+ * Chwila przesunięta tak, że jej DATA UTC jest datą KLUBU - do nazwania DNIA, nigdy
+ * godziny.
+ *
+ * ══ OFFSET POCHODZI Z OGLĄDANEJ DOBY ══
+ * Data odległa o miesiące może leżeć po drugiej stronie zmiany czasu i wyjść wtedy
+ * o godzinę obok. Do nazwania dnia to wystarcza (godzina błędu przesuwa datę tylko
+ * dla chwil tuż przy północy), a do godziny i tak używamy `clubHhmm` na WŁAŚCIWEJ
+ * dobie. Ten sam rachunek i ten sam koszt, co przy oknie domyślnym w `dayWindow.ts`.
+ */
+export function clubInstant(at: number, day: ClubDayBounds): number {
+  return at + clubOffset(day);
+}

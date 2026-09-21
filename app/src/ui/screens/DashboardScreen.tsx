@@ -274,7 +274,7 @@ function BookingCard({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Twoja rezerwacja ${booking.clock}, ${booking.aircraft}`}
-      onPress={() => navigation.navigate('BookingDetails', { id: booking.id })}
+      onPress={() => navigation.navigate('BookingDetails', { bookingId: booking.id })}
     >
       <Card
         title="Twoja rezerwacja"

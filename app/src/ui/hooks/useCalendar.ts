@@ -1,5 +1,5 @@
 /**
- * Ninerdeck - ZAJĘTOŚĆ FLOTY dla zakładki Kalendarz (21, rezerwacje 3.0.0).
+ * Ninerdeck - ZAJĘTOŚĆ FLOTY w oknie dat (rezerwacje 3.0.0).
  *
  * ══ TO NIE JEST WYŁOM W OFFLINE-FIRST, TYLKO INNA KATEGORIA DANYCH ══
  * Cały moduł rezerwacji wymaga sieci (decyzja właściciela 2026-09-20,
@@ -12,26 +12,29 @@
  * CAŁĄ treść, więc ekran musi powiedzieć wprost, że nie wie. Pusta siatka wyglądałaby
  * dokładnie jak flota wolna na wylot (makieta 21B).
  *
- * ODŚWIEŻA SIĘ PRZY WEJŚCIU NA ZAKŁADKĘ, nie w pętli: zajętość zmienia kolega przy
- * innym telefonie, a nie ten pilot, więc odpytywanie co puls kosztowałoby baterię za
- * odpowiedź, na którą i tak nikt nie patrzy. Wejście na zakładkę jest chwilą, w której
- * pilot pyta „co jest wolne" - i wtedy pytamy serwer.
+ * ODŚWIEŻA SIĘ PRZY WEJŚCIU NA EKRAN, nie w pętli: zajętość zmienia kolega przy innym
+ * telefonie, a nie ten pilot, więc odpytywanie co puls kosztowałoby baterię za
+ * odpowiedź, na którą i tak nikt nie patrzy. Wejście jest chwilą, w której pilot pyta
+ * „co jest wolne" - i wtedy pytamy serwer.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 
+import { utcDayStart } from '../../domain';
 import { useSessionStore } from '../store';
 
 import { toCalendar, type CalendarData } from '../screens/logic/calendarData';
+import { useMinuteTicker } from './useMinuteTicker';
 
 /**
- * Ile dób pokazuje pasek dni.
+ * Ile dób pokazuje pasek dni (decyzja właściciela 2026-09-21).
  *
- * Dwa tygodnie, choć makieta rysuje siedem chipów: pasek i tak przewija się kciukiem
- * w bok, a rezerwacja robiona „na następny weekend" musi być widoczna tam, gdzie
- * pilot jej szuka. Horyzontu zakładania rezerwacji to nie dotyczy - ten jest
- * nieograniczony (P7) i wybiera się go kalendarzem w formularzu.
+ * Czternaście, choć makieta rysuje siedem chipów: siedem to tyle, ile MIEŚCI SIĘ na
+ * ekranie, a nie tyle, ile jest - reszta dojeżdża kciukiem w bok. Rezerwacja robiona
+ * „na następny weekend" ma być widoczna tam, gdzie pilot jej szuka. Horyzontu zakładania
+ * rezerwacji to nie dotyczy - ten jest nieograniczony (P7), a dalsze terminy wybiera się
+ * kalendarzem miesięcznym, który PRZESTAWIA KOTWICĘ tego okna.
  */
 export const CALENDAR_DAYS = 14;
 
@@ -54,7 +57,7 @@ export interface UseCalendar {
   data: CalendarData | null | undefined;
   /**
    * Ponowne pytanie - po ZAPISIE rezerwacji (założeniu, odwołaniu), żeby oś pokazała
-   * skutek bez czekania na powrót na zakładkę.
+   * skutek bez czekania na powrót na ekran.
    *
    * Stanu bez połączenia to NIE dotyczy: 21B nie ma przycisku ponowienia, bo drogą
    * wyjścia jest zdanie „Wróć tu z zasięgiem", a pytanie ponawia samo wejście tutaj.
@@ -62,17 +65,18 @@ export interface UseCalendar {
   reload: () => void;
 }
 
-export function useCalendar(): UseCalendar {
+/**
+ * Zajętość floty w ZADANYM oknie.
+ *
+ * Okno przychodzi PARĄ LICZB, nie obiektem: `load` ma je w liście zależności, a nowa
+ * referencja przy każdym renderze zamieniłaby odświeżenie w pętlę. `null` w którejkolwiek
+ * znaczy „nie ma o co pytać" i ekran dostaje wtedy `null`, czyli „nie wiem".
+ */
+export function useCalendarWindow(from: number | null, to: number | null): UseCalendar {
   const sync = useSessionStore((s) => s.sync);
   const focused = useIsFocused();
   const [data, setData] = useState<CalendarData | null | undefined>(undefined);
   const alive = useRef(true);
-  // Początek okna zapisany przy KAŻDYM pytaniu, nie przy pierwszym renderze: zakładka
-  // żyje tak długo jak aplikacja, więc telefon otwarty w piątek i obejrzany w poniedziałek
-  // pytałby wciąż o piątkowe czternaście dni - a wtedy „dzisiaj" wypada poza oknem
-  // i kalendarz otwiera się na dobie sprzed trzech dni. Do listy zależności `now`
-  // nie wchodzi, bo tyka co minutę i zamieniłby odświeżenie w pętlę.
-  const from = useRef(Date.now());
 
   useEffect(() => {
     alive.current = true;
@@ -82,34 +86,27 @@ export function useCalendar(): UseCalendar {
   }, []);
 
   const load = useCallback(() => {
-    if (sync == null) {
+    if (sync == null || from == null || to == null) {
       setData(null);
       return;
     }
 
     setData(undefined);
-    from.current = Date.now();
     void sync
-      .fetchCalendar({
-        from: from.current,
-        // Doba BIEŻĄCA liczy się jako pierwsza z czternastu, więc granica idzie
-        // o trzynaście dni dalej - „+14 dni" dałoby piętnastą kolumnę (ta sama
-        // pomyłka, którą złapał przegląd kalendarza panelu).
-        to: from.current + (CALENDAR_DAYS - 1) * DAY_MS,
-      })
+      .fetchCalendar({ from, to })
       .then((wire) => {
         if (alive.current) setData(wire == null ? null : toCalendar(wire));
       })
       .catch(() => {
         // `authorizedFetch` zwija offline i odmowy do `null`; tu łapiemy resztę.
-        // Nieudane pytanie o kalendarz nie ma prawa wywrócić zakładki.
+        // Nieudane pytanie o kalendarz nie ma prawa wywrócić ekranu.
         if (alive.current) setData(null);
       });
-  }, [sync]);
+  }, [sync, from, to]);
 
   useFocusEffect(load);
 
-  // Ponawiamy WYŁĄCZNIE w stanie „nie wiem" i WYŁĄCZNIE na widocznej zakładce:
+  // Ponawiamy WYŁĄCZNIE w stanie „nie wiem" i WYŁĄCZNIE na widocznym ekranie:
   // `undefined` znaczy pytanie w toku, a ekran pod spodem nie ma komu odpowiadać.
   // Po każdej nieudanej próbie `data` wraca na `null`, więc efekt startuje od nowa
   // i odstęp liczy się OD KOŃCA próby - dwa żądania nie mają jak się nałożyć.
@@ -120,4 +117,26 @@ export function useCalendar(): UseCalendar {
   }, [focused, data, load]);
 
   return { data, reload: load };
+}
+
+/**
+ * Zajętość floty na czternaście dób OD KOTWICY - zakładka Kalendarz i formularz
+ * rezerwacji pytają tym samym kodem, tylko o inne okno.
+ *
+ * ══ KOTWICA JEST KWANTOWANA DO POCZĄTKU DOBY UTC ══
+ * I to jest cały powód, dla którego okno ani nie ucieka, ani nie kamienieje. `Date.now()`
+ * w liście zależności odświeżałby kalendarz przy każdym tyknięciu; zamrożony w refie
+ * zostawałby piątkowy u telefonu otwartego do poniedziałku - a wtedy „dzisiaj" wypada
+ * poza oknem i kalendarz otwiera się na dobie sprzed trzech dni.
+ *
+ * Doba UTC nie jest dobą klubu i być nią nie musi: to jest WYZNACZENIE OKNA, a nie
+ * granica doby. Serwer i tak przycina okno do granic dób klubu, a północ UTC leży
+ * w środku dzisiejszej doby każdego klubu w Europie.
+ *
+ * @param anchor chwila w dobie, od której liczymy okno; pominięta = dzisiaj.
+ */
+export function useCalendar(anchor?: number | null): UseCalendar {
+  const now = useMinuteTicker();
+  const from = utcDayStart(anchor ?? now);
+  return useCalendarWindow(from, from + (CALENDAR_DAYS - 1) * DAY_MS);
 }

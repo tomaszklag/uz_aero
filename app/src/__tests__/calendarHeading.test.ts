@@ -6,7 +6,7 @@
  */
 
 import type { ClubDayBounds } from '../ui/screens/logic/clubClock';
-import { dayHeading } from '../ui/screens/logic/calendarHeading';
+import { dayHeading, dayShort } from '../ui/screens/logic/calendarHeading';
 
 describe('nagłówek doby', () => {
   it('nazywa dzień tygodnia i datę w dopełniaczu', () => {
@@ -27,5 +27,16 @@ describe('nagłówek doby', () => {
       endsAt: Date.parse('2026-06-22T22:00:00Z'),
     };
     expect(dayHeading(day)).toBe('Poniedziałek 22 czerwca');
+  });
+});
+
+describe('krótka doba', () => {
+  it('mieści się w jednej linii podtytułu: „Nd 20 WRZ"', () => {
+    const day: ClubDayBounds = {
+      date: '2026-09-20',
+      startsAt: Date.parse('2026-09-19T22:00:00Z'),
+      endsAt: Date.parse('2026-09-20T22:00:00Z'),
+    };
+    expect(dayShort(day)).toBe('Nd 20 WRZ');
   });
 });

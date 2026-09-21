@@ -83,6 +83,10 @@ export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';
 export * from './sheets/JoinClubSheet';
 export * from './sheets/FleetFilterSheet';
+// Rezerwacja (3.0.0): godzina terminu, drugi pilot i pojedyncza liczba planu.
+export * from './sheets/BookingTimeSheet';
+export * from './sheets/DualSheet';
+export * from './sheets/NumberSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
 // ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu
@@ -116,6 +120,9 @@ export * from './data/DayChips';
 export * from './data/FleetAxis';
 export * from './data/FilterChip';
 export * from './data/ReservationCard';
+// Formularz rezerwacji (22): karta samolotu z paskiem zajętości i chipy sugestii.
+export * from './data/BookingAircraftCard';
+export * from './data/SlotChips';
 // `SummaryHero` i `SummaryGrid` USUNIĘTE 2026-08-12 - były komponentami ekranu 03
 // (podsumowanie preflightu), a ten zniknął przy skróceniu przejęcia do trzech kroków
 // (etap C4: „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu). Rolę siatki klucz/wartość

@@ -12,6 +12,7 @@ import {
   MIN_USEFUL_SLOT_MS,
   SLOT_GRAIN_MS,
   flightDayWindow,
+  freeSpans,
   suggestSlots,
   sunTimes,
   type BusySpan,
@@ -218,5 +219,42 @@ describe('okno doby lotnej', () => {
     const okno = flightDayWindow(day, HOME);
     expect(okno.from).toBeGreaterThanOrEqual(day.startsAt);
     expect(okno.to).toBeLessThanOrEqual(day.endsAt);
+  });
+});
+
+/**
+ * WOLNE PASMA - ta sama odpowiedź, z której `suggestSlots` wybiera kandydatów, oddana
+ * wprost. Karta samolotu przy zakładaniu rezerwacji pisze z niej „wolne: 06:00-13:00 ·
+ * 16:00-21:00", więc dwie definicje słowa „wolne" nie mają jak powstać.
+ */
+describe('wolne pasma', () => {
+  const spans = (busySpans: BusySpan[]): string[] =>
+    freeSpans(WINDOW, busySpans).map((s) => `${hhmm(s.startsAt)}-${hhmm(s.endsAt)}`);
+
+  it('okno bez zajętości to jedno pasmo', () => {
+    expect(spans([])).toEqual(['06:00-20:00']);
+  });
+
+  it('zajętość dzieli okno na dwa pasma', () => {
+    expect(spans([busy(9, 11)])).toEqual(['06:00-09:00', '11:00-20:00']);
+  });
+
+  it('zetknięcie i nakładanie się scalają w JEDNĄ przerwę', () => {
+    expect(spans([busy(9, 11), busy(11, 13)])).toEqual(['06:00-09:00', '13:00-20:00']);
+    expect(spans([busy(9, 12), busy(10, 13)])).toEqual(['06:00-09:00', '13:00-20:00']);
+  });
+
+  it('zajętość wystająca poza okno jest przycinana, a nie pomijana', () => {
+    expect(spans([{ startsAt: at(3), endsAt: at(8) }])).toEqual(['08:00-20:00']);
+  });
+
+  it('okno zajęte w całości nie ma wolnych pasm', () => {
+    expect(spans([busy(6, 20)])).toEqual([]);
+  });
+
+  it('NIE odsiewa krótkich pasm - to opis okna, a nie propozycja terminu', () => {
+    // Pięć minut między rezerwacjami bywa treścią (widać, że maszyna stoi bez przerwy),
+    // a odsiewanie należy do wołającego, bo próg zależy od tego, na co patrzy.
+    expect(spans([busy(6, 9), { startsAt: at(9, 5), endsAt: at(20) }])).toEqual(['09:00-09:05']);
   });
 });

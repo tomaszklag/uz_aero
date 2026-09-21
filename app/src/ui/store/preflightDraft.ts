@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 
-import { isSameFieldOperation } from '../../domain';
+import { withRouteShape } from '../screens/logic/routeShape';
 import type { JumperCounts, MhFormat, OperationType, ReferenceAircraft } from '../../domain';
 
 export interface PreflightDraft {
@@ -86,23 +86,6 @@ const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
   'client',
 ];
 
-/**
- * Trasa skoków to JEDNA wartość w dwóch polach rekordu (issue #13).
- *
- * Formularz pyta o jedno lotnisko - bo skoki startują i lądują na tym samym placu
- * (`isSameFieldOperation`) - ale szkic trzyma obie wartości równe. Dzięki temu ani
- * projekcja, ani karta arkusza, ani panel nie muszą znać wyjątku „przy skokach patrz
- * tylko na start": `departureIcao` i `arrivalIcao` znaczą zawsze to samo co dotąd.
- *
- * Egzekwowane w JEDNYM miejscu - przy każdym zapisie do szkicu - bo inwariant pilnowany
- * przez pamiętanie o nim w trzech miejscach ekranu jest inwariantem tylko do pierwszej
- * zmiany w tym ekranie.
- */
-function withRouteShape(draft: PreflightDraft): PreflightDraft {
-  if (!isSameFieldOperation(draft.operation)) return draft;
-  if (draft.arrivalIcao === draft.departureIcao) return draft;
-  return { ...draft, arrivalIcao: draft.departureIcao };
-}
 
 interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;

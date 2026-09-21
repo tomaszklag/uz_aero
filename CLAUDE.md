@@ -3927,6 +3927,65 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   rezerwacji (epik R-F, #162), podmiany 13 osadzeń podręcznika i screen flow w tym
   pliku (epik R-W, #163 - podręcznik opisuje wersję WDROŻONĄ)
 
+## Rezerwacje 3.0.0 - epik R-F: kalendarz i formularz w telefonie (issue #162, 2026-09-21)
+Zakładka Kalendarz dostała treść, a rezerwacja - dwa kroki. Reguły obowiązujące odtąd
+KAŻDY ekran modułu rezerwacji:
+- **CAŁY MODUŁ WYMAGA SIECI I MÓWI TO WPROST** (§2.2): `useCalendarWindow` oddaje `null`
+  = „nie wiem", a ekran rysuje kartę „BRAK POŁĄCZENIA" zamiast pustej siatki - ta
+  wyglądałaby jak flota wolna na wylot. Przycisku ponowienia NIE MA (makieta 21B), ale
+  dopóki karta stoi, ekran pyta serwer **co 60 s** i wraca sam (decyzja właściciela
+  2026-09-21; wzorzec pustej floty z 02G). Cache’a zajętości nie dorabiamy - to jest
+  decyzja, nie brak czasu
+- **OKNO OSI TO DOBA LOTNA, NIE KALENDARZOWA**: liczy je `flightDayWindow`
+  z `@ninerdeck/domain`, czyli ten sam kod, którym serwer liczy okno dla sugestii.
+  Bez lotniska macierzystego schodzi do domyślnego i mówi o tym (`windowBasis`) -
+  inaczej okno awaryjne wyglądałoby na wynik rachunku z efemeryd
+- **REZERWACJA WYSTAJĄCA POZA OKNO ROZCIĄGA JE, WYŁĄCZENIE Z UŻYTKU - NIE.** Plan ukryty
+  jest ukrytą kolizją; maszyna w serwisie jest niedostępna także w widocznym oknie, więc
+  przycięcie niczego nie gubi (całodobowy przegląd rysuje się na całej szerokości)
+- **GODZINY LICZY ODEJMOWANIE OD GRANIC DÓB** (`logic/clubClock.ts`), a dni tygodnia mają
+  własną tablicę w `@ninerdeck/format` - `Intl` w Hermesie bez danych ICU przyjmuje
+  `timeZone` i po cichu formatuje w UTC, czyli ODPOWIADA, tylko źle. Offset klubu
+  wyczytuje się z granic doby (`clubOffset`) i służy WYŁĄCZNIE do nazwania DNIA
+- **NA PASKU OSI STOI SKRÓCONE NAZWISKO - także przy własnej rezerwacji** (decyzja
+  właściciela 2026-09-21, odwraca makietę 21). Kod pilota zostaje ostatnią deską ratunku
+  dla pilota spoza cache’u floty; surowy identyfikator nie trafia na pasek nigdy
+- **PASEK DNI SIĘGA 14 DÓB**, choć makiety rysują siedem chipów: siedem to tyle, ile MIEŚCI
+  SIĘ na ekranie. Kalendarz miesięczny w formularzu PRZESTAWIA KOTWICĘ okna, więc termin
+  spoza dwóch tygodni pyta serwer o doby wokół siebie
+- **FILTR MASZYN ZAPISUJE UKRYTE, NIE POKAZYWANE** - maszyna dokupiona przez klub pojawia
+  się na osi sama. Wybór jest preferencją PATRZENIA, więc mieszka w `AsyncStorage` per
+  pilot i klub, jak motyw
+- **KROK 1 REZERWACJI PYTA O TERMIN I MASZYNĘ, NIE O ZADANIE** (makieta 22, odwrotnie niż
+  przejęcie): rezerwacja rozstrzyga KONKURENCJĘ o zasób, a rodzaj lotu i trasa nikomu
+  niczego nie zabierają. **Lista zadań w issue #162 jest starsza niż makiety i mówi
+  „samolot + Dual" w kroku 1 - nie wracać do tamtego podziału**
+- **DWA KROKI TO JEDEN EKRAN NAWIGACJI** (wzorzec wpisu ręcznego): „wstecz" z kroku 2 cofa
+  o krok, z kroku 1 przy niepustym szkicu pyta o rezygnację (`AbandonDraftSheet`). Termin
+  i maszyna PODSTAWIONE przez nawigację nie liczą się jako wpis pilota
+- **TAPNIĘCIE W WOLNE PASMO NIE USTAWIA TERMINU**, tylko przekazuje wskazaną godzinę jako
+  PREFEROWANĄ PORĘ do zapytania o sugestie (`SLOT_PREFERRED_BONUS`). Podstawiona godzina
+  wyglądałaby jak wpisana - to ta sama reguła, przez którą `Stepper` nie ma wartości
+  domyślnej (issue #62)
+- **WOLNE PASMA LICZY DOMENA** (`freeSpans` w `@ninerdeck/domain`) - ta sama odpowiedź,
+  z której `suggestSlots` wybiera kandydatów. Własne scalanie zajętości po stronie ekranu
+  byłoby drugą definicją słowa „wolne"
+- **KSZTAŁT TRASY MA JEDNO ŹRÓDŁO** (`logic/routeShape.ts`): reguła „skoki = jedno
+  lotnisko" obowiązuje szkic przejęcia I szkic rezerwacji, więc wyszła ze środka
+  `preflightDraft.ts` do wspólnego modułu
+- **WYMÓG DUALA JEDZIE WSPÓLNYM ZDANIEM** (`logic/dualRequirement.ts`) - trzeci ekran po
+  02 i 15, bez ani jednej nowej kopii napisu
+- **SĄSIAD W POWODZIE SUGESTII STOI ZA SEPARATOREM** („tuż przed rezerwacją · J. Nowak"):
+  odmiany nazwiska nie da się wyprowadzić regułą, więc zdanie zostaje poprawne, a nazwisko
+  dochodzi w mianowniku. Ta sama decyzja, co przy blokadzie arkusza czasów
+- **`NumberSheet` to arkusz JEDNEJ liczby** (plan lotu, paliwo do zabrania) - dwa osobne
+  pliki różniłyby się wyłącznie napisami, a `ReadingSheet` niesie cały świat paliwa
+  i licznika. Rezygnacja z wartości opcjonalnej to „×" w linii tytułu
+- **czego epik R-F jeszcze NIE ROBI**: zapisu rezerwacji (F6), odwołania (F7), wejścia
+  w lot z rezerwacji (F8), ostrzeżenia o kolizji przy przejęciu (F9) i karty najbliższej
+  rezerwacji na Pulpicie (F12). Trasy `BookingDetails` w nawigacji NADAL NIE MA - zakłada
+  ją F7; nazwa parametru jest już ujednolicona na `bookingId`
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

@@ -5,7 +5,7 @@
  * pokazuje same liczby, a pilot planujący lot myśli weekendami.
  */
 
-import { dateUtcDayMonthLong, weekdayUtc } from '@ninerdeck/format';
+import { dateUtcDayMonth, dateUtcDayMonthLong, weekdayShortUtc, weekdayUtc } from '@ninerdeck/format';
 
 import type { ClubDayBounds } from './clubClock';
 
@@ -15,4 +15,17 @@ export function dayHeading(day: ClubDayBounds): string {
   const midday = (day.startsAt + day.endsAt) / 2;
   const dow = weekdayUtc(midday).toLowerCase();
   return `${dow.charAt(0).toUpperCase()}${dow.slice(1)} ${dateUtcDayMonthLong(midday).toLowerCase()}`;
+}
+
+/**
+ * Doba w postaci KRÓTKIEJ: „Nd 20 WRZ".
+ *
+ * Do podtytułu kroku 2 rezerwacji, gdzie w jednej linii mono stoją jeszcze godziny
+ * i znak maszyny - pełne „Niedziela 20 września" zjadłoby całą szerokość telefonu
+ * i wypchnęło to, co pilot tam naprawdę czyta.
+ */
+export function dayShort(day: ClubDayBounds): string {
+  const midday = (day.startsAt + day.endsAt) / 2;
+  const dow = weekdayShortUtc(midday).toLowerCase();
+  return `${dow.charAt(0).toUpperCase()}${dow.slice(1)} ${dateUtcDayMonth(midday)}`;
 }
