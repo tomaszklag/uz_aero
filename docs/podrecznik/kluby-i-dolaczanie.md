@@ -20,7 +20,7 @@ Do klubu wchodzi się **kodem klubu**. Kod to siedem znaków z myślnikiem w śr
 
 1. **Zaloguj się kontem Google.** Jeśli żaden klub Cię jeszcze nie zna, aplikacja pokazuje ekran **„Nie należysz do żadnego klubu"** z jednym polem.
 2. **Wpisz kod klubu.** Powstaje zgłoszenie i zobaczysz ekran „Czeka na zatwierdzenie" z nazwą klubu. Dołączenie wymaga internetu - tak jak samo logowanie.
-3. **Poczekaj na decyzję administratora.** Aplikacja sama sprawdza, czy zapadła; **SPRAWDŹ PONOWNIE** robi to od ręki. Po zatwierdzeniu poprosi o PIN i pokaże „Mój dzień" - od tej chwili jesteś w klubie pod kodem pilota, który nadał Ci administrator.
+3. **Poczekaj na decyzję administratora.** Aplikacja sama sprawdza, czy zapadła; **SPRAWDŹ PONOWNIE** robi to od ręki. Po zatwierdzeniu poprosi o PIN i otworzy Pulpit - od tej chwili jesteś w klubie pod kodem pilota, który nadał Ci administrator.
 
 Zgłoszenie **odrzucone** pokazuje powód wpisany przez administratora i nazwę klubu. Możesz dołączyć do innego klubu innym kodem albo zalogować się innym kontem Google; ponowne wpisanie TEGO SAMEGO kodu decyzji nie obejdzie - cofnąć ją może wyłącznie klub. Zgłoszenie nie wygasa samo: kończy je wyłącznie decyzja w klubie.
 
@@ -32,9 +32,9 @@ Latasz już w jednym klubie i dołączasz do drugiego? To samo pole znajdziesz w
 
 Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jego przekazania i normy widzisz przy przejęciu. Który to klub, wybierasz w ustawieniach - sekcja **Klub** pojawia się tylko wtedy, gdy masz więcej niż jedno członkostwo. Zmiana klubu **wymaga internetu**, a wcześniej trzeba **wysłać zapisy z klubu, z którego wychodzisz** - powstały pod jego kluczem, więc tylko nim wyjdą na serwer. Nie da się jej też zrobić z maszyną w ręce: operację kończy zdanie samolotu. Bez zasięgu pracujesz dalej w klubie, w którym jesteś, a aplikacja mówi przy karcie klubu, dlaczego nie da się przełączyć.
 
-**„Mój dzień" i „Poprzednie dni" pokazują wszystkie Twoje operacje**, z obu klubów: na każdym kafelku stoi nazwa klubu, a sumy doby liczą wszystko. Przełącznik zmienia tylko to, gdzie zaczniesz następny lot - nie chowa niczego, co już zapisałeś.
+**Pulpit i Historia pokazują wszystkie Twoje operacje**, z obu klubów: przy operacji stoi nazwa klubu, a sumy doby liczą wszystko. Przełącznik zmienia tylko to, gdzie zaczniesz następny lot - nie chowa niczego, co już zapisałeś.
 
-@screen 13a-ustawienia-klub "Przełącznik klubu w ustawieniach" | 01e-moj-dzien-dwa-kluby "Kafelki z nazwą klubu"
+@screen 13a-ustawienia-klub "Przełącznik klubu w ustawieniach"
 
 ## Panel klubu: członkowie, zgłoszenia, kod klubu
 

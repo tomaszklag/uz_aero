@@ -55,7 +55,7 @@ Na samym dole trybu edycji stoi obramowany czerwony **USUŃ CAŁY WPIS**. Okienk
 
 Administratora nie ogranicza czas na poprawki: kolizja z operacją w toku albo z pilotem, który wciąż może poprawiać, jest dla niego ostrzeżeniem, nie odmową. W tym wydaniu ma w [dzienniku](panel-dziennik) i na [karcie samolotu](panel-samoloty) trzy narzędzia:
 
-- **Zakończenie operacji**, której pilot nie zdał (telefon padł, został w kabinie) - z powodem, bez odczytów, opcjonalnie z unieważnieniem w tym samym ruchu. Operacja liczy się do nalotu, ale nie staje się przekazaniem, a telefon nie wyśle już jej zdania: pilot dostaje na Mój dzień baner z przyciskiem **ROZUMIEM**.
+- **Zakończenie operacji**, której pilot nie zdał (telefon padł, został w kabinie) - z powodem, bez odczytów, opcjonalnie z unieważnieniem w tym samym ruchu. Operacja liczy się do nalotu, ale nie staje się przekazaniem, a telefon nie wyśle już jej zdania: pilot dostaje na Pulpicie baner z przyciskiem **ROZUMIEM**.
 - **Unieważnienie wpisu** - z powodem WYMAGANYM, inaczej niż u pilota: pilot wycofuje własny lot, administrator cudzy.
 - **Poprawa odczytów maszyny** na karcie samolotu, z wymaganym komentarzem. Staje się przekazaniem dla następnego pilota, ale nie zmienia ani jednego zapisu operacji.
 

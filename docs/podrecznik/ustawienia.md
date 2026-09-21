@@ -16,7 +16,7 @@
 | **Hasło** | **Ustaw hasło** (gdy go jeszcze nie masz) albo **Zmień hasło**. Wymaga internetu - hasło sprawdza i zapisuje klub. |
 | **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
 
-@screen 01-moj-dzien "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
+@screen 20-pulpit "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
 
 ## Synchronizacja
 
@@ -26,7 +26,7 @@ Wiersz **Ostatnia synchronizacja** to godzina ostatniego udanego kontaktu z klub
 
 > **Wskazówka.** Liczba zapisów w kolejce i wiek danych pobranych z panelu stoją w okienku pod oznaczeniem łączności w nagłówku, nie na tym ekranie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
-@screen 01c-moj-dzien-offline "Okienko pod oznaczeniem łączności" | 01d-sync-stoi "Kolejka stoi po odmowie"
+@screen 20c-pulpit-offline "Okienko pod oznaczeniem łączności" | 20d-pulpit-sync-stoi "Kolejka stoi po odmowie"
 
 ## Diagnostyka GPS
 

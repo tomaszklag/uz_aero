@@ -2,6 +2,10 @@
 
 > Trzy kroki i jesteś w kokpicie: samolot i załoga, zadanie i trasa, liczniki. Wartości z ostatniego przekazania są już wpisane - Ty porównujesz je z przyrządami.
 
+Wchodzi się tu przyciskiem **ROZPOCZNIJ LOT** z [Pulpitu](moj-dzien). Jeśli masz na tę
+porę [rezerwację](rezerwacja-samolotu), pierwszy krok jest już wypełniony tym, co
+zaplanowałeś - maszyną, zadaniem, trasą i drugim pilotem. Sprawdzasz i idziesz dalej.
+
 ## Krok 1 · samolot i załoga
 
 Wybierz samolot z listy floty klubu. Karta maszyny mówi, w jakim jest stanie: wolna, prowadzona przez innego pilota („Prowadzi PIC: KRZ · od 07:10") albo wyłączona ze służby. Jeśli maszyna wymaga załogi dwuosobowej, przy nagłówku stoi oznaczenie „wymagany · załoga 2-os.", a bez wybranego drugiego pilota przycisk **DALEJ** mówi dlaczego. W pozostałych przypadkach drugi pilot (Dual) jest opcjonalny; raz wybrany, zostaje także po zmianie samolotu.
@@ -13,6 +17,13 @@ Wybierz samolot z listy floty klubu. Karta maszyny mówi, w jakim jest stanie: w
 Samolot zajęty przez innego pilota otwiera się w **podglądzie**: jego log z serwera, bez możliwości zapisu, z przyciskiem **PRZEJMIJ SAMOLOT**. Przejęcie cudzej maszyny jest sytuacją awaryjną (poprzednik odjechał bez zdania): aplikacja ostrzega, że tamten może mieć niewysłane dane, a nakładające się operacje klub zobaczy jako sprawę do wyjaśnienia. Na co dzień samolot oddaje się przez zdanie.
 
 @screen 04b-cockpit-readonly "Podgląd zajętego samolotu" | 02g-preflight-brak-floty "Pusta flota"
+
+Jeśli wybrana maszyna ma na najbliższe godziny **cudzą rezerwację**, nad formularzem
+stanie bursztynowy baner: kto ją ma i na kiedy. To informacja, nie blokada - lecisz
+dalej tak samo. Bez zasięgu banera nie ma, bo kalendarz klubu nie jest przechowywany
+na telefonie.
+
+@screen 23a-rezerwacja-kolizja "Cudzy plan na tę maszynę"
 
 ## Krok 2 · zadanie i trasa
 
@@ -50,6 +61,13 @@ Przekazanie to odczyty z ostatniego zdania tej maszyny - albo, gdy nikt jej jesz
 ## Dlaczego tak to działa
 
 > **Dlaczego rodzaj operacji zmienia resztę ekranów.** Rodzaj operacji wyznacza nie tylko pola trasy: w dniu skokowym kokpit dostaje załadunek i zrzut, a wykrywanie lądowania spodziewa się powrotu na to samo pole. Ten sam wybór ustawia formularz i automat.
+
+> **Dlaczego rezerwacja wypełnia formularz, ale go nie zastępuje.** Rezerwacja opisuje
+> zamiar, a lot - to, co naprawdę się dzieje: maszyna mogła zostać wymieniona, a odczyty
+> liczników i tak trzeba wpisać z przyrządów. Dlatego plan skraca wpisywanie, a nie
+> pomija kroków. Z tego samego powodu formularz wypełnia się terminem, który właśnie
+> trwa albo zaraz się zacznie - plan na przyszły weekend wyglądałby w polach jak Twój
+> dzisiejszy wpis.
 
 > **Dlaczego kroki są trzy, a trasę wolno pominąć.** Rozpoczęcie lotu ma trwać sekundy. Dlatego są trzy kroki, trasę wolno zostawić pustą, a formularz podpowiada wartości z wczoraj - fakt lotu jest cenniejszy niż kompletność formularza.
 

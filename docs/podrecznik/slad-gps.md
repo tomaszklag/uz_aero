@@ -6,7 +6,7 @@
 
 ## Jak tu wejść
 
-Wejście jest jedno: **miniatura śladu na [ekranie operacji](operacja-i-korekty)**, w karcie „Przebieg operacji" nad osią zdarzeń. Tapnięcie otwiera pełny ekran. Z list operacji - Mój dzień i Poprzednie dni - w ślad się nie wchodzi: najpierw wybiera się operację, potem jej trasę.
+Wejście jest jedno: **miniatura śladu na [ekranie operacji](operacja-i-korekty)**, w karcie „Przebieg operacji" nad osią zdarzeń. Tapnięcie otwiera pełny ekran. Z listy operacji w Historii w ślad się nie wchodzi: najpierw wybiera się operację, potem jej trasę.
 
 @screen 10-statystyki "Miniatura śladu przy osi"
 
