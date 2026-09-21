@@ -8,8 +8,6 @@ Każda operacja ma odczyty z obu stron. Przy przejęciu pilot potwierdza paliwo 
 
 @screen 02a-preflight "Odczyty przy przejęciu" | 09b-zdaj-samolot "Odczyty przy zdaniu"
 
-> **Dlaczego odczyt przy zdaniu jest obowiązkowy.** To on zatwierdza log operacji, staje się przekazaniem dla następnego pilota i ogniwem łańcucha; bez niego następny musiałby zgadywać, a [norma zużycia](norma-zuzycia) nie miałaby z czego liczyć. Odczyt jest jeden na operację - także w dniu skokowym z dziesięcioma lotami.
-
 ## Przekazanie przy rozpoczęciu lotu
 
 W kroku 3 rozpoczęcia lotu na górze stoi, skąd pochodzą liczby - „Wartości z ostatniego przekazania · SP-AXA przekazał J. Kowalski" - i jedna instrukcja: zweryfikuj ilość paliwa w zbiornikach i aktualny stan licznika motogodzin. Okienko paliwa pokazuje **rozpiska**: ile poprzednik zastał, ile dolał, ile latał („J. Kowalski latał · 1h 30min") i ile według normy powinno zostać („Szacunkowo zostało ~X L"). To krzyżowa kontrola przekazania: łapie literówkę w odczycie zdania albo tankowanie poza aplikacją.
@@ -25,8 +23,6 @@ Maszyna, której nikt jeszcze nie przekazał, ma w karcie samolotu „Aktualny s
 ## Odczyty administratora
 
 Gdy dziennik rozjechał się z rzeczywistością, administrator wpisuje w karcie samolotu **nadrzędne odczyty** paliwa, licznika i opcjonalnie oleju - z wymaganym komentarzem. Wpis staje się konkurentem ostatniego zdania: przekazaniem zostaje ten, kto stoi **dalej w łańcuchu** (wyższy licznik; przy remisie późniejszy). Kolejne zdanie z wyższym licznikiem wypiera wpis samo. Pilot widzi „Odczyty wpisał administrator"; rejestr operacji się nie zmienia.
-
-> **Założenie.** Osią porządku jest licznik motogodzin: rośnie tylko w jedną stronę, niezależnie od zegarów telefonów i sieci. Dlatego cofnięty licznik jest jedyną rzeczą, którą łańcuch blokuje twardo.
 
 ## Rozjazd ostrzega, nie blokuje
 
@@ -49,3 +45,9 @@ Wpis po fakcie pyta o chwilę z przeszłości, więc podpowiada zastane paliwo i
 ## Co widzi administrator
 
 W dzienniku każda operacja ma paliwo i licznik przejęcie → zdanie w jednej komórce, obok dolewkę i olej; brak odczytu to kreska, nigdy zero. Rozjazd widać, zestawiając zdanie jednej operacji z przejęciem następnej. Operacja zakończona z panelu bez odczytów nie jest ogniwem łańcucha. Naprawa ma dwie drogi: korekta odczytu w operacji (z powodem i historią zmian) albo nadrzędne odczyty w [karcie samolotu](panel-samoloty).
+
+## Dlaczego tak to działa
+
+> **Dlaczego odczyt przy zdaniu jest obowiązkowy.** To on zatwierdza log operacji, staje się przekazaniem dla następnego pilota i ogniwem łańcucha; bez niego następny musiałby zgadywać, a [norma zużycia](norma-zuzycia) nie miałaby z czego liczyć. Odczyt jest jeden na operację - także w dniu skokowym z dziesięcioma lotami.
+
+> **Dlaczego kolejność wyznacza licznik, a nie zegar.** Osią porządku jest licznik motogodzin: rośnie tylko w jedną stronę, niezależnie od zegarów telefonów i sieci. Dlatego cofnięty licznik jest jedyną rzeczą, którą łańcuch blokuje twardo.

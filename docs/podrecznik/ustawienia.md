@@ -52,15 +52,17 @@ W sekcji **Konto** może stanąć baner **Sesja zakończona przez administratora
 
 Sekcja **Hasło** jest w tym stanie nieczynna z podanym powodem - hasło zapisuje klub, a klub tej sesji już nie uznaje. Zaloguj się ponownie.
 
-> **Dlaczego tak.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
-
 ## Jak to działa
 
 Cały ekran pracuje na tym, co telefon ma u siebie: wybór motywu, PIN i stan odbiornika GPS nie potrzebują serwera ani przez chwilę. Motyw jest preferencją pilota, więc zapisuje się w Twoim profilu i wraca po zalogowaniu na innym telefonie. Godzina synchronizacji jest jedna, choć mechanizm ma dwa kierunki - wysyłkę zapisów i pobranie danych z panelu; ekran pokazuje ten późniejszy, bo pytanie brzmi „od kiedy nie mam kontaktu z klubem", a nie „który kierunek zadziałał". Jedyną akcją, która wymaga sieci, jest wylogowanie. Mechanizm w całości: [synchronizacja](synchronizacja).
 
-> **Założenie.** W ustawieniach nie ma nic, co dotyczy bieżącej operacji - samolotu, trasy ani lotów. To są dane dnia lotnego i mieszkają w kokpicie oraz na ekranie Mój dzień.
-
 > **Wskazówka.** Zgłoszenia błędu nie szukaj w ustawieniach. Na czas testów z pilotami przycisk stoi w prawym górnym rogu każdego ekranu i każdego okienka - poza ekranem logowania i PIN-em.
+
+## Dlaczego tak to działa
+
+> **Dlaczego wylogowanie czeka na pustą kolejkę.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
+
+> **Dlaczego w ustawieniach nie ma danych lotu.** W ustawieniach nie ma nic, co dotyczy bieżącej operacji - samolotu, trasy ani lotów. To są dane dnia lotnego i mieszkają w kokpicie oraz na ekranie Mój dzień.
 
 ## Częste problemy
 

@@ -23,8 +23,6 @@ Samolot zajęty przez innego pilota otwiera się w **podglądzie**: jego log z s
 
 @screen 02e-preflight-zadanie "Rodzaj operacji i klient" | 02f-preflight-lotnisko "Okienko wyboru lotniska"
 
-> **Dlaczego tak.** Rodzaj operacji wyznacza nie tylko pola trasy: w dniu skokowym kokpit dostaje załadunek i zrzut, a wykrywanie lądowania spodziewa się powrotu na to samo pole. Ten sam wybór ustawia formularz i automat.
-
 ## Krok 3 · liczniki
 
 Na górze ekranu stoi, skąd pochodzą wartości: **z ostatniego przekazania** (kto i kiedy zdał samolot), **ze stanu wpisanego w panelu** dla maszyny, której nikt jeszcze nie przekazał, albo z odczytów wpisanych przez administratora. Instrukcja jest jedna: zweryfikuj ilość paliwa w zbiornikach i aktualny stan licznika motogodzin.
@@ -45,11 +43,15 @@ Odczyty z przyrządów są ważniejsze niż podpowiedź. Rozjazd z przekazaniem 
 
 Przekazanie to odczyty z ostatniego zdania tej maszyny - albo, gdy nikt jej jeszcze nie zdał, stan wpisany w panelu. Z siecią aplikacja pobiera je na żywo przy wejściu w krok 3; bez sieci pracuje na kopii z ostatniego połączenia i mówi o tym adnotacją z datą. Twoje odczyty przy przejęciu stają się kolejnym ogniwem łańcucha tej maszyny: paliwo i licznik od zdania poprzednika do Twojego przejęcia powinny się zgadzać, a różnica jest sygnałem - o literówce, o tankowaniu poza aplikacją albo o locie, którego nikt nie zapisał. Przejęcie zapisuje się na telefonie natychmiast, bez pytania serwera o zgodę; gdyby dwa telefony wzięły tę samą maszynę, klub dostanie to jako sprawę do wyjaśnienia, a nie Ty jako blokadę. Więcej: [łańcuch odczytów](lancuch-odczytow), [norma zużycia](norma-zuzycia).
 
-> **Założenie.** Rozpoczęcie lotu ma trwać sekundy. Dlatego są trzy kroki, trasę wolno zostawić pustą, a formularz podpowiada wartości z wczoraj - fakt lotu jest cenniejszy niż kompletność formularza.
-
 > **Uwaga.** Wyjście z formularza przyciskiem wstecz przy wypełnionych polach pyta o rezygnację i czyści szkic; pusty formularz wychodzi bez pytania.
 
 @screen 02h-preflight-rezygnacja "Pytanie o rezygnację" | 02d-preflight-offline "Wartości z ostatniego połączenia"
+
+## Dlaczego tak to działa
+
+> **Dlaczego rodzaj operacji zmienia resztę ekranów.** Rodzaj operacji wyznacza nie tylko pola trasy: w dniu skokowym kokpit dostaje załadunek i zrzut, a wykrywanie lądowania spodziewa się powrotu na to samo pole. Ten sam wybór ustawia formularz i automat.
+
+> **Dlaczego kroki są trzy, a trasę wolno pominąć.** Rozpoczęcie lotu ma trwać sekundy. Dlatego są trzy kroki, trasę wolno zostawić pustą, a formularz podpowiada wartości z wczoraj - fakt lotu jest cenniejszy niż kompletność formularza.
 
 ## Częste problemy
 

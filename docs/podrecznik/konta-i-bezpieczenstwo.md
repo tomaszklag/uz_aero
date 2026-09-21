@@ -12,8 +12,6 @@
 
 Zgłoszenie do klubu składa się wyłącznie z aplikacji; konto, które nie należy do żadnego klubu, dostaje w panelu odmowę. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
 
-> **Założenie.** Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google. Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do decyzji pilota po prostu w tym klubie nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
-
 ### Pierwszy administrator klubu
 
 Z panelu klubu **nie da się nikogo dopisać** - każdy wchodzi kodem klubu i decyzją. Jedynym wyjątkiem jest **pierwszy administrator**: zakłada go opiekun platformy razem z klubem, podając jego adres e-mail, imię i kod pilota, a członkostwo powstaje od razu. **Adres nie musi być kontem Google**: razem z klubem wychodzi na niego zaproszenie z linkiem do ustawienia hasła, ważnym trzy doby. Jeśli mimo to zaloguje się kontem Google z tym samym adresem, konto podpisze się samo. Tą samą drogą wchodzi sam opiekun platformy przy uruchomieniu serwera.
@@ -29,8 +27,6 @@ W samolocie bywa jeden tablet dla kilku pilotów. Logowanie kontem Google znaczy
 - **Hasło ustawia i zmienia wyłącznie jego właściciel** - w [ustawieniach](ustawienia) aplikacji, na `#/konto` w panelu albo linkiem z e-maila. Administrator może wysłać Ci list z linkiem, ale nie zobaczy ani nie poda hasła; kodów do dyktowania przez telefon nie ma w ogóle.
 
 @screen 00f-login-haslo "Logowanie hasłem" | 00i-wybor-klubu "Wybór klubu urządzenia" | 13-ustawienia "Hasło w ustawieniach"
-
-> **Dlaczego tak.** Hasło wróciło do produktu świadomie i z policzoną ceną: hasła się zapomina, a odzyskiwanie musi być samoobsługowe, inaczej administrator klubu spędza sezon na resetach. Stąd jeden mechanizm odzyskania - link z e-maila - i stąd brak jakiejkolwiek drogi, w której ktoś podaje komuś hasło.
 
 ## Sesje i urządzenia
 
@@ -56,8 +52,6 @@ Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda 
 
 @screen 00-login "Codzienne wejście PIN-em" | 00b-login-offline "Logowanie wymaga internetu" | 13-ustawienia "Wyloguj na końcu ustawień"
 
-> **Dlaczego tak.** Wylogowanie zamyka profil pilota na tym telefonie. Zapisy, które nie doszły do klubu, istnieją tylko tam - przy niepustej kolejce przepadłyby bez śladu. Ponowne logowanie wymaga internetu, więc to jedyna rzecz w ustawieniach, której nie da się cofnąć bez sieci.
-
 ## Wyłączenie członkostwa
 
 Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach dnia, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
@@ -80,3 +74,11 @@ Poza operacją aplikacja nie zapisuje położenia; w ustawieniach jest tylko dia
 @screen 14-slad "Ślad nagrany w operacji"
 
 > **Uwaga.** Zapisy powstają na telefonie, na którym latasz, i to on jest ich źródłem, dopóki nie wyśle ich do klubu - nie czyść danych aplikacji z niepustą kolejką wysyłki.
+
+## Dlaczego tak to działa
+
+> **Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google.** Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do decyzji pilota po prostu w tym klubie nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
+
+> **Dlaczego obok konta Google jest też hasło.** Hasło wróciło do produktu świadomie i z policzoną ceną: hasła się zapomina, a odzyskiwanie musi być samoobsługowe, inaczej administrator klubu spędza sezon na resetach. Stąd jeden mechanizm odzyskania - link z e-maila - i stąd brak jakiejkolwiek drogi, w której ktoś podaje komuś hasło.
+
+> **Dlaczego wylogowanie czeka na pustą kolejkę.** Wylogowanie zamyka profil pilota na tym telefonie. Zapisy, które nie doszły do klubu, istnieją tylko tam - przy niepustej kolejce przepadłyby bez śladu. Ponowne logowanie wymaga internetu, więc to jedyna rzecz w ustawieniach, której nie da się cofnąć bez sieci.

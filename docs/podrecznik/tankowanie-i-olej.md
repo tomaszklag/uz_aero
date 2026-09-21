@@ -16,8 +16,6 @@ Po pomiarze paliwa ekran pokazuje pod kartą **rzeczywiste zużycie** od ostatni
 
 > **Uwaga.** Tankowanie przy pracującym silniku jest niemożliwe - przycisk mówi to wprost. Dolewa się przy zatrzymanym śmigle; to samo dotyczy dolewki oleju.
 
-> **Dlaczego tak.** Po locie pole „przed tankowaniem" jest puste, choć aplikacja umie policzyć szacunek. Podstawiona liczba dałaby się zatwierdzić bez spojrzenia na paliwomierz, a rachunek zużycia ma liczyć się z pomiaru - nie z modelu.
-
 ## Olej
 
 - **Pomiar przy przejęciu jest obowiązkowy** (krok 3 rozpoczęcia lotu; we [wpisie po fakcie](wpis-lotu-po-fakcie) - opcjonalny). Sekcja pokazuje stan w silniku dużą liczbą i podziałkę wobec zbiornika; bursztynowa kreska to minimum przed lotem z karty samolotu. Pod minimum sekcja ostrzega („dolej przed lotem") - nie blokuje.
@@ -33,11 +31,15 @@ W kokpicie kafelek **Dolej olej** pokazuje, ile oleju jest w silniku (pomiar plu
 
 Paliwo liczy się między odczytami. Każdy odczyt paliwomierza (przejęcie, pomiar przed tankowaniem, zdanie) i każde tankowanie (stan przed, dolano, stan po) jest punktem na osi paliwa tej maszyny; między dwoma punktami aplikacja zna czas pracy silnika, więc umie policzyć średnie zużycie i porównać je z normą. Szacunek „ile zostało" to ostatni pewny odczyt pomniejszony o zużycie z normy za czas pracy silnika - podpowiedź, nie pomiar. Olej idzie własną osią: od pomiaru do pomiaru, przez wiele operacji, bo bagnet tuż po locie kłamie. Oczekiwanie na bagnecie to ostatni pomiar plus dolewki minus norma oleju pomnożona przez motogodziny od tego pomiaru. Więcej: [norma zużycia](norma-zuzycia), [łańcuch odczytów](lancuch-odczytow).
 
-> **Założenie.** Oleju nie mierzy się po locie, bo poziom na bagnecie ustala się dopiero po ostygnięciu silnika. Dlatego zużycie oleju jednej operacji nie ma werdyktu - ma go dopiero odcinek od pomiaru do pomiaru.
-
 > **Wskazówka.** Tankowanie zapomniane w kokpicie dopiszesz później: na ekranie operacji **EDYTUJ DANE** → **DODAJ WPIS** → Tankowanie (stan przed i dolano; stan po liczy się sam).
 
 @screen 10h-dodaj-wpis "Dopisanie zapomnianego tankowania"
+
+## Dlaczego tak to działa
+
+> **Dlaczego po locie pole paliwa startuje puste.** Po locie pole „przed tankowaniem" jest puste, choć aplikacja umie policzyć szacunek. Podstawiona liczba dałaby się zatwierdzić bez spojrzenia na paliwomierz, a rachunek zużycia ma liczyć się z pomiaru - nie z modelu.
+
+> **Dlaczego olej mierzy się tylko przy przejęciu.** Oleju nie mierzy się po locie, bo poziom na bagnecie ustala się dopiero po ostygnięciu silnika. Dlatego zużycie oleju jednej operacji nie ma werdyktu - ma go dopiero odcinek od pomiaru do pomiaru.
 
 ## Częste problemy
 

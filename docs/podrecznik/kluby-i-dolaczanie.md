@@ -26,8 +26,6 @@ Zgłoszenie **odrzucone** pokazuje powód wpisany przez administratora i nazwę 
 
 @screen 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Zgłoszenie czeka w klubie" | 00d-odrzucone "Odrzucone z powodem"
 
-> **Dlaczego tak.** Klub zna swoich pilotów, a aplikacja nie. Kod otwiera drzwi do poczekalni, a do klubu wpuszcza człowiek - dlatego nikt nie wejdzie przez sam wyciek kodu, a administrator nie musi wcześniej znać ani Twojego adresu, ani konta Google.
-
 Latasz już w jednym klubie i dołączasz do drugiego? To samo pole znajdziesz w ustawieniach, w sekcji **Klub**, pod „Dołącz do innego klubu". Do czasu zatwierdzenia pracujesz dalej w dotychczasowym klubie.
 
 ## Pilot w dwóch klubach
@@ -37,8 +35,6 @@ Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jeg
 **„Mój dzień" i „Poprzednie dni" pokazują wszystkie Twoje operacje**, z obu klubów: na każdym kafelku stoi nazwa klubu, a sumy doby liczą wszystko. Przełącznik zmienia tylko to, gdzie zaczniesz następny lot - nie chowa niczego, co już zapisałeś.
 
 @screen 13a-ustawienia-klub "Przełącznik klubu w ustawieniach" | 01e-moj-dzien-dwa-kluby "Kafelki z nazwą klubu"
-
-> **Dlaczego tak.** Operacja należy do klubu, w którym ją zaczęto - maszyna jest w jego flocie, a kod pilota w sygnaturze jest kodem z tego klubu. Dzień pilota natomiast należy do pilota: latałeś dziś w dwóch klubach, więc na liście dnia masz obie operacje, bo to Twój nalot.
 
 ## Panel klubu: członkowie, zgłoszenia, kod klubu
 
@@ -64,7 +60,13 @@ Superadministrator prowadzi też **kolejkę zgłoszeń błędów z aplikacji** -
 
 @panel zgloszenia-lista "Zgłoszenia błędów ze wszystkich klubów"
 
-> **Dlaczego tak.** „Nic nie wycieka między klubami" obejmuje także operatora serwera. Gdy klub potrzebuje pomocy w dzienniku, jego administrator dodaje operatora jako członka - jawnie i z wpisem w dzienniku akcji, jak każdego innego pilota. Zgłoszenia błędów są jedynym wyjątkiem i to wyjątek wąski: opis błędu z założenia dotyczy aplikacji, a pilot decyduje, co w nim napisze.
+## Dlaczego tak to działa
+
+> **Dlaczego o wejściu decyduje człowiek, a nie kod.** Klub zna swoich pilotów, a aplikacja nie. Kod otwiera drzwi do poczekalni, a do klubu wpuszcza człowiek - dlatego nikt nie wejdzie przez sam wyciek kodu, a administrator nie musi wcześniej znać ani Twojego adresu, ani konta Google.
+
+> **Dlaczego operacja zostaje w klubie, w którym się zaczęła.** Operacja należy do klubu, w którym ją zaczęto - maszyna jest w jego flocie, a kod pilota w sygnaturze jest kodem z tego klubu. Dzień pilota natomiast należy do pilota: latałeś dziś w dwóch klubach, więc na liście dnia masz obie operacje, bo to Twój nalot.
+
+> **Dlaczego operator serwera nie zagląda do dziennika klubu.** „Nic nie wycieka między klubami" obejmuje także operatora serwera. Gdy klub potrzebuje pomocy w dzienniku, jego administrator dodaje operatora jako członka - jawnie i z wpisem w dzienniku akcji, jak każdego innego pilota. Zgłoszenia błędów są jedynym wyjątkiem i to wyjątek wąski: opis błędu z założenia dotyczy aplikacji, a pilot decyduje, co w nim napisze.
 
 ## Częste problemy
 

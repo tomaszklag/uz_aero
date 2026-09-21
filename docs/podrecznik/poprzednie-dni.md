@@ -6,10 +6,10 @@
 
 ## Dwie grupy
 
-Ekran otwiera się z przycisku **POPRZEDNIE DNI** na ekranie [Mój dzień](moj-dzien). Kafelki dzielą się według okna korekty:
+Ekran otwiera się z przycisku **POPRZEDNIE DNI** na ekranie [Mój dzień](moj-dzien). Kafelki dzielą się według tego, czy trwa jeszcze czas na poprawki:
 
 - **Możesz jeszcze poprawić** - operacje, dla których nie minęły 24 godziny od zdania samolotu. Kafelek ma niebieską ramkę, termin (`Korekta do 12 SIE 16:05`), odliczanie („zostało 4 h 12 min") i przycisk **OTWÓRZ I POPRAW**.
-- **Zamknięte** - operacje po oknie. Przycisk mówi **ZOBACZ SZCZEGÓŁY**, a pod grupą stoi zdanie o tym, że można je oglądać, ale nie zmieniać: błąd zgłasza się administratorowi, a jego poprawka dopisze się jako korekta, bez kasowania pierwotnego zapisu.
+- **Zamknięte** - operacje po terminie. Przycisk mówi **ZOBACZ SZCZEGÓŁY**, a pod grupą stoi zdanie o tym, że można je oglądać, ale nie zmieniać: błąd zgłasza się administratorowi, a jego poprawka dopisze się jako korekta, bez kasowania pierwotnego zapisu.
 
 ## Kafelek operacji
 
@@ -21,17 +21,19 @@ Ten sam kształt, co na ekranie Mój dzień - różnią się dwie rzeczy: nagł�
 - **Zakończył administrator** - operacja, której nie zdałeś, a klub zamknął ją z panelu.
 - **Oznaczenie zaległości** pojawia się tylko wtedy, gdy zapisy tej operacji jeszcze nie doszły do klubu: „Oczekuje na przesłanie · n" albo „W trakcie wysyłania · n". Wysłane operacje nie mają żadnej oznaczenia - to stan domyślny.
 
-Tapnięcie kafelka otwiera [ekran operacji](operacja-i-korekty): w oknie korekty z możliwością edycji, po oknie w trybie podglądu.
+Tapnięcie kafelka otwiera [ekran operacji](operacja-i-korekty): w oknie korekty z możliwością edycji, po terminie w trybie podglądu.
 
-@screen 10-statystyki "Operacja w oknie korekty" | 10b-rozliczenie-zamkniete "Operacja po oknie korekty"
+@screen 10-statystyki "Operacja w oknie korekty" | 10b-rozliczenie-zamkniete "Operacja po terminie korekty"
 
 ## Jak to działa
 
 Lista liczy się na telefonie, z Twojego lokalnego zapisu - dlatego wygląda tak samo z zasięgiem i bez. Kafelkiem jest **operacja, nie doba**: doba z dwiema operacjami daje dwie karty, rozróżnione godzinami biegu silnika. Do której doby należy operacja, rozstrzyga chwila uruchomienia silnika w czasie UTC (a przy zapisie bez biegu - chwila przejęcia), więc granica jest tu ta sama, co na ekranie Mój dzień i żadna operacja nie wpada w dziurę między ekranami. Z listy wypadają operacje unieważnione - przez Ciebie albo przez administratora - oraz zdania bez lotu, w których nic się nie zmieniło. Dzisiejszych operacji tu nie ma: stoją na ekranie Mój dzień, na identycznych kafelkach.
 
-> **Dlaczego tak.** Kafelek opisuje jedną maszynę i jeden bieg silnika, bo tak wygląda rozliczenie: paliwo i motogodziny należą do samolotu, nie do pilota. Kafelek-doba nie miałby czego otworzyć, gdyby tego dnia latałeś dwiema maszynami. Więcej: [model operacji](model-operacji).
+## Dlaczego tak to działa
 
-> **Założenie.** Podział na dwie grupy robi wyłącznie okno korekty. Przycisku edycji nie pokazujemy wyszarzonego - obiecywałby akcję, której reguły i tak nie dopuszczą; po oknie znika po prostu wejście w edycję. Więcej: [korekty i rejestr](korekty-i-rejestr).
+> **Dlaczego kafelek to jedna operacja, a nie cały dzień.** Kafelek opisuje jedną maszynę i jeden bieg silnika, bo tak wygląda rozliczenie: paliwo i motogodziny należą do samolotu, nie do pilota. Kafelek-doba nie miałby czego otworzyć, gdyby tego dnia latałeś dwiema maszynami. Więcej: [model operacji](model-operacji).
+
+> **Dlaczego starsze loty otwierają się tylko do podglądu.** Podział na dwie grupy robi wyłącznie czas na poprawki. Przycisku edycji nie pokazujemy wyszarzonego - obiecywałby akcję, której reguły i tak nie dopuszczą; po terminie znika po prostu wejście w edycję. Więcej: [korekty i rejestr](korekty-i-rejestr).
 
 ## Częste problemy
 

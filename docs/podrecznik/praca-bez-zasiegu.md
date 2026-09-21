@@ -33,8 +33,6 @@ Tapnięcie otwiera okienko „Synchronizacja": ile zapisów czeka w kolejce, **O
 
 @screen 01-moj-dzien "Brak oznaczenia · wszystko wysłane" | 01c-moj-dzien-offline "OFFLINE · okienko synchronizacji" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
 
-> **Dlaczego tak.** „OFFLINE" znaczy wynik ostatniej próby, a nie samą obecność zapisów w kolejce. Bursztyn mówi w tej aplikacji „poczekaj, samo przejdzie", więc odmowy serwera nie wolno tak nazwać: sieć wtedy jest, a kolejka mimo to stoi i sama nie ruszy. Dlatego ten stan ma osobny, czerwony kolor.
-
 ## Ponowienie z ręki czeka dłużej
 
 Wysyłka w tle rezygnuje po kilku sekundach - przy słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za chwilę. **PONÓW PRÓBĘ** czeka nawet pół minuty, bo sięgasz po nie dokładnie wtedy, gdy długo nic nie szło, a serwer klubu potrzebuje chwili na obudzenie. Każda próba, także nieudana, zmienia wiersz **Ostatnia próba** - żeby dało się odróżnić przycisk, który nic nie zrobił, od próby, która się nie powiodła. Po udanej wysyłce okienko zostaje otwarty ze zdaniem o tym, ile zapisów poszło.
@@ -47,7 +45,11 @@ Zanim telefon wyśle zaległe zapisy, **pyta klub o decyzje z panelu**. Jeśli a
 
 Każde zdarzenie - przejęcie, uruchomienie silnika, wykryty start, tankowanie, zdanie, korekta - zapisuje się na telefonie w chwili, gdy zachodzi, i od razu liczy się do wszystkiego, co widzisz na ekranie. Zapisy, których klub jeszcze nie dostał, tworzą kolejkę: wysyła się sama, paczkami, po odzyskaniu sieci i co jakiś czas w tle. Paczka wysłana dwa razy niczego nie dubluje, bo serwer rozpoznaje zapis, który już ma. Klub nie odrzuca faktów z terenu - wpis, który nie zgadza się z resztą dziennika, dostaje oznaczenie do wyjaśnienia dla administratora, zamiast blokować pilota. Tą samą drogą, na końcu każdej wysyłki, wychodzą nagrania śladu i zgłoszenia z aplikacji. W drugą stronę telefon pobiera własne zapisy (po reinstalacji albo na nowym telefonie), decyzje administratora i dane referencyjne. Mechanizm w całości: [synchronizacja](synchronizacja).
 
-> **Założenie.** Jeden telefon, jeden pilot. Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach, a wylogowanie jest zablokowane przy niepustej kolejce: to, co jeszcze nie doszło, nie ma skąd wrócić.
+## Dlaczego tak to działa
+
+> **Dlaczego „OFFLINE" opisuje ostatnią próbę, a nie kolejkę.** „OFFLINE" znaczy wynik ostatniej próby, a nie samą obecność zapisów w kolejce. Bursztyn mówi w tej aplikacji „poczekaj, samo przejdzie", więc odmowy serwera nie wolno tak nazwać: sieć wtedy jest, a kolejka mimo to stoi i sama nie ruszy. Dlatego ten stan ma osobny, czerwony kolor.
+
+> **Dlaczego zapisy powstają na jednym telefonie.** Jeden telefon, jeden pilot. Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach, a wylogowanie jest zablokowane przy niepustej kolejce: to, co jeszcze nie doszło, nie ma skąd wrócić.
 
 ## Częste problemy
 

@@ -66,7 +66,7 @@ Tak, przez 24 godziny od zdania: kafelek operacji → **EDYTUJ DANE** → ołów
 
 ### Minęły 24 godziny, a liczba jest zła
 
-Ekran operacji otwiera się wtedy w podglądzie: bez **EDYTUJ DANE**, ale z pełnym rachunkiem i historią zmian. Poprawkę zgłoś administratorowi - jego okna korekty nic nie zamyka ([korekty i rejestr](korekty-i-rejestr)).
+Ekran operacji otwiera się wtedy w podglądzie: bez **EDYTUJ DANE**, ale z pełnym rachunkiem i historią zmian. Poprawkę zgłoś administratorowi - jego czasu na poprawki nic nie zamyka ([korekty i rejestr](korekty-i-rejestr)).
 
 ### Odjechałem, a samolotu nie zdałem. Co teraz?
 

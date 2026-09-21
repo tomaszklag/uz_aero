@@ -36,15 +36,11 @@ Zakładając maszynę, wpisujesz, co pokazują przyrządy: licznik, paliwo i ole
 
 Od chwili, gdy maszynę prowadzi dziennik, te same pola są **do odczytu**: pokazują ostatni odczyt z podpisem, skąd pochodzi - z dziennika albo z ręki administratora, razem z jego komentarzem. Olej ma własną datę i własny brak pomiaru: bywa dużo starszy niż odczyt paliwa, bo mierzy się go tylko przy przejęciu, a maszyna potrafi latać bez ani jednego pomiaru w dzienniku.
 
-> **Dlaczego stan początkowy przestaje być polem.** Liczba, którą prowadzi dziennik, ma jednego właściciela naraz. Dopóki jedynym źródłem jest wpis z panelu, wolno go poprawić - to nadal Twoja własna literówka. Gdy maszyna zaczęła latać, wpis nic już nie znaczy, a pole edytowalne nad wartością, której edycja niczego nie zmienia, kierowałoby administratorem w złą stronę. Zero jest przy tym **wartością, nie brakiem**: nowy silnik ma zero na liczniku, maszyna przyjęta z pustymi zbiornikami - zero litrów. Dlatego stan początkowy zera nie zabrania, a normy z dokumentacji owszem: zero litrów na godzinę nie jest stanem świata, tylko literówką.
-
 ## Poprawa odczytów
 
-Gdy stan w dzienniku rozjechał się z rzeczywistością - operacja zakończona przez administratora bez odczytów, tankowanie poza aplikacją, remont, pomyłka pilota zauważona po oknie korekty - karta ma osobną akcję **Popraw odczyty**: licznik, paliwo, opcjonalnie olej i **wymagany komentarz**, skąd te liczby. Wpis jest trwały i zostaje w klubie razem z autorem i komentarzem.
+Bywa, że stan w dzienniku rozjeżdża się z rzeczywistością: operacja zakończona przez administratora bez odczytów, tankowanie poza aplikacją, remont, pomyłka pilota zauważona po terminie korekty. Na takie sytuacje karta ma osobną akcję **Popraw odczyty**: licznik, paliwo, opcjonalnie olej i **wymagany komentarz**, skąd te liczby. Wpis jest trwały i zostaje w klubie razem z autorem i komentarzem.
 
 Wchodzi do łańcucha jako konkurent ostatniego zdania: przekazaniem zostaje ten, kto stoi **dalej w łańcuchu** - wyższy licznik motogodzin, a przy remisie późniejszy wpis. Kolejne zdanie samolotu z wyższym licznikiem wypiera go samo, bez kasowania czegokolwiek. Pilot zobaczy przy przejęciu adnotację, że odczyty wpisał administrator.
-
-> **Dlaczego to nie zmienia zapisów operacji.** Są to dwie różne rzeczy. Operacja jest tym, co pilot zapisał w konkretnym locie; odczyt administratora mówi „tyle jest teraz na przyrządach". Wpis z karty samolotu nie dotyka ani jednego zapisu w dzienniku - nie zmienia czasów, cudzych odczytów przy przejęciu i zdaniu ani rachunku zużycia w zamkniętych operacjach. Zmienia wyłącznie punkt, od którego zacznie następny pilot. Poprawka konkretnej liczby w konkretnym locie to [korekta](korekty-i-rejestr), którą przez 24 godziny od zdania robi pilot w aplikacji.
 
 ## Norma z dokumentacji
 
@@ -55,6 +51,12 @@ Do dziennika nic z tego nie wchodzi - tam stoją wyłącznie odczyty.
 ## Wyłączenie i usunięcie
 
 Maszyny wycofanej z klubu się nie kasuje - wyłącza. Wyłączona znika pilotom z listy wyboru, a jej dziennik zostaje w komplecie. Nie da się wyłączyć jednostki, którą ktoś właśnie trzyma; panel mówi to przy przycisku („Ktoś ma teraz ten samolot"), zanim stracisz wypełniony formularz. Trwałe usunięcie działa dopiero wtedy, gdy maszyna jest **już wyłączona** i nie ma za sobą ani jednego zapisu.
+
+## Dlaczego tak to działa
+
+> **Dlaczego stan początkowy przestaje być polem.** Liczba, którą prowadzi dziennik, ma jednego właściciela naraz. Dopóki jedynym źródłem jest wpis z panelu, wolno go poprawić - to nadal Twoja własna literówka. Gdy maszyna zaczęła latać, wpis nic już nie znaczy, a pole edytowalne nad wartością, której edycja niczego nie zmienia, kierowałoby administratorem w złą stronę. Zero jest przy tym **wartością, nie brakiem**: nowy silnik ma zero na liczniku, maszyna przyjęta z pustymi zbiornikami - zero litrów. Dlatego stan początkowy zera nie zabrania, a normy z dokumentacji owszem: zero litrów na godzinę nie jest stanem świata, tylko literówką.
+
+> **Dlaczego to nie zmienia zapisów operacji.** Są to dwie różne rzeczy. Operacja jest tym, co pilot zapisał w konkretnym locie; odczyt administratora mówi „tyle jest teraz na przyrządach". Wpis z karty samolotu nie dotyka ani jednego zapisu w dzienniku - nie zmienia czasów, cudzych odczytów przy przejęciu i zdaniu ani rachunku zużycia w zamkniętych operacjach. Zmienia wyłącznie punkt, od którego zacznie następny pilot. Poprawka konkretnej liczby w konkretnym locie to [korekta](korekty-i-rejestr), którą przez 24 godziny od zdania robi pilot w aplikacji.
 
 > **Dlaczego najpierw wyłączyć, a dopiero potem usuwać.** Telefony pracują na kopii floty pobranej z panelu, a ta kopia się dopisuje i poprawia - nigdy nie kasuje wierszy. Maszyna usunięta „na gorąco" zostałaby na każdym telefonie, który zdążył ją pobrać, i to **dalej wybieralna**: pilot zacząłby lot na jednostce, której klub już nie zna. Wyłączenie jedzie tą samą drogą, co reszta zmian, i aplikacja je rozumie - więc kolejność „wyłącz, poczekaj, aż telefony pobiorą zmianę, usuń" zamyka tę dziurę mechanizmem, który już działa.
 

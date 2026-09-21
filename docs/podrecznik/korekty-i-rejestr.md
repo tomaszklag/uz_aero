@@ -1,24 +1,20 @@
 # Korekty, historia zmian i rejestr, który nic nie gubi
 
-> Rejestr Ninerdeck dopisuje, nigdy nie nadpisuje: korekta to nowy wpis obok starego, z autorem, godziną i powodem. Pilot poprawia własne zapisy przez 24 godziny od zdania samolotu, a administratora nie ogranicza żadne okno - twarde reguły obowiązują obu tak samo.
+> Rejestr Ninerdeck dopisuje, nigdy nie nadpisuje: korekta to nowy wpis obok starego, z autorem, godziną i powodem. Pilot poprawia własne zapisy przez 24 godziny od zdania samolotu, a administratora nie ogranicza żaden termin - twarde reguły obowiązują obu tak samo.
 
 ## Nic nie znika: poprawka staje obok starej wartości
 
-Poprawiona godzina lądowania nie zastępuje tej, którą wykrył GPS - staje obok niej jako nowy wpis. Ekran pokazuje wartość aktualną z oznaczeniem **popr.**, także w podglądzie po oknie. Tapnięcie w oznaczenie otwiera historię zmian: od najnowszej do zapisu pierwotnego, każda jako para „było → jest", z autorem (Ty albo administrator), godziną i powodem - albo adnotacją „bez powodu". Unieważnienie zdarzenia („tego lądowania nie było") jest takim samym wpisem i kolejna poprawka może je przywrócić.
+Poprawiona godzina lądowania nie zastępuje tej, którą wykrył GPS - staje obok niej jako nowy wpis. Ekran pokazuje wartość aktualną z oznaczeniem **popr.**, także w podglądzie po terminie. Tapnięcie w oznaczenie otwiera historię zmian: od najnowszej do zapisu pierwotnego, każda jako para „było → jest", z autorem (Ty albo administrator), godziną i powodem - albo adnotacją „bez powodu". Unieważnienie zdarzenia („tego lądowania nie było") jest takim samym wpisem i kolejna poprawka może je przywrócić.
 
 @screen 10i-historia-zmian "Kolejne wersje jednej wartości"
 
-> **Założenie.** Dlaczego nic nie ginie. Dziennik lotów jest dokumentem klubu: administrator ma widzieć nie tylko, ile wynosi liczba, ale też że ktoś ją zmienił, kiedy i dlaczego. Wartość nadpisana nie zostawia śladu; dopisana zostawia całą drogę do siebie.
-
-## Okno korekty: 24 godziny od zdania
+## Czas na poprawki: 24 godziny od zdania
 
 Zdanie samolotu z odczytami zatwierdza log operacji. Od tej chwili przez dobę **EDYTUJ DANE** na ekranie operacji włącza tryb edycji: ołówek przy każdym wierszu osi, **DODAJ WPIS** na jej końcu, a na górze wykryte niespójności (lot bez lądowania, zrzut zapisany na ziemi) z podpowiedzią, czym je naprawić - ostrzegają, nie blokują. Przed zdaniem to samo robi kafelek **Popraw dane operacji** w kokpicie, bo log trzeba móc naprawić, zanim zdanie go zatwierdzi. Krok po kroku: [ekran operacji i korekty](operacja-i-korekty).
 
-Po oknie ekran otwiera się w podglądzie: bez **EDYTUJ DANE**, z banerem „Minęły 24 godziny od zdania samolotu". Historia zmian i okienko normy nadal się otwierają - zamknięte okno odbiera prawo do zmiany danych, nie do ich zrozumienia. Poprawkę wprowadza wtedy administrator, więc zgłoś ją klubowi. Zakończenie operacji przez administratora zamyka okno od razu.
+Po oknie ekran otwiera się w podglądzie: bez **EDYTUJ DANE**, z banerem „Minęły 24 godziny od zdania samolotu". Historia zmian i okienko normy nadal się otwierają - upływ terminu odbiera prawo do zmiany danych, nie do ich zrozumienia. Poprawkę wprowadza wtedy administrator, więc zgłoś ją klubowi. Zakończenie operacji przez administratora zamyka ten czas od razu.
 
-@screen 10d-edycja "Tryb edycji z ołówkami" | 10b-rozliczenie-zamkniete "Podgląd po oknie"
-
-> **Dlaczego tak.** Okno liczy się od zdania, bo zdanie jest chwilą zatwierdzenia. Dlatego godziny zdania nie da się poprawić (przesuwałoby to własny termin), a samego zdania unieważnić - rozbiłoby operację w pół i zabrało następnemu pilotowi przekazanie.
+@screen 10d-edycja "Tryb edycji z ołówkami" | 10b-rozliczenie-zamkniete "Podgląd po terminie"
 
 ## Co wolno poprawić i jak
 
@@ -57,7 +53,7 @@ Na samym dole trybu edycji stoi obramowany czerwony **USUŃ CAŁY WPIS**. Okienk
 
 ## Co może administrator
 
-Administratora nie ogranicza okno korekty: kolizja z operacją w toku albo z otwartym oknem pilota jest dla niego ostrzeżeniem, nie odmową. W tym wydaniu ma w [dzienniku](panel-dziennik) i na [karcie samolotu](panel-samoloty) trzy narzędzia:
+Administratora nie ogranicza czas na poprawki: kolizja z operacją w toku albo z pilotem, który wciąż może poprawiać, jest dla niego ostrzeżeniem, nie odmową. W tym wydaniu ma w [dzienniku](panel-dziennik) i na [karcie samolotu](panel-samoloty) trzy narzędzia:
 
 - **Zakończenie operacji**, której pilot nie zdał (telefon padł, został w kabinie) - z powodem, bez odczytów, opcjonalnie z unieważnieniem w tym samym ruchu. Operacja liczy się do nalotu, ale nie staje się przekazaniem, a telefon nie wyśle już jej zdania: pilot dostaje na Mój dzień baner z przyciskiem **ROZUMIEM**.
 - **Unieważnienie wpisu** - z powodem WYMAGANYM, inaczej niż u pilota: pilot wycofuje własny lot, administrator cudzy.
@@ -65,4 +61,10 @@ Administratora nie ogranicza okno korekty: kolizja z operacją w toku albo z otw
 
 Każda z tych decyzji wraca na telefon pilota przy najbliższym połączeniu. Poprawek pojedynczych zdarzeń - godziny startu, odczytu paliwa, składu zrzutu - administrator z panelu dziś nie wprowadza: robi to pilot w swoim oknie, a po nim błąd zgłasza się do klubu i zostaje w dokumentacji jako fakt. Ekran korekt wraca w kolejnym wydaniu panelu.
 
-> **Dlaczego tak.** Administrator nie jest nigdy blokowany, bo to on odpowiada za dziennik i rozstrzyga, gdy pilot już nie może. Zamiast odmowy dostaje ostrzeżenie - a rejestr i tak zapamięta, kto i kiedy zmienił liczbę.
+## Dlaczego tak to działa
+
+> **Dlaczego nic nie ginie.** Dziennik lotów jest dokumentem klubu: administrator ma widzieć nie tylko, ile wynosi liczba, ale też że ktoś ją zmienił, kiedy i dlaczego. Wartość nadpisana nie zostawia śladu; dopisana zostawia całą drogę do siebie.
+
+> **Dlaczego czas na poprawki liczy się od zdania.** Bo to zdanie jest chwilą zatwierdzenia. Dlatego godziny zdania nie da się poprawić (przesuwałoby to własny termin), a samego zdania unieważnić - rozbiłoby operację w pół i zabrało następnemu pilotowi przekazanie.
+
+> **Dlaczego administratora nie ogranicza termin.** Administrator nie jest nigdy blokowany, bo to on odpowiada za dziennik i rozstrzyga, gdy pilot już nie może. Zamiast odmowy dostaje ostrzeżenie - a rejestr i tak zapamięta, kto i kiedy zmienił liczbę.

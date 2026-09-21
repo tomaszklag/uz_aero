@@ -29,7 +29,7 @@ Nazwisko w pasku górnym prowadzi na **Moje konto** - jedyną stronę panelu, kt
 
 - **Logowanie** - Twój adres (klub go nie zmienia) i oznaczenia metod, którymi wchodzisz: Google, hasło albo obie;
 - **Hasło** - ustawienie pierwszego albo zmiana istniejącego. Minimum 12 znaków i żadnych wymogów co do rodzaju znaków: długość jest jedyną miarą, a wymuszone „duża litera, cyfra i znak" produkuje hasła, które słowniki znają lepiej niż ludzie. **Zapis wylogowuje Twoje pozostałe urządzenia** - to okno zostaje;
-- **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów i obu powierzchni. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, oznaczenie „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
+- **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów, z aplikacji i z panelu. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, oznaczenie „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
 
 Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to głównie jest: logowanie Googlem na cudzym urządzeniu znaczyłoby dodanie własnego konta do cudzej przeglądarki.
 
@@ -51,7 +51,7 @@ Czwarty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
 
 Moduł na czas testów z pilotami. **Nie ma go w panelu klubu**: kolejka zgłoszeń jest jedna dla całego serwera i obsługuje ją opiekun platformy - ta sama osoba, która zakłada kluby. Powód jest prosty: zgłoszenie opisuje aplikację, a nie klub, i naprawia je nowe wydanie aplikacji dla wszystkich klubów naraz. Administrator klubu tej zakładki więc nie widzi; jeśli chce coś zgłosić, robi to tak jak pilot - przyciskiem w aplikacji.
 
-Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; przy każdym zgłoszeniu stoi nazwa klubu, z którego przyszło, bo kod pilota jest jedyny w klubie, nie na serwerze. Wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
+Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst: ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki. Wychodzi z telefonu samo, gdy jest sieć. Pilot widzi przy tym „zapisane", nie „wysłane" - w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; przy każdym zgłoszeniu stoi nazwa klubu, z którego przyszło, bo kod pilota jest jedyny w klubie, nie na serwerze. Wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
 
 @panel dziennik-flota "Dziennik · ekran startowy panelu"
 
@@ -59,7 +59,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 
 ## Jak to działa
 
-- **Jeden dziennik, dwie powierzchnie.** Aplikacja pilota i panel pracują na tym samym dzienniku operacji. To, co pilot zapisze na telefonie, dociera do klubu z najbliższym połączeniem; to, co zdecyduje administrator (zatwierdzenie konta, zakończenie operacji, unieważnienie, poprawa odczytów), telefon pobiera przy najbliższym połączeniu - zwykle w ciągu kwadransa, a od razu po **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji. Szczegóły: [synchronizacja](synchronizacja).
+- **Jeden dziennik dla telefonu i panelu.** Aplikacja pilota i panel pracują na tym samym dzienniku operacji. To, co pilot zapisze na telefonie, dociera do klubu z najbliższym połączeniem. W drugą stronę działa to tak samo: decyzje administratora - zatwierdzenie konta, zakończenie operacji, unieważnienie, poprawa odczytów - telefon pobiera zwykle w ciągu kwadransa, a od razu po **SYNCHRONIZUJ TERAZ** w ustawieniach. Szczegóły: [synchronizacja](synchronizacja).
 - **Flota i piloci jadą na telefony jako kopia.** Zmiana na karcie samolotu (pojemność, norma, minimum oleju, wyłączenie ze służby) i na koncie pilota dociera do aplikacji tą samą drogą, w tym samym rytmie. Telefon bez zasięgu pracuje na kopii z ostatniego połączenia.
 - **Panel nie liczy niczego po swojemu.** Czas blokowy, sumy, sygnatura operacji, stan oleju „do lotu" - wszystko przychodzi policzone tym samym rachunkiem, który zasila aplikację pilota. Administrator i pilot patrzą na te same liczby, a rozmowa o locie ma jedną nazwę: sygnaturę.
 - **Adres z paska przeglądarki jest kompletny.** Zakres dat dziennika, filtr listy, otwarta karta konta albo operacji - wszystko stoi w adresie, więc link wklejony koledze pokazuje dokładnie to samo. Maszynę w dzienniku adresuje się znakami rejestracyjnymi, nie identyfikatorem.
@@ -68,21 +68,23 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 ## Zasady w całym panelu
 
 - **Panel pokazuje odczyty, nie szacunki.** Brak odczytu widać jako kreskę, nigdy jako zero: `0 L` znaczy pusty zbiornik, kreska - „nikt nie zapisał". Normy zużycia i szacowany poziom oleju nie wchodzą do dziennika.
-- **Administratora nie ogranicza okno korekty.** Pilot poprawia własne wpisy przez 24 godziny od zdania; administrator kończy i unieważnia operacje w dowolnej chwili - także operację w toku.
+- **Administratora nie ogranicza czas na poprawki.** Pilot poprawia własne wpisy przez 24 godziny od zdania; administrator kończy i unieważnia operacje w dowolnej chwili - także operację w toku.
 - **Nic nie znika z dziennika.** Unieważnienie, zakończenie administracyjne i poprawa odczytów dopisują nowy fakt z powodem; stary zapis zostaje widoczny.
 - **Skutek akcji nieodwracalnej mówi się przed nią.** Wyłączenie konta, usunięcie, zakończenie, unieważnienie - każde pyta o potwierdzenie i w pytaniu nazywa, co się stanie z dostępem i z danymi.
 - **Puste pole wymagane blokuje zapis samym brakiem**, a powód innej blokady stoi w samym przycisku („Najpierw wyłącz konto", „Ktoś ma teraz ten samolot").
 - **Operację nazywa sygnatura** (`SP-AXA/2026-09-05/TMK/1`: znak, doba UTC, kod pilota, numer operacji tego pilota w dobie) - ta sama w aplikacji pilota, w dzienniku i w zgłoszeniach.
-
-> **Dlaczego tak.** Administrator nigdy nie jest blokowany, bo w klubie to on jest ostatnią instancją: telefon, który padł w locie, pilot, który zapomniał zdać samolot, wpis otwarty przez pomyłkę - każda z tych sytuacji musi mieć wyjście, także wtedy, gdy pilot wciąż trzyma maszynę. Kolizja z pilotem (operacja w toku, otwarte okno korekty) jest więc ostrzeżeniem, nie odmową. Twarde reguły dziennika obowiązują za to obu tak samo: operacja musi istnieć, unieważnić da się ją tylko raz, a zakończenie bez odczytów nie udaje zdania.
-
-> **Założenie.** Panel odpowiada, nie tłumaczy. Nie ma w nim stałych banerów ani kart wyjaśniających - zostały trzy rodzaje tekstu: podpowiedź pod polem („Znaki z kadłuba, np. SP-KLM."), komunikat po akcji („Konto Anny Wrzosek wyłączone.") i powód blokady. Wszystko, co opisuje budowę systemu, mieszka w tym podręczniku, nie na ekranie.
 
 ## Czego w tym wydaniu nie ma
 
 Panel ma dziś cztery moduły. Ekrany znane z wcześniejszej wersji - pulpit, skrzynka rozjazdów (flag), eksporty kart, dziennik akcji administratorów, statystyki i analityka zużycia - nie są dostępne i wracają pojedynczo w kolejnych wydaniach. Rozjazdy łańcucha odczytów Ninerdeck nadal wykrywa i zapisuje przy każdej wysyłce z telefonu, a każda decyzja administratora zostawia ślad w dzienniku akcji - brakuje wyłącznie ekranów do ich przeglądania.
 
 Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliwa, skład zrzutu). Pilot poprawia własne wpisy przez 24 godziny od zdania w aplikacji ([ekran operacji i korekty](operacja-i-korekty)); administrator ma dziś trzy narzędzia: zakończenie i unieważnienie operacji w [dzienniku](panel-dziennik) oraz poprawę odczytów maszyny w [karcie samolotu](panel-samoloty).
+
+## Dlaczego tak to działa
+
+> **Dlaczego administrator nie jest blokowany.** W klubie to administrator ma ostatnie słowo: telefon, który padł w locie, pilot, który zapomniał zdać samolot, wpis otwarty przez pomyłkę - każda z tych sytuacji musi mieć wyjście, także wtedy, gdy pilot wciąż trzyma maszynę. Kolizja z pilotem (operacja w toku, trwający czas na poprawki) jest więc ostrzeżeniem, nie odmową. Twarde reguły dziennika obowiązują za to obu tak samo: operacja musi istnieć, unieważnić da się ją tylko raz, a zakończenie bez odczytów nie udaje zdania.
+
+> **Dlaczego w panelu nie ma banerów wyjaśniających.** Panel odpowiada, nie tłumaczy. Nie ma w nim stałych banerów ani kart wyjaśniających - zostały trzy rodzaje tekstu: podpowiedź pod polem („Znaki z kadłuba, np. SP-KLM."), komunikat po akcji („Konto Anny Wrzosek wyłączone.") i powód blokady. Wszystko, co opisuje budowę systemu, mieszka w tym podręczniku, nie na ekranie.
 
 ## Częste problemy
 

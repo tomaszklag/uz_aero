@@ -12,8 +12,6 @@ Automat odpowiada wyłącznie na trzy pytania: czy samolot **ruszył ze stanowis
 
 Z odbiornika GPS przychodzą pozycja, prędkość nad ziemią, wysokość, kurs i dokładność. Automat patrzy na okno ostatnich sekund, nie na pojedynczy odczyt: medianę prędkości, trend przyspieszenia (rozbieg przyspiesza, dobieg hamuje), przemieszczenie od stanowiska i tempo zakrętu. Odczyty pozytywnie złe odpadają na wejściu - dokładność w setkach metrów, prędkość spoza możliwości maszyny; brak pomiaru nie dyskwalifikuje, bo brak to nie zero. Wysokość liczy się **względem lotniska**, a elewację automat bierze z tego samego odbiornika w chwili START ENGINE - nigdy z katalogu lotnisk.
 
-> **Dlaczego tak.** Wysokość odczytu i elewacja pola odejmują się od siebie, więc wspólny błąd odbiornika się skraca. Elewacja z mapy leży w innym układzie odniesienia i dawałaby stały błąd rzędu stu stóp: fałszywy start na postoju i lądowanie, które nigdy nie zapada.
-
 ## Pięć faz
 
 - **Postój** - stanowisko to uśredniona pozycja z ostatnich kilkudziesięciu sekund, odporna na dryf odbiornika.
@@ -24,13 +22,11 @@ Z odbiornika GPS przychodzą pozycja, prędkość nad ziemią, wysokość, kurs 
 
 @screen 05h-cockpit-idle "Postój po uruchomieniu" | 05a-cockpit-taxi "Kołowanie przed startem" | 05d-cockpit-taxi-post "Kołowanie po lądowaniu"
 
-> **Założenie.** Bez wysokości automat lądowania nie wykryje - milczy świadomie, bo zmyślone lądowanie kosztuje więcej niż jego brak. Brakujące lądowanie dopisuje pilot.
-
 ## „Czy" i „kiedy" to dwa pytania
 
 Decyzja, **czy** coś się wydarzyło, zapada późno i na mocnych przesłankach; **kiedy** - tego automat szuka wstecz w zapisie ostatnich minut. Start to ostatnia chwila z kołami na ziemi, lądowanie - pierwsza chwila serii przy ziemi, kołowanie - ostatnia chwila przy stanowisku. Na oś trafia ta cofnięta godzina, więc czas na upewnienie się nie kosztuje dokładności w dokumentach.
 
-Wykryty start i lądowanie pokazują się najpierw jako powiadomienie „Wykryto: Takeoff" z odliczaniem: brak reakcji przez kilka sekund to zapis, **COFNIJ** znaczy, że zapisu nie będzie. Kołowanie okna nie ma - błędny wpis dokłada wiersz, a nie psuje rozliczenia.
+Wykryty start i lądowanie pokazują się najpierw jako powiadomienie „Wykryto: Takeoff" z odliczaniem: brak reakcji przez kilka sekund to zapis, **COFNIJ** znaczy, że zapisu nie będzie. Kołowanie zapisuje się bez odliczania - błędny wpis dokłada wiersz, a nie psuje rozliczenia.
 
 @screen 05b-cockpit-inflight-toast "Odliczanie po wykryciu startu" | 05c-cockpit-toast-ldg "Odliczanie po wykryciu lądowania"
 
@@ -67,3 +63,9 @@ Cały bieg silnika na mapie: kołowanie przerywaną szarą linią, loty pełną 
 Progi wyszły z rozumowania o fizyce czujników i są **do kalibracji na prawdziwych lotach**. Przy pracującym silniku telefon nagrywa surowe odczyty (także odrzucone), znaczniki wykryć i każde COFNIJ, a nagranie odtwarza się przez ten sam automat, który pracuje w telefonie. Barometr, akcelerometr i żyroskop są nagrywane, ale nie decydują - dopóki nie ma danych.
 
 > **Wskazówka.** COFNIJ przy fałszywym wykryciu to najcenniejszy materiał do kalibracji - jedyny sposób, w jaki człowiek oznacza pomyłkę automatu. Używaj go zamiast poprawiać oś po locie.
+
+## Dlaczego tak to działa
+
+> **Dlaczego liczy się wysokość nad lotniskiem.** Wysokość odczytu i elewacja pola odejmują się od siebie, więc wspólny błąd odbiornika się skraca. Elewacja z mapy leży w innym układzie odniesienia i dawałaby stały błąd rzędu stu stóp: fałszywy start na postoju i lądowanie, które nigdy nie zapada.
+
+> **Dlaczego automat czasem milczy.** Bez wysokości automat lądowania nie wykryje - milczy świadomie, bo zmyślone lądowanie kosztuje więcej niż jego brak. Brakujące lądowanie dopisuje pilot.

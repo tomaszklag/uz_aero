@@ -39,17 +39,11 @@ Gdy GPS zamilknie na kilkanaście sekund, kokpit pokazuje baner „GPS: brak syg
 
 Automat patrzy na kolejne odczyty GPS i odrzuca te, które nie zasługują na zaufanie (zła dokładność, nieprawdopodobny skok pozycji). Kołowanie rozpoznaje po tym, że samolot oddalił się od miejsca postoju o ponad 25 metrów. Start wymaga prędkości około 50 węzłów bez hamowania albo wzniesienia ponad 50 stóp nad poziom lotniska, utrzymanych przez kilka sekund; lądowanie - jednocześnie małej prędkości i wysokości blisko ziemi, poza ciasnym zakrętem, a w dniu skokowym dodatkowo w pobliżu pola. Poziom lotniska aplikacja bierze z wysokości GPS w chwili uruchomienia silnika, nie z mapy - dzięki temu błąd odbiornika skraca się w rachunku. Do rejestru trafia nie chwila potwierdzenia, lecz odszukana wstecz chwila oderwania albo przyziemienia; po każdym wykryciu automat na chwilę ślepnie, żeby dobieg nie udawał rozbiegu. Progi i pełny opis: [wykrywanie faz lotu](wykrywanie-faz-lotu).
 
-> **Dlaczego tak.** Zdarzenie zapisuje się dopiero po odliczeniu, bo rejestru się nie kasuje - cofnięcie zapisu musiałoby być kolejną poprawką. Pięć sekund kosztuje mniej niż fałszywy start w dokumentach.
-
-> **Założenie.** Bez wiarygodnej wysokości automat woli zmilczeć lądowanie niż je zmyślić. Brakujące zdarzenie dopisuje pilot - przyciskiem w locie albo poprawką po zatrzymaniu silnika.
-
 ## Po zatrzymaniu silnika
 
 **STOP ENGINE** kończy bieg silnika i operację. Drugiego startu w tej operacji nie ma - kolejny lot to nowe przejęcie z ekranu Mój dzień. Na ziemi zostają: tankowanie, dolewka oleju, kafelek **Popraw dane operacji** (brakujące lądowanie, zły czas - zanim zatwierdzisz log) i główny przycisk **ZDAJ SAMOLOT** → [zdanie samolotu](zdanie-samolotu). Pod osią stoi stopka z sumami: blok, czas lotu, starty.
 
 @screen 04-cockpit-ground "Główny przycisk ZDAJ SAMOLOT"
-
-> **Dlaczego tak.** Operacja to dokładnie jeden bieg silnika. Każda jest domknięta odczytami z obu stron - przejęcia i zdania - więc rachunek paliwa i motogodzin ma zawsze pełne dane, a log zatwierdza się raz, przy zdaniu. Więcej: [model operacji](model-operacji).
 
 ## Z kokpitu nie ma wyjścia bokiem
 
@@ -60,6 +54,14 @@ Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Mój d
 ## Oś operacji
 
 Pod wskaźnikiem stoi oś zdarzeń tej operacji: przejęcie z odczytami, tankowania i dolewki oleju, uruchomienie, kołowanie, każdy start i lądowanie z czasem lotu, zrzuty, wyłączenie. To ta sama oś, którą zobaczysz później na [ekranie operacji](operacja-i-korekty) - kokpit dokłada tylko wiersz „na żywo" z bieżącym czasem.
+
+## Dlaczego tak to działa
+
+> **Dlaczego przyciski wymagają przytrzymania.** Zdarzenie zapisuje się dopiero po odliczeniu, bo rejestru się nie kasuje - cofnięcie zapisu musiałoby być kolejną poprawką. Pięć sekund kosztuje mniej niż fałszywy start w dokumentach.
+
+> **Dlaczego bez pewnej wysokości nie ma lądowania.** Automat woli przemilczeć lądowanie, niż je zmyślić. Brakujące zdarzenie dopisuje pilot - przyciskiem w locie albo poprawką po zatrzymaniu silnika.
+
+> **Dlaczego po zatrzymaniu silnika zostaje już tylko zdanie.** Operacja to dokładnie jeden bieg silnika. Każda jest domknięta odczytami z obu stron - przejęcia i zdania - więc rachunek paliwa i motogodzin ma zawsze pełne dane, a log zatwierdza się raz, przy zdaniu. Więcej: [model operacji](model-operacji).
 
 ## Częste problemy
 

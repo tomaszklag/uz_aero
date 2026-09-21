@@ -27,10 +27,6 @@ Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powó
 
 Google potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w klubie - czyli Twój kod pilota, rola i dostęp - powstaje dopiero w chwili zatwierdzenia; wcześniej Twoje zgłoszenie nie ma kodu pilota, nie stoi na liście członków i nie może niczego zapisać. Po zatwierdzeniu telefon dostaje profil pilota i od tej pory pracuje samodzielnie: PIN sprawdza na miejscu, a połączenie z klubem odnawia sobie w tle przy najbliższej sieci. Wygaśnięcie tego połączenia nigdy nie wylogowuje - aplikacja sama nie wyrzuca do ekranu logowania. Mechanizm w całości: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
 
-> **Dlaczego tak.** Rejestracja jest otwarta dla każdego, kto ma konto Google, ale bramką jest przyjęcie do klubu - klub zna swoich pilotów, a administrator nie musi nikomu przekazywać haseł ani ich resetować. Kod klubu otwiera drzwi do poczekalni; do klubu wpuszcza człowiek.
-
-> **Dlaczego tak.** Logowanie to jednorazowe zaufanie telefonowi i wymaga sieci; codzienne wejście nie może od niej zależeć, bo dzień lotny często zaczyna się bez zasięgu. Stąd PIN.
-
 ## Nie pamiętam hasła
 
 Na ekranie logowania hasłem wybierz **Nie pamiętam hasła**, podaj swój adres e-mail i tapnij **WYŚLIJ LINK**. Na skrzynkę przyjdzie list z linkiem ważnym godzinę. Otwórz go **na dowolnym urządzeniu** - także na własnym telefonie, na którym czytasz pocztę - ustaw hasło na stronie i wróć zalogować się tam, gdzie pracujesz.
@@ -41,7 +37,7 @@ Ta sama droga USTAWIA pierwsze hasło, jeśli go jeszcze nie masz, bo dotąd wch
 
 Aplikacja odpowiada zawsze tym samym zdaniem, niezależnie od tego, czy zna podany adres. Nie jest to wykręt: inna odpowiedź mówiłaby każdemu, kto zna ten ekran, czy dana osoba ma tu konto.
 
-> **Nie masz jeszcze konta?** Na ekranie logowania hasłem wybierz **Załóż konto**, podaj imię, nazwisko i adres. Konto powstanie w chwili, gdy ustawisz hasło z linku - adres jest wtedy potwierdzony samym kliknięciem. Potem zalogujesz się hasłem i aplikacja poprosi o kod klubu, jak każdego innego: **założenie konta nie omija decyzji administratora**.
+> **Wskazówka.** Nie masz jeszcze konta? Na ekranie logowania hasłem wybierz **Załóż konto**, podaj imię, nazwisko i adres. Konto powstanie w chwili, gdy ustawisz hasło z linku - adres jest wtedy potwierdzony samym kliknięciem. Potem zalogujesz się hasłem i aplikacja poprosi o kod klubu, jak każdego innego: **założenie konta nie omija decyzji administratora**.
 
 ## Nie pamiętam PIN-u
 
@@ -56,6 +52,12 @@ Wylogowanie jest w [ustawieniach](ustawienia), na samym końcu. Nie zadziała, d
 @screen 13-ustawienia "Sekcja konta w ustawieniach"
 
 > **Uwaga.** Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Nie prowadź jednego dnia lotnego na dwóch telefonach.
+
+## Dlaczego tak to działa
+
+> **Dlaczego samo konto Google nie wystarcza.** Rejestracja jest otwarta dla każdego, kto ma konto Google, ale bramką jest przyjęcie do klubu - klub zna swoich pilotów, a administrator nie musi nikomu przekazywać haseł ani ich resetować. Kod klubu otwiera drzwi do poczekalni; do klubu wpuszcza człowiek.
+
+> **Dlaczego codzienne wejście to PIN, a nie logowanie.** Logowanie to jednorazowe zaufanie telefonowi i wymaga sieci; codzienne wejście nie może od niej zależeć, bo dzień lotny często zaczyna się bez zasięgu. Stąd PIN.
 
 ## Częste problemy
 

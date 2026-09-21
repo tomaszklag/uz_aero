@@ -14,8 +14,6 @@ Data jest pierwszym pytaniem - kalendarz miesięczny ze skrótami **Wczoraj** i 
 
 Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu lotu. **Trasa jest tu wymagana**: przy skokach jedno lotnisko, przy pozostałych operacjach para skąd → dokąd. Klient i notatka są opcjonalne i mówi to oznaczenie przy ich nagłówkach.
 
-> **Dlaczego tak.** Przy rozpoczęciu lotu trasę wolno zostawić pustą, bo start silnika ma trwać sekundy. Wpis po fakcie opisuje lot, który **już się odbył** - „jeszcze nie wiem, dokąd" tu nie istnieje.
-
 @screen 15a-reczny-zadanie "Rodzaj operacji i lotniska"
 
 ## Krok 3 · przebieg operacji
@@ -30,8 +28,6 @@ Oś zaczyna się od dwóch pustych wierszy: **uruchomienie** i **wyłączenie** 
 @screen 15h-reczny-czasy-bez-biegu "Pusta oś przed godzinami biegu" | 15b-reczny-czasy "Loty i zrzuty na osi" | 15i-reczny-dodaj-lot "Dodanie lotu z kręgami"
 
 Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się zapisać - ekran tylko ostrzega. Tak samo dzień skokowy bez zrzutu: składu i wysokości wyniesienia nie odtworzy nikt poza pilotem, który leciał.
-
-> **Dlaczego tak.** Kręgi to jedna liczba, a nie pięć wymyślonych par godzin: rozdzielone na równe odcinki wyglądałyby na osi jak zapisane fakty. To świadoma cena - ten sam dzień zapisany automatem da pięć lotów, a skrótem jeden lot i pięć lądowań.
 
 ## Krok 4 · liczniki
 
@@ -59,9 +55,15 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 
 Wpis nie jest osobnym rodzajem dokumentu - aplikacja składa z niego dokładnie takie same zapisy, jakie powstałyby w kokpicie: przejęcie z odczytami, tankowanie, uruchomienie, każdy start i lądowanie, zrzuty, wyłączenie i zdanie samolotu. Cały przebieg sprawdzany jest **w całości przed zapisem** - albo zapisuje się wszystko, albo nic - i dlatego blokada mówi o problemie już w formularzu, zamiast odmówić po tapnięciu w **ZAPISZ LOT**. Ostrzeżenia liczą się bez sieci: kolizje z Twoimi własnymi operacjami biorą się z zapisu na telefonie, a łańcuch paliwa i licznika z kopii z ostatniego połączenia, z adnotacją o jej wieku. Połączenia potrzebuje jedno: podpowiedź „z poprzedniego lotu", bo pyta klub o sąsiada tej maszyny w tej konkretnej chwili. Gotowa operacja dostaje oznaczenie **RĘCZNIE** na kafelku i w nagłówku [ekranu operacji](operacja-i-korekty).
 
-> **Założenie.** Ostrzeżenia nigdy nie blokują zapisu. Pilot wpisujący lot z kartki tydzień później często ma dane niepełne, a lot z jedną niepewną liczbą jest wart więcej niż lot, którego w dokumentacji nie ma wcale.
-
 > **Uwaga.** Wstecz z pierwszego kroku przy wypełnionym formularzu pyta o rezygnację i czyści szkic; z kolejnych cofa o jeden krok. Przycisk sprzętowy i gest cofania robią to samo, co strzałka w nagłówku.
+
+## Dlaczego tak to działa
+
+> **Dlaczego tutaj trasa jest wymagana.** Przy rozpoczęciu lotu trasę wolno zostawić pustą, bo start silnika ma trwać sekundy. Wpis po fakcie opisuje lot, który **już się odbył** - „jeszcze nie wiem, dokąd" tu nie istnieje.
+
+> **Dlaczego kręgi to liczba, a nie osobne loty.** Kręgi to jedna liczba, a nie pięć wymyślonych par godzin: rozdzielone na równe odcinki wyglądałyby na osi jak zapisane fakty. To świadoma cena - ten sam dzień zapisany automatem da pięć lotów, a skrótem jeden lot i pięć lądowań.
+
+> **Dlaczego ostrzeżenia nie blokują zapisu.** Pilot wpisujący lot z kartki tydzień później często ma dane niepełne, a lot z jedną niepewną liczbą jest wart więcej niż lot, którego w dokumentacji nie ma wcale.
 
 ## Częste problemy
 

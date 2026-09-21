@@ -20,13 +20,9 @@ Pusty dzień pokazuje kartę „DZIŚ BEZ LOTÓW" i kreski zamiast sum - nigdy z
 
 Lista liczy się na telefonie, z lokalnego rejestru - ekran nigdy nie pyta o nią serwera, więc wygląda tak samo z zasięgiem i bez. Do dzisiejszej doby należą operacje, w których uruchomiono silnik między północą a północą UTC; operacja bez biegu silnika (zdanie ze zmienionym odczytem albo z dolewką) liczy się według godziny przejęcia. Numer na kafelku to kolejność uruchomień w Twojej dobie i ten sam numer stoi w sygnaturze - dlatego operacje numerują się po pilocie, nie po samolocie. Lista pomija operacje unieważnione i „puste" zdania bez lotu, w których nic się nie zmieniło. Po reinstalacji albo na nowym telefonie operacje wracają z serwera przy pierwszym połączeniu; do tego czasu ekran nie pisze „DZIŚ BEZ LOTÓW", żeby nie wyglądało to na utratę danych.
 
-> **Założenie.** Dzień pilota to lista operacji i nic ponadto. Niczego się nie otwiera ani nie zamyka - dzień zaczyna się pierwszą operacją, a zdanie samolotu go nie kończy: kolejna maszyna dopisze się do listy. Więcej: [model operacji](model-operacji).
-
 ## Doba liczy się w UTC
 
 Wszystkie czasy w Ninerdeck są w UTC - w logu operacji, przy startach i lądowaniach, na karcie dnia. Doba zaczyna się o północy UTC, a operacja należy do doby, w której uruchomiono silnik. Operacja z późnego wieczoru może więc stać na liście pod inną datą niż w kalendarzu na ścianie.
-
-> **Dlaczego tak.** Jedna godzina dla pilota, panelu i karty dnia - bez przeliczania stref i bez skoku przy zmianie czasu. Czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 
 ## Wskaźnik łączności
 
@@ -42,6 +38,12 @@ Tapnięcie oznaczenia otwiera okienko z kolejką, ostatnią próbą, ostatnią u
 ## Komunikaty od administratora
 
 Jeśli administrator zakończył albo unieważnił Twoją operację z panelu, na ekranie stoi bursztynowy baner: która operacja, z jakiego powodu i co stało się z Twoimi zapisami (np. „2 zapisy z tego telefonu do tej operacji nie wyjdą na serwer"). Znika po tapnięciu **ROZUMIEM**. Operacja zakończona przez administratora zostaje na liście z oznaczeniem; unieważniona znika z listy i z sum.
+
+## Dlaczego tak to działa
+
+> **Dlaczego dnia się nie otwiera ani nie zamyka.** Dzień pilota to lista operacji i nic ponadto: dzień zaczyna się pierwszą operacją, a zdanie samolotu go nie kończy: kolejna maszyna dopisze się do listy. Więcej: [model operacji](model-operacji).
+
+> **Dlaczego doba liczy się w UTC.** Jedna godzina dla pilota, panelu i karty dnia - bez przeliczania stref i bez skoku przy zmianie czasu. Czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 
 ## Częste problemy
 

@@ -8,8 +8,6 @@ Operacja zaczyna się przejęciem samolotu (ROZPOCZNIJ LOT z odczytami paliwa, m
 
 @screen 02a-preflight "Odczyty przy przejęciu" | 05-cockpit-running "Bieg silnika w kokpicie" | 09b-zdaj-samolot "Odczyty przy zdaniu"
 
-> **Założenie.** Operacja jest jednostką wszystkiego: zapisu, zatwierdzenia (zdanie), korekty (24 godziny od zdania), rozliczenia paliwa i motogodzin oraz wiersza w dzienniku klubu. Każda ma odczyty z obu stron, więc [łańcuch odczytów](lancuch-odczytow) i [norma zużycia](norma-zuzycia) mają z czego liczyć.
-
 ## Lot to odcinek od startu do lądowania
 
 W jednej operacji może być wiele lotów: aplikacja wykrywa je z GPS, a każdy krąg z touch and go daje własną parę start → lądowanie. We wpisie lotu po fakcie kręgi podaje się liczbą przy lądowaniu. Trójka **Loty · Blok · Lot** na kafelku to liczba lotów, czas blokowy (od uruchomienia do wyłączenia silnika) i czas lotu (suma czasu w powietrzu).
@@ -22,15 +20,11 @@ Po zatrzymaniu silnika głównym przyciskiem kokpitu staje się **ZDAJ SAMOLOT**
 
 @screen 04-cockpit-ground "Główny przycisk po zatrzymaniu silnika"
 
-> **Dlaczego tak.** Dzień skokowy to jeden bieg silnika z 8–12 lotami, czyli jedno przejęcie i jeden odczyt na końcu - nikt nie chodzi do licznika po każdym wyniesieniu. Drugi start w tej samej operacji rozbiłby ją na cykle bez odczytów pomiędzy, a odczyt na obu końcach każdej operacji daje ciągłość liczników i uczciwy rachunek zużycia.
-
 ## Doba pilota w UTC
 
 Do pilota w danej dobie UTC przypisana jest lista operacji - i nic ponadto. Operacje na różnych maszynach leżą na jednej liście Mój dzień w kolejności czasu, a sumy doby to ta sama trójka. Operacja należy do doby, w której uruchomiono silnik (zapis bez biegu - do doby przejęcia), więc operacja z późnego wieczoru może stać pod inną datą niż w kalendarzu na ścianie. Po północy UTC operacje przechodzą do [poprzednich dni](poprzednie-dni).
 
 @screen 01-moj-dzien "Lista operacji jednej doby" | 12-historia "Operacje spoza dzisiejszej doby"
-
-> **Dlaczego nie ma „dnia służby".** Czas od meldunku do zamknięcia niczego nie mierzył, a wymagał deklaracji godziny, przycisku „Zamknij dzień" i osobnych reguł. Dzień zaczyna się pierwszą operacją i niczym się nie domyka; zdanie samolotu nie kończy dnia.
 
 ## Sygnatura operacji
 
@@ -58,5 +52,13 @@ Gdy silnik nie ruszył (pogoda, usterka, próba), samolot zdaje się w wariancie
 Zdanie samolotu zatwierdza log operacji - niczego nie potwierdza się drugi raz. Zapis czeka w kolejce wysyłki i wychodzi, gdy tylko jest sieć; w panelu operacja pojawia się w [dzienniku](panel-dziennik): flota → maszyna → operacja z osią zdarzeń.
 
 Po stronie klubu składa się też **karta dnia maszyny** - dokument jednej doby jednego samolotu, np. `2026-09-05_SP-AXA`. Operacje są jej wierszami (zmiany `S1`, `S2`… z kolumną Zadanie), dalej idą tabele lotów, paliwa, motogodzin i zrzutów. Kartę wyzwala zdanie i przebudowuje się ją przy każdym kolejnym zdaniu tej maszyny w tej dobie; operacja niezdana stoi w niej jako „w toku". Sygnatury w karcie nie ma: karta numeruje zmiany w dobie samolotu, sygnatura - operacje w dobie pilota.
+
+## Dlaczego tak to działa
+
+> **Dlaczego wszystko liczy się na operację.** Operacja jest jednostką wszystkiego: zapisu, zatwierdzenia (zdanie), korekty (24 godziny od zdania), rozliczenia paliwa i motogodzin oraz wiersza w dzienniku klubu. Każda ma odczyty z obu stron, więc [łańcuch odczytów](lancuch-odczytow) i [norma zużycia](norma-zuzycia) mają z czego liczyć.
+
+> **Dlaczego po zatrzymaniu silnika nie ma drugiego startu.** Dzień skokowy to jeden bieg silnika z 8–12 lotami, czyli jedno przejęcie i jeden odczyt na końcu - nikt nie chodzi do licznika po każdym wyniesieniu. Drugi start w tej samej operacji rozbiłby ją na cykle bez odczytów pomiędzy, a odczyt na obu końcach każdej operacji daje ciągłość liczników i uczciwy rachunek zużycia.
+
+> **Dlaczego nie ma „dnia służby".** Czas od meldunku do zamknięcia niczego nie mierzył, a wymagał deklaracji godziny, przycisku „Zamknij dzień" i osobnych reguł. Dzień zaczyna się pierwszą operacją i niczym się nie domyka; zdanie samolotu nie kończy dnia.
 
 > **Dlaczego karta jest dobą samolotu, a nie operacją.** Klub czyta dzień per samolot, nie per zmianę pilota - w typowym dniu skokowym jedną maszyną lata dwóch pilotów. Operacje unieważnione i puste do karty nie wchodzą.

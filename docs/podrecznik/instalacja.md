@@ -19,8 +19,6 @@
 
 @screen 05g-cockpit-no-gps "Kokpit bez sygnału GPS" | 05f-zdarzenie-reczne "Ręczny zapis startu"
 
-> **Dlaczego tak.** Aplikacja nie prosi o dostęp do lokalizacji „w tle". Zapis przy wygaszonym ekranie utrzymuje właśnie to widoczne powiadomienie - pilot ma widzieć, że telefon nagrywa, a nie domyślać się tego. Nagrywanie w tle działa wyłącznie w czasie pracy silnika; po jego zatrzymaniu powiadomienie gaśnie samo.
-
 ## Aktualizacja
 
 Aktualizacja to instalacja nowego pliku z tej samej [strony pobierania](~/pobierz/) - na istniejącą aplikację, bez odinstalowywania. Dane na telefonie zostają: profil, PIN, zapis operacji i kolejka wysyłki. O nowych wersjach informuje strona [wydania i zmiany](~/wydania/); tam też stoi, kiedy aktualizacja wymaga czegoś więcej, na przykład ponownego zalogowania. Wersję, którą masz, podaje sekcja „O aplikacji" w [ustawieniach](ustawienia).
@@ -41,7 +39,11 @@ Aplikacja trzyma na telefonie własny zapis Twoich operacji i wysyła go do klub
 - Zgoda na dostęp do lokalizacji i na powiadomienia.
 - Internet przy pierwszym logowaniu i do wysyłki danych - nie w locie.
 
-> **Założenie.** Brak GPS nie blokuje pracy: kokpit ma przyciski ręczne do startu i lądowania, a lot można też [wpisać po fakcie](wpis-lotu-po-fakcie). Bez GPS nie powstanie tylko ślad na mapie i trzeba samemu zapisać starty i lądowania.
+## Dlaczego tak to działa
+
+> **Dlaczego aplikacja nie prosi o lokalizację „w tle".** Zapis przy wygaszonym ekranie utrzymuje właśnie to widoczne powiadomienie - pilot ma widzieć, że telefon nagrywa, a nie domyślać się tego. Nagrywanie w tle działa wyłącznie w czasie pracy silnika; po jego zatrzymaniu powiadomienie gaśnie samo.
+
+> **Dlaczego brak GPS nie zatrzymuje lotu.** Brak GPS nie blokuje pracy: kokpit ma przyciski ręczne do startu i lądowania, a lot można też [wpisać po fakcie](wpis-lotu-po-fakcie). Bez GPS nie powstanie tylko ślad na mapie i trzeba samemu zapisać starty i lądowania.
 
 ## Częste problemy
 

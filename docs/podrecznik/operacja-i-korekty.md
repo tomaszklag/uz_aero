@@ -13,14 +13,14 @@ Nagłówek nosi **sygnaturę** operacji, np. `SP-AXA/2026-09-05/TMK/1` - znak sa
 
 ## Co zawiera
 
-- **Baner okna korekty** na samej górze: do zdania samolotu poprawiasz bez limitu, po zdaniu masz 24 godziny (z podaną godziną, do której), a po oknie stoi tu bursztynowa informacja, że korektę wprowadza już administrator.
+- **Baner z czasem na poprawki** na samej górze: do zdania samolotu poprawiasz bez limitu, po zdaniu masz 24 godziny (z podaną godziną, do której), a po terminie stoi tu bursztynowa informacja, że korektę wprowadza już administrator.
 - **Przebieg operacji** - miniatura śladu (wejście w [pełny ślad](slad-gps)) i pod nią oś zdarzeń: przejęcie z odczytami paliwa, licznika i oleju, tankowania i dolewki oleju, uruchomienie, kołowanie, każdy start i lądowanie z czasem lotu, zrzuty, wyłączenie, zdanie. Stopka sumuje blok, czas lotu, starty i podaje lotnisko.
 - **Paliwo, Motogodziny, Olej** - rachunek operacji: odczyt przy przejęciu, dolane, odczyt przy zdaniu, zużycie. Oznaczenie werdyktu mówi, czy zużycie mieści się w [normie maszyny](norma-zuzycia); tapnięcie otwiera okienko „jak to policzone". Olej jest bez werdyktu - mierzy się go od pomiaru do pomiaru, więc zużycia jednej operacji nie da się policzyć.
 - **Zrzuty** (dzień skokowy) - wyniesienia i liczba skoczków, typy skoków, średnia wysokość i klient.
 - **Załoga** - dowódca i drugi pilot.
 - **Notatki** - notatka z zadania i uwagi wpisów po fakcie; karta istnieje tylko wtedy, gdy coś w niej jest.
 
-## Okno korekty: 24 godziny od zdania
+## Czas na poprawki: 24 godziny od zdania
 
 Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz osi staje się miejscem do tapnięcia z ołówkiem, na końcu osi dochodzi **DODAJ WPIS**, a na górze - wykryte niespójności („Lot 2 nie ma lądowania", „Zrzut zapisany na ziemi") z podpowiedzią, czym je naprawić. Ostrzegają, nigdy nie blokują. Wyjście z trybu to **ZAKOŃCZ EDYCJĘ**.
 
@@ -42,7 +42,7 @@ Powód korekty jest opcjonalny, ale to jedyne, z czego administrator dowie się,
 
 ## Historia zmian
 
-Poprawiona wartość nosi oznaczenie **popr.** - w obu trybach, także w podglądzie po oknie. Tapnięcie otwiera historię: kiedy, co było i co jest, kto zmienił (Ty albo administrator) i z jakim powodem. Zapis się dopisuje, nie nadpisuje - pierwotna wartość zostaje w dokumentacji klubu.
+Poprawiona wartość nosi oznaczenie **popr.** - w obu trybach, także w podglądzie po terminie. Tapnięcie otwiera historię: kiedy, co było i co jest, kto zmienił (Ty albo administrator) i z jakim powodem. Zapis się dopisuje, nie nadpisuje - pierwotna wartość zostaje w dokumentacji klubu.
 
 @screen 10i-historia-zmian "Kolejne wersje wartości" | 10k-korekta-notatki "Notatka z wejściem w historię"
 
@@ -56,9 +56,11 @@ Na samym dole trybu edycji, za wszystkim, stoi obramowany czerwony **USUŃ CAŁY
 
 Ekran nie przechowuje żadnych liczb - przelicza je za każdym razem z zapisu na telefonie, dlatego działa bez sieci i pokazuje skutek poprawki natychmiast. Korekta nie zmienia istniejącego wpisu: dopisuje obok niego nowy, z autorem, godziną i powodem, a ekran pokazuje wartość aktualną. Twarde reguły obowiązują tu tak samo, jak w kokpicie - wyłączenie przed uruchomieniem, cofnięty licznik czy paliwo, którego przybyło bez dolewki, są odmawiane z powodem przy przycisku. Wszystko, co jest tylko oceną danych - werdykt normy, rozjazd z sąsiednią operacją - ostrzega. Decyzje administratora (zakończenie operacji, unieważnienie wpisu) wracają na telefon przy najbliższym połączeniu i widać je na tym samym ekranie. Mechanizm w całości: [korekty i rejestr](korekty-i-rejestr).
 
-> **Dlaczego tak.** Okno liczy się od zdania samolotu, bo to ono zatwierdza log operacji. Z tego samego powodu godziny zdania nie da się poprawić - przesuwałaby własny termin - a samego zdania unieważnić: rozbiłoby operację w pół i zabrało następnemu pilotowi przekazanie.
+## Dlaczego tak to działa
 
-> **Założenie.** W trybie odczytu na osi nie ma ani jednego ołówka. Korekta ma jedne drzwi - **EDYTUJ DANE** - a kilkanaście identycznych celów w jednej kolumnie czytałoby się jak szum. Jedynym miejscem do tapnięcia w tym trybie jest oznaczenie **popr.**, bo historia zmian niczego nie zapisuje.
+> **Dlaczego czas na poprawki liczy się od zdania.** Bo to zdanie samolotu zatwierdza log operacji. Z tego samego powodu godziny zdania nie da się poprawić - przesuwałaby własny termin - a samego zdania unieważnić: rozbiłoby operację w pół i zabrało następnemu pilotowi przekazanie.
+
+> **Dlaczego korekta ma jedne drzwi.** W trybie odczytu na osi nie ma ani jednego ołówka. Korekta ma jedne drzwi - **EDYTUJ DANE** - a kilkanaście identycznych celów w jednej kolumnie czytałoby się jak szum. Jedynym miejscem do tapnięcia w tym trybie jest oznaczenie **popr.**, bo historia zmian niczego nie zapisuje.
 
 ## Częste problemy
 

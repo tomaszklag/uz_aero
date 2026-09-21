@@ -32,8 +32,6 @@ Wysokość z GPS w czasie, w stopach, z przerwami na ziemi między lotami. Jeden
 
 @screen 14d-slad-kursor "Kursor na profilu wysokości"
 
-> **Dlaczego tak.** Kursor prowadzi się wyłącznie na profilu, bo pytanie „co się działo o tej godzinie" ma sens tylko na osi czasu. Mapa osi czasu nie ma: nad polem skoków ten sam punkt trasy to pięć różnych przelotów, więc dotknięcie mapy musiałoby zgadywać, o który chodzi.
-
 ## Statystyki
 
 Pod wykresami, z zapisu GPS - każdy blok gaśnie osobno, gdy nie ma z czego go policzyć:
@@ -60,9 +58,13 @@ Zamiast pustej mapy ekran pokazuje wtedy **co mimo wszystko wiadomo o operacji**
 
 Telefon nagrywa pozycję co sekundę przez cały bieg silnika - także przy wygaszonym ekranie, dlatego Android pokazuje wtedy powiadomienie „Ninerdeck - rejestracja lotu". Po zakończeniu nagranie wychodzi do klubu na końcu najbliższej wysyłki, a telefon kasuje swoją kopię. Ekran śladu pobiera więc gotową geometrię z serwera - i to jedyne miejsce w aplikacji, które do działania potrzebuje sieci. Z serwera przychodzi sam rysunek: linię, profil i statystyki. Rejestracja, loty, czasy i rozliczenie liczą się dalej z zapisu na telefonie, dlatego stan „bez zasięgu" pokazuje komplet godzin i mówi wprost, że brakuje samego rysunku. Trasa jest przed wysłaniem upraszczana, ale statystyki liczą się przed uproszczeniem - żeby „największe wznoszenie" nie zależało od dokładności rysowania.
 
-> **Dlaczego tak.** Ślad jest jedynym świadomym wyjątkiem od zasady „wszystko działa bez sieci", bo jest materiałem do oglądania po locie, a nie przyrządem w locie. Nagranie trzymane na telefonie znikałoby przy reinstalacji i nie byłoby go na nowym telefonie; oddane klubowi zostaje na stałe.
+## Dlaczego tak to działa
 
-> **Założenie.** Ślad należy do **operacji**, nie do pojedynczego lotu: zapis powstaje w jednym ciągu, od uruchomienia do zatrzymania silnika, a loty są jego odcinkami. Dlatego jeden ekran pokazuje wszystkie starty i lądowania jednego biegu.
+> **Dlaczego kursor działa tylko na profilu wysokości.** Kursor prowadzi się wyłącznie na profilu, bo pytanie „co się działo o tej godzinie" ma sens tylko na osi czasu. Mapa osi czasu nie ma: nad polem skoków ten sam punkt trasy to pięć różnych przelotów, więc dotknięcie mapy musiałoby zgadywać, o który chodzi.
+
+> **Dlaczego akurat ślad wymaga sieci.** Ślad jest jedynym świadomym wyjątkiem od zasady „wszystko działa bez sieci", bo jest materiałem do oglądania po locie, a nie przyrządem w locie. Nagranie trzymane na telefonie znikałoby przy reinstalacji i nie byłoby go na nowym telefonie; oddane klubowi zostaje na stałe.
+
+> **Dlaczego ślad obejmuje całą operację, a nie jeden lot.** Ślad należy do **operacji**, nie do pojedynczego lotu: zapis powstaje w jednym ciągu, od uruchomienia do zatrzymania silnika, a loty są jego odcinkami. Dlatego jeden ekran pokazuje wszystkie starty i lądowania jednego biegu.
 
 ## Częste problemy
 

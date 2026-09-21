@@ -8,11 +8,7 @@
 
 **Z dokumentacji jednostki.** W karcie samolotu w panelu administrator wpisuje zużycie paliwa i oleju w litrach na godzinę pracy silnika. Ta norma działa od pierwszego lotu. Jej pasmo jest **zadeklarowane** - ±15% wokół wartości - a nie zmierzone: instrukcja podaje punkt, nie rozrzut.
 
-> **Dlaczego ±15%.** Tyle mniej więcej dzieli spalanie w przelocie od spalania w dniu z długim kołowaniem, a norma z dokumentacji nie rozdziela faz. Węższe pasmo zapalałoby werdykt przy każdej operacji o innej mieszance ziemi i powietrza - mówiłoby o zadaniu, nie o maszynie.
-
 **Z lotów tej maszyny.** Odcinki między kolejnymi odczytami paliwa z ostatnich 90 dni składają się w model z osobną stawką w powietrzu i na ziemi. Model publikuje się dopiero przy dostatecznej liczbie odcinków i godzin pracy silnika - poniżej progu nie ma stawki „wstępnej", bo liczba wygląda na pomiar, a nim nie jest. Gdy dane nie rozdzielają faz (dzień skokowy ma zawsze tę samą proporcję), zostaje jedna stawka na godzinę pracy silnika. Wyliczona norma **wygrywa** z wpisaną; dokumentacja zostaje wartością odniesienia.
-
-> **Założenie.** Model opisuje ten egzemplarz, dokumentacja - typ. Pasmo modelu to zakres, w którym mieści się 80% rzeczywistych operacji tej maszyny, z podłogą z podziałki przyrządu: 6 litrów i 0,1 motogodziny.
 
 ## Motogodziny mają własny przelicznik
 
@@ -21,8 +17,6 @@ Przyrost licznika nie równa się czasowi blokowemu i nie ma prawa się równać
 ## Oczekiwanie liczy się per operacja
 
 Paliwo i motogodziny liczą się tym samym równaniem: **stawka w locie × czas lotu + stawka na ziemi × czas na ziemi**. Okienko pokazuje to wprost: „1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L".
-
-> **Dlaczego per operacja.** Porównanie średniego zużycia na godzinę z pasmem maszyny dawało „poniżej normy" każdej operacji z długim kołowaniem - bez żadnego powodu poza proporcją ziemi do powietrza. Pasmo liczy się dla tej mieszanki faz, nie dla średniej operacji samolotu.
 
 ## Werdykt i okienko
 
@@ -44,8 +38,6 @@ Ta sama norma daje szacunki tam, gdzie odczytu jeszcze nie ma:
 
 @screen 05-cockpit-running "Szacunek paliwa w kokpicie" | 06-tankowanie "Szacunek przed tankowaniem" | 02b-preflight-paliwo "Zielone ogniwo przy przejęciu"
 
-> **Założenie.** Szacunek nigdy nie wchodzi do pola sam - wpisujesz to, co pokazuje paliwomierz. Podstawiona liczba dałaby się zatwierdzić bez patrzenia na przyrząd.
-
 ## Olej: oczekiwanie bez werdyktu
 
 Norma oleju daje oczekiwanie **między pomiarami**: okienko pomiaru przy przejęciu pokazuje „Ostatni pomiar", „Latano · 4:00 MH" i „na bagnecie oczekuj ≈ 10,1 L", a kokpit „W silniku około 9,1 L". Werdyktu per operacja nie ma - oleju nie mierzy się przy zdaniu, więc zużycia jednej operacji nie da się policzyć; karta Olej na ekranie operacji to rachunek bez oznaczenia.
@@ -57,3 +49,13 @@ Norma oleju daje oczekiwanie **między pomiarami**: okienko pomiaru przy przeję
 Progi modelu - długość odcinka, liczba odcinków, szerokość pasm - wyszły z rozumowania o dokładności paliwomierza, nie z danych. Kalibruje się je na prawdziwej historii z testów, nie w dyskusji. Pierwsze przebiegi pokazały, że rozdział ziemia/powietrze wychodzi tylko na maszynie o różnorodnym ruchu (egzaminy, przeloty, próby silnika), a nigdy na samych skokach.
 
 > **Wskazówka.** Werdykt poza pasmem to pytanie, nie zarzut: sprawdź odczyt, dolewkę poza aplikacją i czas kołowania. Dziennik klubu pokazuje wyłącznie odczyty - szacunki i werdykty zostają w aplikacji.
+
+## Dlaczego tak to działa
+
+> **Dlaczego ±15%.** Tyle mniej więcej dzieli spalanie w przelocie od spalania w dniu z długim kołowaniem, a norma z dokumentacji nie rozdziela faz. Węższe pasmo zapalałoby werdykt przy każdej operacji o innej mieszance ziemi i powietrza - mówiłoby o zadaniu, nie o maszynie.
+
+> **Dlaczego norma z lotów wygrywa z dokumentacją.** Model opisuje ten egzemplarz, dokumentacja - typ. Pasmo modelu to zakres, w którym mieści się 80% rzeczywistych operacji tej maszyny, z podłogą z podziałki przyrządu: 6 litrów i 0,1 motogodziny.
+
+> **Dlaczego per operacja.** Porównanie średniego zużycia na godzinę z pasmem maszyny dawało „poniżej normy" każdej operacji z długim kołowaniem - bez żadnego powodu poza proporcją ziemi do powietrza. Pasmo liczy się dla tej mieszanki faz, nie dla średniej operacji samolotu.
+
+> **Dlaczego szacunek nie wpisuje się sam.** Szacunek nigdy nie wchodzi do pola sam - wpisujesz to, co pokazuje paliwomierz. Podstawiona liczba dałaby się zatwierdzić bez patrzenia na przyrząd.

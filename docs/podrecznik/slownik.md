@@ -74,10 +74,10 @@
 
 - **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/TMK/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
 - **Kod pilota** - krótki kod (np. `TMK`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
-- **Okno korekty** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
+- **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
 - **Korekta** - poprawka godziny, odczytu, składu zrzutu, notatki albo drugiego pilota, z opcjonalnym powodem. Nie nadpisuje historii - dopisuje się do niej.
 - **Oznaczenie „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.
-- **Podgląd po oknie** - ten sam ekran operacji po upływie 24 godzin: bez edycji, ale z pełnym rachunkiem, śladem i historią zmian. Zamknięte okno odbiera prawo do zmiany danych, nie do ich zrozumienia.
+- **Podgląd po terminie** - ten sam ekran operacji po upływie 24 godzin: bez edycji, ale z pełnym rachunkiem, śladem i historią zmian. Upływ terminu odbiera prawo do zmiany danych, nie do ich zrozumienia.
 - **Unieważnienie** - wycofanie całej operacji z list i sum; zapis zostaje razem z powodem. Robi to pilot w oknie korekty albo administrator z panelu, gdzie powód jest wymagany.
 - **Zakończenie administracyjne** - zakończenie z panelu operacji, której pilot nie zdał: z powodem, bez odczytów. Zwalnia maszynę i liczy się do nalotu, ale nie jest ogniwem łańcucha odczytów.
 - **Ślad** - zapis GPS całej operacji: mapa z kołowaniem i lotami, profil wysokości i statystyki. Wraca z serwera, więc wymaga zasięgu.
