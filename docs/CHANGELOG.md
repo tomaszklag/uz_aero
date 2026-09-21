@@ -35,6 +35,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 3.0.0 (build 5) · 3 października 2026
+
 > Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.
 
 ### Nowości
@@ -217,18 +219,6 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ## Plan wydań
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
-
-### 3.0.0 · planowane na 3 października 2026
-
-> Rezerwacja samolotu i kalendarz floty: kto ma którą maszynę i kiedy - widoczne dla całego klubu.
-
-- [x] Kalendarz floty w panelu klubu: maszyny i dni obok siebie, w widoku na tydzień, dwa tygodnie albo miesiąc
-- [x] Wyłączenie maszyny z użytku na czas przeglądu albo usterki - znika wtedy pilotom z kalendarza
-- [x] Rezerwacja za pilota z panelu; terminy, które kolidują z wpisywanym, widać jeszcze przed zapisem
-- [x] Nowy ekran startowy aplikacji i zakładki Pulpit · Kalendarz · Historia
-- [x] Podpowiedź wolnych terminów, liczona od wschodu do zachodu słońca nad lotniskiem klubu
-- [x] Kalendarz floty i rezerwacja w aplikacji pilota
-- [x] Wejście w lot z rezerwacji: dane z niej wypełniają kroki przejęcia. Rezerwacja niczego nie warunkuje - polecieć można bez niej, także bez zasięgu
 
 ### 3.1.0 · po wydaniu 3.0.0
 
