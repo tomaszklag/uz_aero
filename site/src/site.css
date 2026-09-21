@@ -158,28 +158,18 @@ h1 .grad { background: linear-gradient(92deg, #2ECC71 0%, #3DDC82 45%, #3498DB 1
 .modules li:last-child { border-bottom: 1px solid var(--border); }
 .modules b { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: 2px; color: var(--green); padding-top: 3px; }
 .modules span { color: var(--text-secondary); font-size: 14.5px; }
-.browser-wrap { perspective: 1600px; min-width: 0; }
-.browser { background: #0B0B0B; border: 1px solid var(--border-strong); border-radius: 18px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.03); transform: rotateY(-7deg) rotateX(3deg); transition: transform .5s; }
-.browser-wrap:hover .browser { transform: none; }
-.chrome { display: flex; align-items: center; gap: 7px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: #121212; }
-.chrome i { width: 10px; height: 10px; border-radius: 50%; background: #2A2A2A; display: inline-block; }
-.chrome .url { margin-left: 10px; flex: 1; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); background: #0D0D0D; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
-.pbar { display: flex; align-items: center; gap: 24px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
-.pbar .pname { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; }
-.pbar .pname em { color: var(--green); font-style: normal; }
-.pbar .tabs { display: flex; gap: 18px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px; color: var(--text-muted); }
-.pbar .tabs .on { color: var(--text-primary); box-shadow: inset 0 -2px 0 var(--green); padding-bottom: 4px; }
-.pbar .who { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
-.ptitle { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 18px 6px; }
-.ptitle b { font-family: var(--font-display); font-weight: 400; font-size: 22px; letter-spacing: 1.5px; }
-.ptitle span { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
-table.log { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; }
-table.log th { text-align: left; color: var(--text-muted); font-weight: 500; letter-spacing: 1px; font-size: 10px; padding: 10px 14px 8px; text-transform: uppercase; }
-table.log td { padding: 10px 14px; border-top: 1px solid var(--border); color: var(--text-primary); white-space: nowrap; }
-table.log td.dim { color: var(--text-muted); }
-table.log td.g { color: var(--green); }
-table.log td.a { color: var(--amber); }
-table.log tr:last-child td { padding-bottom: 16px; }
+.browser-wrap { display: grid; justify-items: center; gap: 14px; min-width: 0; }
+/* Żywa makieta panelu (`design/panel/` przez generator). Zastąpiła podgląd pisany
+   ręcznie w HTML landingu: tamten rozjechał się z panelem przy stylu lekkim i nikt
+   tego nie zauważył, bo kopia nie krzyczy - po prostu pokazuje nieprawdę. Skala jak
+   w podręczniku (`.panel-frame`), bo to ta sama makieta w tej samej ramie.
+   BEZ przechyłu 3D, który miał tu poprzednik: `transform` na przodku przestaje malować
+   osadzoną ramkę - efekt jest czarny prostokąt zamiast panelu, i to tylko czasem. */
+.pshot { --ps: 0.42; width: calc(1440px * var(--ps)); height: calc(900px * var(--ps)); border-radius: 18px; overflow: hidden; background: #0B0B0B; box-shadow: 0 40px 100px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05); }
+.pshot iframe { width: 1440px; height: 900px; border: 0; display: block; transform: scale(var(--ps)); transform-origin: top left; pointer-events: none; background: transparent; }
+@media (max-width: 1240px) { .pshot { --ps: 0.36; } }
+@media (max-width: 980px) { .pshot { --ps: 0.5; } }
+@media (max-width: 560px) { .pshot { --ps: 0.3; } }
 
 /* dostęp - stepper */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; position: relative; margin-top: 44px; }
@@ -205,10 +195,6 @@ table.log tr:last-child td { padding-bottom: 16px; }
 .who-pilot { margin-top: 16px; padding: 14px 18px; border-radius: 14px; border: 1px dashed var(--border-strong); color: var(--text-secondary); font-size: 15px; }
 .who-pilot b { color: var(--text-primary); }
 .timeline.four { grid-template-columns: repeat(4, 1fr); }
-.know { list-style: none; margin-top: 28px; display: grid; grid-template-columns: auto 1fr 1fr 1fr; gap: 14px 22px; align-items: start; font-size: 14.5px; color: var(--text-secondary); }
-.know li:first-child { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); padding-top: 3px; }
-.know li:not(:first-child) { padding-left: 14px; border-left: 2px solid var(--green-border); }
-.pbar .who-badge { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
 
 /* CTA końcowe + stopka */
 .outro { margin-top: 90px; text-align: center; padding: 0 0 24px; }
