@@ -164,12 +164,15 @@ describe('paski zajętości', () => {
 });
 
 describe('napis i ton paska', () => {
-  it('WŁASNA rezerwacja niesie kod pilota', () => {
-    const g = grid({ bookings: [booking({ id: 'b1', aircraftId: 'a1', pilotId: 'ja' })] });
-    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'TMK', tone: 'mine' });
+  it('WŁASNA rezerwacja niesie skrócone nazwisko - jedna konwencja na całej osi', () => {
+    const g = grid({
+      bookings: [booking({ id: 'b1', aircraftId: 'a1', pilotId: 'ja' })],
+      nameOf: (id) => (id === 'ja' ? 'Tomasz Małkiewicz' : null),
+    });
+    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'T. Małkiewicz', tone: 'mine' });
   });
 
-  it('CUDZA niesie skrócone nazwisko - kodów kolegów nikt nie pamięta', () => {
+  it('CUDZA tak samo - kodów kolegów nikt nie pamięta', () => {
     const g = grid({ bookings: [booking({ id: 'b1', aircraftId: 'a1' })] });
     expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'J. Nowak', tone: 'other' });
   });
@@ -181,6 +184,14 @@ describe('napis i ton paska', () => {
       codeOf: (id) => (id === 'obcy' ? 'OBC' : null),
     });
     expect(g.rows[0]!.bars[0]!.label).toBe('OBC');
+  });
+
+  it('własny pasek bez nazwiska w cache schodzi do kodu, nie do identyfikatora', () => {
+    const g = grid({
+      bookings: [booking({ id: 'b1', aircraftId: 'a1', pilotId: 'ja' })],
+      nameOf: () => null,
+    });
+    expect(g.rows[0]!.bars[0]!.label).toBe('TMK');
   });
 
   it('wyłączenie z użytku niesie POWÓD, a bez niego nazwę stanu', () => {

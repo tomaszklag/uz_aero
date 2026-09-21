@@ -180,26 +180,27 @@ function bar(
 }
 
 /**
- * Napis na pasku.
+ * Napis na pasku: SKRÓCONE NAZWISKO, tak samo przy własnej rezerwacji jak przy cudzej
+ * (decyzja właściciela 2026-09-21 - odwraca makietę 21, która przy własnej rysowała kod).
  *
- * WŁASNA rezerwacja niesie KOD pilota, cudza - skrócone nazwisko, i to jest wierne
- * makiecie 21. Powód jest praktyczny: własne paski bywają wąskie (godzina to ~7%
- * szerokości ekranu), a kod jest najkrótszą nazwą, jaką aplikacja daje pilotowi -
- * tą samą, którą pisze w sygnaturze operacji i w składzie załogi. Przy cudzej
- * rezerwacji nazwisko odpowiada na pytanie „kogo zapytać o zamianę", a kod tego
- * nie robi: kodów kolegów nikt nie pamięta.
+ * Pierwsza wersja różnicowała: kod przy własnej, nazwisko przy cudzej. Rachunek za tym
+ * stał („kolor już mówi «twoja», a kod mieści się w wąskim pasku") i jest prawdziwy,
+ * ale W JEDNYM RZĘDZIE dawał obraz dwóch konwencji naraz - a oś czyta się poziomo,
+ * jednym spojrzeniem. Jedna konwencja waży więcej niż kilka znaków oszczędności,
+ * i jest to ta sama, którą wybrał grid kalendarza w panelu.
+ *
+ * Kod zostaje OSTATNIĄ DESKĄ RATUNKU dla pilota spoza cache’u floty - tam nazwisko
+ * nie istnieje, a surowy identyfikator na pasku byłby guidem na ekranie (issue #68).
  */
 function barLabel(booking: CalendarBooking, input: FleetGridInput): string {
   if (booking.kind === 'block') return booking.blockReason ?? 'Wyłączony z użytku';
 
-  if (booking.pilotId === input.pilotId) {
-    return input.codeOf(booking.pilotId) ?? 'Twoja';
-  }
-
   const name = input.nameOf(booking.pilotId);
   if (name != null) return shortName(name);
-  // Pilot spoza cache'u floty - kod jest wtedy jedyną nazwą, jaka została.
-  return input.codeOf(booking.pilotId) ?? 'Zajęte';
+
+  const code = input.codeOf(booking.pilotId);
+  if (code != null) return code;
+  return booking.pilotId === input.pilotId ? 'Twoja' : 'Zajęte';
 }
 
 function barTone(booking: CalendarBooking, pilotId: string): BarTone {

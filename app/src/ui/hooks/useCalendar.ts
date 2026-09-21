@@ -19,7 +19,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 
 import { useSessionStore } from '../store';
 
@@ -34,6 +34,18 @@ import { toCalendar, type CalendarData } from '../screens/logic/calendarData';
  * nieograniczony (P7) i wybiera się go kalendarzem w formularzu.
  */
 export const CALENDAR_DAYS = 14;
+
+/**
+ * Co ile ekran pyta ponownie, DOPÓKI NIE WIE (decyzja właściciela 2026-09-21).
+ *
+ * Przycisku ponowienia nie ma - makieta 21B go nie rysuje, a przy braku zasięgu
+ * i tak nic by nie zmienił. Zamiast niego kalendarz wraca SAM, dokładnie tak jak
+ * formularz przy pustej flocie na 02G: pilot ze wróconym zasięgiem nie ma się
+ * domyślać, że musi przeskoczyć zakładkę i wrócić.
+ *
+ * Minuta, nie puls: zajętość zmienia kolega przy innym telefonie, a nie ten pilot.
+ */
+const RETRY_MS = 60_000;
 
 const DAY_MS = 86_400_000;
 
@@ -52,6 +64,7 @@ export interface UseCalendar {
 
 export function useCalendar(): UseCalendar {
   const sync = useSessionStore((s) => s.sync);
+  const focused = useIsFocused();
   const [data, setData] = useState<CalendarData | null | undefined>(undefined);
   const alive = useRef(true);
   // Początek okna zapisany przy KAŻDYM pytaniu, nie przy pierwszym renderze: zakładka
@@ -95,6 +108,16 @@ export function useCalendar(): UseCalendar {
   }, [sync]);
 
   useFocusEffect(load);
+
+  // Ponawiamy WYŁĄCZNIE w stanie „nie wiem" i WYŁĄCZNIE na widocznej zakładce:
+  // `undefined` znaczy pytanie w toku, a ekran pod spodem nie ma komu odpowiadać.
+  // Po każdej nieudanej próbie `data` wraca na `null`, więc efekt startuje od nowa
+  // i odstęp liczy się OD KOŃCA próby - dwa żądania nie mają jak się nałożyć.
+  useEffect(() => {
+    if (!focused || data !== null) return;
+    const id = setInterval(load, RETRY_MS);
+    return () => clearInterval(id);
+  }, [focused, data, load]);
 
   return { data, reload: load };
 }
