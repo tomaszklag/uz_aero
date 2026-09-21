@@ -481,9 +481,25 @@ albo dłuższa (23 albo 25 godzin) - a offset per doba byłby w takim dniu KŁAM
 w którejś połowie, bo offsety są tam dwa. Liczy to `server/src/domain/clubTime.ts`
 (`Intl` na serwerze jest pełne), a testy stoją dokładnie na tych dwóch dniach.
 
-**Sonda stref (B0) zostaje mimo to warta uruchomienia**, ale przestała być warunkiem
-wstępnym epiku R-B: jej wynik rozstrzyga, czy telefon może formatować daty i nazwy
-miesięcy przez `Intl`, a nie kształt kontraktu kalendarza.
+**Sonda stref (B0/F0) przestała być warunkiem wstępnym epiku R-B**, a po domknięciu
+R-F nie rozstrzyga już niczego - i to jest fakt sprawdzalny w kodzie, nie domysł.
+
+Zostało jej jedno pytanie: czy telefon może formatować daty i nazwy miesięcy przez
+`Intl`. **Odpowiedź brzmi: nie ma to znaczenia, bo NIE FORMATUJE ICH PRZEZ `Intl`.**
+Sprawdzone 2026-09-21 na całym drzewie: `Intl.` nie pada w `app/src` ani
+w `packages/*/src` ANI RAZU poza samą sondą (`ui/screens/logic/timeZoneProbe.ts`).
+Dni tygodnia (`weekdayUtc`, `weekdayShortUtc`), nazwy miesięcy (`MONTHS_PL`,
+`MONTHS_PL_NOMINATIVE`) i wszystkie napisy dat liczą się z WŁASNYCH TABLIC
+w `@ninerdeck/format`, na `getUTC*` i milisekundach.
+
+Wariant awaryjny, który zadanie wymienia jako skutek wyniku negatywnego („własny
+formater w `@ninerdeck/format`"), jest więc tym, co już się wysyła - BEZWARUNKOWO.
+Żaden wynik sondy nie zmieni ani jednej linijki kodu.
+
+Uruchomienie sondy na dev buildzie zostaje warte zachodu z jednego powodu: jako
+ZAPIS, ile ICU ma Hermes w tym buildzie. Pierwszy kod, który sięgnie po `Intl`,
+będzie miał wtedy gotową odpowiedź zamiast zakładu - ale dzisiaj nic na nią nie
+czeka, a diagnostyka stoi w Ustawieniach (tylko dev build).
 
 ## 7. Sugestie slotów („jak w kinie")
 
