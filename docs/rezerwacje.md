@@ -544,9 +544,14 @@ w `booking/policy.ts` razem z resztą progów DO KALIBRACJI.
 
 Czego ta decyzja wymaga (zakres #158 i #159 rośnie):
 
-- **`organizations.home_icao`** - lotnisko macierzyste klubu, dziś nieistniejące.
-  Migracja 11, pole na karcie klubu w module Organizacje. Współrzędne przychodzą
-  z katalogu lotnisk (`packages/domain/src/airfields.ts`), więc klub podaje sam kod;
+- **`organizations.home_icao`** - lotnisko macierzyste klubu. Migracja 11 (R-B) oraz
+  **pole na karcie klubu w module Organizacje** (R-W, 2026-09-21 - do wydania 3.0.0
+  kolumna była WYŁĄCZNIE do odczytu, więc każdy klub siedział na oknie domyślnym,
+  choć produkt obiecywał wschód i zachód słońca). Współrzędne przychodzą z katalogu
+  lotnisk (`packages/domain/src/airfields.ts`), więc klub podaje sam kod, a **kod spoza
+  katalogu jest ODMOWĄ** (`400 invalid` z polem): wzorzec czterech liter przepuściłby
+  `ZZZZ`, a klub dostałby okno domyślne bez ani jednego słowa o tym, dlaczego. Puste
+  pole to co innego niż zły wpis - znaczy „wyczyść" i jest dozwolone;
 - **`packages/domain/src/booking/solar.ts`** - czysta funkcja liczącą wschód i zachód
   z szerokości, długości i daty (algorytm NOAA, ~60 linii, zero zależności). Precedens
   w tym pakiecie już jest: `geoid/` liczy undulację, `magneticDeclination.ts` deklinację -
@@ -631,7 +636,7 @@ jest na nią gotowy; do tego czasu kluby wskazują ludzi.
 
 Ekran startowy przestaje być „Mój dzień" (zgłoszenie #145). Dolny pasek zakładek
 (`@react-navigation/bottom-tabs` - czysty JS na `react-native-screens`, które już jest,
-więc zmiana jedzie OTA):
+więc warstwa natywna zostaje nietknięta; samo wydanie idzie mimo to nowym APK - §13 pkt 7):
 
 | Zakładka | Treść |
 | --- | --- |
@@ -897,10 +902,15 @@ Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zale
 4. **R-D - panel** (moduł Kalendarz, wyłączenia z użytku) - po R-B.
 5. **R-E - aplikacja: nawigacja** (zakładki, ekran startowy, kokpit nadal modalny) - zależy
    tylko od makiet, więc może iść równolegle z R-B/R-D.
-6. **R-F - aplikacja: kalendarz i rezerwacja** (cache SQLite 10, formularz, sugestie,
-   wejście w lot z rezerwacji) - po R-B, R-C i R-E.
-7. **R-W - wydanie 3.0.0**: podręcznik, changelog, migracja na staging, OTA (bez zmian
-   natywnych `@react-navigation/bottom-tabs` jedzie aktualizacją).
+6. **R-F - aplikacja: kalendarz i rezerwacja** (formularz, sugestie, wejście w lot
+   z rezerwacji) - po R-B, R-C i R-E. **Cache'u zajętości NIE MA**: §2.2 zdjęło go razem
+   z odczytem bez zasięgu, więc schemat SQLite telefonu zostaje na wersji 9.
+7. **R-W - wydanie 3.0.0**: podręcznik, changelog, migracja na staging, **nowy APK**
+   (decyzja właściciela 2026-09-21). Warstwa natywna się nie zmienia, więc aktualizacja
+   w tle byłaby technicznie możliwa - ale przy `runtimeVersion: appVersion` nie wolno
+   przy niej podnieść `version`, a bez podbicia telefon w „O aplikacji" i strona wydań
+   mówiłyby „2.1.0" o wersji z rezerwacjami. Numer wersji jest tym, co pilot podaje
+   w zgłoszeniu z terenu, a klub czyta na stronie - wygrywa z jedną reinstalacją.
 
 Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** (panel) i
 **R-I** (aplikacja) równolegle → **R-J** push razem z zadaniem właściciela (Firebase/EAS)

@@ -81,6 +81,28 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   dni, w widoku na tydzień, dwa tygodnie albo miesiąc. Administrator zarezerwuje termin za
   pilota i wyłączy maszynę z użytku na czas przeglądu albo usterki - wtedy znika ona pilotom
   z kalendarza. Zajętości, które kolidują z wpisywanym terminem, widać jeszcze przed zapisem.
+- **Karta klubu pyta o lotnisko macierzyste i strefę czasu.** Z lotniska liczy się doba
+  lotna kalendarza, ze strefy - godziny. Dopóki lotniska nie ma, kalendarz stoi na
+  06:00-21:00 i nic przez to nie przestaje działać; rezerwacja nie zależy od tego
+  ustawienia.
+
+### Dla testerów
+
+- **To wydanie wymaga zainstalowania nowego pliku ze [strony pobierania](../pobierz/).**
+  Aktualizacja w tle nie wystarczy, bo zmienia się numer wersji aplikacji - a to on wiąże
+  telefon z wydaniem. Dane z telefonu zostają na miejscu.
+- **Rezerwacja i kalendarz jako jedyne wymagają zasięgu.** Termin przydziela klub, więc
+  rozstrzyga go serwer - dwa telefony nie zapiszą się na tę samą maszynę i tę samą
+  godzinę. Reszta pracy w kabinie jest bez zmian: przejęcie, kokpit, zdanie samolotu
+  i wpis po fakcie nadal nie pytają o sieć.
+- **Kalendarz pokazuje godziny czasu klubu, nie UTC.** Log operacji zostaje w UTC -
+  zmieniła się wyłącznie siatka kalendarza, bo rezerwacja jest umową między ludźmi
+  o godzinie, a nie pomiarem.
+- **Zanim zaczniecie, wpiszcie lotnisko macierzyste na karcie klubu** - bez niego doba
+  lotna nie ma skąd wziąć wschodu i zachodu słońca.
+- Na co zwrócić uwagę: czy podpowiedzi terminów trafiają w to, jak naprawdę układacie
+  dzień; czy doba lotna nie jest za wąska dla lotów o zmierzchu; czy „ROZPOCZNIJ LOT"
+  z rezerwacji wypełnia to, czego się spodziewacie.
 
 ## 2.1.0 (build 4) · 18 września 2026
 

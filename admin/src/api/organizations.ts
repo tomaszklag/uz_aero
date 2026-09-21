@@ -16,6 +16,7 @@ import type {
   OrganizationChangeDto,
   OrganizationDetailDto,
   OrganizationDraftBody,
+  OrganizationPatchBody,
   OrganizationPageDto,
   PasswordLinkSentDto,
 } from './dto';
@@ -59,9 +60,16 @@ export function createOrganization(body: OrganizationDraftBody): Promise<Organiz
 }
 
 /** `PATCH` opisuje ZMIANĘ - dziś jest nią wyłącznie nazwa. Adresu się nie zmienia. */
+/**
+ * Zmiana karty klubu: nazwa i konfiguracja kalendarza.
+ *
+ * `homeIcao: null` znaczy „wyczyść", a POMINIĘCIE pola „nie ruszaj" - stąd typ
+ * z `?` i `| null` naraz. Zlanie ich w jedno odebrałoby klubowi możliwość cofnięcia
+ * konfiguracji, a nam - pewność, że zmiana nazwy nie kasuje lotniska.
+ */
 export function updateOrganization(
   id: string,
-  body: { name: string },
+  body: OrganizationPatchBody,
 ): Promise<OrganizationChangeDto> {
   return apiPatch<OrganizationChangeDto>(`/organizations/${encodeURIComponent(id)}`, body);
 }

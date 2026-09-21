@@ -34,6 +34,21 @@ export function conflictField(error: unknown): ConflictField | null {
 }
 
 /**
+ * Pole z wpisem, którego serwer NIE PRZYJMUJE (`400 invalid`); `null` = to nie ten
+ * przypadek.
+ *
+ * Osobno od `conflictField`, bo to są dwa różne zdania: przy `conflict` wartość jest
+ * poprawna i tylko zajęta przez kogoś innego, a tutaj nie da się jej przyjąć w ogóle
+ * (kod spoza katalogu lotnisk, strefa, której nie zna `Intl`). Zlanie ich w jedno dałoby
+ * formularzowi jeden komunikat na dwie różne sytuacje.
+ */
+export function invalidField(error: unknown): ConflictField | null {
+  if (!isHttpError(error)) return null;
+  if (error.status !== 400 || error.body.error !== 'invalid') return null;
+  return error.body.field ?? null;
+}
+
+/**
  * Powód odmowy reguły (`409 refused`); `null` = to nie ten przypadek.
  *
  * Zawężenie do `409 refused` jest tu WARUNKIEM POPRAWNOŚCI, nie ostrożnością: od 2.1.0

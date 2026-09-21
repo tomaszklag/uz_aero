@@ -81,5 +81,6 @@ Wszystko pozostałe działa jak zawsze: **lot rozpoczniesz, poprowadzisz i zdasz
 - **„ZAREZERWUJ" jest nieaktywne** → powód stoi w przycisku: wybierz rodzaj operacji, uzupełnij trasę, wskaż drugiego pilota albo podaj planowany czas lotu.
 - **Termin zajęto, choć przed chwilą był wolny** → ktoś zapisał go szybciej. Skrót w komunikacie prowadzi do najbliższego wolnego pasma tej samej długości.
 - **Na osi nie widzę swojego samolotu** → sprawdź filtr przy nagłówku doby; zawęża oś do wybranych maszyn. Maszyna wyłączona z użytku zostaje widoczna z powodem.
+- **Kalendarz kończy się o 21:00, choć w czerwcu jest jasno dłużej** → klub nie ma jeszcze wpisanego lotniska macierzystego, więc doba lotna nie ma skąd wziąć świtu i zmroku. Wpisuje je opiekun platformy na karcie klubu; do tego czasu siatka stoi na stałych godzinach i nic poza tym nie przestaje działać.
 - **Nie mogę przesunąć rezerwacji** → termin już trwa. Można go oddać, ale nie przenieść w przeszłość.
 - **Rezerwacja zniknęła, choć jej nie odwoływałem** → slot zwalnia się sam godzinę po terminie, jeśli nikt nie wziął maszyny. Zarezerwuj ponownie albo weź samolot i leć - rezerwacja nie jest do tego potrzebna.

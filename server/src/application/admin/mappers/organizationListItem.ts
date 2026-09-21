@@ -7,6 +7,7 @@
  * arkusza liczy wyłącznie serwer.
  */
 
+import { airfieldByIcao } from '@ninerdeck/domain';
 import { formatClubCode } from '../../../domain/clubCode.ts';
 import type {
   AdminOrganizationAdmin,
@@ -50,5 +51,8 @@ export function organizationDetail(org: OrganizationDetail): AdminOrganizationDe
     joinCode: org.joinCode,
     joinCodeFormatted: org.joinCode == null ? null : formatClubCode(org.joinCode),
     joinCodeSince: org.joinCodeSince?.toISOString() ?? null,
+    timezone: org.timezone,
+    homeIcao: org.homeIcao,
+    homeAirfieldName: airfieldByIcao(org.homeIcao)?.name ?? null,
   };
 }

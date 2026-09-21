@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { HttpError } from '../../api/httpClient';
-import { conflictField, errorMessage, refusalOf, ruleViolationMessage } from './apiMessage';
+import {
+  conflictField,
+  errorMessage,
+  invalidField,
+  refusalOf,
+  ruleViolationMessage,
+} from './apiMessage';
 
 const http = (status: number, body: Record<string, unknown>): HttpError =>
   new HttpError(status, body as never);
@@ -25,6 +31,19 @@ describe('rozpoznanie odmowy', () => {
     const offline = new TypeError('Failed to fetch');
     expect(conflictField(offline)).toBeNull();
     expect(refusalOf(offline)).toBeNull();
+    expect(invalidField(offline)).toBeNull();
+  });
+
+  it('400 invalid oddaje POLE z wpisem, którego nie da się przyjąć', () => {
+    expect(invalidField(http(400, { error: 'invalid', field: 'homeIcao' }))).toBe('homeIcao');
+    expect(invalidField(http(400, { error: 'invalid', field: 'timezone' }))).toBe('timezone');
+  });
+
+  it('nie myli `400 invalid` z `409 conflict` - to dwa różne zdania', () => {
+    // Przy `conflict` wartość jest poprawna i tylko zajęta; przy `invalid` nie da się jej
+    // przyjąć w ogóle. Jeden komunikat na oba przypadki kazałby zgadywać, co poprawić.
+    expect(invalidField(http(409, { error: 'conflict', field: 'slug' }))).toBeNull();
+    expect(conflictField(http(400, { error: 'invalid', field: 'homeIcao' }))).toBeNull();
   });
 });
 

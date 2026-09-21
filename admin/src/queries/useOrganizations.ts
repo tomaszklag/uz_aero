@@ -16,6 +16,7 @@ import type {
   OrganizationChangeDto,
   OrganizationDetailDto,
   OrganizationDraftBody,
+  OrganizationPatchBody,
   OrganizationPageDto,
 } from '../api/dto';
 import {
@@ -71,7 +72,8 @@ export function useCreateOrganization() {
 export function useUpdateOrganization() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) => updateOrganization(id, { name }),
+    mutationFn: ({ id, ...body }: { id: string } & OrganizationPatchBody) =>
+      updateOrganization(id, body),
     onSuccess: (change) => applyChange(qc, change),
   });
 }

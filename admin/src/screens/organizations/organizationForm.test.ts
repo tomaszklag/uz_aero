@@ -6,6 +6,7 @@ import {
   draftOf,
   EMPTY_ORGANIZATION,
   hasChanges,
+  patchBodyOf,
   slugFrom,
   verdictOf,
   type OrganizationDraft,
@@ -26,6 +27,9 @@ const organization = (over: Partial<OrganizationDetailDto> = {}): OrganizationDe
   name: 'Aeroklub Alfa',
   slug: 'aeroklub-alfa',
   active: true,
+  timezone: 'Europe/Warsaw',
+  homeIcao: null,
+  homeAirfieldName: null,
   createdAt: '2026-08-26T10:00:00.000Z',
   members: 14,
   aircraft: 4,
@@ -118,6 +122,48 @@ describe('szkic → żądanie', () => {
       ...EMPTY_ORGANIZATION,
       name: 'Aeroklub Alfa',
       slug: 'aeroklub-alfa',
+      timezone: 'Europe/Warsaw',
     });
+  });
+
+  // ── KALENDARZ KLUBU (3.0.0) ──────────────────────────────────────────────────────
+
+  it('łatka niesie WYŁĄCZNIE to, co się zmieniło', () => {
+    const before = organization({ homeIcao: 'EPKK', timezone: 'Europe/Warsaw' });
+    const draft = { ...draftOf(before), name: 'Aeroklub Alfa i Omega' };
+
+    expect(patchBodyOf(before, draft)).toEqual({ name: 'Aeroklub Alfa i Omega' });
+  });
+
+  it('kod lotniska idzie WERSALIKAMI, jak po stronie serwera', () => {
+    const before = organization({ homeIcao: null });
+
+    expect(patchBodyOf(before, { ...draftOf(before), homeIcao: ' epgl ' })).toEqual({
+      homeIcao: 'EPGL',
+    });
+  });
+
+  it('puste pole lotniska to `null`, czyli „wyczyść" - nie pusty napis', () => {
+    const before = organization({ homeIcao: 'EPKK' });
+
+    expect(patchBodyOf(before, { ...draftOf(before), homeIcao: '' })).toEqual({
+      homeIcao: null,
+    });
+  });
+
+  it('bez zmian łatka jest pusta, a „Zapisz" nie ma co wysłać', () => {
+    const before = organization({ homeIcao: 'EPKK', timezone: 'Europe/Berlin' });
+    const draft = draftOf(before);
+
+    expect(patchBodyOf(before, draft)).toEqual({});
+    expect(hasChanges(before, draft)).toBe(false);
+  });
+
+  it('wpisanie tego samego kodu inną wielkością liter NIE jest zmianą', () => {
+    // Inaczej „Zapisz" ożywałby po samym tapnięciu w pole, a dziennik notowałby zmianę
+    // z `EPKK` na `EPKK`.
+    const before = organization({ homeIcao: 'EPKK' });
+
+    expect(hasChanges(before, { ...draftOf(before), homeIcao: 'epkk' })).toBe(false);
   });
 });

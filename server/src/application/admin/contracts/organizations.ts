@@ -126,6 +126,18 @@ export interface AdminOrganizationDetail extends AdminOrganizationListItem {
   joinCode: string | null;
   joinCodeFormatted: string | null;
   joinCodeSince: string | null;
+  /** Strefa, w której klub czyta godziny kalendarza. */
+  timezone: string;
+  /** Lotnisko macierzyste - wyznacza dobę lotną kalendarza (§7.1). */
+  homeIcao: string | null;
+  /**
+   * Nazwa lotniska z katalogu - potwierdzenie, że kod się rozwiązał.
+   *
+   * Idzie z serwera, bo panel katalogu NIE MA: `admin/test/architecture.test.ts`
+   * zabrania importu wartości z `@ninerdeck/domain` poza imiennymi wyjątkami, a druga
+   * kopia katalogu lotnisk w przeglądarce rozjechałaby się z pierwszą regeneracją.
+   */
+  homeAirfieldName: string | null;
 }
 
 /** Lista bez kursora: klubów na serwerze jest tyle, ile klubów - nie tyle, ile lotów. */

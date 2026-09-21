@@ -3804,6 +3804,18 @@ issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
   floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
   wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
   w `admin/src/styles/components/calendar.css` i idą do makiet generatorem `panel:css`.
+- **KONFIGURACJĘ KALENDARZA KLUBU USTAWIA MODUŁ ORGANIZACJE** (karta klubu: lotnisko
+  macierzyste i strefa; dołożone przy wydaniu, R-W). Do 2026-09-21 `organizations.home_icao`
+  było wszędzie WYŁĄCZNIE do odczytu, więc doba lotna schodziła u każdego klubu do
+  domyślnych 06-21, choć changelog obiecywał wschód i zachód słońca - kolumna z migracji
+  bez drogi zapisu jest funkcją, której nie ma. **Kod spoza KATALOGU lotnisk to ODMOWA**
+  (`400 invalid` z polem, nie wzorzec czterech liter: `ZZZZ` przeszłoby, a klub dostałby
+  okno domyślne bez słowa dlaczego), **nieznana strefa też** - `safeZone` RATUJE ODCZYT,
+  więc do walidacji wpisu służy osobne `isKnownZone`. Puste lotnisko jest dozwolone
+  i znaczy „wyczyść": stąd `homeIcao?: string | null` o TRZECH stanach (pominięte /
+  napis / `null`) i `CASE` zamiast `COALESCE` w SQL-u. Listę stref oddaje PRZEGLĄDARKA
+  (`Intl.supportedValuesOf`), a nie nasza tablica; strefa klubu spoza tej listy dokleja
+  się siłą, inaczej `<select>` po cichu przestawiłby konfigurację na pierwszą pozycję.
 ## Rezerwacje 3.0.0 - epik R-B: serwer, model zajętości i API (issue #158, 2026-09-19)
 Migracja 11 + domena + porty + trasy telefonu i panelu + zadanie okresowe. Decyzje
 i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
@@ -3926,8 +3938,12 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
   archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
   i opisuje wersję, którą piloci mają w telefonach
-- **zmiana jedzie OTA**: `@react-navigation/bottom-tabs` to czysty JS na
-  `react-native-screens`, które projekt już ma - bez nowego APK
+- **zakładki NIE RUSZAJĄ WARSTWY NATYWNEJ**: `@react-navigation/bottom-tabs` to czysty
+  JS na `react-native-screens`, które projekt już ma. Samo wydanie 3.0.0 idzie mimo to
+  NOWYM APK (decyzja właściciela 2026-09-21): przy `runtimeVersion: appVersion`
+  aktualizacji w tle nie wolno podnieść numeru wersji, a bez podbicia telefon i strona
+  wydań pisałyby dalej „2.1.0" o wersji, która ma rezerwacje - a numer wersji jest tym,
+  co pilot podaje w zgłoszeniu z terenu i co klub czyta na stronie
 - **czego R-E świadomie NIE ROBI**: treści zakładki Kalendarz i danych najbliższej
   rezerwacji (epik R-F, #162), podmiany 13 osadzeń podręcznika i screen flow w tym
   pliku (epik R-W, #163 - podręcznik opisuje wersję WDROŻONĄ)
