@@ -28,6 +28,8 @@
 
 ## Rezerwacje i kalendarz
 
+> **Uwaga.** Rezerwacje i kalendarz floty wchodzą w wydaniu 3.0.0. W aplikacji, którą piloci mają dziś na telefonach, tych ekranów jeszcze nie ma - hasła poniżej opisują, jak to będzie działać. Kiedy: [wydania i zmiany](~/wydania/).
+
 - **Rezerwacja** - zajęcie samolotu na konkretne godziny. Opisuje PLAN, a nie fakt: lot
   zapisuje się osobno, w rejestrze operacji. Rezerwacja niczego nie warunkuje - można
   polecieć bez niej, także bez zasięgu.
@@ -48,6 +50,7 @@
 - **Ścieżka akceptacji** *(3.1.0)* - kolejność osób, które muszą zgodzić się na
   rezerwację, zanim stanie się potwierdzona. Klub bez ścieżki nie zatwierdza niczego -
   rezerwacja jest gotowa od razu. Odrzucenie wymaga powodu, a pilot czyta go w aplikacji.
+
 ## Liczniki, paliwo i olej
 
 - **Motogodziny (MH)** - licznik pracy silnika maszyny. Odczyt przy przejęciu i przy zdaniu tworzy łańcuch: ile jeden pilot zostawił, tyle następny powinien zastać.

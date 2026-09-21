@@ -9,7 +9,8 @@ Format (świadomie wąski, parsuje go site/tools/render-changelog.mjs):
   ## W przygotowaniu                                 - to, co weszło do kodu od ostatniego builda
   > jedno zdanie o wydaniu                           - opcjonalnie, tuż pod nagłówkiem
   ### Nowości / ### Poprawki / ### Dla testerów      - grupy
-  - punkt (z **pogrubieniem**, `kodem`, [linkiem](url))
+  - punkt (z **pogrubieniem**, `kodem`, [linkiem](url)); długi punkt wolno zawinąć -
+    kontynuację wcina się dwiema spacjami i dokleja się do tego samego punktu
 
   ## Plan wydań                                      - moduł „Co dalej" na stronie (nie jest wydaniem)
   ### <wersja> · <termin>                            - kamień milowy, np. „1.1.0 · planowane na wrzesień 2026";
@@ -161,14 +162,26 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 2.2.0 · po pierwszych tygodniach testów
+### 3.0.0 · planowane na 3 października 2026
 
-> Poprawki z testów i kalibracja normy zużycia na prawdziwych lotach.
+> Rezerwacja samolotu i kalendarz floty: kto ma którą maszynę i kiedy - widoczne dla całego klubu.
 
-- [ ] Kalibracja progów normy paliwa i motogodzin na danych z testów
-- [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
-- [ ] Panel: pulpit floty, skrzynka flag i eksporty kart dnia w regułach 2.0
-- [ ] Poprawki zgłoszone przez pilotów w testach
+- [x] Kalendarz floty w panelu klubu: maszyny i dni obok siebie, w widoku na tydzień, dwa tygodnie albo miesiąc
+- [x] Wyłączenie maszyny z użytku na czas przeglądu albo usterki - znika wtedy pilotom z kalendarza
+- [x] Rezerwacja za pilota z panelu; terminy, które kolidują z wpisywanym, widać jeszcze przed zapisem
+- [x] Nowy ekran startowy aplikacji i zakładki Pulpit · Kalendarz · Historia
+- [x] Podpowiedź wolnych terminów, liczona od wschodu do zachodu słońca nad lotniskiem klubu
+- [ ] Kalendarz floty i rezerwacja w aplikacji pilota
+- [ ] Wejście w lot z rezerwacji: dane z niej wypełniają kroki przejęcia. Rezerwacja niczego nie warunkuje - polecieć można bez niej, także bez zasięgu
+
+### 3.1.0 · po wydaniu 3.0.0
+
+> Rezerwacja do akceptacji przez klub i powiadomienie o decyzji.
+
+- [ ] Ścieżka akceptacji: rezerwacja czeka na zgodę wskazanej osoby albo roli
+- [ ] Odmowa z powodem, który pilot czyta na swoim telefonie
+- [ ] Skrzynka powiadomień w aplikacji - działa też bez zasięgu
+- [ ] Powiadomienie na telefon, gdy decyzja zapadnie (wymaga zainstalowania nowej wersji aplikacji)
 
 ### 4.0.0 · termin do ustalenia
 
@@ -179,6 +192,11 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Dalej
 
+> Bez terminu: część z tego czeka na dane z testów z pilotami.
+
+- [ ] Poprawki zgłoszone przez pilotów w testach
+- [ ] Kalibracja normy paliwa i motogodzin na danych z prawdziwych lotów
+- [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
+- [ ] Panel: pulpit floty, statystyki, analityka zużycia, skrzynka rozjazdów i eksporty kart dnia w nowym stylu
 - [ ] Eksport karty dnia do arkusza Google klubu
-- [ ] Statystyki i analityka floty w panelu 2.0
 - [ ] Wdrożenie produkcyjne po sezonie testowym

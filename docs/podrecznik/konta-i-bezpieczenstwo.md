@@ -40,7 +40,7 @@ Każde zalogowanie - w aplikacji i w panelu - zostawia **wiersz sesji**: jakie t
 - **Administrator klubu** widzi w karcie członka urządzenia tej osoby **w swoim klubie** i może je wylogować - pojedynczo albo wszystkie naraz. Urządzeń, którymi ta sama osoba loguje się w innym klubie, nie widzi.
 - **Zmiana hasła wylogowuje pozostałe urządzenia**, a to, przy którym siedzisz, zostaje. Ustawienie hasła z linku wylogowuje wszystkie - link jest drogą na wypadek, gdyby stare hasło wyciekło.
 
-> **Zdalne wylogowanie NIE kasuje danych z telefonu.** Urządzenie przestaje wysyłać i mówi o tym wprost - na ekranie PIN i w ustawieniach - ale PIN dalej otwiera aplikację, a niewysłane zapisy czekają na niej do ponownego zalogowania **tej samej osoby**. Wyrzucenie do ekranu logowania zabrałoby pilotowi dane dnia, którego klub jeszcze nie ma.
+> **Uwaga.** Zdalne wylogowanie nie kasuje danych z telefonu. Urządzenie przestaje wysyłać i mówi o tym wprost - na ekranie PIN i w ustawieniach - ale PIN dalej otwiera aplikację, a niewysłane zapisy czekają na niej do ponownego zalogowania **tej samej osoby**. Wyrzucenie do ekranu logowania zabrałoby pilotowi dane dnia, którego klub jeszcze nie ma.
 
 ## Role: pilot, administrator, opiekun platformy
 
