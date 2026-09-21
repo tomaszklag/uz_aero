@@ -36,7 +36,7 @@ Zdanie dopisuje do rejestru ostatni wpis operacji: odczyty końcowe. Ten wpis ro
 - Twoje odczyty stają się przekazaniem dla następnego pilota.
 - Operacja stoi na Mój dzień z trójką Loty · Blok · Lot, a po północy UTC przechodzi do [poprzednich dni](poprzednie-dni). Przez 24 godziny poprawisz ją sam, potem robi to administrator.
 
-@screen 01-moj-dzien "Operacja na liście dnia" | 12-historia "Po północy w poprzednich dniach"
+@screen 20-pulpit "Sumy doby po zdaniu" | 24-historia "Operacja w Historii"
 
 ## Dlaczego tak to działa
 

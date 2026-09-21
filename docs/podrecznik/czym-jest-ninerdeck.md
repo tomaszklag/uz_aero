@@ -9,7 +9,7 @@ Ninerdeck składa się z **aplikacji pilota** na Androida i **panelu klubu** w p
 - **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć.
 - **[Panel klubu](panel-wprowadzenie)** to miejsce administratora: konta pilotów do zatwierdzenia, karty samolotów z normami zużycia, dziennik operacji z osią zdarzeń i śladem GPS, a na czas testów także zgłoszenia wysłane z aplikacji.
 
-@screen 01-moj-dzien "Ekran domowy aplikacji pilota"
+@screen 20-pulpit "Ekran domowy aplikacji pilota"
 
 ## Trzy słowa, które warto znać
 
@@ -35,7 +35,7 @@ Pełna lista pojęć: [słownik](slownik). Model w całości: [model operacji](m
 
 Każde zdarzenie dnia lotnego - przejęcie, uruchomienie silnika, start, lądowanie, tankowanie, zdanie - jest wpisem w rejestrze na telefonie pilota. Wpis powstaje natychmiast, bez pytania serwera o zgodę, i nigdy nie jest nadpisywany: poprawka dopisuje się obok niego, a stara wartość zostaje. Z tego rejestru telefon sam liczy czas blokowy, liczbę lotów, rachunek paliwa i motogodzin oraz sygnaturę operacji. Kolejka wysyłki przekazuje wpisy do klubu, gdy jest sieć; tam łączą się w dziennik floty, dostają oznaczenia niespójności do wyjaśnienia i trafiają na kartę dnia samolotu. Panel klubu czyta ten sam dziennik - administrator widzi każdą operację razem z historią poprawek.
 
-@screen 01c-moj-dzien-offline "Kolejka wysyłki bez sieci"
+@screen 20c-pulpit-offline "Kolejka wysyłki bez sieci"
 
 Więcej o mechanizmach: [łańcuch odczytów](lancuch-odczytow), [synchronizacja](synchronizacja), [korekty i rejestr](korekty-i-rejestr).
 

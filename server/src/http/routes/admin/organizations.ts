@@ -61,7 +61,17 @@ const createBody = z.object({
 });
 
 /** Zmiana nazwy. Sluga i kodu klubu ta trasa nie przyjmuje - patrz port. */
-const patchBody = z.object({ name: orgName.optional() });
+/**
+ * Łatka karty klubu. Lotnisko przyjmujemy jako `string | null` - `null` znaczy
+ * „wyczyść" (§7.1: brak konfiguracji nie blokuje rezerwacji), a pominięcie pola
+ * „nie ruszaj". Kształtu kodu ICAO tu NIE sprawdzamy: rozstrzyga o nim katalog
+ * lotnisk w komendzie, a wzorzec czterech liter przepuszczałby `ZZZZ`.
+ */
+const patchBody = z.object({
+  name: orgName.optional(),
+  timezone: z.string().trim().min(1).max(64).optional(),
+  homeIcao: z.string().trim().max(8).nullable().optional(),
+});
 
 const activeBody = z.object({ active: z.boolean() });
 
@@ -221,5 +231,10 @@ export function registerPlatformOrganizationRoutes(
 function refusal(reply: FastifyReply, outcome: { reason: string; field?: string }): unknown {
   if (outcome.reason === 'not_found') return reply.code(404).send({ error: 'not_found' });
   if (outcome.reason === 'no_changes') return reply.code(400).send({ error: 'no_changes' });
+  // Wpis nie do przyjęcia (kod spoza katalogu, nieznana strefa) - 400 z POLEM, żeby
+  // odmowa wróciła pod to pole w formularzu, a nie banerem nad całą kartą.
+  if (outcome.reason === 'invalid') {
+    return reply.code(400).send({ error: 'invalid', field: outcome.field });
+  }
   return reply.code(409).send({ error: 'conflict', field: outcome.field });
 }

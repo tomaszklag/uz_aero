@@ -82,9 +82,28 @@ const suggestions = z.object({
 /**
  * Zajętość na drucie. `createdBy`, `updatedAt` i `closeReason` zostają po stronie
  * serwera - telefon rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian.
+ *
+ * ══ CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRANY Z NIEJ CZYTAJĄ ══
+ * (przegląd bezpieczeństwa W7, decyzja właściciela 2026-09-21). Oś floty, sugestie
+ * godzin, karta samolotu i ostrzeżenie o kolizji biorą z CUDZEGO terminu dokładnie
+ * pięć rzeczy: godziny, maszynę, właściciela, rodzaj zajętości i powód wyłączenia
+ * z użytku. Trasa, drugi pilot, plan lotu i NOTATKA - wolny tekst, który pilot pisał
+ * dla siebie i dla administratora - nie trafiają na ekran nigdy, a jechały na każdy
+ * telefon w klubie przy każdym odświeżeniu kalendarza.
+ *
+ * Dlatego kształt pyta, KTO PATRZY. Nie jest to zawężenie „na wszelki wypadek":
+ * to jest dokładnie ta sama lista pól, którą czyta `logic/calendarGrid.ts`,
+ * `slotChips.ts`, `aircraftAvailability.ts` i `claimConflict.ts`.
+ *
+ * Wyłączenie z użytku nie ma właściciela (`pilotId === null`), więc idzie wąskim
+ * kształtem - a `blockReason` jest w nim od zawsze, bo to ono nazywa taką zajętość
+ * na pasku osi.
+ *
+ * Panel ma własne kontrakty i własną zdolność (`reservations.manage`) - tam
+ * administrator widzi komplet, bo to jego robota.
  */
-export function bookingWire(row: BookingRecord): Record<string, unknown> {
-  return {
+export function bookingWire(row: BookingRecord, viewerPilotId: string): Record<string, unknown> {
+  const wire: Record<string, unknown> = {
     id: row.id,
     aircraftId: row.aircraftId,
     kind: row.kind,
@@ -92,6 +111,13 @@ export function bookingWire(row: BookingRecord): Record<string, unknown> {
     startsAt: new Date(row.startsAt).toISOString(),
     endsAt: new Date(row.endsAt).toISOString(),
     pilotId: row.pilotId,
+    blockReason: row.blockReason,
+  };
+
+  if (row.pilotId !== viewerPilotId) return wire;
+
+  return {
+    ...wire,
     dualId: row.dualId,
     operation: row.operation,
     fromIcao: row.fromIcao,
@@ -99,7 +125,6 @@ export function bookingWire(row: BookingRecord): Record<string, unknown> {
     plannedAirMin: row.plannedAirMin,
     plannedFuelL: row.plannedFuelL,
     sessionUuid: row.sessionUuid,
-    blockReason: row.blockReason,
     note: row.note,
   };
 }
@@ -148,7 +173,7 @@ export function registerBookingRoutes(
         startsAt: new Date(d.startsAt).toISOString(),
         endsAt: new Date(d.endsAt).toISOString(),
       })),
-      bookings: view.bookings.map(bookingWire),
+      bookings: view.bookings.map((row) => bookingWire(row, who.pilotId)),
     });
   });
 
@@ -213,7 +238,7 @@ export function registerBookingRoutes(
         startsAt: new Date(view.day.startsAt).toISOString(),
         endsAt: new Date(view.day.endsAt).toISOString(),
       },
-      booking: bookingWire(view.booking),
+      booking: bookingWire(view.booking, who.pilotId),
     });
   });
 
@@ -238,10 +263,10 @@ export function registerBookingRoutes(
       plannedFuelL: b.plannedFuelL ?? null,
       note: b.note ?? null,
     });
-    if (!result.ok) return refuse(reply, result.refusal, result.taken);
+    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
     // Powtórzony zapis (telefon ponowił przy słabym łączu) wraca `200` z tym samym
     // wierszem - `201` kłamałoby o tym, że coś właśnie powstało.
-    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking));
+    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking, who.pilotId));
   });
 
   app.patch<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -264,8 +289,8 @@ export function registerBookingRoutes(
       ...(p.note === undefined ? {} : { note: p.note }),
     });
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking));
+    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
+    return reply.send(bookingWire(result.booking, who.pilotId));
   });
 
   app.delete<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -282,13 +307,19 @@ export function registerBookingRoutes(
       parsed.data.reason ?? null,
     );
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking));
+    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
+    return reply.send(bookingWire(result.booking, who.pilotId));
   });
 }
 
+/**
+ * Odmowa na drut. `viewerPilotId` jedzie tu z tego samego powodu, co do `bookingWire`:
+ * kolidująca zajętość jest zwykle CUDZA, a ekran mówi o niej dokładnie tyle, ile
+ * potrzebuje - „SP-AXA jest zajęta 11:00 → 13:00 · rezerwację ma J. Nowak" (22C).
+ */
 function refuse(
   reply: { code: (n: number) => { send: (body: unknown) => unknown } },
+  viewerPilotId: string,
   refusal: BookingRefusal,
   taken: BookingRecord | null | undefined,
 ): unknown {
@@ -300,6 +331,11 @@ function refuse(
     // między cudzym planem sprzed tygodnia a slotem zajętym w trakcie wypełniania
     // formularza. Dokładanie pola do wspólnego kształtu kazałoby wozić je w każdej
     // odpowiedzi kalendarza.
-    ...(taken == null ? {} : { taken: bookingWire(taken), takenAt: new Date(taken.createdAt).toISOString() }),
+    ...(taken == null
+      ? {}
+      : {
+          taken: bookingWire(taken, viewerPilotId),
+          takenAt: new Date(taken.createdAt).toISOString(),
+        }),
   });
 }

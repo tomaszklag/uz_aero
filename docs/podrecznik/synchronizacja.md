@@ -4,7 +4,7 @@
 
 ## Zapis powstaje na telefonie
 
-Uruchomienie silnika, wykryty start, odczyt przy zdaniu, korekta - każde z nich jest zdarzeniem, które telefon zapisuje od razu, z czasem z własnego zegara i z GPS, jeśli ma pozycję. Mój dzień, Poprzednie dni i ekran operacji liczą się wyłącznie z tego lokalnego zapisu, dlatego są zawsze aktualne i nie czekają na serwer. Rejestr dopisuje, nie nadpisuje ([korekty i rejestr](korekty-i-rejestr)).
+Uruchomienie silnika, wykryty start, odczyt przy zdaniu, korekta - każde z nich jest zdarzeniem, które telefon zapisuje od razu, z czasem z własnego zegara i z GPS, jeśli ma pozycję. Sumy na Pulpicie, Historia i ekran operacji liczą się wyłącznie z tego lokalnego zapisu, dlatego są zawsze aktualne i nie czekają na serwer. Rejestr dopisuje, nie nadpisuje ([korekty i rejestr](korekty-i-rejestr)).
 
 @screen 05-cockpit-running "Zdarzenie powstaje w kokpicie" | 10-statystyki "Oś zdarzeń operacji"
 
@@ -12,7 +12,7 @@ Uruchomienie silnika, wykryty start, odczyt przy zdaniu, korekta - każde z nich
 
 Zdarzenia, których klub jeszcze nie dostał, tworzą kolejkę. Wysyła się sama, paczkami: po odzyskaniu sieci i co jakiś czas w tle. Serwer rozpoznaje zapis, który już ma, więc paczka wysłana dwa razy niczego nie dubluje. Serwer nie odrzuca faktów z terenu: zapis, który nie zgadza się z resztą dziennika (nakładające się operacje, cofnięty licznik), oznacza dla administratora, zamiast blokować pilota. Na końcu każdej wysyłki tą samą drogą wychodzą nagranie śladu GPS (telefon kasuje kopię po potwierdzeniu) i zgłoszenia z aplikacji.
 
-@screen 12-historia "Oznaczenie zaległości na kafelku"
+@screen 24-historia "Oznaczenie zaległości przy operacji"
 
 ## Wskaźnik łączności
 
@@ -24,7 +24,7 @@ Oznaczenie w nagłówku pojawia się tylko wtedy, gdy coś stoi - stan „wszyst
 | **OFFLINE · n** (bursztyn) | ostatnia próba nie dotarła do serwera; n zdarzeń czeka | nic - przejdzie samo z zasięgiem |
 | **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij oznaczenie i zrób to, co mówi baner |
 
-@screen 01c-moj-dzien-offline "OFFLINE · kolejka czeka" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
+@screen 20c-pulpit-offline "OFFLINE · kolejka czeka" | 20d-pulpit-sync-stoi "SYNC STOI · serwer odmówił"
 
 ### Okienko pod oznaczeniem
 
@@ -36,7 +36,7 @@ Tapnięcie otwiera okienko „Synchronizacja": liczba zdarzeń w kolejce, **Osta
 
 Przy każdym kontakcie z serwerem telefon także pobiera:
 
-- **własne zapisy** - po czyszczeniu danych aplikacji, reinstalacji albo na nowym telefonie rejestr odbudowuje się z tego, co klub już dostał. Odbudowa zasila rejestr, nie ekran: Mój dzień dalej liczy się z telefonu, tylko do pierwszego pobrania nie pokazuje stanu „dziś bez lotów". Operacja trwająca w chwili awarii nie wraca jako bieżąca - maszynę bierze się ponownie zwykłym **ROZPOCZNIJ LOT**;
+- **własne zapisy** - po czyszczeniu danych aplikacji, reinstalacji albo na nowym telefonie rejestr odbudowuje się z tego, co klub już dostał. Odbudowa zasila rejestr, nie ekran: Pulpit dalej liczy się z telefonu, tylko do pierwszego pobrania nie pokazuje stanu „dziś bez lotów". Operacja trwająca w chwili awarii nie wraca jako bieżąca - maszynę bierze się ponownie zwykłym **ROZPOCZNIJ LOT**;
 - **decyzje administratora** - zakończenie operacji, unieważnienie wpisu i poprawa odczytów maszyny. Zanim telefon wyśle zaległości, pyta o nie serwer. Jeśli administrator zakończył albo unieważnił operację, którą właśnie prowadzisz, kokpit wraca na Mój dzień, a zaległe zapisy tej operacji nie wychodzą: baner z przyciskiem **ROZUMIEM** mówi, która to operacja, z jakim powodem i ile zapisów zostanie tylko na telefonie;
 - **dane referencyjne** - flota, piloci i przekazanie z ostatniego zdania, odświeżane w tle nie częściej niż co kwadrans, na żądanie od razu. Bez sieci aplikacja pracuje na kopii z bursztynową adnotacją „Ostatnie pobrane" i datą przy wartości; pusta flota nie czeka na kwadrans.
 

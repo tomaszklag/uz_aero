@@ -437,15 +437,26 @@ export interface RemoteBooking {
   startsAt: string;
   endsAt: string;
   pilotId: string | null;
-  dualId: string | null;
-  operation: string | null;
-  fromIcao: string | null;
-  toIcao: string | null;
-  plannedAirMin: number | null;
-  plannedFuelL: number | null;
-  sessionUuid: string | null;
+  /** Powód wyłączenia z użytku - nazywa zajętość, która nie ma właściciela. */
   blockReason: string | null;
-  note: string | null;
+
+  /**
+   * ══ PONIŻSZE POLA PRZYCHODZĄ WYŁĄCZNIE PRZY WŁASNEJ REZERWACJI ══
+   * (przegląd W7, decyzja właściciela 2026-09-21). Z cudzego terminu ekrany czytają
+   * godziny, maszynę, właściciela i rodzaj zajętości - reszta nie trafia na ekran
+   * nigdy, więc serwer jej nie wysyła. `undefined` znaczy tu „nie moja rezerwacja",
+   * a nie „puste pole", i dlatego pola są OPCJONALNE, a nie nullowalne: gdyby
+   * przychodziły jako `null`, kod czytający je nie miałby jak odróżnić cudzego
+   * terminu od własnego bez trasy.
+   */
+  dualId?: string | null;
+  operation?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  sessionUuid?: string | null;
+  note?: string | null;
 }
 
 /**

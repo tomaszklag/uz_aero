@@ -35,6 +35,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+> Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.
+
 ### Nowości
 
 - **Nowy ekran startowy aplikacji i dolne zakładki: Pulpit · Kalendarz · Historia.**
@@ -45,39 +47,62 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   zakładek nie ma - dopóki trzymasz samolot, nic nie wyprowadza Cię z niego bokiem.
 - **Kalendarz floty w telefonie** - nowa zakładka pokazuje jedną dobę i wszystkie maszyny
   naraz, więc na pytanie „czym dziś polecę" odpowiada jedno spojrzenie. Godziny idą czasem
-  klubu, siatka obejmuje dobę lotną liczoną z wschodu i zachodu słońca nad lotniskiem
-  macierzystym, a maszyny wyłączone z użytku zostają widoczne razem z powodem. Przy
-  kilkunastu samolotach da się zawęzić listę do tych, na których się lata - wybór zostaje
-  na telefonie. Kalendarz wymaga połączenia i mówi to wprost zamiast pokazywać pustą
-  siatkę; ze wróconym zasięgiem wraca sam.
+  klubu, a siatka obejmuje dzień lotny - od wschodu do zachodu słońca nad lotniskiem klubu,
+  więc w czerwcu jest szersza niż w listopadzie. Maszyny wyłączone z użytku zostają
+  widoczne razem z powodem. Przy kilkunastu samolotach da się zawęzić listę do tych, na
+  których się lata - wybór zostaje na telefonie. Kalendarz wymaga połączenia i mówi to
+  wprost, zamiast pokazywać pustą siatkę; z powrotem zasięgu wraca sam.
 - **Rezerwacja samolotu z telefonu, w dwóch krokach.** Najpierw dzień, maszyna i godziny -
-  każda karta samolotu niesie pasek zajętości i wypisane wolne pasma, a nad kontrolką czasu
-  stoją gotowe propozycje terminu z powodem („tuż po rezerwacji · J. Nowak", „początek
-  dnia"). Potem zadanie: rodzaj operacji, trasa, drugi pilot, planowany czas lotu, paliwo
-  do zabrania i notatka - te same pytania i te same kontrolki, co przy rozpoczęciu lotu.
-  Samolot wymagający załogi dwuosobowej nie przepuści rezerwacji bez drugiego pilota,
-  a powód stoi wewnątrz przycisku.
-- **Rezerwacja zapisuje się na serwerze, a zajęty termin mówi, co w nim stoi.** Jeśli
-  slot zniknął w trakcie wypełniania formularza, ekran wraca do godzin i pisze, kto go
-  ma i od kiedy - razem z gotowym skrótem do najbliższego wolnego pasma tej samej
-  długości. Bez zasięgu zapisu nie ma i aplikacja mówi to wprost: termin potwierdza
-  serwer.
-- **Karta rezerwacji**: dzień, godziny czasem klubu z odliczaniem, maszyna, zadanie,
-  trasa, drugi pilot i plan lotu. Stamtąd termin się przesuwa („Przesuń i popraw"
-  wraca do formularza z wypełnionymi polami) i odwołuje - z potwierdzeniem, które
-  nazywa konkretny wpis, i z opcjonalnym powodem. Zmiana samolotu zakłada rezerwację
-  od nowa i zwalnia poprzednią dopiero wtedy, gdy nowa już stoi.
+  przy każdym samolocie widać pasek zajętości i wypisane wolne pasma („wolne: 06:00-13:00"),
+  a nad godzinami stoją gotowe propozycje terminu z powodem („tuż po rezerwacji · J. Nowak",
+  „początek dnia"). Potem zadanie: rodzaj operacji, trasa, drugi pilot, planowany czas lotu,
+  paliwo do zabrania i notatka - te same pytania, co przy rozpoczęciu lotu. Samolot
+  wymagający załogi dwuosobowej nie przepuści rezerwacji bez drugiego pilota, a powód
+  stoi w przycisku.
+- **Zajęty termin mówi, kto go ma.** Jeśli ktoś zapisał się szybciej, gdy wypełniałeś
+  formularz, ekran wraca do godzin i pisze, czyja to rezerwacja i od kiedy stoi - razem
+  z gotowym skrótem do najbliższego wolnego pasma tej samej długości. Bez zasięgu
+  rezerwacji się nie zapisze i aplikacja mówi to wprost: termin przydziela klub, a nie
+  telefon.
+- **Karta rezerwacji**: dzień, godziny czasu klubu z odliczaniem do startu, maszyna,
+  zadanie, trasa, drugi pilot i plan lotu. Stamtąd termin się przesuwa („Przesuń
+  i popraw" wraca do formularza z wypełnionymi polami) i odwołuje - z pytaniem, które
+  nazywa konkretną rezerwację, i z miejscem na powód. Zmiana samolotu zakłada termin
+  od nowa i zwalnia poprzedni dopiero wtedy, gdy nowy już stoi, żeby nie zostać
+  z niczym.
 - **Pulpit pokazuje najbliższą rezerwację** - godziny, maszynę, zadanie i odliczanie -
-  a „ROZPOCZNIJ LOT" wypełnia nią kroki rozpoczęcia lotu: samolot, zadanie, trasę
-  i drugiego pilota. Dotyczy to terminu, który właśnie się zaczyna albo trwa; plan
-  na przyszły tydzień zostaje planem. **Rezerwacja nigdy nie warunkuje lotu** - bez
-  niej i bez zasięgu wszystko działa jak dotąd.
+  a „ROZPOCZNIJ LOT" wypełnia nią pierwszy krok: samolot, zadanie, trasę i drugiego
+  pilota. Dotyczy to terminu, który właśnie się zaczyna albo trwa; plan na przyszły
+  tydzień zostaje planem. **Rezerwacja nigdy nie warunkuje lotu** - bez niej i bez
+  zasięgu wszystko działa jak dotąd.
 - **Ostrzeżenie o cudzym planie przy braniu maszyny**: jeśli ktoś ma ją zarezerwowaną
   na najbliższe godziny, pierwszy krok mówi kto i kiedy - ale nie zatrzymuje lotu.
 - **Kalendarz floty w panelu klubu** - kto ma zaplanowany lot, na której maszynie i w które
   dni, w widoku na tydzień, dwa tygodnie albo miesiąc. Administrator zarezerwuje termin za
   pilota i wyłączy maszynę z użytku na czas przeglądu albo usterki - wtedy znika ona pilotom
   z kalendarza. Zajętości, które kolidują z wpisywanym terminem, widać jeszcze przed zapisem.
+- **Karta klubu pyta o lotnisko macierzyste i strefę czasu.** Z lotniska liczy się doba
+  lotna kalendarza, ze strefy - godziny. Dopóki lotniska nie ma, kalendarz stoi na
+  06:00-21:00 i nic przez to nie przestaje działać; rezerwacja nie zależy od tego
+  ustawienia.
+
+### Dla testerów
+
+- **To wydanie wymaga zainstalowania nowego pliku ze [strony pobierania](../pobierz/).**
+  Aktualizacja w tle nie wystarczy, bo zmienia się numer wersji aplikacji - a to on wiąże
+  telefon z wydaniem. Dane z telefonu zostają na miejscu.
+- **Rezerwacja i kalendarz jako jedyne wymagają zasięgu.** Termin przydziela klub, więc
+  rozstrzyga go serwer - dwa telefony nie zapiszą się na tę samą maszynę i tę samą
+  godzinę. Reszta pracy w kabinie jest bez zmian: przejęcie, kokpit, zdanie samolotu
+  i wpis po fakcie nadal nie pytają o sieć.
+- **Kalendarz pokazuje godziny czasu klubu, nie UTC.** Log operacji zostaje w UTC -
+  zmieniła się wyłącznie siatka kalendarza, bo rezerwacja jest umową między ludźmi
+  o godzinie, a nie pomiarem.
+- **Zanim zaczniecie, wpiszcie lotnisko macierzyste na karcie klubu** - bez niego doba
+  lotna nie ma skąd wziąć wschodu i zachodu słońca.
+- Na co zwrócić uwagę: czy podpowiedzi terminów trafiają w to, jak naprawdę układacie
+  dzień; czy doba lotna nie jest za wąska dla lotów o zmierzchu; czy „ROZPOCZNIJ LOT"
+  z rezerwacji wypełnia to, czego się spodziewacie.
 
 ## 2.1.0 (build 4) · 18 września 2026
 
@@ -202,8 +227,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [x] Rezerwacja za pilota z panelu; terminy, które kolidują z wpisywanym, widać jeszcze przed zapisem
 - [x] Nowy ekran startowy aplikacji i zakładki Pulpit · Kalendarz · Historia
 - [x] Podpowiedź wolnych terminów, liczona od wschodu do zachodu słońca nad lotniskiem klubu
-- [ ] Kalendarz floty i rezerwacja w aplikacji pilota
-- [ ] Wejście w lot z rezerwacji: dane z niej wypełniają kroki przejęcia. Rezerwacja niczego nie warunkuje - polecieć można bez niej, także bez zasięgu
+- [x] Kalendarz floty i rezerwacja w aplikacji pilota
+- [x] Wejście w lot z rezerwacji: dane z niej wypełniają kroki przejęcia. Rezerwacja niczego nie warunkuje - polecieć można bez niej, także bez zasięgu
 
 ### 3.1.0 · po wydaniu 3.0.0
 

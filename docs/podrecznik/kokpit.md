@@ -33,7 +33,7 @@ Gdy GPS zamilknie na kilkanaście sekund, kokpit pokazuje baner „GPS: brak syg
 
 @screen 05f-zdarzenie-reczne "Ręczny zapis zdarzenia" | 05g-cockpit-no-gps "Bez sygnału GPS" | 05e-zrzut "Okienko zrzutu skoczków"
 
-> **Wskazówka.** Przełącznik w prawym górnym rogu przełącza ciemny i jasny motyw - jasny jest na pełne słońce. Ustawień w kokpicie nie ma; są na ekranie Mój dzień.
+> **Wskazówka.** Przełącznik w prawym górnym rogu przełącza ciemny i jasny motyw - jasny jest na pełne słońce. Ustawień w kokpicie nie ma; są na Pulpicie.
 
 ## Jak to działa
 
@@ -41,13 +41,13 @@ Automat patrzy na kolejne odczyty GPS i odrzuca te, które nie zasługują na za
 
 ## Po zatrzymaniu silnika
 
-**STOP ENGINE** kończy bieg silnika i operację. Drugiego startu w tej operacji nie ma - kolejny lot to nowe przejęcie z ekranu Mój dzień. Na ziemi zostają: tankowanie, dolewka oleju, kafelek **Popraw dane operacji** (brakujące lądowanie, zły czas - zanim zatwierdzisz log) i główny przycisk **ZDAJ SAMOLOT** → [zdanie samolotu](zdanie-samolotu). Pod osią stoi stopka z sumami: blok, czas lotu, starty.
+**STOP ENGINE** kończy bieg silnika i operację. Drugiego startu w tej operacji nie ma - kolejny lot to nowe przejęcie z Pulpitu. Na ziemi zostają: tankowanie, dolewka oleju, kafelek **Popraw dane operacji** (brakujące lądowanie, zły czas - zanim zatwierdzisz log) i główny przycisk **ZDAJ SAMOLOT** → [zdanie samolotu](zdanie-samolotu). Pod osią stoi stopka z sumami: blok, czas lotu, starty.
 
 @screen 04-cockpit-ground "Główny przycisk ZDAJ SAMOLOT"
 
 ## Z kokpitu nie ma wyjścia bokiem
 
-Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Mój dzień - pokazują okienko **TRZYMASZ SP-AXA** z wyborem: zostań albo zdaj samolot. Maszynę oddaje się wyłącznie przez zdanie, żeby żadna operacja nie została otwarta przez przypadek, a następny pilot zawsze dostał przekazanie. Jedyny wyjątek robi administrator: gdy zakończy albo unieważni Twoją operację z panelu, kokpit sam wraca na Mój dzień z banerem.
+Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Pulpit - pokazują okienko **TRZYMASZ SP-AXA** z wyborem: zostań albo zdaj samolot. Maszynę oddaje się wyłącznie przez zdanie, żeby żadna operacja nie została otwarta przez przypadek, a następny pilot zawsze dostał przekazanie. Jedyny wyjątek robi administrator: gdy zakończy albo unieważni Twoją operację z panelu, kokpit sam wraca na Pulpit z banerem.
 
 @screen 04d-wyjscie-z-kokpitu "Zostań albo zdaj samolot"
 
@@ -68,6 +68,6 @@ Pod wskaźnikiem stoi oś zdarzeń tej operacji: przejęcie z odczytami, tankowa
 - **Nie wykryło startu albo lądowania** → w locie przytrzymaj „Take off" / „Landing" i cofnij godzinę w okienku, jeśli minęło kilka minut. Po zatrzymaniu silnika brakujące zdarzenie dopisze **Popraw dane operacji** → **DODAJ WPIS**.
 - **Wykryło start, którego nie było** → tapnij COFNIJ w czasie odliczania. Po zapisie: **Popraw dane operacji**, ołówek przy wierszu, „tego nie było".
 - **Baner „GPS: brak sygnału"** → zapisuj start i lądowanie przyciskami; sygnał zwykle wraca sam. Stan odbiornika sprawdzisz w [ustawieniach](ustawienia), w sekcji „Diagnostyka GPS".
-- **Nie mogę wrócić na Mój dzień** → zdaj samolot: ZDAJ SAMOLOT po locie, „Zdanie bez lotu" przed uruchomieniem. Ustawienia i poprzednie dni wrócą po zdaniu.
+- **Nie mogę wrócić na Pulpit** → zdaj samolot: ZDAJ SAMOLOT po locie, „Zdanie bez lotu" przed uruchomieniem. Zakładki wrócą po zdaniu - w kokpicie paska nie ma.
 - **Po STOP ENGINE nie ma START ENGINE** → to nie błąd: kolejny lot to nowe przejęcie. Zdaj samolot i rozpocznij lot jeszcze raz.
-- **Kokpit sam wrócił na Mój dzień** → administrator zakończył albo unieważnił operację; baner mówi, która i dlaczego.
+- **Kokpit sam wrócił na Pulpit** → administrator zakończył albo unieważnił operację; baner mówi, która i dlaczego.

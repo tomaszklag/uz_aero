@@ -33,7 +33,9 @@
  * z PUSTYM `org_id`: akcja platformowa nie dzieje się w żadnym klubie, tylko go tworzy.
  */
 
+import { airfieldByIcao } from '@ninerdeck/domain';
 import { CLUB_CODE_LENGTH, clubCodeFrom, formatClubCode } from '../../../domain/clubCode.ts';
+import { isKnownZone } from '../../../domain/clubTime.ts';
 import type { Clock } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -73,9 +75,20 @@ export type OrganizationOutcome<T> =
   | { ok: true; result: T }
   | { ok: false; reason: 'not_found' }
   | { ok: false; reason: 'no_changes' }
-  | { ok: false; reason: 'conflict'; field: 'slug' | 'email' };
+  | { ok: false; reason: 'conflict'; field: 'slug' | 'email' }
+  /**
+   * Wpis, którego nie da się przyjąć: kod spoza katalogu lotnisk albo strefa, której
+   * `Intl` nie zna. Osobno od `conflict`, bo tam wartość jest poprawna i tylko zajęta.
+   */
+  | { ok: false; reason: 'invalid'; field: 'homeIcao' | 'timezone' };
 
 class OrganizationNotFound extends Error {}
+
+class InvalidField extends Error {
+  constructor(readonly field: 'homeIcao' | 'timezone') {
+    super(field);
+  }
+}
 
 class NoChanges extends Error {}
 
@@ -159,16 +172,26 @@ export class PlatformOrganizationCommands {
     throw new Error(`nie udało się wylosować wolnego kodu klubu w ${DRAW_ATTEMPTS} próbach`);
   }
 
-  /** Zmiana nazwy klubu. Slug zostaje - jest adresem, nie napisem. */
+  /**
+   * Nazwa klubu i konfiguracja kalendarza (lotnisko macierzyste, strefa). Slug zostaje
+   * - jest adresem, nie napisem.
+   *
+   * Lotnisko sprawdzamy w KATALOGU, a nie wzorcem czterech liter: z jego współrzędnych
+   * liczy się doba lotna (§7.1), więc kod, którego katalog nie zna, dałby klubowi okno
+   * domyślne i ani słowa o tym, dlaczego. Puste pole to co innego niż zły wpis - znaczy
+   * „wyczyść" i jest dozwolone.
+   */
   async update(
     actor: PlatformActor,
     id: string,
     patch: OrganizationPatch,
   ): Promise<OrganizationOutcome<OrganizationDetail>> {
     return this.change(actor, id, 'organization.update', async (tx, before) => {
-      if (patch.name === undefined || patch.name === before.name) throw new NoChanges();
-      await this.organizations.update(tx, id, patch);
-      return { name: { from: before.name, to: patch.name } };
+      const next = validatedPatch(patch);
+      const changes = organizationChanges(before, next);
+      if (Object.keys(changes).length === 0) throw new NoChanges();
+      await this.organizations.update(tx, id, next);
+      return changes;
     });
   }
 
@@ -232,7 +255,59 @@ export class PlatformOrganizationCommands {
     } catch (err) {
       if (err instanceof OrganizationNotFound) return { ok: false, reason: 'not_found' };
       if (err instanceof NoChanges) return { ok: false, reason: 'no_changes' };
+      if (err instanceof InvalidField) return { ok: false, reason: 'invalid', field: err.field };
       throw err;
     }
   }
+}
+
+/**
+ * Łatka przycięta i sprawdzona. Puste pole lotniska znaczy „wyczyść" (`null`), bo klub
+ * ma prawo cofnąć konfigurację - okno schodzi wtedy do domyślnego i nic się nie blokuje.
+ * Pustej STREFY nie ma: kolumna jest `NOT NULL`, a „brak strefy" nie jest stanem, który
+ * kalendarz umiałby narysować.
+ */
+function validatedPatch(patch: OrganizationPatch): OrganizationPatch {
+  const next: OrganizationPatch = {};
+
+  if (patch.name !== undefined) next.name = patch.name.trim();
+
+  if (patch.timezone !== undefined) {
+    const zone = patch.timezone.trim();
+    if (!isKnownZone(zone)) throw new InvalidField('timezone');
+    next.timezone = zone;
+  }
+
+  if (patch.homeIcao !== undefined) {
+    const icao = patch.homeIcao?.trim().toUpperCase() ?? null;
+    if (icao === null || icao === '') next.homeIcao = null;
+    else {
+      if (airfieldByIcao(icao) == null) throw new InvalidField('homeIcao');
+      next.homeIcao = icao;
+    }
+  }
+
+  return next;
+}
+
+/**
+ * Co naprawdę się zmienia - i to jest jedyne miejsce, które o tym rozstrzyga: ten sam
+ * obiekt idzie do dziennika jako diff i decyduje, czy zapis w ogóle ma sens (`NoChanges`).
+ * Dwa rachunki dałyby wpis audytu o zmianie, której nie było, albo odwrotnie.
+ */
+function organizationChanges(
+  before: OrganizationDetail,
+  patch: OrganizationPatch,
+): Record<string, unknown> {
+  const changes: Record<string, unknown> = {};
+  if (patch.name !== undefined && patch.name !== before.name) {
+    changes.name = { from: before.name, to: patch.name };
+  }
+  if (patch.timezone !== undefined && patch.timezone !== before.timezone) {
+    changes.timezone = { from: before.timezone, to: patch.timezone };
+  }
+  if (patch.homeIcao !== undefined && patch.homeIcao !== before.homeIcao) {
+    changes.homeIcao = { from: before.homeIcao, to: patch.homeIcao };
+  }
+  return changes;
 }

@@ -83,15 +83,18 @@ export function toBooking(wire: RemoteBooking): CalendarBooking | null {
     startsAt,
     endsAt,
     pilotId: wire.pilotId,
-    dualId: wire.dualId,
-    operation: wire.operation,
-    fromIcao: wire.fromIcao,
-    toIcao: wire.toIcao,
-    plannedAirMin: wire.plannedAirMin,
-    plannedFuelL: wire.plannedFuelL,
-    sessionUuid: wire.sessionUuid,
+    // Pola własnej rezerwacji: z cudzej nie przychodzą wcale (W7), a `null` jest
+    // tu poprawnym odwzorowaniem braku - ekran i tak pyta o nie tylko przy swoich
+    // terminach i pomija wiersz, którego nie ma czym wypełnić.
+    dualId: wire.dualId ?? null,
+    operation: wire.operation ?? null,
+    fromIcao: wire.fromIcao ?? null,
+    toIcao: wire.toIcao ?? null,
+    plannedAirMin: wire.plannedAirMin ?? null,
+    plannedFuelL: wire.plannedFuelL ?? null,
+    sessionUuid: wire.sessionUuid ?? null,
     blockReason: wire.blockReason,
-    note: wire.note,
+    note: wire.note ?? null,
   };
 }
 

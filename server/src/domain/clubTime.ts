@@ -150,5 +150,19 @@ export function safeZone(zone: string | null | undefined): string {
   }
 }
 
+/**
+ * Czy `Intl` zna tę strefę. To jest pytanie WALIDACYJNE - o wpis, który ktoś właśnie
+ * podał - i dlatego nie da się go zadać przez `safeZone`: tamto RATUJE ODCZYT, więc
+ * literówkę zamienia w strefę domyślną i formularz przyjąłby ją bez słowa.
+ */
+export function isKnownZone(zone: string): boolean {
+  try {
+    formatterFor(zone);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Minuty na milisekundy - dla wołających, którzy liczą długość slotu w minutach. */
 export const minutes = (count: number): number => count * MINUTE_MS;

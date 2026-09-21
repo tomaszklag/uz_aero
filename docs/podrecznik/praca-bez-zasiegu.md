@@ -4,7 +4,7 @@
 
 ## Co działa bez internetu
 
-Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykrywaniem startów i lądowań, tankowanie i olej, zdanie samolotu, wpis lotu po fakcie, korekty, Mój dzień i Poprzednie dni. Norma zużycia, werdykty i sygnatura operacji też liczą się na telefonie - z Twojego lokalnego zapisu, bez pytania serwera o cokolwiek.
+Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykrywaniem startów i lądowań, tankowanie i olej, zdanie samolotu, wpis lotu po fakcie, korekty, sumy na Pulpicie i Historia. Norma zużycia, werdykty i sygnatura operacji też liczą się na telefonie - z Twojego lokalnego zapisu, bez pytania serwera o cokolwiek.
 
 @screen 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Zdanie samolotu z odczytami"
 
@@ -31,7 +31,7 @@ Oznaczenie w nagłówku istnieje tylko wtedy, gdy coś stoi. Stan „wszystko wy
 
 Tapnięcie otwiera okienko „Synchronizacja": ile zapisów czeka w kolejce, **Ostatnia próba** z godziną i wynikiem („brak sieci", „odrzucone"), **Ostatnia udana synchronizacja**, wiek danych pobranych z panelu oraz przycisk **PONÓW PRÓBĘ**. Ponowienie robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
 
-@screen 01-moj-dzien "Brak oznaczenia · wszystko wysłane" | 01c-moj-dzien-offline "OFFLINE · okienko synchronizacji" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
+@screen 20-pulpit "Brak oznaczenia · wszystko wysłane" | 20c-pulpit-offline "OFFLINE · okienko synchronizacji" | 20d-pulpit-sync-stoi "SYNC STOI · serwer odmówił"
 
 ## Ponowienie z ręki czeka dłużej
 
@@ -39,7 +39,7 @@ Wysyłka w tle rezygnuje po kilku sekundach - przy słabym zasięgu lepiej szybk
 
 ## Decyzje administratora docierają przy pierwszym połączeniu
 
-Zanim telefon wyśle zaległe zapisy, **pyta klub o decyzje z panelu**. Jeśli administrator zakończył albo unieważnił operację, którą właśnie prowadzisz, kokpit sam wraca na Mój dzień, a zaległe zapisy tej operacji nie wychodzą - baner z przyciskiem **ROZUMIEM** mówi, która to operacja, z jakiego powodu i ile zapisów zostanie tylko na telefonie.
+Zanim telefon wyśle zaległe zapisy, **pyta klub o decyzje z panelu**. Jeśli administrator zakończył albo unieważnił operację, którą właśnie prowadzisz, kokpit sam wraca na Pulpit, a zaległe zapisy tej operacji nie wychodzą - baner z przyciskiem **ROZUMIEM** mówi, która to operacja, z jakiego powodu i ile zapisów zostanie tylko na telefonie.
 
 ## Jak to działa
 

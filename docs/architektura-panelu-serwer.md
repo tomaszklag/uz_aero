@@ -1516,6 +1516,20 @@ wszędzie tam, gdzie odmowa nie jest końcem obsługi żądania. Tam, gdzie po o
 się wszystko (`uniqueConflictOn` w `fleet.ts` - odpowiedź `409` i koniec), punkt zapisu
 nie jest potrzebny i go nie ma.
 
+**(m) OKNO O ZEROWEJ SZEROKOŚCI NIE PRZECINA ŻADNEJ DOBY (2026-09-21, R-F).**
+`clubDays(zone, from, to)` oddaje doby klubu PRZECIĘTE oknem `[from, to)` i zaczyna
+od `if (!(to > from)) return []` - poprawnie, bo okno puste nie obejmuje niczego.
+Trasa `GET /bookings/:id` pytała o dobę SAMEJ rezerwacji, czyli `[startsAt, startsAt]`,
+i dostawała pustą listę - a stąd `404` na własną, istniejącą rezerwację. Objaw był
+mylący podwójnie: trasa wyglądała na złamaną przez izolację klubów, choć klub był
+właściwy, a odmowa padała po stronie, która o klub w ogóle nie pytała.
+
+Reguła: pytanie o dobę zawierającą CHWILĘ to najwęższe okno, które ją obejmuje
+(`[t, t + 1)`), a nie okno zerowe. Złapał to test izolacji, nie przegląd kodu - i to
+dopiero po dołożeniu do świata testowego wiersza po stronie klubu A: `404` na cudzej
+rezerwacji dowodzi tyle samo, co trasa, która nie działa wcale. **Sonda izolacji bez
+przypadku POZYTYWNEGO jest sondą na nic.**
+
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 
 Reguła jest jednym zdaniem: **żadnemu zapytaniu nie wolno przepuścić wiersza innego

@@ -467,26 +467,31 @@ po lewej ani tytułem na środku bez powrotu - 01 był takim wyjątkiem i przest
 LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`, usunięty razem z klamrą (issue #23).
 Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
 
-## Screen flow (kolejność ekranów - model 2026-08-10, bez klamry od issue #23)
+## Screen flow (zakładki od 3.0.0; model operacji 2026-08-10, bez klamry od issue #23)
 ```
-00-login → 01-moj-dzien (EKRAN DOMOWY - płaski log operacji dnia; warianty: 01a pusty,
-  01c offline + arkusz szczegółów synchronizacji)
-01-moj-dzien → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+00-login → ZAKŁADKI: 20-pulpit · 21-kalendarz · 24-historia (EKRAN DOMOWY; flow lotu
+  leży NAD nimi, kokpit zakładek nie ma - patrz „epik R-E" niżej)
+20-pulpit (sumy doby + najbliższa rezerwacja; warianty: 20a bez rezerwacji,
+  20c offline + arkusz synchronizacji, 20d SYNC STOI)
+20-pulpit → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+  (rezerwacja na TERAZ wypełnia krok 1; 23a ostrzega o cudzym planie, nigdy nie blokuje)
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
 → START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
 → STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
   drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
-  wariant 09c: zdanie bez lotu) → 01-moj-dzien
-01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
+  wariant 09c: zdanie bez lotu) → 20-pulpit
+20-pulpit → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
   2026-08-16: 15 data+samolot+Dual (data pierwsza - issue #58) → 15a zadanie →
   15b czasy i loty → 15c liczniki; arkusze: 15d czas zdarzenia na TimeStepperze,
   15e data lotu na KALENDARZU miesięcznym)
-01-moj-dzien → 12-historia („Poprzednie dni" - operacje spoza dzisiejszej doby);
-  KAFELEK operacji → 10-statystyki (ekran OPERACJI: detale i korekty TEJ operacji)
-12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
+24-historia (WSZYSTKIE operacje - dziś i wcześniej; dzień nagłówkiem, archiwum
+  zwinięte w 24a); WIERSZ operacji → 10-statystyki (detale i korekty TEJ operacji)
+24-historia → wiersz w oknie 24 h → 10-statystyki; wiersz po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
+21-kalendarz → wolne pasmo → 22/22a (rezerwacja w dwóch krokach; 22b arkusz czasu,
+  22c termin zajęty) · pasek zajętości → 23 (karta rezerwacji: przesunięcie i odwołanie)
 10-statystyki → „EDYTUJ DANE" → 10d (TRYB EDYCJI tego samego ekranu - issue #43;
   ołówek przy każdym wierszu osi, arkusze: 10e czas zdarzenia · 10f paliwo i MH przy
   przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis · 10i historia zmian)
@@ -503,19 +508,19 @@ EKRANU 11 NIE MA (usunięty 2026-08-12) - stan wysyłki, uwagi serwera i awaryjn
   „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
   pokazuje też arkusz pod SyncChipem
 ```
-**Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
+**Wszystko wraca na PULPIT, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszą operacją i NICZYM się nie domyka - „Zamknij dzień",
 ekran 01b i klamra służby zostały usunięte (issue #23). Wyjście działa też offline -
 niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
 ### Kokpit jest stanem modalnym (decyzja 2026-08-10)
 **Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** - z 04/05 nie prowadzi
-żadna droga na 01. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na 01;
+żadna droga na Pulpit - paska zakładek w kokpicie NIE MA. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na Pulpit;
 akcje ground (06/07/08) i 09 wracają do kokpitu. **Od issue #82 nie ma już ani jednego
 wyjątku**: ustawienia (13) były ostatnim i zniknęły z paska kokpitu - zębatka stoi
-wyłącznie na 01, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
+wyłącznie na Pulpicie, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
 Konsekwencje przy każdej zmianie kokpitu:
-- **nie dokładaj linków na 01** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
+- **nie dokładaj linków na Pulpit** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
   operacji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
   z 04/04A (żyje wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę i nie prowadzi nikąd)
 - z tego samego powodu kokpit nie powtarza tego, co mówi już pasek górny (maszyna, trasa)
@@ -569,7 +574,7 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
   Zmiana załogi tylko PRZED uruchomieniem - po biegu nowa załoga = nowe przejęcie.
 - kokpit pokazuje WYŁĄCZNIE bieżącą operację - bez „Log dnia", bez „CYKL n", bez harmonijki
   wielu cykli. Kokpit pozostaje stanem modalnym (sekcja wyżej).
-- na 01 lista operacji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
+- na Pulpicie sumy doby i najbliższa rezerwacja; lista operacji (różne zadania, różne maszyny) w Historii (24), a ręczny wpis CAŁEGO lotu (15) z Pulpitu.
 - zysk uboczny analityki: każda operacja domknięta odczytami z OBU stron - znika patologia
   interwałów degeneracyjnych między ostatnim `leg_close` a zdaniem (§3.6b).
 
@@ -3799,6 +3804,18 @@ issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
   floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
   wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
   w `admin/src/styles/components/calendar.css` i idą do makiet generatorem `panel:css`.
+- **KONFIGURACJĘ KALENDARZA KLUBU USTAWIA MODUŁ ORGANIZACJE** (karta klubu: lotnisko
+  macierzyste i strefa; dołożone przy wydaniu, R-W). Do 2026-09-21 `organizations.home_icao`
+  było wszędzie WYŁĄCZNIE do odczytu, więc doba lotna schodziła u każdego klubu do
+  domyślnych 06-21, choć changelog obiecywał wschód i zachód słońca - kolumna z migracji
+  bez drogi zapisu jest funkcją, której nie ma. **Kod spoza KATALOGU lotnisk to ODMOWA**
+  (`400 invalid` z polem, nie wzorzec czterech liter: `ZZZZ` przeszłoby, a klub dostałby
+  okno domyślne bez słowa dlaczego), **nieznana strefa też** - `safeZone` RATUJE ODCZYT,
+  więc do walidacji wpisu służy osobne `isKnownZone`. Puste lotnisko jest dozwolone
+  i znaczy „wyczyść": stąd `homeIcao?: string | null` o TRZECH stanach (pominięte /
+  napis / `null`) i `CASE` zamiast `COALESCE` w SQL-u. Listę stref oddaje PRZEGLĄDARKA
+  (`Intl.supportedValuesOf`), a nie nasza tablica; strefa klubu spoza tej listy dokleja
+  się siłą, inaczej `<select>` po cichu przestawiłby konfigurację na pierwszą pozycję.
 ## Rezerwacje 3.0.0 - epik R-B: serwer, model zajętości i API (issue #158, 2026-09-19)
 Migracja 11 + domena + porty + trasy telefonu i panelu + zadanie okresowe. Decyzje
 i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
@@ -3921,8 +3938,12 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
   archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
   i opisuje wersję, którą piloci mają w telefonach
-- **zmiana jedzie OTA**: `@react-navigation/bottom-tabs` to czysty JS na
-  `react-native-screens`, które projekt już ma - bez nowego APK
+- **zakładki NIE RUSZAJĄ WARSTWY NATYWNEJ**: `@react-navigation/bottom-tabs` to czysty
+  JS na `react-native-screens`, które projekt już ma. Samo wydanie 3.0.0 idzie mimo to
+  NOWYM APK (decyzja właściciela 2026-09-21): przy `runtimeVersion: appVersion`
+  aktualizacji w tle nie wolno podnieść numeru wersji, a bez podbicia telefon i strona
+  wydań pisałyby dalej „2.1.0" o wersji, która ma rezerwacje - a numer wersji jest tym,
+  co pilot podaje w zgłoszeniu z terenu i co klub czyta na stronie
 - **czego R-E świadomie NIE ROBI**: treści zakładki Kalendarz i danych najbliższej
   rezerwacji (epik R-F, #162), podmiany 13 osadzeń podręcznika i screen flow w tym
   pliku (epik R-W, #163 - podręcznik opisuje wersję WDROŻONĄ)
@@ -4022,6 +4043,19 @@ KAŻDY ekran modułu rezerwacji:
   dwóch godzin (tyle trwa typowy lot klubowy), własna rezerwacja kolizją nie jest,
   a bez sieci ostrzeżenia nie ma i przejęcie idzie dalej - rezerwacja nigdy go nie
   warunkowała (§2.3)
+- **CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRAN Z NIEJ CZYTA** (przegląd W7, decyzja
+  właściciela 2026-09-21): `bookingWire` pyta, KTO PATRZY. Własna rezerwacja jedzie
+  w komplecie, cudza - godziny, maszyna, właściciel, rodzaj zajętości i powód
+  wyłączenia z użytku, czyli dokładnie to, co czytają `calendarGrid.ts`,
+  `slotChips.ts`, `aircraftAvailability.ts` i `claimConflict.ts`. Trasa, drugi pilot,
+  plan lotu i NOTATKA (wolny tekst pilota) nie trafiają na cudzy ekran nigdy, a jechały
+  na każdy telefon w klubie przy każdym odświeżeniu kalendarza. **Na telefonie te pola
+  są OPCJONALNE, nie nullowalne**: `undefined` znaczy „nie moja rezerwacja", a `null`
+  znaczyłby „moja, tylko pusta". Panel widzi komplet - ma do tego osobną zdolność
+- **DOKŁADAJĄC POLE DO ODPOWIEDZI TELEFONU, SPRAWDŹ, KTO JE CZYTA**: reguła wyżej nie
+  jest o rezerwacjach, tylko o kształtach na drucie. Pole, którego żaden ekran nie
+  czyta, nie jest „na zapas" - jest wyciekiem czekającym na pierwszego, kto zajrzy
+  w odpowiedź
 - **czego epik R-F NIE ROBI**: sprawdzeń NA URZĄDZENIU (F0 sonda stref, F11 i F13) -
   wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
   parametru jest jedna (`bookingId`) po obu stronach

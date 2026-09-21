@@ -25,6 +25,7 @@ import type {
 import type { Queryable } from '../../../application/common/ports.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 import { normalizeEmail } from '../../../domain/email.ts';
+import { DEFAULT_CLUB_ZONE } from '../../../domain/clubTime.ts';
 
 interface OrgRow {
   id: string;
@@ -34,6 +35,9 @@ interface OrgRow {
   created_at: string | Date;
   join_code: string | null;
   join_code_since: string | Date | null;
+  /** Konfiguracja kalendarza - czyta ją WYŁĄCZNIE `byId` (karta klubu). */
+  timezone?: string;
+  home_icao?: string | null;
   /** `COUNT(*)` - sterownik oddaje `int8` NAPISEM. */
   members: string | number;
   aircraft: string | number;
@@ -122,7 +126,7 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
 
   async byId(db: Queryable, id: string): Promise<OrganizationDetail | null> {
     const { rows } = await db.query<OrgRow>(
-      `SELECT ${ORG_COLUMNS}, ${COUNTS} FROM organizations o WHERE o.id = $1`,
+      `SELECT ${ORG_COLUMNS}, o.timezone, o.home_icao, ${COUNTS} FROM organizations o WHERE o.id = $1`,
       [id],
     );
     const row = rows[0];
@@ -133,6 +137,10 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
       ...toSummary(row, admins.get(row.id) ?? []),
       joinCode: row.join_code,
       joinCodeSince: row.join_code_since == null ? null : new Date(row.join_code_since),
+      // Kolumna ma `NOT NULL DEFAULT` (migracja 11), więc `??` broni wyłącznie przed
+      // wierszem sprzed niej - nie przed pustą konfiguracją, która tu nie istnieje.
+      timezone: row.timezone ?? DEFAULT_CLUB_ZONE,
+      homeIcao: row.home_icao ?? null,
     };
   }
 
@@ -178,13 +186,24 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
     return { adminPilotId: pilotId };
   }
 
+  /**
+   * Nazwa i konfiguracja kalendarza. Slug jest adresem kart arkusza i po nadaniu się
+   * nie zmienia (§3.1), a kod klubu prowadzi panel klubu (`PgClubCodeRepo`).
+   *
+   * `home_icao` idzie przez CASE, a nie przez COALESCE, bo `null` znaczy tu
+   * „wyczyść", a nie „nie ruszaj" - o tym, czy w ogóle piszemy, rozstrzyga OBECNOŚĆ
+   * pola w łatce. COALESCE zlałby te dwa stany w jeden i wyczyszczenie lotniska
+   * byłoby niewyrażalne.
+   */
   async update(tx: Queryable, id: string, patch: OrganizationPatch): Promise<void> {
-    // Sam `name`: slug jest adresem kart arkusza i po nadaniu się nie zmienia (§3.1),
-    // a kod klubu prowadzi panel klubu (`PgClubCodeRepo`).
-    await tx.query('UPDATE organizations SET name = COALESCE($2, name) WHERE id = $1', [
-      id,
-      patch.name ?? null,
-    ]);
+    await tx.query(
+      `UPDATE organizations
+          SET name      = COALESCE($2, name),
+              timezone  = COALESCE($3, timezone),
+              home_icao = CASE WHEN $4 THEN $5 ELSE home_icao END
+        WHERE id = $1`,
+      [id, patch.name ?? null, patch.timezone ?? null, patch.homeIcao !== undefined, patch.homeIcao ?? null],
+    );
   }
 
   async setActive(tx: Queryable, id: string, active: boolean): Promise<void> {

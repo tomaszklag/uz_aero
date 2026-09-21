@@ -246,7 +246,7 @@ export interface ApiErrorDto {
    * `slug` dochodzi z modułem Organizacje (adres klubu jest jedyny na SERWERZE, nie
    * w klubie), `email` wskazuje tam osobę, która jest już administratorem tego klubu.
    */
-  field?: 'code' | 'email' | 'reg' | 'slug';
+  field?: 'code' | 'email' | 'reg' | 'slug' | 'homeIcao' | 'timezone';
   /**
    * 409 `wrong_status` (decyzja o członkostwie): W JAKIM STANIE jest zgłoszenie teraz.
    * Administrator z otwartą szufladą nie wie, że drugi rozstrzygnął je minutę temu -
@@ -454,6 +454,12 @@ export interface OrganizationDetailDto extends OrganizationListItemDto {
   joinCode: string | null;
   joinCodeFormatted: string | null;
   joinCodeSince: string | null;
+  /** Strefa, w której klub czyta godziny kalendarza (3.0.0). */
+  timezone: string;
+  /** Lotnisko macierzyste - wyznacza dobę lotną kalendarza. */
+  homeIcao: string | null;
+  /** Nazwa z katalogu lotnisk; `null` przy pustym polu. Katalogu panel NIE MA. */
+  homeAirfieldName: string | null;
 }
 
 /** Lista bez kursora: klubów na serwerze jest tyle, ile klubów - nie tyle, ile lotów. */
@@ -488,6 +494,16 @@ export interface OrganizationDraftBody {
   name: string;
   slug: string;
   admin: { name: string; email: string; code: string };
+}
+
+/**
+ * Zmiana karty klubu. Każde pole jest OPCJONALNE, bo łatka opisuje to, co się zmienia,
+ * a nie cały klub; `homeIcao: null` znaczy „wyczyść" i jest czym innym niż pominięcie.
+ */
+export interface OrganizationPatchBody {
+  name?: string;
+  timezone?: string;
+  homeIcao?: string | null;
 }
 
 // -- flota ----------------------------------------------------------------------

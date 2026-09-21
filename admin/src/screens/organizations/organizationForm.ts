@@ -12,12 +12,21 @@
  * blokadą akcji, która jest dozwolona.
  *
  * ══ DWA TRYBY, BO DWA RÓŻNE FORMULARZE ══
- * `create` pyta o wszystko (klub + pierwszy administrator), `edit` wyłącznie o NAZWĘ:
- * adres jest nadawany raz (stoi w adresach kart arkusza), a administratorów zmienia się
- * w klubie, nie na platformie.
+ * `create` pyta o klub i pierwszego administratora, `edit` o NAZWĘ i KONFIGURACJĘ
+ * KALENDARZA (lotnisko macierzyste, strefa): adres jest nadawany raz (stoi w adresach
+ * kart arkusza), a administratorów zmienia się w klubie, nie na platformie.
+ *
+ * Kalendarza NIE MA przy zakładaniu i to jest decyzja: klub powstaje razem
+ * z administratorem jednym, nierozdzielnym zamówieniem, a po założeniu szuflada zostaje
+ * otwarta już jako karta - więc pola są na wyciągnięcie ręki, a formularz zakładania
+ * nie rośnie o rzeczy, bez których klub działa.
  */
 
-import type { OrganizationDetailDto, OrganizationDraftBody } from '../../api/dto';
+import type {
+  OrganizationDetailDto,
+  OrganizationDraftBody,
+  OrganizationPatchBody,
+} from '../../api/dto';
 
 export type OrganizationMode = 'create' | 'edit';
 
@@ -38,6 +47,10 @@ export interface OrganizationDraft {
   adminName: string;
   adminEmail: string;
   adminCode: string;
+  /** Kod ICAO lotniska macierzystego; pusty napis = brak konfiguracji. */
+  homeIcao: string;
+  /** Nazwa strefy IANA. Pusta wyłącznie w formularzu zakładania, który o nią nie pyta. */
+  timezone: string;
 }
 
 export const EMPTY_ORGANIZATION: OrganizationDraft = {
@@ -46,12 +59,23 @@ export const EMPTY_ORGANIZATION: OrganizationDraft = {
   adminName: '',
   adminEmail: '',
   adminCode: '',
+  homeIcao: '',
+  timezone: '',
 };
 
 /** Klub z serwera -> szkic. Pola administratora zostają puste: karta ich nie edytuje. */
 export function draftOf(organization: OrganizationDetailDto): OrganizationDraft {
-  return { ...EMPTY_ORGANIZATION, name: organization.name, slug: organization.slug };
+  return {
+    ...EMPTY_ORGANIZATION,
+    name: organization.name,
+    slug: organization.slug,
+    homeIcao: organization.homeIcao ?? '',
+    timezone: organization.timezone,
+  };
 }
+
+/** Kod ICAO do WERSALIKOW - tak samo, jak robi to serwer przed zajrzeniem do katalogu. */
+export const normalizeIcao = (icao: string): string => icao.trim().toUpperCase();
 
 /** Lustro `ORG_SLUG_MAX_LENGTH` z `server/src/domain/organizations.ts`. */
 const ORG_SLUG_MAX_LENGTH = 60;
@@ -84,7 +108,14 @@ export function slugFrom(name: string): string {
  */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type OrganizationField = 'name' | 'slug' | 'adminName' | 'adminEmail' | 'adminCode';
+export type OrganizationField =
+  | 'name'
+  | 'slug'
+  | 'adminName'
+  | 'adminEmail'
+  | 'adminCode'
+  | 'homeIcao'
+  | 'timezone';
 
 export interface OrganizationVerdict {
   /** Pola z wpisem NIE DO ODCZYTANIA - czerwona ramka. Puste pola tu NIE wchodzą. */
@@ -169,6 +200,28 @@ export function createBodyOf(draft: OrganizationDraft): OrganizationDraftBody {
   };
 }
 
-/** Przy edycji zmienia się WYŁĄCZNIE nazwa - reszta pól karty jest do odczytu. */
+/**
+ * Łatka z tego, co NAPRAWDĘ się zmieniło - i to samo pytanie rozstrzyga, czy przycisk
+ * „Zapisz" ma co robić (`hasChanges`). Wysłanie całego szkicu byłoby prostsze i gorsze:
+ * serwer zapisałby wtedy pola, których nikt nie tknął, i wpisał je do dziennika.
+ */
+export function patchBodyOf(
+  before: OrganizationDetailDto,
+  draft: OrganizationDraft,
+): OrganizationPatchBody {
+  const body: OrganizationPatchBody = {};
+
+  const name = draft.name.trim();
+  if (name !== before.name) body.name = name;
+
+  const icao = normalizeIcao(draft.homeIcao);
+  if (icao !== (before.homeIcao ?? '')) body.homeIcao = icao === '' ? null : icao;
+
+  if (draft.timezone !== before.timezone) body.timezone = draft.timezone;
+
+  return body;
+}
+
+/** Czy „Zapisz" ma co wysłać. Jedno pytanie z łatką - druga lista pól by się rozjechała. */
 export const hasChanges = (before: OrganizationDetailDto, draft: OrganizationDraft): boolean =>
-  draft.name.trim() !== before.name;
+  Object.keys(patchBodyOf(before, draft)).length > 0;

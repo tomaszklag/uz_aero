@@ -31,7 +31,7 @@ Aplikacja trzyma na telefonie własny zapis Twoich operacji i wysyła go do klub
 
 > **Uwaga.** Przed odinstalowaniem albo zmianą telefonu sprawdź, czy kolejka wysyłki jest pusta: brak oznaczenia łączności w nagłówku i wiersz „Kolejka wysyłki · pusta" w [ustawieniach](ustawienia).
 
-@screen 01c-moj-dzien-offline "Kolejka wysyłki przed zmianą telefonu"
+@screen 20c-pulpit-offline "Kolejka wysyłki przed zmianą telefonu"
 
 ## Wymagania
 

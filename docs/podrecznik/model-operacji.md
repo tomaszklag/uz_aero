@@ -22,13 +22,13 @@ Po zatrzymaniu silnika głównym przyciskiem kokpitu staje się **ZDAJ SAMOLOT**
 
 ## Doba pilota w UTC
 
-Do pilota w danej dobie UTC przypisana jest lista operacji - i nic ponadto. Operacje na różnych maszynach leżą na jednej liście Mój dzień w kolejności czasu, a sumy doby to ta sama trójka. Operacja należy do doby, w której uruchomiono silnik (zapis bez biegu - do doby przejęcia), więc operacja z późnego wieczoru może stać pod inną datą niż w kalendarzu na ścianie. Po północy UTC operacje przechodzą do [poprzednich dni](poprzednie-dni).
+Do pilota w danej dobie UTC przypisana jest lista operacji - i nic ponadto. Operacje na różnych maszynach leżą na jednej liście w [Historii](poprzednie-dni) w kolejności czasu, a sumy doby stoją na Pulpicie w tej samej trójce. Operacja należy do doby, w której uruchomiono silnik (zapis bez biegu - do doby przejęcia), więc operacja z późnego wieczoru może stać pod inną datą niż w kalendarzu na ścianie. Po północy UTC operacja przechodzi pod nowy nagłówek dnia.
 
-@screen 01-moj-dzien "Lista operacji jednej doby" | 12-historia "Operacje spoza dzisiejszej doby"
+@screen 20-pulpit "Sumy dzisiejszej doby" | 24-historia "Operacje dzień po dniu"
 
 ## Sygnatura operacji
 
-Operacja ma nazwę, którą da się przeczytać przez telefon i wpisać w zgłoszenie: `SP-AXA/2026-09-05/TMK/1` - znak samolotu, doba UTC, kod dowódcy, numer operacji tego pilota w tej dobie. To ten sam numer, który Mój dzień pisze jako „OPERACJA 1". Sygnatura stoi na kafelkach, w nagłówku ekranu operacji, w pasku kokpitu po uruchomieniu silnika i w dzienniku panelu.
+Operacja ma nazwę, którą da się przeczytać przez telefon i wpisać w zgłoszenie: `SP-AXA/2026-09-05/TMK/1` - znak samolotu, doba UTC, kod dowódcy, numer operacji tego pilota w tej dobie. To ten sam numer, który stoi przy operacji w Historii. Sygnatura stoi na kafelkach, w nagłówku ekranu operacji, w pasku kokpitu po uruchomieniu silnika i w dzienniku panelu.
 
 - **Liczy się przy każdym wyświetleniu**, jak czas blokowy: wpis po fakcie dopisany przed istniejącą operacją tej doby przenumerowuje ją, a numer zapisany na stałe wskazywałby po tym dwie operacje naraz.
 - **Nie ma w niej godziny**: korekta czasu przesuwa uruchomienie o kilka minut, a sygnatura z godziną opisywałaby po korekcie inną operację niż przed.
@@ -41,7 +41,7 @@ Gdy silnik nie ruszył (pogoda, usterka, próba), samolot zdaje się w wariancie
 | Zapis bez biegu silnika | Co się dzieje |
 |---|---|
 | zmieniony odczyt paliwa albo licznika, dolewka paliwa lub oleju | pełnoprawna operacja: numer, sygnatura, kafelek z godzinami zajęcia maszyny i trójką 0 · 0:00 · 0:00 |
-| nic się nie zmieniło | pusty zapis: nie pokazuje go Mój dzień, Poprzednie dni, dziennik panelu ani karta dnia |
+| nic się nie zmieniło | pusty zapis: nie pokazuje go Pulpit, Historia, dziennik panelu ani karta dnia |
 
 @screen 09c-zdaj-bez-lotu "Powód zdania bez lotu" | 10a-statystyki-zero "Rozliczenie bez ani jednego lotu"
 

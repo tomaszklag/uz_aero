@@ -1471,15 +1471,22 @@ sprawdzić. Cała poprawność siedzi w regule i w testach tej reguły.
    kontraktu, nie ozdobą.
 5. **Pusta odpowiedź NIE JEST błędem.** Dzień bywa pełny; funkcja planowania ma prawo
    powiedzieć „nic nie proponuję" i wołający ma to umieć narysować.
-6. **Chwila bieżąca idzie z portu `Clock`**, nigdy z `Date.now()`. Planowanie odcina to,
+6. **To, co funkcja liczy po drodze, EKSPORTUJ - nie licz tego drugi raz na ekranie.**
+   `slots.ts` i tak scala zajętości i wycina z okna wolne pasma, więc `freeSpans`
+   wyszło na zewnątrz (R-F): karta samolotu wypisuje z niego „wolne: 06:00-13:00",
+   a sugestie wybierają z niego kandydatów. Własne scalanie po stronie ekranu byłoby
+   DRUGĄ definicją słowa „wolne" - a dwie definicje tego samego słowa rozjeżdżają się
+   przy pierwszej poprawce jednej z nich i rozjeżdżają się CICHO, bo obie odpowiedzi
+   wyglądają sensownie.
+7. **Chwila bieżąca idzie z portu `Clock`**, nigdy z `Date.now()`. Planowanie odcina to,
    co już minęło, więc „teraz" jest WEJŚCIEM rachunku - a wejście z zegara systemowego
    jest niesprawdzalne testem (ta usterka powstała i została złapana przy #159).
-7. **Testy w `app/src/__tests__/`** (tam żyją testy `@ninerdeck/domain`) i **oba zestawy
+8. **Testy w `app/src/__tests__/`** (tam żyją testy `@ninerdeck/domain`) i **oba zestawy
    uruchamiane**, bo zmiana w `packages/` dotyka obu stron. Przy obliczeniach
    astronomiczno-geodezyjnych kotwicz test na czymś NIEZALEŻNIE weryfikowalnym
    (południe słoneczne z długości geograficznej, długość dnia z kąta godzinnego) -
    asercja przepisana z tej samej formuły, którą testujesz, jest kołem w powietrzu.
-8. Eksport z `packages/domain/src/index.ts`.
+9. Eksport z `packages/domain/src/index.ts`.
 
 ### Nowy adapter (np. serwer sync)
 
