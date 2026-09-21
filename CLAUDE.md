@@ -4022,6 +4022,19 @@ KAŻDY ekran modułu rezerwacji:
   dwóch godzin (tyle trwa typowy lot klubowy), własna rezerwacja kolizją nie jest,
   a bez sieci ostrzeżenia nie ma i przejęcie idzie dalej - rezerwacja nigdy go nie
   warunkowała (§2.3)
+- **CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRAN Z NIEJ CZYTA** (przegląd W7, decyzja
+  właściciela 2026-09-21): `bookingWire` pyta, KTO PATRZY. Własna rezerwacja jedzie
+  w komplecie, cudza - godziny, maszyna, właściciel, rodzaj zajętości i powód
+  wyłączenia z użytku, czyli dokładnie to, co czytają `calendarGrid.ts`,
+  `slotChips.ts`, `aircraftAvailability.ts` i `claimConflict.ts`. Trasa, drugi pilot,
+  plan lotu i NOTATKA (wolny tekst pilota) nie trafiają na cudzy ekran nigdy, a jechały
+  na każdy telefon w klubie przy każdym odświeżeniu kalendarza. **Na telefonie te pola
+  są OPCJONALNE, nie nullowalne**: `undefined` znaczy „nie moja rezerwacja", a `null`
+  znaczyłby „moja, tylko pusta". Panel widzi komplet - ma do tego osobną zdolność
+- **DOKŁADAJĄC POLE DO ODPOWIEDZI TELEFONU, SPRAWDŹ, KTO JE CZYTA**: reguła wyżej nie
+  jest o rezerwacjach, tylko o kształtach na drucie. Pole, którego żaden ekran nie
+  czyta, nie jest „na zapas" - jest wyciekiem czekającym na pierwszego, kto zajrzy
+  w odpowiedź
 - **czego epik R-F NIE ROBI**: sprawdzeń NA URZĄDZENIU (F0 sonda stref, F11 i F13) -
   wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
   parametru jest jedna (`bookingId`) po obu stronach

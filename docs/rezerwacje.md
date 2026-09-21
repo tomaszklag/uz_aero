@@ -961,3 +961,70 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 | **Tylko push, bez skrzynki** | §12.1 - powiadomienie, które nie doszło, znaczy prośbę o zgodę wiszącą bez odpowiedzi |
 | **Tylko e-mail zamiast skrzynki** | Rozważone (poczta działa od 2.1.0); e-mail w hangarze bywa czytany z opóźnieniem, a historia decyzji ma być w aplikacji |
 | **Kalendarz w UTC** | §6 - rezerwacja jest umową o godzinie, a nie pomiarem; dwa razy w roku przesuwałby siatkę dnia |
+
+## 17. Przegląd bezpieczeństwa (W7, 2026-09-21)
+
+Zrobiony PRZED dokumentacją, nie po niej - nauka z wydania 2.1.0, gdzie kolejność była
+odwrotna. Trzy pytania z zadania W7 i jedno ustalenie, które wymagało decyzji.
+
+**Izolacja klubu na nowych trasach: SPEŁNIONA strukturalnie.** `GET /bookings/:id`
+i reszta tras rezerwacji mają przypadki w `server/test/tenantIsolation.test.ts`, który
+bierze listę tras z REJESTRU FASTIFY - nowa trasa bez przypadku albo bez imiennego
+wyjątku wywraca ten test. Klub jest argumentem portu (`byId(db, orgId, id)`), a nie
+polem filtra, więc pominięcia nie da się przeoczyć.
+
+**Odmowy 404 zamiast 403: SPEŁNIONE.** Cudza rezerwacja jest dla tokenu NIEISTNIEJĄCA -
+`403` mówiłoby „to istnieje, ale nie dla ciebie". Osobno sprawdzone zderzenie uuidów
+między klubami: wiersz o tym samym identyfikatorze w innym klubie oddaje
+`{ ok: false, taken: null }`, czyli odmowę bez wskazania, co stoi w terminie - inaczej
+idempotencja zapisu byłaby sondą na cudzy kalendarz.
+
+**Ile mówimy o cudzej rezerwacji: ZNALEZIONE I ZAWĘŻONE.** Z cudzych terminów ekrany
+czytają dokładnie pięć rzeczy - godziny, maszynę, właściciela, rodzaj zajętości i powód
+wyłączenia z użytku (`calendarGrid.ts`, `slotChips.ts`, `aircraftAvailability.ts`,
+`claimConflict.ts`). Serwer wysyłał przy tym na KAŻDY telefon w klubie komplet pól:
+trasę, drugiego pilota, planowany czas lotu, paliwo i NOTATKĘ - wolny tekst, który pilot
+pisał dla siebie i dla administratora. Na ekran nie trafiał nigdy, a jechał przy każdym
+odświeżeniu kalendarza i w każdej odmowie `slot_taken`.
+
+**Decyzja właściciela 2026-09-21: pełne pola tylko dla WŁASNYCH rezerwacji.**
+`bookingWire` pyta odtąd, KTO PATRZY. Wąski kształt nie jest zawężeniem „na wszelki
+wypadek" - to jest ta sama lista pól, którą czytają wymienione wyżej moduły. Wyłączenie
+z użytku nie ma właściciela, więc idzie wąskim kształtem, a `blockReason` jest w nim od
+zawsze, bo to ono nazywa taką zajętość na pasku osi.
+
+Po stronie telefonu pola własnej rezerwacji są **OPCJONALNE, a nie nullowalne**:
+`undefined` znaczy „nie moja rezerwacja", a `null` znaczyłoby „moja, tylko pusta" -
+i kod czytający je nie miałby jak odróżnić jednego od drugiego. Pilnuje tego test
+`server/test/bookings.test.ts` (pełna lista kluczy cudzej zajętości, karta `23` i ciało
+odmowy), bo niepilnowana własność jest własnością do czasu.
+
+**Czego świadomie NIE zmieniono:** panel widzi komplet - administrator ma do tego
+osobną zdolność (`reservations.manage`) i to jest jego robota; karta `23` otwarta na
+cudzym terminie dalej działa i pokazuje, KTO i KIEDY - tyle, ile wie po zawężeniu.
+
+## 18. Odstępstwa wobec planu - gdzie ich szukać
+
+Ten dokument powstał PRZED kodem i w kilku miejscach kod go poprawił. Odstępstwa są
+opisane TAM, GDZIE MIESZKA DECYZJA - poniżej jest spis, a nie druga kopia: dwa opisy
+tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
+
+| Epik | Co wyszło inaczej | Gdzie |
+| --- | --- | --- |
+| R-A | slot zwalnia się sam po godzinie bez przejęcia maszyny - świadomy wyłom w „rezerwacja jest mutowalna tylko przez człowieka" | §3.5 |
+| R-B | kontrakt kalendarza oddaje GRANICE DÓB, nie offsety; sonda stref przestała być warunkiem wstępnym | §6.1 |
+| R-B | `aircraft_not_found` osobno od `aircraft_disabled` - wyłączenie z użytku nie pyta o stan służby, więc razem z nim przestawało sprawdzać ISTNIENIE | §3.5 |
+| R-C | horyzontu rezerwacji NIE MA (P7); chwila bieżąca idzie z portu `Clock` | §7.2 |
+| R-E | zakładki nazwane PULPIT · KALENDARZ · HISTORIA, a Historia obejmuje także DZIŚ - odejście od issue #35 | §9.1 |
+| R-F | **cały moduł wymaga sieci** - odwraca pierwotne „odczyt kalendarza działa z cache" | §2.2 |
+| R-F | krok 1 formularza pyta o TERMIN I MASZYNĘ, nie o zadanie - lista zadań w issue #162 jest starsza niż makiety 22/22A | §9.2 |
+| R-F | tapnięcie w wolne pasmo NIE ustawia terminu, tylko przekazuje godzinę jako preferowaną porę do sugestii | makiety `21`, `21c`, `21d` |
+| R-F | `PATCH` nie przyjmuje maszyny - zmiana egzemplarza zakłada rezerwację od nowa i odwołuje starą, w tej kolejności | §5.1 |
+| R-F | `GET /bookings/:id` i `takenAt` w ciele odmowy - dwa dopiski wymuszone przez ekrany | §5.1 |
+| R-F | sonda stref odpowiedziana KODEM: aplikacja nie woła `Intl` ani razu | §6.1 |
+| R-W | cudza zajętość niesie tylko to, co ekran z niej czyta | §17 |
+
+Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
+bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od
+nowa, pełne pola tylko dla własnych rezerwacji) stoją w `CLAUDE.md` w sekcji epiku R-F -
+tam, gdzie szuka ich kod, a nie plan.
