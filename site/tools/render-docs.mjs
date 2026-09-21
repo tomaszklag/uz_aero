@@ -169,12 +169,13 @@ for (const p of pages) {
   p.text = plain(`${p.lead ?? ''} ${p.html}`);
 }
 
-// Ekrany, których podręcznik nie wymienia, a które osadza landing (`--extra`).
-// Kopiuje je TEN renderer, bo nakładka „sama rama telefonu" jest zdefiniowana raz
+// Makiety, których podręcznik nie wymienia, a które osadza landing (`--extra`,
+// `--extra-panels`).
+// Kopiuje je TEN renderer, bo nakładka „sama rama" jest zdefiniowana raz
 // i osadzenie w landingu ma wyglądać dokładnie tak, jak w podręczniku.
-for (const name of (opt('extra') ?? '').split(',').map((s) => s.trim()).filter(Boolean)) {
-  allScreens.add(name);
-}
+const listed = (name) => (opt(name) ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+for (const name of listed('extra')) allScreens.add(name);
+for (const name of listed('extra-panels')) allPanels.add(name);
 
 // ── żywe ekrany ────────────────────────────────────────────────────────────
 const OVERRIDE = `<style id="embed-override">
@@ -214,7 +215,7 @@ if (allPanels.size) {
   writeFileSync(join(panelsDir, 'panel.css'), readFileSync(css, 'utf8'));
   for (const name of allPanels) {
     const from = join(panelSrc, `${name}.html`);
-    if (!existsSync(from)) throw new Error(`brak makiety panelu ${from} (dyrektywa @panel)`);
+    if (!existsSync(from)) throw new Error(`brak makiety panelu ${from} (dyrektywa @panel albo --extra-panels)`);
     let html = readFileSync(from, 'utf8');
     if (!html.includes('id="embed-override"')) html = html.replace('</head>', `${PANEL_OVERRIDE}
 </head>`);
