@@ -115,6 +115,53 @@ describe('rezerwacje: zapis z telefonu', () => {
     );
   });
 
+  it('CUDZA zajętość niesie tylko to, co ekran z niej czyta', async () => {
+    const { app } = await testHarness();
+    const tmk = await login(app, 'TMK');
+    const pwi = await login(app, 'PWI');
+
+    // Rezerwacja z KOMPLETEM pól: trasa, drugi pilot, plan i notatka - czyli
+    // dokładnie to, czego nie ma prawa zobaczyć kolega z klubu (przegląd W7).
+    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H, {
+      operation: 'przelot',
+      fromIcao: 'EPKK',
+      toIcao: 'EPRJ',
+      plannedAirMin: 90,
+      plannedFuelL: 120,
+      note: 'Odbiór części w Jasionce',
+    });
+    expect(made.statusCode, made.body).toBe(201);
+
+    // WŁAŚCICIEL widzi swoje w całości - to jego plan i jego karta rezerwacji.
+    const moje = (await calendar(app, tmk)).json().bookings[0];
+    expect(moje.note).toBe('Odbiór części w Jasionce');
+    expect(moje.fromIcao).toBe('EPKK');
+    expect(moje.plannedFuelL).toBe(120);
+
+    // KOLEGA z tego samego klubu dostaje pięć rzeczy, których używa oś floty,
+    // karta samolotu i ostrzeżenie o kolizji - i ani pola więcej.
+    const cudze = (await calendar(app, pwi)).json().bookings[0];
+    expect(Object.keys(cudze).sort()).toEqual([
+      'aircraftId',
+      'blockReason',
+      'endsAt',
+      'id',
+      'kind',
+      'pilotId',
+      'startsAt',
+      'status',
+    ]);
+
+    // To samo na karcie rezerwacji: cudzy termin otwarty z osi mówi, KTO i KIEDY.
+    const karta = await app.inject({
+      url: `/bookings/${made.json().id}`,
+      headers: bearer(pwi),
+    });
+    expect(karta.statusCode).toBe(200);
+    expect(karta.json().booking.note).toBeUndefined();
+    expect(karta.json().booking.pilotId).toBe('TMK');
+  });
+
   it('NAKŁADKA odbija się i mówi, CO stoi w tym czasie', async () => {
     const { app } = await testHarness();
     const tmk = await login(app, 'TMK');
@@ -133,6 +180,10 @@ describe('rezerwacje: zapis z telefonu', () => {
     // innego niż „stoi od tygodnia", a na siatce kalendarza ta liczba nie znaczy nic,
     // więc do wspólnego kształtu zajętości nie wchodzi.
     expect(Number.isFinite(Date.parse(kolizja.json().takenAt))).toBe(true);
+    // …ale nie mówi o niej NIC ponad to: notatka i plan cudzego lotu nie są
+    // odpowiedzią na pytanie „czemu nie mogę zapisać" (W7).
+    expect(kolizja.json().taken.note).toBeUndefined();
+    expect(kolizja.json().taken.plannedFuelL).toBeUndefined();
   });
 
   it('ZETKNIĘCIE CO DO MINUTY PRZECHODZI', async () => {
