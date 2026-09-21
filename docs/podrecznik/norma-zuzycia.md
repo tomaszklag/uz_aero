@@ -20,15 +20,15 @@ Przyrost licznika nie równa się czasowi blokowemu i nie ma prawa się równać
 
 ## Oczekiwanie liczy się per operacja
 
-Paliwo i motogodziny liczą się tym samym równaniem: **stawka w locie × czas lotu + stawka na ziemi × czas na ziemi**. Arkusz pokazuje to wprost: „1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L".
+Paliwo i motogodziny liczą się tym samym równaniem: **stawka w locie × czas lotu + stawka na ziemi × czas na ziemi**. Okienko pokazuje to wprost: „1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L".
 
 > **Dlaczego per operacja.** Porównanie średniego zużycia na godzinę z pasmem maszyny dawało „poniżej normy" każdej operacji z długim kołowaniem - bez żadnego powodu poza proporcją ziemi do powietrza. Pasmo liczy się dla tej mieszanki faz, nie dla średniej operacji samolotu.
 
-## Werdykt i arkusz
+## Werdykt i okienko
 
-Na ekranie operacji karty Paliwo i Motogodziny kończy plakietka: **✓ W NORMIE** albo bursztynowe **↑ POWYŻEJ NORMY** / **↓ PONIŻEJ NORMY**. Tapnięcie otwiera arkusz „jak to policzone": zużyte w tej operacji, oczekiwane pasmo, średnia tej operacji, norma w locie i na ziemi oraz **Podstawa** z wiekiem normy („90 dni · Ostatnie pobrane · 05 SIE 17:30"). Przy normie z dokumentacji arkusz mówi wprost, że pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny; gdy model już jest, dokłada wiersze „Z dokumentacji" i „Odchyłka od dokumentacji" - dla tej operacji i dla normy maszyny. Ten sam rachunek stoi w kroku 4 [wpisu lotu po fakcie](wpis-lotu-po-fakcie), zanim cokolwiek zapiszesz.
+Na ekranie operacji karty Paliwo i Motogodziny kończy oznaczenie: **✓ W NORMIE** albo bursztynowe **↑ POWYŻEJ NORMY** / **↓ PONIŻEJ NORMY**. Tapnięcie otwiera okienko „jak to policzone": zużyte w tej operacji, oczekiwane pasmo, średnia tej operacji, norma w locie i na ziemi oraz **Podstawa** z wiekiem normy („90 dni · Ostatnie pobrane · 05 SIE 17:30"). Przy normie z dokumentacji okienko mówi wprost, że pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny; gdy model już jest, dokłada wiersze „Z dokumentacji" i „Odchyłka od dokumentacji" - dla tej operacji i dla normy maszyny. Ten sam rachunek stoi w kroku 4 [wpisu lotu po fakcie](wpis-lotu-po-fakcie), zanim cokolwiek zapiszesz.
 
-Bez normy karta milczy - nie ma plakietki ani zdania o jej braku. Jedyny wyjątek to „silnik nie pracował".
+Bez normy karta milczy - nie ma oznaczenia ani zdania o jej braku. Jedyny wyjątek to „silnik nie pracował".
 
 @screen 10c-norma-detale "Rozpisane działanie normy" | 10a-statystyki-zero "Silnik nie pracował"
 
@@ -39,7 +39,7 @@ Bez normy karta milczy - nie ma plakietki ani zdania o jej braku. Jedyny wyjąte
 Ta sama norma daje szacunki tam, gdzie odczytu jeszcze nie ma:
 
 - **Kokpit** - po uruchomieniu silnika litry są szacunkiem („Na pokładzie około 141 L"), odświeżanym co 5 minut. Pasek wystarczalności („wystarczy na ~7 wyniesień do rezerwy 45 min") pojawia się tylko przy normie z lotów ze stawką w locie - stawka z dokumentacji zaniżałaby rezerwę.
-- **Tankowanie i zdanie samolotu** - po biegu silnika pole paliwa startuje puste, a podpis podpowiada „szacunek z normy: ~60 L"; arkusz pokazuje szlak: ostatni odczyt, ile latano, ile mogło się spalić.
+- **Tankowanie i zdanie samolotu** - po biegu silnika pole paliwa startuje puste, a podpis podpowiada „szacunek z normy: ~60 L"; okienko pokazuje rozpiskę: ostatni odczyt, ile latano, ile mogło się spalić.
 - **Przejęcie** - zielone ogniwo „Szacunkowo zostało ~X L" liczone z historii przekazania.
 
 @screen 05-cockpit-running "Szacunek paliwa w kokpicie" | 06-tankowanie "Szacunek przed tankowaniem" | 02b-preflight-paliwo "Zielone ogniwo przy przejęciu"
@@ -48,7 +48,7 @@ Ta sama norma daje szacunki tam, gdzie odczytu jeszcze nie ma:
 
 ## Olej: oczekiwanie bez werdyktu
 
-Norma oleju daje oczekiwanie **między pomiarami**: arkusz pomiaru przy przejęciu pokazuje „Ostatni pomiar", „Latano · 4:00 MH" i „na bagnecie oczekuj ≈ 10,1 L", a kokpit „W silniku około 9,1 L". Werdyktu per operacja nie ma - oleju nie mierzy się przy zdaniu, więc zużycia jednej operacji nie da się policzyć; karta Olej na ekranie operacji to rachunek bez plakietki.
+Norma oleju daje oczekiwanie **między pomiarami**: okienko pomiaru przy przejęciu pokazuje „Ostatni pomiar", „Latano · 4:00 MH" i „na bagnecie oczekuj ≈ 10,1 L", a kokpit „W silniku około 9,1 L". Werdyktu per operacja nie ma - oleju nie mierzy się przy zdaniu, więc zużycia jednej operacji nie da się policzyć; karta Olej na ekranie operacji to rachunek bez oznaczenia.
 
 @screen 02i-preflight-olej "Oczekiwanie na bagnecie"
 

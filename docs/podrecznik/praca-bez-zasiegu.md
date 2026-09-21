@@ -21,23 +21,23 @@ Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykr
 
 ## Wskaźnik łączności
 
-Plakietka w nagłówku istnieje tylko wtedy, gdy coś stoi. Stan „wszystko wysłane" nie dostaje żadnego znaku - świecąca cały czas plakietka uczyłaby oko pomijać ten róg ekranu.
+Oznaczenie w nagłówku istnieje tylko wtedy, gdy coś stoi. Stan „wszystko wysłane" nie dostaje żadnego znaku - świecąca cały czas oznaczenie uczyłaby oko pomijać ten róg ekranu.
 
-| Plakietka | Znaczenie | Co zrobić |
+| Oznaczenie | Znaczenie | Co zrobić |
 |---|---|---|
-| brak plakietki | wszystko wysłane albo wyjdzie przy najbliższej okazji | nic |
+| brak oznaczenia | wszystko wysłane albo wyjdzie przy najbliższej okazji | nic |
 | **OFFLINE · n** (bursztyn) | ostatnia próba wysyłki nie dotarła do serwera; n zapisów czeka | nic - przejdzie samo z zasięgiem |
-| **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij plakietkę: baner nazywa powód, podaje kod dla administratora i drogę wyjścia |
+| **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij oznaczenie: baner nazywa powód, podaje kod dla administratora i drogę wyjścia |
 
-Tapnięcie otwiera arkusz „Synchronizacja": ile zapisów czeka w kolejce, **Ostatnia próba** z godziną i wynikiem („brak sieci", „odrzucone"), **Ostatnia udana synchronizacja**, wiek danych pobranych z panelu oraz przycisk **PONÓW PRÓBĘ**. Ponowienie robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
+Tapnięcie otwiera okienko „Synchronizacja": ile zapisów czeka w kolejce, **Ostatnia próba** z godziną i wynikiem („brak sieci", „odrzucone"), **Ostatnia udana synchronizacja**, wiek danych pobranych z panelu oraz przycisk **PONÓW PRÓBĘ**. Ponowienie robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
 
-@screen 01-moj-dzien "Brak plakietki · wszystko wysłane" | 01c-moj-dzien-offline "OFFLINE · arkusz synchronizacji" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
+@screen 01-moj-dzien "Brak oznaczenia · wszystko wysłane" | 01c-moj-dzien-offline "OFFLINE · okienko synchronizacji" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
 
 > **Dlaczego tak.** „OFFLINE" znaczy wynik ostatniej próby, a nie samą obecność zapisów w kolejce. Bursztyn mówi w tej aplikacji „poczekaj, samo przejdzie", więc odmowy serwera nie wolno tak nazwać: sieć wtedy jest, a kolejka mimo to stoi i sama nie ruszy. Dlatego ten stan ma osobny, czerwony kolor.
 
 ## Ponowienie z ręki czeka dłużej
 
-Wysyłka w tle rezygnuje po kilku sekundach - przy słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za chwilę. **PONÓW PRÓBĘ** czeka nawet pół minuty, bo sięgasz po nie dokładnie wtedy, gdy długo nic nie szło, a serwer klubu potrzebuje chwili na obudzenie. Każda próba, także nieudana, zmienia wiersz **Ostatnia próba** - żeby dało się odróżnić przycisk, który nic nie zrobił, od próby, która się nie powiodła. Po udanej wysyłce arkusz zostaje otwarty ze zdaniem o tym, ile zapisów poszło.
+Wysyłka w tle rezygnuje po kilku sekundach - przy słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za chwilę. **PONÓW PRÓBĘ** czeka nawet pół minuty, bo sięgasz po nie dokładnie wtedy, gdy długo nic nie szło, a serwer klubu potrzebuje chwili na obudzenie. Każda próba, także nieudana, zmienia wiersz **Ostatnia próba** - żeby dało się odróżnić przycisk, który nic nie zrobił, od próby, która się nie powiodła. Po udanej wysyłce okienko zostaje otwarty ze zdaniem o tym, ile zapisów poszło.
 
 ## Decyzje administratora docierają przy pierwszym połączeniu
 
@@ -53,7 +53,7 @@ Każde zdarzenie - przejęcie, uruchomienie silnika, wykryty start, tankowanie, 
 
 @screen 13-ustawienia "SYNCHRONIZUJ TERAZ w ustawieniach"
 
-- **Plakietka mówi OFFLINE, choć mam zasięg** → ostatnia próba nie doszła; bywa tak przy słabym połączeniu albo gdy serwer klubu dopiero się budzi. Tapnij plakietkę i **PONÓW PRÓBĘ** - to ponowienie czeka dłużej niż wysyłka w tle.
+- **Oznaczenie mówi OFFLINE, choć mam zasięg** → ostatnia próba nie doszła; bywa tak przy słabym połączeniu albo gdy serwer klubu dopiero się budzi. Tapnij oznaczenie i **PONÓW PRÓBĘ** - to ponowienie czeka dłużej niż wysyłka w tle.
 - **Czerwone SYNC STOI** → serwer odpowiedział i odmówił albo trzeba zalogować się ponownie. Twoje zapisy są bezpieczne na telefonie. Zrób to, co mówi baner; przy odmowie przekaż administratorowi kod, który w nim stoi.
 - **Tapnąłem PONÓW PRÓBĘ i nic się nie zmieniło** → sprawdź wiersz **Ostatnia próba**: jeśli ma świeżą godzinę i wynik, przycisk zadziałał, a próba się nie powiodła.
 - **Zmieniam telefon albo odinstalowuję aplikację** → najpierw doprowadź kolejkę do stanu pustego. Zapisy, które nie zdążyły wyjść, istnieją wyłącznie na starym telefonie.

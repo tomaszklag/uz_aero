@@ -34,7 +34,7 @@ Zmiana pojemności zbiorników zmienia przy okazji próg, od którego klub dosta
 
 Zakładając maszynę, wpisujesz, co pokazują przyrządy: licznik, paliwo i olej. To jest pierwsze ogniwo [łańcucha odczytów](lancuch-odczytow) - pierwszy pilot zobaczy te liczby przy rozpoczęciu lotu jako **stan początkowy z panelu**, bez nazwiska poprzednika, bo nikt tej maszyny jeszcze nie przekazał. Jego zdanie samolotu stanie się przekazaniem dla następnego i od tej chwili łańcuch prowadzi się sam.
 
-Od chwili, gdy maszynę prowadzi dziennik, te same pola są **do odczytu**: pokazują ostatni odczyt z podpisem, skąd pochodzi - z dziennika albo z ręki administratora, razem z jego komentarzem. Olej ma własny stempel i własny stan pusty: bywa dużo starszy niż odczyt paliwa, bo mierzy się go tylko przy przejęciu, a maszyna potrafi latać bez ani jednego pomiaru w dzienniku.
+Od chwili, gdy maszynę prowadzi dziennik, te same pola są **do odczytu**: pokazują ostatni odczyt z podpisem, skąd pochodzi - z dziennika albo z ręki administratora, razem z jego komentarzem. Olej ma własną datę i własny brak pomiaru: bywa dużo starszy niż odczyt paliwa, bo mierzy się go tylko przy przejęciu, a maszyna potrafi latać bez ani jednego pomiaru w dzienniku.
 
 > **Dlaczego stan początkowy przestaje być polem.** Liczba, którą prowadzi dziennik, ma jednego właściciela naraz. Dopóki jedynym źródłem jest wpis z panelu, wolno go poprawić - to nadal Twoja własna literówka. Gdy maszyna zaczęła latać, wpis nic już nie znaczy, a pole edytowalne nad wartością, której edycja niczego nie zmienia, kierowałoby administratorem w złą stronę. Zero jest przy tym **wartością, nie brakiem**: nowy silnik ma zero na liczniku, maszyna przyjęta z pustymi zbiornikami - zero litrów. Dlatego stan początkowy zera nie zabrania, a normy z dokumentacji owszem: zero litrów na godzinę nie jest stanem świata, tylko literówką.
 
@@ -48,7 +48,7 @@ Wchodzi do łańcucha jako konkurent ostatniego zdania: przekazaniem zostaje ten
 
 ## Norma z dokumentacji
 
-Zużycie wpisane w karcie działa **od pierwszego lotu**: aplikacja liczy z niego szacunek „ile zostało" i werdykt, czy operacja mieści się w paśmie. Pasmo jest wtedy zadeklarowane wokół wpisanej wartości, a nie zmierzone - instrukcja podaje punkt, nie rozrzut, i arkusz rachunku mówi to pilotowi wprost. Gdy maszyna ma dość zamkniętych operacji, norma wyliczona z **jej własnych lotów** wygrywa z wpisaną, a dokumentacja zostaje wartością odniesienia. Cała mechanika: [norma zużycia](norma-zuzycia).
+Zużycie wpisane w karcie działa **od pierwszego lotu**: aplikacja liczy z niego szacunek „ile zostało" i werdykt, czy operacja mieści się w paśmie. Pasmo jest wtedy zadeklarowane wokół wpisanej wartości, a nie zmierzone - instrukcja podaje punkt, nie rozrzut, i okienko rachunku mówi to pilotowi wprost. Gdy maszyna ma dość zamkniętych operacji, norma wyliczona z **jej własnych lotów** wygrywa z wpisaną, a dokumentacja zostaje wartością odniesienia. Cała mechanika: [norma zużycia](norma-zuzycia).
 
 Do dziennika nic z tego nie wchodzi - tam stoją wyłącznie odczyty.
 

@@ -50,7 +50,7 @@ Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda 
 
 ## Sesje
 
-- **Aplikacja.** Po pierwszym logowaniu telefon ma profil pilota, a codzienne wejście to PIN. Sesja z serwerem odświeża się sama przy najbliższej sieci; jej wygaśnięcie nie kasuje niczego i nie wylogowuje - może tylko zatrzymać kolejkę wysyłki z plakietką **SYNC STOI** i prośbą o ponowne zalogowanie ([synchronizacja](synchronizacja)).
+- **Aplikacja.** Po pierwszym logowaniu telefon ma profil pilota, a codzienne wejście to PIN. Sesja z serwerem odświeża się sama przy najbliższej sieci; jej wygaśnięcie nie kasuje niczego i nie wylogowuje - może tylko zatrzymać kolejkę wysyłki z oznaczeniem **SYNC STOI** i prośbą o ponowne zalogowanie ([synchronizacja](synchronizacja)).
 - **Panel.** Sesja wygasa po ośmiu godzinach i panel prosi o ponowne logowanie.
 - **Wylogowanie** stoi na końcu ustawień jako **Wyloguj i zmień konto** i nie zadziała, dopóki kolejka wysyłki nie jest pusta. Kończy sesję także po stronie klubu, nie tylko na telefonie - na wspólnym tablecie „wyloguj" ma znaczyć koniec, a nie schowanie.
 
@@ -60,7 +60,7 @@ Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda 
 
 ## Wyłączenie członkostwa
 
-Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
+Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach dnia, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
 
 Człowieka jako osoby nie kasuje nikt - dziennik musi umieć przypisać każdy wpis do autora. Blokada obejmująca wszystkie kluby naraz należy do opiekuna platformy i jest osobną decyzją.
 
@@ -73,7 +73,7 @@ Człowieka jako osoby nie kasuje nikt - dziennik musi umieć przypisać każdy w
 | wiersz sesji logowania | przy każdym zalogowaniu: urządzenie (model, system, wersja aplikacji albo przeglądarka), adres IP, czym się zalogowano, początek i ostatnia aktywność - po to, żeby dało się zobaczyć swoje urządzenia i wylogować je zdalnie | Ty - swoje wszędzie; administrator - Twoje w SWOIM klubie |
 | dziennik lotów: operacje, odczyty, korekty z autorem i powodem, notatki | z aplikacji, w chwili zdarzenia | pilot - swoje; administrator - całą flotę |
 | ślad GPS | tylko w trakcie operacji: od uruchomienia do wyłączenia silnika telefon nagrywa ślad i pokazuje o tym powiadomienie; po wysłaniu kasuje kopię | pilot - swoje; administrator - w dzienniku |
-| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarty arkusz, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | opiekun platformy - jedna kolejka dla całego serwera, z nazwą klubu przy zgłoszeniu; administrator klubu tej zakładki nie ma |
+| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarte okienko, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | opiekun platformy - jedna kolejka dla całego serwera, z nazwą klubu przy zgłoszeniu; administrator klubu tej zakładki nie ma |
 
 Poza operacją aplikacja nie zapisuje położenia; w ustawieniach jest tylko diagnostyka GPS na żądanie. Dane trafiają na serwer klubu, utrzymywany u dostawcy hostingu, a dziennik jest dokumentem klubu: to klub przyjmuje pilotów, poprawia i unieważnia wpisy. Pełny opis: [polityka prywatności](~/prywatnosc.html).
 

@@ -5,12 +5,12 @@
 ## Co widać
 
 - **Nagłówek** z Twoim kodem pilota i dzisiejszą datą, np. `TMK · 06 SIE 2026`.
-- **Kafelek operacji** - numer operacji w dobie (OPERACJA 1, 2, 3…), jej sygnatura, np. `SP-AXA/2026-08-06/TMK/1`, godziny uruchomienia i wyłączenia silnika oraz trójka **Loty · Blok · Lot** (liczba lotów, czas blokowy, czas w powietrzu). Lot wpisany po fakcie ma plakietkę **RĘCZNIE**, operacja zakończona z panelu - „Zakończył administrator". **OTWÓRZ I POPRAW** albo tapnięcie w kafelek otwiera [ekran operacji](operacja-i-korekty).
+- **Kafelek operacji** - numer operacji w dobie (OPERACJA 1, 2, 3…), jej sygnatura, np. `SP-AXA/2026-08-06/TMK/1`, godziny uruchomienia i wyłączenia silnika oraz trójka **Loty · Blok · Lot** (liczba lotów, czas blokowy, czas w powietrzu). Lot wpisany po fakcie ma oznaczenie **RĘCZNIE**, operacja zakończona z panelu - „Zakończył administrator". **OTWÓRZ I POPRAW** albo tapnięcie w kafelek otwiera [ekran operacji](operacja-i-korekty).
 - **Sumy doby** w tej samej trójce, pod listą; przy kilku maszynach stoi dopisek, np. „2 samoloty".
 - **ROZPOCZNIJ LOT** - zawsze zielony i zawsze w tym samym miejscu, pod logiem dnia, przez cały dzień. Prowadzi do [rozpoczęcia lotu](rozpoczecie-lotu).
 - **DODAJ LOT RĘCZNIE** - [wpis lotu po fakcie](wpis-lotu-po-fakcie), dostępny także przy pustym dniu.
-- **POPRZEDNIE DNI** - operacje spoza dzisiejszej doby ([więcej](poprzednie-dni)); plakietka na przycisku mówi, że jakąś operację z ostatnich dni można jeszcze poprawić.
-- **Zębatka** w prawym górnym rogu - [ustawienia](ustawienia). To jedyne wejście do ustawień w aplikacji. Obok niej, na czas testów, stoi przycisk zgłoszenia błędu - ten sam na każdym ekranie i w każdym arkuszu.
+- **POPRZEDNIE DNI** - operacje spoza dzisiejszej doby ([więcej](poprzednie-dni)); oznaczenie na przycisku mówi, że jakąś operację z ostatnich dni można jeszcze poprawić.
+- **Zębatka** w prawym górnym rogu - [ustawienia](ustawienia). To jedyne wejście do ustawień w aplikacji. Obok niej, na czas testów, stoi przycisk zgłoszenia błędu - ten sam na każdym ekranie i w każdym okienku.
 
 Pusty dzień pokazuje kartę „DZIŚ BEZ LOTÓW" i kreski zamiast sum - nigdy zera.
 
@@ -30,18 +30,18 @@ Wszystkie czasy w Ninerdeck są w UTC - w logu operacji, przy startach i lądowa
 
 ## Wskaźnik łączności
 
-Gdy wszystko jest wysłane, na ekranie **nie ma żadnej plakietki** - to stan domyślny. Plakietka pojawia się tylko wtedy, gdy coś czeka:
+Gdy wszystko jest wysłane, na ekranie **nie ma żadnego oznaczenia** - i tak wygląda dzień, w którym wszystko doszło do klubu. Oznaczenie pojawia się tylko wtedy, gdy coś czeka:
 
 - **OFFLINE · n** (bursztyn) - ostatnia próba wysyłki nie dotarła do serwera, n zapisów czeka w kolejce. Przejdzie samo, gdy wróci zasięg.
-- **SYNC STOI · n** (czerwony) - serwer odmówił albo sesja wygasła. Samo nie ruszy; tapnij plakietkę, żeby zobaczyć powód i co zrobić.
+- **SYNC STOI · n** (czerwony) - serwer odmówił albo sesja wygasła. Samo nie ruszy; tapnij oznaczenie, żeby zobaczyć powód i co zrobić.
 
-Tapnięcie plakietki otwiera arkusz z kolejką, ostatnią próbą, ostatnią udaną synchronizacją i przyciskiem **PONÓW PRÓBĘ**. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
+Tapnięcie oznaczenia otwiera okienko z kolejką, ostatnią próbą, ostatnią udaną synchronizacją i przyciskiem **PONÓW PRÓBĘ**. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
-@screen 01c-moj-dzien-offline "Arkusz synchronizacji po tapnięciu" | 01d-sync-stoi "Czerwony stan SYNC STOI"
+@screen 01c-moj-dzien-offline "Okienko synchronizacji po tapnięciu" | 01d-sync-stoi "Czerwony stan SYNC STOI"
 
 ## Komunikaty od administratora
 
-Jeśli administrator zakończył albo unieważnił Twoją operację z panelu, na ekranie stoi bursztynowy baner: która operacja, z jakiego powodu i co stało się z Twoimi zapisami (np. „2 zapisy z tego telefonu do tej operacji nie wyjdą na serwer"). Znika po tapnięciu **ROZUMIEM**. Operacja zakończona przez administratora zostaje na liście z plakietką; unieważniona znika z listy i z sum.
+Jeśli administrator zakończył albo unieważnił Twoją operację z panelu, na ekranie stoi bursztynowy baner: która operacja, z jakiego powodu i co stało się z Twoimi zapisami (np. „2 zapisy z tego telefonu do tej operacji nie wyjdą na serwer"). Znika po tapnięciu **ROZUMIEM**. Operacja zakończona przez administratora zostaje na liście z oznaczeniem; unieważniona znika z listy i z sum.
 
 ## Częste problemy
 

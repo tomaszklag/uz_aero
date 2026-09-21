@@ -23,7 +23,7 @@ Znanego pilota można dopisać, zanim w ogóle sięgnie po aplikację: **Dodaj p
 
 ## Lista kont
 
-Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki niesie i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
+Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki zapamiętuje i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
 
 @panel piloci-zgloszenie "Zatwierdzenie z nadaniem kodu"
 
@@ -39,7 +39,7 @@ Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google)
 
 W sekcji **Dostęp** stoi jeden przycisk: **Wyślij link do ustawienia hasła**. To dokładnie ten sam list, który pilot wysłałby sobie sam przez „Nie pamiętam hasła" - różni je tylko to, kto go wywołał. Po wysłaniu panel potwierdza, **dokąd** poszedł i **jak długo** jest ważny; samego linku ani żadnego kodu nie pokazuje nikomu, także Tobie. Hasło zna wyłącznie jego właściciel i to jest cała treść tego rozwiązania - hasło podyktowane przez telefon zna już dwoje ludzi.
 
-Tą samą drogą ustawia hasło pilot, który dotąd wchodził wyłącznie Googlem, a ma latać ze wspólnego tabletu. Pod adresem w sekcji **Osoba** widać plakietki metod: „Google", „hasło" albo obie; przy koncie, do którego nikt jeszcze nie wszedł, nie ma żadnej. Osoba bez adresu e-mail nie ma dokąd dostać listu i przycisk mówi to wprost.
+Tą samą drogą ustawia hasło pilot, który dotąd wchodził wyłącznie Googlem, a ma latać ze wspólnego tabletu. Pod adresem w sekcji **Osoba** widać oznaczenia metod: „Google", „hasło" albo obie; przy koncie, do którego nikt jeszcze nie wszedł, nie ma żadnej. Osoba bez adresu e-mail nie ma dokąd dostać listu i przycisk mówi to wprost.
 
 ### Sesje: które urządzenie i „wyloguj wszędzie"
 

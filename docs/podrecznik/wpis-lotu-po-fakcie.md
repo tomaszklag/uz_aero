@@ -12,7 +12,7 @@ Data jest pierwszym pytaniem - kalendarz miesięczny ze skrótami **Wczoraj** i 
 
 ## Krok 2 · zadanie
 
-Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu lotu. **Trasa jest tu wymagana**: przy skokach jedno lotnisko, przy pozostałych operacjach para skąd → dokąd. Klient i notatka są opcjonalne i mówi to plakietka przy ich nagłówkach.
+Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu lotu. **Trasa jest tu wymagana**: przy skokach jedno lotnisko, przy pozostałych operacjach para skąd → dokąd. Klient i notatka są opcjonalne i mówi to oznaczenie przy ich nagłówkach.
 
 > **Dlaczego tak.** Przy rozpoczęciu lotu trasę wolno zostawić pustą, bo start silnika ma trwać sekundy. Wpis po fakcie opisuje lot, który **już się odbył** - „jeszcze nie wiem, dokąd" tu nie istnieje.
 
@@ -20,7 +20,7 @@ Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu
 
 ## Krok 3 · przebieg operacji
 
-Oś zaczyna się od dwóch pustych wierszy: **uruchomienie** i **wyłączenie** silnika. Tapnięcie w wiersz otwiera arkusz godziny - wpis z klawiatury (kropka i przecinek znaczą dwukropek, więc `8.30` to `08:30`) albo przyciski ±1 min; przy etykiecie stoi czas lokalny.
+Oś zaczyna się od dwóch pustych wierszy: **uruchomienie** i **wyłączenie** silnika. Tapnięcie w wiersz otwiera okienko godziny - wpis z klawiatury (kropka i przecinek znaczą dwukropek, więc `8.30` to `08:30`) albo przyciski ±1 min; przy etykiecie stoi czas lokalny.
 
 - **DODAJ LOT** pojawia się dopiero wtedy, gdy oba końce biegu mają godzinę. Pierwszy lot dostaje granice całego biegu, każdy kolejny zaczyna się od ostatniego lądowania.
 - **Kręgi (touch and go)** wpisuje się liczbą przy lądowaniu, a podpis mówi, ile z tego wychodzi lądowań. Nie trzeba wpisywać pięciu par godzin.
@@ -39,7 +39,7 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 - **Motogodziny** z obu stron biegu: przed uruchomieniem i po locie.
 - **Olej** jest tu opcjonalny (inaczej niż przy przejęciu na żywo): pomiar z bagnetu i ewentualna dolewka.
 - **Zastane paliwo i licznik podpowiada operacja poprzedzająca** na tej maszynie - z podpisem, skąd liczba pochodzi (`z poprzedniego lotu · AKO`). Podpowiedź można nadpisać, a odczytów po locie nie podpowiada nic: to na nie odpowiadasz.
-- **Karty pokazują werdykt wobec normy** maszyny od razu; tapnięcie w plakietkę otwiera rachunek. Więcej: [norma zużycia](norma-zuzycia).
+- **Karty pokazują werdykt wobec normy** maszyny od razu; tapnięcie w oznaczenie otwiera rachunek. Więcej: [norma zużycia](norma-zuzycia).
 
 @screen 15c-reczny-liczniki "Paliwo, motogodziny i olej"
 
@@ -53,11 +53,11 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 | paliwa po locie więcej niż zastane plus dolane | zużycie poza normą maszyny |
 | stan ponad pojemność zbiorników | nakładanie się czasów z Twoją inną operacją |
 
-@screen 15g-reczny-czas-kolejnosc "Blokada odwróconej pary godzin" | 15f-reczny-czas-pusty "Arkusz czasu bez wartości"
+@screen 15g-reczny-czas-kolejnosc "Blokada odwróconej pary godzin" | 15f-reczny-czas-pusty "Okienko czasu bez wartości"
 
 ## Jak to działa
 
-Wpis nie jest osobnym rodzajem dokumentu - aplikacja składa z niego dokładnie takie same zapisy, jakie powstałyby w kokpicie: przejęcie z odczytami, tankowanie, uruchomienie, każdy start i lądowanie, zrzuty, wyłączenie i zdanie samolotu. Cały przebieg sprawdzany jest **w całości przed zapisem** - albo zapisuje się wszystko, albo nic - i dlatego blokada mówi o problemie już w formularzu, zamiast odmówić po tapnięciu w **ZAPISZ LOT**. Ostrzeżenia liczą się bez sieci: kolizje z Twoimi własnymi operacjami biorą się z zapisu na telefonie, a łańcuch paliwa i licznika z kopii z ostatniego połączenia, z adnotacją o jej wieku. Połączenia potrzebuje jedno: podpowiedź „z poprzedniego lotu", bo pyta klub o sąsiada tej maszyny w tej konkretnej chwili. Gotowa operacja niesie plakietkę **RĘCZNIE** na kafelku i w nagłówku [ekranu operacji](operacja-i-korekty).
+Wpis nie jest osobnym rodzajem dokumentu - aplikacja składa z niego dokładnie takie same zapisy, jakie powstałyby w kokpicie: przejęcie z odczytami, tankowanie, uruchomienie, każdy start i lądowanie, zrzuty, wyłączenie i zdanie samolotu. Cały przebieg sprawdzany jest **w całości przed zapisem** - albo zapisuje się wszystko, albo nic - i dlatego blokada mówi o problemie już w formularzu, zamiast odmówić po tapnięciu w **ZAPISZ LOT**. Ostrzeżenia liczą się bez sieci: kolizje z Twoimi własnymi operacjami biorą się z zapisu na telefonie, a łańcuch paliwa i licznika z kopii z ostatniego połączenia, z adnotacją o jej wieku. Połączenia potrzebuje jedno: podpowiedź „z poprzedniego lotu", bo pyta klub o sąsiada tej maszyny w tej konkretnej chwili. Gotowa operacja dostaje oznaczenie **RĘCZNIE** na kafelku i w nagłówku [ekranu operacji](operacja-i-korekty).
 
 > **Założenie.** Ostrzeżenia nigdy nie blokują zapisu. Pilot wpisujący lot z kartki tydzień później często ma dane niepełne, a lot z jedną niepewną liczbą jest wart więcej niż lot, którego w dokumentacji nie ma wcale.
 

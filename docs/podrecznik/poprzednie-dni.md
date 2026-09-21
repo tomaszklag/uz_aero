@@ -13,13 +13,13 @@ Ekran otwiera się z przycisku **POPRZEDNIE DNI** na ekranie [Mój dzień](moj-d
 
 ## Kafelek operacji
 
-Ten sam kształt, co na ekranie Mój dzień - różnią się dwie rzeczy: nagłówkiem jest data (`11 SIERPNIA 2026`), a pod kafelkiem może stać stopka z plakietkami.
+Ten sam kształt, co na ekranie Mój dzień - różnią się dwie rzeczy: nagłówkiem jest data (`11 SIERPNIA 2026`), a pod kafelkiem może stać stopka z oznaczeniami.
 
 - **Sygnatura** operacji, np. `SP-KLM/2026-08-11/TMK/2`, znak samolotu i godziny biegu silnika (`14:20 → 16:02 UTC`).
 - **Trójka Loty · Blok · Lot** - liczba lotów, czas blokowy, czas w powietrzu.
 - **RĘCZNIE** przy nagłówku, gdy operacja powstała jako [wpis lotu po fakcie](wpis-lotu-po-fakcie).
 - **Zakończył administrator** - operacja, której nie zdałeś, a klub zamknął ją z panelu.
-- **Plakietka zaległości** pojawia się tylko wtedy, gdy zapisy tej operacji jeszcze nie doszły do klubu: „Oczekuje na przesłanie · n" albo „W trakcie wysyłania · n". Wysłane operacje nie mają żadnej plakietki - to stan domyślny.
+- **Oznaczenie zaległości** pojawia się tylko wtedy, gdy zapisy tej operacji jeszcze nie doszły do klubu: „Oczekuje na przesłanie · n" albo „W trakcie wysyłania · n". Wysłane operacje nie mają żadnej oznaczenia - to stan domyślny.
 
 Tapnięcie kafelka otwiera [ekran operacji](operacja-i-korekty): w oknie korekty z możliwością edycji, po oknie w trybie podglądu.
 
@@ -35,10 +35,10 @@ Lista liczy się na telefonie, z Twojego lokalnego zapisu - dlatego wygląda tak
 
 ## Częste problemy
 
-@screen 01-moj-dzien "Dzisiejsze operacje na Mój dzień" | 01d-sync-stoi "Czerwona plakietka łączności"
+@screen 01-moj-dzien "Dzisiejsze operacje na Mój dzień" | 01d-sync-stoi "Czerwone oznaczenie łączności"
 
 - **Nie widzę wczorajszego wieczornego lotu** → doba liczy się w UTC od uruchomienia silnika. Latem lot uruchomiony po 02:00 czasu polskiego należy już do następnej doby, więc może stać na ekranie Mój dzień, a nie tutaj.
 - **Kafelek ma tylko ZOBACZ SZCZEGÓŁY** → minęły 24 godziny od zdania samolotu. Poprawkę wprowadzi administrator - zgłoś ją w klubie; zapis pierwotny i tak zostanie w dokumentacji.
-- **Plakietka „Oczekuje na przesłanie" nie znika** → zapisy tej operacji czekają w kolejce wysyłki. Wróć w zasięg; jeśli plakietka łączności w nagłówku jest czerwona, kolejka sama nie ruszy - patrz [praca bez zasięgu](praca-bez-zasiegu).
+- **Oznaczenie „Oczekuje na przesłanie" nie znika** → zapisy tej operacji czekają w kolejce wysyłki. Wróć w zasięg; jeśli oznaczenie łączności w nagłówku jest czerwona, kolejka sama nie ruszy - patrz [praca bez zasięgu](praca-bez-zasiegu).
 - **Lista jest pusta po reinstalacji albo na nowym telefonie** → operacje wracają z serwera przy pierwszym połączeniu. Daj aplikacji chwilę z zasięgiem albo użyj **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
 - **Operacja zniknęła z listy** → została unieważniona: przez Ciebie w trybie edycji albo przez administratora. Zapis zostaje w dokumentacji klubu i widzi go administrator, ale przestaje się liczyć - wypada z sum, z historii i z dokumentów dnia.

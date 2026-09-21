@@ -62,7 +62,7 @@ Tak. Zdanie ma wariant **bez lotu**: powód z listy i opcjonalny komentarz dla a
 
 ### Wpisałem złą liczbę przy zdaniu. Da się poprawić?
 
-Tak, przez 24 godziny od zdania: kafelek operacji → **EDYTUJ DANE** → ołówek przy wierszu „Zdanie" → nowa wartość i opcjonalny powód. Stara liczba nie ginie - przy poprawionej staje plakietka **popr.** z całą historią zmian. Więcej: [ekran operacji i korekty](operacja-i-korekty).
+Tak, przez 24 godziny od zdania: kafelek operacji → **EDYTUJ DANE** → ołówek przy wierszu „Zdanie" → nowa wartość i opcjonalny powód. Stara liczba nie ginie - przy poprawionej staje oznaczenie **popr.** z całą historią zmian. Więcej: [ekran operacji i korekty](operacja-i-korekty).
 
 ### Minęły 24 godziny, a liczba jest zła
 
@@ -82,7 +82,7 @@ Bo doba w Ninerdeck liczy się w UTC, a operacja należy do doby, w której uruc
 
 ### Jak wpisać lot, którego nie było na telefonie?
 
-Na Moim dniu stoi **DODAJ LOT RĘCZNIE** - cztery kroki: data i samolot, zadanie, czasy i loty, liczniki. Kręgi podaje się liczbą przy lądowaniu, a nie parami godzin. Taki wpis nie ma śladu GPS i niesie plakietkę **RĘCZNIE**: [wpis lotu po fakcie](wpis-lotu-po-fakcie).
+Na Moim dniu stoi **DODAJ LOT RĘCZNIE** - cztery kroki: data i samolot, zadanie, czasy i loty, liczniki. Kręgi podaje się liczbą przy lądowaniu, a nie parami godzin. Taki wpis nie ma śladu GPS i dostaje oznaczenie **RĘCZNIE**: [wpis lotu po fakcie](wpis-lotu-po-fakcie).
 
 ## Bez zasięgu
 
@@ -92,11 +92,11 @@ Tak - wszystko, co dotyczy lotu, działa bez sieci: wejście PIN-em, rozpoczęci
 
 ### Co znaczy czerwone „SYNC STOI"?
 
-Serwer odpowiedział i odmówił przyjęcia zapisów albo wygasła sesja - kolejka sama nie ruszy. Tapnij plakietkę: baner nazywa powód, podaje kod odmowy dla administratora i drogę wyjścia. Twoje zapisy są bezpieczne na telefonie. Bursztynowe **OFFLINE · n** znaczy co innego: ostatnia próba nie dotarła i przejdzie sama, gdy wróci zasięg ([synchronizacja](synchronizacja)).
+Serwer odpowiedział i odmówił przyjęcia zapisów albo wygasła sesja - kolejka sama nie ruszy. Tapnij oznaczenie: baner nazywa powód, podaje kod odmowy dla administratora i drogę wyjścia. Twoje zapisy są bezpieczne na telefonie. Bursztynowe **OFFLINE · n** znaczy co innego: ostatnia próba nie dotarła i przejdzie sama, gdy wróci zasięg ([synchronizacja](synchronizacja)).
 
 ### Nie mogę się wylogować
 
-Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, które nie doszły do klubu, istnieją tylko na tym telefonie i przepadłyby razem z profilem. Znajdź zasięg, poczekaj, aż plakietka zgaśnie, i spróbuj jeszcze raz ([konta i bezpieczeństwo](konta-i-bezpieczenstwo)).
+Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, które nie doszły do klubu, istnieją tylko na tym telefonie i przepadłyby razem z profilem. Znajdź zasięg, poczekaj, aż oznaczenie zgaśnie, i spróbuj jeszcze raz ([konta i bezpieczeństwo](konta-i-bezpieczenstwo)).
 
 ## Panel klubu
 
@@ -114,4 +114,4 @@ W tym wydaniu nie: panel ma dwa wyjścia awaryjne - zakończenie operacji i unie
 
 ### Mam uwagę do aplikacji. Gdzie ją zgłosić?
 
-Przyciskiem w prawym górnym rogu ekranu albo arkusza - zgłoszenie zabiera ze sobą kontekst (ekran, operacja, samolot, wersja aplikacji) i wysyła się samo, gdy jest sieć. Administrator czyta je w module Zgłoszenia w [panelu](panel-wprowadzenie) i nadaje im status.
+Przyciskiem w prawym górnym rogu ekranu albo okienka - zgłoszenie zabiera ze sobą kontekst (ekran, operacja, samolot, wersja aplikacji) i wysyła się samo, gdy jest sieć. Administrator czyta je w module Zgłoszenia w [panelu](panel-wprowadzenie) i nadaje im status.

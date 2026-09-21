@@ -27,9 +27,9 @@ Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logow
 
 Nazwisko w pasku górnym prowadzi na **Moje konto** - jedyną stronę panelu, która mówi o Tobie, a nie o klubie. Są na niej trzy rzeczy:
 
-- **Logowanie** - Twój adres (klub go nie zmienia) i plakietki metod, którymi wchodzisz: Google, hasło albo obie;
+- **Logowanie** - Twój adres (klub go nie zmienia) i oznaczenia metod, którymi wchodzisz: Google, hasło albo obie;
 - **Hasło** - ustawienie pierwszego albo zmiana istniejącego. Minimum 12 znaków i żadnych wymogów co do rodzaju znaków: długość jest jedyną miarą, a wymuszone „duża litera, cyfra i znak" produkuje hasła, które słowniki znają lepiej niż ludzie. **Zapis wylogowuje Twoje pozostałe urządzenia** - to okno zostaje;
-- **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów i obu powierzchni. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, plakietka „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
+- **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów i obu powierzchni. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, oznaczenie „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
 
 Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to głównie jest: logowanie Googlem na cudzym urządzeniu znaczyłoby dodanie własnego konta do cudzej przeglądarki.
 
@@ -37,7 +37,7 @@ Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to 
 
 ## Moduły
 
-Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry niesie tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień. **Kolumna pokazuje to, do czego masz prawo** - moduł niedostępny dla Twojego konta nie stoi w niej wyszarzony, po prostu go nie ma.
+Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień. **Kolumna pokazuje to, do czego masz prawo** - moduł niedostępny dla Twojego konta nie stoi w niej wyszarzony, po prostu go nie ma.
 
 | Moduł | Do czego |
 |---|---|
@@ -51,7 +51,7 @@ Czwarty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
 
 Moduł na czas testów z pilotami. **Nie ma go w panelu klubu**: kolejka zgłoszeń jest jedna dla całego serwera i obsługuje ją opiekun platformy - ta sama osoba, która zakłada kluby. Powód jest prosty: zgłoszenie opisuje aplikację, a nie klub, i naprawia je nowe wydanie aplikacji dla wszystkich klubów naraz. Administrator klubu tej zakładki więc nie widzi; jeśli chce coś zgłosić, robi to tak jak pilot - przyciskiem w aplikacji.
 
-Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; przy każdym zgłoszeniu stoi nazwa klubu, z którego przyszło, bo kod pilota jest jedyny w klubie, nie na serwerze. Wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
+Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym rogu przycisk zgłoszenia. Zgłoszenie zabiera ze sobą kontekst - ekran, operację (sygnaturę), samolot, zadanie, stan silnika, liczbę lotów, wersję aplikacji, model telefonu, stan łączności i kolejki wysyłki - i wychodzi z telefonu samo, gdy jest sieć; pilot widzi „zapisane", nie „wysłane", bo w chwili tapnięcia telefon nie wie, czy ma zasięg. W panelu lista pokazuje domyślnie robotę (**Do zrobienia** = nowe i w toku), a filtry z licznikami pozostałe statusy; przy każdym zgłoszeniu stoi nazwa klubu, z którego przyszło, bo kod pilota jest jedyny w klubie, nie na serwerze. Wiersz otwiera kartę z opisem, obsługą i pełnym kontekstem. Cztery statusy: **Nowe → W toku → Rozwiązane / Odrzucone**. Odrzucenie wymaga komentarza, treści zgłoszenia nie zmienia nikt, kasowania nie ma - zgłoszenie nietrafione zamyka się odrzuceniem z powodem. Odpowiedzi do pilota z panelu nie ma: testy trwają krótko, a klub ma telefony.
 
 @panel dziennik-flota "Dziennik · ekran startowy panelu"
 
@@ -63,7 +63,7 @@ Każdy ekran i arkusz aplikacji (poza logowaniem i PIN-em) ma w prawym górnym r
 - **Flota i piloci jadą na telefony jako kopia.** Zmiana na karcie samolotu (pojemność, norma, minimum oleju, wyłączenie ze służby) i na koncie pilota dociera do aplikacji tą samą drogą, w tym samym rytmie. Telefon bez zasięgu pracuje na kopii z ostatniego połączenia.
 - **Panel nie liczy niczego po swojemu.** Czas blokowy, sumy, sygnatura operacji, stan oleju „do lotu" - wszystko przychodzi policzone tym samym rachunkiem, który zasila aplikację pilota. Administrator i pilot patrzą na te same liczby, a rozmowa o locie ma jedną nazwę: sygnaturę.
 - **Adres z paska przeglądarki jest kompletny.** Zakres dat dziennika, filtr listy, otwarta karta konta albo operacji - wszystko stoi w adresie, więc link wklejony koledze pokazuje dokładnie to samo. Maszynę w dzienniku adresuje się znakami rejestracyjnymi, nie identyfikatorem.
-- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z plakietką „tylko podgląd", bez przycisków zapisu. Dziś role są proste: pilot nie wchodzi do panelu, administrator ma w nim wszystko, co należy do klubu, a kolejka zgłoszeń błędów należy do opiekuna platformy; role pośrednie mogą dojść w kolejnych wydaniach.
+- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z oznaczeniem „tylko podgląd", bez przycisków zapisu. Dziś role są proste: pilot nie wchodzi do panelu, administrator ma w nim wszystko, co należy do klubu, a kolejka zgłoszeń błędów należy do opiekuna platformy; role pośrednie mogą dojść w kolejnych wydaniach.
 
 ## Zasady w całym panelu
 

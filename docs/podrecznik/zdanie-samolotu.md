@@ -10,11 +10,11 @@ Na górze ekranu stoi podsumowanie operacji (Loty · Blok · Lot i godzina przej
 
 ## Odczyty przy zdaniu
 
-- **Paliwo na pokładzie** - po biegu silnika pole startuje puste, a podpis podpowiada szacunek z normy maszyny („szacunek z normy: ~60 L"). W arkuszu stoi szlak: odczyt sprzed lotu, ile latano i ile według normy mogło się spalić, na końcu szacunek. Wpisz to, co pokazuje paliwomierz. Po wpisaniu podpis podsumowuje: przy przejęciu, tankowania, zużyte.
+- **Paliwo na pokładzie** - po biegu silnika pole startuje puste, a podpis podpowiada szacunek z normy maszyny („szacunek z normy: ~60 L"). W okienku stoi rozpiska: odczyt sprzed lotu, ile latano i ile według normy mogło się spalić, na końcu szacunek. Wpisz to, co pokazuje paliwomierz. Po wpisaniu podpis podsumowuje: przy przejęciu, tankowania, zużyte.
 - **Motogodziny** - odczyt licznika w formacie maszyny; podpis pokazuje stan przy przejęciu i przyrost. Wartość niższa niż przy przejęciu jest blokadą z powodem: licznik nie cofa się sam.
 - **Oleju przy zdaniu się nie mierzy** - bagnet tuż po locie kłamie. Olej zmierzy następny pilot przy przejęciu.
 
-Arkusz odczytu ostrzega na miejscu, nad przyciskiem: odczyt przekracza pojemność zbiorników, po locie nie mogło zostać tyle paliwa, ile wpisujesz, albo wartość odbiega od tego, co zapisano wcześniej. Ostrzeżenie nie blokuje - przyrząd ma rację.
+Okienko odczytu ostrzega na miejscu, nad przyciskiem: odczyt przekracza pojemność zbiorników, po locie nie mogło zostać tyle paliwa, ile wpisujesz, albo wartość odbiega od tego, co zapisano wcześniej. Ostrzeżenie nie blokuje - przyrząd ma rację.
 
 **ZDAJ I ZATWIERDŹ LOG** zapisuje zdanie i wraca na Mój dzień. Sygnaturę operacja ma od uruchomienia silnika; zdanie zamyka ją odczytami.
 

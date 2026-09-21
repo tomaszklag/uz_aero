@@ -37,7 +37,7 @@ Każde zdarzenie dnia lotnego - przejęcie, uruchomienie silnika, start, lądowa
 
 @screen 01c-moj-dzien-offline "Kolejka wysyłki bez sieci"
 
-> **Założenie.** Telefon dowódcy jest źródłem prawdy o operacji, a klub - źródłem prawdy o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
+> **Założenie.** Telefon dowódcy rozstrzyga o przebiegu operacji, a klub - o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
 
 > **Założenie.** Liczniki fizyczne są ważniejsze niż podpowiedzi. Aplikacja podsuwa wartości z ostatniego przekazania i z normy zużycia, ale zapisuje to, co pilot odczytał z paliwomierza i licznika motogodzin. Rozjazd jest ostrzeżeniem dla pilota i sygnałem dla klubu, nigdy blokadą.
 

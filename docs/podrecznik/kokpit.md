@@ -8,7 +8,7 @@ Pasek górny pokazuje znak samolotu, lotnisko i zadanie; sygnatura operacji poja
 
 - **Tankowanie** - dolewka przed lotem ([tankowanie i olej](tankowanie-i-olej)).
 - **Dolej olej** - kafelek pokazuje, ile oleju jest w silniku („W silniku 9,2 L": pomiar z przejęcia plus dolewki).
-- **Załadunek** (tylko w dniu skokowym) - wejście skoczków na pokład, ze składem albo bez; skład wypełni potem arkusz zrzutu.
+- **Załadunek** (tylko w dniu skokowym) - wejście skoczków na pokład, ze składem albo bez; skład wypełni potem okienko zrzutu.
 - **Zmiana załogi** - drugi pilot wchodzi albo schodzi. Dowódcy nie zmienia się w trakcie: nowy dowódca to zdanie samolotu i nowe przejęcie z jego telefonu.
 - **Zdaj samolot · Nie lecisz? Zdanie bez lotu** - pogoda, usterka, próba silnika: maszyna wraca do klubu z powodem i opcjonalnym komentarzem.
 
@@ -25,13 +25,13 @@ Po uruchomieniu silnika aplikacja wykrywa z GPS **kołowanie, start i lądowanie
 @screen 05-cockpit-running "Faza lotu i parametry" | 05b-cockpit-inflight-toast "Odliczanie po wykryciu startu"
 
 - **Wykryty start albo lądowanie najpierw pokazuje się jako komunikat z odliczaniem 5 sekund** i przyciskiem cofnięcia („COFNIJ - NIE BYŁO STARTU", „COFNIJ - TO PRZELOT"). Brak reakcji = zapis. Kołowanie zapisuje się od razu, bez odliczania.
-- **Zrzut skoczków** (dzień skokowy) - przycisk w locie; arkusz podpowiada skład z załadunku, a wysokość bierze z GPS jako średnią z ostatnich 15 sekund. Skład jest opcjonalny, więc zapis zrzutu nigdy nie jest zablokowany.
-- **Przyciski ręczne** - „Take off" i „Landing" z przytrzymania. Arkusz ogłasza typ zdarzenia w tytule i pozwala cofnąć godzinę przyciskami ±1 min, jeśli zauważyłeś je po fakcie.
+- **Zrzut skoczków** (dzień skokowy) - przycisk w locie; okienko podpowiada skład z załadunku, a wysokość bierze z GPS jako średnią z ostatnich 15 sekund. Skład jest opcjonalny, więc zapis zrzutu nigdy nie jest zablokowany.
+- **Przyciski ręczne** - „Take off" i „Landing" z przytrzymania. Okienko ogłasza typ zdarzenia w tytule i pozwala cofnąć godzinę przyciskami ±1 min, jeśli zauważyłeś je po fakcie.
 - **Paliwo i olej po uruchomieniu to szacunki** - kafelki mówią „około" i odświeżają się co 5 minut na podstawie normy maszyny i czasu pracy silnika. Przed uruchomieniem pokazują odczyty.
 
 Gdy GPS zamilknie na kilkanaście sekund, kokpit pokazuje baner „GPS: brak sygnału · autodetekcja wstrzymana", parametry zmieniają się w kreski, a start i lądowanie zapisuje się przyciskami. Zegary liczą dalej, a wysyłka danych działa - to awaria czujnika, nie łączności. Powrót sygnału gasi baner bez Twojego udziału.
 
-@screen 05f-zdarzenie-reczne "Ręczny zapis zdarzenia" | 05g-cockpit-no-gps "Bez sygnału GPS" | 05e-zrzut "Arkusz zrzutu skoczków"
+@screen 05f-zdarzenie-reczne "Ręczny zapis zdarzenia" | 05g-cockpit-no-gps "Bez sygnału GPS" | 05e-zrzut "Okienko zrzutu skoczków"
 
 > **Wskazówka.** Przełącznik w prawym górnym rogu przełącza ciemny i jasny motyw - jasny jest na pełne słońce. Ustawień w kokpicie nie ma; są na ekranie Mój dzień.
 
@@ -53,7 +53,7 @@ Automat patrzy na kolejne odczyty GPS i odrzuca te, które nie zasługują na za
 
 ## Z kokpitu nie ma wyjścia bokiem
 
-Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Mój dzień - pokazują arkusz **TRZYMASZ SP-AXA** z wyborem: zostań albo zdaj samolot. Maszynę oddaje się wyłącznie przez zdanie, żeby żadna operacja nie została otwarta przez przypadek, a następny pilot zawsze dostał przekazanie. Jedyny wyjątek robi administrator: gdy zakończy albo unieważni Twoją operację z panelu, kokpit sam wraca na Mój dzień z banerem.
+Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Mój dzień - pokazują okienko **TRZYMASZ SP-AXA** z wyborem: zostań albo zdaj samolot. Maszynę oddaje się wyłącznie przez zdanie, żeby żadna operacja nie została otwarta przez przypadek, a następny pilot zawsze dostał przekazanie. Jedyny wyjątek robi administrator: gdy zakończy albo unieważni Twoją operację z panelu, kokpit sam wraca na Mój dzień z banerem.
 
 @screen 04d-wyjscie-z-kokpitu "Zostań albo zdaj samolot"
 
@@ -63,7 +63,7 @@ Pod wskaźnikiem stoi oś zdarzeń tej operacji: przejęcie z odczytami, tankowa
 
 ## Częste problemy
 
-- **Nie wykryło startu albo lądowania** → w locie przytrzymaj „Take off" / „Landing" i cofnij godzinę w arkuszu, jeśli minęło kilka minut. Po zatrzymaniu silnika brakujące zdarzenie dopisze **Popraw dane operacji** → **DODAJ WPIS**.
+- **Nie wykryło startu albo lądowania** → w locie przytrzymaj „Take off" / „Landing" i cofnij godzinę w okienku, jeśli minęło kilka minut. Po zatrzymaniu silnika brakujące zdarzenie dopisze **Popraw dane operacji** → **DODAJ WPIS**.
 - **Wykryło start, którego nie było** → tapnij COFNIJ w czasie odliczania. Po zapisie: **Popraw dane operacji**, ołówek przy wierszu, „tego nie było".
 - **Baner „GPS: brak sygnału"** → zapisuj start i lądowanie przyciskami; sygnał zwykle wraca sam. Stan odbiornika sprawdzisz w [ustawieniach](ustawienia), w sekcji „Diagnostyka GPS".
 - **Nie mogę wrócić na Mój dzień** → zdaj samolot: ZDAJ SAMOLOT po locie, „Zdanie bez lotu" przed uruchomieniem. Ustawienia i poprzednie dni wrócą po zdaniu.

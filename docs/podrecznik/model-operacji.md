@@ -2,7 +2,7 @@
 
 > Operacja to jeden bieg silnika od przejęcia do zdania samolotu, lot to odcinek od startu do lądowania, a dzień pilota to lista operacji z jednej doby UTC - bez otwierania i zamykania czegokolwiek.
 
-## Operacja = jeden bieg silnika
+## Operacja to jeden bieg silnika
 
 Operacja zaczyna się przejęciem samolotu (ROZPOCZNIJ LOT z odczytami paliwa, motogodzin i oleju) i kończy zdaniem (ZDAJ SAMOLOT z odczytami paliwa i motogodzin). W środku jest dokładnie jeden bieg silnika: START ENGINE → STOP ENGINE. Tankowanie mieści się w operacji przy zatrzymanym śmigle - przed uruchomieniem i po zatrzymaniu; drugiego pilota zmienia się tylko przed uruchomieniem, dowódcy nie zmienia się wcale.
 
@@ -10,7 +10,7 @@ Operacja zaczyna się przejęciem samolotu (ROZPOCZNIJ LOT z odczytami paliwa, m
 
 > **Założenie.** Operacja jest jednostką wszystkiego: zapisu, zatwierdzenia (zdanie), korekty (24 godziny od zdania), rozliczenia paliwa i motogodzin oraz wiersza w dzienniku klubu. Każda ma odczyty z obu stron, więc [łańcuch odczytów](lancuch-odczytow) i [norma zużycia](norma-zuzycia) mają z czego liczyć.
 
-## Lot = od startu do lądowania
+## Lot to odcinek od startu do lądowania
 
 W jednej operacji może być wiele lotów: aplikacja wykrywa je z GPS, a każdy krąg z touch and go daje własną parę start → lądowanie. We wpisie lotu po fakcie kręgi podaje się liczbą przy lądowaniu. Trójka **Loty · Blok · Lot** na kafelku to liczba lotów, czas blokowy (od uruchomienia do wyłączenia silnika) i czas lotu (suma czasu w powietrzu).
 
@@ -20,7 +20,7 @@ W jednej operacji może być wiele lotów: aplikacja wykrywa je z GPS, a każdy 
 
 Po zatrzymaniu silnika głównym przyciskiem kokpitu staje się **ZDAJ SAMOLOT**. Kolejny lot tą samą maszyną to nowe przejęcie - trzy kroki rozpoczęcia lotu z wartościami z Twojego zdania już wpisanymi. Z kokpitu nie ma wyjścia bokiem: maszynę oddaje się wyłącznie przez zdanie ([kokpit](kokpit)).
 
-@screen 04-cockpit-ground "Hero ZDAJ SAMOLOT po zatrzymaniu"
+@screen 04-cockpit-ground "Główny przycisk po zatrzymaniu silnika"
 
 > **Dlaczego tak.** Dzień skokowy to jeden bieg silnika z 8–12 lotami, czyli jedno przejęcie i jeden odczyt na końcu - nikt nie chodzi do licznika po każdym wyniesieniu. Drugi start w tej samej operacji rozbiłby ją na cykle bez odczytów pomiędzy, a odczyt na obu końcach każdej operacji daje ciągłość liczników i uczciwy rachunek zużycia.
 

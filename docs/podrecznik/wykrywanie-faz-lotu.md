@@ -40,9 +40,9 @@ Rodzaj operacji z kroku 2 rozpoczęcia lotu steruje detekcją. Skoki startują i
 
 ## Przyciski ręczne
 
-Przycisk ręczny w pasku kokpitu jest zawsze widoczny i nazywa kolejne zdarzenie: **Taxi**, **Take off**, **Landing**. Wymaga przytrzymania przez sekundę; w arkuszu godzinę cofniesz o ±1 min albo wpiszesz z klawiatury, bo pilot orientuje się po fakcie. Zdarzenie ręczne wygląda na osi tak samo jak wykryte; skąd pochodzi, widzi klub w dzienniku.
+Przycisk ręczny w pasku kokpitu jest zawsze widoczny i nazywa kolejne zdarzenie: **Taxi**, **Take off**, **Landing**. Wymaga przytrzymania przez sekundę; w okienku godzinę cofniesz o ±1 min albo wpiszesz z klawiatury, bo pilot orientuje się po fakcie. Zdarzenie ręczne wygląda na osi tak samo jak wykryte; skąd pochodzi, widzi klub w dzienniku.
 
-@screen 05f-zdarzenie-reczne "Arkusz zdarzenia ręcznego"
+@screen 05f-zdarzenie-reczne "Okienko zdarzenia ręcznego"
 
 ## Gdy GPS zawiedzie
 
@@ -56,7 +56,7 @@ Po kilkunastu sekundach ciszy kokpit pokazuje baner „GPS: brak sygnału · aut
 
 ## Zrzut skoczków
 
-W dniu skokowym przycisk zrzutu w locie otwiera arkusz ze składem z załadunku do potwierdzenia. Wysokość podstawia GPS jako **średnią z ostatnich kilkunastu sekund** - pojedynczy odczyt niósł szum kilkudziesięciu stóp. Bez sygnału wysokość wpisujesz z wysokościomierza.
+W dniu skokowym przycisk zrzutu w locie otwiera okienko ze składem z załadunku do potwierdzenia. Wysokość podstawia GPS jako **średnią z ostatnich kilkunastu sekund** - pojedynczy odczyt niósł szum kilkudziesięciu stóp. Bez sygnału wysokość wpisujesz z wysokościomierza.
 
 ## Ślad po locie
 
