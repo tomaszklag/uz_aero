@@ -29,6 +29,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 
 ## Dzień lotny
 - moj-dzien
+- rezerwacja-samolotu
 - rozpoczecie-lotu
 - kokpit
 - zdanie-samolotu

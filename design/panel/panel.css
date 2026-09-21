@@ -966,6 +966,51 @@ a {
   margin-left: auto;
 }
 
+/* ── karta z TONEM ──
+   Karta niosąca decyzję, po której nie ma odwrotu (odwołanie rezerwacji), i karta
+   uprzedzająca o tym, w co wchodzi administrator (rezerwacje stojące w wybranym
+   oknie). Ton niesie WŁOS I TŁO, nie wypełnienie: karta w pełnym kolorze byłaby
+   najgłośniejszym elementem szuflady, a intencją wchodzącego jest przeczytanie
+   szczegółów, nie kasowanie. Ta sama zasada, co przy koszu w linii tytułu arkusza
+   w aplikacji pilota.
+
+   Klasy pochodzą wprost z makiet kalendarza (`kalendarz-wpis`, `kalendarz-blokada`),
+   które używały ich, zanim istniały - do wdrożenia modułu Kalendarz karty „danger"
+   i „warn" rysowały się jak każde inne. */
+.card.danger {
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.card.warn {
+  border-color: var(--amber-border);
+  background: var(--amber-muted);
+}
+
+.card.danger > .card-title {
+  color: var(--red);
+  border-bottom-color: var(--red-border);
+}
+
+.card.warn > .card-title {
+  color: var(--amber);
+  border-bottom-color: var(--amber-border);
+}
+
+/* Zdanie o SKUTKU decyzji, nie przypis o budowie panelu: stoi między tytułem karty
+   a kontrolką, której dotyczy. */
+.card-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.card-note.danger {
+  color: var(--red);
+}
+
 /* ── plakietki stanu ──
    Bez ramki i bez wersalików: kolor tła mówi ton, napis mówi stan - pisany jak zdanie,
    z wielkiej litery. Plakietka z obwódką i literami rozstrzelonymi na 1,2 px była
@@ -2416,7 +2461,219 @@ tbody tr.voided td {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   14. ŚLAD GPS - MAPA I PROFIL PIONOWY
+   14. KALENDARZ FLOTY - OŚ MASZYN I DNI
+   źródło: admin/src/styles/components/calendar.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   KALENDARZ FLOTY (3.0.0, issue #145)
+
+   Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma
+   kalendarzami. Pilot pyta „czym polecę dzisiaj", więc na telefonie osią jest JEDNA
+   DOBA całej floty. Administrator układa tydzień: kto ma zaplanowane loty, kiedy
+   wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd - więc tutaj osią poziomą
+   są DNI, a maszyny stoją w wierszach.
+
+   Ta sama zajętość, dwa pytania, dwa kadry. Wspólny jest model i wspólne są kolory:
+   rezerwacja neutralna, wyłączenie z użytku bursztynowe w skos.
+
+   Styl lekki (issue #107): promienie 6-8 px, pisownia zdaniowa, plakietki bez ramki
+   i bez wersalików, mono wyłącznie przy wartości maszynowej.
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Nagłówek dni - lepki przy przewijaniu długiej floty: bez niego przy dwunastu
+   maszynach nie wiadomo, nad którym dniem stoi pasek. */
+.cal-head {
+  display: grid;
+  grid-template-columns: var(--cal-reg-col) 1fr;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+  padding-bottom: 6px;
+}
+
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(var(--cal-days), 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  border-radius: 6px;
+}
+
+.cal-day-dow {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.cal-day-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Dzisiaj - jedyny wyróżniony dzień. Zaznaczenie odwrócone, jak aktywna pozycja
+   kolumny bocznej: mówi „tu jesteś", a nie „to jest w normie". */
+.cal-day.today {
+  background: var(--text-primary);
+}
+
+.cal-day.today .cal-day-dow,
+.cal-day.today .cal-day-num {
+  color: var(--bg);
+}
+
+/* Weekend przygaszony - w aeroklubie to najgęstsze dni, więc nie chodzi o „mniej
+   ważne", tylko o rytm tygodnia, po którym oko odnajduje kolumnę. */
+.cal-day.weekend .cal-day-dow {
+  color: var(--text-secondary);
+}
+
+.cal-row {
+  display: grid;
+  grid-template-columns: var(--cal-reg-col) 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+}
+
+.cal-reg {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cal-reg-mark {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.cal-reg-type {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.cal-cells {
+  display: grid;
+  grid-template-columns: repeat(var(--cal-days), 1fr);
+  gap: 2px;
+}
+
+/* Komórka doby - tło rysuje siatkę, a zajętości leżą w środku pozycjonowane
+   procentem doby lotnej. Wysokość stała, bo wiersz maszyny ma być porównywalny
+   z sąsiednim; dwie rezerwacje w jednym dniu dzielą komórkę w pionie. */
+.cal-cell {
+  position: relative;
+  min-height: 34px;
+  border-radius: 6px;
+  background: var(--surface-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.cal-cell.off {
+  background: transparent;
+  border: 1px dashed var(--border);
+}
+
+.cal-item {
+  min-height: 13px;
+  border-radius: 4px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cal-item:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+/* Wyłączenie z użytku - bursztyn i skos, jak każde ostrzeżenie o stanie maszyny.
+   Odróżnia się KSZTAŁTEM, nie samym kolorem. */
+.cal-item.block {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--amber-muted) 0 5px,
+    transparent 5px 10px
+  );
+  border-color: var(--amber-border);
+  color: var(--amber);
+}
+
+/* Czeka na akceptację (3.1.0) - ramka przerywana, stan przejściowy widać kształtem. */
+.cal-item.pending {
+  border-style: dashed;
+}
+
+/* Legenda opisuje wzory, które NA TEJ OSI WIDAĆ - przy pustym zakresie jej nie ma. */
+.cal-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-swatch {
+  width: 14px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+}
+
+.cal-swatch.block {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--amber-muted) 0 4px,
+    transparent 4px 8px
+  );
+  border-color: var(--amber-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15. ŚLAD GPS - MAPA I PROFIL PIONOWY
    źródło: admin/src/styles/components/track.css
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -2594,7 +2851,7 @@ tbody tr.voided td {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   15. ZGŁOSZENIA BŁĘDÓW
+   16. ZGŁOSZENIA BŁĘDÓW
    źródło: admin/src/styles/components/bugs.css
    ═══════════════════════════════════════════════════════════════════════════ */
 

@@ -9,13 +9,18 @@
 
 > **Przebudowany 2026-08-06** (`_main.md.txt` §3.6a), a **2026-08-11 (issue #23) klamra
 > służby znikła w całości**: dzień pilota to lista operacji - niczego się nie otwiera ani
-> nie zamyka. Wszystko wraca do `01`, jednostką potwierdzenia jest operacja.
+> nie zamyka. Jednostką potwierdzenia jest operacja.
+>
+> **Od 3.0.0 ekranem domowym są ZAKŁADKI** (Pulpit · Kalendarz · Historia) - wszystko
+> wraca na `20-pulpit`, a flow lotu leży NAD paskiem zakładek, bo kokpit jest stanem
+> modalnym. Rodzina `01` opisuje linię 2.x i jest jej archiwum (`rezerwacje.md` §9.1a).
 
 ```
 00-login (odblokowanie PIN · warianty: 00a pełny login, 00b offline bez profilu)
-  → 01-moj-dzien          EKRAN DOMOWY - płaski log operacji dnia (oś czasu, rejestracja
-                          jako informacja wiersza; warianty: 01a zero operacji,
-                          01c offline + arkusz szczegółów synchronizacji)
+  → ZAKŁADKI              EKRAN DOMOWY: 20-pulpit · 21-kalendarz · 24-historia
+  → 20-pulpit             sumy doby (wejście w Historię) + najbliższa rezerwacja
+                          z odliczaniem; warianty: 20a bez rezerwacji, 20c offline
+                          + arkusz synchronizacji, 20d SYNC STOI
 
 Nowy lot (trzy kroki, kilka sekund - nie otwiera doby):
   → 02-preflight          (krok 1/3 - samolot i Dual; wariant offline: 02d)
@@ -48,15 +53,15 @@ Zdanie samolotu (model 2026-08-10 - operacja = jeden bieg silnika; ekrany 09 i 0
   09b-zdaj-samolot          (przegląd lotów operacji + odczyt WYMAGANY - przekazanie,
                              ogniwo łańcucha MH i ZATWIERDZENIE logu operacji;
                              09c - zdanie bez lotu: pogoda, usterka)
-  → 01-moj-dzien            kolejna operacja dopisuje się do listy dnia;
-                            z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
+  → 20-pulpit               kolejna operacja dopisuje się do sum doby;
+                            z Pulpitu także [15] ręczny wpis CAŁEGO lotu po fakcie
 
-Odnogi pod 01 (nie etapy dnia):
+Odnogi pod zakładkami (nie etapy dnia):
   10-statystyki  OPERACJA: ślad całego biegu silnika ze znacznikami startów i lądowań,
                  oś czasu (przejęcie → uruchomienie → kołowanie, starty, zrzuty,
                  lądowania → wyłączenie → zdanie), rachunki paliwa i motogodzin
-                 zakończone PLAKIETKĄ werdyktu, notatki pilota. Wejście KAFELKIEM
-                 operacji na 01 albo takim samym kafelkiem w historii (10a - bez lotu,
+                 zakończone PLAKIETKĄ werdyktu, notatki pilota. Wejście WIERSZEM
+                 operacji w Historii - dzisiejszym albo starszym (10a - bez lotu,
                  10b - po oknie korekty, tylko odczyt, 10c - arkusz normy pod
                  plakietką); niczego się tu nie zatwierdza: zdanie samolotu już
                  potwierdziło dane, a czasy poprawia się przyciskiem EDYTUJ DANE

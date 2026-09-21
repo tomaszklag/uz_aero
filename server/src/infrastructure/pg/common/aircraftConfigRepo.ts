@@ -7,6 +7,7 @@
  * tolerancja mogłaby pochodzić z innej wersji konfiguracji niż reszta rachunku.
  */
 
+import type { ServiceStatus } from '@ninerdeck/domain';
 import type { AircraftConfigPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgAircraftConfigRepo implements AircraftConfigPort {
@@ -24,5 +25,21 @@ export class PgAircraftConfigRepo implements AircraftConfigPort {
       [aircraftId],
     );
     return rows[0]?.org_id ?? null;
+  }
+
+  async serviceStatusOf(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+  ): Promise<ServiceStatus | null> {
+    const { rows } = await db.query<{ service_status: string }>(
+      'SELECT service_status FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, aircraftId],
+    );
+    const value = rows[0]?.service_status;
+    if (value == null) return null;
+    // Wartość spoza katalogu schodzi do `disabled` - ta sama ostrożność, co
+    // w `fleetRepo.toServiceStatus`: nieznany stan nie ma prawa wypuścić maszyny.
+    return value === 'active' ? 'active' : 'disabled';
   }
 }

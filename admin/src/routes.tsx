@@ -22,6 +22,7 @@ import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
+import { CalendarScreen } from './screens/calendar/CalendarScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { AccountScreen } from './screens/me/AccountScreen';
 import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
@@ -70,6 +71,12 @@ export const router = createHashRouter([
       { path: 'piloci/zgloszenia/:id', element: <AccountsScreen drawer="request" /> },
       { path: 'piloci/:id?', element: <AccountsScreen drawer="account" /> },
       { path: 'samoloty/:id?', element: <FleetScreen /> },
+
+      // Kalendarz: siatka i szuflada pod JEDNĄ trasą, jak flota - szuflada opisuje
+      // jedną zajętość i otwiera się NAD siatką, więc siatka ma zostać pod spodem
+      // jako kontekst decyzji. Formularze (wyłączenie z użytku, rezerwacja za pilota)
+      // adresu NIE MAJĄ: nie opisują istniejącego bytu, tylko go tworzą.
+      { path: 'kalendarz/:id?', element: <CalendarScreen /> },
 
       // Moduł PLATFORMY (`docs/wielofirmowosc.md` §8.1), więc trasa pyta o zdolność -
       // ta sama reguła, co przy Zgłoszeniach: wklejony adres odsyła administratora klubu

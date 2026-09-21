@@ -56,6 +56,30 @@ class MemoryCredentials {
 
 /** Serwer-skrypt: kolejki zaprogramowanych odpowiedzi na `pushEvents` i `getSyncStatus`. */
 class ScriptedServer implements ServerPort {
+  // Kalendarz rezerwacji (epik R-F) - te przekroje go nie dotykają.
+  async getBookings(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async patchBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async createBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async cancelBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
   pushes: { token: string; count: number; trigger?: string }[] = [];
   statusCalls: string[] = [];
   refreshCalls = 0;

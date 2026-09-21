@@ -70,6 +70,10 @@
   .screen-subtitle { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-top:3px; }
   .step-badge { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; flex-shrink:0; white-space:nowrap; }
   .scroll { flex:1; overflow:hidden; padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+  /* Dzieci przewijanej kolumny NIE KURCZĄ SIĘ - patrz 12-historia.html (zgłoszenie
+     z urządzenia, 2026-09-19): flex ściska karty przy dłuższej treści, a tekst wylewa
+     się poza nie i nachodzi na sąsiednie. */
+  .scroll > * { flex-shrink: 0; }
   .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; opacity:0.4; }
   .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:11px 13px; display:flex; align-items:center; justify-content:space-between; }

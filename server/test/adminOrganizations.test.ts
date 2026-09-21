@@ -383,6 +383,90 @@ describe('karta klubu: zmiana nazwy i wyłączenie', () => {
     });
   });
 
+  // ═══ KALENDARZ KLUBU (3.0.0, `docs/rezerwacje.md` §7.1) ══════════════════════════
+  // Lotnisko macierzyste wyznacza DOBĘ LOTNĄ. Do wydania 3.0.0 kolumna istniała
+  // (migracja 11), ale nie miała ANI JEDNEJ drogi zapisu - więc każdy klub siedział na
+  // oknie domyślnym, choć produkt obiecywał wschód i zachód słońca.
+
+  it('ustawia lotnisko macierzyste i strefę, a karta oddaje nazwę lotniska z katalogu', async () => {
+    const { app, db } = await testHarness();
+    const root = await panelCookie(app, 'ROOT');
+
+    const res = await patch(app, root, ORG_A, { homeIcao: 'epgl', timezone: 'Europe/Berlin' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().organization).toMatchObject({
+      homeIcao: 'EPGL',
+      homeAirfieldName: 'Gliwice-Trynek Airfield',
+      timezone: 'Europe/Berlin',
+    });
+
+    // Dziennik notuje OBIE zmiany - to jest konfiguracja klubu, nie drobiazg widoku.
+    const rows = await auditRows(db);
+    expect(rows[0]).toMatchObject({ action: 'organization.update' });
+    expect(rows[0]!.details).toMatchObject({
+      changes: {
+        homeIcao: { from: null, to: 'EPGL' },
+        timezone: { from: 'Europe/Warsaw', to: 'Europe/Berlin' },
+      },
+    });
+  });
+
+  it('kod spoza KATALOGU lotnisk → 400 `invalid` z polem, nic się nie zapisuje', async () => {
+    const { app, db } = await testHarness();
+    const root = await panelCookie(app, 'ROOT');
+
+    const res = await patch(app, root, ORG_A, { homeIcao: 'ZZZZ' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: 'invalid', field: 'homeIcao' });
+    // Wzorzec czterech liter przepuściłby `ZZZZ` - i klub dostałby okno domyślne
+    // bez ani jednego słowa o tym, dlaczego doba lotna się nie liczy.
+    expect((await card(app, root, ORG_A)).json().organization.homeIcao).toBeNull();
+    expect(await auditRows(db)).toEqual([]);
+  });
+
+  it('nieznana strefa → 400 `invalid`, bez cichego zejścia do domyślnej', async () => {
+    const { app } = await testHarness();
+    const root = await panelCookie(app, 'ROOT');
+
+    const res = await patch(app, root, ORG_A, { timezone: 'Europe/Atlantyda' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: 'invalid', field: 'timezone' });
+  });
+
+  it('lotnisko ma TRZY stany: ustaw, wyczyść i nie ruszaj', async () => {
+    const { app } = await testHarness();
+    const root = await panelCookie(app, 'ROOT');
+
+    await patch(app, root, ORG_A, { homeIcao: 'EPKK' });
+
+    // Pominięcie pola NIE RUSZA lotniska - zmiana samej nazwy nie kasuje konfiguracji.
+    const kept = await patch(app, root, ORG_A, { name: 'Aeroklub Alfa i Omega' });
+    expect(kept.json().organization.homeIcao).toBe('EPKK');
+
+    // `null` znaczy „wyczyść": klub ma prawo cofnąć konfigurację i wrócić do okna
+    // domyślnego - brak ustawienia nie może zablokować rezerwacji.
+    const cleared = await patch(app, root, ORG_A, { homeIcao: null });
+    expect(cleared.statusCode).toBe(200);
+    expect(cleared.json().organization).toMatchObject({
+      homeIcao: null,
+      homeAirfieldName: null,
+    });
+  });
+
+  it('klub bez konfiguracji: strefa domyślna, lotnisko puste', async () => {
+    const { app } = await testHarness();
+    const root = await panelCookie(app, 'ROOT');
+
+    expect((await card(app, root, ORG_A)).json().organization).toMatchObject({
+      timezone: 'Europe/Warsaw',
+      homeIcao: null,
+      homeAirfieldName: null,
+    });
+  });
+
   it('żądanie bez zmiany → 400 `no_changes`, bez wpisu w dzienniku', async () => {
     const { app, db } = await testHarness();
     const root = await panelCookie(app, 'ROOT');

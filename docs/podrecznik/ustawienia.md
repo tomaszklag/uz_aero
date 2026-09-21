@@ -16,7 +16,7 @@
 | **Hasło** | **Ustaw hasło** (gdy go jeszcze nie masz) albo **Zmień hasło**. Wymaga internetu - hasło sprawdza i zapisuje klub. |
 | **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
 
-@screen 01-moj-dzien "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
+@screen 20-pulpit "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
 
 ## Synchronizacja
 
@@ -24,9 +24,9 @@ Wysyłka działa sama w tle, więc ten przycisk jest ponagleniem na wypadek, gdy
 
 Wiersz **Ostatnia synchronizacja** to godzina ostatniego udanego kontaktu z klubem - w którąkolwiek stronę. Poza dzisiejszą dobą UTC dochodzi do niej data, bo sama godzina przy stemplu sprzed dwóch dni niczego nie mówi.
 
-> **Wskazówka.** Liczba zapisów w kolejce i wiek danych pobranych z panelu stoją w arkuszu pod plakietką łączności w nagłówku, nie na tym ekranie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
+> **Wskazówka.** Liczba zapisów w kolejce i wiek danych pobranych z panelu stoją w okienku pod oznaczeniem łączności w nagłówku, nie na tym ekranie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
-@screen 01c-moj-dzien-offline "Arkusz pod plakietką łączności" | 01d-sync-stoi "Kolejka stoi po odmowie"
+@screen 20c-pulpit-offline "Okienko pod oznaczeniem łączności" | 20d-pulpit-sync-stoi "Kolejka stoi po odmowie"
 
 ## Diagnostyka GPS
 
@@ -40,7 +40,7 @@ Trzy sekcje dotyczą dostępu do aplikacji i dlatego stoją razem, na końcu.
 
 **PIN** zmienia się bez internetu - sprawdza go telefon.
 
-**Hasło** internetu wymaga, bo sprawdza je i zapisuje klub. Nie zastępuje PIN-u: PIN otwiera ten telefon każdego dnia, hasło loguje Cię na **innym** urządzeniu - wspólnym tablecie w samolocie albo w panelu klubu. Arkusz pyta o nowe hasło i powtórkę, a gdy hasło już masz - najpierw o obecne. Wymagane jest **co najmniej 12 znaków** i nic poza tym; hasło zawierające Twój adres albo nazwisko zostanie odrzucone. Zmiana wylogowuje pozostałe urządzenia, a to, na którym ją robisz, zostaje zalogowane. Jeśli hasła nie pamiętasz, nie zmieniasz go tutaj - używasz **Nie pamiętam hasła** na ekranie logowania ([pierwsze logowanie](pierwsze-logowanie)).
+**Hasło** internetu wymaga, bo sprawdza je i zapisuje klub. Nie zastępuje PIN-u: PIN otwiera ten telefon każdego dnia, hasło loguje Cię na **innym** urządzeniu - wspólnym tablecie w samolocie albo w panelu klubu. Okienko pyta o nowe hasło i powtórkę, a gdy hasło już masz - najpierw o obecne. Wymagane jest **co najmniej 12 znaków** i nic poza tym; hasło zawierające Twój adres albo nazwisko zostanie odrzucone. Zmiana wylogowuje pozostałe urządzenia, a to, na którym ją robisz, zostaje zalogowane. Jeśli hasła nie pamiętasz, nie zmieniasz go tutaj - używasz **Nie pamiętam hasła** na ekranie logowania ([pierwsze logowanie](pierwsze-logowanie)).
 
 **Wylogowanie** internetu wymaga, bo ponowne wejście to logowanie kontem Google albo hasłem.
 
@@ -52,20 +52,22 @@ W sekcji **Konto** może stanąć baner **Sesja zakończona przez administratora
 
 Sekcja **Hasło** jest w tym stanie nieczynna z podanym powodem - hasło zapisuje klub, a klub tej sesji już nie uznaje. Zaloguj się ponownie.
 
-> **Dlaczego tak.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
-
 ## Jak to działa
 
 Cały ekran pracuje na tym, co telefon ma u siebie: wybór motywu, PIN i stan odbiornika GPS nie potrzebują serwera ani przez chwilę. Motyw jest preferencją pilota, więc zapisuje się w Twoim profilu i wraca po zalogowaniu na innym telefonie. Godzina synchronizacji jest jedna, choć mechanizm ma dwa kierunki - wysyłkę zapisów i pobranie danych z panelu; ekran pokazuje ten późniejszy, bo pytanie brzmi „od kiedy nie mam kontaktu z klubem", a nie „który kierunek zadziałał". Jedyną akcją, która wymaga sieci, jest wylogowanie. Mechanizm w całości: [synchronizacja](synchronizacja).
 
-> **Założenie.** W ustawieniach nie ma nic, co dotyczy bieżącej operacji - samolotu, trasy ani lotów. To są dane dnia lotnego i mieszkają w kokpicie oraz na ekranie Mój dzień.
+> **Wskazówka.** Zgłoszenia błędu nie szukaj w ustawieniach. Na czas testów z pilotami przycisk stoi w prawym górnym rogu każdego ekranu i każdego okienka - poza ekranem logowania i PIN-em.
 
-> **Wskazówka.** Zgłoszenia błędu nie szukaj w ustawieniach. Na czas testów z pilotami przycisk stoi w prawym górnym rogu każdego ekranu i każdego arkusza - poza ekranem logowania i PIN-em.
+## Dlaczego tak to działa
+
+> **Dlaczego wylogowanie czeka na pustą kolejkę.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
+
+> **Dlaczego w ustawieniach nie ma danych lotu.** W ustawieniach nie ma nic, co dotyczy bieżącej operacji - samolotu, trasy ani lotów. To są dane dnia lotnego i mieszkają w kokpicie oraz na ekranie Mój dzień.
 
 ## Częste problemy
 
 - **SYNCHRONIZUJ TERAZ jest nieaktywny** → telefon nie ma połączenia; powód stoi w przycisku. Synchronizacja ruszy sama, gdy wróci zasięg.
-- **„Ostatnia synchronizacja" pokazuje godzinę sprzed wielu godzin** → tyle czasu telefon nie rozmawiał z klubem. Jeśli sieć jest, tapnij **SYNCHRONIZUJ TERAZ**; jeśli kolejka nadal stoi, sprawdź plakietkę łączności w nagłówku.
+- **„Ostatnia synchronizacja" pokazuje godzinę sprzed wielu godzin** → tyle czasu telefon nie rozmawiał z klubem. Jeśli sieć jest, tapnij **SYNCHRONIZUJ TERAZ**; jeśli kolejka nadal stoi, sprawdź oznaczenie łączności w nagłówku.
 - **Diagnostyka pokazuje brak uprawnień do lokalizacji** → zgoda została cofnięta w ustawieniach Androida. Przywróć ją; do tego czasu starty i lądowania zapisuj przyciskami w kokpicie.
-- **Wyloguj i zmień konto jest nieaktywne** → w kolejce czekają zapisy. Wróć do zasięgu i poczekaj, aż plakietka łączności zniknie.
+- **Wyloguj i zmień konto jest nieaktywne** → w kolejce czekają zapisy. Wróć do zasięgu i poczekaj, aż oznaczenie łączności zniknie.
 - **Nie widzę zębatki** → jesteś w kokpicie. Ustawienia mają jedno wejście - ekran Mój dzień; w kokpicie w tym samym rogu stoi przełącznik jasności.

@@ -15,8 +15,8 @@ describe('holdsAircraft / resumeTarget', () => {
   it('maszyna trzymana → kokpit; bez operacji → Mój dzień', () => {
     expect(holdsAircraft(held())).toBe(true);
     expect(resumeTarget(held())).toBe('Cockpit');
-    expect(resumeTarget(null)).toBe('MyDay');
-    expect(resumeTarget(emptySessionState())).toBe('MyDay');
+    expect(resumeTarget(null)).toBe('Tabs');
+    expect(resumeTarget(emptySessionState())).toBe('Tabs');
   });
 
   it('ZDANY samolot wraca do «Mój dzień» - także zakończony przez administratora', () => {
@@ -29,6 +29,6 @@ describe('holdsAircraft / resumeTarget', () => {
     // się prowadzić dalej, więc kokpit nad nim pokazywałby maszynę, której rejestr
     // pilotowi już nie przypisuje.
     expect(holdsAircraft({ ...held(), voided: true, voidedByAdmin: true })).toBe(false);
-    expect(resumeTarget({ ...held(), voided: true })).toBe('MyDay');
+    expect(resumeTarget({ ...held(), voided: true })).toBe('Tabs');
   });
 });

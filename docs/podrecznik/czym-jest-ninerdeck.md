@@ -2,14 +2,14 @@
 
 > Elektroniczny chronometraż dla aeroklubów, stref zrzutu i szkół latania: pilot odczytuje liczniki przy przejęciu i zdaniu samolotu, resztę zapisuje telefon, a klub widzi flotę w panelu.
 
-## Dwie powierzchnie, jeden dziennik
+## Aplikacja w telefonie, panel w przeglądarce
 
 Ninerdeck składa się z **aplikacji pilota** na Androida i **panelu klubu** w przeglądarce. Obie pracują na tym samym dzienniku operacji.
 
 - **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć.
 - **[Panel klubu](panel-wprowadzenie)** to miejsce administratora: konta pilotów do zatwierdzenia, karty samolotów z normami zużycia, dziennik operacji z osią zdarzeń i śladem GPS, a na czas testów także zgłoszenia wysłane z aplikacji.
 
-@screen 01-moj-dzien "Ekran domowy aplikacji pilota"
+@screen 20-pulpit "Ekran domowy aplikacji pilota"
 
 ## Trzy słowa, które warto znać
 
@@ -35,11 +35,7 @@ Pełna lista pojęć: [słownik](slownik). Model w całości: [model operacji](m
 
 Każde zdarzenie dnia lotnego - przejęcie, uruchomienie silnika, start, lądowanie, tankowanie, zdanie - jest wpisem w rejestrze na telefonie pilota. Wpis powstaje natychmiast, bez pytania serwera o zgodę, i nigdy nie jest nadpisywany: poprawka dopisuje się obok niego, a stara wartość zostaje. Z tego rejestru telefon sam liczy czas blokowy, liczbę lotów, rachunek paliwa i motogodzin oraz sygnaturę operacji. Kolejka wysyłki przekazuje wpisy do klubu, gdy jest sieć; tam łączą się w dziennik floty, dostają oznaczenia niespójności do wyjaśnienia i trafiają na kartę dnia samolotu. Panel klubu czyta ten sam dziennik - administrator widzi każdą operację razem z historią poprawek.
 
-@screen 01c-moj-dzien-offline "Kolejka wysyłki bez sieci"
-
-> **Założenie.** Telefon dowódcy jest źródłem prawdy o operacji, a klub - źródłem prawdy o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
-
-> **Założenie.** Liczniki fizyczne są ważniejsze niż podpowiedzi. Aplikacja podsuwa wartości z ostatniego przekazania i z normy zużycia, ale zapisuje to, co pilot odczytał z paliwomierza i licznika motogodzin. Rozjazd jest ostrzeżeniem dla pilota i sygnałem dla klubu, nigdy blokadą.
+@screen 20c-pulpit-offline "Kolejka wysyłki bez sieci"
 
 Więcej o mechanizmach: [łańcuch odczytów](lancuch-odczytow), [synchronizacja](synchronizacja), [korekty i rejestr](korekty-i-rejestr).
 
@@ -54,13 +50,19 @@ Więcej o mechanizmach: [łańcuch odczytów](lancuch-odczytow), [synchronizacja
 
 Wszystkie godziny w aplikacji i w panelu są w UTC: w logu operacji, przy startach i lądowaniach, na karcie dnia. Czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 
-> **Dlaczego tak.** Pilot, panel i karta dnia mają czytać tę samą godzinę - bez przeliczania stref i bez skoku przy zmianie czasu na letni. Doba pilota i doba samolotu liczą się od północy UTC.
-
 ## Czego aplikacja nie robi
 
 - **Nie zastępuje przyrządów.** Paliwomierz i licznik motogodzin mają rację; aplikacja zapisuje ich wskazania i pilnuje, żeby nie zginęły po drodze.
 - **Nie blokuje pilota.** Jedyne odmowy dotyczą zapisów, których dokumentacja nie może przyjąć - jak cofnięty licznik. Wszystko inne jest ostrzeżeniem do wyjaśnienia w klubie.
 - **Nie każe niczego wysyłać ręcznie.** Zdanie samolotu zatwierdza log operacji, a dokumenty klubu składają się po jego stronie - pilot niczego nie eksportuje.
+
+## Dlaczego tak to działa
+
+> **Dlaczego telefon rozstrzyga o locie, a klub o flocie.** Telefon dowódcy rozstrzyga o przebiegu operacji, a klub - o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
+
+> **Dlaczego przyrządy są ważniejsze niż podpowiedzi.** Aplikacja podsuwa wartości z ostatniego przekazania i z normy zużycia, ale zapisuje to, co pilot odczytał z paliwomierza i licznika motogodzin. Rozjazd jest ostrzeżeniem dla pilota i sygnałem dla klubu, nigdy blokadą.
+
+> **Dlaczego wszędzie UTC.** Pilot, panel i karta dnia mają czytać tę samą godzinę - bez przeliczania stref i bez skoku przy zmianie czasu na letni. Doba pilota i doba samolotu liczą się od północy UTC.
 
 ## Częste problemy
 

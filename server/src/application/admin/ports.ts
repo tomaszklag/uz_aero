@@ -1105,6 +1105,10 @@ export interface OrganizationAdmin {
 export interface OrganizationDetail extends OrganizationSummary {
   joinCode: string | null;
   joinCodeSince: Date | null;
+  /** Strefa, w której rysuje się kalendarz klubu (migracja 11, `rezerwacje.md` §6). */
+  timezone: string;
+  /** Lotnisko macierzyste - z jego współrzędnych liczy się doba lotna (§7.1). */
+  homeIcao: string | null;
 }
 
 /**
@@ -1141,9 +1145,17 @@ export interface NewOrganization {
   admin: { pilotId: string; name: string; email: string; code: string };
 }
 
-/** Zmiana klubu z karty. Slug i kod klubu NIE są tu polami - patrz `OrganizationsPlatformPort`. */
+/**
+ * Zmiana klubu z karty. Slug i kod klubu NIE są tu polami - patrz `OrganizationsPlatformPort`.
+ *
+ * `homeIcao` rozróżnia TRZY stany i dlatego nie jest zwykłym `string | undefined`:
+ * pole pominięte („nie ruszaj"), napis („ustaw") i `null` („wyczyść"). Klub ma prawo
+ * cofnąć konfigurację - okno schodzi wtedy do domyślnego i nic się nie blokuje (§7.1).
+ */
 export interface OrganizationPatch {
   name?: string;
+  timezone?: string;
+  homeIcao?: string | null;
 }
 
 /**

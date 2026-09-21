@@ -193,6 +193,24 @@ describe('granice warstw', () => {
     expect(entry).toContain('./src/infrastructure/gps/backgroundLocationTask');
   });
 
+  it('APLIKACJA NIE WOŁA `Intl` - formatowanie idzie z własnych tablic', () => {
+    // Hermes bywa budowany BEZ danych ICU i wtedy `Intl` nie znika, tylko zaczyna
+    // kłamać: przyjmuje `timeZone` i po cichu formatuje w UTC, czyli ODPOWIADA,
+    // tylko źle (`docs/rezerwacje.md` §6.1). Dlatego dni tygodnia, nazwy miesięcy
+    // i wszystkie napisy dat liczy `@ninerdeck/format` na `getUTC*` i milisekundach.
+    //
+    // Wyjątkiem jest SONDA - jej cała treść polega na wywołaniu `Intl` i sprawdzeniu,
+    // czy wyszły znane odpowiedzi.
+    // Testy jadą w Node z pełnym ICU i nigdy nie trafiają na telefon, więc strażnik
+    // pyta wyłącznie o kod, który się WYSYŁA - razem z tym plikiem, który sam pisze
+    // `Intl` w asercji.
+    const users = sourceFiles('.')
+      .filter((file) => !file.startsWith('__tests__/'))
+      .filter((file) => readFileSync(join(SRC, file), 'utf8').includes('Intl.'))
+      .sort();
+    expect(users).toEqual(['ui/screens/logic/timeZoneProbe.ts']);
+  });
+
   it('tylko adapter czujników dotyka expo-sensors', () => {
     const users = sourceFiles('.')
       .filter((f) => importsOf(f).some((s) => s === 'expo-sensors'))

@@ -55,6 +55,9 @@ import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
 import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
+import type { BookingCommands } from '../application/mobile/commands/bookings.ts';
+import type { BookingQueries } from '../application/common/queries/bookings.ts';
+import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
 import type { BugReportCommands } from '../application/mobile/commands/bugReports.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
@@ -77,6 +80,7 @@ import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
+import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
 import type { JoinCommands } from '../application/mobile/commands/join.ts';
 import { registerJoinRoutes } from './routes/mobile/join.ts';
@@ -103,6 +107,7 @@ import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
+import { registerBookingRoutes } from './routes/mobile/bookings.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -149,6 +154,14 @@ export interface ServerDeps {
    * a nie lot, więc nie ma czego zsynchronizować z projekcjami.
    */
   bugReports: BugReportCommands;
+  /**
+   * Rezerwacje z telefonu (3.0.0, issue #158). Zapis WYMAGA SIECI i nie jest to
+   * wyjątek od offline-first: rezerwacja jest przedmiotem konkurencji, więc
+   * rozstrzyga ją ten, kto widzi obu chętnych. Odczyt idzie z cache jak reszta.
+   */
+  bookings: BookingCommands;
+  /** Okno kalendarza - to samo zapytanie dla telefonu i dla panelu. */
+  calendar: BookingQueries;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
    * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
@@ -273,6 +286,11 @@ export interface ServerDeps {
    */
   adminBugReportQueries: AdminBugReportQueries;
   adminBugReports: AdminBugReportCommands;
+  /**
+   * Kalendarz w panelu (3.0.0): rezerwacja za pilota i odwołanie cudzej na
+   * `reservations.manage`, wyłączenie maszyny z użytku na `fleet.manage`.
+   */
+  adminBookings: AdminBookingCommands;
   /**
    * Identyfikator klienta Google WEB - jedyna konfiguracja, jakiej panel potrzebuje
    * PRZED zalogowaniem (`GET /admin/api/auth/google-client`). Nie sekret: stoi
@@ -456,6 +474,7 @@ export async function buildServer(
   registerMePasswordRoutes(app, deps.passwords, memberGate);
   registerMeAccountRoutes(app, deps.accounts, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
+  registerBookingRoutes(app, deps.bookings, deps.calendar, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -516,6 +535,7 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
+  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

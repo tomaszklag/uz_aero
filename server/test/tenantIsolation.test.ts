@@ -35,6 +35,11 @@ type App = Harness['app'];
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
+/** Okno kalendarza sond rezerwacji - tydzień po dobie świata testowego. */
+const BOOK_FROM = DAY + 7 * 86_400_000 + 8 * 3_600_000;
+const bookWindow = (days = 3): string =>
+  `from=${new Date(BOOK_FROM - 3_600_000).toISOString()}&to=${new Date(BOOK_FROM + days * 86_400_000).toISOString()}`;
+
 let seq = 0;
 function event(
   type: string,
@@ -151,6 +156,10 @@ const B_MARKERS = [
   // prawa pokazać się w żadnej odpowiedzi dla Alfy.
   'kandydat@beta.pl',
   'BETAKDE',
+  // Rezerwacja i wyłączenie z użytku w klubie B (3.0.0) - żadna odpowiedź dla Alfy
+  // nie ma prawa ich pokazać.
+  'book-b',
+  'block-b',
 ] as const;
 
 interface World {
@@ -286,6 +295,27 @@ async function twoClubs(): Promise<World> {
     [ORG_B],
   );
   await db.query(`UPDATE organizations SET join_code = 'BETAKDE', join_code_since = now() WHERE id = $1`, [ORG_B]);
+
+  // Zajętość maszyny klubu B (3.0.0): rezerwacja pilota i wyłączenie z użytku. Terminy
+  // stoją W PRZYSZŁOŚCI względem świata testowego, bo kalendarz pokazuje to, co przed
+  // pilotem - a sondy mają pytać o okno, w którym te wiersze naprawdę są.
+  // Własna rezerwacja klubu A - bez niej sonda „czysta odpowiedź" nie miałaby czego
+  // sprawdzić: 404 na cudzej dowodzi tyle samo, co trasa, która nie działa wcale.
+  await db.query(
+    `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'TMK', 'przelot', 'TMK')`,
+    [ORG_A, new Date(BOOK_FROM), new Date(BOOK_FROM + 7_200_000)],
+  );
+  await db.query(
+    `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+     VALUES ('book-b', $1, 'SP-BBB', 'flight', 'confirmed', $2, $3, 'BPI', 'skoki', 'BPI')`,
+    [ORG_B, new Date(BOOK_FROM), new Date(BOOK_FROM + 7_200_000)],
+  );
+  await db.query(
+    `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, block_reason, created_by)
+     VALUES ('block-b', $1, 'SP-BBB', 'block', 'confirmed', $2, $3, 'maintenance', 'BAD')`,
+    [ORG_B, new Date(BOOK_FROM + 86_400_000), new Date(BOOK_FROM + 2 * 86_400_000)],
+  );
 
   return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
 }
@@ -648,6 +678,190 @@ const CASES: Record<string, Probe> = {
     ).toBe(404);
   },
 
+  // ── rezerwacje (3.0.0, issue #158) ───────────────────────────────────────────
+  'GET /bookings': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/bookings?${bookWindow()}`,
+      headers: bearer(a),
+    });
+    expectClean(res, '/bookings');
+    // Kontrola pozytywna: siatka dób przychodzi nawet przy pustym kalendarzu - to ona
+    // jest odpowiedzią na pytanie o strefę klubu, a nie lista rezerwacji.
+    expect(res.json().days.length).toBeGreaterThan(0);
+    expect(res.json().timezone).toBe('Europe/Warsaw');
+  },
+
+  'GET /bookings/suggestions': async ({ app, a }) => {
+    // Maszyna klubu B z tokenu klubu A: sugestie liczą się dla maszyny, której ten
+    // klub nie ma, więc muszą wyjść tak, jakby była WOLNA CAŁY DZIEŃ - a nie zdradzić
+    // rezerwacji Bety godzinami, w których „nie ma miejsca".
+    const res = await app.inject({
+      method: 'GET',
+      url: `/bookings/suggestions?aircraftId=SP-BBB&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expectClean(res, '/bookings/suggestions');
+    // Kontrola pozytywna: własna maszyna też odpowiada, i to sugestiami.
+    const own = await app.inject({
+      method: 'GET',
+      url: `/bookings/suggestions?aircraftId=SP-AXA&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().suggestions.length).toBeGreaterThan(0);
+  },
+  'POST /bookings': async ({ app, db, a }) => {
+    // Rezerwacja maszyny klubu B z tokenu A: maszyna jest dla tego tokenu
+    // NIEISTNIEJĄCA, więc 404 - ta sama odpowiedź, którą dostałby pilot pytający
+    // o maszynę skasowaną. Wiersz NIE POWSTAJE.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      headers: bearer(a),
+      payload: {
+        id: 'iso-book-obcy',
+        aircraftId: 'SP-BBB',
+        startsAt: new Date(BOOK_FROM + 4 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 4 * 86_400_000 + 3_600_000).toISOString(),
+        operation: 'skoki',
+      },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error).toBe('aircraft_not_found');
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM bookings WHERE id = 'iso-book-obcy'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+
+    // Kontrola pozytywna: własna maszyna przechodzi i ląduje w klubie aktora.
+    const own = await app.inject({
+      method: 'POST',
+      url: '/bookings',
+      headers: bearer(a),
+      payload: {
+        id: 'iso-book-wlasny',
+        aircraftId: 'SP-AXA',
+        startsAt: new Date(BOOK_FROM + 5 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 5 * 86_400_000 + 3_600_000).toISOString(),
+        operation: 'skoki',
+      },
+    });
+    expect(own.statusCode, own.body).toBe(201);
+    const org = await db.query<{ org_id: string }>(
+      `SELECT org_id FROM bookings WHERE id = 'iso-book-wlasny'`,
+    );
+    expect(org.rows[0]!.org_id).toBe(ORG_A);
+    // Sondy dzielą jeden świat, więc ta, która go zmienia, po sobie sprząta.
+    await db.query(`DELETE FROM bookings WHERE id = 'iso-book-wlasny'`);
+  },
+
+  'GET /bookings/:id': async ({ app, a }) => {
+    const res = await app.inject({ url: '/bookings/book-b', headers: bearer(a) });
+    // Karta CUDZEJ rezerwacji ma nie istnieć - 404 nie potwierdza nawet, że wiersz jest.
+    expect(res.statusCode).toBe(404);
+
+    const swoja = await app.inject({ url: '/bookings/book-a', headers: bearer(a) });
+    expect(swoja.statusCode).toBe(200);
+    expectClean(swoja, '/bookings/:id');
+  },
+
+  'PATCH /bookings/:id': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/bookings/book-b',
+      headers: bearer(a),
+      payload: { note: 'przejete' },
+    });
+    // 404, nie 403: cudza rezerwacja ma być dla tego tokenu NIEISTNIEJĄCA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ note: string | null }>(
+      `SELECT note FROM bookings WHERE id = 'book-b'`,
+    );
+    expect(rows[0]!.note).toBeNull();
+  },
+
+  'DELETE /bookings/:id': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/bookings/book-b',
+      headers: bearer(a),
+      payload: {},
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ status: string }>(
+      `SELECT status FROM bookings WHERE id = 'book-b'`,
+    );
+    expect(rows[0]!.status).toBe('confirmed');
+  },
+
+  'GET /admin/api/bookings': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/admin/api/bookings?${bookWindow()}`,
+      headers: bearer(a),
+    });
+    expectClean(res, '/admin/api/bookings');
+  },
+
+  'POST /admin/api/bookings': async ({ app, db, a }) => {
+    // Rezerwacja za pilota KLUBU B na maszynie klubu B - odbija się na MASZYNIE,
+    // bo to ona nosi klub. 404: dla panelu klubu A ta maszyna nie istnieje.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings',
+      headers: writer(a),
+      payload: {
+        id: 'iso-admin-book',
+        aircraftId: 'SP-BBB',
+        pilotId: 'BPI',
+        startsAt: new Date(BOOK_FROM + 6 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 6 * 86_400_000 + 3_600_000).toISOString(),
+        operation: 'skoki',
+      },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM bookings WHERE id = 'iso-admin-book'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'POST /admin/api/bookings/blocks': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings/blocks',
+      headers: writer(a),
+      payload: {
+        id: 'iso-admin-block',
+        aircraftId: 'SP-BBB',
+        startsAt: new Date(BOOK_FROM + 8 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 9 * 86_400_000).toISOString(),
+        blockReason: 'maintenance',
+      },
+    });
+    // Wyłączenie z użytku nie sprawdza stanu służby, więc odmowa przychodzi z zapisu:
+    // maszyna klubu B ma klucz obcy do klubu B, a wiersz szedłby z `org_id` klubu A.
+    expect(res.statusCode).not.toBe(201);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM bookings WHERE id = 'iso-admin-block'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'POST /admin/api/bookings/:id/cancel': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings/book-b/cancel',
+      headers: writer(a),
+      payload: { reason: 'nie moja sprawa' },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ status: string }>(
+      `SELECT status FROM bookings WHERE id = 'book-b'`,
+    );
+    expect(rows[0]!.status).toBe('confirmed');
+  },
   'POST /admin/api/fleet': async ({ app, db, a }) => {
     // Nowa maszyna ląduje w klubie aktora; rejestracja zajęta w B nie jest kolizją w A.
     const res = await app.inject({

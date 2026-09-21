@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 22A Rezerwacja, zadanie (2/2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  .step-header {
+    display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .step-head-mid { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
+  .step-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); }
+  /* Podtytuł niesie WYBÓR Z KROKU 1 - termin i maszynę. Bez niego krok 2 pyta o zadanie
+     w oderwaniu od tego, co pilot przed chwilą zajął; z nim formularz czyta się dalej
+     jako jedna decyzja. Czas klubu, jak cały kalendarz (§6). */
+  .step-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .step-badge { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:4px 8px; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:15px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  .field { display:flex; flex-direction:column; gap:7px; }
+  .field-label-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  /* Opcjonalność mówi PLAKIETKA, nigdy słowo doklejone do nazwy pola (uwaga
+     z urządzenia 2026-08-29): to właściwość pola, a właściwość ma w tym systemie jeden
+     kształt. */
+  .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
+  .required-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:6px; padding:2px 6px; }
+
+  /* Siatka rodzajów operacji - 1:1 z 02E, bo to TEN SAM wybór. „Definiowanie nowego lotu
+     dostępne jako rezerwacja" (zgłoszenie #145) znaczy dosłownie: te same pola, te same
+     kontrolki, ten sam słownik. */
+  .op-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .op-option { display:flex; align-items:center; gap:8px; padding:10px 11px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
+  .op-option.selected { border-color:var(--green-border); background:var(--green-muted); }
+  .op-icon { color:var(--text-muted); display:flex; }
+  .op-option.selected .op-icon, .op-option.selected .op-label { color:var(--green); }
+  .op-label { font-size:12px; color:var(--text-secondary); }
+
+  /* Pole wartości = pole wpisu z arkusza oglądane w spoczynku (issue #58): mono 16,
+     odstęp 1,5. Placeholder składem TEKSTOWYM - to instrukcja, nie wartość. */
+  .value-box {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    min-height:46px; padding:10px 12px; border-radius:12px;
+    border:1px solid var(--border-strong); background:var(--surface-raised);
+    text-decoration:none; color:inherit;
+  }
+  .value-box:hover { border-color:var(--green-border); }
+  .vb-val { font-family:var(--font-mono); font-size:16px; letter-spacing:1.5px; color:var(--text-primary); }
+  .vb-val.text { font-family:var(--font-body); font-size:14px; letter-spacing:0; line-height:1.4; }
+  .vb-placeholder { font-family:var(--font-body); font-size:15px; color:var(--text-placeholder); }
+  .vb-meta { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vb-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
+  .vb-left { display:flex; flex-direction:column; gap:2px; min-width:0; }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .vb-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); }
+
+  /* Podpis pod polem planowanego czasu: liczba, którą pilot właśnie wybrał, przeliczona
+     na to, co z niej wynika dla slotu. Nie jest ostrzeżeniem - jest rachunkiem. */
+  .field-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; color:var(--text-muted); padding:0 2px; }
+
+  .action-bar { padding:10px 14px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:15px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:20px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 22A</span>
+  <span class="slug">rezerwacja · krok 2/2</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran 3</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Rezerwacja, krok 2">
+  <div class="status-bar">
+    <span>07:47</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="step-header">
+      <a href="22-rezerwacja.html" class="icon-btn" title="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-head-mid">
+        <span class="step-title">REZERWACJA</span>
+        <span class="step-sub">Nd 20 WRZ · 11:00 → 13:00 · SP-AXA</span>
+      </span>
+      <span class="step-badge">2/2</span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ ZADANIE ═══
+           Siatka kart, nigdy natywny select. Bez wartości podstawionej - wybór ma być
+           świadomy (ta sama reguła, co we wpisie ręcznym). -->
+      <div class="field">
+        <span class="field-label">Rodzaj operacji</span>
+        <div class="op-grid">
+          <div class="op-option">
+            <div class="op-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12 8 8M12 12l4-4M5 20l7-8 7 8"/><circle cx="12" cy="5" r="2"/></svg>
+            </div>
+            <div class="op-label">Skoki</div>
+          </div>
+          <div class="op-option selected">
+            <div class="op-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
+            </div>
+            <div class="op-label">Przelot</div>
+          </div>
+          <div class="op-option">
+            <div class="op-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="op-label">Egzamin</div>
+          </div>
+          <div class="op-option">
+            <div class="op-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <div class="op-label">Lot tech.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TRASA ═══
+           Pola wg issue #13: skoki = jedno lotnisko, pozostałe operacje = para
+           start → lądowanie. Reguła mieszka w domenie, więc formularz i detekcja nie
+           mają jak się rozjechać. -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Start</span>
+        </div>
+        <a href="02f-preflight-lotnisko.html" class="value-box">
+          <span class="vb-left">
+            <span class="vb-val">EPKK</span>
+            <span class="vb-meta">Kraków-Balice</span>
+          </span>
+          <span class="vb-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Lądowanie</span>
+        </div>
+        <a href="02f-preflight-lotnisko.html" class="value-box">
+          <span class="vb-left">
+            <span class="vb-val">EPRJ</span>
+            <span class="vb-meta">Rzeszów-Jasionka</span>
+          </span>
+          <span class="vb-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <!-- ═══ DRUGI PILOT ═══
+           Wymóg załogi dwuosobowej obowiązuje tak samo, jak na 02 i 15 - jedno zdanie
+           w `logic/dualRequirement.ts` czytane przez wszystkie trzy ekrany. Tu maszyna
+           go nie ma, więc pole jest opcjonalne. -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Drugi pilot</span>
+          <span class="optional-tag">opcjonalne</span>
+        </div>
+        <a href="22a-rezerwacja-zadanie.html" class="value-box">
+          <span class="vb-left">
+            <span class="vb-val">AKO</span>
+            <span class="vb-meta">Anna Kowalska</span>
+          </span>
+          <span class="vb-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <!-- ═══ PLAN LOTU ═══
+           Dwie liczby, których rejestr nie zna i znać nie może, bo dotyczą przyszłości:
+           spodziewany czas w powietrzu i paliwo do zabrania. Przy zdaniu samolotu oba
+           mają swoje FAKTYCZNE odpowiedniki - i to tamte wchodzą do rozliczenia. -->
+      <div class="two-col">
+        <div class="field">
+          <span class="field-label">Czas lotu</span>
+          <a href="22a-rezerwacja-zadanie.html" class="value-box">
+            <span class="vb-val">1:30</span>
+            <span class="vb-unit">h:mm</span>
+          </a>
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <span class="field-label">Paliwo</span>
+            <span class="optional-tag">opcj.</span>
+          </div>
+          <a href="22a-rezerwacja-zadanie.html" class="value-box">
+            <span class="vb-val">120</span>
+            <span class="vb-unit">L</span>
+          </a>
+        </div>
+      </div>
+      <div class="field-hint">Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę</div>
+
+      <!-- ═══ NOTATKA ═══
+           Ten sam arkusz, w którym notatka powstaje na 02E - pusty tekst ją kasuje. -->
+      <div class="field">
+        <div class="field-label-row">
+          <span class="field-label">Notatka</span>
+          <span class="optional-tag">opcjonalne</span>
+        </div>
+        <a href="10k-korekta-notatki.html" class="value-box">
+          <span class="vb-placeholder">Dla kogo, po co, na co uważać…</span>
+          <span class="vb-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Przycisk mówi, CO SIĘ STANIE, a nie „zapisz": rezerwacja jest ustaleniem z innymi
+         ludźmi, więc pilot ma widzieć termin w chwili potwierdzania. Zapis WYMAGA SIECI
+         (§2.1) - wariant bez zasięgu niesie powód wewnątrz przycisku. -->
+    <div class="action-bar">
+      <a href="23-rezerwacja-szczegoly.html" class="btn-primary">
+        ZAREZERWUJ 11:00 → 13:00
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="22-rezerwacja.html">
+    <span class="vp-badge">22</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 1 - kiedy i czym</span>
+      <span class="vp-when">Termin i maszyna, czyli to, o co konkurują piloci. Sugestie slotów i zajętość w karcie maszyny.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="22a-rezerwacja-zadanie.html">
+    <span class="vp-badge">22A</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 2 - zadanie</span>
+      <span class="vp-when">Rodzaj operacji, trasa, Dual, plan lotu i notatka - te same pola i te same kontrolki, co na 02E, bo „definiowanie nowego lotu dostępne jako rezerwacja" (#145) znaczy dosłownie ten sam formularz. Podtytuł niesie wybór z kroku 1, żeby zadanie nie było pytane w oderwaniu od zajętego terminu.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="22c-rezerwacja-zajete.html">
+    <span class="vp-badge amber">22C</span>
+    <span class="vp-body">
+      <span class="vp-name">Slot zajęty w międzyczasie</span>
+      <span class="vp-when">Ktoś z zasięgiem zdążył pierwszy: odmowa serwera mówi, CO stoi w tym czasie, i proponuje najbliższe wolne pasmo - zamiast „spróbuj ponownie".</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="21-kalendarz.html">21 Kalendarz</a>
+  <a href="22-rezerwacja.html">← 22 Krok 1</a>
+  <span>·</span>
+  <a href="22a-rezerwacja-zadanie.html" class="active">22A Krok 2</a>
+  <a href="22b-rezerwacja-czas.html">22B Arkusz czasu</a>
+  <a href="22c-rezerwacja-zajete.html">22C Slot zajęty</a>
+  <span>·</span>
+  <a href="23-rezerwacja-szczegoly.html">23 Szczegóły →</a>
+</nav>
+
+</body>
+</html>

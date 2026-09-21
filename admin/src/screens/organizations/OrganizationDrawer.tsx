@@ -37,7 +37,8 @@ import {
   linkValidity,
 } from '../accounts/passwordAccess';
 import { lastSeenText } from '../accounts/sessionRows';
-import { conflictField, errorMessage } from '../common/apiMessage';
+import { conflictField, errorMessage, invalidField } from '../common/apiMessage';
+import { clubTimeZones } from './timeZones';
 import { dateWithYear, NONE } from '../common/values';
 import {
   createBodyOf,
@@ -46,6 +47,8 @@ import {
   hasChanges,
   NEW_ORGANIZATION,
   normalizeCode,
+  patchBodyOf,
+  normalizeIcao,
   slugFrom,
   verdictOf,
   type OrganizationDraft,
@@ -96,13 +99,17 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
   const changed = creating || (organization != null && hasChanges(organization, draft));
 
   const field = conflictField(error);
+  // `400 invalid` to inne zdanie niż `409 conflict`: tam wartość jest poprawna i tylko
+  // zajęta, tu nie da się jej przyjąć w ogóle.
+  const rejected = invalidField(error);
   const conflict =
     field === 'slug'
       ? 'Ten adres jest już zajęty przez inny klub. Wybierz inny.'
       : field === 'email'
         ? 'Ta osoba jest już administratorem tego klubu.'
         : null;
-  const generalError = error == null || conflict != null ? null : errorMessage(error);
+  const generalError =
+    error == null || conflict != null || rejected != null ? null : errorMessage(error);
 
   const save = (): void => {
     if (creating) {
@@ -120,7 +127,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
     }
     if (organization == null) return;
     update.mutate(
-      { id: organization.id, name: draft.name.trim() },
+      { id: organization.id, ...patchBodyOf(organization, draft) },
       { onSuccess: () => setDone('Zapisano.') },
     );
   };
@@ -228,6 +235,67 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
           </>
         )}
       </Card>
+
+      {/* KALENDARZ KLUBU (3.0.0, `docs/rezerwacje.md` §7.1) - wyłącznie na KARCIE.
+          Formularz zakładania o to nie pyta: klub powstaje razem z administratorem jednym
+          zamówieniem, a szuflada zostaje potem otwarta już jako karta, więc pola są na
+          wyciągnięcie ręki. Puste pola NIE BLOKUJĄ niczego - kalendarz schodzi wtedy na
+          okno domyślne, tą samą zasadą, przez którą brak normy zużycia nie blokuje lotu. */}
+      {!showsCard ? null : (
+        <Card title="Kalendarz">
+          <Field
+            htmlFor="org-icao"
+            label="Lotnisko macierzyste"
+            // Nazwa z katalogu opisuje kod ZAPISANY, więc pokazujemy ją wyłącznie wtedy,
+            // gdy pole jeszcze go niesie - inaczej po wpisaniu `EPKK` pod spodem dalej
+            // stałoby „Gliwice-Trynek", czyli podpis o innym lotnisku niż to w polu.
+            hint={
+              normalizeIcao(draft.homeIcao) === (created.homeIcao ?? '') &&
+              created.homeAirfieldName != null
+                ? created.homeAirfieldName
+                : 'Z jego współrzędnych liczy się doba lotna. Puste = kalendarz stoi na 06:00-21:00.'
+            }
+          >
+            <TextInput
+              id="org-icao"
+              mono
+              value={draft.homeIcao}
+              placeholder="Kod ICAO"
+              invalid={rejected === 'homeIcao'}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, homeIcao: event.target.value }))
+              }
+            />
+          </Field>
+          {rejected === 'homeIcao' ? (
+            <p className="hint danger">Nie znam takiego lotniska. Sprawdź kod ICAO.</p>
+          ) : null}
+
+          <Field
+            htmlFor="org-tz"
+            label="Strefa czasu"
+            hint="Godziny kalendarza i rezerwacji. Log operacji zostaje w UTC."
+          >
+            <select
+              id="org-tz"
+              className="input"
+              value={draft.timezone}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, timezone: event.target.value }))
+              }
+            >
+              {clubTimeZones(draft.timezone).map((zone) => (
+                <option key={zone} value={zone}>
+                  {zone}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {rejected === 'timezone' ? (
+            <p className="hint danger">Tej strefy nie znam. Wybierz z listy.</p>
+          ) : null}
+        </Card>
+      )}
 
       {creating && !showsCard ? <FirstAdminCard draft={draft} setDraft={setDraft} verdict={verdict} conflict={field === 'email' ? conflict : null} /> : null}
 

@@ -1500,6 +1500,36 @@ je PRZED transakcją. Test architektury „komendy panelu nie mają uchwytu do b
 łapie - komenda nie importowała `Database`, tylko port, który go miał w środku.
 
 
+**(l) ODMOWA OGRANICZENIA UNIEWAŻNIA CAŁĄ TRANSAKCJĘ - zapis idzie w `SAVEPOINT`
+(2026-09-19, R-B rezerwacje).** `bookings_no_overlap` (`EXCLUDE USING gist`) odbija
+nakładającą się rezerwację błędem `23P01`. Adapter łapie go i chce zaraz potem dociągnąć
+KOLIDUJĄCY wiersz, żeby ekran mógł napisać, co stoi w tym czasie - a w panelu dołożyć
+jeszcze ślad audytu tą samą transakcją. Nic z tego nie przechodzi: po odmowie
+ograniczenia transakcja jest odrzucona i każde następne zapytanie w niej dostaje
+`current transaction is aborted`. Objawem był `500` zamiast `409` - na trasie, która
+logicznie działała, bo baza zrobiła DOKŁADNIE to, co miała zrobić.
+
+Reguła: zapis, po którego ODMOWIE chcemy jeszcze coś przeczytać albo zapisać, biegnie
+między `SAVEPOINT` a `ROLLBACK TO SAVEPOINT` - punkt zapisu cofa wyłącznie nieudane
+zapytanie i zostawia transakcję żywą. Dotyczy to ograniczeń wykluczających i unikalności
+wszędzie tam, gdzie odmowa nie jest końcem obsługi żądania. Tam, gdzie po odmowie kończy
+się wszystko (`uniqueConflictOn` w `fleet.ts` - odpowiedź `409` i koniec), punkt zapisu
+nie jest potrzebny i go nie ma.
+
+**(m) OKNO O ZEROWEJ SZEROKOŚCI NIE PRZECINA ŻADNEJ DOBY (2026-09-21, R-F).**
+`clubDays(zone, from, to)` oddaje doby klubu PRZECIĘTE oknem `[from, to)` i zaczyna
+od `if (!(to > from)) return []` - poprawnie, bo okno puste nie obejmuje niczego.
+Trasa `GET /bookings/:id` pytała o dobę SAMEJ rezerwacji, czyli `[startsAt, startsAt]`,
+i dostawała pustą listę - a stąd `404` na własną, istniejącą rezerwację. Objaw był
+mylący podwójnie: trasa wyglądała na złamaną przez izolację klubów, choć klub był
+właściwy, a odmowa padała po stronie, która o klub w ogóle nie pytała.
+
+Reguła: pytanie o dobę zawierającą CHWILĘ to najwęższe okno, które ją obejmuje
+(`[t, t + 1)`), a nie okno zerowe. Złapał to test izolacji, nie przegląd kodu - i to
+dopiero po dołożeniu do świata testowego wiersza po stronie klubu A: `404` na cudzej
+rezerwacji dowodzi tyle samo, co trasa, która nie działa wcale. **Sonda izolacji bez
+przypadku POZYTYWNEGO jest sondą na nic.**
+
 ### 7.10 Izolacja klubów - dwa strażniki na jedną regułę (epik C, 2026-09-10)
 
 Reguła jest jednym zdaniem: **żadnemu zapytaniu nie wolno przepuścić wiersza innego

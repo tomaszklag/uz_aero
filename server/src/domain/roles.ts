@@ -136,6 +136,26 @@ export type Capability =
    * nie widzi ani zakładki, ani danych; do klubu wraca odpowiedź w aplikacji, nie w panelu.
    * Dlatego zdolność stoi w mapie ról PLATFORMOWYCH, a żadna rola klubu jej nie ma.
    */
+
+  /**
+   * Władza nad CUDZYM planem: odwołanie i zmiana rezerwacji innego pilota oraz
+   * wpisanie rezerwacji za kogoś (milestone 3.0.0, `docs/rezerwacje.md` §8).
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE `fleet.manage` ══
+   * Katalog nazywa ZASOBY, a rezerwacja jest zasobem, którego do 3.0.0 nie było.
+   * `fleet.manage` nazywa FLOTĘ - konfigurację maszyn, z której wynika kształt każdej
+   * przyszłej karty dnia. Tu chodzi o czyjś sobotni plan, czyli o coś, co należy do
+   * człowieka, nie do maszyny. Wpisanie tego pod flotę dałoby fałszywą odpowiedź na
+   * pytanie, po które ten plik istnieje: „co panel potrafi zmienić".
+   *
+   * **Wyłączenie maszyny z użytku na konkretne dni idzie natomiast na `fleet.manage`**
+   * i to nie jest niekonsekwencja: to stan MASZYNY rozciągnięty w czasie, czyli
+   * przedłużenie `service_status`, którym tamta zdolność już steruje.
+   *
+   * **Rezerwuje każdy aktywny członek klubu** - to nie jest zdolność panelu, tylko
+   * zwykła praca pilota, jak wpisanie lotu. Ta pozycja dotyczy wyłącznie cudzych.
+   */
+  | 'reservations.manage'
   | 'bugs.triage'
   /**
    * Zakładanie i wyłączanie KLUBÓW oraz zapraszanie ich pierwszych administratorów
@@ -165,6 +185,7 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
     'thresholds.manage',
     'audit.read',
     'maintenance.run',
+    'reservations.manage',
   ],
 };
 

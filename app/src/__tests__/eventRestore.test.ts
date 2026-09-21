@@ -77,6 +77,30 @@ class MemoryCredentials {
 
 /** Serwer-skrypt dla `GET /me/events`: rejestruje kursory, odpowiada z kolejki. */
 class PullServer implements ServerPort {
+  // Kalendarz rezerwacji (epik R-F) - te przekroje go nie dotykają.
+  async getBookings(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async patchBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async createBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async cancelBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
   async loginWithGoogle(): Promise<never> {
     throw new Error('nieużywane w tych testach');
   }

@@ -1,44 +1,43 @@
-# Poprzednie dni
+# Historia
 
-> Operacje spoza dzisiejszej doby - na takich samych kafelkach jak na ekranie Mój dzień, w dwóch grupach: te, które możesz jeszcze poprawić, i te już zamknięte.
+> Wszystkie Twoje operacje - dzisiejsze i wcześniejsze: dzień nagłówkiem, loty zwartymi wierszami, starsze zwinięte pod przyciskiem.
 
-@screen 12-historia "Kafelki z terminem korekty"
+@screen 24-historia "Dzień nagłówkiem, operacje wierszami" | 24a-historia-rozwinieta "Archiwum po rozwinięciu"
 
-## Dwie grupy
+## Co widać
 
-Ekran otwiera się z przycisku **POPRZEDNIE DNI** na ekranie [Mój dzień](moj-dzien). Kafelki dzielą się według okna korekty:
+Zakładka **Historia** to trzecia pozycja paska na dole ekranu. Otwiera się na tym, co można jeszcze poprawić - starsze dni czekają zwinięte.
 
-- **Możesz jeszcze poprawić** - operacje, dla których nie minęły 24 godziny od zdania samolotu. Kafelek ma niebieską ramkę, termin (`Korekta do 12 SIE 16:05`), odliczanie („zostało 4 h 12 min") i przycisk **OTWÓRZ I POPRAW**.
-- **Zamknięte** - operacje po oknie. Przycisk mówi **ZOBACZ SZCZEGÓŁY**, a pod grupą stoi zdanie o tym, że można je oglądać, ale nie zmieniać: błąd zgłasza się administratorowi, a jego poprawka dopisze się jako korekta, bez kasowania pierwotnego zapisu.
+- **Nagłówek dnia** z datą, np. `11 SIERPNIA 2026`. Data pada raz, nad wszystkimi operacjami tego dnia.
+- **Wiersz operacji** - godziny biegu silnika, znak samolotu i trójka liczb **Loty · Blok · Lot** bez etykiet: ich kolejność jest w aplikacji stała.
+- **Suma dnia** pojawia się dopiero wtedy, gdy tego dnia latałeś kilka razy - przy jednej operacji powtarzałaby jej własne liczby.
+- **Ikona po prawej** mówi, co się stanie po tapnięciu: **ołówek** - trwa jeszcze czas na poprawki, **oko** - operację można już tylko obejrzeć.
+- **POKAŻ STARSZE** rozwija archiwum. Zwija się przy każdym wejściu: „co mogę poprawić" pytasz codziennie, a „co latałem w maju" - raz na jakiś czas.
 
-## Kafelek operacji
+Oznaczenia przy wierszu pojawiają się tylko wtedy, gdy coś znaczą: **RĘCZNIE** przy [wpisie lotu po fakcie](wpis-lotu-po-fakcie), **Zakończył administrator** przy operacji zamkniętej z panelu, a przy zapisach, które jeszcze nie doszły do klubu - „Oczekuje na przesłanie · n".
 
-Ten sam kształt, co na ekranie Mój dzień - różnią się dwie rzeczy: nagłówkiem jest data (`11 SIERPNIA 2026`), a pod kafelkiem może stać stopka z plakietkami.
+Tapnięcie wiersza otwiera [ekran operacji](operacja-i-korekty): w czasie na poprawki z możliwością edycji, po terminie w trybie podglądu.
 
-- **Sygnatura** operacji, np. `SP-KLM/2026-08-11/TMK/2`, znak samolotu i godziny biegu silnika (`14:20 → 16:02 UTC`).
-- **Trójka Loty · Blok · Lot** - liczba lotów, czas blokowy, czas w powietrzu.
-- **RĘCZNIE** przy nagłówku, gdy operacja powstała jako [wpis lotu po fakcie](wpis-lotu-po-fakcie).
-- **Zakończył administrator** - operacja, której nie zdałeś, a klub zamknął ją z panelu.
-- **Plakietka zaległości** pojawia się tylko wtedy, gdy zapisy tej operacji jeszcze nie doszły do klubu: „Oczekuje na przesłanie · n" albo „W trakcie wysyłania · n". Wysłane operacje nie mają żadnej plakietki - to stan domyślny.
-
-Tapnięcie kafelka otwiera [ekran operacji](operacja-i-korekty): w oknie korekty z możliwością edycji, po oknie w trybie podglądu.
-
-@screen 10-statystyki "Operacja w oknie korekty" | 10b-rozliczenie-zamkniete "Operacja po oknie korekty"
+@screen 10-statystyki "Operacja w czasie na poprawki" | 10b-rozliczenie-zamkniete "Operacja po terminie"
 
 ## Jak to działa
 
-Lista liczy się na telefonie, z Twojego lokalnego zapisu - dlatego wygląda tak samo z zasięgiem i bez. Kafelkiem jest **operacja, nie doba**: doba z dwiema operacjami daje dwie karty, rozróżnione godzinami biegu silnika. Do której doby należy operacja, rozstrzyga chwila uruchomienia silnika w czasie UTC (a przy zapisie bez biegu - chwila przejęcia), więc granica jest tu ta sama, co na ekranie Mój dzień i żadna operacja nie wpada w dziurę między ekranami. Z listy wypadają operacje unieważnione - przez Ciebie albo przez administratora - oraz zdania bez lotu, w których nic się nie zmieniło. Dzisiejszych operacji tu nie ma: stoją na ekranie Mój dzień, na identycznych kafelkach.
+Lista liczy się na telefonie, z Twojego lokalnego zapisu - dlatego wygląda tak samo z zasięgiem i bez. Wierszem jest **operacja, nie doba**: dzień z dwiema operacjami ma dwa wiersze, rozróżnione godzinami biegu silnika. Do której doby należy operacja, rozstrzyga chwila uruchomienia silnika w czasie UTC, a przy zapisie bez biegu - chwila przejęcia. Z listy wypadają operacje unieważnione - przez Ciebie albo przez administratora - oraz zdania bez lotu, w których nic się nie zmieniło.
 
-> **Dlaczego tak.** Kafelek opisuje jedną maszynę i jeden bieg silnika, bo tak wygląda rozliczenie: paliwo i motogodziny należą do samolotu, nie do pilota. Kafelek-doba nie miałby czego otworzyć, gdyby tego dnia latałeś dwiema maszynami. Więcej: [model operacji](model-operacji).
+Czas na poprawki to 24 godziny od zdania samolotu i liczy się osobno dla każdej operacji. Po jego upływie wiersz zostaje, ale otwiera się już tylko do oglądania.
 
-> **Założenie.** Podział na dwie grupy robi wyłącznie okno korekty. Przycisku edycji nie pokazujemy wyszarzonego - obiecywałby akcję, której reguły i tak nie dopuszczą; po oknie znika po prostu wejście w edycję. Więcej: [korekty i rejestr](korekty-i-rejestr).
+## Dlaczego tak to działa
+
+> **Dlaczego dzisiejsze loty są tutaj, a nie na Pulpicie.** Poprawia się je w jednym miejscu - tym samym, w którym leżą wszystkie pozostałe. Dwie listy tych samych operacji znaczyłyby dwa miejsca do sprawdzenia i dwa, które mogą się rozjechać.
+
+> **Dlaczego wiersz to jedna operacja, a nie cały dzień.** Wiersz opisuje jedną maszynę i jeden bieg silnika, bo tak wygląda rozliczenie: paliwo i motogodziny należą do samolotu, nie do pilota. Wiersz-doba nie miałby czego otworzyć, gdybyś tego dnia latał dwiema maszynami. Więcej: [model operacji](model-operacji).
+
+> **Dlaczego starsze loty otwierają się tylko do podglądu.** O tym, co widzisz, rozstrzyga wyłącznie czas na poprawki. Przycisku edycji nie pokazujemy wyszarzonego - obiecywałby akcję, której reguły i tak nie dopuszczą; po terminie znika po prostu wejście w edycję. Więcej: [korekty i rejestr](korekty-i-rejestr).
 
 ## Częste problemy
 
-@screen 01-moj-dzien "Dzisiejsze operacje na Mój dzień" | 01d-sync-stoi "Czerwona plakietka łączności"
-
-- **Nie widzę wczorajszego wieczornego lotu** → doba liczy się w UTC od uruchomienia silnika. Latem lot uruchomiony po 02:00 czasu polskiego należy już do następnej doby, więc może stać na ekranie Mój dzień, a nie tutaj.
-- **Kafelek ma tylko ZOBACZ SZCZEGÓŁY** → minęły 24 godziny od zdania samolotu. Poprawkę wprowadzi administrator - zgłoś ją w klubie; zapis pierwotny i tak zostanie w dokumentacji.
-- **Plakietka „Oczekuje na przesłanie" nie znika** → zapisy tej operacji czekają w kolejce wysyłki. Wróć w zasięg; jeśli plakietka łączności w nagłówku jest czerwona, kolejka sama nie ruszy - patrz [praca bez zasięgu](praca-bez-zasiegu).
+- **Nie widzę wczorajszego wieczornego lotu** → doba liczy się w UTC od uruchomienia silnika. Latem lot uruchomiony po 02:00 czasu polskiego należy już do następnej doby i stoi pod jutrzejszą datą.
+- **Wiersz ma ikonę oka zamiast ołówka** → minęły 24 godziny od zdania samolotu. Poprawkę wprowadzi administrator - zgłoś ją w klubie; zapis pierwotny i tak zostanie w dokumentacji.
+- **Oznaczenie „Oczekuje na przesłanie" nie znika** → zapisy tej operacji czekają w kolejce wysyłki. Wróć w zasięg; jeśli oznaczenie łączności na Pulpicie jest czerwone, kolejka sama nie ruszy - patrz [praca bez zasięgu](praca-bez-zasiegu).
 - **Lista jest pusta po reinstalacji albo na nowym telefonie** → operacje wracają z serwera przy pierwszym połączeniu. Daj aplikacji chwilę z zasięgiem albo użyj **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
 - **Operacja zniknęła z listy** → została unieważniona: przez Ciebie w trybie edycji albo przez administratora. Zapis zostaje w dokumentacji klubu i widzi go administrator, ale przestaje się liczyć - wypada z sum, z historii i z dokumentów dnia.

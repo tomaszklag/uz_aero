@@ -189,6 +189,30 @@ export const ADMIN_ACTIONS = [
    * pilota wpisu nie dostaje - to nie jest decyzja administratora.
    */
   'password.link_sent',
+  /**
+   * REZERWACJA WPISANA Z PANELU (milestone 3.0.0, `docs/rezerwacje.md` §5.2).
+   *
+   * Rezerwacja własna pilota śladu w dzienniku NIE DOSTAJE - to jego zwykła praca,
+   * jak wpisanie lotu, a dziennik audytu jest od decyzji administratora o CUDZYCH
+   * sprawach. Wpis powstaje dopiero, gdy rezerwację zakłada ktoś za kogoś.
+   * `details` niosą maszynę, termin i pilota, za którego wpisano.
+   */
+  'booking.create',
+  /**
+   * ODWOŁANIE CUDZEJ REZERWACJI - z POWODEM, który pilot czyta w aplikacji (P4).
+   *
+   * To jest zdjęcie komuś soboty, więc pytanie „kto mi to zabrał i dlaczego" ma mieć
+   * odpowiedź w dzienniku, a nie tylko w powiadomieniu, które da się przeoczyć.
+   */
+  'booking.cancel',
+  /**
+   * WYŁĄCZENIE MASZYNY Z UŻYTKU na konkretne dni (`kind = block`).
+   *
+   * Osobny kod od `booking.create`, choć wiersz jest w tej samej tabeli: tamto
+   * rozporządza czyimś planem, to zdejmuje maszynę całemu klubowi. Dwie różne
+   * odpowiedzi na pytanie, dlaczego w sobotę nikt nie poleciał.
+   */
+  'booking.block',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

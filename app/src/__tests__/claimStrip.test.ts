@@ -111,11 +111,11 @@ describe('wznowienie po restarcie', () => {
     const released = session({ closed: true });
 
     expect(holdsAircraft(released)).toBe(false);
-    expect(resumeTarget(released)).toBe('MyDay');
+    expect(resumeTarget(released)).toBe('Tabs');
   });
 
   it('brak operacji zaczyna od „Mój dzień"', () => {
-    expect(resumeTarget(null)).toBe('MyDay');
-    expect(resumeTarget(emptySessionState())).toBe('MyDay');
+    expect(resumeTarget(null)).toBe('Tabs');
+    expect(resumeTarget(emptySessionState())).toBe('Tabs');
   });
 });

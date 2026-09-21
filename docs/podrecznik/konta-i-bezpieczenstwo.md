@@ -12,8 +12,6 @@
 
 Zgłoszenie do klubu składa się wyłącznie z aplikacji; konto, które nie należy do żadnego klubu, dostaje w panelu odmowę. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
 
-> **Założenie.** Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google. Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do decyzji pilota po prostu w tym klubie nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
-
 ### Pierwszy administrator klubu
 
 Z panelu klubu **nie da się nikogo dopisać** - każdy wchodzi kodem klubu i decyzją. Jedynym wyjątkiem jest **pierwszy administrator**: zakłada go opiekun platformy razem z klubem, podając jego adres e-mail, imię i kod pilota, a członkostwo powstaje od razu. **Adres nie musi być kontem Google**: razem z klubem wychodzi na niego zaproszenie z linkiem do ustawienia hasła, ważnym trzy doby. Jeśli mimo to zaloguje się kontem Google z tym samym adresem, konto podpisze się samo. Tą samą drogą wchodzi sam opiekun platformy przy uruchomieniu serwera.
@@ -30,8 +28,6 @@ W samolocie bywa jeden tablet dla kilku pilotów. Logowanie kontem Google znaczy
 
 @screen 00f-login-haslo "Logowanie hasłem" | 00i-wybor-klubu "Wybór klubu urządzenia" | 13-ustawienia "Hasło w ustawieniach"
 
-> **Dlaczego tak.** Hasło wróciło do produktu świadomie i z policzoną ceną: hasła się zapomina, a odzyskiwanie musi być samoobsługowe, inaczej administrator klubu spędza sezon na resetach. Stąd jeden mechanizm odzyskania - link z e-maila - i stąd brak jakiejkolwiek drogi, w której ktoś podaje komuś hasło.
-
 ## Sesje i urządzenia
 
 Każde zalogowanie - w aplikacji i w panelu - zostawia **wiersz sesji**: jakie to urządzenie, czym się zalogowano, od kiedy i kiedy było ostatnio aktywne.
@@ -40,7 +36,7 @@ Każde zalogowanie - w aplikacji i w panelu - zostawia **wiersz sesji**: jakie t
 - **Administrator klubu** widzi w karcie członka urządzenia tej osoby **w swoim klubie** i może je wylogować - pojedynczo albo wszystkie naraz. Urządzeń, którymi ta sama osoba loguje się w innym klubie, nie widzi.
 - **Zmiana hasła wylogowuje pozostałe urządzenia**, a to, przy którym siedzisz, zostaje. Ustawienie hasła z linku wylogowuje wszystkie - link jest drogą na wypadek, gdyby stare hasło wyciekło.
 
-> **Zdalne wylogowanie NIE kasuje danych z telefonu.** Urządzenie przestaje wysyłać i mówi o tym wprost - na ekranie PIN i w ustawieniach - ale PIN dalej otwiera aplikację, a niewysłane zapisy czekają na niej do ponownego zalogowania **tej samej osoby**. Wyrzucenie do ekranu logowania zabrałoby pilotowi dane dnia, którego klub jeszcze nie ma.
+> **Uwaga.** Zdalne wylogowanie nie kasuje danych z telefonu. Urządzenie przestaje wysyłać i mówi o tym wprost - na ekranie PIN i w ustawieniach - ale PIN dalej otwiera aplikację, a niewysłane zapisy czekają na niej do ponownego zalogowania **tej samej osoby**. Wyrzucenie do ekranu logowania zabrałoby pilotowi dane dnia, którego klub jeszcze nie ma.
 
 ## Role: pilot, administrator, opiekun platformy
 
@@ -50,17 +46,15 @@ Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda 
 
 ## Sesje
 
-- **Aplikacja.** Po pierwszym logowaniu telefon ma profil pilota, a codzienne wejście to PIN. Sesja z serwerem odświeża się sama przy najbliższej sieci; jej wygaśnięcie nie kasuje niczego i nie wylogowuje - może tylko zatrzymać kolejkę wysyłki z plakietką **SYNC STOI** i prośbą o ponowne zalogowanie ([synchronizacja](synchronizacja)).
+- **Aplikacja.** Po pierwszym logowaniu telefon ma profil pilota, a codzienne wejście to PIN. Sesja z serwerem odświeża się sama przy najbliższej sieci; jej wygaśnięcie nie kasuje niczego i nie wylogowuje - może tylko zatrzymać kolejkę wysyłki z oznaczeniem **SYNC STOI** i prośbą o ponowne zalogowanie ([synchronizacja](synchronizacja)).
 - **Panel.** Sesja wygasa po ośmiu godzinach i panel prosi o ponowne logowanie.
 - **Wylogowanie** stoi na końcu ustawień jako **Wyloguj i zmień konto** i nie zadziała, dopóki kolejka wysyłki nie jest pusta. Kończy sesję także po stronie klubu, nie tylko na telefonie - na wspólnym tablecie „wyloguj" ma znaczyć koniec, a nie schowanie.
 
 @screen 00-login "Codzienne wejście PIN-em" | 00b-login-offline "Logowanie wymaga internetu" | 13-ustawienia "Wyloguj na końcu ustawień"
 
-> **Dlaczego tak.** Wylogowanie zamyka profil pilota na tym telefonie. Zapisy, które nie doszły do klubu, istnieją tylko tam - przy niepustej kolejce przepadłyby bez śladu. Ponowne logowanie wymaga internetu, więc to jedyna rzecz w ustawieniach, której nie da się cofnąć bez sieci.
-
 ## Wyłączenie członkostwa
 
-Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach arkusza, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
+Pilota, który odchodzi z klubu, administrator nie kasuje - **wyłącza mu członkostwo**. Działa natychmiast: telefon przestaje wysyłać i pobierać cokolwiek z tego klubu, a panel zamyka dostęp. Loty zostają w dzienniku, w statystykach i w kartach dnia, bo się zdarzyły. **W pozostałych klubach ten sam człowiek lata dalej**, pod ich kodami. Ponowne włączenie przywraca dostęp; pilot loguje się jeszcze raz.
 
 Człowieka jako osoby nie kasuje nikt - dziennik musi umieć przypisać każdy wpis do autora. Blokada obejmująca wszystkie kluby naraz należy do opiekuna platformy i jest osobną decyzją.
 
@@ -73,10 +67,18 @@ Człowieka jako osoby nie kasuje nikt - dziennik musi umieć przypisać każdy w
 | wiersz sesji logowania | przy każdym zalogowaniu: urządzenie (model, system, wersja aplikacji albo przeglądarka), adres IP, czym się zalogowano, początek i ostatnia aktywność - po to, żeby dało się zobaczyć swoje urządzenia i wylogować je zdalnie | Ty - swoje wszędzie; administrator - Twoje w SWOIM klubie |
 | dziennik lotów: operacje, odczyty, korekty z autorem i powodem, notatki | z aplikacji, w chwili zdarzenia | pilot - swoje; administrator - całą flotę |
 | ślad GPS | tylko w trakcie operacji: od uruchomienia do wyłączenia silnika telefon nagrywa ślad i pokazuje o tym powiadomienie; po wysłaniu kasuje kopię | pilot - swoje; administrator - w dzienniku |
-| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarty arkusz, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | opiekun platformy - jedna kolejka dla całego serwera, z nazwą klubu przy zgłoszeniu; administrator klubu tej zakładki nie ma |
+| zgłoszenia z aplikacji | opis pilota i kontekst zebrany bez pytania: ekran i otwarte okienko, operacja, samolot, zadanie, stan silnika, wersja aplikacji, system i model telefonu, motyw, stan łączności, czas i strefa; zrzutu ekranu nie ma | opiekun platformy - jedna kolejka dla całego serwera, z nazwą klubu przy zgłoszeniu; administrator klubu tej zakładki nie ma |
 
 Poza operacją aplikacja nie zapisuje położenia; w ustawieniach jest tylko diagnostyka GPS na żądanie. Dane trafiają na serwer klubu, utrzymywany u dostawcy hostingu, a dziennik jest dokumentem klubu: to klub przyjmuje pilotów, poprawia i unieważnia wpisy. Pełny opis: [polityka prywatności](~/prywatnosc.html).
 
 @screen 14-slad "Ślad nagrany w operacji"
 
 > **Uwaga.** Zapisy powstają na telefonie, na którym latasz, i to on jest ich źródłem, dopóki nie wyśle ich do klubu - nie czyść danych aplikacji z niepustą kolejką wysyłki.
+
+## Dlaczego tak to działa
+
+> **Dlaczego dostęp daje zatwierdzenie, a nie samo konto Google.** Rejestracja jest otwarta dla każdego z kontem Google - o tym, kto lata w klubie, decyduje klub. Do decyzji pilota po prostu w tym klubie nie ma: nie ma kodu, którym podpisuje się operacje, nie ma go na liście pilotów ani w wyborze drugiego pilota, więc nie ma czego wpuścić. Z tego samego powodu odrzucenie musi mieć powód - bez niego człowiek zostaje przed ekranem, na którym nie da się nic zrobić.
+
+> **Dlaczego obok konta Google jest też hasło.** Hasło wróciło do produktu świadomie i z policzoną ceną: hasła się zapomina, a odzyskiwanie musi być samoobsługowe, inaczej administrator klubu spędza sezon na resetach. Stąd jeden mechanizm odzyskania - link z e-maila - i stąd brak jakiejkolwiek drogi, w której ktoś podaje komuś hasło.
+
+> **Dlaczego wylogowanie czeka na pustą kolejkę.** Wylogowanie zamyka profil pilota na tym telefonie. Zapisy, które nie doszły do klubu, istnieją tylko tam - przy niepustej kolejce przepadłyby bez śladu. Ponowne logowanie wymaga internetu, więc to jedyna rzecz w ustawieniach, której nie da się cofnąć bez sieci.

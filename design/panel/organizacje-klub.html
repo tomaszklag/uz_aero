@@ -347,6 +347,35 @@
           <div class="kv"><span class="kv-k">Samoloty</span><span class="kv-v">0</span></div>
         </div>
 
+        <!-- KALENDARZ KLUBU (3.0.0, docs/rezerwacje.md §7.1). Lotnisko macierzyste wyznacza
+             DOBĘ LOTNĄ: siatka kalendarza biegnie od wschodu do zachodu słońca nad nim, więc
+             w czerwcu jest szersza niż w listopadzie. Puste pole NIE BLOKUJE rezerwacji -
+             okno schodzi wtedy do domyślnych 06:00-21:00, tą samą zasadą, przez którą brak
+             normy zużycia nie blokuje lotu. Współrzędne przychodzą z katalogu lotnisk, więc
+             klub podaje sam kod, a panel dopisuje pod polem nazwę - kod bez nazwy znaczy
+             „nie znam takiego lotniska" i wtedy zapis odbija.
+             Strefa rysuje GODZINY kalendarza; rejestr operacji zostaje w UTC, bo rezerwacja
+             jest umową między ludźmi o godzinie, a nie pomiarem (§6). Lista stref jest
+             zamknięta i długa, więc natywny `select` - reguła panelu z CLAUDE.md. -->
+        <div class="card">
+          <div class="card-title">Kalendarz</div>
+          <div class="field">
+            <label class="label" for="k-icao">Lotnisko macierzyste</label>
+            <input class="input mono" id="k-icao" value="EPGL" maxlength="4" placeholder="Kod ICAO">
+            <span class="hint">Gliwice-Trynek Airfield</span>
+          </div>
+          <div class="field">
+            <label class="label" for="k-tz">Strefa czasu</label>
+            <select class="input" id="k-tz">
+              <option selected>Europe/Warsaw</option>
+              <option>Europe/Berlin</option>
+              <option>Europe/London</option>
+              <option>UTC</option>
+            </select>
+            <span class="hint">Godziny kalendarza i rezerwacji. Log operacji zostaje w UTC.</span>
+          </div>
+        </div>
+
         <!-- Administratorzy = jedyne osoby z klubu widoczne dla superadministratora:
              odpowiadają na pytanie „do kogo dzwonić". Reszta członków zostaje w klubie.
              ZAPROSZENIE (2.1.0, docs/logowanie-haslem.md D8, §5.4): to TEN SAM mechanizm,

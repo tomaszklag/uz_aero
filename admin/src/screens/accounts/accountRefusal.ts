@@ -55,9 +55,9 @@ const CONFLICTS: Record<'code' | 'email', string> = {
 };
 
 export function accountConflictMessage(field: ConflictField | null): string | null {
-  // `reg` (flota) i `slug` (klub) na tym ekranie nie mają prawa się pojawić - ale unia
-  // odmowy jest wspólna dla całego panelu, więc obsługujemy to milczeniem zamiast
-  // rzucania wyjątku w formularzu, który klient właśnie wypełnia.
-  if (field == null || field === 'reg' || field === 'slug') return null;
+  // Pola spoza konta - `reg` (flota), `slug` i konfiguracja kalendarza klubu - na tym
+  // ekranie nie mają prawa się pojawić, ale unia odmowy jest WSPÓLNA dla całego panelu.
+  // Milczymy zamiast rzucać wyjątek w formularzu, który klient właśnie wypełnia.
+  if (field !== 'code' && field !== 'email') return null;
   return CONFLICTS[field];
 }

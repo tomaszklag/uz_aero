@@ -52,6 +52,7 @@ import {
   AbandonDraftSheet,
   ActionButton,
   AppText,
+  Banner,
   Card,
   CardPicker,
   Icon,
@@ -67,6 +68,9 @@ import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAbandonExit } from '../hooks/useAbandonExit';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { useCalendar } from '../hooks/useCalendar';
+import { useMinuteTicker } from '../hooks/useMinuteTicker';
+import { claimConflict } from './logic/claimConflict';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dualRequirementBlocker } from './logic/dualRequirement';
 import { timeUtc } from '../format';
@@ -124,8 +128,12 @@ export function PreflightAircraftScreen({
     };
   }, [pilotId, queries, setPilotProfile]);
 
+  const calendar = useCalendar();
+  const now = useMinuteTicker();
+
   /** Stan `design/02g`: cache przeczytany i pusty - warning zamiast formularza. */
   const noFleet = loaded && fleet.length === 0;
+
 
   // Warning ma zniknąć SAM, gdy sync dowiezie flotę - pilot patrzący na ekran z radą
   // „sprawdź internet" nie może być zmuszony do wyjścia i powrotu, żeby sprawdzić,
@@ -169,6 +177,29 @@ export function PreflightAircraftScreen({
   const exit = useAbandonExit(navigation, draft.dirty(), undefined, () => draft.reset());
 
   const selected = draft.aircraft;
+
+  /**
+   * Cudza rezerwacja na maszynę, którą pilot właśnie bierze (23A).
+   *
+   * WYMAGA SIECI (§2.2) i to jest znana cena: bez zasięgu banera nie ma, a przejęcie
+   * idzie dalej dokładnie tak, jak szło przed 3.0.0 - rezerwacja nigdy go nie
+   * warunkowała (§2.3). Pytamy tym samym oknem, co zakładka Kalendarz: jedno
+   * zapytanie w obu miejscach znaczy jedną odpowiedź i jedną definicję zajętości.
+   */
+  const conflict = useMemo(
+    () =>
+      claimConflict({
+        bookings: calendar.data?.bookings ?? null,
+        days: calendar.data?.days ?? [],
+        aircraftId: selected?.id ?? null,
+        reg: selected?.reg ?? null,
+        pilotId,
+        now,
+        nameOf: (id: string | null) =>
+          id == null ? null : (pilots.find((p) => p.id === id)?.name ?? null),
+      }),
+    [calendar.data, selected, pilotId, now, pilots],
+  );
 
   const aircraftOptions: PickerOption<string>[] = useMemo(
     () =>
@@ -313,6 +344,14 @@ export function PreflightAircraftScreen({
         </View>
       ) : (
         <View style={{ gap: theme.spacing.md }}>
+          {/* ── cudza rezerwacja na tę maszynę (23A) ─────────────────────
+              OSTRZEGA, nigdy nie blokuje: kolega mógł odpuścić albo zamienić się,
+              a maszyna stoi wolna. Baner warunkowy - znika razem z warunkiem,
+              więc nie ma „×" do zamknięcia. */}
+          {conflict != null && (
+            <Banner kind="warning" title={conflict.title} text={conflict.text} />
+          )}
+
           {/* ── kto zapisuje ten dzień ──────────────────────────────────── */}
           <IdentityStrip
             name={pilotProfile?.name ?? pilotId}

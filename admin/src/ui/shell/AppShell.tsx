@@ -25,6 +25,7 @@ import { Link, NavLink } from 'react-router-dom';
 
 import type { Capability } from '../../api/dto';
 import {
+  CalendarIcon,
   BookIcon,
   BugIcon,
   BuildingIcon,
@@ -39,6 +40,7 @@ import type { ShellScope } from './scope';
 
 const ICONS: Record<NavIcon, (props: { size?: number }) => React.ReactNode> = {
   logbook: BookIcon,
+  calendar: CalendarIcon,
   people: PeopleIcon,
   plane: PlaneIcon,
   bug: BugIcon,

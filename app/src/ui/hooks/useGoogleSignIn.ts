@@ -9,8 +9,10 @@
  * ══ PRZEZ PRZEGLĄDARKĘ SYSTEMOWĄ, BEZ NATYWNEGO SDK GOOGLE ══
  * `expo-auth-session` otwiera Custom Tab i wraca własnym schematem adresu. Dla klienta
  * Google typu ANDROID ten schemat MUSI być pakietem aplikacji
- * (`com.ninerdeck.app:/oauthredirect` - dostawca składa go z `Application.applicationId`),
- * dlatego `scheme` w `app.json` niesie pakiet. Kontrakt serwera jest ten sam, co przy
+ * (`com.ninerdeck.app:/oauthredirect`, w dev buildzie `com.ninerdeck.app.dev:/oauthredirect` -
+ * dostawca składa go z `Application.applicationId`), dlatego `scheme` w `app.json` niesie
+ * pakiet, a `app.config.js` podmienia go razem z pakietem w wariancie deweloperskim
+ * (`scripts/app-variant.js`). Kontrakt serwera jest ten sam, co przy
  * natywnym SDK (token tożsamości Google), więc podmiana to później decyzja o UX.
  *
  * ══ KOD + PKCE, NIE `id_token` WPROST ══

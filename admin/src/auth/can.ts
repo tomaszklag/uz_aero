@@ -48,6 +48,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'thresholds.manage': 'administrator',
   'audit.read': 'administrator',
   'maintenance.run': 'administrator',
+  'reservations.manage': 'administrator',
   // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
   // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
   // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.

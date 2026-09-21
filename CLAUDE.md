@@ -361,6 +361,15 @@ i uzasadnienia: **`docs/panel-2.0.md` §3.8**. Reguły obowiązujące KAŻDY now
 - **`td.cell-sub` ma `display: table-cell`** - klasa bywa klasą całej komórki (kolumny
   „E-mail", „Kiedy") i `display: block` wyjmowało ją z wiersza (usterka z 2.0 naprawiona
   przy okazji)
+- **WYBÓR Z DŁUGIEJ LISTY IDZIE NATYWNYM `<select>`** (decyzja właściciela 2026-09-20,
+  przy kalendarzu 3.0.0) - to JEDYNY wyjątek od reguły „zawsze lista kart" i obowiązuje
+  WYŁĄCZNIE w panelu. Tamta reguła powstała dla telefonu: kciuk w rękawicy, słońce,
+  wybór spośród kilku maszyn. Panel to mysz i biurko, a klub z dwunastoma maszynami
+  dostałby dwanaście kart w szufladzie. Granica jest w DŁUGOŚCI listy, nie w powierzchni:
+  zbiór ZAMKNIĘTY i krótki (powód wyłączenia z użytku, rodzaj operacji, rola) zostaje
+  listą kart `OptionButton` także w panelu, bo tam widoczność wszystkich opcji naraz jest
+  całą wartością. Zbiór rosnący z klubem (maszyna, pilot) dostaje `<select class="input">`,
+  tak jak rysują to makiety `design/panel/kalendarz-*.html`
 
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo - inne urządzenie, ten sam produkt.
 
@@ -458,26 +467,31 @@ po lewej ani tytułem na środku bez powrotu - 01 był takim wyjątkiem i przest
 LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`, usunięty razem z klamrą (issue #23).
 Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
 
-## Screen flow (kolejność ekranów - model 2026-08-10, bez klamry od issue #23)
+## Screen flow (zakładki od 3.0.0; model operacji 2026-08-10, bez klamry od issue #23)
 ```
-00-login → 01-moj-dzien (EKRAN DOMOWY - płaski log operacji dnia; warianty: 01a pusty,
-  01c offline + arkusz szczegółów synchronizacji)
-01-moj-dzien → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+00-login → ZAKŁADKI: 20-pulpit · 21-kalendarz · 24-historia (EKRAN DOMOWY; flow lotu
+  leży NAD nimi, kokpit zakładek nie ma - patrz „epik R-E" niżej)
+20-pulpit (sumy doby + najbliższa rezerwacja; warianty: 20a bez rezerwacji,
+  20c offline + arkusz synchronizacji, 20d SYNC STOI)
+20-pulpit → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
+  (rezerwacja na TERAZ wypełnia krok 1; 23a ostrzega o cudzym planie, nigdy nie blokuje)
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
 → START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
 → STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
   drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
-  wariant 09c: zdanie bez lotu) → 01-moj-dzien
-01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
+  wariant 09c: zdanie bez lotu) → 20-pulpit
+20-pulpit → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
   2026-08-16: 15 data+samolot+Dual (data pierwsza - issue #58) → 15a zadanie →
   15b czasy i loty → 15c liczniki; arkusze: 15d czas zdarzenia na TimeStepperze,
   15e data lotu na KALENDARZU miesięcznym)
-01-moj-dzien → 12-historia („Poprzednie dni" - operacje spoza dzisiejszej doby);
-  KAFELEK operacji → 10-statystyki (ekran OPERACJI: detale i korekty TEJ operacji)
-12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
+24-historia (WSZYSTKIE operacje - dziś i wcześniej; dzień nagłówkiem, archiwum
+  zwinięte w 24a); WIERSZ operacji → 10-statystyki (detale i korekty TEJ operacji)
+24-historia → wiersz w oknie 24 h → 10-statystyki; wiersz po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
+21-kalendarz → wolne pasmo → 22/22a (rezerwacja w dwóch krokach; 22b arkusz czasu,
+  22c termin zajęty) · pasek zajętości → 23 (karta rezerwacji: przesunięcie i odwołanie)
 10-statystyki → „EDYTUJ DANE" → 10d (TRYB EDYCJI tego samego ekranu - issue #43;
   ołówek przy każdym wierszu osi, arkusze: 10e czas zdarzenia · 10f paliwo i MH przy
   przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis · 10i historia zmian)
@@ -494,19 +508,19 @@ EKRANU 11 NIE MA (usunięty 2026-08-12) - stan wysyłki, uwagi serwera i awaryjn
   „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
   pokazuje też arkusz pod SyncChipem
 ```
-**Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
+**Wszystko wraca na PULPIT, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszą operacją i NICZYM się nie domyka - „Zamknij dzień",
 ekran 01b i klamra służby zostały usunięte (issue #23). Wyjście działa też offline -
 niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
 ### Kokpit jest stanem modalnym (decyzja 2026-08-10)
 **Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** - z 04/05 nie prowadzi
-żadna droga na 01. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na 01;
+żadna droga na Pulpit - paska zakładek w kokpicie NIE MA. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na Pulpit;
 akcje ground (06/07/08) i 09 wracają do kokpitu. **Od issue #82 nie ma już ani jednego
 wyjątku**: ustawienia (13) były ostatnim i zniknęły z paska kokpitu - zębatka stoi
-wyłącznie na 01, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
+wyłącznie na Pulpicie, a w jej miejscu pilot ma przełącznik jasności (sekcja niżej).
 Konsekwencje przy każdej zmianie kokpitu:
-- **nie dokładaj linków na 01** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
+- **nie dokładaj linków na Pulpit** - ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
   operacji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
   z 04/04A (żyje wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę i nie prowadzi nikąd)
 - z tego samego powodu kokpit nie powtarza tego, co mówi już pasek górny (maszyna, trasa)
@@ -560,7 +574,7 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
   Zmiana załogi tylko PRZED uruchomieniem - po biegu nowa załoga = nowe przejęcie.
 - kokpit pokazuje WYŁĄCZNIE bieżącą operację - bez „Log dnia", bez „CYKL n", bez harmonijki
   wielu cykli. Kokpit pozostaje stanem modalnym (sekcja wyżej).
-- na 01 lista operacji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
+- na Pulpicie sumy doby i najbliższa rezerwacja; lista operacji (różne zadania, różne maszyny) w Historii (24), a ręczny wpis CAŁEGO lotu (15) z Pulpitu.
 - zysk uboczny analityki: każda operacja domknięta odczytami z OBU stron - znika patologia
   interwałów degeneracyjnych między ostatnim `leg_close` a zdaniem (§3.6b).
 
@@ -3538,6 +3552,66 @@ linków do kart, bez czekania z adresem w `eas.json`. Reguły obowiązujące odt
   (Search Console) i polityka pod `https://ninerdeck.pl/prywatnosc.html` - komplet
   w README „Wdrożenie: Railway"
 
+## Wariant deweloperski aplikacji = OSOBNY PAKIET (2026-09-17, gałąź `feature-wariant-dev`)
+Prośba właściciela po własnej domenie: testować aplikację lokalnie na nowej instancji i mieć
+osobny dev build do pracy z Expo. Reguły obowiązujące odtąd:
+- **`app.json` jest bazą, `app.config.js` ją przestawia**: przy `APP_VARIANT=development`
+  nazwa „Ninerdeck Dev", pakiet `com.ninerdeck.app.dev`, schemat adresu równy pakietowi
+  (`app/scripts/app-variant.js` - czysty CommonJS z testami, bo czytają go dwa miejsca).
+  Wersja, `versionCode`, ikony i projekt EAS BEZ ZMIAN - to ta sama aplikacja pod innym
+  adresem. Każda inna wartość zmiennej (albo brak) znaczy produkcję
+- **dlaczego osobny pakiet**: dev build z pakietem produkcyjnym zastępowałby na telefonie APK
+  z produkcji, a zapisane w nim tokeny produkcji jechałyby do lokalnego serwera. Koszt:
+  poświadczenia EAS są PER PAKIET, więc dev build ma własny klucz, własny SHA-1 i WŁASNY
+  klient OAuth Android w Google Cloud - jego identyfikator stoi w `app/.env` (Metro)
+  i w `GOOGLE_ANDROID_CLIENT_ID` lokalnego serwera, NIGDY w `eas.json`
+- **kto ustawia `APP_VARIANT`**: `app/.env` (Metro, `expo run:android`), profil `development`
+  w `eas.json` (build) i JAWNIE `production` w profilu produkcyjnym - `eas update` eksportuje
+  na komputerze, gdzie `.env` mówi `development`, a zmienne procesu wygrywają. Pilnuje tego
+  `easProfileEnv.test.ts`. Profil `development` NIE niesie adresu serwera ani klienta
+  Google: dev client bierze JS z Metro, więc te wartości i tak idą z `app/.env`
+- **dev build to nasza binarka, ale NAZWANA**: `ownRelease` oddaje `dev: true`, a napis
+  wersji brzmi „2.0.0 (build 3) · dev" (ekran 13, zgłoszenie błędu, kolumna w panelu).
+  Wzorzec pakietu dev `nativeRelease.ts` liczy z tego samego helpera, nie
+  z `Constants.expoConfig` - manifest z Metro odzwierciedla `.env` komputera, nie binarkę
+- **Expo Go nie jest drogą testów**: nie zna pakietu, do którego Google przypina logowanie,
+  ani usługi GPS w tle. Lokalnego Android SDK w projekcie nie ma, więc `npm run build:dev`
+  (EAS) jest jedyną drogą do dev builda; procedura krok po kroku w README „Dev build aplikacji"
+- **lokalne środowisko = nowa instancja od zera** (ta sama decyzja, co §10 wielofirmowości):
+  baza `ninerdeck` w kontenerze `ninerdeck-pg`, klient Web z NOWEGO projektu Google (ten
+  sam, którym loguje się `app.ninerdeck.pl`), seed superadministratora. Komplet zmiennych
+  opisują `.env.example` obu stron; dev build nie jest wydaniem (skill `wydanie`)
+
+## Staging = przedwydaniowa kopia produkcji (issue #155, 2026-09-18)
+Wydanie niesie od 2.1.0 migracje bazy i listy wychodzące - dwie rzeczy, których nie cofa
+się zdjęciem builda, a jedyną próbą generalną była do tej pory produkcja. Runbook
+(zmienne, rozruch, sprawdziany, kopia produkcji, koszt): **`docs/staging.md`**.
+- **serwer NIE MA dla staging ani jednej gałęzi w kodzie** - całą różnicę niosą zmienne
+  (`PUBLIC_BASE_URL`, `PUBLIC_SITE_URL`, `MAIL_FROM`, `JWT_SECRET`, `SEED_ADMIN_EMAIL`).
+  Gdyby kiedyś kusiło dopisanie `if (staging)`, to jest znak, że różnica siedzi w złym
+  miejscu
+- **dwa hosty, jak na produkcji** (`stg.ninerdeck.pl` strona, `app.stg.ninerdeck.pl` panel
+  i API): przy jednym haście rozdział hostów i rozdział origin CSP (`hostSplit.ts`, #124)
+  pierwszy raz działałyby dopiero na produkcji
+- **aplikację reprezentuje DEV BUILD** (`com.ninerdeck.app.dev`), nie osobny wariant
+  `.stg`. Świadoma cena: release'owy bundle i kanał `production` startują pierwszy raz
+  na produkcji. Furtka (profil `staging` + pakiet `.stg` + rozpoznanie go w `ownRelease`)
+  jest opisana w `docs/staging.md` §7 i nie wymaga cofania niczego
+- **gałąź publikacji OTA = KANAŁ profilu z `eas.json`** (`eas-profile-env.js`), nie druga
+  stała obok: dwie wartości opisujące jedno wydanie rozjeżdżają się po cichu, a cichy
+  rozjazd tutaj znaczy aktualizację wysłaną tam, gdzie nikt jej nie czeka. Stąd jeden
+  runner na dwa kierunki - `update:prod` (profil `production`) i `update:stg` (profil
+  `development`, adres staging)
+- **wymagalność zmiennych zależy od KANAŁU**: `production` żąda adresu i klienta Google
+  (telefon pilota nie ma innej drogi logowania), `development` samego adresu - na staging
+  loguje się hasłem, a klient Google jest związany z pakietem dev i bywa go po prostu brak
+- **baza staging stoi OD ZERA** (`SEED_ADMIN_EMAIL` → klub → kod klubu → flota). Kopia
+  produkcji tylko pod migrację wymagającą realnego wolumenu i ZAWSZE ze scrubbingiem
+  adresów, inaczej staging wysyła listy prawdziwym pilotom (`docs/staging.md` §8)
+- **staging śledzi `develop`**, a na czas stabilizacji przełącza się go na
+  `ninerdeck_x_x_x` - wtedy deploy jest próbą generalną migracji. Kolejność w skillu
+  `wydanie` (krok 0b)
+
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```
 feature-… → develop → ninerdeck_x_x_x → main        (wydanie planowe)
@@ -3669,6 +3743,322 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   w `site/src/site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
   w przycisku, nie ruszać ich
+
+## Rezerwacja samolotu i kalendarz floty (3.0.0, issue #145, gałąź `feature-145-projekt-rezerwacji`)
+Pierwsza funkcja Ninerdeck, która nie opisuje przeszłości, tylko PRZYSZŁOŚĆ. Decyzje,
+model danych, API i odrzucone warianty: **`docs/rezerwacje.md`**; epiki R-A…R-W =
+issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
+
+- **REZERWACJA NIE JEST ZDARZENIEM REJESTRU** (§2.1) i to jest decyzja, z której wynika
+  reszta. Rejestr ma JEDNEGO piszącego, jest append-only i opisuje FAKTY; rezerwacja jest
+  przedmiotem konkurencji dwóch pilotów, jest mutowalna i opisuje ZAMIAR. Rzecz, o którą
+  się konkuruje, potrzebuje arbitra - a arbiter musi być JEDEN, więc **zapis wymaga
+  sieci**, dokładnie jak przełączenie i dołączenie do klubu. Wysyłka przez outbox
+  znaczyłaby „twój slot przepadł" godzinę po tym, jak pilot go zarezerwował.
+- **CAŁY MODUŁ REZERWACJI WYMAGA SIECI** (§2.2, decyzja właściciela 2026-09-20 -
+  ODWRACA „odczyt działa z cache"): *„rezerwację raczej robimy w domu, gdzie zasięg
+  jest"*. Cache’u zajętości w SQLite NIE MA i nie wolno go dorobić po cichu - ani
+  pobierania z ETagiem, ani adnotacji wieku, ani wariantów offline z ostatnią migawką.
+  To jedyny moduł z takim rozstrzygnięciem i czyta się je RAZEM z §4.1 („brak sieci
+  nigdy nie blokuje pracy pilota"): tamta reguła broni PRACY W LOCIE - rejestru, czasów,
+  odczytów, zdania samolotu - czyli tego, czego nikt poza pilotem nie odtworzy.
+  Rezerwacja jest UMOWĄ MIĘDZY LUDŹMI składaną przy biurku, nie pomiarem z kabiny.
+  Cena jest znana i zapisana: bez zasięgu przy samolocie nie ma karty „Twoja
+  rezerwacja", kroki przejęcia nie wypełniają się rezerwacją, a ostrzeżenie o cudzym
+  terminie nie pada. Wszystkie trzy degradują się łagodnie, bo żadna nie jest warunkiem
+  lotu (§2.3). Zmiana tego wymaga nowej decyzji, nie cache’u dopisanego przy okazji.
+- **REZERWACJA NIE WARUNKUJE LOTU** (§2.3, decyzja właściciela): „ROZPOCZNIJ LOT" działa
+  jak dziś, także bez zasięgu i bez rezerwacji. Rezerwacja wypełnia kroki przejęcia
+  i OSTRZEGA przy cudzej kolizji - nigdy nie blokuje.
+- **NAKŁADANIE WYKLUCZA BAZA, NIE KOD** (§3.2): `EXCLUDE USING gist` na `tstzrange`
+  z zakresem `[)` (zetknięcie co do minuty przechodzi, jak przy operacjach). Rezerwacje
+  i wyłączenia maszyny z użytku siedzą w JEDNEJ tabeli `bookings` z dyskryminatorem
+  `kind` właśnie dlatego, że jedno ograniczenie ma objąć oba rodzaje naraz.
+- **KALENDARZ MÓWI CZASEM KLUBU, REJESTR ZOSTAJE W UTC** (§6): reguła „UTC wszędzie"
+  broni POMIARÓW, a rezerwacja jest umową między ludźmi o godzinie. Siatkę rysuje strefa
+  KLUBU (`organizations.timezone`), czas lokalny urządzenia dochodzi adnotacją TYLKO przy
+  różnicy stref.
+- **NAWIGACJA: PULPIT · KALENDARZ · HISTORIA** (§9.1). Ekran startowy przestał być „Mój
+  dzień": Pulpit niesie SUMY doby, najbliższą rezerwację i akcje, a listy operacji NIE MA
+  - kafelki i korekta w oknie 24 h przeniosły się do Historii, która obejmuje odtąd także
+  dziś (odejście od issue #35). **KOKPIT ZOSTAJE MODALNY**: zakładek w nim nie ma, flow
+  lotu żyje NAD nimi, a zakładka wyprowadzająca z kokpitu byłaby skasowaniem modalności.
+- **HISTORIA: dzień nagłówkiem, operacje zwartymi wierszami** (makieta `24`, nie `12`).
+  Ikona po prawej niesie skutek tapnięcia (ołówek - okno korekty, oko - podgląd po oknie).
+  Domyślnie widać tylko to, co można poprawić; archiwum stoi pod przyciskiem.
+- **GRANICA ZWIJANIA**: zwijamy to, czego pilot NIE SZUKA, wchodząc na ekran. Dlatego
+  archiwum w historii jest zwinięte, a maszyny wyłączone z użytku w kalendarzu ZOSTAJĄ
+  widoczne - tam schowana byłaby odpowiedź na „czemu nie ma czym latać".
+- **PULPIT NIE POWTARZA KALENDARZA**: paska zajętości floty na nim NIE MA, bo zakładka
+  Kalendarz stoi widoczna przez cały czas.
+- **KONTROLKA POMOCNICZA NIE DOSTAJE WAGI TREŚCI**: chip filtra maszyn jest cichy (ikona
+  lejka i liczba w tonie podpisu), a zawężenie niesie SAMA LICZBA („6 z 12" kontra „12").
+  Zieleń i odwrócone zaznaczenie odpadły jako dwa kolejne kroki tej samej pomyłki - zieleń
+  znaczy tu stan w normie albo akcję główną, a odwrócenie jest najmocniejszym kontrastem
+  na ekranie.
+- **MAKIETY 3.0 MAJĄ NOWE NUMERY** (20-24), a `01` i `12` zostają specyfikacją linii 2.x
+  aż do wydania - podręcznik osadza rodzinę `01` w 13 miejscach i opisuje wersję, którą
+  piloci mają w telefonach. Plan przejścia i los tych plików (archiwum w miejscu, jak
+  `design/admin/`): `docs/rezerwacje.md` §9.1a.
+- **PANEL PATRZY SZERZEJ NIŻ TELEFON**: na telefonie osią kalendarza jest JEDNA DOBA całej
+  floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
+  wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
+  w `admin/src/styles/components/calendar.css` i idą do makiet generatorem `panel:css`.
+- **KONFIGURACJĘ KALENDARZA KLUBU USTAWIA MODUŁ ORGANIZACJE** (karta klubu: lotnisko
+  macierzyste i strefa; dołożone przy wydaniu, R-W). Do 2026-09-21 `organizations.home_icao`
+  było wszędzie WYŁĄCZNIE do odczytu, więc doba lotna schodziła u każdego klubu do
+  domyślnych 06-21, choć changelog obiecywał wschód i zachód słońca - kolumna z migracji
+  bez drogi zapisu jest funkcją, której nie ma. **Kod spoza KATALOGU lotnisk to ODMOWA**
+  (`400 invalid` z polem, nie wzorzec czterech liter: `ZZZZ` przeszłoby, a klub dostałby
+  okno domyślne bez słowa dlaczego), **nieznana strefa też** - `safeZone` RATUJE ODCZYT,
+  więc do walidacji wpisu służy osobne `isKnownZone`. Puste lotnisko jest dozwolone
+  i znaczy „wyczyść": stąd `homeIcao?: string | null` o TRZECH stanach (pominięte /
+  napis / `null`) i `CASE` zamiast `COALESCE` w SQL-u. Listę stref oddaje PRZEGLĄDARKA
+  (`Intl.supportedValuesOf`), a nie nasza tablica; strefa klubu spoza tej listy dokleja
+  się siłą, inaczej `<select>` po cichu przestawiłby konfigurację na pierwszą pozycję.
+## Rezerwacje 3.0.0 - epik R-B: serwer, model zajętości i API (issue #158, 2026-09-19)
+Migracja 11 + domena + porty + trasy telefonu i panelu + zadanie okresowe. Decyzje
+i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
+- **NAKŁADANIE ODBIJA BAZA, A ADAPTER TŁUMACZY JEJ ODMOWĘ**: `bookings_no_overlap` rzuca
+  `23P01`, `PgBookingsRepo` zamienia to na `slot_taken` i DOCIĄGA kolidujący wiersz -
+  ekran ma powiedzieć, CO stoi w tym czasie, a nie samo „nie da się". Zapis idzie
+  w **`SAVEPOINT`** i to nie jest ostrożność: odmowa ograniczenia unieważnia CAŁĄ
+  transakcję, więc bez punktu zapisu ani dociągnięcie kolizji, ani ślad audytu panelu
+  nie miałyby jak powstać
+- **KLUCZ WYKLUCZENIA NIE NIESIE `org_id`**: egzemplarz należy do jednego klubu (klucz
+  obcy `aircraft.org_id`), więc klub niczego by nie zawęził, a sugerowałby, że ten sam
+  płatowiec da się zająć dwa razy pod dwiema nazwami
+- **`aircraft_not_found` JEST OSOBNĄ ODMOWĄ OD `aircraft_disabled`** i kosztowała dziurę:
+  wyłączenie z użytku nie pyta o stan służby (przegląd na maszynie stojącej w serwisie
+  to norma), więc razem ze stanem przestawało sprawdzać ISTNIENIE - i panel klubu A
+  zakładał blokadę na maszynie klubu B, odbierając jej właścicielowi własny samolot.
+  Złapał to `tenantIsolation.test.ts`, nie przegląd kodu. Jeden kod na „skasowana"
+  i „cudza", bo odróżnienie ich potwierdzałoby istnienie cudzego egzemplarza
+- **`GET /bookings` ODDAJE GRANICE DÓB, NIE OFFSETY** (§6.1) - i to jest odpowiedź na
+  pytanie B0 o `Intl` na telefonie, NIEZALEŻNA od wyniku sondy: telefon liczy położenie
+  na siatce, godzinę z formularza i podpis osi samym odejmowaniem, a doba zmiany czasu
+  wychodzi poprawnie sama, bo jest krótsza albo dłuższa. Offset per doba kłamałby
+  w takim dniu w którejś połowie, bo offsety są tam DWA (`domain/clubTime.ts`)
+- **REGUŁA TERMINU STOI NA JEGO KOŃCU, NIE POCZĄTKU**: rezerwacja zaczynająca się
+  kwadrans temu jest normalna (pilot bierze maszynę TERAZ i wpisuje, do której
+  godziny); odrzucamy dopiero termin, który CAŁY minął
+- **ZAPIS Z TELEFONU NIE MA ŚLADU W AUDYCIE, Z PANELU MA**: rezerwacja własna to zwykła
+  praca pilota, jak wpisanie lotu. Trzy akcje panelu (`booking.create`, `booking.cancel`,
+  `booking.block`) dotyczą CUDZYCH spraw; odwołanie cudzej wymaga POWODU (P4)
+- **NOWA ZDOLNOŚĆ `reservations.manage`** (władza nad cudzym planem), a wyłączenie
+  z użytku idzie na istniejące `fleet.manage` - to stan MASZYNY w czasie
+- **`session_claim.reservationId` JEST JEDYNYM ZETKNIĘCIEM REJESTRU Z REZERWACJĄ**
+  i tylko w jedną stronę. Nieznany identyfikator NIE odrzuca paczki: rezerwacja nie
+  jest warunkiem lotu (§2.3), a pilot mógł wejść w lot z rezerwacji odwołanej
+  w międzyczasie. Domena nie robi z tym polem NIC
+- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min): slot
+  zwalnia się sam po godzinie bez przejęcia maszyny. `setInterval`, nie kolejka - jedna
+  instancja (§8.8 architektury); wyłączalny `BOOKING_RELEASE=0`, bo przebieg zmienia
+  dane w tle i testy nie mają go dostać przypadkiem. Status `released`, nie `cancelled`,
+  i BEZ powodu: `close_reason` niesie zdanie CZŁOWIEKA, a tu upłynął czas
+- **PGlite WYMAGA JAWNEGO `btree_gist`** w konstruktorze (`server/test/pglite.ts`) -
+  bez tego `CREATE EXTENSION` odmawia i cała migracja 11 nie wchodzi
+- **czego epik R-B świadomie NIE ROBI**: `GET /bookings/suggestions` (czeka na
+  `packages/domain/src/booking/slots.ts` z epiku R-C, #159) i okna doby lotnej
+  z efemeryd - `organizations.home_icao` już jest, ale nikt go jeszcze nie czyta
+
+## Rezerwacje 3.0.0 - epik R-C: sugestie slotów i doba lotna (issue #159, 2026-09-19)
+Czysta domena planowania w `packages/domain/src/booking/` - ten sam kod liczy sugestie
+na telefonie (OFFLINE, z cache’owanych zajętości) i na serwerze. Decyzje:
+`docs/rezerwacje.md` §7.2; przepis „nowa funkcja planowania": `docs/architektura-kodu.md` §7.
+- **CZTERY PLIKI, KAŻDY Z JEDNYM PYTANIEM**: `solar.ts` (kiedy wschodzi Słońce - NOAA,
+  zero zależności), `dayWindow.ts` (granice doby lotnej - składa efemerydy z progami),
+  `slots.ts` (które sloty i DLACZEGO), `policy.ts` (wszystkie liczby, DO KALIBRACJI)
+- **`slots.ts` DOSTAJE OKNO ARGUMENTEM i o jego pochodzeniu nie wie nic** - ta sama
+  granica, co przy kopercie śladu niosącej samą geometrię (issue #47). Gdy przyjdą loty
+  nocne (NVFR, poza 3.0.0), zmienia się `dayWindow.ts`, a upakowanie dnia zostaje
+- **KANDYDACI NIE NAKŁADAJĄ SIĘ NAWZAJEM** i to jest własność, nie optymalizacja: bez
+  niej pusty dzień oddawał cztery propozycje odległe o kwadrans, czyli jedną propozycję
+  powiedzianą cztery razy. Pilot ma dostać WYBÓR, a nie listę zaokrągleń
+- **PRZYLEGANIE NIE MUSI TRAFIĆ W ZIARNO**: rezerwacja kończąca się o 10:07 daje
+  przyleganie o 10:07, a siatka co kwadrans by je minęła - czyli zgubiłaby dokładnie ten
+  slot, o który w całej regule chodzi. Oba kandydaty z krawędzi dziury wchodzą JAWNIE
+- **GRANICA DNIA NIE JEST PRZYLEGANIEM**: świt i zmrok to ściana, nie sąsiad -
+  premiowanie ich kazałoby proponować lot o pierwszej minucie po wschodzie
+- **RELACJA PROGÓW NIESIE REGUŁĘ**: kara za martwą resztkę (1,5) jest WIĘKSZA niż premia
+  za jedno przyleganie (1), więc slot zostawiający pół godziny na nic przegrywa ze slotem
+  luzem. Zmieniasz którąś liczbę - sprawdź, czy ta nierówność zostaje
+- **WYNIK NIESIE POWÓD** (`SlotSuggestion.reason`), bo ekran ma umieć napisać, dlaczego
+  proponuje właśnie to. Pusta lista NIE JEST błędem - dzień bywa pełny
+- **CHWILA BIEŻĄCA IDZIE Z PORTU `Clock`, NIGDY Z `Date.now()`**: planowanie odcina to,
+  co minęło, więc „teraz" jest WEJŚCIEM rachunku, a wejście z zegara systemowego jest
+  niesprawdzalne testem. Ta usterka powstała przy tym epiku i złapał ją test izolacji
+- **TEST EFEMERYD KOTWICZY SIĘ NA CZYMŚ NIEZALEŻNIE WERYFIKOWALNYM** (południe słoneczne
+  z długości geograficznej, długość dnia z kąta godzinnego) - asercja przepisana z tej
+  samej formuły, którą testuje, jest kołem w powietrzu. Pierwsza wersja testu padła na
+  wartościach „z pamięci", które okazały się wewnętrznie sprzeczne z geometrią
+- **HORYZONTU NIE MA** (P7, decyzja właściciela): lista zadań #159 wymieniała go w C3, bo
+  powstała przed tą decyzją. W 3.0.0 nie ma limitów horyzontu ani liczby rezerwacji
+- **KLUB BEZ LOTNISKA MACIERZYSTEGO** dostaje okno domyślne 06-21, a odpowiedź MÓWI, że
+  jest domyślne (`window.basis`) - inaczej sugestia wyglądałaby na wynik rachunku
+  z efemeryd, którego nie było. Dwa razy w roku to okno jest o godzinę obok (doba zmiany
+  czasu) i to jest przyjęte: poprawka wymagałaby konwersji stref na telefonie
+
+## Rezerwacje 3.0.0 - epik R-E: zakładki i nowy ekran startowy (issue #161, 2026-09-20)
+Ekran startowy przestał być logiem dnia. Aplikacja dostała dolny pasek **Pulpit ·
+Kalendarz · Historia**, a flow lotu żyje NAD nim. Decyzje: `docs/rezerwacje.md` §9.1.
+Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
+- **KOKPIT NIE MA ZAKŁADKI I MIEĆ NIE MOŻE.** Zakładki są JEDNYM ekranem stosu
+  (`Tabs`), a 02 → 02E → 02A → kokpit → 09B leżą NAD nimi - wejście w lot przykrywa
+  pasek w całości, bez ani jednej linijki warunku w kokpicie. Dopisanie pozycji do
+  `ui/navigation/tabs.ts` to jedna niewinnie wyglądająca linijka, więc pilnuje tego
+  TEST (`src/__tests__/tabs.test.ts`), nie komentarz: `TABS` nie może zawierać żadnej
+  trasy z `FLOW_ROUTES`. Zakładka wyprowadzająca z kokpitu nie jest zmianą nawigacji,
+  tylko skasowaniem modalności (issue #82)
+- **NAZWY ZAKŁADEK SĄ ROZSTRZYGNIĘTE** (decyzja właściciela 2026-09-19, `rezerwacje.md`
+  §9.1): PULPIT, nie „Dziś" - niesie najbliższą rezerwację, która bywa jutrzejsza, więc
+  nazwa czasowa obiecywałaby węższy zakres; HISTORIA, nie „Loty" - „Loty" obok zakładki
+  z dzisiejszymi sumami sugerowałoby dwa różne zbiory lotów. „Start" i „Przegląd"
+  odpadły przez kolizję ze słownikiem. **Lista zadań w issue #161 jest STARSZA niż ta
+  decyzja i mówi „Dziś · Kalendarz · Loty" - nie wracać do tamtych nazw**
+- **PULPIT NIE MA LISTY OPERACJI I NIE POWTARZA KALENDARZA**: same sumy doby, najbliższa
+  rezerwacja i akcje. Kafelek operacji był JEDYNYMI drzwiami do korekty w oknie 24 h
+  (issue #23, #43), więc drzwi przejęła HISTORIA - i dlatego obejmuje ona odtąd także
+  DZIŚ, wbrew issue #35. Karta „Mój dzień" jest linkiem, który tam prowadzi. Paska
+  zajętości floty nie ma: powtarzał zakładkę stojącą centymetr niżej
+- **BEZ REZERWACJI KARTY NIE MA WCALE** (wariant `20a`) - pusta karta „brak rezerwacji"
+  byłaby zdaniem o niczym. Do epiku R-F (#162) ekran dostaje `null` i wygląda dokładnie
+  jak ten wariant; zaślepki „wkrótce" nie ma
+- **POWRÓT NA EKRAN DOMOWY IDZIE PRZEZ `goHome()`** (`ui/navigation/goHome.ts`) - to
+  jedyne miejsce znające zagnieżdżony kształt trasy (`navigate('Tabs', { screen })`).
+  `navigate` przyjmuje dowolny napis, więc literówka w którymkolwiek z sześciu wyjść
+  z flow objawiłaby się dopiero w locie
+- **HISTORIA: dzień NAGŁÓWKIEM, operacje zwartymi wierszami** (makieta `24`). Data pada
+  RAZ, liczby stoją BEZ ETYKIET (kolejność Loty · Blok · Lot jest w aplikacji stała),
+  suma doby wchodzi dopiero przy KILKU operacjach, a ikona po prawej niesie SKUTEK
+  tapnięcia: ołówek (okno korekty) albo oko (podgląd po oknie). Archiwum jest zwinięte
+  i zwija się przy KAŻDYM wejściu - pytanie „co mogę poprawić" wraca za każdym razem,
+  a „co latałem w maju" pada raz na jakiś czas
+- **`MyDayScreen` (01) SKASOWANY**, a `buildHistory`/`editableBadge`/`remainingLabel`
+  umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
+  archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
+  i opisuje wersję, którą piloci mają w telefonach
+- **zakładki NIE RUSZAJĄ WARSTWY NATYWNEJ**: `@react-navigation/bottom-tabs` to czysty
+  JS na `react-native-screens`, które projekt już ma. Samo wydanie 3.0.0 idzie mimo to
+  NOWYM APK (decyzja właściciela 2026-09-21): przy `runtimeVersion: appVersion`
+  aktualizacji w tle nie wolno podnieść numeru wersji, a bez podbicia telefon i strona
+  wydań pisałyby dalej „2.1.0" o wersji, która ma rezerwacje - a numer wersji jest tym,
+  co pilot podaje w zgłoszeniu z terenu i co klub czyta na stronie
+- **czego R-E świadomie NIE ROBI**: treści zakładki Kalendarz i danych najbliższej
+  rezerwacji (epik R-F, #162), podmiany 13 osadzeń podręcznika i screen flow w tym
+  pliku (epik R-W, #163 - podręcznik opisuje wersję WDROŻONĄ)
+
+## Rezerwacje 3.0.0 - epik R-F: kalendarz i formularz w telefonie (issue #162, 2026-09-21)
+Zakładka Kalendarz dostała treść, a rezerwacja - dwa kroki. Reguły obowiązujące odtąd
+KAŻDY ekran modułu rezerwacji:
+- **CAŁY MODUŁ WYMAGA SIECI I MÓWI TO WPROST** (§2.2): `useCalendarWindow` oddaje `null`
+  = „nie wiem", a ekran rysuje kartę „BRAK POŁĄCZENIA" zamiast pustej siatki - ta
+  wyglądałaby jak flota wolna na wylot. Przycisku ponowienia NIE MA (makieta 21B), ale
+  dopóki karta stoi, ekran pyta serwer **co 60 s** i wraca sam (decyzja właściciela
+  2026-09-21; wzorzec pustej floty z 02G). Cache’a zajętości nie dorabiamy - to jest
+  decyzja, nie brak czasu
+- **OKNO OSI TO DOBA LOTNA, NIE KALENDARZOWA**: liczy je `flightDayWindow`
+  z `@ninerdeck/domain`, czyli ten sam kod, którym serwer liczy okno dla sugestii.
+  Bez lotniska macierzystego schodzi do domyślnego i mówi o tym (`windowBasis`) -
+  inaczej okno awaryjne wyglądałoby na wynik rachunku z efemeryd
+- **REZERWACJA WYSTAJĄCA POZA OKNO ROZCIĄGA JE, WYŁĄCZENIE Z UŻYTKU - NIE.** Plan ukryty
+  jest ukrytą kolizją; maszyna w serwisie jest niedostępna także w widocznym oknie, więc
+  przycięcie niczego nie gubi (całodobowy przegląd rysuje się na całej szerokości)
+- **GODZINY LICZY ODEJMOWANIE OD GRANIC DÓB** (`logic/clubClock.ts`), a dni tygodnia mają
+  własną tablicę w `@ninerdeck/format` - `Intl` w Hermesie bez danych ICU przyjmuje
+  `timeZone` i po cichu formatuje w UTC, czyli ODPOWIADA, tylko źle. Offset klubu
+  wyczytuje się z granic doby (`clubOffset`) i służy WYŁĄCZNIE do nazwania DNIA
+- **NA PASKU OSI STOI SKRÓCONE NAZWISKO - także przy własnej rezerwacji** (decyzja
+  właściciela 2026-09-21, odwraca makietę 21). Kod pilota zostaje ostatnią deską ratunku
+  dla pilota spoza cache’u floty; surowy identyfikator nie trafia na pasek nigdy
+- **PASEK DNI SIĘGA 14 DÓB**, choć makiety rysują siedem chipów: siedem to tyle, ile MIEŚCI
+  SIĘ na ekranie. Kalendarz miesięczny w formularzu PRZESTAWIA KOTWICĘ okna, więc termin
+  spoza dwóch tygodni pyta serwer o doby wokół siebie
+- **FILTR MASZYN ZAPISUJE UKRYTE, NIE POKAZYWANE** - maszyna dokupiona przez klub pojawia
+  się na osi sama. Wybór jest preferencją PATRZENIA, więc mieszka w `AsyncStorage` per
+  pilot i klub, jak motyw
+- **KROK 1 REZERWACJI PYTA O TERMIN I MASZYNĘ, NIE O ZADANIE** (makieta 22, odwrotnie niż
+  przejęcie): rezerwacja rozstrzyga KONKURENCJĘ o zasób, a rodzaj lotu i trasa nikomu
+  niczego nie zabierają. **Lista zadań w issue #162 jest starsza niż makiety i mówi
+  „samolot + Dual" w kroku 1 - nie wracać do tamtego podziału**
+- **DWA KROKI TO JEDEN EKRAN NAWIGACJI** (wzorzec wpisu ręcznego): „wstecz" z kroku 2 cofa
+  o krok, z kroku 1 przy niepustym szkicu pyta o rezygnację (`AbandonDraftSheet`). Termin
+  i maszyna PODSTAWIONE przez nawigację nie liczą się jako wpis pilota
+- **TAPNIĘCIE W WOLNE PASMO NIE USTAWIA TERMINU**, tylko przekazuje wskazaną godzinę jako
+  PREFEROWANĄ PORĘ do zapytania o sugestie (`SLOT_PREFERRED_BONUS`). Podstawiona godzina
+  wyglądałaby jak wpisana - to ta sama reguła, przez którą `Stepper` nie ma wartości
+  domyślnej (issue #62)
+- **WOLNE PASMA LICZY DOMENA** (`freeSpans` w `@ninerdeck/domain`) - ta sama odpowiedź,
+  z której `suggestSlots` wybiera kandydatów. Własne scalanie zajętości po stronie ekranu
+  byłoby drugą definicją słowa „wolne"
+- **KSZTAŁT TRASY MA JEDNO ŹRÓDŁO** (`logic/routeShape.ts`): reguła „skoki = jedno
+  lotnisko" obowiązuje szkic przejęcia I szkic rezerwacji, więc wyszła ze środka
+  `preflightDraft.ts` do wspólnego modułu
+- **WYMÓG DUALA JEDZIE WSPÓLNYM ZDANIEM** (`logic/dualRequirement.ts`) - trzeci ekran po
+  02 i 15, bez ani jednej nowej kopii napisu
+- **SĄSIAD W POWODZIE SUGESTII STOI ZA SEPARATOREM** („tuż przed rezerwacją · J. Nowak"):
+  odmiany nazwiska nie da się wyprowadzić regułą, więc zdanie zostaje poprawne, a nazwisko
+  dochodzi w mianowniku. Ta sama decyzja, co przy blokadzie arkusza czasów
+- **`NumberSheet` to arkusz JEDNEJ liczby** (plan lotu, paliwo do zabrania) - dwa osobne
+  pliki różniłyby się wyłącznie napisami, a `ReadingSheet` niesie cały świat paliwa
+  i licznika. Rezygnacja z wartości opcjonalnej to „×" w linii tytułu
+- **ODMOWA ZAPISU NIESIE TREŚĆ, WIĘC NIE JEST BŁĘDEM** (`logic/bookingDeny.ts`,
+  makieta 22C): `409 slot_taken` przychodzi z kolidującą zajętością, a ekran wraca na
+  KROK 1 - tam stoją kontrolki, którymi da się ją naprawić, i tam stoi karta z powodem.
+  Karta niesie skrót „najbliższe wolne" TYLKO przy zajętym terminie: sugestie liczą się
+  dla wybranej maszyny, więc przy maszynie wyłączonej z użytku prowadziłyby w tę samą
+  ścianę. **Wiek kolizji jedzie OBOK zajętości** (`takenAt` w ciele odmowy, nie
+  w `bookingWire`): „weszła 3 min temu" znaczy wyścig o slot, a plan sprzed tygodnia -
+  stan kalendarza, którego pilot nie zauważył; na siatce ta liczba nie znaczy nic
+- **ZAPIS, KTÓRY NIE DOJECHAŁ, TO INNA KATEGORIA NIŻ ODMOWA REGUŁY**: `null` z portu
+  znaczy „o terminie nie wiemy nic", więc ekran mówi, CZYJĄ decyzją jest slot
+  („Slot potwierdza serwer"), a nie „spróbuj ponownie". Preemptywnego powodu
+  w przycisku NIE MA i to jest świadome: `syncIndicator` opisuje kolejkę ZDARZEŃ,
+  więc przy pustym outboksie milczałby dokładnie u pilota bez zasięgu
+- **KARTA REZERWACJI (23) MA JEDNE DRZWI DO ZMIANY**: „PRZESUŃ I POPRAW" wraca do
+  kroku 1 z wypełnionym szkicem, ołówków przy wierszach nie ma (issue #40). Poprawka
+  niesie SAMĄ RÓŻNICĘ (`logic/bookingEdit.ts` + `PATCH`), a **zmiana maszyny jest NOWĄ
+  rezerwacją** (decyzja właściciela 2026-09-21): termin należy do egzemplarza, więc
+  ekran zakłada nowy i odwołuje stary - **w tej kolejności**, bo odwrotna oddawałaby
+  slot, zanim wiadomo, czy jest co wziąć w zamian. Obie stoją na różnych maszynach,
+  więc nie mają jak zderzyć się ze sobą
+- **ODWOŁANIE I POPRAWKA MAJĄ RÓŻNE WARUNKI I TO NIE JEST NIEDOPATRZENIE**: oddać da
+  się termin, który już TRWA (pilot nie poleci), przesunąć - dopiero taki, który się
+  nie zaczął; przesuwanie trwającego opisywałoby przeszłość. Cudzej rezerwacji nie
+  dotyczy ani jedno, ani drugie
+- **`GET /bookings/:id` JEST OSOBNĄ TRASĄ**, nie szukaniem w oknie kalendarza: termin
+  bywa za dwa miesiące, a karta nie rysuje żadnej siatki. Odpowiedź niesie DOBĘ razem
+  z wierszem, więc telefon liczy godziny odejmowaniem, jak wszędzie indziej (§6.1)
+- **KARTA NAJBLIŻSZEJ REZERWACJI PYTA SERWER PRZY WEJŚCIU NA PULPIT** (F12): bez
+  zasięgu karty NIE MA WCALE, czyli ekran wygląda jak wariant `20a` - i to jest stan
+  poprawny, nie zaślepka. „Najbliższa" znaczy pierwszą WŁASNĄ, która się jeszcze nie
+  skończyła - także tę, która właśnie trwa
+- **REZERWACJA WYPEŁNIA PRZEJĘCIE, ALE GO NIE ZASTĘPUJE** (F8, `logic/claimFromBooking.ts`):
+  „ROZPOCZNIJ LOT" ma jedno miejsce i jeden wygląd przez cały dzień (issue #42),
+  a rezerwacja zmienia wyłącznie to, czym wypełni się krok 1. Wypełnia TYLKO termin,
+  który dzieje się teraz (godzina przed początkiem, do końca) - plan na przyszły
+  weekend podstawiony w formularz wyglądałby jak wpis pilota. `session_claim` niesie
+  `reservationId` i to jest JEDYNE zetknięcie rejestru z rezerwacją, w jedną stronę
+- **OSTRZEŻENIE O CUDZYM TERMINIE TO BANER, NIGDY BLOKADA** (F9, makieta 23A): okno
+  dwóch godzin (tyle trwa typowy lot klubowy), własna rezerwacja kolizją nie jest,
+  a bez sieci ostrzeżenia nie ma i przejęcie idzie dalej - rezerwacja nigdy go nie
+  warunkowała (§2.3)
+- **CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRAN Z NIEJ CZYTA** (przegląd W7, decyzja
+  właściciela 2026-09-21): `bookingWire` pyta, KTO PATRZY. Własna rezerwacja jedzie
+  w komplecie, cudza - godziny, maszyna, właściciel, rodzaj zajętości i powód
+  wyłączenia z użytku, czyli dokładnie to, co czytają `calendarGrid.ts`,
+  `slotChips.ts`, `aircraftAvailability.ts` i `claimConflict.ts`. Trasa, drugi pilot,
+  plan lotu i NOTATKA (wolny tekst pilota) nie trafiają na cudzy ekran nigdy, a jechały
+  na każdy telefon w klubie przy każdym odświeżeniu kalendarza. **Na telefonie te pola
+  są OPCJONALNE, nie nullowalne**: `undefined` znaczy „nie moja rezerwacja", a `null`
+  znaczyłby „moja, tylko pusta". Panel widzi komplet - ma do tego osobną zdolność
+- **DOKŁADAJĄC POLE DO ODPOWIEDZI TELEFONU, SPRAWDŹ, KTO JE CZYTA**: reguła wyżej nie
+  jest o rezerwacjach, tylko o kształtach na drucie. Pole, którego żaden ekran nie
+  czyta, nie jest „na zapas" - jest wyciekiem czekającym na pierwszego, kto zajrzy
+  w odpowiedź
+- **czego epik R-F NIE ROBI**: sprawdzeń NA URZĄDZENIU (F0 sonda stref, F11 i F13) -
+  wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
+  parametru jest jedna (`bookingId`) po obu stronach
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

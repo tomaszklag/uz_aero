@@ -70,6 +70,11 @@ import { PgPasswordCredentialsRepo } from '../src/infrastructure/pg/common/passw
 import { PgPasswordResetTokensRepo } from '../src/infrastructure/pg/common/passwordResetTokensRepo.ts';
 import { FakeMail } from './fakeMail.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
+import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
+import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
+import { BookingQueries } from '../src/application/common/queries/bookings.ts';
+import { BookingCommands } from '../src/application/mobile/commands/bookings.ts';
+import { AdminBookingCommands } from '../src/application/admin/commands/bookings.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { TraceCommands } from '../src/application/mobile/commands/traces.ts';
@@ -126,6 +131,7 @@ import type { HostSplit } from '../src/http/hostSplit.ts';
 import { buildServer } from '../src/http/server.ts';
 import { seedTestWorld } from './testWorld.ts';
 import { TestIdentityProvider } from './testIdentityProvider.ts';
+import { newPglite } from './pglite';
 
 export class TestClock implements Clock {
   constructor(private current = Date.UTC(2026, 5, 22, 8, 0, 0)) {}
@@ -231,7 +237,7 @@ export async function testHarness(
     hostSplit?: HostSplit;
   } = {},
 ) {
-  const pglite = new PGlite();
+  const pglite = newPglite();
   // PGlite spełnia `Queryable` wprost, a transakcje ma własne (`transaction(cb)` daje
   // obiekt z `query`) - opakowanie dopasowuje tylko kształt do portu `Database`.
   const db: Database & { exec: (sql: string) => Promise<unknown> } = {
@@ -310,6 +316,10 @@ const lastSeen = new LastSeenThrottle();
   const phaseTimeline = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
 
   const aircraftConfig = new PgAircraftConfigRepo();
+  // Zajętość maszyny (3.0.0) - jeden adapter i JEDNO okno kalendarza dla obu
+  // powierzchni, dokładnie jak w `src/index.ts`.
+  const bookingsRepo = new PgBookingsRepo();
+  const calendar = new BookingQueries(db, bookingsRepo, new PgClubSettingsRepo(), clock);
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
   // Jeden adapter flag dla komend i zapytań - tak jak w produkcyjnym composition root.
   const adminFlagsRepo = new PgAdminFlagsRepo();
@@ -390,7 +400,7 @@ const lastSeen = new LastSeenThrottle();
       events,
       aircraftReadings,
     ),
-    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
@@ -408,6 +418,8 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock),
+    calendar,
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
     // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
@@ -574,6 +586,7 @@ const lastSeen = new LastSeenThrottle();
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
+    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

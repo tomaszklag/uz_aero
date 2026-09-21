@@ -396,6 +396,179 @@ export interface BugReportPushResult {
   duplicates: number;
 }
 
+/**
+ * ZAJĘTOŚĆ FLOTY z `GET /bookings` (rezerwacje 3.0.0, epik R-F).
+ *
+ * ══ WYŁĄCZNIE ONLINE ══
+ * Cały moduł rezerwacji wymaga sieci (decyzja właściciela 2026-09-20,
+ * `docs/rezerwacje.md` §2.2): „rezerwację raczej robimy w domu, gdzie zasięg jest".
+ * Telefon NIE trzyma zajętości w SQLite, więc brak odpowiedzi znaczy „nie wiem",
+ * a ekran mówi to wprost zamiast rysować pustą siatkę - ta wyglądałaby na flotę wolną
+ * na wylot. To samo rozstrzygnięcie, co przy `getReadingsChain`.
+ */
+export interface RemoteCalendar {
+  /** Strefa KLUBU - siatkę rysuje ona, nie strefa telefonu (§6). */
+  timezone: string;
+  /** Lotnisko macierzyste klubu; `null` = nieustawione, okno doby jest wtedy domyślne. */
+  homeIcao: string | null;
+  /**
+   * GRANICE KAŻDEJ DOBY jako para chwil UTC (§6.1) - i to jest cały powód, dla którego
+   * telefon nie potrzebuje ani `Intl`, ani tablicy stref: położenie paska na siatce,
+   * godzinę z formularza i podpis osi liczy samym odejmowaniem. Doba zmiany czasu
+   * wychodzi poprawnie sama, bo ma 23 albo 25 godzin.
+   */
+  days: RemoteCalendarDay[];
+  bookings: RemoteBooking[];
+}
+
+export interface RemoteCalendarDay {
+  /** `RRRR-MM-DD` w strefie klubu - klucz doby, nie data do wyświetlenia. */
+  date: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+/** Jedna zajętość - rezerwacja pilota albo wyłączenie maszyny z użytku. */
+export interface RemoteBooking {
+  id: string;
+  aircraftId: string;
+  kind: 'flight' | 'block';
+  status: string;
+  startsAt: string;
+  endsAt: string;
+  pilotId: string | null;
+  /** Powód wyłączenia z użytku - nazywa zajętość, która nie ma właściciela. */
+  blockReason: string | null;
+
+  /**
+   * ══ PONIŻSZE POLA PRZYCHODZĄ WYŁĄCZNIE PRZY WŁASNEJ REZERWACJI ══
+   * (przegląd W7, decyzja właściciela 2026-09-21). Z cudzego terminu ekrany czytają
+   * godziny, maszynę, właściciela i rodzaj zajętości - reszta nie trafia na ekran
+   * nigdy, więc serwer jej nie wysyła. `undefined` znaczy tu „nie moja rezerwacja",
+   * a nie „puste pole", i dlatego pola są OPCJONALNE, a nie nullowalne: gdyby
+   * przychodziły jako `null`, kod czytający je nie miałby jak odróżnić cudzego
+   * terminu od własnego bez trasy.
+   */
+  dualId?: string | null;
+  operation?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  sessionUuid?: string | null;
+  note?: string | null;
+}
+
+/**
+ * JEDNA zajętość z `GET /bookings/:id` - karta rezerwacji (23) i karta najbliższej
+ * rezerwacji na Pulpicie (20).
+ *
+ * Doba jedzie razem z wierszem, bo karta pisze godziny CZASEM KLUBU (§6), a telefon
+ * liczy je odejmowaniem od jej granic. Bez nich musiałby znać strefę, czyli dokładnie
+ * to, czego kontrakt kalendarza mu oszczędza.
+ */
+export interface RemoteBookingDetail {
+  timezone: string;
+  day: RemoteCalendarDay;
+  booking: RemoteBooking;
+}
+
+/** Propozycje wolnych slotów z `GET /bookings/suggestions` (domena R-C liczy je na serwerze). */
+export interface RemoteSlotSuggestions {
+  day: RemoteCalendarDay;
+  /**
+   * Okno doby lotnej. `basis` mówi, SKĄD się wzięło: `solar` z efemeryd lotniska
+   * macierzystego, `default` z progu 06-21 - i ekran musi to rozróżniać, bo inaczej
+   * domyślne okno wyglądałoby na wynik rachunku, którego nie było.
+   */
+  window: { from: string; to: string; basis: 'solar' | 'default' };
+  suggestions: RemoteSlot[];
+}
+
+export interface RemoteSlot {
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  gapBeforeMin: number;
+  gapAfterMin: number;
+}
+
+/** Szkic rezerwacji wysyłany na serwer - kroki 1-2 przejęcia plus czas i plan. */
+export interface RemoteBookingDraft {
+  id: string;
+  aircraftId: string;
+  startsAt: string;
+  endsAt: string;
+  operation: string;
+  dualId?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+}
+
+/**
+ * POPRAWKA istniejącej rezerwacji (`PATCH /bookings/:id`).
+ *
+ * MASZYNY TU NIE MA i to nie jest przeoczenie: rezerwacja należy do konkretnego
+ * egzemplarza, a przeniesienie jej na inny jest INNĄ rezerwacją - zakłada się ją
+ * od nowa i odwołuje starą. Pola pominięte zostają bez zmian.
+ */
+export interface RemoteBookingPatch {
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  dualId?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+}
+
+/**
+ * POPRAWKA istniejącej rezerwacji (`PATCH /bookings/:id`).
+ *
+ * MASZYNY TU NIE MA i to nie jest przeoczenie: rezerwacja należy do konkretnego
+ * egzemplarza, a przeniesienie jej na inny jest INNĄ rezerwacją - zakłada się ją
+ * od nowa i odwołuje starą. Pola pominięte zostają bez zmian.
+ */
+export interface RemoteBookingPatch {
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  dualId?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+}
+
+/**
+ * Wynik zapisu rezerwacji.
+ *
+ * Odmowa NIE JEST wyjątkiem, bo `slot_taken` niesie TREŚĆ: kolidującą zajętość,
+ * którą serwer dociąga kosztem punktu zapisu w transakcji (epik R-B). Ekran ma
+ * powiedzieć, CO stoi w tym czasie, a nie „spróbuj ponownie".
+ */
+export type BookingWriteResult =
+  | { ok: true; booking: RemoteBooking }
+  | {
+      ok: false;
+      refusal: string;
+      taken: RemoteBooking | null;
+      /**
+       * Kiedy POWSTAŁA kolidująca zajętość (UTC, ms); `null` = odmowa bez zajętości.
+       *
+       * Stoi OBOK niej, a nie w niej: na siatce kalendarza wiek wiersza nie znaczy nic,
+       * a przy kolizji jest różnicą między cudzym planem sprzed tygodnia a slotem
+       * zajętym w trakcie wypełniania formularza (makieta 22C).
+       */
+      takenAt: number | null;
+    };
+
 export type SyncTrigger = 'background' | 'manual';
 
 export interface ServerPort {
@@ -550,6 +723,38 @@ export interface ServerPort {
    * jest bezpieczna.
    */
   pushBugReports(token: string, reports: RemoteBugReport[]): Promise<BugReportPushResult>;
+  /**
+   * Zajętość floty w oknie dat (`GET /bookings`) - WYŁĄCZNIE online (§2.2).
+   *
+   * `aircraftId` zawęża do jednej maszyny: kalendarz pyta bez niego, a ostrzeżenie
+   * o kolizji przy przejęciu - z nim.
+   */
+  getBookings(
+    token: string,
+    params: { from: number; to: number; aircraftId?: string },
+  ): Promise<RemoteCalendar>;
+  /**
+   * Jedna rezerwacja razem z jej dobą (`GET /bookings/:id`). Cudza i nieistniejąca
+   * są nie do odróżnienia - obie kończą się 404, jak cudza operacja.
+   */
+  getBooking(token: string, id: string): Promise<RemoteBookingDetail>;
+  /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
+  getSlotSuggestions(
+    token: string,
+    params: { aircraftId: string; day: number; minutes: number; preferredAt?: number },
+  ): Promise<RemoteSlotSuggestions>;
+  /**
+   * Nowa rezerwacja (`POST /bookings`). Uuid nadaje TELEFON i to on jest całą
+   * idempotencją: powtórzony zapis przy słabym łączu wraca tym samym wierszem,
+   * a nie drugim terminem.
+   */
+  createBooking(token: string, draft: RemoteBookingDraft): Promise<BookingWriteResult>;
+  /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
+  patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
+  /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
+  patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
+  /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); powód opcjonalny. */
+  cancelBooking(token: string, id: string, reason: string | null): Promise<BookingWriteResult>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

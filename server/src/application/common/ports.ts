@@ -12,7 +12,7 @@
  * serwer, kilkunastu pilotów) każdy dodatkowy ruchomy element to koszt bez zysku.
  */
 
-import type {
+import type { ServiceStatus,
   ConsumptionNorm,
   Event,
   FlagStatus,
@@ -23,6 +23,7 @@ import type {
   ReferencePilot,
 } from '@ninerdeck/domain';
 
+import type { BookingKind, BookingStatus } from '../../domain/bookings.ts';
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { LoginMethod, RevokedBy, SessionSurface } from '../../domain/loginSessions.ts';
@@ -932,6 +933,189 @@ export interface BugReportsPort {
   /** Liczba zgłoszeń per status - plakietka przy zakładce panelu. */
   countByStatus(db: Queryable): Promise<Record<BugStatus, number>>;
 }
+
+/**
+ * Ustawienia klubu, z których liczy się KALENDARZ (migracja 11).
+ *
+ * `timezone` rysuje siatkę (§6), `homeIcao` wyznacza dobę lotną z efemeryd (§7.1).
+ * Oba mogą być puste i oba mają wtedy wartość domyślną - brak konfiguracji nie może
+ * zablokować rezerwacji, tak jak brak normy zużycia nie blokuje lotu.
+ */
+export interface ClubCalendarSettings {
+  timezone: string | null;
+  homeIcao: string | null;
+}
+
+export interface ClubSettingsPort {
+  /** `null`, gdy klubu nie ma - trasa robi z tego 404, a nie pustą siatkę. */
+  calendar(db: Queryable, orgId: string): Promise<ClubCalendarSettings | null>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ZAJĘTOŚĆ MASZYNY - rezerwacje pilotów i wyłączenia z użytku (milestone 3.0.0,
+ * issue #158; `docs/rezerwacje.md` §3, §5).
+ *
+ * Port jest w `common/`, bo ma czytelników po OBU stronach: kalendarz w aplikacji
+ * pilota i moduł kalendarza w panelu. Reguły, kto co może, mieszkają w
+ * `domain/bookings.ts` - tutaj jest wyłącznie dostęp do wierszy.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Wiersz zajętości w postaci, w jakiej czyta go reszta serwera (czasy w ms). */
+export interface BookingRecord {
+  id: string;
+  aircraftId: string;
+  kind: BookingKind;
+  status: BookingStatus;
+  startsAt: number;
+  endsAt: number;
+  /** `null` przy wyłączeniu z użytku - ono nie ma właściciela. */
+  pilotId: string | null;
+  dualId: string | null;
+  operation: string | null;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  sessionUuid: string | null;
+  blockReason: string | null;
+  note: string | null;
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+  closedAt: number | null;
+  closeReason: string | null;
+}
+
+/**
+ * Nowa zajętość. `id` nadaje KLIENT i to on jest całą idempotencją zapisu - ta sama
+ * zasada, co przy zdarzeniach rejestru: powtórzony `POST` (telefon ponawia przy
+ * słabym łączu) wraca tym samym wierszem, a nie drugim terminem tego samego pilota.
+ */
+export interface NewBooking {
+  id: string;
+  aircraftId: string;
+  kind: BookingKind;
+  status: BookingStatus;
+  startsAt: number;
+  endsAt: number;
+  pilotId: string | null;
+  dualId: string | null;
+  operation: string | null;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  blockReason: string | null;
+  note: string | null;
+  createdBy: string;
+}
+
+/** Pola, które wolno zmienić w istniejącej zajętości. Pominięte zostają bez zmian. */
+export interface BookingPatch {
+  startsAt?: number;
+  endsAt?: number;
+  dualId?: string | null;
+  operation?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  blockReason?: string | null;
+  note?: string | null;
+}
+
+/**
+ * Wynik zapisu. `taken` niesie KOLIDUJĄCY wiersz, a nie samo „nie da się": ekran ma
+ * powiedzieć, CO stoi w tym czasie (§5.1), bo „termin zajęty" bez nazwy każe pilotowi
+ * zgadywać, czy to przegląd, czy kolega.
+ */
+export type BookingWrite =
+  | { ok: true; booking: BookingRecord; created: boolean }
+  | { ok: false; taken: BookingRecord | null };
+
+/** Okno kalendarza. `aircraftId` zawęża do jednej maszyny (ekran szczegółów). */
+export interface BookingQuery {
+  from: number;
+  to: number;
+  aircraftId?: string;
+  /** Domyślnie same czynne (`pending`, `confirmed`) - kalendarz nie rysuje odwołanych. */
+  includeClosed?: boolean;
+}
+
+/** Rezerwacja przeterminowana - materiał dla zadania okresowego (§4.1, B10). */
+export interface BookingDue {
+  id: string;
+  orgId: string;
+  aircraftId: string;
+  startsAt: number;
+}
+
+export interface BookingsPort {
+  /**
+   * Okno kalendarza. KLUB JEST ARGUMENTEM, nie polem filtra (epik C wielofirmowości):
+   * pole dałoby się pominąć i nikt by nie zauważył, a argument wymusza kompilator.
+   */
+  list(db: Queryable, orgId: string, query: BookingQuery): Promise<BookingRecord[]>;
+  byId(db: Queryable, orgId: string, id: string): Promise<BookingRecord | null>;
+  /**
+   * Wstawia albo oddaje wiersz już istniejący pod tym uuidem (idempotencja).
+   * Nakładkę odbija BAZA (`bookings_no_overlap`) - adapter tłumaczy jej wyjątek
+   * na `{ ok: false }` i dociąga kolidujący wiersz.
+   */
+  insert(tx: Queryable, orgId: string, draft: NewBooking): Promise<BookingWrite>;
+  /** `null`, gdy wiersza nie ma w tym klubie - trasa robi z tego 404. */
+  update(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    patch: BookingPatch,
+  ): Promise<BookingWrite | null>;
+  /**
+   * Zamknięcie: odwołanie, odrzucenie albo zwolnienie slotu. Status przychodzi
+   * z zewnątrz, bo to komenda wie, KTÓRE z trzech się właśnie dzieje.
+   */
+  close(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    change: { status: BookingStatus; at: Date; reason: string | null },
+  ): Promise<BookingRecord | null>;
+  /**
+   * Rezerwacja zrealizowana operacją (B7). Jedyne miejsce, w którym rejestr dotyka
+   * rezerwacji, i tylko w jedną stronę. `false`, gdy wiersza nie ma albo nie jest
+   * czynny - ingest nie ma się wtedy o co potykać.
+   */
+  fulfil(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    sessionUuid: string,
+    at: Date,
+  ): Promise<boolean>;
+  /**
+   * Kandydaci do zwolnienia slotu (§4.1): rezerwacje czynne, które zaczęły się przed
+   * `startedBefore` i których termin JESZCZE TRWA w `endsAfter`.
+   *
+   * Drugi warunek nie jest optymalizacją, tylko regułą: rezerwacja, której termin
+   * MINĄŁ, zostaje `confirmed` na zawsze (§4 - „minęła bez operacji NIE zmienia stanu
+   * automatem"). Bez niego każdy taki wiersz wracałby jako kandydat przy każdym
+   * przebiegu, na zawsze, i lista rosłaby z każdym nieodbytym lotem w historii klubu.
+   *
+   * ══ BEZ `orgId` I TO JEST DECYZJA ══
+   * Zadanie okresowe nie działa w imieniu żadnego klubu - przemiata cały serwer,
+   * jak sprzątanie wygasłych tokenów. Klub każdego wiersza jedzie w `BookingDue`,
+   * żeby zapis zwolnienia trafił z powrotem we właściwy.
+   */
+  due(
+    db: Queryable,
+    window: { startedBefore: Date; endsAfter: Date },
+  ): Promise<BookingDue[]>;
+  /**
+   * Chwila ostatniej zmiany w klubie - materiał na ETag okna kalendarza. `null`,
+   * gdy klub nie ma ani jednej zajętości.
+   */
+  latestChangeAt(db: Queryable, orgId: string): Promise<number | null>;
+}
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];
@@ -1271,6 +1455,18 @@ export interface AircraftConfigPort {
    * nie flagowany.
    */
   orgIdOf(db: Queryable, aircraftId: string): Promise<string | null>;
+  /**
+   * Stan służby maszyny W TYM KLUBIE; `null` = maszyna nieznana albo cudza.
+   *
+   * Wejście reguły `refuseCreate` (rezerwacje, 3.0.0): wyłączenie ze służby nie ma
+   * terminu, więc nie nakłada się na nic i ograniczenie bazy o nim nie wie -
+   * bez tego odczytu dałoby się zaplanować sobotę czymś, czego klub nie wypuszcza.
+   */
+  serviceStatusOf(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+  ): Promise<ServiceStatus | null>;
 }
 
 /**

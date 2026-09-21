@@ -63,6 +63,23 @@ a niepotrzebny APK tylko kosztuje.
 **Serwer, panel i strona nie są częścią tej decyzji.** Jadą własnym torem: push do
 `main` przebudowuje obraz na Railway, aplikacji pilota to nie dotyka.
 
+## Krok 0b: próba generalna na staging
+
+Wydanie planowe przechodzi najpierw przez **staging** (`docs/staging.md`) - własna baza,
+te same migracje, ta sama poczta, adresy `stg.ninerdeck.pl` i `app.stg.ninerdeck.pl`.
+
+1. Po założeniu gałęzi `ninerdeck_x_x_x` przełącz w Railway śledzoną gałąź środowiska
+   staging z `develop` na nią. Deploy uruchamia migracje przy starcie serwera, więc
+   **to jest jedyna próba generalna migracji, jaką wydanie dostaje**.
+2. Przejdź na staging to, co wydanie dotyka - minimum: logowanie hasłem i Googlem, link
+   „ustaw hasło", operacja z telefonu od przejęcia do zdania, karty arkusza, panel.
+   Telefon: dev build wskazany na staging, bundle przez `npm run update:stg`.
+3. Dopiero potem merge do `main` i właściwe wydanie (ścieżka A albo B).
+4. Po wydaniu przełącz staging z powrotem na `develop`.
+
+Hotfix z `main` idzie bez tego kroku, jeśli poprawka jest wąska i pilna - ale migracja
+w hotfixie jest dokładnie tym przypadkiem, dla którego staging powstał.
+
 ---
 
 ## Ścieżka A: aktualizacja OTA
@@ -150,6 +167,11 @@ z klientem **Android** w Google Cloud (przy pakiecie `com.ninerdeck.app`).
 To jedyna rzecz w tej procedurze, która psuje się cicho: build przechodzi, APK się
 instaluje, a logowanie Google odbija dopiero na telefonie pilota. Klient OAuth wiąże
 JEDEN pakiet z JEDNYM odciskiem, więc rozjazd nie naprawi się sam.
+
+Profil `development` (`npm run build:dev`) to INNY pakiet - `com.ninerdeck.app.dev`
+z własnym kluczem i własnym klientem Android (README „Dev build aplikacji"). Jego SHA-1
+nie ma nic wspólnego z produkcyjnym, a dev build nie jest wydaniem: nie podnosi wersji,
+nie wchodzi do changelogu i nie trafia na stronę pobierania.
 
 ### 3. Zbuduj i opublikuj
 

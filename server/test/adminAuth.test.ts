@@ -72,6 +72,10 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         // z `capabilitiesOf('admin')`: porównanie z tą samą funkcją, którą trasa
         // woła, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
         'maintenance.run',
+        // Rezerwacje (3.0.0, issue #158) - władza nad CUDZYM planem lotu. Ta lista
+        // jest jedynym miejscem, które zauważa nową pozycję katalogu, więc dopisanie
+        // zdolności administratorowi musi przejść przez ten test.
+        'reservations.manage',
         // `bugs.triage` (moduł „Zgłoszenia", issue #87) ZESZŁO z tej listy w epiku C
         // wielofirmowości (issue #99, C6): zgłoszenia obsługuje superadministrator
         // na platformie, administrator klubu ich nie widzi.

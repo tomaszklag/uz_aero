@@ -1,14 +1,21 @@
 /**
- * Ninerdeck - `npm run update:prod`: aktualizacja OTA ze zmiennymi profilu `production`
- * z `eas.json`.
+ * Ninerdeck - aktualizacja OTA ze zmiennymi profilu z `eas.json`.
+ *
+ * Woła się przez skrypty npm, a nazwa profilu jest ich pierwszym argumentem:
+ *   `npm run update:prod -- -m "opis"`  → profil `production`  → kanał `production` (piloci)
+ *   `npm run update:stg  -- -m "opis"`  → profil `development` → kanał `development` (staging)
+ * Reszta argumentów leci dalej do `eas-cli`.
  *
  * `eas update` nie czyta `build.<profil>.env` z `eas.json` (to pole obsługuje tylko
  * `eas build`), więc gołe `eas-cli update` pakowało bundle ze zmiennymi z lokalnego
  * `app/.env` - a tam adres serwera jest w dev zakomentowany. Ten runner czyta profil
- * `production` z `eas.json`, sprawdza komplet (`eas-profile-env.js`) i wstrzykuje go do
- * środowiska procesu `eas-cli`. Zmienne procesu WYGRYWAJĄ z plikami `.env` Expo, więc
- * lokalny plik nie ma jak podmienić adresu po cichu. Argumenty lecą dalej:
- * `npm run update:prod -- -m "opis zmiany"`.
+ * z `eas.json`, sprawdza komplet (`eas-profile-env.js`) i wstrzykuje go do środowiska
+ * procesu `eas-cli`. Zmienne procesu WYGRYWAJĄ z plikami `.env` Expo, więc lokalny plik
+ * nie ma jak podmienić adresu po cichu.
+ *
+ * Gałąź publikacji to KANAŁ profilu, nie osobna stała - powód w docblocku
+ * `eas-profile-env.js`. Profil `development` wskazuje adres staging, więc ten sam runner
+ * obsługuje próbę generalną wydania (`docs/staging.md`).
  *
  * Platforma jest ZAWSZE podana (`--platform android`, chyba że wołający poda własną):
  * bez niej `eas update` eksportuje bundle dla wszystkich platform, także web, a projekt
@@ -25,42 +32,53 @@
 const path = require('node:path');
 const { readFileSync } = require('node:fs');
 const { spawnSync } = require('node:child_process');
-const { profileEnv } = require('./eas-profile-env');
+const { profileTarget } = require('./eas-profile-env');
 
 const appRoot = path.resolve(__dirname, '..');
-const PROFILE = 'production';
-const BRANCH = 'production';
 const PLATFORM = 'android';
 
-const passedArgs = process.argv.slice(2);
-const platformArgs = passedArgs.some((arg) => arg === '--platform' || arg === '-p' || arg.startsWith('--platform='))
+const [profile, ...passedArgs] = process.argv.slice(2);
+if (profile == null || profile.startsWith('-')) {
+  console.error(
+    '\n  BŁĄD: runner potrzebuje nazwy profilu z eas.json.\n' +
+      '  Na co dzień woła się go przez npm run update:prod albo npm run update:stg.\n',
+  );
+  process.exit(1);
+}
+
+const platformArgs = passedArgs.some(
+  (arg) => arg === '--platform' || arg === '-p' || arg.startsWith('--platform='),
+)
   ? []
   : ['--platform', PLATFORM];
 
-let env;
+let target;
 try {
   const easJson = JSON.parse(readFileSync(path.join(appRoot, 'eas.json'), 'utf8'));
-  env = profileEnv(easJson, PROFILE);
+  target = profileTarget(easJson, profile);
 } catch (err) {
   console.error(`\n  BŁĄD: ${err instanceof Error ? err.message : String(err)}\n`);
   process.exit(1);
 }
 
 console.log(
-  `eas update --branch ${BRANCH} ${platformArgs.join(' ')} ze zmiennymi profilu "${PROFILE}" z eas.json:`.replace(/\s+/g, ' '),
+  `eas update --branch ${target.channel} ${platformArgs.join(' ')} ze zmiennymi profilu "${profile}" z eas.json:`.replace(
+    /\s+/g,
+    ' ',
+  ),
 );
-for (const [name, value] of Object.entries(env)) console.log(`  ${name}=${value}`);
+for (const [name, value] of Object.entries(target.env)) console.log(`  ${name}=${value}`);
 console.log('');
 
 const result = spawnSync(
   'npx',
-  ['eas-cli', 'update', '--branch', BRANCH, ...platformArgs, ...passedArgs],
+  ['eas-cli', 'update', '--branch', target.channel, ...platformArgs, ...passedArgs],
   {
     cwd: appRoot,
     stdio: 'inherit',
     // `npx` jest na Windowsie skryptem `.cmd` - bez powłoki `spawnSync` go nie znajdzie.
     shell: process.platform === 'win32',
-    env: { ...process.env, ...env },
+    env: { ...process.env, ...target.env },
   },
 );
 

@@ -938,6 +938,16 @@ external_identities - (provider, subject) → pilot_id, e-mail i imię z Google,
                (tożsamość Google ZAWSZE podpięta do osoby; statusy zgłoszenia przeniosły
                się na `memberships` w epiku D wielofirmowości)
 aircraft     - id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
+bookings     - id (uuid KLIENTA = idempotencja zapisu), org_id, aircraft_id,
+               kind (flight|block), status, starts_at, ends_at, pilot_id (NULL przy
+               wyłączeniu z użytku - ono nie ma właściciela), dual_id, operation,
+               from/to_icao, planned_air_min, planned_fuel_l, block_reason, note,
+               created_by, closed_at, close_reason
+               (REZERWACJE 3.0.0 - `docs/rezerwacje.md`. Rezerwacja NIE JEST zdarzeniem
+               rejestru: opisuje ZAMIAR, jest mutowalna i jest przedmiotem konkurencji
+               dwóch pilotów, więc ma arbitra i osobną tabelę. Rezerwacje i wyłączenia
+               maszyny z użytku siedzą w JEDNEJ tabeli z dyskryminatorem `kind`, bo
+               jedno ograniczenie ma objąć oba rodzaje naraz)
 events       - uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
                device_time, gps_time, payload JSONB, received_at, source_device
 sessions     - projekcja: uuid, aircraft_id, pic_id, claim/close time,
@@ -948,6 +958,19 @@ export_log   - data, aircraft_id, sheet_url, exported_at, rewizja, session_uuid
                §4.7; session_uuid = CZŁONKOSTWO operacji w rewizji, po nim pyta
                GET /sessions/:uuid/sync-status)
 ```
+
+**NAKŁADANIE WYKLUCZA BAZA, NIE KOD** (`bookings_no_overlap`): `EXCLUDE USING gist`
+na `tstzrange(starts_at, ends_at, '[)')` per maszyna, z zakresem PÓŁOTWARTYM - więc
+zetknięcie co do minuty przechodzi, dokładnie jak przy operacjach (§3.6a). Sprawdzenie
+w aplikacji przepuściłoby przy dwóch równoczesnych zapisach oba. Klucz nie niesie
+`org_id`: egzemplarz należy do jednego klubu, więc klub niczego by nie zawęził,
+a sugerowałby, że ten sam płatowiec da się zająć dwa razy pod dwiema nazwami.
+
+`organizations` dokłada do tego `timezone` (siatkę kalendarza rysuje strefa KLUBU, §6
+tamtego dokumentu) i `home_icao` (lotnisko macierzyste - z niego liczy się okno doby
+lotnej dla sugestii). `session_claim` dostaje pole `reservationId` i jest to JEDYNE
+zetknięcie rejestru z modułem rezerwacji, w jedną stronę: nieznany identyfikator NIE
+odrzuca paczki, bo rezerwacja nie warunkuje lotu, a domena nie robi z tym polem NIC.
 
 `events` jest append-only również na serwerze; `sessions` i statystyki to projekcje
 odświeżane przy przyjęciu zdarzeń. Dochodzą jeszcze: `exported_sheets` (treść kart -
@@ -1183,6 +1206,50 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 
 ---
 
+
+### 7.1 Nawigacja 3.0.0 - zakładki i rezerwacje (issue #145)
+
+Flow wyżej opisuje wersję WDROŻONĄ (2.x) i obowiązuje do wydania 3.0.0 - piloci mają
+ją w telefonach, a podręcznik osadza jej ekrany. Poniżej to, co się wtedy zmieni;
+pełny opis: `docs/rezerwacje.md`, makiety `design/20-24`.
+
+```
+[Pulpit 20]   NOWY EKRAN STARTOWY. „Mój dzień" jako SUMY doby (wejście w Historię),
+    │         pod nimi najbliższa rezerwacja z odliczaniem, dalej akcje.
+    │         Listy operacji nie ma - kafelki i korekta 24 h są w Historii.
+    │         warianty: 20a bez rezerwacji · 20c offline · 20d sync stoi
+    ├─→ [Kalendarz 21]  doba całej floty, siatka okna doby lotnej w czasie KLUBU;
+    │       │            tapnięcie w wolne pasmo otwiera formularz z tą maszyną,
+    │       │            a wskazana godzina jedzie jako PREFEROWANA PORA do sugestii
+    │       ├─→ [22 Rezerwacja 1/2]  termin i maszyna (to, o co konkurują piloci)
+    │       │       └─→ [22a 2/2]  zadanie, trasa, Dual, plan lotu, notatka
+    │       │            22b arkusz czasu · 22c slot zajęty (odmowa serwera)
+    │       └─→ [23 Szczegóły]  przesunięcie i odwołanie; 23a kolizja przy przejęciu
+    ├─→ [Historia 24]  WSZYSTKIE operacje - dziś i wcześniej; dzień nagłówkiem,
+    │       operacje zwartymi wierszami; archiwum zwinięte (24a)
+    ↓ ROZPOCZNIJ LOT (bierze rezerwację, jeśli jest - ale nigdy jej nie wymaga)
+[02 Nowy lot 1/3] … flow lotu BEZ ZMIAN, NAD zakładkami
+```
+
+**Kokpit zostaje modalny i zakładek w nim nie ma.** Flow lotu (02 → 02e → 02a →
+kokpit → 09b) żyje w stosie NAD paskiem zakładek: dopóki pilot trzyma samolot,
+z kokpitu nie prowadzi żadna droga bokiem. Zakładka wyprowadzająca z kokpitu nie
+byłaby zmianą nawigacji, tylko skasowaniem modalności.
+
+**Rezerwacja nie warunkuje lotu** (§2.3 tamtego dokumentu): „ROZPOCZNIJ LOT" działa
+jak dziś, także bez zasięgu i bez rezerwacji - wypełnia tylko kroki przejęcia
+i ostrzega przy kolizji z cudzym planem. Wypełnia je TERMINEM, KTÓRY DZIEJE SIĘ TERAZ
+(godzina przed początkiem, do końca): plan na przyszły weekend podstawiony w formularz
+wyglądałby jak wpis pilota - ta sama reguła, przez którą kontrolka czasu nie ma
+wartości domyślnej (issue #62).
+
+**CAŁY MODUŁ REZERWACJI WYMAGA SIECI** (§2.2, decyzja właściciela 2026-09-20) i jest
+to JEDYNY moduł z takim rozstrzygnięciem. Czyta się je RAZEM z §4.1: tamta reguła
+broni PRACY W LOCIE - rejestru, czasów, odczytów, zdania samolotu - czyli tego, czego
+nikt poza pilotem nie odtworzy. Rezerwacja jest umową między ludźmi składaną przy
+biurku, a nie pomiarem z kabiny. Cena jest znana i zapisana: bez zasięgu nie ma karty
+najbliższej rezerwacji, kroki przejęcia nie wypełniają się planem, a ostrzeżenie
+o cudzym terminie nie pada. Wszystkie trzy degradują się łagodnie.
 ## 8. Wymagania niefunkcjonalne i ryzyka
 
 ### Ryzyka techniczne

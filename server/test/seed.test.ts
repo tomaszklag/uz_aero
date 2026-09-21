@@ -15,7 +15,6 @@
  * wolno mu wtedy ani dorobić drugiego konta, ani zerwać istniejącego podpięcia.
  */
 
-import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 
 import type { Database, Queryable } from '../src/application/common/ports.ts';
@@ -24,6 +23,7 @@ import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { seed } from '../src/infrastructure/pg/seed.ts';
 import { PgExternalIdentitiesRepo } from '../src/infrastructure/pg/common/externalIdentitiesRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
+import { newPglite } from './pglite';
 
 const ADMIN_EMAIL = 'szef@aeroklub.pl';
 
@@ -36,7 +36,7 @@ const googleProfile = (email: string, subject = 'google-sub-admin') => ({
 });
 
 async function freshDb() {
-  const pglite = new PGlite();
+  const pglite = newPglite();
   const db: Database & { exec: (sql: string) => Promise<unknown> } = {
     query: (text, params) => pglite.query(text, params as never) as never,
     exec: (sql) => pglite.exec(sql),

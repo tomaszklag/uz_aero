@@ -29,7 +29,7 @@ import {
   type SessionState,
 } from '../../../domain';
 import type { HistoryDay } from '../../../application';
-import { dateUtcLong } from '../../format';
+import { dateUtcDayMonthLong, dateUtcLong } from '../../format';
 import { type SessionCardVm, sessionStats, sessionTimes } from './sessionCard';
 import { dateTimeUtcShort } from './statsDay';
 
@@ -57,27 +57,6 @@ export interface UploadSpec {
 export interface DayCardSpec extends SessionCardVm {
   /** Zaległość wysyłki albo `null` = wszystko poszło (nie rysujemy nic). */
   upload: UploadSpec | null;
-}
-
-/** Karta sesji w oknie korekty - dodatkowo termin i odliczanie. */
-export interface EditableDaySpec extends DayCardSpec {
-  /** „Korekta do 23 CZE 16:45". */
-  deadline: string;
-  /** „zostało 23 h 04 min". */
-  remaining: string;
-}
-
-export interface HistoryGroups {
-  editable: EditableDaySpec[];
-  closed: DayCardSpec[];
-}
-
-/** „zostało 23 h 04 min" / „zostało 42 min" - zero wiodące minut jak w mockupie. */
-export function remainingLabel(ms: number): string {
-  const totalMin = Math.max(0, Math.ceil(ms / 60_000));
-  const h = Math.floor(totalMin / 60);
-  const min = totalMin % 60;
-  return h > 0 ? `zostało ${h} h ${String(min).padStart(2, '0')} min` : `zostało ${min} min`;
 }
 
 /**
@@ -150,86 +129,174 @@ function cardSpec(
 }
 
 /**
- * Podział zamkniętych sesji na grupy ekranu 12.
+ * Wiersz operacji w logu historii (makieta `24`).
  *
- * Odpadają: sesje dnia dzisiejszego (są na 01), sesje trzymane (mają kokpit) i strumienie
- * bez claimu (śmieciowe) - patrz docblock modułu.
- *
- * @param now      teraz (epoch ms) - wyznacza dobę dzisiejszą i stan okien korekty,
- * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki),
- * @param regOf    identyfikator maszyny → jej ZNAK (patrz `buildMyDay`),
- * @param signatureOf identyfikator sesji → jej SYGNATURA (`useOperationSignatures`),
- * @param clubOf   identyfikator sesji → NAZWA KLUBU (`useOperationClub`; `null` przy
- *   jednym członkostwie - regułę trzyma hook, nie ten builder).
+ * Ten sam model, co kafelek na Pulpicie i w rozliczeniu (`SessionCardVm`, issue #42) -
+ * historia dokłada wyłącznie to, czego nie ma nigdzie indziej: stan wysyłki, termin
+ * korekty i odpowiedź na pytanie, CO ZROBI tapnięcie.
  */
-export function buildHistory(
+export interface HistoryOpVm extends DayCardSpec {
+  /**
+   * Okno korekty jest OTWARTE - wiersz prowadzi do edycji (ołówek), a nie do podglądu
+   * (oko). Ikona po prawej niesie SKUTEK tapnięcia, który do 3.0.0 niósł pas akcji
+   * kafelka: „OTWÓRZ I POPRAW" dokładało 44 px do każdej pozycji, choć cała karta
+   * prowadziła w to samo miejsce.
+   */
+  editable: boolean;
+  /** „Korekta do 19 WRZ 18:05" - plakietka WYŁĄCZNIE w oknie (stan odchylony). */
+  deadline: string | null;
+  /**
+   * Trzy liczby BEZ ETYKIET: loty, blok, czas w powietrzu.
+   *
+   * Podpisy stały w nagłówku każdej grupy do 2026-09-19 i wyleciały uwagą właściciela:
+   * powtarzały się przy każdym dniu, a kolejność tej trójki jest w aplikacji stała -
+   * liczba całkowita to loty, dwa czasy to blok i lot (kafelek, stopka osi, rozliczenie).
+   */
+  nums: string[];
+}
+
+/** Dzień jako NAGŁÓWEK grupy - data pada raz, operacje są zwartymi wierszami. */
+export interface HistoryDayVm {
+  /** Północ UTC tej doby - klucz listy i podstawa sortowania. */
+  day: number;
+  /** „Dzisiaj · 19 WRZEŚNIA", „Wczoraj · 18 WRZEŚNIA", „11 SIERPNIA 2026". */
+  label: string;
+  ops: HistoryOpVm[];
+  /**
+   * Suma doby - WYŁĄCZNIE przy kilku operacjach. Przy jednej byłaby przepisaniem
+   * wiersza tuż wyżej (decyzja właściciela 2026-09-19).
+   */
+  total: string[] | null;
+}
+
+export interface HistoryVm {
+  /**
+   * Dni z operacjami W OKNIE KOREKTY - widoczne od razu. Domyślnie widać TYLKO to,
+   * co można poprawić: po to pilot tu wchodzi.
+   */
+  open: HistoryDayVm[];
+  /** Reszta - za przyciskiem „Starsze operacje" (makieta `24a` = stan rozwinięty). */
+  archive: HistoryDayVm[];
+  /** Ile operacji czeka w archiwum - liczba przy przycisku. */
+  archiveCount: number;
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Log historii: WSZYSTKIE operacje pilota, dzisiejsze i wcześniejsze.
+ *
+ * ══ DZIŚ JEST TUTAJ, I TO JEST ZMIANA WOBEC issue #35 ══
+ * Do 3.0.0 dzisiejsze operacje mieszkały na ekranie domowym, a ten ekran nazywał się
+ * „Poprzednie dni". Od Pulpitu (§9.1) ekran startowy pokazuje SAME SUMY, więc kafelek
+ * operacji - jedyne drzwi do korekty w oknie 24 h (issue #23, #43) - musiał gdzieś
+ * zamieszkać. Zamieszkał tu, a zakładka nazywa się HISTORIA właśnie dlatego, że
+ * obejmuje odtąd obie strony doby.
+ *
+ * Odpadają, jak dotąd: operacje trzymane (mają kokpit), unieważnione (issue #75 pkt 1)
+ * i puste zapisy (issue #75 pkt 2) - wiersz obiecywałby rozliczenie, w którym nic nie ma.
+ *
+ * @param now      teraz (epoch ms) - nazwy dób i stan okien korekty,
+ * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki),
+ * @param regOf    identyfikator maszyny → jej ZNAK,
+ * @param signatureOf identyfikator operacji → jej SYGNATURA,
+ * @param clubOf   identyfikator operacji → NAZWA KLUBU (`null` przy jednym członkostwie).
+ */
+export function buildHistoryLog(
   days: HistoryDay[],
   now: number,
   pushing = false,
   regOf: (id: string) => string | null = () => null,
   signatureOf: (sessionUuid: string) => string | null = () => null,
   clubOf: (sessionUuid: string) => string | null = () => null,
-): HistoryGroups {
-  const groups: HistoryGroups = { editable: [], closed: [] };
-  const today = utcDayStart(now);
+): HistoryVm {
+  const grupy = new Map<number, HistoryOpVm[]>();
 
   for (const day of days) {
-    // Warunkiem jest ZDANIE samolotu (`closed`), nie klamra służby. Do 2026-08-07 stało
-    // tu `dutyEnd == null` i po §3.6a znaczyło coś zupełnie innego, niż miało: ekran
-    // „Zdaj samolot" `dutyEnd` NIE WYSYŁA, więc poprawnie zdana sesja wypadała z historii
-    // W CAŁOŚCI - a to jedyny ekran, z którego pilot dosięga okna korekty.
-    if (day.state.sessionUuid == null || !day.state.closed) continue;
-    /* Sesja UNIEWAŻNIONA wypada też z historii (issue #75 pkt 1): `projectPilotDay`
-       filtruje ją na 01 od 2026-08-30, a tu filtru nie było - więc lot wycofany przez
-       administratora znikał z „Mojego dnia", ale jego karta stała na 12 dalej,
-       wbrew docblockowi projekcji („wypada z dnia pilota, z historii, z sum"). */
-    if (day.state.voided) continue;
-    // Zapis PUSTY - zdany bez biegu, lotów i z odczytami równymi przejęciu - jest
-    // śmieciem (issue #75 pkt 2): karta obiecywałaby rozliczenie, w którym nic nie ma.
-    if (isEmptyOperation(substanceFacts(day.state))) continue;
-    if (sessionDay(day.state) === today) continue;
+    const { state } = day;
+    if (state.sessionUuid == null || !state.closed) continue;
+    if (state.voided) continue;
+    if (isEmptyOperation(substanceFacts(state))) continue;
 
-    const window = correctionWindow(day.state, now);
-    if (window.open && window.closesAt != null) {
-      groups.editable.push({
-        ...cardSpec(day, pushing, regOf, signatureOf, clubOf),
-        deadline: `Korekta do ${dateTimeUtcShort(window.closesAt)}`,
-        remaining: remainingLabel(window.closesAt - now),
-      });
-    } else {
-      groups.closed.push(cardSpec(day, pushing, regOf, signatureOf, clubOf));
-    }
+    const doba = sessionDay(state);
+    if (doba == null) continue;
+
+    const window = correctionWindow(state, now);
+    const spec = cardSpec(day, pushing, regOf, signatureOf, clubOf);
+    const lista = grupy.get(doba) ?? [];
+    lista.push({
+      ...spec,
+      editable: window.open,
+      deadline:
+        window.open && window.closesAt != null
+          ? `Korekta do ${dateTimeUtcShort(window.closesAt)}`
+          : null,
+      nums: spec.stats.map((stat) => stat.v),
+    });
+    grupy.set(doba, lista);
   }
-  return groups;
+
+  const dni = [...grupy.entries()]
+    // Najnowsze na górze: pilot wchodzi po to, co poprawia, a to jest zawsze świeże.
+    .sort((a, b) => b[0] - a[0])
+    .map(([doba, ops]) => ({
+      day: doba,
+      label: dayLabel(doba, now),
+      // Wewnątrz doby chronologicznie - tak samo jak oś operacji i lista na Pulpicie.
+      ops: [...ops].sort((a, b) => (a.times ?? '').localeCompare(b.times ?? '')),
+      total: ops.length > 1 ? dayTotal(ops) : null,
+    }));
+
+  const wOknie = (d: HistoryDayVm): boolean => d.ops.some((op) => op.editable);
+  const open = dni.filter(wOknie);
+  const archive = dni.filter((d) => !wOknie(d));
+  return {
+    open,
+    archive,
+    archiveCount: archive.reduce((suma, d) => suma + d.ops.length, 0),
+  };
 }
 
 /**
- * Plakietka na przycisku „Poprzednie dni" ekranu 01 (`.history-badge`):
- * najświeższa sesja W OKNIE KOREKTY spoza dnia dzisiejszego → „11 SIE - można poprawić";
- * brak → null.
+ * Nazwa doby w nagłówku grupy.
  *
- * Dzień dzisiejszy jest pominięty z tego samego powodu, dla którego nie ma go na liście
- * (issue #35 pkt 1): plakietka obiecuje coś, co pilot znajdzie po wejściu. Sesję z dziś
- * poprawia się kafelkiem tuż obok, na tym samym ekranie.
+ * „Dzisiaj" i „Wczoraj" mają pierwszeństwo przed datą, bo to one padają na tym ekranie
+ * najczęściej - a pilot szukający świeżego lotu nie przelicza w głowie, którego dziś
+ * jest. Data stoi OBOK, nie zamiast: bez niej „Wczoraj" na telefonie otwartym po
+ * północy znaczyłoby co innego niż przy wejściu wieczorem.
  */
-export function editableBadge(days: HistoryDay[], now: number): string | null {
-  const today = utcDayStart(now);
-  for (const day of days) {
-    // Warunkiem jest OTWARTE OKNO, nie obecność klamry służby. Po §3.6a okno kotwiczy się
-    // w ZDANIU samolotu, więc `correctionWindow` odpowiada samo - a wymóg `dutyEnd`/`dutyStart`
-    // wyciszał plakietkę na każdej sesji bez deklaracji, czyli na prawie każdej.
-    if (day.state.claimedAt == null) continue;
-    if (!day.state.closed) continue;
-    // Te same wykluczenia, co lista niżej: plakietka obiecuje kartę, którą pilot
-    // znajdzie po wejściu - sesja unieważniona ani pusta karty nie ma (issue #75).
-    if (day.state.voided) continue;
-    if (isEmptyOperation(substanceFacts(day.state))) continue;
-    if (sessionDay(day.state) === today) continue;
-    if (correctionWindow(day.state, now).open) {
-      // `dateTimeUtcShort` daje „22 CZE 16:45" - plakietka bierze samą datę.
-      const label = dateTimeUtcShort(day.state.claimedAt).split(' ').slice(0, 2).join(' ');
-      return `${label} - można poprawić`;
-    }
+export function dayLabel(day: number, now: number): string {
+  const dzis = utcDayStart(now);
+  if (day === dzis) return `Dzisiaj · ${dateUtcDayMonthLong(day)}`;
+  if (day === dzis - DAY_MS) return `Wczoraj · ${dateUtcDayMonthLong(day)}`;
+  return dateUtcLong(day);
+}
+
+/** Suma doby - ta sama trójka, co w wierszu: loty (liczba), blok i lot (czasy). */
+function dayTotal(ops: HistoryOpVm[]): string[] {
+  const loty = ops.reduce(
+    (suma, op) => suma + (Number.parseInt(op.nums[0] ?? '0', 10) || 0),
+    0,
+  );
+  return [String(loty), sumaCzasow(ops, 1), sumaCzasow(ops, 2)];
+}
+
+/**
+ * Suma kolumny czasów „H:MM" z wierszy doby.
+ *
+ * Sumujemy NAPISY, a nie milisekundy, i to jest świadome: wiersz pokazuje już
+ * zaokrąglony czas, więc suma policzona z surowych wartości potrafiłaby różnić się
+ * o minutę od tego, co pilot widzi nad nią - a to jest dokładnie ten rodzaj
+ * rozbieżności, którego nikt nie umie sobie wytłumaczyć. Kreska („- -") znaczy brak
+ * pomiaru i do sumy nie wchodzi.
+ */
+function sumaCzasow(ops: HistoryOpVm[], kolumna: number): string {
+  let minuty = 0;
+  for (const op of ops) {
+    const [h, m] = (op.nums[kolumna] ?? '').split(':');
+    const godziny = Number.parseInt(h ?? '', 10);
+    const reszta = Number.parseInt(m ?? '', 10);
+    if (Number.isFinite(godziny) && Number.isFinite(reszta)) minuty += godziny * 60 + reszta;
   }
-  return null;
+  return `${Math.floor(minuty / 60)}:${String(minuty % 60).padStart(2, '0')}`;
 }

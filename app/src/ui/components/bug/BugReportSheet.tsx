@@ -49,7 +49,7 @@ import { SheetSurface } from '../sheets/SheetSurface';
 import { syncIndicator } from '../status/syncIndicator';
 import { toneColors } from '../tone';
 import { buildBugContext } from './bugContext';
-import { bugRoute, submitBugReport } from './bugReporter';
+import { bugBooking, bugRoute, submitBugReport } from './bugReporter';
 import { deviceRelease } from './deviceRelease';
 
 /** Sufit opisu - ten sam, którego pilnuje trasa serwera. */
@@ -125,6 +125,9 @@ export function BugReportSheet({ visible, sheet, onClose }: BugReportSheetProps)
         flights: projection.flights.length,
         closed: projection.closed,
       },
+      // `null` przy każdym ekranie, który rezerwacji nie dotyczy - i to jest
+      // odpowiedź, nie brak danych.
+      booking: bugBooking(),
       pilot: {
         id: pilotId,
         code: account?.code ?? null,

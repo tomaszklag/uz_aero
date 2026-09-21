@@ -227,6 +227,18 @@ export function BugIcon({ size = 16 }: IconProps) {
   );
 }
 
+/** Kalendarz - moduł zajętości floty. Kartka z dwoma kolcami i linią nagłówka. */
+export function CalendarIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="8" y1="3" x2="8" y2="7" />
+      <line x1="16" y1="3" x2="16" y2="7" />
+    </Stroke>
+  );
+}
+
 /** Budynek - klub w kolumnie i moduł Organizacje (wielofirmowość 2.0.0). */
 export function BuildingIcon({ size = 16 }: IconProps) {
   return (

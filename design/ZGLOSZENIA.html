@@ -74,6 +74,10 @@
   .bug-btn { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; color:var(--text-muted); }
 
   .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; opacity:0.5; }
+  /* Dzieci przewijanej kolumny NIE KURCZĄ SIĘ - patrz 12-historia.html (zgłoszenie
+     z urządzenia, 2026-09-19): flex ściska karty przy dłuższej treści, a tekst wylewa
+     się poza nie i nachodzi na sąsiednie. */
+  .scroll > * { flex-shrink: 0; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
   .card-head { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .ghost-line { height:10px; border-radius:5px; background:var(--surface-raised); }
@@ -370,7 +374,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="01-moj-dzien.html">01 Mój dzień</a>
+  <a href="20-pulpit.html">20 Pulpit</a>
   <a href="04a-cockpit-ground.html">04A Kokpit</a>
   <a href="10-statystyki.html">10 Operacja</a>
   <a href="13-ustawienia.html">13 Ustawienia</a>

@@ -13,8 +13,6 @@ Gdy ktoś zaloguje się w aplikacji kontem Google, którego klub nie zna, jego z
 
 Po decyzji karta zamienia się w jedno zdanie podsumowania. Jeśli ktoś rozstrzygnął to zgłoszenie przed Tobą - drugi administrator albo druga karta przeglądarki - panel mówi, jaka decyzja już zapadła, zamiast zakładać drugie konto.
 
-> **Założenie.** Rejestracja jest otwarta dla każdego z kontem Google, a dostęp daje dopiero zatwierdzenie - o tym, kto lata w klubie, decyduje klub. Do decyzji taka osoba nie ma w systemie nic: żadnego kodu, którym podpisuje się operacje, i żadnego wiersza na liście pilotów ani w wyborze drugiego pilota. Dlatego odrzucenie musi mieć powód: bez niego człowiek zostaje przed ekranem, na którym nie da się już nic zrobić. Szerzej: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
-
 @panel piloci-lista "Kolejka zgłoszeń nad listą kont"
 
 ## Konto założone zawczasu
@@ -23,7 +21,7 @@ Znanego pilota można dopisać, zanim w ogóle sięgnie po aplikację: **Dodaj p
 
 ## Lista kont
 
-Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki niesie i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
+Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki zapamiętuje i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
 
 @panel piloci-zgloszenie "Zatwierdzenie z nadaniem kodu"
 
@@ -39,7 +37,7 @@ Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google)
 
 W sekcji **Dostęp** stoi jeden przycisk: **Wyślij link do ustawienia hasła**. To dokładnie ten sam list, który pilot wysłałby sobie sam przez „Nie pamiętam hasła" - różni je tylko to, kto go wywołał. Po wysłaniu panel potwierdza, **dokąd** poszedł i **jak długo** jest ważny; samego linku ani żadnego kodu nie pokazuje nikomu, także Tobie. Hasło zna wyłącznie jego właściciel i to jest cała treść tego rozwiązania - hasło podyktowane przez telefon zna już dwoje ludzi.
 
-Tą samą drogą ustawia hasło pilot, który dotąd wchodził wyłącznie Googlem, a ma latać ze wspólnego tabletu. Pod adresem w sekcji **Osoba** widać plakietki metod: „Google", „hasło" albo obie; przy koncie, do którego nikt jeszcze nie wszedł, nie ma żadnej. Osoba bez adresu e-mail nie ma dokąd dostać listu i przycisk mówi to wprost.
+Tą samą drogą ustawia hasło pilot, który dotąd wchodził wyłącznie Googlem, a ma latać ze wspólnego tabletu. Pod adresem w sekcji **Osoba** widać oznaczenia metod: „Google", „hasło" albo obie; przy koncie, do którego nikt jeszcze nie wszedł, nie ma żadnej. Osoba bez adresu e-mail nie ma dokąd dostać listu i przycisk mówi to wprost.
 
 ### Sesje: które urządzenie i „wyloguj wszędzie"
 
@@ -52,8 +50,12 @@ Karta **Sesje** wymienia urządzenia, na których ta osoba jest zalogowana **w T
 ## Jak to działa
 
 - **Kod pilota jest nazwą w dokumentach klubu.** Stoi w sygnaturze każdej operacji (`SP-AXA/2026-09-05/TMK/1`), w kokpicie przy składzie załogi i wszędzie tam, gdzie o locie się rozmawia. Ma od 2 do 10 znaków, zapisuje się wielkimi literami i jest w klubie jedyny; zmiana kodu zmienia nazwę, pod którą klub zna wcześniejsze loty, więc robi się to z rozmysłem.
-- **Rola wyznacza powierzchnię.** Pilot ma aplikację na telefonie, administrator - aplikację i panel, do którego loguje się tym samym kontem Google. Konto pilota, które spróbuje wejść do panelu, dostaje komunikat, a nie awarię.
+- **Rola wyznacza, gdzie się pracuje.** Pilot ma aplikację na telefonie, administrator - aplikację i panel, do którego loguje się tym samym kontem Google. Konto pilota, które spróbuje wejść do panelu, dostaje komunikat, a nie awarię.
 - **Wyłączenie działa natychmiast, usunięcie dopiero po nim.** Telefony pracują na kopii listy pilotów i floty pobranej z panelu, a ta kopia się dopisuje i poprawia - nigdy nie kasuje wierszy. Konto usunięte „na gorąco" zostałoby duchem na każdym telefonie, który zdążył je pobrać, i dalej dałoby się je wybrać jako drugiego pilota. Wyłączenie jedzie normalną drogą i aplikacja je rozumie, więc kolejność jest jedna: wyłącz, poczekaj, aż telefony pobiorą zmianę, dopiero potem usuwaj.
+
+## Dlaczego tak to działa
+
+> **Dlaczego o wejściu do klubu decyduje klub.** Rejestracja jest otwarta dla każdego z kontem Google, a dostęp daje dopiero zatwierdzenie - o tym, kto lata w klubie, decyduje klub. Do decyzji taka osoba nie ma w systemie nic: żadnego kodu, którym podpisuje się operacje, i żadnego wiersza na liście pilotów ani w wyborze drugiego pilota. Dlatego odrzucenie musi mieć powód: bez niego człowiek zostaje przed ekranem, na którym nie da się już nic zrobić. Szerzej: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
 
 > **Dlaczego konta z historią nie da się skasować.** Dziennik lotów jest dokumentem klubu, a każdy zapis ma autora: kto przejął maszynę, kto ją zdał, kto poprawił liczbę i dlaczego. Konto usunięte razem z tym wszystkim zostawiłoby loty bez właściciela - i pytanie „czyj to nalot", na które nikt już nie odpowie. Wyłączenie odbiera dostęp i nie rusza ani jednego zapisu.
 
