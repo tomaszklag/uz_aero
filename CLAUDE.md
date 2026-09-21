@@ -3750,9 +3750,18 @@ issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
   się konkuruje, potrzebuje arbitra - a arbiter musi być JEDEN, więc **zapis wymaga
   sieci**, dokładnie jak przełączenie i dołączenie do klubu. Wysyłka przez outbox
   znaczyłaby „twój slot przepadł" godzinę po tym, jak pilot go zarezerwował.
-- **ODCZYT DZIAŁA Z CACHE** (§2.2) jak dane referencyjne §4.8: kalendarz bez zasięgu
-  pokazuje ostatnią migawkę z adnotacją wieku. Bez sieci blokuje się WYŁĄCZNIE zapis,
-  a przycisk niesie powód wewnątrz siebie (issue #55).
+- **CAŁY MODUŁ REZERWACJI WYMAGA SIECI** (§2.2, decyzja właściciela 2026-09-20 -
+  ODWRACA „odczyt działa z cache"): *„rezerwację raczej robimy w domu, gdzie zasięg
+  jest"*. Cache’u zajętości w SQLite NIE MA i nie wolno go dorobić po cichu - ani
+  pobierania z ETagiem, ani adnotacji wieku, ani wariantów offline z ostatnią migawką.
+  To jedyny moduł z takim rozstrzygnięciem i czyta się je RAZEM z §4.1 („brak sieci
+  nigdy nie blokuje pracy pilota"): tamta reguła broni PRACY W LOCIE - rejestru, czasów,
+  odczytów, zdania samolotu - czyli tego, czego nikt poza pilotem nie odtworzy.
+  Rezerwacja jest UMOWĄ MIĘDZY LUDŹMI składaną przy biurku, nie pomiarem z kabiny.
+  Cena jest znana i zapisana: bez zasięgu przy samolocie nie ma karty „Twoja
+  rezerwacja", kroki przejęcia nie wypełniają się rezerwacją, a ostrzeżenie o cudzym
+  terminie nie pada. Wszystkie trzy degradują się łagodnie, bo żadna nie jest warunkiem
+  lotu (§2.3). Zmiana tego wymaga nowej decyzji, nie cache’u dopisanego przy okazji.
 - **REZERWACJA NIE WARUNKUJE LOTU** (§2.3, decyzja właściciela): „ROZPOCZNIJ LOT" działa
   jak dziś, także bez zasięgu i bez rezerwacji. Rezerwacja wypełnia kroki przejęcia
   i OSTRZEGA przy cudzej kolizji - nigdy nie blokuje.

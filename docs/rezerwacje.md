@@ -74,22 +74,42 @@ sieci (`docs/wielofirmowosc.md` §6 - „offline-first dotyczy pracy w klubie, n
 klubu"). Rezerwacja należy do tej samej kategorii: to nie jest praca pilota w terenie,
 tylko ustalenie z innymi ludźmi, kto kiedy leci.
 
-### 2.2 Odczyt kalendarza działa bez sieci, zapis nie
+### 2.2 Cały moduł rezerwacji wymaga sieci
 
-Podział jest dokładnie ten z §4.8 (cache referencyjny):
+**Decyzja właściciela 2026-09-20 - ODWRACA pierwotne §2.2 („odczyt kalendarza działa
+bez sieci").** Uzasadnienie w jednym zdaniu: *„rezerwację raczej robimy w domu, gdzie
+zasięg jest"*.
 
-- **odczyt** - telefon trzyma migawkę zajętości na najbliższe dni (cache SQLite,
-  odświeżany przy okazji, ETag jak `/reference`). Kalendarz bez zasięgu pokazuje ostatnią
-  znaną zajętość Z ADNOTACJĄ WIEKU („· z cache · sync 21 WRZ 17:30"). Pilot w hangarze
-  bez zasięgu ma odpowiedź na „czy w sobotę coś stoi wolne";
-- **zapis** - `POST`/`PATCH`/`DELETE` wymagają sieci. Bez niej przycisk niesie POWÓD
-  WEWNĄTRZ SIEBIE (reguła issue #55 - powód blokady nigdy nie stoi pod przyciskiem):
-  „Rezerwacja wymaga połączenia - slot potwierdza serwer".
+To jest JEDYNY moduł aplikacji z takim rozstrzygnięciem i dlatego trzeba je czytać
+razem z §4.1 („brak sieci NIGDY nie blokuje pracy pilota"). Tamta reguła broni PRACY
+W LOCIE: rejestru zdarzeń, czasów, odczytów, zdania samolotu - wszystkiego, co powstaje
+przy samolocie i czego nikt poza pilotem nie odtworzy. Rezerwacja nie należy do tej
+kategorii: jest UMOWĄ MIĘDZY LUDŹMI składaną przy biurku, a nie pomiarem robionym
+w kabinie.
 
-**Cache kalendarza NIE jest rejestrem** i nie wolno go nim uczynić: przy migracji leci
-`DROP` + `CREATE`, jak pięć tabel cache'u referencyjnego (SQLite 9). To materiał roboczy,
-który wraca jednym zapytaniem.
+- **zapis** (`POST`/`PATCH`/`DELETE`) wymaga sieci, bo slot jest przedmiotem
+  konkurencji i potrzebuje arbitra (§2.1). Bez niej przycisk niesie POWÓD WEWNĄTRZ
+  SIEBIE (issue #55): „Rezerwacja wymaga połączenia - slot potwierdza serwer";
+- **odczyt** też wymaga sieci: kalendarz floty, sugestie slotów i karta najbliższej
+  rezerwacji na Pulpicie pytają serwer przy wejściu. Bez zasięgu ekran mówi to wprost
+  i nie rysuje pustej siatki, która wyglądałaby na wolną flotę.
 
+**CO TA DECYZJA KOSZTUJE** - trzy rzeczy dzieją się PRZY SAMOLOCIE, czyli tam, gdzie
+zasięg bywa najgorszy, i bez cache’u przestają działać. Wszystkie trzy degradują się
+łagodnie, bo żadna nie jest warunkiem lotu (§2.3):
+
+| Co | Bez zasięgu |
+| --- | --- |
+| karta „Twoja rezerwacja" na Pulpicie | karty nie ma - tak samo, jak przy braku rezerwacji |
+| wypełnienie kroków przejęcia rezerwacją | kroki są puste, pilot wpisuje jak dotąd |
+| ostrzeżenie o cudzej rezerwacji przy przejęciu | ostrzeżenia nie ma; nigdy nie blokowało, więc lot idzie dalej |
+
+**Czego NIE MA i nie wolno dorobić po cichu**: tabeli zajętości w SQLite, pobierania
+z ETagiem, adnotacji wieku („· z cache · sync …") i wariantów offline pokazujących
+ostatnią migawkę. Gdyby któraś z tych trzech rzeczy okazała się w testach z pilotami
+realnie potrzebna, wraca tu decyzja, a nie cache dopisany przy okazji - bo cache
+zajętości, raz dodany, natychmiast rodzi pytanie „jak stara jest ta odpowiedź", na które
+kalendarz musi wtedy odpowiadać na każdym ekranie.
 ### 2.3 Rezerwacja nie warunkuje lotu
 
 **Decyzja właściciela 2026-09-18.** „ROZPOCZNIJ LOT" działa dokładnie jak dziś - także
