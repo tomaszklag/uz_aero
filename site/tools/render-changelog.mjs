@@ -60,6 +60,8 @@ for (const raw of lines) {
   if (/^### /.test(line)) { flushPara(); flushList(); grp = { type: 'group', title: line.slice(4).trim(), lead: null, blocks: [] }; sec.blocks.push(grp); continue; }
   if (/^> /.test(line)) { const host = grp ?? sec; if (host && host.lead == null && host.blocks.length === 0) { host.lead = line.slice(2).trim(); continue; } }
   if (/^- /.test(line)) { flushPara(); (list ??= []).push(taskOf(line.slice(2).trim())); continue; }
+  // Zawinięta kontynuacja punktu (wcięcie dwiema spacjami) należy do niego, nie jest nowym akapitem.
+  if (/^ {2,}[^ ]/.test(line) && list) { list.at(-1).text += ' ' + line.trim(); continue; }
   if (line === '') { flushPara(); flushList(); continue; }
   para.push(line.trim());
 }

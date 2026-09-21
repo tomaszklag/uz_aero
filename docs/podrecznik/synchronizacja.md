@@ -8,33 +8,27 @@ Uruchomienie silnika, wykryty start, odczyt przy zdaniu, korekta - każde z nich
 
 @screen 05-cockpit-running "Zdarzenie powstaje w kokpicie" | 10-statystyki "Oś zdarzeń operacji"
 
-> **Założenie.** Dlaczego sieć jest okazją, nie warunkiem. Lądowisko w polu, hangar bez wi-fi, kabina w locie: aplikacja pracuje tam, gdzie zasięgu bywa najmniej, a fakt lotu jest cenniejszy niż natychmiastowe potwierdzenie z serwera. Sieć jest więc chwilą, w której telefon oddaje klubowi to, co ma. Warunkiem zostaje tylko to, czego bez sieci nie da się zrobić uczciwie: pierwsze logowanie (potwierdzenie tożsamości) i obejrzenie [śladu GPS](slad-gps), który wraca z serwera.
-
-> **Założenie.** Jeden telefon, jeden pilot: zapisy operacji powstają wyłącznie na telefonie dowódcy, a pozostali piloci widzą zajęty samolot tylko w podglądzie. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach.
-
 ## Kolejka wysyłki
 
 Zdarzenia, których klub jeszcze nie dostał, tworzą kolejkę. Wysyła się sama, paczkami: po odzyskaniu sieci i co jakiś czas w tle. Serwer rozpoznaje zapis, który już ma, więc paczka wysłana dwa razy niczego nie dubluje. Serwer nie odrzuca faktów z terenu: zapis, który nie zgadza się z resztą dziennika (nakładające się operacje, cofnięty licznik), oznacza dla administratora, zamiast blokować pilota. Na końcu każdej wysyłki tą samą drogą wychodzą nagranie śladu GPS (telefon kasuje kopię po potwierdzeniu) i zgłoszenia z aplikacji.
 
-@screen 12-historia "Plakietka zaległości na kafelku"
+@screen 12-historia "Oznaczenie zaległości na kafelku"
 
 ## Wskaźnik łączności
 
-Plakietka w nagłówku pojawia się tylko wtedy, gdy coś stoi - stan „wszystko wysłane" nie dostaje żadnego znaku.
+Oznaczenie w nagłówku pojawia się tylko wtedy, gdy coś stoi - stan „wszystko wysłane" nie dostaje żadnego znaku.
 
-| Plakietka | Co znaczy | Co dalej |
+| Oznaczenie | Co znaczy | Co dalej |
 |---|---|---|
-| brak plakietki | kolejka pusta albo wyjdzie przy najbliższej okazji | nic |
+| brak oznaczenia | kolejka pusta albo wyjdzie przy najbliższej okazji | nic |
 | **OFFLINE · n** (bursztyn) | ostatnia próba nie dotarła do serwera; n zdarzeń czeka | nic - przejdzie samo z zasięgiem |
-| **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij plakietkę i zrób to, co mówi baner |
+| **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij oznaczenie i zrób to, co mówi baner |
 
 @screen 01c-moj-dzien-offline "OFFLINE · kolejka czeka" | 01d-sync-stoi "SYNC STOI · serwer odmówił"
 
-> **Dlaczego tak.** Bursztyn znaczy w Ninerdeck „poczekaj, samo przejdzie", więc odmowy serwera nie wolno nazwać „offline": sieć jest, a kolejka mimo to stoi. Czerwony baner nazywa powód, uspokaja („Twoje zapisy są bezpieczne w telefonie"), podaje kod odmowy do przeczytania administratorowi i kończy się drogą wyjścia: przy odmowie „Zgłoś to administratorowi", przy wygasłej sesji „Zaloguj się ponownie".
+### Okienko pod oznaczeniem
 
-### Arkusz pod plakietką
-
-Tapnięcie otwiera arkusz „Synchronizacja": liczba zdarzeń w kolejce, **Ostatnia próba** z godziną i wynikiem („wysłano 3", „brak sieci", „odrzucone", „sesja wygasła"), **Ostatnia udana synchronizacja** i wiek danych referencyjnych. **PONÓW PRÓBĘ** robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia): dopycha kolejkę oraz pobiera dane z panelu i decyzje administratora bez czekania na zwykły odstęp. Ponowienie z ręki czeka na odpowiedź do pół minuty zamiast kilku sekund, bo uśpiony serwer potrzebuje chwili na obudzenie, a pilot stoi i patrzy. Każda próba, także nieudana, zostawia ślad w wierszu „Ostatnia próba"; po udanej arkusz zostaje otwarty ze zdaniem „Wysłano n".
+Tapnięcie otwiera okienko „Synchronizacja": liczba zdarzeń w kolejce, **Ostatnia próba** z godziną i wynikiem („wysłano 3", „brak sieci", „odrzucone", „sesja wygasła"), **Ostatnia udana synchronizacja** i wiek danych referencyjnych. **PONÓW PRÓBĘ** robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia): dopycha kolejkę oraz pobiera dane z panelu i decyzje administratora bez czekania na zwykły odstęp. Ponowienie z ręki czeka na odpowiedź do pół minuty zamiast kilku sekund, bo uśpiony serwer potrzebuje chwili na obudzenie, a pilot stoi i patrzy. Każda próba, także nieudana, zostawia ślad w wierszu „Ostatnia próba"; po udanej okienko zostaje otwarty ze zdaniem „Wysłano n".
 
 @screen 13-ustawienia "Ten sam przycisk w ustawieniach"
 
@@ -52,4 +46,12 @@ Przy każdym kontakcie z serwerem telefon także pobiera:
 
 ## Wygasła sesja to nie wylogowanie
 
-Sesja z serwerem służy wyłącznie do rozmowy z nim. Praca na telefonie jej nie potrzebuje, a aplikacja nigdy sama nie wyrzuca do ekranu logowania - wygasła sesja odświeża się przy najbliższej sieci. Gdy się to nie uda, kolejka stoi z plakietką **SYNC STOI** i prośbą o ponowne zalogowanie; zapisy czekają nietknięte. Więcej: [konta i bezpieczeństwo](konta-i-bezpieczenstwo); dzień bez zasięgu krok po kroku: [praca bez zasięgu](praca-bez-zasiegu).
+Sesja z serwerem służy wyłącznie do rozmowy z nim. Praca na telefonie jej nie potrzebuje, a aplikacja nigdy sama nie wyrzuca do ekranu logowania - wygasła sesja odświeża się przy najbliższej sieci. Gdy się to nie uda, kolejka stoi z oznaczeniem **SYNC STOI** i prośbą o ponowne zalogowanie; zapisy czekają nietknięte. Więcej: [konta i bezpieczeństwo](konta-i-bezpieczenstwo); dzień bez zasięgu krok po kroku: [praca bez zasięgu](praca-bez-zasiegu).
+
+## Dlaczego tak to działa
+
+> **Dlaczego sieć jest okazją, nie warunkiem.** Lądowisko w polu, hangar bez wi-fi, kabina w locie: aplikacja pracuje tam, gdzie zasięgu bywa najmniej, a fakt lotu jest cenniejszy niż natychmiastowe potwierdzenie z serwera. Sieć jest więc chwilą, w której telefon oddaje klubowi to, co ma. Warunkiem zostaje tylko to, czego bez sieci nie da się zrobić uczciwie: pierwsze logowanie (potwierdzenie tożsamości) i obejrzenie [śladu GPS](slad-gps), który wraca z serwera.
+
+> **Dlaczego zapisuje tylko telefon dowódcy.** Jeden telefon, jeden pilot: zapisy operacji powstają wyłącznie na telefonie dowódcy, a pozostali piloci widzą zajęty samolot tylko w podglądzie. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach.
+
+> **Dlaczego odmowa serwera ma inny kolor niż brak sieci.** Bursztyn znaczy w Ninerdeck „poczekaj, samo przejdzie", więc odmowy serwera nie wolno nazwać „offline": sieć jest, a kolejka mimo to stoi. Czerwony baner nazywa powód, uspokaja („Twoje zapisy są bezpieczne w telefonie"), podaje kod odmowy do przeczytania administratorowi i kończy się drogą wyjścia: przy odmowie „Zgłoś to administratorowi", przy wygasłej sesji „Zaloguj się ponownie".

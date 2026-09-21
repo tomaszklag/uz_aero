@@ -14,9 +14,9 @@
 - **PIC / Dual** - dowódca statku powietrznego (pilot prowadzący operację) i drugi pilot. Dowódcy nie zmienia się w trakcie operacji.
 - **Zadanie** - rodzaj operacji: Skoki, Przelot, Egzamin, Lot techniczny, Inne. Skoki mają jedno lotnisko, pozostałe parę skąd → dokąd.
 - **Dzień skokowy** - operacja z zadaniem Skoki: jedno lotnisko, załadunek i zrzuty, zwykle kilka do kilkunastu lotów w jednym biegu silnika.
-- **Załadunek** - znacznik wejścia skoczków na pokład przed startem; skład jest opcjonalny i wypełnia potem arkusz zrzutu.
+- **Załadunek** - znacznik wejścia skoczków na pokład przed startem; skład jest opcjonalny i wypełnia potem okienko zrzutu.
 - **Zrzut** - wyniesienie skoczków w locie: skład i wysokość, którą aplikacja podstawia z GPS.
-- **Wpis lotu po fakcie** - lot wpisany z pamięci albo z kartki, w czterech krokach; niesie plakietkę **RĘCZNIE** i nie ma śladu GPS.
+- **Wpis lotu po fakcie** - lot wpisany z pamięci albo z kartki, w czterech krokach; dostaje oznaczenie **RĘCZNIE** i nie ma śladu GPS.
 
 ## Czas
 
@@ -27,6 +27,8 @@
 - **UTC** - czas uniwersalny, domyślny wszędzie. Czas nieoznaczony jest czasem UTC; czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
 
 ## Rezerwacje i kalendarz
+
+> **Uwaga.** Rezerwacje i kalendarz floty wchodzą w wydaniu 3.0.0. W aplikacji, którą piloci mają dziś na telefonach, tych ekranów jeszcze nie ma - hasła poniżej opisują, jak to będzie działać. Kiedy: [wydania i zmiany](~/wydania/).
 
 - **Rezerwacja** - zajęcie samolotu na konkretne godziny. Opisuje PLAN, a nie fakt: lot
   zapisuje się osobno, w rejestrze operacji. Rezerwacja niczego nie warunkuje - można
@@ -48,6 +50,7 @@
 - **Ścieżka akceptacji** *(3.1.0)* - kolejność osób, które muszą zgodzić się na
   rezerwację, zanim stanie się potwierdzona. Klub bez ścieżki nie zatwierdza niczego -
   rezerwacja jest gotowa od razu. Odrzucenie wymaga powodu, a pilot czyta go w aplikacji.
+
 ## Liczniki, paliwo i olej
 
 - **Motogodziny (MH)** - licznik pracy silnika maszyny. Odczyt przy przejęciu i przy zdaniu tworzy łańcuch: ile jeden pilot zostawił, tyle następny powinien zastać.
@@ -57,7 +60,7 @@
 - **Stan początkowy (aktualny stan)** - licznik, paliwo i olej wpisane w karcie samolotu przy zakładaniu maszyny. Jest pierwszym ogniwem łańcucha, dopóki maszyny nikt nie przekazał; potem pola pokazują ostatni odczyt z dziennika.
 - **Poprawa odczytów** - wpisanie przez administratora nadrzędnego stanu licznika, paliwa i oleju, z wymaganym komentarzem. Wchodzi do łańcucha jako punkt wyjścia dla następnego pilota, ale nie zmienia zapisów żadnej operacji.
 - **Minimum oleju** - poziom przed lotem zadeklarowany w karcie samolotu; aplikacja pokazuje go jako kreskę na podziałce i ostrzega przy zejściu poniżej.
-- **Dolewka oleju** - osobny zapis o dolanym oleju, z arkusza przejęcia albo z kokpitu. Olej mierzy się tylko przy przejęciu, więc zużycie liczy się od pomiaru do pomiaru, przez wiele operacji.
+- **Dolewka oleju** - osobny zapis o dolanym oleju, z okienka przejęcia albo z kokpitu. Olej mierzy się tylko przy przejęciu, więc zużycie liczy się od pomiaru do pomiaru, przez wiele operacji.
 
 ## Norma i werdykty
 
@@ -65,16 +68,16 @@
 - **Norma z dokumentacji** - liczba z instrukcji użytkowania wpisana w karcie samolotu, w litrach na godzinę pracy silnika. Działa od pierwszego lotu i ustępuje normie wyliczonej, gdy ta się pojawi.
 - **Pasmo normy** - widełki wokół oczekiwania, w których zużycie uchodzi za normalne. Przy normie z dokumentacji jest zadeklarowane (instrukcja podaje punkt, nie rozrzut); przy normie z lotów - zmierzone na historii tej maszyny.
 - **Szacunek z normy** - podpowiedź „ile zostało", liczona z normy i czasu pracy silnika: w kokpicie po uruchomieniu, przy tankowaniu i przy zdaniu samolotu. Nigdy nie wchodzi do pola sama - wpisujesz to, co pokazuje przyrząd.
-- **Werdykt** - plakietka na rachunku paliwa albo motogodzin: czy zużycie tej operacji mieści się w paśmie. Tapnięcie otwiera rachunek. Niczego nie blokuje i nie zmienia.
+- **Werdykt** - oznaczenie na rachunku paliwa albo motogodzin: czy zużycie tej operacji mieści się w paśmie. Tapnięcie otwiera rachunek. Niczego nie blokuje i nie zmienia.
 
 ## Zapis, korekty i nazwy
 
 - **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/TMK/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
 - **Kod pilota** - krótki kod (np. `TMK`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
-- **Okno korekty** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
+- **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
 - **Korekta** - poprawka godziny, odczytu, składu zrzutu, notatki albo drugiego pilota, z opcjonalnym powodem. Nie nadpisuje historii - dopisuje się do niej.
-- **Plakietka „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.
-- **Podgląd po oknie** - ten sam ekran operacji po upływie 24 godzin: bez edycji, ale z pełnym rachunkiem, śladem i historią zmian. Zamknięte okno odbiera prawo do zmiany danych, nie do ich zrozumienia.
+- **Oznaczenie „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.
+- **Podgląd po terminie** - ten sam ekran operacji po upływie 24 godzin: bez edycji, ale z pełnym rachunkiem, śladem i historią zmian. Upływ terminu odbiera prawo do zmiany danych, nie do ich zrozumienia.
 - **Unieważnienie** - wycofanie całej operacji z list i sum; zapis zostaje razem z powodem. Robi to pilot w oknie korekty albo administrator z panelu, gdzie powód jest wymagany.
 - **Zakończenie administracyjne** - zakończenie z panelu operacji, której pilot nie zdał: z powodem, bez odczytów. Zwalnia maszynę i liczy się do nalotu, ale nie jest ogniwem łańcucha odczytów.
 - **Ślad** - zapis GPS całej operacji: mapa z kołowaniem i lotami, profil wysokości i statystyki. Wraca z serwera, więc wymaga zasięgu.

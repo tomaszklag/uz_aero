@@ -22,9 +22,9 @@ Wszystkie maszyny klubu w wybranym zakresie, także te, które nie latały: wier
 
 W adresie stoi rejestracja, nie wewnętrzny numer - `SP-KLM` człowiek przeczyta przez telefon i wpisze z pamięci. Kolumn jest dziewięć i każda odpowiada na jedno pytanie, zamiast wypisywać pojedynczą liczbę:
 
-| Kolumna | Co niesie |
+| Kolumna | Co pokazuje |
 |---|---|
-| **Operacja** | data, a pod nią sygnatura; plakietka **ręcznie** przy wpisie po fakcie |
+| **Operacja** | data, a pod nią sygnatura; oznaczenie **ręcznie** przy wpisie po fakcie |
 | **Bieg silnika** | uruchomienie → wyłączenie, druga linia mówi, jak długo |
 | **Lot** | pierwszy start → ostatnie lądowanie, druga linia mówi, dokąd |
 | **Loty** | ile lotów w tej operacji |
@@ -42,7 +42,7 @@ Gdy zakres obejmuje więcej operacji, niż lista pokazuje, stopka mówi to wpros
 
 ## Poziom 3 · jedna operacja
 
-Nagłówek niesie znaki, sygnaturę i godziny biegu silnika, a obok stan wpisu: **ręcznie**, **w toku**, **unieważniona** albo **zakończona przez administratora**. Dwa ostatnie dokłada baner, który mówi, co z tego wynika dla rachunków klubu.
+W nagłówku stoją znaki, sygnatura i godziny biegu silnika, a obok stan wpisu: **ręcznie**, **w toku**, **unieważniona** albo **zakończona przez administratora**. Dwa ostatnie dokłada baner, który mówi, co z tego wynika dla rachunków klubu.
 
 - **Log zdarzeń** - ten sam przebieg, który widzi pilot: przejęcie z odczytami, zadanie, tankowania, uruchomienie, kołowanie, starty, lądowania, zrzuty, dolewki oleju, wyłączenie, zdanie. Czasy z sekundami, bo to jedyne miejsce, gdzie różnica sekund rozstrzyga, o które zdarzenie chodzi. Kolumna **Zapis** mówi, czy zdarzenie wykrył automat, czy zapisał je pilot ręcznie. Poprawiona godzina jest przekreślona, a pod nią stoi nowa; korekta administratora jest podpisana; zdarzenie unieważnione zostaje przekreślone w wierszu.
 - **Szczegóły** - pilot i drugi pilot, zadanie, klient, trasa, liczba lotów, starty i lądowania, paliwo z dolewką, motogodziny i trzy liczby oleju: pomiar przed lotem, dolewka i stan do lotu.
@@ -56,17 +56,19 @@ Operacja, której pilot nie zdał - telefon padł, został w kabinie, pilot odje
 
 Po zakończeniu maszyna jest wolna, a pilot dostaje na telefonie baner z powodem. Zaległych zapisów tej operacji jego telefon już nie wyśle i nie naniesie w niej poprawek.
 
-> **Dlaczego zakończenie nie udaje zdania.** Zdanie samolotu niesie obowiązkowe odczyty paliwa i licznika - to one są przekazaniem dla następnego pilota. Administrator przy biurku nie wie, co pokazują przyrządy, a wpisanie zmyślonych liczb byłoby najgorszą rzeczą, jaką można zrobić dziennikowi. Zakończona operacja liczy się więc do nalotu i do sum, ale **nie jest ogniwem łańcucha**: aktualny stan maszyny wpisuje się osobno, w [karcie samolotu](panel-samoloty).
-
 ### Unieważnienie wpisu
 
 Operację zakończoną można wycofać - z **wymaganym** powodem. Przestaje się liczyć do nalotu pilota, do sum dziennika i do karty dnia maszyny, znika z list w aplikacji pilota i przestaje trzymać samolot. Sam zapis zostaje razem z powodem.
 
+@panel dziennik-operacja "Poziom 3 · oś zdarzeń i ślad"
+
+## Dlaczego tak to działa
+
+> **Dlaczego zakończenie nie udaje zdania.** Zdanie samolotu wymaga odczytów paliwa i licznika - to one są przekazaniem dla następnego pilota. Administrator przy biurku nie wie, co pokazują przyrządy, a wpisanie zmyślonych liczb byłoby najgorszą rzeczą, jaką można zrobić dziennikowi. Zakończona operacja liczy się więc do nalotu i do sum, ale **nie jest ogniwem łańcucha**: aktualny stan maszyny wpisuje się osobno, w [karcie samolotu](panel-samoloty).
+
 > **Dlaczego powód jest tu wymagany, a w telefonie nie.** W aplikacji pilot wycofuje własny wpis i wie, co zrobił. Z panelu wycofuje się cudzy lot: powód czyta pilot na swoim telefonie, stoi na osi zdarzeń i zostaje w klubie. Nic przy tym nie znika - powstaje nowy fakt („ten wpis został wycofany"), bo dziennik lotów ma pokazywać, że lot był i że go wycofano.
 
-> **Założenie.** W dzienniku stoją wyłącznie wartości zmierzone albo policzone z faktów - liczba lotów, czas trwania biegu, suma pomiaru i dolewki. Normy zużycia, szacunki „ile powinno zostać" i werdykty nie wchodzą tu ani teraz, ani później: to jest narzędzie nadzoru, a nie druga opinia o cudzym locie. Dlatego `0 L` znaczy pusty zbiornik, a kreska - „nikt tego nie zapisał".
-
-@panel dziennik-operacja "Poziom 3 · oś zdarzeń i ślad"
+> **Dlaczego dziennik nie pokazuje szacunków.** W dzienniku stoją wyłącznie wartości zmierzone albo policzone z faktów - liczba lotów, czas trwania biegu, suma pomiaru i dolewki. Normy zużycia, szacunki „ile powinno zostać" i werdykty nie wchodzą tu ani teraz, ani później: to jest narzędzie nadzoru, a nie druga opinia o cudzym locie. Dlatego `0 L` znaczy pusty zbiornik, a kreska - „nikt tego nie zapisał".
 
 ## Częste problemy
 
