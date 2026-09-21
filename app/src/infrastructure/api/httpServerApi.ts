@@ -33,7 +33,9 @@ import type {
   SetPasswordResult,
   BookingWriteResult,
   RemoteBooking,
+  RemoteBookingDetail,
   RemoteBookingDraft,
+  RemoteBookingPatch,
   RemoteCalendar,
   RemoteSlotSuggestions,
   RemoteBugReport,
@@ -442,6 +444,10 @@ export class HttpServerApi implements ServerPort {
     return this.request('GET', `/bookings?${query.toString()}`, { token });
   }
 
+  getBooking(token: string, id: string): Promise<RemoteBookingDetail> {
+    return this.request('GET', `/bookings/${encodeURIComponent(id)}`, { token });
+  }
+
   getSlotSuggestions(
     token: string,
     params: { aircraftId: string; day: number; minutes: number; preferredAt?: number },
@@ -470,6 +476,18 @@ export class HttpServerApi implements ServerPort {
     return this.write(await this.send('POST', '/bookings', { token, body: draft }));
   }
 
+  async patchBooking(
+    token: string,
+    id: string,
+    patch: RemoteBookingPatch,
+  ): Promise<BookingWriteResult> {
+    const response = await this.send('PATCH', `/bookings/${encodeURIComponent(id)}`, {
+      token,
+      body: patch,
+    });
+    return this.write(response);
+  }
+
   async cancelBooking(
     token: string,
     id: string,
@@ -486,7 +504,7 @@ export class HttpServerApi implements ServerPort {
   /** Odpowiedź zapisu → wynik: sukces z wierszem albo odmowa z tym, co koliduje. */
   private async write(response: Response): Promise<BookingWriteResult> {
     const body = (await response.json().catch(() => null)) as
-      | { error?: string; taken?: RemoteBooking }
+      | { error?: string; taken?: RemoteBooking; takenAt?: string }
       | RemoteBooking
       | null;
 
@@ -499,11 +517,19 @@ export class HttpServerApi implements ServerPort {
     // Bez nazwanego powodu to nie jest odmowa REGUŁY, tylko awaria - i tak ma
     // wyglądać na ekranie (401 po wygaśnięciu tokenu, 500, odpowiedź nie-JSON).
     if (refusal == null) throw new ServerRejectedError(response.status, `http_${response.status}`);
-    return { ok: false, refusal, taken: (body as { taken?: RemoteBooking }).taken ?? null };
+    const taken = (body as { taken?: RemoteBooking }).taken ?? null;
+    const at = (body as { takenAt?: string }).takenAt;
+    const takenAt = at == null ? null : Date.parse(at);
+    return {
+      ok: false,
+      refusal,
+      taken,
+      takenAt: takenAt == null || Number.isNaN(takenAt) ? null : takenAt,
+    };
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
     options: { token?: string; body?: unknown; timeoutMs?: number },
   ): Promise<T> {
@@ -520,7 +546,7 @@ export class HttpServerApi implements ServerPort {
    * interpretację statusu zostawia wołającemu - `getReference` musi odróżnić 304 od błędu.
    */
   private async send(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
     options: {
       token?: string;

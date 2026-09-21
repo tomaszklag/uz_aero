@@ -26,7 +26,9 @@ import {
   type PushResult,
   type RemoteAircraftState,
   type BookingWriteResult,
+  type RemoteBookingDetail,
   type RemoteBookingDraft,
+  type RemoteBookingPatch,
   type RemoteCalendar,
   type RemoteSlotSuggestions,
   type RemoteReadingsChain,
@@ -166,6 +168,16 @@ export class SyncEngine {
     return authorizedFetch(this.auth, (token) => this.server.getBookings(token, params));
   }
 
+  /**
+   * JEDNA rezerwacja razem z jej dobą (`GET /bookings/:id`).
+   *
+   * Osobno od okna kalendarza, bo termin bywa za dwa miesiące: szukanie go w oknie
+   * znaczyłoby pytanie o siatkę, której ten ekran w ogóle nie rysuje.
+   */
+  fetchBooking(id: string): Promise<RemoteBookingDetail | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getBooking(token, id));
+  }
+
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   fetchSlots(params: {
     aircraftId: string;
@@ -190,6 +202,16 @@ export class SyncEngine {
    */
   createBooking(draft: RemoteBookingDraft): Promise<BookingWriteResult | null> {
     return authorizedFetch(this.auth, (token) => this.server.createBooking(token, draft));
+  }
+
+  /**
+   * Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi.
+   *
+   * Przesunięcie terminu jest tym samym wyścigiem, co jego zakładanie: nowe godziny
+   * mogą być już zajęte, więc odmowa niesie kolidującą zajętość i ekran mówi, co stoi.
+   */
+  patchBooking(id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.patchBooking(token, id, patch));
   }
 
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); ta sama trójka odpowiedzi. */

@@ -126,15 +126,23 @@ export function step2Blocker(input: Step2Input): string | null {
 }
 
 /**
- * Napis przycisku zapisu: „ZAREZERWUJ 11:00 → 13:00".
+ * Napis przycisku zapisu: „ZAREZERWUJ 11:00 → 13:00", a w poprawce „ZAPISZ 11:00 → 13:00".
  *
  * Przycisk mówi, CO SIĘ STANIE, a nie „zapisz": rezerwacja jest ustaleniem z innymi
  * ludźmi, więc pilot ma widzieć termin w chwili potwierdzania. Bez godzin zostaje sam
  * czasownik - blokada i tak stoi wyżej.
+ *
+ * Czasownik różni się w POPRAWCE, bo różni się skutek: „zarezerwuj" nad terminem,
+ * który już stoi w kalendarzu, obiecywałoby drugą rezerwację.
  */
-export function confirmLabel(draft: BookingDraft, day: ClubDayBounds | null): string {
-  if (draft.startsAt == null || draft.endsAt == null || day == null) return 'ZAREZERWUJ';
-  return `ZAREZERWUJ ${clubHhmm(draft.startsAt, day)} → ${clubHhmm(draft.endsAt, day)}`;
+export function confirmLabel(
+  draft: BookingDraft,
+  day: ClubDayBounds | null,
+  editing = false,
+): string {
+  const verb = editing ? 'ZAPISZ' : 'ZAREZERWUJ';
+  if (draft.startsAt == null || draft.endsAt == null || day == null) return verb;
+  return `${verb} ${clubHhmm(draft.startsAt, day)} → ${clubHhmm(draft.endsAt, day)}`;
 }
 
 /**

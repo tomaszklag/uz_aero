@@ -56,6 +56,23 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   do zabrania i notatka - te same pytania i te same kontrolki, co przy rozpoczęciu lotu.
   Samolot wymagający załogi dwuosobowej nie przepuści rezerwacji bez drugiego pilota,
   a powód stoi wewnątrz przycisku.
+- **Rezerwacja zapisuje się na serwerze, a zajęty termin mówi, co w nim stoi.** Jeśli
+  slot zniknął w trakcie wypełniania formularza, ekran wraca do godzin i pisze, kto go
+  ma i od kiedy - razem z gotowym skrótem do najbliższego wolnego pasma tej samej
+  długości. Bez zasięgu zapisu nie ma i aplikacja mówi to wprost: termin potwierdza
+  serwer.
+- **Karta rezerwacji**: dzień, godziny czasem klubu z odliczaniem, maszyna, zadanie,
+  trasa, drugi pilot i plan lotu. Stamtąd termin się przesuwa („Przesuń i popraw"
+  wraca do formularza z wypełnionymi polami) i odwołuje - z potwierdzeniem, które
+  nazywa konkretny wpis, i z opcjonalnym powodem. Zmiana samolotu zakłada rezerwację
+  od nowa i zwalnia poprzednią dopiero wtedy, gdy nowa już stoi.
+- **Pulpit pokazuje najbliższą rezerwację** - godziny, maszynę, zadanie i odliczanie -
+  a „ROZPOCZNIJ LOT" wypełnia nią kroki rozpoczęcia lotu: samolot, zadanie, trasę
+  i drugiego pilota. Dotyczy to terminu, który właśnie się zaczyna albo trwa; plan
+  na przyszły tydzień zostaje planem. **Rezerwacja nigdy nie warunkuje lotu** - bez
+  niej i bez zasięgu wszystko działa jak dotąd.
+- **Ostrzeżenie o cudzym planie przy braniu maszyny**: jeśli ktoś ma ją zarezerwowaną
+  na najbliższe godziny, pierwszy krok mówi kto i kiedy - ale nie zatrzymuje lotu.
 - **Kalendarz floty w panelu klubu** - kto ma zaplanowany lot, na której maszynie i w które
   dni, w widoku na tydzień, dwa tygodnie albo miesiąc. Administrator zarezerwuje termin za
   pilota i wyłączy maszynę z użytku na czas przeglądu albo usterki - wtedy znika ona pilotom

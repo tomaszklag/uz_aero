@@ -82,6 +82,19 @@ export interface BugOperation {
   closed: boolean;
 }
 
+/**
+ * REZERWACJA, której dotyczy ekran (#162 F10); `null` = ekran nie dotyczy żadnej.
+ *
+ * Inaczej niż operacja, ta NIE jest z lokalnego rejestru: rezerwacje żyją wyłącznie
+ * na serwerze (§2.2), więc zgłoszenie z ekranu bez zasięgu ma tu `null` - i to jest
+ * prawdziwa odpowiedź, bo telefon naprawdę nie wie, na co pilot patrzył.
+ */
+export interface BugBooking {
+  id: string;
+  /** „SP-AXA · 20 WRZ 11:00 → 13:00" - to, co pilot widział na ekranie. */
+  label: string;
+}
+
 export interface BugPilot {
   id: string;
   code: string | null;
@@ -102,6 +115,8 @@ export interface BugContextInput {
   release: BugRelease;
   sync: BugSyncSnapshot;
   operation: BugOperation;
+  /** Rezerwacja, której dotyczy ekran; pominięta = ekran nie dotyczy żadnej. */
+  booking?: BugBooking | null;
   pilot: BugPilot;
   /** Nazwa motywu (`night` / `solar`) - część opisu tego, co pilot widział. */
   theme: string;
@@ -187,7 +202,7 @@ function deviceLine(release: BugRelease): string {
 }
 
 export function buildBugContext(input: BugContextInput): BugContextView {
-  const { place, release, sync, operation, pilot, theme, at } = input;
+  const { place, release, sync, operation, booking, pilot, theme, at } = input;
   const screen = bugPlaceLabel(place);
 
   const context: Record<string, unknown> = {
@@ -204,6 +219,9 @@ export function buildBugContext(input: BugContextInput): BugContextView {
     engineRunning: operation.engineRunning,
     flights: operation.flights,
     sessionClosed: operation.closed,
+    // ── rezerwacja (z serwera, więc bez zasięgu jej nie ma) ──
+    bookingId: booking?.id ?? null,
+    booking: booking?.label ?? null,
     // ── kto ──
     pilotId: pilot.id,
     pilotCode: pilot.code,
@@ -251,6 +269,11 @@ export function buildBugContext(input: BugContextInput): BugContextView {
       });
     }
   }
+
+  // Wiersz istnieje TYLKO z rezerwacją - „Rezerwacja -" byłoby wierszem o niczym
+  // (ta sama reguła, co przy operacji). Napis „Dołączamy automatycznie" jest
+  // obietnicą, więc wiersz i `context` powstają z JEDNEGO wywołania.
+  if (booking != null) rows.push({ label: 'Rezerwacja', value: booking.label });
 
   rows.push({
     label: 'Pilot',

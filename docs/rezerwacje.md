@@ -374,6 +374,7 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 | Trasa | Znaczenie |
 | --- | --- |
 | `GET /bookings?from=&to=` | zajętość floty w oknie dat; ETag, bo kalendarz odpytuje często |
+| `GET /bookings/:id` | JEDNA zajętość razem z jej dobą - karta rezerwacji (23) i karta na Pulpicie |
 | `POST /bookings` | nowa rezerwacja (uuid klienta = idempotencja); `409 slot_taken` |
 | `PATCH /bookings/:id` | przesunięcie i zmiana zadania - WŁASNEJ rezerwacji |
 | `DELETE /bookings/:id` | odwołanie własnej (zapis zostaje, `status = 'cancelled'`) |
@@ -386,6 +387,21 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 Odmowy: `409 slot_taken` (nakładka - z danymi kolidującej zajętości, żeby ekran mógł
 powiedzieć CO stoi w tym czasie), `409 aircraft_disabled`, `403 not_your_booking`,
 `404` na cudzy klub.
+
+**Ciało odmowy niesie `takenAt` OBOK `taken`**, a nie w środku: „weszła 3 min temu"
+znaczy wyścig o slot, a cudzy plan sprzed tygodnia - zwykły stan kalendarza, którego
+pilot nie zauważył (makieta 22C). Na siatce kalendarza wiek wiersza nie znaczy nic,
+więc do wspólnego kształtu zajętości nie wchodzi - inaczej jechałby w każdej
+odpowiedzi, której nikt o to nie pyta.
+
+**`PATCH` nie przyjmuje maszyny i to jest decyzja, nie luka**: rezerwacja należy do
+konkretnego egzemplarza. Przeniesienie jej na inny jest NOWĄ rezerwacją i telefon
+robi wtedy dwa zapisy - **najpierw zakłada nowy termin, a stary odwołuje dopiero po
+jego potwierdzeniu** (decyzja właściciela 2026-09-21). Odwrotna kolejność oddawałaby
+slot, zanim wiadomo, czy jest co wziąć w zamian; obie rezerwacje stoją na RÓŻNYCH
+maszynach, więc nie mają jak zderzyć się ze sobą. Nieudane odwołanie nie cofa zapisu:
+pilot ma wtedy dwa terminy i dowiaduje się o tym z karty starego - to jest lepszy
+stan niż utrata nowego.
 
 ### 5.2 Panel (sesja klubu, `adminRoute`)
 

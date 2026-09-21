@@ -122,6 +122,7 @@ export * from './data/FilterChip';
 export * from './data/ReservationCard';
 // Formularz rezerwacji (22): karta samolotu z paskiem zajętości i chipy sugestii.
 export * from './data/BookingAircraftCard';
+export * from './data/BookingDenyCard';
 export * from './data/SlotChips';
 // `SummaryHero` i `SummaryGrid` USUNIĘTE 2026-08-12 - były komponentami ekranu 03
 // (podsumowanie preflightu), a ten zniknął przy skróceniu przejęcia do trzech kroków

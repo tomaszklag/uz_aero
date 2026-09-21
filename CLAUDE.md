@@ -3981,10 +3981,50 @@ KAŻDY ekran modułu rezerwacji:
 - **`NumberSheet` to arkusz JEDNEJ liczby** (plan lotu, paliwo do zabrania) - dwa osobne
   pliki różniłyby się wyłącznie napisami, a `ReadingSheet` niesie cały świat paliwa
   i licznika. Rezygnacja z wartości opcjonalnej to „×" w linii tytułu
-- **czego epik R-F jeszcze NIE ROBI**: zapisu rezerwacji (F6), odwołania (F7), wejścia
-  w lot z rezerwacji (F8), ostrzeżenia o kolizji przy przejęciu (F9) i karty najbliższej
-  rezerwacji na Pulpicie (F12). Trasy `BookingDetails` w nawigacji NADAL NIE MA - zakłada
-  ją F7; nazwa parametru jest już ujednolicona na `bookingId`
+- **ODMOWA ZAPISU NIESIE TREŚĆ, WIĘC NIE JEST BŁĘDEM** (`logic/bookingDeny.ts`,
+  makieta 22C): `409 slot_taken` przychodzi z kolidującą zajętością, a ekran wraca na
+  KROK 1 - tam stoją kontrolki, którymi da się ją naprawić, i tam stoi karta z powodem.
+  Karta niesie skrót „najbliższe wolne" TYLKO przy zajętym terminie: sugestie liczą się
+  dla wybranej maszyny, więc przy maszynie wyłączonej z użytku prowadziłyby w tę samą
+  ścianę. **Wiek kolizji jedzie OBOK zajętości** (`takenAt` w ciele odmowy, nie
+  w `bookingWire`): „weszła 3 min temu" znaczy wyścig o slot, a plan sprzed tygodnia -
+  stan kalendarza, którego pilot nie zauważył; na siatce ta liczba nie znaczy nic
+- **ZAPIS, KTÓRY NIE DOJECHAŁ, TO INNA KATEGORIA NIŻ ODMOWA REGUŁY**: `null` z portu
+  znaczy „o terminie nie wiemy nic", więc ekran mówi, CZYJĄ decyzją jest slot
+  („Slot potwierdza serwer"), a nie „spróbuj ponownie". Preemptywnego powodu
+  w przycisku NIE MA i to jest świadome: `syncIndicator` opisuje kolejkę ZDARZEŃ,
+  więc przy pustym outboksie milczałby dokładnie u pilota bez zasięgu
+- **KARTA REZERWACJI (23) MA JEDNE DRZWI DO ZMIANY**: „PRZESUŃ I POPRAW" wraca do
+  kroku 1 z wypełnionym szkicem, ołówków przy wierszach nie ma (issue #40). Poprawka
+  niesie SAMĄ RÓŻNICĘ (`logic/bookingEdit.ts` + `PATCH`), a **zmiana maszyny jest NOWĄ
+  rezerwacją** (decyzja właściciela 2026-09-21): termin należy do egzemplarza, więc
+  ekran zakłada nowy i odwołuje stary - **w tej kolejności**, bo odwrotna oddawałaby
+  slot, zanim wiadomo, czy jest co wziąć w zamian. Obie stoją na różnych maszynach,
+  więc nie mają jak zderzyć się ze sobą
+- **ODWOŁANIE I POPRAWKA MAJĄ RÓŻNE WARUNKI I TO NIE JEST NIEDOPATRZENIE**: oddać da
+  się termin, który już TRWA (pilot nie poleci), przesunąć - dopiero taki, który się
+  nie zaczął; przesuwanie trwającego opisywałoby przeszłość. Cudzej rezerwacji nie
+  dotyczy ani jedno, ani drugie
+- **`GET /bookings/:id` JEST OSOBNĄ TRASĄ**, nie szukaniem w oknie kalendarza: termin
+  bywa za dwa miesiące, a karta nie rysuje żadnej siatki. Odpowiedź niesie DOBĘ razem
+  z wierszem, więc telefon liczy godziny odejmowaniem, jak wszędzie indziej (§6.1)
+- **KARTA NAJBLIŻSZEJ REZERWACJI PYTA SERWER PRZY WEJŚCIU NA PULPIT** (F12): bez
+  zasięgu karty NIE MA WCALE, czyli ekran wygląda jak wariant `20a` - i to jest stan
+  poprawny, nie zaślepka. „Najbliższa" znaczy pierwszą WŁASNĄ, która się jeszcze nie
+  skończyła - także tę, która właśnie trwa
+- **REZERWACJA WYPEŁNIA PRZEJĘCIE, ALE GO NIE ZASTĘPUJE** (F8, `logic/claimFromBooking.ts`):
+  „ROZPOCZNIJ LOT" ma jedno miejsce i jeden wygląd przez cały dzień (issue #42),
+  a rezerwacja zmienia wyłącznie to, czym wypełni się krok 1. Wypełnia TYLKO termin,
+  który dzieje się teraz (godzina przed początkiem, do końca) - plan na przyszły
+  weekend podstawiony w formularz wyglądałby jak wpis pilota. `session_claim` niesie
+  `reservationId` i to jest JEDYNE zetknięcie rejestru z rezerwacją, w jedną stronę
+- **OSTRZEŻENIE O CUDZYM TERMINIE TO BANER, NIGDY BLOKADA** (F9, makieta 23A): okno
+  dwóch godzin (tyle trwa typowy lot klubowy), własna rezerwacja kolizją nie jest,
+  a bez sieci ostrzeżenia nie ma i przejęcie idzie dalej - rezerwacja nigdy go nie
+  warunkowała (§2.3)
+- **czego epik R-F NIE ROBI**: sprawdzeń NA URZĄDZENIU (F0 sonda stref, F11 i F13) -
+  wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
+  parametru jest jedna (`bookingId`) po obu stronach
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

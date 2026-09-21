@@ -14,7 +14,7 @@
  * błędu przyjeżdża w ramie `ScreenHeader` (issue #87), więc ekran nie ma o nim linijki.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { referenceCheckedAt } from '../../application';
@@ -42,8 +42,14 @@ import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong } from '../format';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
+import { useCalendar } from '../hooks/useCalendar';
 import { useOperationSignatures } from '../hooks/useOperationSignatures';
 import { useOperationClub } from '../hooks/useOperationClub';
+import { usePilotCode } from '../hooks/usePilots';
+import { claimSeed } from './logic/claimFromBooking';
+import { nextBooking, nextBookingRow } from './logic/nextBooking';
+import { usePreflightDraft } from '../store/preflightDraft';
+import { useFleet } from '../hooks/useFleet';
 import { buildMyDay, myDayActions, totalLabel, type MyDayVm } from './logic/myDay';
 import {
   bookingLead,
@@ -71,6 +77,7 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
   const pilotDay = usePilotDay(pilotId, utcDayStart(now));
 
   const regOf = useAircraftRegistrations();
+  const codeOf = usePilotCode();
   const signatureOf = useOperationSignatures();
   const clubOf = useOperationClub();
   const vm = pilotDay != null ? buildMyDay(pilotDay, regOf, signatureOf, clubOf) : null;
@@ -79,12 +86,48 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
   const actions = myDayActions();
 
   /**
-   * Najbliższa rezerwacja przychodzi z cache'u kalendarza, który powstaje w epiku R-F
-   * (#162 F1/F2). Do tego czasu jest jej po prostu BRAK - i ekran wygląda wtedy dokładnie
-   * jak wariant `20a`, bo bez rezerwacji karty nie ma wcale. Zaślepki „wkrótce" tu nie
-   * ma i być nie może: pusta karta byłaby zdaniem o niczym.
+   * Najbliższa rezerwacja - PYTANIE DO SERWERA przy wejściu na Pulpit.
+   *
+   * Cache’u zajętości nie ma i nie będzie (§2.2, decyzja właściciela 2026-09-20),
+   * więc bez zasięgu karty po prostu NIE MA - ekran wygląda wtedy dokładnie jak
+   * wariant `20a`. To jest stan poprawny, nie zaślepka: o tym, że nic nie stoi
+   * w planie, mówi już sam brak karty, a pusta byłaby zdaniem o niczym.
+   *
+   * Okno jest to samo, co w zakładce Kalendarz - jedno zapytanie w obu miejscach
+   * znaczy jedną odpowiedź i jedną definicję „najbliższej".
    */
-  const booking: NextBooking | null = null;
+  const calendar = useCalendar();
+  const { aircraft: fleet } = useFleet();
+  const fromBooking = usePreflightDraft((d) => d.fromBooking);
+  const booking = useMemo(
+    () =>
+      nextBooking({
+        data: calendar.data ?? null,
+        pilotId,
+        now,
+        regOf: (id) => regOf(id),
+        codeOf: (id) => codeOf(id),
+      }),
+    [calendar.data, pilotId, now, regOf, codeOf],
+  );
+
+  /**
+   * Czym wypełni się przejęcie, jeśli pilot tapnie „ROZPOCZNIJ LOT" TERAZ.
+   *
+   * Bez rezerwacji, bez zasięgu i przy terminie na przyszły tydzień jest to `null`,
+   * a formularz otwiera się pusty jak zawsze - rezerwacja nigdy nie warunkuje lotu
+   * (§2.3), więc jej brak nie zmienia ani jednego kroku.
+   */
+  const seed = useMemo(() => {
+    const row = nextBookingRow({
+      data: calendar.data ?? null,
+      pilotId,
+      now,
+      regOf: (id) => regOf(id),
+      codeOf: (id) => codeOf(id),
+    });
+    return claimSeed(row, now);
+  }, [calendar.data, pilotId, now, regOf, codeOf]);
 
   const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
   useEffect(() => {
@@ -168,9 +211,27 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
             size={action.primary ? undefined : 'md'}
             icon={action.primary ? 'start' : 'edit'}
             {...(action.primary && hint != null ? { hint } : {})}
-            onPress={() =>
-              navigation.navigate(action.id === 'start' ? 'PreflightAircraft' : 'ManualFlight')
-            }
+            onPress={() => {
+              if (action.id !== 'start') {
+                navigation.navigate('ManualFlight');
+                return;
+              }
+              // Rezerwacja wypełnia krok 1, ale go nie zastępuje: pilot i tak
+              // przechodzi przez wybór maszyny, zadanie i odczyty liczników.
+              const plane = seed == null ? null : fleet.find((a) => a.id === seed.aircraftId);
+              if (seed != null && plane != null) {
+                fromBooking({
+                  aircraft: plane,
+                  reservationId: seed.reservationId,
+                  operation: seed.operation,
+                  departureIcao: seed.departureIcao,
+                  arrivalIcao: seed.arrivalIcao,
+                  dualId: seed.dualId,
+                  notes: seed.notes,
+                });
+              }
+              navigation.navigate('PreflightAircraft');
+            }}
           />
         ))}
       </View>

@@ -45,6 +45,14 @@ class BugServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async patchBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
     throw new Error('nieużywane');
   }

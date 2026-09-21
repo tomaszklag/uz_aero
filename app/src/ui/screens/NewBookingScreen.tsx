@@ -19,7 +19,7 @@
  * godzinę później. Ekran mówi to wprost, zamiast rysować pusty formularz.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { CommonActions, type NavigationAction } from '@react-navigation/native';
 
@@ -29,6 +29,7 @@ import {
   AirfieldSheet,
   AppText,
   BookingAircraftCard,
+  BookingDenyCard,
   BookingTimeSheet,
   Card,
   DayChips,
@@ -49,7 +50,10 @@ import {
   type SheetRow,
 } from '../components';
 import { airfieldValueProps } from '../components/input/airfieldMark';
+import { uuidv4 } from '../../infrastructure/id';
+import type { RemoteBooking } from '../../application/ports';
 import { useAbandonExit } from '../hooks/useAbandonExit';
+import { useBooking } from '../hooks/useBooking';
 import { useCalendar } from '../hooks/useCalendar';
 import { useFleet } from '../hooks/useFleet';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
@@ -57,10 +61,12 @@ import { useNearbyPosition } from '../hooks/useNearbyPosition';
 import { usePilots } from '../hooks/usePilots';
 import { useSlotSuggestions } from '../hooks/useSlotSuggestions';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { useSessionStore } from '../store';
 import { useCurrentPilot } from '../store/currentPilot';
 import { bookingDraftDirty, useBookingDraft, type BookingDraft } from '../store/bookingDraft';
 import { useTheme, type Theme } from '../theme';
 import { duration, litres, maskMotoHoursInput, parseLitres, parseMotoHours } from '../format';
+import { relativeAge } from '@ninerdeck/format';
 import {
   isSameFieldOperation,
   OPERATION_TYPES,
@@ -68,6 +74,13 @@ import {
 } from '../../domain';
 
 import { buildAircraftOptions } from './logic/aircraftAvailability';
+import { bookingDeny, BOOKING_OFFLINE, type BookingDenyVm } from './logic/bookingDeny';
+import {
+  aircraftChanged,
+  bookingChanged,
+  bookingChanges,
+  draftOfBooking,
+} from './logic/bookingEdit';
 import {
   confirmLabel,
   planNote,
@@ -76,7 +89,7 @@ import {
   step2Blocker,
   step2Subtitle,
 } from './logic/bookingSteps';
-import { bookingsOnDay } from './logic/calendarData';
+import { bookingsOnDay, toBooking } from './logic/calendarData';
 import { buildDayChips, defaultDay } from './logic/calendarDays';
 import { dayHeading, dayShort } from './logic/calendarHeading';
 import { buildFleetGrid } from './logic/calendarGrid';
@@ -88,6 +101,12 @@ import { buildSlotChips } from './logic/slotChips';
 /** `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02 i 15. */
 type Nav = {
   navigate: (screen: string, params?: object) => void;
+  /**
+   * Po ZAPISIE formularz ustępuje miejsca szczegółom (23), a nie kładzie ich na
+   * sobie: „wstecz" z karty rezerwacji ma wrócić do kalendarza, a nie do wypełnionego
+   * formularza, z którego ta rezerwacja właśnie powstała.
+   */
+  replace: (screen: string, params?: object) => void;
   goBack: () => void;
   dispatch: (action: NavigationAction) => void;
 };
@@ -107,7 +126,7 @@ export function NewBookingScreen({
   route,
 }: {
   navigation: Nav;
-  route?: { params?: { aircraftId?: string; startsAt?: number } };
+  route?: { params?: { aircraftId?: string; startsAt?: number; bookingId?: string } };
 }) {
   const { theme } = useTheme();
   const s = styles(theme);
@@ -119,6 +138,9 @@ export function NewBookingScreen({
   const draft = useBookingDraft();
 
   const [step, setStep] = useState<1 | 2>(1);
+  const [saving, setSaving] = useState(false);
+  const [deny, setDeny] = useState<BookingDenyVm | null>(null);
+  const sync = useSessionStore((st) => st.sync);
 
   /**
    * Godzina, w którą pilot wycelował na osi kalendarza - ŻYCZENIE, nie termin.
@@ -127,13 +149,34 @@ export function NewBookingScreen({
    */
   const preferredAt = route?.params?.startsAt ?? null;
 
-  // Formularz zaczyna się od pustego szkicu plus tego, co podała nawigacja. Szkic
-  // jest magazynem globalnym, więc bez tego wejście po rezygnacji wracałoby
-  // z wyborami sprzed godziny - a te czytają się jak podpowiedź.
+  /**
+   * POPRAWKA istniejącego terminu, jeśli nawigacja podała identyfikator („PRZESUŃ
+   * I POPRAW" z karty 23). Ten sam formularz, inne znaczenie zapisu.
+   */
+  const editId = route?.params?.bookingId ?? null;
+  const edited = useBooking(editId);
+  const base = useMemo(
+    () =>
+      edited.data == null ? null : draftOfBooking(edited.data.booking, edited.data.day),
+    [edited.data],
+  );
+
+  // Formularz zaczyna się od pustego szkicu plus tego, co podała nawigacja - albo od
+  // odtworzonej rezerwacji. Szkic jest magazynem globalnym, więc bez tego wejście po
+  // rezygnacji wracałoby z wyborami sprzed godziny, a te czytają się jak podpowiedź.
   const start = useBookingDraft((d) => d.start);
+  const seeded = useRef<string | null>(null);
   useEffect(() => {
-    start({ aircraftId: route?.params?.aircraftId ?? null });
-  }, [start, route?.params?.aircraftId]);
+    if (editId == null) {
+      start({ aircraftId: route?.params?.aircraftId ?? null });
+      return;
+    }
+    // Podstawiamy RAZ: ponowne wczytanie tej samej rezerwacji (powrót na ekran)
+    // przywracałoby wartości sprzed poprawek, których pilot jeszcze nie zapisał.
+    if (base == null || seeded.current === editId) return;
+    seeded.current = editId;
+    start(base);
+  }, [start, editId, base, route?.params?.aircraftId]);
   const [anchor, setAnchor] = useState<number | null>(preferredAt);
   const { data } = useCalendar(anchor);
   const skeleton = useSkeleton(data === undefined);
@@ -224,7 +267,11 @@ export function NewBookingScreen({
   const blocker2 = step2Blocker({ draft, aircraft, singleField });
 
   // ── wyjście ───────────────────────────────────────────────────────────────
-  const dirty = bookingDraftDirty(draft, SEEDED);
+  // W poprawce „niepusty szkic" znaczy co innego niż przy nowej rezerwacji: pilot
+  // straci ZMIANY, a nie wpisy - więc bramka rezygnacji porównuje z zapisanym
+  // terminem, nie z pustym formularzem.
+  const dirty =
+    base == null ? bookingDraftDirty(draft, SEEDED) : bookingChanged(draft, base);
   const exit = useAbandonExit(
     navigation,
     step > 1 || dirty,
@@ -252,6 +299,131 @@ export function NewBookingScreen({
     },
     [draft],
   );
+
+  /**
+   * Uuid nadaje TELEFON i to on jest całą idempotencją zapisu (ta sama zasada, co
+   * przy zdarzeniach rejestru): powtórzony `POST` przy słabym łączu wraca tym samym
+   * terminem, a nie drugą rezerwacją tego samego pilota. Dlatego identyfikator
+   * powstaje RAZ na wejście w formularz, a nie przy każdym tapnięciu.
+   */
+  const bookingId = useRef(uuidv4());
+
+  /**
+   * Odmowa → zdanie na ekranie. Wspólna dla zakładania i poprawki: serwer odmawia
+   * jednym słownikiem, więc dwa tłumaczenia rozjechałyby się przy pierwszej zmianie.
+   */
+  const refusalVm = useCallback(
+    (result: { refusal: string; taken: RemoteBooking | null; takenAt: number | null }) =>
+      bookingDeny({
+        refusal: result.refusal,
+        taken: result.taken == null ? null : toBooking(result.taken),
+        takenAt: result.takenAt,
+        now: Date.now(),
+        day: day ?? { date: '', startsAt: 0, endsAt: 0 },
+        reg: aircraft?.reg ?? null,
+        pilotId,
+        nameOf: (id) => (id == null ? null : (pilots.find((p) => p.id === id)?.name ?? null)),
+      }),
+    [day, aircraft, pilotId, pilots],
+  );
+
+  const save = useCallback(async () => {
+    if (sync == null || day == null || saving) return;
+    if (draft.aircraftId == null || draft.startsAt == null || draft.endsAt == null) return;
+    if (draft.operation == null) return;
+
+    setSaving(true);
+    setDeny(null);
+    try {
+      /**
+       * POPRAWKA BEZ ZMIANY MASZYNY idzie jednym `PATCH`-em i niesie samą różnicę.
+       * Brak różnicy to nie jest błąd - pilot wszedł w poprawkę i się rozmyślił,
+       * więc karta po prostu wraca bez ani jednego zapisu.
+       */
+      if (editId != null && base != null && !aircraftChanged(draft, base)) {
+        const changes = bookingChanges(draft, base);
+        if (changes == null) {
+          navigation.replace('BookingDetails', { bookingId: editId });
+          return;
+        }
+
+        const patched = await sync.patchBooking(editId, changes);
+        if (patched == null) {
+          setDeny(BOOKING_OFFLINE);
+          setStep(1);
+          return;
+        }
+        if (!patched.ok) {
+          setDeny(refusalVm(patched));
+          setStep(1);
+          return;
+        }
+
+        draft.reset();
+        navigation.replace('BookingDetails', { bookingId: editId });
+        return;
+      }
+
+      const result = await sync.createBooking({
+        id: bookingId.current,
+        aircraftId: draft.aircraftId,
+        startsAt: new Date(draft.startsAt).toISOString(),
+        endsAt: new Date(draft.endsAt).toISOString(),
+        operation: draft.operation,
+        dualId: draft.dualId,
+        fromIcao: draft.departureIcao === '' ? null : draft.departureIcao,
+        toIcao: draft.arrivalIcao === '' ? null : draft.arrivalIcao,
+        plannedAirMin: draft.plannedAirMin,
+        plannedFuelL: draft.plannedFuelL,
+        note: draft.notes,
+      });
+
+      // `null` = zapis NIE DOJECHAŁ (brak sieci albo odmowa transportowa). To inna
+      // kategoria niż odmowa reguły i mówi co innego: o terminie nie wiemy nic.
+      if (result == null) {
+        setDeny(BOOKING_OFFLINE);
+        setStep(1);
+        return;
+      }
+
+      if (!result.ok) {
+        setDeny(refusalVm(result));
+        // Odmowa dotyczy TERMINU I MASZYNY, czyli kroku 1 - tam stoją kontrolki,
+        // którymi da się ją naprawić, i tam stoi karta z powodem (makieta 22C).
+        setStep(1);
+        return;
+      }
+
+      /**
+       * ZMIANA MASZYNY: nowy termin już stoi, więc stary można oddać (decyzja
+       * właściciela 2026-09-21). Kolejność jest częścią tej decyzji - odwrotna
+       * zwalniałaby slot, zanim wiadomo, czy jest co wziąć w zamian.
+       *
+       * Nieudane odwołanie NIE cofa zapisu: pilot ma wtedy DWA terminy i lepiej,
+       * żeby dowiedział się o tym z karty starej rezerwacji niż stracił nową.
+       */
+      if (editId != null) await sync.cancelBooking(editId, null);
+
+      // Szkic ustępuje: następne wejście w formularz zaczyna od nowa, a nie od
+      // wyborów sprzed chwili (reguła rezygnacji z issue #55).
+      draft.reset();
+      navigation.replace('BookingDetails', { bookingId: result.booking.id });
+    } finally {
+      setSaving(false);
+    }
+  }, [sync, day, saving, draft, editId, base, refusalVm, navigation]);
+
+  /**
+   * Odmowa opisuje KONKRETNY termin i maszynę, więc gaśnie, gdy któreś się zmieni -
+   * inaczej karta mówiłaby o godzinach, których w formularzu już nie ma.
+   */
+  const slotKey = `${draft.aircraftId ?? ''}|${draft.startsAt ?? ''}|${draft.endsAt ?? ''}`;
+  const denied = useRef(slotKey);
+  useEffect(() => {
+    if (denied.current === slotKey) return;
+    denied.current = slotKey;
+    setDeny(null);
+  }, [slotKey]);
 
   const header = (
     <ScreenHeader
@@ -283,6 +455,21 @@ export function NewBookingScreen({
           <Offline theme={theme} />
         ) : step === 1 ? (
           <>
+            {deny != null && (
+              <BookingDenyCard
+                deny={deny}
+                {...(deny.offerFix && chips.length > 0
+                  ? {
+                      fix: {
+                        label: `Najbliższe wolne ${relativeAge(chips[0]!.endsAt - chips[0]!.startsAt)}`,
+                        hours: chips[0]!.hours,
+                        onPress: () => pickSlot(chips[0]!.startsAt, chips[0]!.endsAt),
+                      },
+                    }
+                  : {})}
+              />
+            )}
+
             <Field label="Dzień" labelNote="czas klubu">
               <View style={s.dayRow}>
                 <View style={s.dayStrip}>
@@ -453,11 +640,15 @@ export function NewBookingScreen({
             />
           ) : (
             <ActionButton
-              label={confirmLabel(draft, day)}
+              label={saving ? 'ZAPISUJĘ…' : confirmLabel(draft, day, editId != null)}
               tone="green"
               {...(blocker2 != null ? { disabledReason: blocker2 } : {})}
+              /* Przycisk mówi, co się DZIEJE - zapis idzie do serwera i może potrwać
+                 na słabym łączu, a samo zgaśnięcie byłoby nieodróżnialne od martwego
+                 tapnięcia (reguła ponowienia synchronizacji). */
+              {...(saving ? { disabled: true } : {})}
               onPress={() => {
-                /* Zapis dochodzi w F6 - patrz `docs/rezerwacje.md` §2.1. */
+                void save();
               }}
             />
           )}

@@ -224,3 +224,22 @@ describe('kontekst zgłoszenia', () => {
     expect(view.rows.find((r) => r.label === 'Klub')).toBeUndefined();
   });
 });
+
+describe('rezerwacja w kontekście (#162 F10)', () => {
+  const booking = { id: 'b-uuid', label: 'SP-AXA · 20 WRZ 11:00 → 13:00' };
+
+  it('wiersz i payload powstają z JEDNEGO wywołania', () => {
+    const view = buildBugContext(input({ booking }));
+    expect(rowOf(view, 'Rezerwacja')).toBe(booking.label);
+    expect(view.context['bookingId']).toBe('b-uuid');
+    expect(view.context['booking']).toBe(booking.label);
+  });
+
+  it('ekran, który rezerwacji nie dotyczy, nie dostaje wiersza o niczym', () => {
+    const view = buildBugContext(input());
+    expect(rowOf(view, 'Rezerwacja')).toBeUndefined();
+    // `null` w payloadzie ZOSTAJE: to jest odpowiedź „ekran jej nie dotyczył",
+    // a nie brak pola, który panel musiałby zgadywać.
+    expect(view.context['bookingId']).toBeNull();
+  });
+});

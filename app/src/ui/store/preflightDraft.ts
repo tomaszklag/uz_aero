@@ -76,6 +76,14 @@ export interface PreflightDraft {
    * świeżo wpisaną trasę, bo ekran montuje się od nowa i znowu „pomagał".
    */
   taskTouched: boolean;
+  /**
+   * Rezerwacja, z której pilot wszedł w lot (#162 F8); `null` = lot bez rezerwacji.
+   *
+   * Jedzie do `session_claim` i jest JEDYNYM zetknięciem rejestru z modułem
+   * rezerwacji - w jedną stronę. Rezerwacja NIGDY nie warunkuje lotu (§2.3), więc
+   * puste pole nie znaczy tu nic złego: znaczy lot, który zaczął się bez planu.
+   */
+  reservationId: string | null;
 }
 
 /** Pola opisujące ZADANIE dnia - ich zmiana wyłącza podpowiadanie (patrz `taskTouched`). */
@@ -86,6 +94,21 @@ const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
   'client',
 ];
 
+
+/**
+ * Czym rezerwacja wypełnia przejęcie. Maszyna przychodzi CAŁYM wierszem floty, bo
+ * szkic trzyma z niej normy, pojemności i format licznika - sam identyfikator
+ * kazałby ekranowi szukać ich po raz drugi.
+ */
+export interface BookingSeed {
+  aircraft: ReferenceAircraft;
+  reservationId: string;
+  operation: OperationType | null;
+  departureIcao: string;
+  arrivalIcao: string;
+  dualId: string | null;
+  notes: string | null;
+}
 
 interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;
@@ -101,6 +124,14 @@ interface PreflightDraftStore extends PreflightDraft {
    * wyborem pilota, więc liczy się jako dotknięcie zadania: podpowiedź nie wraca przy
    * następnym wejściu na ekran. Notatki NIE rusza - nigdy nie była podpowiedzią.
    */
+  /**
+   * Wypełnienie przejęcia REZERWACJĄ (#162 F8) - maszyna, zadanie, trasa i Dual.
+   *
+   * Liczy się jako DOTKNIĘCIE zadania, inaczej niż podpowiedź z ostatniego dnia:
+   * pilot zaplanował ten lot świadomie, więc pamięć zadania nie ma prawa wejść na
+   * ekran i przykryć jego planu własnym domysłem.
+   */
+  fromBooking(seed: BookingSeed): void;
   clearTask(): void;
   reset(): void;
   /** Format MH wybranego samolotu - steruje wyświetlaniem (§5.4). */
@@ -134,6 +165,7 @@ function initial(): PreflightDraft {
     readingSource: 'manual',
     suggested: false,
     taskTouched: false,
+    reservationId: null,
   };
 }
 
@@ -173,6 +205,23 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     // Podpowiedź z ostatniego dnia też przechodzi przez kształt trasy: zapamiętana para
     // „EPKK → EPWA" przy operacji skoki opisywałaby dzień, którego się nie da polecieć.
     set((state) => withRouteShape({ ...state, ...task, ...route, suggested: true }));
+  },
+
+  fromBooking(seed) {
+    // Przez `setAircraft`, a nie `set`: wybór maszyny podstawia odczyty
+    // z przekazania i format licznika, a rezerwacja nie jest wyjątkiem od tego.
+    get().setAircraft(seed.aircraft);
+    set({
+      reservationId: seed.reservationId,
+      // Rodzaj spoza tego wydania zostawia wybór pilotowi - podstawiony surowy
+      // kod byłby napisem z wnętrza bazy pokazanym na siatce kart.
+      ...(seed.operation == null ? {} : { operation: seed.operation }),
+      departureIcao: seed.departureIcao,
+      arrivalIcao: seed.arrivalIcao,
+      dualId: seed.dualId,
+      notes: seed.notes,
+      taskTouched: true,
+    });
   },
 
   clearTask() {

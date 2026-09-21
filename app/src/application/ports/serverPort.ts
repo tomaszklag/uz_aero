@@ -448,6 +448,20 @@ export interface RemoteBooking {
   note: string | null;
 }
 
+/**
+ * JEDNA zajętość z `GET /bookings/:id` - karta rezerwacji (23) i karta najbliższej
+ * rezerwacji na Pulpicie (20).
+ *
+ * Doba jedzie razem z wierszem, bo karta pisze godziny CZASEM KLUBU (§6), a telefon
+ * liczy je odejmowaniem od jej granic. Bez nich musiałby znać strefę, czyli dokładnie
+ * to, czego kontrakt kalendarza mu oszczędza.
+ */
+export interface RemoteBookingDetail {
+  timezone: string;
+  day: RemoteCalendarDay;
+  booking: RemoteBooking;
+}
+
 /** Propozycje wolnych slotów z `GET /bookings/suggestions` (domena R-C liczy je na serwerze). */
 export interface RemoteSlotSuggestions {
   day: RemoteCalendarDay;
@@ -484,6 +498,44 @@ export interface RemoteBookingDraft {
 }
 
 /**
+ * POPRAWKA istniejącej rezerwacji (`PATCH /bookings/:id`).
+ *
+ * MASZYNY TU NIE MA i to nie jest przeoczenie: rezerwacja należy do konkretnego
+ * egzemplarza, a przeniesienie jej na inny jest INNĄ rezerwacją - zakłada się ją
+ * od nowa i odwołuje starą. Pola pominięte zostają bez zmian.
+ */
+export interface RemoteBookingPatch {
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  dualId?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+}
+
+/**
+ * POPRAWKA istniejącej rezerwacji (`PATCH /bookings/:id`).
+ *
+ * MASZYNY TU NIE MA i to nie jest przeoczenie: rezerwacja należy do konkretnego
+ * egzemplarza, a przeniesienie jej na inny jest INNĄ rezerwacją - zakłada się ją
+ * od nowa i odwołuje starą. Pola pominięte zostają bez zmian.
+ */
+export interface RemoteBookingPatch {
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  dualId?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+}
+
+/**
  * Wynik zapisu rezerwacji.
  *
  * Odmowa NIE JEST wyjątkiem, bo `slot_taken` niesie TREŚĆ: kolidującą zajętość,
@@ -492,7 +544,19 @@ export interface RemoteBookingDraft {
  */
 export type BookingWriteResult =
   | { ok: true; booking: RemoteBooking }
-  | { ok: false; refusal: string; taken: RemoteBooking | null };
+  | {
+      ok: false;
+      refusal: string;
+      taken: RemoteBooking | null;
+      /**
+       * Kiedy POWSTAŁA kolidująca zajętość (UTC, ms); `null` = odmowa bez zajętości.
+       *
+       * Stoi OBOK niej, a nie w niej: na siatce kalendarza wiek wiersza nie znaczy nic,
+       * a przy kolizji jest różnicą między cudzym planem sprzed tygodnia a slotem
+       * zajętym w trakcie wypełniania formularza (makieta 22C).
+       */
+      takenAt: number | null;
+    };
 
 export type SyncTrigger = 'background' | 'manual';
 
@@ -658,6 +722,11 @@ export interface ServerPort {
     token: string,
     params: { from: number; to: number; aircraftId?: string },
   ): Promise<RemoteCalendar>;
+  /**
+   * Jedna rezerwacja razem z jej dobą (`GET /bookings/:id`). Cudza i nieistniejąca
+   * są nie do odróżnienia - obie kończą się 404, jak cudza operacja.
+   */
+  getBooking(token: string, id: string): Promise<RemoteBookingDetail>;
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   getSlotSuggestions(
     token: string,
@@ -669,6 +738,10 @@ export interface ServerPort {
    * a nie drugim terminem.
    */
   createBooking(token: string, draft: RemoteBookingDraft): Promise<BookingWriteResult>;
+  /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
+  patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
+  /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
+  patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); powód opcjonalny. */
   cancelBooking(token: string, id: string, reason: string | null): Promise<BookingWriteResult>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */

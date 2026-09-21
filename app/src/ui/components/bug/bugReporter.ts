@@ -41,6 +41,24 @@ export function bugRoute(): string | null {
   return route;
 }
 
+/**
+ * REZERWACJA, którą pokazuje bieżący ekran (#162 F10); `null` = żadna.
+ *
+ * Tu, a nie w nawigacji: trasę zna `RootNavigator`, ale która rezerwacja stoi na
+ * ekranie, wie wyłącznie ten ekran - i tylko wtedy, gdy serwer odpowiedział.
+ * Ekran zgłasza ją przy wejściu i ZDEJMUJE przy wyjściu, żeby zgłoszenie z Pulpitu
+ * nie niosło terminu oglądanego minutę wcześniej.
+ */
+let booking: { id: string; label: string } | null = null;
+
+export function setBugBooking(value: { id: string; label: string } | null): void {
+  booking = value;
+}
+
+export function bugBooking(): { id: string; label: string } | null {
+  return booking;
+}
+
 let store: BugReportPort | null = null;
 let sync: BugReportSync | null = null;
 
