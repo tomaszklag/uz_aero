@@ -224,8 +224,8 @@ i że drugi wpis odbija się sekwencyjnie - o równoległość dba baza produkcy
 ograniczenie zamiast sprawdzenia w kodzie.
 
 **Ryzyko wdrożeniowe:** `CREATE EXTENSION btree_gist` wymaga pakietu contrib na instancji
-Postgresa (Railway: standardowy obraz go ma - **do potwierdzenia na staging PRZED
-wdrożeniem**, §14 R2). Plan awaryjny, gdyby rozszerzenia nie było: blokada doradcza
+Postgresa - **POTWIERDZONE NA PRODUKCJI przy wydaniu 3.0.0** (2026-09-21, §14 R2): obraz
+Railway rozszerzenie ma, migracja 11 przeszła. Plan awaryjny, gdyby rozszerzenia nie było: blokada doradcza
 `pg_advisory_xact_lock(hashtext(aircraft_id))` na czas transakcji zapisu plus sprawdzenie
 nakładania w tej samej transakcji. Działa wszędzie, kosztuje szeregowanie zapisów per
 maszyna - a tych są dziesiątki na sezon, nie tysiące na sekundę.

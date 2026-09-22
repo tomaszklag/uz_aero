@@ -63,23 +63,6 @@ a niepotrzebny APK tylko kosztuje.
 **Serwer, panel i strona nie są częścią tej decyzji.** Jadą własnym torem: push do
 `main` przebudowuje obraz na Railway, aplikacji pilota to nie dotyka.
 
-## Krok 0b: próba generalna na staging
-
-Wydanie planowe przechodzi najpierw przez **staging** (`docs/staging.md`) - własna baza,
-te same migracje, ta sama poczta, adresy `staging.ninerdeck.pl` i `app-staging.ninerdeck.pl`.
-
-1. Po założeniu gałęzi `ninerdeck_x_x_x` przełącz w Railway śledzoną gałąź środowiska
-   staging z `develop` na nią. Deploy uruchamia migracje przy starcie serwera, więc
-   **to jest jedyna próba generalna migracji, jaką wydanie dostaje**.
-2. Przejdź na staging to, co wydanie dotyka - minimum: logowanie hasłem i Googlem, link
-   „ustaw hasło", operacja z telefonu od przejęcia do zdania, karty arkusza, panel.
-   Telefon: dev build wskazany na staging, bundle przez `npm run update:stg`.
-3. Dopiero potem merge do `main` i właściwe wydanie (ścieżka A albo B).
-4. Po wydaniu przełącz staging z powrotem na `develop`.
-
-Hotfix z `main` idzie bez tego kroku, jeśli poprawka jest wąska i pilna - ale migracja
-w hotfixie jest dokładnie tym przypadkiem, dla którego staging powstał.
-
 ---
 
 ## Ścieżka A: aktualizacja OTA
