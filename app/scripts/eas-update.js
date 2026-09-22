@@ -41,7 +41,7 @@ const [profile, ...passedArgs] = process.argv.slice(2);
 if (profile == null || profile.startsWith('-')) {
   console.error(
     '\n  BŁĄD: runner potrzebuje nazwy profilu z eas.json.\n' +
-      '  Na co dzień woła się go przez npm run update:prod albo npm run update:stg.\n',
+      '  Na co dzień woła się go przez npm run update:prod.\n',
   );
   process.exit(1);
 }
