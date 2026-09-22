@@ -1,10 +1,10 @@
 /**
  * Ninerdeck - aktualizacja OTA ze zmiennymi profilu z `eas.json`.
  *
- * Woła się przez skrypty npm, a nazwa profilu jest ich pierwszym argumentem:
- *   `npm run update:prod -- -m "opis"`  → profil `production`  → kanał `production` (piloci)
- *   `npm run update:stg  -- -m "opis"`  → profil `development` → kanał `development` (staging)
- * Reszta argumentów leci dalej do `eas-cli`.
+ * Woła się przez skrypt npm, a nazwa profilu jest jego pierwszym argumentem:
+ *   `npm run update:prod -- -m "opis"`  → profil `production` → kanał `production` (piloci)
+ * Reszta argumentów leci dalej do `eas-cli`. Profil jest argumentem, a nie stałą, bo
+ * runner ma zostać jeden także wtedy, gdy celów będzie kiedyś więcej niż jeden.
  *
  * `eas update` nie czyta `build.<profil>.env` z `eas.json` (to pole obsługuje tylko
  * `eas build`), więc gołe `eas-cli update` pakowało bundle ze zmiennymi z lokalnego
@@ -14,8 +14,7 @@
  * nie ma jak podmienić adresu po cichu.
  *
  * Gałąź publikacji to KANAŁ profilu, nie osobna stała - powód w docblocku
- * `eas-profile-env.js`. Profil `development` wskazuje adres staging, więc ten sam runner
- * obsługuje próbę generalną wydania (`docs/staging.md`).
+ * `eas-profile-env.js`.
  *
  * Platforma jest ZAWSZE podana (`--platform android`, chyba że wołający poda własną):
  * bez niej `eas update` eksportuje bundle dla wszystkich platform, także web, a projekt
@@ -33,6 +32,7 @@ const path = require('node:path');
 const { readFileSync } = require('node:fs');
 const { spawnSync } = require('node:child_process');
 const { profileTarget } = require('./eas-profile-env');
+const { shellArgs } = require('./shell-args');
 
 const appRoot = path.resolve(__dirname, '..');
 const PLATFORM = 'android';
@@ -70,16 +70,18 @@ console.log(
 for (const [name, value] of Object.entries(target.env)) console.log(`  ${name}=${value}`);
 console.log('');
 
-const result = spawnSync(
-  'npx',
-  ['eas-cli', 'update', '--branch', target.channel, ...platformArgs, ...passedArgs],
-  {
-    cwd: appRoot,
-    stdio: 'inherit',
-    // `npx` jest na Windowsie skryptem `.cmd` - bez powłoki `spawnSync` go nie znajdzie.
-    shell: process.platform === 'win32',
-    env: { ...process.env, ...target.env },
-  },
-);
+// `npx` jest na Windowsie skryptem `.cmd` - bez powłoki `spawnSync` go nie uruchomi.
+// A skoro powłoka jest, to cytowanie argumentów należy do nas: `shell: true` skleja je
+// spacjami BEZ cudzysłowów, więc `-m "opis ze spacjami"` rozpadał się na kilka argumentów
+// i `eas-cli` odbijał wywołanie (2026-09-22; pełne uzasadnienie w `shell-args.js`).
+const useShell = process.platform === 'win32';
+const argv = ['eas-cli', 'update', '--branch', target.channel, ...platformArgs, ...passedArgs];
+
+const result = spawnSync('npx', shellArgs(argv, useShell), {
+  cwd: appRoot,
+  stdio: 'inherit',
+  shell: useShell,
+  env: { ...process.env, ...target.env },
+});
 
 process.exit(result.status ?? 1);

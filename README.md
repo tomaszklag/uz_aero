@@ -39,7 +39,6 @@ na produkcji zmień też `JWT_SECRET`).
 | `npm test` | wszystkie testy: aplikacja (Jest) + serwer (Vitest na PGlite) |
 | `npm run typecheck` | TypeScript w całym repo |
 | `npm run build:dev` | dev build na EAS (`expo-dev-client`, pakiet `com.ninerdeck.app.dev` - stoi na telefonie OBOK produkcyjnego APK) - tylko po zmianie modułów natywnych; procedura w „Dev build aplikacji" niżej |
-| `npm run update:stg` | aktualizacja OTA na kanał dev builda, wskazana na **staging** (`docs/staging.md`) - tester bez Metro bierze z niej bundle |
 
 Kolejność przy pracy z serwerem: `db:up` → `seed` (raz) → `server`.
 
@@ -94,7 +93,10 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
 
 1. **Projekt**: railway.com → New Project → Deploy from GitHub repo (`uz_aero`).
    Railway wykryje `Dockerfile` przez `railway.json`.
-2. **Postgres**: w projekcie „Create → Database → PostgreSQL".
+2. **Postgres**: w projekcie „Create → Database → PostgreSQL". Obraz musi umieć
+   `CREATE EXTENSION btree_gist` - na nim stoi wykluczanie nakładających się rezerwacji
+   (migracja 11); bez rozszerzenia migracja nie przejdzie i serwer nie wstanie. Obraz
+   Railway to potrafi - sprawdzone przy wydaniu 3.0.0.
 3. **Zmienne serwisu** (zakładka Variables usługi z repo):
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (referencja do usługi Postgres),
    - `JWT_SECRET` = losowe ≥32 znaki,
@@ -110,7 +112,9 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
      drukuje list do logu serwera - dobre w dev, na produkcji byłoby tokenem linku poza
      pocztą,
    - `MAIL_API_KEY` i `MAIL_FROM` (np. `Ninerdeck <konto@ninerdeck.pl>`) - WYMAGANE przy
-     `resend`, komplet albo serwer nie wstaje (krok 7),
+     `resend`, komplet albo serwer nie wstaje (krok 7). Adres nadawcy musi stać na
+     domenie ZWERYFIKOWANEJ u dostawcy (SPF + DKIM), inaczej wysyłka wraca błędem
+     `dostawca odmówił (HTTP …)` w logu, a panel pokazuje 500 przy „Nie pamiętam hasła",
    `TRACES_DIR` jest ustawiony w obrazie - nie podawaj go; build panelu i stronę serwer
    znajduje sam (ścieżki wbudowane w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
@@ -194,19 +198,6 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
     ustawieniu hasła wszystkie dotychczasowe sesje tej osoby zostają wylogowane. W drugą
     stronę (zapomniane hasło superadministratora): „Nie pamiętam hasła" w panelu, Google
     z tym samym adresem albo ta sama komenda. Kodów jednorazowych do dyktowania NIE MA.
-
-### Staging - przedwydaniowa kopia produkcji
-
-Wydanie przechodzi próbę generalną na osobnym środowisku Railway (własna usługa, własny
-Postgres, własny wolumen) pod adresami `stg.ninerdeck.pl` i `app.stg.ninerdeck.pl`.
-Obraz, migracje i poczta są te same, co na produkcji - różnią się wyłącznie zmienne,
-więc serwer nie ma dla staging ani jednej gałęzi w kodzie. Aplikację reprezentuje tam
-**dev build** (`com.ninerdeck.app.dev`), a bundle wysyła się na jego kanał przez
-`npm run update:stg`. Środowisko śledzi `develop`, a na czas stabilizacji przełącza się
-je na gałąź wydaniową - wtedy deploy jest zarazem próbą generalną migracji.
-
-Pełny runbook (zmienne, rozruch, sprawdziany, kopia produkcji ze scrubbingiem adresów,
-koszt): **`docs/staging.md`**; checklista wdrożenia: issue #155.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

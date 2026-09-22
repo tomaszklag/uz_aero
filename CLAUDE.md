@@ -3582,35 +3582,28 @@ osobny dev build do pracy z Expo. Reguły obowiązujące odtąd:
   sam, którym loguje się `app.ninerdeck.pl`), seed superadministratora. Komplet zmiennych
   opisują `.env.example` obu stron; dev build nie jest wydaniem (skill `wydanie`)
 
-## Staging = przedwydaniowa kopia produkcji (issue #155, 2026-09-18)
-Wydanie niesie od 2.1.0 migracje bazy i listy wychodzące - dwie rzeczy, których nie cofa
-się zdjęciem builda, a jedyną próbą generalną była do tej pory produkcja. Runbook
-(zmienne, rozruch, sprawdziany, kopia produkcji, koszt): **`docs/staging.md`**.
-- **serwer NIE MA dla staging ani jednej gałęzi w kodzie** - całą różnicę niosą zmienne
-  (`PUBLIC_BASE_URL`, `PUBLIC_SITE_URL`, `MAIL_FROM`, `JWT_SECRET`, `SEED_ADMIN_EMAIL`).
-  Gdyby kiedyś kusiło dopisanie `if (staging)`, to jest znak, że różnica siedzi w złym
-  miejscu
-- **dwa hosty, jak na produkcji** (`stg.ninerdeck.pl` strona, `app.stg.ninerdeck.pl` panel
-  i API): przy jednym haście rozdział hostów i rozdział origin CSP (`hostSplit.ts`, #124)
-  pierwszy raz działałyby dopiero na produkcji
-- **aplikację reprezentuje DEV BUILD** (`com.ninerdeck.app.dev`), nie osobny wariant
-  `.stg`. Świadoma cena: release'owy bundle i kanał `production` startują pierwszy raz
-  na produkcji. Furtka (profil `staging` + pakiet `.stg` + rozpoznanie go w `ownRelease`)
-  jest opisana w `docs/staging.md` §7 i nie wymaga cofania niczego
-- **gałąź publikacji OTA = KANAŁ profilu z `eas.json`** (`eas-profile-env.js`), nie druga
-  stała obok: dwie wartości opisujące jedno wydanie rozjeżdżają się po cichu, a cichy
-  rozjazd tutaj znaczy aktualizację wysłaną tam, gdzie nikt jej nie czeka. Stąd jeden
-  runner na dwa kierunki - `update:prod` (profil `production`) i `update:stg` (profil
-  `development`, adres staging)
-- **wymagalność zmiennych zależy od KANAŁU**: `production` żąda adresu i klienta Google
-  (telefon pilota nie ma innej drogi logowania), `development` samego adresu - na staging
-  loguje się hasłem, a klient Google jest związany z pakietem dev i bywa go po prostu brak
-- **baza staging stoi OD ZERA** (`SEED_ADMIN_EMAIL` → klub → kod klubu → flota). Kopia
-  produkcji tylko pod migrację wymagającą realnego wolumenu i ZAWSZE ze scrubbingiem
-  adresów, inaczej staging wysyła listy prawdziwym pilotom (`docs/staging.md` §8)
-- **staging śledzi `develop`**, a na czas stabilizacji przełącza się go na
-  `ninerdeck_x_x_x` - wtedy deploy jest próbą generalną migracji. Kolejność w skillu
-  `wydanie` (krok 0b)
+## Staging ODRZUCONY (issue #155, decyzja właściciela 2026-09-22)
+Środowisko staging na Railway (własna baza, domeny `staging`/`app-staging`, poczta)
+zostało postawione 2026-09-22 i **tego samego dnia wycofane w całości**: usługa, baza,
+domeny, runbook i `npm run update:stg`. Powód właściciela: „staging i tak odpalam
+lokalnie w expo, wtedy też mógłbym startować lokalny serwer API oraz docker z bazą" -
+czyli codzienna praca sprawdza się lokalnie, a drugie hostowane środowisko kosztowało
+pieniądze i czas, nie dając nic ponad to.
+- **nie proponuj staging ponownie bez nowego powodu.** Rachunek jest znany: lokalne
+  środowisko NIE pokazuje czterech rzeczy - obrazu Dockera (panel i strona budują się
+  tylko tam), rozdziału hostów i rozdziału origin CSP (`hostSplit.ts` przy jednym haście
+  w ogóle się nie wykonuje), poczty, która naprawdę wychodzi (`MAIL_PROVIDER=log` dowodzi
+  tokenu, nie doręczenia) oraz migracji na hostowanej bazie. Jeśli któraś z nich zacznie
+  boleć, to jest argument do rozmowy - a nie powód do cichego postawienia środowiska
+- **co ZOSTAŁO z tej pracy, bo nie dotyczy staging**: wariant dev builda
+  (`com.ninerdeck.app.dev` obok produkcyjnego APK - sekcja wyżej), wyprowadzanie gałęzi
+  OTA z KANAŁU profilu (`eas-profile-env.js`) oraz cytowanie argumentów powłoki
+  w runnerze OTA (`shell-args.js`, PR #192) - ta ostatnia poprawka dotyczyła także
+  `update:prod`, czyli wydań dla pilotów
+- **dwa fakty o produkcji przeniesione do README** (sekcja „Wdrożenie: Railway"): Postgres
+  musi umieć `CREATE EXTENSION btree_gist` (migracja 11), a adres w `MAIL_FROM` musi stać
+  na domenie zweryfikowanej u dostawcy poczty - inaczej „Nie pamiętam hasła" kończy się
+  błędem 500, a list nigdy nie wychodzi
 
 ## Obieg gałęzi (git-flow od 2026-09-08, milestone „Wielofirmowość + SaaS 2.0.0")
 ```

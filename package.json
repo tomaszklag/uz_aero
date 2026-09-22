@@ -15,7 +15,6 @@
     "build:dev": "npm run build:dev --workspace app",
     "build:prod": "npm run build:prod --workspace app",
     "update:prod": "npm run update:prod --workspace app",
-    "update:stg": "npm run update:stg --workspace app",
     "server": "npm run dev --workspace server",
     "admin": "npm run dev --workspace admin",
     "site": "node site/tools/build.mjs",

@@ -441,9 +441,10 @@ Konsekwencje, które musi obsłużyć epik P-W:
   w `site/tools/render-changelog.mjs` rozpoznaje `## <wersja> (build <N>) · <data>`,
   a przy braku `(build N)` wkłada cały tytuł w miejsce wersji. Wydanie bez binarki to
   pierwszy taki przypadek w historii projektu;
-- **staging** (`docs/staging.md`) - przebieg przed wdrożeniem, nawet jeśli nie dochodzi
-  żadna migracja; dziś żadnej nie przewidujemy, a gdyby doszła, jest wyłącznie addytywna
-  (produkcja żyje od 16 września 2026);
+- **migracja** - dziś żadnej nie przewidujemy, a gdyby doszła, jest wyłącznie addytywna
+  (produkcja żyje od 16 września 2026). Środowiska staging NIE MA: postawione i wycofane
+  2026-09-22 (`CLAUDE.md`, „Staging ODRZUCONY"), więc pierwszy przebieg migracji dzieje
+  się na produkcji - to jest znana cena, nie przeoczenie;
 - **podręcznik** - strony panelu w `docs/podrecznik/` osadzają makiety dyrektywą `@panel`,
   więc każdy nowy ekran ma stronę albo akapit. Reguła „zmiana ekranu w PR = zmiana strony
   podręcznika" obowiązuje każdy epik, nie tylko wydaniowy.
@@ -470,7 +471,7 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
    Może iść równolegle z P-B.
 5. **P-E - statystyki i analityka**: moduł statystyk i karta analityki w szufladzie
    samolotu. Może iść równolegle; zależy od §4.5 (jedna podstawa liczenia).
-6. **P-W - wydanie**: changelog, podręcznik, przegląd bezpieczeństwa, staging, wdrożenie.
+6. **P-W - wydanie**: changelog, podręcznik, przegląd bezpieczeństwa, wdrożenie.
 
 | Epik | Issue |
 |---|---|
