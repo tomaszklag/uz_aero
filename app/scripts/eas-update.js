@@ -33,6 +33,7 @@ const path = require('node:path');
 const { readFileSync } = require('node:fs');
 const { spawnSync } = require('node:child_process');
 const { profileTarget } = require('./eas-profile-env');
+const { shellArgs } = require('./shell-args');
 
 const appRoot = path.resolve(__dirname, '..');
 const PLATFORM = 'android';
@@ -70,16 +71,18 @@ console.log(
 for (const [name, value] of Object.entries(target.env)) console.log(`  ${name}=${value}`);
 console.log('');
 
-const result = spawnSync(
-  'npx',
-  ['eas-cli', 'update', '--branch', target.channel, ...platformArgs, ...passedArgs],
-  {
-    cwd: appRoot,
-    stdio: 'inherit',
-    // `npx` jest na Windowsie skryptem `.cmd` - bez powłoki `spawnSync` go nie znajdzie.
-    shell: process.platform === 'win32',
-    env: { ...process.env, ...target.env },
-  },
-);
+// `npx` jest na Windowsie skryptem `.cmd` - bez powłoki `spawnSync` go nie uruchomi.
+// A skoro powłoka jest, to cytowanie argumentów należy do nas: `shell: true` skleja je
+// spacjami BEZ cudzysłowów, więc `-m "opis ze spacjami"` rozpadał się na kilka argumentów
+// i `eas-cli` odbijał wywołanie (2026-09-22; pełne uzasadnienie w `shell-args.js`).
+const useShell = process.platform === 'win32';
+const argv = ['eas-cli', 'update', '--branch', target.channel, ...platformArgs, ...passedArgs];
+
+const result = spawnSync('npx', shellArgs(argv, useShell), {
+  cwd: appRoot,
+  stdio: 'inherit',
+  shell: useShell,
+  env: { ...process.env, ...target.env },
+});
 
 process.exit(result.status ?? 1);
