@@ -42,11 +42,10 @@ akceptacji bez kalendarza nie ma czego akceptować.
 - panel: moduł „Kalendarz" z wyłączeniami serwisowymi.
 
 **3.1.0 - workflow akceptacji i powiadomienia:**
-- ścieżka akceptacji klubu (lista kroków; krok wskazuje rolę albo imienną osobę),
+- ścieżka akceptacji klubu (uporządkowane kroki; krok ma nazwę i listę osób),
 - decyzje z powodem przy odrzuceniu i stany rezerwacji,
-- skrzynka powiadomień w aplikacji (źródło prawdy, działa offline),
-- push jako budzik (`expo-notifications` + FCM, nowy APK),
-- zdolność `reservations.approve`.
+- skrzynka powiadomień w aplikacji (źródło prawdy; wymaga sieci, jak cały moduł),
+- push jako budzik (`expo-notifications` + FCM, nowy APK).
 
 ## 2. Czym JEST rezerwacja w tym systemie
 
@@ -247,14 +246,23 @@ CREATE INDEX idx_bookings_window ON bookings (org_id, aircraft_id, starts_at)
 
 ```sql
 -- Ścieżka akceptacji klubu: uporządkowane kroki. Brak wierszy = brak akceptacji.
+-- Krok ma NAZWĘ i LISTĘ OSÓB (decyzja właściciela 2026-09-22) - roli nie ma, bo role
+-- klubu są dwie i „Mechanik" żadną z nich nie jest (§8).
 CREATE TABLE approval_steps (
   org_id    TEXT NOT NULL REFERENCES organizations(id),
   step_no   INTEGER NOT NULL,
   label     TEXT NOT NULL,              -- np. „Mechanik", „Szef wyszkolenia"
-  role      TEXT,                       -- rola klubu ALBO...
-  pilot_id  TEXT REFERENCES pilots(id), -- ...konkretna osoba (§11.2)
-  PRIMARY KEY (org_id, step_no),
-  CONSTRAINT step_target CHECK ((role IS NULL) <> (pilot_id IS NULL))
+  PRIMARY KEY (org_id, step_no)
+);
+
+-- Kto może zatwierdzić dany krok. WIĘCEJ NIŻ JEDNA OSOBA, a wystarczy zgoda JEDNEJ
+-- z nich (§11.2) - to pula uprawnionych, nie komplet podpisów.
+CREATE TABLE approval_step_members (
+  org_id   TEXT NOT NULL,
+  step_no  INTEGER NOT NULL,
+  pilot_id TEXT NOT NULL REFERENCES pilots(id),
+  PRIMARY KEY (org_id, step_no, pilot_id),
+  FOREIGN KEY (org_id, step_no) REFERENCES approval_steps(org_id, step_no) ON DELETE CASCADE
 );
 
 -- Decyzje na rezerwacji - append-only, bo to zapis o tym, kto co postanowił.
@@ -262,6 +270,10 @@ CREATE TABLE booking_approvals (
   booking_id TEXT NOT NULL REFERENCES bookings(id),
   step_no    INTEGER NOT NULL,
   decision   TEXT NOT NULL CHECK (decision IN ('approved', 'rejected')),
+  -- Skąd wzięła się zgoda: ktoś kliknął (`person`) czy krok przeszedł sam, bo
+  -- rezerwujący jest na jego liście (`self`, §11.2). Bez tego pominięty krok jest
+  -- nieodróżnialny od kroku, o który nikt nie zapytał.
+  via        TEXT NOT NULL DEFAULT 'person' CHECK (via IN ('person', 'self')),
   reason     TEXT,                      -- WYMAGANY przy 'rejected' (§11.3)
   decided_by TEXT NOT NULL REFERENCES pilots(id),
   decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -619,16 +631,23 @@ zasobem, którego dotąd nie było - stąd nowe pozycje, nie doklejenie do istni
   maszyn, a tu chodzi o władzę nad cudzym planem;
 - **wyłączenie maszyny z użytku idzie na `fleet.manage`** - to stan maszyny w czasie,
   czyli przedłużenie `service_status`, którym tamta zdolność już steruje (§3.1);
-- **`reservations.approve`** (3.1.0, rola `admin`) - krok akceptacji;
+- **`reservations.approve` NIE POWSTAJE** (2026-09-22) - o prawie do decyzji rozstrzyga
+  OBECNOŚĆ NA LIŚCIE KROKU (§11.2), a nie rola, więc zdolności nie miałby kto nosić.
+  Pozycja w katalogu bez ani jednego właściciela jest gorsza niż jej brak: wygląda jak
+  działający bezpiecznik;
 - **rezerwuje KAŻDY aktywny członek klubu** - to nie jest zdolność panelu, tylko zwykła
   praca pilota, jak wpisanie lotu.
 
-**Napięcie do rozwiązania w 3.1.0:** role klubu są dziś dwie (`pilot`, `admin`), a `admin`
-ma wszystko - „szef wyszkolenia" został wycofany 2026-08-30 decyzją właściciela. Ścieżka
-akceptacji z krokiem „szef wyszkolenia" nie ma więc na czym stanąć jako ROLA. Dlatego krok
-ścieżki wskazuje **rolę ALBO imienną osobę** (§3.4), a osoba wskazana imiennie decyduje
-o TEJ rezerwacji bez żadnej zdolności globalnej. Trzecia rola może wrócić później i model
-jest na nią gotowy; do tego czasu kluby wskazują ludzi.
+**Napięcie ROZWIĄZANE 2026-09-22.** Role klubu są dwie (`pilot`, `admin`), a `admin` ma
+wszystko - „szef wyszkolenia" został wycofany 2026-08-30 decyzją właściciela, więc krok
+„szef wyszkolenia" nie miał na czym stanąć jako ROLA. Pierwotne wyjście - krok wskazuje
+**rolę ALBO jedną imienną osobę** - przenosiło problem: klub i tak wskazywał człowieka,
+a wtedy jeden urlop blokował rezerwacje.
+
+Odtąd **krok ma nazwę i LISTĘ osób** (§11.2). Rola znika z modelu kroku w całości, a prawo
+do decyzji jest obecnością na liście - nie trzeba więc ani trzeciej roli, ani zdolności
+`reservations.approve`. Gdyby trzecia rola kiedyś wróciła, nic tu nie trzeba cofać: lista
+osób opisuje to samo dokładniej.
 
 ## 9. Aplikacja pilota
 
@@ -825,12 +844,43 @@ Brak wierszy w `approval_steps` znaczy „rezerwacja potwierdzona od razu" - i t
 domyślny każdego nowego klubu. Wymóg akceptacji jest decyzją klubu, nie podatkiem
 nakładanym przez narzędzie.
 
-### 11.2 Kroki idą PO KOLEI
+### 11.2 Krok to NAZWA i LISTA OSÓB, a kroki idą PO KOLEI
 
-Ścieżka to lista uporządkowana: krok 2 pyta dopiero po zgodzie kroku 1. Powody: opisuje
-prawdziwy porządek („najpierw mechanik zwalnia maszynę, potem szef wyszkolenia zgadza się
-na lot"), budzi jedną osobę naraz zamiast wszystkich, a przy odmowie na kroku 1 nikt
-dalszy nie jest fatygowany. (Do potwierdzenia - §15 P3.)
+**Decyzja właściciela 2026-09-22** - zastępuje pierwotny model „krok wskazuje rolę ALBO
+jedną osobę" i domyka przy okazji P3. Ścieżkę definiuje **administrator klubu**: nadaje
+krokom nazwy, ustala ich kolejność i dopisuje do każdego osoby, które mogą go zatwierdzić.
+
+- **osób w kroku bywa kilka, a wystarczy zgoda JEDNEJ** - to pula uprawnionych, nie
+  komplet podpisów. Skrajny przypadek („jeden krok, kilka osób, ktokolwiek zatwierdzi")
+  ma być najprostszy z możliwych, a nie najcięższy. Wariant „wszyscy muszą podpisać"
+  jest innym mechanizmem i wymagałby innej nazwy - patrz §16;
+- **kroki idą po kolei**: krok 2 pyta dopiero po zgodzie kroku 1. Opisuje to prawdziwy
+  porządek („najpierw mechanik zwalnia maszynę, potem szef wyszkolenia zgadza się na
+  lot"), budzi jedną grupę naraz zamiast wszystkich, a przy odmowie na kroku 1 nikt
+  dalszy nie jest fatygowany;
+- **ROLI W KROKU NIE MA I NIE BĘDZIE** - to jest właśnie rozwiązanie napięcia z §8. Role
+  klubu są dwie (`pilot`, `admin`), więc „Mechanik" nigdy nie był rolą, a wskazanie
+  JEDNEJ imiennej osoby robiło z każdego urlopu blokadę rezerwacji. Lista osób znosi
+  jedno i drugie;
+- **osobą w kroku bywa ZWYKŁY PILOT bez dostępu do panelu**, więc decyzja musi dać się
+  podjąć z telefonu, ze skrzynki (§12.1). Panel jest dla tego, kto ścieżkę układa, nie
+  dla tego, kto po niej klika.
+
+**Rezerwujący pomija własne kroki.** Jeśli osoba zakładająca rezerwację jest na liście
+któregoś kroku, ten krok przechodzi sam - nikt nie prosi człowieka o zgodę na własny
+plan. Pominięcie **zapisuje się jako decyzja** z adnotacją `via = self`, a nie jako brak
+wpisu: po miesiącu krok pominięty musi być odróżnialny od kroku, o który nikt nie zapytał.
+Gdy rezerwujący jest na liście wszystkich kroków, rezerwacja potwierdza się od razu.
+
+**Pomijanie dotyczy OBECNOŚCI NA LIŚCIE, nie władzy administratora** - inaczej rezerwacje
+administratora omijałyby ścieżkę, której sam pilnuje. Administrator może natomiast
+zdecydować za KAŻDY krok (`reservations.manage`) i to jest jawny akt zapisany w historii,
+a nie ciche ominięcie.
+
+**Krok bez ani jednej osoby blokuje wszystko**, więc stoją przed tym dwie zapory: panel
+nie zapisze takiego kroku, a administrator odblokuje ścieżkę, w której ludzie stracili
+członkostwo. Bez tej drugiej wystarczyłoby jedno odejście z klubu, żeby rezerwacje utknęły
+na zawsze.
 
 ### 11.3 Odmowa wymaga powodu, zgoda nie
 
@@ -842,8 +892,9 @@ w `rejected` i zwalnia slot.
 
 ### 11.4 Decyzja jest zapisem, nie polem
 
-`booking_approvals` jest append-only: kto, kiedy, co postanowił i dlaczego. Zmiana zdania
-znaczy nową rezerwację, nie nadpisanie decyzji.
+`booking_approvals` jest append-only: kto, kiedy, co postanowił, dlaczego i czy kliknął
+to człowiek, czy krok przeszedł sam (`via`). Zmiana zdania znaczy nową rezerwację, nie
+nadpisanie decyzji.
 
 ## 12. Powiadomienia (3.1.0)
 
@@ -853,10 +904,18 @@ znaczy nową rezerwację, nie nadpisanie decyzji.
 systemu albo odrzucony na Androidzie 13+ (`POST_NOTIFICATIONS`) - a prośba o zgodę, która
 przepadła, znaczy pilota czekającego na odpowiedź, która nigdy nie przyszła. Dlatego:
 
-- **skrzynka** (`notifications` + `GET /me/notifications`) jest kompletna, ma historię
-  i działa offline z cache. Licznik nieprzeczytanych stoi przy zakładce Pulpit;
+- **skrzynka** (`notifications` + `GET /me/notifications`) jest kompletna i ma historię.
+  Licznik nieprzeczytanych stoi przy zakładce Pulpit;
 - **push** niesie tylko „masz coś w skrzynce" i otwiera właściwy ekran. Brak push nie gubi
   ani jednej informacji.
+
+**CAŁY TEN MODUŁ WYMAGA SIECI** (decyzja właściciela 2026-09-22) - i to ODWRACA zdanie
+„skrzynka działa offline z cache", które stało tu do 3.0.0. Powód jest ten sam, co przy
+rezerwacji (§2.2): zgoda jest umową między ludźmi, a nie pomiarem z kabiny, i zapada przy
+biurku. Cache powiadomień w SQLite więc NIE POWSTAJE, a zakres R-I jest o niego mniejszy.
+Reguła §4.1 („brak sieci nigdy nie blokuje pilota") broni PRACY W LOCIE - rejestru, czasów,
+odczytów, zdania samolotu - i tego nie rusza: bez zasięgu pilot lata dokładnie jak dotąd,
+tylko nie zobaczy skrzynki i nie zatwierdzi cudzego terminu.
 
 ### 12.2 Token push żyje razem z sesją logowania
 
@@ -937,12 +996,16 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
   z **WSCHODU I ZACHODU SŁOŃCA nad lotniskiem macierzystym klubu** (§7.1), a nie ze
   stałych godzin. Konsekwencje w §7.1 - to najdroższa z decyzji tej tury i zmienia
   zakres #158 oraz #159.
-- **P3 - kroki akceptacji po kolei czy równolegle** (§11.2). Propozycja: po kolei.
-- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19**:
-  administrator (`reservations.manage`) **oraz osoby akceptujące** (`reservations.approve`,
-  od 3.1.0). W 3.0.0 znaczy to „tylko administrator", bo akceptujących jeszcze nie ma -
-  zdolność dochodzi razem ze ścieżką akceptacji. Powód jest WYMAGANY w obu wypadkach:
-  odwołujący sięga po cudzy plan, a pilot czyta powód w aplikacji.
+- ~~**P3 - kroki akceptacji po kolei czy równolegle**~~ - **rozstrzygnięte 2026-09-22**:
+  **po kolei**, a przy okazji przebudowany sam krok - ma NAZWĘ i LISTĘ OSÓB zamiast roli
+  albo jednego człowieka, wystarczy zgoda jednej osoby z listy, a rezerwujący pomija
+  kroki, na których sam stoi (§11.2). To rozwiązuje też napięcie z §8.
+- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19, uściślone
+  2026-09-22**: administrator (`reservations.manage`) **oraz osoby ze ścieżki akceptacji**.
+  W 3.0.0 znaczyło to „tylko administrator", bo ścieżki jeszcze nie było. Od 3.1.0
+  uprawnia OBECNOŚĆ NA LIŚCIE któregokolwiek kroku, a nie zdolność `reservations.approve`
+  - ta nie powstaje (§8). Powód jest WYMAGANY w obu wypadkach: odwołujący sięga po cudzy
+  plan, a pilot czyta powód w aplikacji.
 - ~~**P5 - „no-show"**~~ - **rozstrzygnięte 2026-09-19**: slot **zwalnia się sam po
   60 minutach** od początku rezerwacji, jeśli serwer nie widzi ani przejęcia maszyny,
   ani biegu silnika. Maszyna nie stoi bezczynnie w sobotę. Mechanizm, jego cena
@@ -968,6 +1031,10 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 | **Sprawdzanie nakładania w kodzie aplikacji** | Dyscyplina zamiast niezmiennika; przy dwóch równoległych żądaniach po prostu nie działa |
 | **Jeden akceptujący („dyżurny")** | Decyzja właściciela 2026-09-18 - odwracałoby zdanie ze zgłoszenia „kilka osób musi się zgodzić" |
 | **Akceptacja warunkowa (reguły typu „pilot poniżej X godzin")** | Rozważona i odłożona: wymaga katalogu warunków, którego klub jeszcze nie umie nazwać. Wraca, gdy poprosi |
+| **Krok wskazuje ROLĘ albo JEDNĄ osobę** | Pierwotny model §3.4, zastąpiony 2026-09-22: role klubu są dwie, więc krok i tak celował w człowieka - a wtedy jeden urlop blokuje rezerwacje |
+| **Wszystkie osoby kroku muszą zatwierdzić** | Odwracałoby sens listy: ma ona ZWIĘKSZAĆ szansę, że ktoś odpowie, a nie mnożyć podpisy. Komplet zgód to inny mechanizm i wymagałby innej nazwy |
+| **Rezerwujący prosi sam siebie o zgodę** | Krok, na którego liście stoi rezerwujący, przechodzi sam (§11.2) - pytanie człowieka o zgodę na własny plan jest pustym kliknięciem |
+| **Skrzynka powiadomień z cache offline** | Decyzja właściciela 2026-09-22 - cały moduł wymaga sieci, jak rezerwacja (§2.2); cache byłby kosztem bez odbiorcy |
 | **Tylko push, bez skrzynki** | §12.1 - powiadomienie, które nie doszło, znaczy prośbę o zgodę wiszącą bez odpowiedzi |
 | **Tylko e-mail zamiast skrzynki** | Rozważone (poczta działa od 2.1.0); e-mail w hangarze bywa czytany z opóźnieniem, a historia decyzji ma być w aplikacji |
 | **Kalendarz w UTC** | §6 - rezerwacja jest umową o godzinie, a nie pomiarem; dwa razy w roku przesuwałby siatkę dnia |
