@@ -34,6 +34,21 @@ RUN npm run build -w admin
 FROM node:22-alpine AS site-build
 WORKDIR /repo
 
+# Cache warstwy `COPY` potrafi przeżyć zmianę źródeł, gdy builder hostingu odtwarza
+# kontekst po swojemu. 2026-09-22 produkcja serwowała landing i arkusz stylów sprzed
+# commita „Strona główna: planowanie obok rozliczania" - a dokumentacja, changelog
+# i makiety z TEGO SAMEGO obrazu były aktualne, więc po objawach wyglądało to na
+# brakującą treść, nie na wdrożenie. Ponowienie deployu nie pomaga: warstwa wraca
+# z cache razem ze starym `site/src`. Argument zmienia się z każdym commitem, więc
+# unieważnia wszystko poniżej - Railway podaje `RAILWAY_GIT_COMMIT_SHA` sam, a build
+# lokalny zostaje przy wartości domyślnej i cache działa jak dotąd. Etap jest
+# najtańszy w obrazie (bez `npm ci`), więc jego przebudowa kosztuje sekundy.
+#
+# Gdyby hosting przestał podawać tę zmienną, wystarczy dowolna inna zmieniana co
+# wydanie - warunkiem jest TYLKO to, żeby jej wartość różniła się między commitami.
+ARG RAILWAY_GIT_COMMIT_SHA=local
+RUN echo "$RAILWAY_GIT_COMMIT_SHA" > /repo/.source-ref
+
 COPY site/ site/
 COPY docs/ docs/
 COPY design/ design/
