@@ -1,10 +1,10 @@
 /**
  * Ninerdeck - aktualizacja OTA ze zmiennymi profilu z `eas.json`.
  *
- * Woła się przez skrypty npm, a nazwa profilu jest ich pierwszym argumentem:
- *   `npm run update:prod -- -m "opis"`  → profil `production`  → kanał `production` (piloci)
- *   `npm run update:stg  -- -m "opis"`  → profil `development` → kanał `development` (staging)
- * Reszta argumentów leci dalej do `eas-cli`.
+ * Woła się przez skrypt npm, a nazwa profilu jest jego pierwszym argumentem:
+ *   `npm run update:prod -- -m "opis"`  → profil `production` → kanał `production` (piloci)
+ * Reszta argumentów leci dalej do `eas-cli`. Profil jest argumentem, a nie stałą, bo
+ * runner ma zostać jeden także wtedy, gdy celów będzie kiedyś więcej niż jeden.
  *
  * `eas update` nie czyta `build.<profil>.env` z `eas.json` (to pole obsługuje tylko
  * `eas build`), więc gołe `eas-cli update` pakowało bundle ze zmiennymi z lokalnego
@@ -14,8 +14,7 @@
  * nie ma jak podmienić adresu po cichu.
  *
  * Gałąź publikacji to KANAŁ profilu, nie osobna stała - powód w docblocku
- * `eas-profile-env.js`. Profil `development` wskazuje adres staging, więc ten sam runner
- * obsługuje próbę generalną wydania (`docs/staging.md`).
+ * `eas-profile-env.js`.
  *
  * Platforma jest ZAWSZE podana (`--platform android`, chyba że wołający poda własną):
  * bez niej `eas update` eksportuje bundle dla wszystkich platform, także web, a projekt

@@ -11,8 +11,7 @@
         "buildType": "apk"
       },
       "env": {
-        "APP_VARIANT": "development",
-        "EXPO_PUBLIC_API_URL": "https://app-staging.ninerdeck.pl"
+        "APP_VARIANT": "development"
       }
     },
     "production": {
