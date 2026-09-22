@@ -66,7 +66,7 @@ a niepotrzebny APK tylko kosztuje.
 ## Krok 0b: próba generalna na staging
 
 Wydanie planowe przechodzi najpierw przez **staging** (`docs/staging.md`) - własna baza,
-te same migracje, ta sama poczta, adresy `stg.ninerdeck.pl` i `app.stg.ninerdeck.pl`.
+te same migracje, ta sama poczta, adresy `staging.ninerdeck.pl` i `app-staging.ninerdeck.pl`.
 
 1. Po założeniu gałęzi `ninerdeck_x_x_x` przełącz w Railway śledzoną gałąź środowiska
    staging z `develop` na nią. Deploy uruchamia migracje przy starcie serwera, więc

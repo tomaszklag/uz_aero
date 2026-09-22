@@ -3590,7 +3590,7 @@ się zdjęciem builda, a jedyną próbą generalną była do tej pory produkcja.
   (`PUBLIC_BASE_URL`, `PUBLIC_SITE_URL`, `MAIL_FROM`, `JWT_SECRET`, `SEED_ADMIN_EMAIL`).
   Gdyby kiedyś kusiło dopisanie `if (staging)`, to jest znak, że różnica siedzi w złym
   miejscu
-- **dwa hosty, jak na produkcji** (`stg.ninerdeck.pl` strona, `app.stg.ninerdeck.pl` panel
+- **dwa hosty, jak na produkcji** (`staging.ninerdeck.pl` strona, `app-staging.ninerdeck.pl` panel
   i API): przy jednym haście rozdział hostów i rozdział origin CSP (`hostSplit.ts`, #124)
   pierwszy raz działałyby dopiero na produkcji
 - **aplikację reprezentuje DEV BUILD** (`com.ninerdeck.app.dev`), nie osobny wariant
