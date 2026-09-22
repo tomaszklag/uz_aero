@@ -144,7 +144,7 @@ describe('eas.json w repozytorium', () => {
     expect(target.channel).toBe('development');
     expect(easJson.build.development.developmentClient).toBe(true);
     expect(target.env.APP_VARIANT).toBe(DEVELOPMENT_VARIANT);
-    expect(target.env.EXPO_PUBLIC_API_URL).toBe('https://app.stg.ninerdeck.pl');
+    expect(target.env.EXPO_PUBLIC_API_URL).toBe('https://app-staging.ninerdeck.pl');
   });
 
   it('profil development NIE ustawia klienta Google - jest związany z pakietem dev i bywa go brak', () => {

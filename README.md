@@ -198,7 +198,7 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
 ### Staging - przedwydaniowa kopia produkcji
 
 Wydanie przechodzi próbę generalną na osobnym środowisku Railway (własna usługa, własny
-Postgres, własny wolumen) pod adresami `stg.ninerdeck.pl` i `app.stg.ninerdeck.pl`.
+Postgres, własny wolumen) pod adresami `staging.ninerdeck.pl` i `app-staging.ninerdeck.pl`.
 Obraz, migracje i poczta są te same, co na produkcji - różnią się wyłącznie zmienne,
 więc serwer nie ma dla staging ani jednej gałęzi w kodzie. Aplikację reprezentuje tam
 **dev build** (`com.ninerdeck.app.dev`), a bundle wysyła się na jego kanał przez

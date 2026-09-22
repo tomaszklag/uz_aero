@@ -18,7 +18,7 @@ i dev build z Metro) ani kopią danych klubów (baza stoi od zera - patrz §8).
 2. **Aplikacja na staging = istniejący dev build** `com.ninerdeck.app.dev`, nie osobny
    wariant `.stg` (potwierdzone przez właściciela 2026-09-21). Stoi na telefonie obok
    produkcyjnego APK i ma własne dane - cena tej decyzji w §7.
-3. **Dwa hosty, jak na produkcji**: `stg.ninerdeck.pl` (strona) i `app.stg.ninerdeck.pl`
+3. **Dwa hosty, jak na produkcji**: `staging.ninerdeck.pl` (strona) i `app-staging.ninerdeck.pl`
    (panel i API). Jeden host oznaczałby, że rozdział hostów i rozdział origin CSP
    (`server/src/http/hostSplit.ts`, issue #124) pierwszy raz działają dopiero na produkcji.
    **Adres hosta aplikacji jest wydany w `eas.json`** (profil `development`, od 3.0.0
@@ -32,12 +32,12 @@ i dev build z Metro) ani kopią danych klubów (baza stoi od zera - patrz §8).
 
 | | produkcja | staging |
 | --- | --- | --- |
-| host strony | `ninerdeck.pl` | `stg.ninerdeck.pl` |
-| host panelu i API | `app.ninerdeck.pl` | `app.stg.ninerdeck.pl` |
+| host strony | `ninerdeck.pl` | `staging.ninerdeck.pl` |
+| host panelu i API | `app.ninerdeck.pl` | `app-staging.ninerdeck.pl` |
 | baza | Postgres produkcji | własny Postgres |
 | `JWT_SECRET` | produkcyjny | **inny** - tokeny obu światów nie są wymienne |
 | nadawca poczty | `Ninerdeck <konto@…>` | `Ninerdeck STAGING <…>` |
-| klient Google Web | ten sam, z dodanym originem staging | ten sam |
+| logowanie do panelu | Google albo hasło | **hasło** - originu staging nie dodajemy w Google Cloud, więc przycisk Google jest nieczynny |
 | pakiet aplikacji | `com.ninerdeck.app` | `com.ninerdeck.app.dev` (dev build) |
 | kanał aktualizacji | `production` | `development` |
 | gałąź | `main` | `develop`, w stabilizacji `ninerdeck_x_x_x` |
@@ -50,13 +50,12 @@ Reszta - obraz Dockera, migracje, seed, panel, strona - jest identyczna, i o to 
 DATABASE_URL             = ${{Postgres.DATABASE_URL}}
 JWT_SECRET               = <nowy, losowy min. 32 znaki - NIE ten z produkcji>
 TRUST_PROXY              = 1
-PUBLIC_BASE_URL          = https://app.stg.ninerdeck.pl
-PUBLIC_SITE_URL          = https://stg.ninerdeck.pl
+PUBLIC_BASE_URL          = https://app-staging.ninerdeck.pl
+PUBLIC_SITE_URL          = https://staging.ninerdeck.pl
 MAIL_PROVIDER            = resend
 MAIL_API_KEY             = <klucz Resend>
-MAIL_FROM                = Ninerdeck STAGING <staging@ninerdeck.pl>
-GOOGLE_WEB_CLIENT_ID     = <ten sam klient Web, co produkcja>
-GOOGLE_ANDROID_CLIENT_ID = <klient dev builda, com.ninerdeck.app.dev>
+MAIL_FROM                = Ninerdeck STAGING <konto@staging.ninerdeck.pl>
+GOOGLE_WEB_CLIENT_ID     = <ten sam klient Web, co produkcja - WYMAGANY, bez niego serwer nie wstaje>
 SEED_ADMIN_EMAIL         = <adres właściciela>
 ```
 
@@ -83,15 +82,46 @@ Czego na tej liście nie ma, a od 3.0.0 musi być w środowisku:
   rezerwacje chodzi (co 5 min). To pierwszy wątek okresowy w tym serwerze i staging jest
   jedynym miejscem, gdzie da się go zobaczyć przed produkcją; `0` wpisuje się wyłącznie
   wtedy, gdy przeszkadza w konkretnym teście.
+- **`GOOGLE_ANDROID_CLIENT_ID` zostaje NIEUSTAWIONE** (decyzja właściciela 2026-09-22):
+  na staging loguje się hasłem, a klient Android jest związany z pakietem - produkcyjny
+  odrzuciłby token dev builda, więc wartość skopiowana z produkcji szkodzi bardziej niż
+  jej brak. `GOOGLE_WEB_CLIENT_ID` musi zostać: bez niego serwer nie wstaje, a pusty zbiór
+  odbiorców przepuszczałby dowolny token Google.
+
+## 3a. Domeny w Cloudflare
+
+**Certyfikat Universal SSL pokrywa `ninerdeck.pl` i `*.ninerdeck.pl` - czyli JEDEN poziom
+subdomeny.** Dlatego host panelu nazywa się `app-staging`, a nie `app.staging`: ten drugi
+jest dwa poziomy w głąb i przy włączonym proxy odpadłby na TLS, a żeby działał, trzeba by
+płatnego Advanced Certificate Manager albo wyłączenia proxy - a wtedy przepada reguła
+Transform z nagłówkiem `noindex`. Myślnik kupuje darmowy certyfikat i proxy w komplecie.
+
+- obie domeny dodaje się w Railway (Settings → Public Networking, port 3000); Railway
+  podaje dla każdej parę CNAME + TXT i wymaga obu. Plan Hobby dopuszcza dwie domeny
+  na usługę - staging jest osobną usługą, więc ma własny budżet;
+- w Cloudflare proxy **włączone**, SSL/TLS **Full** (nie Full strict), jak na produkcji.
+  CNAME flattening nie jest tu potrzebny - to była sztuczka wyłącznie dla apexu;
+- **reguła Transform z `X-Robots-Tag: noindex` musi wymieniać OBA hosty po nazwie.**
+  Wzorzec `*.staging.ninerdeck.pl` nie trafi w `app-staging.ninerdeck.pl`, bo to rodzeństwo,
+  nie dziecko;
+- `PUBLIC_SITE_URL` i `PUBLIC_BASE_URL` ustawia się **po** wystawieniu certyfikatów: przy
+  połowicznej konfiguracji serwer świadomie nie wstaje, więc kolejność odwrotna wygląda
+  jak awaria wdrożenia.
+
+Poczta: dopóki w Resend zweryfikowana jest sama `ninerdeck.pl`, nadawcą zostaje
+`staging@ninerdeck.pl` - rozróżnienie niesie wtedy nazwa („Ninerdeck STAGING"), bo adres
+spoza zweryfikowanej domeny Resend odrzuca. Adres `konto@staging.ninerdeck.pl` z tabeli
+wyżej wymaga dodania tej subdomeny w Resend (DKIM, SPF, zwrotki) - a darmowy plan daje
+jedną domenę, więc może się nie zmieścić.
 
 ## 4. Rozruch od zera
 
-1. `curl https://app.stg.ninerdeck.pl/health` → `{"ok":true}`.
+1. `curl https://app-staging.ninerdeck.pl/health` → `{"ok":true}`.
 2. Panel (`/admin/`) → **„Nie pamiętam hasła"** na adres z `SEED_ADMIN_EMAIL` → link
    z poczty → ustawienie hasła → wejście. To jednocześnie pierwszy pełny test łańcucha
    2.1.0: dostawca poczty → link → strona `/haslo/` na hoście aplikacji → logowanie.
-3. Rozdział hostów - trzy sprawdziany: `stg.ninerdeck.pl/admin/` odsyła na host aplikacji,
-   `app.stg.ninerdeck.pl/` odsyła na `/admin/`, `stg.ninerdeck.pl/admin/api/me` → 404.
+3. Rozdział hostów - trzy sprawdziany: `staging.ninerdeck.pl/admin/` odsyła na host aplikacji,
+   `app-staging.ninerdeck.pl/` odsyła na `/admin/`, `staging.ninerdeck.pl/admin/api/me` → 404.
 4. Organizacje → klub → **lotnisko macierzyste i strefa czasowa klubu** → kod klubu → flota
    (normy paliwa i oleju, pojemności, minima, stany początkowe, format licznika). Ten świat
    zostaje między wydaniami. Konfiguracja kalendarza nie jest ozdobą: bez lotniska doba
@@ -108,7 +138,7 @@ Czego na tej liście nie ma, a od 3.0.0 musi być w środowisku:
 Dev build (`com.ninerdeck.app.dev`, README „Dev build aplikacji") rozmawia ze staging na
 dwa sposoby i różnią się tym, skąd bierze bundle:
 
-- **przy biurku**: `EXPO_PUBLIC_API_URL=https://app.stg.ninerdeck.pl` w `app/.env`
+- **przy biurku**: `EXPO_PUBLIC_API_URL=https://app-staging.ninerdeck.pl` w `app/.env`
   + `npm run app`. Metro bundluje lokalnie, więc wygrywa plik `.env`.
 - **tester bez Twojego Metro**: `npm run update:stg -- -m "opis"`. Runner czyta profil
   `development` z `eas.json`, publikuje na gałąź równą jego kanałowi i wstrzykuje adres

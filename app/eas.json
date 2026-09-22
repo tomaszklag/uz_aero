@@ -12,7 +12,7 @@
       },
       "env": {
         "APP_VARIANT": "development",
-        "EXPO_PUBLIC_API_URL": "https://app.stg.ninerdeck.pl"
+        "EXPO_PUBLIC_API_URL": "https://app-staging.ninerdeck.pl"
       }
     },
     "production": {
