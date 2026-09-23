@@ -142,6 +142,20 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async pending(db: Queryable, orgId: string): Promise<BookingRecord[]> {
+    // `kind = 'flight'` jest tu REGUŁĄ, nie filtrem wygody: wyłączenie maszyny z użytku
+    // nie ma ścieżki i nie może czekać na niczyją zgodę (§11) - a `pending` na takim
+    // wierszu i tak nie ma jak powstać. Najstarsze pierwsze, bo kolejka ma pokazać na
+    // górze to, co jest najbliżej wygaśnięcia.
+    const { rows } = await db.query<BookingDbRow>(
+      `SELECT ${COLUMNS} FROM bookings
+        WHERE org_id = $1 AND kind = 'flight' AND status = 'pending'
+        ORDER BY created_at, id`,
+      [orgId],
+    );
+    return rows.map(toRecord);
+  }
+
   /**
    * Zapis idempotentny po uuidzie klienta: `ON CONFLICT DO NOTHING` nic nie oddaje,
    * więc wiersz dociągamy osobno i mówimy `created: false`. Powtórzony `POST` z terenu

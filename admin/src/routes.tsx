@@ -22,7 +22,9 @@ import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
+import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
+import { DecisionQueueScreen } from './screens/calendar/DecisionQueueScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { AccountScreen } from './screens/me/AccountScreen';
 import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
@@ -76,6 +78,28 @@ export const router = createHashRouter([
       // jedną zajętość i otwiera się NAD siatką, więc siatka ma zostać pod spodem
       // jako kontekst decyzji. Formularze (wyłączenie z użytku, rezerwacja za pilota)
       // adresu NIE MAJĄ: nie opisują istniejącego bytu, tylko go tworzą.
+      // Konfiguracja i kolejka modułu Kalendarz (3.1.0, issue #165) mają WŁASNE adresy
+      // PRZED `:id?`, bo `sciezka` i `decyzje` byłyby dla niego identyfikatorem zajętości
+      // - ta sama reguła, co `piloci/kod` przed `piloci/:id?`. Oba pytają o zdolność:
+      // ścieżka to rozdanie władzy (`accounts.manage`), kolejka - moje kroki
+      // (`reservations.approve`); wklejony adres bez zdolności wraca na ekran startowy.
+      // Krok ścieżki ma adres jak każda szuflada nad listą (`nowy` = nowy krok).
+      {
+        path: 'kalendarz/sciezka/:stepId?',
+        element: (
+          <RequireCapability capability="accounts.manage">
+            <ApprovalPathScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'kalendarz/decyzje',
+        element: (
+          <RequireCapability capability="reservations.approve">
+            <DecisionQueueScreen />
+          </RequireCapability>
+        ),
+      },
       { path: 'kalendarz/:id?', element: <CalendarScreen /> },
 
       // Moduł PLATFORMY (`docs/wielofirmowosc.md` §8.1), więc trasa pyta o zdolność -

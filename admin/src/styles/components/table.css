@@ -265,3 +265,13 @@ tbody tr.muted .cell-strong {
 .cell-sub.warn {
   color: var(--amber);
 }
+
+/* Nazwisko PRZYGASZONE w obsadzie kroku ścieżki akceptacji (`kalendarz-sciezka` K4c):
+   osoba, która nie rozstrzygnie kroku, ZOSTAJE na liście - to konfiguracja klubu
+   i nie zmienia się sama - ale schodzi o stopień, żeby administrator na nią nie liczył.
+   Stopień placeholdera, nie `--text-muted`: ten drugi należy w kalendarzu do stanu
+   „czeka na akceptację" i nie ma prawa znaczyć dwóch rzeczy naraz. */
+.cell-sub .dim,
+.cell-sub.dim {
+  color: var(--text-placeholder);
+}

@@ -52,11 +52,20 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   pilota z historią, a powiadomienie na telefon jest tylko sygnałem, że coś przyszło.
 - **Termin, którego nikt nie rozpatrzył, wygasa z chwilą swojego początku** i wraca do
   puli - maszyna nie stoi w sobotę zablokowana prośbą, o której wszyscy zapomnieli.
+- **Panel: ścieżka akceptacji i kolejka decyzji.** Administrator układa kroki w minutę -
+  nazwa, osoby, kolejność przestawiana chwytem - a ekran mówi od razu, gdy ktoś z kroku
+  stracił prawo akceptacji. Kto akceptuje, widzi w kalendarzu baner z liczbą spraw
+  czekających na jego zgodę i rozstrzyga je z jednego miejsca, z całym planem lotu przed
+  oczami. Rezerwacja czekająca na zgodę stoi na osi floty z przerywaną ramką, a jej karta
+  pokazuje historię decyzji: kto, kiedy i dlaczego. Klub, który akceptacji nie chce, nie
+  widzi w panelu ani jednego dodatkowego kroku.
 
 ### Dla testerów
 
-- Ścieżkę akceptacji ustawia się w panelu; decyzję podejmuje się z telefonu, także bez
-  dostępu do panelu - mechanik jest w klubie zwykłym pilotem.
+- Ścieżkę akceptacji ustawia się w panelu; decyzję podejmuje się z telefonu albo z panelu,
+  także bez dostępu do panelu - mechanik jest w klubie zwykłym pilotem.
+- Administrator z uprawnieniem do cudzych rezerwacji może rozstrzygnąć każdy krok z karty
+  rezerwacji w kalendarzu - to wyjście awaryjne, gdy krok stracił obsadę.
 - Prawo akceptacji nadaje się osobie w zakresie uprawnień, niezależnie od reszty
   uprawnień panelu.
 

@@ -429,12 +429,19 @@ stan niż utrata nowego.
 | Trasa | Zdolność |
 | --- | --- |
 | `GET /admin/api/bookings?from=&to=` | `panel.access` |
+| `GET /admin/api/bookings/:id` *(3.1)* - zajętość ze stanem ścieżki, Z OSOBĄ decydującą | `panel.access` |
 | `POST /admin/api/bookings` (rezerwacja za pilota, wyłączenie z użytku) | `reservations.manage` / `fleet.manage` |
-| `PATCH`/`DELETE /admin/api/bookings/:id` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/cancel` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
+| `GET /admin/api/approvals/queue` *(3.1)* - co czeka na MOJĄ zgodę | `reservations.approve` |
 | `GET`/`PUT /admin/api/approval-steps` *(3.1)* | `accounts.manage` |
 
-Wpisy administratora idą przez `AuditedWrite` - nowe akcje w `domain/adminActions.ts`:
-`booking.create`, `booking.cancel`, `booking.block`, `approval.decide`.
+Wpisy administratora idą przez `AuditedWrite` - akcje w `domain/adminActions.ts`:
+`booking.create`, `booking.cancel`, `booking.block`, `approval.steps`. **Decyzja o rezerwacji
+NIE MA akcji audytu** - ani z telefonu, ani z panelu (decyzja właściciela 2026-09-23,
+epik R-H): jej rejestrem jest append-only `booking_approvals`, a drugi ślad zależny od
+powierzchni mówiłby o jednym fakcie na dwa sposoby. Historia w panelu niesie OSOBĘ
+decydującą (`decidedBy`), telefon - nie (§9.4): administrator pyta „do kogo zadzwonić".
 
 ## 6. Czas: kalendarz mówi czasem klubu, rejestr zostaje w UTC
 
@@ -976,6 +983,22 @@ nalot bywa pytaniem, a nie dowódcy.
 Panel NIE pokazuje sugestii slotów: to narzędzie pilota szukającego miejsca dla siebie,
 a administrator patrzy na całość i wpisuje konkretny termin.
 
+**HISTORIA DECYZJI I ODBLOKOWANIE UTKNIĘTEGO KROKU MIESZKAJĄ W SZUFLADZIE ZAJĘTOŚCI**
+(K2a, decyzja właściciela 2026-09-23, epik R-H). Kolejka K5 pokazuje wyłącznie sprawy
+stojące na MOIM kroku bieżącym, więc rezerwacja utknięta na kroku bez obsady (K4c) nigdy
+by się w niej nie pojawiła - a szuflada opisuje KAŻDĄ zajętość. Karta „Ścieżka akceptacji"
+stoi za kartą rezerwacji: kroki po numerach, przy decyzji OSOBA z kodem i godzina klubu
+(inaczej niż na telefonie, §9.4 - administrator pyta „do kogo zadzwonić"), pominięcie jako
+zapis „przeszedł sam", odmowa z powodem, krok bieżący bursztynem, krok nieosiągnięty kreską.
+Dla `reservations.manage` przy sprawie w toku dochodzi karta „Decyzja za krok …" - jawny
+akt z nazwiskiem w historii, powód wymagany przy odmowie. Klub bez ścieżki karty NIE MA.
+Rozstrzygnięcie idzie RZECZOWNIKIEM („zgoda · Jan Bąk"), bo czasownika nie da się odmienić
+bez znajomości płci.
+
+**Wartości „samolot" i „pilot" w kolejce NIE prowadzą jeszcze w głąb**: podgląd K6 wymaga
+nowych zapytań serwera (nalot, ostatnie loty, najbliższe rezerwacje) wspólnych z telefonem
+26a/26b i jest osobnym epikiem po R-H (decyzja właściciela 2026-09-23).
+
 ## 11. Workflow akceptacji (3.1.0)
 
 ### 11.1 Klub bez ścieżki nie klika w nic
@@ -1300,6 +1323,9 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-G | **decyzje NIE trafiają do dziennika audytu** - ich rejestrem jest append-only `booking_approvals`; do `admin_audit` wchodzi zmiana ŚCIEŻKI (`approval.steps`) | `CLAUDE.md`, sekcja epiku R-G |
 | R-G | zapis ścieżki odmawia kroku bez osób **i** kroku obsadzonego kimś spoza klubu | §11.2 |
 | R-G | stan ścieżki jedzie w `GET /bookings/:id`, nie w oknie kalendarza (odczyt per wiersz zamieniłby jedno zapytanie w tyle, ile rezerwacji na ekranie) | §5.1 |
+| R-H | decyzja z panelu idzie TYM SAMYM rdzeniem i rejestrem, co z telefonu - bez wpisu w dzienniku audytu; historia w panelu niesie OSOBĘ decydującą | §5.2 |
+| R-H | historia decyzji (H5) i odblokowanie utkniętego kroku mieszkają w SZUFLADZIE ZAJĘTOŚCI (K2a), nie w kolejce - kolejka pokazuje wyłącznie moje kroki | §10 |
+| R-H | podgląd pilota i samolotu (K6) wypadł z epiku do osobnego zgłoszenia; wartości w kolejce nie prowadzą w głąb | §10 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od

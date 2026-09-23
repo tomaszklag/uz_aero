@@ -1112,6 +1112,14 @@ export interface BookingsPort {
    */
   undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]>;
   /**
+   * Rezerwacje KLUBU czekające na zgodę (3.1.0, issue #165) - materiał kolejki decyzji
+   * w panelu. Bez okna dat, bo kolejka go nie ma: prośba o zgodę sprzed tygodnia na
+   * termin za miesiąc czeka tak samo, jak złożona dziś na jutro. Lista nie rośnie bez
+   * końca z tego samego powodu, co `undecided`: rozstrzygnięty wiersz przestaje być
+   * `pending`. Najstarsze pierwsze - to one są najbliżej wygaśnięcia (§11.5).
+   */
+  pending(db: Queryable, orgId: string): Promise<BookingRecord[]>;
+  /**
    * Rezerwacja zrealizowana operacją (B7). Jedyne miejsce, w którym rejestr dotyka
    * rezerwacji, i tylko w jedną stronę. `false`, gdy wiersza nie ma albo nie jest
    * czynny - ingest nie ma się wtedy o co potykać.

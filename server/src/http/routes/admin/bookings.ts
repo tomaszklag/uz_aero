@@ -21,10 +21,12 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { AdminBookingCommands } from '../../../application/admin/commands/bookings.ts';
+import type { ApprovalFlow } from '../../../application/common/commands/approvals.ts';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
-import type { BookingRecord } from '../../../application/common/ports.ts';
 import type { BookingRefusal } from '../../../domain/bookings.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
+import { panelApprovalWire } from './approvals.ts';
+import { bookingWire as wire } from './bookingWire.ts';
 
 const ICAO = z.string().trim().min(3).max(8);
 const NOTE_MAX = 500;
@@ -66,32 +68,6 @@ const block = z.object({
  */
 const cancel = z.object({ reason: z.string().trim().max(2000).nullable().optional() });
 
-/** Zajętość na drucie dla panelu - pełna, razem ze śladem zamknięcia i autorem. */
-function wire(row: BookingRecord): Record<string, unknown> {
-  return {
-    id: row.id,
-    aircraftId: row.aircraftId,
-    kind: row.kind,
-    status: row.status,
-    startsAt: new Date(row.startsAt).toISOString(),
-    endsAt: new Date(row.endsAt).toISOString(),
-    pilotId: row.pilotId,
-    dualId: row.dualId,
-    operation: row.operation,
-    fromIcao: row.fromIcao,
-    toIcao: row.toIcao,
-    plannedAirMin: row.plannedAirMin,
-    plannedFuelL: row.plannedFuelL,
-    sessionUuid: row.sessionUuid,
-    blockReason: row.blockReason,
-    note: row.note,
-    createdBy: row.createdBy,
-    createdAt: new Date(row.createdAt).toISOString(),
-    closedAt: row.closedAt == null ? null : new Date(row.closedAt).toISOString(),
-    closeReason: row.closeReason,
-  };
-}
-
 const STATUS: Readonly<Record<BookingRefusal, number>> = {
   slot_taken: 409,
   aircraft_disabled: 409,
@@ -107,8 +83,36 @@ export function registerAdminBookingRoutes(
   app: FastifyInstance,
   bookings: AdminBookingCommands,
   calendar: BookingQueries,
+  approvals: ApprovalFlow,
   gate: AdminGate,
 ): void {
+  /**
+   * JEDNA zajętość razem ze stanem jej ścieżki (3.1.0, issue #165) - dla szuflady
+   * `#/kalendarz/:id`. Stan ścieżki jedzie TUTAJ, nie w oknie kalendarza: siatka rysuje
+   * pasek i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno zapytanie o tydzień
+   * w tyle zapytań, ile rezerwacji stoi na ekranie (ta sama decyzja, co na telefonie).
+   * Cudzy klub = 404, jak wszędzie (epik C wielofirmowości).
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'GET', url: '/bookings/:id', capability: 'panel.access' },
+    async (req, reply, actor) => {
+      const p = params.safeParse(req.params);
+      if (!p.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const view = await calendar.byId(actor.orgId, p.data.id);
+      if (view == null) return reply.code(404).send({ error: 'not_found' });
+
+      const approval = await approvals.view(actor.orgId, view.booking.id);
+      return reply.send({
+        timezone: view.timezone,
+        booking: wire(view.booking),
+        approval: panelApprovalWire(approval),
+      });
+    },
+  );
+
   adminRoute(
     app,
     gate,

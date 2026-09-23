@@ -83,6 +83,7 @@ import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
+import { registerAdminApprovalRoutes } from './routes/admin/approvals.ts';
 import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
@@ -553,8 +554,11 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, gate);
+  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, deps.approvals, gate);
   registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
+  // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
+  // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.
+  registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie
