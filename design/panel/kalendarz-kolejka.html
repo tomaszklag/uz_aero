@@ -152,10 +152,23 @@
 
            Kolejność: najdłużej czekające na górze, bo one są najbliżej wygaśnięcia.
            Rezerwacja NIEROZSTRZYGNIĘTA wygasa z początkiem terminu (§11.5) i zwalnia
-           slot - stąd wiersz „Czeka od" i podpis przy terminie, a nie sama data. -->
+           slot - stąd wiersz „Czeka od" i podpis przy terminie, a nie sama data.
+
+           ══ WIERSZA „KROK" NIE MA I WRACA TYLKO WTEDY, GDY ODRÓŻNIA ══
+           Uwaga właściciela 2026-09-23. Na tym ekranie wszystko czeka na ZALOGOWANEGO,
+           a jeśli stoi on w jednym kroku ścieżki - czyli prawie zawsze - „Mechanik"
+           powtarzałby się przy każdej karcie. Wartość jednakowa w każdym wierszu uczy
+           oko pomijać kolumnę (reguła SyncChipa z issue #12).
+
+           Wiersz wraca WYŁĄCZNIE wtedy, gdy kolejka MIESZA kroki - bo ta sama osoba
+           stoi na liście kilku. Rozstrzyga faktyczna zawartość listy, nie to, ile
+           kroków ma ścieżka: dokładnie tak, jak plakietka nazwy pola w historii zmian
+           (`needsFieldLabels`, issue #43) pojawia się tylko przy liście mieszanej.
+
+           Co dzieje się PO decyzji, mówi zdanie pod listą - raz, a nie przy każdej
+           karcie z osobna. -->
       <div class="card">
         <div class="card-title">SP-AXA · sobota 26 WRZ, 09:00-12:00</div>
-        <div class="kv"><span class="kv-k">Krok</span><span class="kv-v">Mechanik <span class="cell-sub">· 1 z 2</span></span></div>
         <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Jakub Wrona <span class="cell-sub mono">JWR</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
@@ -171,7 +184,6 @@
 
       <div class="card">
         <div class="card-title">SP-BKL · niedziela 27 WRZ, 07:30-09:00</div>
-        <div class="kv"><span class="kv-k">Krok</span><span class="kv-v">Mechanik <span class="cell-sub">· 1 z 2</span></span></div>
         <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Marta Zięba <span class="cell-sub mono">MZI</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG</span></div>
