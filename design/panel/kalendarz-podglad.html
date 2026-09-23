@@ -132,40 +132,8 @@
       <!-- Karta kolejki pod szufladą. Podgląd otwierają DWA PRZYCISKI pod tytułem,
            a nie podkreślone wartości w wierszach - patrz komentarz przy nich. -->
       <div class="card">
-        <div class="card-title">sobota 26 WRZ, 09:00-12:00</div>
-        <!-- ══ SAMOLOT I PILOT SĄ POZYCJAMI PROWADZĄCYMI W GŁĄB ══
-             Trzy poprzednie wersje próbowały zrobić afordancję Z WARTOŚCI: niebieski
-             odnośnik, potem tekst z doklejoną ikoną, potem para przycisków odsuniętych
-             pod tytuł. Pierwsze dwie nie czytały się jak przycisk, trzecia odrywała
-             kontrolkę od rzeczy, której dotyczy.
-
-             Właściwy wzorzec ten projekt MA OD DAWNA i nazywa się `.opt` z szewronem
-             `.opt-go` - „pozycja prowadząca w głąb" (wybór klubu, 00A). Karta-przycisk
-             z nazwą, podpisem i szewronem: czyta się jak przycisk, bo nim jest, i stoi
-             NA BYCIE, a nie obok niego. Zero nowego CSS-u.
-
-             PODPIS DAJE POWÓD, ŻEBY OTWORZYĆ: typ maszyny i stan służby, u pilota kod
-             i kiedy ostatnio latał. Bez niego pozycja mówiłaby tylko „kliknij", a tak
-             odpowiada na pół pytania już na karcie.
-
-             Znak maszyny znika przy tym z TYTUŁU karty - stałby dwa razy na jednym
-             ekranie, a tytuł ma nieść TERMIN, o którym zapada decyzja. -->
-        <div class="opt-list">
-          <a class="opt" href="#samolot">
-            <span class="opt-body">
-              <span class="opt-name">SP-AXA</span>
-              <span class="opt-desc">Cessna 172 · w użytku</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-          <a class="opt" href="kalendarz-podglad.html">
-            <span class="opt-body">
-              <span class="opt-name">Jakub Wrona</span>
-              <span class="opt-desc">JWR · ostatni lot 6 dni temu</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-        </div>
+        <div class="card-title"><a class="go" href="#samolot" aria-label="Podgląd samolotu SP-AXA">SP-AXA<span class="opt-go" aria-hidden="true">›</span></a> · sobota 26 WRZ, 09:00-12:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Jakub Wrona">Jakub Wrona<span class="opt-go" aria-hidden="true">›</span></a> <span class="cell-sub mono">JWR</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">2:00 · paliwo 140 L</span></div>

@@ -382,3 +382,40 @@ tr.dragging > td {
   background: var(--surface-raised);
   opacity: 0.75;
 }
+
+/**
+ * WARTOŚĆ, KTÓRA PROWADZI W GŁĄB - afordancja NA wartości, nie obok niej.
+ *
+ * Powstała przy kolejce decyzji: znak maszyny i nazwisko pilota otwierają podgląd
+ * boczny. Cztery podejścia odpadły i każde z innego powodu - niebieski odnośnik
+ * obiecywał przejście gdzie indziej, tekst z ikoną-pudełkiem nie czytał się jak
+ * przycisk, przyciski pod tytułem oderwały kontrolkę od rzeczy, a karty `.opt`
+ * były na miejscu, ale ciężkie: dwie obramowane pozycje na każdą sprawę w liście.
+ *
+ * Zostaje rzecz najlżejsza: wartość zostaje wartością, w swoim miejscu i w swoim
+ * kolorze, a za nią stoi SZEWRON `.opt-go` - glif, którym ten panel oznacza
+ * „prowadzi w głąb". W wierszu waży tyle, co znak przestankowy.
+ *
+ * W SPOCZYNKU NIC SIĘ NIE ŚWIECI. Podkreślenie i zieleń szewronu wchodzą pod kursorem
+ * i na fokusie: w kolejce takie wartości są dwie na sprawę, więc afordancja widoczna
+ * stale robiłaby z listy choinkę (reguła SyncChipa z issue #12).
+ */
+.go {
+  color: inherit;
+  text-decoration: none;
+}
+
+.go:hover,
+.go:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.go .opt-go {
+  margin-left: 4px;
+}
+
+.go:hover .opt-go,
+.go:focus-visible .opt-go {
+  color: var(--green);
+}

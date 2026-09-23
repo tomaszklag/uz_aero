@@ -179,40 +179,24 @@
              i stoją tam, gdzie pada pytanie „czym" i „komu". Karta niesie PLAN,
              podgląd KONTEKST: plan mówi, co pilot zamierza, podgląd - czy to ma
              ręce i nogi. -->
-        <div class="card-title">sobota 26 WRZ, 09:00-12:00</div>
-        <!-- ══ SAMOLOT I PILOT SĄ POZYCJAMI PROWADZĄCYMI W GŁĄB ══
-             Trzy poprzednie wersje próbowały zrobić afordancję Z WARTOŚCI: niebieski
-             odnośnik, potem tekst z doklejoną ikoną, potem para przycisków odsuniętych
-             pod tytuł. Pierwsze dwie nie czytały się jak przycisk, trzecia odrywała
-             kontrolkę od rzeczy, której dotyczy.
+        <!-- ══ AFORDANCJĄ JEST SZEWRON PRZY WARTOŚCI, NIC WIĘCEJ ══
+             Cztery podejścia do jednej kontrolki: niebieski odnośnik (obiecywał przejście
+             gdzie indziej), tekst z doklejoną ikoną-pudełkiem (nie czytał się jak przycisk
+             i świecił przy każdej wartości), para przycisków pod tytułem (oderwana od
+             rzeczy, której dotyczy), karty `.opt` z szewronem (na miejscu, ale ciężkie -
+             dwie obramowane pozycje na każdą sprawę w liście).
 
-             Właściwy wzorzec ten projekt MA OD DAWNA i nazywa się `.opt` z szewronem
-             `.opt-go` - „pozycja prowadząca w głąb" (wybór klubu, 00A). Karta-przycisk
-             z nazwą, podpisem i szewronem: czyta się jak przycisk, bo nim jest, i stoi
-             NA BYCIE, a nie obok niego. Zero nowego CSS-u.
+             Zostaje rzecz najlżejsza z możliwych: WARTOŚĆ ZOSTAJE WARTOŚCIĄ, w swoim
+             miejscu i w swoim kolorze, a za nią stoi SZEWRON - ten sam glif `.opt-go`,
+             którym ten panel oznacza „prowadzi w głąb". Bez pudełka, bez ramki, bez
+             akcentu. Podkreślenie i zieleń szewronu wchodzą dopiero pod kursorem
+             i na fokusie.
 
-             PODPIS DAJE POWÓD, ŻEBY OTWORZYĆ: typ maszyny i stan służby, u pilota kod
-             i kiedy ostatnio latał. Bez niego pozycja mówiłaby tylko „kliknij", a tak
-             odpowiada na pół pytania już na karcie.
-
-             Znak maszyny znika przy tym z TYTUŁU karty - stałby dwa razy na jednym
-             ekranie, a tytuł ma nieść TERMIN, o którym zapada decyzja. -->
-        <div class="opt-list">
-          <a class="opt" href="kalendarz-podglad.html#samolot">
-            <span class="opt-body">
-              <span class="opt-name">SP-AXA</span>
-              <span class="opt-desc">Cessna 172 · w użytku</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-          <a class="opt" href="kalendarz-podglad.html">
-            <span class="opt-body">
-              <span class="opt-name">Jakub Wrona</span>
-              <span class="opt-desc">JWR · ostatni lot 6 dni temu</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-        </div>
+             Szewron, a nie ikona panelu bocznego: glif z rodziny, którą panel już ma,
+             waży w wierszu tyle co znak przestankowy - a ikona była prostokątem 13 px,
+             czyli drugim elementem obok napisu. -->
+        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-AXA">SP-AXA<span class="opt-go" aria-hidden="true">›</span></a> · sobota 26 WRZ, 09:00-12:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Jakub Wrona">Jakub Wrona<span class="opt-go" aria-hidden="true">›</span></a> <span class="cell-sub mono">JWR</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
         <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub mono">AKO</span></span></div>
@@ -226,40 +210,24 @@
       </div>
 
       <div class="card">
-        <div class="card-title">niedziela 27 WRZ, 07:30-09:00</div>
-        <!-- ══ SAMOLOT I PILOT SĄ POZYCJAMI PROWADZĄCYMI W GŁĄB ══
-             Trzy poprzednie wersje próbowały zrobić afordancję Z WARTOŚCI: niebieski
-             odnośnik, potem tekst z doklejoną ikoną, potem para przycisków odsuniętych
-             pod tytuł. Pierwsze dwie nie czytały się jak przycisk, trzecia odrywała
-             kontrolkę od rzeczy, której dotyczy.
+        <!-- ══ AFORDANCJĄ JEST SZEWRON PRZY WARTOŚCI, NIC WIĘCEJ ══
+             Cztery podejścia do jednej kontrolki: niebieski odnośnik (obiecywał przejście
+             gdzie indziej), tekst z doklejoną ikoną-pudełkiem (nie czytał się jak przycisk
+             i świecił przy każdej wartości), para przycisków pod tytułem (oderwana od
+             rzeczy, której dotyczy), karty `.opt` z szewronem (na miejscu, ale ciężkie -
+             dwie obramowane pozycje na każdą sprawę w liście).
 
-             Właściwy wzorzec ten projekt MA OD DAWNA i nazywa się `.opt` z szewronem
-             `.opt-go` - „pozycja prowadząca w głąb" (wybór klubu, 00A). Karta-przycisk
-             z nazwą, podpisem i szewronem: czyta się jak przycisk, bo nim jest, i stoi
-             NA BYCIE, a nie obok niego. Zero nowego CSS-u.
+             Zostaje rzecz najlżejsza z możliwych: WARTOŚĆ ZOSTAJE WARTOŚCIĄ, w swoim
+             miejscu i w swoim kolorze, a za nią stoi SZEWRON - ten sam glif `.opt-go`,
+             którym ten panel oznacza „prowadzi w głąb". Bez pudełka, bez ramki, bez
+             akcentu. Podkreślenie i zieleń szewronu wchodzą dopiero pod kursorem
+             i na fokusie.
 
-             PODPIS DAJE POWÓD, ŻEBY OTWORZYĆ: typ maszyny i stan służby, u pilota kod
-             i kiedy ostatnio latał. Bez niego pozycja mówiłaby tylko „kliknij", a tak
-             odpowiada na pół pytania już na karcie.
-
-             Znak maszyny znika przy tym z TYTUŁU karty - stałby dwa razy na jednym
-             ekranie, a tytuł ma nieść TERMIN, o którym zapada decyzja. -->
-        <div class="opt-list">
-          <a class="opt" href="kalendarz-podglad.html#samolot">
-            <span class="opt-body">
-              <span class="opt-name">SP-BKL</span>
-              <span class="opt-desc">Piper PA-28 · w użytku</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-          <a class="opt" href="kalendarz-podglad.html">
-            <span class="opt-body">
-              <span class="opt-name">Marta Zięba</span>
-              <span class="opt-desc">MZI · ostatni lot wczoraj</span>
-            </span>
-            <span class="opt-go" aria-hidden="true">›</span>
-          </a>
-        </div>
+             Szewron, a nie ikona panelu bocznego: glif z rodziny, którą panel już ma,
+             waży w wierszu tyle co znak przestankowy - a ikona była prostokątem 13 px,
+             czyli drugim elementem obok napisu. -->
+        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-BKL">SP-BKL<span class="opt-go" aria-hidden="true">›</span></a> · niedziela 27 WRZ, 07:30-09:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Marta Zięba">Marta Zięba<span class="opt-go" aria-hidden="true">›</span></a> <span class="cell-sub mono">MZI</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG</span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 90 L</span></div>
