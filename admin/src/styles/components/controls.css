@@ -382,3 +382,54 @@ tr.dragging > td {
   background: var(--surface-raised);
   opacity: 0.75;
 }
+
+/**
+ * PODGLĄD BOCZNY - wartość, która otwiera panel NAD tym ekranem.
+ *
+ * Powstał przy kolejce decyzji (`design/panel/kalendarz-kolejka`), gdzie nazwisko pilota
+ * i znak maszyny prowadzą w podgląd. Pierwsza wersja była zwykłym `<a>` - czyli
+ * NIEBIESKIM linkiem - i to było złe z powodu, który widać dopiero po kliknięciu:
+ * niebieski link obiecuje PRZEJŚCIE GDZIE INDZIEJ, a tu nic nie odchodzi. Wysuwa się
+ * szuflada, ekran pod spodem zostaje, sprawa zostaje, miejsce na liście zostaje.
+ *
+ * Stąd trzy decyzje:
+ *  • KOLOR DZIEDZICZONY, nie akcent - wartość ma wyglądać jak wartość, bo nią jest;
+ *  • IKONA MÓWI, CO SIĘ STANIE - prostokąt z wydzielonym prawym pasem to panel boczny,
+ *    a nie strzałka „dalej". Afordancja opisuje RUCH INTERFEJSU, nie kierunek nawigacji;
+ *  • UJAWNIA SIĘ POD KURSOREM - tło i zielona ikona dopiero na `:hover`/`:focus`.
+ *    Przy każdej wartości świecąca afordancja robi z karty choinkę, a tu takich wartości
+ *    są w kolejce dwie na sprawę (reguła SyncChipa z issue #12).
+ *
+ * Ujemny margines po lewej wyrównuje napis do sąsiednich wierszy mimo własnego
+ * wcięcia - inaczej jedna wartość w kolumnie stałaby o kilka pikseli dalej niż reszta.
+ */
+.peek {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: -3px -4px -3px -7px;
+  padding: 3px 4px 3px 7px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.peek:hover,
+.peek:focus-visible {
+  background: var(--surface-raised);
+}
+
+.peek svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.peek:hover svg,
+.peek:focus-visible svg {
+  color: var(--green);
+}
