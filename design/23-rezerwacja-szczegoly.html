@@ -280,6 +280,34 @@
       <span class="vp-when">Dwa kroki: termin i maszyna → zadanie, trasa, plan lotu. Ten sam formularz obsługuje przesunięcie istniejącej.</span>
     </span>
   </a>
+  <a class="vp-item" href="23b-rezerwacja-czeka.html">
+    <span class="vp-badge amber">23B</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zgodę</span>
+      <span class="vp-when">Klub ma ścieżkę akceptacji. Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Poprawka czyści zgody i zaczyna ścieżkę od nowa.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23e-rezerwacja-nowy-krok.html">
+    <span class="vp-badge amber">23E</span>
+    <span class="vp-body">
+      <span class="vp-name">Doszedł krok akceptacji</span>
+      <span class="vp-when">Klub dopisał krok, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest żywa i to jest jej cena.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23c-rezerwacja-odrzucona.html">
+    <span class="vp-badge amber">23C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odrzucona z powodem</span>
+      <span class="vp-when">Powód jest po stronie decydującego wymagany i stoi tu jako treść. Termin wrócił do puli, więc zostaje jedno wyjście - wybrać inny.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23d-rezerwacja-wygasla.html">
+    <span class="vp-badge amber">23D</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin minął bez decyzji</span>
+      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i oddaje slot: milczenie nie znaczy zgody.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -293,6 +321,12 @@
   <span>·</span>
   <a href="23-rezerwacja-szczegoly.html" class="active">23 Szczegóły</a>
   <a href="23a-rezerwacja-kolizja.html">23A Kolizja</a>
+
+  <span>·</span>
+  <a href="23b-rezerwacja-czeka.html">23B Czeka</a>
+  <a href="23e-rezerwacja-nowy-krok.html">23E Krok</a>
+  <a href="23c-rezerwacja-odrzucona.html">23C Odrzucona</a>
+  <a href="23d-rezerwacja-wygasla.html">23D Wygasła</a>
 </nav>
 
 </body>
