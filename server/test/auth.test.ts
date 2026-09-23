@@ -35,7 +35,6 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
       id: 'TMK',
       code: 'TMK',
       name: 'Tomasz Małkiewicz',
-      role: 'admin',
     });
     // JWT ma być od razu użyteczny…
     expect(tokens.verify(body.token)).toEqual({
@@ -43,7 +42,6 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
       // KLUB w tokenie (wielofirmowość §6): trasy klubowe pracują w klubie z claimu.
       orgId: ORG_A,
       code: 'TMK',
-      role: 'admin',
       // CHWILA WYDANIA (`iat`, sekundy epoki) - bez niej brama panelu nie umiałaby
       // odpowiedzieć na pytanie „czy to poświadczenie jest starsze niż unieważnienie".
       issuedAt: Math.floor(clock.now().getTime() / 1000),
@@ -263,8 +261,8 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     // Przyjęcie „ręką administratora" - wprost w bazie, bo komendy panelu to epik D2;
     // tu liczy się wyłącznie zachowanie tokenu osoby.
     await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, 'NW5', 'pilot', 'active', 'code')`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, $2, 'NW5', 'active', 'code')`,
       [ORG_A, person],
     );
 
@@ -293,8 +291,8 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     const personToken = (await stranger(app, 'nowy6')).json().personToken as string;
     const person = await personOf(db, 'nowy6');
     await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, 'NW6', 'pilot', 'active', 'code')`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, $2, 'NW6', 'active', 'code')`,
       [ORG_A, person],
     );
 
@@ -328,7 +326,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     expect(res.json().status).toBe('active');
     expect(res.json().tokens).toBeUndefined();
     expect(res.json().memberships).toMatchObject([
-      { org: { id: ORG_A }, status: 'active', code: 'TMK', role: 'admin', clubActive: true },
+      { org: { id: ORG_A }, status: 'active', code: 'TMK', clubActive: true },
     ]);
   });
 

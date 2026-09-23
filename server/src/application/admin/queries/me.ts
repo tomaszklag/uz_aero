@@ -76,7 +76,6 @@ export class AdminMeQueries {
       id: account.id,
       code: membership.code,
       name: account.name,
-      role: membership.role,
       org: { id: membership.orgId, slug: membership.orgSlug, name: membership.orgName },
     };
   }

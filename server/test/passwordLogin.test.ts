@@ -63,7 +63,7 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
     const res = await passwordLogin(app, 'tomasz@ninerdeck.pl', PASSWORD);
     expect(res.statusCode, res.body).toBe(200);
     const body = res.json();
-    expect(body.pilot).toMatchObject({ id: 'TMK', code: 'TMK', role: 'admin' });
+    expect(body.pilot).toMatchObject({ id: 'TMK', code: 'TMK' });
     expect(body.org.id).toBe(ORG_A);
     expect(typeof body.token).toBe('string');
     expect(typeof body.refreshToken).toBe('string');
@@ -201,7 +201,7 @@ describe('logowanie hasłem - panel (§5.2)', () => {
 
     const res = await panelLogin(app, 'tomasz@ninerdeck.pl', PASSWORD);
     expect(res.statusCode, res.body).toBe(200);
-    expect(res.json()).toMatchObject({ pilot: { id: 'TMK', code: 'TMK', role: 'admin' }, org: { id: ORG_A } });
+    expect(res.json()).toMatchObject({ pilot: { id: 'TMK', code: 'TMK' }, org: { id: ORG_A } });
     expect(res.json().capabilities).toContain('accounts.manage');
     const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin');
     expect(cookie?.httpOnly).toBe(true);

@@ -208,11 +208,11 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
     await login(app, 'TMK');
 
     const unknown = tokens.sign(
-      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin', sessionId: 'sesja-widmo' },
+      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', sessionId: 'sesja-widmo' },
       3600,
     );
     const legacy = tokens.sign(
-      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin', sessionId: '' },
+      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', sessionId: '' },
       3600,
     );
 

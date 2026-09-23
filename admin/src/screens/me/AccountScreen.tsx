@@ -20,6 +20,7 @@
 import { useState } from 'react';
 
 import type { PanelSessionDto } from '../../api/dto';
+import { scopeLabel } from '../accounts/scope';
 import { useSessionState } from '../../auth/sessionContext';
 import {
   useChangePassword,
@@ -68,7 +69,7 @@ export function AccountScreen() {
     <>
       <PageHead
         title="Moje konto"
-        // Podtytuł mówi, KIM tu jestem - bo to jest strona o mnie. Rola przed klubem, jak
+        // Podtytuł mówi, KIM tu jestem - bo to jest strona o mnie. Zakres przed klubem, jak
         // w mockupie: „administrator w klubie Aeroklub Zielonogórski". Sesja platformowa
         // nie ma klubu ani kodu, więc zostaje z niej sama rola.
         sub={[
@@ -221,12 +222,13 @@ export function AccountScreen() {
 /**
  * „administrator w klubie Aeroklub Zielonogórski" albo „superadministrator".
  *
- * Rola stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
+ * Zakres stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
  * Sesja platformowa nie ma klubu i nie ma go z czego wziąć - zostaje sama rola.
  */
 function scopeText(session: PanelSessionDto | null): string | null {
   if (session == null) return null;
   if (session.org == null) return 'superadministrator';
-  const role = session.pilot.role === 'admin' ? 'administrator' : 'pilot';
-  return `${role} w klubie ${session.org.name}`;
+  // Zakres, nie rola (epik #197): ten sam człowiek bywa technikiem w jednym klubie
+  // i administratorem w drugim, a nazwa liczy się ze zbioru zdolności TEJ sesji.
+  return `${scopeLabel(session.capabilities).toLowerCase()} w klubie ${session.org.name}`;
 }

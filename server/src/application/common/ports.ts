@@ -27,7 +27,7 @@ import type { BookingKind, BookingStatus } from '../../domain/bookings.ts';
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { LoginMethod, RevokedBy, SessionSurface } from '../../domain/loginSessions.ts';
-import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
+import type { Capability, PlatformRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,11 @@ export interface Membership {
   orgActive: boolean;
   /** Kod pilota W TYM klubie; `null` wyłącznie przy `pending` (CHECK w bazie). */
   code: string | null;
-  role: PilotRole;
+  /**
+   * ZAKRES UPRAWNIEŃ W TYM KLUBIE (epik #197) - zbiór, nie rola. Pusty zbiór to stan
+   * domyślny: pilot pracuje w aplikacji i panel go nie dotyczy.
+   */
+  capabilities: readonly Capability[];
   status: MembershipStatus;
   /** Unieważnienie poświadczeń PER KLUB - druga z dwóch dat, które sprawdza brama. */
   credentialsValidFrom: Date | null;
@@ -132,7 +136,11 @@ export interface MembershipAuthSnapshot {
   name: string;
   /** Osoba aktywna platformowo I klub działa I członkostwo `active`. */
   active: boolean;
-  role: PilotRole;
+  /**
+   * Zbiór czytany TYM SAMYM zapytaniem, co członkostwo - brama pyta o niego przy każdym
+   * żądaniu, więc odebranie zdolności działa natychmiast, a nie po wygaśnięciu tokenu.
+   */
+  capabilities: readonly Capability[];
   /**
    * Od kiedy poświadczenia OSOBY są ważne (`pilots.credentials_valid_from`). `null` =
    * nigdy ich nie unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy - to jedyny
@@ -245,7 +253,7 @@ export interface PilotPrefsPort {
  *
  * ══ TOKEN NIESIE OSOBĘ I KLUB (decyzja właściciela 2026-09-08, wielofirmowość §6) ══
  * `orgId` jest kontekstem KAŻDEJ trasy klubowej: flota, przejęcie, rejestr, karta arkusza
- * należą do klubu z tokenu. `code` i `role` są kodem i rolą Z CZŁONKOSTWA w tym klubie.
+ * należą do klubu z tokenu. `code` jest kodem Z CZŁONKOSTWA w tym klubie.
  * Przełączenie klubu to NOWA para tokenów (`POST /auth/switch`, epik F), nie nagłówek -
  * drugie źródło prawdy o klubie obok tokenu było rozważone i odrzucone.
  */
@@ -253,7 +261,12 @@ export interface Identity {
   pilotId: string;
   orgId: string;
   code: string;
-  role: PilotRole;
+  /*
+   * ROLI W TOKENIE NIE MA (epik #197). Była tym, Z CZEGO wyliczały się zdolności;
+   * odkąd czyta je brama z bazy, claim nie miał już władzy - a claim wyglądający na
+   * nadający uprawnienia, który nic nie nadaje, jest gorszy niż jego brak. Tokeny
+   * wydane przed wdrożeniem przechodzą dalej, bo brama i tak ich o rolę nie pyta.
+   */
   /**
    * SESJA LOGOWANIA (claim `sid`, 2.1.0 §6) - wiersz `login_sessions`, który brama
    * sprawdza przy KAŻDYM żądaniu. Dzięki niemu „Wyloguj to urządzenie" odbija następne

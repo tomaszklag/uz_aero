@@ -45,10 +45,8 @@ import { credentialsRevoked } from '../../../domain/credentials.ts';
 import type { MembershipStatus } from '../../../domain/memberships.ts';
 import {
   can,
-  capabilitiesOf,
   platformCapabilitiesOf,
   type Capability,
-  type PilotRole,
   type PlatformRole,
 } from '../../../domain/roles.ts';
 import type { AttemptLimiter } from '../attemptLimiter.ts';
@@ -163,19 +161,15 @@ export interface OrgRef {
 export interface AuthTokens {
   token: string;
   refreshToken: string;
-  /**
-   * `role` jedzie w odpowiedzi, a nie tylko w tokenie: panel musi wiedzieć od razu po
-   * zalogowaniu, które sekcje pokazać, a nie zgadywać po odmowach z kolejnych tras.
-   * `code` i `role` są kodem i rolą Z CZŁONKOSTWA w klubie `org`.
-   */
-  pilot: { id: string; code: string; name: string; role: PilotRole };
+  /** `code` jest kodem Z CZŁONKOSTWA w klubie `org` (wielofirmowość §3.2). */
+  pilot: { id: string; code: string; name: string };
   /** Klub, DLA KTÓREGO wydano tę parę (wielofirmowość §6). */
   org: OrgRef;
   /**
    * Komplet klubów osoby - z tego telefon wie, czy rysować przełącznik na 13a
    * (wyłącznie przy więcej niż jednym członkostwie, §7.3) i plakietkę klubu na 01e.
    */
-  memberships: { org: OrgRef; code: string; role: PilotRole }[];
+  memberships: { org: OrgRef; code: string }[];
 }
 
 /**
@@ -188,7 +182,6 @@ export interface ClubMembershipView {
   clubActive: boolean;
   status: MembershipStatus;
   code: string | null;
-  role: PilotRole;
   rejectReason: string | null;
   createdAt: Date;
   decidedAt: Date | null;
@@ -234,7 +227,6 @@ export interface PanelPilot {
   id: string;
   code: string;
   name: string;
-  role: PilotRole;
   /** Klub sesji panelu (wielofirmowość §8.2) - w SESJI, nie w nagłówku. */
   org: OrgRef;
 }
@@ -242,14 +234,17 @@ export interface PanelPilot {
 /**
  * Klub, do którego ta osoba może PRZEŁĄCZYĆ sesję panelu (mockup `00a-wybor-klubu`).
  *
- * Kod i rola są tu po to, żeby karta wyboru mogła napisać drugą linię („administrator ·
+ * Kod i ZAKRES są tu po to, żeby karta wyboru mogła napisać drugą linię („administrator ·
  * Twój kod TMK") - a nie po to, żeby panel cokolwiek z nich wnioskował: o tym, co wolno
- * w klubie, rozstrzyga zdolność z sesji WYDANEJ dla tego klubu.
+ * w klubie, rozstrzyga zbiór z sesji WYDANEJ dla tego klubu, czytany przy każdym żądaniu.
+ *
+ * Nazwę zakresu składa PANEL ze zbioru (epik #197) - serwer nie zna języka interfejsu,
+ * dokładnie jak przy kodach `AccountRefusal`.
  */
 export interface PanelScopeClub {
   org: OrgRef;
   code: string;
-  role: PilotRole;
+  capabilities: readonly Capability[];
 }
 
 /**
@@ -650,7 +645,7 @@ export class AuthCommands {
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
     const memberships = await this.pilots.memberships(account.id);
-    const admin = await this.pickActive(account.id, memberships, (m) => can(m.role, 'panel.access'));
+    const admin = await this.pickActive(account.id, memberships, (m) => can(m.capabilities, 'panel.access'));
     const scopes = panelScopesOf(memberships, account.platformRole);
 
     if (admin == null) {
@@ -773,7 +768,7 @@ export class AuthCommands {
     if (
       membership == null ||
       !isActive(membership) ||
-      !can(membership.role, 'panel.access') ||
+      !can(membership.capabilities, 'panel.access') ||
       credentialsRevoked(membership.credentialsValidFrom, request.issuedAt)
     ) {
       return { ok: false, reason: 'not_found' };
@@ -1087,20 +1082,19 @@ export class AuthCommands {
   ): Promise<AuthTokens> {
     const memberships = (await this.pilots.memberships(account.id))
       .filter((m): m is Membership & { code: string } => isActive(m))
-      .map((m) => ({ org: orgRefOf(m), code: m.code, role: m.role }));
+      .map((m) => ({ org: orgRefOf(m), code: m.code }));
     return {
       token: this.tokens.sign(
         {
           pilotId: account.id,
           orgId: membership.orgId,
           code: membership.code,
-          role: membership.role,
           sessionId,
         },
         ACCESS_TTL_SEC,
       ),
       refreshToken,
-      pilot: { id: account.id, code: membership.code, name: account.name, role: membership.role },
+      pilot: { id: account.id, code: membership.code, name: account.name },
       org: orgRefOf(membership),
       memberships,
     };
@@ -1165,8 +1159,8 @@ export function panelScopesOf(
 ): PanelScopes {
   return {
     clubs: memberships
-      .filter((m): m is Membership & { code: string } => isActive(m) && can(m.role, 'panel.access'))
-      .map((m) => ({ org: orgRefOf(m), code: m.code, role: m.role })),
+      .filter((m): m is Membership & { code: string } => isActive(m) && can(m.capabilities, 'panel.access'))
+      .map((m) => ({ org: orgRefOf(m), code: m.code, capabilities: m.capabilities })),
     platform: platformRole != null,
   };
 }
@@ -1186,7 +1180,6 @@ function orgSession(
         pilotId: account.id,
         orgId: membership.orgId,
         code: membership.code,
-        role: membership.role,
         sessionId,
       },
       ADMIN_SESSION_TTL_SEC,
@@ -1196,10 +1189,9 @@ function orgSession(
       id: account.id,
       code: membership.code,
       name: account.name,
-      role: membership.role,
       org: orgRefOf(membership),
     },
-    capabilities: capabilitiesOf(membership.role),
+    capabilities: membership.capabilities,
     scopes,
   };
 }
@@ -1240,7 +1232,6 @@ export function clubsView(
       clubActive: m.orgActive,
       status: m.status,
       code: m.code,
-      role: m.role,
       rejectReason: m.rejectReason,
       createdAt: m.createdAt,
       decidedAt: m.decidedAt,

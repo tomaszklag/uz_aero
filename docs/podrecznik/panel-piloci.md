@@ -1,12 +1,12 @@
 # Piloci
 
-> Konta pilotów i administratorów: kolejka zgłoszeń z aplikacji, kod pilota, rola i dostęp. Nowe konto zaczyna się od zgłoszenia albo od adresu Google wpisanego zawczasu.
+> Konta pilotów i administratorów: kolejka zgłoszeń z aplikacji, kod pilota, zakres uprawnień i dostęp. Nowe konto zaczyna się od zgłoszenia albo od adresu Google wpisanego zawczasu.
 
 ## Kolejka zgłoszeń
 
 Gdy ktoś zaloguje się w aplikacji kontem Google, którego klub nie zna, jego zgłoszenie staje **nad listą pilotów**: imię i adres z konta Google oraz chwila pierwszego logowania. Kolejki nie ma, gdy nikt nie czeka - pusta karta z zerem zajmowałaby ekran bez powodu.
 
-**Rozpatrz** otwiera kartę z trzema rzeczami: co przyszło z Google, kim ta osoba będzie w klubie (imię i nazwisko, kod pilota podpowiedziany z inicjałów) i jaką dostanie rolę. Dwa przyciski, żaden nie jest domyślny:
+**Rozpatrz** otwiera kartę z trzema rzeczami: co przyszło z Google, kim ta osoba będzie w klubie (imię i nazwisko, kod pilota podpowiedziany z inicjałów) i jaki dostanie zakres uprawnień. Dwa przyciski, żaden nie jest domyślny:
 
 - **Zatwierdź i załóż konto** - zakłada konto i wpuszcza do aplikacji. Adresu nie wpisujesz: jest nim konto Google, którym ta osoba się zalogowała. Telefon zauważa decyzję sam, bez ponownego logowania.
 - **Odrzuć** - z powodem, który jest **wymagany**. Pilot czyta go na swoim ekranie, więc pisz do niego: co poszło nie tak i co ma zrobić dalej.
@@ -21,7 +21,7 @@ Znanego pilota można dopisać, zanim w ogóle sięgnie po aplikację: **Dodaj p
 
 ## Lista kont
 
-Kolumny: kod, imię i nazwisko, adres, rola i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki zapamiętuje i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
+Kolumny: kod, imię i nazwisko, adres, zakres i status. Wyszukiwarka obejmuje nazwisko, kod i adres, filtr zawęża listę do aktywnych, a nagłówek nazwiska odwraca kolejność. Konta wyłączone są przygaszone i stoją na końcu. Wiersz otwiera kartę konta, a adres z paska przeglądarki zapamiętuje i zawężenie, i otwartą kartę - link wklejony koledze pokazuje to samo.
 
 @panel piloci-zgloszenie "Zatwierdzenie z nadaniem kodu"
 
@@ -31,7 +31,7 @@ Trzy sekcje: **Dane pilota** (imię i nazwisko, kod pilota, e-mail konta Google)
 
 - **Wyłącz konto** pyta o potwierdzenie i w pytaniu mówi obie rzeczy, które trzeba wiedzieć: logowanie przestaje działać od razu - w aplikacji i w panelu - a zapisane loty zostają. Ponowne włączenie przywraca konto; pilot loguje się jeszcze raz.
 - **Usuń konto** działa dopiero wtedy, gdy konto jest **już wyłączone** i nie ma za sobą ani jednego zapisu - także jako drugi pilot. W każdym innym przypadku panel mówi powód: w przycisku albo odmową („To konto ma zapisane loty - możesz je tylko wyłączyć").
-- **Własnego konta nie da się wyłączyć ani usunąć**, a ostatniemu aktywnemu administratorowi nie da się odebrać roli. Obie blokady chronią przed tym samym: klubem, który został bez nikogo z dostępem do panelu.
+- **Własnego konta nie da się wyłączyć ani usunąć**, a ostatniej aktywnej osobie nie da się odebrać zdolności **Konta i kod klubu**. Obie blokady chronią przed tym samym: klubem, który został bez nikogo, kto mógłby nadać komukolwiek uprawnienia. Pozostałe zdolności wolno odebrać do zera - klub żyje dalej, bo zostaje ktoś, kto potrafi je przywrócić.
 
 ### Hasło: wysyłasz, nie dyktujesz
 
@@ -64,4 +64,4 @@ Karta **Sesje** wymienia urządzenia, na których ta osoba jest zalogowana **w T
 - **Pilot czeka w kolejce, choć założyłeś mu konto** → w jego koncie stoi inny adres niż ten, którym się zalogował. Zatwierdzenia takiego zgłoszenia panel odmawia („Konto z tym adresem e-mail już istnieje"), bo powstałoby drugie konto tej samej osoby. Wpisz adres z kolejki w istniejącym koncie, a potem poproś pilota, żeby zalogował się kontem Google jeszcze raz - samo **SPRAWDŹ PONOWNIE** na jego ekranie oczekiwania tego nie załatwi.
 - **Pilot jest na liście, a aplikacja go nie wpuszcza** → sprawdź w karcie dwie rzeczy: status konta (wyłączone odpowiada wprost, że jest wyłączone) i adres e-mail konta Google, bez którego konto nie ma jak wejść.
 - **„Ten kod ma już inny pilot"** → kody są w klubie jedyne, także wśród kont wyłączonych. Wyłącz zawężenie do aktywnych i przejrzyj całą listę, zanim wymyślisz nowy.
-- **Zmiana roli albo nazwiska nie dotarła na telefon pilota** → telefony pobierają dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracują na kopii. Pilot może ponaglić to przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji ([synchronizacja](synchronizacja)).
+- **Zmiana zakresu albo nazwiska nie dotarła na telefon pilota** → telefony pobierają dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracują na kopii. Pilot może ponaglić to przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji ([synchronizacja](synchronizacja)).

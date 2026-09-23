@@ -5,40 +5,17 @@
  * pod testem, nie w JSX-ie. Komponent dostaje gotowy wiersz i wyłącznie go rysuje.
  */
 
-import type { PilotListItemDto, PilotRole } from '../../api/dto';
+import type { PilotListItemDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
 import { NONE } from '../common/values';
+import { scopeLabel, scopeTone } from './scope';
 
-/**
- * Nazwa roli DLA CZŁOWIEKA i jej ton.
- *
- * `Record<PilotRole, …>`, więc rola dodana na serwerze wywala kompilację zamiast
- * pojawić się na ekranie jako surowy kod.
- *
- * Rola panelowa jest `blue` (to jest informacja: ten człowiek wchodzi do panelu),
- * pilot jest `dim` - bo to stan domyślny, a plakietka świecąca przy każdym wierszu
- * uczy oko pomijać kolumnę.
+/*
+ * NAZWĘ ZAKRESU LICZY `scope.ts` ZE ZBIORU (epik #197) - tabela jej nie
+ * przechowuje i nie wymyśla. Do 3.1.0 stała tu mapa ról na etykiety; rola zniknęła
+ * z modelu razem z kolumną, a „administrator" jest odtąd nazwą ZESTAWU zdolności.
  */
-const ROLES: Record<PilotRole, { label: string; tone: PillTone }> = {
-  admin: { label: 'Administrator', tone: 'blue' },
-  pilot: { label: 'Pilot', tone: 'dim' },
-};
 
-export const roleLabel = (role: PilotRole): string => ROLES[role].label;
-export const roleTone = (role: PilotRole): PillTone => ROLES[role].tone;
-
-/** Jedno zdanie o tym, co rola OTWIERA - do kart wyboru w formularzu. */
-const ROLE_NOTES: Record<PilotRole, string> = {
-  pilot: 'Tylko aplikacja na telefonie.',
-  // „tego klubu" nie jest ozdobą: rola należy do CZŁONKOSTWA, więc administrator
-  // jednego klubu nie widzi drugiego (wielofirmowość 2.0.0).
-  admin: 'Panel tego klubu w całości, razem z pilotami i samolotami.',
-};
-
-export const roleNote = (role: PilotRole): string => ROLE_NOTES[role];
-
-/** Kolejność kart wyboru roli - od najmniejszych uprawnień. Domyślna jest pierwsza. */
-export const ROLE_ORDER: readonly PilotRole[] = ['pilot', 'admin'];
 
 export interface AccountRow {
   id: string;
@@ -46,8 +23,8 @@ export interface AccountRow {
   name: string;
   /** Kreska, nie pusta komórka: brak e-maila to normalny stan, nie brak danych. */
   email: string;
-  roleLabel: string;
-  roleTone: PillTone;
+  scopeLabel: string;
+  scopeTone: PillTone;
   active: boolean;
   statusLabel: string;
   /** Wiersz przygaszony - konto bez dostępu. Serwer stawia takie na końcu listy. */
@@ -60,8 +37,8 @@ export function accountRow(pilot: PilotListItemDto): AccountRow {
     code: pilot.code,
     name: pilot.name,
     email: pilot.email ?? NONE,
-    roleLabel: roleLabel(pilot.role),
-    roleTone: roleTone(pilot.role),
+    scopeLabel: scopeLabel(pilot.capabilities),
+    scopeTone: scopeTone(pilot.capabilities),
     active: pilot.active,
     statusLabel: pilot.active ? 'Aktywny' : 'Nieaktywny',
     muted: !pilot.active,

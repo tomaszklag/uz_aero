@@ -274,7 +274,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     expect(await auditRows(db)).toMatchObject([
       {
         actor_pilot_id: 'TMK',
-        actor_role: 'admin',
+        actor_role: 'full',
         action: 'session.void',
         target_type: 'session',
         target_id: MORNING,

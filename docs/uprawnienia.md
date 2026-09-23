@@ -52,7 +52,7 @@ niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawn
 | Zestaw | Zdolności |
 | --- | --- |
 | **Pilot** | żadnych - stan domyślny, wyłącznie aplikacja na telefonie |
-| **Akceptujący** | akceptacja rezerwacji |
+| **Akceptujący** | akceptacja rezerwacji (`reservations.approve`) - BEZ wejścia do panelu: mechanik rozstrzyga swój krok z telefonu |
 | **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja |
 | **Technik** | wejście do panelu + flota |
 | **Administrator** | komplet zdolności klubowych |
@@ -220,14 +220,29 @@ dokładnie tym rodzajem rzeczy, której kształt poznaje się dopiero, gdy się 
 Do narysowania w epiku projektowym 3.1.0:
 
 - **sekcja „Zakres uprawnień" w szufladzie członka** (`design/panel/piloci-konto.html`):
-  lista zdolności z opisem, co każda otwiera, dwa przyciski presetu i wyliczona etykieta
-  („administrator" / „pilot" / „własny zakres");
+  lista ZESTAWÓW, pod nią podpis „ile i czego", a pełna lista zdolności z opisem - co
+  każda otwiera - ZWINIĘTA za przyciskiem „Pokaż zdolności";
 - **odmowa `last_admin` jako jawny komunikat przy przełączniku**, nie ukryty przełącznik -
   „nigdy cichy brak" (`accountGuards.ts`);
 - **kolumna „Zakres" na liście członków** zamiast dzisiejszej „Rola".
 
-Zdolności zamknięte i krótkie (jest ich dziewięć) zostają **listą przełączników**, nie
-`<select>` - wyjątek z 2026-09-20 dotyczy zbiorów ROSNĄCYCH z klubem (maszyny, piloci).
+**ZESTAW WYBIERA SIĘ `<select>`-em, ZDOLNOŚCI PRZEŁĄCZNIKAMI** - i to nie jest
+niekonsekwencja, tylko dwa różne pytania w jednej karcie. Reguła „zawsze lista kart"
+broni WIDOCZNOŚCI OPCJI: przy zestawach ich zawartość stoi ROZPISANA POD LISTĄ, więc
+pokazanie wszystkich sześciu naraz niczego nie dokłada, a dwie listy kart jedna nad
+drugą zlałyby się w jedną i wybór przestałby się odróżniać od szczegółu. Same zdolności
+zostają przełącznikami, bo tam widoczność jest całą wartością.
+
+**ZAKRES JEST ZWINIĘTY DOMYŚLNIE, BEZ WYJĄTKÓW** (uwaga właściciela 2026-09-23).
+Pierwsza wersja rozwijała listę przy „własnym zakresie", bo wtedy nazwa zestawu nie mówi
+nic - ale wyjątek kosztował więcej, niż dawał: karta miała dwie wysokości zależne od
+danych, a szuflada skakała między członkami. Odpowiedź na „co ten człowiek może" niesie
+PODPIS, a pełna lista jest dla tego, kto przyszedł ZMIENIAĆ. To ta sama granica, co przy
+archiwum w historii lotów: zwijamy to, czego wchodzący na ekran NIE SZUKA.
+
+**„WŁASNY ZAKRES" WSKAKUJE SAM** przy tknięciu którejkolwiek zdolności i nie da się go
+wybrać z listy - pozycja, którą trzeba wybrać, ŻEBY MÓC coś zmienić, byłaby bramką przed
+samą czynnością.
 
 ## 9. Migracja i backfill
 
@@ -248,6 +263,36 @@ Do przepisania razem z kolumną: `isPilotRole`/`DEFAULT_ROLE`, `PilotRole` w kon
 zgłoszenia kodem klubu (dziś nadaje rolę - odtąd nadaje preset) oraz dwa miejsca wyświetlające
 rolę po polsku (`scopeOptions.ts`, `AccountScreen.tsx`).
 
+### 9.1 Co naprawdę stanęło (epik wykonany 2026-09-23)
+
+Odstępstwa wobec planu wyżej - wszystkie w tę stronę, że zmiana okazała się szersza
+o jedną pozycję katalogu i węższa o jeden ekran:
+
+- **KATALOG UROSŁ O `reservations.approve`** (dziesiąta zdolność klubowa). Plan jej nie
+  wymieniał, bo należy do workflow akceptacji (#164) - ale makieta L1 rysuje ją na
+  ekranie zakresu, a bez niej zestaw „Akceptujący" musiałby stać na
+  `reservations.manage`, czyli na władzy nad CUDZYM planem. To odbierałoby całej
+  zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
+  Backfill migracji 12 nadaje ją administratorom razem z resztą - obie rzeczy jadą
+  w tym samym wydaniu, więc to jest stan z chwili wdrożenia.
+- **`PilotCounts.byRole` ZNIKNĘŁO** zamiast zamienić się w podział po zakresach:
+  „ilu administratorów" przestało mieć jedną odpowiedź, a kafli z licznikami panel 2.0
+  i tak nie ma. Na pytanie „kto wejdzie do panelu" odpowiada chip `panel.access`.
+- **`PilotListFilter.roles: PilotRole[]` → `capability?: Capability`** - jedna zdolność,
+  nie lista: po epiku #197 pytanie ma dokładnie jedną odpowiedź i nie trzeba jej
+  sklejać z katalogu ról. Napis spoza katalogu jest w tym parametrze IGNOROWANY,
+  a nie odrzucany: to parametr widoku, a pusta lista po literówce w adresie byłaby
+  gorsza niż pełna.
+- **`admin_audit.actor_role`** niesie klucz zakresu (`scopeKey`), a kolumna zostaje
+  pod starą nazwą: wiersze sprzed 3.1.0 mówią `admin`/`pilot` i tak zostaje.
+- **ZBIÓR JEDZIE Z BAZY POSORTOWANY ALFABETYCZNIE** (`string_agg … ORDER BY`), a nie
+  w kolejności katalogu. Kolejność nie jest informacją - panel pyta o obecność pozycji
+  i rysuje we własnej kolejności czytania - ale determinizm ma znaczenie dla diffu
+  w dzienniku nadzoru.
+- **Napis, nie tablica**: zdolności czyta się z jednego `string_agg`, bo tablice
+  Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`. Ta sama
+  decyzja, co przy `IN (…)` zamiast `= ANY ($n)`.
+
 ## 10. Ryzyka
 
 | Ryzyko | Czym zamknięte |

@@ -55,6 +55,7 @@ import {
   Loadable,
   OptionButton,
   Pill,
+  Select,
   TextInput,
 } from '../../ui/components';
 import { CheckIcon } from '../../ui/components/icons';
@@ -74,7 +75,15 @@ import {
   type AccountDraft,
 } from './accountForm';
 import { accountConflictMessage, accountRefusalMessage, SELF_ACCOUNT } from './accountRefusal';
-import { roleLabel, roleNote, ROLE_ORDER } from './accountRows';
+import {
+  CAPABILITY_LABELS,
+  CLUB_CAPABILITIES,
+  CUSTOM_SCOPE,
+  presetOf,
+  SCOPE_PRESETS,
+  scopeSummary,
+  toggleCapability,
+} from './scope';
 
 interface AccountDrawerProps {
   /** Identyfikator OSOBY z listy członków klubu. */
@@ -104,6 +113,12 @@ export function AccountDrawer({
    * na niewłaściwy.
    */
   const [confirm, setConfirm] = useState<'disable' | 'delete' | null>(null);
+  // ZAKRES JEST ZWINIĘTY DOMYŚLNIE, BEZ WYJĄTKÓW (uwaga właściciela 2026-09-23).
+  // Pierwsza wersja rozwijała listę przy „własnym zakresie", bo wtedy nazwa zestawu
+  // nie mówi nic - ale wyjątek kosztował więcej, niż dawał: karta miała dwie wysokości
+  // zależne od danych, a szuflada skakała między członkami. Odpowiedź na „co ten
+  // człowiek może" niesie PODPIS, a pełna lista jest dla tego, kto przyszedł ZMIENIAĆ.
+  const [scopeOpen, setScopeOpen] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   /**
    * Potwierdzenie OSTATNIEJ wysyłki linku (2.1.0) - stan ekranu, nie danych: mówi
@@ -303,19 +318,61 @@ export function AccountDrawer({
         {field === 'code' && conflict != null ? <p className="hint danger">{conflict}</p> : null}
       </Card>
 
-      <Card title="Rola w klubie">
-        <div className="opt-list" role="radiogroup" aria-label="Rola konta">
-          {ROLE_ORDER.map((role) => (
-            <OptionButton
-              key={role}
-              name={roleLabel(role)}
-              desc={roleNote(role)}
-              selected={draft.role === role}
-              disabled={readOnly}
-              onSelect={() => setDraft({ ...draft, role })}
-            />
-          ))}
+      {/* ══ ZAKRES UPRAWNIEŃ ══ (epik #197, `docs/uprawnienia.md`)
+          Zestaw jest SKRÓTEM PRZY WYPEŁNIANIU, nie bytem: po wybraniu zapisuje się
+          ZBIÓR, a nazwa liczy się z niego z powrotem. „Własny zakres" wskakuje SAM
+          przy tknięciu którejkolwiek zdolności - pozycja, którą trzeba wybrać, ŻEBY
+          MÓC coś zmienić, byłaby bramką przed samą czynnością.
+
+          `<select>`, a nie lista kart: zawartość wyboru stoi ROZPISANA POD NIM, więc
+          widoczność wszystkich opcji naraz - cały argument tamtej reguły - niczego nie
+          dokłada, a dwie listy jedna nad drugą zlałyby się w jedną. */}
+      <Card title="Zakres uprawnień">
+        <Field htmlFor="scope" label="Zestaw uprawnień">
+          <Select
+            id="scope"
+            value={presetOf(draft.capabilities)?.id ?? CUSTOM_SCOPE.id}
+            disabled={readOnly}
+            options={[...SCOPE_PRESETS, CUSTOM_SCOPE].map((preset) => ({
+              value: preset.id,
+              label: preset.label,
+            }))}
+            onChange={(id: string) => {
+              const preset = SCOPE_PRESETS.find((item) => item.id === id);
+              // „Własny zakres" nie jest wyborem, tylko NAZWĄ stanu - wybranie go
+              // z listy nie ma czego ustawić, więc zostawia zbiór taki, jaki jest.
+              if (preset == null) return;
+              setDraft({ ...draft, capabilities: [...preset.capabilities] });
+            }}
+          />
+        </Field>
+
+        <div className="access-row">
+          <span className="cell-sub">{scopeSummary(draft.capabilities)}</span>
+          <Button variant="ghost" size="sm" onClick={() => setScopeOpen(!scopeOpen)}>
+            {scopeOpen ? 'Ukryj zdolności' : 'Pokaż zdolności'}
+          </Button>
         </div>
+
+        {!scopeOpen ? null : (
+          <div className="opt-list">
+            {CLUB_CAPABILITIES.map((capability) => (
+              <OptionButton
+                key={capability}
+                name={CAPABILITY_LABELS[capability].label}
+                desc={CAPABILITY_LABELS[capability].desc}
+                selected={draft.capabilities.includes(capability)}
+                disabled={readOnly}
+                onSelect={() =>
+                  setDraft({
+                    ...draft,
+                    capabilities: toggleCapability(draft.capabilities, capability),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
       </Card>
 
       {pilot == null || readOnly ? null : (

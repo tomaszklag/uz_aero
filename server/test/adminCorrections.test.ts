@@ -277,7 +277,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await auditRows(db)).toMatchObject([
       {
         actor_pilot_id: 'TMK',
-        actor_role: 'admin',
+        actor_role: 'full',
         action: 'event.correct',
         target_type: 'event',
         target_id: UUID.engineStop,

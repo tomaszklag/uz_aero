@@ -52,10 +52,10 @@
 import {
   refuseDeactivate,
   refuseDelete,
-  refuseRoleChange,
+  refuseScopeChange,
   type AccountRefusal,
 } from '../../../domain/accountGuards.ts';
-import type { PilotRole } from '../../../domain/roles.ts';
+import { can, type Capability } from '../../../domain/roles.ts';
 import type { Clock, LoginSessionsPort } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -71,7 +71,7 @@ export interface UpdatePilotInput {
   code?: string;
   name?: string;
   email?: string | null;
-  role?: PilotRole;
+  capabilities?: readonly Capability[];
 }
 
 export interface PilotChange {
@@ -185,23 +185,23 @@ export class AdminPilotCommands {
         // czytelny - a panel i tak blokuje przycisk, gdy nic nie ruszono.
         if (Object.keys(changes).length === 0) throw new NoChanges();
 
-        if (input.role !== undefined) {
+        if (input.capabilities !== undefined) {
           // Blokada PRZED odczytem licznika i w TEJ SAMEJ transakcji - inaczej nie
           // szereguje niczego. `SELECT COUNT(*)` w READ COMMITTED nie blokuje, a dwie
-          // transakcje odbierające rolę DWÓM RÓŻNYM administratorom piszą do różnych
+          // transakcje odbierające zdolność DWÓM RÓŻNYM nosicielom piszą do różnych
           // wierszy, więc bez tej blokady nic ich nie serializuje: obie widzą „jest
           // dwóch", obie commitują i zostaje ZERO administratorów. Z blokadą druga
           // transakcja liczy dopiero po pierwszej, widzi jednego i odbija się
           // o `last_admin` - czyli gałąź, która dopiero tu staje się osiągalna.
           await this.pilots.lockAdminPopulation(tx, actor.orgId);
 
-          const refusal = refuseRoleChange({
+          const refusal = refuseScopeChange({
             actorPilotId: actor.pilotId,
             targetPilotId: id,
-            currentRole: before.role,
-            nextRole: input.role,
+            currentCapabilities: before.capabilities,
+            nextCapabilities: input.capabilities,
             targetActive: before.active,
-            activeAdmins: await this.pilots.countActiveAdmins(tx, actor.orgId),
+            activeManagers: await this.pilots.countActiveManagers(tx, actor.orgId),
           });
           if (refusal != null) throw new Refused(refusal);
         }
@@ -270,8 +270,8 @@ export class AdminPilotCommands {
           const refusal = refuseDeactivate({
             actorPilotId: actor.pilotId,
             targetPilotId: id,
-            currentRole: before.role,
-            activeAdmins: await this.pilots.countActiveAdmins(tx, actor.orgId),
+            targetManagesAccounts: can(before.capabilities, 'accounts.manage'),
+            activeManagers: await this.pilots.countActiveManagers(tx, actor.orgId),
           });
           if (refusal != null) throw new Refused(refusal);
         }
@@ -366,7 +366,7 @@ export class AdminPilotCommands {
               code: account.code,
               name: account.name,
               email: account.email,
-              role: account.role,
+              capabilities: account.capabilities,
             },
           },
         };
@@ -405,11 +405,20 @@ export class AdminPilotCommands {
  */
 function diffOf(before: AdminPilotAccount, input: UpdatePilotInput): Record<string, FieldDiff> {
   const changes: Record<string, FieldDiff> = {};
-  for (const key of ['code', 'name', 'email', 'role'] as const) {
+  for (const key of ['code', 'name', 'email'] as const) {
     const next = input[key];
     if (next === undefined) continue;
     if (next === before[key]) continue;
     changes[key] = { from: before[key], to: next };
+  }
+  // Zakres porównuje się JAKO ZBIÓR: kolejność zdolności w tablicy nie jest
+  // informacją, a panel wysyła je w kolejności katalogu ekranu, nie bazy.
+  if (input.capabilities !== undefined) {
+    const before_ = [...before.capabilities].sort();
+    const after_ = [...input.capabilities].sort();
+    if (before_.join(',') !== after_.join(',')) {
+      changes.capabilities = { from: before_, to: after_ };
+    }
   }
   return changes;
 }
@@ -420,6 +429,6 @@ function stripUndefined(input: UpdatePilotInput): Partial<AdminPilotAccount> {
   if (input.code !== undefined) out.code = input.code;
   if (input.name !== undefined) out.name = input.name;
   if (input.email !== undefined) out.email = input.email;
-  if (input.role !== undefined) out.role = input.role;
+  if (input.capabilities !== undefined) out.capabilities = input.capabilities;
   return out;
 }

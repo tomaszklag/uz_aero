@@ -71,12 +71,11 @@ const personIdOf = async (db: Harness['db'], subject: string): Promise<string> =
 const membershipOf = async (db: Harness['db'], orgId: string, pilotId: string) => {
   const { rows } = await db.query<{
     code: string | null;
-    role: string;
     status: string;
     joined_via: string;
     reject_reason: string | null;
   }>(
-    'SELECT code, role, status, joined_via, reject_reason FROM memberships WHERE org_id = $1 AND pilot_id = $2',
+    'SELECT code, status, joined_via, reject_reason FROM memberships WHERE org_id = $1 AND pilot_id = $2',
     [orgId, pilotId],
   );
   return rows;
@@ -93,14 +92,14 @@ describe('POST /auth/join - kod klubu daje wyłącznie zgłoszenie', () => {
     expect(res.json()).toMatchObject({
       status: 'pending',
       org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
-      memberships: [{ org: { id: ORG_A }, status: 'pending', code: null, role: 'pilot' }],
+      memberships: [{ org: { id: ORG_A }, status: 'pending', code: null }],
     });
     expect(res.json().token).toBeUndefined();
     expect(res.json().personToken).toBeUndefined();
 
     const person = await personIdOf(db, 'kandydat1');
     expect(await membershipOf(db, ORG_A, person)).toEqual([
-      { code: null, role: 'pilot', status: 'pending', joined_via: 'code', reject_reason: null },
+      { code: null, status: 'pending', joined_via: 'code', reject_reason: null },
     ]);
 
     // Zgłoszenie NIE jest dostępem: logowanie dalej daje 202, tym razem ze stanem `pending`.
@@ -157,7 +156,7 @@ describe('POST /auth/join - kod klubu daje wyłącznie zgłoszenie', () => {
           clubActive: true,
           status: 'pending',
           code: null,
-          role: 'pilot',
+
           rejectReason: null,
           createdAt: clock.now().toISOString(),
           decidedAt: null,
@@ -182,7 +181,7 @@ describe('POST /auth/join - kod klubu daje wyłącznie zgłoszenie', () => {
       { org: { id: ORG_B }, status: 'pending', code: null },
     ]);
     expect(await membershipOf(db, ORG_B, 'TMK')).toEqual([
-      { code: null, role: 'pilot', status: 'pending', joined_via: 'code', reject_reason: null },
+      { code: null, status: 'pending', joined_via: 'code', reject_reason: null },
     ]);
   });
 });

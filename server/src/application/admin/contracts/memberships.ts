@@ -14,7 +14,7 @@
  */
 
 import type { MembershipStatusWire } from './organizations.ts';
-import type { PilotRoleWire } from './pilots.ts';
+import type { CapabilityWire } from './pilots.ts';
 
 /**
  * Jedno zgłoszenie w kolejce klubu.
@@ -57,8 +57,11 @@ export interface AdminMembershipDecision {
   rejectReason: string | null;
 }
 
-/** Zatwierdzenie: kod pilota W TYM klubie i rola. Oba wymagane - aktywny ⟺ ma kod. */
+/**
+ * Zatwierdzenie: kod pilota W TYM klubie i ZAKRES uprawnień. Kod wymagany - aktywny
+ * ⟺ ma kod; zbiór bywa PUSTY i to jest stan domyślny (pilot pracuje w aplikacji).
+ */
 export interface AdminMembershipApproval {
   code: string;
-  role: PilotRoleWire;
+  capabilities: CapabilityWire[];
 }

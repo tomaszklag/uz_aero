@@ -20,11 +20,11 @@
  */
 
 import type {
+  Capability,
   LoginSessionDto,
   PasswordLinkSentDto,
   PilotChangeDto,
   PilotPageDto,
-  PilotRole,
 } from './dto';
 import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
 
@@ -32,8 +32,8 @@ import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
  * Filtr listy tak, jak przyjmuje go trasa. Wszystko opcjonalne poza `limit` - brak
  * filtra znaczy „pokaż wszystkie konta".
  *
- * Trasa umie więcej (`role`, okno `from`/`to` dla dni lotnych); panel 2.0 o to nie
- * pyta, bo tych kolumn nie pokazuje.
+ * Trasa umie więcej (okno `from`/`to` dla dni lotnych); panel 2.0 o to nie pyta, bo
+ * tych kolumn nie pokazuje.
  */
 export interface PilotListQuery {
   /** `'true'`/`'false'` jako NAPIS: query string nie ma typu logicznego. */
@@ -74,7 +74,8 @@ export interface UpdatePilotBody {
   code?: string;
   name?: string;
   email?: string;
-  role?: PilotRole;
+  /** ZAKRES w całości - panel wysyła stan docelowy, a serwer liczy z niego różnicę. */
+  capabilities?: Capability[];
 }
 
 export function updatePilot(id: string, body: UpdatePilotBody): Promise<PilotChangeDto> {

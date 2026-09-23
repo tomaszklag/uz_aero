@@ -49,15 +49,15 @@ describe('can', () => {
 
 describe('denialReason', () => {
   it('mówi, KOGO prosić - a nie tylko, że się nie da', () => {
-    expect(denialReason('thresholds.manage')).toBe('Wymaga roli: administrator');
-    expect(denialReason('flags.resolve')).toBe('Wymaga roli: administrator');
+    expect(denialReason('thresholds.manage')).toBe('Nadaje: administrator');
+    expect(denialReason('flags.resolve')).toBe('Nadaje: administrator');
   });
 
   it('każda zdolność ma powód (kontrola kompletności mapy)', () => {
-    // Bez tego dopisanie zdolności dałoby `Wymaga roli: undefined` na ekranie,
+    // Bez tego dopisanie zdolności dałoby `Nadaje: undefined` na ekranie,
     // i to dopiero u kogoś, kto akurat tej roli nie ma.
     for (const capability of ADMIN) {
-      expect(denialReason(capability)).toMatch(/^Wymaga roli: \S/);
+      expect(denialReason(capability)).toMatch(/^Nadaje: \S/);
     }
   });
 });

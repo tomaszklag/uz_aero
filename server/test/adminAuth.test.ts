@@ -21,6 +21,20 @@ import { ORG_A, ORG_B } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
+/** Komplet zdolności klubowych w kolejności, w jakiej oddaje je baza (alfabetycznie). */
+const ADMIN_SCOPE = [
+  'accounts.manage',
+  'audit.read',
+  'events.correct',
+  'flags.resolve',
+  'fleet.manage',
+  'maintenance.run',
+  'panel.access',
+  'reservations.approve',
+  'reservations.manage',
+  'thresholds.manage',
+];
+
 const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
 
 function panelLogin(app: Harness['app'], who: string, idToken = googleTokenFor(who)) {
@@ -54,31 +68,30 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
-      pilot: { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', role: 'admin' },
+      pilot: { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' },
       // Klub sesji (wielofirmowość): panel pisze go w kolumnie bocznej i pyta nim
       // o każdą listę - kod i rola wyżej są kodem i rolą W TYM klubie.
       org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
+      // ══ KOLEJNOŚĆ JEST ALFABETYCZNA, BO IDZIE Z BAZY (epik #197) ══
+      // Zdolności czyta się z `membership_capabilities` posortowane - kolejność nie
+      // jest informacją i panel jej nie czyta (pyta o obecność pozycji, a rysuje
+      // we własnej kolejności czytania). Wypisana tu w całości, bo ta lista jest
+      // jedynym miejscem, które zauważa nową pozycję katalogu: porównanie ze stałą,
+      // z której serwer ją składa, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
+      //
+      // `bugs.triage` i `platform.manage` tu NIE STOJĄ: to oś PLATFORMOWA, której
+      // administrator klubu nie dotyka (wielofirmowość §3.3, epik C C6).
       capabilities: [
-        'panel.access',
-        'flags.resolve',
-        'events.correct',
         'accounts.manage',
-        'fleet.manage',
-        'thresholds.manage',
         'audit.read',
-        // Narzędzia serwisowe (`A11`) - dopisane 2026-08-02 razem z trasami
-        // konserwacji. Ten przypadek jest jedynym miejscem, które zauważa nową
-        // pozycję katalogu, i dlatego lista jest tu wypisana, a nie porównana
-        // z `capabilitiesOf('admin')`: porównanie z tą samą funkcją, którą trasa
-        // woła, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
+        'events.correct',
+        'flags.resolve',
+        'fleet.manage',
         'maintenance.run',
-        // Rezerwacje (3.0.0, issue #158) - władza nad CUDZYM planem lotu. Ta lista
-        // jest jedynym miejscem, które zauważa nową pozycję katalogu, więc dopisanie
-        // zdolności administratorowi musi przejść przez ten test.
+        'panel.access',
+        'reservations.approve',
         'reservations.manage',
-        // `bugs.triage` (moduł „Zgłoszenia", issue #87) ZESZŁO z tej listy w epiku C
-        // wielofirmowości (issue #99, C6): zgłoszenia obsługuje superadministrator
-        // na platformie, administrator klubu ich nie widzi.
+        'thresholds.manage',
       ],
       // Zakresy sesji (issue #101, E2) - z nich panel wie, czy kafel klubu w kolumnie
       // bocznej jest linkiem. TMK jest administratorem wyłącznie w Alfie, więc lista
@@ -88,7 +101,9 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
           {
             org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
             code: 'TMK',
-            role: 'admin',
+            // Karta wyboru klubu pisze drugą linią ZAKRES („administrator · Twój kod TMK"),
+            // a nazwę składa panel ze zbioru - serwer nie zna języka interfejsu.
+            capabilities: ADMIN_SCOPE,
           },
         ],
         platform: false,
@@ -280,12 +295,22 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
  */
 describe('przełączenie zakresu sesji panelu', () => {
   /** Członkostwo `admin` w Becie dla TMK - świat bazowy nie ma nikogo w dwóch klubach. */
-  const makeAdminInBeta = (db: Harness['db']) =>
-    db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, 'TMK', 'TMB', 'admin', 'active', 'platform')`,
+  // Członkostwo PLUS zakres: po epiku #197 sama wstawka do `memberships` daje PILOTA,
+  // bo zdolności są osobnymi wierszami. Bez nich brama odpowiada 404 na przełączenie -
+  // i słusznie, bo klub, w którym ktoś nie ma wejścia do panelu, dla panelu nie istnieje.
+  const makeAdminInBeta = async (db: Harness['db']) => {
+    await db.query(
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, 'TMK', 'TMB', 'active', 'platform')`,
       [ORG_B],
     );
+    for (const capability of ADMIN_SCOPE) {
+      await db.query(
+        `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ($1, $2, $3)`,
+        [ORG_B, 'TMK', capability],
+      );
+    }
+  };
 
   const switchTo = (app: Harness['app'], cookie: string, orgId: string | null) =>
     app.inject({
@@ -305,7 +330,7 @@ describe('przełączenie zakresu sesji panelu', () => {
     expect(res.statusCode).toBe(200);
     // Klub, kod i rola są klubu DOCELOWEGO - w Becie ta sama osoba ma inny kod.
     expect(res.json()).toMatchObject({
-      pilot: { id: 'TMK', code: 'TMB', role: 'admin' },
+      pilot: { id: 'TMK', code: 'TMB' },
       org: { id: ORG_B, name: 'Aeroklub Beta' },
     });
     // Zakresy niosą OBA kluby - kolumna boczna ma dokąd prowadzić w każdą stronę.
@@ -326,8 +351,8 @@ describe('przełączenie zakresu sesji panelu', () => {
     // czego mu pokazać. Bierzemy jednak administratora Alfy i celujemy w Betę, gdzie
     // członkostwa nie ma wcale: obie drogi mają dać TĘ SAMĄ odpowiedź.
     await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, 'TMK', 'TMB', 'pilot', 'active', 'platform')`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, 'TMK', 'TMB', 'active', 'platform')`,
       [ORG_B],
     );
     const cookie = sessionCookie(await panelLogin(app, 'TMK'));
@@ -376,7 +401,7 @@ describe('przełączenie zakresu sesji panelu', () => {
 
     const platform = await switchTo(app, cookie, null);
     expect(platform.statusCode).toBe(200);
-    expect(platform.json()).toMatchObject({ org: null, pilot: { role: 'superadmin', code: null } });
+    expect(platform.json()).toMatchObject({ org: null, pilot: { code: null } });
 
     // I z powrotem - tym razem ciasteczkiem PLATFORMOWYM, czyli drugą gałęzią bramy.
     const back = await switchTo(app, sessionCookie(platform), ORG_A);

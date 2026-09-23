@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1397,6 +1397,67 @@ export const MIGRATION_11 = `
   CREATE INDEX IF NOT EXISTS idx_bookings_session
     ON bookings (session_uuid) WHERE session_uuid IS NOT NULL;
 `;
+/**
+ * ZAKRES UPRAWNIEŃ: ZDOLNOŚĆ NALEŻY DO CZŁONKOSTWA, NIE DO ROLI
+ * (epik #197, `docs/uprawnienia.md`; decyzja właściciela 2026-09-23).
+ *
+ * Role klubu były dwie - `admin` z kompletem zdolności i `pilot` z pustą listą - więc
+ * nie dało się powiedzieć „mechanik zatwierdza rezerwacje, ale floty ani kont nie
+ * dotyka". Ścieżka akceptacji rezerwacji (3.1.0) potrzebuje dokładnie tego: krok
+ * „Mechanik" musi mieć kogo pytać, a mechanik jest w klubie zwykłym pilotem.
+ *
+ * ══ KOLEJNOŚĆ TRZECH KROKÓW JEST CZĘŚCIĄ MIGRACJI ══
+ * Tabela → backfill → `DROP COLUMN`. Odwrotna gubi dane bezpowrotnie: po skasowaniu
+ * kolumny nie ma z czego wyprowadzić, kto był administratorem.
+ */
+export const MIGRATION_12 = `
+  -- ═══ ZDOLNOŚCI NADANE CZŁONKOSTWU ══════════════════════════════════════════════
+  -- Brak wiersza = brak zdolności. Zbiór czyta brama razem z członkostwem, przy każdym
+  -- żądaniu (authSnapshot), więc odebranie działa natychmiast - nie po wygaśnięciu tokenu.
+  CREATE TABLE IF NOT EXISTS membership_capabilities (
+    org_id     TEXT NOT NULL,
+    pilot_id   TEXT NOT NULL,
+    -- BEZ CHECK-a na wartość i to jest decyzja, nie przeoczenie: katalog zdolności żyje
+    -- w TypeScripcie i rośnie z produktem, więc ograniczenie w bazie znaczyłoby migrację
+    -- przy każdej nowej pozycji. Napis spoza katalogu nie pasuje do żadnego pytania
+    -- \`can(...)\`, czyli nie nadaje niczego - bezpiecznik jest wbudowany w model.
+    capability TEXT NOT NULL,
+    -- BEZ granted_at/granted_by: kto i kiedy zmienił zakres, mówi audyt (membership.scope),
+    -- a wiersz opisuje STAN. Ta sama zasada, którą decyzja o zgłoszeniu zostawia historię
+    -- dziennikowi zamiast trzymać ją w kolumnach.
+    PRIMARY KEY (org_id, pilot_id, capability),
+    -- CASCADE: skasowanie osoby zabiera członkostwo, a członkostwo - jego zdolności.
+    FOREIGN KEY (org_id, pilot_id) REFERENCES memberships(org_id, pilot_id) ON DELETE CASCADE
+  );
+
+  -- ═══ BACKFILL Z RÓL ════════════════════════════════════════════════════════════
+  -- Każde członkostwo \`admin\` dostaje komplet dzisiejszych zdolności administratora,
+  -- każde \`pilot\` - ZERO wierszy, bo dzisiejsza rola \`pilot\` ma pustą listę uprawnień
+  -- panelu. To nie jest utrata niczego: pilot pracuje wyłącznie w aplikacji.
+  --
+  -- Lista wypisana tutaj, a nie wzięta z kodu: migracja opisuje stan z chwili wdrożenia
+  -- i ma dawać ten sam wynik za rok, gdy \`CLUB_CAPABILITIES\` urośnie o trzy pozycje.
+  -- Backfill czytający dzisiejszą stałą przyznawałby wtedy uprawnienia, których
+  -- administrator z 2026 roku nigdy nie dostał.
+  INSERT INTO membership_capabilities (org_id, pilot_id, capability)
+  SELECT m.org_id, m.pilot_id, c.capability
+  FROM memberships m
+  CROSS JOIN (VALUES
+    ('panel.access'), ('flags.resolve'), ('events.correct'), ('accounts.manage'),
+    ('fleet.manage'), ('thresholds.manage'), ('audit.read'), ('maintenance.run'),
+    ('reservations.manage'), ('reservations.approve')
+  ) AS c(capability)
+  WHERE m.role = 'admin'
+  ON CONFLICT DO NOTHING;
+
+  -- ═══ ROLA KLUBU ZNIKA ══════════════════════════════════════════════════════════
+  -- Razem z CHECK-iem z migracji 8 (DROP COLUMN zabiera go sam). Kolumna, która wygląda
+  -- na nadającą uprawnienia, a nic nie nadaje, jest GORSZA niż jej brak: pierwszy
+  -- człowiek, który zobaczy \`role = admin\` przy członku bez \`accounts.manage\`, uzna
+  -- jedno z dwojga za usterkę i „naprawi" niewłaściwe.
+  ALTER TABLE memberships DROP COLUMN IF EXISTS role;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1409,6 +1470,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_9,
   MIGRATION_10,
   MIGRATION_11,
+  MIGRATION_12,
 ];
 
 /**
@@ -1441,4 +1503,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
   'Sesje logowania (2.1.0, issue #133): wiersz dla każdej żywej sesji telefonu i panelu z urządzeniem, metodą i ostatnią aktywnością, identyfikator sesji w tokenach - zdalne wylogowanie pojedynczego urządzenia zamiast zrywania wszystkich poświadczeń osoby',
   'Rezerwacje i kalendarz floty (3.0.0, issue #145): zajętość maszyny jako rezerwacja pilota albo wyłączenie z użytku, nakładanie wykluczone przez bazę na zakresach czasu, strefa i lotnisko macierzyste klubu dla doby lotnej',
+  'Zakresy uprawnień (3.1.0, issue #197): zdolność nadawana CZŁONKOSTWU zamiast wynikania z roli klubu - administrator może dać mechanikowi prawo akceptacji rezerwacji, nie oddając mu floty ani kont; kolumna roli znika razem z backfillem',
 ];

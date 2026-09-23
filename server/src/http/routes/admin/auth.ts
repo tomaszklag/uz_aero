@@ -23,7 +23,7 @@ import type {
   PanelScopes,
   PanelSession,
 } from '../../../application/common/commands/auth.ts';
-import { capabilitiesOf, platformCapabilitiesOf } from '../../../domain/roles.ts';
+import { platformCapabilitiesOf, type Capability } from '../../../domain/roles.ts';
 import { deviceFrom } from '../../device.ts';
 import { ADMIN_SESSION_COOKIE, tokenFromRequest } from '../../tokenFromRequest.ts';
 import { passwordField, tooManyAttempts } from '../common/password.ts';
@@ -71,10 +71,14 @@ const COOKIE_OPTIONS = {
  * klubu w kolumnie bocznej i nie pyta o nią drugi raz. Kod i rola są kodem i rolą
  * Z CZŁONKOSTWA w tym klubie.
  */
-export const panelSessionToWire = (pilot: PanelPilot, scopes: PanelScopes) => ({
-  pilot: { id: pilot.id, code: pilot.code, name: pilot.name, role: pilot.role },
+export const panelSessionToWire = (
+  pilot: PanelPilot,
+  capabilities: readonly Capability[],
+  scopes: PanelScopes,
+) => ({
+  pilot: { id: pilot.id, code: pilot.code, name: pilot.name },
   org: pilot.org,
-  capabilities: capabilitiesOf(pilot.role),
+  capabilities: [...capabilities],
   scopes,
 });
 
@@ -101,7 +105,7 @@ export const platformSessionToWire = (
 /** Sesja → ciało odpowiedzi. Jedno miejsce, bo logowanie i przełączenie oddają to samo. */
 const sessionToWire = (session: PanelSession) =>
   session.kind === 'org'
-    ? panelSessionToWire(session.pilot, session.scopes)
+    ? panelSessionToWire(session.pilot, session.capabilities, session.scopes)
     : platformSessionToWire(session.pilot, session.scopes);
 
 /** Ciasteczko + ciało - jedno miejsce, bo logowanie i przełączenie kończą się tak samo. */

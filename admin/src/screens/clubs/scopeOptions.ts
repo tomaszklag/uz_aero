@@ -6,7 +6,8 @@
  * kolejności i o co pyta nagłówek - a nie o jego układzie. Dlatego ma test obok.
  */
 
-import type { PanelScopesDto, PilotRole } from '../../api/dto';
+import type { Capability, PanelScopesDto } from '../../api/dto';
+import { scopeLabel } from '../accounts/scope';
 
 export interface ScopeOption {
   /** Cel przełączenia: identyfikator klubu albo `null` = platforma. */
@@ -16,7 +17,13 @@ export interface ScopeOption {
   desc: string;
 }
 
-const roleWord = (role: PilotRole): string => (role === 'admin' ? 'administrator' : 'pilot');
+/**
+ * Druga linia karty klubu mówi ZAKRESEM, nie rolą (epik #197) - nazwę liczy
+ * `scope.ts` ze zbioru zdolności, więc klub, w którym ktoś jest technikiem,
+ * napisze „technik", a nie „pilot".
+ */
+const scopeWord = (club: { capabilities: Capability[] }): string =>
+  scopeLabel(club.capabilities).toLowerCase();
 
 /**
  * Karty wyboru. PLATFORMA STOI PIERWSZA, gdy jest: to nie jest klub, więc jej druga
@@ -42,7 +49,7 @@ export function scopeOptions(scopes: PanelScopesDto): ScopeOption[] {
     ...scopes.clubs.map((club) => ({
       orgId: club.org.id,
       name: club.org.name,
-      desc: `${roleWord(club.role)} · Twój kod ${club.code}`,
+      desc: `${scopeWord(club)} · Twój kod ${club.code}`,
     })),
   ];
 }

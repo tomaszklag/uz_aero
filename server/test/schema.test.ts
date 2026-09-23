@@ -76,7 +76,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since', 'sheets_key', 'timezone', 'home_icao']],
     [
       'memberships',
-      ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
+      ['org_id', 'pilot_id', 'code', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
     ],
     // Tożsamość Google ZAWSZE podpięta do osoby (epik D, issue #100): `status`,
     // `reject_reason`, `decided_at`, `decided_by` ZNIKŁY migracją 8 - decyzja o zgłoszeniu
@@ -90,6 +90,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'login_sessions',
       ['id', 'pilot_id', 'org_id', 'surface', 'method', 'created_at', 'last_seen_at', 'expires_at', 'revoked_at', 'revoked_by', 'device_label', 'ip'],
     ],
+    // Zakres uprawnień (migracja 12, issue #197): zdolność NADANA członkostwu. Bez
+    // `CHECK`-a na wartość i bez `granted_at` - katalog żyje w TypeScripcie, a kto
+    // i kiedy zmienił zakres, mówi audyt (`membership.scope`).
+    ['membership_capabilities', ['org_id', 'pilot_id', 'capability']],
     // Zajętość maszyny (migracja 11, issue #145): JEDNA tabela na rezerwację pilota
     // i wyłączenie z użytku, bo ograniczenie wykluczające musi objąć oba rodzaje naraz.
     [
@@ -179,6 +183,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'exported_sheets',
       'flags',
       'login_sessions',
+      'membership_capabilities',
       'memberships',
       'refresh_tokens',
       'sessions',

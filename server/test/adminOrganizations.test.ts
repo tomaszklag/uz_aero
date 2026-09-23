@@ -225,16 +225,27 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
     // nie droga dla pilotów.
     const { rows } = await db.query<{
       code: string;
-      role: string;
       status: string;
       joined_via: string;
     }>(
-      `SELECT m.code, m.role, m.status, m.joined_via FROM memberships m
+      `SELECT m.code, m.status, m.joined_via FROM memberships m
         JOIN organizations o ON o.id = m.org_id WHERE o.slug = 'ks-gliwice'`,
     );
     expect(rows).toEqual([
-      { code: 'PWR', role: 'admin', status: 'active', joined_via: 'platform' },
+      { code: 'PWR', status: 'active', joined_via: 'platform' },
     ]);
+
+    // ══ PIERWSZY CZŁONEK KLUBU MA KOMPLET ZDOLNOŚCI (epik #197) ══
+    // To jest cała treść słowa „administrator" po zniknięciu ról - a `accounts.manage`
+    // jest w tym zbiorze pozycją, bez której klub powstałby ZAMKNIĘTY: nie miałby kto
+    // nadać uprawnień drugiemu członkowi.
+    const caps = await db.query<{ capability: string }>(
+      `SELECT mc.capability FROM membership_capabilities mc
+         JOIN organizations o ON o.id = mc.org_id
+        WHERE o.slug = 'ks-gliwice' ORDER BY mc.capability`,
+    );
+    expect(caps.rows.map((r) => r.capability)).toContain('accounts.manage');
+    expect(caps.rows).toHaveLength(10);
     // Sekret adresu kart arkusza losuje BAZA - klub dostaje go przy założeniu.
     const secret = await db.query<{ sheets_key: string }>(
       `SELECT sheets_key FROM organizations WHERE slug = 'ks-gliwice'`,
@@ -266,7 +277,7 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
 
     expect(login.statusCode).toBe(200);
     expect(login.json()).toMatchObject({
-      pilot: { code: 'PWR', role: 'admin' },
+      pilot: { code: 'PWR' },
       org: { id: orgId, slug: 'ks-gliwice' },
     });
 

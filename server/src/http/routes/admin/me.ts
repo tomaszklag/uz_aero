@@ -35,7 +35,9 @@ export function registerAdminMeRoutes(
       // „kim jestem", a odpowiedź „nikim" znaczy dla panelu dokładnie „zaloguj się".
       if (pilot == null) return reply.code(401).send({ error: 'unauthorized' });
 
-      return reply.send(panelSessionToWire(pilot, await auth.panelScopes(actor.pilotId)));
+      return reply.send(
+        panelSessionToWire(pilot, actor.capabilities, await auth.panelScopes(actor.pilotId)),
+      );
     },
 
     platform: async (_req, reply, actor) => {
