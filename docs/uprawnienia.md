@@ -42,11 +42,37 @@ lista** dla konkretnego człowieka: z wiersza `memberships` zamiast z mapy `CAPA
 Zdolność jest własnością **członkostwa**, nie osoby: ten sam człowiek bywa w Alfie
 administratorem, a w Becie zwykłym pilotem - dokładnie jak kod pilota (`docs/wielofirmowosc.md`).
 
-### 2.2 „Administrator" zostaje PRESETEM
+### 2.2 SZEŚĆ ZESTAWÓW, ale w bazie stoi ZBIÓR
 
-Panel dostaje przycisk „ustaw jak administrator", który wypełnia zbiór kompletem zdolności
-klubowych, i „wyczyść", który go opróżnia. To jest wygoda przy zakładaniu konta, a nie byt
-w modelu: po kliknięciu w bazie stoi **zbiór**, nie nazwa presetu.
+Pierwsza wersja miała dwa przyciski - „ustaw jak administrator" i „wyczyść". Właściciel
+odrzucił je 2026-09-23 („to jest bez sensu") i wskazał drogę: **lista predefiniowanych
+zestawów z możliwością modyfikacji**, a pod nią rozpisane zdolności, które dany zestaw
+niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawnień"):
+
+| Zestaw | Zdolności |
+| --- | --- |
+| **Pilot** | żadnych - stan domyślny, wyłącznie aplikacja na telefonie |
+| **Akceptujący** | akceptacja rezerwacji |
+| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja |
+| **Technik** | wejście do panelu + flota |
+| **Administrator** | komplet zdolności klubowych |
+| **Własny zakres** | cokolwiek innego |
+
+**ZESTAW NIE JEST BYTEM W MODELU.** Po wybraniu w bazie stoi ZBIÓR ZDOLNOŚCI, nie nazwa -
+zestaw jest skrótem myślowym przy wypełnianiu, a etykieta liczy się z powrotem ze zbioru
+(§2.3). Dzięki temu zmiana katalogu - dołożenie „Skarbnika", przemianowanie „Technika" -
+**nie rusza nikomu uprawnień**: przestawia tylko to, co panel proponuje następnemu.
+
+**„WŁASNY ZAKRES" JEST ZAWSZE OSTATNI** i znaczy „ten zbiór nie odpowiada żadnemu
+skrótowi". Nie wybiera się go świadomie - wskakuje SAM, gdy tknąć którąkolwiek zdolność
+pod listą. Pozycja, którą się wybiera, żeby móc coś zmienić, byłaby bramką przed samą
+czynnością.
+
+**`<select>`, NIE LISTA KART** - świadome odstępstwo od reguły „zawsze lista kart",
+obok tego z kalendarza 3.0.0. Tam powodem była długość listy rosnącej z klubem; tutaj
+zawartość wyboru stoi ROZPISANA POD NIM, więc widoczność wszystkich opcji naraz - cały
+argument tamtej reguły - niczego nie dokłada. Dwie listy kart jedna nad drugą zlałyby
+się w jedną, a wybór przestałby być odróżnialny od szczegółu.
 
 ### 2.3 Kolumna `memberships.role` ZNIKA
 
@@ -72,6 +98,43 @@ seed, `CHECK` z migracji 8 i dwa miejsca wyświetlające rolę po polsku.
 (zakładanie klubów, kolejka zgłoszeń błędów), świadomie rozłączna z klubową - superadministrator
 nie ma `panel.access` do żadnego klubu (`docs/wielofirmowosc.md` §3.3) i tak zostaje.
 Rozmontowanie obu osi naraz zamieniłoby jedną decyzję w dwie.
+
+### 2.5 Zdolność i lista kroku - dwa pytania, dwa zapisy, jeden rozjazd
+
+Pytanie właściciela 2026-09-23, zadane przy makiecie ścieżki: **po co zdolność akceptacji,
+skoro krok i tak wymienia, kto może go zatwierdzić?**
+
+Zdolność zarabia na siebie z trzech powodów:
+
+- **widoczność** - to ona otwiera podgląd wszystkich ścieżek i terminów klubu w komplecie
+  (`docs/rezerwacje.md` §17). Gdyby prawo brało się z samej obecności na liście, dopisanie
+  kogoś do kroku po cichu otwierałoby mu cudze plany, a katalog `Capability` nie wiedziałby
+  o tym nic - czyli wracałby drugi, równoległy mechanizm uprawnień z §1;
+- **jeden włącznik** - odebranie zdolności wyłącza człowieka z obiegu WSZĘDZIE naraz.
+  Bez niej wyprowadzenie kogoś z klubu znaczyłoby obejście każdego kroku po kolei;
+- **odpowiada KATALOG, nie konfiguracja kalendarza** - na pytanie „co ta osoba może"
+  ma być jedno miejsce z odpowiedzią.
+
+**Cena jest realna: dwa zapisy mogą się rozjechać.** Człowiek zostaje na liście kroku po
+tym, jak stracił zdolność - i wtedy krok ma na papierze obsadę, której naprawdę nie ma.
+
+**LISTY KROKU NIE CZYŚCIMY PO CICHU.** Odebranie uprawnienia nie może przestawiać
+konfiguracji kalendarza za plecami administratora: wróciłby na tamten ekran i zastał
+ścieżkę, której nie zmieniał. Rozjazd się OZNACZA, a decyzję zostawia człowiekowi - ta
+sama zasada, przez którą krok się nie kasuje, tylko przestaje być pytany (§11.2 rezerwacji).
+
+Ostrzeżenie stoi w DWÓCH miejscach, bo opisuje dwie różne chwile:
+
+| Gdzie | Kiedy | Co mówi |
+| --- | --- | --- |
+| karta członka | przy ODBIERANIU zdolności - tam zapada decyzja | nazywa krok, liczbę osób, które w nim zostaną, i to, że lista sama się nie wyczyści |
+| ścieżka akceptacji | przy OGLĄDANIU ścieżki - tam widać skutek | przygasza nazwisko bez prawa; gdy krok został bez nikogo, dokłada baner i plakietkę |
+
+**To OSTRZEŻENIE, nigdy odmowa.** Człowiek odchodzi z klubu albo z funkcji i uprawnienia
+muszą dać się odebrać; blokowanie tego konfiguracją kalendarza byłoby ogonem machającym
+psem. Inaczej niż przy ostatnim nosicielu `accounts.manage` (§6), gdzie odmowa jest twarda,
+bo tam klub zamyka się sam i nie ma drogi powrotu - tu droga powrotu jest zawsze: krok
+bez obsady odblokuje administrator klubu (`reservations.manage`).
 
 ## 3. Tabela (migracja 12)
 

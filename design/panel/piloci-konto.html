@@ -282,24 +282,86 @@
         <!-- Wybór jako lista kart, nigdy natywny `<select>`: obie role widać bez
              klikania, a druga linia mówi, co rola OTWIERA. Kolejność od najmniejszych
              uprawnień - domyślna jest pierwsza. Rola jest rolą W TYM KLUBIE. -->
+        <!-- ══ ZAKRES UPRAWNIEŃ ZAMIAST ROLI (3.1.0, docs/uprawnienia.md) ══
+             Karta „Rola w klubie" z dwiema kartami wyboru ZNIKA. Powód jest w decyzji
+             właściciela z 2026-09-23: role były dwie - „pilot" bez niczego i
+             „administrator" ze wszystkim - więc żeby MECHANIK zatwierdzał swój krok
+             ścieżki akceptacji, trzeba by mu oddać flotę, konta i dziennik całego klubu.
+
+             Odtąd zdolność nadaje się OSOBIE. „Administrator" zostaje PRESETEM
+             wypełniającym zbiór, a nie władzą samą w sobie - stąd dwa przyciski nad
+             listą, a nie trzecia karta wyboru obok „pilota".
+
+             ETYKIETA LICZY SIĘ ZE ZBIORU, nie stoi w bazie: komplet zdolności to
+             „Administrator", zbiór pusty - „Pilot", cokolwiek pomiędzy - „Własny zakres".
+             Kolumna `role` znika razem z rolą, bo kolumna wyglądająca na nadającą
+             uprawnienia i nienadająca niczego wygląda jak działający bezpiecznik.
+
+             TA RAMKA POKAZUJE PRZYPADEK, KTÓRY WYWOŁAŁ CAŁĄ DECYZJĘ: Anna jest zwykłym
+             pilotem BEZ wejścia do panelu, a mimo to akceptuje rezerwacje - decyzje
+             podejmuje ze SKRZYNKI W TELEFONIE (makiety 25 i 26). Zakres pilota jest tu
+             pusty poza jedną pozycją, więc etykieta mówi „Własny zakres".
+
+             Lista kart, nie `<select>` ani przełączniki: zdolności jest dziesięć i jest
+             to zbiór ZAMKNIĘTY, więc widoczność wszystkich naraz jest całą wartością
+             (wyjątek `<select>` z 2026-09-20 dotyczy zbiorów rosnących z klubem). -->
         <div class="card">
-          <div class="card-title">Rola w klubie</div>
-          <div class="opt-list" role="radiogroup" aria-label="Rola konta">
-            <button type="button" class="opt selected" role="radio" aria-checked="true">
-              <span class="opt-body">
-                <span class="opt-name">Pilot</span>
-                <span class="opt-desc">Tylko aplikacja na telefonie.</span>
-              </span>
-              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </button>
-            <button type="button" class="opt" role="radio" aria-checked="false">
-              <span class="opt-body">
-                <span class="opt-name">Administrator</span>
-                <span class="opt-desc">Panel tego klubu w całości, razem z pilotami i samolotami.</span>
-              </span>
-              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </button>
+          <div class="card-title">Zakres uprawnień</div>
+
+          <!-- ══ ZESTAW WYBIERA SIĘ Z LISTY, ZDOLNOŚCI STOJĄ POD NIM ══
+               Uwaga właściciela 2026-09-23: dwa przyciski presetu („ustaw jak
+               administrator", „wyczyść") były akcjami, których nazwa nie zapowiadała
+               skutku, a „Własny zakres" jako sama plakietka nie mówił, czym różni się
+               od czegokolwiek. Odtąd administrator WYBIERA ZESTAW, a pod spodem widzi
+               i poprawia to, co zestaw zawiera.
+
+               ZESTAWY NIE ISTNIEJĄ W BAZIE - to skróty wypełniające zbiór zdolności.
+               Po zapisie stoi w bazie ZBIÓR, nie nazwa zestawu (`docs/uprawnienia.md`
+               §2.2), więc zmiana katalogu zestawów nie rusza nikomu uprawnień.
+               „Własny zakres" jest ZAWSZE ostatni i znaczy „ten zbiór nie odpowiada
+               żadnemu skrótowi" - wskakuje SAM, gdy tknąć którąkolwiek zdolność.
+
+               `<select>`, nie lista kart, i to jest świadome odstępstwo od reguły
+               „zawsze lista kart": tutaj zawartość wyboru stoi ROZPISANA POD NIM, więc
+               widoczność wszystkich opcji naraz - czyli cały argument tamtej reguły -
+               niczego nie dokłada. Dwie listy kart jedna nad drugą zlałyby się w jedną,
+               a wybór przestałby być odróżnialny od szczegółu.
+
+               KATALOG ZATWIERDZONY przez właściciela 2026-09-23 („zostawmy te zestawy
+               uprawnień") - sześć pozycji odwzorowujących funkcje w klubie:
+                 • Pilot - nic (stan domyślny; wyłącznie aplikacja na telefonie)
+                 • Akceptujący - Akceptacja rezerwacji
+                 • Koordynator lotów - Wejście do panelu + Cudze rezerwacje + Akceptacja
+                 • Technik - Wejście do panelu + Flota
+                 • Administrator - komplet
+                 • Własny zakres - cokolwiek innego -->
+          <label class="field">
+            <span class="field-label">Zestaw uprawnień</span>
+            <select class="input">
+              <option selected>Pilot</option>
+              <option>Akceptujący</option>
+              <option>Koordynator lotów</option>
+              <option>Technik</option>
+              <option>Administrator</option>
+              <option selected>Własny zakres</option>
+            </select>
+          </label>
+
+          <!-- ZAKRES JEST ZWINIĘTY DOMYŚLNIE, BEZ WYJĄTKÓW (uwaga właściciela
+               2026-09-23). Pierwsza wersja rozwijała listę przy „własnym zakresie",
+               bo wtedy nazwa zestawu nie mówi nic - ale wyjątek kosztował więcej, niż
+               dawał: karta miała dwie wysokości zależne od danych, a szuflada skakała
+               między członkami. Odpowiedź na „co ten człowiek może" niesie PODPIS
+               (liczba i nazwy), a pełna lista jest dla tego, kto przyszedł ZMIENIAĆ.
+
+               To ta sama granica, co przy archiwum w historii lotów: zwijamy to, czego
+               wchodzący na ekran NIE SZUKA. Administrator otwiera kartę członka po kod
+               pilota, sesje albo hasło - zakres poprawia rzadziej. -->
+          <div class="access-row">
+            <span class="cell-sub">Nadana 1 z 10 zdolności · Akceptacja rezerwacji</span>
+            <button type="button" class="btn ghost">Pokaż zdolności</button>
           </div>
+
         </div>
 
         <div class="card">
@@ -445,7 +507,195 @@
   <a href="#dostep-i-sesje">↓ Dostęp i sesje</a>
   <span>·</span>
   <a href="#druga-przynaleznosc">↓ P2a</a>
+  <span>·</span>
+  <a href="#zakres-uprawnien">↓ Zakres</a>
 </nav>
+
+<!-- ══ ZAKRES UPRAWNIEŃ · DRUGI STAN ══
+     Ramka P2 pokazuje zakres WŁASNY (pilot z samym prawem akceptacji). Tu stoi stan
+     drugi - komplet administratora - bo to on niesie jedyną odmowę tej karty. -->
+<section class="canvas-section" id="zakres-uprawnien">
+  <div class="canvas-section-title">Zakres uprawnień · komplet, zestaw pusty i rozjazd ze ścieżką akceptacji (3.1.0)</div>
+  <div class="inv-grid">
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Po tapnięciu „Pokaż zdolności" - lista i odmowa przy zestawie</span>
+        <span class="inv-when">Jedyny stan, w którym pełna lista stoi na ekranie: ktoś o nią poprosił. Zbiór równy skrótowi „Administrator", więc lista zestawów pokazuje tę nazwę. ODMOWA STOI PRZY LIŚCIE ZESTAWÓW, bo do zabronionego stanu prowadzą stąd dwie drogi: zdjęcie zdolności przełącznikiem i przestawienie zestawu na taki, który jej nie zawiera. Marek jest ostatnią aktywną osobą w klubie ze zdolnością „Konta i kod klubu", a odebranie jej zamknęłoby panel dla wszystkich i nie byłoby drogi powrotu. Odmowa jest JAWNA, nie ukryta - administrator ma wiedzieć, że funkcja istnieje i czemu akurat teraz nie działa. Ta sama zapora stoi na dwóch pozostałych drogach do tego stanu: wyłączeniu członkostwa i usunięciu konta.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zakres uprawnień</div>
+          <label class="field">
+            <span class="field-label">Zestaw uprawnień</span>
+            <select class="input">
+              <option>Pilot</option>
+              <option>Akceptujący</option>
+              <option>Koordynator lotów</option>
+              <option>Technik</option>
+              <option selected>Administrator</option>
+              <option>Własny zakres</option>
+            </select>
+          </label>
+          <!-- ODMOWA STOI PRZY LIŚCIE ZESTAWÓW, nie przy przełączniku niżej, i to jest
+               zmiana wymuszona przez samą listę: do zabronionego stanu prowadzą odtąd
+               DWIE drogi w jednej karcie - zdjęcie zdolności i przestawienie zestawu na
+               taki, który jej nie zawiera. Zdanie mówi o obu, stoi raz i stoi przy
+               kontrolce, po którą administrator sięga pierwszą. -->
+          <p class="hint"><b>Zestawu nie da się tu zmienić</b> - Marek jest ostatnią aktywną osobą w klubie ze zdolnością „Konta i kod klubu", a bez niej nikt nie wpuści nikogo do panelu ani nie nada zakresu. Nadaj ją komuś innemu, zanim odbierzesz mu tę.</p>
+          <div class="access-row">
+            <span class="cell-sub">Nadanych 10 z 10 zdolności</span>
+            <button type="button" class="btn ghost">Ukryj zdolności</button>
+          </div>
+          <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Wejście do panelu</span>
+                <span class="opt-desc">Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+              <span class="opt-body">
+                <span class="opt-name">Konta i kod klubu</span>
+                <span class="opt-desc">Przyjmowanie do klubu, zakresy uprawnień, kod klubu, wylogowywanie cudzych urządzeń.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Flota</span>
+                <span class="opt-desc">Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Korekty w dzienniku</span>
+                <span class="opt-desc">Poprawianie i unieważnianie cudzych operacji, także po oknie 24 godzin.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Uwagi serwera</span>
+                <span class="opt-desc">Rozstrzyganie tego, co serwer zgłasza przy operacjach: nakładki, rozjazdy liczników.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Cudze rezerwacje</span>
+                <span class="opt-desc">Odwoływanie i przesuwanie cudzych terminów oraz wpisanie rezerwacji za pilota.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Progi i reguły</span>
+                <span class="opt-desc">Strojenie progów analityki zużycia.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Dziennik zmian</span>
+                <span class="opt-desc">Odczyt tego, kto i co zmienił w panelu.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Narzędzia serwisowe</span>
+                <span class="opt-desc">Przebudowa danych dziennika ze strumienia zdarzeń i odczyt stanu bazy.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Akceptacja rezerwacji</span>
+                <span class="opt-desc">Rozstrzyganie kroków ścieżki akceptacji ORAZ podgląd wszystkich terminów klubu w komplecie - z zadaniem, trasą, drugim pilotem i notatką. Bez tego zgoda zapadałaby na podstawie samych godzin.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Zestaw pusty - stan, w którym jest większość klubu</span>
+        <span class="inv-when">Tak wygląda karta zwykłego pilota i tak wygląda większość klubu. Podpis mówi wprost, co znaczy zbiór pusty, zamiast pokazywać dziesięć wygaszonych przełączników - zwinięcie nie ukrywa niczego, bo nie ma czego ukrywać. Tknięcie którejkolwiek zdolności po rozwinięciu przestawia listę zestawów na „Własny zakres" w tej samej chwili: zestaw jest SKRÓTEM do zbioru, a nie etykietą przyklejoną do osoby.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zakres uprawnień</div>
+          <label class="field">
+            <span class="field-label">Zestaw uprawnień</span>
+            <select class="input">
+              <option>Pilot</option>
+              <option>Akceptujący</option>
+              <option>Koordynator lotów</option>
+              <option>Technik</option>
+              <option>Administrator</option>
+              <option>Własny zakres</option>
+            </select>
+          </label>
+          <div class="access-row">
+            <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
+            <button type="button" class="btn ghost">Pokaż zdolności</button>
+          </div>
+        </div>
+      </div>
+    </article>
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odebranie prawa akceptacji komuś ze ścieżki</span>
+        <span class="inv-when">Zdolność i lista kroku odpowiadają na dwa różne pytania, więc mogą się rozjechać: człowiek zostaje na liście po tym, jak stracił prawo. Ostrzeżenie stoi TUTAJ, a nie tylko na ekranie ścieżki, bo tu zapada decyzja - tam widać dopiero jej skutek. To OSTRZEŻENIE, nie odmowa: człowiek odchodzi z klubu albo z funkcji i uprawnienia muszą dać się odebrać, a blokowanie tego konfiguracją kalendarza byłoby ogonem machającym psem. Zdanie nazywa więc KROK, liczbę osób, które w nim zostaną, i mówi wprost, że lista sama się nie wyczyści - konfiguracji klubu nie zmieniamy za plecami administratora. Gdy w kroku zostaje ktoś jeszcze, zdanie jest łagodniejsze i mówi tylko, z kim krok zostaje.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zakres uprawnień</div>
+          <label class="field">
+            <span class="field-label">Zestaw uprawnień</span>
+            <select class="input">
+              <option selected>Pilot</option>
+              <option>Akceptujący</option>
+              <option>Koordynator lotów</option>
+              <option>Technik</option>
+              <option>Administrator</option>
+              <option>Własny zakres</option>
+            </select>
+          </label>
+          <div class="access-row">
+            <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
+            <button type="button" class="btn ghost">Ukryj zdolności</button>
+          </div>
+          <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wejście do panelu</span>
+                <span class="opt-desc">Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Akceptacja rezerwacji</span>
+                <span class="opt-desc">Rozstrzyganie kroków ścieżki akceptacji ORAZ podgląd wszystkich terminów klubu w komplecie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <p class="hint"><b>Marek stoi sam w kroku „Szef wyszkolenia".</b> Po zapisaniu nie zostanie w nim nikt, kto mógłby zatwierdzać - nowe rezerwacje zatrzymają się na tym kroku. Lista kroku się nie wyczyści: zmień ją w <a href="kalendarz-sciezka.html">ścieżce akceptacji</a>.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost">Anuluj</button>
+            <button type="button" class="btn primary">Zapisz</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 
 <!-- ══ P2 · DÓŁ SZUFLADY (po przewinięciu) ══
      Okno makiety ma 900 px, a szuflada członkostwa jest dłuższa: karty „Dostęp" i „Sesje"

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 23 Szczegóły rezerwacji</title>
+<title>Ninerdeck - 26C Odmowa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -124,6 +124,80 @@
   }
   .btn-danger:hover { background:var(--red-muted); }
 
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     WIERSZ, KTÓRY PROWADZI W GŁĄB - telefonowy odpowiednik `.go` z panelu
+
+     W panelu afordancję niesie GHOST-BADGE POD KURSOREM: wartość jest wartością,
+     a kształt pojawia się dopiero, gdy myszka nad nią stanie. Na telefonie kursora
+     NIE MA, więc ta sama sztuczka dałaby wiersz, po którym nic nie widać - trzeba
+     byłoby w niego tapnąć, żeby się dowiedzieć, że coś robi.
+
+     Dlatego tutaj afordancja stoi W SPOCZYNKU i jest nią SZEWRON na prawej krawędzi -
+     ten sam glif, którym cała aplikacja oznacza „to prowadzi dalej". Świeci przy
+     DWÓCH-TRZECH wierszach karty, nie przy każdym, więc nie uczy oka pomijać kolumny
+     (reguła SyncChipa z issue #12).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  a.kv { text-decoration:none; color:inherit; position:relative; }
+  a.kv:hover { background:var(--surface-raised); }
+  a.kv .kv-v { padding-right:16px; }
+  a.kv::after {
+    content:"\203A"; position:absolute; right:13px; top:50%; transform:translateY(-52%);
+    font-family:var(--font-mono); font-size:15px; color:var(--text-muted);
+  }
+
+  /* Pas decyzji. ZGODA jest akcją główną, ODMOWA wyciszoną - tak samo jak w kolejce
+     panelu. Czerwieni tu nie ma: odmowa jest DECYZJĄ, nie zniszczeniem - czerwień
+     w tej aplikacji niesie odwołanie własnej rezerwacji i unieważnienie wpisu. */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; padding:14px; border-radius:14px;
+    background:var(--green); color:#0D0D0D; border:none;
+    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; text-decoration:none;
+    box-shadow:0 0 28px rgba(46,204,113,0.28);
+  }
+
+  /* Tabela ostatnich lotów - ten sam wycinek, co w szufladzie panelu. Trzy wiersze,
+     bo podgląd jest WYCINKIEM, a nie drugim dziennikiem. */
+  .mini-tab { width:100%; border-collapse:collapse; }
+  .mini-tab th {
+    text-align:left; font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-muted); font-weight:400; padding:9px 13px 6px; border-bottom:1px solid var(--border);
+  }
+  .mini-tab td { font-size:12px; color:var(--text-secondary); padding:9px 13px; border-bottom:1px solid var(--border); }
+  .mini-tab tr:last-child td { border-bottom:none; }
+  .mini-tab td.reg { font-family:var(--font-mono); font-size:11.5px; letter-spacing:1px; color:var(--text-primary); }
+  .mini-tab td.num, .mini-tab th.num { text-align:right; font-family:var(--font-mono); }
+
+  .kv-v.amber { color:var(--amber); }
+  .kv-v .cell-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ═══ ARKUSZ ODMOWY ═══
+     Rama jak w każdym arkuszu aplikacji: sufit 56 px nad bezpiecznym obszarem, treść
+     przewija się w środku, akcje przypięte na dole. Arkusz jest WSTAWKĄ NAD ekranem
+     i musi to być widać - bez sufitu czyta się jak nowy ekran. */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 16px 30px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-field {
+    border:1px solid var(--border-strong); background:var(--surface); border-radius:12px;
+    padding:12px 13px; min-height:86px; font-size:13px; line-height:1.5; color:var(--text-placeholder, #5A5A5A);
+  }
+  .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  .modal-ref-val { color:var(--text-secondary); }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
+  /* Przycisk ZABLOKOWANY BEZ ZDANIA POD SPODEM: pole odmowy jest puste i pilot na nie
+     patrzy, więc powód blokady widać z kontrolki nad przyciskiem (wąski wyjątek
+     reguły issue #55 - „puste pole wymagane nie dostaje zdania"). */
+  .modal-btn-off { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-family:var(--font-display); font-size:17px; letter-spacing:2px; opacity:0.55; }
+  /* Przypis pod pasem akcji - jedno zdanie o SKUTKU decyzji. Ta sama kontrolka,
+     co w Historii: ikona u góry pierwszej linii, tekst wygaszony. */
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:2px 4px 0; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
@@ -141,12 +215,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 23</span>
-  <span class="slug">rezerwacja · szczegóły</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran 3</span>
+  <span class="film-strip">NINERDECK - 26C</span>
+  <span class="slug">odmowa · powód wymagany</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Szczegóły rezerwacji">
+<main class="phone" role="region" aria-label="Mockup - Odmowa z powodem">
   <div class="status-bar">
     <span>07:45</span>
     <span class="status-right">
@@ -155,102 +229,74 @@
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
     </span>
   </div>
-
   <div class="screen">
 
+    <!-- Nagłówek wg wzorca 23: powrót po lewej, tytuł na środku. Wyśrodkowanie
+         zostaje dla ekranów z powrotem - tak samo jak na karcie rezerwacji, której
+         ten ekran jest bliźniakiem. Kim albo czym jest bohater, mówi pierwsza
+         linia treści, a nie podtytuł w nagłówku. -->
     <div class="app-header">
-      <a href="21-kalendarz.html" class="icon-btn" title="Wróć">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      <a href="25-powiadomienia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </a>
-      <span class="screen-title">REZERWACJA</span>
+      <span class="screen-title">DECYZJA</span>
       <span></span>
     </div>
 
     <div class="scroll">
 
-      <!-- ═══ TERMIN ═══
-           Plakietka mówi STAN rezerwacji. W 3.0.0 jest jeden („Potwierdzona") i dlatego
-           mógłby go nie być wcale - ale w 3.1.0 dochodzi „Czeka na zgodę" i „Odrzucona",
-           więc miejsce jest przewidziane od początku, żeby ekran nie zmieniał wtedy
-           układu. -->
-      <div class="hero">
-        <div class="hero-top">
-          <span class="hero-date">Sobota · 19 września</span>
-          <span class="hero-badge">Potwierdzona</span>
-        </div>
-        <div class="hero-hours">09:00 → 11:00</div>
-        <div class="hero-meta">
-          <span class="hero-zone">czas klubu</span>
-          <span class="hero-dur">2 h</span>
-          <span class="hero-count">ZA 1 H 15 MIN</span>
-        </div>
-      </div>
-
-      <!-- ═══ CO REZERWUJESZ ═══ -->
+      <!-- ══ KROKU NIE PISZEMY ══
+           „Krok: Mechanik" nie pada ani tutaj, ani w kolejce panelu: ekran pyta CIEBIE,
+           więc nazwa kroku odpowiada na pytanie, którego nikt nie zadał. Co się stanie
+           po decyzji, mówi zdanie pod pasem akcji - raz, a nie przy każdym wierszu. -->
+      <div class="section-lbl">Rezerwacja do rozpatrzenia</div>
       <div class="card">
-        <div class="kv">
-          <span class="kv-k">Samolot</span>
-          <span class="kv-v"><span class="mono">SP-AXA</span><span class="kv-sub">Cessna 172 · C172</span></span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Zadanie</span>
-          <span class="kv-v">Przelot</span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Trasa</span>
-          <span class="kv-v"><span class="mono">EPKK → EPRJ</span><span class="kv-sub">Kraków-Balice → Rzeszów-Jasionka</span></span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Drugi pilot</span>
-          <span class="kv-v"><span class="mono">AKO</span><span class="kv-sub">Anna Kowalska</span></span>
-        </div>
+        <a class="kv" href="26b-podglad-samolotu.html"><span class="kv-k">Samolot</span><span class="kv-v">SP-AXA <span class="cell-sub">· C172</span></span></a>
+        <div class="kv"><span class="kv-k">Termin</span><span class="kv-v">sob 26 WRZ <span class="mono">09:00-12:00</span></span></div>
+        <a class="kv" href="26a-podglad-pilota.html"><span class="kv-k">Pilot</span><span class="kv-v">Jakub Wrona <span class="cell-sub">· JWR</span></span></a>
+        <a class="kv" href="26a-podglad-pilota.html"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub">· AKO</span></span></a>
+        <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+        <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v"><span class="mono">EPZG → EPRJ</span></span></div>
+        <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">2:00 · paliwo 140 L</span></div>
+        <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części w Jasionce, wracamy tego samego dnia.</span></div>
+        <div class="kv"><span class="kv-k">Czeka od</span><span class="kv-v">wczoraj 18:40 <span class="kv-sub">termin za 3 dni</span></span></div>
       </div>
 
-      <!-- ═══ PLAN ═══
-           Liczby, których rejestr nie zna, bo dotyczą przyszłości. Po locie mają swoje
-           faktyczne odpowiedniki na ekranie operacji (10) - i to TAMTE wchodzą do
-           rozliczenia. Karty „plan kontra fakt" tu nie ma i nie będzie: rezerwacja
-           zamyka się w chwili, w której zaczyna się operacja. -->
-      <div class="section-lbl">Plan</div>
-      <div class="card">
-        <div class="kv">
-          <span class="kv-k">Czas lotu</span>
-          <span class="kv-v"><span class="mono">1:30</span></span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Paliwo</span>
-          <span class="kv-v"><span class="mono">120 L</span><span class="kv-sub">do zabrania</span></span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Notatka</span>
-          <span class="kv-v">Odbiór części w Jasionce, powrót tego samego dnia.</span>
-        </div>
+      <!-- ODMOWA NIE JEST CZERWONA. Czerwień niesie w tej aplikacji odwołanie WŁASNEJ
+           rezerwacji i unieważnienie wpisu - rzeczy, które coś kasują. Odmowa jest
+           decyzją i stoi obok zgody jako druga, wyciszona odpowiedź. -->
+      <a class="btn-primary" href="25-powiadomienia.html">ZATWIERDŹ</a>
+      <a class="btn-secondary" href="26c-odmowa.html">ODMÓW</a>
+
+      <!-- Jedno zdanie o skutku, na dole i raz. Pilot dostaje wiadomość natychmiast,
+           więc decyzja jest widoczna po tamtej stronie od razu - to warto wiedzieć
+           PRZED tapnięciem, a nie po. -->
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>Po zgodzie rezerwacja idzie do kroku <b>Szef wyszkolenia</b>. Po odmowie termin wraca do puli, a pilot dostaje powód.</span>
       </div>
 
-      <!-- ═══ AKCJE ═══
-           „PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem i zapisuje SAMĄ
-           RÓŻNICĘ - pola, których pilot nie tknął, zostają nietknięte także
-           w rejestrze zajętości.
+    </div>
 
-           ZMIANA MASZYNY JEST NOWĄ REZERWACJĄ (decyzja właściciela 2026-09-21):
-           termin należy do konkretnego egzemplarza, więc ekran zakłada go od nowa
-           i odwołuje stary. Kolejność jest częścią tej decyzji - najpierw nowy,
-           potem odwołanie starego; odwrotna oddawałaby slot, zanim wiadomo, czy
-           jest co wziąć w zamian.
+    <!-- ══ POWÓD ODMOWY JEST WYMAGANY ══
+         Pilot czyta go na swoim telefonie jako treść wiadomości - „odmowa" bez słowa
+         zostawia go z pytaniem, na które musiałby zadzwonić. To jedyne pole w tym
+         module bez plakietki „opcjonalne".
 
-           Odwołania NIE MA przy cudzej rezerwacji ani po terminie, a poprawki -
-           przy terminie, który już trwa: maszynę można oddać (pilot nie poleci),
-           ale przesuwanie trwającego terminu opisywałoby przeszłość. -->
-      <a href="22-rezerwacja.html" class="btn-secondary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        PRZESUŃ I POPRAW
-      </a>
-
-      <a href="21-kalendarz.html" class="btn-danger">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-        ODWOŁAJ REZERWACJĘ
-      </a>
-
+         Przycisk jest wygaszony BEZ ZDANIA POD SPODEM: puste pole stoi tuż nad nim,
+         więc powód blokady widać z kontrolki (wąski wyjątek reguły issue #55). -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">ODMOWA</div>
+        <div class="modal-lbl">Powód</div>
+        <div class="modal-field">Napisz, dlaczego nie - pilot przeczyta to na swoim telefonie.</div>
+        <div class="modal-ref"><span>Rezerwacja</span><span class="modal-ref-val">SP-AXA · sob 26 WRZ 09:00-12:00</span></div>
+        <div class="modal-actions">
+          <a class="modal-btn-cancel" href="26-decyzja.html">ANULUJ</a>
+          <span class="modal-btn-off">ODMÓW</span>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -258,54 +304,40 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
-  <a class="vp-item active" href="23-rezerwacja-szczegoly.html">
-    <span class="vp-badge">23</span>
+  <a class="vp-item" href="26-decyzja.html">
+    <span class="vp-badge">26</span>
     <span class="vp-body">
-      <span class="vp-name">Rezerwacja potwierdzona</span>
-      <span class="vp-when">Bohaterem ekranu jest TERMIN - to on jest przedmiotem rezerwacji, a maszyna i zadanie go opisują. Zmiana idzie jedną drogą („PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem), ołówków przy wierszach NIE MA (issue #40). Odwołanie jest obramowane, nie wypełnione, i stoi na końcu.</span>
+      <span class="vp-name">Decyzja o cudzej rezerwacji</span>
+      <span class="vp-when">Otwiera się z wiersza „Do decyzji" w skrzynce. Samolot i OBIE osoby prowadzą w podgląd - to jedyne trzy wiersze karty z szewronem. Zgoda jest akcją główną, odmowa wyciszoną; czerwieni tu nie ma, bo odmowa jest decyzją, a nie zniszczeniem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="26a-podglad-pilota.html">
+    <span class="vp-badge">26A</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd pilota</span>
+      <span class="vp-when">Te same fakty, co szuflada w panelu: doświadczenie NA TYM egzemplarzu przed nalotem ogólnym, trzy ostatnie loty i najbliższe rezerwacje - w tym ta, która nachodzi na rozpatrywany termin. Bazy to nie wyklucza (ograniczenie pilnuje egzemplarza, nie człowieka), więc odpowiedź należy do tego, kto zatwierdza.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="26b-podglad-samolotu.html">
+    <span class="vp-badge">26B</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd samolotu</span>
+      <span class="vp-when">Liczniki ze źródłem odczytu, ostatnie 30 dni, ostatnie loty i najbliższe terminy - razem z wyłączeniem z użytku, które czasem stoi tuż za rozpatrywanym terminem.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="26c-odmowa.html">
+    <span class="vp-badge amber">26C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odmowa - powód wymagany</span>
+      <span class="vp-when">Pilot czyta ten powód na swoim telefonie, więc bez niego odmowa zostawia go z pytaniem, na które musiałby zadzwonić. Przycisk jest wygaszony BEZ zdania pod spodem: puste pole widać nad nim (issue #55).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="23a-rezerwacja-kolizja.html">
-    <span class="vp-badge amber">23A</span>
+  <a class="vp-item" href="25-powiadomienia.html">
+    <span class="vp-badge blue">25</span>
     <span class="vp-body">
-      <span class="vp-name">Kolizja przy przejęciu maszyny</span>
-      <span class="vp-when">Pilot bierze samolot, który na ten czas ma zarezerwowany ktoś inny: baner OSTRZEGA i pokazuje, czyja to rezerwacja - ale NIGDY nie blokuje (§2.3). Wymaga sieci (§2.2): bez zasięgu ostrzeżenia nie ma, a lot idzie dalej - rezerwacja nigdy nie warunkowała przejęcia.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="22-rezerwacja.html">
-    <span class="vp-badge">22</span>
-    <span class="vp-body">
-      <span class="vp-name">Nowa rezerwacja</span>
-      <span class="vp-when">Dwa kroki: termin i maszyna → zadanie, trasa, plan lotu. Ten sam formularz obsługuje przesunięcie istniejącej.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="23b-rezerwacja-czeka.html">
-    <span class="vp-badge amber">23B</span>
-    <span class="vp-body">
-      <span class="vp-name">Czeka na zgodę</span>
-      <span class="vp-when">Klub ma ścieżkę akceptacji. Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Poprawka czyści zgody i zaczyna ścieżkę od nowa.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="23e-rezerwacja-nowy-krok.html">
-    <span class="vp-badge amber">23E</span>
-    <span class="vp-body">
-      <span class="vp-name">Doszedł krok akceptacji</span>
-      <span class="vp-when">Klub dopisał krok, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest żywa i to jest jej cena.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="23c-rezerwacja-odrzucona.html">
-    <span class="vp-badge amber">23C</span>
-    <span class="vp-body">
-      <span class="vp-name">Odrzucona z powodem</span>
-      <span class="vp-when">Powód jest po stronie decydującego wymagany i stoi tu jako treść. Termin wrócił do puli, więc zostaje jedno wyjście - wybrać inny.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="23d-rezerwacja-wygasla.html">
-    <span class="vp-badge amber">23D</span>
-    <span class="vp-body">
-      <span class="vp-name">Termin minął bez decyzji</span>
-      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i oddaje slot: milczenie nie znaczy zgody.</span>
+      <span class="vp-name">Skrzynka (wejście)</span>
+      <span class="vp-when">Lista wiadomości i spraw. Po decyzji plakietka „Do decyzji" gaśnie, a wiadomość zostaje jako zapis tego, co się stało.</span>
     </span>
   </a>
 </aside>
@@ -313,20 +345,14 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="20-pulpit.html">20 Pulpit</a>
-  <a href="21-kalendarz.html">← 21 Kalendarz</a>
+  <a href="25-powiadomienia.html">← 25 Skrzynka</a>
   <span>·</span>
-  <a href="22-rezerwacja.html">22 Krok 1</a>
-  <a href="22a-rezerwacja-zadanie.html">22A Krok 2</a>
+  <a href="26-decyzja.html">26 Decyzja</a>
+  <a href="26a-podglad-pilota.html">26A Pilot</a>
+  <a href="26b-podglad-samolotu.html">26B Samolot</a>
+  <a href="26c-odmowa.html" class="active">26C Odmowa</a>
   <span>·</span>
-  <a href="23-rezerwacja-szczegoly.html" class="active">23 Szczegóły</a>
-  <a href="23a-rezerwacja-kolizja.html">23A Kolizja</a>
-
-  <span>·</span>
-  <a href="23b-rezerwacja-czeka.html">23B Czeka</a>
-  <a href="23e-rezerwacja-nowy-krok.html">23E Krok</a>
-  <a href="23c-rezerwacja-odrzucona.html">23C Odrzucona</a>
-  <a href="23d-rezerwacja-wygasla.html">23D Wygasła</a>
+  <a href="20-pulpit.html">20 Pulpit →</a>
 </nav>
 
 </body>

@@ -4053,6 +4053,49 @@ KAŻDY ekran modułu rezerwacji:
   wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
   parametru jest jedna (`bookingId`) po obu stronach
 
+## Akceptacja rezerwacji 3.1.0 - MAKIETY ZATWIERDZONE (issue #196, 2026-09-23)
+Cały epik makiet przed kodem, design-first jak w 3.0.0. Decyzje i uzasadnienia:
+**`docs/rezerwacje.md` §9.4 (telefon), §10 (panel), §11 (workflow)** oraz
+**`docs/uprawnienia.md`** (epik #197). Reguły obowiązujące odtąd:
+- **ZAKRES UPRAWNIEŃ ZAMIAST ROLI**: zdolności należą do CZŁONKOSTWA, `memberships.role`
+  znika. Panel pokazuje SZEŚĆ ZESTAWÓW (Pilot · Akceptujący · Koordynator lotów ·
+  Technik · Administrator · Własny zakres) - katalog zatwierdzony 2026-09-23, ale
+  **zestaw NIE JEST bytem w modelu**: w bazie stoi ZBIÓR, a etykieta liczy się z niego
+  z powrotem. Zmiana katalogu nie rusza nikomu uprawnień. „Własny zakres" wskakuje SAM
+  przy tknięciu którejkolwiek zdolności - nie wybiera się go świadomie
+- **`<select>` przy zestawie** - drugie (po kalendarzu) odstępstwo od „zawsze lista kart",
+  bo zawartość wyboru stoi ROZPISANA POD NIM: dwie listy kart jedna nad drugą zlałyby się
+  w jedną
+- **WIADOMOŚĆ TO NIE SPRAWA** (skrzynka `25`): „Nowe" gaśnie z otwarciem listy, „Do
+  decyzji" stoi do decyzji. Gdyby jedno gasiło drugie, zerknięcie na skrzynkę uciszałoby
+  prośbę o zgodę. CZWARTEJ ZAKŁADKI NIE MA - wejściem jest DZWONEK na Pulpicie (obok
+  zębatki, issue #82); licznik wyłącznie z nieprzeczytanymi, bez zasięgu nie ma go wcale
+- **PODGLĄD PILOTA I SAMOLOTU** (panel: szuflada `kalendarz-podglad`; telefon: EKRANY
+  `26a`/`26b`, bo cztery karty z tabelą to nie arkusz). Otwiera się z maszyny i z OBU
+  pilotów, nie ma ani jednej akcji na sprawie, a doświadczenie NA TYM egzemplarzu stoi
+  przed nalotem ogólnym - to jest pytanie decyzji
+- **LICENCJE, BADANIA I UPRAWNIENIA NA TYP SĄ POZA ZAKRESEM** (decyzja właściciela
+  2026-09-23: osobny epik). Podgląd odpowiada nalotem i historią lotów - i NIE pokazuje
+  pustych wierszy „Badania -": na ekranie decyzji czytałyby się jak stwierdzenie o stanie
+  dokumentów, a byłyby stwierdzeniem o brakującym module
+- **ODMOWA NIE JEST CZERWONA** (jest decyzją, nie zniszczeniem), ale POWÓD JEST WYMAGANY
+  po obu stronach - pilot czyta go jako treść wiadomości. Przycisk blokuje BEZ zdania,
+  bo puste pole widać nad nim (issue #55)
+- **KROKU NIE PISZEMY** ani w kolejce, ani na ekranie decyzji: ekran pyta CIEBIE
+- **STAN „CZEKA" WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST** - rezerwacja trzyma termin od
+  ZŁOŻENIA, nie od zgody. Na osi floty różni go KSZTAŁT (przerywana ramka, jaśniejsza od
+  zwykłego obrysu - inaczej ginie), na karcie pilota TON (ostrzeżenie, nie wygaszenie);
+  zamknięta wraca do tonu neutralnego, bo czerwień niesie baner
+- **POPRAWKA CZEKAJĄCEJ REZERWACJI CZYŚCI ZGODY** i ekran mówi to PRZED tapnięciem:
+  zgoda dotyczyła konkretnego terminu. Rezerwacja ZAMKNIĘTA ma jedno wyjście („wybierz
+  inny termin") - wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą
+- **`.go` - WARTOŚĆ PROWADZĄCA W GŁĄB** (panel): w spoczynku wartość, pod kursorem
+  ghost-badge. Sześć wersji, cztery odrzucone z powodami w docblocku `controls.css`.
+  Podpis wartości (kod pilota) wchodzi DO ŚRODKA przycisku. Na telefonie ten sam byt
+  wygląda INACZEJ - szewron w spoczynku, bo na dotyku nie ma hovera
+- **kolejność `NAV_ITEMS` decyduje o ekranie startowym** (`homeFor`) - dokładając moduł
+  platformy albo klubu, sprawdź, czy go nie przestawiasz
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

@@ -19,12 +19,12 @@
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Moduł kalendarza - trzy ekrany</div>
+  <div class="vp-title">Moduł kalendarza - sześć ekranów</div>
   <a class="vp-item active" href="kalendarz-flota.html">
     <span class="vp-badge">K1</span>
     <span class="vp-body">
       <span class="vp-name">Oś maszyn i dni</span>
-      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry.</span>
+      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry. W 3.1.0 dochodzi stan CZEKA NA AKCEPTACJĘ (przerywana ramka) i baner kolejki - widoczny wyłącznie wtedy, gdy coś czeka na zalogowanego.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -47,6 +47,27 @@
     <span class="vp-body">
       <span class="vp-name">Dziennik (moduł obok)</span>
       <span class="vp-when">Kalendarz pokazuje PLAN, dziennik FAKTY. Jedno nie miesza się z drugim: w kalendarzu nie ma czasów blokowych, w dzienniku nie ma rezerwacji.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-sciezka.html">
+    <span class="vp-badge">K4</span>
+    <span class="vp-body">
+      <span class="vp-name">Ścieżka akceptacji</span>
+      <span class="vp-when">Kroki, przez które przechodzi rezerwacja, zanim się potwierdzi (3.1.0). Klub bez ani jednego kroku nie klika w nic i to jest stan domyślny KAŻDEGO klubu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-kolejka.html">
+    <span class="vp-badge">K5</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolejka decyzji</span>
+      <span class="vp-when">Rezerwacje czekające na MOJĄ zgodę, z całym planem (3.1.0). Ścieżka mówi, CO ma się zdarzyć; kolejka - co czeka teraz.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-podglad.html">
+    <span class="vp-badge">K6</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd pilota i samolotu</span>
+      <span class="vp-when">Kontekst decyzji (3.1.0): komu zatwierdzam i czym poleci. Ten sam komplet faktów niesie arkusz w aplikacji - decyduje też mechanik, który panelu nie otwiera.</span>
     </span>
   </a>
 </aside>
@@ -125,7 +146,13 @@
         <div>
           <h1 class="page-title">Kalendarz</h1>
         </div>
+        <!-- DWIE AKCJE, RÓŻNEJ WAGI: wyłączenie maszyny z użytku jest czynnością
+             cotygodniową, a ścieżkę akceptacji układa się raz i zagląda do niej
+             rzadko - więc konfiguracja idzie akcją WYCISZONĄ, nie drugim przyciskiem
+             tej samej wagi. Dwie akcje główne obok siebie nie mówią, która jest
+             główna. -->
         <div class="page-actions">
+          <a class="btn ghost" href="kalendarz-sciezka.html">Ścieżka akceptacji</a>
           <a class="btn" href="kalendarz-blokada.html">Wyłącz maszynę z użytku</a>
         </div>
       </div>
@@ -138,12 +165,41 @@
 
            Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go kliknięto
            (reguła z dziennika). -->
+      <!-- ══ WEJŚCIE W KOLEJKĘ ISTNIEJE WYŁĄCZNIE Z PRACĄ ══
+           Baner pojawia się, gdy coś CZEKA NA ZALOGOWANEGO - nie na klub. Kolejka
+           cudzego kroku nie jest jego sprawą i nie ma jak jej rozstrzygnąć.
+
+           Nie ma go w kolumnie ani w pasku akcji, bo wskaźnik świecący przy każdym
+           wejściu uczy oko pomijać górę ekranu (reguła SyncChipa z issue #12): pusta
+           kolejka to stan domyślny i nie dostaje zdania. Stąd też LICZBA w napisie -
+           „coś czeka" kazałoby wejść, żeby się dowiedzieć ile. -->
+      <div class="banner status">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span><b>Dwie rezerwacje czekają na Twoją zgodę.</b> Najdłużej czekająca od wczoraj, a termin ma za trzy dni.</span>
+        <a class="btn ghost sm" href="kalendarz-kolejka.html">Rozpatrz</a>
+      </div>
+
       <div class="filters">
         <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
         <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
         <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
       </div>
 
+      <!-- ══ CZEKA NA AKCEPTACJĘ WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST ══
+           Rezerwacja złożona trzyma termin od razu - nie od zgody. Dlatego wpis
+           z przerywaną ramką ma to samo tło, ten sam napis i to samo miejsce, co
+           każdy inny: maszyna w tych godzinach NIE JEST wolna. Przygaszenie albo
+           węższy pasek obiecywałyby dostępność, której nie ma.
+
+           Kreska mówi „jeszcze nieostateczne", a nie „mniej ważne". Bursztyn odpada,
+           bo niesie wyłączenie z użytku - dwa ostrzeżenia w jednej barwie przestają
+           się odróżniać z kąta oka.
+
+           OŚ POKAZUJE KAŻDY WPIS CZEKAJĄCY W ZAKRESIE, a baner wyżej liczy TYLKO
+           te, które czekają NA ZALOGOWANEGO. Tu liczby się zgadzają, ale nie muszą:
+           rezerwacja stojąca na cudzym kroku jest na osi, a w kolejce administratora
+           jej nie ma. To dwa różne pytania - „czy termin jest pewny" i „co mam
+           rozstrzygnąć". -->
       <div class="card">
         <div class="cal" style="--cal-days:7; --cal-reg-col:88px;">
           <div class="cal-head">
@@ -224,6 +280,7 @@
             <div class="cal-cell off"></div>
             <div class="cal-cell">
               <a class="cal-item" href="kalendarz-wpis.html">A. Kowal</a>
+              <a class="cal-item pending" href="kalendarz-wpis.html">M. Zięba</a>
             </div>
           </div>
         </div>
@@ -308,6 +365,7 @@
 
           <div class="cal-legend">
             <span class="cal-legend-item"><span class="cal-swatch"></span>Rezerwacja</span>
+            <span class="cal-legend-item"><span class="cal-swatch pending"></span>Czeka na akceptację</span>
             <span class="cal-legend-item"><span class="cal-swatch block"></span>Wyłączona z użytku</span>
           </div>
         </div>
@@ -328,6 +386,9 @@
   <a href="kalendarz-flota.html" class="active">Kalendarz · flota</a>
   <a href="kalendarz-wpis.html">Kalendarz · wpis</a>
   <a href="kalendarz-blokada.html">Kalendarz · wyłączenie</a>
+  <a href="kalendarz-sciezka.html">Kalendarz · ścieżka</a>
+  <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
+  <a href="kalendarz-podglad.html">Kalendarz · podgląd</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>

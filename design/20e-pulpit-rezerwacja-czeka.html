@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 20D Pulpit, sync stoi</title>
+<title>Ninerdeck - 20E Pulpit - rezerwacja czeka</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -108,16 +108,24 @@
      ale nadal jest jedyną rzeczą na tym ekranie, która mówi o PRZYSZŁOŚCI - a ekran
      w całości mieści się bez przewijania, więc „pierwsza" i „druga" są tu o kolejności
      czytania, nie o widoczności. */
+  /* ══ REZERWACJA CZEKAJĄCA TRACI ZIELEŃ ══
+     Zieleń znaczy w tej aplikacji „w normie" i niesie akcję główną, więc na karcie
+     rezerwacji obiecuje, że lot jest pewny. Dopóki ktoś nie zdecydował, nie jest -
+     karta idzie więc w ton ostrzeżenia, a nie w wygaszenie: rezerwacja ZAJMUJE
+     maszynę i przygaszona wyglądałaby na mniej ważną, niż jest.
+
+     ODLICZANIE ZOSTAJE. Termin zbliża się niezależnie od tego, czy ktoś zdążył
+     zdecydować, a para „za godzinę - i nadal czeka" jest tu całą informacją. */
   .next-card {
-    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
-    border:1px solid var(--green-border); border-radius:16px;
+    background:linear-gradient(180deg, rgba(243,156,18,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--amber-border); border-radius:16px;
     padding:14px; display:flex; flex-direction:column; gap:11px;
     text-decoration:none; color:inherit;
   }
   .next-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .next-badge {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
     border-radius:5px; padding:3px 7px;
   }
   /* Odliczanie jest jedyną liczbą tej karty pisaną krojem display: to ono decyduje,
@@ -126,7 +134,7 @@
   .next-when { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
   .next-hours { font-family:var(--font-mono); font-size:19px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
   .next-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .next-ac { font-family:var(--font-mono); font-size:12px; letter-spacing:1.5px; color:var(--green); }
+  .next-ac { font-family:var(--font-mono); font-size:12px; letter-spacing:1.5px; color:var(--text-primary); }
   .next-task { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); }
   .next-route { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   .next-dot { width:3px; height:3px; border-radius:50%; background:var(--border-strong); flex-shrink:0; }
@@ -228,82 +236,13 @@
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
   .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
-  .sync-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    min-height:34px; padding:3px 11px; border-radius:999px;
-    background:var(--red-muted); border:1px solid var(--red-border);
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--red); text-decoration:none; cursor:pointer;
-  }
-
-  /* ===== Arkusz „Synchronizacja" =====
-     Ten sam prymityw .modal-overlay / .modal-sheet co 04c/04d. Zbiera w JEDNYM
-     miejscu wszystko, co wcześniej wisiało na ekranie na stałe (issue #23 pkt 5):
-     stan kolejki, stempel ostatniego udanego syncu i wiek danych referencyjnych.
-     Arkusz jest INFORMACYJNY - bez akcji „wyślij teraz": outbox wysyła sam,
-     gdy wróci sieć (§4.1), a przycisk-atrapa uczyłby, że trzeba pomagać. */
-  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
-  /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
-     dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
-  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
-  .sheet-title { font-family:var(--font-display); font-size:21px; letter-spacing:2px; }
-  .sheet-status {
-    display:flex; align-items:flex-start; gap:9px; padding:11px 13px; border-radius:12px;
-    background:var(--red-muted); border:1px solid var(--red-border);
-  }
-  .sheet-status .dot { width:8px; height:8px; border-radius:50%; background:var(--red); box-shadow:0 0 8px var(--red-glow); flex-shrink:0; margin-top:4px; }
-  .sheet-status-text { font-size:12px; color:var(--text-primary); line-height:1.5; }
-  .sheet-status-text b { color:var(--red); }
-  .sheet-rows { display:flex; flex-direction:column; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-  .sheet-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; background:var(--surface); border-bottom:1px solid var(--border); }
-  .sheet-row:last-child { border-bottom:none; }
-  .sheet-row-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
-  .sheet-row-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); display:inline-flex; align-items:center; gap:7px; }
-  .sheet-row-val .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
-  /* Ton WARTOŚCI, nie ozdoba wiersza: "brak sieci" i "odrzucone" to werdykty o próbie
-     (ta sama reguła, co `SheetRow.tone` w kodzie - issue #60). */
-  .sheet-row-val.amber { color:var(--amber); }
-  .sheet-row-val.red   { color:var(--red); }
-  .sheet-note { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  /* Para akcji arkusza: 1 : 2, jak w każdym innym (`.modal-actions`). Ponowienie jest
-     akcją GŁÓWNĄ, bo to po nie pilot tu wszedł; „Zamknij" zostaje wyjściem. */
-  .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
-  .sheet-retry {
-    display:flex; align-items:center; justify-content:center;
-    padding:13px; border-radius:14px; border:none;
-    background:var(--green); color:#0D0D0D;
-    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
-    text-decoration:none; cursor:pointer;
-  }
-  .sheet-close {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; min-height:46px; padding:13px; border-radius:12px;
-    background:var(--surface); color:var(--text-secondary);
-    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
-    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
-  }
-  .sheet-close:hover { border-color:var(--green-border); color:var(--green); }
-
-  /* ===== VARIANTS PANEL ===== */
-  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
-  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
-  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
-  .vp-item:hover { border-color:var(--green-border); }
-  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
-  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
-  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
-  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
-  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
-  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
-  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
-  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 20D</span>
-  <span class="slug">pulpit · kolejka stoi</span>
+  <span class="film-strip">NINERDECK - 20E</span>
+  <span class="slug">pulpit · rezerwacja czeka</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 1</span>
 </header>
 
@@ -328,13 +267,15 @@
         <span class="header-subtitle">TMK · 19 WRZ 2026</span>
       </div>
       <div class="app-header-right">
-        <a href="20d-pulpit-sync-stoi.html" class="sync-chip" title="Szczegóły synchronizacji - arkusz na dole ekranu">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
-          SYNC STOI · 2
-        </a>
-        <!-- Skrzynka pusta, więc licznika nie ma - samo wejście zostaje. -->
+        <!-- DZWONEK JEST JEDYNYM WEJŚCIEM DO SKRZYNKI i stoi tylko tutaj - tak samo
+             jak zębatka (issue #82). Czwartej zakładki nie ma: zakładka to MIEJSCE
+             PRACY (dzień, plan, przeszłość), a skrzynka jest kanałem - zagląda się
+             do niej, kiedy coś przyszło, i wychodzi.
+
+             Licznik zapala się wyłącznie z nieprzeczytanymi; pusta skrzynka nie
+             dostaje zera (reguła SyncChipa z issue #12). -->
         <a href="25-powiadomienia.html" class="icon-btn bell" title="Powiadomienia" aria-label="Powiadomienia">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bell-count">2</span>
         </a>
         <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
@@ -405,9 +346,9 @@
 
            CZASY SĄ W STREFIE KLUBU (P1, §6), więc nie ma przy nich „UTC" - rejestr
            na karcie wyżej mówi UTC i dlatego obie osie są oznaczone. -->
-      <a href="23-rezerwacja-szczegoly.html" class="next-card">
+      <a href="23b-rezerwacja-czeka.html" class="next-card">
         <div class="next-top">
-          <span class="next-badge">Twoja rezerwacja</span>
+          <span class="next-badge">Czeka na zgodę</span>
           <span class="next-countdown">ZA 1 H 15 MIN</span>
         </div>
         <div class="next-when">
@@ -421,6 +362,8 @@
           <span class="next-route">EPKK → EPRJ</span>
           <span class="next-dot"></span>
           <span>Dual: AKO</span>
+          <span class="next-dot"></span>
+          <span>krok 1 z 2</span>
         </div>
       </a>
 
@@ -462,85 +405,12 @@
       </a>
     </nav>
 
-
-    <!-- Arkusz szczegółów synchronizacji - otwarty tapnięciem w pill OFFLINE.
-         Wszystkie stemple syncu mieszkają TU, nie na ekranie (issue #23 pkt 5). -->
-    <div class="modal-overlay">
-      <div class="modal-sheet">
-        <span class="sheet-title">SYNCHRONIZACJA</span>
-
-        <!-- BANER MÓWI, ŻE TO SIĘ SAMO NIE NAPRAWI - i to jest cała różnica wobec 01C.
-             Do 2026-08-30 ten stan wyświetlał się jako "Offline … wyślą się same, gdy
-             wróci sieć", czyli podawał pilotowi nieprawdę i kazał czekać na zdarzenie,
-             które już nastąpiło: sieć JEST, serwer odpowiedział, tylko odmówił.
-
-             Zdanie kończy się DROGĄ WYJŚCIA, bo bez niej baner jest samą złą wiadomością.
-             Nie ma tu za to ani słowa o kopercie, kodzie HTTP czy budowie kolejki -
-             ta sama granica, którą issue #43 wyznaczyło arkuszom korekty. -->
-        <div class="sheet-status">
-          <span class="dot"></span>
-          <!-- „brak zasięgu niczego nie blokuje" USUNIĘTE (uwaga z urządzenia,
-               2026-08-30). Zdanie odpowiadało na obawę, której pilot nie zgłosił -
-               a przez to ją podsuwało. Ta sama kategoria przypisów, którą issue #43
-               wyrzuciło z arkuszy korekty. Zostaje sam fakt i to, co się z nim stanie. -->
-          <span class="sheet-status-text"><b>Serwer odmówił przyjęcia</b> - 2 zdarzenia stoją
-          w kolejce i nie wyślą się same. Twoje zapisy są bezpieczne w telefonie.
-          Zgłoś to administratorowi.</span>
-        </div>
-
-        <div class="sheet-rows">
-          <div class="sheet-row">
-            <span class="sheet-row-key">W kolejce</span>
-            <span class="sheet-row-val">2 zdarzenia</span>
-          </div>
-          <!-- OSTATNIA PRÓBA - wiersz dołożony po uwadze z urządzenia (2026-08-30:
-               "klikam «ponów próbę» i nie dostaję żadnego feedback czy się udało").
-               Przy nieudanym ponowieniu NIC innego w arkuszu się nie zmienia: kolejka
-               stoi, stempel udanego syncu stoi, pill stoi - więc tapnięcie wyglądało
-               jak przycisk, który nie działa. Ten wiersz jest dowodem, że próba się
-               odbyła, i mówi, czym się skończyła. Stoi NAD stemplem udanego syncu, bo
-               odpowiada na świeższe pytanie ("co się właśnie stało"), a tamten na
-               pytanie o wiek danych. -->
-          <div class="sheet-row">
-            <span class="sheet-row-key">Ostatnia próba</span>
-            <span class="sheet-row-val red">17:42 UTC - odrzucone</span>
-          </div>
-          <div class="sheet-row">
-            <span class="sheet-row-key">Ostatnia udana synchronizacja</span>
-            <span class="sheet-row-val">17:02 UTC</span>
-          </div>
-          <div class="sheet-row">
-            <span class="sheet-row-key">Dane referencyjne</span>
-            <span class="sheet-row-val"><span class="dot"></span>sync 17:02 UTC</span>
-          </div>
-        </div>
-
-        <!-- DROGOWSKAZ DO USTAWIEŃ USUNIĘTY, A W JEGO MIEJSCE WESZŁA AKCJA
-             (uwaga z urządzenia, 2026-08-30). Stopka odsyłała po przycisk „Synchronizuj
-             teraz" do innego ekranu - a skoro pilot otworzył ten arkusz właśnie z tym
-             pytaniem, przycisk ma stać tutaj.
-
-             ODWRACA TO DECYZJĘ Z issue #23 („arkusz jest INFORMACYJNY, bez akcji -
-             outbox wysyła sam, a przycisk-atrapa uczyłby, że trzeba pomagać").
-             Uzasadnienie było połowiczne: outbox faktycznie wysyła sam, ale ponowienie
-             NIE JEST atrapą - robi dokładnie to, co „SYNCHRONIZUJ TERAZ" w ustawieniach
-             (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku,
-             issue #55). Pilot pyta „czy teraz?", a odpowiedź „poczekaj albo idź do
-             ustawień" była gorsza niż jedno tapnięcie. -->
-        <div class="sheet-actions">
-          <a href="01c-moj-dzien-offline.html" class="sheet-close">ZAMKNIJ</a>
-          <a href="01c-moj-dzien-offline.html" class="sheet-retry">PONÓW PRÓBĘ</a>
-        </div>
-      </div>
-    </div>
-
-  </div>
   </div>
 </main>
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
-  <a class="vp-item" href="20-pulpit.html">
+  <a class="vp-item active" href="20-pulpit.html">
     <span class="vp-badge">20</span>
     <span class="vp-body">
       <span class="vp-name">Dzień z rezerwacją</span>
@@ -562,11 +432,11 @@
       <span class="vp-when">Pełna oś maszyn i godzin z wejściem w rezerwację - JEDYNE miejsce, w którym widać zajętość floty. Pulpit jej nie powtarza.</span>
     </span>
   </a>
-  <a class="vp-item" href="20e-pulpit-rezerwacja-czeka.html">
-    <span class="vp-badge amber">20E</span>
+  <a class="vp-item" href="23b-rezerwacja-czeka.html">
+    <span class="vp-badge amber">23B</span>
     <span class="vp-body">
-      <span class="vp-name">Rezerwacja czeka na zgodę</span>
-      <span class="vp-when">Klub ma ścieżkę akceptacji, a tej rezerwacji jeszcze nikt nie rozstrzygnął. Karta traci zieleń, ale nie gaśnie: termin jest zajęty, a odliczanie idzie dalej.</span>
+      <span class="vp-name">Karta rezerwacji, która czeka</span>
+      <span class="vp-when">Ta sama rezerwacja otwarta z karty: ścieżka akceptacji, powód wygaśnięcia i pas akcji bez obietnic.</span>
     </span>
   </a>
 </aside>
@@ -574,7 +444,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="20-pulpit.html">20 Pulpit</a>
+  <a href="20-pulpit.html" class="active">20 Pulpit</a>
   <a href="20a-pulpit-bez-rezerwacji.html">20A Bez rezerwacji</a>
   <span>·</span>
   <a href="21-kalendarz.html">21 Kalendarz</a>
@@ -584,10 +454,6 @@
   <a href="24-historia.html">24 Historia</a>
   <span>·</span>
   <a href="02-preflight.html">02 Nowy lot →</a>
-
-  <span>·</span>
-  <a href="20e-pulpit-rezerwacja-czeka.html">20E Czeka</a>
-  <a href="25-powiadomienia.html">25 Skrzynka →</a>
 </nav>
 
 </body>

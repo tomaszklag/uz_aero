@@ -842,6 +842,97 @@ odpowiedzi trzeba szukać przewijaniem. Chip w nagłówku osi otwiera arkusz wyb
 - **akcje arkusza są PRZYPIĘTE**, przewija się lista (reguła ramy arkuszy: skraca się to,
   co pilot doczyta przewinięciem, nie rząd akcji).
 
+### 9.4 Ekrany 3.1.0 (wykonane w epiku #196, design-first)
+
+Makiety powstały PRZED kodem, tak jak w 3.0.0: **`25-powiadomienia`** (+ `25a` nic nie
+przyszło, `25b` bez zasięgu), **`26-decyzja`** (+ `26a` podgląd pilota, `26b` podgląd
+samolotu, `26c` odmowa z powodem), **stany karty rezerwacji** `23b` czeka na zgodę,
+`23e` doszedł krok, `23c` odrzucona, `23d` wygasła, oraz **`20e`** - Pulpit
+z rezerwacją, która czeka.
+
+**WIADOMOŚĆ TO NIE SPRAWA** - z tego rozróżnienia bierze się cała skrzynka. „Nowe"
+mówi o WIADOMOŚCI („nie widziałeś jeszcze tej nowiny") i gaśnie z chwilą otwarcia
+listy; „Do decyzji" mówi o SPRAWIE i stoi, dopóki nie zapadnie decyzja - choćby pilot
+czytał listę dziesięć razy. Gdyby jedno gasiło drugie, wystarczyłoby zerknąć na
+skrzynkę, żeby prośba o zgodę przestała się dopominać. Stąd dwa różne znaki: krawędź
+przy brzegu wiersza i plakietka przy treści.
+
+**CZWARTEJ ZAKŁADKI NIE MA I NIE BĘDZIE.** Zakładka to MIEJSCE PRACY (dzień, plan,
+przeszłość), a skrzynka jest kanałem - zagląda się do niej, kiedy coś przyszło,
+i wychodzi. Wejściem jest **dzwonek w nagłówku Pulpitu**, obok zębatki i z tego samego
+powodu, co ona (issue #82: jedno wejście, tylko tutaj). Licznik zapala się wyłącznie
+z nieprzeczytanymi; **bez zasięgu nie ma go wcale**, bo liczbę zna serwer, a
+zapamiętana sprzed godziny mówiłaby o stanie, którego telefon nie zna. Paska zakładek
+nie ma ani na 25, ani na 26: zakładki są w nawigacji JEDNYM ekranem stosu, a wszystko
+otwarte z Pulpitu leży nad nimi (§9.1).
+
+**SPRAWY NIE SĄ PRZYPINANE do góry** - lista jest chronologiczna, a wyróżnia je
+plakietka. Przypięcie kazałoby czytać listę dwa razy: raz w kolejności czasu i raz
+w kolejności wagi.
+
+**POWÓD ODMOWY JEST CZĘŚCIĄ WIADOMOŚCI** - bez niego „odmowa" zostawia pilota
+z pytaniem, na które musiałby zadzwonić. Tą samą zasadą wiadomość o wygaśnięciu mówi,
+co robić dalej, a wiadomość o zmianie ścieżki - dlaczego rezerwacja czeka, mimo że ktoś
+już ją zatwierdził.
+
+**PODGLĄD JEST NA TELEFONIE EKRANEM, NIE ARKUSZEM.** W panelu te same fakty wysuwają
+się szufladą nad kolejką, bo tam sprawa zostaje widoczna pod spodem; na telefonie nie
+ma takiego miejsca, a cztery karty z tabelą to treść na cały ekran - arkusz z sufitem
+56 px byłby ekranem udającym wstawkę. Podgląd nie ma ANI JEDNEJ akcji na sprawie: zgoda
+i odmowa zostają tam, gdzie stoi komplet danych.
+
+**WIERSZ PROWADZĄCY W GŁĄB WYGLĄDA INACZEJ NIŻ W PANELU.** Tam afordancję niesie
+ghost-badge POD KURSOREM (§10); na telefonie kursora nie ma, więc ta sama sztuczka
+dałaby wiersz, po którym nic nie widać. Afordancja stoi w spoczynku i jest nią szewron
+na prawej krawędzi - przy trzech wierszach karty (samolot, pilot, drugi pilot), nie
+przy każdym.
+
+**ODMOWA NIE JEST CZERWONA.** Czerwień niesie w tej aplikacji odwołanie WŁASNEJ
+rezerwacji i unieważnienie wpisu - rzeczy, które coś kasują. Odmowa jest decyzją
+i stoi obok zgody jako druga, wyciszona odpowiedź.
+
+**KROKU NIE PISZEMY** - ani na 26, ani w kolejce panelu: ekran pyta CIEBIE, więc nazwa
+kroku odpowiada na pytanie, którego nikt nie zadał. Co się stanie po decyzji, mówi
+jedno zdanie pod pasem akcji.
+
+**STANY KARTY REZERWACJI: UKŁAD ZOSTAJE, ZMIENIA SIĘ TON.** Miejsce na plakietkę stanu
+przewidziano już w 3.0.0, kiedy stan był jeden - ekran, który przy odmowie przestawia
+karty, każe czytać się od nowa w najgorszym momencie. Zieleń znaczy „w normie" i niesie
+akcję główną, więc na karcie rezerwacji obiecuje, że lot jest pewny: rezerwacja
+czekająca idzie w ton ostrzeżenia (NIE w wygaszenie - zajmuje maszynę), a zamknięta
+(odrzucona, wygasła) wraca do tonu neutralnego, bo czerwień niesie baner, a dwa czerwone
+pudełka pod sobą przestają się odróżniać.
+
+**ŚCIEŻKA MÓWI, ILE KROKÓW ZOSTAŁO I KTO JE TRZYMA** - to jedyna odpowiedź na pytanie
+„do kogo mam zadzwonić". Nazwisk decydujących NIE MA: krok bywa obsadzony przez kilka
+osób i rozstrzyga pierwsza (§11.2), więc jedno nazwisko byłoby nieprawdą, a trzy - listą
+do przepisania przy każdej zmianie obsady.
+
+**POPRAWKA CZYŚCI ZGODY i ekran mówi to PRZED tapnięciem.** Zgoda dotyczyła KONKRETNEGO
+terminu, więc po przesunięciu przestaje cokolwiek znaczyć - inaczej ktoś zatwierdziłby
+dwie godziny w sobotę rano, a poleciałoby się przez pół niedzieli. Odwołanie zostaje:
+rezerwacja czekająca trzyma slot tak samo jak zatwierdzona (§11.5). Rezerwacja ZAMKNIĘTA
+ma za to jedno wyjście - „wybierz inny termin": nie ma czego przesuwać ani odwoływać,
+a wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą.
+
+**ODLICZANIE ZOSTAJE przy rezerwacji czekającej** (`20e`). Termin zbliża się niezależnie
+od tego, czy ktoś zdążył zdecydować, a para „za godzinę - i nadal czeka" jest tu całą
+informacją.
+
+**LICENCJE, BADANIA I UPRAWNIENIA NA TYP SĄ POZA ZAKRESEM 3.1.0** (decyzja właściciela
+2026-09-23: „na razie pomijamy, jest do tego inny epik"). Podgląd pilota przy decyzji
+odpowiada więc wyłącznie NALOTEM I HISTORIĄ LOTÓW - tym, co rejestr naprawdę wie.
+Ważności badań ani uprawnień na typ nie pokazujemy w żadnej postaci, także jako
+pustego wiersza albo kreski: pole „Badania -" na ekranie, który ma odpowiedzieć „czy
+mogę mu zatwierdzić ten lot", czyta się jak stwierdzenie o stanie dokumentów, a byłoby
+wyłącznie stwierdzeniem o brakującym module. Kiedy tamten epik wejdzie, podgląd dostanie
+kartę z prawdziwymi datami i to jest właściwa kolejność.
+
+**PRZEGLĄD DOMKNIĘTY 2026-09-23.** Katalog zestawów uprawnień zatwierdzony bez zmian
+(`docs/uprawnienia.md` §2.2), licencje i badania odłożone do własnego epiku. Makiety
+3.1.0 są od tej chwili ZATWIERDZONĄ SPECYFIKACJĄ i obowiązuje przy nich reguła „ekran
+wdrażamy 1:1": wątpliwość to rozmowa przed implementacją, nie cicha zmiana w kodzie.
+
 ## 10. Panel: moduł „Kalendarz"
 
 Piąta pozycja kolumny bocznej (`ui/shell/nav.ts`), po „Samolotach", na `panel.access`.
@@ -853,8 +944,34 @@ generowany (`npm run panel:css`):
 - `kalendarz-wpis` - szuflada jednej zajętości: kto, co, kiedy, notatka, odwołanie
   z powodem; dla wyłączenia - powód serwisowy;
 - `kalendarz-blokada` - wpisanie wyłączenia z użytku (maszyna, zakres, powód, komentarz);
-- (3.1) `kalendarz-sciezka` - kroki akceptacji klubu, `kalendarz-kolejka` - co czeka na
-  decyzję.
+- (3.1) `kalendarz-sciezka` - kroki akceptacji klubu (kolejność przestawia się
+  chwytem, nie strzałkami), `kalendarz-kolejka` - co czeka na decyzję,
+  `kalendarz-podglad` - szuflada pilota i samolotu nad kolejką.
+
+**STAN „CZEKA NA AKCEPTACJĘ" NA OSI FLOTY WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST** (L4):
+rezerwacja złożona trzyma termin od razu, nie od zgody - wiersz w `bookings` powstaje
+przy złożeniu i od tej chwili wyklucza nakładanie. Wpis ma więc to samo tło, ten sam
+napis i to samo miejsce, co każdy inny; różni go PRZERYWANA RAMKA, czyli kształt,
+a nie barwa (bursztyn niesie wyłączenie z użytku). Kreska jest JAŚNIEJSZA od zwykłego
+obrysu - przerywana linia o kontraście zwykłej ramki zlewa się z wypełnieniem i zostaje
+wpis wyglądający na odrobinę wytarty. Konsekwencja: ramka pod kursorem idzie do końca
+skali, bo `--text-muted` należy odtąd do stanu czekającego.
+
+Oś pokazuje KAŻDY wpis czekający w zakresie, a baner kolejki liczy TYLKO te, które
+czekają na zalogowanego - dwa różne pytania, więc liczby nie muszą się zgadzać.
+
+**PODGLĄD OTWIERA SIĘ Z WARTOŚCI, A AFORDANCJĄ JEST GHOST-BADGE POD KURSOREM**
+(komponent `.go`, sześć wersji, wybór właściciela 2026-09-23). W spoczynku wartość jest
+wartością - w swoim miejscu, w swoim kolorze, bez ramki i bez tła, z wyciszoną ikoną
+panelu bocznego; pod kursorem i na fokusie dostaje KSZTAŁT: tło i zaokrąglenie,
+dokładnie jak `.btn.ghost`. Odrzucone i po co to wiedzieć: niebieski odnośnik obiecywał
+przejście gdzie indziej (a ekran pod spodem zostaje), przyciski pod tytułem oderwały
+kontrolkę od rzeczy, której dotyczy, karty `.opt` ważyły dwie obramowane pozycje na
+każdą sprawę, szewron mówi „dalej", a sama ikona z podkreśleniem była afordancją bez
+kształtu. **Podpis wartości wchodzi do środka** (kod pilota przy nazwisku): jest
+częścią odpowiedzi, a nie sąsiadem - zostawiony na zewnątrz rozcinał jedną rzecz na dwie.
+**Drugi pilot ma własne wejście**: przy locie szkolnym i załodze dwuosobowej to jego
+nalot bywa pytaniem, a nie dowódcy.
 
 Panel NIE pokazuje sugestii slotów: to narzędzie pilota szukającego miejsca dla siebie,
 a administrator patrzy na całość i wpisuje konkretny termin.

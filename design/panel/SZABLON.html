@@ -816,6 +816,55 @@
   <div class="canvas-section-title">Dane</div>
   <div class="inv-grid">
 
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wartość, która prowadzi w głąb</span>
+        <span class="inv-when">Afordancja NA wartości, nie obok niej - znak maszyny albo nazwisko pilota otwierające podgląd boczny. W spoczynku wartość jest wartością: w swoim miejscu i w swoim kolorze, bez ramki i bez tła, a za nią stoi wyciszona IKONA PANELU BOCZNEGO - prostokąt z wydzielonym prawym pasem. POD KURSOREM I NA FOKUSIE dostaje kształt: tło i zaokrąglenie, dokładnie jak `.btn.ghost` - stąd ghost-badge. Ikona, a NIE szewron ani niebieski odnośnik: jedno i drugie obiecuje przejście gdzie indziej, a tu nic nie odchodzi - wysuwa się szuflada, ekran pod spodem zostaje. Kształt dopiero pod kursorem, bo takich wartości bywa kilka na kartę (reguła SyncChipa). Padding kompensuje ujemny margines, więc nic nie skacze. PODPIS WARTOŚCI STOI W ŚRODKU (kod pilota przy nazwisku): jest częścią odpowiedzi, a nie sąsiadem - zostawiony na zewnątrz rozcinałby jedną rzecz na dwie.</span>
+        <span class="inv-classes"><b>.go</b></span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title"><a class="go" href="#">SP-AXA<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a> · sobota 26 WRZ, 09:00-12:00</div>
+          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="#">Jakub Wrona <span class="cell-sub mono">JWR</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a></span></div>
+          <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">DragHandle - lista, w której KOLEJNOŚĆ JEST TREŚCIĄ</span>
+        <span class="inv-when">Wyłącznie tam, gdzie kolejność wiersza znaczy coś dla systemu, a nie tylko dla oka - dziś kroki ścieżki akceptacji (<b>K4</b>). Para strzałek „w górę/w dół" mówi to samo dwoma przyciskami na wiersz, a przy pięciu pozycjach zamienia przestawienie w odklikiwanie. Uchwyt jest <b>przyciskiem</b>, nie <code>&lt;span draggable&gt;</code>: przeciąganie samą myszą byłoby jedyną drogą do zmiany kolejności, a tej nie da się wykonać z klawiatury - z fokusem na uchwycie wiersz przestawiają strzałki. Stoi PIERWSZY w wierszu, bo dotyczy całego wiersza, a nie jednej z jego wartości. Kursor niesie stan czynności (grab → grabbing): to jedyne miejsce w panelu, gdzie wciśnięcie znaczy „trzymam", a nie „kliknąłem".</span>
+        <span class="inv-classes"><b>.drag-handle</b> · tr.dragging</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Kroki ścieżki - uchwyt i wiersz w ruchu</caption>
+            <thead>
+              <tr>
+                <th><span class="visually-hidden">Kolejność</span></th>
+                <th>Krok</th>
+                <th>Nazwa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Mechanik"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">1</td>
+                <td class="cell-strong">Mechanik</td>
+              </tr>
+              <tr class="dragging">
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Szef wyszkolenia"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">2</td>
+                <td class="cell-strong">Szef wyszkolenia <span class="cell-sub">· w ruchu</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">DataTable</span>

@@ -330,6 +330,28 @@
   <a href="24-historia.html" class="flow-step">24 Historia</a>
 </div>
 
+<!-- ŚCIEŻKA AKCEPTACJI (3.1.0) - dwa pasma, bo to DWIE role tej samej osoby: ta, która
+     prosi, i ta, która rozstrzyga. Rezerwacja trzyma termin od złożenia, więc pasmo
+     zgody biegnie OBOK kalendarza, a nie przed nim. -->
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="21-kalendarz.html" class="flow-step">21 Kalendarz</a>
+  <span class="flow-sep">→</span>
+  <a href="22-rezerwacja.html" class="flow-step">22 Rezerwacja</a>
+  <span class="flow-sep">→</span>
+  <a href="23b-rezerwacja-czeka.html" class="flow-step">23B Czeka na zgodę</a>
+  <span class="flow-sep">→</span>
+  <a href="23-rezerwacja-szczegoly.html" class="flow-step">23 Potwierdzona</a>
+</div>
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="20-pulpit.html" class="flow-step">20 Pulpit</a>
+  <span class="flow-sep">→</span>
+  <a href="25-powiadomienia.html" class="flow-step">25 Skrzynka</a>
+  <span class="flow-sep">→</span>
+  <a href="26-decyzja.html" class="flow-step">26 Decyzja</a>
+  <span class="flow-sep">→</span>
+  <a href="26a-podglad-pilota.html" class="flow-step">26A Podgląd</a>
+</div>
+
 
 <div class="section-title">Rezerwacje i kalendarz (3.0.0)</div>
 <div class="cards">
@@ -337,7 +359,7 @@
     <div class="card-num">20</div>
     <div class="card-body">
       <div class="card-title">20-pulpit</div>
-      <div class="card-desc">NOWY EKRAN STARTOWY (3.0.0). „Mój dzień" jako same sumy doby z wejściem w operacje, pod nim najbliższa rezerwacja z odliczaniem, dalej akcje. Listy operacji NIE MA - kafelki i korekta w oknie 24 h przeniosły się do Historii. Zakładki: Pulpit · Kalendarz · Historia; kokpit zostaje modalny i zakładek w nim nie ma. Warianty: 20A bez rezerwacji, 20C offline, 20D sync stoi</div>
+      <div class="card-desc">NOWY EKRAN STARTOWY (3.0.0). „Mój dzień" jako same sumy doby z wejściem w operacje, pod nim najbliższa rezerwacja z odliczaniem, dalej akcje. Listy operacji NIE MA - kafelki i korekta w oknie 24 h przeniosły się do Historii. Zakładki: Pulpit · Kalendarz · Historia; kokpit zostaje modalny i zakładek w nim nie ma. Od 3.1.0 w nagłówku stoi też DZWONEK ze skrzynką (25). Warianty: 20A bez rezerwacji, 20C offline, 20D sync stoi, 20E rezerwacja czeka na zgodę</div>
       <div class="card-tags"><span class="tag green">home</span><span class="tag">rezerwacja</span><span class="tag">zakładki</span></div>
     </div>
   </a>
@@ -361,7 +383,7 @@
     <div class="card-num">23</div>
     <div class="card-body">
       <div class="card-title">23-rezerwacja-szczegoly</div>
-      <div class="card-desc">Szczegóły rezerwacji - bohaterem jest TERMIN, bo to on jest jej przedmiotem. Zmiana idzie jedną drogą („PRZESUŃ I POPRAW" wraca do kroku 1), odwołanie jest obramowane i stoi na końcu. 23A: kolizja przy przejęciu maszyny - baner ostrzega, NIGDY nie blokuje (§2.3)</div>
+      <div class="card-desc">Szczegóły rezerwacji - bohaterem jest TERMIN, bo to on jest jej przedmiotem. Zmiana idzie jedną drogą („PRZESUŃ I POPRAW" wraca do kroku 1), odwołanie jest obramowane i stoi na końcu. 23A: kolizja przy przejęciu maszyny - baner ostrzega, NIGDY nie blokuje (§2.3). Od 3.1.0 dochodzą stany akceptacji: 23B czeka, 23E doszedł krok, 23C odrzucona, 23D wygasła</div>
       <div class="card-tags"><span class="tag">szczegóły</span><span class="tag amber">kolizja</span></div>
     </div>
   </a>
@@ -371,6 +393,41 @@
       <div class="card-title">24-historia</div>
       <div class="card-desc">HISTORIA jako zakładka - wszystkie operacje, dzisiejsze i wcześniejsze. Dzień jest nagłówkiem grupy, operacje zwartymi wierszami; ikona po prawej niesie skutek tapnięcia (ołówek - okno korekty, oko - podgląd). Domyślnie widać tylko to, co można poprawić, archiwum pod przyciskiem (24A). Zastępuje ekran 12 od wydania 3.0.0</div>
       <div class="card-tags"><span class="tag green">historia</span><span class="tag">okno 24 h</span></div>
+    </div>
+  </a>
+</div>
+<div class="section-title">Akceptacja rezerwacji (3.1.0)</div>
+<div class="cards">
+  <a href="25-powiadomienia.html" class="card">
+    <div class="card-num">25</div>
+    <div class="card-body">
+      <div class="card-title">25-powiadomienia</div>
+      <div class="card-desc">SKRZYNKA - decyzje o Twoich rezerwacjach i prośby o Twoją zgodę. Wejściem jest dzwonek na Pulpicie, bo zakładka to MIEJSCE PRACY, a skrzynka jest kanałem. „Nowe" mówi o wiadomości i gaśnie z otwarciem listy; „Do decyzji" mówi o sprawie i stoi, dopóki nie zapadnie decyzja. Warianty: 25A nic nie przyszło, 25B bez zasięgu</div>
+      <div class="card-tags"><span class="tag green">skrzynka</span><span class="tag">powiadomienia</span><span class="tag amber">wymaga sieci</span></div>
+    </div>
+  </a>
+  <a href="26-decyzja.html" class="card">
+    <div class="card-num">26</div>
+    <div class="card-body">
+      <div class="card-title">26-decyzja</div>
+      <div class="card-desc">DECYZJA o cudzej rezerwacji. Samolot i OBIE osoby prowadzą w podgląd (26A pilot, 26B samolot) - te same fakty, co szuflada w panelu. Odmowa nie jest czerwona, bo jest decyzją, a nie zniszczeniem - ale powód jest WYMAGANY (26C): pilot czyta go na swoim telefonie</div>
+      <div class="card-tags"><span class="tag green">decyzja</span><span class="tag">podgląd</span><span class="tag amber">powód wymagany</span></div>
+    </div>
+  </a>
+  <a href="23b-rezerwacja-czeka.html" class="card">
+    <div class="card-num">23B</div>
+    <div class="card-body">
+      <div class="card-title">23b-rezerwacja-czeka</div>
+      <div class="card-desc">STANY REZERWACJI po stronie pilota: czeka na zgodę (23B), doszedł krok akceptacji (23E), odrzucona z powodem (23C), wygasła bez decyzji (23D). Układ ekranu zostaje ten sam - zmienia się plakietka, ton i baner. Ścieżka mówi, ile kroków zostało i kto je trzyma; poprawka CZYŚCI zgody</div>
+      <div class="card-tags"><span class="tag">stany</span><span class="tag amber">ścieżka</span></div>
+    </div>
+  </a>
+  <a href="20e-pulpit-rezerwacja-czeka.html" class="card">
+    <div class="card-num">20E</div>
+    <div class="card-body">
+      <div class="card-title">20e-pulpit-rezerwacja-czeka</div>
+      <div class="card-desc">Pulpit z rezerwacją, która czeka na zgodę. Karta traci zieleń i poświatę, bo zielona obiecywałaby, że lot jest pewny - ale NIE jest wygaszona, bo rezerwacja zajmuje maszynę. Odliczanie zostaje: para „za godzinę - i nadal czeka" jest tu całą informacją</div>
+      <div class="card-tags"><span class="tag">pulpit</span><span class="tag amber">czeka</span></div>
     </div>
   </a>
 </div>
@@ -452,6 +509,70 @@
 
 <div class="section-title">Warianty i stany</div>
 <div class="grid">
+  <a href="25a-powiadomienia-pusto.html" class="card">
+    <div class="card-num">25A</div>
+    <div class="card-body">
+      <div class="card-title">25a-powiadomienia-pusto</div>
+      <div class="card-desc">Skrzynka pusta. Stan mówi, CO tu trafia - decyzje o Twoich rezerwacjach i prośby o Twoją zgodę - a nie „brak danych". Dzwonek na Pulpicie stoi mimo to: znika licznik, nie wejście</div>
+      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">skrzynka</span></div>
+    </div>
+  </a>
+  <a href="25b-powiadomienia-offline.html" class="card amber">
+    <div class="card-num">25B</div>
+    <div class="card-body">
+      <div class="card-title">25b-powiadomienia-offline</div>
+      <div class="card-desc">Skrzynkę trzyma serwer, więc bez połączenia nie ma czego pokazać - ekran mówi to wprost zamiast rysować pustą listę, którą dałoby się wziąć za „nic nie przyszło"</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">skrzynka</span></div>
+    </div>
+  </a>
+  <a href="26a-podglad-pilota.html" class="card">
+    <div class="card-num">26A</div>
+    <div class="card-body">
+      <div class="card-title">26a-podglad-pilota</div>
+      <div class="card-desc">Podgląd pilota przy decyzji: doświadczenie NA TYM egzemplarzu przed nalotem ogólnym, trzy ostatnie loty i najbliższe rezerwacje - w tym ta, która nachodzi na rozpatrywany termin. Na telefonie EKRAN, nie arkusz: cztery karty i tabela to treść na cały ekran</div>
+      <div class="card-tags"><span class="tag">podgląd</span><span class="tag amber">kolizja pilota</span></div>
+    </div>
+  </a>
+  <a href="26b-podglad-samolotu.html" class="card">
+    <div class="card-num">26B</div>
+    <div class="card-body">
+      <div class="card-title">26b-podglad-samolotu</div>
+      <div class="card-desc">Ten sam kształt, drugie pytanie: liczniki ze źródłem odczytu, ostatnie 30 dni, ostatnie loty i najbliższe terminy razem z wyłączeniem z użytku</div>
+      <div class="card-tags"><span class="tag">podgląd</span><span class="tag">liczniki</span></div>
+    </div>
+  </a>
+  <a href="26c-odmowa.html" class="card amber">
+    <div class="card-num">26C</div>
+    <div class="card-body">
+      <div class="card-title">26c-odmowa</div>
+      <div class="card-desc">Odmowa z powodem WYMAGANYM - pilot czyta go na swoim telefonie jako treść wiadomości. Przycisk wygaszony bez zdania pod spodem, bo puste pole stoi tuż nad nim (issue #55)</div>
+      <div class="card-tags"><span class="tag amber">powód wymagany</span><span class="tag">arkusz</span></div>
+    </div>
+  </a>
+  <a href="23c-rezerwacja-odrzucona.html" class="card amber">
+    <div class="card-num">23C</div>
+    <div class="card-body">
+      <div class="card-title">23c-rezerwacja-odrzucona</div>
+      <div class="card-desc">Rezerwacja odrzucona: baner z powodem, karta terminu w tonie neutralnym (czerwień niesie baner), jedno wyjście - wybrać inny termin. Odwoływać nie ma czego, slot wrócił do puli</div>
+      <div class="card-tags"><span class="tag amber">odrzucona</span><span class="tag">stan</span></div>
+    </div>
+  </a>
+  <a href="23d-rezerwacja-wygasla.html" class="card amber">
+    <div class="card-num">23D</div>
+    <div class="card-body">
+      <div class="card-title">23d-rezerwacja-wygasla</div>
+      <div class="card-desc">Termin minął bez decyzji. Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i oddaje slot - milczenie NIE znaczy zgody</div>
+      <div class="card-tags"><span class="tag amber">wygasła</span><span class="tag">stan</span></div>
+    </div>
+  </a>
+  <a href="23e-rezerwacja-nowy-krok.html" class="card amber">
+    <div class="card-num">23E</div>
+    <div class="card-body">
+      <div class="card-title">23e-rezerwacja-nowy-krok</div>
+      <div class="card-desc">Klub dopisał krok do ścieżki, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest ŻYWA i to jest jej cena; zgody już wydane zostają</div>
+      <div class="card-tags"><span class="tag amber">ścieżka</span><span class="tag">stan</span></div>
+    </div>
+  </a>
   <a href="00a-login-full.html" class="card">
     <div class="card-num">00A</div>
     <div class="card-body">
