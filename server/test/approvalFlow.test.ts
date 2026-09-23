@@ -562,6 +562,142 @@ describe('akceptujący jest TRZECIM widzem na drucie (§17)', () => {
   });
 });
 
+/**
+ * PANEL (issue #165): kolejka „czeka na Twoją decyzję" i decyzja z biurka. Decyzja
+ * z panelu przechodzi TYM SAMYM rdzeniem i trafia do TEGO SAMEGO rejestru, co z telefonu
+ * - bez wpisu w dzienniku audytu (decyzja właściciela 2026-09-23).
+ */
+describe('panel: kolejka decyzji i decyzja z biurka', () => {
+  const queue = (app: App, cookie: Record<string, string>) =>
+    app.inject({ method: 'GET', url: '/admin/api/approvals/queue', headers: cookie });
+
+  const decideFromPanel = (
+    app: App,
+    cookie: Record<string, string>,
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason?: string | null },
+  ) =>
+    app.inject({
+      method: 'POST',
+      url: `/admin/api/bookings/${id}/decision`,
+      headers: cookie,
+      payload: body,
+    });
+
+  it('kolejka pokazuje WYŁĄCZNIE sprawy stojące na MOIM kroku bieżącym, najstarsze pierwsze', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [
+      { label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Szef wyszkolenia', memberIds: ['TMK', 'AKO'] },
+    ]);
+
+    const pwi = await login(app, 'PWI');
+    const pierwsza = (await book(app, pwi)).json().id as string;
+    const druga = (await book(app, pwi, JUTRO + 11 * H, JUTRO + 12 * H)).json().id as string;
+
+    // TMK stoi na kroku 2 - dopóki mechanik nie zatwierdzi, jego kolejka jest PUSTA,
+    // choć w klubie czekają dwie sprawy. Kolejka cudzego kroku nie jest jego sprawą.
+    expect((await queue(app, cookie)).json().items).toEqual([]);
+
+    const krz = await login(app, 'KRZ');
+    await decide(app, krz, druga, { decision: 'approved' });
+    await decide(app, krz, pierwsza, { decision: 'approved' });
+
+    const res = await queue(app, cookie);
+    expect(res.statusCode, res.body).toBe(200);
+    const items = res.json().items as {
+      booking: { id: string; note: string };
+      step: { label: string; members: number; next: string | null };
+    }[];
+    // Najstarsza ZŁOŻONA pierwsza - to ona jest najbliżej wygaśnięcia.
+    expect(items.map((i) => i.booking.id)).toEqual([pierwsza, druga]);
+    expect(items[0]!.step).toEqual({
+      id: expect.any(String),
+      label: 'Szef wyszkolenia',
+      members: 2,
+      next: null,
+    });
+    // Panel widzi komplet pól cudzej rezerwacji - bez notatki zgoda zapadałaby na
+    // podstawie samych godzin.
+    expect(items[0]!.booking.note).toBe('zabieram dwóch tandemów');
+  });
+
+  it('decyzja z panelu: ten sam rdzeń, ten sam rejestr, ŻADNEGO wpisu audytu; historia z osobą', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [
+      { label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Szef wyszkolenia', memberIds: ['TMK'] },
+    ]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    // TMK ma `reservations.manage`, więc odblokowuje z panelu krok MECHANIKA - druga
+    // zapora przed zakleszczeniem ścieżki (§11.2). Zapis jest jego i jawny.
+    const krok1 = await decideFromPanel(app, cookie, id, { decision: 'approved' });
+    expect(krok1.statusCode, krok1.body).toBe(200);
+    expect(krok1.json().status).toBe('pending');
+    expect(krok1.json().approval.steps[0].decision).toMatchObject({
+      decision: 'approved',
+      via: 'person',
+      decidedBy: 'TMK',
+    });
+
+    const krok2 = await decideFromPanel(app, cookie, id, { decision: 'approved' });
+    expect(krok2.json().status).toBe('confirmed');
+
+    // Karta w panelu niesie OSOBĘ decydującą (H5), telefon - nie (§9.4).
+    const panelCard = await app.inject({ url: `/admin/api/bookings/${id}`, headers: cookie });
+    expect(panelCard.statusCode, panelCard.body).toBe(200);
+    expect(panelCard.json().approval.steps.map((s: { decision: { decidedBy: string } }) => s.decision.decidedBy)).toEqual(['TMK', 'TMK']);
+    const phoneCard = await card(app, pwi, id);
+    expect(phoneCard.json().approval.steps[0].decision).not.toHaveProperty('decidedBy');
+
+    // Rejestrem decyzji jest `booking_approvals`; w dzienniku audytu nic nie przybyło.
+    const audit = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM admin_audit WHERE action LIKE 'approval.%' AND action <> 'approval.steps'`,
+    );
+    expect(Number(audit.rows[0]!.n)).toBe(0);
+  });
+
+  it('odmowa z panelu wymaga powodu; bez `approve` ani `manage` - 403', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    // JSE dostaje SAMO wejście do panelu - ani jednej ze zdolności decyzji.
+    await db.query(
+      `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ($1, 'JSE', 'panel.access')`,
+      [ORG_A],
+    );
+    const jse = await panelCookie(app, 'JSE');
+    const bezPrawa = await decideFromPanel(app, jse, id, { decision: 'approved' });
+    expect(bezPrawa.statusCode, bezPrawa.body).toBe(403);
+
+    const bezPowodu = await decideFromPanel(app, cookie, id, { decision: 'rejected' });
+    expect(bezPowodu.statusCode).toBe(400);
+    expect(bezPowodu.json().error).toBe('reason_required');
+
+    const odmowa = await decideFromPanel(app, cookie, id, {
+      decision: 'rejected',
+      reason: 'Maszyna jedzie na przegląd.',
+    });
+    expect(odmowa.statusCode, odmowa.body).toBe(200);
+    expect(odmowa.json().status).toBe('rejected');
+
+    // Sprawa rozstrzygnięta znika z każdej kolejki.
+    expect((await queue(app, cookie)).json().items).toEqual([]);
+  });
+});
+
 describe('izolacja klubów', () => {
   it('ścieżka i skrzynka NIE PRZECIEKAJĄ do drugiego klubu', async () => {
     const { app, db } = await testHarness();

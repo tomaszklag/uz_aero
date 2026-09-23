@@ -69,11 +69,18 @@ export interface ApprovalPlan {
 export interface ApprovalStepView {
   id: string;
   label: string;
-  /** Decyzja pod tym krokiem; `null` = jeszcze nie zapadła. */
+  /**
+   * Decyzja pod tym krokiem; `null` = jeszcze nie zapadła.
+   *
+   * `decidedBy` jest tu, choć telefon go NIE dostaje (`approvalWire` go pomija, §9.4):
+   * panel pyta „do kogo zadzwonić" (issue #165, H5), a widok jest jeden - o tym, które
+   * pola jadą na drut, rozstrzyga trasa, nie warstwa aplikacji.
+   */
   decision: {
     decision: ApprovalVerdict;
     via: ApprovalVia;
     reason: string | null;
+    decidedBy: string;
     decidedAt: number;
   } | null;
   /** Czy to jego pytamy TERAZ. */
@@ -84,6 +91,16 @@ export interface ApprovalStepView {
 export interface ApprovalView {
   outcome: ApprovalOutcome;
   steps: ApprovalStepView[];
+}
+
+/**
+ * Pozycja KOLEJKI DECYZJI (issue #165, H3): rezerwacja czekająca na krok, na którego
+ * liście stoi pytający. `members` i `next` niosą materiał na zdanie pod listą („krok ma
+ * dwie osoby i rozstrzyga pierwsza; po zatwierdzeniu idzie do kroku …").
+ */
+export interface ApprovalQueueItem {
+  booking: BookingRecord;
+  step: { id: string; label: string; members: number; next: string | null };
 }
 
 /** Kto próbuje zdecydować. */
@@ -179,6 +196,44 @@ export class ApprovalFlow {
       this.approvals.listFor(this.db, orgId, bookingId),
     ]);
     return viewOf(path, decisions);
+  }
+
+  /**
+   * CO CZEKA NA TĘ OSOBĘ (kolejka decyzji w panelu, issue #165) - rezerwacje klubu
+   * w stanie `pending`, których krok BIEŻĄCY ma ją na liście.
+   *
+   * Zawężenie do „mojego kroku" jest treścią ekranu, nie oszczędnością: kolejka cudzego
+   * kroku nie jest sprawą pytającego i nie ma jak jej rozstrzygnąć (makieta K5).
+   * Administrator z `reservations.manage` odblokowuje utkniętą sprawę Z JEJ KARTY
+   * (szuflada zajętości), nie z tej listy - tu stoją wyłącznie prośby skierowane do niego.
+   *
+   * Osoba spoza każdego kroku dostaje pustą listę BEZ pytania o rezerwacje: ścieżka jest
+   * jednym odczytem, a lista czekających - jednym na każdą sprawę.
+   */
+  async queueFor(orgId: string, pilotId: string): Promise<ApprovalQueueItem[]> {
+    const path = await this.steps.path(this.db, orgId);
+    if (!path.some((step) => step.memberIds.includes(pilotId))) return [];
+
+    const ordered = orderedSteps(path);
+    const waiting = await this.bookings.pending(this.db, orgId);
+    const out: ApprovalQueueItem[] = [];
+    for (const booking of waiting) {
+      const decisions = await this.approvals.listFor(this.db, orgId, booking.id);
+      if (approvalOutcome(path, decisions) !== 'pending') continue;
+      const step = currentStep(path, decisions);
+      if (step == null || !step.memberIds.includes(pilotId)) continue;
+      const at = ordered.findIndex((s) => s.id === step.id);
+      out.push({
+        booking,
+        step: {
+          id: step.id,
+          label: step.label,
+          members: step.memberIds.length,
+          next: ordered[at + 1]?.label ?? null,
+        },
+      });
+    }
+    return out;
   }
 
   /**
@@ -297,6 +352,7 @@ function viewOf(
                 decision: decided.decision,
                 via: decided.via,
                 reason: decided.reason,
+                decidedBy: decided.decidedBy,
                 decidedAt: decided.decidedAt,
               },
         current: current?.id === step.id,

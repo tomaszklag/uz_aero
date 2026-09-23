@@ -1463,6 +1463,76 @@ const CASES: Record<string, Probe> = {
     const { rows } = await db.query<{ status: string }>(`SELECT status FROM bug_reports WHERE uuid = 'bug-b'`);
     expect(rows[0]!.status).toBe('new');
   },
+
+  // ── kolejka decyzji i decyzja z panelu (3.1.0, issue #165) ─────────────────
+  // STOJĄ NA KOŃCU celowo: dokładają Alfie krok ścieżki, a sondy jadą w kolejności
+  // wpisów po jednym świecie - wcześniejsze przypadki rezerwacji liczą na klub bez
+  // akceptacji (rezerwacja z panelu ma wchodzić jako `confirmed`).
+  'GET /admin/api/bookings/:id': async ({ app, a }) => {
+    // Cudza zajętość jest dla tego tokenu NIEISTNIEJĄCA - 404, nie 403.
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    // Kontrola pozytywna: własną widać, razem ze stanem ścieżki.
+    const own = await app.inject({ url: '/admin/api/bookings/book-a', headers: bearer(a) });
+    expectClean(own, '/admin/api/bookings/:id');
+    expect(own.json().booking.id).toBe('book-a');
+    expect(own.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
+  },
+
+  'POST /admin/api/bookings/:id/decision': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings/book-b/decision',
+      headers: writer(a),
+      payload: { decision: 'approved' },
+    });
+    expect(res.statusCode, res.body).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM booking_approvals WHERE booking_id = 'book-b'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'GET /admin/api/approvals/queue': async ({ app, db, a }) => {
+    // Krok Bety obsadzony TMK - wprost do bazy, bo panel by tego nie zapisał
+    // (`member_not_in_org`), ale wiersz może tak stać po wyłączeniu członkostwa.
+    // Czekająca rezerwacja Bety na tym kroku NIE MA prawa pokazać się w kolejce Alfy,
+    // choć osoba się zgadza: kolejka jest pytaniem o klub tokenu.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b-queue', $1, 0, 'Krok Bartosza')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-queue', 'TMK')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-b-waiting', $1, 'SP-BBB', 'flight', 'pending', $2, $3, 'BPI', 'skoki', 'BPI')`,
+      [ORG_B, new Date(BOOK_FROM + 3 * 86_400_000), new Date(BOOK_FROM + 3 * 86_400_000 + 7_200_000)],
+    );
+    // Kontrola pozytywna: ten sam krok w Alfie i czekająca rezerwacja Alfy - widać.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-a-queue', $1, 0, 'Mechanik')`,
+      [ORG_A],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-a-queue', 'TMK')`,
+      [ORG_A],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-a-waiting', $1, 'SP-AXA', 'flight', 'pending', $2, $3, 'PWI', 'skoki', 'PWI')`,
+      [ORG_A, new Date(BOOK_FROM + 3 * 86_400_000), new Date(BOOK_FROM + 3 * 86_400_000 + 7_200_000)],
+    );
+
+    const res = await app.inject({ url: '/admin/api/approvals/queue', headers: bearer(a) });
+    expectClean(res, '/admin/api/approvals/queue');
+    expect((res.json().items as { booking: { id: string } }[]).map((i) => i.booking.id)).toEqual([
+      'book-a-waiting',
+    ]);
+  },
 };
 
 /**

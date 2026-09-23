@@ -429,12 +429,19 @@ stan niż utrata nowego.
 | Trasa | Zdolność |
 | --- | --- |
 | `GET /admin/api/bookings?from=&to=` | `panel.access` |
+| `GET /admin/api/bookings/:id` *(3.1)* - zajętość ze stanem ścieżki, Z OSOBĄ decydującą | `panel.access` |
 | `POST /admin/api/bookings` (rezerwacja za pilota, wyłączenie z użytku) | `reservations.manage` / `fleet.manage` |
-| `PATCH`/`DELETE /admin/api/bookings/:id` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/cancel` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
+| `GET /admin/api/approvals/queue` *(3.1)* - co czeka na MOJĄ zgodę | `reservations.approve` |
 | `GET`/`PUT /admin/api/approval-steps` *(3.1)* | `accounts.manage` |
 
-Wpisy administratora idą przez `AuditedWrite` - nowe akcje w `domain/adminActions.ts`:
-`booking.create`, `booking.cancel`, `booking.block`, `approval.decide`.
+Wpisy administratora idą przez `AuditedWrite` - akcje w `domain/adminActions.ts`:
+`booking.create`, `booking.cancel`, `booking.block`, `approval.steps`. **Decyzja o rezerwacji
+NIE MA akcji audytu** - ani z telefonu, ani z panelu (decyzja właściciela 2026-09-23,
+epik R-H): jej rejestrem jest append-only `booking_approvals`, a drugi ślad zależny od
+powierzchni mówiłby o jednym fakcie na dwa sposoby. Historia w panelu niesie OSOBĘ
+decydującą (`decidedBy`), telefon - nie (§9.4): administrator pyta „do kogo zadzwonić".
 
 ## 6. Czas: kalendarz mówi czasem klubu, rejestr zostaje w UTC
 
