@@ -19,12 +19,12 @@
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Moduł kalendarza - trzy ekrany</div>
+  <div class="vp-title">Moduł kalendarza - sześć ekranów</div>
   <a class="vp-item active" href="kalendarz-flota.html">
     <span class="vp-badge">K1</span>
     <span class="vp-body">
       <span class="vp-name">Oś maszyn i dni</span>
-      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry.</span>
+      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry. W 3.1.0 dochodzi stan CZEKA NA AKCEPTACJĘ (przerywana ramka) i baner kolejki - widoczny wyłącznie wtedy, gdy coś czeka na zalogowanego.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -185,6 +185,21 @@
         <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
       </div>
 
+      <!-- ══ CZEKA NA AKCEPTACJĘ WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST ══
+           Rezerwacja złożona trzyma termin od razu - nie od zgody. Dlatego wpis
+           z przerywaną ramką ma to samo tło, ten sam napis i to samo miejsce, co
+           każdy inny: maszyna w tych godzinach NIE JEST wolna. Przygaszenie albo
+           węższy pasek obiecywałyby dostępność, której nie ma.
+
+           Kreska mówi „jeszcze nieostateczne", a nie „mniej ważne". Bursztyn odpada,
+           bo niesie wyłączenie z użytku - dwa ostrzeżenia w jednej barwie przestają
+           się odróżniać z kąta oka.
+
+           OŚ POKAZUJE KAŻDY WPIS CZEKAJĄCY W ZAKRESIE, a baner wyżej liczy TYLKO
+           te, które czekają NA ZALOGOWANEGO. Tu liczby się zgadzają, ale nie muszą:
+           rezerwacja stojąca na cudzym kroku jest na osi, a w kolejce administratora
+           jej nie ma. To dwa różne pytania - „czy termin jest pewny" i „co mam
+           rozstrzygnąć". -->
       <div class="card">
         <div class="cal" style="--cal-days:7; --cal-reg-col:88px;">
           <div class="cal-head">
@@ -265,6 +280,7 @@
             <div class="cal-cell off"></div>
             <div class="cal-cell">
               <a class="cal-item" href="kalendarz-wpis.html">A. Kowal</a>
+              <a class="cal-item pending" href="kalendarz-wpis.html">M. Zięba</a>
             </div>
           </div>
         </div>
@@ -349,6 +365,7 @@
 
           <div class="cal-legend">
             <span class="cal-legend-item"><span class="cal-swatch"></span>Rezerwacja</span>
+            <span class="cal-legend-item"><span class="cal-swatch pending"></span>Czeka na akceptację</span>
             <span class="cal-legend-item"><span class="cal-swatch block"></span>Wyłączona z użytku</span>
           </div>
         </div>

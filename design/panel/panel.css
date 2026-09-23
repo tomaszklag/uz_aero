@@ -2723,8 +2723,11 @@ tbody tr.voided td {
   cursor: pointer;
 }
 
+/* Ramka pod kursorem idzie do KOŃCA SKALI, nie o stopień w górę: `--text-muted`
+   należy odtąd do stanu „czeka na akceptację", a wpis wskazany kursorem nie ma
+   prawa wyglądać jak wpis o innym stanie. */
 .cal-item:hover {
-  border-color: var(--text-muted);
+  border-color: var(--text-primary);
   color: var(--text-primary);
 }
 
@@ -2740,9 +2743,26 @@ tbody tr.voided td {
   color: var(--amber);
 }
 
-/* Czeka na akceptację (3.1.0) - ramka przerywana, stan przejściowy widać kształtem. */
+/* ── CZEKA NA AKCEPTACJĘ (3.1.0) ──
+   Ramka PRZERYWANA, reszta bez zmian: to samo tło, ten sam napis, to samo miejsce.
+   Tak ma być, bo rezerwacja niezatwierdzona TRZYMA TERMIN dokładnie jak zatwierdzona
+   - wiersz w `bookings` powstaje przy złożeniu i od tej chwili wyklucza nakładanie.
+   Zajętość przygaszona albo węższa kłamałaby o dostępności maszyny.
+
+   Kreska mówi „jeszcze nieostateczne", a nie „mniej ważne". Stan przejściowy widać
+   KSZTAŁTEM, nie kolorem - bursztyn jest zajęty przez wyłączenie z użytku, a dwa
+   ostrzeżenia w jednej barwie przestają się odróżniać z kąta oka.
+
+   KRESKA JEST JAŚNIEJSZA OD ZWYKŁEJ RAMKI (`--text-muted` zamiast `--border-strong`),
+   bo przerywana linia o kontraście zwykłego obrysu po prostu ginie: przerwy zlewają
+   się z wypełnieniem i zostaje wpis wyglądający na odrobinę wytarty. Wzór ma być
+   czytelny z kąta oka, a nie po przyjrzeniu się.
+
+   Osi nie obchodzi, CZYJEJ decyzji brakuje: krok i nazwiska mówi kolejka. Tu pada
+   jedno pytanie - czy termin jest pewny. */
 .cal-item.pending {
   border-style: dashed;
+  border-color: var(--text-muted);
 }
 
 /* Legenda opisuje wzory, które NA TEJ OSI WIDAĆ - przy pustym zakresie jej nie ma. */
@@ -2769,6 +2789,11 @@ tbody tr.voided td {
   border-radius: 3px;
   background: var(--surface-hover);
   border: 1px solid var(--border-strong);
+}
+
+.cal-swatch.pending {
+  border-style: dashed;
+  border-color: var(--text-muted);
 }
 
 .cal-swatch.block {
