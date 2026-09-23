@@ -143,6 +143,10 @@ export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<s
     plannedFuelL: row.plannedFuelL,
     sessionUuid: row.sessionUuid,
     note: row.note,
+    // Od kiedy sprawa czeka (3.1.0): ekran decyzji pisze „czeka od …", a karta własnej
+    // rezerwacji - od kiedy stoi na kroku. W kształcie pełnym, bo pyta o to wyłącznie
+    // ten, kto widzi komplet; na osi floty wiek wiersza nie znaczy nic.
+    createdAt: new Date(row.createdAt).toISOString(),
   };
 }
 

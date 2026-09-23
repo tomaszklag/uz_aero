@@ -288,6 +288,11 @@ CREATE TABLE booking_approvals (
   decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (booking_id, step_id)
 );
+-- MIGRACJA 14 (3.1.0, epik R-I): POPRAWKA TERMINU CZYŚCI ZGODY (§11.4). Wiersz dostaje
+-- własny `id` (klucz główny w miejsce pary), `superseded_at` znaczy „ta zgoda dotyczyła
+-- innego terminu", a unikat (booking_id, step_id) obowiązuje WYŁĄCZNIE wśród żywych:
+-- indeks częściowy `idx_booking_approvals_live … WHERE superseded_at IS NULL`.
+-- Append-only zostaje: unieważniona zgoda nie znika, tylko przestaje się liczyć.
 
 -- Skrzynka: źródło prawdy powiadomień. Push jest tylko budzikiem (§12).
 CREATE TABLE notifications (
@@ -400,10 +405,17 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 | `PATCH /bookings/:id` | przesunięcie i zmiana zadania - WŁASNEJ rezerwacji |
 | `DELETE /bookings/:id` | odwołanie własnej (zapis zostaje, `status = 'cancelled'`) |
 | `GET /bookings/suggestions?aircraftId=&day=&minutes=` | sugestie slotów (§7) |
-| `GET /me/notifications` *(3.1)* | skrzynka, kursor jak `/me/events` |
-| `POST /me/notifications/:id/read` *(3.1)* | odczytanie |
+| `GET /me/notifications` *(3.1)* | skrzynka, kursor parą `(created_at, id)`; odpowiedź niesie `timezone` klubu i przy każdej wiadomości DOBĘ terminu (`day`), bo „sob 26 WRZ 09:00-12:00" liczy się odejmowaniem od granic doby (§6.1) |
+| `POST /me/notifications/:id/read` *(3.1)* | odczytanie - gasi „nowe", nie „do decyzji" (§9.4) |
+| `GET /me/approvals/queue` *(3.1)* | sprawy czekające na MOJĄ decyzję: rezerwacja (pełne pola) + krok; skrzynka liczy z niej plakietkę „Do decyzji" |
 | `POST /me/push-token` *(3.1)* | rejestracja tokenu push dla BIEŻĄCEJ sesji |
 | `POST /bookings/:id/decision` *(3.1)* | zgoda albo odmowa z powodem |
+
+**Własna rezerwacja niesie `createdAt`** (R-I) - karta pisze „czeka od 16 h", a ekran
+decyzji „czeka od wczoraj"; cudza zajętość na siatce tej chwili nie dostaje (§17).
+**Payload powiadomienia niesie `pilotId` rezerwującego** - skrzynka pisze „Jakub Wrona
+prosi o zgodę na lot", a nazwisko rozwiązuje z cache członków po identyfikatorze, jak
+wszędzie; nazwisk na drucie nie ma.
 
 Odmowy: `409 slot_taken` (nakładka - z danymi kolidującej zajętości, żeby ekran mógł
 powiedzieć CO stoi w tym czasie), `409 aircraft_disabled`, `403 not_your_booking`,
@@ -1075,6 +1087,16 @@ w `rejected` i zwalnia slot.
 to człowiek, czy krok przeszedł sam (`via`). Zmiana zdania znaczy nową rezerwację, nie
 nadpisanie decyzji.
 
+**POPRAWKA TERMINU CZYŚCI ZGODY** (decyzja właściciela 2026-09-23, epik R-I, migracja 14):
+zgoda dotyczyła KONKRETNEGO terminu - inaczej ktoś zatwierdziłby dwie godziny, a poleciałoby
+się przez pół dnia. `PATCH /bookings/:id` ze zmienionym `startsAt`/`endsAt` na rezerwacji
+z żywą ścieżką: dotychczasowe decyzje dostają `superseded_at` (zostają w rejestrze, nie
+liczą się), ścieżka planuje się od nowa (kroki rezerwującego znów przechodzą same), wiersz
+wraca do `pending` i osoby kroku bieżącego dostają ŚWIEŻĄ prośbę. Rezerwacja potwierdzona
+po ścieżce też wraca do `pending` - i ekran mówi to PRZED tapnięciem („Po przesunięciu
+ścieżka rusza od nowa - zgoda dotyczyła tego terminu", makieta 23B). Zmiana samej notatki,
+zadania albo trasy zgód nie rusza; klub bez ścieżki nie zauważa nic.
+
 ### 11.5 Termin nadszedł, a decyzji nie ma
 
 **Nierozstrzygnięta rezerwacja WYGASA z początkiem swojego terminu** (decyzja właściciela
@@ -1326,6 +1348,12 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-H | decyzja z panelu idzie TYM SAMYM rdzeniem i rejestrem, co z telefonu - bez wpisu w dzienniku audytu; historia w panelu niesie OSOBĘ decydującą | §5.2 |
 | R-H | historia decyzji (H5) i odblokowanie utkniętego kroku mieszkają w SZUFLADZIE ZAJĘTOŚCI (K2a), nie w kolejce - kolejka pokazuje wyłącznie moje kroki | §10 |
 | R-H | podgląd pilota i samolotu (K6) wypadł z epiku do osobnego zgłoszenia; wartości w kolejce nie prowadzą w głąb | §10 |
+| R-I | **poprawka terminu czyści zgody** (migracja 14: `superseded_at`, indeks częściowy) - wzięte do epiku decyzją właściciela 2026-09-23, choć plan tego nie miał | §11.4, §3.4 |
+| R-I | skrzynka NIE działa offline i nie ma cache - punkt I2 z issue #166 jest starszy niż decyzja z 2026-09-22; licznik stoi przy DZWONKU na Pulpicie, nie przy zakładce | §12.1, §9.4 |
+| R-I | telefon dostał własną kolejkę spraw (`GET /me/approvals/queue`), a skrzynka dobę terminu i `timezone` - bez nich „Do decyzji" i godziny klubu nie miałyby źródła | §5.1 |
+| R-I | rozstrzygnięcia idą RZECZOWNIKIEM („Odmowa zgody · Anna Kowal", nie „Anna Kowal odmówiła") - czasownika nie da się odmienić bez płci; makieta 25 ma formę czasownikową | `CLAUDE.md`, sekcja epiku R-I |
+| R-I | baner odmowy na karcie (23C) nazywa KROK, nie osobę - stan ścieżki na telefonie nazwisk decydujących nie niesie (§9.4), a makieta rysowała nazwisko | §9.4 |
+| R-I | podgląd pilota i samolotu (26A/26B) czeka na to samo zgłoszenie, co K6 - wiersze karty decyzji nie prowadzą w głąb | §10 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od

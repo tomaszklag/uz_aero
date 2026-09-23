@@ -39,6 +39,12 @@ export interface NoticeBooking {
   aircraftId: string;
   startsAt: number;
   endsAt: number;
+  /**
+   * Rezerwujący (3.1.0, epik R-I) - skrzynka pisze „Jakub Wrona prosi o zgodę na lot",
+   * a nazwisko rozwiązuje z cache floty po identyfikatorze, jak wszędzie. `null` przy
+   * wyłączeniu z użytku, którego ścieżka nie dotyczy.
+   */
+  pilotId: string | null;
 }
 
 /**
@@ -56,6 +62,7 @@ export interface NotificationDraft {
 const about = (booking: NoticeBooking): Record<string, unknown> => ({
   bookingId: booking.id,
   aircraftId: booking.aircraftId,
+  pilotId: booking.pilotId,
   startsAt: new Date(booking.startsAt).toISOString(),
   endsAt: new Date(booking.endsAt).toISOString(),
 });

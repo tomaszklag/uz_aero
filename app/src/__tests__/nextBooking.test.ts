@@ -143,3 +143,11 @@ describe('czym wypełnić przejęcie', () => {
     expect(seed?.operation).toBeNull();
   });
 });
+
+describe('rezerwacja czekająca na zgodę (3.1.0)', () => {
+  it('karta wie, że czeka - i tylko wtedy', () => {
+    // Potwierdzona: zieleń. Czekająca: ton ostrzeżenia, bo zielona obiecywałaby pewny lot.
+    expect(nextBooking(input([booking({ id: 'b1' })]))?.pending).toBe(false);
+    expect(nextBooking(input([booking({ id: 'b2', status: 'pending' })]))?.pending).toBe(true);
+  });
+});

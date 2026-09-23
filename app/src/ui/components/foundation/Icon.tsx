@@ -149,6 +149,8 @@ const REGISTRY = {
   takeoff: f('arrow-up'),
   landing: f('arrow-down'),
   settings: f('settings'),
+  // Skrzynka powiadomień (3.1.0) - dzwonek w nagłówku Pulpitu, obok zębatki (makieta 20E).
+  bell: f('bell'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 

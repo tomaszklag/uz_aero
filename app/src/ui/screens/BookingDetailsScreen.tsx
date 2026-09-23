@@ -23,15 +23,21 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActionButton,
   AppText,
+  Banner,
   Card,
+  GroupLabel,
   Icon,
   KeyValueRow,
+  PathSteps,
   ReasonField,
   Screen,
   ScreenHeader,
   Sheet,
   Skeleton,
+  toneColors,
+  type IconName,
 } from '../components';
+import { goHome } from '../navigation/goHome';
 import { useAircraft } from '../hooks/useAircraft';
 import { useBooking } from '../hooks/useBooking';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
@@ -42,8 +48,17 @@ import { useCurrentPilot } from '../store/currentPilot';
 import { useTheme, type Theme } from '../theme';
 import { airfieldByIcao } from '../../domain';
 
+import { approvalView, type ApprovalState } from './logic/bookingApproval';
 import { bookingDetails, type BookingDetailRow } from './logic/bookingDetails';
 import { setBugBooking } from '../components/bug/bugReporter';
+
+/** Ikona banera stanu (23B–23E): zegar czeka, ogniwo dokłada krok, blokada odmawia, trójkąt wygasa. */
+const BANNER_ICON: Partial<Record<ApprovalState, IconName>> = {
+  waiting: 'clock',
+  stepAdded: 'link',
+  rejected: 'blocker',
+  expired: 'warning',
+};
 
 type Nav = {
   navigate: (screen: string, params?: object) => void;
@@ -84,12 +99,32 @@ export function BookingDetailsScreen({
       day: data.day,
       now,
       pilotId,
+      hasPath: (data.approval?.steps.length ?? 0) > 0,
       aircraft: aircraft == null ? null : { reg: aircraft.reg, type: aircraft.type ?? null },
       dualName: dual?.name ?? null,
       dualCode: dual?.code ?? null,
       airfieldName: (icao) => airfieldByIcao(icao)?.name ?? null,
     });
   }, [data, now, pilotId, aircraft, pilots]);
+
+  /**
+   * Stan rezerwacji wobec ŚCIEŻKI AKCEPTACJI (3.1.0, makiety 23B–23E): baner na górze,
+   * ton karty terminu, kroki ścieżki. Klub bez ścieżki dostaje `state: 'none'` i karta
+   * wygląda dokładnie jak w 3.0.0.
+   */
+  const av = useMemo(
+    () =>
+      data == null
+        ? null
+        : approvalView({
+            approval: data.approval,
+            status: data.booking.status,
+            now,
+            createdAt: data.booking.createdAt ?? null,
+            day: data.day,
+          }),
+    [data, now],
+  );
 
   /**
    * Zgłoszenie błędu z tego ekranu niesie REZERWACJĘ (#162 F10). Zdejmujemy ją przy
@@ -147,17 +182,42 @@ export function BookingDetailsScreen({
           skeleton ? (
             <Skeleton height={190} radius={14} />
           ) : null
-        ) : vm == null ? (
+        ) : vm == null || av == null ? (
           <Missing theme={theme} />
         ) : (
           <>
-            <Card flush>
+            {/* Baner stanu (23B–23E) - przyrząd, nie pouczenie: mówi, co ze sprawą, i co dalej. */}
+            {av.banner != null && (
+              <Banner
+                kind="status"
+                tone={av.banner.tone}
+                icon={BANNER_ICON[av.state]}
+                title={av.banner.title}
+                text={av.banner.text}
+              />
+            )}
+
+            {/* Ton karty terminu idzie za stanem: zieleń obiecuje pewny lot, bursztyn
+                mówi „czeka", karta wygaszona - „to już tylko zapis" (`.hero.wait` / `.hero.off`). */}
+            <Card
+              flush
+              style={
+                av.heroTone === 'amber'
+                  ? { borderColor: toneColors(theme, 'amber').border }
+                  : av.heroTone === 'off'
+                    ? { borderColor: theme.colors.borderStrong }
+                    : undefined
+              }
+            >
               <View style={s.hero}>
                 <View style={s.heroTop}>
                   <AppText variant="body" style={s.heroDate}>
                     {vm.date}
                   </AppText>
-                  <AppText variant="mono" style={s.heroBadge}>
+                  <AppText
+                    variant="mono"
+                    style={[s.heroBadge, { color: toneColors(theme, av.badgeTone === 'dim' ? 'neutral' : av.badgeTone).accent }]}
+                  >
                     {vm.badge}
                   </AppText>
                 </View>
@@ -186,6 +246,16 @@ export function BookingDetailsScreen({
               <Rows rows={vm.what} />
             </Card>
 
+            {/* Ścieżka akceptacji - tylko gdy klub ją prowadzi. Nazwisk nie ma (§9.4). */}
+            {av.steps.length > 0 && (
+              <>
+                <GroupLabel text="Ścieżka akceptacji" />
+                <Card flush>
+                  <PathSteps steps={av.steps} />
+                </Card>
+              </>
+            )}
+
             {/* Sekcji planu nie ma, gdy pilot nie podał niczego - „Plan -" byłoby
                 wierszem o niczym (ta sama reguła, co przy karcie notatek na 10). */}
             {vm.plan.length > 0 && (
@@ -205,6 +275,19 @@ export function BookingDetailsScreen({
               </AppText>
             )}
 
+            {/* Rezerwacja ZAMKNIĘTA ma jedno wyjście (23C/23D): nie ma czego przesuwać ani
+                odwoływać, a wyszarzone przyciski obiecywałyby akcje, których reguły nie
+                dopuszczą. */}
+            {vm.closed && (
+              <ActionButton
+                label="WYBIERZ INNY TERMIN"
+                icon="calendar"
+                variant="secondary"
+                size="md"
+                onPress={() => goHome(navigation, 'Calendar')}
+              />
+            )}
+
             {vm.canEdit && (
               <ActionButton
                 label="PRZESUŃ I POPRAW"
@@ -213,6 +296,12 @@ export function BookingDetailsScreen({
                 size="md"
                 onPress={() => navigation.navigate('NewBooking', { bookingId })}
               />
+            )}
+            {/* Poprawka CZYŚCI zgody (§11.4) i ekran mówi to PRZED tapnięciem, nie po. */}
+            {vm.canEdit && vm.editNote != null && (
+              <AppText variant="body" style={s.editNote}>
+                {vm.editNote}
+              </AppText>
             )}
 
             {vm.canCancel && (
@@ -322,6 +411,8 @@ const styles = (t: Theme) =>
 
     sectionLabel: { marginTop: 4 },
     failed: { fontSize: 12, lineHeight: 17, color: t.colors.amber },
+    // `.foot-note` pod „PRZESUŃ I POPRAW": przypis do akcji, nie baner - bez tła i ikony.
+    editNote: { fontSize: 11, lineHeight: 16, color: t.colors.textSecondary, paddingHorizontal: 4, marginTop: -4 },
 
     warning: { alignItems: 'center', gap: 10, padding: 22 },
     warningTitle: { fontSize: 22, letterSpacing: 2, color: t.colors.amber, textAlign: 'center' },

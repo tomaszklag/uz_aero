@@ -64,6 +64,7 @@ export function nextBooking(input: NextBookingInput): NextBooking | null {
     operation: operationLabelOf(first.operation),
     route: route(first),
     dualCode: first.dualId == null ? null : input.codeOf(first.dualId),
+    pending: first.status === 'pending',
   };
 }
 

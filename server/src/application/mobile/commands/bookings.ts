@@ -84,6 +84,7 @@ export class BookingCommands {
       aircraftId: draft.aircraftId,
       startsAt: draft.startsAt,
       endsAt: draft.endsAt,
+      pilotId,
     });
 
     const row: NewBooking = {
@@ -143,10 +144,46 @@ export class BookingCommands {
       refuseWindowOf(current, patch, now);
     if (refusal != null) return { ok: false, refusal };
 
-    const write = await this.db.transaction((tx) => this.bookings.update(tx, orgId, id, patch));
+    // ══ POPRAWKA TERMINU CZYŚCI ZGODY (3.1.0, §9.4) ══
+    // Zgoda dotyczyła KONKRETNEGO terminu, więc przesunięcie unieważnia ją i ścieżka
+    // rusza od nowa - także dla rezerwacji już POTWIERDZONEJ. Zmiana zadania, trasy
+    // czy notatki zgód nie rusza: to termin był przedmiotem decyzji. Plan liczy się
+    // PRZED transakcją, jak przy złożeniu (§ `create`).
+    const startsAt = patch.startsAt ?? current.startsAt;
+    const endsAt = patch.endsAt ?? current.endsAt;
+    const termChanged = startsAt !== current.startsAt || endsAt !== current.endsAt;
+    const plan = termChanged
+      ? await this.approvals.plan(orgId, pilotId, {
+          id,
+          aircraftId: current.aircraftId,
+          startsAt,
+          endsAt,
+          pilotId,
+        })
+      : null;
+    // Klub BEZ ścieżki: plan mówi `confirmed` bez ani jednego pominięcia - nie ma czego
+    // czyścić ani o co pytać, a rezerwacja zostaje w stanie, w jakim była.
+    const restart = plan != null && (plan.status === 'pending' || plan.selfApproved.length > 0);
+
+    const write = await this.db.transaction(async (tx) => {
+      const result = await this.bookings.update(tx, orgId, id, patch);
+      if (result == null || !result.ok || plan == null || !restart) return result;
+
+      await this.approvals.restart(tx, orgId, id, plan);
+      // Stan wiersza idzie ZA planem: czeka, gdy jest o co pytać; potwierdza się od
+      // razu, gdy rezerwujący stoi na każdym kroku. `null` = ktoś zamknął ją w międzyczasie.
+      const row =
+        plan.status === 'pending'
+          ? await this.bookings.reopen(tx, orgId, id, this.clock.now())
+          : await this.bookings.confirm(tx, orgId, id, this.clock.now());
+      return row == null ? result : { ok: true as const, booking: row, created: false };
+    });
     if (write == null) return null;
-    if (write.ok) return write;
-    return { ok: false, refusal: 'slot_taken', taken: write.taken };
+    if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
+
+    // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
+    if (plan != null && restart) await this.notifier.wake(plan.notices);
+    return write;
   }
 
   /**

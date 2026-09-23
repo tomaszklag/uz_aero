@@ -29,10 +29,14 @@ import {
   StatGrid,
   SyncChip,
   Tag,
+  toneColors,
   type StatCell,
 } from '../components';
 import { useAdminNotices } from '../hooks/useAdminNotices';
+import { useBooking } from '../hooks/useBooking';
+import { useUnreadCount } from '../hooks/useUnreadCount';
 import { adminNoticeText } from './logic/adminNotices';
+import { approvalView } from './logic/bookingApproval';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { useTheme, type Theme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
@@ -158,6 +162,12 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
 
   const hint = startHint(booking);
 
+  /**
+   * Licznik przy dzwonku (3.1.0, makieta 20E) - z serwera przy każdym wejściu na Pulpit,
+   * bez zasięgu `null` i wtedy nie ma go wcale: wejście zostaje, znika liczba.
+   */
+  const unread = useUnreadCount();
+
   return (
     <Screen
       scroll
@@ -167,6 +177,8 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
           title="PULPIT"
           size="md"
           subtitle={`${pilotCode ?? pilotId} · ${dateUtcLong(now)}`}
+          onNotifications={() => navigation.navigate('Notifications')}
+          unread={unread}
           onSettings={() => navigation.navigate('Settings')}
           right={<SyncChip refCheckedAt={refCheckedAt} />}
         />
@@ -331,15 +343,41 @@ function BookingCard({
   const { theme } = useTheme();
   const s = styles(theme);
 
+  /**
+   * „krok 1 z 2" stoi WYŁĄCZNIE przy rezerwacji czekającej (20E) i pochodzi z karty
+   * rezerwacji (`GET /bookings/:id`): okno kalendarza ścieżki nie niesie (§17), a przy
+   * potwierdzonej nie ma o co pytać - `useBooking(null)` serwera nie woła.
+   */
+  const detail = useBooking(booking.pending ? booking.id : null);
+  const stepOfN = useMemo(() => {
+    const d = detail.data;
+    if (d == null) return null;
+    return approvalView({
+      approval: d.approval,
+      status: d.booking.status,
+      now,
+      createdAt: d.booking.createdAt ?? null,
+      day: d.day,
+    }).stepOfN;
+  }, [detail.data, now]);
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Twoja rezerwacja ${booking.clock}, ${booking.aircraft}`}
+      accessibilityLabel={`Twoja rezerwacja ${booking.clock}, ${booking.aircraft}${booking.pending ? ', czeka na zgodę' : ''}`}
       onPress={() => navigation.navigate('BookingDetails', { bookingId: booking.id })}
     >
+      {/* Czekająca traci zieleń (`.next-card` bursztynowa): zielona obiecywałaby, że lot
+          jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od decyzji. */}
       <Card
         title="Twoja rezerwacja"
-        headerRight={<Tag label={bookingLead(booking.startsAt, now)} tone="green" />}
+        style={booking.pending ? { borderColor: toneColors(theme, 'amber').border } : undefined}
+        headerRight={
+          <View style={s.bookingTags}>
+            {booking.pending && <Tag label="Czeka na zgodę" tone="amber" />}
+            <Tag label={bookingLead(booking.startsAt, now)} tone={booking.pending ? 'amber' : 'green'} />
+          </View>
+        }
       >
         <View style={s.bookingClock}>
           <AppText variant="display" style={s.bookingTime}>
@@ -364,6 +402,11 @@ function BookingCard({
           {booking.dualCode != null && (
             <AppText variant="mono" tone="muted">
               Dual: {booking.dualCode}
+            </AppText>
+          )}
+          {stepOfN != null && (
+            <AppText variant="mono" tone="muted">
+              {stepOfN}
             </AppText>
           )}
         </View>
@@ -406,6 +449,7 @@ const styles = (theme: Theme) =>
     },
     todayTitle: { fontSize: 19, lineHeight: 19, letterSpacing: 2 },
 
+    bookingTags: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     bookingClock: { gap: 3 },
     bookingTime: {
       fontSize: 26,

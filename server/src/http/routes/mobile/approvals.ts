@@ -24,6 +24,7 @@ import type { ApprovalRefusal } from '../../../domain/approvals.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 import { approvalWire } from './approvalWire.ts';
+import { bookingWire } from './bookings.ts';
 
 const REASON_MAX = 500;
 
@@ -50,6 +51,28 @@ export function registerApprovalRoutes(
   approvals: ApprovalFlow,
   gate: MemberGate,
 ): void {
+  /**
+   * CO CZEKA NA MOJĄ DECYZJĘ (3.1.0, epik R-I - issue #166): rezerwacje klubu stojące
+   * na kroku, na którego liście jest pytający. Ta sama odpowiedź, którą dostaje panel
+   * (`GET /admin/api/approvals/queue`), bo to to samo pytanie.
+   *
+   * Skrzynka mówi o WIADOMOŚCIACH i gaśnie z przeczytaniem; plakietka „Do decyzji"
+   * mówi o SPRAWIE i stoi, dopóki decyzja nie zapadnie (§9.4) - i tę drugą liczy się
+   * WYŁĄCZNIE stąd. Zdolności tu nie sprawdzamy: osoba bez `reservations.approve`
+   * dostaje prośby jak każdy z listy kroku, a odmowę usłyszy dopiero przy decyzji -
+   * pusta kolejka ukryłaby przed nią sprawę, o którą ktoś ją prosi.
+   */
+  app.get('/me/approvals/queue', async (req, reply) => {
+    const who = await memberFromRequest(gate, req);
+    if (who == null) return reply.code(401).send({ error: 'unauthorized' });
+
+    const items = await approvals.queueFor(who.orgId, who.pilotId);
+    const viewer = { pilotId: who.pilotId, approves: can(who.capabilities, 'reservations.approve') };
+    return reply.send({
+      items: items.map((item) => ({ booking: bookingWire(item.booking, viewer), step: item.step })),
+    });
+  });
+
   app.post<{ Params: { id: string } }>('/bookings/:id/decision', async (req, reply) => {
     const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });

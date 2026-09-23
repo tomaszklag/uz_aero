@@ -698,6 +698,107 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
   });
 });
 
+/**
+ * POPRAWKA TERMINU CZYŚCI ZGODY (3.1.0, epik R-I; §9.4, migracja 14). Zgoda dotyczyła
+ * KONKRETNEGO terminu: po przesunięciu ścieżka rusza od nowa, także dla rezerwacji już
+ * potwierdzonej, a stare decyzje zostają w rejestrze jako zastąpione. Zmiana notatki
+ * zgód nie rusza.
+ */
+describe('poprawka terminu czyści zgody', () => {
+  const move = (app: App, token: string, id: string, body: Record<string, unknown>) =>
+    app.inject({ method: 'PATCH', url: `/bookings/${id}`, headers: bearer(token), payload: body });
+
+  it('przesunięcie POTWIERDZONEJ rezerwacji cofa ją do `pending` i pyta krok pierwszy od nowa', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    const krz = await login(app, 'KRZ');
+    expect((await decide(app, krz, id, { decision: 'approved' })).json().status).toBe('confirmed');
+    expect((await inbox(app, krz)).json().items).toHaveLength(1);
+
+    const moved = await move(app, pwi, id, { startsAt: iso(JUTRO + 12 * H), endsAt: iso(JUTRO + 14 * H) });
+    expect(moved.statusCode, moved.body).toBe(200);
+    expect(moved.json().status).toBe('pending');
+
+    // Stara zgoda NIE liczy się do rozstrzygnięcia, ale zostaje w rejestrze.
+    const view = await card(app, pwi, id);
+    expect(view.json().approval.outcome).toBe('pending');
+    expect(view.json().approval.steps[0].decision).toBeNull();
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM booking_approvals WHERE booking_id = $1 AND superseded_at IS NOT NULL`,
+      [id],
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
+
+    // Mechanik dostał DRUGĄ prośbę - o nowy termin - i może zdecydować pod tym samym krokiem.
+    expect((await inbox(app, krz)).json().items).toHaveLength(2);
+    const znowu = await decide(app, krz, id, { decision: 'approved' });
+    expect(znowu.statusCode, znowu.body).toBe(200);
+    expect(znowu.json().status).toBe('confirmed');
+  });
+
+  it('zmiana notatki zgód nie rusza; klub bez ścieżki poprawia termin jak w 3.0.0', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    const krz = await login(app, 'KRZ');
+    await decide(app, krz, id, { decision: 'approved' });
+
+    const notatka = await move(app, pwi, id, { note: 'jednak trzech tandemów' });
+    expect(notatka.statusCode, notatka.body).toBe(200);
+    expect(notatka.json().status).toBe('confirmed');
+    expect((await card(app, pwi, id)).json().approval.steps[0].decision).not.toBeNull();
+
+    // Klub bez ścieżki: przesunięcie zostawia `confirmed` i nikogo nie budzi.
+    await setPath(app, cookie, []);
+    const bezSciezki = await move(app, pwi, id, { startsAt: iso(JUTRO + 15 * H), endsAt: iso(JUTRO + 16 * H) });
+    expect(bezSciezki.statusCode, bezSciezki.body).toBe(200);
+    expect(bezSciezki.json().status).toBe('confirmed');
+  });
+});
+
+/** TELEFON: kolejka moich spraw i doba klubu przy wiadomości (3.1.0, epik R-I). */
+describe('telefon: kolejka spraw i skrzynka z dobą klubu', () => {
+  it('`GET /me/approvals/queue` oddaje sprawy na MOIM kroku, a wiadomość niesie dobę terminu', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    const krz = await login(app, 'KRZ');
+    const queue = await app.inject({ url: '/me/approvals/queue', headers: bearer(krz) });
+    expect(queue.statusCode, queue.body).toBe(200);
+    const items = queue.json().items as { booking: { id: string; note?: string; createdAt?: string }; step: { label: string } }[];
+    expect(items.map((i) => i.booking.id)).toEqual([id]);
+    expect(items[0]!.step.label).toBe('Mechanik');
+    // Akceptujący widzi komplet, razem z chwilą złożenia („czeka od").
+    expect(items[0]!.booking.note).toBe('zabieram dwóch tandemów');
+    expect(items[0]!.booking.createdAt).toEqual(expect.any(String));
+
+    // Rezerwujący nie stoi na żadnym kroku - jego kolejka jest pusta.
+    expect((await app.inject({ url: '/me/approvals/queue', headers: bearer(pwi) })).json().items).toEqual([]);
+
+    const skrzynka = await inbox(app, krz);
+    const [note] = skrzynka.json().items as { kind: string; day: { date: string; startsAt: string; endsAt: string } | null }[];
+    expect(skrzynka.json().timezone).toEqual(expect.any(String));
+    expect(note!.kind).toBe('approval_requested');
+    expect(note!.day).toEqual({ date: expect.any(String), startsAt: expect.any(String), endsAt: expect.any(String) });
+    expect(Date.parse(note!.day!.startsAt)).toBeLessThanOrEqual(JUTRO + 8 * H);
+    expect(Date.parse(note!.day!.endsAt)).toBeGreaterThan(JUTRO + 8 * H);
+  });
+});
+
 describe('izolacja klubów', () => {
   it('ścieżka i skrzynka NIE PRZECIEKAJĄ do drugiego klubu', async () => {
     const { app, db } = await testHarness();

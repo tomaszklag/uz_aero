@@ -32,6 +32,7 @@ const rezerwacja = (over: Partial<NextBooking> = {}): NextBooking => ({
   clock: '09:00 → 11:00',
   aircraft: 'SP-AXA',
   operation: 'Przelot',
+  pending: false,
   route: 'EPKK → EPRJ',
   dualCode: 'AKO',
   ...over,

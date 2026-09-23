@@ -56,6 +56,11 @@ export interface NextBooking {
   route: string | null;
   /** Kod drugiego pilota; `null` = lot bez Duala. */
   dualCode: string | null;
+  /**
+   * Czeka na zgodę (3.1.0, makieta 20E): karta traci zieleń, bo zielona obiecywałaby,
+   * że lot jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od decyzji.
+   */
+  pending: boolean;
 }
 
 const MIN_MS = 60_000;

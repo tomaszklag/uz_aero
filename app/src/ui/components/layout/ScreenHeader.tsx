@@ -45,6 +45,18 @@ export interface ScreenHeaderProps {
   onBack?: () => void;
   /** Koło zębate na PRAWYM skraju (`.icon-btn`) - wzorzec issue #23 pkt 7. */
   onSettings?: () => void;
+  /**
+   * Dzwonek skrzynki powiadomień (3.1.0, epik R-I) - stoi PRZED zębatką i wyłącznie na
+   * Pulpicie: czwartej zakładki NIE MA (§9.4), a wejście do skrzynki jest ikoną obok
+   * ustawień, bo jak ustawienia nie jest pytaniem o czas.
+   */
+  onNotifications?: () => void;
+  /**
+   * Nieprzeczytane przy dzwonku. Licznik zapala się WYŁĄCZNIE z nieprzeczytanymi (zero
+   * nie dostaje plakietki - reguła SyncChipa), a `null` znaczy „nie wiem" (bez zasięgu)
+   * i też nie rysuje nic: wejście zostaje, znika liczba.
+   */
+  unread?: number | null;
   /** Napis przy strzałce powrotu; domyślnie „Wróć", ale bywa nazwą celu („Kokpit"). */
   backLabel?: string;
   /** Prawa strona przed zębatką - zwykle `SyncChip` i badge kroku. */
@@ -60,11 +72,38 @@ export function ScreenHeader({
   onBack,
   backLabel = 'Wróć',
   onSettings,
+  onNotifications,
+  unread = null,
   right,
   style,
 }: ScreenHeaderProps) {
   const { theme } = useTheme();
   const titleSize = size === 'lg' ? styles.title : styles.titleMd;
+
+  const showCount = unread != null && unread > 0;
+  const bellButton =
+    onNotifications != null ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={showCount ? `Powiadomienia, nieprzeczytane: ${unread}` : 'Powiadomienia'}
+        onPress={onNotifications}
+        style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Icon name="bell" size={19} color={theme.colors.textMuted} />
+        {showCount && (
+          <View
+            style={[
+              styles.bellCount,
+              { backgroundColor: theme.colors.green, borderColor: theme.colors.bg },
+            ]}
+          >
+            <AppText variant="mono" style={[styles.bellCountText, { color: theme.colors.bg }]}>
+              {unread > 99 ? '99+' : String(unread)}
+            </AppText>
+          </View>
+        )}
+      </Pressable>
+    ) : null;
 
   const settingsButton =
     onSettings != null ? (
@@ -127,6 +166,7 @@ export function ScreenHeader({
           <View style={styles.right}>
             {step != null && <Tag label={step} size="md" />}
             {right}
+            {bellButton}
             {settingsButton}
           </View>
           <BugButton />
@@ -167,6 +207,7 @@ export function ScreenHeader({
         <View style={[styles.right, styles.rightRow]}>
           {step != null && <Tag label={step} size="md" />}
           {right}
+          {bellButton}
           {settingsButton}
         </View>
         <BugButton />
@@ -199,4 +240,19 @@ const styles = StyleSheet.create({
   sideSlot: { minWidth: 56 },
   // `.icon-btn`: wysokość 44 px - próg celu dotykowego dla rękawic, nie ozdoba.
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  // `.bell-count` z makiety 20E: pastylka na dzwonku, obwiedziona tłem ekranu, żeby nie
+  // zlewała się z ikoną. Rośnie z liczbą (min-width), a ponad 99 mówi „99+".
+  bellCount: {
+    position: 'absolute',
+    top: 5,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellCountText: { fontSize: 9, lineHeight: 11, fontWeight: '700' },
 });

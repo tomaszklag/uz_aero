@@ -1464,6 +1464,27 @@ const CASES: Record<string, Probe> = {
     expect(rows[0]!.status).toBe('new');
   },
 
+  'GET /me/approvals/queue': async ({ app, db, a }) => {
+    // Kolejka TELEFONU jest pytaniem o klub tokenu - krok Bety obsadzony TMK i czekająca
+    // rezerwacja Bety (wiersze z sondy panelu niżej jeszcze nie istnieją, więc własne).
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b-phone', $1, 0, 'Krok Bartosza')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-phone', 'TMK')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-b-phone', $1, 'SP-BBB', 'flight', 'pending', $2, $3, 'BPI', 'skoki', 'BPI')`,
+      [ORG_B, new Date(BOOK_FROM + 4 * 86_400_000), new Date(BOOK_FROM + 4 * 86_400_000 + 7_200_000)],
+    );
+    const res = await app.inject({ url: '/me/approvals/queue', headers: bearer(a) });
+    expectClean(res, '/me/approvals/queue');
+    expect(res.json().items).toEqual([]);
+  },
+
   // ── kolejka decyzji i decyzja z panelu (3.1.0, issue #165) ─────────────────
   // STOJĄ NA KOŃCU celowo: dokładają Alfie krok ścieżki, a sondy jadą w kolejności
   // wpisów po jednym świecie - wcześniejsze przypadki rezerwacji liczą na klub bez

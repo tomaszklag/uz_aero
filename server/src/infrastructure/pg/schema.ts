@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1600,6 +1600,44 @@ export const MIGRATION_13 = `
   CREATE INDEX IF NOT EXISTS idx_push_tokens_pilot ON push_tokens (pilot_id);
 `;
 
+/**
+ * POPRAWKA CZEKAJĄCEJ REZERWACJI CZYŚCI ZGODY
+ * (milestone 3.1.0, epik R-I - issue #166; `docs/rezerwacje.md` §9.4, §11.4;
+ * decyzja właściciela 2026-09-23: wchodzi do R-I, nie do osobnego zgłoszenia).
+ *
+ * Zgoda dotyczyła KONKRETNEGO terminu, więc po przesunięciu przestaje cokolwiek znaczyć -
+ * inaczej ktoś zatwierdziłby dwie godziny w sobotę rano, a poleciałoby się przez pół
+ * niedzieli. Rejestr decyzji ZOSTAJE append-only: stara zgoda nie znika, tylko dostaje
+ * stempel `superseded_at` (ta sama zasada, co `removed_at` na kroku), a ścieżka rusza
+ * od nowa nowymi wierszami.
+ *
+ * ══ KLUCZ NA PARZE (REZERWACJA, KROK) SCHODZI DO INDEKSU CZĘŚCIOWEGO ══
+ * Do 3.1.0 para była kluczem głównym, bo jedna rezerwacja miała jedną ścieżkę. Odkąd
+ * ścieżka potrafi ruszyć od nowa, pod tym samym krokiem stoją DWIE decyzje - stara
+ * (`superseded_at` ustawione) i nowa. Jedyność obowiązuje więc wyłącznie decyzje ŻYWE,
+ * a to jest dokładnie indeks częściowy: `ON CONFLICT (booking_id, step_id) WHERE
+ * superseded_at IS NULL DO NOTHING` dalej rozstrzyga wyścig dwóch osób z listy kroku.
+ *
+ * Nowy klucz główny `id` losuje BAZA (`DEFAULT gen_random_uuid()`), jak `sheets_key`:
+ * sekret nie powstaje w dwóch miejscach, a dopisanie kolumny NOT NULL z domyślną
+ * wartością LOTNĄ wypełnia istniejące wiersze osobnymi wartościami bez `UPDATE`.
+ */
+export const MIGRATION_14 = `
+  -- ═══ DECYZJE: ŻYWE I ZASTĄPIONE ════════════════════════════════════════════════
+  ALTER TABLE booking_approvals
+    ADD COLUMN IF NOT EXISTS id TEXT NOT NULL DEFAULT gen_random_uuid()::text;
+  ALTER TABLE booking_approvals DROP CONSTRAINT IF EXISTS booking_approvals_pkey;
+  ALTER TABLE booking_approvals ADD PRIMARY KEY (id);
+  -- Stempel ZASTĄPIENIA: poprawka terminu rezerwacji unieważnia zgody, które go
+  -- dotyczyły (§9.4). Wiersz zostaje w rejestrze - z powodem, krokiem i adnotacją -
+  -- ale przestaje liczyć się do rozstrzygnięcia; \`listFor\` czyta wyłącznie żywe.
+  ALTER TABLE booking_approvals ADD COLUMN IF NOT EXISTS superseded_at TIMESTAMPTZ;
+  -- Jedna ŻYWA decyzja na krok - reguła „wystarczy zgoda jednej osoby, rozstrzyga
+  -- pierwsza" (§11.2) zostaje regułą bazy, tylko zawężoną do wierszy bez stempla.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_approvals_live
+    ON booking_approvals (booking_id, step_id) WHERE superseded_at IS NULL;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1614,6 +1652,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_11,
   MIGRATION_12,
   MIGRATION_13,
+  MIGRATION_14,
 ];
 
 /**
@@ -1648,4 +1687,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Rezerwacje i kalendarz floty (3.0.0, issue #145): zajętość maszyny jako rezerwacja pilota albo wyłączenie z użytku, nakładanie wykluczone przez bazę na zakresach czasu, strefa i lotnisko macierzyste klubu dla doby lotnej',
   'Zakresy uprawnień (3.1.0, issue #197): zdolność nadawana CZŁONKOSTWU zamiast wynikania z roli klubu - administrator może dać mechanikowi prawo akceptacji rezerwacji, nie oddając mu floty ani kont; kolumna roli znika razem z backfillem',
   'Akceptacja rezerwacji i powiadomienia (3.1.0, issue #164): ścieżka zgód klubu jako uporządkowane kroki z listą osób, decyzje zapisywane przy rezerwacji z powodem odmowy, skrzynka powiadomień pilota i tokeny push wygasające razem z sesją logowania',
+  'Poprawka terminu czyści zgody (3.1.0, issue #166): decyzje na rezerwacji dostają własny klucz i stempel zastąpienia - przesunięcie terminu unieważnia dotychczasowe zgody i ścieżka rusza od nowa, a rejestr decyzji zostaje append-only',
 ];

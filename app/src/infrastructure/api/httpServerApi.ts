@@ -32,6 +32,12 @@ import type {
   PasswordLoginResult,
   SetPasswordResult,
   BookingWriteResult,
+  DecisionRefusal,
+  DecisionResult,
+  InboxCursor,
+  RemoteApproval,
+  RemoteApprovalQueue,
+  RemoteInbox,
   RemoteBooking,
   RemoteBookingDetail,
   RemoteBookingDraft,
@@ -499,6 +505,61 @@ export class HttpServerApi implements ServerPort {
       { token, body: reason == null ? {} : { reason } },
     );
     return this.write(response);
+  }
+
+  getInbox(token: string, page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox> {
+    const query = new URLSearchParams();
+    if (page?.limit != null) query.set('limit', String(page.limit));
+    if (page?.before != null) {
+      query.set('beforeAt', page.before.beforeAt);
+      query.set('beforeId', page.before.beforeId);
+    }
+    const suffix = query.toString();
+    return this.request('GET', suffix === '' ? '/me/notifications' : `/me/notifications?${suffix}`, {
+      token,
+    });
+  }
+
+  async markNotificationRead(token: string, id: string): Promise<void> {
+    const response = await this.send('POST', `/me/notifications/${encodeURIComponent(id)}/read`, {
+      token,
+    });
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  getApprovalQueue(token: string): Promise<RemoteApprovalQueue> {
+    return this.request('GET', '/me/approvals/queue', { token });
+  }
+
+  /**
+   * Decyzja idzie przez `send`, jak zapis rezerwacji: odmowa NIESIE KOD, który ekran
+   * nazywa przy przycisku („podaj powód", „to nie Twój krok"), a `request` zamieniłby
+   * ją w wyjątek. Awaria sieci zostaje wyjątkiem - „nie wiem, czy zapisano" to inna
+   * wiadomość niż odmowa.
+   */
+  async decideBooking(
+    token: string,
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult> {
+    const response = await this.send('POST', `/bookings/${encodeURIComponent(id)}/decision`, {
+      token,
+      body,
+    });
+    const parsed = (await response.json().catch(() => null)) as
+      | { error?: string; status?: string; approval?: RemoteApproval }
+      | null;
+    if (response.ok) {
+      if (parsed?.status == null || parsed.approval == null) {
+        throw new ServerRejectedError(response.status, `http_${response.status}`);
+      }
+      return { ok: true, status: parsed.status, approval: parsed.approval };
+    }
+    const refusal = parsed?.error;
+    if (refusal == null) throw new ServerRejectedError(response.status, `http_${response.status}`);
+    // 401 zostaje wyjątkiem, żeby `authorizedFetch` odświeżył token i ponowił.
+    if (response.status === 401) throw new ServerRejectedError(response.status, refusal);
+    return { ok: false, refusal: refusal as DecisionRefusal };
   }
 
   /** Odpowiedź zapisu → wynik: sukces z wierszem albo odmowa z tym, co koliduje. */

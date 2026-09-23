@@ -31,6 +31,8 @@ export interface BookingDetailsInput {
   now: number;
   /** Ten pilot - cudza rezerwacja nie ma ani odwołania, ani poprawki. */
   pilotId: string;
+  /** Czy klub prowadzi ścieżkę akceptacji dla tej rezerwacji (są kroki) - dla `editNote`. */
+  hasPath?: boolean;
   /** Znak i typ maszyny z cache floty; `null` = poza cache'em. */
   aircraft: { reg: string; type: string | null } | null;
   /** Imię i nazwisko drugiego pilota; `null` = poza cache'em albo lot bez Duala. */
@@ -63,15 +65,32 @@ export interface BookingDetailsVm {
   plan: BookingDetailRow[];
   canCancel: boolean;
   canEdit: boolean;
+  /**
+   * Rezerwacja ZAMKNIĘTA (odrzucona, wygasła, odwołana, zwolniona) ma jedno wyjście -
+   * „wybierz inny termin" (23C/23D): nie ma czego przesuwać ani odwoływać, a wyszarzone
+   * przyciski obiecywałyby akcje, których reguły nie dopuszczą.
+   */
+  closed: boolean;
+  /**
+   * Zdanie pod „PRZESUŃ I POPRAW" przy rezerwacji CZEKAJĄCEJ (23B): poprawka czyści zgody
+   * i ekran mówi to PRZED tapnięciem. `null` przy potwierdzonej w klubie bez ścieżki -
+   * tam nie ma czego czyścić; przy potwierdzonej PO ścieżce zdanie też pada, bo zgoda
+   * dotyczyła terminu.
+   */
+  editNote: string | null;
 }
 
 const STATUS: Readonly<Record<string, string>> = {
   confirmed: 'Potwierdzona',
   pending: 'Czeka na zgodę',
   rejected: 'Odrzucona',
+  expired: 'Wygasła',
   cancelled: 'Odwołana',
   released: 'Slot zwolniony',
+  fulfilled: 'Zrealizowana',
 };
+
+const EDIT_NOTE = 'Po przesunięciu ścieżka rusza od nowa - zgoda dotyczyła tego terminu.';
 
 export function bookingDetails(input: BookingDetailsInput): BookingDetailsVm {
   const b = input.booking;
@@ -90,6 +109,8 @@ export function bookingDetails(input: BookingDetailsInput): BookingDetailsVm {
     plan: planRows(b),
     canCancel: mine && open && b.endsAt > input.now,
     canEdit: mine && open && b.startsAt > input.now,
+    closed: mine && !open && b.kind === 'flight',
+    editNote: mine && open && b.startsAt > input.now && input.hasPath === true ? EDIT_NOTE : null,
   };
 }
 

@@ -493,7 +493,7 @@ export async function buildServer(
   registerBugReportRoutes(app, deps.bugReports, memberGate);
   registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, memberGate);
   registerApprovalRoutes(app, deps.approvals, memberGate);
-  registerNotificationRoutes(app, deps.notifications, memberGate);
+  registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`

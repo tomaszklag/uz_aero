@@ -73,6 +73,22 @@ class ScriptedServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getInbox(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async markNotificationRead(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getApprovalQueue(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async decideBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async createBooking(): Promise<never> {
     throw new Error('nieużywane');
   }
