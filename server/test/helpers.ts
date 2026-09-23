@@ -69,6 +69,15 @@ import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
 import { PgPasswordCredentialsRepo } from '../src/infrastructure/pg/common/passwordCredentialsRepo.ts';
 import { PgPasswordResetTokensRepo } from '../src/infrastructure/pg/common/passwordResetTokensRepo.ts';
 import { FakeMail } from './fakeMail.ts';
+import { FakePush } from './fakePush.ts';
+import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
+import { ApprovalStepsCommands } from '../src/application/admin/commands/approvalSteps.ts';
+import { Notifier } from '../src/application/common/notify/notifier.ts';
+import { NotificationQueries } from '../src/application/mobile/queries/notifications.ts';
+import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalStepsRepo.ts';
+import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
+import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';
+import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
@@ -354,6 +363,25 @@ const lastSeen = new LastSeenThrottle();
   // egzemplarzem - odczyt wskazuje na TEN SAM katalog co zapis, więc test wysyła nagranie
   // przez `POST /traces` i odbiera je obiema trasami, czyli przechodzi drogę produkcyjną.
   const sessionTrack = new SessionTrackQueries(db, events, new FsTraceSource(tracesDir));
+  const push = new FakePush();
+  // Ścieżka akceptacji na PRAWDZIWYCH adapterach - budzik jest jedynym, co podmieniamy,
+  // bo to cudza usługa HTTP (ta sama granica, co przy poczcie: `test/fakeMail.ts`).
+  // Ścieżka akceptacji rezerwacji (3.1.0, issue #164). Adaptery są WSPÓLNE dla obu
+  // powierzchni: ścieżkę układa panel, a klika po niej telefon - druga kopia zapytania
+  // byłaby pierwszym miejscem, w którym decyzja zobaczyłaby inną listę osób niż panel.
+  const approvalStepsRepo = new PgApprovalStepsRepo();
+  const bookingApprovalsRepo = new PgBookingApprovalsRepo();
+  const notificationsRepo = new PgNotificationsRepo();
+  const pushTokensRepo = new PgPushTokensRepo();
+  const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+  const approvals = new ApprovalFlow(
+    db,
+    approvalStepsRepo,
+    bookingApprovalsRepo,
+    bookingsRepo,
+    notifier,
+    clock,
+  );
 
   const app = await buildServer({
     // Logowanie: PRAWDZIWE tożsamości w bazie (`PgExternalIdentitiesRepo`) i prawdziwa
@@ -418,8 +446,17 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
-    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier),
     calendar,
+    approvals,
+    notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
+    adminApprovalSteps: new ApprovalStepsCommands(
+      auditedWrite,
+      approvalStepsRepo,
+      adminPilotsRepo,
+      randomUUID,
+      clock,
+    ),
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
     // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
@@ -622,6 +659,7 @@ const lastSeen = new LastSeenThrottle();
     sessions,
     identityProvider,
     mail,
+    push,
     passwordHasher,
     passwords,
   };

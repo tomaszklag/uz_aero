@@ -48,6 +48,16 @@ import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { PgAircraftReadingsRepo } from './infrastructure/pg/common/aircraftReadingsRepo.ts';
 import { BookingReleaseJob } from './application/common/commands/bookingRelease.ts';
+import { ApprovalFlow } from './application/common/commands/approvals.ts';
+import { ApprovalStepsCommands } from './application/admin/commands/approvalSteps.ts';
+import { Notifier } from './application/common/notify/notifier.ts';
+import { NotificationQueries } from './application/mobile/queries/notifications.ts';
+import { PgApprovalStepsRepo } from './infrastructure/pg/common/approvalStepsRepo.ts';
+import { PgBookingApprovalsRepo } from './infrastructure/pg/common/bookingApprovalsRepo.ts';
+import { PgNotificationsRepo } from './infrastructure/pg/common/notificationsRepo.ts';
+import { PgPushTokensRepo } from './infrastructure/pg/common/pushTokensRepo.ts';
+import { ExpoPush } from './infrastructure/push/expoPush.ts';
+import { LogPush } from './infrastructure/push/logPush.ts';
 import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from './application/common/queries/bookings.ts';
@@ -200,6 +210,21 @@ const env = z
      */
     MAIL_API_KEY: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1).optional(),
+    /**
+     * BUDZIK POWIADOMIEŃ (3.1.0, `docs/rezerwacje.md` §12.3) - NIEWYMAGANY, domyślnie
+     * `log`. To jest świadoma różnica wobec `MAIL_PROVIDER`: poczta MUSI być, bo „Nie
+     * pamiętam hasła", które po cichu nic nie wysyła, zostawia człowieka bez drogi do
+     * konta. Push jest tylko budzikiem - bez niego prośba o zgodę nadal czeka
+     * w skrzynce, kompletna i z historią, a serwer, który nie wstaje przez brak
+     * budzika, kosztowałby więcej niż budzik, który nie dzwoni.
+     */
+    PUSH_PROVIDER: z.enum(['log', 'expo']).default('log'),
+    /**
+     * Token dostępu z konsoli Expo - OPCJONALNY także przy `PUSH_PROVIDER=expo`:
+     * dostawca przyjmuje wysyłkę bez niego, a z nim odrzuca żądania spoza konta.
+     * Stąd brak warunkowego wymogu, który stoi przy `MAIL_API_KEY`.
+     */
+    PUSH_ACCESS_TOKEN: z.string().min(1).optional(),
   })
   .superRefine((value, ctx) => {
     // Konfiguracja POŁOWICZNA ma zatrzymać START, a nie pierwszy reset hasła o 22:00:
@@ -354,6 +379,28 @@ const bookingsRepo = new PgBookingsRepo();
 const clubSettings = new PgClubSettingsRepo();
 // Okno kalendarza jest wspólne, więc składamy je RAZ i podajemy obu stronom.
 const calendar = new BookingQueries(db, bookingsRepo, clubSettings, clock);
+// BUDZIK: wybór adaptera jest jawny, ale BRAK KONFIGURACJI znaczy `log` - inaczej niż
+// przy poczcie (§12.3). Poczta musi być, bo „Nie pamiętam hasła" bez niej zostawia
+// człowieka bez drogi do konta; push jest budzikiem, a bez niego prośba o zgodę nadal
+// czeka w skrzynce, kompletna i z historią. Serwer, który nie wstaje przez brak
+// budzika, kosztuje więcej niż budzik, który nie dzwoni.
+const push = env.PUSH_PROVIDER === 'expo' ? new ExpoPush(env.PUSH_ACCESS_TOKEN ?? '') : new LogPush();
+// Ścieżka akceptacji rezerwacji (3.1.0, issue #164). Adaptery są WSPÓLNE dla obu
+// powierzchni: ścieżkę układa panel, a klika po niej telefon - druga kopia zapytania
+// byłaby pierwszym miejscem, w którym decyzja zobaczyłaby inną listę osób niż panel.
+const approvalStepsRepo = new PgApprovalStepsRepo();
+const bookingApprovalsRepo = new PgBookingApprovalsRepo();
+const notificationsRepo = new PgNotificationsRepo();
+const pushTokensRepo = new PgPushTokensRepo();
+const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+const approvals = new ApprovalFlow(
+  db,
+  approvalStepsRepo,
+  bookingApprovalsRepo,
+  bookingsRepo,
+  notifier,
+  clock,
+);
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -439,8 +486,17 @@ const app = await buildServer({
   bugReports: new BugReportCommands(db, bugReports),
   // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
   // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
-  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock),
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier),
   calendar,
+  approvals,
+  notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
+  adminApprovalSteps: new ApprovalStepsCommands(
+    auditedWrite,
+    approvalStepsRepo,
+    adminPilotsRepo,
+    randomUUID,
+    clock,
+  ),
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
   // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
@@ -651,7 +707,7 @@ const app = await buildServer({
 // Zwalnianie slotów (§4.1) - PIERWSZY wątek okresowy w tym serwerze. Startuje po
 // `listen`, bo jest porządkowaniem kalendarza, a nie warunkiem przyjmowania żądań.
 if (env.BOOKING_RELEASE !== '0') {
-  new BookingReleaseJob(db, bookingsRepo, sessions, clock).start();
+  new BookingReleaseJob(db, bookingsRepo, sessions, clock, notifier).start();
 }
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

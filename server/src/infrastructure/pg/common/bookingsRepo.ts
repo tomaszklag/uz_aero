@@ -258,6 +258,25 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async confirm(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    // `status = 'pending'` w warunku, a nie sprawdzenie przed zapisem: między odczytem
+    // a zapisem mieści się odwołanie pilota i decyzja panelu, a `null` jest wtedy tą
+    // samą odpowiedzią co „nie ma czego potwierdzać".
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET status = 'confirmed', updated_at = $3
+        WHERE org_id = $1 AND id = $2 AND status = 'pending'
+        RETURNING ${COLUMNS}`,
+      [orgId, id, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
   async fulfil(
     tx: Queryable,
     orgId: string,
@@ -287,10 +306,31 @@ export class PgBookingsRepo implements BookingsPort {
     }>(
       `SELECT id, org_id, aircraft_id, starts_at
          FROM bookings
-        WHERE kind = 'flight' AND status IN (${HOLDING})
+        WHERE kind = 'flight' AND status = 'confirmed'
           AND starts_at < $1 AND ends_at > $2
         ORDER BY starts_at`,
       [window.startedBefore, window.endsAfter],
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      aircraftId: r.aircraft_id,
+      startsAt: ms(r.starts_at),
+    }));
+  }
+
+  async undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]> {
+    const { rows } = await db.query<{
+      id: string;
+      org_id: string;
+      aircraft_id: string;
+      starts_at: string | Date;
+    }>(
+      `SELECT id, org_id, aircraft_id, starts_at
+         FROM bookings
+        WHERE kind = 'flight' AND status = 'pending' AND starts_at <= $1
+        ORDER BY starts_at`,
+      [startedBefore],
     );
     return rows.map((r) => ({
       id: r.id,
