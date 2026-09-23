@@ -179,26 +179,40 @@
              i stoją tam, gdzie pada pytanie „czym" i „komu". Karta niesie PLAN,
              podgląd KONTEKST: plan mówi, co pilot zamierza, podgląd - czy to ma
              ręce i nogi. -->
-        <div class="card-title">SP-AXA · sobota 26 WRZ, 09:00-12:00</div>
-        <!-- ══ DWA PRZYCISKI, NIE PODKREŚLONE WARTOŚCI ══
-             Pierwsza wersja robiła z nazwiska i znaku odnośniki - najpierw niebieskie,
-             potem z doklejoną ikoną. Oba warianty miały tę samą wadę: nie czytały się
-             jak przycisk, tylko jak napis, któremu coś się przykleiło, a ikona wisiała
-             przy KAŻDEJ wartości.
+        <div class="card-title">sobota 26 WRZ, 09:00-12:00</div>
+        <!-- ══ SAMOLOT I PILOT SĄ POZYCJAMI PROWADZĄCYMI W GŁĄB ══
+             Trzy poprzednie wersje próbowały zrobić afordancję Z WARTOŚCI: niebieski
+             odnośnik, potem tekst z doklejoną ikoną, potem para przycisków odsuniętych
+             pod tytuł. Pierwsze dwie nie czytały się jak przycisk, trzecia odrywała
+             kontrolkę od rzeczy, której dotyczy.
 
-             Podgląd jest OSOBNĄ czynnością, więc dostaje osobną kontrolkę - dwa
-             wyciszone przyciski zaraz pod tytułem, w jednym miejscu. Wartości w wierszach
-             zostają wartościami: nic nie podkreślamy, nic nie barwimy, nic nie skacze
-             pod kursorem.
+             Właściwy wzorzec ten projekt MA OD DAWNA i nazywa się `.opt` z szewronem
+             `.opt-go` - „pozycja prowadząca w głąb" (wybór klubu, 00A). Karta-przycisk
+             z nazwą, podpisem i szewronem: czyta się jak przycisk, bo nim jest, i stoi
+             NA BYCIE, a nie obok niego. Zero nowego CSS-u.
 
-             Ikona mówi, CO SIĘ STANIE - prostokąt z wydzielonym prawym pasem to panel
-             boczny, a nie strzałka „dalej". Wysuwa się szuflada, ekran pod spodem
-             zostaje; strzałka obiecywałaby przejście gdzie indziej. -->
-        <div class="pill-row">
-          <a class="btn ghost sm" href="kalendarz-podglad.html"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg> Podgląd pilota</a>
-          <a class="btn ghost sm" href="kalendarz-podglad.html#samolot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg> Podgląd samolotu</a>
+             PODPIS DAJE POWÓD, ŻEBY OTWORZYĆ: typ maszyny i stan służby, u pilota kod
+             i kiedy ostatnio latał. Bez niego pozycja mówiłaby tylko „kliknij", a tak
+             odpowiada na pół pytania już na karcie.
+
+             Znak maszyny znika przy tym z TYTUŁU karty - stałby dwa razy na jednym
+             ekranie, a tytuł ma nieść TERMIN, o którym zapada decyzja. -->
+        <div class="opt-list">
+          <a class="opt" href="kalendarz-podglad.html#samolot">
+            <span class="opt-body">
+              <span class="opt-name">SP-AXA</span>
+              <span class="opt-desc">Cessna 172 · w użytku</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+          <a class="opt" href="kalendarz-podglad.html">
+            <span class="opt-body">
+              <span class="opt-name">Jakub Wrona</span>
+              <span class="opt-desc">JWR · ostatni lot 6 dni temu</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
         </div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Jakub Wrona <span class="cell-sub mono">JWR</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
         <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub mono">AKO</span></span></div>
@@ -212,26 +226,40 @@
       </div>
 
       <div class="card">
-        <div class="card-title">SP-BKL · niedziela 27 WRZ, 07:30-09:00</div>
-        <!-- ══ DWA PRZYCISKI, NIE PODKREŚLONE WARTOŚCI ══
-             Pierwsza wersja robiła z nazwiska i znaku odnośniki - najpierw niebieskie,
-             potem z doklejoną ikoną. Oba warianty miały tę samą wadę: nie czytały się
-             jak przycisk, tylko jak napis, któremu coś się przykleiło, a ikona wisiała
-             przy KAŻDEJ wartości.
+        <div class="card-title">niedziela 27 WRZ, 07:30-09:00</div>
+        <!-- ══ SAMOLOT I PILOT SĄ POZYCJAMI PROWADZĄCYMI W GŁĄB ══
+             Trzy poprzednie wersje próbowały zrobić afordancję Z WARTOŚCI: niebieski
+             odnośnik, potem tekst z doklejoną ikoną, potem para przycisków odsuniętych
+             pod tytuł. Pierwsze dwie nie czytały się jak przycisk, trzecia odrywała
+             kontrolkę od rzeczy, której dotyczy.
 
-             Podgląd jest OSOBNĄ czynnością, więc dostaje osobną kontrolkę - dwa
-             wyciszone przyciski zaraz pod tytułem, w jednym miejscu. Wartości w wierszach
-             zostają wartościami: nic nie podkreślamy, nic nie barwimy, nic nie skacze
-             pod kursorem.
+             Właściwy wzorzec ten projekt MA OD DAWNA i nazywa się `.opt` z szewronem
+             `.opt-go` - „pozycja prowadząca w głąb" (wybór klubu, 00A). Karta-przycisk
+             z nazwą, podpisem i szewronem: czyta się jak przycisk, bo nim jest, i stoi
+             NA BYCIE, a nie obok niego. Zero nowego CSS-u.
 
-             Ikona mówi, CO SIĘ STANIE - prostokąt z wydzielonym prawym pasem to panel
-             boczny, a nie strzałka „dalej". Wysuwa się szuflada, ekran pod spodem
-             zostaje; strzałka obiecywałaby przejście gdzie indziej. -->
-        <div class="pill-row">
-          <a class="btn ghost sm" href="kalendarz-podglad.html"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg> Podgląd pilota</a>
-          <a class="btn ghost sm" href="kalendarz-podglad.html#samolot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg> Podgląd samolotu</a>
+             PODPIS DAJE POWÓD, ŻEBY OTWORZYĆ: typ maszyny i stan służby, u pilota kod
+             i kiedy ostatnio latał. Bez niego pozycja mówiłaby tylko „kliknij", a tak
+             odpowiada na pół pytania już na karcie.
+
+             Znak maszyny znika przy tym z TYTUŁU karty - stałby dwa razy na jednym
+             ekranie, a tytuł ma nieść TERMIN, o którym zapada decyzja. -->
+        <div class="opt-list">
+          <a class="opt" href="kalendarz-podglad.html#samolot">
+            <span class="opt-body">
+              <span class="opt-name">SP-BKL</span>
+              <span class="opt-desc">Piper PA-28 · w użytku</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
+          <a class="opt" href="kalendarz-podglad.html">
+            <span class="opt-body">
+              <span class="opt-name">Marta Zięba</span>
+              <span class="opt-desc">MZI · ostatni lot wczoraj</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
         </div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Marta Zięba <span class="cell-sub mono">MZI</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG</span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 90 L</span></div>
