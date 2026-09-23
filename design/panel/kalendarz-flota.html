@@ -49,6 +49,13 @@
       <span class="vp-when">Kalendarz pokazuje PLAN, dziennik FAKTY. Jedno nie miesza się z drugim: w kalendarzu nie ma czasów blokowych, w dzienniku nie ma rezerwacji.</span>
     </span>
   </a>
+  <a class="vp-item" href="kalendarz-sciezka.html">
+    <span class="vp-badge">K4</span>
+    <span class="vp-body">
+      <span class="vp-name">Ścieżka akceptacji</span>
+      <span class="vp-when">Kroki, przez które przechodzi rezerwacja, zanim się potwierdzi (3.1.0). Klub bez ani jednego kroku nie klika w nic i to jest stan domyślny KAŻDEGO klubu.</span>
+    </span>
+  </a>
 </aside>
 
 <main class="browser" role="region" aria-label="Kalendarz - cała flota">
@@ -125,7 +132,13 @@
         <div>
           <h1 class="page-title">Kalendarz</h1>
         </div>
+        <!-- DWIE AKCJE, RÓŻNEJ WAGI: wyłączenie maszyny z użytku jest czynnością
+             cotygodniową, a ścieżkę akceptacji układa się raz i zagląda do niej
+             rzadko - więc konfiguracja idzie akcją WYCISZONĄ, nie drugim przyciskiem
+             tej samej wagi. Dwie akcje główne obok siebie nie mówią, która jest
+             główna. -->
         <div class="page-actions">
+          <a class="btn ghost" href="kalendarz-sciezka.html">Ścieżka akceptacji</a>
           <a class="btn" href="kalendarz-blokada.html">Wyłącz maszynę z użytku</a>
         </div>
       </div>
@@ -328,6 +341,7 @@
   <a href="kalendarz-flota.html" class="active">Kalendarz · flota</a>
   <a href="kalendarz-wpis.html">Kalendarz · wpis</a>
   <a href="kalendarz-blokada.html">Kalendarz · wyłączenie</a>
+  <a href="kalendarz-sciezka.html">Kalendarz · ścieżka</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>

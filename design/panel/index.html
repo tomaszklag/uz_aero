@@ -60,32 +60,46 @@
      od których prowadzi implementacja (docs/wielofirmowosc.md §8). -->
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Dziennik</div>
+  <div class="canvas-section-title">Kalendarz</div>
   <div class="idx-grid">
     <a class="idx-card" href="kalendarz-flota.html">
-      <span class="idx-badge">L1</span>
+      <span class="idx-badge">K1</span>
       <span class="idx-body">
         <span class="idx-name">kalendarz-flota</span>
-        <span class="idx-route">#/dziennik?od=&amp;do=</span>
-        <span class="idx-when">Ekran startowy panelu. CAŁA flota w zakresie dat - także maszyny, które nie latały. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
+        <span class="idx-route">#/kalendarz?od=&amp;do=</span>
+        <span class="idx-when">Wejście modułu: maszyny w pionie, dni w poziomie. Panel patrzy SZERZEJ NIŻ TELEFON - pilot pyta „czym polecę dzisiaj", administrator układa tydzień.</span>
       </span>
     </a>
     <a class="idx-card" href="kalendarz-wpis.html">
-      <span class="idx-badge">L1</span>
+      <span class="idx-badge">K2</span>
       <span class="idx-body">
         <span class="idx-name">kalendarz-wpis</span>
-        <span class="idx-route">#/dziennik?od=&amp;do=</span>
-        <span class="idx-when">Ekran startowy panelu. CAŁA flota w zakresie dat - także maszyny, które nie latały. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
+        <span class="idx-route">#/kalendarz/:id</span>
+        <span class="idx-when">Szuflada zajętości: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku dzielą jedną szufladę w dwóch stanach.</span>
       </span>
     </a>
     <a class="idx-card" href="kalendarz-blokada.html">
-      <span class="idx-badge">L1</span>
+      <span class="idx-badge">K3</span>
       <span class="idx-body">
         <span class="idx-name">kalendarz-blokada</span>
-        <span class="idx-route">#/dziennik?od=&amp;do=</span>
-        <span class="idx-when">Ekran startowy panelu. CAŁA flota w zakresie dat - także maszyny, które nie latały. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
+        <span class="idx-route">#/kalendarz/blokada</span>
+        <span class="idx-when">Wyłączenie maszyny z użytku: maszyna, zakres i powód serwisowy. Zdolność `fleet.manage`, bo to stan MASZYNY w czasie, a nie władza nad cudzym planem.</span>
       </span>
     </a>
+    <a class="idx-card" href="kalendarz-sciezka.html">
+      <span class="idx-badge">K4</span>
+      <span class="idx-body">
+        <span class="idx-name">kalendarz-sciezka</span>
+        <span class="idx-route">#/kalendarz/sciezka</span>
+        <span class="idx-when">Ścieżka akceptacji klubu (3.1.0): kroki, przez które przechodzi rezerwacja, zanim się potwierdzi. Klub bez kroków nie klika w nic - i to jest stan domyślny.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Dziennik</div>
+  <div class="idx-grid">
     <a class="idx-card" href="dziennik-flota.html">
       <span class="idx-badge">L1</span>
       <span class="idx-body">
