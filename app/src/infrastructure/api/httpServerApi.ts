@@ -37,9 +37,11 @@ import type {
   InboxCursor,
   RemoteApproval,
   RemoteApprovalQueue,
+  RemoteAircraftPreview,
   RemoteInbox,
   RemoteBooking,
   RemoteBookingDetail,
+  RemotePilotPreview,
   RemoteBookingDraft,
   RemoteBookingPatch,
   RemoteCalendar,
@@ -452,6 +454,20 @@ export class HttpServerApi implements ServerPort {
 
   getBooking(token: string, id: string): Promise<RemoteBookingDetail> {
     return this.request('GET', `/bookings/${encodeURIComponent(id)}`, { token });
+  }
+
+  getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview> {
+    return this.request(
+      'GET',
+      `/bookings/${encodeURIComponent(bookingId)}/preview/pilot/${encodeURIComponent(pilotId)}`,
+      { token },
+    );
+  }
+
+  getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview> {
+    return this.request('GET', `/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`, {
+      token,
+    });
   }
 
   getSlotSuggestions(

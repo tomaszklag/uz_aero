@@ -1554,6 +1554,58 @@ const CASES: Record<string, Probe> = {
       'book-a-waiting',
     ]);
   },
+
+  // ── Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) ─────────────────
+  // PWI ma OPERACJĘ w Becie (`sess-pwi-b`): podgląd jego nalotu w Alfie nie ma prawa
+  // jej policzyć ani pokazać - nalot jest pytaniem o klub sprawy, nie o osobę.
+  'GET /bookings/:id/preview/pilot/:pilotId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ url: '/bookings/book-b/preview/pilot/BPI', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('iso-prev-pwi', $1, 'SP-AXA', 'flight', 'pending', $2, $3, 'PWI', 'skoki', 'PWI')`,
+      [ORG_A, new Date(BOOK_FROM + 4 * 86_400_000), new Date(BOOK_FROM + 4 * 86_400_000 + 7_200_000)],
+    );
+    const res = await app.inject({ url: '/bookings/iso-prev-pwi/preview/pilot/PWI', headers: bearer(a) });
+    expectClean(res, '/bookings/:id/preview/pilot/:pilotId');
+    expect(res.json().flying.total.flights).toBe(0);
+    expect(res.json().recent).toEqual([]);
+    // Osoba spoza sprawy - także członek cudzego klubu - nie istnieje dla tej trasy.
+    expect(
+      (await app.inject({ url: '/bookings/iso-prev-pwi/preview/pilot/BPI', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    await db.query(`DELETE FROM bookings WHERE id = 'iso-prev-pwi'`);
+  },
+
+  'GET /bookings/:id/preview/aircraft': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/bookings/book-b/preview/aircraft', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/bookings/book-a/preview/aircraft', headers: bearer(a) });
+    expectClean(res, '/bookings/:id/preview/aircraft');
+    expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))
+        .statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/pilot/TMK', headers: bearer(a) });
+    expectClean(res, '/admin/api/bookings/:id/preview/pilot/:pilotId');
+    expect(res.json().pilot.id).toBe('TMK');
+  },
+
+  'GET /admin/api/bookings/:id/preview/aircraft': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b/preview/aircraft', headers: bearer(a) }))
+        .statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/aircraft', headers: bearer(a) });
+    expectClean(res, '/admin/api/bookings/:id/preview/aircraft');
+    expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
 };
 
 /**

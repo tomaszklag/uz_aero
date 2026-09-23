@@ -1007,9 +1007,40 @@ akt z nazwiskiem w historii, powód wymagany przy odmowie. Klub bez ścieżki ka
 Rozstrzygnięcie idzie RZECZOWNIKIEM („zgoda · Jan Bąk"), bo czasownika nie da się odmienić
 bez znajomości płci.
 
-**Wartości „samolot" i „pilot" w kolejce NIE prowadzą jeszcze w głąb**: podgląd K6 wymaga
-nowych zapytań serwera (nalot, ostatnie loty, najbliższe rezerwacje) wspólnych z telefonem
-26a/26b i jest osobnym epikiem po R-H (decyzja właściciela 2026-09-23).
+**Podgląd pilota i samolotu (K6/K6a) - WYKONANY w #206 (2026-09-24).** Znak maszyny na
+tytule karty kolejki oraz pilot i drugi pilot w wierszach są wartościami PROWADZĄCYMI
+W GŁĄB (`.go`, badge dopiero pod kursorem) i otwierają szufladę NAD kolejką - sprawa
+zostaje widoczna pod spodem, a szuflada nie ma ani jednej akcji na sprawie. Fakty liczy
+serwer JEDNYM zapytaniem dla panelu i telefonu (`domain/decisionPreview.ts`,
+`application/common/queries/decisionPreview.ts`; trasy `GET /admin/api/bookings/:id/
+preview/pilot/:pilotId` i `…/preview/aircraft` oraz ich bliźniaki telefonu pod
+`/bookings/:id/preview/…`), więc szuflada i ekrany 26a/26b dostają bajt w bajt ten sam
+komplet - pilnuje tego test `server/test/decisionPreview.test.ts`. Reguły:
+
+- **osoba NA SPRAWIE, nie dowolna**: podgląd pilota otwiera się wyłącznie dla PIC-a albo
+  Duala rozpatrywanej rezerwacji; inna osoba to 404 - inaczej trasa byłaby wyszukiwarką
+  nalotu każdego członka klubu dla każdego, kto ma jedną zdolność. Wpuszcza
+  `reservations.approve` ALBO `reservations.manage`, dokładnie jak decyzja;
+- **operacje liczą się z OBU foteli** (`listByCrew`: PIC albo Dual) - uczeń lata jako
+  Dual i bez tego fotela nie miałby ani jednego lotu na koncie. Liczy się operacja
+  nieunieważniona z biegiem silnika albo lotem; zapis bez biegu ze zmienionym odczytem
+  jest operacją w sensie issue #75, ale nalotu nie daje;
+- **doświadczenie NA EGZEMPLARZU sprawy stoi przed nalotem ogólnym**; „pierwszy raz na
+  tej maszynie" pisze się wprost zamiast pokazywać zera;
+- **„najbliższe terminy" sięgają po sufit okna kalendarza, ale rozpatrywana sprawa jest
+  na liście ZAWSZE**, także gdy stoi dalej - to ona jest powodem, dla którego ktoś tu
+  patrzy. Termin pilota nachodzący na sprawę dostaje bursztyn: baza pilnuje EGZEMPLARZA,
+  nie człowieka, więc odpowiedź należy do akceptującego;
+- **liczniki niosą ŹRÓDŁO** (zdanie samolotu / operacja w toku / stan początkowy /
+  wpis administratora) i osobę - ta sama `pickHandover`, którą liczy karta samolotu
+  w panelu i przekazanie na 02A;
+- **dwa zegary na jednym ekranie, świadomie**: chwile operacji (ostatnie loty, ostatni
+  lot, odczyt) idą datą rejestru w UTC, jak dziennik; terminy - dobą klubu, jak reszta
+  kalendarza;
+- **stopka szuflady pilota mówi „Pokaż kartę pilota"** (`#/piloci/:id`), nie „Pokaż
+  w dzienniku" jak w makiecie: dziennik nie ma wejścia po osobie, a link do listy floty
+  odpowiadałby na inne pytanie. Szuflada maszyny prowadzi w dziennik tej maszyny;
+- licencji, badań i uprawnień na typ NIE MA - osobny epik (§9.4).
 
 ## 11. Workflow akceptacji (3.1.0)
 
@@ -1381,13 +1412,14 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-G | stan ścieżki jedzie w `GET /bookings/:id`, nie w oknie kalendarza (odczyt per wiersz zamieniłby jedno zapytanie w tyle, ile rezerwacji na ekranie) | §5.1 |
 | R-H | decyzja z panelu idzie TYM SAMYM rdzeniem i rejestrem, co z telefonu - bez wpisu w dzienniku audytu; historia w panelu niesie OSOBĘ decydującą | §5.2 |
 | R-H | historia decyzji (H5) i odblokowanie utkniętego kroku mieszkają w SZUFLADZIE ZAJĘTOŚCI (K2a), nie w kolejce - kolejka pokazuje wyłącznie moje kroki | §10 |
-| R-H | podgląd pilota i samolotu (K6) wypadł z epiku do osobnego zgłoszenia; wartości w kolejce nie prowadzą w głąb | §10 |
+| R-H | podgląd pilota i samolotu (K6) wypadł z epiku do osobnego zgłoszenia (#206, wykonane 2026-09-24) | §10 |
 | R-I | **poprawka terminu czyści zgody** (migracja 14: `superseded_at`, indeks częściowy) - wzięte do epiku decyzją właściciela 2026-09-23, choć plan tego nie miał | §11.4, §3.4 |
 | R-I | skrzynka NIE działa offline i nie ma cache - punkt I2 z issue #166 jest starszy niż decyzja z 2026-09-22; licznik stoi przy DZWONKU na Pulpicie, nie przy zakładce | §12.1, §9.4 |
 | R-I | telefon dostał własną kolejkę spraw (`GET /me/approvals/queue`), a skrzynka dobę terminu i `timezone` - bez nich „Do decyzji" i godziny klubu nie miałyby źródła | §5.1 |
 | R-I | rozstrzygnięcia idą RZECZOWNIKIEM („Odmowa zgody · Anna Kowal", nie „Anna Kowal odmówiła") - czasownika nie da się odmienić bez płci; makieta 25 ma formę czasownikową | `CLAUDE.md`, sekcja epiku R-I |
 | R-I | baner odmowy na karcie (23C) nazywa KROK, nie osobę - stan ścieżki na telefonie nazwisk decydujących nie niesie (§9.4), a makieta rysowała nazwisko | §9.4 |
-| R-I | podgląd pilota i samolotu (26A/26B) czeka na to samo zgłoszenie, co K6 - wiersze karty decyzji nie prowadzą w głąb | §10 |
+| R-I | podgląd pilota i samolotu (26A/26B) wszedł razem z K6 w #206 - wiersze samolotu i obu osób na karcie decyzji prowadzą w głąb | §10 |
+| K6 (#206) | operacje pilota liczą się z OBU foteli (PIC i Dual), a podgląd otwiera się wyłącznie dla osoby NA SPRAWIE; stopka szuflady pilota prowadzi do karty pilota, nie do dziennika; chwile operacji w UTC, terminy dobą klubu | §10 |
 | R-J | prośba o zgodę na powiadomienia pada na Pulpicie dla AKCEPTUJĄCEGO i po rezerwacji, która CZEKA (decyzja właściciela 2026-09-23); skrzynka dostała bit `approver`, bo telefon nie zna zdolności | §12.5 |
 | R-J | plik Firebase idzie zmienną EAS typu „file" albo lokalną kopią poza repozytorium - Z2 z #168 rozstrzygnięte w kodzie | §12.5 |
 | R-J | wersja i `versionCode` NIE podbite w tym epiku - to krok gałęzi wydaniowej (R-K), a `develop` nie buduje APK; J6 i J7 czekają na Firebase (#168) | §12.4 |

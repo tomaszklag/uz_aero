@@ -32,6 +32,7 @@ import {
   stempel,
   type PersonLookup,
 } from './bookingLabels';
+import type { PreviewTarget } from './previewLabels';
 
 export interface QueueRow {
   label: string;
@@ -42,12 +43,22 @@ export interface QueueRow {
   sub?: string;
   subMono?: boolean;
   tone?: 'amber';
+  /**
+   * Wartość PROWADZĄCA W GŁĄB (issue #206): pilot i drugi pilot otwierają szufladę
+   * podglądu. W spoczynku wygląda jak wartość, badge świeci dopiero pod kursorem -
+   * takie wartości są dwie na sprawę, a stale widoczne zrobiłyby z listy farmę guzików.
+   */
+  go?: PreviewTarget;
 }
 
 export interface QueueCard {
   id: string;
-  /** „SP-AXA · sobota 26 wrz, 09:00-12:00" */
+  /** „SP-AXA · sobota 26 wrz, 09:00-12:00" - w całości do banerów po decyzji. */
   title: string;
+  /** Znak maszyny - na karcie jest wartością prowadzącą w podgląd samolotu. */
+  aircraft: { id: string; reg: string };
+  /** Reszta tytułu za znakiem: doba i godziny w strefie klubu. */
+  when: string;
   rows: QueueRow[];
   step: ApprovalQueueItemDto['step'];
 }
@@ -89,7 +100,8 @@ export const waitingTone = (createdAt: number, now: number): 'amber' | undefined
   now - createdAt >= WAITING_LONG_MS ? 'amber' : undefined;
 
 /** Tytuł karty: znak i termin w strefie klubu - „SP-AXA · sobota 26 wrz, 09:00-12:00". */
-export function cardTitle(booking: BookingDto, reg: string, tz: string): string {
+/** Doba i godziny sprawy w strefie klubu - tytuł karty bez znaku maszyny. */
+export function whenTitle(booking: BookingDto, tz: string): string {
   const od = new Date(booking.startsAt);
   const doo = new Date(booking.endsAt);
   const dzien = new Intl.DateTimeFormat('pl-PL', {
@@ -98,7 +110,11 @@ export function cardTitle(booking: BookingDto, reg: string, tz: string): string 
     month: 'short',
     timeZone: tz || undefined,
   }).format(od);
-  return `${reg} · ${dzien}, ${godzina(od, tz)}-${godzina(doo, tz)}`;
+  return `${dzien}, ${godzina(od, tz)}-${godzina(doo, tz)}`;
+}
+
+export function cardTitle(booking: BookingDto, reg: string, tz: string): string {
+  return `${reg} · ${whenTitle(booking, tz)}`;
 }
 
 /** Czy kolejka MIESZA kroki - wtedy i tylko wtedy wiersz „Krok" ma co odróżniać. */
@@ -120,7 +136,13 @@ export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOp
     .map(({ booking, step }) => {
       const rows: QueueRow[] = [];
       const pilot = who(booking.pilotId, opts.person);
-      rows.push({ label: 'Pilot', value: pilot.value, sub: pilot.sub, subMono: true });
+      rows.push({
+        label: 'Pilot',
+        value: pilot.value,
+        sub: pilot.sub,
+        subMono: true,
+        go: previewOf(booking, booking.pilotId, pilot.value),
+      });
       rows.push({ label: 'Zadanie', value: operationLabel(booking.operation) });
 
       const trasa = [booking.fromIcao, booking.toIcao].filter((x) => x != null);
@@ -128,7 +150,13 @@ export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOp
 
       if (booking.dualId != null) {
         const dual = who(booking.dualId, opts.person);
-        rows.push({ label: 'Drugi pilot', value: dual.value, sub: dual.sub, subMono: true });
+        rows.push({
+          label: 'Drugi pilot',
+          value: dual.value,
+          sub: dual.sub,
+          subMono: true,
+          go: previewOf(booking, booking.dualId, dual.value),
+        });
       }
 
       const plan = plannedLabel(booking);
@@ -147,13 +175,21 @@ export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOp
         tone: waitingTone(createdAt, opts.now),
       });
 
+      const reg = opts.reg(booking.aircraftId);
       return {
         id: booking.id,
-        title: cardTitle(booking, opts.reg(booking.aircraftId), opts.timezone),
+        title: cardTitle(booking, reg, opts.timezone),
+        aircraft: { id: booking.aircraftId, reg },
+        when: whenTitle(booking, opts.timezone),
         rows,
         step,
       };
     });
+}
+
+/** Cel podglądu pilota ze sprawy; bez osoby (wyłączenie z użytku) nie ma czego otwierać. */
+function previewOf(booking: BookingDto, pilotId: string | null, label: string): PreviewTarget | undefined {
+  return pilotId == null ? undefined : { kind: 'pilot', bookingId: booking.id, pilotId, label };
 }
 
 /** Baner na osi kalendarza (K1) - istnieje WYŁĄCZNIE z pracą. */

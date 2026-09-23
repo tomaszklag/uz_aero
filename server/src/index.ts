@@ -61,6 +61,7 @@ import { LogPush } from './infrastructure/push/logPush.ts';
 import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from './application/common/queries/bookings.ts';
+import { DecisionPreviewQueries } from './application/common/queries/decisionPreview.ts';
 import { BookingCommands } from './application/mobile/commands/bookings.ts';
 import { AdminBookingCommands } from './application/admin/commands/bookings.ts';
 import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
@@ -490,6 +491,19 @@ const app = await buildServer({
   calendar,
   approvals,
   notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
+  // Podgląd pilota i samolotu przy decyzji (issue #206): jeden widok dla telefonu
+  // i panelu, składany z TYCH SAMYCH adapterów, którymi czytają kalendarz, dziennik
+  // i kartę samolotu - nowe pytanie do istniejących wierszy, nie nowe dane.
+  previews: new DecisionPreviewQueries(
+    db,
+    bookingsRepo,
+    sessions,
+    pilots,
+    new PgReferenceRepo(db),
+    aircraftReadings,
+    clubSettings,
+    clock,
+  ),
   adminApprovalSteps: new ApprovalStepsCommands(
     auditedWrite,
     approvalStepsRepo,

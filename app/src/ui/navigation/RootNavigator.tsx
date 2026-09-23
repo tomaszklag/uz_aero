@@ -44,6 +44,8 @@ import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { BookingDetailsScreen } from '../screens/BookingDetailsScreen';
 import { DecisionScreen } from '../screens/DecisionScreen';
+import { AircraftPreviewScreen } from '../screens/AircraftPreviewScreen';
+import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
@@ -96,6 +98,13 @@ export type RootStackParamList = {
   Notifications: undefined;
   /** 26 - decyzja o CUDZEJ rezerwacji: zgoda albo odmowa z powodem. Wejście z wiersza „Do decyzji". */
   Decision: { bookingId: string };
+  /**
+   * 26A/26B - podgląd pilota i samolotu przy decyzji (issue #206): ten sam komplet
+   * faktów, co szuflada w panelu. EKRANY, nie arkusze - cztery karty i tabela to treść
+   * na cały ekran. Wejście z wierszy karty decyzji; jedyne wyjście - wstecz do niej.
+   */
+  PilotPreview: { bookingId: string; pilotId: string };
+  AircraftPreview: { bookingId: string };
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -212,6 +221,8 @@ export function RootNavigator({
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
         <Stack.Screen name="Decision" component={DecisionScreen} />
+        <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
+        <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

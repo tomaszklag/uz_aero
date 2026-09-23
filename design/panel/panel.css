@@ -1032,6 +1032,17 @@ tr.dragging > td {
   color: var(--text-secondary);
 }
 
+/* `.go` bywa PRZYCISKIEM (szuflada podglądu otwiera się bez adresu, issue #206):
+   zdejmujemy oprawę przeglądarki, żeby wartość wyglądała jak wartość, nie jak guzik.
+   Reszta - odstęp, promień, tło pod kursorem - jest ta sama, co dla odnośnika. */
+button.go {
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    06. KARTY, PLAKIETKI, BANERY, STANY PUSTE
    źródło: admin/src/styles/components/surfaces.css

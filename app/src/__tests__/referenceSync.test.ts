@@ -89,6 +89,14 @@ class RefServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getPilotPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
     throw new Error('nieużywane');
   }

@@ -29,8 +29,10 @@ import {
   type DecisionResult,
   type InboxCursor,
   type RemoteApprovalQueue,
+  type RemoteAircraftPreview,
   type RemoteInbox,
   type RemoteBookingDetail,
+  type RemotePilotPreview,
   type RemoteBookingDraft,
   type RemoteBookingPatch,
   type RemoteCalendar,
@@ -180,6 +182,21 @@ export class SyncEngine {
    */
   fetchBooking(id: string): Promise<RemoteBookingDetail | null> {
     return authorizedFetch(this.auth, (token) => this.server.getBooking(token, id));
+  }
+
+  /**
+   * Podgląd pilota i samolotu przy decyzji (issue #206). `null` = nie wiadomo TERAZ:
+   * offline, wygasła sesja, brak zdolności albo osoba spoza sprawy - ekran mówi wtedy,
+   * że podgląd składa serwer, a nie pokazuje pustych zer.
+   */
+  fetchPilotPreview(bookingId: string, pilotId: string): Promise<RemotePilotPreview | null> {
+    return authorizedFetch(this.auth, (token) =>
+      this.server.getPilotPreview(token, bookingId, pilotId),
+    );
+  }
+
+  fetchAircraftPreview(bookingId: string): Promise<RemoteAircraftPreview | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getAircraftPreview(token, bookingId));
   }
 
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */

@@ -174,4 +174,13 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     );
     return rows.map(toSessionRow);
   }
+
+  async listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]> {
+    const { rows } = await db.query<SessionDbRow>(
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND (s.pic_id = $2 OR s.dual_id = $2)`,
+      [orgId, pilotId],
+    );
+    return rows.map(toSessionRow);
+  }
 }

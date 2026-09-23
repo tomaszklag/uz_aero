@@ -59,6 +59,7 @@ import type { BookingCommands } from '../application/mobile/commands/bookings.ts
 import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
 import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
 import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
+import type { DecisionPreviewQueries } from '../application/common/queries/decisionPreview.ts';
 import type { BookingQueries } from '../application/common/queries/bookings.ts';
 import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
 import type { BugReportCommands } from '../application/mobile/commands/bugReports.ts';
@@ -84,6 +85,7 @@ import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminApprovalRoutes } from './routes/admin/approvals.ts';
+import { registerAdminPreviewRoutes } from './routes/admin/previews.ts';
 import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
@@ -115,6 +117,7 @@ import { registerAuthRoutes } from './routes/common/auth.ts';
 import { registerApprovalRoutes } from './routes/mobile/approvals.ts';
 import { registerBookingRoutes } from './routes/mobile/bookings.ts';
 import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
+import { registerPreviewRoutes } from './routes/mobile/previews.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -177,6 +180,8 @@ export interface ServerDeps {
   approvals: ApprovalFlow;
   /** Skrzynka powiadomień i token push (3.1.0, §12). CAŁY moduł wymaga sieci. */
   notifications: NotificationQueries;
+  /** Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) - JEDEN widok dla obu powierzchni. */
+  previews: DecisionPreviewQueries;
   /** Ścieżka akceptacji układana w panelu (`accounts.manage`). */
   adminApprovalSteps: ApprovalStepsCommands;
   /**
@@ -494,6 +499,7 @@ export async function buildServer(
   registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, memberGate);
   registerApprovalRoutes(app, deps.approvals, memberGate);
   registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
+  registerPreviewRoutes(app, deps.previews, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -559,6 +565,8 @@ export async function buildServer(
   // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
   // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.
   registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
+  // Podgląd pilota i samolotu z kolejki (issue #206) - ten sam widok, co w telefonie.
+  registerAdminPreviewRoutes(app, deps.previews, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

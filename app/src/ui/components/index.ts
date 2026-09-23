@@ -141,6 +141,7 @@ export * from './data/IconAction';
 export * from './data/BalanceCard';
 export * from './data/BalanceSummary';
 export * from './data/KeyValueRow';
+export * from './data/PreviewBody';
 // Skrzynka powiadomień i ścieżka akceptacji (3.1.0, epik R-I).
 export * from './data/InboxRow';
 export * from './data/PathSteps';

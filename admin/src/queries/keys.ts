@@ -158,6 +158,12 @@ export const keys = {
     all: ['approvals'] as const,
     steps: ['approvals', 'steps'] as const,
     queue: ['approvals', 'queue'] as const,
+    // Podgląd przy decyzji (issue #206): klucz per sprawa i osoba, bo ten sam pilot
+    // na dwóch sprawach ma dwa różne „nachodzi na rozpatrywany termin".
+    pilotPreview: (bookingId: string, pilotId: string) =>
+      ['approvals', 'preview', 'pilot', bookingId, pilotId] as const,
+    aircraftPreview: (bookingId: string) =>
+      ['approvals', 'preview', 'aircraft', bookingId] as const,
   },
   bugs: {
     all: ['bugs'] as const,

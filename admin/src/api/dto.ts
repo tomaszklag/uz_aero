@@ -1099,3 +1099,105 @@ export interface DecisionResultDto {
   status: BookingStatusDto;
   approval: ApprovalViewDto;
 }
+
+// -- podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) ------------------
+//
+// Ten sam komplet faktów, który dostaje telefon (ekrany 26A/26B) - serwer składa go
+// JEDNYM zapytaniem dla obu powierzchni, więc szuflada K6/K6a nie liczy nic sama.
+// Wiersze niosą identyfikatory; nazwiska i znaki rozwiązuje panel z list klubu.
+
+/** Trójka Loty · Blok · Lot - stała w całym produkcie. */
+export interface PreviewFlyingDto {
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+}
+
+export interface PreviewRecentDto {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie); ISO. */
+  at: string | null;
+  aircraftId: string;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  blockMs: number;
+  flights: number;
+}
+
+export interface PreviewUpcomingDto {
+  id: string;
+  aircraftId: string;
+  kind: BookingKindDto;
+  status: BookingStatusDto;
+  startsAt: string;
+  endsAt: string;
+  pilotId: string | null;
+  blockReason: BlockReasonDto | null;
+  /** Rozpatrywana sprawa - wiersz „· ta sprawa". */
+  thisCase: boolean;
+  /** Nachodzi na rozpatrywany termin - ten sam człowiek nie poleci dwiema maszynami. */
+  overlaps: boolean;
+  day: CalendarDayDto;
+}
+
+export interface PilotPreviewDto {
+  timezone: string;
+  bookingId: string;
+  pilot: {
+    id: string;
+    code: string | null;
+    name: string | null;
+    memberSince: string | null;
+  };
+  lastFlightAt: string | null;
+  /** Doświadczenie NA EGZEMPLARZU sprawy - pierwsza karta, bo to pytanie decyzji. */
+  onAircraft: {
+    aircraftId: string;
+    operations: number;
+    lastAt: string | null;
+    flights: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  flying: {
+    last30: PreviewFlyingDto;
+    last90: PreviewFlyingDto;
+    total: PreviewFlyingDto;
+  };
+  recent: PreviewRecentDto[];
+  upcoming: PreviewUpcomingDto[];
+}
+
+export interface AircraftPreviewDto {
+  timezone: string;
+  bookingId: string;
+  aircraft: {
+    id: string;
+    reg: string;
+    type: string;
+    serviceStatus: ServiceStatus;
+    capacityL: number;
+    mhFormat: MhFormat;
+    oilMinL: number | null;
+  };
+  lastFlightAt: string | null;
+  /** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
+  counters: {
+    mh: number;
+    fuelL: number;
+    oilL: number | null;
+    at: string;
+    source: AircraftReadingDto['source'];
+    byPilotId: string | null;
+    enteredBy: string | null;
+  } | null;
+  last30: {
+    daysWithFlights: number;
+    takeoffs: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  recent: PreviewRecentDto[];
+  upcoming: PreviewUpcomingDto[];
+}

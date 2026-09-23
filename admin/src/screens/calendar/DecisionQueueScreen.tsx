@@ -20,8 +20,9 @@
  * Wejście z kalendarza wtedy NIE ISTNIEJE (baner pojawia się wyłącznie z pracą); ekran
  * zostaje osiągalny adresem i mówi wprost, że nie ma nic do zrobienia (K5b).
  *
- * Wartości „samolot" i „pilot" NIE prowadzą jeszcze w głąb: podgląd pilota i samolotu
- * (K6) jest osobnym epikiem po R-H (decyzja właściciela 2026-09-23).
+ * Znak maszyny na tytule karty oraz pilot i drugi pilot PROWADZĄ W GŁĄB (issue #206):
+ * otwierają szufladę podglądu nad kolejką - sprawa zostaje widoczna pod spodem, a decyzja
+ * zapada na jej karcie. Szuflada nie ma ani jednej akcji na sprawie.
  */
 
 import { useMemo, useState } from 'react';
@@ -30,11 +31,13 @@ import { useApprovalQueue, useDecideBooking } from '../../queries/useApprovals';
 import { useFleet } from '../../queries/useFleet';
 import { usePilots } from '../../queries/usePilots';
 import { Banner, Breadcrumbs, Button, EmptyState, LinkButton, Loadable, PageHead } from '../../ui/components';
-import { ChecklistIcon } from '../../ui/components/icons';
+import { ChecklistIcon, PreviewIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { decisionErrorMessage } from './approvalRefusal';
 import type { Person } from './bookingLabels';
-import { decisionHint, queueCards, type QueueCard } from './queueCards';
+import { PreviewDrawer } from './PreviewDrawer';
+import type { PreviewTarget } from './previewLabels';
+import { decisionHint, queueCards, type QueueCard, type QueueRow } from './queueCards';
 
 export function DecisionQueueScreen() {
   const queue = useApprovalQueue(true);
@@ -47,6 +50,9 @@ export function DecisionQueueScreen() {
   /** Ostatnia decyzja - JEDNO zdanie u góry; karta pod nim właśnie zniknęła z listy. */
   const [done, setDone] = useState<string | null>(null);
   const [failed, setFailed] = useState<{ id: string; error: unknown } | null>(null);
+  // Szuflada podglądu NAD kolejką (issue #206): sprawa zostaje widoczna pod spodem,
+  // a decyzja zapada na jej karcie - szuflada nie ma ani jednej akcji na sprawie.
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
 
   const person = useMemo(() => {
     const byId = new Map<string, Person>(
@@ -117,17 +123,36 @@ export function DecisionQueueScreen() {
           <>
             {cards.map((card) => (
               <div className="card" key={card.id}>
-                <div className="card-title">{card.title}</div>
+                <div className="card-title">
+                  <button
+                    type="button"
+                    className="go"
+                    aria-label={`Podgląd samolotu ${card.aircraft.reg}`}
+                    onClick={() =>
+                      setPreview({ kind: 'aircraft', bookingId: card.id, label: card.aircraft.reg })
+                    }
+                  >
+                    {card.aircraft.reg}
+                    <PreviewIcon />
+                  </button>
+                  {` · ${card.when}`}
+                </div>
                 {card.rows.map((row) => (
                   <div className="kv" key={row.label}>
                     <span className="kv-k">{row.label}</span>
                     <span className={row.tone === 'amber' ? 'kv-v amber' : 'kv-v'}>
-                      {row.mono ? <span className="mono">{row.value}</span> : row.value}
-                      {row.sub == null ? null : (
-                        <>
-                          {' '}
-                          <span className={row.subMono ? 'cell-sub mono' : 'cell-sub'}>{row.sub}</span>
-                        </>
+                      {row.go == null ? (
+                        <RowValue row={row} />
+                      ) : (
+                        <button
+                          type="button"
+                          className="go"
+                          aria-label={`Podgląd pilota ${row.value}`}
+                          onClick={() => setPreview(row.go ?? null)}
+                        >
+                          <RowValue row={row} />
+                          <PreviewIcon />
+                        </button>
                       )}
                     </span>
                   </div>
@@ -205,6 +230,25 @@ export function DecisionQueueScreen() {
           </>
         )}
       </Loadable>
+
+      {preview == null ? null : (
+        <PreviewDrawer target={preview} person={person} reg={reg} onClose={() => setPreview(null)} />
+      )}
+    </>
+  );
+}
+
+/** Wartość wiersza z podpisem - ta sama w wierszu zwykłym i w prowadzącym w głąb. */
+function RowValue({ row }: { row: QueueRow }) {
+  return (
+    <>
+      {row.mono ? <span className="mono">{row.value}</span> : row.value}
+      {row.sub == null ? null : (
+        <>
+          {' '}
+          <span className={row.subMono ? 'cell-sub mono' : 'cell-sub'}>{row.sub}</span>
+        </>
+      )}
     </>
   );
 }
