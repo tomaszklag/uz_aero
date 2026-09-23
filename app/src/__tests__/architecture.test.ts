@@ -237,6 +237,16 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/release/otaUpdate.ts']);
   });
 
+  it('tylko adapter powiadomień dotyka expo-notifications', () => {
+    // Push jest budzikiem (epik R-J): adres urządzenia, kanał Androida i tapnięcie
+    // w powiadomienie mają JEDEN adres w kodzie - podmiana dostawcy albo zdjęcie
+    // modułu natywnego to zmiana w jednym pliku, jak przy `expo-updates`.
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-notifications'))
+      .sort();
+    expect(users).toEqual(['infrastructure/push/expoNotifications.ts']);
+  });
+
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
     const barrel = importsOf('infrastructure/index.ts');
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
@@ -249,6 +259,7 @@ describe('granice warstw', () => {
     expect(barrel).not.toContain('./gps/backgroundLocationTask');
     expect(barrel).not.toContain('./gps/headlessTraceWriter');
     expect(barrel).not.toContain('./permissions/notificationPermission');
+    expect(barrel).not.toContain('./push/expoNotifications');
   });
 
   it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {

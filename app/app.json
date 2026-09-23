@@ -52,7 +52,15 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2ECC71",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "owner": "tomekklag",
     "extra": {

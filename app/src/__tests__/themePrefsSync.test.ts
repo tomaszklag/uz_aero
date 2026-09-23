@@ -95,6 +95,10 @@ class PrefsServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async registerPushToken(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async createBooking(): Promise<never> {
     throw new Error('nieużywane');
   }

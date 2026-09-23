@@ -17,4 +17,5 @@ export * from './sync/traceSync';
 export * from './sync/bugReportSync';
 export * from './sync/sessionTrackFetch';
 export * from './sync/themePrefsSync';
+export * from './sync/pushTokenSync';
 export * from './traceRecorder';

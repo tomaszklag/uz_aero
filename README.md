@@ -198,6 +198,34 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
     ustawieniu hasła wszystkie dotychczasowe sesje tej osoby zostają wylogowane. W drugą
     stronę (zapomniane hasło superadministratora): „Nie pamiętam hasła" w panelu, Google
     z tym samym adresem albo ta sama komenda. Kodów jednorazowych do dyktowania NIE MA.
+12. **Powiadomienia push** (od 3.1.0; Firebase Cloud Messaging przez Expo Push Service -
+    issue #168, epik R-J). Push jest BUDZIKIEM do skrzynki: bez tego kroku serwer wstaje,
+    prośby o zgodę czekają w aplikacji, tylko nikt nie dzwoni.
+    1. console.firebase.google.com → nowy projekt → **Add app → Android**, package
+       `com.ninerdeck.app`; drugi raz dla `com.ninerdeck.app.dev`, jeśli dev build ma
+       dostawać powiadomienia (osobny pakiet = osobna aplikacja w Firebase). Pobierz
+       `google-services.json` - jeden plik obejmuje obie aplikacje projektu.
+    2. Plik NIE trafia do repozytorium. Dla buildów EAS: w `app/`
+       `npx eas-cli env:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment production`
+       (i to samo z `--environment development`); lokalnie połóż go jako
+       `app/google-services.json` (jest w `.gitignore`). `app.config.js` dokłada
+       `android.googleServicesFile` z tej zmiennej albo z lokalnej kopii
+       (`app/scripts/google-services.js`).
+    3. **FCM V1**: Firebase → Project settings → Service accounts → **Generate new private
+       key** (JSON) → `npx eas-cli credentials -p android` → pakiet → Push Notifications
+       (FCM V1) → wgraj klucz. Osobno dla pakietu dev. Stary „server key" jest wycofany
+       przez Google.
+    4. Zmienne usługi: `PUSH_PROVIDER=expo`; opcjonalnie `PUSH_ACCESS_TOKEN`
+       (expo.dev → Account → Access tokens) - z nim Expo odrzuca wysyłki spoza konta.
+       **Brak `PUSH_PROVIDER` nie daje żadnego objawu na serwerze** - jedynym śladem jest
+       cisza w telefonach przy działającej skrzynce.
+    5. **Nowy APK**: `expo-notifications` to moduł natywny, więc OTA go nie dowiezie
+       (3.1.0 idzie nowym plikiem). Próba PRZED wydaniem: dev build (`npm run build:dev`
+       po kroku 2 i 3) z lokalnym serwerem na `PUSH_PROVIDER=expo` → rezerwacja w klubie
+       ze ścieżką → telefon akceptującego dostaje „Prośba o zgodę".
+    6. Polityka prywatności (`https://ninerdeck.pl/prywatnosc.html`): dopisać
+       powiadomienia push - token urządzenia przypięty do sesji logowania, po co
+       (prośby o zgodę i decyzje o rezerwacjach), jak wyłączyć (ustawienia systemu).
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

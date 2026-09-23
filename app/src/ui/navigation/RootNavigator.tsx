@@ -19,13 +19,19 @@
  * a natywny pasek stosu jest wyłączony (patrz `screenOptions` niżej).
  */
 
-import React from 'react';
-import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
+import React, { useState } from 'react';
+import {
+  NavigationContainer,
+  DarkTheme,
+  DefaultTheme,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 
 import { useTheme } from '../theme';
 import { setBugRoute } from '../components/bug/bugReporter';
+import { usePushNavigation } from '../hooks/usePushNavigation';
 import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightTaskScreen } from '../screens/PreflightTaskScreen';
@@ -115,6 +121,13 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
+ * Uchwyt nawigatora dla wejść SPOZA drzewa ekranów - dziś jedynego: tapnięcia
+ * w powiadomienie push (epik R-J, `hooks/usePushNavigation.ts`). Ekrany dalej nawigują
+ * własnym `navigation`; uchwyt istnieje dla zdarzeń, które nie mają ekranu.
+ */
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+/**
  * Nazwa trasy, na której pilot NAPRAWDĘ stoi.
  *
  * Od zakładek (3.0.0) czubek stosu bywa nawigatorem, nie ekranem: `state.routes[i].name`
@@ -142,6 +155,11 @@ export function RootNavigator({
 }) {
   const { theme } = useTheme();
 
+  // Tapnięcie w powiadomienie prowadzi do rezerwacji albo skrzynki - także z zimnego
+  // startu, więc nawigator mówi hookowi, KIEDY jest gotów przyjąć wejście.
+  const [navReady, setNavReady] = useState(false);
+  usePushNavigation(navigationRef, navReady);
+
   // Motyw nawigacji budujemy z naszych tokenów, żeby tła ekranów i przejść nie
   // migały kolorem spoza systemu (zasada: kolory wyłącznie z tokenów).
   const navTheme = {
@@ -158,12 +176,16 @@ export function RootNavigator({
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       theme={navTheme}
       /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87). Tutaj, a nie
          w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter istnieje,
          a nowy ekran dostaje kontekst w chwili dopisania do stosu. */
       onStateChange={(state) => setBugRoute(activeRoute(state))}
-      onReady={() => setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName)}
+      onReady={() => {
+        setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName);
+        setNavReady(true);
+      }}
     >
       <Stack.Navigator
         initialRouteName={initialRouteName}

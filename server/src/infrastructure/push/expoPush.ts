@@ -91,6 +91,11 @@ export class ExpoPush implements PushPort {
             // bo prośba o zgodę na cudzy lot bywa pilna (termin jest jutro).
             sound: 'default',
             priority: 'high',
+            // Kanał Androida zakłada APLIKACJA przy starcie (`infrastructure/push/
+            // expoNotifications.ts`, epik R-J) z wysoką ważnością - bez nazwanego kanału
+            // system wrzuciłby budzik do kanału domyślnego o ważności, której nie
+            // kontrolujemy.
+            channelId: 'default',
           })),
         ),
         signal: AbortSignal.timeout(TIMEOUT_MS),

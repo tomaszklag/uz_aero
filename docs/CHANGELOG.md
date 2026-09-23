@@ -73,6 +73,12 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Przesunięcie terminu zaczyna ścieżkę od nowa.** Zgoda dotyczyła konkretnego terminu,
   więc po poprawce osoby z pierwszego kroku dostają świeżą prośbę, a karta mówi o tym,
   zanim tapniesz „PRZESUŃ I POPRAW".
+- **Powiadomienia na telefon.** Prośba o zgodę, decyzja w Twojej sprawie i wygaśnięcie
+  terminu budzą telefon powiadomieniem, a tapnięcie w nie otwiera od razu właściwy ekran -
+  także wtedy, gdy aplikacja była zamknięta. Powiadomienie jest tylko sygnałem: treść
+  zawsze czeka w skrzynce, więc bez zgody na powiadomienia nic nie ginie. Aplikacja pyta
+  o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje
+  albo gdy Twoja rezerwacja czeka na zgodę.
 
 ### Dla testerów
 
@@ -82,6 +88,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   rezerwacji w kalendarzu - to wyjście awaryjne, gdy krok stracił obsadę.
 - Prawo akceptacji nadaje się osobie w zakresie uprawnień, niezależnie od reszty
   uprawnień panelu.
+- Powiadomienia na telefon wymagają NOWEJ instalacji z pliku (wersja 3.1.0) - dochodzi
+  moduł systemowy, którego aktualizacja w tle nie dowiezie. Do czasu skonfigurowania
+  Firebase po stronie serwera powiadomienia po prostu nie przychodzą; skrzynka działa.
 
 ## 3.0.0 (build 5) · 3 października 2026
 

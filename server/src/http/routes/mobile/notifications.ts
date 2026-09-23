@@ -18,6 +18,7 @@ import { z } from 'zod';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
 import type { NotificationQueries } from '../../../application/mobile/queries/notifications.ts';
 import { clubDays } from '../../../domain/clubTime.ts';
+import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 /**
@@ -97,6 +98,12 @@ export function registerNotificationRoutes(
     return reply.send({
       timezone,
       unread: view.unread,
+      // Czy ta osoba ROZSTRZYGA cudze terminy (3.1.0, epik R-J): telefon pyta o to
+      // przy wejściu na Pulpit, bo akceptującego prosi o zgodę na powiadomienia
+      // od razu, a pozostałych dopiero przy rezerwacji, która czeka (§12.5).
+      // Jedzie tu, a nie osobną trasą - Pulpit i tak czyta skrzynkę przy każdym
+      // wejściu, a druga trasa byłaby drugim żądaniem o jeden bit.
+      approver: can(who.capabilities, 'reservations.approve'),
       items: view.items.map((n) => ({
         id: n.id,
         kind: n.kind,

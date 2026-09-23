@@ -35,8 +35,10 @@ import {
 import { useAdminNotices } from '../hooks/useAdminNotices';
 import { useBooking } from '../hooks/useBooking';
 import { useUnreadCount } from '../hooks/useUnreadCount';
+import { askForPush } from '../hooks/askForPush';
 import { adminNoticeText } from './logic/adminNotices';
 import { approvalView } from './logic/bookingApproval';
+import { optInOnDashboard } from './logic/pushOptIn';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { useTheme, type Theme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
@@ -166,7 +168,16 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
    * Licznik przy dzwonku (3.1.0, makieta 20E) - z serwera przy każdym wejściu na Pulpit,
    * bez zasięgu `null` i wtedy nie ma go wcale: wejście zostaje, znika liczba.
    */
-  const unread = useUnreadCount();
+  const glance = useUnreadCount();
+
+  /**
+   * Prośba o zgodę na powiadomienia (epik R-J, J3) - AKCEPTUJĄCEGO dotyczy każda
+   * prośba o zgodę, więc pytamy go przy wejściu na Pulpit; pozostałych dopiero przy
+   * rezerwacji, która czeka (decyzja właściciela 2026-09-23). Raz na uruchomienie.
+   */
+  useEffect(() => {
+    void askForPush(optInOnDashboard(glance.approver));
+  }, [glance.approver]);
 
   return (
     <Screen
@@ -178,7 +189,7 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
           size="md"
           subtitle={`${pilotCode ?? pilotId} · ${dateUtcLong(now)}`}
           onNotifications={() => navigation.navigate('Notifications')}
-          unread={unread}
+          unread={glance.unread}
           onSettings={() => navigation.navigate('Settings')}
           right={<SyncChip refCheckedAt={refCheckedAt} />}
         />
