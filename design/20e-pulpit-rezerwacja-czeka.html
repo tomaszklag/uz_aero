@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 20E Pulpit - rezerwacja czeka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header - wzorzec z issue #23 pkt 7, bez zmian.
+     Zębatka stoi TYLKO tutaj (issue #82): to jedyny ekran aplikacji z wejściem
+     w ustawienia, a kokpit ma w tym miejscu przełącznik jasności. */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .icon-btn {
+    width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0;
+  }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+
+  /* Licznik nieprzeczytanych. ZAPALA SIĘ WYŁĄCZNIE Z TREŚCIĄ - dzwonek stoi
+     zawsze, bo jest wejściem, ale pusta skrzynka nie dostaje zera (reguła
+     SyncChipa z issue #12). Bez zasięgu licznika też nie ma: liczbę zna serwer,
+     a zapamiętana sprzed godziny mówiłaby o stanie, którego telefon nie zna.
+
+     Obwódka w kolorze tła WYCINA plakietkę z ikony - bez niej cyfra siada na
+     kresce dzwonka i obie przestają być czytelne. */
+  .bell { position:relative; }
+  .bell-count {
+    position:absolute; top:5px; right:4px; min-width:16px; height:16px; padding:0 4px;
+    border-radius:8px; background:var(--green); color:var(--bg); border:2px solid var(--bg);
+    font-family:var(--font-mono); font-size:9px; font-weight:700; line-height:12px; text-align:center;
+  }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+  .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NAJBLIŻSZA REZERWACJA (3.0.0, issue #145)
+
+     Stoi POD „Moim dniem" (decyzja właściciela 2026-09-19): pilot otwiera aplikację
+     w kontekście tego, co dziś lata, a plan jest odpowiedzią na pytanie zadawane raz -
+     rano albo przy układaniu tygodnia.
+
+     KARTA NIE MA WŁASNEGO PRZYCISKU STARTU i to jest decyzja: „ROZPOCZNIJ LOT" ma
+     w tej aplikacji jedno miejsce i jeden wygląd przez cały dzień (issue #42), więc
+     drugi zielony przycisk w karcie uczyłby, że są dwa różne starty. Główny przycisk
+     BIERZE tę rezerwację i wypełnia nią kroki przejęcia - pilot, który chce lecieć
+     inaczej, zmienia wybór w kroku 1.
+
+     Zielona ramka i poświata zostają mimo przesunięcia w dół: karta nie jest pierwsza,
+     ale nadal jest jedyną rzeczą na tym ekranie, która mówi o PRZYSZŁOŚCI - a ekran
+     w całości mieści się bez przewijania, więc „pierwsza" i „druga" są tu o kolejności
+     czytania, nie o widoczności. */
+  /* ══ REZERWACJA CZEKAJĄCA TRACI ZIELEŃ ══
+     Zieleń znaczy w tej aplikacji „w normie" i niesie akcję główną, więc na karcie
+     rezerwacji obiecuje, że lot jest pewny. Dopóki ktoś nie zdecydował, nie jest -
+     karta idzie więc w ton ostrzeżenia, a nie w wygaszenie: rezerwacja ZAJMUJE
+     maszynę i przygaszona wyglądałaby na mniej ważną, niż jest.
+
+     ODLICZANIE ZOSTAJE. Termin zbliża się niezależnie od tego, czy ktoś zdążył
+     zdecydować, a para „za godzinę - i nadal czeka" jest tu całą informacją. */
+  .next-card {
+    background:linear-gradient(180deg, rgba(243,156,18,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--amber-border); border-radius:16px;
+    padding:14px; display:flex; flex-direction:column; gap:11px;
+    text-decoration:none; color:inherit;
+  }
+  .next-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .next-badge {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:5px; padding:3px 7px;
+  }
+  /* Odliczanie jest jedyną liczbą tej karty pisaną krojem display: to ono decyduje,
+     czy pilot ma jeszcze czas na kawę. */
+  .next-countdown { font-family:var(--font-display); font-size:19px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .next-when { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .next-hours { font-family:var(--font-mono); font-size:19px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .next-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .next-ac { font-family:var(--font-mono); font-size:12px; letter-spacing:1.5px; color:var(--text-primary); }
+  .next-task { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); }
+  .next-route { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
+  .next-dot { width:3px; height:3px; border-radius:50%; background:var(--border-strong); flex-shrink:0; }
+
+
+  /* ═══ PODSUMOWANIE DNIA ═══
+     Kafelka operacji na tym ekranie NIE MA (decyzja właściciela 2026-09-19) - zostaje
+     sama suma dnia. Komponent `DayCard` żyje dalej w zakładce Historia, gdzie opisuje
+     pojedynczą operację i prowadzi do jej korekty (issue #42: jeden kształt kafelka).
+
+     Karta jest linkiem, więc `cta-open` zostaje w tym samym kroju i kształcie, co pas
+     akcji kafelka operacji - to ta sama czynność (otwórz i popraw), tylko o jeden
+     poziom wyżej. */
+  .today-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px 13px; display:flex; flex-direction:column; gap:10px;
+    text-decoration:none; color:inherit;
+  }
+  .today-card:hover { border-color:var(--border-strong); }
+  .today-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .today-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); line-height:1; }
+  /* Podpis mówi, ILE i CZYM - bez tego suma „Blok 1:38" nie zdradza, że dzień miał
+     dwie maszyny, a to jest pierwsza rzecz, o którą pilot pyta patrząc na własną sumę. */
+  .today-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .cta-open {
+    display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
+    border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised);
+    color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+  }
+  .today-card:hover .cta-open { border-color:var(--text-muted); color:var(--text-primary); }
+
+  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:11px; overflow:hidden; }
+  .total-cell { background:var(--surface-raised); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
+  .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
+  .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
+
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+  /* Podpis przycisku mówi, CZYM się poleci - to jedyne miejsce, w którym widać, że
+     start bierze rezerwację. Znika bez rezerwacji (wariant 20A), bo wtedy nie ma
+     czego zapowiadać. */
+  .btn-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-align:center; margin-top:-6px; }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:12px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ZAKŁADKI (3.0.0) - Pulpit · Kalendarz · Historia
+
+     Ekran startowy przestał być samym logiem dnia (zgłoszenie #145), więc aplikacja
+     dostaje dolny pasek. Trzy pozycje i ani jednej więcej: każda odpowiada na inne
+     pytanie w czasie - co mam dziś, co jest zaplanowane, co już poleciałem.
+
+     KOKPITU W TYM PASKU NIE MA I BYĆ NIE MOŻE. Kokpit jest stanem modalnym (CLAUDE.md,
+     issue #82): dopóki pilot trzyma samolot, z kokpitu nie prowadzi żadna droga bokiem,
+     a flow lotu (02 → 02E → 02A → kokpit → 09B) żyje NAD zakładkami. Zakładka
+     wyprowadzająca z kokpitu nie byłaby zmianą nawigacji, tylko skasowaniem modalności.
+
+     Podział „Pulpit" / „Historia" idzie po CZASIE, nie po rodzaju zapisu - dlatego żadna
+     lista nie stoi na dwóch zakładkach naraz. Kafelek operacji jest ten sam po obu
+     stronach (issue #42). */
+  .tabbar {
+    display:grid; grid-template-columns:repeat(3, 1fr);
+    border-top:1px solid var(--border); background:var(--surface);
+    padding:6px 8px 22px; flex-shrink:0;
+  }
+  .tab {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 4px; border-radius:10px; text-decoration:none;
+    color:var(--text-muted); min-height:44px;
+  }
+  .tab.active { color:var(--green); }
+  .tab:hover { color:var(--text-secondary); }
+  .tab.active:hover { color:var(--green); }
+  .tab-label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 20E</span>
+  <span class="slug">pulpit · rezerwacja czeka</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran 1</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Pulpit">
+  <div class="status-bar">
+    <span>07:45</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <!-- Nagłówek wg wzorca issue #23 pkt 7: tytuł do lewej, zębatka po prawej.
+         Zębatka jest TYLKO tutaj (issue #82) - zakładki nie zmieniają tej reguły,
+         bo „Kalendarz" i „Historia" to ten sam ekran domowy widziany inaczej. -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">PULPIT</span>
+        <span class="header-subtitle">TMK · 19 WRZ 2026</span>
+      </div>
+      <div class="app-header-right">
+        <!-- DZWONEK JEST JEDYNYM WEJŚCIEM DO SKRZYNKI i stoi tylko tutaj - tak samo
+             jak zębatka (issue #82). Czwartej zakładki nie ma: zakładka to MIEJSCE
+             PRACY (dzień, plan, przeszłość), a skrzynka jest kanałem - zagląda się
+             do niej, kiedy coś przyszło, i wychodzi.
+
+             Licznik zapala się wyłącznie z nieprzeczytanymi; pusta skrzynka nie
+             dostaje zera (reguła SyncChipa z issue #12). -->
+        <a href="25-powiadomienia.html" class="icon-btn bell" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bell-count">2</span>
+        </a>
+        <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ MÓJ DZIEŃ ═══ (decyzja właściciela, 2026-09-19)
+           STOI PIERWSZY, nad rezerwacją: pilot otwiera aplikację w kontekście tego, co
+           dziś lata, a plan jest odpowiedzią na pytanie zadawane raz - rano albo przy
+           układaniu tygodnia. Nazwa jest ta sama, co dotychczasowego ekranu domowego
+           (01), bo to ta sama rzecz: doba pilota z sumami.
+
+           Zamiast listy kafelków - SAME SUMY (ta sama decyzja). Przebieg pojedynczej
+           operacji jest pytaniem trzecim, zadawanym rzadziej, i ma własne miejsce.
+
+           KARTA JEST WEJŚCIEM, i to nie jest ozdoba: kafelek operacji był JEDYNYMI
+           drzwiami do korekty dzisiejszego lotu w oknie 24 h (issue #23, #43). Skoro
+           znika z ekranu startowego, drzwi przejmuje zakładka Historia - dlatego
+           obejmuje ona odtąd także dzisiejsze operacje, a nie wyłącznie poprzednie dni
+           (odejście od issue #35, wymuszone tą zmianą).
+
+           Trójka Loty · Blok · Lot jest ta sama, co na kafelku operacji i w stopce osi
+           (2026-08-16) - jedna wielkość ma w tej aplikacji jedną nazwę i jedno miejsce
+           w rzędzie.
+
+           PRZED PIERWSZYM LOTEM karta kurczy się do JEDNEJ LINIJKI („dziś bez lotów",
+           wariant 20A) zamiast pokazywać trzy zera. Zera znaczyłyby zmierzony wynik,
+           a nie brak pomiaru (reguła z 01A: „- -", nigdy zera) - i przy okazji to one
+           spychałyby wtedy rezerwację poza pierwszy ekran, czyli dokładnie rano, kiedy
+           jest najbardziej potrzebna. -->
+      <a href="24-historia.html" class="today-card">
+        <div class="today-head">
+          <span class="today-title">MÓJ DZIEŃ</span>
+          <span class="today-sub">2 operacje · SP-AXA, SP-BKL</span>
+        </div>
+        <div class="totals">
+          <div class="total-cell">
+            <span class="total-key">Loty</span>
+            <span class="total-val">3</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Blok</span>
+            <span class="total-val">1:38</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Lot</span>
+            <span class="total-val">1:21</span>
+          </div>
+        </div>
+        <div class="cta-open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          OPERACJE DNIA
+        </div>
+      </a>
+
+      <!-- ═══ NAJBLIŻSZA REZERWACJA ═══
+           POD „Moim dniem" (decyzja właściciela 2026-09-19). Bez rezerwacji karty nie ma
+           WCALE (wariant 20A) - pusta karta „brak rezerwacji" byłaby zdaniem o niczym,
+           a o tym, że nic nie stoi w planie, mówi już jej brak.
+
+           Karta prowadzi w SZCZEGÓŁY rezerwacji (23), gdzie się ją przesuwa i odwołuje.
+           Własnego przycisku startu NIE MA: „ROZPOCZNIJ LOT" ma w tej aplikacji jedno
+           miejsce i jeden wygląd przez cały dzień (issue #42), a rezerwacja zmienia
+           wyłącznie to, czym wypełni się krok 1.
+
+           CZASY SĄ W STREFIE KLUBU (P1, §6), więc nie ma przy nich „UTC" - rejestr
+           na karcie wyżej mówi UTC i dlatego obie osie są oznaczone. -->
+      <a href="23b-rezerwacja-czeka.html" class="next-card">
+        <div class="next-top">
+          <span class="next-badge">Czeka na zgodę</span>
+          <span class="next-countdown">ZA 1 H 15 MIN</span>
+        </div>
+        <div class="next-when">
+          <span class="next-hours">09:00 → 11:00</span>
+          <span class="next-zone">czas klubu</span>
+        </div>
+        <div class="next-ac">SP-AXA</div>
+        <div class="next-task">
+          <span>Przelot</span>
+          <span class="next-dot"></span>
+          <span class="next-route">EPKK → EPRJ</span>
+          <span class="next-dot"></span>
+          <span>Dual: AKO</span>
+          <span class="next-dot"></span>
+          <span>krok 1 z 2</span>
+        </div>
+      </a>
+
+      <!-- ═══ PAS AKCJI ═══
+           „ROZPOCZNIJ LOT" stoi tam, gdzie stał i wygląda tak, jak wyglądał przez cały
+           dzień (issue #42, uwaga z urządzenia 2026-08-16) - rezerwacja nie zmienia
+           przycisku, tylko to, czym się wypełni krok 1. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
+      <div class="btn-hint">Wypełni się rezerwacją 09:00 · SP-AXA</div>
+
+      <a href="15-reczny-lot.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+        DODAJ LOT RĘCZNIE
+      </a>
+
+      <!-- Przycisku „POPRZEDNIE DNI" NIE MA - historia jest zakładką, a nie miejscem,
+           do którego prowadzi przycisk z dna ekranu (byłby drugą drogą do tej samej
+           listy, a pasek zakładek stoi widoczny przez cały czas). -->
+
+
+    </div>
+
+    <!-- ═══ ZAKŁADKI ═══ -->
+    <nav class="tabbar">
+      <a href="20-pulpit.html" class="tab active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tab-label">Pulpit</span>
+      </a>
+      <a href="21-kalendarz.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="tab-label">Kalendarz</span>
+      </a>
+      <a href="24-historia.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="tab-label">Historia</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item active" href="20-pulpit.html">
+    <span class="vp-badge">20</span>
+    <span class="vp-body">
+      <span class="vp-name">Dzień z rezerwacją</span>
+      <span class="vp-when">Standard: „MÓJ DZIEŃ" na górze (same sumy, bez listy operacji), pod nim najbliższa rezerwacja z odliczaniem, dalej akcje - kolejność z 2026-09-19. Paska zajętości floty NIE MA (uwaga właściciela 2026-09-19): powtarzał zakładkę Kalendarz, która stoi widoczna przez cały czas. „ROZPOCZNIJ LOT" bierze rezerwację i wypełnia nią krok 1 przejęcia; drugiego przycisku startu w karcie rezerwacji NIE MA (issue #42: jeden start, jedno miejsce). Kafelki operacji i korekta dzisiejszego lotu mieszkają w zakładce Historia, która obejmuje odtąd także dziś.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="20a-pulpit-bez-rezerwacji.html">
+    <span class="vp-badge blue">20A</span>
+    <span class="vp-body">
+      <span class="vp-name">Dzień bez rezerwacji</span>
+      <span class="vp-when">Pilot nic nie zarezerwował: karty rezerwacji nie ma wcale (pusta karta byłaby zdaniem o niczym), a pod przyciskiem startu znika podpis o rezerwacji. Zajętość floty zostaje - to ona mówi, czym da się polecieć bez planu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="21-kalendarz.html">
+    <span class="vp-badge">21</span>
+    <span class="vp-body">
+      <span class="vp-name">Kalendarz floty (zakładka obok)</span>
+      <span class="vp-when">Pełna oś maszyn i godzin z wejściem w rezerwację - JEDYNE miejsce, w którym widać zajętość floty. Pulpit jej nie powtarza.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23b-rezerwacja-czeka.html">
+    <span class="vp-badge amber">23B</span>
+    <span class="vp-body">
+      <span class="vp-name">Karta rezerwacji, która czeka</span>
+      <span class="vp-when">Ta sama rezerwacja otwarta z karty: ścieżka akceptacji, powód wygaśnięcia i pas akcji bez obietnic.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20-pulpit.html" class="active">20 Pulpit</a>
+  <a href="20a-pulpit-bez-rezerwacji.html">20A Bez rezerwacji</a>
+  <span>·</span>
+  <a href="21-kalendarz.html">21 Kalendarz</a>
+  <a href="22-rezerwacja.html">22 Nowa rezerwacja</a>
+  <a href="23-rezerwacja-szczegoly.html">23 Szczegóły</a>
+  <span>·</span>
+  <a href="24-historia.html">24 Historia</a>
+  <span>·</span>
+  <a href="02-preflight.html">02 Nowy lot →</a>
+</nav>
+
+</body>
+</html>
