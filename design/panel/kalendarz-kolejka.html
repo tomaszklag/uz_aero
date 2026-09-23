@@ -57,6 +57,13 @@
       <span class="vp-when">Stan, w którym ten ekran jest przez większość czasu. Wejście do niego z kalendarza wtedy NIE ISTNIEJE - baner pojawia się wyłącznie z pracą.</span>
     </span>
   </a>
+  <a class="vp-item" href="kalendarz-podglad.html">
+    <span class="vp-badge">K6</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd pilota i samolotu</span>
+      <span class="vp-when">Kontekst decyzji (3.1.0): komu zatwierdzam i czym poleci. Ten sam komplet faktów niesie arkusz w aplikacji - decyduje też mechanik, który panelu nie otwiera.</span>
+    </span>
+  </a>
 </aside>
 
 <main class="browser" role="region" aria-label="Kolejka decyzji">
@@ -168,8 +175,12 @@
            Co dzieje się PO decyzji, mówi zdanie pod listą - raz, a nie przy każdej
            karcie z osobna. -->
       <div class="card">
-        <div class="card-title">SP-AXA · sobota 26 WRZ, 09:00-12:00</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Jakub Wrona <span class="cell-sub mono">JWR</span></span></div>
+        <!-- ZNAK I NAZWISKO SĄ LINKAMI W PODGLĄD (K6) - to jedyne dwa wejścia
+             i stoją tam, gdzie pada pytanie „czym" i „komu". Karta niesie PLAN,
+             podgląd KONTEKST: plan mówi, co pilot zamierza, podgląd - czy to ma
+             ręce i nogi. -->
+        <div class="card-title"><a href="kalendarz-podglad.html#samolot">SP-AXA</a> · sobota 26 WRZ, 09:00-12:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a href="kalendarz-podglad.html">Jakub Wrona</a> <span class="cell-sub mono">JWR</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
         <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub mono">AKO</span></span></div>
@@ -183,8 +194,8 @@
       </div>
 
       <div class="card">
-        <div class="card-title">SP-BKL · niedziela 27 WRZ, 07:30-09:00</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Marta Zięba <span class="cell-sub mono">MZI</span></span></div>
+        <div class="card-title"><a href="kalendarz-podglad.html#samolot">SP-BKL</a> · niedziela 27 WRZ, 07:30-09:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a href="kalendarz-podglad.html">Marta Zięba</a> <span class="cell-sub mono">MZI</span></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG</span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 90 L</span></div>
@@ -220,6 +231,8 @@
   <a href="kalendarz-sciezka.html">K4 Ścieżka akceptacji</a>
   <span>·</span>
   <a href="kalendarz-kolejka.html" class="active">K5 Kolejka decyzji</a>
+  <span>·</span>
+  <a href="kalendarz-podglad.html">K6 Podgląd</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
   <span>·</span>
