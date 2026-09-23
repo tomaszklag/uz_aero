@@ -64,6 +64,14 @@
     </span>
     <span class="vp-tag amber">stan domyślny</span>
   </a>
+  <a class="vp-item" href="#rozjazd">
+    <span class="vp-badge">K4c</span>
+    <span class="vp-body">
+      <span class="vp-name">Ktoś stracił prawo akceptacji</span>
+      <span class="vp-when">Jedyny stan, w którym ścieżka i uprawnienia mówią co innego. Lista kroku zostaje nietknięta - to konfiguracja klubu i nie zmienia się sama - więc ekran ją OZNACZA i podaje drogę naprawy.</span>
+    </span>
+    <span class="vp-tag amber">rozjazd</span>
+  </a>
   <a class="vp-item" href="piloci-konto.html">
     <span class="vp-badge">P2</span>
     <span class="vp-body">
@@ -266,6 +274,8 @@
   <a href="#krok">↓ K4a Szuflada kroku</a>
   <span>·</span>
   <a href="#bez-sciezki">↓ K4b Klub bez ścieżki</a>
+  <span>·</span>
+  <a href="#rozjazd">↓ K4c Rozjazd uprawnień</a>
 </nav>
 
 <!-- ══ K4a · SZUFLADA KROKU ══
@@ -357,6 +367,99 @@
             <button type="button" class="btn ghost">Anuluj</button>
             <button type="button" class="btn primary" disabled>Zapisz - wskaż przynajmniej jedną osobę</button>
           </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ══ K4c · ROZJAZD LISTY KROKU ZE ZDOLNOŚCIĄ ══
+     Lista kroku i zdolność „Akceptacja rezerwacji" odpowiadają na dwa różne pytania
+     (`docs/uprawnienia.md`): zdolność mówi „ta osoba w ogóle akceptuje i widzi terminy
+     klubu", krok - „za to odpowiada". Dwa pytania znaczą dwa zapisy, a dwa zapisy mogą
+     się rozjechać: ktoś zostaje na liście kroku po tym, jak stracił zdolność.
+
+     LISTY NIE CZYŚCIMY PO CICHU. Odebranie komuś uprawnienia nie może przestawiać
+     konfiguracji kalendarza za plecami administratora - wróciłby na ten ekran i zastał
+     ścieżkę, której nie zmieniał. Ekran OZNACZA rozjazd i podaje drogę naprawy; decyzję
+     zostawia człowiekowi. Ta sama zasada, przez którą krok się nie kasuje, tylko
+     przestaje być pytany. -->
+<section class="canvas-section" id="rozjazd">
+  <div class="canvas-section-title">K4c · ktoś stracił prawo akceptacji · dwa stopnie</div>
+  <div class="inv-grid">
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Stopień pierwszy - krok nadal ma kogo pytać</span>
+        <span class="inv-when">Anna straciła zdolność, ale krok „Mechanik" ma jeszcze Jana - rezerwacje idą dalej, więc nic nie jest zepsute i nic nie krzyczy. Nazwisko schodzi do tonu przygaszonego, a zdanie pod tabelą mówi, KTO i CO dalej. Bez tego administrator widziałby dwie osoby w kroku i liczył na obie.</span>
+        <span class="inv-classes">td.dim · .hint</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><span class="visually-hidden">Kolejność</span></th>
+                <th>Krok</th>
+                <th>Nazwa</th>
+                <th>Kto może zatwierdzić</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Mechanik"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">1</td>
+                <td class="cell-strong">Mechanik</td>
+                <td><span class="cell-sub">Jan Bąk · <span class="dim">Anna Kowal</span></span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#krok">Edytuj</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint"><b>Anna Kowal</b> nie ma już zdolności „Akceptacja rezerwacji" i nie rozstrzygnie tego kroku. Krok zostaje z jedną osobą - nadaj jej zdolność z powrotem (<a href="piloci-konto.html">Piloci</a>) albo zdejmij ją z listy.</p>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Stopień drugi - krok nie ma nikogo i rezerwacje STANĄ</span>
+        <span class="inv-when">Tu nie chodzi już o czytelność, tylko o to, że każda nowa rezerwacja zatrzyma się na tym kroku i nikt jej nie ruszy. Ten sam skutek, co krok bez ani jednej osoby - ale tamten przypadek zapis ODRZUCA, a ten powstaje SAM, po zmianie w zupełnie innym module, więc odmowy nie ma gdzie postawić. Zostaje baner `warn` nad tabelą, plakietka przy kroku i droga naprawy. Administrator KLUBU odblokuje utknięte rezerwacje (`reservations.manage`), ale to jest wyjście awaryjne, nie sposób pracy.</span>
+        <span class="inv-classes">.banner warn · .pill amber</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span><b>Kroku „Szef wyszkolenia" nie ma kto zatwierdzić.</b> Marek Sowa stracił zdolność „Akceptacja rezerwacji", a był w tym kroku sam. Nowe rezerwacje zatrzymają się na nim.</span>
+          <a class="btn ghost sm" href="#krok">Wskaż kogoś</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><span class="visually-hidden">Kolejność</span></th>
+                <th>Krok</th>
+                <th>Nazwa</th>
+                <th>Kto może zatwierdzić</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Mechanik"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">1</td>
+                <td class="cell-strong">Mechanik</td>
+                <td><span class="cell-sub">Jan Bąk</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#krok">Edytuj</a></td>
+              </tr>
+              <tr>
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Szef wyszkolenia"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">2</td>
+                <td class="cell-strong">Szef wyszkolenia <span class="pill amber">Nikt nie zatwierdzi</span></td>
+                <td><span class="cell-sub dim">Marek Sowa</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="#krok">Edytuj</a></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </article>

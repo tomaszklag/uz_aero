@@ -515,7 +515,7 @@
      Ramka P2 pokazuje zakres WŁASNY (pilot z samym prawem akceptacji). Tu stoi stan
      drugi - komplet administratora - bo to on niesie jedyną odmowę tej karty. -->
 <section class="canvas-section" id="zakres-uprawnien">
-  <div class="canvas-section-title">Zakres uprawnień · komplet administratora i odmowa „ostatni administrator" (3.1.0)</div>
+  <div class="canvas-section-title">Zakres uprawnień · komplet, zestaw pusty i rozjazd ze ścieżką akceptacji (3.1.0)</div>
   <div class="inv-grid">
     <article class="inv">
       <div class="inv-head">
@@ -643,6 +643,53 @@
           <div class="access-row">
             <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
             <button type="button" class="btn ghost">Pokaż zdolności</button>
+          </div>
+        </div>
+      </div>
+    </article>
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odebranie prawa akceptacji komuś ze ścieżki</span>
+        <span class="inv-when">Zdolność i lista kroku odpowiadają na dwa różne pytania, więc mogą się rozjechać: człowiek zostaje na liście po tym, jak stracił prawo. Ostrzeżenie stoi TUTAJ, a nie tylko na ekranie ścieżki, bo tu zapada decyzja - tam widać dopiero jej skutek. To OSTRZEŻENIE, nie odmowa: człowiek odchodzi z klubu albo z funkcji i uprawnienia muszą dać się odebrać, a blokowanie tego konfiguracją kalendarza byłoby ogonem machającym psem. Zdanie nazywa więc KROK, liczbę osób, które w nim zostaną, i mówi wprost, że lista sama się nie wyczyści - konfiguracji klubu nie zmieniamy za plecami administratora. Gdy w kroku zostaje ktoś jeszcze, zdanie jest łagodniejsze i mówi tylko, z kim krok zostaje.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zakres uprawnień</div>
+          <label class="field">
+            <span class="field-label">Zestaw uprawnień</span>
+            <select class="input">
+              <option selected>Pilot</option>
+              <option>Akceptujący</option>
+              <option>Koordynator lotów</option>
+              <option>Technik</option>
+              <option>Administrator</option>
+              <option>Własny zakres</option>
+            </select>
+          </label>
+          <div class="access-row">
+            <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
+            <button type="button" class="btn ghost">Ukryj zdolności</button>
+          </div>
+          <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Wejście do panelu</span>
+                <span class="opt-desc">Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body">
+                <span class="opt-name">Akceptacja rezerwacji</span>
+                <span class="opt-desc">Rozstrzyganie kroków ścieżki akceptacji ORAZ podgląd wszystkich terminów klubu w komplecie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <p class="hint"><b>Marek stoi sam w kroku „Szef wyszkolenia".</b> Po zapisaniu nie zostanie w nim nikt, kto mógłby zatwierdzać - nowe rezerwacje zatrzymają się na tym kroku. Lista kroku się nie wyczyści: zmień ją w <a href="kalendarz-sciezka.html">ścieżce akceptacji</a>.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost">Anuluj</button>
+            <button type="button" class="btn primary">Zapisz</button>
           </div>
         </div>
       </div>

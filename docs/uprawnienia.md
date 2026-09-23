@@ -73,6 +73,43 @@ seed, `CHECK` z migracji 8 i dwa miejsca wyświetlające rolę po polsku.
 nie ma `panel.access` do żadnego klubu (`docs/wielofirmowosc.md` §3.3) i tak zostaje.
 Rozmontowanie obu osi naraz zamieniłoby jedną decyzję w dwie.
 
+### 2.5 Zdolność i lista kroku - dwa pytania, dwa zapisy, jeden rozjazd
+
+Pytanie właściciela 2026-09-23, zadane przy makiecie ścieżki: **po co zdolność akceptacji,
+skoro krok i tak wymienia, kto może go zatwierdzić?**
+
+Zdolność zarabia na siebie z trzech powodów:
+
+- **widoczność** - to ona otwiera podgląd wszystkich ścieżek i terminów klubu w komplecie
+  (`docs/rezerwacje.md` §17). Gdyby prawo brało się z samej obecności na liście, dopisanie
+  kogoś do kroku po cichu otwierałoby mu cudze plany, a katalog `Capability` nie wiedziałby
+  o tym nic - czyli wracałby drugi, równoległy mechanizm uprawnień z §1;
+- **jeden włącznik** - odebranie zdolności wyłącza człowieka z obiegu WSZĘDZIE naraz.
+  Bez niej wyprowadzenie kogoś z klubu znaczyłoby obejście każdego kroku po kolei;
+- **odpowiada KATALOG, nie konfiguracja kalendarza** - na pytanie „co ta osoba może"
+  ma być jedno miejsce z odpowiedzią.
+
+**Cena jest realna: dwa zapisy mogą się rozjechać.** Człowiek zostaje na liście kroku po
+tym, jak stracił zdolność - i wtedy krok ma na papierze obsadę, której naprawdę nie ma.
+
+**LISTY KROKU NIE CZYŚCIMY PO CICHU.** Odebranie uprawnienia nie może przestawiać
+konfiguracji kalendarza za plecami administratora: wróciłby na tamten ekran i zastał
+ścieżkę, której nie zmieniał. Rozjazd się OZNACZA, a decyzję zostawia człowiekowi - ta
+sama zasada, przez którą krok się nie kasuje, tylko przestaje być pytany (§11.2 rezerwacji).
+
+Ostrzeżenie stoi w DWÓCH miejscach, bo opisuje dwie różne chwile:
+
+| Gdzie | Kiedy | Co mówi |
+| --- | --- | --- |
+| karta członka | przy ODBIERANIU zdolności - tam zapada decyzja | nazywa krok, liczbę osób, które w nim zostaną, i to, że lista sama się nie wyczyści |
+| ścieżka akceptacji | przy OGLĄDANIU ścieżki - tam widać skutek | przygasza nazwisko bez prawa; gdy krok został bez nikogo, dokłada baner i plakietkę |
+
+**To OSTRZEŻENIE, nigdy odmowa.** Człowiek odchodzi z klubu albo z funkcji i uprawnienia
+muszą dać się odebrać; blokowanie tego konfiguracją kalendarza byłoby ogonem machającym
+psem. Inaczej niż przy ostatnim nosicielu `accounts.manage` (§6), gdzie odmowa jest twarda,
+bo tam klub zamyka się sam i nie ma drogi powrotu - tu droga powrotu jest zawsze: krok
+bez obsady odblokuje administrator klubu (`reservations.manage`).
+
 ## 3. Tabela (migracja 12)
 
 ```sql
