@@ -928,8 +928,10 @@ mogę mu zatwierdzić ten lot", czyta się jak stwierdzenie o stanie dokumentów
 wyłącznie stwierdzeniem o brakującym module. Kiedy tamten epik wejdzie, podgląd dostanie
 kartę z prawdziwymi datami i to jest właściwa kolejność.
 
-**CO ZOSTAŁO OTWARTE do rozmowy z właścicielem**: katalog zestawów uprawnień
-(`docs/uprawnienia.md` §2) - czy sześć pozycji wystarczy i czy nazwy są te właściwe.
+**PRZEGLĄD DOMKNIĘTY 2026-09-23.** Katalog zestawów uprawnień zatwierdzony bez zmian
+(`docs/uprawnienia.md` §2.2), licencje i badania odłożone do własnego epiku. Makiety
+3.1.0 są od tej chwili ZATWIERDZONĄ SPECYFIKACJĄ i obowiązuje przy nich reguła „ekran
+wdrażamy 1:1": wątpliwość to rozmowa przed implementacją, nie cicha zmiana w kodzie.
 
 ## 10. Panel: moduł „Kalendarz"
 

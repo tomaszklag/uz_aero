@@ -42,11 +42,37 @@ lista** dla konkretnego człowieka: z wiersza `memberships` zamiast z mapy `CAPA
 Zdolność jest własnością **członkostwa**, nie osoby: ten sam człowiek bywa w Alfie
 administratorem, a w Becie zwykłym pilotem - dokładnie jak kod pilota (`docs/wielofirmowosc.md`).
 
-### 2.2 „Administrator" zostaje PRESETEM
+### 2.2 SZEŚĆ ZESTAWÓW, ale w bazie stoi ZBIÓR
 
-Panel dostaje przycisk „ustaw jak administrator", który wypełnia zbiór kompletem zdolności
-klubowych, i „wyczyść", który go opróżnia. To jest wygoda przy zakładaniu konta, a nie byt
-w modelu: po kliknięciu w bazie stoi **zbiór**, nie nazwa presetu.
+Pierwsza wersja miała dwa przyciski - „ustaw jak administrator" i „wyczyść". Właściciel
+odrzucił je 2026-09-23 („to jest bez sensu") i wskazał drogę: **lista predefiniowanych
+zestawów z możliwością modyfikacji**, a pod nią rozpisane zdolności, które dany zestaw
+niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawnień"):
+
+| Zestaw | Zdolności |
+| --- | --- |
+| **Pilot** | żadnych - stan domyślny, wyłącznie aplikacja na telefonie |
+| **Akceptujący** | akceptacja rezerwacji |
+| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja |
+| **Technik** | wejście do panelu + flota |
+| **Administrator** | komplet zdolności klubowych |
+| **Własny zakres** | cokolwiek innego |
+
+**ZESTAW NIE JEST BYTEM W MODELU.** Po wybraniu w bazie stoi ZBIÓR ZDOLNOŚCI, nie nazwa -
+zestaw jest skrótem myślowym przy wypełnianiu, a etykieta liczy się z powrotem ze zbioru
+(§2.3). Dzięki temu zmiana katalogu - dołożenie „Skarbnika", przemianowanie „Technika" -
+**nie rusza nikomu uprawnień**: przestawia tylko to, co panel proponuje następnemu.
+
+**„WŁASNY ZAKRES" JEST ZAWSZE OSTATNI** i znaczy „ten zbiór nie odpowiada żadnemu
+skrótowi". Nie wybiera się go świadomie - wskakuje SAM, gdy tknąć którąkolwiek zdolność
+pod listą. Pozycja, którą się wybiera, żeby móc coś zmienić, byłaby bramką przed samą
+czynnością.
+
+**`<select>`, NIE LISTA KART** - świadome odstępstwo od reguły „zawsze lista kart",
+obok tego z kalendarza 3.0.0. Tam powodem była długość listy rosnącej z klubem; tutaj
+zawartość wyboru stoi ROZPISANA POD NIM, więc widoczność wszystkich opcji naraz - cały
+argument tamtej reguły - niczego nie dokłada. Dwie listy kart jedna nad drugą zlałyby
+się w jedną, a wybór przestałby być odróżnialny od szczegółu.
 
 ### 2.3 Kolumna `memberships.role` ZNIKA
 
