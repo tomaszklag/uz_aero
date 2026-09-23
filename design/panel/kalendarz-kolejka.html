@@ -175,31 +175,39 @@
            Co dzieje się PO decyzji, mówi zdanie pod listą - raz, a nie przy każdej
            karcie z osobna. -->
       <div class="card">
-        <!-- ZNAK I NAZWISKO SĄ LINKAMI W PODGLĄD (K6) - to jedyne dwa wejścia
-             i stoją tam, gdzie pada pytanie „czym" i „komu". Karta niesie PLAN,
-             podgląd KONTEKST: plan mówi, co pilot zamierza, podgląd - czy to ma
-             ręce i nogi. -->
-        <!-- ══ AFORDANCJĄ JEST SZEWRON PRZY WARTOŚCI, NIC WIĘCEJ ══
-             Cztery podejścia do jednej kontrolki: niebieski odnośnik (obiecywał przejście
-             gdzie indziej), tekst z doklejoną ikoną-pudełkiem (nie czytał się jak przycisk
-             i świecił przy każdej wartości), para przycisków pod tytułem (oderwana od
-             rzeczy, której dotyczy), karty `.opt` z szewronem (na miejscu, ale ciężkie -
-             dwie obramowane pozycje na każdą sprawę w liście).
+        <!-- PODGLĄD (K6) OTWIERA SIĘ Z KAŻDEJ OSOBY I Z MASZYNY - wejścia stoją tam,
+             gdzie pada pytanie „czym", „komu" i „z kim". Karta niesie PLAN, podgląd
+             KONTEKST: plan mówi, co pilot zamierza, podgląd - czy to ma ręce i nogi.
 
-             Zostaje rzecz najlżejsza z możliwych: WARTOŚĆ ZOSTAJE WARTOŚCIĄ, w swoim
-             miejscu i w swoim kolorze, a za nią stoi SZEWRON - ten sam glif `.opt-go`,
-             którym ten panel oznacza „prowadzi w głąb". Bez pudełka, bez ramki, bez
-             akcentu. Podkreślenie i zieleń szewronu wchodzą dopiero pod kursorem
-             i na fokusie.
+             DRUGI PILOT MA WŁASNE WEJŚCIE (uwaga właściciela 2026-09-23): przy locie
+             szkolnym i przy załodze dwuosobowej to jego nalot bywa pytaniem, a nie
+             dowódcy - wejście tylko przy dowódcy kazałoby zgadywać albo schodzić
+             do modułu Piloci. -->
+        <!-- ══ WARTOŚĆ, KTÓRA POD KURSOREM STAJE SIĘ PRZYCISKIEM ══
+             Pięć podejść do jednej kontrolki: niebieski odnośnik (obiecywał przejście
+             gdzie indziej), tekst z doklejoną ikoną-pudełkiem, para przycisków pod
+             tytułem (oderwana od rzeczy, której dotyczy), karty `.opt` z szewronem
+             (na miejscu, ale dwie obramowane pozycje na każdą sprawę), sama ikona
+             z podkreśleniem (afordancja bez kształtu - napis, któremu coś dopisano).
 
-             Szewron, a nie ikona panelu bocznego: glif z rodziny, którą panel już ma,
-             waży w wierszu tyle co znak przestankowy - a ikona była prostokątem 13 px,
-             czyli drugim elementem obok napisu. -->
-        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-AXA">SP-AXA<span class="opt-go" aria-hidden="true">›</span></a> · sobota 26 WRZ, 09:00-12:00</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Jakub Wrona">Jakub Wrona<span class="opt-go" aria-hidden="true">›</span></a> <span class="cell-sub mono">JWR</span></span></div>
+             Zostaje GHOST-BADGE UJAWNIANY KURSOREM. W spoczynku WARTOŚĆ JEST WARTOŚCIĄ:
+             w swoim miejscu, w swoim kolorze, bez ramki i bez tła, a za nią stoi
+             wyciszona IKONA PANELU BOCZNEGO - prostokąt z wydzielonym prawym pasem.
+             Pod kursorem i na fokusie dostaje KSZTAŁT: tło i zaokrąglenie, dokładnie
+             jak `.btn.ghost`.
+
+             Ikona, a nie szewron: szewron mówi „dalej", czyli obiecuje przejście gdzie
+             indziej, a tu nic nie odchodzi - wysuwa się szuflada, ekran pod spodem
+             zostaje. Prostokąt z wydzielonym pasem jako jedyny mówi, CO ZROBI
+             INTERFEJS, a nie dokąd się idzie.
+
+             Kształt dopiero pod kursorem, bo takie wartości są DWIE na sprawę - badge
+             widoczny stale zrobiłby z kolejki farmę guzików (reguła SyncChipa). -->
+        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-AXA">SP-AXA<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a> · sobota 26 WRZ, 09:00-12:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Jakub Wrona">Jakub Wrona <span class="cell-sub mono">JWR</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPRJ</span></div>
-        <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub mono">AKO</span></span></div>
+        <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd drugiego pilota Anna Kowal">Anna Kowal <span class="cell-sub mono">AKO</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a></span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">2:00 · paliwo 140 L</span></div>
         <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części w Jasionce, wracamy tego samego dnia.</span></div>
         <div class="kv"><span class="kv-k">Czeka od</span><span class="kv-v amber">wczoraj 18:40 <span class="cell-sub">· termin za 3 dni</span></span></div>
@@ -210,24 +218,8 @@
       </div>
 
       <div class="card">
-        <!-- ══ AFORDANCJĄ JEST SZEWRON PRZY WARTOŚCI, NIC WIĘCEJ ══
-             Cztery podejścia do jednej kontrolki: niebieski odnośnik (obiecywał przejście
-             gdzie indziej), tekst z doklejoną ikoną-pudełkiem (nie czytał się jak przycisk
-             i świecił przy każdej wartości), para przycisków pod tytułem (oderwana od
-             rzeczy, której dotyczy), karty `.opt` z szewronem (na miejscu, ale ciężkie -
-             dwie obramowane pozycje na każdą sprawę w liście).
-
-             Zostaje rzecz najlżejsza z możliwych: WARTOŚĆ ZOSTAJE WARTOŚCIĄ, w swoim
-             miejscu i w swoim kolorze, a za nią stoi SZEWRON - ten sam glif `.opt-go`,
-             którym ten panel oznacza „prowadzi w głąb". Bez pudełka, bez ramki, bez
-             akcentu. Podkreślenie i zieleń szewronu wchodzą dopiero pod kursorem
-             i na fokusie.
-
-             Szewron, a nie ikona panelu bocznego: glif z rodziny, którą panel już ma,
-             waży w wierszu tyle co znak przestankowy - a ikona była prostokątem 13 px,
-             czyli drugim elementem obok napisu. -->
-        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-BKL">SP-BKL<span class="opt-go" aria-hidden="true">›</span></a> · niedziela 27 WRZ, 07:30-09:00</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Marta Zięba">Marta Zięba<span class="opt-go" aria-hidden="true">›</span></a> <span class="cell-sub mono">MZI</span></span></div>
+        <div class="card-title"><a class="go" href="kalendarz-podglad.html#samolot" aria-label="Podgląd samolotu SP-BKL">SP-BKL<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a> · niedziela 27 WRZ, 07:30-09:00</div>
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="go" href="kalendarz-podglad.html" aria-label="Podgląd pilota Marta Zięba">Marta Zięba <span class="cell-sub mono">MZI</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG</span></div>
         <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 90 L</span></div>

@@ -975,37 +975,61 @@ tr.dragging > td {
  * WARTOŚĆ, KTÓRA PROWADZI W GŁĄB - afordancja NA wartości, nie obok niej.
  *
  * Powstała przy kolejce decyzji: znak maszyny i nazwisko pilota otwierają podgląd
- * boczny. Cztery podejścia odpadły i każde z innego powodu - niebieski odnośnik
- * obiecywał przejście gdzie indziej, tekst z ikoną-pudełkiem nie czytał się jak
- * przycisk, przyciski pod tytułem oderwały kontrolkę od rzeczy, a karty `.opt`
- * były na miejscu, ale ciężkie: dwie obramowane pozycje na każdą sprawę w liście.
+ * boczny. Sześć wersji, wybór właściciela po obejrzeniu wszystkich - odrzucone i po co
+ * to wiedzieć: NIEBIESKI ODNOŚNIK obiecywał przejście gdzie indziej (a ekran pod
+ * spodem zostaje); PRZYCISKI POD TYTUŁEM oderwały kontrolkę od rzeczy, której dotyczy;
+ * KARTY `.opt` stały na miejscu, ale ważyły dwie obramowane pozycje na każdą sprawę
+ * w liście; SZEWRON `›` mówi „dalej", a nie „wysunie się panel"; SAMA IKONA
+ * z podkreśleniem była afordancją bez kształtu - napisem, któremu coś dopisano.
  *
- * Zostaje rzecz najlżejsza: wartość zostaje wartością, w swoim miejscu i w swoim
- * kolorze, a za nią stoi SZEWRON `.opt-go` - glif, którym ten panel oznacza
- * „prowadzi w głąb". W wierszu waży tyle, co znak przestankowy.
+ * Zostaje GHOST-BADGE UJAWNIANY KURSOREM. W spoczynku wartość jest wartością:
+ * w swoim miejscu, w swoim kolorze, bez ramki i bez tła, a za nią stoi wyciszona
+ * IKONA PANELU BOCZNEGO (prostokąt z wydzielonym prawym pasem - jako jedyna z sześciu
+ * mówi, CO ZROBI INTERFEJS, a nie dokąd się idzie). Pod kursorem i na fokusie wartość
+ * dostaje KSZTAŁT: tło `surface-raised` i zaokrąglenie, czyli dokładnie to, co robi
+ * `.btn.ghost` - stąd nazwa. Kształt jest tym, czego brakowało samej ikonie: pudełko
+ * mówi „to jest jedna rzecz i da się ją nacisnąć".
  *
- * W SPOCZYNKU NIC SIĘ NIE ŚWIECI. Podkreślenie i zieleń szewronu wchodzą pod kursorem
- * i na fokusie: w kolejce takie wartości są dwie na sprawę, więc afordancja widoczna
- * stale robiłaby z listy choinkę (reguła SyncChipa z issue #12).
+ * ŚWIECI DOPIERO POD KURSOREM, bo w kolejce takie wartości są dwie na sprawę -
+ * badge widoczny stale robiłby z listy farmę guzików (reguła SyncChipa z issue #12).
+ *
+ * PODPIS WARTOŚCI WCHODZI DO ŚRODKA - kod pilota jest częścią odpowiedzi na „kto",
+ * a nie sąsiadem stojącym obok (uwaga właściciela 2026-09-23). Zostawiony na zewnątrz
+ * rozcinał jedną rzecz na dwie: badge kończył się w połowie nazwiska, a kciuk trafiał
+ * raz w cel, raz obok. Stąd `gap` zamiast marginesów między częściami.
+ *
+ * ODSTĘP WYCHODZI POZA OBRYS: padding kompensuje ujemny margines, więc badge wylewa
+ * się na wierzch sąsiedniego tekstu zamiast go rozpychać. Bez tego wartość skakałaby
+ * pod kursorem, a cały wiersz razem z nią.
  */
 .go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 6px;
   color: inherit;
   text-decoration: none;
 }
 
+/* `--surface-hover`, nie `--surface-raised`: badge startuje z tła KARTY (#141414),
+   a lift o sześć punktów byłby ledwie widoczny. Obowiązuje reguła POWIERZCHNI POD
+   KURSOREM - ten sam token, którym rozjaśnia się `.btn`. */
 .go:hover,
 .go:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  background: var(--surface-hover);
 }
 
-.go .opt-go {
-  margin-left: 4px;
+.go svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
 }
 
-.go:hover .opt-go,
-.go:focus-visible .opt-go {
-  color: var(--green);
+.go:hover svg,
+.go:focus-visible svg {
+  color: var(--text-secondary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
