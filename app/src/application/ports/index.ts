@@ -10,3 +10,4 @@ export * from './pinCryptoPort';
 export * from './tracePort';
 export * from './bugReportPort';
 export * from './themePrefsPort';
+export * from './pushDevicePort';

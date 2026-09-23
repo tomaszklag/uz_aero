@@ -532,6 +532,11 @@ export interface RemoteInbox {
   /** Nieprzeczytane w CAŁEJ skrzynce - licznik przy dzwonku na Pulpicie. */
   unread: number;
   items: RemoteNotification[];
+  /**
+   * Czy ta osoba ROZSTRZYGA cudze terminy (epik R-J): Pulpit prosi wtedy o zgodę na
+   * powiadomienia od razu. Opcjonalne - serwer sprzed 3.1.0 tego pola nie niesie.
+   */
+  approver?: boolean;
 }
 
 /** Kursor strony skrzynki - PARA, bo sam stempel nie porządkuje jednoznacznie. */
@@ -866,6 +871,11 @@ export interface ServerPort {
     id: string,
     body: { decision: 'approved' | 'rejected'; reason: string | null },
   ): Promise<DecisionResult>;
+  /**
+   * Rejestracja tokenu push TEGO urządzenia (`POST /me/push-token`, epik R-J). Serwer
+   * przypina go do sesji logowania z tokenu żądania (§12.2) - telefon nie podaje sesji.
+   */
+  registerPushToken(token: string, deviceToken: string): Promise<void>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

@@ -43,6 +43,8 @@ import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { SignInFlow } from './src/ui/navigation/SignInFlow';
 import { PinScreen } from './src/ui/screens/PinScreen';
 import { ClubGateScreen } from './src/ui/screens/ClubGateScreen';
+// Import wprost z infrastruktury (jak composition root) - moduł natywny nie ma go w barrelu.
+import { configureNotifications } from './src/infrastructure/push/expoNotifications';
 
 /**
  * Tło okna natywnego - jedyna warstwa, której nie da się pomalować widokiem RN.
@@ -87,6 +89,13 @@ function AppRoot() {
   const sensors = useSensorPort();
 
   useSystemBackground(theme.colors.bg);
+
+  // Budzik push (epik R-J): jak ma się pokazać przy otwartej aplikacji i na jakim
+  // kanale Androida. Raz na proces, przed bramką tożsamości - kanał musi istnieć,
+  // zanim przyjdzie pierwsze powiadomienie, a to przychodzi także do zablokowanej aplikacji.
+  useEffect(() => {
+    configureNotifications();
+  }, []);
 
   const [fontsLoaded, fontError] = useFonts({
     BebasNeue_400Regular,

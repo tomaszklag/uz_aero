@@ -503,6 +503,10 @@ describe('skrzynka', () => {
     expect(mechanik.json().unread).toBe(1);
     expect(mechanik.json().items[0].kind).toBe('approval_requested');
     expect(mechanik.json().items[0].payload.stepLabel).toBe('Mechanik');
+    // Skrzynka mówi telefonowi, czy ta osoba AKCEPTUJE (epik R-J): akceptującego prosi
+    // się o zgodę na powiadomienia od razu, rezerwującego dopiero przy jego sprawie.
+    expect(mechanik.json().approver).toBe(true);
+    expect((await inbox(app, pwi)).json().approver).toBe(false);
 
     // Krok 2 jeszcze nie pyta, więc AKO nie dostaje nic - budzenie wszystkich naraz
     // jest dokładnie tym, przed czym broni kolejność kroków.

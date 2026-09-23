@@ -31,6 +31,7 @@ export function useSyncLoop(): void {
   const refreshReference = useSessionStore((s) => s.refreshReference);
   const uploadTraces = useSessionStore((s) => s.uploadTraces);
   const syncThemePrefs = useSessionStore((s) => s.syncThemePrefs);
+  const registerPushToken = useSessionStore((s) => s.registerPushToken);
 
   // Jedna trwająca obietnica - okazje w trakcie przebiegu są zbędne (silnik i tak
   // dopije outbox do dna), a AppState potrafi strzelić kilka razy pod rząd.
@@ -55,6 +56,9 @@ export function useSyncLoop(): void {
         // Motyw pilota (decyzja 2026-07-29): push zaległej zmiany od razu, pull
         // z własną bramą wieku - puls co 60 s nie zamienia się w odpytywanie.
         await syncThemePrefs();
+        // Token push (epik R-J): jeden `POST` na uruchomienie i na zmianę poświadczeń,
+        // reszta okazji wraca od razu (`fresh`). Bez Firebase w buildzie - cisza.
+        await registerPushToken();
         await uploadTraces();
         // Zgłoszenia błędów (issue #87) - na samym końcu, jak ślad: rejestr dnia
         // i cache referencyjny mają pierwszeństwo, bo od nich zależy praca.
@@ -83,6 +87,7 @@ export function useSyncLoop(): void {
     restoreEvents,
     refreshReference,
     syncThemePrefs,
+    registerPushToken,
     uploadTraces,
   ]);
 }

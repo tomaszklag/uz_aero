@@ -405,7 +405,7 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 | `PATCH /bookings/:id` | przesunięcie i zmiana zadania - WŁASNEJ rezerwacji |
 | `DELETE /bookings/:id` | odwołanie własnej (zapis zostaje, `status = 'cancelled'`) |
 | `GET /bookings/suggestions?aircraftId=&day=&minutes=` | sugestie slotów (§7) |
-| `GET /me/notifications` *(3.1)* | skrzynka, kursor parą `(created_at, id)`; odpowiedź niesie `timezone` klubu i przy każdej wiadomości DOBĘ terminu (`day`), bo „sob 26 WRZ 09:00-12:00" liczy się odejmowaniem od granic doby (§6.1) |
+| `GET /me/notifications` *(3.1)* | skrzynka, kursor parą `(created_at, id)`; odpowiedź niesie `timezone` klubu i przy każdej wiadomości DOBĘ terminu (`day`), bo „sob 26 WRZ 09:00-12:00" liczy się odejmowaniem od granic doby (§6.1); `approver` = czy ta osoba rozstrzyga cudze terminy (R-J - prośba o zgodę na powiadomienia) |
 | `POST /me/notifications/:id/read` *(3.1)* | odczytanie - gasi „nowe", nie „do decyzji" (§9.4) |
 | `GET /me/approvals/queue` *(3.1)* | sprawy czekające na MOJĄ decyzję: rezerwacja (pełne pola) + krok; skrzynka liczy z niej plakietkę „Do decyzji" |
 | `POST /me/push-token` *(3.1)* | rejestracja tokenu push dla BIEŻĄCEJ sesji |
@@ -1163,6 +1163,40 @@ Serwer, który nie wstaje przez brak budzika, kosztuje więcej niż budzik, któ
 zadanie właściciela: projekt Firebase, FCM V1 (service account) w EAS, `google-services.json`.
 Ta pozycja jest na drodze krytycznej 3.1.0 tak samo, jak poczta (#137) była dla 2.1.0.
 
+### 12.5 Telefon: token, prośba o zgodę, tapnięcie (epik R-J, 2026-09-23)
+
+- **Jeden plik zna `expo-notifications`** (`infrastructure/push/expoNotifications.ts`,
+  exact-list w teście architektury): adres urządzenia (`ExpoPushDevice` za portem
+  `PushDevicePort`), kanał Androida `default` o wysokiej ważności (serwer adresuje go
+  `channelId`), sposób pokazania budzika przy otwartej aplikacji i tapnięcie. Reszta
+  aplikacji widzi port i czyste funkcje - zdjęcie modułu natywnego to jeden plik.
+- **Token rejestruje pętla okazji** (`PushTokenSync.register` - po motywie, przed
+  śladem): raz na uruchomienie i raz na zmianę poświadczeń (nowa sesja logowania = nowy
+  `POST /me/push-token`), reszta pulsów wraca od razu. Serwer przypina token do sesji
+  z tokenu żądania (§12.2), więc telefon sesji nie podaje. Build bez Firebase, Expo Go,
+  telefon bez usług Google - token jest `null` i to jest cisza, nie błąd (§12.1).
+- **Prośba o zgodę na powiadomienia** (decyzja właściciela 2026-09-23, J3): przy
+  wejściu na Pulpit, gdy osoba jest AKCEPTUJĄCYM (`approver` w odpowiedzi
+  `GET /me/notifications` - jeden bit dołożony do odpowiedzi, którą Pulpit i tak czyta,
+  bo telefon zdolności nie zna), oraz po złożeniu rezerwacji, która CZEKA na zgodę.
+  Raz na uruchomienie, miękko (§4.1). Rezerwacja potwierdzona od razu (klub bez ścieżki)
+  nie rodzi żadnego powiadomienia, więc przy niej nie pytamy o zgodę na nic.
+- **Tapnięcie** (`logic/pushTarget.ts`): `approval_requested` → ekran decyzji 26;
+  `booking_approved` / `booking_rejected` / `booking_expired` → karta 23; wszystko inne
+  (także rodzaj z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
+  w skrzynce". Z zimnego startu i sprzed odblokowania PIN-em tapnięcie czeka jako
+  „ostatnia odpowiedź" i czyta się je, gdy nawigator stanie; identyfikator obsłużonego
+  tapnięcia trzyma stan modułu, żeby ponowne zamontowanie nawigatora nie otwierało
+  tej samej rezerwacji drugi raz.
+- **Plik Firebase poza repozytorium** (Z2 z #168 rozstrzygnięte): `android.googleServicesFile`
+  dokłada `app.config.js` ze zmiennej EAS `GOOGLE_SERVICES_JSON` (typu „file") albo
+  z lokalnego `app/google-services.json` (w `.gitignore`); bez obu konfiguracja zostaje
+  bez pola i Metro pracuje jak dotąd. Ikona powiadomień to biała sylwetka znaku
+  z generatora ikon (`notification-icon.png`, 96 px), barwiona `#2ECC71` przez plugin.
+- **Czego telefon nie ma**: własnego przełącznika powiadomień (system ma swój), wyboru
+  rodzajów, listy urządzeń. Push jest budzikiem - konfiguruje się go tam, gdzie
+  konfiguruje się dzwonek.
+
 ## 13. Etapy i kolejność realizacji
 
 Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zależność twarda.
@@ -1354,6 +1388,9 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-I | rozstrzygnięcia idą RZECZOWNIKIEM („Odmowa zgody · Anna Kowal", nie „Anna Kowal odmówiła") - czasownika nie da się odmienić bez płci; makieta 25 ma formę czasownikową | `CLAUDE.md`, sekcja epiku R-I |
 | R-I | baner odmowy na karcie (23C) nazywa KROK, nie osobę - stan ścieżki na telefonie nazwisk decydujących nie niesie (§9.4), a makieta rysowała nazwisko | §9.4 |
 | R-I | podgląd pilota i samolotu (26A/26B) czeka na to samo zgłoszenie, co K6 - wiersze karty decyzji nie prowadzą w głąb | §10 |
+| R-J | prośba o zgodę na powiadomienia pada na Pulpicie dla AKCEPTUJĄCEGO i po rezerwacji, która CZEKA (decyzja właściciela 2026-09-23); skrzynka dostała bit `approver`, bo telefon nie zna zdolności | §12.5 |
+| R-J | plik Firebase idzie zmienną EAS typu „file" albo lokalną kopią poza repozytorium - Z2 z #168 rozstrzygnięte w kodzie | §12.5 |
+| R-J | wersja i `versionCode` NIE podbite w tym epiku - to krok gałęzi wydaniowej (R-K), a `develop` nie buduje APK; J6 i J7 czekają na Firebase (#168) | §12.4 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od

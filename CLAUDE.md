@@ -4310,6 +4310,54 @@ wszystko 1:1 z makiet #196. Do tego cienki plaster serwera i migracja 14. Decyzj
   o zmianie ścieżki (#207), push (R-J - moduł natywny, nowy APK), sprawdzenia
   NA URZĄDZENIU (wymaga dev builda - do epiku wydaniowego #169), podręcznika (R-K)
 
+## Rezerwacje 3.1.0 - epik R-J: push jako budzik (issue #167, 2026-09-23)
+`expo-notifications` w aplikacji, cienki plaster serwera (`channelId`, bit `approver`),
+plik Firebase poza repozytorium. Decyzje: `docs/rezerwacje.md` §12.1–§12.5; odstępstwa §18.
+**Zadanie właściciela #168 (Firebase, FCM V1 w EAS, `PUSH_PROVIDER=expo`) jest na
+drodze krytycznej** - bez niego kod działa, ale budzik milczy. Reguły obowiązujące odtąd:
+- **JEDEN PLIK ZNA `expo-notifications`** (`infrastructure/push/expoNotifications.ts`,
+  exact-list w `architecture.test.ts`, poza barrelem): adres urządzenia (`ExpoPushDevice`
+  za `PushDevicePort`), kanał Androida `default` (WYSOKA ważność - serwer adresuje go
+  `channelId`), pokazanie budzika przy otwartej aplikacji i tapnięcie. `configureNotifications()`
+  woła `App.tsx` raz na proces, PRZED bramką tożsamości - kanał ma istnieć, zanim
+  przyjdzie pierwsze powiadomienie do zablokowanej aplikacji
+- **KAŻDA AWARIA PUSH JEST CISZĄ**: `getExpoPushTokenAsync` rzuca bez Firebase, w Expo Go
+  i na telefonie bez usług Google - token jest wtedy `null` (`unavailable`), a skrzynka
+  działa (§12.1). Nikt wyżej nie ma czego łapać
+- **TOKEN REJESTRUJE PĘTLA OKAZJI** (`PushTokenSync.register` w `useSyncLoop`, po
+  motywie, przed śladem): klucz pamięci = pilot + para poświadczeń + token, więc jeden
+  `POST` na uruchomienie i na nową sesję logowania; rotacja tokenów odświeża klucz
+  (jeden nadmiarowy `POST`, tańszy niż wystawianie identyfikatora sesji z serwisu
+  poświadczeń). Klucz liczy się PO rozmowie - `authorizedFetch` mógł w niej odświeżyć parę
+- **PROŚBA O ZGODĘ PADA W DWÓCH MOMENTACH I RAZ NA URUCHOMIENIE** (decyzja właściciela
+  2026-09-23; `logic/pushOptIn.ts` + `hooks/askForPush.ts`): Pulpit dla AKCEPTUJĄCEGO
+  (`approver` w `GET /me/notifications` - telefon zdolności nie zna, a Pulpit i tak czyta
+  skrzynkę przy wejściu) oraz zapis rezerwacji, która CZEKA (`pending`). Rezerwacja
+  potwierdzona od razu nie rodzi powiadomień, więc przy niej nie pytamy - to jest
+  świadome zawężenie słów „gdy zalogowana osoba złoży rezerwację". Prośba jest miękka
+  (`requestNotificationPermission` z usługi GPS), po niej od razu próba rejestracji
+- **TAPNIĘCIE LICZY CZYSTA FUNKCJA** (`logic/pushTarget.ts`): prośba → `Decision`,
+  decyzja/wygaśnięcie → `BookingDetails`, wszystko inne → `Notifications`. Dane z push
+  są `unknown` - spreparowane albo z nowszego serwera mają prowadzić w bezpieczne
+  miejsce, nie wywracać aplikacji. `usePushNavigation` dostaje `navigationRef`
+  i flagę gotowości nawigatora; zimny start i tapnięcie sprzed PIN-u czyta
+  `getLastNotificationResponseAsync`, a identyfikator obsłużonego tapnięcia trzyma
+  STAN MODUŁU (ponowne zamontowanie nawigatora nie otwiera tej samej rezerwacji)
+- **PLIK FIREBASE POZA REPOZYTORIUM** (`scripts/google-services.js`, z testem):
+  `android.googleServicesFile` ze zmiennej EAS `GOOGLE_SERVICES_JSON` (typ „file")
+  albo z lokalnego `app/google-services.json` (`.gitignore`); bez obu pole nie istnieje
+  i Metro pracuje jak dotąd. Jeden plik Firebase obejmuje obie aplikacje projektu
+  (`com.ninerdeck.app` i `.dev`) - dev build to osobna aplikacja w Firebase
+- **IKONA POWIADOMIEŃ Z GENERATORA** (`notification-icon.png`, 96 px, biała sylwetka
+  znaku bez tła - Android barwi ją sam kolorem z pluginu). Ta sama reguła, co przy
+  reszcie ikon: poprawka przez `npm run icons`, nie ręczną edycją PNG
+- **WERSJI NIE PODBIJAMY W TYM EPIKU**: `develop` nie buduje APK, a bump `version`
+  i `versionCode` należy do gałęzi wydaniowej (R-K, #169). J6 (APK) i J7 (sprawdzenie
+  na urządzeniu) czekają na #168
+- **czego R-J NIE ROBI**: przełącznika powiadomień w ustawieniach aplikacji (system ma
+  swój), listy urządzeń w telefonie, pokwitowań Expo (receipts - `DeviceNotRegistered`
+  przychodzi już w biletach), powiadomień o zmianie ścieżki (#207)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

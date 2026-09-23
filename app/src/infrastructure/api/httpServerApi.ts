@@ -531,6 +531,11 @@ export class HttpServerApi implements ServerPort {
     return this.request('GET', '/me/approvals/queue', { token });
   }
 
+  async registerPushToken(token: string, deviceToken: string): Promise<void> {
+    const response = await this.send('POST', '/me/push-token', { token, body: { token: deviceToken } });
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
   /**
    * Decyzja idzie przez `send`, jak zapis rezerwacji: odmowa NIESIE KOD, który ekran
    * nazywa przy przycisku („podaj powód", „to nie Twój krok"), a `request` zamieniłby

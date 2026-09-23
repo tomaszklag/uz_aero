@@ -45,6 +45,7 @@ import {
   FlightTrackQueries,
   SyncEngine,
   ThemePrefsSync,
+  PushTokenSync,
   TraceSync,
   type BoardingInput,
   type ClaimInput,
@@ -113,6 +114,8 @@ export interface SessionStore {
   traceSync: TraceSync | null;
   /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) - ThemeProvider słucha adopcji. */
   themePrefs: ThemePrefsSync | null;
+  /** Zgłoszenie tokenu push (epik R-J); `null` w testach bez serwera. */
+  pushTokens: PushTokenSync | null;
   /** Wynik ostatniego przebiegu synca - czytają stąd SyncChip i sekcja synchronizacji (13). */
   lastSync: SyncOutcome | null;
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) - „ostatnia udana wysyłka 14:02 UTC". */
@@ -155,6 +158,7 @@ export interface SessionStore {
     traceSync: TraceSync,
     themePrefs: ThemePrefsSync,
     eventRestore: EventRestore,
+    pushTokens?: PushTokenSync,
   ): void;
 
   /** Rozpoczyna/przejmuje sesję: emituje `session_claim` i ustawia kontekst (§4.4). */
@@ -247,6 +251,12 @@ export interface SessionStore {
   uploadTraces(): Promise<void>;
   /** Uzgadnia motyw zalogowanego pilota (push `dirty` od razu, pull za bramą wieku). */
   syncThemePrefs(): Promise<void>;
+  /**
+   * Zgłoszenie tokenu push serwerowi (epik R-J) - z pętli okazji i tuż po zgodzie na
+   * powiadomienia. Bez warstwy synca albo bez tokenu urządzenia: cichy no-op, bo push
+   * jest budzikiem, a skrzynka działa bez niego (§12.1).
+   */
+  registerPushToken(): Promise<void>;
   /** Czyści stan w pamięci (wylogowanie / nowy dzień) - nie kasuje bazy. */
   reset(): void;
 }
@@ -386,6 +396,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     eventRestore: null,
     traceSync: null,
     themePrefs: null,
+    pushTokens: null,
     lastSync: null,
     lastSyncAt: null,
     lastAttemptAt: null,
@@ -404,11 +415,19 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       });
     },
 
-    attachSync(sync, referenceSync, traceSync, themePrefs, eventRestore) {
+    attachSync(sync, referenceSync, traceSync, themePrefs, eventRestore, pushTokens) {
       // `streamHydrated: false` od chwili, w której ISTNIEJE z kim się uzgodnić:
       // dopóki pierwsze odtworzenie nie wróci, pusty rejestr może być skutkiem
       // czyszczenia pamięci, a nie faktem o dniu pilota.
-      set({ sync, referenceSync, traceSync, themePrefs, eventRestore, streamHydrated: false });
+      set({
+        sync,
+        referenceSync,
+        traceSync,
+        themePrefs,
+        eventRestore,
+        pushTokens: pushTokens ?? null,
+        streamHydrated: false,
+      });
     },
 
     attachTrack(trackQueries) {
@@ -674,6 +693,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       const pilot = useAuthStore.getState().pilot;
       if (pilot == null) return;
       await themePrefs.syncIfStale(pilot.id);
+    },
+
+    async registerPushToken() {
+      const { pushTokens } = get();
+      if (pushTokens == null) return; // testy żyją bez serwera - to nie błąd
+      await pushTokens.register();
     },
 
     reset() {
