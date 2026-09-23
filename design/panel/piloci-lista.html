@@ -200,7 +200,7 @@
 
       <!-- Kolumny 1:1 z `columns` w AccountsScreen: Kod (`.reg` - kod W TYM klubie) ·
            Imię i nazwisko (osoba; jedyna sortowalna - porządek jedzie w adresie jako
-           `?kolejnosc=z-a`) · E-mail konta Google (`.cell-sub`) · Rola (w tym klubie) ·
+           `?kolejnosc=z-a`) · E-mail konta Google (`.cell-sub`) · Zakres uprawnień (w tym klubie) ·
            Status (członkostwa) · akcja. Członkostwo wyłączone jest przygaszone
            (`tr.muted`) i serwer stawia je na końcu. Od 2.0.0 wiersz bez e-maila nie
            istnieje: osoba powstaje z konta Google, więc adres jest zawsze. -->
@@ -212,7 +212,7 @@
               <th>Kod</th>
               <th class="sortable" aria-sort="ascending"><button type="button">Imię i nazwisko<span class="arrow" aria-hidden="true">↑</span></button></th>
               <th>E-mail</th>
-              <th>Rola</th>
+              <th>Zakres</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -222,7 +222,7 @@
               <td class="reg">AKO</td>
               <td class="cell-strong">Anna Kowal</td>
               <td><span class="cell-sub">anna.kowal@gmail.com</span></td>
-              <td><span class="pill dim">Pilot</span></td>
+              <td><span class="pill amber">Własny zakres</span></td>
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
             </tr>
@@ -242,9 +242,13 @@
               <td><span class="pill green"><span class="dot"></span>Aktywny</span></td>
               <td class="row-actions"><a class="btn ghost sm" href="piloci-konto.html">Edytuj</a></td>
             </tr>
-            <!-- Rola panelowa jest `blue`: to INFORMACJA (ten człowiek wchodzi do panelu).
-                 „Pilot" zostaje `dim`, bo jest stanem domyślnym, a plakietka świecąca
-                 przy każdym wierszu uczy oko pomijać kolumnę. -->
+            <!-- ZAKRES ZAMIAST ROLI (3.1.0, docs/uprawnienia.md): kolumna nie niesie już
+                 roli, bo role nie nadają zdolności. Etykieta LICZY SIĘ ZE ZBIORU i ma trzy
+                 wartości: komplet → „Administrator" (`blue` - to INFORMACJA, że ten człowiek
+                 wchodzi do panelu), zbiór pusty → „Pilot" (`dim`, bo to stan domyślny, a
+                 plakietka świecąca przy każdym wierszu uczy oko pomijać kolumnę), cokolwiek
+                 pomiędzy → „Własny zakres" (`amber` - wiersz, w który warto zajrzeć).
+                 Anna wyżej jest dokładnie tym przypadkiem: pilot z samym prawem akceptacji. -->
             <tr class="clickable">
               <td class="reg">TMA</td>
               <td class="cell-strong">Tomasz Małkiewicz</td>
