@@ -141,6 +141,23 @@ export const keys = {
   calendar: {
     all: ['calendar'] as const,
     range: (query: CalendarRange) => ['calendar', query] as const,
+    /**
+     * JEDNA zajętość ze stanem ścieżki (3.1.0). Pod korzeniem kalendarza, bo starzeje się
+     * od tej samej rzeczy - decyzja przestawia i pasek na siatce, i kartę w szufladzie.
+     */
+    detail: (id: string) => ['calendar', 'detail', id] as const,
+  },
+
+  /**
+   * Ścieżka akceptacji i kolejka decyzji (3.1.0, issue #165). Jeden korzeń, bo obie
+   * starzeją się od tej samej rzeczy: zapis ścieżki przestawia sprawy w toku (§11.2),
+   * więc unieważnia też kolejkę, a decyzja zmienia kolejkę i nie rusza ścieżki - lecz
+   * unieważnienie korzenia kosztuje jeden odczyt listy kroków, nie niespójność.
+   */
+  approvals: {
+    all: ['approvals'] as const,
+    steps: ['approvals', 'steps'] as const,
+    queue: ['approvals', 'queue'] as const,
   },
   bugs: {
     all: ['bugs'] as const,

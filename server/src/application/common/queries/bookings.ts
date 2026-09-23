@@ -110,6 +110,15 @@ export class BookingQueries {
     return { timezone, booking: row, day };
   }
 
+  /**
+   * Sama strefa klubu - dla odpowiedzi, które niosą chwile bez siatki dób (kolejka
+   * decyzji w panelu, 3.1.0). `null` = klubu nie ma.
+   */
+  async timezone(orgId: string): Promise<string | null> {
+    const settings = await this.clubs.calendar(this.db, orgId);
+    return settings == null ? null : safeZone(settings.timezone);
+  }
+
   /** `null`, gdy klubu nie ma - trasa robi z tego 404, a nie pustej siatki. */
   async window(
     orgId: string,

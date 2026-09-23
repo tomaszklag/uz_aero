@@ -12,8 +12,19 @@
  * przyciski, i nie rysować ich razem tam, gdzie zdolność jest jedna.
  */
 
-import type { BlockReasonDto, BookingDto, CalendarDto } from './dto';
+import type { BlockReasonDto, BookingDetailDto, BookingDto, CalendarDto } from './dto';
 import { apiGet, apiPost } from './httpClient';
+
+/**
+ * JEDNA zajętość razem ze stanem jej ścieżki akceptacji (3.1.0, issue #165).
+ *
+ * Osobne pytanie od okna kalendarza, bo stan ścieżki jedzie WYŁĄCZNIE tutaj: siatka
+ * rysuje pasek i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno zapytanie
+ * o tydzień w tyle zapytań, ile rezerwacji stoi na ekranie.
+ */
+export function getBooking(id: string): Promise<BookingDetailDto> {
+  return apiGet<BookingDetailDto>(`/bookings/${encodeURIComponent(id)}`);
+}
 
 export interface CalendarRange {
   /** ISO - dowolna chwila; serwer i tak sprowadzi ją do granic dób w strefie klubu. */

@@ -28,15 +28,24 @@ interface BannerProps {
   /** `role="alert"` dla treści, która POJAWIA SIĘ w reakcji na akcję (np. odmowa 401). */
   live?: boolean;
   style?: React.CSSProperties;
+  /**
+   * Droga wyjścia stojąca W BANERZE (`.btn.ghost.sm` za treścią, jak w makietach
+   * `kalendarz-flota` i `kalendarz-sciezka`): baner, który nazywa pracę do zrobienia
+   * („dwie rezerwacje czekają", „kroku nie ma kto zatwierdzić"), prowadzi tam, gdzie
+   * się ją robi. Osobny slot, bo przycisk jest RODZEŃSTWEM treści w układzie flex,
+   * a nie jej fragmentem.
+   */
+  action?: ReactNode;
   children: ReactNode;
 }
 
-export function Banner({ tone, live = false, style, children }: BannerProps) {
+export function Banner({ tone, live = false, style, action, children }: BannerProps) {
   const Icon = ICONS[tone];
   return (
     <div className={`banner ${tone}`} style={style} role={live ? 'alert' : undefined}>
       <Icon size={15} />
       <span>{children}</span>
+      {action ?? null}
     </div>
   );
 }

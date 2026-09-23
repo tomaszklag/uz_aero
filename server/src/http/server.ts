@@ -558,7 +558,7 @@ export async function buildServer(
   registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
   // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
   // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.
-  registerAdminApprovalRoutes(app, deps.approvals, gate);
+  registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

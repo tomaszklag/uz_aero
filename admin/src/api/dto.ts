@@ -1065,6 +1065,8 @@ export interface ApprovalViewDto {
 
 /** `GET /admin/api/bookings/:id` - zajętość razem ze stanem jej ścieżki. */
 export interface BookingDetailDto {
+  /** Strefa klubu - godziny decyzji czyta się nią, jak resztę kalendarza. */
+  timezone: string;
   booking: BookingDto;
   approval: ApprovalViewDto;
 }
@@ -1087,6 +1089,8 @@ export interface ApprovalQueueItemDto {
 }
 
 export interface ApprovalQueueDto {
+  /** Strefa klubu - „wczoraj 18:40" i „termin za 3 dni" liczą się jej dobą. */
+  timezone: string;
   items: ApprovalQueueItemDto[];
 }
 

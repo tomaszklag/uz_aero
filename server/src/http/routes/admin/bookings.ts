@@ -105,7 +105,11 @@ export function registerAdminBookingRoutes(
       if (view == null) return reply.code(404).send({ error: 'not_found' });
 
       const approval = await approvals.view(actor.orgId, view.booking.id);
-      return reply.send({ booking: wire(view.booking), approval: panelApprovalWire(approval) });
+      return reply.send({
+        timezone: view.timezone,
+        booking: wire(view.booking),
+        approval: panelApprovalWire(approval),
+      });
     },
   );
 

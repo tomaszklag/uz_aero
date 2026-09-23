@@ -4179,6 +4179,64 @@ Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decy
   panelu; `expo-notifications` w aplikacji to moduł natywny, więc 3.1.0 idzie NOWYM APK
   (§12.4), a projekt Firebase i FCM V1 w EAS są zadaniem właściciela na drodze krytycznej
 
+## Rezerwacje 3.1.0 - epik R-H: panel - ścieżka akceptacji i kolejka decyzji (issue #165, 2026-09-23)
+Cztery decyzje właściciela na wejściu (pytane pojedynczo) i reguły obowiązujące odtąd:
+- **DECYZJA Z PANELU = TA SAMA DECYZJA, CO Z TELEFONU** - `POST /admin/api/bookings/:id/decision`
+  na tym samym `ApprovalFlow.decide`, BEZ wpisu w dzienniku audytu: rejestrem jest
+  append-only `booking_approvals`, a drugi ślad zależny od powierzchni mówiłby o jednym
+  fakcie na dwa sposoby. Trasa wpuszcza `reservations.approve` ALBO `reservations.manage`
+  (druga jest zaporą przed zakleszczeniem), więc deklaracja stoi na `panel.access`,
+  a rozstrzygnięcie w handlerze - `adminRoute` zna jedną zdolność, a „approve albo manage"
+  nie jest żadną z nich
+- **HISTORIA W PANELU NIESIE OSOBĘ** (`decidedBy` w `panelApprovalWire`), telefon dalej
+  nie (`approvalWire`, §9.4): administrator pyta „do kogo zadzwonić". Widok w warstwie
+  aplikacji jest JEDEN; o polach na drucie rozstrzyga trasa. Rozstrzygnięcie pisze się
+  RZECZOWNIKIEM („zgoda · Jan Bąk JBA · 24 wrz, 18:40"), bo czasownika nie da się
+  odmienić bez znajomości płci - ta sama granica, co przy `originLabel`
+- **HISTORIA (H5) I ODBLOKOWANIE UTKNIĘTEGO KROKU MIESZKAJĄ W SZUFLADZIE ZAJĘTOŚCI** (K2a
+  w `kalendarz-wpis`, dorysowana PRZED kodem): kolejka K5 pokazuje wyłącznie sprawy na
+  MOIM kroku bieżącym (`ApprovalFlow.queueFor`), więc rezerwacja utknięta na kroku bez
+  obsady nigdy by się w niej nie pojawiła. `ApprovalCard`: kroki po numerach, krok
+  bieżący bursztynem, nieosiągnięty kreską, pominięcie jako zapis „przeszedł sam";
+  dla `reservations.manage` przy sprawie w toku karta „Decyzja za krok …". Klub bez
+  ścieżki karty NIE MA (reguła SyncChipa)
+- **KOLEJKA MA WŁASNĄ TRASĘ** (`GET /admin/api/approvals/queue`, `reservations.approve`),
+  nie filtr na oknie kalendarza - kolejka nie ma okna dat. Odpowiedź niesie `timezone`,
+  bo „wczoraj 18:40" i „termin za 3 dni" liczą się DOBĄ KLUBU (`clubDayIndex`
+  w `bookingLabels.ts` czyta części daty z `Intl`, nie napis - `pl-PL` układa go po
+  swojemu). Najstarsze ZŁOŻONE pierwsze: to one są najbliżej wygaśnięcia (§11.5)
+- **BANER NA OSI ISTNIEJE WYŁĄCZNIE Z PRACĄ** i liczy sprawy SŁOWEM do czterech („Dwie
+  rezerwacje czekają na Twoją zgodę."); wiersz „Krok" na karcie kolejki wraca TYLKO przy
+  kolejce mieszającej kroki (`showsStepRow` - wzorzec `needsFieldLabels` z issue #43);
+  zdanie „co po decyzji" stoi RAZ pod listą (`decisionHint`). `Banner` dostał slot `action`
+  (przycisk jest rodzeństwem treści w układzie flex, jak w makietach); ikona banera dalej
+  wynika z TONU, więc zegar z makiety K1 został ikoną informacji
+- **KOLEJNOŚĆ KROKÓW ZAPISUJE SIĘ OD RAZU** przy przestawieniu (uchwyt = `<button
+  draggable>` ze strzałkami góra/dół; kolejność jest REGUŁĄ, nie szkicem), a ścieżka
+  zawsze jedzie CAŁA (`withStep`/`withoutStep` w `approvalPath.ts`). Tabelę ścieżki
+  rysuje ekran sam, nie `DataTable` - uchwyt potrzebuje zdarzeń na WIERSZU, których
+  tabela-kręgosłup nie wystawia. Zdjęcie kroku ma kartę `danger` w szufladzie z opisem
+  skutku (nie było w makiecie - sprawy czekające na krok przejdą dalej)
+- **OBSADA LICZY SIĘ WOBEC ŻYWEGO KLUBU** (`stepMembers`/`stepHealth`): osoba, która
+  straciła zdolność albo członkostwo, ZOSTAJE na liście (konfiguracji klubu nie czyścimy
+  po cichu), nazwisko przygasa (`.cell-sub .dim` - stopień placeholdera, bo `--text-muted`
+  należy w kalendarzu do stanu „czeka"), a krok bez nikogo dostaje baner `warn`
+  z drogą naprawy. W szufladzie taka osoba stoi na liście ZAZNACZONA z adnotacją -
+  inaczej nie dałoby się jej z kroku zdjąć. `OptionButton` dostał `multiple`
+  (`role="checkbox"`): obsada kroku to pula, nie jedna z listy
+- **PODGLĄD PILOTA I SAMOLOTU (K6) TO OSOBNE ZGŁOSZENIE**: wymaga zapytań serwera (nalot,
+  ostatnie loty, najbliższe rezerwacje) wspólnych z telefonem 26a/26b. Wartości w kolejce
+  NIE prowadzą w głąb (`.go` z makiety czeka na tamten epik)
+- **STRAŻNIK LUSTER PILNUJE ODTĄD KONTRAKTÓW KALENDARZA I ŚCIEŻKI** (#204, zrobione
+  pierwszym commitem tego epiku): `BookingStatus`, `BookingKind`, `ApprovalOutcome`,
+  `ApprovalRefusal`, `ApprovalVerdict`, `ApprovalVia`, `ApprovalStepsRefusal` - skaner
+  czyta unie także z `application/common/ports.ts` i z komendy ścieżki. Dokładając unię
+  po stronie serwera, dopisz lustro i jego wiersz w `admin/test/mirrors.test.ts`
+- **czego R-H NIE ROBI**: sprawdzenia w przeglądarce na żywym serwerze (panel przeszedł
+  `tsc` i 413 testów, w tym strażników); podręcznika (R-K, #169); domknięcia rezerwacji,
+  którym po SKRÓCENIU ścieżki nie zostało czego pytać (osobne zgłoszenie - dziś stoją
+  w `pending` do wygaśnięcia)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

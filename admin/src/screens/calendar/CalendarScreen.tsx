@@ -21,6 +21,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
+import { useApprovalQueue } from '../../queries/useApprovals';
 import { useCalendar } from '../../queries/useCalendar';
 import { useFleet } from '../../queries/useFleet';
 import { usePilots } from '../../queries/usePilots';
@@ -29,6 +30,7 @@ import {
   Button,
   EmptyState,
   FilterChip,
+  LinkButton,
   Loadable,
   PageHead,
 } from '../../ui/components';
@@ -38,6 +40,7 @@ import { BlockDrawer } from './BlockDrawer';
 import { BookingDrawer } from './BookingDrawer';
 import type { Person } from './bookingLabels';
 import { buildCalendarGrid, hasAnyItem, type CalendarAircraft } from './calendarGrid';
+import { queueBanner } from './queueCards';
 import {
   DEFAULT_RANGE,
   RANGE_OPTIONS,
@@ -108,11 +111,26 @@ export function CalendarScreen() {
   );
 
   const open = id == null ? null : (calendar.data?.bookings ?? []).find((b) => b.id === id) ?? null;
-  const error = calendar.error ?? fleet.error;
 
   // Brak uprawnienia = BRAK przycisku, nie przycisk wyszarzony (`panel-2.0.md` §3.3).
   const canBlock = can(session?.capabilities, 'fleet.manage');
   const canManage = can(session?.capabilities, 'reservations.manage');
+  // Ścieżkę układa się raz i zagląda do niej rzadko - konfiguracja idzie akcją WYCISZONĄ
+  // (`accounts.manage`, bo to rozdanie władzy). Kolejkę pyta wyłącznie ten, kto w ogóle
+  // akceptuje: bez zdolności odpowiedź byłaby 403 na ekranie, na którym nic nie zaszło.
+  const canConfigure = can(session?.capabilities, 'accounts.manage');
+  const canApprove = can(session?.capabilities, 'reservations.approve');
+  const queue = useApprovalQueue(canApprove);
+  const waiting = useMemo(
+    () =>
+      queueBanner(queue.data?.items ?? [], {
+        timezone: queue.data?.timezone ?? '',
+        now: Date.now(),
+      }),
+    [queue.data],
+  );
+
+  const error = calendar.error ?? fleet.error ?? queue.error;
 
   return (
     <>
@@ -120,6 +138,11 @@ export function CalendarScreen() {
         title="Kalendarz"
         actions={
           <>
+            {canConfigure ? (
+              <LinkButton to="/kalendarz/sciezka" variant="ghost">
+                Ścieżka akceptacji
+              </LinkButton>
+            ) : null}
             {canManage ? (
               <Button variant="ghost" onClick={() => setForm('booking')}>
                 Zarezerwuj za pilota
@@ -138,6 +161,23 @@ export function CalendarScreen() {
       {error == null ? null : (
         <Banner tone="danger" live>
           {errorMessage(error)}
+        </Banner>
+      )}
+
+      {/* WEJŚCIE W KOLEJKĘ ISTNIEJE WYŁĄCZNIE Z PRACĄ: baner pojawia się, gdy coś czeka
+          NA ZALOGOWANEGO - nie na klub. Pusta kolejka to stan domyślny i nie dostaje
+          zdania (reguła SyncChipa); liczba w napisie, bo „coś czeka" kazałoby wejść,
+          żeby się dowiedzieć ile. */}
+      {waiting == null ? null : (
+        <Banner
+          tone="status"
+          action={
+            <LinkButton to="/kalendarz/decyzje" size="sm" variant="ghost">
+              Rozpatrz
+            </LinkButton>
+          }
+        >
+          <b>{waiting.lead}</b> {waiting.detail}
         </Banner>
       )}
 
@@ -177,6 +217,12 @@ export function CalendarScreen() {
                 <span className="cal-legend-item">
                   <span className="cal-swatch" />
                   Rezerwacja
+                </span>
+                {/* Stan „czeka na akceptację" różni się KSZTAŁTEM (przerywana ramka), nie
+                    barwą - bursztyn niesie wyłączenie z użytku (issue #165, H4). */}
+                <span className="cal-legend-item">
+                  <span className="cal-swatch pending" />
+                  Czeka na akceptację
                 </span>
                 <span className="cal-legend-item">
                   <span className="cal-swatch block" />

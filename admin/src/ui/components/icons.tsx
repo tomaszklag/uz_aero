@@ -313,3 +313,32 @@ export function PhoneIcon({ size = 15 }: IconProps) {
     </Stroke>
   );
 }
+
+/* ── ścieżka akceptacji i kolejka decyzji (3.1.0, issue #165) - 1:1 z `design/panel/kalendarz-*.html` ── */
+
+/**
+ * Uchwyt przeciągania - sześć kropek. Wypełniony, bo to nie jest kontur rzeczy, tylko
+ * faktura chwytu; stoi w przycisku `.drag-handle`, który przyjmuje fokus i strzałki.
+ */
+export function DragHandleIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="9" cy="6" r="1.6" />
+      <circle cx="15" cy="6" r="1.6" />
+      <circle cx="9" cy="12" r="1.6" />
+      <circle cx="15" cy="12" r="1.6" />
+      <circle cx="9" cy="18" r="1.6" />
+      <circle cx="15" cy="18" r="1.6" />
+    </svg>
+  );
+}
+
+/** Lista z ptaszkiem - stan pusty ścieżki („potwierdzają się od razu") i kolejki („nikt nie czeka"). */
+export function ChecklistIcon({ size = 22 }: IconProps) {
+  return (
+    <Stroke size={size} width={1.8}>
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </Stroke>
+  );
+}

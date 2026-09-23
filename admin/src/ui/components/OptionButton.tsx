@@ -23,14 +23,27 @@ interface OptionButtonProps {
   desc: string;
   selected: boolean;
   disabled?: boolean;
+  /**
+   * Wybór WIELU pozycji naraz (`role="checkbox"`) - obsada kroku ścieżki akceptacji
+   * (makieta `kalendarz-sciezka` K4a): kilka osób w kroku to pula, nie jedna z listy.
+   * Wygląd ten sam, inna semantyka dla czytnika ekranu.
+   */
+  multiple?: boolean;
   onSelect: () => void;
 }
 
-export function OptionButton({ name, desc, selected, disabled = false, onSelect }: OptionButtonProps) {
+export function OptionButton({
+  name,
+  desc,
+  selected,
+  disabled = false,
+  multiple = false,
+  onSelect,
+}: OptionButtonProps) {
   return (
     <button
       type="button"
-      role="radio"
+      role={multiple ? 'checkbox' : 'radio'}
       aria-checked={selected}
       disabled={disabled}
       className={selected ? 'opt selected' : 'opt'}

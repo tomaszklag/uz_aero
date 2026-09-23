@@ -29,6 +29,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { ApprovalFlow, ApprovalView } from '../../../application/common/commands/approvals.ts';
+import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
 import type { ApprovalRefusal } from '../../../domain/approvals.ts';
 import { can } from '../../../domain/roles.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
@@ -86,6 +87,7 @@ export function panelApprovalWire(view: ApprovalView): Record<string, unknown> {
 export function registerAdminApprovalRoutes(
   app: FastifyInstance,
   approvals: ApprovalFlow,
+  calendar: BookingQueries,
   gate: AdminGate,
 ): void {
   adminRoute(
@@ -93,10 +95,15 @@ export function registerAdminApprovalRoutes(
     gate,
     { method: 'GET', url: '/approvals/queue', capability: 'reservations.approve' },
     async (_req, reply, actor) => {
+      const timezone = await calendar.timezone(actor.orgId);
+      if (timezone == null) return reply.code(404).send({ error: 'not_found' });
+
       const items = await approvals.queueFor(actor.orgId, actor.pilotId);
       // Pusta lista jest STANEM, w którym ta odpowiedź jest przez większość czasu -
-      // baner na osi kalendarza pojawia się wyłącznie z pracą (makieta K5b).
+      // baner na osi kalendarza pojawia się wyłącznie z pracą (makieta K5b). Strefa
+      // jedzie obok, bo „wczoraj" i „termin za 3 dni" liczą się dobą KLUBU (§6).
       return reply.send({
+        timezone,
         items: items.map((item) => ({ booking: bookingWire(item.booking), step: item.step })),
       });
     },

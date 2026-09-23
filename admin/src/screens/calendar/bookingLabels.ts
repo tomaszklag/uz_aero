@@ -123,9 +123,27 @@ export interface DrawerHeading {
 const fmt = (timezone: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat =>
   new Intl.DateTimeFormat('pl-PL', { ...options, timeZone: timezone || undefined });
 
-/** Data w strefie klubu jako `RRRR-MM-DD` - do porównania dób, nie do czytania. */
+/**
+ * Data w strefie klubu jako napis - WYŁĄCZNIE do porównania dób (dwie chwile w jednej
+ * dobie klubu dają ten sam napis), nie do czytania ani parsowania: `pl-PL` układa ją
+ * po swojemu („26.09.2026"). Kto potrzebuje liczyć na dniach, bierze `clubDayIndex`.
+ */
 const dzien = (at: Date, tz: string): string =>
   fmt(tz, { year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
+
+/**
+ * Numer doby KLUBU (dni od epoki) - do rachunku „dziś / wczoraj / za n dni" w kolejce
+ * decyzji (3.1.0). Z części sformatowanej daty, nie z napisu: układ napisu należy do
+ * locale, a części mają nazwy. Doba klubu, nie przeglądarki - jak reszta kalendarza.
+ */
+export function clubDayIndex(at: number, tz: string): number {
+  const f = fmt(tz, { year: 'numeric', month: 'numeric', day: 'numeric' });
+  const date = new Date(at);
+  const rok = Number(czesc(f, date, 'year'));
+  const miesiac = Number(czesc(f, date, 'month'));
+  const dzienMiesiaca = Number(czesc(f, date, 'day'));
+  return Date.UTC(rok, miesiac - 1, dzienMiesiaca) / 86_400_000;
+}
 
 export const godzina = (at: Date, tz: string): string =>
   fmt(tz, { hour: '2-digit', minute: '2-digit' }).format(at);
