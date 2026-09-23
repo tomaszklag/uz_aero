@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 26C Odmowa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Nagłówek z powrotem: ten ekran OTWIERA SIĘ z kalendarza albo z Pulpitu, więc
+     strzałka ma dokąd wracać - inaczej niż zakładki, które powrotu nie mają. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══ HERO: TERMIN ═══
+     Bohaterem ekranu jest CZAS, bo to on jest przedmiotem rezerwacji - maszyna, zadanie
+     i trasa są jego opisem. Odliczanie stoi tylko przy rezerwacji nadchodzącej; przy
+     minionej znika, zamiast pokazywać liczbę ujemną. */
+  .hero {
+    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--green-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--green); }
+
+  /* ═══ KARTA DANYCH ═══ wiersze klucz-wartość, jak szuflada panelu: ekran ODPOWIADA,
+     a nie oferuje - ołówek przy każdym wierszu byłby czterema celami dotknięcia dla
+     jednej czynności (issue #40). Zmiana idzie jedną drogą: „PRZESUŃ I POPRAW". */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══ AKCJE ═══
+     „PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem - to ta sama ścieżka, więc
+     nie ma osobnego ekranu edycji (ta sama zasada, co tryb edycji ekranu 10 z issue #43).
+
+     ODWOŁANIE jest OBRAMOWANE, nie wypełnione: czerwień mówi „uwaga", nie „zrób to"
+     (issue #55 / 10L). Stoi na dole, za wszystkim - intencją wchodzącego jest sprawdzenie
+     albo przesunięcie, nie kasowanie. */
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+  .btn-danger {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:transparent; color:var(--red);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--red-border); text-decoration:none;
+  }
+  .btn-danger:hover { background:var(--red-muted); }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     WIERSZ, KTÓRY PROWADZI W GŁĄB - telefonowy odpowiednik `.go` z panelu
+
+     W panelu afordancję niesie GHOST-BADGE POD KURSOREM: wartość jest wartością,
+     a kształt pojawia się dopiero, gdy myszka nad nią stanie. Na telefonie kursora
+     NIE MA, więc ta sama sztuczka dałaby wiersz, po którym nic nie widać - trzeba
+     byłoby w niego tapnąć, żeby się dowiedzieć, że coś robi.
+
+     Dlatego tutaj afordancja stoi W SPOCZYNKU i jest nią SZEWRON na prawej krawędzi -
+     ten sam glif, którym cała aplikacja oznacza „to prowadzi dalej". Świeci przy
+     DWÓCH-TRZECH wierszach karty, nie przy każdym, więc nie uczy oka pomijać kolumny
+     (reguła SyncChipa z issue #12).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  a.kv { text-decoration:none; color:inherit; position:relative; }
+  a.kv:hover { background:var(--surface-raised); }
+  a.kv .kv-v { padding-right:16px; }
+  a.kv::after {
+    content:"\203A"; position:absolute; right:13px; top:50%; transform:translateY(-52%);
+    font-family:var(--font-mono); font-size:15px; color:var(--text-muted);
+  }
+
+  /* Pas decyzji. ZGODA jest akcją główną, ODMOWA wyciszoną - tak samo jak w kolejce
+     panelu. Czerwieni tu nie ma: odmowa jest DECYZJĄ, nie zniszczeniem - czerwień
+     w tej aplikacji niesie odwołanie własnej rezerwacji i unieważnienie wpisu. */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; padding:14px; border-radius:14px;
+    background:var(--green); color:#0D0D0D; border:none;
+    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; text-decoration:none;
+    box-shadow:0 0 28px rgba(46,204,113,0.28);
+  }
+
+  /* Tabela ostatnich lotów - ten sam wycinek, co w szufladzie panelu. Trzy wiersze,
+     bo podgląd jest WYCINKIEM, a nie drugim dziennikiem. */
+  .mini-tab { width:100%; border-collapse:collapse; }
+  .mini-tab th {
+    text-align:left; font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-muted); font-weight:400; padding:9px 13px 6px; border-bottom:1px solid var(--border);
+  }
+  .mini-tab td { font-size:12px; color:var(--text-secondary); padding:9px 13px; border-bottom:1px solid var(--border); }
+  .mini-tab tr:last-child td { border-bottom:none; }
+  .mini-tab td.reg { font-family:var(--font-mono); font-size:11.5px; letter-spacing:1px; color:var(--text-primary); }
+  .mini-tab td.num, .mini-tab th.num { text-align:right; font-family:var(--font-mono); }
+
+  .kv-v.amber { color:var(--amber); }
+  .kv-v .cell-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ═══ ARKUSZ ODMOWY ═══
+     Rama jak w każdym arkuszu aplikacji: sufit 56 px nad bezpiecznym obszarem, treść
+     przewija się w środku, akcje przypięte na dole. Arkusz jest WSTAWKĄ NAD ekranem
+     i musi to być widać - bez sufitu czyta się jak nowy ekran. */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 16px 30px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-field {
+    border:1px solid var(--border-strong); background:var(--surface); border-radius:12px;
+    padding:12px 13px; min-height:86px; font-size:13px; line-height:1.5; color:var(--text-placeholder, #5A5A5A);
+  }
+  .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  .modal-ref-val { color:var(--text-secondary); }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
+  /* Przycisk ZABLOKOWANY BEZ ZDANIA POD SPODEM: pole odmowy jest puste i pilot na nie
+     patrzy, więc powód blokady widać z kontrolki nad przyciskiem (wąski wyjątek
+     reguły issue #55 - „puste pole wymagane nie dostaje zdania"). */
+  .modal-btn-off { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-family:var(--font-display); font-size:17px; letter-spacing:2px; opacity:0.55; }
+  /* Przypis pod pasem akcji - jedno zdanie o SKUTKU decyzji. Ta sama kontrolka,
+     co w Historii: ikona u góry pierwszej linii, tekst wygaszony. */
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:2px 4px 0; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 26C</span>
+  <span class="slug">odmowa · powód wymagany</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Odmowa z powodem">
+  <div class="status-bar">
+    <span>07:45</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+  <div class="screen">
+
+    <!-- Nagłówek wg wzorca 23: powrót po lewej, tytuł na środku. Wyśrodkowanie
+         zostaje dla ekranów z powrotem - tak samo jak na karcie rezerwacji, której
+         ten ekran jest bliźniakiem. Kim albo czym jest bohater, mówi pierwsza
+         linia treści, a nie podtytuł w nagłówku. -->
+    <div class="app-header">
+      <a href="25-powiadomienia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">DECYZJA</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ══ KROKU NIE PISZEMY ══
+           „Krok: Mechanik" nie pada ani tutaj, ani w kolejce panelu: ekran pyta CIEBIE,
+           więc nazwa kroku odpowiada na pytanie, którego nikt nie zadał. Co się stanie
+           po decyzji, mówi zdanie pod pasem akcji - raz, a nie przy każdym wierszu. -->
+      <div class="section-lbl">Rezerwacja do rozpatrzenia</div>
+      <div class="card">
+        <a class="kv" href="26b-podglad-samolotu.html"><span class="kv-k">Samolot</span><span class="kv-v">SP-AXA <span class="cell-sub">· C172</span></span></a>
+        <div class="kv"><span class="kv-k">Termin</span><span class="kv-v">sob 26 WRZ <span class="mono">09:00-12:00</span></span></div>
+        <a class="kv" href="26a-podglad-pilota.html"><span class="kv-k">Pilot</span><span class="kv-v">Jakub Wrona <span class="cell-sub">· JWR</span></span></a>
+        <a class="kv" href="26a-podglad-pilota.html"><span class="kv-k">Drugi pilot</span><span class="kv-v">Anna Kowal <span class="cell-sub">· AKO</span></span></a>
+        <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+        <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v"><span class="mono">EPZG → EPRJ</span></span></div>
+        <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">2:00 · paliwo 140 L</span></div>
+        <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części w Jasionce, wracamy tego samego dnia.</span></div>
+        <div class="kv"><span class="kv-k">Czeka od</span><span class="kv-v">wczoraj 18:40 <span class="kv-sub">termin za 3 dni</span></span></div>
+      </div>
+
+      <!-- ODMOWA NIE JEST CZERWONA. Czerwień niesie w tej aplikacji odwołanie WŁASNEJ
+           rezerwacji i unieważnienie wpisu - rzeczy, które coś kasują. Odmowa jest
+           decyzją i stoi obok zgody jako druga, wyciszona odpowiedź. -->
+      <a class="btn-primary" href="25-powiadomienia.html">ZATWIERDŹ</a>
+      <a class="btn-secondary" href="26c-odmowa.html">ODMÓW</a>
+
+      <!-- Jedno zdanie o skutku, na dole i raz. Pilot dostaje wiadomość natychmiast,
+           więc decyzja jest widoczna po tamtej stronie od razu - to warto wiedzieć
+           PRZED tapnięciem, a nie po. -->
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>Po zgodzie rezerwacja idzie do kroku <b>Szef wyszkolenia</b>. Po odmowie termin wraca do puli, a pilot dostaje powód.</span>
+      </div>
+
+    </div>
+
+    <!-- ══ POWÓD ODMOWY JEST WYMAGANY ══
+         Pilot czyta go na swoim telefonie jako treść wiadomości - „odmowa" bez słowa
+         zostawia go z pytaniem, na które musiałby zadzwonić. To jedyne pole w tym
+         module bez plakietki „opcjonalne".
+
+         Przycisk jest wygaszony BEZ ZDANIA POD SPODEM: puste pole stoi tuż nad nim,
+         więc powód blokady widać z kontrolki (wąski wyjątek reguły issue #55). -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">ODMOWA</div>
+        <div class="modal-lbl">Powód</div>
+        <div class="modal-field">Napisz, dlaczego nie - pilot przeczyta to na swoim telefonie.</div>
+        <div class="modal-ref"><span>Rezerwacja</span><span class="modal-ref-val">SP-AXA · sob 26 WRZ 09:00-12:00</span></div>
+        <div class="modal-actions">
+          <a class="modal-btn-cancel" href="26-decyzja.html">ANULUJ</a>
+          <span class="modal-btn-off">ODMÓW</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="26-decyzja.html">
+    <span class="vp-badge">26</span>
+    <span class="vp-body">
+      <span class="vp-name">Decyzja o cudzej rezerwacji</span>
+      <span class="vp-when">Otwiera się z wiersza „Do decyzji" w skrzynce. Samolot i OBIE osoby prowadzą w podgląd - to jedyne trzy wiersze karty z szewronem. Zgoda jest akcją główną, odmowa wyciszoną; czerwieni tu nie ma, bo odmowa jest decyzją, a nie zniszczeniem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="26a-podglad-pilota.html">
+    <span class="vp-badge">26A</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd pilota</span>
+      <span class="vp-when">Te same fakty, co szuflada w panelu: doświadczenie NA TYM egzemplarzu przed nalotem ogólnym, trzy ostatnie loty i najbliższe rezerwacje - w tym ta, która nachodzi na rozpatrywany termin. Bazy to nie wyklucza (ograniczenie pilnuje egzemplarza, nie człowieka), więc odpowiedź należy do tego, kto zatwierdza.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="26b-podglad-samolotu.html">
+    <span class="vp-badge">26B</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd samolotu</span>
+      <span class="vp-when">Liczniki ze źródłem odczytu, ostatnie 30 dni, ostatnie loty i najbliższe terminy - razem z wyłączeniem z użytku, które czasem stoi tuż za rozpatrywanym terminem.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="26c-odmowa.html">
+    <span class="vp-badge amber">26C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odmowa - powód wymagany</span>
+      <span class="vp-when">Pilot czyta ten powód na swoim telefonie, więc bez niego odmowa zostawia go z pytaniem, na które musiałby zadzwonić. Przycisk jest wygaszony BEZ zdania pod spodem: puste pole widać nad nim (issue #55).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="25-powiadomienia.html">
+    <span class="vp-badge blue">25</span>
+    <span class="vp-body">
+      <span class="vp-name">Skrzynka (wejście)</span>
+      <span class="vp-when">Lista wiadomości i spraw. Po decyzji plakietka „Do decyzji" gaśnie, a wiadomość zostaje jako zapis tego, co się stało.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25-powiadomienia.html">← 25 Skrzynka</a>
+  <span>·</span>
+  <a href="26-decyzja.html">26 Decyzja</a>
+  <a href="26a-podglad-pilota.html">26A Pilot</a>
+  <a href="26b-podglad-samolotu.html">26B Samolot</a>
+  <a href="26c-odmowa.html" class="active">26C Odmowa</a>
+  <span>·</span>
+  <a href="20-pulpit.html">20 Pulpit →</a>
+</nav>
+
+</body>
+</html>
