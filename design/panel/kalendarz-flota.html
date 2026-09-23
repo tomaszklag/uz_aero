@@ -56,6 +56,13 @@
       <span class="vp-when">Kroki, przez które przechodzi rezerwacja, zanim się potwierdzi (3.1.0). Klub bez ani jednego kroku nie klika w nic i to jest stan domyślny KAŻDEGO klubu.</span>
     </span>
   </a>
+  <a class="vp-item" href="kalendarz-kolejka.html">
+    <span class="vp-badge">K5</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolejka decyzji</span>
+      <span class="vp-when">Rezerwacje czekające na MOJĄ zgodę, z całym planem (3.1.0). Ścieżka mówi, CO ma się zdarzyć; kolejka - co czeka teraz.</span>
+    </span>
+  </a>
 </aside>
 
 <main class="browser" role="region" aria-label="Kalendarz - cała flota">
@@ -151,6 +158,20 @@
 
            Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go kliknięto
            (reguła z dziennika). -->
+      <!-- ══ WEJŚCIE W KOLEJKĘ ISTNIEJE WYŁĄCZNIE Z PRACĄ ══
+           Baner pojawia się, gdy coś CZEKA NA ZALOGOWANEGO - nie na klub. Kolejka
+           cudzego kroku nie jest jego sprawą i nie ma jak jej rozstrzygnąć.
+
+           Nie ma go w kolumnie ani w pasku akcji, bo wskaźnik świecący przy każdym
+           wejściu uczy oko pomijać górę ekranu (reguła SyncChipa z issue #12): pusta
+           kolejka to stan domyślny i nie dostaje zdania. Stąd też LICZBA w napisie -
+           „coś czeka" kazałoby wejść, żeby się dowiedzieć ile. -->
+      <div class="banner status">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span><b>Dwie rezerwacje czekają na Twoją zgodę.</b> Najdłużej czekająca od wczoraj, a termin ma za trzy dni.</span>
+        <a class="btn ghost sm" href="kalendarz-kolejka.html">Rozpatrz</a>
+      </div>
+
       <div class="filters">
         <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
         <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
@@ -342,6 +363,7 @@
   <a href="kalendarz-wpis.html">Kalendarz · wpis</a>
   <a href="kalendarz-blokada.html">Kalendarz · wyłączenie</a>
   <a href="kalendarz-sciezka.html">Kalendarz · ścieżka</a>
+  <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>

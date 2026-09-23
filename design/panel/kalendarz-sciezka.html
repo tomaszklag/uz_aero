@@ -71,6 +71,13 @@
       <span class="vp-when">Na listę kroku wchodzą WYŁĄCZNIE osoby ze zdolnością „Akceptacja rezerwacji". Zdolność mówi „ta osoba w ogóle akceptuje", krok - „za to odpowiada".</span>
     </span>
   </a>
+  <a class="vp-item" href="kalendarz-kolejka.html">
+    <span class="vp-badge">K5</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolejka decyzji</span>
+      <span class="vp-when">Rezerwacje czekające na MOJĄ zgodę, z całym planem (3.1.0). Ścieżka mówi, CO ma się zdarzyć; kolejka - co czeka teraz.</span>
+    </span>
+  </a>
 </aside>
 
 <main class="browser" role="region" aria-label="Ścieżka akceptacji klubu">
@@ -157,19 +164,19 @@
         </div>
       </div>
 
-      <!-- ══ ŻYWA ŚCIEŻKA MÓWI O SOBIE PRZED LISTĄ, NIE PO ZAPISIE ══
-           Rezerwacja w toku czyta konfigurację NA ŻYWO (`docs/rezerwacje.md` §11.2), więc
-           poprawka obowiązuje natychmiast i wszystkich - także sprawy, które ktoś już
-           zaczął rozstrzygać. Skutek dołożenia kroku jest przy tym NIEOCZYWISTY: rezerwacja
-           czekająca na krok 2 wraca do nowego kroku 1, czyli COFA SIĘ.
+      <!-- ══ BANER MÓWI, CO TA ŚCIEŻKA ROBI - PRZED LISTĄ, NIE POD NIĄ ══
+           Kto wchodzi na ten ekran, pyta najpierw „jak to u nas działa", a nie „co się
+           stanie, gdy to zmienię". Reguła mieści się w trzech zdaniach i CZYTA SIĘ
+           RAZEM Z TABELĄ pod spodem, bo wymienia kroki po nazwach - baner i lista mówią
+           o tym samym, tylko baner słowami, a lista wierszami.
 
-           Baner jest typu `status`, nie `warn`: to nie jest ostrzeżenie o błędzie, tylko
-           opis działania ekranu, na którym administrator właśnie stoi. Stoi NAD listą, bo
-           dotyczy każdej zmiany na niej - nie pod przyciskiem zapisu, gdzie przeczytałby
-           go dopiero ten, kto już zdecydował. -->
+           Baner jest typu `status`, nie `warn`: to nie ostrzeżenie o błędzie, tylko opis
+           działania ekranu. Cena ZMIANY - że ścieżka jest żywa i dołożenie kroku cofa
+           sprawy w toku - zeszła pod tabelę: dotyczy tego, kto już coś przestawia,
+           a nie tego, kto właśnie wszedł. -->
       <div class="banner status">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span><b>Zmiana działa od zaraz, także na rezerwacjach w toku.</b> Dołożenie kroku cofa sprawy, które czekają na zgodę dalszego kroku - wrócą do nowego kroku 1. Zgody już wydane zostają przy swoich krokach.</span>
+        <span><b>Rezerwacja idzie krok po kroku: Mechanik, potem Szef wyszkolenia.</b> Wystarczy zgoda jednej osoby z kroku. Pierwsza odmowa jest ostateczna: rezerwacja zostaje odrzucona, termin wraca do puli i nie idzie już do kolejnych kroków.</span>
       </div>
 
       <!-- ══ TABELA, NIE LISTA KART ══
@@ -177,50 +184,59 @@
            jest tu TREŚCIĄ, nie porządkiem wyświetlania. Tabela stawia numer w osobnej
            kolumnie i dzięki temu widać ścieżkę jako ciąg, a nie zbiór.
 
-           Strzałki przestawiają krok; przy pierwszym gaśnie „w górę", przy ostatnim
-           „w dół" - to BRAK AKCJI, nie wyszarzony przycisk z powodem, bo powód widać
-           z samej pozycji wiersza. -->
+           ══ KOLEJNOŚĆ ZMIENIA SIĘ UCHWYTEM, NIE PARĄ STRZAŁEK ══
+           Uwaga właściciela w trakcie rysowania. Strzałki „w górę/w dół" mówiły to samo
+           dwoma przyciskami na wiersz, a przy pięciu krokach zamieniały przestawienie
+           w odklikiwanie - żeby przenieść krok z końca na początek, trzeba było kliknąć
+           cztery razy i za każdym razem sprawdzić, gdzie wiersz wylądował.
+
+           Uchwyt stoi PIERWSZY w wierszu, bo dotyczy całego wiersza, a nie jednej
+           z jego wartości - kolumna akcji po prawej mówi, co zrobić z KROKIEM
+           („Edytuj"), a uchwyt, gdzie ten krok ma stać.
+
+           Jest PRZYCISKIEM, nie `<span draggable>`: przeciąganie samą myszą byłoby
+           jedyną drogą do zmiany kolejności, a tej nie da się wykonać z klawiatury.
+           Uchwyt przyjmuje fokus, a strzałki przestawiają wtedy wiersz - przeciąganie
+           jest wygodą, nie warunkiem (`admin/src/styles/components/controls.css`). -->
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
+              <th><span class="visually-hidden">Kolejność</span></th>
               <th>Krok</th>
               <th>Nazwa</th>
               <th>Kto może zatwierdzić</th>
-              <th>Kolejność</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr class="clickable">
+              <td><button type="button" class="drag-handle" aria-label="Przenieś krok Mechanik"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
               <td class="reg">1</td>
               <td class="cell-strong">Mechanik</td>
               <td><span class="cell-sub">Jan Bąk · Anna Kowal</span></td>
-              <td class="row-actions">
-                <button type="button" class="btn ghost sm" disabled aria-label="W górę">↑</button>
-                <button type="button" class="btn ghost sm" aria-label="W dół">↓</button>
-              </td>
               <td class="row-actions"><a class="btn ghost sm" href="#krok">Edytuj</a></td>
             </tr>
             <tr class="clickable">
+              <td><button type="button" class="drag-handle" aria-label="Przenieś krok Szef wyszkolenia"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
               <td class="reg">2</td>
               <td class="cell-strong">Szef wyszkolenia</td>
               <td><span class="cell-sub">Marek Sowa</span></td>
-              <td class="row-actions">
-                <button type="button" class="btn ghost sm" aria-label="W górę">↑</button>
-                <button type="button" class="btn ghost sm" disabled aria-label="W dół">↓</button>
-              </td>
               <td class="row-actions"><a class="btn ghost sm" href="#krok">Edytuj</a></td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- ══ CO WYNIKA Z KOLEJNOŚCI - ZDANIEM, NIE DIAGRAMEM ══
-           Kroki idą PO KOLEI: krok 2 pyta dopiero po zgodzie kroku 1, a przy odmowie na
-           kroku 1 nikt dalszy nie jest fatygowany. To jest cała reguła i mieści się
-           w jednym zdaniu, więc nie dostaje rysunku. -->
-      <p class="hint">Rezerwacja idzie krok po kroku: <b>Mechanik</b>, potem <b>Szef wyszkolenia</b>. Wystarczy zgoda jednej osoby z kroku. Pierwsza odmowa kończy sprawę i zwalnia termin - dalszych kroków nikt nie pyta.</p>
+      <!-- ══ CENA ZMIANY STOI POD TYM, CO SIĘ ZMIENIA ══
+           Rezerwacja w toku czyta konfigurację NA ŻYWO (`docs/rezerwacje.md` §11.2), więc
+           poprawka obowiązuje natychmiast i wszystkich - także sprawy, które ktoś już
+           zaczął rozstrzygać. Skutek dołożenia kroku jest przy tym NIEOCZYWISTY:
+           rezerwacja czekająca na krok 2 wraca do nowego kroku 1, czyli COFA SIĘ.
+
+           Zdanie stoi POD tabelą, a nie nad nią: czyta je ten, kto właśnie przestawia
+           kroki, a nie każdy, kto wszedł zobaczyć, jak ścieżka wygląda. -->
+      <p class="hint"><b>Zmiana działa od zaraz, także na rezerwacjach w toku.</b> Dołożenie kroku cofa sprawy, które czekają na zgodę dalszego kroku - wrócą do nowego kroku 1. Zgody już wydane zostają przy swoich krokach.</p>
 
         </div>
       </div>
@@ -240,6 +256,8 @@
   <a href="kalendarz-blokada.html">K3 Wyłączenie z użytku</a>
   <span>·</span>
   <a href="kalendarz-sciezka.html" class="active">K4 Ścieżka akceptacji</a>
+  <span>·</span>
+  <a href="kalendarz-kolejka.html">K5 Kolejka decyzji</a>
   <span>·</span>
   <a href="piloci-konto.html">P2 Zakres uprawnień</a>
   <span>·</span>

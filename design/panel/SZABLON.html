@@ -818,6 +818,40 @@
 
     <article class="inv full">
       <div class="inv-head">
+        <span class="inv-name">DragHandle - lista, w której KOLEJNOŚĆ JEST TREŚCIĄ</span>
+        <span class="inv-when">Wyłącznie tam, gdzie kolejność wiersza znaczy coś dla systemu, a nie tylko dla oka - dziś kroki ścieżki akceptacji (<b>K4</b>). Para strzałek „w górę/w dół" mówi to samo dwoma przyciskami na wiersz, a przy pięciu pozycjach zamienia przestawienie w odklikiwanie. Uchwyt jest <b>przyciskiem</b>, nie <code>&lt;span draggable&gt;</code>: przeciąganie samą myszą byłoby jedyną drogą do zmiany kolejności, a tej nie da się wykonać z klawiatury - z fokusem na uchwycie wiersz przestawiają strzałki. Stoi PIERWSZY w wierszu, bo dotyczy całego wiersza, a nie jednej z jego wartości. Kursor niesie stan czynności (grab → grabbing): to jedyne miejsce w panelu, gdzie wciśnięcie znaczy „trzymam", a nie „kliknąłem".</span>
+        <span class="inv-classes"><b>.drag-handle</b> · tr.dragging</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Kroki ścieżki - uchwyt i wiersz w ruchu</caption>
+            <thead>
+              <tr>
+                <th><span class="visually-hidden">Kolejność</span></th>
+                <th>Krok</th>
+                <th>Nazwa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Mechanik"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">1</td>
+                <td class="cell-strong">Mechanik</td>
+              </tr>
+              <tr class="dragging">
+                <td><button type="button" class="drag-handle" aria-label="Przenieś krok Szef wyszkolenia"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></button></td>
+                <td class="reg">2</td>
+                <td class="cell-strong">Szef wyszkolenia <span class="cell-sub">· w ruchu</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
         <span class="inv-name">DataTable</span>
         <span class="inv-when">Kręgosłup panelu. Reguła, której nie wolno zgubić: <b>liczby zawsze mono i do prawej</b> (<code>.num</code>) - panel czyta się kolumną, a czcionka proporcjonalna przesuwa cyfry względem siebie. Nagłówek krojem tekstowym, na tym samym tle, co wiersze. Druga linia komórki (<code>.cell-sub</code>) KWALIFIKUJE wartość nad sobą; wartość maszynowa (e-mail, sygnatura) dostaje do tego <code>.mono</code>; jej ton mówi o wieku danych (<code>fresh</code> / <code>stale</code> / <code>none</code>) albo ostrzega (<code>warn</code>). <b>Brakujący odczyt jest kreską, nigdy zerem.</b> Wiersz jest klikalny, ale drogą właściwą jest link w kolumnie akcji - inaczej ginie „kopiuj adres linku".</span>
         <span class="inv-classes"><b>.table-wrap</b> · thead th · th.num · <b>tbody td</b> · td.num · td.mono · td.dim · .cell-strong · .cell-sub · .cell-sub.mono · .cell-sub.fresh|stale|none|warn · .reg · .cell-pair · .cell-arrow · .cell-go · .cell-link · tr.clickable · tr.opened · tr.muted · tr.voided · .row-actions · .list-foot</span>

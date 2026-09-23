@@ -335,3 +335,50 @@
   font-family: var(--font-mono);
   letter-spacing: 0.3px;
 }
+
+/**
+ * UCHWYT PRZECIĄGANIA - dla listy, w której KOLEJNOŚĆ JEST TREŚCIĄ.
+ *
+ * Powstał dla kroków ścieżki akceptacji (`design/panel/kalendarz-sciezka`): numer kroku
+ * nie jest porządkiem wyświetlania, tylko tym, co system naprawdę robi. Para strzałek
+ * „w górę/w dół" w kolumnie akcji mówiła to samo dwoma przyciskami na wiersz, a przy
+ * pięciu krokach zamieniała przestawienie w odklikiwanie.
+ *
+ * ══ JEST PRZYCISKIEM, NIE `<span draggable>` ══
+ * Przeciąganie samą myszą byłoby JEDYNĄ drogą do zmiany kolejności, a tej nie da się
+ * wykonać z klawiatury. Uchwyt przyjmuje fokus, a strzałki przestawiają wiersz -
+ * przeciąganie jest wygodą, nie warunkiem. To ta sama zasada, przez którą wybór
+ * w panelu jest `<button>`, a nie `<label>` z mockupu.
+ *
+ * Kursor niesie stan czynności (`grab` → `grabbing`), bo to jedyny element panelu,
+ * w którym wciśnięcie znaczy „trzymam", a nie „kliknąłem".
+ */
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.drag-handle:hover {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Wiersz W RUCHU: jaśniejsze tło i przygaszenie. Ma być widać, że jest przenoszony,
+   a nie że coś się zepsuło - stąd zmiana tła, a nie ramka w tonie błędu. */
+tr.dragging > td {
+  background: var(--surface-raised);
+  opacity: 0.75;
+}
