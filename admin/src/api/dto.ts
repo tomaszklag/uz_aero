@@ -904,13 +904,20 @@ export interface BugReportPageDto {
 
 export type BookingKindDto = 'flight' | 'block';
 
+/**
+ * Lustro `BookingStatus` z `server/src/domain/bookings.ts` - pilnuje go
+ * `test/mirrors.test.ts` (od issue #204: stan `expired` wszedł na serwerze w 3.1.0
+ * i przez dwa dni nikt tego nie widział, bo kontrakty kalendarza nie były na liście
+ * strażnika).
+ */
 export type BookingStatusDto =
   | 'pending'
   | 'confirmed'
   | 'rejected'
   | 'cancelled'
   | 'fulfilled'
-  | 'released';
+  | 'released'
+  | 'expired';
 
 export type BlockReasonDto = 'maintenance' | 'defect' | 'other';
 
@@ -970,4 +977,121 @@ export interface CalendarDto {
   homeIcao: string | null;
   days: CalendarDayDto[];
   bookings: BookingDto[];
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ŚCIEŻKA AKCEPTACJI I KOLEJKA DECYZJI (milestone 3.1.0, issue #165;
+ * `docs/rezerwacje.md` §11)
+ *
+ * Cztery lustra unii pilnuje `test/mirrors.test.ts`. Reszta to kształty odpowiedzi
+ * tras panelu - identyfikatory, nie napisy: nazwisko decydującego i znak maszyny panel
+ * rozwiązuje z list, które i tak ma (`usePilots`, `useFleet`).
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Lustro `ApprovalOutcome` (`server/src/domain/approvals.ts`) - stan ścieżki rezerwacji. */
+export type ApprovalOutcomeDto = 'pending' | 'confirmed' | 'rejected';
+
+/**
+ * Lustro `ApprovalRefusal` - dlaczego decyzja nie może zapaść. Kody surowe; zdania po
+ * polsku należą do ekranu (`screens/calendar/approvalRefusal.ts`).
+ */
+export type ApprovalRefusalDto = 'not_pending' | 'not_your_step' | 'reason_required';
+
+/** Lustro `ApprovalVerdict` (`application/common/ports.ts`). */
+export type ApprovalVerdictDto = 'approved' | 'rejected';
+
+/**
+ * Lustro `ApprovalVia`: `person` = ktoś kliknął, `self` = krok przeszedł sam, bo
+ * rezerwujący stoi na jego liście (§11.2).
+ */
+export type ApprovalViaDto = 'person' | 'self';
+
+/** Lustro `ApprovalStepsRefusal` - odmowy zapisu ścieżki; obie niosą `stepLabel`. */
+export type ApprovalStepsRefusalDto = 'step_without_members' | 'member_not_in_org';
+
+/** Krok ścieżki klubu w KONFIGURACJI (`GET`/`PUT /admin/api/approval-steps`). */
+export interface ApprovalStepDto {
+  id: string;
+  /** Kolejność pytania - zmienna, w odróżnieniu od `id`. */
+  position: number;
+  label: string;
+  /** Pula uprawnionych, nie komplet podpisów: wystarczy zgoda JEDNEJ z tych osób. */
+  memberIds: string[];
+}
+
+export interface ApprovalPathDto {
+  /** Pusta lista = klub bez akceptacji, czyli stan domyślny (§11.1). */
+  steps: ApprovalStepDto[];
+}
+
+/**
+ * Krok w ZAMÓWIENIU zapisu ścieżki. Kolejność w tablicy JEST kolejnością pytania;
+ * `id` puste = krok nowy (identyfikator nadaje serwer), krok istniejący zachowuje
+ * swój `id` razem z zapadłymi pod nim decyzjami.
+ */
+export interface ApprovalStepInputDto {
+  id?: string | null;
+  label: string;
+  memberIds: string[];
+}
+
+/**
+ * Decyzja pod krokiem. `decidedBy` jest identyfikatorem OSOBY i jedzie do panelu
+ * ŚWIADOMIE, choć na telefon nie (§9.4): administrator pyta „do kogo zadzwonić",
+ * a pilot dostaje nazwę kroku, bo krok bywa obsadzony przez kilka osób.
+ */
+export interface ApprovalDecisionDto {
+  decision: ApprovalVerdictDto;
+  via: ApprovalViaDto;
+  reason: string | null;
+  decidedBy: string;
+  decidedAt: string;
+}
+
+export interface ApprovalStepStateDto {
+  id: string;
+  label: string;
+  /** Czy to jego pytamy TERAZ. */
+  current: boolean;
+  /** `null` = decyzja pod tym krokiem jeszcze nie zapadła. */
+  decision: ApprovalDecisionDto | null;
+}
+
+/** Stan ścieżki JEDNEJ rezerwacji. `steps` puste = klub bez akceptacji. */
+export interface ApprovalViewDto {
+  outcome: ApprovalOutcomeDto;
+  steps: ApprovalStepStateDto[];
+}
+
+/** `GET /admin/api/bookings/:id` - zajętość razem ze stanem jej ścieżki. */
+export interface BookingDetailDto {
+  booking: BookingDto;
+  approval: ApprovalViewDto;
+}
+
+/**
+ * Pozycja kolejki „czeka na Twoją decyzję": rezerwacja stojąca na kroku, na którego
+ * liście jest zalogowany. `step.members` i `step.next` służą zdaniu pod listą („krok ma
+ * dwie osoby i rozstrzyga pierwsza; po zatwierdzeniu idzie do kroku …").
+ */
+export interface ApprovalQueueItemDto {
+  booking: BookingDto;
+  step: {
+    id: string;
+    label: string;
+    /** Ile osób stoi na liście tego kroku. */
+    members: number;
+    /** Nazwa NASTĘPNEGO kroku; `null` = ten jest ostatni. */
+    next: string | null;
+  };
+}
+
+export interface ApprovalQueueDto {
+  items: ApprovalQueueItemDto[];
+}
+
+/** Odpowiedź `POST /admin/api/bookings/:id/decision`. */
+export interface DecisionResultDto {
+  status: BookingStatusDto;
+  approval: ApprovalViewDto;
 }

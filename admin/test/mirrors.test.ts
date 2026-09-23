@@ -23,6 +23,24 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const SERVER = join(__dirname, '..', '..', 'server', 'src', 'domain');
+/**
+ * Dwa pliki SPOZA domeny, z których panel też ma lustra (3.1.0, issue #165): porty
+ * warstwy aplikacji (rozstrzygnięcie i pochodzenie decyzji) oraz komenda ścieżki
+ * (powody odmowy zapisu). Skaner czyta unię tak samo niezależnie od katalogu -
+ * a lustro bez strażnika rozjeżdża się tak samo niezależnie od tego, gdzie stoi oryginał.
+ */
+const PORTS = join(__dirname, '..', '..', 'server', 'src', 'application', 'common', 'ports.ts');
+const APPROVAL_STEPS = join(
+  __dirname,
+  '..',
+  '..',
+  'server',
+  'src',
+  'application',
+  'admin',
+  'commands',
+  'approvalSteps.ts',
+);
 const DTO = join(__dirname, '..', 'src', 'api', 'dto.ts');
 
 /**
@@ -125,6 +143,50 @@ const MIRRORS = [
     panel: 'AccountMethodDto',
     server: 'LOGIN_METHODS_ISSUED',
     read: () => constIn(join(SERVER, 'loginSessions.ts'), 'LOGIN_METHODS_ISSUED'),
+  },
+  // KALENDARZ ZAJĘTOŚCI (3.0.0) - dopisane przy issue #204, bo weszły z modułem
+  // i nikt ich tu nie dołożył: stan `expired` (3.1.0, #164) pojawił się na serwerze
+  // bez ani jednego czerwonego testu. Dokładnie ten tryb awarii, który opisuje nagłówek.
+  // `BlockReasonDto` lustra NIE MA, bo po drugiej stronie nie ma typu - powód wyłączenia
+  // z użytku żyje w schemacie zoda trasy i w CHECK-u migracji 11.
+  {
+    panel: 'BookingStatusDto',
+    server: 'BookingStatus',
+    read: () => unionIn(join(SERVER, 'bookings.ts'), 'BookingStatus'),
+  },
+  {
+    panel: 'BookingKindDto',
+    server: 'BookingKind',
+    read: () => unionIn(join(SERVER, 'bookings.ts'), 'BookingKind'),
+  },
+  // ŚCIEŻKA AKCEPTACJI (3.1.0, issue #165). Wynik ścieżki i powody odmowy decyzji są
+  // w domenie; rozstrzygnięcie i pochodzenie decyzji (`ApprovalVerdict`, `ApprovalVia`)
+  // żyją w portach warstwy aplikacji - skaner czyta je stamtąd, bo lustro bez strażnika
+  // rozjeżdża się tak samo niezależnie od katalogu, w którym stoi oryginał.
+  {
+    panel: 'ApprovalOutcomeDto',
+    server: 'ApprovalOutcome',
+    read: () => unionIn(join(SERVER, 'approvals.ts'), 'ApprovalOutcome'),
+  },
+  {
+    panel: 'ApprovalRefusalDto',
+    server: 'ApprovalRefusal',
+    read: () => unionIn(join(SERVER, 'approvals.ts'), 'ApprovalRefusal'),
+  },
+  {
+    panel: 'ApprovalVerdictDto',
+    server: 'ApprovalVerdict',
+    read: () => unionIn(PORTS, 'ApprovalVerdict'),
+  },
+  {
+    panel: 'ApprovalViaDto',
+    server: 'ApprovalVia',
+    read: () => unionIn(PORTS, 'ApprovalVia'),
+  },
+  {
+    panel: 'ApprovalStepsRefusalDto',
+    server: 'ApprovalStepsRefusal',
+    read: () => unionIn(APPROVAL_STEPS, 'ApprovalStepsRefusal'),
   },
 ] as const;
 
