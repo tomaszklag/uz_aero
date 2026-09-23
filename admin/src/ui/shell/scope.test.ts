@@ -6,13 +6,17 @@ import { scopeCount, shellScope, SCOPE_PICK } from './scope';
 const ALFA: OrganizationRefDto = { id: 'org-a', slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' };
 const BETA: OrganizationRefDto = { id: 'org-b', slug: 'aeroklub-beta', name: 'Aeroklub Beta' };
 
-const club = (org: OrganizationRefDto) => ({ org, code: 'TMK', role: 'admin' as const });
+const club = (org: OrganizationRefDto) => ({
+  org,
+  code: 'TMK',
+  capabilities: ['panel.access' as const, 'accounts.manage' as const],
+});
 
 const session = (
   org: OrganizationRefDto | null,
   scopes: PanelScopesDto,
 ): PanelSessionDto => ({
-  pilot: { id: 'TMK', code: org == null ? null : 'TMK', name: 'Tomasz Małkiewicz', role: 'admin' },
+  pilot: { id: 'TMK', code: org == null ? null : 'TMK', name: 'Tomasz Małkiewicz' },
   org,
   capabilities: ['panel.access'],
   scopes,

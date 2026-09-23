@@ -762,7 +762,7 @@ export class AuditedWrite {
       await this.audit.append(tx, {
         ...audit,
         actorPilotId: actor.pilotId,
-        actorRole:    actor.role,     // rola W CHWILI AKCJI - role się zmieniają
+        actorRole:    scopeKey(actor.capabilities), // ZAKRES W CHWILI AKCJI
         ip:           actor.ip,
         createdAt:    this.clock.now(),
       });
@@ -801,7 +801,10 @@ Trzy testy przybijające tę własność (`test/adminAudit.test.ts`):
    To jest test, który dowodzi „zmiana bez śladu nie ma prawa się zapisać".
 2. **Nieudany skutek nie zostawia śladu.** `UPDATE` trafia w 0 wierszy i komenda rzuca →
    `admin_audit` pusty.
-3. **`actor_role` jest rolą z chwili akcji**, nie odczytaną później z konta.
+3. **`actor_role` jest ZAKRESEM z chwili akcji**, nie odczytanym później z konta.
+   Od 3.1.0 (epik #197) stoi w nim klucz zakresu - `full`, `partial` albo `none` -
+   liczony ze zbioru zdolności sprawcy; wiersze starsze mówią `admin`/`pilot` i tak
+   zostaje, bo dziennik opisuje to, co się wtedy wydarzyło, a nie dzisiejszy słownik.
 
 ### 4.4 Słownik akcji - jeden plik, jak `roles.ts`
 

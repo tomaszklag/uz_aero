@@ -16,7 +16,7 @@ Panel jest dla administratorów. Jeśli po logowaniu panel nie może wpuścić, 
 |---|---|
 | „Nieprawidłowy e-mail lub hasło" | jedna odpowiedź na trzy sytuacje: nie znamy tego adresu, konto nie ma hasła albo hasło jest inne. Panel ich nie rozróżnia, żeby formularz nie wyliczał kont |
 | „Za dużo prób - spróbuj za …" | po kilkunastu nieudanych próbach logowanie z tego adresu odpoczywa; zdanie mówi, jak długo |
-| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma roli administratora; panel go nie obejmuje |
+| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma zdolności **Wejście do panelu** |
 | „To konto jest wyłączone" | członkostwo wyłączono w module Piloci - kolejne próby nic nie zmienią, dopóki administrator go nie włączy |
 
 Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie członkostwa w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
@@ -63,7 +63,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 - **Flota i piloci jadą na telefony jako kopia.** Zmiana na karcie samolotu (pojemność, norma, minimum oleju, wyłączenie ze służby) i na koncie pilota dociera do aplikacji tą samą drogą, w tym samym rytmie. Telefon bez zasięgu pracuje na kopii z ostatniego połączenia.
 - **Panel nie liczy niczego po swojemu.** Czas blokowy, sumy, sygnatura operacji, stan oleju „do lotu" - wszystko przychodzi policzone tym samym rachunkiem, który zasila aplikację pilota. Administrator i pilot patrzą na te same liczby, a rozmowa o locie ma jedną nazwę: sygnaturę.
 - **Adres z paska przeglądarki jest kompletny.** Zakres dat dziennika, filtr listy, otwarta karta konta albo operacji - wszystko stoi w adresie, więc link wklejony koledze pokazuje dokładnie to samo. Maszynę w dzienniku adresuje się znakami rejestracyjnymi, nie identyfikatorem.
-- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z oznaczeniem „tylko podgląd", bez przycisków zapisu. Dziś role są proste: pilot nie wchodzi do panelu, administrator ma w nim wszystko, co należy do klubu, a kolejka zgłoszeń błędów należy do opiekuna platformy; role pośrednie mogą dojść w kolejnych wydaniach.
+- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z oznaczeniem „tylko podgląd", bez przycisków zapisu. Uprawnienia nadaje się POJEDYNCZO: administrator klubu składa komuś zakres z takich zdolności, jakich naprawdę potrzebuje - mechanik rozstrzyga swój krok akceptacji, a floty ani kont nie dotyka. Kolejka zgłoszeń błędów stoi poza tym podziałem: należy do opiekuna platformy, nie do klubu.
 
 ## Zasady w całym panelu
 
@@ -91,4 +91,4 @@ Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliw
 - **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, skontaktuj się z osobą, która wdrażała Ninerdeck.
 - **„Sesja wygasła. Zaloguj się jeszcze raz" w środku pracy** → minęło osiem godzin od zalogowania. Zaloguj się ponownie i wróć do tego samego adresu - zakres dat i otwarta karta są w nim zapisane.
 - **Zmiana z panelu nie dotarła na telefon pilota** → telefon pobiera dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracuje na kopii. Pilot może ponaglić pobranie przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.
-- **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → ma rolę pilota. Rolę zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.
+- **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → nie ma zdolności **Wejście do panelu**. Zakres zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.

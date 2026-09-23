@@ -21,6 +21,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
+
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor, googleTokenForStranger } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_CODE, ORG_B } from './testWorld.ts';
@@ -193,12 +195,12 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { pilotId } = await applicant(app, 'nowy');
     const token = await tokenOf(app, 'TMK');
 
-    const res = await approve(app, token, pilotId, { code: 'nwy', role: 'pilot' });
+    const res = await approve(app, token, pilotId, { code: 'nwy', capabilities: [] });
 
     expect(res.statusCode).toBe(200);
     const { pilot } = res.json();
     // Kod normalizuje się do wersalików - „nwy" i „NWY" to w intencji ten sam kod.
-    expect(pilot).toMatchObject({ id: pilotId, code: 'NWY', role: 'pilot', active: true });
+    expect(pilot).toMatchObject({ id: pilotId, code: 'NWY', capabilities: [], active: true });
 
     const login = await app.inject({
       method: 'POST',
@@ -224,14 +226,14 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'sowa');
 
-    await approve(app, await tokenOf(app, 'TMK'), pilotId, { code: 'SOW', role: 'admin' });
+    await approve(app, await tokenOf(app, 'TMK'), pilotId, { code: 'SOW', capabilities: CLUB_CAPABILITIES });
 
     const rows = await auditRows(db);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ action: 'membership.approve', target_id: pilotId, org_id: ORG_A });
     expect(rows[0]!.details).toMatchObject({
       code: 'SOW',
-      role: 'admin',
+      capabilities: CLUB_CAPABILITIES,
       name: 'Nieznajomy sowa',
       email: 'sowa@gmail.com',
     });
@@ -242,7 +244,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { pilotId } = await applicant(app, 'kolizja');
     const token = await tokenOf(app, 'TMK');
 
-    const res = await approve(app, token, pilotId, { code: 'AKO', role: 'pilot' });
+    const res = await approve(app, token, pilotId, { code: 'AKO', capabilities: [] });
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'conflict', field: 'code' });
@@ -258,7 +260,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     // `AKO` jest zajęte w Alfie, ale nie w Becie.
     const inBeta = await approve(app, await tokenOf(app, 'BAD'), pilotId, {
       code: 'AKO',
-      role: 'pilot',
+      capabilities: [],
     });
     // …tylko że ten człowiek zgłosił się do Alfy: dla Bety jego zgłoszenia NIE MA.
     expect(inBeta.statusCode).toBe(404);
@@ -268,9 +270,9 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'dwarazy');
     const token = await tokenOf(app, 'TMK');
-    expect((await approve(app, token, pilotId, { code: 'DWA', role: 'pilot' })).statusCode).toBe(200);
+    expect((await approve(app, token, pilotId, { code: 'DWA', capabilities: [] })).statusCode).toBe(200);
 
-    const again = await approve(app, token, pilotId, { code: 'DW2', role: 'pilot' });
+    const again = await approve(app, token, pilotId, { code: 'DW2', capabilities: [] });
 
     expect(again.statusCode).toBe(409);
     expect(again.json()).toEqual({ error: 'wrong_status', status: 'active' });
@@ -285,23 +287,23 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
 
     const res = await approve(app, await tokenOf(app, 'TMK'), pilotId, {
       code: 'ZAB',
-      role: 'pilot',
+      capabilities: [],
     });
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'refused', reason: 'inactive_account' });
   });
 
-  it('bez kodu albo bez roli → 400; zgłoszenia nieznanego → 404', async () => {
+  it('bez kodu albo bez zakresu → 400; zgłoszenia nieznanego → 404', async () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'walidacja');
     const token = await tokenOf(app, 'TMK');
 
-    expect((await approve(app, token, pilotId, { role: 'pilot' })).statusCode).toBe(400);
+    expect((await approve(app, token, pilotId, { capabilities: [] })).statusCode).toBe(400);
     expect((await approve(app, token, pilotId, { code: 'WAL' })).statusCode).toBe(400);
-    expect((await approve(app, token, pilotId, { code: 'A B', role: 'pilot' })).statusCode).toBe(400);
+    expect((await approve(app, token, pilotId, { code: 'A B', capabilities: [] })).statusCode).toBe(400);
     expect(
-      (await approve(app, token, 'nie-ma-takiego', { code: 'WAL', role: 'pilot' })).statusCode,
+      (await approve(app, token, 'nie-ma-takiego', { code: 'WAL', capabilities: [] })).statusCode,
     ).toBe(404);
   });
 
@@ -311,7 +313,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
 
     const res = await approve(app, await tokenOf(app, 'PWI'), pilotId, {
       code: 'BEZ',
-      role: 'pilot',
+      capabilities: [],
     });
 
     expect(res.statusCode).toBe(403);
@@ -363,7 +365,7 @@ describe('POST /admin/api/memberships/:id/reject - odrzucenie', () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'juzwklubie');
     const token = await tokenOf(app, 'TMK');
-    await approve(app, token, pilotId, { code: 'JUZ', role: 'pilot' });
+    await approve(app, token, pilotId, { code: 'JUZ', capabilities: [] });
 
     const res = await reject(app, token, pilotId, { reason: 'zmiana decyzji' });
 
@@ -442,7 +444,7 @@ describe('POST /admin/api/memberships/:id/reopen - cofnięcie odrzucenia', () =>
     await reject(app, token, pilotId, { reason: 'najpierw odmowa' });
     await reopen(app, token, pilotId);
 
-    expect((await approve(app, token, pilotId, { code: 'WRC', role: 'pilot' })).statusCode).toBe(200);
+    expect((await approve(app, token, pilotId, { code: 'WRC', capabilities: [] })).statusCode).toBe(200);
     expect((await auditRows(db)).map((r) => r.action)).toEqual([
       'membership.reject',
       'membership.reopen',
@@ -460,7 +462,7 @@ describe('decyzje dotyczą WYŁĄCZNIE klubu z sesji', () => {
     expect((await pending(app, beta)).json().items).toEqual([]);
     expect((await reject(app, beta, pilotId, { reason: 'nie moje' })).statusCode).toBe(404);
     expect((await reopen(app, beta, pilotId)).statusCode).toBe(404);
-    expect((await approve(app, beta, pilotId, { code: 'ALF', role: 'pilot' })).statusCode).toBe(404);
+    expect((await approve(app, beta, pilotId, { code: 'ALF', capabilities: [] })).statusCode).toBe(404);
     expect(ORG_B).not.toBe(ORG_A);
   });
 });

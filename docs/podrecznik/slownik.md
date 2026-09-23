@@ -96,7 +96,8 @@
 ## Panel klubu
 
 - **Panel klubu** - strona w przeglądarce dla administratora: piloci, samoloty, dziennik i zgłoszenia.
-- **Administrator** - rola dająca aplikację i panel. Druga rola, pilot, daje samą aplikację.
+- **Administrator** - potocznie: członek klubu z pełnym zakresem uprawnień, czyli z panelem. Uprawnienia nadaje się jednak POJEDYNCZO (zob. **zakres uprawnień**), więc „administrator" jest nazwą zestawu, a nie osobnym bytem w systemie.
+- **Zakres uprawnień** - zbiór zdolności nadanych członkowi W TYM klubie: wejście do panelu, flota, akceptacja rezerwacji i tak dalej. Należy do członkostwa, więc w dwóch klubach ta sama osoba może mieć dwa różne zakresy.
 - **Rola** - to, co konto otwiera: pilot albo administrator. Nadaje ją klub przy zakładaniu konta i zmienia w karcie konta.
 - **Sesja panelu** - zalogowanie w przeglądarce; wygasa po ośmiu godzinach i panel prosi o ponowne logowanie. Wyłączenie konta zrywa ją od razu.
 - **Kolejka zgłoszeń** - lista osób, które zalogowały się kontem Google nieznanym klubowi i czekają na decyzję. Stoi nad listą pilotów tylko wtedy, gdy ktoś w niej jest.

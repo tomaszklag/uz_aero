@@ -30,18 +30,12 @@ import type {
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
-/**
- * Role kont. LUSTRO `server/src/domain/roles.ts`, przybite `test/mirrors.test.ts`.
- *
- * Kopia, a nie import, bo panel nie widzi wnętrza serwera. Ta kopia NIE DECYDUJE
- * o niczym: mapa rola -> zdolności jest wyłącznie na serwerze i wyłącznie on ją
- * egzekwuje. Tu są nazwy do porównania, nie uprawnienia.
- *
- * `training_lead` wycofany 2026-08-30 (decyzja właściciela produktu, do rewizji
- * w kolejnej iteracji uprawnień). Zostają dwie role, a jedna z nich w ogóle nie
- * dotyczy panelu - więc każdy, kto tu wejdzie, ma dziś komplet zdolności.
+/*
+ * RÓL KLUBU NIE MA (epik #197, `docs/uprawnienia.md`). Zdolność nadaje się
+ * CZŁONKOSTWU, a „administrator" jest odtąd ZESTAWEM - skrótem przy wypełnianiu
+ * formularza, nie bytem w modelu. Nazwę zakresu składa panel ze zbioru
+ * (`screens/accounts/scope.ts`), bo serwer nie zna języka interfejsu.
  */
-export type PilotRole = 'pilot' | 'admin';
 
 /**
  * Zdolności. LUSTRO `server/src/domain/roles.ts`, przybite `test/mirrors.test.ts`.
@@ -60,6 +54,7 @@ export type Capability =
   | 'audit.read'
   | 'maintenance.run'
   | 'reservations.manage'
+  | 'reservations.approve'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';
@@ -67,15 +62,16 @@ export type Capability =
 /**
  * Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji.
  *
- * Od wielofirmowości `code` i `role` są kodem i rolą Z CZŁONKOSTWA w klubie sesji
- * (`PanelSessionDto.org`). Sesja superadministratora (epik E) niesie `code: null`
- * i rolę platformową - panel 2.0 takiej sesji jeszcze nie rysuje.
+ * Od wielofirmowości `code` jest kodem Z CZŁONKOSTWA w klubie sesji
+ * (`PanelSessionDto.org`). Sesja superadministratora niesie `code: null`.
+ *
+ * ROLI TU NIE MA (epik #197): o tym, co wolno, rozstrzyga `capabilities` sesji,
+ * a jak to nazwać - `scopeLabel`. Sesję platformową poznaje się po `org: null`.
  */
 export interface PanelPilotDto {
   id: string;
   code: string | null;
   name: string;
-  role: PilotRole | 'superadmin';
 }
 
 /** Klub sesji panelu (wielofirmowość §8.2) - nazwa do kolumny bocznej. */
@@ -88,17 +84,18 @@ export interface OrganizationRefDto {
 /**
  * Klub, do którego wolno PRZEŁĄCZYĆ tę sesję (mockup `00a-wybor-klubu`; issue #101, E2).
  *
- * Kod i rola opisują drugą linię karty wyboru („administrator · Twój kod TMK") i tylko
- * ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla tego klubu.
+ * Kod i ZAKRES opisują drugą linię karty wyboru („administrator · Twój kod TMK")
+ * i tylko ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla
+ * tego klubu, czytane przez serwer przy każdym żądaniu.
  */
 export interface PanelScopeClubDto {
   org: OrganizationRefDto;
   code: string;
-  role: PilotRole;
+  capabilities: Capability[];
 }
 
 /**
- * Zakresy sesji: kluby z rolą panelu i - osobno - platforma.
+ * Zakresy sesji: kluby z wejściem do panelu i - osobno - platforma.
  *
  * Jedzie w KAŻDEJ odpowiedzi o sesji, bo panel pyta o to przy każdym wczytaniu: czy
  * kafel klubu w kolumnie bocznej jest linkiem (jest co przełączyć) i czy po zalogowaniu
@@ -303,7 +300,8 @@ export interface PilotListItemDto {
    */
   email: string | null;
   active: boolean;
-  role: PilotRole;
+  /** ZAKRES w tym klubie (epik #197); pusty zbiór = pilot, czyli stan domyślny. */
+  capabilities: Capability[];
   /**
    * Ostatnia aktywność ŻYWEJ sesji tego członka W TYM klubie (2.1.0), ISO 8601;
    * `null` = nie ma czynnej sesji. To nie jest „nigdy nie wszedł" - po wygaśnięciu
@@ -350,7 +348,7 @@ export type MembershipStatusDto = 'pending' | 'active' | 'disabled' | 'rejected'
  *
  * Imię i adres wzięły się z ZAŁOŻENIA KONTA, którego ta osoba dokonała sama - Googlem
  * albo adresem i hasłem (2.1.0). Administrator czyta więc to, co ona podała, a nie to,
- * co sam wpisał. Kodu ani roli tu NIE MA - nadaje się je dopiero przy zatwierdzeniu (P3),
+ * co sam wpisał. Kodu ani zakresu tu NIE MA - nadaje się je dopiero przy zatwierdzeniu (P3),
  * i to jest cała różnica między kandydatem a wierszem listy członków.
  */
 export interface MembershipRequestDto {
@@ -380,10 +378,13 @@ export interface MembershipDecisionDto {
   rejectReason: string | null;
 }
 
-/** Zatwierdzenie: kod pilota W TYM klubie i rola. Oba wymagane - aktywny ⟺ ma kod. */
+/**
+ * Zatwierdzenie: kod pilota W TYM klubie i ZAKRES. Kod wymagany - aktywny ⟺ ma kod;
+ * zbiór bywa PUSTY i to jest stan domyślny (pilot pracuje w aplikacji).
+ */
 export interface MembershipApprovalBody {
   code: string;
-  role: PilotRole;
+  capabilities: Capability[];
 }
 
 // -- kod klubu: JEDYNA droga do klubu (issue #101, E3) --------------------------

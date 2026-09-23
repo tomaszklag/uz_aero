@@ -183,7 +183,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     expect(rows[0]).toMatchObject({ actor_pilot_id: 'TMK' });
   });
 
-  it('wpis niesie aktora, jego rolę, akcję i identyfikator flagi', async () => {
+  it('wpis niesie aktora, jego zakres, akcję i identyfikator flagi', async () => {
     const { app, db, flagId } = await overlapping();
     // Aktorem jest DRUGI administrator, nie TMK: wpis ma dowieść, że dziennik zapisuje
     // tego, kto akcję wykonał, a nie tego, kim jest pierwsze konto ze świata testowego.
@@ -194,7 +194,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     expect(await auditRows(db)).toMatchObject([
       {
         actor_pilot_id: 'AKO',
-        actor_role: 'admin',
+        actor_role: 'full',
         action: 'flag.resolve',
         target_type: 'flag',
         target_id: String(flagId),
@@ -207,17 +207,23 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     ]);
   });
 
-  it('`actor_role` to rola Z CHWILI AKCJI - późniejsza zmiana konta jej nie przepisuje', async () => {
-    // Dziennik jest zapisem historycznym, nie złączeniem z `pilots`. Gdyby rola szła
+  it('`actor_role` to ZAKRES Z CHWILI AKCJI - późniejsza zmiana konta go nie przepisuje', async () => {
+    // Dziennik jest zapisem historycznym, nie złączeniem z `pilots`. Gdyby zakres szedł
     // z konta przy odczycie, odebranie uprawnień zafałszowałoby odpowiedź na pytanie
     // „kto miał wtedy prawo to zrobić" - czyli jedyne, po co ten dziennik istnieje.
+    //
+    // Od 3.1.0 w kolumnie stoi KLUCZ ZAKRESU (`full`/`partial`/`none`) liczony ze zbioru
+    // zdolności sprawcy. Wiersze starsze mówią `admin`/`pilot` i tak zostaje - dziennik
+    // opisuje to, co się wtedy wydarzyło, a nie dzisiejszy słownik.
     const { app, db, flagId } = await overlapping();
     const admin = await login(app, 'TMK');
 
     await resolve(app, flagId, admin, 'Rozstrzygnięte przez administratora.');
-    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'TMK' AND org_id = 'org-a'");
+    await db.query(
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+    );
 
-    expect((await auditRows(db))[0]).toMatchObject({ actor_pilot_id: 'TMK', actor_role: 'admin' });
+    expect((await auditRows(db))[0]).toMatchObject({ actor_pilot_id: 'TMK', actor_role: 'full' });
   });
 });
 
@@ -559,7 +565,7 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
     await seedAudit(db, [
       {
         actor: 'TMK',
-        role: 'admin',
+        role: 'full',
         action: 'maintenance.rebuild_projections',
         targetType: null,
         targetId: null,
@@ -666,7 +672,7 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
       ['pilot.create', 'pilot.update', 'pilot.deactivate', 'aircraft.create', 'export.retry'].map(
         (action, i) => ({
           actor: 'TMK',
-          role: 'admin',
+          role: 'full',
           action,
           targetType: 'pilot',
           targetId: `P-${i}`,

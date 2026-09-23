@@ -40,7 +40,6 @@ export const membershipToWire = (m: ClubMembershipView) => ({
   clubActive: m.clubActive,
   status: m.status,
   code: m.code,
-  role: m.role,
   rejectReason: m.rejectReason,
   createdAt: m.createdAt.toISOString(),
   decidedAt: m.decidedAt?.toISOString() ?? null,

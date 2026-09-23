@@ -4063,6 +4063,18 @@ Cały epik makiet przed kodem, design-first jak w 3.0.0. Decyzje i uzasadnienia:
   **zestaw NIE JEST bytem w modelu**: w bazie stoi ZBIÓR, a etykieta liczy się z niego
   z powrotem. Zmiana katalogu nie rusza nikomu uprawnień. „Własny zakres" wskakuje SAM
   przy tknięciu którejkolwiek zdolności - nie wybiera się go świadomie
+- **MODEL WDROŻONY W KODZIE (epik #197, 2026-09-23)**: migracja 12 z tabelą
+  `membership_capabilities`, backfillem z ról i `DROP COLUMN memberships.role`.
+  `can(zbiór, zdolność)` zamiast `can(rola, …)`, zbiór czytany RAZEM z członkostwem
+  (`authSnapshot`), claim `role` wypadł z tokenu, zapora przeszła na
+  `refuseScopeChange` liczoną po `accounts.manage`. Katalog ma DZIESIĘĆ zdolności
+  klubowych - doszła `reservations.approve` (rozstrzyganie kroku ścieżki + podgląd
+  cudzych terminów), osobna od `reservations.manage`, bo akceptujący nie kasuje
+  cudzych rezerwacji. Nazwy zestawów i zdolności po polsku mieszkają WYŁĄCZNIE
+  w panelu (`admin/src/screens/accounts/scope.ts`) - serwer nie zna języka interfejsu
+- **`admin_audit.actor_role` niesie odtąd KLUCZ ZAKRESU** (`full`/`partial`/`none`),
+  a wiersze sprzed 3.1.0 zostają przy `admin`/`pilot`: dziennik jest zapisem
+  historycznym i przepisanie go zmieniłoby to, co się wtedy wydarzyło
 - **`<select>` przy zestawie** - drugie (po kalendarzu) odstępstwo od „zawsze lista kart",
   bo zawartość wyboru stoi ROZPISANA POD NIM: dwie listy kart jedna nad drugą zlałyby się
   w jedną

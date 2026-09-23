@@ -26,9 +26,9 @@ import {
   useRejectMembership,
   useReopenMembership,
 } from '../../queries/useMemberships';
-import { Banner, Button, Card, Drawer, Field, OptionButton, Pill, TextInput } from '../../ui/components';
+import { Banner, Button, Card, Drawer, Field, OptionButton, Pill, Select, TextInput } from '../../ui/components';
 import { conflictField, errorMessage } from '../common/apiMessage';
-import { roleLabel, roleNote, ROLE_ORDER } from './accountRows';
+import { CAPABILITY_LABELS, CLUB_CAPABILITIES, CUSTOM_SCOPE, presetOf, SCOPE_PRESETS, scopeLabel, scopeSummary, toggleCapability } from './scope';
 import {
   approvalBodyOf,
   approveVerdict,
@@ -54,6 +54,8 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
 
   const [draft, setDraft] = useState<RequestDraft>(EMPTY_REQUEST);
   const [step, setStep] = useState<RequestStep>('approve');
+  // Zwinięty domyślnie - jak na karcie członka (uwaga właściciela 2026-09-23).
+  const [scopeOpen, setScopeOpen] = useState(false);
   const [outcome, setOutcome] = useState<string | null>(null);
 
   const approve = useApproveMembership();
@@ -90,7 +92,7 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
         onSuccess: (change) => {
           setStep('decided');
           setOutcome(
-            `${change.pilot.name} jest w klubie jako ${change.pilot.code} (${roleLabel(change.pilot.role).toLowerCase()}). Kod i rolę zmienisz na jego karcie.`,
+            `${change.pilot.name} jest w klubie jako ${change.pilot.code} (${scopeLabel(change.pilot.capabilities).toLowerCase()}). Kod i zakres zmienisz na jego karcie.`,
           );
         },
       },
@@ -242,18 +244,52 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
                 {conflict == null ? null : <p className="hint danger">{conflict}</p>}
               </Card>
 
-              <Card title="Rola w klubie">
-                <div className="opt-list" role="radiogroup" aria-label="Rola w klubie">
-                  {ROLE_ORDER.map((role) => (
-                    <OptionButton
-                      key={role}
-                      name={roleLabel(role)}
-                      desc={roleNote(role)}
-                      selected={draft.role === role}
-                      onSelect={() => setDraft({ ...draft, role })}
-                    />
-                  ))}
+              {/* TEN SAM wybór zakresu, co na karcie członka - wpuszczenie do klubu
+                  i późniejsza zmiana uprawnień są tą samą decyzją, więc mają wyglądać
+                  tak samo. Domyślny zestaw to „Pilot" (pusty zbiór): kandydat wchodzi
+                  do klubu po to, żeby latać, a nie po to, żeby wejść do panelu. */}
+              <Card title="Zakres uprawnień">
+                <Field htmlFor="request-scope" label="Zestaw uprawnień">
+                  <Select
+                    id="request-scope"
+                    value={presetOf(draft.capabilities)?.id ?? CUSTOM_SCOPE.id}
+                    options={[...SCOPE_PRESETS, CUSTOM_SCOPE].map((preset) => ({
+                      value: preset.id,
+                      label: preset.label,
+                    }))}
+                    onChange={(id: string) => {
+                      const preset = SCOPE_PRESETS.find((item) => item.id === id);
+                      if (preset == null) return;
+                      setDraft({ ...draft, capabilities: [...preset.capabilities] });
+                    }}
+                  />
+                </Field>
+
+                <div className="access-row">
+                  <span className="cell-sub">{scopeSummary(draft.capabilities)}</span>
+                  <Button variant="ghost" size="sm" onClick={() => setScopeOpen(!scopeOpen)}>
+                    {scopeOpen ? 'Ukryj zdolności' : 'Pokaż zdolności'}
+                  </Button>
                 </div>
+
+                {!scopeOpen ? null : (
+                  <div className="opt-list">
+                    {CLUB_CAPABILITIES.map((capability) => (
+                      <OptionButton
+                        key={capability}
+                        name={CAPABILITY_LABELS[capability].label}
+                        desc={CAPABILITY_LABELS[capability].desc}
+                        selected={draft.capabilities.includes(capability)}
+                        onSelect={() =>
+                          setDraft({
+                            ...draft,
+                            capabilities: toggleCapability(draft.capabilities, capability),
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </Card>
             </>
           )}

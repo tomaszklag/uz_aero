@@ -20,6 +20,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
+
 import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { MIGRATIONS } from '../src/infrastructure/pg/schema.ts';
@@ -234,21 +236,41 @@ describe('migracja 8 - backfill jednego klubu z danych 1.x', () => {
     }
   });
 
-  it('każde konto 1.x → członkostwo z tym samym kodem, rolą i znacznikiem unieważnienia', async () => {
+  it('każde konto 1.x → członkostwo z kodem, ZAKRESEM z roli i znacznikiem unieważnienia', async () => {
     const db = await legacyClubDb();
     await migrate(db, MIGRATIONS, { seedOrg: { name: 'Klub', slug: 'klub' } });
 
     const { rows } = await db.query<{
       pilot_id: string;
       code: string;
-      role: string;
       status: string;
       joined_via: string;
       credentials_valid_from: string | Date | null;
-    }>('SELECT pilot_id, code, role, status, joined_via, credentials_valid_from FROM memberships ORDER BY pilot_id');
+    }>('SELECT pilot_id, code, status, joined_via, credentials_valid_from FROM memberships ORDER BY pilot_id');
     expect(rows.map((r) => ({ ...r, credentials_valid_from: r.credentials_valid_from == null ? null : 'set' }))).toEqual([
-      { pilot_id: 'PWI', code: 'PWI', role: 'pilot', status: 'disabled', joined_via: 'backfill', credentials_valid_from: 'set' },
-      { pilot_id: 'admin', code: 'admin', role: 'admin', status: 'active', joined_via: 'backfill', credentials_valid_from: null },
+      { pilot_id: 'PWI', code: 'PWI', status: 'disabled', joined_via: 'backfill', credentials_valid_from: 'set' },
+      { pilot_id: 'admin', code: 'admin', status: 'active', joined_via: 'backfill', credentials_valid_from: null },
+    ]);
+
+    // ══ DRUGI BACKFILL, TA SAMA BAZA: ROLA → ZBIÓR ZDOLNOŚCI (migracja 12, #197) ══
+    // Konto 1.x z rolą `admin` ma po obu migracjach KOMPLET zdolności klubowych,
+    // a pilot - ani jednej. Kolumny roli już nie ma, więc to jedyne miejsce, z którego
+    // da się odczytać, kto przed wdrożeniem miał władzę nad klubem.
+    const caps = await db.query<{ pilot_id: string; capability: string }>(
+      'SELECT pilot_id, capability FROM membership_capabilities ORDER BY pilot_id, capability',
+    );
+    expect(caps.rows.filter((r) => r.pilot_id === 'PWI')).toEqual([]);
+    expect(caps.rows.filter((r) => r.pilot_id === 'admin').map((r) => r.capability)).toEqual([
+      'accounts.manage',
+      'audit.read',
+      'events.correct',
+      'flags.resolve',
+      'fleet.manage',
+      'maintenance.run',
+      'panel.access',
+      'reservations.approve',
+      'reservations.manage',
+      'thresholds.manage',
     ]);
 
     // Wyłączone konto stało się wyłączonym CZŁONKOSTWEM, a osoba jest odtąd aktywna
@@ -357,9 +379,9 @@ describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
     const body = res.json();
     expect(body.org).toEqual({ id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' });
     expect(body.memberships).toEqual([
-      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'TMK', role: 'admin' },
+      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'TMK' },
     ]);
-    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin' });
+    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'TMK', orgId: ORG_A, code: 'TMK' });
   });
 
   it('osoba w DWU klubach: klub aktywny = pierwszy alfabetycznie, kod z TEGO klubu, dwa członkostwa', async () => {
@@ -475,7 +497,7 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     const res = await panelLogin(app, googleTokenFor('BAD'));
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
-      pilot: { id: 'BAD', code: 'BAD', role: 'admin' },
+      pilot: { id: 'BAD', code: 'BAD' },
       org: { id: ORG_B, slug: 'aeroklub-beta', name: 'Aeroklub Beta' },
     });
 
@@ -648,16 +670,16 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     // TMK jest zajęty w Alfie…
     await expect(
       db.query(
-        `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+         VALUES ($1, 'X', 'TMK', 'active', 'platform')`,
         [ORG_A],
       ),
     ).rejects.toThrow();
     // …a w Becie wolny.
     await expect(
       db.query(
-        `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+         VALUES ($1, 'X', 'TMK', 'active', 'platform')`,
         [ORG_B],
       ),
     ).resolves.toBeDefined();
@@ -708,7 +730,9 @@ describe('to samo w dwóch klubach to dwa byty', () => {
       ['BPI', 'BPI', ORG_B],
       ['PWI', 'PWB', ORG_B],
     ]);
-    expect(beta.counts).toMatchObject({ total: 3, admin: 1, pilot: 2 });
+    // Podziału po rolach w licznikach nie ma (epik #197) - kafel liczy CZŁONKÓW,
+    // a na pytanie „kto wejdzie do panelu" odpowiada chip ze zdolnością.
+    expect(beta.counts).toMatchObject({ total: 3, active: 3 });
   });
 });
 

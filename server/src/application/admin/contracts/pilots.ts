@@ -23,8 +23,26 @@
 
 import type { AccountMethodWire } from './loginSessions.ts';
 
-/** Lustro `PILOT_ROLES` z `domain/roles.ts` - patrz nagłówek pliku. */
-export type PilotRoleWire = 'pilot' | 'admin';
+/**
+ * Lustro `Capability` z `domain/roles.ts` - patrz nagłówek pliku.
+ *
+ * Rozjazd z katalogiem serwera nie może niczego otworzyć: zdolność, której serwer nie
+ * zna, nie pasuje do żadnego pytania `can(...)`, a zdolność, której nie zna panel, po
+ * prostu nie pokaże się na ekranie zakresu.
+ */
+export type CapabilityWire =
+  | 'panel.access'
+  | 'flags.resolve'
+  | 'events.correct'
+  | 'accounts.manage'
+  | 'fleet.manage'
+  | 'thresholds.manage'
+  | 'audit.read'
+  | 'maintenance.run'
+  | 'reservations.manage'
+  | 'reservations.approve'
+  | 'bugs.triage'
+  | 'platform.manage';
 
 /**
  * Jeden CZŁONEK klubu na liście `A06` (od wielofirmowości - wiersz to członkostwo,
@@ -41,8 +59,11 @@ export interface AdminPilotListItem {
   email: string | null;
   /** Członkostwo `active`; `false` = wyłączone w tym klubie (osoba może latać w innym). */
   active: boolean;
-  /** Rola W TYM klubie. */
-  role: PilotRoleWire;
+  /**
+   * ZAKRES W TYM klubie (epik #197). Nazwę zakresu („administrator", „pilot",
+   * „własny zakres") składa PANEL ze zbioru - serwer nie zna języka interfejsu.
+   */
+  capabilities: CapabilityWire[];
   /** ISO 8601 UTC - ostatnia zmiana wiersza konta (nie: ostatnie logowanie). */
   updatedAt: string;
   /**
@@ -79,9 +100,11 @@ export interface AdminPilotCounts {
   total: number;
   active: number;
   inactive: number;
-  admin: number;
-  /** `training_lead` wypadł razem z rolą (2026-08-30) - patrz `domain/roles.ts`. */
-  pilot: number;
+  /*
+   * LICZNIKÓW RÓL NIE MA (epik #197): kafle z licznikami zniknęły z panelu 2.0, a po
+   * zamianie ról na zbiory „ilu administratorów" przestało mieć jedną odpowiedź -
+   * zakres bywa własny. Chip „Z dostępem do panelu" liczy `AdminPilotScopeCounts`.
+   */
   /**
    * Dni lotne CAŁEGO klubu w oknie `daysFrom`–`daysTo`: liczba sesji ZAMKNIĘTYCH,
    * a nie suma kolumny `flyingDays`. Dzień szkolny liczy się dwóm pilotom naraz, więc

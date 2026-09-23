@@ -71,11 +71,9 @@ const MIRRORS = [
     server: 'Capability',
     read: () => unionIn(join(SERVER, 'roles.ts'), 'Capability'),
   },
-  {
-    panel: 'PilotRole',
-    server: 'PILOT_ROLES',
-    read: () => constIn(join(SERVER, 'roles.ts'), 'PILOT_ROLES'),
-  },
+  // Lustro `PilotRole` wypadło razem z rolami klubu (epik #197): zdolność nadaje się
+  // CZŁONKOSTWU, a „administrator" jest nazwą ZESTAWU, którą panel liczy sobie sam
+  // ze zbioru. Nie ma po drugiej stronie czego lustrzyć.
   {
     panel: 'PilotRefusalDto',
     server: 'AccountRefusal',
@@ -136,7 +134,7 @@ describe('lustra unii: panel <-> serwer', () => {
     // przestał cokolwiek łapać albo któryś plik zmienił nazwę.
     expect(unionIn(join(SERVER, 'roles.ts'), 'Capability')).toContain('panel.access');
     expect(unionIn(DTO, 'Capability')).toContain('flags.resolve');
-    expect(constIn(join(SERVER, 'roles.ts'), 'PILOT_ROLES')).toContain('admin');
+    expect(unionIn(join(SERVER, 'roles.ts'), 'Capability')).toContain('accounts.manage');
   });
 
   it('kontrola testu: komentarze NIE wchodzą do wyniku', () => {

@@ -15,7 +15,10 @@ import { z } from 'zod';
 
 import type { AdminPilotListItem } from '../../../application/admin/contracts/pilots.ts';
 import type { AdminPilotAccount } from '../../../application/admin/ports.ts';
-import { PILOT_ROLES } from '../../../domain/roles.ts';
+import { isCapability, type Capability } from '../../../domain/roles.ts';
+
+/** Re-eksport strażnika: trasy walidują parametr zapytania tym samym katalogiem. */
+export const isCapabilityName = isCapability;
 
 /**
  * Kod pilota: WERSALIKI, bez spacji, 2–10 znaków.
@@ -47,7 +50,25 @@ export const pilotEmail = z
   .union([z.string().trim().email().max(200), z.literal('')])
   .transform((value) => (value === '' ? null : value));
 
-export const pilotRole = z.enum(PILOT_ROLES);
+/**
+ * ZAKRES UPRAWNIEN - lista zdolnosci z katalogu (epik #197).
+ *
+ * Walidujemy KAZDA pozycje po katalogu, choc napis spoza niego i tak nie otworzylby
+ * zadnej trasy (`can` pyta o obecnosc konkretnej pozycji). Odmowa jest mimo to
+ * wlasciwa: wiersz ze smieciem w bazie wygladalby jak nadane uprawnienie, a panel
+ * pokazalby przy nim pusta etykiete. Blad w zadaniu ma odbic sie od razu, a nie
+ * zostac w tabeli na lata.
+ *
+ * ZBIOR BYWA PUSTY i to jest stan domyslny czlonka: pilot pracuje w aplikacji.
+ */
+export const capabilitySet = z
+  .array(z.string())
+  .max(20)
+  .transform((values) => [...new Set(values)])
+  .refine((values) => values.every(isCapability), {
+    message: 'zakres uprawnien: nieznana zdolnosc',
+  })
+  .transform((values) => values as Capability[]);
 
 /** Identyfikator OSOBY w adresie trasy - klucz zdarzeń, nie kod pilota. */
 export const pilotIdParams = z.object({ id: z.string().min(1).max(100) });
@@ -68,7 +89,7 @@ export const accountToWire = (account: AdminPilotAccount, at: Date): AdminPilotL
   name: account.name,
   email: account.email,
   active: account.active,
-  role: account.role,
+  capabilities: [...account.capabilities],
   updatedAt: at.toISOString(),
   flyingDays: 0,
   // `null` z tego samego powodu, co `flyingDays: 0`: mutacja oddaje tożsamość

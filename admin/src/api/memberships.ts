@@ -6,8 +6,8 @@
  * decyduje `queries/`.
  *
  * ══ OSOBNY ZASÓB OD `pilots.ts`, BO TO INNY BYT NA EKRANIE ══
- * Wiersz listy opisuje CZŁONKA klubu: ma kod pilota, rolę i status. Wiersz kolejki
- * opisuje KANDYDATA - kodu jeszcze nie ma (nadaje się go dopiero decyzją), roli też nie.
+ * Wiersz listy opisuje CZŁONKA klubu: ma kod pilota, zakres uprawnień i status. Wiersz kolejki
+ * opisuje KANDYDATA - kodu jeszcze nie ma (nadaje się go dopiero decyzją), zakresu też nie.
  * Osobne trasy mają przy tym osobną zdolność (`accounts.manage` także na ODCZYT), bo
  * w kolejce stoją adresy e-mail ludzi, których w klubie NIE MA.
  *
@@ -52,7 +52,7 @@ export function rejectMembership(
   );
 }
 
-/** Cofnięcie odrzucenia - zgłoszenie wraca do kolejki, kod i rolę nadaje się potem. */
+/** Cofnięcie odrzucenia - zgłoszenie wraca do kolejki, kod i zakres nadaje się potem. */
 export function reopenMembership(pilotId: string): Promise<{ membership: MembershipDecisionDto }> {
   return apiPost<{ membership: MembershipDecisionDto }>(
     `/memberships/${encodeURIComponent(pilotId)}/reopen`,

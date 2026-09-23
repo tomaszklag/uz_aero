@@ -281,7 +281,7 @@ describe('zaproszenie administratora klubu z PLATFORMY (`platform.manage`, D8)',
       payload: { email: 'grazyna@gamma.pl', password: PASSWORD },
     });
     expect(login.statusCode, login.body).toBe(200);
-    expect(login.json()).toMatchObject({ org: { slug: 'aeroklub-gamma' }, pilot: { code: 'GGA', role: 'admin' } });
+    expect(login.json()).toMatchObject({ org: { slug: 'aeroklub-gamma' }, pilot: { code: 'GGA' } });
   });
 
   it('„Wyślij ponownie" - ten sam list dla administratora TEGO klubu; cudza osoba → 404', async () => {

@@ -39,7 +39,7 @@ async function loginOf(app: Harness['app'], code: string) {
     token: string;
     refreshToken: string;
     org: { id: string; slug: string; name: string };
-    pilot: { id: string; code: string; name: string; role: string };
+    pilot: { id: string; code: string; name: string };
     memberships: { org: { id: string }; code: string }[];
   };
 }

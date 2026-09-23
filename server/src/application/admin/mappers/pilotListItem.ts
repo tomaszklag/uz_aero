@@ -21,7 +21,7 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
     name: account.name,
     email: account.email,
     active: account.active,
-    role: account.role,
+    capabilities: [...account.capabilities],
     updatedAt: join.updatedAt.toISOString(),
     lastSeenAt: join.lastSeenAt?.toISOString() ?? null,
     // Przepisanie 1:1 - lustro kontraktu jest podzbiorem typu domeny, więc rozjazd
@@ -32,7 +32,7 @@ export function pilotListItem(join: AdminPilotJoin): AdminPilotListItem {
 }
 
 /**
- * `PilotCounts.byRole` (mapa po katalogu ról) → płaskie pola kontraktu.
+ * `PilotCounts` → płaskie pola kontraktu.
  *
  * Płasko, a nie mapą, bo kontrakt panelu ma być czytelny bez znajomości katalogu ról
  * serwera - a dopisanie czwartej roli i tak wymaga decyzji o tym, jak nazwać ją
@@ -43,8 +43,6 @@ export function pilotCounts(counts: PilotCounts): AdminPilotCounts {
     total: counts.total,
     active: counts.active,
     inactive: counts.inactive,
-    admin: counts.byRole.admin,
-    pilot: counts.byRole.pilot,
     flyingDays: counts.flyingDays,
   };
 }

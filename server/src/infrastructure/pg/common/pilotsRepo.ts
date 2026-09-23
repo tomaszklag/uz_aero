@@ -24,7 +24,7 @@ import type {
 } from '../../../application/common/ports.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
 import { normalizeEmail } from '../../../domain/email.ts';
-import { DEFAULT_ROLE, isPilotRole, isPlatformRole } from '../../../domain/roles.ts';
+import { isCapability, isPlatformRole, type Capability } from '../../../domain/roles.ts';
 
 interface PilotRow {
   id: string;
@@ -58,9 +58,19 @@ interface MembershipRow {
   status: string;
   reject_reason: string | null;
   created_at: string | Date;
+  /** Zdolności członkostwa sklejone przecinkami (`string_agg`) - patrz `toCapabilities`. */
+  capabilities: string;
   decided_at: string | Date | null;
   credentials_valid_from: string | Date | null;
 }
+
+/**
+ * Zbiór zdolności z JEDNEGO napisu, nie z kolumny tablicowej: tablice Postgresa
+ * serializuje sterownik, a testy jadą na PGlite i produkcja na `pg`. Napis spoza
+ * katalogu wypada - w bazie nie ma `CHECK`-a, bo katalog żyje w TypeScripcie.
+ */
+const toCapabilities = (value: string): Capability[] =>
+  value === '' ? [] : value.split(',').filter(isCapability);
 
 const toMembership = (r: MembershipRow): Membership => ({
   orgId: r.org_id,
@@ -68,9 +78,9 @@ const toMembership = (r: MembershipRow): Membership => ({
   orgSlug: r.org_slug,
   orgActive: r.org_active,
   code: r.code,
-  // Ta sama nieufność, co przy roli konta do 2.0.0: nierozpoznana rola schodzi do
-  // najmniejszej, nierozpoznany status - do stanu bez dostępu.
-  role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
+  // Ta sama nieufność, co przy statusie: napis spoza katalogu wypada ze zbioru,
+  // bo wiersz ze śmieciem wyglądałby jak nadane uprawnienie (w bazie nie ma CHECK-a).
+  capabilities: toCapabilities(r.capabilities),
   status: membershipStatusOf(r.status),
   credentialsValidFrom: at(r.credentials_valid_from),
   rejectReason: r.reject_reason,
@@ -85,7 +95,10 @@ const toMembership = (r: MembershipRow): Membership => ({
  */
 const MEMBERSHIP_SELECT = `
   SELECT m.org_id, o.name AS org_name, o.slug AS org_slug, o.active AS org_active,
-         m.code, m.role, m.status, m.reject_reason, m.created_at, m.decided_at,
+         m.code, m.status, m.reject_reason, m.created_at, m.decided_at,
+         COALESCE((SELECT string_agg(mc.capability, ',' ORDER BY mc.capability)
+                 FROM membership_capabilities mc
+                WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id), '') AS capabilities,
          m.credentials_valid_from
     FROM memberships m
     JOIN organizations o ON o.id = m.org_id`;
@@ -195,7 +208,7 @@ export class PgPilotsRepo implements PilotsPort {
       code: string | null;
       name: string;
       active: boolean;
-      role: string;
+      capabilities: string;
       credentials_valid_from: string | Date | null;
       membership_credentials_valid_from: string | Date | null;
       session_revoked: boolean;
@@ -207,7 +220,9 @@ export class PgPilotsRepo implements PilotsPort {
       // przechodzi) od „sesji, której nie ma" (odbija).
       `SELECT m.pilot_id, m.org_id, m.code, p.name,
               (p.active AND o.active AND m.status = 'active') AS active,
-              m.role,
+              COALESCE((SELECT string_agg(mc.capability, ',' ORDER BY mc.capability)
+                 FROM membership_capabilities mc
+                WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id), '') AS capabilities,
               p.credentials_valid_from,
               m.credentials_valid_from AS membership_credentials_valid_from,
               ($3::text IS NOT NULL AND (s.id IS NULL OR s.revoked_at IS NOT NULL))
@@ -229,7 +244,7 @@ export class PgPilotsRepo implements PilotsPort {
       code: row.code ?? '',
       name: row.name,
       active: row.active,
-      role: isPilotRole(row.role) ? row.role : DEFAULT_ROLE,
+      capabilities: toCapabilities(row.capabilities),
       credentialsValidFrom: at(row.credentials_valid_from),
       membershipCredentialsValidFrom: at(row.membership_credentials_valid_from),
       sessionRevoked: row.session_revoked,

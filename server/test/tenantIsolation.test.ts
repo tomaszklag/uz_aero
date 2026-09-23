@@ -1058,7 +1058,7 @@ const CASES: Record<string, Probe> = {
       method: 'POST',
       url: `/admin/api/memberships/${pendingB}/approve`,
       headers: writer(a),
-      payload: { code: 'KAN', role: 'pilot' },
+      payload: { code: 'KAN', capabilities: [] },
     });
     expect(res.statusCode).toBe(404);
     const { rows } = await db.query<{ status: string; code: string | null }>(

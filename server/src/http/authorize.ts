@@ -160,7 +160,7 @@ export async function authorizeOrg(
   if (account == null) return UNAUTHORIZED;
   if (account.sessionRevoked) return SESSION_REVOKED;
 
-  if (!can(account.role, capability)) {
+  if (!can(account.capabilities, capability)) {
     return { ok: false, status: 403, body: { error: 'forbidden', required: capability } };
   }
   return { ok: true, account };

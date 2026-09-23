@@ -14,14 +14,14 @@
  * odmową z powodem.
  */
 
-import type { MembershipApprovalBody, PilotRole } from '../../api/dto';
+import type { Capability, MembershipApprovalBody } from '../../api/dto';
 
 /** Który krok szuflady jest na ekranie. `decided` = po decyzji, bez formularza. */
 export type RequestStep = 'approve' | 'reject' | 'decided';
 
 export interface RequestDraft {
   code: string;
-  role: PilotRole;
+  capabilities: Capability[];
   reason: string;
 }
 
@@ -32,7 +32,7 @@ export interface RequestDraft {
  * a kod jest jedyną rzeczą, którą klub w tej decyzji naprawdę wybiera (stoi potem
  * w sygnaturze każdej operacji tego pilota).
  */
-export const EMPTY_REQUEST: RequestDraft = { code: '', role: 'pilot', reason: '' };
+export const EMPTY_REQUEST: RequestDraft = { code: '', capabilities: [], reason: '' };
 
 /** Kod pilota do WERSALIKOW - dokładnie jak przy koncie i jak robi to serwer. */
 export const normalizeCode = (code: string): string => code.trim().toUpperCase();
@@ -80,5 +80,5 @@ export function rejectVerdict(draft: RequestDraft): RequestVerdict {
 }
 
 export function approvalBodyOf(draft: RequestDraft): MembershipApprovalBody {
-  return { code: normalizeCode(draft.code), role: draft.role };
+  return { code: normalizeCode(draft.code), capabilities: draft.capabilities };
 }

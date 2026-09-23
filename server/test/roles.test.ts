@@ -55,10 +55,12 @@ const PLATFORM_CAPABILITIES = ['platform.manage', 'bugs.triage'] as const;
  */
 const NO_SESSION = '';
 
+// Tożsamość z tokenu NIE NIESIE ZAKRESU (epik #197) - zdolności czyta brama z bazy,
+// więc oba pomocniki różnią się dziś wyłącznie nazwą i to jest sedno tej zmiany.
 const asAdmin = (pilotId: string, orgId = ORG_A) =>
-  ({ pilotId, orgId, code: pilotId, role: 'admin', sessionId: NO_SESSION }) as const;
+  ({ pilotId, orgId, code: pilotId, sessionId: NO_SESSION }) as const;
 const asPilot = (pilotId: string, orgId = ORG_A) =>
-  ({ pilotId, orgId, code: pilotId, role: 'pilot', sessionId: NO_SESSION }) as const;
+  ({ pilotId, orgId, code: pilotId, sessionId: NO_SESSION }) as const;
 
 describe('mapa uprawnień', () => {
   it('pilot nie ma w panelu NICZEGO - z wejściem i platformą włącznie', () => {
@@ -66,7 +68,7 @@ describe('mapa uprawnień', () => {
     // (2026-08-30) to JEDYNY przypadek mówiący „tej zdolności się nie dostaje",
     // więc musi widzieć każdą nową pozycję katalogu - tak samo jak przypadek niżej.
     for (const capability of [...CLUB_CAPABILITIES, ...PLATFORM_CAPABILITIES]) {
-      expect(can('pilot', capability)).toBe(false);
+      expect(can([], capability)).toBe(false);
     }
   });
 
@@ -74,12 +76,14 @@ describe('mapa uprawnień', () => {
   // w kontach") wypadł razem z rolą `training_lead` 2026-08-30 - dziś każdy, kto
   // wchodzi do panelu klubu, ma komplet zdolności KLUBU i mówi o tym ten przypadek.
   it('administrator klubu ma komplet zdolności klubu - i NIE MA zdolności platformowej', () => {
-    for (const capability of CLUB_CAPABILITIES) expect(can('admin', capability)).toBe(true);
+    for (const capability of CLUB_CAPABILITIES) {
+      expect(can(CLUB_CAPABILITIES, capability)).toBe(true);
+    }
     // Rozłączność dwóch osi władzy (wielofirmowość §3.3): administrator klubu nie
     // zakłada klubów. Dopisanie `platform.manage` do listy `admin` byłoby wyjątkiem
     // wpisanym w rolę, niewidocznym dla klubu, którego dotyczy.
     for (const capability of PLATFORM_CAPABILITIES) {
-      expect(can('admin', capability)).toBe(false);
+      expect(can(CLUB_CAPABILITIES, capability)).toBe(false);
     }
   });
 
@@ -242,13 +246,13 @@ describe('brama uprawnień tras panelu klubu', () => {
 
     expect(Object.keys(outcome.account).sort()).toEqual([
       'active',
+      'capabilities',
       'code',
       'credentialsValidFrom',
       'membershipCredentialsValidFrom',
       'name',
       'orgId',
       'pilotId',
-      'role',
       // 2.1.0: brama sprawdza też SESJĘ z claimu `sid` - tym samym zapytaniem, co
       // członkostwo, więc oba pola jadą tą samą projekcją. `sessionId` wraca echem
       // argumentu: z niego bierze się stempel aktywności i `Actor.sessionId`.
@@ -306,17 +310,18 @@ describe('brama uprawnień tras panelu klubu', () => {
     ).toBe(true);
   });
 
-  it('odebranie roli działa NATYCHMIAST, bez czekania na wygaśnięcie tokenu', async () => {
+  it('odebranie zdolności działa NATYCHMIAST, bez czekania na wygaśnięcie tokenu', async () => {
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
     const token = tokens.sign(asAdmin('TMK'), 3600);
 
     await db.query(
-      "UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
     );
 
-    // Token nadal NIESIE `admin` - i to jest sedno: brama go nie pyta o rolę.
-    expect(tokens.verify(token)?.role).toBe('admin');
+    // Token jest NIETKNIĘTY i nadal ważny - i to jest sedno: zakres czyta brama z bazy,
+    // a nie z ładunku, więc odebranie zdolności nie czeka na wygaśnięcie poświadczenia.
+    expect(tokens.verify(token)?.pilotId).toBe('TMK');
     expect(await authorizeOrg(tokens, accounts, token, 'accounts.manage')).toMatchObject({
       status: 403,
       body: { required: 'accounts.manage' },
@@ -341,7 +346,7 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
     // zna (backfill wpisał klub domyślny w `refresh_tokens.org_id`). Domyślanie się klubu
     // byłoby zgadywaniem, do czyich danych ten token ma prawo.
     const { db, tokens, clock } = await testHarness();
-    const legacy = handRolled(clock, { sub: 'TMK', code: 'TMK', role: 'admin' });
+    const legacy = handRolled(clock, { sub: 'TMK', code: 'TMK' });
 
     expect(tokens.verify(legacy)).toBeNull();
     expect(await authorizeOrg(tokens, new PgPilotsRepo(db), legacy, 'panel.access')).toEqual({
@@ -351,9 +356,10 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
     });
   });
 
-  it('token z klubem, ale bez roli czyta się jako pilot - a panel otwiera po ROLI Z CZŁONKOSTWA', async () => {
-    // Cichy awans byłby luką, więc claim bez roli schodzi do najmniejszej. Brama panelu
-    // roli z claimu jednak nie pyta: TMK jest administratorem W KLUBIE, więc token wchodzi.
+  it('token BEZ roli przechodzi bez zająknięcia - claim przestał cokolwiek znaczyć', async () => {
+    // Token sprzed 3.1.0 niesie jeszcze claim , a token sprzed wielofirmowości nie
+    // niesie go wcale - i jedno, i drugie jest dziś bez znaczenia: brama czyta zakres
+    // z bazy. TMK ma w klubie , więc token wchodzi.
     const { db, tokens, clock } = await testHarness();
     const token = handRolled(clock, { sub: 'TMK', org: ORG_A, code: 'TMK' });
 
@@ -361,7 +367,6 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
       pilotId: 'TMK',
       orgId: ORG_A,
       code: 'TMK',
-      role: 'pilot',
       // …a brak `iat` czyta się jako `0`, czyli „wydany przed czasem" - wartość, która
       // przegrywa z każdym znacznikiem unieważnienia (przypadek niżej).
       issuedAt: 0,
@@ -382,7 +387,7 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
     // unieważnienia przegrywa z każdą datą.
     const { db, tokens, clock } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = handRolled(clock, { sub: 'TMK', org: ORG_A, code: 'TMK', role: 'admin' });
+    const token = handRolled(clock, { sub: 'TMK', org: ORG_A, code: 'TMK' });
 
     expect((await authorizeOrg(tokens, accounts, token, 'accounts.manage')).ok).toBe(true);
 
@@ -394,8 +399,8 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
   });
 });
 
-describe('rola pochodzi z członkostwa, nie z tokenu', () => {
-  it('odebranie roli działa przy najbliższym odświeżeniu', async () => {
+describe('zakres pochodzi z członkostwa, nie z tokenu', () => {
+  it('odebranie zdolności widać także po odświeżeniu pary tokenów', async () => {
     const { app, db, tokens } = await testHarness();
 
     const login = await app.inject({
@@ -403,12 +408,11 @@ describe('rola pochodzi z członkostwa, nie z tokenu', () => {
       url: '/auth/google',
       payload: { idToken: googleTokenFor('TMK') },
     });
-    expect(tokens.verify(login.json().token)?.role).toBe('admin');
     expect(tokens.verify(login.json().token)?.orgId).toBe(ORG_A);
 
     // Administrator traci uprawnienia w klubie…
     await db.query(
-      "UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
     );
 
     const refreshed = await app.inject({
@@ -417,11 +421,15 @@ describe('rola pochodzi z członkostwa, nie z tokenu', () => {
       payload: { refreshToken: login.json().refreshToken },
     });
 
-    // …a świeży token już go nie niesie. Gdyby rola szła ze starego tokenu, dostęp
-    // wisiałby do wygaśnięcia refresha, czyli do 90 dni. Klub zostaje ten sam.
+    // …i świeża para tokenów tego nie odwraca: zakres nie jedzie w ładunku, więc nie ma
+    // jak się w nim zakonserwować. Klub zostaje ten sam.
     expect(refreshed.statusCode).toBe(200);
-    expect(refreshed.json().pilot.role).toBe('pilot');
-    expect(tokens.verify(refreshed.json().token)).toMatchObject({ role: 'pilot', orgId: ORG_A });
+    expect(tokens.verify(refreshed.json().token)).toMatchObject({ orgId: ORG_A });
+
+    const accounts = new PgPilotsRepo(db);
+    expect(await authorizeOrg(tokens, accounts, refreshed.json().token, 'panel.access')).toMatchObject({
+      status: 403,
+    });
   });
 });
 
@@ -481,12 +489,10 @@ describe('token PLATFORMOWY superadministratora', () => {
 });
 
 describe('CHECK na słownikach ról', () => {
-  it('`memberships.role` nie przyjmuje roli spoza słownika', async () => {
-    const { db } = await testHarness();
-    await expect(
-      db.query("UPDATE memberships SET role = 'superadmin' WHERE pilot_id = 'TMK'"),
-    ).rejects.toThrow();
-  });
+  // Przypadek „`memberships.role` nie przyjmuje roli spoza słownika" wypadł razem
+  // z kolumną (epik #197). Jego rolę przejął przypadek niżej, o katalogu zdolności:
+  // w `membership_capabilities` CHECK-a NIE MA świadomie (katalog żyje w TypeScripcie
+  // i rośnie), więc pilnuje tego kod, a nie baza.
 
   it('`pilots.platform_role` przyjmuje wyłącznie `superadmin` albo NULL', async () => {
     const { db } = await testHarness();
@@ -498,19 +504,24 @@ describe('CHECK na słownikach ról', () => {
     ).resolves.toBeDefined();
   });
 
-  it('członkostwo założone bez podanej roli dostaje `pilot`', async () => {
-    const { db } = await testHarness();
+  // ══ BEZPIECZNIK JEST W MODELU, NIE W BAZIE (epik #197) ══
+  // Zdolność spoza katalogu wchodzi do tabeli bez przeszkód - `CHECK`-a tam nie ma,
+  // bo katalog żyje w TypeScripcie i rośnie z produktem. Nie otwiera przez to NICZEGO:
+  // `can` pyta o obecność KONKRETNEJ pozycji, więc literówka nie pasuje do żadnego
+  // pytania. Ten przypadek pilnuje dokładnie tego - że śmieć w bazie jest bezsilny,
+  // a nie że go nie ma.
+  it('zdolność spoza katalogu nie otwiera ŻADNEJ trasy', async () => {
+    const { db, tokens } = await testHarness();
+    const accounts = new PgPilotsRepo(db);
     await db.query(
-      `INSERT INTO pilots (id, name, email, active) VALUES ('NEW', 'Nowe Konto', 'nowe@ninerdeck.pl', TRUE)`,
+      `INSERT INTO membership_capabilities (org_id, pilot_id, capability)
+       VALUES ('org-a', 'PWI', 'panel.acces')`,
     );
-    await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-       VALUES ('org-a', 'NEW', 'NEW', 'active', 'code')`,
-    );
-    const { rows } = await db.query<{ role: string }>(
-      "SELECT role FROM memberships WHERE pilot_id = 'NEW'",
-    );
-    expect(rows[0]?.role).toBe('pilot');
+
+    const token = tokens.sign(asPilot('PWI'), 3600);
+    expect(await authorizeOrg(tokens, accounts, token, 'panel.access')).toMatchObject({
+      status: 403,
+    });
   });
 
   it('członkostwo AKTYWNE bez kodu jest niemożliwe (`membership_active_has_code`)', async () => {

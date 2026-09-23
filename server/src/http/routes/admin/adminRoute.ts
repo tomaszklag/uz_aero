@@ -84,7 +84,7 @@ function actorFrom(account: MembershipAuthSnapshot, req: FastifyRequest): Actor 
   return {
     pilotId: account.pilotId,
     orgId: account.orgId,
-    role: account.role,
+    capabilities: account.capabilities,
     ip: req.ip ?? null,
     sessionId: account.sessionId,
   };

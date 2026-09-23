@@ -13,7 +13,7 @@
  * jest dozwolona.
  */
 
-import type { PilotListItemDto, PilotRole } from '../../api/dto';
+import type { Capability, PilotListItemDto } from '../../api/dto';
 import type { UpdatePilotBody } from '../../api/pilots';
 import { ACCOUNT_ACTIVE, SELF_ACCOUNT } from './accountRefusal';
 
@@ -22,14 +22,19 @@ export interface AccountDraft {
   code: string;
   name: string;
   email: string;
-  role: PilotRole;
+  capabilities: Capability[];
 }
 
-export const EMPTY_ACCOUNT: AccountDraft = { code: '', name: '', email: '', role: 'pilot' };
+export const EMPTY_ACCOUNT: AccountDraft = { code: '', name: '', email: '', capabilities: [] };
 
 /** Konto z listy -> szkic. `null` w e-mailu to puste pole, nie napis „null". */
 export function draftOf(pilot: PilotListItemDto): AccountDraft {
-  return { code: pilot.code, name: pilot.name, email: pilot.email ?? '', role: pilot.role };
+  return {
+    code: pilot.code,
+    name: pilot.name,
+    email: pilot.email ?? '',
+    capabilities: [...pilot.capabilities],
+  };
 }
 
 /**
@@ -145,7 +150,13 @@ export function updateBodyOf(before: PilotListItemDto, draft: AccountDraft): Upd
   // `null` i `''` znaczą to samo („bez e-maila"), więc porównujemy po normalizacji -
   // inaczej samo otwarcie i zapisanie konta bez e-maila wyglądałoby na zmianę.
   if (email !== (before.email ?? '')) body.email = email;
-  if (draft.role !== before.role) body.role = draft.role;
+  // Zakres porównuje się JAKO ZBIÓR - kolejność nie jest informacją, a formularz
+  // przestawia ją przy każdym przełączniku. Bez tego „zapisz" bez zmiany wysyłałby
+  // zakres, a dziennik nadzoru dostawałby wiersz o niczym.
+  const sorted = (c: readonly string[]) => [...c].sort().join(',');
+  if (sorted(draft.capabilities) !== sorted(before.capabilities)) {
+    body.capabilities = draft.capabilities;
+  }
 
   return body;
 }

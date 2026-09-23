@@ -36,16 +36,17 @@ import {
   pilotEmail,
   pilotIdParams,
   pilotName,
-  pilotRole,
+  capabilitySet,
+  isCapabilityName,
 } from './pilotFields.ts';
 
-const roles = z
-  .union([pilotRole, z.array(pilotRole)])
+const capabilityFilter = z
+  .union([z.string(), z.array(z.string())])
   .transform((value) => (Array.isArray(value) ? value : [value]));
 
 const listQuery = z.object({
   active: z.enum(['true', 'false']).optional(),
-  role: roles.optional(),
+  capability: z.string().optional(),
   /** Fragment kodu, nazwiska albo e-maila - dopasowanie zawierające, nie dokładne. */
   q: z.string().trim().min(1).max(100).optional(),
   sort: z.enum(['asc', 'desc']).default('asc'),
@@ -64,7 +65,7 @@ const patchBody = z.object({
   code: pilotCode.optional(),
   name: pilotName.optional(),
   email: pilotEmail.optional(),
-  role: pilotRole.optional(),
+  capabilities: capabilitySet.optional(),
 });
 
 const activeBody = z.object({ active: z.boolean() });
@@ -113,7 +114,7 @@ export function registerAdminPilotRoutes(
       return reply.send(
         await queries.list(actor.orgId, {
           active: q.active === undefined ? undefined : q.active === 'true',
-          roles: q.role,
+          capability: isCapabilityName(q.capability) ? q.capability : undefined,
           search: q.q,
           direction: q.sort,
           limit: q.limit,

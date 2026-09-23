@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CLUB_CAPABILITIES } from '../accounts/scope';
 
 import type { PanelScopesDto } from '../../api/dto';
 import { scopeOptions, scopeQuestion } from './scopeOptions';
@@ -6,7 +7,8 @@ import { scopeOptions, scopeQuestion } from './scopeOptions';
 const club = (id: string, name: string, code: string) => ({
   org: { id, slug: id, name },
   code,
-  role: 'admin' as const,
+  // Komplet zdolności klubowych - zestaw „Administrator", więc karta pisze tę nazwę.
+  capabilities: [...CLUB_CAPABILITIES],
 });
 
 const scopes = (over: Partial<PanelScopesDto> = {}): PanelScopesDto => ({
@@ -16,7 +18,7 @@ const scopes = (over: Partial<PanelScopesDto> = {}): PanelScopesDto => ({
 });
 
 describe('karty wyboru zakresu', () => {
-  it('klub niesie ROLĘ i KOD w tym klubie - to jest skutek wyboru', () => {
+  it('klub niesie ZAKRES i KOD w tym klubie - to jest skutek wyboru', () => {
     expect(scopeOptions(scopes())).toEqual([
       {
         orgId: 'org-a',

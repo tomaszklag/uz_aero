@@ -25,6 +25,7 @@ import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts'
 import { uniqueConflictField } from '../src/application/admin/commands/pilots.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import type { PilotsAdminPort } from '../src/application/admin/ports.ts';
+import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
 import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
@@ -84,7 +85,7 @@ async function addMember(
     method: 'POST',
     url: `/admin/api/memberships/${member.id}/approve`,
     headers: admin(token),
-    payload: { code: member.code, role: 'pilot' },
+    payload: { code: member.code, capabilities: [] },
   });
   expect(approved.statusCode, approved.body).toBe(200);
 }
@@ -177,7 +178,7 @@ function pilotCommands(
 const actor = (pilotId: string) => ({
   pilotId,
   orgId: ORG_A,
-  role: 'admin' as const,
+  capabilities: CLUB_CAPABILITIES,
   ip: null,
   sessionId: null,
 });
@@ -216,8 +217,6 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
       total: 5,
       active: 5,
       inactive: 0,
-      admin: 2,
-      pilot: 3,
       // Zero dni lotnych, bo świeży harness nie ma jeszcze ani jednej sesji.
       flyingDays: 0,
     });
@@ -235,6 +234,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     for (const item of res.json().items) {
       expect(Object.keys(item).sort()).toEqual([
         'active',
+        'capabilities',
         'code',
         'email',
         'flyingDays',
@@ -248,22 +248,27 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         'loginMethods',
         'name',
         'orgId',
-        'role',
         'updatedAt',
       ]);
     }
   });
 
-  it('filtruje po roli, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
+  it('filtruje po ZDOLNOŚCI, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
     const { app } = await testHarness();
     const token = await tokenOf(app, 'TMK');
 
-    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(2);
-    // Parametr jest POWTARZALNY - chip „Z rolą panelu" był dwiema rolami naraz
-    // i wróci nią razem z trzecią rolą, więc kształt zapytania zostaje sprawdzony.
+    // Chip „Z dostępem do panelu" pyta o JEDNĄ zdolność, a nie o listę ról: od epiku
+    // #197 „kto wejdzie do panelu" ma dokładnie jedną odpowiedź i nie trzeba jej sklejać.
     expect(
-      (await listPilots(app, token, '?role=admin&role=pilot')).json().items,
-    ).toHaveLength(5);
+      (await listPilots(app, token, '?capability=panel.access')).json().items,
+    ).toHaveLength(2);
+    // Zdolność, której nikt w klubie nie ma, zawęża do zera - a nie odbija błędem.
+    expect(
+      (await listPilots(app, token, '?capability=bugs.triage')).json().items,
+    ).toHaveLength(0);
+    // Napis spoza katalogu jest IGNOROWANY, nie odrzucany: to parametr widoku, a nie
+    // treść zapisu - pusta lista po literówce w adresie byłaby gorsza niż pełna.
+    expect((await listPilots(app, token, '?capability=nie.ma')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?active=true')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?q=kowalska')).json().items).toEqual([
       expect.objectContaining({ code: 'AKO' }),
@@ -279,7 +284,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
 
   it('liczniki są niezależne od filtra - kafel opisuje klub, nie zawężenie', async () => {
     const { app } = await testHarness();
-    const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?role=admin')).json();
+    const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?capability=panel.access')).json();
 
     expect(body.items).toHaveLength(2);
     expect(body.total).toBe(2);
@@ -317,14 +322,14 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     const { app, db } = await testHarness();
     const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'admin',
+      capabilities: CLUB_CAPABILITIES,
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().pilot).toMatchObject({
       code: 'PWI',
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'admin',
+      capabilities: CLUB_CAPABILITIES,
     });
 
     const rows = await auditRows(db);
@@ -333,7 +338,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
       code: 'PWI',
       changes: {
         name: { from: 'Piotr Wiśniewski', to: 'Piotr Wiśniewski-Nowak' },
-        role: { from: 'pilot', to: 'admin' },
+        capabilities: { from: [], to: [...CLUB_CAPABILITIES].sort() },
       },
     });
   });
@@ -369,15 +374,16 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
 
   it('administrator nie odbiera roli SOBIE - 409 z powodem, nie ciche 200', async () => {
     const { app, db } = await testHarness();
-    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'TMK', { role: 'pilot' });
+    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'TMK', { capabilities: [] });
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
-    const { rows } = await db.query<{ role: string }>(
-      "SELECT role FROM memberships WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM membership_capabilities
+        WHERE pilot_id = 'TMK' AND org_id = 'org-a' AND capability = 'accounts.manage'`,
     );
-    expect(rows[0]?.role).toBe('admin');
+    expect(Number(rows[0]?.n)).toBe(1);
     expect(await auditRows(db)).toEqual([]);
   });
 
@@ -393,22 +399,22 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
     // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
     // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
-    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
-    await patchPilot(app, token, 'PWI', { role: 'admin' });
+    await patchPilot(app, token, 'PWI', { capabilities: CLUB_CAPABILITIES });
     // …i degradacja TMK cudzą ręką (PWI jest teraz administratorem).
     const second = await tokenOf(app, 'PWI');
-    expect((await patchPilot(app, second, 'TMK', { role: 'pilot' })).statusCode).toBe(200);
+    expect((await patchPilot(app, second, 'TMK', { capabilities: [] })).statusCode).toBe(200);
 
     // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch -
     // i to jest jedyna droga, jaką ten stan da się osiągnąć jednym żądaniem.
-    const refused = await patchPilot(app, second, 'PWI', { role: 'pilot' });
+    const refused = await patchPilot(app, second, 'PWI', { capabilities: [] });
     expect(refused.statusCode).toBe(409);
     expect(refused.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships m JOIN membership_capabilities mc ON mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id AND mc.capability = 'accounts.manage' WHERE m.org_id = 'org-a' AND m.status = 'active'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -430,11 +436,11 @@ describe('wyścig o populację administratorów', () => {
     const queries: string[] = [];
     const commands = pilotCommands(harness, { queries });
 
-    const outcome = await commands.update(actor('TMK'), 'PWI', { role: 'admin' });
+    const outcome = await commands.update(actor('TMK'), 'PWI', { capabilities: CLUB_CAPABILITIES });
     expect(outcome.ok).toBe(true);
 
     const lock = queries.findIndex((q) => q.includes('pg_advisory_xact_lock'));
-    const count = queries.findIndex((q) => q.includes("role = 'admin'"));
+    const count = queries.findIndex((q) => q.includes("'accounts.manage'"));
     expect(lock).toBeGreaterThanOrEqual(0);
     expect(count).toBeGreaterThanOrEqual(0);
     // Blokada ZA odczytem nie chroni niczego: licznik byłby już przeczytany.
@@ -463,21 +469,21 @@ describe('wyścig o populację administratorów', () => {
 
     // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
     // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
-    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await harness.db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
     // Dwóch administratorów: TMK (seed) i PWI.
-    expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
+    expect((await commands.update(actor('TMK'), 'PWI', { capabilities: CLUB_CAPABILITIES })).ok).toBe(true);
 
-    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi - jest dwóch.
-    expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
+    // Pierwsza transakcja wyścigu: PWI odbiera TMK władzę nad kontami. Przechodzi - jest dwóch.
+    expect((await commands.update(actor('PWI'), 'TMK', { capabilities: [] })).ok).toBe(true);
 
     // Druga transakcja wyścigu, wpuszczona przez blokadę dopiero teraz.
-    const outcome = await commands.update(actor('TMK'), 'PWI', { role: 'pilot' });
+    const outcome = await commands.update(actor('TMK'), 'PWI', { capabilities: [] });
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
 
     // I to jest cała stawka: klub NADAL ma administratora.
     const { rows } = await harness.db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships m JOIN membership_capabilities mc ON mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id AND mc.capability = 'accounts.manage' WHERE m.org_id = 'org-a' AND m.status = 'active'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -488,10 +494,10 @@ describe('wyścig o populację administratorów', () => {
 
     // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
     // ostatniego, a to jego dotyczy ten przypadek.
-    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await harness.db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
 
-    expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
-    expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
+    expect((await commands.update(actor('TMK'), 'PWI', { capabilities: CLUB_CAPABILITIES })).ok).toBe(true);
+    expect((await commands.update(actor('PWI'), 'TMK', { capabilities: [] })).ok).toBe(true);
 
     const outcome = await commands.setActive(actor('TMK'), 'PWI', false);
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
@@ -769,7 +775,7 @@ describe('usunięcie konta', () => {
     // tożsamości - `target_id` jest uuid-em, którego nikt nie rozpozna.
     const audit = (await auditRows(db)).find((row) => row.action === 'pilot.delete');
     expect(audit).toMatchObject({ target_type: 'pilot', target_id: id, actor_pilot_id: 'TMK' });
-    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', role: 'pilot' });
+    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', capabilities: [] });
   });
 
   it('ODMAWIA, dopóki konto ma dostęp - usuwanie jest dwustopniowe', async () => {
