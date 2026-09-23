@@ -20,6 +20,8 @@ import {
   refuseWindow,
   type BookingRefusal,
 } from '../../../domain/bookings.ts';
+import type { ApprovalFlow } from '../../common/commands/approvals.ts';
+import type { Notifier } from '../../common/notify/notifier.ts';
 import type {
   AircraftConfigPort,
   BookingPatch,
@@ -55,11 +57,15 @@ export class BookingCommands {
     private readonly bookings: BookingsPort,
     private readonly aircraft: AircraftConfigPort,
     private readonly clock: Clock,
+    private readonly approvals: ApprovalFlow,
+    private readonly notifier: Notifier,
   ) {}
 
   /**
-   * Nowa rezerwacja pilota. Stan od razu `confirmed` - ścieżka akceptacji (`pending`)
-   * przychodzi w 3.1.0, a model jest na nią gotowy (§4).
+   * Nowa rezerwacja pilota. Stan startowy WYZNACZA ŚCIEŻKA AKCEPTACJI klubu (3.1.0,
+   * §11): klub bez ścieżki dostaje `confirmed` od razu i pracuje dokładnie jak
+   * w 3.0.0, klub ze ścieżką - `pending`, który TRZYMA SLOT (§11.2; inaczej
+   * „czekam na akceptację" znaczyłoby „ktoś mi to zaraz zajmie").
    */
   async create(orgId: string, pilotId: string, draft: BookingDraft): Promise<BookingResult> {
     const status = await this.aircraft.serviceStatusOf(this.db, orgId, draft.aircraftId);
@@ -71,11 +77,20 @@ export class BookingCommands {
     });
     if (refusal != null) return { ok: false, refusal };
 
+    // Plan liczy się PRZED zapisem, bo jego wynikiem jest między innymi stan startowy
+    // wiersza - dołożony po fakcie wymagałby drugiego zapisu, który mógłby się nie udać.
+    const plan = await this.approvals.plan(orgId, pilotId, {
+      id: draft.id,
+      aircraftId: draft.aircraftId,
+      startsAt: draft.startsAt,
+      endsAt: draft.endsAt,
+    });
+
     const row: NewBooking = {
       id: draft.id,
       aircraftId: draft.aircraftId,
       kind: 'flight',
-      status: 'confirmed',
+      status: plan.status,
       startsAt: draft.startsAt,
       endsAt: draft.endsAt,
       pilotId,
@@ -89,9 +104,21 @@ export class BookingCommands {
       note: draft.note,
       createdBy: pilotId,
     };
-    const write = await this.db.transaction((tx) => this.bookings.insert(tx, orgId, row));
-    if (write.ok) return write;
-    return { ok: false, refusal: 'slot_taken', taken: write.taken };
+    const write = await this.db.transaction(async (tx) => {
+      const result = await this.bookings.insert(tx, orgId, row);
+      // Pominięcia kroków i prośby o zgodę idą TĄ SAMĄ transakcją, co rezerwacja -
+      // inaczej prośba istnieje, a nikt o niej nie wie, albo odwrotnie (§12.1).
+      // Tylko przy wierszu NOWYM: powtórzony zapis (telefon ponowił przy słabym łączu)
+      // nie ma prawa wysłać drugiej prośby o tę samą zgodę.
+      if (result.ok && result.created) await this.approvals.recordPlan(tx, orgId, draft.id, plan);
+      return result;
+    });
+    if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
+
+    // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
+    // awaria ma kosztować ciszę w telefonie, a nie utraconą rezerwację.
+    if (write.created) await this.notifier.wake(plan.notices);
+    return write;
   }
 
   /**

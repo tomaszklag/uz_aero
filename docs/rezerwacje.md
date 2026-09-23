@@ -1064,6 +1064,12 @@ mu jedno pytanie, a nie drugi wątek. Stan jest osobny od `released` z P5 (tam m
 przejęto, tu zgody nie wydano) i BEZ powodu - `close_reason` niesie zdanie CZŁOWIEKA,
 a tutaj po prostu upłynął czas.
 
+**Nazywa się `expired`** (epik R-G): osobny stan, a nie `released` z adnotacją - pilot ma
+usłyszeć, KTÓRĄ z dwóch rzeczy przegapiono, a karta rezerwacji rysuje to jako własny stan
+(`23d`). Wygaszanie idzie w przebiegu PIERWSZE, bo zdejmuje wiersz ze stanu `pending`,
+zanim ktokolwiek zapyta o niego jako o rezerwację do zwolnienia; samo zwalnianie pyta
+odtąd WYŁĄCZNIE o `confirmed`, bo rezerwacji czekającej na zgodę nikt nie mógł przejąć.
+
 **„Milczenie znaczy zgodę" ODRZUCONE** (§16): najprostszą drogą do zatwierdzenia dowolnego
 lotu stałoby się nieklikanie niczego, a zgoda przestałaby cokolwiek znaczyć.
 
@@ -1289,6 +1295,11 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-F | `GET /bookings/:id` i `takenAt` w ciele odmowy - dwa dopiski wymuszone przez ekrany | §5.1 |
 | R-F | sonda stref odpowiedziana KODEM: aplikacja nie woła `Intl` ani razu | §6.1 |
 | R-W | cudza zajętość niesie tylko to, co ekran z niej czyta | §17 |
+| R-G | rezerwacja bez decyzji wygasa w stanie `expired`, a `released` zawęża się do `confirmed` | §11.5 |
+| R-G | decyzję wpuszcza `reservations.approve` **albo** `reservations.manage` - druga jest zaporą przed zakleszczeniem ścieżki, więc nie może wymagać pierwszej | §11.2 |
+| R-G | **decyzje NIE trafiają do dziennika audytu** - ich rejestrem jest append-only `booking_approvals`; do `admin_audit` wchodzi zmiana ŚCIEŻKI (`approval.steps`) | `CLAUDE.md`, sekcja epiku R-G |
+| R-G | zapis ścieżki odmawia kroku bez osób **i** kroku obsadzonego kimś spoza klubu | §11.2 |
+| R-G | stan ścieżki jedzie w `GET /bookings/:id`, nie w oknie kalendarza (odczyt per wiersz zamieniłby jedno zapytanie w tyle, ile rezerwacji na ekranie) | §5.1 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od

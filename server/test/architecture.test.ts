@@ -115,9 +115,18 @@ const SCOPED_TABLES = [
   // prawa zobaczyć ani wyłączyć urządzenia, którym ta osoba loguje się gdzie indziej.
   'login_sessions',
   'memberships',
+  // Zakres uprawnień członkostwa (3.1.0, issue #197) - zdolność nadana W KLUBIE.
+  'membership_capabilities',
   // Zajętość maszyny (3.0.0, issue #158) - rezerwacje i wyłączenia z użytku. Kalendarz
   // jest wspólnym zasobem KLUBU: wiersz z cudzego klubu nie ma prawa trafić na siatkę.
   'bookings',
+  // Ścieżka akceptacji i skrzynka (3.1.0, issue #164). `push_tokens` na liście NIE MA
+  // i to jest zgodne z regułą: token opisuje URZĄDZENIE osoby, która bywa w kilku
+  // klubach naraz - klub niesie POWIADOMIENIE, czyli treść, która przez niego wychodzi.
+  'approval_steps',
+  'approval_step_members',
+  'booking_approvals',
+  'notifications',
 ] as const;
 
 /**

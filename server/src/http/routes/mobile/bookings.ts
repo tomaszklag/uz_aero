@@ -23,8 +23,12 @@ import { z } from 'zod';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
 import type { BookingCommands } from '../../../application/mobile/commands/bookings.ts';
 import type { BookingRecord } from '../../../application/common/ports.ts';
+import type { ApprovalFlow } from '../../../application/common/commands/approvals.ts';
+import type { MembershipAuthSnapshot } from '../../../application/common/ports.ts';
 import type { BookingRefusal } from '../../../domain/bookings.ts';
+import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
+import { approvalWire } from './approvalWire.ts';
 
 const ICAO = z.string().trim().min(3).max(8);
 const NOTE_MAX = 500;
@@ -101,8 +105,21 @@ const suggestions = z.object({
  *
  * Panel ma własne kontrakty i własną zdolność (`reservations.manage`) - tam
  * administrator widzi komplet, bo to jego robota.
+ *
+ * ══ TRZECI WIDZ: AKCEPTUJĄCY (3.1.0, §17) ══
+ * Osoba ze zdolnością `reservations.approve` dostaje komplet pól WSZYSTKICH rezerwacji
+ * klubu - zadanie, trasę, drugiego pilota, planowany czas, paliwo i notatkę. Bez tego
+ * zgoda zapadałaby na podstawie samych godzin i znaku maszyny, czyli ekran decyzji
+ * (26) pytałby o coś, czego nie pokazuje. Zwykły członek klubu nie zyskuje ani
+ * jednego pola - kształt dalej pyta, KTO PATRZY, tylko odpowiedzi są trzy.
  */
-export function bookingWire(row: BookingRecord, viewerPilotId: string): Record<string, unknown> {
+export interface BookingViewer {
+  pilotId: string;
+  /** Czy widzi komplet cudzych rezerwacji - zdolność `reservations.approve`. */
+  approves: boolean;
+}
+
+export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<string, unknown> {
   const wire: Record<string, unknown> = {
     id: row.id,
     aircraftId: row.aircraftId,
@@ -114,7 +131,7 @@ export function bookingWire(row: BookingRecord, viewerPilotId: string): Record<s
     blockReason: row.blockReason,
   };
 
-  if (row.pilotId !== viewerPilotId) return wire;
+  if (row.pilotId !== viewer.pilotId && !viewer.approves) return wire;
 
   return {
     ...wire,
@@ -145,6 +162,7 @@ export function registerBookingRoutes(
   app: FastifyInstance,
   bookings: BookingCommands,
   calendar: BookingQueries,
+  approvals: ApprovalFlow,
   gate: MemberGate,
 ): void {
   app.get('/bookings', async (req, reply) => {
@@ -173,7 +191,7 @@ export function registerBookingRoutes(
         startsAt: new Date(d.startsAt).toISOString(),
         endsAt: new Date(d.endsAt).toISOString(),
       })),
-      bookings: view.bookings.map((row) => bookingWire(row, who.pilotId)),
+      bookings: view.bookings.map((row) => bookingWire(row, viewerOf(who))),
     });
   });
 
@@ -231,6 +249,11 @@ export function registerBookingRoutes(
     const view = await calendar.byId(who.orgId, req.params.id);
     if (view == null) return reply.code(404).send({ error: 'not_found' });
 
+    // Stan ścieżki jedzie WYŁĄCZNIE tutaj, a nie w oknie kalendarza: siatka rysuje
+    // pasek zajętości i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno
+    // zapytanie o dobę w tyle zapytań, ile rezerwacji stoi na ekranie.
+    const approval = await approvals.view(who.orgId, view.booking.id);
+
     return reply.send({
       timezone: view.timezone,
       day: {
@@ -238,7 +261,8 @@ export function registerBookingRoutes(
         startsAt: new Date(view.day.startsAt).toISOString(),
         endsAt: new Date(view.day.endsAt).toISOString(),
       },
-      booking: bookingWire(view.booking, who.pilotId),
+      booking: bookingWire(view.booking, viewerOf(who)),
+      approval: approvalWire(approval),
     });
   });
 
@@ -263,10 +287,10 @@ export function registerBookingRoutes(
       plannedFuelL: b.plannedFuelL ?? null,
       note: b.note ?? null,
     });
-    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
+    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
     // Powtórzony zapis (telefon ponowił przy słabym łączu) wraca `200` z tym samym
     // wierszem - `201` kłamałoby o tym, że coś właśnie powstało.
-    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking, who.pilotId));
+    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking, viewerOf(who)));
   });
 
   app.patch<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -289,8 +313,8 @@ export function registerBookingRoutes(
       ...(p.note === undefined ? {} : { note: p.note }),
     });
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking, who.pilotId));
+    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
+    return reply.send(bookingWire(result.booking, viewerOf(who)));
   });
 
   app.delete<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -307,19 +331,28 @@ export function registerBookingRoutes(
       parsed.data.reason ?? null,
     );
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, who.pilotId, result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking, who.pilotId));
+    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
+    return reply.send(bookingWire(result.booking, viewerOf(who)));
   });
 }
 
 /**
- * Odmowa na drut. `viewerPilotId` jedzie tu z tego samego powodu, co do `bookingWire`:
+ * Kto patrzy - z członkostwa, nigdy z ciała żądania. Akceptujący widzi komplet pól
+ * cudzych rezerwacji, bo bez nich zgoda zapadałaby na podstawie samych godzin (§17).
+ */
+const viewerOf = (who: MembershipAuthSnapshot): BookingViewer => ({
+  pilotId: who.pilotId,
+  approves: can(who.capabilities, 'reservations.approve'),
+});
+
+/**
+ * Odmowa na drut. Widz jedzie tu z tego samego powodu, co do `bookingWire`:
  * kolidująca zajętość jest zwykle CUDZA, a ekran mówi o niej dokładnie tyle, ile
  * potrzebuje - „SP-AXA jest zajęta 11:00 → 13:00 · rezerwację ma J. Nowak" (22C).
  */
 function refuse(
   reply: { code: (n: number) => { send: (body: unknown) => unknown } },
-  viewerPilotId: string,
+  viewer: BookingViewer,
   refusal: BookingRefusal,
   taken: BookingRecord | null | undefined,
 ): unknown {
@@ -334,7 +367,7 @@ function refuse(
     ...(taken == null
       ? {}
       : {
-          taken: bookingWire(taken, viewerPilotId),
+          taken: bookingWire(taken, viewer),
           takenAt: new Date(taken.createdAt).toISOString(),
         }),
   });

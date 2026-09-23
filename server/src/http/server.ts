@@ -56,6 +56,9 @@ import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
 import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
 import type { BookingCommands } from '../application/mobile/commands/bookings.ts';
+import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
+import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
+import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
 import type { BookingQueries } from '../application/common/queries/bookings.ts';
 import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
 import type { BugReportCommands } from '../application/mobile/commands/bugReports.ts';
@@ -80,6 +83,7 @@ import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
+import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
 import type { JoinCommands } from '../application/mobile/commands/join.ts';
@@ -107,7 +111,9 @@ import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
+import { registerApprovalRoutes } from './routes/mobile/approvals.ts';
 import { registerBookingRoutes } from './routes/mobile/bookings.ts';
+import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -162,6 +168,16 @@ export interface ServerDeps {
   bookings: BookingCommands;
   /** Okno kalendarza - to samo zapytanie dla telefonu i dla panelu. */
   calendar: BookingQueries;
+  /**
+   * Ścieżka akceptacji (3.1.0, issue #164). W `common/`, bo rezerwację zakłada
+   * i decyzję podejmuje TELEFON - osobą kroku bywa zwykły pilot bez dostępu do
+   * panelu - a konfigurację ścieżki układa panel.
+   */
+  approvals: ApprovalFlow;
+  /** Skrzynka powiadomień i token push (3.1.0, §12). CAŁY moduł wymaga sieci. */
+  notifications: NotificationQueries;
+  /** Ścieżka akceptacji układana w panelu (`accounts.manage`). */
+  adminApprovalSteps: ApprovalStepsCommands;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
    * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
@@ -474,7 +490,9 @@ export async function buildServer(
   registerMePasswordRoutes(app, deps.passwords, memberGate);
   registerMeAccountRoutes(app, deps.accounts, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
-  registerBookingRoutes(app, deps.bookings, deps.calendar, memberGate);
+  registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, memberGate);
+  registerApprovalRoutes(app, deps.approvals, memberGate);
+  registerNotificationRoutes(app, deps.notifications, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -536,6 +554,7 @@ export async function buildServer(
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
   registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, gate);
+  registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

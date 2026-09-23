@@ -1094,6 +1094,24 @@ export interface BookingsPort {
     change: { status: BookingStatus; at: Date; reason: string | null },
   ): Promise<BookingRecord | null>;
   /**
+   * Rezerwacja przeszła ścieżkę akceptacji (3.1.0, §11): `pending` → `confirmed`.
+   *
+   * Osobno od `close`, bo to jest przejście DO stanu czynnego, a tamta metoda stempluje
+   * `closed_at` i powód - tutaj nie ma czego zamykać ani kto by powód podał. Warunek
+   * `status = 'pending'` jest w SQL-u: `null` znaczy „ktoś zdążył przed nami" (odwołanie
+   * pilota, decyzja panelu), a to nie jest awaria, tylko ta sama odpowiedź.
+   */
+  confirm(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+  /**
+   * Rezerwacje CZEKAJĄCE NA ZGODĘ, których termin już się zaczął (§11.5) - drugie
+   * pytanie zadania okresowego. Bez `orgId` z tego samego powodu, co `due()`: zadanie
+   * przemiata cały serwer i nie działa w imieniu żadnego klubu.
+   *
+   * Lista nie ma jak rosnąć w nieskończoność, choć nie pyta o koniec terminu (inaczej
+   * niż `due`): wygaszony wiersz przestaje być `pending`, więc wypada z niej na zawsze.
+   */
+  undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]>;
+  /**
    * Rezerwacja zrealizowana operacją (B7). Jedyne miejsce, w którym rejestr dotyka
    * rezerwacji, i tylko w jedną stronę. `false`, gdy wiersza nie ma albo nie jest
    * czynny - ingest nie ma się wtedy o co potykać.
@@ -1106,8 +1124,12 @@ export interface BookingsPort {
     at: Date,
   ): Promise<boolean>;
   /**
-   * Kandydaci do zwolnienia slotu (§4.1): rezerwacje czynne, które zaczęły się przed
-   * `startedBefore` i których termin JESZCZE TRWA w `endsAfter`.
+   * Kandydaci do zwolnienia slotu (§4.1): rezerwacje POTWIERDZONE, które zaczęły się
+   * przed `startedBefore` i których termin JESZCZE TRWA w `endsAfter`.
+   *
+   * Wyłącznie `confirmed`, odkąd `pending` wszedł do życia (3.1.0): rezerwacji czekającej
+   * na zgodę nikt nie mógł przejąć, bo jeszcze jej nie zatwierdzono - zwolnienie jej jako
+   * „pilot się nie zjawił" byłoby zdaniem nieprawdziwym. Jej termin rozstrzyga `undecided`.
    *
    * Drugi warunek nie jest optymalizacją, tylko regułą: rezerwacja, której termin
    * MINĄŁ, zostaje `confirmed` na zawsze (§4 - „minęła bez operacji NIE zmienia stanu
@@ -1128,6 +1150,192 @@ export interface BookingsPort {
    * gdy klub nie ma ani jednej zajętości.
    */
   latestChangeAt(db: Queryable, orgId: string): Promise<number | null>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ŚCIEŻKA AKCEPTACJI, SKRZYNKA I BUDZIK (milestone 3.1.0, issue #164;
+ * `docs/rezerwacje.md` §11, §12).
+ *
+ * Porty są w `common/`, bo ścieżkę UKŁADA panel, a KLIKA po niej telefon - osobą kroku
+ * bywa zwykły pilot bez dostępu do panelu (§11.2). Rozstrzygnięcia („który krok pyta
+ * teraz", „czy ta decyzja może zapaść") mieszkają w `domain/approvals.ts`; tutaj jest
+ * wyłącznie dostęp do wierszy.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Krok ścieżki razem z listą osób - w tej postaci czyta go i panel, i decyzja. */
+export interface ApprovalStepRecord {
+  id: string;
+  position: number;
+  label: string;
+  /** Pula uprawnionych, nie komplet podpisów: wystarczy zgoda JEDNEJ z tych osób. */
+  memberIds: string[];
+}
+
+/**
+ * Krok w zamówieniu panelu. `id` jest tu ZAWSZE - krokom nowym nadaje je komenda
+ * (`newId` z composition rootu, jak wszędzie), a krok istniejący ma PRZEŻYĆ zapis razem
+ * ze swoimi decyzjami (§11.2: ścieżka jest bieżąca, ale zapadłe podpisy zostają przy
+ * swoich krokach).
+ */
+export interface ApprovalStepDraft {
+  id: string;
+  label: string;
+  memberIds: readonly string[];
+}
+
+export interface ApprovalStepsPort {
+  /**
+   * ŚCIEŻKA ŻYWA klubu (`removed_at IS NULL`), w kolejności pytania. Pusta = klub bez
+   * akceptacji, czyli stan domyślny (§11.1).
+   */
+  path(db: Queryable, orgId: string): Promise<ApprovalStepRecord[]>;
+  /**
+   * Zapisuje ścieżkę W CAŁOŚCI: kroki z zamówienia dostają kolejne `position`, kroki
+   * spoza niego - stempel `removed_at`. Zamówienie zamiast pojedynczych operacji, bo
+   * kolejność jest własnością CAŁEJ listy, a nie żadnego kroku z osobna.
+   */
+  replace(
+    tx: Queryable,
+    orgId: string,
+    steps: readonly ApprovalStepDraft[],
+    at: Date,
+  ): Promise<ApprovalStepRecord[]>;
+}
+
+/** Zapadła decyzja - wiersz `booking_approvals`. */
+export interface BookingApprovalRecord {
+  stepId: string;
+  decision: ApprovalVerdict;
+  /** `self` = krok pominięty, bo rezerwujący jest na jego liście (§11.2). */
+  via: ApprovalVia;
+  reason: string | null;
+  decidedBy: string;
+  decidedAt: number;
+}
+
+export type ApprovalVerdict = 'approved' | 'rejected';
+export type ApprovalVia = 'person' | 'self';
+
+/** Nowa decyzja. Klub, rezerwację i chwilę dokłada adapter - nie powtarzamy ich w wierszu. */
+export interface NewApproval {
+  stepId: string;
+  decision: ApprovalVerdict;
+  via: ApprovalVia;
+  reason: string | null;
+  decidedBy: string;
+}
+
+export interface BookingApprovalsPort {
+  /** Decyzje jednej rezerwacji, najstarsze pierwsze. */
+  listFor(db: Queryable, orgId: string, bookingId: string): Promise<BookingApprovalRecord[]>;
+  /**
+   * Dopisuje decyzje. Wiele naraz, bo rezerwujący potrafi pominąć KILKA kroków jednym
+   * zapisem, a wszystkie należą do tej samej transakcji, co powstanie rezerwacji.
+   */
+  insert(
+    tx: Queryable,
+    orgId: string,
+    bookingId: string,
+    decisions: readonly NewApproval[],
+    at: Date,
+  ): Promise<void>;
+}
+
+/** Wiersz skrzynki. `payload` opisuje rzecz, o której mowa - kształt zna aplikacja. */
+export interface NotificationRecord {
+  id: string;
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: number;
+  readAt: number | null;
+}
+
+/** Nowe powiadomienie. Klub i chwilę dokłada adapter; `id` nadaje wołający. */
+export interface NewNotification {
+  id: string;
+  pilotId: string;
+  kind: string;
+  payload: Record<string, unknown>;
+}
+
+/**
+ * Kursor skrzynki: PARA, a nie sam stempel. Powiadomienia jednej decyzji rodzą się
+ * w tej samej transakcji, więc `createdAt` nie porządkuje ich jednoznacznie i strona
+ * potrafiłaby zgubić wiersz.
+ */
+export interface NotificationCursor {
+  createdAt: number;
+  id: string;
+}
+
+export interface NotificationsPort {
+  /** W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1). */
+  insert(
+    tx: Queryable,
+    orgId: string,
+    rows: readonly NewNotification[],
+    at: Date,
+  ): Promise<void>;
+  /** Strona skrzynki, od najnowszego. `before` = kursor poprzedniej strony. */
+  list(
+    db: Queryable,
+    orgId: string,
+    pilotId: string,
+    page: { before?: NotificationCursor; limit: number },
+  ): Promise<NotificationRecord[]>;
+  /** Ile nieprzeczytanych - liczba przy zakładce Pulpit. */
+  unreadCount(db: Queryable, orgId: string, pilotId: string): Promise<number>;
+  /**
+   * Stempluje przeczytanie. `false` = wiersza nie ma w tej skrzynce (cudzy klub, cudza
+   * osoba); trasa robi z tego 404. Powtórzone przeczytanie NIE przesuwa stempla - to
+   * fakt „widziałem", a nie licznik wejść.
+   */
+  markRead(
+    db: Queryable,
+    orgId: string,
+    pilotId: string,
+    id: string,
+    at: Date,
+  ): Promise<boolean>;
+}
+
+/**
+ * Token push urządzenia. BEZ KLUBU i to jest zgodne z regułą, nie wyjątkiem od niej:
+ * token opisuje URZĄDZENIE osoby, a ta bywa w kilku klubach naraz i przełącza je bez
+ * wylogowania. Klub niesie powiadomienie, czyli treść, która przez ten token wychodzi.
+ */
+export interface PushTokensPort {
+  /** Rejestracja tokenu urządzenia; powtórzona przypina go do BIEŻĄCEJ sesji. */
+  register(
+    db: Queryable,
+    token: { token: string; sessionId: string; pilotId: string },
+    at: Date,
+  ): Promise<void>;
+  /** Na które urządzenia zadzwonić. Osoba bez tokenu po prostu nie ma wiersza. */
+  byPilots(db: Queryable, pilotIds: readonly string[]): Promise<string[]>;
+  /** Token odrzucony przez dostawcę jako martwy - urządzenie odinstalowało aplikację. */
+  forget(db: Queryable, tokens: readonly string[]): Promise<void>;
+}
+
+/** Budzik na jedno urządzenie. Treść jest w skrzynce - tu jedzie tylko zaczepka. */
+export interface PushMessage {
+  token: string;
+  title: string;
+  body: string;
+  /** Co otworzyć po tapnięciu; aplikacja czyta z tego trasę. */
+  data: Record<string, unknown>;
+}
+
+/**
+ * PUSH JEST BUDZIKIEM, NIE TREŚCIĄ (§12.1), i stąd dwie różnice wobec `MailPort`:
+ * `PUSH_PROVIDER` NIE jest wymagany (domyślnie `log`), a nieudana wysyłka NIE MOŻE
+ * przewrócić zapisu decyzji - prośba czeka wtedy w skrzynce, kompletna i z historią.
+ *
+ * Oddaje tokeny, które dostawca uznał za MARTWE: urządzenie odinstalowało aplikację,
+ * więc wiersz ma zniknąć, zamiast obrastać kolejką nieodebranych budzików.
+ */
+export interface PushPort {
+  send(messages: readonly PushMessage[]): Promise<{ dead: string[] }>;
 }
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {

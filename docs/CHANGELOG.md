@@ -35,6 +35,31 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Klub może wymagać zgody na rezerwację.** Administrator układa ścieżkę: nadaje krokom
+  nazwy („Mechanik", „Szef wyszkolenia"), ustala ich kolejność i dopisuje do każdego osoby,
+  które mogą go zatwierdzić. Klub, który tego nie ustawi, pracuje dokładnie jak dotąd -
+  rezerwacja potwierdza się od razu.
+- **Kroki idą po kolei, a w kroku wystarczy zgoda jednej osoby z listy.** Przy odmowie
+  na pierwszym kroku nikt dalszy nie jest fatygowany, a termin wraca do puli natychmiast.
+- **Odmowa wymaga powodu**, który pilot przeczyta w aplikacji - bez niego „odrzucone"
+  zostawia go z pytaniem, na które musiałby zadzwonić.
+- **Rezerwujący nie prosi sam siebie o zgodę**: kroki, na których stoi, przechodzą same,
+  a w historii widać, że przeszły właśnie w ten sposób.
+- **Rezerwacja czekająca na zgodę trzyma termin** - nikt inny nie zajmie go w międzyczasie.
+- **Skrzynka powiadomień**: prośba o zgodę, decyzja i wygaśnięcie terminu trafiają do
+  pilota z historią, a powiadomienie na telefon jest tylko sygnałem, że coś przyszło.
+- **Termin, którego nikt nie rozpatrzył, wygasa z chwilą swojego początku** i wraca do
+  puli - maszyna nie stoi w sobotę zablokowana prośbą, o której wszyscy zapomnieli.
+
+### Dla testerów
+
+- Ścieżkę akceptacji ustawia się w panelu; decyzję podejmuje się z telefonu, także bez
+  dostępu do panelu - mechanik jest w klubie zwykłym pilotem.
+- Prawo akceptacji nadaje się osobie w zakresie uprawnień, niezależnie od reszty
+  uprawnień panelu.
+
 ## 3.0.0 (build 5) · 3 października 2026
 
 > Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.

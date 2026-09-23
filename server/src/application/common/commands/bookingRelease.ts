@@ -14,6 +14,23 @@
  * zrobi się więcej, właściwym ruchem jest blokada doradcza wokół przebiegu, a nie
  * przepisanie tego pliku.
  *
+ * ══ DWA PYTANIA, JEDEN WĄTEK (3.1.0, §11.5) ══
+ * Przebieg pyta o dwie różne rzeczy i nie wolno ich mylić:
+ *
+ *  1. **rezerwacja POTWIERDZONA, której nikt nie odebrał** przez godzinę - slot wraca
+ *     do puli jako `released` (§4.1);
+ *  2. **rezerwacja CZEKAJĄCA NA ZGODĘ, której termin już nadszedł** - wygasa jako
+ *     `expired`, bo inaczej maszyna stałaby w sobotę zablokowana prośbą, której nikt
+ *     nie rozpatrzył.
+ *
+ * Stany są OSOBNE i to jest ich cała różnica: tam maszyny nie przejęto, tu zgody nie
+ * wydano - a pilot ma usłyszeć, którą z tych dwóch rzeczy przegapiono. Wygaśnięcie
+ * idzie PIERWSZE, bo zdejmuje wiersz ze stanu `pending`, zanim ktokolwiek zapyta
+ * o niego jako o rezerwację do zwolnienia.
+ *
+ * „Milczenie znaczy zgodę" ODRZUCONE (§16): najprostszą drogą do zatwierdzenia
+ * dowolnego lotu stałoby się nieklikanie niczego.
+ *
  * ══ DA SIĘ WYŁĄCZYĆ I TO NIE JEST OZDOBA ══
  * Testy i staging nie mają ruszać danych w tle: przebieg zmieniający wiersze między
  * asercjami dawałby testy, które padają raz na dziesięć uruchomień i nikt nie wie
@@ -29,6 +46,8 @@ import type {
   Database,
   SessionsProjectionPort,
 } from '../ports.ts';
+import type { Notifier } from '../notify/notifier.ts';
+import { bookingExpired } from '../notify/bookingNotices.ts';
 
 /** Co ile sprawdzamy. Rezerwacja zwalnia się po godzinie, więc kwadrans dokładności wystarczy. */
 export const RELEASE_TICK_MS = 5 * 60_000;
@@ -36,6 +55,8 @@ export const RELEASE_TICK_MS = 5 * 60_000;
 export interface ReleaseRun {
   checked: number;
   released: number;
+  /** Rezerwacje wygaszone bez decyzji (§11.5) - osobno, bo to inny fakt. */
+  expired: number;
 }
 
 export class BookingReleaseJob {
@@ -44,6 +65,7 @@ export class BookingReleaseJob {
     private readonly bookings: BookingsPort,
     private readonly sessions: SessionsProjectionPort,
     private readonly clock: Clock,
+    private readonly notifier: Notifier,
   ) {}
 
   /**
@@ -52,6 +74,7 @@ export class BookingReleaseJob {
    */
   async run(): Promise<ReleaseRun> {
     const now = this.clock.now();
+    const expired = await this.expire(now);
     const candidates = await this.bookings.due(this.db, {
       startedBefore: new Date(now.getTime() - RELEASE_AFTER_MS),
       endsAfter: now,
@@ -85,7 +108,46 @@ export class BookingReleaseJob {
       );
       if (closed != null) released += 1;
     }
-    return { checked: candidates.length, released };
+    return { checked: candidates.length, released, expired };
+  }
+
+  /**
+   * Rezerwacje, których termin nadszedł bez decyzji (§11.5). Slot wraca do puli,
+   * a rezerwujący dostaje wiadomość „nikt nie zdążył zdecydować".
+   *
+   * BEZ POWODU: `close_reason` niesie zdanie CZŁOWIEKA, a tutaj nikt nic nie
+   * powiedział - upłynął czas. Sam status mówi wszystko, a napis „wygasło
+   * automatycznie" udawałby uzasadnienie.
+   */
+  private async expire(now: Date): Promise<number> {
+    const waiting = await this.bookings.undecided(this.db, now);
+
+    let expired = 0;
+    for (const candidate of waiting) {
+      const booking = await this.bookings.byId(this.db, candidate.orgId, candidate.id);
+      // Zniknęła między zapytaniami (odwołał ją pilot, rozstrzygnął akceptujący) -
+      // nie ma czego wygaszać.
+      if (booking == null || booking.status !== 'pending' || booking.pilotId == null) continue;
+
+      const notice = bookingExpired(booking, booking.pilotId);
+      const closed = await this.db.transaction(async (tx) => {
+        const row = await this.bookings.close(tx, candidate.orgId, candidate.id, {
+          status: 'expired',
+          at: now,
+          reason: null,
+        });
+        if (row == null) return null;
+        // Wiadomość TĄ SAMĄ transakcją, co wygaszenie: pilot, który stracił termin,
+        // ma się o tym dowiedzieć zawsze, a nie „jeśli drugi zapis też się uda".
+        await this.notifier.record(tx, candidate.orgId, [notice], now);
+        return row;
+      });
+      if (closed == null) continue;
+
+      expired += 1;
+      await this.notifier.wake([notice]);
+    }
+    return expired;
   }
 
   /** Uruchamia pętlę i oddaje funkcję, która ją zatrzymuje. */

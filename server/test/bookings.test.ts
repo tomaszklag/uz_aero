@@ -27,6 +27,7 @@ import { describe, expect, it } from 'vitest';
 import { BookingReleaseJob } from '../src/application/common/commands/bookingRelease.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 
@@ -506,9 +507,13 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
     const id = made.json().id as string;
 
     const job = (now: Date) =>
-      new BookingReleaseJob(db, new PgBookingsRepo(), new PgSessionsProjection(), {
-        now: () => now,
-      }).run();
+      new BookingReleaseJob(
+        db,
+        new PgBookingsRepo(),
+        new PgSessionsProjection(),
+        { now: () => now },
+        silentNotifier(db),
+      ).run();
 
     // Pół godziny po starcie pilot jest po prostu spóźniony.
     const wczesnie = await job(new Date(start + 30 * 60_000));
@@ -558,9 +563,13 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
       },
     });
 
-    const run = await new BookingReleaseJob(db, new PgBookingsRepo(), new PgSessionsProjection(), {
-      now: () => new Date(start + 70 * 60_000),
-    }).run();
+    const run = await new BookingReleaseJob(
+      db,
+      new PgBookingsRepo(),
+      new PgSessionsProjection(),
+      { now: () => new Date(start + 70 * 60_000) },
+      silentNotifier(db),
+    ).run();
     expect(run.released).toBe(0);
 
     const { rows } = await db.query<{ status: string }>('SELECT status FROM bookings WHERE id = $1', [id]);

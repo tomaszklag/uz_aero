@@ -1041,6 +1041,110 @@ const CASES: Record<string, Probe> = {
     expect(res.json().totals.sessions).toBe(1);
   },
 
+  // ── ścieżka akceptacji i skrzynka (3.1.0, issue #164) ────────────────────────
+  'POST /bookings/:id/decision': async ({ app, db, a }) => {
+    // Decyzja o CUDZEJ rezerwacji: wiersz jest dla tego tokenu nieistniejący, więc 404,
+    // a nie 403 - `403` potwierdzałoby, że taka rezerwacja jest.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/bookings/book-b/decision',
+      headers: bearer(a),
+      payload: { decision: 'approved' },
+    });
+    expect(res.statusCode, res.body).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM booking_approvals WHERE booking_id = 'book-b'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'GET /me/notifications': async ({ app, db, pwiA, pwiB }) => {
+    // Skrzynka jednej osoby w DWÓCH klubach: wiadomość z Bety nie ma prawa pokazać się
+    // pod tokenem Alfy, choć chodzi o tę samą osobę (PWI).
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b', $1, 'PWI', 'approval_requested', $2::jsonb)`,
+      [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
+    );
+
+    const res = await app.inject({ url: '/me/notifications', headers: bearer(pwiA) });
+    expectClean(res, '/me/notifications');
+    expect(res.json().items).toHaveLength(0);
+    expect(res.json().unread).toBe(0);
+
+    // Kontrola pozytywna: TA SAMA OSOBA pod tokenem klubu B widzi ją natychmiast -
+    // pusta skrzynka wyżej jest zawężeniem klubu, a nie brakiem wiersza.
+    const wBecie = await app.inject({ url: '/me/notifications', headers: bearer(pwiB) });
+    expect(wBecie.statusCode, wBecie.body).toBe(200);
+    expect(wBecie.json().items).toHaveLength(1);
+  },
+
+  'POST /me/notifications/:id/read': async ({ app, db, pwiA }) => {
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-read', $1, 'PWI', 'booking_approved', '{}'::jsonb)`,
+      [ORG_B],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/me/notifications/note-b-read/read',
+      headers: bearer(pwiA),
+    });
+    // Cudzy klub odpowiada tak samo jak wiersz nieistniejący, a stempel NIE PADA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ read_at: string | null }>(
+      `SELECT read_at FROM notifications WHERE id = 'note-b-read'`,
+    );
+    expect(rows[0]!.read_at).toBeNull();
+  },
+
+  'POST /me/push-token': async ({ app, db, pwiA }) => {
+    // Token urządzenia NIE MA klubu i to jest zgodne z regułą: opisuje urządzenie OSOBY,
+    // która bywa w kilku klubach naraz. Sprawdzamy więc to, co tu jest do wycieku -
+    // że token przypina się do TEJ osoby i do JEJ sesji, a nie do kogokolwiek z ciała.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/me/push-token',
+      headers: bearer(pwiA),
+      payload: { token: 'ExponentPushToken[iso]', pilotId: 'BPI' },
+    });
+    expect(res.statusCode, res.body).toBe(204);
+    const { rows } = await db.query<{ pilot_id: string }>(
+      `SELECT pilot_id FROM push_tokens WHERE token = 'ExponentPushToken[iso]'`,
+    );
+    expect(rows[0]!.pilot_id).toBe('PWI');
+  },
+
+  'GET /admin/api/approval-steps': async ({ app, db, a }) => {
+    // Ścieżka Bety nie ma prawa pokazać się w panelu Alfy - a pusta odpowiedź niczego
+    // by nie dowiodła, więc Beta dostaje krok ze znacznikiem.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b', $1, 0, 'Mechanik Bartosz')`,
+      [ORG_B],
+    );
+    const res = await app.inject({ url: '/admin/api/approval-steps', headers: bearer(a) });
+    expectClean(res, '/admin/api/approval-steps');
+    expect(res.json().steps).toEqual([]);
+  },
+
+  'PUT /admin/api/approval-steps': async ({ app, db, a }) => {
+    // Krok obsadzony osobą z CUDZEGO klubu jest odmawiany, a ścieżka Alfy zostaje pusta -
+    // inaczej panel jednego klubu rozdawałby władzę członkom drugiego.
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/admin/api/approval-steps',
+      headers: writer(a),
+      payload: { steps: [{ label: 'Mechanik', memberIds: ['BPI'] }] },
+    });
+    expect(res.statusCode, res.body).toBe(400);
+    expect(res.json().error).toBe('member_not_in_org');
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM approval_steps WHERE org_id = $1`,
+      [ORG_A],
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   // ── kolejka zgłoszeń i kod klubu (issue #100, D2) ────────────────────────────
   'GET /admin/api/memberships/pending': async ({ app, a }) => {
     const res = await app.inject({

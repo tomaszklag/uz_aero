@@ -4108,6 +4108,77 @@ Cały epik makiet przed kodem, design-first jak w 3.0.0. Decyzje i uzasadnienia:
 - **kolejność `NAV_ITEMS` decyduje o ekranie startowym** (`homeFor`) - dokładając moduł
   platformy albo klubu, sprawdź, czy go nie przestawiasz
 
+## Rezerwacje 3.1.0 - epik R-G: ścieżka akceptacji, decyzje z powodem, skrzynka (issue #164, 2026-09-23)
+Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decyzje:
+`docs/rezerwacje.md` §11, §12, §3.4; odstępstwa §18. Reguły obowiązujące odtąd:
+- **ROZSTRZYGNIĘCIA LICZY CZYSTA DOMENA** (`server/src/domain/approvals.ts`): który krok
+  pyta teraz, czy decyzja może zapaść, kogo zapytać dalej. Warstwa aplikacji
+  (`ApprovalFlow`) dokłada odczyt, transakcję, powiadomienia i zmianę stanu wiersza -
+  i to jest cała granica. Domena nie zna SQL-a, zegara ani zdolności `reservations.approve`
+- **ŚCIEŻKA JEST ZAWSZE BIEŻĄCA** (decyzja właściciela 2026-09-23), więc **decyzja wskazuje
+  KROK przez `step_id`, nigdy przez numer**, a kroku się NIE KASUJE (`removed_at`).
+  Dołożenie kroku COFA sprawy w toku i to jest cena przyjęta świadomie; zapadłe podpisy
+  zostają przy SWOICH krokach, bo numery przesuwają się, a `id` nie
+- **KROK TO NAZWA I LISTA OSÓB, nigdy rola** - w kroku wystarczy zgoda JEDNEJ osoby
+  (pula uprawnionych, nie komplet podpisów), a kroki idą PO KOLEI. Rezerwujący pomija
+  kroki, na których sam stoi, i pominięcie ZAPISUJE SIĘ (`via = 'self'`): po miesiącu
+  krok pominięty musi być odróżnialny od kroku, o który nikt nie zapytał
+- **DWIE ZDOLNOŚCI, DWIE RÓŻNE ROLE**: `reservations.approve` mówi „ta osoba w ogóle
+  akceptuje", lista kroku - „to jest JEJ krok". Trasa decyzji wpuszcza `approve` ALBO
+  `manage`, bo `manage` jest DRUGĄ ZAPORĄ przed zakleszczeniem ścieżki (§11.2) - wymóg
+  obu naraz znaczyłby, że utkniętą ścieżkę odblokuje wyłącznie ktoś, kogo w tej roli nie
+  ma. `manage` odblokowuje przy tym KAŻDY krok, ale NIE pomija żadnego automatycznie:
+  rezerwacje administratora podlegają ścieżce, której sam pilnuje
+- **DECYZJE NIE TRAFIAJĄ DO DZIENNIKA AUDYTU i to jest decyzja, nie przeoczenie.**
+  Ich rejestrem jest append-only `booking_approvals` - z powodem, krokiem i adnotacją
+  `via` - czyli ślad BOGATSZY niż wiersz `admin_audit`. Do dziennika wchodzi za to
+  zmiana ŚCIEŻKI (`approval.steps`, `accounts.manage`), bo to ona rozdaje władzę.
+  Architektura zresztą tej drugiej drogi nie ma: decyzja zapada z TELEFONU (osobą kroku
+  bywa zwykły pilot bez wejścia do panelu), a `application/common/` nie importuje
+  z `admin/` - pilnuje tego oś powierzchni w `architecture.test.ts`
+- **REZERWACJA `pending` TRZYMA SLOT** (była w `SLOT_HOLDING_STATUSES` od 3.0.0, teraz
+  wchodzi w życie): inaczej „czekam na akceptację" znaczyłoby „ktoś mi to zaraz zajmie"
+- **NOWY STAN `expired`** (§11.5): termin nadszedł, decyzji nie ma - slot wraca do puli
+  BEZ powodu (`close_reason` niesie zdanie CZŁOWIEKA). Osobny od `released`, bo tam
+  maszyny nie przejęto, a tu zgody nie wydano. `BookingReleaseJob` dostał drugie pytanie,
+  nie drugi wątek; **wygaszanie idzie PIERWSZE**, a `due()` zawęziło się do `confirmed` -
+  rezerwacji czekającej na zgodę nikt nie mógł przejąć, więc zwolnienie jej jako
+  „pilot się nie zjawił" byłoby zdaniem nieprawdziwym
+- **SKRZYNKA JEST ŹRÓDŁEM PRAWDY, PUSH BUDZIKIEM** (§12.1): powiadomienie powstaje TĄ
+  SAMĄ transakcją, co rzecz, o której mówi (`Notifier.record`), a budzik idzie PO
+  commicie i NIGDY nie rzuca (`Notifier.wake`). Rozdzielenie widać w sygnaturach:
+  `record` żąda uchwytu transakcji, `wake` go nie przyjmuje. Stąd też `PUSH_PROVIDER`
+  jest NIEWYMAGANY i domyślnie znaczy `log` - inaczej niż `MAIL_PROVIDER`, bez którego
+  serwer nie wstaje: bez budzika prośba nadal czeka w skrzynce, kompletna i z historią
+- **PUSH NIE NIESIE NAZWISK ANI GODZIN**: ląduje na ekranie blokady, który widzi każdy,
+  kto akurat patrzy na telefon. Tytuł nazywa rzecz („Prośba o zgodę"), a treść stoi
+  w skrzynce. `payload` wozi IDENTYFIKATORY - znak maszyny rozwiązuje aplikacja z cache
+  floty, jak wszędzie indziej
+- **KURSOR SKRZYNKI JEST PARĄ** `(created_at, id)`: powiadomienia jednej decyzji rodzą
+  się w tej samej transakcji, więc sam stempel nie porządkuje ich jednoznacznie i strona
+  potrafiłaby zgubić wiersz. Kursor NIEPEŁNY to `400`, a nie ciche „od początku" -
+  strona od początku wygląda jak strona z wynikami, więc telefon pętliłby się na
+  pierwszej i nikt by tego nie zauważył
+- **TOKEN PUSH ŻYJE RAZEM Z SESJĄ LOGOWANIA** (kaskada z `login_sessions`, §12.2) i jako
+  jedyna nowa tabela **NIE MA `org_id`**: opisuje URZĄDZENIE osoby, a ta bywa w kilku
+  klubach naraz i przełącza je bez wylogowania. Klub niesie POWIADOMIENIE, czyli treść,
+  która przez ten token wychodzi. Sesja bierze się z TOKENU żądania, nie z ciała
+- **AKCEPTUJĄCY JEST TRZECIM WIDZEM `bookingWire`** (§17, G5b): ze zdolnością
+  `reservations.approve` widzi komplet pól WSZYSTKICH rezerwacji klubu - bez zadania,
+  trasy i notatki zgoda zapadałaby na podstawie samych godzin i znaku maszyny. Zwykły
+  członek klubu nie zyskuje ani jednego pola
+- **STAN ŚCIEŻKI JEDZIE W `GET /bookings/:id`, NIE W OKNIE KALENDARZA**: siatka rysuje
+  pasek zajętości i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno zapytanie
+  o dobę w tyle zapytań, ile rezerwacji stoi na ekranie. **Nazwisk decydujących nie ma
+  nigdzie** (§9.4): krok bywa obsadzony przez kilka osób i rozstrzyga pierwsza
+- **ZAPIS ŚCIEŻKI IDZIE CAŁĄ LISTĄ** (`PUT /admin/api/approval-steps`), bo `position`
+  jest własnością LISTY, a nie kroku. Odmawia kroku BEZ OSÓB (zatrzymałby rezerwacje na
+  zawsze) i kroku obsadzonego kimś spoza klubu; odmowa niesie NAZWĘ kroku, nie numer -
+  ekran pokazuje listę, w której numer i tak nie stoi
+- **czego epik R-G świadomie NIE ROBI**: ekranów telefonu (25/26 - epik R-H) ani modułu
+  panelu; `expo-notifications` w aplikacji to moduł natywny, więc 3.1.0 idzie NOWYM APK
+  (§12.4), a projekt Firebase i FCM V1 w EAS są zadaniem właściciela na drodze krytycznej
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
