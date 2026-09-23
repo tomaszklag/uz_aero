@@ -919,10 +919,17 @@ a wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą.
 od tego, czy ktoś zdążył zdecydować, a para „za godzinę - i nadal czeka" jest tu całą
 informacją.
 
+**LICENCJE, BADANIA I UPRAWNIENIA NA TYP SĄ POZA ZAKRESEM 3.1.0** (decyzja właściciela
+2026-09-23: „na razie pomijamy, jest do tego inny epik"). Podgląd pilota przy decyzji
+odpowiada więc wyłącznie NALOTEM I HISTORIĄ LOTÓW - tym, co rejestr naprawdę wie.
+Ważności badań ani uprawnień na typ nie pokazujemy w żadnej postaci, także jako
+pustego wiersza albo kreski: pole „Badania -" na ekranie, który ma odpowiedzieć „czy
+mogę mu zatwierdzić ten lot", czyta się jak stwierdzenie o stanie dokumentów, a byłoby
+wyłącznie stwierdzeniem o brakującym module. Kiedy tamten epik wejdzie, podgląd dostanie
+kartę z prawdziwymi datami i to jest właściwa kolejność.
+
 **CO ZOSTAŁO OTWARTE do rozmowy z właścicielem**: katalog zestawów uprawnień
-(`docs/uprawnienia.md` §2) oraz to, czy do systemu mają w ogóle wejść licencje, badania
-i uprawnienia na typ - dziś podgląd pilota odpowiada wyłącznie nalotem i historią lotów,
-bo tylko to rejestr wie.
+(`docs/uprawnienia.md` §2) - czy sześć pozycji wystarczy i czy nazwy są te właściwe.
 
 ## 10. Panel: moduł „Kalendarz"
 
