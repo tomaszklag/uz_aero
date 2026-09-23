@@ -35,6 +35,14 @@
       <span class="vp-when">Po kliknięciu w pasek: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku mają tę samą szufladę w dwóch stanach, bo to jeden byt z dyskryminatorem (`bookings.kind`).</span>
     </span>
   </a>
+  <a class="vp-item" href="#czeka">
+    <span class="vp-badge">K2a</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezerwacja czekająca na zgodę</span>
+      <span class="vp-when">Ta sama szuflada, gdy termin stoi na ścieżce akceptacji (3.1.0): karta „Ścieżka akceptacji" z historią decyzji - kto, kiedy, dlaczego - i dla „Cudzych rezerwacji" decyzja za utknięty krok. Klub bez ścieżki tej karty NIE MA.</span>
+    </span>
+    <span class="vp-tag amber">3.1.0</span>
+  </a>
   <a class="vp-item" href="kalendarz-blokada.html">
     <span class="vp-badge">K3</span>
     <span class="vp-body">
@@ -408,6 +416,8 @@
   <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
   <a href="kalendarz-podglad.html">Kalendarz · podgląd</a>
   <span>·</span>
+  <a href="#czeka">↓ K2a Czeka na zgodę</a>
+  <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>
   <a href="dziennik-operacja.html">Dziennik · operacja</a>
@@ -420,6 +430,109 @@
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
+
+<!-- ══ K2a · REZERWACJA CZEKAJĄCA NA ZGODĘ (3.1.0, issue #165) ══
+     Decyzja właściciela 2026-09-23: historia decyzji (H5) i wyjście awaryjne
+     administratora mieszkają W TEJ szufladzie, nie w kolejce. Kolejka (K5) pokazuje
+     wyłącznie sprawy stojące na MOIM kroku, więc rezerwacja utknięta na kroku, którego
+     nie ma kto zatwierdzić (K4c), nigdy by się w niej nie pojawiła - a szuflada opisuje
+     KAŻDĄ zajętość, także tę, którą trzeba odblokować.
+
+     ══ HISTORIA NIESIE OSOBĘ - INACZEJ NIŻ NA TELEFONIE ══
+     Pilot dostaje na karcie rezerwacji (23b) samą nazwę kroku, bo krok bywa obsadzony
+     przez kilka osób i rozstrzyga pierwsza. Administrator pyta o co innego: „kto to
+     rozstrzygnął i do kogo zadzwonić" - więc przy decyzji stoi nazwisko z kodem, jak
+     przy każdej osobie w panelu. Pominięcie („przeszedł sam") jest ZAPISEM, nie brakiem
+     wiersza, i dlatego wygląda jak decyzja z inną adnotacją.
+
+     ══ DECYZJA ADMINISTRATORA JEST JAWNYM AKTEM, NIE CICHYM OMINIĘCIEM ══
+     „Cudze rezerwacje" (`reservations.manage`) odblokowują KAŻDY krok - to druga zapora
+     przed zakleszczeniem ścieżki (§11.2). Karta mówi, ZA KOGO administrator decyduje,
+     a zapis w historii jest jego. Bez tej zdolności karty decyzji nie ma wcale - nie ma
+     przycisku wyszarzonego (`panel-2.0.md` §3.3).
+
+     Klub bez ścieżki karty „Ścieżka akceptacji" NIE MA: „rezerwacja potwierdzona od
+     razu" jest stanem domyślnym i nie dostaje zdania (reguła SyncChipa). -->
+<section class="canvas-section" id="czeka">
+  <div class="canvas-section-title">K2a · rezerwacja czekająca na zgodę · historia decyzji i odblokowanie</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Czeka na krok 2 - z decyzją za ten krok</span>
+        <span class="inv-when">Karta ścieżki stoi ZA kartą rezerwacji, przed „Realizacją": najpierw co, potem czy wolno, na końcu czy się odbyło. Krok pierwszy ma osobę, godzinę i kod; krok bieżący jest bursztynowy, bo to na nim sprawa stoi. Decyzja administratora nazywa krok, za który decyduje, a powód ma pole WYŁĄCZNIE przy odmowie - jak w kolejce (K5a).</span>
+        <span class="inv-classes">.kv-v.amber · .pill.amber · .card-note</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill amber">Czeka na krok 2 z 2</span></h2>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">zatwierdził Jan Bąk <span class="cell-sub mono">JBA</span> <span class="cell-sub">· 24 WRZ 18:40</span></span></div>
+          <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v amber">czeka na decyzję</span></div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Decyzja za krok „Szef wyszkolenia"</h2>
+          <p class="card-note">Ten krok czeka na osoby z jego listy. Możesz rozstrzygnąć go za nie - w historii stanie Twoje nazwisko. Odmowa jest ostateczna i wymaga powodu, który pilot przeczyta w telefonie.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost">Odmów</button>
+            <button type="button" class="btn primary">Zatwierdź</button>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odrzucona - historia z powodem, bez decyzji</span>
+        <span class="inv-when">Pierwsza odmowa kończy sprawę (§11.3), więc karty decyzji już nie ma - nie ma przycisku wyszarzonego, bo nie ma czego rozstrzygać. Krok POMINIĘTY („przeszedł sam") stoi w historii jak każda decyzja, tylko z inną adnotacją: po miesiącu ma być odróżnialny od kroku, o który nikt nie zapytał. Krok, do którego sprawa nie doszła, ma kreskę - nie „czeka", bo już nie czeka.</span>
+        <span class="inv-classes">.pill.dim · .cell-sub</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill dim">Odrzucona</span></h2>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">przeszedł sam <span class="cell-sub">· rezerwujący jest na liście kroku</span></span></div>
+          <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v">odmówił Marek Sowa <span class="cell-sub mono">MSO</span> <span class="cell-sub">· 24 WRZ 19:02</span><br><span class="cell-sub">Maszyna po przeglądzie dopiero w poniedziałek.</span></span></div>
+          <div class="kv"><span class="kv-k">3 · Prezes</span><span class="kv-v"><span class="cell-sub">—</span></span></div>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odmowa za krok - powód wymagany</span>
+        <span class="inv-when">„Odmów" zamienia stopkę karty na pole powodu, dokładnie jak w kolejce (K5a): przycisk blokuje BEZ zdania, bo puste pole widać nad nim (issue #55). „Wróć" prowadzi do pary przycisków, nie zamyka szuflady - odmowa jest KROKIEM, a nie osobnym ekranem.</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Decyzja za krok „Szef wyszkolenia"</h2>
+          <label class="field">
+            <span class="field-label">Powód odmowy</span>
+            <textarea class="input" rows="3" placeholder="Np. maszyna po przeglądzie dopiero w poniedziałek."></textarea>
+          </label>
+          <p class="hint">Pilot zobaczy ten powód w telefonie. Odmowa jest ostateczna: rezerwacja zostaje odrzucona, a termin wraca do puli.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost">Wróć</button>
+            <button type="button" class="btn danger" disabled>Odmów</button>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Potwierdzona - sama historia</span>
+        <span class="inv-when">Komplet zgód. Karta zostaje, bo odpowiada na „kto się zgodził" jeszcze długo po locie; plakietka w tonie neutralnym, nie zielonym - zieleń znaczy w panelu stan w normie albo akcję główną, a to jest fakt o przeszłości.</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill dim">Potwierdzona</span></h2>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">zatwierdził Jan Bąk <span class="cell-sub mono">JBA</span> <span class="cell-sub">· 24 WRZ 18:40</span></span></div>
+          <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v">zatwierdził Tomasz Małkiewicz <span class="cell-sub mono">TMK</span> <span class="cell-sub">· 25 WRZ 07:15 · za krok</span></span></div>
+        </section>
+      </div>
+    </article>
+
+  </div>
+</section>
 
 <!-- ══ STANY TEGO EKRANU ══
      Nie inwentarz komponentów (ten mieszka w `SZABLON.html`), tylko dwa pozostałe
