@@ -37,7 +37,9 @@ import {
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { BookingDetailsScreen } from '../screens/BookingDetailsScreen';
+import { DecisionScreen } from '../screens/DecisionScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { TabsNavigator, type TabsParamList } from './TabsNavigator';
@@ -81,6 +83,13 @@ export type RootStackParamList = {
   NewBooking: { aircraftId?: string; startsAt?: number; bookingId?: string } | undefined;
   /** Karta rezerwacji (23) - z kalendarza, z Pulpitu i po zapisie formularza. */
   BookingDetails: { bookingId: string };
+  /**
+   * 25 - skrzynka powiadomień (3.1.0): decyzje o moich rezerwacjach i prośby o moją
+   * zgodę. Wejście DZWONKIEM z Pulpitu - czwartej zakładki nie ma (§9.4).
+   */
+  Notifications: undefined;
+  /** 26 - decyzja o CUDZEJ rezerwacji: zgoda albo odmowa z powodem. Wejście z wiersza „Do decyzji". */
+  Decision: { bookingId: string };
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -179,6 +188,8 @@ export function RootNavigator({
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="NewBooking" component={NewBookingScreen} />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Decision" component={DecisionScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

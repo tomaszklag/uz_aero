@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import type { RemoteBookingDetail } from '../../application/ports';
+import type { RemoteApproval, RemoteBookingDetail } from '../../application/ports';
 import { useSessionStore } from '../store';
 
 import { toBooking, type CalendarBooking } from '../screens/logic/calendarData';
@@ -23,6 +23,8 @@ import type { ClubDayBounds } from '../screens/logic/clubClock';
 export interface BookingDetailData {
   booking: CalendarBooking;
   day: ClubDayBounds;
+  /** Stan ścieżki akceptacji (3.1.0); `null` = serwer sprzed 3.1.0 albo cudza rezerwacja bez wglądu. */
+  approval: RemoteApproval | null;
 }
 
 export interface UseBooking {
@@ -75,5 +77,5 @@ function toDetail(wire: RemoteBookingDetail | null): BookingDetailData | null {
   const endsAt = Date.parse(wire.day.endsAt);
   if (booking == null || !Number.isFinite(startsAt) || !Number.isFinite(endsAt)) return null;
 
-  return { booking, day: { date: wire.day.date, startsAt, endsAt } };
+  return { booking, day: { date: wire.day.date, startsAt, endsAt }, approval: wire.approval ?? null };
 }

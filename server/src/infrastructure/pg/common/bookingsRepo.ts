@@ -291,6 +291,24 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async reopen(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    // Ten sam warunek w SQL-u, co przy `confirm`: między odczytem a zapisem ktoś mógł
+    // odwołać rezerwację, a wtedy wracamy `null` zamiast wskrzeszać wiersz zamknięty.
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET status = 'pending', updated_at = $3
+        WHERE org_id = $1 AND id = $2 AND status IN (${HOLDING})
+        RETURNING ${COLUMNS}`,
+      [orgId, id, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
   async fulfil(
     tx: Queryable,
     orgId: string,

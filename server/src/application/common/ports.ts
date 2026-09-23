@@ -1103,6 +1103,13 @@ export interface BookingsPort {
    */
   confirm(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
   /**
+   * Ścieżka ruszyła OD NOWA po poprawce terminu (3.1.0, §9.4): `confirmed` → `pending`.
+   * Odwrotność `confirm`, z tym samym warunkiem w SQL-u (status czynny) i z tego samego
+   * powodu: `null` znaczy „ktoś zdążył przed nami". Rezerwacja już czekająca zostaje
+   * czekającą - wiersz i tak wraca, bo poprawka ma go pokazać w nowym stanie.
+   */
+  reopen(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+  /**
    * Rezerwacje CZEKAJĄCE NA ZGODĘ, których termin już się zaczął (§11.5) - drugie
    * pytanie zadania okresowego. Bez `orgId` z tego samego powodu, co `due()`: zadanie
    * przemiata cały serwer i nie działa w imieniu żadnego klubu.
@@ -1234,8 +1241,18 @@ export interface NewApproval {
 }
 
 export interface BookingApprovalsPort {
-  /** Decyzje jednej rezerwacji, najstarsze pierwsze. */
+  /**
+   * Decyzje ŻYWE jednej rezerwacji, najstarsze pierwsze. Decyzje zastąpione poprawką
+   * terminu (`superseded_at`, migracja 14) zostają w tabeli, ale do rozstrzygnięcia
+   * już nie wchodzą - dotyczyły innego terminu.
+   */
   listFor(db: Queryable, orgId: string, bookingId: string): Promise<BookingApprovalRecord[]>;
+  /**
+   * Poprawka terminu CZYŚCI ZGODY (§9.4): każda żywa decyzja tej rezerwacji dostaje
+   * stempel zastąpienia. Zwraca, ile ich było - zero znaczy, że nie było czego czyścić.
+   * Rejestr zostaje append-only: to stempel, nie nadpisanie decyzji.
+   */
+  supersede(tx: Queryable, orgId: string, bookingId: string, at: Date): Promise<number>;
   /**
    * Dopisuje decyzje. Wiele naraz, bo rezerwujący potrafi pominąć KILKA kroków jednym
    * zapisem, a wszystkie należą do tej samej transakcji, co powstanie rezerwacji.

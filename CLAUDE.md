@@ -4237,6 +4237,79 @@ Cztery decyzje właściciela na wejściu (pytane pojedynczo) i reguły obowiązu
   którym po SKRÓCENIU ścieżki nie zostało czego pytać (osobne zgłoszenie - dziś stoją
   w `pending` do wygaśnięcia)
 
+## Rezerwacje 3.1.0 - epik R-I: aplikacja - skrzynka, decyzja z telefonu, stany rezerwacji (issue #166, 2026-09-23)
+Ekrany 25/25A/25B (skrzynka), 26/26C (decyzja), stany karty 23B–23E, Pulpit 20E -
+wszystko 1:1 z makiet #196. Do tego cienki plaster serwera i migracja 14. Decyzje:
+`docs/rezerwacje.md` §9.4, §11.4, §12.1; odstępstwa §18. Reguły obowiązujące odtąd:
+- **POPRAWKA TERMINU CZYŚCI ZGODY** (decyzja właściciela 2026-09-23 - wzięte do R-I,
+  choć plan tego nie miał; migracja 14). `booking_approvals` dostało własny `id`
+  i `superseded_at`, a unikat `(booking_id, step_id)` obowiązuje TYLKO wśród żywych
+  (indeks częściowy). `PATCH` ze zmienionym terminem na rezerwacji z żywą ścieżką:
+  `ApprovalFlow.restart` unieważnia decyzje, planuje ścieżkę od nowa, wiersz wraca do
+  `pending` (`BookingsPort.reopen`), a osoby kroku bieżącego dostają świeżą prośbę.
+  Zmiana notatki/zadania/trasy zgód NIE rusza. Append-only zostaje: unieważniona zgoda
+  nie znika, tylko przestaje się liczyć - `listFor` czyta wyłącznie żywe
+- **SKRZYNKA I KOLEJKA TO DWA PYTANIA, JEDNA ODPOWIEDŹ** (`useInbox`): „Nowe" gaśnie
+  z otwarciem listy (oznaczenie w tle po udanym odczycie, zielona krawędź zostaje na
+  czas tej wizyty), „Do decyzji" liczy się z `GET /me/approvals/queue` i stoi do decyzji.
+  Kolejka, która nie dojechała, NIE gasi listy - wiersze są bez plakietki. Skrzynka
+  niesie `timezone` i DOBĘ terminu przy każdej wiadomości, bo godziny liczą się
+  odejmowaniem od granic doby (§6.1) - `Intl` w aplikacji dalej ani razu
+- **CAŁY MODUŁ WYMAGA SIECI, BEZ CACHE** (§12.1): `null` z hooka = 25B „BRAK POŁĄCZENIA",
+  ponawianie co 60 s bez przycisku (wzorzec kalendarza). Punkt I2 z issue #166 („działa
+  offline, zapis lokalny") jest STARSZY niż decyzja z 2026-09-22 - nie wracać
+- **LICZNIK PRZY DZWONKU, NIE PRZY ZAKŁADCE** (czwartej zakładki nie ma, §9.4):
+  `ScreenHeader.onNotifications` + `unread`, dzwonek PRZED zębatką i wyłącznie na
+  Pulpicie. `useUnreadCount` pyta serwer o JEDNĄ wiadomość przy każdym wejściu; bez
+  zasięgu `null` i licznika nie ma wcale (ostatnia znana liczba kłamałaby). Zero nie
+  dostaje plakietki (reguła SyncChipa)
+- **ROZSTRZYGNIĘCIA IDĄ RZECZOWNIKIEM**: „Odmowa zgody · Anna Kowal", nie „Anna Kowal
+  odmówiła zgody" (makieta 25 ma czasownik) - czasownika nie da się odmienić bez płci,
+  a rzeczownik brzmi tak samo dla każdego. „Prosi o zgodę" zostaje: trzecia osoba czasu
+  teraźniejszego jest wspólna. Nazwisko rezerwującego przychodzi IDENTYFIKATOREM
+  w payloadzie (`pilotId`) i rozwiązuje się z cache członków; poza cache’em tytuł
+  ogólny („Prośba o zgodę na lot"), nigdy surowy id
+- **STANY KARTY LICZY `approvalView`** (`logic/bookingApproval.ts`): `none` (klub bez
+  ścieżki - karta jak w 3.0.0) / `waiting` / `stepAdded` / `confirmed` / `rejected`
+  / `expired` / `closed`. **„Doszedł krok" (23E) poznaje się po KSZTAŁCIE ścieżki**:
+  decyzja stojąca ZA krokiem bieżącym nie ma innego wytłumaczenia - serwer nie mówi
+  „dołożono krok", a osobne powiadomienie o zmianie ścieżki to #207. Krok bieżący czeka
+  od OSTATNIEJ zgody przed nim, bez niej od złożenia (`createdAt` własnej rezerwacji -
+  nowe pole `bookingWire`, tylko dla właściciela). Wygasła: pierwszy niezdecydowany
+  „nie zdecydował", dalsi „nie zaczął"; po odmowie każdy dalszy „nie zaczął"
+- **BANER ODMOWY NA KARCIE NAZYWA KROK, NIE OSOBĘ** (makieta 23C ma nazwisko): stan
+  ścieżki na telefonie nazwisk decydujących nie niesie (§9.4) - powód jest treścią,
+  a to, KTÓRY krok odmówił, mówi też oś ścieżki (znacznik czerwony)
+- **TON KARTY TERMINU IDZIE ZA STANEM**: `heroTone` amber (czeka - zieleń obiecywałaby
+  pewny lot), green (potwierdzona), off (zamknięta - czerwień niesie baner). Na Pulpicie
+  ta sama reguła (20E): plakietka „Czeka na zgodę", odliczanie bursztynem, „krok 1 z 2"
+  z `GET /bookings/:id` - pytany WYŁĄCZNIE przy czekającej (`useBooking(null)` serwera
+  nie woła), bo okno kalendarza ścieżki nie niesie (§17)
+- **REZERWACJA ZAMKNIĘTA MA JEDNO WYJŚCIE** (`BookingDetailsVm.closed` → „WYBIERZ INNY
+  TERMIN" → `goHome(navigation, 'Calendar')`): nie ma czego przesuwać ani odwoływać,
+  a wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą. Przy
+  czekającej pod „PRZESUŃ I POPRAW" stoi `editNote` - ekran mówi o czyszczeniu zgód
+  PRZED tapnięciem
+- **EKRAN DECYZJI PYTA CIEBIE** (`logic/decision.ts`): kroku nie piszemy, karta niesie
+  plan w komplecie bez kresek za pola, których nie ma; zdanie pod pasem akcji nazywa
+  NASTĘPNY krok (albo „jest potwierdzona" przy ostatnim). ZATWIERDŹ zielony solid, ODMÓW
+  neutralny secondary (odmowa jest decyzją, nie zniszczeniem); arkusz 26C blokuje BEZ
+  zdania przy pustym powodzie (issue #55), sufit 500 znaków jak serwer. `null` z synca
+  = „Decyzję zapisuje serwer - potrzebne połączenie", odmowa reguły = zdanie
+  z `decisionRefusalText` + `reload()`, żeby karta pokazała NOWY stan sprawy zamiast
+  obiecywać pas akcji. Udana decyzja wraca do skrzynki (lista czyta się na nowo przy
+  fokusie)
+- **PLAKIETKA `pending` NA OSI FLOTY NIE WCHODZI DO LEGENDY** - to decyzja z R-F
+  (różni się KSZTAŁTEM ramki, nie kolorem); pierwsza wersja tego epiku dopisała ją
+  i została cofnięta. `CalendarBooking.createdAt` jest OPCJONALNE, nie nullowalne:
+  brak pola = „nie ta odpowiedź" (cudza, serwer sprzed 3.1.0)
+- **CZAS WIADOMOŚCI TO WIEK, NIE GODZINA** („12 min temu", „wczoraj", „2 dni temu" -
+  `agoLabel`): telefon nie ma doby klubu dla chwili powstania wiadomości, tylko dla
+  terminu, a „wczoraj 18:40" z makiety wymagałoby konwersji stref
+- **czego R-I NIE ROBI**: podglądów 26A/26B (to samo zgłoszenie, co K6), powiadomienia
+  o zmianie ścieżki (#207), push (R-J - moduł natywny, nowy APK), sprawdzenia
+  NA URZĄDZENIU (wymaga dev builda - do epiku wydaniowego #169), podręcznika (R-K)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

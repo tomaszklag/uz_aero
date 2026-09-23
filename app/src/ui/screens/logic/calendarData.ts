@@ -33,6 +33,12 @@ export interface CalendarBooking {
   sessionUuid: string | null;
   blockReason: string | null;
   note: string | null;
+  /**
+   * Chwila złożenia (ms) - 3.1.0, epik R-I. Opcjonalne: brak pola znaczy „nie ta
+   * odpowiedź" (cudza rezerwacja, serwer sprzed 3.1.0), a `null` - odpowiedź bez stempla,
+   * którego nie dało się przeczytać.
+   */
+  createdAt?: number | null;
 }
 
 export interface CalendarData {
@@ -95,8 +101,15 @@ export function toBooking(wire: RemoteBooking): CalendarBooking | null {
     sessionUuid: wire.sessionUuid ?? null,
     blockReason: wire.blockReason,
     note: wire.note ?? null,
+    createdAt: parsedOrNull(wire.createdAt),
   };
 }
+
+const parsedOrNull = (iso: string | undefined): number | null => {
+  if (iso == null) return null;
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? at : null;
+};
 
 /**
  * Zajętości NACHODZĄCE na dobę - z klamrą obustronnie otwartą, bo rezerwacja

@@ -457,6 +457,8 @@ export interface RemoteBooking {
   plannedFuelL?: number | null;
   sessionUuid?: string | null;
   note?: string | null;
+  /** Chwila złożenia (3.1.0) - „czeka od" na ekranie decyzji; w kształcie pełnym. */
+  createdAt?: string;
 }
 
 /**
@@ -471,7 +473,97 @@ export interface RemoteBookingDetail {
   timezone: string;
   day: RemoteCalendarDay;
   booking: RemoteBooking;
+  /**
+   * Stan ścieżki akceptacji (3.1.0, §11) - jedzie WYŁĄCZNIE tutaj, nie w oknie
+   * kalendarza. Opcjonalne, bo serwer sprzed 3.1.0 go nie wysyła: karta bez bloku
+   * czyta się wtedy jak w 3.0.0 (klub bez ścieżki).
+   */
+  approval?: RemoteApproval;
 }
+
+/**
+ * ŚCIEŻKA AKCEPTACJI jednej rezerwacji, tak jak widzi ją PILOT (3.1.0, epik R-I).
+ *
+ * NAZWISK DECYDUJĄCYCH NIE MA (§9.4): krok bywa obsadzony przez kilka osób i rozstrzyga
+ * pierwsza - jedno nazwisko byłoby nieprawdą, a trzy listą do przepisania. Ścieżka
+ * odpowiada na „ile kroków zostało i kto je trzyma" NAZWĄ kroku.
+ */
+export interface RemoteApproval {
+  outcome: 'pending' | 'confirmed' | 'rejected';
+  steps: RemoteApprovalStep[];
+}
+
+export interface RemoteApprovalStep {
+  id: string;
+  label: string;
+  /** Czy to jego pytamy TERAZ. */
+  current: boolean;
+  /** `null` = jeszcze nie zapadła. `via: 'self'` = przeszedł sam, bo rezerwujący jest na liście. */
+  decision: {
+    decision: 'approved' | 'rejected';
+    via: 'person' | 'self';
+    reason: string | null;
+    decidedAt: string;
+  } | null;
+}
+
+/** Wiadomość ze skrzynki (`GET /me/notifications`, §12.1). */
+export interface RemoteNotification {
+  id: string;
+  /**
+   * `approval_requested` | `booking_approved` | `booking_rejected` | `booking_expired` -
+   * jako NAPIS, bo serwer nowszy niż aplikacja dokłada rodzaje, a wiadomość nieznanego
+   * rodzaju ma się pokazać, nie zniknąć.
+   */
+  kind: string;
+  /** Identyfikatory rzeczy, o której mowa (`bookingId`, `aircraftId`, `startsAt`, `reason`…). */
+  payload: Record<string, unknown>;
+  createdAt: string;
+  readAt: string | null;
+  /**
+   * DOBA KLUBU terminu, o którym mówi wiadomość - telefon liczy z niej godziny
+   * odejmowaniem (§6.1). `null`, gdy wiadomość nie mówi o terminie.
+   */
+  day: RemoteCalendarDay | null;
+}
+
+export interface RemoteInbox {
+  timezone: string;
+  /** Nieprzeczytane w CAŁEJ skrzynce - licznik przy dzwonku na Pulpicie. */
+  unread: number;
+  items: RemoteNotification[];
+}
+
+/** Kursor strony skrzynki - PARA, bo sam stempel nie porządkuje jednoznacznie. */
+export interface InboxCursor {
+  beforeAt: string;
+  beforeId: string;
+}
+
+/**
+ * CO CZEKA NA MOJĄ DECYZJĘ (`GET /me/approvals/queue`): rezerwacje na kroku, na którego
+ * liście stoi pytający. Z tego liczy się plakietka „Do decyzji" - skrzynka mówi
+ * o wiadomościach i gaśnie z przeczytaniem, sprawa stoi do decyzji (§9.4).
+ */
+export interface RemoteApprovalQueue {
+  items: {
+    booking: RemoteBooking;
+    step: { id: string; label: string; members: number; next: string | null };
+  }[];
+}
+
+/** Odmowy decyzji - kody surowe z domeny serwera; zdania po polsku należą do ekranu. */
+export type DecisionRefusal =
+  | 'not_pending'
+  | 'not_your_step'
+  | 'reason_required'
+  | 'booking_closed'
+  | 'forbidden'
+  | 'not_found';
+
+export type DecisionResult =
+  | { ok: true; status: string; approval: RemoteApproval }
+  | { ok: false; refusal: DecisionRefusal };
 
 /** Propozycje wolnych slotów z `GET /bookings/suggestions` (domena R-C liczy je na serwerze). */
 export interface RemoteSlotSuggestions {
@@ -755,6 +847,25 @@ export interface ServerPort {
   patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); powód opcjonalny. */
   cancelBooking(token: string, id: string, reason: string | null): Promise<BookingWriteResult>;
+  /**
+   * Skrzynka (`GET /me/notifications`, 3.1.0) - strona najnowszych, licznik CAŁEJ
+   * skrzynki i doba klubu przy każdym terminie. WYŁĄCZNIE online (§12.1): cache'u
+   * powiadomień nie ma i nie wolno go dorobić po cichu.
+   */
+  getInbox(token: string, page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox>;
+  /** Przeczytanie wiadomości (`POST /me/notifications/:id/read`) - powtórzone nie przesuwa stempla. */
+  markNotificationRead(token: string, id: string): Promise<void>;
+  /** Sprawy czekające na MOJĄ decyzję (`GET /me/approvals/queue`). */
+  getApprovalQueue(token: string): Promise<RemoteApprovalQueue>;
+  /**
+   * Decyzja o cudzej rezerwacji (`POST /bookings/:id/decision`). Jak zapis rezerwacji:
+   * odmowa NIESIE kod (`reason_required`, `not_your_step`…), więc nie idzie wyjątkiem.
+   */
+  decideBooking(
+    token: string,
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

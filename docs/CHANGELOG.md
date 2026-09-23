@@ -59,6 +59,20 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   oczami. Rezerwacja czekająca na zgodę stoi na osi floty z przerywaną ramką, a jej karta
   pokazuje historię decyzji: kto, kiedy i dlaczego. Klub, który akceptacji nie chce, nie
   widzi w panelu ani jednego dodatkowego kroku.
+- **Skrzynka w telefonie i dzwonek na Pulpicie.** Prośby o zgodę, decyzje w Twojej sprawie
+  i wygaśnięcia terminów czekają pod dzwonkiem obok ustawień; licznik przy nim zapala się
+  tylko z nieprzeczytanymi. „Do decyzji" stoi przy sprawie, dopóki jej nie rozstrzygniesz -
+  samo zerknięcie na listę niczego nie ucisza. Skrzynka wymaga zasięgu, jak cały kalendarz.
+- **Decyzja z telefonu.** Kto akceptuje, widzi cały plan lotu - samolot, termin czasem
+  klubu, pilota i drugiego pilota, zadanie, trasę, plan i notatkę - i zatwierdza jednym
+  tapnięciem albo odmawia z powodem, który pilot przeczyta u siebie. Bez wchodzenia do panelu.
+- **Karta rezerwacji mówi, na czym stoi sprawa.** Czeka na zgodę (z krokami ścieżki
+  i od kiedy), doszedł krok, odrzucona z powodem, wygasła bez decyzji - każdy stan ma
+  własny baner, a zamknięta rezerwacja prowadzi wprost do wyboru innego terminu.
+  Rezerwacja czekająca traci zieleń także na Pulpicie: zielona obiecywałaby pewny lot.
+- **Przesunięcie terminu zaczyna ścieżkę od nowa.** Zgoda dotyczyła konkretnego terminu,
+  więc po poprawce osoby z pierwszego kroku dostają świeżą prośbę, a karta mówi o tym,
+  zanim tapniesz „PRZESUŃ I POPRAW".
 
 ### Dla testerów
 

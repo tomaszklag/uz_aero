@@ -107,9 +107,12 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ['approval_step_members', ['org_id', 'step_id', 'pilot_id']],
     // Decyzje na rezerwacji: `via` odróżnia kliknięcie człowieka od kroku pominiętego
     // przez rezerwującego, `reason` jest wymagany przy odmowie (pilnuje domena).
+    // Od migracji 14 z własnym kluczem `id` (para rezerwacja-krok zeszła do indeksu
+    // częściowego na decyzjach żywych) i stemplem `superseded_at`: poprawka terminu
+    // czyści zgody, a rejestr zostaje append-only.
     [
       'booking_approvals',
-      ['booking_id', 'org_id', 'step_id', 'decision', 'via', 'reason', 'decided_by', 'decided_at'],
+      ['booking_id', 'org_id', 'step_id', 'decision', 'via', 'reason', 'decided_by', 'decided_at', 'id', 'superseded_at'],
     ],
     // Skrzynka (migracja 13): źródło prawdy powiadomień, push jest tylko budzikiem.
     ['notifications', ['id', 'org_id', 'pilot_id', 'kind', 'payload', 'created_at', 'read_at']],

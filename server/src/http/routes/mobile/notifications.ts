@@ -15,7 +15,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
 import type { NotificationQueries } from '../../../application/mobile/queries/notifications.ts';
+import { clubDays } from '../../../domain/clubTime.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 
 /**
@@ -39,9 +41,31 @@ const token = z.object({ token: z.string().trim().min(1).max(500) });
 
 const DEFAULT_LIMIT = 30;
 
+/**
+ * DOBA KLUBU terminu, o którym mówi wiadomość (3.1.0, epik R-I). Telefon nie zna stref
+ * i liczy godziny odejmowaniem od granic doby (§6.1) - bez nich „sob 26 wrz 09:00-12:00"
+ * w skrzynce musiałby iść w UTC, czyli inną godziną niż na osi kalendarza obok.
+ * `null`, gdy wiadomość nie mówi o terminie albo stempel nie daje się przeczytać.
+ */
+function termDayOf(
+  timezone: string,
+  payload: Record<string, unknown>,
+): { date: string; startsAt: string; endsAt: string } | null {
+  const startsAt = typeof payload.startsAt === 'string' ? Date.parse(payload.startsAt) : NaN;
+  if (!Number.isFinite(startsAt)) return null;
+  const day = clubDays(timezone, startsAt, startsAt + 1, 1)[0];
+  if (day == null) return null;
+  return {
+    date: day.date,
+    startsAt: new Date(day.startsAt).toISOString(),
+    endsAt: new Date(day.endsAt).toISOString(),
+  };
+}
+
 export function registerNotificationRoutes(
   app: FastifyInstance,
   notifications: NotificationQueries,
+  calendar: BookingQueries,
   gate: MemberGate,
 ): void {
   app.get('/me/notifications', async (req, reply) => {
@@ -59,6 +83,9 @@ export function registerNotificationRoutes(
       return reply.code(400).send({ error: 'bad_request' });
     }
 
+    const timezone = await calendar.timezone(who.orgId);
+    if (timezone == null) return reply.code(404).send({ error: 'not_found' });
+
     const view = await notifications.inbox(who.orgId, who.pilotId, {
       limit: q.limit ?? DEFAULT_LIMIT,
       before:
@@ -68,6 +95,7 @@ export function registerNotificationRoutes(
     });
 
     return reply.send({
+      timezone,
       unread: view.unread,
       items: view.items.map((n) => ({
         id: n.id,
@@ -75,6 +103,7 @@ export function registerNotificationRoutes(
         payload: n.payload,
         createdAt: new Date(n.createdAt).toISOString(),
         readAt: n.readAt == null ? null : new Date(n.readAt).toISOString(),
+        day: termDayOf(timezone, n.payload),
       })),
     });
   });

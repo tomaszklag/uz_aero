@@ -26,6 +26,10 @@ import {
   type PushResult,
   type RemoteAircraftState,
   type BookingWriteResult,
+  type DecisionResult,
+  type InboxCursor,
+  type RemoteApprovalQueue,
+  type RemoteInbox,
   type RemoteBookingDetail,
   type RemoteBookingDraft,
   type RemoteBookingPatch,
@@ -217,6 +221,40 @@ export class SyncEngine {
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); ta sama trójka odpowiedzi. */
   cancelBooking(id: string, reason: string | null): Promise<BookingWriteResult | null> {
     return authorizedFetch(this.auth, (token) => this.server.cancelBooking(token, id, reason));
+  }
+
+  /**
+   * SKRZYNKA POWIADOMIEŃ (`GET /me/notifications`, 3.1.0, §12.1) - strona najnowszych
+   * razem z licznikiem nieprzeczytanych. `null` = nie wiadomo (brak sieci, odmowa):
+   * cały moduł wymaga sieci i cache'u nie ma, więc ekran mówi to wprost (25B).
+   */
+  fetchInbox(page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getInbox(token, page));
+  }
+
+  /** Przeczytanie wiadomości - gasi „nowe", nie „do decyzji" (§9.4). `false` = nie dojechało. */
+  async markNotificationRead(id: string): Promise<boolean> {
+    const done = await authorizedFetch(this.auth, async (token) => {
+      await this.server.markNotificationRead(token, id);
+      return true;
+    });
+    return done === true;
+  }
+
+  /** Sprawy czekające na MOJĄ decyzję (`GET /me/approvals/queue`). */
+  fetchApprovalQueue(): Promise<RemoteApprovalQueue | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getApprovalQueue(token));
+  }
+
+  /**
+   * DECYZJA o cudzej rezerwacji (`POST /bookings/:id/decision`) - ZAPIS, więc nie przez
+   * outbox: decyzja jest arbitrażem, jak sama rezerwacja (§2.1). `null` = nie dojechała.
+   */
+  decideBooking(
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.decideBooking(token, id, body));
   }
 
   /**

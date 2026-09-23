@@ -181,6 +181,31 @@ export class ApprovalFlow {
   }
 
   /**
+   * ŚCIEŻKA OD NOWA po poprawce terminu (3.1.0, §9.4 - decyzja właściciela 2026-09-23).
+   *
+   * Zgoda dotyczyła KONKRETNEGO terminu, więc po przesunięciu przestaje cokolwiek
+   * znaczyć. Żywe decyzje dostają stempel zastąpienia (rejestr zostaje append-only),
+   * a nowy plan zapisuje się jak przy złożeniu: pominięcia rezerwującego i prośby do
+   * kroku bieżącego - w TEJ SAMEJ transakcji, co nowy termin. Budzik (`wake`) zostaje
+   * wołającemu, bo idzie po commicie.
+   *
+   * Plan liczy WOŁAJĄCY PRZED transakcją (`plan`) - z tego samego powodu, co przy
+   * złożeniu: jego wynikiem jest stan wiersza, a odczyt cudzym uchwytem w otwartej
+   * transakcji zawiesza PGlite.
+   */
+  async restart(
+    tx: Queryable,
+    orgId: string,
+    bookingId: string,
+    plan: ApprovalPlan,
+  ): Promise<void> {
+    const at = this.clock.now();
+    await this.approvals.supersede(tx, orgId, bookingId, at);
+    await this.approvals.insert(tx, orgId, bookingId, plan.selfApproved, at);
+    await this.notifier.record(tx, orgId, plan.notices, at);
+  }
+
+  /**
    * ŚCIEŻKA ŻYWA klubu - do ekranu konfiguracji w panelu. Pusta lista NIE JEST brakiem
    * konfiguracji do naprawienia: to stan domyślny każdego klubu i znaczy „rezerwacja
    * potwierdza się od razu" (§11.1).
@@ -381,6 +406,7 @@ function noticesFor(
     aircraftId: booking.aircraftId,
     startsAt: booking.startsAt,
     endsAt: booking.endsAt,
+    pilotId: booking.pilotId,
   };
   // Rezerwacja bez właściciela nie istnieje (CHECK `booking_flight_fields`), ale typ
   // dopuszcza `null` ze względu na wyłączenia z użytku - a tych ścieżka nie dotyczy.
