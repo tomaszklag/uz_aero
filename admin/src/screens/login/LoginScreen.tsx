@@ -1,7 +1,10 @@
 /**
  * Ninerdeck - panel: logowanie.
  *
- * == DWIE METODY, JEDNA KARTA (2.1.0, `docs/logowanie-haslem.md` D1, §5.2, §7.2) ==
+ * Kształt ekranu (znak, tytuł, formularz bez karty, zdanie pod spodem) składa
+ * `AuthFrame` - układ jak w GitLabie, przegląd właściciela 2026-09-24.
+ *
+ * == DWIE METODY, JEDNA KOLUMNA (2.1.0, `docs/logowanie-haslem.md` D1, §5.2, §7.2) ==
  * Hasło jest DRUGĄ metodą tej samej osoby, nie zamiennikiem Google: obie kończą się
  * tą samą sesją i tym samym klubem. Formularz stoi NA WIERZCHU, bo administrator klubu
  * założonego bez konta Google (D8) nie ma innej drogi i to on musi ją zobaczyć pierwszy;
@@ -38,10 +41,10 @@ import { Link, Navigate } from 'react-router-dom';
 import { renderGoogleButton } from '../../auth/googleIdentity';
 import { useSessionState } from '../../auth/sessionContext';
 import { useAuthMethods, useLogin, usePasswordLogin } from '../../queries/useSession';
-import { Banner, Button, Field, PasswordInput, TextInput } from '../../ui/components';
-import { BrandMark } from '../../ui/components/icons';
+import { Button, Field, PasswordInput, TextInput } from '../../ui/components';
 import { FORGOT_PASSWORD, SIGN_UP, homeFor } from '../../ui/shell/nav';
 import { scopeCount, SCOPE_PICK } from '../../ui/shell/scope';
+import { AuthFrame } from './AuthFrame';
 import { loginMessage } from './loginMessage';
 
 export function LoginScreen() {
@@ -116,97 +119,76 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="login">
-      <div className="login-mark">
-        <span className="login-badge">
-          <BrandMark size={28} />
-        </span>
-        <span className="login-title">NINERDECK</span>
-        <span className="login-note">Panel administracyjny</span>
-      </div>
+    <AuthFrame
+      title="Zaloguj się do Ninerdeck"
+      message={message}
+      // Droga dla kogoś bez KONTA wcale - jedno zdanie pod formularzem (wzorzec GitLab
+      // „Don't have an account yet? Register now"). Do 2026-09-24 stało w osobnej ramce.
+      footer={
+        <>
+          Nie masz jeszcze konta? <Link to={SIGN_UP}>Załóż konto</Link>
+        </>
+      }
+    >
+      <form className="login-form" onSubmit={submit} autoComplete="on">
+        <Field htmlFor="login-email" label="E-mail">
+          <TextInput
+            id="login-email"
+            mono
+            type="email"
+            // Bez `autocomplete` menedżer haseł nie skojarzy pary adres + hasło,
+            // a to on jest tu sojusznikiem: hasło ma być długie i wklejone.
+            autoComplete="username"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Field>
 
-      {message == null ? null : (
-        <div className="login-banner">
-          <Banner tone={message.tone} live>
-            {message.text}
-          </Banner>
-        </div>
-      )}
+        <Field
+          htmlFor="login-password"
+          label="Hasło"
+          // „Nie pamiętam hasła" PRZY POLU, którego dotyczy. Służy też osobie z Googlem,
+          // która hasła nigdy nie ustawiła: list z linku ustawia hasło niezależnie od
+          // tego, czy jakieś było (D5), więc osobnego „nie mam jeszcze hasła" NIE MA.
+          action={
+            <Link className="label-action" to={FORGOT_PASSWORD}>
+              Nie pamiętam hasła
+            </Link>
+          }
+        >
+          <PasswordInput
+            id="login-password"
+            autoComplete="current-password"
+            required
+            value={secret}
+            onChange={(event) => setSecret(event.target.value)}
+          />
+        </Field>
 
-      <div className="login-card">
-        <form onSubmit={submit} autoComplete="on">
-          <Field htmlFor="login-email" label="E-mail">
-            <TextInput
-              id="login-email"
-              mono
-              type="email"
-              // Bez `autocomplete` menedżer haseł nie skojarzy pary adres + hasło,
-              // a to on jest tu sojusznikiem: hasło ma być długie i wklejone.
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </Field>
+        <Button type="submit" variant="primary" block disabled={password.isPending}>
+          Zaloguj się
+        </Button>
+      </form>
 
-          <Field
-            htmlFor="login-password"
-            label="Hasło"
-            // „Nie pamiętam hasła" PRZY POLU, którego dotyczy (wzorzec GitHub / Stripe /
-            // Linear; przegląd właściciela 2026-09-24 - linki pod przyciskiem „wyglądały
-            // jak linki"). Służy też osobie z Googlem, która hasła nigdy nie ustawiła:
-            // list z linku ustawia hasło niezależnie od tego, czy jakieś było (D5), więc
-            // osobnego „nie mam jeszcze hasła" NIE MA.
-            action={
-              <Link className="label-action" to={FORGOT_PASSWORD}>
-                Nie pamiętam hasła
-              </Link>
-            }
-          >
-            <PasswordInput
-              id="login-password"
-              autoComplete="current-password"
-              required
-              value={secret}
-              onChange={(event) => setSecret(event.target.value)}
-            />
-          </Field>
+      {/* Postęp czynności, o którą człowiek właśnie poprosił - pod przyciskiem,
+          którego dotyczy. To nie jest blokada, więc nie ma tu powodu, tylko stan. */}
+      {password.isPending ? <p className="login-status">Logowanie…</p> : null}
 
-          <Button type="submit" variant="primary" block disabled={password.isPending}>
-            Zaloguj się
-          </Button>
-
-        </form>
-
-        {/* Postęp czynności, o którą człowiek właśnie poprosił - pod przyciskiem,
-            którego dotyczy. To nie jest blokada, więc nie ma tu powodu, tylko stan. */}
-        {password.isPending ? <p className="login-status">Logowanie…</p> : null}
-
-        {hasGoogle ? (
-          <>
-            <div className="login-divider" role="separator">
-              albo
-            </div>
-            {rendered || scriptError != null ? null : (
-              <div className="login-google-skeleton" aria-hidden="true" />
-            )}
-            <div
-              ref={slot}
-              className={rendered ? 'login-google' : 'login-google pending'}
-              aria-busy={login.isPending}
-            />
-            {login.isPending ? <p className="login-status">Logowanie…</p> : null}
-          </>
-        ) : null}
-      </div>
-
-      {/* ALTERNATYWNA DROGA POD KARTĄ (issue #180; wzorzec GitHub „New to GitHub? Create
-          an account", Notion, Linear): karta niesie JEDNĄ akcję główną, a wyjście dla
-          kogoś bez KONTA wcale stoi w osobnej, lżejszej ramce - zdanie jest treścią,
-          link czasownikiem. Do 2026-09-24 tę drogę miał wyłącznie telefon (00H). */}
-      <div className="login-alt">
-        Nie masz jeszcze konta? <Link to={SIGN_UP}>Załóż konto</Link>
-      </div>
-    </div>
+      {hasGoogle ? (
+        <>
+          <div className="login-divider" role="separator">
+            albo zaloguj się przez
+          </div>
+          {rendered || scriptError != null ? null : <div className="login-google-skeleton" aria-hidden="true" />}
+          <div
+            ref={slot}
+            className={rendered ? 'login-google' : 'login-google pending'}
+            aria-busy={login.isPending}
+          />
+          {login.isPending ? <p className="login-status">Logowanie…</p> : null}
+        </>
+      ) : null}
+    </AuthFrame>
   );
 }

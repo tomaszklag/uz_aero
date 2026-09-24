@@ -1,13 +1,27 @@
 /**
- * Ninerdeck - panel: EKRAN LOGOWANIA.
+ * Ninerdeck - panel: EKRANY PRZED RAMĄ (logowanie, „Nie pamiętam hasła", „Załóż konto",
+ * wybór klubu).
  *
- * Osobny arkusz, bo to jedyny ekran panelu, który nie jest tabelą ani formularzem
- * w szufladzie - i jedyny poza znakiem w pasku, na którym marka ma prawo być duża.
+ * == UKŁAD JAK W GITLABIE (przegląd właściciela 2026-09-24) ==
+ * Do tego dnia ekran był KARTĄ z włosem na środku pustego tła: wersalikowy „NINERDECK"
+ * nad nią, formularz w ramce, „albo" drobnym mono, Google jako pigułka węższa od
+ * przycisku nad nią i link „Załóż konto" w osobnym pudełku. Każdy z tych elementów
+ * był poprawny osobno, a razem czytały się jak formularz back-office'u. Odtąd:
+ *  • **znak i TYTUŁ ZDANIOWY** („Zaloguj się do Ninerdeck") zamiast nazwy marki - ekran
+ *    mówi, CO się tu robi; marka jest w znaku i w tytule karty przeglądarki;
+ *  • **formularz BEZ KARTY**, w kolumnie 400 px - na ekranie z dwoma polami ramka
+ *    niczego nie oddziela, tylko zamyka;
+ *  • **wszystkie przyciski jednej szerokości i wysokości** (40 px), także Google -
+ *    kolumna ma jedną krawędź;
+ *  • **„albo zaloguj się przez"** zwykłym krojem tekstowym, między dwiema liniami;
+ *  • **droga dla kogoś bez konta to JEDNO ZDANIE pod formularzem**, bez ramki
+ *    (odwraca pudełko `.login-alt` z issue #180 - to samo zdanie, lżej);
+ *  • **poświata U DOŁU ekranu** z samych tokenów (`--green-muted`, `--blue-muted`) -
+ *    odwraca „logowanie bez poświaty" z issue #107: to jedyny ekran, na którym nie ma
+ *    treści do czytania, więc tło ma prawo coś powiedzieć. Zero literałów koloru.
  *
- * Styl lekki (issue #107): bez poświaty pod znakiem; tłem jest to samo tło, co pod
- * chrome'em panelu (kolor i lekki gradient z `base.css`) - logowanie nie ma własnego
- * gradientu, jak w 2.0, tylko przepuszcza ten jeden. Znak na zielonej plamie, karta
- * na `--surface` z włosem, tak jak każda inna karta.
+ * Wszystkie cztery ekrany składa `screens/login/AuthFrame.tsx` - kształt ma JEDNĄ
+ * definicję, inaczej rozjeżdża się przy pierwszej poprawce jednego z nich.
  */
 
 .login {
@@ -16,22 +30,39 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
-  padding: 40px 24px 64px;
+  padding: 48px 24px 72px;
   overflow-y: auto;
+  /* Dwie plamy światła za horyzontem: zieleń marki po lewej, błękit informacji po
+     prawej. Każda plama dwa razy, bo tony `-muted` (0,12) same są ledwie widoczne na
+     `--bg`, a nowego tokenu dla jednego tła nie dokładamy. */
+  background-image:
+    radial-gradient(55% 42% at 32% 112%, var(--green-muted), transparent 72%),
+    radial-gradient(40% 30% at 30% 106%, var(--green-muted), transparent 70%),
+    radial-gradient(50% 40% at 72% 110%, var(--blue-muted), transparent 72%),
+    radial-gradient(35% 28% at 70% 104%, var(--blue-muted), transparent 70%);
 }
 
-.login-mark {
+/* Kolumna: wszystko ma tę samą szerokość i jedną oś. */
+.login-column {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  text-align: center;
 }
 
 .login-badge {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   background: var(--green-muted);
   color: var(--green);
   display: inline-flex;
@@ -39,126 +70,68 @@
   justify-content: center;
 }
 
-.login-title {
-  font-family: var(--font-display);
-  font-size: 40px;
-  letter-spacing: 6px;
-  /* Bebas Neue ma duży odstęp wewnętrzny; bez tego podpis odkleja się od nazwy. */
-  line-height: 0.9;
+/* Tytuł ekranu: Archivo 600 w pisowni zdaniowej (styl lekki, issue #107). */
+.login-heading {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--text-primary);
-  /* Wersaliki mają odstęp PO ostatniej literze, więc blok wygląda na przesunięty
-     w lewo. Wcięcie o połowę odstępu wyrównuje go optycznie do środka. */
-  text-indent: 6px;
 }
 
-.login-note {
-  font-size: 13px;
+/* Jedno zdanie pod tytułem - co się stanie po wysłaniu formularza. */
+.login-lead {
+  margin: -8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
-/**
- * Karta formularza. Własna, nie `.card`: tam padding jest dobrany do gęstej treści
- * back-office'u, a tu ma być powietrze.
- */
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 28px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-/* Odstęp między polami trzyma FORMULARZ, nie karta: karta ma jedno dziecko, więc
-   `gap` na niej nie miałby czego rozsunąć. */
-.login-card form {
+.login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-/* Pola logowania są WYŻSZE niż w reszcie panelu: na ekranie są dwa, więc nie ma
-   czego upychać, a 44 px to wygodny cel także na tablecie w hangarze. */
-.login-card .input {
-  min-height: 44px;
-  border-radius: 8px;
-  padding: 10px 14px;
+/* Etykiety pełnym stopniem: na ekranie z dwoma polami nie ma czego upychać. */
+.login-form .label {
   font-size: 14px;
 }
 
-.login-card .field {
+.login-form .field {
   gap: 8px;
 }
 
-.login-card .btn {
-  min-height: 44px;
+/* Pola i przyciski WYŻSZE niż w reszcie panelu: 40 px to wygodny cel także na
+   tablecie w hangarze, a wszystkie przyciski kolumny mają tę samą wysokość. */
+.login-form .input {
+  min-height: 40px;
   border-radius: 8px;
-  font-size: 15px;
-  margin-top: 4px;
+  padding: 9px 12px;
+  font-size: 14px;
 }
 
-/* Baner błędu trzyma szerokość karty, żeby kolumna miała jedną krawędź. */
-.login-banner {
-  width: 100%;
-  max-width: 400px;
+.login-column .btn {
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 14.5px;
 }
 
-/**
- * Przycisk Google. Rysuje go SKRYPT GOOGLE w tym kontenerze (`auth/googleIdentity.ts`),
- * więc ostylować da się tylko ramę wokół niego: wyśrodkowanie i wysokość, żeby karta
- * nie skakała, gdy przycisk wjeżdża. Dopóki nie ma go w drzewie (`pending`), kontener
- * nie zajmuje miejsca - miejsce trzyma plamka o jego geometrii.
- */
-.login-google {
-  display: flex;
-  justify-content: center;
-  min-height: 44px;
-}
-
-.login-google.pending {
-  min-height: 0;
-}
-
-/* Plamka w geometrii przycisku Google (44 px, pigułka) - nigdy pustka, nigdy spinner. */
-.login-google-skeleton {
-  height: 44px;
-  max-width: 336px;
-  margin: 0 auto;
-  border-radius: 22px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-}
-
-.login-status {
-  margin: 14px 0 0;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
+.login-form .btn {
+  margin-top: 6px;
 }
 
 /**
- * ══ LOGOWANIE HASŁEM (2.1.0, `docs/logowanie-haslem.md` §5.2, §7.2) ══
- *
- * Hasło jest DRUGĄ metodą tej samej osoby (D1), więc formularz i przycisk Google stoją
- * w JEDNEJ karcie, rozdzielone separatorem „albo" - nie w dwóch kartach i nie za
- * przełącznikiem. Formularz jest na wierzchu, bo administrator klubu założonego bez
- * Google (D8) nie ma innej drogi; Google zostaje pod spodem dla każdego, kto je ma.
+ * Separator między dwiema metodami logowania: dwie linie i zdanie między nimi.
+ * Krojem tekstowym, nie mono - to zdanie, nie etykieta przyrządu.
  */
-
-/* Separator między dwiema metodami logowania: dwie linie i słowo między nimi. Mono,
-   ale bez wersalików i bez rozstrzelenia - „albo" jest słowem, nie etykietą przyrządu
-   (styl lekki, issue #107). Odstęp niesie SEPARATOR, nie karta: karta ma dalej dzieci
-   o różnej naturze (formularz, kontener Google, plamka), a wspólny `gap` rozsuwałby
-   też pusty kontener `pending`. */
 .login-divider {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.3px;
-  color: var(--text-muted);
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .login-divider::before,
@@ -166,6 +139,60 @@
   content: '';
   flex: 1;
   border-top: 1px solid var(--border);
+}
+
+/**
+ * Przycisk Google. Rysuje go SKRYPT GOOGLE w tym kontenerze (`auth/googleIdentity.ts`,
+ * `width: 400` = szerokość kolumny), więc ostylować da się tylko ramę wokół niego.
+ * Dopóki nie ma go w drzewie (`pending`), kontener nie zajmuje miejsca - miejsce
+ * trzyma plamka o jego geometrii.
+ */
+.login-google {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.login-google.pending {
+  min-height: 0;
+}
+
+/* Plamka w geometrii przycisku Google - nigdy pustka, nigdy spinner. */
+.login-google-skeleton {
+  height: 40px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.login-status {
+  margin: -8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/**
+ * Droga dla kogoś, kto trafił nie tam („Nie masz jeszcze konta?", „Masz już konto?",
+ * „Wróć do logowania"): jedno zdanie pod formularzem, bez ramki. Zdanie jest treścią,
+ * link czasownikiem. „Nie pamiętam hasła" NIE stoi tutaj - dotyczy pola hasła, więc
+ * stoi przy nim (`.label-action` w `controls.css`).
+ */
+.login-foot {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.login-foot a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.login-foot a:hover {
+  text-decoration: underline;
 }
 
 /**
@@ -209,45 +236,4 @@
 /* Hasło ODSŁONIĘTE: ikona w pełnym kontraście mówi, że pole pokazuje jawny tekst. */
 .eye-btn[aria-pressed='true'] {
   color: var(--text-primary);
-}
-
-/**
- * ALTERNATYWNA DROGA POD KARTĄ (issue #180; przegląd właściciela 2026-09-24: linki pod
- * przyciskiem „wyglądały jak linki"). Wzorzec z GitHuba („New to GitHub? Create an
- * account"), Notion i Linear: karta niesie JEDNĄ akcję główną, a wyjście dla kogoś, kto
- * trafił nie tam („Nie masz jeszcze konta?", „Masz już konto?", „Wróć do logowania"),
- * stoi w osobnej, lżejszej ramce POD nią - w szerokości karty, bez tła, z samym włosem.
- * Zdanie jest treścią, link czasownikiem; ramka mówi „to jest inna sprawa niż formularz
- * wyżej", czego lista linków w karcie nie mówiła. „Nie pamiętam hasła" NIE stoi tutaj -
- * dotyczy pola hasła, więc stoi przy nim (`.label-action` w `controls.css`).
- *
- * Do 2026-09-24 były tu `.login-link` (link w karcie pod przyciskiem) i `.login-links`
- * (dwa takie linki w wierszu z kropką) - obie klasy zniknęły razem z tym układem.
- */
-.login-alt {
-  width: 100%;
-  max-width: 400px;
-  margin-top: 12px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  text-align: center;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-
-/* W kolumnie logowania odstępy trzyma `gap` 28 px; ramka jest PRZYPISEM karty, nie
-   kolejną sekcją, więc podchodzi bliżej (28 − 12 = 16 px). */
-.login > .login-alt {
-  margin-top: -12px;
-}
-
-.login-alt a {
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.login-alt a:hover {
-  text-decoration: underline;
 }
