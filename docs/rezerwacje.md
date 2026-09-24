@@ -1249,6 +1249,123 @@ Ta pozycja jest na drodze krytycznej 3.1.0 tak samo, jak poczta (#137) była dla
   rodzajów, listy urządzeń. Push jest budzikiem - konfiguruje się go tam, gdzie
   konfiguruje się dzwonek.
 
+### 12.6 Architektura budzika w jednym miejscu (zapis 2026-09-24, przy zadaniu #168)
+
+Konfiguracja push rozjeżdża się po czterech konsolach (Firebase, Google Cloud, EAS,
+Railway) i trzech plikach repozytorium, więc ten punkt zbiera CAŁY łańcuch, miejsce
+każdego sekretu, koszt i to, co zmieni sklep Play. Procedura klik po kliku dla
+właściciela stoi w README („Wdrożenie: Railway", krok 12); tutaj jest architektura.
+
+**Łańcuch doręczenia** - pięć ogniw, dwa po naszej stronie:
+
+```
+  telefon                          serwer Ninerdeck                 Expo Push Service        Google FCM V1        telefon
+  expo-notifications               (Railway)                        exp.host                 fcm.googleapis.com   kanał `default`
+  ────────────────────────────     ───────────────────────────────  ───────────────────────  ──────────────────   ──────────────
+  getExpoPushTokenAsync ──POST /me/push-token──▶ push_tokens
+  (ExponentPushToken[…])                        (przy sesji logowania, §12.2)
+
+                                   decyzja / prośba o zgodę
+                                   Notifier.record  (w transakcji)
+                                   commit
+                                   Notifier.wake ── ExpoPush.send ──▶ bilety ──▶ (klucz FCM V1 z EAS) ──▶ budzik
+                                   (fetch, do 100 szt./żądanie)       DeviceNotRegistered → wiersz push_tokens znika
+```
+
+1. Telefon prosi `expo-notifications` o token Expo (`ExponentPushToken[…]`). Bez pliku
+   Firebase w buildzie, w Expo Go albo bez usług Google token jest `null` i to jest cisza,
+   nie błąd (§12.1).
+2. Pętla okazji rejestruje token na serwerze; wiersz `push_tokens` wisi na sesji logowania
+   (§12.2), więc zdalne wylogowanie gasi go samo.
+3. Decyzja albo prośba o zgodę zapisuje wiersz skrzynki W TRANSAKCJI, a budzik idzie
+   po commicie i nigdy nie rzuca (§12.1, `Notifier`).
+4. `ExpoPush` (§12.3) wysyła paczkę do Expo Push Service jednym żądaniem HTTP. Expo
+   odpowiada biletem na każdą wiadomość; `DeviceNotRegistered` znaczy, że aplikacji już
+   nie ma na urządzeniu i serwer kasuje token.
+5. Expo uwierzytelnia się w FCM kluczem konta usługi wgranym do EAS i FCM budzi telefon
+   na kanale `default` (wysoka ważność).
+
+**Kto trzyma co** - jedyny prawdziwy sekret w tym łańcuchu NIE leży na serwerze:
+
+| Rzecz | Gdzie stoi | Kto z tego korzysta | Sekret? |
+|---|---|---|---|
+| projekt Firebase `ninerdeck-81f75` z DWIEMA aplikacjami Android: `com.ninerdeck.app` i `com.ninerdeck.app.dev` | konsola Firebase (nowy projekt pod kontem właściciela, poza projektem Google Cloud logowania) | rejestracja pakietów, klucz FCM | nie |
+| `google-services.json` - JEDEN plik, tablica `client` z oboma pakietami | zmienna EAS `GOOGLE_SERVICES_JSON` typu „file" (środowiska `production`, `development`, `preview`; widoczność `secret`) + lokalna kopia `app/google-services.json` w `.gitignore` | `app.config.js` dokłada `android.googleServicesFile` (§12.5) | identyfikatory publiczne klienta; poza repozytorium z ostrożności, nie z konieczności |
+| klucz konta usługi FCM V1 (`firebase-adminsdk-fbsvc@ninerdeck-81f75…`, JSON z Firebase → Konta usługi) | poświadczenia EAS, OSOBNO dla każdego pakietu (`eas credentials -p android`, profile `production` i `development`) | Expo Push Service przy doręczaniu do FCM | **TAK** - pełny dostęp administracyjny do projektu Firebase. Nigdy w repozytorium, nigdy na Railway, nigdy w `app/`; kopia z dysku do skasowania po wgraniu, nowy klucz generuje się tym samym przyciskiem, stary unieważnia w Google Cloud → IAM → Service accounts → Keys |
+| `PUSH_PROVIDER=expo` | zmienne usługi na Railway + `server/.env` lokalnie | serwer wybiera adapter `ExpoPush` zamiast `LogPush` | nie |
+| `PUSH_ACCESS_TOKEN` (opcjonalny) | Railway; z konsoli Expo → konto → Access tokens | serwer dokleja `Authorization: Bearer` | tak - token konta Expo |
+| token push urządzenia | `push_tokens` na serwerze (bez `org_id`, kaskada z `login_sessions`) | serwer adresuje budzik | nie jest sekretem, ale wyciek pozwala spamować urządzenia - i po to istnieje `PUSH_ACCESS_TOKEN` z wymuszeniem w panelu Expo |
+
+**Dlaczego Expo w środku, a nie FCM wprost** (pytanie właściciela 2026-09-24). Nic
+technicznego tego nie wymusza - to decyzja z §12.3 i ma znane obie strony:
+
+- za pośrednikiem: jedno żądanie na stu adresatów, bilety per wiadomość (w tym „urządzenia
+  już nie ma"), zero kryptografii po naszej stronie, jeden format tokenu i jedno API dla
+  Androida i przyszłego iOS (APNs bez zmiany serwera). Najważniejsze: klucz konta usługi
+  Firebase leży WYŁĄCZNIE w EAS, serwer na Railway nie trzyma żadnego sekretu Google;
+- przeciw: dodatkowy przeskok przez cudzą usługę (zależność od dostępności Expo) i trzeci
+  podmiot przetwarzający w polityce prywatności. Expo widzi token i treść, ale treść to
+  z założenia tytuł rzeczy i identyfikatory, bez nazwisk i godzin (§12.1), a Expo deklaruje,
+  że nie przechowuje treści dłużej, niż trwa doręczenie;
+- droga bezpośrednia, gdyby pośrednik zaczął przeszkadzać: nowy adapter za `PushPort`
+  (JWT RS256 z `node:crypto` na kluczu konta usługi → token dostępu Google →
+  `projects/<id>/messages:send` osobno na urządzenie, `fetch` bez zależności), telefon
+  rejestruje natywny token FCM (`getDevicePushTokenAsync`) zamiast tokenu Expo, klucz
+  konta usługi przechodzi z EAS na Railway. Około dnia pracy plus próba na urządzeniu -
+  osobne zgłoszenie, nie przebudowa. Nie ma go w planie 3.1.0.
+
+**Koszt i limity** (dokumentacja i cennik Expo, stan 2026-09-24): wysyłka przez Expo Push
+Service jest BEZPŁATNA na każdym planie, także darmowym - cennik nie ma pozycji za
+powiadomienia. Limity są techniczne: 600 powiadomień na sekundę na projekt i 100 na jedno
+żądanie (adapter dzieli paczkę po sto). Expo liczy za co innego: buildy (plan darmowy -
+15 buildów Androida miesięcznie; każdy `build:dev` i `build:prod` zjada jeden) i EAS
+Update (tysiąc aktywnych użytkowników miesięcznie). To liczby do pilnowania przy
+wydaniach, nie przy powiadomieniach.
+
+**Sklep Google Play niczego tu nie zmienia.** FCM adresuje po PAKIECIE i nie pyta, skąd
+wziął się APK - rejestracja w Firebase, `google-services.json`, klucz FCM V1 w EAS
+i `PUSH_PROVIDER` zostają identyczne. Jedyna zmiana ze sklepu to podpis: Play App Signing
+podpisuje plik własnym kluczem, więc odcisk SHA-1 zainstalowanej aplikacji będzie inny niż
+odcisk klucza EAS. Powiadomień to nie dotyczy (FCM odcisku nie sprawdza; w Firebase
+celowo nie wpisano żadnego SHA-1, żeby nie mnożyć klientów OAuth w Google Cloud) -
+dotyczy wyłącznie logowania Google, i to jest zapisany punkt planu 4.0.0.
+
+**Pułapki spisane przy konfiguracji 2026-09-24**, żeby nie płacić za nie drugi raz:
+
+- **komendy EAS idą z `app/`**, nigdy z korzenia repozytorium: `eas env:set` i `eas credentials`
+  uruchomione z `D:\uz_areo` pytają „EAS project not configured?", a „yes" zakłada w korzeniu
+  zbędny `app.json` z samym identyfikatorem projektu (do skasowania) i dalej nie działa,
+  bo `eas.json` leży w `app/`;
+- **plik Firebase pobiera się DOPIERO po zarejestrowaniu obu pakietów** - pobrany po
+  pierwszym zawiera jeden wpis `client`; kreator Firebase każe go pobrać w kroku 2 i pokazuje
+  instrukcje Android Studio/Gradle, które w projekcie Expo pomija się w całości;
+- **środowisko EAS profilu bez pola `environment`** wybiera się regułą domyślną: `distribution:
+  store` → `production`, `developmentClient: true` → `development`, wszystko inne → `preview`.
+  Profil produkcyjny Ninerdeck buduje APK (`distribution: internal`), więc BEZ jawnego pola
+  wylądowałby w `preview` i dostał build bez pliku Firebase - a taki build przechodzi,
+  tylko telefon po cichu nie rejestruje tokenu (§12.5). Stąd zmienna w trzech
+  środowiskach naraz; docelowo profile dostają jawne `environment` (R-K, #169);
+- **`eas env:create` jest wycofane** na rzecz `eas env:set` (ta sama składnia; README
+  poprawione);
+- **nowa organizacja Google Cloud blokuje generowanie kluczy kont usługi** polityką
+  `iam.disableServiceAccountKeyCreation` (wersja `iam.managed.…` bywa osobno). Firebase
+  odmawia wtedy „Key creation is not allowed on this service account". Wyjątek nadaje się
+  NA PROJEKCIE (Organization Policies → Manage policy → Override parent's policy →
+  Enforcement Off), po kilku minutach propagacji; sprawdź, w KTÓRYM projekcie edytujesz
+  politykę, i po wgraniu klucza przywróć dziedziczenie. Projekt bez organizacji tej
+  polityki nie ma wcale;
+- **klucz produkcyjny i dev to TEN SAM plik** wgrany dwa razy (raz na profil w
+  `eas credentials`) - EAS trzyma poświadczenia per pakiet, a Firebase klucz per projekt.
+
+**Próba przed wydaniem** (kryterium #168 po odrzuceniu staging, #155): dev build
+(`npm run build:dev` - moduł natywny, więc build sprzed R-J nie wystarczy) + lokalny
+serwer z `PUSH_PROVIDER=expo` + klub ze ścieżką akceptacji. Na telefonie loguje się osoba
+z KROKU ścieżki (hasłem - klient OAuth Android dla pakietu dev nie jest potrzebny),
+a rezerwację składa KTOŚ INNY (z panelu na cudze konto albo z drugiego telefonu):
+składający pomija kroki, na których sam stoi (§11.2), więc próba na jednym koncie nie
+wywoła żadnego powiadomienia. Oczekiwane: „Prośba o zgodę" na telefonie, tapnięcie
+otwiera ekran decyzji 26.
+
 ## 13. Etapy i kolejność realizacji
 
 Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zależność twarda.

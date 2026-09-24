@@ -205,12 +205,16 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
        `com.ninerdeck.app`; drugi raz dla `com.ninerdeck.app.dev`, jeśli dev build ma
        dostawać powiadomienia (osobny pakiet = osobna aplikacja w Firebase). Pobierz
        `google-services.json` - jeden plik obejmuje obie aplikacje projektu.
-    2. Plik NIE trafia do repozytorium. Dla buildów EAS: w `app/`
-       `npx eas-cli env:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment production`
-       (i to samo z `--environment development`); lokalnie połóż go jako
+    2. Plik NIE trafia do repozytorium. Dla buildów EAS, KONIECZNIE z katalogu `app/`
+       (z korzenia EAS pyta „project not configured" i zakłada zbędny `app.json`):
+       `npx eas-cli env:set --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility secret --environment production --environment development --environment preview`
+       (`env:create` jest wycofane; `preview` dlatego, że profil bez pola `environment`
+       z `distribution: internal` ląduje w środowisku preview - build bez pliku przechodzi,
+       a telefon po cichu nie rejestruje tokenu). Lokalnie połóż go jako
        `app/google-services.json` (jest w `.gitignore`). `app.config.js` dokłada
        `android.googleServicesFile` z tej zmiennej albo z lokalnej kopii
-       (`app/scripts/google-services.js`).
+       (`app/scripts/google-services.js`). Architektura, sekrety, koszt i sklep Play:
+       `docs/rezerwacje.md` §12.6.
     3. **FCM V1**: Firebase → Project settings → Service accounts → **Generate new private
        key** (JSON) → `npx eas-cli credentials -p android` → pakiet → Push Notifications
        (FCM V1) → wgraj klucz. Osobno dla pakietu dev. Stary „server key" jest wycofany

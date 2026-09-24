@@ -4337,6 +4337,9 @@ wszystko 1:1 z makiet #196. Do tego cienki plaster serwera i migracja 14. Decyzj
 ## Rezerwacje 3.1.0 - epik R-J: push jako budzik (issue #167, 2026-09-23)
 `expo-notifications` w aplikacji, cienki plaster serwera (`channelId`, bit `approver`),
 plik Firebase poza repozytorium. Decyzje: `docs/rezerwacje.md` §12.1–§12.5; odstępstwa §18.
+**Cały łańcuch (telefon → serwer → Expo Push Service → FCM), miejsce każdego sekretu, koszt,
+sklep Play i pułapki konfiguracji z 2026-09-24: `docs/rezerwacje.md` §12.6** - tam zaglądaj,
+zanim ruszysz Firebase, EAS albo `PUSH_PROVIDER`.
 **Zadanie właściciela #168 (Firebase, FCM V1 w EAS, `PUSH_PROVIDER=expo`) jest na
 drodze krytycznej** - bez niego kod działa, ale budzik milczy. Reguły obowiązujące odtąd:
 - **JEDEN PLIK ZNA `expo-notifications`** (`infrastructure/push/expoNotifications.ts`,
