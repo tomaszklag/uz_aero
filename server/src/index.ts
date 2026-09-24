@@ -508,6 +508,8 @@ const app = await buildServer({
     auditedWrite,
     approvalStepsRepo,
     adminPilotsRepo,
+    approvals,
+    notifier,
     randomUUID,
     clock,
   ),

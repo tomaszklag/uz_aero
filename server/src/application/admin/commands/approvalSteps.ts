@@ -17,6 +17,12 @@
  * jest bieżąca, więc dotyczy to także spraw złożonych wcześniej. To pierwsza z dwóch
  * zapór (druga: administrator odblokowuje każdy krok, §11.2) i jedyna, która działa
  * ZANIM ktokolwiek utknie.
+ *
+ * ══ ZAPIS ŚCIEŻKI DOMYKA I PRZEKIEROWUJE SPRAWY W TOKU (issue #207) ══
+ * Ścieżka jest zawsze bieżąca, więc jej zapis zmienia stan każdej czekającej sprawy -
+ * a wiersz rezerwacji sam tego nie zauważy. W TEJ SAMEJ transakcji `ApprovalFlow.reconcile`
+ * potwierdza sprawy z kompletem zgód, prosi osoby nowego kroku bieżącego i dopisuje
+ * pominięcia rezerwującego pod krokami dołożonymi później. Budzik idzie PO commicie.
  */
 
 import type {
@@ -25,6 +31,8 @@ import type {
   ApprovalStepsPort,
   Clock,
 } from '../../common/ports.ts';
+import type { ApprovalFlow, PathReconcile } from '../../common/commands/approvals.ts';
+import type { Notifier } from '../../common/notify/notifier.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, PilotsAdminPort } from '../ports.ts';
 
@@ -35,8 +43,11 @@ export interface ApprovalStepInput {
   memberIds: readonly string[];
 }
 
+/** Ile spraw w toku zapis ścieżki domknął i ile przekierował - do banera w panelu. */
+export type PathEffect = Pick<PathReconcile, 'confirmed' | 'moved'>;
+
 export type ApprovalStepsOutcome =
-  | { ok: true; steps: ApprovalStepRecord[] }
+  | { ok: true; steps: ApprovalStepRecord[]; reconciled: PathEffect }
   | { ok: false; reason: ApprovalStepsRefusal; stepLabel: string };
 
 export type ApprovalStepsRefusal =
@@ -59,6 +70,8 @@ export class ApprovalStepsCommands {
     private readonly write: AuditedWrite,
     private readonly steps: ApprovalStepsPort,
     private readonly members: PilotsAdminPort,
+    private readonly approvals: ApprovalFlow,
+    private readonly notifier: Notifier,
     private readonly newId: () => string,
     private readonly clock: Clock,
   ) {}
@@ -70,7 +83,7 @@ export class ApprovalStepsCommands {
    */
   async replace(actor: Actor, input: readonly ApprovalStepInput[]): Promise<ApprovalStepsOutcome> {
     try {
-      const steps = await this.write.run(actor, async (tx) => {
+      const { steps, reconciled } = await this.write.run(actor, async (tx) => {
         const before = await this.steps.path(tx, actor.orgId);
 
         const drafts: ApprovalStepDraft[] = [];
@@ -91,19 +104,34 @@ export class ApprovalStepsCommands {
         }
 
         const after = await this.steps.replace(tx, actor.orgId, drafts, this.clock.now());
+        const reconciled = await this.approvals.reconcile(tx, actor.orgId, before, after);
         return {
-          result: after,
+          result: { steps: after, reconciled },
           audit: {
             action: 'approval.steps' as const,
             targetType: 'organization',
             targetId: actor.orgId,
             // Ścieżka PRZED i PO, bo pytanie brzmi zwykle „od kiedy to tak działa
-            // i kto to przestawił" - a sama nowa lista na nie nie odpowiada.
-            details: { before: summary(before), after: summary(after) },
+            // i kto to przestawił" - a sama nowa lista na nie nie odpowiada. Obok
+            // liczby spraw, które ten zapis domknął i przekierował (issue #207).
+            details: {
+              before: summary(before),
+              after: summary(after),
+              confirmed: reconciled.confirmed,
+              moved: reconciled.moved,
+            },
           },
         };
       });
-      return { ok: true, steps };
+
+      // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
+      // awaria ma kosztować ciszę w telefonie, a nie niezapisaną ścieżkę.
+      await this.notifier.wake(reconciled.notices);
+      return {
+        ok: true,
+        steps,
+        reconciled: { confirmed: reconciled.confirmed, moved: reconciled.moved },
+      };
     } catch (err) {
       if (err instanceof Refused) return { ok: false, reason: err.reason, stepLabel: err.stepLabel };
       throw err;

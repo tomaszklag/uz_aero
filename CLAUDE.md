@@ -4408,6 +4408,40 @@ odstępstwa §18. Reguły obowiązujące odtąd:
 - **czego #206 NIE ROBI**: licencji, badań i uprawnień na typ (osobny epik, decyzja
   właściciela 2026-09-23), sprawdzenia w przeglądarce i na urządzeniu (→ #169)
 
+## Rezerwacje 3.1.0 - zapis ścieżki domyka sprawy w toku (issue #207, 2026-09-24)
+Luka znaleziona przy R-H: ścieżka jest bieżąca (§11.2), więc jej SKRÓCENIE zostawiało
+rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refuseDecision` →
+`not_pending`), a wygasały jako „nikt nie zdążył zdecydować". Decyzje: `docs/rezerwacje.md`
+§11.2 (akapit „ZAPIS ŚCIEŻKI DOMYKA…"); odstępstwa §18. Reguły obowiązujące odtąd:
+- **ZAPIS ŚCIEŻKI PRZECHODZI PO SPRAWACH `pending` W TEJ SAMEJ TRANSAKCJI**
+  (`ApprovalFlow.reconcile(tx, orgId, before, after)`, wołane z `ApprovalStepsCommands.replace`
+  zaraz po `steps.replace`): komplet zgód na nowej ścieżce → `bookings.confirm` +
+  `booking_approved` do pilota; inny krok bieżący niż przed zmianą → `approval_requested`
+  do osób nowego kroku; krok dołożony z rezerwującym na liście → pominięcie `self`
+  (`missingSelfApprovals` w domenie). Odmowa w rejestrze sprawy `pending` nie ma jak
+  powstać, a gdyby stała, rozstrzyga o niej człowiek, nie zapis konfiguracji
+- **„INNY KROK" ZNACZY INNY `id` KROKU BIEŻĄCEGO**, nie inną obsadę: dopisanie osoby do
+  kroku bieżącego nie rodzi prośby (sprawa czeka tam, gdzie czekała, a osoba widzi ją
+  w kolejce). Przestawienie kolejności PRZEKIEROWUJE tak samo, jak dołożenie - panel
+  przy przestawianiu też pokazuje skutek
+- **BUDZIK PO COMMICIE, JAK WSZĘDZIE**: `reconcile` oddaje `notices`, komenda woła
+  `notifier.wake` po `write.run`. `ApprovalStepsCommands` dostał przez to `ApprovalFlow`
+  i `Notifier` w konstruktorze (oba korzenie kompozycji: `index.ts` i `test/helpers.ts`)
+- **LICZBY JADĄ DO DZIENNIKA I DO PANELU**: audyt `approval.steps` ma w `details`
+  `confirmed` i `moved` obok `before`/`after`; `PUT /admin/api/approval-steps` oddaje
+  `reconciled: { confirmed, moved }`, a ekran ścieżki pokazuje to banerem `ok`
+  (`pathSavedNotice` w `approvalPath.ts`, z testami) - ZERO nie dostaje zdania (reguła
+  SyncChipa). Szuflada kroku zamyka się po zapisie, więc skutek podaje ekran pod nią
+  (`StepDrawer.onSaved`), a mutacja unieważnia też cache KALENDARZA - pasek na osi
+  zmienia kształt z `pending` na `confirmed`
+- **TESTY DOWIODŁY LUKI PRZED POPRAWKĄ**: pięć z sześciu nowych przypadków
+  w `approvalFlow.test.ts` pada bez wywołania `reconcile`; szósty (zmiana obsady bez
+  prośby) jest strażnikiem przed budzeniem wszystkich. Strażnik hexów w panelu
+  (`architecture.test.ts`) łapie `#207` w NAPISIE testu - numer issue w nazwie `describe`
+  wygląda dla niego jak kolor; w komentarzach jest bezpieczny (są zdejmowane)
+- **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
+  o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

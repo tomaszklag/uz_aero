@@ -51,6 +51,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   rozpatrywany termin) oraz podgląd samolotu (liczniki z ostatniego odczytu, ostatnie
   30 dni, ostatnie loty, najbliższe terminy razem z przeglądami). Mechanik decydujący
   z telefonu widzi dokładnie to samo, co administrator przy biurku.
+- **Zmiana ścieżki akceptacji porządkuje sprawy w toku.** Gdy klub zdejmie krok, rezerwacje,
+  które mają już komplet pozostałych zgód, zostają potwierdzone od razu, a pilot dostaje
+  wiadomość. Gdy krok dojdzie albo zmieni kolejność, osoby nowego kroku dostają prośbę
+  o zgodę. Panel mówi po zapisie, ile rezerwacji to dotknęło.
 - **Rezerwujący nie prosi sam siebie o zgodę**: kroki, na których stoi, przechodzą same,
   a w historii widać, że przeszły właśnie w ten sposób.
 - **Rezerwacja czekająca na zgodę trzyma termin** - nikt inny nie zajmie go w międzyczasie.

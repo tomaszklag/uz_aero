@@ -20,7 +20,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { ApprovalStepDto, PilotListItemDto } from '../../api/dto';
+import type { ApprovalStepDto, PathEffectDto, PilotListItemDto } from '../../api/dto';
 import { useReplaceApprovalSteps } from '../../queries/useApprovals';
 import { Button, Card, Drawer, Field, OptionButton, TextInput } from '../../ui/components';
 import {
@@ -44,9 +44,15 @@ interface Props {
   steps: readonly ApprovalStepDto[];
   pilots: readonly PilotListItemDto[];
   onClose: () => void;
+  /**
+   * Zapis się udał - ze SKUTKIEM dla spraw w toku (issue #207). Szuflada zamyka się
+   * po zapisie, więc zdanie o potwierdzonych i przekierowanych rezerwacjach mówi
+   * ekran pod nią, nie ona.
+   */
+  onSaved: (effect: PathEffectDto | undefined) => void;
 }
 
-export function StepDrawer({ step, steps, pilots, onClose }: Props) {
+export function StepDrawer({ step, steps, pilots, onClose, onSaved }: Props) {
   // Szkic startuje z kroku RAZ - szuflada montuje się z kluczem kroku (`key`), więc
   // zmiana adresu daje świeży szkic, a odświeżenie listy po zapisie go nie kasuje.
   const [draft, setDraft] = useState<StepDraft>(() => (step == null ? EMPTY_STEP : draftOf(step)));
@@ -62,12 +68,16 @@ export function StepDrawer({ step, steps, pilots, onClose }: Props) {
   const blocker = stepBlocker(draft);
   const unchanged = step != null && !hasStepChanges(steps, draft);
 
+  const saved = (data: { reconciled?: PathEffectDto }): void => {
+    onSaved(data.reconciled);
+    onClose();
+  };
   const save = (): void => {
-    replace.mutate(withStep(steps, draft), { onSuccess: onClose });
+    replace.mutate(withStep(steps, draft), { onSuccess: saved });
   };
   const remove = (): void => {
     if (step == null) return;
-    replace.mutate(withoutStep(steps, step.id), { onSuccess: onClose });
+    replace.mutate(withoutStep(steps, step.id), { onSuccess: saved });
   };
 
   return (
@@ -148,12 +158,14 @@ export function StepDrawer({ step, steps, pilots, onClose }: Props) {
 
       {/* Zdjęcie kroku - poniżej i w tonie ostrzeżenia, bo intencją wchodzącego jest
           poprawka obsady, nie kasowanie. Skutek pada PRZED kliknięciem: sprawy czekające
-          na ten krok przejdą dalej, a zgody pod nim zostają w historii. */}
+          na ten krok przejdą dalej albo zostaną potwierdzone (issue #207), a zgody pod
+          nim zostają w historii. */}
       {step == null ? null : (
         <Card title="Zdjęcie kroku ze ścieżki" tone="danger">
           <p className="card-note">
-            Rezerwacje czekające na ten krok przejdą do następnego od razu. Zgody już wydane
-            zostają w historii.
+            Rezerwacje czekające na ten krok przejdą do następnego od razu, a jego osoby
+            dostaną prośbę o zgodę. Ta, która ma już komplet pozostałych zgód, zostaje
+            potwierdzona. Zgody już wydane zostają w historii.
           </p>
           {removing ? (
             <div className="drawer-foot">

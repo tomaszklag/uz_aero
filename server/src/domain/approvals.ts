@@ -114,6 +114,22 @@ export function selfApprovedSteps(
 }
 
 /** Powód, dla którego decyzja nie może zapaść. Kody SUROWE - nazywa je panel i aplikacja. */
+/**
+ * Kroki, na których stoi rezerwujący, a pod którymi nie ma jeszcze ŻADNEJ decyzji -
+ * pominięcia `self` do DOPISANIA po zmianie ścieżki (issue #207). Przy złożeniu
+ * rezerwacji pominięcia liczy `selfApprovedSteps`; krok dołożony później, z rezerwującym
+ * na liście, pytałby go o zgodę na własny plan - wbrew §11.2. Krok już rozstrzygnięty
+ * (także odmową) zostaje przy swojej decyzji: rejestr jest append-only.
+ */
+export function missingSelfApprovals(
+  steps: readonly ApprovalStep[],
+  decisions: readonly ApprovalDecision[],
+  requesterPilotId: string,
+): ApprovalStep[] {
+  const decided = new Set(decisions.map((d) => d.stepId));
+  return selfApprovedSteps(steps, requesterPilotId).filter((step) => !decided.has(step.id));
+}
+
 export type ApprovalRefusal =
   /** Rezerwacja nie czeka na niczyją zgodę (już rozstrzygnięta albo klub bez ścieżki). */
   | 'not_pending'

@@ -29,7 +29,7 @@
 import { useEffect, useState, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import type { ApprovalStepDto, PilotListItemDto } from '../../api/dto';
+import type { ApprovalStepDto, PathEffectDto, PilotListItemDto } from '../../api/dto';
 import { useApprovalSteps, useReplaceApprovalSteps } from '../../queries/useApprovals';
 import { usePilots } from '../../queries/usePilots';
 import {
@@ -49,6 +49,7 @@ import {
   moveStep,
   namesSentence,
   orphanNotices,
+  pathSavedNotice,
   pathSentence,
   stepMembers,
   type OrphanNotice,
@@ -72,11 +73,19 @@ export function ApprovalPathScreen() {
   const steps = order ?? path.data?.steps ?? [];
   const members = pilots.data?.items ?? [];
 
+  // Skutek OSTATNIEGO zapisu dla spraw w toku (issue #207): zapis konfiguracji potrafi
+  // potwierdzić cudzą rezerwację albo poprosić o zgodę kogoś innego niż dotąd - i to
+  // ma stanąć na ekranie, a nie zdarzyć się po cichu. Zero nie dostaje zdania.
+  const [saved, setSaved] = useState<string | null>(null);
+  const noteSaved = (effect: PathEffectDto | undefined): void => setSaved(pathSavedNotice(effect));
+
   const reorder = (from: number, to: number): void => {
     if (to < 0 || to >= steps.length || from === to) return;
     const next = moveStep(steps, from, to);
     setOrder(next);
-    replace.mutate(asInput(next));
+    // Przestawienie też przekierowuje sprawy: krok bez decyzji przesunięty przed
+    // bieżący staje się bieżącym i jego osoby dostają prośbę.
+    replace.mutate(asInput(next), { onSuccess: (data) => noteSaved(data.reconciled) });
   };
 
   const notices = orphanNotices(steps, members);
@@ -114,6 +123,11 @@ export function ApprovalPathScreen() {
       {replace.error == null ? null : (
         <Banner tone="danger" live>
           {stepsErrorMessage(replace.error)}
+        </Banner>
+      )}
+      {saved == null ? null : (
+        <Banner tone="ok" live>
+          {saved}
         </Banner>
       )}
 
@@ -190,6 +204,7 @@ export function ApprovalPathScreen() {
           steps={steps}
           pilots={members}
           onClose={backToList}
+          onSaved={noteSaved}
         />
       )}
     </>
