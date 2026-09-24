@@ -19,8 +19,8 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useForgotPassword } from '../../queries/useSession';
-import { Banner, Button, Field, TextInput } from '../../ui/components';
-import { BrandMark } from '../../ui/components/icons';
+import { Button, Field, TextInput } from '../../ui/components';
+import { AuthFrame } from './AuthFrame';
 import { canSendLink, forgotOutcome, type ForgotOutcome } from './forgotPasswordForm';
 
 export function ForgotPasswordScreen() {
@@ -44,61 +44,35 @@ export function ForgotPasswordScreen() {
   };
 
   return (
-    <div className="login">
-      <div className="login-mark">
-        <span className="login-badge">
-          <BrandMark size={28} />
-        </span>
-        <span className="login-title">NINERDECK</span>
-        <span className="login-note">Panel administracyjny</span>
-      </div>
+    <AuthFrame
+      title="Nie pamiętam hasła"
+      // Jedno zdanie o tym, CO SIĘ STANIE - nie o tym, jak działa link.
+      lead="Wyślemy link na adres konta. Otwórz go na dowolnym urządzeniu i ustaw hasło - potem zaloguj się tutaj."
+      message={outcome}
+      footer={<Link to="/logowanie">Wróć do logowania</Link>}
+    >
+      <form className="login-form" onSubmit={submit}>
+        <Field htmlFor="forgot-email" label="E-mail">
+          <TextInput
+            id="forgot-email"
+            mono
+            type="email"
+            autoComplete="username"
+            required
+            // Po wysłaniu pole zostaje DO ODCZYTU: mówi, dokąd poszedł list, a nie
+            // zaprasza do drugiej próby zanim ktokolwiek zajrzy do skrzynki.
+            disabled={sent}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Field>
 
-      {outcome == null ? null : (
-        <div className="login-banner">
-          <Banner tone={outcome.tone} live>
-            {outcome.text}
-          </Banner>
-        </div>
-      )}
-
-      <div className="login-card">
-        <form onSubmit={submit}>
-          <div className="card-title">Link do ustawienia hasła</div>
-          {/* Jedno zdanie o tym, CO SIĘ STANIE - nie o tym, jak działa link. */}
-          <p className="login-note">
-            Wyślemy link na adres konta. Otwórz go na dowolnym urządzeniu i ustaw hasło -
-            potem zaloguj się tutaj.
-          </p>
-
-          <Field htmlFor="forgot-email" label="E-mail">
-            <TextInput
-              id="forgot-email"
-              mono
-              type="email"
-              autoComplete="username"
-              required
-              // Po wysłaniu pole zostaje DO ODCZYTU: mówi, dokąd poszedł list, a nie
-              // zaprasza do drugiej próby zanim ktokolwiek zajrzy do skrzynki.
-              disabled={sent}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </Field>
-
-          {sent ? null : (
-            <Button type="submit" variant="primary" block disabled={!ready || forgot.isPending}>
-              Wyślij link
-            </Button>
-          )}
-
-        </form>
-      </div>
-
-      {/* Wyjście POD kartą, nie w niej (issue #180, wzorzec GitHub / Linear): karta niesie
-          jedną akcję, a droga powrotu jest jej przypisem. */}
-      <div className="login-alt">
-        <Link to="/logowanie">Wróć do logowania</Link>
-      </div>
-    </div>
+        {sent ? null : (
+          <Button type="submit" variant="primary" block disabled={!ready || forgot.isPending}>
+            Wyślij link
+          </Button>
+        )}
+      </form>
+    </AuthFrame>
   );
 }

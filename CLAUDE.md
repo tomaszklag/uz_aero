@@ -2862,6 +2862,14 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     link czasownikiem). Ekrany hasła i rejestracji mają tę samą ramkę („Wróć do logowania",
     „Masz już konto? Zaloguj się"). Klasy `.login-link`/`.login-links` NIE ISTNIEJĄ -
     link w karcie pod przyciskiem nie wraca
+  - **UKŁAD JAK W GITLABIE** (przegląd właściciela tego samego dnia, wieczorem: „wygląda
+    okropnie") - odwraca kartę i ramkę `.login-alt`: znak + TYTUŁ ZDANIOWY („Zaloguj się
+    do Ninerdeck", bez wersalikowego NINERDECK), formularz BEZ KARTY w kolumnie 400 px,
+    wszystkie przyciski 40 px i tej samej szerokości (Google: GIS `filled_black`,
+    prostokąt, `width: 400`), separator „albo zaloguj się przez" krojem tekstowym, droga
+    dla kogoś bez konta JEDNYM ZDANIEM pod spodem (`.login-foot`, bez ramki), poświata
+    u dołu ekranu z tokenów `-muted` (odwraca „bez poświaty" z #107). Cztery ekrany przed
+    ramą (logowanie, hasło, rejestracja, wybór klubu) składa JEDEN `screens/login/AuthFrame.tsx`
   - **odmowa `403 no_panel_access` mówi, skąd bierze się klub** („Do klubu wchodzi się kodem
     klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu") - osobą bez
     klubu bywa odtąd ktoś, kto założył konto w tym panelu

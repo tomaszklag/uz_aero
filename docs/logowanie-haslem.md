@@ -955,6 +955,10 @@ wymaga wpisu tylko dla tras, które ISTNIEJĄ, i brakującej nie zauważy.
    klasy `.login-link`/`.login-links` zniknęły razem z nią. Osobnego „nie mam jeszcze
    hasła" nadal nie ma (D5). Lead jest krótszy niż na 00H (strażnik napisów panelu trzyma zdania w dwóch linijkach,
    a „na dowolnym urządzeniu" ma wagę na wspólnym tablecie, nie w przeglądarce).
+   **Tego samego wieczoru układ przeszedł na wzór GitLaba** (właściciel: „wygląda okropnie"):
+   bez karty i bez ramki `.login-alt` - tytuł zdaniowy, formularz w kolumnie, pełnoszerokie
+   przyciski, „albo zaloguj się przez", jedno zdanie `.login-foot` pod spodem
+   (`admin/src/styles/components/login.css`, `screens/login/AuthFrame.tsx`).
 3. **Odmowa `403 no_panel_access` mówi, skąd bierze się klub.** Serwer nie rozróżnia
    członka bez wejścia do panelu od osoby bez klubu (decyzja epiku D wielofirmowości) -
    a od #180 osobą bez klubu bywa ktoś, kto przed chwilą założył konto W TYM panelu.
