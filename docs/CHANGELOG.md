@@ -89,6 +89,17 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   zawsze czeka w skrzynce, więc bez zgody na powiadomienia nic nie ginie. Aplikacja pyta
   o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje
   albo gdy Twoja rezerwacja czeka na zgodę.
+- **Konto zakłada się także z panelu.** „Załóż konto" pod kartą logowania pyta
+  o imię i nazwisko oraz adres i wysyła ten sam link, co przy zapomnianym haśle - konto
+  powstaje w chwili ustawienia hasła. Do klubu nadal wchodzi się kodem klubu w aplikacji,
+  a dostęp do panelu nadaje administrator klubu; ekran mówi to wprost, gdy konto jeszcze
+  klubu nie ma.
+
+### Poprawki
+
+- **„Nie pamiętam hasła" w panelu naprawdę wysyła list.** Od wydania 2.1.0 formularz
+  w panelu potwierdzał wysyłkę, ale list nigdy nie wychodził - działała wyłącznie ta sama
+  prośba złożona z telefonu albo link wysłany przez administratora z karty członka.
 
 ### Dla testerów
 

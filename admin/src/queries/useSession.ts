@@ -22,10 +22,12 @@ import {
   myAccount,
   mySessions,
   revokeMySession,
+  signUp,
   switchScope,
   type ChangePasswordInput,
   type LoginInput,
   type PasswordLoginInput,
+  type SignUpInput,
 } from '../api/session';
 import { keys } from './keys';
 
@@ -102,6 +104,14 @@ export function usePasswordLogin() {
  */
 export function useForgotPassword() {
   return useMutation({ mutationFn: (email: string) => forgotPassword(email) });
+}
+
+/**
+ * „Załóż konto" (issue #180) - ta sama natura, co wyżej: list i tyle, niczego w panelu
+ * nie zmienia, więc bez unieważnień. Osoba powstaje dopiero na stronie z linku.
+ */
+export function useSignUp() {
+  return useMutation({ mutationFn: (input: SignUpInput) => signUp(input) });
 }
 
 /** Moje konto: adres i metody logowania (`#/konto`, karta „Logowanie"). */

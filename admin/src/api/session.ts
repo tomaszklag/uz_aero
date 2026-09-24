@@ -105,6 +105,24 @@ export function forgotPassword(email: string): Promise<null> {
   return apiPost<null>('/auth/password/forgot', { email });
 }
 
+export interface SignUpInput {
+  /** Imię i nazwisko - jedyna rzecz, której serwer nie ma skąd wziąć (u Google jest w profilu). */
+  name: string;
+  email: string;
+}
+
+/**
+ * „Załóż konto" (`#/logowanie/konto`, issue #180) - TEN SAM mechanizm, co „Nie pamiętam
+ * hasła": list z linkiem, hasło ustawia strona `/haslo/`, i dopiero wtedy powstaje osoba.
+ *
+ * Odpowiedź jest `202` ZAWSZE - także dla adresu zajętego (ten dostaje list resetu
+ * ze zdaniem „masz już konto"), więc formularz nie wylicza kont i nie ma tu czego
+ * zwracać. Do #180 panel tej trasy nie miał: konto zakładało się wyłącznie w aplikacji.
+ */
+export function signUp(input: SignUpInput): Promise<null> {
+  return apiPost<null>('/auth/signup', input);
+}
+
 /**
  * Moje konto - adres i metody logowania (karta „Logowanie" na `#/konto`).
  *

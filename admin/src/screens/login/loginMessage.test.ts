@@ -51,13 +51,16 @@ describe('nieudane logowanie (Google)', () => {
     expect(message.text).toContain('wyłączone');
   });
 
-  it('osoba bez roli panelu (także bez klubu): droga prowadzi do administratora klubu', () => {
+  it('osoba bez roli panelu (także bez klubu): zdanie niesie OBIE drogi wyjścia', () => {
     // Od epiku D wielofirmowości osoba powstaje przy pierwszym logowaniu, więc „konta
     // nie ma" przestało być stanem - nieznajomy i zwykły pilot dostają to samo zdanie.
+    // Od issue #180 osoba bez klubu bywa kimś, kto przed chwilą założył konto W TYM
+    // panelu - zdanie musi więc mówić, skąd bierze się klub, a nie tylko „poproś".
     const panel = loginMessage(http(403, 'no_panel_access'));
     expect(panel.tone).toBe('warn');
     expect(panel.text).toContain('nie ma dostępu do panelu');
-    expect(panel.text).toContain('administratora klubu');
+    expect(panel.text).toContain('kodem klubu w aplikacji');
+    expect(panel.text).toContain('administrator klubu');
   });
 
   it('brak sieci to inne zdanie niż odmowa serwera', () => {

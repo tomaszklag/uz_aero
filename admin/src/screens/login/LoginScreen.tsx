@@ -18,7 +18,9 @@
  *    tego po próbie, jednym zdaniem (`loginMessage.ts`);
  *  • **pola na NOWE hasło ani kodu do przepisania** - hasło ustawia strona z linku
  *    (`/haslo/`), nigdy ten ekran. „Nie pamiętam hasła" prowadzi na `#/logowanie/haslo`,
- *    gdzie jedynym pytaniem jest adres;
+ *    gdzie jedynym pytaniem jest adres; „Załóż konto" (issue #180) na `#/logowanie/konto`,
+ *    gdzie pytaniami są imię i nazwisko oraz adres - a osoba powstaje dopiero na
+ *    stronie z linku;
  *  • **wymogów co do znaków i wskaźnika siły** - tu hasła się PODAJE, a nie ustawia.
  *
  * == PRZYCISK RYSUJE GOOGLE, NIE MY ==
@@ -38,7 +40,7 @@ import { useSessionState } from '../../auth/sessionContext';
 import { useAuthMethods, useLogin, usePasswordLogin } from '../../queries/useSession';
 import { Banner, Button, Field, PasswordInput, TextInput } from '../../ui/components';
 import { BrandMark } from '../../ui/components/icons';
-import { FORGOT_PASSWORD, homeFor } from '../../ui/shell/nav';
+import { FORGOT_PASSWORD, SIGN_UP, homeFor } from '../../ui/shell/nav';
 import { scopeCount, SCOPE_PICK } from '../../ui/shell/scope';
 import { loginMessage } from './loginMessage';
 
@@ -147,7 +149,20 @@ export function LoginScreen() {
             />
           </Field>
 
-          <Field htmlFor="login-password" label="Hasło">
+          <Field
+            htmlFor="login-password"
+            label="Hasło"
+            // „Nie pamiętam hasła" PRZY POLU, którego dotyczy (wzorzec GitHub / Stripe /
+            // Linear; przegląd właściciela 2026-09-24 - linki pod przyciskiem „wyglądały
+            // jak linki"). Służy też osobie z Googlem, która hasła nigdy nie ustawiła:
+            // list z linku ustawia hasło niezależnie od tego, czy jakieś było (D5), więc
+            // osobnego „nie mam jeszcze hasła" NIE MA.
+            action={
+              <Link className="label-action" to={FORGOT_PASSWORD}>
+                Nie pamiętam hasła
+              </Link>
+            }
+          >
             <PasswordInput
               id="login-password"
               autoComplete="current-password"
@@ -161,12 +176,6 @@ export function LoginScreen() {
             Zaloguj się
           </Button>
 
-          {/* JEDEN link, nie „nie pamiętam" i „nie mam jeszcze": osoba z Googlem, która
-              hasła nigdy nie ustawiła, idzie TĄ SAMĄ drogą - list z linku ustawia hasło
-              niezależnie od tego, czy jakieś było (D5). */}
-          <Link className="login-link" to={FORGOT_PASSWORD}>
-            Nie pamiętam hasła
-          </Link>
         </form>
 
         {/* Postęp czynności, o którą człowiek właśnie poprosił - pod przyciskiem,
@@ -189,6 +198,14 @@ export function LoginScreen() {
             {login.isPending ? <p className="login-status">Logowanie…</p> : null}
           </>
         ) : null}
+      </div>
+
+      {/* ALTERNATYWNA DROGA POD KARTĄ (issue #180; wzorzec GitHub „New to GitHub? Create
+          an account", Notion, Linear): karta niesie JEDNĄ akcję główną, a wyjście dla
+          kogoś bez KONTA wcale stoi w osobnej, lżejszej ramce - zdanie jest treścią,
+          link czasownikiem. Do 2026-09-24 tę drogę miał wyłącznie telefon (00H). */}
+      <div className="login-alt">
+        Nie masz jeszcze konta? <Link to={SIGN_UP}>Załóż konto</Link>
       </div>
     </div>
   );

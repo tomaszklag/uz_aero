@@ -211,16 +211,43 @@
   color: var(--text-primary);
 }
 
-/* Link pod przyciskiem („Nie pamiętam hasła", „Wróć do logowania"): jedna linia,
-   wyśrodkowana, w błękicie linku z `base.css` - to jedyny kolor, którego użytkownik
-   przeglądarki nie musi się uczyć. Podkreślenie dopiero pod kursorem. */
-.login-link {
-  display: block;
+/**
+ * ALTERNATYWNA DROGA POD KARTĄ (issue #180; przegląd właściciela 2026-09-24: linki pod
+ * przyciskiem „wyglądały jak linki"). Wzorzec z GitHuba („New to GitHub? Create an
+ * account"), Notion i Linear: karta niesie JEDNĄ akcję główną, a wyjście dla kogoś, kto
+ * trafił nie tam („Nie masz jeszcze konta?", „Masz już konto?", „Wróć do logowania"),
+ * stoi w osobnej, lżejszej ramce POD nią - w szerokości karty, bez tła, z samym włosem.
+ * Zdanie jest treścią, link czasownikiem; ramka mówi „to jest inna sprawa niż formularz
+ * wyżej", czego lista linków w karcie nie mówiła. „Nie pamiętam hasła" NIE stoi tutaj -
+ * dotyczy pola hasła, więc stoi przy nim (`.label-action` w `controls.css`).
+ *
+ * Do 2026-09-24 były tu `.login-link` (link w karcie pod przyciskiem) i `.login-links`
+ * (dwa takie linki w wierszu z kropką) - obie klasy zniknęły razem z tym układem.
+ */
+.login-alt {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   text-align: center;
   font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* W kolumnie logowania odstępy trzyma `gap` 28 px; ramka jest PRZYPISEM karty, nie
+   kolejną sekcją, więc podchodzi bliżej (28 − 12 = 16 px). */
+.login > .login-alt {
+  margin-top: -12px;
+}
+
+.login-alt a {
+  font-weight: 600;
   text-decoration: none;
 }
 
-.login-link:hover {
+.login-alt a:hover {
   text-decoration: underline;
 }

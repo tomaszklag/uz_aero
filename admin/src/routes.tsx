@@ -29,7 +29,8 @@ import { FleetScreen } from './screens/fleet/FleetScreen';
 import { AccountScreen } from './screens/me/AccountScreen';
 import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
-import { ACCOUNT, FORGOT_PASSWORD } from './ui/shell/nav';
+import { SignUpScreen } from './screens/login/SignUpScreen';
+import { ACCOUNT, FORGOT_PASSWORD, SIGN_UP } from './ui/shell/nav';
 import { OrganizationsScreen } from './screens/organizations/OrganizationsScreen';
 
 export const router = createHashRouter([
@@ -38,6 +39,9 @@ export const router = createHashRouter([
   // sesji jeszcze nie ma. Pod `/logowanie/`, bo to jest krok logowania - nie moduł
   // i nie ustawienie konta (tamto jest na `#/konto`, już w ramie).
   { path: FORGOT_PASSWORD, element: <ForgotPasswordScreen /> },
+  // „Załóż konto" (issue #180) - ta sama natura, co wyżej: krok logowania bez sesji,
+  // list z linkiem, a osoba powstaje dopiero na stronie z linku.
+  { path: SIGN_UP, element: <SignUpScreen /> },
   // Wybór zakresu stoi POZA ramą, jak logowanie: klub nie jest jeszcze wybrany, więc
   // pasek górny i kolumna boczna nie miałyby czego w sobie napisać. To drugi krok
   // logowania (mockup `00a-wybor-klubu`), nie moduł.

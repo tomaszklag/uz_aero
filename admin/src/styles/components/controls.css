@@ -121,6 +121,33 @@
   line-height: 1.4;
 }
 
+/**
+ * AKCJA W WIERSZU ETYKIETY (issue #180; przegląd właściciela 2026-09-24: lista linków
+ * pod przyciskiem „wygląda jak linki"). Wzorzec z GitHuba, Stripe'a i Linear: drobna
+ * akcja dotycząca POLA stoi w jego wierszu etykiety, po prawej - „Nie pamiętam hasła"
+ * przy polu hasła - a nie pod przyciskiem, gdzie konkurowała z akcją główną i mówiła
+ * o czymś, co stoi trzy pola wyżej. Etykieta zostaje `<label>`; akcja jest jej
+ * RODZEŃSTWEM w wierszu flex (`Field.action`), nie dzieckiem.
+ */
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label-action {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--blue);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.label-action:hover {
+  text-decoration: underline;
+}
+
 .input {
   min-height: 34px;
   border-radius: 6px;

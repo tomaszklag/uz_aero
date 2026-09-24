@@ -26,7 +26,8 @@ import type {
 import { platformCapabilitiesOf, type Capability } from '../../../domain/roles.ts';
 import { deviceFrom } from '../../device.ts';
 import { ADMIN_SESSION_COOKIE, tokenFromRequest } from '../../tokenFromRequest.ts';
-import { passwordField, tooManyAttempts } from '../common/password.ts';
+import type { PasswordCommands } from '../../../application/common/commands/passwords.ts';
+import { forgotHandler, passwordField, signupHandler, tooManyAttempts } from '../common/password.ts';
 import { sessionRoute, ADMIN_API_PREFIX, type AdminGate } from './adminRoute.ts';
 
 const loginBody = z.object({ idToken: z.string().min(1).max(4096) });
@@ -154,10 +155,22 @@ async function switchScope(
 export function registerAdminAuthRoutes(
   app: FastifyInstance,
   auth: AuthCommands,
+  passwords: PasswordCommands,
   /** Identyfikator klienta Google WEB - panel pobiera go stąd, żeby narysować przycisk. */
   googleWebClientId: string,
   gate: AdminGate,
 ): void {
+  /**
+   * „Nie pamiętam hasła" i „Załóż konto" POD PREFIKSEM PANELU (issue #180) - te same
+   * handlery, co `/auth/password/forgot` i `/auth/signup` telefonu (`common/password.ts`).
+   * Panel woła wyłącznie `/admin/api/*`, więc bez lustra obie prośby kończyły się 404;
+   * pierwsza od 2.1.0 (ekran chował to za „link już idzie"), druga nie istniała w panelu
+   * wcale. Publiczne jak logowanie - sesji jeszcze nie ma; strażnik CSRF obejmuje je
+   * z konstrukcji (`http/adminCsrf.ts`), a limity wysyłki dzielą z telefonem (3/adres).
+   */
+  app.post(`${ADMIN_API_PREFIX}/auth/password/forgot`, forgotHandler(passwords));
+  app.post(`${ADMIN_API_PREFIX}/auth/signup`, signupHandler(passwords));
+
   /**
    * Konfiguracja przycisku Google - PUBLICZNA, bo pyta o nią ekran logowania, czyli
    * ktoś bez sesji. Identyfikator klienta nie jest sekretem (stoi w każdym żądaniu

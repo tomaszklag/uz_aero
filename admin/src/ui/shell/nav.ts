@@ -99,3 +99,9 @@ export const ACCOUNT = '/konto';
  * i wybór klubu: sesji jeszcze nie ma, więc pasek i kolumna nie miałyby czego napisać.
  */
 export const FORGOT_PASSWORD = '/logowanie/haslo';
+
+/**
+ * „Załóż konto" (issue #180) - trzeci ekran PRZED ramą, pod `/logowanie/`, bo jest
+ * krokiem logowania: kończy się listem, a osoba powstaje dopiero na stronie z linku.
+ */
+export const SIGN_UP = '/logowanie/konto';
