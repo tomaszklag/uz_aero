@@ -96,7 +96,7 @@ ten sam link drukuje zamiast wysyłać.
 | D6 | Sesje logowania | Tabela **`login_sessions`** dla KAŻDEJ powierzchni (telefon, panel klubu, platforma), `sid` w tokenie, `refresh_tokens.session_id`. Brama sprawdza unieważnienie w TYM SAMYM zapytaniu, które dziś czyta członkostwo (`authSnapshot`). `last_seen_at` pisany z przepustnicą 60 s. | rozstrzygnięte 2026-09-16 |
 | D7 | Zdalne wylogowanie a offline-first | Unieważnienie działa **na serwerze natychmiast** (każde żądanie odbija, refresh odmawia z powodem `session_revoked`). Telefon dowiaduje się przy najbliższym kontakcie: przestaje wysyłać i pobierać, pokazuje na PIN-ie i w ustawieniach zdanie „Sesja zakończona - zaloguj się ponownie", ale **PIN dalej otwiera aplikację**, a niewysłane zapisy zostają na urządzeniu do ponownego zalogowania TEGO SAMEGO pilota. Wyrzucenie do ekranu logowania kasowałoby dane dnia - to jest dokładnie to, przed czym chroni §3.0. | rozstrzygnięte 2026-09-16 |
 | D8 | Nowy klub bez Google | Formularz O2: „Konto Google" → **„E-mail"**. Razem z klubem wychodzi **e-mail „ustaw hasło" z linkiem** do pierwszego administratora (jak zaproszenie w każdym systemie); karta klubu pokazuje „wysłano na …" i „Wyślij ponownie" dopóki administrator się nie zalogował; adres da się poprawić, dopóki nie wszedł (jak dziś). Podpięcie Googlem po tym samym adresie DALEJ działa (jeśli adres jest kontem Google, administrator może po prostu kliknąć Google). | rozstrzygnięte 2026-09-16 |
-| D9 | Rejestracja e-mailem (osoba bez Google) | **W 2.1.0** - decyzja właściciela z przeglądu makiet 2026-09-17 („powinna być opcja rejestracji, jeśli jeszcze nie mam konta"; pierwsza wersja odkładała to po 2.1.0). Mechanizm jest TEN SAM, co przy zapomnianym haśle: ekran 00H („Załóż konto": imię i nazwisko + e-mail) → `POST /auth/signup` → zawsze `202` → list z linkiem → strona `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres potwierdzony kliknięciem, jak `email_verified` u Google) → logowanie hasłem → 00E i kod klubu. Adres zajęty dostaje list resetu zamiast odmowy (bez wyliczania kont). Rejestracja NIE tworzy członkostwa i nie omija zatwierdzenia w klubie; w panelu jej nie ma (§5.4a). | rozstrzygnięte 2026-09-17 (odwrócone przy przeglądzie makiet) |
+| D9 | Rejestracja e-mailem (osoba bez Google) | **W 2.1.0** - decyzja właściciela z przeglądu makiet 2026-09-17 („powinna być opcja rejestracji, jeśli jeszcze nie mam konta"; pierwsza wersja odkładała to po 2.1.0). Mechanizm jest TEN SAM, co przy zapomnianym haśle: ekran 00H („Załóż konto": imię i nazwisko + e-mail) → `POST /auth/signup` → zawsze `202` → list z linkiem → strona `/haslo/` ustawia hasło i DOPIERO WTEDY powstaje osoba (adres potwierdzony kliknięciem, jak `email_verified` u Google) → logowanie hasłem → 00E i kod klubu. Adres zajęty dostaje list resetu zamiast odmowy (bez wyliczania kont). Rejestracja NIE tworzy członkostwa i nie omija zatwierdzenia w klubie; w panelu od issue #180 (2026-09-24, §16) - wcześniej wyłącznie w aplikacji. | rozstrzygnięte 2026-09-17 (odwrócone przy przeglądzie makiet); panel dołączony 2026-09-24 |
 | D10 | Wspólny tablet | Przełączanie kont = „Wyloguj i zmień konto" z **zachowanym strażnikiem outboxa** (zapisy pilota A wychodzą wyłącznie tokenem A). Urządzenie pamięta **KLUBY, z których się na nim logowano** (nie osoby) - to w bieżącym z nich rozwiązuje się kod pilota (D2). **Zna jeden klub → 00F nic o nim nie mówi** (przegląd makiet 2026-09-17: „w jednym klubie nie ma sensu tego podawać"); zna więcej → nazwa bieżącego pod marką i „Zmień klub" w stopce → ekran **00I** z listą tych klubów. Zdania „kod pilota działa w klubie X" nie ma nigdzie. Profil PIN-u należy do zalogowanego: zmiana pilota = nowy PIN. Wieloprofilowość urządzenia - osobny temat. | rozstrzygnięte 2026-09-16; kontekst klubu doprecyzowany 2026-09-17 |
 | D11 | Wylogowanie telefonu | NOWA trasa **`POST /auth/logout`**: unieważnia refresh i sesję na serwerze. Dziś telefon tylko czyści magazyn, a refresh żyje 90 dni - to luka, którą sesje obnażają i domykają. Offline: czyścimy lokalnie, unieważnienie zostaje administratorowi (§9). | rozstrzygnięte 2026-09-16 |
 | D12 | Dystrybucja | **OTA, nie APK**: zmiana nie dotyka modułów natywnych (`expo-secure-store` jest, pole hasła to `TextInput` z `secureTextEntry`). Serwer z migracją 9 WCZEŚNIEJ niż aktualizacja telefonów. | rozstrzygnięte przez kod |
@@ -378,8 +378,10 @@ Decyzja właściciela z przeglądu makiet 2026-09-17 („powinna być opcja reje
 jeszcze nie mam konta") odwraca D9: osoba bez Google zakłada konto SAMA, a mechanizm jest
 dokładnie ten, co przy zapomnianym haśle - list z linkiem i strona `/haslo/`.
 
-**`POST /auth/signup { name, email }`** (telefon, bez sesji; panel tej trasy NIE MA -
-administrator powstaje z zaproszenia platformy, pilot rejestruje się w aplikacji):
+**`POST /auth/signup { name, email }`** (bez sesji; telefon woła ją wprost, panel przez lustro
+`POST /admin/api/auth/signup` na TYM SAMYM handlerze - od issue #180, 2026-09-24, §16; do tego
+dnia panel tej trasy NIE MIAŁ, bo administrator powstawał z zaproszenia platformy, a pilot
+rejestrował się w aplikacji):
 odpowiedź **ZAWSZE `202`**, te same limity wysyłki, co `forgot` (3/adres, 10/IP w 15 min).
 Adres WOLNY → token `kind: 'signup'` z adresem i imieniem (`triggered_by: 'self'`, 60 min),
 list „Załóż hasło do nowego konta w Ninerdeck". Adres ZAJĘTY → serwer wysyła zwykły list
@@ -397,8 +399,9 @@ członkostwa - jak osoba po pierwszym logowaniu Googlem, `docs/wielofirmowosc.md
 konta. Google podpina się do takiej osoby po tym samym adresie (`claimByVerifiedEmail`)
 tak, jak do osoby założonej przez panel.
 
-Czego rejestracja NIE robi: nie tworzy członkostwa, nie omija zatwierdzenia w klubie, nie
-istnieje w panelu. Imię i nazwisko z formularza są własnością osoby i poprawia je ona sama
+Czego rejestracja NIE robi: nie tworzy członkostwa, nie omija zatwierdzenia w klubie.
+(Do 2026-09-24 nie istniała też w panelu - odwrócone przy issue #180, §16; kodu klubu panel
+nadal nie ma.) Imię i nazwisko z formularza są własnością osoby i poprawia je ona sama
 (albo administrator klubu, w którym jest jedynym członkiem - reguła z wielofirmowości).
 
 ### 5.5 Wylogowanie telefonu: `POST /auth/logout { refreshToken }`
@@ -519,6 +522,10 @@ znaczy link.
   separator „albo", przycisk Google (GIS) pod nim. Odmowy w banerze między znakiem a kartą
   jak dziś; dochodzi `invalid_credentials` („Nieprawidłowy e-mail lub hasło") i `429`.
   Drugie okno: „Nie pamiętam hasła" = pole adresu + „Wyślij link" + potwierdzenie.
+  Od issue #180 (2026-09-24) „Nie pamiętam hasła" stoi w wierszu etykiety pola hasła,
+  pod kartą lżejsza ramka „Nie masz jeszcze konta? Załóż konto", a czwarte okno to „Załóż
+  konto" - lustro 00H telefonu: imię i nazwisko + adres, „Wyślij link", potwierdzenie
+  w trybie warunkowym, pod kartą „Masz już konto? Zaloguj się" (§16).
 - **`piloci-konto.html`** (P2): sekcja **Dostęp** dostaje dwie rzeczy: przycisk „Wyślij
   link do ustawienia hasła" (ten sam list, który pilot wysłałby sobie sam; potwierdzenie
   „wysłano na … · ważny godzinę") oraz kartę **Sesje**: wiersze (urządzenie · metoda · od ·
@@ -904,3 +911,60 @@ link w kod do dyktowania, czego świadomie nie ma - D5). Formularz dostał przy 
   (aplikacja normalizuje do wersalików przed wysłaniem), a klucz limitu jest liczony
   z loginu małymi literami - dzięki temu `AKO` i `ako` dzielą jeden kubełek prób
   i zmiana wielkości liter nie mnoży limitu.
+
+## 16. Rejestracja i „Nie pamiętam hasła" z panelu (issue #180, 2026-09-24)
+
+Zgłoszenie właściciela po wydaniu 2.1.0: „Brakuje możliwości założenia konta za pomocą
+panelu. Teraz muszę mieć aplikację, aby założyć konto. Chciałbym mieć taką samą
+funkcjonalność rejestracji i przypominania hasła w aplikacji web" - i „bardzo jej brakuje,
+utrudnia testy". Odwraca zdanie z §5.4a („nie istnieje w panelu") i dopisek w wierszu D9.
+
+**Co się okazało przy okazji - usterka w „Nie pamiętam hasła" panelu.** Panel woła
+WYŁĄCZNIE `/admin/api/*` (jeden origin, nagłówek CSRF), a trasa `POST /auth/password/forgot`
+istniała tylko pod prefiksem telefonu. Prośba z ekranu `#/logowanie/haslo` kończyła się więc
+`404` - a ekran, zgodnie z §5.4 („każda odmowa serwera daje to samo zdanie, bo inna
+wyliczałaby konta"), pisał „link już idzie". List nie wychodził NIGDY. Usterka od 2.1.0
+(2026-09-18) do 2026-09-24; dowodem jest test w `passwordReset.test.ts` („PANEL ma tę samą
+trasę pod swoim prefiksem"), który padał na 404 przed poprawką. Wniosek na przyszłość: reguła
+„jedno zdanie na każdą odpowiedź serwera" zasłania także 404, więc KAŻDA trasa panelu
+potrzebuje testu serwera pod swoim prefiksem - test izolacji (`tenantIsolation.test.ts`)
+wymaga wpisu tylko dla tras, które ISTNIEJĄ, i brakującej nie zauważy.
+
+**Decyzje:**
+
+1. **Ten sam handler pod dwoma prefiksami.** `forgotHandler` i `signupHandler`
+   w `routes/common/password.ts` rejestruje raz `registerPasswordRoutes` (`/auth/…`) i raz
+   `registerAdminAuthRoutes` (`/admin/api/auth/…`). Dwie kopie kodu rozjechałyby się przy
+   pierwszej poprawce jednej z nich - dokładnie tak, jak rozjechały się prefiksy. Trasy
+   panelu są publiczne jak logowanie (sesji nie ma), objęte strażnikiem CSRF z konstrukcji,
+   a limity wysyłki (3/adres, 10/IP w 15 min) DZIELĄ z telefonem: to ten sam adres i ta
+   sama skrzynka.
+2. **Ekran `#/logowanie/konto` jest lustrem 00H**: imię i nazwisko + adres, „Wyślij link",
+   potwierdzenie w trybie warunkowym, „Mam już konto - zaloguj się". Bez pola hasła (ustawia
+   je strona `/haslo/`) i bez kodu klubu - do klubu wchodzi się kodem w APLIKACJI, osobną
+   decyzją administratora. Rejestracja niczego w klubie nie omija; bramką zostaje brak
+   członkostwa. **Układ po przeglądzie właściciela tego samego dnia** („to wygląda jak
+   linki, na pewno są jakieś ciekawe wzorce topowych stron"): „Nie pamiętam hasła" stoi
+   W WIERSZU ETYKIETY pola hasła, po prawej (wzorzec GitHub / Stripe / Linear - akcja przy
+   polu, którego dotyczy; `Field.action`, `.label-row` + `.label-action`), a „Załóż konto"
+   w osobnej, lżejszej ramce POD kartą („Nie masz jeszcze konta? Załóż konto" - wzorzec
+   GitHub „New to GitHub? Create an account", Notion, Linear: karta niesie JEDNĄ akcję
+   główną, a zdanie jest treścią, link czasownikiem; `.login-alt`). Ten sam kształt mają
+   ekrany hasła („Wróć do logowania") i rejestracji („Masz już konto? Zaloguj się").
+   Pierwsza wersja - dwa linki w jednym wierszu pod przyciskiem - przeżyła godzinę;
+   klasy `.login-link`/`.login-links` zniknęły razem z nią. Osobnego „nie mam jeszcze
+   hasła" nadal nie ma (D5). Lead jest krótszy niż na 00H (strażnik napisów panelu trzyma zdania w dwóch linijkach,
+   a „na dowolnym urządzeniu" ma wagę na wspólnym tablecie, nie w przeglądarce).
+3. **Odmowa `403 no_panel_access` mówi, skąd bierze się klub.** Serwer nie rozróżnia
+   członka bez wejścia do panelu od osoby bez klubu (decyzja epiku D wielofirmowości) -
+   a od #180 osobą bez klubu bywa ktoś, kto przed chwilą założył konto W TYM panelu.
+   „Poproś administratora klubu o nadanie roli" byłoby dla niego zdaniem o kimś, kogo
+   jeszcze nie ma. Nowe zdanie niesie obie drogi: kod klubu w aplikacji, dostęp do panelu
+   od administratora klubu.
+4. **Panel dalej NIE MA kodu klubu.** Dołączanie do klubu zostaje funkcją aplikacji (00E) -
+   to nie jest przeoczenie, tylko granica tego zgłoszenia: właściciel prosił o rejestrację
+   i przypomnienie hasła, a wejście do klubu z przeglądarki jest osobnym pytaniem (i osobną
+   decyzją, bo panel jest back-office'em administratora).
+
+Czego to NIE zmienia: zaproszenie pierwszego administratora z platformy (72 h), podpięcie
+Googlem po tym samym adresie, strona `/haslo/`, polityka hasła, tabela odpowiedzi §5.4a.

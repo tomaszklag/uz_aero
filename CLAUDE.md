@@ -2843,6 +2843,30 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     i nie starzeje się nigdy) oraz `invite` przy administratorze klubu. Przy okazji
     `signedIn` na karcie klubu przestało pytać WYŁĄCZNIE o tożsamość Google - inaczej
     administrator, który wszedł z linku i hasłem, zostawałby „tym, który się nie zalogował"
+- **REJESTRACJA I „NIE PAMIĘTAM HASŁA" TAKŻE Z PANELU (issue #180, 2026-09-24)** - odwraca
+  „w panelu jej nie ma" z §5.4a; pełny zapis `docs/logowanie-haslem.md` §16:
+  - **panel woła WYŁĄCZNIE `/admin/api/*`**, a `POST /auth/password/forgot` istniało tylko
+    pod prefiksem telefonu - „Nie pamiętam hasła" w panelu kończyło się 404 od 2.1.0,
+    a ekran pisał „link już idzie" (reguła „jedno zdanie na każdą odmowę" zasłania też 404).
+    Odtąd `forgotHandler`/`signupHandler` z `routes/common/password.ts` stoją pod OBOMA
+    prefiksami; **każda trasa panelu potrzebuje testu serwera pod swoim prefiksem** -
+    `tenantIsolation.test.ts` wymaga wpisu tylko dla tras, które ISTNIEJĄ
+  - **`#/logowanie/konto` = lustro 00H** (imię i nazwisko + adres → list → hasło na stronie
+    → osoba). Bez pola hasła i bez kodu klubu - do klubu wchodzi się kodem w APLIKACJI
+    (00E), panel tego nie ma i to jest granica zgłoszenia, nie przeoczenie
+  - **UKŁAD JAK U GITHUBA / STRIPE'A / LINEAR** (przegląd właściciela tego samego dnia:
+    dwa linki pod przyciskiem „wyglądają jak linki"): „Nie pamiętam hasła" stoi W WIERSZU
+    ETYKIETY pola hasła (`Field.action` → `.label-row` + `.label-action` w `controls.css`),
+    a „Załóż konto" w lżejszej ramce POD kartą (`.login-alt` w `login.css`: „Nie masz
+    jeszcze konta? Załóż konto" - karta niesie JEDNĄ akcję główną, zdanie jest treścią,
+    link czasownikiem). Ekrany hasła i rejestracji mają tę samą ramkę („Wróć do logowania",
+    „Masz już konto? Zaloguj się"). Klasy `.login-link`/`.login-links` NIE ISTNIEJĄ -
+    link w karcie pod przyciskiem nie wraca
+  - **odmowa `403 no_panel_access` mówi, skąd bierze się klub** („Do klubu wchodzi się kodem
+    klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu") - osobą bez
+    klubu bywa odtąd ktoś, kto założył konto w tym panelu
+  - **strażnik hexów panelu łapie `#180` w napisie testu** (jak `#207`) - numer issue
+    zostaje w komentarzu; strażnik napisów (`copy.test.ts`) trzyma lead w dwóch linijkach
 - **etap H-E (aplikacja pilota) WYKONANY 2026-09-18** (PR #150, issue #135) - reguły
   obowiązujące odtąd KAŻDY ekran logowania w aplikacji:
   - **HASŁO KOŃCZY SIĘ TAM, GDZIE GOOGLE**: `AuthService.loginWithPassword` robi WYŁĄCZNIE

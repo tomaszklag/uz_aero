@@ -152,6 +152,30 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
     expect((await forgot(app, 'to-nie-adres')).statusCode).toBe(202);
     expect((await app.inject({ method: 'POST', url: '/auth/password/forgot', payload: {} })).statusCode).toBe(400);
   });
+
+  it('PANEL ma tę samą trasę pod swoim prefiksem (issue #180) - ten sam list, ta sama odpowiedź', async () => {
+    // Panel woła WYŁĄCZNIE `/admin/api/*` (jeden origin, nagłówek CSRF), więc trasa
+    // istniejąca tylko pod `/auth/…` była dla niego 404 - a ekran „Nie pamiętam hasła"
+    // ukrywał to za zdaniem „link już idzie", bo każdą odmowę serwera traktuje jak 202.
+    const { app, mail } = await testHarness();
+    const panel = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/password/forgot',
+      headers: ADMIN_CSRF_HEADERS,
+      payload: { email: 'tomasz@ninerdeck.pl' },
+    });
+    expect(panel.statusCode).toBe(202);
+    expect(panel.body).toBe((await forgot(app, 'nikogo-takiego@ninerdeck.pl')).body);
+    expect(mail.lastTo('tomasz@ninerdeck.pl')!.subject).toBe('Ninerdeck - ustaw hasło');
+
+    // Bez nagłówka CSRF strażnik odbija - jak każdą mutację panelu.
+    const noCsrf = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/password/forgot',
+      payload: { email: 'tomasz@ninerdeck.pl' },
+    });
+    expect(noCsrf.statusCode).toBe(403);
+  });
 });
 
 describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {

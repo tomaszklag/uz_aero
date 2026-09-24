@@ -56,9 +56,13 @@ export function loginMessage(error: unknown): LoginMessage {
   }
 
   if (error.status === 403) {
+    // Jedno zdanie na DWIE sytuacje, których serwer nie rozróżnia (`no_panel_access`):
+    // członek klubu bez wejścia do panelu i osoba BEZ KLUBU - od issue #180 także taka,
+    // która przed chwilą założyła konto w tym panelu. Dla niej „poproś administratora
+    // klubu" byłoby zdaniem o kimś, kogo jeszcze nie ma: klub przychodzi kodem w aplikacji.
     return {
       tone: 'warn',
-      text: 'To konto nie ma dostępu do panelu. Poproś administratora klubu o nadanie roli.',
+      text: 'To konto nie ma dostępu do panelu. Do klubu wchodzi się kodem klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu.',
     };
   }
 

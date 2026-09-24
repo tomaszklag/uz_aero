@@ -1626,6 +1626,9 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'GET /auth/methods': 'metody logowania telefonu - konfiguracja serwera, publiczna z definicji',
   'PUT /me/password': 'własne hasło zalogowanego - poświadczenie osoby, nie dane klubu',
   'POST /admin/api/auth/password': 'logowanie panelu hasłem - poświadczenia osoby',
+  // issue #180: lustra tras telefonu pod prefiksem panelu - ten sam handler, bez sesji i bez klubu.
+  'POST /admin/api/auth/password/forgot': '„Nie pamiętam hasła" z panelu - zawsze 202, bez danych; list idzie do adresu z formularza',
+  'POST /admin/api/auth/signup': 'rejestracja e-mailem z panelu - zawsze 202, osoba powstaje bez klubu przy realizacji linku',
   'GET /admin/api/auth/methods': 'metody logowania panelu - konfiguracja serwera, publiczna z definicji',
   'PUT /admin/api/me/password': 'własne hasło zalogowanego w panelu - poświadczenie osoby, nie dane klubu',
   'GET /admin/api/auth/google-client': 'identyfikator klienta Google - publiczny z definicji',

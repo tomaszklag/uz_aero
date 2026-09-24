@@ -546,8 +546,8 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Formularz logowania · pole hasła z „pokaż"</span>
-        <span class="inv-when">Hasło jest DRUGĄ metodą tej samej osoby (D1), więc formularz i przycisk Google stoją w JEDNEJ karcie, rozdzielone separatorem „albo" - formularz na wierzchu (administrator klubu bez Google nie ma innej drogi), Google pod spodem; gdy serwer nie zna klienta Google, separator i kontener znikają. Pole hasła: wklejanie dozwolone, przełącznik „pokaż" jako przycisk-ikona W POLU (stan <code>aria-pressed</code>), bez wymogów co do znaków. JEDEN link „Nie pamiętam hasła" - służy też osobie, która hasła jeszcze nie ma. Ta sama para <code>.input-pass</code> + <code>.eye-btn</code> stoi w zmianie hasła na <code>#/konto</code>.</span>
-        <span class="inv-classes"><b>.login-card</b> · .login-card form · .field · .input.mono · <b>.input-pass</b> · <b>.eye-btn</b> · .eye-btn[aria-pressed] · .btn.primary.block · <b>.login-link</b> · <b>.login-divider</b> · .login-google · .login-banner · .login-status</span>
+        <span class="inv-when">Hasło jest DRUGĄ metodą tej samej osoby (D1), więc formularz i przycisk Google stoją w JEDNEJ karcie, rozdzielone separatorem „albo" - formularz na wierzchu (administrator klubu bez Google nie ma innej drogi), Google pod spodem; gdy serwer nie zna klienta Google, separator i kontener znikają. Pole hasła: wklejanie dozwolone, przełącznik „pokaż" jako przycisk-ikona W POLU (stan <code>aria-pressed</code>), bez wymogów co do znaków. „Nie pamiętam hasła" stoi W WIERSZU ETYKIETY pola hasła (<code>.label-row</code> + <code>.label-action</code> - akcja przy polu, którego dotyczy; służy też osobie, która hasła jeszcze nie ma), a „Załóż konto" w lżejszej ramce POD KARTĄ (<code>.login-alt</code>: „Nie masz jeszcze konta? Załóż konto" - karta niesie jedną akcję główną; issue #180, 2026-09-24, wzorzec GitHub / Stripe / Linear). Tę samą ramkę mają ekrany hasła („Wróć do logowania") i rejestracji („Masz już konto? Zaloguj się"). Linków w karcie pod przyciskiem NIE MA - dwa takie linki w wierszu odpadły przeglądem właściciela („wygląda jak linki"). Ta sama para <code>.input-pass</code> + <code>.eye-btn</code> stoi w zmianie hasła na <code>#/konto</code>.</span>
+        <span class="inv-classes"><b>.login-card</b> · .login-card form · .field · .input.mono · <b>.input-pass</b> · <b>.eye-btn</b> · .eye-btn[aria-pressed] · .btn.primary.block · <b>.label-row</b> · <b>.label-action</b> · <b>.login-alt</b> · <b>.login-divider</b> · .login-google · .login-banner · .login-status</span>
       </div>
       <div class="inv-demo">
         <div class="login-card">
@@ -557,7 +557,10 @@
               <input class="input mono" id="t-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
             </div>
             <div class="field">
-              <label class="label" for="t-pass">Hasło</label>
+              <div class="label-row">
+                <label class="label" for="t-pass">Hasło</label>
+                <a class="label-action" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+              </div>
               <div class="input-pass">
                 <input class="input" id="t-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
                 <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
@@ -566,11 +569,11 @@
               </div>
             </div>
             <button type="submit" class="btn primary block">Zaloguj się</button>
-            <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
           </form>
           <div class="login-divider" role="separator">albo</div>
           <div class="login-google-skeleton" aria-hidden="true"></div>
         </div>
+        <div class="login-alt">Nie masz jeszcze konta? <a href="00-logowanie.html#konto">Załóż konto</a></div>
       </div>
     </article>
 

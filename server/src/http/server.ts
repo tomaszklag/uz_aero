@@ -517,7 +517,7 @@ export async function buildServer(
     clock: deps.clock,
   };
 
-  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
+  registerAdminAuthRoutes(app, deps.auth, deps.passwords, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);

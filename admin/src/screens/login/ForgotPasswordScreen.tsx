@@ -91,10 +91,13 @@ export function ForgotPasswordScreen() {
             </Button>
           )}
 
-          <Link className="login-link" to="/logowanie">
-            Wróć do logowania
-          </Link>
         </form>
+      </div>
+
+      {/* Wyjście POD kartą, nie w niej (issue #180, wzorzec GitHub / Linear): karta niesie
+          jedną akcję, a droga powrotu jest jej przypisem. */}
+      <div className="login-alt">
+        <Link to="/logowanie">Wróć do logowania</Link>
       </div>
     </div>
   );

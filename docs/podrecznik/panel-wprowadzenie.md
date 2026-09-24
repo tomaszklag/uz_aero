@@ -8,7 +8,9 @@ Adres panelu klub dostaje przy wdrożeniu. Wejść można **na dwa sposoby i oba
 
 Pierwszego administratora wskazuje się adresem e-mail przy zakładaniu klubu. Adres **nie musi być kontem Google**: razem z klubem wychodzi na niego list z linkiem do ustawienia hasła, ważnym 72 godziny. Administrator klika, ustawia hasło i loguje się; jeśli to jednak konto Google, może zamiast tego kliknąć Google. Kolejnych administratorów i pilotów prowadzi się w module [Piloci](panel-piloci).
 
-**Zapomniane hasło odzyskuje się samodzielnie**: „Nie pamiętam hasła" pod formularzem pyta o adres i wysyła na niego link ważny godzinę. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, którego nie zna - inaczej sam formularz mówiłby obcym, kto ma w klubie konto. Tą samą drogą ustawia hasło ktoś, kto dotąd wchodził wyłącznie Googlem i nigdy hasła nie miał.
+**Zapomniane hasło odzyskuje się samodzielnie**: „Nie pamiętam hasła" przy polu hasła pyta o adres i wysyła na niego link ważny godzinę. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, którego nie zna - inaczej sam formularz mówiłby obcym, kto ma w klubie konto. Tą samą drogą ustawia hasło ktoś, kto dotąd wchodził wyłącznie Googlem i nigdy hasła nie miał.
+
+**Konto zakłada się też z panelu.** „Załóż konto" pod kartą logowania pyta o imię i nazwisko oraz adres i wysyła link - ten sam, co przy zapomnianym haśle. Konto powstaje w chwili, gdy ustawisz z niego hasło, więc adres jest potwierdzony samym kliknięciem. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, który ma już konto - taki adres dostaje list z wyjaśnieniem, jak się zalogować. Założenie konta nie otwiera ani panelu, ani klubu: do klubu wchodzi się kodem klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu.
 
 Panel jest dla administratorów. Jeśli po logowaniu panel nie może wpuścić, mówi to jednym zdaniem:
 
@@ -16,7 +18,7 @@ Panel jest dla administratorów. Jeśli po logowaniu panel nie może wpuścić, 
 |---|---|
 | „Nieprawidłowy e-mail lub hasło" | jedna odpowiedź na trzy sytuacje: nie znamy tego adresu, konto nie ma hasła albo hasło jest inne. Panel ich nie rozróżnia, żeby formularz nie wyliczał kont |
 | „Za dużo prób - spróbuj za …" | po kilkunastu nieudanych próbach logowanie z tego adresu odpoczywa; zdanie mówi, jak długo |
-| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma zdolności **Wejście do panelu** |
+| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma zdolności **Wejście do panelu** - albo nie należy jeszcze do żadnego klubu, np. zostało dopiero założone. Zdanie mówi, co dalej: do klubu wchodzi się kodem klubu w aplikacji, dostęp do panelu nadaje administrator klubu |
 | „To konto jest wyłączone" | członkostwo wyłączono w module Piloci - kolejne próby nic nie zmienią, dopóki administrator go nie włączy |
 
 Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie członkostwa w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
