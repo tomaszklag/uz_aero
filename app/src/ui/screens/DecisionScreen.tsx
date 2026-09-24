@@ -17,8 +17,8 @@
  * który ekran nazywa zdaniem (`decisionRefusalText`). Po udanej decyzji ekran wraca
  * do skrzynki - tam plakietka „Do decyzji" gaśnie, a wiadomość zostaje jako zapis.
  *
- * Podglądy pilota i samolotu (26A/26B) nie prowadzą jeszcze w głąb - osobne zgłoszenie
- * po R-H (decyzja właściciela 2026-09-23).
+ * Samolot i OBIE osoby prowadzą w podgląd (26A/26B, issue #206) - to jedyne trzy wiersze
+ * karty z szewronem. Podgląd jest ekranem i wraca strzałką dokładnie tu.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -45,7 +45,7 @@ import { useSkeleton } from '../hooks/useSkeleton';
 import { useSessionStore } from '../store';
 import { useTheme, type Theme } from '../theme';
 
-import { decisionRefusalText, decisionView } from './logic/decision';
+import { decisionRefusalText, decisionView, type PreviewLink } from './logic/decision';
 
 type Nav = {
   navigate: (screen: string, params?: object) => void;
@@ -131,6 +131,12 @@ export function DecisionScreen({
     [sync, bookingId, busy, reason, reload, navigation],
   );
 
+  const openPreview = (link: PreviewLink): void => {
+    if (bookingId == null) return;
+    if (link.kind === 'aircraft') navigation.navigate('AircraftPreview', { bookingId });
+    else navigation.navigate('PilotPreview', { bookingId, pilotId: link.pilotId });
+  };
+
   const header = (
     <ScreenHeader title="DECYZJA" size="md" backLabel="Wróć" onBack={() => navigation.goBack()} />
   );
@@ -155,9 +161,25 @@ export function DecisionScreen({
           <>
             <GroupLabel text="Rezerwacja do rozpatrzenia" />
             <Card>
-              {vm.rows.map((row) => (
-                <KeyValueRow key={row.label} label={row.label} value={row.value} sub={row.sub} />
-              ))}
+              {vm.rows.map((row) => {
+                // Samolot i obie osoby prowadzą w podgląd (26A/26B, issue #206) -
+                // jedyne trzy wiersze karty z szewronem.
+                const link = row.opens;
+                return (
+                  <KeyValueRow
+                    key={row.label}
+                    label={row.label}
+                    value={row.value}
+                    sub={row.sub}
+                    onPress={link == null ? undefined : () => openPreview(link)}
+                    pressLabel={
+                      link?.kind === 'aircraft'
+                        ? `Podgląd samolotu ${row.value}`
+                        : `Podgląd pilota ${row.value}`
+                    }
+                  />
+                );
+              })}
             </Card>
 
             {failed != null && (

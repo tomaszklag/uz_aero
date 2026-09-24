@@ -342,3 +342,16 @@ export function ChecklistIcon({ size = 22 }: IconProps) {
     </Stroke>
   );
 }
+
+/**
+ * Podgląd w szufladzie (kolejka decyzji, issue #206) - ramka okna z linią szuflady.
+ * Stoi w `.go` przy wartości prowadzącej w głąb; świeci dopiero pod kursorem.
+ */
+export function PreviewIcon({ size = 12 }: IconProps) {
+  return (
+    <Stroke size={size} width={2}>
+      <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="15" y1="4" x2="15" y2="20" strokeLinecap="round" />
+    </Stroke>
+  );
+}

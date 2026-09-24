@@ -82,6 +82,7 @@ import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from '../src/application/common/queries/bookings.ts';
+import { DecisionPreviewQueries } from '../src/application/common/queries/decisionPreview.ts';
 import { BookingCommands } from '../src/application/mobile/commands/bookings.ts';
 import { AdminBookingCommands } from '../src/application/admin/commands/bookings.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
@@ -450,6 +451,18 @@ const lastSeen = new LastSeenThrottle();
     calendar,
     approvals,
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
+    // Podgląd pilota i samolotu przy decyzji (issue #206) - te same adaptery, co
+    // w produkcji, bo test ma przejść dokładnie drogę szuflady panelu i ekranu 26A.
+    previews: new DecisionPreviewQueries(
+      db,
+      bookingsRepo,
+      sessions,
+      pilots,
+      new PgReferenceRepo(db),
+      aircraftReadings,
+      new PgClubSettingsRepo(),
+      clock,
+    ),
     adminApprovalSteps: new ApprovalStepsCommands(
       auditedWrite,
       approvalStepsRepo,

@@ -481,6 +481,110 @@ export interface RemoteBookingDetail {
   approval?: RemoteApproval;
 }
 
+// ── Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206; ekrany 26A/26B) ──
+//
+// TEN SAM komplet faktów, który dostaje szuflada w panelu - serwer składa go jednym
+// zapytaniem dla obu powierzchni, a telefon niczego nie liczy sam. Wiersze niosą
+// identyfikatory; nazwiska i znaki rozwiązuje cache klubu, jak wszędzie. CAŁY MODUŁ
+// WYMAGA SIECI (§12.1): bez zasięgu ekran mówi, że podgląd składa serwer.
+
+/** Trójka Loty · Blok · Lot - stała w całym produkcie. */
+export interface RemotePreviewFlying {
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+}
+
+export interface RemotePreviewRecent {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie); ISO, UTC jak rejestr. */
+  at: string | null;
+  aircraftId: string;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  blockMs: number;
+  flights: number;
+}
+
+export interface RemotePreviewUpcoming {
+  id: string;
+  aircraftId: string;
+  kind: 'flight' | 'block';
+  status: string;
+  startsAt: string;
+  endsAt: string;
+  pilotId: string | null;
+  blockReason: string | null;
+  /** Rozpatrywana sprawa - wiersz „· ta sprawa". */
+  thisCase: boolean;
+  /** Nachodzi na rozpatrywany termin - ten sam człowiek nie poleci dwiema maszynami. */
+  overlaps: boolean;
+  /** Doba klubu początku terminu - godziny liczą się odejmowaniem (§6.1). */
+  day: RemoteCalendarDay;
+}
+
+export interface RemotePilotPreview {
+  timezone: string;
+  bookingId: string;
+  pilot: {
+    id: string;
+    code: string | null;
+    name: string | null;
+    memberSince: string | null;
+  };
+  lastFlightAt: string | null;
+  /** Doświadczenie NA EGZEMPLARZU sprawy - pierwsza karta, bo to pytanie decyzji. */
+  onAircraft: {
+    aircraftId: string;
+    operations: number;
+    lastAt: string | null;
+    flights: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  flying: {
+    last30: RemotePreviewFlying;
+    last90: RemotePreviewFlying;
+    total: RemotePreviewFlying;
+  };
+  recent: RemotePreviewRecent[];
+  upcoming: RemotePreviewUpcoming[];
+}
+
+export interface RemoteAircraftPreview {
+  timezone: string;
+  bookingId: string;
+  aircraft: {
+    id: string;
+    reg: string;
+    type: string;
+    serviceStatus: 'active' | 'disabled';
+    capacityL: number;
+    mhFormat: 'hhmm' | 'decimal';
+    oilMinL: number | null;
+  };
+  lastFlightAt: string | null;
+  /** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
+  counters: {
+    mh: number;
+    fuelL: number;
+    oilL: number | null;
+    at: string;
+    source: 'handover' | 'open_session' | 'initial' | 'admin';
+    byPilotId: string | null;
+    enteredBy: string | null;
+  } | null;
+  last30: {
+    daysWithFlights: number;
+    takeoffs: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  recent: RemotePreviewRecent[];
+  upcoming: RemotePreviewUpcoming[];
+}
+
 /**
  * ŚCIEŻKA AKCEPTACJI jednej rezerwacji, tak jak widzi ją PILOT (3.1.0, epik R-I).
  *
@@ -835,6 +939,13 @@ export interface ServerPort {
    * są nie do odróżnienia - obie kończą się 404, jak cudza operacja.
    */
   getBooking(token: string, id: string): Promise<RemoteBookingDetail>;
+  /**
+   * Podgląd pilota stojącego na sprawie (issue #206) - `GET /bookings/:id/preview/pilot/:pilotId`.
+   * Osoba spoza sprawy i sprawa cudzego klubu kończą się 404, jak cudza operacja.
+   */
+  getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview>;
+  /** Podgląd maszyny sprawy (issue #206) - `GET /bookings/:id/preview/aircraft`. */
+  getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview>;
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   getSlotSuggestions(
     token: string,

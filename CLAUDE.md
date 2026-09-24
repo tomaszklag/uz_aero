@@ -4358,6 +4358,56 @@ drodze krytycznej** - bez niego kod działa, ale budzik milczy. Reguły obowiąz
   swój), listy urządzeń w telefonie, pokwitowań Expo (receipts - `DeviceNotRegistered`
   przychodzi już w biletach), powiadomień o zmianie ścieżki (#207)
 
+## Rezerwacje 3.1.0 - podgląd pilota i samolotu przy decyzji (K6, 26A/26B; issue #206, 2026-09-24)
+Akceptujący pyta „komu zatwierdzam" i „czym poleci" - i ma dostać na to TEN SAM komplet
+faktów w panelu (szuflada `kalendarz-podglad`) i w telefonie (ekrany 26A/26B), bo decyzję
+podejmuje też mechanik, który panelu nie otwiera. Decyzje: `docs/rezerwacje.md` §10;
+odstępstwa §18. Reguły obowiązujące odtąd:
+- **JEDNO ZAPYTANIE DLA OBU POWIERZCHNI**: rachunek w `server/src/domain/decisionPreview.ts`
+  (czysty: wiersze + „teraz"), składanie w `application/common/queries/decisionPreview.ts`,
+  kształt na drucie w `http/routes/common/previewWire.ts`. Trasy telefonu
+  (`GET /bookings/:id/preview/pilot/:pilotId`, `…/preview/aircraft`) i panelu (te same pod
+  `/admin/api`) różnią się WYŁĄCZNIE bramą; test `decisionPreview.test.ts` przybija
+  równość odpowiedzi bajt w bajt. Panel i telefon NICZEGO nie liczą - składają napisy
+  (`admin/src/screens/calendar/previewLabels.ts`, `app/src/ui/screens/logic/previewRows.ts`)
+- **OSOBA NA SPRAWIE, NIE DOWOLNA**: podgląd pilota istnieje tylko dla PIC-a albo Duala
+  rozpatrywanej rezerwacji; inna osoba i cudza sprawa to 404 (epik C), członek bez
+  `reservations.approve`/`manage` - 403 (sprawę widać w kalendarzu i tak, więc nic nie
+  wycieka). Bez tej granicy trasa byłaby wyszukiwarką nalotu każdego członka klubu
+- **NOWE PYTANIA DO ISTNIEJĄCYCH WIERSZY, NIE NOWE DANE**: zero migracji. Doszły
+  `SessionsProjectionPort.listByCrew` (PIC albo Dual - uczeń lata jako Dual) i filtr
+  `BookingQuery.pilotId` (`pilot_id = $n OR dual_id = $n`). Liczy się operacja
+  nieunieważniona z biegiem silnika albo lotem (`flew`); zapis bez biegu ze zmienionym
+  odczytem jest operacją w sensie issue #75, ale nalotu nie daje
+- **DOŚWIADCZENIE NA EGZEMPLARZU SPRAWY STOI PIERWSZE** (pytanie decyzji: „czy zna TĘ
+  maszynę"), „pierwszy raz na tej maszynie" pisze się wprost; potem okna 30/90 dni
+  i „w klubie" trójką Loty · Blok · Lot; ostatnie loty do pięciu
+- **ROZPATRYWANA SPRAWA JEST NA LIŚCIE TERMINÓW ZAWSZE** (`upcomingOf`): lista sięga po
+  sufit okna kalendarza, ale sprawa wchodzi także spoza niego. Termin PILOTA nachodzący
+  na sprawę dostaje bursztyn - baza pilnuje egzemplarza, nie człowieka. Wyłączenie
+  z użytku na liście maszyny też bursztynem, z powodem
+- **LICZNIKI NIOSĄ ŹRÓDŁO** - `pickHandover` z odczytem administratora jako konkurentem,
+  jak karta samolotu w panelu; etykiety źródła: zdanie samolotu / operacja w toku / stan
+  początkowy z panelu / wpis administratora. Bez odczytu KRESKI, nie zera
+- **DWA ZEGARY, ŚWIADOMIE**: chwile operacji (ostatnie loty, ostatni lot, odczyt) datą
+  rejestru w UTC (`dateUtcDayMonth`, `dateTimeUtcShort`), terminy dobą klubu - serwer
+  przysyła dobę przy każdym terminie, telefon liczy godziny odejmowaniem (`Intl` ani razu)
+- **PANEL: `.go` bywa PRZYCISKIEM** (`button.go` w `controls.css` zdejmuje oprawę
+  przeglądarki; `panel.css` przegenerowany) - szuflada otwiera się bez adresu. Znak na
+  tytule karty kolejki oraz pilot i drugi pilot prowadzą w głąb (`QueueRow.go`,
+  `QueueCard.aircraft` + `when`); szuflada `PreviewDrawer` NIE MA akcji na sprawie.
+  Stopka pilota: „Pokaż kartę pilota" (`#/piloci/:id`) - dziennik nie ma wejścia po
+  osobie; stopka maszyny: „Pokaż w dzienniku" (`#/dziennik/:reg`)
+- **TELEFON: PODGLĄD JEST EKRANEM, NIE ARKUSZEM** (`PilotPreviewScreen`,
+  `AircraftPreviewScreen`, wspólna treść `components/data/PreviewBody.tsx`): cztery karty
+  i tabela to treść na cały ekran. `KeyValueRow.onPress` rysuje szewron ZA wartością
+  w spoczynku (na dotyku nie ma hovera); na karcie decyzji mają go DOKŁADNIE trzy
+  wiersze - samolot i obie osoby (`DecisionRow.opens`). Hooki `usePilotPreview`/
+  `useAircraftPreview` w `ui/hooks/usePreview.ts` czytają przy każdym wejściu, bez cache
+  (§12.1); `null` = ekran „BRAK PODGLĄDU - składa serwer, wróć z zasięgiem"
+- **czego #206 NIE ROBI**: licencji, badań i uprawnień na typ (osobny epik, decyzja
+  właściciela 2026-09-23), sprawdzenia w przeglądarce i na urządzeniu (→ #169)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

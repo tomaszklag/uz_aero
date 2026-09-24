@@ -11,8 +11,8 @@
  * rzeczy, które coś kasują. Odmowa jest decyzją i stoi obok zgody jako druga, wyciszona
  * odpowiedź. Powód przy odmowie jest WYMAGANY - pilot czyta go na swoim telefonie.
  *
- * Podglądy pilota i samolotu (26a/26b) NIE prowadzą jeszcze w głąb - osobne zgłoszenie
- * po R-H (decyzja właściciela 2026-09-23), wspólne z szufladą K6 w panelu.
+ * Samolot i obie osoby prowadzą w podgląd (26a/26b, issue #206) - `DecisionRow.opens`;
+ * ten sam komplet faktów, co szuflada K6 w panelu, składa serwer jednym zapytaniem.
  */
 
 import { duration, litres } from '@ninerdeck/format';
@@ -38,9 +38,20 @@ export interface DecisionInput {
   dual: { name: string; code: string } | null;
 }
 
+/**
+ * Dokąd prowadzi wiersz karty (issue #206): samolot i OBIE osoby otwierają podgląd -
+ * to jedyne trzy wiersze z szewronem. Osobę wskazuje jej identyfikator, maszynę
+ * sama sprawa (serwer wie, którym egzemplarzem poleci).
+ */
+export type PreviewLink = { kind: 'pilot'; pilotId: string } | { kind: 'aircraft' };
+
+export interface DecisionRow extends BookingDetailRow {
+  opens?: PreviewLink;
+}
+
 export interface DecisionVm {
   /** Karta „Rezerwacja do rozpatrzenia" - wiersze z wartością; puste pola nie stoją z kreską. */
-  rows: BookingDetailRow[];
+  rows: DecisionRow[];
   /** Zdanie pod pasem akcji: co się stanie po zgodzie i po odmowie. */
   footnote: string;
   /** Sprawa naprawdę czeka - inaczej pasa akcji nie ma (rozstrzygnięta, odwołana). */
@@ -56,16 +67,26 @@ export function decisionView(input: DecisionInput): DecisionVm {
   const term = `${dzien.charAt(0).toLowerCase()}${dzien.slice(1)} ${hours}`;
   const reg = input.aircraft?.reg ?? b.aircraftId;
 
-  const rows: BookingDetailRow[] = [
-    { label: 'Samolot', value: reg, sub: input.aircraft?.type ?? null },
+  const rows: DecisionRow[] = [
+    { label: 'Samolot', value: reg, sub: input.aircraft?.type ?? null, opens: { kind: 'aircraft' } },
     { label: 'Termin', value: term, sub: null },
     // Rezerwujący: nazwisko czyta się bez zaglądania do listy członków, kod odróżnia
     // dwóch Nowaków. Poza cache'em zostaje kod z rezerwacji - surowy identyfikator
     // nie ma prawa stanąć na ekranie decyzji.
-    { label: 'Pilot', value: input.pilot?.name ?? '—', sub: input.pilot?.code ?? null },
+    {
+      label: 'Pilot',
+      value: input.pilot?.name ?? '—',
+      sub: input.pilot?.code ?? null,
+      ...(b.pilotId == null ? {} : { opens: { kind: 'pilot' as const, pilotId: b.pilotId } }),
+    },
   ];
   if (b.dualId != null) {
-    rows.push({ label: 'Drugi pilot', value: input.dual?.name ?? '—', sub: input.dual?.code ?? null });
+    rows.push({
+      label: 'Drugi pilot',
+      value: input.dual?.name ?? '—',
+      sub: input.dual?.code ?? null,
+      opens: { kind: 'pilot', pilotId: b.dualId },
+    });
   }
   const zadanie = operationLabelOf(b.operation);
   if (zadanie != null) rows.push({ label: 'Zadanie', value: zadanie, sub: null });

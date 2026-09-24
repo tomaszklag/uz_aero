@@ -45,6 +45,12 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   na pierwszym kroku nikt dalszy nie jest fatygowany, a termin wraca do puli natychmiast.
 - **Odmowa wymaga powodu**, który pilot przeczyta w aplikacji - bez niego „odrzucone"
   zostawia go z pytaniem, na które musiałby zadzwonić.
+- **Zanim zdecydujesz, zobacz komu i czym.** Z karty sprawy - w panelu i w aplikacji -
+  otwiera się podgląd pilota (ile latał na tej maszynie i kiedy ostatnio, nalot z 30
+  i 90 dni, ostatnie loty, najbliższe rezerwacje z ostrzeżeniem, gdy nachodzą na
+  rozpatrywany termin) oraz podgląd samolotu (liczniki z ostatniego odczytu, ostatnie
+  30 dni, ostatnie loty, najbliższe terminy razem z przeglądami). Mechanik decydujący
+  z telefonu widzi dokładnie to samo, co administrator przy biurku.
 - **Rezerwujący nie prosi sam siebie o zgodę**: kroki, na których stoi, przechodzą same,
   a w historii widać, że przeszły właśnie w ten sposób.
 - **Rezerwacja czekająca na zgodę trzyma termin** - nikt inny nie zajmie go w międzyczasie.

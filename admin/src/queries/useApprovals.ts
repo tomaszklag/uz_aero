@@ -21,12 +21,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   decideBooking,
+  getAircraftPreview,
   getApprovalQueue,
   getApprovalSteps,
+  getPilotPreview,
   replaceApprovalSteps,
   type DecisionBody,
 } from '../api/approvals';
-import type { ApprovalPathDto, ApprovalQueueDto, ApprovalStepInputDto } from '../api/dto';
+import type {
+  AircraftPreviewDto,
+  ApprovalPathDto,
+  ApprovalQueueDto,
+  ApprovalStepInputDto,
+  PilotPreviewDto,
+} from '../api/dto';
 import { keys } from './keys';
 
 export function useApprovalSteps(enabled: boolean) {
@@ -68,5 +76,25 @@ export function useDecideBooking() {
       void qc.invalidateQueries({ queryKey: keys.approvals.all });
       void qc.invalidateQueries({ queryKey: keys.calendar.all });
     },
+  });
+}
+
+/**
+ * Podgląd pilota przy decyzji (issue #206). `null` = szuflada nie jest otwarta na
+ * pilocie - zapytanie śpi, a nie pyta serwer o nic.
+ */
+export function usePilotPreview(target: { bookingId: string; pilotId: string } | null) {
+  return useQuery<PilotPreviewDto>({
+    queryKey: keys.approvals.pilotPreview(target?.bookingId ?? '', target?.pilotId ?? ''),
+    queryFn: () => getPilotPreview(target!.bookingId, target!.pilotId),
+    enabled: target != null,
+  });
+}
+
+export function useAircraftPreview(bookingId: string | null) {
+  return useQuery<AircraftPreviewDto>({
+    queryKey: keys.approvals.aircraftPreview(bookingId ?? ''),
+    queryFn: () => getAircraftPreview(bookingId!),
+    enabled: bookingId != null,
   });
 }

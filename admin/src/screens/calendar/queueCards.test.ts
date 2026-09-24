@@ -99,7 +99,16 @@ describe('karty', () => {
   it('niosą cały plan, bez kresek za pola, których nie ma', () => {
     const [karta] = queueCards([item({ dualId: null, note: null, plannedAirMin: null, plannedFuelL: null })], opts);
     expect(karta!.rows.map((r) => r.label)).toEqual(['Pilot', 'Zadanie', 'Trasa', 'Czeka od']);
-    expect(karta!.rows[0]).toEqual({ label: 'Pilot', value: 'Jakub Wrona', sub: 'JWR', subMono: true });
+    expect(karta!.rows[0]).toEqual({
+      label: 'Pilot',
+      value: 'Jakub Wrona',
+      sub: 'JWR',
+      subMono: true,
+      // Pilot prowadzi w podgląd (issue #206) - cel niesie sprawę i osobę.
+      go: { kind: 'pilot', bookingId: 'b1', pilotId: 'jwr', label: 'Jakub Wrona' },
+    });
+    expect(karta!.aircraft).toEqual({ id: 'a1', reg: 'SP-AXA' });
+    expect(karta!.when).toBe('sobota, 26 wrz, 09:00-12:00');
     expect(karta!.rows[2]).toEqual({ label: 'Trasa', value: 'EPZG → EPRJ', mono: true });
     expect(karta!.rows[3]).toEqual({
       label: 'Czeka od',

@@ -14,11 +14,13 @@
  */
 
 import type {
+  AircraftPreviewDto,
   ApprovalPathDto,
   ApprovalQueueDto,
   ApprovalStepInputDto,
   ApprovalVerdictDto,
   DecisionResultDto,
+  PilotPreviewDto,
 } from './dto';
 import { apiGet, apiPost, apiPut } from './httpClient';
 
@@ -43,4 +45,16 @@ export interface DecisionBody {
 
 export function decideBooking(id: string, body: DecisionBody): Promise<DecisionResultDto> {
   return apiPost<DecisionResultDto>(`/bookings/${encodeURIComponent(id)}/decision`, body);
+}
+
+/** Podgląd pilota stojącego na sprawie (issue #206) - osoba spoza sprawy to 404. */
+export function getPilotPreview(bookingId: string, pilotId: string): Promise<PilotPreviewDto> {
+  return apiGet<PilotPreviewDto>(
+    `/bookings/${encodeURIComponent(bookingId)}/preview/pilot/${encodeURIComponent(pilotId)}`,
+  );
+}
+
+/** Podgląd maszyny sprawy (issue #206). */
+export function getAircraftPreview(bookingId: string): Promise<AircraftPreviewDto> {
+  return apiGet<AircraftPreviewDto>(`/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`);
 }

@@ -128,6 +128,12 @@ export class PgBookingsRepo implements BookingsPort {
       params.push(query.aircraftId);
       sql += ` AND aircraft_id = $${params.length}`;
     }
+    if (query.pilotId != null) {
+      // Osoba na KTÓRYMKOLWIEK fotelu: rezerwacja z uczniem jako Dual jest jego terminem
+      // tak samo, jak instruktora - i tak samo nachodzi na inny (issue #206).
+      params.push(query.pilotId);
+      sql += ` AND (pilot_id = $${params.length} OR dual_id = $${params.length})`;
+    }
     if (query.includeClosed !== true) sql += ` AND status IN (${HOLDING})`;
     sql += ' ORDER BY starts_at, aircraft_id';
     const { rows } = await db.query<BookingDbRow>(sql, params);

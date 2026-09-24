@@ -1051,6 +1051,8 @@ export interface BookingQuery {
   from: number;
   to: number;
   aircraftId?: string;
+  /** Terminy tej OSOBY - jako pilot albo drugi pilot (podgląd przy decyzji, issue #206). */
+  pilotId?: string;
   /** Domyślnie same czynne (`pending`, `confirmed`) - kalendarz nie rysuje odwołanych. */
   includeClosed?: boolean;
 }
@@ -1658,6 +1660,12 @@ export interface SessionsProjectionPort {
    * w dzienniku jednego klubu, a wskazywałaby operację drugiego, czyli byłaby wyciekiem.
    */
   listByPilot(db: Queryable, orgId: string, picId: string): Promise<SessionRow[]>;
+  /**
+   * Operacje, w których osoba siedziała na KTÓRYMKOLWIEK fotelu (PIC albo Dual) -
+   * podgląd pilota przy decyzji (3.1.0, issue #206): uczeń lata jako Dual i bez tego
+   * fotela nie miałby ani jednego lotu na koncie.
+   */
+  listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]>;
   /**
    * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *

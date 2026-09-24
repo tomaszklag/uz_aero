@@ -76,7 +76,16 @@ describe('karta do rozpatrzenia', () => {
       'Czeka od',
     ]);
     expect(vm.rows[1]).toEqual({ label: 'Termin', value: 'sob 26 WRZ 09:00-12:00', sub: null });
-    expect(vm.rows[2]).toEqual({ label: 'Pilot', value: 'Jakub Wrona', sub: 'JWR' });
+    // Samolot i obie osoby prowadzą w podgląd (issue #206); termin i reszta - nie.
+    expect(vm.rows[0]!.opens).toEqual({ kind: 'aircraft' });
+    expect(vm.rows[1]!.opens).toBeUndefined();
+    expect(vm.rows[2]).toEqual({
+      label: 'Pilot',
+      value: 'Jakub Wrona',
+      sub: 'JWR',
+      opens: { kind: 'pilot', pilotId: 'jwr' },
+    });
+    expect(vm.rows[3]!.opens).toEqual({ kind: 'pilot', pilotId: 'ako' });
     expect(vm.rows[6]).toEqual({ label: 'Plan lotu', value: '2:00 · paliwo 140 L', sub: null });
     expect(vm.rows[8]).toEqual({ label: 'Czeka od', value: '16 h temu', sub: 'termin za 2 dni' });
     expect(vm.reference).toBe('SP-AXA · sob 26 WRZ 09:00-12:00');
