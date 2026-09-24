@@ -7,7 +7,7 @@
  * osoby są porównywane wprost: pilot przepisuje te liczby do własnej książki lotów
  * i musi jednym spojrzeniem zobaczyć, co przypada jemu, a co drugiemu pilotowi.
  * Karta zalogowanego jest wyróżniona (`active`) - nie dla ozdoby, tylko dlatego że
- * kody trzyliterowe (TMK/AKO) mylą się przy przepisywaniu.
+ * kody trzyliterowe (AKO/BNO) mylą się przy przepisywaniu.
  *
  * Kod pilota, nie nazwisko: tak jest w mockupie i tak wygląda wpis w dokumentach -
  * `shortName` byłby tu tłumaczeniem na język, którego formularze nie używają.
@@ -29,7 +29,7 @@ export interface CrewStat {
 export interface CrewCardProps {
   /** Rola i kontekst („PIC · zalogowany (Ty)"). */
   role: string;
-  /** Kod pilota („TMK"). */
+  /** Kod pilota („AKO"). */
   code: string;
   stats?: CrewStat[];
   /** Przypis pod statystykami („Cała sesja"). */

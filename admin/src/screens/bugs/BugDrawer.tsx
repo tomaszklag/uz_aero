@@ -99,7 +99,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
       wide
       title={`Zgłoszenie · ${bug.pilotCode ?? bug.pilotId}`}
       // KLUB pierwszy w podtytule (issue #99 C6): kod pilota w tytule jest jedyny
-      // W KLUBIE, więc `TMA` bez nazwy klubu może być dwiema różnymi osobami.
+      // W KLUBIE, więc `AKO` bez nazwy klubu może być dwiema różnymi osobami.
       sub={
         <>
           {bug.org.name} · {bug.screen} · {stamp(bug.createdAt)}

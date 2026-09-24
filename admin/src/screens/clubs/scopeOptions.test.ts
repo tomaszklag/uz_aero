@@ -12,7 +12,7 @@ const club = (id: string, name: string, code: string) => ({
 });
 
 const scopes = (over: Partial<PanelScopesDto> = {}): PanelScopesDto => ({
-  clubs: [club('org-a', 'Aeroklub Zielonogórski', 'TMK')],
+  clubs: [club('org-a', 'Aeroklub Zielonogórski', 'AKO')],
   platform: false,
   ...over,
 });
@@ -23,7 +23,7 @@ describe('karty wyboru zakresu', () => {
       {
         orgId: 'org-a',
         name: 'Aeroklub Zielonogórski',
-        desc: 'administrator · Twój kod TMK',
+        desc: 'administrator · Twój kod AKO',
       },
     ]);
   });

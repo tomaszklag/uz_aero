@@ -38,7 +38,7 @@ const pilot = (over: Partial<PilotListItemDto>): PilotListItemDto => ({
 });
 
 const JBA = pilot({ id: 'jba', code: 'JBA', name: 'Jan Bąk', capabilities: ['reservations.approve'] });
-const AKO = pilot({ id: 'ako', code: 'AKO', name: 'Anna Kowal', capabilities: ['reservations.approve'] });
+const AKW = pilot({ id: 'akw', code: 'AKW', name: 'Anna Kowal', capabilities: ['reservations.approve'] });
 const MSO = pilot({ id: 'mso', code: 'MSO', name: 'Marek Sowa', capabilities: ['panel.access'] });
 const OFF = pilot({ id: 'off', code: 'OFF', name: 'Były Członek', active: false, capabilities: ['reservations.approve'] });
 
@@ -52,7 +52,7 @@ const step = (over: Partial<ApprovalStepDto>): ApprovalStepDto => ({
 
 describe('kandydaci do kroku', () => {
   it('to WYŁĄCZNIE aktywni ze zdolnością akceptacji, po nazwisku', () => {
-    expect(approverCandidates([MSO, JBA, OFF, AKO]).map((c) => c.code)).toEqual(['AKO', 'JBA']);
+    expect(approverCandidates([MSO, JBA, OFF, AKW]).map((c) => c.code)).toEqual(['AKW', 'JBA']);
   });
 });
 
@@ -65,14 +65,14 @@ describe('obsada wobec żywego klubu', () => {
   });
 
   it('stan kroku: ok / częściowy / bez obsady', () => {
-    expect(stepHealth(stepMembers(['jba', 'ako'], [JBA, AKO]))).toBe('ok');
+    expect(stepHealth(stepMembers(['jba', 'akw'], [JBA, AKW]))).toBe('ok');
     expect(stepHealth(stepMembers(['jba', 'mso'], [JBA, MSO]))).toBe('partial');
     expect(stepHealth(stepMembers(['mso'], [JBA, MSO]))).toBe('none');
   });
 
   it('rozjazdy zbierają się per krok, z nazwiskami tych, którzy nie rozstrzygną', () => {
     const notices = orphanNotices(
-      [step({ id: 's1', memberIds: ['jba', 'ako'] }), step({ id: 's2', label: 'Szef', memberIds: ['mso'] })],
+      [step({ id: 's1', memberIds: ['jba', 'akw'] }), step({ id: 's2', label: 'Szef', memberIds: ['mso'] })],
       [JBA, MSO],
     );
     expect(notices).toEqual([
@@ -118,24 +118,24 @@ describe('szuflada kroku', () => {
   });
 
   it('przełączenie osoby dodaje albo zdejmuje', () => {
-    expect(toggleMember(['jba'], 'ako')).toEqual(['jba', 'ako']);
-    expect(toggleMember(['jba', 'ako'], 'jba')).toEqual(['ako']);
+    expect(toggleMember(['jba'], 'akw')).toEqual(['jba', 'akw']);
+    expect(toggleMember(['jba', 'akw'], 'jba')).toEqual(['akw']);
   });
 
   it('„Zapisz" bez zmian jest nieaktywny; nowy krok zawsze ma co zapisać', () => {
-    const steps = [step({ memberIds: ['jba', 'ako'] })];
-    expect(hasStepChanges(steps, { id: 's1', label: 'Mechanik ', memberIds: ['ako', 'jba'] })).toBe(false);
+    const steps = [step({ memberIds: ['jba', 'akw'] })];
+    expect(hasStepChanges(steps, { id: 's1', label: 'Mechanik ', memberIds: ['akw', 'jba'] })).toBe(false);
     expect(hasStepChanges(steps, { id: 's1', label: 'Mechanik', memberIds: ['jba'] })).toBe(true);
     expect(hasStepChanges(steps, { id: null, label: 'Nowy', memberIds: ['jba'] })).toBe(true);
   });
 
   it('zamówienie podmienia krok istniejący (zachowując id) albo dokłada nowy na końcu', () => {
-    const steps = [step({ id: 's1' }), step({ id: 's2', label: 'Szef', memberIds: ['ako'] })];
-    expect(withStep(steps, { id: 's1', label: ' Mechanik klubu ', memberIds: ['jba', 'ako'] })).toEqual([
-      { id: 's1', label: 'Mechanik klubu', memberIds: ['jba', 'ako'] },
-      { id: 's2', label: 'Szef', memberIds: ['ako'] },
+    const steps = [step({ id: 's1' }), step({ id: 's2', label: 'Szef', memberIds: ['akw'] })];
+    expect(withStep(steps, { id: 's1', label: ' Mechanik klubu ', memberIds: ['jba', 'akw'] })).toEqual([
+      { id: 's1', label: 'Mechanik klubu', memberIds: ['jba', 'akw'] },
+      { id: 's2', label: 'Szef', memberIds: ['akw'] },
     ]);
-    expect(withStep(steps, { id: null, label: 'Prezes', memberIds: ['ako'] }).map((s) => s.id)).toEqual([
+    expect(withStep(steps, { id: null, label: 'Prezes', memberIds: ['akw'] }).map((s) => s.id)).toEqual([
       's1',
       's2',
       null,

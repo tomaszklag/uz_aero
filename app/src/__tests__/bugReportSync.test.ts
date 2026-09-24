@@ -24,7 +24,7 @@ import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 
 const T0 = Date.UTC(2026, 8, 4, 9, 41, 0);
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };

@@ -15,7 +15,7 @@
  * pilot wpisuje jedną - a rozstrzygnąć da się to z samego napisu.
  *
  * Rozstrzyga OBECNOŚĆ „@", nie kształt adresu: pole ma rozpoznać INTENCJĘ, a nie
- * walidować pocztę. „tmk@" jest adresem popsutym, nie kodem pilota, więc pójdzie
+ * walidować pocztę. „ako@" jest adresem popsutym, nie kodem pilota, więc pójdzie
  * na serwer jako adres i wróci jedną odmową - tą samą, co adres nieznany.
  */
 export const looksLikeEmail = (login: string): boolean => login.includes('@');
@@ -27,8 +27,8 @@ export const looksLikeEmail = (login: string): boolean => login.includes('@');
  * a różnica wielkości liter na tablecie z autokapitalizacją jest regułą, nie wyjątkiem.
  * Kod pilota: przycięty i WERSALIKAMI - tak stoi w klubie i tak czyta go człowiek.
  *
- * Normalizacja jest po to, żeby ta sama osoba wpisująca „ Ako " weszła tam, gdzie
- * wpisująca „AKO" - a nie po to, żeby cokolwiek przepuścić: sprawdza serwer.
+ * Normalizacja jest po to, żeby ta sama osoba wpisująca „ Bno " weszła tam, gdzie
+ * wpisująca „BNO" - a nie po to, żeby cokolwiek przepuścić: sprawdza serwer.
  */
 export const normalizeLogin = (login: string): string => {
   const trimmed = login.trim();

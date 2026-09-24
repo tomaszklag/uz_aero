@@ -28,7 +28,7 @@ Do pilota w danej dobie UTC przypisana jest lista operacji - i nic ponadto. Oper
 
 ## Sygnatura operacji
 
-Operacja ma nazwę, którą da się przeczytać przez telefon i wpisać w zgłoszenie: `SP-AXA/2026-09-05/TMK/1` - znak samolotu, doba UTC, kod dowódcy, numer operacji tego pilota w tej dobie. To ten sam numer, który stoi przy operacji w Historii. Sygnatura stoi na kafelkach, w nagłówku ekranu operacji, w pasku kokpitu po uruchomieniu silnika i w dzienniku panelu.
+Operacja ma nazwę, którą da się przeczytać przez telefon i wpisać w zgłoszenie: `SP-AXA/2026-09-05/AKO/1` - znak samolotu, doba UTC, kod dowódcy, numer operacji tego pilota w tej dobie. To ten sam numer, który stoi przy operacji w Historii. Sygnatura stoi na kafelkach, w nagłówku ekranu operacji, w pasku kokpitu po uruchomieniu silnika i w dzienniku panelu.
 
 - **Liczy się przy każdym wyświetleniu**, jak czas blokowy: wpis po fakcie dopisany przed istniejącą operacją tej doby przenumerowuje ją, a numer zapisany na stałe wskazywałby po tym dwie operacje naraz.
 - **Nie ma w niej godziny**: korekta czasu przesuwa uruchomienie o kilka minut, a sygnatura z godziną opisywałaby po korekcie inną operację niż przed.

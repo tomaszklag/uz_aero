@@ -90,7 +90,7 @@ describe('odczyty maszyny wpisane ręką administratora (issue #81)', () => {
   it('wpis wraca w karcie samolotu ze źródłem `admin`, podpisem i komentarzem - i w audycie', async () => {
     const { app, db } = await testHarness();
     await push(app, 'KRZ', shift('s-1', at(10, 0), 1236.5));
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await recordReading(app, admin, 'SP-AXA', {
       mh: 1240,
@@ -122,7 +122,7 @@ describe('odczyty maszyny wpisane ręką administratora (issue #81)', () => {
   it('telefon dostaje z wpisu przekazanie z `origin: admin`, a ETag /reference się zmienia', async () => {
     const { app } = await testHarness();
     await push(app, 'KRZ', shift('s-1', at(10, 0), 1236.5));
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     const before = await referenceRow(app, krz, 'SP-AXA');
@@ -145,7 +145,7 @@ describe('odczyty maszyny wpisane ręką administratora (issue #81)', () => {
   it('porządek łańcucha MH: wpis wypiera zdanie z niższym licznikiem, zdanie z wyższym wypiera wpis', async () => {
     const { app, clock } = await testHarness();
     await push(app, 'KRZ', shift('s-1', at(10, 0), 1236.5));
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     // Wpis PONIŻEJ ostatniego zdania w łańcuchu: zdanie zostaje bazą przekazania.
     await recordReading(app, admin, 'SP-AXA', { mh: 1230, fuelL: 200, oilL: null, note: 'Stary odczyt.' });
@@ -164,7 +164,7 @@ describe('odczyty maszyny wpisane ręką administratora (issue #81)', () => {
   it('bez ani jednej zdanej operacji wpis wypiera stan początkowy z panelu', async () => {
     const { app, db } = await testHarness();
     await db.query("UPDATE aircraft SET initial_mh = 1000, initial_fuel_l = 50, updated_at = now() WHERE id = 'SP-AXA'");
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     expect((await fleetRow(app, admin, 'SP-AXA')).reading).toMatchObject({ source: 'initial', mh: 1000 });
 
     await recordReading(app, admin, 'SP-AXA', { mh: 1001, fuelL: 60, oilL: null, note: 'Po tankowaniu.' });
@@ -173,7 +173,7 @@ describe('odczyty maszyny wpisane ręką administratora (issue #81)', () => {
 
   it('odmawia jak stan początkowy: minus i sufit zbiornika z powodem; komentarz wymagany; nieznana maszyna → 404', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const minus = await recordReading(app, admin, 'SP-AXA', { mh: -1, fuelL: 10, oilL: null, note: 'x' });
     expect(minus.statusCode).toBe(409);

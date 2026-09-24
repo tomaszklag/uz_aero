@@ -37,7 +37,7 @@ export interface ReadingsTrailRow {
   meta: string;
 }
 
-/** „AKO · 16 SIE 09:00" - kto zostawił maszynę i kiedy. */
+/** „BNO · 16 SIE 09:00" - kto zostawił maszynę i kiedy. */
 function who(link: RemoteReadingsChainLink): string {
   return `${link.picId.toUpperCase()} · ${dateTimeUtcShort(link.at)}`;
 }

@@ -29,7 +29,7 @@ function event(type: Event['type'], time: number, payload: object = {}): Event {
     uuid: `e-${seq}-${type}`,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -239,7 +239,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',
     mhFormat: 'hhmm',
-    picCode: 'TMK',
+    picCode: 'AKO',
     picName: 'Adam Kowalski',
     dualCode: null,
     dualName: null,
@@ -275,7 +275,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
    * doba idzie z URUCHOMIENIA SILNIKA (08:12), a nie z przejęcia.
    */
   it('składa sygnaturę operacji ze złączeń i kolumn projekcji', () => {
-    expect(sessionListItem(join).signature).toBe('SP-AXA/2026-06-22/TMK/2');
+    expect(sessionListItem(join).signature).toBe('SP-AXA/2026-06-22/AKO/2');
   });
 
   it('nie ma sygnatury bez któregokolwiek członu - napis z kreską nie identyfikuje', () => {
@@ -291,7 +291,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
       uuid: 'contract-preflight-1',
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'preflight_confirm',
       deviceTime: at(8, 0),
@@ -310,7 +310,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
       uuid: 'contract-engine-start-1',
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'engine_start',
       deviceTime: at(8, 12),
@@ -363,7 +363,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -407,7 +407,7 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     const token = login.json().token as string;
     const auth = { authorization: `Bearer ${token}` };
@@ -445,7 +445,7 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
       uuid: `stat-${wireSeq}-${type}`,
       sessionUuid,
       aircraftId,
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type,
       deviceTime: time,
@@ -485,7 +485,7 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     const auth = { authorization: `Bearer ${login.json().token as string}` };
 

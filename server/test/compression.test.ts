@@ -33,7 +33,7 @@ async function pilotToken(app: Awaited<ReturnType<typeof testHarness>>['app']): 
   const login = await app.inject({
     method: 'POST',
     url: '/auth/google',
-    payload: { idToken: googleTokenFor('TMK') },
+    payload: { idToken: googleTokenFor('AKO') },
   });
   return login.json().token as string;
 }

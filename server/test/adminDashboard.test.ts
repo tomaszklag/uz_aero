@@ -236,14 +236,14 @@ describe('pulpit - stan silnika', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-air',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'takeoff',
       }),
     );
 
-    const row = rowOf((await dashboard(await token(app, 'TMK'))).json(), 'SP-AXA');
+    const row = rowOf((await dashboard(await token(app, 'AKO'))).json(), 'SP-AXA');
 
     expect(row.engine).not.toBeNull();
     expect(row.engine).toMatchObject({
@@ -267,14 +267,14 @@ describe('pulpit - stan silnika', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-ground',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'engine_stop',
       }),
     );
 
-    const row = rowOf((await dashboard(await token(app, 'TMK'))).json(), 'SP-AXA');
+    const row = rowOf((await dashboard(await token(app, 'AKO'))).json(), 'SP-AXA');
     expect(row.engine).toMatchObject({
       engineRunning: false,
       inFlight: false,
@@ -293,14 +293,14 @@ describe('pulpit - stan silnika', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-closed',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'day_close',
       }),
     );
 
-    const body = (await dashboard(await token(app, 'TMK'))).json();
+    const body = (await dashboard(await token(app, 'AKO'))).json();
     expect(rowOf(body, 'SP-AXA').engine).toBeNull();
     // Samolot, który nigdy nie latał, też jest na liście - pulpit pokazuje CAŁĄ flotę.
     expect(rowOf(body, 'SP-ANK').engine).toBeNull();
@@ -316,14 +316,14 @@ describe('pulpit - stan silnika', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-silent',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'preflight',
       }),
     );
 
-    const row = rowOf((await dashboard(await token(app, 'TMK'))).json(), 'SP-AXA');
+    const row = rowOf((await dashboard(await token(app, 'AKO'))).json(), 'SP-AXA');
     expect(row.engine).toMatchObject({ engineRunning: false, inFlight: false, flightsCount: 0 });
     expect(row.engine?.eventCount).toBe(2);
   });
@@ -342,7 +342,7 @@ describe('pulpit - kafle są SKRÓTEM do list, nie drugą definicją', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-a',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart: dayStart - 3 * DAY_MS,
         until: 'day_close',
@@ -377,7 +377,7 @@ describe('pulpit - kafle są SKRÓTEM do list, nie drugą definicją', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-a2',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart: dayStart - 2 * DAY_MS,
         mh: 1010,
@@ -385,7 +385,7 @@ describe('pulpit - kafle są SKRÓTEM do list, nie drugą definicją', () => {
       }),
     );
 
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
     const [dash, flags, openDays, exports, fleet] = await Promise.all([
       dashboard(t),
       getPanel(app, t, '/flags?status=open&limit=100'),
@@ -420,7 +420,7 @@ describe('pulpit - kolejka „wymaga uwagi"', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-stale',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart: dayStart - 3 * DAY_MS,
         until: 'engine_stop',
@@ -438,7 +438,7 @@ describe('pulpit - kolejka „wymaga uwagi"', () => {
       }),
     );
 
-    const body = (await dashboard(await token(app, 'TMK'))).json();
+    const body = (await dashboard(await token(app, 'AKO'))).json();
     const uuids = body.attention.staleOpenDays.map((s: { sessionUuid: string }) => s.sessionUuid);
 
     // Oba dni są OTWARTE i oba liczą się do kafla…
@@ -458,7 +458,7 @@ describe('pulpit - kolejka „wymaga uwagi"', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-mh-1',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart: dayStart - 2 * DAY_MS,
         mh: 1000,
@@ -471,7 +471,7 @@ describe('pulpit - kolejka „wymaga uwagi"', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-mh-2',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart: dayStart - DAY_MS,
         mh: 1010,
@@ -479,7 +479,7 @@ describe('pulpit - kolejka „wymaga uwagi"', () => {
       }),
     );
 
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
     const body = (await dashboard(t)).json();
     const inbox = (await getPanel(app, t, '/flags?status=open&limit=100')).json();
 
@@ -496,14 +496,14 @@ describe('pulpit - puls rejestru', () => {
 
     const events = flyingDay({
       sessionUuid: 'dash-pulse',
-      picId: 'TMK',
+      picId: 'AKO',
       aircraftId: 'SP-AXA',
       dayStart,
       until: 'day_close',
     });
     await ingest(app, events);
 
-    const body = (await dashboard(await token(app, 'TMK'))).json();
+    const body = (await dashboard(await token(app, 'AKO'))).json();
     expect(body.inflow.buckets).toHaveLength(12);
     expect(body.inflow.bucketMs).toBe(HOUR_MS);
     expect(body.inflow.toMs - body.inflow.fromMs).toBe(12 * HOUR_MS);
@@ -520,7 +520,7 @@ describe('pulpit - puls rejestru', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-r1',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'engine_stop',
@@ -540,7 +540,7 @@ describe('pulpit - puls rejestru', () => {
       }),
     );
 
-    const body = (await dashboard(await token(app, 'TMK'))).json();
+    const body = (await dashboard(await token(app, 'AKO'))).json();
     const recent = body.recent as {
       uuid: string;
       sessionUuid: string;
@@ -611,7 +611,7 @@ describe('pulpit - puls rejestru', () => {
       app,
       flyingDay({
         sessionUuid: 'dash-t1',
-        picId: 'TMK',
+        picId: 'AKO',
         aircraftId: 'SP-AXA',
         dayStart,
         until: 'day_close',
@@ -641,7 +641,7 @@ describe('pulpit - puls rejestru', () => {
       }),
     );
 
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
     const body = (await dashboard(t)).json();
     const list = (await getPanel(app, t, '/sessions?limit=50')).json();
     const today = list.items.filter((s: { sessionUuid: string }) =>
@@ -672,7 +672,7 @@ describe('pulpit - cisza jest odpowiedzią, nie awarią', () => {
     // więc odpowiedź musi być POPRAWNA i kompletna, a nie 500 ani brak pól.
     const { app, dashboard } = await harnessNow();
 
-    const res = await dashboard(await token(app, 'TMK'));
+    const res = await dashboard(await token(app, 'AKO'));
     expect(res.statusCode).toBe(200);
     const body = res.json();
 

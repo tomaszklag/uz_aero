@@ -47,7 +47,7 @@ describe('rejestracja e-mailem (§5.4a)', () => {
       `SELECT kind, pilot_id, email FROM password_reset_tokens ORDER BY kind`,
     );
     expect(rows).toEqual([
-      { kind: 'reset', pilot_id: 'TMK', email: null },
+      { kind: 'reset', pilot_id: 'AKO', email: null },
       { kind: 'signup', pilot_id: null, email: 'nowa@example.com' },
     ]);
   });

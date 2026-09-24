@@ -31,7 +31,7 @@ const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
   sync: { state: 'synced', outboxCount: 0, lastSyncAt: Date.UTC(2026, 8, 4, 9, 38), lastAttemptAt: null },
   operation: {
     sessionUuid: 'S1',
-    signature: 'SP-AXA/2026-09-04/TMK/2',
+    signature: 'SP-AXA/2026-09-04/AKO/2',
     aircraftId: 'a-uuid',
     aircraftReg: 'SP-AXA',
     operation: 'Skoki',
@@ -41,7 +41,7 @@ const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
   },
   pilot: {
     id: 'p-uuid',
-    code: 'TMK',
+    code: 'AKO',
     name: 'Adam Kowalski',
     orgId: 'org-a',
     orgName: 'Aeroklub Zielonogórski',
@@ -81,8 +81,8 @@ describe('kontekst zgłoszenia', () => {
     expect(rowOf(view, 'Miejsce')).toBe('OPERACJA (10)');
     expect(view.context.screenLabel).toBe(view.screen);
 
-    expect(rowOf(view, 'Operacja')).toBe('SP-AXA/2026-09-04/TMK/2');
-    expect(view.context.signature).toBe('SP-AXA/2026-09-04/TMK/2');
+    expect(rowOf(view, 'Operacja')).toBe('SP-AXA/2026-09-04/AKO/2');
+    expect(view.context.signature).toBe('SP-AXA/2026-09-04/AKO/2');
     expect(view.sessionUuid).toBe('S1');
     expect(view.context.sessionUuid).toBe('S1');
   });
@@ -172,7 +172,7 @@ describe('kontekst zgłoszenia', () => {
     expect(rowOf(view, 'Operacja')).toBeUndefined();
     expect(rowOf(view, 'Samolot · zadanie')).toBeUndefined();
     // …ale pilot, wydanie i czas zostają: bez nich zgłoszenie nie ma adresu.
-    expect(rowOf(view, 'Pilot')).toBe('TMK · Adam Kowalski');
+    expect(rowOf(view, 'Pilot')).toBe('AKO · Adam Kowalski');
     expect(view.sessionUuid).toBeNull();
   });
 
@@ -201,9 +201,9 @@ describe('kontekst zgłoszenia', () => {
 
   it('pilot bez profilu z cache jedzie samym kodem, a bez kodu - identyfikatorem', () => {
     const noName = buildBugContext(
-      input({ pilot: { id: 'p-uuid', code: 'TMK', name: null, orgId: null, orgName: null } }),
+      input({ pilot: { id: 'p-uuid', code: 'AKO', name: null, orgId: null, orgName: null } }),
     );
-    expect(rowOf(noName, 'Pilot')).toBe('TMK');
+    expect(rowOf(noName, 'Pilot')).toBe('AKO');
 
     const raw = buildBugContext(
       input({ pilot: { id: 'p-uuid', code: null, name: null, orgId: null, orgName: null } }),
@@ -219,7 +219,7 @@ describe('kontekst zgłoszenia', () => {
 
   it('bez klubu (aktualizacja z 1.x przed pierwszym odświeżeniem tokenów) wiersza nie ma', () => {
     const view = buildBugContext(
-      input({ pilot: { id: 'p-uuid', code: 'TMK', name: 'Adam', orgId: null, orgName: null } }),
+      input({ pilot: { id: 'p-uuid', code: 'AKO', name: 'Adam', orgId: null, orgName: null } }),
     );
     expect(view.rows.find((r) => r.label === 'Klub')).toBeUndefined();
   });

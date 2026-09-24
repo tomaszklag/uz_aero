@@ -11,7 +11,7 @@
  *
  *  1. **źródłem jest REJESTR, nie cache** - konkretny sąsiad tej maszyny w tej chwili
  *     (`before`), a nie „ostatni znany stan" sprzed nieznanej liczby cudzych lotów;
- *  2. **liczba niesie ŹRÓDŁO przy polu** („z poprzedniego lotu · AKO"), więc nie udaje
+ *  2. **liczba niesie ŹRÓDŁO przy polu** („z poprzedniego lotu · BNO"), więc nie udaje
  *     odczytu z przyrządu - a to było sednem tamtej pomyłki: „nikt jej potem nie odróżni";
  *  3. **podstawiamy WYŁĄCZNIE w pole, które nie jest decyzją pilota** - puste albo takie,
  *     w którym stoi nasza własna wcześniejsza podpowiedź.

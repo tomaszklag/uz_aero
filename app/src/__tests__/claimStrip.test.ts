@@ -40,8 +40,8 @@ const session = (over: Partial<SessionState> = {}): SessionState => ({
   ...emptySessionState(),
   sessionUuid: 's-axa',
   aircraftId: 'SP-AXA',
-  sessionPicId: 'TMK',
-  picId: 'TMK',
+  sessionPicId: 'AKO',
+  picId: 'AKO',
   claimedAt: at('08:04'),
   ...over,
 });

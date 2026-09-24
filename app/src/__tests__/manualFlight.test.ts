@@ -207,7 +207,7 @@ describe('wymóg załogi dwuosobowej na kroku 1 (issue #58 pkt 4)', () => {
       DUAL_REQUIRED_REASON,
     );
     expect(
-      manualFlightStepBlocker('aircraft', draft({ dualId: 'ako' }), limits(true)),
+      manualFlightStepBlocker('aircraft', draft({ dualId: 'bno' }), limits(true)),
     ).toBeNull();
   });
 
@@ -301,7 +301,7 @@ describe('toManualFlightInput - szkic → wejście komendy', () => {
   });
 
   function ids() {
-    return { sessionUuid: 'sess-1', picId: 'tmk' };
+    return { sessionUuid: 'sess-1', picId: 'ako' };
   }
 });
 
@@ -312,7 +312,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
 
   it('kolizja czasów z własną operacją doby - z lokalnego rejestru', () => {
     const day: PilotDay = {
-      ...emptyPilotDay('tmk', DAY),
+      ...emptyPilotDay('ako', DAY),
       sessions: [
         {
           index: 2,
@@ -337,7 +337,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
 
   it('operacja z innej godziny doby NIE ostrzega', () => {
     const day: PilotDay = {
-      ...emptyPilotDay('tmk', DAY),
+      ...emptyPilotDay('ako', DAY),
       sessions: [
         {
           index: 1,
@@ -492,7 +492,7 @@ describe('manualFlightDirty - czy jest co stracić', () => {
   it('każdy wybór pilota brudzi szkic', () => {
     const fresh = emptyManualFlightDraft(t(16));
     expect(manualFlightDirty({ ...fresh, aircraftId: 'sp-axa' }, DAY)).toBe(true);
-    expect(manualFlightDirty({ ...fresh, dualId: 'ako' }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, dualId: 'bno' }, DAY)).toBe(true);
     expect(manualFlightDirty({ ...fresh, operation: 'skoki' }, DAY)).toBe(true);
     expect(manualFlightDirty({ ...fresh, notes: 'z kartki' }, DAY)).toBe(true);
     expect(manualFlightDirty({ ...fresh, engineStart: t(9, 42) }, DAY)).toBe(true);
@@ -568,7 +568,7 @@ describe('manualFlightBlocker - bramka zapisu widzi wszystkie kroki', () => {
  * (ile z tego lądowań i startów) robi projekcja - tu pilnujemy DROGI tej liczby.
  */
 describe('touch and go we wpisie ręcznym', () => {
-  const ids = () => ({ sessionUuid: 'sess-1', picId: 'tmk' });
+  const ids = () => ({ sessionUuid: 'sess-1', picId: 'ako' });
   const withCircuits = (touchAndGo?: number) =>
     draft({
       flights: [{ id: 'f1', takeoff: t(10, 0), landing: t(10, 40), ...(touchAndGo != null ? { touchAndGo } : {}) }],

@@ -34,7 +34,7 @@ export interface BugRow {
   /**
    * Nazwa KLUBU zgłoszenia (issue #99 C6). Kolejka jest jedna dla całego serwera,
    * a kod pilota jest jedyny w klubie, nie na serwerze - więc bez tej kolumny dwa
-   * zgłoszenia od dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby.
+   * zgłoszenia od dwóch różnych `AKO` czytałyby się jak dwa zgłoszenia jednej osoby.
    */
   org: string;
   /** Kod pilota; nazwisko schodzi do drugiej linii komórki. */

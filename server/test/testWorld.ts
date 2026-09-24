@@ -5,7 +5,7 @@
  * i był wspólny z zaślepką telefonu. Produkcyjny seed stawia odtąd wyłącznie konto
  * superadministratora, więc scenariusz mieszka TU: testy dalej stoją na SP-AXA (wolny),
  * SP-FGK (zajmowany przez KRZ), SP-ANK (An-2 z wymogiem Duala) i SP-KWA (wyłączony)
- * oraz na kontach TMK/AKO/PWI/JSE/KRZ - a zmiany bootstrapu wdrożenia ich nie ruszają.
+ * oraz na kontach AKO/BNO/PWI/JSE/KRZ - a zmiany bootstrapu wdrożenia ich nie ruszają.
  *
  * ══ DWA KLUBY (wielofirmowość, issue #98 - warunek testu izolacji z epiku C) ══
  * `ORG_A` („Aeroklub Alfa") to dotychczasowy świat w całości. `ORG_B` („Aeroklub Beta")
@@ -79,7 +79,7 @@ const AIRCRAFT_B = [
 /**
  * OSOBY klubu A: DWA konta z wejściem do panelu i trzej zwykli piloci.
  *
- * AKO był szefem wyszkolenia do wycofania tej roli 2026-08-30 i schodzi na `admin`,
+ * BNO był szefem wyszkolenia do wycofania tej roli 2026-08-30 i schodzi na `admin`,
  * a nie na `pilot`, bo tak ocaleje najwięcej przypadków: odmowy „konto bez zdolności X"
  * dowodzi odtąd token zwykłego pilota (PWI/JSE/KRZ, brama pyta o ZDOLNOŚĆ, nie o wejście
  * do panelu), a drugiego konta panelowego nie da się niczym zastąpić tam, gdzie przekrój
@@ -94,8 +94,8 @@ const AIRCRAFT_B = [
  * równe historycznie i to jest wygoda testów, nie reguła produktu.
  */
 export const TEST_PILOTS = [
-  ['TMK', 'TMK', 'Adam Kowalski', 'adam@ninerdeck.pl', 'admin'],
-  ['AKO', 'AKO', 'Barbara Nowak', 'barbara@ninerdeck.pl', 'admin'],
+  ['AKO', 'AKO', 'Adam Kowalski', 'adam@ninerdeck.pl', 'admin'],
+  ['BNO', 'BNO', 'Barbara Nowak', 'barbara@ninerdeck.pl', 'admin'],
   ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@ninerdeck.pl', 'pilot'],
   ['JSE', 'JSE', 'Jan Serafin', 'jan@ninerdeck.pl', 'pilot'],
   ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@ninerdeck.pl', 'pilot'],

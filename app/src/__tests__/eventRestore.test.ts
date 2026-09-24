@@ -39,7 +39,7 @@ import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 
@@ -49,7 +49,7 @@ function remote(uuid: string, over: Partial<Omit<Event, 'syncedAt'>> = {}) {
     uuid,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type: 'session_claim',
     deviceTime: T0,
@@ -284,7 +284,7 @@ describe('EventRestore', () => {
       uuid: 'e-1',
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       type: 'session_claim',
       payload: { mode: 'free' },
     } as never);
@@ -343,7 +343,7 @@ describe('EventRestore', () => {
     expect(outcome).toEqual({ kind: 'pulled', fetched: 1, inserted: 1, complete: false });
     expect(await repo.getAllEvents()).toHaveLength(1);
     expect(await repo.getMeta(EVENT_RESTORE_META_CURSOR)).toBe(
-      JSON.stringify({ pilotId: 'TMK', cursor: 'c-1' }),
+      JSON.stringify({ pilotId: 'AKO', cursor: 'c-1' }),
     );
     // Przerwane odtworzenie NIE stempluje bramy wieku - dokończenie ma iść przy
     // najbliższej okazji, a nie za kwadrans.

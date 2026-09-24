@@ -18,7 +18,7 @@ function heldNoRun(over: Partial<SessionState> = {}): SessionState {
     ...emptySessionState(),
     sessionUuid: 's-fgk',
     aircraftId: 'SP-FGK',
-    sessionPicId: 'tmk',
+    sessionPicId: 'ako',
     claimedAt: T,
     fuel: { startL: 240, addedL: 0, endL: null, consumedL: null, lastReadingL: 240 },
     mh: { start: 2815.2, end: null, deltaH: null },

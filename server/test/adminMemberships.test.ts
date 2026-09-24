@@ -83,7 +83,7 @@ async function applicant(
 
 /** Identyfikator osoby nadaje serwer (uuid), więc czytamy go z kolejki zgłoszeń. */
 async function pilotIdOf(app: Harness['app'], subject: string): Promise<string> {
-  const token = await tokenOf(app, 'TMK');
+  const token = await tokenOf(app, 'AKO');
   const queue = await app.inject({
     method: 'GET',
     url: '/admin/api/memberships/pending',
@@ -144,7 +144,7 @@ describe('GET /admin/api/memberships/pending - kolejka zgłoszeń', () => {
     clock.advance(60_000);
     await applicant(app, 'drugi');
 
-    const res = await pending(app, await tokenOf(app, 'TMK'));
+    const res = await pending(app, await tokenOf(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     const items = res.json().items as { name: string; email: string; requestedAt: string }[];
@@ -159,7 +159,7 @@ describe('GET /admin/api/memberships/pending - kolejka zgłoszeń', () => {
   it('kandydat NIE stoi na liście członków - kolejka i lista to dwa byty', async () => {
     const { app } = await testHarness();
     await applicant(app, 'kandydat');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     const list = await app.inject({
       method: 'GET',
@@ -183,7 +183,7 @@ describe('GET /admin/api/memberships/pending - kolejka zgłoszeń', () => {
 
   it('kolejka jest PUSTA, dopóki nikt nie wpisał kodu', async () => {
     const { app } = await testHarness();
-    expect((await pending(app, await tokenOf(app, 'TMK'))).json()).toEqual({ items: [] });
+    expect((await pending(app, await tokenOf(app, 'AKO'))).json()).toEqual({ items: [] });
   });
 });
 
@@ -193,7 +193,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     // tokeny KLUBU (200) z kodem z członkostwa.
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'nowy');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     const res = await approve(app, token, pilotId, { code: 'nwy', capabilities: [] });
 
@@ -219,14 +219,14 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     );
     // `joined_via` zostaje `code`: zatwierdzenie nie zmienia tego, JAK ten człowiek
     // trafił do klubu - a trafił kodem.
-    expect(rows[0]).toMatchObject({ status: 'active', joined_via: 'code', decided_by: 'TMK' });
+    expect(rows[0]).toMatchObject({ status: 'active', joined_via: 'code', decided_by: 'AKO' });
   });
 
   it('wpis audytu niesie KOMPLET tożsamości z Google plus nadany kod i rolę', async () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'sowa');
 
-    await approve(app, await tokenOf(app, 'TMK'), pilotId, { code: 'SOW', capabilities: CLUB_CAPABILITIES });
+    await approve(app, await tokenOf(app, 'AKO'), pilotId, { code: 'SOW', capabilities: CLUB_CAPABILITIES });
 
     const rows = await auditRows(db);
     expect(rows).toHaveLength(1);
@@ -242,9 +242,9 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
   it('kod zajęty w tym klubie → 409 z nazwą pola, zgłoszenie zostaje w kolejce', async () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'kolizja');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
-    const res = await approve(app, token, pilotId, { code: 'AKO', capabilities: [] });
+    const res = await approve(app, token, pilotId, { code: 'BNO', capabilities: [] });
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'conflict', field: 'code' });
@@ -257,9 +257,9 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'tezako');
 
-    // `AKO` jest zajęte w Alfie, ale nie w Becie.
+    // `BNO` jest zajęte w Alfie, ale nie w Becie.
     const inBeta = await approve(app, await tokenOf(app, 'BAD'), pilotId, {
-      code: 'AKO',
+      code: 'BNO',
       capabilities: [],
     });
     // …tylko że ten człowiek zgłosił się do Alfy: dla Bety jego zgłoszenia NIE MA.
@@ -269,7 +269,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
   it('drugie zatwierdzenie → 409 `wrong_status` ze STANEM, nie ciche 200', async () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'dwarazy');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     expect((await approve(app, token, pilotId, { code: 'DWA', capabilities: [] })).statusCode).toBe(200);
 
     const again = await approve(app, token, pilotId, { code: 'DW2', capabilities: [] });
@@ -285,7 +285,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
     const { pilotId } = await applicant(app, 'zablokowany');
     await db.query('UPDATE pilots SET active = FALSE WHERE id = $1', [pilotId]);
 
-    const res = await approve(app, await tokenOf(app, 'TMK'), pilotId, {
+    const res = await approve(app, await tokenOf(app, 'AKO'), pilotId, {
       code: 'ZAB',
       capabilities: [],
     });
@@ -297,7 +297,7 @@ describe('POST /admin/api/memberships/:id/approve - zatwierdzenie', () => {
   it('bez kodu albo bez zakresu → 400; zgłoszenia nieznanego → 404', async () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'walidacja');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     expect((await approve(app, token, pilotId, { capabilities: [] })).statusCode).toBe(400);
     expect((await approve(app, token, pilotId, { code: 'WAL' })).statusCode).toBe(400);
@@ -327,7 +327,7 @@ describe('POST /admin/api/memberships/:id/reject - odrzucenie', () => {
     const { app, db } = await testHarness();
     const { pilotId, personToken } = await applicant(app, 'odmowa');
 
-    const res = await reject(app, await tokenOf(app, 'TMK'), pilotId, {
+    const res = await reject(app, await tokenOf(app, 'AKO'), pilotId, {
       reason: 'zgłoś się adresem klubowym podanym przy zapisie na kurs',
     });
 
@@ -354,7 +354,7 @@ describe('POST /admin/api/memberships/:id/reject - odrzucenie', () => {
   it('powód jest WYMAGANY - pusty i jednoznakowy odbijają się o 400', async () => {
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'bezpowodu');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     expect((await reject(app, token, pilotId, {})).statusCode).toBe(400);
     expect((await reject(app, token, pilotId, { reason: '   ' })).statusCode).toBe(400);
@@ -364,7 +364,7 @@ describe('POST /admin/api/memberships/:id/reject - odrzucenie', () => {
   it('odrzucenie po zatwierdzeniu → 409 `wrong_status`, członkostwo zostaje aktywne', async () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'juzwklubie');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     await approve(app, token, pilotId, { code: 'JUZ', capabilities: [] });
 
     const res = await reject(app, token, pilotId, { reason: 'zmiana decyzji' });
@@ -383,7 +383,7 @@ describe('POST /admin/api/memberships/:id/reopen - cofnięcie odrzucenia', () =>
   it('wraca do kolejki i CZYŚCI decyzję - powód, chwilę i autora', async () => {
     const { app, db } = await testHarness();
     const { pilotId, personToken } = await applicant(app, 'pomylka');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     await reject(app, token, pilotId, { reason: 'pomyłka administratora' });
 
     const res = await reopen(app, token, pilotId);
@@ -431,7 +431,7 @@ describe('POST /admin/api/memberships/:id/reopen - cofnięcie odrzucenia', () =>
     const { app } = await testHarness();
     const { pilotId } = await applicant(app, 'czeka');
 
-    const res = await reopen(app, await tokenOf(app, 'TMK'), pilotId);
+    const res = await reopen(app, await tokenOf(app, 'AKO'), pilotId);
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'wrong_status', status: 'pending' });
@@ -440,7 +440,7 @@ describe('POST /admin/api/memberships/:id/reopen - cofnięcie odrzucenia', () =>
   it('po cofnięciu zgłoszenie da się zatwierdzić - dwustopniowo, z dwoma wpisami', async () => {
     const { app, db } = await testHarness();
     const { pilotId } = await applicant(app, 'wrocil');
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     await reject(app, token, pilotId, { reason: 'najpierw odmowa' });
     await reopen(app, token, pilotId);
 

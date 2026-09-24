@@ -17,7 +17,7 @@ import { BugButton } from '../bug/BugButton';
 
 export interface AppBarProps {
   /**
-   * Tytuł paska: SYGNATURA operacji („SP-AXA/2026-09-01/AKO/1"), a gdy operacja
+   * Tytuł paska: SYGNATURA operacji („SP-AXA/2026-09-01/BNO/1"), a gdy operacja
    * numeru jeszcze nie ma (przed uruchomieniem silnika) - sam znak samolotu.
    * Sygnatura ZASTĘPUJE znak, bo się od niego zaczyna (issue #68, reguła z DayCard);
    * surowego identyfikatora maszyny tu nie podajemy nigdy (uwaga z urządzenia,

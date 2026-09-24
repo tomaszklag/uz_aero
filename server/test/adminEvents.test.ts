@@ -239,7 +239,7 @@ describe('rejestr pokazuje to, co przyszło - bez interpretacji', () => {
     const { app, db } = await testHarness();
     await rawEvent(db, { uuid: 'ev-obcy', type: 'jakis_nowy_typ', payload: { x: 1 } });
 
-    const res = await getEvents(app, await token(app, 'TMK'));
+    const res = await getEvents(app, await token(app, 'AKO'));
     expect(res.statusCode).toBe(200);
     expect(entry(res.json() as PageDto, 'ev-obcy').type).toBe('jakis_nowy_typ');
   });
@@ -253,7 +253,7 @@ describe('rejestr pokazuje to, co przyszło - bez interpretacji', () => {
     await rawEvent(db, { uuid: 'ev-num', type: 'taxi', payload: 42 });
     await rawEvent(db, { uuid: 'ev-nul', type: 'taxi', payload: null });
 
-    const page = (await getEvents(app, await token(app, 'TMK'))).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'))).json() as PageDto;
     expect(entry(page, 'ev-tab').payload).toEqual([1, 'dwa', null]);
     expect(entry(page, 'ev-num').payload).toBe(42);
     // `null` NIE zamienia się w pusty obiekt - to dwie różne odpowiedzi na pytanie
@@ -272,7 +272,7 @@ describe('rejestr pokazuje to, co przyszło - bez interpretacji', () => {
       payload: { __proto__: 'nie-prototyp', constructor: 'tekst', hasOwnProperty: 1, ok: 'tak' },
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'))).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'))).json() as PageDto;
     const payload = entry(page, 'ev-proto').payload as Record<string, unknown>;
     expect(payload['constructor']).toBe('tekst');
     expect(payload['hasOwnProperty']).toBe(1);
@@ -290,7 +290,7 @@ describe('rejestr pokazuje to, co przyszło - bez interpretacji', () => {
       picId: 'XXX',
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'))).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'))).json() as PageDto;
     const row = entry(page, 'ev-sierota');
     expect(row.reg).toBeNull();
     expect(row.picName).toBeNull();
@@ -310,7 +310,7 @@ describe('dwa zegary: brak fixa to nie zero', () => {
       gpsTime: null,
     });
 
-    const row = entry((await getEvents(app, await token(app, 'TMK'))).json() as PageDto, 'ev-bezfixa');
+    const row = entry((await getEvents(app, await token(app, 'AKO'))).json() as PageDto, 'ev-bezfixa');
     // `null`, nie `0`: zero byłoby twierdzeniem, że zegary się zgadzały.
     expect(row.driftMs).toBeNull();
     expect(row.gpsTime).toBeNull();
@@ -337,7 +337,7 @@ describe('dwa zegary: brak fixa to nie zero', () => {
       gpsTime: at(13, 34, 47),
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'))).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'))).json() as PageDto;
     expect(entry(page, 'ev-rozjazd').driftMs).toBe(720_000);
     expect(entry(page, 'ev-spoznia').driftMs).toBe(720_000);
     expect(entry(page, 'ev-rozjazd').effectiveClock).toBe('gps');
@@ -376,7 +376,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
     // Wada z A05 w czystej postaci: zawężenie stało PO `LIMIT`-cie, więc chip pokazywał
     // zero i wyglądało to na dobrą wiadomość.
     const { app } = await withCounts();
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     const full = (await getEvents(app, t, '?limit=500')).json() as PageDto;
     const clipped = (await getEvents(app, t, '?limit=1')).json() as PageDto;
@@ -388,7 +388,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
 
   it('liczy „bez fixa" i „rozjazd zegarów" osobno, progiem z DOMENY', async () => {
     const { app } = await withCounts();
-    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto;
 
     expect(page.counts?.withoutGpsFix).toBe(2);
     // `ev-c3` przekracza próg, `ev-c4` stoi dokładnie na nim.
@@ -406,7 +406,7 @@ describe('liczniki opisują ZAKRES ZAPYTANIA, nie widoczne okno', () => {
 
   it('liczniki respektują FILTR, a strona kursorowa oddaje `null`, nie zero', async () => {
     const { app } = await withCounts();
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     const narrowed = (await getEvents(app, t, '?type=taxi&limit=500')).json() as PageDto;
     expect(narrowed.counts?.total).toBe(4);
@@ -433,7 +433,7 @@ describe('kursor keyset: granica strony przy IDENTYCZNYM `received_at`', () => {
     // zobaczyć akurat tego, którego szuka.
     const { app, db } = await testHarness();
     await ingest(app, flyingDay());
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     const stamps = await db.query<{ n: string }>(
       'SELECT COUNT(DISTINCT received_at) AS n FROM events',
@@ -461,7 +461,7 @@ describe('kursor keyset: granica strony przy IDENTYCZNYM `received_at`', () => {
 
   it('kursor NIECZYTELNY to 400, nie 500 i nie cichy powrót na początek', async () => {
     const { app } = await testHarness();
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     for (const bad of ['nie-base64', Buffer.from('{"k1":"abc","k2":"x","d":"desc"}').toString('base64url')]) {
       const res = await getEvents(app, t, `?cursor=${encodeURIComponent(bad)}`);
@@ -485,7 +485,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     // Ciche zignorowanie pokazałoby PEŁNY rejestr pod etykietą zawężenia, czyli
     // skłamałoby o tym, na co człowiek patrzy.
     const { app } = await testHarness();
-    const res = await getEvents(app, await token(app, 'TMK'), '?type=nieistniejacy');
+    const res = await getEvents(app, await token(app, 'AKO'), '?type=nieistniejacy');
     expect(res.statusCode).toBe(400);
   });
 
@@ -494,7 +494,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     await ingest(app, flyingDay());
 
     const page = (
-      await getEvents(app, await token(app, 'TMK'), '?type=takeoff&type=landing')
+      await getEvents(app, await token(app, 'AKO'), '?type=takeoff&type=landing')
     ).json() as PageDto;
     expect(page.items.map((i) => i.type).sort()).toEqual(['landing', 'takeoff']);
   });
@@ -502,7 +502,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
   it('pilot dopasowuje PIC-a ALBO Duala - dzień szkolny należy do obu', async () => {
     const { app, db } = await testHarness();
     await rawEvent(db, { uuid: 'ev-dual', type: 'taxi', payload: {}, picId: 'KRZ', dualId: 'JSE' });
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     const asPic = (await getEvents(app, t, '?pilotId=KRZ')).json() as PageDto;
     const asDual = (await getEvents(app, t, '?pilotId=JSE')).json() as PageDto;
@@ -517,11 +517,11 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
       uuid: 'ev-panel',
       type: 'event_correction',
       payload: { targetUuid: uuidOf('session_claim'), action: 'void' },
-      sourceDevice: 'admin:TMK',
+      sourceDevice: 'admin:AKO',
       sessionUuid: 'sess-inna',
       aircraftId: 'SP-FGK',
     });
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     expect(((await getEvents(app, t, '?uuid=ev-panel')).json() as PageDto).items).toHaveLength(1);
     expect(
@@ -529,7 +529,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
     ).toHaveLength(1);
     expect(((await getEvents(app, t, '?aircraftId=SP-FGK')).json() as PageDto).items).toHaveLength(1);
     expect(
-      ((await getEvents(app, t, '?sourceDevice=admin%3ATMK')).json() as PageDto).items,
+      ((await getEvents(app, t, '?sourceDevice=admin%3AAKO')).json() as PageDto).items,
     ).toHaveLength(1);
   });
 
@@ -541,7 +541,7 @@ describe('filtry: nieznana wartość to 400, nie ciche zignorowanie', () => {
       payload: {},
       receivedAt: new Date(Date.UTC(2026, 0, 5, 23, 59, 59)),
     });
-    const t = await token(app, 'TMK');
+    const t = await token(app, 'AKO');
 
     // `do=2026-01-05` obejmuje CAŁĄ dobę - inaczej „od 1 do 5" gubiłoby ostatni dzień.
     const inside = (await getEvents(app, t, '?from=2026-01-05&to=2026-01-05')).json() as PageDto;
@@ -563,12 +563,12 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       uuid: 'ev-void',
       type: 'event_correction',
       payload: { targetUuid: target, action: 'void', reason: 'nie było' },
-      sourceDevice: 'admin:TMK',
+      sourceDevice: 'admin:AKO',
       deviceTime: at(20, 0),
       gpsTime: at(20, 0),
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto;
     expect(entry(page, target).voided).toBe(true);
     expect(entry(page, target).adminCorrected).toBe(true);
     // Korekta korekty nie istnieje - wiersz `event_correction` nigdy nie jest
@@ -599,7 +599,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     });
 
     const row = entry(
-      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto,
       target,
     );
     expect(row.voided).toBe(false);
@@ -628,7 +628,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     });
 
     const page = (
-      await getEvents(app, await token(app, 'TMK'), '?from=2026-01-05&to=2026-01-05')
+      await getEvents(app, await token(app, 'AKO'), '?from=2026-01-05&to=2026-01-05')
     ).json() as PageDto;
     expect(page.items.map((i) => i.uuid)).toEqual(['ev-daleki']);
     expect(entry(page, 'ev-daleki').voided).toBe(true);
@@ -651,7 +651,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     });
 
     const before = entry(
-      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto,
       'ev-bez-fixa',
     );
     expect(before.effectiveTime).toBe(at(13, 13, 33));
@@ -666,7 +666,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     });
 
     const after = entry(
-      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto,
       'ev-bez-fixa',
     );
     expect(after.effectiveTime).toBe(at(13, 20));
@@ -689,7 +689,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       uuid: 'ev-p1',
       type: 'event_correction',
       payload: { targetUuid: target, action: 'void' },
-      sourceDevice: 'admin:TMK',
+      sourceDevice: 'admin:AKO',
       deviceTime: at(20, 0),
       gpsTime: at(20, 0),
     });
@@ -697,13 +697,13 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       uuid: 'ev-p2',
       type: 'event_correction',
       payload: { targetUuid: target, action: 'retime', newTime: at(7, 10) },
-      sourceDevice: 'admin:TMK',
+      sourceDevice: 'admin:AKO',
       deviceTime: at(21, 0),
       gpsTime: at(21, 0),
     });
 
     const row = entry(
-      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto,
       target,
     );
     expect(row.voided).toBe(false);
@@ -726,12 +726,12 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       uuid: 'ev-z-panelu',
       type: 'event_correction',
       payload: { targetUuid: target, action: 'void' },
-      sourceDevice: 'admin:TMK',
+      sourceDevice: 'admin:AKO',
       deviceTime: at(20, 0),
       gpsTime: at(20, 0),
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto;
 
     // Zdarzenie przyszło z telefonu, choć jego korektę zapisał panel.
     expect(entry(page, target).writtenByPanel).toBe(false);
@@ -776,7 +776,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     });
 
     const page = (
-      await getEvents(app, await token(app, 'TMK'), '?from=2026-01-05&to=2026-01-05')
+      await getEvents(app, await token(app, 'AKO'), '?from=2026-01-05&to=2026-01-05')
     ).json() as PageDto;
     expect(entry(page, 'ev-remis').voided).toBe(false);
     expect(entry(page, 'ev-remis').correctedTime).toBe(at(9, 21));
@@ -799,7 +799,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       gpsTime: at(20, 0),
     });
 
-    const res = await getEvents(app, await token(app, 'TMK'), '?limit=500');
+    const res = await getEvents(app, await token(app, 'AKO'), '?limit=500');
     expect(res.statusCode).toBe(200);
 
     const page = res.json() as PageDto;
@@ -826,7 +826,7 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
       gpsTime: at(20, 0),
     });
 
-    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+    const page = (await getEvents(app, await token(app, 'AKO'), '?limit=500')).json() as PageDto;
     expect(entry(page, target).correctedTime).toBeNull();
     expect(entry(page, target).voided).toBe(false);
     expect(entry(page, target).effectiveTime).toBe(at(6, 30));

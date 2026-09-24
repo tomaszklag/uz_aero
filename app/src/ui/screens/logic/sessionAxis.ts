@@ -651,7 +651,7 @@ function jumpersLine(jumpers: EventOf<'drop'>['payload']['jumpers']): string | n
 }
 
 /**
- * Podpis zmiany załogi: „PIC: KRZ → TMK", „DUAL: - → ADM".
+ * Podpis zmiany załogi: „PIC: KRZ → AKO", „DUAL: - → ADM".
  *
  * Myślnik po którejś stronie znaczy, że fotela wtedy nie było zajętego (dodanie albo
  * zdjęcie Duala) - nie że pilota nie znamy.

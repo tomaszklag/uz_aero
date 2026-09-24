@@ -151,7 +151,7 @@ async function threeDays() {
     flyingDay({
       sessionUuid: 'st-sky',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dayStart: D20,
       operation: 'skoki',
       client: 'SKY CAMP',
@@ -181,13 +181,13 @@ async function threeDays() {
     flyingDay({
       sessionUuid: 'st-open',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dayStart: D22,
       close: false,
     }),
   );
 
-  const admin = await token(app, 'TMK');
+  const admin = await token(app, 'AKO');
   const stats = async (query = '?from=2026-06-19&to=2026-06-22'): Promise<AdminStatsReport> => {
     const res = await app.inject({
       method: 'GET',
@@ -209,7 +209,7 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
     expect(report.totals).toMatchObject({
       sessions: 2,
       aircraft: 2,
-      // PIC ∪ Dual: TMK, PWI i JSE - dzień szkolny należy do OBU członków załogi.
+      // PIC ∪ Dual: AKO, PWI i JSE - dzień szkolny należy do OBU członków załogi.
       pilots: 3,
       blockMs: 2 * BLOCK_MS,
       flightMs: 2 * FLIGHT_MS,
@@ -247,7 +247,7 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
     // Bloki obu operacji są tu RÓWNE, więc rozstrzyga tie-breaker alfabetyczny.
     expect(report.operations.map((r) => r.operation)).toEqual(['ferry', 'skoki']);
     // Bloki obu PIC-ów są równe - rozstrzyga tie-breaker po identyfikatorze konta.
-    expect(report.pilots.map((r) => r.code)).toEqual(['PWI', 'TMK']);
+    expect(report.pilots.map((r) => r.code)).toEqual(['AKO', 'PWI']);
     expect(report.pilots.find((r) => r.code === 'PWI')).toMatchObject({
       regs: ['SP-FGK'],
       sessions: 1,
@@ -282,7 +282,7 @@ describe('A10 · dni otwarte i oś zakresu', () => {
         uuid: 'st-9999-day_close',
         sessionUuid: 'st-open',
         aircraftId: 'SP-AXA',
-        picId: 'TMK',
+        picId: 'AKO',
         dualId: null,
         type: 'day_close',
         deviceTime: D22 + 16 * HOUR_MS,
@@ -596,7 +596,7 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
     const base = {
       sessionUuid: 'st-noball',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       schemaVersion: 1,
     };
@@ -669,7 +669,7 @@ describe('A10 · brama i walidacja', () => {
     const panel = await app.inject({
       method: 'GET',
       url: '/admin/api/stats',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
     expect(panel.statusCode).toBe(200);
 

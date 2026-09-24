@@ -64,11 +64,11 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
   // wysyłana lista jest zawsze tą jedną - i to ją przybija ten przypadek.
   it('administrator dostaje sesję: ciasteczko HttpOnly + tożsamość i zdolności w ciele', async () => {
     const { app } = await testHarness();
-    const res = await panelLogin(app, 'TMK');
+    const res = await panelLogin(app, 'AKO');
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
-      pilot: { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' },
+      pilot: { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' },
       // Klub sesji (wielofirmowość): panel pisze go w kolumnie bocznej i pyta nim
       // o każdą listę - kod i rola wyżej są kodem i rolą W TYM klubie.
       org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
@@ -94,14 +94,14 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         'thresholds.manage',
       ],
       // Zakresy sesji (issue #101, E2) - z nich panel wie, czy kafel klubu w kolumnie
-      // bocznej jest linkiem. TMK jest administratorem wyłącznie w Alfie, więc lista
+      // bocznej jest linkiem. AKO jest administratorem wyłącznie w Alfie, więc lista
       // ma jedną pozycję i przełączać nie ma dokąd.
       scopes: {
         clubs: [
           {
             org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
-            code: 'TMK',
-            // Karta wyboru klubu pisze drugą linią ZAKRES („administrator · Twój kod TMK"),
+            code: 'AKO',
+            // Karta wyboru klubu pisze drugą linią ZAKRES („administrator · Twój kod AKO"),
             // a nazwę składa panel ze zbioru - serwer nie zna języka interfejsu.
             capabilities: ADMIN_SCOPE,
           },
@@ -119,7 +119,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
 
   it('ciasteczko ma komplet atrybutów z §8.2 - HttpOnly, Secure, SameSite=Strict, Path=/admin', () => {
     return testHarness().then(async ({ app }) => {
-      const header = setCookieHeader(await panelLogin(app, 'TMK'));
+      const header = setCookieHeader(await panelLogin(app, 'AKO'));
 
       expect(header).toMatch(/^ninerdeck_admin=/);
       expect(header).toMatch(/HttpOnly/i);
@@ -139,7 +139,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     // aplikacji.
     const { app } = await testHarness();
 
-    const badToken = await panelLogin(app, 'TMK', 'nie-jest-tokenem');
+    const badToken = await panelLogin(app, 'AKO', 'nie-jest-tokenem');
     const alsoBad = await panelLogin(app, 'NIE-MA-TAKIEGO', 'tez-nie-jest');
 
     expect(badToken.statusCode).toBe(401);
@@ -210,17 +210,17 @@ describe('konto bez `panel.access` nie dostaje sesji panelu', () => {
 describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () => {
   it('`GET /admin/api/me` działa na samym ciasteczku (JS panelu nie zna tokenu)', async () => {
     const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
 
     expect(me.statusCode).toBe(200);
-    expect(me.json()).toMatchObject({ pilot: { id: 'TMK', name: 'Adam Kowalski' } });
+    expect(me.json()).toMatchObject({ pilot: { id: 'AKO', name: 'Adam Kowalski' } });
   });
 
   it('ciasteczko autoryzuje też listy panelu - brama jest JEDNA', async () => {
     const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const sessions = await app.inject({
       method: 'GET',
@@ -235,7 +235,7 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     const phone = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
 
     const me = await app.inject({
@@ -244,7 +244,7 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
       headers: { authorization: `Bearer ${phone.json().token}` },
     });
     expect(me.statusCode).toBe(200);
-    expect(me.json().pilot.id).toBe('TMK');
+    expect(me.json().pilot.id).toBe('AKO');
   });
 
   // Druga połowa reguły „ciasteczko jest kanałem, nie awansem" - sesja panelu roli
@@ -255,7 +255,7 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     // Żądanie niosące oba pochodzi z przeglądarki z doklejonym `Authorization`.
     // Kolejność jest zapisana raz (`tokenFromRequest`), więc nie zależy od trasy.
     const { app } = await testHarness();
-    const adminCookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const adminCookie = sessionCookie(await panelLogin(app, 'AKO'));
     const pilot = await app.inject({
       method: 'POST',
       url: '/auth/google',
@@ -294,20 +294,20 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
  * zrealizował, też ma ginąć razem z dostępem.
  */
 describe('przełączenie zakresu sesji panelu', () => {
-  /** Członkostwo `admin` w Becie dla TMK - świat bazowy nie ma nikogo w dwóch klubach. */
+  /** Członkostwo `admin` w Becie dla AKO - świat bazowy nie ma nikogo w dwóch klubach. */
   // Członkostwo PLUS zakres: po epiku #197 sama wstawka do `memberships` daje PILOTA,
   // bo zdolności są osobnymi wierszami. Bez nich brama odpowiada 404 na przełączenie -
   // i słusznie, bo klub, w którym ktoś nie ma wejścia do panelu, dla panelu nie istnieje.
   const makeAdminInBeta = async (db: Harness['db']) => {
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-       VALUES ($1, 'TMK', 'TMB', 'active', 'platform')`,
+       VALUES ($1, 'AKO', 'AKB', 'active', 'platform')`,
       [ORG_B],
     );
     for (const capability of ADMIN_SCOPE) {
       await db.query(
         `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ($1, $2, $3)`,
-        [ORG_B, 'TMK', capability],
+        [ORG_B, 'AKO', capability],
       );
     }
   };
@@ -323,14 +323,14 @@ describe('przełączenie zakresu sesji panelu', () => {
   it('administrator w dwóch klubach dostaje NOWĄ sesję dla wybranego klubu', async () => {
     const { app, db } = await testHarness();
     await makeAdminInBeta(db);
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const res = await switchTo(app, cookie, ORG_B);
 
     expect(res.statusCode).toBe(200);
     // Klub, kod i rola są klubu DOCELOWEGO - w Becie ta sama osoba ma inny kod.
     expect(res.json()).toMatchObject({
-      pilot: { id: 'TMK', code: 'TMB' },
+      pilot: { id: 'AKO', code: 'AKB' },
       org: { id: ORG_B, name: 'Aeroklub Beta' },
     });
     // Zakresy niosą OBA kluby - kolumna boczna ma dokąd prowadzić w każdą stronę.
@@ -352,10 +352,10 @@ describe('przełączenie zakresu sesji panelu', () => {
     // członkostwa nie ma wcale: obie drogi mają dać TĘ SAMĄ odpowiedź.
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-       VALUES ($1, 'TMK', 'TMB', 'active', 'platform')`,
+       VALUES ($1, 'AKO', 'AKB', 'active', 'platform')`,
       [ORG_B],
     );
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const res = await switchTo(app, cookie, ORG_B);
 
@@ -370,14 +370,14 @@ describe('przełączenie zakresu sesji panelu', () => {
   it('CIASTECZKO SPRZED WYŁĄCZENIA CZŁONKOSTWA nie mieni nowej sesji', async () => {
     const { app, db, clock } = await testHarness();
     await makeAdminInBeta(db);
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     // Administrator Bety wyłącza to członkostwo - `credentials_valid_from` przesuwa się
     // na teraz, czyli ZA chwilę wydania ciasteczka.
     clock.advance(60_000);
     await db.query(
       `UPDATE memberships SET status = 'disabled', credentials_valid_from = $2
-       WHERE org_id = $1 AND pilot_id = 'TMK'`,
+       WHERE org_id = $1 AND pilot_id = 'AKO'`,
       [ORG_B, clock.now()],
     );
 
@@ -391,8 +391,8 @@ describe('przełączenie zakresu sesji panelu', () => {
   it('superadministrator schodzi na klub i wraca na PLATFORMĘ tym samym ciasteczkiem', async () => {
     const { app, db } = await testHarness();
     // Operator, który jest też administratorem Alfy - dokładnie przypadek 00A′ z makiety.
-    await db.query(`UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'`);
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    await db.query(`UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'AKO'`);
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     // Logowanie wybiera KLUB (członkostwo admin wygrywa), a platforma jest zakresem obok.
     const club = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
@@ -411,7 +411,7 @@ describe('przełączenie zakresu sesji panelu', () => {
 
   it('administrator BEZ roli platformowej nie ma zakresu platformy (404, nie 403)', async () => {
     const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const res = await switchTo(app, cookie, null);
 
@@ -435,7 +435,7 @@ describe('przełączenie zakresu sesji panelu', () => {
 describe('wylogowanie', () => {
   it('kasuje ciasteczko - przeglądarka dostaje pustą wartość i wygasłą datę', async () => {
     const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const out = await app.inject({
       method: 'POST',
@@ -468,7 +468,7 @@ describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/login',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
 
     expect(res.statusCode).toBe(403);
@@ -478,7 +478,7 @@ describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
 
   it('ODCZYT panelu nagłówka nie wymaga - GET nie ma skutków ubocznych', async () => {
     const { app } = await testHarness();
-    const cookie = sessionCookie(await panelLogin(app, 'TMK'));
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     expect((await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } })).statusCode).toBe(200);
   });
@@ -490,7 +490,7 @@ describe('CSRF: mutacje panelu wymagają własnego nagłówka', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(res.statusCode).toBe(200);
   });

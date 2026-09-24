@@ -17,7 +17,7 @@ import type { RemoteReadingsChain } from '../application';
 const chain: RemoteReadingsChain = {
   before: {
     sessionUuid: 'rano',
-    picId: 'ako',
+    picId: 'bno',
     at: Date.UTC(2026, 7, 16, 9, 0),
     fuelL: 140,
     mh: 1232,
@@ -70,7 +70,7 @@ describe('fuelSheetWarning - ciągłość z poprzednikiem', () => {
     // Sedno zgłoszenia: „warning, jeśli wpiszę mniejszą wartość w Paliwo zastane niż
     // wynika to ze zdania samolotu przez poprzednika".
     const w = fuelSheetWarning('found', 100, fuelCtx());
-    expect(w).toContain('AKO');
+    expect(w).toContain('BNO');
     expect(w).toContain('140 L');
     expect(w).toContain('100 L');
   });
@@ -115,7 +115,7 @@ describe('mhSheetWarning', () => {
 
   it('rozjazd z poprzednikiem podaje jego odczyt i kto go zostawił', () => {
     const w = mhSheetWarning('before', 1230, mhCtx());
-    expect(w).toContain('AKO');
+    expect(w).toContain('BNO');
     expect(w).toContain('1232');
   });
 

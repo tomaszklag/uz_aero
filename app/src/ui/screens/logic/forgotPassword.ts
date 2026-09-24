@@ -15,7 +15,7 @@ import { looksLikeEmail } from './passwordLogin';
  *
  * Po kodzie pilota pole startuje puste i to nie jest niedbałość: kod nie jest adresem,
  * a serwer z kodu adresu nie zdradzi - odpowiedź na wysyłkę nie może mówić, czy ktoś
- * taki istnieje. Podstawienie „AKO" do pola e-mail byłoby wpisem, który na pewno nie
+ * taki istnieje. Podstawienie „BNO" do pola e-mail byłoby wpisem, który na pewno nie
  * zadziała, postawionym tam, gdzie pilot go nie oczekuje.
  */
 export const emailPrefill = (login: string): string => (looksLikeEmail(login) ? login.trim() : '');

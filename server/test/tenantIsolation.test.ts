@@ -142,7 +142,7 @@ const B_MARKERS = [
   'SP-BBB',
   'sess-b',
   'sess-pwi-b',
-  // Nazwisko i adres, nie samo imię: w klubie A jest Barbara Nowak (AKO).
+  // Nazwisko i adres, nie samo imię: w klubie A jest Barbara Nowak (BNO).
   'Adamska',
   'barbara@beta.pl',
   'Bartosz',
@@ -167,7 +167,7 @@ const B_MARKERS = [
 interface World {
   app: App;
   db: Harness['db'];
-  /** Administrator klubu A (TMK) - token telefonu, który otwiera też trasy panelu. */
+  /** Administrator klubu A (AKO) - token telefonu, który otwiera też trasy panelu. */
   a: string;
   /** Administrator klubu B (BAD). */
   b: string;
@@ -193,7 +193,7 @@ async function twoClubs(): Promise<World> {
   const { app, db } = harness;
   await seedBetaFleet(db);
 
-  const a = await tokenOf(app, 'TMK');
+  const a = await tokenOf(app, 'AKO');
   const b = await tokenOf(app, 'BAD');
   const bpi = await tokenOf(app, 'BPI');
 
@@ -218,7 +218,7 @@ async function twoClubs(): Promise<World> {
 
   const post = (token: string, events: unknown[]) =>
     app.inject({ method: 'POST', url: '/events', headers: bearer(token), payload: { events } });
-  expect((await post(a, day('sess-a', 'SP-AXA', 'TMK', 'ALFA-CLIENT'))).statusCode).toBe(200);
+  expect((await post(a, day('sess-a', 'SP-AXA', 'AKO', 'ALFA-CLIENT'))).statusCode).toBe(200);
   expect((await post(b, day('sess-b', 'SP-BBB', 'BAD', 'BETA-CLIENT'))).statusCode).toBe(200);
   // Operacja PWI w Becie: dobę PÓŹNIEJ, odczytami ciągłymi z `sess-b` - bez nakładki
   // i bez cofnięcia licznika, więc ingest nie dokłada Becie flag spoza zamiaru testu.
@@ -305,7 +305,7 @@ async function twoClubs(): Promise<World> {
   // sprawdzić: 404 na cudzej dowodzi tyle samo, co trasa, która nie działa wcale.
   await db.query(
     `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
-     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'TMK', 'przelot', 'TMK')`,
+     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'AKO', 'przelot', 'AKO')`,
     [ORG_A, new Date(BOOK_FROM), new Date(BOOK_FROM + 7_200_000)],
   );
   await db.query(
@@ -351,11 +351,11 @@ const CASES: Record<string, Probe> = {
   'POST /events': async ({ app, db, a }) => {
     // Zapis do maszyny B i do sesji B z tokenu A - wstrzymany w całości, zero wierszy.
     const foreign = [
-      ...day('sess-x', 'SP-BBB', 'TMK', 'X'),
+      ...day('sess-x', 'SP-BBB', 'AKO', 'X'),
       event('refuel', at(11, 0), { beforeL: 80, addedL: 10, afterL: 90 }, {
         sessionUuid: 'sess-b',
         aircraftId: 'SP-BBB',
-        picId: 'TMK',
+        picId: 'AKO',
         dualId: null,
       }),
     ];
@@ -540,7 +540,7 @@ const CASES: Record<string, Probe> = {
    * CUDZY identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia
    * bokiem. Ta sama para sprawdzeń, co przy `POST /admin/api/auth/switch`.
    *
-   * TMK lata wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY (404, nie 403 -
+   * AKO lata wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY (404, nie 403 -
    * 403 potwierdzałoby, że taki klub jest), a odmowa nie może wydać ani jednego tokenu.
    */
   'POST /auth/switch': async ({ app, a }) => {
@@ -1421,7 +1421,7 @@ const CASES: Record<string, Probe> = {
    * PRZEŁĄCZENIE ZAKRESU (issue #101, E2) - jedyna trasa panelu, która przyjmuje CUDZY
    * identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia bokiem.
    *
-   * TMK jest administratorem wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY
+   * AKO jest administratorem wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY
    * (404, nie 403 - 403 potwierdzałoby, że taki klub jest), a odmowa nie może zostawić
    * ciasteczka. To ostatnie sprawdzamy wprost: sesja wydana mimo odmowy byłaby wejściem
    * do cudzego dziennika przez każdą kolejną trasę panelu.
@@ -1467,14 +1467,14 @@ const CASES: Record<string, Probe> = {
   },
 
   'GET /me/approvals/queue': async ({ app, db, a }) => {
-    // Kolejka TELEFONU jest pytaniem o klub tokenu - krok Bety obsadzony TMK i czekająca
+    // Kolejka TELEFONU jest pytaniem o klub tokenu - krok Bety obsadzony AKO i czekająca
     // rezerwacja Bety (wiersze z sondy panelu niżej jeszcze nie istnieją, więc własne).
     await db.query(
       `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b-phone', $1, 0, 'Krok Bartosza')`,
       [ORG_B],
     );
     await db.query(
-      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-phone', 'TMK')`,
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-phone', 'AKO')`,
       [ORG_B],
     );
     await db.query(
@@ -1518,7 +1518,7 @@ const CASES: Record<string, Probe> = {
   },
 
   'GET /admin/api/approvals/queue': async ({ app, db, a }) => {
-    // Krok Bety obsadzony TMK - wprost do bazy, bo panel by tego nie zapisał
+    // Krok Bety obsadzony AKO - wprost do bazy, bo panel by tego nie zapisał
     // (`member_not_in_org`), ale wiersz może tak stać po wyłączeniu członkostwa.
     // Czekająca rezerwacja Bety na tym kroku NIE MA prawa pokazać się w kolejce Alfy,
     // choć osoba się zgadza: kolejka jest pytaniem o klub tokenu.
@@ -1527,7 +1527,7 @@ const CASES: Record<string, Probe> = {
       [ORG_B],
     );
     await db.query(
-      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-queue', 'TMK')`,
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-queue', 'AKO')`,
       [ORG_B],
     );
     await db.query(
@@ -1541,7 +1541,7 @@ const CASES: Record<string, Probe> = {
       [ORG_A],
     );
     await db.query(
-      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-a-queue', 'TMK')`,
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-a-queue', 'AKO')`,
       [ORG_A],
     );
     await db.query(
@@ -1594,9 +1594,9 @@ const CASES: Record<string, Probe> = {
       (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))
         .statusCode,
     ).toBe(404);
-    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/pilot/TMK', headers: bearer(a) });
+    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/pilot/AKO', headers: bearer(a) });
     expectClean(res, '/admin/api/bookings/:id/preview/pilot/:pilotId');
-    expect(res.json().pilot.id).toBe('TMK');
+    expect(res.json().pilot.id).toBe('AKO');
   },
 
   'GET /admin/api/bookings/:id/preview/aircraft': async ({ app, a }) => {

@@ -84,7 +84,7 @@ export interface OrganizationRefDto {
 /**
  * Klub, do którego wolno PRZEŁĄCZYĆ tę sesję (mockup `00a-wybor-klubu`; issue #101, E2).
  *
- * Kod i ZAKRES opisują drugą linię karty wyboru („administrator · Twój kod TMK")
+ * Kod i ZAKRES opisują drugą linię karty wyboru („administrator · Twój kod AKO")
  * i tylko ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla
  * tego klubu, czytane przez serwer przy każdym żądaniu.
  */
@@ -683,7 +683,7 @@ export interface LogReportDto {
 export interface SessionListItemDto {
   sessionUuid: string;
   /**
-   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68). Liczy ją SERWER; panel
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/BNO/1" (issue #68). Liczy ją SERWER; panel
    * nigdy nie skleja jej u siebie, bo druga konwencja nazw znaczyłaby, że pilot
    * i administrator mówią o jednym locie dwoma napisami.
    *
@@ -861,7 +861,7 @@ export interface BugReportDto {
   /**
    * KLUB zgłoszenia (wielofirmowość, issue #99 C6). Kolejka jest jedna dla całego
    * serwera - czyta ją superadministrator - a kod pilota jest jedyny W KLUBIE, nie na
-   * serwerze: bez tego pola `TMA` z dwóch klubów byłoby nieodróżnialne.
+   * serwerze: bez tego pola `AKO` z dwóch klubów byłoby nieodróżnialne.
    */
   org: OrganizationRefDto;
   severity: BugSeverityDto | null;

@@ -40,7 +40,7 @@ async function writeDay(
   aircraftId = 'SP-AXA',
 ): Promise<void> {
   const t = (offsetMin: number): number => dayStart + offsetMin * 60_000;
-  const base = { sessionUuid, aircraftId, picId: 'TMK', dualId: null } as const;
+  const base = { sessionUuid, aircraftId, picId: 'AKO', dualId: null } as const;
   await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' }, deviceTime: t(0) });
   await repo.appendEvent({
     ...base,
@@ -149,7 +149,7 @@ describe('historia - wiersz operacji (zakładka 24)', () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
     // Druga operacja bez zdania samolotu.
-    const base = { sessionUuid: 'sess-2', aircraftId: 'SP-FGK', picId: 'TMK', dualId: null } as const;
+    const base = { sessionUuid: 'sess-2', aircraftId: 'SP-FGK', picId: 'AKO', dualId: null } as const;
     await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' }, deviceTime: at(18, 0) });
 
     const vm = buildHistoryLog(await queries.historyDays(), nextDay(9, 0));
@@ -258,7 +258,7 @@ async function writeNoRun(
   finalReading: { fuelL: number; mh: number },
 ): Promise<void> {
   const t = (offsetMin: number): number => dayStart + offsetMin * 60_000;
-  const base = { sessionUuid, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null } as const;
+  const base = { sessionUuid, aircraftId: 'SP-FGK', picId: 'AKO', dualId: null } as const;
   await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' }, deviceTime: t(0) });
   await repo.appendEvent({
     ...base,
@@ -289,7 +289,7 @@ describe('historia - unieważnienie i treść operacji (issue #75)', () => {
     await repo.appendEvent({
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'session_void',
       payload: { reason: 'wpis testowy' },

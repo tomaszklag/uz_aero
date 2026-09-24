@@ -12,7 +12,7 @@ import { create } from 'zustand';
 import type { ReferencePilot } from '../../domain';
 
 /** Placeholder sprzed provisioning - testom wystarcza stała wartość. */
-export const PILOT_ID = 'TMK';
+export const PILOT_ID = 'AKO';
 
 interface CurrentPilotStore {
   id: string;

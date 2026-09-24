@@ -363,7 +363,7 @@ describe('trasy podglądu - jeden komplet faktów dla telefonu i panelu', () => 
 
   it('panel dostaje bajt w bajt ten sam komplet, co telefon', async () => {
     const { app, krz, id } = await world();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const phone = await app.inject({ url: `/bookings/${id}/preview/pilot/PWI`, headers: bearer(krz) });
     const panel = await app.inject({ url: `/admin/api/bookings/${id}/preview/pilot/PWI`, headers: cookie });

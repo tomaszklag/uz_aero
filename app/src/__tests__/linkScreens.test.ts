@@ -16,8 +16,8 @@ import { SIGNUP_SENT_TEXT, canSignUp, normalizeName } from '../ui/screens/logic/
 
 describe('00G - „Nie pamiętam hasła"', () => {
   it('podstawia adres z 00F, ale KODU PILOTA nie - z kodu serwer adresu nie zdradzi', () => {
-    expect(emailPrefill('  tmk@ninerdeck.pl ')).toBe('tmk@ninerdeck.pl');
-    expect(emailPrefill('AKO')).toBe('');
+    expect(emailPrefill('  adam@ninerdeck.pl ')).toBe('adam@ninerdeck.pl');
+    expect(emailPrefill('BNO')).toBe('');
     expect(emailPrefill('')).toBe('');
   });
 
@@ -26,7 +26,7 @@ describe('00G - „Nie pamiętam hasła"', () => {
     // a ekran, który ma odpowiadać zawsze tak samo, nie różnicuje niczego sam z siebie.
     expect(canSendLink('')).toBe(false);
     expect(canSendLink('   ')).toBe(false);
-    expect(canSendLink('tmk@')).toBe(true);
+    expect(canSendLink('ako@')).toBe(true);
     expect(canSendLink('cokolwiek')).toBe(true);
   });
 

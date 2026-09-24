@@ -345,7 +345,7 @@ Skrót, który wystarcza przy projektowaniu ekranu:
 
 ## Placeholdery / dane przykładowe
 
-- Pilot: Adam Kowalski / kod TMK
+- Pilot: Adam Kowalski / kod AKO
 - Samolot: SP-AXA (Cessna 182 · 2019), SP-FGK (Cessna 182 · 2017), SP-KWA (Cessna 172 · 2021, wyłączony)
 - Baza: EPKK → EPWA
 - Operacja: Skoki

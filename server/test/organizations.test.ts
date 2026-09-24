@@ -373,15 +373,15 @@ describe('migracja 8 - backfill jednego klubu z danych 1.x', () => {
 describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
   it('osoba z JEDNYM członkostwem dostaje token tego klubu, `org` i komplet członkostw', async () => {
     const { app, tokens } = await testHarness();
-    const res = await login(app, 'TMK');
+    const res = await login(app, 'AKO');
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.org).toEqual({ id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' });
     expect(body.memberships).toEqual([
-      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'TMK' },
+      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'AKO' },
     ]);
-    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'TMK', orgId: ORG_A, code: 'TMK' });
+    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'AKO', orgId: ORG_A, code: 'AKO' });
   });
 
   it('osoba w DWU klubach: klub aktywny = pierwszy alfabetycznie, kod z TEGO klubu, dwa członkostwa', async () => {
@@ -633,10 +633,10 @@ describe('to samo w dwóch klubach to dwa byty', () => {
        VALUES ('SP-AXA-B', $1, 'SP-AXA', 'Cessna 182', 330, 'hhmm')`,
       [ORG_B],
     );
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
     const b = await tokenOf(app, 'BAD');
 
-    expect((await post(app, a, day('sess-a', 'SP-AXA', 'TMK'))).statusCode).toBe(200);
+    expect((await post(app, a, day('sess-a', 'SP-AXA', 'AKO'))).statusCode).toBe(200);
     expect((await post(app, b, day('sess-b', 'SP-AXA-B', 'BAD'))).statusCode).toBe(200);
 
     // Po jednej karcie na klub, każda w kluczu SWOJEGO klubu.
@@ -654,7 +654,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     // Własna karta - z własnym pilotem…
     const seenByA = await read(a, '2026-06-22_SP-AXA');
     expect(seenByA.statusCode).toBe(200);
-    expect(JSON.stringify(seenByA.json().rows)).toContain('TMK');
+    expect(JSON.stringify(seenByA.json().rows)).toContain('AKO');
     const seenByB = await read(b, '2026-06-22_SP-AXA-B');
     expect(seenByB.statusCode).toBe(200);
     expect(JSON.stringify(seenByB.json().rows)).toContain('BAD');
@@ -667,11 +667,11 @@ describe('to samo w dwóch klubach to dwa byty', () => {
   it('ten sam KOD pilota w dwóch klubach jest dopuszczalny, w jednym - nie', async () => {
     const { db } = await testHarness();
     await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('X', 'Ktoś', 'x@x.pl', TRUE)`);
-    // TMK jest zajęty w Alfie…
+    // AKO jest zajęty w Alfie…
     await expect(
       db.query(
         `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'active', 'platform')`,
+         VALUES ($1, 'X', 'AKO', 'active', 'platform')`,
         [ORG_A],
       ),
     ).rejects.toThrow();
@@ -679,7 +679,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     await expect(
       db.query(
         `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'active', 'platform')`,
+         VALUES ($1, 'X', 'AKO', 'active', 'platform')`,
         [ORG_B],
       ),
     ).resolves.toBeDefined();
@@ -691,7 +691,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     const a = (await app.inject({
       method: 'GET',
       url: '/reference',
-      headers: { authorization: `Bearer ${await tokenOf(app, 'TMK')}` },
+      headers: { authorization: `Bearer ${await tokenOf(app, 'AKO')}` },
     })).json();
     const b = (await app.inject({
       method: 'GET',
@@ -702,7 +702,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     expect(a.aircraft.map((x: { reg: string }) => x.reg).sort()).toEqual(['SP-ANK', 'SP-AXA', 'SP-FGK', 'SP-KWA']);
     expect(b.aircraft.map((x: { reg: string }) => x.reg)).toEqual(['SP-BBB']);
 
-    expect(a.pilots.map((p: { code: string }) => p.code).sort()).toEqual(['AKO', 'JSE', 'KRZ', 'PWI', 'TMK']);
+    expect(a.pilots.map((p: { code: string }) => p.code).sort()).toEqual(['AKO', 'BNO', 'JSE', 'KRZ', 'PWI']);
     // PWI w Becie nazywa się PWB - ta sama osoba, kod z członkostwa w klubie z tokenu.
     expect(b.pilots.map((p: { id: string; code: string }) => [p.id, p.code])).toEqual([
       ['BAD', 'BAD'],
@@ -722,9 +722,9 @@ describe('to samo w dwóch klubach to dwa byty', () => {
         })
       ).json();
 
-    const alfa = await listFor('TMK');
+    const alfa = await listFor('AKO');
     const beta = await listFor('BAD');
-    expect(alfa.items.map((i: { code: string }) => i.code).sort()).toEqual(['AKO', 'JSE', 'KRZ', 'PWI', 'TMK']);
+    expect(alfa.items.map((i: { code: string }) => i.code).sort()).toEqual(['AKO', 'BNO', 'JSE', 'KRZ', 'PWI']);
     expect(beta.items.map((i: { id: string; code: string; orgId: string }) => [i.id, i.code, i.orgId])).toEqual([
       ['BAD', 'BAD', ORG_B],
       ['BPI', 'BPI', ORG_B],
@@ -749,9 +749,9 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
   it('paczka z tokenu klubu A do maszyny klubu B → 200 z kompletem uuidów w `withheld`, zero wierszy', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
 
-    const batch = day('sess-x', 'SP-BBB', 'TMK');
+    const batch = day('sess-x', 'SP-BBB', 'AKO');
     const res = await post(app, a, batch);
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ accepted: 0, duplicates: 0 });
@@ -763,10 +763,10 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
   it('w JEDNEJ paczce zapisy do własnego klubu wchodzą, a do cudzego są wstrzymane', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
 
-    const own = day('sess-own', 'SP-AXA', 'TMK');
-    const foreign = day('sess-foreign', 'SP-BBB', 'TMK');
+    const own = day('sess-own', 'SP-AXA', 'AKO');
+    const foreign = day('sess-foreign', 'SP-BBB', 'AKO');
     const res = await post(app, a, [...own, ...foreign]);
     expect(res.statusCode).toBe(200);
     expect(res.json().accepted).toBe(own.length);

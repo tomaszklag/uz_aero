@@ -15,7 +15,7 @@ import { googleTokenFor } from './testIdentityProvider.ts';
 
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
-async function authed(app: App, login = 'TMK'): Promise<string> {
+async function authed(app: App, login = 'AKO'): Promise<string> {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
@@ -95,13 +95,13 @@ describe('/me/prefs', () => {
     });
   });
 
-  it('preferencja jest per pilot Z TOKENU - zapis TMK nie przecieka do AKO', async () => {
+  it('preferencja jest per pilot Z TOKENU - zapis AKO nie przecieka do BNO', async () => {
     const { app } = await testHarness();
-    const tmk = await authed(app);
-    const ako = await authed(app, 'AKO');
+    const ako = await authed(app);
+    const bno = await authed(app, 'BNO');
 
-    await put(app, tmk, 'paper', T1);
-    expect((await get(app, ako)).json()).toEqual({ theme: null, themeUpdatedAt: null });
+    await put(app, ako, 'paper', T1);
+    expect((await get(app, bno)).json()).toEqual({ theme: null, themeUpdatedAt: null });
   });
 
   it('walidacja zod: pusta/za długa nazwa i zepsuty stempel → 400, bez zapisu', async () => {

@@ -74,7 +74,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 - **Nic nie znika z dziennika.** Unieważnienie, zakończenie administracyjne i poprawa odczytów dopisują nowy fakt z powodem; stary zapis zostaje widoczny.
 - **Skutek akcji nieodwracalnej mówi się przed nią.** Wyłączenie konta, usunięcie, zakończenie, unieważnienie - każde pyta o potwierdzenie i w pytaniu nazywa, co się stanie z dostępem i z danymi.
 - **Puste pole wymagane blokuje zapis samym brakiem**, a powód innej blokady stoi w samym przycisku („Najpierw wyłącz konto", „Ktoś ma teraz ten samolot").
-- **Operację nazywa sygnatura** (`SP-AXA/2026-09-05/TMK/1`: znak, doba UTC, kod pilota, numer operacji tego pilota w dobie) - ta sama w aplikacji pilota, w dzienniku i w zgłoszeniach.
+- **Operację nazywa sygnatura** (`SP-AXA/2026-09-05/AKO/1`: znak, doba UTC, kod pilota, numer operacji tego pilota w dobie) - ta sama w aplikacji pilota, w dzienniku i w zgłoszeniach.
 
 ## Czego w tym wydaniu nie ma
 

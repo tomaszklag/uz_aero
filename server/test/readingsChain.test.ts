@@ -16,7 +16,7 @@ const at = (h: number, m = 0): number => DAY + (h * 60 + m) * 60_000;
 function session(over: Partial<SessionRow> & { sessionUuid: string }): SessionRow {
   return {
     aircraftId: 'sp-axa',
-    picId: 'tmk',
+    picId: 'ako',
     dualId: null,
     status: 'closed',
     claimTime: null,
@@ -38,7 +38,7 @@ function session(over: Partial<SessionRow> & { sessionUuid: string }): SessionRo
 const HISTORY: SessionRow[] = [
   session({
     sessionUuid: 'rano',
-    picId: 'ako',
+    picId: 'bno',
     claimTime: at(7),
     closeTime: at(9),
     fuelStartL: 180,
@@ -64,7 +64,7 @@ describe('sąsiedztwo w łańcuchu odczytów', () => {
 
     expect(before).toEqual({
       sessionUuid: 'rano',
-      picId: 'ako',
+      picId: 'bno',
       at: at(9),
       fuelL: 140,
       mh: 1232,
@@ -148,7 +148,7 @@ describe('olej idzie WŁASNĄ osią - pomiar żyje tylko przy przejęciu', () =>
   const WITH_OIL: SessionRow[] = [
     session({
       sessionUuid: 'pomiar',
-      picId: 'ako',
+      picId: 'bno',
       claimTime: at(7),
       closeTime: at(9),
       mhStart: 1230,
@@ -186,7 +186,7 @@ describe('olej idzie WŁASNĄ osią - pomiar żyje tylko przy przejęciu', () =>
 
   it('kotwicą jest ostatni pomiar NIE PÓŹNIEJSZY niż pytana chwila', () => {
     const { oil } = readingsChainNeighbours(WITH_OIL, at(12));
-    expect(oil).toMatchObject({ levelL: 9.2, atMh: 1230, byPilotId: 'ako' });
+    expect(oil).toMatchObject({ levelL: 9.2, atMh: 1230, byPilotId: 'bno' });
     // Dolewka z sesji „dolewka" (10:00) jest po kotwicy i przed pytaną chwilą.
     expect(oil?.addedSinceL).toBe(1);
   });

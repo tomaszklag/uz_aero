@@ -32,7 +32,7 @@ function event(
     uuid: `x-${seq}-${type}`,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -120,7 +120,7 @@ function shift(o: {
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
-async function login(app: Harness['app'], who = 'TMK') {
+async function login(app: Harness['app'], who = 'AKO') {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
@@ -184,7 +184,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
     // Wiersz zmiany: załoga kodami, operacja, przejęcie → zdanie, block, stan.
     expect(sheet.rows).toContainEqual([
       'S1',
-      'TMK',
+      'AKO',
       '-',
       'skoki',
       '08:00',
@@ -257,10 +257,10 @@ describe('eksport dziennego arkusza (§4.7)', () => {
   it('otwarta flaga aircraft_overlap wstrzymuje eksport do decyzji administratora (§4.7)', async () => {
     const sheets = new FakeSheets();
     const { app, db } = await testHarness({ sheets });
-    const tokenTmk = await login(app, 'TMK');
+    const tokenTmk = await login(app, 'AKO');
     const tokenKrz = await login(app, 'KRZ');
 
-    // TMK nie zamyka dnia… a KRZ przejmuje offline i wysyła własną otwartą sesję -
+    // AKO nie zamyka dnia… a KRZ przejmuje offline i wysyła własną otwartą sesję -
     // serwer flaguje nakładkę (obie sesje bez day_close).
     await post(app, tokenTmk, day('sess-1').slice(0, 6));
     const takeover = day('sess-2', { picId: 'KRZ' })
@@ -341,11 +341,11 @@ describe('karta = doba samolotu (§4.7)', () => {
   it('dwie zmiany jednego dnia = JEDNA karta z obiema sesjami i WSPÓLNĄ rewizją', async () => {
     const sheets = new FakeSheets();
     const { app, db } = await testHarness({ sheets });
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // Zmiana poranna - zamknięta, karta wychodzi po zdaniu samolotu.
-    await post(app, tmk, day('zmiana-am'));
+    await post(app, ako, day('zmiana-am'));
     // Zmiana popołudniowa - ten sam samolot, ta sama doba, inny pilot.
     await post(
       app,
@@ -384,7 +384,7 @@ describe('karta = doba samolotu (§4.7)', () => {
     ]);
     expect(card.rows).toContainEqual([
       'S1',
-      'TMK',
+      'AKO',
       '-',
       'skoki',
       '08:00',
@@ -440,7 +440,7 @@ describe('karta = doba samolotu (§4.7)', () => {
 
     // Ekran 11 OBU pilotów prowadzi do tej samej karty - powiązanie sesja→karta
     // przeżyło zmianę jednostki.
-    expect((await syncStatus(app, tmk, 'zmiana-am')).exportUrl).toBe(
+    expect((await syncStatus(app, ako, 'zmiana-am')).exportUrl).toBe(
       'https://sheets.example/2026-06-22_SP-AXA',
     );
     expect((await syncStatus(app, krz, 'zmiana-pm')).exportUrl).toBe(
@@ -451,15 +451,15 @@ describe('karta = doba samolotu (§4.7)', () => {
   it('ta sama zmiana NASTĘPNEGO dnia to inna karta i własna rewizja 1', async () => {
     const sheets = new FakeSheets();
     const { app, db } = await testHarness({ sheets });
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    await post(app, tmk, day('d-1'));
+    await post(app, ako, day('d-1'));
     await post(
       app,
-      tmk,
+      ako,
       shift({
         sessionUuid: 'd-2',
-        picId: 'TMK',
+        picId: 'AKO',
         from: at(8, 0) + 24 * 60 * 60 * 1000,
         reading: { fuelL: 88, mh: 1241.15 },
         finalReading: { fuelL: 60, mh: 1243.15 },
@@ -503,7 +503,7 @@ describe('daySheetContent (czysta funkcja)', () => {
         uuid: 'only-claim-1',
         sessionUuid: 'sess-x',
         aircraftId: 'SP-AXA',
-        picId: 'TMK',
+        picId: 'AKO',
         dualId: null,
         type: 'session_claim',
         deviceTime: at(8, 0),
@@ -517,14 +517,14 @@ describe('daySheetContent (czysta funkcja)', () => {
     const sheet = buildDaySheet({
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
-      sessions: [{ sessionUuid: 'sess-x', state, crew: { pic: 'TMK', dual: null } }],
+      sessions: [{ sessionUuid: 'sess-x', state, crew: { pic: 'AKO', dual: null } }],
       excluded: [],
     });
 
     expect(sheet?.tab).toBe('2026-06-22_SP-AXA');
     expect(sheet?.rows).toContainEqual([
       'S1',
-      'TMK',
+      'AKO',
       '-',
       '-',
       '08:00',
@@ -544,7 +544,7 @@ describe('daySheetContent (czysta funkcja)', () => {
         uuid: 'kept-claim-1',
         sessionUuid: 'sess-ok',
         aircraftId: 'SP-AXA',
-        picId: 'TMK',
+        picId: 'AKO',
         dualId: null,
         type: 'session_claim',
         deviceTime: at(8, 0),
@@ -558,7 +558,7 @@ describe('daySheetContent (czysta funkcja)', () => {
     const sheet = buildDaySheet({
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
-      sessions: [{ sessionUuid: 'sess-ok', state, crew: { pic: 'TMK', dual: null } }],
+      sessions: [{ sessionUuid: 'sess-ok', state, crew: { pic: 'AKO', dual: null } }],
       excluded: [
         {
           sessionUuid: 'sess-sporna',
@@ -587,7 +587,7 @@ describe('blok oleju na karcie doby (issue #60)', () => {
       uuid: 'oil-claim-1',
       sessionUuid: 'sess-oil',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'session_claim',
       deviceTime: at(8, 0),
@@ -604,7 +604,7 @@ describe('blok oleju na karcie doby (issue #60)', () => {
       uuid: 'oil-pf-1',
       sessionUuid: 'sess-oil',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'preflight_confirm',
       deviceTime: at(8, 0),
@@ -624,7 +624,7 @@ describe('blok oleju na karcie doby (issue #60)', () => {
     const sheet = buildDaySheet({
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
-      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'AKO', dual: null } }],
       excluded: [],
     });
 
@@ -638,7 +638,7 @@ describe('blok oleju na karcie doby (issue #60)', () => {
     const sheet = buildDaySheet({
       day: '2026-06-22',
       aircraftId: 'SP-AXA',
-      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'AKO', dual: null } }],
       excluded: [],
     });
 

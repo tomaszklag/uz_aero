@@ -448,7 +448,7 @@ kolumną o stałej wartości. Stoi w tytule strony.
 
 **Pierwsza kolumna nazywa się odtąd `Operacja`** (issue #68) i niesie dwie linie: datę
 (mocną - po niej skanuje się listę jednej maszyny) i pod nią SYGNATURĘ, czyli
-`SP-AXA/2026-09-01/AKO/1`. Dziesiątej kolumny to nie kosztuje, a odpowiada na pytanie,
+`SP-AXA/2026-09-01/BNO/1`. Dziesiątej kolumny to nie kosztuje, a odpowiada na pytanie,
 na które uuid w pasku adresu nie odpowiadał: **jak nazwać ten lot w rozmowie**. Sygnaturę
 składa SERWER i podaje gotową w DTO - panel nigdy nie skleja jej u siebie, bo druga
 konwencja nazw znaczyłaby, że administrator i pilot mówią o jednym locie dwoma napisami
@@ -950,7 +950,7 @@ Nie ma dziennika, nie ma floty, nie ma pilotów; ma Zgłoszenia (i od epiku E Or
   tylko odpowiedź na pytanie „czy ja tu mam czego szukać"
 - **lista zgłoszeń ma kolumnę „Klub"** i klub w podtytule szuflady: kolejka jest jedna
   dla całego serwera, a kod pilota jest jedyny W KLUBIE - bez tego dwa zgłoszenia od
-  dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
+  dwóch różnych `AKO` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
   stoi na końcu listy kontekstu, razem z chwilą przyjęcia: oba pola pochodzą od SERWERA,
   a nie z kontekstu, który przysłał telefon - i lista ma tego nie mieszać
 - **filtra po klubie NIE MA** - kolejka fazy testów ma kilkanaście pozycji, a chip

@@ -85,7 +85,7 @@ describe('pilot_overlap - grafik pilota, nie dane maszyny', () => {
    *
    * Wada spała, bo KAŻDY przypadek w tym pliku nazywał sesje `a`, `b`, `c` - czyli tak,
    * że porządek alfabetyczny pokrywał się z chronologicznym. Dopiero dane demo z prawdziwymi
-   * identyfikatorami (`demo-kwa-…-ako` przejęte przed `demo-ank-…-ako`) pokazały flagę
+   * identyfikatorami (`demo-kwa-…-bno` przejęte przed `demo-ank-…-bno`) pokazały flagę
    * przypiętą do maszyny ZDAWANEJ zamiast wziętej.
    */
   it('wskazuje sesję PÓŹNIEJSZĄ niezależnie od porządku alfabetycznego uuid', () => {

@@ -25,11 +25,11 @@ class MemoryKv implements KeyValueStorage {
 describe('TaskMemoryStore', () => {
   it('operacja i klient żyją per pilot - na wspólnym telefonie się nie mieszają', async () => {
     const store = new TaskMemoryStore(new MemoryKv());
-    await store.writeTask('TMK', { operation: 'skoki', client: 'SKY CAMP' });
-    await store.writeTask('AKO', { operation: 'ferry', client: null });
+    await store.writeTask('AKO', { operation: 'skoki', client: 'SKY CAMP' });
+    await store.writeTask('BNO', { operation: 'ferry', client: null });
 
-    expect(await store.readTask('TMK')).toEqual({ operation: 'skoki', client: 'SKY CAMP' });
-    expect(await store.readTask('AKO')).toEqual({ operation: 'ferry', client: null });
+    expect(await store.readTask('AKO')).toEqual({ operation: 'skoki', client: 'SKY CAMP' });
+    expect(await store.readTask('BNO')).toEqual({ operation: 'ferry', client: null });
   });
 
   it('trasa żyje per samolot - An-2 ze swojego lotniska, przelot ze swoją parą ICAO', async () => {
@@ -43,17 +43,17 @@ describe('TaskMemoryStore', () => {
 
   it('pierwszy dzień = brak podpowiedzi, nie błąd', async () => {
     const store = new TaskMemoryStore(new MemoryKv());
-    expect(await store.readTask('TMK')).toBeNull();
+    expect(await store.readTask('AKO')).toBeNull();
     expect(await store.readRoute('SP-ANK')).toBeNull();
   });
 
   it('zepsuty zapis nie wywraca ekranu - po prostu nie ma czego podpowiedzieć', async () => {
     const kv = new MemoryKv();
-    kv.data.set('ninerdeck.task.TMK', '{to nie jest json');
+    kv.data.set('ninerdeck.task.AKO', '{to nie jest json');
     kv.data.set('ninerdeck.route.SP-ANK', '[]');
 
     const store = new TaskMemoryStore(kv);
-    expect(await store.readTask('TMK')).toBeNull();
+    expect(await store.readTask('AKO')).toBeNull();
     expect(await store.readRoute('SP-ANK')).toBeNull();
   });
 
@@ -61,17 +61,17 @@ describe('TaskMemoryStore', () => {
     // Wartość spoza słownika §3.1 nie miałaby czego zaznaczyć w siatce kart, a przy
     // potwierdzeniu poszłaby do rejestru - lepiej pusty formularz niż cichy śmieć.
     const kv = new MemoryKv();
-    kv.data.set('ninerdeck.task.TMK', JSON.stringify({ operation: 'kosmos', client: null }));
+    kv.data.set('ninerdeck.task.AKO', JSON.stringify({ operation: 'kosmos', client: null }));
 
-    expect(await new TaskMemoryStore(kv).readTask('TMK')).toBeNull();
+    expect(await new TaskMemoryStore(kv).readTask('AKO')).toBeNull();
   });
 
   it('brak klienta zapisuje się jako brak, a nie jako napis „null"', async () => {
     const kv = new MemoryKv();
     const store = new TaskMemoryStore(kv);
-    await store.writeTask('TMK', { operation: 'egzamin', client: null });
+    await store.writeTask('AKO', { operation: 'egzamin', client: null });
 
-    expect(await store.readTask('TMK')).toEqual({ operation: 'egzamin', client: null });
+    expect(await store.readTask('AKO')).toEqual({ operation: 'egzamin', client: null });
   });
 
   it('trasa z niepełnymi polami = brak podpowiedzi (nie połowa trasy)', async () => {

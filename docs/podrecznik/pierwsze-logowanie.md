@@ -10,7 +10,7 @@
 
    @screen 00a-login-full "Logowanie Google" | 00f-login-haslo "Logowanie hasłem"
 2. **Wpisz kod klubu.** Kod dostajesz od administratora - z tablicy w hangarze, z grupy klubowej albo z ręki; to siedem znaków z myślnikiem w środku, np. `AZG-7K4M`. Wielkość liter i myślnik nie mają znaczenia. Po wpisaniu powstaje zgłoszenie do tego klubu. Szerzej: [kluby i dołączanie](kluby-i-dolaczanie).
-3. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `TMK`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
+3. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `AKO`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
 4. **Ustaw PIN.** Po zatwierdzeniu aplikacja prosi o PIN. Od tej chwili to nim wchodzisz do aplikacji - bez internetu.
 
 @screen 00a-login-full "Ekran logowania Google" | 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00-login "Codzienne wejście PIN-em"

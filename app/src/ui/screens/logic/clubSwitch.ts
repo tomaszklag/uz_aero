@@ -23,7 +23,7 @@ import { plural } from '../../format';
 export interface ClubCardVm {
   orgId: string;
   name: string;
-  /** Druga linia karty: „Twój kod: TMK · 4 samoloty". */
+  /** Druga linia karty: „Twój kod: AKO · 4 samoloty". */
   sub: string;
   /** Klub aktywny - zielona ramka i ptaszek; tapnięcie w niego nic nie robi. */
   selected: boolean;

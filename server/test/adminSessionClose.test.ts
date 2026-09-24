@@ -119,7 +119,7 @@ async function orphanedDay() {
 describe('zakończenie administracyjne operacji (issue #81)', () => {
   it('zamyka operację osieroconą: PIC sesji w rejestrze, autor w audycie, maszyna wolna, odczytów brak', async () => {
     const { app, db } = await orphanedDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await closeSession(app, admin, SESSION, { reason: 'Telefon pilota padł w locie.' });
 
@@ -139,7 +139,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]!.pic_id).toBe('KRZ');
-    expect(rows[0]!.source_device).toBe('admin:TMK');
+    expect(rows[0]!.source_device).toBe('admin:AKO');
     expect(rows[0]!.payload).toEqual({ reason: 'Telefon pilota padł w locie.' });
 
     // Projekcja: zamknięta, ale BEZ odczytów końcowych - nie jest ogniwem łańcucha.
@@ -172,7 +172,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
 
   it('„od razu unieważnij" dopisuje DWA fakty: zakończenie i unieważnienie z podpisem admina', async () => {
     const { app, db } = await orphanedDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await closeSession(app, admin, SESSION, { reason: 'Pomyłka maszyny.', void: true });
 
@@ -195,7 +195,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
 
   it('zdanie dosłane z telefonu PO decyzji panelu jest WSTRZYMANE - nie wchodzi do rejestru, telefon dostaje listę', async () => {
     const { app, db } = await orphanedDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     await closeSession(app, admin, SESSION, { reason: 'Telefon padł.' });
 
     // Telefon KRZ odzyskał zasięg i wysyła to, co zapisał offline - razem ze zdaniem.
@@ -221,7 +221,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
 
   it('decyzja wraca na telefon pilota, a telefon nie ma jak przysłać `session_close` sam', async () => {
     const { app } = await orphanedDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     await closeSession(app, admin, SESSION, { reason: 'Telefon padł.' });
 
     const krz = await login(app, 'KRZ');
@@ -243,7 +243,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
 
   it('drugie zakończenie → 422 z nazwanym powodem; nieznana operacja → 404; pusty powód → 400', async () => {
     const { app } = await orphanedDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     expect((await closeSession(app, admin, SESSION, { reason: 'x' })).statusCode).toBe(200);
 
@@ -258,7 +258,7 @@ describe('zakończenie administracyjne operacji (issue #81)', () => {
   it('operacja ZDANA przez pilota nie ma czego kończyć - ten sam kod, co drugie zdanie', async () => {
     const { app } = await testHarness();
     await push(app, 'KRZ', [...ORPHANED, ...LATE]);
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await closeSession(app, admin, SESSION, { reason: 'x' });
     expect(res.statusCode).toBe(422);

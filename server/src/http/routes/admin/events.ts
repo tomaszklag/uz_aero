@@ -59,7 +59,7 @@ const listQuery = z.object({
   aircraftId: z.string().min(1).max(100).optional(),
   /** Dopasowuje PIC-a albo Duala - dzień szkolny należy do obu. */
   pilotId: z.string().min(1).max(100).optional(),
-  /** Dokładna wartość `events.source_device`, np. `admin:TMK` albo znacznik telefonu. */
+  /** Dokładna wartość `events.source_device`, np. `admin:AKO` albo znacznik telefonu. */
   sourceDevice: z.string().min(1).max(200).optional(),
   /** Zakres po CZASIE PRZYJĘCIA (`received_at`) - tej samej osi, co porządek listy. */
   from: dayParam.optional(),

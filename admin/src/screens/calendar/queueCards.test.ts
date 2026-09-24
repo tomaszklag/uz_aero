@@ -28,7 +28,7 @@ const H = 3_600_000;
 
 const OSOBY: Record<string, Person> = {
   jwr: { name: 'Jakub Wrona', code: 'JWR' },
-  ako: { name: 'Anna Kowal', code: 'AKO' },
+  akw: { name: 'Anna Kowal', code: 'AKW' },
 };
 const osoba = (id: string): Person | null => OSOBY[id] ?? null;
 const znak = (id: string): string => (id === 'a1' ? 'SP-AXA' : 'SP-BKL');
@@ -119,7 +119,7 @@ describe('karty', () => {
   });
 
   it('z drugim pilotem, planem i notatką - komplet', () => {
-    const [karta] = queueCards([item({ dualId: 'ako' })], opts);
+    const [karta] = queueCards([item({ dualId: 'akw' })], opts);
     expect(karta!.rows.map((r) => r.label)).toEqual([
       'Pilot',
       'Zadanie',

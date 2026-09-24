@@ -19,7 +19,7 @@ import { projectPilotDay, emptySessionState } from '../domain';
 import type { SessionState, Leg, Flight } from '../domain';
 
 const DAY0 = Date.UTC(2026, 7, 6, 0, 0, 0);
-const PIC = 'tmk';
+const PIC = 'ako';
 
 function at(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number);

@@ -203,7 +203,7 @@ export interface DaySheetExclusion {
   flagIds: readonly number[];
 }
 
-/** „08:12 → 10:34 · TMK" - opis operacji wykluczonej z karty. */
+/** „08:12 → 10:34 · AKO" - opis operacji wykluczonej z karty. */
 export function exclusionLabel(gap: DaySheetExclusion): string {
   const run =
     gap.engineStartAt == null

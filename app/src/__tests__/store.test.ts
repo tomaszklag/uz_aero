@@ -25,7 +25,7 @@ import { useSessionStore } from '../ui/store/sessionStore';
 
 const SESSION = 'sess-1';
 const AC = 'sp-axa';
-const PIC = 'tmk';
+const PIC = 'ako';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const min = (m: number): number => T0 + m * 60_000;

@@ -58,12 +58,12 @@ const panelLogin = (app: App, email: string, password: string) =>
 describe('logowanie hasłem - telefon (§5.1)', () => {
   it('e-mail + hasło daje DOKŁADNIE te tokeny, co Google: klub, kod, rola, lista klubów', async () => {
     const { app } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
 
     const res = await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD);
     expect(res.statusCode, res.body).toBe(200);
     const body = res.json();
-    expect(body.pilot).toMatchObject({ id: 'TMK', code: 'TMK' });
+    expect(body.pilot).toMatchObject({ id: 'AKO', code: 'AKO' });
     expect(body.org.id).toBe(ORG_A);
     expect(typeof body.token).toBe('string');
     expect(typeof body.refreshToken).toBe('string');
@@ -75,7 +75,7 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 
   it('adres bez względu na wielkość liter i odstępy - to ten sam login', async () => {
     const { app } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
     expect((await passwordLogin(app, '  Adam@Ninerdeck.PL ', PASSWORD)).statusCode).toBe(200);
   });
 
@@ -96,7 +96,7 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 
   it('login nieznany / osoba bez hasła / złe hasło = JEDNA odpowiedź, co do bajtu', async () => {
     const { app } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
 
     const unknown = await passwordLogin(app, 'nikt@ninerdeck.pl', PASSWORD);
     const noPassword = await passwordLogin(app, 'barbara@ninerdeck.pl', PASSWORD);
@@ -125,8 +125,8 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 
   it('osoba zablokowana platformowo: hasło zgodne → `account_disabled` (tożsamość dowiedziona)', async () => {
     const { app, db } = await testHarness();
-    await withPassword(app, 'TMK');
-    await db.query(`UPDATE pilots SET active = FALSE WHERE id = 'TMK'`);
+    await withPassword(app, 'AKO');
+    await db.query(`UPDATE pilots SET active = FALSE WHERE id = 'AKO'`);
 
     const res = await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD);
     expect(res.statusCode).toBe(401);
@@ -153,7 +153,7 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 
   it('limit prób: po 10 na login `429` z `Retry-After`, po oknie znów wolno', async () => {
     const { app, clock } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
 
     for (let i = 0; i < PASSWORD_LOGIN_PER_LOGIN; i += 1) {
       expect((await passwordLogin(app, 'adam@ninerdeck.pl', 'zle-haslo-numer-' + i)).statusCode).toBe(401);
@@ -173,15 +173,15 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 
   it('skrót ze słabszych parametrów jest przeliczany po udanym logowaniu (re-hash bez migracji)', async () => {
     const { app, db, passwordHasher } = await testHarness();
-    await withPassword(app, 'TMK');
-    const before = (await db.query<{ hash: string }>(`SELECT hash FROM password_credentials WHERE pilot_id = 'TMK'`)).rows[0]!.hash;
+    await withPassword(app, 'AKO');
+    const before = (await db.query<{ hash: string }>(`SELECT hash FROM password_credentials WHERE pilot_id = 'AKO'`)).rows[0]!.hash;
     expect(before.startsWith('$scrypt$ln=10,')).toBe(true);
 
     // Udawany „stary" skrót: te same bajty, słabsze parametry w napisie (ln=9) - hasło
     // dalej pasuje, bo skrót liczy się z parametrów Z WIERSZA.
     vi.spyOn(passwordHasher, 'needsRehash').mockReturnValueOnce(true);
     expect((await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
-    const after = (await db.query<{ hash: string }>(`SELECT hash FROM password_credentials WHERE pilot_id = 'TMK'`)).rows[0]!.hash;
+    const after = (await db.query<{ hash: string }>(`SELECT hash FROM password_credentials WHERE pilot_id = 'AKO'`)).rows[0]!.hash;
     expect(after).not.toBe(before);
     expect((await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
   });
@@ -197,11 +197,11 @@ describe('logowanie hasłem - telefon (§5.1)', () => {
 describe('logowanie hasłem - panel (§5.2)', () => {
   it('administrator klubu dostaje ciasteczko sesji i ten sam kształt, co po Google', async () => {
     const { app } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
 
     const res = await panelLogin(app, 'adam@ninerdeck.pl', PASSWORD);
     expect(res.statusCode, res.body).toBe(200);
-    expect(res.json()).toMatchObject({ pilot: { id: 'TMK', code: 'TMK' }, org: { id: ORG_A } });
+    expect(res.json()).toMatchObject({ pilot: { id: 'AKO', code: 'AKO' }, org: { id: ORG_A } });
     expect(res.json().capabilities).toContain('accounts.manage');
     const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin');
     expect(cookie?.httpOnly).toBe(true);
@@ -221,7 +221,7 @@ describe('logowanie hasłem - panel (§5.2)', () => {
 
   it('login nieznany i złe hasło - jedno 401, `429` po limicie', async () => {
     const { app } = await testHarness();
-    await withPassword(app, 'TMK');
+    await withPassword(app, 'AKO');
 
     const unknown = await panelLogin(app, 'nikt@ninerdeck.pl', PASSWORD);
     const wrong = await panelLogin(app, 'adam@ninerdeck.pl', 'nie-to-haslo-na-pewno');
@@ -258,7 +258,7 @@ describe('logowanie hasłem - panel (§5.2)', () => {
 describe('ustawienie i zmiana hasła (§5.3)', () => {
   it('osoba z hasłem podaje `current`; błędne → 401; bez `current` → 401', async () => {
     const { app } = await testHarness();
-    const tokens = await withPassword(app, 'TMK');
+    const tokens = await withPassword(app, 'AKO');
     const headers = { authorization: `Bearer ${tokens.token}` };
 
     const noCurrent = await app.inject({ method: 'PUT', url: '/me/password', headers, payload: { next: 'nowe-dlugie-haslo-2026' } });
@@ -284,7 +284,7 @@ describe('ustawienie i zmiana hasła (§5.3)', () => {
 
   it('polityka domeny: słabe hasło → 400 z POWODEM, także z fragmentem nazwiska albo adresu', async () => {
     const { app } = await testHarness();
-    const tokens = await googleLogin(app, 'TMK');
+    const tokens = await googleLogin(app, 'AKO');
     const headers = { authorization: `Bearer ${tokens.token}` };
 
     const short = await app.inject({ method: 'PUT', url: '/me/password', headers, payload: { next: 'krotkie' } });
@@ -314,7 +314,7 @@ describe('ustawienie i zmiana hasła (§5.3)', () => {
 
   it('panel: `PUT /admin/api/me/password` dla sesji klubu i platformy', async () => {
     const { app } = await testHarness();
-    const login = await app.inject({ method: 'POST', url: '/admin/api/auth/login', headers: ADMIN_CSRF_HEADERS, payload: { idToken: googleTokenFor('TMK') } });
+    const login = await app.inject({ method: 'POST', url: '/admin/api/auth/login', headers: ADMIN_CSRF_HEADERS, payload: { idToken: googleTokenFor('AKO') } });
     const cookie = login.cookies.find((c) => c.name === 'ninerdeck_admin')!;
     const set = await app.inject({
       method: 'PUT',

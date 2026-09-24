@@ -70,7 +70,7 @@ function operation(o: OperationOptions) {
   const d = o.dayOffset ?? 0;
   const base = {
     sessionUuid: o.sessionUuid,
-    picId: o.picId ?? 'TMK',
+    picId: o.picId ?? 'AKO',
     aircraftId: o.aircraftId ?? 'SP-AXA',
     dualId: null,
   };
@@ -159,54 +159,54 @@ async function signatures(app: Harness['app'], t: string): Promise<Map<string, s
 describe('sygnatura operacji w panelu', () => {
   it('składa się ze znaku, doby uruchomienia, kodu PIC i numeru w dobie', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const ingest = await post(app, tmk, [
+    const ingest = await post(app, ako, [
       ...operation({ sessionUuid: 's-1', engineStartH: 8 }),
       ...operation({ sessionUuid: 's-2', aircraftId: 'SP-FGK', engineStartH: 13 }),
     ]);
     expect(ingest.statusCode, JSON.stringify(ingest.json())).toBe(200);
 
-    const found = await signatures(app, tmk);
+    const found = await signatures(app, ako);
     // Numer biegnie CIĄGIEM PRZEZ MASZYNY - to doba PILOTA, nie doba samolotu.
-    expect(found.get('s-1')).toBe('SP-AXA/2026-09-01/TMK/1');
-    expect(found.get('s-2')).toBe('SP-FGK/2026-09-01/TMK/2');
+    expect(found.get('s-1')).toBe('SP-AXA/2026-09-01/AKO/1');
+    expect(found.get('s-2')).toBe('SP-FGK/2026-09-01/AKO/2');
   });
 
   it('numeruje każdą dobę od nowa', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    await post(app, tmk, [
+    await post(app, ako, [
       ...operation({ sessionUuid: 's-d0', engineStartH: 8 }),
       ...operation({ sessionUuid: 's-d1', engineStartH: 8, dayOffset: 1 }),
     ]);
 
-    const found = await signatures(app, tmk);
-    expect(found.get('s-d0')).toBe('SP-AXA/2026-09-01/TMK/1');
-    expect(found.get('s-d1')).toBe('SP-AXA/2026-09-02/TMK/1');
+    const found = await signatures(app, ako);
+    expect(found.get('s-d0')).toBe('SP-AXA/2026-09-01/AKO/1');
+    expect(found.get('s-d1')).toBe('SP-AXA/2026-09-02/AKO/1');
   });
 
   it('zapis PUSTY (odczyty równe przejęciu) znika z listy i nie zajmuje numeru', async () => {
     // 09C bez żadnej zmiany: śmieć (issue #75 pkt 2) - list go nie pokazuje wcale,
     // a rejestr trzyma go dalej: adres bezpośredni odpowiada jak zawsze.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    await post(app, tmk, [
+    await post(app, ako, [
       ...operation({ sessionUuid: 's-09c', engineStartH: 7, noEngineRun: true }),
       ...operation({ sessionUuid: 's-lot', engineStartH: 10 }),
     ]);
 
-    const found = await signatures(app, tmk);
+    const found = await signatures(app, ako);
     expect(found.has('s-09c')).toBe(false);
-    expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/TMK/1');
+    expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/AKO/1');
 
     // Rejestr widzi wszystko: szczegół operacji (oś zdarzeń) otwiera się dalej.
     const detail = await app.inject({
       method: 'GET',
       url: '/admin/api/sessions/s-09c',
-      headers: { authorization: `Bearer ${tmk}` },
+      headers: { authorization: `Bearer ${ako}` },
     });
     expect(detail.statusCode).toBe(200);
     expect(detail.json().session.signature).toBeNull();
@@ -217,9 +217,9 @@ describe('sygnatura operacji w panelu', () => {
     // dostać sygnaturę". Kotwicą jest przejęcie (05:50), więc taki zapis numeruje się
     // PRZED operacją z silnikiem uruchomionym o 10:12.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    await post(app, tmk, [
+    await post(app, ako, [
       ...operation({
         sessionUuid: 's-zmiana',
         engineStartH: 7,
@@ -229,37 +229,37 @@ describe('sygnatura operacji w panelu', () => {
       ...operation({ sessionUuid: 's-lot', engineStartH: 10 }),
     ]);
 
-    const found = await signatures(app, tmk);
-    expect(found.get('s-zmiana')).toBe('SP-AXA/2026-09-01/TMK/1');
-    expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/TMK/2');
+    const found = await signatures(app, ako);
+    expect(found.get('s-zmiana')).toBe('SP-AXA/2026-09-01/AKO/1');
+    expect(found.get('s-lot')).toBe('SP-AXA/2026-09-01/AKO/2');
   });
 
   it('operacja unieważniona nie zajmuje numeru następnym', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    await post(app, tmk, [
+    await post(app, ako, [
       ...operation({ sessionUuid: 's-void', engineStartH: 8, voided: true }),
       ...operation({ sessionUuid: 's-real', engineStartH: 12 }),
     ]);
 
-    const found = await signatures(app, tmk);
-    expect(found.get('s-real')).toBe('SP-AXA/2026-09-01/TMK/1');
+    const found = await signatures(app, ako);
+    expect(found.get('s-real')).toBe('SP-AXA/2026-09-01/AKO/1');
   });
 
   it('cudze operacje nie wchodzą do numeracji - doba należy do PILOTA', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const krz = await token(app, 'KRZ');
 
     await post(app, krz, [
       ...operation({ sessionUuid: 's-krz', picId: 'KRZ', aircraftId: 'SP-FGK', engineStartH: 8 }),
     ]);
-    await post(app, tmk, [...operation({ sessionUuid: 's-tmk', engineStartH: 12 })]);
+    await post(app, ako, [...operation({ sessionUuid: 's-ako', engineStartH: 12 })]);
 
-    const found = await signatures(app, tmk);
+    const found = await signatures(app, ako);
     expect(found.get('s-krz')).toBe('SP-FGK/2026-09-01/KRZ/1');
-    expect(found.get('s-tmk')).toBe('SP-AXA/2026-09-01/TMK/1');
+    expect(found.get('s-ako')).toBe('SP-AXA/2026-09-01/AKO/1');
   });
 
   /**
@@ -270,7 +270,7 @@ describe('sygnatura operacji w panelu', () => {
    */
   it('numer z SQL zgadza się z numerem, który policzy telefon', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     const streams: Record<string, Event[]> = {
       's-a': operation({ sessionUuid: 's-a', engineStartH: 6 }) as unknown as Event[],
@@ -300,17 +300,17 @@ describe('sygnatura operacji w panelu', () => {
       }) as unknown as Event[],
     };
 
-    await post(app, tmk, Object.values(streams).flat());
+    await post(app, ako, Object.values(streams).flat());
 
     // Tor telefonu: projekcje ze strumienia → numery z domeny.
     const fromDomain = operationIndexes(
       Object.values(streams).map((stream) => projectSession(stream)),
-      'TMK',
+      'AKO',
     );
 
     // Tor panelu: kolumny projekcji → ranga w SQL → ostatni człon sygnatury.
     const fromPanel = new Map<string, number | null>(
-      [...(await signatures(app, tmk))].map(([uuid, signature]) => [
+      [...(await signatures(app, ako))].map(([uuid, signature]) => [
         uuid,
         signature == null ? null : Number(signature.split('/')[3]),
       ]),
@@ -381,7 +381,7 @@ describe('sygnatura operacji w panelu', () => {
     // Czyta ADMINISTRATOR każdego klubu - PWI jest pilotem, a panel wymaga `panel.access`.
     // Kod PIC w sygnaturze pochodzi i tak z członkostwa w klubie OPERACJI, nie czytającego.
     // Każdy klub liczy od jedynki i podpisuje SWOIM kodem.
-    const fromAlfa = await signatures(app, await token(app, 'TMK'));
+    const fromAlfa = await signatures(app, await token(app, 'AKO'));
     expect([...fromAlfa.keys()]).toEqual(['sig-a1']);
     expect(fromAlfa.get('sig-a1')).toBe('SP-AXA/2026-09-01/PWI/1');
 

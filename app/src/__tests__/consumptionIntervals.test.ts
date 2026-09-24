@@ -25,7 +25,7 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
     uuid: `e-${seq}-${type}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,

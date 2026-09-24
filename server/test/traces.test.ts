@@ -17,7 +17,7 @@ async function login(app: Awaited<ReturnType<typeof testHarness>>['app']) {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
-    payload: { idToken: googleTokenFor('TMK') },
+    payload: { idToken: googleTokenFor('AKO') },
   });
   return res.json().token as string;
 }
@@ -55,7 +55,7 @@ describe('POST /traces', () => {
       .split('\n')
       .map((l) => JSON.parse(l));
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatchObject({ kind: 'fix', gs: 60, pilotId: 'TMK' }); // czyj telefon nagrał
+    expect(lines[0]).toMatchObject({ kind: 'fix', gs: 60, pilotId: 'AKO' }); // czyj telefon nagrał
     expect(lines[2]).toMatchObject({ kind: 'undo', detail: 'landing' });
   });
 

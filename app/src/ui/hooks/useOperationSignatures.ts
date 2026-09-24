@@ -38,7 +38,7 @@ import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraftRegistrations } from './useAircraftRegistrations';
 import { useSessionOrgs } from './useSessionOrgs';
 
-/** Sygnatura operacji („SP-AXA/2026-09-01/AKO/1"); `null` = nie ma jej z czego złożyć. */
+/** Sygnatura operacji („SP-AXA/2026-09-01/BNO/1"); `null` = nie ma jej z czego złożyć. */
 export type OperationSignatureOf = (sessionUuid: string) => string | null;
 
 /** Co o operacji trzeba wiedzieć, żeby złożyć jej sygnaturę przy wywołaniu. */
@@ -58,7 +58,7 @@ export function useOperationSignatures(): OperationSignatureOf {
   const pilotId = useCurrentPilot((s) => s.id);
   // Kod pilota z profilu logowania - nigdzie o niego nie pytamy (CLAUDE.md). Od 2.0.0
   // kod należy do CZŁONKOSTWA, więc bierze się z klubu OPERACJI, nie z klubu aktywnego:
-  // ten sam człowiek lata w Alfie jako TMK, a w Becie jako TMB (mockup 01e).
+  // ten sam człowiek lata w Alfie jako AKO, a w Becie jako AKB (mockup 01e).
   const activeCode = useAuthStore((s) => s.pilot?.code) ?? null;
   const activeOrg = useAuthStore((s) => s.org?.id) ?? null;
   const memberships = useAuthStore((s) => s.memberships);
