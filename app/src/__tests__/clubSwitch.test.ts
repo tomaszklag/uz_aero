@@ -29,48 +29,48 @@ const pending = (org: typeof ALFA): ClubMembershipView => ({
 
 describe('showsClubSection', () => {
   it('jeden klub - sekcji NIE MA (przełącznik o jednej pozycji nic nie przełącza)', () => {
-    expect(showsClubSection([member(ALFA, 'TMK')], [])).toBe(false);
+    expect(showsClubSection([member(ALFA, 'AKO')], [])).toBe(false);
   });
 
   it('dwa członkostwa - sekcja jest', () => {
-    expect(showsClubSection([member(ALFA, 'TMK'), member(BETA, 'TOM')], [])).toBe(true);
+    expect(showsClubSection([member(ALFA, 'AKO'), member(BETA, 'TOM')], [])).toBe(true);
   });
 
   it('jeden klub + ZGŁOSZENIE do drugiego - sekcja jest', () => {
     // Pilot, który właśnie wpisał kod, ma prawo zobaczyć, że zgłoszenie czeka.
-    expect(showsClubSection([member(ALFA, 'TMK')], [pending(BETA)])).toBe(true);
+    expect(showsClubSection([member(ALFA, 'AKO')], [pending(BETA)])).toBe(true);
   });
 
   it('zgłoszenie ODRZUCONE nie robi sekcji - nie ma czego przełączać', () => {
     const rejected = { ...pending(BETA), status: 'rejected' as const };
-    expect(showsClubSection([member(ALFA, 'TMK')], [rejected])).toBe(false);
+    expect(showsClubSection([member(ALFA, 'AKO')], [rejected])).toBe(false);
   });
 });
 
 describe('clubCards', () => {
   it('klub aktywny na czele, podpis z kodem i liczbą maszyn', () => {
     const cards = clubCards(
-      [member(BETA, 'TOM'), member(ALFA, 'TMK')],
+      [member(BETA, 'TOM'), member(ALFA, 'AKO')],
       [],
       ALFA.id,
       { [ALFA.id]: 4, [BETA.id]: 2 },
     );
 
     expect(cards.map((c) => c.orgId)).toEqual([ALFA.id, BETA.id]);
-    expect(cards[0]).toMatchObject({ selected: true, sub: 'Twój kod: TMK · 4 samoloty' });
+    expect(cards[0]).toMatchObject({ selected: true, sub: 'Twój kod: AKO · 4 samoloty' });
     expect(cards[1]).toMatchObject({ selected: false, sub: 'Twój kod: TOM · 2 samoloty' });
   });
 
   it('klub, którego floty telefon nie widział, NIE dostaje „0 samolotów"', () => {
     // To byłoby zdanie o flocie, a jest zdaniem o pustym cache'u.
-    const cards = clubCards([member(ALFA, 'TMK'), member(BETA, 'TOM')], [], ALFA.id, {
+    const cards = clubCards([member(ALFA, 'AKO'), member(BETA, 'TOM')], [], ALFA.id, {
       [ALFA.id]: 4,
     });
     expect(cards[1]!.sub).toBe('Twój kod: TOM');
   });
 
   it('zgłoszenie stoi na końcu, jest `pending` i nie ma kodu', () => {
-    const cards = clubCards([member(ALFA, 'TMK')], [pending(GAMMA)], ALFA.id, {});
+    const cards = clubCards([member(ALFA, 'AKO')], [pending(GAMMA)], ALFA.id, {});
 
     expect(cards).toHaveLength(2);
     expect(cards[1]).toMatchObject({
@@ -82,7 +82,7 @@ describe('clubCards', () => {
   });
 
   it('zgłoszenie do klubu, w którym pilot JUŻ lata, nie dubluje karty', () => {
-    const cards = clubCards([member(ALFA, 'TMK')], [pending(ALFA)], ALFA.id, {});
+    const cards = clubCards([member(ALFA, 'AKO')], [pending(ALFA)], ALFA.id, {});
     expect(cards).toHaveLength(1);
   });
 });

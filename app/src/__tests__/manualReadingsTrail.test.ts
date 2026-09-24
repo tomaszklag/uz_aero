@@ -102,8 +102,8 @@ describe('manualFuelTrail - co zastałem, co dolałem, ile latałem, ile zostani
   });
 
   it('podpowiedź z łańcucha zostaje podpisana źródłem, wpis pilota - przyrządem', () => {
-    const fromChain = manualFuelTrail(draft(), norm(), null, 'z poprzedniego lotu · AKO');
-    expect(fromChain[0]!.meta).toBe('z poprzedniego lotu · AKO');
+    const fromChain = manualFuelTrail(draft(), norm(), null, 'z poprzedniego lotu · BNO');
+    expect(fromChain[0]!.meta).toBe('z poprzedniego lotu · BNO');
     expect(manualFuelTrail(draft(), norm(), null, null)[0]!.meta).toContain('paliwomierza');
   });
 

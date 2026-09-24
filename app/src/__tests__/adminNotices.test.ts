@@ -77,10 +77,10 @@ describe('adminNoticeText', () => {
 
   it('nazywa operację sygnaturą, chwilą, powodem i losem zapisów telefonu', () => {
     const [notice] = buildAdminNotices([closedByAdmin], new Set());
-    const text = adminNoticeText(notice!, regOf, () => 'SP-AXA/2026-09-03/TMK/1');
+    const text = adminNoticeText(notice!, regOf, () => 'SP-AXA/2026-09-03/AKO/1');
     expect(text.title).toBe('Operację zakończył administrator');
     expect(text.text.split('\n')).toEqual([
-      'SP-AXA/2026-09-03/TMK/1 · 3 WRZ 12:40 UTC',
+      'SP-AXA/2026-09-03/AKO/1 · 3 WRZ 12:40 UTC',
       'Powód: Telefon padł w locie.',
       'Operacja liczy się dalej, ale bez odczytów końcowych - poprawek już nie naniesiesz.',
       '3 zapisy z tego telefonu do tej operacji nie wyjdą na serwer.',

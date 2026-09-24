@@ -32,8 +32,8 @@ const step = (id: string, position: number, memberIds: string[], label = id): Ap
 const ok = (stepId: string): ApprovalDecision => ({ stepId, decision: 'approved' });
 const no = (stepId: string): ApprovalDecision => ({ stepId, decision: 'rejected' });
 
-const MECHANIK = step('s-mech', 1, ['AKO', 'JSE']);
-const SZEF = step('s-szef', 2, ['TMK']);
+const MECHANIK = step('s-mech', 1, ['BNO', 'JSE']);
+const SZEF = step('s-szef', 2, ['AKO']);
 const PATH = [MECHANIK, SZEF];
 
 describe('klub bez ścieżki', () => {
@@ -52,8 +52,8 @@ describe('kroki idą po kolei', () => {
   });
 
   it('remis pozycji rozstrzyga `id` - porządek jest deterministyczny bez unikatu w bazie', () => {
-    const a = step('s-a', 1, ['AKO']);
-    const b = step('s-b', 1, ['TMK']);
+    const a = step('s-a', 1, ['BNO']);
+    const b = step('s-b', 1, ['AKO']);
     expect(currentStep([b, a], [])?.id).toBe('s-a');
   });
 
@@ -82,12 +82,12 @@ describe('w kroku wystarczy zgoda JEDNEJ osoby', () => {
   it('lista kroku jest PULĄ uprawnionych, nie kompletem podpisów', () => {
     // Skrajny przypadek („jeden krok, kilka osób, ktokolwiek zatwierdzi") ma być
     // najprostszy z możliwych, a nie najcięższy (§11.2).
-    expect(pendingApprovers([MECHANIK], [])).toEqual(['AKO', 'JSE']);
+    expect(pendingApprovers([MECHANIK], [])).toEqual(['BNO', 'JSE']);
     expect(approvalOutcome([MECHANIK], [ok('s-mech')])).toBe('confirmed');
   });
 
   it('każda z nich może zdecydować', () => {
-    for (const who of ['AKO', 'JSE']) {
+    for (const who of ['BNO', 'JSE']) {
       expect(
         refuseDecision([MECHANIK], [], { deciderPilotId: who, decision: 'approved', reason: null, overrides: false }),
       ).toBeNull();
@@ -97,14 +97,14 @@ describe('w kroku wystarczy zgoda JEDNEJ osoby', () => {
 
 describe('rezerwujący pomija własne kroki', () => {
   it('pomija te, na których stoi - i tylko te', () => {
-    expect(selfApprovedSteps(PATH, 'AKO').map((s) => s.id)).toEqual(['s-mech']);
-    expect(selfApprovedSteps(PATH, 'TMK').map((s) => s.id)).toEqual(['s-szef']);
+    expect(selfApprovedSteps(PATH, 'BNO').map((s) => s.id)).toEqual(['s-mech']);
+    expect(selfApprovedSteps(PATH, 'AKO').map((s) => s.id)).toEqual(['s-szef']);
     expect(selfApprovedSteps(PATH, 'PWI')).toEqual([]);
   });
 
   it('rezerwujący na liście WSZYSTKICH kroków dostaje potwierdzenie od razu', () => {
-    const wszedzie = [step('s-mech', 1, ['AKO']), step('s-szef', 2, ['AKO'])];
-    const skipped = selfApprovedSteps(wszedzie, 'AKO').map((s) => ok(s.id));
+    const wszedzie = [step('s-mech', 1, ['BNO']), step('s-szef', 2, ['BNO'])];
+    const skipped = selfApprovedSteps(wszedzie, 'BNO').map((s) => ok(s.id));
     expect(approvalOutcome(wszedzie, skipped)).toBe('confirmed');
   });
 
@@ -115,13 +115,13 @@ describe('rezerwujący pomija własne kroki', () => {
   });
 
   it('krok DOŁOŻONY później z rezerwującym na liście też przechodzi sam (#207)', () => {
-    // Ścieżka po zmianie: przed mechanikiem stanął nowy krok, na którym stoi AKO.
-    const nowy = step('s-nowy', 0, ['AKO']);
+    // Ścieżka po zmianie: przed mechanikiem stanął nowy krok, na którym stoi BNO.
+    const nowy = step('s-nowy', 0, ['BNO']);
     const after = [nowy, MECHANIK, SZEF];
-    // Mechanik już zdecydował (AKO pominął go przy złożeniu) - ten wpis ZOSTAJE.
-    expect(missingSelfApprovals(after, [ok('s-mech')], 'AKO').map((s) => s.id)).toEqual(['s-nowy']);
+    // Mechanik już zdecydował (BNO pominął go przy złożeniu) - ten wpis ZOSTAJE.
+    expect(missingSelfApprovals(after, [ok('s-mech')], 'BNO').map((s) => s.id)).toEqual(['s-nowy']);
     // Krok rozstrzygnięty odmową też nie dostaje drugiego wpisu.
-    expect(missingSelfApprovals(after, [no('s-mech'), ok('s-nowy')], 'AKO')).toEqual([]);
+    expect(missingSelfApprovals(after, [no('s-mech'), ok('s-nowy')], 'BNO')).toEqual([]);
     expect(missingSelfApprovals(after, [], 'PWI')).toEqual([]);
   });
 });
@@ -135,7 +135,7 @@ describe('kto może zdecydować', () => {
 
   it('osoba z kroku PÓŹNIEJSZEGO jeszcze nie decyduje - kroki idą po kolei', () => {
     expect(
-      refuseDecision(PATH, [], { deciderPilotId: 'TMK', decision: 'approved', reason: null, overrides: false }),
+      refuseDecision(PATH, [], { deciderPilotId: 'AKO', decision: 'approved', reason: null, overrides: false }),
     ).toBe('not_your_step');
   });
 
@@ -146,7 +146,7 @@ describe('kto może zdecydować', () => {
   });
 
   it('rezerwacja ROZSTRZYGNIĘTA nie przyjmuje drugiej decyzji', () => {
-    const attempt = { deciderPilotId: 'AKO', decision: 'approved' as const, reason: null, overrides: true };
+    const attempt = { deciderPilotId: 'BNO', decision: 'approved' as const, reason: null, overrides: true };
     expect(refuseDecision(PATH, [no('s-mech')], attempt)).toBe('not_pending');
     expect(refuseDecision(PATH, [ok('s-mech'), ok('s-szef')], attempt)).toBe('not_pending');
     expect(refuseDecision([], [], attempt)).toBe('not_pending');
@@ -155,7 +155,7 @@ describe('kto może zdecydować', () => {
 
 describe('odmowa wymaga powodu, zgoda nie', () => {
   it('odmowa bez powodu odbija się - pilot czyta go na telefonie', () => {
-    const base = { deciderPilotId: 'AKO', decision: 'rejected' as const, overrides: false };
+    const base = { deciderPilotId: 'BNO', decision: 'rejected' as const, overrides: false };
     expect(refuseDecision(PATH, [], { ...base, reason: null })).toBe('reason_required');
     expect(refuseDecision(PATH, [], { ...base, reason: '' })).toBe('reason_required');
     expect(refuseDecision(PATH, [], { ...base, reason: 'Maszyna na przeglądzie.' })).toBeNull();
@@ -163,7 +163,7 @@ describe('odmowa wymaga powodu, zgoda nie', () => {
 
   it('zgoda bez powodu przechodzi', () => {
     expect(
-      refuseDecision(PATH, [], { deciderPilotId: 'AKO', decision: 'approved', reason: null, overrides: false }),
+      refuseDecision(PATH, [], { deciderPilotId: 'BNO', decision: 'approved', reason: null, overrides: false }),
     ).toBeNull();
   });
 
@@ -217,7 +217,7 @@ describe('ścieżka jest ŻYWA', () => {
     expect(approvalOutcome([pusty], [])).toBe('pending');
     expect(pendingApprovers([pusty], [])).toEqual([]);
     expect(
-      refuseDecision([pusty], [], { deciderPilotId: 'AKO', decision: 'approved', reason: null, overrides: false }),
+      refuseDecision([pusty], [], { deciderPilotId: 'BNO', decision: 'approved', reason: null, overrides: false }),
     ).toBe('not_your_step');
     // …a administrator wyprowadza ją z zakleszczenia.
     expect(

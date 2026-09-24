@@ -12,7 +12,7 @@ import type { RemoteReadingsChain, RemoteReadingsChainLink } from '../applicatio
 
 const before: RemoteReadingsChainLink = {
   sessionUuid: 'rano',
-  picId: 'ako',
+  picId: 'bno',
   at: Date.UTC(2026, 7, 16, 9, 0),
   fuelL: 140,
   mh: 1232.4,
@@ -20,7 +20,7 @@ const before: RemoteReadingsChainLink = {
 
 const after: RemoteReadingsChainLink = {
   sessionUuid: 'wieczor',
-  picId: 'tmk',
+  picId: 'ako',
   at: Date.UTC(2026, 7, 16, 17, 30),
   fuelL: 96,
   mh: 1234.9,
@@ -34,7 +34,7 @@ describe('szlak paliwa', () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.title).toContain('Poprzedni lot');
-    expect(rows[0]!.title).toContain('AKO');
+    expect(rows[0]!.title).toContain('BNO');
     expect(rows[0]!.meta).toContain('140');
   });
 
@@ -42,7 +42,7 @@ describe('szlak paliwa', () => {
     const rows = fuelChainTrail(chain, 'after');
 
     expect(rows[0]!.title).toContain('Następny lot');
-    expect(rows[0]!.title).toContain('TMK');
+    expect(rows[0]!.title).toContain('AKO');
     expect(rows[0]!.meta).toContain('96');
   });
 

@@ -74,7 +74,7 @@ function grid(over: Partial<Parameters<typeof buildFleetGrid>[0]> = {}) {
     // liczby do sprawdzenia; wariant z efemerydami ma własny przypadek niżej.
     homeIcao: null,
     pilotId: 'ja',
-    codeOf: (id) => (id == null ? null : id === 'ja' ? 'TMK' : 'XYZ'),
+    codeOf: (id) => (id == null ? null : id === 'ja' ? 'AKO' : 'XYZ'),
     nameOf: (id) => (id === 'inny' ? 'Jan Nowak' : null),
     now: at(7, 45),
     ...over,
@@ -191,7 +191,7 @@ describe('napis i ton paska', () => {
       bookings: [booking({ id: 'b1', aircraftId: 'a1', pilotId: 'ja' })],
       nameOf: () => null,
     });
-    expect(g.rows[0]!.bars[0]!.label).toBe('TMK');
+    expect(g.rows[0]!.bars[0]!.label).toBe('AKO');
   });
 
   it('wyłączenie z użytku niesie POWÓD, a bez niego nazwę stanu', () => {

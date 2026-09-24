@@ -22,7 +22,7 @@ import type { RemoteReadingsChain } from '../application';
 const chain: RemoteReadingsChain = {
   before: {
     sessionUuid: 'rano',
-    picId: 'ako',
+    picId: 'bno',
     at: Date.UTC(2026, 7, 16, 9, 0),
     fuelL: 140,
     mh: 1232,
@@ -43,7 +43,7 @@ describe('wiersze odniesienia w arkuszu odczytu', () => {
     const before = fuelBeforeReference(chain);
     expect(before!.value).toBe('140 L');
     expect(before!.label).toContain('Zostawione przed lotem');
-    expect(before!.label).toContain('AKO');
+    expect(before!.label).toContain('BNO');
 
     const after = fuelAfterReference(chain);
     expect(after!.value).toBe('96 L');
@@ -75,7 +75,7 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
     expect(w!.id).toBe('continuity-before');
     expect(w!.text).toContain('140 L');
     expect(w!.text).toContain('100 L');
-    expect(w!.src).toContain('AKO');
+    expect(w!.src).toContain('BNO');
   });
 
   it('mówią o rozjeździe z NASTĘPNYM lotem', () => {
@@ -109,7 +109,7 @@ describe('ciągłość MOTOGODZIN - łańcuch MH jest osią samolotu (§4.5)', (
   it('podaje odczyty obu sąsiadów jako wiersze odniesienia', () => {
     expect(mhBeforeReference(chain, 'decimal')!.value).toBe('1232.0');
     expect(mhAfterReference(chain, 'decimal')!.value).toBe('1240.0');
-    expect(mhBeforeReference(chain, 'decimal')!.label).toContain('AKO');
+    expect(mhBeforeReference(chain, 'decimal')!.label).toContain('BNO');
   });
 
   it('milczy, gdy licznik trzyma łańcuch', () => {
@@ -137,7 +137,7 @@ describe('ciągłość OLEJU - kotwica, nie para „przed/po"', () => {
       levelL: 9.2,
       atMh: 1230,
       at: Date.UTC(2026, 7, 16, 7, 0),
-      byPilotId: 'ako',
+      byPilotId: 'bno',
       addedSinceL: 1,
     },
   };
@@ -145,7 +145,7 @@ describe('ciągłość OLEJU - kotwica, nie para „przed/po"', () => {
   it('wiersz odniesienia niesie pomiar, autora i DOLEWKI od niego', () => {
     const row = oilReference(withOil)!;
     expect(row.value).toBe(oilLitres(9.2));
-    expect(row.label).toContain('AKO');
+    expect(row.label).toContain('BNO');
     expect(row.label).toContain('dolano');
   });
 

@@ -125,7 +125,7 @@ describe('GET /me/task-suggestions', () => {
     // Brak historii jest normalnym stanem nowego klubu i pierwszego dnia pilota.
     // 404 mówiłoby „zasobu nie ma", a zasób jest - po prostu nic jeszcze nie zawiera.
     const { app } = await testHarness();
-    const res = await suggestions(app, await login(app, 'TMK'));
+    const res = await suggestions(app, await login(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ clients: [], notes: [] });
@@ -142,31 +142,31 @@ describe('GET /me/task-suggestions', () => {
         notes: 'notatka KRZ-a',
       },
     ]);
-    await send(app, 'TMK', [
-      { session: 'sess-tmk', pic: 'TMK', claimedAt: at(1, 8), notes: 'lot z uczniem' },
+    await send(app, 'AKO', [
+      { session: 'sess-ako', pic: 'AKO', claimedAt: at(1, 8), notes: 'lot z uczniem' },
     ]);
 
-    const body = (await suggestions(app, await login(app, 'TMK'))).json();
+    const body = (await suggestions(app, await login(app, 'AKO'))).json();
 
-    // Klient wpisany przez KRZ-a jest kontrahentem KLUBU - TMK ma go zobaczyć.
+    // Klient wpisany przez KRZ-a jest kontrahentem KLUBU - AKO ma go zobaczyć.
     expect(body.clients).toEqual([
       { value: 'SKY CAMP', operation: 'skoki', lastUsedAt: iso(at(0, 8)) },
     ]);
-    // Notatka KRZ-a jest jego uwagą o jego dniu - do podpowiedzi TMK nie wchodzi.
+    // Notatka KRZ-a jest jego uwagą o jego dniu - do podpowiedzi AKO nie wchodzi.
     expect(body.notes).toEqual([{ value: 'lot z uczniem', lastUsedAt: iso(at(1, 8)) }]);
   });
 
   it('najnowsze pierwsze i BEZ duplikatów - powtórzona wartość to jedna pozycja', async () => {
     const { app } = await testHarness();
-    await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'stara' },
-      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: 'AEROKLUB', notes: 'nowsza' },
+    await send(app, 'AKO', [
+      { session: 's1', pic: 'AKO', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'stara' },
+      { session: 's2', pic: 'AKO', claimedAt: at(1, 8), client: 'AEROKLUB', notes: 'nowsza' },
       // Ten sam klient i ta sama notatka co w `s1`, ale najświeższego dnia - wartość
       // ma zostać JEDNA, z podbitym stemplem, a nie trafić na listę drugi raz.
-      { session: 's3', pic: 'TMK', claimedAt: at(2, 8), client: 'SKY CAMP', notes: 'stara' },
+      { session: 's3', pic: 'AKO', claimedAt: at(2, 8), client: 'SKY CAMP', notes: 'stara' },
     ]);
 
-    const body = (await suggestions(app, await login(app, 'TMK'))).json();
+    const body = (await suggestions(app, await login(app, 'AKO'))).json();
 
     expect(body.clients).toEqual([
       { value: 'SKY CAMP', operation: 'skoki', lastUsedAt: iso(at(2, 8)) },
@@ -182,12 +182,12 @@ describe('GET /me/task-suggestions', () => {
     // Klient bywa obsługiwany różnie (skoki, a potem ferry). Podpowiedź ma nieść to,
     // co robiono ostatnio - starsza operacja podpowiadałaby wczorajszy kontekst.
     const { app } = await testHarness();
-    await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', operation: 'skoki' },
-      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: 'SKY CAMP', operation: 'ferry' },
+    await send(app, 'AKO', [
+      { session: 's1', pic: 'AKO', claimedAt: at(0, 8), client: 'SKY CAMP', operation: 'skoki' },
+      { session: 's2', pic: 'AKO', claimedAt: at(1, 8), client: 'SKY CAMP', operation: 'ferry' },
     ]);
 
-    const body = (await suggestions(app, await login(app, 'TMK'))).json();
+    const body = (await suggestions(app, await login(app, 'AKO'))).json();
     expect(body.clients).toEqual([
       { value: 'SKY CAMP', operation: 'ferry', lastUsedAt: iso(at(1, 8)) },
     ]);
@@ -197,12 +197,12 @@ describe('GET /me/task-suggestions', () => {
     // Pilot, który przeszedł przez pole i nic nie wpisał, nie tworzy pozycji na liście
     // - pusty wiersz do wyboru byłby gorszy niż brak listy.
     const { app } = await testHarness();
-    await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: '', notes: '   ' },
-      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: null, notes: null },
+    await send(app, 'AKO', [
+      { session: 's1', pic: 'AKO', claimedAt: at(0, 8), client: '', notes: '   ' },
+      { session: 's2', pic: 'AKO', claimedAt: at(1, 8), client: null, notes: null },
     ]);
 
-    expect((await suggestions(app, await login(app, 'TMK'))).json()).toEqual({
+    expect((await suggestions(app, await login(app, 'AKO'))).json()).toEqual({
       clients: [],
       notes: [],
     });
@@ -214,15 +214,15 @@ describe('GET /me/task-suggestions', () => {
     for (let i = 0; i < 25; i += 1) {
       specs.push({
         session: `s-${i}`,
-        pic: 'TMK',
+        pic: 'AKO',
         claimedAt: at(i, 8),
         client: `KLIENT ${i}`,
         notes: `notatka ${i}`,
       });
     }
-    await send(app, 'TMK', specs);
+    await send(app, 'AKO', specs);
 
-    const body = (await suggestions(app, await login(app, 'TMK'))).json();
+    const body = (await suggestions(app, await login(app, 'AKO'))).json();
     expect(body.clients).toHaveLength(20);
     expect(body.notes).toHaveLength(20);
     // Obcięcie idzie po WŁAŚCIWEJ stronie porządku: zostają najnowsze, nie pierwsze
@@ -238,7 +238,7 @@ describe('GET /me/task-suggestions', () => {
     // MUSI przejść przez zapytanie bez błędu - `COALESCE` na stempel projekcji jest
     // po to, żeby porządek nie miał dziury.
     const { app } = await testHarness();
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
     const claim = await app.inject({
       method: 'POST',
       url: '/events',
@@ -249,7 +249,7 @@ describe('GET /me/task-suggestions', () => {
             uuid: 'e-claim-only',
             sessionUuid: 'sess-claim-only',
             aircraftId: 'SP-FGK',
-            picId: 'TMK',
+            picId: 'AKO',
             dualId: null,
             type: 'session_claim',
             deviceTime: at(3, 7),
@@ -262,8 +262,8 @@ describe('GET /me/task-suggestions', () => {
     });
     expect(claim.statusCode).toBe(200);
 
-    await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'uwaga' },
+    await send(app, 'AKO', [
+      { session: 's1', pic: 'AKO', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'uwaga' },
     ]);
 
     const body = (await suggestions(app, token)).json();

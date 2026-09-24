@@ -24,7 +24,7 @@ import { Sheet } from './Sheet';
 
 export interface CrewOption {
   id: string;
-  /** Kod pilota („AKO") - monospacing, tak jak w dokumentach. */
+  /** Kod pilota („BNO") - monospacing, tak jak w dokumentach. */
   code: string;
   name: string;
 }

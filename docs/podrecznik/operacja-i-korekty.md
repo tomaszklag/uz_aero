@@ -9,7 +9,7 @@
 - **Wierszem operacji** w [Historii](poprzednie-dni) - dzisiejszym albo z wcześniejszego dnia.
 - **Z kokpitu, po zatrzymaniu silnika** - kafelkiem **Popraw dane operacji**. To jedyne wejście przed zdaniem samolotu i wraca stamtąd do kokpitu, bo maszyna zostaje w Twoich rękach.
 
-Nagłówek nosi **sygnaturę** operacji, np. `SP-AXA/2026-09-05/TMK/1` - znak samolotu, doba UTC, kod pilota i numer operacji w Twojej dobie. Tak nazywa się tę operację w aplikacji, w panelu klubu i w rozmowie z administratorem. Obok sygnatury stoi oznaczenie trybu albo pochodzenia wpisu: **RĘCZNIE**, **EDYCJA**, **Podgląd**.
+Nagłówek nosi **sygnaturę** operacji, np. `SP-AXA/2026-09-05/AKO/1` - znak samolotu, doba UTC, kod pilota i numer operacji w Twojej dobie. Tak nazywa się tę operację w aplikacji, w panelu klubu i w rozmowie z administratorem. Obok sygnatury stoi oznaczenie trybu albo pochodzenia wpisu: **RĘCZNIE**, **EDYCJA**, **Podgląd**.
 
 ## Co zawiera
 

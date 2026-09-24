@@ -39,7 +39,7 @@ const claim = (sessionUuid: string, aircraftId: string): AppendEventInput => ({
   type: 'session_claim',
   sessionUuid,
   aircraftId,
-  picId: 'TMK',
+  picId: 'AKO',
   payload: { mode: 'free' },
 });
 
@@ -47,7 +47,7 @@ const landing = (sessionUuid: string, aircraftId: string): AppendEventInput => (
   type: 'landing',
   sessionUuid,
   aircraftId,
-  picId: 'TMK',
+  picId: 'AKO',
   payload: { method: 'manual' },
 });
 

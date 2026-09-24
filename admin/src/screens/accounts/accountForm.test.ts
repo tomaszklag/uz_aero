@@ -14,7 +14,7 @@ import {
 
 const pilot: PilotListItemDto = {
   id: 'p-1',
-  code: 'TMK',
+  code: 'AKO',
   name: 'Adam Kowalski',
   email: 'a.kowalski@ninerdeck.pl',
   active: true,
@@ -23,7 +23,7 @@ const pilot: PilotListItemDto = {
   loginMethods: ['google'],
 };
 
-const filled = { ...EMPTY_ACCOUNT, code: 'TMK', name: 'Adam Kowalski' };
+const filled = { ...EMPTY_ACCOUNT, code: 'AKO', name: 'Adam Kowalski' };
 
 describe('kod pilota', () => {
   it('normalizuje do wersalików, jak serwer', () => {

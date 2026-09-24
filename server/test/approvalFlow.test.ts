@@ -146,7 +146,7 @@ describe('ścieżka dwóch kroków', () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
     await grantApprove(db, 'JSE');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const path = await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
       { label: 'Szef wyszkolenia', memberIds: ['JSE'] },
@@ -180,8 +180,8 @@ describe('ścieżka dwóch kroków', () => {
 
   it('REZERWACJA CZEKAJĄCA TRZYMA SLOT - inaczej „czekam" znaczyłoby „zaraz mi to zajmą"', async () => {
     const { app } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
-    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['AKO'] }]);
+    const cookie = await panelCookie(app, 'AKO');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['BNO'] }]);
 
     const pwi = await login(app, 'PWI');
     const made = await book(app, pwi);
@@ -197,7 +197,7 @@ describe('ścieżka dwóch kroków', () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
     await grantApprove(db, 'JSE');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ', 'JSE'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -214,10 +214,10 @@ describe('rezerwujący pomija własne kroki', () => {
   it('krok, na którym sam stoi, przechodzi z adnotacją `self` - a nie brakiem wpisu', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
 
     // Rezerwuje SAM mechanik - jego krok przechodzi, pyta dopiero szef wyszkolenia.
@@ -235,10 +235,10 @@ describe('rezerwujący pomija własne kroki', () => {
   it('rezerwujący na liście WSZYSTKICH kroków dostaje `confirmed` od razu', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['KRZ', 'AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['KRZ', 'BNO'] },
     ]);
 
     const krz = await login(app, 'KRZ');
@@ -255,7 +255,7 @@ describe('odmowa', () => {
   it('bez powodu odbija się, z powodem kończy sprawę i ZWALNIA termin', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -294,16 +294,16 @@ describe('odmowa', () => {
   it('po odmowie nie da się już zatwierdzić', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
-    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ', 'AKO'] }]);
+    const cookie = await panelCookie(app, 'AKO');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ', 'BNO'] }]);
 
     const pwi = await login(app, 'PWI');
     const id = (await book(app, pwi)).json().id as string;
     const krz = await login(app, 'KRZ');
     await decide(app, krz, id, { decision: 'rejected', reason: 'Nie ma zgody.' });
 
-    const ako = await login(app, 'AKO');
-    const poZamknieciu = await decide(app, ako, id, { decision: 'approved' });
+    const bno = await login(app, 'BNO');
+    const poZamknieciu = await decide(app, bno, id, { decision: 'approved' });
     expect(poZamknieciu.statusCode, poZamknieciu.body).toBe(409);
     expect(poZamknieciu.json().error).toBe('not_pending');
   });
@@ -312,7 +312,7 @@ describe('odmowa', () => {
 describe('kto może zdecydować', () => {
   it('BEZ zdolności `reservations.approve` - 403, choćby stał na liście kroku', async () => {
     const { app } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     // JSE stoi na liście, ale zdolności nie dostał - lista kroku i zdolność odpowiadają
     // na dwa RÓŻNE pytania i potrzebne są obie (§11.2).
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['JSE'] }]);
@@ -330,7 +330,7 @@ describe('kto może zdecydować', () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
     await grantApprove(db, 'JSE');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -345,15 +345,15 @@ describe('kto może zdecydować', () => {
   it('ADMINISTRATOR odblokowuje każdy krok - inaczej jedno odejście z klubu blokuje wszystko', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
     const id = (await book(app, pwi)).json().id as string;
 
-    // TMK ma `reservations.manage`, a na liście kroku nie stoi.
-    const tmk = await login(app, 'TMK');
-    const decyzja = await decide(app, tmk, id, { decision: 'approved' });
+    // AKO ma `reservations.manage`, a na liście kroku nie stoi.
+    const ako = await login(app, 'AKO');
+    const decyzja = await decide(app, ako, id, { decision: 'approved' });
     expect(decyzja.statusCode, decyzja.body).toBe(200);
     expect(decyzja.json().status).toBe('confirmed');
   });
@@ -363,7 +363,7 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
   it('dołożenie kroku COFA sprawę w toku, a zapadłe decyzje zostają przy SWOICH krokach', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
     const mechanik = pierwsza.json().steps[0] as { id: string };
 
@@ -376,7 +376,7 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
     // Administrator dokłada krok PRZED mechanikiem. Rezerwacja już potwierdzona nie
     // wraca do kolejki - decyzja jest faktem, a status wiersza jej skutkiem.
     await setPath(app, cookie, [
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
       { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ'] },
     ]);
 
@@ -394,10 +394,10 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
   it('krok ZDJĘTY ze ścieżki przestaje być pytany, a jego decyzja zostaje w rejestrze', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
     const szef = (pierwsza.json().steps as { id: string; label: string }[])[1]!;
 
@@ -407,7 +407,7 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
     await decide(app, krz, id, { decision: 'approved' });
 
     // Klub zdejmuje mechanika ze ścieżki. Zostaje sam szef wyszkolenia.
-    await setPath(app, cookie, [{ id: szef.id, label: 'Szef wyszkolenia', memberIds: ['AKO'] }]);
+    await setPath(app, cookie, [{ id: szef.id, label: 'Szef wyszkolenia', memberIds: ['BNO'] }]);
 
     const view = await card(app, pwi, id);
     expect(view.json().approval.steps).toHaveLength(1);
@@ -423,7 +423,7 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
 
   it('krok BEZ ANI JEDNEJ OSOBY jest odrzucany przy zapisie ścieżki', async () => {
     const { app } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const proba = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: [] }]);
     expect(proba.statusCode, proba.body).toBe(400);
     expect(proba.json()).toMatchObject({ error: 'step_without_members', stepLabel: 'Mechanik' });
@@ -431,7 +431,7 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
 
   it('krok obsadzony osobą z CUDZEGO klubu jest odrzucany', async () => {
     const { app } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const proba = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['BAD'] }]);
     expect(proba.statusCode, proba.body).toBe(400);
     expect(proba.json().error).toBe('member_not_in_org');
@@ -450,10 +450,10 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
   it('zdjęcie ostatniego brakującego kroku POTWIERDZA sprawę z kompletem zgód i zawiadamia pilota', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
     const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
 
@@ -483,7 +483,7 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
   it('wyczyszczenie całej ścieżki potwierdza WSZYSTKIE czekające sprawy', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -503,27 +503,27 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
   it('zdjęcie kroku BIEŻĄCEGO przesuwa sprawę do następnego i prosi jego osoby', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    await grantApprove(db, 'AKO');
-    const cookie = await panelCookie(app, 'TMK');
+    await grantApprove(db, 'BNO');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
     const szef = (pierwsza.json().steps as { id: string }[])[1]!;
 
     const pwi = await login(app, 'PWI');
     const id = (await book(app, pwi)).json().id as string;
-    const ako = await login(app, 'AKO');
-    expect((await inbox(app, ako)).json().items).toHaveLength(0);
+    const bno = await login(app, 'BNO');
+    expect((await inbox(app, bno)).json().items).toHaveLength(0);
 
     // Mechanik znika ze ścieżki, zanim zdecydował. Sprawa czeka teraz na szefa - a ten
     // musi się o tym dowiedzieć, bo przy złożeniu nikt go nie pytał (kroki idą po kolei).
     const zapis = await setPath(app, cookie, [
-      { id: szef.id, label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { id: szef.id, label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
     expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 1 });
 
-    const wiadomosci = (await inbox(app, ako)).json().items as { kind: string; payload: { stepLabel: string } }[];
+    const wiadomosci = (await inbox(app, bno)).json().items as { kind: string; payload: { stepLabel: string } }[];
     expect(wiadomosci).toHaveLength(1);
     expect(wiadomosci[0]!.kind).toBe('approval_requested');
     expect(wiadomosci[0]!.payload.stepLabel).toBe('Szef wyszkolenia');
@@ -532,14 +532,14 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
     expect(view.json().approval.outcome).toBe('pending');
     expect(view.json().approval.steps[0].current).toBe(true);
     // I szef może teraz zdecydować - sprawa nie utknęła.
-    expect((await decide(app, ako, id, { decision: 'approved' })).json().status).toBe('confirmed');
+    expect((await decide(app, bno, id, { decision: 'approved' })).json().status).toBe('confirmed');
   });
 
   it('krok DOŁOŻONY przed bieżącym prosi swoje osoby, a krok bieżący nie dostaje drugiej prośby', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    await grantApprove(db, 'AKO');
-    const cookie = await panelCookie(app, 'TMK');
+    await grantApprove(db, 'BNO');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
     const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
 
@@ -549,13 +549,13 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
     // Dołożenie kroku COFA sprawę (§11.2) - i od #207 nowy krok pierwszy dowiaduje się
     // o tym od razu, zamiast czekać, aż ktoś zajrzy do kolejki.
     const zapis = await setPath(app, cookie, [
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
       { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ'] },
     ]);
     expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 1 });
 
-    const ako = await login(app, 'AKO');
-    const wiadomosci = (await inbox(app, ako)).json().items as { kind: string; payload: { stepLabel: string } }[];
+    const bno = await login(app, 'BNO');
+    const wiadomosci = (await inbox(app, bno)).json().items as { kind: string; payload: { stepLabel: string } }[];
     expect(wiadomosci.map((w) => [w.kind, w.payload.stepLabel])).toEqual([
       ['approval_requested', 'Szef wyszkolenia'],
     ]);
@@ -568,7 +568,7 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
   it('krok dołożony z REZERWUJĄCYM na liście przechodzi sam - z adnotacją `self`', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
     const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
 
@@ -603,21 +603,21 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
   it('zmiana OBSADY kroku bieżącego nie rodzi prośby - sprawa czeka tam, gdzie czekała', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    await grantApprove(db, 'AKO');
-    const cookie = await panelCookie(app, 'TMK');
+    await grantApprove(db, 'BNO');
+    const cookie = await panelCookie(app, 'AKO');
     const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
     const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
     const pwi = await login(app, 'PWI');
     await book(app, pwi);
 
     const zapis = await setPath(app, cookie, [
-      { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ', 'AKO'] },
+      { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ', 'BNO'] },
     ]);
     expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 0 });
     // Osoba dopisana do kroku widzi sprawę w kolejce; budzika za to nie ma.
-    const ako = await login(app, 'AKO');
-    expect((await inbox(app, ako)).json().items).toHaveLength(0);
-    const kolejka = await app.inject({ url: '/me/approvals/queue', headers: bearer(ako) });
+    const bno = await login(app, 'BNO');
+    expect((await inbox(app, bno)).json().items).toHaveLength(0);
+    const kolejka = await app.inject({ url: '/me/approvals/queue', headers: bearer(bno) });
     expect(kolejka.json().items).toHaveLength(1);
   });
 });
@@ -625,8 +625,8 @@ describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
 describe('termin nadszedł, a decyzji nie ma (§11.5)', () => {
   it('rezerwacja WYGASA, zwalnia slot i mówi o tym pilotowi', async () => {
     const { app, db } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
-    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['AKO'] }]);
+    const cookie = await panelCookie(app, 'AKO');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['BNO'] }]);
 
     const pwi = await login(app, 'PWI');
     const start = TERAZ + 2 * H;
@@ -673,10 +673,10 @@ describe('skrzynka', () => {
   it('prośba trafia do osób kroku BIEŻĄCEGO i do nikogo więcej', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
     ]);
 
     const pwi = await login(app, 'PWI');
@@ -692,16 +692,16 @@ describe('skrzynka', () => {
     expect(mechanik.json().approver).toBe(true);
     expect((await inbox(app, pwi)).json().approver).toBe(false);
 
-    // Krok 2 jeszcze nie pyta, więc AKO nie dostaje nic - budzenie wszystkich naraz
+    // Krok 2 jeszcze nie pyta, więc BNO nie dostaje nic - budzenie wszystkich naraz
     // jest dokładnie tym, przed czym broni kolejność kroków.
-    const ako = await login(app, 'AKO');
-    expect((await inbox(app, ako)).json().items).toHaveLength(0);
+    const bno = await login(app, 'BNO');
+    expect((await inbox(app, bno)).json().items).toHaveLength(0);
   });
 
   it('przeczytanie gasi licznik, a CUDZEJ wiadomości nie da się tknąć', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -731,7 +731,7 @@ describe('akceptujący jest TRZECIM widzem na drucie (§17)', () => {
   it('widzi komplet pól cudzej rezerwacji; zwykły członek klubu - nie', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -775,17 +775,17 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
   it('kolejka pokazuje WYŁĄCZNIE sprawy stojące na MOIM kroku bieżącym, najstarsze pierwsze', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['TMK', 'AKO'] },
+      { label: 'Szef wyszkolenia', memberIds: ['AKO', 'BNO'] },
     ]);
 
     const pwi = await login(app, 'PWI');
     const pierwsza = (await book(app, pwi)).json().id as string;
     const druga = (await book(app, pwi, JUTRO + 11 * H, JUTRO + 12 * H)).json().id as string;
 
-    // TMK stoi na kroku 2 - dopóki mechanik nie zatwierdzi, jego kolejka jest PUSTA,
+    // AKO stoi na kroku 2 - dopóki mechanik nie zatwierdzi, jego kolejka jest PUSTA,
     // choć w klubie czekają dwie sprawy. Kolejka cudzego kroku nie jest jego sprawą.
     expect((await queue(app, cookie)).json().items).toEqual([]);
 
@@ -815,16 +815,16 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
   it('decyzja z panelu: ten sam rdzeń, ten sam rejestr, ŻADNEGO wpisu audytu; historia z osobą', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [
       { label: 'Mechanik', memberIds: ['KRZ'] },
-      { label: 'Szef wyszkolenia', memberIds: ['TMK'] },
+      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
     ]);
 
     const pwi = await login(app, 'PWI');
     const id = (await book(app, pwi)).json().id as string;
 
-    // TMK ma `reservations.manage`, więc odblokowuje z panelu krok MECHANIKA - druga
+    // AKO ma `reservations.manage`, więc odblokowuje z panelu krok MECHANIKA - druga
     // zapora przed zakleszczeniem ścieżki (§11.2). Zapis jest jego i jawny.
     const krok1 = await decideFromPanel(app, cookie, id, { decision: 'approved' });
     expect(krok1.statusCode, krok1.body).toBe(200);
@@ -832,7 +832,7 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
     expect(krok1.json().approval.steps[0].decision).toMatchObject({
       decision: 'approved',
       via: 'person',
-      decidedBy: 'TMK',
+      decidedBy: 'AKO',
     });
 
     const krok2 = await decideFromPanel(app, cookie, id, { decision: 'approved' });
@@ -841,7 +841,7 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
     // Karta w panelu niesie OSOBĘ decydującą (H5), telefon - nie (§9.4).
     const panelCard = await app.inject({ url: `/admin/api/bookings/${id}`, headers: cookie });
     expect(panelCard.statusCode, panelCard.body).toBe(200);
-    expect(panelCard.json().approval.steps.map((s: { decision: { decidedBy: string } }) => s.decision.decidedBy)).toEqual(['TMK', 'TMK']);
+    expect(panelCard.json().approval.steps.map((s: { decision: { decidedBy: string } }) => s.decision.decidedBy)).toEqual(['AKO', 'AKO']);
     const phoneCard = await card(app, pwi, id);
     expect(phoneCard.json().approval.steps[0].decision).not.toHaveProperty('decidedBy');
 
@@ -855,7 +855,7 @@ describe('panel: kolejka decyzji i decyzja z biurka', () => {
   it('odmowa z panelu wymaga powodu; bez `approve` ani `manage` - 403', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -899,7 +899,7 @@ describe('poprawka terminu czyści zgody', () => {
   it('przesunięcie POTWIERDZONEJ rezerwacji cofa ją do `pending` i pyta krok pierwszy od nowa', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -932,7 +932,7 @@ describe('poprawka terminu czyści zgody', () => {
   it('zmiana notatki zgód nie rusza; klub bez ścieżki poprawia termin jak w 3.0.0', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -958,7 +958,7 @@ describe('telefon: kolejka spraw i skrzynka z dobą klubu', () => {
   it('`GET /me/approvals/queue` oddaje sprawy na MOIM kroku, a wiadomość niesie dobę terminu', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     const pwi = await login(app, 'PWI');
@@ -991,7 +991,7 @@ describe('izolacja klubów', () => {
   it('ścieżka i skrzynka NIE PRZECIEKAJĄ do drugiego klubu', async () => {
     const { app, db } = await testHarness();
     await grantApprove(db, 'KRZ');
-    const cookieA = await panelCookie(app, 'TMK');
+    const cookieA = await panelCookie(app, 'AKO');
     await setPath(app, cookieA, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
 
     // Klub B ścieżki nie ma, choć klub A właśnie ją ułożył.

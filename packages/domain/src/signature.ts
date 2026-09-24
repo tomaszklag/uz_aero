@@ -8,7 +8,7 @@
  * wzrokiem na liście. Sygnatura odpowiada na to samo pytanie faktami, które człowiek
  * i tak zna:
  *
- *     SP-AXA/2026-09-01/AKO/1
+ *     SP-AXA/2026-09-01/BNO/1
  *     └ znak  └ doba     └ PIC └ która operacja tego pilota w tej dobie
  *
  * ══ LICZY SIĘ, NIE ZAPISUJE ══
@@ -65,7 +65,7 @@ export interface OperationSignatureParts {
   reg: string | null;
   /** Uruchomienie silnika - z niego bierze się DOBA operacji. */
   startedAt: EpochMillis | null;
-  /** Kod pilota dowodzącego („AKO"). */
+  /** Kod pilota dowodzącego („BNO"). */
   picCode: string | null;
   /** Numer operacji w dobie pilota (1-based) - `operationIndexes`. */
   index: number | null;

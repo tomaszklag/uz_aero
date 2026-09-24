@@ -153,7 +153,7 @@ async function flownWithTrace(
     });
   }
 
-  return { harness, app, admin: await login(app, 'TMK'), pilot };
+  return { harness, app, admin: await login(app, 'AKO'), pilot };
 }
 
 describe('GET /admin/api/sessions/:uuid/track', () => {

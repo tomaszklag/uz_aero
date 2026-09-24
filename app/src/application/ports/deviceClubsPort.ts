@@ -2,7 +2,7 @@
  * Ninerdeck - KLUBY, Z KTÓRYCH LOGOWANO SIĘ NA TYM URZĄDZENIU (2.1.0, §5.1, D10).
  *
  * Powód istnienia jest jeden: **kod pilota jest jedyny W KLUBIE, nie na serwerze.**
- * Sam nie może być więc loginem - „AKO" wskazuje tyle osób, ile jest klubów. E-mail
+ * Sam nie może być więc loginem - „BNO" wskazuje tyle osób, ile jest klubów. E-mail
  * wystarcza sobie, kod pilota potrzebuje klubu, a jedynym miejscem, które ten klub zna
  * PRZED zalogowaniem, jest samo urządzenie: wspólny tablet w samolocie lata dla jednego
  * klubu, a jego piloci wpisują swoje trzy litery.

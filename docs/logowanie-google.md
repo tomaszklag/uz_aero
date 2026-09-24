@@ -63,7 +63,7 @@ To jest ważniejsze niż lista zmian, bo wyznacza jej granice:
   jednym kroku. `AuthService`, rotacja refresha, „wygasły token ≠ wylogowanie"
   i blokada wylogowania przy niepustym outboksie - bez zmian.
 - **Rejestr zdarzeń, projekcje, sygnatura operacji** - bez zmian. `pilots.code`
-  zostaje `NOT NULL UNIQUE`, więc `SP-AXA/2026-09-01/AKO/1` liczy się jak dotąd.
+  zostaje `NOT NULL UNIQUE`, więc `SP-AXA/2026-09-01/BNO/1` liczy się jak dotąd.
 - **Role i zdolności** (`domain/roles.ts`) - bez zmian, patrz §4.
 - **Unieważnianie poświadczeń** (`credentials_valid_from`) zostaje i jest teraz
   WAŻNIEJSZE: to jedyny sposób odcięcia żywej sesji, skoro nie ma już hasła

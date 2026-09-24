@@ -39,8 +39,8 @@
 | Element | Wartość |
 |---------|---------|
 | Dzień scenariusza | 22 JUNE 2026 · EPKK · operacja: Skoki (skoki startują i lądują na tym samym lotnisku - jeden kod ICAO, nie para; issue #13) |
-| PIC zalogowany | Adam Kowalski · TMK · login `akowalski` · adam@ninerdeck.pl |
-| Dual | AKO |
+| PIC zalogowany | Adam Kowalski · AKO · login `akowalski` · adam@ninerdeck.pl |
+| Dual | BNO |
 | Samolot operacji | SP-AXA · Cessna 182 · 2019 · zbiorniki 330 L · MH w formacie **hh:mm** (1 234:30) |
 | Samolot zajęty | SP-FGK · C182 2017 · aktywny PIC: KRZ od 07:10 |
 | Samolot 2-osobowy | SP-ANK · An-2 1984 · 1700 L · wymaga Dual |

@@ -9,13 +9,13 @@ const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
 
 const session: SessionListItemDto = {
   sessionUuid: 's-1',
-  signature: 'SP-KLM/2026-08-12/TMK/1',
+  signature: 'SP-KLM/2026-08-12/AKO/1',
   aircraftId: 'a-1',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 182',
   mhFormat: 'decimal',
   picId: 'p-1',
-  picCode: 'TMK',
+  picCode: 'AKO',
   picName: 'Adam Kowalski',
   dualCode: null,
   dualName: null,

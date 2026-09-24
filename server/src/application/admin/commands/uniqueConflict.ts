@@ -31,7 +31,7 @@ export function uniqueConflictOn<F extends string>(err: unknown, fields: readonl
   if (e.code !== '23505') return null;
 
   // Sterowniki podają raz `constraint` (`pilots_code_key`), raz `detail`
-  // (`Key (code)=(TMK) already exists`) - sklejamy wszystko i szukamy w całości.
+  // (`Key (code)=(AKO) already exists`) - sklejamy wszystko i szukamy w całości.
   const where = [e.constraint, e.detail, e.message]
     .filter((value): value is string => typeof value === 'string')
     .join(' ');

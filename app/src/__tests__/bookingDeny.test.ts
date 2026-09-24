@@ -49,7 +49,7 @@ const input = (over: Partial<Parameters<typeof bookingDeny>[0]> = {}) => ({
   now: NOW,
   day,
   reg: 'SP-AXA',
-  pilotId: 'tmk',
+  pilotId: 'ako',
   nameOf: (id: string | null) => (id === 'nowak' ? 'Jan Nowak' : null),
   ...over,
 });
@@ -81,7 +81,7 @@ describe('termin zajęty', () => {
   });
 
   it('WŁASNA rezerwacja to podwójny wpis, nie cudzy plan', () => {
-    const vm = bookingDeny(input({ taken: booking({ pilotId: 'tmk' }) }));
+    const vm = bookingDeny(input({ taken: booking({ pilotId: 'ako' }) }));
     expect(vm.title).toBe('Masz już rezerwację w tych godzinach');
     expect(vm.body).not.toContain('rezerwację ma');
   });

@@ -21,7 +21,7 @@ function event(type: Event['type'], time: number, payload: unknown = {}): Event 
     uuid: `e-${seq}-${type}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -48,7 +48,7 @@ function correction(
     uuid: `c-${seq}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: options.picId ?? 'TMK',
+    picId: options.picId ?? 'AKO',
     dualId: null,
     type: 'event_correction',
     deviceTime: recordedAt,
@@ -87,7 +87,7 @@ describe('historia zmian - czas zdarzenia', () => {
       kind: 'retime',
       from: at(8, 58),
       to: at(9, 1),
-      byPilotId: 'TMK',
+      byPilotId: 'AKO',
       reason: 'GPS wykrył lądowanie za późno.',
     });
   });
@@ -98,7 +98,7 @@ describe('historia zmian - czas zdarzenia', () => {
       target,
       correction(target, at(11, 42), { action: 'retime', newTime: at(9, 1) }),
       correction(target, at(12, 5), { action: 'retime', newTime: at(9, 0) }, {
-        picId: 'AKO',
+        picId: 'BNO',
         reason: 'Zgodnie z zapisem w dzienniku lotniska.',
       }),
     ];
@@ -107,7 +107,7 @@ describe('historia zmian - czas zdarzenia', () => {
     expect(history).toHaveLength(2);
     // Chronologicznie: ekran odwraca kolejność u siebie (najnowsza na górze).
     expect(history[0]?.to).toBe(at(9, 1));
-    expect(history[1]).toMatchObject({ from: at(9, 1), to: at(9, 0), byPilotId: 'AKO' });
+    expect(history[1]).toMatchObject({ from: at(9, 1), to: at(9, 0), byPilotId: 'BNO' });
   });
 
   it('brak powodu zostaje jawnym `null`, nie pustym napisem', () => {

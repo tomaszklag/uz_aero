@@ -909,7 +909,7 @@ link w kod do dyktowania, czego świadomie nie ma - D5). Formularz dostał przy 
   którą na liście nie ma `pilots` ani `external_identities`.
 - **Kod pilota w loginie porównuje się bez zmiany wielkości liter po stronie klienta**
   (aplikacja normalizuje do wersalików przed wysłaniem), a klucz limitu jest liczony
-  z loginu małymi literami - dzięki temu `AKO` i `ako` dzielą jeden kubełek prób
+  z loginu małymi literami - dzięki temu `BNO` i `bno` dzielą jeden kubełek prób
   i zmiana wielkości liter nie mnoży limitu.
 
 ## 16. Rejestracja i „Nie pamiętam hasła" z panelu (issue #180, 2026-09-24)

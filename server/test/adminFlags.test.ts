@@ -146,17 +146,17 @@ async function exportRevisions(db: Harness['db']) {
 }
 
 /**
- * Nakładka sesji jak w `export.test.ts`: TMK nie zamyka dnia, KRZ przejmuje samolot
+ * Nakładka sesji jak w `export.test.ts`: AKO nie zamyka dnia, KRZ przejmuje samolot
  * offline. Obie sesje bez `day_close` → `aircraft_overlap`. Potem KRZ zamyka SWÓJ
  * dzień - sesja jest domknięta, ale sporna, więc karta NIE powstaje.
  */
 async function overlapping() {
   const harness = await testHarness();
   const { app, db } = harness;
-  const tmk = await login(app, 'TMK');
+  const ako = await login(app, 'AKO');
   const krz = await login(app, 'KRZ');
 
-  await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
+  await post(app, ako, openDay({ sessionUuid: 'sess-1', picId: 'AKO', reading: { fuelL: 150, mh: 1234.5 } }));
   await post(app, krz, openDay({ sessionUuid: 'sess-2', picId: 'KRZ', reading: { fuelL: 112, mh: 1236.87 } }));
   await post(app, krz, closeDay({ sessionUuid: 'sess-2', picId: 'KRZ', mh: 1237.4 }));
 
@@ -175,11 +175,11 @@ describe('rozwiązanie flagi (A03a)', () => {
   // czyli administrator - i to jego drogę przez `flags.resolve` przybija ten przypadek.
   it('zmienia status, zapisuje komentarz i ODBLOKOWUJE kartę dnia', async () => {
     const { app, db, flagId } = await overlapping();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await resolve(app, flagId, {
       token: admin,
-      note: 'Rozmowa z TMK: dzień zamknięty telefonicznie, nakładka pozorna.',
+      note: 'Rozmowa z AKO: dzień zamknięty telefonicznie, nakładka pozorna.',
     });
 
     expect(res.statusCode).toBe(200);
@@ -189,8 +189,8 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(await flagRows(db)).toMatchObject([
       {
         status: 'resolved',
-        resolved_by: 'TMK',
-        resolution_note: 'Rozmowa z TMK: dzień zamknięty telefonicznie, nakładka pozorna.',
+        resolved_by: 'AKO',
+        resolution_note: 'Rozmowa z AKO: dzień zamknięty telefonicznie, nakładka pozorna.',
       },
     ]);
     expect((await flagRows(db))[0]!.resolved_at).not.toBeNull();
@@ -272,7 +272,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     ['same spacje', '   '],
   ])('komentarz wymagany - %s daje 400 i nie rusza flagi', async (_case, note) => {
     const { app, db, flagId } = await overlapping();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await resolve(app, flagId, { token: admin, note });
 
@@ -283,7 +283,7 @@ describe('rozwiązanie flagi (A03a)', () => {
 
   it('nieistniejąca flaga → 404', async () => {
     const { app, flagId } = await overlapping();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await resolve(app, flagId + 999, { token: admin, note: 'Nie ma czego zamykać.' });
 
@@ -299,8 +299,8 @@ describe('rozwiązanie flagi (A03a)', () => {
     const { app, db, flagId } = await overlapping();
     // DWA konta, którym wolno rozstrzygać - świat testowy ma dwóch administratorów
     // właśnie po to, żeby dało się odtworzyć dwie osoby klikające w tę samą flagę.
-    const admin = await login(app, 'TMK');
-    const otherAdmin = await login(app, 'AKO');
+    const admin = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'BNO');
 
     await resolve(app, flagId, { token: admin, note: 'Pierwsze rozstrzygnięcie.' });
     const second = await resolve(app, flagId, {
@@ -311,10 +311,10 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(second.statusCode).toBe(409);
     expect(second.json()).toMatchObject({
       error: 'already_resolved',
-      flag: { id: flagId, status: 'resolved', resolvedBy: 'TMK', resolutionNote: 'Pierwsze rozstrzygnięcie.' },
+      flag: { id: flagId, status: 'resolved', resolvedBy: 'AKO', resolutionNote: 'Pierwsze rozstrzygnięcie.' },
     });
     expect((await flagRows(db))[0]).toMatchObject({
-      resolved_by: 'TMK',
+      resolved_by: 'AKO',
       resolution_note: 'Pierwsze rozstrzygnięcie.',
     });
 
@@ -333,16 +333,16 @@ describe('rozwiązanie flagi (A03a)', () => {
     // Rozwiązanie `mh_gap` niczego nie odblokowuje, bo `DayExporter` nie ma na niego
     // bramki. Odpowiedź z fałszywą rewizją uczyłaby nieufności do narzędzia.
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
-    await post(app, tmk, closeDay({ sessionUuid: 'sess-1', picId: 'TMK', mh: 1241.15 }));
+    await post(app, ako, openDay({ sessionUuid: 'sess-1', picId: 'AKO', reading: { fuelL: 150, mh: 1234.5 } }));
+    await post(app, ako, closeDay({ sessionUuid: 'sess-1', picId: 'AKO', mh: 1241.15 }));
     // Następny dzień zaczyna się od licznika wyższego o ~9 h - ktoś latał bez aplikacji.
     // Paliwo ZGADZA się z przekazaniem (88 L z `closeDay`) celowo: ten test dotyczy
     // flagi nieblokującej eksportu, a rozjazd paliwa dołożyłby drugą, niezwiązaną
     // z jego tezą (od 2026-07-31 serwer liczy też `fuel_mismatch`).
-    await post(app, tmk, openDay({ sessionUuid: 'sess-3', picId: 'TMK', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
-    await post(app, tmk, closeDay({ sessionUuid: 'sess-3', picId: 'TMK', mh: 1252, dayOffset: 1 }));
+    await post(app, ako, openDay({ sessionUuid: 'sess-3', picId: 'AKO', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
+    await post(app, ako, closeDay({ sessionUuid: 'sess-3', picId: 'AKO', mh: 1252, dayOffset: 1 }));
 
     const flags = await flagRows(db);
     expect(flags).toMatchObject([{ type: 'mh_gap', status: 'open' }]);
@@ -350,7 +350,7 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(before).toHaveLength(2); // obie sesje zamknięte → obie już wyeksportowane
 
     const res = await resolve(app, flags[0]!.id, {
-      token: tmk,
+      token: ako,
       note: 'Lot techniczny bez aplikacji, potwierdzony w książce samolotu.',
     });
 
@@ -382,7 +382,7 @@ const onAircraft = (events: ReturnType<typeof event>[], aircraftId: string) =>
  * flagi, których ten test nie dotyczy.
  *
  * Z tego samego powodu dni na SP-FGK lata TRZECI pilot (2026-08-07). Wcześniej były
- * TMK-a, czyli tego samego, który trzyma otwartą sesję na SP-AXA - a od rozdzielenia
+ * AKO-a, czyli tego samego, który trzyma otwartą sesję na SP-AXA - a od rozdzielenia
  * `session_overlap` (§4.7) taki układ jest już wykrywany jako `pilot_overlap`:
  * jeden człowiek prowadzi dwie maszyny naraz. Detektor miał rację, więc poprawiamy
  * FIXTURE, a nie detektor.
@@ -390,12 +390,12 @@ const onAircraft = (events: ReturnType<typeof event>[], aircraftId: string) =>
 async function mixedInbox() {
   const harness = await testHarness();
   const { app, db } = harness;
-  const tmk = await login(app, 'TMK');
+  const ako = await login(app, 'AKO');
   const krz = await login(app, 'KRZ');
   const jse = await login(app, 'JSE');
 
   // 1) Nakładka na SP-AXA: dwie sesje bez `day_close`. Powstaje NAJWCZEŚNIEJ.
-  await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
+  await post(app, ako, openDay({ sessionUuid: 'sess-1', picId: 'AKO', reading: { fuelL: 150, mh: 1234.5 } }));
   await post(app, krz, openDay({ sessionUuid: 'sess-2', picId: 'KRZ', reading: { fuelL: 150, mh: 1236.87 } }));
 
   // 2) Dziura MH na SP-FGK w kolejnych dniach - flaga młodsza, ale NIE blokuje karty.
@@ -411,7 +411,7 @@ async function mixedInbox() {
   );
   expect(rows.map((r) => r.type)).toEqual(['aircraft_overlap', 'mh_gap']);
 
-  return { ...harness, admin: tmk, flags: rows };
+  return { ...harness, admin: ako, flags: rows };
 }
 
 describe('skrzynka flag (A03)', () => {
@@ -443,17 +443,17 @@ describe('skrzynka flag (A03)', () => {
     // wiekiem, karta dnia stojąca poza arkuszem czekałaby na dole listy.
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // Najpierw dziura MH na SP-AXA (flaga starsza, nieblokująca).
-    await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
-    await post(app, tmk, closeDay({ sessionUuid: 'sess-1', picId: 'TMK', mh: 1241.15 }));
-    await post(app, tmk, openDay({ sessionUuid: 'sess-2', picId: 'TMK', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
-    await post(app, tmk, closeDay({ sessionUuid: 'sess-2', picId: 'TMK', mh: 1252, dayOffset: 1 }));
+    await post(app, ako, openDay({ sessionUuid: 'sess-1', picId: 'AKO', reading: { fuelL: 150, mh: 1234.5 } }));
+    await post(app, ako, closeDay({ sessionUuid: 'sess-1', picId: 'AKO', mh: 1241.15 }));
+    await post(app, ako, openDay({ sessionUuid: 'sess-2', picId: 'AKO', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
+    await post(app, ako, closeDay({ sessionUuid: 'sess-2', picId: 'AKO', mh: 1252, dayOffset: 1 }));
 
     // Potem nakładka na INNYM samolocie (flaga młodsza, blokująca). Sesje SP-FGK
-    // należą do INNYCH pilotów niż dni SP-AXA wyżej - inaczej TMK trzymałby otwartą
+    // należą do INNYCH pilotów niż dni SP-AXA wyżej - inaczej AKO trzymałby otwartą
     // maszynę, lecąc drugą, czyli produkowałby `pilot_overlap` (§4.7) i zaśmiecał
     // skrzynkę flagami, o których ten test nie mówi.
     const withFgk = (uuid: string, pic: string, mh: number) =>
@@ -464,7 +464,7 @@ describe('skrzynka flag (A03)', () => {
     const { rows } = await db.query<{ type: string }>('SELECT type FROM flags ORDER BY id');
     expect(rows.map((r) => r.type)).toEqual(['mh_gap', 'aircraft_overlap']);
 
-    const body = (await inbox(app, tmk)).json();
+    const body = (await inbox(app, ako)).json();
     expect(body.items.map((i: { type: string }) => i.type)).toEqual(['aircraft_overlap', 'mh_gap']);
   });
 
@@ -487,7 +487,7 @@ describe('skrzynka flag (A03)', () => {
     const resolved = (await inbox(app, admin, '?status=resolved')).json();
     expect(resolved.items[0]).toMatchObject({
       blocksExport: false,
-      resolvedBy: 'TMK',
+      resolvedBy: 'AKO',
       resolutionNote: 'Nakładka pozorna.',
     });
 

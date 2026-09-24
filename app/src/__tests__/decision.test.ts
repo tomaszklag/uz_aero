@@ -28,7 +28,7 @@ function booking(over: Partial<CalendarBooking> = {}): CalendarBooking {
     startsAt: day.startsAt + 9 * H,
     endsAt: day.startsAt + 12 * H,
     pilotId: 'jwr',
-    dualId: 'ako',
+    dualId: 'akw',
     operation: 'ferry',
     fromIcao: 'EPZG',
     toIcao: 'EPRJ',
@@ -58,7 +58,7 @@ const view = (over: Partial<CalendarBooking> = {}, approval: RemoteApproval | nu
     now: NOW,
     aircraft: { reg: 'SP-AXA', type: 'C172' },
     pilot: { name: 'Jakub Wrona', code: 'JWR' },
-    dual: { name: 'Anna Kowal', code: 'AKO' },
+    dual: { name: 'Anna Kowal', code: 'AKW' },
   });
 
 describe('karta do rozpatrzenia', () => {
@@ -85,7 +85,7 @@ describe('karta do rozpatrzenia', () => {
       sub: 'JWR',
       opens: { kind: 'pilot', pilotId: 'jwr' },
     });
-    expect(vm.rows[3]!.opens).toEqual({ kind: 'pilot', pilotId: 'ako' });
+    expect(vm.rows[3]!.opens).toEqual({ kind: 'pilot', pilotId: 'akw' });
     expect(vm.rows[6]).toEqual({ label: 'Plan lotu', value: '2:00 · paliwo 140 L', sub: null });
     expect(vm.rows[8]).toEqual({ label: 'Czeka od', value: '16 h temu', sub: 'termin za 2 dni' });
     expect(vm.reference).toBe('SP-AXA · sob 26 WRZ 09:00-12:00');

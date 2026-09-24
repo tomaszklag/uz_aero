@@ -25,8 +25,8 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('administrator nie odbiera jej SOBIE - nawet gdy są inni nosiciele', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
         currentCapabilities: MANAGER,
         nextCapabilities: WITHOUT_MANAGE,
         targetActive: true,
@@ -38,8 +38,8 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('OSTATNI aktywny nosiciel jej nie traci', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
         currentCapabilities: MANAGER,
         nextCapabilities: TECHNIK,
         targetActive: true,
@@ -51,8 +51,8 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('przedostatni traci - blokada dotyczy ostatniego, nie każdego', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
         currentCapabilities: MANAGER,
         nextCapabilities: TECHNIK,
         targetActive: true,
@@ -64,7 +64,7 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('członkostwo NIEAKTYWNE nie liczy się do puli - odebranie nikogo nie odcina', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
+        actorPilotId: 'AKO',
         targetPilotId: 'MDB',
         currentCapabilities: MANAGER,
         nextCapabilities: [],
@@ -81,8 +81,8 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('odebranie WSZYSTKIEGO POZA `accounts.manage` przechodzi - nawet ostatniemu', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
         currentCapabilities: CLUB_CAPABILITIES,
         nextCapabilities: ['accounts.manage'],
         targetActive: true,
@@ -94,7 +94,7 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('NADANIE zdolności nigdy nie jest blokowane - nie zmniejsza liczby naprawiających', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
+        actorPilotId: 'AKO',
         targetPilotId: 'PWI',
         currentCapabilities: [],
         nextCapabilities: CLUB_CAPABILITIES,
@@ -107,8 +107,8 @@ describe('odebranie zdolności `accounts.manage`', () => {
   it('zapis bez zmiany tej jednej zdolności to brak zmiany, a nie odmowa', () => {
     expect(
       refuseScopeChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
         currentCapabilities: MANAGER,
         nextCapabilities: [...MANAGER, 'audit.read'],
         targetActive: true,
@@ -122,8 +122,8 @@ describe('deaktywacja', () => {
   it('administrator nie deaktywuje SIEBIE', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
         targetManagesAccounts: true,
         activeManagers: 5,
       }),
@@ -133,8 +133,8 @@ describe('deaktywacja', () => {
   it('ostatni aktywny nosiciel `accounts.manage` nie traci dostępu', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'AKO',
-        targetPilotId: 'TMK',
+        actorPilotId: 'BNO',
+        targetPilotId: 'AKO',
         targetManagesAccounts: true,
         activeManagers: 1,
       }),
@@ -144,7 +144,7 @@ describe('deaktywacja', () => {
   it('zwykły pilot deaktywuje się bez przeszkód - to codzienna operacja klubu', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'TMK',
+        actorPilotId: 'AKO',
         targetPilotId: 'PWI',
         targetManagesAccounts: false,
         activeManagers: 1,
@@ -157,8 +157,8 @@ describe('deaktywacja', () => {
   it('członek z panelem, ale bez władzy nad kontami, wyłącza się swobodnie', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
         targetManagesAccounts: false,
         activeManagers: 1,
       }),

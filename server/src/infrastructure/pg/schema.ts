@@ -906,7 +906,7 @@ export const MIGRATION_8 = `
     -- bez kodu nie ma prawa być aktywne.
     CONSTRAINT membership_active_has_code CHECK (status <> 'active' OR code IS NOT NULL)
   );
-  -- Kod jedyny W KLUBIE, nie na serwerze: ta sama osoba może być TMK w jednym klubie
+  -- Kod jedyny W KLUBIE, nie na serwerze: ta sama osoba może być AKO w jednym klubie
   -- i TOM w drugim. Częściowy, bo 'pending' kodu nie ma.
   CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_code
     ON memberships (org_id, code) WHERE code IS NOT NULL;

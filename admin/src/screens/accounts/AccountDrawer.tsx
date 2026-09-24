@@ -304,7 +304,7 @@ export function AccountDrawer({
         <Field
           htmlFor="code"
           label="Kod pilota"
-          hint="Krótki skrót przy każdym locie, np. TMK. Jedyny w tym klubie - w innym klubie ta osoba może mieć inny."
+          hint="Krótki skrót przy każdym locie, np. AKO. Jedyny w tym klubie - w innym klubie ta osoba może mieć inny."
         >
           <TextInput
             id="code"

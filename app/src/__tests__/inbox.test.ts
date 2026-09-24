@@ -41,7 +41,7 @@ const rows = (items: RemoteNotification[], todo: string[] = []) =>
     todoIds: new Set(todo),
     now: NOW,
     regOf: (id) => (id === 'a1' ? 'SP-AXA' : null),
-    nameOf: (id) => ({ jwr: 'Jakub Wrona', ako: 'Anna Kowal' })[id] ?? null,
+    nameOf: (id) => ({ jwr: 'Jakub Wrona', akw: 'Anna Kowal' })[id] ?? null,
   });
 
 describe('wiek wiadomości', () => {
@@ -85,7 +85,7 @@ describe('wiersze skrzynki', () => {
 
   it('odmowa niesie POWÓD i decydującego rzeczownikiem; zgoda i wygaśnięcie mają swoje zdania', () => {
     const [odmowa, zgoda, wygasla] = rows([
-      note({ id: 'n2', kind: 'booking_rejected', payload: { decidedBy: 'ako', reason: 'Maszyna idzie na przegląd.' } }),
+      note({ id: 'n2', kind: 'booking_rejected', payload: { decidedBy: 'akw', reason: 'Maszyna idzie na przegląd.' } }),
       note({ id: 'n3', kind: 'booking_approved' }),
       note({ id: 'n4', kind: 'booking_expired' }),
     ]);

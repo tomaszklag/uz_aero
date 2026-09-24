@@ -34,7 +34,7 @@ const rezerwacja = (over: Partial<NextBooking> = {}): NextBooking => ({
   operation: 'Przelot',
   pending: false,
   route: 'EPKK → EPRJ',
-  dualCode: 'AKO',
+  dualCode: 'BNO',
   ...over,
 });
 

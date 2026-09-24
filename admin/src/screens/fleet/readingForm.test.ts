@@ -11,7 +11,7 @@ const reading: AircraftReadingDto = {
   mh: 1236.5,
   fuelL: 112,
   at: Date.UTC(2026, 8, 3, 10, 0),
-  byPilotId: 'AKO',
+  byPilotId: 'BNO',
   byPilotName: 'Barbara Nowak',
   oilL: 8.2,
   oilAddedSinceL: 0,

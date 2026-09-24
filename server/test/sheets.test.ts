@@ -29,7 +29,7 @@ function event(type: string, time: number, payload: Record<string, unknown> = {}
     uuid: `sh-${seq}-${type}`,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -63,7 +63,7 @@ async function login(app: Awaited<ReturnType<typeof testHarness>>['app']) {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
-    payload: { idToken: googleTokenFor('TMK') },
+    payload: { idToken: googleTokenFor('AKO') },
   });
   return res.json().token as string;
 }

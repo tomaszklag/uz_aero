@@ -584,7 +584,7 @@ Uuid nadaje się do ADRESOWANIA (klucz w bazie, ścieżka w panelu, cel korekty)
 niczego więcej: `7c1e5a9b-…-83b4` nie da się przeczytać przez telefon administratorowi,
 wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
 
-    SP-AXA/2026-09-01/AKO/1
+    SP-AXA/2026-09-01/BNO/1
     └ znak  └ doba     └ PIC └ która operacja tego pilota w tej dobie
 
 - **SKŁADA JĄ DOMENA** (`packages/domain/src/signature.ts`: `operationSignature`,
@@ -1614,7 +1614,7 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
     z 2026-08-16 („wpis brał odczyt początkowy z cache, a zgadnięte ogniwo psuło łańcuch
     MH następnemu pilotowi") pod trzema warunkami naraz: (1) źródłem jest REJESTR -
     konkretny sąsiad tej maszyny w tej chwili, nie „ostatni znany stan"; (2) liczba
-    niesie ŹRÓDŁO przy polu („z poprzedniego lotu · AKO"), więc nie udaje odczytu
+    niesie ŹRÓDŁO przy polu („z poprzedniego lotu · BNO"), więc nie udaje odczytu
     z przyrządu - a to było sednem tamtej pomyłki; (3) wpisujemy się TYLKO w pole puste
     albo takie, w którym stoi nasza własna wcześniejsza podpowiedź (zmiana maszyny
     wymienia ją, poprawka pilota jest nietykalna, a wtedy gaśnie też adnotacja).
@@ -2108,7 +2108,7 @@ nie architekturą:
   Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u.
   **Ta sama poprawka na kafelku „Zmiana załogi" w kokpicie** (2026-09-03: podpis
   kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał
-  „PIC: TMK · DUAL: AKO") - kody rozwiązuje odtąd hook `usePilotCode`
+  „PIC: AKO · DUAL: BNO") - kody rozwiązuje odtąd hook `usePilotCode`
   (`hooks/usePilots.ts`, wzorzec `useAircraft`): `queries.pilots()` ładowało
   sobie już SZEŚĆ ekranów własnymi kopiami, siódma kopia byłaby dokładnie tym,
   przed czym ostrzega docblock tamtego hooka
@@ -3397,7 +3397,7 @@ bierze się cały epik. Decyzje i odstępstwa: `docs/wielofirmowosc.md` §14 F. 
 obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
 - **KLUB JEST KONTEKSTEM FLOTY I WYSYŁKI, NIE REJESTRU**: `getAircraft()` i `getPilots()`
   oddają dane KLUBU AKTYWNEGO (kod pilota należy do członkostwa - ten sam człowiek jest
-  w Alfie `TMK`, a w Becie `TMB`), a „Mój dzień", historia i sumy doby pokazują operacje
+  w Alfie `AKO`, a w Becie `AKB`), a „Mój dzień", historia i sumy doby pokazują operacje
   WSZYSTKICH klubów. Stąd `getAircraftById` i NOWE `getAllAircraft()` idą BEZ zawężenia:
   kafelek operacji z drugiego klubu musi mieć czym się podpisać, inaczej wraca na ekran
   surowy identyfikator z panelu. Do WYBORU maszyny służy `aircraft()` i tylko ono.

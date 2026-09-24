@@ -235,7 +235,7 @@ export interface PanelPilot {
  * Klub, do którego ta osoba może PRZEŁĄCZYĆ sesję panelu (mockup `00a-wybor-klubu`).
  *
  * Kod i ZAKRES są tu po to, żeby karta wyboru mogła napisać drugą linię („administrator ·
- * Twój kod TMK") - a nie po to, żeby panel cokolwiek z nich wnioskował: o tym, co wolno
+ * Twój kod AKO") - a nie po to, żeby panel cokolwiek z nich wnioskował: o tym, co wolno
  * w klubie, rozstrzyga zbiór z sesji WYDANEJ dla tego klubu, czytany przy każdym żądaniu.
  *
  * Nazwę zakresu składa PANEL ze zbioru (epik #197) - serwer nie zna języka interfejsu,

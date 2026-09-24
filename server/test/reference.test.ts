@@ -15,7 +15,7 @@ async function authed(app: Awaited<ReturnType<typeof testHarness>>['app']): Prom
   const login = await app.inject({
     method: 'POST',
     url: '/auth/google',
-    payload: { idToken: googleTokenFor('TMK') },
+    payload: { idToken: googleTokenFor('AKO') },
   });
   return login.json().token as string;
 }
@@ -65,14 +65,14 @@ describe('GET /reference', () => {
     const { app } = await testHarness();
     const token = await authed(app);
 
-    // TMK otwiera dzień na SP-AXA (claim + preflight, bez zamknięcia).
+    // AKO otwiera dzień na SP-AXA (claim + preflight, bez zamknięcia).
     const DAY = Date.UTC(2026, 5, 22);
     const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
     const mk = (i: number, type: string, time: number, payload: object) => ({
       uuid: `ref-claim-${i}`,
       sessionUuid: 'sess-ref',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type,
       deviceTime: time,
@@ -111,7 +111,7 @@ describe('GET /reference', () => {
 
     expect(res.statusCode).toBe(200);
     const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
-    expect(axa.claimPicId).toBe('TMK');
+    expect(axa.claimPicId).toBe('AKO');
     expect(axa.claimSince).toBe(at(8, 0));
   });
 
@@ -246,7 +246,7 @@ describe('szlak przekazania w /reference (2026-09-02)', () => {
     uuid: `trail-ref-${++seq}`,
     sessionUuid: sess,
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -295,7 +295,7 @@ describe('szlak przekazania w /reference (2026-09-02)', () => {
       {
         kind: 'claim',
         at: at(8, 0),
-        pilotId: 'TMK',
+        pilotId: 'AKO',
         fuelDeltaL: null,
         fuelAfterL: 150,
         mhAfter: 1230.5,
@@ -304,7 +304,7 @@ describe('szlak przekazania w /reference (2026-09-02)', () => {
       {
         kind: 'refuel',
         at: at(8, 5),
-        pilotId: 'TMK',
+        pilotId: 'AKO',
         fuelDeltaL: 45,
         fuelAfterL: 195,
         mhAfter: null,
@@ -315,7 +315,7 @@ describe('szlak przekazania w /reference (2026-09-02)', () => {
       {
         kind: 'flight',
         at: at(10, 40),
-        pilotId: 'TMK',
+        pilotId: 'AKO',
         fuelDeltaL: null,
         fuelAfterL: 120,
         mhAfter: 1232.7,
@@ -411,7 +411,7 @@ describe('szlak przekazania w /reference (2026-09-02)', () => {
     const body = res.json();
 
     const axa = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
-    expect(axa.handover.byPilotId).toBe('TMK');
+    expect(axa.handover.byPilotId).toBe('AKO');
     expect(axa.handover.at).toBe(at(11, 0));
     expect(axa.handover.trail.map((e: { kind: string }) => e.kind)).toEqual(['claim']);
     expect(axa.handover.trail[0]).toMatchObject({ at: at(11, 0), fuelAfterL: 150 });
@@ -435,7 +435,7 @@ describe('przekazanie oleju w /reference (issue #60)', () => {
       uuid: `oil-ref-${++seq}`,
       sessionUuid: sess,
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type,
       deviceTime: time,
@@ -505,7 +505,7 @@ describe('przekazanie oleju w /reference (issue #60)', () => {
       levelL: 10.6,
       atMh: 1230.5,
       at: at(8, 0),
-      byPilotId: 'TMK',
+      byPilotId: 'AKO',
       addedSinceL: 1.0,
     });
   });
@@ -582,7 +582,7 @@ describe('stan początkowy jednostki (issue #66)', () => {
       uuid: `initial-seed-${i}`,
       sessionUuid: 'sess-init',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type,
       deviceTime: time,
@@ -619,7 +619,7 @@ describe('stan początkowy jednostki (issue #66)', () => {
     const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
 
     expect(axa.handover.reading).toEqual({ fuelL: 84, mh: 1237.9 });
-    expect(axa.handover.byPilotId).toBe('TMK');
+    expect(axa.handover.byPilotId).toBe('AKO');
   });
 
   it('norma nominalna spalania jedzie na telefon obok konfiguracji oleju', async () => {

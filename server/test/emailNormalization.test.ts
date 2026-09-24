@@ -96,7 +96,7 @@ describe('adres e-mail zapisuje się znormalizowany (§4.4)', () => {
 
   it('EDYCJA CZŁONKA W PANELU: nowy adres schodzi do małych liter', async () => {
     const { app, db } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'PATCH',

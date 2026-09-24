@@ -31,8 +31,8 @@ function event<T extends EventType>(
     type,
     sessionUuid: 's-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
-    dualId: 'AKO',
+    picId: 'AKO',
+    dualId: 'BNO',
     deviceTime: time,
     gpsTime: time,
     schemaVersion: 1,
@@ -348,14 +348,14 @@ describe('zdarzenia naziemne', () => {
   it('zmiana załogi mówi, kto kogo zmienił', () => {
     const zZaloga = [
       ...sessionEvents(),
-      event('crew_change', at(9, 5), { role: 'dual', pilotOutId: null, pilotInId: 'AKO' }, 'crew-1'),
+      event('crew_change', at(9, 5), { role: 'dual', pilotOutId: null, pilotInId: 'BNO' }, 'crew-1'),
     ];
     const row = axis(zZaloga).rows.find((r) => r.id === 'crew-1')!;
 
     expect(row.kind).toBe('crew');
     expect(row.name).toBe('Zmiana załogi');
     // Myślnik = fotela nie było zajętego (dołączenie Duala), a nie „nie wiemy kto".
-    expect(row.sub).toBe('DUAL: - → AKO');
+    expect(row.sub).toBe('DUAL: - → BNO');
   });
 
   it('uwaga bez czasów (wpis ręczny z samą notatką) nie jest punktem osi', () => {
@@ -458,7 +458,7 @@ describe('znacznik poprawki', () => {
       type: 'event_correction',
       sessionUuid: 's-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       deviceTime: at(11, 40),
       gpsTime: at(11, 40),

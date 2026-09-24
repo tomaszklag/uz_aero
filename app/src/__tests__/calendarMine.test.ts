@@ -71,10 +71,10 @@ describe('karty własnych rezerwacji', () => {
   });
 
   it('wiersz szczegółów niesie zadanie, trasę i Duala', () => {
-    expect(mine([booking({ id: 'b1', dualId: 'ako' })])[0]!.meta).toEqual([
+    expect(mine([booking({ id: 'b1', dualId: 'bno' })])[0]!.meta).toEqual([
       'Przelot',
       'EPKK → EPRJ',
-      'Dual: AKO',
+      'Dual: BNO',
     ]);
   });
 

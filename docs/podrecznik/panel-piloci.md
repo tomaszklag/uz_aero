@@ -49,7 +49,7 @@ Karta **Sesje** wymienia urządzenia, na których ta osoba jest zalogowana **w T
 
 ## Jak to działa
 
-- **Kod pilota jest nazwą w dokumentach klubu.** Stoi w sygnaturze każdej operacji (`SP-AXA/2026-09-05/TMK/1`), w kokpicie przy składzie załogi i wszędzie tam, gdzie o locie się rozmawia. Ma od 2 do 10 znaków, zapisuje się wielkimi literami i jest w klubie jedyny; zmiana kodu zmienia nazwę, pod którą klub zna wcześniejsze loty, więc robi się to z rozmysłem.
+- **Kod pilota jest nazwą w dokumentach klubu.** Stoi w sygnaturze każdej operacji (`SP-AXA/2026-09-05/AKO/1`), w kokpicie przy składzie załogi i wszędzie tam, gdzie o locie się rozmawia. Ma od 2 do 10 znaków, zapisuje się wielkimi literami i jest w klubie jedyny; zmiana kodu zmienia nazwę, pod którą klub zna wcześniejsze loty, więc robi się to z rozmysłem.
 - **Rola wyznacza, gdzie się pracuje.** Pilot ma aplikację na telefonie, administrator - aplikację i panel, do którego loguje się tym samym kontem Google. Konto pilota, które spróbuje wejść do panelu, dostaje komunikat, a nie awarię.
 - **Wyłączenie działa natychmiast, usunięcie dopiero po nim.** Telefony pracują na kopii listy pilotów i floty pobranej z panelu, a ta kopia się dopisuje i poprawia - nigdy nie kasuje wierszy. Konto usunięte „na gorąco" zostałoby duchem na każdym telefonie, który zdążył je pobrać, i dalej dałoby się je wybrać jako drugiego pilota. Wyłączenie jedzie normalną drogą i aplikacja je rozumie, więc kolejność jest jedna: wyłącz, poczekaj, aż telefony pobiorą zmianę, dopiero potem usuwaj.
 

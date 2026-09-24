@@ -20,7 +20,7 @@ import {
 import type { Leg, SessionState } from '../domain';
 
 const DAY0 = Date.UTC(2026, 8, 1, 0, 0, 0); // 01 WRZ 2026
-const PIC = 'tmk';
+const PIC = 'ako';
 
 const at = (hhmm: string, day = DAY0): number => {
   const [h, m] = hhmm.split(':').map(Number);
@@ -50,15 +50,15 @@ describe('operationDate', () => {
 });
 
 describe('operationSignature', () => {
-  const parts = { reg: 'SP-AXA', startedAt: at('08:12'), picCode: 'AKO', index: 1 };
+  const parts = { reg: 'SP-AXA', startedAt: at('08:12'), picCode: 'BNO', index: 1 };
 
   it('składa cztery człony w kolejności znak → doba → PIC → numer', () => {
-    expect(operationSignature(parts)).toBe('SP-AXA/2026-09-01/AKO/1');
+    expect(operationSignature(parts)).toBe('SP-AXA/2026-09-01/BNO/1');
   });
 
   it('podnosi znak i kod pilota do wersalików', () => {
-    expect(operationSignature({ ...parts, reg: 'sp-axa', picCode: 'ako' })).toBe(
-      'SP-AXA/2026-09-01/AKO/1',
+    expect(operationSignature({ ...parts, reg: 'sp-axa', picCode: 'bno' })).toBe(
+      'SP-AXA/2026-09-01/BNO/1',
     );
   });
 

@@ -5,7 +5,7 @@ import { accountRow } from './accountRows';
 
 const pilot: PilotListItemDto = {
   id: 'p-1',
-  code: 'TMK',
+  code: 'AKO',
   name: 'Adam Kowalski',
   email: 'a.kowalski@ninerdeck.pl',
   active: true,

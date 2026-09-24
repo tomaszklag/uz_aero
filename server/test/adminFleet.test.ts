@@ -171,9 +171,9 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     // To jest własność, dla której ta trasa w ogóle ma taki kształt: panel nie może
     // policzyć `max(10 L, 5%)`, bo z domeny wolno mu importować wyłącznie typy.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const res = await listFleet(app, tmk);
+    const res = await listFleet(app, ako);
     expect(res.statusCode).toBe(200);
     const body = res.json();
 
@@ -188,15 +188,15 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
   it('kolumny stanu mają TRZY stany świeżości - nigdy zera za brak', async () => {
     const harness = await testHarness();
     const { app } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const krz = await token(app, 'KRZ');
 
     // SP-AXA: dzień ZAMKNIĘTY → jest przekazanie, nie ma claimu. Pomiar oleju przy
     // przejęciu zasila pola „Aktualny stan" karty samolotu (uwagi do issue #66).
     await postEvents(
       app,
-      tmk,
-      flyingDay({ sessionUuid: 'fleet-closed', picId: 'TMK', oilL: 8.2 }),
+      ako,
+      flyingDay({ sessionUuid: 'fleet-closed', picId: 'AKO', oilL: 8.2 }),
     );
     // SP-FGK: dzień OTWARTY → jest claim; przekazania nie ma, bo nie ma zamkniętego dnia.
     await postEvents(
@@ -211,7 +211,7 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
       }),
     );
 
-    const body = (await listFleet(app, tmk)).json();
+    const body = (await listFleet(app, ako)).json();
 
     const axa = rowOf(body, 'SP-AXA') as unknown as Record<string, unknown>;
     expect(axa.claim).toBeNull();
@@ -242,7 +242,7 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
 
   it('liczniki kafli opisują CAŁĄ flotę, a filtr zawęża wyłącznie listę', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const krz = await token(app, 'KRZ');
     await postEvents(
       app,
@@ -250,7 +250,7 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
       flyingDay({ sessionUuid: 'fleet-claimed', picId: 'KRZ', aircraftId: 'SP-FGK', close: false }),
     );
 
-    const all = (await listFleet(app, tmk)).json();
+    const all = (await listFleet(app, ako)).json();
     expect(all.counts).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
     // Wyłączone na końcu listy - porządek jest częścią kontraktu portu.
     expect(all.items.map((i: { reg: string }) => i.reg)).toEqual([
@@ -263,14 +263,14 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     // Bez wyszukiwania chipy zgadzają się z kaflami.
     expect(all.scopes).toEqual(all.counts);
 
-    const narrowed = (await listFleet(app, tmk, '?status=disabled')).json();
+    const narrowed = (await listFleet(app, ako, '?status=disabled')).json();
     expect(narrowed.items.map((i: { reg: string }) => i.reg)).toEqual(['SP-KWA']);
     // Kafle się NIE ruszyły - opisują flotę, nie zawężenie. Chip też nie: zawęża go
     // WYŁĄCZNIE wyszukiwanie, żeby cztery liczby zostały porównywalne między sobą.
     expect(narrowed.counts).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
     expect(narrowed.scopes).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
 
-    const searched = (await listFleet(app, tmk, '?q=antonov')).json();
+    const searched = (await listFleet(app, ako, '?q=antonov')).json();
     expect(searched.items.map((i: { reg: string }) => i.reg)).toEqual(['SP-ANK']);
     // Kafle mówią o flocie…
     expect(searched.counts).toEqual({ total: 4, active: 3, disabled: 1, claimed: 1 });
@@ -279,9 +279,9 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
 
     // Chip „Z claimem" filtruje po stronie SERWERA - liczba na chipie i skład listy
     // pod nim muszą mieć jedną definicję, a nie dwie (SQL kafla vs `.filter()` panelu).
-    const claimed = (await listFleet(app, tmk, '?claimed=true')).json();
+    const claimed = (await listFleet(app, ako, '?claimed=true')).json();
     expect(claimed.items.map((i: { reg: string }) => i.reg)).toEqual(['SP-FGK']);
-    const free = (await listFleet(app, tmk, '?claimed=false')).json();
+    const free = (await listFleet(app, ako, '?claimed=false')).json();
     expect(free.items.map((i: { reg: string }) => i.reg)).not.toContain('SP-FGK');
   });
 
@@ -296,25 +296,25 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     // To ta sama usterka, co przy chipach na `A06`.
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     await db.query(
       `INSERT INTO aircraft (org_id, id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
        VALUES ('${ORG_A}', 'ac-dziwny', 'SP-ZLE', 'Cessna 152', 1998, 120, 'decimal', false, 'w_remoncie')`,
     );
 
-    const body = (await listFleet(app, tmk)).json();
+    const body = (await listFleet(app, ako)).json();
     // Prezentacja: wiersz jest w tabeli i jest opisany jako wyłączony.
     expect(rowOf(body, 'SP-ZLE')).toMatchObject({ serviceStatus: 'disabled' });
 
-    const narrowed = (await listFleet(app, tmk, '?status=disabled')).json();
+    const narrowed = (await listFleet(app, ako, '?status=disabled')).json();
     // Liczba na chipie == liczba wierszy, które chip pokazuje. To jest cała reguła.
     expect(narrowed.items).toHaveLength(body.counts.disabled);
     expect(narrowed.items.map((i: { reg: string }) => i.reg).sort()).toEqual(['SP-KWA', 'SP-ZLE']);
 
     // …a suma dwóch stanów nadal zgadza się z całością floty.
     expect(body.counts.active + body.counts.disabled).toBe(body.counts.total);
-    const active = (await listFleet(app, tmk, '?status=active')).json();
+    const active = (await listFleet(app, ako, '?status=active')).json();
     expect(active.items).toHaveLength(body.counts.active);
     expect(active.items.map((i: { reg: string }) => i.reg)).not.toContain('SP-ZLE');
   });
@@ -325,18 +325,18 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
 describe('GET /admin/api/fleet/tolerance - próg dla pojemności i dla samolotu', () => {
   it('liczy próg dla pojemności, której jeszcze nie ma w bazie (karta „Skutki zmiany")', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    expect((await tolerance(app, tmk, '?capacityL=1257')).json()).toEqual({
+    expect((await tolerance(app, ako, '?capacityL=1257')).json()).toEqual({
       capacityL: 1257,
       fuelToleranceL: 62.85,
     });
-    expect((await tolerance(app, tmk, '?capacityL=1100')).json()).toEqual({
+    expect((await tolerance(app, ako, '?capacityL=1100')).json()).toEqual({
       capacityL: 1100,
       fuelToleranceL: 55,
     });
     // Poniżej progu 10 L tolerancja NIE schodzi - to jest cała treść słowa „lub" w §4.5.
-    expect((await tolerance(app, tmk, '?capacityL=118')).json()).toEqual({
+    expect((await tolerance(app, ako, '?capacityL=118')).json()).toEqual({
       capacityL: 118,
       fuelToleranceL: 10,
     });
@@ -344,14 +344,14 @@ describe('GET /admin/api/fleet/tolerance - próg dla pojemności i dla samolotu'
 
   it('odpowiada też po `aircraftId` - to odblokowuje A02a/A02b, gdzie panel zna samolot, a nie pojemność', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    expect((await tolerance(app, tmk, '?aircraftId=SP-ANK')).json()).toEqual({
+    expect((await tolerance(app, ako, '?aircraftId=SP-ANK')).json()).toEqual({
       capacityL: 1700,
       fuelToleranceL: 85,
     });
     // Samolot spoza rejestru = brak odpowiedzi, a nie próg z podłogi.
-    expect((await tolerance(app, tmk, '?aircraftId=SP-NIEMA')).statusCode).toBe(404);
+    expect((await tolerance(app, ako, '?aircraftId=SP-NIEMA')).statusCode).toBe(404);
   });
 
   it('odmawia DOKŁADNIE tym samym, czym odmawia zapis - jedna definicja dopuszczalnej pojemności', async () => {
@@ -363,20 +363,20 @@ describe('GET /admin/api/fleet/tolerance - próg dla pojemności i dla samolotu'
     // `admin/src/queries/useFleet.ts` - czyli reguła siedziała w panelu, dokładnie tam,
     // gdzie ten przekrój deklaruje, że jej nie ma.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     for (const query of ['?capacityL=0', '?capacityL=-500', '?capacityL=']) {
-      const res = await tolerance(app, tmk, query);
+      const res = await tolerance(app, ako, query);
       expect([query, res.statusCode]).toEqual([query, 409]);
       expect(res.json()).toEqual({ error: 'refused', reason: 'capacity_not_positive' });
     }
 
     // Poza zakresem kolumny to kształt żądania, nie reguła - tak samo jak przy zapisie.
-    expect((await tolerance(app, tmk, '?capacityL=1e300')).statusCode).toBe(400);
-    expect((await tolerance(app, tmk, '?capacityL=abc')).statusCode).toBe(400);
+    expect((await tolerance(app, ako, '?capacityL=1e300')).statusCode).toBe(400);
+    expect((await tolerance(app, ako, '?capacityL=abc')).statusCode).toBe(400);
 
     // Kontrola w drugą stronę: te same wartości odbijają się od ZAPISU tak samo.
-    const zero = await createAircraft(app, tmk, {
+    const zero = await createAircraft(app, ako, {
       reg: 'SP-ZRO',
       type: 'Cessna 152',
       capacityL: 0,
@@ -391,8 +391,8 @@ describe('GET /admin/api/fleet/tolerance - próg dla pojemności i dla samolotu'
     // skonfigurowanej pojemności": takiego wiersza nie ma, bo `aircraft.capacity_l` jest
     // `NOT NULL`, a zapis ≤ 0 kończy się odmową. Kontrakt mówił do 2026-08-01 to drugie.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    expect((await tolerance(app, tmk, '')).json()).toEqual({ capacityL: null, fuelToleranceL: 10 });
+    const ako = await token(app, 'AKO');
+    expect((await tolerance(app, ako, '')).json()).toEqual({ capacityL: null, fuelToleranceL: 10 });
   });
 });
 
@@ -402,9 +402,9 @@ describe('POST /admin/api/fleet - dodanie jednostki', () => {
   it('zakłada samolot, oddaje pełny wiersz listy i zapisuje próg w dzienniku audytu', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const res = await createAircraft(app, tmk, {
+    const res = await createAircraft(app, ako, {
       reg: 'sp-klm',
       type: 'Cessna 208 Caravan',
       year: 2011,
@@ -445,9 +445,9 @@ describe('POST /admin/api/fleet - dodanie jednostki', () => {
   it('zajęta rejestracja → 409 z NAZWĄ POLA, bez drugiego wiersza w bazie', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const res = await createAircraft(app, tmk, {
+    const res = await createAircraft(app, ako, {
       reg: 'SP-AXA',
       type: 'Cessna 182',
       capacityL: 330,
@@ -468,9 +468,9 @@ describe('POST /admin/api/fleet - dodanie jednostki', () => {
     // tankowaniu ≤ pojemność" przestałby cokolwiek znaczyć.
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const res = await createAircraft(app, tmk, {
+    const res = await createAircraft(app, ako, {
       reg: 'SP-ZER',
       type: 'Cessna 152',
       capacityL: 0,
@@ -491,20 +491,20 @@ describe('PATCH /admin/api/fleet/:id - zmiana konfiguracji', () => {
   it('zmiana pojemności PRZESUWA próg flagi i wypisuje skutek w dzienniku', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const before = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as {
+    const before = rowOf((await listFleet(app, ako)).json(), 'SP-ANK') as unknown as {
       id: string;
       fuelToleranceL: number;
     };
     expect(before.fuelToleranceL).toBe(85);
 
-    const res = await patchAircraft(app, tmk, before.id, { capacityL: 1100 });
+    const res = await patchAircraft(app, ako, before.id, { capacityL: 1100 });
     expect(res.statusCode).toBe(200);
     expect(res.json().aircraft).toMatchObject({ capacityL: 1100, fuelToleranceL: 55 });
 
     // Lista mówi to samo co odpowiedź mutacji - jedno źródło liczby.
-    const after = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as {
+    const after = rowOf((await listFleet(app, ako)).json(), 'SP-ANK') as unknown as {
       fuelToleranceL: number;
     };
     expect(after.fuelToleranceL).toBe(55);
@@ -523,10 +523,10 @@ describe('PATCH /admin/api/fleet/:id - zmiana konfiguracji', () => {
   it('PATCH bez faktycznej zmiany → 400 `no_changes`, bez wpisu o niczym', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
-    const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as { id: string };
+    const ako = await token(app, 'AKO');
+    const axa = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as { id: string };
 
-    const res = await patchAircraft(app, tmk, axa.id, { capacityL: 330, mhFormat: 'hhmm' });
+    const res = await patchAircraft(app, ako, axa.id, { capacityL: 330, mhFormat: 'hhmm' });
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: 'no_changes' });
 
@@ -536,8 +536,8 @@ describe('PATCH /admin/api/fleet/:id - zmiana konfiguracji', () => {
 
   it('nieznana jednostka → 404, a nie 500 ani ciche 200', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const res = await patchAircraft(app, tmk, 'nie-ma-takiego', { capacityL: 200 });
+    const ako = await token(app, 'AKO');
+    const res = await patchAircraft(app, ako, 'nie-ma-takiego', { capacityL: 200 });
     expect(res.statusCode).toBe(404);
   });
 });
@@ -552,19 +552,19 @@ describe('komenda floty niczego nie przepisuje', () => {
     // była: rejestr jest append-only, a panel go nie przepisuje.
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     await postEvents(
       app,
-      tmk,
-      flyingDay({ sessionUuid: 'back-1', picId: 'TMK', mh: 1200, fuelEndL: 88 }),
+      ako,
+      flyingDay({ sessionUuid: 'back-1', picId: 'AKO', mh: 1200, fuelEndL: 88 }),
     );
     await postEvents(
       app,
-      tmk,
+      ako,
       flyingDay({
         sessionUuid: 'back-2',
-        picId: 'TMK',
+        picId: 'AKO',
         dayOffset: 1,
         mh: 1202.2,
         fuelStartL: 150,
@@ -579,13 +579,13 @@ describe('komenda floty niczego nie przepisuje', () => {
 
     const eventsBefore = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
 
-    const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as {
+    const axa = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as {
       id: string;
       openFlags: number;
     };
     expect(axa.openFlags).toBe(1);
 
-    expect((await patchAircraft(app, tmk, axa.id, { capacityL: 118 })).statusCode).toBe(200);
+    expect((await patchAircraft(app, ako, axa.id, { capacityL: 118 })).statusCode).toBe(200);
 
     const flagAfter = await db.query<{ id: number; details: Body; created_at: Date }>(
       "SELECT id, details, created_at FROM flags WHERE type = 'fuel_mismatch'",
@@ -602,7 +602,7 @@ describe('komenda floty niczego nie przepisuje', () => {
 
     // Liczba otwartych flag na wierszu floty się nie zmieniła - karta „Skutki zmiany"
     // pokazuje ją właśnie po to, żeby powiedzieć, ilu spraw zmiana NIE dotyka.
-    const after = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as {
+    const after = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as {
       openFlags: number;
       fuelToleranceL: number;
     };
@@ -625,18 +625,18 @@ describe('komenda floty niczego nie przepisuje', () => {
     // i szuflady panelu mówią dokładnie to, co robi ten przypadek.
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     const ankDays = (o: Omit<DayOptions, 'aircraftId'>) =>
       flyingDay({ ...o, aircraftId: 'SP-ANK' });
 
     // Dwa dni SP-ANK z rozjazdem paliwa 62 L. Pojemność 1700 L → tolerancja 85 L,
     // więc przy STARYM progu ta para jest czysta.
-    await postEvents(app, tmk, ankDays({ sessionUuid: 'hist-a', picId: 'TMK', mh: 1200, fuelEndL: 88 }));
+    await postEvents(app, ako, ankDays({ sessionUuid: 'hist-a', picId: 'AKO', mh: 1200, fuelEndL: 88 }));
     await postEvents(
       app,
-      tmk,
-      ankDays({ sessionUuid: 'hist-b', picId: 'TMK', dayOffset: 1, mh: 1202.2, fuelStartL: 150, fuelEndL: 88 }),
+      ako,
+      ankDays({ sessionUuid: 'hist-b', picId: 'AKO', dayOffset: 1, mh: 1202.2, fuelStartL: 150, fuelEndL: 88 }),
     );
 
     const flagsOf = async () =>
@@ -649,8 +649,8 @@ describe('komenda floty niczego nie przepisuje', () => {
     expect(await flagsOf()).toHaveLength(0);
 
     // Pojemność w dół: 1700 → 200 L, czyli tolerancja 85 → 10 L.
-    const ank = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as { id: string };
-    expect((await patchAircraft(app, tmk, ank.id, { capacityL: 200 })).statusCode).toBe(200);
+    const ank = rowOf((await listFleet(app, ako)).json(), 'SP-ANK') as unknown as { id: string };
+    expect((await patchAircraft(app, ako, ank.id, { capacityL: 200 })).statusCode).toBe(200);
 
     // Sam PATCH nadal niczego nie wystawia - komenda nie ma pętli po `flags`.
     expect(await flagsOf()).toHaveLength(0);
@@ -660,8 +660,8 @@ describe('komenda floty niczego nie przepisuje', () => {
     // to próg - i to on wystawia flagę na parze `hist-a` / `hist-b`.
     await postEvents(
       app,
-      tmk,
-      ankDays({ sessionUuid: 'hist-c', picId: 'TMK', dayOffset: 2, mh: 1204.4, fuelStartL: 88, fuelEndL: 88 }),
+      ako,
+      ankDays({ sessionUuid: 'hist-c', picId: 'AKO', dayOffset: 2, mh: 1204.4, fuelStartL: 88, fuelEndL: 88 }),
     );
 
     const raised = await flagsOf();
@@ -674,11 +674,11 @@ describe('komenda floty niczego nie przepisuje', () => {
     // Asymetria: powrót do 1700 L NIE zdejmuje flagi, która przy tym progu by nie
     // powstała - `ensureOpen` tylko dokłada. Zmiana działa wstecz WYŁĄCZNIE w stronę
     // produkującą pracę i ekran ma o tym mówić wprost.
-    expect((await patchAircraft(app, tmk, ank.id, { capacityL: 1700 })).statusCode).toBe(200);
+    expect((await patchAircraft(app, ako, ank.id, { capacityL: 1700 })).statusCode).toBe(200);
     await postEvents(
       app,
-      tmk,
-      ankDays({ sessionUuid: 'hist-d', picId: 'TMK', dayOffset: 3, mh: 1206.6, fuelStartL: 88, fuelEndL: 88 }),
+      ako,
+      ankDays({ sessionUuid: 'hist-d', picId: 'AKO', dayOffset: 3, mh: 1206.6, fuelStartL: 88, fuelEndL: 88 }),
     );
     expect(await flagsOf()).toHaveLength(1);
   });
@@ -693,19 +693,19 @@ describe('zapis dociera do telefonów - ETag `GET /reference`', () => {
     // zobaczy - dostanie 304 i będzie pracował na starej pojemności.
     const harness = await testHarness();
     const { app } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const first = await reference(app, tmk);
+    const first = await reference(app, ako);
     expect(first.statusCode).toBe(200);
     const etag = first.headers.etag as string;
 
     // Kontrola: bez zmiany ten sam znacznik daje 304.
-    expect((await reference(app, tmk, etag)).statusCode).toBe(304);
+    expect((await reference(app, ako, etag)).statusCode).toBe(304);
 
-    const ank = rowOf((await listFleet(app, tmk)).json(), 'SP-ANK') as unknown as { id: string };
-    expect((await patchAircraft(app, tmk, ank.id, { capacityL: 1100 })).statusCode).toBe(200);
+    const ank = rowOf((await listFleet(app, ako)).json(), 'SP-ANK') as unknown as { id: string };
+    expect((await patchAircraft(app, ako, ank.id, { capacityL: 1100 })).statusCode).toBe(200);
 
-    const stale = await reference(app, tmk, etag);
+    const stale = await reference(app, ako, etag);
     expect(stale.statusCode).toBe(200);
     expect(stale.headers.etag).not.toBe(etag);
 
@@ -722,9 +722,9 @@ describe('zapis dociera do telefonów - ETag `GET /reference`', () => {
     // (`app/src/application/sync/referenceSync.ts` mówi to wprost). Wybór blokuje
     // aplikacja - `preflightDraft.ts` odrzuca `serviceStatus === 'disabled'`.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const body = (await reference(app, tmk)).json();
+    const body = (await reference(app, ako)).json();
     const kwa = (body.aircraft as { reg: string; serviceStatus: string }[]).find(
       (a) => a.reg === 'SP-KWA',
     );
@@ -738,7 +738,7 @@ describe('wyłączenie ze służby', () => {
   it('samolot z OTWARTĄ sesją → 409 `open_session`, konfiguracja bez zmian', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const krz = await token(app, 'KRZ');
 
     await postEvents(
@@ -747,13 +747,13 @@ describe('wyłączenie ze służby', () => {
       flyingDay({ sessionUuid: 'still-open', picId: 'KRZ', aircraftId: 'SP-FGK', close: false }),
     );
 
-    const fgk = rowOf((await listFleet(app, tmk)).json(), 'SP-FGK') as unknown as {
+    const fgk = rowOf((await listFleet(app, ako)).json(), 'SP-FGK') as unknown as {
       id: string;
       openSessions: number;
     };
     expect(fgk.openSessions).toBe(1);
 
-    const res = await patchAircraft(app, tmk, fgk.id, { serviceStatus: 'disabled' });
+    const res = await patchAircraft(app, ako, fgk.id, { serviceStatus: 'disabled' });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'refused', reason: 'open_session' });
 
@@ -767,12 +767,12 @@ describe('wyłączenie ze służby', () => {
   it('po zamknięciu dnia wyłączenie przechodzi i ma WŁASNY kod w dzienniku', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    await postEvents(app, tmk, flyingDay({ sessionUuid: 'closed-day', picId: 'TMK' }));
-    const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as { id: string };
+    await postEvents(app, ako, flyingDay({ sessionUuid: 'closed-day', picId: 'AKO' }));
+    const axa = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as { id: string };
 
-    const res = await patchAircraft(app, tmk, axa.id, { serviceStatus: 'disabled' });
+    const res = await patchAircraft(app, ako, axa.id, { serviceStatus: 'disabled' });
     expect(res.statusCode).toBe(200);
 
     const audit = await db.query<{ action: string; details: Body }>(
@@ -784,7 +784,7 @@ describe('wyłączenie ze służby', () => {
 
     // Powrót do służby wraca jako zwykła aktualizacja - katalog nie ma
     // `aircraft.enable` i to jest jego świadoma treść.
-    expect((await patchAircraft(app, tmk, axa.id, { serviceStatus: 'active' })).statusCode).toBe(200);
+    expect((await patchAircraft(app, ako, axa.id, { serviceStatus: 'active' })).statusCode).toBe(200);
     const back = await db.query<{ action: string }>(
       'SELECT action FROM admin_audit ORDER BY id DESC LIMIT 1',
     );
@@ -794,32 +794,32 @@ describe('wyłączenie ze służby', () => {
   it('wyłączenie NIE unieważnia historii - dni, flagi i karty zostają', async () => {
     const harness = await testHarness();
     const { app } = harness;
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
     await postEvents(
       app,
-      tmk,
-      flyingDay({ sessionUuid: 'hist-1', picId: 'TMK', mh: 1200, fuelEndL: 88 }),
+      ako,
+      flyingDay({ sessionUuid: 'hist-1', picId: 'AKO', mh: 1200, fuelEndL: 88 }),
     );
     await postEvents(
       app,
-      tmk,
+      ako,
       flyingDay({
         sessionUuid: 'hist-2',
-        picId: 'TMK',
+        picId: 'AKO',
         dayOffset: 1,
         mh: 1202.2,
         fuelStartL: 150,
       }),
     );
 
-    const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as { id: string };
-    expect((await patchAircraft(app, tmk, axa.id, { serviceStatus: 'disabled' })).statusCode).toBe(200);
+    const axa = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as { id: string };
+    expect((await patchAircraft(app, ako, axa.id, { serviceStatus: 'disabled' })).statusCode).toBe(200);
 
     const days = await app.inject({
       method: 'GET',
       url: '/admin/api/sessions?aircraftId=SP-AXA',
-      headers: bearer(tmk),
+      headers: bearer(ako),
     });
     expect(days.json().items.map((d: { sessionUuid: string }) => d.sessionUuid).sort()).toEqual([
       'hist-1',
@@ -829,7 +829,7 @@ describe('wyłączenie ze służby', () => {
     const flags = await app.inject({
       method: 'GET',
       url: '/admin/api/flags?aircraftId=SP-AXA',
-      headers: bearer(tmk),
+      headers: bearer(ako),
     });
     expect(flags.json().total).toBeGreaterThan(0);
 
@@ -837,7 +837,7 @@ describe('wyłączenie ze służby', () => {
     const sheet = await app.inject({
       method: 'GET',
       url: '/admin/api/sessions/hist-1',
-      headers: bearer(tmk),
+      headers: bearer(ako),
     });
     expect(sheet.statusCode).toBe(200);
     expect(sheet.json().session.reg).toBe('SP-AXA');
@@ -852,11 +852,11 @@ describe('zakres uprawnień floty', () => {
     // flotę, ale jej nie zmieniała. Po jej wycofaniu odczyt pokazuje administrator,
     // a odmowę zapisu - z tą samą zdolnością w treści - token zwykłego pilota.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const pwi = await token(app, 'PWI');
 
-    expect((await listFleet(app, tmk)).statusCode).toBe(200);
-    expect((await tolerance(app, tmk, '?capacityL=1100')).statusCode).toBe(200);
+    expect((await listFleet(app, ako)).statusCode).toBe(200);
+    expect((await tolerance(app, ako, '?capacityL=1100')).statusCode).toBe(200);
 
     const created = await createAircraft(app, pwi, {
       reg: 'SP-NEW',
@@ -867,7 +867,7 @@ describe('zakres uprawnień floty', () => {
     expect(created.statusCode).toBe(403);
     expect(created.json()).toMatchObject({ required: 'fleet.manage' });
 
-    const axa = rowOf((await listFleet(app, tmk)).json(), 'SP-AXA') as unknown as { id: string };
+    const axa = rowOf((await listFleet(app, ako)).json(), 'SP-AXA') as unknown as { id: string };
     const patched = await patchAircraft(app, pwi, axa.id, { capacityL: 400 });
     expect(patched.statusCode).toBe(403);
     expect(patched.json()).toMatchObject({ required: 'fleet.manage' });
@@ -883,11 +883,11 @@ describe('zakres uprawnień floty', () => {
 
   it('mutacja bez nagłówka CSRF nie przechodzi', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/fleet',
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: { reg: 'SP-CSR', type: 'Cessna 152', capacityL: 100, mhFormat: 'decimal' },
     });
     expect(res.statusCode).toBe(403);
@@ -901,9 +901,9 @@ describe('konfiguracja oleju (issue #60)', () => {
 
   it('trójka oleju zapisuje się, wraca w liście i w /reference; PATCH null czyści', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const created = await createAircraft(app, tmk, {
+    const created = await createAircraft(app, ako, {
       ...base,
       oilMinL: 8.5,
       oilCapacityL: 11.4,
@@ -918,7 +918,7 @@ describe('konfiguracja oleju (issue #60)', () => {
     const id = created.json().aircraft.id as string;
 
     // Kanał do telefonów: konfiguracja jedzie w /reference obok pojemności.
-    const ref = await reference(app, tmk);
+    const ref = await reference(app, ako);
     const oilAc = ref
       .json()
       .aircraft.find((a: { reg: string }) => a.reg === 'SP-OIL');
@@ -928,20 +928,20 @@ describe('konfiguracja oleju (issue #60)', () => {
     expect(axa).toMatchObject({ oilMinL: null, oilCapacityL: null, oilNormLPerH: null });
 
     // `null` = wyczyść (moduł ma zamilknąć) - inaczej niż pominięcie pola.
-    const cleared = await patchAircraft(app, tmk, id, { oilMinL: null });
+    const cleared = await patchAircraft(app, ako, id, { oilMinL: null });
     expect(cleared.statusCode).toBe(200);
     expect(cleared.json().aircraft).toMatchObject({ oilMinL: null, oilCapacityL: 11.4 });
   });
 
   it('zero i minimum ponad zbiornik odbijają się z powodem - reguła, nie kształt żądania', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const zero = await createAircraft(app, tmk, { ...base, reg: 'SP-OL0', oilMinL: 0 });
+    const zero = await createAircraft(app, ako, { ...base, reg: 'SP-OL0', oilMinL: 0 });
     expect(zero.statusCode).toBe(409);
     expect(zero.json()).toMatchObject({ error: 'refused', reason: 'oil_not_positive' });
 
-    const inverted = await createAircraft(app, tmk, {
+    const inverted = await createAircraft(app, ako, {
       ...base,
       reg: 'SP-OL1',
       oilMinL: 12,
@@ -953,9 +953,9 @@ describe('konfiguracja oleju (issue #60)', () => {
 
   it('reguła minimum ≤ zbiornik działa na stanie EFEKTYWNYM po PATCH-u, nie na samym żądaniu', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const created = await createAircraft(app, tmk, {
+    const created = await createAircraft(app, ako, {
       ...base,
       reg: 'SP-OL2',
       oilMinL: 8.5,
@@ -964,7 +964,7 @@ describe('konfiguracja oleju (issue #60)', () => {
     const id = created.json().aircraft.id as string;
 
     // Samo minimum w żądaniu - zbiornik 10 L stoi już w bazie; 12 > 10 ma odbić.
-    const res = await patchAircraft(app, tmk, id, { oilMinL: 12 });
+    const res = await patchAircraft(app, ako, id, { oilMinL: 12 });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'oil_min_above_capacity' });
   });
@@ -986,9 +986,9 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
 
   it('zapis wraca w liście, w karcie i - w części normy - w /reference', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const created = await createAircraft(app, tmk, {
+    const created = await createAircraft(app, ako, {
       ...base,
       oilCapacityL: 11.4,
       fuelNormLPerH: 18.5,
@@ -1017,7 +1017,7 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
       source: 'initial',
     });
 
-    const ref = await reference(app, tmk);
+    const ref = await reference(app, ako);
     const row = ref.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-NRM');
     expect(row.fuelNormLPerH).toBe(18.5);
     expect(row.handover).toMatchObject({ byPilotId: null, reading: { fuelL: 112, mh: 1236.5 } });
@@ -1025,15 +1025,15 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
 
   it('norma zerowa odbija się z powodem, a startowe ZERO jest legalne', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const zero = await createAircraft(app, tmk, { ...base, reg: 'SP-NR0', fuelNormLPerH: 0 });
+    const zero = await createAircraft(app, ako, { ...base, reg: 'SP-NR0', fuelNormLPerH: 0 });
     expect(zero.statusCode).toBe(409);
     expect(zero.json()).toMatchObject({ error: 'refused', reason: 'fuel_norm_not_positive' });
 
     // Nowy silnik ma 0 na liczniku, a maszyna przyjęta z pustymi zbiornikami - 0 litrów.
     // To jest WARTOŚĆ, nie brak, więc ta sama liczba przechodzi w drugim polu.
-    const fresh = await createAircraft(app, tmk, {
+    const fresh = await createAircraft(app, ako, {
       ...base,
       reg: 'SP-NR1',
       initialMh: 0,
@@ -1045,22 +1045,22 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
 
   it('startowe paliwo ponad zbiornik odbija się - inwariant §3.4 wpisany ręką', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const over = await createAircraft(app, tmk, { ...base, reg: 'SP-NR2', initialFuelL: 400 });
+    const over = await createAircraft(app, ako, { ...base, reg: 'SP-NR2', initialFuelL: 400 });
     expect(over.statusCode).toBe(409);
     expect(over.json()).toMatchObject({ error: 'refused', reason: 'initial_fuel_over_capacity' });
 
-    const minus = await createAircraft(app, tmk, { ...base, reg: 'SP-NR3', initialMh: -1 });
+    const minus = await createAircraft(app, ako, { ...base, reg: 'SP-NR3', initialMh: -1 });
     expect(minus.statusCode).toBe(409);
     expect(minus.json()).toMatchObject({ error: 'refused', reason: 'initial_negative' });
   });
 
   it('sufit liczy się na stanie EFEKTYWNYM po PATCH-u - także od strony pojemności', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
+    const ako = await token(app, 'AKO');
 
-    const created = await createAircraft(app, tmk, {
+    const created = await createAircraft(app, ako, {
       ...base,
       reg: 'SP-NR4',
       initialFuelL: 300,
@@ -1068,7 +1068,7 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
     const id = created.json().aircraft.id as string;
 
     // Samo obniżenie pojemności: startowe 300 L stoi już w bazie i przestaje się mieścić.
-    const shrink = await patchAircraft(app, tmk, id, { capacityL: 200 });
+    const shrink = await patchAircraft(app, ako, id, { capacityL: 200 });
     expect(shrink.statusCode).toBe(409);
     expect(shrink.json()).toMatchObject({
       error: 'refused',
@@ -1076,7 +1076,7 @@ describe('normy z dokumentacji i stan początkowy (issue #66)', () => {
     });
 
     // `null` czyści wpis - tak samo jak przy oleju.
-    const cleared = await patchAircraft(app, tmk, id, { initialFuelL: null });
+    const cleared = await patchAircraft(app, ako, id, { initialFuelL: null });
     expect(cleared.statusCode).toBe(200);
     expect(cleared.json().aircraft.initialFuelL).toBeNull();
   });
@@ -1108,10 +1108,10 @@ describe('usunięcie jednostki floty', () => {
 
   it('kasuje jednostkę BEZ historii - wiersz znika, audyt niesie rejestrację', async () => {
     const { app, db } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const id = await disposable(app, tmk);
+    const ako = await token(app, 'AKO');
+    const id = await disposable(app, ako);
 
-    const res = await deleteAircraft(app, tmk, id);
+    const res = await deleteAircraft(app, ako, id);
 
     expect(res.statusCode).toBe(204);
     const { rows } = await db.query('SELECT id FROM aircraft WHERE id = $1', [id]);
@@ -1128,8 +1128,8 @@ describe('usunięcie jednostki floty', () => {
 
   it('ODMAWIA, dopóki jednostka jest w służbie', async () => {
     const { app, db } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const created = await createAircraft(app, tmk, {
+    const ako = await token(app, 'AKO');
+    const created = await createAircraft(app, ako, {
       reg: 'SP-TMP',
       type: 'Pomyłka',
       capacityL: 100,
@@ -1137,7 +1137,7 @@ describe('usunięcie jednostki floty', () => {
     });
     const id = created.json().aircraft.id as string;
 
-    const res = await deleteAircraft(app, tmk, id);
+    const res = await deleteAircraft(app, ako, id);
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'aircraft_in_service' });
@@ -1147,16 +1147,16 @@ describe('usunięcie jednostki floty', () => {
 
   it('ODMAWIA jednostce, która ma w rejestrze choć jedno zdarzenie', async () => {
     const { app, db } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const id = await disposable(app, tmk);
+    const ako = await token(app, 'AKO');
+    const id = await disposable(app, ako);
     await db.query(
       `INSERT INTO events (org_id, uuid, session_uuid, aircraft_id, pic_id, type, device_time,
                            payload, schema_version)
-       VALUES ('${ORG_A}', 'e-1', 's-1', $1, 'TMK', 'engine_start', 1, '{}'::jsonb, 1)`,
+       VALUES ('${ORG_A}', 'e-1', 's-1', $1, 'AKO', 'engine_start', 1, '{}'::jsonb, 1)`,
       [id],
     );
 
-    const res = await deleteAircraft(app, tmk, id);
+    const res = await deleteAircraft(app, ako, id);
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'has_history' });
@@ -1164,8 +1164,8 @@ describe('usunięcie jednostki floty', () => {
 
   it('konto bez zdolności `fleet.manage` dostaje 403 i niczego nie kasuje', async () => {
     const { app, db } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const id = await disposable(app, tmk);
+    const ako = await token(app, 'AKO');
+    const id = await disposable(app, ako);
 
     const res = await deleteAircraft(app, await token(app, 'PWI'), id);
 

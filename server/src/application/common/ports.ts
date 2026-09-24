@@ -61,7 +61,7 @@ export interface Database extends Queryable {
  *
  * ══ CZEGO TU NIE MA OD WIELOFIRMOWOŚCI: KODU I ROLI ══
  * Kod pilota i rola panelu są własnością CZŁONKOSTWA w klubie (`Membership`), nie osoby:
- * ten sam człowiek bywa `TMK` w jednym klubie i `TOM` w drugim, administratorem tu
+ * ten sam człowiek bywa `AKO` w jednym klubie i `TOM` w drugim, administratorem tu
  * i zwykłym pilotem tam. `active` znaczy odtąd blokadę PLATFORMOWĄ (nakłada ją wyłącznie
  * superadministrator); codzienne „wyłącz konto" w panelu klubu jest stanem członkostwa.
  */

@@ -64,7 +64,7 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
 
   it('link ustawia hasło, zrywa WSZYSTKIE sesje osoby i nie wydaje sesji w odpowiedzi', async () => {
     const { app, clock, mail } = await testHarness();
-    const before = await googleLogin(app, 'TMK');
+    const before = await googleLogin(app, 'AKO');
     clock.advance(60_000);
 
     await forgot(app, 'Adam@Ninerdeck.pl');
@@ -181,7 +181,7 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
 describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
   it('administrator wysyła TEN SAM list członkowi swojego klubu; odpowiedź bez linku; wpis audytu bez tokenu', async () => {
     const { app, db, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'POST',
@@ -221,7 +221,7 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
     expect((await forgot(app, 'jan@ninerdeck.pl')).statusCode).toBe(202);
     const bySelf = mail.lastTo('jan@ninerdeck.pl')!;
 
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const sent = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots/JSE/password-link',
@@ -241,7 +241,7 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
 
   it('członek bez adresu → 409 `email_required` (tu wolno powiedzieć wprost)', async () => {
     const { app, db, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await db.query(`UPDATE pilots SET email = NULL WHERE id = 'KRZ'`);
     const res = await app.inject({
       method: 'POST',
@@ -260,7 +260,7 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
     const pilot = await app.inject({ method: 'POST', url: '/admin/api/auth/login', headers: ADMIN_CSRF_HEADERS, payload: { idToken: googleTokenFor('JSE') } });
     expect(pilot.statusCode).toBe(403);
 
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     mail.failing = true;
     const res = await app.inject({
       method: 'POST',

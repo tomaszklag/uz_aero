@@ -16,7 +16,7 @@ import { toneColors } from '../tone';
 
 export interface ProfileChipProps {
   name: string;
-  /** Kod pilota (TMK) - mono, pod nazwiskiem. */
+  /** Kod pilota (AKO) - mono, pod nazwiskiem. */
   code: string;
   /**
    * Klub, w którym ten kod obowiązuje - dopisek po kodzie (mockup 13a). Podaje się go

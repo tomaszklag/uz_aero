@@ -21,10 +21,10 @@ describe('claimDecision (§4.4)', () => {
   });
 
   it('przejęcie z odpowiedzią → takeover_online z ŻYWYM poprzednikiem, nie z cache', () => {
-    // Cache pamiętał KRZ, ale samolot zdążył przejść na AKO - przejmujemy AKO.
-    expect(claimDecision('KRZ', { claimPicId: 'AKO' })).toEqual({
+    // Cache pamiętał KRZ, ale samolot zdążył przejść na BNO - przejmujemy BNO.
+    expect(claimDecision('KRZ', { claimPicId: 'BNO' })).toEqual({
       mode: 'takeover_online',
-      previousPicId: 'AKO',
+      previousPicId: 'BNO',
     });
   });
 

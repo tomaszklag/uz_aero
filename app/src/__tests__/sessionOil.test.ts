@@ -33,7 +33,7 @@ function event<T extends EventType>(
     type,
     sessionUuid: 's-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     deviceTime: time,
     gpsTime: time,

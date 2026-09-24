@@ -46,10 +46,10 @@ const waitingInBeta: ClubsView = {
 const flying: StoredCredentials = {
   token: 'jwt',
   refreshToken: 'r',
-  pilot: { id: 'p1', code: 'TMK', name: 'Adam Kowalski' },
+  pilot: { id: 'p1', code: 'AKO', name: 'Adam Kowalski' },
   pin: { salt: 's', hash: 'h' },
   org: ALFA,
-  memberships: [{ org: ALFA, code: 'TMK', role: 'pilot' }],
+  memberships: [{ org: ALFA, code: 'AKO', role: 'pilot' }],
 };
 
 /** Atrapa serwisu - store woła z niego dokładnie te trzy rzeczy. */
@@ -196,7 +196,7 @@ describe('switchClub', () => {
       pilot: { ...flying.pilot, code: 'TOM' },
       org: BETA,
       memberships: [
-        { org: ALFA, code: 'TMK', role: 'pilot' },
+        { org: ALFA, code: 'AKO', role: 'pilot' },
         { org: BETA, code: 'TOM', role: 'pilot' },
       ],
     };

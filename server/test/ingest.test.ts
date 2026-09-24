@@ -26,7 +26,7 @@ function event(
     uuid: `e-${seq}-${type}`,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -68,7 +68,7 @@ function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
   ];
 }
 
-async function login(app: Awaited<ReturnType<typeof testHarness>>['app'], who = 'TMK') {
+async function login(app: Awaited<ReturnType<typeof testHarness>>['app'], who = 'AKO') {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
@@ -104,7 +104,7 @@ describe('POST /events', () => {
     );
     expect(rows[0]).toMatchObject({
       aircraft_id: 'SP-AXA',
-      pic_id: 'TMK',
+      pic_id: 'AKO',
       status: 'closed',
       mh_start: 1234.5,
       mh_end: 1241.15,
@@ -131,7 +131,7 @@ describe('POST /events', () => {
 
   it('cudzą sesję odrzuca w całości - single-writer (§4.4)', async () => {
     const { app, db } = await testHarness();
-    // KRZ próbuje wysłać zdarzenia podpisane PIC-em TMK.
+    // KRZ próbuje wysłać zdarzenia podpisane PIC-em AKO.
     const tokenKrz = await login(app, 'KRZ');
     const res = await post(app, tokenKrz, day());
 
@@ -148,12 +148,12 @@ describe('POST /events', () => {
   });
 
   it('przejęcie CUDZEJ sesji własnym podpisem → 403 (audyt: krytyczne)', async () => {
-    // KRZ zna sessionUuid TMK i wysyła zdarzenia z WŁASNYM picId - antydatowany
+    // KRZ zna sessionUuid AKO i wysyła zdarzenia z WŁASNYM picId - antydatowany
     // `session_claim` przejąłby sesję, a `day_close` zamknąłby cudzy dzień.
     const { app, db } = await testHarness();
-    const tokenTmk = await login(app, 'TMK');
+    const tokenTmk = await login(app, 'AKO');
     const tokenKrz = await login(app, 'KRZ');
-    await post(app, tokenTmk, day('sess-1').slice(0, 6)); // sesja TMK, otwarta
+    await post(app, tokenTmk, day('sess-1').slice(0, 6)); // sesja AKO, otwarta
 
     const hijack = day('sess-1', { picId: 'KRZ' }).map((e, i) => ({
       ...e,
@@ -167,7 +167,7 @@ describe('POST /events', () => {
     const { rows } = await db.query<{ pic_id: string }>(
       "SELECT pic_id FROM sessions WHERE session_uuid = 'sess-1'",
     );
-    expect(rows[0]!.pic_id).toBe('TMK'); // sesja nietknięta
+    expect(rows[0]!.pic_id).toBe('AKO'); // sesja nietknięta
   });
 
   it('poprawna koperta ze zepsutym payloadem → 400, nie 500 i wieczny retry', async () => {
@@ -374,10 +374,10 @@ describe('flagi łańcucha MH (§4.5)', () => {
 
   it('dwie niezamknięte sesje jednego samolotu → aircraft_overlap (przejęcie offline)', async () => {
     const { app } = await testHarness();
-    const tokenTmk = await login(app, 'TMK');
+    const tokenTmk = await login(app, 'AKO');
     const tokenKrz = await login(app, 'KRZ');
 
-    // TMK zaczyna dzień i NIE zamyka…
+    // AKO zaczyna dzień i NIE zamyka…
     await post(app, tokenTmk, day('sess-1').slice(0, 6));
     // …a KRZ przejmuje offline i wysyła własną, też otwartą sesję.
     const takeover = day('sess-2', { picId: 'KRZ' })
@@ -534,7 +534,7 @@ describe('GET /aircraft/:id/state i sync-status', () => {
     expect(body.claimPicId).toBeNull();
     expect(body.handover).toMatchObject({
       reading: { fuelL: 88, mh: 1241.15 },
-      byPilotId: 'TMK',
+      byPilotId: 'AKO',
     });
     expect(body.lastSyncAt).not.toBeNull();
   });
@@ -549,7 +549,7 @@ describe('GET /aircraft/:id/state i sync-status', () => {
       url: '/aircraft/SP-AXA/state',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(res.json()).toMatchObject({ claimPicId: 'TMK', claimSince: at(8, 0) });
+    expect(res.json()).toMatchObject({ claimPicId: 'AKO', claimSince: at(8, 0) });
   });
 
   it('sync-status: licznik przyjętych + flagi sesji', async () => {

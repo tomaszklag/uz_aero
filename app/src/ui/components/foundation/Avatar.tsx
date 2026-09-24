@@ -26,7 +26,7 @@ export type AvatarSize = 'sm' | 'md';
 export interface AvatarProps {
   /** Pełne imię i nazwisko - inicjały wyliczamy sami. */
   name: string;
-  /** Kod pilota („AKO"); podany - zastępuje inicjały i idzie czcionką mono. */
+  /** Kod pilota („BNO"); podany - zastępuje inicjały i idzie czcionką mono. */
   code?: string;
   size?: AvatarSize;
   /** `neutral` = pozycja nie wybrana, `green` = wybrana / zalogowany pilot. */
@@ -75,7 +75,7 @@ export function Avatar({ name, code, size = 'md', tone = 'neutral', style }: Ava
     >
       {code != null ? (
         // Trzy znaki kodu w kwadracie 32 px: mniejszy stopień i ciaśniejsze światło niż
-        // przy dwuznakowych inicjałach - inaczej „AKO" rozpycha kafelek.
+        // przy dwuznakowych inicjałach - inaczej „BNO" rozpycha kafelek.
         <AppText
           variant="mono"
           numberOfLines={1}

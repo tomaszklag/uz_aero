@@ -96,7 +96,7 @@ describe('zgłoszenia błędów z telefonu', () => {
     // Ciało niesie CUDZY `pilotId` - i nie ma prawa nic zmienić: pole nie istnieje
     // w schemacie żądania, a autor bierze się z tokenu.
     const pilot = await login(app, 'PWI');
-    expect((await submit(app, pilot, [report('b1', { pilotId: 'TMK' })])).statusCode).toBe(200);
+    expect((await submit(app, pilot, [report('b1', { pilotId: 'AKO' })])).statusCode).toBe(200);
 
     const root = await panelCookie(app, 'ROOT');
     const row = (await list(app, root)).json().items[0];
@@ -189,7 +189,7 @@ describe('moduł „Zgłoszenia" na platformie', () => {
   it('jedna lista dla WSZYSTKICH klubów - każdy wiersz nazywa swój klub, kod pilota z tego klubu', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
-    await submit(app, await login(app, 'TMK'), [report('alfa-1')]);
+    await submit(app, await login(app, 'AKO'), [report('alfa-1')]);
     await submit(app, await login(app, 'BPI'), [report('beta-1')]);
 
     const root = await panelCookie(app, 'ROOT');
@@ -199,7 +199,7 @@ describe('moduł „Zgłoszenia" na platformie', () => {
       org: { id: string; slug: string };
     }[];
     expect(items.map((i) => [i.uuid, i.pilotCode, i.org.id]).sort()).toEqual([
-      ['alfa-1', 'TMK', ORG_A],
+      ['alfa-1', 'AKO', ORG_A],
       ['beta-1', 'BPI', ORG_B],
     ]);
   });
@@ -240,7 +240,7 @@ describe('moduł „Zgłoszenia" na platformie', () => {
     const club = await app.inject({
       method: 'GET',
       url: '/admin/api/audit?action=bug.status',
-      headers: bearer(await login(app, 'TMK')),
+      headers: bearer(await login(app, 'AKO')),
     });
     expect(club.json().items).toHaveLength(0);
   });
@@ -272,7 +272,7 @@ describe('moduł „Zgłoszenia" na platformie', () => {
 
     // Sesja KLUBU (administrator Alfy) - trasy platformowe jej nie znają: 401, bo za
     // tokenem klubu nie stoi żadna tożsamość platformowa (rozłączność rodzajów tokenu).
-    const admin = await panelCookie(app, 'TMK');
+    const admin = await panelCookie(app, 'AKO');
     expect((await list(app, admin)).statusCode).toBe(401);
     expect((await patch(app, admin, 'b1', { status: 'resolved' })).statusCode).toBe(401);
 

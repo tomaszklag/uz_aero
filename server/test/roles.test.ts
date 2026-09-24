@@ -161,7 +161,7 @@ describe('brama uprawnień tras panelu klubu', () => {
     // wymaga dwóch podmiotów - katalog zdolności i brama zostają nietknięte.
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const admin = tokens.sign(asAdmin('TMK'), 3600);
+    const admin = tokens.sign(asAdmin('AKO'), 3600);
     const pilot = tokens.sign(asPilot('PWI'), 3600);
 
     expect((await authorizeOrg(tokens, accounts, admin, 'flags.resolve')).ok).toBe(true);
@@ -177,11 +177,11 @@ describe('brama uprawnień tras panelu klubu', () => {
     // poświadczeniem nikt już nie stoi".
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     expect((await authorizeOrg(tokens, accounts, token, 'accounts.manage')).ok).toBe(true);
 
-    await db.query("UPDATE pilots SET active = FALSE WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET active = FALSE WHERE id = 'AKO'");
 
     expect(await authorizeOrg(tokens, accounts, token, 'accounts.manage')).toEqual({
       ok: false,
@@ -196,10 +196,10 @@ describe('brama uprawnień tras panelu klubu', () => {
     // CZŁONKOSTWO - osoba w drugim klubie lata dalej (przypadek niżej).
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     await db.query(
-      "UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'AKO' AND org_id = 'org-a'",
     );
 
     expect(await authorizeOrg(tokens, accounts, token, 'panel.access')).toEqual({
@@ -210,11 +210,11 @@ describe('brama uprawnień tras panelu klubu', () => {
   });
 
   it('token KLUBU, W KTÓRYM OSOBA NIE MA CZŁONKOSTWA → 401 (wielofirmowość §4)', async () => {
-    // TMK jest administratorem klubu A i nikim w klubie B. Podpisany przez nas token
+    // AKO jest administratorem klubu A i nikim w klubie B. Podpisany przez nas token
     // z `org: org-b` to poprawna koperta - a brama i tak odmawia, bo bramką jest BRAK
     // CZŁONKOSTWA, nie brak podpisu.
     const { db, tokens } = await testHarness();
-    const token = tokens.sign(asAdmin('TMK', ORG_B), 3600);
+    const token = tokens.sign(asAdmin('AKO', ORG_B), 3600);
 
     expect(await authorizeOrg(tokens, new PgPilotsRepo(db), token, 'panel.access')).toEqual({
       ok: false,
@@ -226,7 +226,7 @@ describe('brama uprawnień tras panelu klubu', () => {
   it('KLUB WYŁĄCZONY przez superadministratora → 401 dla wszystkich jego członków', async () => {
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
     expect((await authorizeOrg(tokens, accounts, token, 'panel.access')).ok).toBe(true);
 
     await db.query("UPDATE organizations SET active = FALSE WHERE id = 'org-a'");
@@ -238,7 +238,7 @@ describe('brama uprawnień tras panelu klubu', () => {
     // `MembershipAuthSnapshot` powstał po to, żeby do warstwy HTTP nie wjeżdżało nic
     // ponad to, czego brama i `Actor` potrzebują - lista pól jest kontraktem.
     const { db, tokens } = await testHarness();
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     const outcome = await authorizeOrg(tokens, new PgPilotsRepo(db), token, 'accounts.manage');
     expect(outcome.ok).toBe(true);
@@ -269,12 +269,12 @@ describe('brama uprawnień tras panelu klubu', () => {
     // godzin, czyli o cały TTL sesji.
     const { db, tokens, clock } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     expect((await authorizeOrg(tokens, accounts, token, 'accounts.manage')).ok).toBe(true);
 
     clock.advance(1000);
-    await db.query("UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'TMK'", [
+    await db.query("UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'AKO'", [
       clock.now().toISOString(),
     ]);
 
@@ -286,7 +286,7 @@ describe('brama uprawnień tras panelu klubu', () => {
 
     // …a token wydany PO unieważnieniu przechodzi. Znacznik odcina przeszłość,
     // nie konto - inaczej unieważnienie zamykałoby drogę powrotną, którą otwiera.
-    const fresh = tokens.sign(asAdmin('TMK'), 3600);
+    const fresh = tokens.sign(asAdmin('AKO'), 3600);
     expect((await authorizeOrg(tokens, accounts, fresh, 'accounts.manage')).ok).toBe(true);
   });
 
@@ -295,17 +295,17 @@ describe('brama uprawnień tras panelu klubu', () => {
     // token sprzed wyłączenia ma być w A martwy, choć osoba i klub są w porządku.
     const { db, tokens, clock } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     clock.advance(1000);
     await db.query(
-      "UPDATE memberships SET credentials_valid_from = $1 WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "UPDATE memberships SET credentials_valid_from = $1 WHERE pilot_id = 'AKO' AND org_id = 'org-a'",
       [clock.now().toISOString()],
     );
 
     expect((await authorizeOrg(tokens, accounts, token, 'accounts.manage')).ok).toBe(false);
     expect(
-      (await authorizeOrg(tokens, accounts, tokens.sign(asAdmin('TMK'), 3600), 'accounts.manage'))
+      (await authorizeOrg(tokens, accounts, tokens.sign(asAdmin('AKO'), 3600), 'accounts.manage'))
         .ok,
     ).toBe(true);
   });
@@ -313,15 +313,15 @@ describe('brama uprawnień tras panelu klubu', () => {
   it('odebranie zdolności działa NATYCHMIAST, bez czekania na wygaśnięcie tokenu', async () => {
     const { db, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = tokens.sign(asAdmin('TMK'), 3600);
+    const token = tokens.sign(asAdmin('AKO'), 3600);
 
     await db.query(
-      "DELETE FROM membership_capabilities WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'",
     );
 
     // Token jest NIETKNIĘTY i nadal ważny - i to jest sedno: zakres czyta brama z bazy,
     // a nie z ładunku, więc odebranie zdolności nie czeka na wygaśnięcie poświadczenia.
-    expect(tokens.verify(token)?.pilotId).toBe('TMK');
+    expect(tokens.verify(token)?.pilotId).toBe('AKO');
     expect(await authorizeOrg(tokens, accounts, token, 'accounts.manage')).toMatchObject({
       status: 403,
       body: { required: 'accounts.manage' },
@@ -346,7 +346,7 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
     // zna (backfill wpisał klub domyślny w `refresh_tokens.org_id`). Domyślanie się klubu
     // byłoby zgadywaniem, do czyich danych ten token ma prawo.
     const { db, tokens, clock } = await testHarness();
-    const legacy = handRolled(clock, { sub: 'TMK', code: 'TMK' });
+    const legacy = handRolled(clock, { sub: 'AKO', code: 'AKO' });
 
     expect(tokens.verify(legacy)).toBeNull();
     expect(await authorizeOrg(tokens, new PgPilotsRepo(db), legacy, 'panel.access')).toEqual({
@@ -359,14 +359,14 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
   it('token BEZ roli przechodzi bez zająknięcia - claim przestał cokolwiek znaczyć', async () => {
     // Token sprzed 3.1.0 niesie jeszcze claim , a token sprzed wielofirmowości nie
     // niesie go wcale - i jedno, i drugie jest dziś bez znaczenia: brama czyta zakres
-    // z bazy. TMK ma w klubie , więc token wchodzi.
+    // z bazy. AKO ma w klubie , więc token wchodzi.
     const { db, tokens, clock } = await testHarness();
-    const token = handRolled(clock, { sub: 'TMK', org: ORG_A, code: 'TMK' });
+    const token = handRolled(clock, { sub: 'AKO', org: ORG_A, code: 'AKO' });
 
     expect(tokens.verify(token)).toEqual({
-      pilotId: 'TMK',
+      pilotId: 'AKO',
       orgId: ORG_A,
-      code: 'TMK',
+      code: 'AKO',
       // …a brak `iat` czyta się jako `0`, czyli „wydany przed czasem" - wartość, która
       // przegrywa z każdym znacznikiem unieważnienia (przypadek niżej).
       issuedAt: 0,
@@ -387,11 +387,11 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
     // unieważnienia przegrywa z każdą datą.
     const { db, tokens, clock } = await testHarness();
     const accounts = new PgPilotsRepo(db);
-    const token = handRolled(clock, { sub: 'TMK', org: ORG_A, code: 'TMK' });
+    const token = handRolled(clock, { sub: 'AKO', org: ORG_A, code: 'AKO' });
 
     expect((await authorizeOrg(tokens, accounts, token, 'accounts.manage')).ok).toBe(true);
 
-    await db.query("UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'TMK'", [
+    await db.query("UPDATE pilots SET credentials_valid_from = $1 WHERE id = 'AKO'", [
       clock.now().toISOString(),
     ]);
 
@@ -406,13 +406,13 @@ describe('zakres pochodzi z członkostwa, nie z tokenu', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(tokens.verify(login.json().token)?.orgId).toBe(ORG_A);
 
     // Administrator traci uprawnienia w klubie…
     await db.query(
-      "DELETE FROM membership_capabilities WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'",
     );
 
     const refreshed = await app.inject({
@@ -441,7 +441,7 @@ describe('token PLATFORMOWY superadministratora', () => {
     // do klubu, którego w tokenie nie ma.
     const { tokens } = await testHarness();
     const platform = tokens.signPlatform({ pilotId: 'admin', sessionId: NO_SESSION }, 3600);
-    const club = tokens.sign(asAdmin('TMK'), 3600);
+    const club = tokens.sign(asAdmin('AKO'), 3600);
 
     expect(tokens.verify(platform)).toBeNull();
     expect(tokens.verifyPerson(platform)).toBeNull();
@@ -454,9 +454,9 @@ describe('token PLATFORMOWY superadministratora', () => {
     const { db, clock, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
     const sessions = new PgLoginSessions(db, clock);
-    const token = tokens.signPlatform({ pilotId: 'TMK', sessionId: NO_SESSION }, 3600);
+    const token = tokens.signPlatform({ pilotId: 'AKO', sessionId: NO_SESSION }, 3600);
 
-    // TMK jest administratorem KLUBU, a nie superadministratorem: token platformowy
+    // AKO jest administratorem KLUBU, a nie superadministratorem: token platformowy
     // z jego identyfikatorem jest poprawną kopertą, ale rola z osoby go nie przepuszcza.
     expect(await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).toEqual({
       ok: false,
@@ -464,11 +464,11 @@ describe('token PLATFORMOWY superadministratora', () => {
       body: { error: 'forbidden', required: 'platform.manage' },
     });
 
-    await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'AKO'");
     expect((await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).ok).toBe(true);
 
     // Osoba zablokowana platformowo - 401, jak wszędzie: nikt za tym poświadczeniem nie stoi.
-    await db.query("UPDATE pilots SET active = FALSE WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET active = FALSE WHERE id = 'AKO'");
     expect((await authorizePlatform(tokens, accounts, sessions, token, 'platform.manage')).ok).toBe(false);
   });
 
@@ -476,10 +476,10 @@ describe('token PLATFORMOWY superadministratora', () => {
     const { db, clock, tokens } = await testHarness();
     const accounts = new PgPilotsRepo(db);
     const sessions = new PgLoginSessions(db, clock);
-    await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'");
+    await db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'AKO'");
 
-    const club = tokens.sign(asAdmin('TMK'), 3600);
-    const platform = tokens.signPlatform({ pilotId: 'TMK', sessionId: NO_SESSION }, 3600);
+    const club = tokens.sign(asAdmin('AKO'), 3600);
+    const platform = tokens.signPlatform({ pilotId: 'AKO', sessionId: NO_SESSION }, 3600);
 
     expect(
       (await authorizePlatform(tokens, accounts, sessions, club, 'platform.manage')).ok,
@@ -497,10 +497,10 @@ describe('CHECK na słownikach ról', () => {
   it('`pilots.platform_role` przyjmuje wyłącznie `superadmin` albo NULL', async () => {
     const { db } = await testHarness();
     await expect(
-      db.query("UPDATE pilots SET platform_role = 'admin' WHERE id = 'TMK'"),
+      db.query("UPDATE pilots SET platform_role = 'admin' WHERE id = 'AKO'"),
     ).rejects.toThrow();
     await expect(
-      db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'TMK'"),
+      db.query("UPDATE pilots SET platform_role = 'superadmin' WHERE id = 'AKO'"),
     ).resolves.toBeDefined();
   });
 

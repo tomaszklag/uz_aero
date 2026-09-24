@@ -72,8 +72,8 @@
 
 ## Zapis, korekty i nazwy
 
-- **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/TMK/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
-- **Kod pilota** - krótki kod (np. `TMK`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
+- **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/AKO/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
+- **Kod pilota** - krótki kod (np. `AKO`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
 - **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
 - **Korekta** - poprawka godziny, odczytu, składu zrzutu, notatki albo drugiego pilota, z opcjonalnym powodem. Nie nadpisuje historii - dopisuje się do niej.
 - **Oznaczenie „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.

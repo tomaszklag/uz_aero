@@ -176,7 +176,7 @@ PRZEŁĄCZNIK OSI na poziomie 1, a nie druga pozycja w kolumnie.
 
 ### 4.2 Adres osi pilota: pierwszy segment jest już zajęty
 
-`#/dziennik/:reg` bierze dziś cały pierwszy segment, więc `#/dziennik/AKO` byłoby
+`#/dziennik/:reg` bierze dziś cały pierwszy segment, więc `#/dziennik/BNO` byłoby
 odróżnialne od rejestracji wyłącznie heurystyką po kształcie napisu - a heurystyka
 w adresie to pułapka, która odzywa się przy pierwszym klubie ze znakiem spoza wzorca.
 

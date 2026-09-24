@@ -451,7 +451,7 @@ function FirstAdminCard({
       <Field
         htmlFor="org-admin-code"
         label="Kod pilota"
-        hint="Krótki skrót przy każdym locie, np. TMK. Jedyny w tym klubie."
+        hint="Krótki skrót przy każdym locie, np. AKO. Jedyny w tym klubie."
       >
         <TextInput
           id="org-admin-code"

@@ -18,7 +18,7 @@ const bug = (over: Partial<BugReportDto> = {}): BugReportDto => ({
   createdAt: '2026-09-04T09:41:07.000Z',
   receivedAt: '2026-09-04T10:02:00.000Z',
   pilotId: 'p-uuid',
-  pilotCode: 'TMK',
+  pilotCode: 'AKO',
   pilotName: 'Adam Kowalski',
   org: { id: 'org-1', slug: 'aeroklub-zielonogorski', name: 'Aeroklub Zielonogórski' },
   severity: 'annoying',
@@ -42,14 +42,14 @@ describe('wiersz listy', () => {
     const row = bugRow(bug());
     // Zegar telefonu, nie serwera: pytanie brzmi „kiedy pilot to widział".
     expect(row.when).toBe('4 WRZ 09:41');
-    expect(row.pilot).toBe('TMK');
+    expect(row.pilot).toBe('AKO');
     expect(row.excerpt).toBe('Czas lotu nie przeliczył się po korekcie lądowania.');
     expect(row.muted).toBe(false);
   });
 
   it('niesie NAZWĘ KLUBU, bo kod pilota jest jedyny w klubie, nie na serwerze', () => {
     // Kolejka zgłoszeń jest wspólna dla całego serwera (issue #99 C6), więc dwa
-    // zgłoszenia od dwóch różnych `TMK` muszą się na liście różnić.
+    // zgłoszenia od dwóch różnych `AKO` muszą się na liście różnić.
     expect(bugRow(bug()).org).toBe('Aeroklub Zielonogórski');
     const other = bugRow(
       bug({ org: { id: 'org-2', slug: 'aeroklub-beta', name: 'Aeroklub Beta' } }),
@@ -92,7 +92,7 @@ describe('wiersz listy', () => {
 describe('wiersze kontekstu', () => {
   it('pola znane dostają polską nazwę i stoją w kolejności czytania', () => {
     const rows = bugContextRows({
-      pilotCode: 'TMK',
+      pilotCode: 'AKO',
       screenLabel: 'KOKPIT (04/05)',
       appVersion: '1.4.0',
     });

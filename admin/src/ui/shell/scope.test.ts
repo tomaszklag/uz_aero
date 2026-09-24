@@ -8,7 +8,7 @@ const BETA: OrganizationRefDto = { id: 'org-b', slug: 'aeroklub-beta', name: 'Ae
 
 const club = (org: OrganizationRefDto) => ({
   org,
-  code: 'TMK',
+  code: 'AKO',
   capabilities: ['panel.access' as const, 'accounts.manage' as const],
 });
 
@@ -16,7 +16,7 @@ const session = (
   org: OrganizationRefDto | null,
   scopes: PanelScopesDto,
 ): PanelSessionDto => ({
-  pilot: { id: 'TMK', code: org == null ? null : 'TMK', name: 'Adam Kowalski' },
+  pilot: { id: 'AKO', code: org == null ? null : 'AKO', name: 'Adam Kowalski' },
   org,
   capabilities: ['panel.access'],
   scopes,

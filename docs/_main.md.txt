@@ -329,7 +329,7 @@ deklaracji, przycisku „Zamknij dzień" i osobnych reguł.
 
 Operacja ma nazwę czytelną dla człowieka - obok uuid, który zostaje kluczem technicznym:
 
-    SP-AXA/2026-09-01/AKO/1
+    SP-AXA/2026-09-01/BNO/1
     └ znak  └ doba     └ PIC └ numer operacji tego pilota w tej dobie
 
 **Liczy się, nie zapisuje.** Sygnatura jest projekcją - składa ją `operationSignature`
@@ -547,7 +547,7 @@ Punkty niżej opisują wymagania, które ta sekcja spełnia (historycznie: ekran
 
 Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje:
 
-- banner "Podgląd · SP-AXA zajęty przez TMK od 08:00"
+- banner "Podgląd · SP-AXA zajęty przez AKO od 08:00"
 - widoczne: status, log dnia, statystyki, historia; **zero możliwości zapisu**
 - z podglądu dostępna akcja "Przejmij" (→ flow przejęcia, sekcja 4.4)
 

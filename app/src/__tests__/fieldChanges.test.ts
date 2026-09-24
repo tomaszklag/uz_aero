@@ -28,7 +28,7 @@ function event<T extends EventType>(
     type,
     sessionUuid: 's-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     deviceTime: time,
     gpsTime: time,
@@ -80,7 +80,7 @@ describe('licznik poprawek per pole', () => {
       ...base(),
       correction('preflight-1', { action: 'amend', fields: { fuelL: 148 } }, at(11, 0), 'c-1'),
       correction('preflight-1', { action: 'amend', fields: { notes: 'Po poprawce.' } }, at(11, 5), 'c-2'),
-      correction('preflight-1', { action: 'amend', fields: { dualId: 'AKO' } }, at(11, 9), 'c-3'),
+      correction('preflight-1', { action: 'amend', fields: { dualId: 'BNO' } }, at(11, 9), 'c-3'),
     ];
 
     expect(fieldChanges(events, 'preflight-1', ['fuelL'])).toBe(1);
