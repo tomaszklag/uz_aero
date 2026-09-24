@@ -23,8 +23,8 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useSignUp } from '../../queries/useSession';
-import { Banner, Button, Field, TextInput } from '../../ui/components';
-import { BrandMark } from '../../ui/components/icons';
+import { Button, Field, TextInput } from '../../ui/components';
+import { AuthFrame } from './AuthFrame';
 import { canSignUp, normalizeName, SIGNUP_LEAD, signUpOutcome, type SignUpOutcome } from './signUpForm';
 
 export function SignUpScreen() {
@@ -52,80 +52,61 @@ export function SignUpScreen() {
   };
 
   return (
-    <div className="login">
-      <div className="login-mark">
-        <span className="login-badge">
-          <BrandMark size={28} />
-        </span>
-        <span className="login-title">NINERDECK</span>
-        <span className="login-note">Panel administracyjny</span>
-      </div>
-
-      {outcome == null ? null : (
-        <div className="login-banner">
-          <Banner tone={outcome.tone} live>
-            {outcome.text}
-          </Banner>
-        </div>
-      )}
-
-      <div className="login-card">
-        <form onSubmit={submit}>
-          <div className="card-title">Załóż konto</div>
-          <p className="login-note">{SIGNUP_LEAD}</p>
-
-          {/* Imię i nazwisko - jedyna rzecz, której serwer nie ma skąd wziąć: u osoby
-              z Google przychodzi z profilu, tutaj nie ma innego źródła. */}
-          <Field htmlFor="signup-name" label="Imię i nazwisko">
-            <TextInput
-              id="signup-name"
-              type="text"
-              autoComplete="name"
-              autoCapitalize="words"
-              required
-              disabled={sent}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </Field>
-
-          <Field htmlFor="signup-email" label="E-mail">
-            <TextInput
-              id="signup-email"
-              mono
-              type="email"
-              autoComplete="email"
-              required
-              // Po wysłaniu pola zostają DO ODCZYTU: mówią, dokąd poszedł list, a nie
-              // zapraszają do drugiej próby, zanim ktokolwiek zajrzy do skrzynki.
-              disabled={sent}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </Field>
-
-          {sent ? null : (
-            // Puste albo za krótkie pole blokuje BEZ zdania - widać je nad przyciskiem (issue #55).
-            <Button type="submit" variant="primary" block disabled={!ready || signUp.isPending}>
-              Wyślij link
-            </Button>
-          )}
-
-        </form>
-      </div>
-
-      {/* Wyjście POD kartą (issue #180, wzorzec GitHub „New to GitHub?" odwrócony): karta
-          niesie jedną akcję, a ktoś, kto ma już konto albo kliknął tu przez pomyłkę,
-          wraca bez wysyłania czegokolwiek. Po wysłaniu zostaje sam powrót. */}
-      <div className="login-alt">
-        {sent ? (
+    <AuthFrame
+      title="Załóż konto"
+      lead={SIGNUP_LEAD}
+      message={outcome}
+      // Ktoś, kto ma już konto albo kliknął tu przez pomyłkę, wraca bez wysyłania
+      // czegokolwiek. Po wysłaniu zostaje sam powrót.
+      footer={
+        sent ? (
           <Link to="/logowanie">Wróć do logowania</Link>
         ) : (
           <>
             Masz już konto? <Link to="/logowanie">Zaloguj się</Link>
           </>
+        )
+      }
+    >
+      <form className="login-form" onSubmit={submit}>
+        {/* Imię i nazwisko - jedyna rzecz, której serwer nie ma skąd wziąć: u osoby
+            z Google przychodzi z profilu, tutaj nie ma innego źródła. */}
+        <Field htmlFor="signup-name" label="Imię i nazwisko">
+          <TextInput
+            id="signup-name"
+            type="text"
+            autoComplete="name"
+            autoCapitalize="words"
+            required
+            disabled={sent}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </Field>
+
+        <Field htmlFor="signup-email" label="E-mail">
+          <TextInput
+            id="signup-email"
+            mono
+            type="email"
+            autoComplete="email"
+            required
+            // Po wysłaniu pola zostają DO ODCZYTU: mówią, dokąd poszedł list, a nie
+            // zapraszają do drugiej próby, zanim ktokolwiek zajrzy do skrzynki.
+            disabled={sent}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Field>
+
+        {sent ? null : (
+          // Puste albo za krótkie pole blokuje BEZ zdania - widać je nad przyciskiem (issue #55).
+          <Button type="submit" variant="primary" block disabled={!ready || signUp.isPending}>
+            Wyślij link
+          </Button>
         )}
-      </div>
-    </div>
+
+      </form>
+    </AuthFrame>
   );
 }
