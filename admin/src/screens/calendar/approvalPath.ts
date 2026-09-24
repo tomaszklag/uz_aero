@@ -18,6 +18,8 @@
  * i podaje drogę naprawy; decyzję zostawia człowiekowi (K4c).
  */
 
+import { plural } from '@ninerdeck/format';
+
 import type { ApprovalStepDto, ApprovalStepInputDto, PilotListItemDto } from '../../api/dto';
 import { NONE } from '../common/values';
 
@@ -199,4 +201,25 @@ export function withStep(steps: readonly ApprovalStepDto[], draft: StepDraft): A
 /** Zamówienie BEZ kroku - krok zdjęty ze ścieżki przestaje być pytany (§11.2). */
 export function withoutStep(steps: readonly ApprovalStepDto[], id: string): ApprovalStepInputDto[] {
   return asInput(steps.filter((s) => s.id !== id));
+}
+
+/**
+ * Zdanie po zapisie ścieżki o SPRAWACH W TOKU (issue #207): ile czekających rezerwacji
+ * dostało komplet zgód, a ile czeka teraz na inny krok. `null`, gdy zapis niczego
+ * w sprawach nie zmienił - baner o zerze uczyłby pomijać banery (reguła SyncChipa).
+ */
+export function pathSavedNotice(effect: { confirmed: number; moved: number } | undefined): string | null {
+  if (effect == null) return null;
+  const parts: string[] = [];
+  if (effect.confirmed > 0) {
+    parts.push(
+      `${effect.confirmed} ${plural(effect.confirmed, 'rezerwacja z kompletem zgód została potwierdzona', 'rezerwacje z kompletem zgód zostały potwierdzone', 'rezerwacji z kompletem zgód zostało potwierdzonych')}`,
+    );
+  }
+  if (effect.moved > 0) {
+    parts.push(
+      `${effect.moved} ${plural(effect.moved, 'rezerwacja czeka teraz na inny krok - jego osoby dostały prośbę', 'rezerwacje czekają teraz na inny krok - jego osoby dostały prośbę', 'rezerwacji czeka teraz na inny krok - jego osoby dostały prośbę')}`,
+    );
+  }
+  return parts.length === 0 ? null : `${parts.join('. ')}.`;
 }

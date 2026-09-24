@@ -467,6 +467,8 @@ const lastSeen = new LastSeenThrottle();
       auditedWrite,
       approvalStepsRepo,
       adminPilotsRepo,
+      approvals,
+      notifier,
       randomUUID,
       clock,
     ),

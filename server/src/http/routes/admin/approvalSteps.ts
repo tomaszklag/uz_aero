@@ -75,7 +75,9 @@ export function registerApprovalStepRoutes(
       if (!outcome.ok) {
         return reply.code(400).send({ error: outcome.reason, stepLabel: outcome.stepLabel });
       }
-      return reply.send({ steps: outcome.steps });
+      // Ile spraw w toku ten zapis domknął i przekierował (issue #207) - panel mówi to
+      // banerem, bo skutek zapisu konfiguracji dotyczy cudzych rezerwacji.
+      return reply.send({ steps: outcome.steps, reconciled: outcome.reconciled });
     },
   );
 }

@@ -56,6 +56,9 @@ export function useReplaceApprovalSteps() {
     mutationFn: (steps: readonly ApprovalStepInputDto[]) => replaceApprovalSteps(steps),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys.approvals.all });
+      // Zapis ścieżki potwierdza sprawy z kompletem zgód (issue #207), więc pasek na osi
+      // floty zmienia kształt - kalendarz ma to zobaczyć bez odświeżania karty.
+      void qc.invalidateQueries({ queryKey: keys.calendar.all });
     },
   });
 }

@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 import {
   approvalOutcome,
   currentStep,
+  missingSelfApprovals,
   pendingApprovers,
   refuseDecision,
   selfApprovedSteps,
@@ -111,6 +112,17 @@ describe('rezerwujący pomija własne kroki', () => {
     // Inaczej rezerwacje administratora omijałyby ścieżkę, której sam pilnuje. Ta
     // funkcja nie ma nawet czym o władzę zapytać - i to jest cała odpowiedź.
     expect(selfApprovedSteps(PATH, 'admin')).toEqual([]);
+  });
+
+  it('krok DOŁOŻONY później z rezerwującym na liście też przechodzi sam (#207)', () => {
+    // Ścieżka po zmianie: przed mechanikiem stanął nowy krok, na którym stoi AKO.
+    const nowy = step('s-nowy', 0, ['AKO']);
+    const after = [nowy, MECHANIK, SZEF];
+    // Mechanik już zdecydował (AKO pominął go przy złożeniu) - ten wpis ZOSTAJE.
+    expect(missingSelfApprovals(after, [ok('s-mech')], 'AKO').map((s) => s.id)).toEqual(['s-nowy']);
+    // Krok rozstrzygnięty odmową też nie dostaje drugiego wpisu.
+    expect(missingSelfApprovals(after, [no('s-mech'), ok('s-nowy')], 'AKO')).toEqual([]);
+    expect(missingSelfApprovals(after, [], 'PWI')).toEqual([]);
   });
 });
 

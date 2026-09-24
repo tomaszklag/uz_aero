@@ -1022,6 +1022,18 @@ export interface ApprovalStepDto {
 export interface ApprovalPathDto {
   /** Pusta lista = klub bez akceptacji, czyli stan domyślny (§11.1). */
   steps: ApprovalStepDto[];
+  /**
+   * Skutek ZAPISU dla spraw w toku (issue #207) - tylko w odpowiedzi `PUT`: ile
+   * czekających rezerwacji dostało komplet zgód na nowej ścieżce (potwierdzone), a ile
+   * czeka teraz na inny krok (jego osoby dostały prośbę). Zapis konfiguracji dotyka
+   * cudzych rezerwacji, więc panel mówi to banerem.
+   */
+  reconciled?: PathEffectDto;
+}
+
+export interface PathEffectDto {
+  confirmed: number;
+  moved: number;
 }
 
 /**

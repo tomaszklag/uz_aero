@@ -19,6 +19,7 @@
 import {
   approvalOutcome,
   currentStep,
+  missingSelfApprovals,
   orderedSteps,
   pendingApprovers,
   refuseDecision,
@@ -117,6 +118,16 @@ export type DecisionResult =
   | { ok: true; booking: BookingRecord; view: ApprovalView }
   | { ok: false; refusal: ApprovalRefusal | 'booking_closed' };
 
+/** Skutek ZMIANY ŚCIEŻKI dla spraw w toku (issue #207) - do audytu i do panelu. */
+export interface PathReconcile {
+  /** Sprawy, które na nowej ścieżce mają komplet zgód - potwierdzone, pilot zawiadomiony. */
+  confirmed: number;
+  /** Sprawy, które czekają teraz na INNY krok - jego osoby dostały prośbę o zgodę. */
+  moved: number;
+  /** Do budzika PO commicie - zostaje wołającemu, jak przy `recordPlan`. */
+  notices: NotificationDraft[];
+}
+
 export class ApprovalFlow {
   constructor(
     private readonly db: Database,
@@ -203,6 +214,80 @@ export class ApprovalFlow {
     await this.approvals.supersede(tx, orgId, bookingId, at);
     await this.approvals.insert(tx, orgId, bookingId, plan.selfApproved, at);
     await this.notifier.record(tx, orgId, plan.notices, at);
+  }
+
+  /**
+   * SPRAWY W TOKU PO ZMIANIE ŚCIEŻKI (issue #207) - w TEJ SAMEJ transakcji, co zapis
+   * ścieżki. Ścieżka jest zawsze bieżąca (§11.2), więc zapis konfiguracji zmienia stan
+   * każdej sprawy `pending` w klubie - a wiersz rezerwacji sam z siebie tego nie
+   * zauważy. Bez tego przebiegu rezerwacja, której zdjęto ostatni brakujący krok,
+   * stała w `pending` z kompletem zgód, nikt nie miał jak jej domknąć (`refuseDecision`
+   * → `not_pending`) i wygasała jako „nikt nie zdążył zdecydować".
+   *
+   * Trzy rzeczy, w tej kolejności, dla każdej sprawy:
+   * 1. krok dołożony z REZERWUJĄCYM na liście dostaje pominięcie `self` - nikt nie prosi
+   *    człowieka o zgodę na własny plan, także po zmianie ścieżki;
+   * 2. komplet zgód na nowej ścieżce POTWIERDZA rezerwację i zawiadamia pilota tak samo,
+   *    jak po ostatniej zgodzie kroku;
+   * 3. sprawa, która czeka teraz na INNY krok niż przed zmianą (krok dołożony PRZED
+   *    bieżącym albo bieżący zdjęty), rodzi prośbę do osób nowego kroku - dotąd
+   *    dołożenie kroku cofało sprawę i NIKOGO o tym nie zawiadamiało. Zmiana OBSADY
+   *    tego samego kroku prośby nie rodzi: sprawa czeka tam, gdzie czekała, a osoba
+   *    dopisana do kroku widzi ją w kolejce.
+   *
+   * `before` i `after` idą argumentami, bo wołający ma je już z zapisu; drugi odczyt
+   * ścieżki w otwartej transakcji byłby wyłącznie kosztem.
+   */
+  async reconcile(
+    tx: Queryable,
+    orgId: string,
+    before: readonly ApprovalStep[],
+    after: readonly ApprovalStep[],
+  ): Promise<PathReconcile> {
+    const at = this.clock.now();
+    const out: PathReconcile = { confirmed: 0, moved: 0, notices: [] };
+
+    for (const booking of await this.bookings.pending(tx, orgId)) {
+      const requester = booking.pilotId;
+      if (requester == null) continue;
+      const had = await this.approvals.listFor(tx, orgId, booking.id);
+      const wasAt = currentStep(before, had);
+
+      const skipped: NewApproval[] = missingSelfApprovals(after, had, requester).map((step) => ({
+        stepId: step.id,
+        decision: 'approved',
+        via: 'self',
+        reason: null,
+        decidedBy: requester,
+      }));
+      if (skipped.length > 0) await this.approvals.insert(tx, orgId, booking.id, skipped, at);
+
+      const decisions: ApprovalDecision[] = [...had, ...skipped].map((d) => ({
+        stepId: d.stepId,
+        decision: d.decision,
+      }));
+      const outcome = approvalOutcome(after, decisions);
+      // Wiersz `pending` z odmową w rejestrze nie ma jak powstać (odmowa zamyka sprawę
+      // tą samą transakcją). Gdyby jednak stał, rozstrzygać o nim ma człowiek, nie
+      // zapis konfiguracji.
+      if (outcome === 'rejected') continue;
+
+      const about = noticeOf(booking);
+      if (outcome === 'confirmed') {
+        if ((await this.bookings.confirm(tx, orgId, booking.id, at)) == null) continue;
+        out.notices.push(bookingApproved(about, requester));
+        out.confirmed += 1;
+        continue;
+      }
+
+      const nowAt = currentStep(after, decisions);
+      if (nowAt == null || nowAt.id === wasAt?.id) continue;
+      out.notices.push(...approvalRequested(about, pendingApprovers(after, decisions), nowAt));
+      out.moved += 1;
+    }
+
+    await this.notifier.record(tx, orgId, out.notices, at);
+    return out;
   }
 
   /**
@@ -401,13 +486,7 @@ function noticesFor(
   decisions: readonly ApprovalDecision[],
   refusal: { reason: string | null; decidedBy: string; stepLabel: string },
 ): NotificationDraft[] {
-  const about: NoticeBooking = {
-    id: booking.id,
-    aircraftId: booking.aircraftId,
-    startsAt: booking.startsAt,
-    endsAt: booking.endsAt,
-    pilotId: booking.pilotId,
-  };
+  const about = noticeOf(booking);
   // Rezerwacja bez właściciela nie istnieje (CHECK `booking_flight_fields`), ale typ
   // dopuszcza `null` ze względu na wyłączenia z użytku - a tych ścieżka nie dotyczy.
   const requester = booking.pilotId;
@@ -428,3 +507,12 @@ function noticesFor(
   const next = currentStep(path, decisions);
   return next == null ? [] : approvalRequested(about, pendingApprovers(path, decisions), next);
 }
+
+/** Tyle rezerwacji, ile niesie wiadomość - identyfikatory, znak rozwiązuje telefon (§12.1). */
+const noticeOf = (booking: BookingRecord): NoticeBooking => ({
+  id: booking.id,
+  aircraftId: booking.aircraftId,
+  startsAt: booking.startsAt,
+  endsAt: booking.endsAt,
+  pilotId: booking.pilotId,
+});

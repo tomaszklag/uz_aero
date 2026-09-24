@@ -15,6 +15,7 @@ import {
   moveStep,
   namesSentence,
   orphanNotices,
+  pathSavedNotice,
   pathSentence,
   stepBlocker,
   stepHealth,
@@ -140,5 +141,24 @@ describe('szuflada kroku', () => {
       null,
     ]);
     expect(withoutStep(steps, 's1').map((s) => s.id)).toEqual(['s2']);
+  });
+});
+
+describe('zdanie po zapisie ścieżki o sprawach w toku', () => {
+  it('milczy, gdy zapis niczego w sprawach nie zmienił', () => {
+    expect(pathSavedNotice(undefined)).toBeNull();
+    expect(pathSavedNotice({ confirmed: 0, moved: 0 })).toBeNull();
+  });
+
+  it('liczy potwierdzone i przekierowane sprawy z odmianą', () => {
+    expect(pathSavedNotice({ confirmed: 1, moved: 0 })).toBe(
+      '1 rezerwacja z kompletem zgód została potwierdzona.',
+    );
+    expect(pathSavedNotice({ confirmed: 0, moved: 2 })).toBe(
+      '2 rezerwacje czekają teraz na inny krok - jego osoby dostały prośbę.',
+    );
+    expect(pathSavedNotice({ confirmed: 5, moved: 1 })).toBe(
+      '5 rezerwacji z kompletem zgód zostało potwierdzonych. 1 rezerwacja czeka teraz na inny krok - jego osoby dostały prośbę.',
+    );
   });
 });

@@ -438,6 +438,190 @@ describe('ścieżka jest ZAWSZE BIEŻĄCA', () => {
   });
 });
 
+describe('zapis ścieżki domyka i przekierowuje sprawy w toku (#207)', () => {
+  const audytZapisu = async (db: Db) => {
+    const { rows } = await db.query<{ details: unknown }>(
+      `SELECT details FROM admin_audit WHERE action = 'approval.steps' ORDER BY id DESC LIMIT 1`,
+    );
+    const d = rows[0]!.details;
+    return (typeof d === 'string' ? JSON.parse(d) : d) as { confirmed: number; moved: number };
+  };
+
+  it('zdjęcie ostatniego brakującego kroku POTWIERDZA sprawę z kompletem zgód i zawiadamia pilota', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    const pierwsza = await setPath(app, cookie, [
+      { label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+    ]);
+    const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    const krz = await login(app, 'KRZ');
+    expect((await decide(app, krz, id, { decision: 'approved' })).json().status).toBe('pending');
+
+    // Klub zdejmuje szefa wyszkolenia. Sprawa ma komplet zgód na NOWEJ ścieżce - do #207
+    // stała w `pending`, nikt nie mógł jej domknąć i wygasała jako „nikt nie zdecydował".
+    const zapis = await setPath(app, cookie, [{ id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ'] }]);
+    expect(zapis.statusCode, zapis.body).toBe(200);
+    expect(zapis.json().reconciled).toEqual({ confirmed: 1, moved: 0 });
+
+    const view = await card(app, pwi, id);
+    expect(view.json().booking.status).toBe('confirmed');
+    expect(view.json().approval.outcome).toBe('confirmed');
+
+    // Pilot dostaje TĘ SAMĄ wiadomość, co po ostatniej zgodzie kroku.
+    const skrzynka = await inbox(app, pwi);
+    expect(skrzynka.json().items.map((i: { kind: string }) => i.kind)).toEqual(['booking_approved']);
+
+    // Dziennik mówi, ile spraw ten zapis domknął.
+    expect(await audytZapisu(db)).toMatchObject({ confirmed: 1, moved: 0 });
+  });
+
+  it('wyczyszczenie całej ścieżki potwierdza WSZYSTKIE czekające sprawy', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const jse = await login(app, 'JSE');
+    const a = (await book(app, pwi)).json().id as string;
+    const b = (await book(app, jse, JUTRO + 12 * H, JUTRO + 13 * H)).json().id as string;
+
+    // Klub wyłącza akceptację. Bez tego przebiegu obie sprawy stałyby w `pending`
+    // w klubie, który nie ma już czego pytać.
+    const zapis = await setPath(app, cookie, []);
+    expect(zapis.json().reconciled).toEqual({ confirmed: 2, moved: 0 });
+    expect((await card(app, pwi, a)).json().booking.status).toBe('confirmed');
+    expect((await card(app, jse, b)).json().booking.status).toBe('confirmed');
+    expect((await inbox(app, jse)).json().items[0].kind).toBe('booking_approved');
+  });
+
+  it('zdjęcie kroku BIEŻĄCEGO przesuwa sprawę do następnego i prosi jego osoby', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    await grantApprove(db, 'AKO');
+    const cookie = await panelCookie(app, 'TMK');
+    const pierwsza = await setPath(app, cookie, [
+      { label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+    ]);
+    const szef = (pierwsza.json().steps as { id: string }[])[1]!;
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    const ako = await login(app, 'AKO');
+    expect((await inbox(app, ako)).json().items).toHaveLength(0);
+
+    // Mechanik znika ze ścieżki, zanim zdecydował. Sprawa czeka teraz na szefa - a ten
+    // musi się o tym dowiedzieć, bo przy złożeniu nikt go nie pytał (kroki idą po kolei).
+    const zapis = await setPath(app, cookie, [
+      { id: szef.id, label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+    ]);
+    expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 1 });
+
+    const wiadomosci = (await inbox(app, ako)).json().items as { kind: string; payload: { stepLabel: string } }[];
+    expect(wiadomosci).toHaveLength(1);
+    expect(wiadomosci[0]!.kind).toBe('approval_requested');
+    expect(wiadomosci[0]!.payload.stepLabel).toBe('Szef wyszkolenia');
+
+    const view = await card(app, pwi, id);
+    expect(view.json().approval.outcome).toBe('pending');
+    expect(view.json().approval.steps[0].current).toBe(true);
+    // I szef może teraz zdecydować - sprawa nie utknęła.
+    expect((await decide(app, ako, id, { decision: 'approved' })).json().status).toBe('confirmed');
+  });
+
+  it('krok DOŁOŻONY przed bieżącym prosi swoje osoby, a krok bieżący nie dostaje drugiej prośby', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    await grantApprove(db, 'AKO');
+    const cookie = await panelCookie(app, 'TMK');
+    const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+    const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    // Dołożenie kroku COFA sprawę (§11.2) - i od #207 nowy krok pierwszy dowiaduje się
+    // o tym od razu, zamiast czekać, aż ktoś zajrzy do kolejki.
+    const zapis = await setPath(app, cookie, [
+      { label: 'Szef wyszkolenia', memberIds: ['AKO'] },
+      { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ'] },
+    ]);
+    expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 1 });
+
+    const ako = await login(app, 'AKO');
+    const wiadomosci = (await inbox(app, ako)).json().items as { kind: string; payload: { stepLabel: string } }[];
+    expect(wiadomosci.map((w) => [w.kind, w.payload.stepLabel])).toEqual([
+      ['approval_requested', 'Szef wyszkolenia'],
+    ]);
+    // Mechanik miał prośbę od złożenia i nie dostaje jej po raz drugi.
+    const krz = await login(app, 'KRZ');
+    expect((await inbox(app, krz)).json().items).toHaveLength(1);
+    expect((await card(app, pwi, id)).json().approval.steps[0].current).toBe(true);
+  });
+
+  it('krok dołożony z REZERWUJĄCYM na liście przechodzi sam - z adnotacją `self`', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'TMK');
+    const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+    const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    // Krok z PWI na liście dochodzi ZA mechanikiem: nikt nie prosi człowieka o zgodę
+    // na własny plan, także po zmianie ścieżki. Sprawa dalej czeka na mechanika.
+    const druga = await setPath(app, cookie, [
+      { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Potwierdzenie pilota', memberIds: ['PWI'] },
+    ]);
+    expect(druga.json().reconciled).toEqual({ confirmed: 0, moved: 0 });
+    const kroki = (await card(app, pwi, id)).json().approval.steps as {
+      label: string;
+      current: boolean;
+      decision: { via: string } | null;
+    }[];
+    expect(kroki[0]!.current).toBe(true);
+    expect(kroki[1]!.decision?.via).toBe('self');
+    expect((await inbox(app, pwi)).json().items).toHaveLength(0);
+
+    // A gdy mechanik znika, pominięcie jest kompletem zgód.
+    const potwierdzenie = (druga.json().steps as { id: string }[])[1]!;
+    const trzecia = await setPath(app, cookie, [
+      { id: potwierdzenie.id, label: 'Potwierdzenie pilota', memberIds: ['PWI'] },
+    ]);
+    expect(trzecia.json().reconciled).toEqual({ confirmed: 1, moved: 0 });
+    expect((await card(app, pwi, id)).json().booking.status).toBe('confirmed');
+  });
+
+  it('zmiana OBSADY kroku bieżącego nie rodzi prośby - sprawa czeka tam, gdzie czekała', async () => {
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    await grantApprove(db, 'AKO');
+    const cookie = await panelCookie(app, 'TMK');
+    const pierwsza = await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+    const mechanik = (pierwsza.json().steps as { id: string }[])[0]!;
+    const pwi = await login(app, 'PWI');
+    await book(app, pwi);
+
+    const zapis = await setPath(app, cookie, [
+      { id: mechanik.id, label: 'Mechanik', memberIds: ['KRZ', 'AKO'] },
+    ]);
+    expect(zapis.json().reconciled).toEqual({ confirmed: 0, moved: 0 });
+    // Osoba dopisana do kroku widzi sprawę w kolejce; budzika za to nie ma.
+    const ako = await login(app, 'AKO');
+    expect((await inbox(app, ako)).json().items).toHaveLength(0);
+    const kolejka = await app.inject({ url: '/me/approvals/queue', headers: bearer(ako) });
+    expect(kolejka.json().items).toHaveLength(1);
+  });
+});
+
 describe('termin nadszedł, a decyzji nie ma (§11.5)', () => {
   it('rezerwacja WYGASA, zwalnia slot i mówi o tym pilotowi', async () => {
     const { app, db } = await testHarness();

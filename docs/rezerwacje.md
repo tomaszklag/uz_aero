@@ -1104,6 +1104,27 @@ nie zapisze takiego kroku, a administrator odblokuje ścieżkę, w której ludzi
 członkostwo. Bez tej drugiej wystarczyłoby jedno odejście z klubu, żeby rezerwacje utknęły
 na zawsze.
 
+**ZAPIS ŚCIEŻKI DOMYKA I PRZEKIEROWUJE SPRAWY W TOKU** (issue #207, 2026-09-24). Skoro
+ścieżka jest bieżąca, jej zapis zmienia stan każdej czekającej rezerwacji - a wiersz
+rezerwacji sam tego nie zauważy. Do #207 SKRÓCENIE ścieżki zostawiało dziurę, której §11.2
+nie opisywał: rezerwacja ze zgodą kroku 1, czekająca na krok 2, po zdjęciu kroku 2 miała
+komplet zgód, ale stała w `pending` - nikt nie mógł jej domknąć (reguły odbijały
+`not_pending`) i wygasała jako „nikt nie zdążył zdecydować". Odtąd zapis ścieżki, w TEJ
+SAMEJ transakcji, przechodzi po sprawach `pending` klubu i liczy każdą na nowej ścieżce:
+
+- **komplet zgód POTWIERDZA rezerwację** i zawiadamia pilota tą samą wiadomością, co po
+  ostatniej zgodzie kroku; dotyczy to też wyczyszczenia całej ścieżki (klub wyłącza
+  akceptację - czekające sprawy nie mają już czego czekać);
+- **sprawa czekająca teraz na INNY krok** (bieżący zdjęty, krok dołożony przed bieżącym
+  albo przestawiony przed niego) rodzi prośbę o zgodę do osób nowego kroku - dotąd
+  dołożenie kroku cofało sprawę i nikogo o tym nie zawiadamiało. Zmiana OBSADY tego
+  samego kroku prośby nie rodzi: sprawa czeka tam, gdzie czekała, a osoba dopisana do
+  kroku widzi ją w kolejce;
+- **krok dołożony z REZERWUJĄCYM na liście przechodzi sam** (`via = self`) - pomijanie
+  własnych kroków obowiązuje także po zmianie ścieżki, nie tylko przy złożeniu;
+- dziennik (`approval.steps`) i odpowiedź zapisu niosą liczbę spraw potwierdzonych
+  i przekierowanych; panel mówi to banerem po zapisie, a zero nie dostaje zdania.
+
 ### 11.3 Odmowa wymaga powodu, zgoda nie
 
 Powód jest w `booking_approvals.reason` WYMAGANY przy `rejected` - pilot czyta go na
@@ -1423,6 +1444,7 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-J | prośba o zgodę na powiadomienia pada na Pulpicie dla AKCEPTUJĄCEGO i po rezerwacji, która CZEKA (decyzja właściciela 2026-09-23); skrzynka dostała bit `approver`, bo telefon nie zna zdolności | §12.5 |
 | R-J | plik Firebase idzie zmienną EAS typu „file" albo lokalną kopią poza repozytorium - Z2 z #168 rozstrzygnięte w kodzie | §12.5 |
 | R-J | wersja i `versionCode` NIE podbite w tym epiku - to krok gałęzi wydaniowej (R-K), a `develop` nie buduje APK; J6 i J7 czekają na Firebase (#168) | §12.4 |
+| #207 | zapis ścieżki domyka sprawy z kompletem zgód, prosi osoby nowego kroku bieżącego i dopisuje pominięcia `self` pod krokami dołożonymi później - §11.2 opisywało cenę DOŁOŻENIA kroku, nie SKRÓCENIA | §11.2 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od
