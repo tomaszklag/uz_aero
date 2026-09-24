@@ -12,7 +12,7 @@ import { ServerUnreachableError } from '../application/ports';
 import { PushTokenSync } from '../application/sync/pushTokenSync';
 import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' };
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const creds = (refreshToken: string): StoredCredentials => ({
   token: 'jwt',

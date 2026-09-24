@@ -46,7 +46,7 @@ export interface PickerTag {
 
 export interface PickerOption<T extends string> {
   value: T;
-  /** Główna etykieta (np. „SP-AXA", „Anna Kowalska"). */
+  /** Główna etykieta (np. „SP-AXA", „Barbara Nowak"). */
   label: string;
   /** Wartość po prawej: typ samolotu. Mono, przygaszona. */
   detail?: string;

@@ -1078,7 +1078,7 @@ describe('pierwszeństwo stanów karty', () => {
     aircraftType: 'Cessna 182',
     picId: 'TMK',
     picCode: 'TMK',
-    picName: 'Tomasz Małkiewicz',
+    picName: 'Adam Kowalski',
     status: 'closed',
     claimedAt: DAY,
     updatedAt: new Date(DAY),

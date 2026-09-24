@@ -48,7 +48,7 @@ const input = (over: Partial<Parameters<typeof claimConflict>[0]> = {}) => ({
   reg: 'SP-AXA',
   pilotId: 'tmk',
   now: at(9),
-  nameOf: (id: string | null) => (id === 'ako' ? 'Anna Kowalska' : null),
+  nameOf: (id: string | null) => (id === 'ako' ? 'Barbara Nowak' : null),
   ...over,
 });
 
@@ -56,9 +56,9 @@ describe('kiedy baner jest', () => {
   it('cudzy termin na tej maszynie ostrzega i nazywa go w MIANOWNIKU', () => {
     const vm = claimConflict(input());
     expect(vm?.title).toBe('Ktoś ma tę maszynę zarezerwowaną');
-    // Nazwisko za separatorem: „przez A. Kowalską" wymagałoby odmiany.
+    // Nazwisko za separatorem: „przez J. Nowaka" wymagałoby odmiany.
     expect(vm?.text).toBe(
-      'SP-AXA ma rezerwację 09:00 → 11:00 · A. Kowalska. Możesz lecieć - to tylko informacja o cudzym planie.',
+      'SP-AXA ma rezerwację 09:00 → 11:00 · B. Nowak. Możesz lecieć - to tylko informacja o cudzym planie.',
     );
   });
 

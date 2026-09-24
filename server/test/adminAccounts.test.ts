@@ -270,7 +270,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     // treść zapisu - pusta lista po literówce w adresie byłaby gorsza niż pełna.
     expect((await listPilots(app, token, '?capability=nie.ma')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?active=true')).json().items).toHaveLength(5);
-    expect((await listPilots(app, token, '?q=kowalska')).json().items).toEqual([
+    expect((await listPilots(app, token, '?q=nowak')).json().items).toEqual([
       expect.objectContaining({ code: 'AKO' }),
     ]);
     // Wyszukiwanie po fragmencie e-maila i bez rozróżniania wielkości liter.
@@ -305,14 +305,14 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     expect(all.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
 
     // Z wyszukiwaniem chipy opisują TRAFIENIA…
-    const narrowed = (await listPilots(app, token, '?q=kowalska')).json();
+    const narrowed = (await listPilots(app, token, '?q=nowak')).json();
     expect(narrowed.items).toHaveLength(1);
     expect(narrowed.scopes).toEqual({ total: 1, active: 1, inactive: 0, panel: 1 });
     // …a kafle dalej opisują KLUB, bo o tym mówią na ekranie.
     expect(narrowed.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
 
     // I najważniejsze: liczba na chipie zgadza się z liczbą wierszy po kliknięciu.
-    const clicked = (await listPilots(app, token, '?q=kowalska&active=false')).json();
+    const clicked = (await listPilots(app, token, '?q=nowak&active=false')).json();
     expect(clicked.items).toHaveLength(narrowed.scopes.inactive);
   });
 });
@@ -531,7 +531,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     expect(sameCode).toEqual({ ok: false, reason: 'conflict', field: 'code' });
 
     const sameEmail = await commands.update(actor('TMK'), 'PWI', {
-      email: 'tomasz@ninerdeck.pl',
+      email: 'adam@ninerdeck.pl',
     });
     expect(sameEmail).toEqual({ ok: false, reason: 'conflict', field: 'email' });
 

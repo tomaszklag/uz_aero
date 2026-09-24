@@ -15,15 +15,15 @@ import {
 const pilot: PilotListItemDto = {
   id: 'p-1',
   code: 'TMK',
-  name: 'Tomasz Małkiewicz',
-  email: 't.malkiewicz@ninerdeck.pl',
+  name: 'Adam Kowalski',
+  email: 'a.kowalski@ninerdeck.pl',
   active: true,
   capabilities: [],
   lastSeenAt: null,
   loginMethods: ['google'],
 };
 
-const filled = { ...EMPTY_ACCOUNT, code: 'TMK', name: 'Tomasz Małkiewicz' };
+const filled = { ...EMPTY_ACCOUNT, code: 'TMK', name: 'Adam Kowalski' };
 
 describe('kod pilota', () => {
   it('normalizuje do wersalików, jak serwer', () => {

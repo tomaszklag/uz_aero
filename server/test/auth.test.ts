@@ -34,7 +34,7 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
     expect(body.pilot).toEqual({
       id: 'TMK',
       code: 'TMK',
-      name: 'Tomasz Małkiewicz',
+      name: 'Adam Kowalski',
     });
     // JWT ma być od razu użyteczny…
     expect(tokens.verify(body.token)).toEqual({
@@ -173,7 +173,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     identityProvider.register('niepotwierdzony', {
       provider: 'google',
       subject: 'niepotw',
-      email: 'anna@ninerdeck.pl',
+      email: 'barbara@ninerdeck.pl',
       emailVerified: false,
       name: 'Ktoś Podszywający',
     });

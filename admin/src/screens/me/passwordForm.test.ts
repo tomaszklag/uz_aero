@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { HttpError } from '../../api/httpClient';
 import { EMPTY_PASSWORD, passwordFailure, verdictOf } from './passwordForm';
 
-const ME = { email: 'tomasz.malkiewicz@ninerdeck.pl', name: 'Tomasz Małkiewicz' };
+const ME = { email: 'adam.kowalski@ninerdeck.pl', name: 'Adam Kowalski' };
 const GOOD = 'wspolny-tablet-EPZG';
 
 const draft = (over: Partial<typeof EMPTY_PASSWORD> = {}) => ({ ...EMPTY_PASSWORD, ...over });
@@ -35,14 +35,14 @@ describe('co mówi pod polem', () => {
 
     // Hasło z własną tożsamością jest pierwszym, które ktoś spróbuje przy tablecie.
     // KOLEJNOŚĆ POWODÓW NALEŻY DO DOMENY: adres bada się przed nazwiskiem, więc dla
-    // konta `tomasz.malkiewicz@…` nazwisko w haśle wraca jako „zawiera Twój adres" -
+    // konta `adam.kowalski@…` nazwisko w haśle wraca jako „zawiera Twój adres" -
     // i to jest prawda o tym haśle, a nie pomyłka. Panel nie ustawia tej kolejności
     // po swojemu, bo wtedy miałby własną politykę.
-    expect(verdictOf(draft({ next: 'malkiewicz2026' }), ME, false).nextError).toContain(
+    expect(verdictOf(draft({ next: 'kowalski2026' }), ME, false).nextError).toContain(
       'zawiera Twój adres',
     );
     expect(
-      verdictOf(draft({ next: 'malkiewicz2026' }), { email: 'tm@ninerdeck.pl', name: ME.name }, false)
+      verdictOf(draft({ next: 'kowalski2026' }), { email: 'ak@ninerdeck.pl', name: ME.name }, false)
         .nextError,
     ).toContain('zawiera Twoje nazwisko');
   });
@@ -64,7 +64,7 @@ describe('odmowa serwera', () => {
     // Jedna implementacja reguły po obu stronach znaczy jedno zdanie: gdyby panel miał
     // własną kopię polityki, te dwa napisy rozjechałyby się przy pierwszej poprawce.
     const fromServer = passwordFailure(http(400, 'weak_password', { reason: 'contains_email' }));
-    const fromBrowser = verdictOf(draft({ next: 'malkiewicz2026' }), ME, false);
+    const fromBrowser = verdictOf(draft({ next: 'kowalski2026' }), ME, false);
     expect(fromServer.field).toBe(fromBrowser.nextError);
     expect(fromServer.banner).toBeNull();
   });

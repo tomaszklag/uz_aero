@@ -12,7 +12,7 @@ import {
 
 const PEOPLE: Readonly<Record<string, Person>> = {
   'p-1': { name: 'Jan Nowak', code: 'JNO' },
-  'p-2': { name: 'Tomasz Małkiewicz', code: 'TMK' },
+  'p-2': { name: 'Adam Kowalski', code: 'TMK' },
 };
 const person = (id: string): Person | null => PEOPLE[id] ?? null;
 

@@ -152,8 +152,8 @@ describe('GET /admin/api/organizations - lista klubów', () => {
     ]);
     const alfa = items.find((i) => i.slug === 'aeroklub-alfa')!;
     expect(alfa.admins.map((a) => [a.code, a.signedIn])).toEqual([
-      ['AKO', false],
       ['TMK', true],
+      ['AKO', false],
     ]);
   });
 

@@ -240,7 +240,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
     aircraftType: 'Cessna 182',
     mhFormat: 'hhmm',
     picCode: 'TMK',
-    picName: 'Tomasz Małkiewicz',
+    picName: 'Adam Kowalski',
     dualCode: null,
     dualName: null,
     openFlags: [],

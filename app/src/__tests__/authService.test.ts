@@ -51,7 +51,7 @@ const BETA: OrgRef = { id: 'org-b', slug: 'beta', name: 'Aeroklub Beta' };
 const tokens: AuthTokens = {
   token: 'jwt-1',
   refreshToken: 'refresh-1',
-  pilot: { id: 'p1', code: 'TMK', name: 'Tomasz' },
+  pilot: { id: 'p1', code: 'TMK', name: 'Adam' },
   org: ALFA,
   memberships: [{ org: ALFA, code: 'TMK', role: 'pilot' }],
 };
@@ -60,7 +60,7 @@ const betaTokens: AuthTokens = {
   ...tokens,
   token: 'jwt-b',
   refreshToken: 'refresh-b',
-  pilot: { id: 'p1', code: 'TMB', name: 'Tomasz' },
+  pilot: { id: 'p1', code: 'TMB', name: 'Adam' },
   org: BETA,
 };
 

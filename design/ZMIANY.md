@@ -76,7 +76,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - 07: badge PIC z tagiem "zalogowany · Ty"; pola Wychodzący/Nowy PIC i DUAL; info-box wyjaśnia,
 >   że zmiana PIC wymaga zalogowania nowego pilota
 > - 10: karty załogi → "PIC · zalogowany (Ty)" / "Dual · drugi pilot" (AKO z block time)
-> Ujednolicono też kod zalogowanego pilota: MIW → TMK (Tomasz Małkiewicz) na 04, 07, 10.
+> Ujednolicono też kod zalogowanego pilota: MIW → TMK (Adam Kowalski) na 04, 07, 10.
 
 **Format motogodzin z konfiguracji samolotu (02a, 02c, 03, 04, 05*)**
 > Powód: w części samolotów licznik MH jest dziesiętny (krok 0.1 h = 6 min),
@@ -302,7 +302,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > single-writer, claim optymistyczny, monotoniczny łańcuch MH hh:mm, eksport serwerowy,
 > brak OAuth, stany świeżości, SyncChip, żywa nawigacja). Poprawiony potwierdzony
 > klaster niespójności scenariusza:
-> - **02a/02c**: poprzednik „T. Małkiewicz" → **„J. Kowalski"** (pilot przekazywał sam
+> - **02a/02c**: poprzednik „A. Kowalski" → **„J. Kowalski"** (pilot przekazywał sam
 >   sobie); terminologia korekt „Szacowane z logów"/„szacowane" → „Przekazane przez
 >   poprzednika"/„przekazane" (02b i 02c) - wartość to przekazanie, nie szacunek
 > - **06-tankowanie**: wyrównane do kanonicznego zdarzenia +48 (112→160 @ 10:48):

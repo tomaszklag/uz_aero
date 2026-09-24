@@ -16,7 +16,7 @@ const session = (
   org: OrganizationRefDto | null,
   scopes: PanelScopesDto,
 ): PanelSessionDto => ({
-  pilot: { id: 'TMK', code: org == null ? null : 'TMK', name: 'Tomasz Małkiewicz' },
+  pilot: { id: 'TMK', code: org == null ? null : 'TMK', name: 'Adam Kowalski' },
   org,
   capabilities: ['panel.access'],
   scopes,

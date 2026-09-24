@@ -42,7 +42,7 @@ const input = (over: Partial<BugContextInput> = {}): BugContextInput => ({
   pilot: {
     id: 'p-uuid',
     code: 'TMK',
-    name: 'Tomasz Małkiewicz',
+    name: 'Adam Kowalski',
     orgId: 'org-a',
     orgName: 'Aeroklub Zielonogórski',
   },
@@ -172,7 +172,7 @@ describe('kontekst zgłoszenia', () => {
     expect(rowOf(view, 'Operacja')).toBeUndefined();
     expect(rowOf(view, 'Samolot · zadanie')).toBeUndefined();
     // …ale pilot, wydanie i czas zostają: bez nich zgłoszenie nie ma adresu.
-    expect(rowOf(view, 'Pilot')).toBe('TMK · Tomasz Małkiewicz');
+    expect(rowOf(view, 'Pilot')).toBe('TMK · Adam Kowalski');
     expect(view.sessionUuid).toBeNull();
   });
 
@@ -219,7 +219,7 @@ describe('kontekst zgłoszenia', () => {
 
   it('bez klubu (aktualizacja z 1.x przed pierwszym odświeżeniem tokenów) wiersza nie ma', () => {
     const view = buildBugContext(
-      input({ pilot: { id: 'p-uuid', code: 'TMK', name: 'Tomasz', orgId: null, orgName: null } }),
+      input({ pilot: { id: 'p-uuid', code: 'TMK', name: 'Adam', orgId: null, orgName: null } }),
     );
     expect(view.rows.find((r) => r.label === 'Klub')).toBeUndefined();
   });

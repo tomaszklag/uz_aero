@@ -104,8 +104,8 @@ describe('lustro polityki hasła na stronie /haslo/', () => {
     // Token z linku niczego o człowieku nie zdradza, więc strona nie ma jak sprawdzić
     // adresu ani nazwiska. Te dwa powody rozstrzyga SERWER i wracają jako
     // `400 weak_password { reason }` - strona pokazuje je pod polem (`haslo.js`).
-    const withEmail = 'malkiewicz-lotnisko';
-    const context = { email: 'tomasz.malkiewicz@ninerdeck.pl', name: 'Tomasz Małkiewicz' };
+    const withEmail = 'kowalski-lotnisko';
+    const context = { email: 'adam.kowalski@ninerdeck.pl', name: 'Adam Kowalski' };
 
     expect(checkPassword(withEmail, context)).toBe('contains_email');
     expect(mirror.checkPassword(withEmail)).toBeNull();

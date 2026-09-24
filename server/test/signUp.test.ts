@@ -35,13 +35,13 @@ describe('rejestracja e-mailem (§5.4a)', () => {
     const { app, db, mail } = await testHarness();
 
     const fresh = await signup(app, 'Nowa Osoba', 'Nowa@Example.com');
-    const taken = await signup(app, 'Ktoś Inny', 'tomasz@ninerdeck.pl');
+    const taken = await signup(app, 'Ktoś Inny', 'adam@ninerdeck.pl');
     expect(fresh.statusCode).toBe(202);
     expect(taken.statusCode).toBe(202);
     expect(taken.body).toBe(fresh.body);
 
     expect(mail.lastTo('nowa@example.com')!.subject).toBe('Ninerdeck - załóż hasło do nowego konta');
-    expect(mail.lastTo('tomasz@ninerdeck.pl')!.subject).toBe('Ninerdeck - masz już konto');
+    expect(mail.lastTo('adam@ninerdeck.pl')!.subject).toBe('Ninerdeck - masz już konto');
     // Adres zajęty NIE dostaje tokenu rejestracji - jego list resetuje hasło ISTNIEJĄCEJ osoby.
     const { rows } = await db.query<{ kind: string; pilot_id: string | null; email: string | null }>(
       `SELECT kind, pilot_id, email FROM password_reset_tokens ORDER BY kind`,
@@ -79,11 +79,11 @@ describe('rejestracja e-mailem (§5.4a)', () => {
 
   it('link „masz już konto" ustawia hasło istniejącej osobie - bez drugiej osoby', async () => {
     const { app, db, mail } = await testHarness();
-    await signup(app, 'Ktoś Inny', 'tomasz@ninerdeck.pl');
-    expect((await reset(app, tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!), PASSWORD)).statusCode).toBe(204);
+    await signup(app, 'Ktoś Inny', 'adam@ninerdeck.pl');
+    expect((await reset(app, tokenIn(mail.lastTo('adam@ninerdeck.pl')!), PASSWORD)).statusCode).toBe(204);
 
-    expect((await passwordLogin(app, 'tomasz@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
-    const { rows } = await db.query<{ n: string }>(`SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'tomasz@ninerdeck.pl'`);
+    expect((await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
+    const { rows } = await db.query<{ n: string }>(`SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'adam@ninerdeck.pl'`);
     expect(Number(rows[0]!.n)).toBe(1);
   });
 

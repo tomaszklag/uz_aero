@@ -19,7 +19,7 @@ const bug = (over: Partial<BugReportDto> = {}): BugReportDto => ({
   receivedAt: '2026-09-04T10:02:00.000Z',
   pilotId: 'p-uuid',
   pilotCode: 'TMK',
-  pilotName: 'Tomasz Małkiewicz',
+  pilotName: 'Adam Kowalski',
   org: { id: 'org-1', slug: 'aeroklub-zielonogorski', name: 'Aeroklub Zielonogórski' },
   severity: 'annoying',
   description: 'Czas lotu nie przeliczył się po korekcie lądowania.',

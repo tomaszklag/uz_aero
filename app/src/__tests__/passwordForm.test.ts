@@ -16,7 +16,7 @@ import {
   type PasswordDraft,
 } from '../ui/screens/logic/passwordForm';
 
-const ME = { email: 'tomasz.malkiewicz@ninerdeck.pl', name: 'Tomasz Małkiewicz' };
+const ME = { email: 'adam.kowalski@ninerdeck.pl', name: 'Adam Kowalski' };
 const GOOD = 'hangar-lotnisko-7';
 
 const draft = (over: Partial<PasswordDraft>): PasswordDraft => ({ ...EMPTY_PASSWORD_DRAFT, ...over });
@@ -46,7 +46,7 @@ describe('passwordVerdict', () => {
     expect(blocked.hintWarns).toBe(true);
     expect(blocked.hint).not.toContain(String(PASSWORD_MIN_LENGTH));
 
-    const withEmail = passwordVerdict(draft({ next: 'tomasz.malkiewicz@ninerdeck.pl1' }), ME, false);
+    const withEmail = passwordVerdict(draft({ next: 'adam.kowalski@ninerdeck.pl1' }), ME, false);
     expect(withEmail.hint).toContain('adres');
   });
 

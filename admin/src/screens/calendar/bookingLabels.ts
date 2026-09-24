@@ -180,7 +180,7 @@ const czesc = (f: Intl.DateTimeFormat, at: Date, typ: Intl.DateTimeFormatPartTyp
  *
  * Makieta odpowiada tu na SKĄD, nie na KTO - i to jest lepsze pytanie: administrator
  * patrzy na cudzy termin i chce wiedzieć, czy założył go pilot sam, czy ktoś z biurka.
- * Przy okazji omija ODMIANĘ nazwiska: „przez Tomasz Malkiewicz" jest błędem, a odmiany
+ * Przy okazji omija ODMIANĘ nazwiska: „przez Adam Kowalski" jest błędem, a odmiany
  * nie da się wyprowadzić regułą (ta sama granica, przez którą blokady arkuszy mówią
  * o skutku zamiast wołać nazwy pól po imieniu). Kto - mówi KOD, który się nie odmienia.
  */

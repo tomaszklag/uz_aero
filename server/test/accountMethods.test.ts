@@ -71,7 +71,7 @@ describe('plakietki metod w karcie członka (D4)', () => {
     expect(Object.keys(sent.json()).sort()).toEqual(['expiresAt', 'sentTo']);
 
     // Sam wysłany list metody NIE DODAJE - dodaje ją dopiero ustawione hasło.
-    const letter = mail.lastTo('anna@ninerdeck.pl')!;
+    const letter = mail.lastTo('barbara@ninerdeck.pl')!;
     expect(await methodsOf(app, cookie, 'AKO')).toEqual([]);
     expect(
       (await app.inject({ method: 'POST', url: '/auth/password/reset', payload: { token: tokenIn(letter), password: PASSWORD } })).statusCode,
@@ -111,7 +111,7 @@ describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
       cookies: { ninerdeck_admin: cookie },
     });
     expect(before.statusCode, before.body).toBe(200);
-    expect(before.json()).toEqual({ email: 'tomasz@ninerdeck.pl', methods: ['google'] });
+    expect(before.json()).toEqual({ email: 'adam@ninerdeck.pl', methods: ['google'] });
 
     // Hasło ustawia się TĄ SAMĄ komendą, co na telefonie - osoba bez hasła nie podaje
     // obecnego, bo nie ma czego podać.
@@ -130,7 +130,7 @@ describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
       url: '/admin/api/me/account',
       cookies: { ninerdeck_admin: cookie },
     });
-    expect(after.json()).toEqual({ email: 'tomasz@ninerdeck.pl', methods: ['google', 'password'] });
+    expect(after.json()).toEqual({ email: 'adam@ninerdeck.pl', methods: ['google', 'password'] });
   });
 
   it('odpowiada też sesji PLATFORMOWEJ - hasło ma każdy zalogowany, nie tylko klub', async () => {
@@ -176,7 +176,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
     });
     expect(before.statusCode, before.body).toBe(200);
     expect(before.json()).toEqual({
-      email: 'tomasz@ninerdeck.pl',
+      email: 'adam@ninerdeck.pl',
       hasGoogle: true,
       hasPassword: false,
     });
@@ -195,7 +195,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(after.json()).toEqual({
-      email: 'tomasz@ninerdeck.pl',
+      email: 'adam@ninerdeck.pl',
       hasGoogle: true,
       hasPassword: true,
     });

@@ -219,7 +219,7 @@ describe('GET /admin/api/fleet - konfiguracja + stan z telefonów', () => {
     expect(axa.reading).toMatchObject({
       fuelL: 88,
       source: 'handover',
-      byPilotName: 'Tomasz Małkiewicz',
+      byPilotName: 'Adam Kowalski',
       oilL: 8.2,
       oilAddedSinceL: 0,
     });

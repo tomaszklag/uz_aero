@@ -36,7 +36,7 @@ const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const ORG = 'org-a';
 /** Ten sam klub w kształcie, w jakim niosą go tokeny (wielofirmowość §6). */
 const ORG_REF = { id: ORG, slug: 'alfa', name: 'Aeroklub Alfa' };
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG_REF, memberships: [] };
 
 /** Wiersz floty z serwera - `fetchedAt` serwera jest ignorowany (stemplujemy lokalnie). */
@@ -57,7 +57,7 @@ const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
   ...over,
 });
 
-const tmk: ReferencePilot = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', active: true, fetchedAt: 0 };
+const tmk: ReferencePilot = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski', active: true, fetchedAt: 0 };
 
 class MemoryCredentials {
   // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.

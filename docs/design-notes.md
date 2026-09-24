@@ -167,7 +167,7 @@ Wzorzec obowiązuje KAŻDY ekran z SyncChipem, nie tylko 01.
 Ekranu 03 nie ma (usunięty 2026-08-06), więc spójności pilnujemy między krokami 1–3
 a kokpitem, do którego prowadzi „ROZPOCZNIJ LOT":
 - Samolot: SP-AXA (Cessna 182 · 2019)
-- Pilot: T. Małkiewicz
+- Pilot: A. Kowalski
 - Paliwo: 150 L
 - Motogodziny: 1 234:30 MH (format hh:mm z konfiguracji SP-AXA)
 - Godzina przejęcia: **08:04 UTC** - ta sama na 04A („Twój od 08:04"), na 04 i w rozliczeniu
@@ -345,7 +345,7 @@ Skrót, który wystarcza przy projektowaniu ekranu:
 
 ## Placeholdery / dane przykładowe
 
-- Pilot: Tomasz Małkiewicz / kod TMK
+- Pilot: Adam Kowalski / kod TMK
 - Samolot: SP-AXA (Cessna 182 · 2019), SP-FGK (Cessna 182 · 2017), SP-KWA (Cessna 172 · 2021, wyłączony)
 - Baza: EPKK → EPWA
 - Operacja: Skoki

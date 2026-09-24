@@ -74,7 +74,7 @@ export function bookingErrorMessage(
   return stoi == null ? ZDANIA.slot_taken : `${ZDANIA.slot_taken} ${opis(stoi, timezone, person)}`;
 }
 
-/** „Od 23 wrz, 06:00 stoi przegląd." / „Od 21 wrz, 08:00 lata A. Kowalska (egzamin)." */
+/** „Od 23 wrz, 06:00 stoi przegląd." / „Od 21 wrz, 08:00 lata B. Nowak (egzamin)." */
 function opis(taken: BookingDto, timezone: string, person: PersonLookup): string {
   const od = stempel(new Date(taken.startsAt), timezone);
   if (taken.kind === 'block') return `Od ${od} maszyna jest wyłączona z użytku.`;

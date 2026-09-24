@@ -11,12 +11,12 @@ describe('kiedy wolno wysłać link rejestracyjny (rejestracja z panelu)', () =>
     // „Jan" jest kompletnym imieniem - liczby członów nie sprawdzamy.
     expect(canSignUp('Jan', 'jan@ninerdeck.pl')).toBe(true);
 
-    expect(canSignUp('', 'anna@ninerdeck.pl')).toBe(false);
+    expect(canSignUp('', 'barbara@ninerdeck.pl')).toBe(false);
     // Lustro serwera: `signupBody` odrzuca imię krótsze niż 2 znaki (400).
-    expect(canSignUp('X', 'anna@ninerdeck.pl')).toBe(false);
-    expect(canSignUp('   ', 'anna@ninerdeck.pl')).toBe(false);
+    expect(canSignUp('X', 'barbara@ninerdeck.pl')).toBe(false);
+    expect(canSignUp('   ', 'barbara@ninerdeck.pl')).toBe(false);
     expect(canSignUp('Anna Kowal', '')).toBe(false);
-    expect(canSignUp('Anna Kowal', 'anna@ninerdeck')).toBe(false);
+    expect(canSignUp('Anna Kowal', 'barbara@ninerdeck')).toBe(false);
   });
 
   it('nie próbuje rozstrzygać, CZY ten adres jest wolny', () => {

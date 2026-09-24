@@ -16,7 +16,7 @@ const session: SessionListItemDto = {
   mhFormat: 'decimal',
   picId: 'p-1',
   picCode: 'TMK',
-  picName: 'Tomasz Małkiewicz',
+  picName: 'Adam Kowalski',
   dualCode: null,
   dualName: null,
   status: 'closed',
@@ -136,7 +136,7 @@ describe('reszta wiersza', () => {
   });
 
   it('nazwisko skraca się tak samo, jak w aplikacji pilota', () => {
-    expect(sessionRow(session).pic).toBe('T. Małkiewicz');
+    expect(sessionRow(session).pic).toBe('A. Kowalski');
   });
 
   it('plakietka RĘCZNIE dotyczy całego wiersza, a unieważnienie go przekreśla', () => {

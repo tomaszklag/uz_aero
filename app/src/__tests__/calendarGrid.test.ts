@@ -167,9 +167,9 @@ describe('napis i ton paska', () => {
   it('WŁASNA rezerwacja niesie skrócone nazwisko - jedna konwencja na całej osi', () => {
     const g = grid({
       bookings: [booking({ id: 'b1', aircraftId: 'a1', pilotId: 'ja' })],
-      nameOf: (id) => (id === 'ja' ? 'Tomasz Małkiewicz' : null),
+      nameOf: (id) => (id === 'ja' ? 'Adam Kowalski' : null),
     });
-    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'T. Małkiewicz', tone: 'mine' });
+    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'A. Kowalski', tone: 'mine' });
   });
 
   it('CUDZA tak samo - kodów kolegów nikt nie pamięta', () => {

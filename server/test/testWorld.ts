@@ -94,8 +94,8 @@ const AIRCRAFT_B = [
  * równe historycznie i to jest wygoda testów, nie reguła produktu.
  */
 export const TEST_PILOTS = [
-  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@ninerdeck.pl', 'admin'],
-  ['AKO', 'AKO', 'Anna Kowalska', 'anna@ninerdeck.pl', 'admin'],
+  ['TMK', 'TMK', 'Adam Kowalski', 'adam@ninerdeck.pl', 'admin'],
+  ['AKO', 'AKO', 'Barbara Nowak', 'barbara@ninerdeck.pl', 'admin'],
   ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@ninerdeck.pl', 'pilot'],
   ['JSE', 'JSE', 'Jan Serafin', 'jan@ninerdeck.pl', 'pilot'],
   ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@ninerdeck.pl', 'pilot'],

@@ -35,7 +35,7 @@ export interface AvatarProps {
 }
 
 /**
- * „Tomasz Małkiewicz" → „TM"; jednoczłonowe → pierwsza litera.
+ * „Adam Kowalski" → „AK"; jednoczłonowe → pierwsza litera.
  *
  * NIE eksportowana: używa jej wyłącznie `Avatar` niżej. Eksport obok komponentu
  * odbierałby plikowi status granicy Fast Refresh (`docs/architektura-kodu.md` §2).

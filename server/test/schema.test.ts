@@ -361,7 +361,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     beforeAll(async () => {
       db = await migrated();
       await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org', 'Klub', 'klub')`);
-      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt', 'Tomasz Małkiewicz')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt', 'Adam Kowalski')`);
     });
 
     async function aircraft(): Promise<string> {
@@ -454,7 +454,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     beforeAll(async () => {
       db = await migrated();
       await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org2', 'Klub', 'klub2')`);
-      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt2', 'Tomasz Małkiewicz')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt2', 'Adam Kowalski')`);
       await db.query(
         `INSERT INTO aircraft (id, reg, type, capacity_l, mh_format, org_id)
          VALUES ('ac-w', 'SP-WWW', 'C172', 200, 'decimal', 'org2')`,

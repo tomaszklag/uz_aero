@@ -46,13 +46,13 @@ describe('00G - „Nie pamiętam hasła"', () => {
 describe('00H - „Załóż konto"', () => {
   it('oba pola wymagane, ale liczby członów nazwiska NIE sprawdzamy', () => {
     expect(canSignUp('', 'kto@gmail.com')).toBe(false);
-    expect(canSignUp('Tomasz Małkiewicz', '  ')).toBe(false);
+    expect(canSignUp('Adam Kowalski', '  ')).toBe(false);
     // „Jan" jest kompletnym imieniem człowieka, który tak się przedstawia.
     expect(canSignUp('Jan', 'kto@gmail.com')).toBe(true);
   });
 
   it('nazwisko idzie bez zewnętrznych spacji i bez podwójnych w środku', () => {
-    expect(normalizeName('  Tomasz   Małkiewicz ')).toBe('Tomasz Małkiewicz');
+    expect(normalizeName('  Adam   Kowalski ')).toBe('Adam Kowalski');
   });
 
   it('potwierdzenie opisuje OBA wyniki naraz - adres wolny i zajęty', () => {

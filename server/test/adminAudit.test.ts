@@ -398,7 +398,7 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
     expect(body.items[3]).toMatchObject({
       actorPilotId: 'AKO',
       actorCode: 'AKO',
-      actorName: 'Anna Kowalska',
+      actorName: 'Barbara Nowak',
       actorRole: 'admin',
       targetType: 'flag',
       targetId: '1044',

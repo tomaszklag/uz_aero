@@ -31,7 +31,7 @@ import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 const T0 = Date.UTC(2026, 6, 29, 8, 0, 0);
 const iso = (ms: number): string => new Date(ms).toISOString();
 
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
@@ -338,7 +338,7 @@ describe('ThemePrefsSync', () => {
     const { prefs, server, sync } = harness({
       token: 'jwt-1',
       refreshToken: 'r1',
-      pilot: { id: 'AKO', code: 'AKO', name: 'Anna Kowalska' },
+      pilot: { id: 'AKO', code: 'AKO', name: 'Barbara Nowak' },
     });
     await prefs.write('TMK', { theme: 'paper', updatedAt: T0, dirty: true });
 

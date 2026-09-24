@@ -6,13 +6,13 @@ import { canSendLink, forgotOutcome, LINK_SENT } from './forgotPasswordForm';
 describe('kiedy wolno wysłać link', () => {
   it('przyjmuje adres, odrzuca to, co adresem nie jest', () => {
     expect(canSendLink('anna.kowal@ninerdeck.pl')).toBe(true);
-    expect(canSendLink('  anna@ninerdeck.pl  ')).toBe(true);
+    expect(canSendLink('  barbara@ninerdeck.pl  ')).toBe(true);
 
     expect(canSendLink('')).toBe(false);
     expect(canSendLink('anna')).toBe(false);
     expect(canSendLink('@ninerdeck.pl')).toBe(false);
-    expect(canSendLink('anna@ninerdeck')).toBe(false);
-    expect(canSendLink('anna@.pl')).toBe(false);
+    expect(canSendLink('barbara@ninerdeck')).toBe(false);
+    expect(canSendLink('barbara@.pl')).toBe(false);
     expect(canSendLink('anna kowal@ninerdeck.pl')).toBe(false);
   });
 

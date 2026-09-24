@@ -157,7 +157,7 @@ function emailFragments(email: string | null | undefined): string[] {
   return uniqueLongEnough([folded, local, ...local.split(/[._\-+]/)]);
 }
 
-/** Słowa z imienia i nazwiska (`Tomasz Małkiewicz` → `tomasz`, `malkiewicz`) i całość bez odstępów. */
+/** Słowa z imienia i nazwiska (`Adam Kowalski` → `adam`, `kowalski`) i całość bez odstępów. */
 function nameFragments(name: string | null | undefined): string[] {
   if (name == null) return [];
   const words = name

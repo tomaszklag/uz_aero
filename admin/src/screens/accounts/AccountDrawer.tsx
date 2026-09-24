@@ -145,7 +145,7 @@ export function AccountDrawer({
     setConfirm(null);
     setDone(null);
     // Potwierdzenie wysyłki I JEJ ODMOWA dotyczą KONKRETNEJ osoby - przy zmianie karty
-    // muszą zgasnąć, inaczej „wysłano na anna@…" wisiałoby nad kartą kogoś innego.
+    // muszą zgasnąć, inaczej „wysłano na barbara@…" wisiałoby nad kartą kogoś innego.
     setLinkSent(null);
     sendLink.reset();
     // `sendLink` NIE jest zależnością celowo: efekt patrzy na TOŻSAMOŚĆ konta, a nie na
@@ -437,7 +437,7 @@ export function AccountDrawer({
               {/* DWUKROPEK, nie „konto Anny Kowal" (2026-09-07). Pytanie musi nazwać
                   konto, a polszczyzna chciałaby tu dopełniacza - odmiany dowolnego
                   nazwiska nie da się złożyć w kodzie („Kowal" → „Kowal", ale
-                  „Małkiewicz" → „Małkiewicza"), więc szablon obiecywał brzmienie,
+                  „Kowalski" → „Kowalskiego"), więc szablon obiecywał brzmienie,
                   którego panel nie umie wyprodukować. Dwukropek stawia nazwisko
                   w mianowniku i jest poprawny dla KAŻDEGO. */}
               <p className="confirm-q">Wyłączyć członkostwo: {pilot.name}?</p>

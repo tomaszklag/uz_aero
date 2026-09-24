@@ -91,7 +91,7 @@ describe('sesja powstaje przy każdym wejściu (§4.3)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/password',
-      payload: { login: 'tomasz@ninerdeck.pl', password: 'zielone-smiglo-leci-2026' },
+      payload: { login: 'adam@ninerdeck.pl', password: 'zielone-smiglo-leci-2026' },
     });
     expect(res.statusCode, res.body).toBe(200);
     expect((await sessionRows(db, 'TMK')).map((r) => r.method)).toEqual(['password']);
@@ -332,8 +332,8 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
     await login(app, 'TMK');
     await panelLogin(app, 'TMK');
 
-    await passwords.forgot('tomasz@ninerdeck.pl', null);
-    const link = mail.lastTo('tomasz@ninerdeck.pl')!;
+    await passwords.forgot('adam@ninerdeck.pl', null);
+    const link = mail.lastTo('adam@ninerdeck.pl')!;
     const token = /#([A-Za-z0-9_-]+)/.exec(link.text)![1]!;
     expect(
       (

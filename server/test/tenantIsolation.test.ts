@@ -14,7 +14,7 @@
  * Klub A (Alfa) i klub B (Beta) dostają po jednej ZAMKNIĘTEJ operacji, flagę, odczyt
  * administratora (a z nim wpis audytu), normę zużycia, zgłoszenie błędu i kartę arkusza;
  * PWI - osoba w OBU klubach - ma operację w B. Dane klubu B niosą ZNACZNIKI (`SP-BBB`,
- * `sess-b`, `Barbara`, `beta-flag`…), których w żadnej odpowiedzi klubu A nie ma prawa
+ * `sess-b`, `Adamska`, `beta-flag`…), których w żadnej odpowiedzi klubu A nie ma prawa
  * być. Sondy są dwojakie: LISTY muszą być czyste ze znaczników, ADRESY BEZPOŚREDNIE do
  * danych B muszą odpowiadać tak, jakby tych danych nie było (404, „nieznana", puste).
  *
@@ -142,7 +142,9 @@ const B_MARKERS = [
   'SP-BBB',
   'sess-b',
   'sess-pwi-b',
-  'Barbara',
+  // Nazwisko i adres, nie samo imię: w klubie A jest Barbara Nowak (AKO).
+  'Adamska',
+  'barbara@beta.pl',
   'Bartosz',
   'beta-flag',
   'bug-b',

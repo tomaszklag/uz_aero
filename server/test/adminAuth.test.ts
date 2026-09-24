@@ -68,7 +68,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
-      pilot: { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' },
+      pilot: { id: 'TMK', code: 'TMK', name: 'Adam Kowalski' },
       // Klub sesji (wielofirmowość): panel pisze go w kolumnie bocznej i pyta nim
       // o każdą listę - kod i rola wyżej są kodem i rolą W TYM klubie.
       org: { id: ORG_A, name: 'Aeroklub Alfa', slug: 'aeroklub-alfa' },
@@ -215,7 +215,7 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
     const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
 
     expect(me.statusCode).toBe(200);
-    expect(me.json()).toMatchObject({ pilot: { id: 'TMK', name: 'Tomasz Małkiewicz' } });
+    expect(me.json()).toMatchObject({ pilot: { id: 'TMK', name: 'Adam Kowalski' } });
   });
 
   it('ciasteczko autoryzuje też listy panelu - brama jest JEDNA', async () => {

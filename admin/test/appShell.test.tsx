@@ -53,7 +53,7 @@ const render = (
   renderToStaticMarkup(
     <MemoryRouter initialEntries={[path]}>
       <AppShell
-        who="Tomasz Małkiewicz"
+        who="Adam Kowalski"
         scope={scope}
         capabilities={capabilities}
         onLogout={() => undefined}
@@ -139,8 +139,8 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('pisze inicjały zalogowanego w kółku i nazwisko obok', () => {
     const html = render(HOME);
-    expect(html).toContain('class="avatar" aria-hidden="true">TM<');
-    expect(html).toContain('class="who-name">Tomasz Małkiewicz<');
+    expect(html).toContain('class="avatar" aria-hidden="true">AK<');
+    expect(html).toContain('class="who-name">Adam Kowalski<');
   });
 
   it('kafel klubu stoi WYŁĄCZNIE, gdy sesja zna klub', () => {
