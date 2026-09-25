@@ -72,8 +72,8 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 - **Panel pokazuje odczyty, nie szacunki.** Brak odczytu widać jako kreskę, nigdy jako zero: `0 L` znaczy pusty zbiornik, kreska - „nikt nie zapisał". Normy zużycia i szacowany poziom oleju nie wchodzą do dziennika.
 - **Administratora nie ogranicza czas na poprawki.** Pilot poprawia własne wpisy przez 24 godziny od zdania; administrator kończy i unieważnia operacje w dowolnej chwili - także operację w toku.
 - **Nic nie znika z dziennika.** Unieważnienie, zakończenie administracyjne i poprawa odczytów dopisują nowy fakt z powodem; stary zapis zostaje widoczny.
-- **Skutek akcji nieodwracalnej mówi się przed nią.** Wyłączenie konta, usunięcie, zakończenie, unieważnienie - każde pyta o potwierdzenie i w pytaniu nazywa, co się stanie z dostępem i z danymi.
-- **Puste pole wymagane blokuje zapis samym brakiem**, a powód innej blokady stoi w samym przycisku („Najpierw wyłącz konto", „Ktoś ma teraz ten samolot").
+- **Skutek akcji nieodwracalnej mówi się przed nią.** Wyłączenie członkostwa, usunięcie, zakończenie, unieważnienie - każde pyta o potwierdzenie i w pytaniu nazywa, co się stanie z dostępem i z danymi.
+- **Puste pole wymagane blokuje zapis samym brakiem**, a powód innej blokady stoi w samym przycisku („Najpierw wyłącz członkostwo", „Ktoś ma teraz ten samolot").
 - **Operację nazywa sygnatura** (`SP-AXA/2026-09-05/AKO/1`: znak, doba UTC, kod pilota, numer operacji tego pilota w dobie) - ta sama w aplikacji pilota, w dzienniku i w zgłoszeniach.
 
 ## Czego w tym wydaniu nie ma
@@ -90,7 +90,7 @@ Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliw
 
 ## Częste problemy
 
-- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, skontaktuj się z osobą, która wdrażała Ninerdeck.
+- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, napisz na kontakt@ninerdeck.pl.
 - **„Sesja wygasła. Zaloguj się jeszcze raz" w środku pracy** → minęło osiem godzin od zalogowania. Zaloguj się ponownie i wróć do tego samego adresu - zakres dat i otwarta karta są w nim zapisane.
 - **Zmiana z panelu nie dotarła na telefon pilota** → telefon pobiera dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracuje na kopii. Pilot może ponaglić pobranie przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.
 - **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → nie ma zdolności **Wejście do panelu**. Zakres zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.
