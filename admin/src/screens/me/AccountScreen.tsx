@@ -9,6 +9,10 @@
  *
  * Trzy karty, trzy pytania: CZYM się loguję, JAK ZMIENIĆ HASŁO (albo ustawić pierwsze -
  * droga na wspólny tablet dla kogoś, kto wchodzi Googlem) i GDZIE JESTEM ZALOGOWANY.
+ * Czwarta - „Obserwowane samoloty" (3.2.0, issue #205, decyzja 12) - istnieje WYŁĄCZNIE
+ * w sesji klubu i przy zdolności `fleet.watch`: to ustawienie osoby W KLUBIE, więc sesja
+ * platformowa nie ma o co pytać, a osoba bez zdolności nie widzi karty (brak karty, nie
+ * karta wyszarzona - reguła panelu 2.0 o pozycjach bez uprawnienia).
  *
  * ══ CZEGO TU NIE MA ══
  * Zmiany adresu (jest tożsamością - klub go nie zmienia, osoba też nie), odpinania
@@ -21,6 +25,7 @@ import { useState } from 'react';
 
 import type { PanelSessionDto } from '../../api/dto';
 import { scopeLabel } from '../accounts/scope';
+import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
 import {
   useChangePassword,
@@ -33,6 +38,7 @@ import { sessionRows } from '../accounts/sessionRows';
 import { SessionList } from '../common/SessionList';
 import { NONE } from '../common/values';
 import { EMPTY_PASSWORD, passwordFailure, verdictOf } from './passwordForm';
+import { WatchCard } from './WatchCard';
 
 export function AccountScreen() {
   const { session } = useSessionState();
@@ -195,6 +201,11 @@ export function AccountScreen() {
             </Button>
           </div>
         </Card>
+
+        {/* OBSERWOWANE SAMOLOTY (3.2.0): ustawienie osoby W KLUBIE, więc wyłącznie w sesji
+            klubu i przy zdolności. Karta pyta serwer sama - stąd osobny komponent, który
+            montuje się tylko wtedy, gdy wolno pytać. */}
+        {session?.org == null || !can(session.capabilities, 'fleet.watch') ? null : <WatchCard />}
 
         {/* MOJE SESJE: własne urządzenia ze WSZYSTKICH powierzchni i klubów - to są moje
             urządzenia, a nie dane klubu. Bieżąca przeglądarka ma plakietkę i ŻADNEJ akcji. */}

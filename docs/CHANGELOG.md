@@ -64,8 +64,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   z ostatniego odczytu, najbliższe terminy, wykresy motogodzin i paliwa z ostatnich
   90 dni z kursorem i przybliżeniem oraz historia wszystkich operacji tej maszyny.
   Otwiera się ze znaku maszyny w kalendarzu, z powiadomienia i z podglądu przy decyzji.
-- **Obserwowanie samolotu.** Jeden przełącznik na karcie maszyny albo w ustawieniach
-  (cała flota z przełącznikami i stanem „teraz") - i telefon budzi, gdy lot zbliża się
+- **Obserwowanie samolotu.** Jeden przełącznik na karcie maszyny, w ustawieniach
+  aplikacji albo w panelu na stronie Moje konto (cała flota z przełącznikami i stanem
+  „teraz") - i telefon budzi, gdy lot zbliża się
   za godzinę, gdy silnik ruszył (z adnotacją, czy zgodnie z planem), gdy maszyna wróciła
   z odczytami, gdy przypomniany termin odwołano i gdy nikt nie odebrał zarezerwowanej
   maszyny. Wiadomość mówi czasem z rejestru, a gdy zapis dotarł później, dopisuje kiedy.
@@ -339,10 +340,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [x] Karta samolotu w aplikacji: co się z nim dzieje teraz, liczniki, najbliższe terminy,
   historia lotów oraz wykresy motogodzin i paliwa - dla technika, koordynatora lotów
   i osób akceptujących rezerwacje
-- [~] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
+- [x] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
   ruszył, gdy maszyna wróciła z odczytami, gdy przypomniany termin odwołano
   i gdy nikt nie odebrał zarezerwowanej maszyny; lista obserwowanych z przełącznikami
-  w ustawieniach aplikacji (gotowe) i w Moim koncie w panelu (w toku)
+  w ustawieniach aplikacji i w Moim koncie w panelu
 
 ### 4.0.0 · termin do ustalenia
 

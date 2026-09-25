@@ -65,9 +65,7 @@ Wszystko pozostałe działa jak zawsze: **lot rozpoczniesz, poprowadzisz i zdasz
 
 @screen 21b-kalendarz-offline "Kalendarz bez połączenia"
 
-## Obserwowanie samolotu (3.2.0, w przygotowaniu)
-
-> **W przygotowaniu.** Ta część jest zaprojektowana, ale jeszcze nie ma jej w aplikacji. Wejdzie z wydaniem 3.2.0 jako aktualizacja w tle, bez nowej instalacji; szczegóły mogą się jeszcze zmienić.
+## Obserwowanie samolotu
 
 Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu wyłącznie narzędzia decyzji: zgodę na rezerwację i wyłączenie z użytku. Nikt nie dowiaduje się, że maszyna właśnie wróciła z lotu i można ją tankować, ani że za godzinę ktoś ją bierze. To zmienia **karta samolotu** i **obserwowanie**.
 
@@ -91,7 +89,7 @@ Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu
 
 O własnym działaniu nikt nie dostaje wiadomości: pilot, który sam uruchomił silnik albo sam odwołał termin, nie jest o tym budzony. Wpis lotu po fakcie nie rodzi powiadomień - opisuje przeszłość, nie to, co dzieje się z maszyną teraz.
 
-**Co obserwujesz, widzisz w jednym miejscu**: w [ustawieniach](ustawienia) sekcja „Obserwowane samoloty" pokazuje całą flotę klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili - tam włączasz i wyłączasz obserwowanie kilku maszyn naraz, bez otwierania każdej karty. Ta sama lista stoi w panelu klubu, w Moim koncie.
+**Co obserwujesz, widzisz w jednym miejscu**: w [ustawieniach](ustawienia) sekcja „Obserwowane samoloty" pokazuje całą flotę klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili - tam włączasz i wyłączasz obserwowanie kilku maszyn naraz, bez otwierania każdej karty. Ta sama lista stoi w panelu klubu, na stronie [Moje konto](panel-wprowadzenie#moje-konto) - zaznaczona maszyna to obserwowana, a zmiana zapisuje się od razu.
 
 @screen 13c-ustawienia-obserwowane "Ustawienia · obserwowane samoloty"
 

@@ -27,15 +27,16 @@ Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logow
 
 ## Moje konto
 
-Nazwisko w pasku górnym prowadzi na **Moje konto** - jedyną stronę panelu, która mówi o Tobie, a nie o klubie. Są na niej trzy rzeczy:
+Nazwisko w pasku górnym prowadzi na **Moje konto** - jedyną stronę panelu, która mówi o Tobie, a nie o klubie. Są na niej trzy rzeczy, a u osób z uprawnieniem „Obserwowanie samolotów" - cztery:
 
 - **Logowanie** - Twój adres (klub go nie zmienia) i oznaczenia metod, którymi wchodzisz: Google, hasło albo obie;
 - **Hasło** - ustawienie pierwszego albo zmiana istniejącego. Minimum 12 znaków i żadnych wymogów co do rodzaju znaków: długość jest jedyną miarą, a wymuszone „duża litera, cyfra i znak" produkuje hasła, które słowniki znają lepiej niż ludzie. **Zapis wylogowuje Twoje pozostałe urządzenia** - to okno zostaje;
+- **Obserwowane samoloty** - cała flota klubu z jej stanem w tej chwili (w locie i kto, wolna, wyłączona z użytku do kiedy, zarezerwowana); zaznaczona maszyna to obserwowana, a zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach przychodzą na telefon - panel niesie samą listę. Więcej: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu);
 - **Moje sesje** - urządzenia, na których jesteś zalogowany, ze wszystkich klubów, z aplikacji i z panelu. Przy każdym stoi „Wyloguj"; przy tym, z którego patrzysz, oznaczenie „To urządzenie" i żadnej akcji - od wylogowania siebie jest przycisk w pasku.
 
 Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to głównie jest: logowanie Googlem na cudzym urządzeniu znaczyłoby dodanie własnego konta do cudzej przeglądarki.
 
-@panel konto "Moje konto: hasło i własne urządzenia"
+@panel konto "Moje konto: hasło, obserwowane samoloty i własne urządzenia"
 
 ## Moduły
 

@@ -1215,3 +1215,49 @@ export interface AircraftPreviewDto {
   recent: PreviewRecentDto[];
   upcoming: PreviewUpcomingDto[];
 }
+/* ══════════════════════════════════════════════════════════════════════════════
+ * OBSERWOWANE SAMOLOTY (3.2.0, issue #205, decyzja 12; `docs/obserwowanie-samolotu.md`
+ * §6.6, §7.2) - karta „Obserwowane samoloty" na `#/konto`
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Stan maszyny TERAZ - lustro `AircraftNow` z `server/src/domain/aircraftCard.ts`
+ * (unia OBIEKTÓW po `kind`, więc strażnik luster jej nie czyta; nowy rodzaj stanu
+ * ujawnia się kompilatorem przy `switch` w `screens/me/watchRows.ts`).
+ *
+ * JEDEN kształt dla telefonu (sekcja 13C, hero karty 27) i panelu: obie powierzchnie
+ * pokazują tę samą flotę w tym samym stanie. Chwile operacji (`since`) jadą stemplem
+ * UTC, terminy (`until`, `startsAt`) też - dobę klubu panel liczy sam z `timezone`.
+ */
+export type AircraftNowDto =
+  | { kind: 'retired' }
+  | {
+      kind: 'flying' | 'claimed' | 'after_flight';
+      sessionUuid: string;
+      pilotId: string;
+      dualId: string | null;
+      operation: string | null;
+      departureIcao: string | null;
+      /** `null` wyłącznie przy `claimed` sprzed uruchomienia silnika bez chwili przejęcia. */
+      since: string | null;
+    }
+  | { kind: 'blocked'; bookingId: string; reason: BlockReasonDto | null; until: string }
+  | { kind: 'booked'; bookingId: string; pilotId: string | null; startsAt: string; endsAt: string }
+  | { kind: 'free'; next: { bookingId: string; kind: BookingKindDto; startsAt: string } | null };
+
+/** Jedna maszyna floty klubu sesji z flagą „obserwuję" (`GET /admin/api/me/watches`). */
+export interface WatchListItemDto {
+  aircraftId: string;
+  reg: string;
+  type: string;
+  serviceStatus: ServiceStatus;
+  watching: boolean;
+  now: AircraftNowDto;
+}
+
+export interface WatchListDto {
+  /** Strefa klubu - do „dziś 14:00" przy terminach, jak w kalendarzu. */
+  timezone: string;
+  items: WatchListItemDto[];
+}
+

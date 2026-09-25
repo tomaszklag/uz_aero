@@ -52,21 +52,21 @@ niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawn
 | Zestaw | Zdolności |
 | --- | --- |
 | **Pilot** | żadnych - stan domyślny, wyłącznie aplikacja na telefonie |
-| **Akceptujący** | akceptacja rezerwacji (`reservations.approve`) - BEZ wejścia do panelu: mechanik rozstrzyga swój krok z telefonu |
-| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja |
-| **Technik** | wejście do panelu + flota |
+| **Akceptujący** | akceptacja rezerwacji (`reservations.approve`) + obserwowanie samolotów (`fleet.watch`) - BEZ wejścia do panelu: mechanik rozstrzyga swój krok z telefonu i tam ogląda kartę maszyny |
+| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja + obserwowanie samolotów |
+| **Technik** | wejście do panelu + flota + obserwowanie samolotów |
 | **Administrator** | komplet zdolności klubowych |
 | **Własny zakres** | cokolwiek innego |
 
-**Uzupełnienie 2026-09-25 (zgłoszenie #205, wydanie 3.2.0 - `docs/obserwowanie-samolotu.md`
-§3):** katalog rośnie o jedenastą zdolność klubową **`fleet.watch` „Obserwowanie
-samolotów"** (karta maszyny w aplikacji i powiadomienia o jej lotach), a decyzją
-właściciela wchodzi ona do TRZECH zestawów naraz - Akceptujący, Koordynator lotów
-i Technik (Administrator przez komplet). Zestaw „Akceptujący" przestaje przez to nazywać
-jedną rzecz i jego opis w panelu ma mówić o dwóch. **Backfillu przy #205 NIE MA**
-(decyzja właściciela 2026-09-25: baza nie ma jeszcze prawdziwych klubów - „jeszcze nie
-używaliśmy aplikacji, więc startujemy od zera"); reguła na przyszłość, gdy będzie miała
-na czym działać - §12.
+**Jedenasta zdolność klubowa - `fleet.watch` „Obserwowanie samolotów"** (karta maszyny
+w aplikacji i powiadomienia o jej lotach) weszła 2026-09-25 (zgłoszenie #205, wydanie
+3.2.0 - `docs/obserwowanie-samolotu.md` §3) i decyzją właściciela stoi w TRZECH zestawach
+naraz - stąd brzmienie tabeli wyżej. Zestaw „Akceptujący" nazywa przez to dwie rzeczy
+i jego opis w panelu mówi o dwóch (`scope.ts`). **Backfillu przy #205 NIE BYŁO** (decyzja
+właściciela 2026-09-25: baza nie ma jeszcze prawdziwych klubów - „jeszcze nie używaliśmy
+aplikacji, więc startujemy od zera"), więc członkostwo z dawnym zbiorem zestawu czyta się
+po wdrożeniu jako „Własny zakres", dopóki administrator nie nada zakresu od nowa; reguła
+na przyszłość, gdy będzie miała na czym działać - §12.
 
 **ZESTAW NIE JEST BYTEM W MODELU.** Po wybraniu w bazie stoi ZBIÓR ZDOLNOŚCI, nie nazwa -
 zestaw jest skrótem myślowym przy wypełnianiu, a etykieta liczy się z powrotem ze zbioru

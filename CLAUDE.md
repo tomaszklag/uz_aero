@@ -4485,7 +4485,8 @@ samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbl
 decyzji: **`docs/obserwowanie-samolotu.md`** (model, pięć wiadomości, ekran 27, API,
 etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT zamknięty, **makiety O-A gotowe
 (2026-09-25, #219: `27`, `27a-c`, `25c`, szewron na 21, jedenasta zdolność w `piloci-konto`)**,
-kodu jeszcze nie ma (O-B #220, O-C #221, O-D #222).
+**O-B #220, O-C #221 i O-D #222 WYKONANE 2026-09-25** (bloki niżej) - do wydania
+zostaje P-W 3.2.0.
 Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
 - **nowa zdolność `fleet.watch`** („Obserwowanie samolotów") w zestawach Akceptujący,
   Koordynator lotów i Technik, Administrator przez komplet. **BEZ backfillu** (druga tura
@@ -4642,6 +4643,37 @@ serwera; 30 nowych testów aplikacji, zero nowych tabel SQLite. Reguły obowiąz
 - **czego O-C NIE ROBI**: notatki i autora wyłączenia w herosie 27B (cudza zajętość jedzie
   polami z kalendarza, P2), „zgodnie z rezerwacją" przy „Zdana" (payload tego nie niesie),
   sprawdzenia na urządzeniu (dev build → #169), karty w `#/konto` (O-D, #222)
+
+### Epik O-D: panel obserwowania WYKONANY (issue #222, 2026-09-25, gałąź `feature-222-panel-obserwowane`)
+Katalog, opisy i zestawy z `fleet.watch` weszły już z O-B, więc ten epik to SAMA karta
+„Obserwowane samoloty" na `#/konto` (decyzja 12; makieta `konto`) plus dokumentacja
+(`docs/uprawnienia.md` §2.2 w brzmieniu docelowym, podręcznik bez ramek „w przygotowaniu").
+Reguły obowiązujące odtąd:
+- **KARTA ISTNIEJE WYŁĄCZNIE W SESJI KLUBU I PRZY `fleet.watch`** - rozstrzyga
+  `AccountScreen` (`session.org != null && can(capabilities, 'fleet.watch')`), a `WatchCard`
+  montuje się tylko wtedy i sam pyta serwer (`useMyWatches` BEZ `enabled` - druga bramka
+  na to samo pytanie rozjechałaby się z pierwszą). Brak karty, nie karta wyszarzona;
+  sesja platformowa nie ma o co pytać
+- **ZAPIS OD RAZU, BEZ SZKICU I BEZ AUDYTU**: `.opt` z rolą checkbox (`OptionButton
+  multiple`), `PUT`/`DELETE /admin/api/me/watches/:id`, po zapisie lista czyta się na nowo
+  (odpowiedź jest pusta, a stan „teraz" i tak się starzeje). Przygasa WYŁĄCZNIE
+  przełączany wiersz; odmowa serwera = baner `warn` nad listą (`errorMessage`)
+- **ZDANIA O STANIE „TERAZ" SĄ ZDANIAMI SEKCJI 13C TELEFONU** (`screens/me/watchRows.ts`,
+  czysty, z testem): serwer liczy `aircraftNow`, panel wyłącznie nazywa - jak
+  `bookingLabels.ts` nazywa zajętość. Zalogowany to „Ty"; osoba spoza listy członków
+  = milczenie, nigdy identyfikator. Dopisku „zgodnie z rezerwacją" i notatki wyłączenia
+  z makiety NIE MA - lista floty tych pól nie niesie (P2; hero karty 27 liczy to z listy
+  terminów, której tu nie ma)
+- **DWA ZEGARY**: chwile operacji stemplem UTC (`timeUtc` z `common/values.ts`), terminy
+  dobą klubu przez `Intl` ze strefą z odpowiedzi (`clubDayIndex`/`godzina` z kalendarza) -
+  „dziś 14:00", „jutro 09:00", „do 2 paź 18:00"
+- **`AircraftNowDto` to lustro unii OBIEKTÓW** (`server/src/domain/aircraftCard.ts`),
+  której strażnik luster nie czyta; nowy rodzaj stanu ujawnia kompilator przy `switch`
+  w `watchRows.ts`. Klucz zapytania `keys.account.watches` pod korzeniem konta
+  (ustawienie osoby o sobie, jak hasło)
+- **czego O-D NIE ROBI**: sprawdzenia w przeglądarce na żywym serwerze (→ P-W #169, jak
+  R-H i #206), listy obserwujących na karcie samolotu w module Samoloty (§7.2 - wraca,
+  gdy ktoś poprosi)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
