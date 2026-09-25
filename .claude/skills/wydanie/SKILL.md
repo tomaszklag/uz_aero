@@ -74,7 +74,8 @@ Najkrótsza droga i domyślna po rozpoczęciu testów z pilotami.
 2. Dopisz punkt do sekcji `## W przygotowaniu` w `docs/CHANGELOG.md` — językiem korzyści
    dla pilota, nie opisem commita (patrz „Changelog" niżej).
 3. Zacommituj i doprowadź zmianę do `main`: hotfix PR-em `hotfix-…` → `main`, wydanie
-   planowe przez gałąź wydaniową → `main` (sekcja „Gałęzie" wyżej).
+   planowe przez gałąź wydaniową → `main` (sekcja „Gałęzie" wyżej). Przed merge sprawdź
+   daty na stronie (sekcja „Daty na stronie = dzień publikacji" niżej).
 4. Z checkoutu `main` (`git checkout main && git pull`):
    `npm run update:prod -- -m "krótki opis zmiany"`
 5. Zmerguj `main` → `develop`.
@@ -188,7 +189,8 @@ już 6 września i strona pobierania była martwa, nie dając po sobie znaku.
 npm run site
 ```
 
-Obejrzyj `site/dist/wydania/index.html`, zacommituj (podbicie wersji, changelog, nowy
+Obejrzyj `site/dist/wydania/index.html` i sprawdź daty na stronie (sekcja „Daty na
+stronie = dzień publikacji" niżej). Zacommituj (podbicie wersji, changelog, nowy
 link) na gałęzi wydaniowej i zmerguj ją do `main` PR-em; przy hotfixie - gałąź hotfixu
 do `main`. Po merge: `main` → `develop`, żeby podbita wersja, changelog i link do
 pobrania wróciły na gałąź integracyjną - inaczej następne wydanie zacznie się od
@@ -199,6 +201,36 @@ GitHub Release jej nie zmienia — `/pobierz/` pokaże nowy plik po przebudowie 
 To najczęstsze zaskoczenie w tej procedurze: APK istnieje, a link prowadzi do starego.
 
 Po wdrożeniu sprawdź: `/health`, `/`, `/pobierz/`, `/wydania/`, `/dokumentacja/`, `/admin/`.
+
+---
+
+## Daty na stronie = dzień publikacji
+
+Każda data na stronie mówi, **kiedy zmiana realnie trafiła do ludzi** - nie kiedy powstał
+kod, nie kiedy podbito wersję i nie kiedy planowaliśmy wydanie (decyzja właściciela
+2026-09-25). Publikacją jest merge do `main`, bo dopiero on przebudowuje stronę na Railway.
+Przed tym merge sprawdź dwa miejsca:
+
+- **Polityka prywatności i regulamin** - wiersz „obowiązuje od" w `site/src/prywatnosc.html`
+  i `site/src/regulamin.html`. Obie strony obiecują czytelnikowi nową datę przy każdej
+  zmianie treści, także przy zmianie danych kontaktowych. Sprawdź, czy od ostatniego
+  wydania coś się w nich zmieniło:
+
+  ```bash
+  git diff origin/main -- site/src/prywatnosc.html site/src/regulamin.html
+  ```
+
+  Jeśli tak - „obowiązuje od" to dzień merge do `main`. Data wpisana wcześniej na gałęzi
+  (zwykle planowany termin wydania) jest tylko zaślepką i trzeba ją potwierdzić albo
+  poprawić. Jeśli treść się nie zmieniła, daty nie ruszaj: nowa data przy tej samej
+  treści sugeruje zmianę, której nie było.
+- **Nagłówek wydania w changelogu** - `## <wersja> (build <N>) · <data>`. Skrypt
+  `bump-release.mjs` wpisuje datę PODBICIA wersji. Gdy build, testy albo przegląd
+  przesuną publikację na inny dzień, popraw datę przed merge - strona wydań i strona
+  pobierania pokazują ją pilotom jako dzień, od którego wersja jest dostępna.
+
+Data wcześniejsza niż publikacja twierdzi, że zasady albo wersja obowiązywały, zanim
+ktokolwiek mógł je zobaczyć. Późniejsza - że obowiązuje coś, czego już na stronie nie ma.
 
 ---
 

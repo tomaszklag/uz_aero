@@ -77,7 +77,8 @@ if (flag('release')) {
 
 const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
 const date = `${build.date.getDate()} ${months[build.date.getMonth()]} ${build.date.getFullYear()}`;
-const meta = `wersja ${build.version} (build ${build.number}) · ${date} · ${flag('release') ? 'GitHub Releases' : 'build EAS'}`;
+// Stały plik wydania nie dostaje dopisku: miejsce przechowywania nie jest informacją dla pilota.
+const meta = `wersja ${build.version} (build ${build.number}) · ${date}${flag('release') ? '' : ' · build EAS'}`;
 
 let html = readFileSync(page, 'utf8');
 const before = html;

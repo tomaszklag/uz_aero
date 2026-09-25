@@ -90,7 +90,7 @@ Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliw
 
 ## Częste problemy
 
-- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, skontaktuj się z osobą, która wdrażała Ninerdeck.
+- **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, napisz na kontakt@ninerdeck.pl.
 - **„Sesja wygasła. Zaloguj się jeszcze raz" w środku pracy** → minęło osiem godzin od zalogowania. Zaloguj się ponownie i wróć do tego samego adresu - zakres dat i otwarta karta są w nim zapisane.
 - **Zmiana z panelu nie dotarła na telefon pilota** → telefon pobiera dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracuje na kopii. Pilot może ponaglić pobranie przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.
 - **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → nie ma zdolności **Wejście do panelu**. Zakres zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.

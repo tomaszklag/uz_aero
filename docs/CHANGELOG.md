@@ -89,6 +89,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   zawsze czeka w skrzynce, więc bez zgody na powiadomienia nic nie ginie. Aplikacja pyta
   o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje
   albo gdy Twoja rezerwacja czeka na zgodę.
+- **Uprawnienia nadaje się osobie, a nie roli.** Przy przyjęciu do klubu administrator wybiera
+  gotowy zestaw - pilot, akceptujący, koordynator lotów, technik, administrator - albo zaznacza
+  pojedyncze pozycje, na przykład samą zgodę na rezerwacje dla mechanika. Ta sama osoba może
+  mieć w dwóch klubach dwa różne zakresy.
 - **Konto zakłada się także z panelu.** „Załóż konto" pod kartą logowania pyta
   o imię i nazwisko oraz adres i wysyła ten sam link, co przy zapomnianym haśle - konto
   powstaje w chwili ustawienia hasła. Do klubu nadal wchodzi się kodem klubu w aplikacji,
@@ -113,7 +117,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   moduł systemowy, którego aktualizacja w tle nie dowiezie. Do czasu skonfigurowania
   Firebase po stronie serwera powiadomienia po prostu nie przychodzą; skrzynka działa.
 
-## 3.0.0 (build 5) · 3 października 2026
+## 3.0.0 (build 5) · 22 września 2026
 
 > Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.
 
@@ -298,14 +302,19 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 3.1.0 · po wydaniu 3.0.0
+### 3.1.0 · planowane na 26 września 2026
 
-> Rezerwacja do akceptacji przez klub i powiadomienie o decyzji.
+> Rezerwacja do akceptacji przez klub, skrzynka i powiadomienie o decyzji.
 
-- [ ] Ścieżka akceptacji: rezerwacja czeka na zgodę wskazanej osoby albo roli
-- [ ] Odmowa z powodem, który pilot czyta na swoim telefonie
-- [ ] Skrzynka powiadomień w aplikacji - działa też bez zasięgu
-- [ ] Powiadomienie na telefon, gdy decyzja zapadnie (wymaga zainstalowania nowej wersji aplikacji)
+- [x] Ścieżka akceptacji: rezerwacja czeka na zgodę osób dopisanych do kolejnych kroków
+- [x] Odmowa z powodem, który pilot czyta na swoim telefonie
+- [x] Podgląd pilota i samolotu przy decyzji - w panelu i w aplikacji
+- [x] Skrzynka powiadomień z dzwonkiem na Pulpicie - wymaga zasięgu, jak kalendarz
+- [~] Powiadomienie na telefon o prośbie i decyzji (wymaga zainstalowania nowej wersji aplikacji)
+- [x] Uprawnienia nadawane osobie gotowym zestawem albo pozycja po pozycji
+- [x] Zakładanie konta i „Nie pamiętam hasła" także z panelu
+- [ ] Panel dla każdego członka klubu - to, co widać, wyznacza zakres uprawnień
+- [ ] Obserwowanie samolotu: strona maszyny i powiadomienie o zbliżającym się locie
 
 ### 4.0.0 · termin do ustalenia
 
