@@ -1156,8 +1156,9 @@ zadania albo trasy zgód nie rusza; klub bez ścieżki nie zauważa nic.
 Bez tej reguły maszyna stałaby w sobotę zablokowana prośbą, której nikt nie rozpatrzył -
 czyli dokładnie tym, przed czym broni P5.
 
-Mechanizm JUŻ ISTNIEJE: `BookingReleaseJob` (§3.5) przemiata sloty co 5 minut, więc dochodzi
-mu jedno pytanie, a nie drugi wątek. Stan jest osobny od `released` z P5 (tam maszyny nie
+Mechanizm JUŻ ISTNIEJE: `BookingReleaseJob` (§3.5; od 3.2.0 `BookingClockJob` w pliku
+`bookingClock.ts` - trzecie pytanie, „zbliża się lot", dołożyło obserwowanie samolotu)
+przemiata sloty co 5 minut, więc dochodzi mu jedno pytanie, a nie drugi wątek. Stan jest osobny od `released` z P5 (tam maszyny nie
 przejęto, tu zgody nie wydano) i BEZ powodu - `close_reason` niesie zdanie CZŁOWIEKA,
 a tutaj po prostu upłynął czas.
 

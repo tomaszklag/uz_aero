@@ -98,8 +98,12 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // i wyłączenie z użytku, bo ograniczenie wykluczające musi objąć oba rodzaje naraz.
     [
       'bookings',
-      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason'],
+      // `reminded_at` na końcu - migracja 15 (obserwowanie samolotu): stempel „za godzinę".
+      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at'],
     ],
+    // Obserwowanie samolotu (migracja 15, issue #205): ZAMIAR osoby, bez statusu i bez
+    // rodzajów - prawo do powiadomienia sprawdza się przy wysyłce, nie w wierszu.
+    ['aircraft_watches', ['org_id', 'aircraft_id', 'pilot_id', 'created_at']],
     // Ścieżka akceptacji (migracja 13, issue #164): krok ma NAZWĘ i LISTĘ OSÓB - roli
     // w nim nie ma. `id` jest TRWAŁE, a `position` zmienne, bo ścieżka jest zawsze
     // bieżąca; `removed_at` zamiast `DELETE`, bo decyzje pod krokiem są append-only.
@@ -195,6 +199,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'aircraft',
       'aircraft_consumption',
       'aircraft_readings',
+      'aircraft_watches',
       'approval_step_members',
       'approval_steps',
       'booking_approvals',
@@ -531,6 +536,37 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       // człowiekowi - w domenie (`refuseDecision`) i przy przycisku.
       const st = await step();
       await expect(decide(await booking(), st, 'rejected')).resolves.toBeDefined();
+    });
+
+    it('OBSERWOWANIE ZNIKA RAZEM Z CZŁONKOSTWEM, a drugie włączenie nie robi drugiego wiersza (migracja 15)', async () => {
+      // Kaskada z `memberships`, nie z `pilots`: osoba w dwóch klubach traci obserwowanie
+      // TYLKO w klubie, z którego wypadła. Wyłączenie członkostwa (status) wiersza nie
+      // rusza - wycisza je sprawdzenie przy wysyłce (`watchersOf`).
+      await db.query(
+        `INSERT INTO organizations (id, name, slug) VALUES ('org-w', 'Klub W', 'klub-w')`,
+      );
+      await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('plt-w', 'W', 'w@x.pl', TRUE)`);
+      await db.query(
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via) VALUES ('org-w', 'plt-w', 'WWW', 'active', 'code')`,
+      );
+      await db.query(
+        `INSERT INTO aircraft (id, org_id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
+         VALUES ('ac-w15', 'org-w', 'SP-W15', 'C152', 2000, 100, 'decimal', FALSE, 'active')`,
+      );
+      for (let i = 0; i < 2; i += 1) {
+        await db.query(
+          `INSERT INTO aircraft_watches (org_id, aircraft_id, pilot_id) VALUES ('org-w', 'ac-w15', 'plt-w')
+           ON CONFLICT (aircraft_id, pilot_id) DO NOTHING`,
+        );
+      }
+      const before = await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`);
+      expect(before.rows).toHaveLength(1);
+
+      await db.query(`UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'plt-w'`);
+      expect((await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`)).rows).toHaveLength(1);
+
+      await db.query(`DELETE FROM memberships WHERE pilot_id = 'plt-w'`);
+      expect((await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`)).rows).toHaveLength(0);
     });
 
     it('TOKEN PUSH GAŚNIE RAZEM Z SESJĄ LOGOWANIA (§12.2)', async () => {

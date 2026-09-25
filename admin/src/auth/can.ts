@@ -50,6 +50,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'maintenance.run': 'administrator',
   'reservations.manage': 'administrator',
   'reservations.approve': 'administrator',
+  'fleet.watch': 'administrator',
   // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
   // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
   // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.

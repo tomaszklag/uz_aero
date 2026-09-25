@@ -31,7 +31,22 @@ export type NotificationKind =
   /** „Odmówiono" razem z powodem - do rezerwującego. */
   | 'booking_rejected'
   /** „Nikt nie zdążył zdecydować" (§11.5) - do rezerwującego. */
-  | 'booking_expired';
+  | 'booking_expired'
+  /*
+   * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205) - pięć rodzajów do obserwujących maszynę,
+   * treści w `aircraftNotices.ts`. Stoją w TEJ unii, bo to jest kontrakt skrzynki:
+   * aplikacja rozpoznaje rodzaj po napisie, a rodzaj nieznany kieruje do skrzynki.
+   */
+  /** „Zbliża się lot" - potwierdzony termin zaczyna się za godzinę. */
+  | 'aircraft_flight_soon'
+  /** Odwołano albo przesunięto termin, o którym już przypomniano. */
+  | 'aircraft_flight_cancelled'
+  /** Przyjęte uruchomienie silnika - maszyny nie wolno tknąć. */
+  | 'aircraft_engine_started'
+  /** Maszyna zdana (z odczytami) albo operację zakończył administrator. */
+  | 'aircraft_released'
+  /** Nikt nie odebrał zarezerwowanej maszyny - slot wrócił do puli. */
+  | 'aircraft_not_taken';
 
 /** Rezerwacja w postaci, w jakiej opisuje ją wiadomość. */
 export interface NoticeBooking {

@@ -10,12 +10,14 @@
  */
 
 import type {
+  OperationCursor,
   Queryable,
   SessionOwner,
   SessionRow,
   SessionsProjectionPort,
 } from '../../../application/common/ports.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
+import { emptySessionSql } from '../substanceSql.ts';
 
 export class PgSessionsProjection implements SessionsProjectionPort {
   async upsert(tx: Queryable, row: SessionRow): Promise<void> {
@@ -171,6 +173,33 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     const { rows } = await db.query<SessionDbRow>(
       `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.org_id = $1 AND s.pic_id = $2`,
       [orgId, picId],
+    );
+    return rows.map(toSessionRow);
+  }
+
+  async listByAircraftPage(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+    page: { before?: OperationCursor; limit: number },
+  ): Promise<SessionRow[]> {
+    // Chwila operacji jak w `operationAt`: uruchomienie silnika, awaryjnie przejęcie.
+    // Porządek i warunek kursora idą po TEJ SAMEJ parze (chwila, uuid) - inaczej strona
+    // na granicy dwóch operacji z jednej chwili gubiłaby wiersz albo pokazywała go dwa razy.
+    const at = 'COALESCE(s.engine_start_at, s.claim_time)';
+    const cursor = page.before;
+    const { rows } = await db.query<SessionDbRow>(
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.org_id = $1 AND s.aircraft_id = $2
+          AND s.status <> 'voided'
+          AND NOT ${emptySessionSql('s')}
+          AND ${at} IS NOT NULL
+          ${cursor == null ? '' : `AND (${at}, s.session_uuid) < ($4, $5)`}
+        ORDER BY ${at} DESC, s.session_uuid DESC
+        LIMIT $3`,
+      cursor == null
+        ? [orgId, aircraftId, page.limit]
+        : [orgId, aircraftId, page.limit, cursor.at, cursor.sessionUuid],
     );
     return rows.map(toSessionRow);
   }

@@ -55,6 +55,8 @@ export type Capability =
   | 'maintenance.run'
   | 'reservations.manage'
   | 'reservations.approve'
+  /** Karta maszyny w aplikacji i powiadomienia o jej lotach (3.2.0, issue #205). */
+  | 'fleet.watch'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';

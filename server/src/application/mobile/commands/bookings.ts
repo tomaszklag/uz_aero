@@ -21,6 +21,9 @@ import {
   type BookingRefusal,
 } from '../../../domain/bookings.ts';
 import type { ApprovalFlow } from '../../common/commands/approvals.ts';
+import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
+import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
+import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { Notifier } from '../../common/notify/notifier.ts';
 import type {
   AircraftConfigPort,
@@ -59,6 +62,12 @@ export class BookingCommands {
     private readonly clock: Clock,
     private readonly approvals: ApprovalFlow,
     private readonly notifier: Notifier,
+    /**
+     * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Odwołanie albo
+     * przesunięcie terminu, o którym JUŻ przypomniano obserwującym, rodzi „odwołany lot"
+     * (§5.2: „co ogłosiłeś, to odwołaj"); nieprzypomniany odwołuje się po cichu.
+     */
+    private readonly watching: AircraftWatching | null = null,
   ) {}
 
   /**
@@ -165,9 +174,26 @@ export class BookingCommands {
     // czyścić ani o co pytać, a rezerwacja zostaje w stanie, w jakim była.
     const restart = plan != null && (plan.status === 'pending' || plan.selfApproved.length > 0);
 
+    // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2): przesunięcie POCZĄTKU terminu,
+    // o którym już przypomniano, rodzi wiadomość ze starym i nowym terminem - w TEJ
+    // SAMEJ transakcji, co zmiana. Adapter zeruje przy tym stempel, więc nowy termin
+    // dostanie własne „za godzinę". Bez sprawcy: odwołujący o sobie nie słyszy.
+    const watching = this.watching;
+    const announce =
+      watching != null && current.remindedAt != null && startsAt !== current.startsAt;
+    let watchNotices: NotificationDraft[] = [];
+
     const write = await this.db.transaction(async (tx) => {
       const result = await this.bookings.update(tx, orgId, id, patch);
-      if (result == null || !result.ok || plan == null || !restart) return result;
+      if (result == null || !result.ok) return result;
+      if (announce && watching != null) {
+        const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
+        if (audience != null) {
+          watchNotices = aircraftFlightCancelled(audience, current, { startsAt, endsAt });
+          await watching.record(tx, orgId, watchNotices, this.clock.now());
+        }
+      }
+      if (plan == null || !restart) return result;
 
       await this.approvals.restart(tx, orgId, id, plan);
       // Stan wiersza idzie ZA planem: czeka, gdy jest o co pytać; potwierdza się od
@@ -183,6 +209,7 @@ export class BookingCommands {
 
     // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
     if (plan != null && restart) await this.notifier.wake(plan.notices);
+    if (watchNotices.length > 0) await watching?.wake(watchNotices);
     return write;
   }
 
@@ -202,16 +229,28 @@ export class BookingCommands {
     const refusal = refuseCancel(current, { pilotId, manages: false }, reason);
     if (refusal != null) return { ok: false, refusal };
 
-    const closed = await this.db.transaction((tx) =>
-      this.bookings.close(tx, orgId, id, {
+    const watching = this.watching;
+    let watchNotices: NotificationDraft[] = [];
+    const closed = await this.db.transaction(async (tx) => {
+      const row = await this.bookings.close(tx, orgId, id, {
         status: 'cancelled',
         at: this.clock.now(),
         reason,
-      }),
-    );
+      });
+      // Obserwujący słyszą o odwołaniu WYŁĄCZNIE terminu, o którym już im przypomniano
+      // (§5.2) - i nigdy o własnym; wiadomość idzie tą samą transakcją, co odwołanie.
+      if (row == null || current.remindedAt == null || watching == null) return row;
+      const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
+      if (audience != null) {
+        watchNotices = aircraftFlightCancelled(audience, current, null);
+        await watching.record(tx, orgId, watchNotices, this.clock.now());
+      }
+      return row;
+    });
     // Przegrany wyścig z zadaniem okresowym albo z panelem: wiersz przestał być czynny
     // między odczytem a zapisem. To nie jest awaria - to jest ta sama odpowiedź.
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
+    if (watchNotices.length > 0) await watching?.wake(watchNotices);
     return { ok: true, booking: closed, created: false };
   }
 }

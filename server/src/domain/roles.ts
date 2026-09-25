@@ -161,6 +161,22 @@ export type Capability =
    * w ciemno (uwaga właściciela 2026-09-23), a kontekstem są dane cudzej rezerwacji.
    */
   | 'reservations.approve'
+  /**
+   * OBSERWOWANIE SAMOLOTÓW (3.2.0, issue #205; `docs/obserwowanie-samolotu.md` §3):
+   * karta maszyny w aplikacji (stan teraz, liczniki, terminy, historia, wykresy)
+   * i powiadomienia o jej lotach po włączeniu obserwowania.
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE `fleet.manage` ══
+   * Katalog nazywa ZASOBY, a obserwowanie jest nowym RODZAJEM dostępu do zasobu,
+   * który do dziś miał wyłącznie zarządzanie. Koordynator lotów floty nie konfiguruje,
+   * mechanik-akceptujący nie ma nic poza zgodą - obu nie da się wpuścić na kartę
+   * maszyny żadną istniejącą pozycją bez oddania im władzy, o którą nikt nie prosił.
+   *
+   * Zdolność mówi „wolno ci patrzeć i obserwować"; sam ZAMIAR („chcę") jest wierszem
+   * `aircraft_watches`, a prawo adresata sprawdza się PRZY WYSYŁCE (§2.1): odebranie
+   * zdolności wycisza od razu, bez sprzątania wierszy.
+   */
+  | 'fleet.watch'
   | 'bugs.triage'
   /**
    * Zakładanie i wyłączanie KLUBÓW oraz zapraszanie ich pierwszych administratorów
@@ -197,6 +213,7 @@ export const CLUB_CAPABILITIES: readonly Capability[] = [
   'maintenance.run',
   'reservations.manage',
   'reservations.approve',
+  'fleet.watch',
 ];
 
 /**

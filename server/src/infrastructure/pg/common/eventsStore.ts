@@ -45,8 +45,8 @@ export class PgEventsStore implements EventsStorePort {
     orgId: string,
     events: readonly Event[],
     sourceDevice: string | null,
-  ): Promise<{ accepted: number; duplicates: number }> {
-    let accepted = 0;
+  ): Promise<{ accepted: number; duplicates: number; inserted: string[] }> {
+    const inserted: string[] = [];
     for (const e of events) {
       // `org_id` z wołającego, nie ze zdarzenia: `Event` klubu nie zna (wielofirmowość §2).
       const { rows } = await tx.query<{ uuid: string }>(
@@ -71,9 +71,9 @@ export class PgEventsStore implements EventsStorePort {
           orgId,
         ],
       );
-      if (rows.length > 0) accepted += 1;
+      if (rows.length > 0) inserted.push(e.uuid);
     }
-    return { accepted, duplicates: events.length - accepted };
+    return { accepted: inserted.length, duplicates: events.length - inserted.length, inserted };
   }
 
   async sessionEvents(db: Queryable, orgId: string, sessionUuid: string): Promise<Event[]> {

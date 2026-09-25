@@ -118,6 +118,10 @@ import { registerApprovalRoutes } from './routes/mobile/approvals.ts';
 import { registerBookingRoutes } from './routes/mobile/bookings.ts';
 import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
 import { registerPreviewRoutes } from './routes/mobile/previews.ts';
+import { registerAircraftRoutes } from './routes/mobile/aircraft.ts';
+import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
+import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
+import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -182,6 +186,10 @@ export interface ServerDeps {
   notifications: NotificationQueries;
   /** Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) - JEDEN widok dla obu powierzchni. */
   previews: DecisionPreviewQueries;
+  /** Karta maszyny, historia i lista obserwowanych (3.2.0, issue #205) - obie powierzchnie. */
+  aircraftCards: AircraftCardQueries;
+  /** Włączanie i wyłączanie obserwowania - ustawienie osoby o sobie, bez audytu. */
+  aircraftWatch: AircraftWatchCommands;
   /** Ścieżka akceptacji układana w panelu (`accounts.manage`). */
   adminApprovalSteps: ApprovalStepsCommands;
   /**
@@ -500,6 +508,7 @@ export async function buildServer(
   registerApprovalRoutes(app, deps.approvals, memberGate);
   registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
   registerPreviewRoutes(app, deps.previews, memberGate);
+  registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -520,6 +529,7 @@ export async function buildServer(
   registerAdminAuthRoutes(app, deps.auth, deps.passwords, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
+  registerAdminMeWatchRoutes(app, deps.aircraftCards, deps.aircraftWatch, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
