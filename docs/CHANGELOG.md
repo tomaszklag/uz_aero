@@ -328,7 +328,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   i osób akceptujących rezerwacje
 - [ ] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
   ruszył, gdy maszyna wróciła z odczytami, gdy przypomniany termin odwołano
-  i gdy nikt nie odebrał zarezerwowanej maszyny
+  i gdy nikt nie odebrał zarezerwowanej maszyny; lista obserwowanych z przełącznikami
+  w ustawieniach aplikacji i w Moim koncie w panelu
 
 ### 4.0.0 · termin do ustalenia
 

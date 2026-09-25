@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 13 Ustawienia · PIN · hasło · konto</title>
+<title>Ninerdeck - 13C Ustawienia - obserwowane samoloty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -205,14 +205,42 @@
   .nav-strip a:hover { color:var(--green); }
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ OBSERWOWANE SAMOLOTY (3.2.0, docs/obserwowanie-samolotu.md §6.6) ═══
+     Cała flota z przełącznikiem przy każdej maszynie (decyzja właściciela 2026-09-25):
+     jedno miejsce do włączania i wyłączania, bez arkusza „dodaj". Wiersz ma DWA cele:
+     lewa część prowadzi w kartę maszyny (27), przełącznik po prawej zmienia obserwowanie
+     wprost na serwerze - jak na karcie. Sekcja istnieje WYŁĄCZNIE dla osoby ze zdolnością
+     „Obserwowanie samolotów" (Akceptujący, Koordynator lotów, Technik, Administrator);
+     pilot bez niej tej sekcji nie widzi - to brak sekcji, nie sekcja wyszarzona.
+
+     WYMAGA SIECI jak cały moduł (§2.2): stan wierszy i sam zapis przychodzą z serwera.
+     Bez połączenia w miejscu listy stoi jedno zdanie w tonie ostrzeżenia (`.watch-off`),
+     a reszta ustawień działa jak zawsze - PIN, motyw i synchronizacja nie potrzebują
+     do niczego tej listy. */
+  .watch-list { display:flex; flex-direction:column; gap:8px; }
+  .watch-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:10px 14px 10px 12px; min-height:52px; }
+  .watch-main { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; min-width:0; }
+  .watch-main::after { content:"\203A"; font-family:var(--font-mono); font-size:15px; color:var(--text-muted); margin-left:2px; }
+  .watch-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .watch-reg { font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .watch-reg small { font-weight:400; font-size:9px; letter-spacing:1px; color:var(--text-muted); margin-left:6px; }
+  .watch-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .watch-sub.green { color:var(--green); }
+  .watch-sub.amber { color:var(--amber); }
+  .switch { width:42px; height:24px; border-radius:12px; background:var(--green); position:relative; flex-shrink:0; }
+  .switch::after { content:''; position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:#0D0D0D; }
+  .switch.off { background:var(--border-strong); }
+  .switch.off::after { right:auto; left:3px; background:var(--text-secondary); }
+  .watch-off { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--amber); line-height:1.6; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 13</span>
-  <span class="slug">ustawienia · motyw · sync · gps · pin · hasło · konto</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran 13</span>
+  <span class="film-strip">NINERDECK - 13C</span>
+  <span class="slug">ustawienia · obserwowane samoloty</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant</span>
 </header>
 
 <main class="phone" role="region" aria-label="Mockup - Ustawienia">
@@ -233,10 +261,6 @@
         Mój dzień
       </a>
       <span class="screen-title">USTAWIENIA</span>
-      <div class="offline-chip" title="Brak sieci - 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-        Offline · 3
-      </div>
     </div>
 
     <div class="scroll">
@@ -246,14 +270,49 @@
         <div class="form-section-title">Motyw wyświetlacza</div>
 
         <div class="theme-switch">
-          <button class="theme-opt selected" id="th-night" onclick="pickTheme('night')">
+          <button class="theme-opt selected" id="th-night">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             Ciemny
           </button>
-          <button class="theme-opt" id="th-solar" onclick="pickTheme('solar')">
+          <button class="theme-opt" id="th-solar">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             Jasny
           </button>
+        </div>
+      </div>
+
+      <!-- ══ OBSERWOWANE SAMOLOTY (3.2.0) ══
+           Zestaw wierszy = CAŁA FLOTA klubu bieżącego, bo „zarządzać obserwowaniem" znaczy
+           włączać i wyłączać - a do włączenia trzeba widzieć te, których się jeszcze nie
+           obserwuje. Podpis mówi stan maszyny TERAZ (ten sam rachunek, co hero na 27),
+           bo to on decyduje, czy warto ją obserwować akurat dziś. -->
+      <div class="form-section" id="obserwowane">
+        <div class="form-section-title">Obserwowane samoloty</div>
+        <div class="watch-list">
+          <div class="watch-row">
+            <a class="watch-main" href="27-samolot.html"><span class="watch-body"><span class="watch-reg">SP-AXA<small>C172</small></span><span class="watch-sub green">W locie · A. Kowalski · od 08:12 UTC</span></span></a>
+            <span class="switch" role="switch" aria-checked="true" aria-label="Obserwujesz SP-AXA"></span>
+          </div>
+          <div class="watch-row">
+            <a class="watch-main" href="27a-samolot-wolna.html"><span class="watch-body"><span class="watch-reg">SP-BKL<small>PA-28</small></span><span class="watch-sub">Wolna · następny termin dziś 14:00</span></span></a>
+            <span class="switch" role="switch" aria-checked="true" aria-label="Obserwujesz SP-BKL"></span>
+          </div>
+          <div class="watch-row">
+            <a class="watch-main" href="27a-samolot-wolna.html"><span class="watch-body"><span class="watch-reg">SP-DKM<small>C152</small></span><span class="watch-sub">Wolna</span></span></a>
+            <span class="switch off" role="switch" aria-checked="false" aria-label="Obserwuj SP-DKM"></span>
+          </div>
+          <div class="watch-row">
+            <a class="watch-main" href="27a-samolot-wolna.html"><span class="watch-body"><span class="watch-reg">SP-ELG<small>Aquila</small></span><span class="watch-sub">Wolna · następny termin jutro 09:00</span></span></a>
+            <span class="switch off" role="switch" aria-checked="false" aria-label="Obserwuj SP-ELG"></span>
+          </div>
+          <div class="watch-row">
+            <a class="watch-main" href="27b-samolot-wylaczona.html"><span class="watch-body"><span class="watch-reg">SP-CDR<small>AN-2</small></span><span class="watch-sub amber">Wyłączona z użytku · przegląd do 2 PAŹ</span></span></a>
+            <span class="switch" role="switch" aria-checked="true" aria-label="Obserwujesz SP-CDR"></span>
+          </div>
+          <div class="watch-row">
+            <a class="watch-main" href="27a-samolot-wolna.html"><span class="watch-body"><span class="watch-reg">SP-FGK<small>C182</small></span><span class="watch-sub">Wolna</span></span></a>
+            <span class="switch off" role="switch" aria-checked="false" aria-label="Obserwuj SP-FGK"></span>
+          </div>
         </div>
       </div>
 
@@ -273,7 +332,7 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val amber">3 zdarzenia czekają</span>
+            <span class="diag-val">pusta</span>
           </div>
           <!-- JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): „czemu mam dwa czasy, które się
                różnią, czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno
@@ -323,7 +382,7 @@
             <span class="diag-val">50°04.7'N 019°47.1'E</span>
           </div>
         </div>
-        <button class="btn-refresh" onclick="refreshFix()">
+        <button class="btn-refresh">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Odśwież
         </button>
@@ -367,7 +426,7 @@
       <!-- ══ PIN ══ -->
       <div class="form-section">
         <div class="form-section-title">Bezpieczeństwo</div>
-        <button class="action-item" onclick="openPin()">
+        <button class="action-item">
           <span class="action-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </span>
@@ -413,14 +472,14 @@
       <div class="form-section">
         <div class="form-section-title">Konto</div>
         <div class="profile-chip">
-          <div class="avatar">AK</div>
+          <div class="avatar">BN</div>
           <div class="profile-text">
-            <span class="profile-name">Adam Kowalski</span>
-            <span class="profile-sub">AKO · a.kowalski@gmail.com</span>
+            <span class="profile-name">Barbara Nowak</span>
+            <span class="profile-sub">BNO · b.nowak@gmail.com</span>
           </div>
         </div>
 
-        <!-- WARIANT „SESJA ZAKOŃCZONA PRZEZ ADMINISTRATORA" (2.1.0, D7) - baner Status
+        <!-- WARIANT „SESJA ZBNOŃCZONA PRZEZ ADMINISTRATORA" (2.1.0, D7) - baner Status
              pod profil-chipem, pokazany w DRUGIEJ RAMCE (#sesja). Tutaj go nie ma,
              bo sesja żyje; stan domyślny nie dostaje zdania (issue #12). -->
 
@@ -459,18 +518,18 @@
           <span></span><span></span><span></span><span></span>
         </div>
         <div class="numpad">
-          <div class="num-btn" onclick="press()">1</div>
-          <div class="num-btn" onclick="press()">2</div>
-          <div class="num-btn" onclick="press()">3</div>
-          <div class="num-btn" onclick="press()">4</div>
-          <div class="num-btn" onclick="press()">5</div>
-          <div class="num-btn" onclick="press()">6</div>
-          <div class="num-btn" onclick="press()">7</div>
-          <div class="num-btn" onclick="press()">8</div>
-          <div class="num-btn" onclick="press()">9</div>
+          <div class="num-btn">1</div>
+          <div class="num-btn">2</div>
+          <div class="num-btn">3</div>
+          <div class="num-btn">4</div>
+          <div class="num-btn">5</div>
+          <div class="num-btn">6</div>
+          <div class="num-btn">7</div>
+          <div class="num-btn">8</div>
+          <div class="num-btn">9</div>
           <div class="num-btn ghost"></div>
-          <div class="num-btn" onclick="press()">0</div>
-          <div class="num-btn ghost" onclick="back()" title="Usuń cyfrę">
+          <div class="num-btn">0</div>
+          <div class="num-btn ghost" title="Usuń cyfrę">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
           </div>
         </div>
@@ -478,7 +537,7 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           Sprawdzane lokalnie - bez zasięgu też działa
         </div>
-        <button class="sheet-cancel" onclick="closePin()">Anuluj</button>
+        <button class="sheet-cancel">Anuluj</button>
       </div>
     </div>
   </div>
@@ -486,14 +545,13 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Dokąd stąd?</div>
-  <a class="vp-item active" href="13-ustawienia.html">
+  <a class="vp-item" href="13-ustawienia.html">
     <span class="vp-badge">13</span>
     <span class="vp-body">
       <span class="vp-name">Ustawienia</span>
       <span class="vp-when">Wejście zębatką z „Mój dzień" (01) - JEDYNE w całej aplikacji od issue #82; kokpit ma w tym miejscu przełącznik jasności. Wszystko tu działa offline poza dwiema akcjami, które z natury idą przez serwer - ustawieniem hasła i wylogowaniem: obie są disabled z podanym powodem w wierszu, a wylogowanie przy niepustej kolejce wysyłki chroni amber-box (wzorzec z 00).</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
-  </a>
+    </a>
   <a class="vp-item" href="#sesja">
     <span class="vp-badge amber">13 · sesja</span>
     <span class="vp-body">
@@ -508,18 +566,19 @@
       <span class="vp-when">Z wiersza „Ustaw hasło" w sekcji Hasło (online): nowe hasło + powtórz, podpowiedź polityki po wpisie, „ZAPISZ HASŁO". Gdy hasło już jest - wiersz nazywa się „Zmień hasło", a arkusz zaczyna od pola „Obecne hasło".</span>
     </span>
   </a>
+  <a class="vp-item active" href="13c-ustawienia-obserwowane.html">
+    <span class="vp-badge">13C</span>
+    <span class="vp-body">
+      <span class="vp-name">Obserwowane samoloty (3.2.0)</span>
+      <span class="vp-when">Sekcja po motywie, wyłącznie dla osoby ze zdolnością „Obserwowanie samolotów": cała flota klubu z przełącznikiem przy każdej maszynie i stanem „teraz" w podpisie. Wiersz prowadzi w kartę maszyny (27), przełącznik zapisuje się na serwerze wprost. Bez sieci w miejscu listy stoi jedno zdanie; reszta ustawień działa jak zawsze.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
   <a class="vp-item" href="13a-ustawienia-klub.html">
     <span class="vp-badge amber">13A</span>
     <span class="vp-body">
       <span class="vp-name">Przełącznik klubu</span>
       <span class="vp-when">Pilot z więcej niż jednym członkostwem dostaje na górze sekcję „Klub" (lista kart z kodem pilota w każdym; przełączenie wymaga internetu i wysłanych zapisów klubu, z którego się wychodzi). Przy jednym klubie - jak tu - sekcji nie ma.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="13c-ustawienia-obserwowane.html">
-    <span class="vp-badge">13C</span>
-    <span class="vp-body">
-      <span class="vp-name">Obserwowane samoloty (3.2.0)</span>
-      <span class="vp-when">Dla osoby ze zdolnością „Obserwowanie samolotów": sekcja po motywie z całą flotą klubu i przełącznikiem przy każdej maszynie; wiersz prowadzi w kartę maszyny (27). Pilot bez zdolności tej sekcji nie widzi wcale.</span>
     </span>
   </a>
   <a class="vp-item" href="20-pulpit.html">
@@ -537,540 +596,15 @@
   <a href="20-pulpit.html">← 20 Pulpit</a>
   <a href="04-cockpit-ground.html">04 Kokpit ground</a>
   <a href="05-cockpit-running.html">05 Kokpit lot</a>
-  <a href="13-ustawienia.html" class="active">13 Ustawienia</a>
+  <a href="13-ustawienia.html">13 Ustawienia</a>
   <a href="13a-ustawienia-klub.html">13A Klub</a>
-  <a href="13c-ustawienia-obserwowane.html">13C Obserwowane</a>
+  <a href="13c-ustawienia-obserwowane.html" class="active">13C Obserwowane</a>
+  <span>·</span>
+  <a href="27-samolot.html">27 Karta maszyny →</a>
   <span>·</span>
   <a href="#sesja">↓ sesja zakończona</a>
   <a href="#haslo">↓ 13B arkusz hasła</a>
 </nav>
-
-<!-- ══ DRUGA RAMKA: SESJA ZAKOŃCZONA PRZEZ ADMINISTRATORA ══
-     (2.1.0, docs/logowanie-haslem.md D7, §6). Serwer unieważnił sesję tego telefonu -
-     każde żądanie odbija, refresh odmawia. Telefon dowiedział się przy najbliższym
-     kontakcie, więc SIEĆ JEST (pasek stanu online), a mimo to kolejka stoi i sama nie
-     ruszy - stąd w nagłówku CZERWONY chip SYNC STOI (trzeci stan chipa, 01D), nie
-     bursztynowy OFFLINE. Ekran przewinięty do sekcji Konto.
-
-     Co się zmienia względem pierwszej ramki:
-       - pod profilem BANER STATUS (bursztyn, niezamykalny): co się stało i co z zapisami.
-         Zapisy ZOSTAJĄ na telefonie - wyrzucenie do logowania kasowałoby dane dnia,
-         czyli dokładnie to, przed czym chroni §3.0;
-       - „Wyloguj i zmień konto" dalej ze strażnikiem outboxa (D10): zapisy pilota A
-         wychodzą wyłącznie tokenem A. Amber-box strażnika ZNIKA - jego zdanie „wróć do
-         zasięgu, wyślą się same" byłoby tu nieprawdą (czekają na zalogowanie, nie na
-         zasięg), a dwa bursztynowe pudełka o jednej kolejce to szum. Powód zostaje
-         w wierszu;
-       - wiersz „Ustaw hasło" wygaszony z powodem „zaloguj się ponownie": hasło ustawia
-         serwer, a serwer tej sesji już nie zna;
-       - DROGA WYJŚCIA, którą baner nazywa: wiersz „Zaloguj się ponownie" (→ 00A / 00F).
-         Baner bez wejścia w czynność, o której mówi, byłby ścianą (§6 pkt 3). Ponowne
-         logowanie TEJ SAMEJ osoby daje nowy token i wysyła zaległe zapisy; rejestr
-         i PIN zostają. **DO POTWIERDZENIA w H-E (#135)**: dokument §6 zakłada ponowne
-         logowanie tej samej osoby, ale nie nazywa wejścia - ten wiersz jest propozycją
-         makiety, a inna osoba przy niepustej kolejce musi dostać tę samą odmowę, co
-         przy „Wyloguj i zmień konto".
-     Ten sam stan na ekranie PIN: 00-login.html#sesja. -->
-<header class="canvas-label" id="sesja">
-  <span class="film-strip">NINERDECK - 13</span>
-  <span class="slug">stan: sesja zakończona przez administratora</span>
-  <span class="canvas-meta">Sieć jest · sync stoi</span>
-</header>
-
-<main class="phone" role="region" aria-label="Mockup - Ustawienia, sesja zakończona przez administratora">
-  <div class="status-bar">
-    <span>12:52</span>
-    <span class="status-right">
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
-      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
-    </span>
-  </div>
-
-  <div class="screen">
-    <div class="app-header">
-      <a href="20-pulpit.html" class="back-btn">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
-        Mój dzień
-      </a>
-      <span class="screen-title">USTAWIENIA</span>
-      <a href="01d-sync-stoi.html" class="sync-chip" title="Sieć jest, a kolejka stoi: sesja zakończona przez administratora - arkusz pod chipem na 01D">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
-        Sync stoi · 3
-      </a>
-    </div>
-
-    <div class="scroll" data-scroll="bottom">
-
-      <div class="form-section">
-        <div class="form-section-title">Motyw wyświetlacza</div>
-        <div class="theme-switch">
-          <button class="theme-opt selected">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            Ciemny
-          </button>
-          <button class="theme-opt">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            Jasny
-          </button>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Synchronizacja</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val red">3 zdarzenia czekają</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Ostatnia synchronizacja</span>
-            <span class="diag-val">09:41 UTC</span>
-          </div>
-        </div>
-        <button class="btn-refresh">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Synchronizuj teraz
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Diagnostyka GPS</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Status</span>
-            <span class="diag-val green">FIX 3D · 11 satelitów</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Ostatni fix</span>
-            <span class="diag-val">12:52:04 UTC <small>· 2 s temu</small></span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Dokładność</span>
-            <span class="diag-val">± 4 m</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Pozycja</span>
-            <span class="diag-val">50°04.7'N 019°47.1'E</span>
-          </div>
-        </div>
-        <button class="btn-refresh">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Odśwież
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">O aplikacji</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Aplikacja</span>
-            <span class="diag-val">Ninerdeck</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Wersja</span>
-            <span class="diag-val">1.0.0 (build 1)</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Bezpieczeństwo</div>
-        <button class="action-item">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Zmień PIN</span>
-            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </button>
-      </div>
-
-      <!-- Hasło ustawia serwer, a serwer tej sesji już nie zna - powód w wierszu. -->
-      <div class="form-section">
-        <div class="form-section-title">Hasło</div>
-        <button class="action-item disabled" title="Niedostępne: sesja zakończona - zaloguj się ponownie" aria-disabled="true">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 1 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Ustaw hasło</span>
-            <span class="action-sub">niedostępne - zaloguj się ponownie</span>
-          </span>
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Konto</div>
-        <div class="profile-chip">
-          <div class="avatar">AK</div>
-          <div class="profile-text">
-            <span class="profile-name">Adam Kowalski</span>
-            <span class="profile-sub">AKO · a.kowalski@gmail.com</span>
-          </div>
-        </div>
-
-        <!-- BANER STATUS (D7): bursztyn, niezamykalny, zdanie o stanie i o losie zapisów. -->
-        <div class="session-guard">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>Sesja zakończona przez administratora.</b> Zapisy zostają na telefonie i wyjdą po ponownym zalogowaniu tej samej osoby.</span>
-        </div>
-
-        <!-- DROGA WYJŚCIA nazwana przez baner - wymaga sieci (tu jest). Propozycja makiety,
-             do potwierdzenia w H-E (komentarz nad ramką). -->
-        <a href="00a-login-full.html" class="action-item">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Zaloguj się ponownie</span>
-            <span class="action-sub">ta sama osoba - zapisy wyjdą po zalogowaniu</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </a>
-
-        <!-- Strażnik outboxa zostaje (D10); jego amber-box - nie (powód nad ramką). -->
-        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Wyloguj i zmień konto</span>
-            <span class="action-sub">niedostępne - 3 zapisy czekają na wysyłkę</span>
-          </span>
-        </button>
-      </div>
-
-    </div>
-  </div>
-</main>
-
-<nav class="nav-strip">
-  <a href="index.html">↩ Index</a>
-  <span>·</span>
-  <a href="00-login.html#sesja">← 00 PIN · sesja</a>
-  <a href="01d-sync-stoi.html">01D Sync stoi</a>
-  <a href="13-ustawienia.html" class="active">13 Ustawienia</a>
-  <a href="#haslo">↓ 13B arkusz hasła</a>
-</nav>
-
-<!-- ══ TRZECIA RAMKA: 13B - ARKUSZ „USTAW HASŁO" ══
-     (2.1.0, docs/logowanie-haslem.md D4, §5.3, §7.1). Ekran ONLINE (arkusz wymaga
-     sieci, więc wiersz „Ustaw hasło" jest tu czynny i ma podpis „do logowania na
-     wspólnym tablecie"); kolejka pusta, więc wylogowanie też czynne - bez amber-boxa.
-
-     Arkusz na TEJ SAMEJ ramie, co zmiana PIN-u (uchwyt, tytuł, sufit `calc(100% - 56px)`,
-     „Anuluj"), ale BEZ numpada: hasło to pełna klawiatura. Dwa pola - „Nowe hasło"
-     i „Powtórz hasło" - mono, `secureTextEntry`, `autoComplete="new-password"`, oko
-     „pokaż" w polu, wklejanie dozwolone (D4). Przy haśle ISTNIEJĄCYM (wiersz „Zmień
-     hasło") dochodzi trzecie pole „Obecne hasło" NA GÓRZE, nad nowym; błędne obecne →
-     błąd przy tym polu („Nieprawidłowe obecne hasło."), jak każdy błąd tej rodziny.
-
-     POLITYKA (D4 = NIST SP 800-63B): minimum 12 znaków, BEZ wymogów co do znaków, bez
-     wygasania, lista zablokowanych (najczęstsze hasła + fragmenty e-maila i nazwiska).
-     Podpowiedź „co najmniej 12 znaków · bez wymogów co do znaków" pojawia się PO
-     PIERWSZYM ZNAKU, pod nowym hasłem: pusty formularz blokuje BEZ zdania (issue #55),
-     a zdanie o polityce przed wpisem uczyłoby, że ekran tłumaczy się sam. Dopóki hasło
-     jest za krótkie, podpowiedź jest bursztynowa, a przycisk wygaszony bez własnego
-     zdania - blokadę widać z kontrolki nad nim (wąski wyjątek issue #55). Hasło z listy
-     zablokowanych → błąd PRZY POLU („To hasło jest zbyt łatwe do odgadnięcia - wybierz
-     inne."), ten sam powód, który odda serwer (`400 weak_password`); powtórka różna od
-     nowego → błąd przy drugim polu („Hasła się różnią."). Nie ma paska „siły hasła":
-     polityka jest długością, a pasek udawałby pomiar, którego nie ma.
-
-     PO ZAPISIE: wiersz w sekcji zmienia napis na „Zmień hasło / najpierw obecne, potem
-     nowe" (jeden wiersz, dwa napisy). Zmiana hasła wylogowuje POZOSTAŁE urządzenia tej
-     osoby (§5.3) - to standard i arkusz o tym NIE mówi: to opis działania serwera, nie
-     instrukcja dla pilota (issue #72). HASŁO NIE ZASTĘPUJE PIN-U: PIN dalej otwiera ten
-     telefon offline; hasło loguje tę samą osobę na wspólnym tablecie (00F). -->
-<header class="canvas-label" id="haslo">
-  <span class="film-strip">NINERDECK - 13B</span>
-  <span class="slug">ustawienia · arkusz ustawienia hasła · online</span>
-  <span class="canvas-meta">Arkusz · nowe + powtórz</span>
-</header>
-
-<main class="phone" role="region" aria-label="Mockup - Ustawienia, arkusz ustawienia hasła">
-  <div class="status-bar">
-    <span>18:05</span>
-    <span class="status-right">
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
-      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
-    </span>
-  </div>
-
-  <div class="screen">
-    <div class="app-header">
-      <a href="20-pulpit.html" class="back-btn">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
-        Mój dzień
-      </a>
-      <span class="screen-title">USTAWIENIA</span>
-      <!-- online: SyncChip nie rysuje NIC (issue #12) -->
-      <span></span>
-    </div>
-
-    <div class="scroll" data-scroll="#pwRow">
-
-      <div class="form-section">
-        <div class="form-section-title">Motyw wyświetlacza</div>
-        <div class="theme-switch">
-          <button class="theme-opt selected">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            Ciemny
-          </button>
-          <button class="theme-opt">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            Jasny
-          </button>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Synchronizacja</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val green">wszystko wysłane</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Ostatnia synchronizacja</span>
-            <span class="diag-val">18:04 UTC</span>
-          </div>
-        </div>
-        <button class="btn-refresh">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Synchronizuj teraz
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Diagnostyka GPS</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Status</span>
-            <span class="diag-val green">FIX 3D · 9 satelitów</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Ostatni fix</span>
-            <span class="diag-val">18:05:11 UTC <small>· 3 s temu</small></span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Dokładność</span>
-            <span class="diag-val">± 6 m</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Pozycja</span>
-            <span class="diag-val">51°56.3'N 015°47.9'E</span>
-          </div>
-        </div>
-        <button class="btn-refresh">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Odśwież
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">O aplikacji</div>
-        <div>
-          <div class="diag-row">
-            <span class="diag-key">Aplikacja</span>
-            <span class="diag-val">Ninerdeck</span>
-          </div>
-          <div class="diag-row">
-            <span class="diag-key">Wersja</span>
-            <span class="diag-val">1.0.0 (build 1)</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Bezpieczeństwo</div>
-        <button class="action-item">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Zmień PIN</span>
-            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </button>
-      </div>
-
-      <!-- ONLINE: wiersz czynny, podpis mówi PO CO (nie „wymaga internetu" - to stan
-           domyślny, issue #12). Po zapisie: „Zmień hasło / najpierw obecne, potem nowe". -->
-      <div class="form-section">
-        <div class="form-section-title">Hasło</div>
-        <button class="action-item" onclick="openPassword()" id="pwRow">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 1 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name" id="pwRowName">Ustaw hasło</span>
-            <span class="action-sub" id="pwRowSub">do logowania na wspólnym tablecie</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </button>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title">Konto</div>
-        <div class="profile-chip">
-          <div class="avatar">AK</div>
-          <div class="profile-text">
-            <span class="profile-name">Adam Kowalski</span>
-            <span class="profile-sub">AKO · a.kowalski@gmail.com</span>
-          </div>
-        </div>
-        <!-- Kolejka pusta i sieć jest: wylogowanie czynne, bez amber-boxa. -->
-        <a href="00a-login-full.html" class="action-item">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Wyloguj i zmień konto</span>
-            <span class="action-sub">wszystkie zapisy wysłane</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </a>
-      </div>
-
-      <!-- Przestrzeń TYLKO w tej ramce: arkusz zasłania dolne ~45% ekranu, a sekcja „Hasło"
-           stoi tuż nad „Kontem", więc bez zapasu przewinięcie do niej (data-scroll="#pwRow")
-           kończy się na maksimum i wiersz ląduje pod arkuszem. Zapas pozwala ustawić sekcję
-           u góry - makieta pokazuje wiersz w spoczynku I arkusz, który on otwiera. -->
-      <div style="flex:none; height:340px" aria-hidden="true"></div>
-
-    </div>
-
-    <!-- ═══ ARKUSZ 13B: USTAW HASŁO - ta sama rama, co PIN, bez numpada ═══ -->
-    <div class="sheet-overlay open" id="passwordSheet">
-      <div class="sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-title">USTAW HASŁO</div>
-
-        <!-- Przy haśle ISTNIEJĄCYM tu stoi pole „Obecne hasło" (autocomplete
-             `current-password`) - jedno pole więcej, ta sama rama. -->
-
-        <div class="field">
-          <span class="field-label">Nowe hasło</span>
-          <div class="input-wrap">
-            <input class="input" type="password" autocomplete="new-password" value="hangar-lotnisko-7" aria-label="Nowe hasło" id="pwNew" oninput="pwHint()">
-            <button class="eye-btn" type="button" aria-label="Pokaż hasło" onclick="toggleEye(this)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-          <!-- Podpowiedź polityki PO wpisie (D4, NIST 800-63B). Bursztyn, dopóki za krótko. -->
-          <span class="field-hint" id="pwHintEl">co najmniej 12 znaków · bez wymogów co do znaków</span>
-        </div>
-
-        <div class="field">
-          <span class="field-label">Powtórz hasło</span>
-          <div class="input-wrap">
-            <input class="input" type="password" autocomplete="new-password" value="hangar-lotnisko-7" aria-label="Powtórz hasło" id="pwRepeat" oninput="pwHint()">
-            <button class="eye-btn" type="button" aria-label="Pokaż hasło" onclick="toggleEye(this)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-          <span class="field-error" id="pwMismatch" style="display:none;">Hasła się różnią.</span>
-        </div>
-
-        <!-- Puste / za krótkie / różne blokują BEZ zdania w przycisku: widać z pól wyżej. -->
-        <button class="btn-primary" type="button" id="pwSave" onclick="savePassword()">ZAPISZ HASŁO</button>
-        <button class="sheet-cancel" onclick="closePassword()">Anuluj</button>
-      </div>
-    </div>
-  </div>
-</main>
-
-<nav class="nav-strip">
-  <a href="index.html">↩ Index</a>
-  <span>·</span>
-  <a href="13-ustawienia.html" class="active">13 Ustawienia</a>
-  <a href="00f-login-haslo.html">00F Logowanie hasłem →</a>
-  <a href="00g-link-hasla.html">00G Link hasła</a>
-</nav>
-
-<script>
-  // ── Motyw: dwie pozycje, zaznaczenie = zielona obramówka (issue #72) ──
-  function pickTheme(t) {
-    ['night','solar'].forEach(k =>
-      document.getElementById('th-' + k).classList.toggle('selected', k === t));
-  }
-
-  // ── Diagnostyka GPS: odświeżenie fixa (czujnik lokalny - zero sieci) ──
-  function refreshFix() {
-    document.getElementById('fixTime').childNodes[0].textContent = '12:47:41 UTC ';
-    document.getElementById('fixAge').textContent = '· przed chwilą';
-  }
-
-  // ── Zmiana PIN: dwa kroki (obecny → nowy), sprawdzane lokalnie (3.0) ──
-  const dots = [...document.querySelectorAll('#pinDots span')];
-  const stepEl = document.getElementById('pinStep');
-  let pin = '', phase = 'current';
-  function render() { dots.forEach((el, i) => el.classList.toggle('filled', i < pin.length)); }
-  function openPin() {
-    pin = ''; phase = 'current';
-    stepEl.textContent = 'Wpisz obecny PIN'; stepEl.classList.remove('ok');
-    render();
-    document.getElementById('pinSheet').classList.add('open');
-  }
-  function closePin() { document.getElementById('pinSheet').classList.remove('open'); }
-  function press() {
-    if (pin.length >= 4) return;
-    pin += '•'; render();
-    if (pin.length === 4) {
-      if (phase === 'current') {
-        phase = 'new';
-        setTimeout(() => { pin = ''; render(); stepEl.textContent = 'Ustaw nowy PIN'; }, 380);
-      } else {
-        stepEl.textContent = 'PIN zmieniony ✓'; stepEl.classList.add('ok');
-        setTimeout(closePin, 900);
-      }
-    }
-  }
-  function back() { pin = pin.slice(0, -1); render(); }
-
-  // ── Ramki przewinięte po wczytaniu: druga na sam dół (Konto), trzecia do sekcji, w której stoi wskazany wiersz (Hasło) - sam wiersz musi być widoczny NAD arkuszem, inaczej makieta nie pokazuje stanu spoczynku sekcji ──
-  document.querySelectorAll('.scroll[data-scroll]').forEach(el => { const t = el.dataset.scroll; if (t === 'bottom') { el.scrollTop = el.scrollHeight; return; } const target = el.querySelector(t); if (!target) return; const sec = target.closest('.form-section') || target; el.scrollTop = sec.getBoundingClientRect().top - el.getBoundingClientRect().top - 14; });
-
-  // ── Arkusz hasła (13B): otwarcie / zamknięcie / zapis (po zapisie wiersz zmienia napis) ──
-  function openPassword() { document.getElementById('passwordSheet').classList.add('open'); }
-  function closePassword() { document.getElementById('passwordSheet').classList.remove('open'); }
-  function savePassword() {
-    if (document.getElementById('pwSave').classList.contains('disabled')) return;
-    document.getElementById('pwRowName').textContent = 'Zmień hasło';
-    document.getElementById('pwRowSub').textContent = 'najpierw obecne, potem nowe';
-    closePassword();
-  }
-  // Podpowiedź polityki (D4): pojawia się po pierwszym znaku, bursztyn poniżej 12 znaków;
-  // powtórka różna od nowego - błąd przy drugim polu. Zapis blokuje się BEZ zdania.
-  function pwHint() {
-    const a = document.getElementById('pwNew').value, b = document.getElementById('pwRepeat').value;
-    const hint = document.getElementById('pwHintEl'), mismatch = document.getElementById('pwMismatch');
-    hint.style.display = a.length ? '' : 'none';
-    hint.classList.toggle('short', a.length > 0 && a.length < 12);
-    const differ = b.length > 0 && b !== a;
-    mismatch.style.display = differ ? '' : 'none';
-    document.getElementById('pwRepeat').classList.toggle('invalid', differ);
-    document.getElementById('pwSave').classList.toggle('disabled', a.length < 12 || b !== a);
-  }
-  pwHint();
-
-  // ── „pokaż" - przełącznik widoczności hasła w polu (D4). Ikona mówi, co zrobi tapnięcie. ──
-  const EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-  function toggleEye(btn) {
-    const input = btn.parentElement.querySelector('input');
-    const show = input.type === 'password';
-    input.type = show ? 'text' : 'password';
-    btn.innerHTML = show ? EYE_OFF : EYE;
-    btn.setAttribute('aria-label', show ? 'Ukryj hasło' : 'Pokaż hasło');
-  }
-</script>
 
 </body>
 </html>

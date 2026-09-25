@@ -4482,7 +4482,9 @@ Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zda
 samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,
 że lot się rozpoczął lub się zakończył" - dla koordynatora lotów i mechanika. Dokument
 decyzji: **`docs/obserwowanie-samolotu.md`** (model, pięć wiadomości, ekran 27, API,
-etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT - makiet ani kodu jeszcze nie ma.
+etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT zamknięty, **makiety O-A gotowe
+(2026-09-25, #219: `27`, `27a-c`, `25c`, szewron na 21, jedenasta zdolność w `piloci-konto`)**,
+kodu jeszcze nie ma (O-B #220, O-C #221, O-D #222).
 Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
 - **nowa zdolność `fleet.watch`** („Obserwowanie samolotów") w zestawach Akceptujący,
   Koordynator lotów i Technik, Administrator przez komplet. **BEZ backfillu** (druga tura
@@ -4497,6 +4499,12 @@ Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
   przypomnienie „za godzinę" to STAŁA 60 min w `policy.ts`, nie ustawienie klubu; historia
   operacji na karcie sięga po WSZYSTKIE operacje stronami (kursor parą jak w skrzynce),
   wykres zostaje przy 90 dniach
+- **trzecia tura 2026-09-25 (po makietach): LISTA OBSERWOWANYCH I ZARZĄDZANIE** - w Ustawieniach
+  (13, sekcja po motywie) CAŁA flota klubu z przełącznikiem przy każdej maszynie i stanem
+  „teraz" w podpisie (jedno miejsce do włączania i wyłączania, bez arkusza „dodaj"; tylko
+  przy `fleet.watch`, wymaga sieci) oraz karta „Obserwowane samoloty" w `#/konto` panelu
+  (`.opt` z rolą checkbox, trasy `/admin/api/me/watches`, bez audytu). Odwraca „ani
+  przełącznika w #/konto" z §7.2 - tamto było „wraca, gdy ktoś poprosi". Makiety `13c` i `konto`
 - **„lot się rozpoczął" = URUCHOMIENIE SILNIKA** (`engine_start`), nie przejęcie;
   **wpis ręczny MILCZY**; **ziarnem jest OPERACJA**, nie każdy start i lądowanie
 - **pięć wiadomości**: za godzinę · odwołano termin, który JUŻ przypomniano · uruchomienie
