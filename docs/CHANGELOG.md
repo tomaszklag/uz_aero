@@ -103,6 +103,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   zawsze czeka w skrzynce, więc bez zgody na powiadomienia nic nie ginie. Aplikacja pyta
   o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje
   albo gdy Twoja rezerwacja czeka na zgodę.
+- **Polityka prywatności opisuje rezerwacje i powiadomienia na telefon**: co zapisuje
+  kalendarz i kto co z niego widzi, czym jest token powiadomień i dlaczego ginie razem
+  z sesją logowania, kto pośredniczy w doręczeniu i co dostaje, jak powiadomienia wyłączyć -
+  skrzynka w aplikacji działa wtedy bez zmian.
 - **Uprawnienia nadaje się osobie, a nie roli.** Przy przyjęciu do klubu administrator wybiera
   gotowy zestaw - pilot, akceptujący, koordynator lotów, technik, administrator - albo zaznacza
   pojedyncze pozycje, na przykład samą zgodę na rezerwacje dla mechanika. Ta sama osoba może

@@ -1307,7 +1307,13 @@ technicznego tego nie wymusza - to decyzja z §12.3 i ma znane obie strony:
 - przeciw: dodatkowy przeskok przez cudzą usługę (zależność od dostępności Expo) i trzeci
   podmiot przetwarzający w polityce prywatności. Expo widzi token i treść, ale treść to
   z założenia tytuł rzeczy i identyfikatory, bez nazwisk i godzin (§12.1), a Expo deklaruje,
-  że nie przechowuje treści dłużej, niż trwa doręczenie;
+  że nie przechowuje treści dłużej, niż trwa doręczenie. **Uściślenie z 2026-09-25
+  (#168 Z6)**: `data` budzika to dziś `{ kind, orgId, ...payload }` (`Notifier.wake`),
+  więc przez Expo i FCM jadą także godziny terminu, identyfikatory osób, powód odmowy
+  i odczyty przy zdaniu - a telefon czyta z tego WYŁĄCZNIE `kind`, `orgId`, `bookingId`
+  i `aircraftId` (`pushTarget.ts`). Polityka prywatności (sekcja 5.2) opisuje stan
+  faktyczny; zawężenie `data` do tych czterech pól jest otwartą propozycją - po niej
+  wiersz tabeli w polityce skraca się do samych identyfikatorów;
 - droga bezpośrednia, gdyby pośrednik zaczął przeszkadzać: nowy adapter za `PushPort`
   (JWT RS256 z `node:crypto` na kluczu konta usługi → token dostępu Google →
   `projects/<id>/messages:send` osobno na urządzenie, `fetch` bez zależności), telefon

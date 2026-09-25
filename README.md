@@ -227,9 +227,11 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
        (3.1.0 idzie nowym plikiem). Próba PRZED wydaniem: dev build (`npm run build:dev`
        po kroku 2 i 3) z lokalnym serwerem na `PUSH_PROVIDER=expo` → rezerwacja w klubie
        ze ścieżką → telefon akceptującego dostaje „Prośba o zgodę".
-    6. Polityka prywatności (`https://ninerdeck.pl/prywatnosc.html`): dopisać
-       powiadomienia push - token urządzenia przypięty do sesji logowania, po co
-       (prośby o zgodę i decyzje o rezerwacjach), jak wyłączyć (ustawienia systemu).
+    6. Polityka prywatności (`site/src/prywatnosc.html`, sekcja 5.2) opisuje powiadomienia:
+       token przypięty do sesji logowania, obu pośredników doręczenia (Expo Push Service,
+       Firebase Cloud Messaging) i co dostają, jak wyłączyć (ustawienia systemu). Zmiana
+       dostawcy albo zawartości pola `data` budzika (`Notifier.wake`) to zmiana tej sekcji
+       w tym samym PR-ze.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

@@ -135,7 +135,58 @@
   <p>Zgłoszenia trafiają do <strong>operatora aplikacji</strong> (punkt 1), a nie do administratora
   Twojego klubu - to jedna kolejka dla całego serwera i klub nie ma do niej dostępu.</p>
 
-  <h2>5. Gdzie i jak długo</h2>
+  <h2>5. Rezerwacje i powiadomienia</h2>
+  <p>Aplikacja i panel prowadzą <strong>kalendarz floty</strong>: rezerwacje samolotów, ich
+  akceptację przez klub i wyłączenia maszyn z użytku. Te dane opisują zamiar, nie odbyty lot,
+  i są przechowywane osobno od dziennika operacji (punkt 4). Kalendarz wymaga połączenia
+  z serwerem - telefon nie trzyma jego kopii.</p>
+
+  <h3>5.1. Rezerwacja samolotu</h3>
+  <p>Rezerwacja zapisuje termin, samolot, rezerwującego i drugiego pilota, zadanie, trasę,
+  planowany czas lotu i notatkę. Członkowie klubu widzą w kalendarzu <strong>tylko to, czego
+  potrzebują, żeby zaplanować własny lot</strong>: godziny, maszynę, kto ją zarezerwował
+  i rodzaj zajętości (przy wyłączeniu z użytku - także powód). Zadanie, trasę, plan i notatkę
+  widzi rezerwujący, osoby akceptujące rezerwacje w tym klubie oraz administrator w panelu.</p>
+  <p>Jeśli klub ustawił ścieżkę akceptacji, każda decyzja - zgoda albo odmowa - zapisuje się
+  z osobą, chwilą i powodem; przy odmowie powód jest wymagany, bo czyta go rezerwujący.
+  Historia decyzji jest dopisywalna jak dziennik: przesunięcie terminu unieważnia zgody, ale
+  ich nie kasuje. Rezerwujący widzi w aplikacji krok i powód decyzji, administrator w panelu -
+  także osobę, która ją podjęła. Osoba akceptująca widzi przed decyzją podgląd pilota (nalot
+  na tej maszynie, z ostatnich 30 i 90 dni, ostatnie loty, najbliższe terminy) i samolotu -
+  są to dane z dziennika klubu udostępniane wyłącznie na potrzeby tej decyzji. Osoba
+  z uprawnieniem do obserwowania samolotów widzi ponadto kartę maszyny: kto ją ma teraz,
+  liczniki, terminy i historię jej operacji.</p>
+
+  <h3>5.2. Skrzynka powiadomień i powiadomienia na telefon</h3>
+  <p>Prośby o zgodę, decyzje w Twojej sprawie, wygaśnięcie terminu oraz - po włączeniu
+  obserwowania samolotu - wiadomości o lotach tej maszyny trafiają do <strong>skrzynki
+  w aplikacji</strong>. Skrzynka jest na serwerze klubu i to ona jest treścią: przechowuje
+  wiadomość, chwilę jej powstania i to, czy została przeczytana. Widzisz ją wyłącznie Ty.</p>
+  <p><strong>Powiadomienie na telefon jest tylko sygnałem</strong>, że w skrzynce coś czeka.
+  Działa dopiero po Twojej zgodzie: system Android pyta o nią, a aplikacja prosi wyłącznie
+  wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje, gdy Twoja rezerwacja
+  czeka na zgodę albo gdy włączasz obserwowanie samolotu. Bez zgody nic nie ginie: skrzynka
+  i licznik przy dzwonku działają tak samo.</p>
+  <p>Po zgodzie telefon otrzymuje od systemu <strong>identyfikator instalacji aplikacji</strong>
+  („token powiadomień" - losowy ciąg, który nie zawiera danych o Tobie ani o urządzeniu)
+  i przekazuje go na serwer. Serwer zapisuje go <strong>razem z sesją logowania</strong>
+  (punkt 2.3): token znika z chwilą zakończenia sesji - wylogowaniem albo zdalnie z panelu -
+  oraz wtedy, gdy dostawca zgłosi, że aplikacji już nie ma na urządzeniu.</p>
+  <p>Doręczeniem zajmują się dwa podmioty przetwarzające: <strong>Expo Push Service</strong>
+  (650 Industries, Inc., USA), do którego serwer wysyła powiadomienia, oraz
+  <strong>Google Firebase Cloud Messaging</strong>, którym Expo doręcza je do systemu Android.
+  Otrzymują one:</p>
+  <table>
+    <tr><th>Dane</th><th>Po co</th></tr>
+    <tr><td>token powiadomień</td><td>adres urządzenia, na które ma trafić sygnał</td></tr>
+    <tr><td>tytuł i jedno zdanie powiadomienia - bez nazwisk (np. „Prośba o zgodę", „Rezerwacja odrzucona", „SP-ABC uruchomiona")</td><td>to, co widzisz na ekranie blokady</td></tr>
+    <tr><td>dane sprawy: rodzaj wiadomości, identyfikatory klubu, rezerwacji, samolotu i osób, godziny terminu; przy odmowie - jej powód; przy zdaniu samolotu - odczyty i czas pracy silnika</td><td>tapnięcie otwiera właściwy ekran - aplikacja czyta z nich rodzaj wiadomości oraz identyfikatory klubu, rezerwacji i samolotu, a treść pobiera z serwera</td></tr>
+  </table>
+  <p>Dostawcy pośredniczą wyłącznie w doręczeniu i nie wykorzystują tych danych do własnych
+  celów. Powiadomienia nie zawierają położenia ani danych z dziennika poza wymienionymi wyżej.
+  Wyłączysz je w każdej chwili w ustawieniach systemu (punkt 8).</p>
+
+  <h2>6. Gdzie i jak długo</h2>
   <p>Dane są przechowywane na serwerze aplikacji u dostawcy infrastruktury chmurowej oraz
   <strong>lokalnie na telefonie pilota</strong>. Zapis lokalny nie znika po wysłaniu i nie ma
   takiego znikać: to on pozwala aplikacji działać bez zasięgu i z niego liczą się „Mój dzień"
@@ -148,14 +199,14 @@
   w których brałeś udział - wtedy członkostwo zostaje wyłączone, a wpisy pozostają w dzienniku
   klubu jako dokument eksploatacji samolotów.</p>
   <p>Danych nie sprzedajemy ani nie przekazujemy podmiotom trzecim poza dostawcami infrastruktury
-  niezbędnymi do działania usługi: dostawcą hostingu, na którym stoi serwer i baza, oraz dostawcą
-  wysyłki poczty (punkt 2.4).</p>
+  niezbędnymi do działania usługi: dostawcą hostingu, na którym stoi serwer i baza, dostawcą
+  wysyłki poczty (punkt 2.4) oraz dostawcami doręczania powiadomień na telefon (punkt 5.2).</p>
 
-  <h2>6. Pliki cookie i dane na urządzeniu</h2>
+  <h2>7. Pliki cookie i dane na urządzeniu</h2>
   <p>Panel administratora używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.
   Nie stosujemy plików cookie analitycznych ani reklamowych; aplikacja i panel nie zawierają
   narzędzi śledzących, nie profilują i nie podejmują decyzji w sposób zautomatyzowany wobec osób.</p>
-  <p>Aplikacja przechowuje dane <strong>na samym urządzeniu</strong>: dziennik operacji (punkt 5),
+  <p>Aplikacja przechowuje dane <strong>na samym urządzeniu</strong>: dziennik operacji (punkt 6),
   poświadczenia logowania i skrót PIN-u w bezpiecznym magazynie systemu Android, kopię listy
   samolotów i pilotów klubu potrzebną do pracy bez zasięgu oraz drobne ustawienia (motyw,
   ostatnio wybrane zadanie). Na urządzeniu dzielonym zapisana jest dodatkowo lista klubów,
@@ -165,7 +216,7 @@
   <p>Strona internetowa Ninerdeck ładuje wyłącznie kroje pisma z Google Fonts i nie ustawia
   własnych plików cookie.</p>
 
-  <h2>7. Twoje prawa</h2>
+  <h2>8. Twoje prawa</h2>
   <p>Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania
   oraz sprzeciwu. W tym celu skontaktuj się z administratorem klubu albo napisz do operatora aplikacji
   na adres <a href="mailto:kontakt@ninerdeck.pl">kontakt@ninerdeck.pl</a>.</p>
@@ -176,11 +227,14 @@
         zmiana wylogowuje pozostałe urządzenia;</li>
     <li><strong>cofnąć dostęp konta Google</strong> - w ustawieniach swojego konta Google
         (Bezpieczeństwo → Połączenia z aplikacjami i usługami innych firm);</li>
+    <li><strong>wyłączyć powiadomienia na telefon</strong> - w ustawieniach systemu Android
+        (Aplikacje → Ninerdeck → Powiadomienia); skrzynka w aplikacji działa dalej, a wylogowanie
+        usuwa token powiadomień z serwera;</li>
     <li><strong>usunąć dane z urządzenia</strong> - wylogowując się w aplikacji (wcześniej poczekaj,
         aż zapisy dojdą do klubu) albo odinstalowując ją.</li>
   </ul>
 
-  <h2>8. Zmiany</h2>
+  <h2>9. Zmiany</h2>
   <p>O zmianach tej polityki informujemy na tej stronie, podając datę obowiązywania nowej wersji.</p>
 </main>
 
