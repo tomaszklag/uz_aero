@@ -219,8 +219,25 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
        key** (JSON) → `npx eas-cli credentials -p android` → pakiet → Push Notifications
        (FCM V1) → wgraj klucz. Osobno dla pakietu dev. Stary „server key" jest wycofany
        przez Google.
-    4. Zmienne usługi: `PUSH_PROVIDER=expo`; opcjonalnie `PUSH_ACCESS_TOKEN`
-       (expo.dev → Account → Access tokens) - z nim Expo odrzuca wysyłki spoza konta.
+    4. Zmienne usługi: `PUSH_PROVIDER=expo` oraz `PUSH_ACCESS_TOKEN` - technicznie
+       opcjonalny, na produkcji WSKAZANY: bez niego każdy, kto pozna token urządzenia
+       (`ExponentPushToken[…]`), może przez Expo słać na ten telefon dowolne budziki.
+       To token KONTA EXPO, robi się go w przeglądarce (nie w `eas-cli`) i jako
+       **robot**, nie personal access token: robot to osobna tożsamość z własną rolą,
+       którą unieważnia się bez ruszania własnego konta, a personal token działa w pełni
+       jak właściciel (buildy, zmiany projektu).
+       1. expo.dev → avatar → Account settings → **Access tokens**
+          (`https://expo.dev/accounts/<konto>/settings/access-tokens`) → **Add robot**,
+          nazwa np. `ninerdeck-server`, rola Developer (Viewer prawdopodobnie wystarcza
+          do wysyłki, ale tego nie sprawdzono).
+       2. Przy robocie **Create token** (nazwa np. `railway-push`) - ciąg widać RAZ.
+       3. Railway → usługa serwera → Variables → `PUSH_ACCESS_TOKEN` = ten ciąg (sam
+          token, bez „Bearer" i bez cudzysłowów); Railway robi redeploy.
+       4. DOPIERO POTEM expo.dev → projekt → Project settings → **Enhanced Security for
+          Push Notifications**: od tej chwili Expo odrzuca wysyłki bez tokenu konta.
+          Kolejność 3 → 4 jest twarda - wymuszanie włączone przy pustej zmiennej daje
+          odmowy Expo w logu serwera i ciszę w telefonach.
+
        **Brak `PUSH_PROVIDER` nie daje żadnego objawu na serwerze** - jedynym śladem jest
        cisza w telefonach przy działającej skrzynce.
     5. **Nowy APK**: `expo-notifications` to moduł natywny, więc OTA go nie dowiezie

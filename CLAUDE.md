@@ -4186,7 +4186,11 @@ Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decy
 - **PUSH NIE NIESIE NAZWISK ANI GODZIN**: ląduje na ekranie blokady, który widzi każdy,
   kto akurat patrzy na telefon. Tytuł nazywa rzecz („Prośba o zgodę"), a treść stoi
   w skrzynce. `payload` wozi IDENTYFIKATORY - znak maszyny rozwiązuje aplikacja z cache
-  floty, jak wszędzie indziej
+  floty, jak wszędzie indziej. **Od #228 (2026-09-25) `data` budzika to DOKŁADNIE cztery
+  pola**: `kind`, `orgId`, `bookingId`, `aircraftId` (`notify/pushData.ts`, klucz tylko
+  z niepustym napisem) - payload skrzynki NIE rozlewa się do push, bo Expo i FCM widziały
+  przez to godziny, osoby, powód odmowy i odczyty, których telefon nie czytał
+  (`pushTarget.ts`). Nowe pole czytane przez telefon dopisuje się do `PUSH_DATA_KEYS`
 - **KURSOR SKRZYNKI JEST PARĄ** `(created_at, id)`: powiadomienia jednej decyzji rodzą
   się w tej samej transakcji, więc sam stempel nie porządkuje ich jednoznacznie i strona
   potrafiłaby zgubić wiersz. Kursor NIEPEŁNY to `400`, a nie ciche „od początku" -

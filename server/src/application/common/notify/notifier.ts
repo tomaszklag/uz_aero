@@ -22,6 +22,7 @@ import type {
   Queryable,
 } from '../ports.ts';
 import type { NotificationDraft } from './bookingNotices.ts';
+import { pushData } from './pushData.ts';
 
 export class Notifier {
   constructor(
@@ -69,11 +70,14 @@ export class Notifier {
             token,
             title: draft.push.title,
             body: draft.push.body,
-            // KLUB w danych budzika (obserwowanie §8, R6): osoba w dwóch klubach dostaje
-            // push z klubu B przy aktywnym klubie A, a ekran otwarty tokenem A odpowiedziałby
-            // 404. Telefon porównuje ten klub z aktywnym i przy różnicy otwiera skrzynkę
-            // z instrukcją zamiast karty, która nie ma jak się wczytać.
-            data: { kind: draft.kind, orgId, ...draft.payload },
+            // DOKŁADNIE to, co telefon czyta (#228, `pushData.ts`): rodzaj, KLUB
+            // i identyfikatory rezerwacji i maszyny - reszta payloadu zostaje w skrzynce,
+            // bo pośrednicy (Expo, FCM) nie mają jej po co widzieć. KLUB (obserwowanie §8,
+            // R6): osoba w dwóch klubach dostaje push z klubu B przy aktywnym klubie A,
+            // a ekran otwarty tokenem A odpowiedziałby 404 - telefon porównuje ten klub
+            // z aktywnym i przy różnicy otwiera skrzynkę z instrukcją zamiast karty,
+            // która nie ma jak się wczytać.
+            data: pushData(orgId, draft),
           });
         }
       }
