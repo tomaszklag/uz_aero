@@ -31,6 +31,21 @@ Treść podręcznika i wydań to `docs/podrecznik/` i `docs/CHANGELOG.md`, a ży
 `design/*.html` czytane tam, gdzie leżą. **Kopii żadnego z tych plików nie ma nigdzie** -
 to była cena osobnego repozytorium i to ona zniknęła.
 
+## Wejście do panelu ze strony (2026-09-25)
+
+Strona ma DWA wejścia, bo ma dwóch czytelników: pilot idzie po APK („Pobierz", zielony),
+administrator do panelu („Panel klubu", ta sama rodzina przycisku bez gradientu). Panel
+stoi w nagłówku obok „Pobierz" (na telefonie znika - dwa pille nie mieszczą się obok
+marki, a panel jest narzędziem biurka), jako drugi przycisk w hero, jako duży przycisk
+pod listą modułów w sekcji `#panel` i w stopce. **Cel jest WZGLĘDNY: `admin/`** - na jednym
+hoście (dev, testy) otwiera panel wprost, a na hoście strony serwer odsyła 301 na host
+aplikacji (`server/src/http/hostSplit.ts`); zapisanie `https://app.ninerdeck.pl/admin/`
+na sztywno psułoby stronę wszędzie poza produkcją. Strony podręcznika i wydań mają nagłówki
+składane przez renderery (`tools/render-docs.mjs`, `tools/render-changelog.mjs`) i dostają
+ten sam pill obok „Pobierz"; strona pobierania - sam pill, bo „Pobierz" jest jej treścią.
+Polityka prywatności i regulamin mają nawigację „Dokumenty" bez żadnej akcji i zostają
+bez zmian.
+
 ## Czego na stronie NIE MA
 
 **Sekcja „Umów prezentację" jest UKRYTA** (2026-09-07, decyzja właściciela): zniknął

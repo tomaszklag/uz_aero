@@ -78,6 +78,12 @@ skrzynka rozjazdów i eksporty kart dnia w nowym stylu*):
 5. **statystyki i analityka zużycia** - `/stats` i `/fleet/:id/consumption` bez klienta (§8);
 6. **pulpit** - wraca wyłącznie jako „Do sprawdzenia", nie jako kafle z licznikami (§9).
 
+**Uzupełnienie 2026-09-25 - dochodzi zgłoszenie #205 „Obserwowanie samolotu"** (decyzja
+właściciela: wydanie razem z 3.2.0). To jedyna część tego milestone'u dotykająca APLIKACJI
+PILOTA: karta maszyny w telefonie z wykresami motogodzin i paliwa, obserwowanie
+i pięć powiadomień o lotach maszyny, nowa zdolność `fleet.watch`. Dokument decyzji,
+model, etapy O-A…O-D i to, co zmienia w §10-§12: **`docs/obserwowanie-samolotu.md`**.
+
 ### 1.3 Świadomie poza zakresem
 
 - **konserwacja** (`/admin/api/maintenance/*`: przebudowa projekcji, czyszczenie refreshy,
@@ -415,6 +421,14 @@ zostają dwie (`admin`, `pilot` - `docs/panel-2.0.md` §3.2a).
 Zdolność dokłada się wtedy, gdy pojawia się nowy ZASÓB albo nowa oś władzy
 (`reservations.manage` przy rezerwacjach) - a tu żaden z tych dwóch warunków nie zachodzi.
 
+**Uzupełnienie 2026-09-25: JEDNA nowa zdolność jednak dochodzi - `fleet.watch`** ze
+zgłoszenia #205 (`docs/obserwowanie-samolotu.md` §3), bo dołączyło ono do tego wydania.
+Zdanie wyżej zostaje prawdziwe dla sześciu epików panelu: obserwowanie jest nowym
+RODZAJEM dostępu do floty (patrzeć i być budzonym, nie zarządzać), czyli dokładnie tym
+warunkiem, o którym mówi akapit. Katalog panelu i opisy zestawów zmienia epik O-D;
+migracja 15 to sam DDL, bez backfillu zestawów (tamże §3.2 - decyzja właściciela
+2026-09-25: baza nie ma jeszcze prawdziwych klubów).
+
 ---
 
 ## 11. Wydanie: panel jedzie bez APK i PRZED Google Play
@@ -449,6 +463,14 @@ Konsekwencje, które musi obsłużyć epik P-W:
   więc każdy nowy ekran ma stronę albo akapit. Reguła „zmiana ekranu w PR = zmiana strony
   podręcznika" obowiązuje każdy epik, nie tylko wydaniowy.
 
+**Uzupełnienie 2026-09-25 - aplikacja pilota JEDNAK dostaje aktualizację, ale OTA:**
+zgłoszenie #205 (`docs/obserwowanie-samolotu.md`) dołączyło do 3.2.0 i niesie ekran karty
+maszyny, wykresy i pięć powiadomień w telefonie. Modułu natywnego nie rusza, więc jedzie
+`npm run update:prod` na runtime 3.1.0 **bez podbicia `version`** - zdanie o `app.json`
+wyżej zostaje w mocy. Kolejność wdrożenia: serwer z migracją 15 i panel PRZED OTA; telefony
+na 3.0.0 nic nie dostają, bo i tak potrzebują APK 3.1.0. Migracja 15 jest addytywna
+(§4 tamtego dokumentu), więc punkt o migracji wyżej dostaje pierwszy realny przypadek.
+
 ---
 
 ## 12. Etapy i kolejność realizacji
@@ -472,6 +494,10 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 5. **P-E - statystyki i analityka**: moduł statystyk i karta analityki w szufladzie
    samolotu. Może iść równolegle; zależy od §4.5 (jedna podstawa liczenia).
 6. **P-W - wydanie**: changelog, podręcznik, przegląd bezpieczeństwa, wdrożenie.
+7. **O-A…O-D - obserwowanie samolotu** (uzupełnienie 2026-09-25, zgłoszenie #205):
+   makiety telefonu → serwer (migracja 15, powiadomienia, karta) → aplikacja → katalog
+   zdolności w panelu. Niezależne od P-A…P-E; wchodzą do P-W jako OTA aplikacji.
+   Etapy i zależności: `docs/obserwowanie-samolotu.md` §9.
 
 | Epik | Issue |
 |---|---|
@@ -481,6 +507,10 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 | P-D do sprawdzenia: rozjazdy i eksporty | #185 |
 | P-E statystyki i analityka zużycia | #186 |
 | P-W wydanie 3.2.0 | #187 |
+| O-A obserwowanie: makiety telefonu i zakres w panelu | #219 (zgłoszenie nadrzędne #205) |
+| O-B obserwowanie: serwer - migracja 15, powiadomienia, karta maszyny | #220 |
+| O-C obserwowanie: aplikacja - karta 27, wykresy z gestami, skrzynka | #221 |
+| O-D obserwowanie: panel - `fleet.watch` w katalogu i zestawach | #222 |
 
 ---
 

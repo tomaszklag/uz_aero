@@ -1524,6 +1524,43 @@ jest wspólne i nowa metoda nie ma prawa tego powtórzyć.
    Powierzchnia bez dostępu do `@ninerdeck/domain` (strona `/haslo/`) trzyma LUSTRO
    z testem równości - nigdy drugą implementację bez strażnika.
 
+### Nowy rodzaj powiadomienia (3.1.0, `docs/rezerwacje.md` §12; pierwsze użycie spoza rezerwacji: `docs/obserwowanie-samolotu.md` §5)
+
+Skrzynka jest ŹRÓDŁEM PRAWDY, push BUDZIKIEM - i z tego wynika cały przepis. Nowy rodzaj
+wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
+
+1. **Rodzaj i treść w `application/common/notify/*Notices.ts`** - czysta funkcja: fakty
+   → `NotificationDraft` (adresat, `kind`, `payload`, `push`). Brzmienie sprawdza test,
+   nie oglądanie telefonu. Napis rodzaju jedzie na drut i czyta go aplikacja, więc jest
+   częścią kontraktu: dopisuje się go po stronie serwera, a aplikacja go DOGANIA.
+2. **`payload` wozi IDENTYFIKATORY i czasy, nie zdania.** Znak maszyny i nazwisko
+   rozwiązuje aplikacja z cache floty, jak na każdym innym ekranie. Push jest krótki,
+   BEZ NAZWISK I GODZIN terminu - ląduje na ekranie blokady, który widzi każdy, kto
+   akurat patrzy na telefon.
+3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
+   mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
+   uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
+   się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
+4. **Wiadomość o zdarzeniu Z REJESTRU niesie czas Z REJESTRU**, nie chwilę dotarcia
+   paczki: telefon dosyła zapisy po godzinach, a „lot się rozpoczął" powstaje, gdy paczka
+   dojechała. Skrzynka pisze czas zdarzenia i osobno „zapis dotarł …", gdy zwłoka jest
+   widoczna; paczka niosąca początek i koniec tej samej rzeczy rodzi TYLKO koniec
+   (`docs/obserwowanie-samolotu.md` §2.3). Rezerwacje tego problemu nie mają - liczy je
+   serwer własnym zegarem.
+5. **Sprawca własnego działania nie jest budzony**, a prawo adresata sprawdza się PRZY
+   WYSYŁCE (aktywne członkostwo × zdolność w SQL-u), nie w chwili zapisu subskrypcji -
+   odebranie zdolności wycisza od razu, bez sprzątania wierszy.
+6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
+   da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
+   wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED
+   aplikacją.
+7. **Wiadomość o TERMINIE dostaje `day`** (doba klubu, §6.1 rezerwacji) i telefon liczy
+   godzinę odejmowaniem; wiadomość o OPERACJI niesie `at` w UTC, a `day` ma `null`.
+   Dwa zegary, świadomie - jak na ekranie podglądu 26B.
+8. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
+   ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
+   strażniki izolacji klubów.
+
 ---
 
 ## 8. Testy

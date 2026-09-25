@@ -375,6 +375,18 @@ footer a:hover { color: var(--green); }
 .top nav a.cta.dl .dl-txt b { font-size: 19px; letter-spacing: 1.6px; }
 .top nav a.cta.dl .dl-arr { width: 26px; height: 26px; border-width: 1.2px; }
 .top nav a.cta.dl .dl-arr svg { width: 14px; height: 14px; }
+/* Drugie wejście w nagłówku: PANEL KLUBU (2026-09-25). Ta sama kompaktowa rodzina, co
+   „Pobierz", ale bez gradientu - pilot idzie po APK, administrator do panelu, a zielony
+   przycisk jest na stronie jeden. Reguła nagłówka wyżej wygrywa specyficznością z `.dl.ghost`,
+   więc kolor i tło trzeba tu powtórzyć. Na telefonie pill znika w całości: dwa pille obok
+   marki nie mieszczą się w 360 px, a panel jest narzędziem biurka - wejście zostaje w hero,
+   w sekcji panelu i w stopce. */
+.top nav a.cta.dl.ghost { color: var(--text-primary); background: rgba(255,255,255,0.03); box-shadow: 0 0 0 1px var(--border-strong); }
+.top nav a.cta.dl.ghost:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--green-border), 0 10px 26px rgba(0,0,0,0.35); }
+.top nav a.cta.dl.ghost:hover .dl-txt b { color: var(--green); }
+@media (max-width: 560px) { .top nav a.cta.dl.ghost { display: none; } }
+/* Przycisk „Otwórz panel klubu" pod listą modułów w sekcji panelu. */
+.modules + .dl-wrap { margin-top: 24px; }
 .top nav a.on { color: var(--text-primary); background: rgba(255,255,255,0.06); }
 @media (prefers-reduced-motion: reduce) { .dl::before, .dl:hover .dl-arr svg { animation: none; } }
 @media (max-width: 560px) {

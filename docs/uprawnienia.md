@@ -58,6 +58,16 @@ niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawn
 | **Administrator** | komplet zdolności klubowych |
 | **Własny zakres** | cokolwiek innego |
 
+**Uzupełnienie 2026-09-25 (zgłoszenie #205, wydanie 3.2.0 - `docs/obserwowanie-samolotu.md`
+§3):** katalog rośnie o jedenastą zdolność klubową **`fleet.watch` „Obserwowanie
+samolotów"** (karta maszyny w aplikacji i powiadomienia o jej lotach), a decyzją
+właściciela wchodzi ona do TRZECH zestawów naraz - Akceptujący, Koordynator lotów
+i Technik (Administrator przez komplet). Zestaw „Akceptujący" przestaje przez to nazywać
+jedną rzecz i jego opis w panelu ma mówić o dwóch. **Backfillu przy #205 NIE MA**
+(decyzja właściciela 2026-09-25: baza nie ma jeszcze prawdziwych klubów - „jeszcze nie
+używaliśmy aplikacji, więc startujemy od zera"); reguła na przyszłość, gdy będzie miała
+na czym działać - §12.
+
 **ZESTAW NIE JEST BYTEM W MODELU.** Po wybraniu w bazie stoi ZBIÓR ZDOLNOŚCI, nie nazwa -
 zestaw jest skrótem myślowym przy wypełnianiu, a etykieta liczy się z powrotem ze zbioru
 (§2.3). Dzięki temu zmiana katalogu - dołożenie „Skarbnika", przemianowanie „Technika" -
@@ -263,36 +273,36 @@ Do przepisania razem z kolumną: `isPilotRole`/`DEFAULT_ROLE`, `PilotRole` w kon
 zgłoszenia kodem klubu (dziś nadaje rolę - odtąd nadaje preset) oraz dwa miejsca wyświetlające
 rolę po polsku (`scopeOptions.ts`, `AccountScreen.tsx`).
 
-### 9.1 Co naprawdę stanęło (epik wykonany 2026-09-23)
-
-Odstępstwa wobec planu wyżej - wszystkie w tę stronę, że zmiana okazała się szersza
-o jedną pozycję katalogu i węższa o jeden ekran:
-
-- **KATALOG UROSŁ O `reservations.approve`** (dziesiąta zdolność klubowa). Plan jej nie
-  wymieniał, bo należy do workflow akceptacji (#164) - ale makieta L1 rysuje ją na
-  ekranie zakresu, a bez niej zestaw „Akceptujący" musiałby stać na
-  `reservations.manage`, czyli na władzy nad CUDZYM planem. To odbierałoby całej
-  zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
-  Backfill migracji 12 nadaje ją administratorom razem z resztą - obie rzeczy jadą
-  w tym samym wydaniu, więc to jest stan z chwili wdrożenia.
-- **`PilotCounts.byRole` ZNIKNĘŁO** zamiast zamienić się w podział po zakresach:
-  „ilu administratorów" przestało mieć jedną odpowiedź, a kafli z licznikami panel 2.0
-  i tak nie ma. Na pytanie „kto wejdzie do panelu" odpowiada chip `panel.access`.
-- **`PilotListFilter.roles: PilotRole[]` → `capability?: Capability`** - jedna zdolność,
-  nie lista: po epiku #197 pytanie ma dokładnie jedną odpowiedź i nie trzeba jej
-  sklejać z katalogu ról. Napis spoza katalogu jest w tym parametrze IGNOROWANY,
-  a nie odrzucany: to parametr widoku, a pusta lista po literówce w adresie byłaby
-  gorsza niż pełna.
-- **`admin_audit.actor_role`** niesie klucz zakresu (`scopeKey`), a kolumna zostaje
-  pod starą nazwą: wiersze sprzed 3.1.0 mówią `admin`/`pilot` i tak zostaje.
-- **ZBIÓR JEDZIE Z BAZY POSORTOWANY ALFABETYCZNIE** (`string_agg … ORDER BY`), a nie
-  w kolejności katalogu. Kolejność nie jest informacją - panel pyta o obecność pozycji
-  i rysuje we własnej kolejności czytania - ale determinizm ma znaczenie dla diffu
-  w dzienniku nadzoru.
-- **Napis, nie tablica**: zdolności czyta się z jednego `string_agg`, bo tablice
-  Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`. Ta sama
-  decyzja, co przy `IN (…)` zamiast `= ANY ($n)`.
-
+### 9.1 Co naprawdę stanęło (epik wykonany 2026-09-23)
+
+Odstępstwa wobec planu wyżej - wszystkie w tę stronę, że zmiana okazała się szersza
+o jedną pozycję katalogu i węższa o jeden ekran:
+
+- **KATALOG UROSŁ O `reservations.approve`** (dziesiąta zdolność klubowa). Plan jej nie
+  wymieniał, bo należy do workflow akceptacji (#164) - ale makieta L1 rysuje ją na
+  ekranie zakresu, a bez niej zestaw „Akceptujący" musiałby stać na
+  `reservations.manage`, czyli na władzy nad CUDZYM planem. To odbierałoby całej
+  zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
+  Backfill migracji 12 nadaje ją administratorom razem z resztą - obie rzeczy jadą
+  w tym samym wydaniu, więc to jest stan z chwili wdrożenia.
+- **`PilotCounts.byRole` ZNIKNĘŁO** zamiast zamienić się w podział po zakresach:
+  „ilu administratorów" przestało mieć jedną odpowiedź, a kafli z licznikami panel 2.0
+  i tak nie ma. Na pytanie „kto wejdzie do panelu" odpowiada chip `panel.access`.
+- **`PilotListFilter.roles: PilotRole[]` → `capability?: Capability`** - jedna zdolność,
+  nie lista: po epiku #197 pytanie ma dokładnie jedną odpowiedź i nie trzeba jej
+  sklejać z katalogu ról. Napis spoza katalogu jest w tym parametrze IGNOROWANY,
+  a nie odrzucany: to parametr widoku, a pusta lista po literówce w adresie byłaby
+  gorsza niż pełna.
+- **`admin_audit.actor_role`** niesie klucz zakresu (`scopeKey`), a kolumna zostaje
+  pod starą nazwą: wiersze sprzed 3.1.0 mówią `admin`/`pilot` i tak zostaje.
+- **ZBIÓR JEDZIE Z BAZY POSORTOWANY ALFABETYCZNIE** (`string_agg … ORDER BY`), a nie
+  w kolejności katalogu. Kolejność nie jest informacją - panel pyta o obecność pozycji
+  i rysuje we własnej kolejności czytania - ale determinizm ma znaczenie dla diffu
+  w dzienniku nadzoru.
+- **Napis, nie tablica**: zdolności czyta się z jednego `string_agg`, bo tablice
+  Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`. Ta sama
+  decyzja, co przy `IN (…)` zamiast `= ANY ($n)`.
+
 ## 10. Ryzyka
 
 | Ryzyko | Czym zamknięte |
@@ -301,6 +311,7 @@ o jedną pozycję katalogu i węższa o jeden ekran:
 | backfill gubi uprawnienia administratorów | kolejność z §9 i test migracji na świecie z dwoma klubami (`test/testWorld.ts`) |
 | zdolność nadana, ale trasa dalej pyta o rolę | dziewiętnaście pytań `can(...)` przechodzi bez zmian, a kompilator zgłosi każde wywołanie z dawną sygnaturą |
 | ktoś odtworzy rolę jako „preset zapisany w bazie" | §2.3 - kolumna znika, etykieta jest wyliczana |
+| zestaw ZYSKUJE zdolność, a istniejące zbiory zostają w tyle (od 2026-09-25) | §12 - na żywej bazie migracja z backfillem co do zbioru, z jawnie wypisanymi zestawami i testem czterech przypadków; przy #205 świadomie BEZ backfillu (decyzja właściciela: baza nie ma jeszcze prawdziwych klubów) |
 
 ## 11. Warianty odrzucone - nie wracać
 
@@ -312,3 +323,36 @@ o jedną pozycję katalogu i węższa o jeden ekran:
 | **Zdolności w tokenie zamiast w bazie** | odebranie uprawnienia działałoby dopiero po wygaśnięciu tokenu, a brama i tak czyta członkostwo przy każdym żądaniu |
 | **`CHECK` na wartość `capability`** | migracja przy każdej nowej pozycji katalogu; napis spoza katalogu i tak nie nadaje niczego (§5) |
 | **Prawo do decyzji z samej obecności na liście kroku** | zapis z 2026-09-22, zastąpiony - drugi mechanizm uprawnień obok katalogu, niewidoczny dla `can(...)` |
+
+## 12. Zestaw, który ZYSKUJE zdolność, na żywej bazie wymaga backfillu (nauka z #205, 2026-09-25)
+
+§2.2 mówi, że zmiana katalogu „nie rusza nikomu uprawnień" - i to zdanie jest prawdziwe
+dla DOPISANIA albo PRZEMIANOWANIA zestawu. Nie jest prawdziwe dla zestawu, do którego
+decyzją właściciela WCHODZI nowa zdolność, i dowodem jest pierwszy taki przypadek:
+`fleet.watch` w Akceptującym, Koordynatorze lotów i Techniku (`docs/obserwowanie-samolotu.md`
+§3). `presetOf` w panelu i `scopeKey` na serwerze porównują zbiór członka ze zbiorem
+zestawu CO DO POZYCJI, więc bez backfillu nazajutrz po wdrożeniu każdy dzisiejszy
+administrator, technik, koordynator i akceptujący czyta się jako „Własny zakres",
+a administrator klubu dopisuje tę samą pozycję po kolei każdemu.
+
+**Przy #205 ta reguła NIE WCHODZI W ŻYCIE** - decyzja właściciela 2026-09-25: *„jeszcze
+nie używaliśmy aplikacji, więc tak jakby startujemy od zera"*. Baza hostowana nie ma
+prawdziwych klubów, tylko konta testowe, więc migracja 15 jest samym DDL, a członkostwa
+testowe z dawnym zbiorem zestawu czytają się po wdrożeniu jako „Własny zakres", dopóki
+administrator nie nada zakresu od nowa. Reguła zostaje zapisana na dzień, w którym będzie
+miała na czym działać - na klubie z prawdziwymi członkami:
+
+1. **nowa zdolność w kompletie (`CLUB_CAPABILITIES`) = backfill dla członkostw
+   z kompletem** - inaczej etykieta „Administrator" gaśnie wszystkim naraz;
+2. **nowa zdolność w zestawie = backfill dla członkostw o zbiorze DOKŁADNIE równym
+   temu zestawowi** w brzmieniu z chwili wdrożenia; zbiór własny zostaje nietknięty,
+   bo ktoś układał go ręcznie i nie wiemy, czy chciałby tej pozycji;
+3. **zestawy w migracji stoją WYPISANE**, nie wzięte z kodu (ta sama zasada, co przy
+   dziesięciu pozycjach backfillu migracji 12): migracja opisuje stan z chwili
+   wdrożenia i ma dawać ten sam wynik za rok;
+4. **test migracji na PGlite** obejmuje po jednym członkostwie na zestaw plus jedno
+   z własnym zbiorem - czterech dostaje pozycję, piąty nie.
+
+Odwrotna sytuacja - zdolność ZDJĘTA z zestawu - backfillu nie potrzebuje: nikomu nic
+nie odbieramy, a etykieta zestawu ma prawo zgasnąć, bo zbiór naprawdę przestał mu
+odpowiadać.
