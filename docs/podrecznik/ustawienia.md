@@ -15,7 +15,7 @@
 | **Bezpieczeństwo** | **Zmień PIN**: najpierw obecny, potem nowy. Po zmianie stary PIN przestaje działać od razu. |
 | **Hasło** | **Ustaw hasło** (gdy go jeszcze nie masz) albo **Zmień hasło**. Wymaga internetu - hasło sprawdza i zapisuje klub. |
 | **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
-| **Obserwowane samoloty** *(3.2.0, w przygotowaniu)* | Tylko dla osób z uprawnieniem „Obserwowanie samolotów": cała flota klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili. Wiersz otwiera kartę maszyny. Sekcja wymaga zasięgu - reszta ustawień nie. Więcej: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu-3-2-0-w-przygotowaniu). |
+| **Obserwowane samoloty** | Tylko dla osób z uprawnieniem „Obserwowanie samolotów": cała flota klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili. Wiersz otwiera kartę maszyny. Sekcja wymaga zasięgu - reszta ustawień nie. Więcej: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu). |
 
 @screen 20-pulpit "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
 

@@ -695,6 +695,27 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
      czeka na dev build - jak przy R-F, R-I (→ #169).
 4. **O-D - panel**: katalog i opisy zestawów (lustro unii) oraz karta „Obserwowane
    samoloty" w `#/konto` (decyzja 12) - po O-B.
+   **WYKONANE 2026-09-25** (gałąź `feature-222-panel-obserwowane`, issue #222). Katalog,
+   opisy i zestawy weszły już z O-B (lustro unii w `dto.ts`, `scope.ts`), więc ten epik
+   to sama karta: `screens/me/WatchCard.tsx` na `AccountScreen` (wyłącznie w sesji klubu
+   i przy `fleet.watch` - rozstrzyga ekran, karta zakłada, że wolno pytać),
+   `api/watches.ts` + `queries/useWatches.ts` (klucz `account.watches`), wiersze w czystym
+   `screens/me/watchRows.ts` z testem. Odstępstwa i doprecyzowania wobec makiety `konto`:
+   - zdania o stanie „teraz" są DOKŁADNIE zdaniami sekcji 13C telefonu („W locie · J. Nowak
+     · od 08:12 UTC", „Wolna · następny termin dziś 14:00") - jedna maszyna czyta się tak
+     samo w ustawieniach i w panelu; zalogowany jest w nich „Ty", jak na telefonie;
+   - dopisku „· zgodnie z rezerwacją" z makiety NIE MA: odpowiedź listy niesie stan maszyny,
+     a to, czy operacja realizuje rezerwację, liczy hero karty 27 z listy terminów, której
+     lista floty nie ma. Notatki wyłączenia („przegląd 100 h") też nie - cudza zajętość
+     jedzie polami z kalendarza (P2), więc zostaje powód z katalogu i „do 2 paź 18:00";
+   - terminy dobą klubu przez `Intl` ze strefą z odpowiedzi (jak kalendarz i kolejka
+     panelu), chwile operacji stemplem UTC - dwa zegary (§6.2);
+   - zapis przygasza WYŁĄCZNIE przełączany wiersz; odmowa serwera to baner nad listą
+     zdaniem z `apiMessage.ts`, a lista czyta się po zapisie na nowo (stan „teraz" też
+     się starzeje);
+   - sprawdzenie w przeglądarce na żywym serwerze (członek ze zdolnością, klub z flotą)
+     czeka na P-W (#169), jak przy R-H i #206; panel przeszedł `tsc` i komplet testów,
+     w tym strażników architektury, napisów i luster.
 5. **Wydanie - w P-W 3.2.0**, z JEDNĄ zmianą wobec `docs/panel-3.2.md` §11: aplikacja
    pilota DOSTAJE aktualizację OTA na runtime 3.1.0 (bez podbicia `version` - moduł
    natywny się nie zmienia). Kolejność: serwer z migracją 15 i panel PRZED OTA;
@@ -707,7 +728,7 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
 | O-A projekt i makiety | #219 |
 | O-B serwer | #220 - WYKONANE 2026-09-25 |
 | O-C aplikacja | #221 - WYKONANE 2026-09-25 |
-| O-D panel | #222 |
+| O-D panel | #222 - WYKONANE 2026-09-25 |
 | zgłoszenie nadrzędne | #205 (milestone „Panel admina 3.2.0") |
 
 ## 10. Ryzyka

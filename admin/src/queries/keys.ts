@@ -36,6 +36,12 @@ export const keys = {
     all: ['account'] as const,
     profile: ['account', 'profile'] as const,
     sessions: ['account', 'sessions'] as const,
+    /**
+     * Obserwowane samoloty (3.2.0, issue #205) - flota klubu SESJI ze stanem „teraz"
+     * i flagą tej osoby. Pod korzeniem konta, bo to ustawienie osoby o sobie, jak
+     * hasło; przełączenie klubu i tak zmiata cały cache (to inna flota).
+     */
+    watches: ['account', 'watches'] as const,
   },
 
   /**
