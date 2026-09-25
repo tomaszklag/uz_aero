@@ -144,7 +144,7 @@ export class BookingClockJob {
       if (closed == null) continue;
 
       released += 1;
-      await this.watching?.wake(notices);
+      await this.watching?.wake(candidate.orgId, notices);
     }
     return { checked: candidates.length, released };
   }
@@ -183,7 +183,7 @@ export class BookingClockJob {
       if (closed == null) continue;
 
       expired += 1;
-      await this.notifier.wake([notice]);
+      await this.notifier.wake(candidate.orgId, [notice]);
     }
     return expired;
   }
@@ -219,7 +219,7 @@ export class BookingClockJob {
       if (stamped == null) continue;
 
       reminded += 1;
-      await this.watching?.wake(notices);
+      await this.watching?.wake(candidate.orgId, notices);
     }
     return reminded;
   }

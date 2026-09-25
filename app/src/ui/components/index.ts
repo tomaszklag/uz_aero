@@ -30,6 +30,9 @@ export * from './layout/SkeletonScreen';
 export * from './layout/AppBar';
 export * from './layout/ScreenHeader';
 export * from './layout/IdentityStrip';
+// Obserwowanie samolotu (3.2.0): wykres odczytów karty maszyny i przełącznik obserwowania.
+export * from './data/ReadingsChart';
+export * from './settings/WatchSwitch';
 
 // Statusy i komunikaty
 export * from './status/SyncChip';

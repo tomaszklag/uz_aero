@@ -57,7 +57,7 @@ export class Notifier {
    * lista rosłaby przy każdej decyzji i przy każdej wysyłce płacilibyśmy za adresy,
    * o których dostawca już powiedział, że ich nie ma.
    */
-  async wake(drafts: readonly NotificationDraft[]): Promise<void> {
+  async wake(orgId: string, drafts: readonly NotificationDraft[]): Promise<void> {
     if (drafts.length === 0) return;
     try {
       // Jedna wiadomość na URZĄDZENIE, nie na osobę: pilot bywa zalogowany na telefonie
@@ -69,7 +69,11 @@ export class Notifier {
             token,
             title: draft.push.title,
             body: draft.push.body,
-            data: { kind: draft.kind, ...draft.payload },
+            // KLUB w danych budzika (obserwowanie §8, R6): osoba w dwóch klubach dostaje
+            // push z klubu B przy aktywnym klubie A, a ekran otwarty tokenem A odpowiedziałby
+            // 404. Telefon porównuje ten klub z aktywnym i przy różnicy otwiera skrzynkę
+            // z instrukcją zamiast karty, która nie ma jak się wczytać.
+            data: { kind: draft.kind, orgId, ...draft.payload },
           });
         }
       }

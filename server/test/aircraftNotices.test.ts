@@ -47,6 +47,7 @@ describe('adresaci i to, czego push nie niesie', () => {
         pilotId: 'AKO',
         dualId: 'JSE',
         at: T,
+        operation: 'skoki',
         planned: false,
         bookingId: null,
       }),
@@ -113,12 +114,14 @@ describe('operacja - czas Z REJESTRU, nie chwila dotarcia paczki', () => {
       pilotId: 'AKO',
       dualId: null,
       at: T,
+      operation: 'skoki',
       planned: true,
       bookingId: 'b-1',
     })[0]!;
     expect(planned.kind).toBe('aircraft_engine_started');
     expect(planned.payload.at).toBe('2026-06-22T08:12:00.000Z');
     expect(planned.payload.planned).toBe(true);
+    expect(planned.payload.operation).toBe('skoki');
     expect(planned.payload.bookingId).toBe('b-1');
     expect(planned.push).toEqual({
       title: 'SP-AXA uruchomiona',
@@ -131,6 +134,7 @@ describe('operacja - czas Z REJESTRU, nie chwila dotarcia paczki', () => {
       pilotId: 'AKO',
       dualId: null,
       at: T,
+      operation: null,
       planned: false,
       bookingId: null,
     })[0]!;

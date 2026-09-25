@@ -38,6 +38,10 @@ import type {
   RemoteApproval,
   RemoteApprovalQueue,
   RemoteAircraftPreview,
+  RemoteAircraftCard,
+  RemoteAircraftOperations,
+  RemoteWatchList,
+  OperationsCursor,
   RemoteInbox,
   RemoteBooking,
   RemoteBookingDetail,
@@ -468,6 +472,39 @@ export class HttpServerApi implements ServerPort {
     return this.request('GET', `/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`, {
       token,
     });
+  }
+
+  getAircraftCard(token: string, aircraftId: string): Promise<RemoteAircraftCard> {
+    return this.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/card`, { token });
+  }
+
+  getAircraftOperations(
+    token: string,
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations> {
+    const query = new URLSearchParams();
+    if (page?.limit != null) query.set('limit', String(page.limit));
+    if (page?.before != null) {
+      query.set('beforeAt', page.before.beforeAt);
+      query.set('beforeUuid', page.before.beforeUuid);
+    }
+    const suffix = query.toString();
+    const path = `/aircraft/${encodeURIComponent(aircraftId)}/operations`;
+    return this.request('GET', suffix === '' ? path : `${path}?${suffix}`, { token });
+  }
+
+  getAircraftWatches(token: string): Promise<RemoteWatchList> {
+    return this.request('GET', '/aircraft/watches', { token });
+  }
+
+  async setAircraftWatch(token: string, aircraftId: string, on: boolean): Promise<void> {
+    const response = await this.send(
+      on ? 'PUT' : 'DELETE',
+      `/aircraft/${encodeURIComponent(aircraftId)}/watch`,
+      { token },
+    );
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
   }
 
   getSlotSuggestions(

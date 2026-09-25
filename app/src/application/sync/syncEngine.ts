@@ -30,6 +30,10 @@ import {
   type InboxCursor,
   type RemoteApprovalQueue,
   type RemoteAircraftPreview,
+  type RemoteAircraftCard,
+  type RemoteAircraftOperations,
+  type RemoteWatchList,
+  type OperationsCursor,
   type RemoteInbox,
   type RemoteBookingDetail,
   type RemotePilotPreview,
@@ -197,6 +201,57 @@ export class SyncEngine {
 
   fetchAircraftPreview(bookingId: string): Promise<RemoteAircraftPreview | null> {
     return authorizedFetch(this.auth, (token) => this.server.getAircraftPreview(token, bookingId));
+  }
+
+  /**
+   * KARTA MASZYNY (`GET /aircraft/:id/card`, obserwowanie 3.2.0, §6). `null` = nie
+   * wiadomo TERAZ - brak sieci, odmowa, cudza maszyna: cały moduł wymaga sieci (§2.2),
+   * więc ekran mówi to wprost (27C), a nie rysuje liczników sprzed godziny.
+   */
+  fetchAircraftCard(aircraftId: string): Promise<RemoteAircraftCard | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getAircraftCard(token, aircraftId));
+  }
+
+  /** Historia maszyny stronami (`GET /aircraft/:id/operations`); ta sama trójka co wyżej. */
+  fetchAircraftOperations(
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations | null> {
+    return authorizedFetch(this.auth, (token) =>
+      this.server.getAircraftOperations(token, aircraftId, page),
+    );
+  }
+
+  /**
+   * CAŁA FLOTA ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`, 13C).
+   *
+   * Trzy odpowiedzi, bo sekcja w ustawieniach istnieje WYŁĄCZNIE dla osoby ze zdolnością
+   * (§6.6): lista, `'forbidden'` (serwer odmówił 403 - tej osoby sekcja nie dotyczy)
+   * albo `null` (nie wiadomo teraz). Zwinięcie 403 do `null` kazałoby każdemu pilotowi
+   * bez zasięgu oglądać zdanie o liście, której nigdy nie miał.
+   */
+  fetchAircraftWatches(): Promise<RemoteWatchList | 'forbidden' | null> {
+    return authorizedFetch(this.auth, async (token) => {
+      try {
+        return await this.server.getAircraftWatches(token);
+      } catch (error) {
+        if (error instanceof ServerRejectedError && error.status === 403) return 'forbidden' as const;
+        throw error;
+      }
+    });
+  }
+
+  /**
+   * Przełącznik obserwowania (`PUT`/`DELETE /aircraft/:id/watch`) - ZAPIS wprost, nie
+   * przez outbox (§2.2): ustawienie osoby, nie fakt z kabiny. `false` = nie dojechało
+   * (brak sieci, odmowa) i ekran mówi to POWODEM przy przełączniku.
+   */
+  async setAircraftWatch(aircraftId: string, on: boolean): Promise<boolean> {
+    const done = await authorizedFetch(this.auth, async (token) => {
+      await this.server.setAircraftWatch(token, aircraftId, on);
+      return true;
+    });
+    return done === true;
   }
 
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */

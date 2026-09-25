@@ -33,12 +33,26 @@ export const HISTORY_PAGE_SIZE = 30;
 
 export type AircraftNow =
   | { kind: 'retired' }
-  | { kind: 'flying'; sessionUuid: string; pilotId: string; dualId: string | null; since: number }
-  | { kind: 'claimed'; sessionUuid: string; pilotId: string; dualId: string | null; since: number | null }
-  | { kind: 'after_flight'; sessionUuid: string; pilotId: string; dualId: string | null; since: number }
+  | ({ kind: 'flying'; since: number } & HeldCrew)
+  | ({ kind: 'claimed'; since: number | null } & HeldCrew)
+  | ({ kind: 'after_flight'; since: number } & HeldCrew)
   | { kind: 'blocked'; bookingId: string; reason: string | null; until: number }
   | { kind: 'booked'; bookingId: string; pilotId: string | null; startsAt: number; endsAt: number }
   | { kind: 'free'; next: { bookingId: string; kind: BookingKind; startsAt: number } | null };
+
+/**
+ * Operacja W TOKU na herosie karty: kto ją ma, a obok - CO robi i SKĄD (makieta 27:
+ * „A. Kowalski · skoki · EPBK"). Zadanie i lotnisko startu pochodzą z tego samego
+ * wiersza projekcji, co załoga; telefon nie ma jak ich dociągnąć osobno, bo cudzej
+ * operacji nie ma u siebie (§2.2).
+ */
+export interface HeldCrew {
+  sessionUuid: string;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  departureIcao: string | null;
+}
 
 export interface AircraftNowInput {
   serviceStatus: ServiceStatus;
@@ -65,7 +79,13 @@ export function aircraftNow(input: AircraftNowInput): AircraftNow {
 
   const held = heldBy(input.sessions);
   if (held != null) {
-    const crew = { sessionUuid: held.sessionUuid, pilotId: held.picId, dualId: held.dualId };
+    const crew: HeldCrew = {
+      sessionUuid: held.sessionUuid,
+      pilotId: held.picId,
+      dualId: held.dualId,
+      operation: held.operation,
+      departureIcao: held.departureIcao,
+    };
     if (held.engineStartAt != null && held.engineStopAt == null) {
       return { kind: 'flying', ...crew, since: held.engineStartAt };
     }

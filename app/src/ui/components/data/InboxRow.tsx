@@ -33,6 +33,7 @@ const ICON: Record<InboxTone, IconName> = {
   no: 'clear',
   warn: 'warning',
   info: 'info',
+  news: 'info',
 };
 
 const TONE: Record<InboxTone, Tone> = {
@@ -41,6 +42,8 @@ const TONE: Record<InboxTone, Tone> = {
   no: 'red',
   warn: 'amber',
   info: 'neutral',
+  // Rzecz, która się DZIEJE z obserwowaną maszyną (25C): błękit, jak prośba.
+  news: 'blue',
 };
 
 export function InboxRow({ row, onPress }: InboxRowProps) {
@@ -75,9 +78,24 @@ export function InboxRow({ row, onPress }: InboxRowProps) {
             {row.sub}
           </AppText>
         )}
-        {row.reason != null && (
+        {(row.reason != null || row.lead != null) && (
           <AppText variant="body" style={s.reason}>
+            {/* Wyróżniony początek („Poza planem", „Paliwo 128 L") - ton z makiety 25C:
+                bursztyn mówi „uwaga", zieleń „w normie"; reszta zdania tonem podpisu. */}
+            {row.lead != null && (
+              <AppText
+                variant="body"
+                style={[s.reason, s.lead, { color: row.lead.tone === 'amber' ? theme.colors.amber : theme.colors.green }]}
+              >
+                {row.lead.text}
+              </AppText>
+            )}
             {row.reason}
+          </AppText>
+        )}
+        {row.late != null && (
+          <AppText variant="mono" style={s.late}>
+            {row.late}
           </AppText>
         )}
         {row.todo && <Tag label="Do decyzji" tone="green" size="sm" />}
@@ -124,5 +142,8 @@ const styles = (t: Theme) =>
     // czyli najdłuższy napis w tej liście - przy 1 px łamał się na dwie linie.
     sub: { fontSize: 9.5, lineHeight: 13, letterSpacing: 0.5, textTransform: 'uppercase', color: t.colors.textMuted },
     reason: { fontSize: 11, lineHeight: 16.5, color: t.colors.textSecondary },
+    lead: { fontWeight: '600' },
+    // `.n-late`: zwłoka zapisu w tonie podpisu - fakt o rejestrze, nie o locie.
+    late: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.8, color: t.colors.textMuted },
     when: { fontSize: 9, lineHeight: 12, letterSpacing: 1, color: t.colors.textMuted, paddingTop: 2, flexShrink: 0 },
   });

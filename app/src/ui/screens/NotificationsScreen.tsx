@@ -21,8 +21,9 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Icon, InboxRow, Screen, ScreenHeader, Skeleton, type IconName } from '../components';
+import { AppText, Banner, Icon, InboxRow, Screen, ScreenHeader, Skeleton, type IconName } from '../components';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
+import { useFleet } from '../hooks/useFleet';
 import { useInbox } from '../hooks/useInbox';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { usePilots } from '../hooks/usePilots';
@@ -36,7 +37,13 @@ type Nav = {
   goBack: () => void;
 };
 
-export function NotificationsScreen({ navigation }: { navigation: Nav }) {
+export function NotificationsScreen({
+  navigation,
+  route,
+}: {
+  navigation: Nav;
+  route?: { params?: { foreignClub?: true } };
+}) {
   const { theme } = useTheme();
   const s = styles(theme);
   const now = useMinuteTicker();
@@ -45,6 +52,9 @@ export function NotificationsScreen({ navigation }: { navigation: Nav }) {
   const skeleton = useSkeleton(data === undefined);
   const regOf = useAircraftRegistrations();
   const pilots = usePilots();
+  // Format licznika maszyny - do odczytu w wierszu „Zdana" (3.2.0); flota klubu aktywnego,
+  // bo skrzynka jest per klub (§12.1).
+  const { aircraft: fleet } = useFleet();
 
   const rows = useMemo(() => {
     if (data == null) return [];
@@ -54,11 +64,17 @@ export function NotificationsScreen({ navigation }: { navigation: Nav }) {
       now,
       regOf,
       nameOf: (id) => pilots.find((p) => p.id === id)?.name ?? null,
+      mhFormatOf: (id) => fleet.find((a) => a.id === id)?.mhFormat ?? null,
     });
-  }, [data, now, regOf, pilots]);
+  }, [data, now, regOf, pilots, fleet]);
 
   const open = (row: InboxRowVm) => {
-    if (row.bookingId == null || row.opens == null) return;
+    if (row.opens == null) return;
+    if (row.opens === 'aircraft') {
+      if (row.aircraftId != null) navigation.navigate('Aircraft', { aircraftId: row.aircraftId });
+      return;
+    }
+    if (row.bookingId == null) return;
     navigation.navigate(row.opens === 'decision' ? 'Decision' : 'BookingDetails', {
       bookingId: row.bookingId,
     });
@@ -81,6 +97,17 @@ export function NotificationsScreen({ navigation }: { navigation: Nav }) {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* Budzik z klubu, który nie jest teraz aktywny (R6, obserwowanie §8): ekran
+            otwarty tokenem klubu aktywnego odpowiedziałby 404, więc zamiast niego stoi
+            instrukcja - przełączenie klubu jest decyzją pilota i wymaga sieci (§6). */}
+        {route?.params?.foreignClub === true && (
+          <Banner
+            kind="status"
+            tone="amber"
+            title="Wiadomość z innego klubu"
+            text="To powiadomienie dotyczy klubu, który nie jest teraz aktywny. Przełącz klub w Ustawieniach, żeby je otworzyć."
+          />
+        )}
         {data === undefined ? (
           skeleton ? (
             <>

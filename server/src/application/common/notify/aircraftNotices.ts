@@ -49,6 +49,8 @@ export interface WatchedEngineStart {
   dualId: string | null;
   /** Chwila `engine_start` Z REJESTRU. */
   at: number;
+  /** Zadanie operacji (`skoki`, `ferry`…) - skrzynka pisze je obok nazwiska. */
+  operation: string | null;
   /** Rezerwacja zrealizowana TĄ operacją - „zgodnie z planem" kontra „poza planem". */
   planned: boolean;
   bookingId: string | null;
@@ -159,6 +161,7 @@ export function aircraftEngineStarted(
       pilotId: start.pilotId,
       dualId: start.dualId,
       at: iso(start.at),
+      operation: start.operation,
       planned: start.planned,
       bookingId: start.bookingId,
     },

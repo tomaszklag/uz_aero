@@ -60,7 +60,7 @@ export class AircraftWatching {
   }
 
   /** Budzik PO commicie; nigdy nie rzuca. */
-  wake(drafts: readonly NotificationDraft[]): Promise<void> {
-    return this.notifier.wake(drafts);
+  wake(orgId: string, drafts: readonly NotificationDraft[]): Promise<void> {
+    return this.notifier.wake(orgId, drafts);
   }
 }

@@ -30,6 +30,8 @@ export function aircraftNowWire(now: AircraftNow): Record<string, unknown> {
         sessionUuid: now.sessionUuid,
         pilotId: now.pilotId,
         dualId: now.dualId,
+        operation: now.operation,
+        departureIcao: now.departureIcao,
         since: iso(now.since),
       };
     case 'claimed':
@@ -38,6 +40,8 @@ export function aircraftNowWire(now: AircraftNow): Record<string, unknown> {
         sessionUuid: now.sessionUuid,
         pilotId: now.pilotId,
         dualId: now.dualId,
+        operation: now.operation,
+        departureIcao: now.departureIcao,
         since: isoOrNull(now.since),
       };
     case 'blocked':

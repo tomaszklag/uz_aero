@@ -1768,6 +1768,13 @@ export interface SessionsProjectionPort {
     aircraftId: string,
     page: { before?: OperationCursor; limit: number },
   ): Promise<SessionRow[]>;
+  /**
+   * Ile operacji liczy historia maszyny W CAŁOŚCI - tym samym warunkiem, co strona
+   * (`listByAircraftPage`): nagłówek sekcji pisze „218 operacji", a wiersz „Pokaż
+   * starsze" - ile jeszcze zostało. Liczba osobno od strony, bo strona nie wie,
+   * ile jest za nią.
+   */
+  countByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<number>;
 }
 
 /** Kursor historii operacji: chwila operacji (ms UTC) i uuid - patrz `listByAircraftPage`. */

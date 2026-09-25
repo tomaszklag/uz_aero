@@ -58,6 +58,19 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Rezerwujący nie prosi sam siebie o zgodę**: kroki, na których stoi, przechodzą same,
   a w historii widać, że przeszły właśnie w ten sposób.
 - **Rezerwacja czekająca na zgodę trzyma termin** - nikt inny nie zajmie go w międzyczasie.
+- **Karta samolotu w aplikacji** - dla technika, koordynatora lotów i osób akceptujących
+  rezerwacje: co dzieje się z maszyną teraz (kto ją ma, od kiedy, zgodnie z rezerwacją
+  czy poza planem - albo że stoi, jest wyłączona z użytku lub zarezerwowana), liczniki
+  z ostatniego odczytu, najbliższe terminy, wykresy motogodzin i paliwa z ostatnich
+  90 dni z kursorem i przybliżeniem oraz historia wszystkich operacji tej maszyny.
+  Otwiera się ze znaku maszyny w kalendarzu, z powiadomienia i z podglądu przy decyzji.
+- **Obserwowanie samolotu.** Jeden przełącznik na karcie maszyny albo w ustawieniach
+  (cała flota z przełącznikami i stanem „teraz") - i telefon budzi, gdy lot zbliża się
+  za godzinę, gdy silnik ruszył (z adnotacją, czy zgodnie z planem), gdy maszyna wróciła
+  z odczytami, gdy przypomniany termin odwołano i gdy nikt nie odebrał zarezerwowanej
+  maszyny. Wiadomość mówi czasem z rejestru, a gdy zapis dotarł później, dopisuje kiedy.
+  Powiadomienie z klubu, który nie jest teraz aktywny, prowadzi do skrzynki z instrukcją,
+  zamiast otwierać pustą kartę.
 - **Skrzynka powiadomień**: prośba o zgodę, decyzja i wygaśnięcie terminu trafiają do
   pilota z historią, a powiadomienie na telefon jest tylko sygnałem, że coś przyszło.
 - **Termin, którego nikt nie rozpatrzył, wygasa z chwilą swojego początku** i wraca do
@@ -323,13 +336,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
 - [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [ ] Statystyki klubu i analityka zużycia maszyny
-- [ ] Karta samolotu w aplikacji: co się z nim dzieje teraz, liczniki, najbliższe terminy,
+- [x] Karta samolotu w aplikacji: co się z nim dzieje teraz, liczniki, najbliższe terminy,
   historia lotów oraz wykresy motogodzin i paliwa - dla technika, koordynatora lotów
   i osób akceptujących rezerwacje
-- [ ] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
+- [~] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
   ruszył, gdy maszyna wróciła z odczytami, gdy przypomniany termin odwołano
   i gdy nikt nie odebrał zarezerwowanej maszyny; lista obserwowanych z przełącznikami
-  w ustawieniach aplikacji i w Moim koncie w panelu
+  w ustawieniach aplikacji (gotowe) i w Moim koncie w panelu (w toku)
 
 ### 4.0.0 · termin do ustalenia
 

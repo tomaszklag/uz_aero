@@ -197,7 +197,7 @@ export class AdminBookingCommands {
           },
         };
       });
-      if (watchNotices.length > 0) await this.watching?.wake(watchNotices);
+      if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
       return { ok: true, booking };
     } catch (err) {
       return outcomeOf(err);

@@ -24,17 +24,37 @@
  * ══ RODZAJ NIEZNANY TEMU WYDANIU NIE ZNIKA ══
  * Serwer nowszy niż aplikacja dokłada rodzaje wiadomości; taka wiadomość dostaje
  * tytuł ogólny i wchodzi w kartę rezerwacji, jeśli ją niesie.
+ *
+ * ══ WIADOMOŚCI O OBSERWOWANEJ MASZYNIE (3.2.0, `docs/obserwowanie-samolotu.md` §5) ══
+ * Pięć rodzajów, tytuły RZECZOWNIKIEM ze znakiem maszyny („Uruchomienie · SP-AXA"),
+ * tapnięcie otwiera kartę maszyny (27). Wiadomość o zdarzeniu z rejestru niesie CZAS
+ * Z REJESTRU w UTC, nie chwilę dotarcia paczki (§2.3): wiersz mówi „08:12 UTC", a gdy
+ * zapis dotarł później niż kwadrans po zdarzeniu, dokłada „zapis dotarł 09:40 UTC"
+ * w tonie podpisu. Terminy (za godzinę, odwołany, nie odebrano) - czasem klubu, jak
+ * w kalendarzu. Ton ikony: błękit = rzecz się dzieje, zieleń = wróciła z odczytami,
+ * bursztyn = coś przepadło.
  */
 
-import { plural } from '@ninerdeck/format';
+import { duration, litres, motoHours, plural, relativeAge, timeUtc } from '@ninerdeck/format';
 
 import type { RemoteCalendarDay, RemoteNotification } from '../../../application';
 
 import { dayShort } from './calendarHeading';
 import { clubHhmm, type ClubDayBounds } from './clubClock';
+import { operationLabelOf } from './operations';
 
-/** Ton ikony wiersza - kolory z makiety: prośba błękitem, zgoda zielenią, odmowa czerwienią. */
-export type InboxTone = 'ask' | 'ok' | 'no' | 'warn' | 'info';
+/**
+ * Ton ikony wiersza - kolory z makiety: prośba błękitem, zgoda zielenią, odmowa
+ * czerwienią; `news` = błękit dla rzeczy, która się DZIEJE z maszyną (25C),
+ * `info` = neutralny dla rodzaju nieznanego temu wydaniu.
+ */
+export type InboxTone = 'ask' | 'ok' | 'no' | 'warn' | 'info' | 'news';
+
+/** Wyróżnione pierwsze słowa wiersza powodu: „Poza planem" bursztynem, „Paliwo 128 L" zielenią. */
+export interface InboxLead {
+  text: string;
+  tone: 'amber' | 'green';
+}
 
 export interface InboxRowVm {
   id: string;
@@ -44,6 +64,10 @@ export interface InboxRowVm {
   sub: string | null;
   /** Powód odmowy albo zdanie, co robić dalej; `null` = wiadomość mówi wszystko tytułem. */
   reason: string | null;
+  /** Wyróżniony początek `reason` (wiadomości o maszynie); `null` = powód jednym tonem. */
+  lead: InboxLead | null;
+  /** „zapis dotarł 09:40 UTC" - zwłoka ponad kwadrans między zdarzeniem a paczką; `null` = bez zwłoki. */
+  late: string | null;
   /** „12 min temu", „3 h temu", „2 dni temu". */
   when: string;
   /** Nieprzeczytana - zielona krawędź; gaśnie z otwarciem listy. */
@@ -51,8 +75,9 @@ export interface InboxRowVm {
   /** Sprawa czeka na MOJĄ decyzję - plakietka „Do decyzji"; stoi do decyzji. */
   todo: boolean;
   bookingId: string | null;
-  /** Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23) albo nigdzie. */
-  opens: 'decision' | 'booking' | null;
+  aircraftId: string | null;
+  /** Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23), karta maszyny (27) albo nigdzie. */
+  opens: 'decision' | 'booking' | 'aircraft' | null;
 }
 
 export interface InboxInput {
@@ -64,10 +89,47 @@ export interface InboxInput {
   regOf: (aircraftId: string) => string | null;
   /** Imię i nazwisko z cache członków; `null` = poza cache'em. */
   nameOf: (pilotId: string) => string | null;
+  /** Format licznika maszyny z cache floty - do odczytu przy „zdana"; `null` = poza cache'em. */
+  mhFormatOf?: (aircraftId: string) => 'hhmm' | 'decimal' | null;
 }
 
 const str = (value: unknown): string | null =>
   typeof value === 'string' && value !== '' ? value : null;
+const num = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+const instant = (value: unknown): number | null => {
+  const at = Date.parse(str(value) ?? '');
+  return Number.isFinite(at) ? at : null;
+};
+
+/** Zwłoka między zdarzeniem a dotarciem paczki, od której wiersz o niej mówi (§2.3). */
+const LATE_MS = 15 * 60_000;
+
+const DAY_MS = 86_400_000;
+
+/** Powód zdania bez lotu (09C) - te same cztery słowa, co na ekranie zdania. */
+const NO_FLIGHT_LABEL: Readonly<Record<string, string>> = {
+  weather: 'pogoda',
+  malfunction: 'usterka',
+  cancelled: 'odwołane',
+  other: 'inny powód',
+};
+
+/**
+ * Doba klubu przesunięta o pełne dni do chwili `at` - nowy termin po przesunięciu
+ * potrafi leżeć w innej dobie niż stary, a wiadomość niesie dobę STAREGO.
+ */
+function dayAround(day: ClubDayBounds | null, at: number): ClubDayBounds | null {
+  if (day == null) return null;
+  const shift = Math.floor((at - day.startsAt) / DAY_MS) * DAY_MS;
+  return shift === 0 ? day : { date: day.date, startsAt: day.startsAt + shift, endsAt: day.endsAt + shift };
+}
+
+/** „zapis dotarł 09:40 UTC", gdy paczka dotarła później niż kwadrans po zdarzeniu. */
+export function lateNote(eventAt: number | null, createdAt: number): string | null {
+  if (eventAt == null || createdAt - eventAt <= LATE_MS) return null;
+  return `zapis dotarł ${timeUtc(createdAt)} UTC`;
+}
 
 /** „przed chwilą", „12 min temu", „3 h temu", „2 dni temu" - wiek wiadomości. */
 export function agoLabel(at: number, now: number): string {
@@ -112,16 +174,135 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
       Date.parse(str(n.payload.endsAt) ?? ''),
     );
     const sub = reg == null ? term : term == null ? reg : `${reg} · ${term}`;
+    const createdAt = Date.parse(n.createdAt);
     const base = {
       id: n.id,
       sub,
-      when: agoLabel(Date.parse(n.createdAt), input.now),
+      lead: null,
+      late: null,
+      when: agoLabel(createdAt, input.now),
       isNew: n.readAt == null,
       bookingId,
+      aircraftId,
     };
     const opensBooking = bookingId == null ? null : ('booking' as const);
+    const opensAircraft = aircraftId == null ? null : ('aircraft' as const);
+    const regTitle = reg ?? 'samolot';
+    const who = (id: string | null): string | null => (id == null ? null : input.nameOf(id));
+    // Wiadomość o maszynie ma znak w TYTULE, więc podpis niesie sam termin i nazwisko.
+    const termWho = [term, who(str(n.payload.pilotId))].filter((x): x is string => x != null).join(' · ');
 
     switch (n.kind) {
+      case 'aircraft_flight_soon':
+        return {
+          ...base,
+          sub: termWho === '' ? null : termWho,
+          tone: 'news',
+          title: `Zbliża się lot · ${regTitle}`,
+          reason: null,
+          todo: false,
+          opens: opensAircraft,
+        };
+      case 'aircraft_flight_cancelled': {
+        const startsAt = instant(n.payload.startsAt);
+        const moved = n.payload.movedTo as { startsAt?: unknown; endsAt?: unknown } | null | undefined;
+        const movedStart = moved == null ? null : instant(moved.startsAt);
+        const movedEnd = moved == null ? null : instant(moved.endsAt);
+        const before =
+          startsAt != null && Number.isFinite(createdAt) && startsAt > createdAt
+            ? ` ${relativeAge(startsAt - createdAt)} przed startem`
+            : '';
+        const newTerm =
+          movedStart == null || movedEnd == null
+            ? null
+            : termLabel(dayAround(dayBounds(n.day), movedStart), movedStart, movedEnd);
+        return {
+          ...base,
+          sub: termWho === '' ? null : termWho,
+          tone: 'warn',
+          title: `Odwołany lot · ${regTitle}`,
+          reason:
+            newTerm != null
+              ? `Przesunięty${before} - nowy termin ${newTerm}, po przypomnieniu.`
+              : `Odwołany${before} - po przypomnieniu.`,
+          todo: false,
+          opens: opensAircraft,
+        };
+      }
+      case 'aircraft_engine_started': {
+        const at = instant(n.payload.at);
+        const task = operationLabelOf(str(n.payload.operation));
+        const planned = n.payload.planned === true;
+        return {
+          ...base,
+          sub: [at == null ? null : `${timeUtc(at)} UTC`, who(str(n.payload.pilotId)), task?.toLowerCase() ?? null]
+            .filter((x): x is string => x != null)
+            .join(' · '),
+          tone: 'news',
+          title: `Uruchomienie · ${regTitle}`,
+          lead: planned ? { text: 'Zgodnie z planem', tone: 'green' } : { text: 'Poza planem', tone: 'amber' },
+          reason: planned ? ' - na tę godzinę była rezerwacja.' : ' - na tę godzinę nie było rezerwacji.',
+          late: lateNote(at, createdAt),
+          todo: false,
+          opens: opensAircraft,
+        };
+      }
+      case 'aircraft_released': {
+        const at = instant(n.payload.at);
+        const byAdmin = n.payload.closedBy === 'admin';
+        const flights = num(n.payload.flights) ?? 0;
+        const blockMs = num(n.payload.blockMs);
+        const fuel = num(n.payload.fuelEndL);
+        const mh = num(n.payload.mhEnd);
+        const noFlight = str(n.payload.noFlightReason);
+        const adminReason = str(n.payload.reason);
+        const format = aircraftId == null ? null : (input.mhFormatOf?.(aircraftId) ?? null);
+        const sub = byAdmin
+          ? [at == null ? null : `${timeUtc(at)} UTC`, 'zakończył administrator']
+          : [
+              at == null ? null : `${timeUtc(at)} UTC`,
+              who(str(n.payload.pilotId)),
+              blockMs == null ? null : `blok ${duration(blockMs)}`,
+              `${flights} ${plural(flights, 'lot', 'loty', 'lotów')}`,
+            ];
+        // Odczyty końcowe są tym, po co mechanik czeka - zielenią, jak stan w normie.
+        // Oleju NIE MA: zdanie samolotu oleju nie mierzy (issue #60).
+        const readings =
+          fuel == null && mh == null
+            ? null
+            : { lead: fuel == null ? null : { text: `Paliwo ${litres(fuel)}`, tone: 'green' as const }, rest: mh == null ? '' : ` · licznik ${motoHours(mh, format)}` };
+        return {
+          ...base,
+          sub: sub.filter((x): x is string => x != null).join(' · '),
+          tone: byAdmin ? 'warn' : 'ok',
+          title: `Zdana · ${regTitle}`,
+          lead: readings?.lead ?? null,
+          reason: byAdmin
+            ? adminReason == null
+              ? 'Bez odczytów - operację zakończył administrator.'
+              : `Bez odczytów - „${adminReason}".`
+            : noFlight != null
+              ? `Zdana bez lotu - ${NO_FLIGHT_LABEL[noFlight] ?? noFlight}.${readings == null ? '' : ` ${readings.lead?.text ?? ''}${readings.rest}`.replace(/^ · /, ' ')}`
+              : readings == null
+                ? null
+                : readings.lead == null
+                  ? readings.rest.replace(/^ · /, '')
+                  : readings.rest,
+          late: lateNote(at, createdAt),
+          todo: false,
+          opens: opensAircraft,
+        };
+      }
+      case 'aircraft_not_taken':
+        return {
+          ...base,
+          sub: termWho === '' ? null : termWho,
+          tone: 'warn',
+          title: `Nie odebrano · ${regTitle}`,
+          reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+          todo: false,
+          opens: opensAircraft,
+        };
       case 'approval_requested': {
         const who = str(n.payload.pilotId);
         const name = who == null ? null : input.nameOf(who);
