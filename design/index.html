@@ -216,11 +216,6 @@
   .card.green:hover { border-color: var(--green-border); box-shadow: 0 8px 24px rgba(46,204,113,0.15); }
   .card.amber:hover { border-color: var(--amber-border); box-shadow: 0 8px 24px rgba(243,156,18,0.15); }
   .card.red:hover { border-color: rgba(231,76,60,0.3); box-shadow: 0 8px 24px rgba(231,76,60,0.15); }
-  /* Karta ekranu, który jest ZAPROJEKTOWANY, ale jeszcze nienarysowany (sekcja
-     „w projekcie"): przerywana ramka, bez odnośnika i bez uniesienia pod kursorem -
-     kliknięcie nie ma dokąd prowadzić, więc karta nie może tego obiecywać. */
-  .card.planned { border-style: dashed; cursor: default; }
-  .card.planned:hover { background: var(--surface); border-color: var(--border); transform: none; box-shadow: none; }
 
   .card-num {
     font-family: var(--font-mono);
@@ -356,6 +351,13 @@
   <span class="flow-sep">→</span>
   <a href="26a-podglad-pilota.html" class="flow-step">26A Podgląd</a>
 </div>
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="21-kalendarz.html" class="flow-step">21 Kalendarz</a>
+  <span class="flow-sep">→</span>
+  <a href="27-samolot.html" class="flow-step">27 Karta maszyny</a>
+  <span class="flow-sep">→</span>
+  <a href="25c-powiadomienia-samolot.html" class="flow-step">25C Skrzynka o maszynie</a>
+</div>
 
 
 <div class="section-title">Rezerwacje i kalendarz (3.0.0)</div>
@@ -436,34 +438,32 @@
     </div>
   </a>
 </div>
-<!-- ══ OBSERWOWANIE SAMOLOTU (3.2.0) - PROJEKT PRZED MAKIETAMI ══
-     Karty bez odnośnika, bo plików jeszcze nie ma (reguła „zero martwych linków").
-     Rysuje je epik O-A po potwierdzeniu §11 w docs/obserwowanie-samolotu.md;
-     wtedy karta dostaje href, a klasa .planned znika. -->
-<div class="section-title">Obserwowanie samolotu (3.2.0) · w projekcie</div>
+<!-- ══ OBSERWOWANIE SAMOLOTU (3.2.0, zgłoszenie #205) ══
+     Makiety z epiku O-A (#219); decyzje: docs/obserwowanie-samolotu.md. -->
+<div class="section-title">Obserwowanie samolotu (3.2.0)</div>
 <div class="cards">
-  <div class="card planned">
+  <a href="27-samolot.html" class="card">
     <div class="card-num">27</div>
     <div class="card-body">
-      <div class="card-title">27-samolot · do narysowania</div>
-      <div class="card-desc">KARTA MASZYNY dla osoby ze zdolnością „Obserwowanie samolotów" (Akceptujący, Koordynator lotów, Technik, Administrator): stan teraz (wolna · w locie · przejęta · po locie · wyłączona z użytku · zarezerwowana), liczniki ze źródłem, przełącznik „Obserwuj", najbliższe terminy, WYKRESY motogodzin i paliwa z 90 dni (kursor i przybliżenie jak na profilu śladu 14), historia WSZYSTKICH operacji maszyny stronami, z odczytami w drugiej linii. Wejścia: nagłówek wiersza maszyny w kalendarzu (21), skrzynka i push, stopka podglądu 26B. Cały ekran wymaga sieci. Warianty: 27A wolna i nieobserwowana, 27B wyłączona z użytku, 27C bez połączenia. Decyzje: docs/obserwowanie-samolotu.md §6</div>
-      <div class="card-tags"><span class="tag amber">do narysowania</span><span class="tag">wymaga sieci</span><span class="tag">wykresy</span></div>
+      <div class="card-title">27-samolot</div>
+      <div class="card-desc">KARTA MASZYNY dla osoby ze zdolnością „Obserwowanie samolotów" (Akceptujący, Koordynator lotów, Technik, Administrator): stan teraz z rejestru (w locie · przejęta · po locie · wolna · wyłączona z użytku · zarezerwowana) z adnotacją „wg zapisów do …", liczniki ze źródłem, przełącznik „Obserwuj", najbliższe terminy, WYKRESY motogodzin i paliwa z 90 dni z kursorem i przybliżeniem (jak profil śladu 14), historia WSZYSTKICH operacji stronami z odczytami w drugiej linii. Wejścia: nagłówek wiersza maszyny w kalendarzu (21), skrzynka (25C) i push, stopka podglądu 26B. Cały ekran wymaga sieci. Warianty: 27A wolna i nieobserwowana, 27B wyłączona z użytku, 27C bez połączenia</div>
+      <div class="card-tags"><span class="tag green">karta maszyny</span><span class="tag">wykresy</span><span class="tag amber">wymaga sieci</span></div>
     </div>
-  </div>
-  <div class="card planned">
+  </a>
+  <a href="25c-powiadomienia-samolot.html" class="card">
     <div class="card-num">25C</div>
     <div class="card-body">
-      <div class="card-title">25c-powiadomienia-samolot · do narysowania</div>
-      <div class="card-desc">Skrzynka z pięcioma wiadomościami o obserwowanej maszynie: „Zbliża się lot", „Odwołany lot" (wyłącznie termin, który już przypomniano), „Uruchomienie" z adnotacją „poza planem" bursztynem, „Zdana" z odczytami, „Nie odebrano". Czas w wiadomości to CZAS Z REJESTRU; przy zwłoce ponad kwadrans dochodzi „zapis dotarł …", a paczka niosąca uruchomienie i zdanie naraz rodzi tylko „Zdana". Sprawca własnego działania nie jest budzony. Decyzje: docs/obserwowanie-samolotu.md §5</div>
-      <div class="card-tags"><span class="tag amber">do narysowania</span><span class="tag">skrzynka</span><span class="tag">czas z rejestru</span></div>
+      <div class="card-title">25c-powiadomienia-samolot</div>
+      <div class="card-desc">Skrzynka z pięcioma wiadomościami o obserwowanej maszynie: „Zbliża się lot", „Uruchomienie" z adnotacją „poza planem" bursztynem, „Zdana" z odczytami, „Odwołany lot" (wyłącznie termin, który już przypomniano), „Nie odebrano". Wiadomość o zdarzeniu z rejestru niesie CZAS Z REJESTRU w UTC, a przy zwłoce ponad kwadrans dopisek „zapis dotarł …"; paczka niosąca uruchomienie i zdanie naraz rodzi tylko „Zdana". Sprawca własnego działania nie jest budzony. Tapnięcie otwiera kartę 27</div>
+      <div class="card-tags"><span class="tag green">skrzynka</span><span class="tag">czas z rejestru</span></div>
     </div>
-  </div>
+  </a>
   <a href="21-kalendarz.html" class="card">
     <div class="card-num">21</div>
     <div class="card-body">
-      <div class="card-title">21-kalendarz · zmiana w projekcie</div>
-      <div class="card-desc">Nagłówek wiersza maszyny (znak po lewej osi) staje się WEJŚCIEM w kartę 27 dla osoby ze zdolnością obserwowania - szewron w spoczynku, jak przy wierszach prowadzących w głąb na 26. Bez zdolności wiersz zostaje etykietą: brak akcji, nie wyszarzona akcja. Bit „viewer.watch" dojeżdża w oknie kalendarza, bo telefon zdolności nie zna</div>
-      <div class="card-tags"><span class="tag amber">do dorysowania</span><span class="tag">wejście</span></div>
+      <div class="card-title">21-kalendarz · wejście w kartę maszyny</div>
+      <div class="card-desc">Nagłówek wiersza maszyny (znak po lewej osi) jest WEJŚCIEM w kartę 27 dla osoby ze zdolnością obserwowania - szewron w spoczynku, jak przy wierszach prowadzących w głąb na 26. Bez zdolności wiersz zostaje etykietą: brak akcji, nie wyszarzona akcja. Bit „viewer.watch" dojeżdża w oknie kalendarza, bo telefon zdolności nie zna</div>
+      <div class="card-tags"><span class="tag">wejście</span><span class="tag">kalendarz</span></div>
     </div>
   </a>
 </div>
@@ -545,6 +545,30 @@
 
 <div class="section-title">Warianty i stany</div>
 <div class="grid">
+  <a href="27a-samolot-wolna.html" class="card">
+    <div class="card-num">27A</div>
+    <div class="card-body">
+      <div class="card-title">27a-samolot-wolna</div>
+      <div class="card-desc">Karta maszyny WOLNEJ i nieobserwowanej: hero w tonie neutralnym z następnym terminem (zieleń obiecywałaby „w normie"), liczniki z ostatniego zdania, przełącznik „Obserwuj" wyłączony - jedno słowo mówi, co zrobi tapnięcie; podpis z listą zdarzeń stoi tylko przy włączonym</div>
+      <div class="card-tags"><span class="tag">wolna</span><span class="tag">nieobserwowana</span></div>
+    </div>
+  </a>
+  <a href="27b-samolot-wylaczona.html" class="card">
+    <div class="card-num">27B</div>
+    <div class="card-body">
+      <div class="card-title">27b-samolot-wylaczona</div>
+      <div class="card-desc">Karta maszyny WYŁĄCZONEJ Z UŻYTKU: bursztynowy hero z powodem, terminem i „wraca za 4 dni" - stan maszyny rozciągnięty w czasie, jak na osi kalendarza. Obserwowanie zostaje włączone: mechanik chce wiedzieć, kiedy znów poleci</div>
+      <div class="card-tags"><span class="tag amber">wyłączona</span><span class="tag">przegląd</span></div>
+    </div>
+  </a>
+  <a href="27c-samolot-offline.html" class="card">
+    <div class="card-num">27C</div>
+    <div class="card-body">
+      <div class="card-title">27c-samolot-offline</div>
+      <div class="card-desc">Karta maszyny BEZ POŁĄCZENIA - ten sam prymityw, co kalendarz bez sieci (21B): karta na cały ekran z powodem i drogą wyjścia, bez przycisku ponowienia (ekran pyta serwer co minutę i wraca sam) i bez przełącznika „Obserwuj", bo zapis idzie na serwer wprost</div>
+      <div class="card-tags"><span class="tag amber">wymaga sieci</span><span class="tag">stan pusty</span></div>
+    </div>
+  </a>
   <a href="25a-powiadomienia-pusto.html" class="card">
     <div class="card-num">25A</div>
     <div class="card-body">

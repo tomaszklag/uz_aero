@@ -79,6 +79,8 @@ Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu
 - **wykresy** motogodzin i paliwa z ostatnich 90 dni - z kursorem i przybliżeniem, jak profil śladu GPS - oraz sumy z 30 i 90 dni;
 - **historia lotów tej maszyny** - kto, kiedy, ile, a w drugiej linii odczyty przy przejęciu i zdaniu; starsze doładowują się przyciskiem.
 
+@screen 27-samolot "Karta maszyny · w locie, obserwowana" | 27b-samolot-wylaczona "Wyłączona z użytku na przegląd"
+
 **Obserwowanie** to jeden przełącznik na karcie. Włączone, daje pięć rodzajów wiadomości w skrzynce powiadomień aplikacji (dzwonek na pulpicie) i powiadomienie na telefon:
 
 1. **zbliża się lot** - godzinę przed potwierdzoną rezerwacją;

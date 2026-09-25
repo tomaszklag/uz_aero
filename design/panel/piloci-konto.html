@@ -330,11 +330,17 @@
                KATALOG ZATWIERDZONY przez właściciela 2026-09-23 („zostawmy te zestawy
                uprawnień") - sześć pozycji odwzorowujących funkcje w klubie:
                  • Pilot - nic (stan domyślny; wyłącznie aplikacja na telefonie)
-                 • Akceptujący - Akceptacja rezerwacji
+                 • Akceptujący - Akceptacja rezerwacji + Obserwowanie samolotów
                  • Koordynator lotów - Wejście do panelu + Cudze rezerwacje + Akceptacja
-                 • Technik - Wejście do panelu + Flota
-                 • Administrator - komplet
-                 • Własny zakres - cokolwiek innego -->
+                   + Obserwowanie samolotów
+                 • Technik - Wejście do panelu + Flota + Obserwowanie samolotów
+                 • Administrator - komplet (jedenaście pozycji)
+                 • Własny zakres - cokolwiek innego
+
+               OBSERWOWANIE SAMOLOTÓW doszło 2026-09-25 (zgłoszenie #205, 3.2.0,
+               docs/obserwowanie-samolotu.md §3): karta maszyny w aplikacji i powiadomienia
+               o jej lotach. Wchodzi do TRZECH zestawów naraz decyzją właściciela, więc
+               „Akceptujący" przestał nazywać jedną rzecz - jego opis mówi o dwóch. -->
           <label class="field">
             <span class="field-label">Zestaw uprawnień</span>
             <select class="input">
@@ -543,7 +549,7 @@
                kontrolce, po którą administrator sięga pierwszą. -->
           <p class="hint"><b>Zestawu nie da się tu zmienić</b> - Marek jest ostatnią aktywną osobą w klubie ze zdolnością „Konta i kod klubu", a bez niej nikt nie wpuści nikogo do panelu ani nie nada zakresu. Nadaj ją komuś innemu, zanim odbierzesz mu tę.</p>
           <div class="access-row">
-            <span class="cell-sub">Nadane 10 z 10 zdolności</span>
+            <span class="cell-sub">Nadane 11 z 11 zdolności</span>
             <button type="button" class="btn ghost">Ukryj zdolności</button>
           </div>
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
@@ -614,6 +620,18 @@
               <span class="opt-body">
                 <span class="opt-name">Akceptacja rezerwacji</span>
                 <span class="opt-desc">Rozstrzyganie kroków ścieżki akceptacji ORAZ podgląd wszystkich terminów klubu w komplecie - z zadaniem, trasą, drugim pilotem i notatką. Bez tego zgoda zapadałaby na podstawie samych godzin.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <!-- JEDENASTA ZDOLNOŚĆ (3.2.0, #205): obserwowanie jest nowym RODZAJEM dostępu
+                 do floty - patrzeć i być budzonym, nie zarządzać. Koordynator floty nie
+                 konfiguruje, mechanik-Akceptujący nie ma nic poza zgodą; żadna istniejąca
+                 pozycja nie wpuściłaby ich na kartę maszyny bez oddania władzy, o którą
+                 nikt nie prosił. -->
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Obserwowanie samolotów</span>
+                <span class="opt-desc">Karta maszyny w aplikacji - stan, liczniki, terminy, historia i wykresy - oraz powiadomienia o jej lotach po włączeniu obserwowania.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>

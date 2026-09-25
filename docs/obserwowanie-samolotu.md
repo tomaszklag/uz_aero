@@ -478,9 +478,11 @@ natywnych.
   własne reguły redakcyjne (`docs/panel-3.2.md` §8). Wykres pokazuje, co pokazały
   przyrządy; brak danych to brak linii, nie zero (issue #69).
 
-### 6.5 Makiety do narysowania (design-first, epik O-A)
+### 6.5 Makiety (design-first, epik O-A - WYKONANE 2026-09-25, issue #219)
 
-Aplikacja, z `26b` jako punktem wyjścia dla kart liczników i terminów:
+Aplikacja, z `26b` jako punktem wyjścia dla kart liczników i terminów. Warianty 27A-C
+są GENEROWANE z matki 27 (bloki `@hero`/`@watch`/`@counters`/`@upcoming`), więc dzielą
+z nią arkusz stylów co do bajtu; 25C powstaje ze skrzynki 25 tą samą drogą:
 
 - **`27-samolot`** - w locie, obserwowana, komplet bloków i oba wykresy z kursorem
   na jednym z nich;
