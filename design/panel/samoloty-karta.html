@@ -102,6 +102,18 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
           </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -339,6 +351,34 @@
           </div>
         </div>
 
+        <!-- ══ ZUŻYCIE Z LOTÓW - ANALITYKA W SZUFLADZIE SAMOLOTU (3.2.0, docs/panel-3.2.md §8) ══
+             Własność MASZYNY, więc nie pozycja w kolumnie, tylko karta obok norm i stanu
+             bieżącego. Karta jest CZYSTYM ODCZYTEM między kartami formularza - jak pola
+             „Aktualny stan". Trzy reguły, wszystkie rozstrzygnięte gdzie indziej:
+             (1) BRAK DANYCH = MILCZENIE (issue #69) - młoda maszyna bez opublikowanego
+             modelu NIE MA tej karty wcale, ani zer, ani zdania o braku; (2) NORMA
+             WYLICZONA Z LOTÓW I NORMA Z DOKUMENTACJI TO DWIE RÓŻNE LICZBY (issue #66) -
+             pasmo zmierzone jest wypełnieniem, norma zadeklarowana bursztynowym
+             markerem, a wiersz mówi, która jest która; (3) panel niczego nie liczy -
+             centyle, stawki fazowe i przeliczniki licznika przychodzą policzone.
+             Wiersz „Motogodziny" GAŚNIE osobno, gdy model licznika nie jest opublikowany
+             (inne wejście, inny próg). Liczba obserwacji stoi w tytule jako plakietka. -->
+        <div class="card" id="analityka">
+          <div class="card-title">Zużycie z lotów<span class="spacer"></span><span class="pill dim">42 operacje · od 3 MAJA</span></div>
+          <div class="kv"><span class="kv-k">Pasmo zużycia · 10.–90. centyl</span><span class="kv-v green">28,4–32,9 <small>L/h</small></span></div>
+          <div class="band" role="img" aria-label="Pasmo 28,4–32,9 L/h na skali 20–40; norma z dokumentacji 30,0">
+            <span class="band-fill" style="left:42%; width:22.5%"></span>
+            <span class="band-mark" style="left:50%" title="Z dokumentacji: 30,0 L/h"></span>
+          </div>
+          <div class="band-scale"><span>20 L/h</span><span>40 L/h</span></div>
+          <div class="kv"><span class="kv-k">Z dokumentacji</span><span class="kv-v amber">30,0 <small>L/h · zadeklarowane, nie zmierzone</small></span></div>
+          <div class="kv"><span class="kv-k">W locie / na ziemi</span><span class="kv-v">33,2 / 11,6 <small>L/h</small></span></div>
+          <div class="kv"><span class="kv-k">Na godzinę lotu</span><span class="kv-v">38,3 <small>L/h</small></span></div>
+          <div class="kv"><span class="kv-k">Motogodziny</span><span class="kv-v">0,98 / 0,61 <small>MH na h · w locie / na ziemi · obrotomierz</small></span></div>
+          <div class="kv"><span class="kv-k">Obserwacje</span><span class="kv-v">42 <small>operacje · 38 ze śladem GPS · 3 odstające pominięte</small></span></div>
+          <div class="kv"><span class="kv-k">Ostatni miesiąc</span><span class="kv-v">31,1 <small>L/h · 9 operacji</small></span></div>
+        </div>
+
         <!-- ══ S2b: POPRAWA ODCZYTÓW - JEDYNA DROGA NADPISANIA ══
              Osobna karta, a nie odblokowanie pól wyżej: to INNA operacja niż poprawienie
              konfiguracji. Wpis jest nadrzędny wobec ostatniego zdania, dopóki kolejne
@@ -390,10 +430,62 @@
   <span>·</span>
   <a href="samoloty-karta.html" class="active">S2 Karta samolotu</a>
   <span>·</span>
+  <a href="#analityka-brak">↓ S2c Zużycie z lotów: brak danych</a>
+  <span>·</span>
   <a href="#nowy">↓ S2a Nowy samolot</a>
+  <span>·</span>
+  <a href="statystyki.html">T1 Statystyki</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">L2 Dziennik maszyny →</a>
 </nav>
+
+<!-- ══ S2c: ZUŻYCIE Z LOTÓW - BRAK DANYCH = BRAK KARTY ══ -->
+<section class="canvas-section" id="analityka-brak">
+  <div class="canvas-section-title">S2c · Zużycie z lotów · brak danych = MILCZENIE (issue #69)</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Młoda maszyna: karty nie ma wcale</span>
+        <span class="inv-when">Model paliwa poniżej progu publikacji (`fuel.published: false`) znaczy, że nie ma czego pokazać - a ekran wtedy MILCZY. Ani zer w miejscu pomiaru (zero jest kłamstwem), ani zdania „nie ma jeszcze danych" (opisuje wnętrze analityki komuś, kto nic z tym nie zrobi). Szuflada idzie wprost z „Motogodziny" do „Poprawa odczytów". Norma z dokumentacji zostaje tam, gdzie jest - w karcie „Paliwo" - i to ona liczy oczekiwanie w telefonie, dopóki model nie dojrzeje.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Motogodziny</div>
+          <div class="field">
+            <label class="label" for="s2c-mh">Aktualny stan</label>
+            <input class="input mono" id="s2c-mh" value="12.4" disabled>
+            <span class="hint">Z dziennika · odczyt 6 WRZ 2026 14:02 UTC.</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Poprawa odczytów</div>
+          <span class="inv-mark">między nimi NIC - karta zużycia pojawi się sama, gdy model przekroczy próg</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Paliwo opublikowane, licznik nie: gaśnie JEDEN wiersz</span>
+        <span class="inv-when">Model licznika ma własne wejście i własny próg (ΔMH per operacja), więc bywa nieopublikowany przy dojrzałym modelu paliwa. Wtedy znika wyłącznie wiersz „Motogodziny" - `null` znaczy „nie ma czego pokazać" i ekran milczy o TEJ liczbie, nie o całej karcie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zużycie z lotów<span class="spacer"></span><span class="pill dim">14 operacji · od 2 SIE</span></div>
+          <div class="kv"><span class="kv-k">Pasmo zużycia · 10.–90. centyl</span><span class="kv-v green">27,9–34,6 <small>L/h</small></span></div>
+          <div class="band"><span class="band-fill" style="left:39.5%; width:33.5%"></span><span class="band-mark" style="left:50%"></span></div>
+          <div class="band-scale"><span>20 L/h</span><span>40 L/h</span></div>
+          <div class="kv"><span class="kv-k">Z dokumentacji</span><span class="kv-v amber">30,0 <small>L/h · zadeklarowane, nie zmierzone</small></span></div>
+          <div class="kv"><span class="kv-k">Na godzinę lotu</span><span class="kv-v">39,0 <small>L/h</small></span></div>
+          <div class="kv"><span class="kv-k">Obserwacje</span><span class="kv-v">14 <small>operacji · 11 ze śladem GPS</small></span></div>
+        </div>
+        <span class="inv-mark">bez wierszy „W locie / na ziemi" (model nie rozdzielił faz) i bez „Motogodziny"</span>
+      </div>
+    </article>
+
+  </div>
+</section>
 
 <!-- ══ RAMA 2: NOWA JEDNOSTKA (S2a) ══
      Różnica wobec ramy wyżej: rejestracja jest polem, „Aktualny stan" WPISUJE
@@ -452,6 +544,18 @@
           <a class="nav-item" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
           </a>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>

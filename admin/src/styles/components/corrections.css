@@ -1,0 +1,279 @@
+/**
+ * Ninerdeck - panel: KOREKTY ZDARZEŃ - tryb edycji osi, siatka typów, historia zmian
+ * (3.2.0, `docs/panel-3.2.md` §5; epik P-C).
+ *
+ * Panel mówi SŁOWNIKIEM TELEFONU (§5.3): oś operacji w panelu i oś w aplikacji pilota
+ * opisują ten sam bieg silnika, więc plakietka „popr.", kolumna ołówka w trybie edycji,
+ * siatka typów przy dopisaniu i oś czasu historii zmian są tu PRZEŁOŻENIEM ekranów
+ * `10D`–`10I` na styl lekki - nie kopią 1:1. Panel ma mysz, szufladę i miejsce, więc
+ * arkusz telefonu jest tu kartą w szufladzie.
+ */
+
+/* ── kolumna ołówka - WYŁĄCZNIE w trybie edycji ──
+   W odczycie oś nie ma ani jednego celu kliknięcia (issue #40): kilkanaście ołówków
+   w jednej kolumnie czyta się jak szum. W edycji cały wiersz otwiera szufladę, a ołówek
+   mówi, że tak jest. Wiersz bez ołówka (przejęcie z korektą wyłącznie odczytów, zdanie
+   bez `retime`) też ma pustą komórkę - brak celu widać od razu. */
+td.pen {
+  width: 36px;
+  padding-right: 8px;
+  text-align: right;
+}
+
+.pen-btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pen-btn:hover,
+.pen-btn:focus-visible {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+tbody tr.editable {
+  cursor: pointer;
+}
+
+tbody tr.editable:hover .pen-btn {
+  color: var(--text-secondary);
+}
+
+/* ── plakietka „popr." - widoczna w OBU trybach ──
+   Fakt o danych, nie akcja (issue #43): wartość, którą ktoś zmienił, nie jest tym,
+   co zapisał przyrząd. Błękit, nie bursztyn - korekta jest informacją, a nie
+   ostrzeżeniem. W odczycie prowadzi do historii zmian, w edycji stoi obok ołówka. */
+.tag-corrected {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--blue-muted);
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  line-height: 16px;
+  vertical-align: 2px;
+  text-decoration: none;
+}
+
+a.tag-corrected:hover {
+  text-decoration: underline;
+}
+
+/* ── ostatni wiersz osi: DOPISANIE ──
+   Dopisywany fakt trafia do przebiegu operacji, więc wejście stoi tam, gdzie skończy
+   się jego skutek - na końcu osi, nie w pasie akcji pod ekranem (uwaga z urządzenia
+   przy issue #43). Kreska przerywana odcina je od zdarzeń: to zaproszenie, nie zapis. */
+tr.axis-add > td {
+  padding: 0;
+  border-top: 1px dashed var(--border-strong);
+}
+
+tr.axis-add:hover {
+  background: none;
+}
+
+.axis-add-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.axis-add-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+/* ── siatka typów zdarzeń (dopisanie, §5.4) ──
+   Karty z ikoną w trzech kolumnach - wzorzec `10H` z telefonu. Lista jest WĄSKA
+   i brak kafla mówi o granicy sam: uruchomienia i wyłączenia silnika tu nie ma, bo
+   wyznaczają kopertę operacji; zrzut i załadunek pokazują się wyłącznie w dniu
+   skokowym (issue #19). Zaznaczona karta: zielona ramka, jak `.opt.selected`. */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.type-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.type-opt svg {
+  color: var(--text-muted);
+}
+
+.type-opt:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.type-opt.selected {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+  color: var(--text-primary);
+}
+
+.type-opt.selected svg {
+  color: var(--green);
+}
+
+/* ── historia zmian - oś czasu w karcie (wzorzec `10I`) ──
+   Najnowsza zmiana na górze, kotwicą jest ZAPIS PIERWOTNY (kropka pusta - fakt
+   z terenu, nie korekta). Wiersz niesie parę „było → jest", kto i z jakim powodem;
+   nazwa pola wraca WYŁĄCZNIE, gdy lista miesza pola (`needsFieldLabels`, issue #43).
+   Bez podpisu o źródle zapisu i bez przypisu o append-only - to opisuje budowę
+   rejestru komuś, kto o nią nie pytał. */
+.hist {
+  display: flex;
+  flex-direction: column;
+}
+
+.hist-item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.hist-item:last-child {
+  border-bottom: none;
+}
+
+.hist-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.hist-rail::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: -9px;
+  width: 1px;
+  background: var(--border);
+}
+
+.hist-item:last-child .hist-rail::before {
+  display: none;
+}
+
+.hist-dot {
+  position: relative;
+  z-index: 1;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+}
+
+.hist-dot.origin {
+  background: var(--surface);
+  border: 1.5px solid var(--text-muted);
+}
+
+.hist-dot.void {
+  background: var(--red);
+}
+
+.hist-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hist-when {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+
+.hist-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.hist-from {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.hist-arrow {
+  color: var(--text-muted);
+}
+
+/* Nazwa pola - wyłącznie przy liście mieszającej pola. */
+.hist-field {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.hist-verdict {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.hist-verdict.void {
+  color: var(--red);
+}
+
+.hist-who {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.hist-reason {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+.hist-reason.none {
+  font-style: normal;
+  color: var(--text-muted);
+}

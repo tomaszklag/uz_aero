@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Dziennik: operacje jednego pilota, dobami</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DZIENNIK · ADAM KOWALSKI</span>
+  <span class="slug">panel/dziennik-pilot · #/dziennik/pilot/AKO?od=&amp;do= · poziom 2 · oś pilota</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ten sam kształt, co L2 maszyny - inna kolumna, inne pytanie</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dziennik - siedem ekranów jednej rodziny</div>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Cała flota w zakresie dat</span>
+      <span class="vp-when">Wejście domyślne, oś MASZYN. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło. Przełącznik osi stoi PRZED zakresem dat.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-piloci.html">
+    <span class="vp-badge">L1b</span>
+    <span class="vp-body">
+      <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-maszyna.html">
+    <span class="vp-badge">L2</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednej maszyny - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi maszyn. DOBA JEST NAGŁÓWKIEM z sumami doby, kolumny z datą przy wierszu NIE MA; godzina zostaje przy operacji, bo dwie zmiany jednej maszyny różnią się wyłącznie godzinami.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="dziennik-pilot.html">
+    <span class="vp-badge">L2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednego pilota - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="dziennik-operacja.html">
+    <span class="vp-badge">L3</span>
+    <span class="vp-body">
+      <span class="vp-name">Jedna operacja</span>
+      <span class="vp-when">Pełna strona: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA: okruszki prowadzą na oś maszyny, nazwisko pilota w szczegółach - na oś pilota. Tym „powiązaniem list" jest link w obie strony, nie trzecia lista.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-edycja.html">
+    <span class="vp-badge amber">L3b</span>
+    <span class="vp-body">
+      <span class="vp-name">Tryb edycji: korekta zdarzeń</span>
+      <span class="vp-when">Ten sam ekran po „Popraw zdarzenia": ołówek przy każdym wierszu osi, szuflada korekty czasu / wartości / unieważnienia z podglądem „przed → po", baner kolizji z pilotem (nigdy odmowa), powód wymagany, historia zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-dopisanie.html">
+    <span class="vp-badge amber">L3c</span>
+    <span class="vp-body">
+      <span class="vp-name">Dopisanie brakującego zdarzenia</span>
+      <span class="vp-when">Ostatni wiersz osi w trybie edycji. Wąska siatka typów - bez uruchomienia i wyłączenia silnika, bo one wyznaczają kopertę operacji - czas w granicach biegu, powód wymagany. Jedyna nowa droga zapisu w 3.2.0.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Dziennik - operacje pilota AKO">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/dziennik/pilot/AKO?od=2026-09-01&amp;do=2026-09-07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- OKRUSZKI: „Dziennik" niesie oś PILOTÓW i zakres dat, z którego się przyszło
+           (`?os=piloci&od=…`). Adres poziomu 2 jest STATYCZNYM segmentem `pilot/` -
+           „pilot" nigdy nie będzie znakiem rejestracyjnym, więc router nie zgaduje
+           po kształcie napisu (decyzja 22 września 2026, §14 pkt 2). -->
+      <nav class="crumbs" aria-label="Ścieżka">
+        <a href="dziennik-piloci.html">Dziennik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current">Adam Kowalski</span>
+      </nav>
+
+      <!-- Tytułem jest OSOBA, podtytuł niesie kod pilota (mono - wartość maszynowa).
+           Akcja w nagłówku prowadzi do karty członka w module Piloci - ta sama para,
+           co „Karta samolotu" na osi maszyny. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Adam Kowalski</h1>
+          <p class="page-sub"><span class="mono">AKO</span> · pilot</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="piloci-konto.html">Karta członka</a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="daterange">
+          <span class="visually-hidden">Od dnia</span>
+          <input type="date" value="2026-09-01">
+        </label>
+        <span class="daterange-sep" aria-hidden="true">→</span>
+        <label class="daterange">
+          <span class="visually-hidden">Do dnia</span>
+          <input type="date" value="2026-09-07">
+        </label>
+        <button type="button" class="chip" aria-pressed="false">Dzisiaj</button>
+        <button type="button" class="chip" aria-pressed="false">Weekend</button>
+        <button type="button" class="chip" aria-pressed="false">30 dni</button>
+        <button type="button" class="chip on" aria-pressed="true">Ten miesiąc</button>
+        <button type="button" class="chip" aria-pressed="false">Poprzedni miesiąc</button>
+      </div>
+
+      <!-- ══ GRID OPERACJI PILOTA - DOBA NAGŁÓWKIEM ══
+           TEN SAM KSZTAŁT, co poziom 2 maszyny (jedna rzecz, jeden kształt): nagłówek
+           doby z sumami, para godzin biegu silnika i sygnatura w pierwszej komórce,
+           te same kolumny odczytów. Różnica jest DOKŁADNIE JEDNA: kolumna „Pilot"
+           zamienia się w „Samolot" (znak + typ), bo pilota stoi w tytule, a maszyna
+           jest tu zmienną.
+
+           Loty JAKO DRUGI PILOT są w dobie WIDOCZNE - przygaszone, z plakietką,
+           poza sumami doby: nalot liczy się dowódcy (jak w statystykach). Decyzja
+           postawiona na widoku - do potwierdzenia przez właściciela (patrz L1b). -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Operacje pilota Adam Kowalski, dobami</caption>
+          <thead>
+            <tr>
+              <th>Operacja</th>
+              <th>Lot</th>
+              <th class="num">Loty</th>
+              <th class="num">Blok</th>
+              <th>Samolot</th>
+              <th>Zadanie</th>
+              <th>Paliwo</th>
+              <th>Motogodziny</th>
+              <th>Olej do lotu</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody class="day">
+            <tr class="day-row">
+              <th colspan="10" scope="rowgroup">
+                <span class="day-row-in">
+                  <span>6 września <span class="day-dow">sobota</span></span>
+                  <span class="day-sums">
+                    <span><b>1</b> operacja</span>
+                    <span><b>6</b> lotów</span>
+                    <span><b>2:22</b> blok</span>
+                    <span><b>1:57</b> lot</span>
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-pair">08:42<span class="cell-arrow" aria-hidden="true">→</span>11:04</span>
+                <span class="cell-sub mono">SP-AXA/2026-09-06/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">09:01<span class="cell-arrow" aria-hidden="true">→</span>10:58</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">6</td>
+              <td class="num">2:22</td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td><span class="cell-pair">185 L<span class="cell-arrow" aria-hidden="true">→</span>108 L</span></td>
+              <td><span class="cell-pair">1236:30<span class="cell-arrow" aria-hidden="true">→</span>1238:52</span></td>
+              <td><span class="cell-pair">9,2 L</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+          </tbody>
+
+          <tbody class="day">
+            <tr class="day-row">
+              <th colspan="10" scope="rowgroup">
+                <span class="day-row-in">
+                  <span>4 września <span class="day-dow">czwartek</span></span>
+                  <span class="day-sums">
+                    <span><b>1</b> operacja</span>
+                    <span><b>1</b> lot</span>
+                    <span><b>1:30</b> blok</span>
+                    <span><b>1:12</b> lot</span>
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr class="clickable voided">
+              <td>
+                <span class="cell-pair">16:02<span class="cell-arrow" aria-hidden="true">→</span>16:19</span>
+                <span class="cell-sub">unieważniona</span>
+              </td>
+              <td><span class="cell-pair">—<span class="cell-arrow" aria-hidden="true">→</span>—</span></td>
+              <td class="num">0</td>
+              <td class="num">0:17</td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td><span class="pill dim">Lot tech.</span></td>
+              <td><span class="cell-pair">140 L<span class="cell-arrow" aria-hidden="true">→</span>136 L</span></td>
+              <td><span class="cell-pair">1234:10<span class="cell-arrow" aria-hidden="true">→</span>1234:27</span></td>
+              <td><span class="cell-pair">9,0 L</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+            <!-- EGZAMIN: to AKO był dowódcą, więc operacja liczy się jemu; drugi pilot
+                 stoi w podpisie kolumny „Samolot" - tu nie ma kolumny „Pilot", a załoga
+                 dwuosobowa dalej jest faktem operacji. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-pair">08:20<span class="cell-arrow" aria-hidden="true">→</span>09:50</span>
+                <span class="cell-sub mono">SP-AXA/2026-09-04/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:31<span class="cell-arrow" aria-hidden="true">→</span>09:43</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td class="num">1:30</td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">z A. Kowal</span></td>
+              <td><span class="pill dim">Egzamin</span></td>
+              <td>
+                <span class="cell-pair">118 L<span class="cell-arrow" aria-hidden="true">→</span>140 L</span>
+                <span class="cell-sub">dolano 70 L</span>
+              </td>
+              <td><span class="cell-pair">1232:40<span class="cell-arrow" aria-hidden="true">→</span>1234:10</span></td>
+              <td><span class="cell-pair">9,4 L</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+          </tbody>
+
+          <tbody class="day">
+            <tr class="day-row">
+              <th colspan="10" scope="rowgroup">
+                <span class="day-row-in">
+                  <span>3 września <span class="day-dow">środa</span></span>
+                  <span class="day-sums">
+                    <span><b>1</b> operacja</span>
+                    <span><b>1</b> lot</span>
+                    <span><b>0:34</b> blok</span>
+                    <span><b>0:20</b> lot</span>
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-pair">11:20<span class="cell-arrow" aria-hidden="true">→</span>11:54</span> <span class="pill dim">Ręcznie</span>
+                <span class="cell-sub mono">SP-AXA/2026-09-03/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">11:28<span class="cell-arrow" aria-hidden="true">→</span>11:48</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">1</td>
+              <td class="num">0:34</td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td><span class="pill dim">Lot tech.</span></td>
+              <td><span class="cell-pair">130 L<span class="cell-arrow" aria-hidden="true">→</span>118 L</span></td>
+              <td><span class="cell-pair">1232:06<span class="cell-arrow" aria-hidden="true">→</span>1232:40</span></td>
+              <td><span class="cell-pair">9,6 L</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+          </tbody>
+
+          <!-- ── 1 WRZEŚNIA: własna operacja rano i lot JAKO DRUGI PILOT po południu.
+               Sumy doby liczą wyłącznie pierwszą; wiersz drugiej ZOSTAJE, bo dzień
+               tego człowieka na lotnisku był dłuższy niż jego nalot dowódcy. -->
+          <tbody class="day">
+            <tr class="day-row">
+              <th colspan="10" scope="rowgroup">
+                <span class="day-row-in">
+                  <span>1 września <span class="day-dow">poniedziałek</span></span>
+                  <span class="day-sums">
+                    <span><b>1</b> operacja</span>
+                    <span><b>7</b> lotów</span>
+                    <span><b>3:14</b> blok</span>
+                    <span><b>2:51</b> lot</span>
+                  </span>
+                </span>
+              </th>
+            </tr>
+            <tr class="clickable as-dual">
+              <td>
+                <span class="cell-pair">13:30<span class="cell-arrow" aria-hidden="true">→</span>15:42</span> <span class="pill dim">Drugi pilot</span>
+                <span class="cell-sub mono">SP-KLM/2026-09-01/BNO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">13:41<span class="cell-arrow" aria-hidden="true">→</span>15:35</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">3</td>
+              <td class="num">2:12</td>
+              <td><span class="reg">SP-KLM</span><span class="cell-sub">dowódca B. Nowak</span></td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td><span class="cell-pair">610 L<span class="cell-arrow" aria-hidden="true">→</span>420 L</span></td>
+              <td><span class="cell-pair">641:00<span class="cell-arrow" aria-hidden="true">→</span>643:12</span></td>
+              <td><span class="cell-pair">14,0 L</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-pair">07:58<span class="cell-arrow" aria-hidden="true">→</span>11:12</span>
+                <span class="cell-sub mono">SP-AXA/2026-09-01/AKO/1</span>
+              </td>
+              <td>
+                <span class="cell-pair">08:11<span class="cell-arrow" aria-hidden="true">→</span>11:02</span>
+                <span class="cell-sub">EPZG</span>
+              </td>
+              <td class="num">7</td>
+              <td class="num">3:14</td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td><span class="pill dim">Skoki</span></td>
+              <td>
+                <span class="cell-pair">176 L<span class="cell-arrow" aria-hidden="true">→</span>92 L</span>
+                <span class="cell-sub">dolano 40 L</span>
+              </td>
+              <td><span class="cell-pair">1226:20<span class="cell-arrow" aria-hidden="true">→</span>1229:34</span></td>
+              <td>
+                <span class="cell-pair">10,4 L</span>
+                <span class="cell-sub">9,4 L + 1,0 L</span>
+              </td>
+              <td class="row-actions"><a class="btn ghost sm" href="dziennik-operacja.html">Szczegóły</a></td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-piloci.html">← Dziennik · piloci</a>
+  <span>·</span>
+  <a href="dziennik-pilot.html" class="active">Dziennik · pilot</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja →</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="piloci-konto.html">Karta członka</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Pilot nie latał w tym zakresie</span>
+        <span class="inv-when">Pusto znaczy „w TYCH datach nic", nie „ten pilot nie lata" - zdanie wskazuje obie drogi wyjścia: zmianę zakresu i powrót do listy pilotów. Przycisku nie ma: zakres zmienia się kontrolką wyżej na tym samym ekranie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="empty-title">Marta Zięba nie latała w tym zakresie</span>
+          <span class="empty-note">Zmień zakres dat albo wróć do listy pilotów.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Kod spoza klubu w adresie</span>
+        <span class="inv-when">Kod pilota jest jedyny W KLUBIE, więc adres wklejony z rozmowy w innym klubie prowadzi donikąd. Ten sam stan, co znak spoza floty na osi maszyny - i z tego samego powodu pusta tabela nie wchodzi w grę: wyglądałaby jak „ten pilot nic nie robił". Przycisk JEST, bo z tego ekranu nie ma innego wyjścia.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="empty-title">Nie ma pilota o kodzie XYZ</span>
+          <span class="empty-note">Sprawdź kod w module Piloci albo wróć do listy.</span>
+          <a class="btn primary" href="dziennik-piloci.html">Pokaż wszystkich</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Były członek klubu</span>
+        <span class="inv-when">Osoba z wyłączonym członkostwem nie ma wiersza na osi pilotów (oś pyta o tych, którzy mogą latać), ale jej stare operacje stoją w dzienniku na zawsze - i adres bezpośredni je pokazuje. Plakietka w nagłówku mówi CO (członkostwo wyłączone), nie co z tego wynika; zdolność „Karta członka" prowadzi tam, gdzie da się je włączyć z powrotem.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Tomasz Lis</h1>
+            <p class="page-sub"><span class="mono">TLI</span> · pilot</p>
+          </div>
+          <div class="page-actions">
+            <span class="pill dim">Członkostwo wyłączone</span>
+            <a class="btn" href="piloci-konto.html">Karta członka</a>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-piloci.html">← Dziennik · piloci</a>
+  <span>·</span>
+  <a href="dziennik-pilot.html" class="active">Dziennik · pilot</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

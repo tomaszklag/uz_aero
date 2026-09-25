@@ -1,0 +1,102 @@
+/**
+ * Ninerdeck - panel: STATYSTYKI I ANALITYKA ZUŻYCIA
+ * (3.2.0, `docs/panel-3.2.md` §8; epik P-E).
+ *
+ * Dwie rzeczy, których reszta panelu nie potrzebowała: słupki „nalot dzień po dniu"
+ * i pasmo zużycia. Obie rysowane SAMYM CSS-em na wartościach z serwera - panel nie
+ * liczy po swojemu (`admin/test/architecture.test.ts`), wysokość słupka i położenie
+ * pasma to procent policzony z gotowych liczb. Sumy i wiersze per maszyna / pilot
+ * jadą zwykłą tabelą z wierszem `tfoot` (`table.css`).
+ */
+
+/* ── słupki: nalot dzień po dniu ──
+   Wysokość względem maksimum zakresu (`style="height:…%"`), dzień bez lotów to
+   PRAWDZIWE zero i dostaje kreskę u podstawy - pusta kolumna czytałaby się jak brak
+   danych. Podpis dnia co kilka słupków, żeby mono nie zlało się w jeden napis. */
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+  padding-top: 8px;
+}
+
+.bar {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.bar i {
+  display: block;
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--green);
+  opacity: 0.85;
+}
+
+.bar.zero i {
+  height: 2px;
+  background: var(--border-strong);
+  opacity: 1;
+}
+
+.bar-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-align: center;
+  height: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.bars-axis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* ── pasmo zużycia (10.–90. centyl) z markerem normy z dokumentacji ──
+   Wypełnienie = pasmo ZMIERZONE z lotów tej maszyny, kreska bursztynowa = norma
+   ZADEKLAROWANA w karcie (issue #66: dwie różne liczby, ekran nazywa, którą pokazuje).
+   Skala pod paskiem podaje granice osi, żeby procenty coś znaczyły. */
+.band {
+  position: relative;
+  height: 8px;
+  margin: 8px 0 4px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+}
+
+.band-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--green-border);
+}
+
+.band-mark {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--amber);
+}
+
+.band-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}

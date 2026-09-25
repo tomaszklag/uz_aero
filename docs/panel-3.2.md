@@ -153,10 +153,11 @@ Trzy ograniczenia z `admin/src/ui/shell/nav.ts`, których nie wolno naruszyć:
 3. **pozycja należy do zdolności** - moduł bez prawa wejścia nie jest wyszarzony, tylko
    go nie ma.
 
-Propozycja kolejności (do rozstrzygnięcia w P-A): **Dziennik · Do sprawdzenia · Kalendarz ·
-Statystyki · Piloci · Samoloty** - najpierw to, co się wydarzyło i co wymaga reakcji, potem
-to, co zaplanowane i ile tego było, na końcu konfiguracja klubu, którą rusza się raz na
-sezon.
+Kolejność (rozstrzygnięta 22 września 2026, §14 pkt 7; makiety P-A 25 września): **Dziennik ·
+Do sprawdzenia · Kalendarz · Statystyki · Piloci · Samoloty** - najpierw to, co się wydarzyło
+i co wymaga reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu,
+którą rusza się raz na sezon. Ikony: skrzynka (Do sprawdzenia) i słupki (Statystyki);
+klasa plakietki `.nav-count` w `shell.css`.
 
 **Plakietka z liczbą przy „Do sprawdzenia" pojawia się WYŁĄCZNIE przy niezerowej liczbie** -
 to jest reguła SyncChipa z issue #12 zastosowana do kolumny: stan domyślny („nic nie
@@ -210,10 +211,11 @@ Gdyby sumy doby liczyła przeglądarka z wczytanych wierszy, pierwsza strona pok
 POŁOWY doby jako sumę doby - i nikt by tego nie zauważył, bo liczba wygląda poprawnie.
 
 Stąd cienki plaster serwera w P-B: **sumy doby przychodzą z odpowiedzi**, a nie z wierszy.
-Do rozstrzygnięcia w P-A, czy niesie je rozszerzone `GET /sessions` (nagłówki dób obok
-wierszy - wzorzec `GET /bookings`, które oddaje granice dób razem z zajętością), czy druga
-trasa. Rekomendacja: jedna odpowiedź, bo dwie oznaczają dwa momenty w czasie i sumy
-niepasujące do wierszy pod nimi.
+**Rozstrzygnięte w P-A (25 września 2026): JEDNA odpowiedź** - rozszerzone `GET /sessions`
+niesie nagłówki dób obok wierszy (wzorzec `GET /bookings`, które oddaje granice dób razem
+z zajętością). Dwie trasy oznaczałyby dwa momenty w czasie i sumy niepasujące do wierszy
+pod nimi. Makieta L2 pokazuje dobę przeciętą stroną: nagłówek dalej mówi prawdę o całej
+dobie, a stopka „Pokazano 50 z 214" stoi pod nią.
 
 ### 4.5 Jedna podstawa liczenia dla dziennika i statystyk
 
@@ -578,4 +580,56 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 
 | Epik | Odstępstwo | Sekcja |
 |---|---|---|
-| - | - | - |
+| P-A | Baner niespójności operacji (`rules/consistency.ts`) w trybie edycji wymaga cienkiego plastra serwera - panelowi wolno brać z domeny wyłącznie typy | §17 pkt 6 |
+| P-A | Loty jako drugi pilot na osi pilotów: widoczne, poza sumami - decyzja produktowa DO POTWIERDZENIA przez właściciela przed P-B | §17 pkt 3 |
+| P-A | Oś pilotów na poziomie 1 obejmuje WSZYSTKICH aktywnych członków (także z zerami), czyli nie jest samym `GET /stats.pilots` - plaster w `GET /log` | §17 pkt 2 |
+
+---
+
+## 17. Decyzje makiet P-A (25 września 2026)
+
+Makiety powstały z kopii `SZABLON.html` i stoją w `design/panel/` (spis w `index.html`,
+inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wniosły ponad
+§14 - każde da się obejrzeć na kanwie odpowiedniego pliku:
+
+1. **Oś na poziomie 1 to SEGMENT, nie para chipów** (`.seg`, `dziennik-flota` / `dziennik-piloci`):
+   chip zawęża listę, oś rozstrzyga pytanie - dokładnie jedna jest zawsze włączona. Stoi
+   PRZED zakresem dat; adres `?os=piloci`, oś maszyn domyślna i nieobecna w adresie.
+2. **Oś pilotów (L1b) = wszyscy aktywni członkowie**, także z zerami - jak oś maszyn
+   pokazuje maszynę, która nie latała. Kolumny: Dni · Operacje · Loty · Blok · Lot · Samoloty.
+   Sumy obu osi dla tego samego zakresu są równe co do minuty (test dla P-B).
+3. **Nalot liczy się dowódcy; loty jako drugi pilot są WIDOCZNE, ale poza sumami**
+   (podpis „+1 jako drugi pilot" pod liczbą operacji na L1b; wiersz `tr.as-dual`
+   z plakietką „Drugi pilot" na L2b). Bez tego uczeń bez ani jednej operacji jako dowódca
+   znikałby z osi. **Do potwierdzenia przez właściciela** - czy klub chce widzieć czas
+   „w prawym fotelu" osobno.
+4. **Doba nagłówkiem (L2, L2b)**: `<tbody class="day">` na dobę, nagłówek z datą, dniem
+   tygodnia i sumami Operacje · Loty · Blok · Lot; pierwsza komórka wiersza = para godzin
+   biegu silnika + sygnatura (kształt kafelka z telefonu), a czas trwania biegu ma własną
+   kolumnę „Blok". Operacja w toku i wpis unieważniony poza sumami („· 1 w toku").
+5. **Tryb edycji ma WŁASNY ADRES** (`…/edycja`), żeby dało się go wkleić w rozmowie
+   („popraw to"); wejście = „Popraw zdarzenia" w nagłówku L3 (zdolność `events.correct`,
+   bez niej przycisku nie ma). Korekta to szuflada (`.drawer`), unieważnienie zdarzenia to
+   kosz w linii tytułu szuflady, dopisanie - ostatni wiersz osi (`tr.axis-add`).
+6. **Baner niespójności nad osią w trybie edycji** (jak 10D w telefonie) - wymaga, żeby
+   serwer przysłał wynik `rules/consistency.ts` razem z operacją (plaster P-C).
+7. **Skrzynka rozjazdów mówi po polsku**: Dwie operacje naraz · Pilot w dwóch maszynach ·
+   Luka w liczniku · Cofnięty licznik · Rozjazd paliwa · Rozjazd zegara; kody serwera nie
+   wychodzą na ekran. Notatka rozstrzygnięcia jest WYMAGANA (jak powód korekty); dla
+   `aircraft_overlap` baner o re-eksporcie karty stoi PRZED przyciskiem. Chipy bez liczb -
+   liczby w podtytule strony.
+8. **Plakietka kolumny = suma trzech źródeł `attention`** (flagi otwarte + karty `missing`
+   + operacje wiszące), wyłącznie przy niezerowej. Karta bez spraw na D1 ZNIKA, nie zostaje
+   z zerem.
+9. **Karty dnia (D3)**: wiersz = operacja, nazwa wiersza = karta (doba samolotu); stany
+   po polsku (W arkuszu / Bez karty / Wstrzymana flagą / Czeka na zdanie / Unieważniona);
+   adres karty ze slugiem i sekretem pokazany świadomie, z jednym zdaniem komu go dawać.
+10. **Statystyki bez kafli**: sumy jako pasek faktów (`.track-facts` z karty śladu),
+    słupki „dzień po dniu" i tabele z wierszem `tfoot`; podtytuł nazywa podstawę liczenia
+    („operacje zamknięte · n w toku poza sumami").
+11. **Analityka zużycia = karta „Zużycie z lotów" w szufladzie samolotu** (S2c): pasmo
+    P10–P90 jako wypełnienie, norma z dokumentacji jako marker; bez opublikowanego modelu
+    karty NIE MA wcale; wiersz „Motogodziny" gaśnie osobno.
+12. **Nowe komponenty** (`admin/src/styles/components/`): `.nav-count` (shell), `.seg`
+    (filters), `tr.day-row` (logbook), `tfoot` (table), `corrections.css`, `attention.css`,
+    `stats.css`; wszystkie w inwentarzu `SZABLON.html`, `panel.css` przegenerowany.
