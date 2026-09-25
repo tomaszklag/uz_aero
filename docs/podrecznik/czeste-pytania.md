@@ -102,7 +102,7 @@ Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, 
 
 ### Jak wpuścić nowego pilota?
 
-W module [Piloci](panel-piloci) nad listą stoi kolejka zgłoszeń - **Rozpatrz**, kod pilota, zakres uprawnień, **Zatwierdź i załóż konto**. Znanego pilota można też dopisać zawczasu, razem z adresem jego konta Google: pierwsze logowanie podepnie się wtedy bez kolejki. Odrzucenie wymaga powodu, bo pilot czyta go na swoim ekranie.
+Podaj mu kod klubu. Pilot loguje się w aplikacji, wpisuje kod, a jego zgłoszenie staje w module [Piloci](panel-piloci) nad listą: **Rozpatrz**, kod pilota, zakres uprawnień, **Zatwierdź i przyjmij do klubu**. Innej drogi nie ma - z panelu nikogo nie dopisuje się ręcznie. Odrzucenie wymaga powodu, bo pilot czyta go na swoim ekranie.
 
 ### Samolot jest zajęty przez pilota, który go nie zdał
 

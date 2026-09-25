@@ -25,7 +25,7 @@ Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powó
 
 ## Jak to działa
 
-Google potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w klubie - czyli Twój kod pilota, rola i dostęp - powstaje dopiero w chwili zatwierdzenia; wcześniej Twoje zgłoszenie nie ma kodu pilota, nie stoi na liście członków i nie może niczego zapisać. Po zatwierdzeniu telefon dostaje profil pilota i od tej pory pracuje samodzielnie: PIN sprawdza na miejscu, a połączenie z klubem odnawia sobie w tle przy najbliższej sieci. Wygaśnięcie tego połączenia nigdy nie wylogowuje - aplikacja sama nie wyrzuca do ekranu logowania. Mechanizm w całości: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
+Logowanie potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w klubie - czyli Twój kod pilota i zakres uprawnień - powstaje dopiero w chwili zatwierdzenia; wcześniej Twoje zgłoszenie nie ma kodu pilota, nie stoi na liście członków i nie może niczego zapisać. Po zatwierdzeniu telefon dostaje profil pilota i od tej pory pracuje samodzielnie: PIN sprawdza na miejscu, a połączenie z klubem odnawia sobie w tle przy najbliższej sieci. Wygaśnięcie tego połączenia nigdy nie wylogowuje - aplikacja sama nie wyrzuca do ekranu logowania. Mechanizm w całości: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
 
 ## Nie pamiętam hasła
 

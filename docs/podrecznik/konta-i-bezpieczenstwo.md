@@ -1,6 +1,6 @@
 # Konta, logowanie i bezpieczeństwo danych
 
-> Konto zakłada się kontem Google **albo e-mailem i hasłem**, wstęp do klubu daje kod klubu i decyzja administratora, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, role i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
+> Konto zakłada się kontem Google **albo e-mailem i hasłem**, wstęp do klubu daje kod klubu i decyzja administratora, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, uprawnienia i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
 
 ## Trzy kroki: konto, klub, PIN
 
