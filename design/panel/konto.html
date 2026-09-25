@@ -204,6 +204,52 @@
               </div>
             </div>
 
+            <!-- OBSERWOWANE SAMOLOTY (3.2.0, docs/obserwowanie-samolotu.md §6.6; decyzja
+                 właściciela 2026-09-25). Karta stoi TU, bo #/konto jest jedynym ekranem
+                 panelu O OSOBIE - obserwowanie jest jej ustawieniem w klubie, nie daną
+                 klubu. Cała flota klubu bieżącej sesji, każdy wiersz jako przełącznik
+                 (`.opt` z rolą checkbox - ten sam komponent, którym karta członka nadaje
+                 zdolności), zaznaczony = obserwuję. Zapis od razu, bez audytu: to decyzja
+                 osoby o sobie, jak motyw. Podpis mówi stan maszyny TERAZ - ten sam
+                 rachunek, co hero karty w aplikacji. Karta istnieje wyłącznie przy
+                 zdolności „Obserwowanie samolotów" (Koordynator lotów, Technik,
+                 Administrator); Akceptujący bez panelu zarządza z aplikacji (13C).
+                 Powiadomienia i tak przychodzą na telefon - panel niesie samą listę. -->
+            <div class="card span-2">
+              <div class="card-title">Obserwowane samoloty</div>
+              <div class="opt-list" role="group" aria-label="Obserwowane samoloty w tym klubie">
+                <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                  <span class="opt-body">
+                    <span class="opt-name">SP-AXA · Cessna 172</span>
+                    <span class="opt-desc">W locie · A. Kowalski · od 08:12 UTC · zgodnie z rezerwacją</span>
+                  </span>
+                  <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                </button>
+                <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                  <span class="opt-body">
+                    <span class="opt-name">SP-BKL · Piper PA-28</span>
+                    <span class="opt-desc">Wolna · następny termin dziś 14:00</span>
+                  </span>
+                  <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                </button>
+                <button type="button" class="opt" role="checkbox" aria-checked="false">
+                  <span class="opt-body">
+                    <span class="opt-name">SP-DKM · Cessna 152</span>
+                    <span class="opt-desc">Wolna</span>
+                  </span>
+                  <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                </button>
+                <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                  <span class="opt-body">
+                    <span class="opt-name">SP-CDR · An-2</span>
+                    <span class="opt-desc">Wyłączona z użytku · przegląd 100 h · do 2 PAŹ</span>
+                  </span>
+                  <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                </button>
+              </div>
+              <span class="hint">Zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach przychodzą na telefon - w skrzynce aplikacji.</span>
+            </div>
+
             <!-- MOJE SESJE (§5.6, `GET /admin/api/me/sessions`): własne sesje ze WSZYSTKICH
                  powierzchni (panel, telefon) i wszystkich klubów - to urządzenia tej osoby,
                  nie dane klubu. Bieżąca przeglądarka ma plakietkę „to urządzenie" i ŻADNEJ

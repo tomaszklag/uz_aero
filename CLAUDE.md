@@ -4499,6 +4499,12 @@ Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
   przypomnienie „za godzinę" to STAŁA 60 min w `policy.ts`, nie ustawienie klubu; historia
   operacji na karcie sięga po WSZYSTKIE operacje stronami (kursor parą jak w skrzynce),
   wykres zostaje przy 90 dniach
+- **trzecia tura 2026-09-25 (po makietach): LISTA OBSERWOWANYCH I ZARZĄDZANIE** - w Ustawieniach
+  (13, sekcja po motywie) CAŁA flota klubu z przełącznikiem przy każdej maszynie i stanem
+  „teraz" w podpisie (jedno miejsce do włączania i wyłączania, bez arkusza „dodaj"; tylko
+  przy `fleet.watch`, wymaga sieci) oraz karta „Obserwowane samoloty" w `#/konto` panelu
+  (`.opt` z rolą checkbox, trasy `/admin/api/me/watches`, bez audytu). Odwraca „ani
+  przełącznika w #/konto" z §7.2 - tamto było „wraca, gdy ktoś poprosi". Makiety `13c` i `konto`
 - **„lot się rozpoczął" = URUCHOMIENIE SILNIKA** (`engine_start`), nie przejęcie;
   **wpis ręczny MILCZY**; **ziarnem jest OPERACJA**, nie każdy start i lądowanie
 - **pięć wiadomości**: za godzinę · odwołano termin, który JUŻ przypomniano · uruchomienie

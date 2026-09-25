@@ -93,6 +93,15 @@ Druga tura tego samego dnia - pięć wąskich pytań z §11:
 11. **Historia na karcie sięga po WSZYSTKIE operacje maszyny, stronami** (§6.2,
     §11 P5); wykres zostaje przy 90 dniach - to inne pytanie.
 
+Trzecia tura (po makietach O-A, uwaga właściciela: „gdzieś w ustawieniach i na profilu
+warto byłoby dodać listę obserwowanych samolotów oraz możliwość zarządzania"):
+
+12. **LISTA OBSERWOWANYCH I ZARZĄDZANIE W DWÓCH MIEJSCACH** (§6.6): w Ustawieniach
+    aplikacji (13) sekcja „Obserwowane samoloty" = CAŁA flota klubu z przełącznikiem przy
+    każdej maszynie (jedno miejsce do włączania i wyłączania, bez arkusza „dodaj"), oraz
+    w panelu karta w **`#/konto`** z tą samą listą. Odwraca zdanie z §7.2 „ani przełącznika
+    w `#/konto`" - tamto było „wraca, gdy ktoś poprosi", i ktoś poprosił.
+
 ## 2. Czym JEST obserwowanie w tym systemie
 
 ### 2.1 Zapis zamiaru osoby, prawo sprawdzane przy KAŻDEJ wysyłce
@@ -492,13 +501,46 @@ z nią arkusz stylów co do bajtu; 25C powstaje ze skrzynki 25 tą samą drogą:
 - **`25c-powiadomienia-samolot`** - skrzynka z pięcioma rodzajami z §5, w tym wiersz
   z adnotacją „zapis dotarł" i wiersz „poza planem" bursztynem;
 - **`21`** dostaje ramkę z afordancją na nagłówku wiersza maszyny (szewron, jak przy
-  wierszach prowadzących w głąb na 26).
+  wierszach prowadzących w głąb na 26);
+- **`13c-ustawienia-obserwowane`** (trzecia tura) - Ustawienia z sekcją „Obserwowane
+  samoloty" po motywie: cała flota z przełącznikami, profil technika.
 
 Panel: **`piloci-konto`** - sekcja zakresu z nową pozycją i nowym opisem zestawu
-„Akceptujący"; nic więcej w pierwszej wersji (§7.2).
+„Akceptujący"; **`konto`** (trzecia tura) - karta „Obserwowane samoloty" z listą floty
+jako przełącznikami `.opt` (§6.6, §7.2).
 
 Panele „Warianty tego ekranu", wpisy w `index.html`, zero martwych linków - jak przy
 każdej rodzinie.
+
+### 6.6 Lista obserwowanych i zarządzanie: Ustawienia (13C) i Moje konto (decyzja 12)
+
+Karta maszyny jest wejściem W JEDNĄ maszynę. Mechanik obserwujący trzy samoloty musiałby
+otworzyć trzy karty, a przeglądu „co obserwuję" nie miałby nigdzie - stąd lista w dwóch
+miejscach, które są O OSOBIE, nie o maszynie:
+
+- **Ustawienia (13), sekcja „Obserwowane samoloty"** po motywie, przed synchronizacją:
+  **CAŁA flota klubu bieżącego**, każdy wiersz ze znakiem, typem, STANEM TERAZ w podpisie
+  (ten sam rachunek `aircraftNow`, co hero karty) i przełącznikiem. Wiersz ma dwa cele:
+  lewa część prowadzi w kartę 27, przełącznik zapisuje obserwowanie na serwerze wprost -
+  ten sam zapis, co karta-przełącznik na 27. Cała flota, nie „tylko obserwowane +
+  dodaj": zarządzać znaczy włączać I wyłączać, a do włączenia trzeba widzieć maszyny,
+  których się jeszcze nie obserwuje (decyzja właściciela 2026-09-25). Sekcja istnieje
+  WYŁĄCZNIE przy zdolności `fleet.watch` - pilot bez niej jej nie widzi (brak sekcji,
+  nie sekcja wyszarzona); bit `viewer.watch` dojeżdża w odpowiedzi listy. **Wymaga
+  sieci** jak cały moduł: bez połączenia w miejscu listy stoi jedno zdanie w tonie
+  ostrzeżenia, a reszta ustawień działa jak zawsze - PIN, motyw i synchronizacja nie
+  potrzebują tej listy do niczego. Makieta `13c`.
+- **Panel, `#/konto`, karta „Obserwowane samoloty"**: ta sama lista floty klubu bieżącej
+  sesji jako przełączniki `.opt` z rolą checkbox (komponent, którym karta członka nadaje
+  zdolności), zaznaczony = obserwuję, zapis od razu, BEZ audytu - to decyzja osoby
+  o sobie, jak motyw. Karta stoi w `#/konto`, bo to jedyny ekran panelu o osobie
+  patrzącej; widzą ją Koordynator lotów, Technik i Administrator, Akceptujący bez panelu
+  zarządza z aplikacji. Powiadomienia i tak przychodzą na telefon - panel niesie samą
+  listę, a podpis pod kartą to mówi. Makieta `konto`.
+
+Czego tu NIE MA: listy obserwujących na karcie SAMOLOTU w module Samoloty („kto dostanie
+powiadomienie o tej maszynie") - to pytanie administratora o cudze ustawienia; wraca,
+gdy ktoś o nie poprosi (§7.2).
 
 ## 7. API
 
@@ -510,6 +552,7 @@ każdej rodzinie.
 | `GET /aircraft/:id/operations?beforeAt=&beforeUuid=&limit=` | strona historii, kursor PARĄ jak w skrzynce (chwila operacji + uuid); bez dolnej granicy czasu (P5) | jak wyżej; kursor niepełny 400 |
 | `PUT /aircraft/:id/watch` | 204, idempotentne | jak wyżej |
 | `DELETE /aircraft/:id/watch` | 204, idempotentne | jak wyżej |
+| `GET /aircraft/watches` (decyzja 12) | `{ timezone, viewer: { watch }, items: [{ aircraftId, watching, now }] }` - cała flota klubu z tokenu ze stanem `aircraftNow` per maszyna; materiał sekcji 13C | 401 · 403 bez `fleet.watch` |
 
 `GET /bookings` (okno kalendarza) i `GET /bookings/:id/preview/aircraft` dokładają bit
 `viewer.watch` (§6.1). `GET /me/notifications` nie zmienia się: nowe rodzaje jadą
@@ -524,11 +567,19 @@ o sprawę („· ta sprawa" na liście, `overlaps`), tu o maszynę.
 
 ### 7.2 Panel
 
-W pierwszej wersji panel dostaje WYŁĄCZNIE katalog: pozycję `fleet.watch` w `dto.ts`
-(lustro unii - `mirrors.test.ts`), w `scope.ts` i w opisach zestawów. Ani listy
-obserwujących na karcie samolotu, ani przełącznika w `#/konto` - koordynator siedzi
-przy biurku, ale powiadomienia i tak lądują na telefonie, a panel ma w 3.2.0 własne
-sześć epików. Obie rzeczy są tanie i wracają, gdy ktoś o nie poprosi.
+Katalog: pozycja `fleet.watch` w `dto.ts` (lustro unii - `mirrors.test.ts`), w `scope.ts`
+i w opisach zestawów. **Do tego, od decyzji 12, karta „Obserwowane samoloty" w `#/konto`**
+(§6.6) na trasach sesji klubu:
+
+| Trasa | Odpowiedź | Zdolność |
+| --- | --- | --- |
+| `GET /admin/api/me/watches` | jak `GET /aircraft/watches` telefonu - flota klubu sesji ze stanem i `watching` | `fleet.watch` |
+| `PUT` / `DELETE /admin/api/me/watches/:aircraftId` | 204, idempotentne, BEZ wpisu w `admin_audit` (ustawienie osoby o sobie) | `fleet.watch` |
+
+Trasy siedzą pod `/me/`, obok sesji i konta, bo pytają o osobę patrzącą, nie o klub;
+cudza maszyna to 404 (epik C). Czego panel NIE dostaje: listy obserwujących na karcie
+samolotu w module Samoloty - pytanie administratora o cudze ustawienia, wraca, gdy ktoś
+o nie poprosi.
 
 ## 8. Aplikacja - co się zmienia
 
@@ -548,8 +599,13 @@ sześć epików. Obie rzeczy są tanie i wracają, gdy ktoś o nie poprosi.
 - **tapnięcie** (`logic/pushTarget.ts`, `usePushNavigation`): pięć rodzajów → `Aircraft`;
 - **kalendarz**: nagłówek wiersza maszyny jako `Pressable` przy `viewer.watch`;
 - **zgoda na powiadomienia**: trzeci moment (`'watching'`) w `logic/pushOptIn.ts`
-  - po włączeniu obserwowania;
-- **port serwera**: `fetchAircraftCard`, `fetchAircraftOperations`, `setAircraftWatch`.
+  - po włączeniu obserwowania (z karty 27 ALBO z sekcji w Ustawieniach);
+- **Ustawienia (13)**: sekcja „Obserwowane samoloty" (decyzja 12) - `useAircraftWatches`
+  na wzorcu okna kalendarza (`null` = zdanie o braku połączenia w miejscu listy), wiersze
+  z `logic/watchList.ts` (znak, typ, podpis stanu z `aircraftNow`), przełącznik na tym
+  samym `setAircraftWatch`; sekcja renderuje się wyłącznie przy `viewer.watch`;
+- **port serwera**: `fetchAircraftCard`, `fetchAircraftOperations`, `fetchAircraftWatches`,
+  `setAircraftWatch`.
 
 Schemat SQLite telefonu NIE ROŚNIE: cache'u nie ma (§2.2).
 
@@ -572,12 +628,14 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
    komendy rezerwacji telefonu i panelu (§5.2), `sessionClose`/`void` panelu (§5.4),
    trzecie pytanie zadania okresowego (§5.1, §5.5) ze stałą 60 min w `policy.ts`;
    `aircraftNow` i serie w domenie; zapytanie karty i historii (bez dolnej granicy
-   czasu); cztery trasy + dwa bity `viewer.watch`; przypadki izolacji dla każdej
+   czasu); pięć tras telefonu (z listą floty ze stanem, decyzja 12) + dwa bity `viewer.watch`
+   + trzy trasy panelu pod `/admin/api/me/watches`; przypadki izolacji dla każdej
    trasy. Może iść RÓWNOLEGLE z O-A.
 3. **O-C - aplikacja**: po O-A i O-B. Ekran 27 z wariantami, wykresy z kursorem
    i przybliżeniem, skrzynka, tapnięcie, wejście z kalendarza i z 26B, zgoda na
-   powiadomienia.
-4. **O-D - panel**: katalog i opisy zestawów - kilka linijek, po O-B (lustro unii).
+   powiadomienia, sekcja „Obserwowane samoloty" w Ustawieniach (13C, decyzja 12).
+4. **O-D - panel**: katalog i opisy zestawów (lustro unii) oraz karta „Obserwowane
+   samoloty" w `#/konto` (decyzja 12) - po O-B.
 5. **Wydanie - w P-W 3.2.0**, z JEDNĄ zmianą wobec `docs/panel-3.2.md` §11: aplikacja
    pilota DOSTAJE aktualizację OTA na runtime 3.1.0 (bez podbicia `version` - moduł
    natywny się nie zmienia). Kolejność: serwer z migracją 15 i panel PRZED OTA;

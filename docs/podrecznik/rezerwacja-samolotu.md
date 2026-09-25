@@ -91,6 +91,10 @@ Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu
 
 O własnym działaniu nikt nie dostaje wiadomości: pilot, który sam uruchomił silnik albo sam odwołał termin, nie jest o tym budzony. Wpis lotu po fakcie nie rodzi powiadomień - opisuje przeszłość, nie to, co dzieje się z maszyną teraz.
 
+**Co obserwujesz, widzisz w jednym miejscu**: w [ustawieniach](ustawienia) sekcja „Obserwowane samoloty" pokazuje całą flotę klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili - tam włączasz i wyłączasz obserwowanie kilku maszyn naraz, bez otwierania każdej karty. Ta sama lista stoi w panelu klubu, w Moim koncie.
+
+@screen 13c-ustawienia-obserwowane "Ustawienia · obserwowane samoloty"
+
 > **Uwaga.** Godzina w wiadomości o uruchomieniu i zdaniu jest godziną z zapisu na telefonie pilota, nie chwilą, w której wiadomość dotarła. Telefon bez zasięgu dosyła zapisy później - czasem po godzinach - i wtedy wiadomość mówi to wprost („zapis dotarł 09:40"). Jeśli uruchomienie i zdanie dotarły w jednej paczce, przychodzi tylko wiadomość o zdaniu.
 
 Karta samolotu, jak cały moduł rezerwacji, wymaga zasięgu: pokazuje cudze loty i terminy, których telefon nie ma u siebie.
