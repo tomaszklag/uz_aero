@@ -1549,7 +1549,11 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    serwer własnym zegarem.
 5. **Sprawca własnego działania nie jest budzony**, a prawo adresata sprawdza się PRZY
    WYSYŁCE (aktywne członkostwo × zdolność w SQL-u), nie w chwili zapisu subskrypcji -
-   odebranie zdolności wycisza od razu, bez sprzątania wierszy.
+   odebranie zdolności wycisza od razu, bez sprzątania wierszy. Dla powiadomień o MASZYNIE
+   robi to jeden pomocnik - `notify/aircraftWatching.ts` (`audience(tx, org, maszyna,
+   sprawcy)` → `record` → `wake`) - i nowy producent woła jego, a nie port obserwowania
+   wprost. Producent z REJESTRU budzi wyłącznie przy zdarzeniu, które NAPRAWDĘ weszło
+   (`insertBatch` oddaje uuidy przyjęte) - ponowiona paczka nie dzwoni drugi raz.
 6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
    da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
    wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED

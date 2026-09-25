@@ -162,6 +162,9 @@ const B_MARKERS = [
   // nie ma prawa ich pokazać.
   'book-b',
   'block-b',
+  // Obserwowanie samolotu (3.2.0): wiersz obserwowania Bety i uuid jej operacji na
+  // karcie maszyny nie mają prawa paść w żadnej odpowiedzi dla Alfy.
+  'watch-b',
 ] as const;
 
 interface World {
@@ -317,6 +320,14 @@ async function twoClubs(): Promise<World> {
     `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, block_reason, created_by)
      VALUES ('block-b', $1, 'SP-BBB', 'block', 'confirmed', $2, $3, 'maintenance', 'BAD')`,
     [ORG_B, new Date(BOOK_FROM + 86_400_000), new Date(BOOK_FROM + 2 * 86_400_000)],
+  );
+
+  // Obserwowanie samolotu (3.2.0, issue #205): administratorzy obu klubów obserwują
+  // własną maszynę. Wiersz Bety niesie w `aircraft_id` znacznik `SP-BBB`, a jej klub
+  // stoi w `org_id` - lista obserwowanych Alfy nie ma go prawa pokazać.
+  await db.query(
+    `INSERT INTO aircraft_watches (org_id, aircraft_id, pilot_id) VALUES ($1, 'SP-AXA', 'AKO'), ($2, 'SP-BBB', 'BAD')`,
+    [ORG_A, ORG_B],
   );
 
   return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
@@ -1587,6 +1598,77 @@ const CASES: Record<string, Probe> = {
     const res = await app.inject({ url: '/bookings/book-a/preview/aircraft', headers: bearer(a) });
     expectClean(res, '/bookings/:id/preview/aircraft');
     expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  // ── obserwowanie samolotu (3.2.0, issue #205) ──────────────────────────────
+  'GET /aircraft/watches': async ({ app, a }) => {
+    const res = await app.inject({ url: '/aircraft/watches', headers: bearer(a) });
+    expectClean(res, '/aircraft/watches');
+    const ids = (res.json().items as { aircraftId: string; watching: boolean }[]).map((i) => i.aircraftId);
+    // Cała flota WŁASNEGO klubu, z bitem obserwowania - i ani jednej maszyny Bety.
+    expect(ids).toContain('SP-AXA');
+    expect(ids).not.toContain('SP-BBB');
+    expect((res.json().items as { aircraftId: string; watching: boolean }[]).find((i) => i.aircraftId === 'SP-AXA')?.watching).toBe(true);
+  },
+
+  'GET /aircraft/:id/card': async ({ app, a }) => {
+    expect((await app.inject({ url: '/aircraft/SP-BBB/card', headers: bearer(a) })).statusCode).toBe(404);
+    const own = await app.inject({ url: '/aircraft/SP-AXA/card', headers: bearer(a) });
+    expectClean(own, '/aircraft/:id/card');
+    expect(own.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  'GET /aircraft/:id/operations': async ({ app, a }) => {
+    expect((await app.inject({ url: '/aircraft/SP-BBB/operations', headers: bearer(a) })).statusCode).toBe(404);
+    const own = await app.inject({ url: '/aircraft/SP-AXA/operations', headers: bearer(a) });
+    expectClean(own, '/aircraft/:id/operations');
+    expect((own.json().items as { sessionUuid: string }[]).map((i) => i.sessionUuid)).toContain('sess-a');
+  },
+
+  'PUT /aircraft/:id/watch': async ({ app, db, a }) => {
+    // Maszyna Bety pod tokenem Alfy: 404 i ZERO wierszy - także pod klubem Alfy.
+    expect((await app.inject({ method: 'PUT', url: '/aircraft/SP-BBB/watch', headers: bearer(a) })).statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB' AND pilot_id = 'AKO'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+    expect((await app.inject({ method: 'PUT', url: '/aircraft/SP-FGK/watch', headers: bearer(a) })).statusCode).toBe(204);
+    await db.query(`DELETE FROM aircraft_watches WHERE aircraft_id = 'SP-FGK' AND pilot_id = 'AKO'`);
+  },
+
+  'DELETE /aircraft/:id/watch': async ({ app, db, a }) => {
+    expect((await app.inject({ method: 'DELETE', url: '/aircraft/SP-BBB/watch', headers: bearer(a) })).statusCode).toBe(404);
+    // Wiersz Bety (BAD → SP-BBB) stoi nietknięty.
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
+  },
+
+  'GET /admin/api/me/watches': async ({ app, a }) => {
+    const res = await app.inject({ url: '/admin/api/me/watches', headers: bearer(a) });
+    expectClean(res, '/admin/api/me/watches');
+    expect((res.json().items as { aircraftId: string }[]).map((i) => i.aircraftId)).not.toContain('SP-BBB');
+  },
+
+  'PUT /admin/api/me/watches/:aircraftId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ method: 'PUT', url: '/admin/api/me/watches/SP-BBB', headers: writer(a) })).statusCode,
+    ).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB' AND pilot_id = 'AKO'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'DELETE /admin/api/me/watches/:aircraftId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ method: 'DELETE', url: '/admin/api/me/watches/SP-BBB', headers: writer(a) })).statusCode,
+    ).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
   },
 
   'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {

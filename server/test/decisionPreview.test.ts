@@ -148,6 +148,7 @@ function bookingRecord(over: Partial<BookingRecord> & { id: string }): BookingRe
     updatedAt: TERAZ,
     closedAt: null,
     closeReason: null,
+    remindedAt: null,
     ...over,
   };
 }
@@ -373,7 +374,12 @@ describe('trasy podglądu - jeden komplet faktów dla telefonu i panelu', () => 
     const phoneAc = await app.inject({ url: `/bookings/${id}/preview/aircraft`, headers: bearer(krz) });
     const panelAc = await app.inject({ url: `/admin/api/bookings/${id}/preview/aircraft`, headers: cookie });
     expect(panelAc.statusCode, panelAc.body).toBe(200);
-    expect(panelAc.json()).toEqual(phoneAc.json());
+    // `viewer` mówi o PATRZĄCYM (czy ma kartę maszyny - obserwowanie samolotu, 3.2.0),
+    // nie o sprawie: komplet FAKTÓW porównuje się bez niego. Panel bitu nie dostaje,
+    // bo ma własną stopkę („Pokaż w dzienniku").
+    const { viewer, ...phoneFacts } = phoneAc.json();
+    expect(viewer).toEqual({ watch: false });
+    expect(panelAc.json()).toEqual(phoneFacts);
 
     expect(
       (await app.inject({ url: `/admin/api/bookings/nie-ma/preview/aircraft`, headers: cookie })).statusCode,

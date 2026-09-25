@@ -20,6 +20,9 @@
  * między ludźmi, a telefon nie zna stref i liczy ją odejmowaniem od granic doby.
  */
 
+import type { ReferenceAircraft } from '@ninerdeck/domain';
+
+import type { HandoverPick } from '../../../application/common/aircraftStateView.ts';
 import type {
   AircraftPreview,
   PilotPreview,
@@ -89,36 +92,47 @@ export function pilotPreviewWire(view: PilotPreview): Record<string, unknown> {
   };
 }
 
+/**
+ * Ostatni odczyt liczników ze ŹRÓDŁEM - wiersze 26B i karta maszyny 27 (obserwowanie
+ * samolotu) piszą je JEDNYM kształtem, bo to jest to samo przekazanie (`pickHandover`).
+ */
+export function countersWire(counters: HandoverPick | null): Record<string, unknown> | null {
+  if (counters == null) return null;
+  const oil = counters.handover.oil ?? null;
+  return {
+    mh: counters.handover.reading.mh,
+    fuelL: counters.handover.reading.fuelL,
+    // Suma „pomiar + dolewki po nim" liczy się TU, jak na karcie samolotu
+    // w panelu (`readingOf`) - panel i telefon mają pokazać jedną liczbę.
+    oilL: oil == null ? null : oil.levelL + oil.addedSinceL,
+    at: iso(counters.handover.at),
+    source: counters.source,
+    byPilotId: counters.handover.byPilotId,
+    enteredBy: counters.enteredBy,
+  };
+}
+
+/** Konfiguracja maszyny w nagłówku podglądu i karty - bez niej karta nie ma tytułu. */
+export function aircraftHeadWire(aircraft: ReferenceAircraft): Record<string, unknown> {
+  return {
+    id: aircraft.id,
+    reg: aircraft.reg,
+    type: aircraft.type,
+    serviceStatus: aircraft.serviceStatus,
+    capacityL: aircraft.capacityL,
+    mhFormat: aircraft.mhFormat,
+    oilMinL: aircraft.oilMinL ?? null,
+  };
+}
+
 export function aircraftPreviewWire(view: AircraftPreview): Record<string, unknown> {
   const { facts, counters, aircraft } = view;
-  const oil = counters?.handover.oil ?? null;
   return {
     timezone: view.timezone,
     bookingId: view.booking.id,
-    aircraft: {
-      id: aircraft.id,
-      reg: aircraft.reg,
-      type: aircraft.type,
-      serviceStatus: aircraft.serviceStatus,
-      capacityL: aircraft.capacityL,
-      mhFormat: aircraft.mhFormat,
-      oilMinL: aircraft.oilMinL ?? null,
-    },
+    aircraft: aircraftHeadWire(aircraft),
     lastFlightAt: isoOrNull(facts.lastFlightAt),
-    counters:
-      counters == null
-        ? null
-        : {
-            mh: counters.handover.reading.mh,
-            fuelL: counters.handover.reading.fuelL,
-            // Suma „pomiar + dolewki po nim" liczy się TU, jak na karcie samolotu
-            // w panelu (`readingOf`) - panel i telefon mają pokazać jedną liczbę.
-            oilL: oil == null ? null : oil.levelL + oil.addedSinceL,
-            at: iso(counters.handover.at),
-            source: counters.source,
-            byPilotId: counters.handover.byPilotId,
-            enteredBy: counters.enteredBy,
-          },
+    counters: countersWire(counters),
     last30: facts.last30,
     recent: recentWire(facts.recent),
     upcoming: upcomingWire(view.upcoming),

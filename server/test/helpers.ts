@@ -73,6 +73,10 @@ import { FakePush } from './fakePush.ts';
 import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from '../src/application/admin/commands/approvalSteps.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
+import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
+import { AircraftWatchCommands } from '../src/application/common/commands/aircraftWatch.ts';
+import { AircraftCardQueries } from '../src/application/common/queries/aircraftCard.ts';
+import { PgAircraftWatchesRepo } from '../src/infrastructure/pg/common/aircraftWatchesRepo.ts';
 import { NotificationQueries } from '../src/application/mobile/queries/notifications.ts';
 import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalStepsRepo.ts';
 import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
@@ -375,6 +379,10 @@ const lastSeen = new LastSeenThrottle();
   const notificationsRepo = new PgNotificationsRepo();
   const pushTokensRepo = new PgPushTokensRepo();
   const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+  // Obserwowanie samolotu (issue #205) - prawdziwy adapter i ta sama odpowiedź na „kogo
+  // obudzić", co w produkcji; budzik jest atrapą jak przy ścieżce akceptacji.
+  const aircraftWatches = new PgAircraftWatchesRepo();
+  const watching = new AircraftWatching(aircraftWatches, aircraftConfig, notifier);
   const approvals = new ApprovalFlow(
     db,
     approvalStepsRepo,
@@ -429,7 +437,7 @@ const lastSeen = new LastSeenThrottle();
       events,
       aircraftReadings,
     ),
-    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo, watching),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
@@ -447,7 +455,7 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
-    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
     calendar,
     approvals,
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
@@ -463,6 +471,19 @@ const lastSeen = new LastSeenThrottle();
       new PgClubSettingsRepo(),
       clock,
     ),
+    aircraftCards: new AircraftCardQueries(
+      db,
+      sessions,
+      bookingsRepo,
+      new PgReferenceRepo(db),
+      aircraftReadings,
+      new PgClubSettingsRepo(),
+      events,
+      aircraftConfig,
+      aircraftWatches,
+      clock,
+    ),
+    aircraftWatch: new AircraftWatchCommands(db, aircraftWatches, aircraftConfig, clock),
     adminApprovalSteps: new ApprovalStepsCommands(
       auditedWrite,
       approvalStepsRepo,
@@ -581,6 +602,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      watching,
     ),
     // Zakończenie administracyjne (issue #81) - jak unieważnienie, z tym samym eksporterem.
     adminSessionClose: new AdminSessionCloseCommands(
@@ -591,6 +613,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      watching,
     ),
     // Odczyt dziennika jedzie PRAWDZIWYM adapterem także wtedy, gdy `options.audit`
     // podmienia stronę zapisu na rzucającą: test „awaria audytu cofa skutek" ma
@@ -638,7 +661,7 @@ const lastSeen = new LastSeenThrottle();
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
-    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock),
+    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, watching),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

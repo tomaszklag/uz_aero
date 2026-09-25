@@ -631,6 +631,31 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
    czasu); pięć tras telefonu (z listą floty ze stanem, decyzja 12) + dwa bity `viewer.watch`
    + trzy trasy panelu pod `/admin/api/me/watches`; przypadki izolacji dla każdej
    trasy. Może iść RÓWNOLEGLE z O-A.
+   **WYKONANE 2026-09-25** (gałąź `feature-220-serwer-obserwowania`, issue #220).
+   Odstępstwa i doprecyzowania wobec tego dokumentu:
+   - adapter obserwowania mieszka w `infrastructure/pg/common/`, nie `mobile/` (lista
+     zadań #220 powstała przed decyzją 12 - odkąd ustawienie zapisuje też panel,
+     druga kopia SQL-a po tamtej stronie rozjeżdżałaby listy tej samej osoby);
+   - „kogo obudzić" liczy JEDEN pomocnik dla wszystkich producentów
+     (`notify/aircraftWatching.ts`: `audience` w transakcji → `record` → `wake` po
+     commicie), a ingest budzi wyłącznie przy zdarzeniu, które NAPRAWDĘ weszło -
+     `EventsStorePort.insertBatch` oddaje odtąd uuidy przyjęte, nie samą liczbę;
+   - „zgodnie z planem" = rezerwacja ZREALIZOWANA tą operacją (`fulfil` w tej samej
+     paczce albo wcześniej), nie sam identyfikator w przejęciu: rezerwacja odwołana
+     w międzyczasie nie jest planem, na który mechanik czekał;
+   - zegar (`bookingClock.ts`, `BookingClockJob`) pyta w kolejności: wygaszanie →
+     zwalnianie → przypomnienie. Przypomnienie idzie OSTATNIE, bo termin zwolniony
+     w tym samym przebiegu nie jest już potwierdzony - w odwrotnej kolejności jeden
+     przebieg mówiłby „za godzinę" i „nie odebrano" o jednym terminie;
+   - historia stronami wyklucza operacje unieważnione i PUSTE (issue #75) tym samym
+     predykatem, co listy dziennika (`emptySessionSql`);
+   - wykres paliwa dociąga tankowania strumieniami operacji z okna 90 dni
+     (`sessionStreams` przez `applyCorrections` - czwarty imienny wołający w strażniku
+     `architecture.test.ts`), bo projekcja niesie sumę dolewek, nie ich chwile;
+   - bit `viewer.watch` w podglądzie 26B dostaje WYŁĄCZNIE telefon (panel ma własną
+     stopkę), a test równości „bajt w bajt" porównuje komplet faktów bez niego;
+   - świat testowy: zestaw administratora ma jedenastą pozycję (świadomie - `scopeKey`
+     liczy komplet z katalogu), testy 403 idą osobą BEZ zdolności.
 3. **O-C - aplikacja**: po O-A i O-B. Ekran 27 z wariantami, wykresy z kursorem
    i przybliżeniem, skrzynka, tapnięcie, wejście z kalendarza i z 26B, zgoda na
    powiadomienia, sekcja „Obserwowane samoloty" w Ustawieniach (13C, decyzja 12).
@@ -646,7 +671,7 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
 | Epik | Issue |
 | --- | --- |
 | O-A projekt i makiety | #219 |
-| O-B serwer | #220 |
+| O-B serwer | #220 - WYKONANE 2026-09-25 |
 | O-C aplikacja | #221 |
 | O-D panel | #222 |
 | zgłoszenie nadrzędne | #205 (milestone „Panel admina 3.2.0") |

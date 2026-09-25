@@ -41,6 +41,7 @@ export const CLUB_CAPABILITIES: readonly Capability[] = [
   'flags.resolve',
   'reservations.manage',
   'reservations.approve',
+  'fleet.watch',
   'thresholds.manage',
   'audit.read',
   'maintenance.run',
@@ -75,6 +76,10 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   'reservations.approve': {
     label: 'Akceptacja rezerwacji',
     desc: 'Rozstrzyganie kroków ścieżki akceptacji i podgląd wszystkich terminów klubu w komplecie.',
+  },
+  'fleet.watch': {
+    label: 'Obserwowanie samolotów',
+    desc: 'Karta maszyny w aplikacji (stan, liczniki, terminy, historia, wykresy) i powiadomienia o jej lotach po włączeniu obserwowania.',
   },
   'thresholds.manage': {
     label: 'Progi i reguły',
@@ -114,14 +119,17 @@ export interface ScopePreset {
 export const SCOPE_PRESETS: readonly ScopePreset[] = [
   { id: 'pilot', label: 'Pilot', capabilities: [] },
   // Akceptujący NIE MA wejścia do panelu i to jest sedno tej pozycji: mechanik
-  // rozstrzyga swój krok z telefonu (ekran 26), a do back-office’u nie wchodzi.
-  { id: 'approver', label: 'Akceptujący', capabilities: ['reservations.approve'] },
+  // rozstrzyga swój krok z telefonu (ekran 26) i widzi kartę maszyny (27), a do
+  // back-office’u nie wchodzi. `fleet.watch` w trzech zestawach od 3.2.0 (issue #205):
+  // zgoda bez stanu maszyny byłaby podpisem w ciemno, a technik ma wiedzieć, kiedy
+  // maszyna wraca z odczytami.
+  { id: 'approver', label: 'Akceptujący', capabilities: ['reservations.approve', 'fleet.watch'] },
   {
     id: 'dispatcher',
     label: 'Koordynator lotów',
-    capabilities: ['panel.access', 'reservations.manage', 'reservations.approve'],
+    capabilities: ['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch'],
   },
-  { id: 'tech', label: 'Technik', capabilities: ['panel.access', 'fleet.manage'] },
+  { id: 'tech', label: 'Technik', capabilities: ['panel.access', 'fleet.manage', 'fleet.watch'] },
   { id: 'admin', label: 'Administrator', capabilities: CLUB_CAPABILITIES },
 ];
 

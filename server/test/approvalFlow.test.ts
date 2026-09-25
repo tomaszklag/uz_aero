@@ -29,7 +29,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BookingReleaseJob } from '../src/application/common/commands/bookingRelease.ts';
+import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { silentNotifier } from './fakePush.ts';
@@ -635,7 +635,7 @@ describe('termin nadszedł, a decyzji nie ma (§11.5)', () => {
     const id = made.json().id as string;
 
     const job = (now: Date) =>
-      new BookingReleaseJob(
+      new BookingClockJob(
         db,
         new PgBookingsRepo(),
         new PgSessionsProjection(),

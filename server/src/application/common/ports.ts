@@ -835,6 +835,12 @@ export interface AircraftReadingsPort {
   latestAt(db: Queryable, orgId: string): Promise<Date | null>;
   /** `orgId` = klub maszyny (wiersz niesie go denormalizowany, jak każda tabela klubu). */
   insert(tx: Queryable, orgId: string, aircraftId: string, reading: AdminReading): Promise<void>;
+  /**
+   * Wpisy maszyny od chwili `since`, najstarsze pierwsze - punkty wykresów karty maszyny
+   * (obserwowanie, §6.4): odczyt administratora jest punktem serii tak samo, jak
+   * przejęcie i zdanie, tylko z innym ŹRÓDŁEM.
+   */
+  listSince(db: Queryable, orgId: string, aircraftId: string, since: Date): Promise<AdminReading[]>;
 }
 
 // ── zgłoszenia błędów z aplikacji pilota (issue #87, na czas testów) ────────────
@@ -997,6 +1003,13 @@ export interface BookingRecord {
   updatedAt: number;
   closedAt: number | null;
   closeReason: string | null;
+  /**
+   * Stempel przypomnienia „za godzinę" dla obserwujących maszynę (3.2.0, issue #205,
+   * §4.2 tamtego dokumentu). `null` = nikomu jeszcze nie przypomniano; odwołanie
+   * terminu Z tym stemplem rodzi wiadomość „odwołany lot", bez stempla odwołuje się
+   * po cichu. Przesunięcie początku terminu ZERUJE go (robi to adapter przy `update`).
+   */
+  remindedAt: number | null;
 }
 
 /**
@@ -1167,6 +1180,22 @@ export interface BookingsPort {
    * gdy klub nie ma ani jednej zajętości.
    */
   latestChangeAt(db: Queryable, orgId: string): Promise<number | null>;
+  /**
+   * Rezerwacje, którym za chwilę zaczyna się termin, a NIKT o tym jeszcze nie przypomniał
+   * (obserwowanie samolotu, §5.1): potwierdzone loty ze startem przed `startsBefore`,
+   * trwające po `endsAfter`, bez stempla. Bez `orgId` z tego samego powodu, co `due` -
+   * to trzecie pytanie tego samego zadania okresowego.
+   */
+  dueReminders(
+    db: Queryable,
+    window: { startsBefore: Date; endsAfter: Date },
+  ): Promise<BookingDue[]>;
+  /**
+   * Stempel „przypomniano" (§4.2). Warunek `reminded_at IS NULL` i stan `confirmed` stoją
+   * w SQL-u: `null` = ktoś zdążył przed nami (drugi przebieg, odwołanie w międzyczasie),
+   * a to nie jest awaria, tylko ta sama odpowiedź.
+   */
+  markReminded(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -1364,6 +1393,36 @@ export interface PushMessage {
 export interface PushPort {
   send(messages: readonly PushMessage[]): Promise<{ dead: string[] }>;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205; `docs/obserwowanie-samolotu.md` §2, §4).
+ *
+ * Wiersz `aircraft_watches` to ZAMIAR osoby („chcę wiedzieć, co się dzieje z tą maszyną
+ * w tym klubie"), nie uprawnienie: zdolność `fleet.watch` mówi „wolno ci", wiersz mówi
+ * „chcę". Port jest w `common/`, bo ustawienie zapisuje telefon (karta maszyny 27,
+ * lista 13C) i panel (karta „Obserwowane samoloty" w `#/konto`, decyzja 12) - a czyta
+ * je ingest, komendy rezerwacji i zadanie okresowe, gdy szukają, kogo obudzić.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+export interface AircraftWatchesPort {
+  /**
+   * Włącza obserwowanie - IDEMPOTENTNIE (drugie tapnięcie nie robi drugiego wiersza).
+   * Maszyna spoza klubu nie dostaje wiersza: `false` = nie ma jej w tym klubie,
+   * a trasa robi z tego 404, nie 403 (epik C).
+   */
+  set(db: Queryable, orgId: string, aircraftId: string, pilotId: string, at: Date): Promise<boolean>;
+  /** Wyłącza obserwowanie; brak wiersza nie jest błędem - stan końcowy jest ten sam. */
+  unset(db: Queryable, orgId: string, aircraftId: string, pilotId: string): Promise<void>;
+  isWatching(db: Queryable, orgId: string, aircraftId: string, pilotId: string): Promise<boolean>;
+  /** Maszyny klubu obserwowane przez osobę - materiał listy w ustawieniach i w `#/konto`. */
+  watchedBy(db: Queryable, orgId: string, pilotId: string): Promise<Set<string>>;
+  /**
+   * KOGO OBUDZIĆ przy zdarzeniu maszyny: obserwujący z AKTYWNYM członkostwem, aktywną
+   * osobą, aktywnym klubem i zdolnością `fleet.watch` - złączenie W SQL-u, nie w kodzie
+   * (§2.1: prawo sprawdza się przy wysyłce). Wołane WYŁĄCZNIE przy przyjętym
+   * uruchomieniu/zdaniu i przy zmianie terminu, per maszyna (§10 R4).
+   */
+  watchersOf(db: Queryable, orgId: string, aircraftId: string): Promise<string[]>;
+}
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];
@@ -1451,13 +1510,17 @@ export interface EventsStorePort {
    * (wielofirmowość §2: żadna reguła domeny nie czyta `org_id`) - klub jest własnością
    * WIERSZA rejestru, a rozstrzyga o nim wołający: token telefonu albo klub sesji
    * przy zapisie z panelu.
+   *
+   * `inserted` = uuidy, które NAPRAWDĘ weszły (bez duplikatów) - obserwowanie samolotu
+   * (issue #205) budzi ludzi wyłącznie przy PRZYJĘTYM uruchomieniu i zdaniu; ponowiona
+   * paczka nie ma prawa zadzwonić drugi raz o tym samym.
    */
   insertBatch(
     tx: Queryable,
     orgId: string,
     events: readonly Event[],
     sourceDevice: string | null,
-  ): Promise<{ accepted: number; duplicates: number }>;
+  ): Promise<{ accepted: number; duplicates: number; inserted: string[] }>;
   /**
    * Pełny strumień sesji KLUBU - wejście `projectSession`.
    *
@@ -1688,6 +1751,29 @@ export interface SessionsProjectionPort {
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<SessionRow[]>;
+  /**
+   * HISTORIA MASZYNY STRONAMI (karta maszyny, obserwowanie §6.2 pkt 7): najnowsze
+   * pierwsze, kursor PARĄ (chwila operacji + uuid), jak skrzynka - dwie operacje
+   * potrafią mieć tę samą chwilę, a sam stempel gubiłby wtedy wiersz na granicy stron.
+   *
+   * Chwilą operacji jest uruchomienie silnika, awaryjnie przejęcie (`operationAt`
+   * z `domain/decisionPreview.ts`); wiersz bez obu nie ma kiedy się wydarzył i nie
+   * wchodzi. Unieważnione i PUSTE zapisy (issue #75, `emptySessionSql`) nie wchodzą
+   * tak samo, jak nie wchodzą do żadnej listy dziennika. BEZ dolnej granicy czasu -
+   * decyzja właściciela P5 2026-09-25: lista sięga po wszystkie operacje.
+   */
+  listByAircraftPage(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+    page: { before?: OperationCursor; limit: number },
+  ): Promise<SessionRow[]>;
+}
+
+/** Kursor historii operacji: chwila operacji (ms UTC) i uuid - patrz `listByAircraftPage`. */
+export interface OperationCursor {
+  at: number;
+  sessionUuid: string;
 }
 
 /**
@@ -1721,6 +1807,14 @@ export interface AircraftConfigPort {
     orgId: string,
     aircraftId: string,
   ): Promise<ServiceStatus | null>;
+  /**
+   * Znak rejestracyjny maszyny W TYM KLUBIE; `null` = nieznana albo cudza.
+   *
+   * Do TYTUŁU budzika obserwującego (`docs/obserwowanie-samolotu.md` §5): znak jest
+   * daną klubu, nie osoby, więc wolno mu paść na ekranie blokady - inaczej niż
+   * nazwisku i godzinie, których push nie niesie nigdy.
+   */
+  regOf(db: Queryable, orgId: string, aircraftId: string): Promise<string | null>;
 }
 
 /**

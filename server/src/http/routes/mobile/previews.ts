@@ -60,6 +60,12 @@ export function registerPreviewRoutes(
 
     const view = await previews.aircraft(who.orgId, req.params.id);
     if (view == null) return reply.code(404).send({ error: 'not_found' });
-    return reply.send(aircraftPreviewWire(view));
+    // Bit „ma kartę maszyny" (obserwowanie samolotu) - stopka 26B „Pokaż kartę samolotu"
+    // istnieje wyłącznie z `fleet.watch`. Mówi o PATRZĄCYM, nie o sprawie, więc panel
+    // (który ma własną stopkę „Pokaż w dzienniku") go nie dostaje.
+    return reply.send({
+      ...aircraftPreviewWire(view),
+      viewer: { watch: can(who.capabilities, 'fleet.watch') },
+    });
   });
 }

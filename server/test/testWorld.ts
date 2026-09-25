@@ -141,6 +141,10 @@ const ADMIN_SCOPE = [
   'maintenance.run',
   'reservations.manage',
   'reservations.approve',
+  // Obserwowanie samolotów (3.2.0, issue #205) - jedenasta pozycja kompletu. Dopisana
+  // ŚWIADOMIE: `scopeKey` liczy „komplet" z katalogu, więc administrator świata
+  // testowego bez niej czytałby się w dzienniku jako zakres częściowy.
+  'fleet.watch',
 ] as const;
 
 export async function seedTestWorld(db: Queryable): Promise<void> {

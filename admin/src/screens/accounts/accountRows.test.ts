@@ -20,7 +20,7 @@ describe('komórki', () => {
   });
 
   it('zakres mówi po polsku, nie kodem kontraktu', () => {
-    expect(accountRow({ ...pilot, capabilities: ['reservations.approve'] }).scopeLabel).toBe(
+    expect(accountRow({ ...pilot, capabilities: ['reservations.approve', 'fleet.watch'] }).scopeLabel).toBe(
       'Akceptujący',
     );
   });
@@ -38,7 +38,7 @@ describe('zakres w wierszu', () => {
   // zdolności (epik #197): rola przestała istnieć, a opis należy dziś do ZDOLNOŚCI.
   it('zakres nazywa się ZE ZBIORU - wiersz nie przechowuje nazwy', () => {
     expect(accountRow(pilot).scopeLabel).toBe('Pilot');
-    expect(accountRow({ ...pilot, capabilities: ['panel.access', 'fleet.manage'] }).scopeLabel).toBe(
+    expect(accountRow({ ...pilot, capabilities: ['panel.access', 'fleet.manage', 'fleet.watch'] }).scopeLabel).toBe(
       'Technik',
     );
   });

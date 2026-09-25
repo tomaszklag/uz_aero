@@ -35,6 +35,9 @@ import type {
   Clock,
   NewBooking,
 } from '../../common/ports.ts';
+import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
+import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
+import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -84,6 +87,8 @@ export class AdminBookingCommands {
     private readonly bookings: BookingsPort,
     private readonly aircraft: AircraftConfigPort,
     private readonly clock: Clock,
+    /** Obserwowanie samolotu (3.2.0): odwołanie przypomnianego terminu budzi obserwujących, bez administratora. */
+    private readonly watching: AircraftWatching | null = null,
   ) {}
 
   async createFor(actor: Actor, input: AdminBookingInput): Promise<AdminBookingOutcome> {
@@ -145,6 +150,7 @@ export class AdminBookingCommands {
     reason: string | null,
   ): Promise<AdminBookingOutcome> {
     const at = this.clock.now();
+    let watchNotices: NotificationDraft[] = [];
     try {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
@@ -161,6 +167,18 @@ export class AdminBookingCommands {
         // Wiersz przestał być czynny między odczytem a zapisem (telefon pilota, zadanie
         // okresowe). Ta sama odpowiedź, co przy rezerwacji już zamkniętej.
         if (closed == null) throw new Refused('booking_closed');
+
+        // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2) - tą samą transakcją, co
+        // odwołanie i ślad audytu; administrator o własnej decyzji nie słyszy.
+        if (this.watching != null && current.remindedAt != null) {
+          const audience = await this.watching.audience(tx, actor.orgId, current.aircraftId, [
+            actor.pilotId,
+          ]);
+          if (audience != null) {
+            watchNotices = aircraftFlightCancelled(audience, current, null);
+            await this.watching.record(tx, actor.orgId, watchNotices, at);
+          }
+        }
 
         return {
           result: closed,
@@ -179,6 +197,7 @@ export class AdminBookingCommands {
           },
         };
       });
+      if (watchNotices.length > 0) await this.watching?.wake(watchNotices);
       return { ok: true, booking };
     } catch (err) {
       return outcomeOf(err);

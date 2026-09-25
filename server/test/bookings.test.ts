@@ -24,7 +24,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BookingReleaseJob } from '../src/application/common/commands/bookingRelease.ts';
+import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { silentNotifier } from './fakePush.ts';
@@ -507,7 +507,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
     const id = made.json().id as string;
 
     const job = (now: Date) =>
-      new BookingReleaseJob(
+      new BookingClockJob(
         db,
         new PgBookingsRepo(),
         new PgSessionsProjection(),
@@ -563,7 +563,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
       },
     });
 
-    const run = await new BookingReleaseJob(
+    const run = await new BookingClockJob(
       db,
       new PgBookingsRepo(),
       new PgSessionsProjection(),

@@ -190,6 +190,11 @@ export function registerBookingRoutes(
     return reply.header('etag', view.etag).send({
       timezone: view.timezone,
       homeIcao: view.homeIcao,
+      // Czy PATRZĄCY ma kartę maszyny (obserwowanie samolotu, 3.2.0): telefon zdolności
+      // nie zna, a znak przy osi kalendarza jest celem dotknięcia tylko z `fleet.watch`.
+      // Jedzie tu, bo ekran i tak pyta serwer o okno - osobna trasa byłaby drugim
+      // żądaniem o jeden bit (ten sam rachunek, co `approver` w skrzynce).
+      viewer: { watch: can(who.capabilities, 'fleet.watch') },
       days: view.days.map((d) => ({
         date: d.date,
         startsAt: new Date(d.startsAt).toISOString(),

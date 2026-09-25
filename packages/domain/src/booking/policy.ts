@@ -96,3 +96,16 @@ export const CIVIL_TWILIGHT_MS = 30 * MINUTE_MS;
  */
 export const DEFAULT_DAY_START_H = 6;
 export const DEFAULT_DAY_END_H = 21;
+
+/**
+ * WYPRZEDZENIE przypomnienia „zbliża się lot" dla obserwujących maszynę
+ * (`docs/obserwowanie-samolotu.md` §5.1; decyzja właściciela 2026-09-25, P4).
+ *
+ * STAŁA, nie ustawienie klubu: godzina to tyle, ile mechanik potrzebuje, żeby zejść
+ * do hangaru, a klub, który poprosi o inne wyprzedzenie, dostanie wtedy pole
+ * w konfiguracji - nie wcześniej. Zadanie okresowe tyka co 5 minut, więc przypomnienie
+ * pada 55-60 minut przed terminem; rezerwacja złożona później niż godzinę przed
+ * startem dostaje je na najbliższym przebiegu, a treść mówi wtedy „za 20 min" -
+ * zdanie liczy się z terminu w chwili wysyłki, nie z tej stałej.
+ */
+export const FLIGHT_SOON_MS = 60 * MINUTE_MS;

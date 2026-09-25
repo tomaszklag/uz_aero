@@ -3876,7 +3876,8 @@ i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
   i tylko w jedną stronę. Nieznany identyfikator NIE odrzuca paczki: rezerwacja nie
   jest warunkiem lotu (§2.3), a pilot mógł wejść w lot z rezerwacji odwołanej
   w międzyczasie. Domena nie robi z tym polem NIC
-- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min): slot
+- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min; od 3.2.0
+  `BookingClockJob` w `bookingClock.ts` - obserwowanie samolotu dołożyło trzecie pytanie): slot
   zwalnia się sam po godzinie bez przejęcia maszyny. `setInterval`, nie kolejka - jedna
   instancja (§8.8 architektury); wyłączalny `BOOKING_RELEASE=0`, bo przebieg zmienia
   dane w tle i testy nie mają go dostać przypadkiem. Status `released`, nie `cancelled`,
@@ -4525,6 +4526,68 @@ Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
   aplikacji na runtime 3.1.0 (wbrew „aplikacji nie rusza" w `docs/panel-3.2.md` §11);
   wejście na kartę 27: nagłówek wiersza maszyny w kalendarzu, skrzynka i push, stopka 26B;
   bit `viewer.watch` dojeżdża w oknie kalendarza, bo telefon zdolności nie zna
+
+### Epik O-B: serwer obserwowania WYKONANY (issue #220, 2026-09-25, gałąź `feature-220-serwer-obserwowania`)
+Migracja 15 (sam DDL), `fleet.watch` w katalogu (11 pozycji kompletu, lustra w `dto.ts`,
+`contracts/pilots.ts`, `scope.ts` z zestawami Akceptujący/Koordynator/Technik), port
+i adapter obserwowania, pięć treści, pięciu producentów, karta, historia, lista floty ze
+stanem, osiem tras z przypadkami izolacji; 36 nowych testów. Reguły obowiązujące odtąd:
+- **„KOGO OBUDZIĆ" LICZY JEDEN POMOCNIK** - `application/common/notify/aircraftWatching.ts`
+  (`audience(tx, orgId, aircraftId, sprawcy)` → `record` w tej samej transakcji → `wake`
+  po commicie). Nowy producent woła JEGO, nie port obserwowania wprost - sprawcy
+  (PIC i Dual operacji, odwołujący, administrator zamykający) wypadają w jednym miejscu,
+  a prawo adresata liczy SQL w `watchersOf` (członkostwo `active` × osoba aktywna × klub
+  aktywny × `fleet.watch`)
+- **INGEST BUDZI WYŁĄCZNIE PRZY ZDARZENIU, KTÓRE NAPRAWDĘ WESZŁO**: `EventsStorePort.insertBatch`
+  oddaje odtąd `inserted: string[]` obok liczników - ponowiona paczka (słabe łącze) nie
+  dzwoni drugi raz. Uruchomienie dosłane do operacji już ZAMKNIĘTEJ też milczy, wpis
+  ręczny milczy, paczka z uruchomieniem I zdaniem rodzi samo „zdana". „Zgodnie z planem"
+  = rezerwacja ZREALIZOWANA tą operacją (`bookings.sessionUuid === sessionUuid`), nie sam
+  identyfikator w przejęciu
+- **ADAPTER OBSERWOWANIA JEST W `infrastructure/pg/common/`**, nie `mobile/` (lista zadań
+  #220 powstała przed decyzją 12): ustawienie zapisuje telefon (27, 13C) I panel
+  (`#/konto`), a `set` NIE zakłada wiersza dla maszyny spoza klubu (`WHERE EXISTS` +
+  osobne sprawdzenie istnienia, bo `ON CONFLICT DO NOTHING` nie odróżnia powtórki od
+  cudzej maszyny). Komenda `AircraftWatchCommands` (`common/commands/`) idzie w panelu
+  ŚWIADOMIE poza `AuditedWrite`: ustawienie osoby o sobie, jak motyw i PIN
+- **ZEGAR REZERWACJI NAZYWA SIĘ `bookingClock.ts` / `BookingClockJob`** (sama zmiana
+  nazwy - trzy pytania zamiast jednego) i pyta W KOLEJNOŚCI: wygaszanie → zwalnianie →
+  przypomnienie. Przypomnienie idzie OSTATNIE: termin zwolniony w tym przebiegu nie jest
+  już potwierdzony, a w odwrotnej kolejności jeden przebieg mówiłby „za godzinę" i „nie
+  odebrano" o jednym terminie. Stempel `reminded_at` pada w warunku SQL
+  (`markReminded`: `status = 'confirmed' AND reminded_at IS NULL`) także bez ani jednego
+  obserwującego - idempotencja zadania nie zależy od tego, czy ktoś patrzy; `update`
+  adaptera zeruje go przy zmianie `starts_at` (`CASE WHEN starts_at = $n` na wartości
+  SPRZED zapisu). Stała `FLIGHT_SOON_MS` w `packages/domain/src/booking/policy.ts`
+- **KARTA I LISTA FLOTY TO JEDNO ZAPYTANIE W `common/`** (`queries/aircraftCard.ts`) z klocków
+  podglądu 26B: `aircraftWindow` (wydzielone z `aircraftFacts` - 30 i 90 dni tym samym
+  rachunkiem), `pickHandover`, `clubDays`; stan „teraz" i serie w CZYSTYM
+  `domain/aircraftCard.ts` (pierwszeństwo: wycofana → w locie → przejęta → po locie →
+  wyłączona → zarezerwowana [wyłącznie `confirmed`] → wolna; przy dwóch operacjach
+  w toku liczy się ostatnio przejęta). `lastRecordAt` = `events.lastReceivedAt`, czyli
+  chwila DOTARCIA ostatniej paczki („zapisy do 09:40")
+- **WYKRES PALIWA DOCIĄGA TANKOWANIA STRUMIENIAMI** operacji z okna 90 dni
+  (`sessionStreams` + `applyCorrections`, żeby unieważnione tankowanie nie stanęło na
+  wykresie) - `queries/aircraftCard.ts` jest CZWARTYM imiennym wołającym w strażniku
+  `architecture.test.ts`. Punkt serii niesie ŹRÓDŁO (`claim`/`release`/`refuel`/`admin`);
+  zakończenie z panelu daje sam punkt przejęcia (odczytu końcowego nie ma i nie udajemy
+  go); przy tej samej chwili zdanie poprzednika stoi PRZED przejęciem następcy
+- **HISTORIA STRONAMI** (`listByAircraftPage`, kursor PARĄ chwila+uuid, `limit + 1` mówi
+  o następnej stronie) wyklucza unieważnione i PUSTE zapisy tym samym `emptySessionSql`,
+  co listy dziennika; bez dolnej granicy czasu (P5). Kursor niepełny = 400, jak w skrzynce
+- **BIT `viewer.watch` W PODGLĄDZIE 26B DOSTAJE WYŁĄCZNIE TELEFON** (panel ma stopkę
+  „Pokaż w dzienniku"); test „bajt w bajt" `decisionPreview.test.ts` porównuje komplet
+  faktów BEZ tego pola, bo mówi ono o patrzącym, nie o sprawie. `countersWire`
+  i `aircraftHeadWire` wyszły z `previewWire.ts` jako funkcje - karta 27 pisze liczniki
+  i nagłówek maszyny TYM SAMYM kształtem
+- **ŚWIAT TESTOWY: komplet administratora ma jedenastą pozycję** (`ADMIN_SCOPE`
+  w `testWorld.ts` - świadomie, `scopeKey` liczy komplet z katalogu i wpisy audytu
+  `actor_role: 'full'` przestałyby być prawdziwe); testy 403 idą osobą BEZ zdolności
+  (PWI), obserwujący dostaje ją `grantWatch` (KRZ). Panel: zestaw sprzed 3.2.0 bez
+  `fleet.watch` czyta się jako „Własny zakres" i test to przybija
+- **czego O-B NIE ROBI**: ekranów telefonu (O-C, #221) i karty w `#/konto` (O-D, #222 -
+  katalog i zestawy panelu JUŻ są, karta czeka); push `aircraft_*` w `logic/pushTarget.ts`
+  telefonu idzie dziś do skrzynki, co jest zaprojektowane
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

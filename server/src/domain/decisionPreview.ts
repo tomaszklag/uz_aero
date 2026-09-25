@@ -172,20 +172,34 @@ export function aircraftFacts(
   dayKeyOf: (at: number) => string,
 ): AircraftFacts {
   const dated = flown(rows);
-  const recent30 = dated.filter((d) => d.at >= now - FLYING_WINDOWS_DAYS.short * DAY_MS);
-  const days = new Set(recent30.map((d) => dayKeyOf(d.at)));
-  const flying = sumFlying(recent30.map((d) => d.row));
   return {
     lastFlightAt: dated[0]?.at ?? null,
-    last30: {
-      daysWithFlights: days.size,
-      // Starty z projekcji, a gdy zapis ich nie policzył (stary strumień) - liczba
-      // lotów: każdy lot zaczyna się startem, więc to dolne ograniczenie, nie domysł.
-      takeoffs: recent30.reduce((n, d) => n + (d.row.takeoffCount ?? d.row.flightsCount), 0),
-      blockMs: flying.blockMs,
-      flightMs: flying.flightMs,
-    },
+    last30: aircraftWindow(rows, now, FLYING_WINDOWS_DAYS.short, dayKeyOf),
     recent: dated.slice(0, RECENT_LIMIT).map((d) => d.row),
+  };
+}
+
+/**
+ * Nalot MASZYNY w oknie ostatnich `days` dni: ile dób latała, ile startów, ile silnika
+ * i powietrza. Wydzielone z `aircraftFacts`, bo karta maszyny (obserwowanie samolotu,
+ * 3.2.0) pyta o TO SAMO dla 30 i 90 dni - a druga kopia tego rachunku byłaby pierwszym
+ * miejscem, w którym podgląd 26B i karta 27 policzyłyby inaczej ten sam miesiąc.
+ */
+export function aircraftWindow(
+  rows: readonly SessionRow[],
+  now: number,
+  days: number,
+  dayKeyOf: (at: number) => string,
+): AircraftLast30 {
+  const recent = flown(rows).filter((d) => d.at >= now - days * DAY_MS);
+  const flying = sumFlying(recent.map((d) => d.row));
+  return {
+    daysWithFlights: new Set(recent.map((d) => dayKeyOf(d.at))).size,
+    // Starty z projekcji, a gdy zapis ich nie policzył (stary strumień) - liczba
+    // lotów: każdy lot zaczyna się startem, więc to dolne ograniczenie, nie domysł.
+    takeoffs: recent.reduce((n, d) => n + (d.row.takeoffCount ?? d.row.flightsCount), 0),
+    blockMs: flying.blockMs,
+    flightMs: flying.flightMs,
   };
 }
 

@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1638,6 +1638,41 @@ export const MIGRATION_14 = `
     ON booking_approvals (booking_id, step_id) WHERE superseded_at IS NULL;
 `;
 
+/**
+ * Migracja 15 - OBSERWOWANIE SAMOLOTU (3.2.0, issue #205; `docs/obserwowanie-samolotu.md`
+ * §4). SAM DDL, bez backfillu - decyzja właściciela 2026-09-25: baza hostowana nie ma
+ * prawdziwych klubów („startujemy od zera"), więc dopisywanie zdolności `fleet.watch`
+ * członkostwom o zbiorze zestawu opisywałoby stan, którego nikt nie broni
+ * (`docs/uprawnienia.md` §12 zapisuje regułę backfillu na przyszłość).
+ */
+export const MIGRATION_15 = `
+  -- ═══ OBSERWOWANIE SAMOLOTU ══════════════════════════════════════════════════════
+  -- Zapis ZAMIARU osoby: „chcę wiedzieć, co się dzieje z tą maszyną w tym klubie".
+  -- Prawo do powiadomień sprawdza się przy KAŻDEJ wysyłce (aktywne członkostwo
+  -- × zdolność fleet.watch, złączenie w SQL-u) - nie tutaj, dlatego wiersz nie ma
+  -- statusu ani rodzajów: obserwowanie jest jednym przełącznikiem.
+  CREATE TABLE IF NOT EXISTS aircraft_watches (
+    -- Klub jest, choć maszyna należy do jednego klubu - jak na każdej tabeli klubu
+    -- (epik C): odczyt „kogo obudzić" stoi w klubie wiersza.
+    org_id      TEXT NOT NULL REFERENCES organizations(id),
+    aircraft_id TEXT NOT NULL REFERENCES aircraft(id),
+    pilot_id    TEXT NOT NULL REFERENCES pilots(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (aircraft_id, pilot_id),
+    -- Członkostwo ZNIKA → obserwowanie znika. WYŁĄCZENIE członkostwa (status) wiersza
+    -- nie kasuje: wycisza je sprawdzenie przy wysyłce, a przywrócenie zdolności
+    -- przywraca powiadomienia bez proszenia człowieka o drugie włączenie.
+    FOREIGN KEY (org_id, pilot_id) REFERENCES memberships(org_id, pilot_id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_aircraft_watches_aircraft ON aircraft_watches (org_id, aircraft_id);
+
+  -- Stempel przypomnienia „za godzinę" (§4.2): idempotencja zadania okresowego
+  -- i reguła „co ogłosiłeś, to odwołaj" - odwołanie terminu z tym stemplem rodzi
+  -- wiadomość, bez stempla odwołuje się po cichu. Przesunięcie początku ZERUJE go,
+  -- więc nowy termin dostaje własne przypomnienie.
+  ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminded_at TIMESTAMPTZ;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1653,6 +1688,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_12,
   MIGRATION_13,
   MIGRATION_14,
+  MIGRATION_15,
 ];
 
 /**
@@ -1688,4 +1724,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Zakresy uprawnień (3.1.0, issue #197): zdolność nadawana CZŁONKOSTWU zamiast wynikania z roli klubu - administrator może dać mechanikowi prawo akceptacji rezerwacji, nie oddając mu floty ani kont; kolumna roli znika razem z backfillem',
   'Akceptacja rezerwacji i powiadomienia (3.1.0, issue #164): ścieżka zgód klubu jako uporządkowane kroki z listą osób, decyzje zapisywane przy rezerwacji z powodem odmowy, skrzynka powiadomień pilota i tokeny push wygasające razem z sesją logowania',
   'Poprawka terminu czyści zgody (3.1.0, issue #166): decyzje na rezerwacji dostają własny klucz i stempel zastąpienia - przesunięcie terminu unieważnia dotychczasowe zgody i ścieżka rusza od nowa, a rejestr decyzji zostaje append-only',
+  'Obserwowanie samolotu (3.2.0, issue #205): zapis obserwowania maszyny przez członka klubu (znika razem z członkostwem) i stempel przypomnienia „za godzinę" na rezerwacji - bez backfillu, sam DDL',
 ];

@@ -27,6 +27,14 @@ export class PgAircraftConfigRepo implements AircraftConfigPort {
     return rows[0]?.org_id ?? null;
   }
 
+  async regOf(db: Queryable, orgId: string, aircraftId: string): Promise<string | null> {
+    const { rows } = await db.query<{ reg: string }>(
+      'SELECT reg FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, aircraftId],
+    );
+    return rows[0]?.reg ?? null;
+  }
+
   async serviceStatusOf(
     db: Queryable,
     orgId: string,

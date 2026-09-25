@@ -35,8 +35,8 @@ describe('nazwa zakresu', () => {
   });
 
   it('KOLEJNOŚĆ NIE JEST INFORMACJĄ - ten sam zbiór w innej kolejności to ten sam zestaw', () => {
-    expect(scopeLabel(['fleet.manage', 'panel.access'])).toBe('Technik');
-    expect(scopeLabel(['panel.access', 'fleet.manage'])).toBe('Technik');
+    expect(scopeLabel(['fleet.manage', 'panel.access', 'fleet.watch'])).toBe('Technik');
+    expect(scopeLabel(['fleet.watch', 'panel.access', 'fleet.manage'])).toBe('Technik');
   });
 
   it('zbiór spoza katalogu zestawów to WŁASNY ZAKRES, a nie najbliższy zestaw', () => {
@@ -44,6 +44,9 @@ describe('nazwa zakresu', () => {
     // napisałby „technik", a człowiek miałby o jedną zdolność więcej.
     expect(scopeLabel(['panel.access', 'fleet.manage', 'audit.read'])).toBe('Własny zakres');
     expect(scopeTone(['panel.access', 'fleet.manage', 'audit.read'])).toBe('amber');
+    // Technik SPRZED 3.2.0 (bez obserwowania) też jest własnym zakresem - nikomu nic nie
+    // odjęto, ale zestaw w nowym brzmieniu ma o jedną pozycję więcej (issue #205, §3.2).
+    expect(scopeLabel(['panel.access', 'fleet.manage'])).toBe('Własny zakres');
   });
 
   it('każdy zestaw katalogu nazywa się SOBĄ - inaczej lista proponowałaby nieosiągalny stan', () => {
@@ -84,15 +87,15 @@ describe('podpis karty', () => {
 
   it('podaje LICZBĘ i nazwy, a przy długiej liście skraca', () => {
     expect(scopeSummary(['reservations.manage'])).toBe(
-      'Nadane 1 z 10 zdolności · Cudze rezerwacje',
+      'Nadane 1 z 11 zdolności · Cudze rezerwacje',
     );
-    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('10 z 10');
-    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('i 7 więcej');
+    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('11 z 11');
+    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('i 8 więcej');
   });
 
   it('zdolność NIEZNANA panelowi nie wywraca podpisu - po prostu się nie liczy', () => {
     const fromFuture: Capability[] = ['reservations.manage', 'nowa.zdolnosc' as Capability];
-    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 10 zdolności · Cudze rezerwacje');
+    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 11 zdolności · Cudze rezerwacje');
   });
 });
 

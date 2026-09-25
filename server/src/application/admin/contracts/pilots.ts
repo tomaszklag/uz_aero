@@ -41,6 +41,8 @@ export type CapabilityWire =
   | 'maintenance.run'
   | 'reservations.manage'
   | 'reservations.approve'
+  /** Obserwowanie samolotów (3.2.0, issue #205) - karta maszyny i powiadomienia o jej lotach. */
+  | 'fleet.watch'
   | 'bugs.triage'
   | 'platform.manage';
 
