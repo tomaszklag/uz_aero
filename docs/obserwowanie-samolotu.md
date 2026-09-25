@@ -583,6 +583,14 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
    strona „Karta samolotu i obserwowanie" w rozdziale rezerwacji, akapit w stronie
    powiadomień i w stronie zakresów uprawnień; changelog.
 
+| Epik | Issue |
+| --- | --- |
+| O-A projekt i makiety | #219 |
+| O-B serwer | #220 |
+| O-C aplikacja | #221 |
+| O-D panel | #222 |
+| zgłoszenie nadrzędne | #205 (milestone „Panel admina 3.2.0") |
+
 ## 10. Ryzyka
 
 | # | Ryzyko | Co z nim robimy |

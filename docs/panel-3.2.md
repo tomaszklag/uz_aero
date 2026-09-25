@@ -507,7 +507,10 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 | P-D do sprawdzenia: rozjazdy i eksporty | #185 |
 | P-E statystyki i analityka zużycia | #186 |
 | P-W wydanie 3.2.0 | #187 |
-| O-A…O-D obserwowanie samolotu (projekt, serwer, aplikacja, panel) | #205 - do rozpisania na epiki po potwierdzeniu §11 tamtego dokumentu |
+| O-A obserwowanie: makiety telefonu i zakres w panelu | #219 (zgłoszenie nadrzędne #205) |
+| O-B obserwowanie: serwer - migracja 15, powiadomienia, karta maszyny | #220 |
+| O-C obserwowanie: aplikacja - karta 27, wykresy z gestami, skrzynka | #221 |
+| O-D obserwowanie: panel - `fleet.watch` w katalogu i zestawach | #222 |
 
 ---
 
