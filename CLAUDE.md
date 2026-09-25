@@ -4477,6 +4477,47 @@ rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refus
 - **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
   o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
 
+## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.2.0)
+Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zdarzenia na
+samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,
+że lot się rozpoczął lub się zakończył" - dla koordynatora lotów i mechanika. Dokument
+decyzji: **`docs/obserwowanie-samolotu.md`** (model, pięć wiadomości, ekran 27, API,
+etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT - makiet ani kodu jeszcze nie ma.
+Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
+- **nowa zdolność `fleet.watch`** („Obserwowanie samolotów") w zestawach Akceptujący,
+  Koordynator lotów i Technik, Administrator przez komplet. **BEZ backfillu** (druga tura
+  2026-09-25: „jeszcze nie używaliśmy aplikacji, więc startujemy od zera") - migracja 15
+  to SAM DDL (`aircraft_watches`, `bookings.reminded_at`), a członkostwa testowe z dawnym
+  zbiorem czytają się po wdrożeniu jako „Własny zakres", dopóki administrator nie nada
+  zakresu od nowa. Pułapka `presetOf`/`scopeKey` (zestaw liczy się ze zbioru, więc zestaw,
+  który ZYSKUJE zdolność, na żywej bazie wymaga backfillu) zapisana NA PRZYSZŁOŚĆ
+  w `docs/uprawnienia.md` §12
+- **druga tura 2026-09-25, pozostałe cztery**: cudza rezerwacja na karcie maszyny niesie
+  pola jak w kalendarzu (bez zadania, trasy i notatki - `bookingWire` bez czwartego widza);
+  przypomnienie „za godzinę" to STAŁA 60 min w `policy.ts`, nie ustawienie klubu; historia
+  operacji na karcie sięga po WSZYSTKIE operacje stronami (kursor parą jak w skrzynce),
+  wykres zostaje przy 90 dniach
+- **„lot się rozpoczął" = URUCHOMIENIE SILNIKA** (`engine_start`), nie przejęcie;
+  **wpis ręczny MILCZY**; **ziarnem jest OPERACJA**, nie każdy start i lądowanie
+- **pięć wiadomości**: za godzinę · odwołano termin, który JUŻ przypomniano · uruchomienie
+  (z adnotacją „zgodnie z planem"/„poza planem" z `reservationId`) · zdana z odczytami
+  (także zakończenie z panelu, bez odczytów) · nie odebrano po godzinie. Sprawca własnego
+  działania nie jest budzony. Rodzajów per maszyna NIE MA - jeden przełącznik
+- **wiadomość mówi CZASEM Z REJESTRU, nie chwilą dotarcia paczki**: `at` z rejestru +
+  „zapis dotarł …" przy zwłoce ponad kwadrans; paczka niosąca uruchomienie I zdanie tej
+  samej operacji rodzi TYLKO „zdana"
+- **prawo sprawdza się przy KAŻDEJ wysyłce** (wiersz `aircraft_watches` × aktywne
+  członkostwo × `fleet.watch`), nie przy zapisie - odebranie zdolności wycisza od razu,
+  wiersz zostaje
+- **cały moduł wymaga sieci, cache'u NIE MA** (jak kalendarz i skrzynka); przełącznik
+  „Obserwuj" zapisuje serwer wprost, nie outbox
+- **wykresy MH i paliwa OD RAZU**, własnym rendererem jak profil śladu (`TrackPolyline`),
+  serie liczy serwer, telefon samą geometrię; statyczne, bez normy i werdyktu
+- **wydanie RAZEM Z 3.2.0** - milestone „Panel admina 3.2.0" dostaje przez to OTA
+  aplikacji na runtime 3.1.0 (wbrew „aplikacji nie rusza" w `docs/panel-3.2.md` §11);
+  wejście na kartę 27: nagłówek wiersza maszyny w kalendarzu, skrzynka i push, stopka 26B;
+  bit `viewer.watch` dojeżdża w oknie kalendarza, bo telefon zdolności nie zna
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

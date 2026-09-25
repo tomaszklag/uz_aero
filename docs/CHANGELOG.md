@@ -307,6 +307,21 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Skrzynka powiadomień w aplikacji - działa też bez zasięgu
 - [ ] Powiadomienie na telefon, gdy decyzja zapadnie (wymaga zainstalowania nowej wersji aplikacji)
 
+### 3.2.0 · planowane na koniec października 2026
+
+> Rozbudowa panelu klubu i obserwowanie samolotu w aplikacji - bez nowej instalacji, aplikacja aktualizuje się sama.
+
+- [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
+- [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
+- [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
+- [ ] Statystyki klubu i analityka zużycia maszyny
+- [ ] Karta samolotu w aplikacji: co się z nim dzieje teraz, liczniki, najbliższe terminy,
+  historia lotów oraz wykresy motogodzin i paliwa - dla technika, koordynatora lotów
+  i osób akceptujących rezerwacje
+- [ ] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
+  ruszył, gdy maszyna wróciła z odczytami, gdy przypomniany termin odwołano
+  i gdy nikt nie odebrał zarezerwowanej maszyny
+
 ### 4.0.0 · termin do ustalenia
 
 > Aplikacja w sklepie Google Play.
@@ -321,6 +336,5 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Poprawki zgłoszone przez pilotów w testach
 - [ ] Kalibracja normy paliwa i motogodzin na danych z prawdziwych lotów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
-- [ ] Panel: pulpit floty, statystyki, analityka zużycia, skrzynka rozjazdów i eksporty kart dnia w nowym stylu
 - [ ] Eksport karty dnia do arkusza Google klubu
 - [ ] Wdrożenie produkcyjne po sezonie testowym

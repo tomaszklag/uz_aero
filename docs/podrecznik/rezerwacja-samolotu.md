@@ -65,6 +65,34 @@ Wszystko pozostałe działa jak zawsze: **lot rozpoczniesz, poprowadzisz i zdasz
 
 @screen 21b-kalendarz-offline "Kalendarz bez połączenia"
 
+## Obserwowanie samolotu (3.2.0, w przygotowaniu)
+
+> **W przygotowaniu.** Ta część jest zaprojektowana, ale jeszcze nie ma jej w aplikacji. Wejdzie z wydaniem 3.2.0 jako aktualizacja w tle, bez nowej instalacji; szczegóły mogą się jeszcze zmienić.
+
+Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu wyłącznie narzędzia decyzji: zgodę na rezerwację i wyłączenie z użytku. Nikt nie dowiaduje się, że maszyna właśnie wróciła z lotu i można ją tankować, ani że za godzinę ktoś ją bierze. To zmienia **karta samolotu** i **obserwowanie**.
+
+**Karta samolotu** otwiera się z kalendarza - tapnięciem w znak maszyny po lewej stronie osi - oraz z powiadomienia. Widzi ją osoba z uprawnieniem „Obserwowanie samolotów" (zestawy „Akceptujący", „Koordynator lotów", „Technik" i administrator). Na karcie stoją:
+
+- **co dzieje się teraz**: wolna, w locie (kto i od której), przejęta, po locie i jeszcze nie zdana, wyłączona z użytku (z powodem i do kiedy) albo zarezerwowana;
+- **liczniki** paliwa, motogodzin i oleju z ostatniego odczytu, z podpisem, skąd pochodzą;
+- **najbliższe terminy** razem z wyłączeniami z użytku;
+- **wykresy** motogodzin i paliwa z ostatnich 90 dni - z kursorem i przybliżeniem, jak profil śladu GPS - oraz sumy z 30 i 90 dni;
+- **historia lotów tej maszyny** - kto, kiedy, ile, a w drugiej linii odczyty przy przejęciu i zdaniu; starsze doładowują się przyciskiem.
+
+**Obserwowanie** to jeden przełącznik na karcie. Włączone, daje pięć rodzajów wiadomości w skrzynce powiadomień aplikacji (dzwonek na pulpicie) i powiadomienie na telefon:
+
+1. **zbliża się lot** - godzinę przed potwierdzoną rezerwacją;
+2. **odwołany termin** - wyłącznie taki, o którym już przypomniano; termin odwołany wcześniej nikogo nie budzi, bo nikt na niego nie czekał;
+3. **uruchomienie silnika** - z adnotacją, czy lot odbywa się zgodnie z rezerwacją, czy poza planem;
+4. **maszyna zdana** - z odczytami paliwa i licznika, czasem uruchomienia i wyłączenia, liczbą lotów;
+5. **nikt nie odebrał** - zarezerwowana maszyna stała godzinę bez przejęcia i termin wrócił do puli.
+
+O własnym działaniu nikt nie dostaje wiadomości: pilot, który sam uruchomił silnik albo sam odwołał termin, nie jest o tym budzony. Wpis lotu po fakcie nie rodzi powiadomień - opisuje przeszłość, nie to, co dzieje się z maszyną teraz.
+
+> **Uwaga.** Godzina w wiadomości o uruchomieniu i zdaniu jest godziną z zapisu na telefonie pilota, nie chwilą, w której wiadomość dotarła. Telefon bez zasięgu dosyła zapisy później - czasem po godzinach - i wtedy wiadomość mówi to wprost („zapis dotarł 09:40"). Jeśli uruchomienie i zdanie dotarły w jednej paczce, przychodzi tylko wiadomość o zdaniu.
+
+Karta samolotu, jak cały moduł rezerwacji, wymaga zasięgu: pokazuje cudze loty i terminy, których telefon nie ma u siebie.
+
 ## Dlaczego tak to działa
 
 > **Dlaczego rezerwacja wymaga zasięgu, a lot nie.** Zapis lotu opisuje to, co się wydarzyło, i nikt poza Tobą tego nie odtworzy - dlatego czeka na telefonie do najbliższego zasięgu. Rezerwacja to umowa między ludźmi o termin, o który konkuruje kilka osób; ktoś musi rozstrzygnąć, kto był pierwszy, a tego nie da się zrobić na dwóch telefonach naraz. Rezerwuje się zwykle w domu, przy zasięgu - a przy samolocie liczy się lot, nie plan.

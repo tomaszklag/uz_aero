@@ -44,6 +44,8 @@ To, co wolno Ci w klubie, opisuje **zakres uprawnień** - i należy on do **czł
 
 Przy nadawaniu administrator wybiera **zestaw** - gotowy skrót w rodzaju „Pilot", „Technik" czy „Administrator" - i w razie potrzeby poprawia pojedyncze pozycje; wtedy zakres nazywa się „własny". Domyślny jest pusty: wchodzisz do klubu po to, żeby latać. Bez zdolności „Wejście do panelu" logowanie do panelu kończy się komunikatem, a nie awarią.
 
+> **W przygotowaniu (3.2.0).** Dochodzi zdolność **„Obserwowanie samolotów"**: karta maszyny w aplikacji - co się z nią dzieje teraz, liczniki, terminy, historia lotów, wykresy - i powiadomienia o jej lotach po włączeniu obserwowania. Zestawy „Akceptujący", „Koordynator lotów" i „Technik" będą ją zawierać; osobom przyjętym wcześniej administrator nadaje ją w karcie członka. Szczegóły: [rezerwacja samolotu](rezerwacja-samolotu#obserwowanie-samolotu-3-2-0-w-przygotowaniu).
+
 Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda do żadnego dziennika - zakłada kluby razem z ich pierwszym administratorem i prowadzi kolejkę zgłoszeń błędów z aplikacji. Gdy klub potrzebuje pomocy w swoich danych, dodaje go u siebie jak każdego innego członka.
 
 ## Sesje

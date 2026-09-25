@@ -216,6 +216,11 @@
   .card.green:hover { border-color: var(--green-border); box-shadow: 0 8px 24px rgba(46,204,113,0.15); }
   .card.amber:hover { border-color: var(--amber-border); box-shadow: 0 8px 24px rgba(243,156,18,0.15); }
   .card.red:hover { border-color: rgba(231,76,60,0.3); box-shadow: 0 8px 24px rgba(231,76,60,0.15); }
+  /* Karta ekranu, który jest ZAPROJEKTOWANY, ale jeszcze nienarysowany (sekcja
+     „w projekcie"): przerywana ramka, bez odnośnika i bez uniesienia pod kursorem -
+     kliknięcie nie ma dokąd prowadzić, więc karta nie może tego obiecywać. */
+  .card.planned { border-style: dashed; cursor: default; }
+  .card.planned:hover { background: var(--surface); border-color: var(--border); transform: none; box-shadow: none; }
 
   .card-num {
     font-family: var(--font-mono);
@@ -428,6 +433,37 @@
       <div class="card-title">20e-pulpit-rezerwacja-czeka</div>
       <div class="card-desc">Pulpit z rezerwacją, która czeka na zgodę. Karta traci zieleń i poświatę, bo zielona obiecywałaby, że lot jest pewny - ale NIE jest wygaszona, bo rezerwacja zajmuje maszynę. Odliczanie zostaje: para „za godzinę - i nadal czeka" jest tu całą informacją</div>
       <div class="card-tags"><span class="tag">pulpit</span><span class="tag amber">czeka</span></div>
+    </div>
+  </a>
+</div>
+<!-- ══ OBSERWOWANIE SAMOLOTU (3.2.0) - PROJEKT PRZED MAKIETAMI ══
+     Karty bez odnośnika, bo plików jeszcze nie ma (reguła „zero martwych linków").
+     Rysuje je epik O-A po potwierdzeniu §11 w docs/obserwowanie-samolotu.md;
+     wtedy karta dostaje href, a klasa .planned znika. -->
+<div class="section-title">Obserwowanie samolotu (3.2.0) · w projekcie</div>
+<div class="cards">
+  <div class="card planned">
+    <div class="card-num">27</div>
+    <div class="card-body">
+      <div class="card-title">27-samolot · do narysowania</div>
+      <div class="card-desc">KARTA MASZYNY dla osoby ze zdolnością „Obserwowanie samolotów" (Akceptujący, Koordynator lotów, Technik, Administrator): stan teraz (wolna · w locie · przejęta · po locie · wyłączona z użytku · zarezerwowana), liczniki ze źródłem, przełącznik „Obserwuj", najbliższe terminy, WYKRESY motogodzin i paliwa z 90 dni (kursor i przybliżenie jak na profilu śladu 14), historia WSZYSTKICH operacji maszyny stronami, z odczytami w drugiej linii. Wejścia: nagłówek wiersza maszyny w kalendarzu (21), skrzynka i push, stopka podglądu 26B. Cały ekran wymaga sieci. Warianty: 27A wolna i nieobserwowana, 27B wyłączona z użytku, 27C bez połączenia. Decyzje: docs/obserwowanie-samolotu.md §6</div>
+      <div class="card-tags"><span class="tag amber">do narysowania</span><span class="tag">wymaga sieci</span><span class="tag">wykresy</span></div>
+    </div>
+  </div>
+  <div class="card planned">
+    <div class="card-num">25C</div>
+    <div class="card-body">
+      <div class="card-title">25c-powiadomienia-samolot · do narysowania</div>
+      <div class="card-desc">Skrzynka z pięcioma wiadomościami o obserwowanej maszynie: „Zbliża się lot", „Odwołany lot" (wyłącznie termin, który już przypomniano), „Uruchomienie" z adnotacją „poza planem" bursztynem, „Zdana" z odczytami, „Nie odebrano". Czas w wiadomości to CZAS Z REJESTRU; przy zwłoce ponad kwadrans dochodzi „zapis dotarł …", a paczka niosąca uruchomienie i zdanie naraz rodzi tylko „Zdana". Sprawca własnego działania nie jest budzony. Decyzje: docs/obserwowanie-samolotu.md §5</div>
+      <div class="card-tags"><span class="tag amber">do narysowania</span><span class="tag">skrzynka</span><span class="tag">czas z rejestru</span></div>
+    </div>
+  </div>
+  <a href="21-kalendarz.html" class="card">
+    <div class="card-num">21</div>
+    <div class="card-body">
+      <div class="card-title">21-kalendarz · zmiana w projekcie</div>
+      <div class="card-desc">Nagłówek wiersza maszyny (znak po lewej osi) staje się WEJŚCIEM w kartę 27 dla osoby ze zdolnością obserwowania - szewron w spoczynku, jak przy wierszach prowadzących w głąb na 26. Bez zdolności wiersz zostaje etykietą: brak akcji, nie wyszarzona akcja. Bit „viewer.watch" dojeżdża w oknie kalendarza, bo telefon zdolności nie zna</div>
+      <div class="card-tags"><span class="tag amber">do dorysowania</span><span class="tag">wejście</span></div>
     </div>
   </a>
 </div>

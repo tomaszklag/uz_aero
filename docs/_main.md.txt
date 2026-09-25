@@ -79,6 +79,7 @@ i zdaniu samolotu (zdanie zatwierdza log całej operacji).
 | 2026-07-31 | **Panel administratora - DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` - wszystko; `szef wyszkolenia` - podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** - otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 | 2026-09-04 | **Logowanie WYŁĄCZNIE przez Google - ODWRACA „Rezygnację z Google OAuth" z 2026-07-22** i razem z nią regułę „brak samodzielnej rejestracji". Hasła znikają z produktu na obu powierzchniach (aplikacja i panel); rejestruje się każdy, kto ma konto Google, a **konto pilota powstaje dopiero przy zatwierdzeniu przez administratora** - do tej chwili nie ma wiersza w `pilots`, więc nie ma tokenu i nie ma dostępu do żadnej trasy. Powód odwrócenia jest INNY niż argument z 2026-06-22 („Sheets wymaga konta Google", dawno nieaktualny): hasła są dziś jedyną częścią systemu obsługiwaną ręcznie, a `application/admin/commands/pilots.ts` powstał dlatego, że administrator zamknął się poza systemem bez żadnej ścieżki resetu. ODRZUCONE: flaga `approved_at` na `pilots` - wymusiłaby nullowalny `code` (sygnatura operacji, karty arkusza), nową bramę na ~20 trasach telefonu i odwróciłaby sens degradacji nierozpoznanej roli do `pilot` z bezpiecznika w lukę. Rola NIE jest bramką dostępu do aplikacji i nią nie zostaje. PIN i offline-first bez zmian - Google podmienia wyłącznie jednorazowy provisioning. Apple i Facebook na razie POZA zakresem (Apple: brak platformy iOS; Facebook: App Review). Decyzje, model danych i ryzyka: `docs/logowanie-google.md` |
 | 2026-09-05 | **Wdrożenie logowania Google startuje z PUSTĄ bazą produkcyjną** („nie przejmuj się istniejącymi kontami, będę stawiał bazę od zera"). Konsekwencje: dotychczasowych kont z hasłami NIE przenosimy; ryzyko „testerzy stracą dostęp" i krok „e-maile w panelu przed deployem" zdjęte - kolejność to pusta baza → seed z `SEED_ADMIN_EMAIL` → serwer → build; kolumna `pilots.password_hash` USUNIĘTA migracją 7 (`DROP COLUMN` zamiast planowanego `DROP NOT NULL`). Po tym wdrożeniu baza znów jest produkcyjna i wraca reguła migracji wyłącznie addytywnych. Tego samego dnia audyt bezpieczeństwa gałęzi (trzy poprawki, każda z testem padającym przed nią): token rejestracyjny wydaje tokeny pilota RAZ i podlega `credentials_valid_from`, `aud` sprawdzane per powierzchnia (telefon = klient Android, panel = Web), podpięcie po e-mailu także dla zgłoszenia `pending` - `docs/logowanie-google.md` §14 |
+| 2026-09-25 | **Obserwowanie samolotu (zgłoszenie #205) - PROJEKT, wydanie razem z 3.2.0.** Osoba ze zdolnością **`fleet.watch`** (nowa, jedenasta klubowa; w zestawach Akceptujący, Koordynator lotów, Technik) dostaje w aplikacji KARTĘ MASZYNY (stan teraz, liczniki ze źródłem, terminy, historia operacji, WYKRESY MH i paliwa) i może maszynę OBSERWOWAĆ - pięć wiadomości w skrzynce: za godzinę, odwołano przypomniany termin, uruchomienie silnika, zdana z odczytami, nie odebrano. Rozstrzygnięcia właściciela: „lot się rozpoczął" = `engine_start`, nie przejęcie; wpis ręczny milczy; ziarnem OPERACJA, nie każdy start; wykres od razu; razem z 3.2.0 (które dostaje przez to OTA aplikacji). Reguły: obserwowanie jest ZAPISEM ZAMIARU, a prawo sprawdza się przy KAŻDEJ wysyłce; wiadomość o zdarzeniu z rejestru niesie CZAS Z REJESTRU, nie chwilę dotarcia paczki (offline-first), a paczka niosąca uruchomienie i zdanie rodzi tylko „zdana"; cały moduł wymaga sieci, cache'u NIE MA. Druga tura tego samego dnia: BEZ backfillu zestawów („jeszcze nie używaliśmy aplikacji, więc startujemy od zera") - migracja 15 to sam DDL, a pułapka „zestaw liczy się ze zbioru" jest zapisana na przyszłość (`docs/uprawnienia.md` §12); wykresy Z KURSOREM I PRZYBLIŻENIEM od razu (mechanizm profilu śladu); cudzy termin na karcie jak w kalendarzu; 60 minut stałą; historia operacji stronami. Dokument: `docs/obserwowanie-samolotu.md` |
 
 ---
 
@@ -972,6 +973,17 @@ lotnej dla sugestii). `session_claim` dostaje pole `reservationId` i jest to JED
 zetknięcie rejestru z modułem rezerwacji, w jedną stronę: nieznany identyfikator NIE
 odrzuca paczki, bo rezerwacja nie warunkuje lotu, a domena nie robi z tym polem NIC.
 
+Workflow akceptacji i skrzynka (3.1.0, migracje 13-14, `docs/rezerwacje.md` §3.4)
+dokładają `approval_steps`, `booking_approvals`, `notifications` (skrzynka - ŹRÓDŁO
+PRAWDY, `payload` JSONB bez walidacji) i `push_tokens` (bez `org_id` - opisuje
+URZĄDZENIE osoby). **W PROJEKCIE (3.2.0, zgłoszenie #205, `docs/obserwowanie-samolotu.md`
+§4): `aircraft_watches` - (aircraft_id, pilot_id) PK + `org_id`, kaskada z członkostwa;
+zapis ZAMIARU osoby, a prawo do bycia budzonym sprawdza się przy każdej wysyłce ze
+złączenia z `membership_capabilities` - oraz `bookings.reminded_at` (stempel przypomnienia
+„za godzinę": idempotencja i reguła „co ogłosiłeś, to odwołaj"). Migracja 15, addytywna,
+SAM DDL - bez backfillu zdolności `fleet.watch` (decyzja właściciela 2026-09-25: baza nie
+ma jeszcze prawdziwych klubów; reguła backfillu na żywą bazę w `docs/uprawnienia.md` §12).**
+
 `events` jest append-only również na serwerze; `sessions` i statystyki to projekcje
 odświeżane przy przyjęciu zdarzeń. Dochodzą jeszcze: `exported_sheets` (treść kart -
 bazodanowy adapter `SheetsPort`), `admin_audit` (ślad akcji panelu, append-only),
@@ -1250,6 +1262,18 @@ nikt poza pilotem nie odtworzy. Rezerwacja jest umową między ludźmi składan�
 biurku, a nie pomiarem z kabiny. Cena jest znana i zapisana: bez zasięgu nie ma karty
 najbliższej rezerwacji, kroki przejęcia nie wypełniają się planem, a ostrzeżenie
 o cudzym terminie nie pada. Wszystkie trzy degradują się łagodnie.
+
+**W PROJEKCIE (3.2.0, zgłoszenie #205 - `docs/obserwowanie-samolotu.md` §6):** nad
+zakładkami dochodzi **[27 Karta maszyny]** - ekran otwierany z NAGŁÓWKA WIERSZA MASZYNY
+w Kalendarzu 21, ze skrzynki 25 (pięć nowych rodzajów wiadomości) i ze stopki podglądu
+26B, wyłącznie dla osoby ze zdolnością `fleet.watch`. Bloki: stan teraz (wolna · w locie
+· przejęta · po locie · wyłączona z użytku · zarezerwowana), liczniki ze źródłem,
+przełącznik „Obserwuj", najbliższe terminy, wykresy MH i paliwa z 90 dni, historia
+operacji maszyny. Warianty 27A wolna, 27B wyłączona z użytku, 27C bez połączenia.
+Cały ekran wymaga sieci (jak reszta modułu) i NIE jest zakładką - czwartej zakładki
+nie ma (§9.4 tamtego dokumentu). Skrzynka i push dostają regułę CZASU Z REJESTRU:
+wiadomość o uruchomieniu i zdaniu niesie chwilę zdarzenia z rejestru, a nie chwilę
+dotarcia paczki, bo pilot bez zasięgu dosyła zapisy po godzinach.
 ## 8. Wymagania niefunkcjonalne i ryzyka
 
 ### Ryzyka techniczne

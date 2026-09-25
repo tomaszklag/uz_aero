@@ -1366,6 +1366,20 @@ składający pomija kroki, na których sam stoi (§11.2), więc próba na jednym
 wywoła żadnego powiadomienia. Oczekiwane: „Prośba o zgodę" na telefonie, tapnięcie
 otwiera ekran decyzji 26.
 
+### 12.7 Rodzaje spoza rezerwacji: obserwowanie samolotu (3.2.0, projekt 2026-09-25)
+
+Skrzynka i budzik są odtąd mechanizmem OGÓLNYM, nie własnością workflow akceptacji.
+Zgłoszenie #205 (`docs/obserwowanie-samolotu.md` §5) dokłada pięć rodzajów o MASZYNIE -
+za godzinę, odwołano przypomniany termin, uruchomienie silnika, zdana z odczytami, nie
+odebrano - dla osób, które daną maszynę obserwują (nowa zdolność `fleet.watch`). Trzy
+rzeczy z tego rozdziału przechodzą tam bez zmian: skrzynka źródłem prawdy (§12.1), push
+bez nazwisk, rodzaj nieznany aplikacji trafia do skrzynki (§12.5). Jedna reguła DOCHODZI
+i dotyczy wyłącznie wiadomości o zdarzeniach z REJESTRU: niosą CZAS Z REJESTRU, a nie
+chwilę dotarcia paczki, bo pilot bez zasięgu dosyła zapisy po godzinach. Zadanie okresowe
+z §4.1 dostaje przy tym trzecie pytanie - przypomnienie „za godzinę" ze stemplem
+`bookings.reminded_at` - a jego plik zmienia nazwę na mówiącą o trzech pytaniach.
+Przepis „nowy rodzaj powiadomienia": `docs/architektura-kodu.md` §7.
+
 ## 13. Etapy i kolejność realizacji
 
 Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zależność twarda.
