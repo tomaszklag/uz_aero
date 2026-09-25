@@ -44,6 +44,7 @@ import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { BookingDetailsScreen } from '../screens/BookingDetailsScreen';
 import { DecisionScreen } from '../screens/DecisionScreen';
+import { AircraftCardScreen } from '../screens/AircraftCardScreen';
 import { AircraftPreviewScreen } from '../screens/AircraftPreviewScreen';
 import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
@@ -95,7 +96,7 @@ export type RootStackParamList = {
    * 25 - skrzynka powiadomień (3.1.0): decyzje o moich rezerwacjach i prośby o moją
    * zgodę. Wejście DZWONKIEM z Pulpitu - czwartej zakładki nie ma (§9.4).
    */
-  Notifications: undefined;
+  Notifications: { foreignClub?: true } | undefined;
   /** 26 - decyzja o CUDZEJ rezerwacji: zgoda albo odmowa z powodem. Wejście z wiersza „Do decyzji". */
   Decision: { bookingId: string };
   /**
@@ -105,6 +106,13 @@ export type RootStackParamList = {
    */
   PilotPreview: { bookingId: string; pilotId: string };
   AircraftPreview: { bookingId: string };
+  /**
+   * 27 - KARTA MASZYNY (obserwowanie 3.2.0): stan „teraz", przełącznik obserwowania,
+   * liczniki, terminy, wykresy 90 dni, historia wszystkich operacji. Wejście z nagłówka
+   * wiersza maszyny w kalendarzu, ze skrzynki, z powiadomienia i ze stopki 26B - dla
+   * osoby ze zdolnością „Obserwowanie samolotów". Leży NAD zakładkami, jak 23/25/26.
+   */
+  Aircraft: { aircraftId: string };
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -223,6 +231,7 @@ export function RootNavigator({
         <Stack.Screen name="Decision" component={DecisionScreen} />
         <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
         <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
+        <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

@@ -204,6 +204,20 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     return rows.map(toSessionRow);
   }
 
+  async countByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<number> {
+    // Ten sam predykat, co strona historii - liczba ma zgadzać się z tym, co da się
+    // doładować, a nie z rejestrem razem z unieważnionymi i pustymi zapisami.
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*)::text AS n FROM sessions s
+        WHERE s.org_id = $1 AND s.aircraft_id = $2
+          AND s.status <> 'voided'
+          AND NOT ${emptySessionSql('s')}
+          AND COALESCE(s.engine_start_at, s.claim_time) IS NOT NULL`,
+      [orgId, aircraftId],
+    );
+    return Number.parseInt(rows[0]?.n ?? '0', 10) || 0;
+  }
+
   async listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]> {
     const { rows } = await db.query<SessionDbRow>(
       `SELECT ${sessionColumns('s')} FROM sessions s

@@ -4589,6 +4589,60 @@ stanem, osiem tras z przypadkami izolacji; 36 nowych testów. Reguły obowiązuj
   katalog i zestawy panelu JUŻ są, karta czeka); push `aircraft_*` w `logic/pushTarget.ts`
   telefonu idzie dziś do skrzynki, co jest zaprojektowane
 
+### Epik O-C: aplikacja obserwowania WYKONANA (issue #221, 2026-09-25, gałąź `feature-221-aplikacja-obserwowania`)
+Ekran 27 (`AircraftCardScreen`, warianty 27A-C), wykresy z kursorem i zoomem, skrzynka
+25C, tapnięcie w push, wejścia z 21 i 26B, sekcja 13C w Ustawieniach, cienki plaster
+serwera; 30 nowych testów aplikacji, zero nowych tabel SQLite. Reguły obowiązujące odtąd:
+- **KARTA MASZYNY LICZY NAPISY, NIE FAKTY** - `logic/aircraftCard.ts` (hero, liczniki,
+  terminy, historia) i `logic/aircraftSeries.ts` (geometria wykresów) są czyste; stan
+  „teraz", serie i sumy przychodzą z serwera. Dwa zegary (§6.2): chwile operacji
+  i odczytów w UTC, terminy dobą klubu z granic doby przy KAŻDYM terminie - a chwila
+  spoza doby (koniec wielodniowego wyłączenia) liczy godzinę na dobie przesuniętej
+  o pełne dni, DATĘ na dobie oryginalnej (`clubMomentLabel`; przesunięta doba z tą samą
+  `date` psuje `clubOffset`)
+- **CAŁY MODUŁ WYMAGA SIECI I NIE MA CACHE'U** (§2.2): `useAircraftCard` = wzorzec okna
+  kalendarza (`undefined` skeleton, `null` → 27C z ponowieniem co 60 s bez przycisku),
+  historia OSOBNYM hookiem stronami (kursor parą, `loadMore` pod „Pokaż starsze",
+  strona, która nie dojechała, zostawia listę). Przełącznik zapisuje WPROST
+  (`setAircraftWatch`, bez outboxa); nieudany zapis = powód WEWNĄTRZ karty
+  („Obserwowanie zapisuje serwer - potrzebne połączenie."), nigdy cichy błąd
+- **SEKCJA 13C ISTNIEJE WYŁĄCZNIE U OSOBY ZE ZDOLNOŚCIĄ, TAKŻE BEZ SIECI** - i to jest
+  jedyny „magazyn" tego modułu: `ui/store/watchAccess.ts` pamięta w AsyncStorage per
+  pilot i klub OSTATNIĄ ODPOWIEDŹ serwera na pytanie o zdolność (lista → `1`, 403 →
+  `0`). `fetchAircraftWatches` oddaje trzy odpowiedzi (lista / `'forbidden'` / `null`),
+  bo zwinięcie 403 do `null` kazałoby każdemu pilotowi bez zasięgu oglądać zdanie
+  o liście, której nigdy nie miał. Z listy w telefonie nie zostaje nic
+- **KLUB W BUDZIKU (R6) JEST ROZWIĄZANY PO OBU STRONACH**: serwer wkłada `orgId` do
+  danych push (`Notifier.wake(orgId, drafts)` - podpis zmieniony we WSZYSTKICH
+  producentach), a `pushTarget(data, activeOrgId)` przy różnicy otwiera skrzynkę
+  z parametrem `foreignClub` i banerem „przełącz klub w Ustawieniach". Klub aktywny
+  czyta się W CHWILI tapnięcia (`useAuthStore.getState()`), nie przy montowaniu.
+  Pięć rodzajów `aircraft_*` → trasa `Aircraft { aircraftId }` (nad zakładkami, jak 23/25/26)
+- **SKRZYNKA: PIĘĆ GAŁĘZI Z CZASEM Z REJESTRU** (`inbox.ts`): tytuł rzeczownikiem ze
+  znakiem, „08:12 UTC · nazwisko · zadanie", `lead` („Poza planem" bursztynem, „Paliwo
+  128 L" zielenią) + `late` („zapis dotarł 09:40 UTC" ponad kwadrans zwłoki - `lateNote`);
+  licznik przy „Zdana" w formacie MASZYNY (`mhFormatOf` z cache floty klubu). Ton `news`
+  = błękit dla rzeczy, która się dzieje; `info` zostaje neutralny dla rodzaju nieznanego
+- **WEJŚCIA SĄ BRAMKOWANE BITEM `viewer.watch`, NIE ZDOLNOŚCIĄ**: telefon zdolności nie
+  zna, więc nagłówek wiersza w kalendarzu (`FleetAxis.onOpenAircraft`, `CalendarData.canWatch`)
+  i stopka 26B („Pokaż kartę samolotu", `GhostAction`) istnieją wyłącznie, gdy odpowiedź
+  serwera to mówi; bez bitu nagłówek jest SAMĄ ETYKIETĄ, a stopki nie ma wcale
+- **TRZECI MOMENT PROŚBY O ZGODĘ NA POWIADOMIENIA**: `optInAfterWatch(on)` po WŁĄCZENIU
+  obserwowania (karta 27 i sekcja 13C); wyłączenie nie pyta
+- **WYKRESY NA `TrackPolyline` + `useChartGesture`** (`components/data/ReadingsChart.tsx`):
+  scrub jednym palcem, zoom w poziomie (`zoomAxis: 'x'`), dwuklik całość; kursor wskazuje
+  NAJBLIŻSZY punkt (między odczytami rejestr nic nie wie) i mówi chwilę, wartość i ŹRÓDŁO;
+  podpisy osi czasu z okna WIDOCZNEGO; `timeScaleBar` dostał kroki DNI (profil śladu ich
+  nie zobaczy - zatrzymuje się niżej). Licznik od dna do sufitu okna na pełnych godzinach,
+  paliwo od zera do pojemności; odcinek wewnątrz operacji pełną zielenią, postój (po
+  zdaniu ALBO po wpisie administratora) szarą przerywaną
+- **PLASTER SERWERA** (jak R-I): `HeldCrew.operation`/`departureIcao` w stanie „teraz",
+  `total` w stronie historii (`countByAircraft` tym samym predykatem, co strona),
+  `operation` w payloadzie „uruchomienie", `orgId` w danych push
+- **czego O-C NIE ROBI**: notatki i autora wyłączenia w herosie 27B (cudza zajętość jedzie
+  polami z kalendarza, P2), „zgodnie z rezerwacją" przy „Zdana" (payload tego nie niesie),
+  sprawdzenia na urządzeniu (dev build → #169), karty w `#/konto` (O-D, #222)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

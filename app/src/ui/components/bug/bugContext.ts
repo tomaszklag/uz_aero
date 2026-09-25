@@ -166,6 +166,8 @@ export const ROUTE_LABELS: Record<string, string> = {
   Stats: 'OPERACJA (10)',
   Track: 'ŚLAD OPERACJI (14)',
   Settings: 'USTAWIENIA (13)',
+  // Obserwowanie samolotu (3.2.0): karta maszyny leży nad zakładkami, jak 23/25/26.
+  Aircraft: 'KARTA MASZYNY (27)',
 };
 
 export const routeLabel = (route: string | null): string =>

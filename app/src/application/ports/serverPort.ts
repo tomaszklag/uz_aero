@@ -419,6 +419,13 @@ export interface RemoteCalendar {
    */
   days: RemoteCalendarDay[];
   bookings: RemoteBooking[];
+  /**
+   * KTO PATRZY (obserwowanie 3.2.0, §6.6): `watch` = ta osoba ma zdolność
+   * „Obserwowanie samolotów", więc nagłówek wiersza maszyny prowadzi w jej kartę (27).
+   * Telefon zdolności nie zna i bit dojeżdża w odpowiedzi; opcjonalne, bo serwer
+   * sprzed 3.2.0 go nie niesie - wiersz jest wtedy samą etykietą.
+   */
+  viewer?: { watch?: boolean };
 }
 
 export interface RemoteCalendarDay {
@@ -552,37 +559,163 @@ export interface RemotePilotPreview {
   upcoming: RemotePreviewUpcoming[];
 }
 
+/** Nagłówek maszyny - ten sam kształt na podglądzie 26B i na karcie 27. */
+export interface RemoteAircraftHead {
+  id: string;
+  reg: string;
+  type: string;
+  serviceStatus: 'active' | 'disabled';
+  capacityL: number;
+  mhFormat: 'hhmm' | 'decimal';
+  oilMinL: number | null;
+}
+
+/** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
+export interface RemoteAircraftCounters {
+  mh: number;
+  fuelL: number;
+  oilL: number | null;
+  at: string;
+  source: 'handover' | 'open_session' | 'initial' | 'admin';
+  byPilotId: string | null;
+  enteredBy: string | null;
+}
+
+/** Okno dni maszyny: dni z lotami, starty, silnik i lot - 26B („30 dni") i 27 („30 i 90 dni"). */
+export interface RemoteAircraftWindow {
+  daysWithFlights: number;
+  takeoffs: number;
+  blockMs: number;
+  flightMs: number;
+}
+
 export interface RemoteAircraftPreview {
   timezone: string;
   bookingId: string;
-  aircraft: {
-    id: string;
+  aircraft: RemoteAircraftHead;
+  lastFlightAt: string | null;
+  counters: RemoteAircraftCounters | null;
+  last30: RemoteAircraftWindow;
+  recent: RemotePreviewRecent[];
+  upcoming: RemotePreviewUpcoming[];
+  /**
+   * Czy patrzący ma zdolność „Obserwowanie samolotów" (3.2.0): stopka 26B prowadzi
+   * wtedy w kartę maszyny (27). Opcjonalne - serwer sprzed 3.2.0 tego nie niesie.
+   */
+  viewer?: { watch?: boolean };
+}
+
+// ── Karta maszyny i obserwowanie (3.2.0, issue #205; ekrany 27, 13C, 25C) ──────────
+//
+// CAŁY MODUŁ WYMAGA SIECI (`docs/obserwowanie-samolotu.md` §2.2): karta czyta cudze
+// operacje, zajętość i odczyty innych pilotów, których telefon nie ma u siebie -
+// cache'u nie ma i nie wolno go dorobić po cichu. Przełącznik zapisuje się na serwerze
+// wprost, nie przez outbox: to ustawienie osoby, nie fakt z kabiny.
+
+/**
+ * STAN „TERAZ" maszyny - jedno z siedmiu zdań (§6.3), liczone na serwerze z rejestru
+ * i kalendarza. Operacja W TOKU niesie załogę, zadanie i lotnisko startu; wyłączenie -
+ * powód i koniec; rezerwacja - właściciela i godziny; wolna - najbliższy termin.
+ */
+export type RemoteAircraftNow =
+  | { kind: 'retired' }
+  | {
+      kind: 'flying' | 'claimed' | 'after_flight';
+      sessionUuid: string;
+      pilotId: string;
+      dualId: string | null;
+      operation: string | null;
+      departureIcao: string | null;
+      /** Uruchomienie / przejęcie / wyłączenie silnika (ISO UTC); `null` przy przejęciu bez stempla. */
+      since: string | null;
+    }
+  | { kind: 'blocked'; bookingId: string; reason: string | null; until: string }
+  | { kind: 'booked'; bookingId: string; pilotId: string | null; startsAt: string; endsAt: string }
+  | { kind: 'free'; next: { bookingId: string; kind: 'flight' | 'block'; startsAt: string } | null };
+
+/**
+ * Punkt serii wykresu (§6.4) - odczyt z rejestru ze ŹRÓDŁEM: przejęcie, zdanie,
+ * tankowanie (stan po dolewce) albo wpis administratora. Serie liczy SERWER; telefon
+ * liczy wyłącznie geometrię ekranu.
+ */
+export interface RemoteSeriesPoint {
+  at: string;
+  value: number;
+  source: 'claim' | 'release' | 'refuel' | 'admin';
+  sessionUuid: string | null;
+  pilotId: string | null;
+}
+
+/** Termin na karcie maszyny: zajętość jak w kalendarzu (P2) razem z jej dobą. */
+export type RemoteAircraftUpcoming = RemoteBooking & { day: RemoteCalendarDay };
+
+/** Karta maszyny (`GET /aircraft/:id/card`, ekran 27). */
+export interface RemoteAircraftCard {
+  timezone: string;
+  aircraft: RemoteAircraftHead;
+  now: RemoteAircraftNow;
+  /**
+   * Chwila DOTARCIA ostatniej paczki z rejestru tej maszyny (§2.3): pod herosem stoi
+   * „wg zapisów, które dotarły do 09:40", a nie „teraz". `null` = rejestr pusty.
+   */
+  lastRecordAt: string | null;
+  counters: RemoteAircraftCounters | null;
+  lastFlightAt: string | null;
+  last30: RemoteAircraftWindow;
+  last90: RemoteAircraftWindow;
+  upcoming: RemoteAircraftUpcoming[];
+  series: { mh: RemoteSeriesPoint[]; fuel: RemoteSeriesPoint[] };
+  /** Czy TA osoba obserwuje tę maszynę. */
+  watching: boolean;
+  viewer: { watch: boolean };
+}
+
+/** Jedna operacja w historii maszyny - zwarty wiersz z odczytami po obu stronach biegu. */
+export interface RemoteAircraftOperation {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie), ISO UTC. */
+  at: string | null;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  status: string;
+  manualEntry: boolean;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  mhStart: number | null;
+  mhEnd: number | null;
+  fuelStartL: number | null;
+  fuelEndL: number | null;
+  fuelAddedL: number | null;
+}
+
+/** Kursor strony historii - PARA, jak w skrzynce: sam stempel nie porządkuje jednoznacznie. */
+export interface OperationsCursor {
+  beforeAt: string;
+  beforeUuid: string;
+}
+
+/** Strona historii maszyny (`GET /aircraft/:id/operations`), najnowsze pierwsze. */
+export interface RemoteAircraftOperations {
+  /** Ile operacji ma CAŁA historia - nagłówek sekcji i wiersz „Pokaż starsze". */
+  total: number;
+  items: RemoteAircraftOperation[];
+  next: OperationsCursor | null;
+}
+
+/** Cała flota klubu ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`, sekcja 13C). */
+export interface RemoteWatchList {
+  timezone: string;
+  viewer: { watch: boolean };
+  items: {
+    aircraftId: string;
     reg: string;
     type: string;
     serviceStatus: 'active' | 'disabled';
-    capacityL: number;
-    mhFormat: 'hhmm' | 'decimal';
-    oilMinL: number | null;
-  };
-  lastFlightAt: string | null;
-  /** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
-  counters: {
-    mh: number;
-    fuelL: number;
-    oilL: number | null;
-    at: string;
-    source: 'handover' | 'open_session' | 'initial' | 'admin';
-    byPilotId: string | null;
-    enteredBy: string | null;
-  } | null;
-  last30: {
-    daysWithFlights: number;
-    takeoffs: number;
-    blockMs: number;
-    flightMs: number;
-  };
-  recent: RemotePreviewRecent[];
-  upcoming: RemotePreviewUpcoming[];
+    watching: boolean;
+    now: RemoteAircraftNow;
+  }[];
 }
 
 /**
@@ -946,6 +1079,24 @@ export interface ServerPort {
   getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview>;
   /** Podgląd maszyny sprawy (issue #206) - `GET /bookings/:id/preview/aircraft`. */
   getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview>;
+  /**
+   * Karta maszyny (`GET /aircraft/:id/card`, obserwowanie 3.2.0). Bez zdolności
+   * „Obserwowanie samolotów" serwer odmawia 403; cudza i nieznana maszyna to 404.
+   */
+  getAircraftCard(token: string, aircraftId: string): Promise<RemoteAircraftCard>;
+  /** Historia maszyny stronami (`GET /aircraft/:id/operations`), kursor parą. */
+  getAircraftOperations(
+    token: string,
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations>;
+  /** Cała flota ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`). */
+  getAircraftWatches(token: string): Promise<RemoteWatchList>;
+  /**
+   * Włączenie / wyłączenie obserwowania (`PUT` / `DELETE /aircraft/:id/watch`) -
+   * ZAPIS wprost na serwerze, nie przez outbox (§2.2).
+   */
+  setAircraftWatch(token: string, aircraftId: string, on: boolean): Promise<void>;
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   getSlotSuggestions(
     token: string,

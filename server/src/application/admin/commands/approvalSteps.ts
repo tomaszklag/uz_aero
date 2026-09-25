@@ -126,7 +126,7 @@ export class ApprovalStepsCommands {
 
       // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
       // awaria ma kosztować ciszę w telefonie, a nie niezapisaną ścieżkę.
-      await this.notifier.wake(reconciled.notices);
+      await this.notifier.wake(actor.orgId, reconciled.notices);
       return {
         ok: true,
         steps,

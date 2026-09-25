@@ -139,6 +139,7 @@ export function registerAircraftRoutes(
     if (view == null) return reply.code(404).send({ error: 'not_found' });
 
     return reply.send({
+      total: view.total,
       items: view.rows.map((row) => ({
         sessionUuid: row.sessionUuid,
         at: isoOrNull(row.engineStartAt ?? row.claimTime),

@@ -111,6 +111,8 @@ describe('stan teraz - pierwszeństwo od góry (§6.3)', () => {
       sessionUuid: 'flying',
       pilotId: 'PWI',
       dualId: null,
+      operation: 'ferry',
+      departureIcao: 'EPKK',
       since: NOW - H + 10 * 60_000,
     });
     const claimed = session({ sessionUuid: 'claimed', at: NOW - H, status: 'active', engineStartAt: null, engineStopAt: null, closeTime: null });

@@ -251,7 +251,7 @@ export class AdminSessionCloseCommands {
     }
 
     // Budzik PO commicie: awaria dostawcy push nie cofa decyzji administratora.
-    if (this.watching != null) await this.watching.wake(applied.notices);
+    if (this.watching != null) await this.watching.wake(actor.orgId, applied.notices);
 
     return {
       ok: true,

@@ -61,6 +61,22 @@ class BugServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getAircraftCard(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftOperations(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftWatches(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setAircraftWatch(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
     throw new Error('nieużywane');
   }

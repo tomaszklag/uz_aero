@@ -21,6 +21,7 @@ import {
 } from '../../infrastructure/push/expoNotifications';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { pushTarget } from '../screens/logic/pushTarget';
+import { useAuthStore } from '../store/authStore';
 
 let consumed: string | null = null;
 
@@ -34,10 +35,13 @@ export function usePushNavigation(
     const open = (tap: NotificationTap): void => {
       if (consumed === tap.id || !ref.isReady()) return;
       consumed = tap.id;
-      const target = pushTarget(tap.data);
+      // Klub aktywny czytamy W CHWILI tapnięcia, nie przy montowaniu: pilot mógł go
+      // przełączyć, odkąd nawigator stoi.
+      const target = pushTarget(tap.data, useAuthStore.getState().org?.id ?? null);
       if (target.screen === 'Decision') ref.navigate('Decision', target.params);
       else if (target.screen === 'BookingDetails') ref.navigate('BookingDetails', target.params);
-      else ref.navigate('Notifications');
+      else if (target.screen === 'Aircraft') ref.navigate('Aircraft', target.params);
+      else ref.navigate('Notifications', target.params);
     };
 
     void lastNotificationTap().then((tap) => {

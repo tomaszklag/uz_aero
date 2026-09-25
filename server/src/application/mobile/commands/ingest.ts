@@ -386,6 +386,7 @@ export class IngestCommands {
                 pilotId: row.picId,
                 dualId: row.dualId,
                 at: eventTime(start),
+                operation: row.operation,
                 planned,
                 bookingId: planned ? bookingId : null,
               }),
@@ -402,7 +403,7 @@ export class IngestCommands {
     // Budzik obserwujących PO commicie (obserwowanie §5): push jest budzikiem, nie
     // treścią - wiersze skrzynki już są, a awaria dostawcy ma kosztować ciszę
     // w telefonie, nie przyjętą paczkę.
-    if (this.watching != null) await this.watching.wake(notices);
+    if (this.watching != null) await this.watching.wake(orgId, notices);
 
     // Eksport §4.7 - PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
     // za PRZYJĘCIE zdarzeń, a arkusz jest skutkiem, nie warunkiem. Awaria Sheets nie

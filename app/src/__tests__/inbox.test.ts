@@ -7,7 +7,7 @@
  */
 
 import type { RemoteNotification } from '../application';
-import { agoLabel, inboxRows, termLabel, unreadIds } from '../ui/screens/logic/inbox';
+import { agoLabel, inboxRows, lateNote, termLabel, unreadIds } from '../ui/screens/logic/inbox';
 
 const H = 3_600_000;
 const NOW = Date.UTC(2026, 8, 24, 8, 0);
@@ -42,6 +42,7 @@ const rows = (items: RemoteNotification[], todo: string[] = []) =>
     now: NOW,
     regOf: (id) => (id === 'a1' ? 'SP-AXA' : null),
     nameOf: (id) => ({ jwr: 'Jakub Wrona', akw: 'Anna Kowal' })[id] ?? null,
+    mhFormatOf: (id) => (id === 'a1' ? 'hhmm' : null),
   });
 
 describe('wiek wiadomości', () => {
@@ -105,6 +106,119 @@ describe('wiersze skrzynki', () => {
   });
 
   it('do przeczytania idą wyłącznie nieprzeczytane', () => {
+    expect(unreadIds([note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })])).toEqual(['n1']);
+  });
+});
+
+/** Termin z `note()` - pomocnik nadpisuje payload w całości, więc gałęzie o terminie podają go jawnie. */
+const TERM = { bookingId: 'b1', aircraftId: 'a1', pilotId: 'jwr', startsAt: '2026-09-26T07:00:00Z', endsAt: '2026-09-26T10:00:00Z' };
+
+describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
+  it('„zbliża się lot" i „nie odebrano": tytuł rzeczownikiem ze znakiem, termin czasem klubu i nazwisko, kartę maszyny', () => {
+    const [soon, notTaken] = rows([
+      note({ kind: 'aircraft_flight_soon' }),
+      note({ id: 'n2', kind: 'aircraft_not_taken' }),
+    ]);
+    expect(soon).toMatchObject({
+      tone: 'news',
+      title: 'Zbliża się lot · SP-AXA',
+      sub: 'sob 26 WRZ 09:00-12:00 · Jakub Wrona',
+      reason: null,
+      aircraftId: 'a1',
+      opens: 'aircraft',
+      todo: false,
+    });
+    expect(notTaken).toMatchObject({
+      tone: 'warn',
+      title: 'Nie odebrano · SP-AXA',
+      reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+      opens: 'aircraft',
+    });
+  });
+
+  it('„uruchomienie": CZAS Z REJESTRU w UTC, zadanie, „poza planem" bursztynem i „zapis dotarł" przy zwłoce', () => {
+    const [late, planned] = rows([
+      note({
+        kind: 'aircraft_engine_started',
+        day: null,
+        createdAt: '2026-09-24T09:40:00Z',
+        payload: { sessionUuid: 's1', aircraftId: 'a1', pilotId: 'jwr', at: '2026-09-24T08:12:00Z', operation: 'skoki', planned: false, bookingId: null },
+      }),
+      note({
+        id: 'n2',
+        kind: 'aircraft_engine_started',
+        day: null,
+        createdAt: '2026-09-24T08:13:00Z',
+        payload: { sessionUuid: 's1', aircraftId: 'a1', pilotId: 'jwr', at: '2026-09-24T08:12:00Z', operation: null, planned: true, bookingId: 'b1' },
+      }),
+    ]);
+    expect(late).toMatchObject({
+      tone: 'news',
+      title: 'Uruchomienie · SP-AXA',
+      sub: '08:12 UTC · Jakub Wrona · skoki',
+      lead: { text: 'Poza planem', tone: 'amber' },
+      reason: ' - na tę godzinę nie było rezerwacji.',
+      late: 'zapis dotarł 09:40 UTC',
+      opens: 'aircraft',
+    });
+    expect(planned).toMatchObject({ sub: '08:12 UTC · Jakub Wrona', lead: { text: 'Zgodnie z planem', tone: 'green' }, late: null });
+  });
+
+  it('„zdana": blok i loty w podpisie, odczyty zielenią z licznikiem w formacie maszyny; z panelu - powód bez odczytów', () => {
+    const base = { sessionUuid: 's1', aircraftId: 'a1', pilotId: 'jwr', dualId: null, at: '2026-09-23T16:40:00Z', engineStartAt: '2026-09-23T14:58:00Z', engineStopAt: '2026-09-23T16:40:00Z', blockMs: 102 * 60_000, flights: 1 };
+    const [pilot, noFlight, admin] = rows([
+      note({ kind: 'aircraft_released', day: null, createdAt: '2026-09-23T16:41:00Z', payload: { ...base, fuelEndL: 128, mhEnd: 1234.8, noFlightReason: null, closedBy: 'pilot', reason: null } }),
+      note({ id: 'n2', kind: 'aircraft_released', day: null, createdAt: '2026-09-23T16:41:00Z', payload: { ...base, flights: 0, blockMs: 0, fuelEndL: 150, mhEnd: 1234.5, noFlightReason: 'weather', closedBy: 'pilot', reason: null } }),
+      note({ id: 'n3', kind: 'aircraft_released', day: null, createdAt: '2026-09-19T15:30:00Z', payload: { ...base, at: '2026-09-19T15:30:00Z', fuelEndL: null, mhEnd: null, noFlightReason: null, closedBy: 'admin', reason: 'pilot zapomniał zdać, maszyna stoi w hangarze' } }),
+    ]);
+    expect(pilot).toMatchObject({
+      tone: 'ok',
+      title: 'Zdana · SP-AXA',
+      sub: '16:40 UTC · Jakub Wrona · blok 1:42 · 1 lot',
+      lead: { text: 'Paliwo 128 L', tone: 'green' },
+      reason: ' · licznik 1234:48',
+      late: null,
+      opens: 'aircraft',
+    });
+    expect(noFlight!.reason).toBe('Zdana bez lotu - pogoda. Paliwo 150 L · licznik 1234:30');
+    expect(admin).toMatchObject({
+      tone: 'warn',
+      sub: '15:30 UTC · zakończył administrator',
+      lead: null,
+      reason: 'Bez odczytów - „pilot zapomniał zdać, maszyna stoi w hangarze".',
+    });
+  });
+
+  it('„odwołany lot": ile przed startem, po przypomnieniu; przesunięcie nazywa nowy termin', () => {
+    const [cancelled, moved] = rows([
+      note({ kind: 'aircraft_flight_cancelled', createdAt: '2026-09-26T06:20:00Z', payload: { ...TERM, movedTo: null } }),
+      note({
+        id: 'n2',
+        kind: 'aircraft_flight_cancelled',
+        createdAt: '2026-09-26T06:20:00Z',
+        payload: { ...TERM, movedTo: { startsAt: '2026-09-27T07:00:00Z', endsAt: '2026-09-27T09:00:00Z' } },
+      }),
+    ]);
+    expect(cancelled).toMatchObject({
+      tone: 'warn',
+      title: 'Odwołany lot · SP-AXA',
+      sub: 'sob 26 WRZ 09:00-12:00 · Jakub Wrona',
+      reason: 'Odwołany 40 min przed startem - po przypomnieniu.',
+      opens: 'aircraft',
+    });
+    expect(moved!.reason).toBe('Przesunięty 40 min przed startem - nowy termin nd 27 WRZ 09:00-11:00, po przypomnieniu.');
+  });
+
+  it('dopisek o zwłoce pada dopiero ponad kwadrans; maszyna poza cache’em dostaje słowo, nie identyfikator', () => {
+    const at = Date.parse('2026-09-24T08:12:00Z');
+    expect(lateNote(at, at + 14 * 60_000)).toBeNull();
+    expect(lateNote(at, at + 16 * 60_000)).toBe('zapis dotarł 08:28 UTC');
+    expect(lateNote(null, at)).toBeNull();
+    const [row] = rows([note({ kind: 'aircraft_flight_soon', payload: { aircraftId: 'ghost' } })]);
+    expect(row!.title).toBe('Zbliża się lot · ghost');
+  });
+
+  it('przeczytane liczą się jak dotąd', () => {
     expect(unreadIds([note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })])).toEqual(['n1']);
   });
 });

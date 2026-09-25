@@ -31,6 +31,20 @@ describe('podziałka czasu profilu', () => {
     expect(zoomed.label).not.toBe(rest.label);
   });
 
+  it('oś 90 dni karty maszyny dostaje kroki DNI, a przybliżenie schodzi do godzin', () => {
+    const DAY = 24 * 60 * MINUTE;
+    const rest = timeScaleBar((90 * DAY) / 300, 60)!;
+    expect(rest.label).toBe('14 dni');
+    expect(rest.pixels).toBeLessThanOrEqual(60);
+
+    const zoomed = timeScaleBar((90 * DAY) / (300 * 8), 60)!;
+    expect(zoomed.label).toBe('2 dni');
+
+    const deep = timeScaleBar((90 * DAY) / (300 * 64), 60)!;
+    expect(deep.label).toBe('4 h');
+    expect(timeScaleBar(DAY / 100, 60)!.label).toBe('12 h');
+  });
+
   it('kroki są okrągłe w mowie pilota, nie arytmetycznie równe', () => {
     const labels = [1, 2, 4, 8].map((zoom) => timeScaleBar(SESSION_MS / (SPAN_PX * zoom), 70)!.label);
 

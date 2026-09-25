@@ -48,6 +48,11 @@ export interface CalendarData {
   homeIcao: string | null;
   days: ClubDayBounds[];
   bookings: CalendarBooking[];
+  /**
+   * Czy patrzący ma zdolność „Obserwowanie samolotów" (3.2.0): nagłówek wiersza maszyny
+   * prowadzi wtedy w jej kartę (27). Serwer sprzed 3.2.0 bitu nie niesie - `false`.
+   */
+  canWatch: boolean;
 }
 
 /**
@@ -72,6 +77,7 @@ export function toCalendar(wire: RemoteCalendar): CalendarData {
       const parsed = toBooking(b);
       return parsed == null ? [] : [parsed];
     }),
+    canWatch: wire.viewer?.watch === true,
   };
 }
 

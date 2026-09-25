@@ -127,7 +127,7 @@ export class BookingCommands {
 
     // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
     // awaria ma kosztować ciszę w telefonie, a nie utraconą rezerwację.
-    if (write.created) await this.notifier.wake(plan.notices);
+    if (write.created) await this.notifier.wake(orgId, plan.notices);
     return write;
   }
 
@@ -208,8 +208,8 @@ export class BookingCommands {
     if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
 
     // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
-    if (plan != null && restart) await this.notifier.wake(plan.notices);
-    if (watchNotices.length > 0) await watching?.wake(watchNotices);
+    if (plan != null && restart) await this.notifier.wake(orgId, plan.notices);
+    if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
     return write;
   }
 
@@ -250,7 +250,7 @@ export class BookingCommands {
     // Przegrany wyścig z zadaniem okresowym albo z panelem: wiersz przestał być czynny
     // między odczytem a zapisem. To nie jest awaria - to jest ta sama odpowiedź.
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
-    if (watchNotices.length > 0) await watching?.wake(watchNotices);
+    if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
     return { ok: true, booking: closed, created: false };
   }
 }

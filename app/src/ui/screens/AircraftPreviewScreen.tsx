@@ -14,7 +14,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
-import { Screen, ScreenHeader, Skeleton } from '../components';
+import { GhostAction, Screen, ScreenHeader, Skeleton } from '../components';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { usePilots } from '../hooks/usePilots';
@@ -25,7 +25,7 @@ import { useTheme, type Theme } from '../theme';
 import { PreviewBody, PreviewMissing } from '../components/data/PreviewBody';
 import { aircraftPreviewVm } from './logic/previewRows';
 
-type Nav = { goBack: () => void };
+type Nav = { goBack: () => void; navigate: (screen: string, params?: object) => void };
 
 export function AircraftPreviewScreen({
   navigation,
@@ -80,7 +80,20 @@ export function AircraftPreviewScreen({
         ) : vm == null ? (
           <PreviewMissing what="tej maszyny" />
         ) : (
-          <PreviewBody vm={vm} />
+          <>
+            <PreviewBody vm={vm} />
+            {/* Stopka (obserwowanie 3.2.0): karta maszyny (27) - WYŁĄCZNIE dla osoby ze
+                zdolnością „Obserwowanie samolotów"; bit jedzie w odpowiedzi podglądu, bo
+                telefon zdolności nie zna. Bez niego stopki nie ma wcale - nie ma
+                wyszarzonego wejścia w ekran, który odpowie 403. */}
+            {data?.viewer?.watch === true && (
+              <GhostAction
+                label="Pokaż kartę samolotu"
+                icon="more"
+                onPress={() => navigation.navigate('Aircraft', { aircraftId: data.aircraft.id })}
+              />
+            )}
+          </>
         )}
       </ScrollView>
     </Screen>

@@ -98,6 +98,8 @@ export interface AircraftCard {
 
 export interface OperationsPage {
   rows: SessionRow[];
+  /** Ile operacji ma cała historia (tym samym warunkiem, co strona). */
+  total: number;
   /** Kursor następnej strony; `null` = to była ostatnia. */
   next: OperationCursor | null;
 }
@@ -189,6 +191,7 @@ export class AircraftCardQueries {
     const at = last == null ? null : operationAt(last);
     return {
       rows: shown,
+      total: await this.sessions.countByAircraft(this.db, orgId, aircraftId),
       next: more && at != null ? { at, sessionUuid: last.sessionUuid } : null,
     };
   }

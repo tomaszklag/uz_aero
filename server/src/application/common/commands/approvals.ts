@@ -433,7 +433,7 @@ export class ApprovalFlow {
     // albo rozstrzygnął panel. To nie jest awaria - to jest ta sama odpowiedź.
     if (written == null) return { ok: false, refusal: 'booking_closed' };
 
-    await this.notifier.wake(notices);
+    await this.notifier.wake(orgId, notices);
     // Widok czytamy z BAZY, a nie składamy z tego, co przed chwilą wysłaliśmy: druga
     // osoba z listy mogła zdecydować równolegle, a wtedy zapis oddał jej podpis
     // (`ON CONFLICT DO NOTHING`) i to jego ma zobaczyć ekran.

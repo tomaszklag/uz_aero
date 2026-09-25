@@ -179,6 +179,11 @@ export function CalendarScreen({ navigation }: { navigation: Nav }) {
                 onPick={(aircraftId, at) =>
                   navigation.navigate('NewBooking', { aircraftId, startsAt: at })
                 }
+                // Karta maszyny (27) - wyłącznie dla osoby ze zdolnością „Obserwowanie
+                // samolotów"; bez niej nagłówek wiersza jest samą etykietą (makieta 21).
+                onOpenAircraft={
+                  data.canWatch ? (aircraftId) => navigation.navigate('Aircraft', { aircraftId }) : undefined
+                }
               />
             )}
 

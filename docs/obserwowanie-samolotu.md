@@ -659,6 +659,40 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
 3. **O-C - aplikacja**: po O-A i O-B. Ekran 27 z wariantami, wykresy z kursorem
    i przybliżeniem, skrzynka, tapnięcie, wejście z kalendarza i z 26B, zgoda na
    powiadomienia, sekcja „Obserwowane samoloty" w Ustawieniach (13C, decyzja 12).
+   **WYKONANE 2026-09-25** (gałąź `feature-221-aplikacja-obserwowania`, issue #221).
+   Odstępstwa i doprecyzowania wobec tego dokumentu:
+   - **cienki plaster serwera** (jak w R-I): stan „teraz" operacji w toku niesie
+     ZADANIE i lotnisko startu (`HeldCrew.operation`, `departureIcao` - hero pisze
+     „A. Kowalski · skoki · EPBK", a cudzej operacji telefon nie ma u siebie); strona
+     historii niesie `total` (`countByAircraft` tym samym predykatem, co strona - „218
+     operacji" w nagłówku i „Pokaż starsze · 213"); wiadomość „uruchomienie" niesie
+     `operation`; **dane push niosą `orgId`** (R6 - `Notifier.wake(orgId, drafts)`,
+     podpis zmieniony we wszystkich producentach), a test wysyłki to przybija;
+   - **sekcja 13C ma PAMIĘĆ ODPOWIEDZI o zdolności** (`ui/store/watchAccess.ts`,
+     AsyncStorage per pilot i klub): lista → `true`, odmowa 403 → `false`. Bez sieci
+     zdanie „lista wymaga połączenia" stoi WYŁĄCZNIE u osoby, której serwer kiedyś
+     odpowiedział listą - inaczej każdy pilot bez zasięgu oglądałby sekcję o funkcji,
+     której nie ma. To pamięć jednego bitu o zdolności, nie cache listy (§2.2 stoi);
+     `fetchAircraftWatches` oddaje przez to trzy odpowiedzi (lista / `'forbidden'` / `null`);
+   - **hero „wyłączona" nie pisze, kto wpisał i z jaką notatką** (makieta 27B: „wpisała
+     B. Nowak · «wymiana oleju…»"): wyłączenie jest cudzą zajętością i jedzie polami jak
+     w kalendarzu (P2) - bez notatki i autora. Pod kreską stoi wiersz o zapisach, jak
+     w każdym stanie;
+   - **terminy w skrzynce piszą się jak dotąd** („sob 26 WRZ 14:00-16:00"), nie „dziś
+     14:00-16:00" z makiety 25C: jeden format terminu w całej liście; wiersz „Zdana" nie
+     dostaje „zgodnie z rezerwacją" ani „odczyty poprawiono w panelu" - payload tego nie
+     niesie i nie ma skąd;
+   - **wykresy**: oś licznika na pełnych godzinach, podpisy osi czasu liczone z okna
+     WIDOCZNEGO (po zoomie mówią o tym, co widać), podziałka czasu (`timeScaleBar`)
+     dostała kroki DNI (8 h … 30 dni - profil śladu ich nie zobaczy, bo zatrzymuje się
+     niżej), kursor wskazuje NAJBLIŻSZY punkt (między odczytami rejestr nic nie wie);
+     odcinek zaczynający się wpisem administratora jest „postojem" (wpis pada przy
+     biurku, nie w kabinie);
+   - `InboxTone` dostał `news` (błękit dla rzeczy, która się DZIEJE z maszyną; `info`
+     zostaje neutralny dla rodzaju nieznanego), a wiersz skrzynki - wyróżniony początek
+     powodu (`lead`) i dopisek o zwłoce (`late`);
+   - sprawdzenie NA URZĄDZENIU (gesty wykresu, tapnięcie w push, karta bez zasięgu)
+     czeka na dev build - jak przy R-F, R-I (→ #169).
 4. **O-D - panel**: katalog i opisy zestawów (lustro unii) oraz karta „Obserwowane
    samoloty" w `#/konto` (decyzja 12) - po O-B.
 5. **Wydanie - w P-W 3.2.0**, z JEDNĄ zmianą wobec `docs/panel-3.2.md` §11: aplikacja
@@ -672,7 +706,7 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
 | --- | --- |
 | O-A projekt i makiety | #219 |
 | O-B serwer | #220 - WYKONANE 2026-09-25 |
-| O-C aplikacja | #221 |
+| O-C aplikacja | #221 - WYKONANE 2026-09-25 |
 | O-D panel | #222 |
 | zgłoszenie nadrzędne | #205 (milestone „Panel admina 3.2.0") |
 

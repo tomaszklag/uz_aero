@@ -37,7 +37,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
 import { referenceCheckedAt } from '../../application';
@@ -57,10 +57,23 @@ import {
   ProfileChip,
   Screen,
   ScreenHeader,
+  Icon,
   SettingsAction,
+  SkeletonRows,
   SyncChip,
   ThemeSwitch,
+  WatchSwitch,
 } from '../components';
+import { useTheme } from '../theme';
+import { askForPush } from '../hooks/askForPush';
+import { useAircraftWatches } from '../hooks/useAircraftWatches';
+import { useMinuteTicker } from '../hooks/useMinuteTicker';
+import { usePilots } from '../hooks/usePilots';
+import { useCalendar } from '../hooks/useCalendar';
+import { useCurrentPilot } from '../store/currentPilot';
+import { clubDayAt } from './logic/clubClock';
+import { optInAfterWatch } from './logic/pushOptIn';
+import { watchRows, type WatchRowVm } from './logic/watchList';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
@@ -76,7 +89,7 @@ import { holdsAircraft } from '../navigation/resumeTarget';
 export function SettingsScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string) => void; goBack: () => void };
+  navigation: { navigate: (screen: string, params?: object) => void; goBack: () => void };
 }) {
   const gps = useGps();
 
@@ -116,6 +129,49 @@ export function SettingsScreen({
   useEffect(() => {
     void loadAccount();
   }, [loadAccount]);
+
+  // ── sekcja „Obserwowane samoloty" (13C, obserwowanie 3.2.0) ──────────────
+  // Cała flota klubu bieżącego z przełącznikiem przy każdej maszynie (decyzja
+  // właściciela 2026-09-25); istnieje WYŁĄCZNIE dla osoby ze zdolnością „Obserwowanie
+  // samolotów" - `visible` liczy to z odpowiedzi serwera i z jej pamięci.
+  const { theme } = useTheme();
+  const watches = useAircraftWatches();
+  const watchNow = useMinuteTicker();
+  const watchPilotId = useCurrentPilot((p) => p.id);
+  const watchPilots = usePilots();
+  // Doby klubu do „dziś 14:00" w podpisie - z okna kalendarza (ten sam moduł, ta sama sieć).
+  const { data: calendar } = useCalendar();
+  const [watchError, setWatchError] = useState<string | null>(null);
+  const [watchBusy, setWatchBusy] = useState<string | null>(null);
+  const watchList = useMemo<WatchRowVm[] | null>(() => {
+    if (watches.data == null) return null;
+    return watchRows(watches.data, {
+      now: watchNow,
+      pilotId: watchPilotId,
+      shortNameOf: (id) => {
+        const name = watchPilots.find((p) => p.id === id)?.name;
+        if (name == null) return null;
+        const parts = name.trim().split(/\s+/);
+        return parts.length < 2 ? name : `${parts[0]![0]!.toUpperCase()}. ${parts.slice(1).join(' ')}`;
+      },
+      dayAt: (at) => (calendar == null ? null : clubDayAt(calendar.days, at)),
+    });
+  }, [watches.data, watchNow, watchPilotId, watchPilots, calendar]);
+  const toggleWatch = useCallback(
+    async (row: WatchRowVm) => {
+      if (watchBusy != null) return;
+      setWatchBusy(row.aircraftId);
+      setWatchError(null);
+      const done = await watches.setWatch(row.aircraftId, !row.on);
+      setWatchBusy(null);
+      if (!done) {
+        setWatchError('Obserwowanie zapisuje serwer - potrzebne połączenie.');
+        return;
+      }
+      void askForPush(optInAfterWatch(!row.on));
+    },
+    [watches, watchBusy],
+  );
 
   // ── sekcja „Klub" (13A) ───────────────────────────────────────────────────
   const [joinSheet, setJoinSheet] = useState(false);
@@ -331,6 +387,73 @@ export function SettingsScreen({
         <Card title="Motyw wyświetlacza" header="inline">
           <ThemeSwitch />
         </Card>
+
+        {/* ── obserwowane samoloty (13C, obserwowanie 3.2.0, §6.6) ─────────────
+            Cała flota z przełącznikiem przy każdej maszynie: jedno miejsce do
+            włączania I wyłączania. Wiersz ma DWA cele - lewa część prowadzi w kartę
+            maszyny (27), przełącznik zapisuje obserwowanie na serwerze wprost.
+            Sekcja istnieje WYŁĄCZNIE dla osoby ze zdolnością (brak sekcji, nie sekcja
+            wyszarzona). Bez sieci w miejscu listy stoi jedno zdanie; reszta ustawień
+            działa jak zawsze. */}
+        {watches.visible === true && (
+          <Card title="Obserwowane samoloty" header="inline">
+            {watchList == null ? (
+              watches.data === undefined ? (
+                <SkeletonRows rows={3} height={52} radius={12} gap={8} />
+              ) : (
+                <AppText variant="mono" tone="amber" style={styles.watchOff}>
+                  Lista obserwowanych maszyn i jej przełączniki wymagają połączenia z serwerem -
+                  wróć tu z zasięgiem.
+                </AppText>
+              )
+            ) : (
+              <View style={styles.watchList}>
+                {watchList.map((row) => (
+                  <View key={row.aircraftId} style={styles.watchRow}>
+                    <Pressable
+                      style={({ pressed }) => [styles.watchMain, pressed && { opacity: 0.6 }]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${row.reg} - karta maszyny`}
+                      onPress={() => navigation.navigate('Aircraft', { aircraftId: row.aircraftId })}
+                    >
+                      <View style={styles.watchBody}>
+                        <AppText variant="mono" style={styles.watchReg}>
+                          {row.reg}
+                          <AppText variant="mono" style={styles.watchType}>
+                            {`  ${row.type}`}
+                          </AppText>
+                        </AppText>
+                        <AppText
+                          variant="mono"
+                          tone={row.tone === 'green' ? 'green' : row.tone === 'amber' ? 'amber' : 'muted'}
+                          style={styles.watchSub}
+                          numberOfLines={1}
+                        >
+                          {row.sub}
+                        </AppText>
+                      </View>
+                      <Icon name="more" size={13} color={theme.colors.textMuted} />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="switch"
+                      accessibilityState={{ checked: row.on }}
+                      accessibilityLabel={row.on ? `Obserwujesz ${row.reg}` : `Obserwuj ${row.reg}`}
+                      onPress={() => void toggleWatch(row)}
+                      hitSlop={10}
+                    >
+                      <WatchSwitch on={row.on} busy={watchBusy === row.aircraftId} />
+                    </Pressable>
+                  </View>
+                ))}
+                {watchError != null && (
+                  <AppText variant="mono" tone="amber" style={styles.watchOff}>
+                    {watchError}
+                  </AppText>
+                )}
+              </View>
+            )}
+          </Card>
+        )}
 
         {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
             Ekran 11 usunięty (2026-08-12) - patrz docblock modułu. DWA wiersze
@@ -654,4 +777,13 @@ const styles = StyleSheet.create({
   profile: { minWidth: 0, alignSelf: 'stretch' },
   clubNote: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
+  // `.watch-list` / `.watch-row` z makiety 13C: wiersz o dwóch celach, 52 dp (rękawice).
+  watchList: { gap: 8 },
+  watchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  watchMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+  watchBody: { flex: 1, minWidth: 0, gap: 2 },
+  watchReg: { fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  watchType: { fontSize: 9, fontWeight: '400', letterSpacing: 1 },
+  watchSub: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.5 },
+  watchOff: { fontSize: 8.5, lineHeight: 14, letterSpacing: 0.8 },
 });

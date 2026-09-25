@@ -282,11 +282,15 @@ describe('karta maszyny i historia', () => {
     const krz = await login(app, 'KRZ');
     expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
     const card = (await app.inject({ url: '/aircraft/SP-AXA/card', headers: bearer(krz) })).json();
+    // Zadanie i lotnisko startu jadą razem z załogą - hero karty pisze
+    // „A. Kowalski · skoki · EPKK", a cudzej operacji telefon nie ma u siebie.
     expect(card.now).toEqual({
       kind: 'flying',
       sessionUuid: 'sess-1',
       pilotId: 'AKO',
       dualId: null,
+      operation: 'skoki',
+      departureIcao: 'EPKK',
       since: iso(at(8, 12)),
     });
   });
@@ -316,6 +320,9 @@ describe('karta maszyny i historia', () => {
     expect(first.statusCode, first.body).toBe(200);
     expect((first.json().items as { sessionUuid: string }[]).map((i) => i.sessionUuid)).toEqual(['sess-new', 'sess-mid']);
     expect(first.json().items[0]).toMatchObject({ pilotId: 'AKO', flights: 1, mhStart: 1234.5, mhEnd: 1241.15, fuelEndL: 88 });
+    // Liczba CAŁEJ historii jedzie z każdą stroną: nagłówek pisze „3 operacje",
+    // a „Pokaż starsze" - ile jeszcze zostało za tą stroną.
+    expect(first.json().total).toBe(3);
     const next = first.json().next as { beforeAt: string; beforeUuid: string };
     expect(next.beforeUuid).toBe('sess-mid');
 
@@ -336,10 +343,17 @@ describe('karta maszyny i historia', () => {
 
 describe('powiadomienia z rejestru (ingest)', () => {
   it('uruchomienie budzi obserwujących POZA planem, z czasem Z REJESTRU, bez sprawcy', async () => {
-    const { app, db } = await testHarness();
+    const { app, db, push } = await testHarness();
     const { ako, krz } = await watchers(app, db);
+    expect(
+      (await app.inject({ method: 'POST', url: '/me/push-token', headers: bearer(krz), payload: { token: 'ExponentPushToken[krz]' } })).statusCode,
+    ).toBe(204);
 
     expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
+
+    // Budzik niesie KLUB (R6): telefon osoby z dwóch klubów porównuje go z aktywnym.
+    expect(push.to('ExponentPushToken[krz]')).toHaveLength(1);
+    expect(push.to('ExponentPushToken[krz]')[0]!.data).toMatchObject({ kind: 'aircraft_engine_started', orgId: ORG_A, aircraftId: 'SP-AXA' });
 
     const msgs = await inbox(app, krz);
     expect(msgs).toHaveLength(1);
