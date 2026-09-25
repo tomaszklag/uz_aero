@@ -263,36 +263,36 @@ Do przepisania razem z kolumną: `isPilotRole`/`DEFAULT_ROLE`, `PilotRole` w kon
 zgłoszenia kodem klubu (dziś nadaje rolę - odtąd nadaje preset) oraz dwa miejsca wyświetlające
 rolę po polsku (`scopeOptions.ts`, `AccountScreen.tsx`).
 
-### 9.1 Co naprawdę stanęło (epik wykonany 2026-09-23)
-
-Odstępstwa wobec planu wyżej - wszystkie w tę stronę, że zmiana okazała się szersza
-o jedną pozycję katalogu i węższa o jeden ekran:
-
-- **KATALOG UROSŁ O `reservations.approve`** (dziesiąta zdolność klubowa). Plan jej nie
-  wymieniał, bo należy do workflow akceptacji (#164) - ale makieta L1 rysuje ją na
-  ekranie zakresu, a bez niej zestaw „Akceptujący" musiałby stać na
-  `reservations.manage`, czyli na władzy nad CUDZYM planem. To odbierałoby całej
-  zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
-  Backfill migracji 12 nadaje ją administratorom razem z resztą - obie rzeczy jadą
-  w tym samym wydaniu, więc to jest stan z chwili wdrożenia.
-- **`PilotCounts.byRole` ZNIKNĘŁO** zamiast zamienić się w podział po zakresach:
-  „ilu administratorów" przestało mieć jedną odpowiedź, a kafli z licznikami panel 2.0
-  i tak nie ma. Na pytanie „kto wejdzie do panelu" odpowiada chip `panel.access`.
-- **`PilotListFilter.roles: PilotRole[]` → `capability?: Capability`** - jedna zdolność,
-  nie lista: po epiku #197 pytanie ma dokładnie jedną odpowiedź i nie trzeba jej
-  sklejać z katalogu ról. Napis spoza katalogu jest w tym parametrze IGNOROWANY,
-  a nie odrzucany: to parametr widoku, a pusta lista po literówce w adresie byłaby
-  gorsza niż pełna.
-- **`admin_audit.actor_role`** niesie klucz zakresu (`scopeKey`), a kolumna zostaje
-  pod starą nazwą: wiersze sprzed 3.1.0 mówią `admin`/`pilot` i tak zostaje.
-- **ZBIÓR JEDZIE Z BAZY POSORTOWANY ALFABETYCZNIE** (`string_agg … ORDER BY`), a nie
-  w kolejności katalogu. Kolejność nie jest informacją - panel pyta o obecność pozycji
-  i rysuje we własnej kolejności czytania - ale determinizm ma znaczenie dla diffu
-  w dzienniku nadzoru.
-- **Napis, nie tablica**: zdolności czyta się z jednego `string_agg`, bo tablice
-  Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`. Ta sama
-  decyzja, co przy `IN (…)` zamiast `= ANY ($n)`.
-
+### 9.1 Co naprawdę stanęło (epik wykonany 2026-09-23)
+
+Odstępstwa wobec planu wyżej - wszystkie w tę stronę, że zmiana okazała się szersza
+o jedną pozycję katalogu i węższa o jeden ekran:
+
+- **KATALOG UROSŁ O `reservations.approve`** (dziesiąta zdolność klubowa). Plan jej nie
+  wymieniał, bo należy do workflow akceptacji (#164) - ale makieta L1 rysuje ją na
+  ekranie zakresu, a bez niej zestaw „Akceptujący" musiałby stać na
+  `reservations.manage`, czyli na władzy nad CUDZYM planem. To odbierałoby całej
+  zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
+  Backfill migracji 12 nadaje ją administratorom razem z resztą - obie rzeczy jadą
+  w tym samym wydaniu, więc to jest stan z chwili wdrożenia.
+- **`PilotCounts.byRole` ZNIKNĘŁO** zamiast zamienić się w podział po zakresach:
+  „ilu administratorów" przestało mieć jedną odpowiedź, a kafli z licznikami panel 2.0
+  i tak nie ma. Na pytanie „kto wejdzie do panelu" odpowiada chip `panel.access`.
+- **`PilotListFilter.roles: PilotRole[]` → `capability?: Capability`** - jedna zdolność,
+  nie lista: po epiku #197 pytanie ma dokładnie jedną odpowiedź i nie trzeba jej
+  sklejać z katalogu ról. Napis spoza katalogu jest w tym parametrze IGNOROWANY,
+  a nie odrzucany: to parametr widoku, a pusta lista po literówce w adresie byłaby
+  gorsza niż pełna.
+- **`admin_audit.actor_role`** niesie klucz zakresu (`scopeKey`), a kolumna zostaje
+  pod starą nazwą: wiersze sprzed 3.1.0 mówią `admin`/`pilot` i tak zostaje.
+- **ZBIÓR JEDZIE Z BAZY POSORTOWANY ALFABETYCZNIE** (`string_agg … ORDER BY`), a nie
+  w kolejności katalogu. Kolejność nie jest informacją - panel pyta o obecność pozycji
+  i rysuje we własnej kolejności czytania - ale determinizm ma znaczenie dla diffu
+  w dzienniku nadzoru.
+- **Napis, nie tablica**: zdolności czyta się z jednego `string_agg`, bo tablice
+  Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`. Ta sama
+  decyzja, co przy `IN (…)` zamiast `= ANY ($n)`.
+
 ## 10. Ryzyka
 
 | Ryzyko | Czym zamknięte |
