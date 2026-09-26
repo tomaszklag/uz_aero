@@ -361,15 +361,21 @@ admin/
       keys.ts           JEDNO miejsce z kształtem kluczy (§4.2)
       client.ts         QueryClient + domyślne (staleTime, refetchOnWindowFocus, retry)
       useSession.ts · usePilots.ts · usePilotCommands.ts · useFleet.ts
-      useLog.ts · useLogCommands.ts · useBugReports.ts
+      useApprovals.ts · useAttention.ts · useBugReports.ts · useCalendar.ts · useClubCode.ts · useDirectory.ts · useFleet.ts · useLog.ts · useLogCommands.ts · useMemberships.ts · useOrganizations.ts · usePilotCommands.ts · usePilots.ts · useSession.ts · useStats.ts · useWatches.ts
       useMemberships.ts · useClubCode.ts · useOrganizations.ts
                         mutacja deklaruje SWOJE unieważnienia tutaj, nie na ekranie
 
     screens/            ── jeden katalog na MODUŁ ──────────────────────────────
-      logbook/          DZIENNIK, trzy poziomy: flota → maszyna → operacja
-        LogbookScreen.tsx · AircraftLogScreen.tsx · SessionScreen.tsx · DateRange.tsx
-        dateRanges.ts · logbookRows.ts · sessionRows.ts · timelineRows.ts
-        trackChart.ts · trackFacts.ts · trackMarkers.ts · markerLabels.ts · sessionVoid.ts
+      logbook/          DZIENNIK, dwie osie (maszyny / piloci) × trzy poziomy → operacja
+                        + TRYB EDYCJI (3.2.0: korekty i dopisanie w szufladach)
+        AddEventDrawer.tsx · AircraftLogScreen.tsx · CorrectionDrawer.tsx · DateRange.tsx · EffectRows.tsx · LogbookScreen.tsx · PilotLogScreen.tsx · SessionCells.tsx · SessionScreen.tsx
+        dateRanges.ts · dayGroups.ts · logbookPaths.ts · logbookRows.ts · markerLabels.ts · sessionEdit.ts · sessionRows.ts · sessionVoid.ts · timelineRows.ts · trackChart.ts · trackFacts.ts · trackMarkers.ts
+      attention/        DO SPRAWDZENIA (3.2.0): lista spraw, rozjazdy, karty dnia
+        AttentionScreen.tsx · ExportDrawer.tsx · ExportsScreen.tsx · FlagDrawer.tsx · FlagsScreen.tsx
+        attentionPaths.ts · attentionRows.ts · exportRows.ts · flagLabels.ts · flagRows.ts
+      stats/            STATYSTYKI (3.2.0): pasek sum, słupki, trzy tabele z tfoot
+        StatsScreen.tsx
+        statsRows.ts
       accounts/         PILOCI = członkowie klubu (+ kolejka zgłoszeń i kod klubu)
         AccountsScreen.tsx  lista + JEDNA z trzech szuflad (którą - mówi trasa)
         AccountDrawer.tsx · RequestDrawer.tsx · ClubCodeDrawer.tsx · PendingCard.tsx

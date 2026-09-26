@@ -56,8 +56,12 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Z operacji wychodzi się w dwie strony:** okruszki prowadzą na oś maszyny, a nazwisko
   pilota i drugiego pilota - na oś tej osoby. Strona pilota ma własny adres z jego kodem,
   do wklejenia w rozmowie jak rejestracja.
-- **Kalendarz stoi w kolumnie panelu zaraz pod Dziennikiem** - kolejność modułów klubu
-  jest odtąd stała: Dziennik, Kalendarz, Piloci, Samoloty.
+- **Kolumna panelu ma sześć pozycji w stałej kolejności**: Dziennik, Do sprawdzenia,
+  Kalendarz, Statystyki, Piloci, Samoloty - najpierw to, co się wydarzyło i co wymaga
+  reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu.
+- **Podręcznik opisuje panel taki, jaki jest**: nowe strony „Do sprawdzenia"
+  i „Statystyki", dziennik z dwiema osiami i trybem edycji, zużycie z lotów na karcie
+  samolotu, zakresy uprawnień z nowymi ekranami.
 - **Operację poprawia się w panelu.** Przycisk „Popraw zdarzenia" przełącza stronę
   operacji w tryb edycji pod własnym adresem: każdy wiersz osi ma ołówek i otwiera
   szufladę z poprawką czasu, odczytów albo składu zrzutu, z podglądem „przed → po"
@@ -415,8 +419,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 > Rozbudowa panelu klubu - bez nowej instalacji aplikacji.
 
-- [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
-- [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
+- [x] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
+- [x] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
 - [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [x] Statystyki klubu i analityka zużycia maszyny
 

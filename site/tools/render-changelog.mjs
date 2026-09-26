@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { releaseMeta, splitTitle } from './release-title.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -72,7 +73,6 @@ const isPlan = (s) => /^plan/i.test(s.title);
 const plan = sections.find(isPlan) ?? null;
 const releases = sections.filter((s) => !isPlan(s));
 const kindOf = (title) => /nowo|zawiera/i.test(title) ? 'new' : /popraw|napraw/i.test(title) ? 'fix' : /tester|uwag/i.test(title) ? 'test' : 'other';
-const splitTitle = (t) => { const m = /^(\S+)\s*\(build\s*(\d+)\)\s*·\s*(.+)$/.exec(t); return m ? { version: m[1], build: m[2], date: m[3] } : { version: t, build: null, date: null }; };
 const plural = (n, one, few, many) => `${n} ${n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many}`;
 const itemsOf = (g) => g.blocks.filter((b) => b.type === 'ul').reduce((n, b) => n + b.items.length, 0);
 const countsOf = (r) => r.groups.map((g) => {
@@ -88,6 +88,9 @@ for (const r of releases) {
   r.id = r.upcoming ? 'w-przygotowaniu' : 'v' + r.t.version.replace(/[^0-9a-z.]/gi, '-');
 }
 const current = releases.find((r) => !r.upcoming);
+// Ostatnie wydanie Z BINARKĄ - to jego APK wisi pod przyciskiem, także gdy nowsze
+// wydanie (panel bez nowej aplikacji, 3.2.0) jest „aktualne".
+const binary = releases.find((r) => !r.upcoming && r.t.build != null);
 const upcoming = releases.find((r) => r.upcoming);
 
 const milestones = plan ? plan.blocks.filter((b) => b.type === 'group').map((g) => {
@@ -112,7 +115,7 @@ const article = (r) => {
   const open = r === current || r === upcoming;
   const badge = r.upcoming ? '<span class="badge soon">w przygotowaniu</span>' : r === current ? '<span class="badge now">aktualne</span>' : '';
   const version = r.upcoming ? (next ? esc(next.version) : 'Następne') : esc(r.t.version);
-  const meta = r.upcoming ? (next ? `następne wydanie · ${esc(next.when)}` : 'zmiany od ostatniego builda') : `build ${esc(r.t.build ?? '?')} · ${esc(r.t.date ?? '')}`;
+  const meta = r.upcoming ? (next ? `następne wydanie · ${esc(next.when)}` : 'zmiany od ostatniego builda') : releaseMeta(r.t, esc);
   return `<details class="release${r.upcoming ? ' upcoming' : ''}${r === current ? ' current' : ''}" id="${r.id}"${open ? ' open' : ''}>
   <summary>
     <span class="rel-dot" aria-hidden="true"></span>
@@ -132,9 +135,9 @@ const currentCard = current ? `
     <div class="status-card now">
       <span class="tag">Aktualne wydanie</span>
       <div class="status-ver">${esc(current.t.version)}</div>
-      <div class="status-meta">build ${esc(current.t.build ?? '?')} · ${esc(current.t.date ?? '')} · Android</div>
+      <div class="status-meta">${releaseMeta(current.t, esc)}${current.t.build != null ? ' · Android' : ''}</div>
       ${current.lead ? `<p>${inline(current.lead)}</p>` : ''}
-      <div class="status-actions col">${dlButton('../pobierz/', 'Pobierz na Androida', `APK · wersja ${esc(current.t.version)} (build ${esc(current.t.build ?? '?')})`, 'wide')}<a class="btn ghost" href="#${current.id}">Co zawiera to wydanie</a></div>
+      <div class="status-actions col">${binary ? dlButton('../pobierz/', 'Pobierz na Androida', `APK · wersja ${esc(binary.t.version)} (build ${esc(binary.t.build)})`, 'wide') : ''}<a class="btn ghost" href="#${current.id}">Co zawiera to wydanie</a></div>
     </div>` : '';
 
 const upcomingCard = upcoming ? `

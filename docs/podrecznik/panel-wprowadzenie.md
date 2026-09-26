@@ -1,6 +1,6 @@
 # Panel klubu: wprowadzenie
 
-> Panel to strona w przeglądarce dla członków klubu: kalendarz floty, a z odpowiednim zakresem uprawnień także dziennik operacji, konta pilotów i karty samolotów. Loguje się do niego tym samym kontem, co do aplikacji pilota - Googlem albo hasłem.
+> Panel to strona w przeglądarce dla członków klubu: kalendarz floty, a z odpowiednim zakresem uprawnień także dziennik operacji z korektami, sprawy do sprawdzenia, statystyki, konta pilotów i karty samolotów. Loguje się do niego tym samym kontem, co do aplikacji pilota - Googlem albo hasłem.
 
 ## Dostęp
 
@@ -42,14 +42,18 @@ Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to 
 
 Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje tylko znak i zalogowanego. Ekranem startowym jest pierwszy dostępny moduł: dla administratora Dziennik (konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień), dla pilota bez podglądu klubu - Kalendarz. **Kolumna pokazuje to, do czego masz prawo** - moduł poza Twoim zakresem nie stoi w niej wyszarzony, po prostu go nie ma. Adres takiego modułu wklejony z rozmowy otwiera ekran, który mówi, której zdolności brakuje i kto ją nadaje.
 
+Kolumna klubu ma sześć pozycji w stałej kolejności: najpierw to, co się wydarzyło i co wymaga reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu.
+
 | Moduł | Do czego | Kto |
 |---|---|---|
-| [**Dziennik**](panel-dziennik) | cała flota w zakresie dat → operacje jednej maszyny → jedna operacja z osią zdarzeń i śladem GPS; zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu | Podgląd klubu |
-| [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, wyłączanie kont | Podgląd klubu |
-| [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan; poprawa odczytów | Podgląd klubu |
+| [**Dziennik**](panel-dziennik) | cała flota albo wszyscy piloci w zakresie dat → operacje jednej maszyny albo jednej osoby, dniami → jedna operacja z osią zdarzeń i śladem GPS; korekty i dopisywanie zdarzeń, zakończenie operacji, której pilot nie zdał, unieważnienie wpisu | Podgląd klubu (zmiany: Korekty w dzienniku) |
+| [**Do sprawdzenia**](panel-do-sprawdzenia) | rozjazdy między zapisami, doby bez karty w arkuszu i operacje wiszące - z liczbą w kolumnie, gdy coś czeka | Podgląd klubu (zamykanie: Uwagi serwera, ponowienie eksportu: Flota) |
 | **Kalendarz** | oś całej floty na dni: rezerwacje pilotów i wyłączenia maszyn z użytku, ścieżka akceptacji i kolejka decyzji ([rezerwacja samolotu](rezerwacja-samolotu)) | każdy członek |
+| [**Statystyki**](panel-statystyki) | nalot klubu w zakresie dat: sumy, dzień po dniu, per samolot, pilot i zadanie | Podgląd klubu |
+| [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, zakresy uprawnień, wyłączanie kont | Podgląd klubu |
+| [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan, zużycie zmierzone z lotów; poprawa odczytów | Podgląd klubu |
 
-Piąty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
+Siódmy moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
 
 @panel brak-dostepu "Adres modułu poza zakresem: co tu jest, czego brakuje, kogo prosić"
 
@@ -74,7 +78,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 ## Zasady w całym panelu
 
 - **Panel pokazuje odczyty, nie szacunki.** Brak odczytu widać jako kreskę, nigdy jako zero: `0 L` znaczy pusty zbiornik, kreska - „nikt nie zapisał". Normy zużycia i szacowany poziom oleju nie wchodzą do dziennika.
-- **Administratora nie ogranicza czas na poprawki.** Pilot poprawia własne wpisy przez 24 godziny od zdania; administrator kończy i unieważnia operacje w dowolnej chwili - także operację w toku.
+- **Administratora nie ogranicza czas na poprawki.** Pilot poprawia własne wpisy przez 24 godziny od zdania; administrator poprawia zdarzenia, dopisuje brakujące fakty, kończy i unieważnia operacje w dowolnej chwili - także w operacji w toku, z ostrzeżeniem o kolizji zamiast odmowy.
 - **Nic nie znika z dziennika.** Unieważnienie, zakończenie administracyjne i poprawa odczytów dopisują nowy fakt z powodem; stary zapis zostaje widoczny.
 - **Skutek akcji nieodwracalnej mówi się przed nią.** Wyłączenie członkostwa, usunięcie, zakończenie, unieważnienie - każde pyta o potwierdzenie i w pytaniu nazywa, co się stanie z dostępem i z danymi.
 - **Puste pole wymagane blokuje zapis samym brakiem**, a powód innej blokady stoi w samym przycisku („Najpierw wyłącz członkostwo", „Ktoś ma teraz ten samolot").
@@ -82,9 +86,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 
 ## Czego w tym wydaniu nie ma
 
-Panel ma dziś cztery moduły. Ekrany znane z wcześniejszej wersji - pulpit, skrzynka rozjazdów (flag), eksporty kart, dziennik akcji administratorów, statystyki i analityka zużycia - nie są dostępne i wracają pojedynczo w kolejnych wydaniach. Rozjazdy łańcucha odczytów Ninerdeck nadal wykrywa i zapisuje przy każdej wysyłce z telefonu, a każda decyzja administratora zostawia ślad w dzienniku akcji - brakuje wyłącznie ekranów do ich przeglądania.
-
-Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliwa, skład zrzutu). Pilot poprawia własne wpisy przez 24 godziny od zdania w aplikacji ([ekran operacji i korekty](operacja-i-korekty)); administrator ma dziś trzy narzędzia: zakończenie i unieważnienie operacji w [dzienniku](panel-dziennik) oraz poprawę odczytów maszyny w [karcie samolotu](panel-samoloty).
+Panel ma dziś sześć modułów klubu. Wciąż nie ma ekranu **dziennika akcji administratorów** - każda decyzja (zatwierdzenie konta, korekta, zamknięcie rozjazdu, ponowienie eksportu) zostawia w nim ślad z nazwiskiem i notatką, ale przegląda się go dopiero w kolejnym wydaniu. Karty dnia leżą w arkuszu klubu z adresem dla skarbnika; wysyłka do arkusza Google przyjdzie osobno. Własna rezerwacja z kalendarza panelu jest w przygotowaniu - do tego czasu pilot rezerwuje w aplikacji, a panel pokazuje wynik.
 
 ## Dlaczego tak to działa
 

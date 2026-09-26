@@ -64,7 +64,7 @@ Ekran nie przechowuje żadnych liczb - przelicza je za każdym razem z zapisu na
 
 ## Częste problemy
 
-- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Ekran jest wtedy podglądem; poprawkę zgłoś w klubie. Okienko normy i historia zmian otwierają się nadal.
+- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Ekran jest wtedy podglądem; poprawkę zgłoś w klubie - administrator naniesie ją z panelu, a Ty zobaczysz ją w historii zmian. Okienko normy i historia zmian otwierają się nadal.
 - **Poprawiłem godzinę przejęcia i przesunął się cały bieg** → tak działa przesunięcie w przód, za uruchomienie silnika: czasy trwania zostają, przesuwa się wszystko. Ekran mówi o tym przed zapisem, a bieg, który wyszedłby poza zdanie samolotu, jest odmawiany z powodem.
 - **Zniknął werdykt normy** → log ma niespójność (np. lot bez lądowania). Napraw ją - werdykt wróci sam, gdy rachunek znów będzie miał komplet danych.
 - **Chcę poprawić tankowanie** → tankowania nie zmienia się w miejscu: unieważnij wpis na osi i dopisz go jeszcze raz przez **DODAJ WPIS**, bo stan przed, dolane i stan po muszą się zgadzać.

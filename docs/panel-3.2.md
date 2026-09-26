@@ -755,3 +755,68 @@ dla kontraktu serwera, więc stoją tu razem z nią:
    (`&idle=1`), bo zwykle nikt jej nie rozwija; wiersz zwinięcia nie dostaje plamki
    skeletonu, bo czeka na liczbę. Członkowie wyłączeni nie liczą się do zwiniętych.
 
+---
+
+## 18. Przegląd bezpieczeństwa 3.2.0 (W5, 2026-09-26)
+
+Zrobiony PRZED dokumentacją i wydaniem, na `develop`, dla wszystkiego, co doszło od 3.1.0:
+dwie osie dziennika, doby nagłówkiem, tryb edycji z korektami i dopisywaniem, „Do
+sprawdzenia" (rozjazdy, karty dnia, operacje wiszące), statystyki i analityka na karcie
+samolotu, plus makiety własnej rezerwacji z panelu (#233 - sam design, bez tras). Metoda
+ta sama, co w §17 i §19 rezerwacji: każda nowa trasa przez trzy pytania - kto ją otwiera
+(zdolność), czy widzi wyłącznie swój klub (sonda w `tenantIsolation.test.ts`), co odsłania
+(pola odpowiedzi wobec tego, kto patrzy).
+
+**Wynik: ZERO ustaleń wymagających poprawki kodu.** Pierwszy taki przegląd w tym projekcie
+bez czerwonego testu - i to nie jest powód do dumy, tylko skutek dwóch strażników z epiku C,
+które wymusiły sondę izolacji i `org_id` przy KAŻDEJ z dwunastu nowych tras w chwili jej
+powstania, nie w przeglądzie.
+
+**Sprawdzone i w porządku:**
+
+| Trasa | Zdolność | Izolacja | Co odsłania |
+| --- | --- | --- | --- |
+| `GET /log` (+ `?os=piloci`, `&idle=1`) | `panel.access` | sonda: oś pilotów i lista zwiniętych liczą członkostwa klubu tokenu; osoba w dwóch klubach ma w każdym własny wiersz | nazwiska i kody członków klubu - ten sam zbiór, który `GET /pilots` daje tej samej zdolności; adresów e-mail nie ma |
+| `GET /sessions` (`days[]`, `openFlags`) | `panel.access` | sonda istniejąca; sumy dób i flagi liczone nad wierszami klubu (`AND f.org_id = s.org_id`) | liczby rozjazdu z `details` flagi - czytane przez typowane czytniki (`num`, `text`), nigdy wstawiane jako HTML |
+| `GET /sessions/:uuid` (`consistency`, `adminAuthorId`) | `panel.access` | sonda istniejąca (cudza 404) | wynik `sessionInconsistencies` ze strumienia - żadnego wejścia od klienta; autor zapisu panelu = identyfikator konta rozwiązywany słownikiem klubu (nazwisko, kod) |
+| `POST /sessions/:uuid/events[/preview]` | `events.correct` | sonda (cudza sesja 404, także podgląd) | `ADDED_EVENT_TYPES` w zod PRZED domeną; `reason` `.trim().min(1).max(2000)`; `at` dowolne, ale reguły `checkInsert` odbijają fakt poza kopertą operacji; uuid nadaje serwer |
+| `GET /dashboard` (`counts.attention`, `staleOpenDays`) | `panel.access` | sonda istniejąca | liczby; plakietka kolumny pyta wyłącznie z `panel.access` w sesji klubu |
+| `GET /flags`, `POST /flags/:id/resolve` | `panel.access` / `flags.resolve` | sondy (flaga klubu B → 404) | `note` `.trim().min(1).max(2000)`; 409 z osobą i chwilą rozstrzygnięcia - nazwisko z klubu, nie z konta |
+| `GET /exports`, `GET /exports/:uuid`, `GET /exports/:uuid/sheet`, `POST /exports/:uuid/retry` | `panel.access` (odczyt) / `fleet.manage` (ponowienie) | sondy (cudza karta 404, ponowienie 404) | **adres karty niesie `sheets_key` klubu** - patrz „świadomie nie zmienione" |
+| `GET /stats` | `panel.access` | sonda | nalot per pilot (w tym prawy fotel) - ten sam zbiór, co oś pilotów dziennika tej samej zdolności |
+| `GET /fleet/:id/consumption` (`norm`, `vsDocumentationPct`) | `panel.access` | sonda (`SP-BBB` → 404) | model zużycia maszyny klubu; norma dla telefonu składana tym samym kodem, co `/reference` |
+| `GET /directory` | każdy członek | sonda (bez e-maili) | nazwiska i kody - bez adresów; z 3.1.0, używane przez nowe ekrany do podpisów |
+
+- **Korekty z panelu mają te same twarde reguły, co telefon** (`writeAuthority.test.ts`):
+  administrator dostaje WYŁĄCZNIE ostrzeżenia o kolizji (`ADMIN_EDIT_*`), nigdy poluzowane
+  reguły per typ; `PIC_CHANGE_NOT_ALLOWED`, brak `void` na przejęciu i zdaniu obowiązują.
+- **Blokada advisory na operację** (`AdminCorrectionCommands.add` dziedziczy po `correct`):
+  dwie korekty naraz z dwóch kart przeglądarki nie przeplatają się w projekcji.
+- **Panel nie wstawia HTML**: wszystkie napisy z odpowiedzi (nazwiska, notatki
+  rozstrzygnięć, powody korekt, `details` flag, sygnatury) idą przez React jako tekst;
+  strażnik `copy.test.ts` pilnuje, że nie ma ich w literałach z żargonem.
+- **Adresy dziennika niosą kod pilota, nie identyfikator** (`#/dziennik/pilot/:code`):
+  kod rozwiązuje się osobą ze słownika KLUBU sesji - kod z innego klubu nie trafia nikogo.
+- **Makiety #233 nie dodały tras** - Z2 dostanie sondy razem z trasami (Z3), a `pilot_id`
+  z sesji, nie z ciała, jest treścią osobnego testu tamtego zadania.
+
+**Świadomie NIE zmienione w 3.2.0** (zapisane do przyszłych epików):
+
+- **adres karty dnia z sekretem klubu jest widoczny każdemu z `panel.access`**
+  (`GET /exports/:uuid/sheet` - `sheets_key` w `k=`). To jest zamierzone: adres służy do
+  podania skarbnikowi bez konta, a Podgląd klubu i tak widzi każdą operację. Konsekwencja:
+  kto raz zobaczył adres, czyta karty klubu bez logowania **bez końca** - klucza nie da
+  się dziś zrotować z panelu (losuje go baza przy założeniu klubu). Rotacja = osobne
+  zgłoszenie, gdy pierwszy klub odejdzie ze skarbnikiem;
+- **`GET /sessions` liczy sumy dób nad CAŁYM wynikiem filtra bez kursora** - przy zakresie
+  „rok" i klubie z tysiącami operacji to jedno cięższe zapytanie na wejście; wydajność,
+  nie bezpieczeństwo, ale to jest miejsce na pierwszy limit zakresu, gdyby zabolało;
+- **`idle=1` na osi pilotów oddaje wszystkich aktywnych członków bez lotów** - liczba
+  wierszy = liczba członków klubu; brak stronicowania jest przyjęty (klub, nie platforma);
+- **`adminAuthorId` w osi operacji ujawnia, KTÓRY administrator poprawił zapis** każdemu
+  z Podglądem klubu - zgodne z założeniem, że dziennik akcji jest dokumentem klubu;
+  ekran dziennika akcji (`audit.read`) wciąż nie istnieje, więc jest to dziś jedyne
+  miejsce, w którym autor korekty jest widoczny poza bazą;
+- **`vsDocumentationPct` i `norm` w raporcie zużycia** liczą się przy każdym odczycie
+  (`fitConsumptionModel` na 90 dniach) - bez cache; jeden odczyt na otwarcie szuflady,
+  z `staleTime` minuty po stronie panelu.

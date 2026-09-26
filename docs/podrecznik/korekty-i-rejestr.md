@@ -53,13 +53,14 @@ Na samym dole trybu edycji stoi obramowany czerwony **USUŃ CAŁY WPIS**. Okienk
 
 ## Co może administrator
 
-Administratora nie ogranicza czas na poprawki: kolizja z operacją w toku albo z pilotem, który wciąż może poprawiać, jest dla niego ostrzeżeniem, nie odmową. W tym wydaniu ma w [dzienniku](panel-dziennik) i na [karcie samolotu](panel-samoloty) trzy narzędzia:
+Administratora nie ogranicza czas na poprawki: kolizja z operacją w toku albo z pilotem, który wciąż może poprawiać, jest dla niego ostrzeżeniem, nie odmową. W [dzienniku](panel-dziennik) i na [karcie samolotu](panel-samoloty) ma cztery narzędzia:
 
+- **Tryb edycji operacji** - te same korekty, które pilot robi w aplikacji (godzina, odczyty, skład zrzutu, drugi pilot, notatka, unieważnienie zdarzenia) i dopisywanie brakujących faktów, z podglądem skutku przed zapisem i **wymaganym** powodem. Poprawka administratora wygląda w historii zmian tak samo jak poprawka pilota, tylko z jego nazwiskiem; pilot widzi ją na telefonie przy najbliższym połączeniu.
 - **Zakończenie operacji**, której pilot nie zdał (telefon padł, został w kabinie) - z powodem, bez odczytów, opcjonalnie z unieważnieniem w tym samym ruchu. Operacja liczy się do nalotu, ale nie staje się przekazaniem, a telefon nie wyśle już jej zdania: pilot dostaje na Pulpicie baner z przyciskiem **ROZUMIEM**.
 - **Unieważnienie wpisu** - z powodem WYMAGANYM, inaczej niż u pilota: pilot wycofuje własny lot, administrator cudzy.
 - **Poprawa odczytów maszyny** na karcie samolotu, z wymaganym komentarzem. Staje się przekazaniem dla następnego pilota, ale nie zmienia ani jednego zapisu operacji.
 
-Każda z tych decyzji wraca na telefon pilota przy najbliższym połączeniu. Poprawek pojedynczych zdarzeń - godziny startu, odczytu paliwa, składu zrzutu - administrator z panelu dziś nie wprowadza: robi to pilot w swoim oknie, a po nim błąd zgłasza się do klubu i zostaje w dokumentacji jako fakt. Ekran korekt wraca w kolejnym wydaniu panelu.
+Każda z tych decyzji wraca na telefon pilota przy najbliższym połączeniu. Po 24 godzinach od zdania błąd zgłasza się więc do klubu: administrator poprawia go z panelu, a poprawka staje w historii zmian obok pierwotnej wartości, jak każda inna.
 
 ## Dlaczego tak to działa
 

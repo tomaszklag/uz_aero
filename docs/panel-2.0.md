@@ -5,6 +5,13 @@ w `architektura-panelu-frontend.md` - tam opisany jest ten sam szkielet, na któ
 2.0 stoi (jedne drzwi do sieci, własne DTO, TanStack Query bez globalnego store'u,
 moduły czyste obok komponentów). Tutaj jest wyłącznie to, co się ZMIENIŁO i dlaczego.
 
+> **Dalszy ciąg: `panel-3.2.md`** (milestone „Panel admina 3.2.0", 2026-09-22 → 26):
+> dwie osie dziennika i doby nagłówkiem, tryb edycji z korektami i dopisywaniem,
+> moduł „Do sprawdzenia" (rozjazdy, karty dnia, operacje wiszące), statystyki
+> i analityka zużycia na karcie samolotu, makiety własnej rezerwacji z panelu (#233).
+> Reguły z tego dokumentu obowiązują tam bez zmian; tamten dodaje własne (§17) i zapisuje
+> odstępstwa (§16).
+
 ## 0. Skąd to się wzięło
 
 Zdanie właściciela produktu o panelu 1.0: *„jest za ciężki i nie do końca spełnia

@@ -28,14 +28,15 @@ W kalendarzu panelu nie ma jeszcze przycisku własnej rezerwacji - rezerwujesz w
 
 | Zdolność | W panelu | W aplikacji |
 |---|---|---|
-| **Podgląd klubu** | moduły **Dziennik**, **Piloci** i **Samoloty** do odczytu: operacje całej floty ze śladami, lista członków z adresami i zakresami, karty samolotów. Kalendarz pokazuje cudze rezerwacje w komplecie | bez zmian |
+| **Podgląd klubu** | moduły **Dziennik**, **Do sprawdzenia**, **Statystyki**, **Piloci** i **Samoloty** do odczytu: operacje całej floty ze śladami na obu osiach, sprawy do sprawdzenia, nalot klubu, lista członków z adresami i zakresami, karty samolotów z zużyciem z lotów. Kalendarz pokazuje cudze rezerwacje w komplecie | bez zmian |
 | **Konta i kod klubu** | w module Piloci: kolejka zgłoszeń i decyzje, zmiana kodu pilota i zakresu, wyłączanie i usuwanie członkostw, link do ustawienia hasła, wylogowywanie cudzych urządzeń; kod klubu; ścieżka akceptacji rezerwacji | bez zmian |
-| **Flota** | w module Samoloty: dodawanie i edycja maszyn, normy, pojemności, format licznika, wyłączanie ze służby, poprawa odczytów; w kalendarzu: wyłączenie maszyny z użytku na dni | bez zmian |
-| **Korekty w dzienniku** | w dzienniku: zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu | bez zmian |
+| **Flota** | w module Samoloty: dodawanie i edycja maszyn, normy, pojemności, format licznika, wyłączanie ze służby, poprawa odczytów; w kalendarzu: wyłączenie maszyny z użytku na dni; w Do sprawdzenia: ponowienie eksportu karty dnia | bez zmian |
+| **Korekty w dzienniku** | w dzienniku: tryb edycji operacji - poprawki godzin, odczytów, składu zrzutu, drugiego pilota i notatki, unieważnianie zdarzeń, dopisywanie brakujących faktów; zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu | bez zmian |
+| **Uwagi serwera** | w Do sprawdzenia: zamykanie rozjazdów z notatką rozstrzygnięcia | bez zmian |
 | **Cudze rezerwacje** | w kalendarzu: rezerwacja za pilota, odwoływanie cudzych terminów, decyzja za utknięty krok ścieżki; komplet pól cudzych rezerwacji | bez zmian |
 | **Akceptacja rezerwacji** | w kalendarzu: baner „czeka na Twoją zgodę" i kolejka decyzji z podglądem pilota i samolotu; komplet pól cudzych rezerwacji | skrzynka z prośbami o zgodę, ekran decyzji z podglądem pilota i samolotu, powiadomienia o prośbach |
 | **Obserwowanie samolotów** | Moje konto: lista obserwowanych maszyn | karta maszyny (stan teraz, liczniki, terminy, historia, wykresy), obserwowanie i powiadomienia o lotach, wejście w kartę ze znaku w kalendarzu i z podglądu przy decyzji |
-| **Uwagi serwera**, **Progi i reguły**, **Dziennik zmian**, **Narzędzia serwisowe** | ekrany tych funkcji wracają do panelu w kolejnych wydaniach; zdolności można nadać już dziś | bez zmian |
+| **Progi i reguły**, **Dziennik zmian**, **Narzędzia serwisowe** | ekrany tych funkcji wracają do panelu w kolejnych wydaniach; zdolności można nadać już dziś | bez zmian |
 
 @panel piloci-konto "Zakres uprawnień w karcie członka" | kalendarz-kolejka "Kolejka decyzji - Akceptacja rezerwacji" | dziennik-flota "Dziennik - Podgląd klubu"
 
