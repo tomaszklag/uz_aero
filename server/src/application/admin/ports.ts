@@ -378,17 +378,55 @@ export interface AdminSessionJoin {
   updatedAt: Date;
 }
 
+/**
+ * SUMY DOBY na liście operacji (3.2.0, `docs/panel-3.2.md` §4.4) - jedna doba UTC
+ * z sumami policzonymi nad CAŁYM wynikiem filtra, a nie nad stroną.
+ *
+ * Doba liczy się po chwili PRZEJĘCIA, czyli po TEJ SAMEJ osi, po której idzie kursor
+ * i zakres dat: strona kursorowa rozcina wtedy dobę na dwie SĄSIEDNIE części, a nagłówek
+ * doby na pierwszej stronie dalej mówi prawdę o całej dobie. Doba z sygnatury (kotwica
+ * uruchomienia silnika) bywa inna dla biegu zaczętego po północy - ekran pokazuje
+ * sygnaturę w wierszu, więc rozjazd jest widoczny, a nie ukryty.
+ *
+ * Do sum wchodzą wyłącznie operacje ZAMKNIĘTE - w toku są nazwane osobno („· 1 w toku"),
+ * a unieważnione zostają w dobie przekreślone i nie liczą się nigdzie. Wszystko to są
+ * agregaty kolumn projekcji, jak w `LogAdminPort` (§7.1).
+ */
+export interface AdminSessionDayAggregate {
+  /** Doba UTC `YYYY-MM-DD` chwili przejęcia. */
+  day: string;
+  /** Operacje zamknięte; przy filtrze `pilotId` - te, w których pilot był DOWÓDCĄ. */
+  operations: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Operacje W TOKU w tej dobie - poza sumami, ale nazwane. */
+  inProgress: number;
+  /**
+   * Czas W PRAWYM FOTELU pilota z filtra `pilotId` (§17.1, wariant B) - operacje
+   * zamknięte, w których był drugim pilotem, a nie dowódcą. `null` = lista bez filtra
+   * pilota ALBO doba bez takiego lotu: piąta suma nie rysuje się z zera.
+   */
+  dual: { operations: number; blockMs: number } | null;
+}
+
 export interface SessionsAdminPort {
   /**
-   * Strona listy dni KLUBU. `null` = **kursor nieczytelny** - odmowa jest wariantem
-   * wyniku, nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi
-   * z zewnątrz, więc jego uszkodzenie to 400, a nie 500.
+   * Strona listy dni KLUBU RAZEM z sumami dób całego wyniku filtra. `null` = **kursor
+   * nieczytelny** - odmowa jest wariantem wyniku, nie wyjątkiem (wzorzec
+   * `FlagsAdminPort.resolve`): kursor przychodzi z zewnątrz, więc jego uszkodzenie
+   * to 400, a nie 500.
    */
   list(
     db: Queryable,
     orgId: string,
     filter: SessionListFilter,
-  ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null>;
+  ): Promise<{
+    items: AdminSessionJoin[];
+    nextCursor: string | null;
+    total: number;
+    days: AdminSessionDayAggregate[];
+  } | null>;
   /** Pojedynczy dzień klubu ze złączeniami; `null` = nie ma takiej sesji w tym klubie. */
   byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null>;
 }
@@ -1830,6 +1868,48 @@ export interface LogAircraftAggregate {
   lastEngineStopAt: number | null;
 }
 
+/**
+ * Agregat poziomu 1 na OSI PILOTÓW (3.2.0, `docs/panel-3.2.md` §4.1, §17.1) - jeden
+ * członek klubu, który w zakresie LATAŁ: jako dowódca albo jako drugi pilot.
+ *
+ * Nalot liczy się DOWÓDCY (książka lotów), a czas w prawym fotelu jest OSOBNĄ liczbą
+ * (`dual`) - tej samej godziny lotu szkolnego nie wolno dodać do siebie z dwóch wierszy.
+ * Zbiór wierszy pod sumami dowódcy jest DOKŁADNIE zbiorem osi maszyn (`byAircraft`):
+ * ten sam zakres po `claim_time`, bez unieważnionych i pustych, RAZEM z operacjami
+ * w toku - inaczej dwie osie jednego ekranu dawałyby dwie sumy jednego zakresu.
+ */
+export interface LogPilotAggregate {
+  pilotId: string;
+  /** Kod Z CZŁONKOSTWA w tym klubie; `null` = osoba bez członkostwa (dane historyczne). */
+  code: string | null;
+  name: string | null;
+  /** Członkostwo aktywne. Wyłączony członek, który w zakresie latał, ZOSTAJE na liście. */
+  active: boolean;
+  /** Dni z JAKIMKOLWIEK lotem - w dowolnym fotelu (§17.1 pkt 1). */
+  activeDays: number;
+  sessions: number;
+  openSessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Operacje w PRAWYM FOTELU; `null` = ani jednej. */
+  dual: { operations: number; blockMs: number } | null;
+  /** Rejestracje maszyn z dowolnego fotela, alfabetycznie; bez `null` spoza floty. */
+  regs: string[];
+  /**
+   * Operacja W TOKU tej osoby jako dowódcy - NIEZALEŻNIE od zakresu, bo mówi o TERAZ
+   * (maszyna nieoddana od tygodnia jest sprawą właśnie wtedy, gdy wypada poza zakres).
+   */
+  open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;
+}
+
+/** Członek klubu BEZ lotu w zakresie - wiersz zwinięcia pod listą (§17.1 pkt 3). */
+export interface LogIdleMember {
+  pilotId: string;
+  code: string;
+  name: string;
+}
+
 export interface LogAdminPort {
   /**
    * Cała FLOTA w zakresie - także maszyny, które nie latały (wiersz samych kresek).
@@ -1843,4 +1923,15 @@ export interface LogAdminPort {
     orgId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<LogAircraftAggregate[]>;
+
+  /**
+   * OŚ PILOTÓW tego samego zakresu: ci, którzy latali, oraz - osobno - aktywni
+   * członkowie bez ani jednego lotu. Członkowie WYŁĄCZENI nie liczą się do zwiniętych;
+   * wyłączony, który latał, jest na liście latających z `active: false`.
+   */
+  byPilot(
+    db: Queryable,
+    orgId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<{ pilots: LogPilotAggregate[]; idle: LogIdleMember[] }>;
 }

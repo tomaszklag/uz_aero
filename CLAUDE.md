@@ -4788,6 +4788,78 @@ Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
   (sekcje w kolejności kolumny bocznej), panel wariantów w całej rodzinie; martwe linki
   łapie grep po `href`
 
+## Panel 3.2.0 - epik P-B: dziennik - oś pilota, doby nagłówkiem, powiązanie list (issue #183, 2026-09-26)
+Pierwszy epik KODU milestone 3.2.0, 1:1 z makiet P-A (`dziennik-flota`, `-piloci`,
+`-maszyna`, `-pilot`, `-operacja`). Odstępstwa i ich powody: `docs/panel-3.2.md` §16.
+Reguły obowiązujące odtąd KAŻDĄ zmianę dziennika:
+- **DWIE OSIE POD JEDNYM ADRESEM**: `GET /admin/api/log?os=piloci` to PRZEŁĄCZNIK OSI
+  (segment `.seg` na poziomie 1, oś maszyn domyślna i poza adresem), nie druga trasa -
+  osobny `/log/pilots` sugerowałby drugi raport o innym zakresie. `LogAdminPort.byPilot`
+  czyta DOKŁADNIE ten zbiór operacji, co `byAircraft` (jeden napis `inRange(org)`:
+  zakres po `claim_time`, bez unieważnionych i pustych, RAZEM z operacjami w toku)
+  i rozkłada go po ludziach CTE `crew` (`UNION ALL`: dowódca + drugi pilot, gdy nie
+  jest tą samą osobą). **Sumy dowódcy obu osi są RÓWNE co do minuty** i pilnuje tego
+  test (`adminLog.test.ts`) - operacja w toku liczy się na obu osiach tym, co już
+  zapisała; kanwa makiety L1b mówiła inaczej i została poprawiona
+- **NALOT LICZY SIĘ DOWÓDCY, PRAWY FOTEL OSOBNO** (§17.1 wariant B): wiersz niesie
+  `dual: { operations, blockMs } | null` - `null` znaczy „ani jednej", nie parę zer
+  (piąta suma nie rysuje się z zera). `Dni` liczy doby z JAKIMKOLWIEK lotem. Uczeń bez
+  operacji jako dowódca ma zera w nalocie, liczbę w kolumnie „Drugi pilot" i podpis
+  „tylko jako drugi pilot". Kolumn „Blok" i „Drugi pilot" NIE WOLNO dodać do siebie
+- **ZWINIĘCI = AKTYWNI CZŁONKOWIE BEZ LOTU W ZAKRESIE**: `idle.count` jedzie zawsze
+  (wiersz zwinięcia czeka na LICZBĘ), `idle.members` wyłącznie z `&idle=1` (zwykle nikt
+  nie rozwija; w panelu rozwinięcie jest częścią klucza zapytania z `keepPreviousData`).
+  Wyłączeni nie liczą się do zwiniętych; wyłączony, który LATAŁ, zostaje na liście
+  z `active: false` i podpisem „członkostwo wyłączone". Liczba zerowa = brak wiersza
+  zwinięcia (reguła SyncChipa)
+- **SYGNAŁ „TERAZ" MÓWI O TERAZ**: `open` (operacja w toku dowódcy) jedzie w wierszu
+  NIEZALEŻNIE od zakresu dat - maszyna nieoddana od tygodnia jest sprawą właśnie wtedy,
+  gdy wypada poza zakres. Brzmienie BEZ formy z płcią: „leci teraz · SP-AXA" /
+  „trzyma SP-KLM od 06 WRZ 08:15" (makieta miała „nie zdała" - poprawiona)
+- **SUMY DÓB LICZY SERWER W TEJ SAMEJ ODPOWIEDZI** (`GET /sessions` → `days[]`, §4.4):
+  nad CAŁYM wynikiem filtra, bez kursora, bo strona rozcina dobę i suma połowy doby
+  wygląda poprawnie (test na dobę rozciętą `limit=2`). Doba = doba UTC chwili
+  PRZEJĘCIA - ta sama oś, co kursor i zakres, więc strona rozcina ją na dwie SĄSIEDNIE
+  części; doba sygnatury (kotwica uruchomienia) bywa inna po północy i to widać
+  w wierszu. Do sum wchodzą wyłącznie ZAMKNIĘTE; `inProgress` nazwane osobno
+  („· 1 w toku"); unieważnione nigdzie. Z filtrem `pilotId` sumy dowódcy liczą
+  `pic_id = pilot`, a `dual` - prawy fotel (`null` bez filtra pilota). Doba bez
+  zamkniętej operacji NIE dostaje czwórki zer (`daySums`)
+- **PANEL: GRUPY I ZWINIĘCIE SĄ DANYMI TABELI** (`DataTable.groups` → `tbody.day` +
+  `tr.day-row`; `DataTable.fold` → `tr.fold-row` + wiersze `muted`), jak kolumny.
+  `dayGroups.ts` NAZYWA sumy z serwera i niczego nie dodaje; `SessionCells.tsx`
+  (`Pair`, `OperationCell`, `DayHeader`) jest wspólny dla obu osi poziomu 2 - grid
+  maszyny i pilota różnią się DOKŁADNIE jedną kolumną (Pilot ↔ Samolot). Czas trwania
+  biegu przeszedł z drugiej linii pary do kolumny „Blok" (kreska, dopóki śmigło pracuje)
+- **ADRESY DZIENNIKA MAJĄ JEDNO ŹRÓDŁO** (`screens/logbook/logbookPaths.ts`): pięć
+  kształtów, każdy niesie zakres, a pusty zakres NIE wchodzi do adresu. Oś pilota to
+  `#/dziennik/pilot/:code` (segment STATYCZNY wygrywa z `:reg`; w adresie KOD pilota,
+  rozwiązywany osobą ze słownika klubu - także członek wyłączony). Wiersz „jako drugi
+  pilot" poznaje się po IDENTYFIKATORZE (`asDual`), nie po nazwisku; podpis komórki
+  „Samolot" mówi o załodze („z A. Kowal", „dowódca B. Nowak") albo o typie
+- **PODTYTUŁ POZIOMU 2 PILOTA LICZY SERWER**: liczby zakresu idą z wiersza
+  `GET /log?os=piloci` tego samego zakresu (`pilotRangeSummary`), nie z sumowania
+  nagłówków dób w przeglądarce; zestawu uprawnień w podtytule NIE MA (makieta
+  poprawiona - słownik klubu go nie niesie, zestaw jest sprawą modułu Piloci)
+- **DWA WYJŚCIA Z OPERACJI**: okruszki na oś maszyny, nazwisko pilota i drugiego
+  pilota (`PilotExit`, `.cell-link`) na oś osoby. Osoba bez kodu w klubie (dane
+  historyczne) zostaje napisem
+- **KALENDARZ STOI DRUGI W KOLUMNIE** (B9): Dziennik · Kalendarz · Piloci · Samoloty;
+  „Do sprawdzenia" i „Statystyki" dochodzą z P-D/P-E na swoich miejscach. `homeFor`
+  bez zmian znaczenia (administrator w Dzienniku, członek bez Podglądu klubu
+  w Kalendarzu) - `nav.test.ts` przybija kolejność
+- **JEDNA PODSTAWA LICZENIA DZIENNIKA I STATYSTYK** (§4.5): `CLOSED_IN_RANGE`
+  w `statsRepo` dostało `NOT emptySessionSql` - do 3.2.0 statystyki liczyły puste
+  zapisy, a dziennik nie. Test krzyżowy `/log` ↔ `/log?os=piloci` ↔ `/stats` na
+  zakresie domkniętym w środku. Kolumna „Drugi pilot" w tabeli pilotów STATYSTYK
+  zostaje na P-E
+- **przy okazji: strażnik `org_id` był czerwony na `develop`** (po scaleniu 3.1.0):
+  `LATEST_SQL` w `aircraftReadingsRepo.ts` niesie odtąd `WHERE org_id = $1` w szablonie
+  - klub jest pierwszym warunkiem każdego odczytu tej tabeli, a szablon bez niego
+  czytał się skanerowi jak zapytanie ponad klubami
+- **czego P-B NIE ROBI**: podręcznika (B8 → P-W, #187), kolumny „Drugi pilot"
+  w statystykach (P-E, #186), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

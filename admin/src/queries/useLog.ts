@@ -6,9 +6,10 @@
  * z telefonu - o której panel i tak dowiaduje się dopiero przy następnym pytaniu.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type {
+  LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
   SessionPageDto,
@@ -17,8 +18,10 @@ import type {
 import {
   listSessions,
   loadLog,
+  loadLogPilots,
   loadSession,
   loadSessionTrack,
+  type LogPilotsQuery,
   type LogRangeQuery,
   type SessionListQuery,
 } from '../api/log';
@@ -41,13 +44,39 @@ export function useLogFleet(range: LogRangeQuery) {
   });
 }
 
+/**
+ * Poziom 1, OŚ PILOTÓW (3.2.0): ten sam zakres, drugie pytanie. Rozwinięcie
+ * zwiniętych (`idle`) jest częścią klucza, a poprzednia odpowiedź zostaje na ekranie,
+ * dopóki nie przyjdzie pełna - lista latających nie ma migać przez jedno kliknięcie.
+ */
+export function useLogPilots(query: LogPilotsQuery) {
+  return useQuery<LogPilotsReportDto>({
+    queryKey: keys.log.pilots(query),
+    queryFn: () => loadLogPilots(query),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** Poziom 2: sesje jednej maszyny. `aircraftId` pusty = ekran jeszcze nie wie, której. */
-export function useAircraftSessions(query: Omit<SessionListQuery, 'limit'>) {
+export function useAircraftSessions(query: LogRangeQuery & { aircraftId: string }) {
   const full: SessionListQuery = { ...query, limit: SESSION_LIST_LIMIT };
   return useQuery<SessionPageDto>({
     queryKey: keys.log.sessions(full),
     queryFn: () => listSessions(full),
     enabled: query.aircraftId !== '',
+  });
+}
+
+/**
+ * Poziom 2, OŚ PILOTA (3.2.0): operacje jednej osoby - jako dowódcy I w prawym fotelu,
+ * bo filtr serwera dopasowuje oba. `pilotId` pusty = kod z adresu jeszcze nierozwiązany.
+ */
+export function usePilotSessions(query: LogRangeQuery & { pilotId: string }) {
+  const full: SessionListQuery = { ...query, limit: SESSION_LIST_LIMIT };
+  return useQuery<SessionPageDto>({
+    queryKey: keys.log.sessions(full),
+    queryFn: () => listSessions(full),
+    enabled: query.pilotId !== '',
   });
 }
 

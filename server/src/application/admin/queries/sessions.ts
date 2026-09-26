@@ -67,6 +67,17 @@ export class AdminSessionQueries {
         items: result.items.map(sessionListItem),
         nextCursor: result.nextCursor,
         total: result.total,
+        // Nagłówki dób w TEJ SAMEJ odpowiedzi (§4.4) - przepisane, bo agregat portu
+        // ma już kształt kontraktu; warstwa aplikacji niczego tu nie dolicza.
+        days: result.days.map((d) => ({
+          day: d.day,
+          operations: d.operations,
+          flights: d.flights,
+          blockMs: d.blockMs,
+          flightMs: d.flightMs,
+          inProgress: d.inProgress,
+          dual: d.dual,
+        })),
       },
     };
   }

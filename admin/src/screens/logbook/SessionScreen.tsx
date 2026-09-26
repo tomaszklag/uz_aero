@@ -12,8 +12,8 @@
  */
 
 import { dateUtcShort } from '@ninerdeck/format';
-import { useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useState, type ReactNode } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import type { SessionListItemDto, SessionTrackDto } from '../../api/dto';
 import { can } from '../../auth/can';
@@ -38,6 +38,8 @@ import {
 import { PlaneIcon } from '../../ui/components/icons';
 import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
+import type { DayRange } from './dateRanges';
+import { aircraftLogPath, logbookPath, pilotLogPath } from './logbookPaths';
 import { operationLabel } from './sessionRows';
 import { voidFacts } from './sessionVoid';
 import { timelineRow } from './timelineRows';
@@ -48,8 +50,8 @@ import { trackMarkers } from './trackMarkers';
 export function SessionScreen() {
   const { reg = '', uuid } = useParams();
   const [params] = useSearchParams();
-  const range = `?od=${params.get('od') ?? ''}&do=${params.get('do') ?? ''}`;
-  const back = `/dziennik/${reg}${range}`;
+  const range: DayRange = { from: params.get('od') ?? '', to: params.get('do') ?? '' };
+  const back = aircraftLogPath(reg, range);
 
   const detail = useSessionDetail(uuid);
   const session = detail.data?.session;
@@ -84,7 +86,7 @@ export function SessionScreen() {
           z którego się przyszło. Ostatni człon - sygnatura - jest bieżącą stroną. */}
       <Breadcrumbs
         items={[
-          { label: 'Dziennik', to: `/dziennik${range}` },
+          { label: 'Dziennik', to: logbookPath('samoloty', range) },
           { label: reg.toUpperCase(), to: back },
           { label: identity === '' ? '…' : identity },
         ]}
@@ -182,8 +184,16 @@ export function SessionScreen() {
             </Card>
 
             <Card title="Szczegóły">
-              <Detail label="Pilot" value={session.picName ?? session.picCode ?? NONE} />
-              <Detail label="Drugi pilot" value={session.dualName ?? NONE} />
+              {/* DWA WYJŚCIA z operacji (3.2.0, §4.1): okruszki prowadzą na oś MASZYNY,
+                  a nazwisko - na oś PILOTA. Link w komórce, nie przycisk: to przejście. */}
+              <Detail
+                label="Pilot"
+                value={<PilotExit code={session.picCode} name={session.picName} range={range} />}
+              />
+              <Detail
+                label="Drugi pilot"
+                value={<PilotExit code={session.dualCode} name={session.dualName} range={range} />}
+              />
               <Detail label="Zadanie" value={operationLabel(session.operation)} />
               <Detail label="Klient" value={session.client ?? NONE} />
               <Detail
@@ -548,11 +558,36 @@ function CloseCard({ session }: { session: SessionListItemDto }) {
 }
 
 /** Wiersz klucz-wartość karty szczegółów. */
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="kv">
       <span className="kv-k">{label}</span>
       <span className="kv-v">{value}</span>
     </div>
+  );
+}
+
+/**
+ * Osoba jako WYJŚCIE na jej oś dziennika: nazwisko linkiem, kod obok. Osoba bez kodu
+ * w tym klubie (dane historyczne) nie ma dokąd prowadzić - zostaje sam napis; brak
+ * drugiego pilota to kreska.
+ */
+function PilotExit({
+  code,
+  name,
+  range,
+}: {
+  code: string | null;
+  name: string | null;
+  range: DayRange;
+}) {
+  if (code == null) return <>{name ?? NONE}</>;
+  return (
+    <>
+      <Link className="cell-link" to={pilotLogPath(code, range)}>
+        {name ?? code}
+      </Link>{' '}
+      <small>{code}</small>
+    </>
   );
 }

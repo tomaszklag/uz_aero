@@ -667,6 +667,45 @@ export interface LogReportDto {
   aircraft: LogAircraftDto[];
 }
 
+/**
+ * OŚ PILOTÓW dziennika (3.2.0, `docs/panel-3.2.md` §4.1, §17.1): ten sam zakres i ten
+ * sam zbiór operacji, co oś maszyn, rozłożony po ludziach. Nalot liczy się DOWÓDCY,
+ * a czas w prawym fotelu jest osobną liczbą - obu nie wolno dodać do siebie.
+ */
+export interface LogPilotDto {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  /** Członkostwo aktywne; wyłączony, który latał, zostaje na liście. */
+  active: boolean;
+  /** Dni z jakimkolwiek lotem, w dowolnym fotelu. */
+  activeDays: number;
+  sessions: number;
+  openSessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Prawy fotel; `null` = ani jednej takiej operacji. */
+  dual: { operations: number; blockMs: number } | null;
+  regs: string[];
+  /** Operacja w toku jako dowódcy - o TERAZ, niezależnie od zakresu. */
+  open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;
+}
+
+export interface LogIdleMemberDto {
+  pilotId: string;
+  code: string;
+  name: string;
+}
+
+export interface LogPilotsReportDto {
+  at: string;
+  range: LogRangeDto;
+  pilots: LogPilotDto[];
+  /** Członkowie bez lotów: liczba zawsze, lista wyłącznie na żądanie (`null` = nie pytano). */
+  idle: { count: number; members: LogIdleMemberDto[] | null };
+}
+
 
 // -- dziennik: poziom 2 (sesje jednej maszyny) i poziom 3 (jedna sesja) ---------
 
@@ -701,6 +740,8 @@ export interface SessionListItemDto {
   picId: string;
   picCode: string | null;
   picName: string | null;
+  /** Osoba w prawym fotelu - po niej oś PILOTA poznaje wiersz „jako drugi pilot" (3.2.0). */
+  dualId: string | null;
   dualCode: string | null;
   dualName: string | null;
 
@@ -753,6 +794,25 @@ export interface SessionPageDto {
   items: SessionListItemDto[];
   nextCursor: string | null;
   total: number;
+  /**
+   * NAGŁÓWKI DÓB (3.2.0, `docs/panel-3.2.md` §4.4) nad CAŁYM wynikiem filtra, w tej
+   * samej odpowiedzi, co wiersze. Strona kursorowa potrafi rozciąć dobę, więc suma
+   * z wierszy strony byłaby sumą połowy doby - a taka liczba wygląda poprawnie.
+   */
+  days: SessionDayDto[];
+}
+
+/** Jedna doba UTC (po chwili przejęcia) z sumami operacji ZAMKNIĘTYCH. */
+export interface SessionDayDto {
+  day: string;
+  operations: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Operacje w toku - poza sumami, ale nazwane w nagłówku. */
+  inProgress: number;
+  /** Czas w prawym fotelu pilota z filtra; `null` = bez filtra pilota albo bez takiego lotu. */
+  dual: { operations: number; blockMs: number } | null;
 }
 
 /**

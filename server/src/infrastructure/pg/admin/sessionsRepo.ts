@@ -26,6 +26,7 @@ import { isFlagType, type FlagType, type MhFormat } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
 import type {
+  AdminSessionDayAggregate,
   AdminSessionJoin,
   SessionListFilter,
   SessionsAdminPort,
@@ -44,6 +45,39 @@ import { anchorSql, emptySessionSql } from '../substanceSql.ts';
 
 /** Klucz porządku listy dni. `claim_time` jest NULL-owalne - stąd `NULLS LAST` i kursor. */
 const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
+
+/** Doba UTC w ms - dzielnik numeru doby w sumach dób (`claim_time / 86400000`). */
+const DAY_MS = 86_400_000;
+
+interface DayDbRow {
+  day_index: string;
+  operations: string;
+  flights: string | null;
+  block_ms: string | null;
+  flight_ms: string | null;
+  in_progress: string;
+  dual_operations: string | null;
+  dual_block_ms: string | null;
+}
+
+const int = (v: string | null | undefined): number => (v == null ? 0 : Number(v));
+
+const toDay = (r: DayDbRow, withDual: boolean): AdminSessionDayAggregate => {
+  const dualOperations = int(r.dual_operations);
+  return {
+    // Numer doby (`BIGINT` → tekst) z powrotem na dzień UTC - tak samo, jak robi to
+    // warstwa aplikacji przy szeregu dziennym statystyk.
+    day: new Date(Number(r.day_index) * DAY_MS).toISOString().slice(0, 10),
+    operations: int(r.operations),
+    flights: int(r.flights),
+    blockMs: int(r.block_ms),
+    flightMs: int(r.flight_ms),
+    inProgress: int(r.in_progress),
+    // Piąta suma nie rysuje się z zera (§17.1): bez filtra pilota i bez lotu w prawym
+    // fotelu pole jest `null`, nie parą zer.
+    dual: withDual && dualOperations > 0 ? { operations: dualOperations, blockMs: int(r.dual_block_ms) } : null,
+  };
+};
 
 /**
  * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny -
@@ -181,7 +215,12 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     db: Queryable,
     orgId: string,
     filter: SessionListFilter,
-  ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null> {
+  ): Promise<{
+    items: AdminSessionJoin[];
+    nextCursor: string | null;
+    total: number;
+    days: AdminSessionDayAggregate[];
+  } | null> {
     const shape = shapeOf(filter.direction);
     const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
@@ -222,7 +261,57 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
       conditions.params(),
     );
 
-    return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0) };
+    const days = await this.days(db, orgId, filter);
+
+    return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0), days };
+  }
+
+  /**
+   * SUMY DÓB nad CAŁYM wynikiem filtra (3.2.0, §4.4) - bez kursora, bo strona potrafi
+   * rozciąć dobę, a suma połowy doby wyglądałaby poprawnie. Te same warunki, co
+   * licznik `total`, plus wymóg daty: operacja bez przejęcia nie ma doby i nie ma
+   * czego sumować (na liście jest, w nagłówku doby nie).
+   *
+   * Z filtrem pilota sumy dowódcy liczą wyłącznie operacje, w których pilot BYŁ
+   * dowódcą (filtr listy dopasowuje też Duala - tamte wiersze są na liście, ale
+   * w OSOBNEJ sumie prawego fotela). Agregaty kolumn projekcji, ani jednej nowej liczby.
+   */
+  private async days(
+    db: Queryable,
+    orgId: string,
+    f: SessionListFilter,
+  ): Promise<AdminSessionDayAggregate[]> {
+    const days = new SqlFilter();
+    days.add('s.org_id = ?', orgId);
+    this.applyFilters(days, f);
+    days.add('s.claim_time IS NOT NULL');
+    const dayMs = days.bind(DAY_MS);
+    const pic = f.pilotId === undefined ? null : days.bind(f.pilotId);
+    const closed = pic == null ? `s.status = 'closed'` : `s.status = 'closed' AND s.pic_id = ${pic}`;
+    const asDual =
+      pic == null ? null : `s.status = 'closed' AND s.dual_id = ${pic} AND s.pic_id <> ${pic}`;
+
+    const { rows } = await db.query<DayDbRow>(
+      `SELECT s.claim_time / ${dayMs}                                    AS day_index,
+              COUNT(*) FILTER (WHERE ${closed})                           AS operations,
+              SUM(s.flights_count) FILTER (WHERE ${closed})               AS flights,
+              SUM(s.block_ms) FILTER (WHERE ${closed})                    AS block_ms,
+              SUM(s.flight_ms) FILTER (WHERE ${closed})                   AS flight_ms,
+              COUNT(*) FILTER (WHERE s.status = 'active')                 AS in_progress,
+              ${
+                asDual == null
+                  ? 'NULL AS dual_operations, NULL AS dual_block_ms'
+                  : `COUNT(*) FILTER (WHERE ${asDual})          AS dual_operations,
+                     SUM(s.block_ms) FILTER (WHERE ${asDual})   AS dual_block_ms`
+              }
+         FROM sessions s
+         ${days.where()}
+        GROUP BY 1
+        ORDER BY 1 ${f.direction === 'asc' ? 'ASC' : 'DESC'}`,
+      days.params(),
+    );
+
+    return rows.map((r) => toDay(r, pic != null));
   }
 
   async byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null> {

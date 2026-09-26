@@ -10,6 +10,7 @@
  */
 
 import type {
+  LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
   SessionPageDto,
@@ -40,14 +41,31 @@ export function loadLog(query: LogRangeQuery): Promise<LogReportDto> {
 }
 
 /**
- * Poziom 2: sesje JEDNEJ maszyny w zakresie.
+ * Poziom 1, OŚ PILOTÓW (3.2.0): ten sam adres z `os=piloci` - to przełącznik osi,
+ * nie drugi moduł. `idle` dokłada listę członków bez lotów; sama liczba jedzie zawsze.
+ */
+export interface LogPilotsQuery extends LogRangeQuery {
+  idle?: boolean;
+}
+
+export function loadLogPilots(query: LogPilotsQuery): Promise<LogPilotsReportDto> {
+  const { idle, ...range } = query;
+  return apiGet<LogPilotsReportDto>(
+    `/log?${queryString({ ...range, os: 'piloci', idle: idle === true ? '1' : undefined })}`,
+  );
+}
+
+/**
+ * Poziom 2: sesje JEDNEJ maszyny albo JEDNEGO pilota w zakresie (osi są dwie, §4.1;
+ * filtr pilota dopasowuje też prawy fotel - dzień szkolny należy do obu).
  *
  * `limit` jest bezpiecznikiem, nie stronicowaniem: zakres wybiera człowiek, a klub
  * nie robi setek sesji w miesiącu. Gdy odpowiedź ma `nextCursor`, ekran mówi wprost,
  * że lista jest przycięta - lista ucięta po cichu wygląda jak komplet.
  */
 export interface SessionListQuery extends LogRangeQuery {
-  aircraftId: string;
+  aircraftId?: string;
+  pilotId?: string;
   limit: number;
 }
 

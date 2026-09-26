@@ -35,6 +35,32 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Dziennik odpowiada też na pytanie „kto latał".** Nad tabelą stoi przełącznik osi:
+  Samoloty (jak dotąd) albo Piloci - wiersz na członka klubu z dniami, operacjami, lotami,
+  czasem blokowym i czasem w powietrzu z tego samego zakresu dat. Nalot liczy się dowódcy,
+  a czas w prawym fotelu ma własną kolumnę „Drugi pilot" z własną sumą - tej samej
+  godziny lotu szkolnego nie dodaje się do siebie z wiersza instruktora i ucznia.
+  Członkowie bez lotów w zakresie są zwinięci w jeden wiersz pod listą i rozwijają się
+  kliknięciem. Wiersz mówi też, kto trzyma maszynę albo właśnie leci.
+- **Operacje maszyny i pilota pogrupowane dniami.** Doba jest nagłówkiem z sumami
+  (operacje, loty, blok, lot - liczone przez serwer nad całą dobą, także gdy lista jest
+  przycięta), operacje w toku są nazwane osobno, a czas trwania biegu silnika ma własną
+  kolumnę. Strona pilota pokazuje jego loty w prawym fotelu jako zwykłe wiersze
+  z plakietką i piątą sumą doby.
+- **Z operacji wychodzi się w dwie strony:** okruszki prowadzą na oś maszyny, a nazwisko
+  pilota i drugiego pilota - na oś tej osoby. Strona pilota ma własny adres z jego kodem,
+  do wklejenia w rozmowie jak rejestracja.
+- **Kalendarz stoi w kolumnie panelu zaraz pod Dziennikiem** - kolejność modułów klubu
+  jest odtąd stała: Dziennik, Kalendarz, Piloci, Samoloty.
+
+### Poprawki
+
+- **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
+  (zdanie samolotu bez biegu, lotów i zmian odczytów), tak jak dziennik - ten sam zakres
+  dat nie daje już dwóch sum na dwóch ekranach.
+
 ## 3.1.0 (build 6) · 26 września 2026
 
 > Rezerwacja ze zgodą klubu, skrzynka i powiadomienia na telefon, karta i obserwowanie samolotu, panel dla każdego członka klubu.

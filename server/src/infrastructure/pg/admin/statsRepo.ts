@@ -16,6 +16,14 @@
  * a dzień liczy się tam, gdzie został domknięty. Obsługuje to częściowy indeks
  * `idx_sessions_closed_day`.
  *
+ * ══ PUSTY ZAPIS NIE WCHODZI DO SUM (3.2.0, `docs/panel-3.2.md` §4.5) ══
+ * Do 3.2.0 statystyki liczyły KAŻDĄ zamkniętą operację, a dziennik pomijał puste
+ * zapisy (zdanie bez biegu, lotów i zmian odczytów - śmieć z definicji właściciela,
+ * issue #75 pkt 2). Ten sam zakres dawał przez to dwie sumy na dwóch ekranach.
+ * Wykluczenie stoi w JEDNYM predykacie razem z klubem i zakresem, więc żadne ujęcie
+ * nie ma jak o nim zapomnieć; równość z dziennikiem przybija test krzyżowy.
+ * Różnica „statystyki liczą tylko zamknięte, dziennik także trwające" ZOSTAJE.
+ *
  * ══ `NULL` W KOLUMNACH MIGRACJI 18 ══
  * `SUM` po cichu pomija `NULL`, więc sama suma nie odróżnia „zera" od „wiersza sprzed
  * migracji". Dlatego każdy agregat jedzie z licznikami: `stale_rows` (wiersz
@@ -27,6 +35,7 @@
 import { isOperationType, type MhFormat, type OperationType } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
+import { emptySessionSql } from '../substanceSql.ts';
 import type {
   AdminStatsAircraftRow,
   AdminStatsClientRow,
@@ -49,7 +58,8 @@ const DAY_MS = 86_400_000;
  * Klub (`$3`) jest jego częścią, nie osobnym warunkiem dopisywanym per ujęcie: statystyki
  * są przekrojem dziennika JEDNEGO klubu i żadne ujęcie nie ma prawa o tym zapomnieć.
  */
-const CLOSED_IN_RANGE = `s.org_id = $3 AND s.status = 'closed' AND s.close_time BETWEEN $1 AND $2`;
+const CLOSED_IN_RANGE = `s.org_id = $3 AND s.status = 'closed' AND s.close_time BETWEEN $1 AND $2
+  AND NOT ${emptySessionSql('s')}`;
 
 /**
  * Wspólna część SELECT-a agregatów - te same wyrażenia w każdym ujęciu, bo sumy

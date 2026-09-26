@@ -128,6 +128,33 @@ export interface AdminSessionPage {
   items: AdminSessionListItem[];
   nextCursor: string | null;
   total: number;
+  /**
+   * NAGŁÓWKI DÓB nad CAŁYM wynikiem filtra (3.2.0, `docs/panel-3.2.md` §4.4) - w JEDNEJ
+   * odpowiedzi z wierszami, żeby suma i wiersze pod nią opisywały tę samą chwilę.
+   * Strona kursorowa potrafi rozciąć dobę, więc suma z wierszy strony byłaby sumą
+   * połowy doby, która wygląda poprawnie. Porządek dób = porządek listy.
+   */
+  days: AdminSessionDay[];
+}
+
+/**
+ * Jedna doba UTC (po chwili PRZEJĘCIA - tej samej osi, co kursor i zakres) z sumami
+ * operacji ZAMKNIĘTYCH: Operacje · Loty · Blok · Lot. Operacje w toku są policzone
+ * osobno i nazwane w nagłówku („· 1 w toku"); unieważnione nie liczą się nigdzie.
+ */
+export interface AdminSessionDay {
+  day: string;
+  /** Przy filtrze `pilotId` - operacje, w których pilot był DOWÓDCĄ. */
+  operations: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  inProgress: number;
+  /**
+   * Czas W PRAWYM FOTELU pilota z filtra (§17.1, wariant B) - piąta suma nagłówka,
+   * nigdy dodawana do bloku dowódcy. `null` = bez filtra pilota albo bez takiego lotu.
+   */
+  dual: { operations: number; blockMs: number } | null;
 }
 
 /**

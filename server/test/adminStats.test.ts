@@ -684,3 +684,72 @@ describe('A10 · brama i walidacja', () => {
     expect((await app.inject({ method: 'GET', url: '/admin/api/stats' })).statusCode).toBe(401);
   });
 });
+
+/**
+ * JEDNA PODSTAWA LICZENIA dla dziennika i statystyk (3.2.0, `docs/panel-3.2.md` §4.5):
+ * do 3.2.0 statystyki liczyły KAŻDĄ zamkniętą operację, a dziennik pomijał puste
+ * zapisy - ten sam zakres dawał dwie sumy na dwóch ekranach.
+ */
+describe('A10 · ta sama podstawa liczenia, co dziennik', () => {
+  const statsOf = (app: Harness['app'], t: string, query: string) =>
+    app.inject({ method: 'GET', url: `/admin/api/stats${query}`, headers: { authorization: `Bearer ${t}` } });
+  const logOf = (app: Harness['app'], t: string, query: string) =>
+    app.inject({ method: 'GET', url: `/admin/api/log${query}`, headers: { authorization: `Bearer ${t}` } });
+
+  /** Zdanie BEZ biegu, lotów i zmian odczytów - śmieć z definicji właściciela (issue #75). */
+  function emptyDay(sessionUuid: string, dayStart: number) {
+    const base = { sessionUuid, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null };
+    const at = (h: number, m: number): number => dayStart + h * HOUR_MS + m * MIN_MS;
+    const ev = (type: string, time: number, payload: object = {}) => {
+      seq += 1;
+      return { uuid: `st-${String(seq).padStart(4, '0')}-${type}`, type, deviceTime: time, gpsTime: time, payload, schemaVersion: 1, ...base };
+    };
+    return [
+      ev('session_claim', at(7, 50), { mode: 'free' }),
+      ev('preflight_confirm', at(8, 0), {
+        operation: 'inne',
+        departureIcao: 'EPKK',
+        arrivalIcao: null,
+        reading: { fuelL: 150, mh: 1200 },
+        client: null,
+        mhFormat: 'hhmm',
+      }),
+      ev('day_close', at(8, 10), { finalReading: { fuelL: 150, mh: 1200 }, noFlightReason: 'weather' }),
+    ];
+  }
+
+  it('pusty zapis nie wchodzi do sum - ani do dni, ani do maszyn, ani do pilotów', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await ingest(app, emptyDay('st-empty', D21));
+    await ingest(app, flyingDay({ sessionUuid: 'st-real', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D22 }));
+
+    const report = (await statsOf(app, ako, '?from=2026-06-21&to=2026-06-22')).json() as AdminStatsReport;
+    expect(report.totals.sessions).toBe(1);
+    expect(report.totals.blockMs).toBe(BLOCK_MS);
+    expect(report.aircraft.find((a) => a.aircraftId === 'SP-AXA')?.sessions).toBe(1);
+    expect(report.pilots.find((p) => p.pilotId === 'AKO')?.sessions).toBe(1);
+  });
+
+  it('dziennik i statystyki podają TEN SAM nalot dla zakresu domkniętego w środku', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await ingest(app, emptyDay('st-empty-2', D20));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-1', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D20 }));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-2', aircraftId: 'SP-FGK', picId: 'KRZ', dayStart: D21, dualId: 'AKO' }));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-3', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D22 }));
+
+    // Zakres obejmuje w całości trzy doby, więc różnica osi (`claim_time` w dzienniku,
+    // `close_time` w statystykach) nie ma tu znaczenia - liczy się wyłącznie podstawa.
+    const range = '?from=2026-06-20&to=2026-06-22';
+    const report = (await statsOf(app, ako, range)).json() as AdminStatsReport;
+    const fleet = (await logOf(app, ako, range)).json();
+    const people = (await logOf(app, ako, `${range}&os=piloci`)).json();
+
+    const sum = (rows: { blockMs: number }[]): number => rows.reduce((acc, r) => acc + r.blockMs, 0);
+    expect(report.totals.sessions).toBe(3);
+    expect(sum(fleet.aircraft)).toBe(report.totals.blockMs);
+    expect(sum(people.pilots)).toBe(report.totals.blockMs);
+    expect(report.totals.blockMs).toBe(3 * BLOCK_MS);
+  });
+});

@@ -11,6 +11,8 @@
  * jednej z kopii, i to w miejscu, w którym człowiek podejmuje decyzję nieodwracalną.
  */
 
+import { dateUtcShort } from '@ninerdeck/format';
+
 import type { SessionListItemDto } from '../../api/dto';
 import { NONE } from '../common/values';
 import { sessionRow } from './sessionRows';
@@ -28,12 +30,14 @@ export function voidFacts(s: SessionListItemDto): VoidFact[] {
        stoi pierwsza. Bez niej wraca sama data, a rozróżnienie dwóch operacji tej
        samej maszyny w dobie spada na wiersz „Silnik" - jak przed issue #68. */
     ...(s.signature == null ? [] : [{ label: 'Operacja', value: s.signature }]),
-    { label: 'Dzień', value: row.day },
+    // Dzień z PRZEJĘCIA, jak nagłówek doby w gridzie (3.2.0: data przestała być
+    // kolumną wiersza, więc arkusz składa ją sam z tej samej chwili).
+    { label: 'Dzień', value: s.claimedAt == null ? NONE : dateUtcShort(s.claimedAt) },
     { label: 'Silnik', value: `${row.engine.from} → ${row.engine.to}` },
     { label: 'Pilot', value: row.pic },
     { label: 'Loty', value: row.flights },
     // Kreska, nie zero: sesja bez biegu silnika nie ma czasu blokowego, a `0:00`
     // czytałoby się jak zmierzone zero (reguła „brak odczytu zostaje brakiem").
-    { label: 'Czas blokowy', value: row.engine.note ?? NONE },
+    { label: 'Czas blokowy', value: s.blockMs > 0 ? row.block : NONE },
   ];
 }

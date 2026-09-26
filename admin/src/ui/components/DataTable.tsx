@@ -10,6 +10,12 @@
  * niedostępny z klawiatury i uniemożliwia „kopiuj adres linku", czyli psuje ten sam
  * scenariusz deep linków, dla którego panel istnieje. Kliknięcie w wiersz to skrót
  * myszy; drogą właściwą jest link w kolumnie akcji.
+ *
+ * ══ GRUPY I ZWINIĘCIE (3.2.0, `docs/panel-3.2.md` §4.3, §17.1) ══
+ * `groups` układa wiersze pod NAGŁÓWKAMI (`<tbody class="day">` + `tr.day-row`) -
+ * doba jest nagłówkiem, nie kolumną. `fold` dokłada pod listą JEDEN wiersz zwinięcia
+ * (`tr.fold-row` z przyciskiem) i po rozwinięciu wiersze przygaszone - członkowie bez
+ * lotów. Oba są DANYMI, jak kolumny: ekran mówi, co zwinąć, a kształt ma tabela.
  */
 
 import { Fragment, type ReactNode } from 'react';
@@ -41,9 +47,30 @@ export interface Column<Row> {
   render: (row: Row) => ReactNode;
 }
 
+/** Grupa wierszy pod jednym nagłówkiem - doba dziennika. */
+export interface RowGroup<Row> {
+  key: string;
+  header: ReactNode;
+  rows: Row[];
+}
+
+/** Wiersz zwinięcia pod listą; po rozwinięciu `rows` wchodzą przygaszone (`tr.muted`). */
+export interface RowFold<Row> {
+  /** Napis w stanie zwiniętym („+3 członków bez lotów w tym zakresie"). */
+  label: string;
+  /** Napis w stanie rozwiniętym („Zwiń · 3 członków…"). */
+  openLabel: string;
+  expanded: boolean;
+  onToggle: () => void;
+  rows: Row[];
+}
+
 interface DataTableProps<Row> {
   columns: Column<Row>[];
-  rows: Row[];
+  /** Wiersze płaskie; przy `groups` pomijane. */
+  rows?: Row[];
+  groups?: RowGroup<Row>[];
+  fold?: RowFold<Row>;
   rowKey: (row: Row) => string | number;
   /** Skrót myszy - wiersz wykonuje tę samą akcję, co link w kolumnie akcji. */
   onRowClick?: (row: Row) => void;
@@ -66,12 +93,81 @@ interface DataTableProps<Row> {
 export function DataTable<Row>({
   columns,
   rows,
+  groups,
+  fold,
   rowKey,
   onRowClick,
   rowClass,
   expanded,
   caption,
 }: DataTableProps<Row>) {
+  const renderRow = (row: Row, forced?: string): ReactNode => {
+    const extra = rowClass?.(row);
+    const classes = [onRowClick == null ? null : 'clickable', forced, extra]
+      .filter((c) => c != null)
+      .join(' ');
+    const detail = expanded?.(row);
+    return (
+      // Fragment, a nie `<tbody>` na wiersz: rozwinięcie jest DRUGIM `<tr>`
+      // w tym samym `<tbody>`, więc selektory `tbody tr:last-child` i pasy
+      // hovera z szablonu działają dalej tak, jak w mockupie.
+      <Fragment key={rowKey(row)}>
+        <tr
+          className={classes === '' ? undefined : classes}
+          onClick={onRowClick == null ? undefined : () => onRowClick(row)}
+        >
+          {columns.map((column) => {
+            const cell = [column.align === 'num' ? 'num' : null, column.cellClass]
+              .filter((c) => c != null)
+              .join(' ');
+            return (
+              <td key={column.key} className={cell === '' ? undefined : cell}>
+                {column.render(row)}
+              </td>
+            );
+          })}
+        </tr>
+        {detail == null ? null : (
+          <tr className="row-expand">
+            <td colSpan={columns.length}>{detail}</td>
+          </tr>
+        )}
+      </Fragment>
+    );
+  };
+
+  const foldRows =
+    fold == null ? null : (
+      <>
+        <tr className="fold-row">
+          <td colSpan={columns.length}>
+            <button
+              type="button"
+              className="fold-btn"
+              aria-expanded={fold.expanded}
+              onClick={fold.onToggle}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+              {fold.expanded ? fold.openLabel : fold.label}
+            </button>
+          </td>
+        </tr>
+        {fold.expanded ? fold.rows.map((row) => renderRow(row, 'muted')) : null}
+      </>
+    );
+
   return (
     <div className="table-wrap">
       <table>
@@ -113,42 +209,25 @@ export function DataTable<Row>({
             })}
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row) => {
-            const extra = rowClass?.(row);
-            const classes = [onRowClick == null ? null : 'clickable', extra]
-              .filter((c) => c != null)
-              .join(' ');
-            const detail = expanded?.(row);
-            return (
-              // Fragment, a nie `<tbody>` na wiersz: rozwinięcie jest DRUGIM `<tr>`
-              // w tym samym `<tbody>`, więc selektory `tbody tr:last-child` i pasy
-              // hovera z szablonu działają dalej tak, jak w mockupie.
-              <Fragment key={rowKey(row)}>
-                <tr
-                  className={classes === '' ? undefined : classes}
-                  onClick={onRowClick == null ? undefined : () => onRowClick(row)}
-                >
-                  {columns.map((column) => {
-                    const cell = [column.align === 'num' ? 'num' : null, column.cellClass]
-                      .filter((c) => c != null)
-                      .join(' ');
-                    return (
-                      <td key={column.key} className={cell === '' ? undefined : cell}>
-                        {column.render(row)}
-                      </td>
-                    );
-                  })}
-                </tr>
-                {detail == null ? null : (
-                  <tr className="row-expand">
-                    <td colSpan={columns.length}>{detail}</td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
+        {groups == null ? (
+          <tbody>
+            {(rows ?? []).map((row) => renderRow(row))}
+            {foldRows}
+          </tbody>
+        ) : (
+          groups.map((group) => (
+            // `<tbody>` na DOBĘ: nagłówek jest pierwszym wierszem grupy, więc selektor
+            // `tbody.day + tbody.day` z szablonu rysuje mocniejszy włos między dobami.
+            <tbody key={group.key} className="day">
+              <tr className="day-row">
+                <th colSpan={columns.length} scope="rowgroup">
+                  {group.header}
+                </th>
+              </tr>
+              {group.rows.map((row) => renderRow(row))}
+            </tbody>
+          ))
+        )}
       </table>
     </div>
   );

@@ -27,6 +27,7 @@ import { BugsScreen } from './screens/bugs/BugsScreen';
 import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
+import { PilotLogScreen } from './screens/logbook/PilotLogScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
 import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
@@ -71,6 +72,19 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="panel.access">
             <LogbookScreen />
+          </RequireCapability>
+        ),
+      },
+      // OŚ PILOTA (3.2.0, `docs/panel-3.2.md` §4.2): segment STATYCZNY `pilot/` wygrywa
+      // w routerze z `:reg`, a „pilot" nigdy nie będzie znakiem rejestracyjnym - router
+      // nie zgaduje po kształcie napisu. W adresie stoi KOD pilota: jedyny w klubie
+      // i do wklejenia w rozmowie, jak rejestracja. Operacja z tej osi prowadzi do
+      // istniejącego `dziennik/:reg/:uuid`, bo operacja ma dokładnie jedną maszynę.
+      {
+        path: 'dziennik/pilot/:code',
+        element: (
+          <RequireCapability access="panel.access">
+            <PilotLogScreen />
           </RequireCapability>
         ),
       },

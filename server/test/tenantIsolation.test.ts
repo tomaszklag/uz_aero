@@ -927,6 +927,21 @@ const CASES: Record<string, Probe> = {
     const res = await app.inject({ method: 'GET', url: '/admin/api/log', headers: bearer(a) });
     expectClean(res, '/log');
     expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).toContain('SP-AXA');
+
+    // OŚ PILOTÓW (3.2.0) pod tym samym adresem: PWI jest w OBU klubach, ale latał
+    // wyłącznie w Becie - w Alfie stoi wśród zwiniętych, nie wśród latających,
+    // a lista zwiniętych niesie kody Z CZŁONKOSTWA Alfy i żadnej osoby Bety.
+    const people = await app.inject({
+      method: 'GET',
+      url: '/admin/api/log?os=piloci&idle=1',
+      headers: bearer(a),
+    });
+    expectClean(people, '/log?os=piloci');
+    const flew = people.json().pilots.map((p: { code: string }) => p.code);
+    expect(flew).toEqual(['AKO']);
+    const idle = people.json().idle.members.map((m: { code: string }) => m.code);
+    expect(idle).toContain('PWI');
+    expect(idle).not.toContain('PWB');
   },
 
   'GET /admin/api/maintenance/projections/compare': async ({ app, a }) => {

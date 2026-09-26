@@ -10,7 +10,7 @@ export { Banner, type BannerTone } from './Banner';
 export { Breadcrumbs, type Crumb } from './Breadcrumbs';
 export { Button } from './Button';
 export { Card } from './Card';
-export { DataTable, type Column, type ColumnSort } from './DataTable';
+export { DataTable, type Column, type ColumnSort, type RowFold, type RowGroup } from './DataTable';
 export { Drawer } from './Drawer';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';

@@ -9,13 +9,18 @@
  *  2. **agregat poziomu 1 liczy po TEJ SAMEJ osi**, co lista sesji pod spodem
  *     (`claim_time`), obejmuje całą flotę i NIE pomija sesji otwartych - inaczej
  *     dzisiejszy dzień byłby pusty do wieczora, a dwa poziomy modułu pokazywałyby
- *     inną liczbę sesji.
+ *     inną liczbę sesji;
+ *  3. **oś pilotów (3.2.0, `docs/panel-3.2.md` §4.1, §17.1) rozkłada TEN SAM zbiór
+ *     operacji po ludziach**: sumy dowódcy obu osi są równe co do minuty, czas
+ *     w prawym fotelu jest osobną liczbą, a członkowie bez lotów są zwinięci - liczba
+ *     zawsze, lista na żądanie.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
+import { ORG_A } from './testWorld.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
@@ -39,20 +44,28 @@ function event(
 interface DayOptions {
   sessionUuid: string;
   aircraftId?: string;
+  /** Dowódca (domyślnie AKO) i drugi pilot - oś pilotów pyta o oba fotele. */
+  picId?: string;
+  dualId?: string | null;
   dayOffset?: number;
   close?: boolean;
+  /** `false` = silnik NIE został wyłączony (operacja w toku z pracującym śmigłem). */
+  stopEngine?: boolean;
   arrivalIcao?: string | null;
   refuelL?: number;
 }
+
+/** Blok kanonicznego dnia: 08:12 → 10:34. */
+const BLOCK_MS = (2 * 60 + 22) * 60_000;
 
 /** Dzień lotny z KOMPLETEM rzeczy, o które pyta log: lotniska, dolewka, olej. */
 function flyingDay(o: DayOptions) {
   const d = o.dayOffset ?? 0;
   const base = {
     sessionUuid: o.sessionUuid,
-    picId: 'AKO',
+    picId: o.picId ?? 'AKO',
     aircraftId: o.aircraftId ?? 'SP-AXA',
-    dualId: null,
+    dualId: o.dualId ?? null,
   };
 
   const events = [
@@ -76,6 +89,8 @@ function flyingDay(o: DayOptions) {
     event('takeoff', at(8, 25, d), { method: 'auto' }, base),
     event('landing', at(9, 18, d), { method: 'auto' }, base),
   ];
+
+  if (o.stopEngine === false) return events;
 
   if (o.refuelL != null) {
     // Dolewka PO zatrzymaniu śmigła - jedyne okno, w którym domena ją przyjmuje.
@@ -280,5 +295,156 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
     expect(res.statusCode).toBe(403);
     expect(res.json()).toMatchObject({ required: 'panel.access' });
+  });
+});
+
+/** Oś pilotów tego samego zakresu - `?os=piloci`, z listą zwiniętych po `&idle=1`. */
+const pilotsLog = (app: Harness['app'], t: string, query = '') =>
+  log(app, t, `?os=piloci${query}`);
+
+interface PilotRowLike {
+  code: string | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  activeDays: number;
+  dual: { operations: number; blockMs: number } | null;
+  regs: string[];
+  open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;
+}
+
+const pilotRow = (report: { pilots: PilotRowLike[] }, code: string): PilotRowLike | undefined =>
+  report.pilots.find((p) => p.code === code);
+
+describe('GET /admin/api/log?os=piloci - oś pilotów', () => {
+  it('wiersz na osobę: nalot DOWÓDCY, czas w prawym fotelu OSOBNO, dni z jakimkolwiek lotem', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    const bno = await token(app, 'BNO');
+    // Dzień 0: AKO dowódcą z BNO w prawym fotelu. Dzień 1: BNO sam, jako dowódca.
+    expect((await post(app, ako, flyingDay({ sessionUuid: 's-pl-1', dualId: 'BNO' }))).statusCode).toBe(200);
+    expect((await post(app, bno, flyingDay({ sessionUuid: 's-pl-2', picId: 'BNO', dayOffset: 1 }))).statusCode).toBe(200);
+
+    const report = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-23')).json();
+    const akoRow = pilotRow(report, 'AKO');
+    const bnoRow = pilotRow(report, 'BNO');
+
+    // Instruktor: jedna operacja jako dowódca, ani jednej w prawym fotelu.
+    expect(akoRow).toMatchObject({ sessions: 1, flights: 1, blockMs: BLOCK_MS, activeDays: 1, dual: null });
+    expect(akoRow?.regs).toEqual(['SP-AXA']);
+    // Uczeń: nalot dowódcy z JEDNEJ własnej operacji, a lot szkolny w OSOBNEJ liczbie -
+    // tej samej godziny nie wolno dodać do bloku dowódcy (wariant B, §17.1).
+    expect(bnoRow).toMatchObject({ sessions: 1, blockMs: BLOCK_MS, dual: { operations: 1, blockMs: BLOCK_MS } });
+    // Dni liczą się z JAKIMKOLWIEK lotem: dzień szkolny i własny to dwa dni.
+    expect(bnoRow?.activeDays).toBe(2);
+    // Nikt nie trzyma maszyny.
+    expect(akoRow?.open).toBeNull();
+    // Kolejność alfabetyczna po osobie - pytanie brzmi „gdzie jest Kowalski".
+    expect(report.pilots.map((p: PilotRowLike) => p.code)).toEqual(['AKO', 'BNO']);
+  });
+
+  it('sumy dowódcy OBU osi są równe co do minuty - także z operacją w toku i po unieważnieniu', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    const krz = await token(app, 'KRZ');
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-3', dualId: 'BNO' }));
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-4', dayOffset: 1, refuelL: 30 }));
+    await post(app, krz, flyingDay({ sessionUuid: 's-pl-5', picId: 'KRZ', aircraftId: 'SP-FGK', dayOffset: 1 }));
+    // Operacja W TOKU liczy się na obu osiach tym, co już zapisała (jak dotąd na osi maszyn).
+    await post(app, krz, flyingDay({ sessionUuid: 's-pl-6', picId: 'KRZ', aircraftId: 'SP-FGK', dayOffset: 2, close: false }));
+    // Unieważniona wypada z OBU osi.
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-7', dayOffset: 2 }));
+    const voided = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/s-pl-7/void',
+      headers: { authorization: `Bearer ${ako}`, ...ADMIN_CSRF_HEADERS },
+      payload: { reason: 'wpis testowy' },
+    });
+    expect(voided.statusCode, voided.body).toBe(200);
+
+    const range = '?from=2026-06-22&to=2026-06-24';
+    const fleet = (await log(app, ako, range)).json();
+    const people = (await pilotsLog(app, ako, `&from=2026-06-22&to=2026-06-24`)).json();
+
+    type A = { sessions: number; flights: number; blockMs: number; flightMs: number };
+    const sumOf = (rows: A[], pick: (row: A) => number): number =>
+      rows.reduce((acc, row) => acc + pick(row), 0);
+    const totals = (rows: A[]) => ({
+      sessions: sumOf(rows, (a) => a.sessions),
+      flights: sumOf(rows, (a) => a.flights),
+      blockMs: sumOf(rows, (a) => a.blockMs),
+      flightMs: sumOf(rows, (a) => a.flightMs),
+    });
+    const fleetSum = totals(fleet.aircraft);
+    expect(totals(people.pilots)).toEqual(fleetSum);
+    // Cztery żywe operacje (dwie AKO, dwie KRZ), unieważniona poza rachunkiem.
+    expect(fleetSum.sessions).toBe(4);
+    // Drugi pilot NIE dodaje się do sum dowódcy - BNO ma zero jako dowódca, a lot
+    // szkolny stoi w jego wierszu osobno.
+    expect(pilotRow(people, 'BNO')).toMatchObject({ sessions: 0, blockMs: 0, dual: { operations: 1 } });
+  });
+
+  it('operacja w toku: wiersz mówi, że osoba TRZYMA maszynę - i czy śmigło pracuje', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    const krz = await token(app, 'KRZ');
+    // AKO: silnik wyłączony, samolot niezdany. KRZ: silnik dalej pracuje.
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-8', close: false }));
+    await post(app, krz, flyingDay({ sessionUuid: 's-pl-9', picId: 'KRZ', aircraftId: 'SP-FGK', close: false, stopEngine: false }));
+
+    const report = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22')).json();
+    expect(pilotRow(report, 'AKO')?.open).toEqual({ reg: 'SP-AXA', claimedAt: at(7, 50), engineRunning: false });
+    expect(pilotRow(report, 'KRZ')?.open).toEqual({ reg: 'SP-FGK', claimedAt: at(7, 50), engineRunning: true });
+  });
+
+  it('operacja w toku mówi o TERAZ - wiersz niesie ją także spoza zakresu', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-10', dayOffset: -10, close: false }));
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-11' }));
+
+    const report = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22')).json();
+    // W zakresie jedna operacja; maszyna nieoddana od dziesięciu dni dalej jest sprawą.
+    expect(pilotRow(report, 'AKO')).toMatchObject({ sessions: 1, open: { reg: 'SP-AXA', claimedAt: at(7, 50, -10) } });
+  });
+
+  it('zwinięci: aktywni członkowie bez lotu - LICZBA zawsze, LISTA na żądanie, wyłączeni poza', async () => {
+    const { app, db } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-pl-12' }));
+
+    const folded = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22')).json();
+    // Klub A: AKO latał, czworo nie (BNO, PWI, JSE, KRZ).
+    expect(folded.idle).toEqual({ count: 4, members: null });
+    expect(folded.pilots.map((p: PilotRowLike) => p.code)).toEqual(['AKO']);
+
+    const unfolded = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22&idle=1')).json();
+    expect(unfolded.idle.count).toBe(4);
+    // Alfabetycznie po osobie, jak lista latających.
+    expect(unfolded.idle.members.map((m: { code: string }) => m.code)).toEqual(['BNO', 'JSE', 'KRZ', 'PWI']);
+
+    // Członek WYŁĄCZONY nie liczy się do zwiniętych: „kto nie latał" pyta o tych, którzy mogli.
+    await db.query(`UPDATE memberships SET status = 'disabled' WHERE org_id = $1 AND pilot_id = 'JSE'`, [ORG_A]);
+    const after = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22&idle=1')).json();
+    expect(after.idle.members.map((m: { code: string }) => m.code)).toEqual(['BNO', 'KRZ', 'PWI']);
+  });
+
+  it('członek wyłączony, który w zakresie LATAŁ, zostaje na liście z `active: false`', async () => {
+    const { app, db } = await testHarness();
+    const krz = await token(app, 'KRZ');
+    await post(app, krz, flyingDay({ sessionUuid: 's-pl-13', picId: 'KRZ', aircraftId: 'SP-FGK' }));
+    await db.query(`UPDATE memberships SET status = 'disabled' WHERE org_id = $1 AND pilot_id = 'KRZ'`, [ORG_A]);
+
+    const report = (await pilotsLog(app, await token(app, 'AKO'), '&from=2026-06-22&to=2026-06-22')).json();
+    expect(pilotRow(report, 'KRZ')).toMatchObject({ sessions: 1, active: false });
+  });
+
+  it('oś spoza słownika to 400, a zakres i uprawnienie działają jak na osi maszyn', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    expect((await log(app, ako, '?os=maszyny')).statusCode).toBe(400);
+    expect((await pilotsLog(app, ako, '&from=2026-06-25&to=2026-06-22')).json()).toMatchObject({ error: 'bad_range' });
+    expect((await pilotsLog(app, await token(app, 'PWI'))).statusCode).toBe(403);
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Ninerdeck - panel 2.0: DZIENNIK, poziom 2 - sesje JEDNEJ maszyny (`#/dziennik/SP-KLM`).
+ * Ninerdeck - panel 2.0: DZIENNIK, poziom 2 - operacje JEDNEJ maszyny (`#/dziennik/SP-KLM`).
  *
  * ══ W ADRESIE STOI REJESTRACJA, NIE IDENTYFIKATOR ══
  * `#/dziennik/SP-KLM` człowiek przeczyta i wpisze z pamięci, a o to w wymogu
@@ -12,6 +12,11 @@
  * wartość - czyli byłaby kolumną, która nie odróżnia żadnego wiersza od żadnego.
  * Stoi w tytule strony. Skutek uboczny jest korzystny: format licznika jest
  * własnością maszyny, więc kolumna motogodzin nie ma jak wymieszać `1284.6` z `645:06`.
+ *
+ * ══ DOBA JEST NAGŁÓWKIEM, NIE KOLUMNĄ (3.2.0, `docs/panel-3.2.md` §4.3) ══
+ * Operacje stoją pod nagłówkami dób z SUMAMI Z SERWERA (§4.4) - strona kursorowa
+ * potrafi rozciąć dobę, a suma połowy doby policzona w przeglądarce wyglądałaby
+ * poprawnie. Ten sam kształt ma historia w telefonie (makieta `24`).
  */
 
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -33,14 +38,17 @@ import {
 import { PlaneIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { DateRange } from './DateRange';
+import { dayGroups } from './dayGroups';
 import type { DayRange } from './dateRanges';
-import { sessionRow, type CellPair, type SessionRow } from './sessionRows';
+import { logbookPath, sessionPath } from './logbookPaths';
+import { DayHeader, OperationCell, Pair } from './SessionCells';
+import { sessionRow, type SessionRow } from './sessionRows';
 
 const HEADERS = [
   'Operacja',
-  'Bieg silnika',
   'Lot',
   'Loty',
+  'Blok',
   'Pilot',
   'Zadanie',
   'Paliwo',
@@ -48,22 +56,6 @@ const HEADERS = [
   'Olej do lotu',
   '',
 ];
-
-/** Para wartości w jednej komórce - strzałka wygaszona, druga linia ją kwalifikuje. */
-function Pair({ value }: { value: CellPair }) {
-  return (
-    <>
-      <span className="cell-pair">
-        {value.from}
-        <span className="cell-arrow" aria-hidden="true">
-          →
-        </span>
-        {value.to}
-      </span>
-      {value.note == null ? null : <span className="cell-sub">{value.note}</span>}
-    </>
-  );
-}
 
 export function AircraftLogScreen() {
   const { reg = '' } = useParams();
@@ -87,28 +79,17 @@ export function AircraftLogScreen() {
   });
 
   const rows = (sessions.data?.items ?? []).map(sessionRow);
+  const groups = dayGroups(rows, sessions.data?.days ?? []);
   const truncated = sessions.data?.nextCursor != null;
 
   const columns: Column<SessionRow>[] = [
-    {
-      /* Kolumna IDENTYFIKUJE, więc nazywa się jak to, co identyfikuje (issue #68).
-         Data zostaje linią mocną - po niej skanuje się listę jednej maszyny -
-         a sygnatura schodzi do drugiej linii: to nazwa do przeczytania albo
-         przepisania, nie klucz sortowania. Bez niej wiersz wygląda jak przed
-         issue #68 i to jest stan poprawny, nie brak danych. */
-      key: 'day',
-      header: 'Operacja',
-      render: (row) => (
-        <>
-          <span className="cell-strong">{row.day}</span>
-          {row.manual ? <Pill tone="dim">Ręcznie</Pill> : null}
-          {row.signature == null ? null : <span className="cell-sub">{row.signature}</span>}
-        </>
-      ),
-    },
-    { key: 'engine', header: 'Bieg silnika', render: (row) => <Pair value={row.engine} /> },
+    /* Kolumna IDENTYFIKUJE, więc nazywa się jak to, co identyfikuje (issue #68):
+       para godzin biegu silnika i sygnatura pod spodem - kształt wiersza z telefonu.
+       Daty tu nie ma: stoi w nagłówku doby centymetr wyżej. */
+    { key: 'operation', header: 'Operacja', render: (row) => <OperationCell row={row} /> },
     { key: 'flight', header: 'Lot', render: (row) => <Pair value={row.flight} /> },
     { key: 'flights', header: 'Loty', align: 'num', render: (row) => row.flights },
+    { key: 'block', header: 'Blok', align: 'num', render: (row) => row.block },
     {
       key: 'pic',
       header: 'Pilot',
@@ -119,7 +100,7 @@ export function AircraftLogScreen() {
         </>
       ),
     },
-    { key: 'operation', header: 'Zadanie', render: (row) => <Pill tone="dim">{row.operation}</Pill> },
+    { key: 'task', header: 'Zadanie', render: (row) => <Pill tone="dim">{row.operation}</Pill> },
     { key: 'fuel', header: 'Paliwo', render: (row) => <Pair value={row.fuel} /> },
     { key: 'moto', header: 'Motogodziny', render: (row) => <Pair value={row.moto} /> },
     {
@@ -137,11 +118,7 @@ export function AircraftLogScreen() {
       header: '',
       cellClass: 'row-actions',
       render: (row) => (
-        <LinkButton
-          to={`/dziennik/${reg}/${row.sessionUuid}?od=${range.from}&do=${range.to}`}
-          size="sm"
-          variant="ghost"
-        >
+        <LinkButton to={sessionPath(reg, row.sessionUuid, range)} size="sm" variant="ghost">
           Szczegóły
         </LinkButton>
       ),
@@ -154,10 +131,7 @@ export function AircraftLogScreen() {
           ekran leży POD listą floty, więc droga powrotu jest ścieżką, nie akcją.
           Link niesie zakres dat, z którego się przyszło. */}
       <Breadcrumbs
-        items={[
-          { label: 'Dziennik', to: `/dziennik?od=${range.from}&do=${range.to}` },
-          { label: reg.toUpperCase() },
-        ]}
+        items={[{ label: 'Dziennik', to: logbookPath('samoloty', range) }, { label: reg.toUpperCase() }]}
       />
 
       <PageHead title={reg.toUpperCase()} sub={aircraft?.type} />
@@ -187,7 +161,7 @@ export function AircraftLogScreen() {
           skeleton={
             <TableSkeleton
               headers={HEADERS}
-              widths={[150, 96, 96, 20, 82, 54, 92, 110, 52, 60]}
+              widths={[150, 96, 20, 36, 82, 54, 92, 110, 52, 60]}
               rows={8}
             />
           }
@@ -201,17 +175,20 @@ export function AircraftLogScreen() {
           ) : (
             <>
               <DataTable
-                caption={`Operacje samolotu ${reg.toUpperCase()}`}
+                caption={`Operacje samolotu ${reg.toUpperCase()}, dobami`}
                 columns={columns}
-                rows={rows}
+                groups={groups.map((group) => ({
+                  key: group.key,
+                  header: <DayHeader group={group} />,
+                  rows: group.rows,
+                }))}
                 rowKey={(row) => row.sessionUuid}
                 rowClass={(row) => (row.voided ? 'voided' : undefined)}
-                onRowClick={(row) =>
-                  navigate(`/dziennik/${reg}/${row.sessionUuid}?od=${range.from}&do=${range.to}`)
-                }
+                onRowClick={(row) => navigate(sessionPath(reg, row.sessionUuid, range))}
               />
               {/* Lista przycięta po cichu wygląda jak komplet - a to najgorszy tryb
-                  awarii narzędzia, które ma odpowiadać „co ta maszyna robiła". */}
+                  awarii narzędzia, które ma odpowiadać „co ta maszyna robiła". Nagłówek
+                  doby nad przycięciem dalej mówi prawdę o całej dobie (§4.4). */}
               {truncated ? (
                 <p className="list-foot">
                   Pokazano {rows.length} z {sessions.data?.total ?? rows.length} operacji - zawęź

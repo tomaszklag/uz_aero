@@ -15,13 +15,19 @@
  * ten moduł. Zero nigdy nie zastępuje braku: `0 L` znaczy pusty zbiornik, kreska znaczy
  * „nikt nie zapisał". Przy parze bez jednej strony kreska zostaje PRZY strzałce,
  * żeby widać było, którego odczytu brakuje.
+ *
+ * ══ DOBA JEST NAGŁÓWKIEM, NIE KOLUMNĄ (3.2.0, `docs/panel-3.2.md` §4.3) ══
+ * Wiersz nie niesie już daty jako komórki - niesie KLUCZ doby (`dayKey`), po którym
+ * `dayGroups.ts` składa go pod nagłówek z sumami z serwera. Czas trwania biegu przeszedł
+ * z drugiej linii pary do własnej kolumny „Blok", bo po niej skanuje się listę.
  */
 
-import { dateUtcShort, duration, shortName } from '@ninerdeck/format';
+import { duration, shortName } from '@ninerdeck/format';
 import type { OperationType } from '@ninerdeck/domain';
 
 import type { SessionListItemDto } from '../../api/dto';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
+import { dayOf } from './dateRanges';
 
 /** Para wartości w jednej komórce + linia, która ją kwalifikuje. */
 export interface CellPair {
@@ -35,16 +41,25 @@ export interface SessionRow {
   sessionUuid: string;
   /** Nazwa operacji dla ludzi (issue #68); `null` = nie ma jej z czego złożyć. */
   signature: string | null;
-  day: string;
-  /** Plakietka przy dacie - dotyczy CAŁEGO wiersza, nie żadnej pojedynczej liczby. */
+  /** Chwila przejęcia i jej doba UTC `YYYY-MM-DD` - klucz nagłówka doby; `null` = bez daty. */
+  claimedAt: number | null;
+  dayKey: string | null;
+  /** Plakietka przy parze godzin - dotyczy CAŁEGO wiersza, nie żadnej pojedynczej liczby. */
   manual: boolean;
   /** Wpis unieważniony przez pilota - wiersz zostaje, ale przekreślony. */
   voided: boolean;
 
   engine: CellPair;
+  /** Czas trwania biegu silnika - własna kolumna; kreska, dopóki śmigło pracuje. */
+  block: string;
   flight: CellPair;
   flights: string;
 
+  /** Maszyna - zmienna na osi PILOTA (na osi maszyny stoi w tytule). */
+  reg: string;
+  aircraftType: string;
+  picId: string;
+  dualId: string | null;
   pic: string;
   dual: string | null;
   operation: string;
@@ -87,23 +102,27 @@ export function routeNote(departure: string | null, arrival: string | null): str
 
 export function sessionRow(s: SessionListItemDto): SessionRow {
   const flew = s.firstTakeoffAt != null || s.lastLandingAt != null;
+  const running = s.status === 'active' && s.engineStopAt == null;
 
   return {
     sessionUuid: s.sessionUuid,
     // Przepisana, nie sklejona: sygnaturę składa serwer (issue #68).
     signature: s.signature,
-    // Dobę bierzemy z PRZEJĘCIA, bo tą samą osią filtruje zakres - inaczej wiersz
-    // mógłby wypaść poza zakres, w którym go pokazano.
-    day: s.claimedAt == null ? NONE : dateUtcShort(s.claimedAt),
+    // Dobę bierzemy z PRZEJĘCIA, bo tą samą osią filtruje zakres i tą samą liczy
+    // serwer nagłówki dób - inaczej wiersz mógłby stanąć pod cudzym nagłówkiem.
+    claimedAt: s.claimedAt,
+    dayKey: s.claimedAt == null ? null : dayOf(s.claimedAt),
     manual: s.manualEntry === true,
     voided: s.status === 'voided',
 
     engine: {
       from: timeUtc(s.engineStartAt),
       // Sesja otwarta to NIE brak odczytu, tylko fakt, że jeszcze nie nastąpił.
-      to: s.status === 'active' && s.engineStopAt == null ? 'w toku' : timeUtc(s.engineStopAt),
-      note: s.blockMs > 0 ? duration(s.blockMs) : null,
+      to: running ? 'w toku' : timeUtc(s.engineStopAt),
+      note: null,
     },
+    // Blok liczy DOMENA; dopóki śmigło pracuje, liczby jeszcze nie ma - kreska, nie zero.
+    block: running ? NONE : duration(s.blockMs),
 
     flight: {
       from: timeUtc(s.firstTakeoffAt),
@@ -114,6 +133,10 @@ export function sessionRow(s: SessionListItemDto): SessionRow {
 
     flights: String(s.flightsCount),
 
+    reg: s.reg ?? NONE,
+    aircraftType: s.aircraftType ?? NONE,
+    picId: s.picId,
+    dualId: s.dualId,
     pic: s.picName == null ? (s.picCode ?? NONE) : shortName(s.picName),
     dual: s.dualName == null ? null : shortName(s.dualName),
     operation: operationLabel(s.operation),
@@ -141,4 +164,25 @@ export function sessionRow(s: SessionListItemDto): SessionRow {
         ? `${oilLitres(s.oilLevelL)} + ${oilLitres(s.oilAddedL)}`
         : null,
   };
+}
+
+/**
+ * Wiersz, w którym osoba z osi PILOTA siedziała W PRAWYM FOTELU (decyzja właściciela
+ * 2026-09-26, wariant B): zwykły wiersz z plakietką „Drugi pilot", poza sumami nalotu
+ * dowódcy. Rozstrzyga identyfikator, nie nazwisko - dwóch członków może się nazywać
+ * tak samo, a osoba jest jedna.
+ */
+export const asDual = (row: SessionRow, pilotId: string): boolean =>
+  row.dualId === pilotId && row.picId !== pilotId;
+
+/**
+ * Podpis komórki „Samolot" na osi PILOTA: załoga, gdy była dwuosobowa („z A. Kowal"
+ * przy własnej operacji, „dowódca B. Nowak" przy locie w prawym fotelu), inaczej typ
+ * maszyny. Kolumny „Pilot" na tej osi nie ma - osoba stoi w tytule - a załoga
+ * dwuosobowa dalej jest faktem operacji, więc ma gdzie stać.
+ */
+export function aircraftNote(row: SessionRow, pilotId: string): string {
+  if (asDual(row, pilotId)) return `dowódca ${row.pic}`;
+  if (row.dual != null) return `z ${row.dual}`;
+  return row.aircraftType;
 }

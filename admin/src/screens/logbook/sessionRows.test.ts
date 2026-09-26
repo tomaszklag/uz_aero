@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SessionListItemDto } from '../../api/dto';
 import { NONE } from '../common/values';
-import { operationLabel, routeNote, sessionRow } from './sessionRows';
+import { aircraftNote, asDual, operationLabel, routeNote, sessionRow } from './sessionRows';
 
 const DAY = Date.UTC(2026, 7, 12);
 const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
@@ -17,6 +17,7 @@ const session: SessionListItemDto = {
   picId: 'p-1',
   picCode: 'AKO',
   picName: 'Adam Kowalski',
+  dualId: null,
   dualCode: null,
   dualName: null,
   status: 'closed',
@@ -48,9 +49,23 @@ const session: SessionListItemDto = {
 };
 
 describe('pary w jednej komórce', () => {
-  it('bieg silnika niesie godziny, a druga linia mówi JAK DŁUGO', () => {
+  it('bieg silnika niesie godziny, a JAK DŁUGO mówi własna kolumna „Blok"', () => {
+    // Do 3.2.0 czas trwania stał w drugiej linii pary; po niej skanuje się listę
+    // („który lot był długi"), więc dostał kolumnę (`docs/panel-3.2.md` §4.3).
     const row = sessionRow(session);
-    expect(row.engine).toEqual({ from: '08:42', to: '10:22', note: '1:40' });
+    expect(row.engine).toEqual({ from: '08:42', to: '10:22', note: null });
+    expect(row.block).toBe('1:40');
+  });
+
+  it('dopóki śmigło pracuje, blok jest KRESKĄ, nie zerem - liczby jeszcze nie ma', () => {
+    const open = sessionRow({ ...session, status: 'active', engineStopAt: null, blockMs: 0 });
+    expect(open.engine.to).toBe('w toku');
+    expect(open.block).toBe(NONE);
+  });
+
+  it('wiersz niesie klucz doby z PRZEJĘCIA - tą samą osią, którą serwer liczy nagłówki', () => {
+    expect(sessionRow(session).dayKey).toBe('2026-08-12');
+    expect(sessionRow({ ...session, claimedAt: null }).dayKey).toBeNull();
   });
 
   it('lot niesie godziny, a druga linia mówi DOKĄD', () => {
@@ -143,5 +158,22 @@ describe('reszta wiersza', () => {
     expect(sessionRow({ ...session, manualEntry: true }).manual).toBe(true);
     expect(sessionRow({ ...session, status: 'voided' }).voided).toBe(true);
     expect(sessionRow(session).manual).toBe(false);
+  });
+});
+
+describe('oś pilota: prawy fotel', () => {
+  const schooling = sessionRow({ ...session, dualId: 'p-2', dualCode: 'BNO', dualName: 'Barbara Nowak' });
+
+  it('wiersz „jako drugi pilot" poznaje się po IDENTYFIKATORZE osoby, nie po nazwisku', () => {
+    expect(asDual(schooling, 'p-2')).toBe(true);
+    expect(asDual(schooling, 'p-1')).toBe(false);
+    // Osoba bez prawego fotela nigdy nie jest „drugim pilotem" własnej operacji.
+    expect(asDual(sessionRow(session), 'p-1')).toBe(false);
+  });
+
+  it('podpis maszyny mówi o załodze, gdy była dwuosobowa - inaczej o typie', () => {
+    expect(aircraftNote(schooling, 'p-2')).toBe('dowódca A. Kowalski');
+    expect(aircraftNote(schooling, 'p-1')).toBe('z B. Nowak');
+    expect(aircraftNote(sessionRow(session), 'p-1')).toBe('Cessna 182');
   });
 });

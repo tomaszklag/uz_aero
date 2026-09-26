@@ -17,6 +17,7 @@ const session: SessionListItemDto = {
   picId: 'p-1',
   picCode: 'AKO',
   picName: 'Adam Kowalski',
+  dualId: null,
   dualCode: null,
   dualName: null,
   status: 'closed',

@@ -68,13 +68,15 @@ export const NAV_ITEMS: readonly NavItem[] = [
   // Dziennik jest PIERWSZY, bo ekran startowy ma być tym, po który się sięga:
   // konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
   { to: '/dziennik', label: 'Dziennik', icon: 'logbook', access: 'panel.access' },
+  // Kalendarz stoi DRUGI (3.2.0, `docs/panel-3.2.md` §17: Dziennik · Do sprawdzenia ·
+  // Kalendarz · Statystyki · Piloci · Samoloty - dwie brakujące pozycje dochodzą
+  // z epikami P-D i P-E). Kolejność nie jest kwestią gustu: `homeFor` bierze PIERWSZĄ
+  // dostępną pozycję, więc rozstrzyga, gdzie ląduje zalogowany. Dziennik zostaje
+  // ekranem startowym administratora; członek bez „Podglądu klubu" ma tylko Kalendarz
+  // i ląduje właśnie tu.
+  { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', access: 'club' },
   { to: '/piloci', label: 'Piloci', icon: 'people', access: 'panel.access' },
   { to: '/samoloty', label: 'Samoloty', icon: 'plane', access: 'panel.access' },
-  // Kalendarz stoi PO Samolotach i to nie jest kwestia gustu: `homeFor` bierze
-  // PIERWSZĄ dostępną pozycję, więc kolejność tej tablicy rozstrzyga, gdzie ląduje
-  // administrator po zalogowaniu. Dziennik ma zostać jego ekranem startowym; członek
-  // bez „Podglądu klubu" ma tylko tę pozycję i ląduje właśnie tu.
-  { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', access: 'club' },
   // ── PLATFORMA ────────────────────────────────────────────────────────────────
   // Dwie pozycje niżej należą do sesji superadministratora i w kolumnie klubu NIE MA
   // ich wcale. Organizacje stoją PRZED Zgłoszeniami, bo `homeFor` bierze pierwszą

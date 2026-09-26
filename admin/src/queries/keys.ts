@@ -8,7 +8,7 @@
 
 import type { CalendarRange } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
-import type { LogRangeQuery, SessionListQuery } from '../api/log';
+import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
 import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
@@ -130,6 +130,8 @@ export const keys = {
   log: {
     all: ['log'] as const,
     fleet: (query: LogRangeQuery) => ['log', 'fleet', query] as const,
+    /** Oś pilotów tego samego zakresu (3.2.0); `idle` jest częścią pytania. */
+    pilots: (query: LogPilotsQuery) => ['log', 'pilots', query] as const,
     sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
     session: (uuid: string) => ['log', 'session', uuid] as const,
     track: (uuid: string) => ['log', 'track', uuid] as const,
