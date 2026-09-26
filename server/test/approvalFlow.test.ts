@@ -748,6 +748,29 @@ describe('akceptujący jest TRZECIM widzem na drucie (§17)', () => {
     expect(waski.json().booking.operation).toBeUndefined();
     expect(waski.json().booking.note).toBeUndefined();
   });
+
+  it('ścieżka i POWÓD ODMOWY cudzej rezerwacji nie jadą do zwykłego członka klubu (przegląd 3.1.0)', async () => {
+    // Powód odmowy to zdanie akceptującego DO PILOTA - treść tej samej klasy, co notatka.
+    // Panel ukrywał go wąskiemu widzowi od początku; telefon oddawał go każdemu w klubie.
+    const { app, db } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'AKO');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ'] }]);
+
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    const krz = await login(app, 'KRZ');
+    expect((await decide(app, krz, id, { decision: 'rejected', reason: 'Nie w tym tygodniu.' })).statusCode).toBe(200);
+
+    const jse = await login(app, 'JSE');
+    const obcy = await card(app, jse, id);
+    expect(obcy.statusCode).toBe(200);
+    expect(obcy.json().approval).toBeNull();
+
+    // Właściciel i akceptujący widzą ścieżkę jak dotąd.
+    expect((await card(app, pwi, id)).json().approval.steps[0].decision.reason).toBe('Nie w tym tygodniu.');
+    expect((await card(app, krz, id)).json().approval.steps[0].decision.reason).toBe('Nie w tym tygodniu.');
+  });
 });
 
 /**

@@ -119,6 +119,16 @@ export interface BookingViewer {
   approves: boolean;
 }
 
+/**
+ * Czy widz dostaje KOMPLET tej rezerwacji: pola planu na drucie i - na karcie - stan
+ * ścieżki z powodami decyzji. Jedna reguła dla obu, bo powód odmowy jest zdaniem
+ * akceptującego DO PILOTA, czyli treścią tej samej klasy, co notatka (przegląd
+ * bezpieczeństwa 3.1.0, issue #169: karta oddawała ścieżkę każdemu członkowi klubu).
+ */
+export function seesFull(row: BookingRecord, viewer: BookingViewer): boolean {
+  return row.pilotId === viewer.pilotId || viewer.approves;
+}
+
 export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<string, unknown> {
   const wire: Record<string, unknown> = {
     id: row.id,
@@ -131,7 +141,7 @@ export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<s
     blockReason: row.blockReason,
   };
 
-  if (row.pilotId !== viewer.pilotId && !viewer.approves) return wire;
+  if (!seesFull(row, viewer)) return wire;
 
   return {
     ...wire,
@@ -260,8 +270,13 @@ export function registerBookingRoutes(
 
     // Stan ścieżki jedzie WYŁĄCZNIE tutaj, a nie w oknie kalendarza: siatka rysuje
     // pasek zajętości i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno
-    // zapytanie o dobę w tyle zapytań, ile rezerwacji stoi na ekranie.
-    const approval = await approvals.view(who.orgId, view.booking.id);
+    // zapytanie o dobę w tyle zapytań, ile rezerwacji stoi na ekranie. Cudzej
+    // rezerwacji zwykły członek klubu ścieżki NIE dostaje (`seesFull`) - karta rysuje
+    // wtedy stan jak w klubie bez ścieżki, a aplikacja obsługuje `null` od R-I.
+    const viewer = viewerOf(who);
+    const approval = seesFull(view.booking, viewer)
+      ? approvalWire(await approvals.view(who.orgId, view.booking.id))
+      : null;
 
     return reply.send({
       timezone: view.timezone,
@@ -270,8 +285,8 @@ export function registerBookingRoutes(
         startsAt: new Date(view.day.startsAt).toISOString(),
         endsAt: new Date(view.day.endsAt).toISOString(),
       },
-      booking: bookingWire(view.booking, viewerOf(who)),
-      approval: approvalWire(approval),
+      booking: bookingWire(view.booking, viewer),
+      approval,
     });
   });
 
