@@ -39,17 +39,22 @@ const toReading = (r: ReadingDbRow): AdminReading => ({
 /**
  * Ostatni wpis per maszyna. `DISTINCT ON` po `aircraft_id` w porządku indeksu
  * `idx_aircraft_readings_latest` - jedno przejście dla całej floty.
+ *
+ * Klub (`$1`) stoi W SZABLONIE, nie w wołającym: to pierwszy warunek każdego odczytu
+ * tej tabeli (issue #99 C4), a szablon bez niego czytał się strażnikowi `org_id`
+ * w `test/architecture.test.ts` jak zapytanie ponad klubami.
  */
 const LATEST_SQL = `
   SELECT DISTINCT ON (aircraft_id)
          aircraft_id, mh, fuel_l, oil_l, note, by_pilot_id, created_at
     FROM aircraft_readings
+   WHERE org_id = $1
 `;
 
 export class PgAircraftReadingsRepo implements AircraftReadingsPort {
   async latest(db: Queryable, orgId: string, aircraftId: string): Promise<AdminReading | null> {
     const { rows } = await db.query<ReadingDbRow>(
-      `${LATEST_SQL} WHERE org_id = $1 AND aircraft_id = $2
+      `${LATEST_SQL} AND aircraft_id = $2
         ORDER BY aircraft_id, created_at DESC, id DESC`,
       [orgId, aircraftId],
     );
@@ -58,7 +63,7 @@ export class PgAircraftReadingsRepo implements AircraftReadingsPort {
 
   async latestAll(db: Queryable, orgId: string): Promise<Map<string, AdminReading>> {
     const { rows } = await db.query<ReadingDbRow>(
-      `${LATEST_SQL} WHERE org_id = $1 ORDER BY aircraft_id, created_at DESC, id DESC`,
+      `${LATEST_SQL} ORDER BY aircraft_id, created_at DESC, id DESC`,
       [orgId],
     );
     return new Map(rows.map((r) => [r.aircraft_id, toReading(r)]));
