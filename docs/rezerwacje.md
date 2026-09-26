@@ -1373,7 +1373,7 @@ składający pomija kroki, na których sam stoi (§11.2), więc próba na jednym
 wywoła żadnego powiadomienia. Oczekiwane: „Prośba o zgodę" na telefonie, tapnięcie
 otwiera ekran decyzji 26.
 
-### 12.7 Rodzaje spoza rezerwacji: obserwowanie samolotu (3.2.0, projekt 2026-09-25)
+### 12.7 Rodzaje spoza rezerwacji: obserwowanie samolotu (3.1.0, projekt 2026-09-25)
 
 Skrzynka i budzik są odtąd mechanizmem OGÓLNYM, nie własnością workflow akceptacji.
 Zgłoszenie #205 (`docs/obserwowanie-samolotu.md` §5) dokłada pięć rodzajów o MASZYNIE -

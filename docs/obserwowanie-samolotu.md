@@ -1,13 +1,15 @@
-# Obserwowanie samolotu: karta maszyny w aplikacji i powiadomienia o jej lotach (3.2.0)
+# Obserwowanie samolotu: karta maszyny w aplikacji i powiadomienia o jej lotach (3.1.0)
 
 > Dokument decyzji zgłoszenia **#205 „Obserwowanie samolotu"**. Powstaje PRZED kodem
 > i przed makietami - ta sama kolejność, co przy rezerwacjach (`docs/rezerwacje.md`)
 > i zakresach uprawnień (`docs/uprawnienia.md`).
 >
 > Stan: **decyzje właściciela z 2026-09-25 w dwóch turach** (§1 - sześć pytań o kształt
-> i pięć wąskich z §11, wszystkie zamknięte; nic nie zostaje otwarte). Wydanie: **razem
-> z 3.2.0** (rozbudowa panelu, `docs/panel-3.2.md`), więc etapy z §9 wchodzą do tamtego
-> milestone'u. Następny krok: epik O-A (makiety).
+> i pięć wąskich z §11, wszystkie zamknięte; nic nie zostaje otwarte). Wydanie: planowane
+> razem z 3.2.0, **ostatecznie w 3.1.0** (decyzja właściciela 2026-09-26 przy gałęzi
+> wydaniowej: etapy O-A…O-D były już zmergowane do `develop`, a wycięcie ich z wydania
+> wymagałoby cofania czterech PR-ów przeplecionych z innymi - pkt 6 niżej).
+> Etapy O-A…O-D wykonane.
 
 ## 0. Skąd to się wzięło
 
@@ -73,7 +75,9 @@ Pierwsza tura - kształt:
    tego nie mieści; zgłoszenie #205 przechodzi do milestone'u „Panel admina 3.2.0"
    i dokłada tam etapy O-A…O-D (§9). Konsekwencja dla `docs/panel-3.2.md` §11:
    3.2.0 przestaje być wydaniem, które „aplikacji pilota nie rusza w ogóle" - dostaje
-   OTA (§9).
+   OTA (§9). **ZMIENIONE 2026-09-26**: obserwowanie wychodzi w 3.1.0, razem z nowym
+   APK - gałąź `ninerdeck_3_1_0` wzięła `develop` z kompletem O-A…O-D, więc OTA
+   w 3.2.0 i wyjątek w `docs/panel-3.2.md` §11 przestają być potrzebne.
 
 Druga tura tego samego dnia - pięć wąskich pytań z §11:
 
@@ -716,7 +720,7 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
    - sprawdzenie w przeglądarce na żywym serwerze (członek ze zdolnością, klub z flotą)
      czeka na P-W (#169), jak przy R-H i #206; panel przeszedł `tsc` i komplet testów,
      w tym strażników architektury, napisów i luster.
-5. **Wydanie - w P-W 3.2.0**, z JEDNĄ zmianą wobec `docs/panel-3.2.md` §11: aplikacja
+5. **Wydanie - ostatecznie w 3.1.0 (R-K, #169, decyzja 2026-09-26)**, nowym APK razem ze ścieżką akceptacji. Pierwotny plan - P-W 3.2.0 z JEDNĄ zmianą wobec `docs/panel-3.2.md` §11: aplikacja
    pilota DOSTAJE aktualizację OTA na runtime 3.1.0 (bez podbicia `version` - moduł
    natywny się nie zmienia). Kolejność: serwer z migracją 15 i panel PRZED OTA;
    telefony na 3.0.0 nic nie dostają, bo i tak potrzebują APK 3.1.0. Podręcznik:
@@ -778,7 +782,7 @@ O-B serwer: migracja 15, port, producenci, trasy ─┴─► O-D panel: katalog
 | **Wykresy statyczne w pierwszej wersji** | Decyzja właściciela 2026-09-25 (druga tura): kursor i przybliżenie od razu - mechanizm i tak istnieje w profilu śladu |
 | **Wyprzedzenie przypomnienia jako ustawienie klubu** | Decyzja właściciela 2026-09-25: stała 60 min, bez kolumny i pola w panelu |
 | **Historia na karcie tylko z 90 dni** | Decyzja właściciela 2026-09-25: wszystkie operacje stronami - to jest „historyczny log" ze zgłoszenia |
-| **Wydanie w 3.1.0 albo OTA zaraz po nim** | Decyzja właściciela 2026-09-25: razem z 3.2.0 |
+| **Wydanie w 3.1.0 albo OTA zaraz po nim** | Decyzja właściciela 2026-09-25: razem z 3.2.0 - **odwrócona 2026-09-26**: kod był gotowy i zmergowany przed cięciem gałęzi wydaniowej 3.1.0, więc wyszedł w 3.1.0 |
 | **Powiadomienia o flagach i oleju w skrzynce** | To treść modułu „Do sprawdzenia" panelu (P-D); drugi kanał tych samych uwag |
 | **Zbiorcze podsumowanie dnia** | Budzik dzwoni przy zdarzeniu; wieczorne podsumowanie odpowiada na inne pytanie |
 | **Karta maszyny jako czwarta zakładka albo lista „Samoloty"** | Czwartej zakładki nie ma i nie będzie (§9.4 rezerwacji); wejściem jest wiersz maszyny w kalendarzu |

@@ -2,7 +2,7 @@
 
 > Kalendarz floty na jedną dobę, rezerwacja terminu w dwóch krokach i wejście w lot z tego, co zaplanowałeś.
 
-> **Uwaga.** Kalendarz i rezerwacje wchodzą w wydaniu 3.0.0. Jeśli Twoja aplikacja nie ma jeszcze paska zakładek na dole ekranu, zaktualizuje się sama przy najbliższym uruchomieniu z zasięgiem.
+> **Wskazówka.** Jeśli Twój klub wymaga zgody na rezerwację, zapisany termin czeka na decyzję osób z kolejnych kroków - jak to wygląda, opisuje strona [akceptacja rezerwacji](akceptacja-rezerwacji). W klubie bez ścieżki akceptacji rezerwacja potwierdza się od razu.
 
 ## Kalendarz floty
 

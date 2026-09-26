@@ -60,7 +60,7 @@ niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawn
 
 **Jedenasta zdolność klubowa - `fleet.watch` „Obserwowanie samolotów"** (karta maszyny
 w aplikacji i powiadomienia o jej lotach) weszła 2026-09-25 (zgłoszenie #205, wydanie
-3.2.0 - `docs/obserwowanie-samolotu.md` §3) i decyzją właściciela stoi w TRZECH zestawach
+3.1.0 - `docs/obserwowanie-samolotu.md` §3) i decyzją właściciela stoi w TRZECH zestawach
 naraz - stąd brzmienie tabeli wyżej. Zestaw „Akceptujący" nazywa przez to dwie rzeczy
 i jego opis w panelu mówi o dwóch (`scope.ts`). **Backfillu przy #205 NIE BYŁO** (decyzja
 właściciela 2026-09-25: baza nie ma jeszcze prawdziwych klubów - „jeszcze nie używaliśmy

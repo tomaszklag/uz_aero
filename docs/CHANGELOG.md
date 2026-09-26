@@ -35,6 +35,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 3.1.0 (build 6) · 26 września 2026
+
+> Rezerwacja ze zgodą klubu, skrzynka i powiadomienia na telefon, karta i obserwowanie samolotu, panel dla każdego członka klubu.
+
 ### Nowości
 
 - **Panel klubu otwiera się każdemu członkowi.** Logujesz się tym samym kontem, co do
@@ -132,6 +136,11 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Dla testerów
 
+- **To wydanie wymaga zainstalowania nowego pliku ze [strony pobierania](../pobierz/).**
+  Aktualizacja w tle nie wystarczy: powiadomienia na telefon potrzebują nowej wersji
+  aplikacji. Dane z telefonu zostają na miejscu.
+- Aplikacja zapyta o zgodę na powiadomienia dopiero przy pierwszej sprawie, która Cię
+  dotyczy. Odmowa niczego nie wyłącza - skrzynka pod dzwonkiem działa tak samo.
 - Ścieżkę akceptacji ustawia się w panelu; decyzję podejmuje się z telefonu albo z panelu,
   także bez dostępu do panelu - mechanik jest w klubie zwykłym pilotem.
 - Administrator z uprawnieniem do cudzych rezerwacji może rozstrzygnąć każdy krok z karty
@@ -327,34 +336,14 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 3.1.0 · planowane na 26 września 2026
-
-> Rezerwacja do akceptacji przez klub, skrzynka i powiadomienie o decyzji.
-
-- [x] Ścieżka akceptacji: rezerwacja czeka na zgodę osób dopisanych do kolejnych kroków
-- [x] Odmowa z powodem, który pilot czyta na swoim telefonie
-- [x] Podgląd pilota i samolotu przy decyzji - w panelu i w aplikacji
-- [x] Skrzynka powiadomień z dzwonkiem na Pulpicie - wymaga zasięgu, jak kalendarz
-- [~] Powiadomienie na telefon o prośbie i decyzji (wymaga zainstalowania nowej wersji aplikacji)
-- [x] Uprawnienia nadawane osobie gotowym zestawem albo pozycja po pozycji
-- [x] Zakładanie konta i „Nie pamiętam hasła" także z panelu
-- [x] Panel dla każdego członka klubu - to, co widać, wyznacza zakres uprawnień
-
 ### 3.2.0 · planowane na koniec października 2026
 
-> Rozbudowa panelu klubu i obserwowanie samolotu w aplikacji - bez nowej instalacji, aplikacja aktualizuje się sama.
+> Rozbudowa panelu klubu - bez nowej instalacji aplikacji.
 
 - [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
 - [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
 - [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [ ] Statystyki klubu i analityka zużycia maszyny
-- [x] Karta samolotu w aplikacji: co się z nim dzieje teraz, liczniki, najbliższe terminy,
-  historia lotów oraz wykresy motogodzin i paliwa - dla technika, koordynatora lotów
-  i osób akceptujących rezerwacje
-- [x] Obserwowanie samolotu: powiadomienie, gdy lot zbliża się za godzinę, gdy silnik
-  ruszył, gdy maszyna wróciła z odczytami, gdy przypomniany termin odwołano
-  i gdy nikt nie odebrał zarezerwowanej maszyny; lista obserwowanych z przełącznikami
-  w ustawieniach aplikacji i w Moim koncie w panelu
 
 ### 4.0.0 · termin do ustalenia
 

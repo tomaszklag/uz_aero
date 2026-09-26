@@ -478,6 +478,11 @@ Konsekwencje, które musi obsłużyć epik P-W:
   więc każdy nowy ekran ma stronę albo akapit. Reguła „zmiana ekranu w PR = zmiana strony
   podręcznika" obowiązuje każdy epik, nie tylko wydaniowy.
 
+**Uzupełnienie 2026-09-26 - akapit niżej jest NIEAKTUALNY**: obserwowanie wyszło
+w 3.1.0 razem z nowym APK (decyzja właściciela przy gałęzi wydaniowej - kod był już na
+`develop`), więc 3.2.0 wraca do zdania „aplikacji pilota nie rusza". Migracja 15 weszła
+na produkcję z 3.1.0; `fleet.watch` jest w katalogu od 3.1.0.
+
 **Uzupełnienie 2026-09-25 - aplikacja pilota JEDNAK dostaje aktualizację, ale OTA:**
 zgłoszenie #205 (`docs/obserwowanie-samolotu.md`) dołączyło do 3.2.0 i niesie ekran karty
 maszyny, wykresy i pięć powiadomień w telefonie. Modułu natywnego nie rusza, więc jedzie

@@ -3877,7 +3877,7 @@ i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
   i tylko w jedną stronę. Nieznany identyfikator NIE odrzuca paczki: rezerwacja nie
   jest warunkiem lotu (§2.3), a pilot mógł wejść w lot z rezerwacji odwołanej
   w międzyczasie. Domena nie robi z tym polem NIC
-- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min; od 3.2.0
+- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min; od 3.1.0
   `BookingClockJob` w `bookingClock.ts` - obserwowanie samolotu dołożyło trzecie pytanie): slot
   zwalnia się sam po godzinie bez przejęcia maszyny. `setInterval`, nie kolejka - jedna
   instancja (§8.8 architektury); wyłączalny `BOOKING_RELEASE=0`, bo przebieg zmienia
@@ -4483,15 +4483,16 @@ rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refus
 - **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
   o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
 
-## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.2.0)
+## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.1.0)
 Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zdarzenia na
 samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,
 że lot się rozpoczął lub się zakończył" - dla koordynatora lotów i mechanika. Dokument
 decyzji: **`docs/obserwowanie-samolotu.md`** (model, pięć wiadomości, ekran 27, API,
 etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT zamknięty, **makiety O-A gotowe
 (2026-09-25, #219: `27`, `27a-c`, `25c`, szewron na 21, jedenasta zdolność w `piloci-konto`)**,
-**O-B #220, O-C #221 i O-D #222 WYKONANE 2026-09-25** (bloki niżej) - do wydania
-zostaje P-W 3.2.0.
+**O-B #220, O-C #221 i O-D #222 WYKONANE 2026-09-25** (bloki niżej). **Wydane w 3.1.0**
+(decyzja właściciela 2026-09-26 przy gałęzi `ninerdeck_3_1_0` - kod był już na `develop`,
+a wycięcie wymagałoby cofania czterech przeplecionych PR-ów).
 Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
 - **nowa zdolność `fleet.watch`** („Obserwowanie samolotów") w zestawach Akceptujący,
   Koordynator lotów i Technik, Administrator przez komplet. **BEZ backfillu** (druga tura
@@ -4528,8 +4529,8 @@ Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
   „Obserwuj" zapisuje serwer wprost, nie outbox
 - **wykresy MH i paliwa OD RAZU**, własnym rendererem jak profil śladu (`TrackPolyline`),
   serie liczy serwer, telefon samą geometrię; statyczne, bez normy i werdyktu
-- **wydanie RAZEM Z 3.2.0** - milestone „Panel admina 3.2.0" dostaje przez to OTA
-  aplikacji na runtime 3.1.0 (wbrew „aplikacji nie rusza" w `docs/panel-3.2.md` §11);
+- **wydanie** - planowane RAZEM Z 3.2.0 jako OTA, **ostatecznie w 3.1.0 nowym APK**
+  (2026-09-26), więc 3.2.0 wraca do „aplikacji pilota nie rusza" (`docs/panel-3.2.md` §11);
   wejście na kartę 27: nagłówek wiersza maszyny w kalendarzu, skrzynka i push, stopka 26B;
   bit `viewer.watch` dojeżdża w oknie kalendarza, bo telefon zdolności nie zna
 

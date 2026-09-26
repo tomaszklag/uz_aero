@@ -47,10 +47,12 @@
   drobna adnotacja z czasem lokalnym.
 - **Okno doby lotnej** - godziny, w których klub lata; poza nimi kalendarz nie proponuje
   slotów.
-- **Ścieżka akceptacji** *(3.1.0)* - kolejność osób, które muszą zgodzić się na
-  rezerwację, zanim stanie się potwierdzona. Klub bez ścieżki nie zatwierdza niczego -
-  rezerwacja jest gotowa od razu. Odrzucenie wymaga powodu, a pilot czyta go w aplikacji.
-- **Obserwowanie samolotu** *(3.2.0, w przygotowaniu)* - włącza się na karcie maszyny
+- **Ścieżka akceptacji** *(3.1.0)* - kolejne kroki, w każdym jedna lub kilka osób, które
+  muszą zgodzić się na rezerwację, zanim stanie się potwierdzona; w kroku wystarczy zgoda
+  jednej z nich. Klub bez ścieżki nie zatwierdza niczego - rezerwacja jest gotowa od razu.
+  Odrzucenie wymaga powodu, a pilot czyta go w aplikacji. Więcej:
+  [akceptacja rezerwacji](akceptacja-rezerwacji).
+- **Obserwowanie samolotu** *(3.1.0)* - włącza się na karcie maszyny
   w aplikacji; ma je osoba z uprawnieniem „Obserwowanie samolotów" (technik,
   koordynator lotów, akceptujący rezerwacje). Daje powiadomienia o tej maszynie: lot
   za godzinę, odwołany termin, uruchomienie silnika, zdanie z odczytami, nieodebrana
