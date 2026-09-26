@@ -1145,12 +1145,18 @@ export interface BookingsPort {
    * Rezerwacja zrealizowana operacją (B7). Jedyne miejsce, w którym rejestr dotyka
    * rezerwacji, i tylko w jedną stronę. `false`, gdy wiersza nie ma albo nie jest
    * czynny - ingest nie ma się wtedy o co potykać.
+   *
+   * Realizuje WYŁĄCZNIE rezerwację POTWIERDZONĄ, należącą do PIC-a operacji i tej samej
+   * maszyny (przegląd bezpieczeństwa 3.1.0, issue #169): identyfikator każdej rezerwacji
+   * klubu stoi w oknie kalendarza, więc bez tych warunków zmodyfikowany klient mógł
+   * „zrealizować" termin kolegi. `pending` nie przeskakuje do realizacji - tak mówi
+   * domena (`canTransition`). Cudza, inna maszyna, czekająca: `false`, lot wchodzi.
    */
   fulfil(
     tx: Queryable,
     orgId: string,
     id: string,
-    sessionUuid: string,
+    by: { sessionUuid: string; pilotId: string; aircraftId: string },
     at: Date,
   ): Promise<boolean>;
   /**

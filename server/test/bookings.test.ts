@@ -33,6 +33,7 @@ import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 type App = Harness['app'];
+type Db = Harness['db'];
 
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 
@@ -472,6 +473,69 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
     );
     expect(rows[0]!.status).toBe('fulfilled');
     expect(rows[0]!.session_uuid).toBe('S-REZ');
+  });
+
+  /*
+   * Przegląd bezpieczeństwa 3.1.0 (issue #169, K7): identyfikator KAŻDEJ rezerwacji klubu
+   * stoi w oknie kalendarza, więc zmodyfikowany klient mógł wpisać cudzy do przejęcia
+   * i „zrealizować" termin kolegi - slot przepadał bez słowa, a obserwujący dostawali
+   * „zgodnie z planem" o locie, który z tym planem nie ma nic wspólnego. Lot wchodzi
+   * zawsze (rezerwacja nie jest warunkiem lotu); nietknięta zostaje REZERWACJA.
+   */
+  const claimWith = (app: App, token: string, pic: string, aircraftId: string, reservationId: string, uuid: string) =>
+    app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: bearer(token),
+      payload: {
+        events: [
+          {
+            uuid: `ev-${uuid}`,
+            sessionUuid: uuid,
+            aircraftId,
+            picId: pic,
+            dualId: null,
+            type: 'session_claim',
+            deviceTime: JUTRO + 8 * H,
+            gpsTime: JUTRO + 8 * H,
+            payload: { mode: 'free', reservationId },
+            schemaVersion: 1,
+          },
+        ],
+      },
+    });
+
+  const statusOf = async (db: Db, id: string) =>
+    (await db.query<{ status: string }>('SELECT status FROM bookings WHERE id = $1', [id])).rows[0]!.status;
+
+  it('CUDZA rezerwacja w przejęciu zostaje nietknięta - lot wchodzi, termin kolegi nie przepada', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const krz = await login(app, 'KRZ');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+
+    const res = await claimWith(app, krz, 'KRZ', 'SP-AXA', id, 'S-OBCA');
+    expect(res.statusCode, res.body).toBe(200);
+    expect(await statusOf(db, id)).toBe('confirmed');
+  });
+
+  it('własna rezerwacja INNEJ maszyny zostaje nietknięta', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+
+    expect((await claimWith(app, ako, 'AKO', 'SP-FGK', id, 'S-INNA')).statusCode).toBe(200);
+    expect(await statusOf(db, id)).toBe('confirmed');
+  });
+
+  it('rezerwacja CZEKAJĄCA na zgodę nie przeskakuje do realizacji (domena: pending → fulfilled zakazane)', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+    await db.query(`UPDATE bookings SET status = 'pending' WHERE id = $1`, [id]);
+
+    expect((await claimWith(app, ako, 'AKO', 'SP-AXA', id, 'S-CZEKA')).statusCode).toBe(200);
+    expect(await statusOf(db, id)).toBe('pending');
   });
 
   it('NIEZNANA rezerwacja w `session_claim` NIE odrzuca paczki', async () => {

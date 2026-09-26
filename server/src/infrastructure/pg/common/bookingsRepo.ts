@@ -328,15 +328,16 @@ export class PgBookingsRepo implements BookingsPort {
     tx: Queryable,
     orgId: string,
     id: string,
-    sessionUuid: string,
+    by: { sessionUuid: string; pilotId: string; aircraftId: string },
     at: Date,
   ): Promise<boolean> {
     const { rows } = await tx.query<{ id: string }>(
       `UPDATE bookings
           SET status = 'fulfilled', session_uuid = $3, updated_at = $4
-        WHERE org_id = $1 AND id = $2 AND status IN (${HOLDING})
+        WHERE org_id = $1 AND id = $2 AND status = 'confirmed' AND kind = 'flight'
+          AND pilot_id = $5 AND aircraft_id = $6
         RETURNING id`,
-      [orgId, id, sessionUuid, at],
+      [orgId, id, by.sessionUuid, at, by.pilotId, by.aircraftId],
     );
     return rows.length > 0;
   }

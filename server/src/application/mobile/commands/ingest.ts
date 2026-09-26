@@ -319,7 +319,13 @@ export class IngestCommands {
           if (event.type !== 'session_claim') continue;
           const id = (event.payload as { reservationId?: string | null }).reservationId;
           if (typeof id !== 'string' || id === '') continue;
-          await this.bookings.fulfil(tx, orgId, id, event.sessionUuid, this.clock.now());
+          await this.bookings.fulfil(
+            tx,
+            orgId,
+            id,
+            { sessionUuid: event.sessionUuid, pilotId: event.picId, aircraftId: event.aircraftId },
+            this.clock.now(),
+          );
         }
       }
       /*
