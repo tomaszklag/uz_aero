@@ -32,7 +32,7 @@
 
 import type { Capability } from '../../api/dto';
 
-export type NavIcon = 'logbook' | 'inbox' | 'people' | 'plane' | 'calendar' | 'bug' | 'building';
+export type NavIcon = 'logbook' | 'inbox' | 'people' | 'plane' | 'calendar' | 'chart' | 'bug' | 'building';
 
 /** Rodzaj sesji panelu: klub (członkostwo) albo platforma (superadministrator bez klubu). */
 export type SessionKind = 'org' | 'platform';
@@ -75,11 +75,16 @@ export const NAV_ITEMS: readonly NavItem[] = [
   // niezerowej sumie (reguła SyncChipa, issue #12).
   { to: '/do-sprawdzenia', label: 'Do sprawdzenia', icon: 'inbox', access: 'panel.access' },
   // Kalendarz TRZECI (3.2.0, §17: Dziennik · Do sprawdzenia · Kalendarz · Statystyki ·
-  // Piloci · Samoloty - Statystyki dochodzą z epikiem P-E). Kolejność nie jest kwestią
+  // Piloci · Samoloty). Kolejność nie jest kwestią
   // gustu: `homeFor` bierze PIERWSZĄ dostępną pozycję, więc rozstrzyga, gdzie ląduje
   // zalogowany. Dziennik zostaje ekranem startowym administratora; członek bez
   // „Podglądu klubu" ma tylko Kalendarz i ląduje właśnie tu.
   { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', access: 'club' },
+  // Statystyki CZWARTE (3.2.0, P-E): jedno pytanie - „ile tego było w tym sezonie" -
+  // na tej samej podstawie liczenia, co dziennik (§4.5). Na „Podglądzie klubu", bo to
+  // te same operacje, oglądane sumami; analityka zużycia pozycji NIE dostaje - jest
+  // własnością maszyny i mieszka w jej karcie (§8).
+  { to: '/statystyki', label: 'Statystyki', icon: 'chart', access: 'panel.access' },
   { to: '/piloci', label: 'Piloci', icon: 'people', access: 'panel.access' },
   { to: '/samoloty', label: 'Samoloty', icon: 'plane', access: 'panel.access' },
   // ── PLATFORMA ────────────────────────────────────────────────────────────────

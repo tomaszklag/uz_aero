@@ -258,6 +258,18 @@ export function ClockIcon({ size = 15 }: IconProps) {
   );
 }
 
+/** Słupki - moduł Statystyki (3.2.0, P-E); ścieżka 1:1 z makiety `statystyki` (stan pusty). */
+export function ChartIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <line x1="6" y1="20" x2="6" y2="14" />
+      <line x1="12" y1="20" x2="12" y2="8" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="3" y1="20" x2="21" y2="20" />
+    </Stroke>
+  );
+}
+
 /** Robak - moduł Zgłoszenia (na czas testów, issue #87). */
 export function BugIcon({ size = 16 }: IconProps) {
   return (

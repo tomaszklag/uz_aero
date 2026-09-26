@@ -32,6 +32,7 @@ import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
 import { PilotLogScreen } from './screens/logbook/PilotLogScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
+import { StatsScreen } from './screens/stats/StatsScreen';
 import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
 import { DecisionQueueScreen } from './screens/calendar/DecisionQueueScreen';
@@ -144,6 +145,17 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="panel.access">
             <ExportsScreen />
+          </RequireCapability>
+        ),
+      },
+
+      // STATYSTYKI (3.2.0, P-E): jeden ekran, zakres dat w adresie jak w dzienniku, bez
+      // podstron - analityka zużycia mieszka w karcie samolotu, nie tutaj (§8).
+      {
+        path: 'statystyki',
+        element: (
+          <RequireCapability access="panel.access">
+            <StatsScreen />
           </RequireCapability>
         ),
       },

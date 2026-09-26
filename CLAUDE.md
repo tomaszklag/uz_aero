@@ -5026,6 +5026,64 @@ obowiązujące odtąd:
   żywym serwerze (→ P-W), przyczyny rewizji przy wierszach rewizji (dziennik eksportu jej
   nie zapisuje - wróci z osobnym pytaniem do dziennika akcji)
 
+## Panel 3.2.0 - epik P-E: statystyki i analityka zużycia (issue #186, 2026-09-26)
+Moduł Statystyki 1:1 z makiety `statystyki` (§8, §17 pkt 10) i karta „Zużycie z lotów"
+w szufladzie samolotu 1:1 z `samoloty-karta` S2c (§17 pkt 11), z plastrem serwera na obu
+trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązujące odtąd:
+- **STATYSTYKI TO CZWARTA POZYCJA KOLUMNY** (Dziennik · Do sprawdzenia · Kalendarz ·
+  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia), na „Podglądzie klubu";
+  adres `#/statystyki?od=&do=` z zakresem ZAWSZE w adresie, jak w dzienniku. Analityka
+  zużycia pozycji NIE dostaje - jest własnością maszyny i mieszka w jej karcie (§8)
+- **JEDNA PODSTAWA LICZENIA Z DZIENNIKIEM** (§4.5): operacje ZAMKNIĘTE, bez unieważnionych
+  i pustych; `flights` w każdym wierszu `GET /stats` to LOTY z `flights_count` (kolumna
+  „Loty" jak na osiach dziennika, nie starty ze zdarzeń), a podtytuł NAZYWA podstawę
+  („1–7 września 2026 · operacje zamknięte w zakresie · 2 w toku poza sumami"; zero nie
+  dostaje członu, operacje bez daty przejęcia osobno)
+- **PRAWY FOTEL OSOBNO, TAKŻE TU** (§17.1 pkt 1): `statsRepo.byPilot` idzie tym samym CTE
+  `crew`, co oś pilotów dziennika; wiersz pilota niesie `dual: { operations, blockMs } |
+  null`, uczeń bez operacji jako dowódca ma wiersz z zerami nalotu i podpisem „tylko jako
+  drugi pilot", `totals.dual` jest własną sumą kolumny - kolumn „Blok" i „Drugi pilot" NIE
+  WOLNO dodać. Fakt „Piloci" liczy ludzi z dowolnego fotela = liczbę wierszy. Równość
+  wiersza pilota z `GET /log?os=piloci` (sesje, blok, prawy fotel) przybija test
+- **KAŻDA LICZBA MAKIETY MA POLE W KONTRAKCIE**: `totals.activeDays` („Dni lotne n z m"),
+  `totals.avgLitresPerBlockHour` (wiersz „Razem"), `totals.dual`, `utilizationPct`,
+  `blockSharePct`. Panel formatuje i układa (`screens/stats/statsRows.ts`, czysty,
+  z testami); jedyna arytmetyka to GEOMETRIA słupków - procent względem najwyższego dnia,
+  ta sama kategoria, co `trackChart.ts`. Kreska tam, gdzie serwer nie wie, z podpisem
+  „n operacji bez odczytu" pod paliwem; zero znaczy zero
+- **TABELA MA WIERSZ SUM JAKO DANE** (`DataTable.foot`: lista komórek w kolejności kolumn,
+  wyrównanie z kolumny) - tabela nie sumuje wierszy sama, bo nie wie, których liczb nie
+  wolno dodawać. Δ MH w sumach w godzinach DZIESIĘTNYCH („19,9 h"), bo flota miesza
+  formaty licznika; w wierszu maszyny w JEJ formacie
+- **„SEZON" NA CHIPACH = ROK KALENDARZOWY** (`rangeOf('sezon')`, do potwierdzenia przez
+  właściciela - §16); `DateRange` dostał prop `quick` i dwa zestawy jednego słownika:
+  `LOGBOOK_QUICK` (dziś, weekend, 30 dni, miesiące) i `STATS_QUICK` (30 dni, miesiące,
+  sezony). `activeQuickRange` rozpoznaje każdy zakres niezależnie od ekranu
+- **STAN PUSTY ZASTĘPUJE CAŁĄ TREŚĆ POD FILTRAMI** przy zerze zamkniętych operacji: „Żadnej
+  zamkniętej operacji w tym zakresie · Zmień zakres dat. Operacje w toku pojawią się tu po
+  zdaniu samolotu." Tabela sum z samymi zerami wyglądałaby jak awaria liczenia
+- **KARTA „ZUŻYCIE Z LOTÓW" ISTNIEJE WYŁĄCZNIE Z OPUBLIKOWANYM MODELEM** (issue #69):
+  `consumptionCardView` oddaje `null` i komponent nie rysuje NIC - ani zer, ani zdania
+  o braku danych, ani plamki w trakcie pobierania (obiecywałaby kartę, która może nie
+  przyjść). Wiersz „Motogodziny" gaśnie OSOBNO (`norm.mh == null`). Awaria pobrania to
+  INNY stan i dostaje baner `warn`
+- **STAWKI FAZOWE KARTY IDĄ Z NORMY DLA TELEFONU** (`AdminConsumptionReport.norm` =
+  `buildConsumptionNorm`, ta sama co w `/reference`): model czterofazowy nie ma jednej
+  stawki „w locie", a domena skleja go do pary ziemia + powietrze. Administrator i pilot
+  patrzą na TĘ SAMĄ parę liczb. `fuel.rates` panel nie czyta
+- **DWIE RÓŻNE LICZBY, NAZWANE** (issue #66): pasmo 10.–90. centyla ZMIERZONE jako
+  wypełnienie `.band` w zieleni, norma z dokumentacji (`aircraft.fuelNormLPerH` w raporcie)
+  ZADEKLAROWANA jako bursztynowy marker i wiersz „30,0 L/h · zadeklarowane, nie zmierzone
+  · z lotów +3 %" - odchyłkę (`headline.vsDocumentationPct`) liczy SERWER. Oś paska
+  w pełnych dziesiątkach L/h obejmujących pasmo i marker, nie węższa niż dwie działki
+- **LICZBY KARTY NAZYWAJĄ TO, CZYM SĄ**: „Obserwacje 42 · operacje · 40 pomiarów, 38 ze
+  śladem GPS · 3 odstające pominięte" i „Ostatni miesiąc 31,1 L/h · 9 pomiarów" - pomiar
+  to interwał między odczytami paliwa (operacja z tankowaniem daje dwa), więc makietowe
+  „38 ze śladem GPS" jako operacje byłoby nieprawdą; zero odstających nie dostaje członu
+- **czego P-E NIE ROBI**: podręcznika (E8 → P-W, #187), sprawdzenia w przeglądarce na
+  żywym serwerze (→ P-W), rysowania tabeli interwałów i strony przychodowej (zrzuty,
+  klienci) - kontrakt je niesie, panel 3.2 świadomie nie rysuje
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

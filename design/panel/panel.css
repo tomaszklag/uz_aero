@@ -3557,6 +3557,14 @@ tr.axis-add:hover {
   color: var(--text-primary);
 }
 
+/* Mianownik przy liczbie („6 z 7" - dni lotne w statystykach): ten sam stopień
+   i kolor, co `small` w `.kv-v` - to ta sama rola, przypis do liczby. */
+.track-fact-v small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
 /* Podpis pod profilem - wysokość jest GPS-owa i to trzeba powiedzieć. */
 .profile-foot {
   padding: 6px 16px 12px;

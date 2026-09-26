@@ -87,6 +87,13 @@ interface DataTableProps<Row> {
    * dokument, a nie szczegół jednego wiersza.
    */
   expanded?: (row: Row) => ReactNode;
+  /**
+   * WIERSZ SUM (`tfoot`, 3.2.0 - statystyki): jedna komórka na kolumnę, w kolejności
+   * kolumn, z ich wyrównaniem. Treść komórek przychodzi POLICZONA (serwer sumuje,
+   * tabela układa) - i dlatego to lista napisów, a nie funkcja nad wierszami: tabela
+   * nie ma prawa dodać kolumny sama, bo nie wie, których liczb nie wolno dodawać.
+   */
+  foot?: ReactNode[];
   caption: string;
 }
 
@@ -99,6 +106,7 @@ export function DataTable<Row>({
   onRowClick,
   rowClass,
   expanded,
+  foot,
   caption,
 }: DataTableProps<Row>) {
   const renderRow = (row: Row, forced?: string): ReactNode => {
@@ -227,6 +235,17 @@ export function DataTable<Row>({
               {group.rows.map((row) => renderRow(row))}
             </tbody>
           ))
+        )}
+        {foot == null ? null : (
+          <tfoot>
+            <tr>
+              {columns.map((column, index) => (
+                <td key={column.key} className={column.align === 'num' ? 'num' : undefined}>
+                  {foot[index]}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         )}
       </table>
     </div>

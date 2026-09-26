@@ -19,10 +19,14 @@
  */
 
 import type {
+  ConsumptionModel,
+  ConsumptionNorm,
+  ConsumptionSummary,
   Event,
   FlagStatus,
   FlagType,
   MhFormat,
+  MhModel,
   OperationType,
   PasswordWeakness,
   ServiceStatus,
@@ -1715,4 +1719,159 @@ export interface AttentionDto {
     failedExports: ExportListItemDto[];
     staleOpenDays: SessionListItemDto[];
   };
+}
+
+// -- statystyki zakresu (3.2.0, P-E) --------------------------------------------
+
+/**
+ * `GET /admin/api/stats` - TE pola odpowiedzi, które panel czyta (serwer przysyła też
+ * starty/lądowania, zrzuty i klientów strony przychodowej; panel 3.2 ich nie rysuje).
+ *
+ * Konstytucja ekranu: KAŻDA liczba - także iloraz („Śr. L/h", udział, wykorzystanie,
+ * średnia floty) - przychodzi policzona. Panel formatuje i układa; nie dodaje, nie
+ * dzieli, nie odejmuje (`admin/test/architecture.test.ts`). Ta sama podstawa liczenia,
+ * co dziennik (§4.5): operacje ZAMKNIĘTE w zakresie, bez unieważnionych i pustych.
+ */
+export interface StatsRangeDto {
+  /** Dni UTC `YYYY-MM-DD`, włącznie - po DNIU ZAMKNIĘCIA operacji. */
+  fromDay: string;
+  toDay: string;
+  /** Mianownik „Dni lotne n z m". */
+  calendarDays: number;
+  /** `true` = zakresu nie podano i serwer wybrał domyślny (ostatnie 30 dni). */
+  defaulted: boolean;
+}
+
+export interface StatsTotalsDto {
+  sessions: number;
+  /** Doby z co najmniej jedną zamkniętą operacją. */
+  activeDays: number;
+  /** LOTY (start → lądowanie) - ta sama liczba, co „Loty" w dzienniku. */
+  flights: number;
+  aircraft: number;
+  /** Ludzie, którzy latali w DOWOLNYM fotelu - liczba wierszy tabeli pilotów. */
+  pilots: number;
+  blockMs: number;
+  flightMs: number;
+  /** `null` = choć jedna operacja bez bilansu albo wiersze nieprzeliczone. */
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  /** Średnia FLOTY na godzinę blokową - wiersz „Razem"; liczy serwer. */
+  avgLitresPerBlockHour: number | null;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  /** Prawy fotel w całym zakresie - własna suma kolumny „Drugi pilot"; `null` = ani jednej. */
+  dual: { operations: number; blockMs: number } | null;
+  staleRows: number;
+  /** Operacje W TOKU z przejęciem w zakresie - celowo poza sumami, nazwane w podtytule. */
+  openSessionsInRange: number;
+  /** Operacje w toku BEZ daty przejęcia (rejestr niekompletny) - liczone zawsze. */
+  openSessionsUndated: number;
+}
+
+/** Punkt „nalot dzień po dniu" - pełny kalendarz zakresu, dzień bez lotów to prawdziwe zero. */
+export interface StatsDailyPointDto {
+  /** Dzień UTC `YYYY-MM-DD`. */
+  day: string;
+  blockMs: number;
+}
+
+export interface StatsAircraftDto {
+  aircraftId: string;
+  /** `null` = jednostki nie ma już w rejestrze floty; wiersz zostaje. */
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  avgLitresPerBlockHour: number | null;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  activeDays: number;
+  /** `activeDays / calendarDays` w %; `null` przy zerowym mianowniku. */
+  utilizationPct: number | null;
+  staleRows: number;
+}
+
+/**
+ * Wiersz pilota - ten sam kształt, co oś pilotów dziennika (§17.1 pkt 1): nalot liczy
+ * się dowódcy, czas w prawym fotelu jest osobną liczbą i NIE dodaje się do bloku.
+ */
+export interface StatsPilotDto {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  dual: { operations: number; blockMs: number } | null;
+  /** Maszyny z operacji zamkniętych, dowolny fotel. */
+  regs: string[];
+  staleRows: number;
+}
+
+export interface StatsOperationDto {
+  /** `null` = operacje bez potwierdzonego zadania. */
+  operation: OperationType | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Udział bloku zadania w nalocie zakresu (%); liczy serwer. */
+  blockSharePct: number | null;
+  regs: string[];
+  staleRows: number;
+}
+
+export interface StatsReportDto {
+  /** Zegar SERWERA - kotwica szybkich filtrów dat. */
+  at: string;
+  range: StatsRangeDto;
+  totals: StatsTotalsDto;
+  daily: StatsDailyPointDto[];
+  /** Malejąco po bloku - porządek tabel. */
+  aircraft: StatsAircraftDto[];
+  pilots: StatsPilotDto[];
+  operations: StatsOperationDto[];
+}
+
+// -- analityka zużycia jednej maszyny (3.2.0, P-E) ------------------------------
+
+/**
+ * `GET /admin/api/fleet/:id/consumption` - TE pola, które czyta karta „Zużycie z lotów"
+ * w szufladzie samolotu. Model, norma i podsumowanie jadą JAKO TYPY DOMENOWE (kopia
+ * rozjechałaby się z oryginałem po cichu); panel z nich wyłącznie CZYTA - pasmo,
+ * stawki i odchyłkę od dokumentacji liczy serwer.
+ */
+export interface ConsumptionReportDto {
+  at: string;
+  aircraft: {
+    aircraftId: string;
+    reg: string;
+    mhFormat: MhFormat;
+    /** Norma z DOKUMENTACJI (issue #66) - zadeklarowana, nie zmierzona; `null` = nie wpisano. */
+    fuelNormLPerH: number | null;
+  };
+  headline: {
+    litersPerFlightHour: number | null;
+    litersPerBlockHour: number | null;
+    /** Odchyłka pomiaru od normy z dokumentacji w % normy; `null` bez jednej z liczb. */
+    vsDocumentationPct: number | null;
+  };
+  basis: {
+    /** Operacje zamknięte, które weszły do analizy. */
+    sessions: number;
+    firstDay: number | null;
+  };
+  summary: ConsumptionSummary;
+  /** `published: false` = poniżej progu publikacji - karty wtedy NIE MA wcale (issue #69). */
+  fuel: ConsumptionModel;
+  /** Ta sama norma, którą dostaje telefon; `null` razem z niepublikowanym modelem. */
+  norm: ConsumptionNorm | null;
+  mh: MhModel;
 }

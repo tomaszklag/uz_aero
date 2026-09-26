@@ -18,10 +18,21 @@ export interface DayRange {
   to: string;
 }
 
-/** Szybkie filtry - kolejność jest kolejnością na pasku. */
-export const QUICK_RANGES = ['dzis', 'weekend', 'dni30', 'miesiac', 'poprzedni'] as const;
+/** Wszystkie szybkie filtry - kolejność jest kolejnością na pasku. */
+export const QUICK_RANGES = ['dzis', 'weekend', 'dni30', 'miesiac', 'poprzedni', 'sezon', 'poprzedniSezon'] as const;
 
 export type QuickRange = (typeof QUICK_RANGES)[number];
+
+/**
+ * Które chipy stoją na którym ekranie - dwa zestawy jednego słownika (3.2.0, P-E).
+ *
+ * Dziennik i karty dnia odpowiadają na „co się działo ostatnio" (dziś, weekend, miesiąc);
+ * statystyki na „ile tego było w tym sezonie" - i dlatego mają sezon zamiast dnia
+ * i weekendu (makieta `statystyki`). Jeden słownik, bo `activeQuickRange` ma rozpoznawać
+ * zakres wpisany ręcznie NIEZALEŻNIE od tego, na którym ekranie go wpisano.
+ */
+export const LOGBOOK_QUICK: readonly QuickRange[] = ['dzis', 'weekend', 'dni30', 'miesiac', 'poprzedni'];
+export const STATS_QUICK: readonly QuickRange[] = ['dni30', 'miesiac', 'poprzedni', 'sezon', 'poprzedniSezon'];
 
 /** Napis na chipie. `Record`, więc nowy zakres bez nazwy nie skompiluje się. */
 const LABELS: Record<QuickRange, string> = {
@@ -30,6 +41,8 @@ const LABELS: Record<QuickRange, string> = {
   dni30: '30 dni',
   miesiac: 'Ten miesiąc',
   poprzedni: 'Poprzedni miesiąc',
+  sezon: 'Ten sezon',
+  poprzedniSezon: 'Poprzedni sezon',
 };
 
 export const quickRangeLabel = (range: QuickRange): string => LABELS[range];
@@ -79,6 +92,20 @@ export function rangeOf(quick: QuickRange, now: number): DayRange {
       // Ostatni dzień poprzedniego miesiąca = dzień przed pierwszym bieżącego.
       const last = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) - DAY_MS;
       return { from: dayOf(first), to: dayOf(last) };
+    }
+
+    // ══ SEZON = ROK KALENDARZOWY (3.2.0, P-E) ══
+    // Makieta statystyk mówi „Ten sezon" / „Poprzedni sezon", a dokument decyzji sezonu
+    // nie definiuje. Rok kalendarzowy jest jedyną definicją, która nie zgaduje granic
+    // klubu (kwiecień–październik? marzec–listopad?) i pokrywa się z rocznym
+    // rozliczeniem nalotu. Gdy właściciel nazwie sezon inaczej, zmienia się TYLKO to
+    // miejsce - chipy i adresy zostają.
+    case 'sezon':
+      return { from: dayOf(Date.UTC(date.getUTCFullYear(), 0, 1)), to: dayOf(today) };
+
+    case 'poprzedniSezon': {
+      const year = date.getUTCFullYear() - 1;
+      return { from: dayOf(Date.UTC(year, 0, 1)), to: dayOf(Date.UTC(year, 11, 31)) };
     }
   }
 }

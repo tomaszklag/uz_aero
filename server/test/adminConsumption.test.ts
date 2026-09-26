@@ -194,6 +194,28 @@ describe('A10a · analityka liczy się ze strumienia, ale bez własnej arytmetyk
     expect(body.headline.mhPerBlockHour).toBeCloseTo(14.5 / 17.5, 6);
   });
 
+  it('norma dla aplikacji jedzie w raporcie, a odchyłkę od dokumentacji liczy serwer (3.2.0)', async () => {
+    const { app, db } = await testHarness();
+    await ingest(app, sixDays());
+
+    // Bez normy z dokumentacji nie ma czego odnosić - `null`, nie zero.
+    const bare = await report(app);
+    expect(bare.aircraft.fuelNormLPerH).toBeNull();
+    expect(bare.headline.vsDocumentationPct).toBeNull();
+    // Para stawek dla telefonu - ta sama, którą karta „Zużycie z lotów" pokazuje
+    // administratorowi: obie strony patrzą na TĘ SAMĄ liczbę.
+    expect(bare.norm).not.toBeNull();
+    expect(bare.norm.airLPerH).toBeCloseTo(42, 3);
+    expect(bare.norm.groundLPerH).toBeCloseTo(12, 3);
+    expect(bare.norm.blockLPerH).toBeCloseTo(585 / 17.5, 6);
+
+    await db.query(`UPDATE aircraft SET fuel_norm_l_per_h = 30 WHERE id = 'SP-AXA'`);
+    const withNorm = await report(app);
+    expect(withNorm.aircraft.fuelNormLPerH).toBe(30);
+    // (585 / 17,5 − 30) / 30 - w procentach normy z dokumentacji.
+    expect(withNorm.headline.vsDocumentationPct).toBeCloseTo(((585 / 17.5 - 30) * 100) / 30, 6);
+  });
+
   it('interwały niosą swoje źródła - tabela „skąd biorą się liczby"', async () => {
     const { app } = await testHarness();
     await ingest(app, sixDays());

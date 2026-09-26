@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { activeQuickRange, defaultRange, QUICK_RANGES, quickRangeLabel, rangeOf } from './dateRanges';
+import {
+  activeQuickRange,
+  defaultRange,
+  LOGBOOK_QUICK,
+  QUICK_RANGES,
+  quickRangeLabel,
+  rangeOf,
+  STATS_QUICK,
+} from './dateRanges';
 
 /** Czwartek 13 sierpnia 2026, 21:40 UTC - pora, o której doba lokalna już się rozjeżdża. */
 const THURSDAY = Date.UTC(2026, 7, 13, 21, 40);
@@ -30,6 +38,20 @@ describe('szybkie zakresy', () => {
   it('poprzedni miesiąc przeskakuje rok bez potykania się o grudzień', () => {
     const january = Date.UTC(2026, 0, 9, 12, 0);
     expect(rangeOf('poprzedni', january)).toEqual({ from: '2025-12-01', to: '2025-12-31' });
+  });
+
+  it('sezon to ROK KALENDARZOWY: bieżący od 1 stycznia do dziś, poprzedni w całości', () => {
+    // Definicja nie zgaduje granic klubu - rok pokrywa się z rocznym rozliczeniem nalotu.
+    expect(rangeOf('sezon', THURSDAY)).toEqual({ from: '2026-01-01', to: '2026-08-13' });
+    expect(rangeOf('poprzedniSezon', THURSDAY)).toEqual({ from: '2025-01-01', to: '2025-12-31' });
+  });
+
+  it('dziennik i statystyki mają własne zestawy chipów z JEDNEGO słownika', () => {
+    // Zakres wpisany ręcznie rozpoznaje się niezależnie od ekranu, na którym go wpisano.
+    for (const quick of [...LOGBOOK_QUICK, ...STATS_QUICK]) expect(QUICK_RANGES).toContain(quick);
+    expect(STATS_QUICK).toContain('sezon');
+    expect(LOGBOOK_QUICK).not.toContain('sezon');
+    expect(activeQuickRange({ from: '2026-01-01', to: '2026-08-13' }, THURSDAY)).toBe('sezon');
   });
 });
 

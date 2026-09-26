@@ -13,6 +13,7 @@
 
 import type {
   ConsumptionModel,
+  ConsumptionNorm,
   ConsumptionSummary,
   FuelInterval,
   MhFormat,
@@ -30,6 +31,11 @@ export interface AdminConsumptionAircraft {
   /** Format WYŚWIETLANIA licznika - nie mówi nic o tym, jak licznik zlicza (patrz `MhModel.kind`). */
   mhFormat: MhFormat;
   serviceStatus: string;
+  /**
+   * Norma z DOKUMENTACJI (issue #66): zadeklarowana w karcie samolotu, nie zmierzona -
+   * druga liczba obok pasma z lotów, a ekran nazywa, którą pokazuje. `null` = nie wpisano.
+   */
+  fuelNormLPerH: number | null;
 }
 
 /** Liczby nagłówkowe - kafle na górze ekranu. `null` = nie ma z czego policzyć. */
@@ -46,6 +52,12 @@ export interface AdminConsumptionHeadline {
    * na fazy jest osobnym pytaniem i osobną kartą.
    */
   mhPerBlockHour: number | null;
+  /**
+   * Odchyłka zmierzonego `litersPerBlockHour` od normy z dokumentacji, w % normy
+   * (issue #66: „badać odchylenie średniej od wartości referencyjnej"). Liczy SERWER -
+   * panel nie odejmuje dwóch liczb po swojemu. `null` bez normy albo bez pomiaru.
+   */
+  vsDocumentationPct: number | null;
 }
 
 /** Ile materiału stało za raportem - i czego w nim nie ma. */
@@ -79,6 +91,14 @@ export interface AdminConsumptionReport {
   summary: ConsumptionSummary;
   /** Model fazowy paliwa; `published: false` = poniżej progu (ekran `A10b`). */
   fuel: ConsumptionModel;
+  /**
+   * NORMA dla aplikacji pilota złożona przez domenę (`buildConsumptionNorm`) - TA SAMA,
+   * którą telefon dostaje w `/reference`: model czterofazowy sklejony do pary
+   * ziemia + powietrze średnią ważoną, pasmo 10.–90. centyla, przeliczniki licznika.
+   * Karta „Zużycie z lotów" w panelu czyta z niej stawki fazowe, żeby administrator
+   * i pilot patrzyli na TĘ SAMĄ parę liczb (3.2.0, P-E). `null` = model niepublikowany.
+   */
+  norm: ConsumptionNorm | null;
   /** Przeliczniki motogodzin razem z rozpoznanym typem licznika. */
   mh: MhModel;
   /**

@@ -88,6 +88,22 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   leży w arkuszu, adres karty do podania skarbnikowi (działa bez logowania) i ponowienie
   eksportu z odpowiedzią, co poszło albo dlaczego nie.
 
+- **Statystyki klubu.** Nowa pozycja w kolumnie: nalot w wybranym zakresie dat jako
+  pasek sum (operacje, dni lotne, loty, blok, lot, paliwo, przyrost licznika, piloci),
+  słupki dzień po dniu i trzy tabele jednego zbioru operacji - samoloty, piloci, zadania -
+  każda z wierszem „Razem". Szybkie zakresy: 30 dni, ten i poprzedni miesiąc, ten
+  i poprzedni sezon. Podtytuł mówi, że liczą się operacje zdane, i ile trwa poza sumami.
+- **Czas jako drugi pilot także w statystykach.** Tabela pilotów ma kolumnę „Drugi pilot"
+  z własną sumą - uczeń bez ani jednej operacji jako dowódca ma swój wiersz z liczbą
+  w tej kolumnie, a nalot dowódców sumuje się do nalotu floty co do minuty tak samo,
+  jak w dzienniku.
+- **Zużycie z lotów na karcie samolotu.** Gdy maszyna ma dość zapisanych operacji, jej
+  karta w panelu pokazuje pasmo typowego zużycia zmierzone z lotów, stawki w locie
+  i na ziemi, przeliczniki licznika motogodzin i trend z ostatniego miesiąca. Norma
+  z dokumentacji stoi obok jako marker z odchyłką - to dwie różne liczby i karta nazywa,
+  którą pokazuje. Młoda maszyna bez policzonej normy nie dostaje ani zer, ani zdania
+  o braku danych - karty po prostu nie ma.
+
 ### Poprawki
 
 - **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
@@ -402,7 +418,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
 - [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
 - [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
-- [ ] Statystyki klubu i analityka zużycia maszyny
+- [x] Statystyki klubu i analityka zużycia maszyny
 
 ### 4.0.0 · termin do ustalenia
 

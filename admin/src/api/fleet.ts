@@ -15,7 +15,7 @@
 
 import type { MhFormat } from '@ninerdeck/domain';
 
-import type { AircraftChangeDto, AircraftToleranceDto, FleetPageDto } from './dto';
+import type { AircraftChangeDto, AircraftToleranceDto, ConsumptionReportDto, FleetPageDto } from './dto';
 import { apiDelete, apiGet, apiPatch, apiPost } from './httpClient';
 
 /** Filtr listy tak, jak przyjmuje go trasa. Brak filtra = cała flota. */
@@ -121,4 +121,13 @@ export interface RecordReadingBody {
 
 export function recordReading(id: string, body: RecordReadingBody): Promise<AircraftChangeDto> {
   return apiPost<AircraftChangeDto>(`/fleet/${encodeURIComponent(id)}/readings`, body);
+}
+
+/**
+ * ANALITYKA ZUŻYCIA jednej maszyny (3.2.0, P-E) - karta w szufladzie samolotu, nie moduł.
+ * Okno domyślne (90 dni) wybiera serwer; panel o zakres nie pyta, bo karta odpowiada
+ * na „ile ta maszyna pali", a nie na „ile paliła w sierpniu".
+ */
+export function loadConsumption(aircraftId: string): Promise<ConsumptionReportDto> {
+  return apiGet<ConsumptionReportDto>(`/fleet/${encodeURIComponent(aircraftId)}/consumption`);
 }

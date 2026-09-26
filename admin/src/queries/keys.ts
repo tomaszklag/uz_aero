@@ -13,6 +13,7 @@ import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log
 import type { BugListQuery } from '../api/bugReports';
 import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
+import type { StatsQuery } from '../api/stats';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
@@ -120,6 +121,13 @@ export const keys = {
      * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo.
      */
     tolerance: (capacityL: number) => ['fleet', 'tolerance', capacityL] as const,
+    /**
+     * Analityka zużycia JEDNEJ maszyny (3.2.0, P-E) - karta w szufladzie samolotu. Pod
+     * prefiksem floty, ale POZA `lists`: zapis konfiguracji jej nie starzeje (liczy się
+     * z rejestru lotów, nie z pól karty), a nowa paczka zdarzeń i tak przychodzi
+     * dopiero przy następnym otwarciu szuflady.
+     */
+    consumption: (aircraftId: string) => ['fleet', 'consumption', aircraftId] as const,
   },
 
   /**
@@ -143,6 +151,13 @@ export const keys = {
      */
     preview: (uuid: string, shape: unknown) => ['log', 'preview', uuid, shape] as const,
   },
+
+  /**
+   * Statystyki zakresu (3.2.0, P-E): jedno pytanie o jeden zbiór operacji w trzech
+   * przekrojach naraz. Zakres dat jest tożsamością pytania, jak w dzienniku - „ten
+   * sezon" i „30 dni" mają prawo żyć w cache obok siebie.
+   */
+  stats: (query: StatsQuery) => ['stats', query] as const,
 
   /**
    * Zgłoszenia błędów (issue #87). KORZEŃ obejmuje wszystko i to jest właściwe:

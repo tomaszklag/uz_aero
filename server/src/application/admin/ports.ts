@@ -1582,6 +1582,8 @@ export interface StatsRange {
  */
 export interface AdminStatsGroupRow {
   sessions: number;
+  /** LOTY (start → lądowanie) z kolumny `flights_count` - ta sama liczba, co „Loty" w dzienniku. */
+  flights: number;
   blockMs: number;
   flightMs: number;
   takeoffs: number;
@@ -1600,6 +1602,11 @@ export interface AdminStatsGroupRow {
 /** Sumy całego zakresu plus wymiary kafli (`aircraft`, `pilots`). */
 export interface AdminStatsTotalsRow extends AdminStatsGroupRow {
   aircraft: number;
+  /** Doby UTC (po dniu zamknięcia) z co najmniej jedną zamkniętą operacją - „Dni lotne". */
+  activeDays: number;
+  /** Operacje z drugim pilotem (innym niż dowódca) i ich blok - własna suma kolumny „Drugi pilot". */
+  dualSessions: number;
+  dualBlockMs: number;
   /**
    * PIC ∪ Dual - pilotów BIORĄCYCH UDZIAŁ, nie tylko piszących sesję. Uwaga:
    * `dual_id` niesie OSTATNIEGO duala dnia, więc dual zastąpiony w środku dnia
@@ -1631,17 +1638,26 @@ export interface AdminStatsAircraftRow extends AdminStatsGroupRow {
   mhLastEnd: number | null;
 }
 
+/**
+ * Wiersz ujęcia „per pilot" - osoba, która w zakresie LATAŁA w dowolnym fotelu
+ * (3.2.0, `docs/panel-3.2.md` §17.1 pkt 1). Nalot (`sessions`…`landings`) liczy się
+ * DOWÓDCY; czas w prawym fotelu jest OSOBNĄ parą `dual` - ten sam kształt, co wiersz
+ * osi pilotów dziennika, bo to ta sama podstawa liczenia (§4.5).
+ */
 export interface AdminStatsPilotRow {
   pilotId: string;
   code: string | null;
   name: string | null;
   sessions: number;
+  flights: number;
   blockMs: number;
   flightMs: number;
   takeoffs: number;
   landings: number;
   staleRows: number;
-  /** Rejestracje jednostek (bez `null` po `LEFT JOIN`), alfabetycznie. */
+  /** Prawy fotel: liczba operacji i czas; `null` = ani jednej (nie para zer). */
+  dual: { operations: number; blockMs: number } | null;
+  /** Rejestracje jednostek z operacji zamkniętych, DOWOLNY fotel, alfabetycznie. */
   regs: string[];
 }
 
@@ -1825,6 +1841,8 @@ export interface ConsumptionAircraftRow {
   capacityL: number;
   mhFormat: MhFormat;
   serviceStatus: string;
+  /** Norma z DOKUMENTACJI (issue #66) - zadeklarowana, nie zmierzona; `null` = nie wpisano. */
+  fuelNormLPerH: number | null;
 }
 
 /** Zamknięte dni okna razem z licznikiem tych, które nie zmieściły się w limicie. */

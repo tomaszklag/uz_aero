@@ -68,6 +68,7 @@ const CLOSED_IN_RANGE = `s.org_id = $3 AND s.status = 'closed' AND s.close_time 
  */
 const GROUP_SUMS = `
   COUNT(*)                                                AS sessions,
+  COALESCE(SUM(s.flights_count), 0)                       AS flights,
   COALESCE(SUM(s.block_ms), 0)                            AS block_ms,
   COALESCE(SUM(s.flight_ms), 0)                           AS flight_ms,
   COALESCE(SUM(s.takeoff_count), 0)                       AS takeoffs,
@@ -82,6 +83,7 @@ const GROUP_SUMS = `
 
 interface GroupSumsDbRow {
   sessions: string;
+  flights: string;
   block_ms: string;
   flight_ms: string;
   takeoffs: string;
@@ -97,6 +99,7 @@ interface GroupSumsDbRow {
 
 const toGroupSums = (r: GroupSumsDbRow): AdminStatsGroupRow => ({
   sessions: Number(r.sessions),
+  flights: Number(r.flights),
   blockMs: Number(r.block_ms),
   flightMs: Number(r.flight_ms),
   takeoffs: Number(r.takeoffs),
@@ -122,9 +125,23 @@ const toRegs = (values: (string | null)[] | null): string[] =>
 export class PgAdminStatsRepo implements StatsAdminPort {
   async totals(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsTotalsRow> {
     const params = [range.fromMs, range.toMs, orgId];
-    const { rows } = await db.query<GroupSumsDbRow & { aircraft: string }>(
+    interface TotalsRow extends GroupSumsDbRow {
+      aircraft: string;
+      active_days: string;
+      dual_sessions: string;
+      dual_block_ms: string;
+    }
+    // „Dni lotne" = doby UTC po dniu zamknięcia (ta sama oś, co zakres). Prawy fotel
+    // liczy się TU osobno, a nie sumą wierszy pilotów w panelu: panel niczego nie dodaje,
+    // a `dual_id` równy dowódcy nie jest drugim pilotem (ten sam warunek, co w `byPilot`).
+    const { rows } = await db.query<TotalsRow>(
       `SELECT ${GROUP_SUMS},
-              COUNT(DISTINCT s.aircraft_id) AS aircraft
+              COUNT(DISTINCT s.aircraft_id)                          AS aircraft,
+              COUNT(DISTINCT s.close_time / ${DAY_MS})               AS active_days,
+              COUNT(*) FILTER (WHERE s.dual_id IS NOT NULL AND s.dual_id <> s.pic_id)
+                                                                     AS dual_sessions,
+              COALESCE(SUM(s.block_ms) FILTER (WHERE s.dual_id IS NOT NULL AND s.dual_id <> s.pic_id), 0)
+                                                                     AS dual_block_ms
          FROM sessions s
         WHERE ${CLOSED_IN_RANGE}`,
       params,
@@ -146,6 +163,9 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     return {
       ...toGroupSums(row),
       aircraft: Number(row.aircraft),
+      activeDays: Number(row.active_days),
+      dualSessions: Number(row.dual_sessions),
+      dualBlockMs: Number(row.dual_block_ms),
       pilots: Number(pilots.rows[0]?.n ?? 0),
     };
   }
@@ -246,56 +266,86 @@ export class PgAdminStatsRepo implements StatsAdminPort {
 
   async byPilot(db: Queryable, orgId: string, range: StatsRange): Promise<AdminStatsPilotRow[]> {
     interface Row {
-      pic_id: string;
+      pilot_id: string;
       code: string | null;
       name: string | null;
       sessions: string;
-      block_ms: string;
-      flight_ms: string;
-      takeoffs: string;
-      landings: string;
+      flights: string | null;
+      block_ms: string | null;
+      flight_ms: string | null;
+      takeoffs: string | null;
+      landings: string | null;
       stale_rows: string;
+      dual_sessions: string;
+      dual_block_ms: string | null;
       regs: (string | null)[] | null;
     }
 
-    // Atrybucja po PIC-u - jedynym, którego projekcja zna PEWNIE dla całej sesji
-    // (single-writer). Bloku Duala tu NIE MA i nie wolno go policzyć z `dual_id`:
-    // kolumna niesie OSTATNIEGO duala dnia, a zmiana załogi w środku dnia przypisałaby
-    // mu cudze godziny. Atrybucja per członek załogi wymaga projekcji domenowej
-    // (`docs/architektura-panelu-serwer.md` §10 poz. 8) - decyzja poza tym przekrojem.
+    // ZAŁOGA jako jeden wiersz na (osoba, operacja, fotel) - ten sam kształt, co oś
+    // pilotów dziennika (`logRepo.byPilot`, §4.5: JEDNA podstawa liczenia). Nalot sumuje
+    // się DOWÓDCY (jedynemu, którego projekcja zna PEWNIE dla całej operacji), a czas
+    // w prawym fotelu jest OSOBNĄ parą liczb - `dual_id` niesie OSTATNIEGO drugiego
+    // pilota, więc zmiana załogi w środku operacji przypisałaby mu cały bieg; to jest
+    // przyjęta niedokładność, nazwana w kontrakcie. `UNION ALL`, nie `UNION`: to różne
+    // fotele, nie duplikaty. Uczeń bez operacji jako dowódca dostaje przez to wiersz
+    // z zerami nalotu i liczbą w prawym fotelu (§17.1 pkt 1).
     const { rows } = await db.query<Row>(
-      `SELECT s.pic_id,
+      `WITH crew AS (
+         SELECT s.pic_id AS pilot_id, s.aircraft_id, s.flights_count, s.block_ms, s.flight_ms,
+                s.takeoff_count, s.landing_count, TRUE AS as_pic
+           FROM sessions s
+          WHERE ${CLOSED_IN_RANGE}
+         UNION ALL
+         SELECT s.dual_id, s.aircraft_id, s.flights_count, s.block_ms, s.flight_ms,
+                s.takeoff_count, s.landing_count, FALSE
+           FROM sessions s
+          WHERE ${CLOSED_IN_RANGE}
+            AND s.dual_id IS NOT NULL
+            AND s.dual_id <> s.pic_id
+       )
+       SELECT c.pilot_id,
               p.code  AS code,
               pp.name AS name,
-              COUNT(*)                                        AS sessions,
-              COALESCE(SUM(s.block_ms), 0)                    AS block_ms,
-              COALESCE(SUM(s.flight_ms), 0)                   AS flight_ms,
-              COALESCE(SUM(s.takeoff_count), 0)               AS takeoffs,
-              COALESCE(SUM(s.landing_count), 0)               AS landings,
-              COUNT(*) FILTER (WHERE s.takeoff_count IS NULL) AS stale_rows,
-              array_agg(DISTINCT a.reg ORDER BY a.reg)        AS regs
-         FROM sessions s
-         LEFT JOIN pilots      pp ON pp.id = s.pic_id
-         LEFT JOIN memberships p  ON p.pilot_id = s.pic_id AND p.org_id = s.org_id
-         LEFT JOIN aircraft    a  ON a.id = s.aircraft_id AND a.org_id = s.org_id
-        WHERE ${CLOSED_IN_RANGE}
-        GROUP BY s.pic_id, p.code, pp.name
-        ORDER BY SUM(s.block_ms) DESC, s.pic_id ASC`,
+              COUNT(*)              FILTER (WHERE c.as_pic)                             AS sessions,
+              SUM(c.flights_count)  FILTER (WHERE c.as_pic)                             AS flights,
+              SUM(c.block_ms)       FILTER (WHERE c.as_pic)                             AS block_ms,
+              SUM(c.flight_ms)      FILTER (WHERE c.as_pic)                             AS flight_ms,
+              SUM(c.takeoff_count)  FILTER (WHERE c.as_pic)                             AS takeoffs,
+              SUM(c.landing_count)  FILTER (WHERE c.as_pic)                             AS landings,
+              COUNT(*)              FILTER (WHERE c.as_pic AND c.takeoff_count IS NULL) AS stale_rows,
+              COUNT(*)              FILTER (WHERE NOT c.as_pic)                         AS dual_sessions,
+              SUM(c.block_ms)       FILTER (WHERE NOT c.as_pic)                         AS dual_block_ms,
+              array_agg(DISTINCT a.reg ORDER BY a.reg)                                  AS regs
+         FROM crew c
+         LEFT JOIN pilots      pp ON pp.id = c.pilot_id
+         -- Kod Z CZŁONKOSTWA w klubie raportu: osoba jest jedna, kod należy do klubu.
+         LEFT JOIN memberships p  ON p.pilot_id = c.pilot_id AND p.org_id = $3
+         LEFT JOIN aircraft    a  ON a.id = c.aircraft_id AND a.org_id = $3
+        GROUP BY c.pilot_id, p.code, pp.name
+        -- Ranking po nalocie DOWÓDCY, jak w tabeli mockupu; uczeń bez operacji jako
+        -- dowódca ląduje na końcu. Remis rozstrzyga identyfikator, nie plan zapytania.
+        ORDER BY COALESCE(SUM(c.block_ms) FILTER (WHERE c.as_pic), 0) DESC, c.pilot_id ASC`,
       [range.fromMs, range.toMs, orgId],
     );
 
-    return rows.map((r) => ({
-      pilotId: r.pic_id,
-      code: r.code,
-      name: r.name,
-      sessions: Number(r.sessions),
-      blockMs: Number(r.block_ms),
-      flightMs: Number(r.flight_ms),
-      takeoffs: Number(r.takeoffs),
-      landings: Number(r.landings),
-      staleRows: Number(r.stale_rows),
-      regs: toRegs(r.regs),
-    }));
+    return rows.map((r) => {
+      const dualSessions = Number(r.dual_sessions);
+      return {
+        pilotId: r.pilot_id,
+        code: r.code,
+        name: r.name,
+        sessions: Number(r.sessions),
+        flights: Number(r.flights ?? 0),
+        blockMs: Number(r.block_ms ?? 0),
+        flightMs: Number(r.flight_ms ?? 0),
+        takeoffs: Number(r.takeoffs ?? 0),
+        landings: Number(r.landings ?? 0),
+        staleRows: Number(r.stale_rows),
+        // Prawy fotel jako OSOBNA liczba; bez takiej operacji `null`, nie para zer.
+        dual: dualSessions > 0 ? { operations: dualSessions, blockMs: Number(r.dual_block_ms ?? 0) } : null,
+        regs: toRegs(r.regs),
+      };
+    });
   }
 
   async byOperation(
