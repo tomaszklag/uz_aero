@@ -11,6 +11,12 @@
  * urządzenie BYŁO i zostało wyłączone (przez kogo), a audyt - mieć do czego się odnieść.
  * Wiersz znika dopiero razem z osobą (`ON DELETE CASCADE`).
  *
+ * ══ UNIEWAŻNIENIE SPRZĄTA TOKENY PUSH ══
+ * Skoro wiersz zostaje, kaskada `ON DELETE` z `push_tokens` nie zadziała - więc
+ * `revoke` i `revokeAll` kasują tokeny swoich sesji TYM SAMYM zapytaniem (CTE z zapisem),
+ * czyli w transakcji wołającego. To porządek; gwarancją jest `PgPushTokensRepo.byPilots`,
+ * który o sesję martwą w ogóle nie pyta (przegląd bezpieczeństwa 3.1.0, issue #169).
+ *
  * ══ `touch` I `find` NIE ZNAJĄ KLUBU - IMIENNY WYJĄTEK OD STRAŻNIKA ══
  * Obie biorą identyfikator sesji odczytany ze ZWERYFIKOWANEGO tokenu, a nie z adresu
  * żądania, więc zawężenie po klubie nie dokładałoby żadnej kontroli: kto ma ten `sid`,
@@ -146,11 +152,16 @@ export class PgLoginSessions implements LoginSessionsPort {
     by: RevokedBy,
   ): Promise<boolean> {
     const { rows } = await tx.query<{ id: string }>(
-      `UPDATE login_sessions
-          SET revoked_at = $3, revoked_by = $4
-        WHERE id = $1 AND pilot_id = $2 AND revoked_at IS NULL
-          AND ($5::text IS NULL OR org_id = $5)
-        RETURNING id`,
+      `WITH revoked AS (
+         UPDATE login_sessions
+            SET revoked_at = $3, revoked_by = $4
+          WHERE id = $1 AND pilot_id = $2 AND revoked_at IS NULL
+            AND ($5::text IS NULL OR org_id = $5)
+          RETURNING id
+       ), dropped AS (
+         DELETE FROM push_tokens WHERE session_id IN (SELECT id FROM revoked)
+       )
+       SELECT id FROM revoked`,
       [target.id, target.pilotId, at.toISOString(), by, target.orgId ?? null],
     );
     return rows.length > 0;
@@ -168,12 +179,17 @@ export class PgLoginSessions implements LoginSessionsPort {
     by: RevokedBy,
   ): Promise<number> {
     const { rows } = await tx.query<{ id: string }>(
-      `UPDATE login_sessions
-          SET revoked_at = $2, revoked_by = $3
-        WHERE pilot_id = $1 AND revoked_at IS NULL
-          AND ($4::text IS NULL OR org_id = $4)
-          AND ($5::text IS NULL OR id <> $5)
-        RETURNING id`,
+      `WITH revoked AS (
+         UPDATE login_sessions
+            SET revoked_at = $2, revoked_by = $3
+          WHERE pilot_id = $1 AND revoked_at IS NULL
+            AND ($4::text IS NULL OR org_id = $4)
+            AND ($5::text IS NULL OR id <> $5)
+          RETURNING id
+       ), dropped AS (
+         DELETE FROM push_tokens WHERE session_id IN (SELECT id FROM revoked)
+       )
+       SELECT id FROM revoked`,
       [filter.pilotId, at.toISOString(), by, filter.orgId ?? null, filter.exceptId ?? null],
     );
     return rows.length;

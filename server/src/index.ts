@@ -397,7 +397,7 @@ const push = env.PUSH_PROVIDER === 'expo' ? new ExpoPush(env.PUSH_ACCESS_TOKEN ?
 const approvalStepsRepo = new PgApprovalStepsRepo();
 const bookingApprovalsRepo = new PgBookingApprovalsRepo();
 const notificationsRepo = new PgNotificationsRepo();
-const pushTokensRepo = new PgPushTokensRepo();
+const pushTokensRepo = new PgPushTokensRepo(clock);
 const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
 // Obserwowanie samolotu (3.2.0, issue #205): jeden adapter dla telefonu i panelu, jedna
 // odpowiedź na „kogo obudzić" dla ingestu, rezerwacji, zakończenia z panelu i zegara.

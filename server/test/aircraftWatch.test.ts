@@ -604,3 +604,62 @@ describe('zakończenie z panelu', () => {
     });
   });
 });
+
+describe('token push umiera razem z sesją logowania (przegląd bezpieczeństwa 3.1.0)', () => {
+  /*
+   * Unieważnienie sesji STEMPLUJE wiersz (`revoked_at`), a nie kasuje go - więc kaskada
+   * `ON DELETE` z `push_tokens` nie zadziała nigdy. Budzik ma pytać o sesję ŻYWĄ, a samo
+   * unieważnienie - sprzątać tokeny tej sesji. Inaczej wspólny tablet po wylogowaniu
+   * pilota A dalej dzwoniłby jego sprawami.
+   */
+  async function krzWithToken(app: App, db: Db): Promise<{ ako: string; krz: string; refreshToken: string }> {
+    await grantWatch(db, 'KRZ');
+    const ako = await login(app, 'AKO');
+    const res = await app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor('KRZ') } });
+    expect(res.statusCode, res.body).toBe(200);
+    const { token: krz, refreshToken } = res.json() as { token: string; refreshToken: string };
+    expect((await watch(app, krz)).statusCode).toBe(204);
+    expect(
+      (await app.inject({ method: 'POST', url: '/me/push-token', headers: bearer(krz), payload: { token: 'ExponentPushToken[krz]' } })).statusCode,
+    ).toBe(204);
+    return { ako, krz, refreshToken };
+  }
+
+  it('wylogowany telefon nie dostaje budzika, a jego token znika z bazy - skrzynka zostaje', async () => {
+    const { app, db, push } = await testHarness();
+    const { ako, refreshToken } = await krzWithToken(app, db);
+
+    expect((await app.inject({ method: 'POST', url: '/auth/logout', payload: { refreshToken } })).statusCode).toBe(204);
+    expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
+
+    expect(push.to('ExponentPushToken[krz]')).toHaveLength(0);
+    const tokens = await db.query(`SELECT 1 FROM push_tokens WHERE pilot_id = 'KRZ'`);
+    expect(tokens.rows).toHaveLength(0);
+    // Skrzynka jest źródłem prawdy (§12.1): wiadomość czeka na ponowne zalogowanie.
+    const inboxRows = await db.query(`SELECT kind FROM notifications WHERE pilot_id = 'KRZ'`);
+    expect(inboxRows.rows).toEqual([{ kind: 'aircraft_engine_started' }]);
+  });
+
+  it('sesja unieważniona inną drogą albo wygasła też nie budzi, choć wiersz tokenu jeszcze stoi', async () => {
+    const { app, db, push } = await testHarness();
+    const { ako } = await krzWithToken(app, db);
+
+    // Stan, który zostawiały wszystkie drogi unieważnienia sprzed poprawki.
+    await db.query(`UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin' WHERE pilot_id = 'KRZ'`);
+    expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
+    expect(push.to('ExponentPushToken[krz]')).toHaveLength(0);
+
+    await db.query(`UPDATE login_sessions SET revoked_at = NULL, revoked_by = NULL, expires_at = $1 WHERE pilot_id = 'KRZ'`, [
+      iso(TERAZ - H),
+    ]);
+    expect((await post(app, ako, opened('sess-2'))).statusCode).toBe(200);
+    expect(push.to('ExponentPushToken[krz]')).toHaveLength(0);
+  });
+
+  it('żywa sesja dalej budzi - poprawka nie ucisza nikogo, kto jest zalogowany', async () => {
+    const { app, db, push } = await testHarness();
+    const { ako } = await krzWithToken(app, db);
+    expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
+    expect(push.to('ExponentPushToken[krz]')).toHaveLength(1);
+  });
+});

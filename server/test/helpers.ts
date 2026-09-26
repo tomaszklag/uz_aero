@@ -378,7 +378,7 @@ const lastSeen = new LastSeenThrottle();
   const approvalStepsRepo = new PgApprovalStepsRepo();
   const bookingApprovalsRepo = new PgBookingApprovalsRepo();
   const notificationsRepo = new PgNotificationsRepo();
-  const pushTokensRepo = new PgPushTokensRepo();
+  const pushTokensRepo = new PgPushTokensRepo(clock);
   const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
   // Obserwowanie samolotu (issue #205) - prawdziwy adapter i ta sama odpowiedź na „kogo
   // obudzić", co w produkcji; budzik jest atrapą jak przy ścieżce akceptacji.

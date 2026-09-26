@@ -44,5 +44,8 @@ export class FakePush implements PushPort {
  * z jednym podmienionym elementem: cudzą usługą HTTP.
  */
 export function silentNotifier(db: Database): Notifier {
-  return new Notifier(db, new PgNotificationsRepo(), new PgPushTokensRepo(), new FakePush(), randomUUID);
+  // Zegar systemowy wystarczy: ten powiadamiacz nie pokazuje budzika nikomu, a zegar
+  // adaptera tokenów odróżnia wyłącznie sesje żywe od wygasłych przy wysyłce.
+  const clock = { now: () => new Date() };
+  return new Notifier(db, new PgNotificationsRepo(), new PgPushTokensRepo(clock), new FakePush(), randomUUID);
 }

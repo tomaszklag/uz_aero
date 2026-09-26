@@ -3,11 +3,18 @@
  * `docs/rezerwacje.md` §12.2).
  *
  * ══ TOKEN ŻYJE RAZEM Z SESJĄ LOGOWANIA ══
- * Klucz obcy do `login_sessions` z kasowaniem kaskadowym robi całą robotę: zdalne
- * wylogowanie z panelu (2.1.0) gasi przy okazji powiadomienia na tamtym urządzeniu.
  * Bez tego wspólny tablet klubu wysyłałby powiadomienia pilota, który dawno oddał
  * urządzenie koledze - a tego nikt by nie zauważył, bo push nie wraca z potwierdzeniem
  * do właściciela konta.
+ *
+ * Kaskada `ON DELETE` z `login_sessions` NIE WYSTARCZA i do przeglądu bezpieczeństwa
+ * 3.1.0 (issue #169, K7) była jedyną obroną: unieważnienie sesji STEMPLUJE wiersz
+ * (`revoked_at`), a nie kasuje go, więc kaskada nie zadziałała nigdy - wylogowany
+ * telefon dalej dostawał budziki. Obrona ma odtąd DWA piętra: `byPilots` pyta wyłącznie
+ * o tokeny sesji ŻYWYCH (nieunieważnionych i niewygasłych - ta sama definicja, co
+ * `PgLoginSessions.find`), a samo unieważnienie sprząta tokeny swojej sesji
+ * (`PgLoginSessions.revoke/revokeAll`). Pierwsze piętro jest gwarancją, drugie -
+ * porządkiem w tabeli.
  *
  * ══ BEZ `org_id` I TO JEST ZGODNE Z REGUŁĄ ══
  * Token opisuje URZĄDZENIE osoby, a ta bywa w kilku klubach naraz i przełącza je bez
@@ -15,9 +22,11 @@
  * i to tam (`notifications.org_id`) stoi zawężenie.
  */
 
-import type { PushTokensPort, Queryable } from '../../../application/common/ports.ts';
+import type { Clock, PushTokensPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgPushTokensRepo implements PushTokensPort {
+  constructor(private readonly clock: Clock) {}
+
   async register(
     db: Queryable,
     token: { token: string; sessionId: string; pilotId: string },
@@ -41,8 +50,12 @@ export class PgPushTokensRepo implements PushTokensPort {
   async byPilots(db: Queryable, pilotIds: readonly string[]): Promise<string[]> {
     if (pilotIds.length === 0) return [];
     const { rows } = await db.query<{ token: string }>(
-      `SELECT token FROM push_tokens WHERE pilot_id = ANY($1::text[])`,
-      [pilotIds],
+      `SELECT t.token
+         FROM push_tokens t
+         JOIN login_sessions s
+           ON s.id = t.session_id AND s.revoked_at IS NULL AND s.expires_at > $2
+        WHERE t.pilot_id = ANY($1::text[])`,
+      [pilotIds, this.clock.now().toISOString()],
     );
     return rows.map((r) => r.token);
   }
