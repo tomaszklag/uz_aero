@@ -815,6 +815,38 @@ describe('skrzynka', () => {
   });
 });
 
+describe('były członek klubu nie jest budzony (przegląd bezpieczeństwa 3.1.0)', () => {
+  it('osoba z kroku, której członkostwo wyłączono, nie dostaje ani wiadomości, ani budzika', async () => {
+    // Obsady kroku nie czyścimy po cichu (panel pokazuje ją przygaszoną), ale wiadomość
+    // i push idą wyłącznie do kogoś, kto dziś jest w klubie. Skrzynki były członek i tak
+    // nie otworzy - a budzik „Prośba o zgodę" na jego telefonie mówiłby o cudzym klubie.
+    const { app, db, push } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    await grantApprove(db, 'JSE');
+    const cookie = await panelCookie(app, 'AKO');
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ', 'JSE'] }]);
+
+    for (const who of ['KRZ', 'JSE']) {
+      const token = await login(app, who);
+      expect(
+        (await app.inject({ method: 'POST', url: '/me/push-token', headers: bearer(token), payload: { token: `ExponentPushToken[${who}]` } })).statusCode,
+      ).toBe(204);
+    }
+    await db.query(`UPDATE memberships SET status = 'disabled' WHERE org_id = $1 AND pilot_id = 'KRZ'`, [ORG_A]);
+
+    const pwi = await login(app, 'PWI');
+    expect((await book(app, pwi)).statusCode).toBe(201);
+
+    const doKrz = await db.query(`SELECT 1 FROM notifications WHERE pilot_id = 'KRZ'`);
+    expect(doKrz.rows).toHaveLength(0);
+    expect(push.to('ExponentPushToken[KRZ]')).toHaveLength(0);
+    // Reszta kroku dostaje prośbę jak dotąd.
+    const doJse = await db.query(`SELECT kind FROM notifications WHERE pilot_id = 'JSE'`);
+    expect(doJse.rows).toEqual([{ kind: 'approval_requested' }]);
+    expect(push.to('ExponentPushToken[JSE]')).toHaveLength(1);
+  });
+});
+
 describe('akceptujący jest TRZECIM widzem na drucie (§17)', () => {
   it('widzi komplet pól cudzej rezerwacji; zwykły członek klubu - nie', async () => {
     const { app, db } = await testHarness();

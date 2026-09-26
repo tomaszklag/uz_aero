@@ -1384,7 +1384,7 @@ export interface PushTokensPort {
    * Na które urządzenia zadzwonić - WYŁĄCZNIE te z żywą sesją logowania (wylogowanie
    * gasi budzik). Osoba bez tokenu po prostu nie ma wiersza.
    */
-  byPilots(db: Queryable, pilotIds: readonly string[]): Promise<string[]>;
+  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]>;
   /** Token odrzucony przez dostawcę jako martwy - urządzenie odinstalowało aplikację. */
   forget(db: Queryable, tokens: readonly string[]): Promise<void>;
 }

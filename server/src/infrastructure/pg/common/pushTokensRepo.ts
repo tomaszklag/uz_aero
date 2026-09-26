@@ -47,15 +47,22 @@ export class PgPushTokensRepo implements PushTokensPort {
     );
   }
 
-  async byPilots(db: Queryable, pilotIds: readonly string[]): Promise<string[]> {
+  async byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]> {
     if (pilotIds.length === 0) return [];
+    // Sesja: ŻYWA, ale z DOWOLNEGO klubu - token opisuje urządzenie, a powiadomienie
+    // z klubu B ma dojść także przy aktywnym klubie A (obserwowanie §8 R6). Klub
+    // POWIADOMIENIA wchodzi przez członkostwo: adresat musi dziś w nim być (ten sam
+    // warunek, co przy zapisie skrzynki - `PgNotificationsRepo.insert`).
     const { rows } = await db.query<{ token: string }>(
       `SELECT t.token
          FROM push_tokens t
          JOIN login_sessions s
            ON s.id = t.session_id AND s.revoked_at IS NULL AND s.expires_at > $2
+         JOIN memberships m
+           ON m.pilot_id = t.pilot_id AND m.org_id = $3 AND m.status = 'active'
+         JOIN pilots p ON p.id = t.pilot_id AND p.active
         WHERE t.pilot_id = ANY($1::text[])`,
-      [pilotIds, this.clock.now().toISOString()],
+      [pilotIds, this.clock.now().toISOString(), orgId],
     );
     return rows.map((r) => r.token);
   }

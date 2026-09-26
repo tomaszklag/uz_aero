@@ -46,10 +46,20 @@ export class PgNotificationsRepo implements NotificationsPort {
     rows: readonly NewNotification[],
     at: Date,
   ): Promise<void> {
+    // Adresat MUSI dziś być w klubie (aktywne członkostwo, aktywna osoba). Obsady kroku
+    // ani rezerwującego nikt nie czyści po cichu przy odejściu z klubu, więc bez tego
+    // warunku wiadomość - i budzik za nią - szły do byłych członków (przegląd
+    // bezpieczeństwa 3.1.0, issue #169). Skrzynki i tak by nie otworzyli; ten sam
+    // warunek stoi w `PgPushTokensRepo.byPilots`, bo budzik idzie osobną drogą.
     for (const row of rows) {
       await tx.query(
         `INSERT INTO notifications (id, org_id, pilot_id, kind, payload, created_at)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+         SELECT $1, $2, $3, $4, $5::jsonb, $6
+          WHERE EXISTS (
+            SELECT 1 FROM memberships m
+              JOIN pilots p ON p.id = m.pilot_id AND p.active
+             WHERE m.org_id = $2 AND m.pilot_id = $3 AND m.status = 'active'
+          )
          ON CONFLICT (id) DO NOTHING`,
         [row.id, orgId, row.pilotId, row.kind, JSON.stringify(row.payload), at],
       );

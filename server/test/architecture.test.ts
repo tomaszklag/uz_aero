@@ -564,12 +564,6 @@ describe('granice, których nie pilnuje kompilator', () => {
         'metoda i żywotność sesji z `sid` w tokenie - dla rotacji i przełączenia klubu',
       'infrastructure/pg/common/loginSessionsRepo.ts#isRevoked':
         'brama PLATFORMOWA pyta o sesję bez klubu - superadministrator go nie ma',
-      // Budzik (przegląd bezpieczeństwa 3.1.0, issue #169) pyta o sesję ŻYWĄ tokenu push.
-      // Klubu sesji nie wolno tu sprawdzać: token opisuje URZĄDZENIE, a powiadomienie
-      // z klubu B ma dojść także wtedy, gdy telefon pracuje w klubie A (skrzynka prowadzi
-      // wtedy do przełączenia klubu, obserwowanie §8 R6).
-      'infrastructure/pg/common/pushTokensRepo.ts#byPilots':
-        'żywotność sesji tokenu push - klub sesji to klub aktywny urządzenia, nie klub powiadomienia',
     };
 
     const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {

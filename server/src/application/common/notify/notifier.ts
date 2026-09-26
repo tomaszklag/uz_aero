@@ -65,7 +65,7 @@ export class Notifier {
       // i na tablecie klubu, a budzik ma zadzwonić tam, gdzie akurat patrzy.
       const messages = [];
       for (const draft of drafts) {
-        for (const token of await this.tokens.byPilots(this.db, [draft.pilotId])) {
+        for (const token of await this.tokens.byPilots(this.db, orgId, [draft.pilotId])) {
           messages.push({
             token,
             title: draft.push.title,
