@@ -651,6 +651,11 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 | P-E | **Wysokość słupka „dzień po dniu" liczy panel** (procent względem najwyższego dnia zakresu, `statsRows.ts`): makieta mówi „CSS tylko rysuje procent", ale ktoś ten procent musi policzyć. To GEOMETRIA, ta sama kategoria, co `trackChart.ts` (stopnie na piksele) - układanie gotowych liczb na powierzchni, nie fakt o locie; strażnik architektury dopuszcza ją w module czystym, nie w `.tsx` | §8, §17 pkt 10 |
 | P-E | **Stan pusty zastępuje CAŁĄ treść pod filtrami** (pasek faktów, słupki i trzy tabele), gdy w zakresie nie ma ani jednej zamkniętej operacji - kanwa makiety pokazuje sam komunikat, a tabela sum z samymi zerami wyglądałaby jak awaria liczenia | §17 pkt 10 |
 | P-E | **Awaria pobrania analityki nie milczy**: karta „Zużycie z lotów" znika przy braku modelu (issue #69), ale zerwane łącze dostaje baner `warn` - inaczej młoda maszyna bez danych i serwer, który nie odpowiedział, wyglądałyby tak samo. W trakcie pobierania nie ma ani karty, ani plamki: plamka obiecywałaby kartę, która może nie przyjść | §8 |
+| #233 | **Makieta własnej rezerwacji z panelu (Z1) powstała PO epikach P-B…P-E, nie w P-A** - P-A poszło za sześcioma epikami §12, a punkt spoza planu dostał własny krok design-first. Nowa makieta `kalendarz-rezerwacja` (K7, K7a, K7b) i ramka K2b w `kalendarz-wpis`; decyzje w `docs/rezerwacje.md` §10 (akapit „WŁASNA REZERWACJA Z PANELU") | §10, §17 pkt 13 |
+| #233 | **„Zarezerwuj" staje się JEDYNĄ akcją główną kalendarza dla każdego członka**, a „Wyłącz maszynę z użytku" schodzi u administratora do przycisku wyciszonego (K1 poprawiona). Zgłoszenie mówiło o wejściu z osi; przycisk w nagłówku dochodzi jako drugie wejście, bo pilot bez niego nie odkryłby, że wolne miejsce komórki jest celem kliknięcia - telefon (21) też ma oba wejścia. **Do potwierdzenia przez właściciela przy zatwierdzaniu makiety** | §10 rezerwacji |
+| #233 | **Sugestie slotów w panelu jednak SĄ - przy własnej rezerwacji.** `docs/rezerwacje.md` §10 mówił „panel nie pokazuje sugestii, administrator wpisuje konkretny termin" - zdanie zostaje prawdziwe dla „Zarezerwuj za pilota", a własna rezerwacja jest dokładnie przypadkiem, dla którego sugestie powstały. Trasa `GET /bookings/suggestions` dostanie bliźniaka pod `/admin/api` (panel woła wyłącznie `/admin/api/*`, reguła z #180) | §10 rezerwacji |
+| #233 | **Własne wpisy na osi zielone** (`.cal-item.mine`) i legenda z czwartym wzorem - K1 do 3.1.0 nie odróżniała własnych od cudzych, bo oglądał ją administrator; odkąd ogląda ją pilot, „kiedy lecę" jest pierwszym pytaniem do osi. Zieleń na tle, nie na ramce, żeby złożyć się ze stanem „czeka" | §10 rezerwacji |
+| #233 | **Odwołanie WŁASNEJ rezerwacji z panelu bez pola powodu** (K2b): powód czyta pilot, którego plan zdjęto - przy własnym nie ma komu tłumaczyć. Cudzej dotyczy dotychczasowa karta z powodem wymaganym (`reservations.manage`) | §10 rezerwacji |
 
 ---
 
@@ -705,6 +710,14 @@ inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wni
 12. **Nowe komponenty** (`admin/src/styles/components/`): `.nav-count` (shell), `.seg`
     (filters), `tr.day-row` i `tr.fold-row` (logbook), `tfoot` (table), `corrections.css`, `attention.css`,
     `stats.css`; wszystkie w inwentarzu `SZABLON.html`, `panel.css` przegenerowany.
+13. **Własna rezerwacja z panelu (issue #233, makiety 26 września 2026 - PO epikach
+    P-B…P-E)**: oś jest wejściem (`.cal-add` w wolnym miejscu komórki, plus dopiero pod
+    kursorem), „Zarezerwuj" jedyną akcją główną, własne wpisy zielone (`.cal-item.mine`),
+    szuflada w dwóch krokach jak 22/22A (`.steps`) z paskiem zajętości doby (`.daytrack`)
+    i sugestiami slotów (`.slots`), odmowa `slot_taken` banerem na kroku 1, własna
+    zajętość w K2b z „Przesuń i popraw" i „Odwołaj". Komponenty w `calendar.css`
+    i `drawer.css`, inwentarz `SZABLON.html`, `panel.css` przegenerowany. Pełny zapis
+    decyzji: `docs/rezerwacje.md` §10.
 
 ### 17.1 Rozstrzygnięcia właściciela (26 września 2026)
 

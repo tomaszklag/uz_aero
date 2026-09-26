@@ -5084,6 +5084,25 @@ trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązuj�
   żywym serwerze (→ P-W), rysowania tabeli interwałów i strony przychodowej (zrzuty,
   klienci) - kontrakt je niesie, panel 3.2 świadomie nie rysuje
 
+## Własna rezerwacja z panelu - MAKIETY (issue #233, 2026-09-26, milestone 3.2.0)
+Punkt spoza planu P-A, odłożony decyzją właściciela przy #216: pilot z pustym zakresem
+widzi kalendarz w panelu, ale rezerwował wyłącznie w aplikacji. Krok Z1 (design-first)
+WYKONANY - kod (Z2–Z5) czeka na zatwierdzenie makiet. Pełny zapis: `docs/rezerwacje.md`
+§10 (akapit „WŁASNA REZERWACJA Z PANELU"), odstępstwa `docs/panel-3.2.md` §16.
+- **makiety**: `design/panel/kalendarz-rezerwacja.html` (K7 krok 1 z paskiem zajętości
+  doby i sugestiami slotów, K7a krok 2, K7b odmowa `slot_taken`, stany) i ramka K2b
+  w `kalendarz-wpis.html` (własna zajętość: „Przesuń i popraw", „Odwołaj", czekająca,
+  zamknięta). K1 poprawiona: „Zarezerwuj" JEDYNĄ akcją główną (wyłączenie z użytku
+  schodzi do wyciszonego), własne wpisy zielone, wolne miejsce komórki celem kliknięcia
+- **komponenty** w `calendar.css` (`.cal-add`, `.cal-item.mine`, `.slots`, `.daytrack`)
+  i `drawer.css` (`.steps`); inwentarz `SZABLON.html`; `panel.css` przegenerowany
+- **dwie decyzje DO POTWIERDZENIA przy makiecie**: „Zarezerwuj" jako jedyny primary
+  kalendarza dla każdego członka; sugestie slotów w panelu przy własnej rezerwacji
+  (przy „Zarezerwuj za pilota" dalej ich nie ma)
+- **w kodzie (Z2) obowiązuje**: panel woła wyłącznie `/admin/api/*` (#180), własna
+  rezerwacja = `pilot_id` z sesji, ten sam `BookingsPort`/`ApprovalFlow`, co telefon,
+  BEZ audytu; strażnicy epiku C (sonda `tenantIsolation`, `org_id` w adapterze)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

@@ -131,3 +131,49 @@
   background: var(--surface-raised);
   color: var(--text-primary);
 }
+
+/* ══ KROKI SZUFLADY (3.2.0, issue #233) ══
+   Własna rezerwacja z panelu idzie w DWÓCH krokach, jak 22/22A w telefonie: najpierw
+   to, o co piloci konkurują (termin i maszyna), potem to, co opisuje lot (zadanie,
+   trasa, załoga, plan, notatka). Pasek kroków stoi między nagłówkiem a treścią
+   i mówi dwie rzeczy naraz: gdzie jestem i ile zostało. Krok zaliczony i bieżący są
+   zielone - zieleń znaczy tu postęp, nie werdykt; nazwa kroku bieżącego jest
+   półgruba, żeby pasek czytał się także bez koloru. Kroków NIE klika się na skróty:
+   „Wstecz" w stopce cofa o krok, a krok 2 nie istnieje bez rozstrzygniętego terminu. */
+.steps {
+  flex-shrink: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  padding: 12px 20px 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.step::before {
+  content: '';
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+.step.done::before,
+.step.on::before {
+  background: var(--green);
+}
+
+.step.done {
+  color: var(--text-secondary);
+}
+
+.step.on {
+  color: var(--text-primary);
+  font-weight: 600;
+}

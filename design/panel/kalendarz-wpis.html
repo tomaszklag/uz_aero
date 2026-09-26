@@ -19,7 +19,7 @@
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Moduł kalendarza - sześć ekranów</div>
+  <div class="vp-title">Moduł kalendarza - siedem ekranów</div>
   <a class="vp-item" href="kalendarz-flota.html">
     <span class="vp-badge">K1</span>
     <span class="vp-body">
@@ -32,7 +32,7 @@
     <span class="vp-badge">K2</span>
     <span class="vp-body">
       <span class="vp-name">Szuflada zajętości</span>
-      <span class="vp-when">Po kliknięciu w pasek: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku mają tę samą szufladę w dwóch stanach, bo to jeden byt z dyskryminatorem (`bookings.kind`).</span>
+      <span class="vp-when">Po kliknięciu w pasek: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku mają tę samą szufladę w dwóch stanach, bo to jeden byt z dyskryminatorem (`bookings.kind`). Od 3.2.0 trzeci widok: WŁASNA rezerwacja z „Przesuń i popraw" i „Odwołaj" (K2b).</span>
     </span>
   </a>
   <a class="vp-item" href="#czeka">
@@ -76,6 +76,13 @@
     <span class="vp-body">
       <span class="vp-name">Podgląd pilota i samolotu</span>
       <span class="vp-when">Kontekst decyzji (3.1.0): komu zatwierdzam i czym poleci. Ten sam komplet faktów niesie arkusz w aplikacji - decyduje też mechanik, który panelu nie otwiera.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-rezerwacja.html">
+    <span class="vp-badge">K7</span>
+    <span class="vp-body">
+      <span class="vp-name">Własna rezerwacja z panelu</span>
+      <span class="vp-when">Od 3.2.0 (issue #233) każdy członek rezerwuje z tej samej osi, którą ogląda: przycisk „Zarezerwuj" albo kliknięcie w wolne miejsce komórki otwiera szufladę w dwóch krokach jak 22/22A - termin i maszyna z sugestiami slotów, potem zadanie. Ścieżka akceptacji obowiązuje tak samo jak z telefonu.</span>
     </span>
   </a>
 </aside>
@@ -423,8 +430,10 @@
   <a href="kalendarz-sciezka.html">Kalendarz · ścieżka</a>
   <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
   <a href="kalendarz-podglad.html">Kalendarz · podgląd</a>
+  <a href="kalendarz-rezerwacja.html">Kalendarz · rezerwacja</a>
   <span>·</span>
   <a href="#czeka">↓ K2a Czeka na zgodę</a>
+  <a href="#wlasna">↓ K2b Własna rezerwacja</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>
@@ -535,6 +544,102 @@
           <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill dim">Potwierdzona</span></h2>
           <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">zgoda · Jan Bąk <span class="cell-sub mono">JBA</span> <span class="cell-sub">· 24 WRZ 18:40</span></span></div>
           <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v">zgoda · Adam Kowalski <span class="cell-sub mono">AKO</span> <span class="cell-sub">· 25 WRZ 07:15</span></span></div>
+        </section>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ K2b · WŁASNA REZERWACJA W SZUFLADZIE ZAJĘTOŚCI (3.2.0, issue #233) ══
+     Odkąd każdy członek rezerwuje z panelu (K7), szuflada zajętości ma trzeci widok:
+     WŁASNY termin. Te same akcje, co na karcie 23 w telefonie, i te same warunki:
+     „Przesuń i popraw" wyłącznie przy terminie, który się jeszcze nie zaczął,
+     „Odwołaj" także przy trwającym (pilot nie poleci - oddaje termin); rezerwacja
+     ZAMKNIĘTA ma jedno wyjście („Zarezerwuj inny termin"), bo wyszarzone przyciski
+     obiecywałyby akcje, których reguły nie dopuszczą. Odwołanie WŁASNE nie ma pola
+     powodu: powód czyta pilot, którego plan zdjęto - tu nie ma komu tłumaczyć.
+     Cudzej rezerwacji te akcje nie dotyczą (bez `reservations.manage` stopki nie ma).
+
+     ══ HISTORIA ŚCIEŻKI NIESIE OSOBĘ TAKŻE PRZY WŁASNEJ REZERWACJI ══
+     Na telefonie karta 23b pisze samą nazwę kroku (§9.4). W panelu historia zawsze
+     nazywa osobę (K2a) - także dla właściciela sprawy, bo to ten sam odczyt
+     i ta sama karta; pytanie „do kogo zadzwonić" pilot zadaje tak samo, jak
+     administrator. Cudza sprawa bez „Podglądu klubu" ścieżki nie dostaje wcale. -->
+<section class="canvas-section" id="wlasna">
+  <div class="canvas-section-title">K2b · własna rezerwacja - przesunięcie i odwołanie (3.2.0)</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Własna, potwierdzona - dwie akcje</span>
+        <span class="inv-when">Wiersz „Pilot" mówi „Ty" - nazwisko własne czytałoby się jak cudze. „Założona" nazywa powierzchnię (z panelu / z aplikacji). Karta zmiany prowadzi do K7 w trybie poprawki z wypełnionym szkicem (jedne drzwi do zmiany, ołówków przy wierszach NIE MA - issue #40); odwołanie obramowane, na końcu, bez pola powodu.</span>
+        <span class="inv-classes">.card · .kv · .btn · .card.danger · .btn.danger</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Rezerwacja</h2>
+          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Ty <span class="cell-sub">· Michał Wilk <span class="mono">MWI</span></span></span></div>
+          <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Barbara Nowak <span class="cell-sub mono">BNO</span></span></div>
+          <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+          <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPKK</span></div>
+          <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 120 L</span></div>
+          <div class="kv"><span class="kv-k">Założona</span><span class="kv-v">19 WRZ 21:08 <span class="cell-sub">przez Ciebie, z panelu</span></span></div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Zmiana terminu</h2>
+          <p class="card-note">Poprawka wraca do formularza z Twoim wpisem. Inna maszyna to nowa rezerwacja.</p>
+          <a class="btn" href="kalendarz-rezerwacja.html#stany">Przesuń i popraw</a>
+        </section>
+        <section class="card danger">
+          <h2 class="card-title">Odwołanie rezerwacji</h2>
+          <p class="card-note">Termin zwolni się natychmiast. Wpis zostanie w kalendarzu jako odwołany.</p>
+          <button type="button" class="btn danger">Odwołaj rezerwację</button>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Własna, czekająca na zgodę - poprawka czyści zgody</span>
+        <span class="inv-when">Plakietka bursztynowa w tytule karty ścieżki (ten sam ton, co karta czekającej rezerwacji w telefonie: zieleń obiecywałaby pewny lot). Karta zmiany mówi PRZED kliknięciem, że poprawka terminu wyczyści dotychczasowe zgody i ścieżka zacznie od nowa (reguła z 3.1.0) - zmiana zadania, trasy i notatki zgód nie rusza. Karty „Decyzja za krok" NIE MA: własnej sprawy nie rozstrzyga się samemu, nawet z uprawnieniem.</span>
+        <span class="inv-classes">.pill.amber · .kv-v.amber · .card-note</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill amber">Czeka na krok 1 z 2</span></h2>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v amber">czeka na decyzję <span class="cell-sub">· od 21:08</span></span></div>
+          <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v"><span class="cell-sub">—</span></span></div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Zmiana terminu</h2>
+          <p class="card-note"><b>Zmiana terminu wyczyści dotychczasowe zgody</b> - ścieżka zacznie od nowa. Zadanie, trasę i notatkę możesz poprawić bez tego.</p>
+          <a class="btn" href="kalendarz-rezerwacja.html#stany">Przesuń i popraw</a>
+        </section>
+        <section class="card danger">
+          <h2 class="card-title">Odwołanie rezerwacji</h2>
+          <p class="card-note">Osoby z kroku dostaną wiadomość, że prośba została wycofana.</p>
+          <button type="button" class="btn danger">Odwołaj rezerwację</button>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Własna, zamknięta - jedno wyjście</span>
+        <span class="inv-when">Odrzucona, wygasła albo odwołana: powód odmowy jest treścią (czyta się go w historii ścieżki, z osobą i chwilą), a jedyną akcją jest nowa rezerwacja z tym samym zadaniem - bez terminu, bo to termin przepadł. Ani „Przesuń", ani „Odwołaj": nie ma czego przesuwać ani odwoływać.</span>
+        <span class="inv-classes">.pill.dim · .btn</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill dim">Odrzucona</span></h2>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">odmowa · Jan Bąk <span class="cell-sub mono">JBA</span> <span class="cell-sub">· 20 WRZ 07:15</span><br><span class="cell-sub">Maszyna po przeglądzie dopiero w poniedziałek.</span></span></div>
+          <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v"><span class="cell-sub">—</span></span></div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Co dalej</h2>
+          <p class="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
+          <a class="btn" href="kalendarz-rezerwacja.html">Zarezerwuj inny termin</a>
         </section>
       </div>
     </article>

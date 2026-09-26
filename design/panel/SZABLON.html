@@ -1239,6 +1239,37 @@
       </div>
     </article>
 
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Rezerwacja z osi · kroki szuflady, zajętość doby, sugestie slotów</span>
+        <span class="inv-when">Własna rezerwacja z panelu (3.2.0, issue #233; makieta <code>kalendarz-rezerwacja</code>). Wolne miejsce komórki osi jest odnośnikiem (<code>.cal-add</code>) - w spoczynku nic, pod kursorem tło i plus; własny wpis zalogowanego jest ZIELONY (<code>.cal-item.mine</code>, zieleń na tle, żeby dało się ją złożyć z ramką „czeka"). Szuflada w DWÓCH krokach (<code>.steps</code>: zaliczony i bieżący zielone, bieżący półgruby). Pasek zajętości wybranej maszyny w wybranym dniu (<code>.daytrack</code>: doba lotna od świtu do zmroku, cudze w tonie osi, wyłączenie w skos, własny szkic zielenią, wolne pasma słowami). Sugestie slotów (<code>.slots</code>) jako kafelki z POWODEM, zaznaczony = zielony pierścień jak <code>.opt.selected</code>; nazwisko sąsiada za separatorem, w mianowniku.</span>
+        <span class="inv-classes"><b>.cal-add</b> · <b>.cal-item.mine</b> · .cal-swatch.mine · <b>.steps</b> · .step · .step.done · .step.on · <b>.daytrack</b> · .daytrack-bar · .daytrack-busy · .daytrack-busy.pending · .daytrack-busy.block · .daytrack-busy.mine · .daytrack-scale · .daytrack-free · <b>.slots</b> · .slot · .slot.on · .slot-h · .slot-why</span>
+      </div>
+      <div class="inv-demo">
+        <ol class="steps" style="padding: 0;" aria-label="Kroki rezerwacji"><li class="step done">1 · Termin i maszyna</li><li class="step on" aria-current="step">2 · Zadanie</li></ol>
+        <div class="daytrack">
+          <div class="daytrack-bar" role="img" aria-label="Przykład zajętości doby"><span class="daytrack-busy" style="left:46.7%; width:20%;"></span><span class="daytrack-busy block" style="left:80%; width:20%;"></span><span class="daytrack-busy mine" style="left:33.3%; width:13.3%;"></span></div>
+          <div class="daytrack-scale"><span>06:00</span><span>09:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span></div>
+          <span class="daytrack-free">wolne: 06:00 → 13:00 · 16:00 → 18:00</span>
+        </div>
+        <div class="slots">
+          <button type="button" class="slot on" aria-pressed="true"><span class="slot-h">11:00 → 13:00</span><span class="slot-why">tuż przed rezerwacją · A. Kowalski</span></button>
+          <button type="button" class="slot" aria-pressed="false"><span class="slot-h">06:00 → 08:00</span><span class="slot-why">początek dnia</span></button>
+        </div>
+        <div class="cal" style="--cal-days:3; --cal-reg-col:72px;">
+          <div class="cal-row">
+            <span class="cal-reg"><span class="cal-reg-mark">SP-AXA</span><span class="cal-reg-type">C172</span></span>
+            <div class="cal-cells">
+              <div class="cal-cell"><a class="cal-item mine" href="kalendarz-wpis.html#wlasna">M. Wilk</a><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-AXA">+</a></div>
+              <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-AXA">+</a></div>
+              <div class="cal-cell"><a class="cal-item pending mine" href="kalendarz-wpis.html#wlasna">M. Wilk</a></div>
+            </div>
+          </div>
+        </div>
+        <span class="inv-mark">własny wpis zielony · wolne miejsce komórki pokazuje plus dopiero pod kursorem · własny czekający = zieleń + ramka przerywana</span>
+      </div>
+    </article>
+
   </div>
 </section>
 

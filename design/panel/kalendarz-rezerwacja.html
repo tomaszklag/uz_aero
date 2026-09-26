@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - panel: własna rezerwacja z kalendarza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">KALENDARZ · REZERWACJA</span>
+  <span class="slug">panel/kalendarz-rezerwacja · #/kalendarz?od=&amp;do= · szuflada bez adresu</span>
+  <span class="canvas-meta"><span class="pulse"></span>Moduł kalendarza · 3.2.0 · issue #233</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Moduł kalendarza - siedem ekranów</div>
+  <a class="vp-item" href="kalendarz-flota.html">
+    <span class="vp-badge">K1</span>
+    <span class="vp-body">
+      <span class="vp-name">Oś maszyn i dni</span>
+      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON: pilot pyta „czym polecę dzisiaj", administrator układa tydzień. Od 3.2.0 oś jest też WEJŚCIEM w rezerwację - kliknięcie w wolne miejsce komórki (maszyna × dzień) otwiera tę szufladę z podstawioną maszyną i dniem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-wpis.html">
+    <span class="vp-badge">K2</span>
+    <span class="vp-body">
+      <span class="vp-name">Szuflada zajętości</span>
+      <span class="vp-when">Po kliknięciu w pasek: kto, czym, kiedy, z jakim zadaniem i notatką. Własna rezerwacja (K2b) ma tam „Przesuń i popraw" i „Odwołaj" - jak karta 23 w telefonie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-blokada.html">
+    <span class="vp-badge">K3</span>
+    <span class="vp-body">
+      <span class="vp-name">Wyłączenie maszyny z użytku</span>
+      <span class="vp-when">Maszyna, zakres i powód serwisowy. Zdolność `fleet.manage`: to stan maszyny w czasie, nie władza nad cudzym planem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-sciezka.html">
+    <span class="vp-badge">K4</span>
+    <span class="vp-body">
+      <span class="vp-name">Ścieżka akceptacji</span>
+      <span class="vp-when">Kroki, przez które przechodzi rezerwacja, zanim się potwierdzi (3.1.0). Obowiązuje tak samo rezerwację z panelu, jak z telefonu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-kolejka.html">
+    <span class="vp-badge">K5</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolejka decyzji</span>
+      <span class="vp-when">Rezerwacje czekające na MOJĄ zgodę (3.1.0). Rezerwacja założona z panelu trafia do niej tą samą drogą.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-podglad.html">
+    <span class="vp-badge">K6</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd pilota i samolotu</span>
+      <span class="vp-when">Kontekst decyzji (3.1.0): komu zatwierdzam i czym poleci.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="kalendarz-rezerwacja.html">
+    <span class="vp-badge">K7</span>
+    <span class="vp-body">
+      <span class="vp-name">Własna rezerwacja z panelu</span>
+      <span class="vp-when">Od 3.2.0 (issue #233) każdy członek rezerwuje z tej samej osi, którą ogląda: przycisk „Zarezerwuj" albo kliknięcie w wolne miejsce komórki otwiera szufladę w dwóch krokach jak 22/22A - termin i maszyna z sugestiami slotów, potem zadanie. Ścieżka akceptacji obowiązuje tak samo jak z telefonu. Na kanwie: krok 2 (K7a), odmowa „termin właśnie zajęto" (K7b) i pozostałe stany.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="../22-rezerwacja.html">
+    <span class="vp-badge amber">22</span>
+    <span class="vp-body">
+      <span class="vp-name">Telefon: ten sam formularz</span>
+      <span class="vp-when">Krok 1 i 2 rezerwacji w aplikacji pilota - te same pytania w tej samej kolejności. Rezerwujesz tak samo z telefonu i z panelu; różni się kadr (tydzień floty zamiast doby) i kontrolki (pola web zamiast arkuszy).</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA: PILOT Z PUSTYM ZAKRESEM ══
+     Zalogowany jest zwykły członek klubu (zestaw „Pilot", issue #216): kolumna ma
+     dla niego JEDNĄ pozycję, a nagłówek strony JEDNĄ akcję - „Zarezerwuj". Ani
+     „Zarezerwuj za pilota", ani „Wyłącz maszynę z użytku", ani banera kolejki: brak
+     uprawnienia znaczy brak przycisku. U administratora te akcje dochodzą jako
+     przyciski wyciszone (K1) - „Zarezerwuj" zostaje jedyną akcją główną ekranu, bo
+     to czynność KAŻDEGO członka i najczęstsza w tym module. -->
+<main class="browser" role="region" aria-label="Kalendarz - własna rezerwacja">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/kalendarz?od=2026-09-15&amp;do=2026-09-21
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="kalendarz-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">MW</span>
+          <span class="who-name">Michał Wilk</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA członka z pustym zakresem (issue #216): kontekst klubu
+           i JEDNA pozycja. Pozycje bramkuje zdolność - kto nie ma prawa wejść,
+           nie widzi zakładki. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- JEDNA AKCJA GŁÓWNA: „Zarezerwuj" otwiera tę samą szufladę, co kliknięcie
+           w wolne miejsce komórki - bez podstawionej maszyny i dnia. Przycisk stoi
+           także u administratora (jako jedyny primary), bo rezerwacja jest czynnością
+           każdego członka; jego akcje z `fleet.manage` i `reservations.manage`
+           schodzą wtedy do wyciszonych (K1). -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Kalendarz</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="kalendarz-rezerwacja.html">Zarezerwuj</a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <button type="button" class="chip on" aria-pressed="true">Ten tydzień</button>
+        <button type="button" class="chip" aria-pressed="false">Dwa tygodnie</button>
+        <button type="button" class="chip" aria-pressed="false">Miesiąc</button>
+      </div>
+
+      <!-- ══ OŚ JEST WEJŚCIEM W REZERWACJĘ ══
+           Wolne miejsce KAŻDEJ komórki od dziś w przód jest odnośnikiem (`.cal-add`):
+           w komórce pustej - cała komórka, w komórce z zajętościami - to, co pod
+           nimi zostało. W spoczynku nie rysuje nic (plus w każdej wolnej komórce
+           zamieniłby oś w farmę guzików - reguła SyncChipa); pod kursorem tło
+           i plus. Dni minione i maszyna wyłączona z użytku odnośnika NIE dostają:
+           brak celu, nie cel wyszarzony.
+
+           WŁASNE WPISY są zielone (`.cal-item.mine`) - pilot szuka na osi przede
+           wszystkim siebie, a zieleń na tle (nie na ramce) daje się złożyć ze
+           stanem „czeka" (ramka przerywana). Legenda dostaje czwarty wzór. -->
+      <div class="card">
+        <div class="cal" style="--cal-days:7; --cal-reg-col:88px;">
+          <div class="cal-head">
+            <span></span>
+            <div class="cal-days">
+            <div class="cal-day"><span class="cal-day-dow">Pn</span><span class="cal-day-num">15</span></div>
+            <div class="cal-day"><span class="cal-day-dow">Wt</span><span class="cal-day-num">16</span></div>
+            <div class="cal-day"><span class="cal-day-dow">Śr</span><span class="cal-day-num">17</span></div>
+            <div class="cal-day"><span class="cal-day-dow">Czw</span><span class="cal-day-num">18</span></div>
+            <div class="cal-day today"><span class="cal-day-dow">Pt</span><span class="cal-day-num">19</span></div>
+            <div class="cal-day weekend"><span class="cal-day-dow">Sob</span><span class="cal-day-num">20</span></div>
+            <div class="cal-day weekend"><span class="cal-day-dow">Nd</span><span class="cal-day-num">21</span></div>
+            </div>
+          </div>
+
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-AXA</span>
+            <span class="cal-reg-type">C172</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell off"></div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">A. Kowalski</a>
+              <a class="cal-item" href="kalendarz-wpis.html">J. Nowak</a>
+            </div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">A. Kowal</a>
+            </div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell">
+              <a class="cal-item pending mine" href="kalendarz-wpis.html#wlasna">M. Wilk</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-AXA na piątek 19 września">+</a>
+            </div>
+            <!-- Komórka, w którą kliknięto: szuflada obok dostała z niej maszynę i dzień. -->
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">A. Kowalski</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-AXA na sobotę 20 września">+</a>
+            </div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-AXA na niedzielę 21 września">+</a></div>
+          </div>
+        </div>
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-BKL</span>
+            <span class="cal-reg-type">PA-28</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">P. Zych</a>
+            </div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">K. Lis</a>
+            </div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">A. Kowalski</a>
+            </div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-BKL na piątek 19 września">+</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-BKL na sobotę 20 września">+</a></div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">A. Kowal</a>
+              <a class="cal-item pending" href="kalendarz-wpis.html">M. Zięba</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-BKL na niedzielę 21 września">+</a>
+            </div>
+          </div>
+        </div>
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-DKM</span>
+            <span class="cal-reg-type">C152</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">J. Nowak</a>
+            </div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-DKM na piątek 19 września">+</a></div>
+            <div class="cal-cell">
+              <a class="cal-item" href="kalendarz-wpis.html">P. Zych</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-DKM na sobotę 20 września">+</a>
+            </div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-DKM na niedzielę 21 września">+</a></div>
+          </div>
+        </div>
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-ELG</span>
+            <span class="cal-reg-type">Aquila</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na piątek 19 września">+</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na sobotę 20 września">+</a></div>
+            <div class="cal-cell">
+              <a class="cal-item mine" href="kalendarz-wpis.html#wlasna">M. Wilk</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na niedzielę 21 września">+</a>
+            </div>
+          </div>
+        </div>
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-CDR</span>
+            <span class="cal-reg-type">AN-2</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Przegląd 100 h</a></div>
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Przegląd 100 h</a></div>
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Przegląd 100 h</a></div>
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Przegląd 100 h</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na piątek 19 września">+</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na sobotę 20 września">+</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na niedzielę 21 września">+</a></div>
+          </div>
+        </div>
+        <div class="cal-row">
+          <span class="cal-reg">
+            <span class="cal-reg-mark">SP-FGK</span>
+            <span class="cal-reg-type">C182</span>
+          </span>
+          <div class="cal-cells">
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <div class="cal-cell off"></div>
+            <!-- Maszyna wyłączona z użytku na CAŁY dzień: odnośnika NIE MA. -->
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Usterka - radio</a></div>
+            <div class="cal-cell"><a class="cal-item block" href="kalendarz-wpis.html">Usterka - radio</a></div>
+            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-FGK na niedzielę 21 września">+</a></div>
+          </div>
+        </div>
+
+          <div class="cal-legend">
+            <span class="cal-legend-item"><span class="cal-swatch"></span>Rezerwacja</span>
+            <span class="cal-legend-item"><span class="cal-swatch mine"></span>Twoja rezerwacja</span>
+            <span class="cal-legend-item"><span class="cal-swatch pending"></span>Czeka na akceptację</span>
+            <span class="cal-legend-item"><span class="cal-swatch block"></span>Wyłączona z użytku</span>
+          </div>
+        </div>
+      </div>
+            </div>
+      </div>
+    </div>
+
+    <!-- ══ K7 · KROK 1: TERMIN I MASZYNA ══
+         Ten sam formularz, co 22 w telefonie, w kontrolkach web: maszyna z listy
+         (zbiór rosnący z klubem - `<select>`, jak przy „Zarezerwuj za pilota"), dzień
+         polem daty, godziny parą pól. Pomiędzy nimi dwie rzeczy, których szuflada
+         NIE ma prawa pominąć:
+
+         1. PASEK ZAJĘTOŚCI wybranej maszyny w wybranym dniu (`.daytrack`) - oś za
+            szufladą pokazuje tydzień, ale komórka doby nie ma godzin, a godziny są
+            całą treścią rezerwacji. Własny szkic rysuje się na nim zielenią, więc
+            wybór i jego skutek stoją w jednym miejscu, ZANIM ktokolwiek tapnie „Dalej";
+         2. SUGESTIE SLOTÓW (`.slots`) z `GET /bookings/suggestions` - te same, co na
+            22: powód liczy domena (upakowanie dnia), sąsiada dokłada ekran ze
+            słownika klubu, nazwisko stoi za separatorem w mianowniku. Do 3.2.0 panel
+            sugestii NIE pokazywał, bo „administrator patrzy na całość i wpisuje
+            konkretny termin" (§10) - własna rezerwacja jest DOKŁADNIE przypadkiem,
+            dla którego sugestie powstały: pilot szuka miejsca dla siebie.
+            „Zarezerwuj za pilota" zostaje bez nich.
+
+         Szuflada NIE MA ADRESU (jak wyłączenie z użytku): opisuje byt, który dopiero
+         powstanie. Zamknięcie z niepustym szkicem pyta o rezygnację. -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowa rezerwacja">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Nowa rezerwacja</div>
+          <div class="drawer-sub">SP-AXA · sobota 20 września · godziny w czasie klubu</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <ol class="steps" aria-label="Kroki rezerwacji">
+        <li class="step on" aria-current="step">1 · Termin i maszyna</li>
+        <li class="step">2 · Zadanie</li>
+      </ol>
+
+      <div class="drawer-body">
+        <section class="card">
+          <h2 class="card-title">Kiedy i czym</h2>
+
+          <!-- Maszyna i dzień PODSTAWIONE z klikniętej komórki - to nie jest wpis
+               pilota (rezygnacja nie pyta o nie), ale nie jest też domysł: pilot
+               kliknął w TĘ komórkę. Z przycisku „Zarezerwuj" oba pola startują puste. -->
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Samolot</span>
+              <select class="input">
+                <option selected>SP-AXA · Cessna 172</option>
+                <option>SP-BKL · Piper PA-28</option>
+                <option>SP-DKM · Cessna 152</option>
+                <option>SP-ELG · Aquila A210</option>
+                <option>SP-CDR · Antonov An-2</option>
+                <option disabled>SP-FGK · Cessna 182 · wyłączona z użytku do 20 września</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Dzień</span>
+              <input class="input mono" type="date" value="2026-09-20" min="2026-09-19" />
+            </label>
+          </div>
+
+          <!-- Pasek doby lotnej klubu (świt → zmrok z lotniska macierzystego, §7.1):
+               cudze zajętości w tonie osi, własny szkic zielenią. Wolne pasma SŁOWAMI
+               pod spodem, bo z paska czyta się proporcje, nie minuty. -->
+          <div class="field">
+            <span class="label">Zajętość SP-AXA w sobotę</span>
+            <div class="daytrack">
+              <div class="daytrack-bar" role="img" aria-label="Zajęte 13:00–16:00 przez A. Kowalskiego; Twój termin 11:00–13:00">
+                <span class="daytrack-busy" style="left:46.7%; width:20%;" title="A. Kowalski · 13:00 → 16:00"></span>
+                <span class="daytrack-busy mine" style="left:33.3%; width:13.3%;" title="Twój termin · 11:00 → 13:00"></span>
+              </div>
+              <div class="daytrack-scale"><span>06:00</span><span>09:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span></div>
+              <span class="daytrack-free">wolne: 06:00 → 13:00 · 16:00 → 21:00</span>
+            </div>
+          </div>
+
+          <!-- Kafelek, który trafia w termin z kontrolki, jest zaznaczony - kliknięcie
+               w inny PRZESTAWIA parę godzin. Długość bierze się z pary godzin (tu 2 h);
+               zmiana pary przelicza sugestie. -->
+          <div class="field">
+            <div class="label-row"><span class="label">Sugerowane godziny</span><span class="pill dim">2 h</span></div>
+            <div class="slots">
+              <button type="button" class="slot on" aria-pressed="true">
+                <span class="slot-h">11:00 → 13:00</span>
+                <span class="slot-why">tuż przed rezerwacją · A. Kowalski</span>
+              </button>
+              <button type="button" class="slot" aria-pressed="false">
+                <span class="slot-h">16:00 → 18:00</span>
+                <span class="slot-why">tuż po rezerwacji · A. Kowalski</span>
+              </button>
+              <button type="button" class="slot" aria-pressed="false">
+                <span class="slot-h">06:00 → 08:00</span>
+                <span class="slot-why">początek dnia</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="label">Od</span>
+              <input class="input mono" type="time" value="11:00" step="300" />
+            </label>
+            <label class="field">
+              <span class="label">Do</span>
+              <input class="input mono" type="time" value="13:00" step="300" />
+            </label>
+          </div>
+          <!-- Zdanie pod parą mówi o SKUTKU pary: czy maszyna jest w tych godzinach
+               wolna. Kolizja z tym, co ekran już ma, jest bursztynowa i NIE blokuje
+               „Dalej" - o terminie rozstrzyga serwer (K7b), a pilot mógł zobaczyć
+               coś, co ktoś właśnie odwołuje. Koniec przed początkiem i termin miniony
+               blokują z powodem, jak przy wyłączeniu z użytku. -->
+          <p class="hint">2 h · SP-AXA wolna w tych godzinach</p>
+        </section>
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary">Dalej</button>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">Logowanie</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik · flota</a>
+  <span>·</span>
+  <a href="kalendarz-flota.html">Kalendarz · flota</a>
+  <a href="kalendarz-wpis.html">Kalendarz · wpis</a>
+  <a href="kalendarz-blokada.html">Kalendarz · wyłączenie</a>
+  <a href="kalendarz-sciezka.html">Kalendarz · ścieżka</a>
+  <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
+  <a href="kalendarz-podglad.html">Kalendarz · podgląd</a>
+  <a href="kalendarz-rezerwacja.html" class="active">Kalendarz · rezerwacja</a>
+  <span>·</span>
+  <a href="#krok2">↓ K7a Krok 2</a>
+  <a href="#zajete">↓ K7b Termin zajęty</a>
+  <a href="#stany">↓ Stany</a>
+  <span>·</span>
+  <a href="kalendarz-wpis.html#wlasna">K2b Własna zajętość →</a>
+  <span>·</span>
+  <a href="../22-rezerwacja.html">Telefon · 22</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ K7a · KROK 2: ZADANIE ══
+     Te same pola, co 22A: rodzaj operacji, trasa, drugi pilot, plan lotu, notatka -
+     bo „definiowanie nowego lotu dostępne jako rezerwacja" (#145) znaczy dosłownie ten
+     sam formularz. Podtytuł niesie wybór z kroku 1, żeby zadanie nie było pytane
+     w oderwaniu od zajętego terminu.
+
+     ══ PRZYCISK MÓWI, CO SIĘ STANIE ══
+     „Zarezerwuj 11:00 → 13:00", nie „Zapisz": rezerwacja jest ustaleniem z innymi
+     ludźmi, więc pilot ma widzieć termin w chwili potwierdzania. W klubie ze ścieżką
+     akceptacji notatka stopki nazywa kroki, przez które zapis przejdzie - rezerwacja
+     wejdzie jako CZEKAJĄCA i pojawi się na osi z ramką przerywaną, dokładnie jak
+     złożona z telefonu. Klub bez ścieżki notatki nie dostaje (stan domyślny). -->
+<section class="canvas-section" id="krok2">
+  <div class="canvas-section-title">K7a · krok 2 - zadanie, trasa, załoga, plan, notatka</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Szuflada w kroku 2 - klub ze ścieżką akceptacji</span>
+        <span class="inv-when">Rodzaj operacji listą kart (bez wartości podstawionej - wybór ma być świadomy, jak we wpisie ręcznym); trasa według issue #13 (skoki = jedno lotnisko, pozostałe = para start → lądowanie - pole „Lądowanie" ZNIKA po wybraniu skoków, nie wyszarza się); drugi pilot z listy członków (opcjonalny, chyba że maszyna wymaga załogi dwuosobowej - wtedy plakietka „wymagany · załoga 2-os." przy polu i „Zarezerwuj" zablokowany bez zdania, bo powód widać z kontrolki); plan lotu to dwie liczby o przyszłości (czas w powietrzu, paliwo do zabrania) z podpisem liczącym, ile slotu zostaje na obsługę; notatka opcjonalna. Notatka stopki mówi o ścieżce PRZED tapnięciem.</span>
+        <span class="inv-classes"><b>.steps</b> · .step.done · .step.on · .opt-list · .opt.selected · .field-row · .input.mono · .label-row · .pill.dim · .hint · .drawer-note</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 860px;">
+          <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowa rezerwacja - krok 2" style="width: 640px;">
+
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Nowa rezerwacja</div>
+                <div class="drawer-sub">SP-AXA · sobota 20 września · 11:00 → 13:00 · 2 h</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <ol class="steps" aria-label="Kroki rezerwacji">
+              <li class="step done">1 · Termin i maszyna</li>
+              <li class="step on" aria-current="step">2 · Zadanie</li>
+            </ol>
+
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Rodzaj operacji</h2>
+                <div class="opt-list">
+                  <button type="button" class="opt"><span class="opt-body"><span class="opt-name">Skoki</span><span class="opt-desc">Dzień skokowy - jedno lotnisko</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt selected" aria-pressed="true"><span class="opt-body"><span class="opt-name">Przelot</span><span class="opt-desc">Lot z lotniska na lotnisko</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt"><span class="opt-body"><span class="opt-name">Egzamin</span><span class="opt-desc">Lot egzaminacyjny albo sprawdzian</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt"><span class="opt-body"><span class="opt-name">Lot techniczny</span><span class="opt-desc">Oblot, próba po obsłudze</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt"><span class="opt-body"><span class="opt-name">Inne</span><span class="opt-desc">Pozostałe</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                </div>
+              </section>
+
+              <section class="card">
+                <h2 class="card-title">Trasa</h2>
+                <div class="field-row">
+                  <label class="field">
+                    <span class="label">Start</span>
+                    <input class="input mono" type="text" value="EPZG" placeholder="Kod ICAO" />
+                  </label>
+                  <label class="field">
+                    <span class="label">Lądowanie</span>
+                    <input class="input mono" type="text" value="EPKK" placeholder="Kod ICAO" />
+                  </label>
+                </div>
+                <p class="hint">Kod spoza katalogu lotnisk zapisze się sam, bez nazwy lotniska.</p>
+              </section>
+
+              <section class="card">
+                <h2 class="card-title">Załoga</h2>
+                <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Michał Wilk <span class="cell-sub mono">MWI</span></span></div>
+                <div class="field">
+                  <div class="label-row"><label class="label" for="k7-dual">Drugi pilot</label><span class="pill dim">opcjonalne</span></div>
+                  <select class="input" id="k7-dual">
+                    <option>Bez drugiego pilota</option>
+                    <option selected>Barbara Nowak · BNO</option>
+                    <option>Adam Kowalski · AKO</option>
+                    <option>Jan Bąk · JBA</option>
+                  </select>
+                </div>
+              </section>
+
+              <section class="card">
+                <h2 class="card-title">Plan lotu</h2>
+                <div class="field-row">
+                  <label class="field">
+                    <span class="label">Czas lotu (h:mm)</span>
+                    <input class="input mono" type="text" value="1:30" inputmode="numeric" />
+                  </label>
+                  <div class="field">
+                    <div class="label-row"><label class="label" for="k7-fuel">Paliwo do zabrania (L)</label><span class="pill dim">opcjonalne</span></div>
+                    <input class="input mono" id="k7-fuel" type="text" value="120" inputmode="numeric" />
+                  </div>
+                </div>
+                <p class="hint">Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę</p>
+              </section>
+
+              <section class="card">
+                <div class="label-row"><h2 class="card-title" style="margin: 0;">Notatka</h2><span class="pill dim">opcjonalne</span></div>
+                <textarea class="input area" rows="2" placeholder="Dla kogo, po co, na co uważać…"></textarea>
+              </section>
+            </div>
+
+            <div class="drawer-foot">
+              <span class="drawer-note">Zaczeka na zgodę: Mechanik → Szef wyszkolenia</span>
+              <button type="button" class="btn ghost">Wstecz</button>
+              <button type="button" class="btn primary">Zarezerwuj 11:00 → 13:00</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ K7b · TERMIN ZAJĘTY W MIĘDZYCZASIE ══
+     Odmowa przyszła PO „Zarezerwuj": slot był wolny, gdy pilot otwierał szufladę,
+     i zajął się w międzyczasie. To jest cena arbitrażu po stronie serwera (§2.1)
+     i dokładnie dlatego wykluczenie nakładania trzyma BAZA, a nie sprawdzenie
+     w przeglądarce, które przy dwóch równoczesnych zapisach przepuściłoby oba.
+
+     Szuflada WRACA NA KROK 1 - tam stoją kontrolki, którymi da się to naprawić -
+     i mówi CO stoi w tym czasie (kolidująca zajętość z ciała odmowy), OD KIEDY
+     („weszła 3 min temu" znaczy wyścig; plan sprzed tygodnia - stan kalendarza,
+     którego pilot nie zauważył) i proponuje najbliższe wolne pasmo tej samej długości
+     jako akcję banera. Nigdy „spróbuj ponownie". Pasek doby i sugestie odświeżają się
+     razem z odmową; szkic zadania z kroku 2 ZOSTAJE - pilot poprawia godzinę, nie
+     wypełnia formularza od nowa. -->
+<section class="canvas-section" id="zajete">
+  <div class="canvas-section-title">K7b · odmowa serwera: ten termin właśnie zajęto</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Powrót na krok 1 z odmową w banerze</span>
+        <span class="inv-when">Baner bursztynowy na szczycie treści (nie czerwony: nic się nie zepsuło, ktoś był pierwszy). Akcja banera to najbliższe wolne pasmo tej samej długości - kliknięcie przestawia parę godzin. Pasek doby pokazuje już cudzą rezerwację pod własnym szkicem, a zdanie pod parą mówi o kolizji. Nazwisko za separatorem, w mianowniku (jak przy sugestiach: odmiany nie da się wyprowadzić regułą). Sugestie policzone na nowo dla dnia po zmianie. Kanwa 22C w telefonie mówi to samo tym samym zdaniem.</span>
+        <span class="inv-classes"><b>.banner.warn</b> z akcją · .daytrack-busy · .daytrack-busy.mine · .slots · .hint b</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 640px;">
+          <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowa rezerwacja - termin zajęty" style="width: 640px;">
+
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Nowa rezerwacja</div>
+                <div class="drawer-sub">SP-AXA · sobota 20 września · godziny w czasie klubu</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <ol class="steps" aria-label="Kroki rezerwacji">
+              <li class="step on" aria-current="step">1 · Termin i maszyna</li>
+              <li class="step">2 · Zadanie</li>
+            </ol>
+
+            <div class="drawer-body">
+              <div class="banner warn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                <span><b>Ten termin właśnie zajęto.</b> SP-AXA 11:00 → 13:00 · rezerwację ma J. Nowak · weszła 3 min temu.</span>
+                <button type="button" class="btn ghost sm">Weź 09:00 → 11:00</button>
+              </div>
+
+              <section class="card">
+                <h2 class="card-title">Kiedy i czym</h2>
+                <div class="field-row">
+                  <label class="field">
+                    <span class="label">Samolot</span>
+                    <select class="input"><option selected>SP-AXA · Cessna 172</option><option>SP-BKL · Piper PA-28</option></select>
+                  </label>
+                  <label class="field">
+                    <span class="label">Dzień</span>
+                    <input class="input mono" type="date" value="2026-09-20" min="2026-09-19" />
+                  </label>
+                </div>
+
+                <div class="field">
+                  <span class="label">Zajętość SP-AXA w sobotę</span>
+                  <div class="daytrack">
+                    <div class="daytrack-bar" role="img" aria-label="Zajęte 11:00–13:00 przez J. Nowaka i 13:00–16:00 przez A. Kowalskiego; Twój termin 11:00–13:00 koliduje">
+                      <span class="daytrack-busy" style="left:33.3%; width:13.3%;" title="J. Nowak · 11:00 → 13:00"></span>
+                      <span class="daytrack-busy" style="left:46.7%; width:20%;" title="A. Kowalski · 13:00 → 16:00"></span>
+                      <span class="daytrack-busy mine" style="left:33.3%; width:13.3%; opacity: 0.7;" title="Twój termin · 11:00 → 13:00"></span>
+                    </div>
+                    <div class="daytrack-scale"><span>06:00</span><span>09:00</span><span>12:00</span><span>15:00</span><span>18:00</span><span>21:00</span></div>
+                    <span class="daytrack-free">wolne: 06:00 → 11:00 · 16:00 → 21:00</span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label-row"><span class="label">Sugerowane godziny</span><span class="pill dim">2 h</span></div>
+                  <div class="slots">
+                    <button type="button" class="slot" aria-pressed="false"><span class="slot-h">09:00 → 11:00</span><span class="slot-why">tuż przed rezerwacją · J. Nowak</span></button>
+                    <button type="button" class="slot" aria-pressed="false"><span class="slot-h">16:00 → 18:00</span><span class="slot-why">tuż po rezerwacji · A. Kowalski</span></button>
+                    <button type="button" class="slot" aria-pressed="false"><span class="slot-h">06:00 → 08:00</span><span class="slot-why">początek dnia</span></button>
+                  </div>
+                </div>
+
+                <div class="field-row">
+                  <label class="field"><span class="label">Od</span><input class="input mono" type="time" value="11:00" step="300" /></label>
+                  <label class="field"><span class="label">Do</span><input class="input mono" type="time" value="13:00" step="300" /></label>
+                </div>
+                <p class="hint">2 h · <b>w tych godzinach SP-AXA jest już zajęta</b> · J. Nowak 11:00 → 13:00</p>
+              </section>
+            </div>
+
+            <div class="drawer-foot">
+              <button type="button" class="btn ghost">Anuluj</button>
+              <button type="button" class="btn primary">Dalej</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ STANY TEGO EKRANU ══ -->
+<section class="canvas-section" id="stany">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Klub bez ścieżki akceptacji</span>
+        <span class="inv-when">Stan domyślny KAŻDEGO klubu: stopka bez notatki, „Zarezerwuj 11:00 → 13:00" zapisuje od razu, szuflada zamyka się, a na osi staje zielony wpis własny (pełna ramka). Zdania „rezerwacja potwierdzona od razu" NIE MA - stan domyślny nie dostaje zdania (reguła SyncChipa).</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-foot" style="padding: 0;">
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary">Zarezerwuj 11:00 → 13:00</button>
+        </div>
+        <div class="cal" style="--cal-days:3; --cal-reg-col:72px;">
+          <div class="cal-row">
+            <span class="cal-reg"><span class="cal-reg-mark">SP-AXA</span><span class="cal-reg-type">C172</span></span>
+            <div class="cal-cells">
+              <div class="cal-cell off"></div>
+              <div class="cal-cell"><a class="cal-item mine" href="kalendarz-wpis.html#wlasna">M. Wilk</a><a class="cal-item" href="kalendarz-wpis.html">A. Kowalski</a></div>
+              <div class="cal-cell off"></div>
+            </div>
+          </div>
+        </div>
+        <span class="inv-mark">po zapisie: własny wpis na osi, zielony, w komórce, z której zaczęto</span>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Maszyna wymaga załogi dwuosobowej</span>
+        <span class="inv-when">Wymóg jest właściwością MASZYNY (An-2) i mówi o sobie plakietką przy polu, tym samym zdaniem, co na 02 i 15 w telefonie (`dualRequirement`). „Zarezerwuj" jest zablokowany BEZ zdania: powód widać z kontrolki nad przyciskiem (wąski wyjątek reguły issue #55). Wybór osoby odblokowuje przycisk.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="field">
+          <div class="label-row"><label class="label" for="k7-dual2">Drugi pilot</label><span class="pill amber">wymagany · załoga 2-os.</span></div>
+          <select class="input" id="k7-dual2">
+            <option selected>Wybierz drugiego pilota</option>
+            <option>Barbara Nowak · BNO</option>
+            <option>Adam Kowalski · AKO</option>
+          </select>
+        </div>
+        <div class="drawer-foot" style="padding: 0;">
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary" disabled>Zarezerwuj 09:00 → 12:00</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Przesuń i popraw - ta sama szuflada w trybie poprawki</span>
+        <span class="inv-when">Wejście z K2b („Przesuń i popraw" na własnej rezerwacji): oba kroki wypełnione szkicem, tytuł nazywa czynność, stopka mówi „Zapisz zmiany". Poprawka niesie SAMĄ RÓŻNICĘ (jak na telefonie). ZMIANA MASZYNY JEST NOWĄ REZERWACJĄ (decyzja z 3.0.0): przy zmienionym samolocie podpis pod polem mówi to wprost, a zapis zakłada nowy termin i DOPIERO PO JEGO POTWIERDZENIU odwołuje stary. Rezerwacja CZEKAJĄCA: baner nad formularzem mówi, że zmiana terminu wyczyści zgody - PRZED tapnięciem, nie po.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-head" style="padding: 0 0 12px;">
+          <div>
+            <div class="drawer-title">Przesuń rezerwację</div>
+            <div class="drawer-sub">SP-AXA · piątek 19 września · dziś 14:00 → 16:00 · czeka na krok 1 z 2</div>
+          </div>
+        </div>
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span><b>Zmiana terminu wyczyści dotychczasowe zgody.</b> Ścieżka akceptacji zacznie od nowa - zgoda dotyczyła konkretnego terminu.</span>
+        </div>
+        <label class="field">
+          <span class="label">Samolot</span>
+          <select class="input"><option>SP-AXA · Cessna 172</option><option selected>SP-BKL · Piper PA-28</option></select>
+        </label>
+        <p class="hint"><b>Inna maszyna to nowa rezerwacja.</b> Zapis założy nowy termin na SP-BKL i odwoła ten na SP-AXA - w tej kolejności.</p>
+        <div class="drawer-foot" style="padding: 0;">
+          <button type="button" class="btn ghost">Anuluj</button>
+          <button type="button" class="btn primary">Zapisz zmiany</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Rezygnacja z niepustego szkicu</span>
+        <span class="inv-when">Zamknięcie szuflady (krzyżyk, przesłona, „Anuluj") przy niepustym szkicu pyta potwierdzeniem inline - pusty szkic wychodzi bez pytania. Maszyna i dzień PODSTAWIONE z klikniętej komórki nie liczą się jako wpis (ta sama reguła, co na telefonie); liczą się godziny wpisane ręcznie i cokolwiek z kroku 2.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="confirm">
+          <span class="confirm-q">Porzucić rezerwację? Wpisane zadanie i godziny przepadną.</span>
+          <span class="confirm-actions">
+            <button type="button" class="btn ghost sm">Wróć do formularza</button>
+            <button type="button" class="btn danger sm">Porzuć</button>
+          </span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odmowy reguł i awaria łącza</span>
+        <span class="inv-when">Koniec przed początkiem, termin miniony, maszyna wyłączona z użytku w tych godzinach, cudza maszyna (klub ją skasował w międzyczasie) - zdanie w tonie błędu pod kartą kroku 1, jak przy wyłączeniu z użytku; przycisk zablokowany dopiero wtedy, gdy blokady nie widać z kontrolki. Zapis, który nie dojechał, mówi CZYJĄ decyzją jest slot („Slot potwierdza serwer - spróbuj za chwilę"), a nie „coś poszło nie tak" - szkic zostaje w całości.</span>
+      </div>
+      <div class="inv-demo">
+        <p class="card-note danger">Koniec terminu musi wypadać po jego początku.</p>
+        <p class="card-note danger">Ten termin już minął. Wybierz późniejszy.</p>
+        <p class="card-note danger">Nie ma połączenia z serwerem. Slot potwierdza serwer - spróbuj za chwilę, szkic zostaje.</p>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="kalendarz-flota.html">Kalendarz · flota</a>
+  <span>·</span>
+  <a href="kalendarz-wpis.html#wlasna">K2b Własna zajętość →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

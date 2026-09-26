@@ -229,3 +229,175 @@
   );
   border-color: var(--amber-border);
 }
+
+/* ══ WŁASNA REZERWACJA Z PANELU (3.2.0, issue #233) ══
+   Do 3.1.0 kalendarz w panelu był dla pilota z pustym zakresem WYŁĄCZNIE do
+   oglądania: „Zarezerwuj za pilota" stoi na `reservations.manage`, a własny termin
+   zakładało się w aplikacji. Od 3.2.0 rezerwuje się z tej samej osi, którą się
+   ogląda - dwoma wejściami: przyciskiem „Zarezerwuj" w nagłówku strony i KLIKNIĘCIEM
+   W WOLNE MIEJSCE komórki (maszyna × dzień), jak tapnięciem w wolne pasmo na 21.
+   Formularz jest tym samym formularzem, co 22/22A w telefonie - termin i maszyna,
+   potem zadanie - bo rezerwacja jest rozstrzygnięciem konkurencji o zasób, a rodzaj
+   lotu nikomu niczego nie zabiera. */
+
+/* ── WOLNE MIEJSCE KOMÓRKI JEST CELEM KLIKNIĘCIA ──
+   Odnośnik wypełnia to, co w komórce zostało po zajętościach (w komórce pustej -
+   całość). W spoczynku NIC nie rysuje: plus świecący w każdej wolnej komórce zamieniłby
+   oś w farmę guzików (reguła SyncChipa z issue #12). Pod kursorem komórka mówi „tu da
+   się kliknąć" tłem i plusem - dokładnie tak, jak `.go` ujawnia badge dopiero pod
+   kursorem. Dzień miniony i maszyna wyłączona z użytku odnośnika nie dostają WCALE:
+   brak celu, nie cel wyszarzony. */
+.cal-add {
+  flex: 1;
+  min-height: 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  color: transparent;
+  text-decoration: none;
+}
+
+.cal-add:hover,
+.cal-add:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+}
+
+.cal-cell.off:has(.cal-add:hover),
+.cal-cell.off:has(.cal-add:focus-visible) {
+  border-color: var(--border-strong);
+}
+
+/* ── WŁASNA REZERWACJA NA OSI ──
+   Pilot szuka na osi przede wszystkim SIEBIE („kiedy lecę"), więc jego wpis ma
+   kształt i barwę własnego terminu z telefonu (`.ac-busy.mine` na 21/22): zielona
+   poświata, ta sama, którą zaznaczona karta wyboru mówi „ta". Zieleń jest tu
+   dopuszczalna, bo nie znaczy „w normie" ani „akcja główna", tylko „moje" - i stoi
+   na TLE wpisu, nie na ramce, żeby stan „czeka" (ramka przerywana) dało się dołożyć
+   do własnego wpisu bez zderzenia dwóch sygnałów. */
+.cal-item.mine {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+  color: var(--text-primary);
+}
+
+.cal-swatch.mine {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+}
+
+/* ── SUGESTIE SLOTÓW („jak w kinie", §7) ──
+   Trzy-cztery kafelki NAD kontrolką godzin, nie lista, z której trzeba wybrać: pilot
+   może wpisać dowolny wolny termin, a sugestia ma mu oszczędzić szukania. Każdy
+   kafelek mówi, DLACZEGO proponuje tę godzinę - bez zdania kolejność byłaby
+   przypadkowa. Zaznaczony = zielony pierścień, jak `.opt.selected`: kafelek, który
+   trafia w termin z kontrolki, jest po prostu zaznaczoną kartą wyboru. Nazwisko
+   sąsiada stoi ZA SEPARATOREM, w mianowniku - odmiany nie da się wyprowadzić regułą. */
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.slot:hover {
+  background: var(--surface-raised);
+}
+
+.slot.on {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.slot-h {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slot-why {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+/* ── ZAJĘTOŚĆ WYBRANEJ MASZYNY W WYBRANYM DNIU ──
+   Oś za szufladą pokazuje tydzień, ale komórka doby nie ma godzin - a godziny są
+   całą treścią rezerwacji. Pasek jest odpowiednikiem paska w karcie maszyny na 22:
+   doba lotna klubu od świtu do zmroku, zajętości cudze w tonie osi, wyłączenie
+   z użytku w skos, WŁASNY szkic zielenią - żeby wybór i jego skutek stały w jednym
+   miejscu, zanim ktokolwiek tapnie „Dalej". Wolne pasma pod spodem SŁOWAMI, bo
+   z paska czyta się proporcje, nie minuty. */
+.daytrack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.daytrack-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.daytrack-busy {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+}
+
+.daytrack-busy.pending {
+  border-style: dashed;
+  border-color: var(--text-muted);
+}
+
+.daytrack-busy.block {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--amber-muted) 0 5px,
+    transparent 5px 10px
+  );
+  border-color: var(--amber-border);
+}
+
+.daytrack-busy.mine {
+  background: var(--green-muted);
+  border-color: var(--green);
+}
+
+.daytrack-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.daytrack-free {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
