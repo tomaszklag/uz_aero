@@ -58,6 +58,28 @@ Z ostatniego zdania samolotu - poprzedni pilot wpisał odczyt, który staje się
 
 Tak. Zdanie ma wariant **bez lotu**: powód z listy i opcjonalny komentarz dla administratora. Jeśli nic się nie zmieniło - żadnego biegu silnika, dolewki ani innego odczytu - ekran uprzedzi, że taki zapis nigdzie nie trafi, ale zdania nie zablokuje: maszynę trzeba oddać ([zdanie samolotu](zdanie-samolotu)).
 
+## Rezerwacje i powiadomienia
+
+### Czy muszę rezerwować samolot, żeby polecieć?
+
+Nie. Rezerwacja daje pewny termin i wypełnia pierwszy krok rozpoczęcia lotu, ale bez niej polecisz dokładnie tak samo - także bez zasięgu. Gdy maszynę ma na najbliższe godziny zarezerwowaną ktoś inny, aplikacja powie kto i kiedy, i na tym koniec ([rezerwacja samolotu](rezerwacja-samolotu)).
+
+### Moja rezerwacja „czeka na zgodę" - co to znaczy?
+
+Klub ułożył ścieżkę akceptacji: rezerwację zatwierdzają kolejno wskazane osoby, na przykład mechanik, potem szef wyszkolenia. Termin jest już Twój i nikt go nie zajmie; karta rezerwacji pokazuje, który krok czeka i od kiedy. Gdy nikt nie zdąży zdecydować przed początkiem terminu, rezerwacja wygasa i termin wraca do puli ([akceptacja rezerwacji](akceptacja-rezerwacji)).
+
+### Jak zostać osobą, która zatwierdza rezerwacje?
+
+Administrator nadaje Ci w zakresie uprawnień **Akceptację rezerwacji** i dopisuje Cię do kroku ścieżki. Nie potrzebujesz wejścia do dziennika ani kont - decydujesz z telefonu: prośba przychodzi do skrzynki pod dzwonkiem na pulpicie, a zgoda to jedno tapnięcie ([zakresy uprawnień](uprawnienia)).
+
+### Nie przychodzą powiadomienia
+
+Sprawdź w ustawieniach systemu telefonu, czy Ninerdeck ma zgodę na powiadomienia i czy nie usypia go oszczędzanie baterii. Aplikacja pyta o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - więc może jeszcze nie zapytała. Wiadomości i tak czekają w skrzynce pod dzwonkiem; powiadomienie jest tylko sygnałem, że coś przyszło ([powiadomienia](powiadomienia)).
+
+### Po wylogowaniu przestały przychodzić powiadomienia
+
+Tak ma być: telefon, na którym nikt nie jest zalogowany, nie dostaje cudzych spraw - to chroni wspólny tablet w samolocie. Po zalogowaniu wracają same.
+
 ## Po locie
 
 ### Wpisałem złą liczbę przy zdaniu. Da się poprawić?
@@ -88,7 +110,7 @@ Na Moim dniu stoi **DODAJ LOT RĘCZNIE** - cztery kroki: data i samolot, zadanie
 
 ### Czy aplikacja działa bez internetu?
 
-Tak - wszystko, co dotyczy lotu, działa bez sieci: wejście PIN-em, rozpoczęcie lotu, kokpit, zdanie samolotu, korekty. Zapisy czekają w kolejce i wychodzą same, gdy wróci zasięg. Sieci wymagają tylko pierwsze logowanie, wylogowanie i ślad GPS na mapie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
+Tak - wszystko, co dotyczy lotu, działa bez sieci: wejście PIN-em, rozpoczęcie lotu, kokpit, zdanie samolotu, korekty. Zapisy czekają w kolejce i wychodzą same, gdy wróci zasięg. Sieci wymagają pierwsze logowanie, wylogowanie, ślad GPS na mapie oraz wszystko, co rozstrzyga klub: kalendarz z rezerwacją, skrzynka powiadomień i decyzja o cudzej rezerwacji. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
 
 ### Co znaczy czerwone „SYNC STOI"?
 
