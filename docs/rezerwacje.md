@@ -1194,9 +1194,17 @@ tylko nie zobaczy skrzynki i nie zatwierdzi cudzego terminu.
 
 ### 12.2 Token push żyje razem z sesją logowania
 
-`push_tokens.session_id` z kasowaniem kaskadowym: zdalne wylogowanie z panelu (2.1.0,
-`login_sessions`) gasi przy okazji powiadomienia na tamtym urządzeniu. Bez tego wspólny
-tablet klubu wysyłałby powiadomienia pilota, który dawno oddał urządzenie koledze.
+Wylogowanie - własne, zdalne z panelu, „wyloguj wszędzie", reset hasła, wyłączenie
+członkostwa - gasi powiadomienia na tamtym urządzeniu. Bez tego wspólny tablet klubu
+wysyłałby powiadomienia pilota, który dawno oddał urządzenie koledze.
+
+**Sama kaskada `ON DELETE` z `login_sessions` tego NIE ROBIŁA** i była tu opisana
+jako cały mechanizm - aż do przeglądu bezpieczeństwa 3.1.0 (§19): unieważnienie sesji
+STEMPLUJE wiersz (`revoked_at`), a nie kasuje go, więc kaskada nie zadziałała nigdy.
+Mechanizm ma odtąd dwa piętra: budzik (`PgPushTokensRepo.byPilots`) bierze wyłącznie
+tokeny sesji żywych (nieunieważnionych i niewygasłych) i adresatów z aktywnym
+członkostwem w klubie powiadomienia, a unieważnienie sesji kasuje jej tokeny w tej samej
+transakcji. Kaskada zostaje na wypadek skasowania osoby.
 
 ### 12.3 Port, nie zależność
 
@@ -1589,3 +1597,46 @@ Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponaw
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od
 nowa, pełne pola tylko dla własnych rezerwacji) stoją w `CLAUDE.md` w sekcji epiku R-F -
 tam, gdzie szuka ich kod, a nie plan.
+
+## 19. Przegląd bezpieczeństwa 3.1.0 (K7, 2026-09-26)
+
+Zrobiony PRZED wydaniem, na gałęzi `ninerdeck_3_1_0`, dla wszystkiego, co doszło od
+3.0.0: ścieżki akceptacji, skrzynki i push, zakresów uprawnień, podglądu przy decyzji,
+obserwowania samolotu, panelu dla każdego członka i rejestracji z panelu. Pięć ustaleń
+POPRAWIONYCH, każde z testem, który przed poprawką padał:
+
+| # | Co było | Poprawka |
+| --- | --- | --- |
+| 1 | wylogowany telefon (także zdalnie i po resecie hasła) dalej dostawał push - kaskada z `login_sessions` nie działała, bo sesji się nie kasuje | budzik tylko do sesji żywych; unieważnienie kasuje tokeny swojej sesji (§12.2) |
+| 2 | `session_claim.reservationId` zamykał DOWOLNĄ rezerwację klubu jako zrealizowaną - identyfikatory są w oknie kalendarza, więc zmodyfikowany klient zwalniał termin kolegi, a obserwujący dostawali fałszywe „zgodnie z planem" | realizuje tylko rezerwacja POTWIERDZONA, PIC-a operacji i tej samej maszyny; lot wchodzi jak dotąd |
+| 3 | karta rezerwacji w telefonie oddawała każdemu członkowi klubu ścieżkę z powodami odmowy CUDZEJ rezerwacji (panel ukrywał ją od początku) | ścieżka tylko dla właściciela i akceptujących - ta sama reguła, co pola planu (§17) |
+| 4 | wyścig dwóch decyzji w jednym kroku: odmowa, która przegrała, nie wchodziła do rejestru, a mimo to zamykała POTWIERDZONĄ rezerwację; podwójne kliknięcie słało dwie prośby | blokada wiersza rezerwacji (`FOR UPDATE`) i ponowny odczyt ścieżki i rejestru w transakcji |
+| 5 | prośby i decyzje szły do BYŁYCH członków klubu stojących na liście kroku albo jako rezerwujący | zapis skrzynki i budzik wymagają aktywnego członkostwa w klubie powiadomienia |
+
+Test wyścigu (4) wymusza przeplot: PGlite wykonuje żądania po kolei, więc
+`Promise.all` dwóch decyzji przechodził także na kodzie z luką - zielony test nie
+dowodził niczego. Pierwsza decyzja zatrzymuje się po odczycie, druga przechodzi całą
+trasą, a pierwsza rusza dalej z tym, co przeczytała.
+
+**Sprawdzone i w porządku:** kto może decydować (krok bieżący albo
+`reservations.manage`, cudzy klub 404, pominięcie tylko własnych kroków), zawartość
+push (rodzaj, klub i identyfikatory - #228), podgląd pilota tylko dla PIC-a i Duala
+sprawy i tylko z akceptacją, obserwowanie (maszyna spoza klubu nie da się obserwować,
+zdolność sprawdzana przy każdej wysyłce), trasy panelu otwarte dla każdego członka
+(`/directory` bez e-maili), rejestracja i „Nie pamiętam hasła" z panelu (te same
+handlery i limity, co telefon).
+
+**Świadomie NIE zmienione w 3.1.0** (niskie, zapisane do przyszłych epików):
+- `POST /me/push-token` przepina istniejący token na zgłaszającego - kto zna cudzy
+  token Expo, może przejąć jego budzik (treść i tak zostaje w skrzynce właściciela);
+- podgląd pilota działa dla DOWOLNEJ rezerwacji, w której osoba była PIC-em albo Dualem,
+  także starej - akceptujący widzi nalot członków klubu, a nie tylko spraw w toku;
+- `dualId` rezerwacji nie jest sprawdzany jako członek klubu (klucz obcy do osoby);
+- `POST /auth/password/forgot` odpowiada wolniej przy adresie znanym (wysyłka listu) -
+  istnieje od 2.1.0, ogranicza go limit na adres IP;
+- `aircraft_watches` nie ma na liście tabel strażnika `org_id` (dziś każde zapytanie
+  go niesie, ale test tego nie pilnuje);
+- `PUSH_PROVIDER=log` wypisuje tokeny urządzeń do logów - na produkcji jest `expo`;
+- `PUT /approval-steps` z identyfikatorem kroku CUDZEGO klubu dopisuje wiersze obsady,
+  które blokują dopisanie tej osoby do tamtego kroku - wymaga administratora obecnego
+  w dwóch klubach.

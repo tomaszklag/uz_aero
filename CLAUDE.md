@@ -4197,7 +4197,9 @@ Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decy
   potrafiłaby zgubić wiersz. Kursor NIEPEŁNY to `400`, a nie ciche „od początku" -
   strona od początku wygląda jak strona z wynikami, więc telefon pętliłby się na
   pierwszej i nikt by tego nie zauważył
-- **TOKEN PUSH ŻYJE RAZEM Z SESJĄ LOGOWANIA** (kaskada z `login_sessions`, §12.2) i jako
+- **TOKEN PUSH ŻYJE RAZEM Z SESJĄ LOGOWANIA** (§12.2; kaskada z `login_sessions` NIE
+  wystarcza, bo sesji się nie kasuje - budzik bierze tylko tokeny sesji żywych i adresatów
+  z aktywnym członkostwem, a unieważnienie kasuje tokeny swojej sesji; przegląd 3.1.0, §19) i jako
   jedyna nowa tabela **NIE MA `org_id`**: opisuje URZĄDZENIE osoby, a ta bywa w kilku
   klubach naraz i przełącza je bez wylogowania. Klub niesie POWIADOMIENIE, czyli treść,
   która przez ten token wychodzi. Sesja bierze się z TOKENU żądania, nie z ciała
