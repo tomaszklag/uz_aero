@@ -37,9 +37,15 @@ export interface AdminLogAircraftItem {
   /** Format licznika - panel formatuje nim motogodziny w gridzie poziomu 2. */
   mhFormat: MhFormat | null;
 
-  /** Ile sesji (biegów silnika) w zakresie - razem z otwartymi. */
+  /**
+   * Ile operacji ZDANYCH w zakresie - to jest podstawa wszystkich sum wiersza
+   * (decyzja właściciela 2026-09-26: sumy = operacje zamknięte, jak w statystykach).
+   */
   sessions: number;
-  /** Ile z nich jeszcze trwa. Wyróżnia maszynę, która lata w tej chwili. */
+  /**
+   * Ile operacji zakresu jeszcze TRWA - POZA sumami, nazwana osobno. Wyróżnia
+   * maszynę, która lata w tej chwili („leci teraz").
+   */
   openSessions: number;
   /**
    * Ile DNI maszyna pracowała - liczone po dobie UTC chwili przejęcia, nie po liczbie
@@ -126,17 +132,18 @@ export interface AdminLogPilotItem {
   name: string | null;
   /** Członkostwo aktywne; wyłączony członek, który latał, zostaje na liście. */
   active: boolean;
-  /** Dni z JAKIMKOLWIEK lotem - w dowolnym fotelu. */
+  /** Dni z JAKIMKOLWIEK lotem zamkniętym - w dowolnym fotelu. */
   activeDays: number;
-  /** Nalot dowódcy - razem z operacjami w toku, jak na osi maszyn. */
+  /** Nalot dowódcy z operacji ZDANYCH, jak na osi maszyn i w statystykach. */
   sessions: number;
+  /** Operacje dowódcy w toku w zakresie - POZA sumami; o „teraz" mówi `open`. */
   openSessions: number;
   flights: number;
   blockMs: number;
   flightMs: number;
   /** Prawy fotel: liczba operacji i czas; `null` = ani jednej. */
   dual: { operations: number; blockMs: number } | null;
-  /** Maszyny z dowolnego fotela, alfabetycznie. */
+  /** Maszyny z operacji zamkniętych, dowolny fotel, alfabetycznie. */
   regs: string[];
   /** Operacja W TOKU jako dowódcy - o TERAZ, niezależnie od zakresu; `null` = żadnej. */
   open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;

@@ -4796,11 +4796,23 @@ Reguły obowiązujące odtąd KAŻDĄ zmianę dziennika:
   (segment `.seg` na poziomie 1, oś maszyn domyślna i poza adresem), nie druga trasa -
   osobny `/log/pilots` sugerowałby drugi raport o innym zakresie. `LogAdminPort.byPilot`
   czyta DOKŁADNIE ten zbiór operacji, co `byAircraft` (jeden napis `inRange(org)`:
-  zakres po `claim_time`, bez unieważnionych i pustych, RAZEM z operacjami w toku)
-  i rozkłada go po ludziach CTE `crew` (`UNION ALL`: dowódca + drugi pilot, gdy nie
-  jest tą samą osobą). **Sumy dowódcy obu osi są RÓWNE co do minuty** i pilnuje tego
-  test (`adminLog.test.ts`) - operacja w toku liczy się na obu osiach tym, co już
-  zapisała; kanwa makiety L1b mówiła inaczej i została poprawiona
+  zakres po `claim_time`, bez unieważnionych i pustych) i rozkłada go po ludziach CTE
+  `crew` (`UNION ALL`: dowódca + drugi pilot, gdy nie jest tą samą osobą). **Sumy
+  dowódcy obu osi są RÓWNE co do minuty** i pilnuje tego test (`adminLog.test.ts`)
+- **SUMY DZIENNIKA LICZĄ WYŁĄCZNIE OPERACJE ZDANE, W TOKU JEST NAZWANA OSOBNO** (decyzja
+  właściciela 2026-09-26, w dwóch turach; potwierdza kanwy makiet i §4.5). Do 3.2.0 oś
+  maszyn sumowała operację w toku „tym, co już zapisała" (reguła z 2.0: „inaczej
+  dzisiejszy dzień byłby pusty do wieczora") i pierwsza wersja P-B przeniosła to na oś
+  pilotów - właściciel to cofnął: JEDNA podstawa liczenia dla obu osi, nagłówków dób
+  i statystyk. W `logRepo` zakres (`inRange`) decyduje, KTÓRE operacje należą do
+  wiersza, a filtr `closed(alias)` - które się SUMUJĄ; `openSessions` liczy w toku
+  osobno. Dzisiejszy dzień nie jest pusty: wiersz maszyny mówi „leci teraz", wiersz
+  osoby „leci teraz · SP-AXA", nagłówek doby „· 1 w toku", podtytuł karty pilota
+  „· 1 w toku". Maszyna i osoba z SAMĄ operacją w toku stoją na liście z zerami
+  (maszyna nieprzygaszona, osoba nie wśród zwiniętych, bez podpisu „tylko jako drugi
+  pilot") - zera tłumaczy sygnał „teraz". Lista `regs` też z zamkniętych: maszynę
+  trzymaną nazywa sygnał, nie kolumna „Samoloty"; `lastEngineStopAt` zostaje faktem
+  z każdej operacji, bo śmigło naprawdę stanęło
 - **NALOT LICZY SIĘ DOWÓDCY, PRAWY FOTEL OSOBNO** (§17.1 wariant B): wiersz niesie
   `dual: { operations, blockMs } | null` - `null` znaczy „ani jednej", nie parę zer
   (piąta suma nie rysuje się z zera). `Dni` liczy doby z JAKIMKOLWIEK lotem. Uczeń bez

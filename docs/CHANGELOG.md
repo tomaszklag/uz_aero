@@ -44,6 +44,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   godziny lotu szkolnego nie dodaje się do siebie z wiersza instruktora i ucznia.
   Członkowie bez lotów w zakresie są zwinięci w jeden wiersz pod listą i rozwijają się
   kliknięciem. Wiersz mówi też, kto trzyma maszynę albo właśnie leci.
+- **Sumy dziennika liczą wyłącznie operacje zdane** - na obu osiach, w nagłówkach dób
+  i w statystykach tak samo. Operacja w toku nie dokłada się do nalotu, dopóki samolot
+  nie zostanie zdany; zamiast tego wiersz nazywa ją wprost („leci teraz", „1 w toku"),
+  więc ten sam zakres dat daje jedną liczbę nalotu na każdym ekranie panelu.
 - **Operacje maszyny i pilota pogrupowane dniami.** Doba jest nagłówkiem z sumami
   (operacje, loty, blok, lot - liczone przez serwer nad całą dobą, także gdy lista jest
   przycięta), operacje w toku są nazwane osobno, a czas trwania biegu silnika ma własną

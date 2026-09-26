@@ -7,9 +7,11 @@
  *     a `tsc` tego nie złapie: kolumna nieprzepisana w SQL-u to `null` w runtime,
  *     nie błąd typów;
  *  2. **agregat poziomu 1 liczy po TEJ SAMEJ osi**, co lista sesji pod spodem
- *     (`claim_time`), obejmuje całą flotę i NIE pomija sesji otwartych - inaczej
- *     dzisiejszy dzień byłby pusty do wieczora, a dwa poziomy modułu pokazywałyby
- *     inną liczbę sesji;
+ *     (`claim_time`), obejmuje całą flotę i NAZYWA operację w toku osobno
+ *     (`openSessions`) - do 3.2.0 sumował ją „tym, co już zapisała", od decyzji
+ *     właściciela z 2026-09-26 sumy liczą WYŁĄCZNIE operacje zdane (jedna podstawa
+ *     liczenia z nagłówkami dób i statystykami, §4.5), a dzisiejszy dzień nie jest
+ *     pusty, bo wiersz mówi „leci teraz";
  *  3. **oś pilotów (3.2.0, `docs/panel-3.2.md` §4.1, §17.1) rozkłada TEN SAM zbiór
  *     operacji po ludziach**: sumy dowódcy obu osi są równe co do minuty, czas
  *     w prawym fotelu jest osobną liczbą, a członkowie bez lotów są zwinięci - liczba
@@ -230,7 +232,7 @@ describe('GET /admin/api/log - flota w zakresie', () => {
     expect(idle.blockMs).toBe(0);
   });
 
-  it('liczy sesje OTWARTE - inaczej dzisiejszy dzień byłby pusty do wieczora', async () => {
+  it('operacja W TOKU jest NAZWANA, ale nie sumowana - dzisiejszy dzień mówi „leci teraz", nie „0"', async () => {
     const { app } = await testHarness();
     const ako = await token(app, 'AKO');
     await post(app, ako, flyingDay({ sessionUuid: 's-log-5', close: false }));
@@ -238,9 +240,32 @@ describe('GET /admin/api/log - flota w zakresie', () => {
     const report = (await log(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
     const axa = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-AXA');
 
-    expect(axa).toMatchObject({ sessions: 1, openSessions: 1 });
-    // Bilansu paliwa nie ma bez odczytu końcowego - i wtedy suma NIE jest podawana
-    // jako prawda, tylko jako brak z liczbą wierszy, których dotyczy.
+    // Decyzja właściciela 2026-09-26: sumy = operacje ZDANE (jak w statystykach
+    // i w nagłówkach dób); operacja w toku stoi w wierszu osobno.
+    expect(axa).toMatchObject({ sessions: 0, openSessions: 1, activeDays: 0, flights: 0, blockMs: 0 });
+    // Bilans paliwa liczy się z zamkniętych - bez ani jednej nie ma ani sumy, ani dziury.
+    expect(axa.fuelConsumedL).toBeNull();
+    expect(axa.fuelUnknownSessions).toBe(0);
+  });
+
+  it('wpis bez odczytu końcowego wśród ZAMKNIĘTYCH: suma paliwa jest brakiem z liczbą wierszy', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-5b' }));
+    // Zakończenie z panelu zamyka operację BEZ odczytów (issue #81) - bilansu nie ma.
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-5c', dayOffset: 1, close: false }));
+    const closed = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/s-log-5c/close',
+      headers: { authorization: `Bearer ${ako}`, ...ADMIN_CSRF_HEADERS },
+      payload: { reason: 'pilot nie zdał' },
+    });
+    expect(closed.statusCode, closed.body).toBe(200);
+
+    const report = (await log(app, ako, '?from=2026-06-22&to=2026-06-23')).json();
+    const axa = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-AXA');
+    expect(axa).toMatchObject({ sessions: 2, openSessions: 0 });
+    // Suma z dziurą NIE jest podawana jako prawda, tylko jako brak z liczbą wierszy.
     expect(axa.fuelConsumedL).toBeNull();
     expect(axa.fuelUnknownSessions).toBe(1);
   });
@@ -305,6 +330,7 @@ const pilotsLog = (app: Harness['app'], t: string, query = '') =>
 interface PilotRowLike {
   code: string | null;
   sessions: number;
+  openSessions: number;
   flights: number;
   blockMs: number;
   flightMs: number;
@@ -344,14 +370,15 @@ describe('GET /admin/api/log?os=piloci - oś pilotów', () => {
     expect(report.pilots.map((p: PilotRowLike) => p.code)).toEqual(['AKO', 'BNO']);
   });
 
-  it('sumy dowódcy OBU osi są równe co do minuty - także z operacją w toku i po unieważnieniu', async () => {
+  it('sumy dowódcy OBU osi są równe co do minuty - operacja w toku POZA sumami obu, unieważniona poza obiema', async () => {
     const { app } = await testHarness();
     const ako = await token(app, 'AKO');
     const krz = await token(app, 'KRZ');
     await post(app, ako, flyingDay({ sessionUuid: 's-pl-3', dualId: 'BNO' }));
     await post(app, ako, flyingDay({ sessionUuid: 's-pl-4', dayOffset: 1, refuelL: 30 }));
     await post(app, krz, flyingDay({ sessionUuid: 's-pl-5', picId: 'KRZ', aircraftId: 'SP-FGK', dayOffset: 1 }));
-    // Operacja W TOKU liczy się na obu osiach tym, co już zapisała (jak dotąd na osi maszyn).
+    // Operacja W TOKU nie wchodzi do sum ŻADNEJ osi (decyzja właściciela 2026-09-26) -
+    // obie nazywają ją osobno w `openSessions`.
     await post(app, krz, flyingDay({ sessionUuid: 's-pl-6', picId: 'KRZ', aircraftId: 'SP-FGK', dayOffset: 2, close: false }));
     // Unieważniona wypada z OBU osi.
     await post(app, ako, flyingDay({ sessionUuid: 's-pl-7', dayOffset: 2 }));
@@ -378,8 +405,11 @@ describe('GET /admin/api/log?os=piloci - oś pilotów', () => {
     });
     const fleetSum = totals(fleet.aircraft);
     expect(totals(people.pilots)).toEqual(fleetSum);
-    // Cztery żywe operacje (dwie AKO, dwie KRZ), unieważniona poza rachunkiem.
-    expect(fleetSum.sessions).toBe(4);
+    // Trzy operacje ZDANE (dwie AKO, jedna KRZ); w toku i unieważniona poza rachunkiem.
+    expect(fleetSum.sessions).toBe(3);
+    // Operacja w toku KRZ stoi na obu osiach OSOBNO: w wierszu maszyny i w wierszu osoby.
+    expect(fleet.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-FGK')).toMatchObject({ sessions: 1, openSessions: 1 });
+    expect(pilotRow(people, 'KRZ')).toMatchObject({ sessions: 1, openSessions: 1, blockMs: BLOCK_MS, regs: ['SP-FGK'] });
     // Drugi pilot NIE dodaje się do sum dowódcy - BNO ma zero jako dowódca, a lot
     // szkolny stoi w jego wierszu osobno.
     expect(pilotRow(people, 'BNO')).toMatchObject({ sessions: 0, blockMs: 0, dual: { operations: 1 } });
@@ -396,6 +426,10 @@ describe('GET /admin/api/log?os=piloci - oś pilotów', () => {
     const report = (await pilotsLog(app, ako, '&from=2026-06-22&to=2026-06-22')).json();
     expect(pilotRow(report, 'AKO')?.open).toEqual({ reg: 'SP-AXA', claimedAt: at(7, 50), engineRunning: false });
     expect(pilotRow(report, 'KRZ')?.open).toEqual({ reg: 'SP-FGK', claimedAt: at(7, 50), engineRunning: true });
+    // Osoba z samą operacją w toku STOI na liście (nie wśród zwiniętych), z zerami
+    // w sumach i pustą listą maszyn - maszynę nazywa sygnał „teraz".
+    expect(pilotRow(report, 'KRZ')).toMatchObject({ sessions: 0, openSessions: 1, activeDays: 0, blockMs: 0, regs: [] });
+    expect(report.idle.count).toBe(3);
   });
 
   it('operacja w toku mówi o TERAZ - wiersz niesie ją także spoza zakresu', async () => {

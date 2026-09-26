@@ -230,6 +230,12 @@ właściciela i nie mają czego wnosić do nalotu. Różnica „statystyki licz�
 dziennik także trwające" zostaje i jest poprawna, ale ekran musi ją nazwać.
 **Do potwierdzenia w §14 pkt 3.**
 
+**Rozstrzygnięte przy P-B (26 września 2026, decyzja właściciela - §16):** różnica NIE
+zostaje. Dziennik liczy odtąd na obu osiach wyłącznie operacje ZDANE, tak jak statystyki
+i nagłówki dób; operacja w toku jest wszędzie NAZWANA osobno („leci teraz", „· 1 w toku"),
+nigdy sumowana. Jedna podstawa liczenia znaczy jedną liczbę nalotu na wszystkich ekranach
+panelu dla tego samego zakresu.
+
 ---
 
 ## 5. Edycja przesłanych zdarzeń
@@ -601,7 +607,7 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 | P-A | Baner niespójności operacji (`rules/consistency.ts`) w trybie edycji wymaga cienkiego plastra serwera - panelowi wolno brać z domeny wyłącznie typy. **Rozstrzygnięte 26 września: serwer przysyła wynik razem z operacją** | §17 pkt 6, §17.1 |
 | P-A | Loty jako drugi pilot na osi pilotów. **Rozstrzygnięte 26 września: WŁASNA KOLUMNA i własna suma** (wariant B), także w tabeli pilotów statystyk - `GET /log?os=piloci` i `GET /stats.pilots` niosą czas w prawym fotelu osobno | §17 pkt 3, §17.1 |
 | P-A | Oś pilotów na poziomie 1. **Rozstrzygnięte 26 września: lista tych, którzy latali (dowódca ALBO drugi pilot) + LICZBA zwiniętych członków bez lotów**, rozwijana na żądaniu - plaster w `GET /log` (nie jest samym `GET /stats.pilots`) | §17 pkt 2, §17.1 |
-| P-B | **Operacja w toku liczy się na osi pilotów tak, jak na osi maszyn** - tym, co już zapisała. Kanwa makiety L1b mówiła „suma nie obejmuje operacji w toku", ale równość sum obu osi (§17.1 pkt 1, test `adminLog.test.ts`) wymaga JEDNEGO zbioru wierszy, a oś maszyn liczy otwarte od 2.0 („co lata teraz" jest pytaniem częstszym). Nagłówki dób na poziomie 2 liczą wyłącznie zamknięte i mówią „· n w toku" - tak jak w makiecie | §4.1, §4.4 |
+| P-B | **Sumy OBU osi liczą wyłącznie operacje ZDANE; operacja w toku jest nazwana osobno** (decyzja właściciela 2026-09-26, w dwóch turach: najpierw oś pilotów, potem „obie osie tylko zamknięte"). Pierwsza wersja P-B liczyła operację w toku na obu osiach „tym, co już zapisała" (reguła osi maszyn z 2.0: inaczej dzisiejszy dzień byłby pusty do wieczora) - właściciel potwierdził kanwy makiet (`dziennik-flota`, L1b: „suma nie obejmuje operacji w toku") i §4.5: JEDNA podstawa liczenia dla obu osi, nagłówków dób i statystyk. Dzisiejszy dzień nie jest pusty, bo wiersz mówi „leci teraz" (`openSessions`), nagłówek doby „· n w toku", a podtytuł karty pilota „· 1 w toku". Osoba z samą operacją w toku stoi na liście z zerami (nie wśród zwiniętych); równość sum obu osi zostaje treścią testu | §4.1, §4.4, §4.5 |
 | P-B | **Sygnał „trzyma SP-KLM od 06 WRZ 08:15" zamiast „nie zdała …"**: czasownika w czasie przeszłym nie da się odmienić bez płci (reguła z 3.1.0 - rozstrzygnięcia rzeczownikiem), a „trzyma" brzmi tak samo dla każdego. Operacja w toku dowódcy jedzie w wierszu NIEZALEŻNIE od zakresu, bo mówi o teraz. Makieta poprawiona | §4.1 |
 | P-B | **Podtytuł poziomu 2 osi pilota bez zestawu uprawnień** („· pilot ·" z makiety): słownik klubu, z którego ekran zna osobę, zestawu nie niesie, a zestaw jest sprawą modułu Piloci - stoi tam pod „Karta członka". Liczby zakresu w podtytule idą z wiersza osi pilotów tego samego zakresu (`GET /log?os=piloci`), nie z sumowania nagłówków dób w przeglądarce. Makieta poprawiona | §4.1 |
 | P-B | **Doba nagłówka liczy się po chwili PRZEJĘCIA** (`claim_time`), po tej samej osi, co kursor i zakres - żeby strona rozcinała dobę na dwie sąsiednie części. Doba sygnatury (kotwica uruchomienia silnika) bywa inna dla biegu zaczętego po północy; sygnatura stoi w wierszu, więc rozjazd jest widoczny | §4.3, §4.4 |
@@ -622,7 +628,8 @@ inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wni
    lotów** (rozstrzygnięte 26 września - patrz §17.1 pkt 3; do 26 września makieta
    pokazywała wszystkich z zerami). Kolumny: Dni · Operacje · Loty · Blok · Lot ·
    Drugi pilot · Samoloty. Sumy kolumn DOWÓDCY obu osi dla tego samego zakresu są równe
-   co do minuty (test dla P-B).
+   co do minuty (test dla P-B) i liczą wyłącznie operacje ZDANE - operacja w toku jest
+   w wierszu nazwana („leci teraz"), nie sumowana (decyzja właściciela 26 września, §16).
 3. **Nalot liczy się dowódcy; czas jako drugi pilot ma WŁASNĄ KOLUMNĘ i własną sumę**
    (rozstrzygnięte 26 września - §17.1 pkt 1; do 26 września: podpis poza sumami).
    Na L1b kolumna „Drugi pilot" z podpisem liczby operacji, na L2b wiersz `tr.as-dual`

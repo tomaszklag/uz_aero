@@ -199,7 +199,9 @@
               w wierszu instruktora (Blok) i ucznia (Drugi pilot), więc tych dwóch
               kolumn nie wolno dodać do siebie. Sumy kolumn dowódcy dla obu osi
               (maszyn i pilotów) są RÓWNE co do minuty (19:45 bloku, 33 loty) -
-              to test P-B. Uczeń, który w zakresie nie był ani razu dowódcą, ma
+              to test P-B - i liczą WYŁĄCZNIE operacje zdane (decyzja właściciela
+              z 26 września, druga tura: obie osie tylko zamknięte, jak statystyki
+              i nagłówki dób). Uczeń, który w zakresie nie był ani razu dowódcą, ma
               zera w nalocie i liczbę w kolumnie „Drugi pilot".
            2. LISTA POKAZUJE TYCH, KTÓRZY LATALI (jako dowódca ALBO drugi pilot),
               a członków bez ani jednego lotu w zakresie ZWIJA w jeden wiersz pod
@@ -238,9 +240,12 @@
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
             <!-- Pilot, który właśnie trzyma maszynę: ten sam sygnał „leci teraz", co
-                 w wierszu maszyny na osi obok. Operacja w toku liczy się do sum TYM,
-                 CO JUŻ ZAPISAŁA - dokładnie jak na osi maszyn (P-B: sumy obu osi są
-                 równe co do minuty, więc obie liczą ten sam zbiór wierszy).
+                 w wierszu maszyny na osi obok. Operacja w toku NIE WCHODZI DO SUM -
+                 liczby w wierszu to operacje ZDANE, a to, co dzieje się teraz, mówi
+                 sygnał (dokładnie jak na osi maszyn i w nagłówku doby „· 1 w toku";
+                 P-B: sumy obu osi są równe co do minuty, bo obie liczą ten sam zbiór
+                 zamkniętych operacji). Osoba z SAMĄ operacją w toku stoi tu z zerami,
+                 nie wśród zwiniętych - u niej się dzieje.
                  Barbara Nowak niżej ma operację WISZĄCĄ (SP-KLM od 6 września) - ten sam
                  podpis, inne zdanie: „trzyma … od", bo to sprawa w „Do sprawdzenia".
                  Sygnał mówi o TERAZ i stoi także wtedy, gdy przejęcie wypada poza
@@ -357,7 +362,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Dlaczego oś, a nie drugi moduł</span>
-        <span class="inv-when">Zamówienie mówi wprost, że lista operacji maszyny i lista operacji pilota „są ze sobą powiązane". To ta sama doba i te same operacje, oglądane z dwóch stron - więc przełącznik na jednym ekranie, a nie pozycja w kolumnie. Konsekwencja, której pilnuje test: sumy obu osi dla tego samego zakresu są RÓWNE co do minuty. Dwie liczby nalotu na jednym ekranie panelu byłyby nie do obrony.</span>
+        <span class="inv-when">Zamówienie mówi wprost, że lista operacji maszyny i lista operacji pilota „są ze sobą powiązane". To ta sama doba i te same operacje, oglądane z dwóch stron - więc przełącznik na jednym ekranie, a nie pozycja w kolumnie. Konsekwencja, której pilnuje test: sumy obu osi dla tego samego zakresu są RÓWNE co do minuty i liczą wyłącznie operacje zdane - w toku jest nazwana, nie sumowana. Dwie liczby nalotu na jednym ekranie panelu byłyby nie do obrony.</span>
       </div>
       <div class="inv-demo">
         <div class="filters">

@@ -1885,16 +1885,18 @@ export interface LogPilotAggregate {
   name: string | null;
   /** Członkostwo aktywne. Wyłączony członek, który w zakresie latał, ZOSTAJE na liście. */
   active: boolean;
-  /** Dni z JAKIMKOLWIEK lotem - w dowolnym fotelu (§17.1 pkt 1). */
+  /** Dni z JAKIMKOLWIEK lotem zamkniętym - w dowolnym fotelu (§17.1 pkt 1). */
   activeDays: number;
+  /** Sumy dowódcy z operacji ZDANYCH (jedna podstawa liczenia, §4.5). */
   sessions: number;
+  /** Operacje dowódcy w toku w zakresie - poza sumami. */
   openSessions: number;
   flights: number;
   blockMs: number;
   flightMs: number;
-  /** Operacje w PRAWYM FOTELU; `null` = ani jednej. */
+  /** Operacje zamknięte w PRAWYM FOTELU; `null` = ani jednej. */
   dual: { operations: number; blockMs: number } | null;
-  /** Rejestracje maszyn z dowolnego fotela, alfabetycznie; bez `null` spoza floty. */
+  /** Rejestracje maszyn z operacji zamkniętych, dowolny fotel, alfabetycznie; bez `null` spoza floty. */
   regs: string[];
   /**
    * Operacja W TOKU tej osoby jako dowódcy - NIEZALEŻNIE od zakresu, bo mówi o TERAZ

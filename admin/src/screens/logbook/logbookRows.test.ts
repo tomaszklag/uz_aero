@@ -37,6 +37,13 @@ describe('wiersz osi pilotów', () => {
     expect(row.dual).toEqual({ block: '03:52', note: '2 operacje' });
   });
 
+  it('zera przy operacji dowódcy W TOKU tłumaczy sygnał „teraz", nie podpis o prawym fotelu', () => {
+    const open = { reg: 'SP-AXA', claimedAt: Date.UTC(2026, 8, 6, 8, 15), engineRunning: true };
+    const row = logbookPilotRow({ ...pilot, sessions: 0, openSessions: 1, blockMs: 0, dual: { operations: 2, blockMs: 232 * MIN }, open });
+    expect(row.now).toBe('leci teraz · SP-AXA');
+    expect(row.note).toBeNull();
+  });
+
   it('sygnał „teraz" bez formy z płcią: leci albo trzyma maszynę od kiedy', () => {
     const at = Date.UTC(2026, 8, 6, 8, 15);
     expect(logbookPilotRow({ ...pilot, open: { reg: 'SP-AXA', claimedAt: at, engineRunning: true } }).now).toBe('leci teraz · SP-AXA');
@@ -71,5 +78,14 @@ describe('napisy poziomu 1 i 2', () => {
   it('podtytuł pilota niesie liczby z wiersza osi, prawy fotel tylko gdy jest', () => {
     expect(pilotRangeSummary(pilot)).toBe('w zakresie 4 operacje · 07:40 blok · jako drugi pilot 02:12');
     expect(pilotRangeSummary({ ...pilot, sessions: 1, dual: null })).toBe('w zakresie 1 operacja · 07:40 blok');
+  });
+
+  it('podtytuł nazywa operację w toku POZA sumami, jak nagłówek doby', () => {
+    expect(pilotRangeSummary({ ...pilot, openSessions: 1 })).toBe(
+      'w zakresie 4 operacje · 07:40 blok · 1 w toku · jako drugi pilot 02:12',
+    );
+    expect(pilotRangeSummary({ ...pilot, sessions: 0, blockMs: 0, openSessions: 1, dual: null })).toBe(
+      'w zakresie 0 operacji · 00:00 blok · 1 w toku',
+    );
   });
 });

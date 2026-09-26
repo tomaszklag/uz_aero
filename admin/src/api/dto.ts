@@ -678,15 +678,18 @@ export interface LogPilotDto {
   name: string | null;
   /** Członkostwo aktywne; wyłączony, który latał, zostaje na liście. */
   active: boolean;
-  /** Dni z jakimkolwiek lotem, w dowolnym fotelu. */
+  /** Dni z jakimkolwiek lotem zamkniętym, w dowolnym fotelu. */
   activeDays: number;
+  /** Sumy dowódcy z operacji ZDANYCH - jak na osi maszyn i w statystykach. */
   sessions: number;
+  /** Operacje dowódcy w toku w zakresie - poza sumami. */
   openSessions: number;
   flights: number;
   blockMs: number;
   flightMs: number;
   /** Prawy fotel; `null` = ani jednej takiej operacji. */
   dual: { operations: number; blockMs: number } | null;
+  /** Maszyny z operacji zamkniętych. */
   regs: string[];
   /** Operacja w toku jako dowódcy - o TERAZ, niezależnie od zakresu. */
   open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;

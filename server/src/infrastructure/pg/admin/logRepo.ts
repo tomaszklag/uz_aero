@@ -19,10 +19,20 @@
  *
  * ══ OŚ PILOTÓW: TEN SAM ZBIÓR WIERSZY, DRUGA OŚ (3.2.0, §4.1, §17.1) ══
  * `byPilot` czyta DOKŁADNIE te operacje, co `byAircraft` (zakres po `claim_time`, bez
- * unieważnionych i pustych, razem z operacjami w toku) i rozkłada je po ludziach: raz
- * po dowódcy (nalot), raz po drugim pilocie (osobna suma prawego fotela). Dlatego oba
- * warunki zakresu stoją w JEDNYM napisie (`inRange`) - dwie kopie rozjechałyby się
- * przy pierwszej poprawce, a równość sum obu osi jest treścią testu P-B.
+ * unieważnionych i pustych) i rozkłada je po ludziach: raz po dowódcy (nalot), raz po
+ * drugim pilocie (osobna suma prawego fotela). Dlatego oba warunki zakresu stoją
+ * w JEDNYM napisie (`inRange`) - dwie kopie rozjechałyby się przy pierwszej poprawce,
+ * a równość sum obu osi jest treścią testu P-B.
+ *
+ * ══ SUMY = OPERACJE ZAMKNIĘTE, W TOKU NAZWANA OSOBNO (decyzja właściciela 2026-09-26) ══
+ * Do 3.2.0 oś maszyn sumowała także operację w toku „tym, co już zapisała" (reguła
+ * z 2.0: inaczej dzisiejszy dzień byłby pusty do wieczora). Od P-B JEDNA podstawa
+ * liczenia dla obu osi, nagłówków dób i statystyk (§4.5): do sum wchodzą wyłącznie
+ * operacje ZDANE (`status = 'closed'`), a operacja w toku jest w wierszu NAZWANA -
+ * `openSessions` („leci teraz", „· 1 w toku") - więc dzisiejszy dzień nie jest pusty,
+ * tylko mówi prawdę o tym, czego jeszcze nie ma: wyłączenia silnika i odczytu
+ * końcowego. Zakres (`inRange`) decyduje, KTÓRE operacje należą do wiersza; `CLOSED`
+ * decyduje, które z nich się SUMUJĄ.
  */
 
 import type { Queryable } from '../../../application/common/ports.ts';
@@ -46,6 +56,12 @@ const inRange = (org: string): string => `s.org_id = ${org}
           AND s.claim_time BETWEEN $1 AND $2
           AND s.status <> 'voided'
           AND NOT ${emptySessionSql('s')}`;
+
+/**
+ * Warunek SUMOWANIA (alias podany przez wołającego): liczy się wyłącznie operacja
+ * zdana. Operacja w toku należy do zakresu (`inRange`) i do wiersza, ale nie do sum.
+ */
+const closed = (alias: string): string => `${alias}.status = 'closed'`;
 
 interface Row {
   aircraft_id: string;
@@ -82,25 +98,30 @@ export class PgAdminLogRepo implements LogAdminPort {
               a.reg,
               a.type,
               a.mh_format,
-              COUNT(s.session_uuid) AS sessions,
+              -- SUMY = ZAMKNIĘTE (docblock): każdy agregat niżej ma filtr closed(),
+              -- a operacja w toku jest policzona OSOBNO w open_sessions.
+              COUNT(s.session_uuid) FILTER (WHERE ${closed('s')}) AS sessions,
               COUNT(s.session_uuid) FILTER (WHERE s.status = 'active') AS open_sessions,
               -- DNI pracy, nie liczba sesji: dwie zmiany jednego dnia to jeden dzień.
               -- Doba liczona z chwili PRZEJĘCIA, czyli tą samą osią, którą filtruje
               -- zakres i lista sesji pod spodem.
-              COUNT(DISTINCT (s.claim_time / $3)) AS active_days,
-              SUM(s.flights_count) AS flights,
-              SUM(s.takeoff_count) AS takeoffs,
-              SUM(s.landing_count) AS landings,
-              SUM(s.block_ms) AS block_ms,
-              SUM(s.flight_ms) AS flight_ms,
-              SUM(s.fuel_added_l) AS fuel_added_l,
-              SUM(s.fuel_consumed_l) AS fuel_consumed_l,
-              -- Ile sesji zakresu NIE MA bilansu paliwa (otwarta, wpis bez odczytu
-              -- końcowego). Suma z dziurą podana jako prawda byłaby liczbą mniejszą
-              -- od rzeczywistej - kontrakt oddaje wtedy brak, a to pole mówi ile.
-              COUNT(s.session_uuid) FILTER (WHERE s.fuel_consumed_l IS NULL) AS fuel_unknown,
-              SUM(s.oil_added_l) AS oil_added_l,
-              SUM(s.mh_delta_h) AS mh_delta_h,
+              COUNT(DISTINCT (s.claim_time / $3)) FILTER (WHERE ${closed('s')}) AS active_days,
+              SUM(s.flights_count)   FILTER (WHERE ${closed('s')}) AS flights,
+              SUM(s.takeoff_count)   FILTER (WHERE ${closed('s')}) AS takeoffs,
+              SUM(s.landing_count)   FILTER (WHERE ${closed('s')}) AS landings,
+              SUM(s.block_ms)        FILTER (WHERE ${closed('s')}) AS block_ms,
+              SUM(s.flight_ms)       FILTER (WHERE ${closed('s')}) AS flight_ms,
+              SUM(s.fuel_added_l)    FILTER (WHERE ${closed('s')}) AS fuel_added_l,
+              SUM(s.fuel_consumed_l) FILTER (WHERE ${closed('s')}) AS fuel_consumed_l,
+              -- Ile ZAMKNIĘTYCH operacji zakresu NIE MA bilansu paliwa (wpis bez
+              -- odczytu końcowego, zakończenie z panelu). Suma z dziurą podana jako
+              -- prawda byłaby liczbą mniejszą od rzeczywistej - kontrakt oddaje wtedy
+              -- brak, a to pole mówi ile.
+              COUNT(s.session_uuid) FILTER (WHERE ${closed('s')} AND s.fuel_consumed_l IS NULL) AS fuel_unknown,
+              SUM(s.oil_added_l)     FILTER (WHERE ${closed('s')}) AS oil_added_l,
+              SUM(s.mh_delta_h)      FILTER (WHERE ${closed('s')}) AS mh_delta_h,
+              -- Ostatnie wyłączenie silnika to FAKT, nie suma: liczy się także
+              -- z operacji jeszcze niezdanej, bo śmigło naprawdę stanęło.
               MAX(s.engine_stop_at) AS last_engine_stop_at
          FROM aircraft a
          LEFT JOIN sessions s
@@ -199,17 +220,21 @@ export class PgAdminLogRepo implements LogAdminPort {
               m.code                                                    AS code,
               pp.name                                                   AS name,
               (m.status = 'active')                                     AS active,
-              -- DNI z jakimkolwiek lotem, w dowolnym fotelu (§17.1 pkt 1); doba
-              -- z chwili PRZEJĘCIA, jak na osi maszyn.
-              COUNT(DISTINCT (c.claim_time / $3))                       AS active_days,
-              COUNT(*)            FILTER (WHERE c.as_pic)               AS sessions,
-              COUNT(*)            FILTER (WHERE c.as_pic AND c.status = 'active') AS open_sessions,
-              SUM(c.flights_count) FILTER (WHERE c.as_pic)              AS flights,
-              SUM(c.block_ms)     FILTER (WHERE c.as_pic)               AS block_ms,
-              SUM(c.flight_ms)    FILTER (WHERE c.as_pic)               AS flight_ms,
-              COUNT(*)            FILTER (WHERE NOT c.as_pic)           AS dual_sessions,
-              SUM(c.block_ms)     FILTER (WHERE NOT c.as_pic)           AS dual_block_ms,
-              array_agg(DISTINCT a.reg ORDER BY a.reg)                  AS regs,
+              -- SUMY = ZAMKNIĘTE (docblock), jak na osi maszyn; operacja w toku
+              -- dowódcy jest policzona OSOBNO w open_sessions i nazwana sygnałem
+              -- „teraz" (kolumny o.* niżej). DNI z jakimkolwiek lotem, w dowolnym fotelu
+              -- (§17.1 pkt 1); doba z chwili PRZEJĘCIA, jak na osi maszyn.
+              COUNT(DISTINCT (c.claim_time / $3)) FILTER (WHERE ${closed('c')})  AS active_days,
+              COUNT(*)             FILTER (WHERE c.as_pic AND ${closed('c')})     AS sessions,
+              COUNT(*)             FILTER (WHERE c.as_pic AND c.status = 'active') AS open_sessions,
+              SUM(c.flights_count) FILTER (WHERE c.as_pic AND ${closed('c')})     AS flights,
+              SUM(c.block_ms)      FILTER (WHERE c.as_pic AND ${closed('c')})     AS block_ms,
+              SUM(c.flight_ms)     FILTER (WHERE c.as_pic AND ${closed('c')})     AS flight_ms,
+              COUNT(*)             FILTER (WHERE NOT c.as_pic AND ${closed('c')}) AS dual_sessions,
+              SUM(c.block_ms)      FILTER (WHERE NOT c.as_pic AND ${closed('c')}) AS dual_block_ms,
+              -- Maszyny, na których osoba LATAŁA - z operacji zamkniętych; maszynę
+              -- trzymaną teraz nazywa sygnał „teraz", nie ta lista.
+              array_agg(DISTINCT a.reg ORDER BY a.reg) FILTER (WHERE ${closed('c')}) AS regs,
               o.reg                                                     AS open_reg,
               o.claim_time                                              AS open_claimed_at,
               o.engine_running                                          AS open_engine_running
@@ -239,10 +264,12 @@ export class PgAdminLogRepo implements LogAdminPort {
       params,
     );
 
-    // ZWINIĘCI: aktywni członkowie bez ani jednego lotu w zakresie, w dowolnym fotelu.
-    // Wyłączeni nie liczą się (§17.1 pkt 3) - „kto nie latał" pyta o ludzi, którzy
-    // mogli. `NOT EXISTS` z TYM SAMYM warunkiem zakresu, co lista latających, więc
-    // obie listy są rozłączne i razem dają cały aktywny klub.
+    // ZWINIĘCI: aktywni członkowie bez ani jednej operacji w zakresie, w dowolnym
+    // fotelu. Wyłączeni nie liczą się (§17.1 pkt 3) - „kto nie latał" pyta o ludzi,
+    // którzy mogli. `NOT EXISTS` z TYM SAMYM warunkiem zakresu, co lista latających,
+    // więc obie listy są rozłączne i razem dają cały aktywny klub. Osoba z operacją
+    // W TOKU w zakresie stoi na liście (zera w sumach, sygnał „leci teraz"), nie
+    // wśród zwiniętych - zwinięcie mówi „nic się nie działo", a u niej się dzieje.
     const idle = await db.query<{ pilot_id: string; code: string; name: string }>(
       `SELECT m.pilot_id, m.code, pp.name
          FROM memberships m

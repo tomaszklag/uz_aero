@@ -34,12 +34,14 @@ export interface LogbookRow {
   fuel: string;
   moto: string;
 
-  /** Maszyna, która w zakresie nie latała - wiersz przygaszony, ale obecny. */
+  /** Maszyna, na której w zakresie nic się nie działo - wiersz przygaszony, ale obecny. */
   idle: boolean;
 }
 
 export function logbookRow(a: LogAircraftDto): LogbookRow {
-  const idle = a.sessions === 0;
+  // Sumy liczą operacje ZDANE, ale maszyna z operacją w toku nie „stała": zera
+  // w sumach niesie razem z sygnałem „leci teraz", nie przygaszona.
+  const idle = a.sessions === 0 && a.openSessions === 0;
   return {
     aircraftId: a.aircraftId,
     reg: a.reg ?? NONE,
@@ -104,10 +106,12 @@ export function logbookPilotRow(p: LogPilotDto): LogbookPilotRow {
     now: nowLabel(p.open),
     // Wyłączony, który latał, ZOSTAJE na liście - z podpisem, nie w ukryciu. Uczeń bez
     // ani jednej operacji jako dowódca ma zera w nalocie i liczbę w kolumnie obok;
-    // podpis mówi, dlaczego zera nie są brakiem.
+    // podpis mówi, dlaczego zera nie są brakiem. Zera przy operacji dowódcy W TOKU
+    // tłumaczy sygnał „teraz", więc podpis wtedy milczy - „tylko jako drugi pilot"
+    // przy „leci teraz" byłoby nieprawdą.
     note: !p.active
       ? 'członkostwo wyłączone'
-      : p.sessions === 0 && p.dual != null
+      : p.sessions === 0 && p.openSessions === 0 && p.dual != null
         ? 'tylko jako drugi pilot'
         : null,
     days: String(p.activeDays),
@@ -146,11 +150,15 @@ export function idleFoldLabels(count: number): { closed: string; open: string } 
 }
 
 /**
- * Podtytuł poziomu 2 osi pilota: „w zakresie 4 operacje · 07:40 blok · jako drugi
- * pilot 02:12". Liczby przychodzą z wiersza osi pilotów TEGO SAMEGO zakresu - panel
- * ich nie sumuje z nagłówków dób.
+ * Podtytuł poziomu 2 osi pilota: „w zakresie 4 operacje · 07:40 blok · 1 w toku · jako
+ * drugi pilot 02:12". Liczby przychodzą z wiersza osi pilotów TEGO SAMEGO zakresu - panel
+ * ich nie sumuje z nagłówków dób. Sumy to operacje ZDANE; operacja w toku stoi po
+ * separatorze tak samo, jak w nagłówku doby pod spodem („· 1 w toku") - inaczej pilot
+ * w pierwszym locie miesiąca miałby „0 operacji" nad tabelą, która pokazuje jedną.
  */
 export function pilotRangeSummary(p: LogPilotDto): string {
-  const head = `w zakresie ${operationsCount(p.sessions)} · ${hhmm(p.blockMs)} blok`;
-  return p.dual == null ? head : `${head} · jako drugi pilot ${hhmm(p.dual.blockMs)}`;
+  const parts = [`w zakresie ${operationsCount(p.sessions)} · ${hhmm(p.blockMs)} blok`];
+  if (p.openSessions > 0) parts.push(`${p.openSessions} w toku`);
+  if (p.dual != null) parts.push(`jako drugi pilot ${hhmm(p.dual.blockMs)}`);
+  return parts.join(' · ');
 }
