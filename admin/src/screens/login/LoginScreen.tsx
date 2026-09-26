@@ -42,7 +42,7 @@ import { renderGoogleButton } from '../../auth/googleIdentity';
 import { useSessionState } from '../../auth/sessionContext';
 import { useAuthMethods, useLogin, usePasswordLogin } from '../../queries/useSession';
 import { Button, Field, PasswordInput, TextInput } from '../../ui/components';
-import { FORGOT_PASSWORD, SIGN_UP, homeFor } from '../../ui/shell/nav';
+import { FORGOT_PASSWORD, SIGN_UP, homeFor, kindOf } from '../../ui/shell/nav';
 import { scopeCount, SCOPE_PICK } from '../../ui/shell/scope';
 import { AuthFrame } from './AuthFrame';
 import { loginMessage } from './loginMessage';
@@ -89,7 +89,12 @@ export function LoginScreen() {
   // tego ekranu wpuszczałoby administratora dwóch klubów zawsze do tego samego - i to
   // bez powiedzenia mu, do którego.
   if (session != null) {
-    return <Navigate to={scopeCount(session) > 1 ? SCOPE_PICK : homeFor(session.capabilities)} replace />;
+    return (
+      <Navigate
+        to={scopeCount(session) > 1 ? SCOPE_PICK : homeFor(session.capabilities, kindOf(session))}
+        replace
+      />
+    );
   }
 
   // Odmowa OSTATNIEJ próby, niezależnie od metody: obie mutacje mówią o tej samej

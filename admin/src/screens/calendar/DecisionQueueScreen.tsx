@@ -28,21 +28,21 @@
 import { useMemo, useState } from 'react';
 
 import { useApprovalQueue, useDecideBooking } from '../../queries/useApprovals';
-import { useFleet } from '../../queries/useFleet';
-import { usePilots } from '../../queries/usePilots';
+import { useDirectory } from '../../queries/useDirectory';
 import { Banner, Breadcrumbs, Button, EmptyState, LinkButton, Loadable, PageHead } from '../../ui/components';
 import { ChecklistIcon, PreviewIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { decisionErrorMessage } from './approvalRefusal';
-import type { Person } from './bookingLabels';
+import { personLookup, regLookup } from './directoryLookups';
 import { PreviewDrawer } from './PreviewDrawer';
 import type { PreviewTarget } from './previewLabels';
 import { decisionHint, queueCards, type QueueCard, type QueueRow } from './queueCards';
 
 export function DecisionQueueScreen() {
   const queue = useApprovalQueue(true);
-  const pilots = usePilots({});
-  const fleet = useFleet({});
+  // Nazwiska i znaki ze SŁOWNIKA klubu (issue #216): akceptujący bez „Podglądu klubu"
+  // nie ma prawa do list modułów Piloci i Samoloty - a kolejka jest jego.
+  const directory = useDirectory();
   const decide = useDecideBooking();
 
   const [refusing, setRefusing] = useState<string | null>(null);
@@ -54,17 +54,8 @@ export function DecisionQueueScreen() {
   // a decyzja zapada na jej karcie - szuflada nie ma ani jednej akcji na sprawie.
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
 
-  const person = useMemo(() => {
-    const byId = new Map<string, Person>(
-      (pilots.data?.items ?? []).map((p) => [p.id, { name: p.name, code: p.code }]),
-    );
-    return (pilotId: string): Person | null => byId.get(pilotId) ?? null;
-  }, [pilots.data?.items]);
-
-  const reg = useMemo(() => {
-    const byId = new Map((fleet.data?.items ?? []).map((a) => [a.id, a.reg]));
-    return (aircraftId: string): string => byId.get(aircraftId) ?? aircraftId;
-  }, [fleet.data?.items]);
+  const person = useMemo(() => personLookup(directory.data), [directory.data]);
+  const reg = useMemo(() => regLookup(directory.data), [directory.data]);
 
   const items = queue.data?.items ?? [];
   // „Teraz" liczy się RAZ na odpowiedź, nie przy każdym renderze: „wczoraj 18:40" nie ma
@@ -89,7 +80,7 @@ export function DecisionQueueScreen() {
     );
   };
 
-  const error = queue.error ?? pilots.error ?? fleet.error;
+  const error = queue.error ?? directory.error;
 
   return (
     <>

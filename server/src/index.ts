@@ -40,6 +40,7 @@ import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AccountQuery } from './application/common/queries/account.ts';
+import { AdminDirectoryQueries } from './application/admin/queries/directory.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
@@ -575,6 +576,8 @@ const app = await buildServer({
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Słownik klubu (issue #216): te same adaptery, co listy modułów, cztery pola na drut.
+  adminDirectoryQueries: new AdminDirectoryQueries(db, adminPilotsRepo, adminFleetRepo),
   // Decyzje o zgłoszeniach kodem klubu (issue #100): ten sam adapter członkostw, co
   // lista - kolejka i lista czytają jedną tabelę, a rozdziela je stan wiersza.
   adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),

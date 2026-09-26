@@ -4680,6 +4680,61 @@ Reguły obowiązujące odtąd:
   R-H i #206), listy obserwujących na karcie samolotu w module Samoloty (§7.2 - wraca,
   gdy ktoś poprosi)
 
+## Panel dla wszystkich (issue #216, 2026-09-25, gałąź `claude/issue-216-change-ae11ba`)
+Zgłoszenie właściciela: „Panel web powinien być dostępny dla wszystkich. Nie tylko dla
+»admin«. Mamy sterowanie scope uprawnień i to powinno decydować, co kto widzi." Decyzja
+doprecyzowująca tego samego dnia: członek z zestawem „Pilot" **widzi Moje konto i kalendarz**
+(własna rezerwacja Z PANELU - do epiku przebudowy panelu 3.2.0). Pełny zapis, tabela
+zdolność → trasy i odrzucone warianty: **`docs/uprawnienia.md` §13**; podręcznik: nowa
+strona `docs/podrecznik/uprawnienia.md` („Kto co widzi") z żywymi ekranami panelu i telefonu.
+Reguły obowiązujące odtąd KAŻDĄ trasę i KAŻDY ekran panelu:
+- **DO PANELU WCHODZI KAŻDE AKTYWNE CZŁONKOSTWO** (`enterPanel`, `panelSwitch`,
+  `panelScopesOf` - bez pytania o zdolność). Odmowa przy logowaniu jest JEDNA:
+  `403 no_membership` = osoba bez aktywnego członkostwa (po pierwszym logowaniu, `pending`,
+  odrzucona, wyłączona wszędzie). `no_panel_access` NIE ISTNIEJE - nie przywracać
+- **`panel.access` TO „PODGLĄD KLUBU", NIE DRZWI**: otwiera trzy moduły do odczytu
+  (Dziennik, Piloci, Samoloty). Klucz w bazie ZOSTAJE (rename = migracja + ~70 deklaracji
+  tras dla samej nazwy); zmieniła się etykieta i opis w `scope.ts`. Zestawy bez zmian:
+  Pilot pusty, Akceptujący bez podglądu klubu (decyduje z telefonu ALBO z kalendarza panelu)
+- **`capability: null` W DEKLARACJI TRASY = każdy aktywny członek** (`AdminRouteSpec`,
+  `authorizeOrg`): trasy sesji (`sessionRoute`), kalendarz (`GET /bookings*`), decyzja
+  i podglądy (zdolność rozstrzygana w handlerze), NOWY słownik `GET /admin/api/directory`.
+  `platformRoute` z `null` rzuca przy rejestracji - platforma członków nie ma. Pseudo-zdolności
+  „członek" w katalogu NIE MA: nie da się jej nadać ani odebrać osobno
+- **KSZTAŁT CUDZEJ REZERWACJI W PANELU PYTA, KTO PATRZY** (`routes/admin/bookingWire.ts`,
+  ta sama reguła co telefon, §17 rezerwacji): widz pełny = własna ALBO `panel.access` /
+  `reservations.approve` / `reservations.manage`; zwykły członek dostaje godziny, maszynę,
+  właściciela, rodzaj - bez notatki, zadania, trasy, autora; `GET /bookings/:id` oddaje mu
+  `approval: null`. W DTO panelu pola treści są OPCJONALNE, nie nullowalne (`undefined`
+  = nie dla Ciebie); szuflada nie rysuje wiersza „Zadanie"/„Założona" ani karty ścieżki
+- **SŁOWNIK KLUBU zamiast list modułów**: kalendarz, szuflada i kolejka decyzji podpisują
+  zajętości z `GET /admin/api/directory` (`PilotsAdminPort.directory` - cztery kolumny,
+  własne SQL; flota z `FleetAdminPort.list`). `GET /pilots` (adresy e-mail, zakresy, sesje)
+  i `GET /fleet` (konfiguracja) zostają na `panel.access` - moduł zamknięty na ekranie ma
+  być zamknięty w API. Nowa trasa = sonda w `tenantIsolation.test.ts`
+- **JEDEN SŁOWNIK DOSTĘPU DLA KOLUMNY I TRAS**: `Access = Capability | 'club'`
+  (`ui/shell/nav.ts`, `hasAccess(capabilities, kind, access)`); Kalendarz ma `'club'`
+  (każda sesja klubu, żadna platformy), rodzaj sesji liczy `kindOf(session)` (`org: null`
+  = platforma). `navItemsFor`/`homeFor` biorą RODZAJ SESJI drugim argumentem: pilot ląduje
+  w `/kalendarz`, administrator w `/dziennik`, platforma w `/organizacje`
+- **KAŻDA TRASA MODUŁU MA `RequireCapability access=…`**, a strażnik zamiast przekierowania
+  rysuje EKRAN „BRAK DOSTĘPU" w ramie (`screens/common/NoAccessScreen.tsx`, treść w czystym
+  `noAccess.ts` z testem; makieta `design/panel/brak-dostepu.html`). Trzy brzmienia: członek
+  pod modułem klubu (nazwa zdolności z `CAPABILITY_LABELS` + „Nadaje: administrator klubu"),
+  członek pod modułem platformy („Poza klubem" - BEZ „poproś", bo nie ma czego nadać),
+  sesja platformy pod ekranem klubu („Zakres platformy"). Komponent `.no-access` z inwentarza
+  SZABLONU istniał od 2.0 i był nieużywany. `GRANTED_BY` mówi „administrator klubu", bo
+  czyta to odtąd pilot, który zna dwóch administratorów
+- **APLIKACJA PILOTA BEZ ZMIAN W KODZIE**: telefon zdolności nie zna, bramkuje bitami
+  z serwera (`viewer.watch`, `approver`, kolejka). Podręcznik opisuje jej ekrany per zdolność
+- **strażnik hexów panelu łapie `#216` W NAPISIE TESTU** (jak `#207`) - numer zgłoszenia
+  zostaje w komentarzu; opis zdolności w `CAPABILITY_LABELS` to JEDNO zdanie (test `scope.test.ts`)
+- testy: serwer `adminAuth` (pilot z pustym zakresem: sesja, `GET /me` 200, `GET /sessions`
+  403 `panel.access`; przełączenie do klubu jako pilot 200; `no_membership` dla obcego
+  i wyłączonego), `bookings` (widz w panelu: własna pełna, cudza wąska, `approval: null`,
+  podgląd klubu widzi komplet), sondy `tenantIsolation` dla `/directory`; panel `nav`,
+  `appShell`, `noAccess`, `directoryLookups`, `loginMessage`, `can`
+
 ## Panel 3.2.0 - epik P-A: makiety rozbudowy panelu (issue #182, 2026-09-25)
 Design-first dla sześciu epików `docs/panel-3.2.md` (§14 rozstrzygnięte 22 września):
 jedenaście makiet w `design/panel/` z kopii `SZABLON.html`, siedem nowych komponentów

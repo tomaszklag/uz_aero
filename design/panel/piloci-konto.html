@@ -310,9 +310,10 @@
              uprawnienia i nienadająca niczego wygląda jak działający bezpiecznik.
 
              TA RAMKA POKAZUJE PRZYPADEK, KTÓRY WYWOŁAŁ CAŁĄ DECYZJĘ: Anna jest zwykłym
-             pilotem BEZ wejścia do panelu, a mimo to akceptuje rezerwacje - decyzje
-             podejmuje ze SKRZYNKI W TELEFONIE (makiety 25 i 26). Zakres pilota jest tu
-             pusty poza jedną pozycją, więc etykieta mówi „Własny zakres".
+             pilotem BEZ „Podglądu klubu", a mimo to akceptuje rezerwacje - decyzje
+             podejmuje ze SKRZYNKI W TELEFONIE (makiety 25 i 26) albo z kalendarza
+             w panelu (od issue #216 kalendarz i kolejka decyzji są dla każdego członka).
+             Zakres pilota jest tu pusty poza jedną pozycją, więc etykieta mówi „Własny zakres".
 
              Lista kart, nie `<select>` ani przełączniki: zdolności jest dziesięć i jest
              to zbiór ZAMKNIĘTY, więc widoczność wszystkich naraz jest całą wartością
@@ -341,11 +342,16 @@
 
                KATALOG ZATWIERDZONY przez właściciela 2026-09-23 („zostawmy te zestawy
                uprawnień") - sześć pozycji odwzorowujących funkcje w klubie:
-                 • Pilot - nic (stan domyślny; wyłącznie aplikacja na telefonie)
+                 • Pilot - nic (stan domyślny; aplikacja, a w panelu Moje konto i kalendarz)
                  • Akceptujący - Akceptacja rezerwacji + Obserwowanie samolotów
-                 • Koordynator lotów - Wejście do panelu + Cudze rezerwacje + Akceptacja
+                 • Koordynator lotów - Podgląd klubu + Cudze rezerwacje + Akceptacja
                    + Obserwowanie samolotów
-                 • Technik - Wejście do panelu + Flota + Obserwowanie samolotów
+                 • Technik - Podgląd klubu + Flota + Obserwowanie samolotów
+
+               „PODGLĄD KLUBU" TO DAWNE „WEJŚCIE DO PANELU" (issue #216, 2026-09-25):
+               do panelu wchodzi odtąd KAŻDY członek, więc ta zdolność przestała być
+               drzwiami i została podglądem trzech modułów (dziennik, piloci, samoloty).
+               Klucz w bazie ten sam, zmieniła się nazwa i opis (`scope.ts`).
                  • Administrator - komplet (jedenaście pozycji)
                  • Własny zakres - cokolwiek innego
 
@@ -567,8 +573,8 @@
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
-                <span class="opt-name">Wejście do panelu</span>
-                <span class="opt-desc">Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.</span>
+                <span class="opt-name">Podgląd klubu</span>
+                <span class="opt-desc">Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to Moje konto i kalendarz.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
@@ -703,8 +709,8 @@
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt" role="checkbox" aria-checked="false">
               <span class="opt-body">
-                <span class="opt-name">Wejście do panelu</span>
-                <span class="opt-desc">Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.</span>
+                <span class="opt-name">Podgląd klubu</span>
+                <span class="opt-desc">Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to Moje konto i kalendarz.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>

@@ -49,8 +49,11 @@ describe('can', () => {
 
 describe('denialReason', () => {
   it('mówi, KOGO prosić - a nie tylko, że się nie da', () => {
-    expect(denialReason('thresholds.manage')).toBe('Nadaje: administrator');
-    expect(denialReason('flags.resolve')).toBe('Nadaje: administrator');
+    // „Administrator klubu", nie samo „administrator" (issue #216): to zdanie czyta
+    // odtąd także pilot na ekranie „Brak dostępu", a on zna dwóch administratorów.
+    expect(denialReason('thresholds.manage')).toBe('Nadaje: administrator klubu');
+    expect(denialReason('flags.resolve')).toBe('Nadaje: administrator klubu');
+    expect(denialReason('platform.manage')).toBe('Nadaje: superadministrator');
   });
 
   it('każda zdolność ma powód (kontrola kompletności mapy)', () => {

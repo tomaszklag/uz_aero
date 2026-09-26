@@ -312,8 +312,9 @@ Audyt: `registration.approve` / `registration.reject`.
 Skoro hasła znikają wszędzie, ekran logowania panelu (`admin/`) dostaje ten sam
 przycisk - przepływ webowy Google, osobny client ID, sesja dalej w ciasteczku
 `ninerdeck_admin` z TTL 8 h i BEZ refresh tokenu (§8.4 architektury panelu - to zostaje).
-Brama `panel.access` działa jak dotąd: konto pilota loguje się poprawnie i odbija
-o rolę z osobnym komunikatem.
+Brama `panel.access` działała jak dotąd - do issue #216 („panel dla wszystkich",
+2026-09-25): odtąd do panelu wchodzi każde aktywne członkostwo, a osobny komunikat
+(`403 no_membership`) dostaje wyłącznie osoba bez klubu (`docs/uprawnienia.md` §13).
 
 To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy okazji".
 

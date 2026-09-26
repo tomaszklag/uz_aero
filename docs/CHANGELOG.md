@@ -37,6 +37,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Nowości
 
+- **Panel klubu otwiera się każdemu członkowi.** Logujesz się tym samym kontem, co do
+  aplikacji, a o tym, co widzisz, decyduje Twój zakres uprawnień: każdy ma Moje konto
+  i kalendarz floty (cudze rezerwacje widać w nim tak, jak w aplikacji - godziny, maszyna
+  i pilot), a dziennik operacji, listę pilotów i karty samolotów otwiera zdolność
+  „Podgląd klubu" (dawne „Wejście do panelu"). Adres bez dostępu nie odsyła po cichu -
+  panel mówi, której zdolności brakuje i kto ją nadaje. Kto co widzi, opisuje nowa strona
+  dokumentacji „Zakresy uprawnień: kto co widzi".
 - **Klub może wymagać zgody na rezerwację.** Administrator układa ścieżkę: nadaje krokom
   nazwy („Mechanik", „Szef wyszkolenia"), ustala ich kolejność i dopisuje do każdego osoby,
   które mogą go zatwierdzić. Klub, który tego nie ustawi, pracuje dokładnie jak dotąd -
@@ -331,7 +338,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [~] Powiadomienie na telefon o prośbie i decyzji (wymaga zainstalowania nowej wersji aplikacji)
 - [x] Uprawnienia nadawane osobie gotowym zestawem albo pozycja po pozycji
 - [x] Zakładanie konta i „Nie pamiętam hasła" także z panelu
-- [ ] Panel dla każdego członka klubu - to, co widać, wyznacza zakres uprawnień
+- [x] Panel dla każdego członka klubu - to, co widać, wyznacza zakres uprawnień
 
 ### 3.2.0 · planowane na koniec października 2026
 

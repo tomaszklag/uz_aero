@@ -100,6 +100,10 @@ Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, 
 
 ## Panel klubu
 
+### Jestem pilotem - czy mogę wejść do panelu?
+
+Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - cudze rezerwacje widzisz w nim tak, jak w aplikacji. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
+
 ### Jak wpuścić nowego pilota?
 
 Podaj mu kod klubu. Pilot loguje się w aplikacji, wpisuje kod, a jego zgłoszenie staje w module [Piloci](panel-piloci) nad listą: **Rozpatrz**, kod pilota, zakres uprawnień, **Zatwierdź i przyjmij do klubu**. Innej drogi nie ma - z panelu nikogo nie dopisuje się ręcznie. Odrzucenie wymaga powodu, bo pilot czyta go na swoim ekranie.

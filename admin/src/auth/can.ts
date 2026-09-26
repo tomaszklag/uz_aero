@@ -40,17 +40,20 @@ export function can(
  * `roles.ts` do `@ninerdeck/domain`.
  */
 const GRANTED_BY: Record<Capability, string> = {
-  'panel.access': 'administrator',
-  'flags.resolve': 'administrator',
-  'events.correct': 'administrator',
-  'accounts.manage': 'administrator',
-  'fleet.manage': 'administrator',
-  'thresholds.manage': 'administrator',
-  'audit.read': 'administrator',
-  'maintenance.run': 'administrator',
-  'reservations.manage': 'administrator',
-  'reservations.approve': 'administrator',
-  'fleet.watch': 'administrator',
+  // „Administrator klubu", nie samo „administrator": od issue #216 ten napis czyta na
+  // ekranie „Brak dostępu" także zwykły pilot, a on zna dwóch administratorów - klubu
+  // i platformy - i ma wiedzieć, do którego iść.
+  'panel.access': 'administrator klubu',
+  'flags.resolve': 'administrator klubu',
+  'events.correct': 'administrator klubu',
+  'accounts.manage': 'administrator klubu',
+  'fleet.manage': 'administrator klubu',
+  'thresholds.manage': 'administrator klubu',
+  'audit.read': 'administrator klubu',
+  'maintenance.run': 'administrator klubu',
+  'reservations.manage': 'administrator klubu',
+  'reservations.approve': 'administrator klubu',
+  'fleet.watch': 'administrator klubu',
   // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
   // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
   // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.

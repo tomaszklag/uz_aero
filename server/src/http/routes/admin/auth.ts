@@ -205,8 +205,8 @@ export function registerAdminAuthRoutes(
     });
     if (result.ok) return sendSession(reply, result.session);
     if (result.reason === 'rate_limited') return tooManyAttempts(reply, result.retryAfterSec);
-    // 403 dla konta ROZPOZNANEGO bez wstępu - ten sam rachunek, co przy Google niżej.
-    return reply.code(result.reason === 'no_panel_access' ? 403 : 401).send({ error: result.reason });
+    // 403 dla konta ROZPOZNANEGO bez klubu - ten sam rachunek, co przy Google niżej.
+    return reply.code(result.reason === 'no_membership' ? 403 : 401).send({ error: result.reason });
   });
 
   app.post(`${ADMIN_API_PREFIX}/auth/login`, async (req, reply) => {
@@ -217,10 +217,10 @@ export function registerAdminAuthRoutes(
     if (!result.ok) {
       // 403 dla konta ROZPOZNANEGO, które nie ma wstępu: tożsamość jest poprawna
       // i człowiek ma prawo wiedzieć, dlaczego go nie wpuszczamy - w żadnym klubie nie
-      // jest administratorem (`no_panel_access`; od epiku D obejmuje też osobę, która
+      // ma aktywnego członkostwa (`no_membership`; od epiku D obejmuje też osobę, która
       // dopiero zalogowała się pierwszy raz i nie ma klubu). 401 zostaje dla tokenu,
       // którego nie da się zweryfikować, i dla osoby zablokowanej.
-      const known = result.reason === 'no_panel_access';
+      const known = result.reason === 'no_membership';
       return reply.code(known ? 403 : 401).send({ error: result.reason });
     }
 

@@ -128,11 +128,19 @@ const who = (id: string | null, person: PersonLookup): { value: string; sub?: st
   return p == null ? { value: '—' } : { value: p.name, sub: p.code };
 };
 
+/**
+ * Chwila ZŁOŻENIA sprawy. Kolejkę czyta wyłącznie akceptujący, więc serwer wysyła ją
+ * w komplecie i `createdAt` tu JEST - typ zajętości ma je opcjonalne od issue #216
+ * (cudza rezerwacja dla zwykłego członka), a ta funkcja domyka typ, nie dane: gdyby
+ * pole jednak nie doszło, sprawa liczy się od terminu, a nie wywraca kolejki.
+ */
+const createdAtOf = (booking: BookingDto): number => Date.parse(booking.createdAt ?? booking.startsAt);
+
 /** Karty w kolejności ZŁOŻENIA - najdłużej czekające na górze, bo są najbliżej wygaśnięcia. */
 export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOptions): QueueCard[] {
   const withStep = showsStepRow(items);
   return [...items]
-    .sort((a, b) => Date.parse(a.booking.createdAt) - Date.parse(b.booking.createdAt))
+    .sort((a, b) => createdAtOf(a.booking) - createdAtOf(b.booking))
     .map(({ booking, step }) => {
       const rows: QueueRow[] = [];
       const pilot = who(booking.pilotId, opts.person);
@@ -167,7 +175,7 @@ export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOp
 
       if (withStep) rows.push({ label: 'Krok', value: step.label });
 
-      const createdAt = Date.parse(booking.createdAt);
+      const createdAt = createdAtOf(booking);
       rows.push({
         label: 'Czeka od',
         value: waitingLabel(createdAt, opts.now, opts.timezone),
@@ -209,9 +217,9 @@ export function queueBanner(
   if (items.length === 0) return null;
   const n = items.length;
   const oldest = items.reduce((best, item) =>
-    Date.parse(item.booking.createdAt) < Date.parse(best.booking.createdAt) ? item : best,
+    createdAtOf(item.booking) < createdAtOf(best.booking) ? item : best,
   );
-  const since = waitingLabel(Date.parse(oldest.booking.createdAt), opts.now, opts.timezone);
+  const since = waitingLabel(createdAtOf(oldest.booking), opts.now, opts.timezone);
   const term = termLabel(Date.parse(oldest.booking.startsAt), opts.now, opts.timezone);
   return {
     lead: `${COUNT_WORDS[n] ?? String(n)} ${plural(n, 'rezerwacja czeka', 'rezerwacje czekają', 'rezerwacji czeka')} na Twoją zgodę.`,

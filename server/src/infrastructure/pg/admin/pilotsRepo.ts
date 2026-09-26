@@ -37,6 +37,7 @@ import type {
   PilotScopeCounts,
   PilotsAdminPort,
 } from '../../../application/admin/ports.ts';
+import type { DirectoryMember } from '../../../application/admin/contracts/directory.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import type { IssuedLoginMethod } from '../../../domain/loginSessions.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
@@ -224,6 +225,27 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     );
 
     return { items: rows.map(toJoin), total: Number(total.rows[0]?.n ?? 0) };
+  }
+
+  async directory(db: Queryable, orgId: string): Promise<DirectoryMember[]> {
+    // Ten sam krąg, co lista modułu (`LISTED`: aktywni i wyłączeni, bez kolejki
+    // zgłoszeń), ale CZTERY kolumny: słownik podpisuje zajętości i decyzje, a nazwisko
+    // członka wyłączonego wciąż stoi przy jego dawnej rezerwacji. Klub jest pierwszym
+    // warunkiem, jak w każdym zapytaniu tego pliku (issue #99).
+    const { rows } = await db.query<{ id: string; code: string; name: string; status: string }>(
+      `SELECT p.id, m.code, p.name, m.status
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND ${LISTED}
+        ORDER BY p.name ASC, m.code ASC`,
+      [orgId],
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      active: row.status === 'active',
+    }));
   }
 
   async counts(

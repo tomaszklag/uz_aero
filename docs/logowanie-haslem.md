@@ -292,8 +292,9 @@ z hasłami - wraca razem z nimi).
 
 ### 5.2 Logowanie hasłem - panel: `POST /admin/api/auth/password { email, password }`
 
-Jak `panelLoginWithProvider`: rola panelu w jakimś klubie → ciasteczko sesji klubu;
-superadministrator bez klubu → sesja platformowa; nic z tego → `403 no_panel_access`.
+Jak `panelLoginWithProvider`: aktywne członkostwo w jakimś klubie → ciasteczko sesji klubu
+(od issue #216 bez pytania o zdolność - `docs/uprawnienia.md` §13); superadministrator bez
+klubu → sesja platformowa; nic z tego → `403 no_membership` (do #216: `no_panel_access`).
 Panel loguje WYŁĄCZNIE e-mailem (nie ma kontekstu klubu przed zalogowaniem). Te same
 `401 invalid_credentials` / `account_disabled` / `429`. Nagłówek CSRF obowiązuje już dziś
 (`adminCsrf.ts` obejmuje całe `/admin/api/*`).
@@ -959,12 +960,12 @@ wymaga wpisu tylko dla tras, które ISTNIEJĄ, i brakującej nie zauważy.
    bez karty i bez ramki `.login-alt` - tytuł zdaniowy, formularz w kolumnie, pełnoszerokie
    przyciski, „albo zaloguj się przez", jedno zdanie `.login-foot` pod spodem
    (`admin/src/styles/components/login.css`, `screens/login/AuthFrame.tsx`).
-3. **Odmowa `403 no_panel_access` mówi, skąd bierze się klub.** Serwer nie rozróżnia
-   członka bez wejścia do panelu od osoby bez klubu (decyzja epiku D wielofirmowości) -
-   a od #180 osobą bez klubu bywa ktoś, kto przed chwilą założył konto W TYM panelu.
-   „Poproś administratora klubu o nadanie roli" byłoby dla niego zdaniem o kimś, kogo
-   jeszcze nie ma. Nowe zdanie niesie obie drogi: kod klubu w aplikacji, dostęp do panelu
-   od administratora klubu.
+3. **Odmowa 403 mówi, skąd bierze się klub.** Od #180 osobą bez klubu bywa ktoś, kto
+   przed chwilą założył konto W TYM panelu, więc zdanie niesie drogę: kod klubu w aplikacji.
+   Do issue #216 kod `no_panel_access` obejmował też członka bez wejścia do panelu i zdanie
+   mówiło o nadaniu dostępu przez administratora; odkąd do panelu wchodzi każde aktywne
+   członkostwo, odmowa nazywa się `no_membership` i znaczy wyłącznie brak klubu
+   (`docs/uprawnienia.md` §13).
 4. **Panel dalej NIE MA kodu klubu.** Dołączanie do klubu zostaje funkcją aplikacji (00E) -
    to nie jest przeoczenie, tylko granica tego zgłoszenia: właściciel prosił o rejestrację
    i przypomnienie hasła, a wejście do klubu z przeglądarki jest osobnym pytaniem (i osobną

@@ -33,7 +33,7 @@ import type { BookingQueries } from '../../../application/common/queries/booking
 import type { ApprovalRefusal } from '../../../domain/approvals.ts';
 import { can } from '../../../domain/roles.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
-import { bookingWire } from './bookingWire.ts';
+import { bookingWire, FULL_VIEWER } from './bookingWire.ts';
 
 const REASON_MAX = 500;
 
@@ -104,7 +104,8 @@ export function registerAdminApprovalRoutes(
       // jedzie obok, bo „wczoraj" i „termin za 3 dni" liczą się dobą KLUBU (§6).
       return reply.send({
         timezone,
-        items: items.map((item) => ({ booking: bookingWire(item.booking), step: item.step })),
+        // Kolejkę czyta wyłącznie akceptujący, a ten widzi komplet (§17) - bez pytania kto patrzy.
+        items: items.map((item) => ({ booking: bookingWire(item.booking, FULL_VIEWER), step: item.step })),
       });
     },
   );
@@ -112,7 +113,9 @@ export function registerAdminApprovalRoutes(
   adminRoute(
     app,
     gate,
-    { method: 'POST', url: '/bookings/:id/decision', capability: 'panel.access' },
+    // `null` (issue #216): akceptujący bez „Podglądu klubu" decyduje z panelu tak samo,
+    // jak z telefonu - o prawie rozstrzyga para zdolności NIŻEJ, nie wejście do modułu.
+    { method: 'POST', url: '/bookings/:id/decision', capability: null },
     async (req, reply, actor) => {
       const approves = can(actor.capabilities, 'reservations.approve');
       const manages = can(actor.capabilities, 'reservations.manage');

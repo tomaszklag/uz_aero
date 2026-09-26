@@ -25,6 +25,7 @@ import type { IssuedLoginMethod } from '../../domain/loginSessions.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { Capability, PlatformRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
+import type { DirectoryMember } from './contracts/directory.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
@@ -839,6 +840,14 @@ export interface PilotsAdminPort {
     orgId: string,
     filter: PilotListFilter,
   ): Promise<{ items: AdminPilotJoin[]; total: number }>;
+  /**
+   * SŁOWNIK członków klubu (issue #216): identyfikator, kod, nazwisko, aktywność -
+   * i nic ponadto. Osobna metoda od `list`, bo tamta liczy dni lotne, sesje i metody
+   * logowania dla modułu Piloci, a słownik czyta każdy członek klubu (kalendarz,
+   * kolejka decyzji) i nie ma prawa nieść ani adresu, ani zakresu. Posortowany
+   * nazwiskiem; wyłączone członkostwa zostają, bo ich dawne rezerwacje mają nazwisko.
+   */
+  directory(db: Queryable, orgId: string): Promise<DirectoryMember[]>;
   /** Liczniki po CAŁYM klubie; okno dotyczy wyłącznie `flyingDays`. */
   counts(db: Queryable, orgId: string, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
   /**

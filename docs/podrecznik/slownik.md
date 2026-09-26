@@ -101,9 +101,10 @@
 
 ## Panel klubu
 
-- **Panel klubu** - strona w przeglądarce dla administratora: piloci, samoloty, dziennik i zgłoszenia.
-- **Administrator** - potocznie: członek klubu z pełnym zakresem uprawnień, czyli z panelem. Uprawnienia nadaje się jednak POJEDYNCZO (zob. **zakres uprawnień**), więc „administrator" jest nazwą zestawu, a nie osobnym bytem w systemie.
-- **Zakres uprawnień** - zbiór zdolności nadanych członkowi W TYM klubie: wejście do panelu, flota, akceptacja rezerwacji i tak dalej. Należy do członkostwa, więc w dwóch klubach ta sama osoba może mieć dwa różne zakresy.
+- **Panel klubu** - strona w przeglądarce dla członków klubu: każdy ma w niej Moje konto i kalendarz, a zakres uprawnień otwiera dziennik, pilotów i samoloty.
+- **Administrator** - potocznie: członek klubu z pełnym zakresem uprawnień. Uprawnienia nadaje się jednak POJEDYNCZO (zob. **zakres uprawnień**), więc „administrator" jest nazwą zestawu, a nie osobnym bytem w systemie.
+- **Zakres uprawnień** - zbiór zdolności nadanych członkowi W TYM klubie: podgląd klubu, flota, akceptacja rezerwacji i tak dalej. Należy do członkostwa, więc w dwóch klubach ta sama osoba może mieć dwa różne zakresy. Pusty zakres to zestaw „Pilot".
+- **Podgląd klubu** - zdolność otwierająca w panelu dziennik operacji całej floty, listę pilotów i karty samolotów do odczytu. Bez niej panel to Moje konto i kalendarz.
 - **Rola** - dawniej: pilot albo administrator. Od wersji 3.1.0 zastąpił ją **zakres uprawnień**, a „Pilot" i „Administrator" są dziś nazwami gotowych zestawów.
 - **Sesja panelu** - zalogowanie w przeglądarce; wygasa po ośmiu godzinach i panel prosi o ponowne logowanie. Wyłączenie członkostwa zrywa ją od razu.
 - **Kolejka zgłoszeń** - lista osób, które wpisały w aplikacji kod klubu i czekają na decyzję. Stoi nad listą pilotów tylko wtedy, gdy ktoś w niej jest.

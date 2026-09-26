@@ -1728,9 +1728,13 @@ export function adminRoute(scope, spec: { method; url; capability: Capability },
 Test architektury: żaden plik w `routes/admin/` nie rejestruje trasy inaczej niż przez
 `adminRoute` (poza `auth.ts`, jedynym publicznym).
 
-Dwa poziomy bramki: `preHandler` scope'u wymaga `panel.access` dla **wszystkiego**
-(czyli konto z rolą `pilot` dostaje 403 z powodem - ekran A00-login, wariant „brak
-uprawnień"), a `adminRoute` dokłada zdolność właściwą dla operacji.
+Bramka jest JEDNOPOZIOMOWA: `adminRoute` pyta wyłącznie o zdolność właściwą dla operacji.
+Pierwotny zamysł „drugi poziom: `panel.access` dla wszystkiego" upadł dwa razy - najpierw
+dlatego, że mapa ról nie dawała żadnej zdolności panelu roli bez wejścia (druga kontrola
+niczego by nie odrzuciła), a od issue #216 („panel dla wszystkich", 2026-09-25) byłby
+wprost błędny: do panelu wchodzi KAŻDE aktywne członkostwo, `panel.access` jest odtąd
+„Podglądem klubu" (dziennik, piloci, samoloty), a kalendarz, słownik klubu i pytania sesji
+stoją na deklaracji **`capability: null`** = każdy członek (`docs/uprawnienia.md` §13).
 
 ### 8.7 Serwowanie panelu - `/admin/api/*` vs `/admin/*`
 

@@ -81,6 +81,12 @@ export const keys = {
   clubCode: ['clubCode'] as const,
 
   /**
+   * Słownik klubu (issue #216): nazwiska i znaki dla kalendarza i kolejki decyzji.
+   * Bez parametru, jak kod klubu - klub bierze się z sesji.
+   */
+  directory: ['directory'] as const,
+
+  /**
    * Kluby na serwerze (moduł PLATFORMY, issue #101, E1).
    *
    * `detail` istnieje, inaczej niż przy kontach: karta klubu niesie KOD KLUBU, którego

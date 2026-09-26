@@ -70,7 +70,11 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
             {booking.dualId == null ? null : (
               <Row label="Drugi pilot">{personLabel(booking.dualId, person)}</Row>
             )}
-            <Row label="Zadanie">{operationLabel(booking.operation)}</Row>
+            {/* CUDZA rezerwacja bez „Podglądu klubu" (issue #216) zadania nie niesie -
+                wiersza wtedy NIE MA: kreska mówiłaby „nikt nie wpisał", a wpisano. */}
+            {booking.operation === undefined ? null : (
+              <Row label="Zadanie">{operationLabel(booking.operation)}</Row>
+            )}
             {booking.fromIcao == null && booking.toIcao == null ? null : (
               <Row label="Trasa">
                 <span className="mono">
@@ -86,19 +90,23 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
         {booking.note == null || booking.note === '' ? null : (
           <Row label="Notatka">{booking.note}</Row>
         )}
-        <Row label="Założona">
-          {stempel(new Date(booking.createdAt), timezone)}{' '}
-          <span className="cell-sub">{originLabel(booking, person)}</span>
-        </Row>
+        {booking.createdAt == null ? null : (
+          <Row label="Założona">
+            {stempel(new Date(booking.createdAt), timezone)}{' '}
+            <span className="cell-sub">{originLabel(booking, person)}</span>
+          </Row>
+        )}
       </Card>
 
       {/* Ścieżka akceptacji (K2a): historia decyzji i - dla „Cudzych rezerwacji" -
           decyzja za utknięty krok. Karta istnieje wyłącznie, gdy klub ma ścieżkę;
           rozstrzyga to `ApprovalCard`. Stan wiersza bierze się z TEGO odczytu, nie
           z okna kalendarza - jest świeższy o decyzje sprzed chwili. */}
+      {/* Cudza sprawa bez „Podglądu klubu" (issue #216) przychodzi z `approval: null`:
+          historia kroków i powody odmowy są treścią tej samej klasy, co notatka. */}
       {isBlock ? null : detail.error != null ? (
         <p className="card-note danger">{errorMessage(detail.error)}</p>
-      ) : detail.data == null ? null : (
+      ) : detail.data?.approval == null ? null : (
         <ApprovalCard
           bookingId={booking.id}
           view={detail.data.approval}

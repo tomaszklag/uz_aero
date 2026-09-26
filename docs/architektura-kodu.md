@@ -579,11 +579,13 @@ te wchodzą następnym przekrojem.
   przed XSS-em kończy się na pierwszym takim `const`. **Bez refresh tokenu w przeglądarce**
   (§8.4): obietnica §3.0 „wygasły token ≠ wylogowanie" istnieje dla pilota w terenie,
   administratorowi przy biurku wolno powiedzieć „zaloguj się ponownie".
-- **Konto bez `panel.access` nie dostaje sesji panelu** - i dostaje **403 `no_panel_access`**,
-  odróżnialne od 401. To decyzja z mockupu A00: pilot z POPRAWNYM hasłem ma zobaczyć,
-  że odbija go rola, a nie szukać błędu w haśle, którego nie popełnił. Enumeracji kont
-  to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać hasło), a 401 pozostaje
-  identyczne dla złego hasła i konta, którego nie ma.
+- **Sesję panelu dostaje KAŻDE aktywne członkostwo** (issue #216, „panel dla wszystkich",
+  2026-09-25 - `docs/uprawnienia.md` §13); odmowę **403 `no_membership`**, odróżnialną
+  od 401, dostaje wyłącznie osoba bez klubu. To decyzja z mockupu A00: konto z POPRAWNYM
+  hasłem ma zobaczyć, że odbija je brak klubu, a nie szukać błędu w haśle, którego nie
+  popełniło. Enumeracji kont to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać
+  hasło), a 401 pozostaje identyczne dla złego hasła i konta, którego nie ma. Zdolność
+  `panel.access` jest odtąd „Podglądem klubu" - otwiera moduły, nie drzwi.
 - **`panelLogin` to metoda `AuthCommands`, nie druga komenda** - `application/common/`
   znaczy „obie powierzchnie". Weryfikacja hasła (razem z wyrównaniem czasu odpowiedzi
   przy nieznanym loginie) ma jedną implementację w prywatnym `verifyCredentials`; druga

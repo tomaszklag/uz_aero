@@ -622,7 +622,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
       payload: { idToken: googleTokenFor('BNO') },
     });
     expect(panel.statusCode).toBe(403);
-    expect(panel.json()).toEqual({ error: 'no_panel_access' });
+    expect(panel.json()).toEqual({ error: 'no_membership' });
     expect(panel.headers['set-cookie']).toBeUndefined();
   });
 

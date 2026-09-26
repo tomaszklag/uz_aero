@@ -7,8 +7,14 @@
  * a to realne źródło błędów, którego za jeden znak `#` w adresie nie kupujemy.
  *
  * Trasy wynikają z KANONICZNEJ nawigacji (`ui/shell/nav.ts`), a nie z drugiej listy
- * obok niej: pozycja prowadząca w 404 jest awarią, której nikt nie zauważa. Trasa modułu
- * platformy pyta dodatkowo o zdolność (`RequireCapability`) - patrz issue #99 C6.
+ * obok niej: pozycja prowadząca w 404 jest awarią, której nikt nie zauważa.
+ *
+ * ══ KAŻDA TRASA MODUŁU PYTA O DOSTĘP (issue #216, „panel dla wszystkich") ══
+ * Do 3.1.0 strażnika miały wyłącznie moduły platformy i dwa ekrany kalendarza -
+ * reszta stała otwarta, bo wchodził tu wyłącznie administrator. Odkąd do panelu wchodzi
+ * KAŻDY członek klubu, adres bez dostępu jest codziennością (link do dziennika
+ * z rozmowy), więc każdy moduł pyta `RequireCapability` TYM SAMYM słownikiem, którym
+ * kolumna boczna wybiera pozycje - i zamiast przekierowania rysuje ekran „Brak dostępu".
  */
 
 import { createHashRouter } from 'react-router-dom';
@@ -58,9 +64,32 @@ export const router = createHashRouter([
       //
       // W adresie stoi REJESTRACJA, nie identyfikator - `#/dziennik/SP-KLM` człowiek
       // przeczyta i wpisze z pamięci, a o to w wymogu „do wklejenia" chodziło.
-      { path: 'dziennik', element: <LogbookScreen /> },
-      { path: 'dziennik/:reg', element: <AircraftLogScreen /> },
-      { path: 'dziennik/:reg/:uuid', element: <SessionScreen /> },
+      //
+      // Trzy moduły „Podglądu klubu" (`panel.access`): dziennik, piloci, samoloty.
+      {
+        path: 'dziennik',
+        element: (
+          <RequireCapability access="panel.access">
+            <LogbookScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'dziennik/:reg',
+        element: (
+          <RequireCapability access="panel.access">
+            <AircraftLogScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'dziennik/:reg/:uuid',
+        element: (
+          <RequireCapability access="panel.access">
+            <SessionScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Konta i flota: lista i karta pod JEDNĄ trasą, z segmentem opcjonalnym. Karta
       // otwiera się NAD listą, więc lista ma zostać pod spodem - osobna trasa
@@ -73,10 +102,38 @@ export const router = createHashRouter([
       // (`zgloszenia/:id` - osoba, która nie ma jeszcze kodu) i KOD KLUBU (`kod` -
       // konfiguracja klubu, nie człowiek). Rozstrzyga to trasa, a nie ekran czytający
       // adres w środku: `zgloszenia` i `kod` byłyby dla `:id?` zwykłym identyfikatorem.
-      { path: 'piloci/kod', element: <AccountsScreen drawer="club-code" /> },
-      { path: 'piloci/zgloszenia/:id', element: <AccountsScreen drawer="request" /> },
-      { path: 'piloci/:id?', element: <AccountsScreen drawer="account" /> },
-      { path: 'samoloty/:id?', element: <FleetScreen /> },
+      {
+        path: 'piloci/kod',
+        element: (
+          <RequireCapability access="panel.access">
+            <AccountsScreen drawer="club-code" />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'piloci/zgloszenia/:id',
+        element: (
+          <RequireCapability access="panel.access">
+            <AccountsScreen drawer="request" />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'piloci/:id?',
+        element: (
+          <RequireCapability access="panel.access">
+            <AccountsScreen drawer="account" />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'samoloty/:id?',
+        element: (
+          <RequireCapability access="panel.access">
+            <FleetScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Kalendarz: siatka i szuflada pod JEDNĄ trasą, jak flota - szuflada opisuje
       // jedną zajętość i otwiera się NAD siatką, więc siatka ma zostać pod spodem
@@ -86,12 +143,13 @@ export const router = createHashRouter([
       // PRZED `:id?`, bo `sciezka` i `decyzje` byłyby dla niego identyfikatorem zajętości
       // - ta sama reguła, co `piloci/kod` przed `piloci/:id?`. Oba pytają o zdolność:
       // ścieżka to rozdanie władzy (`accounts.manage`), kolejka - moje kroki
-      // (`reservations.approve`); wklejony adres bez zdolności wraca na ekran startowy.
-      // Krok ścieżki ma adres jak każda szuflada nad listą (`nowy` = nowy krok).
+      // (`reservations.approve`). Sama siatka jest dla KAŻDEGO członka klubu (`club`,
+      // issue #216) - jak kalendarz w aplikacji. Krok ścieżki ma adres jak każda
+      // szuflada nad listą (`nowy` = nowy krok).
       {
         path: 'kalendarz/sciezka/:stepId?',
         element: (
-          <RequireCapability capability="accounts.manage">
+          <RequireCapability access="accounts.manage">
             <ApprovalPathScreen />
           </RequireCapability>
         ),
@@ -99,21 +157,28 @@ export const router = createHashRouter([
       {
         path: 'kalendarz/decyzje',
         element: (
-          <RequireCapability capability="reservations.approve">
+          <RequireCapability access="reservations.approve">
             <DecisionQueueScreen />
           </RequireCapability>
         ),
       },
-      { path: 'kalendarz/:id?', element: <CalendarScreen /> },
+      {
+        path: 'kalendarz/:id?',
+        element: (
+          <RequireCapability access="club">
+            <CalendarScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Moduł PLATFORMY (`docs/wielofirmowosc.md` §8.1), więc trasa pyta o zdolność -
-      // ta sama reguła, co przy Zgłoszeniach: wklejony adres odsyła administratora klubu
-      // na jego ekran startowy, a nie pokazuje mu ramy modułu, którego dane serwer
-      // i tak odmówi. `nowy` w miejscu identyfikatora to ten sam widok z pustą kartą.
+      // ta sama reguła, co przy Zgłoszeniach: wklejony adres mówi administratorowi klubu,
+      // że to moduł opiekuna platformy, a nie pokazuje mu ramy modułu, którego dane
+      // serwer i tak odmówi. `nowy` w miejscu identyfikatora to ten sam widok z pustą kartą.
       {
         path: 'organizacje/:id?',
         element: (
-          <RequireCapability capability="platform.manage">
+          <RequireCapability access="platform.manage">
             <OrganizationsScreen />
           </RequireCapability>
         ),
@@ -121,13 +186,11 @@ export const router = createHashRouter([
 
       // Zgłoszenia: lista i karta pod JEDNĄ trasą, jak konta i flota - karta
       // otwiera się NAD listą, więc lista ma zostać pod spodem jako kontekst.
-      // Moduł PLATFORMY (issue #99 C6), więc trasa pyta o zdolność: wklejony adres
-      // ma odesłać administratora klubu na jego ekran startowy, a nie pokazać mu ramę
-      // modułu, którego dane serwer i tak odmówi.
+      // Moduł PLATFORMY (issue #99 C6), więc trasa pyta o zdolność.
       {
         path: 'zgloszenia/:uuid?',
         element: (
-          <RequireCapability capability="bugs.triage">
+          <RequireCapability access="bugs.triage">
             <BugsScreen />
           </RequireCapability>
         ),

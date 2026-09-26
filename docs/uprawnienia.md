@@ -356,3 +356,115 @@ miała na czym działać - na klubie z prawdziwymi członkami:
 Odwrotna sytuacja - zdolność ZDJĘTA z zestawu - backfillu nie potrzebuje: nikomu nic
 nie odbieramy, a etykieta zestawu ma prawo zgasnąć, bo zbiór naprawdę przestał mu
 odpowiadać.
+
+## 13. Panel dla wszystkich (issue #216, 2026-09-25)
+
+**Decyzja właściciela 2026-09-25.** Zgłoszenie: *„Panel web powinien być dostępny dla
+wszystkich. Nie tylko dla »admin«. Mamy sterowanie scope uprawnień i to powinno decydować,
+co kto widzi. Każdy zarejestrowany powinien móc się zalogować. Dostęp do modułów albo części
+funkcjonalności modułu powinien być ograniczony uprawnieniem."* Pytanie doprecyzowujące
+(co widzi członek z zestawem „Pilot") właściciel rozstrzygnął tego samego dnia: **„powinien
+widzieć swoje konto oraz mieć podgląd do kalendarza w celu rezerwacji samolotu"**; własną
+rezerwację Z PANELU odłożył do epiku przebudowy panelu (§13.6).
+
+### 13.1 Model po zmianie
+
+| Pytanie | Do 3.1.0 | Od issue #216 |
+| --- | --- | --- |
+| kto loguje się do panelu | członkostwo ze zdolnością `panel.access` | **każde AKTYWNE członkostwo** (i rola platformowa) |
+| co znaczy `panel.access` | „Wejście do panelu" - drzwi | **„Podgląd klubu"** - trzy moduły do odczytu: Dziennik, Piloci, Samoloty |
+| co ma członek z pustym zakresem | nic (403 przy logowaniu) | **Moje konto i Kalendarz** - jak w aplikacji |
+| adres modułu bez dostępu | przekierowanie na ekran startowy, bez słowa | **ekran „Brak dostępu"** w ramie: co tu jest, której zdolności brakuje, kto ją nadaje |
+| odmowa przy logowaniu | `403 no_panel_access` (bez roli panelu ALBO bez klubu) | `403 no_membership` - **wyłącznie** osoba bez aktywnego członkostwa |
+| lista klubów do wyboru (`scopes`) | kluby z `panel.access` | wszystkie aktywne członkostwa, z zakresem w drugiej linii („pilot · Twój kod PWI") |
+
+**Klucz `panel.access` ZOSTAJE** - zmienia się nazwa i opis w panelu (`scope.ts`:
+„Podgląd klubu"), nie napis w bazie. Rename klucza znaczyłby migrację `membership_capabilities`
+i przepisanie ~70 deklaracji tras dla samej urody, a klucz dalej mówi prawdę: to jest
+dostęp do modułów panelu. Zestawy (§2.2) NIE zmieniają zawartości: Pilot dalej ma pusty
+zbiór, Akceptujący dalej nie ma „Podglądu klubu" (mechanik decyduje z telefonu ALBO
+z kalendarza w panelu - kalendarz i kolejka decyzji są odtąd dla każdego członka).
+
+### 13.2 Serwer: gdzie stoi każda zdolność
+
+Brama pyta o zdolność **trasy**, nie o wejście (`adminRoute`, `authorizeOrg` - §8.6
+`docs/architektura-panelu-serwer.md`). Nowa wartość deklaracji: **`capability: null`** =
+trasa każdego aktywnego członka klubu. Stan po #216 (z rejestru tras; `tenantIsolation.test.ts`
+wymaga sondy dla każdej):
+
+| Zdolność | Trasy |
+| --- | --- |
+| **`null` - każdy członek** | `GET /me`, `GET /me/account`, `POST /auth/switch`, `GET/DELETE /me/sessions*`, `PUT /me/password`, **`GET /directory`** (nowa), `GET /bookings`, `GET /bookings/:id`, `POST /bookings/:id/decision` (1), `GET /bookings/:id/preview/*` (1) |
+| `panel.access` - Podgląd klubu | `GET /sessions*`, `/sessions/:uuid/track`, `/log`, `/stats`, `/dashboard`, `/events`, `/flags`, `/exports*`, `GET /fleet`, `/fleet/tolerance`, `/fleet/:id/consumption`, `GET /pilots` |
+| `fleet.manage` | `POST/PATCH/DELETE /fleet*`, `/fleet/:id/readings`, `/bookings/blocks`, `/exports/:uuid/retry` |
+| `accounts.manage` | `PATCH /pilots/:id`, `/pilots/:id/active`, `DELETE /pilots/:id`, `/pilots/:id/password-link`, `/pilots/:id/sessions*`, `/memberships/*`, `/club-code*`, `/approval-steps`, `/maintenance/refresh-tokens*` |
+| `reservations.manage` | `POST /bookings`, `/bookings/:id/cancel` |
+| `reservations.approve` | `GET /approvals/queue` |
+| `events.correct` | `/sessions/:uuid/corrections*`, `/void`, `/close` |
+| `flags.resolve` · `audit.read` · `maintenance.run` · `fleet.watch` | jak dotąd (`/flags/:id/resolve` · `/audit` · `/maintenance/projections*`, `/maintenance/schema` · `/me/watches*`) |
+| platforma: `platform.manage` · `bugs.triage` | `/organizations*` · `/bug-reports*` |
+
+(1) decyzja i podglądy mają zdolność rozstrzyganą W HANDLERZE (`reservations.approve`
+ALBO `reservations.manage`), jak od R-G; do #216 stały dodatkowo na `panel.access`, co
+odcinało akceptującego bez podglądu klubu od decyzji z panelu.
+
+**Kształt cudzej rezerwacji pyta, kto patrzy** (`http/routes/admin/bookingWire.ts`) -
+ta sama reguła, co na telefonie (`docs/rezerwacje.md` §17). Widz PEŁNY: własna rezerwacja
+albo którakolwiek ze zdolności `panel.access`, `reservations.approve`, `reservations.manage`
+(technik i koordynator widzą komplet jak przed #216). Zwykły członek: godziny, maszyna,
+właściciel, rodzaj i powód wyłączenia z użytku - bez zadania, trasy, planu, NOTATKI, autora
+i śladu zamknięcia; `GET /bookings/:id` oddaje mu wtedy `approval: null`. Odpowiedzi mutacji
+(na `reservations.manage`/`fleet.manage`) i kolejka decyzji jadą w komplecie.
+
+**Słownik klubu `GET /admin/api/directory`** - nazwiska, kody, znaki i stan służby dla
+KAŻDEGO członka: kalendarz i kolejka decyzji podpisują nim zajętości. Do #216 brały je z list
+modułów Piloci i Samoloty, które niosą więcej (adresy e-mail, zakresy, sesje, konfigurację)
+i zostają na „Podglądzie klubu". `PilotsAdminPort.directory` ma cztery kolumny i własne SQL.
+
+### 13.3 Panel
+
+- **`Access = Capability | 'club'`** (`ui/shell/nav.ts`): pozycja kolumny i strażnik trasy
+  mówią JEDNYM słownikiem (`hasAccess`). Kalendarz ma `'club'` - każda sesja klubu, żadna
+  platformy; Dziennik, Piloci, Samoloty - `panel.access`. `homeFor` dla pilota daje
+  `/kalendarz`, dla administratora `/dziennik`, dla platformy `/organizacje`.
+- **`RequireCapability access=…` na KAŻDEJ trasie modułu** - zamiast `HomeRedirect` rysuje
+  `NoAccessScreen` (komponent `.no-access` z inwentarza SZABLONU, dotąd nieużywany). Treść
+  liczy `screens/common/noAccess.ts` (czysty, z testem): trzy brzmienia - członek pod
+  modułem klubu (nazwa zdolności z `CAPABILITY_LABELS` + „Nadaje: administrator klubu"),
+  członek pod modułem platformy („Poza klubem", bez „poproś"), sesja platformy pod ekranem
+  klubu („Zakres platformy").
+- **`BookingDto` ma pola treści OPCJONALNE** (`undefined` = nie dla Ciebie, `null` = puste);
+  szuflada nie rysuje wiersza „Zadanie" ani „Założona", gdy pola nie ma, i nie rysuje karty
+  ścieżki przy `approval: null`.
+- odmowa logowania: „To konto nie należy jeszcze do żadnego klubu. Do klubu wchodzi się
+  kodem klubu w aplikacji Ninerdeck - potem panel otworzy się tym samym kontem."
+
+### 13.4 Aplikacja pilota - bez zmian w kodzie
+
+Telefon zdolności nie zna i dalej nie musi: jego ekrany bramkują BITY z odpowiedzi serwera
+(`viewer.watch` w oknie kalendarza, `approver` w skrzynce) i kolejki (`GET /me/approvals/queue`).
+Kto co widzi na telefonie - tabela w podręczniku (`docs/podrecznik/uprawnienia.md`).
+
+### 13.5 Makiety (design-first)
+
+`design/panel/brak-dostepu.html` (nowa, trzy brzmienia), `00-logowanie` (zdanie odmowy),
+`00a-wybor-klubu` (karta klubu, w którym osoba jest pilotem), `piloci-konto` („Podgląd klubu"),
+`kalendarz-wpis` (stan „cudza rezerwacja bez Podglądu klubu"), `index.html` (karta BD).
+
+### 13.6 Poza zakresem - do epiku przebudowy panelu (3.2.0)
+
+**Własna rezerwacja z panelu.** Kalendarz w panelu ma dziś wyłącznie „Zarezerwuj za pilota"
+na `reservations.manage`; pilot z pustym zakresem ogląda kalendarz, a rezerwuje w aplikacji.
+Właściciel: *„Chyba że tego jeszcze nie ma. Mamy w planie przebudowę panelu, więc może trzeba
+tam do epika to dodać"* - punkt dopisany w `docs/panel-3.2.md` §10 (formularz jak 22/22A
+z telefonu: termin i maszyna, potem zadanie; sugestie slotów z `GET /bookings/suggestions`).
+
+### 13.7 Odrzucone - nie wracać
+
+| Wariant | Dlaczego |
+| --- | --- |
+| pilot widzi wszystkie cztery moduły do odczytu (`panel.access` znika z katalogu) | lista pilotów niesie adresy e-mail, dziennik - operacje wszystkich; to nie jest to, co pilot widzi w aplikacji |
+| rename klucza `panel.access` → `club.view` | migracja wierszy i ~70 deklaracji tras dla samej nazwy; klucz dalej mówi prawdę („dostęp do modułów panelu") |
+| pseudo-zdolność „członek" w katalogu | nie da się jej nadać ani odebrać osobno, więc nie jest zdolnością - stąd `null` w deklaracji trasy i `'club'` w nawigacji |
+| otwarcie `GET /fleet` i `GET /pilots` każdemu członkowi | moduł byłby zamknięty na ekranie, a otwarty w API; a lista pilotów ujawnia adresy - stąd osobny słownik `GET /directory` |
+| przekierowanie zamiast ekranu „Brak dostępu" | dla pilota z linkiem do dziennika wyglądało jak awaria; zgłoszenie żąda ekranu wprost |

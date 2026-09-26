@@ -59,6 +59,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 
 ## Panel klubu
 - panel-wprowadzenie
+- uprawnienia
 - panel-piloci
 - panel-samoloty
 - panel-dziennik

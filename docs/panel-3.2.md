@@ -423,6 +423,19 @@ zostają dwie (`admin`, `pilot` - `docs/panel-2.0.md` §3.2a).
 Zdolność dokłada się wtedy, gdy pojawia się nowy ZASÓB albo nowa oś władzy
 (`reservations.manage` przy rezerwacjach) - a tu żaden z tych dwóch warunków nie zachodzi.
 
+> **UZUPEŁNIENIE PO ISSUE #216 (2026-09-25, „panel dla wszystkich" - `docs/uprawnienia.md`
+> §13).** Ról nie ma od 3.1.0 (epik #197), a do panelu wchodzi odtąd KAŻDY aktywny członek:
+> `panel.access` jest „Podglądem klubu" (dziennik, piloci, samoloty do odczytu), kalendarz
+> i Moje konto ma każdy. Każdy nowy ekran tego planu - pulpit „Do sprawdzenia", rozjazdy,
+> eksporty, statystyki, edycja zdarzeń - dostaje przez to DWA pytania zamiast jednego:
+> którą zdolnością bramkować odczyt (domyślnie `panel.access`) i czy trasa ma `RequireCapability`
+> z ekranem „Brak dostępu" (ma - każda trasa modułu). **Do tego epiku dochodzi jeden punkt
+> spoza planu, odłożony tu decyzją właściciela:** WŁASNA REZERWACJA Z PANELU. Pilot z pustym
+> zakresem widzi dziś kalendarz w panelu, ale rezerwuje wyłącznie w aplikacji („Zarezerwuj
+> za pilota" stoi na `reservations.manage`). Formularz jak 22/22A z telefonu (termin
+> i maszyna, potem zadanie), sugestie slotów z `GET /bookings/suggestions`, zapis na trasę
+> telefonu albo nową trasę panelu bez zdolności - do rozstrzygnięcia w P-A.
+
 **Uzupełnienie 2026-09-25: JEDNA nowa zdolność jednak dochodzi - `fleet.watch`** ze
 zgłoszenia #205 (`docs/obserwowanie-samolotu.md` §3), bo dołączyło ono do tego wydania.
 Zdanie wyżej zostaje prawdziwe dla sześciu epików panelu: obserwowanie jest nowym
