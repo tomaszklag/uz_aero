@@ -581,6 +581,38 @@ a {
   margin-top: -6px;
 }
 
+/**
+ * LICZBA PRZY POZYCJI KOLUMNY - wyłącznie „Do sprawdzenia" (3.2.0, `docs/panel-3.2.md` §3).
+ *
+ * Plakietka istnieje WYŁĄCZNIE przy niezerowej liczbie - to reguła SyncChipa
+ * (issue #12) zastosowana do kolumny: „nic nie czeka" jest stanem domyślnym i nie
+ * dostaje ozdoby, bo licznik świecący zawsze uczy oko pomijać to miejsce. Bursztyn,
+ * nie czerwień: sprawa do sprawdzenia to „poczekaj na człowieka", nie awaria.
+ * Na pozycji aktywnej (odwróconej) plakietka wraca do tonu chrome'u, żeby nie
+ * konkurować z zaznaczeniem.
+ */
+.nav-count {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--amber-muted);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-item.active .nav-count {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    05. PRZYCISKI I POLA FORMULARZA
    źródło: admin/src/styles/components/controls.css
@@ -1842,6 +1874,58 @@ button.go {
   font-weight: 600;
 }
 
+/**
+ * PRZEŁĄCZNIK OSI - „Samoloty | Piloci" na poziomie 1 dziennika (3.2.0, §4.1).
+ *
+ * Nie para chipów: chip ZAWĘŻA listę (można nie zapalić żadnego), a oś ROZSTRZYGA,
+ * o co pyta ekran - dokładnie jedna pozycja jest zawsze włączona. Segment mówi to
+ * kształtem: jedno pudełko, dwie połowy, żadnej „pustej" konfiguracji. Zaznaczenie
+ * odwrócone, jak chip i pozycja kolumny - jeden język zaznaczenia w całym panelu.
+ * Stoi PRZED zakresem dat, bo zmienia pytanie, a daty tylko je zawężają.
+ */
+.seg {
+  display: inline-flex;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.seg-btn + .seg-btn {
+  border-left: 1px solid var(--border-strong);
+}
+
+.seg-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.seg-btn.on {
+  background: var(--text-primary);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.seg-btn svg {
+  flex-shrink: 0;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    09. TABELA
    źródło: admin/src/styles/components/table.css
@@ -2123,6 +2207,20 @@ tbody tr.muted .cell-strong {
 .cell-sub .dim,
 .cell-sub.dim {
   color: var(--text-placeholder);
+}
+
+/**
+ * WIERSZ SUM pod tabelą - statystyki (3.2.0, §8). Półgruby, odcięty mocniejszym
+ * włosem od wierszy: „Razem" czyta się jako odpowiedź, a nie jako kolejny samolot.
+ * Kolumny liczbowe idą tą samą regułą, co w `tbody` (mono, do prawej).
+ */
+tfoot td {
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-strong);
+  background: var(--surface);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2629,8 +2727,377 @@ tbody tr.voided td {
   font-family: var(--font-mono);
 }
 
+/**
+ * ══ DOBA NAGŁÓWKIEM (3.2.0, `docs/panel-3.2.md` §4.3) ══
+ *
+ * Grupowanie dniami na poziomie 2 obu osi: `<tbody class="day">` na dobę, a jego
+ * pierwszy wiersz to nagłówek z datą i SUMAMI doby (Operacje · Loty · Blok · Lot).
+ * Kolumna z datą przy każdym wierszu ZNIKŁA - powtarzałaby nagłówek stojący centymetr
+ * wyżej. Ten sam kształt dostała historia w telefonie (makieta `24`) i to jest
+ * zamierzone: jedna rzecz ma w produkcie jeden kształt (issue #42).
+ *
+ * Sumy przychodzą Z SERWERA (§4.4): strona kursorowa potrafi rozciąć dobę, a suma
+ * połowy doby policzona w przeglądarce wyglądałaby poprawnie. Nagłówek na tle
+ * `--surface-raised`, żeby dzielił listę bez drugiej ramki; kolejna doba dostaje
+ * mocniejszy włos od góry.
+ */
+tr.day-row th {
+  text-align: left;
+  padding: 9px 12px 7px;
+  background: var(--surface-raised);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody.day + tbody.day tr.day-row th {
+  border-top: 1px solid var(--border-strong);
+}
+
+tr.day-row:hover {
+  background: none;
+}
+
+.day-row-in {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+/* Dzień tygodnia obok daty krojem tekstowym i lżej: to podpis, nie druga data. */
+.day-dow {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Sumy doby po prawej, mono - liczba mocna, jednostka i nazwa wielkości lżej.
+   Kolejność jest STAŁA (Operacje · Loty · Blok · Lot), więc etykiety są krótkie. */
+.day-sums {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.day-sums b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Wiersz operacji, w której osoba z osi PILOTA była DRUGIM pilotem: obecny, ale
+   przygaszony i poza sumami doby - nalot liczy się dowódcy (ta sama atrybucja, co
+   w statystykach, §4.5). Reguła `tr.muted` z tabeli; klasa własna tylko po to, żeby
+   grep znajdował ten przypadek. */
+tbody tr.as-dual td {
+  color: var(--text-muted);
+}
+
+tbody tr.as-dual .cell-strong,
+tbody tr.as-dual .reg {
+  color: var(--text-secondary);
+}
+
+/* Nazwisko i znak w wierszu doby nie łamią się: dziesięć kolumn poziomu 2 zostawia
+   kolumnie „Pilot" tyle miejsca, ile trzeba na skrócone nazwisko - a „A. Kowalski"
+   złamane na dwie linie rozciągało wiersz, choć dane są jednowierszowe. */
+tbody.day .cell-strong,
+tbody.day .reg {
+  white-space: nowrap;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   14. KALENDARZ FLOTY - OŚ MASZYN I DNI
+   14. KOREKTY - TRYB EDYCJI OSI, SIATKA TYPÓW, HISTORIA ZMIAN
+   źródło: admin/src/styles/components/corrections.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Ninerdeck - panel: KOREKTY ZDARZEŃ - tryb edycji osi, siatka typów, historia zmian
+ * (3.2.0, `docs/panel-3.2.md` §5; epik P-C).
+ *
+ * Panel mówi SŁOWNIKIEM TELEFONU (§5.3): oś operacji w panelu i oś w aplikacji pilota
+ * opisują ten sam bieg silnika, więc plakietka „popr.", kolumna ołówka w trybie edycji,
+ * siatka typów przy dopisaniu i oś czasu historii zmian są tu PRZEŁOŻENIEM ekranów
+ * `10D`–`10I` na styl lekki - nie kopią 1:1. Panel ma mysz, szufladę i miejsce, więc
+ * arkusz telefonu jest tu kartą w szufladzie.
+ */
+
+/* ── kolumna ołówka - WYŁĄCZNIE w trybie edycji ──
+   W odczycie oś nie ma ani jednego celu kliknięcia (issue #40): kilkanaście ołówków
+   w jednej kolumnie czyta się jak szum. W edycji cały wiersz otwiera szufladę, a ołówek
+   mówi, że tak jest. Wiersz bez ołówka (przejęcie z korektą wyłącznie odczytów, zdanie
+   bez `retime`) też ma pustą komórkę - brak celu widać od razu. */
+td.pen {
+  width: 36px;
+  padding-right: 8px;
+  text-align: right;
+}
+
+.pen-btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pen-btn:hover,
+.pen-btn:focus-visible {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+tbody tr.editable {
+  cursor: pointer;
+}
+
+tbody tr.editable:hover .pen-btn {
+  color: var(--text-secondary);
+}
+
+/* ── plakietka „popr." - widoczna w OBU trybach ──
+   Fakt o danych, nie akcja (issue #43): wartość, którą ktoś zmienił, nie jest tym,
+   co zapisał przyrząd. Błękit, nie bursztyn - korekta jest informacją, a nie
+   ostrzeżeniem. W odczycie prowadzi do historii zmian, w edycji stoi obok ołówka. */
+.tag-corrected {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--blue-muted);
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  line-height: 16px;
+  vertical-align: 2px;
+  text-decoration: none;
+}
+
+a.tag-corrected:hover {
+  text-decoration: underline;
+}
+
+/* ── ostatni wiersz osi: DOPISANIE ──
+   Dopisywany fakt trafia do przebiegu operacji, więc wejście stoi tam, gdzie skończy
+   się jego skutek - na końcu osi, nie w pasie akcji pod ekranem (uwaga z urządzenia
+   przy issue #43). Kreska przerywana odcina je od zdarzeń: to zaproszenie, nie zapis. */
+tr.axis-add > td {
+  padding: 0;
+  border-top: 1px dashed var(--border-strong);
+}
+
+tr.axis-add:hover {
+  background: none;
+}
+
+.axis-add-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.axis-add-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+/* ── siatka typów zdarzeń (dopisanie, §5.4) ──
+   Karty z ikoną w trzech kolumnach - wzorzec `10H` z telefonu. Lista jest WĄSKA
+   i brak kafla mówi o granicy sam: uruchomienia i wyłączenia silnika tu nie ma, bo
+   wyznaczają kopertę operacji; zrzut i załadunek pokazują się wyłącznie w dniu
+   skokowym (issue #19). Zaznaczona karta: zielona ramka, jak `.opt.selected`. */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.type-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.type-opt svg {
+  color: var(--text-muted);
+}
+
+.type-opt:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.type-opt.selected {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+  color: var(--text-primary);
+}
+
+.type-opt.selected svg {
+  color: var(--green);
+}
+
+/* ── historia zmian - oś czasu w karcie (wzorzec `10I`) ──
+   Najnowsza zmiana na górze, kotwicą jest ZAPIS PIERWOTNY (kropka pusta - fakt
+   z terenu, nie korekta). Wiersz niesie parę „było → jest", kto i z jakim powodem;
+   nazwa pola wraca WYŁĄCZNIE, gdy lista miesza pola (`needsFieldLabels`, issue #43).
+   Bez podpisu o źródle zapisu i bez przypisu o append-only - to opisuje budowę
+   rejestru komuś, kto o nią nie pytał. */
+.hist {
+  display: flex;
+  flex-direction: column;
+}
+
+.hist-item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.hist-item:last-child {
+  border-bottom: none;
+}
+
+.hist-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.hist-rail::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: -9px;
+  width: 1px;
+  background: var(--border);
+}
+
+.hist-item:last-child .hist-rail::before {
+  display: none;
+}
+
+.hist-dot {
+  position: relative;
+  z-index: 1;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+}
+
+.hist-dot.origin {
+  background: var(--surface);
+  border: 1.5px solid var(--text-muted);
+}
+
+.hist-dot.void {
+  background: var(--red);
+}
+
+.hist-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hist-when {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+
+.hist-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.hist-from {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.hist-arrow {
+  color: var(--text-muted);
+}
+
+/* Nazwa pola - wyłącznie przy liście mieszającej pola. */
+.hist-field {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.hist-verdict {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.hist-verdict.void {
+  color: var(--red);
+}
+
+.hist-who {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.hist-reason {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+.hist-reason.none {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   15. KALENDARZ FLOTY - OŚ MASZYN I DNI
    źródło: admin/src/styles/components/calendar.css
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -2867,7 +3334,7 @@ tbody tr.voided td {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   15. ŚLAD GPS - MAPA I PROFIL PIONOWY
+   16. ŚLAD GPS - MAPA I PROFIL PIONOWY
    źródło: admin/src/styles/components/track.css
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -3045,7 +3512,7 @@ tbody tr.voided td {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   16. ZGŁOSZENIA BŁĘDÓW
+   17. ZGŁOSZENIA BŁĘDÓW
    źródło: admin/src/styles/components/bugs.css
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -3086,6 +3553,238 @@ tbody tr.voided td {
  * w ETYKIETĘ chipa („Nowe · 7"), więc `FilterChip` zostaje nietknięty. Przy triażu
  * „ile jest nowych" jest najważniejszą liczbą na stronie.
  */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   18. DO SPRAWDZENIA - LISTA SPRAW
+   źródło: admin/src/styles/components/attention.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Ninerdeck - panel: „DO SPRAWDZENIA" - lista spraw z trzech źródeł
+ * (3.2.0, `docs/panel-3.2.md` §9; epik P-D).
+ *
+ * Pulpit 1.0 miał osiem kafli z licznikami i panel 2.0 wyrzucił go świadomie. Wraca
+ * jego jedyna użyteczna część: JEDNO pytanie („co wymaga mojej reakcji") i trzy
+ * odpowiedzi - rozjazdy, karty bez arkusza, operacje wiszące. Liczniki są PODPISAMI
+ * pozycji, nie kaflami; każdy wiersz jest LINKIEM do miejsca, w którym da się z tym
+ * coś zrobić; stan pusty jest dobrą wiadomością i tak wygląda.
+ */
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Wiersz sprawy: ikona tonu, treść (co i gdzie), wiek, szewron. Szewron, nie ikona
+   panelu bocznego (`.go`): wiersz PROWADZI gdzie indziej - do skrzynki, do dziennika -
+   a nie wysuwa szuflady nad tą listą. Cały wiersz jest odnośnikiem, bo jest jedną
+   sprawą; kształt pod kursorem jak `.go`, z ujemnym marginesem, żeby nic nie skakało. */
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 8px;
+  margin: 0 -8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.todo-row + .todo-row {
+  border-top: 1px solid var(--hairline);
+}
+
+a.todo-row:hover,
+a.todo-row:focus-visible {
+  background: var(--surface-raised);
+}
+
+.todo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--amber-muted);
+  color: var(--amber);
+}
+
+.todo-icon.red {
+  background: var(--red-muted);
+  color: var(--red);
+}
+
+.todo-icon.blue {
+  background: var(--blue-muted);
+  color: var(--blue);
+}
+
+.todo-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todo-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.todo-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Wiek sprawy: mono, bo to odczyt; czerwień, gdy leży ZA DŁUGO (ta sama doba,
+   po której pilot traci prawo korekty - próg z serwera, nie z panelu). */
+.todo-age {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.todo-age.old {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.todo-go {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/* Liczba jako PODPIS tytułu karty, nie kafel: „Rozjazdy · 3". Mono, lżej. */
+.card-count {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+/* Stopka karty z jednym wyjściem do pełnej listy - wyłącznie, gdy lista jest
+   przycięta („5 z 12"). Karta z kompletem stopki nie ma. */
+.card-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   19. STATYSTYKI I ANALITYKA - SŁUPKI, PASMO
+   źródło: admin/src/styles/components/stats.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Ninerdeck - panel: STATYSTYKI I ANALITYKA ZUŻYCIA
+ * (3.2.0, `docs/panel-3.2.md` §8; epik P-E).
+ *
+ * Dwie rzeczy, których reszta panelu nie potrzebowała: słupki „nalot dzień po dniu"
+ * i pasmo zużycia. Obie rysowane SAMYM CSS-em na wartościach z serwera - panel nie
+ * liczy po swojemu (`admin/test/architecture.test.ts`), wysokość słupka i położenie
+ * pasma to procent policzony z gotowych liczb. Sumy i wiersze per maszyna / pilot
+ * jadą zwykłą tabelą z wierszem `tfoot` (`table.css`).
+ */
+
+/* ── słupki: nalot dzień po dniu ──
+   Wysokość względem maksimum zakresu (`style="height:…%"`), dzień bez lotów to
+   PRAWDZIWE zero i dostaje kreskę u podstawy - pusta kolumna czytałaby się jak brak
+   danych. Podpis dnia co kilka słupków, żeby mono nie zlało się w jeden napis. */
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+  padding-top: 8px;
+}
+
+.bar {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.bar i {
+  display: block;
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--green);
+  opacity: 0.85;
+}
+
+.bar.zero i {
+  height: 2px;
+  background: var(--border-strong);
+  opacity: 1;
+}
+
+.bar-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-align: center;
+  height: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.bars-axis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* ── pasmo zużycia (10.–90. centyl) z markerem normy z dokumentacji ──
+   Wypełnienie = pasmo ZMIERZONE z lotów tej maszyny, kreska bursztynowa = norma
+   ZADEKLAROWANA w karcie (issue #66: dwie różne liczby, ekran nazywa, którą pokazuje).
+   Skala pod paskiem podaje granice osi, żeby procenty coś znaczyły. */
+.band {
+  position: relative;
+  height: 8px;
+  margin: 8px 0 4px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+}
+
+.band-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--green-border);
+}
+
+.band-mark {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--amber);
+}
+
+.band-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    RAMA MAKIETY - KANWA, OKNO PRZEGLĄDARKI, INWENTARZ, SPIS

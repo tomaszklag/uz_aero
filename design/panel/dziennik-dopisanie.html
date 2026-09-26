@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Dziennik: dopisanie brakującego zdarzenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DZIENNIK · DOPISANIE WPISU</span>
+  <span class="slug">panel/dziennik-dopisanie · #/dziennik/SP-AXA/&lt;uuid&gt;/edycja · poziom 3 · ostatni wiersz osi</span>
+  <span class="canvas-meta"><span class="pulse"></span>Jedyna nowa droga zapisu w 3.2.0 · wąska siatka typów · powód wymagany</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dziennik - siedem ekranów jednej rodziny</div>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Cała flota w zakresie dat</span>
+      <span class="vp-when">Wejście domyślne, oś MASZYN. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło. Przełącznik osi stoi PRZED zakresem dat.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-piloci.html">
+    <span class="vp-badge">L1b</span>
+    <span class="vp-body">
+      <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-maszyna.html">
+    <span class="vp-badge">L2</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednej maszyny - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi maszyn. DOBA JEST NAGŁÓWKIEM z sumami doby, kolumny z datą przy wierszu NIE MA; godzina zostaje przy operacji, bo dwie zmiany jednej maszyny różnią się wyłącznie godzinami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-pilot.html">
+    <span class="vp-badge">L2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednego pilota - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-operacja.html">
+    <span class="vp-badge">L3</span>
+    <span class="vp-body">
+      <span class="vp-name">Jedna operacja</span>
+      <span class="vp-when">Pełna strona: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA: okruszki prowadzą na oś maszyny, nazwisko pilota w szczegółach - na oś pilota. Tym „powiązaniem list" jest link w obie strony, nie trzecia lista.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-edycja.html">
+    <span class="vp-badge amber">L3b</span>
+    <span class="vp-body">
+      <span class="vp-name">Tryb edycji: korekta zdarzeń</span>
+      <span class="vp-when">Ten sam ekran po „Popraw zdarzenia": ołówek przy każdym wierszu osi, szuflada korekty czasu / wartości / unieważnienia z podglądem „przed → po", baner kolizji z pilotem (nigdy odmowa), powód wymagany, historia zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="dziennik-dopisanie.html">
+    <span class="vp-badge amber">L3c</span>
+    <span class="vp-body">
+      <span class="vp-name">Dopisanie brakującego zdarzenia</span>
+      <span class="vp-when">Ostatni wiersz osi w trybie edycji. Wąska siatka typów - bez uruchomienia i wyłączenia silnika, bo one wyznaczają kopertę operacji - czas w granicach biegu, powód wymagany. Jedyna nowa droga zapisu w 3.2.0.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Dziennik - dopisanie brakującego zdarzenia">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/dziennik/SP-AXA/3a9d21f0-6b7e-4c55-8e2a-9f1c0d4b7a61/edycja
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <nav class="crumbs" aria-label="Ścieżka">
+        <a href="dziennik-flota.html">Dziennik</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="dziennik-maszyna.html">SP-AXA</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current">SP-AXA/2026-09-05/AKW/1</span>
+      </nav>
+
+      <!-- TRYB EDYCJI JEST STANEM TEGO SAMEGO EKRANU (docs/panel-3.2.md §5.3; wzorzec
+           10D z telefonu, issue #43): ten sam ślad, ta sama oś, te same odczyty - plus
+           ołówek przy każdym wierszu i wiersz dopisania na końcu osi. Plakietka w rogu
+           nagłówka trzyma stan TRYBU, a „Zakończ edycję" niczego nie zapisuje - każda
+           korekta zapisała się w chwili zatwierdzenia szuflady - więc nie jest
+           przyciskiem pełnym. Adres `…/edycja` istnieje, żeby dało się go wkleić. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">SP-AXA</h1>
+          <p class="page-sub">SP-AXA/2026-09-05/AKW/1 · silnik 10:06 → 12:09 UTC</p>
+        </div>
+        <div class="page-actions">
+          <span class="pill amber">Edycja</span>
+          <a class="btn" href="dziennik-operacja.html">Zakończ edycję</a>
+        </div>
+      </div>
+
+      <!-- ══ NIESPÓJNOŚCI - NAD OSIĄ, BO WYMAGAJĄ CZYNNOŚCI ══
+           Ten sam baner, który telefon rysuje na 10D: nazywa FAKT i mówi, czym się go
+           naprawia. Liczy je domena na CAŁYM strumieniu (`rules/consistency.ts`)
+           i przysyła serwer razem z operacją - cienki plaster P-C, bo panelowi wolno
+           brać z domeny wyłącznie typy. Wiersz osi, którego to dotyczy, ma bursztynowe
+           tło i podpis: baner mówi „jest problem", wiersz mówi „ten". -->
+      <div class="banner warn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><b>Lot 5 nie ma lądowania.</b> Ostatni start był o 11:42:10, a silnik stanął o 12:09:20 - dopisz lądowanie ostatnim wierszem osi.</span>
+      </div>
+
+      <!-- ══ OŚ ZDARZEŃ W TRYBIE EDYCJI ══
+           Piąta kolumna to OŁÓWEK; cały wiersz jest celem kliknięcia i otwiera szufladę
+           właściwą dla typu zdarzenia (czas · odczyty · zrzut), dokładnie jak wiersz
+           osi na 10D otwiera arkusz 10E / 10F / 10G. Wiersz otwarty w szufladzie
+           dostaje zieloną krawędź (`tr.opened`), jak w każdej liście panelu. Wiersz
+           unieważniony zostaje przekreślony i też ma ołówek - prowadzi do historii
+           i przywrócenia. Słownik jest jeden i polski, ten sam, co w telefonie. -->
+      <div class="card">
+        <div class="card-title">Log zdarzeń</div>
+        <div class="table-wrap plain">
+          <table>
+            <caption class="visually-hidden">Zdarzenia operacji - tryb edycji</caption>
+            <thead>
+              <tr>
+                <th>Czas</th>
+                <th>Zdarzenie</th>
+                <th>Szczegół</th>
+                <th>Zapis</th>
+                <th><span class="visually-hidden">Popraw</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="editable">
+                <td class="num">10:01:15</td>
+                <td class="cell-strong">Przejęcie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw przejęcie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:03:40</td>
+                <td class="cell-strong">Zadanie</td>
+                <td><span class="cell-sub">EPZG · paliwo 136 L · 1234:27 · olej 8,9 L</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zadanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:04:10</td>
+                <td class="cell-strong">Dolewka oleju</td>
+                <td><span class="cell-sub">+0,5 L</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw dolewka oleju"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:06:02</td>
+                <td class="cell-strong">Uruchomienie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw uruchomienie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:11:30</td>
+                <td class="cell-strong">Kołowanie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw kołowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:18:04</td>
+                <td class="cell-strong">Start</td>
+                <td><span class="cell-sub">lot 1</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:28:11</td>
+                <td class="cell-strong">Zrzut</td>
+                <td><span class="cell-sub">8 skoczków · 4000 ft</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zrzut"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:33:50</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw lądowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:37:12</td>
+                <td class="cell-strong">Start</td>
+                <td><span class="cell-sub">lot 2</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:47:40</td>
+                <td class="cell-strong">Zrzut</td>
+                <td><span class="cell-sub">8 skoczków · 4000 ft</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zrzut"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:53:05</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw lądowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">10:56:30</td>
+                <td class="cell-strong">Start</td>
+                <td><span class="cell-sub">lot 3</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:07:02</td>
+                <td class="cell-strong">Zrzut</td>
+                <td><span class="cell-sub">7 skoczków · 4000 ft</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zrzut"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:12:41</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw lądowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:16:10</td>
+                <td class="cell-strong">Start</td>
+                <td><span class="cell-sub">lot 4</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:26:55</td>
+                <td class="cell-strong">Zrzut</td>
+                <td><span class="cell-sub">8 skoczków · 4000 ft</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zrzut"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:32:20</td>
+                <td class="cell-strong">Lądowanie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw lądowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable flagged">
+                <td class="num">11:42:10</td>
+                <td class="cell-strong">Start</td>
+                <td><span class="cell-sub">lot 5 · <span class="cell-sub warn" style="display:inline">bez lądowania</span></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw start"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">11:52:48</td>
+                <td class="cell-strong">Zrzut</td>
+                <td><span class="cell-sub">6 skoczków · 4000 ft</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zrzut"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">12:09:20</td>
+                <td class="cell-strong">Wyłączenie</td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw wyłączenie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">12:12:30</td>
+                <td class="cell-strong">Tankowanie</td>
+                <td><span class="cell-sub">+123 L → 185 L</span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw tankowanie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="editable">
+                <td class="num">12:15:04</td>
+                <td class="cell-strong">Zdanie samolotu</td>
+                <td><span class="cell-sub">paliwo 185 L · 1236:30</span></td>
+                <td><span class="cell-sub">auto</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw zdanie samolotu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+              <tr class="axis-add">
+                <td colspan="5">
+                  <a class="axis-add-btn" href="dziennik-dopisanie.html" aria-current="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Dodaj wpis
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SZUFLADA DOPISANIA (docs/panel-3.2.md §5.4; decyzja właściciela 22 września 2026) ══
+         Młodsza siostra korekty, nie drugi ingest: ta sama zdolność (`events.correct`),
+         ta sama maszyneria w jednej transakcji, ten sam wymagany powód i ten sam podgląd
+         „przed → po". Wzorzec: arkusz 10H z telefonu przełożony na szufladę FORMULARZA
+         (`.drawer.wide`). Zdarzenie stempluje się PILOTEM operacji, więc pilot zobaczy
+         wpis na swoim telefonie - podtytuł mówi to, bo to jest skutek, nie budowa. -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Dodaj wpis do operacji">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Dodaj wpis</div>
+          <div class="drawer-sub">SP-AXA/2026-09-05/AKW/1 · pilot zobaczy wpis na telefonie</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+
+        <!-- ══ WĄSKA SIATKA TYPÓW ══
+             Sześć kart = to, co telefon oferuje na 10H: start · lądowanie · tankowanie ·
+             zrzut · załadunek · dolewka oleju. URUCHOMIENIA I WYŁĄCZENIA SILNIKA TU NIE MA,
+             bo wyznaczają kopertę operacji, a dopisanie ich z panelu znaczyłoby
+             stworzenie biegu silnika, którego nikt nie widział; nie ma też przejęcia,
+             zadania i zdania (tożsamość operacji, końce łańcucha motogodzin). BRAK KAFLA
+             MÓWI O GRANICY SAM - bez przypisu. Zrzut i załadunek widać, bo to operacja
+             skokowa; przy przelocie siatka ma cztery karty (stan niżej na kanwie). -->
+        <div class="card">
+          <div class="card-title">Co się wydarzyło</div>
+          <div class="type-grid" role="radiogroup" aria-label="Rodzaj zdarzenia">
+            <button type="button" class="type-opt" role="radio" aria-checked="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+              Start
+            </button>
+            <button type="button" class="type-opt selected" role="radio" aria-checked="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
+              Lądowanie
+            </button>
+            <button type="button" class="type-opt" role="radio" aria-checked="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
+              Tankowanie
+            </button>
+            <button type="button" class="type-opt" role="radio" aria-checked="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 10a7 7 0 0 1 14 0"/><path d="M5 10v4l7 6 7-6v-4"/><path d="M12 20v-6"/></svg>
+              Zrzut
+            </button>
+            <button type="button" class="type-opt" role="radio" aria-checked="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M17 11h5M19.5 8.5v5"/></svg>
+              Załadunek
+            </button>
+            <button type="button" class="type-opt" role="radio" aria-checked="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+              Dolewka oleju
+            </button>
+          </div>
+        </div>
+
+        <!-- CZAS W GRANICACH OPERACJI: podpis podaje kopertę biegu silnika, bo to jest
+             instrukcja do wykonania, nie opis budowy rejestru. Wpis poza kopertą dostaje
+             zdanie POD POLEM (stan niżej na kanwie), a nie baner nad formularzem. -->
+        <div class="card">
+          <div class="card-title">Kiedy</div>
+          <div class="field">
+            <label class="label" for="a-time">Godzina (UTC)</label>
+            <label class="daterange">
+              <input type="time" step="1" id="a-time" value="12:02:00" aria-label="Godzina lądowania (UTC)">
+            </label>
+            <span class="hint">W granicach biegu silnika: 10:06:02 – 12:09:20 UTC.</span>
+          </div>
+        </div>
+
+        <!-- Podgląd z serwera, jak przy korekcie: dopisane lądowanie DOMYKA lot 5,
+             a niespójność znika. Wiersz „Niespójności" jest tu odpowiedzią na baner
+             nad osią - administrator ma widzieć, że wpis załatwia to, po co przyszedł. -->
+        <div class="card">
+          <div class="card-title">Skutek · przed → po</div>
+          <div class="kv"><span class="kv-k">Domyka lot</span><span class="kv-v">lot 5 · start 11:42:10</span></div>
+          <div class="kv"><span class="kv-k">Czas lotu 5</span><span class="kv-v"><span class="was">—</span> → 0:20</span></div>
+          <div class="kv"><span class="kv-k">Czas w powietrzu operacji</span><span class="kv-v"><span class="was">1:24</span> → 1:44</span></div>
+          <div class="kv"><span class="kv-k">Niespójności</span><span class="kv-v"><span class="was">1</span> → 0</span></div>
+          <div class="kv"><span class="kv-k">Karta arkusza</span><span class="kv-v">2026-09-05_SP-AXA <small>→ rewizja 2</small></span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Powód</div>
+          <div class="field">
+            <label class="label" for="a-reason">Powód dopisania</label>
+            <textarea class="input area" id="a-reason" rows="2">Telefon stracił fixa na pasie - lądowanie 12:02 wg dziennika lotniska.</textarea>
+            <span class="hint">Zobaczy go pilot w historii zmian; zostaje w dzienniku audytu.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Dodaj wpis
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-edycja.html">← Edycja</a>
+  <span>·</span>
+  <a href="dziennik-dopisanie.html" class="active">Dopisanie</a>
+  <span>·</span>
+  <a href="dziennik-operacja.html">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="#typy">↓ Pola zależne od typu</a>
+  <span>·</span>
+  <a href="#odmowy">↓ Odmowy i granice</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section" id="typy">
+  <div class="canvas-section-title">Pola zależne od typu · reszta szuflady bez zmian</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Tankowanie · stan przed i dolano</span>
+        <span class="inv-when">Tankowanie niesie trójkę przed / dolane / po, której arytmetyki pilnuje domena (`FUEL_ARITHMETIC`). Pytamy o DWIE liczby, a stan PO liczy serwer i pokazuje w podglądzie - wpisywanie trzech liczb byłoby zaproszeniem do wpisu, który reguła odrzuci. „Stan przed" podpowiada ostatni odczyt operacji, jak w telefonie. Tankowanie przy pracującym silniku odbija się jako odmowa domeny (niżej), a czas wolno wybrać wyłącznie przed uruchomieniem albo po wyłączeniu.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Tankowanie</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="t-before">Stan przed (L)</label>
+              <input class="input mono" id="t-before" inputmode="decimal" value="62">
+              <span class="hint">Ostatni odczyt operacji: 62 L (szacunek z normy po locie).</span>
+            </div>
+            <div class="field">
+              <label class="label" for="t-added">Dolano (L)</label>
+              <input class="input mono" id="t-added" inputmode="decimal" value="123">
+            </div>
+          </div>
+          <div class="kv"><span class="kv-k">Stan po tankowaniu</span><span class="kv-v">185 <small>L · pojemność 185 L</small></span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Zrzut · skład przed czasem</span>
+        <span class="inv-when">Przy DOPISANIU zrzutu skład stoi PIERWSZY: treścią zrzutu jest to, KOGO wyniesiono, i tylko tego nie odtworzy nikt poza pilotem. Godzinę formularz podstawia ze środka pierwszego lotu bez zrzutu, jak `nextDropAt` w telefonie - stąd plakietka „opcjonalne" przy niej: opcjonalność mówi plakietka, nigdy słowo doklejone do nazwy. Kolejność jest odwrotna niż w KOREKCIE zrzutu (L3b), gdzie wchodzi się z wiersza po godzinę - i to jest świadome.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Zrzut</div>
+          <div class="field-pair">
+            <div class="field">
+              <label class="label" for="d-n">Skład - ilu wyskoczyło</label>
+              <input class="input mono" id="d-n" inputmode="numeric" value="6">
+            </div>
+            <div class="field">
+              <div class="label-row"><label class="label" for="d-alt">Wysokość zrzutu (ft)</label><span class="pill dim">opcjonalne</span></div>
+              <input class="input mono" id="d-alt" inputmode="numeric" value="">
+            </div>
+          </div>
+          <div class="field">
+            <div class="label-row"><label class="label" for="d-time">Godzina (UTC)</label><span class="pill dim">opcjonalne</span></div>
+            <label class="daterange"><input type="time" step="1" id="d-time" value="11:52:00"></label>
+            <span class="hint">Środek lotu 5 - pierwszego bez zrzutu.</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Dolewka oleju · jedna liczba · Załadunek · skład opcjonalny</span>
+        <span class="inv-when">Dolewka oleju pyta o JEDNĄ liczbę (ile dolano): poziomu po dolewce nie da się uczciwie zmierzyć na gorącym silniku, a rachunek traktuje dolewkę jako składnik interwału pomiar→pomiar, nie jego granicę. Załadunek to znacznik wejścia skoczków na pokład (issue #21) - skład OPCJONALNY, bo zadeklarowany wypełnia potem arkusz zrzutu, a niezadeklarowany niczego nie psuje.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Dolewka oleju</div>
+          <div class="field">
+            <label class="label" for="o-added">Dolano (L)</label>
+            <input class="input mono" id="o-added" inputmode="decimal" value="0,5">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Załadunek</div>
+          <div class="field">
+            <div class="label-row"><label class="label" for="b-n">Skład</label><span class="pill dim">opcjonalne</span></div>
+            <input class="input mono" id="b-n" inputmode="numeric" value="">
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Siatka poza dniem skokowym · cztery karty</span>
+        <span class="inv-when">Przy przelocie, egzaminie czy locie technicznym zrzut nie może się wydarzyć (issue #19: `isJumpOperation`), więc kart zrzutu i załadunku NIE MA - to brak akcji, nie blokada z powodem. Siatka ma wtedy cztery karty i nic o tym nie mówi: brak kafla mówi o granicy sam.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="type-grid" role="radiogroup" aria-label="Rodzaj zdarzenia - przelot">
+          <button type="button" class="type-opt" role="radio" aria-checked="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>Start</button>
+          <button type="button" class="type-opt" role="radio" aria-checked="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>Lądowanie</button>
+          <button type="button" class="type-opt" role="radio" aria-checked="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>Tankowanie</button>
+          <button type="button" class="type-opt" role="radio" aria-checked="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Dolewka oleju</button>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="canvas-section" id="odmowy">
+  <div class="canvas-section-title">Odmowy i granice · te same twarde reguły, co dla telefonu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Czas poza kopertą · zdanie POD polem</span>
+        <span class="inv-when">Kopertę operacji wyznaczają uruchomienie i wyłączenie silnika; wpis poza nią nie może być faktem tej operacji. Odmowa stoi przy polu, którego dotyczy (czerwona ramka + zdanie), nie w banerze nad formularzem - baner kazałby szukać, które z pól poprawić. Przycisk zostaje czynny.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="field">
+          <label class="label" for="e-time">Godzina (UTC)</label>
+          <label class="daterange" style="border-color: var(--red-border); box-shadow: 0 0 0 3px var(--red-muted);"><input type="time" step="1" id="e-time" value="12:14:00" aria-invalid="true"></label>
+          <span class="hint danger">Poza biegiem silnika (10:06:02 – 12:09:20). Lądowanie po wyłączeniu silnika nie może być faktem tej operacji.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odmowa reguły domeny · po tapnięciu w „Dodaj wpis"</span>
+        <span class="inv-when">`checkAppend` z uprawnieniem administracyjnym odrzuca dokładnie to, co odrzuciłby telefonowi: zrzut na ziemi, lądowanie bez startu, tankowanie przy pracującym silniku, cofnięty licznik. Wpis nie wchodzi, baner nazywa regułę językiem człowieka i zostaje w szufladzie do poprawki. To JEDYNY rodzaj odmowy w tym module - kolizja z pilotem nigdy nią nie jest.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span><b>Zrzut na ziemi.</b> 11:35:00 wypada między lądowaniem lotu 4 (11:32:20) a startem lotu 5 (11:42:10). Popraw godzinę.</span>
+        </div>
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span><b>Tankowanie przy pracującym silniku.</b> 11:00:00 wypada w biegu silnika (10:06:02 – 12:09:20). Dolewa się przy zatrzymanym śmigle - wybierz czas przed uruchomieniem albo po wyłączeniu.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Po zapisie · wiersz na osi z podpisem, baner o skutkach</span>
+        <span class="inv-when">Dopisany wpis staje na osi tam, gdzie wypada jego czas, z podpisem „dopisał administrator" - ten sam, którym korekta mówi „poprawił administrator". Baner nazywa DWA skutki: kartę arkusza (nowa rewizja, bo lądowanie zmienia czas lotu) i telefon pilota (dosyłka `GET /me/events` - wpis, o którym pilot nigdy się nie dowie, byłby w dzienniku lotniczym wadą). Baner niespójności nad osią gaśnie, bo nie ma już o czym mówić.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner ok">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+          <span>Lądowanie 12:02:00 dopisane - lot 5 domknięty. Karta <b>2026-09-05_SP-AXA</b> poszła do arkusza jako rewizja 2; pilot zobaczy wpis na telefonie.</span>
+        </div>
+        <div class="table-wrap plain">
+          <table>
+            <caption class="visually-hidden">Dopisany wiersz - przykład</caption>
+            <tbody>
+              <tr class="editable">
+                <td class="num">12:02:00</td>
+                <td class="cell-strong">Lądowanie<span class="cell-sub">dopisał administrator · 7 WRZ 12:20</span></td>
+                <td><span class="cell-sub"></span></td>
+                <td><span class="cell-sub">ręcznie</span></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw czas lądowania"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-edycja.html">← Edycja</a>
+  <span>·</span>
+  <a href="dziennik-dopisanie.html" class="active">Dopisanie</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html">Do sprawdzenia →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

@@ -275,3 +275,17 @@ tbody tr.muted .cell-strong {
 .cell-sub.dim {
   color: var(--text-placeholder);
 }
+
+/**
+ * WIERSZ SUM pod tabelą - statystyki (3.2.0, §8). Półgruby, odcięty mocniejszym
+ * włosem od wierszy: „Razem" czyta się jako odpowiedź, a nie jako kolejny samolot.
+ * Kolumny liczbowe idą tą samą regułą, co w `tbody` (mono, do prawej).
+ */
+tfoot td {
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-strong);
+  background: var(--surface);
+}

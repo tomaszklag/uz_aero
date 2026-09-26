@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - Spis makiet panelu 2.0</title>
+<title>Ninerdeck - Spis makiet panelu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -35,6 +35,14 @@
   <code>design/admin/</code> (23 pliki) opisuje panel 1.0 i jest <b>archiwum</b> - nie kopiuj stamtąd układów.
 </p>
 
+<p class="idx-lead">
+  <b>Rozbudowa 3.2.0 (issue #182, <code>docs/panel-3.2.md</code>): jedenaście nowych i zmienionych makiet, zero nowych ekranów odzyskanych z panelu 1.0.</b>
+  Kolumna klubu ma sześć pozycji w stałej kolejności - Dziennik · Do sprawdzenia · Kalendarz · Statystyki · Piloci · Samoloty - a plakietka z liczbą
+  stoi przy „Do sprawdzenia" wyłącznie przy niezerowej liczbie. Dziennik dostał drugą oś (piloci) i doby jako nagłówki; poziom 3 - tryb edycji
+  z korektą i dopisaniem zdarzeń; moduł „Do sprawdzenia" spina rozjazdy, karty dnia i operacje wiszące; statystyki wróciły bez kafli, a analityka
+  zużycia weszła do karty samolotu. Sekcje niżej idą w kolejności kolumny bocznej.
+</p>
+
 <section class="canvas-section">
   <div class="canvas-section-title">Fundament</div>
   <div class="idx-grid">
@@ -49,15 +57,97 @@
   </div>
 </section>
 
-<!-- ══ ZAPOWIEDZI ══
-     Karty poniżej mają linki do plików, które JESZCZE NIE POWSTAŁY (`.idx-card.soon`
-     wygasza je i odbiera reakcję na kursor - link prowadzący donikąd ma wyglądać jak
-     zapowiedź, nie jak zepsuty odnośnik). Kolejność jest kolejnością zakładek panelu,
-     a nie kolejnością powstawania. Robiąc makietę: usuń klasę `soon` z jej karty.
-     Ekrany odwzorowują stan panelu na 2026-09-07 - inwentarz ekranów pochodzi
-     z `admin/src/screens/` i `admin/src/routes.tsx`. Makiety WIELOFIRMOWOŚCI (2.0.0:
-     00A, O1, O2, P4 i zmiany w P1/P3) WYPRZEDZAJĄ kod - to pierwsze makiety panelu,
-     od których prowadzi implementacja (docs/wielofirmowosc.md §8). -->
+<section class="canvas-section">
+  <div class="canvas-section-title">Dziennik · siedem ekranów jednej rodziny (3.2.0: dwie osie, doby, korekty)</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="dziennik-flota.html">
+      <span class="idx-badge">L1</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-flota</span>
+        <span class="idx-route">#/dziennik?od=&amp;do=</span>
+        <span class="idx-when">Ekran startowy panelu, oś MASZYN: cała flota w zakresie dat - także maszyny, które nie latały. Od 3.2.0 z przełącznikiem osi (segment „Samoloty | Piloci") przed zakresem dat; przełączenie osi nie rusza dat. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-piloci.html">
+      <span class="idx-badge">L1b</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-piloci</span>
+        <span class="idx-route">#/dziennik?os=piloci&amp;od=&amp;do=</span>
+        <span class="idx-when">Ta sama doba, oś PILOTÓW: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) plus dni i maszyny - także ci, którzy nie latali. Nalot liczy się dowódcy (jak w statystykach); loty jako drugi pilot są podpisem, nie sumą. Sumy obu osi są równe co do minuty.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-maszyna.html">
+      <span class="idx-badge">L2</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-maszyna</span>
+        <span class="idx-route">#/dziennik/SP-AXA?od=&amp;do=</span>
+        <span class="idx-when">Operacje jednej maszyny DOBAMI: doba jest nagłówkiem z sumami doby (z serwera - strona kursorowa potrafi rozciąć dobę), kolumny z datą przy wierszu nie ma. Pierwsza komórka = para godzin biegu silnika i sygnatura pod spodem, jak wiersz operacji w telefonie. Plakietka rozjazdu stoi przy operacji.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-pilot.html">
+      <span class="idx-badge">L2b</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-pilot</span>
+        <span class="idx-route">#/dziennik/pilot/AKO?od=&amp;do=</span>
+        <span class="idx-when">Operacje jednego pilota DOBAMI - ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot widoczne, przygaszone i poza sumami (decyzja do potwierdzenia). Adres ze statycznym segmentem <code>pilot/</code>, bo „pilot" nigdy nie będzie znakiem rejestracyjnym.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-operacja.html">
+      <span class="idx-badge">L3</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-operacja</span>
+        <span class="idx-route">#/dziennik/SP-AXA/&lt;uuid&gt;</span>
+        <span class="idx-when">Jedna operacja: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA - okruszki na oś maszyny, nazwisko pilota na oś pilota. Od 3.2.0 przycisk „Popraw zdarzenia" (zdolność korekt) prowadzi w tryb edycji; operacja z otwartym rozjazdem ma plakietkę i baner z drogą do sprawy. Na dole - jak dotąd - zakończenie operacji w toku albo unieważnienie wpisu.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-edycja.html">
+      <span class="idx-badge">L3b</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-edycja</span>
+        <span class="idx-route">#/dziennik/SP-AXA/&lt;uuid&gt;/edycja</span>
+        <span class="idx-when">Ten sam ekran w TRYBIE EDYCJI: ołówek przy każdym wierszu osi, szuflada korekty czasu (z sekundami) / odczytów przy przejęciu i zdaniu / zrzutu, podgląd „przed → po" liczony przez serwer, baner kolizji z pilotem (nigdy odmowa - administrator nie jest blokowany), powód WYMAGANY, kosz w linii tytułu do unieważnienia zdarzenia, historia zmian z audytu. Słownik ten sam, co na osi telefonu.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="dziennik-dopisanie.html">
+      <span class="idx-badge">L3c</span>
+      <span class="idx-body">
+        <span class="idx-name">dziennik-dopisanie</span>
+        <span class="idx-route">#/dziennik/SP-AXA/&lt;uuid&gt;/edycja · „Dodaj wpis"</span>
+        <span class="idx-when">Dopisanie brakującego zdarzenia - jedyna nowa droga zapisu w 3.2.0 (decyzja właściciela 22 września 2026). Ostatni wiersz osi, wąska siatka typów (start, lądowanie, tankowanie, zrzut, załadunek, dolewka oleju - BEZ uruchomienia i wyłączenia silnika), czas w granicach biegu, pola zależne od typu, powód wymagany, te same twarde reguły domeny, co dla telefonu.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Do sprawdzenia · trzy ekrany jednego pytania (3.2.0)</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="sprawdzenie-lista.html">
+      <span class="idx-badge">D1</span>
+      <span class="idx-body">
+        <span class="idx-name">sprawdzenie-lista</span>
+        <span class="idx-route">#/do-sprawdzenia</span>
+        <span class="idx-when">„Co wymaga mojej reakcji" - pulpit wraca WYŁĄCZNIE jako ta odpowiedź, bez kafli z licznikami. Trzy karty z trzech istniejących kontraktów: rozjazdy, karty bez arkusza, operacje wiszące. Liczniki są podpisami tytułów, każdy wiersz prowadzi tam, gdzie da się sprawę zamknąć, karta bez spraw znika, a stan pusty jest dobrą wiadomością. Liczba w kolumnie bocznej to suma trzech kart - wyłącznie, gdy niezerowa.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="sprawdzenie-rozjazdy.html">
+      <span class="idx-badge">D2</span>
+      <span class="idx-body">
+        <span class="idx-name">sprawdzenie-rozjazdy</span>
+        <span class="idx-route">#/do-sprawdzenia/rozjazdy?stan=</span>
+        <span class="idx-when">Skrzynka sześciu rodzajów flag, których do 3.2.0 nie widział nikt: wiersz mówi CO się nie zgadza (polska nazwa, liczby w podpisie) i których operacji dotyczy; „Dwie operacje naraz" stoi pierwsza, bo jako jedyna trzyma kartę arkusza. Szuflada: co się nie zgadza, operacje, CO Z TYM ZROBIĆ, notatka wymagana - i baner o re-eksporcie karty PRZED kliknięciem. Rozstrzygnięte pod chipem.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="sprawdzenie-karty.html">
+      <span class="idx-badge">D3</span>
+      <span class="idx-body">
+        <span class="idx-name">sprawdzenie-karty</span>
+        <span class="idx-route">#/do-sprawdzenia/karty?od=&amp;do=&amp;stan=</span>
+        <span class="idx-when">Dziennik eksportu kart dnia: karta = doba samolotu, wiersz = operacja, stan wnioskowany przez serwer (w arkuszu / bez karty / wstrzymana flagą / czeka na zdanie / unieważniona). Szuflada: rewizje (append-only), treść karty jak w arkuszu, adres z sekretem działający bez logowania (dla skarbnika) i ponowienie z czterema odpowiedziami z powodem - nigdy „coś poszło nie tak".</span>
+      </span>
+    </a>
+  </div>
+</section>
 
 <section class="canvas-section">
   <div class="canvas-section-title">Kalendarz</div>
@@ -106,30 +196,14 @@
 </section>
 
 <section class="canvas-section">
-  <div class="canvas-section-title">Dziennik</div>
+  <div class="canvas-section-title">Statystyki (3.2.0)</div>
   <div class="idx-grid">
-    <a class="idx-card" href="dziennik-flota.html">
-      <span class="idx-badge">L1</span>
+    <a class="idx-card" href="statystyki.html">
+      <span class="idx-badge">T1</span>
       <span class="idx-body">
-        <span class="idx-name">dziennik-flota</span>
-        <span class="idx-route">#/dziennik?od=&amp;do=</span>
-        <span class="idx-when">Ekran startowy panelu. CAŁA flota w zakresie dat - także maszyny, które nie latały. Wiersz prowadzi w głąb, do operacji jednej maszyny.</span>
-      </span>
-    </a>
-    <a class="idx-card" href="dziennik-maszyna.html">
-      <span class="idx-badge">L2</span>
-      <span class="idx-body">
-        <span class="idx-name">dziennik-maszyna</span>
-        <span class="idx-route">#/dziennik/SP-AXA?od=&amp;do=</span>
-        <span class="idx-when">Grid operacji jednej maszyny: dziewięć kolumn danych, para godzin w jednej komórce, druga linia ją kwalifikuje. Wyłącznie odczyty - brak odczytu widać jako kreskę, operacja otwarta mówi „w toku".</span>
-      </span>
-    </a>
-    <a class="idx-card" href="dziennik-operacja.html">
-      <span class="idx-badge">L3</span>
-      <span class="idx-body">
-        <span class="idx-name">dziennik-operacja</span>
-        <span class="idx-route">#/dziennik/SP-AXA/&lt;uuid&gt;</span>
-        <span class="idx-when">Jedna operacja: oś zdarzeń, komplet odczytów, ślad GPS całego biegu silnika (mapa i profil pionowy, kołowanie inną linią niż lot) oraz - na samym dole - zakończenie operacji w toku albo unieważnienie wpisu.</span>
+        <span class="idx-name">statystyki</span>
+        <span class="idx-route">#/statystyki?od=&amp;do=</span>
+        <span class="idx-when">„Ile tego było": pasek faktów zamiast kafli, nalot dzień po dniu, tabele per samolot, per pilot i per zadanie z wierszem sum. Liczy operacje ZAMKNIĘTE w zakresie i NAZYWA to w podtytule razem z liczbą operacji w toku - ta sama podstawa liczenia, co dziennik (puste zapisy nie wchodzą nigdzie). Kreska zamiast liczby, gdy bilansu nie da się policzyć. Analityka zużycia jest własnością maszyny i mieszka w jej karcie (S2).</span>
       </span>
     </a>
   </div>
@@ -189,7 +263,7 @@
       <span class="idx-body">
         <span class="idx-name">samoloty-karta</span>
         <span class="idx-route">#/samoloty/&lt;id&gt;</span>
-        <span class="idx-when">Karta samolotu w sekcjach MEDIAMI: Paliwo, Olej, Motogodziny. Wszystkie pola wymagane; „Aktualny stan" jest do wpisania, dopóki jedynym źródłem jest panel, i do odczytu, gdy maszynę prowadzi już dziennik. Osobna karta „Poprawa odczytów" z wymaganym komentarzem.</span>
+        <span class="idx-when">Karta samolotu w sekcjach MEDIAMI: Paliwo, Olej, Motogodziny. Wszystkie pola wymagane; „Aktualny stan" jest do wpisania, dopóki jedynym źródłem jest panel, i do odczytu, gdy maszynę prowadzi już dziennik. Osobna karta „Poprawa odczytów" z wymaganym komentarzem. <b>Od 3.2.0 karta „Zużycie z lotów"</b> (S2c): pasmo 10.–90. centyla zmierzone z lotów obok normy z dokumentacji (zadeklarowanej, nie zmierzonej), stawki fazowe, przeliczniki licznika, liczba obserwacji - a bez opublikowanego modelu karty NIE MA wcale, ani zer, ani zdania o braku danych.</span>
       </span>
     </a>
   </div>

@@ -274,3 +274,35 @@
 .crumbs + .page-head {
   margin-top: -6px;
 }
+
+/**
+ * LICZBA PRZY POZYCJI KOLUMNY - wyłącznie „Do sprawdzenia" (3.2.0, `docs/panel-3.2.md` §3).
+ *
+ * Plakietka istnieje WYŁĄCZNIE przy niezerowej liczbie - to reguła SyncChipa
+ * (issue #12) zastosowana do kolumny: „nic nie czeka" jest stanem domyślnym i nie
+ * dostaje ozdoby, bo licznik świecący zawsze uczy oko pomijać to miejsce. Bursztyn,
+ * nie czerwień: sprawa do sprawdzenia to „poczekaj na człowieka", nie awaria.
+ * Na pozycji aktywnej (odwróconej) plakietka wraca do tonu chrome'u, żeby nie
+ * konkurować z zaznaczeniem.
+ */
+.nav-count {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--amber-muted);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-item.active .nav-count {
+  background: var(--bg);
+  color: var(--text-primary);
+}

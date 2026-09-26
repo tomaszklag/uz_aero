@@ -351,9 +351,11 @@ describe('powiadomienia z rejestru (ingest)', () => {
 
     expect((await post(app, ako, opened('sess-1'))).statusCode).toBe(200);
 
-    // Budzik niesie KLUB (R6): telefon osoby z dwóch klubów porównuje go z aktywnym.
+    // Budzik niesie KLUB (R6): telefon osoby z dwóch klubów porównuje go z aktywnym -
+    // i poza tym DOKŁADNIE to, co telefon czyta (#228): bez sprawcy, czasu z rejestru
+    // ani zadania; bookingId równe null (poza planem) klucza nie dostaje.
     expect(push.to('ExponentPushToken[krz]')).toHaveLength(1);
-    expect(push.to('ExponentPushToken[krz]')[0]!.data).toMatchObject({ kind: 'aircraft_engine_started', orgId: ORG_A, aircraftId: 'SP-AXA' });
+    expect(push.to('ExponentPushToken[krz]')[0]!.data).toEqual({ kind: 'aircraft_engine_started', orgId: ORG_A, aircraftId: 'SP-AXA' });
 
     const msgs = await inbox(app, krz);
     expect(msgs).toHaveLength(1);

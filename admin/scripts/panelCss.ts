@@ -48,9 +48,12 @@ const SHEETS: readonly { file: string; title: string }[] = [
   { file: 'components/skeleton.css', title: 'PLAMKI ŁADOWANIA' },
   { file: 'components/login.css', title: 'EKRAN LOGOWANIA' },
   { file: 'components/logbook.css', title: 'DZIENNIK - PARY, BRAKI, ZAKRES DAT' },
+  { file: 'components/corrections.css', title: 'KOREKTY - TRYB EDYCJI OSI, SIATKA TYPÓW, HISTORIA ZMIAN' },
   { file: 'components/calendar.css', title: 'KALENDARZ FLOTY - OŚ MASZYN I DNI' },
   { file: 'components/track.css', title: 'ŚLAD GPS - MAPA I PROFIL PIONOWY' },
   { file: 'components/bugs.css', title: 'ZGŁOSZENIA BŁĘDÓW' },
+  { file: 'components/attention.css', title: 'DO SPRAWDZENIA - LISTA SPRAW' },
+  { file: 'components/stats.css', title: 'STATYSTYKI I ANALITYKA - SŁUPKI, PASMO' },
 ];
 
 export const PANEL_CSS_HEADER = `/* ══════════════════════════════════════════════════════════════════════════════

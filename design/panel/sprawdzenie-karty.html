@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Do sprawdzenia: karty dnia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">KARTY DNIA</span>
+  <span class="slug">panel/sprawdzenie-karty · #/do-sprawdzenia/karty?od=&amp;do=&amp;stan= · D3</span>
+  <span class="canvas-meta"><span class="pulse"></span>Dziennik eksportu · karta = doba samolotu · rewizje append-only</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Do sprawdzenia - trzy ekrany jednego pytania</div>
+  <a class="vp-item" href="sprawdzenie-lista.html">
+    <span class="vp-badge">D1</span>
+    <span class="vp-body">
+      <span class="vp-name">Co wymaga reakcji</span>
+      <span class="vp-when">Jedno pytanie, trzy źródła: rozjazdy, karty bez arkusza, operacje wiszące. Liczniki są PODPISAMI, nie kaflami; każda pozycja prowadzi tam, gdzie da się ją zamknąć. Stan pusty jest dobrą wiadomością.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="sprawdzenie-rozjazdy.html">
+    <span class="vp-badge">D2</span>
+    <span class="vp-body">
+      <span class="vp-name">Skrzynka rozjazdów</span>
+      <span class="vp-when">Sześć rodzajów flag, których do 3.2.0 nie widział nikt. Wiersz mówi, CO się nie zgadza; szuflada - o ile i CO Z TYM ZROBIĆ; rozstrzygnięcie z notatką idzie do audytu. Flaga trzymająca kartę arkusza stoi pierwsza.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="sprawdzenie-karty.html">
+    <span class="vp-badge">D3</span>
+    <span class="vp-body">
+      <span class="vp-name">Karty dnia i eksport</span>
+      <span class="vp-when">Dziennik eksportu: stan karty każdej doby samolotu, rewizje, podgląd treści, adres karty (bez logowania - dla skarbnika) i ponowienie. Karta, która nie powstała, jest jedynym śladem awarii eksportu.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+    </span>
+  </a>
+</aside>
+<main class="browser" role="region" aria-label="Do sprawdzenia - karty dnia">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/do-sprawdzenia/karty?od=2026-09-01&amp;do=2026-09-07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item active" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <nav class="crumbs" aria-label="Ścieżka">
+        <a href="sprawdzenie-lista.html">Do sprawdzenia</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current">Karty dnia</span>
+      </nav>
+
+      <!-- Liczby w podtytule są LICZNIKAMI CAŁEGO ZAKRESU (`counts`), nie widocznego
+           okna - monitor, którego jedynym pytaniem jest „czy KAŻDA doba ma arkusz",
+           nie może odpowiadać o pięćdziesięciu wierszach i milczeć o reszcie. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Karty dnia</h1>
+          <p class="page-sub">14 operacji w zakresie · 9 w arkuszu · 1 bez karty · 1 wstrzymana · 2 czekają na zdanie</p>
+        </div>
+      </div>
+
+      <!-- Zakres dat + chipy STANU. Stan jest wnioskowany przez serwer z czterech
+           faktów naraz (`ExportState`), więc chip zawęża dokładnie do tych wierszy,
+           które mają daną plakietkę - liczba w podtytule jest obietnicą „tyle
+           zobaczysz po kliknięciu". „Rewizje" to WYMIAR, nie stan: karty wysłane
+           więcej niż raz (spóźnione dane albo korekta). -->
+      <div class="filters">
+        <label class="daterange">
+          <span class="visually-hidden">Od dnia</span>
+          <input type="date" value="2026-09-01">
+        </label>
+        <span class="daterange-sep" aria-hidden="true">→</span>
+        <label class="daterange">
+          <span class="visually-hidden">Do dnia</span>
+          <input type="date" value="2026-09-07">
+        </label>
+        <button type="button" class="chip on" aria-pressed="true">Wszystkie</button>
+        <button type="button" class="chip" aria-pressed="false">Bez karty</button>
+        <button type="button" class="chip" aria-pressed="false">Wstrzymane</button>
+        <button type="button" class="chip" aria-pressed="false">Czekają na zdanie</button>
+        <button type="button" class="chip" aria-pressed="false">W arkuszu</button>
+        <button type="button" class="chip" aria-pressed="false">Rewizje</button>
+      </div>
+
+      <!-- ══ DZIENNIK EKSPORTU ══
+           Wiersz = OPERACJA (tak liczy serwer), ale nazwą wiersza jest KARTA - doba
+           samolotu (`2026-09-06_SP-AXA`), bo o kartę pyta skarbnik. Dwie zmiany jednej
+           maszyny w dobie mają więc TĘ SAMĄ nazwę karty w dwóch wierszach - i to jest
+           poprawne: karta jest jednym dokumentem z dwoma blokami, a stan opisuje
+           OPERACJĘ (jedna czeka na zdanie, druga jest w arkuszu). Kolumna „Wysłano"
+           to chwila OSTATNIEJ udanej wysyłki wg zegara serwera; „Rewizja" > 1 mówi,
+           że kartę zbudowano ponownie. BRAK KARTY JEST CZERWONY: to jedyny ślad awarii
+           eksportu - nieudany zapis nie zostawia wiersza w żadnej tabeli.
+           Porządek: najnowsza doba na górze, w dobie ostatnia zmiana pierwsza. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Karty dnia w zakresie</caption>
+          <thead>
+            <tr>
+              <th>Karta</th>
+              <th>Operacja</th>
+              <th>Stan</th>
+              <th class="num">Rewizja</th>
+              <th class="num">Wysłano</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-06_SP-AXA</span><span class="cell-sub">6 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-06/AKW/1</span><span class="cell-sub">A. Kowal</span></td>
+              <td><span class="pill dim">Czeka na zdanie</span></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="row-actions"></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-06_SP-AXA</span><span class="cell-sub">6 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-06/AKO/1</span><span class="cell-sub">A. Kowalski</span></td>
+              <td><span class="pill green">W arkuszu</span><span class="cell-sub">rewizja po korekcie</span></td>
+              <td class="num">2</td>
+              <td class="num">7 WRZ 12:05</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-06_SP-KLM</span><span class="cell-sub">6 września · SP-KLM</span></td>
+              <td><span class="cell-sub mono">SP-KLM/2026-09-06/MZI/1</span><span class="cell-sub">M. Zięba</span></td>
+              <td><span class="pill amber">Wstrzymana flagą</span><span class="cell-sub">dwie operacje naraz</span></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="row-actions"><a class="btn ghost sm" href="sprawdzenie-rozjazdy.html">Do rozjazdu</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-06_SP-KLM</span><span class="cell-sub">6 września · SP-KLM</span></td>
+              <td><span class="cell-sub mono">SP-KLM/2026-09-06/BNO/1</span><span class="cell-sub">B. Nowak</span></td>
+              <td><span class="pill dim">Czeka na zdanie</span><span class="cell-sub warn">operacja wisi od 34 h</span></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="row-actions"></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-05_SP-AXA</span><span class="cell-sub">5 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-05/AKW/1</span><span class="cell-sub">A. Kowal</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">5 WRZ 12:16</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-05_SP-KLM</span><span class="cell-sub">5 września · SP-KLM</span></td>
+              <td><span class="cell-sub mono">SP-KLM/2026-09-05/BNO/1</span><span class="cell-sub">B. Nowak</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">5 WRZ 11:03</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable opened">
+              <td><span class="reg">2026-09-04_SP-AXA</span><span class="cell-sub">4 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-04/AKO/1</span><span class="cell-sub">A. Kowalski</span></td>
+              <td><span class="pill red">Bez karty</span></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="row-actions"><button type="button" class="btn sm">Ponów</button></td>
+            </tr>
+            <tr class="clickable voided">
+              <td><span class="reg">2026-09-04_SP-AXA</span><span class="cell-sub">4 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">wpis unieważniony</span><span class="cell-sub">A. Kowalski</span></td>
+              <td><span class="pill dim">Unieważniona</span></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="row-actions"></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-03_SP-AXA</span><span class="cell-sub">3 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-03/AKO/1</span><span class="cell-sub">A. Kowalski</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">3 WRZ 11:58</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-03_SP-TWG</span><span class="cell-sub">3 września · SP-TWG</span></td>
+              <td><span class="cell-sub mono">SP-TWG/2026-09-03/AKW/1</span><span class="cell-sub">A. Kowal</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">3 WRZ 10:44</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-02_SP-AXA</span><span class="cell-sub">2 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-02/AKW/2</span><span class="cell-sub">A. Kowal</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">2 WRZ 16:24</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-02_SP-AXA</span><span class="cell-sub">2 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-02/AKW/1</span><span class="cell-sub">A. Kowal</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">2 WRZ 10:41</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-01_SP-AXA</span><span class="cell-sub">1 września · SP-AXA</span></td>
+              <td><span class="cell-sub mono">SP-AXA/2026-09-01/AKO/1</span><span class="cell-sub">A. Kowalski</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">1 WRZ 11:16</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="reg">2026-09-01_SP-KLM</span><span class="cell-sub">1 września · SP-KLM</span></td>
+              <td><span class="cell-sub mono">SP-KLM/2026-09-01/BNO/1</span><span class="cell-sub">B. Nowak</span></td>
+              <td><span class="pill green">W arkuszu</span></td>
+              <td class="num">1</td>
+              <td class="num">1 WRZ 15:49</td>
+              <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SZUFLADA KARTY: BEZ KARTY ══
+         Tytułem jest NAZWA KARTY (mono, do przeczytania skarbnikowi), podtytuł - doba,
+         maszyna, pilot. Baner mówi CO się stało i CO ZROBIĆ (ponów), nie jak działa
+         eksporter. Rewizji nie ma, więc karty „Rewizje" NIE MA; adres karty też nie
+         istnieje. Przycisk ponowienia wymaga `fleet.manage` - bez zdolności stopka
+         jest pusta, nie wyszarzona. -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Karta 2026-09-04_SP-AXA">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title mono">2026-09-04_SP-AXA</div>
+          <div class="drawer-sub">4 września · SP-AXA · A. Kowalski · zdanie 09:52 UTC</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div class="drawer-body">
+
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span><b>Karta nie powstała.</b> Samolot zdano 4 WRZ 09:52, a eksport się nie zapisał - w arkuszu nie ma tej doby. Ponów, żeby zbudować kartę jeszcze raz.</span>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Operacje w tej dobie</div>
+          <div class="kv"><span class="kv-k">08:20 → 09:50</span><span class="kv-v"><a class="cell-link" href="dziennik-operacja.html">SP-AXA/2026-09-04/AKO/1</a> <small>egzamin · 1 lot</small></span></div>
+          <div class="kv"><span class="kv-k">16:02 → 16:19</span><span class="kv-v"><span class="was">wpis unieważniony</span> <small>nie wchodzi do karty</small></span></div>
+          <div class="kv"><span class="kv-k">Ostatnia paczka z telefonu</span><span class="kv-v">4 WRZ 09:53 <small>UTC</small></span></div>
+        </div>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Zamknij</button>
+        <button type="button" class="btn primary">Ponów eksport</button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html">← Do sprawdzenia</a>
+  <span>·</span>
+  <a href="sprawdzenie-rozjazdy.html">Rozjazdy</a>
+  <span>·</span>
+  <a href="sprawdzenie-karty.html" class="active">Karty dnia</a>
+  <span>·</span>
+  <a href="#arkusz">↓ Karta w arkuszu</a>
+  <span>·</span>
+  <a href="#ponowienie">↓ Wyniki ponowienia</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section" id="arkusz">
+  <div class="canvas-section-title">Karta w arkuszu · rewizje, treść, adres</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Szuflada karty W ARKUSZU · trzy karty, których nie ma przy braku</span>
+        <span class="inv-when">REWIZJE to append-only dziennik wysyłek - „3 wiersze dziennika, 1 wiersz karty" jest całą treścią tego ekranu: po nim, i tylko po nim, da się odpowiedzieć, co widział skarbnik, gdy zamykał miesiąc. TREŚĆ to dosłowne wiersze dokumentu (`string[][]`, kształt Excela), nie projekcja do liczenia - tabela bez `.num`, bo to nie są liczby panelu, tylko tekst karty. ADRES niesie slug klubu i sekret (`?k=`) i działa BEZ LOGOWANIA - to jest jego sens (skarbnik bez konta), więc panel pokazuje go świadomie, z jednym zdaniem o tym, komu go dawać. Adres jest tym, który działa DZIŚ (`PUBLIC_BASE_URL` po zmianie domeny), nie tym zapisanym przy pierwszym eksporcie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 640px;">
+          <div class="drawer" role="dialog" aria-modal="true" aria-label="Karta 2026-09-06_SP-AXA">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title mono">2026-09-06_SP-AXA</div>
+                <div class="drawer-sub">6 września · SP-AXA · 2 operacje · <span class="pill green">W arkuszu</span></div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="drawer-body">
+              <div class="card">
+                <div class="card-title">Rewizje <span class="card-count">· 2</span></div>
+                <div class="kv"><span class="kv-k">Rewizja 2 · 7 WRZ 12:05 UTC</span><span class="kv-v"><small>po korekcie lądowania · A. Kowalski</small></span></div>
+                <div class="kv"><span class="kv-k">Rewizja 1 · 6 WRZ 11:12 UTC</span><span class="kv-v"><small>po zdaniu samolotu</small></span></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Treść karty</div>
+                <div class="table-wrap plain">
+                  <table>
+                    <caption class="visually-hidden">Wiersze karty 2026-09-06_SP-AXA</caption>
+                    <thead><tr><th>Operacja</th><th>Pilot</th><th>Silnik</th><th>Loty</th><th>Blok</th><th>Paliwo</th><th>MH</th></tr></thead>
+                    <tbody>
+                      <tr><td class="mono">S1</td><td>AKO</td><td class="mono">08:42–11:04</td><td class="mono">6</td><td class="mono">2:22</td><td class="mono">185→108</td><td class="mono">1236:30→1238:52</td></tr>
+                      <tr><td class="mono">S2</td><td>AKW</td><td class="mono">13:10–w toku</td><td class="mono">—</td><td class="mono">—</td><td class="mono">108→—</td><td class="mono">1238:52→—</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <span class="hint">Tak leży w arkuszu od 7 WRZ 12:05 UTC. Wiersz S2 zaktualizuje się po zdaniu samolotu.</span>
+              </div>
+              <div class="card">
+                <div class="card-title">Adres karty</div>
+                <div class="field-row">
+                  <input class="input mono" value="https://app.ninerdeck.pl/sheets/aeroklub-zielonogorski/2026-09-06_SP-AXA?k=7f3c9a2e1b" readonly aria-label="Adres karty">
+                  <button type="button" class="btn">Kopiuj</button>
+                </div>
+                <span class="hint">Otwiera się bez logowania - jak dokument klubu. Podaj go skarbnikowi, nie publikuj.</span>
+              </div>
+            </div>
+            <div class="drawer-foot">
+              <button type="button" class="btn ghost">Zamknij</button>
+              <a class="btn" href="#">Otwórz kartę <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+              <button type="button" class="btn">Ponów eksport</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta WSTRZYMANA flagą · jedno wyjście</span>
+        <span class="inv-when">Otwarta flaga „Dwie operacje naraz" trzyma sporną operację poza kartą; doba reszty maszyny idzie do arkusza z adnotacją „niekompletna". Szuflada nie ma przycisku ponowienia - ponowienie nic by nie dało - tylko link do sprawy. Skutek mówi się przed kliknięciem, tam, gdzie się rozstrzyga.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>Kartę trzyma otwarty rozjazd.</b> Dopóki sprawa „Dwie operacje naraz · SP-KLM" jest otwarta, operacja M. Zięby nie wchodzi do karty 2026-09-06_SP-KLM. Zamknięcie sprawy wyśle kartę do arkusza.</span>
+        </div>
+        <div class="drawer-foot" style="padding:8px 0 0; border:0;">
+          <button type="button" class="btn ghost">Zamknij</button>
+          <a class="btn primary" href="sprawdzenie-rozjazdy.html">Do rozjazdu</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta NADPISANA przez inną operację · fakt, nie ocena</span>
+        <span class="inv-when">Gdy sesja WYŁĄCZONA z karty flagą została później wyeksportowana osobno, treść leżąca pod nazwą karty opisuje inny dzień pracy. Podgląd musi to powiedzieć, zamiast wyglądać na treść wiersza, który się właśnie kliknęło. To także sygnalizator: zapalenie się dla dwóch zwykłych zmian jednej doby znaczyłoby, że znów powstają dwie karty jednego dokumentu.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Treść pod tą nazwą zapisała później operacja <a class="cell-link" href="dziennik-operacja.html">SP-KLM/2026-09-06/MZI/1</a> (7 WRZ 09:14 UTC). Podgląd niżej pokazuje tamten zapis.</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section class="canvas-section" id="ponowienie">
+  <div class="canvas-section-title">Wyniki ponowienia · odpowiedź 200 z powodem, nie 500</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Cztery odpowiedzi na „Ponów eksport"</span>
+        <span class="inv-when">Nieudane ponowienie to POPRAWNA odpowiedź z powodem: administrator ma zobaczyć, czego brakuje, a nie „coś poszło nie tak" - to jest dokładnie ta chwila, w której człowiek sięga po SQL. Odmowa eksportera (dzień otwarty, flaga) to STAN ŚWIATA, nie błąd - ton informacyjny. Awaria adaptera arkuszy ma sens ponowić za chwilę; awaria po naszej stronie - nie, i baner mówi to inaczej, bo prowadzi w inną stronę.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner ok">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+          <span>Karta <b>2026-09-04_SP-AXA</b> w arkuszu · rewizja 1 · 7 WRZ 19:12 UTC.</span>
+        </div>
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Karty jeszcze nie ma z czego zbudować: operacja SP-AXA/2026-09-06/AKW/1 trwa. Karta powstanie po zdaniu samolotu.</span>
+        </div>
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Kartę trzyma otwarty rozjazd „Dwie operacje naraz · SP-KLM" - zamknij sprawę, a karta pójdzie sama.</span>
+        </div>
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span><b>Arkusz nie odpowiedział.</b> Spróbuj za chwilę - dane w dzienniku są kompletne.</span>
+        </div>
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span><b>Eksport zatrzymał się po naszej stronie.</b> Ponowienie tego nie naprawi - zgłoś operatorowi z nazwą karty 2026-09-04_SP-AXA.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Lista przycięta limitem · widocznie, nie po cichu</span>
+        <span class="inv-when">Zakres w skali klubu to kilkadziesiąt dób, ale bez kalendarza lista rośnie - `truncated` w odpowiedzi ma być bezpiecznikiem widocznym. Stopka mówi ile z ilu; liczby w podtytule i tak opisują cały zakres.</span>
+      </div>
+      <div class="inv-demo">
+        <p class="list-foot">Pokazano 200 z 246 operacji - zawęź zakres dat, żeby zobaczyć resztę. Liczniki w nagłówku obejmują cały zakres.</p>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wszystkie doby mają kartę</span>
+        <span class="inv-when">Stan pusty PO ZAWĘŻENIU chipem „Bez karty" - dobra wiadomość, nie brak danych. Bez zawężenia lista nigdy nie jest pusta, dopóki w zakresie ktoś latał.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+          <span class="empty-title">Każda zamknięta doba ma kartę</span>
+          <span class="empty-note">W tym zakresie nie brakuje żadnej karty w arkuszu.</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html">← Do sprawdzenia</a>
+  <span>·</span>
+  <a href="sprawdzenie-karty.html" class="active">Karty dnia</a>
+  <span>·</span>
+  <a href="statystyki.html">Statystyki →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

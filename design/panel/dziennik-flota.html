@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - Panel 2.0 · Dziennik: cała flota</title>
+<title>Ninerdeck - Panel · Dziennik: cała flota (oś maszyn)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,39 +14,67 @@
 
 <header class="canvas-label">
   <span class="film-strip">DZIENNIK · CAŁA FLOTA</span>
-  <span class="slug">panel/dziennik-flota · #/dziennik?od=&amp;do= · poziom 1</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran startowy panelu</span>
+  <span class="slug">panel/dziennik-flota · #/dziennik?od=&amp;do= · poziom 1 · oś maszyn</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran startowy panelu · od 3.2.0 z przełącznikiem osi</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Trzy poziomy dziennika</div>
+  <div class="vp-title">Dziennik - siedem ekranów jednej rodziny</div>
   <a class="vp-item active" href="dziennik-flota.html">
     <span class="vp-badge">L1</span>
     <span class="vp-body">
       <span class="vp-name">Cała flota w zakresie dat</span>
-      <span class="vp-when">Wejście domyślne. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło („czy SP-OLD w ogóle ruszył we wrześniu"). Dzięki temu nie istnieje stan „nic nie latało".</span>
+      <span class="vp-when">Wejście domyślne, oś MASZYN. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło. Przełącznik osi stoi PRZED zakresem dat.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="dziennik-piloci.html">
+    <span class="vp-badge">L1b</span>
+    <span class="vp-body">
+      <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+    </span>
   </a>
   <a class="vp-item" href="dziennik-maszyna.html">
     <span class="vp-badge">L2</span>
     <span class="vp-body">
-      <span class="vp-name">Operacje jednej maszyny</span>
-      <span class="vp-when">Po kliknięciu w wiersz. Dziewięć kolumn danych, para godzin w jednej komórce, druga linia ją kwalifikuje.</span>
+      <span class="vp-name">Operacje jednej maszyny - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi maszyn. DOBA JEST NAGŁÓWKIEM z sumami doby, kolumny z datą przy wierszu NIE MA; godzina zostaje przy operacji, bo dwie zmiany jednej maszyny różnią się wyłącznie godzinami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-pilot.html">
+    <span class="vp-badge">L2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednego pilota - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-operacja.html">
     <span class="vp-badge">L3</span>
     <span class="vp-body">
       <span class="vp-name">Jedna operacja</span>
-      <span class="vp-when">Oś zdarzeń, komplet odczytów, ślad GPS całego biegu silnika i - na samym dole - jedyne dwa zapisy administratora w tym module.</span>
+      <span class="vp-when">Pełna strona: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA: okruszki prowadzą na oś maszyny, nazwisko pilota w szczegółach - na oś pilota. Tym „powiązaniem list" jest link w obie strony, nie trzecia lista.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-edycja.html">
+    <span class="vp-badge amber">L3b</span>
+    <span class="vp-body">
+      <span class="vp-name">Tryb edycji: korekta zdarzeń</span>
+      <span class="vp-when">Ten sam ekran po „Popraw zdarzenia": ołówek przy każdym wierszu osi, szuflada korekty czasu / wartości / unieważnienia z podglądem „przed → po", baner kolizji z pilotem (nigdy odmowa), powód wymagany, historia zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-dopisanie.html">
+    <span class="vp-badge amber">L3c</span>
+    <span class="vp-body">
+      <span class="vp-name">Dopisanie brakującego zdarzenia</span>
+      <span class="vp-when">Ostatni wiersz osi w trybie edycji. Wąska siatka typów - bez uruchomienia i wyłączenia silnika, bo one wyznaczają kopertę operacji - czas w granicach biegu, powód wymagany. Jedyna nowa droga zapisu w 3.2.0.</span>
     </span>
   </a>
   <a class="vp-item" href="SZABLON.html">
     <span class="vp-badge amber">BAZA</span>
     <span class="vp-body">
       <span class="vp-name">Szablon i inwentarz komponentów</span>
-      <span class="vp-when">Rama okna, pasek górny z kolumną boczną i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
     </span>
   </a>
 </aside>
@@ -101,6 +129,19 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
           </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -124,11 +165,22 @@
         </div>
       </div>
 
-      <!-- Pasek zawężeń to WYŁĄCZNIE zakres dat: para pól natywnych i pięć szybkich
-           zakresów z `dateRanges.ts`. Chip jest zapalony, gdy zakres RÓWNA SIĘ jego
-           wartości - nie gdy go kliknięto; tu 1-7 września to „Ten miesiąc" liczony
-           od pierwszego do dzisiaj. Wyszukiwarki na tym ekranie NIE MA. -->
+      <!-- Pasek zawężeń: PRZEŁĄCZNIK OSI (3.2.0, docs/panel-3.2.md §4.1), a za nim
+           zakres dat - para pól natywnych i pięć szybkich zakresów z `dateRanges.ts`.
+           Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go kliknięto;
+           tu 1-7 września to „Ten miesiąc" liczony od pierwszego do dzisiaj.
+           Wyszukiwarki na tym ekranie NIE MA.
+
+           OŚ TO SEGMENT, NIE PARA CHIPÓW: chip zawęża listę (można nie zapalić żadnego),
+           a oś rozstrzyga, O CO pyta ekran - dokładnie jedna jest zawsze włączona. Stoi
+           PRZED datami, bo zmienia pytanie, a daty tylko je zawężają. Oś maszyn jest
+           domyślna i nie stoi w adresie; oś pilotów to `?os=piloci`. Obie dzielą zakres
+           dat: przełączenie osi nie rusza chipów ani pól. -->
       <div class="filters">
+        <div class="seg" role="group" aria-label="Oś dziennika">
+          <a class="seg-btn on" href="dziennik-flota.html" aria-current="page">Samoloty</a>
+          <a class="seg-btn" href="dziennik-piloci.html">Piloci</a>
+        </div>
         <label class="daterange">
           <span class="visually-hidden">Od dnia</span>
           <input type="date" value="2026-09-01">
@@ -168,15 +220,16 @@
                 <!-- JEDYNY sygnał wyjątkowy tego ekranu: maszyna ma teraz otwartą
                      operację. Stoi w JEJ wierszu, nie w banerze nad tabelą.
                      Suma NIE OBEJMUJE tej operacji: nie ma jeszcze ani wyłączenia
-                     silnika, ani odczytu końcowego, więc nie ma czego dodać. Do
-                     rozstrzygnięcia z właścicielem - patrz raport z makiet. -->
+                     silnika, ani odczytu końcowego, więc nie ma czego dodać. Ta sama
+                     reguła obowiązuje SUMY DOBY na poziomie 2 (nagłówek doby mówi
+                     „· 1 w toku") i oś pilotów obok. -->
                 <span class="cell-sub warn">leci teraz</span>
               </td>
               <td class="num">6</td>
               <td class="num">22</td>
               <td class="num">12:15</td>
-              <td class="num">09:40</td>
-              <td class="num">413 L</td>
+              <td class="num">09:59</td>
+              <td class="num">469 L</td>
               <td class="num">12:15</td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
@@ -184,13 +237,17 @@
               <td>
                 <span class="reg">SP-KLM</span>
                 <span class="cell-sub">An-2</span>
+                <!-- Operacja WISZĄCA: przejęta wczoraj, niezdana. Ten sam sygnał, co
+                     „leci teraz", tylko zdanie mówi, od kiedy - bo to jest sprawa
+                     w „Do sprawdzenia", nie normalna praca. -->
+                <span class="cell-sub warn">zajęty od 6 WRZ 08:15</span>
               </td>
-              <td class="num">2</td>
-              <td class="num">6</td>
-              <td class="num">04:12</td>
-              <td class="num">03:20</td>
-              <td class="num">512 L</td>
-              <td class="num">04:12</td>
+              <td class="num">3</td>
+              <td class="num">8</td>
+              <td class="num">05:52</td>
+              <td class="num">04:35</td>
+              <td class="num">560 L</td>
+              <td class="num">05:52</td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
             <tr class="clickable">
@@ -242,9 +299,15 @@
   <span>·</span>
   <a href="dziennik-flota.html" class="active">Dziennik · flota</a>
   <span>·</span>
+  <a href="dziennik-piloci.html">Dziennik · piloci</a>
+  <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>
   <a href="dziennik-operacja.html">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html">Do sprawdzenia</a>
+  <span>·</span>
+  <a href="statystyki.html">Statystyki</a>
   <span>·</span>
   <a href="piloci-lista.html">Piloci</a>
   <span>·</span>
@@ -330,6 +393,8 @@
   <a href="index.html">↩ Spis makiet panelu</a>
   <span>·</span>
   <a href="dziennik-flota.html" class="active">Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-piloci.html">Dziennik · piloci →</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>

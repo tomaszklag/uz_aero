@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Do sprawdzenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DO SPRAWDZENIA</span>
+  <span class="slug">panel/sprawdzenie-lista · #/do-sprawdzenia · D1</span>
+  <span class="canvas-meta"><span class="pulse"></span>Jedno pytanie: co wymaga mojej reakcji</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Do sprawdzenia - trzy ekrany jednego pytania</div>
+  <a class="vp-item active" href="sprawdzenie-lista.html">
+    <span class="vp-badge">D1</span>
+    <span class="vp-body">
+      <span class="vp-name">Co wymaga reakcji</span>
+      <span class="vp-when">Jedno pytanie, trzy źródła: rozjazdy, karty bez arkusza, operacje wiszące. Liczniki są PODPISAMI, nie kaflami; każda pozycja prowadzi tam, gdzie da się ją zamknąć. Stan pusty jest dobrą wiadomością.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="sprawdzenie-rozjazdy.html">
+    <span class="vp-badge">D2</span>
+    <span class="vp-body">
+      <span class="vp-name">Skrzynka rozjazdów</span>
+      <span class="vp-when">Sześć rodzajów flag, których do 3.2.0 nie widział nikt. Wiersz mówi, CO się nie zgadza; szuflada - o ile i CO Z TYM ZROBIĆ; rozstrzygnięcie z notatką idzie do audytu. Flaga trzymająca kartę arkusza stoi pierwsza.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="sprawdzenie-karty.html">
+    <span class="vp-badge">D3</span>
+    <span class="vp-body">
+      <span class="vp-name">Karty dnia i eksport</span>
+      <span class="vp-when">Dziennik eksportu: stan karty każdej doby samolotu, rewizje, podgląd treści, adres karty (bez logowania - dla skarbnika) i ponowienie. Karta, która nie powstała, jest jedynym śladem awarii eksportu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+    </span>
+  </a>
+</aside>
+<main class="browser" role="region" aria-label="Do sprawdzenia">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/do-sprawdzenia
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item active" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- NIE JEST EKRANEM STARTOWYM (docs/panel-3.2.md §9): Dziennik zostaje pierwszy,
+           bo pulpit jako wejście każe czytać podsumowanie każdemu, kto przyszedł po jedną
+           rzecz. Tytuł bez podtytułu: trzy karty niżej mówią, o co chodzi, lepiej niż
+           zdanie wyjaśniające. Liczba w kolumnie bocznej (5) jest SUMĄ trzech kart. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Do sprawdzenia</h1>
+        </div>
+      </div>
+
+      <!-- ══ TRZY ŹRÓDŁA, TRZY KARTY - NIE JEDNA SPŁASZCZONA LISTA ══
+           `GET /dashboard` oddaje `attention` jako trzy listy z trzech istniejących
+           kontraktów (flagi, eksporty, operacje) - spłaszczenie wymagałoby czwartej
+           definicji „sprawy". LICZNIK JEST PODPISEM TYTUŁU („Rozjazdy · 3"), nie kaflem:
+           panel 1.0 miał osiem płytek z liczbami, z których pięć zawsze pokazywało zero.
+           KAŻDY WIERSZ JEST LINKIEM do miejsca, w którym da się z tym coś zrobić - lista,
+           która wyłącznie informuje, byłaby czwartą kopią tych samych danych. Wiek sprawy
+           mono; czerwony, gdy leży dłużej niż okno korekty pilota (doba - próg z serwera).
+           Pierwsza w każdej karcie jest sprawa NAJPILNIEJSZA: blokująca arkusz, najstarsza. -->
+      <div class="card">
+        <div class="card-title">Rozjazdy <span class="card-count">· 3</span><span class="spacer"></span><a class="cell-link" href="sprawdzenie-rozjazdy.html">Skrzynka rozjazdów</a></div>
+        <div class="todo-list">
+          <a class="todo-row" href="sprawdzenie-rozjazdy.html">
+            <span class="todo-icon red" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">Dwie operacje naraz · SP-KLM</span>
+              <span class="todo-meta">B. Nowak trzyma maszynę od 6 WRZ 08:15, M. Zięba przejęła ją 15:40 i zdała · trzyma kartę 2026-09-06_SP-KLM poza arkuszem</span>
+            </span>
+            <span class="todo-age old">1 dzień</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+          <a class="todo-row" href="sprawdzenie-rozjazdy.html">
+            <span class="todo-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">Rozjazd paliwa · SP-AXA</span>
+              <span class="todo-meta">odczyt przy przejęciu 148 L, przekazanie 92 L (+56 L) · SP-AXA/2026-09-02/AKW/1</span>
+            </span>
+            <span class="todo-age old">5 dni</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+          <a class="todo-row" href="sprawdzenie-rozjazdy.html">
+            <span class="todo-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">Rozjazd zegara · SP-AXA</span>
+              <span class="todo-meta">telefon 6 min 12 s za GPS · SP-AXA/2026-09-06/AKO/1</span>
+            </span>
+            <span class="todo-age old">1 dzień</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Karty bez arkusza <span class="card-count">· 1</span><span class="spacer"></span><a class="cell-link" href="sprawdzenie-karty.html">Karty dnia</a></div>
+        <div class="todo-list">
+          <a class="todo-row" href="sprawdzenie-karty.html">
+            <span class="todo-icon red" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">2026-09-04_SP-AXA nie trafiła do arkusza</span>
+              <span class="todo-meta">A. Kowalski zdał samolot 4 WRZ 09:52 - eksport się nie zapisał · ponów w kartach dnia</span>
+            </span>
+            <span class="todo-age old">3 dni</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Operacja WISZĄCA: przejęta, niezdana, starsza niż okno korekty. Prowadzi
+           na poziom 3 dziennika, gdzie stoi karta „Zakończenie operacji" - to tam da
+           się ją zamknąć. Próg nie jest wybrany na oko: to ta sama doba, po której
+           pilot traci prawo samodzielnej korekty. -->
+      <div class="card">
+        <div class="card-title">Operacje wiszące <span class="card-count">· 1</span></div>
+        <div class="todo-list">
+          <a class="todo-row" href="dziennik-operacja.html">
+            <span class="todo-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">SP-KLM/2026-09-06/BNO/1 · B. Nowak nie zdała samolotu</span>
+              <span class="todo-meta">przejęta 6 WRZ 08:15, silnik 08:40 → ? · ostatni zapis 6 WRZ 11:52 · zakończ w dzienniku</span>
+            </span>
+            <span class="todo-age old">34 h</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+        </div>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html" class="active">Do sprawdzenia</a>
+  <span>·</span>
+  <a href="sprawdzenie-rozjazdy.html">Rozjazdy →</a>
+  <span>·</span>
+  <a href="sprawdzenie-karty.html">Karty dnia →</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik</a>
+  <span>·</span>
+  <a href="#pusto">↓ Nic nie czeka</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section" id="pusto">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Nic nie czeka · stan, w którym ekran jest przez większość czasu</span>
+        <span class="inv-when">Stan pusty jest DOBRĄ wiadomością i tak wygląda: ptaszek, jedno zdanie o sytuacji (nie o braku danych), bez ostrzeżeń i bez trzech kart z zerami. Kolumna boczna nie ma wtedy plakietki przy „Do sprawdzenia" - liczba istnieje wyłącznie przy niezerowej (reguła SyncChipa, issue #12). Ekran zostaje osiągalny z kolumny, bo klub ma tu zaglądać, gdy CHCE, nie tylko gdy musi.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+          <span class="empty-title">Nic nie czeka</span>
+          <span class="empty-note">Rozjazdy wyjaśnione, każda zamknięta doba ma kartę w arkuszu, żadna operacja nie wisi.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Karta bez spraw ZNIKA, nie zostaje z zerem</span>
+        <span class="inv-when">Gdy jedno źródło jest puste, a inne nie, jego karty nie ma wcale - „Karty bez arkusza · 0" byłoby kaflem z zerem w innym ubraniu. Zostają wyłącznie karty ze sprawami; stopka „Wszystkie" w karcie pojawia się WYŁĄCZNIE, gdy lista jest przycięta (pulpit pokazuje kilka najpilniejszych spraw z każdego źródła, pełne listy są pod tytułami).</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card">
+          <div class="card-title">Rozjazdy <span class="card-count">· 12</span><span class="spacer"></span><a class="cell-link" href="sprawdzenie-rozjazdy.html">Skrzynka rozjazdów</a></div>
+          <div class="todo-list">
+          <a class="todo-row" href="sprawdzenie-rozjazdy.html">
+            <span class="todo-icon red" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5"/></svg></span>
+            <span class="todo-body">
+              <span class="todo-title">Dwie operacje naraz · SP-KLM</span>
+              <span class="todo-meta">trzyma kartę 2026-09-06_SP-KLM poza arkuszem</span>
+            </span>
+            <span class="todo-age old">1 dzień</span>
+            <span class="todo-go" aria-hidden="true">›</span>
+          </a>
+          </div>
+          <div class="card-foot"><a class="btn ghost sm" href="sprawdzenie-rozjazdy.html">Pokaż wszystkie 12</a></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie</span>
+        <span class="inv-when">Trzy karty znamy lokalnie (tytuły stoją), liczniki i wiersze przychodzą jednym żądaniem (`GET /dashboard` - jedna trasa, żeby każdy zapis panelu unieważniał jeden klucz). Plamki w geometrii wiersza sprawy: ikona, dwie linie, wiek.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card" aria-busy="true">
+          <div class="card-title">Rozjazdy</div>
+          <div class="todo-list">
+            <div class="todo-row"><span class="skeleton" style="width:30px;height:30px;border-radius:8px"></span><span class="todo-body"><span class="skeleton cell" style="width:220px"></span><span class="skeleton cell" style="width:340px;height:10px"></span></span><span class="skeleton cell" style="width:40px"></span></div>
+            <div class="todo-row"><span class="skeleton" style="width:30px;height:30px;border-radius:8px"></span><span class="todo-body"><span class="skeleton cell" style="width:180px"></span><span class="skeleton cell" style="width:300px;height:10px"></span></span><span class="skeleton cell" style="width:40px"></span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="sprawdzenie-lista.html" class="active">Do sprawdzenia</a>
+  <span>·</span>
+  <a href="sprawdzenie-rozjazdy.html">Rozjazdy →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

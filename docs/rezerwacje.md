@@ -1294,7 +1294,7 @@ właściciela stoi w README („Wdrożenie: Railway", krok 12); tutaj jest archi
 | `google-services.json` - JEDEN plik, tablica `client` z oboma pakietami | zmienna EAS `GOOGLE_SERVICES_JSON` typu „file" (środowiska `production`, `development`, `preview`; widoczność `secret`) + lokalna kopia `app/google-services.json` w `.gitignore` | `app.config.js` dokłada `android.googleServicesFile` (§12.5) | identyfikatory publiczne klienta; poza repozytorium z ostrożności, nie z konieczności |
 | klucz konta usługi FCM V1 (`firebase-adminsdk-fbsvc@ninerdeck-81f75…`, JSON z Firebase → Konta usługi) | poświadczenia EAS, OSOBNO dla każdego pakietu (`eas credentials -p android`, profile `production` i `development`) | Expo Push Service przy doręczaniu do FCM | **TAK** - pełny dostęp administracyjny do projektu Firebase. Nigdy w repozytorium, nigdy na Railway, nigdy w `app/`; kopia z dysku do skasowania po wgraniu, nowy klucz generuje się tym samym przyciskiem, stary unieważnia w Google Cloud → IAM → Service accounts → Keys |
 | `PUSH_PROVIDER=expo` | zmienne usługi na Railway + `server/.env` lokalnie | serwer wybiera adapter `ExpoPush` zamiast `LogPush` | nie |
-| `PUSH_ACCESS_TOKEN` (opcjonalny) | Railway; z konsoli Expo → konto → Access tokens | serwer dokleja `Authorization: Bearer` | tak - token konta Expo |
+| `PUSH_ACCESS_TOKEN` (technicznie opcjonalny, na produkcji wskazany) | Railway; token ROBOTA konta Expo (expo.dev → Account settings → Access tokens → Add robot → Create token), nie personal access token - robot ma własną rolę i unieważnia się go bez ruszania konta właściciela. Wymuszanie: Project settings → „Enhanced Security for Push Notifications", włączane DOPIERO PO ustawieniu zmiennej (procedura: README, krok 12.4) | serwer dokleja `Authorization: Bearer`; Expo z włączonym wymuszaniem odrzuca wysyłki bez niego | tak - token konta Expo |
 | token push urządzenia | `push_tokens` na serwerze (bez `org_id`, kaskada z `login_sessions`) | serwer adresuje budzik | nie jest sekretem, ale wyciek pozwala spamować urządzenia - i po to istnieje `PUSH_ACCESS_TOKEN` z wymuszeniem w panelu Expo |
 
 **Dlaczego Expo w środku, a nie FCM wprost** (pytanie właściciela 2026-09-24). Nic
@@ -1307,13 +1307,13 @@ technicznego tego nie wymusza - to decyzja z §12.3 i ma znane obie strony:
 - przeciw: dodatkowy przeskok przez cudzą usługę (zależność od dostępności Expo) i trzeci
   podmiot przetwarzający w polityce prywatności. Expo widzi token i treść, ale treść to
   z założenia tytuł rzeczy i identyfikatory, bez nazwisk i godzin (§12.1), a Expo deklaruje,
-  że nie przechowuje treści dłużej, niż trwa doręczenie. **Uściślenie z 2026-09-25
-  (#168 Z6)**: `data` budzika to dziś `{ kind, orgId, ...payload }` (`Notifier.wake`),
-  więc przez Expo i FCM jadą także godziny terminu, identyfikatory osób, powód odmowy
-  i odczyty przy zdaniu - a telefon czyta z tego WYŁĄCZNIE `kind`, `orgId`, `bookingId`
-  i `aircraftId` (`pushTarget.ts`). Polityka prywatności (sekcja 5.2) opisuje stan
-  faktyczny; zawężenie `data` do tych czterech pól jest otwartą propozycją - po niej
-  wiersz tabeli w polityce skraca się do samych identyfikatorów;
+  że nie przechowuje treści dłużej, niż trwa doręczenie. **Od #228 (2026-09-25) `data`
+  budzika to DOKŁADNIE `{ kind, orgId, bookingId?, aircraftId? }`** (`notify/pushData.ts`,
+  czysta funkcja z testem; klucz tylko z niepustym napisem) - czyli to, co telefon czyta
+  w `pushTarget.ts`. Do #228 `wake` rozlewał tu CAŁY payload wiadomości (godziny terminu,
+  identyfikatory osób, nazwa kroku, powód odmowy, odczyty przy zdaniu), którego po drugiej
+  stronie nikt nie czytał, a dwaj pośrednicy widzieli; znalazł to przegląd polityki
+  prywatności przy #168 Z6, a sekcja 5.2 polityki opisuje stan po zawężeniu;
 - droga bezpośrednia, gdyby pośrednik zaczął przeszkadzać: nowy adapter za `PushPort`
   (JWT RS256 z `node:crypto` na kluczu konta usługi → token dostępu Google →
   `projects/<id>/messages:send` osobno na urządzenie, `fetch` bez zależności), telefon

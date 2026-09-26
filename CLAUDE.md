@@ -3706,7 +3706,8 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
   pod trwałym `releases/latest/download/ninerdeck.apk`
-- **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
+
+- **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
   kanały `production`/`development` w `eas.json`. Odtąd „wydanie" znaczy DWIE różne
   rzeczy, a pomylenie ich kosztuje reinstalację u wszystkich testerów:
   - **`npm run update:prod -- -m "…"`** dowozi JS i assety do JUŻ ZAINSTALOWANYCH
@@ -4186,7 +4187,11 @@ Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decy
 - **PUSH NIE NIESIE NAZWISK ANI GODZIN**: ląduje na ekranie blokady, który widzi każdy,
   kto akurat patrzy na telefon. Tytuł nazywa rzecz („Prośba o zgodę"), a treść stoi
   w skrzynce. `payload` wozi IDENTYFIKATORY - znak maszyny rozwiązuje aplikacja z cache
-  floty, jak wszędzie indziej
+  floty, jak wszędzie indziej. **Od #228 (2026-09-25) `data` budzika to DOKŁADNIE cztery
+  pola**: `kind`, `orgId`, `bookingId`, `aircraftId` (`notify/pushData.ts`, klucz tylko
+  z niepustym napisem) - payload skrzynki NIE rozlewa się do push, bo Expo i FCM widziały
+  przez to godziny, osoby, powód odmowy i odczyty, których telefon nie czytał
+  (`pushTarget.ts`). Nowe pole czytane przez telefon dopisuje się do `PUSH_DATA_KEYS`
 - **KURSOR SKRZYNKI JEST PARĄ** `(created_at, id)`: powiadomienia jednej decyzji rodzą
   się w tej samej transakcji, więc sam stempel nie porządkuje ich jednoznacznie i strona
   potrafiłaby zgubić wiersz. Kursor NIEPEŁNY to `400`, a nie ciche „od początku" -
@@ -4729,6 +4734,45 @@ Reguły obowiązujące odtąd KAŻDĄ trasę i KAŻDY ekran panelu:
   i wyłączonego), `bookings` (widz w panelu: własna pełna, cudza wąska, `approval: null`,
   podgląd klubu widzi komplet), sondy `tenantIsolation` dla `/directory`; panel `nav`,
   `appShell`, `noAccess`, `directoryLookups`, `loginMessage`, `can`
+
+## Panel 3.2.0 - epik P-A: makiety rozbudowy panelu (issue #182, 2026-09-25)
+Design-first dla sześciu epików `docs/panel-3.2.md` (§14 rozstrzygnięte 22 września):
+jedenaście makiet w `design/panel/` z kopii `SZABLON.html`, siedem nowych komponentów
+CSS, `panel.css` przegenerowany. Decyzje makiet: **`docs/panel-3.2.md` §17**; odstępstwa §16.
+Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
+- **KOLUMNA KLUBU MA SZEŚĆ POZYCJI W STAŁEJ KOLEJNOŚCI**: Dziennik · Do sprawdzenia ·
+  Kalendarz · Statystyki · Piloci · Samoloty (`homeFor` bierze pierwszą - Dziennik zostaje
+  ekranem startowym; lista płaska, grupy od siódmej). Plakietka `.nav-count` WYŁĄCZNIE przy
+  „Do sprawdzenia" i WYŁĄCZNIE przy niezerowej sumie trzech źródeł `attention` (reguła
+  SyncChipa). Makiety Kalendarza/Pilotów/Samolotów pokazują stan BEZ plakietki, dziennik
+  i „Do sprawdzenia" - z „5": oba stany mają być widoczne w zestawie
+- **OŚ DZIENNIKA TO SEGMENT `.seg`, NIE CHIPY** - chip zawęża (można nie zapalić żadnego),
+  oś rozstrzyga pytanie (jedna zawsze włączona). `?os=piloci`, oś maszyn domyślna i poza
+  adresem; poziom 2 pilota = `#/dziennik/pilot/:code` (segment statyczny wygrywa z `:reg`)
+- **DOBA NAGŁÓWKIEM na poziomie 2 obu osi** (`tbody.day` + `tr.day-row`, sumy z serwera
+  jedną odpowiedzią - strona kursorowa potrafi rozciąć dobę); kolumny daty przy wierszu
+  NIE MA; pierwsza komórka = para godzin biegu + sygnatura (kształt kafelka z telefonu)
+- **NALOT LICZY SIĘ DOWÓDCY; loty jako drugi pilot WIDOCZNE, poza sumami** (`tr.as-dual`,
+  podpis „+n jako drugi pilot") - decyzja postawiona na widoku, DO POTWIERDZENIA przed P-B
+- **TRYB EDYCJI = STAN EKRANU POD WŁASNYM ADRESEM** (`…/edycja`): ołówek w piątej kolumnie
+  osi (`td.pen`), plakietka `.tag-corrected` w OBU trybach, korekta w szufladzie z podglądem
+  „przed → po" (liczy serwer), baner kolizji `ADMIN_EDIT_*` NAD formularzem i nigdy
+  wyszarzony przycisk, powód WYMAGANY, kosz w linii tytułu = unieważnienie zdarzenia,
+  historia zmian (`.hist`) tylko gdy jest historia; dopisanie = ostatni wiersz osi
+  (`tr.axis-add`) z WĄSKĄ siatką typów (`.type-grid`; bez uruchomienia i wyłączenia silnika)
+- **ROZJAZDY MÓWIĄ PO POLSKU** (Dwie operacje naraz · Pilot w dwóch maszynach · Luka
+  w liczniku · Cofnięty licznik · Rozjazd paliwa · Rozjazd zegara) - kody serwera nie
+  wychodzą na ekran; notatka rozstrzygnięcia wymagana; skutek dla karty arkusza mówi się
+  PRZED kliknięciem. „Do sprawdzenia": liczniki jako podpisy tytułów (`.card-count`), wiersz
+  sprawy (`.todo-row`) jest linkiem tam, gdzie da się ją zamknąć, karta bez spraw znika
+- **STATYSTYKI BEZ KAFLI** (`.track-facts` jako „Razem", `.bars`, `tfoot`) i z nazwaną
+  podstawą liczenia w podtytule; **ANALITYKA = karta „Zużycie z lotów" w szufladzie
+  samolotu** (`.band`: pasmo zmierzone vs marker normy z dokumentacji), bez modelu karty
+  NIE MA wcale (issue #69)
+- **rama makiety**: nowe klasy do `admin/src/styles/components/` (nigdy do jednej makiety),
+  `npm run panel:css` w `admin/`, wpis w inwentarzu `SZABLON.html`, karta w `index.html`
+  (sekcje w kolejności kolumny bocznej), panel wariantów w całej rodzinie; martwe linki
+  łapie grep po `href`
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

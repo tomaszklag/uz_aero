@@ -1538,7 +1538,12 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
 2. **`payload` wozi IDENTYFIKATORY i czasy, nie zdania.** Znak maszyny i nazwisko
    rozwiązuje aplikacja z cache floty, jak na każdym innym ekranie. Push jest krótki,
    BEZ NAZWISK I GODZIN terminu - ląduje na ekranie blokady, który widzi każdy, kto
-   akurat patrzy na telefon.
+   akurat patrzy na telefon. **`payload` jest treścią SKRZYNKI, a do `data` budzika
+   wchodzi z niego wyłącznie to, co telefon czyta w `pushTarget.ts`** - `kind`, `orgId`,
+   `bookingId`, `aircraftId` (`notify/pushData.ts`, issue #228; klucz tylko z niepustym
+   napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
+   z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
+   jedzie przez Expo i FCM „na zapas".
 3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
    mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
    uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
