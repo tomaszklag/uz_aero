@@ -31,7 +31,7 @@
     <span class="vp-badge">L1b</span>
     <span class="vp-body">
       <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
-      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) i kolumną „Drugi pilot" z własną sumą. Członkowie bez lotów zwinięci w jeden wiersz pod listą. Adres: <code>?os=piloci</code>.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-maszyna.html">
@@ -45,7 +45,7 @@
     <span class="vp-badge">L2b</span>
     <span class="vp-body">
       <span class="vp-name">Operacje jednego pilota - dobami</span>
-      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot to zwykłe wiersze z plakietką i piątą sumą doby, poza nalotem dowódcy.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -170,7 +170,7 @@
       <div class="page-head">
         <div>
           <h1 class="page-title">Adam Kowalski</h1>
-          <p class="page-sub"><span class="mono">AKO</span> · pilot</p>
+          <p class="page-sub"><span class="mono">AKO</span> · pilot · w zakresie 4 operacje · 07:40 blok · jako drugi pilot 02:12</p>
         </div>
         <div class="page-actions">
           <a class="btn" href="piloci-konto.html">Karta członka</a>
@@ -201,9 +201,11 @@
            zamienia się w „Samolot" (znak + typ), bo pilota stoi w tytule, a maszyna
            jest tu zmienną.
 
-           Loty JAKO DRUGI PILOT są w dobie WIDOCZNE - przygaszone, z plakietką,
-           poza sumami doby: nalot liczy się dowódcy (jak w statystykach). Decyzja
-           postawiona na widoku - do potwierdzenia przez właściciela (patrz L1b). -->
+           Loty JAKO DRUGI PILOT to ZWYKŁE wiersze z plakietką „Drugi pilot" - poza
+           czterema sumami nalotu dowódcy, ale z WŁASNĄ, piątą sumą w nagłówku doby
+           („· 2:12 drugi pilot"), która pojawia się wyłącznie w dobie z takim lotem.
+           Decyzja właściciela z 26 września 2026 (wariant B; docs/panel-3.2.md §17.1):
+           czas w prawym fotelu liczy się osobno i nigdy nie dodaje do bloku dowódcy. -->
       <div class="table-wrap">
         <table>
           <caption class="visually-hidden">Operacje pilota Adam Kowalski, dobami</caption>
@@ -358,13 +360,14 @@
                     <span><b>7</b> lotów</span>
                     <span><b>3:14</b> blok</span>
                     <span><b>2:51</b> lot</span>
+                    <span>· <b>2:12</b> drugi pilot</span>
                   </span>
                 </span>
               </th>
             </tr>
             <tr class="clickable as-dual">
               <td>
-                <span class="cell-pair">13:30<span class="cell-arrow" aria-hidden="true">→</span>15:42</span> <span class="pill dim">Drugi pilot</span>
+                <span class="cell-pair">13:30<span class="cell-arrow" aria-hidden="true">→</span>15:42</span> <span class="pill blue">Drugi pilot</span>
                 <span class="cell-sub mono">SP-KLM/2026-09-01/BNO/1</span>
               </td>
               <td>
@@ -434,6 +437,26 @@
 <section class="canvas-section">
   <div class="canvas-section-title">Stany tego ekranu</div>
   <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Doba z lotem jako drugi pilot · piąta suma</span>
+        <span class="inv-when">Rozstrzygnięte 26 września (wariant B): wiersz drugiego pilota jest ZWYKŁYM wierszem z plakietką, a jego czas stoi w nagłówku doby jako osobna, piąta liczba - po separatorze, bo nie należy do czterech sum nalotu dowódcy i nie wolno go do nich dodać (tę samą godzinę niesie wiersz instruktora). Doba bez takiego lotu ma cztery sumy: piąta pojawia się wyłącznie wtedy, gdy ma co powiedzieć (reguła SyncChipa). Na poziomie 1 ta sama liczba stoi w kolumnie „Drugi pilot".</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Doba z lotem jako drugi pilot - przykład</caption>
+            <thead><tr><th>Operacja</th><th class="num">Loty</th><th class="num">Blok</th><th>Samolot</th></tr></thead>
+            <tbody class="day">
+              <tr class="day-row"><th colspan="4" scope="rowgroup"><span class="day-row-in"><span>1 września <span class="day-dow">poniedziałek</span></span><span class="day-sums"><span><b>1</b> operacja</span><span><b>7</b> lotów</span><span><b>3:14</b> blok</span><span><b>2:51</b> lot</span><span>· <b>2:12</b> drugi pilot</span></span></span></th></tr>
+              <tr class="clickable as-dual"><td><span class="cell-pair">13:30<span class="cell-arrow" aria-hidden="true">→</span>15:42</span> <span class="pill blue">Drugi pilot</span><span class="cell-sub mono">SP-KLM/2026-09-01/BNO/1</span></td><td class="num">3</td><td class="num">2:12</td><td><span class="reg">SP-KLM</span><span class="cell-sub">dowódca B. Nowak</span></td></tr>
+              <tr class="clickable"><td><span class="cell-pair">07:58<span class="cell-arrow" aria-hidden="true">→</span>11:12</span><span class="cell-sub mono">SP-AXA/2026-09-01/AKO/1</span></td><td class="num">7</td><td class="num">3:14</td><td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
 
     <article class="inv">
       <div class="inv-head">

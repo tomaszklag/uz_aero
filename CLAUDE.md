@@ -4755,8 +4755,19 @@ Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
 - **DOBA NAGŁÓWKIEM na poziomie 2 obu osi** (`tbody.day` + `tr.day-row`, sumy z serwera
   jedną odpowiedzią - strona kursorowa potrafi rozciąć dobę); kolumny daty przy wierszu
   NIE MA; pierwsza komórka = para godzin biegu + sygnatura (kształt kafelka z telefonu)
-- **NALOT LICZY SIĘ DOWÓDCY; loty jako drugi pilot WIDOCZNE, poza sumami** (`tr.as-dual`,
-  podpis „+n jako drugi pilot") - decyzja postawiona na widoku, DO POTWIERDZENIA przed P-B
+- **NALOT LICZY SIĘ DOWÓDCY, A CZAS JAKO DRUGI PILOT MA WŁASNĄ KOLUMNĘ I WŁASNĄ SUMĘ**
+  (decyzja właściciela 2026-09-26, wariant B spośród trzech na zestawieniu; `docs/panel-3.2.md`
+  §17.1): kolumna „Drugi pilot" na osi pilotów I w tabeli pilotów statystyk, wiersz
+  `tr.as-dual` na poziomie 2 PEŁNYM tonem z plakietką `.pill.blue`, doba z takim lotem
+  dostaje PIĄTĄ sumę po separatorze („· 2:12 drugi pilot", nigdy z zera). Kolumn „Blok"
+  i „Drugi pilot" NIE WOLNO dodać - tę samą godzinę niesie wiersz instruktora i ucznia
+- **LISTA PILOTÓW = CI, KTÓRZY LATALI (dowódca ALBO drugi pilot) + ZWINIĘCI BEZ LOTÓW**
+  (ta sama decyzja): wiersz `tr.fold-row` / `.fold-btn` pod listą z LICZBĄ w napisie
+  („+3 członków bez lotów w tym zakresie"), rozwinięcie dopisuje wiersze `tr.muted`;
+  bez plamki skeletonu. Nie „wszyscy z zerami" i nie „tylko latający"
+- **BANER NIESPÓJNOŚCI W TRYBIE EDYCJI = TE SAME ZDANIA, CO NA TELEFONIE (10D)**, liczone
+  przez SERWER i przysyłane razem z operacją (`consistency` w odpowiedzi o operacji,
+  plaster P-C) - trzeciego imiennego wyjątku „panel liczy z domeny" nie dokładamy
 - **TRYB EDYCJI = STAN EKRANU POD WŁASNYM ADRESEM** (`…/edycja`): ołówek w piątej kolumnie
   osi (`td.pen`), plakietka `.tag-corrected` w OBU trybach, korekta w szufladzie z podglądem
   „przed → po" (liczy serwer), baner kolizji `ADMIN_EDIT_*` NAD formularzem i nigdy

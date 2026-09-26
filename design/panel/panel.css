@@ -2790,17 +2790,62 @@ tr.day-row:hover {
   font-weight: 600;
 }
 
-/* Wiersz operacji, w której osoba z osi PILOTA była DRUGIM pilotem: obecny, ale
-   przygaszony i poza sumami doby - nalot liczy się dowódcy (ta sama atrybucja, co
-   w statystykach, §4.5). Reguła `tr.muted` z tabeli; klasa własna tylko po to, żeby
-   grep znajdował ten przypadek. */
-tbody tr.as-dual td {
-  color: var(--text-muted);
+/* Wiersz operacji, w której osoba z osi PILOTA była DRUGIM pilotem (decyzja
+   właściciela 2026-09-26, wariant B): ZWYKŁY wiersz pełnym tonem, odróżniony
+   plakietką „Drugi pilot" w pierwszej komórce. Do sum nalotu dowódcy (Operacje ·
+   Loty · Blok · Lot) nie wchodzi - czas w prawym fotelu ma WŁASNĄ sumę w nagłówku
+   doby (`.day-sums`: „· 2:12 drugi pilot", wyłącznie gdy w dobie jest taki lot)
+   i własną kolumnę na poziomie 1. Do 2026-09-26 wiersz był przygaszony jak
+   `tr.muted`; klasa zostaje bez reguł koloru, bo P-B rozpoznaje po niej wiersz
+   poza sumami (grep, test). */
+tbody tr.as-dual .pill {
+  vertical-align: 1px;
 }
 
-tbody tr.as-dual .cell-strong,
-tbody tr.as-dual .reg {
+/* Zwinięci CZŁONKOWIE BEZ LOTÓW na osi pilotów (decyzja właściciela 2026-09-26):
+   lista pokazuje tych, którzy w zakresie latali - jako dowódca ALBO drugi pilot -
+   a resztę klubu zwija w JEDEN wiersz pod listą („+3 członków bez lotów w tym
+   zakresie"). Odpowiedź na „kto nie latał" zostaje na ekranie, a klub z 60
+   członkami nie dostaje 45 wierszy zer. Rozwinięcie dopisuje pod spodem zwykłe
+   wiersze `tr.muted` z zerami, a napis zmienia się na „Zwiń"; szewron obraca się
+   z `aria-expanded`. Kreska ciągła, nie przerywana: przerywana należy do DOPISANIA
+   (`tr.axis-add`), a tu nic się nie dopisuje. */
+tr.fold-row > td {
+  padding: 0;
+  border-top: 1px solid var(--border-strong);
+}
+
+tr.fold-row:hover {
+  background: none;
+}
+
+.fold-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 0;
+  background: none;
   color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fold-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-raised);
+}
+
+.fold-btn svg {
+  flex: none;
+  transition: transform 120ms ease;
+}
+
+.fold-btn[aria-expanded="true"] svg {
+  transform: rotate(180deg);
 }
 
 /* Nazwisko i znak w wierszu doby nie łamią się: dziesięć kolumn poziomu 2 zostawia

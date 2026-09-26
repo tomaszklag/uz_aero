@@ -31,7 +31,7 @@
     <span class="vp-badge">L1b</span>
     <span class="vp-body">
       <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
-      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) i kolumną „Drugi pilot" z własną sumą. Członkowie bez lotów zwinięci w jeden wiersz pod listą. Adres: <code>?os=piloci</code>.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -46,7 +46,7 @@
     <span class="vp-badge">L2b</span>
     <span class="vp-body">
       <span class="vp-name">Operacje jednego pilota - dobami</span>
-      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot to zwykłe wiersze z plakietką i piątą sumą doby, poza nalotem dowódcy.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-operacja.html">
@@ -190,17 +190,22 @@
 
       <!-- ══ OŚ PILOTÓW ══
            Wiersz na CZŁONKA KLUBU z wielkościami kafelka operacji z telefonu
-           (Operacje · Loty · Blok · Lot) plus dni i maszyny, na których latał.
-           Lista obejmuje TAKŻE tych, którzy w zakresie nie latali - tak samo jak oś
-           maszyn pokazuje maszynę z zerami: „czy Jakub w ogóle latał we wrześniu"
-           jest pytaniem, po które się tu przychodzi.
+           (Operacje · Loty · Blok · Lot) plus dni, czas jako drugi pilot i maszyny,
+           na których latał.
 
-           NALOT LICZY SIĘ DOWÓDCY. Loty jako drugi pilot NIE wchodzą do bloku ani
-           do liczby operacji - ta sama atrybucja, co w statystykach (docs/panel-3.2.md
-           §4.5: jedna podstawa liczenia). Są za to WIDOCZNE jako podpis w kolumnie
-           „Operacje" - nalot ucznia i egzaminowanego jest pytaniem, tylko innym.
-           Sumy tej osi i osi maszyn dla tego samego zakresu SĄ RÓWNE co do minuty
-           (19:45 bloku, 33 loty) - i to jest test, który ma przejść P-B. -->
+           DWIE DECYZJE WŁAŚCICIELA Z 26 WRZEŚNIA 2026 (docs/panel-3.2.md §17.1):
+           1. NALOT LICZY SIĘ DOWÓDCY, a czas W PRAWYM FOTELU ma WŁASNĄ KOLUMNĘ
+              „Drugi pilot" z własną sumą - ta sama godzina lotu szkolnego stoi
+              w wierszu instruktora (Blok) i ucznia (Drugi pilot), więc tych dwóch
+              kolumn nie wolno dodać do siebie. Sumy kolumn dowódcy dla obu osi
+              (maszyn i pilotów) są RÓWNE co do minuty (19:45 bloku, 33 loty) -
+              to test P-B. Uczeń, który w zakresie nie był ani razu dowódcą, ma
+              zera w nalocie i liczbę w kolumnie „Drugi pilot".
+           2. LISTA POKAZUJE TYCH, KTÓRZY LATALI (jako dowódca ALBO drugi pilot),
+              a członków bez ani jednego lotu w zakresie ZWIJA w jeden wiersz pod
+              listą („+3 członków bez lotów w tym zakresie"). Odpowiedź na „kto nie
+              latał" zostaje na ekranie, a klub z 60 członkami nie dostaje 45
+              wierszy zer. Rozwinięcie: zwykłe wiersze `tr.muted` (kanwa niżej). -->
       <div class="table-wrap">
         <table>
           <caption class="visually-hidden">Piloci w wybranym zakresie dat</caption>
@@ -212,6 +217,7 @@
               <th class="num">Loty</th>
               <th class="num">Blok</th>
               <th class="num">Lot</th>
+              <th class="num">Drugi pilot</th>
               <th>Samoloty</th>
               <th></th>
             </tr>
@@ -223,11 +229,12 @@
                 <span class="cell-sub mono">AKO</span>
               </td>
               <td class="num">4</td>
-              <td class="num">4<span class="cell-sub">+1 jako drugi pilot</span></td>
+              <td class="num">4</td>
               <td class="num">15</td>
               <td class="num">07:40</td>
               <td class="num">06:20</td>
-              <td><span class="reg">SP-AXA</span></td>
+              <td class="num">02:12<span class="cell-sub">1 operacja</span></td>
+              <td><span class="reg">SP-AXA</span> <span class="reg">SP-KLM</span></td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
             <!-- Pilot, który właśnie trzyma maszynę: ten sam sygnał „leci teraz", co
@@ -245,6 +252,7 @@
               <td class="num">10</td>
               <td class="num">06:13</td>
               <td class="num">04:51</td>
+              <td class="num">—</td>
               <td><span class="reg">SP-AXA</span> <span class="reg">SP-TWG</span></td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
@@ -259,24 +267,26 @@
               <td class="num">6</td>
               <td class="num">04:12</td>
               <td class="num">03:20</td>
+              <td class="num">—</td>
               <td><span class="reg">SP-KLM</span></td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
             <!-- Uczeń: zero operacji jako dowódca, dwie jako drugi pilot. Wiersz
-                 przygaszony jak maszyna, która nie latała - ale podpis mówi, że
-                 w samolocie BYŁ. Bez tego podpisu kurs latania byłby na tej osi
-                 niewidoczny. -->
-            <tr class="clickable muted">
+                 PEŁNYM tonem (latał), nalot dowódcy zerami, a liczba stoi w kolumnie
+                 „Drugi pilot" - klub szkolący czyta nalot ucznia jedną liczbą. -->
+            <tr class="clickable">
               <td>
                 <span class="cell-strong">Jakub Wrona</span>
                 <span class="cell-sub mono">JWR</span>
+                <span class="cell-sub">tylko jako drugi pilot</span>
               </td>
+              <td class="num">2</td>
               <td class="num">0</td>
-              <td class="num">0<span class="cell-sub">2 jako drugi pilot</span></td>
               <td class="num">0</td>
               <td class="num">00:00</td>
               <td class="num">00:00</td>
-              <td>—</td>
+              <td class="num">03:52<span class="cell-sub">2 operacje</span></td>
+              <td><span class="reg">SP-AXA</span></td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
             <tr class="clickable">
@@ -289,28 +299,29 @@
               <td class="num">2</td>
               <td class="num">01:40</td>
               <td class="num">01:15</td>
+              <td class="num">—</td>
               <td><span class="reg">SP-KLM</span></td>
               <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
-            <tr class="clickable muted">
-              <td>
-                <span class="cell-strong">Piotr Wróbel</span>
-                <span class="cell-sub mono">PWR</span>
+            <!-- Członkowie bez ani jednego lotu w zakresie: ZWINIĘCI w jeden wiersz.
+                 Napis niesie liczbę, więc „kto nie latał" da się odczytać bez
+                 rozwijania; rozwinięcie dopisuje pod spodem wiersze `tr.muted`
+                 z zerami (stan na kanwie niżej). -->
+            <tr class="fold-row">
+              <td colspan="9">
+                <button type="button" class="fold-btn" aria-expanded="false">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  +3 członków bez lotów w tym zakresie
+                </button>
               </td>
-              <td class="num">0</td>
-              <td class="num">0</td>
-              <td class="num">0</td>
-              <td class="num">00:00</td>
-              <td class="num">00:00</td>
-              <td>—</td>
-              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Członkowie WYŁĄCZENI z klubu nie mają tu wiersza: oś pyta o ludzi, którzy
-           mogą latać. Ich stare operacje zostają widoczne w osi maszyn i na poziomie 3. -->
+      <!-- Członkowie WYŁĄCZENI z klubu nie mają tu wiersza ani miejsca w zwinięciu:
+           oś pyta o ludzi, którzy mogą latać. Ich stare operacje zostają widoczne
+           w osi maszyn i na poziomie 3. -->
 
         </div>
       </div>
@@ -363,19 +374,67 @@
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">Drugi pilot: widoczny, poza sumami - DO POTWIERDZENIA</span>
-        <span class="inv-when">Nalot liczy się dowódcy, jak w statystykach - inaczej godzina lotu szkolnego liczyłaby się dwa razy. Ale uczeń, który w zakresie nie był ani razu dowódcą, nie może na tej osi ZNIKNĄĆ - stąd podpis „2 jako drugi pilot" pod liczbą operacji i przygaszony wiersz z plakietką na poziomie 2. To jest decyzja produktowa (czy klub chce widzieć czas „w prawym fotelu" osobno) i makieta stawia ją na widoku, żeby właściciel mógł ją potwierdzić albo odrzucić przed P-B.</span>
+        <span class="inv-name">Drugi pilot: własna kolumna, własna suma - rozstrzygnięte 26 września</span>
+        <span class="inv-when">Nalot liczy się dowódcy, jak w statystykach - inaczej godzina lotu szkolnego liczyłaby się dwa razy. Czas w prawym fotelu NIE znika i NIE jest podpisem: ma kolumnę „Drugi pilot" z własną sumą (na poziomie 2 piątą liczbę w nagłówku doby), a klub szkolący czyta nalot ucznia jedną liczbą. Dwóch kolumn czasu nie wolno dodać do siebie - tę samą godzinę niesie wiersz instruktora i ucznia. Wybrane spośród trzech wariantów (podpis poza sumami / własna kolumna / wcale) na zestawieniu z 26 września; decyzja w <code>docs/panel-3.2.md</code> §17.1.</span>
       </div>
       <div class="inv-demo">
         <div class="table-wrap">
           <table>
             <caption class="visually-hidden">Wiersz ucznia - przykład</caption>
-            <thead><tr><th>Pilot</th><th class="num">Operacje</th><th class="num">Blok</th></tr></thead>
+            <thead><tr><th>Pilot</th><th class="num">Operacje</th><th class="num">Blok</th><th class="num">Drugi pilot</th></tr></thead>
             <tbody>
-              <tr class="muted">
-                <td><span class="cell-strong">Jakub Wrona</span><span class="cell-sub mono">JWR</span></td>
-                <td class="num">0<span class="cell-sub">2 jako drugi pilot</span></td>
+              <tr>
+                <td><span class="cell-strong">Jakub Wrona</span><span class="cell-sub mono">JWR</span><span class="cell-sub">tylko jako drugi pilot</span></td>
+                <td class="num">0</td>
                 <td class="num">00:00</td>
+                <td class="num">03:52<span class="cell-sub">2 operacje</span></td>
+              </tr>
+              <tr>
+                <td><span class="cell-strong">Adam Kowalski</span><span class="cell-sub mono">AKO</span></td>
+                <td class="num">4</td>
+                <td class="num">07:40</td>
+                <td class="num">02:12<span class="cell-sub">1 operacja</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Członkowie bez lotów - zwinięci, rozwijani jednym kliknięciem</span>
+        <span class="inv-when">Decyzja właściciela z 26 września (spośród: wszyscy z zerami / zwinięci / tylko latający). Lista pokazuje tych, którzy w zakresie latali - jako dowódca albo drugi pilot - a resztę klubu zwija w JEDEN wiersz pod listą. Napis niesie liczbę, więc „ilu nie latało" czyta się bez rozwijania; rozwinięcie dopisuje zwykłe przygaszone wiersze z zerami, a napis zmienia się na „Zwiń". Klub z 60 członkami, z których w tygodniu lata 15, nie dostaje 45 wierszy zer - a odpowiedź na „kto nie latał w tym miesiącu" nie wymaga zaglądania do modułu Piloci.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zwinięcie rozwinięte - przykład</caption>
+            <thead><tr><th>Pilot</th><th class="num">Dni</th><th class="num">Operacje</th><th class="num">Blok</th><th class="num">Drugi pilot</th></tr></thead>
+            <tbody>
+              <tr class="clickable">
+                <td><span class="cell-strong">Marta Zięba</span><span class="cell-sub mono">MZI</span></td>
+                <td class="num">1</td><td class="num">1</td><td class="num">01:40</td><td class="num">—</td>
+              </tr>
+              <tr class="fold-row">
+                <td colspan="5">
+                  <button type="button" class="fold-btn" aria-expanded="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    Zwiń · 3 członków bez lotów w tym zakresie
+                  </button>
+                </td>
+              </tr>
+              <tr class="clickable muted">
+                <td><span class="cell-strong">Ewa Sowa</span><span class="cell-sub mono">ESO</span></td>
+                <td class="num">0</td><td class="num">0</td><td class="num">00:00</td><td class="num">—</td>
+              </tr>
+              <tr class="clickable muted">
+                <td><span class="cell-strong">Piotr Wróbel</span><span class="cell-sub mono">PWR</span></td>
+                <td class="num">0</td><td class="num">0</td><td class="num">00:00</td><td class="num">—</td>
+              </tr>
+              <tr class="clickable muted">
+                <td><span class="cell-strong">Tomasz Lis</span><span class="cell-sub mono">TLI</span></td>
+                <td class="num">0</td><td class="num">0</td><td class="num">00:00</td><td class="num">—</td>
               </tr>
             </tbody>
           </table>
@@ -386,7 +445,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Klub bez ani jednego członka</span>
-        <span class="inv-when">Jedyny stan pusty tej osi - i mówi o KLUBIE, nie o zakresie dat. Członek, który nie latał, ma tu swój wiersz zer, więc „nikt nie latał w tym tygodniu" nie jest stanem pustym. Wskazuje drogę: kod klubu, bo od 2.0.0 to jedyna droga do klubu.</span>
+        <span class="inv-when">Jedyny stan pusty tej osi - i mówi o KLUBIE, nie o zakresie dat. Tydzień, w którym nikt nie latał, to lista z samym wierszem zwinięcia („+12 członków bez lotów w tym zakresie"), nie stan pusty. Wskazuje drogę: kod klubu, bo od 2.0.0 to jedyna droga do klubu.</span>
       </div>
       <div class="inv-demo">
         <div class="empty">
@@ -401,17 +460,17 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Wczytywanie</span>
-        <span class="inv-when">Plamki w geometrii ośmiu kolumn, sześć wierszy - tyle ma typowy klub. Nagłówki znamy lokalnie, więc stoją gotowe; nigdy spinner i nigdy pustka.</span>
+        <span class="inv-when">Plamki w geometrii dziewięciu kolumn, pięć wierszy - tylu latających ma typowy klub w tygodniu; wiersz zwinięcia czeka na liczbę, więc plamki nie dostaje. Nagłówki znamy lokalnie, więc stoją gotowe; nigdy spinner i nigdy pustka.</span>
       </div>
       <div class="inv-demo">
         <div class="table-wrap" aria-busy="true">
           <table>
             <caption class="visually-hidden">Wczytywanie listy</caption>
-            <thead><tr><th>Pilot</th><th class="num">Dni</th><th class="num">Operacje</th><th class="num">Loty</th><th class="num">Blok</th><th class="num">Lot</th><th>Samoloty</th><th></th></tr></thead>
+            <thead><tr><th>Pilot</th><th class="num">Dni</th><th class="num">Operacje</th><th class="num">Loty</th><th class="num">Blok</th><th class="num">Lot</th><th class="num">Drugi pilot</th><th>Samoloty</th><th></th></tr></thead>
             <tbody>
-              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
-              <tr><td><span class="skeleton cell" style="width:126px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
-              <tr><td><span class="skeleton cell" style="width:160px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:126px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:160px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
             </tbody>
           </table>
         </div>

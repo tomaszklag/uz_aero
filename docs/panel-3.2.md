@@ -598,9 +598,9 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 
 | Epik | Odstępstwo | Sekcja |
 |---|---|---|
-| P-A | Baner niespójności operacji (`rules/consistency.ts`) w trybie edycji wymaga cienkiego plastra serwera - panelowi wolno brać z domeny wyłącznie typy | §17 pkt 6 |
-| P-A | Loty jako drugi pilot na osi pilotów: widoczne, poza sumami - decyzja produktowa DO POTWIERDZENIA przez właściciela przed P-B | §17 pkt 3 |
-| P-A | Oś pilotów na poziomie 1 obejmuje WSZYSTKICH aktywnych członków (także z zerami), czyli nie jest samym `GET /stats.pilots` - plaster w `GET /log` | §17 pkt 2 |
+| P-A | Baner niespójności operacji (`rules/consistency.ts`) w trybie edycji wymaga cienkiego plastra serwera - panelowi wolno brać z domeny wyłącznie typy. **Rozstrzygnięte 26 września: serwer przysyła wynik razem z operacją** | §17 pkt 6, §17.1 |
+| P-A | Loty jako drugi pilot na osi pilotów. **Rozstrzygnięte 26 września: WŁASNA KOLUMNA i własna suma** (wariant B), także w tabeli pilotów statystyk - `GET /log?os=piloci` i `GET /stats.pilots` niosą czas w prawym fotelu osobno | §17 pkt 3, §17.1 |
+| P-A | Oś pilotów na poziomie 1. **Rozstrzygnięte 26 września: lista tych, którzy latali (dowódca ALBO drugi pilot) + LICZBA zwiniętych członków bez lotów**, rozwijana na żądanie - plaster w `GET /log` (nie jest samym `GET /stats.pilots`) | §17 pkt 2, §17.1 |
 
 ---
 
@@ -613,14 +613,16 @@ inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wni
 1. **Oś na poziomie 1 to SEGMENT, nie para chipów** (`.seg`, `dziennik-flota` / `dziennik-piloci`):
    chip zawęża listę, oś rozstrzyga pytanie - dokładnie jedna jest zawsze włączona. Stoi
    PRZED zakresem dat; adres `?os=piloci`, oś maszyn domyślna i nieobecna w adresie.
-2. **Oś pilotów (L1b) = wszyscy aktywni członkowie**, także z zerami - jak oś maszyn
-   pokazuje maszynę, która nie latała. Kolumny: Dni · Operacje · Loty · Blok · Lot · Samoloty.
-   Sumy obu osi dla tego samego zakresu są równe co do minuty (test dla P-B).
-3. **Nalot liczy się dowódcy; loty jako drugi pilot są WIDOCZNE, ale poza sumami**
-   (podpis „+1 jako drugi pilot" pod liczbą operacji na L1b; wiersz `tr.as-dual`
-   z plakietką „Drugi pilot" na L2b). Bez tego uczeń bez ani jednej operacji jako dowódca
-   znikałby z osi. **Do potwierdzenia przez właściciela** - czy klub chce widzieć czas
-   „w prawym fotelu" osobno.
+2. **Oś pilotów (L1b) = ci, którzy w zakresie latali, plus ZWINIĘCI członkowie bez
+   lotów** (rozstrzygnięte 26 września - patrz §17.1 pkt 3; do 26 września makieta
+   pokazywała wszystkich z zerami). Kolumny: Dni · Operacje · Loty · Blok · Lot ·
+   Drugi pilot · Samoloty. Sumy kolumn DOWÓDCY obu osi dla tego samego zakresu są równe
+   co do minuty (test dla P-B).
+3. **Nalot liczy się dowódcy; czas jako drugi pilot ma WŁASNĄ KOLUMNĘ i własną sumę**
+   (rozstrzygnięte 26 września - §17.1 pkt 1; do 26 września: podpis poza sumami).
+   Na L1b kolumna „Drugi pilot" z podpisem liczby operacji, na L2b wiersz `tr.as-dual`
+   pełnym tonem z plakietką „Drugi pilot" i PIĄTA suma w nagłówku doby. Uczeń bez ani
+   jednej operacji jako dowódca ma zera w nalocie i liczbę w swojej kolumnie.
 4. **Doba nagłówkiem (L2, L2b)**: `<tbody class="day">` na dobę, nagłówek z datą, dniem
    tygodnia i sumami Operacje · Loty · Blok · Lot; pierwsza komórka wiersza = para godzin
    biegu silnika + sygnatura (kształt kafelka z telefonu), a czas trwania biegu ma własną
@@ -629,8 +631,9 @@ inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wni
    („popraw to"); wejście = „Popraw zdarzenia" w nagłówku L3 (zdolność `events.correct`,
    bez niej przycisku nie ma). Korekta to szuflada (`.drawer`), unieważnienie zdarzenia to
    kosz w linii tytułu szuflady, dopisanie - ostatni wiersz osi (`tr.axis-add`).
-6. **Baner niespójności nad osią w trybie edycji** (jak 10D w telefonie) - wymaga, żeby
-   serwer przysłał wynik `rules/consistency.ts` razem z operacją (plaster P-C).
+6. **Baner niespójności nad osią w trybie edycji** (jak 10D w telefonie) - serwer przysyła
+   wynik `rules/consistency.ts` razem z operacją (plaster P-C; rozstrzygnięte 26 września,
+   §17.1 pkt 2).
 7. **Skrzynka rozjazdów mówi po polsku**: Dwie operacje naraz · Pilot w dwóch maszynach ·
    Luka w liczniku · Cofnięty licznik · Rozjazd paliwa · Rozjazd zegara; kody serwera nie
    wychodzą na ekran. Notatka rozstrzygnięcia jest WYMAGANA (jak powód korekty); dla
@@ -649,5 +652,42 @@ inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wni
     P10–P90 jako wypełnienie, norma z dokumentacji jako marker; bez opublikowanego modelu
     karty NIE MA wcale; wiersz „Motogodziny" gaśnie osobno.
 12. **Nowe komponenty** (`admin/src/styles/components/`): `.nav-count` (shell), `.seg`
-    (filters), `tr.day-row` (logbook), `tfoot` (table), `corrections.css`, `attention.css`,
+    (filters), `tr.day-row` i `tr.fold-row` (logbook), `tfoot` (table), `corrections.css`, `attention.css`,
     `stats.css`; wszystkie w inwentarzu `SZABLON.html`, `panel.css` przegenerowany.
+
+### 17.1 Rozstrzygnięcia właściciela (26 września 2026)
+
+Trzy pytania, które makiety P-A zostawiły otwarte, zadane pojedynczo i rozstrzygnięte
+na zestawieniu wariantów narysowanych na prawdziwym `panel.css`. Każde ma konsekwencję
+dla kontraktu serwera, więc stoją tu razem z nią:
+
+1. **Loty jako drugi pilot: WŁASNA KOLUMNA i własna suma** (spośród: podpis poza sumami /
+   własna kolumna / wcale). Nalot liczy się dowódcy jak dotąd (książka lotów, §4.5), ale
+   czas w prawym fotelu nie jest podpisem - jest liczbą, którą klub szkolący czyta
+   wprost. Wiersz drugiego pilota na poziomie 2 jest zwykłym wierszem z plakietką,
+   a doba z takim lotem dostaje piątą sumę po separatorze. **Kolumn „Blok" i „Drugi
+   pilot" nie wolno dodać do siebie**: tę samą godzinę lotu szkolnego niesie wiersz
+   instruktora i ucznia - i to jest zdanie, które ma stać w podręczniku. Ta sama kolumna
+   wchodzi do tabeli pilotów w STATYSTYKACH, z wierszem ucznia bez operacji jako dowódca
+   (jedna podstawa liczenia, §4.5); fakt „Piloci" w pasku sum liczy ludzi, którzy latali
+   w dowolnym fotelu. Konsekwencja dla P-B i P-E: wiersz pilota w `GET /log?os=piloci`
+   i w `GET /stats` niesie `dual: { operations, blockMs }`, nagłówek doby na osi pilota
+   `dualBlockMs` (`null` bez takiego lotu - piąta suma nie rysuje się z zera); `Dni`
+   liczy dni z JAKIMKOLWIEK lotem.
+2. **Baner niespójności w trybie edycji: te same zdania, co na telefonie** (spośród:
+   z serwera / panel liczy sam / bez banera). Administrator otwiera operację, żeby ją
+   naprawić, i ma od razu wiedzieć, CO jest niekompletne i CZYM to naprawić - a lista
+   sprawdzeń ma być jedna dla pilota i administratora. Konsekwencja dla P-C: odpowiedź
+   o operacji (`GET /admin/api/sessions/:uuid`) niesie `consistency` - wynik
+   `rules/consistency.ts` (kod, zdarzenie, którego dotyczy); panel wyłącznie nazywa po
+   polsku, jak rozjazdy. Trzeci imienny wyjątek od „panel bierze z domeny tylko typy"
+   NIE powstaje.
+3. **Lista pilotów: ci, którzy latali, plus zwinięci członkowie bez lotów** (spośród:
+   wszyscy z zerami / zwinięci / tylko latający). Odpowiedź na „kto nie latał w tym
+   miesiącu" zostaje na ekranie (liczba w napisie wiersza zwinięcia, rozwinięcie
+   kliknięciem), a klub z 60 członkami nie dostaje 45 wierszy zer. „Latał" znaczy: jako
+   dowódca ALBO drugi pilot. Konsekwencja dla P-B: `GET /log?os=piloci` oddaje wiersze
+   latających i `idle: { count, members?: [...] }` - lista zwiniętych dojeżdża na żądanie
+   (`&idle=1`), bo zwykle nikt jej nie rozwija; wiersz zwinięcia nie dostaje plamki
+   skeletonu, bo czeka na liczbę. Członkowie wyłączeni nie liczą się do zwiniętych.
+

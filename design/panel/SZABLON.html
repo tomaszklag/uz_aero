@@ -1116,7 +1116,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Doba nagłówkiem · sumy doby</span>
-        <span class="inv-when">Grupowanie dniami na poziomie 2 obu osi: <code>&lt;tbody class="day"&gt;</code> na dobę, pierwszy wiersz to nagłówek z datą, dniem tygodnia i CZTEREMA sumami w stałej kolejności (Operacje · Loty · Blok · Lot). Kolumna z datą przy wierszu ZNIKŁA - powtarzałaby nagłówek centymetr wyżej. Sumy przychodzą z serwera, bo strona kursorowa potrafi rozciąć dobę. Operacja w toku i wpis unieważniony nie wchodzą do sum - nagłówek mówi o toku wprost.</span>
+        <span class="inv-when">Grupowanie dniami na poziomie 2 obu osi: <code>&lt;tbody class="day"&gt;</code> na dobę, pierwszy wiersz to nagłówek z datą, dniem tygodnia i CZTEREMA sumami w stałej kolejności (Operacje · Loty · Blok · Lot). Kolumna z datą przy wierszu ZNIKŁA - powtarzałaby nagłówek centymetr wyżej. Sumy przychodzą z serwera, bo strona kursorowa potrafi rozciąć dobę. Operacja w toku i wpis unieważniony nie wchodzą do sum - nagłówek mówi o toku wprost. Na osi PILOTA doba z lotem jako drugi pilot dostaje PIĄTĄ sumę po separatorze („· 2:12 drugi pilot"), a sam wiersz jest zwykłym wierszem z plakietką <code>.pill.blue</code> - poza czterema sumami dowódcy (<code>tr.as-dual</code> bez reguł koloru, do rozpoznania w kodzie).</span>
         <span class="inv-classes"><b>tbody.day</b> · <b>tr.day-row</b> · .day-row-in · .day-dow · .day-sums · tr.as-dual</span>
       </div>
       <div class="inv-demo">
@@ -1132,6 +1132,26 @@
             <tbody class="day">
               <tr class="day-row"><th colspan="4" scope="rowgroup"><span class="day-row-in"><span>5 września <span class="day-dow">piątek</span></span><span class="day-sums"><span><b>1</b> operacja</span><span><b>5</b> lotów</span><span><b>2:03</b> blok</span><span><b>1:44</b> lot</span></span></span></th></tr>
               <tr><td><span class="cell-pair">10:06<span class="cell-arrow" aria-hidden="true">→</span>12:09</span><span class="cell-sub mono">SP-AXA/2026-09-05/AKW/1</span></td><td class="num">5</td><td class="num">2:03</td><td><span class="cell-strong">A. Kowal</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Zwinięci członkowie bez lotów</span>
+        <span class="inv-when">Oś pilotów pokazuje tych, którzy w zakresie latali (jako dowódca albo drugi pilot), a resztę klubu zwija w JEDEN wiersz pod listą z liczbą w napisie - „ilu nie latało" czyta się bez rozwijania. Rozwinięcie dopisuje zwykłe wiersze <code>tr.muted</code> z zerami, napis zmienia się na „Zwiń", szewron obraca się z <code>aria-expanded</code>. Kreska ciągła, bo przerywana należy do dopisania.</span>
+        <span class="inv-classes"><b>tr.fold-row</b> · .fold-btn</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Wiersz zwinięcia - przykład</caption>
+            <thead><tr><th>Pilot</th><th class="num">Operacje</th><th class="num">Blok</th><th class="num">Drugi pilot</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cell-strong">Marta Zięba</span><span class="cell-sub mono">MZI</span></td><td class="num">1</td><td class="num">01:40</td><td class="num">—</td></tr>
+              <tr class="fold-row"><td colspan="4"><button type="button" class="fold-btn" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>+3 członków bez lotów w tym zakresie</button></td></tr>
             </tbody>
           </table>
         </div>
