@@ -440,8 +440,8 @@ stan niż utrata nowego.
 
 | Trasa | Zdolność |
 | --- | --- |
-| `GET /admin/api/bookings?from=&to=` | `panel.access` |
-| `GET /admin/api/bookings/:id` *(3.1)* - zajętość ze stanem ścieżki, Z OSOBĄ decydującą | `panel.access` |
+| `GET /admin/api/bookings?from=&to=` | każdy członek (`capability: null`, issue #216; do 3.1.0 `panel.access`) - kształt cudzej rezerwacji pyta, kto patrzy, jak na telefonie (§17) |
+| `GET /admin/api/bookings/:id` *(3.1)* - zajętość ze stanem ścieżki, Z OSOBĄ decydującą | każdy członek (issue #216); stan ścieżki tylko dla widza pełnego, inaczej `approval: null` |
 | `POST /admin/api/bookings` (rezerwacja za pilota, wyłączenie z użytku) | `reservations.manage` / `fleet.manage` |
 | `POST /admin/api/bookings/:id/cancel` | `reservations.manage` |
 | `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
@@ -1583,6 +1583,7 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-J | plik Firebase idzie zmienną EAS typu „file" albo lokalną kopią poza repozytorium - Z2 z #168 rozstrzygnięte w kodzie | §12.5 |
 | R-J | wersja i `versionCode` NIE podbite w tym epiku - to krok gałęzi wydaniowej (R-K), a `develop` nie buduje APK; J6 i J7 czekają na Firebase (#168) | §12.4 |
 | #207 | zapis ścieżki domyka sprawy z kompletem zgód, prosi osoby nowego kroku bieżącego i dopisuje pominięcia `self` pod krokami dołożonymi później - §11.2 opisywało cenę DOŁOŻENIA kroku, nie SKRÓCENIA | §11.2 |
+| #216 | **kalendarz w panelu jest dla KAŻDEGO członka klubu**, a kształt cudzej rezerwacji pyta tam, kto patrzy - jak na telefonie (§17): zwykły członek widzi godziny, maszynę, pilota i rodzaj; komplet - właściciel, „Podgląd klubu", akceptacja, władza nad cudzymi. Zdanie „panel widzi komplet, ma do tego osobną zdolność" z W7 przestało być prawdą o każdym zalogowanym. Nazwiska i znaki panel bierze ze słownika `GET /admin/api/directory`; decyzja i podglądy nie wymagają już `panel.access` (zdolność rozstrzyga handler) | `docs/uprawnienia.md` §13 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od

@@ -412,16 +412,26 @@ describe('rezerwacje: panel', () => {
     expect(zPowodem.json().closeReason).toBe('przegląd 100 h wchodzi na tę sobotę');
   });
 
-  it('PILOT nie wejdzie na trasy panelu', async () => {
+  it('PILOT wchodzi do panelu (issue #216), ale rezerwacji ZA KOGOŚ nie wpisze - 403 z nazwą zdolności', async () => {
     const { app } = await testHarness();
-    // PWI jest zwykłym pilotem - nie ma nawet wejścia do panelu.
+    // PWI jest zwykłym pilotem: do 3.1.0 odbijał się już przy logowaniu; odtąd wchodzi
+    // z pustym zakresem, a odmowa pada tam, gdzie naprawdę stoi władza - na trasie.
+    const session = await panelCookie(app, 'PWI');
     const res = await app.inject({
       method: 'POST',
-      url: '/admin/api/auth/login',
-      headers: ADMIN_CSRF_HEADERS,
-      payload: { idToken: googleTokenFor('PWI') },
+      url: '/admin/api/bookings',
+      headers: session,
+      payload: {
+        id: nextId(),
+        aircraftId: 'SP-AXA',
+        pilotId: 'AKO',
+        startsAt: iso(JUTRO + 8 * H),
+        endsAt: iso(JUTRO + 10 * H),
+        operation: 'skoki',
+      },
     });
     expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'forbidden', required: 'reservations.manage' });
   });
 });
 
@@ -681,5 +691,71 @@ describe('rezerwacje: sugestie slotów', () => {
       url: '/bookings/suggestions?aircraftId=SP-AXA&day=' + iso(JUTRO) + '&minutes=60',
     });
     expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('rezerwacje: panel dla KAŻDEGO członka - kształt pyta, kto patrzy (issue #216)', () => {
+  /** Dwie rezerwacje z notatkami: administratora i zwykłego pilota, na różne godziny. */
+  async function twoWithNotes(app: App): Promise<{ ako: string; pwi: string }> {
+    const akoToken = await login(app, 'AKO');
+    const pwiToken = await login(app, 'PWI');
+    const ako = await create(app, akoToken, JUTRO + 8 * H, JUTRO + 10 * H, { note: 'notatka AKO' });
+    const pwi = await create(app, pwiToken, JUTRO + 12 * H, JUTRO + 14 * H, { note: 'notatka PWI' });
+    expect(ako.statusCode, ako.body).toBe(201);
+    expect(pwi.statusCode, pwi.body).toBe(201);
+    return { ako: ako.json().id as string, pwi: pwi.json().id as string };
+  }
+
+  it('pilot z PUSTYM zakresem czyta okno kalendarza: własna w komplecie, cudza wąsko', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'PWI');
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/admin/api/bookings?from=${iso(JUTRO - H)}&to=${iso(JUTRO + 3 * 86_400_000)}`,
+      headers: session,
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    const rows = res.json().bookings as Record<string, unknown>[];
+    const own = rows.find((b) => b.id === ids.pwi)!;
+    const foreign = rows.find((b) => b.id === ids.ako)!;
+
+    expect(own.note).toBe('notatka PWI');
+    expect(own.operation).toBe('skoki');
+    // Cudza: godziny, maszyna, właściciel i rodzaj - żadnego pola z treścią.
+    expect(foreign.pilotId).toBe('AKO');
+    for (const key of ['note', 'operation', 'dualId', 'fromIcao', 'createdBy', 'closeReason']) {
+      expect(foreign, key).not.toHaveProperty(key);
+    }
+    expect(res.body).not.toContain('notatka AKO');
+  });
+
+  it('karta cudzej rezerwacji dla pilota: bez treści i bez stanu ścieżki; własna z obydwoma', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'PWI');
+
+    const foreign = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.ako}`, headers: session });
+    expect(foreign.statusCode, foreign.body).toBe(200);
+    expect(foreign.json().approval).toBeNull();
+    expect(foreign.json().booking).not.toHaveProperty('note');
+
+    const own = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.pwi}`, headers: session });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
+    expect(own.json().booking.note).toBe('notatka PWI');
+  });
+
+  it('„Podgląd klubu" (panel.access) widzi komplet cudzych - jak przed #216', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'AKO');
+
+    const res = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.pwi}`, headers: session });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().booking.note).toBe('notatka PWI');
+    expect(res.json().booking.createdBy).toBe('PWI');
+    expect(res.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
   });
 });

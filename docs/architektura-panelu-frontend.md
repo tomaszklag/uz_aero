@@ -406,7 +406,9 @@ admin/
       SessionProvider.tsx   sesja z GET /admin/api/me (cienko nad Query, §4.3)
       sessionContext.ts     kontekst + hook (osobno - granica Fast Refresh)
       ShellRoute.tsx        brama sesji: bez niej ekran logowania, nie pusta rama
-      RequireCapability.tsx trasa modułu platformy pyta o zdolność
+      RequireCapability.tsx KAŻDA trasa modułu pyta o dostęp (Access z nav.ts); bez
+                            niego ekran „Brak dostępu" (screens/common/NoAccessScreen.tsx,
+                            treść w noAccess.ts) - issue #216
       HomeRedirect.tsx      goły adres → PIERWSZY DOSTĘPNY ekran (homeFor)
       can.ts                CZYSTY: capability → boolean + POWÓD odmowy do UI
       googleIdentity.ts     jedyne miejsce, które zna skrypt Google Identity Services

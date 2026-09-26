@@ -44,7 +44,6 @@
 import { credentialsRevoked } from '../../../domain/credentials.ts';
 import type { MembershipStatus } from '../../../domain/memberships.ts';
 import {
-  can,
   platformCapabilitiesOf,
   type Capability,
   type PlatformRole,
@@ -299,14 +298,17 @@ export type PanelLoginResult =
   | { ok: false; reason: 'invalid_token' }
   | { ok: false; reason: 'account_disabled' }
   /**
-   * `no_panel_access` jest ODRĘBNY i to jest decyzja produktowa z mockupu A00: konto
-   * loguje się POPRAWNIE, a odbija się o rolę - i ma zobaczyć dlaczego („panel jest dla
-   * administratora; pilot pracuje w aplikacji na telefonie"). Od wielofirmowości znaczy:
-   * w ŻADNYM klubie nie jest administratorem i nie jest superadministratorem - także
-   * wtedy, gdy klubu nie ma wcale (osoba po pierwszym logowaniu). Dawne `not_registered`
-   * zniknęło razem z bramą „brak konta": konto jest zawsze, pytaniem jest członkostwo.
+   * `no_membership` jest ODRĘBNY i to jest decyzja produktowa z mockupu A00: konto
+   * loguje się POPRAWNIE, a odbija się o brak klubu - i ma zobaczyć dlaczego. Od
+   * issue #216 („panel dla wszystkich") znaczy DOKŁADNIE: w żadnym klubie nie ma
+   * aktywnego członkostwa i nie jest superadministratorem - osoba po pierwszym
+   * logowaniu, ze zgłoszeniem `pending`, odrzucona albo wyłączona wszędzie. Członek
+   * z pustym zakresem WCHODZI (Moje konto i kalendarz), więc dawne `no_panel_access`
+   * („nie ma roli panelu") przestało być prawdą o kimkolwiek i zniknęło razem
+   * z bramą wejścia. Dawne `not_registered` zniknęło jeszcze wcześniej, razem
+   * z bramą „brak konta": konto jest zawsze, pytaniem jest członkostwo.
    */
-  | { ok: false; reason: 'no_panel_access' };
+  | { ok: false; reason: 'no_membership' };
 
 /**
  * Kto stoi za tokenem TRASY BEZ KLUBU (`GET /auth/memberships`, `POST /auth/join`;
@@ -607,25 +609,23 @@ export class AuthCommands {
   /**
    * Logowanie do PANELU: ten sam dostawca, inny wynik.
    *
-   * Różnice wobec telefonu są dwie i obie są istotne:
-   *  • brama `panel.access` - członkostwo bez roli panelu NIE DOSTAJE sesji (nie tylko
-   *    pustego ekranu): token, którym nic nie wolno, byłby poświadczeniem bez powodu;
-   *  • brak refresh tokenu - przeglądarka nie dostaje drugiego poświadczenia (§8.4).
-   *    Wołanie `loginWithProvider()` „dla wygody" i porzucanie refresha zostawiałoby
-   *    wiersz w `refresh_tokens` po każdym wejściu do panelu, czyli martwe sesje bez końca.
+   * Różnica wobec telefonu jest jedna i jest istotna: brak refresh tokenu - przeglądarka
+   * nie dostaje drugiego poświadczenia (§8.4). Wołanie `loginWithProvider()` „dla wygody"
+   * i porzucanie refresha zostawiałoby wiersz w `refresh_tokens` po każdym wejściu do
+   * panelu, czyli martwe sesje bez końca. Bramy `panel.access` tu NIE MA od issue #216:
+   * panel jest dla każdego członka, a zdolność otwiera moduły, nie drzwi (`enterPanel`).
    *
-   * Klub sesji wybieramy spośród członkostw Z ROLĄ PANELU tą samą regułą, co dla telefonu
-   * (ostatnio używany → jedyny → pierwszy alfabetycznie). Ekran wyboru klubu przy kilku
-   * członkostwach administratora i przełącznik „Zmień klub" to epik E - do tego czasu
-   * wybór jest deterministyczny, a nie interaktywny.
+   * Klub sesji wybieramy spośród AKTYWNYCH członkostw tą samą regułą, co dla telefonu
+   * (ostatnio używany → jedyny → pierwszy alfabetycznie); przy kilku klubach panel
+   * pokazuje ekran wyboru, a kafel w kolumnie jest przełącznikiem (epik E).
    *
-   * Superadministrator BEZ członkostwa `admin` dostaje sesję PLATFORMOWĄ (§3.3) - ona
-   * otwiera wyłącznie moduł Organizacje. Osoba, która jest jednym i drugim, wchodzi jako
-   * administrator klubu: sesja klubu ma zdolności, których platformowa nie ma, a przejście
-   * na „Organizacje" jest dla niej przełączeniem kontekstu (epik E), nie logowaniem.
+   * Superadministrator BEZ członkostwa dostaje sesję PLATFORMOWĄ (§3.3) - ona otwiera
+   * wyłącznie moduł Organizacje. Osoba, która jest jednym i drugim, wchodzi do klubu:
+   * sesja klubu ma zdolności, których platformowa nie ma, a przejście na „Organizacje"
+   * jest dla niej przełączeniem kontekstu (epik E), nie logowaniem.
    *
    * Osoba bez klubu NIE dostaje tu tokenu osoby: ekrany oczekiwania i kodu klubu są
-   * funkcją aplikacji pilota, a nie back-office'u - dla panelu to `no_panel_access`.
+   * funkcją aplikacji pilota, a nie back-office'u - dla panelu to `no_membership`.
    */
   async panelLoginWithProvider(
     idToken: string,
@@ -640,24 +640,35 @@ export class AuthCommands {
     return result;
   }
 
-  /** Wspólny rdzeń wejścia do PANELU od chwili ustalenia osoby - dla Google i dla hasła. */
+  /**
+   * Wspólny rdzeń wejścia do PANELU od chwili ustalenia osoby - dla Google i dla hasła.
+   *
+   * ══ PANEL DLA KAŻDEGO CZŁONKA (issue #216, 2026-09-25) ══
+   * Do 3.1.0 sesję klubu dostawało wyłącznie członkostwo ze zdolnością `panel.access`;
+   * odtąd KAŻDE AKTYWNE - dokładnie ta sama reguła, którą telefon stosuje od
+   * wielofirmowości. Co taki członek w panelu zobaczy, rozstrzyga zakres: Moje konto
+   * i kalendarz ma każdy, dziennik, pilotów i samoloty otwiera „Podgląd klubu"
+   * (`panel.access`), zapisy - zdolności właściwe. Pusty zbiór zdolności NIE jest
+   * powodem odmowy: token z pustym zbiorem otwiera trasy sesji i kalendarza, a odmowę
+   * na module powie brama trasy - z nazwą brakującej zdolności.
+   */
   private async enterPanel(account: PilotAccount, entry: LoginEntry): Promise<PanelEntry> {
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
     const memberships = await this.pilots.memberships(account.id);
-    const admin = await this.pickActive(account.id, memberships, (m) => can(m.capabilities, 'panel.access'));
+    const member = await this.pickActive(account.id, memberships);
     const scopes = panelScopesOf(memberships, account.platformRole);
 
-    if (admin == null) {
-      if (account.platformRole == null) return { ok: false, reason: 'no_panel_access' };
+    if (member == null) {
+      if (account.platformRole == null) return { ok: false, reason: 'no_membership' };
       const sid = await this.openPanelSession(account.id, null, entry);
       return {
         ok: true,
         session: platformSession(this.tokens, account, account.platformRole, scopes, sid),
       };
     }
-    const sid = await this.openPanelSession(account.id, admin.orgId, entry);
-    return { ok: true, session: orgSession(this.tokens, account, admin, scopes, sid) };
+    const sid = await this.openPanelSession(account.id, member.orgId, entry);
+    return { ok: true, session: orgSession(this.tokens, account, member, scopes, sid) };
   }
 
   /**
@@ -764,11 +775,12 @@ export class AuthCommands {
       };
     }
 
+    // Cel: AKTYWNE członkostwo - bez pytania o zdolność (issue #216): klub, w którym
+    // ta osoba jest tylko pilotem, jest zakresem tak samo jak ten, w którym rządzi.
     const membership = memberships.find((m) => m.orgId === target);
     if (
       membership == null ||
       !isActive(membership) ||
-      !can(membership.capabilities, 'panel.access') ||
       credentialsRevoked(membership.credentialsValidFrom, request.issuedAt)
     ) {
       return { ok: false, reason: 'not_found' };
@@ -1148,18 +1160,22 @@ const enteredSince = (lastLoginAt: Date | null, issuedAt: number): boolean =>
  * Zakresy panelu z członkostw osoby - JEDNA definicja dla logowania, `GET /me`
  * i przełączenia (issue #101, E2).
  *
- * Do klubów wchodzą wyłącznie członkostwa AKTYWNE Z ROLĄ PANELU: klub, w którym ta osoba
- * jest tylko pilotem, na listę wyboru NIE wchodzi - karta „bez dostępu" obiecywałaby
- * wejście, którego reguły odmówią (mockup `00a-wybor-klubu`; ta sama zasada, co przy
- * wyszarzonym przycisku - patrz 10B w aplikacji pilota). O takim klubie mówi telefon.
+ * Do klubów wchodzą wszystkie członkostwa AKTYWNE (issue #216 - do 3.1.0 wyłącznie te
+ * ze zdolnością `panel.access`): klub, w którym ta osoba jest tylko pilotem, jest na
+ * liście wyboru z podpisem „pilot", bo panel otwiera jej tam Moje konto i kalendarz
+ * (mockup `00a-wybor-klubu`). Karta nie obiecuje wejścia, którego reguły odmówią,
+ * bo reguły już nie odmawiają.
  */
 export function panelScopesOf(
   memberships: readonly Membership[],
   platformRole: PlatformRole | null,
 ): PanelScopes {
+  // Od issue #216 na listę wchodzi KAŻDE aktywne członkostwo - także takie z pustym
+  // zakresem: panel jest dla każdego członka, a co w nim widać, mówi zbiór zdolności
+  // niesiony obok (karta wyboru pisze go drugą linią: „pilot · Twój kod PWI").
   return {
     clubs: memberships
-      .filter((m): m is Membership & { code: string } => isActive(m) && can(m.capabilities, 'panel.access'))
+      .filter((m): m is Membership & { code: string } => isActive(m))
       .map((m) => ({ org: orgRefOf(m), code: m.code, capabilities: m.capabilities })),
     platform: platformRole != null,
   };

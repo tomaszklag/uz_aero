@@ -14,6 +14,7 @@ export type * from './bugReports.ts';
 export type * from './consumption.ts';
 export type * from './corrections.ts';
 export type * from './dashboard.ts';
+export type * from './directory.ts';
 export type * from './events.ts';
 export type * from './exports.ts';
 export type * from './flags.ts';

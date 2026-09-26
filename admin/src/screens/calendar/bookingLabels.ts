@@ -45,7 +45,7 @@ const OPERATION: Readonly<Record<string, string>> = {
   inne: 'Inne',
 };
 
-export const operationLabel = (operation: string | null): string =>
+export const operationLabel = (operation: string | null | undefined): string =>
   operation == null ? NONE : (OPERATION[operation] ?? operation);
 
 export const blockReasonLabel = (reason: string | null): string =>
@@ -185,6 +185,9 @@ const czesc = (f: Intl.DateTimeFormat, at: Date, typ: Intl.DateTimeFormatPartTyp
  * o skutku zamiast wołać nazwy pól po imieniu). Kto - mówi KOD, który się nie odmienia.
  */
 export function originLabel(booking: BookingDto, person: PersonLookup): string {
+  // Cudza rezerwacja bez „Podglądu klubu" (issue #216) autora nie niesie - wiersza
+  // „Założona" wtedy nie ma, więc ten napis nie ma gdzie stanąć; pusty jest bezpieczny.
+  if (booking.createdBy == null) return '';
   if (booking.pilotId != null && booking.createdBy === booking.pilotId) return 'przez pilota, z aplikacji';
   const kto = person(booking.createdBy);
   return kto == null ? 'z panelu' : `z panelu · ${kto.code}`;

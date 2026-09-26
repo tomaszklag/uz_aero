@@ -68,7 +68,16 @@ export interface AdminRouteSpec {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Ścieżka WZGLĘDEM `ADMIN_API_PREFIX`, np. `/flags/:id/resolve`. */
   url: string;
-  capability: Capability;
+  /**
+   * `null` = trasa KAŻDEGO AKTYWNEGO CZŁONKA klubu (issue #216, „panel dla wszystkich").
+   *
+   * Od 3.1.0 do panelu wchodzi każde aktywne członkostwo, a zdolność `panel.access`
+   * przestała być wejściem i została „Podglądem klubu" (dziennik, piloci, samoloty).
+   * Kalendarz i słownik klubu ma każdy członek - tak samo, jak w aplikacji na telefonie -
+   * więc te trasy nie mają o jaką pozycję katalogu pytać. `null` stoi w deklaracji
+   * JAWNIE, żeby grep po `capability:` dalej odpowiadał, czego wymaga każda trasa.
+   */
+  capability: Capability | null;
 }
 
 /**
@@ -100,11 +109,10 @@ export function adminRoute(
     method: spec.method,
     url: `${ADMIN_API_PREFIX}${spec.url}`,
     handler: async (req, reply) => {
-      // Bramy `panel.access` nie dokładamy obok zdolności właściwej dla operacji:
-      // mapa w `domain/roles.ts` nie przyznaje ŻADNEJ zdolności panelu roli, która
-      // nie ma wejścia do panelu, więc druga kontrola nie odrzuciłaby niczego,
-      // co przeszło pierwszą. Dwupoziomowa brama z §8.6 ma sens dopiero przy
-      // scope'ie z logowaniem panelu (wtedy niesie komunikat ekranu A00).
+      // Brama jest JEDNOPOZIOMOWA i pyta wyłącznie o zdolność trasy. Od issue #216
+      // („panel dla wszystkich") drugi poziom - `panel.access` dla wszystkiego - byłby
+      // wprost błędny: kalendarz i słownik klubu czyta każdy członek, a `panel.access`
+      // otwiera odtąd tylko trzy moduły podglądu klubu.
       const outcome = await authorizeOrg(
         gate.tokens,
         gate.accounts,
@@ -180,7 +188,9 @@ export function sessionRoute(
         });
       }
 
-      const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, 'panel.access');
+      // Pytania SESJI zadaje każdy aktywny członek (issue #216): „kim jestem", „przełącz
+      // mnie", moje hasło i moje urządzenia nie zależą od żadnej pozycji katalogu.
+      const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, null);
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
       await touchSession(gate, req, outcome.account.sessionId);
@@ -196,6 +206,13 @@ export function platformRoute(
   spec: AdminRouteSpec,
   handler: (req: FastifyRequest, reply: FastifyReply, actor: PlatformActor) => Promise<unknown>,
 ): void {
+  // Trasa platformy ZAWSZE pyta o zdolność: „każdy członek" (`null`, issue #216) jest
+  // pojęciem klubu, a platforma członków nie ma. Odmowa pada przy rejestracji, nie
+  // przy pierwszym żądaniu - błąd składania serwera ma wywrócić start, nie produkcję.
+  const capability = spec.capability;
+  if (capability == null) {
+    throw new Error(`platformRoute ${spec.method} ${spec.url}: trasa platformy wymaga zdolności`);
+  }
   app.route({
     method: spec.method,
     url: `${ADMIN_API_PREFIX}${spec.url}`,
@@ -205,7 +222,7 @@ export function platformRoute(
         gate.accounts,
         gate.sessions,
         tokenFromRequest(req),
-        spec.capability,
+        capability,
       );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 

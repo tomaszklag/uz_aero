@@ -776,8 +776,9 @@ starym pakiecie - decyzja o tym w epiku W.
     własny wpis w dzienniku (`membership.reopen` dołożone do katalogu akcji);
   - **kolejka i kod klubu mają WŁASNE trasy** (`GET /memberships/pending`,
     `GET|POST /club-code*`), nie pola w `GET /pilots`: tamta lista jedzie na
-    `panel.access` (czyta ją każdy z wejściem do panelu, jest też słownikiem pilotów dla
-    filtrów), a kolejka i kod - na `accounts.manage`. Zdolność jest atrybutem TRASY, więc
+    `panel.access` (od issue #216 „Podgląd klubu" - czyta ją ten, kto ma podgląd, a kalendarz
+    bierze nazwiska dla KAŻDEGO członka z węższego słownika `GET /admin/api/directory`),
+    a kolejka i kod - na `accounts.manage`. Zdolność jest atrybutem TRASY, więc
     doklejenie ich do listy oddałoby adresy kandydatów każdemu, kto ją czyta;
   - **„ile zgłoszeń czeka tym kodem" liczy się od `join_code_since`** - `memberships` nie
     zapisuje, którym kodem ktoś wszedł, i zapisywać nie ma po co (kod jest jeden na klub,

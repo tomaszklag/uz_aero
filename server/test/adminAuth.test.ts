@@ -5,7 +5,9 @@
  *  1. token wychodzi WYŁĄCZNIE ciasteczkiem `HttpOnly` - ciało odpowiedzi go nie niesie;
  *  2. ciasteczko autoryzuje trasy panelu tak samo jak `Bearer`, a `Bearer` nadal działa
  *     (jedna brama, dwa kanały - `http/tokenFromRequest.ts`);
- *  3. konto bez `panel.access` NIE DOSTAJE sesji (nie „dostaje pustą") - i wie dlaczego;
+ *  3. konto bez KLUBU nie dostaje sesji - i wie dlaczego; członek z PUSTYM zakresem
+ *     sesję dostaje (issue #216, „panel dla wszystkich"), a odmowę słyszy dopiero na
+ *     module, z nazwą brakującej zdolności;
  *  4. wylogowanie unieważnia ciasteczko po stronie przeglądarki.
  *
  * Wszystko przez prawdziwe endpointy na PGlite (`app.inject`), zero atrap - jak reszta
@@ -151,15 +153,15 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
     expect(setCookieHeader(badToken)).toBe('');
   });
 
-  it('konto Google BEZ klubu → 403 `no_panel_access`, nie „złe poświadczenia"', async () => {
+  it('konto Google BEZ klubu → 403 `no_membership`, nie „złe poświadczenia"', async () => {
     // Od epiku D osoba powstaje przy pierwszym logowaniu, więc „konta nie ma" przestało
-    // istnieć jako stan: nieznajomy jest osobą bez członkostwa i dla panelu znaczy dokładnie
-    // to, co pilot bez roli - w żadnym klubie nie jest administratorem.
+    // istnieć jako stan: nieznajomy jest osobą bez członkostwa. Od issue #216 to JEDYNY
+    // powód odmowy dla rozpoznanego konta - pilot z klubem wchodzi (blok niżej).
     const { app } = await testHarness();
     const res = await panelLogin(app, 'nieznajomy', googleTokenForStranger('obcy'));
 
     expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_panel_access' });
+    expect(res.json()).toEqual({ error: 'no_membership' });
     expect(setCookieHeader(res)).toBe('');
   });
 });
@@ -177,35 +179,74 @@ describe('konfiguracja przycisku Google - `GET /admin/api/auth/google-client`', 
   });
 });
 
-describe('konto bez `panel.access` nie dostaje sesji panelu', () => {
-  it('pilot z POPRAWNYM kontem Google odbija się o rolę - 403 z powodem, bez ciasteczka', async () => {
-    // Mockup A00 mówi to wprost: „konto pilota zaloguje się poprawnie, ale zobaczy
-    // komunikat". Odpowiedź musi więc być ODRÓŻNIALNA od złego hasła, inaczej pilot
-    // szukałby błędu w haśle, którego nie ma.
+describe('panel dla KAŻDEGO członka klubu (issue #216)', () => {
+  it('pilot z PUSTYM zakresem dostaje sesję: ciasteczko, klub i pusta lista zdolności', async () => {
+    // Do 3.1.0 ten sam pilot dostawał tu 403 `no_panel_access`. Panel jest odtąd
+    // powierzchnią KAŻDEGO członka - zakres rozstrzyga, co w nim widać, a nie czy
+    // wolno wejść. PWI jest w dwóch klubach jako pilot, więc lista zakresów ma DWA
+    // wpisy, oba z pustym zbiorem - karta wyboru napisze przy nich „pilot".
     const { app } = await testHarness();
     const res = await panelLogin(app, 'PWI');
 
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_panel_access' });
-    expect(setCookieHeader(res)).toBe('');
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json()).toMatchObject({
+      pilot: { id: 'PWI', code: 'PWI' },
+      org: { id: ORG_A },
+      capabilities: [],
+    });
+    expect(res.json().scopes.clubs.map((c: { org: { id: string }; capabilities: string[] }) => [c.org.id, c.capabilities])).toEqual([
+      [ORG_A, []],
+      [ORG_B, []],
+    ]);
+    expect(setCookieHeader(res)).toContain('ninerdeck_admin=');
   });
 
-  it('pilot nie ma czym otworzyć panelu także tokenem `Bearer` z aplikacji', async () => {
-    // Druga strona tej samej reguły: brak sesji panelu nie jest jedynym zamkiem.
+  it('pusty zakres otwiera sesję i kalendarz, a moduł podglądu klubu odmawia Z NAZWĄ zdolności', async () => {
+    // Odmowa przesunęła się z drzwi na moduł: „kim jestem" i kalendarz odpowiadają
+    // każdemu członkowi, dziennik pyta o `panel.access` - i mówi, czego brakuje, żeby
+    // panel mógł napisać, kogo o to prosić.
+    const { app } = await testHarness();
+    const cookie = sessionCookie(await panelLogin(app, 'PWI'));
+
+    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().capabilities).toEqual([]);
+
+    const directory = await app.inject({ method: 'GET', url: '/admin/api/directory', headers: { cookie } });
+    expect(directory.statusCode).toBe(200);
+
+    const logbook = await app.inject({ method: 'GET', url: '/admin/api/sessions', headers: { cookie } });
+    expect(logbook.statusCode).toBe(403);
+    expect(logbook.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
+
+    const pilots = await app.inject({ method: 'GET', url: '/admin/api/pilots', headers: { cookie } });
+    expect(pilots.statusCode).toBe(403);
+  });
+
+  it('ta sama reguła tokenem `Bearer` z aplikacji - brama jest jedna', async () => {
     const { app } = await testHarness();
     const phone = await app.inject({
       method: 'POST',
       url: '/auth/google',
       payload: { idToken: googleTokenFor('PWI') },
     });
+    const bearer = { authorization: `Bearer ${phone.json().token}` };
 
-    const me = await app.inject({
-      method: 'GET',
-      url: '/admin/api/me',
-      headers: { authorization: `Bearer ${phone.json().token}` },
-    });
-    expect(me.statusCode).toBe(403);
-    expect(me.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
+    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: bearer });
+    expect(me.statusCode).toBe(200);
+    const fleet = await app.inject({ method: 'GET', url: '/admin/api/fleet', headers: bearer });
+    expect(fleet.statusCode).toBe(403);
+    expect(fleet.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
+  });
+
+  it('członkostwo WYŁĄCZONE wszędzie to brak klubu - 403 `no_membership`, bez ciasteczka', async () => {
+    const { app, db } = await testHarness();
+    await db.query(`UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'JSE'`);
+
+    const res = await panelLogin(app, 'JSE');
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'no_membership' });
+    expect(setCookieHeader(res)).toBe('');
   });
 });
 
@@ -270,11 +311,19 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
       headers: { cookie: adminCookie, authorization: `Bearer ${pilot.json().token}` },
     });
 
-    // Wygrywa nagłówek - czyli token PILOTA, czyli 403. Gdyby wygrywało ciasteczko,
-    // ten sam mechanizm w drugą stronę pozwalałby podnieść uprawnienia doklejeniem
-    // cudzego ciasteczka do żądania ze słabszym tokenem.
-    expect(me.statusCode).toBe(403);
-    expect(me.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
+    // Wygrywa nagłówek - czyli token PILOTA: sesja jest sesją PWI z PUSTYM zakresem
+    // (od issue #216 pilot wchodzi), a nie sesją administratora z ciasteczka. Gdyby
+    // wygrywało ciasteczko, ten sam mechanizm w drugą stronę pozwalałby podnieść
+    // uprawnienia doklejeniem cudzego ciasteczka do żądania ze słabszym tokenem.
+    expect(me.statusCode).toBe(200);
+    expect(me.json()).toMatchObject({ pilot: { id: 'PWI' }, capabilities: [] });
+    const logbook = await app.inject({
+      method: 'GET',
+      url: '/admin/api/sessions',
+      headers: { cookie: adminCookie, authorization: `Bearer ${pilot.json().token}` },
+    });
+    expect(logbook.statusCode).toBe(403);
+    expect(logbook.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
   });
 
   it('bez żadnego poświadczenia → 401', async () => {
@@ -298,8 +347,8 @@ describe('ciasteczko autoryzuje trasy panelu - i nie odbiera tego `Bearer`', () 
 describe('przełączenie zakresu sesji panelu', () => {
   /** Członkostwo `admin` w Becie dla AKO - świat bazowy nie ma nikogo w dwóch klubach. */
   // Członkostwo PLUS zakres: po epiku #197 sama wstawka do `memberships` daje PILOTA,
-  // bo zdolności są osobnymi wierszami. Bez nich brama odpowiada 404 na przełączenie -
-  // i słusznie, bo klub, w którym ktoś nie ma wejścia do panelu, dla panelu nie istnieje.
+  // bo zdolności są osobnymi wierszami. Od issue #216 pilot też się przełącza (test
+  // niżej), więc komplet zdolności jest tu po to, żeby sesja Bety była sesją ADMINISTRATORA.
   const makeAdminInBeta = async (db: Harness['db']) => {
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
@@ -347,26 +396,41 @@ describe('przełączenie zakresu sesji panelu', () => {
     expect(me.json().org.id).toBe(ORG_B);
   });
 
-  it('klub, w którym ta osoba jest tylko PILOTEM, nie istnieje dla panelu (404)', async () => {
+  it('klub, w którym ta osoba jest tylko PILOTEM, JEST zakresem - sesja z pustą listą zdolności', async () => {
+    // Do issue #216 klub bez `panel.access` odpowiadał 404 i nie stał na liście wyboru.
+    // Odtąd administrator Alfy będący w Becie zwykłym pilotem przełącza się tam
+    // i dostaje sesję Bety z pustym zakresem: Moje konto i kalendarz Bety, nic więcej.
     const { app, db } = await testHarness();
-    // PWI jest pilotem w obu klubach - ale panel jest dla administratora, więc nie ma
-    // czego mu pokazać. Bierzemy jednak administratora Alfy i celujemy w Betę, gdzie
-    // członkostwa nie ma wcale: obie drogi mają dać TĘ SAMĄ odpowiedź.
     await db.query(
       `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
        VALUES ($1, 'AKO', 'AKB', 'active', 'platform')`,
       [ORG_B],
     );
     const cookie = sessionCookie(await panelLogin(app, 'AKO'));
+    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
+    expect(me.json().scopes.clubs.map((c: { org: { id: string } }) => c.org.id)).toEqual([ORG_A, ORG_B]);
+
+    const res = await switchTo(app, cookie, ORG_B);
+
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json()).toMatchObject({ pilot: { id: 'AKO', code: 'AKB' }, org: { id: ORG_B }, capabilities: [] });
+    // W Becie ta sama osoba nie otwiera dziennika - zdolności są W KLUBIE, nie w osobie.
+    const logbook = await app.inject({
+      method: 'GET',
+      url: '/admin/api/sessions',
+      headers: { cookie: sessionCookie(res) },
+    });
+    expect(logbook.statusCode).toBe(403);
+  });
+
+  it('klub, w którym członkostwa NIE MA wcale, dalej nie istnieje dla panelu (404)', async () => {
+    const { app } = await testHarness();
+    const cookie = sessionCookie(await panelLogin(app, 'AKO'));
 
     const res = await switchTo(app, cookie, ORG_B);
 
     expect(res.statusCode).toBe(404);
     expect(res.json()).toEqual({ error: 'not_found' });
-    // Klub bez roli panelu nie stoi też na liście wyboru - karta „bez dostępu"
-    // obiecywałaby wejście, którego reguły odmówią.
-    const me = await app.inject({ method: 'GET', url: '/admin/api/me', headers: { cookie } });
-    expect(me.json().scopes.clubs).toHaveLength(1);
   });
 
   it('CIASTECZKO SPRZED WYŁĄCZENIA CZŁONKOSTWA nie mieni nowej sesji', async () => {

@@ -21,7 +21,7 @@ import { useMemo, useState } from 'react';
 
 import type { BookingDto } from '../../api/dto';
 import { useCreateBlock, useCreateBooking } from '../../queries/useCalendar';
-import { usePilots } from '../../queries/usePilots';
+import { useDirectory } from '../../queries/useDirectory';
 import { Button, Card, Drawer, Field, OptionButton, TextInput } from '../../ui/components';
 import { bookingErrorMessage } from './bookingRefusal';
 import type { CalendarAircraft } from './calendarGrid';
@@ -58,7 +58,9 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
   const isBlock = mode === 'block';
   const [block, setBlock] = useState(emptyBlockDraft);
   const [booking, setBooking] = useState(emptyBookingDraft);
-  const pilots = usePilots({});
+  // Słownik klubu, nie lista modułu Piloci (issue #216): rezerwację za pilota wpisuje
+  // ktoś z `reservations.manage`, a ta zdolność nie niesie „Podglądu klubu".
+  const directory = useDirectory();
 
   const createBlock = useCreateBlock();
   const createBooking = useCreateBooking();
@@ -194,11 +196,13 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
               onChange={(e) => setBooking((d) => ({ ...d, pilotId: e.target.value }))}
             >
               <option value="">Wybierz pilota</option>
-              {(pilots.data?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} · {p.code}
-                </option>
-              ))}
+              {(directory.data?.members ?? [])
+                .filter((p) => p.active)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · {p.code}
+                  </option>
+                ))}
             </select>
           </Field>
           <div className="opt-list">

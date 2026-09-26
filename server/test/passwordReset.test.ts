@@ -256,9 +256,16 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
 
   it('bez `accounts.manage` (pilot) → 403; awaria poczty → 502, a token i wpis zostają', async () => {
     const { app, db, mail } = await testHarness();
-    // JSE jest pilotem - do panelu nie wchodzi wcale.
-    const pilot = await app.inject({ method: 'POST', url: '/admin/api/auth/login', headers: ADMIN_CSRF_HEADERS, payload: { idToken: googleTokenFor('JSE') } });
+    // JSE jest pilotem: do panelu WCHODZI (issue #216), ale listu nie wyśle - zdolność
+    // stoi na trasie, nie na drzwiach.
+    const pilot = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/KRZ/password-link',
+      headers: ADMIN_CSRF_HEADERS,
+      cookies: { ninerdeck_admin: await panelCookie(app, 'JSE') },
+    });
     expect(pilot.statusCode).toBe(403);
+    expect(pilot.json()).toEqual({ error: 'forbidden', required: 'accounts.manage' });
 
     const cookie = await panelCookie(app, 'AKO');
     mail.failing = true;

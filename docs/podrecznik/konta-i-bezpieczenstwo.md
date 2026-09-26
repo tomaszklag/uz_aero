@@ -40,9 +40,9 @@ Każde zalogowanie - w aplikacji i w panelu - zostawia **wiersz sesji**: jakie t
 
 ## Zakres uprawnień: co wolno w klubie
 
-To, co wolno Ci w klubie, opisuje **zakres uprawnień** - i należy on do **członkostwa**, nie do człowieka: w jednym klubie możesz układać flotę, a w drugim tylko latać. Zakres składa się z pojedynczych zdolności („Wejście do panelu", „Flota", „Akceptacja rezerwacji"), więc administrator daje dokładnie to, co potrzebne: mechanik rozstrzyga swój krok akceptacji z telefonu, a floty ani kont nie dotyka.
+To, co wolno Ci w klubie, opisuje **zakres uprawnień** - i należy on do **członkostwa**, nie do człowieka: w jednym klubie możesz układać flotę, a w drugim tylko latać. Zakres składa się z pojedynczych zdolności („Podgląd klubu", „Flota", „Akceptacja rezerwacji"), więc administrator daje dokładnie to, co potrzebne: mechanik rozstrzyga swój krok akceptacji z telefonu, a floty ani kont nie dotyka.
 
-Przy nadawaniu administrator wybiera **zestaw** - gotowy skrót w rodzaju „Pilot", „Technik" czy „Administrator" - i w razie potrzeby poprawia pojedyncze pozycje; wtedy zakres nazywa się „własny". Domyślny jest pusty: wchodzisz do klubu po to, żeby latać. Bez zdolności „Wejście do panelu" logowanie do panelu kończy się komunikatem, a nie awarią.
+Przy nadawaniu administrator wybiera **zestaw** - gotowy skrót w rodzaju „Pilot", „Technik" czy „Administrator" - i w razie potrzeby poprawia pojedyncze pozycje; wtedy zakres nazywa się „własny". Domyślny jest pusty: wchodzisz do klubu po to, żeby latać. **Do panelu wchodzi każdy członek** - z pustym zakresem ma w nim Moje konto i kalendarz, a dziennik, pilotów i samoloty otwiera zdolność „Podgląd klubu". Który ekran otwiera każda zdolność: [zakresy uprawnień](uprawnienia).
 
 Osobno stoi zdolność **„Obserwowanie samolotów"**: karta maszyny w aplikacji - co się z nią dzieje teraz, liczniki, terminy, historia lotów, wykresy - i powiadomienia o jej lotach po włączeniu obserwowania. Mają ją zestawy „Akceptujący", „Koordynator lotów" i „Technik" (administrator przez komplet); osobie przyjętej wcześniej administrator nadaje ją w karcie członka. Co obserwujesz, ustawiasz w aplikacji albo w panelu na stronie **Moje konto**. Szczegóły: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu).
 

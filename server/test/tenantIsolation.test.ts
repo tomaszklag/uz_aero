@@ -989,6 +989,19 @@ const CASES: Record<string, Probe> = {
     expect(res.json().items.map((i: { code: string }) => i.code)).not.toContain('PWB');
   },
 
+  // Słownik klubu (issue #216) - trasa KAŻDEGO członka, więc sonda pyta tokenem
+  // zwykłego pilota Alfy: żadnego nazwiska ani znaku Bety, a własne widać.
+  'GET /admin/api/directory': async ({ app, pwiA }) => {
+    const res = await app.inject({ method: 'GET', url: '/admin/api/directory', headers: bearer(pwiA) });
+    expectClean(res, '/admin/api/directory');
+    expect(res.json().members.map((m: { code: string }) => m.code)).toContain('AKO');
+    expect(res.json().members.map((m: { code: string }) => m.code)).not.toContain('PWB');
+    expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).toContain('SP-AXA');
+    expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).not.toContain('SP-BBB');
+    // Cztery pola i ani jednego więcej: adresu, zakresu ani sesji słownik nie niesie.
+    expect(Object.keys(res.json().members[0]).sort()).toEqual(['active', 'code', 'id', 'name']);
+  },
+
   'PATCH /admin/api/pilots/:id': async ({ app, a }) => {
     expect(
       (await app.inject({ method: 'PATCH', url: '/admin/api/pilots/BPI', headers: writer(a), payload: { name: 'X Y' } }))

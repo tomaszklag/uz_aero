@@ -16,8 +16,9 @@
  * „idź po administratora":
  *  • `429 too_many_attempts` - za dużo prób. Zdanie niesie CZAS, nie „chwilę": minuta
  *    i kwadrans to dwie różne decyzje człowieka stojącego przy tablecie;
- *  • `403 no_panel_access` - osoba jest, ale w żadnym klubie nie jest administratorem
- *    (zwykły pilot albo ktoś, kto nie ma jeszcze klubu);
+ *  • `403 no_membership` - osoba jest, ale nie ma aktywnego członkostwa w żadnym klubie
+ *    (ktoś po pierwszym logowaniu, ze zgłoszeniem w kolejce albo wyłączony); od
+ *    issue #216 zwykły pilot NIE jest tym przypadkiem - wchodzi z pustym zakresem;
  *  • `401 account_disabled` - osoba zablokowana; próbowanie ponownie nic nie zmieni.
  *    Mówimy to WPROST, bo tożsamość jest już dowiedziona - nie ma czego ukrywać.
  */
@@ -56,13 +57,13 @@ export function loginMessage(error: unknown): LoginMessage {
   }
 
   if (error.status === 403) {
-    // Jedno zdanie na DWIE sytuacje, których serwer nie rozróżnia (`no_panel_access`):
-    // członek klubu bez wejścia do panelu i osoba BEZ KLUBU - od issue #180 także taka,
-    // która przed chwilą założyła konto w tym panelu. Dla niej „poproś administratora
-    // klubu" byłoby zdaniem o kimś, kogo jeszcze nie ma: klub przychodzi kodem w aplikacji.
+    // Od issue #216 („panel dla wszystkich") 403 znaczy JEDNO: osoba bez aktywnego
+    // członkostwa (`no_membership`) - po pierwszym logowaniu, ze zgłoszeniem w kolejce,
+    // odrzucona albo wyłączona wszędzie. Członek klubu wchodzi zawsze, więc zdanie
+    // „dostęp nadaje administrator" zniknęło: nie ma już czego nadawać, żeby wejść.
     return {
       tone: 'warn',
-      text: 'To konto nie ma dostępu do panelu. Do klubu wchodzi się kodem klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu.',
+      text: 'To konto nie należy jeszcze do żadnego klubu. Do klubu wchodzi się kodem klubu w aplikacji Ninerdeck - potem panel otworzy się tym samym kontem.',
     };
   }
 

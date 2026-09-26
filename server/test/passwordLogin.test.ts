@@ -209,14 +209,16 @@ describe('logowanie hasłem - panel (§5.2)', () => {
     expect(res.body).not.toContain(cookie!.value);
   });
 
-  it('pilot bez roli panelu: hasło zgodne → 403 `no_panel_access`, bez ciasteczka', async () => {
+  it('pilot bez zdolności: hasło zgodne → sesja z PUSTYM zakresem (issue #216), ciasteczko jest', async () => {
+    // Hasło kończy się dokładnie tam, gdzie Google: od issue #216 panel wpuszcza każdego
+    // członka klubu, a zakres rozstrzyga o modułach - nie o drzwiach.
     const { app } = await testHarness();
     await withPassword(app, 'JSE');
 
     const res = await panelLogin(app, 'jan@ninerdeck.pl', PASSWORD);
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_panel_access' });
-    expect(res.cookies).toEqual([]);
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json()).toMatchObject({ pilot: { id: 'JSE' }, capabilities: [] });
+    expect(res.cookies.find((c) => c.name === 'ninerdeck_admin')).toBeDefined();
   });
 
   it('login nieznany i złe hasło - jedno 401, `429` po limicie', async () => {

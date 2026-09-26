@@ -23,7 +23,8 @@ export function registerAdminPreviewRoutes(
   adminRoute(
     app,
     gate,
-    { method: 'GET', url: '/bookings/:id/preview/pilot/:pilotId', capability: 'panel.access' },
+    // `null` (issue #216): o prawie do podglądu rozstrzyga para zdolności niżej, jak przy decyzji.
+    { method: 'GET', url: '/bookings/:id/preview/pilot/:pilotId', capability: null },
     async (req, reply, actor) => {
       const approves = can(actor.capabilities, 'reservations.approve');
       const manages = can(actor.capabilities, 'reservations.manage');
@@ -40,7 +41,7 @@ export function registerAdminPreviewRoutes(
   adminRoute(
     app,
     gate,
-    { method: 'GET', url: '/bookings/:id/preview/aircraft', capability: 'panel.access' },
+    { method: 'GET', url: '/bookings/:id/preview/aircraft', capability: null },
     async (req, reply, actor) => {
       const approves = can(actor.capabilities, 'reservations.approve');
       const manages = can(actor.capabilities, 'reservations.manage');

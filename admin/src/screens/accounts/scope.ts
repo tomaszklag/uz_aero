@@ -49,9 +49,13 @@ export const CLUB_CAPABILITIES: readonly Capability[] = [
 
 /** Co dana zdolność OTWIERA - jedno zdanie, językiem klubu, nie katalogu tras. */
 export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string }> = {
+  // Od issue #216 („panel dla wszystkich") do panelu wchodzi KAŻDY członek - Moje konto
+  // i kalendarz ma każdy. Ta pozycja przestała być drzwiami, a została PODGLĄDEM:
+  // dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu. Klucz
+  // techniczny zostaje (`panel.access` = dostęp do modułów panelu), zmienia się nazwa.
   'panel.access': {
-    label: 'Wejście do panelu',
-    desc: 'Bez tego reszta zakresu nie otwiera niczego - osoba pracuje wyłącznie w aplikacji na telefonie.',
+    label: 'Podgląd klubu',
+    desc: 'Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to Moje konto i kalendarz.',
   },
   'accounts.manage': {
     label: 'Konta i kod klubu',
@@ -118,11 +122,12 @@ export interface ScopePreset {
 
 export const SCOPE_PRESETS: readonly ScopePreset[] = [
   { id: 'pilot', label: 'Pilot', capabilities: [] },
-  // Akceptujący NIE MA wejścia do panelu i to jest sedno tej pozycji: mechanik
-  // rozstrzyga swój krok z telefonu (ekran 26) i widzi kartę maszyny (27), a do
-  // back-office’u nie wchodzi. `fleet.watch` w trzech zestawach od 3.2.0 (issue #205):
-  // zgoda bez stanu maszyny byłaby podpisem w ciemno, a technik ma wiedzieć, kiedy
-  // maszyna wraca z odczytami.
+  // Akceptujący NIE MA „Podglądu klubu" i to jest sedno tej pozycji: mechanik
+  // rozstrzyga swój krok z telefonu (ekran 26) albo z kalendarza w panelu (issue #216:
+  // kalendarz i kolejka decyzji są dla każdego członka), widzi kartę maszyny (27),
+  // a dziennika, listy pilotów i kart samolotów nie ogląda. `fleet.watch` w trzech
+  // zestawach od 3.2.0 (issue #205): zgoda bez stanu maszyny byłaby podpisem w ciemno,
+  // a technik ma wiedzieć, kiedy maszyna wraca z odczytami.
   { id: 'approver', label: 'Akceptujący', capabilities: ['reservations.approve', 'fleet.watch'] },
   {
     id: 'dispatcher',

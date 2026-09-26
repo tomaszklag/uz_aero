@@ -55,6 +55,7 @@ import { AdminLoginSessionQueries } from '../src/application/admin/queries/login
 import { AdminLoginSessionCommands } from '../src/application/admin/commands/loginSessions.ts';
 import { AdminMembershipQueries } from '../src/application/admin/queries/memberships.ts';
 import { PlatformOrganizationQueries } from '../src/application/admin/queries/organizations.ts';
+import { AdminDirectoryQueries } from '../src/application/admin/queries/directory.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
@@ -528,6 +529,7 @@ const lastSeen = new LastSeenThrottle();
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+    adminDirectoryQueries: new AdminDirectoryQueries(db, adminPilotsRepo, adminFleetRepo),
     // Kolejka zgłoszeń kodem klubu (issue #100) - ten sam adapter członkostw, co lista.
     adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
     adminMembershipQueries: new AdminMembershipQueries(db, adminPilotsRepo),

@@ -38,6 +38,7 @@ import type { AdminLoginSessionQueries } from '../application/admin/queries/logi
 import type { AdminLoginSessionCommands } from '../application/admin/commands/loginSessions.ts';
 import type { AdminMembershipQueries } from '../application/admin/queries/memberships.ts';
 import type { PlatformOrganizationQueries } from '../application/admin/queries/organizations.ts';
+import type { AdminDirectoryQueries } from '../application/admin/queries/directory.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
@@ -106,6 +107,7 @@ import { registerAdminLoginSessionRoutes } from './routes/admin/loginSessions.ts
 import { registerAdminMembershipRoutes } from './routes/admin/memberships.ts';
 import { registerPlatformOrganizationRoutes } from './routes/admin/organizations.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
+import { registerAdminDirectoryRoutes } from './routes/admin/directory.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
 import { registerAdminSessionCloseRoutes } from './routes/admin/sessionClose.ts';
@@ -265,6 +267,8 @@ export interface ServerDeps {
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
+  /** Słownik klubu dla kalendarza (issue #216): nazwiska i znaki dla KAŻDEGO członka. */
+  adminDirectoryQueries: AdminDirectoryQueries;
   /** Kolejka zgłoszeń kodem klubu - karta ZGŁOSZENIA nad listą pilotów (`accounts.manage`). */
   adminMembershipQueries: AdminMembershipQueries;
   /** Kod klubu do odczytu: wartość, od kiedy obowiązuje, ile zgłoszeń nim czeka. */
@@ -538,6 +542,7 @@ export async function buildServer(
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, deps.adminPasswordLinks, gate);
+  registerAdminDirectoryRoutes(app, deps.adminDirectoryQueries, gate);
   registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
   registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
   registerAdminLoginSessionRoutes(

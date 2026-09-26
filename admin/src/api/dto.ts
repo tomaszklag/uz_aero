@@ -934,6 +934,17 @@ export type BlockReasonDto = 'maintenance' | 'defect' | 'other';
  * odpowiedzi znaczyłoby drugie źródło tych samych napisów, a przy pierwszej zmianie
  * nazwiska - dwa różne nazwiska w dwóch miejscach ekranu.
  */
+/**
+ * Zajętość w kalendarzu panelu.
+ *
+ * ══ POLA TREŚCI SĄ OPCJONALNE, NIE NULLOWALNE (issue #216) ══
+ * Odkąd kalendarz w panelu otwiera się KAŻDEMU członkowi klubu, kształt cudzej
+ * rezerwacji pyta, kto patrzy - dokładnie jak na telefonie (`docs/rezerwacje.md` §17).
+ * Własna rezerwacja i każda oglądana z „Podglądem klubu", akceptacją albo władzą nad
+ * cudzymi jedzie w komplecie; cudza dla zwykłego członka niesie same godziny, maszynę,
+ * właściciela i rodzaj. `undefined` znaczy „nie dla Ciebie", `null` - „puste": zadanie
+ * cudzej rezerwacji NIE jest puste, więc szuflada nie ma prawa napisać przy nim kreski.
+ */
 export interface BookingDto {
   id: string;
   aircraftId: string;
@@ -943,20 +954,20 @@ export interface BookingDto {
   endsAt: string;
   /** `null` przy wyłączeniu z użytku - ono nie ma właściciela. */
   pilotId: string | null;
-  dualId: string | null;
-  operation: string | null;
-  fromIcao: string | null;
-  toIcao: string | null;
-  plannedAirMin: number | null;
-  plannedFuelL: number | null;
-  /** Operacja, która ją zrealizowała; `null` = lot jeszcze się nie odbył. */
-  sessionUuid: string | null;
   blockReason: BlockReasonDto | null;
-  note: string | null;
-  createdBy: string;
-  createdAt: string;
-  closedAt: string | null;
-  closeReason: string | null;
+  dualId?: string | null;
+  operation?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  /** Operacja, która ją zrealizowała; `null` = lot jeszcze się nie odbył. */
+  sessionUuid?: string | null;
+  note?: string | null;
+  createdBy?: string;
+  createdAt?: string;
+  closedAt?: string | null;
+  closeReason?: string | null;
 }
 
 /**
@@ -979,6 +990,34 @@ export interface CalendarDto {
   homeIcao: string | null;
   days: CalendarDayDto[];
   bookings: BookingDto[];
+}
+
+/**
+ * SŁOWNIK KLUBU - `GET /admin/api/directory` (issue #216, „panel dla wszystkich").
+ *
+ * Nazwiska i znaki do podpisania zajętości: czyta go kalendarz i kolejka decyzji,
+ * a dostaje KAŻDY członek klubu. Listy modułów Piloci i Samoloty niosą więcej
+ * (adresy, zakresy, sesje, konfigurację) i stoją na „Podglądzie klubu" - kalendarz
+ * nie ma prawa o nie pytać w imieniu kogoś, kto tego podglądu nie ma.
+ */
+export interface DirectoryMemberDto {
+  id: string;
+  code: string;
+  name: string;
+  /** Wyłączony członek zostaje w słowniku - jego dawna rezerwacja ma nazwisko. */
+  active: boolean;
+}
+
+export interface DirectoryAircraftDto {
+  id: string;
+  reg: string;
+  type: string;
+  serviceStatus: ServiceStatus;
+}
+
+export interface DirectoryDto {
+  members: DirectoryMemberDto[];
+  aircraft: DirectoryAircraftDto[];
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -1082,7 +1121,12 @@ export interface BookingDetailDto {
   /** Strefa klubu - godziny decyzji czyta się nią, jak resztę kalendarza. */
   timezone: string;
   booking: BookingDto;
-  approval: ApprovalViewDto;
+  /**
+   * `null` = cudza sprawa oglądana przez zwykłego członka (issue #216): historia kroków
+   * i powody odmowy są treścią tej samej klasy, co notatka, więc jadą wyłącznie
+   * z kompletem pól. Szuflada nie rysuje wtedy karty ścieżki wcale.
+   */
+  approval: ApprovalViewDto | null;
 }
 
 /**

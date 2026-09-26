@@ -1,6 +1,6 @@
 # Panel klubu: wprowadzenie
 
-> Panel to strona w przeglądarce dla administratora klubu: konta pilotów, karty samolotów i dziennik operacji. Loguje się do niego tym samym kontem, co do aplikacji pilota - Googlem albo hasłem.
+> Panel to strona w przeglądarce dla członków klubu: kalendarz floty, a z odpowiednim zakresem uprawnień także dziennik operacji, konta pilotów i karty samolotów. Loguje się do niego tym samym kontem, co do aplikacji pilota - Googlem albo hasłem.
 
 ## Dostęp
 
@@ -12,14 +12,14 @@ Pierwszego administratora wskazuje się adresem e-mail przy zakładaniu klubu. A
 
 **Konto zakłada się też z panelu.** „Załóż konto" pod kartą logowania pyta o imię i nazwisko oraz adres i wysyła link - ten sam, co przy zapomnianym haśle. Konto powstaje w chwili, gdy ustawisz z niego hasło, więc adres jest potwierdzony samym kliknięciem. Panel odpowiada zawsze tym samym zdaniem, także dla adresu, który ma już konto - taki adres dostaje list z wyjaśnieniem, jak się zalogować. Założenie konta nie otwiera ani panelu, ani klubu: do klubu wchodzi się kodem klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu.
 
-Panel jest dla administratorów. Jeśli po logowaniu panel nie może wpuścić, mówi to jednym zdaniem:
+**Panel jest dla każdego członka klubu.** Loguje się każdy, kto ma w klubie aktywne członkostwo; o tym, które moduły widzi, decyduje jego zakres uprawnień - kto co widzi, opisuje osobna strona [zakresy uprawnień](uprawnienia). Jeśli po logowaniu panel nie może wpuścić, mówi to jednym zdaniem:
 
 | Co widzisz | Co to znaczy |
 |---|---|
 | „Nieprawidłowy e-mail lub hasło" | jedna odpowiedź na trzy sytuacje: nie znamy tego adresu, konto nie ma hasła albo hasło jest inne. Panel ich nie rozróżnia, żeby formularz nie wyliczał kont |
 | „Za dużo prób - spróbuj za …" | po kilkunastu nieudanych próbach logowanie z tego adresu odpoczywa; zdanie mówi, jak długo |
-| „To konto nie ma dostępu do panelu" | konto istnieje, ale w żadnym klubie nie ma zdolności **Wejście do panelu** - albo nie należy jeszcze do żadnego klubu, np. zostało dopiero założone. Zdanie mówi, co dalej: do klubu wchodzi się kodem klubu w aplikacji, dostęp do panelu nadaje administrator klubu |
-| „To konto jest wyłączone" | członkostwo wyłączono w module Piloci - kolejne próby nic nie zmienią, dopóki administrator go nie włączy |
+| „To konto nie należy jeszcze do żadnego klubu" | konto istnieje, ale nie ma aktywnego członkostwa w żadnym klubie - zostało dopiero założone, czeka na zatwierdzenie albo zostało wyłączone. Do klubu wchodzi się kodem klubu w aplikacji; po zatwierdzeniu panel otworzy się tym samym kontem |
+| „To konto jest wyłączone" | osobę zablokował opiekun platformy - kolejne próby nic nie zmienią |
 
 Sesja panelu trwa osiem godzin od zalogowania; potem panel prosi o ponowne logowanie. Wyłączenie członkostwa w module Piloci zrywa jego sesje od razu - w panelu i w aplikacji.
 
@@ -40,15 +40,18 @@ Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to 
 
 ## Moduły
 
-Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje tylko znak i zalogowanego. Ekranem startowym jest Dziennik: konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień. **Kolumna pokazuje to, do czego masz prawo** - moduł niedostępny dla Twojego konta nie stoi w niej wyszarzony, po prostu go nie ma.
+Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje tylko znak i zalogowanego. Ekranem startowym jest pierwszy dostępny moduł: dla administratora Dziennik (konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień), dla pilota bez podglądu klubu - Kalendarz. **Kolumna pokazuje to, do czego masz prawo** - moduł poza Twoim zakresem nie stoi w niej wyszarzony, po prostu go nie ma. Adres takiego modułu wklejony z rozmowy otwiera ekran, który mówi, której zdolności brakuje i kto ją nadaje.
 
-| Moduł | Do czego |
-|---|---|
-| [**Dziennik**](panel-dziennik) | cała flota w zakresie dat → operacje jednej maszyny → jedna operacja z osią zdarzeń i śladem GPS; zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu |
-| [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, wyłączanie kont |
-| [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan; poprawa odczytów |
+| Moduł | Do czego | Kto |
+|---|---|---|
+| [**Dziennik**](panel-dziennik) | cała flota w zakresie dat → operacje jednej maszyny → jedna operacja z osią zdarzeń i śladem GPS; zakończenie operacji, której pilot nie zdał, i unieważnienie wpisu | Podgląd klubu |
+| [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, wyłączanie kont | Podgląd klubu |
+| [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan; poprawa odczytów | Podgląd klubu |
+| **Kalendarz** | oś całej floty na dni: rezerwacje pilotów i wyłączenia maszyn z użytku, ścieżka akceptacji i kolejka decyzji ([rezerwacja samolotu](rezerwacja-samolotu)) | każdy członek |
 
-Czwarty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
+Piąty moduł, **Zgłoszenia**, nie należy do klubu - patrz niżej.
+
+@panel brak-dostepu "Adres modułu poza zakresem: co tu jest, czego brakuje, kogo prosić"
 
 ### Zgłoszenia błędów z aplikacji - moduł opiekuna platformy
 
@@ -66,7 +69,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 - **Flota i piloci jadą na telefony jako kopia.** Zmiana na karcie samolotu (pojemność, norma, minimum oleju, wyłączenie ze służby) i na koncie pilota dociera do aplikacji tą samą drogą, w tym samym rytmie. Telefon bez zasięgu pracuje na kopii z ostatniego połączenia.
 - **Panel nie liczy niczego po swojemu.** Czas blokowy, sumy, sygnatura operacji, stan oleju „do lotu" - wszystko przychodzi policzone tym samym rachunkiem, który zasila aplikację pilota. Administrator i pilot patrzą na te same liczby, a rozmowa o locie ma jedną nazwę: sygnaturę.
 - **Adres z paska przeglądarki jest kompletny.** Zakres dat dziennika, filtr listy, otwarta karta konta albo operacji - wszystko stoi w adresie, więc link wklejony koledze pokazuje dokładnie to samo. Maszynę w dzienniku adresuje się znakami rejestracyjnymi, nie identyfikatorem.
-- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z oznaczeniem „tylko podgląd", bez przycisków zapisu. Uprawnienia nadaje się POJEDYNCZO: administrator klubu składa komuś zakres z takich zdolności, jakich naprawdę potrzebuje - mechanik rozstrzyga swój krok akceptacji, a floty ani kont nie dotyka. Kolejka zgłoszeń błędów stoi poza tym podziałem: należy do opiekuna platformy, nie do klubu.
+- **Brak uprawnień to brak przycisku.** Konto bez prawa do zmian widzi karty z oznaczeniem „tylko podgląd", bez przycisków zapisu; moduł poza zakresem nie stoi w kolumnie wcale. Uprawnienia nadaje się POJEDYNCZO: administrator klubu składa komuś zakres z takich zdolności, jakich naprawdę potrzebuje - mechanik rozstrzyga swój krok akceptacji, a floty ani kont nie dotyka. Każdy członek ma za to kalendarz i Moje konto - do panelu wchodzi się bez żadnej zdolności ([zakresy uprawnień](uprawnienia)). Kolejka zgłoszeń błędów stoi poza tym podziałem: należy do opiekuna platformy, nie do klubu.
 
 ## Zasady w całym panelu
 
@@ -94,4 +97,5 @@ Nie ma też korekty pojedynczych zdarzeń z panelu (godzina startu, odczyt paliw
 - **„Nie ma połączenia z serwerem" albo przycisk Google się nie pojawia** → przeglądarka nie dosięga klubu: sprawdź internet i adres panelu; jeśli problem trwa, napisz na kontakt@ninerdeck.pl.
 - **„Sesja wygasła. Zaloguj się jeszcze raz" w środku pracy** → minęło osiem godzin od zalogowania. Zaloguj się ponownie i wróć do tego samego adresu - zakres dat i otwarta karta są w nim zapisane.
 - **Zmiana z panelu nie dotarła na telefon pilota** → telefon pobiera dane klubu przy najbliższym połączeniu, zwykle w ciągu kwadransa; bez zasięgu pracuje na kopii. Pilot może ponaglić pobranie przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.
-- **Pilot chce wejść do panelu i widzi „To konto nie ma dostępu do panelu"** → nie ma zdolności **Wejście do panelu**. Zakres zmienia się w karcie konta w module Piloci; po zmianie loguje się do panelu jeszcze raz.
+- **Pilot wszedł do panelu i widzi tylko Kalendarz** → tak wygląda zestaw Pilot. Dziennik, pilotów i samoloty otwiera zdolność **Podgląd klubu** - zakres zmienia się w karcie członka w module Piloci, a panel widzi zmianę po odświeżeniu strony ([zakresy uprawnień](uprawnienia)).
+- **Ktoś widzi „To konto nie należy jeszcze do żadnego klubu"** → jego zgłoszenie czeka w kolejce modułu Piloci albo członkostwo jest wyłączone. Do klubu wchodzi się kodem klubu w aplikacji; zatwierdzenie otwiera też panel.

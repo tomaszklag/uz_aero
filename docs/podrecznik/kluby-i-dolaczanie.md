@@ -46,7 +46,7 @@ Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wył�
 
 @panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i zakres" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
 
-Administrator w więcej niż jednym klubie po zalogowaniu do panelu wybiera klub z listy; nazwa klubu stoi potem na szczycie kolumny bocznej i jest przyciskiem zmiany klubu. Przy jednym klubie nazwa też tam stoi - odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale nie jest linkiem, bo nie ma z czego wybierać. Panel pracuje w jednym klubie na jedno okno przeglądarki.
+Członek więcej niż jednego klubu po zalogowaniu do panelu wybiera klub z listy - każda karta mówi, kim w nim jest („administrator", „technik", „pilot") i pod jakim kodem; nazwa klubu stoi potem na szczycie kolumny bocznej i jest przyciskiem zmiany klubu. Przy jednym klubie nazwa też tam stoi - odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale nie jest linkiem, bo nie ma z czego wybierać. Panel pracuje w jednym klubie na jedno okno przeglądarki, a to, co w nim widać, wyznacza zakres uprawnień w tym klubie ([zakresy uprawnień](uprawnienia)).
 
 @panel 00a-wybor-klubu "Wybór klubu po zalogowaniu do panelu"
 

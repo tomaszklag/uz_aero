@@ -513,11 +513,13 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     expect(me.json().pilot.code).toBe('BAD');
   });
 
-  it('pilot BEZ roli panelu w żadnym klubie → 403 `no_panel_access`', async () => {
+  it('pilot bez ani jednej zdolności WCHODZI do panelu z pustym zakresem (issue #216)', async () => {
+    // Do 3.1.0 odbijał się tu o `no_panel_access`; odtąd odmowę dostaje wyłącznie osoba
+    // bez aktywnego członkostwa (`no_membership`, `adminAuth.test.ts`).
     const { app } = await testHarness();
     const res = await panelLogin(app, googleTokenFor('PWI'));
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_panel_access' });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json()).toMatchObject({ org: { id: ORG_A }, capabilities: [] });
   });
 
   it('SUPERADMINISTRATOR bez klubu dostaje sesję PLATFORMOWĄ: `org: null`, sama zdolność `platform.manage`', async () => {

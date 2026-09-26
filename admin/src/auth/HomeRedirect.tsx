@@ -17,10 +17,12 @@
 
 import { Navigate } from 'react-router-dom';
 
-import { homeFor } from '../ui/shell/nav';
+import { homeFor, kindOf } from '../ui/shell/nav';
 import { useSessionState } from './sessionContext';
 
 export function HomeRedirect() {
   const { session } = useSessionState();
-  return <Navigate to={homeFor(session?.capabilities)} replace />;
+  // Rodzaj sesji rozstrzyga Kalendarz (issue #216): ma go każda sesja KLUBU, także
+  // z pustym zakresem - a platforma nie ma go wcale.
+  return <Navigate to={homeFor(session?.capabilities, kindOf(session))} replace />;
 }
