@@ -13,9 +13,13 @@ Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykr
 - **Pierwsze logowanie** i logowanie po „Nie pamiętam PIN" - to jedyny moment, w którym telefon musi potwierdzić, kim jesteś.
 - **Wylogowanie** - i dopiero wtedy, gdy kolejka wysyłki jest pusta.
 - **Ślad GPS na mapie** - wraca z serwera ([więcej](slad-gps)).
+- **Kalendarz i rezerwacja** - termin przydziela klub, więc zapis, przesunięcie i odwołanie potwierdza serwer; bez sieci kalendarz mówi to wprost i wraca sam, gdy zasięg wróci ([więcej](rezerwacja-samolotu#rezerwacja-wymaga-zasiegu)).
+- **Skrzynka powiadomień i decyzja o cudzej rezerwacji** - wiadomości przychodzą z klubu, a zgodę zapisuje serwer ([powiadomienia](powiadomienia), [akceptacja rezerwacji](akceptacja-rezerwacji)).
+- **Karta samolotu i obserwowanie** - pokazują cudze loty i terminy, których telefon nie ma u siebie.
+- **Przełączenie klubu** - dla osób w kilku klubach; wymaga też pustej kolejki wysyłki w klubie, z którego wychodzisz.
 - **Świeże dane z klubu**: lista floty i pilotów, przekazanie z ostatniego zdania cudzej operacji, podpowiedzi odczytów we wpisie po fakcie. Bez sieci aplikacja pracuje na kopii z ostatniego połączenia i mówi o tym przy samej wartości - bursztynową adnotacją **Ostatnie pobrane** z datą. Gdy nie ma nawet kopii, pisze „Brak danych - wpisz z licznika".
 
-Żadna z tych rzeczy nie zatrzymuje lotu. Odczyty z przyrządów są ważniejsze od podpowiedzi, a rozjazd z przekazaniem jest ostrzeżeniem, nie blokadą - patrz [łańcuch odczytów](lancuch-odczytow).
+Żadna z tych rzeczy nie zatrzymuje lotu - rezerwacja też nie: bez niej polecisz dokładnie tak samo. Odczyty z przyrządów są ważniejsze od podpowiedzi, a rozjazd z przekazaniem jest ostrzeżeniem, nie blokadą - patrz [łańcuch odczytów](lancuch-odczytow).
 
 @screen 02d-preflight-offline "Wartości z ostatniego połączenia" | 14c-slad-offline "Ślad wymaga zasięgu"
 
@@ -59,4 +63,5 @@ Każde zdarzenie - przejęcie, uruchomienie silnika, wykryty start, tankowanie, 
 - **Czerwone SYNC STOI** → serwer odpowiedział i odmówił albo trzeba zalogować się ponownie. Twoje zapisy są bezpieczne na telefonie. Zrób to, co mówi baner; przy odmowie przekaż administratorowi kod, który w nim stoi.
 - **Tapnąłem PONÓW PRÓBĘ i nic się nie zmieniło** → sprawdź wiersz **Ostatnia próba**: jeśli ma świeżą godzinę i wynik, przycisk zadziałał, a próba się nie powiodła.
 - **Zmieniam telefon albo odinstalowuję aplikację** → najpierw doprowadź kolejkę do stanu pustego. Zapisy, które nie zdążyły wyjść, istnieją wyłącznie na starym telefonie.
-- **Bez sieci nie widzę śladu lotu** → to jedyna rzecz, która do obejrzenia wymaga połączenia. Czasy, loty i rozliczenie operacji widać mimo to.
+- **Bez sieci nie widzę śladu lotu** → trasę rysuje serwer. Czasy, loty i rozliczenie operacji widać mimo to.
+- **Bez sieci kalendarz i skrzynka pokazują „BRAK POŁĄCZENIA"** → to nie awaria: oba ekrany wracają same, gdy zasięg wróci. Lot rozpoczniesz i zdasz bez nich.

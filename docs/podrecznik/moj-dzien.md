@@ -4,7 +4,7 @@
 
 Aplikacja ma trzy zakładki na dole ekranu - **Pulpit**, [Kalendarz](rezerwacja-samolotu) i [Historia](poprzednie-dni). Pulpit odpowiada na dwa pytania: jak poszło dziś i co masz zaplanowane.
 
-> **Uwaga.** Trzy zakładki zastąpiły ekran „Mój dzień" z listą operacji w wydaniu 3.0.0. Jeśli Twoja aplikacja wygląda jeszcze inaczej, zaktualizuje się sama przy najbliższym uruchomieniu z zasięgiem.
+> **Uwaga.** Trzy zakładki zastąpiły ekran „Mój dzień" z listą operacji w wydaniu 3.0.0. Jeśli Twoja aplikacja wygląda jeszcze inaczej, zainstaluj aktualną wersję ze [strony pobierania](~/pobierz/) - na istniejącą aplikację, dane zostają na telefonie.
 
 ## Co widać
 
