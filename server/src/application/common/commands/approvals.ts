@@ -352,6 +352,15 @@ export class ApprovalFlow {
    * Kolejność jest tu istotna: reguły pytają o stan SPRZED zapisu, a rezerwację
    * przestawiamy dopiero po dopisaniu decyzji - bo to ona jest faktem, a status wiersza
    * tylko jego skutkiem.
+   *
+   * ══ DRUGI ODCZYT POD BLOKADĄ ══
+   * Odczyt przed transakcją odrzuca tanio to, co oczywiste (nie Twój krok, brak powodu),
+   * ale o ZAPISIE rozstrzyga odczyt POWTÓRZONY w transakcji, pod blokadą wiersza
+   * rezerwacji. Do przeglądu bezpieczeństwa 3.1.0 (issue #169) zapis szedł na stanie
+   * sprzed transakcji: odmowa, która przegrała wyścig ze zgodą, nie wchodziła do rejestru
+   * (`ON CONFLICT DO NOTHING`), a mimo to zamykała POTWIERDZONĄ rezerwację - pilot
+   * dostawał odmowę, w historii stała sama zgoda. Podwójne kliknięcie na kroku pośrednim
+   * wysyłało z tego samego powodu dwie prośby do następnego kroku.
    */
   async decide(
     orgId: string,
@@ -377,21 +386,40 @@ export class ApprovalFlow {
     });
     if (refusal != null) return { ok: false, refusal };
 
-    const step = currentStep(path, decisions);
-    // Nie ma jak tu trafić (`refuseDecision` oddałoby wcześniej `not_pending`), ale
-    // kompilator o tym nie wie, a wyjątek byłby gorszą odpowiedzią niż ta sama odmowa.
-    if (step == null) return { ok: false, refusal: 'not_pending' };
-
     const at = this.clock.now();
-    const after: ApprovalDecision[] = [...decisions, { stepId: step.id, decision: input.decision }];
-    const outcome = approvalOutcome(path, after);
-    const notices = noticesFor(booking, outcome, path, after, {
-      reason: input.reason,
-      decidedBy: actor.pilotId,
-      stepLabel: step.label,
-    });
+    const written = await this.db.transaction(async (tx): Promise<
+      | { ok: true; row: BookingRecord; notices: NotificationDraft[] }
+      | { ok: false; refusal: ApprovalRefusal | 'booking_closed' }
+    > => {
+      const locked = await this.bookings.lock(tx, orgId, bookingId);
+      // Rezerwacja przestała być `pending` między odczytem a blokadą: odwołał ją pilot
+      // albo rozstrzygnęła druga osoba z kroku. To nie jest awaria - to ta sama odpowiedź.
+      if (locked == null || locked.kind !== 'flight' || locked.status !== 'pending') {
+        return { ok: false, refusal: 'booking_closed' };
+      }
+      const freshPath = await this.steps.path(tx, orgId);
+      const freshDecisions = await this.approvals.listFor(tx, orgId, bookingId);
+      const late = refuseDecision(freshPath, freshDecisions, {
+        deciderPilotId: actor.pilotId,
+        decision: input.decision,
+        reason: input.reason,
+        overrides: actor.manages,
+      });
+      if (late != null) return { ok: false, refusal: late };
 
-    const written = await this.db.transaction(async (tx) => {
+      const step = currentStep(freshPath, freshDecisions);
+      // Nie ma jak tu trafić (`refuseDecision` oddałoby wcześniej `not_pending`), ale
+      // kompilator o tym nie wie, a wyjątek byłby gorszą odpowiedzią niż ta sama odmowa.
+      if (step == null) return { ok: false, refusal: 'not_pending' };
+
+      const after: ApprovalDecision[] = [...freshDecisions, { stepId: step.id, decision: input.decision }];
+      const outcome = approvalOutcome(freshPath, after);
+      const notices = noticesFor(locked, outcome, freshPath, after, {
+        reason: input.reason,
+        decidedBy: actor.pilotId,
+        stepLabel: step.label,
+      });
+
       await this.approvals.insert(
         tx,
         orgId,
@@ -422,22 +450,19 @@ export class ApprovalFlow {
                 // gdzie nikt nic nie powiedział (§11.5).
                 reason: input.reason,
               })
-            : booking;
-      if (row == null) return null;
+            : locked;
+      // Pod blokadą wiersz jest `pending`, więc `confirm`/`close` zawsze coś oddają;
+      // gałąź zostaje na wypadek zmiany tych zapytań.
+      if (row == null) return { ok: false, refusal: 'booking_closed' };
 
       await this.notifier.record(tx, orgId, notices, at);
-      return row;
+      return { ok: true, row, notices };
     });
 
-    // Rezerwacja przestała być `pending` między odczytem a zapisem: odwołał ją pilot
-    // albo rozstrzygnął panel. To nie jest awaria - to jest ta sama odpowiedź.
-    if (written == null) return { ok: false, refusal: 'booking_closed' };
+    if (!written.ok) return written;
 
-    await this.notifier.wake(orgId, notices);
-    // Widok czytamy z BAZY, a nie składamy z tego, co przed chwilą wysłaliśmy: druga
-    // osoba z listy mogła zdecydować równolegle, a wtedy zapis oddał jej podpis
-    // (`ON CONFLICT DO NOTHING`) i to jego ma zobaczyć ekran.
-    return { ok: true, booking: written, view: await this.view(orgId, bookingId) };
+    await this.notifier.wake(orgId, written.notices);
+    return { ok: true, booking: written.row, view: await this.view(orgId, bookingId) };
   }
 }
 

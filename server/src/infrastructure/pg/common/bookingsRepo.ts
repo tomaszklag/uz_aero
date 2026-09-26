@@ -151,6 +151,14 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async lock(tx: Queryable, orgId: string, id: string): Promise<BookingRecord | null> {
+    const { rows } = await tx.query<BookingDbRow>(
+      `SELECT ${COLUMNS} FROM bookings WHERE org_id = $1 AND id = $2 FOR UPDATE`,
+      [orgId, id],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
   async pending(db: Queryable, orgId: string): Promise<BookingRecord[]> {
     // `kind = 'flight'` jest tu REGUŁĄ, nie filtrem wygody: wyłączenie maszyny z użytku
     // nie ma ścieżki i nie może czekać na niczyją zgodę (§11) - a `pending` na takim

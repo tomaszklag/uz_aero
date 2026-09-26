@@ -1086,6 +1086,13 @@ export interface BookingsPort {
   list(db: Queryable, orgId: string, query: BookingQuery): Promise<BookingRecord[]>;
   byId(db: Queryable, orgId: string, id: string): Promise<BookingRecord | null>;
   /**
+   * Ten sam wiersz co `byId`, ale ZABLOKOWANY do końca transakcji (`FOR UPDATE`).
+   * Decyzja o rezerwacji czyta pod nim stan PONOWNIE: dwie osoby z tego samego kroku
+   * klikające jednocześnie ustawiają się w kolejce na tym wierszu, a druga widzi już
+   * rozstrzygnięcie pierwszej (przegląd bezpieczeństwa 3.1.0, issue #169).
+   */
+  lock(tx: Queryable, orgId: string, id: string): Promise<BookingRecord | null>;
+  /**
    * Wstawia albo oddaje wiersz już istniejący pod tym uuidem (idempotencja).
    * Nakładkę odbija BAZA (`bookings_no_overlap`) - adapter tłumaczy jej wyjątek
    * na `{ ok: false }` i dociąga kolidujący wiersz.

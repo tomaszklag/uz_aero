@@ -29,7 +29,10 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
 import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
+import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalStepsRepo.ts';
+import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { silentNotifier } from './fakePush.ts';
@@ -207,6 +210,91 @@ describe('ścieżka dwóch kroków', () => {
     const decyzja = await decide(app, jse, id, { decision: 'approved' });
     expect(decyzja.statusCode, decyzja.body).toBe(200);
     expect(decyzja.json().status).toBe('confirmed');
+  });
+});
+
+describe('dwie decyzje naraz (przegląd bezpieczeństwa 3.1.0)', () => {
+  /*
+   * Decyzja czytała rezerwację i rejestr POZA transakcją, a zapis podpisu robił
+   * `ON CONFLICT DO NOTHING` bez sprawdzenia, czy wiersz wszedł. Dwie osoby z tego samego
+   * kroku klikające jednocześnie dawały więc stan, którego nikt nie wybrał: odmowa, która
+   * przegrała wyścig, nie trafiała do rejestru, a mimo to zamykała rezerwację - pilot
+   * dostawał odmowę, a w historii stała sama zgoda. Rozstrzyga PIERWSZA decyzja, druga
+   * dostaje odmowę z powodem i niczego nie zmienia.
+   */
+  async function twoOnStep(twoSteps = false) {
+    const { app, db, clock } = await testHarness();
+    await grantApprove(db, 'KRZ');
+    await grantApprove(db, 'JSE');
+    await grantApprove(db, 'BNO');
+    const cookie = await panelCookie(app, 'AKO');
+    const steps = [{ label: 'Mechanik', memberIds: ['KRZ', 'JSE'] }];
+    if (twoSteps) steps.push({ label: 'Szef wyszkolenia', memberIds: ['BNO'] });
+    expect((await setPath(app, cookie, steps)).statusCode).toBe(200);
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+    return { app, db, clock, pwi, id, krz: await login(app, 'KRZ'), jse: await login(app, 'JSE') };
+  }
+
+  /**
+   * Przeplot wymuszony: PGlite wykonuje żądania po kolei, więc `Promise.all` wyścigu nie
+   * odtwarza. Pierwsza decyzja zatrzymuje się tuż po odczycie rejestru (poza transakcją),
+   * druga w tym czasie przechodzi całą trasą, a pierwsza rusza dalej z tym, co przeczytała.
+   */
+  function gatedFlow(db: Db, clock: Harness['clock']) {
+    const real = new PgBookingApprovalsRepo();
+    let release!: () => void;
+    const released = new Promise<void>((r) => (release = r));
+    let reached!: () => void;
+    const atGate = new Promise<void>((r) => (reached = r));
+    let first = true;
+    const gated = Object.create(real) as PgBookingApprovalsRepo;
+    gated.listFor = async (q, orgId, bookingId) => {
+      const rows = await real.listFor(q, orgId, bookingId);
+      if (first) {
+        first = false;
+        reached();
+        await released;
+      }
+      return rows;
+    };
+    const flow = new ApprovalFlow(db, new PgApprovalStepsRepo(), gated, new PgBookingsRepo(), silentNotifier(db), clock);
+    return { flow, atGate, release };
+  }
+
+  it('odmowa, która przegrała ze zgodą, nie zamyka POTWIERDZONEJ rezerwacji', async () => {
+    const { app, db, clock, id, krz } = await twoOnStep();
+    const { flow, atGate, release } = gatedFlow(db, clock);
+
+    const late = flow.decide(ORG_A, id, { pilotId: 'JSE', manages: false }, { decision: 'rejected', reason: 'Przegląd.' });
+    await atGate;
+    expect((await decide(app, krz, id, { decision: 'approved' })).statusCode).toBe(200);
+    release();
+
+    const result = await late;
+    expect(result?.ok).toBe(false);
+    const { rows } = await db.query<{ status: string }>(`SELECT status FROM bookings WHERE id = $1`, [id]);
+    expect(rows[0]!.status).toBe('confirmed');
+    const doPilota = await db.query<{ kind: string }>(
+      `SELECT kind FROM notifications WHERE pilot_id = 'PWI' AND kind IN ('booking_approved', 'booking_rejected')`,
+    );
+    expect(doPilota.rows.map((r) => r.kind)).toEqual(['booking_approved']);
+  });
+
+  it('podwójne kliknięcie na kroku pośrednim: jeden podpis i JEDNA prośba do następnego kroku', async () => {
+    const { app, db, clock, id, krz } = await twoOnStep(true);
+    const { flow, atGate, release } = gatedFlow(db, clock);
+
+    const late = flow.decide(ORG_A, id, { pilotId: 'KRZ', manages: false }, { decision: 'approved', reason: null });
+    await atGate;
+    expect((await decide(app, krz, id, { decision: 'approved' })).statusCode).toBe(200);
+    release();
+
+    expect((await late)?.ok).toBe(false);
+    const zapis = await db.query(`SELECT 1 FROM booking_approvals WHERE booking_id = $1`, [id]);
+    expect(zapis.rows).toHaveLength(1);
+    const prosby = await db.query(`SELECT 1 FROM notifications WHERE pilot_id = 'BNO' AND kind = 'approval_requested'`);
+    expect(prosby.rows).toHaveLength(1);
   });
 });
 
