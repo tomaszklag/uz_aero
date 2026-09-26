@@ -219,6 +219,45 @@ export function BookIcon({ size = 16 }: IconProps) {
   );
 }
 
+/** Skrzynka - moduł „Do sprawdzenia" (3.2.0, P-D); ścieżka 1:1 z makiety `sprawdzenie-lista`. */
+export function InboxIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </Stroke>
+  );
+}
+
+/** Chorągiewka - rozjazd (flaga) na liście spraw; ścieżka 1:1 z makiety `sprawdzenie-lista`. */
+export function FlagIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5" />
+    </Stroke>
+  );
+}
+
+/** Karta arkusza - doba bez karty na liście spraw. */
+export function SheetIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18M9 4v16" />
+    </Stroke>
+  );
+}
+
+/** Zegar - operacja wisząca (przejęta, niezdana) na liście spraw. */
+export function ClockIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15 14" />
+    </Stroke>
+  );
+}
+
 /** Robak - moduł Zgłoszenia (na czas testów, issue #87). */
 export function BugIcon({ size = 16 }: IconProps) {
   return (

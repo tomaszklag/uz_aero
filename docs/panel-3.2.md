@@ -369,14 +369,22 @@ Zakres ekranu: stan karty (`ok` / `missing` / `failed` / `impossible` dla operac
 unieważnionej), ponowienie (`fleet.manage`), link do karty i podgląd treści
 (`GET /exports/:uuid/sheet`).
 
-Dwie rzeczy do sprawdzenia w P-D:
+Dwie rzeczy do sprawdzenia w P-D - **obie rozstrzygnięte 26 września 2026 (P-D)**:
 
 1. **link do karty jest BEZWZGLĘDNY** - `dayExporter` zapisuje `sheetUrl` złożony
    z `PUBLIC_BASE_URL`, a domena zmieniła się przy issue #124. Karty wyeksportowane przed
-   przeniesieniem niosą stary host; ekran ma pokazywać adres, który działa;
+   przeniesieniem niosą stary host; ekran ma pokazywać adres, który działa.
+   **Rozstrzygnięcie**: historia karty (`GET /admin/api/exports/:uuid`) niesie osobne
+   pole `address` - adres złożony DZIŚ z bieżącego hosta, sluga i sekretu klubu
+   (`SheetsReadPort.sheetUrl`), a nie przepisany z dziennika. Adres zapisany przy
+   wysyłce zostaje w `revisions[].sheetUrl` jako zapis historyczny; szuflada pokazuje
+   wyłącznie ten, który działa;
 2. **adres karty ma od epiku C slug klubu i sekret** (`/sheets/<slug>/<tab>?k=…`) - trasa
    nie ma sesji i to jest jej sens (skarbnik bez konta), więc panel pokazuje ten link
-   świadomie, a nie „przy okazji".
+   świadomie, a nie „przy okazji". **Rozstrzygnięcie**: karta „Adres karty" w szufladzie
+   z przyciskiem „Kopiuj" i JEDNYM zdaniem, komu go dawać („Otwiera się bez logowania -
+   jak dokument klubu. Podaj go skarbnikowi, nie publikuj"); istnieje wyłącznie, gdy
+   karta jest w arkuszu.
 
 ---
 
@@ -626,6 +634,15 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 | P-C | **Uuid dopisanego zdarzenia nadaje SERWER, nie klient** (C11 zapowiadało „idempotencję po uuid nadanym przez klienta"): dopisanie idzie tą samą drogą, co korekta (`newId` w komendzie), a podwójne kliknięcie trzyma przycisk zablokowany na czas zapisu. Uuid z przeglądarki byłby drugą konwencją nadawania identyfikatorów obok telefonu i korekty - bez zysku, bo panel nie ma kolejki, którą trzeba by ponawiać | §5.4 |
 | P-C | **Odmowa „poza kopertą operacji" jest zdaniem DOMENY w banerze, nie zdaniem przy polu** (C11): fakt po zdaniu odbija `DAY_CLOSED`, sprzed przejęcia `SESSION_NOT_CLAIMED`, lądowanie po wyłączeniu silnika, ale przed zdaniem, przechodzi z niespójnością `EVENT_OUTSIDE_RUN` w karcie skutku - tak samo, jak przeszłoby telefonowi. Podpis pod polem podaje kopertę biegu jako instrukcję (`runHint`); drugie zdanie o tym samym przy polu powtarzałoby baner | §5.4 |
 | P-C | **Wiersz „Karta arkusza" w skutku liczy rewizję z `exportRevision` wiersza sesji** („rewizja 2 → rewizja 3"), nie z nazwy karty jak na makiecie („2026-09-06_SP-AXA → rewizja 3") - odpowiedź o sesji nazwy karty nie niesie, a rewizja jest tym, co się zmienia | §17 pkt 5 |
+| P-D | **Flaga NAZYWA swoje operacje, nie tylko je adresuje** (`AdminFlagListItem.sessions`: sygnatura, pilot, chwile, karta doby - z listy operacji, jednym zapytaniem `byUuids` na całą skrzynkę). §6 i §9 zakładały, że `GET /flags` i `GET /dashboard` już wystarczą - a niosły same uuid-y, których ekran nie ma komu pokazać (issue #68: uuid adresuje, sygnatura identyfikuje). `AdminFlagQueries` jest przez to JEDYNYM miejscem, w którym flaga dostaje operacje: karta operacji i pulpit wołają je zamiast portu flag, żeby flaga wyglądała wszędzie tak samo | §6, §9 |
+| P-D | **Suma „Do sprawdzenia" i liczba operacji wiszących idą z serwera** (`counts.attention`, `counts.staleOpenDays` w `GET /dashboard`): §17 pkt 8 mówił „suma trzech źródeł", a `attention.staleOpenDays` była listą przyciętą limitem - plakietka w kolumnie liczyłaby najwyżej pięć. Sumuje serwer, bo to on zna trzy definicje składników; panel niczego nie dodaje | §9, §17 pkt 8 |
+| P-D | **Otwarte flagi przy wierszu operacji niosą liczby rozjazdu** (`openFlags: { id, type, details }[]` zamiast samych typów): makieta `dziennik-maszyna` podpisuje parę odczytów („przekazano 92 L"), a sam typ tego nie umie. Który koniec łańcucha to ten wiersz, poznaje się po odczycie WIERSZA (`rowFlagNote`): flaga nie mówi, czy operacja oddała, czy przejęła | §6 |
+| P-D | **Sygnatura i chwila zdania przy wierszu monitora kart** (`AdminExportListItem.signature`, `closeTime`) - ranga sygnatury wyszła z adaptera listy operacji do `substanceSql.ts` (`dayIndexSql`), żeby monitor pisał tę samą sygnaturę, co dziennik; dwie kopie rangi rozjechałyby się przy pierwszej poprawce | §7 |
+| P-D | **„Rewizje" jest chipem po stronie ekranu**, nie stanem serwera: `?state=` przyjmuje wyłącznie stany karty, a wymiar „wysłana więcej niż raz" zawęża się nad przysłaną listą; liczbę niesie `counts.revised`, jak w panelu 1.0 | §17 pkt 9 |
+| P-D | **Ponowienie z wiersza wyłącznie przy BRAKU karty**; kartę w arkuszu ponawia się z szuflady, po obejrzeniu, co w niej leży. Makieta rysuje „Ponów" w wierszu tylko przy braku - przycisk przy każdej karcie w arkuszu produkowałby rewizje bez zmiany choćby jednej liczby | §7 |
+| P-D | **Zdania bez formy z płcią**: „B. Nowak trzyma maszynę od 08:15 · M. Zięba: przejęcie 15:40, zdanie 16:10" zamiast „przejęła ją i zdała" z makiety; „samolot niezdany" zamiast „nie zdała samolotu"; role operacji w karcie sprawy rzeczownikiem („Oddanie samolotu", „Przejęcie", „Operacja w toku"). Ta sama reguła, co przy rozstrzygnięciach ścieżki i sygnale „trzyma" z P-B | §9, §17 pkt 7 |
+| P-D | **Rozjazd zegara nie mówi „za GPS"**: liczby ingestu niosą wartość bezwzględną rozjazdu, więc podpis brzmi „zegar telefonu 6 min 12 s od GPS przy zapisie „lądowanie"" - kierunku serwer nie zna i ekran go nie zgaduje | §17 pkt 7 |
+| P-D | **Przy wierszach rewizji nie ma przyczyny** („po korekcie lądowania · A. Kowalski" z makiety): dziennik eksportu nie zapisuje, CO wywołało rewizję - to wiersz audytu, którego wiersz rewizji nie niesie. Zostaje numer, chwila i „pierwsza wysyłka" / „wysłana ponownie"; przyczyna wróciłaby z osobnym pytaniem do dziennika akcji | §7 |
 
 ---
 

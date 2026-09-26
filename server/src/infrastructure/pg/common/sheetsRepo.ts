@@ -97,6 +97,16 @@ export class PgSheets implements SheetsPort, SheetsReadPort {
     return row == null ? null : { orgId: row.id, slug: row.slug, sheetsKey: row.sheets_key };
   }
 
+  /** Adres karty klubu POD BIEŻĄCYM hostem - ten sam składacz, co przy zapisie karty. */
+  async sheetUrl(orgId: string, tab: string): Promise<string | null> {
+    const { rows } = await this.db.query<AddressDbRow>(
+      'SELECT id, slug, sheets_key FROM organizations WHERE id = $1 AND active',
+      [orgId],
+    );
+    const address = rows[0];
+    return address == null ? null : this.urlOf(address, tab);
+  }
+
   /** `encodeURIComponent` na wypadek rejestracji ze znakiem spoza URL - dziś no-op. */
   private urlOf(address: AddressDbRow, tab: string): string {
     return `${this.baseUrl}/sheets/${address.slug}/${encodeURIComponent(tab)}?k=${address.sheets_key}`;

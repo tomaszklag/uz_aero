@@ -6,6 +6,7 @@
  * filtra. Klucze dochodzą razem z ekranami, które ich używają - nigdy „na zapas".
  */
 
+import type { ExportListQuery, FlagListQuery } from '../api/attention';
 import type { CalendarRange } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
 import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
@@ -188,5 +189,24 @@ export const keys = {
   bugs: {
     all: ['bugs'] as const,
     list: (query: BugListQuery) => ['bugs', 'list', query] as const,
+  },
+
+  /**
+   * „DO SPRAWDZENIA" (3.2.0, P-D). Trzy korzenie, bo trzy pytania o różnym rytmie:
+   * suma spraw (plakietka w kolumnie - pyta się przy każdej ramie), skrzynka rozjazdów
+   * (filtr w adresie) i karty dnia (zakres dat w adresie, jak dziennik). Rozstrzygnięcie
+   * flagi unieważnia WSZYSTKIE trzy i dziennik: zamknięta nakładka wysyła kartę, więc
+   * zmienia stan karty, plakietkę przy operacji i liczbę w kolumnie naraz.
+   */
+  attention: ['attention'] as const,
+  flags: {
+    all: ['flags'] as const,
+    list: (query: FlagListQuery) => ['flags', 'list', query] as const,
+  },
+  exports: {
+    all: ['exports'] as const,
+    list: (query: ExportListQuery) => ['exports', 'list', query] as const,
+    history: (uuid: string) => ['exports', 'history', uuid] as const,
+    sheet: (uuid: string) => ['exports', 'sheet', uuid] as const,
   },
 };

@@ -26,7 +26,7 @@ import type {
   SessionState,
 } from '@ninerdeck/domain';
 
-import type { AdminFlagListItem } from './flags.ts';
+import type { AdminFlagListItem, AdminOpenFlag } from './flags.ts';
 
 /** Jeden dzień lotny na liście `A02`. Czasy zdarzeń w epoch ms UTC, stemple w ISO. */
 export interface AdminSessionListItem {
@@ -118,8 +118,12 @@ export interface AdminSessionListItem {
   /** Stan oleju, z którym silnik ruszył (pomiar + dolewka) - liczy domena. */
   oilAfterL: number | null;
 
-  /** Typy OTWARTYCH flag dotyczących tej sesji - plakietka „2 flagi" w kolumnie „Stan". */
-  openFlags: FlagType[];
+  /**
+   * OTWARTE flagi tej sesji - plakietka przy operacji na poziomie 2 dziennika (3.2.0, §6:
+   * flaga opisuje operację, więc stoi przy niej, a nie wyłącznie w skrzynce). Z liczbami
+   * rozjazdu, bo wiersz podpisuje parę odczytów („przekazano 92 L"); w kolejności powstania.
+   */
+  openFlags: AdminOpenFlag[];
   /** Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. */
   exportRevision: number | null;
   /** Kiedy projekcja była ostatnio odświeżana = ostatnia przyjęta paczka tej sesji. */

@@ -41,6 +41,11 @@ const APPROVAL_STEPS = join(
   'commands',
   'approvalSteps.ts',
 );
+/**
+ * Kontrakt monitora eksportu (3.2.0, P-D): stan karty, powód odmowy i rodzaj awarii
+ * eksportera są uniami W KONTRAKCIE panelu po stronie serwera, nie w domenie.
+ */
+const EXPORTS = join(__dirname, '..', '..', 'server', 'src', 'application', 'admin', 'contracts', 'exports.ts');
 const DTO = join(__dirname, '..', 'src', 'api', 'dto.ts');
 
 /**
@@ -187,6 +192,24 @@ const MIRRORS = [
     panel: 'ApprovalStepsRefusalDto',
     server: 'ApprovalStepsRefusal',
     read: () => unionIn(APPROVAL_STEPS, 'ApprovalStepsRefusal'),
+  },
+  // KARTY DNIA (3.2.0, P-D). Stan karty wnioskuje serwer i panel go wyłącznie nazywa;
+  // stan dołożony na serwerze bez lustra wyszedłby na ekran surowym napisem - a powód
+  // odmowy ponowienia bez lustra wypadłby ze zdania o tym, dlaczego karty nie ma.
+  {
+    panel: 'ExportStateDto',
+    server: 'ExportState',
+    read: () => unionIn(EXPORTS, 'ExportState'),
+  },
+  {
+    panel: 'ExportRefusalDto',
+    server: 'ExportRefusalDto',
+    read: () => unionIn(EXPORTS, 'ExportRefusalDto'),
+  },
+  {
+    panel: 'ExportFailureDto',
+    server: 'ExportFailureDto',
+    read: () => unionIn(EXPORTS, 'ExportFailureDto'),
   },
 ] as const;
 

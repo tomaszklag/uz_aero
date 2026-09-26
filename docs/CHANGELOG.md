@@ -71,6 +71,22 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   i powodem; fakt ocenia się tak, jak wyglądała operacja w tej chwili (lądowanie musi
   mieć start, tankowanie stojący silnik), a podgląd mówi, który lot domyka i ile
   niespójności znika. Pilot zobaczy wpis na telefonie, karta arkusza dostaje nową rewizję.
+- **„Do sprawdzenia" - jedno miejsce na to, co wymaga reakcji.** Nowa pozycja w kolumnie
+  panelu, druga po Dzienniku, z liczbą spraw wyłącznie wtedy, gdy coś czeka. Trzy karty:
+  rozjazdy między zapisami (dwie operacje naraz, pilot w dwóch maszynach, luka albo
+  cofnięcie licznika, rozjazd paliwa, rozjazd zegara), doby bez karty w arkuszu
+  i operacje, których nikt nie zdał od ponad doby. Każdy wiersz prowadzi tam, gdzie
+  sprawę da się zamknąć; gdy nic nie czeka, ekran mówi to wprost.
+- **Skrzynka rozjazdów.** Do tej pory serwer wykrywał nieścisłości między zapisami, ale
+  nie pokazywał ich nikomu. Teraz każda ma nazwę po polsku, liczby, których dotyczy,
+  operacje z sygnaturami, zdanie o tym, czym się to naprawia, i notatkę rozstrzygnięcia,
+  która zostaje w dzienniku akcji. Sprawa „Dwie operacje naraz" mówi przed kliknięciem,
+  że jej zamknięcie wyśle kartę doby do arkusza. Otwarty rozjazd widać też przy operacji
+  w dzienniku - plakietką na liście i banerem na stronie operacji.
+- **Karty dnia i eksport.** Stan karty każdej doby samolotu (w arkuszu, bez karty,
+  wstrzymana rozjazdem, czeka na zdanie, unieważniona), rewizje, treść karty tak, jak
+  leży w arkuszu, adres karty do podania skarbnikowi (działa bez logowania) i ponowienie
+  eksportu z odpowiedzią, co poszło albo dlaczego nie.
 
 ### Poprawki
 
@@ -385,7 +401,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 - [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
 - [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
-- [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
+- [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [ ] Statystyki klubu i analityka zużycia maszyny
 
 ### 4.0.0 · termin do ustalenia

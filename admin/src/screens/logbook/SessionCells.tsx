@@ -6,12 +6,21 @@
  * dokładnie jedną kolumną (Pilot ↔ Samolot), więc reszta stoi tu, a nie w dwóch kopiach.
  */
 
+import { Link } from 'react-router-dom';
+
+import { Pill } from '../../ui/components';
+import { flagPath } from '../attention/attentionPaths';
 import type { DayGroup } from './dayGroups';
 import type { CellPair, SessionRow } from './sessionRows';
-import { Pill } from '../../ui/components';
 
-/** Para wartości w jednej komórce - strzałka wygaszona, druga linia ją kwalifikuje. */
-export function Pair({ value }: { value: CellPair }) {
+const NO_FLAG_FILTER = { resolved: false, kind: null };
+
+/**
+ * Para wartości w jednej komórce - strzałka wygaszona, druga linia ją kwalifikuje.
+ * `warn` to podpis bursztynem z ROZJAZDU (3.2.0, §6: „przekazano 92 L" pod paliwem) -
+ * stoi pod zwykłą drugą linią, bo mówi o innej rzeczy niż ona.
+ */
+export function Pair({ value, warn = null }: { value: CellPair; warn?: string | null }) {
   return (
     <>
       <span className="cell-pair">
@@ -22,6 +31,7 @@ export function Pair({ value }: { value: CellPair }) {
         {value.to}
       </span>
       {value.note == null ? null : <span className="cell-sub">{value.note}</span>}
+      {warn == null ? null : <span className="cell-sub warn">{warn}</span>}
     </>
   );
 }
@@ -54,6 +64,17 @@ export function OperationCell({ row, asDualRow = false }: { row: SessionRow; asD
           <Pill tone="blue">Drugi pilot</Pill>
         </>
       ) : null}
+      {/* OTWARTY ROZJAZD stoi PRZY operacji (3.2.0, §6) i prowadzi do sprawy - flaga
+          opisuje operację, więc nie mieszka wyłącznie w skrzynce. Link w klasach
+          plakietki, jak w makiecie. */}
+      {row.flags.map((flag) => (
+        <span key={flag.id}>
+          {' '}
+          <Link className="pill amber" to={flagPath(flag.id, NO_FLAG_FILTER)} title="Otwarty rozjazd - przejdź do skrzynki">
+            {flag.label}
+          </Link>
+        </span>
+      ))}
       {row.signature != null ? (
         <span className="cell-sub mono">{row.signature}</span>
       ) : row.voided ? (

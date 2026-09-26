@@ -20,6 +20,8 @@
 
 import type {
   Event,
+  FlagStatus,
+  FlagType,
   MhFormat,
   OperationType,
   PasswordWeakness,
@@ -788,6 +790,12 @@ export interface SessionListItemDto {
    * korekty mówi z tego, którą rewizję dostanie klub po zapisie (3.2.0, §5.2).
    */
   exportRevision: number | null;
+  /**
+   * OTWARTE rozjazdy tej operacji (3.2.0, P-D; `docs/panel-3.2.md` §6): flaga opisuje
+   * operację, więc plakietka stoi PRZY NIEJ w gridzie, a nie wyłącznie w skrzynce.
+   * Identyfikator prowadzi do sprawy; liczby rozjazdu podpisują parę odczytów.
+   */
+  openFlags: OpenFlagDto[];
   updatedAt: string;
 }
 
@@ -873,6 +881,8 @@ export interface SessionDetailDto {
    * telefonie. Liczy serwer; panel wyłącznie nazywa i przypina do wiersza osi.
    */
   consistency: RuleViolationDto[];
+  /** Rozjazdy tej operacji RAZEM z rozstrzygniętymi - historia decyzji zostaje na karcie. */
+  flags: FlagDto[];
 }
 
 /**
@@ -1510,3 +1520,199 @@ export interface WatchListDto {
   items: WatchListItemDto[];
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * DO SPRAWDZENIA (3.2.0, P-D; `docs/panel-3.2.md` §6, §7, §9) - rozjazdy, karty dnia,
+ * operacje wiszące. Trzy istniejące kontrakty serwera pod jednym pytaniem
+ * („co wymaga mojej reakcji"); panel niczego z nich nie liczy - nazywa i prowadzi.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Otwarta flaga przy wierszu operacji. `details` to liczby policzone przy przyjęciu
+ * zapisu - kształt zależy od rodzaju i czyta go WYŁĄCZNIE `screens/attention/flagLabels.ts`.
+ */
+export interface OpenFlagDto {
+  id: number;
+  type: FlagType;
+  details: Record<string, unknown>;
+}
+
+/** Operacja objęta rozjazdem - nazwana, nie adresowana (sygnatura, pilot, chwile, karta). */
+export interface FlagSessionDto {
+  sessionUuid: string;
+  signature: string | null;
+  aircraftId: string;
+  reg: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  status: 'active' | 'closed' | 'voided';
+  claimedAt: number | null;
+  closeTime: number | null;
+  /** Nazwa karty doby tej operacji - nakładka mówi, KTÓRĄ kartę trzyma poza arkuszem. */
+  tab: string | null;
+}
+
+/** Jedna sprawa skrzynki rozjazdów (`GET /admin/api/flags`). */
+export interface FlagDto {
+  id: number;
+  type: FlagType;
+  status: FlagStatus;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+  sessionUuids: string[];
+  /** W kolejności `sessionUuids`; operacja nieznana serwerowi po prostu tu nie stoi. */
+  sessions: FlagSessionDto[];
+  details: Record<string, unknown>;
+  createdAt: string;
+  resolvedAt: string | null;
+  /** Identyfikator osoby - nazwisko ze słownika klubu, jak przy autorze korekty. */
+  resolvedBy: string | null;
+  resolutionNote: string | null;
+  /** Czy TA flaga trzyma kartę dnia poza arkuszem - kolumna „Skutek" i pierwszy klucz porządku. */
+  blocksExport: boolean;
+}
+
+export interface FlagPageDto {
+  items: FlagDto[];
+  /** Liczba spraw spełniających filtr - także wtedy, gdy limit obciął listę. */
+  total: number;
+}
+
+/**
+ * Stan karty dnia - lustro `ExportState` z kontraktu monitora eksportu (serwer wnioskuje
+ * go z czterech faktów naraz; panel wyłącznie nazywa). Strażnik: `test/mirrors.test.ts`.
+ */
+export type ExportStateDto = 'waiting' | 'blocked' | 'impossible' | 'missing' | 'current';
+
+/** Powód ODMOWY eksportera - stan świata, nie błąd. Lustro `ExportRefusalDto` serwera. */
+export type ExportRefusalDto = 'no_events' | 'session_open' | 'no_preflight' | 'overlap_flag';
+
+/** Rodzaj AWARII próby eksportu. Lustro `ExportFailureDto` serwera. */
+export type ExportFailureDto = 'sheets_adapter' | 'unexpected';
+
+export type ExportOutcomeDto =
+  | { exported: true; tab: string; revision: number; url: string }
+  | { exported: false; reason: ExportRefusalDto };
+
+/** Wynik `POST /admin/api/flags/:id/resolve` - z próbami re-eksportu kart, które flaga trzymała. */
+export interface ResolveFlagResultDto {
+  flagId: number;
+  type: FlagType;
+  resolvedAt: string;
+  /** Pusta lista przy fladze, która karty nie trzymała - odpowiedź nie kłamie o skutku. */
+  exports: { sessionUuid: string; outcome: ExportOutcomeDto | null }[];
+}
+
+/** Wiersz monitora kart dnia: operacja, nazwana kartą (dobą samolotu), którą zasila. */
+export interface ExportListItemDto {
+  sessionUuid: string;
+  signature: string | null;
+  tab: string | null;
+  day: string | null;
+  claimedAt: number | null;
+  closeTime: number | null;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  sessionStatus: 'active' | 'closed' | 'voided';
+  state: ExportStateDto;
+  revision: number | null;
+  exportedAt: string | null;
+  sheetUrl: string | null;
+  blockingFlagIds: number[];
+  updatedAt: string;
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/** Liczniki CAŁEGO zakresu filtra, niezależnie od zawężenia chipem stanu. */
+export interface ExportCountsDto {
+  total: number;
+  current: number;
+  blocked: number;
+  missing: number;
+  waiting: number;
+  impossible: number;
+  revised: number;
+  overwritten: number;
+}
+
+export interface ExportPageDto {
+  items: ExportListItemDto[];
+  counts: ExportCountsDto;
+  matched: number;
+  /** `true` = limit obciął listę - ekran ma o tym powiedzieć, nie udawać komplet. */
+  truncated: boolean;
+}
+
+export interface ExportRevisionDto {
+  revision: number;
+  day: string;
+  sheetUrl: string;
+  exportedAt: string;
+}
+
+/** Historia rewizji jednej karty (`GET /admin/api/exports/:uuid`). */
+export interface ExportHistoryDto {
+  sessionUuid: string;
+  tab: string | null;
+  state: ExportStateDto;
+  revisions: ExportRevisionDto[];
+  sheetRows: number;
+  /** Adres karty, który DZIAŁA DZIŚ (bieżący host, slug i sekret klubu); `null` bez karty. */
+  address: string | null;
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/** Treść karty tak, jak leży w arkuszu - dosłowne wiersze dokumentu. */
+export interface SheetPreviewDto {
+  tab: string;
+  rows: string[][];
+  updatedAt: string;
+}
+
+/** Wynik `POST /admin/api/exports/:uuid/retry` - także odmowa i awaria są ODPOWIEDZIĄ, nie błędem. */
+export interface ExportRetryResultDto {
+  sessionUuid: string;
+  tab: string | null;
+  revisionBefore: number | null;
+  revisionAfter: number | null;
+  outcome: ExportOutcomeDto | null;
+  failure: ExportFailureDto | null;
+  retriedAt: string;
+}
+
+export interface ExportRetryResponseDto {
+  retry: ExportRetryResultDto;
+  /** Wiersz monitora PO próbie - ekran odświeża go bez drugiego żądania. */
+  row: ExportListItemDto | null;
+}
+
+/**
+ * „Do sprawdzenia" (`GET /admin/api/dashboard`) - TE pola odpowiedzi, które panel czyta.
+ * Trzy źródła w trzech istniejących kształtach (spłaszczenie wymagałoby czwartej
+ * definicji „sprawy"), każde przycięte limitem; ile spraw jest naprawdę, mówią `counts`.
+ */
+export interface AttentionDto {
+  /** Chwila zbudowania odpowiedzi wg zegara SERWERA - od niej liczy się wiek spraw. */
+  at: string;
+  /** Okno korekty pilota (ms) - próg, od którego wiek sprawy jest czerwony. */
+  correctionWindowMs: number;
+  counts: {
+    openFlags: number;
+    exports: ExportCountsDto;
+    staleOpenDays: number;
+    /** SUMA trzech źródeł - plakietka w kolumnie; liczy serwer. */
+    attention: number;
+  };
+  attention: {
+    flags: FlagDto[];
+    failedExports: ExportListItemDto[];
+    staleOpenDays: SessionListItemDto[];
+  };
+}

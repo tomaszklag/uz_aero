@@ -23,6 +23,9 @@ import { HomeRedirect } from './auth/HomeRedirect';
 import { RequireCapability } from './auth/RequireCapability';
 import { ShellRoute } from './auth/ShellRoute';
 import { AccountsScreen } from './screens/accounts/AccountsScreen';
+import { AttentionScreen } from './screens/attention/AttentionScreen';
+import { ExportsScreen } from './screens/attention/ExportsScreen';
+import { FlagsScreen } from './screens/attention/FlagsScreen';
 import { BugsScreen } from './screens/bugs/BugsScreen';
 import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
@@ -112,6 +115,35 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="events.correct">
             <SessionScreen editing />
+          </RequireCapability>
+        ),
+      },
+
+      // „DO SPRAWDZENIA" (3.2.0, P-D): trzy ekrany jednego pytania - lista spraw, skrzynka
+      // rozjazdów (sprawa w szufladzie pod własnym adresem) i karty dnia (karta w szufladzie
+      // pod własnym adresem, zakres dat w adresie jak w dzienniku). Wszystkie na „Podglądzie
+      // klubu": to te same dane, które czyta dziennik, oglądane od strony „co wisi".
+      {
+        path: 'do-sprawdzenia',
+        element: (
+          <RequireCapability access="panel.access">
+            <AttentionScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'do-sprawdzenia/rozjazdy/:id?',
+        element: (
+          <RequireCapability access="panel.access">
+            <FlagsScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'do-sprawdzenia/karty/:uuid?',
+        element: (
+          <RequireCapability access="panel.access">
+            <ExportsScreen />
           </RequireCapability>
         ),
       },

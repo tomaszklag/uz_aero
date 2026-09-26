@@ -337,6 +337,10 @@ describe('monitor eksportu - lista (A05)', () => {
       revision: 1,
       reg: 'SP-AXA',
       picCode: 'AKO',
+      // Wiersz monitora NAZYWA operację (3.2.0, P-D) tą samą sygnaturą, co dziennik,
+      // i niesie chwilę zdania - „A. Kowalski zdał samolot 22 CZE 10:34".
+      signature: 'SP-AXA/2026-06-22/AKO/1',
+      closeTime: at(16, 45),
       sessionStatus: 'closed',
       sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       blockingFlagIds: [],
@@ -348,6 +352,7 @@ describe('monitor eksportu - lista (A05)', () => {
       tab: '2026-06-23_SP-FGK',
       revision: null,
       exportedAt: null,
+      closeTime: null,
     });
     // Sesja z SAMYM claimem, bez preflightu, ma dziś nazwę karty - bo nazwę wyznacza
     // chwila przejęcia, a nie meldunek (decyzja 2026-08-07). To dzień, który po prostu jeszcze
@@ -753,7 +758,13 @@ describe('historia rewizji i podgląd karty (A05)', () => {
 
     const history = (await getPanel(app, admin, '/exports/h-1')).json();
 
-    expect(history).toMatchObject({ sessionUuid: 'h-1', tab: '2026-06-22_SP-AXA', state: 'current' });
+    expect(history).toMatchObject({
+      sessionUuid: 'h-1',
+      tab: '2026-06-22_SP-AXA',
+      state: 'current',
+      // Adres, który działa DZIŚ - z bieżącego hosta, nie z dziennika (P-D, §7).
+      address: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    });
     // Dziennik pamięta KAŻDĄ wysyłkę z osobna, od najstarszej.
     expect(history.revisions.map((r: { revision: number }) => r.revision)).toEqual([1, 2, 3]);
     expect(history.revisions[0]).toMatchObject({
@@ -1081,6 +1092,9 @@ describe('pierwszeństwo stanów karty', () => {
     picName: 'Adam Kowalski',
     status: 'closed',
     claimedAt: DAY,
+    closeTime: DAY,
+    dayIndex: 1,
+    signatureAt: DAY,
     updatedAt: new Date(DAY),
     blockingFlagIds: [],
     revision: null,

@@ -46,6 +46,7 @@ const session: SessionListItemDto = {
   oilAfterL: 11.2,
   manualEntry: false,
   exportRevision: null,
+  openFlags: [],
   updatedAt: '2026-08-12T16:45:00.000Z',
 };
 
@@ -176,5 +177,23 @@ describe('oś pilota: prawy fotel', () => {
     expect(aircraftNote(schooling, 'p-2')).toBe('dowódca A. Kowalski');
     expect(aircraftNote(schooling, 'p-1')).toBe('z B. Nowak');
     expect(aircraftNote(sessionRow(session), 'p-1')).toBe('Cessna 182');
+  });
+});
+
+describe('rozjazd przy operacji (3.2.0, §6)', () => {
+  it('plakietka z polską nazwą i podpis pod parą, której dotyczy', () => {
+    const row = sessionRow({
+      ...session,
+      fuelStartL: 148,
+      openFlags: [{ id: 1052, type: 'fuel_mismatch', details: { handoverL: 92, readingL: 148, diffL: 56, toleranceL: 10 } }],
+    });
+    expect(row.flags).toEqual([{ id: 1052, label: 'Rozjazd paliwa' }]);
+    expect(row.warn).toEqual({ fuel: 'przekazano 92 L', moto: null });
+  });
+
+  it('bez rozjazdów - bez plakietek i bez podpisów', () => {
+    const row = sessionRow(session);
+    expect(row.flags).toEqual([]);
+    expect(row.warn).toEqual({ fuel: null, moto: null });
   });
 });

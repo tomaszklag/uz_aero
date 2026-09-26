@@ -18,14 +18,9 @@ import { projectSession, sessionInconsistencies, type AircraftLimits } from '@ni
 import type { AircraftConfigPort, Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';
 import { eventTimeline } from '../mappers/eventTimeline.ts';
-import { flagListItem } from '../mappers/flagListItem.ts';
-import type {
-  EventsAdminPort,
-  FlagsAdminPort,
-  SessionListFilter,
-  SessionsAdminPort,
-} from '../ports.ts';
+import type { EventsAdminPort, SessionListFilter, SessionsAdminPort } from '../ports.ts';
 import { sessionListItem } from '../mappers/sessionListItem.ts';
+import type { AdminFlagQueries } from './flags.ts';
 
 /**
  * Odmowa jest wariantem wyniku, nie wyjątkiem na granicy HTTP (wzorzec
@@ -47,7 +42,12 @@ export class AdminSessionQueries {
     private readonly db: Database,
     private readonly sessions: SessionsAdminPort,
     private readonly events: EventsStorePort,
-    private readonly flags: FlagsAdminPort,
+    /**
+     * Flagi przez ZAPYTANIE skrzynki, nie przez port (3.2.0): to ono nazywa operacje
+     * flagi sygnaturą, więc karta operacji pokazuje flagę w tym samym kształcie, co
+     * skrzynka i pulpit.
+     */
+    private readonly flags: AdminFlagQueries,
     /**
      * Metadane rejestru, których `Event` nie niesie. Karta dnia potrzebuje dokładnie
      * jednej: czy korektę dopisał panel, czy telefon pilota - bo tylko po tej pierwszej
@@ -95,7 +95,7 @@ export class AdminSessionQueries {
     const stream = await this.events.sessionEvents(this.db, orgId, sessionUuid);
     // Flagi TEJ sesji razem z rozwiązanymi: karta dnia ma pokazywać także decyzje już
     // podjęte, inaczej historia rozstrzygnięć znika dokładnie tam, gdzie jest potrzebna.
-    const { items } = await this.flags.list(this.db, orgId, { sessionUuid, limit: FLAGS_PER_DAY });
+    const { items } = await this.flags.list(orgId, { sessionUuid, limit: FLAGS_PER_DAY });
     const adminAuthors = await this.eventsMeta.adminAuthors(this.db, orgId, sessionUuid);
 
     // JEDYNE wywołanie `projectSession` na żądanie w całym panelu.
@@ -112,7 +112,7 @@ export class AdminSessionQueries {
       session: sessionListItem(join),
       state,
       timeline: eventTimeline(stream, adminAuthors),
-      flags: items.map(flagListItem),
+      flags: items,
       // TE SAME zdania, które pilot czyta na 10D - liczone tą samą funkcją domeny,
       // na tym samym strumieniu, z których powstał `state`.
       consistency: sessionInconsistencies(state, stream, limits),

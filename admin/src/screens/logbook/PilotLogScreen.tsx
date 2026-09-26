@@ -114,8 +114,8 @@ export function PilotLogScreen() {
       ),
     },
     { key: 'task', header: 'Zadanie', render: (row) => <Pill tone="dim">{row.operation}</Pill> },
-    { key: 'fuel', header: 'Paliwo', render: (row) => <Pair value={row.fuel} /> },
-    { key: 'moto', header: 'Motogodziny', render: (row) => <Pair value={row.moto} /> },
+    { key: 'fuel', header: 'Paliwo', render: (row) => <Pair value={row.fuel} warn={row.warn.fuel} /> },
+    { key: 'moto', header: 'Motogodziny', render: (row) => <Pair value={row.moto} warn={row.warn.moto} /> },
     {
       key: 'oil',
       header: 'Olej do lotu',

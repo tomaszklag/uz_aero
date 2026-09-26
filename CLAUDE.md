@@ -4963,6 +4963,69 @@ Reguły obowiązujące odtąd:
 - **czego P-C NIE ROBI**: podręcznika (C13 → P-W, #187), przepięcia 10H telefonu na
   `checkInsert` (osobne zgłoszenie), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
 
+## Panel 3.2.0 - epik P-D: „Do sprawdzenia" - rozjazdy, karty dnia, operacje wiszące (issue #185, 2026-09-26)
+Moduł jednego pytania („co wymaga mojej reakcji") 1:1 z makiet `sprawdzenie-lista`,
+`sprawdzenie-rozjazdy`, `sprawdzenie-karty` (§6, §7, §9 `docs/panel-3.2.md`), plaster serwera
+i plakietka flagi w dzienniku. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły
+obowiązujące odtąd:
+- **FLAGA NAZYWA SWOJE OPERACJE** (`AdminFlagListItem.sessions`: sygnatura, pilot, chwile,
+  karta doby) i dostaje je w JEDNYM miejscu - `AdminFlagQueries` (jedno zapytanie
+  `SessionsAdminPort.byUuids` na całą skrzynkę). Karta operacji i pulpit wołają TO
+  zapytanie, nie port flag: flaga ma wyglądać wszędzie tak samo. Nowy konsument flag
+  nie sięga do `FlagsAdminPort` wprost
+- **SUMĘ „DO SPRAWDZENIA" LICZY SERWER** (`counts.attention` = flagi otwarte + karty
+  `missing` + operacje wiszące `counts.staleOpenDays` w `GET /dashboard`) - plakietka
+  `.nav-count` w kolumnie pokazuje ją WYŁĄCZNIE przy liczbie dodatniej i WYŁĄCZNIE przy
+  pozycji `COUNTED` (`ui/shell/nav.ts`); zero i „nie wiem" wyglądają tak samo (reguła
+  SyncChipa). Zapytanie stawia `ShellRoute` (rama nie zna zapytań) i tylko dla sesji
+  klubu z `panel.access` - dla innych odpowiedź byłaby 403 w ramie, w której nic złego
+  się nie stało. Minuta świeżości i odświeżenie w tle
+- **KODY FLAG NIE WYCHODZĄ NA EKRAN** - słownik `screens/attention/flagLabels.ts`
+  (`Record<FlagType, …>`, więc nowy rodzaj wywala kompilację): nazwa (plakietka), podpis
+  z liczb ingestu (`details` czytane bez udawania, że znamy kształt - brak liczby daje
+  podpis bez niej, nie `undefined`), zdanie o CZYNNOŚCI (szuflada), fakty do karty
+  „Co się nie zgadza", baner na L3 (`flagIssue`) i podpis przy parze odczytów na L2
+  (`rowFlagNote`). W adresie rodzaj jedzie polskim slugiem (`?rodzaj=rozjazd-paliwa`)
+- **OTWARTE FLAGI PRZY WIERSZU OPERACJI NIOSĄ LICZBY** (`openFlags: { id, type,
+  details }[]` na serwerze i w `SessionListItemDto`; SQL `jsonb_agg`): plakietka
+  z polską nazwą przy parze godzin jest LINKIEM do sprawy (`.pill.amber` jako `<Link>`),
+  a podpis bursztynem („przekazano 92 L") stoi pod parą, której dotyczy. Który koniec
+  łańcucha to ten wiersz, rozstrzyga odczyt WIERSZA, bo flaga tego nie mówi
+- **SYGNATURA MA JEDNO WYRAŻENIE SQL** - `dayIndexSql` w `substanceSql.ts` (wyjęte
+  z `sessionsRepo`), bo od P-D pisze ją też monitor kart (`AdminExportListItem.signature`).
+  Dokładając sygnaturę do trzeciego zapytania, bierz stamtąd - nie kopiuj rangi
+- **ADRES KARTY, KTÓRY DZIAŁA DZIŚ** (`AdminExportHistory.address` z `SheetsReadPort.sheetUrl`:
+  bieżący host + slug + sekret) - nie `sheetUrl` z dziennika, bo domena zmieniła się przy
+  issue #124. Karta „Adres karty" z „Kopiuj" i jednym zdaniem, komu go dawać; istnieje
+  wyłącznie przy karcie w arkuszu
+- **STAN KARTY WNIOSKUJE SERWER, PANEL NAZYWA** (`exportRows.ts`: W arkuszu / Bez karty /
+  Wstrzymana flagą / Czeka na zdanie / Unieważniona); „Rewizje" jest WYMIAREM zawężanym
+  nad listą, nie stanem `?state=`. Nieudane ponowienie to ODPOWIEDŹ z powodem
+  (`retryNotice`): odmowa eksportera tonem informacyjnym, awaria arkusza „spróbuj za
+  chwilę", awaria po naszej stronie „zgłoś operatorowi z nazwą karty". Ponowienie
+  z wiersza wyłącznie przy braku karty; kartę w arkuszu ponawia się z szuflady
+- **ZAMKNIĘCIE SPRAWY MÓWI SKUTEK PRZED KLIKNIĘCIEM**: przy `aircraft_overlap` baner
+  „Zamknięcie tej sprawy wyśle kartę do arkusza" NAD przyciskiem i przycisk nazywający
+  oba skutki („Zamknij sprawę i wyślij kartę"); notatka WYMAGANA, blokada przycisku bez
+  zdania (puste pole widać nad nim, issue #55); bez `flags.resolve` stopka jest pusta, nie
+  wyszarzona. Odmowa 409 nazywa osobę i chwilę z ciała odpowiedzi (`alreadyResolvedText`).
+  Rozstrzygnięcie flagi unieważnia CZTERY korzenie zapytań (`flags`, `attention`,
+  `exports`, `log`) - zamknięta nakładka wysyła kartę, gasi plakietkę przy operacji
+  i zmniejsza liczbę w kolumnie
+- **LUSTRA UNII EKSPORTU** (`ExportStateDto`, `ExportRefusalDto`, `ExportFailureDto`)
+  czyta `admin/test/mirrors.test.ts` z `server/src/application/admin/contracts/exports.ts` -
+  pierwszy plik spoza domeny i portów w tym strażniku; `FlagType`/`FlagStatus` panel bierze
+  jako TYPY z `@ninerdeck/domain`, więc lustra nie mają
+- **ZDANIA BEZ FORMY Z PŁCIĄ** także tutaj: „trzyma maszynę od", „przejęcie …, zdanie …",
+  „samolot niezdany", role operacji rzeczownikiem („Oddanie samolotu", „Przejęcie",
+  „Operacja w toku"); rozjazd zegara „od GPS", nie „za GPS" - kierunku ingest nie zna
+- **strażnik napisów panelu czyta identyfikator `claimedAt` między dwoma literałami jako
+  zdanie z żargonem** - chwile do etykiet wyciąga się do zmiennych (`takenAt`) PRZED
+  literałem; ta sama pułapka, co `payload` przy P-C
+- **czego P-D NIE ROBI**: podręcznika (D9 → P-W, #187), sprawdzenia w przeglądarce na
+  żywym serwerze (→ P-W), przyczyny rewizji przy wierszach rewizji (dziennik eksportu jej
+  nie zapisuje - wróci z osobnym pytaniem do dziennika akcji)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

@@ -26,8 +26,15 @@ import { duration, shortName } from '@ninerdeck/format';
 import type { OperationType } from '@ninerdeck/domain';
 
 import type { SessionListItemDto } from '../../api/dto';
+import { flagLabel, rowFlagNote } from '../attention/flagLabels';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
 import { dayOf } from './dateRanges';
+
+/** Rozjazd przy wierszu: identyfikator sprawy i nazwa po polsku. */
+export interface RowFlag {
+  id: number;
+  label: string;
+}
 
 /** Para wartości w jednej komórce + linia, która ją kwalifikuje. */
 export interface CellPair {
@@ -48,6 +55,13 @@ export interface SessionRow {
   manual: boolean;
   /** Wpis unieważniony przez pilota - wiersz zostaje, ale przekreślony. */
   voided: boolean;
+  /**
+   * OTWARTE rozjazdy przy operacji (3.2.0, §6): plakietka z polską nazwą przy parze godzin
+   * prowadzi do sprawy; podpis przy parze odczytów mówi, z czym się nie zgadza.
+   */
+  flags: RowFlag[];
+  /** Podpisy bursztynem pod parą paliwa i licznika - z rozjazdów tej operacji. */
+  warn: { fuel: string | null; moto: string | null };
 
   engine: CellPair;
   /** Czas trwania biegu silnika - własna kolumna; kreska, dopóki śmigło pracuje. */
@@ -103,6 +117,7 @@ export function routeNote(departure: string | null, arrival: string | null): str
 export function sessionRow(s: SessionListItemDto): SessionRow {
   const flew = s.firstTakeoffAt != null || s.lastLandingAt != null;
   const running = s.status === 'active' && s.engineStopAt == null;
+  const notes = s.openFlags.map((flag) => rowFlagNote(flag, s));
 
   return {
     sessionUuid: s.sessionUuid,
@@ -114,6 +129,11 @@ export function sessionRow(s: SessionListItemDto): SessionRow {
     dayKey: s.claimedAt == null ? null : dayOf(s.claimedAt),
     manual: s.manualEntry === true,
     voided: s.status === 'voided',
+    flags: s.openFlags.map((flag) => ({ id: flag.id, label: flagLabel(flag.type) })),
+    warn: {
+      fuel: notes.find((note) => note?.column === 'fuel')?.text ?? null,
+      moto: notes.find((note) => note?.column === 'moto')?.text ?? null,
+    },
 
     engine: {
       from: timeUtc(s.engineStartAt),

@@ -361,6 +361,11 @@ const adminFleetRepo = new PgAdminFleetRepo();
 // najważniejszym wierszem), więc ma własny adapter obok `PgExportLogRepo` - tamten
 // obsługuje ścieżkę eksportu i `sync-status` telefonu, ten listy panelu.
 const adminExportsRepo = new PgAdminExportsRepo();
+// Skrzynka flag ma TRZECH konsumentów (trasy `/flags`, karta operacji, pulpit) - stoi tu,
+// bo od 3.2.0 to ona nazywa operacje flagi sygnaturą i nazwiskiem (jednym zapytaniem
+// o listę operacji), a flaga ma wyglądać na każdym ekranie tak samo.
+const adminSessionsRepo = new PgAdminSessionsRepo();
+const adminFlagQueries = new AdminFlagQueries(db, adminFlagsRepo, adminSessionsRepo);
 // Konserwacja (A11) ma JEDEN adapter na dwie drogi: zapytania (porównanie projekcji,
 // stan tokenów i schematu) i komendę (nadpisanie, czyszczenie). To jeden port i jeden
 // powód istnienia - narzędzia serwisowe jednego ekranu - więc drugi adapter kupiłby
@@ -550,9 +555,9 @@ const app = await buildServer({
   adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
   adminSessionQueries: new AdminSessionQueries(
     db,
-    new PgAdminSessionsRepo(),
+    adminSessionsRepo,
     events,
-    adminFlagsRepo,
+    adminFlagQueries,
     new PgAdminEventsRepo(),
     // Pojemność zbiorników → limity dla `sessionInconsistencies` (3.2.0): karta operacji
     // niesie te same niespójności, które pilot widzi na 10D, więc pyta o samolot
@@ -562,7 +567,7 @@ const app = await buildServer({
   // Ślad sesji w dzienniku: okno biegu z rejestru, geometria z plików NDJSON. Ten sam
   // egzemplarz, z którego czyta telefon - patrz wyżej.
   adminSessionTrack: sessionTrack,
-  adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
+  adminFlagQueries,
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu -
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
   adminMeQueries: new AdminMeQueries(pilots, accountQuery),
@@ -716,8 +721,8 @@ const app = await buildServer({
   adminDashboardQueries: new AdminDashboardQueries(
     db,
     adminFleetQueries,
-    new PgAdminSessionsRepo(),
-    adminFlagsRepo,
+    adminSessionsRepo,
+    adminFlagQueries,
     adminExportsRepo,
     new PgAdminDashboardRepo(),
     events,

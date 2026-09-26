@@ -351,6 +351,9 @@ const lastSeen = new LastSeenThrottle();
   // Monitor eksportu ma własny adapter obok `PgExportLogRepo` - jak w produkcyjnym
   // composition root.
   const adminExportsRepo = new PgAdminExportsRepo();
+  // Jak w produkcyjnym composition root: skrzynka flag nazywa operacje listą operacji.
+  const adminSessionsRepo = new PgAdminSessionsRepo();
+  const adminFlagQueries = new AdminFlagQueries(db, adminFlagsRepo, adminSessionsRepo);
   // Konserwacja (A11) - jeden adapter na dwie drogi (podgląd i zapis), jak w produkcji.
   const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
   // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) - jak w produkcyjnym
@@ -507,16 +510,16 @@ const lastSeen = new LastSeenThrottle();
     adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
     adminSessionQueries: new AdminSessionQueries(
       db,
-      new PgAdminSessionsRepo(),
+      adminSessionsRepo,
       events,
-      adminFlagsRepo,
+      adminFlagQueries,
       new PgAdminEventsRepo(),
       // Pojemność zbiorników → limity dla `sessionInconsistencies` (3.2.0): karta operacji
       // niesie te same niespójności, które pilot widzi na 10D, więc pyta o samolot
       // tym samym portem, co korekta.
       aircraftConfig,
     ),
-    adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
+    adminFlagQueries,
     adminMeQueries: new AdminMeQueries(pilots, accountQuery),
     // Czym osoba może się zalogować - JEDEN egzemplarz na obie powierzchnie, jak
     // w produkcji: panel czyta go przez `AdminMeQueries`, telefon trasą `GET /me/account`.
@@ -654,8 +657,8 @@ const lastSeen = new LastSeenThrottle();
     adminDashboardQueries: new AdminDashboardQueries(
       db,
       adminFleetQueries,
-      new PgAdminSessionsRepo(),
-      adminFlagsRepo,
+      adminSessionsRepo,
+      adminFlagQueries,
       adminExportsRepo,
       new PgAdminDashboardRepo(),
       events,

@@ -44,6 +44,8 @@ import {
   VerticalProfile,
 } from '../../ui/components';
 import { EditIcon, PlaneIcon, PlusIcon } from '../../ui/components/icons';
+import { flagPath } from '../attention/attentionPaths';
+import { flagIssue, flagLabel } from '../attention/flagLabels';
 import { personLookup } from '../calendar/directoryLookups';
 import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
@@ -124,6 +126,10 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
      operacji bywa wklejony komuś, kto listy nigdy nie widział, więc identyfikacja
      musi stać na stronie, a nie tylko w pasku adresu (gdzie stoi uuid). */
   const identity = session?.signature ?? day;
+  // OTWARTE rozjazdy tej operacji (3.2.0, §6): plakietka w nagłówku mówi CO, baner - CO
+  // Z TYM ZROBIĆ i dokąd iść. Rozstrzygnięte zostają w odpowiedzi jako historia decyzji,
+  // ale ekranu nie alarmują.
+  const openFlags = (detail.data?.flags ?? []).filter((flag) => flag.status === 'open');
   const readPath = uuid == null ? back : sessionPath(reg, uuid, range);
   const editPath = uuid == null ? back : sessionEditPath(reg, uuid, range);
 
@@ -145,6 +151,11 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
         sub={session == null ? undefined : `${identity} · silnik ${engine}`}
         actions={
           <>
+            {openFlags.map((flag) => (
+              <Link key={flag.id} className="pill amber" to={flagPath(flag.id, { resolved: false, kind: null })}>
+                {flagLabel(flag.type)}
+              </Link>
+            ))}
             {session?.manualEntry === true ? <Pill tone="dim">Ręcznie</Pill> : null}
             {session?.status === 'voided' ? <Pill tone="red">Unieważniona</Pill> : null}
             {session?.status === 'active' ? <Pill tone="amber">W toku</Pill> : null}
@@ -171,6 +182,19 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
       />
 
       {detail.error == null ? null : <Banner tone="danger">{errorMessage(detail.error)}</Banner>}
+
+      {openFlags.map((flag) => {
+        const issue = flagIssue(flag);
+        return (
+          <Banner tone="warn" key={flag.id}>
+            <b>{issue.headline}</b> {issue.body} Sprawę zamkniesz w{' '}
+            <Link className="cell-link" to={flagPath(flag.id, { resolved: false, kind: null })}>
+              Do sprawdzenia
+            </Link>
+            .
+          </Banner>
+        );
+      })}
 
       {notice == null ? null : (
         <Banner tone="ok" live>

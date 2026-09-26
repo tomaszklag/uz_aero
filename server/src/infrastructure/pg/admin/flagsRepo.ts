@@ -10,7 +10,7 @@
  * życia flagi. Ingest przez to nie ma jak zregresować od zmian w panelu.
  */
 
-import { isFlagType } from '@ninerdeck/domain';
+import { isFlagType, type MhFormat } from '@ninerdeck/domain';
 
 import type {
   AdminFlag,
@@ -40,7 +40,11 @@ interface AdminFlagDbRow {
 interface JoinedFlagDbRow extends AdminFlagDbRow {
   reg: string | null;
   aircraft_type: string | null;
+  mh_format: string | null;
 }
+
+const toMhFormat = (value: string | null): MhFormat | null =>
+  value === 'decimal' || value === 'hhmm' ? value : null;
 
 const FLAG_COLUMNS = `f.id, f.org_id, f.type, f.aircraft_id, f.session_uuids, f.details, f.status,
                       f.created_at, f.resolved_at, f.resolved_by, f.resolution_note`;
@@ -94,7 +98,7 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
     const limitParam = page.bind(filter.limit);
 
     const { rows } = await db.query<JoinedFlagDbRow>(
-      `SELECT ${FLAG_COLUMNS}, a.reg AS reg, a.type AS aircraft_type
+      `SELECT ${FLAG_COLUMNS}, a.reg AS reg, a.type AS aircraft_type, a.mh_format AS mh_format
          FROM flags f
          LEFT JOIN aircraft a ON a.id = f.aircraft_id AND a.org_id = f.org_id
         ${page.where()}
@@ -111,7 +115,12 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
     );
 
     return {
-      items: rows.map((r) => ({ flag: toFlag(r), reg: r.reg, aircraftType: r.aircraft_type })),
+      items: rows.map((r) => ({
+        flag: toFlag(r),
+        reg: r.reg,
+        aircraftType: r.aircraft_type,
+        mhFormat: toMhFormat(r.mh_format),
+      })),
       total: Number(counted.rows[0]?.n ?? 0),
     };
   }

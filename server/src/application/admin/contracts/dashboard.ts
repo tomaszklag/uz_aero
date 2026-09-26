@@ -116,6 +116,18 @@ export interface AdminDashboardCounts {
   openFlags: number;
   /** Stany kart dziennych - kontrakt monitora `A05`, bez zawężenia po stanie. */
   exports: AdminExportCounts;
+  /**
+   * Operacje WISZĄCE - otwarte dłużej niż okno korekty (3.2.0, P-D). Liczba CAŁEGO
+   * zbioru, nie listy `attention.staleOpenDays`, która jest przycięta limitem.
+   */
+  staleOpenDays: number;
+  /**
+   * SUMA trzech źródeł „Do sprawdzenia" (`docs/panel-3.2.md` §9, §17 pkt 8): flagi
+   * otwarte + karty bez arkusza (`exports.missing`) + operacje wiszące. Plakietka
+   * w kolumnie panelu pokazuje ją wyłącznie, gdy jest niezerowa. Liczy ją serwer,
+   * bo to on zna trzy definicje składników - panel niczego nie dodaje po swojemu.
+   */
+  attention: number;
 }
 
 /**

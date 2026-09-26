@@ -14,6 +14,8 @@ const row = (uuid: string, claimedAt: number | null): SessionRow => ({
   dayKey: claimedAt == null ? null : new Date(claimedAt).toISOString().slice(0, 10),
   manual: false,
   voided: false,
+  flags: [],
+  warn: { fuel: null, moto: null },
   engine: { from: '08:00', to: '10:00', note: null },
   block: '2:00',
   flight: { from: '08:10', to: '09:50', note: null },

@@ -4,7 +4,40 @@
  * Wyłącznie typy; jedyny dozwolony import to `@ninerdeck/domain` (patrz `sessions.ts`).
  */
 
-import type { FlagStatus, FlagType } from '@ninerdeck/domain';
+import type { FlagStatus, FlagType, MhFormat } from '@ninerdeck/domain';
+
+/**
+ * OTWARTA flaga przy wierszu operacji (3.2.0, P-D): identyfikator prowadzi do sprawy,
+ * `details` daje podpis z liczbami („przekazano 92 L"). Bez notatki i statusu - wiersz
+ * listy pyta wyłącznie „co tu wisi", resztę mówi skrzynka.
+ */
+export interface AdminOpenFlag {
+  id: number;
+  type: FlagType;
+  details: Record<string, unknown>;
+}
+
+/**
+ * Operacja objęta flagą, w kształcie, którym skrzynka ją NAZYWA (3.2.0, P-D). Do 3.2.0
+ * flaga niosła same uuid-y, a ekran skrzynki nie miał komu ich pokazać: uuid adresuje,
+ * sygnatura identyfikuje (issue #68). Nazwisko i chwile są tu po to, żeby wiersz
+ * powiedział „B. Nowak trzyma maszynę od 08:15, M. Zięba przejęła ją 15:40" bez drugiego
+ * żądania na każdą sprawę. `tab` = karta doby tej operacji - nakładka mówi, KTÓRĄ kartę
+ * trzyma poza arkuszem.
+ */
+export interface AdminFlagSession {
+  sessionUuid: string;
+  signature: string | null;
+  aircraftId: string;
+  reg: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  status: 'active' | 'closed' | 'voided';
+  claimedAt: number | null;
+  closeTime: number | null;
+  tab: string | null;
+}
 
 /** Jedna sprawa w skrzynce. Rozbieżność (`details`) niesie adapter - kształt zależy od typu. */
 export interface AdminFlagListItem {
@@ -15,9 +48,17 @@ export interface AdminFlagListItem {
   aircraftId: string;
   reg: string | null;
   aircraftType: string | null;
+  /** Format licznika maszyny - podpis „zdanie 1238:52" formatuje panel, nie zgaduje. */
+  mhFormat: MhFormat | null;
 
   /** Sesje objęte flagą; nakładka dotyczy dwóch, reszta zwykle jednej lub dwóch ogniw. */
   sessionUuids: string[];
+  /**
+   * Te same operacje NAZWANE (sygnatura, pilot, chwile, karta) - w kolejności
+   * `sessionUuids`. Operacja, której projekcja nie zna, po prostu tu nie stoi; panel
+   * wraca wtedy do uuid-a, zamiast dostawać wiersz z pustkami.
+   */
+  sessions: AdminFlagSession[];
   /** Wartości rozbieżności policzone przy ingescie (`domain/mhChain.ts`, `clockDrift.ts`). */
   details: Record<string, unknown>;
 

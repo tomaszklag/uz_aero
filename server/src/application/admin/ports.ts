@@ -28,6 +28,7 @@ import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
 import type { DirectoryMember } from './contracts/directory.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
+import type { AdminOpenFlag } from './contracts/flags.ts';
 
 // ── tożsamość działającego ──────────────────────────────────────────────────────
 
@@ -272,6 +273,8 @@ export interface AdminFlagJoin {
   flag: AdminFlag;
   reg: string | null;
   aircraftType: string | null;
+  /** Format licznika maszyny flagi - podpis rozjazdu MH formatuje panel wg niego. */
+  mhFormat: MhFormat | null;
 }
 
 export interface FlagsAdminPort {
@@ -372,8 +375,8 @@ export interface AdminSessionJoin {
   picName: string | null;
   dualCode: string | null;
   dualName: string | null;
-  /** Typy flag OTWARTYCH dla tej sesji (posortowane po id - kolejność powstania). */
-  openFlags: FlagType[];
+  /** Flagi OTWARTE dla tej sesji z liczbami rozjazdu (posortowane po id - kolejność powstania). */
+  openFlags: AdminOpenFlag[];
   exportRevision: number | null;
   updatedAt: Date;
 }
@@ -429,6 +432,11 @@ export interface SessionsAdminPort {
   } | null>;
   /** Pojedynczy dzień klubu ze złączeniami; `null` = nie ma takiej sesji w tym klubie. */
   byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null>;
+  /**
+   * Operacje objęte flagami skrzynki (3.2.0, P-D) - JEDNYM zapytaniem; cudze i nieznane
+   * uuid-y po prostu nie wracają. Kolejność wyniku dowolna - wołający dopasowuje po uuid.
+   */
+  byUuids(db: Queryable, orgId: string, sessionUuids: readonly string[]): Promise<AdminSessionJoin[]>;
 }
 
 // ── eksport kart dziennych (A05) ────────────────────────────────────────────────
@@ -506,6 +514,15 @@ export interface AdminExportJoin {
   status: 'active' | 'closed' | 'voided';
   /** Chwila przejęcia samolotu (epoch ms UTC); `null` = strumień bez `session_claim`. */
   claimedAt: number | null;
+  /** Chwila zdania samolotu (epoch ms UTC); `null` = operacja trwa. */
+  closeTime: number | null;
+  /**
+   * Numer operacji w dobie pilota i kotwica numeracji (issue #68, #75) - TE SAME
+   * wyrażenia SQL, co na liście operacji (`dayIndexSql`/`anchorSql`), żeby monitor
+   * kart pisał tę samą sygnaturę, co dziennik. `null` = zapis bez numeru.
+   */
+  dayIndex: number | null;
+  signatureAt: number | null;
   /** Ostatnia przyjęta paczka tej sesji - oś porównania „karta starsza niż dane". */
   updatedAt: Date;
   /**

@@ -409,6 +409,12 @@ describe('pulpit - kafle są SKRÓTEM do list, nie drugą definicją', () => {
     expect(counts.openFlags).toBeGreaterThan(0);
     expect(counts.exports.total).toBeGreaterThan(0);
     expect(counts.exports.current).toBeGreaterThan(0);
+
+    // „Do sprawdzenia" (3.2.0, P-D): operacja wisząca to dash-c (otwarta od trzech dób),
+    // a suma trzech źródeł jest obietnicą plakietki w kolumnie - liczy ją serwer.
+    expect(counts.staleOpenDays).toBe(1);
+    expect(counts.attention).toBe(counts.openFlags + counts.exports.missing + counts.staleOpenDays);
+    expect(dash.json().attention.staleOpenDays.map((s: { sessionUuid: string }) => s.sessionUuid)).toEqual(['dash-c']);
   });
 });
 

@@ -653,7 +653,10 @@ describe('karta dnia (A02a)', () => {
       'sess-1',
       'sess-2',
     ]);
-    expect(flagged.items[0].openFlags).toEqual(['aircraft_overlap']);
+    // Flaga przy wierszu niesie identyfikator (link do sprawy) i liczby rozjazdu (P-D).
+    expect(flagged.items[0].openFlags).toEqual([
+      { id: rows[0]!.id, type: 'aircraft_overlap', details: { openSessions: 2 } },
+    ]);
 
     await app.inject({
       method: 'POST',

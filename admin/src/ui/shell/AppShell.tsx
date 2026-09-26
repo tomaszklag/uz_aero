@@ -29,17 +29,19 @@ import {
   BookIcon,
   BugIcon,
   BuildingIcon,
+  InboxIcon,
   PeopleIcon,
   PlaneIcon,
   SignOutIcon,
   SwitchIcon,
 } from '../components/icons';
 import { initials } from './initials';
-import { ACCOUNT, homeFor, navItemsFor, type NavIcon } from './nav';
+import { ACCOUNT, COUNTED, homeFor, navItemsFor, type NavIcon } from './nav';
 import type { ShellScope } from './scope';
 
 const ICONS: Record<NavIcon, (props: { size?: number }) => React.ReactNode> = {
   logbook: BookIcon,
+  inbox: InboxIcon,
   calendar: CalendarIcon,
   people: PeopleIcon,
   plane: PlaneIcon,
@@ -58,6 +60,13 @@ interface AppShellProps {
    * inna, a nie ta sama z kłódkami (issue #99 C6).
    */
   capabilities: readonly Capability[];
+  /**
+   * Liczba spraw „Do sprawdzenia" (3.2.0, P-D) - plakietka przy JEDNEJ pozycji
+   * (`COUNTED`) i wyłącznie przy liczbie dodatniej: zero i „nie wiem" (`null`, brak
+   * odpowiedzi albo sesja bez tego modułu) wyglądają tak samo, bo stan „nic nie czeka"
+   * nie dostaje ozdoby (reguła SyncChipa, issue #12). Liczbę liczy serwer.
+   */
+  attentionCount?: number | null;
   onLogout: () => void;
   logoutPending: boolean;
   children: React.ReactNode;
@@ -67,6 +76,7 @@ export function AppShell({
   who,
   scope,
   capabilities,
+  attentionCount = null,
   onLogout,
   logoutPending,
   children,
@@ -118,6 +128,11 @@ export function AppShell({
                 >
                   <Icon size={16} />
                   {item.label}
+                  {item.to === COUNTED && attentionCount != null && attentionCount > 0 ? (
+                    <span className="nav-count" aria-label={`${attentionCount} do sprawdzenia`}>
+                      {attentionCount}
+                    </span>
+                  ) : null}
                 </NavLink>
               );
             })}

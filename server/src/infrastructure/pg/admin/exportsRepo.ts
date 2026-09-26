@@ -39,6 +39,7 @@ import {
 } from '../../../application/admin/ports.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import { SqlFilter } from '../sqlFilter.ts';
+import { anchorSql, dayIndexSql } from '../substanceSql.ts';
 
 interface ExportJoinDbRow {
   session_uuid: string;
@@ -52,6 +53,10 @@ interface ExportJoinDbRow {
   status: string;
   /** `BIGINT` - sterownik oddaje `int8` NAPISEM, nie liczbą. */
   claim_time: string | number | null;
+  close_time: string | number | null;
+  /** Ranga sygnatury i jej kotwica - `COUNT`/`BIGINT`, czyli napisy (patrz `sessionsRepo`). */
+  day_index: string | number | null;
+  signature_at: string | number | null;
   updated_at: string | Date;
   /** `int[]`; `COALESCE` w zapytaniu gwarantuje pustą tablicę zamiast `NULL`. */
   blocking_flag_ids: (string | number)[];
@@ -134,6 +139,12 @@ const selectSql = (blockingTypes: string): string => `
          pp.name      AS pic_name,
          s.status,
          s.claim_time,
+         s.close_time,
+         -- Sygnatura operacji przy wierszu monitora (3.2.0, P-D): ranga i kotwica TYM
+         -- SAMYM wyrażeniem, co na liście operacji - dwie sygnatury jednego lotu to
+         -- odwrotność tego, po co sygnatura jest (issue #68).
+         ${dayIndexSql('s')} AS day_index,
+         ${anchorSql('s')}   AS signature_at,
          s.updated_at,
          COALESCE(
            (SELECT array_agg(f.id ORDER BY f.id)
@@ -221,6 +232,9 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) - dobę karty liczymy
   // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
   claimedAt: r.claim_time == null ? null : Number(r.claim_time),
+  closeTime: r.close_time == null ? null : Number(r.close_time),
+  dayIndex: r.day_index == null ? null : Number(r.day_index),
+  signatureAt: r.signature_at == null ? null : Number(r.signature_at),
   updatedAt: new Date(r.updated_at),
   blockingFlagIds: r.blocking_flag_ids.map(Number),
   revision: r.revision,
