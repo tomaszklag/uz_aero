@@ -36,7 +36,7 @@ const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const ORG = 'org-a';
 /** Ten sam klub w kształcie, w jakim niosą go tokeny (wielofirmowość §6). */
 const ORG_REF = { id: ORG, slug: 'alfa', name: 'Aeroklub Alfa' };
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG_REF, memberships: [] };
 
 /** Wiersz floty z serwera - `fetchedAt` serwera jest ignorowany (stemplujemy lokalnie). */
@@ -57,7 +57,7 @@ const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
   ...over,
 });
 
-const tmk: ReferencePilot = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz', active: true, fetchedAt: 0 };
+const ako: ReferencePilot = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski', active: true, fetchedAt: 0 };
 
 class MemoryCredentials {
   // Osoba bez klubu (wielofirmowość §4) - nieużywana w tych testach.
@@ -89,7 +89,51 @@ class RefServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getPilotPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftCard(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftOperations(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftWatches(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setAircraftWatch(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getInbox(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async markNotificationRead(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getApprovalQueue(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async decideBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async registerPushToken(): Promise<never> {
     throw new Error('nieużywane');
   }
 
@@ -224,10 +268,10 @@ describe('ReferenceSync', () => {
   it('pierwsze odświeżenie: prawda serwera nadpisuje seed, ETag zapamiętany', async () => {
     const { repo, server, sync } = await harness();
     // Stan sprzed kontaktu: seed twierdzi, że SP-AXA jest wolny.
-    await repo.upsertReference(ORG, { aircraft: [axa()], pilots: [tmk] });
+    await repo.upsertReference(ORG, { aircraft: [axa()], pilots: [ako] });
     server.script = [
       {
-        data: { aircraft: [axa({ claimPicId: 'KRZ', claimSince: T0 - 3_600_000 })], pilots: [tmk] },
+        data: { aircraft: [axa({ claimPicId: 'KRZ', claimSince: T0 - 3_600_000 })], pilots: [ako] },
         etag: 'W/"ref-1-1"',
       },
     ];
@@ -244,7 +288,7 @@ describe('ReferenceSync', () => {
 
   it('w oknie świeżości nie pyta serwera wcale (puls co 60 s ≠ zapytanie co 60 s)', async () => {
     const { clock, server, sync } = await harness();
-    server.script = [{ data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' }];
+    server.script = [{ data: { aircraft: [axa()], pilots: [ako] }, etag: 'e1' }];
 
     await sync.refreshIfStale();
     clock.advance(REFERENCE_MAX_AGE_MS - 1);
@@ -257,8 +301,8 @@ describe('ReferenceSync', () => {
     // Pierwsze logowanie PRZED założeniem floty w panelu (od issue #50 cache zasila
     // wyłącznie serwer): odpowiedź z pustą listą jest prawdziwa i stempluje „sprawdzone".
     server.script = [
-      { data: { aircraft: [], pilots: [tmk] }, etag: 'e0' },
-      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+      { data: { aircraft: [], pilots: [ako] }, etag: 'e0' },
+      { data: { aircraft: [axa()], pilots: [ako] }, etag: 'e1' },
     ];
     await sync.refreshIfStale();
 
@@ -273,8 +317,8 @@ describe('ReferenceSync', () => {
   it('refresh() nie zna bramy wieku - droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
     const { clock, server, sync } = await harness();
     server.script = [
-      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
-      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e2' },
+      { data: { aircraft: [axa()], pilots: [ako] }, etag: 'e1' },
+      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [ako] }, etag: 'e2' },
     ];
     await sync.refreshIfStale();
 
@@ -289,7 +333,7 @@ describe('ReferenceSync', () => {
   it('po oknie wysyła If-None-Match; 304 podbija wiek danych bez zmiany treści', async () => {
     const { clock, repo, server, sync } = await harness();
     server.script = [
-      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e1' },
+      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [ako] }, etag: 'e1' },
       { data: null, etag: 'e1' }, // 304
     ];
 
@@ -305,13 +349,13 @@ describe('ReferenceSync', () => {
 
   it('offline: cache nietknięty, wynik `skipped`, następna okazja spróbuje znowu', async () => {
     const { repo, server, sync } = await harness();
-    await repo.upsertReference(ORG, { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] });
+    await repo.upsertReference(ORG, { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [ako] });
     server.script = [new ServerUnreachableError()];
 
     expect(await sync.refreshIfStale()).toBe('skipped');
     expect((await repo.getAircraftById('SP-AXA'))?.claimPicId).toBe('KRZ');
     // Brak stempla „sprawdzone" - kolejne wywołanie ma znowu spytać serwer.
-    server.script = [{ data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' }];
+    server.script = [{ data: { aircraft: [axa()], pilots: [ako] }, etag: 'e1' }];
     expect(await sync.refreshIfStale()).toBe('refreshed');
   });
 
@@ -319,7 +363,7 @@ describe('ReferenceSync', () => {
     const { server, sync } = await harness();
     server.script = [
       new ServerRejectedError(401, 'unauthorized'),
-      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+      { data: { aircraft: [axa()], pilots: [ako] }, etag: 'e1' },
     ];
 
     expect(await sync.refreshIfStale()).toBe('refreshed');

@@ -10,7 +10,7 @@
 
 ## Klub, osoba, członkostwo
 
-W Ninerdeck **klub** ma własną flotę, dziennik i panel. **Ty** jesteś jedną osobą - logujesz się jednym kontem Google, niezależnie od tego, w ilu klubach latasz. To, kim jesteś w klubie, opisuje **członkostwo**: kod pilota, rola (pilot albo administrator) i dostęp. Dlatego w dwóch klubach możesz mieć dwa różne kody - `TMK` w jednym, `TOM` w drugim - a sygnatura operacji zawsze niesie kod z klubu, do którego należy maszyna.
+W Ninerdeck **klub** ma własną flotę, dziennik i panel. **Ty** jesteś jedną osobą - logujesz się jednym kontem Google, niezależnie od tego, w ilu klubach latasz. To, kim jesteś w klubie, opisuje **członkostwo**: kod pilota, zakres uprawnień i dostęp. Dlatego w dwóch klubach możesz mieć dwa różne kody - `AKO` w jednym, `TOM` w drugim - a sygnatura operacji zawsze niesie kod z klubu, do którego należy maszyna.
 
 Kluby są od siebie oddzielone całkowicie. Administrator jednego klubu nie zobaczy dziennika drugiego, a pilot z dwoma członkostwami widzi w aplikacji flotę tylko tego klubu, który ma akurat wybrany.
 
@@ -38,15 +38,15 @@ Aplikacja pracuje w **jednym klubie naraz**: z jego floty wybierasz samolot, jeg
 
 ## Panel klubu: członkowie, zgłoszenia, kod klubu
 
-Moduł **Piloci** to lista członków klubu: kod w tym klubie, imię i nazwisko, adres konta Google, rola i status. Nad listą - wyłącznie gdy ktoś czeka - stoi karta **Zgłoszenia**: osoby, które wpisały kod klubu, z imieniem i adresem z ich konta Google. **Rozpatrz** otwiera kartę z nadaniem kodu pilota i roli; odrzucenie wymaga powodu, bo pilot czyta go na swoim telefonie.
+Moduł **Piloci** to lista członków klubu: kod w tym klubie, imię i nazwisko, adres konta Google, zakres uprawnień i status. Nad listą - wyłącznie gdy ktoś czeka - stoi karta **Zgłoszenia**: osoby, które wpisały kod klubu, z imieniem i adresem z ich konta Google. **Rozpatrz** otwiera kartę z nadaniem kodu pilota i zakresu; odrzucenie wymaga powodu, bo pilot czyta go na swoim telefonie.
 
 **Kod klubu** ma własną kartę w module Piloci: widać go w całości, od kiedy obowiązuje i ile zgłoszeń nim czeka (zgłoszenia sprzed wymiany kodu zostają w kolejce - dlatego ta liczba bywa mniejsza niż liczba na karcie ZGŁOSZENIA). **Wygeneruj nowy** unieważnia stary od razu. **Wyłącz dołączanie kodem** kasuje kod: do czasu wygenerowania nowego nikt do klubu nie dołączy, bo innej drogi nie ma, a pilot z wyłączonym kodem dostaje tę samą odpowiedź, co z kodem zmyślonym. Nowego członka nie da się dopisać z panelu ręcznie - każdy wchodzi kodem i decyzją.
 
 Pilot, który **odchodzi z klubu**, nie kasuje się z listy: administrator wyłącza mu członkostwo („Wyłącz członkostwo" w karcie). Dostęp gaśnie od razu - telefon przestaje wysyłać i pobierać cokolwiek z tego klubu - a jego loty zostają w dzienniku, w statystykach i w kartach dnia, bo się zdarzyły. W innych swoich klubach ten człowiek lata dalej, pod ich kodami.
 
-@panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i rola" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
+@panel piloci-lista "Zgłoszenia nad listą członków" | piloci-zgloszenie "Rozpatrzenie zgłoszenia: kod pilota i zakres" | piloci-kod-klubu "Kod klubu: wygeneruj nowy albo wyłącz"
 
-Administrator w więcej niż jednym klubie po zalogowaniu do panelu wybiera klub z listy; nazwa klubu stoi potem na szczycie kolumny bocznej i jest przyciskiem zmiany klubu. Przy jednym klubie nazwa też tam stoi - odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale nie jest linkiem, bo nie ma z czego wybierać. Panel pracuje w jednym klubie na jedno okno przeglądarki.
+Członek więcej niż jednego klubu po zalogowaniu do panelu wybiera klub z listy - każda karta mówi, kim w nim jest („administrator", „technik", „pilot") i pod jakim kodem; nazwa klubu stoi potem na szczycie kolumny bocznej i jest przyciskiem zmiany klubu. Przy jednym klubie nazwa też tam stoi - odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale nie jest linkiem, bo nie ma z czego wybierać. Panel pracuje w jednym klubie na jedno okno przeglądarki, a to, co w nim widać, wyznacza zakres uprawnień w tym klubie ([zakresy uprawnień](uprawnienia)).
 
 @panel 00a-wybor-klubu "Wybór klubu po zalogowaniu do panelu"
 

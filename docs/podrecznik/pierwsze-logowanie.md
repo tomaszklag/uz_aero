@@ -10,7 +10,7 @@
 
    @screen 00a-login-full "Logowanie Google" | 00f-login-haslo "Logowanie hasłem"
 2. **Wpisz kod klubu.** Kod dostajesz od administratora - z tablicy w hangarze, z grupy klubowej albo z ręki; to siedem znaków z myślnikiem w środku, np. `AZG-7K4M`. Wielkość liter i myślnik nie mają znaczenia. Po wpisaniu powstaje zgłoszenie do tego klubu. Szerzej: [kluby i dołączanie](kluby-i-dolaczanie).
-3. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `TMK`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
+3. **Poczekaj na zatwierdzenie.** Zgłoszenie trafia do panelu klubu. Administrator zatwierdza je i nadaje kod pilota (np. `AKO`), który podpisuje Twoje operacje i stoi w ich sygnaturze. Ekran „czeka na zatwierdzenie" sam pyta klub o decyzję - przy każdym wejściu, po powrocie do aplikacji i co minutę, gdy telefon ma sieć; przycisk **SPRAWDŹ PONOWNIE** robi to od ręki.
 4. **Ustaw PIN.** Po zatwierdzeniu aplikacja prosi o PIN. Od tej chwili to nim wchodzisz do aplikacji - bez internetu.
 
 @screen 00a-login-full "Ekran logowania Google" | 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00-login "Codzienne wejście PIN-em"
@@ -25,7 +25,7 @@ Aplikacja pokazuje powód wpisany przez administratora i chwilę decyzji - powó
 
 ## Jak to działa
 
-Google potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w klubie - czyli Twój kod pilota, rola i dostęp - powstaje dopiero w chwili zatwierdzenia; wcześniej Twoje zgłoszenie nie ma kodu pilota, nie stoi na liście członków i nie może niczego zapisać. Po zatwierdzeniu telefon dostaje profil pilota i od tej pory pracuje samodzielnie: PIN sprawdza na miejscu, a połączenie z klubem odnawia sobie w tle przy najbliższej sieci. Wygaśnięcie tego połączenia nigdy nie wylogowuje - aplikacja sama nie wyrzuca do ekranu logowania. Mechanizm w całości: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
+Logowanie potwierdza tylko, kim jesteś; o dostępie decyduje klub. Członkostwo w klubie - czyli Twój kod pilota i zakres uprawnień - powstaje dopiero w chwili zatwierdzenia; wcześniej Twoje zgłoszenie nie ma kodu pilota, nie stoi na liście członków i nie może niczego zapisać. Po zatwierdzeniu telefon dostaje profil pilota i od tej pory pracuje samodzielnie: PIN sprawdza na miejscu, a połączenie z klubem odnawia sobie w tle przy najbliższej sieci. Wygaśnięcie tego połączenia nigdy nie wylogowuje - aplikacja sama nie wyrzuca do ekranu logowania. Mechanizm w całości: [konta i bezpieczeństwo](konta-i-bezpieczenstwo).
 
 ## Nie pamiętam hasła
 

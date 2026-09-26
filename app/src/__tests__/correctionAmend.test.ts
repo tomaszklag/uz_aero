@@ -41,7 +41,7 @@ function event(type: Event['type'], time: number, payload: unknown = {}): Event 
     uuid: `e-${seq}-${type}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -68,7 +68,7 @@ function correction(
     uuid: `c-${seq}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type: 'event_correction',
     deviceTime: recordedAt,
@@ -270,22 +270,22 @@ describe('amend - notatka operacji', () => {
 describe('amend - drugi pilot całej operacji', () => {
   it('deklaracja z preflightu wygrywa z nagłówkami zdarzeń', () => {
     const { events, preflight } = session();
-    // Nagłówki niosą AKO - tak zapisał telefon w chwili lotu.
-    const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
-    expect(projectSession(withDual).dualId).toBe('AKO');
+    // Nagłówki niosą BNO - tak zapisał telefon w chwili lotu.
+    const withDual = events.map((e) => ({ ...e, dualId: 'BNO' }) as Event);
+    expect(projectSession(withDual).dualId).toBe('BNO');
 
     const stream = [
       ...withDual,
       correction(preflight, at(11, 40), { action: 'amend', fields: { dualId: 'KRZ' } }),
     ];
-    // Poprawka działa WSTECZ na całą sesję, choć nagłówki nadal mówią „AKO".
+    // Poprawka działa WSTECZ na całą sesję, choć nagłówki nadal mówią „BNO".
     expect(projectSession(stream).dualId).toBe('KRZ');
-    expect(stream.every((e) => e.type === 'event_correction' || e.dualId === 'AKO')).toBe(true);
+    expect(stream.every((e) => e.type === 'event_correction' || e.dualId === 'BNO')).toBe(true);
   });
 
   it('`dualId: null` znaczy „operacja jednoosobowa" - to deklaracja, nie brak', () => {
     const { events, preflight } = session();
-    const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
+    const withDual = events.map((e) => ({ ...e, dualId: 'BNO' }) as Event);
     const stream = [
       ...withDual,
       correction(preflight, at(11, 40), { action: 'amend', fields: { dualId: null } }),
@@ -295,21 +295,21 @@ describe('amend - drugi pilot całej operacji', () => {
 
   it('bez deklaracji obowiązuje nagłówek - operacje sprzed tej zmiany liczą się jak dawniej', () => {
     const { events } = session();
-    const withDual = events.map((e) => ({ ...e, dualId: 'AKO' }) as Event);
-    expect(projectSession(withDual).dualId).toBe('AKO');
+    const withDual = events.map((e) => ({ ...e, dualId: 'BNO' }) as Event);
+    expect(projectSession(withDual).dualId).toBe('BNO');
   });
 
   it('Dual nie może być PIC-em - ta sama reguła, co przy zmianie załogi', () => {
     const { events, preflight } = session();
     expect(
-      codes(check(events, correction(preflight, at(11, 40), { action: 'amend', fields: { dualId: 'TMK' } }))),
+      codes(check(events, correction(preflight, at(11, 40), { action: 'amend', fields: { dualId: 'AKO' } }))),
     ).toContain('DUAL_IS_PIC');
   });
 
   it('przy zdaniu samolotu pola załogi nie ma - tam nie deklaruje się składu', () => {
     const { events, dayClose } = session();
     expect(
-      codes(check(events, correction(dayClose, at(11, 40), { action: 'amend', fields: { dualId: 'AKO' } }))),
+      codes(check(events, correction(dayClose, at(11, 40), { action: 'amend', fields: { dualId: 'BNO' } }))),
     ).toContain('CORRECTION_FIELD_NOT_ALLOWED');
   });
 });

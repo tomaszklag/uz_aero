@@ -26,7 +26,7 @@ const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 const HOUR_MS = 3_600_000;
 
-/** Sesja dnia: PIC to KRZ (zwykły pilot), administratorem panelu jest TMK. */
+/** Sesja dnia: PIC to KRZ (zwykły pilot), administratorem panelu jest AKO. */
 const SESSION = 'sess-1';
 const PIC = 'KRZ';
 /** `events.source_device` paczki telefonu - dowolny napis z aplikacji, jak w A02b. */
@@ -212,7 +212,7 @@ async function flownDay(options: { closed?: boolean; advanceMs?: number } = {}) 
 describe('korekta administratora po oknie 24 h (A02b)', () => {
   it('retime: dopisuje zdarzenie PIC-em sesji, przelicza dzień i podbija rewizję karty', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     // Przed korektą: siedem zdarzeń i karta w rewizji 1 (eksport po `day_close`).
     expect(await eventRows(db)).toHaveLength(7);
@@ -264,7 +264,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // Kto to zrobił, mówią TRZY rzeczy: `source_device`, dziennik audytu i - od issue
     // #43 - `payload.source`, jedyna z nich widoczna dla telefonu.
     expect(correction.pic_id).toBe(PIC);
-    expect(correction.source_device).toBe('admin:TMK');
+    expect(correction.source_device).toBe('admin:AKO');
 
     // ── projekcja: liczby dnia faktycznie się zmieniły ────────────────────────
     expect(await sessionRow(db)).toEqual({
@@ -276,8 +276,8 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // ── audyt: kto, w jakiej roli, na czym i dlaczego ─────────────────────────
     expect(await auditRows(db)).toMatchObject([
       {
-        actor_pilot_id: 'TMK',
-        actor_role: 'admin',
+        actor_pilot_id: 'AKO',
+        actor_role: 'full',
         action: 'event.correct',
         target_type: 'event',
         target_id: UUID.engineStop,
@@ -311,7 +311,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // Fałszywe lądowanie (przelot nad pasem zaliczony przez detektor). `void` jest tu
     // właściwym narzędziem: zdarzenia NIE BYŁO, więc nie ma czego przesuwać.
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -396,7 +396,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     ['same spacje', '   '],
   ])('powód wymagany - %s daje 400 i nie rusza rejestru', async (_case, reason) => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -415,7 +415,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('retime bez nowego czasu → 400 (payload niekompletny, nie „domyślnie teraz")', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -428,7 +428,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('nieistniejąca sesja → 404', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, 'sess-nie-ma', {
       token: admin,
@@ -444,7 +444,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // To jest dowód, że uchylenie okna nie jest przepustką do rejestru: reguła
     // `CORRECTION_TARGET_NOT_FOUND` obowiązuje administratora tak samo jak pilota.
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -462,7 +462,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('zdania samolotu nie da się unieważnić → 422; sesja nie zostaje bez końca łańcucha MH', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -481,7 +481,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
    */
   it('amend: poprawia odczyt przy zdaniu, przelicza dzień i stempluje autorstwo', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -573,7 +573,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
     // Administrator poprawia licznik przy zdaniu PIERWSZEJ sesji - między ogniwami
     // robi się prawie siedem godzin dziury.
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     const res = await correct(app, SESSION, {
       token: admin,
       body: {
@@ -594,7 +594,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('amend polem spoza białej listy celu → 422, bez zapisu', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -613,7 +613,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
   it('poprawiony czas z przyszłości → 422', async () => {
     const { app, clock } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -638,7 +638,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // gdzie jest naprawdę potrzebna. Administrator nie jest NIGDY blokowany - dostaje
     // ostrzeżenie i decyduje sam.
     const { app, db } = await flownDay({ closed: false });
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -661,7 +661,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // więc pilot może tę sesję poprawić SAM na 04c. Obie strony pisałyby wtedy naraz
     // i administrator ma o tym wiedzieć.
     const { app } = await flownDay({ advanceMs: 9 * HOUR_MS });
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -677,7 +677,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // każdej korekcie. Bez tego przypadku baner nad formularzem świeciłby zawsze
     // i przestałby cokolwiek mówić.
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await correct(app, SESSION, {
       token: admin,
@@ -692,7 +692,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // „Ostatnia wygrywa" jest własnością projekcji (`applyCorrections`), nie panelu.
     // Test przybija, że przekrój administratora tego nie obchodzi po swojemu.
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     await correct(app, SESSION, {
       token: admin,
@@ -734,7 +734,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
   it('retime: pokazuje czas blokowy przed i po, bez naruszeń i bez zapisu', async () => {
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -772,7 +772,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     // `engine_stop` nie skraca cyklu o 12 minut, tylko usuwa go z czasu blokowego
     // w całości. Panel nie umiałby tego wyliczyć: reguła mieszka w projekcji.
     const { app, db } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -799,7 +799,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     // Naruszenie jest TREŚCIĄ odpowiedzi: administrator ma zobaczyć powód razem
     // z liczbami `before`, a nie pustą kartę z 422.
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -815,7 +815,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
 
   it('cel spoza sesji → brak opisu celu i naruszenie CORRECTION_TARGET_NOT_FOUND', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -830,7 +830,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
 
   it('czas z przyszłości → naruszenie CORRECTION_TIME_IN_FUTURE', async () => {
     const { app, clock } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -850,7 +850,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     // musi umieć opisać taki cel - inaczej administrator nie wie, od jakiego stanu
     // startuje.
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     await correct(app, SESSION, {
       token: admin,
@@ -879,7 +879,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     // wystawia formularz tam, gdzie zapis odmówi (albo odwrotnie). Bramka `day_open`
     // znikła po OBU stronach naraz, więc i tu jest 200 razem z ostrzeżeniem.
     const { app } = await flownDay({ closed: false });
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, SESSION, {
       token: admin,
@@ -893,7 +893,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
 
   it('nieistniejąca sesja → 404', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await preview(app, 'sess-nie-ma', {
       token: admin,
@@ -921,7 +921,7 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     // Kolejność jest celowa: najpierw zobacz skutek, potem wytłumacz decyzję.
     // Ciało bez uzasadnienia MUSI więc przejść, a `retime` bez czasu - nie.
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const ok = await preview(app, SESSION, {
       token: admin,

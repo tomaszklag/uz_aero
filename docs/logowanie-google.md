@@ -63,7 +63,7 @@ To jest ważniejsze niż lista zmian, bo wyznacza jej granice:
   jednym kroku. `AuthService`, rotacja refresha, „wygasły token ≠ wylogowanie"
   i blokada wylogowania przy niepustym outboksie - bez zmian.
 - **Rejestr zdarzeń, projekcje, sygnatura operacji** - bez zmian. `pilots.code`
-  zostaje `NOT NULL UNIQUE`, więc `SP-AXA/2026-09-01/AKO/1` liczy się jak dotąd.
+  zostaje `NOT NULL UNIQUE`, więc `SP-AXA/2026-09-01/BNO/1` liczy się jak dotąd.
 - **Role i zdolności** (`domain/roles.ts`) - bez zmian, patrz §4.
 - **Unieważnianie poświadczeń** (`credentials_valid_from`) zostaje i jest teraz
   WAŻNIEJSZE: to jedyny sposób odcięcia żywej sesji, skoro nie ma już hasła
@@ -312,8 +312,9 @@ Audyt: `registration.approve` / `registration.reject`.
 Skoro hasła znikają wszędzie, ekran logowania panelu (`admin/`) dostaje ten sam
 przycisk - przepływ webowy Google, osobny client ID, sesja dalej w ciasteczku
 `ninerdeck_admin` z TTL 8 h i BEZ refresh tokenu (§8.4 architektury panelu - to zostaje).
-Brama `panel.access` działa jak dotąd: konto pilota loguje się poprawnie i odbija
-o rolę z osobnym komunikatem.
+Brama `panel.access` działała jak dotąd - do issue #216 („panel dla wszystkich",
+2026-09-25): odtąd do panelu wchodzi każde aktywne członkostwo, a osobny komunikat
+(`403 no_membership`) dostaje wyłącznie osoba bez klubu (`docs/uprawnienia.md` §13).
 
 To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy okazji".
 

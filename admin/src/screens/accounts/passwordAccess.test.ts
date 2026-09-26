@@ -27,7 +27,7 @@ describe('kiedy wolno wysłać link', () => {
   it('bez adresu nie ma dokąd wysłać - i przycisk mówi to wprost', () => {
     expect(linkBlocker(null)).toBe('ta osoba nie ma adresu e-mail');
     expect(linkBlocker('   ')).toBe('ta osoba nie ma adresu e-mail');
-    expect(linkBlocker('anna@ninerdeck.pl')).toBeNull();
+    expect(linkBlocker('barbara@ninerdeck.pl')).toBeNull();
   });
 });
 
@@ -48,8 +48,8 @@ describe('ważność linku', () => {
 
 describe('potwierdzenie wysyłki', () => {
   it('mówi DOKĄD i JAK DŁUGO - nigdy linku', () => {
-    const text = linkSentText({ sentTo: 'anna@ninerdeck.pl', expiresAt: inMinutes(60) }, NOW);
-    expect(text).toBe('wysłano na anna@ninerdeck.pl · ważny godzinę');
+    const text = linkSentText({ sentTo: 'barbara@ninerdeck.pl', expiresAt: inMinutes(60) }, NOW);
+    expect(text).toBe('wysłano na barbara@ninerdeck.pl · ważny godzinę');
     expect(text).not.toContain('haslo');
   });
 });

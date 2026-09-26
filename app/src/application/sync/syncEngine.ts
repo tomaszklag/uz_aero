@@ -26,7 +26,17 @@ import {
   type PushResult,
   type RemoteAircraftState,
   type BookingWriteResult,
+  type DecisionResult,
+  type InboxCursor,
+  type RemoteApprovalQueue,
+  type RemoteAircraftPreview,
+  type RemoteAircraftCard,
+  type RemoteAircraftOperations,
+  type RemoteWatchList,
+  type OperationsCursor,
+  type RemoteInbox,
   type RemoteBookingDetail,
+  type RemotePilotPreview,
   type RemoteBookingDraft,
   type RemoteBookingPatch,
   type RemoteCalendar,
@@ -178,6 +188,72 @@ export class SyncEngine {
     return authorizedFetch(this.auth, (token) => this.server.getBooking(token, id));
   }
 
+  /**
+   * Podgląd pilota i samolotu przy decyzji (issue #206). `null` = nie wiadomo TERAZ:
+   * offline, wygasła sesja, brak zdolności albo osoba spoza sprawy - ekran mówi wtedy,
+   * że podgląd składa serwer, a nie pokazuje pustych zer.
+   */
+  fetchPilotPreview(bookingId: string, pilotId: string): Promise<RemotePilotPreview | null> {
+    return authorizedFetch(this.auth, (token) =>
+      this.server.getPilotPreview(token, bookingId, pilotId),
+    );
+  }
+
+  fetchAircraftPreview(bookingId: string): Promise<RemoteAircraftPreview | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getAircraftPreview(token, bookingId));
+  }
+
+  /**
+   * KARTA MASZYNY (`GET /aircraft/:id/card`, obserwowanie 3.2.0, §6). `null` = nie
+   * wiadomo TERAZ - brak sieci, odmowa, cudza maszyna: cały moduł wymaga sieci (§2.2),
+   * więc ekran mówi to wprost (27C), a nie rysuje liczników sprzed godziny.
+   */
+  fetchAircraftCard(aircraftId: string): Promise<RemoteAircraftCard | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getAircraftCard(token, aircraftId));
+  }
+
+  /** Historia maszyny stronami (`GET /aircraft/:id/operations`); ta sama trójka co wyżej. */
+  fetchAircraftOperations(
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations | null> {
+    return authorizedFetch(this.auth, (token) =>
+      this.server.getAircraftOperations(token, aircraftId, page),
+    );
+  }
+
+  /**
+   * CAŁA FLOTA ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`, 13C).
+   *
+   * Trzy odpowiedzi, bo sekcja w ustawieniach istnieje WYŁĄCZNIE dla osoby ze zdolnością
+   * (§6.6): lista, `'forbidden'` (serwer odmówił 403 - tej osoby sekcja nie dotyczy)
+   * albo `null` (nie wiadomo teraz). Zwinięcie 403 do `null` kazałoby każdemu pilotowi
+   * bez zasięgu oglądać zdanie o liście, której nigdy nie miał.
+   */
+  fetchAircraftWatches(): Promise<RemoteWatchList | 'forbidden' | null> {
+    return authorizedFetch(this.auth, async (token) => {
+      try {
+        return await this.server.getAircraftWatches(token);
+      } catch (error) {
+        if (error instanceof ServerRejectedError && error.status === 403) return 'forbidden' as const;
+        throw error;
+      }
+    });
+  }
+
+  /**
+   * Przełącznik obserwowania (`PUT`/`DELETE /aircraft/:id/watch`) - ZAPIS wprost, nie
+   * przez outbox (§2.2): ustawienie osoby, nie fakt z kabiny. `false` = nie dojechało
+   * (brak sieci, odmowa) i ekran mówi to POWODEM przy przełączniku.
+   */
+  async setAircraftWatch(aircraftId: string, on: boolean): Promise<boolean> {
+    const done = await authorizedFetch(this.auth, async (token) => {
+      await this.server.setAircraftWatch(token, aircraftId, on);
+      return true;
+    });
+    return done === true;
+  }
+
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   fetchSlots(params: {
     aircraftId: string;
@@ -217,6 +293,40 @@ export class SyncEngine {
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); ta sama trójka odpowiedzi. */
   cancelBooking(id: string, reason: string | null): Promise<BookingWriteResult | null> {
     return authorizedFetch(this.auth, (token) => this.server.cancelBooking(token, id, reason));
+  }
+
+  /**
+   * SKRZYNKA POWIADOMIEŃ (`GET /me/notifications`, 3.1.0, §12.1) - strona najnowszych
+   * razem z licznikiem nieprzeczytanych. `null` = nie wiadomo (brak sieci, odmowa):
+   * cały moduł wymaga sieci i cache'u nie ma, więc ekran mówi to wprost (25B).
+   */
+  fetchInbox(page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getInbox(token, page));
+  }
+
+  /** Przeczytanie wiadomości - gasi „nowe", nie „do decyzji" (§9.4). `false` = nie dojechało. */
+  async markNotificationRead(id: string): Promise<boolean> {
+    const done = await authorizedFetch(this.auth, async (token) => {
+      await this.server.markNotificationRead(token, id);
+      return true;
+    });
+    return done === true;
+  }
+
+  /** Sprawy czekające na MOJĄ decyzję (`GET /me/approvals/queue`). */
+  fetchApprovalQueue(): Promise<RemoteApprovalQueue | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getApprovalQueue(token));
+  }
+
+  /**
+   * DECYZJA o cudzej rezerwacji (`POST /bookings/:id/decision`) - ZAPIS, więc nie przez
+   * outbox: decyzja jest arbitrażem, jak sama rezerwacja (§2.1). `null` = nie dojechała.
+   */
+  decideBooking(
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult | null> {
+    return authorizedFetch(this.auth, (token) => this.server.decideBooking(token, id, body));
   }
 
   /**

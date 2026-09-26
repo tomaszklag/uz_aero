@@ -27,7 +27,7 @@ const BASE = { lat: 52.1387, lon: 15.7986 };
 const NM = 1 / 60;
 
 let seq = 0;
-function event(type: string, time: number, payload: Record<string, unknown>, who = 'TMK') {
+function event(type: string, time: number, payload: Record<string, unknown>, who = 'AKO') {
   seq += 1;
   return {
     uuid: `mtrk-${seq}-${type}`,
@@ -44,7 +44,7 @@ function event(type: string, time: number, payload: Record<string, unknown>, who
 }
 
 /** Sesja: silnik 08:12 → 09:34, jeden lot 08:25 → 09:18. */
-function flownSession(who = 'TMK') {
+function flownSession(who = 'AKO') {
   return [
     event('session_claim', at(7, 50), { mode: 'free' }, who),
     event(
@@ -67,7 +67,7 @@ function flownSession(who = 'TMK') {
   ];
 }
 
-function fix(time: number, over: Record<string, unknown> = {}, who = 'TMK') {
+function fix(time: number, over: Record<string, unknown> = {}, who = 'AKO') {
   return {
     sessionUuid: `sess-${who}`,
     kind: 'fix',
@@ -86,7 +86,7 @@ function fix(time: number, over: Record<string, unknown> = {}, who = 'TMK') {
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 
-async function login(app: Harness['app'], who = 'TMK'): Promise<string> {
+async function login(app: Harness['app'], who = 'AKO'): Promise<string> {
   const res = await app.inject({
     method: 'POST',
     url: '/auth/google',
@@ -95,7 +95,7 @@ async function login(app: Harness['app'], who = 'TMK'): Promise<string> {
   return res.json().token as string;
 }
 
-function getTrack(app: Harness['app'], token: string, uuid = 'sess-TMK') {
+function getTrack(app: Harness['app'], token: string, uuid = 'sess-AKO') {
   return app.inject({
     method: 'GET',
     url: `/me/sessions/${uuid}/track`,
@@ -106,7 +106,7 @@ function getTrack(app: Harness['app'], token: string, uuid = 'sess-TMK') {
 /** Sesja wysłana rejestrem + ślad wysłany tą samą drogą, co z telefonu. */
 async function flownWithTrace(
   entries: Record<string, unknown>[],
-  who = 'TMK',
+  who = 'AKO',
 ): Promise<{ harness: Harness; app: Harness['app']; token: string }> {
   const harness = await testHarness();
   const { app } = harness;
@@ -205,8 +205,8 @@ describe('GET /me/sessions/:uuid/track', () => {
   it('cudza sesja jest nie do odróżnienia od nieistniejącej', async () => {
     const { app, harness } = await flownWithTrace([fix(at(8, 30))]);
 
-    const otherToken = await login(app, 'AKO');
-    const mine = await getTrack(app, otherToken, 'sess-TMK');
+    const otherToken = await login(app, 'BNO');
+    const mine = await getTrack(app, otherToken, 'sess-AKO');
     const nothing = await getTrack(app, otherToken, 'sess-nie-ma');
 
     expect(mine.statusCode).toBe(404);
@@ -219,7 +219,7 @@ describe('GET /me/sessions/:uuid/track', () => {
 
   it('bez tokenu nie ma śladu', async () => {
     const harness = await testHarness();
-    const res = await harness.app.inject({ method: 'GET', url: '/me/sessions/sess-TMK/track' });
+    const res = await harness.app.inject({ method: 'GET', url: '/me/sessions/sess-AKO/track' });
 
     expect(res.statusCode).toBe(401);
     await harness.app.close();

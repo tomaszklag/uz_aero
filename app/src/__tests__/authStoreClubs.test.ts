@@ -23,7 +23,7 @@ import { useAuthStore } from '../ui/store/authStore';
 const ALFA = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Zielonogórski' };
 const BETA = { id: 'org-b', slug: 'beta', name: 'Aeroklub Krakowski' };
 
-const person = { name: 'Tomasz Małkiewicz', email: 't@example.com' };
+const person = { name: 'Adam Kowalski', email: 't@example.com' };
 
 const noClubs: ClubsView = { status: 'none', memberships: [], person };
 const waitingInBeta: ClubsView = {
@@ -46,10 +46,10 @@ const waitingInBeta: ClubsView = {
 const flying: StoredCredentials = {
   token: 'jwt',
   refreshToken: 'r',
-  pilot: { id: 'p1', code: 'TMK', name: 'Tomasz Małkiewicz' },
+  pilot: { id: 'p1', code: 'AKO', name: 'Adam Kowalski' },
   pin: { salt: 's', hash: 'h' },
   org: ALFA,
-  memberships: [{ org: ALFA, code: 'TMK', role: 'pilot' }],
+  memberships: [{ org: ALFA, code: 'AKO', role: 'pilot' }],
 };
 
 /** Atrapa serwisu - store woła z niego dokładnie te trzy rzeczy. */
@@ -196,7 +196,7 @@ describe('switchClub', () => {
       pilot: { ...flying.pilot, code: 'TOM' },
       org: BETA,
       memberships: [
-        { org: ALFA, code: 'TMK', role: 'pilot' },
+        { org: ALFA, code: 'AKO', role: 'pilot' },
         { org: BETA, code: 'TOM', role: 'pilot' },
       ],
     };

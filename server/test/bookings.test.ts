@@ -24,14 +24,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BookingReleaseJob } from '../src/application/common/commands/bookingRelease.ts';
+import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
 type App = Harness['app'];
+type Db = Harness['db'];
 
 const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
 
@@ -97,13 +99,13 @@ describe('rezerwacje: zapis z telefonu', () => {
     const { app } = await testHarness();
     expect((await app.inject({ method: 'GET', url: '/bookings?from=x&to=y' })).statusCode).toBe(401);
 
-    const tmk = await login(app, 'TMK');
-    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const ako = await login(app, 'AKO');
+    const made = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     expect(made.statusCode, made.body).toBe(201);
     expect(made.json().status).toBe('confirmed');
-    expect(made.json().pilotId).toBe('TMK');
+    expect(made.json().pilotId).toBe('AKO');
 
-    const view = await calendar(app, tmk);
+    const view = await calendar(app, ako);
     expect(view.statusCode).toBe(200);
     expect(view.json().bookings).toHaveLength(1);
     // Siatka dób przychodzi zawsze - to ona odpowiada na pytanie o strefę klubu,
@@ -117,12 +119,12 @@ describe('rezerwacje: zapis z telefonu', () => {
 
   it('CUDZA zajętość niesie tylko to, co ekran z niej czyta', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
     // Rezerwacja z KOMPLETEM pól: trasa, drugi pilot, plan i notatka - czyli
     // dokładnie to, czego nie ma prawa zobaczyć kolega z klubu (przegląd W7).
-    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H, {
+    const made = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H, {
       operation: 'przelot',
       fromIcao: 'EPKK',
       toIcao: 'EPRJ',
@@ -133,7 +135,7 @@ describe('rezerwacje: zapis z telefonu', () => {
     expect(made.statusCode, made.body).toBe(201);
 
     // WŁAŚCICIEL widzi swoje w całości - to jego plan i jego karta rezerwacji.
-    const moje = (await calendar(app, tmk)).json().bookings[0];
+    const moje = (await calendar(app, ako)).json().bookings[0];
     expect(moje.note).toBe('Odbiór części w Jasionce');
     expect(moje.fromIcao).toBe('EPKK');
     expect(moje.plannedFuelL).toBe(120);
@@ -159,22 +161,22 @@ describe('rezerwacje: zapis z telefonu', () => {
     });
     expect(karta.statusCode).toBe(200);
     expect(karta.json().booking.note).toBeUndefined();
-    expect(karta.json().booking.pilotId).toBe('TMK');
+    expect(karta.json().booking.pilotId).toBe('AKO');
   });
 
   it('NAKŁADKA odbija się i mówi, CO stoi w tym czasie', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
-    await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     const kolizja = await create(app, pwi, JUTRO + 9 * H, JUTRO + 11 * H);
 
     expect(kolizja.statusCode).toBe(409);
     expect(kolizja.json().error).toBe('slot_taken');
     // Ekran ma napisać, kto trzyma termin - bez tego pilot nie wie, czy prosić kolegę,
     // czy czekać na wyjście maszyny z przeglądu.
-    expect(kolizja.json().taken.pilotId).toBe('TMK');
+    expect(kolizja.json().taken.pilotId).toBe('AKO');
     expect(kolizja.json().taken.kind).toBe('flight');
     // WIEK kolidującej zajętości stoi OBOK niej: „weszła 3 minuty temu" znaczy co
     // innego niż „stoi od tygodnia", a na siatce kalendarza ta liczba nie znaczy nic,
@@ -188,10 +190,10 @@ describe('rezerwacje: zapis z telefonu', () => {
 
   it('ZETKNIĘCIE CO DO MINUTY PRZECHODZI', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
-    await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     const druga = await create(app, pwi, JUTRO + 10 * H, JUTRO + 12 * H);
     expect(druga.statusCode, druga.body).toBe(201);
   });
@@ -200,7 +202,7 @@ describe('rezerwacje: zapis z telefonu', () => {
     // Warunek pracy w terenie: kolejka wysyła do skutku, więc „do skutku" musi być
     // bezpieczne. Uuid nadaje klient i to on jest całą idempotencją.
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const payload = {
       id: 'stala-rezerwacja',
       aircraftId: 'SP-AXA',
@@ -208,28 +210,28 @@ describe('rezerwacje: zapis z telefonu', () => {
       endsAt: iso(JUTRO + 10 * H),
       operation: 'skoki',
     };
-    const pierwszy = await app.inject({ method: 'POST', url: '/bookings', headers: bearer(tmk), payload });
-    const drugi = await app.inject({ method: 'POST', url: '/bookings', headers: bearer(tmk), payload });
+    const pierwszy = await app.inject({ method: 'POST', url: '/bookings', headers: bearer(ako), payload });
+    const drugi = await app.inject({ method: 'POST', url: '/bookings', headers: bearer(ako), payload });
 
     expect(pierwszy.statusCode).toBe(201);
     // 200, nie 201: nic właśnie nie powstało i odpowiedź nie ma prawa tego udawać.
     expect(drugi.statusCode).toBe(200);
     expect(drugi.json().id).toBe(pierwszy.json().id);
-    expect((await calendar(app, tmk)).json().bookings).toHaveLength(1);
+    expect((await calendar(app, ako)).json().bookings).toHaveLength(1);
   });
 
   it('ODWOŁANIE zwalnia termin NATYCHMIAST, a wiersz zostaje w zapisie', async () => {
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
-    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const made = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     const id = made.json().id as string;
 
     const cancelled = await app.inject({
       method: 'DELETE',
       url: `/bookings/${id}`,
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: {},
     });
     expect(cancelled.statusCode).toBe(200);
@@ -245,10 +247,10 @@ describe('rezerwacje: zapis z telefonu', () => {
 
   it('CUDZEJ rezerwacji pilot nie tknie - ani przesunie, ani odwoła', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
-    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const made = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     const id = made.json().id as string;
 
     const przesuniecie = await app.inject({
@@ -271,16 +273,16 @@ describe('rezerwacje: zapis z telefonu', () => {
 
   it('WŁASNĄ wolno przesunąć, a przesunięcie w nakładkę odbija się jak zapis', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
-    const moja = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const moja = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     await create(app, pwi, JUTRO + 12 * H, JUTRO + 14 * H);
 
     const ok = await app.inject({
       method: 'PATCH',
       url: `/bookings/${moja.json().id}`,
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: { endsAt: iso(JUTRO + 11 * H), note: 'przedłużam' },
     });
     expect(ok.statusCode, ok.body).toBe(200);
@@ -289,7 +291,7 @@ describe('rezerwacje: zapis z telefonu', () => {
     const wKolizje = await app.inject({
       method: 'PATCH',
       url: `/bookings/${moja.json().id}`,
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: { endsAt: iso(JUTRO + 13 * H) },
     });
     expect(wKolizje.statusCode).toBe(409);
@@ -298,18 +300,18 @@ describe('rezerwacje: zapis z telefonu', () => {
 
   it('TERMIN, KTÓRY MINĄŁ, i maszyna poza służbą - dwie różne odmowy', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    const wstecz = await create(app, tmk, TERAZ - 4 * H, TERAZ - 2 * H);
+    const wstecz = await create(app, ako, TERAZ - 4 * H, TERAZ - 2 * H);
     expect(wstecz.statusCode).toBe(400);
     expect(wstecz.json().error).toBe('booking_in_past');
 
     // SP-KWA jest w świecie testowym wyłączona ze służby.
-    const wylaczona = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H, { aircraftId: 'SP-KWA' });
+    const wylaczona = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H, { aircraftId: 'SP-KWA' });
     expect(wylaczona.statusCode).toBe(409);
     expect(wylaczona.json().error).toBe('aircraft_disabled');
 
-    const nieznana = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H, { aircraftId: 'SP-NIC' });
+    const nieznana = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H, { aircraftId: 'SP-NIC' });
     expect(nieznana.statusCode).toBe(404);
     expect(nieznana.json().error).toBe('aircraft_not_found');
   });
@@ -318,7 +320,7 @@ describe('rezerwacje: zapis z telefonu', () => {
 describe('rezerwacje: panel', () => {
   it('rezerwacja ZA PILOTA zostawia ślad w dzienniku audytu', async () => {
     const { app, db } = await testHarness();
-    const session = await panelCookie(app, 'TMK');
+    const session = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'POST',
@@ -335,7 +337,7 @@ describe('rezerwacje: panel', () => {
     });
     expect(res.statusCode, res.body).toBe(201);
     expect(res.json().pilotId).toBe('PWI');
-    expect(res.json().createdBy).toBe('TMK');
+    expect(res.json().createdBy).toBe('AKO');
 
     const { rows } = await db.query<{ action: string; details: Record<string, unknown> }>(
       `SELECT action, details FROM admin_audit WHERE action = 'booking.create'`,
@@ -346,8 +348,8 @@ describe('rezerwacje: panel', () => {
 
   it('WYŁĄCZENIE Z UŻYTKU blokuje rezerwacje - także maszyny stojącej w serwisie', async () => {
     const { app } = await testHarness();
-    const session = await panelCookie(app, 'TMK');
-    const tmk = await login(app, 'TMK');
+    const session = await panelCookie(app, 'AKO');
+    const ako = await login(app, 'AKO');
 
     const blokada = await app.inject({
       method: 'POST',
@@ -378,7 +380,7 @@ describe('rezerwacje: panel', () => {
     });
     expect(naSluzbie.statusCode, naSluzbie.body).toBe(201);
 
-    const proba = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const proba = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     expect(proba.statusCode).toBe(409);
     expect(proba.json().taken.kind).toBe('block');
     expect(proba.json().taken.blockReason).toBe('defect');
@@ -386,7 +388,7 @@ describe('rezerwacje: panel', () => {
 
   it('ODWOŁANIE CUDZEJ wymaga POWODU, a pilot czyta go w aplikacji', async () => {
     const { app } = await testHarness();
-    const session = await panelCookie(app, 'TMK');
+    const session = await panelCookie(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
     const made = await create(app, pwi, JUTRO + 8 * H, JUTRO + 10 * H);
@@ -411,38 +413,48 @@ describe('rezerwacje: panel', () => {
     expect(zPowodem.json().closeReason).toBe('przegląd 100 h wchodzi na tę sobotę');
   });
 
-  it('PILOT nie wejdzie na trasy panelu', async () => {
+  it('PILOT wchodzi do panelu (issue #216), ale rezerwacji ZA KOGOŚ nie wpisze - 403 z nazwą zdolności', async () => {
     const { app } = await testHarness();
-    // PWI jest zwykłym pilotem - nie ma nawet wejścia do panelu.
+    // PWI jest zwykłym pilotem: do 3.1.0 odbijał się już przy logowaniu; odtąd wchodzi
+    // z pustym zakresem, a odmowa pada tam, gdzie naprawdę stoi władza - na trasie.
+    const session = await panelCookie(app, 'PWI');
     const res = await app.inject({
       method: 'POST',
-      url: '/admin/api/auth/login',
-      headers: ADMIN_CSRF_HEADERS,
-      payload: { idToken: googleTokenFor('PWI') },
+      url: '/admin/api/bookings',
+      headers: session,
+      payload: {
+        id: nextId(),
+        aircraftId: 'SP-AXA',
+        pilotId: 'AKO',
+        startsAt: iso(JUTRO + 8 * H),
+        endsAt: iso(JUTRO + 10 * H),
+        operation: 'skoki',
+      },
     });
     expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'forbidden', required: 'reservations.manage' });
   });
 });
 
 describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
   it('`session_claim` z `reservationId` przestawia rezerwację na `fulfilled`', async () => {
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
-    const made = await create(app, tmk, JUTRO + 8 * H, JUTRO + 10 * H);
+    const ako = await login(app, 'AKO');
+    const made = await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H);
     const id = made.json().id as string;
 
     const at = JUTRO + 8 * H;
     const res = await app.inject({
       method: 'POST',
       url: '/events',
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: {
         events: [
           {
             uuid: 'ev-claim-rez',
             sessionUuid: 'S-REZ',
             aircraftId: 'SP-AXA',
-            picId: 'TMK',
+            picId: 'AKO',
             dualId: null,
             type: 'session_claim',
             deviceTime: at,
@@ -463,24 +475,87 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
     expect(rows[0]!.session_uuid).toBe('S-REZ');
   });
 
+  /*
+   * Przegląd bezpieczeństwa 3.1.0 (issue #169, K7): identyfikator KAŻDEJ rezerwacji klubu
+   * stoi w oknie kalendarza, więc zmodyfikowany klient mógł wpisać cudzy do przejęcia
+   * i „zrealizować" termin kolegi - slot przepadał bez słowa, a obserwujący dostawali
+   * „zgodnie z planem" o locie, który z tym planem nie ma nic wspólnego. Lot wchodzi
+   * zawsze (rezerwacja nie jest warunkiem lotu); nietknięta zostaje REZERWACJA.
+   */
+  const claimWith = (app: App, token: string, pic: string, aircraftId: string, reservationId: string, uuid: string) =>
+    app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: bearer(token),
+      payload: {
+        events: [
+          {
+            uuid: `ev-${uuid}`,
+            sessionUuid: uuid,
+            aircraftId,
+            picId: pic,
+            dualId: null,
+            type: 'session_claim',
+            deviceTime: JUTRO + 8 * H,
+            gpsTime: JUTRO + 8 * H,
+            payload: { mode: 'free', reservationId },
+            schemaVersion: 1,
+          },
+        ],
+      },
+    });
+
+  const statusOf = async (db: Db, id: string) =>
+    (await db.query<{ status: string }>('SELECT status FROM bookings WHERE id = $1', [id])).rows[0]!.status;
+
+  it('CUDZA rezerwacja w przejęciu zostaje nietknięta - lot wchodzi, termin kolegi nie przepada', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const krz = await login(app, 'KRZ');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+
+    const res = await claimWith(app, krz, 'KRZ', 'SP-AXA', id, 'S-OBCA');
+    expect(res.statusCode, res.body).toBe(200);
+    expect(await statusOf(db, id)).toBe('confirmed');
+  });
+
+  it('własna rezerwacja INNEJ maszyny zostaje nietknięta', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+
+    expect((await claimWith(app, ako, 'AKO', 'SP-FGK', id, 'S-INNA')).statusCode).toBe(200);
+    expect(await statusOf(db, id)).toBe('confirmed');
+  });
+
+  it('rezerwacja CZEKAJĄCA na zgodę nie przeskakuje do realizacji (domena: pending → fulfilled zakazane)', async () => {
+    const { app, db } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const id = (await create(app, ako, JUTRO + 8 * H, JUTRO + 10 * H)).json().id as string;
+    await db.query(`UPDATE bookings SET status = 'pending' WHERE id = $1`, [id]);
+
+    expect((await claimWith(app, ako, 'AKO', 'SP-AXA', id, 'S-CZEKA')).statusCode).toBe(200);
+    expect(await statusOf(db, id)).toBe('pending');
+  });
+
   it('NIEZNANA rezerwacja w `session_claim` NIE odrzuca paczki', async () => {
     // Rezerwacja nie jest warunkiem lotu: pilot mógł wejść w lot z rezerwacji odwołanej
     // w międzyczasie przez administratora, a zapis lotu jest ważniejszy niż porządek
     // w kalendarzu.
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const at = JUTRO + 8 * H;
     const res = await app.inject({
       method: 'POST',
       url: '/events',
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: {
         events: [
           {
             uuid: 'ev-claim-widmo',
             sessionUuid: 'S-WIDMO',
             aircraftId: 'SP-AXA',
-            picId: 'TMK',
+            picId: 'AKO',
             dualId: null,
             type: 'session_claim',
             deviceTime: at,
@@ -497,18 +572,22 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
 
   it('SLOT ZWALNIA SIĘ SAM po godzinie bez przejęcia maszyny', async () => {
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
     // Rezerwacja na TERAZ: zapis przechodzi, bo reguła patrzy na KONIEC terminu.
     const start = TERAZ - 10 * 60_000;
-    const made = await create(app, tmk, start, start + 4 * H);
+    const made = await create(app, ako, start, start + 4 * H);
     expect(made.statusCode, made.body).toBe(201);
     const id = made.json().id as string;
 
     const job = (now: Date) =>
-      new BookingReleaseJob(db, new PgBookingsRepo(), new PgSessionsProjection(), {
-        now: () => now,
-      }).run();
+      new BookingClockJob(
+        db,
+        new PgBookingsRepo(),
+        new PgSessionsProjection(),
+        { now: () => now },
+        silentNotifier(db),
+      ).run();
 
     // Pół godziny po starcie pilot jest po prostu spóźniony.
     const wczesnie = await job(new Date(start + 30 * 60_000));
@@ -529,24 +608,24 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
 
   it('MASZYNA WZIĘTA w terminie NIE zwalnia rezerwacji', async () => {
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
     const start = TERAZ - 10 * 60_000;
-    const made = await create(app, tmk, start, start + 4 * H);
+    const made = await create(app, ako, start, start + 4 * H);
     const id = made.json().id as string;
 
     // Pilot przyszedł kwadrans PRZED czasem - operacja zahacza o okno rezerwacji.
     await app.inject({
       method: 'POST',
       url: '/events',
-      headers: bearer(tmk),
+      headers: bearer(ako),
       payload: {
         events: [
           {
             uuid: 'ev-claim-wziete',
             sessionUuid: 'S-WZIETE',
             aircraftId: 'SP-AXA',
-            picId: 'TMK',
+            picId: 'AKO',
             dualId: null,
             type: 'session_claim',
             deviceTime: start - 15 * 60_000,
@@ -558,9 +637,13 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
       },
     });
 
-    const run = await new BookingReleaseJob(db, new PgBookingsRepo(), new PgSessionsProjection(), {
-      now: () => new Date(start + 70 * 60_000),
-    }).run();
+    const run = await new BookingClockJob(
+      db,
+      new PgBookingsRepo(),
+      new PgSessionsProjection(),
+      { now: () => new Date(start + 70 * 60_000) },
+      silentNotifier(db),
+    ).run();
     expect(run.released).toBe(0);
 
     const { rows } = await db.query<{ status: string }>('SELECT status FROM bookings WHERE id = $1', [id]);
@@ -585,9 +668,9 @@ describe('rezerwacje: sugestie slotów', () => {
 
   it('PUSTY DZIEŃ daje propozycje i mówi, skąd wzięło się okno', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    const res = await pytaj(app, tmk, 120);
+    const res = await pytaj(app, ako, 120);
     expect(res.statusCode, res.body).toBe(200);
     expect(res.json().suggestions.length).toBeGreaterThan(0);
     // Świat testowy nie ma lotniska macierzystego, więc okno jest DOMYŚLNE - i trasa
@@ -598,7 +681,7 @@ describe('rezerwacje: sugestie slotów', () => {
 
   it('SUGESTIA PRZYLEGA do cudzej rezerwacji, a nie stoi na środku pustego rzędu', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const pwi = await login(app, 'PWI');
 
     // Ktoś trzyma maszynę przez dwie godziny. Propozycja dla kolejnego pilota ma
@@ -606,7 +689,7 @@ describe('rezerwacje: sugestie slotów', () => {
     const zajete = { from: JUTRO + 8 * H, to: JUTRO + 10 * H };
     await create(app, pwi, zajete.from, zajete.to);
 
-    const res = await pytaj(app, tmk, 120);
+    const res = await pytaj(app, ako, 120);
     const pierwsza = res.json().suggestions[0];
     // Dokleja się od strony, po której zostaje dość miejsca: okno doby lotnej kończy
     // się niedługo po tej rezerwacji, więc dwie godziny mieszczą się tylko PRZED nią.
@@ -617,8 +700,8 @@ describe('rezerwacje: sugestie slotów', () => {
 
   it('WYŁĄCZENIE Z UŻYTKU liczy się jak każda inna zajętość', async () => {
     const { app } = await testHarness();
-    const session = await panelCookie(app, 'TMK');
-    const tmk = await login(app, 'TMK');
+    const session = await panelCookie(app, 'AKO');
+    const ako = await login(app, 'AKO');
 
     const blok = await app.inject({
       method: 'POST',
@@ -639,19 +722,19 @@ describe('rezerwacje: sugestie slotów', () => {
 
     // Maszyna stoi w serwisie całą dobę - sugestii z tego dnia być nie może, a pusta
     // lista NIE JEST błędem.
-    const res = await pytaj(app, tmk, 60);
+    const res = await pytaj(app, ako, 60);
     expect(res.statusCode).toBe(200);
     expect(res.json().suggestions).toEqual([]);
   });
 
   it('PORA DNIA przesuwa propozycje, gdy pilot ją poda', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
     // Pora musi leżeć W OKNIE doby lotnej - prośba o godzinę po zmroku nie ma czego
     // przesunąć, bo tam i tak nie ma kandydatów.
-    const bez = await pytaj(app, tmk, 60);
-    const z = await pytaj(app, tmk, 60, { preferredAt: iso(JUTRO + 6 * H) });
+    const bez = await pytaj(app, ako, 60);
+    const z = await pytaj(app, ako, 60, { preferredAt: iso(JUTRO + 6 * H) });
     expect(Date.parse(z.json().suggestions[0].startsAt)).toBeGreaterThan(
       Date.parse(bez.json().suggestions[0].startsAt),
     );
@@ -659,10 +742,10 @@ describe('rezerwacje: sugestie slotów', () => {
 
   it('żądanie bez sensu odbija się 400, a nie pustą listą', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    expect((await pytaj(app, tmk, 0)).statusCode).toBe(400);
-    expect((await pytaj(app, tmk, 60, { day: 'wczoraj' })).statusCode).toBe(400);
+    expect((await pytaj(app, ako, 0)).statusCode).toBe(400);
+    expect((await pytaj(app, ako, 60, { day: 'wczoraj' })).statusCode).toBe(400);
   });
 
   it('bez tokenu → 401', async () => {
@@ -672,5 +755,71 @@ describe('rezerwacje: sugestie slotów', () => {
       url: '/bookings/suggestions?aircraftId=SP-AXA&day=' + iso(JUTRO) + '&minutes=60',
     });
     expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('rezerwacje: panel dla KAŻDEGO członka - kształt pyta, kto patrzy (issue #216)', () => {
+  /** Dwie rezerwacje z notatkami: administratora i zwykłego pilota, na różne godziny. */
+  async function twoWithNotes(app: App): Promise<{ ako: string; pwi: string }> {
+    const akoToken = await login(app, 'AKO');
+    const pwiToken = await login(app, 'PWI');
+    const ako = await create(app, akoToken, JUTRO + 8 * H, JUTRO + 10 * H, { note: 'notatka AKO' });
+    const pwi = await create(app, pwiToken, JUTRO + 12 * H, JUTRO + 14 * H, { note: 'notatka PWI' });
+    expect(ako.statusCode, ako.body).toBe(201);
+    expect(pwi.statusCode, pwi.body).toBe(201);
+    return { ako: ako.json().id as string, pwi: pwi.json().id as string };
+  }
+
+  it('pilot z PUSTYM zakresem czyta okno kalendarza: własna w komplecie, cudza wąsko', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'PWI');
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/admin/api/bookings?from=${iso(JUTRO - H)}&to=${iso(JUTRO + 3 * 86_400_000)}`,
+      headers: session,
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    const rows = res.json().bookings as Record<string, unknown>[];
+    const own = rows.find((b) => b.id === ids.pwi)!;
+    const foreign = rows.find((b) => b.id === ids.ako)!;
+
+    expect(own.note).toBe('notatka PWI');
+    expect(own.operation).toBe('skoki');
+    // Cudza: godziny, maszyna, właściciel i rodzaj - żadnego pola z treścią.
+    expect(foreign.pilotId).toBe('AKO');
+    for (const key of ['note', 'operation', 'dualId', 'fromIcao', 'createdBy', 'closeReason']) {
+      expect(foreign, key).not.toHaveProperty(key);
+    }
+    expect(res.body).not.toContain('notatka AKO');
+  });
+
+  it('karta cudzej rezerwacji dla pilota: bez treści i bez stanu ścieżki; własna z obydwoma', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'PWI');
+
+    const foreign = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.ako}`, headers: session });
+    expect(foreign.statusCode, foreign.body).toBe(200);
+    expect(foreign.json().approval).toBeNull();
+    expect(foreign.json().booking).not.toHaveProperty('note');
+
+    const own = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.pwi}`, headers: session });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
+    expect(own.json().booking.note).toBe('notatka PWI');
+  });
+
+  it('„Podgląd klubu" (panel.access) widzi komplet cudzych - jak przed #216', async () => {
+    const { app } = await testHarness();
+    const ids = await twoWithNotes(app);
+    const session = await panelCookie(app, 'AKO');
+
+    const res = await app.inject({ method: 'GET', url: `/admin/api/bookings/${ids.pwi}`, headers: session });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().booking.note).toBe('notatka PWI');
+    expect(res.json().booking.createdBy).toBe('PWI');
+    expect(res.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
   });
 });

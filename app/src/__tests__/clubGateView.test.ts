@@ -16,7 +16,7 @@ const NOW = Date.UTC(2026, 8, 4, 12, 0, 0); // 4 września 2026, 12:00 UTC
 
 const ALFA = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Zielonogórski' };
 const BETA = { id: 'org-b', slug: 'beta', name: 'Aeroklub Krakowski' };
-const PERSON = { name: 'Tomasz Małkiewicz', email: 't.malkiewicz@gmail.com' };
+const PERSON = { name: 'Adam Kowalski', email: 'a.kowalski@gmail.com' };
 
 const membership = (over: Partial<ClubMembershipView> = {}): ClubMembershipView => ({
   org: ALFA,
@@ -52,7 +52,7 @@ describe('whenLabel', () => {
 
 describe('initialsOf', () => {
   it('dwa pierwsze człony, wersalikami', () => {
-    expect(initialsOf('Tomasz Małkiewicz')).toBe('TM');
+    expect(initialsOf('Adam Kowalski')).toBe('AK');
     expect(initialsOf('anna maria nowak')).toBe('AM');
   });
 
@@ -107,7 +107,7 @@ describe('clubGateView', () => {
     expect(view.body).toContain('Aeroklub Zielonogórski');
     expect(view.body).toContain('nadać Ci kod pilota');
     expect(view.meta).toBe('Zgłoszono kodem klubu · dziś 09:38 UTC');
-    expect(view.initials).toBe('TM');
+    expect(view.initials).toBe('AK');
     expect(view.reason).toBeNull();
   });
 
@@ -143,8 +143,8 @@ describe('clubGateView', () => {
 
   it('plakietka konta jedzie z serwera - ekran nie zna tokenu Google', () => {
     const view = clubGateView(clubs('none', []), NOW);
-    expect(view.name).toBe('Tomasz Małkiewicz');
-    expect(view.email).toBe('t.malkiewicz@gmail.com');
+    expect(view.name).toBe('Adam Kowalski');
+    expect(view.email).toBe('a.kowalski@gmail.com');
   });
 
   it('konto bez adresu (starszy serwer) nie wywraca ekranu - pusty napis, nie „null"', () => {

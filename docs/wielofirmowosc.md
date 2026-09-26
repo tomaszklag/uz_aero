@@ -29,7 +29,7 @@ członkostwo, więc ten sam człowiek może latać w dwóch klubach pod dwoma ko
   Zdarzenie dostaje `org_id`, ale żadna reguła domeny go nie czyta: reguły pytają
   o operację, maszynę i pilota, a te trzy rzeczy są już w obrębie jednego klubu z mocy
   modelu (§3.5).
-- **Sygnatura operacji** `SP-AXA/2026-09-01/AKO/1` - ten sam kształt. Kod pilota
+- **Sygnatura operacji** `SP-AXA/2026-09-01/BNO/1` - ten sam kształt. Kod pilota
   w sygnaturze to kod Z CZŁONKOSTWA w klubie, do którego należy maszyna (§3.6).
 - **Logowanie Google, token rejestracyjny, PIN, offline-first** - Google dalej
   potwierdza tożsamość, PIN dalej odblokowuje lokalnie. Zmienia się wyłącznie to, co
@@ -161,7 +161,7 @@ w ingeście i jest twarda: zapis do cudzego klubu nie ma miękkiej wersji.
 
 | dziś (globalnie) | po zmianie |
 |---|---|
-| `pilots.code UNIQUE` | `memberships (org_id, code)` - kod jedyny W KLUBIE; ta sama osoba może mieć `TMK` w jednym klubie i `TOM` w drugim |
+| `pilots.code UNIQUE` | `memberships (org_id, code)` - kod jedyny W KLUBIE; ta sama osoba może mieć `AKO` w jednym klubie i `TOM` w drugim |
 | `pilots.email UNIQUE` | bez zmian - osoba jest jedna na serwerze; e-mail to adres Google z pierwszego logowania albo wpisany przez superadministratora dla pierwszego administratora klubu (§3.8) |
 | `aircraft.reg UNIQUE` | `aircraft (org_id, reg)` - maszyna należy do JEDNEGO klubu; ta sama rejestracja w dwóch klubach jest dopuszczalna (maszyna sprzedana, przerejestrowana - historia zostaje u starego właściciela) |
 | `exported_sheets.tab UNIQUE` | `exported_sheets (org_id, tab)` |
@@ -628,7 +628,7 @@ starym pakiecie - decyzja o tym w epiku W.
   zaproszenie e-mailem wpuszczające od razu jest możliwym rozszerzeniem po 2.0.0
   (§15), nie częścią tego wydania.
 - **Sygnatura jednoznaczna tylko w klubie** (§3.6) - dwa kluby mogą mieć
-  `SP-AXA/2026-09-01/AKO/1` naraz. Wszędzie, gdzie sygnatura opuszcza klub (zgłoszenie
+  `SP-AXA/2026-09-01/BNO/1` naraz. Wszędzie, gdzie sygnatura opuszcza klub (zgłoszenie
   błędu w panelu superadministratora - dziś nie istnieje), musi iść z nazwą klubu.
 - **Superadministrator nie widzi danych klubu** (§3.3) - operator, który ma pomóc,
   musi zostać dodany jako członek. To jest cena reguły „nic nie wycieka", zapłacona
@@ -776,8 +776,9 @@ starym pakiecie - decyzja o tym w epiku W.
     własny wpis w dzienniku (`membership.reopen` dołożone do katalogu akcji);
   - **kolejka i kod klubu mają WŁASNE trasy** (`GET /memberships/pending`,
     `GET|POST /club-code*`), nie pola w `GET /pilots`: tamta lista jedzie na
-    `panel.access` (czyta ją każdy z wejściem do panelu, jest też słownikiem pilotów dla
-    filtrów), a kolejka i kod - na `accounts.manage`. Zdolność jest atrybutem TRASY, więc
+    `panel.access` (od issue #216 „Podgląd klubu" - czyta ją ten, kto ma podgląd, a kalendarz
+    bierze nazwiska dla KAŻDEGO członka z węższego słownika `GET /admin/api/directory`),
+    a kolejka i kod - na `accounts.manage`. Zdolność jest atrybutem TRASY, więc
     doklejenie ich do listy oddałoby adresy kandydatów każdemu, kto ją czyta;
   - **„ile zgłoszeń czeka tym kodem" liczy się od `join_code_since`** - `memberships` nie
     zapisuje, którym kodem ktoś wszedł, i zapisywać nie ma po co (kod jest jeden na klub,

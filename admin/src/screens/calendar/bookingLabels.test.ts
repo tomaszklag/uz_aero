@@ -12,7 +12,7 @@ import {
 
 const PEOPLE: Readonly<Record<string, Person>> = {
   'p-1': { name: 'Jan Nowak', code: 'JNO' },
-  'p-2': { name: 'Tomasz Małkiewicz', code: 'TMK' },
+  'p-2': { name: 'Adam Kowalski', code: 'AKO' },
 };
 const person = (id: string): Person | null => PEOPLE[id] ?? null;
 
@@ -169,7 +169,7 @@ describe('pochodzenie zajętości', () => {
   });
 
   it('cudza ręka to PANEL, a kto - mówi kod, bo kod się nie odmienia', () => {
-    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-2' }), person)).toBe('z panelu · TMK');
+    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-2' }), person)).toBe('z panelu · AKO');
   });
 
   it('autor spoza cache członków nie zostawia po sobie pustego napisu', () => {

@@ -9,8 +9,9 @@
  *
  * **To NIE jest zabezpieczenie.** Serwer odrzuca żądanie zdolnością (`domain/roles.ts`)
  * przy każdym wejściu; tutaj chodzi o to, żeby zamiast pustej tabeli i cichego 403
- * człowiek zobaczył zdanie o tym, kogo prosić. Ten sam powód, dla którego pozycja
- * nawigacji zostaje WIDOCZNA i wyszarzona, a nie znika.
+ * człowiek zobaczył zdanie o tym, kogo prosić. Pozycji nawigacji bez dostępu w kolumnie
+ * NIE MA (`panel-2.0.md` §3.3) - ten komponent odpowiada na ADRES bez dostępu, wklejony
+ * z pamięci albo z cudzej rozmowy (issue #216, `screens/common/NoAccessScreen.tsx`).
  */
 
 import type { ReactNode } from 'react';

@@ -42,11 +42,10 @@ akceptacji bez kalendarza nie ma czego akceptować.
 - panel: moduł „Kalendarz" z wyłączeniami serwisowymi.
 
 **3.1.0 - workflow akceptacji i powiadomienia:**
-- ścieżka akceptacji klubu (lista kroków; krok wskazuje rolę albo imienną osobę),
+- ścieżka akceptacji klubu (uporządkowane kroki; krok ma nazwę i listę osób),
 - decyzje z powodem przy odrzuceniu i stany rezerwacji,
-- skrzynka powiadomień w aplikacji (źródło prawdy, działa offline),
-- push jako budzik (`expo-notifications` + FCM, nowy APK),
-- zdolność `reservations.approve`.
+- skrzynka powiadomień w aplikacji (źródło prawdy; wymaga sieci, jak cały moduł),
+- push jako budzik (`expo-notifications` + FCM, nowy APK).
 
 ## 2. Czym JEST rezerwacja w tym systemie
 
@@ -243,30 +242,57 @@ CREATE INDEX idx_bookings_window ON bookings (org_id, aircraft_id, starts_at)
   WHERE status IN ('pending', 'confirmed');
 ```
 
-### 3.4 Tabele workflow i powiadomień (3.1.0, migracja 12)
+### 3.4 Tabele workflow i powiadomień (3.1.0, migracja 13)
 
 ```sql
 -- Ścieżka akceptacji klubu: uporządkowane kroki. Brak wierszy = brak akceptacji.
+-- Krok ma NAZWĘ i LISTĘ OSÓB (decyzja właściciela 2026-09-22) - roli nie ma, bo role
+-- klubu są dwie i „Mechanik" żadną z nich nie jest (§8).
 CREATE TABLE approval_steps (
   org_id    TEXT NOT NULL REFERENCES organizations(id),
-  step_no   INTEGER NOT NULL,
-  label     TEXT NOT NULL,              -- np. „Mechanik", „Szef wyszkolenia"
-  role      TEXT,                       -- rola klubu ALBO...
-  pilot_id  TEXT REFERENCES pilots(id), -- ...konkretna osoba (§11.2)
-  PRIMARY KEY (org_id, step_no),
-  CONSTRAINT step_target CHECK ((role IS NULL) <> (pilot_id IS NULL))
+  -- TRWAŁY identyfikator, bo ścieżka jest ZAWSZE BIEŻĄCA (§11.2): dołożenie kroku
+  -- w środku przesuwa numery następnych, a decyzja zapisana pod NUMEREM opisywałaby
+  -- po takiej zmianie inny krok niż w chwili kliknięcia.
+  id         TEXT PRIMARY KEY,
+  position   INTEGER NOT NULL,          -- kolejność pytania; zmienna, w odróżnieniu od `id`
+  label      TEXT NOT NULL,             -- np. „Mechanik", „Szef wyszkolenia"
+  -- Krok się NIE KASUJE, tylko przestaje być pytany. Decyzje pod nim zapadłe zostają
+  -- czytelne (append-only), a klucz obcy nie ma czego blokować przy „usuwaniu" kroku.
+  removed_at TIMESTAMPTZ
+);
+-- Unikatu na (org_id, position) NIE MA świadomie: przestawianie kolejności rodziłoby
+-- przejściowe kolizje, a odroczone ograniczenie kosztuje więcej, niż daje. Remis
+-- rozstrzyga `id`, więc porządek jest deterministyczny bez nowej reguły w bazie.
+
+-- Kto może zatwierdzić dany krok. WIĘCEJ NIŻ JEDNA OSOBA, a wystarczy zgoda JEDNEJ
+-- z nich (§11.2) - to pula uprawnionych, nie komplet podpisów.
+CREATE TABLE approval_step_members (
+  org_id   TEXT NOT NULL REFERENCES organizations(id),
+  step_id  TEXT NOT NULL REFERENCES approval_steps(id) ON DELETE CASCADE,
+  pilot_id TEXT NOT NULL REFERENCES pilots(id),
+  PRIMARY KEY (step_id, pilot_id)
 );
 
 -- Decyzje na rezerwacji - append-only, bo to zapis o tym, kto co postanowił.
 CREATE TABLE booking_approvals (
   booking_id TEXT NOT NULL REFERENCES bookings(id),
-  step_no    INTEGER NOT NULL,
+  org_id     TEXT NOT NULL REFERENCES organizations(id),
+  step_id    TEXT NOT NULL REFERENCES approval_steps(id),
   decision   TEXT NOT NULL CHECK (decision IN ('approved', 'rejected')),
+  -- Skąd wzięła się zgoda: ktoś kliknął (`person`) czy krok przeszedł sam, bo
+  -- rezerwujący jest na jego liście (`self`, §11.2). Bez tego pominięty krok jest
+  -- nieodróżnialny od kroku, o który nikt nie zapytał.
+  via        TEXT NOT NULL DEFAULT 'person' CHECK (via IN ('person', 'self')),
   reason     TEXT,                      -- WYMAGANY przy 'rejected' (§11.3)
   decided_by TEXT NOT NULL REFERENCES pilots(id),
   decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (booking_id, step_no)
+  PRIMARY KEY (booking_id, step_id)
 );
+-- MIGRACJA 14 (3.1.0, epik R-I): POPRAWKA TERMINU CZYŚCI ZGODY (§11.4). Wiersz dostaje
+-- własny `id` (klucz główny w miejsce pary), `superseded_at` znaczy „ta zgoda dotyczyła
+-- innego terminu", a unikat (booking_id, step_id) obowiązuje WYŁĄCZNIE wśród żywych:
+-- indeks częściowy `idx_booking_approvals_live … WHERE superseded_at IS NULL`.
+-- Append-only zostaje: unieważniona zgoda nie znika, tylko przestaje się liczyć.
 
 -- Skrzynka: źródło prawdy powiadomień. Push jest tylko budzikiem (§12).
 CREATE TABLE notifications (
@@ -379,10 +405,17 @@ nie istnieje: brak zdarzenia jest nieodróżnialny od braku zasięgu i tak zosta
 | `PATCH /bookings/:id` | przesunięcie i zmiana zadania - WŁASNEJ rezerwacji |
 | `DELETE /bookings/:id` | odwołanie własnej (zapis zostaje, `status = 'cancelled'`) |
 | `GET /bookings/suggestions?aircraftId=&day=&minutes=` | sugestie slotów (§7) |
-| `GET /me/notifications` *(3.1)* | skrzynka, kursor jak `/me/events` |
-| `POST /me/notifications/:id/read` *(3.1)* | odczytanie |
+| `GET /me/notifications` *(3.1)* | skrzynka, kursor parą `(created_at, id)`; odpowiedź niesie `timezone` klubu i przy każdej wiadomości DOBĘ terminu (`day`), bo „sob 26 WRZ 09:00-12:00" liczy się odejmowaniem od granic doby (§6.1); `approver` = czy ta osoba rozstrzyga cudze terminy (R-J - prośba o zgodę na powiadomienia) |
+| `POST /me/notifications/:id/read` *(3.1)* | odczytanie - gasi „nowe", nie „do decyzji" (§9.4) |
+| `GET /me/approvals/queue` *(3.1)* | sprawy czekające na MOJĄ decyzję: rezerwacja (pełne pola) + krok; skrzynka liczy z niej plakietkę „Do decyzji" |
 | `POST /me/push-token` *(3.1)* | rejestracja tokenu push dla BIEŻĄCEJ sesji |
 | `POST /bookings/:id/decision` *(3.1)* | zgoda albo odmowa z powodem |
+
+**Własna rezerwacja niesie `createdAt`** (R-I) - karta pisze „czeka od 16 h", a ekran
+decyzji „czeka od wczoraj"; cudza zajętość na siatce tej chwili nie dostaje (§17).
+**Payload powiadomienia niesie `pilotId` rezerwującego** - skrzynka pisze „Jakub Wrona
+prosi o zgodę na lot", a nazwisko rozwiązuje z cache członków po identyfikatorze, jak
+wszędzie; nazwisk na drucie nie ma.
 
 Odmowy: `409 slot_taken` (nakładka - z danymi kolidującej zajętości, żeby ekran mógł
 powiedzieć CO stoi w tym czasie), `409 aircraft_disabled`, `403 not_your_booking`,
@@ -407,13 +440,20 @@ stan niż utrata nowego.
 
 | Trasa | Zdolność |
 | --- | --- |
-| `GET /admin/api/bookings?from=&to=` | `panel.access` |
+| `GET /admin/api/bookings?from=&to=` | każdy członek (`capability: null`, issue #216; do 3.1.0 `panel.access`) - kształt cudzej rezerwacji pyta, kto patrzy, jak na telefonie (§17) |
+| `GET /admin/api/bookings/:id` *(3.1)* - zajętość ze stanem ścieżki, Z OSOBĄ decydującą | każdy członek (issue #216); stan ścieżki tylko dla widza pełnego, inaczej `approval: null` |
 | `POST /admin/api/bookings` (rezerwacja za pilota, wyłączenie z użytku) | `reservations.manage` / `fleet.manage` |
-| `PATCH`/`DELETE /admin/api/bookings/:id` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/cancel` | `reservations.manage` |
+| `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
+| `GET /admin/api/approvals/queue` *(3.1)* - co czeka na MOJĄ zgodę | `reservations.approve` |
 | `GET`/`PUT /admin/api/approval-steps` *(3.1)* | `accounts.manage` |
 
-Wpisy administratora idą przez `AuditedWrite` - nowe akcje w `domain/adminActions.ts`:
-`booking.create`, `booking.cancel`, `booking.block`, `approval.decide`.
+Wpisy administratora idą przez `AuditedWrite` - akcje w `domain/adminActions.ts`:
+`booking.create`, `booking.cancel`, `booking.block`, `approval.steps`. **Decyzja o rezerwacji
+NIE MA akcji audytu** - ani z telefonu, ani z panelu (decyzja właściciela 2026-09-23,
+epik R-H): jej rejestrem jest append-only `booking_approvals`, a drugi ślad zależny od
+powierzchni mówiłby o jednym fakcie na dwa sposoby. Historia w panelu niesie OSOBĘ
+decydującą (`decidedBy`), telefon - nie (§9.4): administrator pyta „do kogo zadzwonić".
 
 ## 6. Czas: kalendarz mówi czasem klubu, rejestr zostaje w UTC
 
@@ -619,16 +659,37 @@ zasobem, którego dotąd nie było - stąd nowe pozycje, nie doklejenie do istni
   maszyn, a tu chodzi o władzę nad cudzym planem;
 - **wyłączenie maszyny z użytku idzie na `fleet.manage`** - to stan maszyny w czasie,
   czyli przedłużenie `service_status`, którym tamta zdolność już steruje (§3.1);
-- **`reservations.approve`** (3.1.0, rola `admin`) - krok akceptacji;
+- **`reservations.approve`** (3.1.0) - prawo do rozstrzygania cudzych rezerwacji ORAZ
+  do oglądania wszystkich ścieżek i terminów klubu. **Nadaje się je OSOBIE, nie roli**
+  (decyzja właściciela 2026-09-23, `docs/uprawnienia.md`) - i dlatego zapis z 2026-09-22,
+  że ta pozycja „nie powstaje", jest ODWRÓCONY: właściciela nie miałaby tylko dopóty,
+  dopóki zdolności rozdawały role;
 - **rezerwuje KAŻDY aktywny członek klubu** - to nie jest zdolność panelu, tylko zwykła
   praca pilota, jak wpisanie lotu.
 
-**Napięcie do rozwiązania w 3.1.0:** role klubu są dziś dwie (`pilot`, `admin`), a `admin`
-ma wszystko - „szef wyszkolenia" został wycofany 2026-08-30 decyzją właściciela. Ścieżka
-akceptacji z krokiem „szef wyszkolenia" nie ma więc na czym stanąć jako ROLA. Dlatego krok
-ścieżki wskazuje **rolę ALBO imienną osobę** (§3.4), a osoba wskazana imiennie decyduje
-o TEJ rezerwacji bez żadnej zdolności globalnej. Trzecia rola może wrócić później i model
-jest na nią gotowy; do tego czasu kluby wskazują ludzi.
+**Napięcie ROZWIĄZANE 2026-09-23 - U ŹRÓDŁA, NIE OBEJŚCIEM.** Role klubu były dwie
+(`pilot`, `admin`), a `admin` miał wszystko; „szef wyszkolenia" wycofano 2026-08-30, więc
+krok o tej nazwie nie miał na czym stanąć. Dwa pierwsze wyjścia obchodziły problem, zamiast
+go usuwać: krok wskazujący **rolę ALBO jedną osobę** robił z każdego urlopu blokadę
+rezerwacji, a krok z **listą osób BEZ żadnej zdolności** (zapis z 2026-09-22) kupował
+działający workflow kosztem drugiego, równoległego mechanizmu uprawnień - obecność na
+liście rozstrzygałaby o dostępie do cudzych planów, o czym katalog `Capability` nie
+wiedziałby nic.
+
+Właściciel rozstrzygnął to inaczej: **ról nie ma, jest ZAKRES ZDOLNOŚCI NADAWANY OSOBIE.**
+Administrator klubu zaznacza każdemu członkowi, co wolno mu robić; „administrator" zostaje
+presetem wypełniającym ten zbiór, a nie władzą samą w sobie. Mechanik jest więc zwykłym
+pilotem z doklejonym `reservations.approve` - i nie trzeba mu do tego oddawać floty, kont
+ani dziennika. Model, migracja, ekran i zapora przed zamknięciem klubu:
+**`docs/uprawnienia.md`**. Kod był na to gotowy: pyta o ZDOLNOŚĆ w dziewiętnastu miejscach
+i o rolę w żadnym - dwa trafienia `role === 'admin'` zamieniają ją na polskie słowo
+do wyświetlenia.
+
+**Lista kroku i zdolność odpowiadają na DWA różne pytania i oba są potrzebne**: zdolność
+mówi „ta osoba w ogóle akceptuje i widzi terminy klubu", lista kroku - „to jest KROK, za
+który odpowiada". Bez zdolności nie da się nadać prawa do oglądania cudzych planów; bez
+listy każdy akceptujący rozstrzygałby każdy krok, a „Mechanik" i „Szef wyszkolenia"
+przestałyby cokolwiek znaczyć.
 
 ## 9. Aplikacja pilota
 
@@ -800,6 +861,97 @@ odpowiedzi trzeba szukać przewijaniem. Chip w nagłówku osi otwiera arkusz wyb
 - **akcje arkusza są PRZYPIĘTE**, przewija się lista (reguła ramy arkuszy: skraca się to,
   co pilot doczyta przewinięciem, nie rząd akcji).
 
+### 9.4 Ekrany 3.1.0 (wykonane w epiku #196, design-first)
+
+Makiety powstały PRZED kodem, tak jak w 3.0.0: **`25-powiadomienia`** (+ `25a` nic nie
+przyszło, `25b` bez zasięgu), **`26-decyzja`** (+ `26a` podgląd pilota, `26b` podgląd
+samolotu, `26c` odmowa z powodem), **stany karty rezerwacji** `23b` czeka na zgodę,
+`23e` doszedł krok, `23c` odrzucona, `23d` wygasła, oraz **`20e`** - Pulpit
+z rezerwacją, która czeka.
+
+**WIADOMOŚĆ TO NIE SPRAWA** - z tego rozróżnienia bierze się cała skrzynka. „Nowe"
+mówi o WIADOMOŚCI („nie widziałeś jeszcze tej nowiny") i gaśnie z chwilą otwarcia
+listy; „Do decyzji" mówi o SPRAWIE i stoi, dopóki nie zapadnie decyzja - choćby pilot
+czytał listę dziesięć razy. Gdyby jedno gasiło drugie, wystarczyłoby zerknąć na
+skrzynkę, żeby prośba o zgodę przestała się dopominać. Stąd dwa różne znaki: krawędź
+przy brzegu wiersza i plakietka przy treści.
+
+**CZWARTEJ ZAKŁADKI NIE MA I NIE BĘDZIE.** Zakładka to MIEJSCE PRACY (dzień, plan,
+przeszłość), a skrzynka jest kanałem - zagląda się do niej, kiedy coś przyszło,
+i wychodzi. Wejściem jest **dzwonek w nagłówku Pulpitu**, obok zębatki i z tego samego
+powodu, co ona (issue #82: jedno wejście, tylko tutaj). Licznik zapala się wyłącznie
+z nieprzeczytanymi; **bez zasięgu nie ma go wcale**, bo liczbę zna serwer, a
+zapamiętana sprzed godziny mówiłaby o stanie, którego telefon nie zna. Paska zakładek
+nie ma ani na 25, ani na 26: zakładki są w nawigacji JEDNYM ekranem stosu, a wszystko
+otwarte z Pulpitu leży nad nimi (§9.1).
+
+**SPRAWY NIE SĄ PRZYPINANE do góry** - lista jest chronologiczna, a wyróżnia je
+plakietka. Przypięcie kazałoby czytać listę dwa razy: raz w kolejności czasu i raz
+w kolejności wagi.
+
+**POWÓD ODMOWY JEST CZĘŚCIĄ WIADOMOŚCI** - bez niego „odmowa" zostawia pilota
+z pytaniem, na które musiałby zadzwonić. Tą samą zasadą wiadomość o wygaśnięciu mówi,
+co robić dalej, a wiadomość o zmianie ścieżki - dlaczego rezerwacja czeka, mimo że ktoś
+już ją zatwierdził.
+
+**PODGLĄD JEST NA TELEFONIE EKRANEM, NIE ARKUSZEM.** W panelu te same fakty wysuwają
+się szufladą nad kolejką, bo tam sprawa zostaje widoczna pod spodem; na telefonie nie
+ma takiego miejsca, a cztery karty z tabelą to treść na cały ekran - arkusz z sufitem
+56 px byłby ekranem udającym wstawkę. Podgląd nie ma ANI JEDNEJ akcji na sprawie: zgoda
+i odmowa zostają tam, gdzie stoi komplet danych.
+
+**WIERSZ PROWADZĄCY W GŁĄB WYGLĄDA INACZEJ NIŻ W PANELU.** Tam afordancję niesie
+ghost-badge POD KURSOREM (§10); na telefonie kursora nie ma, więc ta sama sztuczka
+dałaby wiersz, po którym nic nie widać. Afordancja stoi w spoczynku i jest nią szewron
+na prawej krawędzi - przy trzech wierszach karty (samolot, pilot, drugi pilot), nie
+przy każdym.
+
+**ODMOWA NIE JEST CZERWONA.** Czerwień niesie w tej aplikacji odwołanie WŁASNEJ
+rezerwacji i unieważnienie wpisu - rzeczy, które coś kasują. Odmowa jest decyzją
+i stoi obok zgody jako druga, wyciszona odpowiedź.
+
+**KROKU NIE PISZEMY** - ani na 26, ani w kolejce panelu: ekran pyta CIEBIE, więc nazwa
+kroku odpowiada na pytanie, którego nikt nie zadał. Co się stanie po decyzji, mówi
+jedno zdanie pod pasem akcji.
+
+**STANY KARTY REZERWACJI: UKŁAD ZOSTAJE, ZMIENIA SIĘ TON.** Miejsce na plakietkę stanu
+przewidziano już w 3.0.0, kiedy stan był jeden - ekran, który przy odmowie przestawia
+karty, każe czytać się od nowa w najgorszym momencie. Zieleń znaczy „w normie" i niesie
+akcję główną, więc na karcie rezerwacji obiecuje, że lot jest pewny: rezerwacja
+czekająca idzie w ton ostrzeżenia (NIE w wygaszenie - zajmuje maszynę), a zamknięta
+(odrzucona, wygasła) wraca do tonu neutralnego, bo czerwień niesie baner, a dwa czerwone
+pudełka pod sobą przestają się odróżniać.
+
+**ŚCIEŻKA MÓWI, ILE KROKÓW ZOSTAŁO I KTO JE TRZYMA** - to jedyna odpowiedź na pytanie
+„do kogo mam zadzwonić". Nazwisk decydujących NIE MA: krok bywa obsadzony przez kilka
+osób i rozstrzyga pierwsza (§11.2), więc jedno nazwisko byłoby nieprawdą, a trzy - listą
+do przepisania przy każdej zmianie obsady.
+
+**POPRAWKA CZYŚCI ZGODY i ekran mówi to PRZED tapnięciem.** Zgoda dotyczyła KONKRETNEGO
+terminu, więc po przesunięciu przestaje cokolwiek znaczyć - inaczej ktoś zatwierdziłby
+dwie godziny w sobotę rano, a poleciałoby się przez pół niedzieli. Odwołanie zostaje:
+rezerwacja czekająca trzyma slot tak samo jak zatwierdzona (§11.5). Rezerwacja ZAMKNIĘTA
+ma za to jedno wyjście - „wybierz inny termin": nie ma czego przesuwać ani odwoływać,
+a wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą.
+
+**ODLICZANIE ZOSTAJE przy rezerwacji czekającej** (`20e`). Termin zbliża się niezależnie
+od tego, czy ktoś zdążył zdecydować, a para „za godzinę - i nadal czeka" jest tu całą
+informacją.
+
+**LICENCJE, BADANIA I UPRAWNIENIA NA TYP SĄ POZA ZAKRESEM 3.1.0** (decyzja właściciela
+2026-09-23: „na razie pomijamy, jest do tego inny epik"). Podgląd pilota przy decyzji
+odpowiada więc wyłącznie NALOTEM I HISTORIĄ LOTÓW - tym, co rejestr naprawdę wie.
+Ważności badań ani uprawnień na typ nie pokazujemy w żadnej postaci, także jako
+pustego wiersza albo kreski: pole „Badania -" na ekranie, który ma odpowiedzieć „czy
+mogę mu zatwierdzić ten lot", czyta się jak stwierdzenie o stanie dokumentów, a byłoby
+wyłącznie stwierdzeniem o brakującym module. Kiedy tamten epik wejdzie, podgląd dostanie
+kartę z prawdziwymi datami i to jest właściwa kolejność.
+
+**PRZEGLĄD DOMKNIĘTY 2026-09-23.** Katalog zestawów uprawnień zatwierdzony bez zmian
+(`docs/uprawnienia.md` §2.2), licencje i badania odłożone do własnego epiku. Makiety
+3.1.0 są od tej chwili ZATWIERDZONĄ SPECYFIKACJĄ i obowiązuje przy nich reguła „ekran
+wdrażamy 1:1": wątpliwość to rozmowa przed implementacją, nie cicha zmiana w kodzie.
+
 ## 10. Panel: moduł „Kalendarz"
 
 Piąta pozycja kolumny bocznej (`ui/shell/nav.ts`), po „Samolotach", na `panel.access`.
@@ -811,11 +963,84 @@ generowany (`npm run panel:css`):
 - `kalendarz-wpis` - szuflada jednej zajętości: kto, co, kiedy, notatka, odwołanie
   z powodem; dla wyłączenia - powód serwisowy;
 - `kalendarz-blokada` - wpisanie wyłączenia z użytku (maszyna, zakres, powód, komentarz);
-- (3.1) `kalendarz-sciezka` - kroki akceptacji klubu, `kalendarz-kolejka` - co czeka na
-  decyzję.
+- (3.1) `kalendarz-sciezka` - kroki akceptacji klubu (kolejność przestawia się
+  chwytem, nie strzałkami), `kalendarz-kolejka` - co czeka na decyzję,
+  `kalendarz-podglad` - szuflada pilota i samolotu nad kolejką.
+
+**STAN „CZEKA NA AKCEPTACJĘ" NA OSI FLOTY WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST** (L4):
+rezerwacja złożona trzyma termin od razu, nie od zgody - wiersz w `bookings` powstaje
+przy złożeniu i od tej chwili wyklucza nakładanie. Wpis ma więc to samo tło, ten sam
+napis i to samo miejsce, co każdy inny; różni go PRZERYWANA RAMKA, czyli kształt,
+a nie barwa (bursztyn niesie wyłączenie z użytku). Kreska jest JAŚNIEJSZA od zwykłego
+obrysu - przerywana linia o kontraście zwykłej ramki zlewa się z wypełnieniem i zostaje
+wpis wyglądający na odrobinę wytarty. Konsekwencja: ramka pod kursorem idzie do końca
+skali, bo `--text-muted` należy odtąd do stanu czekającego.
+
+Oś pokazuje KAŻDY wpis czekający w zakresie, a baner kolejki liczy TYLKO te, które
+czekają na zalogowanego - dwa różne pytania, więc liczby nie muszą się zgadzać.
+
+**PODGLĄD OTWIERA SIĘ Z WARTOŚCI, A AFORDANCJĄ JEST GHOST-BADGE POD KURSOREM**
+(komponent `.go`, sześć wersji, wybór właściciela 2026-09-23). W spoczynku wartość jest
+wartością - w swoim miejscu, w swoim kolorze, bez ramki i bez tła, z wyciszoną ikoną
+panelu bocznego; pod kursorem i na fokusie dostaje KSZTAŁT: tło i zaokrąglenie,
+dokładnie jak `.btn.ghost`. Odrzucone i po co to wiedzieć: niebieski odnośnik obiecywał
+przejście gdzie indziej (a ekran pod spodem zostaje), przyciski pod tytułem oderwały
+kontrolkę od rzeczy, której dotyczy, karty `.opt` ważyły dwie obramowane pozycje na
+każdą sprawę, szewron mówi „dalej", a sama ikona z podkreśleniem była afordancją bez
+kształtu. **Podpis wartości wchodzi do środka** (kod pilota przy nazwisku): jest
+częścią odpowiedzi, a nie sąsiadem - zostawiony na zewnątrz rozcinał jedną rzecz na dwie.
+**Drugi pilot ma własne wejście**: przy locie szkolnym i załodze dwuosobowej to jego
+nalot bywa pytaniem, a nie dowódcy.
 
 Panel NIE pokazuje sugestii slotów: to narzędzie pilota szukającego miejsca dla siebie,
 a administrator patrzy na całość i wpisuje konkretny termin.
+
+**HISTORIA DECYZJI I ODBLOKOWANIE UTKNIĘTEGO KROKU MIESZKAJĄ W SZUFLADZIE ZAJĘTOŚCI**
+(K2a, decyzja właściciela 2026-09-23, epik R-H). Kolejka K5 pokazuje wyłącznie sprawy
+stojące na MOIM kroku bieżącym, więc rezerwacja utknięta na kroku bez obsady (K4c) nigdy
+by się w niej nie pojawiła - a szuflada opisuje KAŻDĄ zajętość. Karta „Ścieżka akceptacji"
+stoi za kartą rezerwacji: kroki po numerach, przy decyzji OSOBA z kodem i godzina klubu
+(inaczej niż na telefonie, §9.4 - administrator pyta „do kogo zadzwonić"), pominięcie jako
+zapis „przeszedł sam", odmowa z powodem, krok bieżący bursztynem, krok nieosiągnięty kreską.
+Dla `reservations.manage` przy sprawie w toku dochodzi karta „Decyzja za krok …" - jawny
+akt z nazwiskiem w historii, powód wymagany przy odmowie. Klub bez ścieżki karty NIE MA.
+Rozstrzygnięcie idzie RZECZOWNIKIEM („zgoda · Jan Bąk"), bo czasownika nie da się odmienić
+bez znajomości płci.
+
+**Podgląd pilota i samolotu (K6/K6a) - WYKONANY w #206 (2026-09-24).** Znak maszyny na
+tytule karty kolejki oraz pilot i drugi pilot w wierszach są wartościami PROWADZĄCYMI
+W GŁĄB (`.go`, badge dopiero pod kursorem) i otwierają szufladę NAD kolejką - sprawa
+zostaje widoczna pod spodem, a szuflada nie ma ani jednej akcji na sprawie. Fakty liczy
+serwer JEDNYM zapytaniem dla panelu i telefonu (`domain/decisionPreview.ts`,
+`application/common/queries/decisionPreview.ts`; trasy `GET /admin/api/bookings/:id/
+preview/pilot/:pilotId` i `…/preview/aircraft` oraz ich bliźniaki telefonu pod
+`/bookings/:id/preview/…`), więc szuflada i ekrany 26a/26b dostają bajt w bajt ten sam
+komplet - pilnuje tego test `server/test/decisionPreview.test.ts`. Reguły:
+
+- **osoba NA SPRAWIE, nie dowolna**: podgląd pilota otwiera się wyłącznie dla PIC-a albo
+  Duala rozpatrywanej rezerwacji; inna osoba to 404 - inaczej trasa byłaby wyszukiwarką
+  nalotu każdego członka klubu dla każdego, kto ma jedną zdolność. Wpuszcza
+  `reservations.approve` ALBO `reservations.manage`, dokładnie jak decyzja;
+- **operacje liczą się z OBU foteli** (`listByCrew`: PIC albo Dual) - uczeń lata jako
+  Dual i bez tego fotela nie miałby ani jednego lotu na koncie. Liczy się operacja
+  nieunieważniona z biegiem silnika albo lotem; zapis bez biegu ze zmienionym odczytem
+  jest operacją w sensie issue #75, ale nalotu nie daje;
+- **doświadczenie NA EGZEMPLARZU sprawy stoi przed nalotem ogólnym**; „pierwszy raz na
+  tej maszynie" pisze się wprost zamiast pokazywać zera;
+- **„najbliższe terminy" sięgają po sufit okna kalendarza, ale rozpatrywana sprawa jest
+  na liście ZAWSZE**, także gdy stoi dalej - to ona jest powodem, dla którego ktoś tu
+  patrzy. Termin pilota nachodzący na sprawę dostaje bursztyn: baza pilnuje EGZEMPLARZA,
+  nie człowieka, więc odpowiedź należy do akceptującego;
+- **liczniki niosą ŹRÓDŁO** (zdanie samolotu / operacja w toku / stan początkowy /
+  wpis administratora) i osobę - ta sama `pickHandover`, którą liczy karta samolotu
+  w panelu i przekazanie na 02A;
+- **dwa zegary na jednym ekranie, świadomie**: chwile operacji (ostatnie loty, ostatni
+  lot, odczyt) idą datą rejestru w UTC, jak dziennik; terminy - dobą klubu, jak reszta
+  kalendarza;
+- **stopka szuflady pilota mówi „Pokaż kartę pilota"** (`#/piloci/:id`), nie „Pokaż
+  w dzienniku" jak w makiecie: dziennik nie ma wejścia po osobie, a link do listy floty
+  odpowiadałby na inne pytanie. Szuflada maszyny prowadzi w dziennik tej maszyny;
+- licencji, badań i uprawnień na typ NIE MA - osobny epik (§9.4).
 
 ## 11. Workflow akceptacji (3.1.0)
 
@@ -825,12 +1050,80 @@ Brak wierszy w `approval_steps` znaczy „rezerwacja potwierdzona od razu" - i t
 domyślny każdego nowego klubu. Wymóg akceptacji jest decyzją klubu, nie podatkiem
 nakładanym przez narzędzie.
 
-### 11.2 Kroki idą PO KOLEI
+### 11.2 Krok to NAZWA i LISTA OSÓB, a kroki idą PO KOLEI
 
-Ścieżka to lista uporządkowana: krok 2 pyta dopiero po zgodzie kroku 1. Powody: opisuje
-prawdziwy porządek („najpierw mechanik zwalnia maszynę, potem szef wyszkolenia zgadza się
-na lot"), budzi jedną osobę naraz zamiast wszystkich, a przy odmowie na kroku 1 nikt
-dalszy nie jest fatygowany. (Do potwierdzenia - §15 P3.)
+**Decyzja właściciela 2026-09-22** - zastępuje pierwotny model „krok wskazuje rolę ALBO
+jedną osobę" i domyka przy okazji P3. Ścieżkę definiuje **administrator klubu**: nadaje
+krokom nazwy, ustala ich kolejność i dopisuje do każdego osoby, które mogą go zatwierdzić.
+
+- **osób w kroku bywa kilka, a wystarczy zgoda JEDNEJ** - to pula uprawnionych, nie
+  komplet podpisów. Skrajny przypadek („jeden krok, kilka osób, ktokolwiek zatwierdzi")
+  ma być najprostszy z możliwych, a nie najcięższy. Wariant „wszyscy muszą podpisać"
+  jest innym mechanizmem i wymagałby innej nazwy - patrz §16;
+- **kroki idą po kolei**: krok 2 pyta dopiero po zgodzie kroku 1. Opisuje to prawdziwy
+  porządek („najpierw mechanik zwalnia maszynę, potem szef wyszkolenia zgadza się na
+  lot"), budzi jedną grupę naraz zamiast wszystkich, a przy odmowie na kroku 1 nikt
+  dalszy nie jest fatygowany;
+- **ROLI W KROKU NIE MA I NIE BĘDZIE** - to jest właśnie rozwiązanie napięcia z §8. Role
+  klubu są dwie (`pilot`, `admin`), więc „Mechanik" nigdy nie był rolą, a wskazanie
+  JEDNEJ imiennej osoby robiło z każdego urlopu blokadę rezerwacji. Lista osób znosi
+  jedno i drugie;
+- **osobą w kroku bywa ZWYKŁY PILOT bez dostępu do panelu**, więc decyzja musi dać się
+  podjąć z telefonu, ze skrzynki (§12.1). Panel jest dla tego, kto ścieżkę układa, nie
+  dla tego, kto po niej klika.
+
+**Rezerwujący pomija własne kroki.** Jeśli osoba zakładająca rezerwację jest na liście
+któregoś kroku, ten krok przechodzi sam - nikt nie prosi człowieka o zgodę na własny
+plan. Pominięcie **zapisuje się jako decyzja** z adnotacją `via = self`, a nie jako brak
+wpisu: po miesiącu krok pominięty musi być odróżnialny od kroku, o który nikt nie zapytał.
+Gdy rezerwujący jest na liście wszystkich kroków, rezerwacja potwierdza się od razu.
+
+**Pomijanie dotyczy OBECNOŚCI NA LIŚCIE, nie władzy administratora** - inaczej rezerwacje
+administratora omijałyby ścieżkę, której sam pilnuje. Administrator może natomiast
+zdecydować za KAŻDY krok (`reservations.manage`) i to jest jawny akt zapisany w historii,
+a nie ciche ominięcie.
+
+**ŚCIEŻKA JEST ZAWSZE BIEŻĄCA** (decyzja właściciela 2026-09-23). Rezerwacja w toku czyta
+konfigurację klubu na ŻYWO, a nie jej kopię z chwili złożenia: poprawka ścieżki obowiązuje
+natychmiast i wszystkich. Cena jest przyjęta świadomie - **dołożenie kroku COFA sprawy
+w toku** (rezerwacja czekająca na krok 2 wraca do nowego kroku 1), więc ekran musi to
+powiedzieć wprost, zamiast po prostu pokazać cofnięty stan.
+
+Z żywej ścieżki wynikają dwie rzeczy w modelu (§3.4), obie NIEOCZYWISTE:
+
+- **decyzja wskazuje KROK, nie jego numer**. Dołożenie kroku w środku przesuwa numery
+  następnych, więc zgoda zapisana jako „krok 2" opisywałaby po takiej zmianie inny krok
+  niż w chwili kliknięcia - czyli żywa ścieżka po cichu przepisywałaby cudze podpisy.
+  Stąd trwałe `approval_steps.id` i zmienna `position` obok niego;
+- **kroku się NIE KASUJE, tylko przestaje być pytany** (`removed_at`). Rejestr decyzji
+  jest append-only, więc zgoda wydana pod krokiem zdjętym ze ścieżki zostaje czytelna -
+  a bez tego klucz obcy i tak nie pozwoliłby kroku usunąć.
+
+**Krok bez ani jednej osoby blokuje wszystko**, więc stoją przed tym dwie zapory: panel
+nie zapisze takiego kroku, a administrator odblokuje ścieżkę, w której ludzie stracili
+członkostwo. Bez tej drugiej wystarczyłoby jedno odejście z klubu, żeby rezerwacje utknęły
+na zawsze.
+
+**ZAPIS ŚCIEŻKI DOMYKA I PRZEKIEROWUJE SPRAWY W TOKU** (issue #207, 2026-09-24). Skoro
+ścieżka jest bieżąca, jej zapis zmienia stan każdej czekającej rezerwacji - a wiersz
+rezerwacji sam tego nie zauważy. Do #207 SKRÓCENIE ścieżki zostawiało dziurę, której §11.2
+nie opisywał: rezerwacja ze zgodą kroku 1, czekająca na krok 2, po zdjęciu kroku 2 miała
+komplet zgód, ale stała w `pending` - nikt nie mógł jej domknąć (reguły odbijały
+`not_pending`) i wygasała jako „nikt nie zdążył zdecydować". Odtąd zapis ścieżki, w TEJ
+SAMEJ transakcji, przechodzi po sprawach `pending` klubu i liczy każdą na nowej ścieżce:
+
+- **komplet zgód POTWIERDZA rezerwację** i zawiadamia pilota tą samą wiadomością, co po
+  ostatniej zgodzie kroku; dotyczy to też wyczyszczenia całej ścieżki (klub wyłącza
+  akceptację - czekające sprawy nie mają już czego czekać);
+- **sprawa czekająca teraz na INNY krok** (bieżący zdjęty, krok dołożony przed bieżącym
+  albo przestawiony przed niego) rodzi prośbę o zgodę do osób nowego kroku - dotąd
+  dołożenie kroku cofało sprawę i nikogo o tym nie zawiadamiało. Zmiana OBSADY tego
+  samego kroku prośby nie rodzi: sprawa czeka tam, gdzie czekała, a osoba dopisana do
+  kroku widzi ją w kolejce;
+- **krok dołożony z REZERWUJĄCYM na liście przechodzi sam** (`via = self`) - pomijanie
+  własnych kroków obowiązuje także po zmianie ścieżki, nie tylko przy złożeniu;
+- dziennik (`approval.steps`) i odpowiedź zapisu niosą liczbę spraw potwierdzonych
+  i przekierowanych; panel mówi to banerem po zapisie, a zero nie dostaje zdania.
 
 ### 11.3 Odmowa wymaga powodu, zgoda nie
 
@@ -842,8 +1135,41 @@ w `rejected` i zwalnia slot.
 
 ### 11.4 Decyzja jest zapisem, nie polem
 
-`booking_approvals` jest append-only: kto, kiedy, co postanowił i dlaczego. Zmiana zdania
-znaczy nową rezerwację, nie nadpisanie decyzji.
+`booking_approvals` jest append-only: kto, kiedy, co postanowił, dlaczego i czy kliknął
+to człowiek, czy krok przeszedł sam (`via`). Zmiana zdania znaczy nową rezerwację, nie
+nadpisanie decyzji.
+
+**POPRAWKA TERMINU CZYŚCI ZGODY** (decyzja właściciela 2026-09-23, epik R-I, migracja 14):
+zgoda dotyczyła KONKRETNEGO terminu - inaczej ktoś zatwierdziłby dwie godziny, a poleciałoby
+się przez pół dnia. `PATCH /bookings/:id` ze zmienionym `startsAt`/`endsAt` na rezerwacji
+z żywą ścieżką: dotychczasowe decyzje dostają `superseded_at` (zostają w rejestrze, nie
+liczą się), ścieżka planuje się od nowa (kroki rezerwującego znów przechodzą same), wiersz
+wraca do `pending` i osoby kroku bieżącego dostają ŚWIEŻĄ prośbę. Rezerwacja potwierdzona
+po ścieżce też wraca do `pending` - i ekran mówi to PRZED tapnięciem („Po przesunięciu
+ścieżka rusza od nowa - zgoda dotyczyła tego terminu", makieta 23B). Zmiana samej notatki,
+zadania albo trasy zgód nie rusza; klub bez ścieżki nie zauważa nic.
+
+### 11.5 Termin nadszedł, a decyzji nie ma
+
+**Nierozstrzygnięta rezerwacja WYGASA z początkiem swojego terminu** (decyzja właściciela
+2026-09-23), slot wraca do puli, a pilot dostaje powiadomienie „nikt nie zdążył zdecydować".
+Bez tej reguły maszyna stałaby w sobotę zablokowana prośbą, której nikt nie rozpatrzył -
+czyli dokładnie tym, przed czym broni P5.
+
+Mechanizm JUŻ ISTNIEJE: `BookingReleaseJob` (§3.5; od 3.2.0 `BookingClockJob` w pliku
+`bookingClock.ts` - trzecie pytanie, „zbliża się lot", dołożyło obserwowanie samolotu)
+przemiata sloty co 5 minut, więc dochodzi mu jedno pytanie, a nie drugi wątek. Stan jest osobny od `released` z P5 (tam maszyny nie
+przejęto, tu zgody nie wydano) i BEZ powodu - `close_reason` niesie zdanie CZŁOWIEKA,
+a tutaj po prostu upłynął czas.
+
+**Nazywa się `expired`** (epik R-G): osobny stan, a nie `released` z adnotacją - pilot ma
+usłyszeć, KTÓRĄ z dwóch rzeczy przegapiono, a karta rezerwacji rysuje to jako własny stan
+(`23d`). Wygaszanie idzie w przebiegu PIERWSZE, bo zdejmuje wiersz ze stanu `pending`,
+zanim ktokolwiek zapyta o niego jako o rezerwację do zwolnienia; samo zwalnianie pyta
+odtąd WYŁĄCZNIE o `confirmed`, bo rezerwacji czekającej na zgodę nikt nie mógł przejąć.
+
+**„Milczenie znaczy zgodę" ODRZUCONE** (§16): najprostszą drogą do zatwierdzenia dowolnego
+lotu stałoby się nieklikanie niczego, a zgoda przestałaby cokolwiek znaczyć.
 
 ## 12. Powiadomienia (3.1.0)
 
@@ -853,24 +1179,43 @@ znaczy nową rezerwację, nie nadpisanie decyzji.
 systemu albo odrzucony na Androidzie 13+ (`POST_NOTIFICATIONS`) - a prośba o zgodę, która
 przepadła, znaczy pilota czekającego na odpowiedź, która nigdy nie przyszła. Dlatego:
 
-- **skrzynka** (`notifications` + `GET /me/notifications`) jest kompletna, ma historię
-  i działa offline z cache. Licznik nieprzeczytanych stoi przy zakładce Pulpit;
+- **skrzynka** (`notifications` + `GET /me/notifications`) jest kompletna i ma historię.
+  Licznik nieprzeczytanych stoi przy zakładce Pulpit;
 - **push** niesie tylko „masz coś w skrzynce" i otwiera właściwy ekran. Brak push nie gubi
   ani jednej informacji.
 
+**CAŁY TEN MODUŁ WYMAGA SIECI** (decyzja właściciela 2026-09-22) - i to ODWRACA zdanie
+„skrzynka działa offline z cache", które stało tu do 3.0.0. Powód jest ten sam, co przy
+rezerwacji (§2.2): zgoda jest umową między ludźmi, a nie pomiarem z kabiny, i zapada przy
+biurku. Cache powiadomień w SQLite więc NIE POWSTAJE, a zakres R-I jest o niego mniejszy.
+Reguła §4.1 („brak sieci nigdy nie blokuje pilota") broni PRACY W LOCIE - rejestru, czasów,
+odczytów, zdania samolotu - i tego nie rusza: bez zasięgu pilot lata dokładnie jak dotąd,
+tylko nie zobaczy skrzynki i nie zatwierdzi cudzego terminu.
+
 ### 12.2 Token push żyje razem z sesją logowania
 
-`push_tokens.session_id` z kasowaniem kaskadowym: zdalne wylogowanie z panelu (2.1.0,
-`login_sessions`) gasi przy okazji powiadomienia na tamtym urządzeniu. Bez tego wspólny
-tablet klubu wysyłałby powiadomienia pilota, który dawno oddał urządzenie koledze.
+Wylogowanie - własne, zdalne z panelu, „wyloguj wszędzie", reset hasła, wyłączenie
+członkostwa - gasi powiadomienia na tamtym urządzeniu. Bez tego wspólny tablet klubu
+wysyłałby powiadomienia pilota, który dawno oddał urządzenie koledze.
+
+**Sama kaskada `ON DELETE` z `login_sessions` tego NIE ROBIŁA** i była tu opisana
+jako cały mechanizm - aż do przeglądu bezpieczeństwa 3.1.0 (§19): unieważnienie sesji
+STEMPLUJE wiersz (`revoked_at`), a nie kasuje go, więc kaskada nie zadziałała nigdy.
+Mechanizm ma odtąd dwa piętra: budzik (`PgPushTokensRepo.byPilots`) bierze wyłącznie
+tokeny sesji żywych (nieunieważnionych i niewygasłych) i adresatów z aktywnym
+członkostwem w klubie powiadomienia, a unieważnienie sesji kasuje jej tokeny w tej samej
+transakcji. Kaskada zostaje na wypadek skasowania osoby.
 
 ### 12.3 Port, nie zależność
 
 `PushPort` + adapter `ExpoPush` (HTTP do Expo Push API przez `fetch`, zero zależności)
-+ `LogPush` dla dev - dokładnie wzorzec `MailPort`/`Resend`/`LogMail` z 2.1.0. Zmienna
-`PUSH_PROVIDER` (`expo` | `log`) i decyzja, czy jest WYMAGANA (przy poczcie jest, bo
-„Nie pamiętam hasła", które po cichu nic nie wysyła, jest gorsze niż serwer, który nie
-wstał - tu rachunek jest łagodniejszy, bo skrzynka działa bez push).
++ `LogPush` dla dev - dokładnie wzorzec `MailPort`/`Resend`/`LogMail` z 2.1.0.
+
+**`PUSH_PROVIDER` (`expo` | `log`) NIE JEST WYMAGANY i domyślnie znaczy `log`** - inaczej
+niż `MAIL_PROVIDER`, bo rachunek jest tu naprawdę inny. Poczta musi być, bo „Nie pamiętam
+hasła", które po cichu nic nie wysyła, zostawia człowieka bez drogi do konta. Push jest
+BUDZIKIEM (§12.1): bez niego prośba o zgodę nadal czeka w skrzynce, kompletna i z historią.
+Serwer, który nie wstaje przez brak budzika, kosztuje więcej niż budzik, który nie dzwoni.
 
 ### 12.4 Cena po stronie aplikacji: nowy APK
 
@@ -878,6 +1223,177 @@ wstał - tu rachunek jest łagodniejszy, bo skrzynka działa bez push).
 `versionCode`, nie OTA (`runtimeVersion: appVersion` - skill `wydanie`, krok 0). Do tego
 zadanie właściciela: projekt Firebase, FCM V1 (service account) w EAS, `google-services.json`.
 Ta pozycja jest na drodze krytycznej 3.1.0 tak samo, jak poczta (#137) była dla 2.1.0.
+
+### 12.5 Telefon: token, prośba o zgodę, tapnięcie (epik R-J, 2026-09-23)
+
+- **Jeden plik zna `expo-notifications`** (`infrastructure/push/expoNotifications.ts`,
+  exact-list w teście architektury): adres urządzenia (`ExpoPushDevice` za portem
+  `PushDevicePort`), kanał Androida `default` o wysokiej ważności (serwer adresuje go
+  `channelId`), sposób pokazania budzika przy otwartej aplikacji i tapnięcie. Reszta
+  aplikacji widzi port i czyste funkcje - zdjęcie modułu natywnego to jeden plik.
+- **Token rejestruje pętla okazji** (`PushTokenSync.register` - po motywie, przed
+  śladem): raz na uruchomienie i raz na zmianę poświadczeń (nowa sesja logowania = nowy
+  `POST /me/push-token`), reszta pulsów wraca od razu. Serwer przypina token do sesji
+  z tokenu żądania (§12.2), więc telefon sesji nie podaje. Build bez Firebase, Expo Go,
+  telefon bez usług Google - token jest `null` i to jest cisza, nie błąd (§12.1).
+- **Prośba o zgodę na powiadomienia** (decyzja właściciela 2026-09-23, J3): przy
+  wejściu na Pulpit, gdy osoba jest AKCEPTUJĄCYM (`approver` w odpowiedzi
+  `GET /me/notifications` - jeden bit dołożony do odpowiedzi, którą Pulpit i tak czyta,
+  bo telefon zdolności nie zna), oraz po złożeniu rezerwacji, która CZEKA na zgodę.
+  Raz na uruchomienie, miękko (§4.1). Rezerwacja potwierdzona od razu (klub bez ścieżki)
+  nie rodzi żadnego powiadomienia, więc przy niej nie pytamy o zgodę na nic.
+- **Tapnięcie** (`logic/pushTarget.ts`): `approval_requested` → ekran decyzji 26;
+  `booking_approved` / `booking_rejected` / `booking_expired` → karta 23; wszystko inne
+  (także rodzaj z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
+  w skrzynce". Z zimnego startu i sprzed odblokowania PIN-em tapnięcie czeka jako
+  „ostatnia odpowiedź" i czyta się je, gdy nawigator stanie; identyfikator obsłużonego
+  tapnięcia trzyma stan modułu, żeby ponowne zamontowanie nawigatora nie otwierało
+  tej samej rezerwacji drugi raz.
+- **Plik Firebase poza repozytorium** (Z2 z #168 rozstrzygnięte): `android.googleServicesFile`
+  dokłada `app.config.js` ze zmiennej EAS `GOOGLE_SERVICES_JSON` (typu „file") albo
+  z lokalnego `app/google-services.json` (w `.gitignore`); bez obu konfiguracja zostaje
+  bez pola i Metro pracuje jak dotąd. Ikona powiadomień to biała sylwetka znaku
+  z generatora ikon (`notification-icon.png`, 96 px), barwiona `#2ECC71` przez plugin.
+- **Czego telefon nie ma**: własnego przełącznika powiadomień (system ma swój), wyboru
+  rodzajów, listy urządzeń. Push jest budzikiem - konfiguruje się go tam, gdzie
+  konfiguruje się dzwonek.
+
+### 12.6 Architektura budzika w jednym miejscu (zapis 2026-09-24, przy zadaniu #168)
+
+Konfiguracja push rozjeżdża się po czterech konsolach (Firebase, Google Cloud, EAS,
+Railway) i trzech plikach repozytorium, więc ten punkt zbiera CAŁY łańcuch, miejsce
+każdego sekretu, koszt i to, co zmieni sklep Play. Procedura klik po kliku dla
+właściciela stoi w README („Wdrożenie: Railway", krok 12); tutaj jest architektura.
+
+**Łańcuch doręczenia** - pięć ogniw, dwa po naszej stronie:
+
+```
+  telefon                          serwer Ninerdeck                 Expo Push Service        Google FCM V1        telefon
+  expo-notifications               (Railway)                        exp.host                 fcm.googleapis.com   kanał `default`
+  ────────────────────────────     ───────────────────────────────  ───────────────────────  ──────────────────   ──────────────
+  getExpoPushTokenAsync ──POST /me/push-token──▶ push_tokens
+  (ExponentPushToken[…])                        (przy sesji logowania, §12.2)
+
+                                   decyzja / prośba o zgodę
+                                   Notifier.record  (w transakcji)
+                                   commit
+                                   Notifier.wake ── ExpoPush.send ──▶ bilety ──▶ (klucz FCM V1 z EAS) ──▶ budzik
+                                   (fetch, do 100 szt./żądanie)       DeviceNotRegistered → wiersz push_tokens znika
+```
+
+1. Telefon prosi `expo-notifications` o token Expo (`ExponentPushToken[…]`). Bez pliku
+   Firebase w buildzie, w Expo Go albo bez usług Google token jest `null` i to jest cisza,
+   nie błąd (§12.1).
+2. Pętla okazji rejestruje token na serwerze; wiersz `push_tokens` wisi na sesji logowania
+   (§12.2), więc zdalne wylogowanie gasi go samo.
+3. Decyzja albo prośba o zgodę zapisuje wiersz skrzynki W TRANSAKCJI, a budzik idzie
+   po commicie i nigdy nie rzuca (§12.1, `Notifier`).
+4. `ExpoPush` (§12.3) wysyła paczkę do Expo Push Service jednym żądaniem HTTP. Expo
+   odpowiada biletem na każdą wiadomość; `DeviceNotRegistered` znaczy, że aplikacji już
+   nie ma na urządzeniu i serwer kasuje token.
+5. Expo uwierzytelnia się w FCM kluczem konta usługi wgranym do EAS i FCM budzi telefon
+   na kanale `default` (wysoka ważność).
+
+**Kto trzyma co** - jedyny prawdziwy sekret w tym łańcuchu NIE leży na serwerze:
+
+| Rzecz | Gdzie stoi | Kto z tego korzysta | Sekret? |
+|---|---|---|---|
+| projekt Firebase `ninerdeck-81f75` z DWIEMA aplikacjami Android: `com.ninerdeck.app` i `com.ninerdeck.app.dev` | konsola Firebase (nowy projekt pod kontem właściciela, poza projektem Google Cloud logowania) | rejestracja pakietów, klucz FCM | nie |
+| `google-services.json` - JEDEN plik, tablica `client` z oboma pakietami | zmienna EAS `GOOGLE_SERVICES_JSON` typu „file" (środowiska `production`, `development`, `preview`; widoczność `secret`) + lokalna kopia `app/google-services.json` w `.gitignore` | `app.config.js` dokłada `android.googleServicesFile` (§12.5) | identyfikatory publiczne klienta; poza repozytorium z ostrożności, nie z konieczności |
+| klucz konta usługi FCM V1 (`firebase-adminsdk-fbsvc@ninerdeck-81f75…`, JSON z Firebase → Konta usługi) | poświadczenia EAS, OSOBNO dla każdego pakietu (`eas credentials -p android`, profile `production` i `development`) | Expo Push Service przy doręczaniu do FCM | **TAK** - pełny dostęp administracyjny do projektu Firebase. Nigdy w repozytorium, nigdy na Railway, nigdy w `app/`; kopia z dysku do skasowania po wgraniu, nowy klucz generuje się tym samym przyciskiem, stary unieważnia w Google Cloud → IAM → Service accounts → Keys |
+| `PUSH_PROVIDER=expo` | zmienne usługi na Railway + `server/.env` lokalnie | serwer wybiera adapter `ExpoPush` zamiast `LogPush` | nie |
+| `PUSH_ACCESS_TOKEN` (technicznie opcjonalny, na produkcji wskazany) | Railway; token ROBOTA konta Expo (expo.dev → Account settings → Access tokens → Add robot → Create token), nie personal access token - robot ma własną rolę i unieważnia się go bez ruszania konta właściciela. Wymuszanie: Project settings → „Enhanced Security for Push Notifications", włączane DOPIERO PO ustawieniu zmiennej (procedura: README, krok 12.4) | serwer dokleja `Authorization: Bearer`; Expo z włączonym wymuszaniem odrzuca wysyłki bez niego | tak - token konta Expo |
+| token push urządzenia | `push_tokens` na serwerze (bez `org_id`, kaskada z `login_sessions`) | serwer adresuje budzik | nie jest sekretem, ale wyciek pozwala spamować urządzenia - i po to istnieje `PUSH_ACCESS_TOKEN` z wymuszeniem w panelu Expo |
+
+**Dlaczego Expo w środku, a nie FCM wprost** (pytanie właściciela 2026-09-24). Nic
+technicznego tego nie wymusza - to decyzja z §12.3 i ma znane obie strony:
+
+- za pośrednikiem: jedno żądanie na stu adresatów, bilety per wiadomość (w tym „urządzenia
+  już nie ma"), zero kryptografii po naszej stronie, jeden format tokenu i jedno API dla
+  Androida i przyszłego iOS (APNs bez zmiany serwera). Najważniejsze: klucz konta usługi
+  Firebase leży WYŁĄCZNIE w EAS, serwer na Railway nie trzyma żadnego sekretu Google;
+- przeciw: dodatkowy przeskok przez cudzą usługę (zależność od dostępności Expo) i trzeci
+  podmiot przetwarzający w polityce prywatności. Expo widzi token i treść, ale treść to
+  z założenia tytuł rzeczy i identyfikatory, bez nazwisk i godzin (§12.1), a Expo deklaruje,
+  że nie przechowuje treści dłużej, niż trwa doręczenie. **Od #228 (2026-09-25) `data`
+  budzika to DOKŁADNIE `{ kind, orgId, bookingId?, aircraftId? }`** (`notify/pushData.ts`,
+  czysta funkcja z testem; klucz tylko z niepustym napisem) - czyli to, co telefon czyta
+  w `pushTarget.ts`. Do #228 `wake` rozlewał tu CAŁY payload wiadomości (godziny terminu,
+  identyfikatory osób, nazwa kroku, powód odmowy, odczyty przy zdaniu), którego po drugiej
+  stronie nikt nie czytał, a dwaj pośrednicy widzieli; znalazł to przegląd polityki
+  prywatności przy #168 Z6, a sekcja 5.2 polityki opisuje stan po zawężeniu;
+- droga bezpośrednia, gdyby pośrednik zaczął przeszkadzać: nowy adapter za `PushPort`
+  (JWT RS256 z `node:crypto` na kluczu konta usługi → token dostępu Google →
+  `projects/<id>/messages:send` osobno na urządzenie, `fetch` bez zależności), telefon
+  rejestruje natywny token FCM (`getDevicePushTokenAsync`) zamiast tokenu Expo, klucz
+  konta usługi przechodzi z EAS na Railway. Około dnia pracy plus próba na urządzeniu -
+  osobne zgłoszenie, nie przebudowa. Nie ma go w planie 3.1.0.
+
+**Koszt i limity** (dokumentacja i cennik Expo, stan 2026-09-24): wysyłka przez Expo Push
+Service jest BEZPŁATNA na każdym planie, także darmowym - cennik nie ma pozycji za
+powiadomienia. Limity są techniczne: 600 powiadomień na sekundę na projekt i 100 na jedno
+żądanie (adapter dzieli paczkę po sto). Expo liczy za co innego: buildy (plan darmowy -
+15 buildów Androida miesięcznie; każdy `build:dev` i `build:prod` zjada jeden) i EAS
+Update (tysiąc aktywnych użytkowników miesięcznie). To liczby do pilnowania przy
+wydaniach, nie przy powiadomieniach.
+
+**Sklep Google Play niczego tu nie zmienia.** FCM adresuje po PAKIECIE i nie pyta, skąd
+wziął się APK - rejestracja w Firebase, `google-services.json`, klucz FCM V1 w EAS
+i `PUSH_PROVIDER` zostają identyczne. Jedyna zmiana ze sklepu to podpis: Play App Signing
+podpisuje plik własnym kluczem, więc odcisk SHA-1 zainstalowanej aplikacji będzie inny niż
+odcisk klucza EAS. Powiadomień to nie dotyczy (FCM odcisku nie sprawdza; w Firebase
+celowo nie wpisano żadnego SHA-1, żeby nie mnożyć klientów OAuth w Google Cloud) -
+dotyczy wyłącznie logowania Google, i to jest zapisany punkt planu 4.0.0.
+
+**Pułapki spisane przy konfiguracji 2026-09-24**, żeby nie płacić za nie drugi raz:
+
+- **komendy EAS idą z `app/`**, nigdy z korzenia repozytorium: `eas env:set` i `eas credentials`
+  uruchomione z `D:\uz_areo` pytają „EAS project not configured?", a „yes" zakłada w korzeniu
+  zbędny `app.json` z samym identyfikatorem projektu (do skasowania) i dalej nie działa,
+  bo `eas.json` leży w `app/`;
+- **plik Firebase pobiera się DOPIERO po zarejestrowaniu obu pakietów** - pobrany po
+  pierwszym zawiera jeden wpis `client`; kreator Firebase każe go pobrać w kroku 2 i pokazuje
+  instrukcje Android Studio/Gradle, które w projekcie Expo pomija się w całości;
+- **środowisko EAS profilu bez pola `environment`** wybiera się regułą domyślną: `distribution:
+  store` → `production`, `developmentClient: true` → `development`, wszystko inne → `preview`.
+  Profil produkcyjny Ninerdeck buduje APK (`distribution: internal`), więc BEZ jawnego pola
+  wylądowałby w `preview` i dostał build bez pliku Firebase - a taki build przechodzi,
+  tylko telefon po cichu nie rejestruje tokenu (§12.5). Stąd zmienna w trzech
+  środowiskach naraz; docelowo profile dostają jawne `environment` (R-K, #169);
+- **`eas env:create` jest wycofane** na rzecz `eas env:set` (ta sama składnia; README
+  poprawione);
+- **nowa organizacja Google Cloud blokuje generowanie kluczy kont usługi** polityką
+  `iam.disableServiceAccountKeyCreation` (wersja `iam.managed.…` bywa osobno). Firebase
+  odmawia wtedy „Key creation is not allowed on this service account". Wyjątek nadaje się
+  NA PROJEKCIE (Organization Policies → Manage policy → Override parent's policy →
+  Enforcement Off), po kilku minutach propagacji; sprawdź, w KTÓRYM projekcie edytujesz
+  politykę, i po wgraniu klucza przywróć dziedziczenie. Projekt bez organizacji tej
+  polityki nie ma wcale;
+- **klucz produkcyjny i dev to TEN SAM plik** wgrany dwa razy (raz na profil w
+  `eas credentials`) - EAS trzyma poświadczenia per pakiet, a Firebase klucz per projekt.
+
+**Próba przed wydaniem** (kryterium #168 po odrzuceniu staging, #155): dev build
+(`npm run build:dev` - moduł natywny, więc build sprzed R-J nie wystarczy) + lokalny
+serwer z `PUSH_PROVIDER=expo` + klub ze ścieżką akceptacji. Na telefonie loguje się osoba
+z KROKU ścieżki (hasłem - klient OAuth Android dla pakietu dev nie jest potrzebny),
+a rezerwację składa KTOŚ INNY (z panelu na cudze konto albo z drugiego telefonu):
+składający pomija kroki, na których sam stoi (§11.2), więc próba na jednym koncie nie
+wywoła żadnego powiadomienia. Oczekiwane: „Prośba o zgodę" na telefonie, tapnięcie
+otwiera ekran decyzji 26.
+
+### 12.7 Rodzaje spoza rezerwacji: obserwowanie samolotu (3.1.0, projekt 2026-09-25)
+
+Skrzynka i budzik są odtąd mechanizmem OGÓLNYM, nie własnością workflow akceptacji.
+Zgłoszenie #205 (`docs/obserwowanie-samolotu.md` §5) dokłada pięć rodzajów o MASZYNIE -
+za godzinę, odwołano przypomniany termin, uruchomienie silnika, zdana z odczytami, nie
+odebrano - dla osób, które daną maszynę obserwują (nowa zdolność `fleet.watch`). Trzy
+rzeczy z tego rozdziału przechodzą tam bez zmian: skrzynka źródłem prawdy (§12.1), push
+bez nazwisk, rodzaj nieznany aplikacji trafia do skrzynki (§12.5). Jedna reguła DOCHODZI
+i dotyczy wyłącznie wiadomości o zdarzeniach z REJESTRU: niosą CZAS Z REJESTRU, a nie
+chwilę dotarcia paczki, bo pilot bez zasięgu dosyła zapisy po godzinach. Zadanie okresowe
+z §4.1 dostaje przy tym trzecie pytanie - przypomnienie „za godzinę" ze stemplem
+`bookings.reminded_at` - a jego plik zmienia nazwę na mówiącą o trzech pytaniach.
+Przepis „nowy rodzaj powiadomienia": `docs/architektura-kodu.md` §7.
 
 ## 13. Etapy i kolejność realizacji
 
@@ -937,12 +1453,16 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
   z **WSCHODU I ZACHODU SŁOŃCA nad lotniskiem macierzystym klubu** (§7.1), a nie ze
   stałych godzin. Konsekwencje w §7.1 - to najdroższa z decyzji tej tury i zmienia
   zakres #158 oraz #159.
-- **P3 - kroki akceptacji po kolei czy równolegle** (§11.2). Propozycja: po kolei.
-- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19**:
-  administrator (`reservations.manage`) **oraz osoby akceptujące** (`reservations.approve`,
-  od 3.1.0). W 3.0.0 znaczy to „tylko administrator", bo akceptujących jeszcze nie ma -
-  zdolność dochodzi razem ze ścieżką akceptacji. Powód jest WYMAGANY w obu wypadkach:
-  odwołujący sięga po cudzy plan, a pilot czyta powód w aplikacji.
+- ~~**P3 - kroki akceptacji po kolei czy równolegle**~~ - **rozstrzygnięte 2026-09-22**:
+  **po kolei**, a przy okazji przebudowany sam krok - ma NAZWĘ i LISTĘ OSÓB zamiast roli
+  albo jednego człowieka, wystarczy zgoda jednej osoby z listy, a rezerwujący pomija
+  kroki, na których sam stoi (§11.2). To rozwiązuje też napięcie z §8.
+- ~~**P4 - kto odwołuje cudzą rezerwację**~~ - **rozstrzygnięte 2026-09-19, uściślone
+  2026-09-23**: administrator (`reservations.manage`) **oraz osoby ze zdolnością**
+  **`reservations.approve`**. W 3.0.0 znaczyło to „tylko administrator", bo ścieżki jeszcze
+  nie było. Uprawnia ZDOLNOŚĆ, a nie obecność na liście kroku: lista mówi, za który krok
+  ktoś odpowiada, a nie czy w ogóle wolno mu sięgać po cudze terminy (§8). Powód jest
+  WYMAGANY w obu wypadkach: odwołujący sięga po cudzy plan, a pilot czyta powód w aplikacji.
 - ~~**P5 - „no-show"**~~ - **rozstrzygnięte 2026-09-19**: slot **zwalnia się sam po
   60 minutach** od początku rezerwacji, jeśli serwer nie widzi ani przejęcia maszyny,
   ani biegu silnika. Maszyna nie stoi bezczynnie w sobotę. Mechanizm, jego cena
@@ -968,6 +1488,14 @@ Kolejność w 3.1.0: **R-G** (serwer: ścieżka, decyzje, skrzynka) → **R-H** 
 | **Sprawdzanie nakładania w kodzie aplikacji** | Dyscyplina zamiast niezmiennika; przy dwóch równoległych żądaniach po prostu nie działa |
 | **Jeden akceptujący („dyżurny")** | Decyzja właściciela 2026-09-18 - odwracałoby zdanie ze zgłoszenia „kilka osób musi się zgodzić" |
 | **Akceptacja warunkowa (reguły typu „pilot poniżej X godzin")** | Rozważona i odłożona: wymaga katalogu warunków, którego klub jeszcze nie umie nazwać. Wraca, gdy poprosi |
+| **Ścieżka z chwili złożenia (kopia kroków w rezerwacji)** | Decyzja właściciela 2026-09-23 - ścieżka jest ZAWSZE BIEŻĄCA (§11.2). Kopia dawała historię niezmienną pod ręką, ale kosztem poprawki, która nie obowiązuje tego, co już w toku |
+| **Milczenie znaczy zgodę** | §11.5 - najprostszą drogą do zatwierdzenia dowolnego lotu stałoby się nieklikanie niczego |
+| **Rezerwacja czeka bez końca na decyzję** | §11.5 - maszyna stałaby w sobotę zablokowana prośbą, której nikt nie rozpatrzył |
+| **Zdolność akceptacji jako ROLA (trzecia albo `admin`)** | §8 - żeby mechanik zatwierdzał swój krok, trzeba by mu oddać flotę, konta i dziennik; jedna rola i tak nie opisałaby klubu, w którym mechanik i szef wyszkolenia to dwa różne kroki |
+| **Krok wskazuje ROLĘ albo JEDNĄ osobę** | Pierwotny model §3.4, zastąpiony 2026-09-22: role klubu są dwie, więc krok i tak celował w człowieka - a wtedy jeden urlop blokuje rezerwacje |
+| **Wszystkie osoby kroku muszą zatwierdzić** | Odwracałoby sens listy: ma ona ZWIĘKSZAĆ szansę, że ktoś odpowie, a nie mnożyć podpisy. Komplet zgód to inny mechanizm i wymagałby innej nazwy |
+| **Rezerwujący prosi sam siebie o zgodę** | Krok, na którego liście stoi rezerwujący, przechodzi sam (§11.2) - pytanie człowieka o zgodę na własny plan jest pustym kliknięciem |
+| **Skrzynka powiadomień z cache offline** | Decyzja właściciela 2026-09-22 - cały moduł wymaga sieci, jak rezerwacja (§2.2); cache byłby kosztem bez odbiorcy |
 | **Tylko push, bez skrzynki** | §12.1 - powiadomienie, które nie doszło, znaczy prośbę o zgodę wiszącą bez odpowiedzi |
 | **Tylko e-mail zamiast skrzynki** | Rozważone (poczta działa od 2.1.0); e-mail w hangarze bywa czytany z opóźnieniem, a historia decyzji ma być w aplikacji |
 | **Kalendarz w UTC** | §6 - rezerwacja jest umową o godzinie, a nie pomiarem; dwa razy w roku przesuwałby siatkę dnia |
@@ -1013,6 +1541,17 @@ odmowy), bo niepilnowana własność jest własnością do czasu.
 osobną zdolność (`reservations.manage`) i to jest jego robota; karta `23` otwarta na
 cudzym terminie dalej działa i pokazuje, KTO i KIEDY - tyle, ile wie po zawężeniu.
 
+**OD 3.1.0 WIDZÓW JEST TRZECH, NIE DWÓCH** (decyzja właściciela 2026-09-23). Obok
+właściciela terminu i reszty klubu staje **osoba ze zdolnością `reservations.approve`**:
+widzi wszystkie ścieżki i wszystkie rezerwacje klubu w komplecie. Powód jest wprost
+praktyczny - „SP-AXA, sobota 9:00-12:00, J. Nowak" to za mało, żeby zgoda cokolwiek
+znaczyła; akceptujący ma zobaczyć zadanie, trasę, drugiego pilota, planowany czas
+i notatkę, bo dokładnie o nich rozstrzyga.
+
+To NIE jest wyłom w zawężeniu, tylko jego trzeci przypadek: `bookingWire` dalej pyta
+KTO PATRZY, a odpowiedź „akceptujący" jest odpowiedzią o ZDOLNOŚCI, sprawdzaną tak samo,
+jak `reservations.manage` w panelu. Zwykły członek klubu nie zyskuje ani jednego pola.
+
 ## 18. Odstępstwa wobec planu - gdzie ich szukać
 
 Ten dokument powstał PRZED kodem i w kilku miejscach kod go poprawił. Odstępstwa są
@@ -1033,8 +1572,71 @@ tej samej zmiany rozjeżdżają się przy pierwszej poprawce jednego z nich.
 | R-F | `GET /bookings/:id` i `takenAt` w ciele odmowy - dwa dopiski wymuszone przez ekrany | §5.1 |
 | R-F | sonda stref odpowiedziana KODEM: aplikacja nie woła `Intl` ani razu | §6.1 |
 | R-W | cudza zajętość niesie tylko to, co ekran z niej czyta | §17 |
+| R-G | rezerwacja bez decyzji wygasa w stanie `expired`, a `released` zawęża się do `confirmed` | §11.5 |
+| R-G | decyzję wpuszcza `reservations.approve` **albo** `reservations.manage` - druga jest zaporą przed zakleszczeniem ścieżki, więc nie może wymagać pierwszej | §11.2 |
+| R-G | **decyzje NIE trafiają do dziennika audytu** - ich rejestrem jest append-only `booking_approvals`; do `admin_audit` wchodzi zmiana ŚCIEŻKI (`approval.steps`) | `CLAUDE.md`, sekcja epiku R-G |
+| R-G | zapis ścieżki odmawia kroku bez osób **i** kroku obsadzonego kimś spoza klubu | §11.2 |
+| R-G | stan ścieżki jedzie w `GET /bookings/:id`, nie w oknie kalendarza (odczyt per wiersz zamieniłby jedno zapytanie w tyle, ile rezerwacji na ekranie) | §5.1 |
+| R-H | decyzja z panelu idzie TYM SAMYM rdzeniem i rejestrem, co z telefonu - bez wpisu w dzienniku audytu; historia w panelu niesie OSOBĘ decydującą | §5.2 |
+| R-H | historia decyzji (H5) i odblokowanie utkniętego kroku mieszkają w SZUFLADZIE ZAJĘTOŚCI (K2a), nie w kolejce - kolejka pokazuje wyłącznie moje kroki | §10 |
+| R-H | podgląd pilota i samolotu (K6) wypadł z epiku do osobnego zgłoszenia (#206, wykonane 2026-09-24) | §10 |
+| R-I | **poprawka terminu czyści zgody** (migracja 14: `superseded_at`, indeks częściowy) - wzięte do epiku decyzją właściciela 2026-09-23, choć plan tego nie miał | §11.4, §3.4 |
+| R-I | skrzynka NIE działa offline i nie ma cache - punkt I2 z issue #166 jest starszy niż decyzja z 2026-09-22; licznik stoi przy DZWONKU na Pulpicie, nie przy zakładce | §12.1, §9.4 |
+| R-I | telefon dostał własną kolejkę spraw (`GET /me/approvals/queue`), a skrzynka dobę terminu i `timezone` - bez nich „Do decyzji" i godziny klubu nie miałyby źródła | §5.1 |
+| R-I | rozstrzygnięcia idą RZECZOWNIKIEM („Odmowa zgody · Anna Kowal", nie „Anna Kowal odmówiła") - czasownika nie da się odmienić bez płci; makieta 25 ma formę czasownikową | `CLAUDE.md`, sekcja epiku R-I |
+| R-I | baner odmowy na karcie (23C) nazywa KROK, nie osobę - stan ścieżki na telefonie nazwisk decydujących nie niesie (§9.4), a makieta rysowała nazwisko | §9.4 |
+| R-I | podgląd pilota i samolotu (26A/26B) wszedł razem z K6 w #206 - wiersze samolotu i obu osób na karcie decyzji prowadzą w głąb | §10 |
+| K6 (#206) | operacje pilota liczą się z OBU foteli (PIC i Dual), a podgląd otwiera się wyłącznie dla osoby NA SPRAWIE; stopka szuflady pilota prowadzi do karty pilota, nie do dziennika; chwile operacji w UTC, terminy dobą klubu | §10 |
+| R-J | prośba o zgodę na powiadomienia pada na Pulpicie dla AKCEPTUJĄCEGO i po rezerwacji, która CZEKA (decyzja właściciela 2026-09-23); skrzynka dostała bit `approver`, bo telefon nie zna zdolności | §12.5 |
+| R-J | plik Firebase idzie zmienną EAS typu „file" albo lokalną kopią poza repozytorium - Z2 z #168 rozstrzygnięte w kodzie | §12.5 |
+| R-J | wersja i `versionCode` NIE podbite w tym epiku - to krok gałęzi wydaniowej (R-K), a `develop` nie buduje APK; J6 i J7 czekają na Firebase (#168) | §12.4 |
+| #207 | zapis ścieżki domyka sprawy z kompletem zgód, prosi osoby nowego kroku bieżącego i dopisuje pominięcia `self` pod krokami dołożonymi później - §11.2 opisywało cenę DOŁOŻENIA kroku, nie SKRÓCENIA | §11.2 |
+| #216 | **kalendarz w panelu jest dla KAŻDEGO członka klubu**, a kształt cudzej rezerwacji pyta tam, kto patrzy - jak na telefonie (§17): zwykły członek widzi godziny, maszynę, pilota i rodzaj; komplet - właściciel, „Podgląd klubu", akceptacja, władza nad cudzymi. Zdanie „panel widzi komplet, ma do tego osobną zdolność" z W7 przestało być prawdą o każdym zalogowanym. Nazwiska i znaki panel bierze ze słownika `GET /admin/api/directory`; decyzja i podglądy nie wymagają już `panel.access` (zdolność rozstrzyga handler) | `docs/uprawnienia.md` §13 |
 
 Decyzje właściciela podjęte w trakcie (skrócone nazwisko na pasku osi, ponawianie co 60 s
 bez przycisku, czternaście dób w pasku dni, zmiana maszyny przez odwołanie i założenie od
 nowa, pełne pola tylko dla własnych rezerwacji) stoją w `CLAUDE.md` w sekcji epiku R-F -
 tam, gdzie szuka ich kod, a nie plan.
+
+## 19. Przegląd bezpieczeństwa 3.1.0 (K7, 2026-09-26)
+
+Zrobiony PRZED wydaniem, na gałęzi `ninerdeck_3_1_0`, dla wszystkiego, co doszło od
+3.0.0: ścieżki akceptacji, skrzynki i push, zakresów uprawnień, podglądu przy decyzji,
+obserwowania samolotu, panelu dla każdego członka i rejestracji z panelu. Pięć ustaleń
+POPRAWIONYCH, każde z testem, który przed poprawką padał:
+
+| # | Co było | Poprawka |
+| --- | --- | --- |
+| 1 | wylogowany telefon (także zdalnie i po resecie hasła) dalej dostawał push - kaskada z `login_sessions` nie działała, bo sesji się nie kasuje | budzik tylko do sesji żywych; unieważnienie kasuje tokeny swojej sesji (§12.2) |
+| 2 | `session_claim.reservationId` zamykał DOWOLNĄ rezerwację klubu jako zrealizowaną - identyfikatory są w oknie kalendarza, więc zmodyfikowany klient zwalniał termin kolegi, a obserwujący dostawali fałszywe „zgodnie z planem" | realizuje tylko rezerwacja POTWIERDZONA, PIC-a operacji i tej samej maszyny; lot wchodzi jak dotąd |
+| 3 | karta rezerwacji w telefonie oddawała każdemu członkowi klubu ścieżkę z powodami odmowy CUDZEJ rezerwacji (panel ukrywał ją od początku) | ścieżka tylko dla właściciela i akceptujących - ta sama reguła, co pola planu (§17) |
+| 4 | wyścig dwóch decyzji w jednym kroku: odmowa, która przegrała, nie wchodziła do rejestru, a mimo to zamykała POTWIERDZONĄ rezerwację; podwójne kliknięcie słało dwie prośby | blokada wiersza rezerwacji (`FOR UPDATE`) i ponowny odczyt ścieżki i rejestru w transakcji |
+| 5 | prośby i decyzje szły do BYŁYCH członków klubu stojących na liście kroku albo jako rezerwujący | zapis skrzynki i budzik wymagają aktywnego członkostwa w klubie powiadomienia |
+
+Test wyścigu (4) wymusza przeplot: PGlite wykonuje żądania po kolei, więc
+`Promise.all` dwóch decyzji przechodził także na kodzie z luką - zielony test nie
+dowodził niczego. Pierwsza decyzja zatrzymuje się po odczycie, druga przechodzi całą
+trasą, a pierwsza rusza dalej z tym, co przeczytała.
+
+**Sprawdzone i w porządku:** kto może decydować (krok bieżący albo
+`reservations.manage`, cudzy klub 404, pominięcie tylko własnych kroków), zawartość
+push (rodzaj, klub i identyfikatory - #228), podgląd pilota tylko dla PIC-a i Duala
+sprawy i tylko z akceptacją, obserwowanie (maszyna spoza klubu nie da się obserwować,
+zdolność sprawdzana przy każdej wysyłce), trasy panelu otwarte dla każdego członka
+(`/directory` bez e-maili), rejestracja i „Nie pamiętam hasła" z panelu (te same
+handlery i limity, co telefon).
+
+**Świadomie NIE zmienione w 3.1.0** (niskie, zapisane do przyszłych epików):
+- `POST /me/push-token` przepina istniejący token na zgłaszającego - kto zna cudzy
+  token Expo, może przejąć jego budzik (treść i tak zostaje w skrzynce właściciela);
+- podgląd pilota działa dla DOWOLNEJ rezerwacji, w której osoba była PIC-em albo Dualem,
+  także starej - akceptujący widzi nalot członków klubu, a nie tylko spraw w toku;
+- `dualId` rezerwacji nie jest sprawdzany jako członek klubu (klucz obcy do osoby);
+- `POST /auth/password/forgot` odpowiada wolniej przy adresie znanym (wysyłka listu) -
+  istnieje od 2.1.0, ogranicza go limit na adres IP;
+- `aircraft_watches` nie ma na liście tabel strażnika `org_id` (dziś każde zapytanie
+  go niesie, ale test tego nie pilnuje);
+- `PUSH_PROVIDER=log` wypisuje tokeny urządzeń do logów - na produkcji jest `expo`;
+- `PUT /approval-steps` z identyfikatorem kroku CUDZEGO klubu dopisuje wiersze obsady,
+  które blokują dopisanie tej osoby do tamtego kroku - wymaga administratora obecnego
+  w dwóch klubach.

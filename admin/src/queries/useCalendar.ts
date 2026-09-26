@@ -14,18 +14,31 @@ import {
   cancelBooking,
   createBlock,
   createBooking,
+  getBooking,
   getCalendar,
   type CalendarRange,
   type NewAdminBooking,
   type NewBlock,
 } from '../api/bookings';
-import type { CalendarDto } from '../api/dto';
+import type { BookingDetailDto, CalendarDto } from '../api/dto';
 import { keys } from './keys';
 
 export function useCalendar(range: CalendarRange) {
   return useQuery<CalendarDto>({
     queryKey: keys.calendar.range(range),
     queryFn: () => getCalendar(range),
+  });
+}
+
+/**
+ * JEDNA zajętość ze stanem ścieżki (3.1.0) - dla szuflady. `null` = szuflada zamknięta,
+ * więc nie ma o co pytać.
+ */
+export function useBooking(id: string | null) {
+  return useQuery<BookingDetailDto>({
+    queryKey: keys.calendar.detail(id ?? ''),
+    queryFn: () => getBooking(id ?? ''),
+    enabled: id != null,
   });
 }
 

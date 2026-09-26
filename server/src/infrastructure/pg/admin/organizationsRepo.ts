@@ -14,6 +14,7 @@
  * kilkanaście wierszy, nie kilkanaście tysięcy.
  */
 
+import { CLUB_CAPABILITIES } from '../../../domain/roles.ts';
 import type {
   NewOrganization,
   OrganizationAdmin,
@@ -178,10 +179,20 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
     // `joined_via = 'platform'`: pierwszy administrator klubu to jedyny wyjątek od kodu
     // klubu i ma w bazie własną nazwę, żeby było widać, że nikt go nie zatwierdzał.
     await tx.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via, created_at, updated_at)
-       VALUES ($1, $2, $3, 'admin', 'active', 'platform', $4, $4)`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via, created_at, updated_at)
+       VALUES ($1, $2, $3, 'active', 'platform', $4, $4)`,
       [org.id, pilotId, org.admin.code, at],
     );
+
+    // KOMPLET ZDOLNOŚCI KLUBOWYCH (epik #197) - to jest cała treść słowa „administrator"
+    // po zniknięciu ról. Pierwszy członek klubu MUSI mieć `accounts.manage`, bo inaczej
+    // nie miałby kto nadać uprawnień drugiemu: klub powstałby zamknięty.
+    for (const capability of CLUB_CAPABILITIES) {
+      await tx.query(
+        `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ($1, $2, $3)`,
+        [org.id, pilotId, capability],
+      );
+    }
 
     return { adminPilotId: pilotId };
   }
@@ -259,7 +270,13 @@ export class PgOrganizationsRepo implements OrganizationsPlatformPort {
                 ORDER BY t.created_at DESC LIMIT 1) AS invite_expires_at
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id
-        WHERE m.org_id = ANY($1) AND m.role = 'admin' AND m.status = 'active'
+        -- ADMINISTRATOR KLUBU = KTOŚ ZE ZDOLNOŚCIĄ accounts.manage (epik #197): to ta
+        -- jedna zdolność rozstrzyga, czy klub ma kogo prosić o pomoc, i to ona broni
+        -- przed zamknięciem klubu. Superadministrator pyta tu wyłącznie „do kogo dzwonić".
+        WHERE m.org_id = ANY($1) AND m.status = 'active'
+          AND EXISTS (SELECT 1 FROM membership_capabilities mc
+                       WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id
+                         AND mc.capability = 'accounts.manage')
         ORDER BY p.name ASC`,
       [orgIds],
     );

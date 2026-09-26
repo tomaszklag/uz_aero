@@ -115,7 +115,7 @@ export interface SessionEditApi {
 }
 
 export interface SessionEditOptions {
-  /** `picId` → kod pilota (TMK). Bez niej historia pokaże surowe identyfikatory. */
+  /** `picId` → kod pilota (AKO). Bez niej historia pokaże surowe identyfikatory. */
   codeOf?: (pilotId: string) => string;
   /** Kto jest zalogowany - do dopisku „(Ty)" w historii. */
   currentPilotId?: string | null;
@@ -827,7 +827,7 @@ function formatValue(
   if (field === 'oilL' || field === 'oilAddedL') {
     return typeof value === 'number' ? litres(value) : null;
   }
-  // Drugi pilot jest identyfikatorem, a pilot czyta KOD (AKO) - surowe uuid w historii
+  // Drugi pilot jest identyfikatorem, a pilot czyta KOD (BNO) - surowe uuid w historii
   // nie mówiłoby nic nikomu.
   if (field === 'dualId') return typeof value === 'string' ? codeOf(value) : null;
   // Notatkę pokazujemy w cudzysłowie i w całości: to zdanie, a nie odczyt, więc

@@ -76,7 +76,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ['organizations', ['id', 'name', 'slug', 'active', 'created_at', 'created_by', 'join_code', 'join_code_since', 'sheets_key', 'timezone', 'home_icao']],
     [
       'memberships',
-      ['org_id', 'pilot_id', 'code', 'role', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
+      ['org_id', 'pilot_id', 'code', 'status', 'reject_reason', 'joined_via', 'created_at', 'decided_at', 'decided_by', 'credentials_valid_from', 'updated_at'],
     ],
     // Tożsamość Google ZAWSZE podpięta do osoby (epik D, issue #100): `status`,
     // `reject_reason`, `decided_at`, `decided_by` ZNIKŁY migracją 8 - decyzja o zgłoszeniu
@@ -90,12 +90,39 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'login_sessions',
       ['id', 'pilot_id', 'org_id', 'surface', 'method', 'created_at', 'last_seen_at', 'expires_at', 'revoked_at', 'revoked_by', 'device_label', 'ip'],
     ],
+    // Zakres uprawnień (migracja 12, issue #197): zdolność NADANA członkostwu. Bez
+    // `CHECK`-a na wartość i bez `granted_at` - katalog żyje w TypeScripcie, a kto
+    // i kiedy zmienił zakres, mówi audyt (`membership.scope`).
+    ['membership_capabilities', ['org_id', 'pilot_id', 'capability']],
     // Zajętość maszyny (migracja 11, issue #145): JEDNA tabela na rezerwację pilota
     // i wyłączenie z użytku, bo ograniczenie wykluczające musi objąć oba rodzaje naraz.
     [
       'bookings',
-      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason'],
+      // `reminded_at` na końcu - migracja 15 (obserwowanie samolotu): stempel „za godzinę".
+      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at'],
     ],
+    // Obserwowanie samolotu (migracja 15, issue #205): ZAMIAR osoby, bez statusu i bez
+    // rodzajów - prawo do powiadomienia sprawdza się przy wysyłce, nie w wierszu.
+    ['aircraft_watches', ['org_id', 'aircraft_id', 'pilot_id', 'created_at']],
+    // Ścieżka akceptacji (migracja 13, issue #164): krok ma NAZWĘ i LISTĘ OSÓB - roli
+    // w nim nie ma. `id` jest TRWAŁE, a `position` zmienne, bo ścieżka jest zawsze
+    // bieżąca; `removed_at` zamiast `DELETE`, bo decyzje pod krokiem są append-only.
+    ['approval_steps', ['id', 'org_id', 'position', 'label', 'removed_at']],
+    ['approval_step_members', ['org_id', 'step_id', 'pilot_id']],
+    // Decyzje na rezerwacji: `via` odróżnia kliknięcie człowieka od kroku pominiętego
+    // przez rezerwującego, `reason` jest wymagany przy odmowie (pilnuje domena).
+    // Od migracji 14 z własnym kluczem `id` (para rezerwacja-krok zeszła do indeksu
+    // częściowego na decyzjach żywych) i stemplem `superseded_at`: poprawka terminu
+    // czyści zgody, a rejestr zostaje append-only.
+    [
+      'booking_approvals',
+      ['booking_id', 'org_id', 'step_id', 'decision', 'via', 'reason', 'decided_by', 'decided_at', 'id', 'superseded_at'],
+    ],
+    // Skrzynka (migracja 13): źródło prawdy powiadomień, push jest tylko budzikiem.
+    ['notifications', ['id', 'org_id', 'pilot_id', 'kind', 'payload', 'created_at', 'read_at']],
+    // Token push BEZ `org_id`: opisuje URZĄDZENIE osoby, a ta bywa w kilku klubach
+    // naraz i przełącza je bez wylogowania. Klub niesie powiadomienie.
+    ['push_tokens', ['token', 'session_id', 'pilot_id', 'created_at']],
     // Tokeny linku „ustaw hasło": `kind`/`email`/`display_name` niosą rejestrację e-mailem
     // (osoba powstaje przy realizacji), `triggered_by` - który z czterech wyzwalaczy.
     [
@@ -172,6 +199,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'aircraft',
       'aircraft_consumption',
       'aircraft_readings',
+      'aircraft_watches',
+      'approval_step_members',
+      'approval_steps',
+      'booking_approvals',
       'bookings',
       'bug_reports',
       'events',
@@ -179,7 +210,9 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'exported_sheets',
       'flags',
       'login_sessions',
+      'membership_capabilities',
       'memberships',
+      'notifications',
       'refresh_tokens',
       'sessions',
     ]);
@@ -333,7 +366,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     beforeAll(async () => {
       db = await migrated();
       await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org', 'Klub', 'klub')`);
-      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt', 'Tomasz Małkiewicz')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt', 'Adam Kowalski')`);
     });
 
     async function aircraft(): Promise<string> {
@@ -414,6 +447,141 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       await expect(insert(ac, '2026-10-01T10:00:00Z', '2026-10-01T08:00:00Z')).rejects.toThrow(
         /booking_order/,
       );
+    });
+  });
+
+  describe('ścieżka akceptacji: co trzyma baza, a co domena', () => {
+    // Ten sam wzorzec, co w bloku zajętości: schemat bez danych, minimum zakładane
+    // na miejscu, a testy rozdziela WŁASNY KROK dla każdego.
+    let db: Awaited<ReturnType<typeof migrated>>;
+    let seq = 0;
+
+    beforeAll(async () => {
+      db = await migrated();
+      await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org2', 'Klub', 'klub2')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt2', 'Adam Kowalski')`);
+      await db.query(
+        `INSERT INTO aircraft (id, reg, type, capacity_l, mh_format, org_id)
+         VALUES ('ac-w', 'SP-WWW', 'C172', 200, 'decimal', 'org2')`,
+      );
+    });
+
+    async function step(): Promise<string> {
+      const id = `st${++seq}`;
+      await db.query(
+        `INSERT INTO approval_steps (id, org_id, position, label) VALUES ($1, 'org2', 1, 'Mechanik')`,
+        [id],
+      );
+      return id;
+    }
+
+    async function booking(): Promise<string> {
+      const id = `bk${seq}`;
+      const hour = 6 + seq;
+      await db.query(
+        `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+         VALUES ($1, 'org2', 'ac-w', 'flight', 'pending', $2, $3, 'plt2', 'przelot', 'plt2')`,
+        [id, `2026-11-01T${String(hour).padStart(2, '0')}:00:00Z`, `2026-11-01T${String(hour).padStart(2, '0')}:30:00Z`],
+      );
+      return id;
+    }
+
+    const decide = (bk: string, st: string, decision = 'approved', via = 'person') =>
+      db.query(
+        `INSERT INTO booking_approvals (booking_id, org_id, step_id, decision, via, decided_by)
+         VALUES ($1, 'org2', $2, $3, $4, 'plt2')`,
+        [bk, st, decision, via],
+      );
+
+    it('KROKU Z DECYZJĄ NIE DA SIĘ USUNĄĆ - stąd `removed_at`, a nie `DELETE`', async () => {
+      // Klucz obcy decyzji celuje w krok BEZ kaskady, więc zapis nie ma jak zniknąć razem
+      // z konfiguracją. Zdjęcie kroku ze ścieżki jest wobec tego stemplem, nie usunięciem.
+      const st = await step();
+      await decide(await booking(), st);
+      await expect(db.query(`DELETE FROM approval_steps WHERE id = $1`, [st])).rejects.toThrow(
+        /booking_approvals|foreign key/i,
+      );
+    });
+
+    it('krok BEZ decyzji da się usunąć, a lista osób znika razem z nim', async () => {
+      const st = await step();
+      await db.query(
+        `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ('org2', $1, 'plt2')`,
+        [st],
+      );
+      await expect(db.query(`DELETE FROM approval_steps WHERE id = $1`, [st])).resolves.toBeDefined();
+      const { rows } = await db.query(`SELECT 1 FROM approval_step_members WHERE step_id = $1`, [st]);
+      expect(rows).toHaveLength(0);
+    });
+
+    it('DECYZJA JEST JEDNA NA KROK - drugiej baza nie przyjmie (append-only)', async () => {
+      // Zmiana zdania znaczy nową rezerwację, nie nadpisanie decyzji (§11.4), więc
+      // kolizja klucza jest tu zachowaniem zamierzonym, nie usterką zapisu.
+      const st = await step();
+      const bk = await booking();
+      await decide(bk, st);
+      await expect(decide(bk, st, 'rejected')).rejects.toThrow(/duplicate key|booking_approvals_pkey/);
+    });
+
+    it('rozstrzygnięcie i jego pochodzenie mają zamknięte zbiory wartości', async () => {
+      const st = await step();
+      const bk = await booking();
+      await expect(decide(bk, st, 'maybe')).rejects.toThrow(/booking_approvals_decision_check|constraint/);
+      await expect(decide(bk, st, 'approved', 'admin')).rejects.toThrow(/booking_approvals_via_check|constraint/);
+    });
+
+    it('POWODU NIE PILNUJE BAZA i to jest decyzja: wymóg dotyczy TREŚCI', async () => {
+      // CHECK umiałby sprawdzić wyłącznie obecność kolumny, a powodem nie jest ani NULL,
+      // ani napis z samych spacji. Odpowiedź ma paść tam, gdzie da się ją nazwać
+      // człowiekowi - w domenie (`refuseDecision`) i przy przycisku.
+      const st = await step();
+      await expect(decide(await booking(), st, 'rejected')).resolves.toBeDefined();
+    });
+
+    it('OBSERWOWANIE ZNIKA RAZEM Z CZŁONKOSTWEM, a drugie włączenie nie robi drugiego wiersza (migracja 15)', async () => {
+      // Kaskada z `memberships`, nie z `pilots`: osoba w dwóch klubach traci obserwowanie
+      // TYLKO w klubie, z którego wypadła. Wyłączenie członkostwa (status) wiersza nie
+      // rusza - wycisza je sprawdzenie przy wysyłce (`watchersOf`).
+      await db.query(
+        `INSERT INTO organizations (id, name, slug) VALUES ('org-w', 'Klub W', 'klub-w')`,
+      );
+      await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('plt-w', 'W', 'w@x.pl', TRUE)`);
+      await db.query(
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via) VALUES ('org-w', 'plt-w', 'WWW', 'active', 'code')`,
+      );
+      await db.query(
+        `INSERT INTO aircraft (id, org_id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
+         VALUES ('ac-w15', 'org-w', 'SP-W15', 'C152', 2000, 100, 'decimal', FALSE, 'active')`,
+      );
+      for (let i = 0; i < 2; i += 1) {
+        await db.query(
+          `INSERT INTO aircraft_watches (org_id, aircraft_id, pilot_id) VALUES ('org-w', 'ac-w15', 'plt-w')
+           ON CONFLICT (aircraft_id, pilot_id) DO NOTHING`,
+        );
+      }
+      const before = await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`);
+      expect(before.rows).toHaveLength(1);
+
+      await db.query(`UPDATE memberships SET status = 'disabled' WHERE pilot_id = 'plt-w'`);
+      expect((await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`)).rows).toHaveLength(1);
+
+      await db.query(`DELETE FROM memberships WHERE pilot_id = 'plt-w'`);
+      expect((await db.query(`SELECT 1 FROM aircraft_watches WHERE pilot_id = 'plt-w'`)).rows).toHaveLength(0);
+    });
+
+    it('TOKEN PUSH GAŚNIE RAZEM Z SESJĄ LOGOWANIA (§12.2)', async () => {
+      // Bez tego wspólny tablet klubu wysyłałby powiadomienia pilota, który dawno oddał
+      // urządzenie koledze - zdalne wylogowanie z panelu nie tknęłoby budzika.
+      await db.query(
+        `INSERT INTO login_sessions (id, pilot_id, org_id, surface, method, created_at, last_seen_at, expires_at)
+         VALUES ('ses-w', 'plt2', 'org2', 'mobile', 'password', now(), now(), '2026-12-01T00:00:00Z')`,
+      );
+      await db.query(
+        `INSERT INTO push_tokens (token, session_id, pilot_id) VALUES ('ExponentPushToken[x]', 'ses-w', 'plt2')`,
+      );
+      await db.query(`DELETE FROM login_sessions WHERE id = 'ses-w'`);
+      const { rows } = await db.query(`SELECT 1 FROM push_tokens WHERE session_id = 'ses-w'`);
+      expect(rows).toHaveLength(0);
     });
   });
 });

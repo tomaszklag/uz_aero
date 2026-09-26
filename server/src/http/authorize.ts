@@ -149,7 +149,14 @@ export async function authorizeOrg(
   tokens: TokenService,
   accounts: PilotsPort,
   token: string | null,
-  capability: Capability,
+  /**
+   * `null` = SAMO CZŁONKOSTWO (issue #216, „panel dla wszystkich"): trasa otwarta dla
+   * każdego aktywnego członka klubu - kalendarz, słownik klubu, „kim jestem". Aktywność
+   * członkostwa i unieważnienie poświadczeń sprawdzają się tak samo; odpada wyłącznie
+   * pytanie o pozycję katalogu. Osobna wartość, a nie pseudo-zdolność w katalogu, bo
+   * zdolności „bycia członkiem" nie da się nadać ani odebrać osobno.
+   */
+  capability: Capability | null,
 ): Promise<AuthOutcome> {
   // Nie przez `authorizeMember`: tamta droga zwija zdalne wylogowanie do zwykłego 401,
   // bo telefon i tak sięga po odświeżenie. Panel potrzebuje POWODU, więc czyta ten sam
@@ -160,7 +167,7 @@ export async function authorizeOrg(
   if (account == null) return UNAUTHORIZED;
   if (account.sessionRevoked) return SESSION_REVOKED;
 
-  if (!can(account.role, capability)) {
+  if (capability != null && !can(account.capabilities, capability)) {
     return { ok: false, status: 403, body: { error: 'forbidden', required: capability } };
   }
   return { ok: true, account };

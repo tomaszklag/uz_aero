@@ -21,14 +21,15 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
+import { useApprovalQueue } from '../../queries/useApprovals';
 import { useCalendar } from '../../queries/useCalendar';
-import { useFleet } from '../../queries/useFleet';
-import { usePilots } from '../../queries/usePilots';
+import { useDirectory } from '../../queries/useDirectory';
 import {
   Banner,
   Button,
   EmptyState,
   FilterChip,
+  LinkButton,
   Loadable,
   PageHead,
 } from '../../ui/components';
@@ -36,8 +37,9 @@ import { CalendarIcon, PlaneIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { BlockDrawer } from './BlockDrawer';
 import { BookingDrawer } from './BookingDrawer';
-import type { Person } from './bookingLabels';
-import { buildCalendarGrid, hasAnyItem, type CalendarAircraft } from './calendarGrid';
+import { buildCalendarGrid, hasAnyItem } from './calendarGrid';
+import { calendarAircraft, personLookup } from './directoryLookups';
+import { queueBanner } from './queueCards';
 import {
   DEFAULT_RANGE,
   RANGE_OPTIONS,
@@ -65,8 +67,9 @@ export function CalendarScreen() {
   const query = useMemo(() => calendarQuery(known, Date.now()), [known]);
 
   const calendar = useCalendar(query);
-  const fleet = useFleet({});
-  const pilots = usePilots({});
+  // Znaki i nazwiska ze SŁOWNIKA klubu, nie z list modułów Piloci i Samoloty
+  // (issue #216): kalendarz ma każdy członek, tamte listy - „Podgląd klubu".
+  const directory = useDirectory();
 
   const setRange = (key: RangeKey): void => {
     const next = new URLSearchParams(params);
@@ -75,26 +78,12 @@ export function CalendarScreen() {
     setParams(next, { replace: true });
   };
 
-  const aircraft: CalendarAircraft[] = useMemo(
-    () =>
-      (fleet.data?.items ?? []).map((a) => ({
-        id: a.id,
-        reg: a.reg,
-        type: a.type,
-        inService: a.serviceStatus === 'active',
-      })),
-    [fleet.data?.items],
-  );
+  const aircraft = useMemo(() => calendarAircraft(directory.data), [directory.data]);
 
-  // Rozwiązanie identyfikatora na członka klubu z listy, którą ekran i tak pobiera.
+  // Rozwiązanie identyfikatora na członka klubu ze słownika, który ekran i tak pobiera.
   // Kalendarz nie dostaje nazwisk w DTO zajętości i nie ma ich dostawać: ta sama
-  // reguła, przez którą dziennik rozwiązuje kody z `usePilots`, a nie z wiersza.
-  const person = useMemo(() => {
-    const byId = new Map<string, Person>(
-      (pilots.data?.items ?? []).map((p) => [p.id, { name: p.name, code: p.code }]),
-    );
-    return (pilotId: string): Person | null => byId.get(pilotId) ?? null;
-  }, [pilots.data?.items]);
+  // reguła, przez którą dziennik rozwiązuje kody z listy, a nie z wiersza.
+  const person = useMemo(() => personLookup(directory.data), [directory.data]);
 
   const rows = useMemo(
     () =>
@@ -108,11 +97,26 @@ export function CalendarScreen() {
   );
 
   const open = id == null ? null : (calendar.data?.bookings ?? []).find((b) => b.id === id) ?? null;
-  const error = calendar.error ?? fleet.error;
 
   // Brak uprawnienia = BRAK przycisku, nie przycisk wyszarzony (`panel-2.0.md` §3.3).
   const canBlock = can(session?.capabilities, 'fleet.manage');
   const canManage = can(session?.capabilities, 'reservations.manage');
+  // Ścieżkę układa się raz i zagląda do niej rzadko - konfiguracja idzie akcją WYCISZONĄ
+  // (`accounts.manage`, bo to rozdanie władzy). Kolejkę pyta wyłącznie ten, kto w ogóle
+  // akceptuje: bez zdolności odpowiedź byłaby 403 na ekranie, na którym nic nie zaszło.
+  const canConfigure = can(session?.capabilities, 'accounts.manage');
+  const canApprove = can(session?.capabilities, 'reservations.approve');
+  const queue = useApprovalQueue(canApprove);
+  const waiting = useMemo(
+    () =>
+      queueBanner(queue.data?.items ?? [], {
+        timezone: queue.data?.timezone ?? '',
+        now: Date.now(),
+      }),
+    [queue.data],
+  );
+
+  const error = calendar.error ?? directory.error ?? queue.error;
 
   return (
     <>
@@ -120,6 +124,11 @@ export function CalendarScreen() {
         title="Kalendarz"
         actions={
           <>
+            {canConfigure ? (
+              <LinkButton to="/kalendarz/sciezka" variant="ghost">
+                Ścieżka akceptacji
+              </LinkButton>
+            ) : null}
             {canManage ? (
               <Button variant="ghost" onClick={() => setForm('booking')}>
                 Zarezerwuj za pilota
@@ -141,6 +150,23 @@ export function CalendarScreen() {
         </Banner>
       )}
 
+      {/* WEJŚCIE W KOLEJKĘ ISTNIEJE WYŁĄCZNIE Z PRACĄ: baner pojawia się, gdy coś czeka
+          NA ZALOGOWANEGO - nie na klub. Pusta kolejka to stan domyślny i nie dostaje
+          zdania (reguła SyncChipa); liczba w napisie, bo „coś czeka" kazałoby wejść,
+          żeby się dowiedzieć ile. */}
+      {waiting == null ? null : (
+        <Banner
+          tone="status"
+          action={
+            <LinkButton to="/kalendarz/decyzje" size="sm" variant="ghost">
+              Rozpatrz
+            </LinkButton>
+          }
+        >
+          <b>{waiting.lead}</b> {waiting.detail}
+        </Banner>
+      )}
+
       <div className="filters">
         {RANGE_OPTIONS.map((option) => (
           <FilterChip
@@ -154,7 +180,7 @@ export function CalendarScreen() {
 
       <div className="card">
         <Loadable
-          pending={calendar.isPending || fleet.isPending}
+          pending={calendar.isPending || directory.isPending}
           skeleton={<CalendarSkeleton days={rangeDays(known)} />}
         >
           {aircraft.length === 0 ? (
@@ -177,6 +203,12 @@ export function CalendarScreen() {
                 <span className="cal-legend-item">
                   <span className="cal-swatch" />
                   Rezerwacja
+                </span>
+                {/* Stan „czeka na akceptację" różni się KSZTAŁTEM (przerywana ramka), nie
+                    barwą - bursztyn niesie wyłączenie z użytku (issue #165, H4). */}
+                <span className="cal-legend-item">
+                  <span className="cal-swatch pending" />
+                  Czeka na akceptację
                 </span>
                 <span className="cal-legend-item">
                   <span className="cal-swatch block" />

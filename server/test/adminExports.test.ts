@@ -282,7 +282,7 @@ async function auditRows(db: Harness['db']) {
 describe('monitor eksportu - lista (A05)', () => {
   it('pusto: zero wierszy i liczniki w zerach, nie brak liczników', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await listExports(app, admin);
 
@@ -307,12 +307,12 @@ describe('monitor eksportu - lista (A05)', () => {
 
   it('nazywa kartę TAK SAMO jak eksporter - także dla dnia, który jeszcze trwa', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // Dzień zamknięty → karta powstała automatycznie przy ingescie.
-    await post(app, tmk, openDay({ sessionUuid: 'closed-1', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'closed-1', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'closed-1', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'closed-1', picId: 'AKO' }));
     // Dzień w toku na innym samolocie → czeka.
     await post(
       app,
@@ -326,7 +326,7 @@ describe('monitor eksportu - lista (A05)', () => {
       claimOnly({ sessionUuid: 'bare-1', picId: 'KRZ', aircraftId: 'SP-ANK', dayOffset: 2 }),
     );
 
-    const body = (await listExports(app, tmk)).json();
+    const body = (await listExports(app, ako)).json();
     const by = (uuid: string) =>
       body.items.find((item: { sessionUuid: string }) => item.sessionUuid === uuid);
 
@@ -336,7 +336,7 @@ describe('monitor eksportu - lista (A05)', () => {
       day: '2026-06-22',
       revision: 1,
       reg: 'SP-AXA',
-      picCode: 'TMK',
+      picCode: 'AKO',
       sessionStatus: 'closed',
       sheetUrl: 'http://ninerdeck.test/sheets/aeroklub-alfa/2026-06-22_SP-AXA?k=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       blockingFlagIds: [],
@@ -372,15 +372,15 @@ describe('monitor eksportu - lista (A05)', () => {
 
   it('otwarta flaga `aircraft_overlap` daje stan `blocked` z NUMEREM flagi', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
-    // Nakładka: TMK nie zamyka dnia, KRZ przejmuje ten sam samolot i zamyka swój.
-    await post(app, tmk, openDay({ sessionUuid: 'ov-1', picId: 'TMK' }));
+    // Nakładka: AKO nie zamyka dnia, KRZ przejmuje ten sam samolot i zamyka swój.
+    await post(app, ako, openDay({ sessionUuid: 'ov-1', picId: 'AKO' }));
     await post(app, krz, openDay({ sessionUuid: 'ov-2', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'ov-2', picId: 'KRZ' }));
 
-    const body = (await listExports(app, tmk)).json();
+    const body = (await listExports(app, ako)).json();
     const blocked = body.items.find(
       (item: { sessionUuid: string }) => item.sessionUuid === 'ov-2',
     );
@@ -394,40 +394,40 @@ describe('monitor eksportu - lista (A05)', () => {
 
   it('chip zawęża listę, a liczniki opisują CAŁY zakres (obietnica chipa)', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    await post(app, tmk, openDay({ sessionUuid: 'c-1', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'c-1', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'c-1', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'c-1', picId: 'AKO' }));
     await post(
       app,
-      tmk,
-      openDay({ sessionUuid: 'w-1', picId: 'TMK', aircraftId: 'SP-FGK', dayOffset: 1 }),
+      ako,
+      openDay({ sessionUuid: 'w-1', picId: 'AKO', aircraftId: 'SP-FGK', dayOffset: 1 }),
     );
 
-    const narrowed = (await listExports(app, tmk, '?state=current')).json();
+    const narrowed = (await listExports(app, ako, '?state=current')).json();
 
     expect(narrowed.items.map((i: { sessionUuid: string }) => i.sessionUuid)).toEqual(['c-1']);
     // Po kliknięciu chipa pozostałe liczby NIE spadają do zera - inaczej administrator
     // po jednym zawężeniu przestałby widzieć, ile jeszcze zostało.
     expect(narrowed.counts).toMatchObject({ total: 2, current: 1, waiting: 1 });
 
-    expect((await listExports(app, tmk, '?state=nieznany')).statusCode).toBe(400);
+    expect((await listExports(app, ako, '?state=nieznany')).statusCode).toBe(400);
   });
 
   it('filtruje po zakresie dni i po samolocie; zakres jest DOMKNIĘTY', async () => {
     const { app } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
 
-    await post(app, tmk, openDay({ sessionUuid: 'd-0', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'd-0', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'd-0', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'd-0', picId: 'AKO' }));
     await post(
       app,
-      tmk,
-      openDay({ sessionUuid: 'd-2', picId: 'TMK', aircraftId: 'SP-FGK', dayOffset: 2 }),
+      ako,
+      openDay({ sessionUuid: 'd-2', picId: 'AKO', aircraftId: 'SP-FGK', dayOffset: 2 }),
     );
 
     const uuids = async (query: string) =>
-      (await listExports(app, tmk, query)).json().items.map(
+      (await listExports(app, ako, query)).json().items.map(
         (i: { sessionUuid: string }) => i.sessionUuid,
       );
 
@@ -452,11 +452,11 @@ describe('monitor eksportu - lista (A05)', () => {
 describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
   it('liczniki opisują CAŁY zakres, a odpowiedź mówi wprost, że lista jest obcięta', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     // Trzy zamknięte dni, każdy z kartą - i pytanie o JEDEN najnowszy.
     for (const day of [0, 1, 2]) {
-      const o = { sessionUuid: `l-${day}`, picId: 'TMK', dayOffset: day };
+      const o = { sessionUuid: `l-${day}`, picId: 'AKO', dayOffset: day };
       await post(app, admin, openDay(o));
       await post(app, admin, closeDay(o));
     }
@@ -479,18 +479,18 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 
   it('chip znajduje dzień STARSZY niż limit - zawężenie jest przed obcięciem', async () => {
     const { app, sheets } = await flakyHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     // Najstarszy dzień: eksport padł, więc karty nie ma. Dokładnie ten wiersz, dla
     // którego ten ekran istnieje - i dokładnie ten, który obcięcie zabierało pierwszy.
     sheets.failing = true;
-    await post(app, admin, openDay({ sessionUuid: 'old-missing', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'old-missing', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'old-missing', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'old-missing', picId: 'AKO' }));
     sheets.failing = false;
 
     // …i dwa nowsze dni z kartami, które w oknie stoją przed nim.
     for (const day of [1, 2]) {
-      const o = { sessionUuid: `new-${day}`, picId: 'TMK', dayOffset: day };
+      const o = { sessionUuid: `new-${day}`, picId: 'AKO', dayOffset: day };
       await post(app, admin, openDay(o));
       await post(app, admin, closeDay(o));
     }
@@ -518,14 +518,14 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 
   it('`truncated` przy zawężeniu liczy TE wiersze, które chip obiecuje', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     for (const day of [0, 1]) {
-      const o = { sessionUuid: `t-${day}`, picId: 'TMK', dayOffset: day };
+      const o = { sessionUuid: `t-${day}`, picId: 'AKO', dayOffset: day };
       await post(app, admin, openDay(o));
       await post(app, admin, closeDay(o));
     }
-    await post(app, admin, openDay({ sessionUuid: 't-open', picId: 'TMK', dayOffset: 3 }));
+    await post(app, admin, openDay({ sessionUuid: 't-open', picId: 'AKO', dayOffset: 3 }));
 
     const body = (await listExports(app, admin, '?state=current&limit=1')).json();
 
@@ -547,17 +547,17 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
    */
   it('liczniki zgadzają się z wierszami, a `?state=X` oddaje dokładnie te wiersze', async () => {
     const { app, sheets } = await flakyHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // `current` (+ `revised` po ponowieniu)
-    await post(app, tmk, openDay({ sessionUuid: 's-cur', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 's-cur', picId: 'TMK' }));
-    await retry(app, 's-cur', tmk);
+    await post(app, ako, openDay({ sessionUuid: 's-cur', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 's-cur', picId: 'AKO' }));
+    await retry(app, 's-cur', ako);
     // `missing`
     sheets.failing = true;
-    await post(app, tmk, openDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
-    await post(app, tmk, closeDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
+    await post(app, ako, openDay({ sessionUuid: 's-miss', picId: 'AKO', dayOffset: 1 }));
+    await post(app, ako, closeDay({ sessionUuid: 's-miss', picId: 'AKO', dayOffset: 1 }));
     sheets.failing = false;
     // `impossible` - strumień bez claimu, czyli rejestr niekompletny (patrz `withoutClaim`).
     await post(
@@ -568,8 +568,8 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     // `waiting` + `blocked` (nakładka na SP-FGK: pierwsza sesja zostaje otwarta)
     await post(
       app,
-      tmk,
-      openDay({ sessionUuid: 's-wait', picId: 'TMK', aircraftId: 'SP-FGK', dayOffset: 3 }),
+      ako,
+      openDay({ sessionUuid: 's-wait', picId: 'AKO', aircraftId: 'SP-FGK', dayOffset: 3 }),
     );
     await post(
       app,
@@ -582,7 +582,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
       closeDay({ sessionUuid: 's-block', picId: 'KRZ', aircraftId: 'SP-FGK', dayOffset: 3 }),
     );
 
-    const body = (await listExports(app, tmk)).json();
+    const body = (await listExports(app, ako)).json();
     const items: { sessionUuid: string; state: string; revision: number | null }[] = body.items;
     expect(items).toHaveLength(5);
 
@@ -604,7 +604,7 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 
     // 2. Zawężenie SQL-a = wiersze, którym mapper nadał ten stan.
     for (const state of ['current', 'blocked', 'missing', 'waiting', 'impossible']) {
-      const narrowed = (await listExports(app, tmk, `?state=${state}`)).json();
+      const narrowed = (await listExports(app, ako, `?state=${state}`)).json();
       expect(
         narrowed.items.map((i: { sessionUuid: string }) => i.sessionUuid).sort(),
         `zawężenie ?state=${state}`,
@@ -638,19 +638,19 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
   it('obie zmiany są `current` pod tą samą kartą i ŻADNA nie jest nadpisana', async () => {
     const { app, clock } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // Zmiana poranna: pełny dzień, zamknięty.
-    await post(app, tmk, openDay({ sessionUuid: 'zmiana-am', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'zmiana-am', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'zmiana-am', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'zmiana-am', picId: 'AKO' }));
 
     // Zmiana popołudniowa: TEN SAM samolot, TEN SAM dzień, inny pilot, też zamknięta.
     clock.advance(5 * 60 * 1000);
     await post(app, krz, openDay({ sessionUuid: 'zmiana-pm', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'zmiana-pm', picId: 'KRZ' }));
 
-    const body = (await listExports(app, tmk)).json();
+    const body = (await listExports(app, ako)).json();
     const by = (uuid: string) =>
       body.items.find((item: { sessionUuid: string }) => item.sessionUuid === uuid);
 
@@ -675,11 +675,11 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
 
   it('podgląd z obu wierszy pokazuje TĘ SAMĄ kartę - i są w niej obaj piloci', async () => {
     const { app, db, clock } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
-    await post(app, tmk, openDay({ sessionUuid: 'am', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'am', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'am', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'am', picId: 'AKO' }));
     clock.advance(5 * 60 * 1000);
     await post(app, krz, openDay({ sessionUuid: 'pm', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'pm', picId: 'KRZ' }));
@@ -693,32 +693,32 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
     ]);
     expect(await sheetRowCount(db)).toBe(1);
 
-    const amSheet = (await getPanel(app, tmk, '/exports/am/sheet')).json();
-    const pmSheet = (await getPanel(app, tmk, '/exports/pm/sheet')).json();
+    const amSheet = (await getPanel(app, ako, '/exports/am/sheet')).json();
+    const pmSheet = (await getPanel(app, ako, '/exports/pm/sheet')).json();
     // Ta sama nazwa = ta sama treść - i to już NIE jest wprowadzanie w błąd, bo treść
     // opisuje dobę obojga, a nie dzień pracy jednego z nich.
     expect(amSheet.rows).toEqual(pmSheet.rows);
     expect(amSheet.rows).toContainEqual(['Operacje', '2']);
-    expect(amSheet.rows.map((r: string[]) => r[1])).toContain('TMK');
+    expect(amSheet.rows.map((r: string[]) => r[1])).toContain('AKO');
     expect(amSheet.rows.map((r: string[]) => r[1])).toContain('KRZ');
 
     // Rozwinięcie nie ma już o czym ostrzegać.
-    expect((await getPanel(app, tmk, '/exports/am')).json().overwrittenBy).toBeNull();
-    expect((await getPanel(app, tmk, '/exports/pm')).json().overwrittenBy).toBeNull();
+    expect((await getPanel(app, ako, '/exports/am')).json().overwrittenBy).toBeNull();
+    expect((await getPanel(app, ako, '/exports/pm')).json().overwrittenBy).toBeNull();
   });
 
   it('ten sam dzień na INNYM samolocie to osobna karta', async () => {
     const { app, clock } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
-    await post(app, tmk, openDay({ sessionUuid: 'a-axa', picId: 'TMK' }));
-    await post(app, tmk, closeDay({ sessionUuid: 'a-axa', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'a-axa', picId: 'AKO' }));
+    await post(app, ako, closeDay({ sessionUuid: 'a-axa', picId: 'AKO' }));
     clock.advance(5 * 60 * 1000);
     await post(app, krz, openDay({ sessionUuid: 'b-fgk', picId: 'KRZ', aircraftId: 'SP-FGK' }));
     await post(app, krz, closeDay({ sessionUuid: 'b-fgk', picId: 'KRZ', aircraftId: 'SP-FGK' }));
 
-    const body = (await listExports(app, tmk)).json();
+    const body = (await listExports(app, ako)).json();
 
     for (const item of body.items) expect(item.overwrittenBy).toBeNull();
     expect(body.counts.overwritten).toBe(0);
@@ -728,10 +728,10 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
     // Regeneracja własnej karty jest zamierzona i codzienna (spóźniony sync, korekta).
     // Warunek `o.session_uuid <> s.session_uuid` istnieje właśnie po to.
     const { app, clock } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'self', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'self', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'self', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'self', picId: 'AKO' }));
     clock.advance(5 * 60 * 1000);
     await retry(app, 'self', admin);
 
@@ -744,10 +744,10 @@ describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
 describe('historia rewizji i podgląd karty (A05)', () => {
   it('N wierszy dziennika, JEDEN wiersz karty - dwie tabele, dwa zadania', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'h-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'h-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'h-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'h-1', picId: 'AKO' }));
     await retry(app, 'h-1', admin);
     await retry(app, 'h-1', admin);
 
@@ -768,10 +768,10 @@ describe('historia rewizji i podgląd karty (A05)', () => {
 
   it('podgląd karty jedzie POD PREFIKSEM PANELU - ciasteczko sesji nie widzi `/sheets`', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'p-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'p-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'p-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'p-1', picId: 'AKO' }));
 
     const res = await getPanel(app, admin, '/exports/p-1/sheet');
 
@@ -790,8 +790,8 @@ describe('historia rewizji i podgląd karty (A05)', () => {
 
   it('404 na podglądzie dnia, którego karta nigdy nie powstała', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
-    await post(app, admin, openDay({ sessionUuid: 'nosheet', picId: 'TMK' }));
+    const admin = await login(app, 'AKO');
+    await post(app, admin, openDay({ sessionUuid: 'nosheet', picId: 'AKO' }));
 
     expect((await getPanel(app, admin, '/exports/nosheet/sheet')).statusCode).toBe(404);
     expect((await getPanel(app, admin, '/exports/nie-ma-takiej')).statusCode).toBe(404);
@@ -801,10 +801,10 @@ describe('historia rewizji i podgląd karty (A05)', () => {
 describe('ponowienie eksportu (A05)', () => {
   it('DOPISUJE wiersz dziennika i NADPISUJE treść karty', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'r-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'r-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'r-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'r-1', picId: 'AKO' }));
     expect(await exportLogRows(db)).toEqual([
       { session_uuid: 'r-1', revision: 1, day: '2026-06-22' },
     ]);
@@ -832,12 +832,12 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('pierwsze ponowienie po AWARII eksportu daje rewizję 1, a nie 2', async () => {
     const { app, db, sheets } = await flakyHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     sheets.failing = true;
-    await post(app, admin, openDay({ sessionUuid: 'f-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'f-1', picId: 'AKO' }));
     // Awaria arkuszy NIE cofa przyjęcia zdarzeń - telefon dostał 200, dzień jest zamknięty.
-    expect((await post(app, admin, closeDay({ sessionUuid: 'f-1', picId: 'TMK' }))).statusCode).toBe(
+    expect((await post(app, admin, closeDay({ sessionUuid: 'f-1', picId: 'AKO' }))).statusCode).toBe(
       200,
     );
     expect(await exportLogRows(db)).toEqual([]);
@@ -871,10 +871,10 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('odmowa bramki to 200 z POWODEM, nie 500 - i nie dopisuje rewizji', async () => {
     const { app, db } = await testHarness();
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
-    await post(app, tmk, openDay({ sessionUuid: 'g-open', picId: 'TMK' }));
+    await post(app, ako, openDay({ sessionUuid: 'g-open', picId: 'AKO' }));
     await post(app, krz, openDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
 
@@ -883,11 +883,11 @@ describe('ponowienie eksportu (A05)', () => {
     // szeregowały się per sesja („twój dzień jeszcze trwa"). Po przejściu na kartę doby
     // to była już nieprawda: doba MA zdaną zmianę (`g-block`), więc powodem, dla którego
     // nic nie idzie do arkusza, jest flaga, a nie brak zamknięcia.
-    const openDayRetry = await retry(app, 'g-open', tmk);
+    const openDayRetry = await retry(app, 'g-open', ako);
     expect(openDayRetry.statusCode).toBe(200);
     expect(openDayRetry.json().retry.outcome).toEqual({ exported: false, reason: 'overlap_flag' });
 
-    const blockedRetry = await retry(app, 'g-block', tmk);
+    const blockedRetry = await retry(app, 'g-block', ako);
     expect(blockedRetry.statusCode).toBe(200);
     expect(blockedRetry.json().retry.outcome).toEqual({ exported: false, reason: 'overlap_flag' });
 
@@ -898,17 +898,17 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('zostawia ślad w audycie: karta, rewizja przed i po, wynik próby', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'a-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'a-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'a-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'a-1', picId: 'AKO' }));
     await retry(app, 'a-1', admin);
 
     const rows = await auditRows(db);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       action: 'export.retry',
-      actor_pilot_id: 'TMK',
+      actor_pilot_id: 'AKO',
       // Celem jest KARTA - dziennik ma się dać zawęzić do „co robiono z tym arkuszem".
       target_type: 'sheet',
       target_id: '2026-06-22_SP-AXA',
@@ -923,8 +923,8 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('ślad powstaje TAKŻE przy odmowie - inaczej „dlaczego ten dzień stoi" nie ma odpowiedzi', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
-    await post(app, admin, openDay({ sessionUuid: 'a-2', picId: 'TMK' }));
+    const admin = await login(app, 'AKO');
+    await post(app, admin, openDay({ sessionUuid: 'a-2', picId: 'AKO' }));
 
     await retry(app, 'a-2', admin);
 
@@ -945,10 +945,10 @@ describe('ponowienie eksportu (A05)', () => {
    */
   it('awaria zapisu karty jedzie jako `sheets_adapter`', async () => {
     const { app, db, sheets } = await flakyHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'e-sheets', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'e-sheets', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'e-sheets', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'e-sheets', picId: 'AKO' }));
 
     sheets.failing = true;
     const res = await retry(app, 'e-sheets', admin);
@@ -962,10 +962,10 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('błąd PO NASZEJ STRONIE jedzie jako `unexpected`, nie jako awaria arkuszy', async () => {
     const { app, db, events } = await explodingHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'e-boom', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'e-boom', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'e-boom', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'e-boom', picId: 'AKO' }));
 
     // Wybucha dopiero teraz: ingest przeszedł normalnie, więc dzień jest zamknięty
     // i ma kartę - tak jak w prawdziwej regresji, która wychodzi przy ponowieniu.
@@ -982,15 +982,15 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('udana próba i odmowa bramki nie mają rodzaju awarii', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'e-ok', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'e-ok', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'e-ok', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'e-ok', picId: 'AKO' }));
     expect((await retry(app, 'e-ok', admin)).json().retry.failure).toBeNull();
 
     // Odmowa jest stanem świata, a nie awarią - `failure` musi zostać puste, inaczej
     // panel pokazałby „coś się zepsuło" tam, gdzie działa zasada.
-    await post(app, admin, openDay({ sessionUuid: 'e-open', picId: 'TMK', dayOffset: 1 }));
+    await post(app, admin, openDay({ sessionUuid: 'e-open', picId: 'AKO', dayOffset: 1 }));
     const refused = await retry(app, 'e-open', admin);
     expect(refused.json().retry).toMatchObject({
       outcome: { exported: false, reason: 'session_open' },
@@ -1000,7 +1000,7 @@ describe('ponowienie eksportu (A05)', () => {
 
   it('404 dla nieznanej sesji - i ANI JEDNEGO wpisu w dzienniku audytu', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await retry(app, 'nie-ma-takiej-sesji', admin);
 
@@ -1013,10 +1013,10 @@ describe('ponowienie eksportu (A05)', () => {
 describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
   it('baza ODRZUCA drugą rewizję o tym samym numerze', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'u-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'u-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'u-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'u-1', picId: 'AKO' }));
 
     // Dokładnie ten wiersz, który powstałby przy przegranym wyścigu dwóch eksportów:
     // ten sam `session_uuid`, ten sam numer rewizji.
@@ -1044,10 +1044,10 @@ describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
    */
   it('dwa ponowienia naraz dają DWIE różne rewizje, nie dwie takie same', async () => {
     const { app, db } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
-    await post(app, admin, openDay({ sessionUuid: 'u-2', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'u-2', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'u-2', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'u-2', picId: 'AKO' }));
 
     const [a, b] = await Promise.all([retry(app, 'u-2', admin), retry(app, 'u-2', admin)]);
 
@@ -1076,9 +1076,9 @@ describe('pierwszeństwo stanów karty', () => {
     aircraftId: 'SP-AXA',
     reg: 'SP-AXA',
     aircraftType: 'Cessna 182',
-    picId: 'TMK',
-    picCode: 'TMK',
-    picName: 'Tomasz Małkiewicz',
+    picId: 'AKO',
+    picCode: 'AKO',
+    picName: 'Adam Kowalski',
     status: 'closed',
     claimedAt: DAY,
     updatedAt: new Date(DAY),
@@ -1121,11 +1121,11 @@ describe('zdolności monitora eksportu', () => {
     // monitor, ale nie ponawiała. Po jej wycofaniu odczyt pokazuje administrator,
     // a odmowę ponowienia - z tą samą zdolnością w treści - token zwykłego pilota.
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     const pilot = await login(app, 'PWI');
 
-    await post(app, admin, openDay({ sessionUuid: 'z-1', picId: 'TMK' }));
-    await post(app, admin, closeDay({ sessionUuid: 'z-1', picId: 'TMK' }));
+    await post(app, admin, openDay({ sessionUuid: 'z-1', picId: 'AKO' }));
+    await post(app, admin, closeDay({ sessionUuid: 'z-1', picId: 'AKO' }));
 
     // Odczyt: `panel.access` - monitor jest narzędziem każdego, kto wchodzi do panelu.
     expect((await listExports(app, admin)).statusCode).toBe(200);
@@ -1143,7 +1143,7 @@ describe('zdolności monitora eksportu', () => {
 
   it('ponowienie bez nagłówka CSRF jest odrzucane', async () => {
     const { app } = await testHarness();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await app.inject({
       method: 'POST',

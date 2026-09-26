@@ -78,6 +78,12 @@ skrzynka rozjazdów i eksporty kart dnia w nowym stylu*):
 5. **statystyki i analityka zużycia** - `/stats` i `/fleet/:id/consumption` bez klienta (§8);
 6. **pulpit** - wraca wyłącznie jako „Do sprawdzenia", nie jako kafle z licznikami (§9).
 
+**Uzupełnienie 2026-09-25 - dochodzi zgłoszenie #205 „Obserwowanie samolotu"** (decyzja
+właściciela: wydanie razem z 3.2.0). To jedyna część tego milestone'u dotykająca APLIKACJI
+PILOTA: karta maszyny w telefonie z wykresami motogodzin i paliwa, obserwowanie
+i pięć powiadomień o lotach maszyny, nowa zdolność `fleet.watch`. Dokument decyzji,
+model, etapy O-A…O-D i to, co zmienia w §10-§12: **`docs/obserwowanie-samolotu.md`**.
+
 ### 1.3 Świadomie poza zakresem
 
 - **konserwacja** (`/admin/api/maintenance/*`: przebudowa projekcji, czyszczenie refreshy,
@@ -147,10 +153,11 @@ Trzy ograniczenia z `admin/src/ui/shell/nav.ts`, których nie wolno naruszyć:
 3. **pozycja należy do zdolności** - moduł bez prawa wejścia nie jest wyszarzony, tylko
    go nie ma.
 
-Propozycja kolejności (do rozstrzygnięcia w P-A): **Dziennik · Do sprawdzenia · Kalendarz ·
-Statystyki · Piloci · Samoloty** - najpierw to, co się wydarzyło i co wymaga reakcji, potem
-to, co zaplanowane i ile tego było, na końcu konfiguracja klubu, którą rusza się raz na
-sezon.
+Kolejność (rozstrzygnięta 22 września 2026, §14 pkt 7; makiety P-A 25 września): **Dziennik ·
+Do sprawdzenia · Kalendarz · Statystyki · Piloci · Samoloty** - najpierw to, co się wydarzyło
+i co wymaga reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu,
+którą rusza się raz na sezon. Ikony: skrzynka (Do sprawdzenia) i słupki (Statystyki);
+klasa plakietki `.nav-count` w `shell.css`.
 
 **Plakietka z liczbą przy „Do sprawdzenia" pojawia się WYŁĄCZNIE przy niezerowej liczbie** -
 to jest reguła SyncChipa z issue #12 zastosowana do kolumny: stan domyślny („nic nie
@@ -176,7 +183,7 @@ PRZEŁĄCZNIK OSI na poziomie 1, a nie druga pozycja w kolumnie.
 
 ### 4.2 Adres osi pilota: pierwszy segment jest już zajęty
 
-`#/dziennik/:reg` bierze dziś cały pierwszy segment, więc `#/dziennik/AKO` byłoby
+`#/dziennik/:reg` bierze dziś cały pierwszy segment, więc `#/dziennik/BNO` byłoby
 odróżnialne od rejestracji wyłącznie heurystyką po kształcie napisu - a heurystyka
 w adresie to pułapka, która odzywa się przy pierwszym klubie ze znakiem spoza wzorca.
 
@@ -204,10 +211,11 @@ Gdyby sumy doby liczyła przeglądarka z wczytanych wierszy, pierwsza strona pok
 POŁOWY doby jako sumę doby - i nikt by tego nie zauważył, bo liczba wygląda poprawnie.
 
 Stąd cienki plaster serwera w P-B: **sumy doby przychodzą z odpowiedzi**, a nie z wierszy.
-Do rozstrzygnięcia w P-A, czy niesie je rozszerzone `GET /sessions` (nagłówki dób obok
-wierszy - wzorzec `GET /bookings`, które oddaje granice dób razem z zajętością), czy druga
-trasa. Rekomendacja: jedna odpowiedź, bo dwie oznaczają dwa momenty w czasie i sumy
-niepasujące do wierszy pod nimi.
+**Rozstrzygnięte w P-A (25 września 2026): JEDNA odpowiedź** - rozszerzone `GET /sessions`
+niesie nagłówki dób obok wierszy (wzorzec `GET /bookings`, które oddaje granice dób razem
+z zajętością). Dwie trasy oznaczałyby dwa momenty w czasie i sumy niepasujące do wierszy
+pod nimi. Makieta L2 pokazuje dobę przeciętą stroną: nagłówek dalej mówi prawdę o całej
+dobie, a stopka „Pokazano 50 z 214" stoi pod nią.
 
 ### 4.5 Jedna podstawa liczenia dla dziennika i statystyk
 
@@ -415,6 +423,27 @@ zostają dwie (`admin`, `pilot` - `docs/panel-2.0.md` §3.2a).
 Zdolność dokłada się wtedy, gdy pojawia się nowy ZASÓB albo nowa oś władzy
 (`reservations.manage` przy rezerwacjach) - a tu żaden z tych dwóch warunków nie zachodzi.
 
+> **UZUPEŁNIENIE PO ISSUE #216 (2026-09-25, „panel dla wszystkich" - `docs/uprawnienia.md`
+> §13).** Ról nie ma od 3.1.0 (epik #197), a do panelu wchodzi odtąd KAŻDY aktywny członek:
+> `panel.access` jest „Podglądem klubu" (dziennik, piloci, samoloty do odczytu), kalendarz
+> i Moje konto ma każdy. Każdy nowy ekran tego planu - pulpit „Do sprawdzenia", rozjazdy,
+> eksporty, statystyki, edycja zdarzeń - dostaje przez to DWA pytania zamiast jednego:
+> którą zdolnością bramkować odczyt (domyślnie `panel.access`) i czy trasa ma `RequireCapability`
+> z ekranem „Brak dostępu" (ma - każda trasa modułu). **Do tego epiku dochodzi jeden punkt
+> spoza planu, odłożony tu decyzją właściciela:** WŁASNA REZERWACJA Z PANELU. Pilot z pustym
+> zakresem widzi dziś kalendarz w panelu, ale rezerwuje wyłącznie w aplikacji („Zarezerwuj
+> za pilota" stoi na `reservations.manage`). Formularz jak 22/22A z telefonu (termin
+> i maszyna, potem zadanie), sugestie slotów z `GET /bookings/suggestions`, zapis na trasę
+> telefonu albo nową trasę panelu bez zdolności - do rozstrzygnięcia w P-A.
+
+**Uzupełnienie 2026-09-25: JEDNA nowa zdolność jednak dochodzi - `fleet.watch`** ze
+zgłoszenia #205 (`docs/obserwowanie-samolotu.md` §3), bo dołączyło ono do tego wydania.
+Zdanie wyżej zostaje prawdziwe dla sześciu epików panelu: obserwowanie jest nowym
+RODZAJEM dostępu do floty (patrzeć i być budzonym, nie zarządzać), czyli dokładnie tym
+warunkiem, o którym mówi akapit. Katalog panelu i opisy zestawów zmienia epik O-D;
+migracja 15 to sam DDL, bez backfillu zestawów (tamże §3.2 - decyzja właściciela
+2026-09-25: baza nie ma jeszcze prawdziwych klubów).
+
 ---
 
 ## 11. Wydanie: panel jedzie bez APK i PRZED Google Play
@@ -449,6 +478,19 @@ Konsekwencje, które musi obsłużyć epik P-W:
   więc każdy nowy ekran ma stronę albo akapit. Reguła „zmiana ekranu w PR = zmiana strony
   podręcznika" obowiązuje każdy epik, nie tylko wydaniowy.
 
+**Uzupełnienie 2026-09-26 - akapit niżej jest NIEAKTUALNY**: obserwowanie wyszło
+w 3.1.0 razem z nowym APK (decyzja właściciela przy gałęzi wydaniowej - kod był już na
+`develop`), więc 3.2.0 wraca do zdania „aplikacji pilota nie rusza". Migracja 15 weszła
+na produkcję z 3.1.0; `fleet.watch` jest w katalogu od 3.1.0.
+
+**Uzupełnienie 2026-09-25 - aplikacja pilota JEDNAK dostaje aktualizację, ale OTA:**
+zgłoszenie #205 (`docs/obserwowanie-samolotu.md`) dołączyło do 3.2.0 i niesie ekran karty
+maszyny, wykresy i pięć powiadomień w telefonie. Modułu natywnego nie rusza, więc jedzie
+`npm run update:prod` na runtime 3.1.0 **bez podbicia `version`** - zdanie o `app.json`
+wyżej zostaje w mocy. Kolejność wdrożenia: serwer z migracją 15 i panel PRZED OTA; telefony
+na 3.0.0 nic nie dostają, bo i tak potrzebują APK 3.1.0. Migracja 15 jest addytywna
+(§4 tamtego dokumentu), więc punkt o migracji wyżej dostaje pierwszy realny przypadek.
+
 ---
 
 ## 12. Etapy i kolejność realizacji
@@ -472,6 +514,10 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 5. **P-E - statystyki i analityka**: moduł statystyk i karta analityki w szufladzie
    samolotu. Może iść równolegle; zależy od §4.5 (jedna podstawa liczenia).
 6. **P-W - wydanie**: changelog, podręcznik, przegląd bezpieczeństwa, wdrożenie.
+7. **O-A…O-D - obserwowanie samolotu** (uzupełnienie 2026-09-25, zgłoszenie #205):
+   makiety telefonu → serwer (migracja 15, powiadomienia, karta) → aplikacja → katalog
+   zdolności w panelu. Niezależne od P-A…P-E; wchodzą do P-W jako OTA aplikacji.
+   Etapy i zależności: `docs/obserwowanie-samolotu.md` §9.
 
 | Epik | Issue |
 |---|---|
@@ -481,6 +527,10 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 | P-D do sprawdzenia: rozjazdy i eksporty | #185 |
 | P-E statystyki i analityka zużycia | #186 |
 | P-W wydanie 3.2.0 | #187 |
+| O-A obserwowanie: makiety telefonu i zakres w panelu | #219 (zgłoszenie nadrzędne #205) |
+| O-B obserwowanie: serwer - migracja 15, powiadomienia, karta maszyny | #220 |
+| O-C obserwowanie: aplikacja - karta 27, wykresy z gestami, skrzynka | #221 |
+| O-D obserwowanie: panel - `fleet.watch` w katalogu i zestawach | #222 |
 
 ---
 
@@ -548,4 +598,56 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 
 | Epik | Odstępstwo | Sekcja |
 |---|---|---|
-| - | - | - |
+| P-A | Baner niespójności operacji (`rules/consistency.ts`) w trybie edycji wymaga cienkiego plastra serwera - panelowi wolno brać z domeny wyłącznie typy | §17 pkt 6 |
+| P-A | Loty jako drugi pilot na osi pilotów: widoczne, poza sumami - decyzja produktowa DO POTWIERDZENIA przez właściciela przed P-B | §17 pkt 3 |
+| P-A | Oś pilotów na poziomie 1 obejmuje WSZYSTKICH aktywnych członków (także z zerami), czyli nie jest samym `GET /stats.pilots` - plaster w `GET /log` | §17 pkt 2 |
+
+---
+
+## 17. Decyzje makiet P-A (25 września 2026)
+
+Makiety powstały z kopii `SZABLON.html` i stoją w `design/panel/` (spis w `index.html`,
+inwentarz nowych komponentów w szablonie). Rozstrzygnięcia, które makiety wniosły ponad
+§14 - każde da się obejrzeć na kanwie odpowiedniego pliku:
+
+1. **Oś na poziomie 1 to SEGMENT, nie para chipów** (`.seg`, `dziennik-flota` / `dziennik-piloci`):
+   chip zawęża listę, oś rozstrzyga pytanie - dokładnie jedna jest zawsze włączona. Stoi
+   PRZED zakresem dat; adres `?os=piloci`, oś maszyn domyślna i nieobecna w adresie.
+2. **Oś pilotów (L1b) = wszyscy aktywni członkowie**, także z zerami - jak oś maszyn
+   pokazuje maszynę, która nie latała. Kolumny: Dni · Operacje · Loty · Blok · Lot · Samoloty.
+   Sumy obu osi dla tego samego zakresu są równe co do minuty (test dla P-B).
+3. **Nalot liczy się dowódcy; loty jako drugi pilot są WIDOCZNE, ale poza sumami**
+   (podpis „+1 jako drugi pilot" pod liczbą operacji na L1b; wiersz `tr.as-dual`
+   z plakietką „Drugi pilot" na L2b). Bez tego uczeń bez ani jednej operacji jako dowódca
+   znikałby z osi. **Do potwierdzenia przez właściciela** - czy klub chce widzieć czas
+   „w prawym fotelu" osobno.
+4. **Doba nagłówkiem (L2, L2b)**: `<tbody class="day">` na dobę, nagłówek z datą, dniem
+   tygodnia i sumami Operacje · Loty · Blok · Lot; pierwsza komórka wiersza = para godzin
+   biegu silnika + sygnatura (kształt kafelka z telefonu), a czas trwania biegu ma własną
+   kolumnę „Blok". Operacja w toku i wpis unieważniony poza sumami („· 1 w toku").
+5. **Tryb edycji ma WŁASNY ADRES** (`…/edycja`), żeby dało się go wkleić w rozmowie
+   („popraw to"); wejście = „Popraw zdarzenia" w nagłówku L3 (zdolność `events.correct`,
+   bez niej przycisku nie ma). Korekta to szuflada (`.drawer`), unieważnienie zdarzenia to
+   kosz w linii tytułu szuflady, dopisanie - ostatni wiersz osi (`tr.axis-add`).
+6. **Baner niespójności nad osią w trybie edycji** (jak 10D w telefonie) - wymaga, żeby
+   serwer przysłał wynik `rules/consistency.ts` razem z operacją (plaster P-C).
+7. **Skrzynka rozjazdów mówi po polsku**: Dwie operacje naraz · Pilot w dwóch maszynach ·
+   Luka w liczniku · Cofnięty licznik · Rozjazd paliwa · Rozjazd zegara; kody serwera nie
+   wychodzą na ekran. Notatka rozstrzygnięcia jest WYMAGANA (jak powód korekty); dla
+   `aircraft_overlap` baner o re-eksporcie karty stoi PRZED przyciskiem. Chipy bez liczb -
+   liczby w podtytule strony.
+8. **Plakietka kolumny = suma trzech źródeł `attention`** (flagi otwarte + karty `missing`
+   + operacje wiszące), wyłącznie przy niezerowej. Karta bez spraw na D1 ZNIKA, nie zostaje
+   z zerem.
+9. **Karty dnia (D3)**: wiersz = operacja, nazwa wiersza = karta (doba samolotu); stany
+   po polsku (W arkuszu / Bez karty / Wstrzymana flagą / Czeka na zdanie / Unieważniona);
+   adres karty ze slugiem i sekretem pokazany świadomie, z jednym zdaniem komu go dawać.
+10. **Statystyki bez kafli**: sumy jako pasek faktów (`.track-facts` z karty śladu),
+    słupki „dzień po dniu" i tabele z wierszem `tfoot`; podtytuł nazywa podstawę liczenia
+    („operacje zamknięte · n w toku poza sumami").
+11. **Analityka zużycia = karta „Zużycie z lotów" w szufladzie samolotu** (S2c): pasmo
+    P10–P90 jako wypełnienie, norma z dokumentacji jako marker; bez opublikowanego modelu
+    karty NIE MA wcale; wiersz „Motogodziny" gaśnie osobno.
+12. **Nowe komponenty** (`admin/src/styles/components/`): `.nav-count` (shell), `.seg`
+    (filters), `tr.day-row` (logbook), `tfoot` (table), `corrections.css`, `attention.css`,
+    `stats.css`; wszystkie w inwentarzu `SZABLON.html`, `panel.css` przegenerowany.

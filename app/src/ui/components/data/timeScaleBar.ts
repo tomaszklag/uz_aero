@@ -15,9 +15,12 @@
  * arytmetycznie równe: podziałka ma się czytać bez liczenia.
  */
 
+import { plural } from '@ninerdeck/format';
+
 const SECOND = 1_000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
 /** Kroki od najmniejszego; wybieramy NAJWIĘKSZY, który mieści się w dozwolonej szerokości. */
 const STEPS_MS = [
@@ -33,6 +36,16 @@ const STEPS_MS = [
   HOUR,
   2 * HOUR,
   4 * HOUR,
+  // Kroki DNI - dla wykresów karty maszyny (obserwowanie 3.2.0, §6.4), których oś
+  // obejmuje 90 dni: po przybliżeniu podziałka schodzi z „14 dni" na „2 dni". Profil
+  // śladu ich nie zobaczy - nagranie trwa godziny, więc wybór zatrzymuje się niżej.
+  8 * HOUR,
+  12 * HOUR,
+  DAY,
+  2 * DAY,
+  7 * DAY,
+  14 * DAY,
+  30 * DAY,
 ];
 
 export interface TimeScale {
@@ -63,6 +76,10 @@ export function timeScaleBar(msPerPixel: number, maxPixels: number): TimeScale |
 }
 
 function labelOf(ms: number): string {
+  if (ms >= DAY) {
+    const days = ms / DAY;
+    return `${days} ${plural(days, 'dzień', 'dni', 'dni')}`;
+  }
   if (ms >= HOUR) {
     const hours = ms / HOUR;
     return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} h`;

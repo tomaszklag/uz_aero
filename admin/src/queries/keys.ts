@@ -36,6 +36,12 @@ export const keys = {
     all: ['account'] as const,
     profile: ['account', 'profile'] as const,
     sessions: ['account', 'sessions'] as const,
+    /**
+     * Obserwowane samoloty (3.2.0, issue #205) - flota klubu SESJI ze stanem „teraz"
+     * i flagą tej osoby. Pod korzeniem konta, bo to ustawienie osoby o sobie, jak
+     * hasło; przełączenie klubu i tak zmiata cały cache (to inna flota).
+     */
+    watches: ['account', 'watches'] as const,
   },
 
   /**
@@ -73,6 +79,12 @@ export const keys = {
    * prowadzi swój kod i tylko swój.
    */
   clubCode: ['clubCode'] as const,
+
+  /**
+   * Słownik klubu (issue #216): nazwiska i znaki dla kalendarza i kolejki decyzji.
+   * Bez parametru, jak kod klubu - klub bierze się z sesji.
+   */
+  directory: ['directory'] as const,
 
   /**
    * Kluby na serwerze (moduł PLATFORMY, issue #101, E1).
@@ -141,6 +153,29 @@ export const keys = {
   calendar: {
     all: ['calendar'] as const,
     range: (query: CalendarRange) => ['calendar', query] as const,
+    /**
+     * JEDNA zajętość ze stanem ścieżki (3.1.0). Pod korzeniem kalendarza, bo starzeje się
+     * od tej samej rzeczy - decyzja przestawia i pasek na siatce, i kartę w szufladzie.
+     */
+    detail: (id: string) => ['calendar', 'detail', id] as const,
+  },
+
+  /**
+   * Ścieżka akceptacji i kolejka decyzji (3.1.0, issue #165). Jeden korzeń, bo obie
+   * starzeją się od tej samej rzeczy: zapis ścieżki przestawia sprawy w toku (§11.2),
+   * więc unieważnia też kolejkę, a decyzja zmienia kolejkę i nie rusza ścieżki - lecz
+   * unieważnienie korzenia kosztuje jeden odczyt listy kroków, nie niespójność.
+   */
+  approvals: {
+    all: ['approvals'] as const,
+    steps: ['approvals', 'steps'] as const,
+    queue: ['approvals', 'queue'] as const,
+    // Podgląd przy decyzji (issue #206): klucz per sprawa i osoba, bo ten sam pilot
+    // na dwóch sprawach ma dwa różne „nachodzi na rozpatrywany termin".
+    pilotPreview: (bookingId: string, pilotId: string) =>
+      ['approvals', 'preview', 'pilot', bookingId, pilotId] as const,
+    aircraftPreview: (bookingId: string) =>
+      ['approvals', 'preview', 'aircraft', bookingId] as const,
   },
   bugs: {
     all: ['bugs'] as const,

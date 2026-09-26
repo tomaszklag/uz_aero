@@ -33,6 +33,12 @@ export interface CalendarBooking {
   sessionUuid: string | null;
   blockReason: string | null;
   note: string | null;
+  /**
+   * Chwila złożenia (ms) - 3.1.0, epik R-I. Opcjonalne: brak pola znaczy „nie ta
+   * odpowiedź" (cudza rezerwacja, serwer sprzed 3.1.0), a `null` - odpowiedź bez stempla,
+   * którego nie dało się przeczytać.
+   */
+  createdAt?: number | null;
 }
 
 export interface CalendarData {
@@ -42,6 +48,11 @@ export interface CalendarData {
   homeIcao: string | null;
   days: ClubDayBounds[];
   bookings: CalendarBooking[];
+  /**
+   * Czy patrzący ma zdolność „Obserwowanie samolotów" (3.2.0): nagłówek wiersza maszyny
+   * prowadzi wtedy w jej kartę (27). Serwer sprzed 3.2.0 bitu nie niesie - `false`.
+   */
+  canWatch: boolean;
 }
 
 /**
@@ -66,6 +77,7 @@ export function toCalendar(wire: RemoteCalendar): CalendarData {
       const parsed = toBooking(b);
       return parsed == null ? [] : [parsed];
     }),
+    canWatch: wire.viewer?.watch === true,
   };
 }
 
@@ -95,8 +107,15 @@ export function toBooking(wire: RemoteBooking): CalendarBooking | null {
     sessionUuid: wire.sessionUuid ?? null,
     blockReason: wire.blockReason,
     note: wire.note ?? null,
+    createdAt: parsedOrNull(wire.createdAt),
   };
 }
+
+const parsedOrNull = (iso: string | undefined): number | null => {
+  if (iso == null) return null;
+  const at = Date.parse(iso);
+  return Number.isFinite(at) ? at : null;
+};
 
 /**
  * Zajętości NACHODZĄCE na dobę - z klamrą obustronnie otwartą, bo rezerwacja

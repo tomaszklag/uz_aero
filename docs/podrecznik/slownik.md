@@ -47,9 +47,17 @@
   drobna adnotacja z czasem lokalnym.
 - **Okno doby lotnej** - godziny, w których klub lata; poza nimi kalendarz nie proponuje
   slotów.
-- **Ścieżka akceptacji** *(3.1.0)* - kolejność osób, które muszą zgodzić się na
-  rezerwację, zanim stanie się potwierdzona. Klub bez ścieżki nie zatwierdza niczego -
-  rezerwacja jest gotowa od razu. Odrzucenie wymaga powodu, a pilot czyta go w aplikacji.
+- **Ścieżka akceptacji** *(3.1.0)* - kolejne kroki, w każdym jedna lub kilka osób, które
+  muszą zgodzić się na rezerwację, zanim stanie się potwierdzona; w kroku wystarczy zgoda
+  jednej z nich. Klub bez ścieżki nie zatwierdza niczego - rezerwacja jest gotowa od razu.
+  Odrzucenie wymaga powodu, a pilot czyta go w aplikacji. Więcej:
+  [akceptacja rezerwacji](akceptacja-rezerwacji).
+- **Obserwowanie samolotu** *(3.1.0)* - włącza się na karcie maszyny
+  w aplikacji; ma je osoba z uprawnieniem „Obserwowanie samolotów" (technik,
+  koordynator lotów, akceptujący rezerwacje). Daje powiadomienia o tej maszynie: lot
+  za godzinę, odwołany termin, uruchomienie silnika, zdanie z odczytami, nieodebrana
+  rezerwacja. Godzina w wiadomości jest godziną zapisu z telefonu pilota, nie chwilą,
+  w której wiadomość dotarła - telefon bez zasięgu dosyła zapisy później.
 
 ## Liczniki, paliwo i olej
 
@@ -72,8 +80,8 @@
 
 ## Zapis, korekty i nazwy
 
-- **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/TMK/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
-- **Kod pilota** - krótki kod (np. `TMK`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
+- **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/AKO/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
+- **Kod pilota** - krótki kod (np. `AKO`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
 - **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
 - **Korekta** - poprawka godziny, odczytu, składu zrzutu, notatki albo drugiego pilota, z opcjonalnym powodem. Nie nadpisuje historii - dopisuje się do niej.
 - **Oznaczenie „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.
@@ -95,10 +103,12 @@
 
 ## Panel klubu
 
-- **Panel klubu** - strona w przeglądarce dla administratora: piloci, samoloty, dziennik i zgłoszenia.
-- **Administrator** - rola dająca aplikację i panel. Druga rola, pilot, daje samą aplikację.
-- **Rola** - to, co konto otwiera: pilot albo administrator. Nadaje ją klub przy zakładaniu konta i zmienia w karcie konta.
-- **Sesja panelu** - zalogowanie w przeglądarce; wygasa po ośmiu godzinach i panel prosi o ponowne logowanie. Wyłączenie konta zrywa ją od razu.
-- **Kolejka zgłoszeń** - lista osób, które zalogowały się kontem Google nieznanym klubowi i czekają na decyzję. Stoi nad listą pilotów tylko wtedy, gdy ktoś w niej jest.
+- **Panel klubu** - strona w przeglądarce dla członków klubu: każdy ma w niej Moje konto i kalendarz, a zakres uprawnień otwiera dziennik, pilotów i samoloty.
+- **Administrator** - potocznie: członek klubu z pełnym zakresem uprawnień. Uprawnienia nadaje się jednak POJEDYNCZO (zob. **zakres uprawnień**), więc „administrator" jest nazwą zestawu, a nie osobnym bytem w systemie.
+- **Zakres uprawnień** - zbiór zdolności nadanych członkowi W TYM klubie: podgląd klubu, flota, akceptacja rezerwacji i tak dalej. Należy do członkostwa, więc w dwóch klubach ta sama osoba może mieć dwa różne zakresy. Pusty zakres to zestaw „Pilot".
+- **Podgląd klubu** - zdolność otwierająca w panelu dziennik operacji całej floty, listę pilotów i karty samolotów do odczytu. Bez niej panel to Moje konto i kalendarz.
+- **Rola** - dawniej: pilot albo administrator. Od wersji 3.1.0 zastąpił ją **zakres uprawnień**, a „Pilot" i „Administrator" są dziś nazwami gotowych zestawów.
+- **Sesja panelu** - zalogowanie w przeglądarce; wygasa po ośmiu godzinach i panel prosi o ponowne logowanie. Wyłączenie członkostwa zrywa ją od razu.
+- **Kolejka zgłoszeń** - lista osób, które wpisały w aplikacji kod klubu i czekają na decyzję. Stoi nad listą pilotów tylko wtedy, gdy ktoś w niej jest.
 - **Karta samolotu** - konfiguracja jednej maszyny w panelu: pojemności, normy z dokumentacji, minimum oleju, format licznika, wymóg drugiego pilota, stan służby i aktualny stan.
 - **Karta dnia maszyny** - dokument doby jednego samolotu dla klubu: operacje jako wiersze z odczytami, czasami i lotami.

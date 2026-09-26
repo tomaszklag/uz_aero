@@ -38,6 +38,7 @@ import type { AdminLoginSessionQueries } from '../application/admin/queries/logi
 import type { AdminLoginSessionCommands } from '../application/admin/commands/loginSessions.ts';
 import type { AdminMembershipQueries } from '../application/admin/queries/memberships.ts';
 import type { PlatformOrganizationQueries } from '../application/admin/queries/organizations.ts';
+import type { AdminDirectoryQueries } from '../application/admin/queries/directory.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
@@ -56,6 +57,10 @@ import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
 import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
 import type { BookingCommands } from '../application/mobile/commands/bookings.ts';
+import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
+import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
+import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
+import type { DecisionPreviewQueries } from '../application/common/queries/decisionPreview.ts';
 import type { BookingQueries } from '../application/common/queries/bookings.ts';
 import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
 import type { BugReportCommands } from '../application/mobile/commands/bugReports.ts';
@@ -80,6 +85,9 @@ import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import { registerPublicSiteStatic } from './routes/site/staticSite.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
+import { registerAdminApprovalRoutes } from './routes/admin/approvals.ts';
+import { registerAdminPreviewRoutes } from './routes/admin/previews.ts';
+import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
 import type { JoinCommands } from '../application/mobile/commands/join.ts';
@@ -99,6 +107,7 @@ import { registerAdminLoginSessionRoutes } from './routes/admin/loginSessions.ts
 import { registerAdminMembershipRoutes } from './routes/admin/memberships.ts';
 import { registerPlatformOrganizationRoutes } from './routes/admin/organizations.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
+import { registerAdminDirectoryRoutes } from './routes/admin/directory.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminSessionVoidRoutes } from './routes/admin/sessionVoid.ts';
 import { registerAdminSessionCloseRoutes } from './routes/admin/sessionClose.ts';
@@ -107,7 +116,14 @@ import { registerAdminLogRoutes } from './routes/admin/log.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
+import { registerApprovalRoutes } from './routes/mobile/approvals.ts';
 import { registerBookingRoutes } from './routes/mobile/bookings.ts';
+import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
+import { registerPreviewRoutes } from './routes/mobile/previews.ts';
+import { registerAircraftRoutes } from './routes/mobile/aircraft.ts';
+import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
+import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
+import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -162,6 +178,22 @@ export interface ServerDeps {
   bookings: BookingCommands;
   /** Okno kalendarza - to samo zapytanie dla telefonu i dla panelu. */
   calendar: BookingQueries;
+  /**
+   * Ścieżka akceptacji (3.1.0, issue #164). W `common/`, bo rezerwację zakłada
+   * i decyzję podejmuje TELEFON - osobą kroku bywa zwykły pilot bez dostępu do
+   * panelu - a konfigurację ścieżki układa panel.
+   */
+  approvals: ApprovalFlow;
+  /** Skrzynka powiadomień i token push (3.1.0, §12). CAŁY moduł wymaga sieci. */
+  notifications: NotificationQueries;
+  /** Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) - JEDEN widok dla obu powierzchni. */
+  previews: DecisionPreviewQueries;
+  /** Karta maszyny, historia i lista obserwowanych (3.2.0, issue #205) - obie powierzchnie. */
+  aircraftCards: AircraftCardQueries;
+  /** Włączanie i wyłączanie obserwowania - ustawienie osoby o sobie, bez audytu. */
+  aircraftWatch: AircraftWatchCommands;
+  /** Ścieżka akceptacji układana w panelu (`accounts.manage`). */
+  adminApprovalSteps: ApprovalStepsCommands;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) - czysty odczyt
    * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
@@ -235,6 +267,8 @@ export interface ServerDeps {
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
+  /** Słownik klubu dla kalendarza (issue #216): nazwiska i znaki dla KAŻDEGO członka. */
+  adminDirectoryQueries: AdminDirectoryQueries;
   /** Kolejka zgłoszeń kodem klubu - karta ZGŁOSZENIA nad listą pilotów (`accounts.manage`). */
   adminMembershipQueries: AdminMembershipQueries;
   /** Kod klubu do odczytu: wartość, od kiedy obowiązuje, ile zgłoszeń nim czeka. */
@@ -474,7 +508,11 @@ export async function buildServer(
   registerMePasswordRoutes(app, deps.passwords, memberGate);
   registerMeAccountRoutes(app, deps.accounts, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
-  registerBookingRoutes(app, deps.bookings, deps.calendar, memberGate);
+  registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, memberGate);
+  registerApprovalRoutes(app, deps.approvals, memberGate);
+  registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
+  registerPreviewRoutes(app, deps.previews, memberGate);
+  registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -492,9 +530,10 @@ export async function buildServer(
     clock: deps.clock,
   };
 
-  registerAdminAuthRoutes(app, deps.auth, deps.googleWebClientId, gate);
+  registerAdminAuthRoutes(app, deps.auth, deps.passwords, deps.googleWebClientId, gate);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
+  registerAdminMeWatchRoutes(app, deps.aircraftCards, deps.aircraftWatch, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
@@ -503,6 +542,7 @@ export async function buildServer(
   registerAdminTrackRoutes(app, deps.adminSessionTrack, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, deps.adminPasswordLinks, gate);
+  registerAdminDirectoryRoutes(app, deps.adminDirectoryQueries, gate);
   registerAdminMembershipRoutes(app, deps.adminMemberships, deps.adminMembershipQueries, gate);
   registerAdminClubCodeRoutes(app, deps.adminClubCode, deps.adminClubCodeQueries, gate);
   registerAdminLoginSessionRoutes(
@@ -535,7 +575,13 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, gate);
+  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, deps.approvals, gate);
+  registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
+  // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
+  // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.
+  registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
+  // Podgląd pilota i samolotu z kolejki (issue #206) - ten sam widok, co w telefonie.
+  registerAdminPreviewRoutes(app, deps.previews, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie

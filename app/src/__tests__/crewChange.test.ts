@@ -28,12 +28,12 @@ function crewEvent(time: number, pilotInId: string | null): Event {
     uuid: `c-${time}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: pilotInId,
     type: 'crew_change',
     deviceTime: time,
     gpsTime: time,
-    payload: { role: 'dual', pilotOutId: 'AKO', pilotInId },
+    payload: { role: 'dual', pilotOutId: 'BNO', pilotInId },
     schemaVersion: 1,
     syncedAt: null,
   } as Event;
@@ -76,7 +76,7 @@ describe('wiersze aktualnej załogi', () => {
   it('puste miejsce Duala jest wierszem, nie brakiem wiersza', () => {
     // Mockup zawsze pokazuje dwa wiersze - pusty DUAL to informacja, nie cisza.
     const projection = {
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       legs: [],
     } as unknown as SessionState;
@@ -90,19 +90,19 @@ describe('wiersze aktualnej załogi', () => {
 
 describe('blokada zapisu zmiany Duala', () => {
   it('wymóg załogi 2-osobowej nie pozwala zostawić pustego miejsca', () => {
-    const reason = dualChangeBlocker(NO_DUAL, 'AKO', true, 'Antonov An-2');
+    const reason = dualChangeBlocker(NO_DUAL, 'BNO', true, 'Antonov An-2');
     expect(reason).toContain('2-osobowej');
   });
 
   it('bez wymogu - rezygnacja z Duala jest legalna', () => {
-    expect(dualChangeBlocker(NO_DUAL, 'AKO', false, 'Cessna 182')).toBeNull();
+    expect(dualChangeBlocker(NO_DUAL, 'BNO', false, 'Cessna 182')).toBeNull();
   });
 
   it('zmiana na tę samą osobę nie jest zmianą', () => {
-    expect(dualChangeBlocker('AKO', 'AKO', false, 'Cessna 182')).not.toBeNull();
+    expect(dualChangeBlocker('BNO', 'BNO', false, 'Cessna 182')).not.toBeNull();
   });
 
   it('zwykła podmiana przechodzi', () => {
-    expect(dualChangeBlocker('PWI', 'AKO', true, 'Antonov An-2')).toBeNull();
+    expect(dualChangeBlocker('PWI', 'BNO', true, 'Antonov An-2')).toBeNull();
   });
 });

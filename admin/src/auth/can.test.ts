@@ -49,15 +49,18 @@ describe('can', () => {
 
 describe('denialReason', () => {
   it('mówi, KOGO prosić - a nie tylko, że się nie da', () => {
-    expect(denialReason('thresholds.manage')).toBe('Wymaga roli: administrator');
-    expect(denialReason('flags.resolve')).toBe('Wymaga roli: administrator');
+    // „Administrator klubu", nie samo „administrator" (issue #216): to zdanie czyta
+    // odtąd także pilot na ekranie „Brak dostępu", a on zna dwóch administratorów.
+    expect(denialReason('thresholds.manage')).toBe('Nadaje: administrator klubu');
+    expect(denialReason('flags.resolve')).toBe('Nadaje: administrator klubu');
+    expect(denialReason('platform.manage')).toBe('Nadaje: superadministrator');
   });
 
   it('każda zdolność ma powód (kontrola kompletności mapy)', () => {
-    // Bez tego dopisanie zdolności dałoby `Wymaga roli: undefined` na ekranie,
+    // Bez tego dopisanie zdolności dałoby `Nadaje: undefined` na ekranie,
     // i to dopiero u kogoś, kto akurat tej roli nie ma.
     for (const capability of ADMIN) {
-      expect(denialReason(capability)).toMatch(/^Wymaga roli: \S/);
+      expect(denialReason(capability)).toMatch(/^Nadaje: \S/);
     }
   });
 });

@@ -28,6 +28,7 @@ import {
   ReferenceSync,
   SyncEngine,
   ThemePrefsSync,
+  PushTokenSync,
   TraceRecorder,
   TraceSync,
 } from '../../application';
@@ -35,6 +36,7 @@ import { deviceLabel } from '../../application/auth/deviceLabel';
 import { deviceRelease } from '../components/bug/deviceRelease';
 import { defaultClock } from '../../infrastructure/clock';
 import { ExpoSensorsAdapter } from '../../infrastructure/sensors/expoSensorsAdapter';
+import { ExpoPushDevice } from '../../infrastructure/push/expoNotifications';
 import type { GpsPort, SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -149,6 +151,9 @@ export function useAppBootstrap(): BootstrapStatus {
             // albo reinstalacji odbudowuje własny rejestr z serwera. Ten sam `repo`,
             // co wysyłka - pobrane zdarzenia są zwykłymi wierszami strumienia.
             new EventRestore(repo, server, auth),
+            // Token push (3.1.0, epik R-J): adres tej instalacji u dostawcy jedzie do
+            // serwera z pętli okazji; brak Firebase w buildzie znaczy cichy `unavailable`.
+            new PushTokenSync(new ExpoPushDevice(), server, auth),
           );
 
         // Zgłoszenia błędów (issue #87, na czas testów): magazyn lokalny + wysyłka

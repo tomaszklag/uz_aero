@@ -27,23 +27,21 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
   it('token Google konta z klubu → para tokenów i tożsamość pilota', async () => {
     const { app, tokens, clock } = await testHarness();
 
-    const res = await loginAs(app, 'TMK');
+    const res = await loginAs(app, 'AKO');
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.pilot).toEqual({
-      id: 'TMK',
-      code: 'TMK',
-      name: 'Tomasz Małkiewicz',
-      role: 'admin',
+      id: 'AKO',
+      code: 'AKO',
+      name: 'Adam Kowalski',
     });
     // JWT ma być od razu użyteczny…
     expect(tokens.verify(body.token)).toEqual({
-      pilotId: 'TMK',
+      pilotId: 'AKO',
       // KLUB w tokenie (wielofirmowość §6): trasy klubowe pracują w klubie z claimu.
       orgId: ORG_A,
-      code: 'TMK',
-      role: 'admin',
+      code: 'AKO',
       // CHWILA WYDANIA (`iat`, sekundy epoki) - bez niej brama panelu nie umiałaby
       // odpowiedzieć na pytanie „czy to poświadczenie jest starsze niż unieważnienie".
       issuedAt: Math.floor(clock.now().getTime() / 1000),
@@ -175,7 +173,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     identityProvider.register('niepotwierdzony', {
       provider: 'google',
       subject: 'niepotw',
-      email: 'anna@ninerdeck.pl',
+      email: 'barbara@ninerdeck.pl',
       emailVerified: false,
       name: 'Ktoś Podszywający',
     });
@@ -190,8 +188,8 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     const person = await personOf(db, 'niepotw');
     const { rows } = await db.query<{ email: string | null }>('SELECT email FROM pilots WHERE id = $1', [person]);
     expect(rows[0]?.email).toBeNull();
-    // A konto AKO zostało przy swojej właścicielce.
-    expect(await db.query('SELECT 1 FROM external_identities WHERE pilot_id = $1', ['AKO'])).toMatchObject({
+    // A konto BNO zostało przy swojej właścicielce.
+    expect(await db.query('SELECT 1 FROM external_identities WHERE pilot_id = $1', ['BNO'])).toMatchObject({
       rows: [],
     });
   });
@@ -212,7 +210,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
 
     // Rozłączność w OBIE strony, na samych tokenach.
     expect(tokens.verify(personToken)).toBeNull();
-    const clubToken = (await loginAs(app, 'TMK')).json().token as string;
+    const clubToken = (await loginAs(app, 'AKO')).json().token as string;
     expect(tokens.verifyPerson(clubToken)).toBeNull();
   });
 
@@ -263,8 +261,8 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     // Przyjęcie „ręką administratora" - wprost w bazie, bo komendy panelu to epik D2;
     // tu liczy się wyłącznie zachowanie tokenu osoby.
     await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, 'NW5', 'pilot', 'active', 'code')`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, $2, 'NW5', 'active', 'code')`,
       [ORG_A, person],
     );
 
@@ -293,8 +291,8 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     const personToken = (await stranger(app, 'nowy6')).json().personToken as string;
     const person = await personOf(db, 'nowy6');
     await db.query(
-      `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-       VALUES ($1, $2, 'NW6', 'pilot', 'active', 'code')`,
+      `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+       VALUES ($1, $2, 'NW6', 'active', 'code')`,
       [ORG_A, person],
     );
 
@@ -317,7 +315,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     // Trasa bez klubu przyjmuje token dowolnego klubu (§6): 13A pokazuje z niej listę.
     // Kto ma token klubu, już wszedł - nowy klub bierze przełączeniem, nie tą trasą.
     const { app } = await testHarness();
-    const clubToken = (await loginAs(app, 'TMK')).json().token as string;
+    const clubToken = (await loginAs(app, 'AKO')).json().token as string;
 
     const res = await app.inject({
       method: 'GET',
@@ -328,7 +326,7 @@ describe('POST /auth/google - osoba BEZ klubu (wielofirmowość §4, epik D)', (
     expect(res.json().status).toBe('active');
     expect(res.json().tokens).toBeUndefined();
     expect(res.json().memberships).toMatchObject([
-      { org: { id: ORG_A }, status: 'active', code: 'TMK', role: 'admin', clubActive: true },
+      { org: { id: ORG_A }, status: 'active', code: 'AKO', clubActive: true },
     ]);
   });
 
@@ -368,7 +366,7 @@ describe('POST /auth/google - token nie do przyjęcia', () => {
 describe('POST /auth/refresh - rotacja', () => {
   it('zużycie refresha wydaje NOWĄ parę i unieważnia stary token', async () => {
     const { app } = await testHarness();
-    const first = (await loginAs(app, 'TMK')).json().refreshToken as string;
+    const first = (await loginAs(app, 'AKO')).json().refreshToken as string;
 
     const rotated = await app.inject({
       method: 'POST',
@@ -389,7 +387,7 @@ describe('POST /auth/refresh - rotacja', () => {
 
   it('wygasły refresh nie odnawia sesji', async () => {
     const { app, clock } = await testHarness();
-    const login = await loginAs(app, 'TMK');
+    const login = await loginAs(app, 'AKO');
 
     clock.advance(91 * 24 * 3_600_000); // za horyzontem REFRESH_TTL_DAYS
 
@@ -405,7 +403,7 @@ describe('POST /auth/refresh - rotacja', () => {
 describe('JWT', () => {
   it('wygasa po ACCESS_TTL_SEC - weryfikacja zależy od zegara, nie od łaski', async () => {
     const { app, clock, tokens } = await testHarness();
-    const jwt = (await loginAs(app, 'TMK')).json().token as string;
+    const jwt = (await loginAs(app, 'AKO')).json().token as string;
 
     expect(tokens.verify(jwt)).not.toBeNull();
     clock.advance((ACCESS_TTL_SEC + 1) * 1000);
@@ -414,7 +412,7 @@ describe('JWT', () => {
 
   it('podpis z innym sekretem i przerobiony payload są odrzucane', async () => {
     const { app, clock } = await testHarness();
-    const jwt = (await loginAs(app, 'TMK')).json().token as string;
+    const jwt = (await loginAs(app, 'AKO')).json().token as string;
     const { Hs256Tokens } = await import('../src/infrastructure/auth/hs256Tokens.ts');
     const forged = new Hs256Tokens('inny-sekret-o-dlugosci-32-znakow!!', clock);
 

@@ -1,59 +1,48 @@
 /**
- * Ninerdeck (serwer) - role i uprawnienia panelu administracyjnego.
+ * Ninerdeck (serwer) - ZDOLNOŚCI i bramy uprawnień panelu administracyjnego.
  *
- * Decyzja 2026-07-31 (odwraca 2026-07-24): panel powstaje jako osobna aplikacja web,
- * z dwiema rolami. Projekt UI: `design/admin/`; analiza i mapowanie ekranów na
- * uprawnienia: `design/admin/ANALIZA.md`.
+ * ══ ZDOLNOŚĆ NALEŻY DO CZŁONKOSTWA, NIE DO ROLI ══
+ * (decyzja właściciela 2026-09-23, epik #197, `docs/uprawnienia.md`)
  *
- * **Rola siedzi na CZŁONKOSTWIE pilota w klubie, nie w osobnej tabeli użytkowników
- * panelu** (od wielofirmowości, issue #98; do niej - na koncie). Administrator JEST
- * pilotem - lata, ma telefon i dodatkowo wchodzi do back-office'u SWOJEGO klubu. Osobny
- * byt użytkownika rozdwoiłby tożsamość: ten sam człowiek miałby dwa identyfikatory,
- * a jego nalot rozjechałby się między nimi. Ten sam człowiek w dwóch klubach ma dwa
- * członkostwa i dwie role - a zdolności liczy się PER KLUB, z roli w klubie z tokenu.
+ * Do 3.1.0 zdolności wyliczały się z ROLI klubu, a role były dwie: `admin` z kompletem
+ * i `pilot` z pustą listą. Nie dało się przez to powiedzieć „mechanik zatwierdza
+ * rezerwacje, ale floty ani kont nie dotyka" - każde wyjście albo oddawało mu wszystko,
+ * albo budowało drugi mechanizm uprawnień obok tego pliku. Odtąd w bazie stoi ZBIÓR
+ * zdolności per członkostwo (`membership_capabilities`), a kolumny `memberships.role`
+ * nie ma wcale.
  *
- * **Obok ról klubu jest ROLA PLATFORMOWA** (`pilots.platform_role`): superadministrator
- * zakłada kluby i pierwszych administratorów, i to wszystko. Nie ma żadnej zdolności
- * klubowej - do dziennika klubu nie wchodzi (`docs/wielofirmowosc.md` §3.3), bo wyjątek
- * wpisany w rolę byłby niewidoczny dla klubu, którego dotyczy.
+ * **Zbiór czyta BRAMA Z BAZY**, tym samym zapytaniem, co członkostwo (`authSnapshot`),
+ * a nie z tokenu - dzięki temu odebranie zdolności działa natychmiast, a nie po
+ * wygaśnięciu poświadczenia.
  *
- * **Uprawnienia trzymamy jako mapę ról na zdolności**, a nie jako `if (role === 'admin')`
- * rozsiane po trasach. Powód jest ten sam, dla którego istnieje `http/authorize.ts`:
- * pytanie „kto może rozwiązać flagę" ma mieć JEDNĄ odpowiedź, w jednym pliku, który
- * da się przeczytać w całości i pokryć testem. Rozsiane porównania ról to konstrukcja,
- * w której nikt nigdy nie wie, czy zna wszystkie miejsca.
+ * **Zestaw („administrator", „technik") jest SKRÓTEM PRZY WYPEŁNIANIU, nie bytem**:
+ * po wybraniu w bazie stoi zbiór, a nazwa liczy się z niego z powrotem. Dzięki temu
+ * zmiana katalogu zestawów nie rusza nikomu uprawnień - przestawia tylko to, co panel
+ * proponuje następnemu. Katalog zestawów i polskie nazwy zdolności mieszkają W PANELU
+ * (`admin/src/screens/accounts/scope.ts`), bo są słownikiem interfejsu, a serwer języka
+ * interfejsu nie zna (ta sama zasada, co przy kodach `AccountRefusal`). Tutaj stoi
+ * wyłącznie KOMPLET zdolności klubowych, którego potrzebuje bootstrap: backfill
+ * migracji 12, pierwszy administrator klubu i seed.
+ *
+ * **Bezpiecznik jest wbudowany w model.** `can` pyta o obecność KONKRETNEJ pozycji
+ * katalogu, więc napis, którego katalog nie zna - literówka, pozycja z przyszłej wersji -
+ * nie pasuje do żadnego pytania: brak wiersza i wiersz niezrozumiały znaczą to samo.
+ * Do 3.1.0 tę rolę pełnił dopisany obok `isPilotRole(...) ? role : DEFAULT_ROLE`
+ * i zniknął razem z rolą.
+ *
+ * ══ DRUGA OŚ WŁADZY: ROLA PLATFORMOWA ══
+ * `pilots.platform_role` zostaje ROLĄ i to nie jest niekonsekwencja: superadministrator
+ * jest OSOBĄ BEZ CZŁONKOSTWA, więc nie ma czemu nadać zbioru. Jego władza jest jedna
+ * (zakładanie i wyłączanie klubów) i rozłączna ze zdolnościami klubu - do dziennika klubu
+ * nie wchodzi (`docs/wielofirmowosc.md` §3.3), bo wyjątek wpisany w rolę byłby
+ * niewidoczny dla klubu, którego dotyczy.
+ *
+ * ══ DLACZEGO JEDEN PLIK ══
+ * Pytanie „kto może rozwiązać flagę" ma mieć JEDNĄ odpowiedź, w jednym pliku, który da
+ * się przeczytać w całości i pokryć testem. Rozsiane po trasach `if (role === ...)` to
+ * konstrukcja, w której nikt nigdy nie wie, czy zna wszystkie miejsca - ten sam powód,
+ * dla którego istnieje `http/authorize.ts`.
  */
-
-/**
- * Kolejność bez znaczenia - to zbiór, nie drabina. Uprawnienia daje mapa niżej.
- *
- * == `training_lead` WYCOFANY 2026-08-30 (decyzja właściciela produktu) ==
- * „Na razie pozbądźmy się roli szef wyszkolenia, niech zostanie tylko admin i pilot.
- * Rozbudujemy i przemyślimy uprawnienia w kolejnych iteracjach."
- *
- * Zostają dwie role i jedna z nich w ogóle nie dotyczy panelu, więc KAŻDY, kto wejdzie
- * do back-office'u, ma dziś komplet zdolności. Katalog `Capability` zostaje mimo to
- * rozpisany i egzekwowany na każdej trasie - bo wraca razem z trzecią rolą, a brama,
- * która przez jedną iterację nie odmawia nikomu, jest tańsza niż brama dopisywana
- * z powrotem do dwudziestu tras.
- *
- * **`CHECK` na kolumnie roli poszedł za tą zmianą** (decyzja użytkownika: „nic nie jest
- * wdrożone, mamy kontrolę nad danymi") - kolumna `memberships.role` dopuszcza dokładnie
- * te dwie role. Adapter i tak nie ufa łańcuchowi znaków z zewnątrz: każdy odczyt
- * przechodzi przez `isPilotRole(...) ? role : DEFAULT_ROLE`, więc wartość spoza katalogu
- * schodzi do `pilot` - czyli do NAJMNIEJSZYCH uprawnień. Ten kierunek błędu jest
- * bezpieczny; odwrotny nie byłby.
- */
-export const PILOT_ROLES = ['pilot', 'admin'] as const;
-
-export type PilotRole = (typeof PILOT_ROLES)[number];
-
-/**
- * Rola członkostwa, którego rola jest nieznana (stary token, kolumna z domyślną
- * wartością). Zawsze najmniejsze uprawnienia: podniesienie musi być jawną decyzją
- * administratora, nigdy skutkiem ubocznym wdrożenia albo błędu odczytu.
- */
-export const DEFAULT_ROLE: PilotRole = 'pilot';
 
 /**
  * Rola PLATFORMOWA - poza klubami (`pilots.platform_role`, wielofirmowość §3.3).
@@ -156,6 +145,38 @@ export type Capability =
    * zwykła praca pilota, jak wpisanie lotu. Ta pozycja dotyczy wyłącznie cudzych.
    */
   | 'reservations.manage'
+  /**
+   * ROZSTRZYGANIE KROKÓW ŚCIEŻKI AKCEPTACJI (3.1.0, `docs/rezerwacje.md` §8) oraz
+   * podgląd wszystkich terminów klubu w komplecie - z zadaniem, trasą, drugim pilotem
+   * i notatką.
+   *
+   * ══ DLACZEGO OSOBNA POZYCJA, A NIE `reservations.manage` ══
+   * Tamta jest WŁADZĄ NAD CUDZYM PLANEM: odwołaniem i przesunięciem terminu. Ta jest
+   * ZGODĄ albo ODMOWĄ w obiegu, który klub sam ułożył - i ma ją dostawać mechanik
+   * albo szef wyszkolenia, czyli ktoś, kto cudzych rezerwacji nie kasuje. Zlanie ich
+   * w jedną oddawałoby akceptującemu władzę, o którą nikt nie prosił, i odbierało
+   * całej zmianie sens: po to rozbiliśmy role na zbiory, żeby dało się dać JEDNO.
+   *
+   * Podgląd jedzie RAZEM ze zgodą i to jest decyzja: zgoda bez kontekstu jest podpisem
+   * w ciemno (uwaga właściciela 2026-09-23), a kontekstem są dane cudzej rezerwacji.
+   */
+  | 'reservations.approve'
+  /**
+   * OBSERWOWANIE SAMOLOTÓW (3.2.0, issue #205; `docs/obserwowanie-samolotu.md` §3):
+   * karta maszyny w aplikacji (stan teraz, liczniki, terminy, historia, wykresy)
+   * i powiadomienia o jej lotach po włączeniu obserwowania.
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE `fleet.manage` ══
+   * Katalog nazywa ZASOBY, a obserwowanie jest nowym RODZAJEM dostępu do zasobu,
+   * który do dziś miał wyłącznie zarządzanie. Koordynator lotów floty nie konfiguruje,
+   * mechanik-akceptujący nie ma nic poza zgodą - obu nie da się wpuścić na kartę
+   * maszyny żadną istniejącą pozycją bez oddania im władzy, o którą nikt nie prosił.
+   *
+   * Zdolność mówi „wolno ci patrzeć i obserwować"; sam ZAMIAR („chcę") jest wierszem
+   * `aircraft_watches`, a prawo adresata sprawdza się PRZY WYSYŁCE (§2.1): odebranie
+   * zdolności wycisza od razu, bez sprzątania wierszy.
+   */
+  | 'fleet.watch'
   | 'bugs.triage'
   /**
    * Zakładanie i wyłączanie KLUBÓW oraz zapraszanie ich pierwszych administratorów
@@ -169,26 +190,63 @@ export type Capability =
    */
   | 'platform.manage';
 
-const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
-  // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy -
-  // i to jest pełna lista jego uprawnień w panelu, celowo pusta.
-  pilot: [],
+/**
+ * KOMPLET zdolności klubowych - to, co w panelu nazywa się zestawem „Administrator".
+ *
+ * Wypisany jawnie, a nie wyliczony jako „wszystko z katalogu": katalog niesie też
+ * zdolności PLATFORMOWE (`platform.manage`, `bugs.triage`), których administrator klubu
+ * mieć nie może i nie ma ich dostać przez przeoczenie. Dopisanie nowej zdolności
+ * klubowej ma przy okazji zmusić do świadomej decyzji, czy wchodzi do kompletu.
+ *
+ * Trzy miejsca, które go potrzebują, i wszystkie trzy są BOOTSTRAPEM, nie bramą:
+ * backfill migracji 12, pierwszy administrator klubu zakładany przez platformę
+ * i seed. Brama pyta wyłącznie `can(zbiór, zdolność)`.
+ */
+export const CLUB_CAPABILITIES: readonly Capability[] = [
+  'panel.access',
+  'flags.resolve',
+  'events.correct',
+  'accounts.manage',
+  'fleet.manage',
+  'thresholds.manage',
+  'audit.read',
+  'maintenance.run',
+  'reservations.manage',
+  'reservations.approve',
+  'fleet.watch',
+];
 
-  // Administrator - wszystko. Lista jest wypisana jawnie, a nie wyliczona jako
-  // „reszta": dopisanie nowej zdolności ma zmusić do świadomej decyzji, komu ją dać.
-  admin: [
-    'panel.access',
-    'flags.resolve',
-    'events.correct',
-    'accounts.manage',
-    'fleet.manage',
-    'thresholds.manage',
-    'audit.read',
-    'maintenance.run',
-    'reservations.manage',
-  ],
-};
+/**
+ * KLUCZ ZAKRESU do dziennika audytu - `full` / `partial` / `none`.
+ *
+ * Kolumna `admin_audit.actor_role` niosła dotąd rolę Z CHWILI AKCJI, a roli nie ma.
+ * Wiersz dziennika ma jednak dalej mówić, jaką władzę miał wtedy sprawca, więc
+ * zapisujemy klucz liczony ze zbioru. Napisy są SUROWE i takie jadą na drut -
+ * nazywa je panel, dokładnie jak kody `AccountRefusal`.
+ *
+ * Wiersze sprzed 3.1.0 mówią w tej kolumnie `admin` albo `pilot` i tak zostaje:
+ * dziennik jest zapisem historycznym, a przepisanie go zmieniłoby to, co się wtedy
+ * naprawdę wydarzyło. Ta sama zasada, przez którą w katalogu akcji został kod
+ * `pilot.password_reset` po funkcji, której już nie ma.
+ */
+export function scopeKey(capabilities: readonly Capability[]): 'full' | 'partial' | 'none' {
+  if (capabilities.length === 0) return 'none';
+  return CLUB_CAPABILITIES.every((c) => capabilities.includes(c)) ? 'full' : 'partial';
+}
 
+/** Strażnik wejścia z zewnątrz (wiersz `membership_capabilities`, body żądania). */
+export function isCapability(value: unknown): value is Capability {
+  return typeof value === 'string' && (CATALOGUE as readonly string[]).includes(value);
+}
+
+/**
+ * Pełny katalog - do walidacji wejścia i do ekranu zakresu w panelu.
+ *
+ * Osobno od `CLUB_CAPABILITIES`, bo to dwie różne listy: tamta mówi „co wolno dać
+ * członkowi klubu", ta „co w ogóle istnieje". Zlanie ich w jedną wpuściłoby
+ * `platform.manage` do zakresu klubowego pierwszą literówką w panelu.
+ */
+const CATALOGUE: readonly Capability[] = [...CLUB_CAPABILITIES, 'bugs.triage', 'platform.manage'];
 /**
  * Zdolności ról PLATFORMOWYCH - osobna mapa, bo to osobna oś władzy. Wypisana jawnie
  * z tego samego powodu, co lista administratora: dopisanie zdolności ma być decyzją.
@@ -198,14 +256,19 @@ const PLATFORM_CAPABILITIES: Readonly<Record<PlatformRole, readonly Capability[]
   superadmin: ['platform.manage', 'bugs.triage'],
 };
 
-/** Strażnik wejścia z zewnątrz (kolumna w bazie, claim w tokenie, body żądania). */
-export function isPilotRole(value: unknown): value is PilotRole {
-  return typeof value === 'string' && (PILOT_ROLES as readonly string[]).includes(value);
-}
 
-/** Jedyne miejsce, w którym system odpowiada na pytanie „czy wolno mu to zrobić" W KLUBIE. */
-export function can(role: PilotRole, capability: Capability): boolean {
-  return CAPABILITIES[role].includes(capability);
+/**
+ * Jedyne miejsce, w którym system odpowiada na pytanie „czy wolno mu to zrobić" W KLUBIE.
+ *
+ * Zbiór przychodzi z BAZY, razem z członkostwem (`authSnapshot`), a nie z tokenu -
+ * dzięki temu odebranie zdolności działa natychmiast, a nie po wygaśnięciu tokenu.
+ * `null`/`undefined` (brak członkostwa) nie może niczego, jak pusty zbiór.
+ */
+export function can(
+  capabilities: readonly Capability[] | null | undefined,
+  capability: Capability,
+): boolean {
+  return capabilities?.includes(capability) ?? false;
 }
 
 /** To samo pytanie dla roli PLATFORMOWEJ - `null` (zwykła osoba) nie może niczego. */
@@ -218,17 +281,3 @@ export function platformCapabilitiesOf(role: PlatformRole): readonly Capability[
   return PLATFORM_CAPABILITIES[role];
 }
 
-/**
- * Komplet zdolności roli - dla `GET /admin/api/me`.
- *
- * Panel MUSI znać tę listę, bo mockup wymaga pozycji nawigacji **widocznych
- * i wyszarzonych** z podanym powodem, a nie ukrytych (`SZABLON.html`, `.nav-item.locked`).
- * Wysyłanie listy zamiast samej roli oznacza, że panel nie trzyma DRUGIEJ kopii mapy
- * uprawnień: zmiana tutaj przemalowuje sidebar bez wydania panelu.
- *
- * To nadal WYŁĄCZNIE podpowiedź dla UI - egzekwuje `can` na każdym żądaniu. Ukrycie
- * przycisku nigdy nie było zabezpieczeniem i tym się nie staje.
- */
-export function capabilitiesOf(role: PilotRole): readonly Capability[] {
-  return CAPABILITIES[role];
-}

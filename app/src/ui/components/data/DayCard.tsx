@@ -31,7 +31,7 @@ export interface DayCardProps {
   /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „OPERACJA 1" (01). */
   title: string;
   /**
-   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68).
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/BNO/1" (issue #68).
    *
    * ZASTĘPUJE znak samolotu, a nie stoi obok niego: sygnatura zaczyna się od tego
    * samego znaku, więc para powtarzałaby go dwa razy w odległości centymetra. Znak

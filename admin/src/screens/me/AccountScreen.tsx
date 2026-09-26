@@ -9,6 +9,10 @@
  *
  * Trzy karty, trzy pytania: CZYM się loguję, JAK ZMIENIĆ HASŁO (albo ustawić pierwsze -
  * droga na wspólny tablet dla kogoś, kto wchodzi Googlem) i GDZIE JESTEM ZALOGOWANY.
+ * Czwarta - „Obserwowane samoloty" (3.2.0, issue #205, decyzja 12) - istnieje WYŁĄCZNIE
+ * w sesji klubu i przy zdolności `fleet.watch`: to ustawienie osoby W KLUBIE, więc sesja
+ * platformowa nie ma o co pytać, a osoba bez zdolności nie widzi karty (brak karty, nie
+ * karta wyszarzona - reguła panelu 2.0 o pozycjach bez uprawnienia).
  *
  * ══ CZEGO TU NIE MA ══
  * Zmiany adresu (jest tożsamością - klub go nie zmienia, osoba też nie), odpinania
@@ -20,6 +24,8 @@
 import { useState } from 'react';
 
 import type { PanelSessionDto } from '../../api/dto';
+import { scopeLabel } from '../accounts/scope';
+import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
 import {
   useChangePassword,
@@ -32,6 +38,7 @@ import { sessionRows } from '../accounts/sessionRows';
 import { SessionList } from '../common/SessionList';
 import { NONE } from '../common/values';
 import { EMPTY_PASSWORD, passwordFailure, verdictOf } from './passwordForm';
+import { WatchCard } from './WatchCard';
 
 export function AccountScreen() {
   const { session } = useSessionState();
@@ -68,7 +75,7 @@ export function AccountScreen() {
     <>
       <PageHead
         title="Moje konto"
-        // Podtytuł mówi, KIM tu jestem - bo to jest strona o mnie. Rola przed klubem, jak
+        // Podtytuł mówi, KIM tu jestem - bo to jest strona o mnie. Zakres przed klubem, jak
         // w mockupie: „administrator w klubie Aeroklub Zielonogórski". Sesja platformowa
         // nie ma klubu ani kodu, więc zostaje z niej sama rola.
         sub={[
@@ -195,6 +202,11 @@ export function AccountScreen() {
           </div>
         </Card>
 
+        {/* OBSERWOWANE SAMOLOTY (3.2.0): ustawienie osoby W KLUBIE, więc wyłącznie w sesji
+            klubu i przy zdolności. Karta pyta serwer sama - stąd osobny komponent, który
+            montuje się tylko wtedy, gdy wolno pytać. */}
+        {session?.org == null || !can(session.capabilities, 'fleet.watch') ? null : <WatchCard />}
+
         {/* MOJE SESJE: własne urządzenia ze WSZYSTKICH powierzchni i klubów - to są moje
             urządzenia, a nie dane klubu. Bieżąca przeglądarka ma plakietkę i ŻADNEJ akcji. */}
         <Card title="Moje sesje" span2>
@@ -221,12 +233,13 @@ export function AccountScreen() {
 /**
  * „administrator w klubie Aeroklub Zielonogórski" albo „superadministrator".
  *
- * Rola stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
+ * Zakres stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
  * Sesja platformowa nie ma klubu i nie ma go z czego wziąć - zostaje sama rola.
  */
 function scopeText(session: PanelSessionDto | null): string | null {
   if (session == null) return null;
   if (session.org == null) return 'superadministrator';
-  const role = session.pilot.role === 'admin' ? 'administrator' : 'pilot';
-  return `${role} w klubie ${session.org.name}`;
+  // Zakres, nie rola (epik #197): ten sam człowiek bywa technikiem w jednym klubie
+  // i administratorem w drugim, a nazwa liczy się ze zbioru zdolności TEJ sesji.
+  return `${scopeLabel(session.capabilities).toLowerCase()} w klubie ${session.org.name}`;
 }

@@ -97,11 +97,12 @@ export async function renderGoogleButton(
     type: 'standard',
     theme: 'filled_black',
     size: 'large',
-    shape: 'pill',
+    shape: 'rectangular',
     text: 'continue_with',
     locale: 'pl',
-    // Szerokość karty logowania minus jej padding (`login.css`): przycisk ma wypełnić
-    // wiersz jak dawne pola, a GIS nie zna `width: 100%`.
-    width: 336,
+    // Szerokość kolumny logowania (`login.css`, 400 px = maksimum GIS): przycisk ma
+    // wypełnić wiersz jak przycisk nad nim, a GIS nie zna `width: 100%`. Prostokąt,
+    // nie pigułka - wszystkie przyciski kolumny mają ten sam kształt.
+    width: 400,
   });
 }

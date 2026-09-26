@@ -36,19 +36,24 @@ export function can(
  *
  * Lustro mapy z serwera - świadome i opisane w `api/dto.ts` przy typie `Capability`.
  * Rozjazd nie może niczego otworzyć ani zamknąć: najgorszy możliwy skutek to zdanie
- * wskazujące złą rolę, i taką cenę płacimy do czasu decyzji z §11 pkt 6 o przeniesieniu
+ * wskazujące niewłaściwego adresata prośby, i taką cenę płacimy do czasu decyzji z §11 pkt 6
  * `roles.ts` do `@ninerdeck/domain`.
  */
 const GRANTED_BY: Record<Capability, string> = {
-  'panel.access': 'administrator',
-  'flags.resolve': 'administrator',
-  'events.correct': 'administrator',
-  'accounts.manage': 'administrator',
-  'fleet.manage': 'administrator',
-  'thresholds.manage': 'administrator',
-  'audit.read': 'administrator',
-  'maintenance.run': 'administrator',
-  'reservations.manage': 'administrator',
+  // „Administrator klubu", nie samo „administrator": od issue #216 ten napis czyta na
+  // ekranie „Brak dostępu" także zwykły pilot, a on zna dwóch administratorów - klubu
+  // i platformy - i ma wiedzieć, do którego iść.
+  'panel.access': 'administrator klubu',
+  'flags.resolve': 'administrator klubu',
+  'events.correct': 'administrator klubu',
+  'accounts.manage': 'administrator klubu',
+  'fleet.manage': 'administrator klubu',
+  'thresholds.manage': 'administrator klubu',
+  'audit.read': 'administrator klubu',
+  'maintenance.run': 'administrator klubu',
+  'reservations.manage': 'administrator klubu',
+  'reservations.approve': 'administrator klubu',
+  'fleet.watch': 'administrator klubu',
   // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
   // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
   // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.
@@ -56,7 +61,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'platform.manage': 'superadministrator',
 };
 
-/** „Wymaga roli: administrator" - dokładnie ten napis nosi `title` w `SZABLON.html`. */
+/** Napis przy kłódce - kto tę zdolność nadaje. */
 export function denialReason(required: Capability): string {
-  return `Wymaga roli: ${GRANTED_BY[required]}`;
+  return `Nadaje: ${GRANTED_BY[required]}`;
 }

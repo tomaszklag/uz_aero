@@ -85,7 +85,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     db.prepare(
       `INSERT INTO events (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
                            device_time, gps_time, payload, schema_version, synced_at)
-       VALUES ('e1', 's1', 'AC', 'TMK', NULL, 'takeoff', 1000, NULL, '{}', 1, NULL)`,
+       VALUES ('e1', 's1', 'AC', 'AKO', NULL, 'takeoff', 1000, NULL, '{}', 1, NULL)`,
     ).run();
     db.prepare(`INSERT INTO session_orgs (session_uuid, org_id) VALUES ('s1', 'org-a')`).run();
 
@@ -172,7 +172,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
       `INSERT INTO events
          (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
           device_time, gps_time, payload, schema_version, synced_at)
-       VALUES (?, ?, 'AC', 'TMK', NULL, ?, ?, NULL, '{}', 1, ?)`,
+       VALUES (?, ?, 'AC', 'AKO', NULL, ?, ?, NULL, '{}', 1, ?)`,
     );
     insert.run('u-b', 's1', 'engine_start', 2000, null);
     insert.run('u-a', 's1', 'takeoff', 1000, 123);
@@ -189,7 +189,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
     const sql = `INSERT OR IGNORE INTO events
         (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
          device_time, gps_time, payload, schema_version, synced_at)
-      VALUES ('dup', 's1', 'AC', 'TMK', NULL, 'takeoff', 1000, NULL, '{}', 1, NULL)`;
+      VALUES ('dup', 's1', 'AC', 'AKO', NULL, 'takeoff', 1000, NULL, '{}', 1, NULL)`;
 
     expect(db.prepare(sql).run().changes).toBe(1);
     expect(db.prepare(sql).run().changes).toBe(0); // §4.3: powtórka to nie błąd, tylko no-op
@@ -202,7 +202,7 @@ describe('schemat lokalnej bazy (node:sqlite)', () => {
       `INSERT INTO events
          (uuid, session_uuid, aircraft_id, pic_id, dual_id, type,
           device_time, gps_time, payload, schema_version, synced_at)
-       VALUES (?, 's1', 'AC', 'TMK', NULL, 'takeoff', 1000, NULL, '{}', 1, ?)`,
+       VALUES (?, 's1', 'AC', 'AKO', NULL, 'takeoff', 1000, NULL, '{}', 1, ?)`,
     );
     insert.run('sent', 999);
     insert.run('pending', null);

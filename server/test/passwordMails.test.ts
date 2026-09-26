@@ -35,7 +35,7 @@ const LINK = { to: 'pilot@ninerdeck.pl', url: URL, expiresAt: HOUR };
 const ALL = [
   ['reset', resetMail(LINK, NOW)],
   ['masz już konto', existingAccountMail(LINK, NOW)],
-  ['rejestracja', signupMail({ ...LINK, displayName: 'Tomasz Małkiewicz' }, NOW)],
+  ['rejestracja', signupMail({ ...LINK, displayName: 'Adam Kowalski' }, NOW)],
   ['zaproszenie', inviteMail({ ...LINK, expiresAt: THREE_DAYS, clubName: 'Aeroklub Alfa' }, NOW)],
 ] as const;
 
@@ -89,8 +89,8 @@ describe('czym się różnią', () => {
   it('rejestracja wita po imieniu i zapowiada KOD KLUBU jako następny krok', () => {
     // Konto założone tą drogą niczego w klubie nie omija - to ma stać w liście,
     // żeby człowiek nie czekał na dostęp, którego nikt mu nie nadał.
-    const mail = signupMail({ ...LINK, displayName: 'Tomasz Małkiewicz' }, NOW);
-    expect(mail.text).toContain('Cześć Tomasz Małkiewicz,');
+    const mail = signupMail({ ...LINK, displayName: 'Adam Kowalski' }, NOW);
+    expect(mail.text).toContain('Cześć Adam Kowalski,');
     expect(mail.text).toContain('kod klubu');
   });
 

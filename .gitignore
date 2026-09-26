@@ -24,3 +24,7 @@ Thumbs.db
 .env.local
 app/package-lock.json
 server/traces
+
+# Plik Firebase dla powiadomien push (epik R-J): lokalna kopia dewelopera; build EAS
+# dostaje go zmienna GOOGLE_SERVICES_JSON typu "file" (app/scripts/google-services.js).
+app/google-services.json

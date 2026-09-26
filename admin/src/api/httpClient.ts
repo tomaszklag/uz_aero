@@ -27,7 +27,7 @@ const CSRF_HEADER = 'X-Ninerdeck-Admin';
  * Odpowiedź serwera spoza 2xx jako wyjątek NIOSĄCY STATUS I CIAŁO.
  *
  * Status jest częścią wiadomości, a nie szczegółem transportu: 401 znaczy „zaloguj
- * się", 403 „twoja rola tego nie obejmuje", 409 „ktoś cię ubiegł". Ekran, który
+ * się", 403 „twój zakres tego nie obejmuje", 409 „ktoś cię ubiegł". Ekran, który
  * dostaje samo `Error('błąd')`, nie ma jak powiedzieć, co się stało - a mockupy
  * panelu wymagają podania powodu, nigdy cichego odbicia.
  */

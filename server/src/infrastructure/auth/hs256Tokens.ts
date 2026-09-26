@@ -32,7 +32,6 @@ import type {
   VerifiedPlatformIdentity,
 } from '../../application/common/ports.ts';
 import { isLoginMethod } from '../../domain/loginSessions.ts';
-import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
 const b64url = (data: Buffer | string): string =>
   Buffer.from(data).toString('base64url');
@@ -182,7 +181,6 @@ export class Hs256Tokens implements TokenService {
       sub: claims.pilotId,
       org: claims.orgId,
       code: claims.code,
-      role: claims.role,
       sid: sidClaim(claims.sessionId),
       iat: issuedAt,
       exp: issuedAt + ttlSec,
@@ -250,10 +248,9 @@ export class Hs256Tokens implements TokenService {
     // danych ten token ma prawo.
     if (typeof claims.org !== 'string' || claims.org === '') return null;
 
-    // Rola nieznana → `pilot`, czyli zero uprawnień w panelu. Cichy awans do wyższej
-    // roli byłby luką - stąd domyślną jest NAJMNIEJSZA rola, nie żadna heurystyka.
-    // Podpis HMAC gwarantuje, że nierozpoznana wartość może pochodzić tylko od nas.
-    const role = isPilotRole(claims.role) ? claims.role : DEFAULT_ROLE;
+    // ROLI W TOKENIE NIE MA (epik #197): zdolności czyta brama z bazy przy każdym
+    // żądaniu, więc claim nie miałby czego nadawać. Tokeny wydane przed wdrożeniem niosą
+    // go jeszcze w ładunku i to nie przeszkadza - nikt o niego nie pyta.
     // Brak `iat` → `0`, czyli „wydany przed czasem": wobec znacznika unieważnienia
     // poświadczeń taki token przegrywa - domyślną wartością jest ta, która odbiera
     // dostęp, nigdy ta, która go przyznaje.
@@ -262,7 +259,6 @@ export class Hs256Tokens implements TokenService {
       pilotId: claims.sub,
       orgId: claims.org,
       code: claims.code,
-      role,
       issuedAt,
       sessionId: sidOf(claims),
     };

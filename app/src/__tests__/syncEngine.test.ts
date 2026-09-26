@@ -69,7 +69,51 @@ class ScriptedServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getPilotPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftCard(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftOperations(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftWatches(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setAircraftWatch(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getInbox(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async markNotificationRead(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getApprovalQueue(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async decideBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async registerPushToken(): Promise<never> {
     throw new Error('nieużywane');
   }
 
@@ -217,7 +261,7 @@ class ScriptedServer implements ServerPort {
   }
 }
 
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
@@ -239,7 +283,7 @@ async function repoWithEvents(n: number): Promise<EventsRepo> {
     await repo.appendEvent({
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'taxi',
       payload: { method: 'manual' },
@@ -444,11 +488,11 @@ describe('SyncEngine.fetchAircraftState (przejęcie §4.4)', () => {
     const repo = await repoWithEvents(0);
     const server = new ScriptedServer([]);
     server.aircraftStateScript = [
-      { aircraftId: 'SP-AXA', claimPicId: 'AKO', claimSince: T0, handover: null, lastSyncAt: null },
+      { aircraftId: 'SP-AXA', claimPicId: 'BNO', claimSince: T0, handover: null, lastSyncAt: null },
     ];
 
     const state = await engineWith(repo, server).fetchAircraftState('SP-AXA');
-    expect(state?.claimPicId).toBe('AKO');
+    expect(state?.claimPicId).toBe('BNO');
   });
 
   it('offline → null - wołający musi zadeklarować takeover_offline', async () => {
@@ -523,7 +567,7 @@ describe('SyncEngine - zapisy wstrzymane (issue #81)', () => {
       clock: new FixedClock(T0),
       generateId: () => `id-${(seq += 1)}`,
     });
-    const base = { sessionUuid: 'sess-1', aircraftId: 'SP-AXA', picId: 'TMK', dualId: null } as const;
+    const base = { sessionUuid: 'sess-1', aircraftId: 'SP-AXA', picId: 'AKO', dualId: null } as const;
     await repo.appendEvent({ ...base, type: 'session_claim', payload: { mode: 'free' } });
     await repo.appendEvent({
       ...base,
@@ -581,7 +625,7 @@ describe('SyncEngine - zapisy wstrzymane (issue #81)', () => {
     await repo.appendEvent({
       sessionUuid: 'sess-1',
       aircraftId: 'SP-AXA',
-      picId: 'TMK',
+      picId: 'AKO',
       dualId: null,
       type: 'session_void',
       payload: { reason: null },

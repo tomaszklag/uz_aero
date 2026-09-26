@@ -29,7 +29,7 @@ const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 const HOUR_MS = 3_600_000;
 
-/** Poranna zmiana: KRZ. Popołudniowa: PWI. Administratorem panelu jest TMK. */
+/** Poranna zmiana: KRZ. Popołudniowa: PWI. Administratorem panelu jest AKO. */
 const MORNING = 'sess-1';
 const AFTERNOON = 'sess-2';
 
@@ -220,7 +220,7 @@ async function flownDay(options: { sheets?: FakeSheets } = {}) {
 describe('unieważnienie sesji z panelu (2026-08-31)', () => {
   it('dopisuje session_void PIC-em sesji, ustawia status voided i przebudowuje kartę bez niej', async () => {
     const { app, db, sheets } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     // Przed unieważnieniem: dwie karty (po jednym zdaniu każda) i obie zmiany w treści.
     expect(sheets.calls).toHaveLength(2);
@@ -255,7 +255,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     // Tożsamość w rejestrze to PIC SESJI - inaczej `WRITER_MISMATCH`, i słusznie.
     // Kto to zrobił, mówią `source_device` i dziennik audytu.
     expect(voided.pic_id).toBe('KRZ');
-    expect(voided.source_device).toBe('admin:TMK');
+    expect(voided.source_device).toBe('admin:AKO');
 
     // ── projekcja: TRZECI status, obok active i closed ────────────────────────
     expect(await statusOf(db, MORNING)).toBe('voided');
@@ -273,8 +273,8 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     // ── audyt: kto, w jakiej roli, co wycofał i dlaczego ──────────────────────
     expect(await auditRows(db)).toMatchObject([
       {
-        actor_pilot_id: 'TMK',
-        actor_role: 'admin',
+        actor_pilot_id: 'AKO',
+        actor_role: 'full',
         action: 'session.void',
         target_type: 'session',
         target_id: MORNING,
@@ -290,7 +290,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
 
   it('wycofana sesja wraca na telefon pilota - inaczej wisiałaby w jego dniu na zawsze', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     await voidSession(app, MORNING, { token: admin, body: { reason: 'Pomyłkowy wpis.' } });
 
     // §4.9: rejestr telefonu odtwarza się z serwera, więc decyzja panelu musi tamtędy
@@ -312,7 +312,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
     // to jest dokładnie ta sytuacja, w której wpis otwarty przez pomyłkę trzeba wycofać.
     const { app, db } = await testHarness();
     await push(app, 'KRZ', MORNING_EVENTS.slice(0, 3)); // przejęcie + preflight + start
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await voidSession(app, MORNING, {
       token: admin,
@@ -326,7 +326,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
 
   it('drugie unieważnienie → 422 z nazwanym powodem (stan jest binarny)', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const first = await voidSession(app, MORNING, {
       token: admin,
@@ -347,7 +347,7 @@ describe('unieważnienie sesji z panelu (2026-08-31)', () => {
 
   it('sesja spoza rejestru → 404, powód pusty → 400, konto bez zdolności → 403', async () => {
     const { app } = await flownDay();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const missing = await voidSession(app, 'sess-nie-ma', {
       token: admin,

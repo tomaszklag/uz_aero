@@ -23,10 +23,11 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText, type AppTextTone } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 import { Skeleton } from '../foundation/Skeleton';
 
 export interface KeyValueRowProps {
@@ -51,6 +52,14 @@ export interface KeyValueRowProps {
   /** Linia pod wierszem + paddingVertical 7 (`.diag-row`). */
   divider?: boolean;
   style?: StyleProp<ViewStyle>;
+  /**
+   * Wiersz PROWADZĄCY W GŁĄB (ekran decyzji 26, issue #206): samolot i obie osoby
+   * otwierają podgląd. Szewron stoi ZA wartością i w spoczynku - na dotyku nie ma
+   * kursora, więc kształt musi być widoczny od razu (inaczej niż `.go` w panelu).
+   */
+  onPress?: () => void;
+  /** Etykieta dostępności celu z `onPress` („podgląd pilota Jakub Wrona"). */
+  pressLabel?: string;
 }
 
 export function KeyValueRow({
@@ -62,22 +71,59 @@ export function KeyValueRow({
   valueTone = 'secondary',
   divider = false,
   style,
+  onPress,
+  pressLabel,
 }: KeyValueRowProps) {
   const { theme } = useTheme();
   const micro = labelVariant === 'micro';
 
+  const rowStyle = [
+    styles.row,
+    divider && {
+      paddingVertical: 7,
+      borderBottomWidth: theme.borderWidth,
+      borderBottomColor: theme.colors.border,
+    },
+    style,
+  ];
+
+  if (onPress != null && value != null) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={pressLabel ?? `${label}: ${value}`}
+        hitSlop={{ top: 6, bottom: 6 }}
+        style={({ pressed }) => [rowStyle, pressed && { opacity: 0.6 }]}
+      >
+        {micro ? (
+          <AppText variant="micro" tone="muted">
+            {label}
+          </AppText>
+        ) : (
+          <AppText variant="mono" tone="muted" style={styles.monoLabel}>
+            {label}
+          </AppText>
+        )}
+        <View style={styles.pressValue}>
+          <View style={styles.valueBox}>
+            <AppText variant="mono" tone={valueTone} style={micro ? styles.microValue : styles.monoValue}>
+              {value}
+            </AppText>
+            {sub != null && sub !== '' && (
+              <AppText tone="muted" style={styles.sub}>
+                {sub}
+              </AppText>
+            )}
+          </View>
+          <Icon name="more" size={14} color={theme.colors.textMuted} />
+        </View>
+      </Pressable>
+    );
+  }
+
   return (
-    <View
-      style={[
-        styles.row,
-        divider && {
-          paddingVertical: 7,
-          borderBottomWidth: theme.borderWidth,
-          borderBottomColor: theme.colors.border,
-        },
-        style,
-      ]}
-    >
+    <View style={rowStyle}>
       {micro ? (
         <AppText variant="micro" tone="muted">
           {label}
@@ -123,4 +169,6 @@ const styles = StyleSheet.create({
   // inaczej druga linia rozpychałaby wiersz na całą szerokość.
   valueBox: { flexShrink: 1, alignItems: 'flex-end', gap: 1 },
   sub: { fontSize: 10, lineHeight: 13, textAlign: 'right' },
+  // Wartość i szewron w jednym rzędzie, wyrównane do linii bazowej wartości.
+  pressValue: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
 });

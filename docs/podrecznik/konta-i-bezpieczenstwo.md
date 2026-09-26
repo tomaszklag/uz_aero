@@ -1,11 +1,11 @@
 # Konta, logowanie i bezpieczeństwo danych
 
-> Konto zakłada się kontem Google **albo e-mailem i hasłem**, wstęp do klubu daje kod klubu i decyzja administratora, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, role i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
+> Konto zakłada się kontem Google **albo e-mailem i hasłem**, wstęp do klubu daje kod klubu i decyzja administratora, a codzienne wejście to PIN sprawdzany na telefonie. Ta strona tłumaczy, jak działają konta, uprawnienia i sesje oraz jakie dane aplikacja zbiera i kto je widzi.
 
 ## Trzy kroki: konto, klub, PIN
 
 1. **Konto - Google albo hasło.** **Kontynuuj z Google** potwierdza tożsamość u Google; aplikacja dostaje stały identyfikator konta, adres e-mail i nazwę. **Albo** logujesz się e-mailem i hasłem - to nie jest drugie konto, tylko druga droga do tego samego (szerzej niżej: [Hasło i wspólny tablet](#haslo-i-wspolny-tablet)). Samo zalogowanie nie daje jeszcze wstępu do żadnego klubu: zakłada Cię jako osobę i tyle.
-2. **Kod klubu i decyzja.** Wstęp do klubu daje **kod klubu**, który dostajesz od administratora - wpisujesz go w aplikacji i tak powstaje zgłoszenie. Administrator przyjmuje je, nadając kod pilota (np. `TMK`, stoi potem w sygnaturze każdej operacji) i rolę, albo odrzuca z powodem - wymaganym, bo pilot czyta go na swoim ekranie. Do decyzji aplikacja pokazuje „Czeka na zatwierdzenie" i sprawdza stan sama, także przyciskiem **SPRAWDŹ PONOWNIE**; po odmowie zostaje **DOŁĄCZ INNYM KODEM** albo zalogowanie innym kontem Google. Cała droga z ekranami: [kluby i dołączanie](kluby-i-dolaczanie).
+2. **Kod klubu i decyzja.** Wstęp do klubu daje **kod klubu**, który dostajesz od administratora - wpisujesz go w aplikacji i tak powstaje zgłoszenie. Administrator przyjmuje je, nadając kod pilota (np. `AKO`, stoi potem w sygnaturze każdej operacji) i zakres uprawnień, albo odrzuca z powodem - wymaganym, bo pilot czyta go na swoim ekranie. Do decyzji aplikacja pokazuje „Czeka na zatwierdzenie" i sprawdza stan sama, także przyciskiem **SPRAWDŹ PONOWNIE**; po odmowie zostaje **DOŁĄCZ INNYM KODEM** albo zalogowanie innym kontem Google. Cała droga z ekranami: [kluby i dołączanie](kluby-i-dolaczanie).
 3. **PIN.** Po zatwierdzeniu aplikacja prosi o PIN i od tej chwili nim się wchodzi. PIN sprawdza telefon, bez sieci; zmienia się go w [ustawieniach](ustawienia). **Nie pamiętam PIN** oznacza ponowne logowanie kontem Google - z internetem.
 
 @screen 00a-login-full "Kontynuuj z Google" | 00e-bez-klubu "Kod klubu" | 00c-oczekiwanie "Czeka na zatwierdzenie" | 00d-odrzucone "Odrzucone z powodem"
@@ -38,9 +38,13 @@ Każde zalogowanie - w aplikacji i w panelu - zostawia **wiersz sesji**: jakie t
 
 > **Uwaga.** Zdalne wylogowanie nie kasuje danych z telefonu. Urządzenie przestaje wysyłać i mówi o tym wprost - na ekranie PIN i w ustawieniach - ale PIN dalej otwiera aplikację, a niewysłane zapisy czekają na niej do ponownego zalogowania **tej samej osoby**. Wyrzucenie do ekranu logowania zabrałoby pilotowi dane dnia, którego klub jeszcze nie ma.
 
-## Role: pilot, administrator, opiekun platformy
+## Zakres uprawnień: co wolno w klubie
 
-Rola należy do **członkostwa**, nie do człowieka: w jednym klubie możesz być administratorem, a w drugim pilotem. **Pilot** ma aplikację. **Administrator** ma aplikację i panel swojego klubu, do którego loguje się tym samym kontem Google; konto bez roli administratora dostaje w panelu odmowę z komunikatem, nie awarię.
+To, co wolno Ci w klubie, opisuje **zakres uprawnień** - i należy on do **członkostwa**, nie do człowieka: w jednym klubie możesz układać flotę, a w drugim tylko latać. Zakres składa się z pojedynczych zdolności („Podgląd klubu", „Flota", „Akceptacja rezerwacji"), więc administrator daje dokładnie to, co potrzebne: mechanik rozstrzyga swój krok akceptacji z telefonu, a floty ani kont nie dotyka.
+
+Przy nadawaniu administrator wybiera **zestaw** - gotowy skrót w rodzaju „Pilot", „Technik" czy „Administrator" - i w razie potrzeby poprawia pojedyncze pozycje; wtedy zakres nazywa się „własny". Domyślny jest pusty: wchodzisz do klubu po to, żeby latać. **Do panelu wchodzi każdy członek** - z pustym zakresem ma w nim Moje konto i kalendarz, a dziennik, pilotów i samoloty otwiera zdolność „Podgląd klubu". Który ekran otwiera każda zdolność: [zakresy uprawnień](uprawnienia).
+
+Osobno stoi zdolność **„Obserwowanie samolotów"**: karta maszyny w aplikacji - co się z nią dzieje teraz, liczniki, terminy, historia lotów, wykresy - i powiadomienia o jej lotach po włączeniu obserwowania. Mają ją zestawy „Akceptujący", „Koordynator lotów" i „Technik" (administrator przez komplet); osobie przyjętej wcześniej administrator nadaje ją w karcie członka. Co obserwujesz, ustawiasz w aplikacji albo w panelu na stronie **Moje konto**. Szczegóły: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu).
 
 Osobno stoi **opiekun platformy**. Nie należy do żadnego klubu i nie zagląda do żadnego dziennika - zakłada kluby razem z ich pierwszym administratorem i prowadzi kolejkę zgłoszeń błędów z aplikacji. Gdy klub potrzebuje pomocy w swoich danych, dodaje go u siebie jak każdego innego członka.
 

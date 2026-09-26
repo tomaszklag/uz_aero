@@ -2,7 +2,7 @@
 
 > Kalendarz floty na jedną dobę, rezerwacja terminu w dwóch krokach i wejście w lot z tego, co zaplanowałeś.
 
-> **Uwaga.** Kalendarz i rezerwacje wchodzą w wydaniu 3.0.0. Jeśli Twoja aplikacja nie ma jeszcze paska zakładek na dole ekranu, zaktualizuje się sama przy najbliższym uruchomieniu z zasięgiem.
+> **Wskazówka.** Jeśli Twój klub wymaga zgody na rezerwację, zapisany termin czeka na decyzję osób z kolejnych kroków - jak to wygląda, opisuje strona [akceptacja rezerwacji](akceptacja-rezerwacji). W klubie bez ścieżki akceptacji rezerwacja potwierdza się od razu.
 
 ## Kalendarz floty
 
@@ -64,6 +64,38 @@ To jedyna część aplikacji, która bez połączenia nie działa - i mówi to w
 Wszystko pozostałe działa jak zawsze: **lot rozpoczniesz, poprowadzisz i zdasz bez zasięgu**, dokładnie tak jak przed rezerwacjami.
 
 @screen 21b-kalendarz-offline "Kalendarz bez połączenia"
+
+## Obserwowanie samolotu
+
+Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu wyłącznie narzędzia decyzji: zgodę na rezerwację i wyłączenie z użytku. Nikt nie dowiaduje się, że maszyna właśnie wróciła z lotu i można ją tankować, ani że za godzinę ktoś ją bierze. To zmienia **karta samolotu** i **obserwowanie**.
+
+**Karta samolotu** otwiera się z kalendarza - tapnięciem w znak maszyny po lewej stronie osi - oraz z powiadomienia. Widzi ją osoba z uprawnieniem „Obserwowanie samolotów" (zestawy „Akceptujący", „Koordynator lotów", „Technik" i administrator). Na karcie stoją:
+
+- **co dzieje się teraz**: wolna, w locie (kto i od której), przejęta, po locie i jeszcze nie zdana, wyłączona z użytku (z powodem i do kiedy) albo zarezerwowana;
+- **liczniki** paliwa, motogodzin i oleju z ostatniego odczytu, z podpisem, skąd pochodzą;
+- **najbliższe terminy** razem z wyłączeniami z użytku;
+- **wykresy** motogodzin i paliwa z ostatnich 90 dni - z kursorem i przybliżeniem, jak profil śladu GPS - oraz sumy z 30 i 90 dni;
+- **historia lotów tej maszyny** - kto, kiedy, ile, a w drugiej linii odczyty przy przejęciu i zdaniu; starsze doładowują się przyciskiem.
+
+@screen 27-samolot "Karta maszyny · w locie, obserwowana" | 27b-samolot-wylaczona "Wyłączona z użytku na przegląd"
+
+**Obserwowanie** to jeden przełącznik na karcie. Włączone, daje pięć rodzajów wiadomości w skrzynce powiadomień aplikacji (dzwonek na pulpicie) i powiadomienie na telefon:
+
+1. **zbliża się lot** - godzinę przed potwierdzoną rezerwacją;
+2. **odwołany termin** - wyłącznie taki, o którym już przypomniano; termin odwołany wcześniej nikogo nie budzi, bo nikt na niego nie czekał;
+3. **uruchomienie silnika** - z adnotacją, czy lot odbywa się zgodnie z rezerwacją, czy poza planem;
+4. **maszyna zdana** - z odczytami paliwa i licznika, czasem uruchomienia i wyłączenia, liczbą lotów;
+5. **nikt nie odebrał** - zarezerwowana maszyna stała godzinę bez przejęcia i termin wrócił do puli.
+
+O własnym działaniu nikt nie dostaje wiadomości: pilot, który sam uruchomił silnik albo sam odwołał termin, nie jest o tym budzony. Wpis lotu po fakcie nie rodzi powiadomień - opisuje przeszłość, nie to, co dzieje się z maszyną teraz.
+
+**Co obserwujesz, widzisz w jednym miejscu**: w [ustawieniach](ustawienia) sekcja „Obserwowane samoloty" pokazuje całą flotę klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili - tam włączasz i wyłączasz obserwowanie kilku maszyn naraz, bez otwierania każdej karty. Ta sama lista stoi w panelu klubu, na stronie [Moje konto](panel-wprowadzenie#moje-konto) - zaznaczona maszyna to obserwowana, a zmiana zapisuje się od razu.
+
+@screen 13c-ustawienia-obserwowane "Ustawienia · obserwowane samoloty"
+
+> **Uwaga.** Godzina w wiadomości o uruchomieniu i zdaniu jest godziną z zapisu na telefonie pilota, nie chwilą, w której wiadomość dotarła. Telefon bez zasięgu dosyła zapisy później - czasem po godzinach - i wtedy wiadomość mówi to wprost („zapis dotarł 09:40"). Jeśli uruchomienie i zdanie dotarły w jednej paczce, przychodzi tylko wiadomość o zdaniu.
+
+Karta samolotu, jak cały moduł rezerwacji, wymaga zasięgu: pokazuje cudze loty i terminy, których telefon nie ma u siebie.
 
 ## Dlaczego tak to działa
 

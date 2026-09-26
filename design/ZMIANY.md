@@ -61,9 +61,9 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > Obok pilota zalogowanego; gdy nie wybrano - pokaże "-" (jak Klient).
 
 **07-zmiana-zalogi - rozszerzono o zmianę drugiego pilota**
-> Aktualna załoga: SIC pokazuje AKO (spójnie z preflightem) zamiast "- (brak)".
+> Aktualna załoga: SIC pokazuje BNO (spójnie z preflightem) zamiast "- (brak)".
 > Sekcja "Dodaj drugiego pilota" (zwinięta) → "Zmień drugiego pilota" (rozwinięta):
-> Wychodzący SIC (AKO, locked) → Nowy SIC (PWI). Info-box uzupełniony o regułę:
+> Wychodzący SIC (BNO, locked) → Nowy SIC (PWI). Info-box uzupełniony o regułę:
 > przy wymogu załogi 2-os. drugi pilot nie może pozostać pusty.
 > Poprawiono literówkę "Wychodząc CDR" → "Wychodzący CDR".
 
@@ -72,11 +72,11 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > Dual = drugi pilot. Zastąpiono wcześniejsze CDR/SIC.
 > - 02/02b/02c: pasek pilota dostał badge "PIC" + dopisek "zalogowany"; sekcja → "Drugi pilot · Dual"
 > - 03: klucze podsumowania → "PIC · zalogowany" / "Dual · drugi pilot"
-> - 04/04a: akcja Zmiana załogi → "PIC: TMK · DUAL: AKO"
+> - 04/04a: akcja Zmiana załogi → "PIC: AKO · DUAL: BNO"
 > - 07: badge PIC z tagiem "zalogowany · Ty"; pola Wychodzący/Nowy PIC i DUAL; info-box wyjaśnia,
 >   że zmiana PIC wymaga zalogowania nowego pilota
-> - 10: karty załogi → "PIC · zalogowany (Ty)" / "Dual · drugi pilot" (AKO z block time)
-> Ujednolicono też kod zalogowanego pilota: MIW → TMK (Tomasz Małkiewicz) na 04, 07, 10.
+> - 10: karty załogi → "PIC · zalogowany (Ty)" / "Dual · drugi pilot" (BNO z block time)
+> Ujednolicono też kod zalogowanego pilota: MIW → AKO (Adam Kowalski) na 04, 07, 10.
 
 **Format motogodzin z konfiguracji samolotu (02a, 02c, 03, 04, 05*)**
 > Powód: w części samolotów licznik MH jest dziesiętny (krok 0.1 h = 6 min),
@@ -173,7 +173,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > Powód: architektura 3.0 - logowanie (jednorazowe, online) ≠ wejście do aplikacji
 > (codzienne, offline). Wygasły token nie wylogowuje.
 > - **00-login** - odblokowanie PIN-em (domyślne wejście): chip profilu lokalnego
->   ("TMK · profil lokalny · działa offline"), 4 kropki + numpad (interaktywny - klikaj),
+>   ("AKO · profil lokalny · działa offline"), 4 kropki + numpad (interaktywny - klikaj),
 >   opcjonalna biometria, linki "Nie pamiętam PIN" / "Zaloguj jako inny pilot"
 >   z adnotacją, że pełne logowanie wymaga internetu
 > - **00a-login-full** (nowy) - pełny login: pola login + hasło (konto od administratora,
@@ -244,7 +244,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 **04b-cockpit-readonly - NOWY ekran: podgląd zajętego samolotu** (PLAN blok 5, sekcja 3.10)
 > Powód: single-writer - zapis ma wyłącznie telefon aktywnego PIC-a; pozostali piloci
 > dostają podgląd stanu z serwera. Domyka TODO "banner read-only" z iteracji 6.
-> Scenariusz: TMK ogląda SP-FGK prowadzony przez KRZ (spójne z 02).
+> Scenariusz: AKO ogląda SP-FGK prowadzony przez KRZ (spójne z 02).
 > - Niebieski banner "PODGLĄD - TYLKO ODCZYT" (blue = informacja, nie warning):
 >   kto prowadzi, od kiedy, "dane z serwera · sync 09:41 · ostatnia aktywność 09:38"
 > - Log dnia KRZ bez kolumny edycji; akcje ground disabled z podanym powodem
@@ -302,7 +302,7 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > single-writer, claim optymistyczny, monotoniczny łańcuch MH hh:mm, eksport serwerowy,
 > brak OAuth, stany świeżości, SyncChip, żywa nawigacja). Poprawiony potwierdzony
 > klaster niespójności scenariusza:
-> - **02a/02c**: poprzednik „T. Małkiewicz" → **„J. Kowalski"** (pilot przekazywał sam
+> - **02a/02c**: poprzednik „A. Kowalski" → **„J. Kowalski"** (pilot przekazywał sam
 >   sobie); terminologia korekt „Szacowane z logów"/„szacowane" → „Przekazane przez
 >   poprzednika"/„przekazane" (02b i 02c) - wartość to przekazanie, nie szacunek
 > - **06-tankowanie**: wyrównane do kanonicznego zdarzenia +48 (112→160 @ 10:48):
@@ -588,7 +588,7 @@ w projekcie leżały na ścieżkach awaryjnych.
 >   pilot", którego już nie ma)
 
 **Czyszczenie tekstów (uwagi użytkownika per ekran)**
-> - 00-login: podpis profilu „TMK · profil lokalny · działa offline" → samo „TMK";
+> - 00-login: podpis profilu „AKO · profil lokalny · działa offline" → samo „AKO";
 >   usunięta opcja „Zaloguj jako inny pilot" (brak przekazywania telefonu)
 > - 00a: usunięta nota „Pierwsze logowanie wymaga internetu…"; poprawiony (błędny) opis
 >   wariantu w panelu
@@ -638,7 +638,7 @@ w projekcie leżały na ścieżkach awaryjnych.
 >   obramówka, link do podglądu 05-T; per pilot, offline
 > - **PIN**: „Zmień PIN" → arkusz z numpadem (58 px) w dwóch krokach (obecny → nowy),
 >   jawnie oznaczone „sprawdzane lokalnie - bez zasięgu też działa" (3.0)
-> - **Konto**: profil TMK; „Wyloguj i zmień konto" **disabled z powodem** + amber-box
+> - **Konto**: profil AKO; „Wyloguj i zmień konto" **disabled z powodem** + amber-box
 >   (wzorzec .outbox-guard z 00-login, język pilota: „3 zapisy czekają na wysyłkę")
 >   + stała nota „ponowne logowanie wymaga internetu - konta zakłada administrator"
 > - **Diagnostyka GPS**: fix, wiek, dokładność ±m, pozycja, „Odśwież" - czujnik lokalny
@@ -941,9 +941,9 @@ przeniesione na 04B.
 > słowo, którego znaczenia trzeba się domyślać, dokładało szumu przy zerowej informacji.
 
 **02-preflight / 02d / 07-zmiana-zalogi** - w kwadracie przy nazwisku stoi **kod pilota**
-(`AKO`, `PWI`, `JSE`) czcionką mono, a powtórzony kod po prawej stronie wiersza zniknął
+(`BNO`, `PWI`, `JSE`) czcionką mono, a powtórzony kod po prawej stronie wiersza zniknął
 (`.crew-code`, `.pilot-cd` usunięte).
-> Powód: wiersz mówił tę samą wartość dwa razy - inicjały `AK` po lewej i kod `AKO` po prawej
+> Powód: wiersz mówił tę samą wartość dwa razy - inicjały `AK` po lewej i kod `BNO` po prawej
 > są tym samym identyfikatorem w dwóch zapisach, a inicjały to wersja gorsza: nie występują
 > nigdzie w arkuszu ani w logu. Kod pilota jest tym, co pilot potem zobaczy w eksporcie, więc
 > to on należy do awatara. 07 zmieniony razem z 02, bo **dwie listy pilotów w jednej aplikacji

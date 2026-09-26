@@ -96,7 +96,7 @@ describe('adres e-mail zapisuje się znormalizowany (§4.4)', () => {
 
   it('EDYCJA CZŁONKA W PANELU: nowy adres schodzi do małych liter', async () => {
     const { app, db } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'PATCH',
@@ -147,7 +147,7 @@ describe('adres e-mail zapisuje się znormalizowany (§4.4)', () => {
     // obok istniejącego i `findByEmail` oddawałby raz jedną osobę, raz drugą.
     const { db } = await testHarness();
     await expect(
-      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('dubel', 'Dubel', 'TOMASZ@ninerdeck.pl', TRUE)`),
+      db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('dubel', 'Dubel', 'ADAM@ninerdeck.pl', TRUE)`),
     ).rejects.toThrow();
   });
 });

@@ -53,7 +53,7 @@ const render = (
   renderToStaticMarkup(
     <MemoryRouter initialEntries={[path]}>
       <AppShell
-        who="Tomasz Małkiewicz"
+        who="Adam Kowalski"
         scope={scope}
         capabilities={capabilities}
         onLogout={() => undefined}
@@ -101,9 +101,14 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('zaznacza pozycję bieżącego modułu i tylko ją', () => {
     for (const item of NAV_ITEMS) {
-      // Render z DOKŁADNIE tą zdolnością, której wymaga pozycja: inaczej moduł
-      // platformowy nie miałby jak się w kolumnie pojawić.
-      const html = render(item.to, undefined, [item.capability]);
+      // Render z DOKŁADNIE tym dostępem, którego wymaga pozycja: inaczej moduł
+      // platformowy nie miałby jak się w kolumnie pojawić. Kalendarz (`club`) nie ma
+      // zdolności - otwiera go sam rodzaj sesji, więc pusty zbiór w ramie klubu.
+      const platform = item.access === 'platform.manage' || item.access === 'bugs.triage';
+      const scope: ShellScope | undefined = platform
+        ? { kind: 'platform', label: 'Superadministrator', name: 'Wszystkie kluby', switchTo: null }
+        : undefined;
+      const html = render(item.to, scope, item.access === 'club' ? [] : [item.access]);
       expect(html.match(/class="nav-item active"/g)).toHaveLength(1);
       expect(html).toContain(`class="nav-item active" href="${item.to}"`);
     }
@@ -120,18 +125,34 @@ describe('AppShell - rama stylu lekkiego', () => {
     expect(club).not.toContain('href="/zgloszenia"');
     expect(club).not.toContain('locked');
 
-    const platform = render('/zgloszenia', undefined, PLATFORM);
+    const platformScope: ShellScope = {
+      kind: 'platform',
+      label: 'Superadministrator',
+      name: 'Wszystkie kluby',
+      switchTo: null,
+    };
+    const platform = render('/zgloszenia', platformScope, PLATFORM);
     expect(platform).toContain('class="nav-item active" href="/zgloszenia"');
     expect(platform).toContain('href="/organizacje"');
-    for (const to of ['/dziennik', '/piloci', '/samoloty']) {
+    for (const to of ['/dziennik', '/piloci', '/samoloty', '/kalendarz']) {
       expect(platform).not.toContain(`href="${to}"`);
     }
   });
 
-  it('sesja bez ANI JEDNEJ zdolności dostaje pustą kolumnę, nie ramę bez adresu', () => {
-    // Rola bez zdolności dziś nie istnieje, ale model jej nie zabrania: rama ma się
-    // wtedy złożyć (marka musi mieć `href`), a odmowę powie serwer na trasie.
-    const html = render(HOME, undefined, []);
+  it('członek z PUSTYM zakresem dostaje SAM Kalendarz, a marka prowadzi właśnie tam (issue #216)', () => {
+    // Panel jest dla każdego członka: bez „Podglądu klubu" kolumna ma jedną pozycję,
+    // a goły adres ląduje na niej - nie na dzienniku, który odpowiedziałby 403.
+    const html = render('/kalendarz', clubScope('Aeroklub Alfa', null), []);
+    expect(html.match(/class="nav-item/g)).toHaveLength(1);
+    expect(html).toContain('class="nav-item active" href="/kalendarz"');
+    expect(html).toContain('class="brand" href="/kalendarz"');
+  });
+
+  it('sesja PLATFORMY bez ANI JEDNEJ zdolności dostaje pustą kolumnę, nie ramę bez adresu', () => {
+    // Rola platformowa bez zdolności dziś nie istnieje, ale model jej nie zabrania: rama
+    // ma się wtedy złożyć (marka musi mieć `href`), a odmowę powie ekran „Brak dostępu".
+    const scope: ShellScope = { kind: 'platform', label: 'Superadministrator', name: 'Wszystkie kluby', switchTo: null };
+    const html = render(HOME, scope, []);
     expect(html).toContain('class="sidebar-nav"');
     expect(html).not.toContain('class="nav-item');
     expect(html).toContain(`class="brand" href="${HOME}"`);
@@ -139,8 +160,8 @@ describe('AppShell - rama stylu lekkiego', () => {
 
   it('pisze inicjały zalogowanego w kółku i nazwisko obok', () => {
     const html = render(HOME);
-    expect(html).toContain('class="avatar" aria-hidden="true">TM<');
-    expect(html).toContain('class="who-name">Tomasz Małkiewicz<');
+    expect(html).toContain('class="avatar" aria-hidden="true">AK<');
+    expect(html).toContain('class="who-name">Adam Kowalski<');
   });
 
   it('kafel klubu stoi WYŁĄCZNIE, gdy sesja zna klub', () => {
@@ -169,9 +190,10 @@ describe('AppShell - rama stylu lekkiego', () => {
     // Superadministrator: `#/dziennik` odpowiedziałby jego sesji 401, więc marka
     // prowadzi tam, gdzie naprawdę może wejść - a to jest Organizacje, bo stoją
     // w `NAV_ITEMS` przed Zgłoszeniami.
-    expect(render('/zgloszenia', undefined, PLATFORM)).toContain(
-      `class="brand" href="${homeFor(PLATFORM)}"`,
+    const scope: ShellScope = { kind: 'platform', label: 'Superadministrator', name: 'Wszystkie kluby', switchTo: null };
+    expect(render('/zgloszenia', scope, PLATFORM)).toContain(
+      `class="brand" href="${homeFor(PLATFORM, 'platform')}"`,
     );
-    expect(homeFor(PLATFORM)).toBe('/organizacje');
+    expect(homeFor(PLATFORM, 'platform')).toBe('/organizacje');
   });
 });

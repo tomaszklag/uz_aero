@@ -15,7 +15,7 @@ import type { RemoteReadingsChainLink } from '../application';
 
 const before: RemoteReadingsChainLink = {
   sessionUuid: 'rano',
-  picId: 'ako',
+  picId: 'bno',
   at: Date.UTC(2026, 7, 16, 9, 0),
   fuelL: 140,
   mh: 1232.4,
@@ -70,8 +70,8 @@ describe('podstawianie odczytów zastanych', () => {
 
 describe('adnotacja źródła przy polu', () => {
   it('mówi, skąd liczba, dopóki jest to liczba sąsiada', () => {
-    expect(prefillSource(before, 'fuelL', 140)).toBe('z poprzedniego lotu · AKO');
-    expect(prefillSource(before, 'mh', 1232.4)).toBe('z poprzedniego lotu · AKO');
+    expect(prefillSource(before, 'fuelL', 140)).toBe('z poprzedniego lotu · BNO');
+    expect(prefillSource(before, 'mh', 1232.4)).toBe('z poprzedniego lotu · BNO');
   });
 
   it('MILCZY przy wartości poprawionej - inaczej podpisywałaby cudzym źródłem odczyt pilota', () => {

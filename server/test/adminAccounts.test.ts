@@ -25,6 +25,7 @@ import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts'
 import { uniqueConflictField } from '../src/application/admin/commands/pilots.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import type { PilotsAdminPort } from '../src/application/admin/ports.ts';
+import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
 import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
@@ -84,7 +85,7 @@ async function addMember(
     method: 'POST',
     url: `/admin/api/memberships/${member.id}/approve`,
     headers: admin(token),
-    payload: { code: member.code, role: 'pilot' },
+    payload: { code: member.code, capabilities: [] },
   });
   expect(approved.statusCode, approved.body).toBe(200);
 }
@@ -177,7 +178,7 @@ function pilotCommands(
 const actor = (pilotId: string) => ({
   pilotId,
   orgId: ORG_A,
-  role: 'admin' as const,
+  capabilities: CLUB_CAPABILITIES,
   ip: null,
   sessionId: null,
 });
@@ -206,18 +207,16 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
   // administrator - i mówi o tym ten przypadek.
   it('administrator dostaje komplet kont z licznikami po CAŁYM klubie', async () => {
     const { app } = await testHarness();
-    const res = await listPilots(app, await tokenOf(app, 'TMK'));
+    const res = await listPilots(app, await tokenOf(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    // Seed: TMK i AKO administratorzy, PWI/JSE/KRZ piloci.
+    // Seed: AKO i BNO administratorzy, PWI/JSE/KRZ piloci.
     expect(body.items).toHaveLength(5);
     expect(body.counts).toEqual({
       total: 5,
       active: 5,
       inactive: 0,
-      admin: 2,
-      pilot: 3,
       // Zero dni lotnych, bo świeży harness nie ma jeszcze ani jednej sesji.
       flyingDays: 0,
     });
@@ -229,12 +228,13 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
 
   it('nie oddaje hasła ani hasha - w żadnym polu, w żadnym wierszu', async () => {
     const { app } = await testHarness();
-    const res = await listPilots(app, await tokenOf(app, 'TMK'));
+    const res = await listPilots(app, await tokenOf(app, 'AKO'));
 
     expect(res.body).not.toContain('scrypt$');
     for (const item of res.json().items) {
       expect(Object.keys(item).sort()).toEqual([
         'active',
+        'capabilities',
         'code',
         'email',
         'flyingDays',
@@ -248,25 +248,30 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
         'loginMethods',
         'name',
         'orgId',
-        'role',
         'updatedAt',
       ]);
     }
   });
 
-  it('filtruje po roli, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
+  it('filtruje po ZDOLNOŚCI, statusie i szuka po kodzie/nazwisku/e-mailu', async () => {
     const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
-    expect((await listPilots(app, token, '?role=admin')).json().items).toHaveLength(2);
-    // Parametr jest POWTARZALNY - chip „Z rolą panelu" był dwiema rolami naraz
-    // i wróci nią razem z trzecią rolą, więc kształt zapytania zostaje sprawdzony.
+    // Chip „Z dostępem do panelu" pyta o JEDNĄ zdolność, a nie o listę ról: od epiku
+    // #197 „kto wejdzie do panelu" ma dokładnie jedną odpowiedź i nie trzeba jej sklejać.
     expect(
-      (await listPilots(app, token, '?role=admin&role=pilot')).json().items,
-    ).toHaveLength(5);
+      (await listPilots(app, token, '?capability=panel.access')).json().items,
+    ).toHaveLength(2);
+    // Zdolność, której nikt w klubie nie ma, zawęża do zera - a nie odbija błędem.
+    expect(
+      (await listPilots(app, token, '?capability=bugs.triage')).json().items,
+    ).toHaveLength(0);
+    // Napis spoza katalogu jest IGNOROWANY, nie odrzucany: to parametr widoku, a nie
+    // treść zapisu - pusta lista po literówce w adresie byłaby gorsza niż pełna.
+    expect((await listPilots(app, token, '?capability=nie.ma')).json().items).toHaveLength(5);
     expect((await listPilots(app, token, '?active=true')).json().items).toHaveLength(5);
-    expect((await listPilots(app, token, '?q=kowalska')).json().items).toEqual([
-      expect.objectContaining({ code: 'AKO' }),
+    expect((await listPilots(app, token, '?q=nowak')).json().items).toEqual([
+      expect.objectContaining({ code: 'BNO' }),
     ]);
     // Wyszukiwanie po fragmencie e-maila i bez rozróżniania wielkości liter.
     expect((await listPilots(app, token, '?q=PIOTR@')).json().items).toEqual([
@@ -279,7 +284,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
 
   it('liczniki są niezależne od filtra - kafel opisuje klub, nie zawężenie', async () => {
     const { app } = await testHarness();
-    const body = (await listPilots(app, await tokenOf(app, 'TMK'), '?role=admin')).json();
+    const body = (await listPilots(app, await tokenOf(app, 'AKO'), '?capability=panel.access')).json();
 
     expect(body.items).toHaveLength(2);
     expect(body.total).toBe(2);
@@ -291,7 +296,7 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     // 2026-08-01 chipy nosiły liczby kafli, więc po wpisaniu frazy tabela miała jeden
     // wiersz, a chip „Nieaktywni" nadal pokazywał 2 i po kliknięciu dawał zero wierszy.
     const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     await setActive(app, token, 'JSE', false);
 
     // Bez wyszukiwania chipy zgadzają się z kaflami - to ta sama populacja.
@@ -300,14 +305,14 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
     expect(all.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
 
     // Z wyszukiwaniem chipy opisują TRAFIENIA…
-    const narrowed = (await listPilots(app, token, '?q=kowalska')).json();
+    const narrowed = (await listPilots(app, token, '?q=nowak')).json();
     expect(narrowed.items).toHaveLength(1);
     expect(narrowed.scopes).toEqual({ total: 1, active: 1, inactive: 0, panel: 1 });
     // …a kafle dalej opisują KLUB, bo o tym mówią na ekranie.
     expect(narrowed.counts).toMatchObject({ total: 5, active: 4, inactive: 1 });
 
     // I najważniejsze: liczba na chipie zgadza się z liczbą wierszy po kliknięciu.
-    const clicked = (await listPilots(app, token, '?q=kowalska&active=false')).json();
+    const clicked = (await listPilots(app, token, '?q=nowak&active=false')).json();
     expect(clicked.items).toHaveLength(narrowed.scopes.inactive);
   });
 });
@@ -315,16 +320,16 @@ describe('GET /admin/api/pilots - lista kont i dane referencyjne', () => {
 describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
   it('zapisuje zmianę i wpisuje do audytu DIFF, nie stan po zmianie', async () => {
     const { app, db } = await testHarness();
-    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
+    const res = await patchPilot(app, await tokenOf(app, 'AKO'), 'PWI', {
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'admin',
+      capabilities: CLUB_CAPABILITIES,
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().pilot).toMatchObject({
       code: 'PWI',
       name: 'Piotr Wiśniewski-Nowak',
-      role: 'admin',
+      capabilities: CLUB_CAPABILITIES,
     });
 
     const rows = await auditRows(db);
@@ -333,7 +338,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
       code: 'PWI',
       changes: {
         name: { from: 'Piotr Wiśniewski', to: 'Piotr Wiśniewski-Nowak' },
-        role: { from: 'pilot', to: 'admin' },
+        capabilities: { from: [], to: [...CLUB_CAPABILITIES].sort() },
       },
     });
   });
@@ -342,7 +347,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // Dziennik nadzoru, w którym połowa wierszy to „otwarto i zamknięto formularz",
     // przestaje być czytelny.
     const { app, db } = await testHarness();
-    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', {
+    const res = await patchPilot(app, await tokenOf(app, 'AKO'), 'PWI', {
       name: 'Piotr Wiśniewski',
     });
 
@@ -353,7 +358,7 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
 
   it('zmiana kodu NIE odrywa konta od historii - `id` zostaje ten sam', async () => {
     const { app, db } = await testHarness();
-    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'PWI', { code: 'PWN' });
+    const res = await patchPilot(app, await tokenOf(app, 'AKO'), 'PWI', { code: 'PWN' });
 
     expect(res.statusCode).toBe(200);
     expect(res.json().pilot).toMatchObject({ id: 'PWI', code: 'PWN' });
@@ -369,15 +374,16 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
 
   it('administrator nie odbiera roli SOBIE - 409 z powodem, nie ciche 200', async () => {
     const { app, db } = await testHarness();
-    const res = await patchPilot(app, await tokenOf(app, 'TMK'), 'TMK', { role: 'pilot' });
+    const res = await patchPilot(app, await tokenOf(app, 'AKO'), 'AKO', { capabilities: [] });
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
-    const { rows } = await db.query<{ role: string }>(
-      "SELECT role FROM memberships WHERE pilot_id = 'TMK' AND org_id = 'org-a'",
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM membership_capabilities
+        WHERE pilot_id = 'AKO' AND org_id = 'org-a' AND capability = 'accounts.manage'`,
     );
-    expect(rows[0]?.role).toBe('admin');
+    expect(Number(rows[0]?.n)).toBe(1);
     expect(await auditRows(db)).toEqual([]);
   });
 
@@ -388,27 +394,27 @@ describe('PATCH /admin/api/pilots/:id - tożsamość i rola', () => {
     // przy jej usunięciu, a pilnował jej z nazwy. Przez gałąź `last_admin` przechodzi
     // osobny przypadek niżej („wyścig o populację administratorów").
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
-    // Świat testowy ma DWA konta administratorów (TMK, AKO), a ten przypadek opisuje
-    // klub, w którym na końcu zostaje JEDEN - więc AKO schodzi do pilota, zanim ruch
+    // Świat testowy ma DWA konta administratorów (AKO, BNO), a ten przypadek opisuje
+    // klub, w którym na końcu zostaje JEDEN - więc BNO schodzi do pilota, zanim ruch
     // się zacznie. Jawnie w teście, bo to warunek przypadku, a nie własność świata.
-    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'BNO' AND org_id = 'org-a'");
 
     // Drugi administrator, żeby dało się w ogóle wykonać ruch odbierający rolę…
-    await patchPilot(app, token, 'PWI', { role: 'admin' });
-    // …i degradacja TMK cudzą ręką (PWI jest teraz administratorem).
+    await patchPilot(app, token, 'PWI', { capabilities: CLUB_CAPABILITIES });
+    // …i degradacja AKO cudzą ręką (PWI jest teraz administratorem).
     const second = await tokenOf(app, 'PWI');
-    expect((await patchPilot(app, second, 'TMK', { role: 'pilot' })).statusCode).toBe(200);
+    expect((await patchPilot(app, second, 'AKO', { capabilities: [] })).statusCode).toBe(200);
 
     // PWI został sam. Odmowa jest tu `self_demote`, bo to on sam wykonuje ruch -
     // i to jest jedyna droga, jaką ten stan da się osiągnąć jednym żądaniem.
-    const refused = await patchPilot(app, second, 'PWI', { role: 'pilot' });
+    const refused = await patchPilot(app, second, 'PWI', { capabilities: [] });
     expect(refused.statusCode).toBe(409);
     expect(refused.json()).toEqual({ error: 'refused', reason: 'self_demote' });
 
     const { rows } = await db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships m JOIN membership_capabilities mc ON mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id AND mc.capability = 'accounts.manage' WHERE m.org_id = 'org-a' AND m.status = 'active'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -430,11 +436,11 @@ describe('wyścig o populację administratorów', () => {
     const queries: string[] = [];
     const commands = pilotCommands(harness, { queries });
 
-    const outcome = await commands.update(actor('TMK'), 'PWI', { role: 'admin' });
+    const outcome = await commands.update(actor('AKO'), 'PWI', { capabilities: CLUB_CAPABILITIES });
     expect(outcome.ok).toBe(true);
 
     const lock = queries.findIndex((q) => q.includes('pg_advisory_xact_lock'));
-    const count = queries.findIndex((q) => q.includes("role = 'admin'"));
+    const count = queries.findIndex((q) => q.includes("'accounts.manage'"));
     expect(lock).toBeGreaterThanOrEqual(0);
     expect(count).toBeGreaterThanOrEqual(0);
     // Blokada ZA odczytem nie chroni niczego: licznik byłby już przeczytany.
@@ -446,7 +452,7 @@ describe('wyścig o populację administratorów', () => {
     const queries: string[] = [];
     const commands = pilotCommands(harness, { queries });
 
-    expect((await commands.setActive(actor('TMK'), 'PWI', false)).ok).toBe(true);
+    expect((await commands.setActive(actor('AKO'), 'PWI', false)).ok).toBe(true);
     expect(queries.some((q) => q.includes('pg_advisory_xact_lock'))).toBe(true);
   });
 
@@ -455,29 +461,29 @@ describe('wyścig o populację administratorów', () => {
     //
     // Stan odtwarza dokładnie to, co po naprawie widzi druga transakcja: obaj
     // administratorzy ruszyli naraz, pierwsza degradacja zdążyła, a druga wchodzi do
-    // reguły z licznikiem przeczytanym PO niej. Jej `Actor` (TMK) nie jest już wtedy
+    // reguły z licznikiem przeczytanym PO niej. Jej `Actor` (AKO) nie jest już wtedy
     // administratorem, więc brama HTTP odbiłaby żądanie wcześniej - dlatego komendę
     // wołamy wprost, tak jak robi to `rebuildProjectionsCli`.
     const harness = await testHarness();
     const commands = pilotCommands(harness);
 
-    // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (AKO)
+    // Wyścig ma być między DWOMA administratorami, a świat testowy ma trzeciego (BNO)
     // - z nim żadna z degradacji nie byłaby tą ostatnią i gałąź nigdy by nie zaszła.
-    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await harness.db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'BNO' AND org_id = 'org-a'");
 
-    // Dwóch administratorów: TMK (seed) i PWI.
-    expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
+    // Dwóch administratorów: AKO (seed) i PWI.
+    expect((await commands.update(actor('AKO'), 'PWI', { capabilities: CLUB_CAPABILITIES })).ok).toBe(true);
 
-    // Pierwsza transakcja wyścigu: PWI odbiera rolę TMK. Przechodzi - jest dwóch.
-    expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
+    // Pierwsza transakcja wyścigu: PWI odbiera AKO władzę nad kontami. Przechodzi - jest dwóch.
+    expect((await commands.update(actor('PWI'), 'AKO', { capabilities: [] })).ok).toBe(true);
 
     // Druga transakcja wyścigu, wpuszczona przez blokadę dopiero teraz.
-    const outcome = await commands.update(actor('TMK'), 'PWI', { role: 'pilot' });
+    const outcome = await commands.update(actor('AKO'), 'PWI', { capabilities: [] });
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
 
     // I to jest cała stawka: klub NADAL ma administratora.
     const { rows } = await harness.db.query<{ n: string }>(
-      "SELECT COUNT(*) AS n FROM memberships WHERE org_id = 'org-a' AND status = 'active' AND role = 'admin'",
+      "SELECT COUNT(*) AS n FROM memberships m JOIN membership_capabilities mc ON mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id AND mc.capability = 'accounts.manage' WHERE m.org_id = 'org-a' AND m.status = 'active'",
     );
     expect(Number(rows[0]?.n)).toBe(1);
   });
@@ -488,12 +494,12 @@ describe('wyścig o populację administratorów', () => {
 
     // Jak wyżej: trzeci administrator ze świata testowego zdejmowałby z PWI status
     // ostatniego, a to jego dotyczy ten przypadek.
-    await harness.db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'AKO' AND org_id = 'org-a'");
+    await harness.db.query("DELETE FROM membership_capabilities WHERE pilot_id = 'BNO' AND org_id = 'org-a'");
 
-    expect((await commands.update(actor('TMK'), 'PWI', { role: 'admin' })).ok).toBe(true);
-    expect((await commands.update(actor('PWI'), 'TMK', { role: 'pilot' })).ok).toBe(true);
+    expect((await commands.update(actor('AKO'), 'PWI', { capabilities: CLUB_CAPABILITIES })).ok).toBe(true);
+    expect((await commands.update(actor('PWI'), 'AKO', { capabilities: [] })).ok).toBe(true);
 
-    const outcome = await commands.setActive(actor('TMK'), 'PWI', false);
+    const outcome = await commands.setActive(actor('AKO'), 'PWI', false);
     expect(outcome).toEqual({ ok: false, reason: 'refused', refusal: 'last_admin' });
 
     const { rows } = await harness.db.query<{ active: boolean }>(
@@ -521,11 +527,11 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     // Po issue #100 wyścig rozgrywa się na EDYCJI, nie na zakładaniu konta
     // (`POST /pilots` już nie ma): dwóch administratorów nadaje dwóm członkom ten sam
     // kod. Błąd przychodzi z PRAWDZIWEGO indeksu `idx_memberships_code`.
-    const sameCode = await commands.update(actor('TMK'), 'PWI', { code: 'AKO' });
+    const sameCode = await commands.update(actor('AKO'), 'PWI', { code: 'BNO' });
     expect(sameCode).toEqual({ ok: false, reason: 'conflict', field: 'code' });
 
-    const sameEmail = await commands.update(actor('TMK'), 'PWI', {
-      email: 'tomasz@ninerdeck.pl',
+    const sameEmail = await commands.update(actor('AKO'), 'PWI', {
+      email: 'adam@ninerdeck.pl',
     });
     expect(sameEmail).toEqual({ ok: false, reason: 'conflict', field: 'email' });
 
@@ -543,7 +549,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_code_key' })).toBe('code');
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_email_key' })).toBe('email');
     expect(
-      uniqueConflictField({ code: '23505', detail: 'Key (code)=(TMK) already exists.' }),
+      uniqueConflictField({ code: '23505', detail: 'Key (code)=(AKO) already exists.' }),
     ).toBe('code');
     expect(uniqueConflictField({ code: '23505', constraint: 'pilots_pkey' })).toBeNull();
     expect(uniqueConflictField({ code: '23503', constraint: 'pilots_code_key' })).toBeNull();
@@ -555,7 +561,7 @@ describe('wyścig o unikalność kodu i e-maila', () => {
 describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
   it('deaktywacja ZRYWA sesje pilota i zapisuje ich liczbę w audycie', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     // Pilot loguje się z dwóch urządzeń - dwa żywe refresh tokeny.
     const first = await login(app, 'PWI');
@@ -602,9 +608,9 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     // 403 „konto nie obejmuje panelu". W obu ZERO tokenów klubu; 401 `account_disabled`
     // zostało dla blokady platformowej osoby (`pilots.active`).
     const { app } = await testHarness();
-    await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
+    await setActive(app, await tokenOf(app, 'AKO'), 'BNO', false);
 
-    const mobile = await login(app, 'AKO');
+    const mobile = await login(app, 'BNO');
     expect(mobile.statusCode).toBe(202);
     expect(mobile.json().status).toBe('none');
     expect(mobile.json().memberships).toMatchObject([{ status: 'disabled' }]);
@@ -613,10 +619,10 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
       method: 'POST',
       url: '/admin/api/auth/login',
       headers: ADMIN_CSRF_HEADERS,
-      payload: { idToken: googleTokenFor('AKO') },
+      payload: { idToken: googleTokenFor('BNO') },
     });
     expect(panel.statusCode).toBe(403);
-    expect(panel.json()).toEqual({ error: 'no_panel_access' });
+    expect(panel.json()).toEqual({ error: 'no_membership' });
     expect(panel.headers['set-cookie']).toBeUndefined();
   });
 
@@ -625,10 +631,10 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
     // administratora jest ważny kryptograficznie jeszcze przez godzinę, a mimo to
     // kolejne żądanie panelu dostaje 401 - bo za poświadczeniem nie stoi już nikt.
     const { app } = await testHarness();
-    const cutOff = await tokenOf(app, 'AKO');
+    const cutOff = await tokenOf(app, 'BNO');
     expect((await listPilots(app, cutOff)).statusCode).toBe(200);
 
-    await setActive(app, await tokenOf(app, 'TMK'), 'AKO', false);
+    await setActive(app, await tokenOf(app, 'AKO'), 'BNO', false);
 
     const after = await listPilots(app, cutOff);
     expect(after.statusCode).toBe(401);
@@ -637,13 +643,13 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
 
   it('administrator nie deaktywuje SIEBIE - 409 z powodem', async () => {
     const { app, db } = await testHarness();
-    const res = await setActive(app, await tokenOf(app, 'TMK'), 'TMK', false);
+    const res = await setActive(app, await tokenOf(app, 'AKO'), 'AKO', false);
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toEqual({ error: 'refused', reason: 'self_deactivate' });
 
     const { rows } = await db.query<{ active: boolean }>(
-      "SELECT active FROM pilots WHERE id = 'TMK'",
+      "SELECT active FROM pilots WHERE id = 'AKO'",
     );
     expect(rows[0]?.active).toBe(true);
     expect(await auditRows(db)).toEqual([]);
@@ -651,7 +657,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
 
   it('aktywacja wraca jako `pilot.update` - katalog akcji nie ma `membership.enable`', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     await setActive(app, token, 'PWI', false);
     const res = await setActive(app, token, 'PWI', true);
@@ -668,7 +674,7 @@ describe('POST /admin/api/pilots/:id/active - deaktywacja i aktywacja', () => {
 
   it('powtórna deaktywacja → 400 `no_changes`, bez drugiego wpisu', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     await setActive(app, token, 'PWI', false);
     const again = await setActive(app, token, 'PWI', false);
@@ -688,19 +694,19 @@ describe('unieważnianie sesji - po wejściu Google jedyną drogą jest deaktywa
     // bo przywrócenie dostępu jest decyzją o KONCIE, a nie o poświadczeniu, które
     // ktoś mógł w międzyczasie skopiować.
     const { app, clock } = await testHarness();
-    const admin = await tokenOf(app, 'TMK');
-    const session = await panelSession(app, 'AKO');
+    const admin = await tokenOf(app, 'AKO');
+    const session = await panelSession(app, 'BNO');
 
     clock.advance(1000);
-    expect((await setActive(app, admin, 'AKO', false)).statusCode).toBe(200);
+    expect((await setActive(app, admin, 'BNO', false)).statusCode).toBe(200);
     expect((await panelMe(app, session)).statusCode).toBe(401);
 
     clock.advance(1000);
-    expect((await setActive(app, admin, 'AKO', true)).statusCode).toBe(200);
+    expect((await setActive(app, admin, 'BNO', true)).statusCode).toBe(200);
     expect((await panelMe(app, session)).statusCode).toBe(401);
 
     // …a świeże logowanie po aktywacji działa (znacznik odcina przeszłość, nie konto).
-    expect((await panelMe(app, await panelSession(app, 'AKO'))).statusCode).toBe(200);
+    expect((await panelMe(app, await panelSession(app, 'BNO'))).statusCode).toBe(200);
   });
 });
 
@@ -710,7 +716,7 @@ describe('CSRF i sesja przeglądarkowa', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots',
-      headers: { authorization: `Bearer ${await tokenOf(app, 'TMK')}` },
+      headers: { authorization: `Bearer ${await tokenOf(app, 'AKO')}` },
       payload: { code: 'NEW', name: 'Nowe Konto', email: 'nowe@ninerdeck.pl' },
     });
 
@@ -756,7 +762,7 @@ describe('usunięcie konta', () => {
 
   it('kasuje konto BEZ historii - wiersz znika, a audyt niesie tożsamość', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     const id = await disposable(app, db, token);
 
     const res = await deletePilot(app, token, id);
@@ -768,8 +774,8 @@ describe('usunięcie konta', () => {
     // Wpis audytu jest po tej operacji JEDYNYM śladem konta, więc musi nieść komplet
     // tożsamości - `target_id` jest uuid-em, którego nikt nie rozpozna.
     const audit = (await auditRows(db)).find((row) => row.action === 'pilot.delete');
-    expect(audit).toMatchObject({ target_type: 'pilot', target_id: id, actor_pilot_id: 'TMK' });
-    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', role: 'pilot' });
+    expect(audit).toMatchObject({ target_type: 'pilot', target_id: id, actor_pilot_id: 'AKO' });
+    expect(audit?.details).toMatchObject({ code: 'TMP', name: 'Konto Pomyłkowe', capabilities: [] });
   });
 
   it('ODMAWIA, dopóki konto ma dostęp - usuwanie jest dwustopniowe', async () => {
@@ -777,7 +783,7 @@ describe('usunięcie konta', () => {
     // usunięte „na gorąco" zostałoby na nim jako AKTYWNE. Wyłączenie jedzie normalną
     // drogą przez `GET /reference` i aplikacja po nim filtruje.
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     await addMember(app, db, token, { id: 'TMP-ID', code: 'TMP', name: 'Konto Pomyłkowe' });
     const id = 'TMP-ID';
 
@@ -791,7 +797,7 @@ describe('usunięcie konta', () => {
 
   it('ODMAWIA kontu, które latało jako PIC', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     const id = await disposable(app, db, token);
     await insertEvent(db, { uuid: 'e-pic', picId: id });
 
@@ -805,9 +811,9 @@ describe('usunięcie konta', () => {
     // Przypadek najłatwiejszy do przeoczenia: konto nie jest PIC-em ani jednej sesji,
     // a mimo to stoi w cudzym rejestrze i w karcie arkusza.
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     const id = await disposable(app, db, token);
-    await insertEvent(db, { uuid: 'e-dual', picId: 'TMK', dualId: id });
+    await insertEvent(db, { uuid: 'e-dual', picId: 'AKO', dualId: id });
 
     const res = await deletePilot(app, token, id);
 
@@ -819,7 +825,7 @@ describe('usunięcie konta', () => {
     // Administrator, który coś w klubie zrobił, zostaje w dzienniku - dziennik bez
     // tożsamości sprawcy przestaje być dziennikiem.
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     const id = await disposable(app, db, token);
     await db.query(
       `INSERT INTO admin_audit (org_id, actor_pilot_id, actor_role, action, target_type, target_id)
@@ -835,9 +841,9 @@ describe('usunięcie konta', () => {
 
   it('ODMAWIA usunięcia WŁASNEGO konta', async () => {
     const { app } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
-    const res = await deletePilot(app, token, 'TMK');
+    const res = await deletePilot(app, token, 'AKO');
 
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: 'refused', reason: 'self_delete' });
@@ -845,14 +851,14 @@ describe('usunięcie konta', () => {
 
   it('nieznane konto to 404, a nie ciche 204', async () => {
     const { app } = await testHarness();
-    const res = await deletePilot(app, await tokenOf(app, 'TMK'), 'nie-ma-takiego');
+    const res = await deletePilot(app, await tokenOf(app, 'AKO'), 'nie-ma-takiego');
 
     expect(res.statusCode).toBe(404);
   });
 
   it('konto bez zdolności `accounts.manage` dostaje 403 i niczego nie kasuje', async () => {
     const { app, db } = await testHarness();
-    const admin = await tokenOf(app, 'TMK');
+    const admin = await tokenOf(app, 'AKO');
     const id = await disposable(app, db, admin);
 
     const res = await deletePilot(app, await tokenOf(app, 'PWI'), id);

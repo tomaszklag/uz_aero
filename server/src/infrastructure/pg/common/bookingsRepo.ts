@@ -62,12 +62,14 @@ interface BookingDbRow {
   updated_at: string | Date;
   closed_at: string | Date | null;
   close_reason: string | null;
+  /** Stempel przypomnienia „za godzinę" (migracja 15, obserwowanie samolotu). */
+  reminded_at: string | Date | null;
 }
 
 const COLUMNS = `
   id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, dual_id, operation,
   from_icao, to_icao, planned_air_min, planned_fuel_l, session_uuid, block_reason,
-  note, created_by, created_at, updated_at, closed_at, close_reason
+  note, created_by, created_at, updated_at, closed_at, close_reason, reminded_at
 `;
 
 /** Lista stanów trzymających slot w postaci gotowej do `IN (...)` - jedno źródło z domeną. */
@@ -100,6 +102,7 @@ const toRecord = (r: BookingDbRow): BookingRecord => ({
   updatedAt: ms(r.updated_at),
   closedAt: r.closed_at == null ? null : ms(r.closed_at),
   closeReason: r.close_reason,
+  remindedAt: r.reminded_at == null ? null : ms(r.reminded_at),
 });
 
 /**
@@ -128,6 +131,12 @@ export class PgBookingsRepo implements BookingsPort {
       params.push(query.aircraftId);
       sql += ` AND aircraft_id = $${params.length}`;
     }
+    if (query.pilotId != null) {
+      // Osoba na KTÓRYMKOLWIEK fotelu: rezerwacja z uczniem jako Dual jest jego terminem
+      // tak samo, jak instruktora - i tak samo nachodzi na inny (issue #206).
+      params.push(query.pilotId);
+      sql += ` AND (pilot_id = $${params.length} OR dual_id = $${params.length})`;
+    }
     if (query.includeClosed !== true) sql += ` AND status IN (${HOLDING})`;
     sql += ' ORDER BY starts_at, aircraft_id';
     const { rows } = await db.query<BookingDbRow>(sql, params);
@@ -140,6 +149,28 @@ export class PgBookingsRepo implements BookingsPort {
       [orgId, id],
     );
     return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
+  async lock(tx: Queryable, orgId: string, id: string): Promise<BookingRecord | null> {
+    const { rows } = await tx.query<BookingDbRow>(
+      `SELECT ${COLUMNS} FROM bookings WHERE org_id = $1 AND id = $2 FOR UPDATE`,
+      [orgId, id],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
+  async pending(db: Queryable, orgId: string): Promise<BookingRecord[]> {
+    // `kind = 'flight'` jest tu REGUŁĄ, nie filtrem wygody: wyłączenie maszyny z użytku
+    // nie ma ścieżki i nie może czekać na niczyją zgodę (§11) - a `pending` na takim
+    // wierszu i tak nie ma jak powstać. Najstarsze pierwsze, bo kolejka ma pokazać na
+    // górze to, co jest najbliżej wygaśnięcia.
+    const { rows } = await db.query<BookingDbRow>(
+      `SELECT ${COLUMNS} FROM bookings
+        WHERE org_id = $1 AND kind = 'flight' AND status = 'pending'
+        ORDER BY created_at, id`,
+      [orgId],
+    );
+    return rows.map(toRecord);
   }
 
   /**
@@ -204,7 +235,13 @@ export class PgBookingsRepo implements BookingsPort {
       params.push(value);
       sets.push(`${column} = $${params.length}`);
     };
-    if (patch.startsAt !== undefined) set('starts_at', new Date(patch.startsAt));
+    if (patch.startsAt !== undefined) {
+      set('starts_at', new Date(patch.startsAt));
+      // Przesunięcie POCZĄTKU zeruje stempel przypomnienia (obserwowanie, §4.2): nowy
+      // termin dostanie własne „za godzinę". Kolumna po prawej stronie `SET` to wartość
+      // SPRZED zapisu, więc poprawka niezmieniająca początku stempla nie rusza.
+      sets.push(`reminded_at = CASE WHEN starts_at = $${params.length} THEN reminded_at ELSE NULL END`);
+    }
     if (patch.endsAt !== undefined) set('ends_at', new Date(patch.endsAt));
     if (patch.dualId !== undefined) set('dual_id', patch.dualId);
     if (patch.operation !== undefined) set('operation', patch.operation);
@@ -258,19 +295,57 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async confirm(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    // `status = 'pending'` w warunku, a nie sprawdzenie przed zapisem: między odczytem
+    // a zapisem mieści się odwołanie pilota i decyzja panelu, a `null` jest wtedy tą
+    // samą odpowiedzią co „nie ma czego potwierdzać".
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET status = 'confirmed', updated_at = $3
+        WHERE org_id = $1 AND id = $2 AND status = 'pending'
+        RETURNING ${COLUMNS}`,
+      [orgId, id, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
+  async reopen(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    // Ten sam warunek w SQL-u, co przy `confirm`: między odczytem a zapisem ktoś mógł
+    // odwołać rezerwację, a wtedy wracamy `null` zamiast wskrzeszać wiersz zamknięty.
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET status = 'pending', updated_at = $3
+        WHERE org_id = $1 AND id = $2 AND status IN (${HOLDING})
+        RETURNING ${COLUMNS}`,
+      [orgId, id, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
   async fulfil(
     tx: Queryable,
     orgId: string,
     id: string,
-    sessionUuid: string,
+    by: { sessionUuid: string; pilotId: string; aircraftId: string },
     at: Date,
   ): Promise<boolean> {
     const { rows } = await tx.query<{ id: string }>(
       `UPDATE bookings
           SET status = 'fulfilled', session_uuid = $3, updated_at = $4
-        WHERE org_id = $1 AND id = $2 AND status IN (${HOLDING})
+        WHERE org_id = $1 AND id = $2 AND status = 'confirmed' AND kind = 'flight'
+          AND pilot_id = $5 AND aircraft_id = $6
         RETURNING id`,
-      [orgId, id, sessionUuid, at],
+      [orgId, id, by.sessionUuid, at, by.pilotId, by.aircraftId],
     );
     return rows.length > 0;
   }
@@ -287,10 +362,76 @@ export class PgBookingsRepo implements BookingsPort {
     }>(
       `SELECT id, org_id, aircraft_id, starts_at
          FROM bookings
-        WHERE kind = 'flight' AND status IN (${HOLDING})
+        WHERE kind = 'flight' AND status = 'confirmed'
           AND starts_at < $1 AND ends_at > $2
         ORDER BY starts_at`,
       [window.startedBefore, window.endsAfter],
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      aircraftId: r.aircraft_id,
+      startsAt: ms(r.starts_at),
+    }));
+  }
+
+  async dueReminders(
+    db: Queryable,
+    window: { startsBefore: Date; endsAfter: Date },
+  ): Promise<BookingDue[]> {
+    // Bez `org_id` jak `due`: zadanie okresowe przemiata cały serwer, a klub każdego
+    // kandydata jedzie w wierszu, żeby stempel i wiadomość trafiły we właściwy.
+    const { rows } = await db.query<{
+      id: string;
+      org_id: string;
+      aircraft_id: string;
+      starts_at: string | Date;
+    }>(
+      `SELECT id, org_id, aircraft_id, starts_at
+         FROM bookings
+        WHERE kind = 'flight' AND status = 'confirmed' AND reminded_at IS NULL
+          AND starts_at <= $1 AND ends_at > $2
+        ORDER BY starts_at`,
+      [window.startsBefore, window.endsAfter],
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      orgId: r.org_id,
+      aircraftId: r.aircraft_id,
+      startsAt: ms(r.starts_at),
+    }));
+  }
+
+  async markReminded(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    // `updated_at` zostaje: stempel nie zmienia niczego, co widzi siatka kalendarza,
+    // więc nie ma po co unieważniać ETagu okna każdemu telefonowi w klubie.
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET reminded_at = $3
+        WHERE org_id = $1 AND id = $2 AND status = 'confirmed' AND reminded_at IS NULL
+        RETURNING ${COLUMNS}`,
+      [orgId, id, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
+  async undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]> {
+    const { rows } = await db.query<{
+      id: string;
+      org_id: string;
+      aircraft_id: string;
+      starts_at: string | Date;
+    }>(
+      `SELECT id, org_id, aircraft_id, starts_at
+         FROM bookings
+        WHERE kind = 'flight' AND status = 'pending' AND starts_at <= $1
+        ORDER BY starts_at`,
+      [startedBefore],
     );
     return rows.map((r) => ({
       id: r.id,

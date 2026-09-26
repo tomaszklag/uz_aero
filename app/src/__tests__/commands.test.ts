@@ -21,7 +21,7 @@ import { FixedClock } from '../infrastructure/clock';
 
 const SESSION = 'sess-22jun';
 const AC = 'sp-axa';
-const PIC = 'tmk';
+const PIC = 'ako';
 /** Klub aktywny - od 2.0.0 kontekst floty i wysyłki (wielofirmowość §7). */
 const ORG = 'org-a';
 

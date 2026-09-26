@@ -5,7 +5,9 @@
  * Cztery trasy i TRZY różne zdolności - to nie jest rozdrobnienie, tylko trzy różne
  * pytania o władzę:
  *
- *  - **odczyt** na `panel.access`: kalendarz klubu czyta każdy, kto wchodzi do panelu;
+ *  - **odczyt** dla KAŻDEGO członka klubu (`capability: null`, issue #216): kalendarz
+ *    w panelu widzi ten sam krąg osób, co w aplikacji - a kształt cudzej rezerwacji
+ *    pyta, kto patrzy (`bookingWire.ts`);
  *  - **rezerwacja za pilota i odwołanie cudzej** na `reservations.manage`: władza nad
  *    czyimś planem;
  *  - **wyłączenie z użytku** na `fleet.manage`: stan MASZYNY rozciągnięty w czasie,
@@ -21,10 +23,12 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { AdminBookingCommands } from '../../../application/admin/commands/bookings.ts';
+import type { ApprovalFlow } from '../../../application/common/commands/approvals.ts';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
-import type { BookingRecord } from '../../../application/common/ports.ts';
 import type { BookingRefusal } from '../../../domain/bookings.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
+import { panelApprovalWire } from './approvals.ts';
+import { bookingWire as wire, FULL_VIEWER, seesFull, viewerOf } from './bookingWire.ts';
 
 const ICAO = z.string().trim().min(3).max(8);
 const NOTE_MAX = 500;
@@ -66,32 +70,6 @@ const block = z.object({
  */
 const cancel = z.object({ reason: z.string().trim().max(2000).nullable().optional() });
 
-/** Zajętość na drucie dla panelu - pełna, razem ze śladem zamknięcia i autorem. */
-function wire(row: BookingRecord): Record<string, unknown> {
-  return {
-    id: row.id,
-    aircraftId: row.aircraftId,
-    kind: row.kind,
-    status: row.status,
-    startsAt: new Date(row.startsAt).toISOString(),
-    endsAt: new Date(row.endsAt).toISOString(),
-    pilotId: row.pilotId,
-    dualId: row.dualId,
-    operation: row.operation,
-    fromIcao: row.fromIcao,
-    toIcao: row.toIcao,
-    plannedAirMin: row.plannedAirMin,
-    plannedFuelL: row.plannedFuelL,
-    sessionUuid: row.sessionUuid,
-    blockReason: row.blockReason,
-    note: row.note,
-    createdBy: row.createdBy,
-    createdAt: new Date(row.createdAt).toISOString(),
-    closedAt: row.closedAt == null ? null : new Date(row.closedAt).toISOString(),
-    closeReason: row.closeReason,
-  };
-}
-
 const STATUS: Readonly<Record<BookingRefusal, number>> = {
   slot_taken: 409,
   aircraft_disabled: 409,
@@ -107,12 +85,47 @@ export function registerAdminBookingRoutes(
   app: FastifyInstance,
   bookings: AdminBookingCommands,
   calendar: BookingQueries,
+  approvals: ApprovalFlow,
   gate: AdminGate,
 ): void {
+  /**
+   * JEDNA zajętość razem ze stanem jej ścieżki (3.1.0, issue #165) - dla szuflady
+   * `#/kalendarz/:id`. Stan ścieżki jedzie TUTAJ, nie w oknie kalendarza: siatka rysuje
+   * pasek i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno zapytanie o tydzień
+   * w tyle zapytań, ile rezerwacji stoi na ekranie (ta sama decyzja, co na telefonie).
+   * Cudzy klub = 404, jak wszędzie (epik C wielofirmowości).
+   */
   adminRoute(
     app,
     gate,
-    { method: 'GET', url: '/bookings', capability: 'panel.access' },
+    // KAŻDY członek (issue #216): kształt pyta, kto patrzy - patrz `bookingWire.ts`.
+    { method: 'GET', url: '/bookings/:id', capability: null },
+    async (req, reply, actor) => {
+      const p = params.safeParse(req.params);
+      if (!p.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const view = await calendar.byId(actor.orgId, p.data.id);
+      if (view == null) return reply.code(404).send({ error: 'not_found' });
+
+      // Stan ścieżki jedzie razem z KOMPLETEM pól - i tylko z nim: historia cudzej
+      // sprawy (kroki, decyzje, powody odmowy) jest treścią tej samej klasy, co jej
+      // notatka. Wąski widz dostaje `approval: null`, a panel nie rysuje wtedy karty.
+      const viewer = viewerOf(actor);
+      const approval = seesFull(view.booking, viewer)
+        ? panelApprovalWire(await approvals.view(actor.orgId, view.booking.id))
+        : null;
+      return reply.send({
+        timezone: view.timezone,
+        booking: wire(view.booking, viewer),
+        approval,
+      });
+    },
+  );
+
+  adminRoute(
+    app,
+    gate,
+    { method: 'GET', url: '/bookings', capability: null },
     async (req, reply, actor) => {
       const q = window.safeParse(req.query);
       if (!q.success) return reply.code(400).send({ error: 'bad_request' });
@@ -125,6 +138,7 @@ export function registerAdminBookingRoutes(
       );
       if (view == null) return reply.code(404).send({ error: 'not_found' });
 
+      const viewer = viewerOf(actor);
       return reply.send({
         timezone: view.timezone,
         homeIcao: view.homeIcao,
@@ -133,7 +147,7 @@ export function registerAdminBookingRoutes(
           startsAt: new Date(d.startsAt).toISOString(),
           endsAt: new Date(d.endsAt).toISOString(),
         })),
-        bookings: view.bookings.map(wire),
+        bookings: view.bookings.map((row) => wire(row, viewer)),
       });
     },
   );
@@ -212,12 +226,15 @@ function answer(
   outcome: Outcome,
   okStatus: number,
 ): unknown {
+  // Mutacje stoją na `reservations.manage` / `fleet.manage`, a kolidujący wiersz jest
+  // treścią odmowy dla kogoś, kto ma prawo go przesunąć - komplet, bez pytania kto patrzy.
   if (outcome.ok) {
-    return okStatus === 200 ? reply.send(wire(outcome.booking)) : reply.code(okStatus).send(wire(outcome.booking));
+    const body = wire(outcome.booking, FULL_VIEWER);
+    return okStatus === 200 ? reply.send(body) : reply.code(okStatus).send(body);
   }
   if (outcome.reason === 'not_found') return reply.code(404).send({ error: 'not_found' });
   return reply.code(STATUS[outcome.refusal]).send({
     error: outcome.refusal,
-    ...(outcome.taken == null ? {} : { taken: wire(outcome.taken) }),
+    ...(outcome.taken == null ? {} : { taken: wire(outcome.taken, FULL_VIEWER) }),
   });
 }

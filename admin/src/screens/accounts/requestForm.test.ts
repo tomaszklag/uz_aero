@@ -13,9 +13,9 @@ const draft = (over: Partial<RequestDraft> = {}): RequestDraft => ({ ...EMPTY_RE
 describe('zatwierdzenie zgłoszenia', () => {
   it('KOD STARTUJE PUSTY - podpowiedziany wyglądałby jak nadany', () => {
     expect(EMPTY_REQUEST.code).toBe('');
-    // Rola ma wartość domyślną, bo zgłaszający jest pilotem, dopóki klub nie postanowi
-    // inaczej - a to jest wybór, którego brak niczego nie psuje.
-    expect(EMPTY_REQUEST.role).toBe('pilot');
+    // ZAKRES startuje PUSTY i to nie jest brak wyboru, tylko wybór domyślny: kandydat
+    // wchodzi do klubu po to, żeby latać, a nie po to, żeby wejść do panelu.
+    expect(EMPTY_REQUEST.capabilities).toEqual([]);
   });
 
   it('puste pole wymagane blokuje BEZ ZDANIA - widać je nad przyciskiem', () => {
@@ -36,9 +36,9 @@ describe('zatwierdzenie zgłoszenia', () => {
   });
 
   it('kod idzie WERSALIKAMI, jak wszędzie indziej w tym panelu', () => {
-    expect(approvalBodyOf(draft({ code: ' mso ', role: 'admin' }))).toEqual({
+    expect(approvalBodyOf(draft({ code: ' mso ', capabilities: ['panel.access', 'accounts.manage'] }))).toEqual({
       code: 'MSO',
-      role: 'admin',
+      capabilities: ['panel.access', 'accounts.manage'],
     });
   });
 });

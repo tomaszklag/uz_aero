@@ -13,9 +13,11 @@
 import { useState } from 'react';
 
 import type { BookingDto } from '../../api/dto';
-import { useCancelBooking } from '../../queries/useCalendar';
+import { useBooking, useCancelBooking } from '../../queries/useCalendar';
 import { Button, Card, Drawer, EmptyState, Field, TextInput } from '../../ui/components';
 import { BookIcon } from '../../ui/components/icons';
+import { errorMessage } from '../common/apiMessage';
+import { ApprovalCard } from './ApprovalCard';
 import { bookingErrorMessage } from './bookingRefusal';
 import { NONE } from '../common/values';
 import {
@@ -44,6 +46,10 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
   const isBlock = booking.kind === 'block';
   const naglowek = drawerHeading(booking, reg, timezone);
 
+  // Stan ścieżki akceptacji (3.1.0) jedzie OSOBNYM odczytem, nie w oknie kalendarza:
+  // siatka o kroki nie pyta. Wyłączenie z użytku ścieżki nie ma - nie pytamy.
+  const detail = useBooking(isBlock ? null : booking.id);
+
   // Powód wymagany WYŁĄCZNIE przy cudzej rezerwacji - zdjęcie wyłączenia z użytku
   // idzie bez niego, bo nie ma komu tłumaczyć.
   const needsReason = !isBlock;
@@ -64,7 +70,11 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
             {booking.dualId == null ? null : (
               <Row label="Drugi pilot">{personLabel(booking.dualId, person)}</Row>
             )}
-            <Row label="Zadanie">{operationLabel(booking.operation)}</Row>
+            {/* CUDZA rezerwacja bez „Podglądu klubu" (issue #216) zadania nie niesie -
+                wiersza wtedy NIE MA: kreska mówiłaby „nikt nie wpisał", a wpisano. */}
+            {booking.operation === undefined ? null : (
+              <Row label="Zadanie">{operationLabel(booking.operation)}</Row>
+            )}
             {booking.fromIcao == null && booking.toIcao == null ? null : (
               <Row label="Trasa">
                 <span className="mono">
@@ -80,11 +90,31 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
         {booking.note == null || booking.note === '' ? null : (
           <Row label="Notatka">{booking.note}</Row>
         )}
-        <Row label="Założona">
-          {stempel(new Date(booking.createdAt), timezone)}{' '}
-          <span className="cell-sub">{originLabel(booking, person)}</span>
-        </Row>
+        {booking.createdAt == null ? null : (
+          <Row label="Założona">
+            {stempel(new Date(booking.createdAt), timezone)}{' '}
+            <span className="cell-sub">{originLabel(booking, person)}</span>
+          </Row>
+        )}
       </Card>
+
+      {/* Ścieżka akceptacji (K2a): historia decyzji i - dla „Cudzych rezerwacji" -
+          decyzja za utknięty krok. Karta istnieje wyłącznie, gdy klub ma ścieżkę;
+          rozstrzyga to `ApprovalCard`. Stan wiersza bierze się z TEGO odczytu, nie
+          z okna kalendarza - jest świeższy o decyzje sprzed chwili. */}
+      {/* Cudza sprawa bez „Podglądu klubu" (issue #216) przychodzi z `approval: null`:
+          historia kroków i powody odmowy są treścią tej samej klasy, co notatka. */}
+      {isBlock ? null : detail.error != null ? (
+        <p className="card-note danger">{errorMessage(detail.error)}</p>
+      ) : detail.data?.approval == null ? null : (
+        <ApprovalCard
+          bookingId={booking.id}
+          view={detail.data.approval}
+          person={person}
+          timezone={detail.data.timezone === '' ? timezone : detail.data.timezone}
+          canDecide={canManage && detail.data.booking.status === 'pending'}
+        />
+      )}
 
       {/* Operacja, która ją zrealizowała - pojawia się DOPIERO po locie, bo wiąże je
           zdarzenie z rejestru. Do tego czasu wiersza nie ma: pusty byłby zdaniem

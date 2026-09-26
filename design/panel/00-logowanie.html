@@ -24,7 +24,7 @@
     <span class="vp-badge">00</span>
     <span class="vp-body">
       <span class="vp-name">Spoczynek - formularz i Google w jednej karcie</span>
-      <span class="vp-when">Stan domyślny od 2.1.0 (2026-09-16): e-mail, hasło, „Zaloguj się" i „Nie pamiętam hasła", pod separatorem „albo" przycisk Google. Hasło jest DRUGĄ metodą tej samej osoby, nie zamiennikiem Google - obie kończą się tą samą sesją. Nie ma tu wykładu o uprawnieniach ani zdania „konta zakłada administrator": kto nie może wejść, dowie się tego jednym zdaniem po próbie.</span>
+      <span class="vp-when">Stan domyślny od 2.1.0 (2026-09-16): e-mail, hasło (z „Nie pamiętam hasła" w wierszu etykiety - przy polu, którego dotyczy), „Zaloguj się", pod separatorem „albo" przycisk Google, a POD KARTĄ lżejsza ramka „Nie masz jeszcze konta? Załóż konto" (issue #180, 2026-09-24; wzorzec GitHub / Stripe / Linear - karta niesie jedną akcję główną). Hasło jest DRUGĄ metodą tej samej osoby, nie zamiennikiem Google - obie kończą się tą samą sesją. Nie ma tu wykładu o uprawnieniach ani zdania „konta zakłada administrator": kto nie może wejść, dowie się tego jednym zdaniem po próbie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -33,6 +33,13 @@
     <span class="vp-body">
       <span class="vp-name">Nie pamiętam hasła</span>
       <span class="vp-when"><code>#/logowanie/haslo</code>: pole adresu i „Wyślij link". Odpowiedź jest ZAWSZE ta sama („jeśli ten adres jest w systemie, link już idzie"), więc formularz nie wylicza kont. Nowego hasła NIE ustawia się w panelu - ustawia się je na stronie z linku, na dowolnym urządzeniu. Trzecie okno niżej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00-logowanie.html#konto">
+    <span class="vp-badge">KONTO</span>
+    <span class="vp-body">
+      <span class="vp-name">Załóż konto</span>
+      <span class="vp-when"><code>#/logowanie/konto</code> (issue #180, 2026-09-24): imię i nazwisko + adres i „Wyślij link" - TEN SAM mechanizm, co „Nie pamiętam hasła": hasło ustawia strona z linku i DOPIERO WTEDY powstaje osoba. Odpowiedź w trybie warunkowym (adres wolny → link; zajęty → list mówi, jak się zalogować), więc formularz nie wylicza kont. Bez pola hasła i bez kodu klubu - do klubu wchodzi się kodem w aplikacji. Lustro ekranu 00H telefonu; czwarte okno niżej.</span>
     </span>
   </a>
   <a class="vp-item" href="00-logowanie.html#odmowa">
@@ -83,16 +90,16 @@
   <div class="shell">
     <div class="login">
 
-      <div class="login-mark">
+      <div class="login-column">
+      <div class="login-head">
         <span class="login-badge">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
         </span>
-        <span class="login-title">NINERDECK</span>
-        <span class="login-note">Panel administracyjny</span>
+        <h1 class="login-heading">Zaloguj się do Ninerdeck</h1>
       </div>
 
-      <div class="login-card">
-        <!-- DWIE METODY, JEDNA KARTA (2.1.0, docs/logowanie-haslem.md D1, §5.2, §7.2).
+
+              <!-- DWIE METODY, JEDNA KOLUMNA (2.1.0, docs/logowanie-haslem.md D1, §5.2, §7.2).
              Hasło jest DRUGĄ metodą tej samej osoby - logowanie hasłem kończy się dokładnie
              tam, gdzie logowanie Googlem (ta sama sesja, ten sam klub). Formularz stoi
              NA WIERZCHU, bo administrator klubu założonego bez konta Google (D8) nie ma
@@ -102,13 +109,22 @@
              telefonu). Pole hasła: wklejanie dozwolone, przełącznik „pokaż", bez wymogów
              co do rodzaju znaków (D4) - żadnej podpowiedzi polityki, bo tu hasła się nie
              ustawia, tylko podaje. -->
-        <form action="#" autocomplete="on">
+
+      <form class="login-form" action="#" autocomplete="on">
           <div class="field">
             <label class="label" for="l-email">E-mail</label>
-            <input class="input mono" id="l-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+            <input class="input mono" id="l-email" type="email" autocomplete="username" value="adam.kowalski@ninerdeck.pl">
           </div>
           <div class="field">
-            <label class="label" for="l-pass">Hasło</label>
+            <div class="label-row">
+              <label class="label" for="l-pass">Hasło</label>
+              <!-- „Nie pamiętam hasła" PRZY POLU, którego dotyczy (wzorzec GitHub / Stripe /
+                   Linear; przegląd właściciela 2026-09-24: linki pod przyciskiem „wyglądały
+                   jak linki"). Służy też osobie z Googlem, która hasła nigdy nie ustawiła -
+                   link z e-maila ustawia hasło niezależnie od tego, czy jakieś było (D5),
+                   więc osobnego „nie mam jeszcze hasła" NIE MA. -->
+              <a class="label-action" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+            </div>
             <div class="input-pass">
               <input class="input" id="l-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
               <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
@@ -117,13 +133,9 @@
             </div>
           </div>
           <button type="submit" class="btn primary block">Zaloguj się</button>
-          <!-- JEDEN link, nie „nie pamiętam" i „nie mam jeszcze": pilot z Googlem, który
-               hasła nigdy nie ustawił, idzie TĄ SAMĄ drogą - link z e-maila ustawia hasło
-               niezależnie od tego, czy jakieś było (D5). -->
-          <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
         </form>
 
-        <div class="login-divider" role="separator">albo</div>
+        <div class="login-divider" role="separator">albo zaloguj się przez</div>
 
         <!-- PRZYCISK RYSUJE GOOGLE, NIE MY. `.login-google` jest pustym kontenerem,
              w który skrypt Google Identity Services wstawia własny przycisk. Poniżej
@@ -142,9 +154,14 @@
               <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
               <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
             </svg>
-            Zaloguj się przez Google
+            Kontynuuj z Google
           </button>
         </div>
+      
+
+      <!-- DROGA DLA KOGOŚ BEZ KONTA = JEDNO ZDANIE pod formularzem, bez ramki (układ jak w GitLabie,
+           przegląd właściciela 2026-09-24; wcześniej osobna ramka `.login-alt` z issue #180). -->
+      <p class="login-foot">Nie masz jeszcze konta? <a href="00-logowanie.html#konto">Załóż konto</a></p>
       </div>
 
     </div>
@@ -157,6 +174,8 @@
   <a href="00-logowanie.html" class="active">Logowanie</a>
   <span>·</span>
   <a href="00-logowanie.html#haslo">↓ Nie pamiętam hasła</a>
+  <span>·</span>
+  <a href="00-logowanie.html#konto">↓ Załóż konto</a>
   <span>·</span>
   <a href="00-logowanie.html#odmowa">↓ Odmowa</a>
   <span>·</span>
@@ -196,29 +215,29 @@
   <div class="shell">
     <div class="login">
 
-      <div class="login-mark">
+      <div class="login-column">
+      <div class="login-head">
         <span class="login-badge">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
         </span>
-        <span class="login-title">NINERDECK</span>
-        <span class="login-note">Panel administracyjny</span>
+        <h1 class="login-heading">Zaloguj się do Ninerdeck</h1>
       </div>
 
-      <div class="login-banner">
-        <div class="banner danger" role="alert">
+              <div class="banner danger" role="alert">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span>Nieprawidłowy e-mail lub hasło.</span>
         </div>
-      </div>
 
-      <div class="login-card">
-        <form action="#" autocomplete="on">
+      <form class="login-form" action="#" autocomplete="on">
           <div class="field">
             <label class="label" for="l2-email">E-mail</label>
-            <input class="input mono" id="l2-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+            <input class="input mono" id="l2-email" type="email" autocomplete="username" value="adam.kowalski@ninerdeck.pl">
           </div>
           <div class="field">
-            <label class="label" for="l2-pass">Hasło</label>
+            <div class="label-row">
+              <label class="label" for="l2-pass">Hasło</label>
+              <a class="label-action" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+            </div>
             <div class="input-pass">
               <input class="input" id="l2-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
               <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
@@ -227,10 +246,9 @@
             </div>
           </div>
           <button type="submit" class="btn primary block">Zaloguj się</button>
-          <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
         </form>
 
-        <div class="login-divider" role="separator">albo</div>
+        <div class="login-divider" role="separator">albo zaloguj się przez</div>
 
         <div class="login-google">
           <button type="button" class="login-google-mock">
@@ -240,9 +258,12 @@
               <path fill="#FBBC05" d="M5.55 14.68a6.9 6.9 0 0 1 0-4.41V7.29H1.7a11.5 11.5 0 0 0 0 10.37l3.85-2.98z"/>
               <path fill="#EA4335" d="M12 4.75c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.72 1.24 15.11 0 12 0 7.48 0 3.57 2.6 1.7 6.38l3.85 2.98C6.46 6.77 9 4.75 12 4.75z"/>
             </svg>
-            Zaloguj się przez Google
+            Kontynuuj z Google
           </button>
         </div>
+      
+
+      <p class="login-foot">Nie masz jeszcze konta? <a href="00-logowanie.html#konto">Załóż konto</a></p>
       </div>
 
     </div>
@@ -287,28 +308,28 @@
   <div class="shell">
     <div class="login">
 
-      <div class="login-mark">
+      <div class="login-column">
+      <div class="login-head">
         <span class="login-badge">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
         </span>
-        <span class="login-title">NINERDECK</span>
-        <span class="login-note">Panel administracyjny</span>
+        <h1 class="login-heading">Nie pamiętam hasła</h1>
       </div>
 
-      <div class="login-card">
-        <form action="#">
-          <!-- Tytuł karty krojem tekstowym, jak każdy tytuł karty w panelu (styl lekki:
-               Bebas tylko w marce); lead jest jednym zdaniem o tym, CO SIĘ STANIE -
-               nie o tym, jak działa token. -->
-          <div class="card-title">Link do ustawienia hasła</div>
-          <p class="login-note">Wyślemy link na adres konta. Otwórz go na dowolnym urządzeniu i ustaw hasło - potem zaloguj się tutaj.</p>
+      <p class="login-lead">Wyślemy link na adres konta. Otwórz go na dowolnym urządzeniu i ustaw hasło - potem zaloguj się tutaj.</p>
+
+      <form class="login-form" action="#">
           <div class="field">
             <label class="label" for="f-email">E-mail</label>
-            <input class="input mono" id="f-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+            <input class="input mono" id="f-email" type="email" autocomplete="username" value="adam.kowalski@ninerdeck.pl">
           </div>
           <button type="submit" class="btn primary block">Wyślij link</button>
-          <a class="login-link" href="00-logowanie.html">Wróć do logowania</a>
         </form>
+      
+
+      <!-- Wyjście POD kartą, nie w niej (issue #180, wzorzec GitHub / Linear): karta
+           niesie jedną akcję, a droga powrotu jest jej przypisem. -->
+      <p class="login-foot"><a href="00-logowanie.html">Wróć do logowania</a></p>
       </div>
 
     </div>
@@ -322,7 +343,85 @@
   <span>·</span>
   <a href="00-logowanie.html#haslo" class="active">Nie pamiętam hasła</a>
   <span>·</span>
+  <a href="00-logowanie.html#konto">↓ Załóż konto</a>
+  <span>·</span>
   <a href="konto.html">K1 Moje konto →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ CZWARTE OKNO: ZAŁÓŻ KONTO (issue #180, 2026-09-24) ══
+     Lustro ekranu 00H telefonu: imię i nazwisko + adres → „Wyślij link" → potwierdzenie.
+     TEN SAM MECHANIZM, co „Nie pamiętam hasła" (docs/logowanie-haslem.md §5.4a, §16):
+     hasło ustawia strona z linku (`/haslo/`) i DOPIERO WTEDY powstaje osoba - adres jest
+     potwierdzony samym kliknięciem, jak `email_verified` u Google. Do tego dnia konto dało
+     się założyć wyłącznie z telefonu, a właściciel zakładający konta testowe musiał po
+     niego sięgać. Czego tu NIE MA: pola hasła (strona z linku) ani kodu klubu - do klubu
+     wchodzi się kodem w APLIKACJI, osobną decyzją administratora; rejestracja niczego
+     w klubie nie omija. Lead mówi, CO SIĘ STANIE i skąd weźmie się klub - nic o tokenach
+     ani o tym, kto wysyła (issue #72). Imię i nazwisko: skład tekstowy, `autocomplete="name"`
+     - jedyna rzecz, której serwer nie ma skąd wziąć (u osoby z Google jest w profilu).
+     Puste albo za krótkie pole blokuje BEZ zdania - widać je nad przyciskiem (issue #55). -->
+<header class="canvas-label" id="konto">
+  <span class="film-strip">ZAŁÓŻ KONTO</span>
+  <span class="slug">panel/00-logowanie · #/logowanie/konto · link z e-maila</span>
+  <span class="canvas-meta">Dwa pola · jedna odpowiedź · bez pola hasła · bez kodu klubu</span>
+</header>
+
+<main class="browser" role="region" aria-label="Załóż konto - wyślij link">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/logowanie/konto
+    </span>
+  </div>
+
+  <div class="shell">
+    <div class="login">
+
+      <div class="login-column">
+      <div class="login-head">
+        <span class="login-badge">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <h1 class="login-heading">Załóż konto</h1>
+      </div>
+
+      <p class="login-lead">Wyślemy link na Twój adres. Ustaw z niego hasło i zaloguj się tutaj. Do klubu wejdziesz kodem od administratora w aplikacji.</p>
+
+      <form class="login-form" action="#">
+          <div class="field">
+            <label class="label" for="r-name">Imię i nazwisko</label>
+            <input class="input" id="r-name" type="text" autocomplete="name" autocapitalize="words" value="Adam Kowalski">
+          </div>
+          <div class="field">
+            <label class="label" for="r-email">E-mail</label>
+            <input class="input mono" id="r-email" type="email" autocomplete="email" value="a.kowalski@gmail.com">
+          </div>
+          <button type="submit" class="btn primary block">Wyślij link</button>
+        </form>
+      
+
+      <!-- Wyjście MUSI być: ktoś, kto ma już konto albo kliknął tu przez pomyłkę, wraca
+           bez wysyłania czegokolwiek - w ramce POD kartą (wzorzec GitHub „New to GitHub?"
+           odwrócony), bo karta niesie jedną akcję. Po wysłaniu zostaje sam powrót. -->
+      <p class="login-foot">Masz już konto? <a href="00-logowanie.html">Zaloguj się</a></p>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="00-logowanie.html">↑ Logowanie</a>
+  <span>·</span>
+  <a href="00-logowanie.html#haslo">↑ Nie pamiętam hasła</a>
+  <span>·</span>
+  <a href="00-logowanie.html#konto" class="active">Załóż konto</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
@@ -337,14 +436,18 @@
         <span class="inv-when">Formularz e-mail i hasło NIE CZEKA - jest znany lokalnie i stoi od pierwszej klatki (reguła „co znamy lokalnie, nie czeka"). Czeka wyłącznie przycisk Google: skrypt dostawcy jedzie z sieci, więc przez chwilę tego przycisku po prostu nie ma w drzewie. W jego miejscu stoi PLAMKA w jego geometrii (44 px, pigułka) - nigdy spinner i nigdy pustka. Bez niej karta skakałaby w chwili wjazdu przycisku.</span>
       </div>
       <div class="inv-demo">
-        <div class="login-card">
-          <form action="#">
+        <div class="login-column">
+
+      <form class="login-form" action="#">
             <div class="field">
               <label class="label" for="s1-email">E-mail</label>
               <input class="input mono" id="s1-email" type="email" autocomplete="username" placeholder="imie.nazwisko@…">
             </div>
             <div class="field">
-              <label class="label" for="s1-pass">Hasło</label>
+              <div class="label-row">
+                <label class="label" for="s1-pass">Hasło</label>
+                <a class="label-action" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+              </div>
               <div class="input-pass">
                 <input class="input" id="s1-pass" type="password" autocomplete="current-password">
                 <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
@@ -353,11 +456,12 @@
               </div>
             </div>
             <button type="submit" class="btn primary block">Zaloguj się</button>
-            <a class="login-link" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
           </form>
-          <div class="login-divider" role="separator">albo</div>
+          <div class="login-divider" role="separator">albo zaloguj się przez</div>
           <div class="login-google-skeleton" aria-hidden="true"></div>
           <div class="login-google pending"></div>
+        
+        <p class="login-foot">Nie masz jeszcze konta? <a href="00-logowanie.html#konto">Załóż konto</a></p>
         </div>
       </div>
     </article>
@@ -368,14 +472,18 @@
         <span class="inv-when">Między „Zaloguj się" a wejściem jest realna chwila: serwer liczy skrót hasła (albo sprawdza podpis tokenu Google). Zdanie stoi POD przyciskiem, którego dotyczy, i mówi, co się dzieje - to nie jest blokada, tylko postęp czynności, o którą człowiek właśnie poprosił. Przy Google to samo zdanie stoi pod przyciskiem Google.</span>
       </div>
       <div class="inv-demo">
-        <div class="login-card">
-          <form action="#">
+        <div class="login-column">
+
+      <form class="login-form" action="#">
             <div class="field">
               <label class="label" for="s2-email">E-mail</label>
-              <input class="input mono" id="s2-email" type="email" autocomplete="username" value="tomasz.malkiewicz@ninerdeck.pl">
+              <input class="input mono" id="s2-email" type="email" autocomplete="username" value="adam.kowalski@ninerdeck.pl">
             </div>
             <div class="field">
-              <label class="label" for="s2-pass">Hasło</label>
+              <div class="label-row">
+                <label class="label" for="s2-pass">Hasło</label>
+                <a class="label-action" href="00-logowanie.html#haslo">Nie pamiętam hasła</a>
+              </div>
               <div class="input-pass">
                 <input class="input" id="s2-pass" type="password" autocomplete="current-password" value="wspolny-tablet-EPZG">
                 <button type="button" class="eye-btn" aria-label="Pokaż hasło" aria-pressed="false">
@@ -386,6 +494,7 @@
             <button type="submit" class="btn primary block" disabled>Zaloguj się</button>
           </form>
           <p class="login-status">Logowanie…</p>
+        
         </div>
       </div>
     </article>
@@ -396,21 +505,48 @@
         <span class="inv-when">Drugi stan okna „Nie pamiętam hasła": baner <code>ok</code> nad kartą, adres do odczytu, powrót do logowania. Zdanie jest ZAWSZE to samo - także dla adresu, którego serwer nie zna, i po przekroczeniu limitu wysyłek - bo inna odpowiedź wyliczałaby konta (§5.4). Żadnego pola hasła ani kodu w panelu: hasło ustawia strona <code>/haslo/</code> z linku, a ta karta tylko wysyła i potwierdza.</span>
       </div>
       <div class="inv-demo">
-        <div class="login-banner">
-          <div class="banner ok" role="status">
+        <div class="login-column">
+                  <div class="banner ok" role="status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
             <span>Jeśli ten adres jest w systemie, link już idzie - ważny godzinę.</span>
           </div>
-        </div>
-        <div class="login-card">
-          <form action="#">
-            <div class="card-title">Link do ustawienia hasła</div>
+
+      <form class="login-form" action="#">
             <div class="field">
               <label class="label" for="s3-email">E-mail</label>
-              <input class="input mono" id="s3-email" type="email" value="tomasz.malkiewicz@ninerdeck.pl" disabled>
+              <input class="input mono" id="s3-email" type="email" value="adam.kowalski@ninerdeck.pl" disabled>
             </div>
-            <a class="login-link" href="00-logowanie.html">Wróć do logowania</a>
           </form>
+        
+        <p class="login-foot"><a href="00-logowanie.html">Wróć do logowania</a></p>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Link wysłany - rejestracja (potwierdzenie)</span>
+        <span class="inv-when">Drugi stan okna „Załóż konto" (issue #180): baner <code>ok</code> w trybie WARUNKOWYM, oba pola do odczytu (literówkę w adresie widać TERAZ), powrót do logowania. Zdanie jest ZAWSZE to samo - adres wolny dostaje list „załóż hasło do nowego konta", adres zajęty zwykły list resetu ze zdaniem „masz już konto"; także po przekroczeniu limitu wysyłek (3 na adres w 15 min, wspólny z telefonem) - inaczej formularz wyliczałby konta (§8 pkt 2). Inne zdanie pada wyłącznie przy awarii sieci („nie wiem, czy wysłano") i przy odmowie KSZTAŁTU danych (400 - o koncie nie mówi nic). „Wyślij ponownie" NIE MA: kto musi, wraca i wysyła znów świadomie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="login-column">
+                  <div class="banner ok" role="status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+            <span>Jeśli ten adres jest wolny, link już idzie - ważny godzinę. Jeśli konto z tym adresem już istnieje, list mówi, jak się zalogować.</span>
+          </div>
+
+      <form class="login-form" action="#">
+            <div class="field">
+              <label class="label" for="s4-name">Imię i nazwisko</label>
+              <input class="input" id="s4-name" type="text" value="Adam Kowalski" disabled>
+            </div>
+            <div class="field">
+              <label class="label" for="s4-email">E-mail</label>
+              <input class="input mono" id="s4-email" type="email" value="a.kowalski@gmail.com" disabled>
+            </div>
+          </form>
+        
+        <p class="login-foot"><a href="00-logowanie.html">Wróć do logowania</a></p>
         </div>
       </div>
     </article>
@@ -422,36 +558,32 @@
       </div>
       <div class="inv-demo">
         <span class="inv-mark">401 invalid_credentials - login nieznany / bez hasła / złe hasło: jedno zdanie, pola zostają</span>
-        <div class="login-banner">
-          <div class="banner danger">
+                  <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Nieprawidłowy e-mail lub hasło.</span>
           </div>
-        </div>
+        
 
         <span class="inv-mark">429 too_many_attempts - 10 prób na login albo 30 na adres IP w 15 min; czas z `retryAfterSec`</span>
-        <div class="login-banner">
-          <div class="banner warn">
+                  <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span>Za dużo prób - spróbuj za 3 min.</span>
           </div>
-        </div>
+        
 
-        <span class="inv-mark">403 no_panel_access - konto jest, ale nie ma roli panelu w żadnym klubie (także osoba bez klubu)</span>
-        <div class="login-banner">
-          <div class="banner warn">
+        <span class="inv-mark">403 no_membership - konto jest, ale nie ma aktywnego członkostwa w żadnym klubie (osoba po pierwszym logowaniu, ze zgłoszeniem w kolejce, odrzucona albo wyłączona wszędzie - od #180 bywa nią ktoś, kto przed chwilą założył konto W TYM panelu). Od issue #216 („panel dla wszystkich", 2026-09-25) to JEDYNA odmowa dla rozpoznanego konta: członek z pustym zakresem wchodzi (Moje konto i Kalendarz), więc dawne `no_panel_access` i zdanie „dostęp nadaje administrator" zniknęły</span>
+                  <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>To konto nie ma dostępu do panelu. Poproś administratora o nadanie roli.</span>
+            <span>To konto nie należy jeszcze do żadnego klubu. Do klubu wchodzi się kodem klubu w aplikacji Ninerdeck - potem panel otworzy się tym samym kontem.</span>
           </div>
-        </div>
+        
 
         <span class="inv-mark">401 account_disabled - konto wyłączone; próbowanie ponownie nic nie zmieni</span>
-        <div class="login-banner">
-          <div class="banner warn">
+                  <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span>To konto jest wyłączone. Poproś administratora o włączenie.</span>
           </div>
-        </div>
+        
       </div>
     </article>
 
@@ -462,43 +594,39 @@
       </div>
       <div class="inv-demo">
         <span class="inv-mark">401 - podpisu tokenu Google nie da się potwierdzić</span>
-        <div class="login-banner">
-          <div class="banner danger">
+                  <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Nie udało się potwierdzić konta Google. Spróbuj jeszcze raz.</span>
           </div>
-        </div>
+        
 
         <span class="inv-mark">serwer nie odpowiada (nie ma statusu - `fetch` rzucił, zanim cokolwiek wróciło)</span>
-        <div class="login-banner">
-          <div class="banner danger">
+                  <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Nie ma połączenia z serwerem. Spróbuj za chwilę.</span>
           </div>
-        </div>
+        
 
         <span class="inv-mark">skrypt Google nie dojechał - przycisku nie będzie wcale; hasło działa dalej</span>
-        <div class="login-banner">
-          <div class="banner danger">
+                  <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Nie udało się wczytać logowania Google. Sprawdź połączenie z internetem albo zaloguj się hasłem.</span>
           </div>
-        </div>
+        
 
         <span class="inv-mark">odmowa nieznana - kod w zdaniu</span>
-        <div class="login-banner">
-          <div class="banner danger">
+                  <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             <span>Logowanie nie powiodło się (kod 502).</span>
           </div>
-        </div>
+        
       </div>
     </article>
 
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Czego na tym ekranie NIE MA</span>
-        <span class="inv-when">Lista jest częścią specyfikacji, bo każda z tych rzeczy tu kiedyś stała albo mogłaby stanąć: <b>samodzielna rejestracja z formularzem</b> (osoba powstaje przy pierwszym logowaniu Googlem albo z ręki superadministratora - D9; do klubu wchodzi się kodem klubu), <b>wykład o uprawnieniach</b> przed zalogowaniem, <b>zdanie „konta zakłada administrator"</b> (opis budowy produktu pokazywany komuś, kto chce się zalogować), <b>kod jednorazowy do przepisania</b> (wycięty przeglądem właściciela 2026-09-16 - dublował link innym kształtem), <b>pole na nowe hasło</b> (ustawia się je na stronie z linku, nie tu), <b>hasło tymczasowe od administratora</b> (link nigdy nie daje sesji - sesję daje dopiero hasło, które zna wyłącznie jego właściciel), <b>kod pilota jako login</b> (jest jedyny w klubie, nie na serwerze, a panel nie zna klubu przed zalogowaniem), <b>wymogi co do znaków i wskaźnik siły</b> (D4 - hasła tu się podaje, a nie ustawia). Natomiast <b>pola e-mail i hasła oraz „Nie pamiętam hasła" SĄ</b> - od 2.1.0 (2026-09-16); od 2026-09-04 do tego dnia nie było ich wcale (haseł nie było w produkcie), a wróciły z powodu, którego tamta decyzja nie przewidziała: wspólnego tabletu w samolocie.</span>
+        <span class="inv-when">Lista jest częścią specyfikacji, bo każda z tych rzeczy tu kiedyś stała albo mogłaby stanąć: <b>wykład o uprawnieniach</b> przed zalogowaniem, <b>zdanie „konta zakłada administrator"</b> (opis budowy produktu pokazywany komuś, kto chce się zalogować), <b>kod jednorazowy do przepisania</b> (wycięty przeglądem właściciela 2026-09-16 - dublował link innym kształtem), <b>pole na nowe hasło</b> (ustawia się je na stronie z linku, nie tu), <b>hasło tymczasowe od administratora</b> (link nigdy nie daje sesji - sesję daje dopiero hasło, które zna wyłącznie jego właściciel), <b>kod pilota jako login</b> (jest jedyny w klubie, nie na serwerze, a panel nie zna klubu przed zalogowaniem), <b>wymogi co do znaków i wskaźnik siły</b> (D4 - hasła tu się podaje, a nie ustawia). Natomiast <b>pola e-mail i hasła oraz „Nie pamiętam hasła" SĄ</b> - od 2.1.0 (2026-09-16); od 2026-09-04 do tego dnia nie było ich wcale (haseł nie było w produkcie), a wróciły z powodu, którego tamta decyzja nie przewidziała: wspólnego tabletu w samolocie. <b>„Załóż konto" JEST od 2026-09-24 (issue #180)</b> - do tego dnia tę listę otwierała „samodzielna rejestracja z formularzem" (osoba powstawała przy pierwszym logowaniu Googlem, z ręki superadministratora albo w APLIKACJI na 00H), a właściciel zakładający konta testowe musiał sięgać po telefon. Mechanizm jest ten sam, co przy „Nie pamiętam hasła", i niczego w klubie nie omija; <b>kodu klubu w panelu nadal NIE MA</b> - do klubu wchodzi się z aplikacji (00E) i to jest granica tamtego zgłoszenia, nie przeoczenie.</span>
       </div>
     </article>
 

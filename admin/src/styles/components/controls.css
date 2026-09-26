@@ -121,6 +121,33 @@
   line-height: 1.4;
 }
 
+/**
+ * AKCJA W WIERSZU ETYKIETY (issue #180; przegląd właściciela 2026-09-24: lista linków
+ * pod przyciskiem „wygląda jak linki"). Wzorzec z GitHuba, Stripe'a i Linear: drobna
+ * akcja dotycząca POLA stoi w jego wierszu etykiety, po prawej - „Nie pamiętam hasła"
+ * przy polu hasła - a nie pod przyciskiem, gdzie konkurowała z akcją główną i mówiła
+ * o czymś, co stoi trzy pola wyżej. Etykieta zostaje `<label>`; akcja jest jej
+ * RODZEŃSTWEM w wierszu flex (`Field.action`), nie dzieckiem.
+ */
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label-action {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--blue);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.label-action:hover {
+  text-decoration: underline;
+}
+
 .input {
   min-height: 34px;
   border-radius: 6px;
@@ -334,4 +361,123 @@
 .mono {
   font-family: var(--font-mono);
   letter-spacing: 0.3px;
+}
+
+/**
+ * UCHWYT PRZECIĄGANIA - dla listy, w której KOLEJNOŚĆ JEST TREŚCIĄ.
+ *
+ * Powstał dla kroków ścieżki akceptacji (`design/panel/kalendarz-sciezka`): numer kroku
+ * nie jest porządkiem wyświetlania, tylko tym, co system naprawdę robi. Para strzałek
+ * „w górę/w dół" w kolumnie akcji mówiła to samo dwoma przyciskami na wiersz, a przy
+ * pięciu krokach zamieniała przestawienie w odklikiwanie.
+ *
+ * ══ JEST PRZYCISKIEM, NIE `<span draggable>` ══
+ * Przeciąganie samą myszą byłoby JEDYNĄ drogą do zmiany kolejności, a tej nie da się
+ * wykonać z klawiatury. Uchwyt przyjmuje fokus, a strzałki przestawiają wiersz -
+ * przeciąganie jest wygodą, nie warunkiem. To ta sama zasada, przez którą wybór
+ * w panelu jest `<button>`, a nie `<label>` z mockupu.
+ *
+ * Kursor niesie stan czynności (`grab` → `grabbing`), bo to jedyny element panelu,
+ * w którym wciśnięcie znaczy „trzymam", a nie „kliknąłem".
+ */
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.drag-handle:hover {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Wiersz W RUCHU: jaśniejsze tło i przygaszenie. Ma być widać, że jest przenoszony,
+   a nie że coś się zepsuło - stąd zmiana tła, a nie ramka w tonie błędu. */
+tr.dragging > td {
+  background: var(--surface-raised);
+  opacity: 0.75;
+}
+
+/**
+ * WARTOŚĆ, KTÓRA PROWADZI W GŁĄB - afordancja NA wartości, nie obok niej.
+ *
+ * Powstała przy kolejce decyzji: znak maszyny i nazwisko pilota otwierają podgląd
+ * boczny. Sześć wersji, wybór właściciela po obejrzeniu wszystkich - odrzucone i po co
+ * to wiedzieć: NIEBIESKI ODNOŚNIK obiecywał przejście gdzie indziej (a ekran pod
+ * spodem zostaje); PRZYCISKI POD TYTUŁEM oderwały kontrolkę od rzeczy, której dotyczy;
+ * KARTY `.opt` stały na miejscu, ale ważyły dwie obramowane pozycje na każdą sprawę
+ * w liście; SZEWRON `›` mówi „dalej", a nie „wysunie się panel"; SAMA IKONA
+ * z podkreśleniem była afordancją bez kształtu - napisem, któremu coś dopisano.
+ *
+ * Zostaje GHOST-BADGE UJAWNIANY KURSOREM. W spoczynku wartość jest wartością:
+ * w swoim miejscu, w swoim kolorze, bez ramki i bez tła, a za nią stoi wyciszona
+ * IKONA PANELU BOCZNEGO (prostokąt z wydzielonym prawym pasem - jako jedyna z sześciu
+ * mówi, CO ZROBI INTERFEJS, a nie dokąd się idzie). Pod kursorem i na fokusie wartość
+ * dostaje KSZTAŁT: tło `surface-raised` i zaokrąglenie, czyli dokładnie to, co robi
+ * `.btn.ghost` - stąd nazwa. Kształt jest tym, czego brakowało samej ikonie: pudełko
+ * mówi „to jest jedna rzecz i da się ją nacisnąć".
+ *
+ * ŚWIECI DOPIERO POD KURSOREM, bo w kolejce takie wartości są dwie na sprawę -
+ * badge widoczny stale robiłby z listy farmę guzików (reguła SyncChipa z issue #12).
+ *
+ * PODPIS WARTOŚCI WCHODZI DO ŚRODKA - kod pilota jest częścią odpowiedzi na „kto",
+ * a nie sąsiadem stojącym obok (uwaga właściciela 2026-09-23). Zostawiony na zewnątrz
+ * rozcinał jedną rzecz na dwie: badge kończył się w połowie nazwiska, a kciuk trafiał
+ * raz w cel, raz obok. Stąd `gap` zamiast marginesów między częściami.
+ *
+ * ODSTĘP WYCHODZI POZA OBRYS: padding kompensuje ujemny margines, więc badge wylewa
+ * się na wierzch sąsiedniego tekstu zamiast go rozpychać. Bez tego wartość skakałaby
+ * pod kursorem, a cały wiersz razem z nią.
+ */
+.go {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* `--surface-hover`, nie `--surface-raised`: badge startuje z tła KARTY (#141414),
+   a lift o sześć punktów byłby ledwie widoczny. Obowiązuje reguła POWIERZCHNI POD
+   KURSOREM - ten sam token, którym rozjaśnia się `.btn`. */
+.go:hover,
+.go:focus-visible {
+  background: var(--surface-hover);
+}
+
+.go svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+
+.go:hover svg,
+.go:focus-visible svg {
+  color: var(--text-secondary);
+}
+
+/* `.go` bywa PRZYCISKIEM (szuflada podglądu otwiera się bez adresu, issue #206):
+   zdejmujemy oprawę przeglądarki, żeby wartość wyglądała jak wartość, nie jak guzik.
+   Reszta - odstęp, promień, tło pod kursorem - jest ta sama, co dla odnośnika. */
+button.go {
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: inherit;
 }

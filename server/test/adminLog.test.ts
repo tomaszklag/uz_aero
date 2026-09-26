@@ -50,7 +50,7 @@ function flyingDay(o: DayOptions) {
   const d = o.dayOffset ?? 0;
   const base = {
     sessionUuid: o.sessionUuid,
-    picId: 'TMK',
+    picId: 'AKO',
     aircraftId: o.aircraftId ?? 'SP-AXA',
     dualId: null,
   };
@@ -129,13 +129,13 @@ const sessions = (app: Harness['app'], t: string, query = '') =>
 describe('projekcja sesji: kolumny logu dnia', () => {
   it('zapisuje bieg silnika, kopertę lotów, lotniska i sumę dolewek', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const ingest = await post(app, tmk, flyingDay({ sessionUuid: 's-log-1', refuelL: 40 }));
+    const ako = await token(app, 'AKO');
+    const ingest = await post(app, ako, flyingDay({ sessionUuid: 's-log-1', refuelL: 40 }));
     // Ingest musi PRZEJŚĆ - odrzucona paczka dałaby pustą listę i test mówiący
     // „projekcja nie zapisuje kolumn" zamiast „payload był zły".
     expect(ingest.statusCode, JSON.stringify(ingest.json())).toBe(200);
 
-    const items = (await sessions(app, await token(app, 'TMK'), '?aircraftId=SP-AXA')).json().items;
+    const items = (await sessions(app, await token(app, 'AKO'), '?aircraftId=SP-AXA')).json().items;
     expect(items).toHaveLength(1);
 
     // Bieg silnika to NIE przejęcie i NIE zdanie: maszynę wzięto 7:50, zdano 16:45,
@@ -156,9 +156,9 @@ describe('projekcja sesji: kolumny logu dnia', () => {
     // Próba silnika albo dzień odwołany pogodą: maszyna pracowała, nikt nie wystartował.
     // To jest stan świata, a nie brak danych - i grid ma go tak pokazać.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    const base = { sessionUuid: 's-log-2', picId: 'TMK', aircraftId: 'SP-AXA', dualId: null };
-    await post(app, tmk, [
+    const ako = await token(app, 'AKO');
+    const base = { sessionUuid: 's-log-2', picId: 'AKO', aircraftId: 'SP-AXA', dualId: null };
+    await post(app, ako, [
       event('session_claim', at(7, 50), { mode: 'free' }, base),
       event(
         'preflight_confirm',
@@ -178,7 +178,7 @@ describe('projekcja sesji: kolumny logu dnia', () => {
       event('day_close', at(8, 30), { finalReading: { fuelL: 148, mh: 1200.1 }, noFlightReason: 'malfunction' }, base),
     ]);
 
-    const items = (await sessions(app, tmk, '?aircraftId=SP-AXA')).json().items;
+    const items = (await sessions(app, ako, '?aircraftId=SP-AXA')).json().items;
     expect(items[0].engineStartAt).toBe(at(8, 12));
     expect(items[0].firstTakeoffAt).toBeNull();
     expect(items[0].lastLandingAt).toBeNull();
@@ -187,10 +187,10 @@ describe('projekcja sesji: kolumny logu dnia', () => {
 
   it('operacja na JEDNYM placu nie ma drugiego lotniska - i to nie jest brak danych', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-3', arrivalIcao: null }));
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-3', arrivalIcao: null }));
 
-    const items = (await sessions(app, tmk, '?aircraftId=SP-AXA')).json().items;
+    const items = (await sessions(app, ako, '?aircraftId=SP-AXA')).json().items;
     expect(items[0].departureIcao).toBe('EPKK');
     expect(items[0].arrivalIcao).toBeNull();
   });
@@ -202,10 +202,10 @@ describe('GET /admin/api/log - flota w zakresie', () => {
     // ruszył") - przy złączeniu od sesji ta maszyna po prostu by zniknęła, a brak
     // wiersza czyta się jak brak maszyny.
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-4' }));
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-4' }));
 
-    const report = (await log(app, tmk, '?from=2026-06-22&to=2026-06-22')).json();
+    const report = (await log(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
     const flew = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-AXA');
     const idle = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId !== 'SP-AXA');
 
@@ -217,10 +217,10 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
   it('liczy sesje OTWARTE - inaczej dzisiejszy dzień byłby pusty do wieczora', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-5', close: false }));
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-5', close: false }));
 
-    const report = (await log(app, tmk, '?from=2026-06-22&to=2026-06-22')).json();
+    const report = (await log(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
     const axa = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-AXA');
 
     expect(axa).toMatchObject({ sessions: 1, openSessions: 1 });
@@ -232,11 +232,11 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
   it('DNI pracy to doby, nie sesje - dwie zmiany jednego dnia liczą się raz', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-6a' }));
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-6b' }));
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-6a' }));
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-6b' }));
 
-    const report = (await log(app, tmk, '?from=2026-06-22&to=2026-06-22')).json();
+    const report = (await log(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
     const axa = report.aircraft.find((a: { aircraftId: string }) => a.aircraftId === 'SP-AXA');
 
     expect(axa).toMatchObject({ sessions: 2, activeDays: 1, flights: 2 });
@@ -244,11 +244,11 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
   it('zakres zawęża po CHWILI PRZEJĘCIA - tą samą osią, co lista sesji', async () => {
     const { app } = await testHarness();
-    const tmk = await token(app, 'TMK');
-    await post(app, tmk, flyingDay({ sessionUuid: 's-log-7', dayOffset: 3 }));
+    const ako = await token(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 's-log-7', dayOffset: 3 }));
 
-    const inside = (await log(app, tmk, '?from=2026-06-25&to=2026-06-25')).json();
-    const outside = (await log(app, tmk, '?from=2026-06-22&to=2026-06-22')).json();
+    const inside = (await log(app, ako, '?from=2026-06-25&to=2026-06-25')).json();
+    const outside = (await log(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
     const of = (r: { aircraft: { aircraftId: string; sessions: number }[] }) =>
       r.aircraft.find((a) => a.aircraftId === 'SP-AXA')?.sessions;
 
@@ -258,7 +258,7 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
   it('zakres odwrócony to 400 z nazwanym powodem, nie pusta lista', async () => {
     const { app } = await testHarness();
-    const res = await log(app, await token(app, 'TMK'), '?from=2026-06-25&to=2026-06-22');
+    const res = await log(app, await token(app, 'AKO'), '?from=2026-06-25&to=2026-06-22');
 
     expect(res.statusCode).toBe(400);
     expect(res.json()).toMatchObject({ error: 'bad_range' });
@@ -266,7 +266,7 @@ describe('GET /admin/api/log - flota w zakresie', () => {
 
   it('bez zakresu serwer wybiera domyślny i mówi o tym wprost', async () => {
     const { app } = await testHarness();
-    const report = (await log(app, await token(app, 'TMK'))).json();
+    const report = (await log(app, await token(app, 'AKO'))).json();
 
     expect(report.range.defaulted).toBe(true);
     // „Dziś" bierze się z zegara SERWERA - panel kotwiczy nim szybkie filtry, zamiast

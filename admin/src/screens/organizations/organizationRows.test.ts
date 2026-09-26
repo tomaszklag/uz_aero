@@ -21,7 +21,7 @@ const organization = (over: Partial<OrganizationListItemDto> = {}): Organization
   createdAt: '2026-08-26T09:00:00.000Z',
   members: 14,
   aircraft: 4,
-  admins: [admin('Tomasz', true)],
+  admins: [admin('Adam', true)],
   ...over,
 });
 
@@ -32,7 +32,7 @@ describe('wiersz listy klubów', () => {
       slug: 'aeroklub-zielonogorski',
       members: 14,
       aircraft: 4,
-      admin: 'Tomasz',
+      admin: 'Adam',
       adminExtra: null,
       created: '26 SIE 2026',
       statusLabel: 'Aktywny',
@@ -43,10 +43,10 @@ describe('wiersz listy klubów', () => {
 
   it('kilku administratorów: pierwszy z nazwiska, reszta jako `+n`', () => {
     const row = organizationRow(
-      organization({ admins: [admin('Tomasz', true), admin('Ewa', true)] }),
+      organization({ admins: [admin('Adam', true), admin('Ewa', true)] }),
     );
 
-    expect(row.admin).toBe('Tomasz');
+    expect(row.admin).toBe('Adam');
     expect(row.adminExtra).toBe('+1');
   });
 

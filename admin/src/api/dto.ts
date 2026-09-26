@@ -30,18 +30,12 @@ import type {
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
 
-/**
- * Role kont. LUSTRO `server/src/domain/roles.ts`, przybite `test/mirrors.test.ts`.
- *
- * Kopia, a nie import, bo panel nie widzi wnętrza serwera. Ta kopia NIE DECYDUJE
- * o niczym: mapa rola -> zdolności jest wyłącznie na serwerze i wyłącznie on ją
- * egzekwuje. Tu są nazwy do porównania, nie uprawnienia.
- *
- * `training_lead` wycofany 2026-08-30 (decyzja właściciela produktu, do rewizji
- * w kolejnej iteracji uprawnień). Zostają dwie role, a jedna z nich w ogóle nie
- * dotyczy panelu - więc każdy, kto tu wejdzie, ma dziś komplet zdolności.
+/*
+ * RÓL KLUBU NIE MA (epik #197, `docs/uprawnienia.md`). Zdolność nadaje się
+ * CZŁONKOSTWU, a „administrator" jest odtąd ZESTAWEM - skrótem przy wypełnianiu
+ * formularza, nie bytem w modelu. Nazwę zakresu składa panel ze zbioru
+ * (`screens/accounts/scope.ts`), bo serwer nie zna języka interfejsu.
  */
-export type PilotRole = 'pilot' | 'admin';
 
 /**
  * Zdolności. LUSTRO `server/src/domain/roles.ts`, przybite `test/mirrors.test.ts`.
@@ -60,6 +54,9 @@ export type Capability =
   | 'audit.read'
   | 'maintenance.run'
   | 'reservations.manage'
+  | 'reservations.approve'
+  /** Karta maszyny w aplikacji i powiadomienia o jej lotach (3.2.0, issue #205). */
+  | 'fleet.watch'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';
@@ -67,15 +64,16 @@ export type Capability =
 /**
  * Konto zalogowane w panelu - stopka nawigacji i decyzje o widoczności akcji.
  *
- * Od wielofirmowości `code` i `role` są kodem i rolą Z CZŁONKOSTWA w klubie sesji
- * (`PanelSessionDto.org`). Sesja superadministratora (epik E) niesie `code: null`
- * i rolę platformową - panel 2.0 takiej sesji jeszcze nie rysuje.
+ * Od wielofirmowości `code` jest kodem Z CZŁONKOSTWA w klubie sesji
+ * (`PanelSessionDto.org`). Sesja superadministratora niesie `code: null`.
+ *
+ * ROLI TU NIE MA (epik #197): o tym, co wolno, rozstrzyga `capabilities` sesji,
+ * a jak to nazwać - `scopeLabel`. Sesję platformową poznaje się po `org: null`.
  */
 export interface PanelPilotDto {
   id: string;
   code: string | null;
   name: string;
-  role: PilotRole | 'superadmin';
 }
 
 /** Klub sesji panelu (wielofirmowość §8.2) - nazwa do kolumny bocznej. */
@@ -88,17 +86,18 @@ export interface OrganizationRefDto {
 /**
  * Klub, do którego wolno PRZEŁĄCZYĆ tę sesję (mockup `00a-wybor-klubu`; issue #101, E2).
  *
- * Kod i rola opisują drugą linię karty wyboru („administrator · Twój kod TMK") i tylko
- * ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla tego klubu.
+ * Kod i ZAKRES opisują drugą linię karty wyboru („administrator · Twój kod AKO")
+ * i tylko ją: o tym, co wolno w klubie, rozstrzygają zdolności sesji WYDANEJ dla
+ * tego klubu, czytane przez serwer przy każdym żądaniu.
  */
 export interface PanelScopeClubDto {
   org: OrganizationRefDto;
   code: string;
-  role: PilotRole;
+  capabilities: Capability[];
 }
 
 /**
- * Zakresy sesji: kluby z rolą panelu i - osobno - platforma.
+ * Zakresy sesji: kluby z wejściem do panelu i - osobno - platforma.
  *
  * Jedzie w KAŻDEJ odpowiedzi o sesji, bo panel pyta o to przy każdym wczytaniu: czy
  * kafel klubu w kolumnie bocznej jest linkiem (jest co przełączyć) i czy po zalogowaniu
@@ -303,7 +302,8 @@ export interface PilotListItemDto {
    */
   email: string | null;
   active: boolean;
-  role: PilotRole;
+  /** ZAKRES w tym klubie (epik #197); pusty zbiór = pilot, czyli stan domyślny. */
+  capabilities: Capability[];
   /**
    * Ostatnia aktywność ŻYWEJ sesji tego członka W TYM klubie (2.1.0), ISO 8601;
    * `null` = nie ma czynnej sesji. To nie jest „nigdy nie wszedł" - po wygaśnięciu
@@ -350,7 +350,7 @@ export type MembershipStatusDto = 'pending' | 'active' | 'disabled' | 'rejected'
  *
  * Imię i adres wzięły się z ZAŁOŻENIA KONTA, którego ta osoba dokonała sama - Googlem
  * albo adresem i hasłem (2.1.0). Administrator czyta więc to, co ona podała, a nie to,
- * co sam wpisał. Kodu ani roli tu NIE MA - nadaje się je dopiero przy zatwierdzeniu (P3),
+ * co sam wpisał. Kodu ani zakresu tu NIE MA - nadaje się je dopiero przy zatwierdzeniu (P3),
  * i to jest cała różnica między kandydatem a wierszem listy członków.
  */
 export interface MembershipRequestDto {
@@ -380,10 +380,13 @@ export interface MembershipDecisionDto {
   rejectReason: string | null;
 }
 
-/** Zatwierdzenie: kod pilota W TYM klubie i rola. Oba wymagane - aktywny ⟺ ma kod. */
+/**
+ * Zatwierdzenie: kod pilota W TYM klubie i ZAKRES. Kod wymagany - aktywny ⟺ ma kod;
+ * zbiór bywa PUSTY i to jest stan domyślny (pilot pracuje w aplikacji).
+ */
 export interface MembershipApprovalBody {
   code: string;
-  role: PilotRole;
+  capabilities: Capability[];
 }
 
 // -- kod klubu: JEDYNA droga do klubu (issue #101, E3) --------------------------
@@ -682,7 +685,7 @@ export interface LogReportDto {
 export interface SessionListItemDto {
   sessionUuid: string;
   /**
-   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68). Liczy ją SERWER; panel
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/BNO/1" (issue #68). Liczy ją SERWER; panel
    * nigdy nie skleja jej u siebie, bo druga konwencja nazw znaczyłaby, że pilot
    * i administrator mówią o jednym locie dwoma napisami.
    *
@@ -860,7 +863,7 @@ export interface BugReportDto {
   /**
    * KLUB zgłoszenia (wielofirmowość, issue #99 C6). Kolejka jest jedna dla całego
    * serwera - czyta ją superadministrator - a kod pilota jest jedyny W KLUBIE, nie na
-   * serwerze: bez tego pola `TMA` z dwóch klubów byłoby nieodróżnialne.
+   * serwerze: bez tego pola `AKO` z dwóch klubów byłoby nieodróżnialne.
    */
   org: OrganizationRefDto;
   severity: BugSeverityDto | null;
@@ -903,13 +906,20 @@ export interface BugReportPageDto {
 
 export type BookingKindDto = 'flight' | 'block';
 
+/**
+ * Lustro `BookingStatus` z `server/src/domain/bookings.ts` - pilnuje go
+ * `test/mirrors.test.ts` (od issue #204: stan `expired` wszedł na serwerze w 3.1.0
+ * i przez dwa dni nikt tego nie widział, bo kontrakty kalendarza nie były na liście
+ * strażnika).
+ */
 export type BookingStatusDto =
   | 'pending'
   | 'confirmed'
   | 'rejected'
   | 'cancelled'
   | 'fulfilled'
-  | 'released';
+  | 'released'
+  | 'expired';
 
 export type BlockReasonDto = 'maintenance' | 'defect' | 'other';
 
@@ -924,6 +934,17 @@ export type BlockReasonDto = 'maintenance' | 'defect' | 'other';
  * odpowiedzi znaczyłoby drugie źródło tych samych napisów, a przy pierwszej zmianie
  * nazwiska - dwa różne nazwiska w dwóch miejscach ekranu.
  */
+/**
+ * Zajętość w kalendarzu panelu.
+ *
+ * ══ POLA TREŚCI SĄ OPCJONALNE, NIE NULLOWALNE (issue #216) ══
+ * Odkąd kalendarz w panelu otwiera się KAŻDEMU członkowi klubu, kształt cudzej
+ * rezerwacji pyta, kto patrzy - dokładnie jak na telefonie (`docs/rezerwacje.md` §17).
+ * Własna rezerwacja i każda oglądana z „Podglądem klubu", akceptacją albo władzą nad
+ * cudzymi jedzie w komplecie; cudza dla zwykłego członka niesie same godziny, maszynę,
+ * właściciela i rodzaj. `undefined` znaczy „nie dla Ciebie", `null` - „puste": zadanie
+ * cudzej rezerwacji NIE jest puste, więc szuflada nie ma prawa napisać przy nim kreski.
+ */
 export interface BookingDto {
   id: string;
   aircraftId: string;
@@ -933,20 +954,20 @@ export interface BookingDto {
   endsAt: string;
   /** `null` przy wyłączeniu z użytku - ono nie ma właściciela. */
   pilotId: string | null;
-  dualId: string | null;
-  operation: string | null;
-  fromIcao: string | null;
-  toIcao: string | null;
-  plannedAirMin: number | null;
-  plannedFuelL: number | null;
-  /** Operacja, która ją zrealizowała; `null` = lot jeszcze się nie odbył. */
-  sessionUuid: string | null;
   blockReason: BlockReasonDto | null;
-  note: string | null;
-  createdBy: string;
-  createdAt: string;
-  closedAt: string | null;
-  closeReason: string | null;
+  dualId?: string | null;
+  operation?: string | null;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  /** Operacja, która ją zrealizowała; `null` = lot jeszcze się nie odbył. */
+  sessionUuid?: string | null;
+  note?: string | null;
+  createdBy?: string;
+  createdAt?: string;
+  closedAt?: string | null;
+  closeReason?: string | null;
 }
 
 /**
@@ -970,3 +991,317 @@ export interface CalendarDto {
   days: CalendarDayDto[];
   bookings: BookingDto[];
 }
+
+/**
+ * SŁOWNIK KLUBU - `GET /admin/api/directory` (issue #216, „panel dla wszystkich").
+ *
+ * Nazwiska i znaki do podpisania zajętości: czyta go kalendarz i kolejka decyzji,
+ * a dostaje KAŻDY członek klubu. Listy modułów Piloci i Samoloty niosą więcej
+ * (adresy, zakresy, sesje, konfigurację) i stoją na „Podglądzie klubu" - kalendarz
+ * nie ma prawa o nie pytać w imieniu kogoś, kto tego podglądu nie ma.
+ */
+export interface DirectoryMemberDto {
+  id: string;
+  code: string;
+  name: string;
+  /** Wyłączony członek zostaje w słowniku - jego dawna rezerwacja ma nazwisko. */
+  active: boolean;
+}
+
+export interface DirectoryAircraftDto {
+  id: string;
+  reg: string;
+  type: string;
+  serviceStatus: ServiceStatus;
+}
+
+export interface DirectoryDto {
+  members: DirectoryMemberDto[];
+  aircraft: DirectoryAircraftDto[];
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ŚCIEŻKA AKCEPTACJI I KOLEJKA DECYZJI (milestone 3.1.0, issue #165;
+ * `docs/rezerwacje.md` §11)
+ *
+ * Cztery lustra unii pilnuje `test/mirrors.test.ts`. Reszta to kształty odpowiedzi
+ * tras panelu - identyfikatory, nie napisy: nazwisko decydującego i znak maszyny panel
+ * rozwiązuje z list, które i tak ma (`usePilots`, `useFleet`).
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Lustro `ApprovalOutcome` (`server/src/domain/approvals.ts`) - stan ścieżki rezerwacji. */
+export type ApprovalOutcomeDto = 'pending' | 'confirmed' | 'rejected';
+
+/**
+ * Lustro `ApprovalRefusal` - dlaczego decyzja nie może zapaść. Kody surowe; zdania po
+ * polsku należą do ekranu (`screens/calendar/approvalRefusal.ts`).
+ */
+export type ApprovalRefusalDto = 'not_pending' | 'not_your_step' | 'reason_required';
+
+/** Lustro `ApprovalVerdict` (`application/common/ports.ts`). */
+export type ApprovalVerdictDto = 'approved' | 'rejected';
+
+/**
+ * Lustro `ApprovalVia`: `person` = ktoś kliknął, `self` = krok przeszedł sam, bo
+ * rezerwujący stoi na jego liście (§11.2).
+ */
+export type ApprovalViaDto = 'person' | 'self';
+
+/** Lustro `ApprovalStepsRefusal` - odmowy zapisu ścieżki; obie niosą `stepLabel`. */
+export type ApprovalStepsRefusalDto = 'step_without_members' | 'member_not_in_org';
+
+/** Krok ścieżki klubu w KONFIGURACJI (`GET`/`PUT /admin/api/approval-steps`). */
+export interface ApprovalStepDto {
+  id: string;
+  /** Kolejność pytania - zmienna, w odróżnieniu od `id`. */
+  position: number;
+  label: string;
+  /** Pula uprawnionych, nie komplet podpisów: wystarczy zgoda JEDNEJ z tych osób. */
+  memberIds: string[];
+}
+
+export interface ApprovalPathDto {
+  /** Pusta lista = klub bez akceptacji, czyli stan domyślny (§11.1). */
+  steps: ApprovalStepDto[];
+  /**
+   * Skutek ZAPISU dla spraw w toku (issue #207) - tylko w odpowiedzi `PUT`: ile
+   * czekających rezerwacji dostało komplet zgód na nowej ścieżce (potwierdzone), a ile
+   * czeka teraz na inny krok (jego osoby dostały prośbę). Zapis konfiguracji dotyka
+   * cudzych rezerwacji, więc panel mówi to banerem.
+   */
+  reconciled?: PathEffectDto;
+}
+
+export interface PathEffectDto {
+  confirmed: number;
+  moved: number;
+}
+
+/**
+ * Krok w ZAMÓWIENIU zapisu ścieżki. Kolejność w tablicy JEST kolejnością pytania;
+ * `id` puste = krok nowy (identyfikator nadaje serwer), krok istniejący zachowuje
+ * swój `id` razem z zapadłymi pod nim decyzjami.
+ */
+export interface ApprovalStepInputDto {
+  id?: string | null;
+  label: string;
+  memberIds: string[];
+}
+
+/**
+ * Decyzja pod krokiem. `decidedBy` jest identyfikatorem OSOBY i jedzie do panelu
+ * ŚWIADOMIE, choć na telefon nie (§9.4): administrator pyta „do kogo zadzwonić",
+ * a pilot dostaje nazwę kroku, bo krok bywa obsadzony przez kilka osób.
+ */
+export interface ApprovalDecisionDto {
+  decision: ApprovalVerdictDto;
+  via: ApprovalViaDto;
+  reason: string | null;
+  decidedBy: string;
+  decidedAt: string;
+}
+
+export interface ApprovalStepStateDto {
+  id: string;
+  label: string;
+  /** Czy to jego pytamy TERAZ. */
+  current: boolean;
+  /** `null` = decyzja pod tym krokiem jeszcze nie zapadła. */
+  decision: ApprovalDecisionDto | null;
+}
+
+/** Stan ścieżki JEDNEJ rezerwacji. `steps` puste = klub bez akceptacji. */
+export interface ApprovalViewDto {
+  outcome: ApprovalOutcomeDto;
+  steps: ApprovalStepStateDto[];
+}
+
+/** `GET /admin/api/bookings/:id` - zajętość razem ze stanem jej ścieżki. */
+export interface BookingDetailDto {
+  /** Strefa klubu - godziny decyzji czyta się nią, jak resztę kalendarza. */
+  timezone: string;
+  booking: BookingDto;
+  /**
+   * `null` = cudza sprawa oglądana przez zwykłego członka (issue #216): historia kroków
+   * i powody odmowy są treścią tej samej klasy, co notatka, więc jadą wyłącznie
+   * z kompletem pól. Szuflada nie rysuje wtedy karty ścieżki wcale.
+   */
+  approval: ApprovalViewDto | null;
+}
+
+/**
+ * Pozycja kolejki „czeka na Twoją decyzję": rezerwacja stojąca na kroku, na którego
+ * liście jest zalogowany. `step.members` i `step.next` służą zdaniu pod listą („krok ma
+ * dwie osoby i rozstrzyga pierwsza; po zatwierdzeniu idzie do kroku …").
+ */
+export interface ApprovalQueueItemDto {
+  booking: BookingDto;
+  step: {
+    id: string;
+    label: string;
+    /** Ile osób stoi na liście tego kroku. */
+    members: number;
+    /** Nazwa NASTĘPNEGO kroku; `null` = ten jest ostatni. */
+    next: string | null;
+  };
+}
+
+export interface ApprovalQueueDto {
+  /** Strefa klubu - „wczoraj 18:40" i „termin za 3 dni" liczą się jej dobą. */
+  timezone: string;
+  items: ApprovalQueueItemDto[];
+}
+
+/** Odpowiedź `POST /admin/api/bookings/:id/decision`. */
+export interface DecisionResultDto {
+  status: BookingStatusDto;
+  approval: ApprovalViewDto;
+}
+
+// -- podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) ------------------
+//
+// Ten sam komplet faktów, który dostaje telefon (ekrany 26A/26B) - serwer składa go
+// JEDNYM zapytaniem dla obu powierzchni, więc szuflada K6/K6a nie liczy nic sama.
+// Wiersze niosą identyfikatory; nazwiska i znaki rozwiązuje panel z list klubu.
+
+/** Trójka Loty · Blok · Lot - stała w całym produkcie. */
+export interface PreviewFlyingDto {
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+}
+
+export interface PreviewRecentDto {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie); ISO. */
+  at: string | null;
+  aircraftId: string;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  blockMs: number;
+  flights: number;
+}
+
+export interface PreviewUpcomingDto {
+  id: string;
+  aircraftId: string;
+  kind: BookingKindDto;
+  status: BookingStatusDto;
+  startsAt: string;
+  endsAt: string;
+  pilotId: string | null;
+  blockReason: BlockReasonDto | null;
+  /** Rozpatrywana sprawa - wiersz „· ta sprawa". */
+  thisCase: boolean;
+  /** Nachodzi na rozpatrywany termin - ten sam człowiek nie poleci dwiema maszynami. */
+  overlaps: boolean;
+  day: CalendarDayDto;
+}
+
+export interface PilotPreviewDto {
+  timezone: string;
+  bookingId: string;
+  pilot: {
+    id: string;
+    code: string | null;
+    name: string | null;
+    memberSince: string | null;
+  };
+  lastFlightAt: string | null;
+  /** Doświadczenie NA EGZEMPLARZU sprawy - pierwsza karta, bo to pytanie decyzji. */
+  onAircraft: {
+    aircraftId: string;
+    operations: number;
+    lastAt: string | null;
+    flights: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  flying: {
+    last30: PreviewFlyingDto;
+    last90: PreviewFlyingDto;
+    total: PreviewFlyingDto;
+  };
+  recent: PreviewRecentDto[];
+  upcoming: PreviewUpcomingDto[];
+}
+
+export interface AircraftPreviewDto {
+  timezone: string;
+  bookingId: string;
+  aircraft: {
+    id: string;
+    reg: string;
+    type: string;
+    serviceStatus: ServiceStatus;
+    capacityL: number;
+    mhFormat: MhFormat;
+    oilMinL: number | null;
+  };
+  lastFlightAt: string | null;
+  /** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
+  counters: {
+    mh: number;
+    fuelL: number;
+    oilL: number | null;
+    at: string;
+    source: AircraftReadingDto['source'];
+    byPilotId: string | null;
+    enteredBy: string | null;
+  } | null;
+  last30: {
+    daysWithFlights: number;
+    takeoffs: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  recent: PreviewRecentDto[];
+  upcoming: PreviewUpcomingDto[];
+}
+/* ══════════════════════════════════════════════════════════════════════════════
+ * OBSERWOWANE SAMOLOTY (3.2.0, issue #205, decyzja 12; `docs/obserwowanie-samolotu.md`
+ * §6.6, §7.2) - karta „Obserwowane samoloty" na `#/konto`
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Stan maszyny TERAZ - lustro `AircraftNow` z `server/src/domain/aircraftCard.ts`
+ * (unia OBIEKTÓW po `kind`, więc strażnik luster jej nie czyta; nowy rodzaj stanu
+ * ujawnia się kompilatorem przy `switch` w `screens/me/watchRows.ts`).
+ *
+ * JEDEN kształt dla telefonu (sekcja 13C, hero karty 27) i panelu: obie powierzchnie
+ * pokazują tę samą flotę w tym samym stanie. Chwile operacji (`since`) jadą stemplem
+ * UTC, terminy (`until`, `startsAt`) też - dobę klubu panel liczy sam z `timezone`.
+ */
+export type AircraftNowDto =
+  | { kind: 'retired' }
+  | {
+      kind: 'flying' | 'claimed' | 'after_flight';
+      sessionUuid: string;
+      pilotId: string;
+      dualId: string | null;
+      operation: string | null;
+      departureIcao: string | null;
+      /** `null` wyłącznie przy `claimed` sprzed uruchomienia silnika bez chwili przejęcia. */
+      since: string | null;
+    }
+  | { kind: 'blocked'; bookingId: string; reason: BlockReasonDto | null; until: string }
+  | { kind: 'booked'; bookingId: string; pilotId: string | null; startsAt: string; endsAt: string }
+  | { kind: 'free'; next: { bookingId: string; kind: BookingKindDto; startsAt: string } | null };
+
+/** Jedna maszyna floty klubu sesji z flagą „obserwuję" (`GET /admin/api/me/watches`). */
+export interface WatchListItemDto {
+  aircraftId: string;
+  reg: string;
+  type: string;
+  serviceStatus: ServiceStatus;
+  watching: boolean;
+  now: AircraftNowDto;
+}
+
+export interface WatchListDto {
+  /** Strefa klubu - do „dziś 14:00" przy terminach, jak w kalendarzu. */
+  timezone: string;
+  items: WatchListItemDto[];
+}
+

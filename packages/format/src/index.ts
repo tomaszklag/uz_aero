@@ -442,7 +442,7 @@ export function parseDateTimeUtc(text: string): EpochMillis | null {
 }
 
 /**
- * „Tomasz Małkiewicz" → „T. Małkiewicz".
+ * „Adam Kowalski" → „A. Kowalski".
  *
  * Skrót imienia z podsumowań (mockup 03): w dwukolumnowej siatce pełne imię i nazwisko
  * łamie kolumnę, a nazwisko wystarcza do rozpoznania. Jednoczłonowe zostawiamy w całości.

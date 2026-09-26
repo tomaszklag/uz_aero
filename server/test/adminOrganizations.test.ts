@@ -112,7 +112,7 @@ describe('GET /admin/api/organizations - lista klubów', () => {
     expect(beta).toMatchObject({ id: ORG_B, slug: 'aeroklub-beta', members: 3, aircraft: 1 });
     // Administratorzy - jedyne osoby z wnętrza klubu, jakie ta lista pokazuje
     // („do kogo dzwonić"). Zwykłych członków nie ma ani jednego.
-    expect(alfa!.admins.map((a) => a.code).sort()).toEqual(['AKO', 'TMK']);
+    expect(alfa!.admins.map((a) => a.code).sort()).toEqual(['AKO', 'BNO']);
     expect(res.body).not.toContain('PWI');
     // Ani jednego wiersza dziennika, floty czy kolejki - tylko liczby.
     expect(res.body).not.toContain('SP-AXA');
@@ -124,9 +124,9 @@ describe('GET /admin/api/organizations - lista klubów', () => {
     const { app } = await testHarness();
     const root = await panelCookie(app, 'ROOT');
     await create(app, root, NEW_CLUB);
-    // TMK loguje się, AKO nie - `signedIn` czyta obecność tożsamości Google, a nie
+    // AKO loguje się, BNO nie - `signedIn` czyta obecność tożsamości Google, a nie
     // członkostwo, więc ta para musi się różnić w obrębie JEDNEGO klubu.
-    await panelCookie(app, 'TMK');
+    await panelCookie(app, 'AKO');
 
     const items = (await list(app, root)).json().items as {
       slug: string;
@@ -152,8 +152,8 @@ describe('GET /admin/api/organizations - lista klubów', () => {
     ]);
     const alfa = items.find((i) => i.slug === 'aeroklub-alfa')!;
     expect(alfa.admins.map((a) => [a.code, a.signedIn])).toEqual([
-      ['AKO', false],
-      ['TMK', true],
+      ['AKO', true],
+      ['BNO', false],
     ]);
   });
 
@@ -185,7 +185,7 @@ describe('GET /admin/api/organizations - lista klubów', () => {
     // Administrator klubu ma sesję klubu, a to nie jest ten rodzaj tokenu
     // (`authorizePlatform`). Ta sama asymetria, co przy zgłoszeniach błędów.
     const { app } = await testHarness();
-    const admin = await panelCookie(app, 'TMK');
+    const admin = await panelCookie(app, 'AKO');
 
     expect((await list(app, admin)).statusCode).toBe(401);
     expect((await card(app, admin, ORG_A)).statusCode).toBe(401);
@@ -225,16 +225,28 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
     // nie droga dla pilotów.
     const { rows } = await db.query<{
       code: string;
-      role: string;
       status: string;
       joined_via: string;
     }>(
-      `SELECT m.code, m.role, m.status, m.joined_via FROM memberships m
+      `SELECT m.code, m.status, m.joined_via FROM memberships m
         JOIN organizations o ON o.id = m.org_id WHERE o.slug = 'ks-gliwice'`,
     );
     expect(rows).toEqual([
-      { code: 'PWR', role: 'admin', status: 'active', joined_via: 'platform' },
+      { code: 'PWR', status: 'active', joined_via: 'platform' },
     ]);
+
+    // ══ PIERWSZY CZŁONEK KLUBU MA KOMPLET ZDOLNOŚCI (epik #197) ══
+    // To jest cała treść słowa „administrator" po zniknięciu ról - a `accounts.manage`
+    // jest w tym zbiorze pozycją, bez której klub powstałby ZAMKNIĘTY: nie miałby kto
+    // nadać uprawnień drugiemu członkowi.
+    const caps = await db.query<{ capability: string }>(
+      `SELECT mc.capability FROM membership_capabilities mc
+         JOIN organizations o ON o.id = mc.org_id
+        WHERE o.slug = 'ks-gliwice' ORDER BY mc.capability`,
+    );
+    expect(caps.rows.map((r) => r.capability)).toContain('accounts.manage');
+    // Komplet klubowy: jedenaście pozycji od 3.2.0 (`fleet.watch`, obserwowanie samolotu).
+    expect(caps.rows).toHaveLength(11);
     // Sekret adresu kart arkusza losuje BAZA - klub dostaje go przy założeniu.
     const secret = await db.query<{ sheets_key: string }>(
       `SELECT sheets_key FROM organizations WHERE slug = 'ks-gliwice'`,
@@ -266,12 +278,12 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
 
     expect(login.statusCode).toBe(200);
     expect(login.json()).toMatchObject({
-      pilot: { code: 'PWR', role: 'admin' },
+      pilot: { code: 'PWR' },
       org: { id: orgId, slug: 'ks-gliwice' },
     });
 
     // I ma panel SWOJEGO klubu - a nie Alfy.
-    const session = await panelCookie(app, 'TMK');
+    const session = await panelCookie(app, 'AKO');
     expect(session.cookie).not.toBe('');
     const pilots = await app.inject({
       method: 'GET',
@@ -493,7 +505,7 @@ describe('karta klubu: zmiana nazwy i wyłączenie', () => {
       await app.inject({
         method: 'POST',
         url: '/auth/google',
-        payload: { idToken: googleTokenFor('TMK') },
+        payload: { idToken: googleTokenFor('AKO') },
       })
     ).json().token as string;
 
@@ -525,7 +537,7 @@ describe('karta klubu: zmiana nazwy i wyłączenie', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(login.statusCode).toBe(202);
     const { rows } = await db.query<{ n: string }>(
@@ -553,7 +565,7 @@ describe('karta klubu: zmiana nazwy i wyłączenie', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(login.statusCode).toBe(200);
   });

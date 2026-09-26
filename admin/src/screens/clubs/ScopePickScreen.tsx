@@ -20,11 +20,10 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import { useSessionState } from '../../auth/sessionContext';
 import { useSwitchScope } from '../../queries/useSession';
-import { Banner } from '../../ui/components';
-import { BrandMark } from '../../ui/components/icons';
-import { homeFor } from '../../ui/shell/nav';
+import { homeFor, kindOf } from '../../ui/shell/nav';
 import { scopeCount } from '../../ui/shell/scope';
 import { errorMessage } from '../common/apiMessage';
+import { AuthFrame } from '../login/AuthFrame';
 import { scopeOptions, scopeQuestion, type ScopeOption } from './scopeOptions';
 
 export function ScopePickScreen() {
@@ -36,65 +35,50 @@ export function ScopePickScreen() {
   // wklejony adres pokazywałby pustą kartę wyboru komuś, kto nie jest zalogowany.
   if (loading) return null;
   if (session == null) return <Navigate to="/logowanie" replace />;
-  if (scopeCount(session) <= 1) return <Navigate to={homeFor(session.capabilities)} replace />;
+  if (scopeCount(session) <= 1) {
+    return <Navigate to={homeFor(session.capabilities, kindOf(session))} replace />;
+  }
 
   const pick = (option: ScopeOption): void => {
     switchScope.mutate(option.orgId, {
       // Cel liczymy ze ŚWIEŻEJ sesji, a nie z tej, którą mamy na ekranie: zdolności
       // zakresu docelowego są inne (platforma nie otwiera dziennika), więc stary
       // `homeFor` odesłałby na trasę, która zaraz odpowie 401.
-      onSuccess: (next) => void navigate(homeFor(next.capabilities), { replace: true }),
+      onSuccess: (next) => void navigate(homeFor(next.capabilities, kindOf(next)), { replace: true }),
     });
   };
 
   return (
-    <div className="login">
-      <div className="login-mark">
-        <span className="login-badge">
-          <BrandMark size={28} />
-        </span>
-        <span className="login-title">NINERDECK</span>
-        <span className="login-note">Panel administracyjny · {session.pilot.name}</span>
+    <AuthFrame
+      title={scopeQuestion(session.scopes)}
+      lead={session.pilot.name}
+      message={switchScope.error == null ? null : { tone: 'danger', text: errorMessage(switchScope.error) }}
+    >
+      <div className="opt-list" role="list" aria-label="Wybierz zakres">
+        {scopeOptions(session.scopes).map((option) => (
+          <button
+            key={option.orgId ?? 'platform'}
+            type="button"
+            role="listitem"
+            className="opt"
+            disabled={switchScope.isPending}
+            onClick={() => pick(option)}
+          >
+            <span className="opt-body">
+              <span className="opt-name">{option.name}</span>
+              <span className="opt-desc">{option.desc}</span>
+            </span>
+            <span className="opt-go" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        ))}
       </div>
-
-      {switchScope.error == null ? null : (
-        <div className="login-banner">
-          <Banner tone="danger" live>
-            {errorMessage(switchScope.error)}
-          </Banner>
-        </div>
-      )}
-
-      <div className="login-card">
-        <div className="field">
-          <span className="label">{scopeQuestion(session.scopes)}</span>
-        </div>
-        <div className="opt-list" role="list" aria-label="Wybierz zakres">
-          {scopeOptions(session.scopes).map((option) => (
-            <button
-              key={option.orgId ?? 'platform'}
-              type="button"
-              role="listitem"
-              className="opt"
-              disabled={switchScope.isPending}
-              onClick={() => pick(option)}
-            >
-              <span className="opt-body">
-                <span className="opt-name">{option.name}</span>
-                <span className="opt-desc">{option.desc}</span>
-              </span>
-              <span className="opt-go" aria-hidden="true">
-                ›
-              </span>
-            </button>
-          ))}
-        </div>
-        {/*
-          Klub, w którym ta osoba jest tylko PILOTEM, na listę nie wchodzi (serwer go tam
-          nie wysyła): panel jest dla administratora, a karta „bez dostępu" obiecywałaby
-          wejście, którego reguły odmówią. O takim klubie mówi aplikacja, nie panel.
-        */}
-      </div>
-    </div>
+      {/*
+        Klub, w którym ta osoba jest tylko PILOTEM, JEST na liście (issue #216): karta
+        pisze „pilot · Twój kod …", a sesja tego klubu otwiera Moje konto i kalendarz.
+        Do 3.1.0 serwer takiego klubu nie wysyłał - panel był dla administratora.
+      */}
+    </AuthFrame>
   );
 }

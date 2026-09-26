@@ -256,6 +256,15 @@ fs.writeFileSync(
   OUT + 'android-icon-monochrome.png',
   render({ size: 432, markRatio: 0.4, background: null, markColor: '#FFFFFF' }),
 );
+/* Ikona powiadomień push (3.1.0, epik R-J): Android rysuje ją JEDNYM kolorem na pasku
+   stanu, więc plik to sama biała sylwetka na przezroczystym tle (kolor barwienia podaje
+   `app.json` → plugin `expo-notifications`). 96 px = rozmiar xxhdpi; plugin skaluje do
+   pozostałych gęstości sam. Znak większy niż w ikonie launchera, bo pasek stanu ma 24 dp
+   i cyfra o połowie pola zlałaby się w kropkę. */
+fs.writeFileSync(
+  OUT + 'notification-icon.png',
+  render({ size: 96, markRatio: 0.8, background: null, markColor: '#FFFFFF' }),
+);
 fs.writeFileSync(
   OUT + 'favicon.png',
   render({ size: 48, markRatio: 0.62, background: BG, markColor: '#2ECC71' }),

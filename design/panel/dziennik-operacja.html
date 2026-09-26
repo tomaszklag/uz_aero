@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - Panel 2.0 · Dziennik: jedna operacja</title>
+<title>Ninerdeck - Panel · Dziennik: jedna operacja</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,43 +15,71 @@
 <header class="canvas-label">
   <span class="film-strip">DZIENNIK · OPERACJA</span>
   <span class="slug">panel/dziennik-operacja · #/dziennik/SP-AXA/&lt;uuid&gt; · poziom 3</span>
-  <span class="canvas-meta"><span class="pulse"></span>Pełna strona, nie szuflada</span>
+  <span class="canvas-meta"><span class="pulse"></span>Pełna strona · dwa wyjścia · od 3.2.0 z trybem edycji</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Trzy poziomy dziennika</div>
+  <div class="vp-title">Dziennik - siedem ekranów jednej rodziny</div>
   <a class="vp-item" href="dziennik-flota.html">
     <span class="vp-badge">L1</span>
     <span class="vp-body">
       <span class="vp-name">Cała flota w zakresie dat</span>
-      <span class="vp-when">Dwa poziomy wyżej.</span>
+      <span class="vp-when">Wejście domyślne, oś MASZYN. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło. Przełącznik osi stoi PRZED zakresem dat.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-piloci.html">
+    <span class="vp-badge">L1b</span>
+    <span class="vp-body">
+      <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-maszyna.html">
     <span class="vp-badge">L2</span>
     <span class="vp-body">
-      <span class="vp-name">Operacje jednej maszyny</span>
-      <span class="vp-when">Stąd się tu wchodzi i tu wraca okruszek „SP-AXA" nad nagłówkiem - razem z zakresem dat, który był ustawiony.</span>
+      <span class="vp-name">Operacje jednej maszyny - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi maszyn. DOBA JEST NAGŁÓWKIEM z sumami doby, kolumny z datą przy wierszu NIE MA; godzina zostaje przy operacji, bo dwie zmiany jednej maszyny różnią się wyłącznie godzinami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-pilot.html">
+    <span class="vp-badge">L2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednego pilota - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
     </span>
   </a>
   <a class="vp-item active" href="dziennik-operacja.html">
     <span class="vp-badge">L3</span>
     <span class="vp-body">
       <span class="vp-name">Jedna operacja</span>
-      <span class="vp-when">PEŁNA STRONA, nie szuflada: szuflady panelu są formularzami jednego rekordu, a tu treścią jest dokument - oś kilkudziesięciu zdarzeń i komplet odczytów. Do operacji wchodzi się, żeby JĄ przeczytać.</span>
+      <span class="vp-when">Pełna strona: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA: okruszki prowadzą na oś maszyny, nazwisko pilota w szczegółach - na oś pilota. Tym „powiązaniem list" jest link w obie strony, nie trzecia lista.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="dziennik-edycja.html">
+    <span class="vp-badge amber">L3b</span>
+    <span class="vp-body">
+      <span class="vp-name">Tryb edycji: korekta zdarzeń</span>
+      <span class="vp-when">Ten sam ekran po „Popraw zdarzenia": ołówek przy każdym wierszu osi, szuflada korekty czasu / wartości / unieważnienia z podglądem „przed → po", baner kolizji z pilotem (nigdy odmowa), powód wymagany, historia zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-dopisanie.html">
+    <span class="vp-badge amber">L3c</span>
+    <span class="vp-body">
+      <span class="vp-name">Dopisanie brakującego zdarzenia</span>
+      <span class="vp-when">Ostatni wiersz osi w trybie edycji. Wąska siatka typów - bez uruchomienia i wyłączenia silnika, bo one wyznaczają kopertę operacji - czas w granicach biegu, powód wymagany. Jedyna nowa droga zapisu w 3.2.0.</span>
+    </span>
   </a>
   <a class="vp-item" href="SZABLON.html">
     <span class="vp-badge amber">BAZA</span>
     <span class="vp-body">
       <span class="vp-name">Szablon i inwentarz komponentów</span>
-      <span class="vp-when">Rama okna, pasek górny z kolumną boczną i klasy do skopiowania.</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
     </span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Operacja SP-AXA/2026-09-06/TMA/1">
+<main class="browser" role="region" aria-label="Operacja SP-AXA/2026-09-06/AKO/1">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
@@ -73,8 +101,8 @@
 
       <div class="topbar-right">
         <span class="who">
-          <span class="avatar" aria-hidden="true">TM</span>
-          <span class="who-name">Tomasz Małkiewicz</span>
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
         </span>
         <button type="button" class="btn ghost sm">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
@@ -100,6 +128,19 @@
           <a class="nav-item active" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
           </a>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -127,13 +168,24 @@
         <span class="sep" aria-hidden="true">/</span>
         <a href="dziennik-maszyna.html">SP-AXA</a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current">SP-AXA/2026-09-06/TMA/1</span>
+        <span class="current">SP-AXA/2026-09-06/AKO/1</span>
       </nav>
 
+      <!-- „POPRAW ZDARZENIA" (3.2.0, docs/panel-3.2.md §5) - JEDNE DRZWI DO KOREKTY,
+           jak „EDYTUJ DANE" na ekranie 10 telefonu (issue #40): w odczycie oś nie ma
+           ani jednego ołówka, a tryb edycji jest STANEM tego ekranu pod własnym
+           adresem (`…/edycja`), żeby dało się go wkleić w rozmowie („popraw to").
+           Konto bez zdolności `events.correct` NIE WIDZI przycisku w ogóle. -->
       <div class="page-head">
         <div>
           <h1 class="page-title">SP-AXA</h1>
-          <p class="page-sub">SP-AXA/2026-09-06/TMA/1 · silnik 08:42 → 11:04 UTC</p>
+          <p class="page-sub">SP-AXA/2026-09-06/AKO/1 · silnik 08:42 → 11:04 UTC</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="dziennik-edycja.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Popraw zdarzenia
+          </a>
         </div>
       </div>
 
@@ -263,8 +315,8 @@
                   <span class="cell-sub">10:16:02</span>
                 </td>
                 <td class="cell-strong">
-                  Lądowanie
-                  <span class="cell-sub">poprawił administrator</span>
+                  Lądowanie <a class="tag-corrected" href="dziennik-edycja.html#historia" title="Historia zmian">popr.</a>
+                  <span class="cell-sub">poprawił administrator · 7 WRZ 12:05</span>
                 </td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
@@ -341,7 +393,11 @@
            nie wiadomo. Szacunków tu nie ma - ani normy, ani przewidywanego oleju. -->
       <div class="card">
         <div class="card-title">Szczegóły</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Tomasz Małkiewicz</span></div>
+        <!-- DRUGIE WYJŚCIE Z OPERACJI (3.2.0, §4.1): okruszki prowadzą na oś MASZYNY,
+             nazwisko - na oś PILOTA (`#/dziennik/pilot/AKO`). Tym „powiązaniem list"
+             z zamówienia jest link w obie strony, nie trzecia lista. Link w treści
+             komórki (`.cell-link`), nie przycisk: to jest przejście, nie akcja. -->
+        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="cell-link" href="dziennik-pilot.html">Adam Kowalski</a> <small>AKO</small></span></div>
         <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">—</span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Klient</span><span class="kv-v">Strefa Spadochronowa Przylep</span></div>
@@ -566,12 +622,13 @@
         </p>
       </div>
 
-      <!-- ══ JEDYNY ZAPIS TEGO MODUŁU ══
-           Dziennik jest do CZYTANIA. Karta stoi na samym dole i za wszystkim - także
-           za śladem GPS - bo do operacji wchodzi się, żeby ją przeczytać, a wycofanie
-           wpisu jest wyjściem awaryjnym. Konto bez zdolności `events.correct` NIE WIDZI
-           tej karty w ogóle: brak uprawnień znaczy brak przycisku, nie przycisk
-           wyszarzony. Ekranu korekty pojedynczych zdarzeń w panelu nie ma. -->
+      <!-- ══ UNIEWAŻNIENIE - WYJŚCIE AWARYJNE, NA SAMYM DOLE ══
+           Dziennik jest do CZYTANIA; korekta zdarzeń mieszka od 3.2.0 pod „Popraw
+           zdarzenia" w nagłówku (osobny tryb ekranu, L3b). Karta unieważnienia stoi
+           za wszystkim - także za śladem GPS - bo do operacji wchodzi się, żeby ją
+           przeczytać, a wycofanie wpisu jest wyjściem awaryjnym. Konto bez zdolności
+           `events.correct` NIE WIDZI ani przycisku, ani tej karty: brak uprawnień
+           znaczy brak przycisku, nie przycisk wyszarzony. -->
       <div class="card">
         <div class="card-title">Unieważnienie wpisu</div>
         <p class="hint">
@@ -600,6 +657,12 @@
   <span>·</span>
   <a href="dziennik-operacja.html" class="active">Dziennik · operacja</a>
   <span>·</span>
+  <a href="dziennik-edycja.html">Edycja →</a>
+  <span>·</span>
+  <a href="dziennik-dopisanie.html">Dopisanie</a>
+  <span>·</span>
+  <a href="dziennik-pilot.html">Dziennik · pilot</a>
+  <span>·</span>
   <a href="piloci-lista.html">Piloci</a>
   <span>·</span>
   <a href="samoloty-lista.html">Samoloty</a>
@@ -610,10 +673,12 @@
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════════
-     ZAPISY ADMINISTRATORA - DWA I TYLKO DWA
+     ZAPISY ADMINISTRATORA NA DOLE STRONY - DWA I TYLKO DWA
      Który się pokaże, rozstrzyga STAN operacji: w toku dostaje „Zakończenie operacji",
      zakończona - „Unieważnienie wpisu". Nigdy oba naraz: dwa wyjścia awaryjne obok
      siebie kazałyby wybierać między rzeczami, które nie są alternatywą.
+     Trzecia droga zapisu - KOREKTA ZDARZEŃ (3.2.0) - nie jest kartą, tylko TRYBEM
+     tego ekranu (L3b, `dziennik-edycja`), bo dotyczy wierszy osi, a nie całego wpisu.
      ══════════════════════════════════════════════════════════════════════════════ -->
 
 <section class="canvas-section">
@@ -638,10 +703,10 @@
                  Fakty składa ten sam kod, który buduje wiersz gridu poziomu 2 - drugie
                  formatowanie tych samych wartości rozjechałoby się dokładnie tam, gdzie
                  człowiek podejmuje decyzję nieodwracalną. -->
-            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/TMA/1</span></div>
+            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKO/1</span></div>
             <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
             <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">08:42 → 11:04</span></div>
-            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">T. Małkiewicz</span></div>
+            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">A. Kowalski</span></div>
             <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">6</span></div>
             <div class="kv"><span class="kv-k">Czas blokowy</span><span class="kv-v">2:22</span></div>
             <div class="field">
@@ -671,12 +736,12 @@
           <span class="sep" aria-hidden="true">/</span>
           <a href="dziennik-maszyna.html">SP-AXA</a>
           <span class="sep" aria-hidden="true">/</span>
-          <span class="current">SP-AXA/2026-09-06/AKO/1</span>
+          <span class="current">SP-AXA/2026-09-06/AKW/1</span>
         </nav>
         <div class="page-head">
           <div>
             <h1 class="page-title">SP-AXA</h1>
-            <p class="page-sub">SP-AXA/2026-09-06/AKO/1 · silnik 13:10 → - UTC</p>
+            <p class="page-sub">SP-AXA/2026-09-06/AKW/1 · silnik 13:10 → - UTC</p>
           </div>
           <div class="page-actions">
             <span class="pill amber"><span class="dot live"></span>W toku</span>
@@ -693,7 +758,7 @@
           </p>
           <div class="confirm">
             <p class="confirm-q">Zakończyć tę operację?</p>
-            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKO/1</span></div>
+            <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKW/1</span></div>
             <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
             <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">13:10 → w toku</span></div>
             <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">A. Kowal</span></div>
@@ -772,6 +837,29 @@
       </div>
     </article>
 
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Operacja z OTWARTYM ROZJAZDEM (3.2.0, §6)</span>
+        <span class="inv-when">Flaga opisuje operację, więc stoi PRZY NIEJ, nie wyłącznie w skrzynce: plakietka w nagłówku mówi CO (rozjazd paliwa), a baner - CO Z TYM ZROBIĆ i dokąd iść. Baner nazywa liczby, które się nie zgadzają, i wskazuje dwa narzędzia: korektę odczytu (tu, „Popraw zdarzenia") i rozstrzygnięcie sprawy (w „Do sprawdzenia"). Nie opisuje, jak liczy się łańcuch odczytów - to kategoria przypisów wyrzuconych z aplikacji przy issue #43 i #72. Ta sama plakietka stoi na wierszu poziomu 2.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">SP-AXA</h1>
+            <p class="page-sub">SP-AXA/2026-09-02/AKW/1 · silnik 09:20 → 10:34 UTC</p>
+          </div>
+          <div class="page-actions">
+            <a class="pill amber" href="sprawdzenie-rozjazdy.html">Rozjazd paliwa</a>
+            <a class="btn primary" href="dziennik-edycja.html">Popraw zdarzenia</a>
+          </div>
+        </div>
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>Odczyt paliwa przy przejęciu nie zgadza się z przekazaniem.</b> Pilot odczytał 148 L, poprzednia operacja (AKO/1, 1 września) oddała 92 L - różnica 56 L przy tolerancji 10 L. Jeśli tankowano poza aplikacją, dopisz tankowanie; jeśli odczyt jest błędny, popraw go. Sprawę zamkniesz w <a class="cell-link" href="sprawdzenie-rozjazdy.html">Do sprawdzenia</a>.</span>
+        </div>
+      </div>
+    </article>
+
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Brak rysunku ma POWÓD</span>
@@ -821,6 +909,8 @@
   <a href="dziennik-maszyna.html">← Dziennik · maszyna</a>
   <span>·</span>
   <a href="dziennik-operacja.html" class="active">Dziennik · operacja</a>
+  <span>·</span>
+  <a href="dziennik-edycja.html">Edycja →</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>

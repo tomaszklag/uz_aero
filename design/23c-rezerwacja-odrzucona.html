@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 23C Rezerwacja odrzucona</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Nagłówek z powrotem: ten ekran OTWIERA SIĘ z kalendarza albo z Pulpitu, więc
+     strzałka ma dokąd wracać - inaczej niż zakładki, które powrotu nie mają. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══ HERO: TERMIN ═══
+     Bohaterem ekranu jest CZAS, bo to on jest przedmiotem rezerwacji - maszyna, zadanie
+     i trasa są jego opisem. Odliczanie stoi tylko przy rezerwacji nadchodzącej; przy
+     minionej znika, zamiast pokazywać liczbę ujemną. */
+  .hero {
+    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--green-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--green); }
+
+  /* ═══ KARTA DANYCH ═══ wiersze klucz-wartość, jak szuflada panelu: ekran ODPOWIADA,
+     a nie oferuje - ołówek przy każdym wierszu byłby czterema celami dotknięcia dla
+     jednej czynności (issue #40). Zmiana idzie jedną drogą: „PRZESUŃ I POPRAW". */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══ AKCJE ═══
+     „PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem - to ta sama ścieżka, więc
+     nie ma osobnego ekranu edycji (ta sama zasada, co tryb edycji ekranu 10 z issue #43).
+
+     ODWOŁANIE jest OBRAMOWANE, nie wypełnione: czerwień mówi „uwaga", nie „zrób to"
+     (issue #55 / 10L). Stoi na dole, za wszystkim - intencją wchodzącego jest sprawdzenie
+     albo przesunięcie, nie kasowanie. */
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+  .btn-danger {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:transparent; color:var(--red);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--red-border); text-decoration:none;
+  }
+  .btn-danger:hover { background:var(--red-muted); }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     STANY REZERWACJI - plakietka, baner i ścieżka
+
+     Plakietka `hero-badge` niesie STAN i miejsce na nią przewidziano już w 3.0.0,
+     kiedy stan był jeden („Potwierdzona"). Teraz są cztery, więc dochodzą TONY -
+     i tylko one, bo układ ekranu zostaje ten sam. Ekran, który przy odmowie
+     przestawia karty, każe czytać go od nowa w najgorszym momencie.
+
+     Baner stoi NAD kartą terminu, bo odpowiada na pierwsze pytanie wchodzącego
+     („co z moim lotem"), a nie na drugie („o której"). Niesie POWÓD i DROGĘ WYJŚCIA;
+     stan bez jednego i drugiego jest zdaniem o niczym.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .hero-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .hero-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .hero-badge.dim { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border-strong); }
+
+
+  /* ══ TON KARTY TERMINU IDZIE ZA STANEM ══
+     Zieleń znaczy „w normie" i niesie akcję główną, więc na karcie rezerwacji
+     obiecuje, że lot jest pewny. Dopóki ktoś nie zdecydował, nie jest - stąd ton
+     ostrzeżenia. Rezerwacja ZAMKNIĘTA (odrzucona, wygasła) wraca do tonu
+     neutralnego, a nie czerwonego: czerwień niesie baner, a dwa czerwone pudełka
+     pod sobą przestają się odróżniać - i tak samo nie jest wygaszona, bo to dalej
+     zapis, który pilot czyta. */
+  .hero.wait { background:linear-gradient(180deg, rgba(243,156,18,0.07) 0%, var(--surface) 55%); border-color:var(--amber-border); }
+  .hero.wait .hero-count { color:var(--amber); }
+  .hero.off { background:var(--surface); border-color:var(--border-strong); }
+  .state-banner {
+    display:flex; align-items:flex-start; gap:10px; padding:12px 13px; border-radius:14px;
+    border:1px solid var(--border-strong); background:var(--surface);
+  }
+  .state-banner.amber { border-color:var(--amber-border); background:var(--amber-muted); }
+  .state-banner.red { border-color:var(--red-border); background:var(--red-muted); }
+  .sb-icon { flex-shrink:0; margin-top:1px; }
+  .state-banner.amber .sb-icon { color:var(--amber); }
+  .state-banner.red .sb-icon { color:var(--red); }
+  .sb-text { font-size:12px; line-height:1.55; color:var(--text-secondary); }
+  .sb-text b { color:var(--text-primary); font-weight:600; display:block; margin-bottom:2px; font-size:12.5px; }
+
+  /* ═══ ŚCIEŻKA AKCEPTACJI ═══
+     Pilot widzi, ILE kroków zostało i KTO je trzyma - bo to jedyna odpowiedź na
+     pytanie „do kogo mam zadzwonić". Nazwisk decydujących NIE MA: krok bywa obsadzony
+     przez kilka osób i rozstrzyga PIERWSZA, więc jedno nazwisko byłoby nieprawdą,
+     a trzy - listą do przepisania przy każdej zmianie obsady. */
+  .step { display:flex; align-items:center; gap:10px; padding:10px 13px; border-bottom:1px solid var(--border); }
+  .step:last-child { border-bottom:none; }
+  .step-mark {
+    width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border-strong); color:var(--text-muted); background:var(--surface-raised);
+  }
+  .step-mark.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
+  .step-mark.now { color:var(--amber); border-color:var(--amber-border); background:var(--amber-muted); }
+  .step-mark.no { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
+  .step-name { font-size:12.5px; color:var(--text-primary); flex:1; }
+  .step-when { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .step.pending .step-name { color:var(--text-secondary); }
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 23C</span>
+  <span class="slug">rezerwacja · odrzucona</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Szczegóły rezerwacji">
+  <div class="status-bar">
+    <span>07:45</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="21-kalendarz.html" class="icon-btn" title="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="screen-title">REZERWACJA</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ TERMIN ═══
+           Plakietka mówi STAN rezerwacji. W 3.0.0 jest jeden („Potwierdzona") i dlatego
+           mógłby go nie być wcale - ale w 3.1.0 dochodzi „Czeka na zgodę" i „Odrzucona",
+           więc miejsce jest przewidziane od początku, żeby ekran nie zmieniał wtedy
+           układu. -->
+      <div class="state-banner red">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span class="sb-text"><b>Anna Kowal odmówiła zgody</b>Maszyna idzie tego dnia na przegląd 100 h. Weź SP-BKL - jest wolna od ósmej.</span>
+      </div>
+
+      <div class="hero off">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 19 września</span>
+          <span class="hero-badge red">Odrzucona</span>
+        </div>
+        <div class="hero-hours">09:00 → 11:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">2 h</span>
+        </div>
+      </div>
+
+      <!-- ═══ CO REZERWUJESZ ═══ -->
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-AXA</span><span class="kv-sub">Cessna 172 · C172</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Przelot</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Trasa</span>
+          <span class="kv-v"><span class="mono">EPKK → EPRJ</span><span class="kv-sub">Kraków-Balice → Rzeszów-Jasionka</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Drugi pilot</span>
+          <span class="kv-v"><span class="mono">BNO</span><span class="kv-sub">Barbara Nowak</span></span>
+        </div>
+      </div>
+
+      <!-- ═══ PLAN ═══
+           Liczby, których rejestr nie zna, bo dotyczą przyszłości. Po locie mają swoje
+           faktyczne odpowiedniki na ekranie operacji (10) - i to TAMTE wchodzą do
+           rozliczenia. Karty „plan kontra fakt" tu nie ma i nie będzie: rezerwacja
+           zamyka się w chwili, w której zaczyna się operacja. -->
+      <div class="section-lbl">Ścieżka akceptacji</div>
+      <div class="card">
+        <div class="step">
+          <span class="step-mark no"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+          <span class="step-name">Mechanik</span>
+          <span class="step-when">dziś 08:20</span>
+        </div>
+        <div class="step pending">
+          <span class="step-mark "><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="12" y1="12" x2="12.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/></svg></span>
+          <span class="step-name">Szef wyszkolenia</span>
+          <span class="step-when">nie zaczął</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Plan</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Czas lotu</span>
+          <span class="kv-v"><span class="mono">1:30</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Paliwo</span>
+          <span class="kv-v"><span class="mono">120 L</span><span class="kv-sub">do zabrania</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Notatka</span>
+          <span class="kv-v">Odbiór części w Jasionce, powrót tego samego dnia.</span>
+        </div>
+      </div>
+
+      <!-- JEDNO WYJŚCIE. Termin wrócił do puli, więc nie ma czego przesuwać ani
+           odwoływać - wyszarzone przyciski obiecywałyby akcje, których reguły nie
+           dopuszczą (zasada z 10B i 02G). Zostaje to, co pilot naprawdę zrobi. -->
+      <a href="21-kalendarz.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        WYBIERZ INNY TERMIN
+      </a>
+
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="23-rezerwacja-szczegoly.html">
+    <span class="vp-badge">23</span>
+    <span class="vp-body">
+      <span class="vp-name">Potwierdzona</span>
+      <span class="vp-when">Komplet zgód albo klub bez ścieżki akceptacji. Pełen pas akcji: przesunięcie i odwołanie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23b-rezerwacja-czeka.html">
+    <span class="vp-badge amber">23B</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zgodę</span>
+      <span class="vp-when">Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Ścieżka mówi, ile kroków zostało i kto je trzyma; nazwisk nie ma, bo krok bywa obsadzony przez kilka osób i rozstrzyga pierwsza. Poprawka CZYŚCI zgody i zaczyna ścieżkę od nowa - inaczej ktoś zatwierdziłby dwie godziny, a poleciałoby się przez pół dnia.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23e-rezerwacja-nowy-krok.html">
+    <span class="vp-badge amber">23E</span>
+    <span class="vp-body">
+      <span class="vp-name">Doszedł krok akceptacji</span>
+      <span class="vp-when">Klub dopisał krok do ścieżki, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest ŻYWA i to jest jej cena; zgody już wydane zostają, bo dotyczyły tego samego terminu.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="23c-rezerwacja-odrzucona.html">
+    <span class="vp-badge">23C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odrzucona z powodem</span>
+      <span class="vp-when">Powód jest wymagany po stronie decydującego i stoi tu jako treść. Termin wrócił do puli, więc odwoływać nie ma czego - zostaje jedno wyjście: wybrać inny termin.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="23d-rezerwacja-wygasla.html">
+    <span class="vp-badge amber">23D</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin minął bez decyzji</span>
+      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i zwalnia slot (milczenie NIE znaczy zgody). Ekran mówi to wprost razem z tym, co robić dalej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="20e-pulpit-rezerwacja-czeka.html">
+    <span class="vp-badge blue">20E</span>
+    <span class="vp-body">
+      <span class="vp-name">Pulpit z rezerwacją czekającą</span>
+      <span class="vp-when">Karta najbliższej rezerwacji traci zieleń i poświatę: zielona obiecywałaby, że lot jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od tego, czy ktoś zdążył zdecydować, i właśnie ta para jest tu całą informacją.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="21-kalendarz.html">← 21 Kalendarz</a>
+  <span>·</span>
+  <a href="23-rezerwacja-szczegoly.html">23 Potwierdzona</a>
+  <a href="23b-rezerwacja-czeka.html">23B Czeka</a>
+  <a href="23e-rezerwacja-nowy-krok.html">23E Doszedł</a>
+  <a href="23c-rezerwacja-odrzucona.html" class="active">23C Odrzucona</a>
+  <a href="23d-rezerwacja-wygasla.html">23D Termin</a>
+  <a href="20e-pulpit-rezerwacja-czeka.html">20E Pulpit</a>
+  <span>·</span>
+  <a href="25-powiadomienia.html">25 Skrzynka →</a>
+</nav>
+
+</body>
+</html>

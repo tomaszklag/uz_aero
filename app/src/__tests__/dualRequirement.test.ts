@@ -16,7 +16,7 @@ import { manualFlightStepBlocker, emptyManualFlightDraft } from '../ui/screens/l
 describe('dualRequirementBlocker', () => {
   it('blokuje maszynę z wymogiem, dopóki nie ma drugiego pilota', () => {
     expect(dualRequirementBlocker({ dualRequired: true }, null)).toBe(DUAL_REQUIRED_REASON);
-    expect(dualRequirementBlocker({ dualRequired: true }, 'ako')).toBeNull();
+    expect(dualRequirementBlocker({ dualRequired: true }, 'bno')).toBeNull();
   });
 
   it('milczy tam, gdzie wymogu nie ma - i zanim jest o czym mówić', () => {

@@ -198,6 +198,57 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
     ustawieniu hasła wszystkie dotychczasowe sesje tej osoby zostają wylogowane. W drugą
     stronę (zapomniane hasło superadministratora): „Nie pamiętam hasła" w panelu, Google
     z tym samym adresem albo ta sama komenda. Kodów jednorazowych do dyktowania NIE MA.
+12. **Powiadomienia push** (od 3.1.0; Firebase Cloud Messaging przez Expo Push Service -
+    issue #168, epik R-J). Push jest BUDZIKIEM do skrzynki: bez tego kroku serwer wstaje,
+    prośby o zgodę czekają w aplikacji, tylko nikt nie dzwoni.
+    1. console.firebase.google.com → nowy projekt → **Add app → Android**, package
+       `com.ninerdeck.app`; drugi raz dla `com.ninerdeck.app.dev`, jeśli dev build ma
+       dostawać powiadomienia (osobny pakiet = osobna aplikacja w Firebase). Pobierz
+       `google-services.json` - jeden plik obejmuje obie aplikacje projektu.
+    2. Plik NIE trafia do repozytorium. Dla buildów EAS, KONIECZNIE z katalogu `app/`
+       (z korzenia EAS pyta „project not configured" i zakłada zbędny `app.json`):
+       `npx eas-cli env:set --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility secret --environment production --environment development --environment preview`
+       (`env:create` jest wycofane; `preview` dlatego, że profil bez pola `environment`
+       z `distribution: internal` ląduje w środowisku preview - build bez pliku przechodzi,
+       a telefon po cichu nie rejestruje tokenu). Lokalnie połóż go jako
+       `app/google-services.json` (jest w `.gitignore`). `app.config.js` dokłada
+       `android.googleServicesFile` z tej zmiennej albo z lokalnej kopii
+       (`app/scripts/google-services.js`). Architektura, sekrety, koszt i sklep Play:
+       `docs/rezerwacje.md` §12.6.
+    3. **FCM V1**: Firebase → Project settings → Service accounts → **Generate new private
+       key** (JSON) → `npx eas-cli credentials -p android` → pakiet → Push Notifications
+       (FCM V1) → wgraj klucz. Osobno dla pakietu dev. Stary „server key" jest wycofany
+       przez Google.
+    4. Zmienne usługi: `PUSH_PROVIDER=expo` oraz `PUSH_ACCESS_TOKEN` - technicznie
+       opcjonalny, na produkcji WSKAZANY: bez niego każdy, kto pozna token urządzenia
+       (`ExponentPushToken[…]`), może przez Expo słać na ten telefon dowolne budziki.
+       To token KONTA EXPO, robi się go w przeglądarce (nie w `eas-cli`) i jako
+       **robot**, nie personal access token: robot to osobna tożsamość z własną rolą,
+       którą unieważnia się bez ruszania własnego konta, a personal token działa w pełni
+       jak właściciel (buildy, zmiany projektu).
+       1. expo.dev → avatar → Account settings → **Access tokens**
+          (`https://expo.dev/accounts/<konto>/settings/access-tokens`) → **Add robot**,
+          nazwa np. `ninerdeck-server`, rola Developer (Viewer prawdopodobnie wystarcza
+          do wysyłki, ale tego nie sprawdzono).
+       2. Przy robocie **Create token** (nazwa np. `railway-push`) - ciąg widać RAZ.
+       3. Railway → usługa serwera → Variables → `PUSH_ACCESS_TOKEN` = ten ciąg (sam
+          token, bez „Bearer" i bez cudzysłowów); Railway robi redeploy.
+       4. DOPIERO POTEM expo.dev → projekt → Project settings → **Enhanced Security for
+          Push Notifications**: od tej chwili Expo odrzuca wysyłki bez tokenu konta.
+          Kolejność 3 → 4 jest twarda - wymuszanie włączone przy pustej zmiennej daje
+          odmowy Expo w logu serwera i ciszę w telefonach.
+
+       **Brak `PUSH_PROVIDER` nie daje żadnego objawu na serwerze** - jedynym śladem jest
+       cisza w telefonach przy działającej skrzynce.
+    5. **Nowy APK**: `expo-notifications` to moduł natywny, więc OTA go nie dowiezie
+       (3.1.0 idzie nowym plikiem). Próba PRZED wydaniem: dev build (`npm run build:dev`
+       po kroku 2 i 3) z lokalnym serwerem na `PUSH_PROVIDER=expo` → rezerwacja w klubie
+       ze ścieżką → telefon akceptującego dostaje „Prośba o zgodę".
+    6. Polityka prywatności (`site/src/prywatnosc.html`, sekcja 5.2) opisuje powiadomienia:
+       token przypięty do sesji logowania, obu pośredników doręczenia (Expo Push Service,
+       Firebase Cloud Messaging) i co dostają, jak wyłączyć (ustawienia systemu). Zmiana
+       dostawcy albo zawartości pola `data` budzika (`Notifier.wake`) to zmiana tej sekcji
+       w tym samym PR-ze.
 
 Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
 przy ruchu klubowym. Strona nie dokłada usługi ani buildu, ale jej transfer idzie odtąd

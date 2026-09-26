@@ -129,10 +129,10 @@ function list(app: Harness['app'], token: string, query = '') {
 async function threeDays() {
   const harness = await testHarness();
   const { app } = harness;
-  const tmk = await login(app, 'TMK');
+  const ako = await login(app, 'AKO');
   const krz = await login(app, 'KRZ');
 
-  await post(app, tmk, flyingDay({ sessionUuid: 'sess-1', picId: 'TMK', dayOffset: 0, mh: 1200 }));
+  await post(app, ako, flyingDay({ sessionUuid: 'sess-1', picId: 'AKO', dayOffset: 0, mh: 1200 }));
   await post(
     app,
     krz,
@@ -153,10 +153,10 @@ async function threeDays() {
   // a nie przypadkową rozbieżność w danych testowych.
   await post(
     app,
-    tmk,
+    ako,
     flyingDay({
       sessionUuid: 'sess-3',
-      picId: 'TMK',
+      picId: 'AKO',
       operation: 'ferry',
       client: 'SKY CAMP',
       dayOffset: 2,
@@ -166,7 +166,7 @@ async function threeDays() {
     }),
   );
 
-  return { ...harness, admin: tmk };
+  return { ...harness, admin: ako };
 }
 
 describe('lista dni (A02)', () => {
@@ -259,7 +259,7 @@ describe('lista dni (A02)', () => {
     expect(await uuids('?flagged=false')).toEqual(['sess-3', 'sess-2', 'sess-1']);
 
     // Pilot dopasowuje PIC-a ALBO Duala: dzień szkolny należy do obu.
-    expect(await uuids('?pilotId=TMK')).toEqual(['sess-3', 'sess-1']);
+    expect(await uuids('?pilotId=AKO')).toEqual(['sess-3', 'sess-1']);
     expect(await uuids('?pilotId=JSE')).toEqual(['sess-2']);
   });
 
@@ -304,7 +304,7 @@ describe('lista dni (A02)', () => {
     await post(
       app,
       admin,
-      flyingDay({ sessionUuid: 'sess-4', picId: 'TMK', dayOffset: 3, mh: 1210 }),
+      flyingDay({ sessionUuid: 'sess-4', picId: 'AKO', dayOffset: 3, mh: 1210 }),
     );
 
     const second = (
@@ -330,7 +330,7 @@ describe('lista dni (A02)', () => {
   it('panel CZYTA listę, pilot dostaje 403, brak tokenu 401', async () => {
     const { app } = await threeDays();
 
-    expect((await list(app, await login(app, 'TMK'))).statusCode).toBe(200);
+    expect((await list(app, await login(app, 'AKO'))).statusCode).toBe(200);
 
     const pilot = await list(app, await login(app, 'PWI'));
     expect(pilot.statusCode).toBe(403);
@@ -352,7 +352,7 @@ describe('karta dnia (A02a)', () => {
     expect(res.statusCode).toBe(200);
 
     const body = res.json();
-    expect(body.session).toMatchObject({ sessionUuid: 'sess-1', reg: 'SP-AXA', picCode: 'TMK' });
+    expect(body.session).toMatchObject({ sessionUuid: 'sess-1', reg: 'SP-AXA', picCode: 'AKO' });
 
     // `state` to byt DOMENOWY - jedzie bez własnego DTO, w całości, żeby panel
     // formatował liczby serwera zamiast liczyć swoje.
@@ -391,7 +391,7 @@ describe('karta dnia (A02a)', () => {
     // gdyby oś brała kolejność z bazy, wróciłaby dokładnie na opak.
     const { app, admin } = await threeDays();
 
-    const base = { sessionUuid: 'sess-rev', picId: 'TMK', aircraftId: 'SP-AXA', dualId: null };
+    const base = { sessionUuid: 'sess-rev', picId: 'AKO', aircraftId: 'SP-AXA', dualId: null };
     const reversed = [
       { ...event('session_claim', at(7, 50), { mode: 'free' }, base), uuid: 'zz-06-claim' },
       {
@@ -416,8 +416,8 @@ describe('karta dnia (A02a)', () => {
       { ...event('engine_stop', at(10, 34), {}, base), uuid: 'zz-01-engstop' },
     ];
 
-    const tmk = await login(app, 'TMK');
-    const sent = await post(app, tmk, reversed);
+    const ako = await login(app, 'AKO');
+    const sent = await post(app, ako, reversed);
     expect(sent.statusCode).toBe(200);
 
     const res = await app.inject({
@@ -486,7 +486,7 @@ describe('karta dnia (A02a)', () => {
     // przeterminowany, więc logujemy się jeszcze raz: to jest zachowanie produkcyjne,
     // a nie obejście testowe.
     clock.advance(4 * DAY_MS);
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const before = (
       await app.inject({
@@ -549,7 +549,7 @@ describe('karta dnia (A02a)', () => {
 
     const flight = (await card()).state.flights[0];
 
-    // 1) KOREKTA ADMINISTRATORA - jedyna droga zapisu panelu, `source_device` = `admin:TMK`.
+    // 1) KOREKTA ADMINISTRATORA - jedyna droga zapisu panelu, `source_device` = `admin:AKO`.
     const byAdmin = await app.inject({
       method: 'POST',
       url: '/admin/api/sessions/sess-1/corrections',
@@ -563,13 +563,13 @@ describe('karta dnia (A02a)', () => {
     expect(byAdmin.statusCode).toBe(200);
 
     // 2) KOREKTA PILOTA - zwykły `POST /events` z telefonu, z identyfikatorem urządzenia.
-    const pilot = await login(app, 'TMK');
+    const pilot = await login(app, 'AKO');
     const byPilot = await post(app, pilot, [
       event(
         'event_correction',
         at(23, 0),
         { targetUuid: flight.landingUuid, action: 'void' },
-        { sessionUuid: 'sess-1', picId: 'TMK', aircraftId: 'SP-AXA' },
+        { sessionUuid: 'sess-1', picId: 'AKO', aircraftId: 'SP-AXA' },
       ),
     ]);
     expect(byPilot.statusCode).toBe(200);
@@ -603,18 +603,18 @@ describe('karta dnia (A02a)', () => {
   it('flagi dnia zawierają także ROZWIĄZANE - historia decyzji zostaje na karcie', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const tmk = await login(app, 'TMK');
+    const ako = await login(app, 'AKO');
     const krz = await login(app, 'KRZ');
 
     // Nakładka: dwie niezamknięte sesje jednego samolotu → `aircraft_overlap`.
-    await post(app, tmk, flyingDay({ sessionUuid: 'sess-1', picId: 'TMK', close: false }));
+    await post(app, ako, flyingDay({ sessionUuid: 'sess-1', picId: 'AKO', close: false }));
     await post(app, krz, flyingDay({ sessionUuid: 'sess-2', picId: 'KRZ', close: false, mh: 1240 }));
 
     const { rows } = await db.query<{ id: number }>('SELECT id FROM flags ORDER BY id');
     expect(rows).toHaveLength(1);
 
     // Pozytywna strona filtra `flagged` na PRAWDZIWEJ fladze: obie sesje nakładki.
-    const flagged = (await list(app, tmk, '?flagged=true')).json();
+    const flagged = (await list(app, ako, '?flagged=true')).json();
     expect(flagged.items.map((i: { sessionUuid: string }) => i.sessionUuid).sort()).toEqual([
       'sess-1',
       'sess-2',
@@ -624,7 +624,7 @@ describe('karta dnia (A02a)', () => {
     await app.inject({
       method: 'POST',
       url: `/admin/api/flags/${rows[0]!.id}/resolve`,
-      headers: { authorization: `Bearer ${tmk}`, ...ADMIN_CSRF_HEADERS },
+      headers: { authorization: `Bearer ${ako}`, ...ADMIN_CSRF_HEADERS },
       payload: { note: 'Nakładka pozorna - KRZ zamknął dzień telefonicznie.' },
     });
 
@@ -632,7 +632,7 @@ describe('karta dnia (A02a)', () => {
       await app.inject({
         method: 'GET',
         url: '/admin/api/sessions/sess-1',
-        headers: { authorization: `Bearer ${tmk}` },
+        headers: { authorization: `Bearer ${ako}` },
       })
     ).json();
 
@@ -640,7 +640,7 @@ describe('karta dnia (A02a)', () => {
     expect(body.flags[0]).toMatchObject({
       type: 'aircraft_overlap',
       status: 'resolved',
-      resolvedBy: 'TMK',
+      resolvedBy: 'AKO',
       // Rozwiązana nakładka już NIE blokuje karty - to samo mówi bramka eksportera.
       blocksExport: false,
     });

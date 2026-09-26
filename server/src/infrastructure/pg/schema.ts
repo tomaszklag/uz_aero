@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 15;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -906,7 +906,7 @@ export const MIGRATION_8 = `
     -- bez kodu nie ma prawa być aktywne.
     CONSTRAINT membership_active_has_code CHECK (status <> 'active' OR code IS NOT NULL)
   );
-  -- Kod jedyny W KLUBIE, nie na serwerze: ta sama osoba może być TMK w jednym klubie
+  -- Kod jedyny W KLUBIE, nie na serwerze: ta sama osoba może być AKO w jednym klubie
   -- i TOM w drugim. Częściowy, bo 'pending' kodu nie ma.
   CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_code
     ON memberships (org_id, code) WHERE code IS NOT NULL;
@@ -1397,6 +1397,282 @@ export const MIGRATION_11 = `
   CREATE INDEX IF NOT EXISTS idx_bookings_session
     ON bookings (session_uuid) WHERE session_uuid IS NOT NULL;
 `;
+/**
+ * ZAKRES UPRAWNIEŃ: ZDOLNOŚĆ NALEŻY DO CZŁONKOSTWA, NIE DO ROLI
+ * (epik #197, `docs/uprawnienia.md`; decyzja właściciela 2026-09-23).
+ *
+ * Role klubu były dwie - `admin` z kompletem zdolności i `pilot` z pustą listą - więc
+ * nie dało się powiedzieć „mechanik zatwierdza rezerwacje, ale floty ani kont nie
+ * dotyka". Ścieżka akceptacji rezerwacji (3.1.0) potrzebuje dokładnie tego: krok
+ * „Mechanik" musi mieć kogo pytać, a mechanik jest w klubie zwykłym pilotem.
+ *
+ * ══ KOLEJNOŚĆ TRZECH KROKÓW JEST CZĘŚCIĄ MIGRACJI ══
+ * Tabela → backfill → `DROP COLUMN`. Odwrotna gubi dane bezpowrotnie: po skasowaniu
+ * kolumny nie ma z czego wyprowadzić, kto był administratorem.
+ */
+export const MIGRATION_12 = `
+  -- ═══ ZDOLNOŚCI NADANE CZŁONKOSTWU ══════════════════════════════════════════════
+  -- Brak wiersza = brak zdolności. Zbiór czyta brama razem z członkostwem, przy każdym
+  -- żądaniu (authSnapshot), więc odebranie działa natychmiast - nie po wygaśnięciu tokenu.
+  CREATE TABLE IF NOT EXISTS membership_capabilities (
+    org_id     TEXT NOT NULL,
+    pilot_id   TEXT NOT NULL,
+    -- BEZ CHECK-a na wartość i to jest decyzja, nie przeoczenie: katalog zdolności żyje
+    -- w TypeScripcie i rośnie z produktem, więc ograniczenie w bazie znaczyłoby migrację
+    -- przy każdej nowej pozycji. Napis spoza katalogu nie pasuje do żadnego pytania
+    -- \`can(...)\`, czyli nie nadaje niczego - bezpiecznik jest wbudowany w model.
+    capability TEXT NOT NULL,
+    -- BEZ granted_at/granted_by: kto i kiedy zmienił zakres, mówi audyt (membership.scope),
+    -- a wiersz opisuje STAN. Ta sama zasada, którą decyzja o zgłoszeniu zostawia historię
+    -- dziennikowi zamiast trzymać ją w kolumnach.
+    PRIMARY KEY (org_id, pilot_id, capability),
+    -- CASCADE: skasowanie osoby zabiera członkostwo, a członkostwo - jego zdolności.
+    FOREIGN KEY (org_id, pilot_id) REFERENCES memberships(org_id, pilot_id) ON DELETE CASCADE
+  );
+
+  -- ═══ BACKFILL Z RÓL ════════════════════════════════════════════════════════════
+  -- Każde członkostwo \`admin\` dostaje komplet dzisiejszych zdolności administratora,
+  -- każde \`pilot\` - ZERO wierszy, bo dzisiejsza rola \`pilot\` ma pustą listę uprawnień
+  -- panelu. To nie jest utrata niczego: pilot pracuje wyłącznie w aplikacji.
+  --
+  -- Lista wypisana tutaj, a nie wzięta z kodu: migracja opisuje stan z chwili wdrożenia
+  -- i ma dawać ten sam wynik za rok, gdy \`CLUB_CAPABILITIES\` urośnie o trzy pozycje.
+  -- Backfill czytający dzisiejszą stałą przyznawałby wtedy uprawnienia, których
+  -- administrator z 2026 roku nigdy nie dostał.
+  INSERT INTO membership_capabilities (org_id, pilot_id, capability)
+  SELECT m.org_id, m.pilot_id, c.capability
+  FROM memberships m
+  CROSS JOIN (VALUES
+    ('panel.access'), ('flags.resolve'), ('events.correct'), ('accounts.manage'),
+    ('fleet.manage'), ('thresholds.manage'), ('audit.read'), ('maintenance.run'),
+    ('reservations.manage'), ('reservations.approve')
+  ) AS c(capability)
+  WHERE m.role = 'admin'
+  ON CONFLICT DO NOTHING;
+
+  -- ═══ ROLA KLUBU ZNIKA ══════════════════════════════════════════════════════════
+  -- Razem z CHECK-iem z migracji 8 (DROP COLUMN zabiera go sam). Kolumna, która wygląda
+  -- na nadającą uprawnienia, a nic nie nadaje, jest GORSZA niż jej brak: pierwszy
+  -- człowiek, który zobaczy \`role = admin\` przy członku bez \`accounts.manage\`, uzna
+  -- jedno z dwojga za usterkę i „naprawi" niewłaściwe.
+  ALTER TABLE memberships DROP COLUMN IF EXISTS role;
+`;
+
+/**
+ * ŚCIEŻKA AKCEPTACJI, SKRZYNKA I BUDZIK
+ * (milestone 3.1.0, epik #164; `docs/rezerwacje.md` §3.4, §11, §12).
+ *
+ * Migracja w całości ADDYTYWNA: `bookings.status` znał `pending` od migracji 11, więc
+ * stan „czeka na zgodę" nie wymaga tu ani jednej zmiany - dopiero teraz wchodzi w życie.
+ *
+ * ══ DWA KSZTAŁTY, KTÓRE WYGLĄDAJĄ NA NADMIAROWE, A NIE SĄ ══
+ * **Trwałe `approval_steps.id` obok zmiennej `position`** - bo ścieżka jest ZAWSZE
+ * BIEŻĄCA (§11.2): dołożenie kroku w środku przesuwa numery następnych, więc zgoda
+ * zapisana pod NUMEREM opisywałaby po takiej zmianie inny krok niż w chwili kliknięcia.
+ *
+ * **`removed_at` zamiast `DELETE`** - decyzje są append-only, więc zgoda wydana pod
+ * krokiem zdjętym ze ścieżki ma zostać czytelna. Bez tego klucz obcy i tak nie
+ * pozwoliłby kroku usunąć.
+ */
+export const MIGRATION_13 = `
+
+  -- ═══ REZERWACJA, KTÓREJ NIKT NIE ROZSTRZYGNĄŁ ══════════════════════════════════
+  -- \`expired\` (§11.5): termin nadszedł, a zgody nie wydano - slot wraca do puli.
+  -- OSOBNY od \`released\` i to jest cała różnica między nimi: tam maszyny nie przejęto,
+  -- tu zgody nie wydano, a pilot ma usłyszeć, którą z tych dwóch rzeczy przegapiono.
+  --
+  -- CHECK trzeba wymienić, bo migracja 11 wypisała listę stanów w \`CREATE TABLE\`.
+  -- Predykatu ograniczenia wykluczającego to NIE RUSZA: \`expired\` slotu nie trzyma.
+  DO $$
+  BEGIN
+    ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+    ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status IN
+      ('pending', 'confirmed', 'rejected', 'cancelled', 'fulfilled', 'released', 'expired'));
+  END $$;
+  -- ═══ ŚCIEŻKA AKCEPTACJI KLUBU ══════════════════════════════════════════════════
+  -- BRAK WIERSZY = rezerwacja potwierdzona od razu, i to jest stan domyślny każdego
+  -- klubu (§11.1): wymóg akceptacji jest decyzją klubu, nie podatkiem od narzędzia.
+  --
+  -- Krok ma NAZWĘ i LISTĘ OSÓB (decyzja właściciela 2026-09-22). Roli w kroku nie ma
+  -- i nie będzie: „Mechanik" nigdy nie był rolą klubu (te były dwie), a wskazanie
+  -- JEDNEJ imiennej osoby robiło z każdego urlopu blokadę rezerwacji.
+  CREATE TABLE IF NOT EXISTS approval_steps (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    position   INTEGER NOT NULL,
+    label      TEXT NOT NULL,
+    removed_at TIMESTAMPTZ
+  );
+  -- UNIKATU NA (org_id, position) NIE MA świadomie: przestawianie kolejności rodziłoby
+  -- przejściowe kolizje, a odroczone ograniczenie kosztuje więcej, niż daje. Remis
+  -- rozstrzyga \`id\` (\`orderedSteps\` w domenie), więc porządek jest deterministyczny
+  -- bez nowej reguły w bazie.
+  --
+  -- Indeks częściowy, bo ścieżkę czyta się WYŁĄCZNIE żywą - kroki zdjęte są materiałem
+  -- historii, po który sięga się przez decyzję.
+  CREATE INDEX IF NOT EXISTS idx_approval_steps_path
+    ON approval_steps (org_id, position) WHERE removed_at IS NULL;
+
+  -- Kto może zatwierdzić dany krok. WIĘCEJ NIŻ JEDNA OSOBA, a wystarczy zgoda JEDNEJ
+  -- z nich (§11.2) - to pula uprawnionych, nie komplet podpisów.
+  --
+  -- Osobą kroku bywa ZWYKŁY PILOT bez dostępu do panelu, więc klucz obcy celuje
+  -- w \`pilots\`, a nie w \`membership_capabilities\`: prawo głosu daje zdolność
+  -- \`reservations.approve\` sprawdzana przy decyzji, a ta lista mówi, CZYJ to krok.
+  CREATE TABLE IF NOT EXISTS approval_step_members (
+    org_id   TEXT NOT NULL REFERENCES organizations(id),
+    step_id  TEXT NOT NULL REFERENCES approval_steps(id) ON DELETE CASCADE,
+    pilot_id TEXT NOT NULL REFERENCES pilots(id),
+    PRIMARY KEY (step_id, pilot_id)
+  );
+  -- „Które kroki czekają na TĘ osobę" - pytanie skrzynki i ekranu decyzji.
+  CREATE INDEX IF NOT EXISTS idx_approval_step_members_pilot
+    ON approval_step_members (org_id, pilot_id);
+
+  -- ═══ DECYZJE NA REZERWACJI ═════════════════════════════════════════════════════
+  -- Append-only, bo to zapis o tym, KTO CO POSTANOWIŁ (§11.4). Zmiana zdania znaczy
+  -- nową rezerwację, nie nadpisanie decyzji - stąd klucz główny na parze, a nie
+  -- kolumna \`updated_at\`.
+  --
+  -- Wskazuje KROK przez \`step_id\`, nigdy przez jego numer: patrz docblock wyżej.
+  CREATE TABLE IF NOT EXISTS booking_approvals (
+    booking_id TEXT NOT NULL REFERENCES bookings(id),
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    step_id    TEXT NOT NULL REFERENCES approval_steps(id),
+    decision   TEXT NOT NULL CHECK (decision IN ('approved', 'rejected')),
+    -- Skąd wzięła się zgoda: ktoś kliknął (\`person\`) czy krok przeszedł sam, bo
+    -- rezerwujący jest na jego liście (\`self\`, §11.2). Bez tego krok pominięty jest
+    -- nieodróżnialny od kroku, o który nikt nie zapytał.
+    via        TEXT NOT NULL DEFAULT 'person' CHECK (via IN ('person', 'self')),
+    -- WYMAGANY przy \`rejected\` (§11.3) - pilot czyta go na telefonie. Wymogu pilnuje
+    -- domena (\`refuseDecision\`), a nie CHECK: pytanie jest o TREŚĆ, a nie o obecność
+    -- kolumny (napis z samych spacji też powodem nie jest), więc odpowiedź ma paść
+    -- tam, gdzie da się ją nazwać człowiekowi.
+    reason     TEXT,
+    decided_by TEXT NOT NULL REFERENCES pilots(id),
+    decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (booking_id, step_id)
+  );
+
+  -- ═══ SKRZYNKA: ŹRÓDŁO PRAWDY POWIADOMIEŃ ═══════════════════════════════════════
+  -- Push jest tylko budzikiem (§12.1): bywa niedostarczony, wyłączony w ustawieniach
+  -- systemu albo odrzucony na Androidzie 13+, a prośba o zgodę, która przepadła, znaczy
+  -- pilota czekającego na odpowiedź, która nigdy nie przyszła. Dlatego kompletna
+  -- i z historią jest TA tabela, a nie kolejka powiadomień.
+  --
+  -- \`payload\` jest JSONB-em i serwer go NIE WALIDUJE - ta sama decyzja, co przy
+  -- kontekście zgłoszenia błędu (issue #87): treść rośnie z produktem, a schemat po tej
+  -- stronie znaczyłby wdrożenie serwera przy każdym nowym rodzaju powiadomienia.
+  CREATE TABLE IF NOT EXISTS notifications (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    pilot_id   TEXT NOT NULL REFERENCES pilots(id),
+    kind       TEXT NOT NULL,
+    payload    JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    read_at    TIMESTAMPTZ
+  );
+  -- Skrzynka jednej osoby w jednym klubie, od najnowszego. \`id\` w kluczu domyka
+  -- kursor: powiadomienia jednej decyzji rodzą się w tej samej transakcji, więc sam
+  -- \`created_at\` nie porządkuje ich jednoznacznie i strona potrafiłaby zgubić wiersz.
+  CREATE INDEX IF NOT EXISTS idx_notifications_inbox
+    ON notifications (org_id, pilot_id, created_at DESC, id DESC);
+  -- Licznik nieprzeczytanych przy zakładce Pulpit - pytanie zadawane najczęściej
+  -- ze wszystkich, a odpowiedź prawie zawsze mieści się w kilku wierszach.
+  CREATE INDEX IF NOT EXISTS idx_notifications_unread
+    ON notifications (org_id, pilot_id) WHERE read_at IS NULL;
+
+  -- ═══ TOKEN PUSH ŻYJE RAZEM Z SESJĄ LOGOWANIA (§12.2) ═══════════════════════════
+  -- Kasowanie kaskadowe: zdalne wylogowanie z panelu (2.1.0) gasi przy okazji
+  -- powiadomienia na tamtym urządzeniu. Bez tego wspólny tablet klubu wysyłałby
+  -- powiadomienia pilota, który dawno oddał urządzenie koledze.
+  --
+  -- KLUBU TU NIE MA i to jest zgodne z regułą, nie wyjątkiem od niej: token opisuje
+  -- URZĄDZENIE osoby, a ta bywa w kilku klubach naraz i przełącza je bez wylogowania.
+  -- Klub niesie POWIADOMIENIE, czyli treść, która przez ten token wychodzi.
+  CREATE TABLE IF NOT EXISTS push_tokens (
+    token      TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES login_sessions(id) ON DELETE CASCADE,
+    pilot_id   TEXT NOT NULL REFERENCES pilots(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  -- „Na które urządzenia zadzwonić" - jedyne pytanie zadawane tej tabeli poza zapisem.
+  CREATE INDEX IF NOT EXISTS idx_push_tokens_pilot ON push_tokens (pilot_id);
+`;
+
+/**
+ * POPRAWKA CZEKAJĄCEJ REZERWACJI CZYŚCI ZGODY
+ * (milestone 3.1.0, epik R-I - issue #166; `docs/rezerwacje.md` §9.4, §11.4;
+ * decyzja właściciela 2026-09-23: wchodzi do R-I, nie do osobnego zgłoszenia).
+ *
+ * Zgoda dotyczyła KONKRETNEGO terminu, więc po przesunięciu przestaje cokolwiek znaczyć -
+ * inaczej ktoś zatwierdziłby dwie godziny w sobotę rano, a poleciałoby się przez pół
+ * niedzieli. Rejestr decyzji ZOSTAJE append-only: stara zgoda nie znika, tylko dostaje
+ * stempel `superseded_at` (ta sama zasada, co `removed_at` na kroku), a ścieżka rusza
+ * od nowa nowymi wierszami.
+ *
+ * ══ KLUCZ NA PARZE (REZERWACJA, KROK) SCHODZI DO INDEKSU CZĘŚCIOWEGO ══
+ * Do 3.1.0 para była kluczem głównym, bo jedna rezerwacja miała jedną ścieżkę. Odkąd
+ * ścieżka potrafi ruszyć od nowa, pod tym samym krokiem stoją DWIE decyzje - stara
+ * (`superseded_at` ustawione) i nowa. Jedyność obowiązuje więc wyłącznie decyzje ŻYWE,
+ * a to jest dokładnie indeks częściowy: `ON CONFLICT (booking_id, step_id) WHERE
+ * superseded_at IS NULL DO NOTHING` dalej rozstrzyga wyścig dwóch osób z listy kroku.
+ *
+ * Nowy klucz główny `id` losuje BAZA (`DEFAULT gen_random_uuid()`), jak `sheets_key`:
+ * sekret nie powstaje w dwóch miejscach, a dopisanie kolumny NOT NULL z domyślną
+ * wartością LOTNĄ wypełnia istniejące wiersze osobnymi wartościami bez `UPDATE`.
+ */
+export const MIGRATION_14 = `
+  -- ═══ DECYZJE: ŻYWE I ZASTĄPIONE ════════════════════════════════════════════════
+  ALTER TABLE booking_approvals
+    ADD COLUMN IF NOT EXISTS id TEXT NOT NULL DEFAULT gen_random_uuid()::text;
+  ALTER TABLE booking_approvals DROP CONSTRAINT IF EXISTS booking_approvals_pkey;
+  ALTER TABLE booking_approvals ADD PRIMARY KEY (id);
+  -- Stempel ZASTĄPIENIA: poprawka terminu rezerwacji unieważnia zgody, które go
+  -- dotyczyły (§9.4). Wiersz zostaje w rejestrze - z powodem, krokiem i adnotacją -
+  -- ale przestaje liczyć się do rozstrzygnięcia; \`listFor\` czyta wyłącznie żywe.
+  ALTER TABLE booking_approvals ADD COLUMN IF NOT EXISTS superseded_at TIMESTAMPTZ;
+  -- Jedna ŻYWA decyzja na krok - reguła „wystarczy zgoda jednej osoby, rozstrzyga
+  -- pierwsza" (§11.2) zostaje regułą bazy, tylko zawężoną do wierszy bez stempla.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_approvals_live
+    ON booking_approvals (booking_id, step_id) WHERE superseded_at IS NULL;
+`;
+
+/**
+ * Migracja 15 - OBSERWOWANIE SAMOLOTU (3.2.0, issue #205; `docs/obserwowanie-samolotu.md`
+ * §4). SAM DDL, bez backfillu - decyzja właściciela 2026-09-25: baza hostowana nie ma
+ * prawdziwych klubów („startujemy od zera"), więc dopisywanie zdolności `fleet.watch`
+ * członkostwom o zbiorze zestawu opisywałoby stan, którego nikt nie broni
+ * (`docs/uprawnienia.md` §12 zapisuje regułę backfillu na przyszłość).
+ */
+export const MIGRATION_15 = `
+  -- ═══ OBSERWOWANIE SAMOLOTU ══════════════════════════════════════════════════════
+  -- Zapis ZAMIARU osoby: „chcę wiedzieć, co się dzieje z tą maszyną w tym klubie".
+  -- Prawo do powiadomień sprawdza się przy KAŻDEJ wysyłce (aktywne członkostwo
+  -- × zdolność fleet.watch, złączenie w SQL-u) - nie tutaj, dlatego wiersz nie ma
+  -- statusu ani rodzajów: obserwowanie jest jednym przełącznikiem.
+  CREATE TABLE IF NOT EXISTS aircraft_watches (
+    -- Klub jest, choć maszyna należy do jednego klubu - jak na każdej tabeli klubu
+    -- (epik C): odczyt „kogo obudzić" stoi w klubie wiersza.
+    org_id      TEXT NOT NULL REFERENCES organizations(id),
+    aircraft_id TEXT NOT NULL REFERENCES aircraft(id),
+    pilot_id    TEXT NOT NULL REFERENCES pilots(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (aircraft_id, pilot_id),
+    -- Członkostwo ZNIKA → obserwowanie znika. WYŁĄCZENIE członkostwa (status) wiersza
+    -- nie kasuje: wycisza je sprawdzenie przy wysyłce, a przywrócenie zdolności
+    -- przywraca powiadomienia bez proszenia człowieka o drugie włączenie.
+    FOREIGN KEY (org_id, pilot_id) REFERENCES memberships(org_id, pilot_id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_aircraft_watches_aircraft ON aircraft_watches (org_id, aircraft_id);
+
+  -- Stempel przypomnienia „za godzinę" (§4.2): idempotencja zadania okresowego
+  -- i reguła „co ogłosiłeś, to odwołaj" - odwołanie terminu z tym stemplem rodzi
+  -- wiadomość, bez stempla odwołuje się po cichu. Przesunięcie początku ZERUJE go,
+  -- więc nowy termin dostaje własne przypomnienie.
+  ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminded_at TIMESTAMPTZ;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1409,6 +1685,10 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_9,
   MIGRATION_10,
   MIGRATION_11,
+  MIGRATION_12,
+  MIGRATION_13,
+  MIGRATION_14,
+  MIGRATION_15,
 ];
 
 /**
@@ -1441,4 +1721,8 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Logowanie hasłem (2.1.0, issue #132): hasło jako drugie poświadczenie osoby obok Google (scrypt), tokeny linku „ustaw hasło" z e-maila (reset i rejestracja e-mailem), adres e-mail jedyny bez względu na wielkość liter',
   'Sesje logowania (2.1.0, issue #133): wiersz dla każdej żywej sesji telefonu i panelu z urządzeniem, metodą i ostatnią aktywnością, identyfikator sesji w tokenach - zdalne wylogowanie pojedynczego urządzenia zamiast zrywania wszystkich poświadczeń osoby',
   'Rezerwacje i kalendarz floty (3.0.0, issue #145): zajętość maszyny jako rezerwacja pilota albo wyłączenie z użytku, nakładanie wykluczone przez bazę na zakresach czasu, strefa i lotnisko macierzyste klubu dla doby lotnej',
+  'Zakresy uprawnień (3.1.0, issue #197): zdolność nadawana CZŁONKOSTWU zamiast wynikania z roli klubu - administrator może dać mechanikowi prawo akceptacji rezerwacji, nie oddając mu floty ani kont; kolumna roli znika razem z backfillem',
+  'Akceptacja rezerwacji i powiadomienia (3.1.0, issue #164): ścieżka zgód klubu jako uporządkowane kroki z listą osób, decyzje zapisywane przy rezerwacji z powodem odmowy, skrzynka powiadomień pilota i tokeny push wygasające razem z sesją logowania',
+  'Poprawka terminu czyści zgody (3.1.0, issue #166): decyzje na rezerwacji dostają własny klucz i stempel zastąpienia - przesunięcie terminu unieważnia dotychczasowe zgody i ścieżka rusza od nowa, a rejestr decyzji zostaje append-only',
+  'Obserwowanie samolotu (3.2.0, issue #205): zapis obserwowania maszyny przez członka klubu (znika razem z członkostwem) i stempel przypomnienia „za godzinę" na rezerwacji - bez backfillu, sam DDL',
 ];

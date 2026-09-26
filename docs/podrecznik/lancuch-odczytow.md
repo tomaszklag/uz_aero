@@ -38,7 +38,7 @@ Olej mierzy się przy **przejęciu** (obowiązkowo), a przy zdaniu - nie: bagnet
 
 ## Wpis lotu po fakcie
 
-Wpis po fakcie pyta o chwilę z przeszłości, więc podpowiada zastane paliwo i licznik z operacji **poprzedzającej** na tej maszynie - z podpisem przy polu („z poprzedniego lotu · AKO") i tylko w pole puste. Odczytów po locie nie podstawia nikt: na nie odpowiada pilot. Ostrzeżenia patrzą w obie strony łańcucha: „Paliwo nie zgadza się z następnym lotem - następny pilot zastał 92 L, a wpis kończy na 76 L." Ta podpowiedź wymaga sieci; bez niej ekran o ciągłości milczy, a wpis zapisuje się jak zwykle.
+Wpis po fakcie pyta o chwilę z przeszłości, więc podpowiada zastane paliwo i licznik z operacji **poprzedzającej** na tej maszynie - z podpisem przy polu („z poprzedniego lotu · BNO") i tylko w pole puste. Odczytów po locie nie podstawia nikt: na nie odpowiada pilot. Ostrzeżenia patrzą w obie strony łańcucha: „Paliwo nie zgadza się z następnym lotem - następny pilot zastał 92 L, a wpis kończy na 76 L." Ta podpowiedź wymaga sieci; bez niej ekran o ciągłości milczy, a wpis zapisuje się jak zwykle.
 
 @screen 15c-reczny-liczniki "Podpowiedź z poprzedniej operacji"
 

@@ -10,14 +10,15 @@
  *  • `POST /auth/password` → `200` tokeny / `202` token osoby / `401 invalid_credentials`
  *    (JEDNA odpowiedź na trzy stany) / `401 account_disabled` / `429` + `Retry-After`;
  *  • `POST /auth/password/forgot`, `POST /auth/signup` → ZAWSZE `202`, niezależnie od tego,
- *    czy adres istnieje i czy limit wysyłek jest wyczerpany (§8 pkt 2);
+ *    czy adres istnieje i czy limit wysyłek jest wyczerpany (§8 pkt 2); OBIE mają lustro
+ *    pod prefiksem panelu (`admin/auth.ts`, issue #180) na TYM SAMYM handlerze;
  *  • `POST /auth/password/reset` → `204` bez sesji / `401 invalid_token` (obcy, po terminie,
  *    zużyty - jednakowo) / `400 weak_password { reason }`;
  *  • `GET /auth/methods` → `{ google, password: true }` - telefon rysuje z tego przyciski;
  *    pola o sposobie resetu NIE MA, bo poczta jest wymaganiem serwera.
  */
 
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, RouteHandlerMethod } from 'fastify';
 import { PASSWORD_MAX_LENGTH } from '@ninerdeck/domain';
 import { z } from 'zod';
 
@@ -87,6 +88,42 @@ export function sendChangeOutcome(reply: FastifyReply, outcome: ChangePasswordOu
   }
 }
 
+/**
+ * „Nie pamiętam hasła" - `202` ZAWSZE. Odpowiedź nie niesie nic poza kodem: zdanie
+ * „jeśli adres jest w systemie, link już idzie" pisze ekran, nie serwer.
+ *
+ * Handler jest WYEKSPORTOWANY, bo tę samą prośbę składa telefon (`/auth/password/forgot`)
+ * i panel (`/admin/api/auth/password/forgot`, `admin/auth.ts`). Panel woła wyłącznie
+ * `/admin/api/*` - jeden origin, nagłówek CSRF - więc trasa istniejąca tylko pod
+ * `/auth/…` była dla niego 404 od 2.1.0 do issue #180, a ekran chował to za zdaniem
+ * „link już idzie". Dwie rejestracje, JEDEN kod: rozjazd między nimi byłby drugim
+ * takim błędem.
+ */
+export function forgotHandler(passwords: PasswordCommands): RouteHandlerMethod {
+  return async (req, reply) => {
+    const parsed = forgotBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    await passwords.forgot(parsed.data.email, req.ip ?? null);
+    return reply.code(202).send({ status: 'accepted' });
+  };
+}
+
+/**
+ * „Załóż konto" (00H w telefonie, `#/logowanie/konto` w panelu od issue #180) - `202`
+ * ZAWSZE; adres zajęty dostaje list resetu, nie odmowę (§5.4a). Ten sam handler pod
+ * dwoma prefiksami z tego samego powodu, co `forgotHandler`.
+ */
+export function signupHandler(passwords: PasswordCommands): RouteHandlerMethod {
+  return async (req, reply) => {
+    const parsed = signupBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    await passwords.signUp(parsed.data.name, parsed.data.email, req.ip ?? null);
+    return reply.code(202).send({ status: 'accepted' });
+  };
+}
+
 export function registerPasswordRoutes(
   app: FastifyInstance,
   auth: AuthCommands,
@@ -123,26 +160,8 @@ export function registerPasswordRoutes(
     }
   });
 
-  /**
-   * „Nie pamiętam hasła" - `202` ZAWSZE. Odpowiedź nie niesie nic poza kodem: zdanie
-   * „jeśli adres jest w systemie, link już idzie" pisze ekran, nie serwer.
-   */
-  app.post('/auth/password/forgot', async (req, reply) => {
-    const parsed = forgotBody.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
-
-    await passwords.forgot(parsed.data.email, req.ip ?? null);
-    return reply.code(202).send({ status: 'accepted' });
-  });
-
-  /** „Załóż konto" (00H) - `202` ZAWSZE; adres zajęty dostaje list resetu, nie odmowę. */
-  app.post('/auth/signup', async (req, reply) => {
-    const parsed = signupBody.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
-
-    await passwords.signUp(parsed.data.name, parsed.data.email, req.ip ?? null);
-    return reply.code(202).send({ status: 'accepted' });
-  });
+  app.post('/auth/password/forgot', forgotHandler(passwords));
+  app.post('/auth/signup', signupHandler(passwords));
 
   /** Realizacja linku ze strony `/haslo/` - BEZ sesji w odpowiedzi (§5.4). */
   app.post('/auth/password/reset', async (req, reply) => {

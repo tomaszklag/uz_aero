@@ -110,7 +110,7 @@ describe('GET /admin/api/club-code - stan kodu', () => {
     const { app } = await testHarness();
     await joinWith(app, 'czekajacy', ORG_A_CODE);
 
-    const res = await state(app, await tokenOf(app, 'TMK'));
+    const res = await state(app, await tokenOf(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
@@ -147,7 +147,7 @@ describe('POST /admin/api/club-code/rotate - nowy kod', () => {
     // Zegar musi ruszyć: „zgłoszenia tym kodem" liczą się od chwili rotacji, więc bez
     // upływu czasu zgłoszenie sprzed niej wypadałoby po tej samej stronie granicy.
     clock.advance(5 * 60_000);
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     const res = await rotate(app, token);
 
@@ -202,7 +202,7 @@ describe('POST /admin/api/club-code/rotate - nowy kod', () => {
     const { app, db } = await testHarness({ clubCodeBytes: codeGenerator('ZAJETYK', 'WLNYKDE') });
     await db.query(`UPDATE organizations SET join_code = 'ZAJETYK' WHERE id = $1`, [ORG_B]);
 
-    const res = await rotate(app, await tokenOf(app, 'TMK'));
+    const res = await rotate(app, await tokenOf(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     expect(res.json().code).toBe('WLNYKDE');
@@ -234,7 +234,7 @@ describe('POST /admin/api/club-code/rotate - nowy kod', () => {
 describe('POST /admin/api/club-code/disable - koniec dołączania kodem', () => {
   it('zamyka JEDYNĄ drogę do klubu, a odpowiedź jest taka, jak na kod zmyślony', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     const res = await disable(app, token);
 
@@ -255,7 +255,7 @@ describe('POST /admin/api/club-code/disable - koniec dołączania kodem', () => 
   it('zgłoszenia złożone PRZED wyłączeniem zostają w kolejce', async () => {
     const { app } = await testHarness();
     await joinWith(app, 'przedwylaczeniem', ORG_A_CODE);
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
 
     await disable(app, token);
 
@@ -269,7 +269,7 @@ describe('POST /admin/api/club-code/disable - koniec dołączania kodem', () => 
 
   it('powtórne wyłączenie → 400 `no_changes`, bez drugiego wpisu w dzienniku', async () => {
     const { app, db } = await testHarness();
-    const token = await tokenOf(app, 'TMK');
+    const token = await tokenOf(app, 'AKO');
     expect((await disable(app, token)).statusCode).toBe(200);
 
     const again = await disable(app, token);

@@ -32,7 +32,7 @@ function booking(over: Partial<CalendarBooking> & { id: string }): CalendarBooki
     status: 'confirmed',
     startsAt: at(11),
     endsAt: at(13),
-    pilotId: 'tmk',
+    pilotId: 'ako',
     dualId: null,
     operation: 'ferry',
     fromIcao: 'EPKK',
@@ -51,10 +51,10 @@ const data = (bookings: CalendarBooking[]): CalendarData =>
 
 const input = (bookings: CalendarBooking[], now = at(9)) => ({
   data: data(bookings),
-  pilotId: 'tmk',
+  pilotId: 'ako',
   now,
   regOf: (id: string) => (id === 'a1' ? 'SP-AXA' : null),
-  codeOf: (id: string) => (id === 'ako' ? 'AKO' : null),
+  codeOf: (id: string) => (id === 'bno' ? 'BNO' : null),
 });
 
 describe('która rezerwacja jest „najbliższa"', () => {
@@ -141,5 +141,13 @@ describe('czym wypełnić przejęcie', () => {
     const seed = claimSeed(booking({ id: 'b1', operation: 'jakies_nowe' }), at(11));
     expect(seed).not.toBeNull();
     expect(seed?.operation).toBeNull();
+  });
+});
+
+describe('rezerwacja czekająca na zgodę (3.1.0)', () => {
+  it('karta wie, że czeka - i tylko wtedy', () => {
+    // Potwierdzona: zieleń. Czekająca: ton ostrzeżenia, bo zielona obiecywałaby pewny lot.
+    expect(nextBooking(input([booking({ id: 'b1' })]))?.pending).toBe(false);
+    expect(nextBooking(input([booking({ id: 'b2', status: 'pending' })]))?.pending).toBe(true);
   });
 });

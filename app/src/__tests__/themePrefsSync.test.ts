@@ -31,7 +31,7 @@ import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 const T0 = Date.UTC(2026, 6, 29, 8, 0, 0);
 const iso = (ms: number): string => new Date(ms).toISOString();
 
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
@@ -75,7 +75,51 @@ class PrefsServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getPilotPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftCard(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftOperations(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftWatches(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setAircraftWatch(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getInbox(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async markNotificationRead(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getApprovalQueue(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async decideBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async registerPushToken(): Promise<never> {
     throw new Error('nieużywane');
   }
 
@@ -213,15 +257,15 @@ function harness(credentials: StoredCredentials | null = CREDS) {
 describe('ThemePrefsSync', () => {
   it('push: rekord dirty idzie PUT-em ze stemplem ISO; potwierdzenie gasi dirty', async () => {
     const { prefs, server, sync } = harness();
-    await prefs.write('TMK', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
+    await prefs.write('AKO', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0 - 60_000) }]; // serwer przyjął nasz stempel
 
-    expect(await sync.syncIfStale('TMK')).toBe('pushed');
+    expect(await sync.syncIfStale('AKO')).toBe('pushed');
 
     expect(server.putCalls).toEqual([
       { token: 'jwt-1', theme: 'paper', themeUpdatedAt: iso(T0 - 60_000) },
     ]);
-    expect(await prefs.read('TMK')).toEqual({ theme: 'paper', updatedAt: T0 - 60_000, dirty: false });
+    expect(await prefs.read('AKO')).toEqual({ theme: 'paper', updatedAt: T0 - 60_000, dirty: false });
   });
 
   it('push przegrany w LWW: odpowiedź autorytatywna z nowszym stemplem nadpisuje lokalny motyw', async () => {
@@ -229,69 +273,69 @@ describe('ThemePrefsSync', () => {
     const applied: string[] = [];
     sync.onApplied((pilotId, theme) => applied.push(`${pilotId}:${theme}`));
 
-    await prefs.write('TMK', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
+    await prefs.write('AKO', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
     // Drugi telefon TEGO pilota zapisał `solar` minutę PÓŹNIEJ - serwer odpowiada zwycięzcą.
     server.putScript = [{ theme: 'solar', themeUpdatedAt: iso(T0 - 1) }];
 
-    expect(await sync.syncIfStale('TMK')).toBe('pulled');
-    expect(await prefs.read('TMK')).toEqual({ theme: 'solar', updatedAt: T0 - 1, dirty: false });
-    expect(applied).toEqual(['TMK:solar']); // ThemeProvider przemaluje ekran na żywo
+    expect(await sync.syncIfStale('AKO')).toBe('pulled');
+    expect(await prefs.read('AKO')).toEqual({ theme: 'solar', updatedAt: T0 - 1, dirty: false });
+    expect(applied).toEqual(['AKO:solar']); // ThemeProvider przemaluje ekran na żywo
   });
 
   it('pull: nowszy wybór z innego urządzenia zostaje adoptowany', async () => {
     const { prefs, server, sync } = harness();
-    await prefs.write('TMK', { theme: 'night', updatedAt: T0 - 3_600_000, dirty: false });
+    await prefs.write('AKO', { theme: 'night', updatedAt: T0 - 3_600_000, dirty: false });
     server.getScript = [{ theme: 'amber', themeUpdatedAt: iso(T0 - 60_000) }];
 
-    expect(await sync.syncIfStale('TMK')).toBe('pulled');
-    expect(await prefs.read('TMK')).toEqual({ theme: 'amber', updatedAt: T0 - 60_000, dirty: false });
+    expect(await sync.syncIfStale('AKO')).toBe('pulled');
+    expect(await prefs.read('AKO')).toEqual({ theme: 'amber', updatedAt: T0 - 60_000, dirty: false });
   });
 
   it('pull: starszy/pusty stan serwera NICZEGO nie zmienia (LWW także w tę stronę)', async () => {
     const { prefs, server, sync, advance } = harness();
     const local: ThemePrefRecord = { theme: 'sky', updatedAt: T0 - 1_000, dirty: false };
-    await prefs.write('TMK', local);
+    await prefs.write('AKO', local);
     server.getScript = [
       { theme: 'night', themeUpdatedAt: iso(T0 - 3_600_000) }, // starszy przegrywa
       { theme: null, themeUpdatedAt: null }, // pilot bez wyboru na serwerze
     ];
 
-    expect(await sync.syncIfStale('TMK')).toBe('in_sync');
-    expect(await prefs.read('TMK')).toEqual(local);
+    expect(await sync.syncIfStale('AKO')).toBe('in_sync');
+    expect(await prefs.read('AKO')).toEqual(local);
 
     advance(THEME_PREFS_MAX_AGE_MS + 1);
-    expect(await sync.syncIfStale('TMK')).toBe('in_sync');
-    expect(await prefs.read('TMK')).toEqual(local);
+    expect(await sync.syncIfStale('AKO')).toBe('in_sync');
+    expect(await prefs.read('AKO')).toEqual(local);
   });
 
   it('brama wieku: świeżo potwierdzony serwer = zero zapytań; dirty ją OMIJA', async () => {
     const { prefs, server, sync, advance } = harness();
     server.getScript = [{ theme: null, themeUpdatedAt: null }];
 
-    expect(await sync.syncIfStale('TMK')).toBe('in_sync');
+    expect(await sync.syncIfStale('AKO')).toBe('in_sync');
     advance(THEME_PREFS_MAX_AGE_MS - 1);
-    expect(await sync.syncIfStale('TMK')).toBe('fresh'); // puls co 60 s ≠ zapytanie co 60 s
+    expect(await sync.syncIfStale('AKO')).toBe('fresh'); // puls co 60 s ≠ zapytanie co 60 s
     expect(server.getCalls).toHaveLength(1);
 
     // Zmiana motywu nie czeka na bramę - dirty to outbox preferencji.
-    await prefs.write('TMK', { theme: 'paper', updatedAt: T0, dirty: true });
+    await prefs.write('AKO', { theme: 'paper', updatedAt: T0, dirty: true });
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0) }];
-    expect(await sync.syncIfStale('TMK')).toBe('pushed');
+    expect(await sync.syncIfStale('AKO')).toBe('pushed');
   });
 
   it('offline: `skipped`, rekord z dirty NIETKNIĘTY - następna okazja spróbuje znowu', async () => {
     const { prefs, server, sync } = harness();
     const local: ThemePrefRecord = { theme: 'paper', updatedAt: T0, dirty: true };
-    await prefs.write('TMK', local);
+    await prefs.write('AKO', local);
     server.putScript = [new ServerUnreachableError()];
 
-    expect(await sync.syncIfStale('TMK')).toBe('skipped');
-    expect(await prefs.read('TMK')).toEqual(local);
+    expect(await sync.syncIfStale('AKO')).toBe('skipped');
+    expect(await prefs.read('AKO')).toEqual(local);
 
     // Zasięg wrócił - ta sama zmiana wychodzi bez straty.
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0) }];
-    expect(await sync.syncIfStale('TMK')).toBe('pushed');
-    expect(await prefs.read('TMK')).toEqual({ ...local, dirty: false });
+    expect(await sync.syncIfStale('AKO')).toBe('pushed');
+    expect(await prefs.read('AKO')).toEqual({ ...local, dirty: false });
   });
 
   it('401 → jedna rotacja tokenu i ponowienie (wzorzec §3.0)', async () => {
@@ -301,7 +345,7 @@ describe('ThemePrefsSync', () => {
       { theme: null, themeUpdatedAt: null },
     ];
 
-    expect(await sync.syncIfStale('TMK')).toBe('in_sync');
+    expect(await sync.syncIfStale('AKO')).toBe('in_sync');
     expect(server.refreshCalls).toBe(1);
     expect(server.getCalls).toEqual(['jwt-1', 'jwt-2']);
   });
@@ -310,30 +354,30 @@ describe('ThemePrefsSync', () => {
     const { prefs, server, sync } = harness({
       token: 'jwt-1',
       refreshToken: 'r1',
-      pilot: { id: 'AKO', code: 'AKO', name: 'Anna Kowalska' },
+      pilot: { id: 'BNO', code: 'BNO', name: 'Barbara Nowak' },
     });
-    await prefs.write('TMK', { theme: 'paper', updatedAt: T0, dirty: true });
+    await prefs.write('AKO', { theme: 'paper', updatedAt: T0, dirty: true });
 
-    expect(await sync.syncIfStale('TMK')).toBe('skipped');
+    expect(await sync.syncIfStale('AKO')).toBe('skipped');
     expect(server.putCalls).toHaveLength(0);
-    expect((await prefs.read('TMK'))?.dirty).toBe(true); // wyśle się po powrocie TMK
+    expect((await prefs.read('AKO'))?.dirty).toBe(true); // wyśle się po powrocie AKO
   });
 
   it('zmiana motywu W TRAKCIE rozmowy z serwerem nie zostaje zgubiona ani cofnięta', async () => {
     const { prefs, server, sync } = harness();
-    await prefs.write('TMK', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
+    await prefs.write('AKO', { theme: 'paper', updatedAt: T0 - 60_000, dirty: true });
 
     // Serwer potwierdza nasz PUT, ale zanim odpowiedź wróciła, pilot wybrał `amber`.
     server.putScript = [{ theme: 'paper', themeUpdatedAt: iso(T0 - 60_000) }];
     const originalPut = server.putPrefs.bind(server);
     server.putPrefs = async (token, body) => {
       const result = await originalPut(token, body);
-      await prefs.write('TMK', { theme: 'amber', updatedAt: T0, dirty: true });
+      await prefs.write('AKO', { theme: 'amber', updatedAt: T0, dirty: true });
       return result;
     };
 
-    expect(await sync.syncIfStale('TMK')).toBe('pushed');
+    expect(await sync.syncIfStale('AKO')).toBe('pushed');
     // Świeższa decyzja przeżyła: dirty stoi, stempel nie cofnięty - wyśle ją następny przebieg.
-    expect(await prefs.read('TMK')).toEqual({ theme: 'amber', updatedAt: T0, dirty: true });
+    expect(await prefs.read('AKO')).toEqual({ theme: 'amber', updatedAt: T0, dirty: true });
   });
 });

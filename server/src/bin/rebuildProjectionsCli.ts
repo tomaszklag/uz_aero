@@ -91,7 +91,7 @@ const actor: AuditActor | null =
         return {
           pilotId: person.id,
           orgId: membership.orgId,
-          role: membership.role,
+          capabilities: membership.capabilities,
           ip: null,
           // Skrypt nie ma sesji - to akcja z konsoli, nie z przeglądarki.
           sessionId: null,

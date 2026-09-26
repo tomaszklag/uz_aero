@@ -40,6 +40,7 @@ import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AccountQuery } from './application/common/queries/account.ts';
+import { AdminDirectoryQueries } from './application/admin/queries/directory.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminConsumptionQueries } from './application/admin/queries/consumption.ts';
@@ -47,10 +48,25 @@ import { AdminLogQueries } from './application/admin/queries/log.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { PgAircraftReadingsRepo } from './infrastructure/pg/common/aircraftReadingsRepo.ts';
-import { BookingReleaseJob } from './application/common/commands/bookingRelease.ts';
+import { BookingClockJob } from './application/common/commands/bookingClock.ts';
+import { AircraftWatchCommands } from './application/common/commands/aircraftWatch.ts';
+import { AircraftWatching } from './application/common/notify/aircraftWatching.ts';
+import { AircraftCardQueries } from './application/common/queries/aircraftCard.ts';
+import { PgAircraftWatchesRepo } from './infrastructure/pg/common/aircraftWatchesRepo.ts';
+import { ApprovalFlow } from './application/common/commands/approvals.ts';
+import { ApprovalStepsCommands } from './application/admin/commands/approvalSteps.ts';
+import { Notifier } from './application/common/notify/notifier.ts';
+import { NotificationQueries } from './application/mobile/queries/notifications.ts';
+import { PgApprovalStepsRepo } from './infrastructure/pg/common/approvalStepsRepo.ts';
+import { PgBookingApprovalsRepo } from './infrastructure/pg/common/bookingApprovalsRepo.ts';
+import { PgNotificationsRepo } from './infrastructure/pg/common/notificationsRepo.ts';
+import { PgPushTokensRepo } from './infrastructure/pg/common/pushTokensRepo.ts';
+import { ExpoPush } from './infrastructure/push/expoPush.ts';
+import { LogPush } from './infrastructure/push/logPush.ts';
 import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from './application/common/queries/bookings.ts';
+import { DecisionPreviewQueries } from './application/common/queries/decisionPreview.ts';
 import { BookingCommands } from './application/mobile/commands/bookings.ts';
 import { AdminBookingCommands } from './application/admin/commands/bookings.ts';
 import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
@@ -200,6 +216,21 @@ const env = z
      */
     MAIL_API_KEY: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1).optional(),
+    /**
+     * BUDZIK POWIADOMIEŃ (3.1.0, `docs/rezerwacje.md` §12.3) - NIEWYMAGANY, domyślnie
+     * `log`. To jest świadoma różnica wobec `MAIL_PROVIDER`: poczta MUSI być, bo „Nie
+     * pamiętam hasła", które po cichu nic nie wysyła, zostawia człowieka bez drogi do
+     * konta. Push jest tylko budzikiem - bez niego prośba o zgodę nadal czeka
+     * w skrzynce, kompletna i z historią, a serwer, który nie wstaje przez brak
+     * budzika, kosztowałby więcej niż budzik, który nie dzwoni.
+     */
+    PUSH_PROVIDER: z.enum(['log', 'expo']).default('log'),
+    /**
+     * Token dostępu z konsoli Expo - OPCJONALNY także przy `PUSH_PROVIDER=expo`:
+     * dostawca przyjmuje wysyłkę bez niego, a z nim odrzuca żądania spoza konta.
+     * Stąd brak warunkowego wymogu, który stoi przy `MAIL_API_KEY`.
+     */
+    PUSH_ACCESS_TOKEN: z.string().min(1).optional(),
   })
   .superRefine((value, ctx) => {
     // Konfiguracja POŁOWICZNA ma zatrzymać START, a nie pierwszy reset hasła o 22:00:
@@ -354,6 +385,32 @@ const bookingsRepo = new PgBookingsRepo();
 const clubSettings = new PgClubSettingsRepo();
 // Okno kalendarza jest wspólne, więc składamy je RAZ i podajemy obu stronom.
 const calendar = new BookingQueries(db, bookingsRepo, clubSettings, clock);
+// BUDZIK: wybór adaptera jest jawny, ale BRAK KONFIGURACJI znaczy `log` - inaczej niż
+// przy poczcie (§12.3). Poczta musi być, bo „Nie pamiętam hasła" bez niej zostawia
+// człowieka bez drogi do konta; push jest budzikiem, a bez niego prośba o zgodę nadal
+// czeka w skrzynce, kompletna i z historią. Serwer, który nie wstaje przez brak
+// budzika, kosztuje więcej niż budzik, który nie dzwoni.
+const push = env.PUSH_PROVIDER === 'expo' ? new ExpoPush(env.PUSH_ACCESS_TOKEN ?? '') : new LogPush();
+// Ścieżka akceptacji rezerwacji (3.1.0, issue #164). Adaptery są WSPÓLNE dla obu
+// powierzchni: ścieżkę układa panel, a klika po niej telefon - druga kopia zapytania
+// byłaby pierwszym miejscem, w którym decyzja zobaczyłaby inną listę osób niż panel.
+const approvalStepsRepo = new PgApprovalStepsRepo();
+const bookingApprovalsRepo = new PgBookingApprovalsRepo();
+const notificationsRepo = new PgNotificationsRepo();
+const pushTokensRepo = new PgPushTokensRepo(clock);
+const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+// Obserwowanie samolotu (3.2.0, issue #205): jeden adapter dla telefonu i panelu, jedna
+// odpowiedź na „kogo obudzić" dla ingestu, rezerwacji, zakończenia z panelu i zegara.
+const aircraftWatches = new PgAircraftWatchesRepo();
+const watching = new AircraftWatching(aircraftWatches, aircraftConfig, notifier);
+const approvals = new ApprovalFlow(
+  db,
+  approvalStepsRepo,
+  bookingApprovalsRepo,
+  bookingsRepo,
+  notifier,
+  clock,
+);
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -418,7 +475,7 @@ const app = await buildServer({
     events,
     aircraftReadings,
   ),
-  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo, watching),
   // Droga POWROTNA outboxa (§4.9, issue #32) - własny adapter obok `PgEventsStore`,
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
   // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
@@ -439,8 +496,47 @@ const app = await buildServer({
   bugReports: new BugReportCommands(db, bugReports),
   // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
   // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
-  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock),
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
   calendar,
+  approvals,
+  notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
+  // Podgląd pilota i samolotu przy decyzji (issue #206): jeden widok dla telefonu
+  // i panelu, składany z TYCH SAMYCH adapterów, którymi czytają kalendarz, dziennik
+  // i kartę samolotu - nowe pytanie do istniejących wierszy, nie nowe dane.
+  previews: new DecisionPreviewQueries(
+    db,
+    bookingsRepo,
+    sessions,
+    pilots,
+    new PgReferenceRepo(db),
+    aircraftReadings,
+    clubSettings,
+    clock,
+  ),
+  // Karta maszyny i lista obserwowanych (issue #205) - te same adaptery, co podgląd
+  // przy decyzji, plus strumienie (tankowania na wykresie) i sam adapter obserwowania.
+  aircraftCards: new AircraftCardQueries(
+    db,
+    sessions,
+    bookingsRepo,
+    new PgReferenceRepo(db),
+    aircraftReadings,
+    clubSettings,
+    events,
+    aircraftConfig,
+    aircraftWatches,
+    clock,
+  ),
+  aircraftWatch: new AircraftWatchCommands(db, aircraftWatches, aircraftConfig, clock),
+  adminApprovalSteps: new ApprovalStepsCommands(
+    auditedWrite,
+    approvalStepsRepo,
+    adminPilotsRepo,
+    approvals,
+    notifier,
+    randomUUID,
+    clock,
+  ),
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
   // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
@@ -480,6 +576,8 @@ const app = await buildServer({
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Słownik klubu (issue #216): te same adaptery, co listy modułów, cztery pola na drut.
+  adminDirectoryQueries: new AdminDirectoryQueries(db, adminPilotsRepo, adminFleetRepo),
   // Decyzje o zgłoszeniach kodem klubu (issue #100): ten sam adapter członkostw, co
   // lista - kolejka i lista czytają jedną tabelę, a rozdziela je stan wiersza.
   adminMemberships: new AdminMembershipCommands(auditedWrite, adminPilotsRepo, clock),
@@ -556,6 +654,7 @@ const app = await buildServer({
     exporter,
     clock,
     randomUUID,
+    watching,
   ),
   // Zakończenie administracyjne operacji osieroconej (issue #81) - te same zależności,
   // co unieważnienie: zdarzenie do rejestru, projekcja, eksport karty PO commicie.
@@ -567,6 +666,7 @@ const app = await buildServer({
     exporter,
     clock,
     randomUUID,
+    watching,
   ),
   // Podgląd korekty dostaje `db` wprost i NIE dostaje `AuditedWrite` - nie ma czym
   // zapisać, bo nie ma czego zapisywać (`queries/corrections.ts`).
@@ -629,7 +729,7 @@ const app = await buildServer({
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
   // Kalendarz panelu - przez bramę audytu: rezerwacja za pilota, odwołanie cudzej
   // i wyłączenie maszyny z użytku to trzy decyzje o cudzych sprawach.
-  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock),
+  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, watching),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
@@ -648,10 +748,11 @@ const app = await buildServer({
   hostSplit: hostSplitFrom(env.PUBLIC_SITE_URL, env.PUBLIC_BASE_URL),
 });
 
-// Zwalnianie slotów (§4.1) - PIERWSZY wątek okresowy w tym serwerze. Startuje po
-// `listen`, bo jest porządkowaniem kalendarza, a nie warunkiem przyjmowania żądań.
+// Zegar rezerwacji (zwalnianie slotów §4.1, wygaszanie §11.5, „zbliża się lot" §5.1
+// obserwowania) - PIERWSZY wątek okresowy w tym serwerze. Startuje po `listen`, bo
+// jest porządkowaniem kalendarza, a nie warunkiem przyjmowania żądań.
 if (env.BOOKING_RELEASE !== '0') {
-  new BookingReleaseJob(db, bookingsRepo, sessions, clock).start();
+  new BookingClockJob(db, bookingsRepo, sessions, clock, notifier, watching).start();
 }
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

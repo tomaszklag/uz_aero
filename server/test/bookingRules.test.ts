@@ -24,15 +24,15 @@ import {
 const NOW = Date.parse('2026-10-01T09:00:00Z');
 const H = 3_600_000;
 
-const PILOT = { pilotId: 'tmk', manages: false };
-const OBCY = { pilotId: 'ako', manages: false };
-const ADMIN = { pilotId: 'ako', manages: true };
+const PILOT = { pilotId: 'ako', manages: false };
+const OBCY = { pilotId: 'bno', manages: false };
+const ADMIN = { pilotId: 'bno', manages: true };
 
 function booking(over: Partial<BookingSubject> = {}): BookingSubject {
   return {
     kind: 'flight',
     status: 'confirmed',
-    pilotId: 'tmk',
+    pilotId: 'ako',
     endsAt: NOW + 4 * H,
     ...over,
   };

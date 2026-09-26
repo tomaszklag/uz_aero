@@ -27,7 +27,7 @@ function booking(over: Partial<CalendarBooking> & { id: string }): CalendarBooki
     status: 'confirmed',
     startsAt: at(9),
     endsAt: at(11),
-    pilotId: 'ako',
+    pilotId: 'bno',
     dualId: null,
     operation: 'ferry',
     fromIcao: null,
@@ -46,9 +46,9 @@ const input = (over: Partial<Parameters<typeof claimConflict>[0]> = {}) => ({
   days: [day],
   aircraftId: 'a1',
   reg: 'SP-AXA',
-  pilotId: 'tmk',
+  pilotId: 'ako',
   now: at(9),
-  nameOf: (id: string | null) => (id === 'ako' ? 'Anna Kowalska' : null),
+  nameOf: (id: string | null) => (id === 'bno' ? 'Barbara Nowak' : null),
   ...over,
 });
 
@@ -56,9 +56,9 @@ describe('kiedy baner jest', () => {
   it('cudzy termin na tej maszynie ostrzega i nazywa go w MIANOWNIKU', () => {
     const vm = claimConflict(input());
     expect(vm?.title).toBe('Ktoś ma tę maszynę zarezerwowaną');
-    // Nazwisko za separatorem: „przez A. Kowalską" wymagałoby odmiany.
+    // Nazwisko za separatorem: „przez J. Nowaka" wymagałoby odmiany.
     expect(vm?.text).toBe(
-      'SP-AXA ma rezerwację 09:00 → 11:00 · A. Kowalska. Możesz lecieć - to tylko informacja o cudzym planie.',
+      'SP-AXA ma rezerwację 09:00 → 11:00 · B. Nowak. Możesz lecieć - to tylko informacja o cudzym planie.',
     );
   });
 
@@ -79,7 +79,7 @@ describe('kiedy baner jest', () => {
 
 describe('kiedy banera nie ma', () => {
   it('WŁASNA rezerwacja nie jest kolizją - to plan, z którego pilot właśnie korzysta', () => {
-    expect(claimConflict(input({ bookings: [booking({ id: 'b1', pilotId: 'tmk' })] }))).toBeNull();
+    expect(claimConflict(input({ bookings: [booking({ id: 'b1', pilotId: 'ako' })] }))).toBeNull();
   });
 
   it('cudzy termin za trzy godziny nie koliduje z lotem, do którego pilot siada', () => {

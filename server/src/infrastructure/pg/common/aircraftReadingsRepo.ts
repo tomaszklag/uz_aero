@@ -64,6 +64,22 @@ export class PgAircraftReadingsRepo implements AircraftReadingsPort {
     return new Map(rows.map((r) => [r.aircraft_id, toReading(r)]));
   }
 
+  async listSince(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+    since: Date,
+  ): Promise<AdminReading[]> {
+    const { rows } = await db.query<ReadingDbRow>(
+      `SELECT aircraft_id, mh, fuel_l, oil_l, note, by_pilot_id, created_at
+         FROM aircraft_readings
+        WHERE org_id = $1 AND aircraft_id = $2 AND created_at >= $3
+        ORDER BY created_at ASC, id ASC`,
+      [orgId, aircraftId, since],
+    );
+    return rows.map(toReading);
+  }
+
   async latestAt(db: Queryable, orgId: string): Promise<Date | null> {
     const { rows } = await db.query<{ at: string | Date | null }>(
       'SELECT MAX(created_at) AS at FROM aircraft_readings WHERE org_id = $1',

@@ -115,9 +115,18 @@ const SCOPED_TABLES = [
   // prawa zobaczyć ani wyłączyć urządzenia, którym ta osoba loguje się gdzie indziej.
   'login_sessions',
   'memberships',
+  // Zakres uprawnień członkostwa (3.1.0, issue #197) - zdolność nadana W KLUBIE.
+  'membership_capabilities',
   // Zajętość maszyny (3.0.0, issue #158) - rezerwacje i wyłączenia z użytku. Kalendarz
   // jest wspólnym zasobem KLUBU: wiersz z cudzego klubu nie ma prawa trafić na siatkę.
   'bookings',
+  // Ścieżka akceptacji i skrzynka (3.1.0, issue #164). `push_tokens` na liście NIE MA
+  // i to jest zgodne z regułą: token opisuje URZĄDZENIE osoby, która bywa w kilku
+  // klubach naraz - klub niesie POWIADOMIENIE, czyli treść, która przez niego wychodzi.
+  'approval_steps',
+  'approval_step_members',
+  'booking_approvals',
+  'notifications',
 ] as const;
 
 /**
@@ -370,6 +379,11 @@ describe('granice, których nie pilnuje kompilator', () => {
     // zdarzenia) - jedna sesja na maszynę, jednym zapytaniem dla całej floty, czyli
     // dokładnie wzorzec, dla którego ta metoda istnieje. To nadal nie jest lista
     // odtwarzająca projekcję: czyta FAKTY, których projekcja nie ma.
+    // Czwarta weszła ŚWIADOMIE 2026-09-25 (obserwowanie samolotu, issue #205):
+    // `queries/aircraftCard.ts` dociąga strumienie operacji z okna 90 dni, bo wykres
+    // paliwa potrzebuje CHWIL tankowań, a projekcja niesie ich sumę - jednym
+    // zapytaniem, przez `applyCorrections`, dla jednej maszyny. Nadal FAKTY, których
+    // projekcja nie ma, a nie lista odtwarzająca projekcję.
     // **Dopisanie kolejnej pozycji jest decyzją, nie refaktorem** - każdy nowy
     // wołający otwiera rejestr kolejnej ścieżce odczytu.
     const users = filesUnder('.')
@@ -383,6 +397,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(users).toEqual([
       'application/admin/queries/consumption.ts',
       'application/common/consumptionNorm.ts',
+      'application/common/queries/aircraftCard.ts',
       'application/mobile/queries/reference.ts',
     ]);
   });

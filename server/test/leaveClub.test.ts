@@ -109,7 +109,7 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
     const { token, refreshToken } = pilot.json();
     expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(token) })).statusCode).toBe(200);
 
-    await leave(app, await tokenOf(app, 'TMK'), 'KRZ');
+    await leave(app, await tokenOf(app, 'AKO'), 'KRZ');
 
     // Token jest ważny kryptograficznie jeszcze godzinę - i nic mu to nie daje.
     expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(token) })).statusCode).toBe(401);
@@ -131,7 +131,7 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
     const { app, db } = await testHarness();
     const pilot = await tokenOf(app, 'PWI');
     expect((await post(app, pilot, day('sess-odchodzi', 'SP-AXA', 'PWI'))).statusCode).toBe(200);
-    const admin = await tokenOf(app, 'TMK');
+    const admin = await tokenOf(app, 'AKO');
 
     await leave(app, admin, 'PWI');
 
@@ -168,7 +168,7 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
     const [claim, preflight, ...rest] = day('sess-wyjscie', 'SP-AXA', 'PWI');
     expect((await post(app, inAlfa, [claim!, preflight!])).statusCode).toBe(200);
 
-    await leave(app, await tokenOf(app, 'TMK'), 'PWI');
+    await leave(app, await tokenOf(app, 'AKO'), 'PWI');
 
     // Telefon przełącza się na klub, w którym PWI nadal jest (najświeższy refresh).
     clock.advance(60_000);
@@ -195,7 +195,7 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
     const { app, db } = await testHarness();
     const pilot = await tokenOf(app, 'PWI');
     expect((await post(app, pilot, day('sess-korekta', 'SP-AXA', 'PWI'))).statusCode).toBe(200);
-    const admin = await tokenOf(app, 'TMK');
+    const admin = await tokenOf(app, 'AKO');
 
     await leave(app, admin, 'PWI');
 
@@ -234,7 +234,7 @@ describe('wyjście z klubu = wyłączenie członkostwa', () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
 
-    await leave(app, await tokenOf(app, 'TMK'), 'PWI');
+    await leave(app, await tokenOf(app, 'AKO'), 'PWI');
 
     // W Becie PWI dalej pracuje - pod swoim kodem TAMTEGO klubu.
     const inBeta = await login(app, 'PWI');

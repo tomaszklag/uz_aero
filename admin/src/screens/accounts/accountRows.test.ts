@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PilotListItemDto } from '../../api/dto';
-import { accountRow, roleLabel, roleNote, ROLE_ORDER } from './accountRows';
+import { accountRow } from './accountRows';
 
 const pilot: PilotListItemDto = {
   id: 'p-1',
-  code: 'TMK',
-  name: 'Tomasz Małkiewicz',
-  email: 't.malkiewicz@ninerdeck.pl',
+  code: 'AKO',
+  name: 'Adam Kowalski',
+  email: 'a.kowalski@ninerdeck.pl',
   active: true,
-  role: 'pilot',
+  capabilities: [],
   lastSeenAt: null,
   loginMethods: ['google'],
 };
@@ -19,8 +19,10 @@ describe('komórki', () => {
     expect(accountRow({ ...pilot, email: null }).email).toBe('—');
   });
 
-  it('rola mówi po polsku, nie kodem kontraktu', () => {
-    expect(roleLabel('admin')).toBe('Administrator');
+  it('zakres mówi po polsku, nie kodem kontraktu', () => {
+    expect(accountRow({ ...pilot, capabilities: ['reservations.approve', 'fleet.watch'] }).scopeLabel).toBe(
+      'Akceptujący',
+    );
   });
 
   it('konto wyłączone przygasza wiersz', () => {
@@ -30,19 +32,14 @@ describe('komórki', () => {
   });
 });
 
-describe('wybór roli w formularzu', () => {
-  it('zaczyna się od najmniejszych uprawnień', () => {
-    // Kolejność jest domyślną odpowiedzią: nowe konto to pilot, a nie administrator.
-    expect(ROLE_ORDER[0]).toBe('pilot');
-    expect(ROLE_ORDER).toHaveLength(2);
-  });
+describe('zakres w wierszu', () => {
 
-  it('każda rola ma JEDNO zdanie o tym, co otwiera', () => {
-    for (const role of ROLE_ORDER) {
-      const note = roleNote(role);
-      expect(note.length).toBeGreaterThan(10);
-      // Jedno zdanie, nie akapit - opis roli w karcie wyboru ma się zmieścić w linii.
-      expect(note.split('.').filter((part) => part.trim() !== '')).toHaveLength(1);
-    }
+  // Przypadek o zdaniu opisującym rolę przeszedł do `scope.test.ts` razem z katalogiem
+  // zdolności (epik #197): rola przestała istnieć, a opis należy dziś do ZDOLNOŚCI.
+  it('zakres nazywa się ZE ZBIORU - wiersz nie przechowuje nazwy', () => {
+    expect(accountRow(pilot).scopeLabel).toBe('Pilot');
+    expect(accountRow({ ...pilot, capabilities: ['panel.access', 'fleet.manage', 'fleet.watch'] }).scopeLabel).toBe(
+      'Technik',
+    );
   });
 });

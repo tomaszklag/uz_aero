@@ -23,8 +23,9 @@ import type {
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { IssuedLoginMethod } from '../../domain/loginSessions.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
-import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
+import type { Capability, PlatformRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
+import type { DirectoryMember } from './contracts/directory.ts';
 import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
@@ -36,9 +37,9 @@ import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
  * a `Actor` - „co wpisać do dziennika audytu". Stąd `ip`, którego w tokenie nie ma
  * i być nie może.
  *
- * `role` jest rolą Z CHWILI AKCJI i tak trafia do `admin_audit`. Role się zmieniają;
- * odczytanie ich później z konta odpowiadałoby na inne pytanie niż „kto miał wtedy
- * prawo to zrobić".
+ * `capabilities` to ZAKRES Z CHWILI AKCJI; do `admin_audit` trafia jego klucz
+ * (`scopeKey`). Zakresy się zmieniają, więc odczytanie ich później z konta
+ * odpowiadałoby na inne pytanie niż „kto miał wtedy prawo to zrobić".
  *
  * `orgId` to KLUB, w którym akcja zachodzi (wielofirmowość, issue #98) - z tokenu sesji
  * panelu, po sprawdzeniu członkostwa. Każda komenda klubu pisze do tabel tego klubu
@@ -48,7 +49,7 @@ import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 export interface Actor {
   pilotId: string;
   orgId: string;
-  role: PilotRole;
+  capabilities: readonly Capability[];
   /** `null` = akcja spoza żądania HTTP (skrypt administracyjny). */
   ip: string | null;
   /**
@@ -108,8 +109,12 @@ export interface AuditEntry {
 /** Kompletny wiersz dziennika: opis akcji + kto, kiedy, skąd i W KTÓRYM KLUBIE. */
 export interface AuditRecord extends AuditEntry {
   actorPilotId: string;
-  /** Rola klubu albo rola platformowa - wpis historyczny, więc napis, nie unia. */
-  actorRole: PilotRole | PlatformRole;
+  /**
+   * Władza sprawcy z chwili akcji - wpis historyczny, więc NAPIS, nie unia. Od 3.1.0
+   * klucz zakresu (`full`/`partial`/`none`) albo rola platformowa; wiersze starsze
+   * mówią `admin`/`pilot` i tak zostaje (patrz `scopeKey`).
+   */
+  actorRole: string;
   /** `null` = akcja platformowa superadministratora (jedyna kolumna klubu bywająca pusta). */
   orgId: string | null;
   ip: string | null;
@@ -696,7 +701,8 @@ export interface AdminPilotAccount {
   name: string;
   email: string | null;
   active: boolean;
-  role: PilotRole;
+  /** ZAKRES UPRAWNIEŃ W TYM klubie (epik #197) - zbiór, nie rola. */
+  capabilities: readonly Capability[];
 }
 
 /**
@@ -737,13 +743,12 @@ export interface AdminPilotJoin {
 export interface PilotListFilter {
   active?: boolean;
   /**
-   * Role jako LISTA, nie pojedyncza wartość, bo chip „Z rolą panelu" opisuje ZBIÓR
-   * ról, a nie jedną: dziś jest w nim sam `admin` (po wycofaniu `training_lead`
-   * 2026-08-30), ale wraca do dwóch razem z rolą pośrednią. Jedna wartość zmusiłaby
-   * panel albo do rezygnacji z chipa, albo do sklejania listy z dwóch żądań - czyli
-   * do liczenia po swojemu. Ta sama decyzja, co przy `AuditListFilter.actions`.
+   * Zawężenie do członków MAJĄCYCH daną zdolność - chip „Z dostępem do panelu" pyta
+   * o `panel.access`. Do 3.1.0 była tu lista RÓL i chip nazywał się „Z rolą panelu";
+   * odkąd zdolność nadaje się osobie, pytanie „kto wejdzie do panelu" ma dokładnie
+   * jedną odpowiedź i nie trzeba jej sklejać z katalogu ról.
    */
-  roles?: PilotRole[];
+  capability?: Capability;
   /** Fragment kodu, nazwiska albo e-maila; dopasowanie bez rozróżniania wielkości. */
   search?: string;
   /** Okno „dni lotnych" (epoch ms UTC), obustronnie domknięte. */
@@ -755,15 +760,17 @@ export interface PilotListFilter {
 }
 
 /**
- * Liczniki kafli i karty „Rola w panelu" (`A06`). Liczone po WSZYSTKICH kontach,
- * niezależnie od filtra listy: kafel opisuje klub, a nie zawężenie, którym ktoś
- * właśnie patrzy na tabelę.
+ * Liczniki kafli (`A06`). Liczone po WSZYSTKICH kontach, niezależnie od filtra listy:
+ * kafel opisuje klub, a nie zawężenie, którym ktoś właśnie patrzy na tabelę.
+ *
+ * Podziału po rolach TU NIE MA (epik #197): „ilu administratorów" przestało mieć
+ * jedną odpowiedź, odkąd zakres bywa własny. Na pytanie „kto wejdzie do panelu"
+ * odpowiada `PilotScopeCounts.panel`, liczony po zdolności `panel.access`.
  */
 export interface PilotCounts {
   total: number;
   active: number;
   inactive: number;
-  byRole: Record<PilotRole, number>;
   /**
    * Dni lotne CAŁEGO klubu w oknie: liczba sesji ZAMKNIĘTYCH, nie suma kolumny
    * `flyingDays` z wierszy. Różnica jest realna, a nie kosmetyczna - dzień szkolny
@@ -792,7 +799,7 @@ export interface PilotScopeCounts {
   total: number;
   active: number;
   inactive: number;
-  /** Chip „Z rolą panelu" - role dające wejście do panelu, razem. */
+  /** Chip „Z dostępem do panelu" - członkowie ze zdolnością `panel.access`. */
   panel: number;
 }
 
@@ -803,8 +810,12 @@ export interface PilotPatch {
   /** Imię i nazwisko OSOBY - widoczne we wszystkich jej klubach. */
   name?: string;
   email?: string | null;
-  /** Rola W TYM KLUBIE (członkostwo). */
-  role?: PilotRole;
+  /**
+   * ZAKRES W TYM KLUBIE (epik #197) - cały zbiór, nie różnica. Panel wysyła stan,
+   * jaki ma stać po zapisie, a komenda porównuje go z obecnym: różnica liczona po
+   * stronie klienta rozjechałaby się przy dwóch otwartych kartach.
+   */
+  capabilities?: readonly Capability[];
 }
 
 /**
@@ -829,6 +840,14 @@ export interface PilotsAdminPort {
     orgId: string,
     filter: PilotListFilter,
   ): Promise<{ items: AdminPilotJoin[]; total: number }>;
+  /**
+   * SŁOWNIK członków klubu (issue #216): identyfikator, kod, nazwisko, aktywność -
+   * i nic ponadto. Osobna metoda od `list`, bo tamta liczy dni lotne, sesje i metody
+   * logowania dla modułu Piloci, a słownik czyta każdy członek klubu (kalendarz,
+   * kolejka decyzji) i nie ma prawa nieść ani adresu, ani zakresu. Posortowany
+   * nazwiskiem; wyłączone członkostwa zostają, bo ich dawne rezerwacje mają nazwisko.
+   */
+  directory(db: Queryable, orgId: string): Promise<DirectoryMember[]>;
   /** Liczniki po CAŁYM klubie; okno dotyczy wyłącznie `flyingDays`. */
   counts(db: Queryable, orgId: string, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
   /**
@@ -864,7 +883,11 @@ export interface PilotsAdminPort {
    */
   setActive(tx: Queryable, orgId: string, id: string, active: boolean, at: Date): Promise<void>;
   /** Ile członkostw AKTYWNYCH ma rolę `admin` W KLUBIE - wejście do `domain/accountGuards.ts`. */
-  countActiveAdmins(tx: Queryable, orgId: string): Promise<number>;
+  /**
+   * Ilu AKTYWNYCH członków klubu ma `accounts.manage` - liczba, na której stoi zapora
+   * z `domain/accountGuards.ts`. Do 3.1.0 liczyła rolę `admin`.
+   */
+  countActiveManagers(tx: Queryable, orgId: string): Promise<number>;
   /**
    * Blokada advisory na kluczu „populacja administratorów KLUBU", ważna do końca
    * transakcji. Wołana PRZED `countActiveAdmins` przez każdą mutację zmieniającą tę
@@ -972,7 +995,7 @@ export interface MembershipDecisionTarget {
 
 export interface MembershipApproval {
   code: string;
-  role: PilotRole;
+  capabilities: readonly Capability[];
   at: Date;
   /** Administrator, który wpuścił - `memberships.decided_by`. */
   by: string;

@@ -3,7 +3,7 @@
  *
  * Siatka 2×2 akcji naziemnych: tankowanie, zmiana załogi, lista ręczna, zakończenie dnia.
  *
- * Każda karta niesie **podpis ze stanem** („Ostatnie: 112 L → 160 L", „PIC: TMK · DUAL: AKO").
+ * Każda karta niesie **podpis ze stanem** („Ostatnie: 112 L → 160 L", „PIC: AKO · DUAL: BNO").
  * To nie ozdoba: dzięki niemu pilot widzi, czy akcja jest potrzebna, bez wchodzenia
  * w ekran i wracania. Kafelek bez podpisu zmuszałby do nawigowania „na próbę".
  *

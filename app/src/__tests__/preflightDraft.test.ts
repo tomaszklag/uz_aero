@@ -97,19 +97,19 @@ describe('szkic preflightu - Dual przeżywa wybór samolotu', () => {
 
   it('pilot wybrany PRZED samolotem zostaje po wyborze maszyny', () => {
     const draft = usePreflightDraft.getState();
-    draft.set('dualId', 'AKO');
+    draft.set('dualId', 'BNO');
     draft.setAircraft(axa());
 
-    expect(usePreflightDraft.getState().dualId).toBe('AKO');
+    expect(usePreflightDraft.getState().dualId).toBe('BNO');
   });
 
   it('zmiana maszyny na inną też nie kasuje wyboru', () => {
     const draft = usePreflightDraft.getState();
     draft.setAircraft(axa());
-    draft.set('dualId', 'AKO');
+    draft.set('dualId', 'BNO');
     draft.setAircraft(axa({ id: 'SP-KLM', reg: 'SP-KLM', type: 'Cessna 172' }));
 
-    expect(usePreflightDraft.getState().dualId).toBe('AKO');
+    expect(usePreflightDraft.getState().dualId).toBe('BNO');
   });
 });
 
@@ -134,7 +134,7 @@ describe('szkic preflightu - dirty() dla bramki rezygnacji', () => {
   });
 
   it('sam Dual (bez samolotu) też podnosi bramkę', () => {
-    usePreflightDraft.getState().set('dualId', 'AKO');
+    usePreflightDraft.getState().set('dualId', 'BNO');
     expect(usePreflightDraft.getState().dirty()).toBe(true);
   });
 

@@ -579,11 +579,13 @@ te wchodzą następnym przekrojem.
   przed XSS-em kończy się na pierwszym takim `const`. **Bez refresh tokenu w przeglądarce**
   (§8.4): obietnica §3.0 „wygasły token ≠ wylogowanie" istnieje dla pilota w terenie,
   administratorowi przy biurku wolno powiedzieć „zaloguj się ponownie".
-- **Konto bez `panel.access` nie dostaje sesji panelu** - i dostaje **403 `no_panel_access`**,
-  odróżnialne od 401. To decyzja z mockupu A00: pilot z POPRAWNYM hasłem ma zobaczyć,
-  że odbija go rola, a nie szukać błędu w haśle, którego nie popełnił. Enumeracji kont
-  to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać hasło), a 401 pozostaje
-  identyczne dla złego hasła i konta, którego nie ma.
+- **Sesję panelu dostaje KAŻDE aktywne członkostwo** (issue #216, „panel dla wszystkich",
+  2026-09-25 - `docs/uprawnienia.md` §13); odmowę **403 `no_membership`**, odróżnialną
+  od 401, dostaje wyłącznie osoba bez klubu. To decyzja z mockupu A00: konto z POPRAWNYM
+  hasłem ma zobaczyć, że odbija je brak klubu, a nie szukać błędu w haśle, którego nie
+  popełniło. Enumeracji kont to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać
+  hasło), a 401 pozostaje identyczne dla złego hasła i konta, którego nie ma. Zdolność
+  `panel.access` jest odtąd „Podglądem klubu" - otwiera moduły, nie drzwi.
 - **`panelLogin` to metoda `AuthCommands`, nie druga komenda** - `application/common/`
   znaczy „obie powierzchnie". Weryfikacja hasła (razem z wyrównaniem czasu odpowiedzi
   przy nieznanym loginie) ma jedną implementację w prywatnym `verifyCredentials`; druga
@@ -1523,6 +1525,52 @@ jest wspólne i nowa metoda nie ma prawa tego powtórzyć.
 7. **Polityka poświadczenia mieszka w domenie**, a liczą ją obie strony z tej samej funkcji.
    Powierzchnia bez dostępu do `@ninerdeck/domain` (strona `/haslo/`) trzyma LUSTRO
    z testem równości - nigdy drugą implementację bez strażnika.
+
+### Nowy rodzaj powiadomienia (3.1.0, `docs/rezerwacje.md` §12; pierwsze użycie spoza rezerwacji: `docs/obserwowanie-samolotu.md` §5)
+
+Skrzynka jest ŹRÓDŁEM PRAWDY, push BUDZIKIEM - i z tego wynika cały przepis. Nowy rodzaj
+wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
+
+1. **Rodzaj i treść w `application/common/notify/*Notices.ts`** - czysta funkcja: fakty
+   → `NotificationDraft` (adresat, `kind`, `payload`, `push`). Brzmienie sprawdza test,
+   nie oglądanie telefonu. Napis rodzaju jedzie na drut i czyta go aplikacja, więc jest
+   częścią kontraktu: dopisuje się go po stronie serwera, a aplikacja go DOGANIA.
+2. **`payload` wozi IDENTYFIKATORY i czasy, nie zdania.** Znak maszyny i nazwisko
+   rozwiązuje aplikacja z cache floty, jak na każdym innym ekranie. Push jest krótki,
+   BEZ NAZWISK I GODZIN terminu - ląduje na ekranie blokady, który widzi każdy, kto
+   akurat patrzy na telefon. **`payload` jest treścią SKRZYNKI, a do `data` budzika
+   wchodzi z niego wyłącznie to, co telefon czyta w `pushTarget.ts`** - `kind`, `orgId`,
+   `bookingId`, `aircraftId` (`notify/pushData.ts`, issue #228; klucz tylko z niepustym
+   napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
+   z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
+   jedzie przez Expo i FCM „na zapas".
+3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
+   mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
+   uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
+   się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
+4. **Wiadomość o zdarzeniu Z REJESTRU niesie czas Z REJESTRU**, nie chwilę dotarcia
+   paczki: telefon dosyła zapisy po godzinach, a „lot się rozpoczął" powstaje, gdy paczka
+   dojechała. Skrzynka pisze czas zdarzenia i osobno „zapis dotarł …", gdy zwłoka jest
+   widoczna; paczka niosąca początek i koniec tej samej rzeczy rodzi TYLKO koniec
+   (`docs/obserwowanie-samolotu.md` §2.3). Rezerwacje tego problemu nie mają - liczy je
+   serwer własnym zegarem.
+5. **Sprawca własnego działania nie jest budzony**, a prawo adresata sprawdza się PRZY
+   WYSYŁCE (aktywne członkostwo × zdolność w SQL-u), nie w chwili zapisu subskrypcji -
+   odebranie zdolności wycisza od razu, bez sprzątania wierszy. Dla powiadomień o MASZYNIE
+   robi to jeden pomocnik - `notify/aircraftWatching.ts` (`audience(tx, org, maszyna,
+   sprawcy)` → `record` → `wake`) - i nowy producent woła jego, a nie port obserwowania
+   wprost. Producent z REJESTRU budzi wyłącznie przy zdarzeniu, które NAPRAWDĘ weszło
+   (`insertBatch` oddaje uuidy przyjęte) - ponowiona paczka nie dzwoni drugi raz.
+6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
+   da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
+   wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED
+   aplikacją.
+7. **Wiadomość o TERMINIE dostaje `day`** (doba klubu, §6.1 rezerwacji) i telefon liczy
+   godzinę odejmowaniem; wiadomość o OPERACJI niesie `at` w UTC, a `day` ma `null`.
+   Dwa zegary, świadomie - jak na ekranie podglądu 26B.
+8. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
+   ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
+   strażniki izolacji klubów.
 
 ---
 

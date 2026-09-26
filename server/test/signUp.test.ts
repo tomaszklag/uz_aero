@@ -35,19 +35,19 @@ describe('rejestracja e-mailem (§5.4a)', () => {
     const { app, db, mail } = await testHarness();
 
     const fresh = await signup(app, 'Nowa Osoba', 'Nowa@Example.com');
-    const taken = await signup(app, 'Ktoś Inny', 'tomasz@ninerdeck.pl');
+    const taken = await signup(app, 'Ktoś Inny', 'adam@ninerdeck.pl');
     expect(fresh.statusCode).toBe(202);
     expect(taken.statusCode).toBe(202);
     expect(taken.body).toBe(fresh.body);
 
     expect(mail.lastTo('nowa@example.com')!.subject).toBe('Ninerdeck - załóż hasło do nowego konta');
-    expect(mail.lastTo('tomasz@ninerdeck.pl')!.subject).toBe('Ninerdeck - masz już konto');
+    expect(mail.lastTo('adam@ninerdeck.pl')!.subject).toBe('Ninerdeck - masz już konto');
     // Adres zajęty NIE dostaje tokenu rejestracji - jego list resetuje hasło ISTNIEJĄCEJ osoby.
     const { rows } = await db.query<{ kind: string; pilot_id: string | null; email: string | null }>(
       `SELECT kind, pilot_id, email FROM password_reset_tokens ORDER BY kind`,
     );
     expect(rows).toEqual([
-      { kind: 'reset', pilot_id: 'TMK', email: null },
+      { kind: 'reset', pilot_id: 'AKO', email: null },
       { kind: 'signup', pilot_id: null, email: 'nowa@example.com' },
     ]);
   });
@@ -79,11 +79,11 @@ describe('rejestracja e-mailem (§5.4a)', () => {
 
   it('link „masz już konto" ustawia hasło istniejącej osobie - bez drugiej osoby', async () => {
     const { app, db, mail } = await testHarness();
-    await signup(app, 'Ktoś Inny', 'tomasz@ninerdeck.pl');
-    expect((await reset(app, tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!), PASSWORD)).statusCode).toBe(204);
+    await signup(app, 'Ktoś Inny', 'adam@ninerdeck.pl');
+    expect((await reset(app, tokenIn(mail.lastTo('adam@ninerdeck.pl')!), PASSWORD)).statusCode).toBe(204);
 
-    expect((await passwordLogin(app, 'tomasz@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
-    const { rows } = await db.query<{ n: string }>(`SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'tomasz@ninerdeck.pl'`);
+    expect((await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD)).statusCode).toBe(200);
+    const { rows } = await db.query<{ n: string }>(`SELECT COUNT(*) AS n FROM pilots WHERE lower(email) = 'adam@ninerdeck.pl'`);
     expect(Number(rows[0]!.n)).toBe(1);
   });
 
@@ -123,18 +123,35 @@ describe('rejestracja e-mailem (§5.4a)', () => {
     expect((await reset(app, token, PASSWORD)).statusCode).toBe(204);
   });
 
-  it('formularz waliduje kształt (400), a panel tej trasy NIE MA', async () => {
+  it('formularz waliduje kształt (400)', async () => {
     const { app } = await testHarness();
     expect((await signup(app, 'X', 'nowa@example.com')).statusCode).toBe(400);
     expect((await signup(app, 'Nowa Osoba', 'to-nie-adres')).statusCode).toBe(400);
-    // Z nagłówkiem CSRF, żeby dojść do routera - bez niego strażnik odbija 403 wszystko pod `/admin/api`.
+  });
+
+  it('PANEL ma tę samą trasę pod swoim prefiksem (issue #180) - ten sam list, ta sama odpowiedź', async () => {
+    // Do #180 panel tej trasy NIE MIAŁ (rejestracja była funkcją telefonu, a administrator
+    // powstawał z zaproszenia platformy). Właściciel: konto ma dać się założyć bez
+    // aplikacji - z przeglądarki, tym samym mechanizmem linku. Panel woła wyłącznie
+    // `/admin/api/*` z nagłówkiem CSRF, więc trasa jest lustrem tej z `/auth/signup`.
+    const { app, mail } = await testHarness();
     const panel = await app.inject({
       method: 'POST',
       url: '/admin/api/auth/signup',
       headers: ADMIN_CSRF_HEADERS,
-      payload: { name: 'A B', email: 'a@b.pl' },
+      payload: { name: 'Osoba Z Panelu', email: 'panel@example.com' },
     });
-    expect(panel.statusCode).toBe(404);
+    expect(panel.statusCode).toBe(202);
+    expect(panel.body).toBe((await signup(app, 'Ktoś Inny', 'ktos@example.com')).body);
+    expect(mail.lastTo('panel@example.com')!.subject).toBe('Ninerdeck - załóż hasło do nowego konta');
+
+    // Bez nagłówka CSRF strażnik odbija - jak każdą mutację panelu.
+    const noCsrf = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/signup',
+      payload: { name: 'Osoba Z Panelu', email: 'panel@example.com' },
+    });
+    expect(noCsrf.statusCode).toBe(403);
   });
 
   it('osoba z rejestracji podpina Google po tym samym adresie - jedna osoba, dwa dowody', async () => {

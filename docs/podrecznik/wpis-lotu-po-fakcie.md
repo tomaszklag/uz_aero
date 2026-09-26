@@ -34,7 +34,7 @@ Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się
 - **Paliwo to trzy liczby**: zastane, dolane, po locie. Godzin się nie podaje - wynikają z chwili uruchomienia i wyłączenia silnika, a dolewkę zapisuje się przy zatrzymanym śmigle.
 - **Motogodziny** z obu stron biegu: przed uruchomieniem i po locie.
 - **Olej** jest tu opcjonalny (inaczej niż przy przejęciu na żywo): pomiar z bagnetu i ewentualna dolewka.
-- **Zastane paliwo i licznik podpowiada operacja poprzedzająca** na tej maszynie - z podpisem, skąd liczba pochodzi (`z poprzedniego lotu · AKO`). Podpowiedź można nadpisać, a odczytów po locie nie podpowiada nic: to na nie odpowiadasz.
+- **Zastane paliwo i licznik podpowiada operacja poprzedzająca** na tej maszynie - z podpisem, skąd liczba pochodzi (`z poprzedniego lotu · BNO`). Podpowiedź można nadpisać, a odczytów po locie nie podpowiada nic: to na nie odpowiadasz.
 - **Karty pokazują werdykt wobec normy** maszyny od razu; tapnięcie w oznaczenie otwiera rachunek. Więcej: [norma zużycia](norma-zuzycia).
 
 @screen 15c-reczny-liczniki "Paliwo, motogodziny i olej"

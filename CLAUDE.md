@@ -584,7 +584,7 @@ Uuid nadaje się do ADRESOWANIA (klucz w bazie, ścieżka w panelu, cel korekty)
 niczego więcej: `7c1e5a9b-…-83b4` nie da się przeczytać przez telefon administratorowi,
 wpisać w zgłoszenie ani znaleźć wzrokiem na liście.
 
-    SP-AXA/2026-09-01/AKO/1
+    SP-AXA/2026-09-01/BNO/1
     └ znak  └ doba     └ PIC └ która operacja tego pilota w tej dobie
 
 - **SKŁADA JĄ DOMENA** (`packages/domain/src/signature.ts`: `operationSignature`,
@@ -1614,7 +1614,7 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
     z 2026-08-16 („wpis brał odczyt początkowy z cache, a zgadnięte ogniwo psuło łańcuch
     MH następnemu pilotowi") pod trzema warunkami naraz: (1) źródłem jest REJESTR -
     konkretny sąsiad tej maszyny w tej chwili, nie „ostatni znany stan"; (2) liczba
-    niesie ŹRÓDŁO przy polu („z poprzedniego lotu · AKO"), więc nie udaje odczytu
+    niesie ŹRÓDŁO przy polu („z poprzedniego lotu · BNO"), więc nie udaje odczytu
     z przyrządu - a to było sednem tamtej pomyłki; (3) wpisujemy się TYLKO w pole puste
     albo takie, w którym stoi nasza własna wcześniejsza podpowiedź (zmiana maszyny
     wymienia ją, poprawka pilota jest nietykalna, a wtedy gaśnie też adnotacja).
@@ -2108,7 +2108,7 @@ nie architekturą:
   Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u.
   **Ta sama poprawka na kafelku „Zmiana załogi" w kokpicie** (2026-09-03: podpis
   kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał
-  „PIC: TMK · DUAL: AKO") - kody rozwiązuje odtąd hook `usePilotCode`
+  „PIC: AKO · DUAL: BNO") - kody rozwiązuje odtąd hook `usePilotCode`
   (`hooks/usePilots.ts`, wzorzec `useAircraft`): `queries.pilots()` ładowało
   sobie już SZEŚĆ ekranów własnymi kopiami, siódma kopia byłaby dokładnie tym,
   przed czym ostrzega docblock tamtego hooka
@@ -2843,6 +2843,38 @@ osobistym i w panelu. Dokument decyzji: **`docs/logowanie-haslem.md`**; epiki H-
     i nie starzeje się nigdy) oraz `invite` przy administratorze klubu. Przy okazji
     `signedIn` na karcie klubu przestało pytać WYŁĄCZNIE o tożsamość Google - inaczej
     administrator, który wszedł z linku i hasłem, zostawałby „tym, który się nie zalogował"
+- **REJESTRACJA I „NIE PAMIĘTAM HASŁA" TAKŻE Z PANELU (issue #180, 2026-09-24)** - odwraca
+  „w panelu jej nie ma" z §5.4a; pełny zapis `docs/logowanie-haslem.md` §16:
+  - **panel woła WYŁĄCZNIE `/admin/api/*`**, a `POST /auth/password/forgot` istniało tylko
+    pod prefiksem telefonu - „Nie pamiętam hasła" w panelu kończyło się 404 od 2.1.0,
+    a ekran pisał „link już idzie" (reguła „jedno zdanie na każdą odmowę" zasłania też 404).
+    Odtąd `forgotHandler`/`signupHandler` z `routes/common/password.ts` stoją pod OBOMA
+    prefiksami; **każda trasa panelu potrzebuje testu serwera pod swoim prefiksem** -
+    `tenantIsolation.test.ts` wymaga wpisu tylko dla tras, które ISTNIEJĄ
+  - **`#/logowanie/konto` = lustro 00H** (imię i nazwisko + adres → list → hasło na stronie
+    → osoba). Bez pola hasła i bez kodu klubu - do klubu wchodzi się kodem w APLIKACJI
+    (00E), panel tego nie ma i to jest granica zgłoszenia, nie przeoczenie
+  - **UKŁAD JAK U GITHUBA / STRIPE'A / LINEAR** (przegląd właściciela tego samego dnia:
+    dwa linki pod przyciskiem „wyglądają jak linki"): „Nie pamiętam hasła" stoi W WIERSZU
+    ETYKIETY pola hasła (`Field.action` → `.label-row` + `.label-action` w `controls.css`),
+    a „Załóż konto" w lżejszej ramce POD kartą (`.login-alt` w `login.css`: „Nie masz
+    jeszcze konta? Załóż konto" - karta niesie JEDNĄ akcję główną, zdanie jest treścią,
+    link czasownikiem). Ekrany hasła i rejestracji mają tę samą ramkę („Wróć do logowania",
+    „Masz już konto? Zaloguj się"). Klasy `.login-link`/`.login-links` NIE ISTNIEJĄ -
+    link w karcie pod przyciskiem nie wraca
+  - **UKŁAD JAK W GITLABIE** (przegląd właściciela tego samego dnia, wieczorem: „wygląda
+    okropnie") - odwraca kartę i ramkę `.login-alt`: znak + TYTUŁ ZDANIOWY („Zaloguj się
+    do Ninerdeck", bez wersalikowego NINERDECK), formularz BEZ KARTY w kolumnie 400 px,
+    wszystkie przyciski 40 px i tej samej szerokości (Google: GIS `filled_black`,
+    prostokąt, `width: 400`), separator „albo zaloguj się przez" krojem tekstowym, droga
+    dla kogoś bez konta JEDNYM ZDANIEM pod spodem (`.login-foot`, bez ramki), poświata
+    u dołu ekranu z tokenów `-muted` (odwraca „bez poświaty" z #107). Cztery ekrany przed
+    ramą (logowanie, hasło, rejestracja, wybór klubu) składa JEDEN `screens/login/AuthFrame.tsx`
+  - **odmowa `403 no_panel_access` mówi, skąd bierze się klub** („Do klubu wchodzi się kodem
+    klubu w aplikacji Ninerdeck, a dostęp do panelu nadaje administrator klubu") - osobą bez
+    klubu bywa odtąd ktoś, kto założył konto w tym panelu
+  - **strażnik hexów panelu łapie `#180` w napisie testu** (jak `#207`) - numer issue
+    zostaje w komentarzu; strażnik napisów (`copy.test.ts`) trzyma lead w dwóch linijkach
 - **etap H-E (aplikacja pilota) WYKONANY 2026-09-18** (PR #150, issue #135) - reguły
   obowiązujące odtąd KAŻDY ekran logowania w aplikacji:
   - **HASŁO KOŃCZY SIĘ TAM, GDZIE GOOGLE**: `AuthService.loginWithPassword` robi WYŁĄCZNIE
@@ -3365,7 +3397,7 @@ bierze się cały epik. Decyzje i odstępstwa: `docs/wielofirmowosc.md` §14 F. 
 obowiązujące odtąd KAŻDY nowy ekran i KAŻDE nowe zapytanie do magazynu:
 - **KLUB JEST KONTEKSTEM FLOTY I WYSYŁKI, NIE REJESTRU**: `getAircraft()` i `getPilots()`
   oddają dane KLUBU AKTYWNEGO (kod pilota należy do członkostwa - ten sam człowiek jest
-  w Alfie `TMK`, a w Becie `TMB`), a „Mój dzień", historia i sumy doby pokazują operacje
+  w Alfie `AKO`, a w Becie `AKB`), a „Mój dzień", historia i sumy doby pokazują operacje
   WSZYSTKICH klubów. Stąd `getAircraftById` i NOWE `getAllAircraft()` idą BEZ zawężenia:
   kafelek operacji z drugiego klubu musi mieć czym się podpisać, inaczej wraca na ekran
   surowy identyfikator z panelu. Do WYBORU maszyny służy `aircraft()` i tylko ono.
@@ -3674,7 +3706,8 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   **Artefakty EAS wygasają po kilku tygodniach** (build z 2026-08-16 zwracał 404 już
   2026-09-06), więc na dłużej `--release`: APK jako GitHub Release w `tomaszklag/uz_aero`
   pod trwałym `releases/latest/download/ninerdeck.apk`
-- **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
+
+- **AKTUALIZACJE OTA (EAS Update) od wydania 1.1.0** - `expo-updates` w aplikacji,
   kanały `production`/`development` w `eas.json`. Odtąd „wydanie" znaczy DWIE różne
   rzeczy, a pomylenie ich kosztuje reinstalację u wszystkich testerów:
   - **`npm run update:prod -- -m "…"`** dowozi JS i assety do JUŻ ZAINSTALOWANYCH
@@ -3844,7 +3877,8 @@ i odstępstwa: `docs/rezerwacje.md` §3.5, §6.1. Reguły obowiązujące odtąd:
   i tylko w jedną stronę. Nieznany identyfikator NIE odrzuca paczki: rezerwacja nie
   jest warunkiem lotu (§2.3), a pilot mógł wejść w lot z rezerwacji odwołanej
   w międzyczasie. Domena nie robi z tym polem NIC
-- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min): slot
+- **PIERWSZY WĄTEK OKRESOWY W TYM SERWERZE** (`BookingReleaseJob`, co 5 min; od 3.1.0
+  `BookingClockJob` w `bookingClock.ts` - obserwowanie samolotu dołożyło trzecie pytanie): slot
   zwalnia się sam po godzinie bez przejęcia maszyny. `setInterval`, nie kolejka - jedna
   instancja (§8.8 architektury); wyłączalny `BOOKING_RELEASE=0`, bo przebieg zmienia
   dane w tle i testy nie mają go dostać przypadkiem. Status `released`, nie `cancelled`,
@@ -4052,6 +4086,696 @@ KAŻDY ekran modułu rezerwacji:
 - **czego epik R-F NIE ROBI**: sprawdzeń NA URZĄDZENIU (F0 sonda stref, F11 i F13) -
   wymagają dev builda. Kod jest kompletny: trasa `BookingDetails` istnieje, a nazwa
   parametru jest jedna (`bookingId`) po obu stronach
+
+## Akceptacja rezerwacji 3.1.0 - MAKIETY ZATWIERDZONE (issue #196, 2026-09-23)
+Cały epik makiet przed kodem, design-first jak w 3.0.0. Decyzje i uzasadnienia:
+**`docs/rezerwacje.md` §9.4 (telefon), §10 (panel), §11 (workflow)** oraz
+**`docs/uprawnienia.md`** (epik #197). Reguły obowiązujące odtąd:
+- **ZAKRES UPRAWNIEŃ ZAMIAST ROLI**: zdolności należą do CZŁONKOSTWA, `memberships.role`
+  znika. Panel pokazuje SZEŚĆ ZESTAWÓW (Pilot · Akceptujący · Koordynator lotów ·
+  Technik · Administrator · Własny zakres) - katalog zatwierdzony 2026-09-23, ale
+  **zestaw NIE JEST bytem w modelu**: w bazie stoi ZBIÓR, a etykieta liczy się z niego
+  z powrotem. Zmiana katalogu nie rusza nikomu uprawnień. „Własny zakres" wskakuje SAM
+  przy tknięciu którejkolwiek zdolności - nie wybiera się go świadomie
+- **MODEL WDROŻONY W KODZIE (epik #197, 2026-09-23)**: migracja 12 z tabelą
+  `membership_capabilities`, backfillem z ról i `DROP COLUMN memberships.role`.
+  `can(zbiór, zdolność)` zamiast `can(rola, …)`, zbiór czytany RAZEM z członkostwem
+  (`authSnapshot`), claim `role` wypadł z tokenu, zapora przeszła na
+  `refuseScopeChange` liczoną po `accounts.manage`. Katalog ma DZIESIĘĆ zdolności
+  klubowych - doszła `reservations.approve` (rozstrzyganie kroku ścieżki + podgląd
+  cudzych terminów), osobna od `reservations.manage`, bo akceptujący nie kasuje
+  cudzych rezerwacji. Nazwy zestawów i zdolności po polsku mieszkają WYŁĄCZNIE
+  w panelu (`admin/src/screens/accounts/scope.ts`) - serwer nie zna języka interfejsu
+- **`admin_audit.actor_role` niesie odtąd KLUCZ ZAKRESU** (`full`/`partial`/`none`),
+  a wiersze sprzed 3.1.0 zostają przy `admin`/`pilot`: dziennik jest zapisem
+  historycznym i przepisanie go zmieniłoby to, co się wtedy wydarzyło
+- **`<select>` przy zestawie** - drugie (po kalendarzu) odstępstwo od „zawsze lista kart",
+  bo zawartość wyboru stoi ROZPISANA POD NIM: dwie listy kart jedna nad drugą zlałyby się
+  w jedną
+- **WIADOMOŚĆ TO NIE SPRAWA** (skrzynka `25`): „Nowe" gaśnie z otwarciem listy, „Do
+  decyzji" stoi do decyzji. Gdyby jedno gasiło drugie, zerknięcie na skrzynkę uciszałoby
+  prośbę o zgodę. CZWARTEJ ZAKŁADKI NIE MA - wejściem jest DZWONEK na Pulpicie (obok
+  zębatki, issue #82); licznik wyłącznie z nieprzeczytanymi, bez zasięgu nie ma go wcale
+- **PODGLĄD PILOTA I SAMOLOTU** (panel: szuflada `kalendarz-podglad`; telefon: EKRANY
+  `26a`/`26b`, bo cztery karty z tabelą to nie arkusz). Otwiera się z maszyny i z OBU
+  pilotów, nie ma ani jednej akcji na sprawie, a doświadczenie NA TYM egzemplarzu stoi
+  przed nalotem ogólnym - to jest pytanie decyzji
+- **LICENCJE, BADANIA I UPRAWNIENIA NA TYP SĄ POZA ZAKRESEM** (decyzja właściciela
+  2026-09-23: osobny epik). Podgląd odpowiada nalotem i historią lotów - i NIE pokazuje
+  pustych wierszy „Badania -": na ekranie decyzji czytałyby się jak stwierdzenie o stanie
+  dokumentów, a byłyby stwierdzeniem o brakującym module
+- **ODMOWA NIE JEST CZERWONA** (jest decyzją, nie zniszczeniem), ale POWÓD JEST WYMAGANY
+  po obu stronach - pilot czyta go jako treść wiadomości. Przycisk blokuje BEZ zdania,
+  bo puste pole widać nad nim (issue #55)
+- **KROKU NIE PISZEMY** ani w kolejce, ani na ekranie decyzji: ekran pyta CIEBIE
+- **STAN „CZEKA" WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST** - rezerwacja trzyma termin od
+  ZŁOŻENIA, nie od zgody. Na osi floty różni go KSZTAŁT (przerywana ramka, jaśniejsza od
+  zwykłego obrysu - inaczej ginie), na karcie pilota TON (ostrzeżenie, nie wygaszenie);
+  zamknięta wraca do tonu neutralnego, bo czerwień niesie baner
+- **POPRAWKA CZEKAJĄCEJ REZERWACJI CZYŚCI ZGODY** i ekran mówi to PRZED tapnięciem:
+  zgoda dotyczyła konkretnego terminu. Rezerwacja ZAMKNIĘTA ma jedno wyjście („wybierz
+  inny termin") - wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą
+- **`.go` - WARTOŚĆ PROWADZĄCA W GŁĄB** (panel): w spoczynku wartość, pod kursorem
+  ghost-badge. Sześć wersji, cztery odrzucone z powodami w docblocku `controls.css`.
+  Podpis wartości (kod pilota) wchodzi DO ŚRODKA przycisku. Na telefonie ten sam byt
+  wygląda INACZEJ - szewron w spoczynku, bo na dotyku nie ma hovera
+- **kolejność `NAV_ITEMS` decyduje o ekranie startowym** (`homeFor`) - dokładając moduł
+  platformy albo klubu, sprawdź, czy go nie przestawiasz
+
+## Rezerwacje 3.1.0 - epik R-G: ścieżka akceptacji, decyzje z powodem, skrzynka (issue #164, 2026-09-23)
+Migracja 13 + domena + porty + adaptery + trasy telefonu i panelu + budzik. Decyzje:
+`docs/rezerwacje.md` §11, §12, §3.4; odstępstwa §18. Reguły obowiązujące odtąd:
+- **ROZSTRZYGNIĘCIA LICZY CZYSTA DOMENA** (`server/src/domain/approvals.ts`): który krok
+  pyta teraz, czy decyzja może zapaść, kogo zapytać dalej. Warstwa aplikacji
+  (`ApprovalFlow`) dokłada odczyt, transakcję, powiadomienia i zmianę stanu wiersza -
+  i to jest cała granica. Domena nie zna SQL-a, zegara ani zdolności `reservations.approve`
+- **ŚCIEŻKA JEST ZAWSZE BIEŻĄCA** (decyzja właściciela 2026-09-23), więc **decyzja wskazuje
+  KROK przez `step_id`, nigdy przez numer**, a kroku się NIE KASUJE (`removed_at`).
+  Dołożenie kroku COFA sprawy w toku i to jest cena przyjęta świadomie; zapadłe podpisy
+  zostają przy SWOICH krokach, bo numery przesuwają się, a `id` nie
+- **KROK TO NAZWA I LISTA OSÓB, nigdy rola** - w kroku wystarczy zgoda JEDNEJ osoby
+  (pula uprawnionych, nie komplet podpisów), a kroki idą PO KOLEI. Rezerwujący pomija
+  kroki, na których sam stoi, i pominięcie ZAPISUJE SIĘ (`via = 'self'`): po miesiącu
+  krok pominięty musi być odróżnialny od kroku, o który nikt nie zapytał
+- **DWIE ZDOLNOŚCI, DWIE RÓŻNE ROLE**: `reservations.approve` mówi „ta osoba w ogóle
+  akceptuje", lista kroku - „to jest JEJ krok". Trasa decyzji wpuszcza `approve` ALBO
+  `manage`, bo `manage` jest DRUGĄ ZAPORĄ przed zakleszczeniem ścieżki (§11.2) - wymóg
+  obu naraz znaczyłby, że utkniętą ścieżkę odblokuje wyłącznie ktoś, kogo w tej roli nie
+  ma. `manage` odblokowuje przy tym KAŻDY krok, ale NIE pomija żadnego automatycznie:
+  rezerwacje administratora podlegają ścieżce, której sam pilnuje
+- **DECYZJE NIE TRAFIAJĄ DO DZIENNIKA AUDYTU i to jest decyzja, nie przeoczenie.**
+  Ich rejestrem jest append-only `booking_approvals` - z powodem, krokiem i adnotacją
+  `via` - czyli ślad BOGATSZY niż wiersz `admin_audit`. Do dziennika wchodzi za to
+  zmiana ŚCIEŻKI (`approval.steps`, `accounts.manage`), bo to ona rozdaje władzę.
+  Architektura zresztą tej drugiej drogi nie ma: decyzja zapada z TELEFONU (osobą kroku
+  bywa zwykły pilot bez wejścia do panelu), a `application/common/` nie importuje
+  z `admin/` - pilnuje tego oś powierzchni w `architecture.test.ts`
+- **REZERWACJA `pending` TRZYMA SLOT** (była w `SLOT_HOLDING_STATUSES` od 3.0.0, teraz
+  wchodzi w życie): inaczej „czekam na akceptację" znaczyłoby „ktoś mi to zaraz zajmie"
+- **NOWY STAN `expired`** (§11.5): termin nadszedł, decyzji nie ma - slot wraca do puli
+  BEZ powodu (`close_reason` niesie zdanie CZŁOWIEKA). Osobny od `released`, bo tam
+  maszyny nie przejęto, a tu zgody nie wydano. `BookingReleaseJob` dostał drugie pytanie,
+  nie drugi wątek; **wygaszanie idzie PIERWSZE**, a `due()` zawęziło się do `confirmed` -
+  rezerwacji czekającej na zgodę nikt nie mógł przejąć, więc zwolnienie jej jako
+  „pilot się nie zjawił" byłoby zdaniem nieprawdziwym
+- **SKRZYNKA JEST ŹRÓDŁEM PRAWDY, PUSH BUDZIKIEM** (§12.1): powiadomienie powstaje TĄ
+  SAMĄ transakcją, co rzecz, o której mówi (`Notifier.record`), a budzik idzie PO
+  commicie i NIGDY nie rzuca (`Notifier.wake`). Rozdzielenie widać w sygnaturach:
+  `record` żąda uchwytu transakcji, `wake` go nie przyjmuje. Stąd też `PUSH_PROVIDER`
+  jest NIEWYMAGANY i domyślnie znaczy `log` - inaczej niż `MAIL_PROVIDER`, bez którego
+  serwer nie wstaje: bez budzika prośba nadal czeka w skrzynce, kompletna i z historią
+- **PUSH NIE NIESIE NAZWISK ANI GODZIN**: ląduje na ekranie blokady, który widzi każdy,
+  kto akurat patrzy na telefon. Tytuł nazywa rzecz („Prośba o zgodę"), a treść stoi
+  w skrzynce. `payload` wozi IDENTYFIKATORY - znak maszyny rozwiązuje aplikacja z cache
+  floty, jak wszędzie indziej. **Od #228 (2026-09-25) `data` budzika to DOKŁADNIE cztery
+  pola**: `kind`, `orgId`, `bookingId`, `aircraftId` (`notify/pushData.ts`, klucz tylko
+  z niepustym napisem) - payload skrzynki NIE rozlewa się do push, bo Expo i FCM widziały
+  przez to godziny, osoby, powód odmowy i odczyty, których telefon nie czytał
+  (`pushTarget.ts`). Nowe pole czytane przez telefon dopisuje się do `PUSH_DATA_KEYS`
+- **KURSOR SKRZYNKI JEST PARĄ** `(created_at, id)`: powiadomienia jednej decyzji rodzą
+  się w tej samej transakcji, więc sam stempel nie porządkuje ich jednoznacznie i strona
+  potrafiłaby zgubić wiersz. Kursor NIEPEŁNY to `400`, a nie ciche „od początku" -
+  strona od początku wygląda jak strona z wynikami, więc telefon pętliłby się na
+  pierwszej i nikt by tego nie zauważył
+- **TOKEN PUSH ŻYJE RAZEM Z SESJĄ LOGOWANIA** (§12.2; kaskada z `login_sessions` NIE
+  wystarcza, bo sesji się nie kasuje - budzik bierze tylko tokeny sesji żywych i adresatów
+  z aktywnym członkostwem, a unieważnienie kasuje tokeny swojej sesji; przegląd 3.1.0, §19) i jako
+  jedyna nowa tabela **NIE MA `org_id`**: opisuje URZĄDZENIE osoby, a ta bywa w kilku
+  klubach naraz i przełącza je bez wylogowania. Klub niesie POWIADOMIENIE, czyli treść,
+  która przez ten token wychodzi. Sesja bierze się z TOKENU żądania, nie z ciała
+- **AKCEPTUJĄCY JEST TRZECIM WIDZEM `bookingWire`** (§17, G5b): ze zdolnością
+  `reservations.approve` widzi komplet pól WSZYSTKICH rezerwacji klubu - bez zadania,
+  trasy i notatki zgoda zapadałaby na podstawie samych godzin i znaku maszyny. Zwykły
+  członek klubu nie zyskuje ani jednego pola
+- **STAN ŚCIEŻKI JEDZIE W `GET /bookings/:id`, NIE W OKNIE KALENDARZA**: siatka rysuje
+  pasek zajętości i o kroki nie pyta, a odczyt per wiersz zamieniłby jedno zapytanie
+  o dobę w tyle zapytań, ile rezerwacji stoi na ekranie. **Nazwisk decydujących nie ma
+  nigdzie** (§9.4): krok bywa obsadzony przez kilka osób i rozstrzyga pierwsza
+- **ZAPIS ŚCIEŻKI IDZIE CAŁĄ LISTĄ** (`PUT /admin/api/approval-steps`), bo `position`
+  jest własnością LISTY, a nie kroku. Odmawia kroku BEZ OSÓB (zatrzymałby rezerwacje na
+  zawsze) i kroku obsadzonego kimś spoza klubu; odmowa niesie NAZWĘ kroku, nie numer -
+  ekran pokazuje listę, w której numer i tak nie stoi
+- **czego epik R-G świadomie NIE ROBI**: ekranów telefonu (25/26 - epik R-H) ani modułu
+  panelu; `expo-notifications` w aplikacji to moduł natywny, więc 3.1.0 idzie NOWYM APK
+  (§12.4), a projekt Firebase i FCM V1 w EAS są zadaniem właściciela na drodze krytycznej
+
+## Rezerwacje 3.1.0 - epik R-H: panel - ścieżka akceptacji i kolejka decyzji (issue #165, 2026-09-23)
+Cztery decyzje właściciela na wejściu (pytane pojedynczo) i reguły obowiązujące odtąd:
+- **DECYZJA Z PANELU = TA SAMA DECYZJA, CO Z TELEFONU** - `POST /admin/api/bookings/:id/decision`
+  na tym samym `ApprovalFlow.decide`, BEZ wpisu w dzienniku audytu: rejestrem jest
+  append-only `booking_approvals`, a drugi ślad zależny od powierzchni mówiłby o jednym
+  fakcie na dwa sposoby. Trasa wpuszcza `reservations.approve` ALBO `reservations.manage`
+  (druga jest zaporą przed zakleszczeniem), więc deklaracja stoi na `panel.access`,
+  a rozstrzygnięcie w handlerze - `adminRoute` zna jedną zdolność, a „approve albo manage"
+  nie jest żadną z nich
+- **HISTORIA W PANELU NIESIE OSOBĘ** (`decidedBy` w `panelApprovalWire`), telefon dalej
+  nie (`approvalWire`, §9.4): administrator pyta „do kogo zadzwonić". Widok w warstwie
+  aplikacji jest JEDEN; o polach na drucie rozstrzyga trasa. Rozstrzygnięcie pisze się
+  RZECZOWNIKIEM („zgoda · Jan Bąk JBA · 24 wrz, 18:40"), bo czasownika nie da się
+  odmienić bez znajomości płci - ta sama granica, co przy `originLabel`
+- **HISTORIA (H5) I ODBLOKOWANIE UTKNIĘTEGO KROKU MIESZKAJĄ W SZUFLADZIE ZAJĘTOŚCI** (K2a
+  w `kalendarz-wpis`, dorysowana PRZED kodem): kolejka K5 pokazuje wyłącznie sprawy na
+  MOIM kroku bieżącym (`ApprovalFlow.queueFor`), więc rezerwacja utknięta na kroku bez
+  obsady nigdy by się w niej nie pojawiła. `ApprovalCard`: kroki po numerach, krok
+  bieżący bursztynem, nieosiągnięty kreską, pominięcie jako zapis „przeszedł sam";
+  dla `reservations.manage` przy sprawie w toku karta „Decyzja za krok …". Klub bez
+  ścieżki karty NIE MA (reguła SyncChipa)
+- **KOLEJKA MA WŁASNĄ TRASĘ** (`GET /admin/api/approvals/queue`, `reservations.approve`),
+  nie filtr na oknie kalendarza - kolejka nie ma okna dat. Odpowiedź niesie `timezone`,
+  bo „wczoraj 18:40" i „termin za 3 dni" liczą się DOBĄ KLUBU (`clubDayIndex`
+  w `bookingLabels.ts` czyta części daty z `Intl`, nie napis - `pl-PL` układa go po
+  swojemu). Najstarsze ZŁOŻONE pierwsze: to one są najbliżej wygaśnięcia (§11.5)
+- **BANER NA OSI ISTNIEJE WYŁĄCZNIE Z PRACĄ** i liczy sprawy SŁOWEM do czterech („Dwie
+  rezerwacje czekają na Twoją zgodę."); wiersz „Krok" na karcie kolejki wraca TYLKO przy
+  kolejce mieszającej kroki (`showsStepRow` - wzorzec `needsFieldLabels` z issue #43);
+  zdanie „co po decyzji" stoi RAZ pod listą (`decisionHint`). `Banner` dostał slot `action`
+  (przycisk jest rodzeństwem treści w układzie flex, jak w makietach); ikona banera dalej
+  wynika z TONU, więc zegar z makiety K1 został ikoną informacji
+- **KOLEJNOŚĆ KROKÓW ZAPISUJE SIĘ OD RAZU** przy przestawieniu (uchwyt = `<button
+  draggable>` ze strzałkami góra/dół; kolejność jest REGUŁĄ, nie szkicem), a ścieżka
+  zawsze jedzie CAŁA (`withStep`/`withoutStep` w `approvalPath.ts`). Tabelę ścieżki
+  rysuje ekran sam, nie `DataTable` - uchwyt potrzebuje zdarzeń na WIERSZU, których
+  tabela-kręgosłup nie wystawia. Zdjęcie kroku ma kartę `danger` w szufladzie z opisem
+  skutku (nie było w makiecie - sprawy czekające na krok przejdą dalej)
+- **OBSADA LICZY SIĘ WOBEC ŻYWEGO KLUBU** (`stepMembers`/`stepHealth`): osoba, która
+  straciła zdolność albo członkostwo, ZOSTAJE na liście (konfiguracji klubu nie czyścimy
+  po cichu), nazwisko przygasa (`.cell-sub .dim` - stopień placeholdera, bo `--text-muted`
+  należy w kalendarzu do stanu „czeka"), a krok bez nikogo dostaje baner `warn`
+  z drogą naprawy. W szufladzie taka osoba stoi na liście ZAZNACZONA z adnotacją -
+  inaczej nie dałoby się jej z kroku zdjąć. `OptionButton` dostał `multiple`
+  (`role="checkbox"`): obsada kroku to pula, nie jedna z listy
+- **PODGLĄD PILOTA I SAMOLOTU (K6) TO OSOBNE ZGŁOSZENIE**: wymaga zapytań serwera (nalot,
+  ostatnie loty, najbliższe rezerwacje) wspólnych z telefonem 26a/26b. Wartości w kolejce
+  NIE prowadzą w głąb (`.go` z makiety czeka na tamten epik)
+- **STRAŻNIK LUSTER PILNUJE ODTĄD KONTRAKTÓW KALENDARZA I ŚCIEŻKI** (#204, zrobione
+  pierwszym commitem tego epiku): `BookingStatus`, `BookingKind`, `ApprovalOutcome`,
+  `ApprovalRefusal`, `ApprovalVerdict`, `ApprovalVia`, `ApprovalStepsRefusal` - skaner
+  czyta unie także z `application/common/ports.ts` i z komendy ścieżki. Dokładając unię
+  po stronie serwera, dopisz lustro i jego wiersz w `admin/test/mirrors.test.ts`
+- **czego R-H NIE ROBI**: sprawdzenia w przeglądarce na żywym serwerze (panel przeszedł
+  `tsc` i 413 testów, w tym strażników); podręcznika (R-K, #169); domknięcia rezerwacji,
+  którym po SKRÓCENIU ścieżki nie zostało czego pytać (osobne zgłoszenie - dziś stoją
+  w `pending` do wygaśnięcia)
+
+## Rezerwacje 3.1.0 - epik R-I: aplikacja - skrzynka, decyzja z telefonu, stany rezerwacji (issue #166, 2026-09-23)
+Ekrany 25/25A/25B (skrzynka), 26/26C (decyzja), stany karty 23B–23E, Pulpit 20E -
+wszystko 1:1 z makiet #196. Do tego cienki plaster serwera i migracja 14. Decyzje:
+`docs/rezerwacje.md` §9.4, §11.4, §12.1; odstępstwa §18. Reguły obowiązujące odtąd:
+- **POPRAWKA TERMINU CZYŚCI ZGODY** (decyzja właściciela 2026-09-23 - wzięte do R-I,
+  choć plan tego nie miał; migracja 14). `booking_approvals` dostało własny `id`
+  i `superseded_at`, a unikat `(booking_id, step_id)` obowiązuje TYLKO wśród żywych
+  (indeks częściowy). `PATCH` ze zmienionym terminem na rezerwacji z żywą ścieżką:
+  `ApprovalFlow.restart` unieważnia decyzje, planuje ścieżkę od nowa, wiersz wraca do
+  `pending` (`BookingsPort.reopen`), a osoby kroku bieżącego dostają świeżą prośbę.
+  Zmiana notatki/zadania/trasy zgód NIE rusza. Append-only zostaje: unieważniona zgoda
+  nie znika, tylko przestaje się liczyć - `listFor` czyta wyłącznie żywe
+- **SKRZYNKA I KOLEJKA TO DWA PYTANIA, JEDNA ODPOWIEDŹ** (`useInbox`): „Nowe" gaśnie
+  z otwarciem listy (oznaczenie w tle po udanym odczycie, zielona krawędź zostaje na
+  czas tej wizyty), „Do decyzji" liczy się z `GET /me/approvals/queue` i stoi do decyzji.
+  Kolejka, która nie dojechała, NIE gasi listy - wiersze są bez plakietki. Skrzynka
+  niesie `timezone` i DOBĘ terminu przy każdej wiadomości, bo godziny liczą się
+  odejmowaniem od granic doby (§6.1) - `Intl` w aplikacji dalej ani razu
+- **CAŁY MODUŁ WYMAGA SIECI, BEZ CACHE** (§12.1): `null` z hooka = 25B „BRAK POŁĄCZENIA",
+  ponawianie co 60 s bez przycisku (wzorzec kalendarza). Punkt I2 z issue #166 („działa
+  offline, zapis lokalny") jest STARSZY niż decyzja z 2026-09-22 - nie wracać
+- **LICZNIK PRZY DZWONKU, NIE PRZY ZAKŁADCE** (czwartej zakładki nie ma, §9.4):
+  `ScreenHeader.onNotifications` + `unread`, dzwonek PRZED zębatką i wyłącznie na
+  Pulpicie. `useUnreadCount` pyta serwer o JEDNĄ wiadomość przy każdym wejściu; bez
+  zasięgu `null` i licznika nie ma wcale (ostatnia znana liczba kłamałaby). Zero nie
+  dostaje plakietki (reguła SyncChipa)
+- **ROZSTRZYGNIĘCIA IDĄ RZECZOWNIKIEM**: „Odmowa zgody · Anna Kowal", nie „Anna Kowal
+  odmówiła zgody" (makieta 25 ma czasownik) - czasownika nie da się odmienić bez płci,
+  a rzeczownik brzmi tak samo dla każdego. „Prosi o zgodę" zostaje: trzecia osoba czasu
+  teraźniejszego jest wspólna. Nazwisko rezerwującego przychodzi IDENTYFIKATOREM
+  w payloadzie (`pilotId`) i rozwiązuje się z cache członków; poza cache’em tytuł
+  ogólny („Prośba o zgodę na lot"), nigdy surowy id
+- **STANY KARTY LICZY `approvalView`** (`logic/bookingApproval.ts`): `none` (klub bez
+  ścieżki - karta jak w 3.0.0) / `waiting` / `stepAdded` / `confirmed` / `rejected`
+  / `expired` / `closed`. **„Doszedł krok" (23E) poznaje się po KSZTAŁCIE ścieżki**:
+  decyzja stojąca ZA krokiem bieżącym nie ma innego wytłumaczenia - serwer nie mówi
+  „dołożono krok", a osobne powiadomienie o zmianie ścieżki to #207. Krok bieżący czeka
+  od OSTATNIEJ zgody przed nim, bez niej od złożenia (`createdAt` własnej rezerwacji -
+  nowe pole `bookingWire`, tylko dla właściciela). Wygasła: pierwszy niezdecydowany
+  „nie zdecydował", dalsi „nie zaczął"; po odmowie każdy dalszy „nie zaczął"
+- **BANER ODMOWY NA KARCIE NAZYWA KROK, NIE OSOBĘ** (makieta 23C ma nazwisko): stan
+  ścieżki na telefonie nazwisk decydujących nie niesie (§9.4) - powód jest treścią,
+  a to, KTÓRY krok odmówił, mówi też oś ścieżki (znacznik czerwony)
+- **TON KARTY TERMINU IDZIE ZA STANEM**: `heroTone` amber (czeka - zieleń obiecywałaby
+  pewny lot), green (potwierdzona), off (zamknięta - czerwień niesie baner). Na Pulpicie
+  ta sama reguła (20E): plakietka „Czeka na zgodę", odliczanie bursztynem, „krok 1 z 2"
+  z `GET /bookings/:id` - pytany WYŁĄCZNIE przy czekającej (`useBooking(null)` serwera
+  nie woła), bo okno kalendarza ścieżki nie niesie (§17)
+- **REZERWACJA ZAMKNIĘTA MA JEDNO WYJŚCIE** (`BookingDetailsVm.closed` → „WYBIERZ INNY
+  TERMIN" → `goHome(navigation, 'Calendar')`): nie ma czego przesuwać ani odwoływać,
+  a wyszarzone przyciski obiecywałyby akcje, których reguły nie dopuszczą. Przy
+  czekającej pod „PRZESUŃ I POPRAW" stoi `editNote` - ekran mówi o czyszczeniu zgód
+  PRZED tapnięciem
+- **EKRAN DECYZJI PYTA CIEBIE** (`logic/decision.ts`): kroku nie piszemy, karta niesie
+  plan w komplecie bez kresek za pola, których nie ma; zdanie pod pasem akcji nazywa
+  NASTĘPNY krok (albo „jest potwierdzona" przy ostatnim). ZATWIERDŹ zielony solid, ODMÓW
+  neutralny secondary (odmowa jest decyzją, nie zniszczeniem); arkusz 26C blokuje BEZ
+  zdania przy pustym powodzie (issue #55), sufit 500 znaków jak serwer. `null` z synca
+  = „Decyzję zapisuje serwer - potrzebne połączenie", odmowa reguły = zdanie
+  z `decisionRefusalText` + `reload()`, żeby karta pokazała NOWY stan sprawy zamiast
+  obiecywać pas akcji. Udana decyzja wraca do skrzynki (lista czyta się na nowo przy
+  fokusie)
+- **PLAKIETKA `pending` NA OSI FLOTY NIE WCHODZI DO LEGENDY** - to decyzja z R-F
+  (różni się KSZTAŁTEM ramki, nie kolorem); pierwsza wersja tego epiku dopisała ją
+  i została cofnięta. `CalendarBooking.createdAt` jest OPCJONALNE, nie nullowalne:
+  brak pola = „nie ta odpowiedź" (cudza, serwer sprzed 3.1.0)
+- **CZAS WIADOMOŚCI TO WIEK, NIE GODZINA** („12 min temu", „wczoraj", „2 dni temu" -
+  `agoLabel`): telefon nie ma doby klubu dla chwili powstania wiadomości, tylko dla
+  terminu, a „wczoraj 18:40" z makiety wymagałoby konwersji stref
+- **czego R-I NIE ROBI**: podglądów 26A/26B (to samo zgłoszenie, co K6), powiadomienia
+  o zmianie ścieżki (#207), push (R-J - moduł natywny, nowy APK), sprawdzenia
+  NA URZĄDZENIU (wymaga dev builda - do epiku wydaniowego #169), podręcznika (R-K)
+
+## Rezerwacje 3.1.0 - epik R-J: push jako budzik (issue #167, 2026-09-23)
+`expo-notifications` w aplikacji, cienki plaster serwera (`channelId`, bit `approver`),
+plik Firebase poza repozytorium. Decyzje: `docs/rezerwacje.md` §12.1–§12.5; odstępstwa §18.
+**Cały łańcuch (telefon → serwer → Expo Push Service → FCM), miejsce każdego sekretu, koszt,
+sklep Play i pułapki konfiguracji z 2026-09-24: `docs/rezerwacje.md` §12.6** - tam zaglądaj,
+zanim ruszysz Firebase, EAS albo `PUSH_PROVIDER`.
+**Zadanie właściciela #168 (Firebase, FCM V1 w EAS, `PUSH_PROVIDER=expo`) jest na
+drodze krytycznej** - bez niego kod działa, ale budzik milczy. Reguły obowiązujące odtąd:
+- **JEDEN PLIK ZNA `expo-notifications`** (`infrastructure/push/expoNotifications.ts`,
+  exact-list w `architecture.test.ts`, poza barrelem): adres urządzenia (`ExpoPushDevice`
+  za `PushDevicePort`), kanał Androida `default` (WYSOKA ważność - serwer adresuje go
+  `channelId`), pokazanie budzika przy otwartej aplikacji i tapnięcie. `configureNotifications()`
+  woła `App.tsx` raz na proces, PRZED bramką tożsamości - kanał ma istnieć, zanim
+  przyjdzie pierwsze powiadomienie do zablokowanej aplikacji
+- **KAŻDA AWARIA PUSH JEST CISZĄ**: `getExpoPushTokenAsync` rzuca bez Firebase, w Expo Go
+  i na telefonie bez usług Google - token jest wtedy `null` (`unavailable`), a skrzynka
+  działa (§12.1). Nikt wyżej nie ma czego łapać
+- **TOKEN REJESTRUJE PĘTLA OKAZJI** (`PushTokenSync.register` w `useSyncLoop`, po
+  motywie, przed śladem): klucz pamięci = pilot + para poświadczeń + token, więc jeden
+  `POST` na uruchomienie i na nową sesję logowania; rotacja tokenów odświeża klucz
+  (jeden nadmiarowy `POST`, tańszy niż wystawianie identyfikatora sesji z serwisu
+  poświadczeń). Klucz liczy się PO rozmowie - `authorizedFetch` mógł w niej odświeżyć parę
+- **PROŚBA O ZGODĘ PADA W DWÓCH MOMENTACH I RAZ NA URUCHOMIENIE** (decyzja właściciela
+  2026-09-23; `logic/pushOptIn.ts` + `hooks/askForPush.ts`): Pulpit dla AKCEPTUJĄCEGO
+  (`approver` w `GET /me/notifications` - telefon zdolności nie zna, a Pulpit i tak czyta
+  skrzynkę przy wejściu) oraz zapis rezerwacji, która CZEKA (`pending`). Rezerwacja
+  potwierdzona od razu nie rodzi powiadomień, więc przy niej nie pytamy - to jest
+  świadome zawężenie słów „gdy zalogowana osoba złoży rezerwację". Prośba jest miękka
+  (`requestNotificationPermission` z usługi GPS), po niej od razu próba rejestracji
+- **TAPNIĘCIE LICZY CZYSTA FUNKCJA** (`logic/pushTarget.ts`): prośba → `Decision`,
+  decyzja/wygaśnięcie → `BookingDetails`, wszystko inne → `Notifications`. Dane z push
+  są `unknown` - spreparowane albo z nowszego serwera mają prowadzić w bezpieczne
+  miejsce, nie wywracać aplikacji. `usePushNavigation` dostaje `navigationRef`
+  i flagę gotowości nawigatora; zimny start i tapnięcie sprzed PIN-u czyta
+  `getLastNotificationResponseAsync`, a identyfikator obsłużonego tapnięcia trzyma
+  STAN MODUŁU (ponowne zamontowanie nawigatora nie otwiera tej samej rezerwacji)
+- **PLIK FIREBASE POZA REPOZYTORIUM** (`scripts/google-services.js`, z testem):
+  `android.googleServicesFile` ze zmiennej EAS `GOOGLE_SERVICES_JSON` (typ „file")
+  albo z lokalnego `app/google-services.json` (`.gitignore`); bez obu pole nie istnieje
+  i Metro pracuje jak dotąd. Jeden plik Firebase obejmuje obie aplikacje projektu
+  (`com.ninerdeck.app` i `.dev`) - dev build to osobna aplikacja w Firebase
+- **IKONA POWIADOMIEŃ Z GENERATORA** (`notification-icon.png`, 96 px, biała sylwetka
+  znaku bez tła - Android barwi ją sam kolorem z pluginu). Ta sama reguła, co przy
+  reszcie ikon: poprawka przez `npm run icons`, nie ręczną edycją PNG
+- **WERSJI NIE PODBIJAMY W TYM EPIKU**: `develop` nie buduje APK, a bump `version`
+  i `versionCode` należy do gałęzi wydaniowej (R-K, #169). J6 (APK) i J7 (sprawdzenie
+  na urządzeniu) czekają na #168
+- **czego R-J NIE ROBI**: przełącznika powiadomień w ustawieniach aplikacji (system ma
+  swój), listy urządzeń w telefonie, pokwitowań Expo (receipts - `DeviceNotRegistered`
+  przychodzi już w biletach), powiadomień o zmianie ścieżki (#207)
+
+## Rezerwacje 3.1.0 - podgląd pilota i samolotu przy decyzji (K6, 26A/26B; issue #206, 2026-09-24)
+Akceptujący pyta „komu zatwierdzam" i „czym poleci" - i ma dostać na to TEN SAM komplet
+faktów w panelu (szuflada `kalendarz-podglad`) i w telefonie (ekrany 26A/26B), bo decyzję
+podejmuje też mechanik, który panelu nie otwiera. Decyzje: `docs/rezerwacje.md` §10;
+odstępstwa §18. Reguły obowiązujące odtąd:
+- **JEDNO ZAPYTANIE DLA OBU POWIERZCHNI**: rachunek w `server/src/domain/decisionPreview.ts`
+  (czysty: wiersze + „teraz"), składanie w `application/common/queries/decisionPreview.ts`,
+  kształt na drucie w `http/routes/common/previewWire.ts`. Trasy telefonu
+  (`GET /bookings/:id/preview/pilot/:pilotId`, `…/preview/aircraft`) i panelu (te same pod
+  `/admin/api`) różnią się WYŁĄCZNIE bramą; test `decisionPreview.test.ts` przybija
+  równość odpowiedzi bajt w bajt. Panel i telefon NICZEGO nie liczą - składają napisy
+  (`admin/src/screens/calendar/previewLabels.ts`, `app/src/ui/screens/logic/previewRows.ts`)
+- **OSOBA NA SPRAWIE, NIE DOWOLNA**: podgląd pilota istnieje tylko dla PIC-a albo Duala
+  rozpatrywanej rezerwacji; inna osoba i cudza sprawa to 404 (epik C), członek bez
+  `reservations.approve`/`manage` - 403 (sprawę widać w kalendarzu i tak, więc nic nie
+  wycieka). Bez tej granicy trasa byłaby wyszukiwarką nalotu każdego członka klubu
+- **NOWE PYTANIA DO ISTNIEJĄCYCH WIERSZY, NIE NOWE DANE**: zero migracji. Doszły
+  `SessionsProjectionPort.listByCrew` (PIC albo Dual - uczeń lata jako Dual) i filtr
+  `BookingQuery.pilotId` (`pilot_id = $n OR dual_id = $n`). Liczy się operacja
+  nieunieważniona z biegiem silnika albo lotem (`flew`); zapis bez biegu ze zmienionym
+  odczytem jest operacją w sensie issue #75, ale nalotu nie daje
+- **DOŚWIADCZENIE NA EGZEMPLARZU SPRAWY STOI PIERWSZE** (pytanie decyzji: „czy zna TĘ
+  maszynę"), „pierwszy raz na tej maszynie" pisze się wprost; potem okna 30/90 dni
+  i „w klubie" trójką Loty · Blok · Lot; ostatnie loty do pięciu
+- **ROZPATRYWANA SPRAWA JEST NA LIŚCIE TERMINÓW ZAWSZE** (`upcomingOf`): lista sięga po
+  sufit okna kalendarza, ale sprawa wchodzi także spoza niego. Termin PILOTA nachodzący
+  na sprawę dostaje bursztyn - baza pilnuje egzemplarza, nie człowieka. Wyłączenie
+  z użytku na liście maszyny też bursztynem, z powodem
+- **LICZNIKI NIOSĄ ŹRÓDŁO** - `pickHandover` z odczytem administratora jako konkurentem,
+  jak karta samolotu w panelu; etykiety źródła: zdanie samolotu / operacja w toku / stan
+  początkowy z panelu / wpis administratora. Bez odczytu KRESKI, nie zera
+- **DWA ZEGARY, ŚWIADOMIE**: chwile operacji (ostatnie loty, ostatni lot, odczyt) datą
+  rejestru w UTC (`dateUtcDayMonth`, `dateTimeUtcShort`), terminy dobą klubu - serwer
+  przysyła dobę przy każdym terminie, telefon liczy godziny odejmowaniem (`Intl` ani razu)
+- **PANEL: `.go` bywa PRZYCISKIEM** (`button.go` w `controls.css` zdejmuje oprawę
+  przeglądarki; `panel.css` przegenerowany) - szuflada otwiera się bez adresu. Znak na
+  tytule karty kolejki oraz pilot i drugi pilot prowadzą w głąb (`QueueRow.go`,
+  `QueueCard.aircraft` + `when`); szuflada `PreviewDrawer` NIE MA akcji na sprawie.
+  Stopka pilota: „Pokaż kartę pilota" (`#/piloci/:id`) - dziennik nie ma wejścia po
+  osobie; stopka maszyny: „Pokaż w dzienniku" (`#/dziennik/:reg`)
+- **TELEFON: PODGLĄD JEST EKRANEM, NIE ARKUSZEM** (`PilotPreviewScreen`,
+  `AircraftPreviewScreen`, wspólna treść `components/data/PreviewBody.tsx`): cztery karty
+  i tabela to treść na cały ekran. `KeyValueRow.onPress` rysuje szewron ZA wartością
+  w spoczynku (na dotyku nie ma hovera); na karcie decyzji mają go DOKŁADNIE trzy
+  wiersze - samolot i obie osoby (`DecisionRow.opens`). Hooki `usePilotPreview`/
+  `useAircraftPreview` w `ui/hooks/usePreview.ts` czytają przy każdym wejściu, bez cache
+  (§12.1); `null` = ekran „BRAK PODGLĄDU - składa serwer, wróć z zasięgiem"
+- **czego #206 NIE ROBI**: licencji, badań i uprawnień na typ (osobny epik, decyzja
+  właściciela 2026-09-23), sprawdzenia w przeglądarce i na urządzeniu (→ #169)
+
+## Rezerwacje 3.1.0 - zapis ścieżki domyka sprawy w toku (issue #207, 2026-09-24)
+Luka znaleziona przy R-H: ścieżka jest bieżąca (§11.2), więc jej SKRÓCENIE zostawiało
+rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refuseDecision` →
+`not_pending`), a wygasały jako „nikt nie zdążył zdecydować". Decyzje: `docs/rezerwacje.md`
+§11.2 (akapit „ZAPIS ŚCIEŻKI DOMYKA…"); odstępstwa §18. Reguły obowiązujące odtąd:
+- **ZAPIS ŚCIEŻKI PRZECHODZI PO SPRAWACH `pending` W TEJ SAMEJ TRANSAKCJI**
+  (`ApprovalFlow.reconcile(tx, orgId, before, after)`, wołane z `ApprovalStepsCommands.replace`
+  zaraz po `steps.replace`): komplet zgód na nowej ścieżce → `bookings.confirm` +
+  `booking_approved` do pilota; inny krok bieżący niż przed zmianą → `approval_requested`
+  do osób nowego kroku; krok dołożony z rezerwującym na liście → pominięcie `self`
+  (`missingSelfApprovals` w domenie). Odmowa w rejestrze sprawy `pending` nie ma jak
+  powstać, a gdyby stała, rozstrzyga o niej człowiek, nie zapis konfiguracji
+- **„INNY KROK" ZNACZY INNY `id` KROKU BIEŻĄCEGO**, nie inną obsadę: dopisanie osoby do
+  kroku bieżącego nie rodzi prośby (sprawa czeka tam, gdzie czekała, a osoba widzi ją
+  w kolejce). Przestawienie kolejności PRZEKIEROWUJE tak samo, jak dołożenie - panel
+  przy przestawianiu też pokazuje skutek
+- **BUDZIK PO COMMICIE, JAK WSZĘDZIE**: `reconcile` oddaje `notices`, komenda woła
+  `notifier.wake` po `write.run`. `ApprovalStepsCommands` dostał przez to `ApprovalFlow`
+  i `Notifier` w konstruktorze (oba korzenie kompozycji: `index.ts` i `test/helpers.ts`)
+- **LICZBY JADĄ DO DZIENNIKA I DO PANELU**: audyt `approval.steps` ma w `details`
+  `confirmed` i `moved` obok `before`/`after`; `PUT /admin/api/approval-steps` oddaje
+  `reconciled: { confirmed, moved }`, a ekran ścieżki pokazuje to banerem `ok`
+  (`pathSavedNotice` w `approvalPath.ts`, z testami) - ZERO nie dostaje zdania (reguła
+  SyncChipa). Szuflada kroku zamyka się po zapisie, więc skutek podaje ekran pod nią
+  (`StepDrawer.onSaved`), a mutacja unieważnia też cache KALENDARZA - pasek na osi
+  zmienia kształt z `pending` na `confirmed`
+- **TESTY DOWIODŁY LUKI PRZED POPRAWKĄ**: pięć z sześciu nowych przypadków
+  w `approvalFlow.test.ts` pada bez wywołania `reconcile`; szósty (zmiana obsady bez
+  prośby) jest strażnikiem przed budzeniem wszystkich. Strażnik hexów w panelu
+  (`architecture.test.ts`) łapie `#207` w NAPISIE testu - numer issue w nazwie `describe`
+  wygląda dla niego jak kolor; w komentarzach jest bezpieczny (są zdejmowane)
+- **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
+  o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
+
+## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.1.0)
+Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zdarzenia na
+samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,
+że lot się rozpoczął lub się zakończył" - dla koordynatora lotów i mechanika. Dokument
+decyzji: **`docs/obserwowanie-samolotu.md`** (model, pięć wiadomości, ekran 27, API,
+etapy O-A…O-D, ryzyka, odrzucone warianty). Stan: PROJEKT zamknięty, **makiety O-A gotowe
+(2026-09-25, #219: `27`, `27a-c`, `25c`, szewron na 21, jedenasta zdolność w `piloci-konto`)**,
+**O-B #220, O-C #221 i O-D #222 WYKONANE 2026-09-25** (bloki niżej). **Wydane w 3.1.0**
+(decyzja właściciela 2026-09-26 przy gałęzi `ninerdeck_3_1_0` - kod był już na `develop`,
+a wycięcie wymagałoby cofania czterech przeplecionych PR-ów).
+Decyzje właściciela z 2026-09-25 - nie wracać do nich w dyskusji:
+- **nowa zdolność `fleet.watch`** („Obserwowanie samolotów") w zestawach Akceptujący,
+  Koordynator lotów i Technik, Administrator przez komplet. **BEZ backfillu** (druga tura
+  2026-09-25: „jeszcze nie używaliśmy aplikacji, więc startujemy od zera") - migracja 15
+  to SAM DDL (`aircraft_watches`, `bookings.reminded_at`), a członkostwa testowe z dawnym
+  zbiorem czytają się po wdrożeniu jako „Własny zakres", dopóki administrator nie nada
+  zakresu od nowa. Pułapka `presetOf`/`scopeKey` (zestaw liczy się ze zbioru, więc zestaw,
+  który ZYSKUJE zdolność, na żywej bazie wymaga backfillu) zapisana NA PRZYSZŁOŚĆ
+  w `docs/uprawnienia.md` §12
+- **druga tura 2026-09-25, pozostałe cztery**: cudza rezerwacja na karcie maszyny niesie
+  pola jak w kalendarzu (bez zadania, trasy i notatki - `bookingWire` bez czwartego widza);
+  przypomnienie „za godzinę" to STAŁA 60 min w `policy.ts`, nie ustawienie klubu; historia
+  operacji na karcie sięga po WSZYSTKIE operacje stronami (kursor parą jak w skrzynce),
+  wykres zostaje przy 90 dniach
+- **trzecia tura 2026-09-25 (po makietach): LISTA OBSERWOWANYCH I ZARZĄDZANIE** - w Ustawieniach
+  (13, sekcja po motywie) CAŁA flota klubu z przełącznikiem przy każdej maszynie i stanem
+  „teraz" w podpisie (jedno miejsce do włączania i wyłączania, bez arkusza „dodaj"; tylko
+  przy `fleet.watch`, wymaga sieci) oraz karta „Obserwowane samoloty" w `#/konto` panelu
+  (`.opt` z rolą checkbox, trasy `/admin/api/me/watches`, bez audytu). Odwraca „ani
+  przełącznika w #/konto" z §7.2 - tamto było „wraca, gdy ktoś poprosi". Makiety `13c` i `konto`
+- **„lot się rozpoczął" = URUCHOMIENIE SILNIKA** (`engine_start`), nie przejęcie;
+  **wpis ręczny MILCZY**; **ziarnem jest OPERACJA**, nie każdy start i lądowanie
+- **pięć wiadomości**: za godzinę · odwołano termin, który JUŻ przypomniano · uruchomienie
+  (z adnotacją „zgodnie z planem"/„poza planem" z `reservationId`) · zdana z odczytami
+  (także zakończenie z panelu, bez odczytów) · nie odebrano po godzinie. Sprawca własnego
+  działania nie jest budzony. Rodzajów per maszyna NIE MA - jeden przełącznik
+- **wiadomość mówi CZASEM Z REJESTRU, nie chwilą dotarcia paczki**: `at` z rejestru +
+  „zapis dotarł …" przy zwłoce ponad kwadrans; paczka niosąca uruchomienie I zdanie tej
+  samej operacji rodzi TYLKO „zdana"
+- **prawo sprawdza się przy KAŻDEJ wysyłce** (wiersz `aircraft_watches` × aktywne
+  członkostwo × `fleet.watch`), nie przy zapisie - odebranie zdolności wycisza od razu,
+  wiersz zostaje
+- **cały moduł wymaga sieci, cache'u NIE MA** (jak kalendarz i skrzynka); przełącznik
+  „Obserwuj" zapisuje serwer wprost, nie outbox
+- **wykresy MH i paliwa OD RAZU**, własnym rendererem jak profil śladu (`TrackPolyline`),
+  serie liczy serwer, telefon samą geometrię; statyczne, bez normy i werdyktu
+- **wydanie** - planowane RAZEM Z 3.2.0 jako OTA, **ostatecznie w 3.1.0 nowym APK**
+  (2026-09-26), więc 3.2.0 wraca do „aplikacji pilota nie rusza" (`docs/panel-3.2.md` §11);
+  wejście na kartę 27: nagłówek wiersza maszyny w kalendarzu, skrzynka i push, stopka 26B;
+  bit `viewer.watch` dojeżdża w oknie kalendarza, bo telefon zdolności nie zna
+
+### Epik O-B: serwer obserwowania WYKONANY (issue #220, 2026-09-25, gałąź `feature-220-serwer-obserwowania`)
+Migracja 15 (sam DDL), `fleet.watch` w katalogu (11 pozycji kompletu, lustra w `dto.ts`,
+`contracts/pilots.ts`, `scope.ts` z zestawami Akceptujący/Koordynator/Technik), port
+i adapter obserwowania, pięć treści, pięciu producentów, karta, historia, lista floty ze
+stanem, osiem tras z przypadkami izolacji; 36 nowych testów. Reguły obowiązujące odtąd:
+- **„KOGO OBUDZIĆ" LICZY JEDEN POMOCNIK** - `application/common/notify/aircraftWatching.ts`
+  (`audience(tx, orgId, aircraftId, sprawcy)` → `record` w tej samej transakcji → `wake`
+  po commicie). Nowy producent woła JEGO, nie port obserwowania wprost - sprawcy
+  (PIC i Dual operacji, odwołujący, administrator zamykający) wypadają w jednym miejscu,
+  a prawo adresata liczy SQL w `watchersOf` (członkostwo `active` × osoba aktywna × klub
+  aktywny × `fleet.watch`)
+- **INGEST BUDZI WYŁĄCZNIE PRZY ZDARZENIU, KTÓRE NAPRAWDĘ WESZŁO**: `EventsStorePort.insertBatch`
+  oddaje odtąd `inserted: string[]` obok liczników - ponowiona paczka (słabe łącze) nie
+  dzwoni drugi raz. Uruchomienie dosłane do operacji już ZAMKNIĘTEJ też milczy, wpis
+  ręczny milczy, paczka z uruchomieniem I zdaniem rodzi samo „zdana". „Zgodnie z planem"
+  = rezerwacja ZREALIZOWANA tą operacją (`bookings.sessionUuid === sessionUuid`), nie sam
+  identyfikator w przejęciu
+- **ADAPTER OBSERWOWANIA JEST W `infrastructure/pg/common/`**, nie `mobile/` (lista zadań
+  #220 powstała przed decyzją 12): ustawienie zapisuje telefon (27, 13C) I panel
+  (`#/konto`), a `set` NIE zakłada wiersza dla maszyny spoza klubu (`WHERE EXISTS` +
+  osobne sprawdzenie istnienia, bo `ON CONFLICT DO NOTHING` nie odróżnia powtórki od
+  cudzej maszyny). Komenda `AircraftWatchCommands` (`common/commands/`) idzie w panelu
+  ŚWIADOMIE poza `AuditedWrite`: ustawienie osoby o sobie, jak motyw i PIN
+- **ZEGAR REZERWACJI NAZYWA SIĘ `bookingClock.ts` / `BookingClockJob`** (sama zmiana
+  nazwy - trzy pytania zamiast jednego) i pyta W KOLEJNOŚCI: wygaszanie → zwalnianie →
+  przypomnienie. Przypomnienie idzie OSTATNIE: termin zwolniony w tym przebiegu nie jest
+  już potwierdzony, a w odwrotnej kolejności jeden przebieg mówiłby „za godzinę" i „nie
+  odebrano" o jednym terminie. Stempel `reminded_at` pada w warunku SQL
+  (`markReminded`: `status = 'confirmed' AND reminded_at IS NULL`) także bez ani jednego
+  obserwującego - idempotencja zadania nie zależy od tego, czy ktoś patrzy; `update`
+  adaptera zeruje go przy zmianie `starts_at` (`CASE WHEN starts_at = $n` na wartości
+  SPRZED zapisu). Stała `FLIGHT_SOON_MS` w `packages/domain/src/booking/policy.ts`
+- **KARTA I LISTA FLOTY TO JEDNO ZAPYTANIE W `common/`** (`queries/aircraftCard.ts`) z klocków
+  podglądu 26B: `aircraftWindow` (wydzielone z `aircraftFacts` - 30 i 90 dni tym samym
+  rachunkiem), `pickHandover`, `clubDays`; stan „teraz" i serie w CZYSTYM
+  `domain/aircraftCard.ts` (pierwszeństwo: wycofana → w locie → przejęta → po locie →
+  wyłączona → zarezerwowana [wyłącznie `confirmed`] → wolna; przy dwóch operacjach
+  w toku liczy się ostatnio przejęta). `lastRecordAt` = `events.lastReceivedAt`, czyli
+  chwila DOTARCIA ostatniej paczki („zapisy do 09:40")
+- **WYKRES PALIWA DOCIĄGA TANKOWANIA STRUMIENIAMI** operacji z okna 90 dni
+  (`sessionStreams` + `applyCorrections`, żeby unieważnione tankowanie nie stanęło na
+  wykresie) - `queries/aircraftCard.ts` jest CZWARTYM imiennym wołającym w strażniku
+  `architecture.test.ts`. Punkt serii niesie ŹRÓDŁO (`claim`/`release`/`refuel`/`admin`);
+  zakończenie z panelu daje sam punkt przejęcia (odczytu końcowego nie ma i nie udajemy
+  go); przy tej samej chwili zdanie poprzednika stoi PRZED przejęciem następcy
+- **HISTORIA STRONAMI** (`listByAircraftPage`, kursor PARĄ chwila+uuid, `limit + 1` mówi
+  o następnej stronie) wyklucza unieważnione i PUSTE zapisy tym samym `emptySessionSql`,
+  co listy dziennika; bez dolnej granicy czasu (P5). Kursor niepełny = 400, jak w skrzynce
+- **BIT `viewer.watch` W PODGLĄDZIE 26B DOSTAJE WYŁĄCZNIE TELEFON** (panel ma stopkę
+  „Pokaż w dzienniku"); test „bajt w bajt" `decisionPreview.test.ts` porównuje komplet
+  faktów BEZ tego pola, bo mówi ono o patrzącym, nie o sprawie. `countersWire`
+  i `aircraftHeadWire` wyszły z `previewWire.ts` jako funkcje - karta 27 pisze liczniki
+  i nagłówek maszyny TYM SAMYM kształtem
+- **ŚWIAT TESTOWY: komplet administratora ma jedenastą pozycję** (`ADMIN_SCOPE`
+  w `testWorld.ts` - świadomie, `scopeKey` liczy komplet z katalogu i wpisy audytu
+  `actor_role: 'full'` przestałyby być prawdziwe); testy 403 idą osobą BEZ zdolności
+  (PWI), obserwujący dostaje ją `grantWatch` (KRZ). Panel: zestaw sprzed 3.2.0 bez
+  `fleet.watch` czyta się jako „Własny zakres" i test to przybija
+- **czego O-B NIE ROBI**: ekranów telefonu (O-C, #221) i karty w `#/konto` (O-D, #222 -
+  katalog i zestawy panelu JUŻ są, karta czeka); push `aircraft_*` w `logic/pushTarget.ts`
+  telefonu idzie dziś do skrzynki, co jest zaprojektowane
+
+### Epik O-C: aplikacja obserwowania WYKONANA (issue #221, 2026-09-25, gałąź `feature-221-aplikacja-obserwowania`)
+Ekran 27 (`AircraftCardScreen`, warianty 27A-C), wykresy z kursorem i zoomem, skrzynka
+25C, tapnięcie w push, wejścia z 21 i 26B, sekcja 13C w Ustawieniach, cienki plaster
+serwera; 30 nowych testów aplikacji, zero nowych tabel SQLite. Reguły obowiązujące odtąd:
+- **KARTA MASZYNY LICZY NAPISY, NIE FAKTY** - `logic/aircraftCard.ts` (hero, liczniki,
+  terminy, historia) i `logic/aircraftSeries.ts` (geometria wykresów) są czyste; stan
+  „teraz", serie i sumy przychodzą z serwera. Dwa zegary (§6.2): chwile operacji
+  i odczytów w UTC, terminy dobą klubu z granic doby przy KAŻDYM terminie - a chwila
+  spoza doby (koniec wielodniowego wyłączenia) liczy godzinę na dobie przesuniętej
+  o pełne dni, DATĘ na dobie oryginalnej (`clubMomentLabel`; przesunięta doba z tą samą
+  `date` psuje `clubOffset`)
+- **CAŁY MODUŁ WYMAGA SIECI I NIE MA CACHE'U** (§2.2): `useAircraftCard` = wzorzec okna
+  kalendarza (`undefined` skeleton, `null` → 27C z ponowieniem co 60 s bez przycisku),
+  historia OSOBNYM hookiem stronami (kursor parą, `loadMore` pod „Pokaż starsze",
+  strona, która nie dojechała, zostawia listę). Przełącznik zapisuje WPROST
+  (`setAircraftWatch`, bez outboxa); nieudany zapis = powód WEWNĄTRZ karty
+  („Obserwowanie zapisuje serwer - potrzebne połączenie."), nigdy cichy błąd
+- **SEKCJA 13C ISTNIEJE WYŁĄCZNIE U OSOBY ZE ZDOLNOŚCIĄ, TAKŻE BEZ SIECI** - i to jest
+  jedyny „magazyn" tego modułu: `ui/store/watchAccess.ts` pamięta w AsyncStorage per
+  pilot i klub OSTATNIĄ ODPOWIEDŹ serwera na pytanie o zdolność (lista → `1`, 403 →
+  `0`). `fetchAircraftWatches` oddaje trzy odpowiedzi (lista / `'forbidden'` / `null`),
+  bo zwinięcie 403 do `null` kazałoby każdemu pilotowi bez zasięgu oglądać zdanie
+  o liście, której nigdy nie miał. Z listy w telefonie nie zostaje nic
+- **KLUB W BUDZIKU (R6) JEST ROZWIĄZANY PO OBU STRONACH**: serwer wkłada `orgId` do
+  danych push (`Notifier.wake(orgId, drafts)` - podpis zmieniony we WSZYSTKICH
+  producentach), a `pushTarget(data, activeOrgId)` przy różnicy otwiera skrzynkę
+  z parametrem `foreignClub` i banerem „przełącz klub w Ustawieniach". Klub aktywny
+  czyta się W CHWILI tapnięcia (`useAuthStore.getState()`), nie przy montowaniu.
+  Pięć rodzajów `aircraft_*` → trasa `Aircraft { aircraftId }` (nad zakładkami, jak 23/25/26)
+- **SKRZYNKA: PIĘĆ GAŁĘZI Z CZASEM Z REJESTRU** (`inbox.ts`): tytuł rzeczownikiem ze
+  znakiem, „08:12 UTC · nazwisko · zadanie", `lead` („Poza planem" bursztynem, „Paliwo
+  128 L" zielenią) + `late` („zapis dotarł 09:40 UTC" ponad kwadrans zwłoki - `lateNote`);
+  licznik przy „Zdana" w formacie MASZYNY (`mhFormatOf` z cache floty klubu). Ton `news`
+  = błękit dla rzeczy, która się dzieje; `info` zostaje neutralny dla rodzaju nieznanego
+- **WEJŚCIA SĄ BRAMKOWANE BITEM `viewer.watch`, NIE ZDOLNOŚCIĄ**: telefon zdolności nie
+  zna, więc nagłówek wiersza w kalendarzu (`FleetAxis.onOpenAircraft`, `CalendarData.canWatch`)
+  i stopka 26B („Pokaż kartę samolotu", `GhostAction`) istnieją wyłącznie, gdy odpowiedź
+  serwera to mówi; bez bitu nagłówek jest SAMĄ ETYKIETĄ, a stopki nie ma wcale
+- **TRZECI MOMENT PROŚBY O ZGODĘ NA POWIADOMIENIA**: `optInAfterWatch(on)` po WŁĄCZENIU
+  obserwowania (karta 27 i sekcja 13C); wyłączenie nie pyta
+- **WYKRESY NA `TrackPolyline` + `useChartGesture`** (`components/data/ReadingsChart.tsx`):
+  scrub jednym palcem, zoom w poziomie (`zoomAxis: 'x'`), dwuklik całość; kursor wskazuje
+  NAJBLIŻSZY punkt (między odczytami rejestr nic nie wie) i mówi chwilę, wartość i ŹRÓDŁO;
+  podpisy osi czasu z okna WIDOCZNEGO; `timeScaleBar` dostał kroki DNI (profil śladu ich
+  nie zobaczy - zatrzymuje się niżej). Licznik od dna do sufitu okna na pełnych godzinach,
+  paliwo od zera do pojemności; odcinek wewnątrz operacji pełną zielenią, postój (po
+  zdaniu ALBO po wpisie administratora) szarą przerywaną
+- **PLASTER SERWERA** (jak R-I): `HeldCrew.operation`/`departureIcao` w stanie „teraz",
+  `total` w stronie historii (`countByAircraft` tym samym predykatem, co strona),
+  `operation` w payloadzie „uruchomienie", `orgId` w danych push
+- **czego O-C NIE ROBI**: notatki i autora wyłączenia w herosie 27B (cudza zajętość jedzie
+  polami z kalendarza, P2), „zgodnie z rezerwacją" przy „Zdana" (payload tego nie niesie),
+  sprawdzenia na urządzeniu (dev build → #169), karty w `#/konto` (O-D, #222)
+
+### Epik O-D: panel obserwowania WYKONANY (issue #222, 2026-09-25, gałąź `feature-222-panel-obserwowane`)
+Katalog, opisy i zestawy z `fleet.watch` weszły już z O-B, więc ten epik to SAMA karta
+„Obserwowane samoloty" na `#/konto` (decyzja 12; makieta `konto`) plus dokumentacja
+(`docs/uprawnienia.md` §2.2 w brzmieniu docelowym, podręcznik bez ramek „w przygotowaniu").
+Reguły obowiązujące odtąd:
+- **KARTA ISTNIEJE WYŁĄCZNIE W SESJI KLUBU I PRZY `fleet.watch`** - rozstrzyga
+  `AccountScreen` (`session.org != null && can(capabilities, 'fleet.watch')`), a `WatchCard`
+  montuje się tylko wtedy i sam pyta serwer (`useMyWatches` BEZ `enabled` - druga bramka
+  na to samo pytanie rozjechałaby się z pierwszą). Brak karty, nie karta wyszarzona;
+  sesja platformowa nie ma o co pytać
+- **ZAPIS OD RAZU, BEZ SZKICU I BEZ AUDYTU**: `.opt` z rolą checkbox (`OptionButton
+  multiple`), `PUT`/`DELETE /admin/api/me/watches/:id`, po zapisie lista czyta się na nowo
+  (odpowiedź jest pusta, a stan „teraz" i tak się starzeje). Przygasa WYŁĄCZNIE
+  przełączany wiersz; odmowa serwera = baner `warn` nad listą (`errorMessage`)
+- **ZDANIA O STANIE „TERAZ" SĄ ZDANIAMI SEKCJI 13C TELEFONU** (`screens/me/watchRows.ts`,
+  czysty, z testem): serwer liczy `aircraftNow`, panel wyłącznie nazywa - jak
+  `bookingLabels.ts` nazywa zajętość. Zalogowany to „Ty"; osoba spoza listy członków
+  = milczenie, nigdy identyfikator. Dopisku „zgodnie z rezerwacją" i notatki wyłączenia
+  z makiety NIE MA - lista floty tych pól nie niesie (P2; hero karty 27 liczy to z listy
+  terminów, której tu nie ma)
+- **DWA ZEGARY**: chwile operacji stemplem UTC (`timeUtc` z `common/values.ts`), terminy
+  dobą klubu przez `Intl` ze strefą z odpowiedzi (`clubDayIndex`/`godzina` z kalendarza) -
+  „dziś 14:00", „jutro 09:00", „do 2 paź 18:00"
+- **`AircraftNowDto` to lustro unii OBIEKTÓW** (`server/src/domain/aircraftCard.ts`),
+  której strażnik luster nie czyta; nowy rodzaj stanu ujawnia kompilator przy `switch`
+  w `watchRows.ts`. Klucz zapytania `keys.account.watches` pod korzeniem konta
+  (ustawienie osoby o sobie, jak hasło)
+- **czego O-D NIE ROBI**: sprawdzenia w przeglądarce na żywym serwerze (→ P-W #169, jak
+  R-H i #206), listy obserwujących na karcie samolotu w module Samoloty (§7.2 - wraca,
+  gdy ktoś poprosi)
+
+## Panel dla wszystkich (issue #216, 2026-09-25, gałąź `claude/issue-216-change-ae11ba`)
+Zgłoszenie właściciela: „Panel web powinien być dostępny dla wszystkich. Nie tylko dla
+»admin«. Mamy sterowanie scope uprawnień i to powinno decydować, co kto widzi." Decyzja
+doprecyzowująca tego samego dnia: członek z zestawem „Pilot" **widzi Moje konto i kalendarz**
+(własna rezerwacja Z PANELU - do epiku przebudowy panelu 3.2.0). Pełny zapis, tabela
+zdolność → trasy i odrzucone warianty: **`docs/uprawnienia.md` §13**; podręcznik: nowa
+strona `docs/podrecznik/uprawnienia.md` („Kto co widzi") z żywymi ekranami panelu i telefonu.
+Reguły obowiązujące odtąd KAŻDĄ trasę i KAŻDY ekran panelu:
+- **DO PANELU WCHODZI KAŻDE AKTYWNE CZŁONKOSTWO** (`enterPanel`, `panelSwitch`,
+  `panelScopesOf` - bez pytania o zdolność). Odmowa przy logowaniu jest JEDNA:
+  `403 no_membership` = osoba bez aktywnego członkostwa (po pierwszym logowaniu, `pending`,
+  odrzucona, wyłączona wszędzie). `no_panel_access` NIE ISTNIEJE - nie przywracać
+- **`panel.access` TO „PODGLĄD KLUBU", NIE DRZWI**: otwiera trzy moduły do odczytu
+  (Dziennik, Piloci, Samoloty). Klucz w bazie ZOSTAJE (rename = migracja + ~70 deklaracji
+  tras dla samej nazwy); zmieniła się etykieta i opis w `scope.ts`. Zestawy bez zmian:
+  Pilot pusty, Akceptujący bez podglądu klubu (decyduje z telefonu ALBO z kalendarza panelu)
+- **`capability: null` W DEKLARACJI TRASY = każdy aktywny członek** (`AdminRouteSpec`,
+  `authorizeOrg`): trasy sesji (`sessionRoute`), kalendarz (`GET /bookings*`), decyzja
+  i podglądy (zdolność rozstrzygana w handlerze), NOWY słownik `GET /admin/api/directory`.
+  `platformRoute` z `null` rzuca przy rejestracji - platforma członków nie ma. Pseudo-zdolności
+  „członek" w katalogu NIE MA: nie da się jej nadać ani odebrać osobno
+- **KSZTAŁT CUDZEJ REZERWACJI W PANELU PYTA, KTO PATRZY** (`routes/admin/bookingWire.ts`,
+  ta sama reguła co telefon, §17 rezerwacji): widz pełny = własna ALBO `panel.access` /
+  `reservations.approve` / `reservations.manage`; zwykły członek dostaje godziny, maszynę,
+  właściciela, rodzaj - bez notatki, zadania, trasy, autora; `GET /bookings/:id` oddaje mu
+  `approval: null`. W DTO panelu pola treści są OPCJONALNE, nie nullowalne (`undefined`
+  = nie dla Ciebie); szuflada nie rysuje wiersza „Zadanie"/„Założona" ani karty ścieżki
+- **SŁOWNIK KLUBU zamiast list modułów**: kalendarz, szuflada i kolejka decyzji podpisują
+  zajętości z `GET /admin/api/directory` (`PilotsAdminPort.directory` - cztery kolumny,
+  własne SQL; flota z `FleetAdminPort.list`). `GET /pilots` (adresy e-mail, zakresy, sesje)
+  i `GET /fleet` (konfiguracja) zostają na `panel.access` - moduł zamknięty na ekranie ma
+  być zamknięty w API. Nowa trasa = sonda w `tenantIsolation.test.ts`
+- **JEDEN SŁOWNIK DOSTĘPU DLA KOLUMNY I TRAS**: `Access = Capability | 'club'`
+  (`ui/shell/nav.ts`, `hasAccess(capabilities, kind, access)`); Kalendarz ma `'club'`
+  (każda sesja klubu, żadna platformy), rodzaj sesji liczy `kindOf(session)` (`org: null`
+  = platforma). `navItemsFor`/`homeFor` biorą RODZAJ SESJI drugim argumentem: pilot ląduje
+  w `/kalendarz`, administrator w `/dziennik`, platforma w `/organizacje`
+- **KAŻDA TRASA MODUŁU MA `RequireCapability access=…`**, a strażnik zamiast przekierowania
+  rysuje EKRAN „BRAK DOSTĘPU" w ramie (`screens/common/NoAccessScreen.tsx`, treść w czystym
+  `noAccess.ts` z testem; makieta `design/panel/brak-dostepu.html`). Trzy brzmienia: członek
+  pod modułem klubu (nazwa zdolności z `CAPABILITY_LABELS` + „Nadaje: administrator klubu"),
+  członek pod modułem platformy („Poza klubem" - BEZ „poproś", bo nie ma czego nadać),
+  sesja platformy pod ekranem klubu („Zakres platformy"). Komponent `.no-access` z inwentarza
+  SZABLONU istniał od 2.0 i był nieużywany. `GRANTED_BY` mówi „administrator klubu", bo
+  czyta to odtąd pilot, który zna dwóch administratorów
+- **APLIKACJA PILOTA BEZ ZMIAN W KODZIE**: telefon zdolności nie zna, bramkuje bitami
+  z serwera (`viewer.watch`, `approver`, kolejka). Podręcznik opisuje jej ekrany per zdolność
+- **strażnik hexów panelu łapie `#216` W NAPISIE TESTU** (jak `#207`) - numer zgłoszenia
+  zostaje w komentarzu; opis zdolności w `CAPABILITY_LABELS` to JEDNO zdanie (test `scope.test.ts`)
+- testy: serwer `adminAuth` (pilot z pustym zakresem: sesja, `GET /me` 200, `GET /sessions`
+  403 `panel.access`; przełączenie do klubu jako pilot 200; `no_membership` dla obcego
+  i wyłączonego), `bookings` (widz w panelu: własna pełna, cudza wąska, `approval: null`,
+  podgląd klubu widzi komplet), sondy `tenantIsolation` dla `/directory`; panel `nav`,
+  `appShell`, `noAccess`, `directoryLookups`, `loginMessage`, `can`
+
+## Panel 3.2.0 - epik P-A: makiety rozbudowy panelu (issue #182, 2026-09-25)
+Design-first dla sześciu epików `docs/panel-3.2.md` (§14 rozstrzygnięte 22 września):
+jedenaście makiet w `design/panel/` z kopii `SZABLON.html`, siedem nowych komponentów
+CSS, `panel.css` przegenerowany. Decyzje makiet: **`docs/panel-3.2.md` §17**; odstępstwa §16.
+Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
+- **KOLUMNA KLUBU MA SZEŚĆ POZYCJI W STAŁEJ KOLEJNOŚCI**: Dziennik · Do sprawdzenia ·
+  Kalendarz · Statystyki · Piloci · Samoloty (`homeFor` bierze pierwszą - Dziennik zostaje
+  ekranem startowym; lista płaska, grupy od siódmej). Plakietka `.nav-count` WYŁĄCZNIE przy
+  „Do sprawdzenia" i WYŁĄCZNIE przy niezerowej sumie trzech źródeł `attention` (reguła
+  SyncChipa). Makiety Kalendarza/Pilotów/Samolotów pokazują stan BEZ plakietki, dziennik
+  i „Do sprawdzenia" - z „5": oba stany mają być widoczne w zestawie
+- **OŚ DZIENNIKA TO SEGMENT `.seg`, NIE CHIPY** - chip zawęża (można nie zapalić żadnego),
+  oś rozstrzyga pytanie (jedna zawsze włączona). `?os=piloci`, oś maszyn domyślna i poza
+  adresem; poziom 2 pilota = `#/dziennik/pilot/:code` (segment statyczny wygrywa z `:reg`)
+- **DOBA NAGŁÓWKIEM na poziomie 2 obu osi** (`tbody.day` + `tr.day-row`, sumy z serwera
+  jedną odpowiedzią - strona kursorowa potrafi rozciąć dobę); kolumny daty przy wierszu
+  NIE MA; pierwsza komórka = para godzin biegu + sygnatura (kształt kafelka z telefonu)
+- **NALOT LICZY SIĘ DOWÓDCY; loty jako drugi pilot WIDOCZNE, poza sumami** (`tr.as-dual`,
+  podpis „+n jako drugi pilot") - decyzja postawiona na widoku, DO POTWIERDZENIA przed P-B
+- **TRYB EDYCJI = STAN EKRANU POD WŁASNYM ADRESEM** (`…/edycja`): ołówek w piątej kolumnie
+  osi (`td.pen`), plakietka `.tag-corrected` w OBU trybach, korekta w szufladzie z podglądem
+  „przed → po" (liczy serwer), baner kolizji `ADMIN_EDIT_*` NAD formularzem i nigdy
+  wyszarzony przycisk, powód WYMAGANY, kosz w linii tytułu = unieważnienie zdarzenia,
+  historia zmian (`.hist`) tylko gdy jest historia; dopisanie = ostatni wiersz osi
+  (`tr.axis-add`) z WĄSKĄ siatką typów (`.type-grid`; bez uruchomienia i wyłączenia silnika)
+- **ROZJAZDY MÓWIĄ PO POLSKU** (Dwie operacje naraz · Pilot w dwóch maszynach · Luka
+  w liczniku · Cofnięty licznik · Rozjazd paliwa · Rozjazd zegara) - kody serwera nie
+  wychodzą na ekran; notatka rozstrzygnięcia wymagana; skutek dla karty arkusza mówi się
+  PRZED kliknięciem. „Do sprawdzenia": liczniki jako podpisy tytułów (`.card-count`), wiersz
+  sprawy (`.todo-row`) jest linkiem tam, gdzie da się ją zamknąć, karta bez spraw znika
+- **STATYSTYKI BEZ KAFLI** (`.track-facts` jako „Razem", `.bars`, `tfoot`) i z nazwaną
+  podstawą liczenia w podtytule; **ANALITYKA = karta „Zużycie z lotów" w szufladzie
+  samolotu** (`.band`: pasmo zmierzone vs marker normy z dokumentacji), bez modelu karty
+  NIE MA wcale (issue #69)
+- **rama makiety**: nowe klasy do `admin/src/styles/components/` (nigdy do jednej makiety),
+  `npm run panel:css` w `admin/`, wpis w inwentarzu `SZABLON.html`, karta w `index.html`
+  (sekcje w kolejności kolumny bocznej), panel wariantów w całej rodzinie; martwe linki
+  łapie grep po `href`
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

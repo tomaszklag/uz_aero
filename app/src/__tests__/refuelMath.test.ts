@@ -37,7 +37,7 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
     uuid: `e-${seq}-${type}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -278,8 +278,8 @@ describe('szlak szacunku (wspólny dla 06 i 09B)', () => {
 });
 
 describe('oczekiwany stan przekazania (ogniwo na przejęciu, 02A)', () => {
-  const claim = { kind: 'claim' as const, at: at(8, 0), pilotId: 'AKO', fuelDeltaL: null, fuelAfterL: 96, mhAfter: 1234.5, durationMs: null };
-  const flight = { kind: 'flight' as const, at: at(9, 0), pilotId: 'AKO', fuelDeltaL: null, fuelAfterL: 62, mhAfter: 1236, durationMs: 90 * 60_000 };
+  const claim = { kind: 'claim' as const, at: at(8, 0), pilotId: 'BNO', fuelDeltaL: null, fuelAfterL: 96, mhAfter: 1234.5, durationMs: null };
+  const flight = { kind: 'flight' as const, at: at(9, 0), pilotId: 'BNO', fuelDeltaL: null, fuelAfterL: 62, mhAfter: 1236, durationMs: 90 * 60_000 };
   const refuel = { kind: 'refuel' as const, at: at(8, 30), pilotId: null, fuelDeltaL: 20, fuelAfterL: 116, mhAfter: null, durationMs: null };
 
   it('zastane + dolewki − norma × czas lotów', () => {

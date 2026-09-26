@@ -14,7 +14,7 @@ import { bookingErrorMessage, bookingRefusal, takenBooking } from './bookingRefu
 import type { Person } from './bookingLabels';
 
 const TZ = 'Europe/Warsaw';
-const OSOBY: Readonly<Record<string, Person>> = { 'p-1': { name: 'Anna Kowalska', code: 'AKO' } };
+const OSOBY: Readonly<Record<string, Person>> = { 'p-1': { name: 'Barbara Nowak', code: 'BNO' } };
 const person = (id: string): Person | null => OSOBY[id] ?? null;
 
 const kolidujaca = (over: Partial<BookingDto> = {}): BookingDto =>
@@ -47,7 +47,7 @@ describe('zdanie pod przyciskiem', () => {
     const e = odmowa(409, { error: 'slot_taken', taken: kolidujaca() });
     expect(takenBooking(e)).not.toBeNull();
     expect(bookingErrorMessage(e, TZ, person)).toBe(
-      'Ten termin jest już zajęty. Od 21 wrz, 08:00 lata Anna Kowalska (egzamin).',
+      'Ten termin jest już zajęty. Od 21 wrz, 08:00 lata Barbara Nowak (egzamin).',
     );
   });
 

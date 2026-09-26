@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Statystyki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">STATYSTYKI</span>
+  <span class="slug">panel/statystyki · #/statystyki?od=&amp;do= · T1</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ile tego było · ta sama podstawa liczenia, co dziennik</span>
+</header>
+
+<main class="browser" role="region" aria-label="Statystyki">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/statystyki?od=2026-09-01&amp;do=2026-09-07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item active" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- Podtytuł NAZYWA różnicę wobec dziennika (docs/panel-3.2.md §4.5): statystyki
+           liczą wyłącznie operacje ZAMKNIĘTE w zakresie, dziennik pokazuje także
+           trwające. Operacje w toku są policzone i podane obok - nie znikają po cichu.
+           Puste zapisy (bez biegu, bez zmiany odczytu) nie wchodzą ani tu, ani tam
+           (decyzja 22 września 2026, §14 pkt 3), więc liczba operacji jest JEDNA. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Statystyki</h1>
+          <p class="page-sub">1–7 września 2026 · operacje zamknięte w zakresie · 2 w toku poza sumami</p>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="daterange">
+          <span class="visually-hidden">Od dnia</span>
+          <input type="date" value="2026-09-01">
+        </label>
+        <span class="daterange-sep" aria-hidden="true">→</span>
+        <label class="daterange">
+          <span class="visually-hidden">Do dnia</span>
+          <input type="date" value="2026-09-07">
+        </label>
+        <button type="button" class="chip" aria-pressed="false">30 dni</button>
+        <button type="button" class="chip on" aria-pressed="true">Ten miesiąc</button>
+        <button type="button" class="chip" aria-pressed="false">Poprzedni miesiąc</button>
+        <button type="button" class="chip" aria-pressed="false">Ten sezon</button>
+        <button type="button" class="chip" aria-pressed="false">Poprzedni sezon</button>
+      </div>
+
+      <!-- ══ RAZEM - PASEK FAKTÓW, NIE KAFLE ══
+           Ten sam komponent, którym karta śladu podaje dystans, pułap i prędkość
+           (`.track-facts`): klucz drobno, liczba mono. Nie `.tiles` z panelu 1.0 -
+           osiem płytek robiło z sum nagłówek gazety. Kolejność jest kolejnością kafelka
+           operacji z telefonu (Operacje · Loty · Blok · Lot), dalej to, co tylko panel
+           umie zsumować. Δ MH w godzinach dziesiętnych, bo flota miesza formaty licznika. -->
+      <div class="card">
+        <div class="card-title">Razem</div>
+        <div class="track-facts">
+          <div class="track-fact"><span class="track-fact-k">Operacje</span><span class="track-fact-v">11</span></div>
+          <div class="track-fact"><span class="track-fact-k">Dni lotne</span><span class="track-fact-v">6 <small>z 7</small></span></div>
+          <div class="track-fact"><span class="track-fact-k">Loty</span><span class="track-fact-v">33</span></div>
+          <div class="track-fact"><span class="track-fact-k">Blok</span><span class="track-fact-v">19:45</span></div>
+          <div class="track-fact"><span class="track-fact-k">Lot</span><span class="track-fact-v">15:46</span></div>
+          <div class="track-fact"><span class="track-fact-k">Paliwo</span><span class="track-fact-v">1 125 L</span></div>
+          <div class="track-fact"><span class="track-fact-k">Δ MH</span><span class="track-fact-v">19,9 h</span></div>
+          <div class="track-fact"><span class="track-fact-k">Piloci</span><span class="track-fact-v">4</span></div>
+        </div>
+      </div>
+
+      <!-- ══ NALOT DZIEŃ PO DNIU ══
+           Słupki na pełnym kalendarzu zakresu - dzień bez lotów to PRAWDZIWE zero
+           (kreska u podstawy), nie dziura. Wysokość względem najwyższego dnia; liczby
+           policzone przez serwer (`daily`), CSS tylko rysuje procent. Podpis pod
+           każdym słupkiem przy tygodniu; przy sezonie co siódmy. -->
+      <div class="card">
+        <div class="card-title">Nalot dzień po dniu <span class="card-count">· blok, UTC</span></div>
+        <div class="bars" role="img" aria-label="Nalot blokowy dzień po dniu, 1–7 września">
+          <div class="bar" title="1 wrz: 5:26"><i style="height:100%"></i><span class="bar-label">1 wrz</span></div>
+          <div class="bar" title="2 wrz: 2:32"><i style="height:47%"></i><span class="bar-label">2 wrz</span></div>
+          <div class="bar" title="3 wrz: 2:12"><i style="height:41%"></i><span class="bar-label">3 wrz</span></div>
+          <div class="bar" title="4 wrz: 1:30"><i style="height:28%"></i><span class="bar-label">4 wrz</span></div>
+          <div class="bar" title="5 wrz: 4:03"><i style="height:75%"></i><span class="bar-label">5 wrz</span></div>
+          <div class="bar" title="6 wrz: 4:02"><i style="height:74%"></i><span class="bar-label">6 wrz</span></div>
+          <div class="bar zero" title="7 wrz: 0:00"><i ></i><span class="bar-label">7 wrz</span></div>
+        </div>
+        <div class="bars-axis"><span>najwyższy dzień: 1 września · 5:26</span><span>7 wrz · dziś</span></div>
+      </div>
+
+      <!-- ══ SAMOLOTY ══
+           Wiersz na maszynę, która w zakresie LATAŁA (maszyna bez zamkniętej operacji
+           nie ma czego wnieść - jej wiersz zer stoi w dzienniku). Malejąco po bloku.
+           Kreska = nie wiemy (`null`), nigdy zero: bilans paliwa liczy się wyłącznie
+           z operacji z oboma odczytami, a podpis pod kreską mówi, ile operacji go nie ma.
+           Δ MH to SUMA delt per operacja, nie „koniec − początek" - dziury między dniami
+           nie są nalotem. Wiersz `tfoot` sumuje tylko to, co da się zsumować. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Nalot per samolot</caption>
+          <thead>
+            <tr>
+              <th>Samolot</th>
+              <th class="num">Operacje</th>
+              <th class="num">Dni</th>
+              <th class="num">Loty</th>
+              <th class="num">Blok</th>
+              <th class="num">Lot</th>
+              <th class="num">Paliwo</th>
+              <th class="num">Śr. L/h</th>
+              <th class="num">Δ MH</th>
+              <th class="num">Wykorzystanie</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">Cessna 182</span></td>
+              <td class="num">7</td><td class="num">6</td><td class="num">22</td><td class="num">12:15</td><td class="num">09:59</td>
+              <td class="num">469 L</td><td class="num">38,3</td><td class="num">12:32</td><td class="num">86 %</td>
+            </tr>
+            <tr>
+              <td><span class="reg">SP-KLM</span><span class="cell-sub">An-2</span></td>
+              <td class="num">3</td><td class="num">3</td><td class="num">8</td><td class="num">05:52</td><td class="num">04:35</td>
+              <td class="num">560 L</td><td class="num">95,5</td><td class="num">05:52</td><td class="num">43 %</td>
+            </tr>
+            <tr>
+              <td><span class="reg">SP-TWG</span><span class="cell-sub">Zlin 526</span></td>
+              <td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">01:38</td><td class="num">01:12</td>
+              <td class="num">96 L</td><td class="num">58,8</td><td class="num">1.6</td><td class="num">14 %</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Razem</td>
+              <td class="num">11</td><td class="num">6</td><td class="num">33</td><td class="num">19:45</td><td class="num">15:46</td>
+              <td class="num">1 125 L</td><td class="num">57,0</td><td class="num">19,9 h</td><td class="num">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- ══ PILOCI ══
+           Atrybucja po DOWÓDCY - ta sama, co na osi pilotów dziennika (jedna podstawa
+           liczenia). Sumy tej tabeli i tabeli samolotów są RÓWNE co do minuty. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Nalot per pilot</caption>
+          <thead>
+            <tr>
+              <th>Pilot</th>
+              <th class="num">Operacje</th>
+              <th class="num">Loty</th>
+              <th class="num">Blok</th>
+              <th class="num">Lot</th>
+              <th>Samoloty</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="cell-strong">Adam Kowalski</span><span class="cell-sub mono">AKO</span></td><td class="num">4</td><td class="num">15</td><td class="num">07:40</td><td class="num">06:20</td><td><span class="reg">SP-AXA</span></td></tr>
+            <tr><td><span class="cell-strong">Anna Kowal</span><span class="cell-sub mono">AKW</span></td><td class="num">4</td><td class="num">10</td><td class="num">06:13</td><td class="num">04:51</td><td><span class="reg">SP-AXA</span> <span class="reg">SP-TWG</span></td></tr>
+            <tr><td><span class="cell-strong">Barbara Nowak</span><span class="cell-sub mono">BNO</span></td><td class="num">2</td><td class="num">6</td><td class="num">04:12</td><td class="num">03:20</td><td><span class="reg">SP-KLM</span></td></tr>
+            <tr><td><span class="cell-strong">Marta Zięba</span><span class="cell-sub mono">MZI</span></td><td class="num">1</td><td class="num">2</td><td class="num">01:40</td><td class="num">01:15</td><td><span class="reg">SP-KLM</span></td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Razem</td><td class="num">11</td><td class="num">33</td><td class="num">19:45</td><td class="num">15:46</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- ══ ZADANIA ══
+           Udział w nalocie liczy SERWER (`blockSharePct`) - panel nie dzieli dwóch sum
+           po swojemu. Nazwy zadań te same, co na 02E i w dzienniku. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Nalot per zadanie</caption>
+          <thead>
+            <tr>
+              <th>Zadanie</th>
+              <th class="num">Operacje</th>
+              <th class="num">Loty</th>
+              <th class="num">Blok</th>
+              <th class="num">Lot</th>
+              <th class="num">Udział</th>
+              <th>Samoloty</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="pill dim">Skoki</span></td><td class="num">6</td><td class="num">26</td><td class="num">13:31</td><td class="num">11:07</td><td class="num">68 %</td><td><span class="reg">SP-AXA</span> <span class="reg">SP-KLM</span></td></tr>
+            <tr><td><span class="pill dim">Przelot</span></td><td class="num">3</td><td class="num">5</td><td class="num">04:10</td><td class="num">03:07</td><td class="num">21 %</td><td><span class="reg">SP-AXA</span> <span class="reg">SP-TWG</span></td></tr>
+            <tr><td><span class="pill dim">Egzamin</span></td><td class="num">1</td><td class="num">1</td><td class="num">01:30</td><td class="num">01:12</td><td class="num">8 %</td><td><span class="reg">SP-AXA</span></td></tr>
+            <tr><td><span class="pill dim">Lot tech.</span></td><td class="num">1</td><td class="num">1</td><td class="num">00:34</td><td class="num">00:20</td><td class="num">3 %</td><td><span class="reg">SP-AXA</span></td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Razem</td><td class="num">11</td><td class="num">33</td><td class="num">19:45</td><td class="num">15:46</td><td class="num">100 %</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="statystyki.html" class="active">Statystyki</a>
+  <span>·</span>
+  <a href="samoloty-karta.html#analityka">Analityka zużycia (karta samolotu) →</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">Dziennik</a>
+  <span>·</span>
+  <a href="#stany">↓ Stany</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section" id="stany">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Ta sama podstawa liczenia, co dziennik (§4.5, decyzja 3)</span>
+        <span class="inv-when">Dziennik za 1–7 września mówi 19:45 bloku i 33 loty na obu osiach; statystyki mówią to samo - bo od 3.2.0 puste zapisy nie wchodzą ani tu, ani tam. Jedyna różnica jest NAZWANA w podtytule: statystyki liczą wyłącznie zamknięte, dziennik pokazuje też trwające. Analityki zużycia (pasmo, stawki fazowe) TU NIE MA - jest własnością maszyny i mieszka w jej karcie.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="kv"><span class="kv-k">Dziennik · oś maszyn · 1–7 września</span><span class="kv-v">19:45 <small>· 33 loty</small></span></div>
+        <div class="kv"><span class="kv-k">Dziennik · oś pilotów · 1–7 września</span><span class="kv-v">19:45 <small>· 33 loty</small></span></div>
+        <div class="kv"><span class="kv-k">Statystyki · 1–7 września</span><span class="kv-v green">19:45 <small>· 33 loty</small></span></div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Kreska, nie zero · bilans, którego nie da się policzyć</span>
+        <span class="inv-when">Operacja bez odczytu początkowego nie ma bilansu paliwa; suma po części operacji podana jako całość byłaby kłamstwem, więc kolumna mówi ile wie, a podpis - ile operacji nie wie. Zero znaczy zero. Dla licznika ta sama reguła.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Wiersz z niepełnym bilansem - przykład</caption>
+            <thead><tr><th>Samolot</th><th class="num">Blok</th><th class="num">Paliwo</th><th class="num">Śr. L/h</th></tr></thead>
+            <tbody>
+              <tr><td><span class="reg">SP-OLD</span><span class="cell-sub">Wilga 35</span></td><td class="num">03:10</td><td class="num">—<span class="cell-sub none">2 operacje bez odczytu</span></td><td class="num">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Nikt nie latał w zakresie</span>
+        <span class="inv-when">Stan pusty mówi o ZAKRESIE, nie o klubie - i wskazuje kontrolkę, która go zmienia. Bez tabel z samymi zerami: tabela sum, w której każda liczba to zero, wygląda jak awaria liczenia.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span>
+          <span class="empty-title">Żadnej zamkniętej operacji w tym zakresie</span>
+          <span class="empty-note">Zmień zakres dat. Operacje w toku pojawią się tu po zdaniu samolotu.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie</span>
+        <span class="inv-when">Pasek faktów i tabele znamy z kształtu, więc plamki idą w ich geometrii; słupki nalotu dostają jedną plamkę o wysokości wykresu, bo liczby słupków nie wiadomo, ile będzie widać.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="card" aria-busy="true">
+          <div class="card-title">Razem</div>
+          <div class="track-facts">
+            <div class="track-fact"><span class="track-fact-k">Operacje</span><span class="skeleton cell" style="width:28px"></span></div>
+            <div class="track-fact"><span class="track-fact-k">Loty</span><span class="skeleton cell" style="width:28px"></span></div>
+            <div class="track-fact"><span class="track-fact-k">Blok</span><span class="skeleton cell" style="width:52px"></span></div>
+            <div class="track-fact"><span class="track-fact-k">Lot</span><span class="skeleton cell" style="width:52px"></span></div>
+          </div>
+        </div>
+        <div class="card" aria-busy="true">
+          <div class="card-title">Nalot dzień po dniu</div>
+          <span class="skeleton" style="display:block; height:120px"></span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="statystyki.html" class="active">Statystyki</a>
+  <span>·</span>
+  <a href="samoloty-karta.html#analityka">Analityka zużycia →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

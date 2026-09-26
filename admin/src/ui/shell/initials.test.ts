@@ -4,7 +4,7 @@ import { initials } from './initials';
 
 describe('initials', () => {
   it('bierze pierwsze litery imienia i nazwiska, wersalikami', () => {
-    expect(initials('Tomasz Małkiewicz')).toBe('TM');
+    expect(initials('Adam Kowalski')).toBe('AK');
     expect(initials('anna kowal')).toBe('AK');
   });
 

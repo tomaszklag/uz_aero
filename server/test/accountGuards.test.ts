@@ -13,87 +13,106 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { refuseDeactivate, refuseRoleChange } from '../src/domain/accountGuards.ts';
+import { refuseDeactivate, refuseScopeChange } from '../src/domain/accountGuards.ts';
+import { CLUB_CAPABILITIES, type Capability } from '../src/domain/roles.ts';
 
-describe('odebranie roli', () => {
-  it('administrator nie odbiera roli SOBIE - nawet gdy są inni administratorzy', () => {
+/** Zakres bez `accounts.manage` - wszystko inne zostaje. */
+const WITHOUT_MANAGE = CLUB_CAPABILITIES.filter((c) => c !== 'accounts.manage');
+const MANAGER: readonly Capability[] = ['panel.access', 'accounts.manage'];
+const TECHNIK: readonly Capability[] = ['panel.access', 'fleet.manage'];
+
+describe('odebranie zdolności `accounts.manage`', () => {
+  it('administrator nie odbiera jej SOBIE - nawet gdy są inni nosiciele', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
-        currentRole: 'admin',
-        nextRole: 'pilot',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
+        currentCapabilities: MANAGER,
+        nextCapabilities: WITHOUT_MANAGE,
         targetActive: true,
-        activeAdmins: 3,
+        activeManagers: 3,
       }),
     ).toBe('self_demote');
   });
 
-  it('OSTATNI aktywny administrator nie traci roli', () => {
+  it('OSTATNI aktywny nosiciel jej nie traci', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
-        currentRole: 'admin',
-        nextRole: 'pilot',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
+        currentCapabilities: MANAGER,
+        nextCapabilities: TECHNIK,
         targetActive: true,
-        activeAdmins: 1,
+        activeManagers: 1,
       }),
     ).toBe('last_admin');
   });
 
-  it('przedostatni administrator rolę traci - blokada dotyczy ostatniego, nie każdego', () => {
+  it('przedostatni traci - blokada dotyczy ostatniego, nie każdego', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'AKO',
-        currentRole: 'admin',
-        nextRole: 'pilot',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
+        currentCapabilities: MANAGER,
+        nextCapabilities: TECHNIK,
         targetActive: true,
-        activeAdmins: 2,
+        activeManagers: 2,
       }),
     ).toBeNull();
   });
 
-  it('administrator NIEAKTYWNY nie liczy się do puli - jego degradacja nikogo nie odcina', () => {
+  it('członkostwo NIEAKTYWNE nie liczy się do puli - odebranie nikogo nie odcina', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
         targetPilotId: 'MDB',
-        currentRole: 'admin',
-        nextRole: 'pilot',
+        currentCapabilities: MANAGER,
+        nextCapabilities: [],
         targetActive: false,
-        activeAdmins: 1,
+        activeManagers: 1,
       }),
     ).toBeNull();
   });
 
-  // Przypadek degradacji roli pośredniej („traci rolę bez ceremonii, bo nie ma
-  // `accounts.manage`") wypadł razem z rolą `training_lead` 2026-08-30: `currentRole`
-  // inne niż `admin` znaczy dziś wyłącznie `pilot`, więc gałęzi „cel nie jest
-  // administratorem" pilnuje ten przypadek.
-  it('NADANIE roli nigdy nie jest blokowane - nie zmniejsza liczby naprawiających', () => {
+  // ══ SEDNO ZMIANY OSI (epik #197) ══
+  // Do 3.1.0 zapora pytała o rolę, więc pilnowała KAŻDEJ zmiany administratora.
+  // Odkąd zdolności nadaje się pojedynczo, blokujemy wyłącznie tę jedną: pozostałe
+  // odbiera się do zera i klub żyje dalej, bo zostaje ktoś, kto potrafi je przywrócić.
+  it('odebranie WSZYSTKIEGO POZA `accounts.manage` przechodzi - nawet ostatniemu', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
+        currentCapabilities: CLUB_CAPABILITIES,
+        nextCapabilities: ['accounts.manage'],
+        targetActive: true,
+        activeManagers: 1,
+      }),
+    ).toBeNull();
+  });
+
+  it('NADANIE zdolności nigdy nie jest blokowane - nie zmniejsza liczby naprawiających', () => {
+    expect(
+      refuseScopeChange({
+        actorPilotId: 'AKO',
         targetPilotId: 'PWI',
-        currentRole: 'pilot',
-        nextRole: 'admin',
+        currentCapabilities: [],
+        nextCapabilities: CLUB_CAPABILITIES,
         targetActive: true,
-        activeAdmins: 1,
+        activeManagers: 1,
       }),
     ).toBeNull();
   });
 
-  it('zmiana roli na tę samą to brak zmiany, a nie odmowa', () => {
+  it('zapis bez zmiany tej jednej zdolności to brak zmiany, a nie odmowa', () => {
     expect(
-      refuseRoleChange({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
-        currentRole: 'admin',
-        nextRole: 'admin',
+      refuseScopeChange({
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
+        currentCapabilities: MANAGER,
+        nextCapabilities: [...MANAGER, 'audit.read'],
         targetActive: true,
-        activeAdmins: 1,
+        activeManagers: 1,
       }),
     ).toBeNull();
   });
@@ -103,21 +122,21 @@ describe('deaktywacja', () => {
   it('administrator nie deaktywuje SIEBIE', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'TMK',
-        targetPilotId: 'TMK',
-        currentRole: 'admin',
-        activeAdmins: 5,
+        actorPilotId: 'AKO',
+        targetPilotId: 'AKO',
+        targetManagesAccounts: true,
+        activeManagers: 5,
       }),
     ).toBe('self_deactivate');
   });
 
-  it('ostatni aktywny administrator nie traci dostępu', () => {
+  it('ostatni aktywny nosiciel `accounts.manage` nie traci dostępu', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'AKO',
-        targetPilotId: 'TMK',
-        currentRole: 'admin',
-        activeAdmins: 1,
+        actorPilotId: 'BNO',
+        targetPilotId: 'AKO',
+        targetManagesAccounts: true,
+        activeManagers: 1,
       }),
     ).toBe('last_admin');
   });
@@ -125,12 +144,24 @@ describe('deaktywacja', () => {
   it('zwykły pilot deaktywuje się bez przeszkód - to codzienna operacja klubu', () => {
     expect(
       refuseDeactivate({
-        actorPilotId: 'TMK',
+        actorPilotId: 'AKO',
         targetPilotId: 'PWI',
-        currentRole: 'pilot',
-        activeAdmins: 1,
+        targetManagesAccounts: false,
+        activeManagers: 1,
+      }),
+    ).toBeNull();
+  });
+
+  // Technik z wejściem do panelu, ale bez władzy nad kontami: jego wyłączenie nie
+  // zamyka klubu, bo drogi powrotu pilnuje wyłącznie `accounts.manage`.
+  it('członek z panelem, ale bez władzy nad kontami, wyłącza się swobodnie', () => {
+    expect(
+      refuseDeactivate({
+        actorPilotId: 'AKO',
+        targetPilotId: 'BNO',
+        targetManagesAccounts: false,
+        activeManagers: 1,
       }),
     ).toBeNull();
   });
 });
-

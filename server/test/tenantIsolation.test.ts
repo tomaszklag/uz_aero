@@ -14,7 +14,7 @@
  * Klub A (Alfa) i klub B (Beta) dostają po jednej ZAMKNIĘTEJ operacji, flagę, odczyt
  * administratora (a z nim wpis audytu), normę zużycia, zgłoszenie błędu i kartę arkusza;
  * PWI - osoba w OBU klubach - ma operację w B. Dane klubu B niosą ZNACZNIKI (`SP-BBB`,
- * `sess-b`, `Barbara`, `beta-flag`…), których w żadnej odpowiedzi klubu A nie ma prawa
+ * `sess-b`, `Adamska`, `beta-flag`…), których w żadnej odpowiedzi klubu A nie ma prawa
  * być. Sondy są dwojakie: LISTY muszą być czyste ze znaczników, ADRESY BEZPOŚREDNIE do
  * danych B muszą odpowiadać tak, jakby tych danych nie było (404, „nieznana", puste).
  *
@@ -142,7 +142,9 @@ const B_MARKERS = [
   'SP-BBB',
   'sess-b',
   'sess-pwi-b',
-  'Barbara',
+  // Nazwisko i adres, nie samo imię: w klubie A jest Barbara Nowak (BNO).
+  'Adamska',
+  'barbara@beta.pl',
   'Bartosz',
   'beta-flag',
   'bug-b',
@@ -160,12 +162,15 @@ const B_MARKERS = [
   // nie ma prawa ich pokazać.
   'book-b',
   'block-b',
+  // Obserwowanie samolotu (3.2.0): wiersz obserwowania Bety i uuid jej operacji na
+  // karcie maszyny nie mają prawa paść w żadnej odpowiedzi dla Alfy.
+  'watch-b',
 ] as const;
 
 interface World {
   app: App;
   db: Harness['db'];
-  /** Administrator klubu A (TMK) - token telefonu, który otwiera też trasy panelu. */
+  /** Administrator klubu A (AKO) - token telefonu, który otwiera też trasy panelu. */
   a: string;
   /** Administrator klubu B (BAD). */
   b: string;
@@ -191,7 +196,7 @@ async function twoClubs(): Promise<World> {
   const { app, db } = harness;
   await seedBetaFleet(db);
 
-  const a = await tokenOf(app, 'TMK');
+  const a = await tokenOf(app, 'AKO');
   const b = await tokenOf(app, 'BAD');
   const bpi = await tokenOf(app, 'BPI');
 
@@ -216,7 +221,7 @@ async function twoClubs(): Promise<World> {
 
   const post = (token: string, events: unknown[]) =>
     app.inject({ method: 'POST', url: '/events', headers: bearer(token), payload: { events } });
-  expect((await post(a, day('sess-a', 'SP-AXA', 'TMK', 'ALFA-CLIENT'))).statusCode).toBe(200);
+  expect((await post(a, day('sess-a', 'SP-AXA', 'AKO', 'ALFA-CLIENT'))).statusCode).toBe(200);
   expect((await post(b, day('sess-b', 'SP-BBB', 'BAD', 'BETA-CLIENT'))).statusCode).toBe(200);
   // Operacja PWI w Becie: dobę PÓŹNIEJ, odczytami ciągłymi z `sess-b` - bez nakładki
   // i bez cofnięcia licznika, więc ingest nie dokłada Becie flag spoza zamiaru testu.
@@ -303,7 +308,7 @@ async function twoClubs(): Promise<World> {
   // sprawdzić: 404 na cudzej dowodzi tyle samo, co trasa, która nie działa wcale.
   await db.query(
     `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
-     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'TMK', 'przelot', 'TMK')`,
+     VALUES ('book-a', $1, 'SP-AXA', 'flight', 'confirmed', $2, $3, 'AKO', 'przelot', 'AKO')`,
     [ORG_A, new Date(BOOK_FROM), new Date(BOOK_FROM + 7_200_000)],
   );
   await db.query(
@@ -315,6 +320,14 @@ async function twoClubs(): Promise<World> {
     `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, block_reason, created_by)
      VALUES ('block-b', $1, 'SP-BBB', 'block', 'confirmed', $2, $3, 'maintenance', 'BAD')`,
     [ORG_B, new Date(BOOK_FROM + 86_400_000), new Date(BOOK_FROM + 2 * 86_400_000)],
+  );
+
+  // Obserwowanie samolotu (3.2.0, issue #205): administratorzy obu klubów obserwują
+  // własną maszynę. Wiersz Bety niesie w `aircraft_id` znacznik `SP-BBB`, a jej klub
+  // stoi w `org_id` - lista obserwowanych Alfy nie ma go prawa pokazać.
+  await db.query(
+    `INSERT INTO aircraft_watches (org_id, aircraft_id, pilot_id) VALUES ($1, 'SP-AXA', 'AKO'), ($2, 'SP-BBB', 'BAD')`,
+    [ORG_A, ORG_B],
   );
 
   return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
@@ -349,11 +362,11 @@ const CASES: Record<string, Probe> = {
   'POST /events': async ({ app, db, a }) => {
     // Zapis do maszyny B i do sesji B z tokenu A - wstrzymany w całości, zero wierszy.
     const foreign = [
-      ...day('sess-x', 'SP-BBB', 'TMK', 'X'),
+      ...day('sess-x', 'SP-BBB', 'AKO', 'X'),
       event('refuel', at(11, 0), { beforeL: 80, addedL: 10, afterL: 90 }, {
         sessionUuid: 'sess-b',
         aircraftId: 'SP-BBB',
-        picId: 'TMK',
+        picId: 'AKO',
         dualId: null,
       }),
     ];
@@ -538,7 +551,7 @@ const CASES: Record<string, Probe> = {
    * CUDZY identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia
    * bokiem. Ta sama para sprawdzeń, co przy `POST /admin/api/auth/switch`.
    *
-   * TMK lata wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY (404, nie 403 -
+   * AKO lata wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY (404, nie 403 -
    * 403 potwierdzałoby, że taki klub jest), a odmowa nie może wydać ani jednego tokenu.
    */
   'POST /auth/switch': async ({ app, a }) => {
@@ -976,6 +989,19 @@ const CASES: Record<string, Probe> = {
     expect(res.json().items.map((i: { code: string }) => i.code)).not.toContain('PWB');
   },
 
+  // Słownik klubu (issue #216) - trasa KAŻDEGO członka, więc sonda pyta tokenem
+  // zwykłego pilota Alfy: żadnego nazwiska ani znaku Bety, a własne widać.
+  'GET /admin/api/directory': async ({ app, pwiA }) => {
+    const res = await app.inject({ method: 'GET', url: '/admin/api/directory', headers: bearer(pwiA) });
+    expectClean(res, '/admin/api/directory');
+    expect(res.json().members.map((m: { code: string }) => m.code)).toContain('AKO');
+    expect(res.json().members.map((m: { code: string }) => m.code)).not.toContain('PWB');
+    expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).toContain('SP-AXA');
+    expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).not.toContain('SP-BBB');
+    // Cztery pola i ani jednego więcej: adresu, zakresu ani sesji słownik nie niesie.
+    expect(Object.keys(res.json().members[0]).sort()).toEqual(['active', 'code', 'id', 'name']);
+  },
+
   'PATCH /admin/api/pilots/:id': async ({ app, a }) => {
     expect(
       (await app.inject({ method: 'PATCH', url: '/admin/api/pilots/BPI', headers: writer(a), payload: { name: 'X Y' } }))
@@ -1041,6 +1067,110 @@ const CASES: Record<string, Probe> = {
     expect(res.json().totals.sessions).toBe(1);
   },
 
+  // ── ścieżka akceptacji i skrzynka (3.1.0, issue #164) ────────────────────────
+  'POST /bookings/:id/decision': async ({ app, db, a }) => {
+    // Decyzja o CUDZEJ rezerwacji: wiersz jest dla tego tokenu nieistniejący, więc 404,
+    // a nie 403 - `403` potwierdzałoby, że taka rezerwacja jest.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/bookings/book-b/decision',
+      headers: bearer(a),
+      payload: { decision: 'approved' },
+    });
+    expect(res.statusCode, res.body).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM booking_approvals WHERE booking_id = 'book-b'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'GET /me/notifications': async ({ app, db, pwiA, pwiB }) => {
+    // Skrzynka jednej osoby w DWÓCH klubach: wiadomość z Bety nie ma prawa pokazać się
+    // pod tokenem Alfy, choć chodzi o tę samą osobę (PWI).
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b', $1, 'PWI', 'approval_requested', $2::jsonb)`,
+      [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
+    );
+
+    const res = await app.inject({ url: '/me/notifications', headers: bearer(pwiA) });
+    expectClean(res, '/me/notifications');
+    expect(res.json().items).toHaveLength(0);
+    expect(res.json().unread).toBe(0);
+
+    // Kontrola pozytywna: TA SAMA OSOBA pod tokenem klubu B widzi ją natychmiast -
+    // pusta skrzynka wyżej jest zawężeniem klubu, a nie brakiem wiersza.
+    const wBecie = await app.inject({ url: '/me/notifications', headers: bearer(pwiB) });
+    expect(wBecie.statusCode, wBecie.body).toBe(200);
+    expect(wBecie.json().items).toHaveLength(1);
+  },
+
+  'POST /me/notifications/:id/read': async ({ app, db, pwiA }) => {
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-read', $1, 'PWI', 'booking_approved', '{}'::jsonb)`,
+      [ORG_B],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/me/notifications/note-b-read/read',
+      headers: bearer(pwiA),
+    });
+    // Cudzy klub odpowiada tak samo jak wiersz nieistniejący, a stempel NIE PADA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ read_at: string | null }>(
+      `SELECT read_at FROM notifications WHERE id = 'note-b-read'`,
+    );
+    expect(rows[0]!.read_at).toBeNull();
+  },
+
+  'POST /me/push-token': async ({ app, db, pwiA }) => {
+    // Token urządzenia NIE MA klubu i to jest zgodne z regułą: opisuje urządzenie OSOBY,
+    // która bywa w kilku klubach naraz. Sprawdzamy więc to, co tu jest do wycieku -
+    // że token przypina się do TEJ osoby i do JEJ sesji, a nie do kogokolwiek z ciała.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/me/push-token',
+      headers: bearer(pwiA),
+      payload: { token: 'ExponentPushToken[iso]', pilotId: 'BPI' },
+    });
+    expect(res.statusCode, res.body).toBe(204);
+    const { rows } = await db.query<{ pilot_id: string }>(
+      `SELECT pilot_id FROM push_tokens WHERE token = 'ExponentPushToken[iso]'`,
+    );
+    expect(rows[0]!.pilot_id).toBe('PWI');
+  },
+
+  'GET /admin/api/approval-steps': async ({ app, db, a }) => {
+    // Ścieżka Bety nie ma prawa pokazać się w panelu Alfy - a pusta odpowiedź niczego
+    // by nie dowiodła, więc Beta dostaje krok ze znacznikiem.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b', $1, 0, 'Mechanik Bartosz')`,
+      [ORG_B],
+    );
+    const res = await app.inject({ url: '/admin/api/approval-steps', headers: bearer(a) });
+    expectClean(res, '/admin/api/approval-steps');
+    expect(res.json().steps).toEqual([]);
+  },
+
+  'PUT /admin/api/approval-steps': async ({ app, db, a }) => {
+    // Krok obsadzony osobą z CUDZEGO klubu jest odmawiany, a ścieżka Alfy zostaje pusta -
+    // inaczej panel jednego klubu rozdawałby władzę członkom drugiego.
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/admin/api/approval-steps',
+      headers: writer(a),
+      payload: { steps: [{ label: 'Mechanik', memberIds: ['BPI'] }] },
+    });
+    expect(res.statusCode, res.body).toBe(400);
+    expect(res.json().error).toBe('member_not_in_org');
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM approval_steps WHERE org_id = $1`,
+      [ORG_A],
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   // ── kolejka zgłoszeń i kod klubu (issue #100, D2) ────────────────────────────
   'GET /admin/api/memberships/pending': async ({ app, a }) => {
     const res = await app.inject({
@@ -1058,7 +1188,7 @@ const CASES: Record<string, Probe> = {
       method: 'POST',
       url: `/admin/api/memberships/${pendingB}/approve`,
       headers: writer(a),
-      payload: { code: 'KAN', role: 'pilot' },
+      payload: { code: 'KAN', capabilities: [] },
     });
     expect(res.statusCode).toBe(404);
     const { rows } = await db.query<{ status: string; code: string | null }>(
@@ -1315,7 +1445,7 @@ const CASES: Record<string, Probe> = {
    * PRZEŁĄCZENIE ZAKRESU (issue #101, E2) - jedyna trasa panelu, która przyjmuje CUDZY
    * identyfikator klubu w ciele, więc jest naturalnym miejscem na próbę wejścia bokiem.
    *
-   * TMK jest administratorem wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY
+   * AKO jest administratorem wyłącznie w Alfie: klub Bety jest dla niego NIEISTNIEJĄCY
    * (404, nie 403 - 403 potwierdzałoby, że taki klub jest), a odmowa nie może zostawić
    * ciasteczka. To ostatnie sprawdzamy wprost: sesja wydana mimo odmowy byłaby wejściem
    * do cudzego dziennika przez każdą kolejną trasę panelu.
@@ -1359,6 +1489,220 @@ const CASES: Record<string, Probe> = {
     const { rows } = await db.query<{ status: string }>(`SELECT status FROM bug_reports WHERE uuid = 'bug-b'`);
     expect(rows[0]!.status).toBe('new');
   },
+
+  'GET /me/approvals/queue': async ({ app, db, a }) => {
+    // Kolejka TELEFONU jest pytaniem o klub tokenu - krok Bety obsadzony AKO i czekająca
+    // rezerwacja Bety (wiersze z sondy panelu niżej jeszcze nie istnieją, więc własne).
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b-phone', $1, 0, 'Krok Bartosza')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-phone', 'AKO')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-b-phone', $1, 'SP-BBB', 'flight', 'pending', $2, $3, 'BPI', 'skoki', 'BPI')`,
+      [ORG_B, new Date(BOOK_FROM + 4 * 86_400_000), new Date(BOOK_FROM + 4 * 86_400_000 + 7_200_000)],
+    );
+    const res = await app.inject({ url: '/me/approvals/queue', headers: bearer(a) });
+    expectClean(res, '/me/approvals/queue');
+    expect(res.json().items).toEqual([]);
+  },
+
+  // ── kolejka decyzji i decyzja z panelu (3.1.0, issue #165) ─────────────────
+  // STOJĄ NA KOŃCU celowo: dokładają Alfie krok ścieżki, a sondy jadą w kolejności
+  // wpisów po jednym świecie - wcześniejsze przypadki rezerwacji liczą na klub bez
+  // akceptacji (rezerwacja z panelu ma wchodzić jako `confirmed`).
+  'GET /admin/api/bookings/:id': async ({ app, a }) => {
+    // Cudza zajętość jest dla tego tokenu NIEISTNIEJĄCA - 404, nie 403.
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    // Kontrola pozytywna: własną widać, razem ze stanem ścieżki.
+    const own = await app.inject({ url: '/admin/api/bookings/book-a', headers: bearer(a) });
+    expectClean(own, '/admin/api/bookings/:id');
+    expect(own.json().booking.id).toBe('book-a');
+    expect(own.json().approval).toEqual({ outcome: 'confirmed', steps: [] });
+  },
+
+  'POST /admin/api/bookings/:id/decision': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/bookings/book-b/decision',
+      headers: writer(a),
+      payload: { decision: 'approved' },
+    });
+    expect(res.statusCode, res.body).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM booking_approvals WHERE booking_id = 'book-b'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'GET /admin/api/approvals/queue': async ({ app, db, a }) => {
+    // Krok Bety obsadzony AKO - wprost do bazy, bo panel by tego nie zapisał
+    // (`member_not_in_org`), ale wiersz może tak stać po wyłączeniu członkostwa.
+    // Czekająca rezerwacja Bety na tym kroku NIE MA prawa pokazać się w kolejce Alfy,
+    // choć osoba się zgadza: kolejka jest pytaniem o klub tokenu.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-b-queue', $1, 0, 'Krok Bartosza')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-b-queue', 'AKO')`,
+      [ORG_B],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-b-waiting', $1, 'SP-BBB', 'flight', 'pending', $2, $3, 'BPI', 'skoki', 'BPI')`,
+      [ORG_B, new Date(BOOK_FROM + 3 * 86_400_000), new Date(BOOK_FROM + 3 * 86_400_000 + 7_200_000)],
+    );
+    // Kontrola pozytywna: ten sam krok w Alfie i czekająca rezerwacja Alfy - widać.
+    await db.query(
+      `INSERT INTO approval_steps (id, org_id, position, label) VALUES ('step-a-queue', $1, 0, 'Mechanik')`,
+      [ORG_A],
+    );
+    await db.query(
+      `INSERT INTO approval_step_members (org_id, step_id, pilot_id) VALUES ($1, 'step-a-queue', 'AKO')`,
+      [ORG_A],
+    );
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('book-a-waiting', $1, 'SP-AXA', 'flight', 'pending', $2, $3, 'PWI', 'skoki', 'PWI')`,
+      [ORG_A, new Date(BOOK_FROM + 3 * 86_400_000), new Date(BOOK_FROM + 3 * 86_400_000 + 7_200_000)],
+    );
+
+    const res = await app.inject({ url: '/admin/api/approvals/queue', headers: bearer(a) });
+    expectClean(res, '/admin/api/approvals/queue');
+    expect((res.json().items as { booking: { id: string } }[]).map((i) => i.booking.id)).toEqual([
+      'book-a-waiting',
+    ]);
+  },
+
+  // ── Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206) ─────────────────
+  // PWI ma OPERACJĘ w Becie (`sess-pwi-b`): podgląd jego nalotu w Alfie nie ma prawa
+  // jej policzyć ani pokazać - nalot jest pytaniem o klub sprawy, nie o osobę.
+  'GET /bookings/:id/preview/pilot/:pilotId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ url: '/bookings/book-b/preview/pilot/BPI', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    await db.query(
+      `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by)
+       VALUES ('iso-prev-pwi', $1, 'SP-AXA', 'flight', 'pending', $2, $3, 'PWI', 'skoki', 'PWI')`,
+      [ORG_A, new Date(BOOK_FROM + 4 * 86_400_000), new Date(BOOK_FROM + 4 * 86_400_000 + 7_200_000)],
+    );
+    const res = await app.inject({ url: '/bookings/iso-prev-pwi/preview/pilot/PWI', headers: bearer(a) });
+    expectClean(res, '/bookings/:id/preview/pilot/:pilotId');
+    expect(res.json().flying.total.flights).toBe(0);
+    expect(res.json().recent).toEqual([]);
+    // Osoba spoza sprawy - także członek cudzego klubu - nie istnieje dla tej trasy.
+    expect(
+      (await app.inject({ url: '/bookings/iso-prev-pwi/preview/pilot/BPI', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    await db.query(`DELETE FROM bookings WHERE id = 'iso-prev-pwi'`);
+  },
+
+  'GET /bookings/:id/preview/aircraft': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/bookings/book-b/preview/aircraft', headers: bearer(a) })).statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/bookings/book-a/preview/aircraft', headers: bearer(a) });
+    expectClean(res, '/bookings/:id/preview/aircraft');
+    expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  // ── obserwowanie samolotu (3.2.0, issue #205) ──────────────────────────────
+  'GET /aircraft/watches': async ({ app, a }) => {
+    const res = await app.inject({ url: '/aircraft/watches', headers: bearer(a) });
+    expectClean(res, '/aircraft/watches');
+    const ids = (res.json().items as { aircraftId: string; watching: boolean }[]).map((i) => i.aircraftId);
+    // Cała flota WŁASNEGO klubu, z bitem obserwowania - i ani jednej maszyny Bety.
+    expect(ids).toContain('SP-AXA');
+    expect(ids).not.toContain('SP-BBB');
+    expect((res.json().items as { aircraftId: string; watching: boolean }[]).find((i) => i.aircraftId === 'SP-AXA')?.watching).toBe(true);
+  },
+
+  'GET /aircraft/:id/card': async ({ app, a }) => {
+    expect((await app.inject({ url: '/aircraft/SP-BBB/card', headers: bearer(a) })).statusCode).toBe(404);
+    const own = await app.inject({ url: '/aircraft/SP-AXA/card', headers: bearer(a) });
+    expectClean(own, '/aircraft/:id/card');
+    expect(own.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  'GET /aircraft/:id/operations': async ({ app, a }) => {
+    expect((await app.inject({ url: '/aircraft/SP-BBB/operations', headers: bearer(a) })).statusCode).toBe(404);
+    const own = await app.inject({ url: '/aircraft/SP-AXA/operations', headers: bearer(a) });
+    expectClean(own, '/aircraft/:id/operations');
+    expect((own.json().items as { sessionUuid: string }[]).map((i) => i.sessionUuid)).toContain('sess-a');
+  },
+
+  'PUT /aircraft/:id/watch': async ({ app, db, a }) => {
+    // Maszyna Bety pod tokenem Alfy: 404 i ZERO wierszy - także pod klubem Alfy.
+    expect((await app.inject({ method: 'PUT', url: '/aircraft/SP-BBB/watch', headers: bearer(a) })).statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB' AND pilot_id = 'AKO'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+    expect((await app.inject({ method: 'PUT', url: '/aircraft/SP-FGK/watch', headers: bearer(a) })).statusCode).toBe(204);
+    await db.query(`DELETE FROM aircraft_watches WHERE aircraft_id = 'SP-FGK' AND pilot_id = 'AKO'`);
+  },
+
+  'DELETE /aircraft/:id/watch': async ({ app, db, a }) => {
+    expect((await app.inject({ method: 'DELETE', url: '/aircraft/SP-BBB/watch', headers: bearer(a) })).statusCode).toBe(404);
+    // Wiersz Bety (BAD → SP-BBB) stoi nietknięty.
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
+  },
+
+  'GET /admin/api/me/watches': async ({ app, a }) => {
+    const res = await app.inject({ url: '/admin/api/me/watches', headers: bearer(a) });
+    expectClean(res, '/admin/api/me/watches');
+    expect((res.json().items as { aircraftId: string }[]).map((i) => i.aircraftId)).not.toContain('SP-BBB');
+  },
+
+  'PUT /admin/api/me/watches/:aircraftId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ method: 'PUT', url: '/admin/api/me/watches/SP-BBB', headers: writer(a) })).statusCode,
+    ).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB' AND pilot_id = 'AKO'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
+  'DELETE /admin/api/me/watches/:aircraftId': async ({ app, db, a }) => {
+    expect(
+      (await app.inject({ method: 'DELETE', url: '/admin/api/me/watches/SP-BBB', headers: writer(a) })).statusCode,
+    ).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM aircraft_watches WHERE aircraft_id = 'SP-BBB'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
+  },
+
+  'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))
+        .statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/pilot/AKO', headers: bearer(a) });
+    expectClean(res, '/admin/api/bookings/:id/preview/pilot/:pilotId');
+    expect(res.json().pilot.id).toBe('AKO');
+  },
+
+  'GET /admin/api/bookings/:id/preview/aircraft': async ({ app, a }) => {
+    expect(
+      (await app.inject({ url: '/admin/api/bookings/book-b/preview/aircraft', headers: bearer(a) }))
+        .statusCode,
+    ).toBe(404);
+    const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/aircraft', headers: bearer(a) });
+    expectClean(res, '/admin/api/bookings/:id/preview/aircraft');
+    expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
 };
 
 /**
@@ -1379,6 +1723,9 @@ const NOT_CLUB_ROUTES: Record<string, string> = {
   'GET /auth/methods': 'metody logowania telefonu - konfiguracja serwera, publiczna z definicji',
   'PUT /me/password': 'własne hasło zalogowanego - poświadczenie osoby, nie dane klubu',
   'POST /admin/api/auth/password': 'logowanie panelu hasłem - poświadczenia osoby',
+  // issue #180: lustra tras telefonu pod prefiksem panelu - ten sam handler, bez sesji i bez klubu.
+  'POST /admin/api/auth/password/forgot': '„Nie pamiętam hasła" z panelu - zawsze 202, bez danych; list idzie do adresu z formularza',
+  'POST /admin/api/auth/signup': 'rejestracja e-mailem z panelu - zawsze 202, osoba powstaje bez klubu przy realizacji linku',
   'GET /admin/api/auth/methods': 'metody logowania panelu - konfiguracja serwera, publiczna z definicji',
   'PUT /admin/api/me/password': 'własne hasło zalogowanego w panelu - poświadczenie osoby, nie dane klubu',
   'GET /admin/api/auth/google-client': 'identyfikator klienta Google - publiczny z definicji',

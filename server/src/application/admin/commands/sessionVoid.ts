@@ -40,6 +40,9 @@ import type {
   EventsStorePort,
   SessionsProjectionPort,
 } from '../../common/ports.ts';
+import { aircraftReleased } from '../../common/notify/aircraftNotices.ts';
+import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
+import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -101,6 +104,8 @@ interface Applied {
   candidate: Event;
   state: SessionState;
   warnings: RuleViolation[];
+  /** Wiadomości do obserwujących maszynę (3.2.0) - budzik dzwoni po commicie. */
+  notices: NotificationDraft[];
 }
 
 export class AdminSessionVoidCommands {
@@ -114,6 +119,13 @@ export class AdminSessionVoidCommands {
     private readonly clock: Clock,
     /** Generator uuid - funkcja, nie port: nie ma tu adaptera do podmiany. */
     private readonly newId: () => string,
+    /**
+     * Obserwowanie samolotu (3.2.0, issue #205; §5.4): unieważnienie operacji W TOKU
+     * rodzi obserwującym „zdana" z `closedBy: 'admin'` i powodem, bez odczytów. Bez tego
+     * obserwujący, który dostał „uruchomiona", nigdy nie dostałby domknięcia - a maszyna
+     * w jego skrzynce latałaby bez końca. `null` = wyłączone.
+     */
+    private readonly watching: AircraftWatching | null = null,
   ) {}
 
   async voidSession(actor: Actor, input: SessionVoidInput): Promise<SessionVoidOutcome> {
@@ -167,8 +179,39 @@ export class AdminSessionVoidCommands {
         const state = projectSession(after);
         await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
 
+        // Obserwujący maszynę: „zdana" z ręki administratora, bez sprawców (administrator,
+        // PIC i Dual operacji), tą samą transakcją, co zapis i ślad audytu.
+        // Wyłącznie dla operacji W TOKU - unieważnienie już zdanej niczego nie domyka.
+        let notices: NotificationDraft[] = [];
+        if (this.watching != null && row.status === 'active') {
+          const audience = await this.watching.audience(tx, orgId, row.aircraftId, [
+            actor.pilotId,
+            row.picId,
+            row.dualId,
+          ]);
+          if (audience != null) {
+            notices = aircraftReleased(audience, {
+              sessionUuid: input.sessionUuid,
+              aircraftId: row.aircraftId,
+              pilotId: row.picId,
+              dualId: row.dualId,
+              at: at.getTime(),
+              engineStartAt: before.legs[0]?.startedAt ?? null,
+              engineStopAt: before.legs[0]?.stoppedAt ?? null,
+              blockMs: before.blockTimeMs,
+              flights: before.flights.length,
+              fuelEndL: null,
+              mhEnd: null,
+              noFlightReason: null,
+              closedBy: 'admin',
+              reason: input.reason,
+            });
+            await this.watching.record(tx, orgId, notices, at);
+          }
+        }
+
         return {
-          result: { candidate, state, warnings },
+          result: { candidate, state, warnings, notices },
           audit: {
             action: 'session.void',
             targetType: 'session',
@@ -197,6 +240,9 @@ export class AdminSessionVoidCommands {
       }
       throw err;
     }
+
+    // Budzik PO commicie: awaria dostawcy push nie cofa decyzji administratora.
+    if (this.watching != null) await this.watching.wake(actor.orgId, applied.notices);
 
     return {
       ok: true,

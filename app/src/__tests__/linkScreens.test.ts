@@ -16,8 +16,8 @@ import { SIGNUP_SENT_TEXT, canSignUp, normalizeName } from '../ui/screens/logic/
 
 describe('00G - „Nie pamiętam hasła"', () => {
   it('podstawia adres z 00F, ale KODU PILOTA nie - z kodu serwer adresu nie zdradzi', () => {
-    expect(emailPrefill('  tmk@ninerdeck.pl ')).toBe('tmk@ninerdeck.pl');
-    expect(emailPrefill('AKO')).toBe('');
+    expect(emailPrefill('  adam@ninerdeck.pl ')).toBe('adam@ninerdeck.pl');
+    expect(emailPrefill('BNO')).toBe('');
     expect(emailPrefill('')).toBe('');
   });
 
@@ -26,7 +26,7 @@ describe('00G - „Nie pamiętam hasła"', () => {
     // a ekran, który ma odpowiadać zawsze tak samo, nie różnicuje niczego sam z siebie.
     expect(canSendLink('')).toBe(false);
     expect(canSendLink('   ')).toBe(false);
-    expect(canSendLink('tmk@')).toBe(true);
+    expect(canSendLink('ako@')).toBe(true);
     expect(canSendLink('cokolwiek')).toBe(true);
   });
 
@@ -46,13 +46,13 @@ describe('00G - „Nie pamiętam hasła"', () => {
 describe('00H - „Załóż konto"', () => {
   it('oba pola wymagane, ale liczby członów nazwiska NIE sprawdzamy', () => {
     expect(canSignUp('', 'kto@gmail.com')).toBe(false);
-    expect(canSignUp('Tomasz Małkiewicz', '  ')).toBe(false);
+    expect(canSignUp('Adam Kowalski', '  ')).toBe(false);
     // „Jan" jest kompletnym imieniem człowieka, który tak się przedstawia.
     expect(canSignUp('Jan', 'kto@gmail.com')).toBe(true);
   });
 
   it('nazwisko idzie bez zewnętrznych spacji i bez podwójnych w środku', () => {
-    expect(normalizeName('  Tomasz   Małkiewicz ')).toBe('Tomasz Małkiewicz');
+    expect(normalizeName('  Adam   Kowalski ')).toBe('Adam Kowalski');
   });
 
   it('potwierdzenie opisuje OBA wyniki naraz - adres wolny i zajęty', () => {

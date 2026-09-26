@@ -26,10 +26,10 @@ import type { AdminMembershipQueries } from '../../../application/admin/queries/
 import type { AdminMembershipDecision } from '../../../application/admin/contracts/memberships.ts';
 import type { MembershipDecided } from '../../../application/admin/commands/memberships.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
-import { accountToWire, pilotCode, pilotIdParams, pilotRole } from './pilotFields.ts';
+import { accountToWire, capabilitySet, pilotCode, pilotIdParams } from './pilotFields.ts';
 
 /** Zatwierdzenie nadaje kod i rolę - oba WYMAGANE, bo aktywny ⟺ ma kod. */
-const approveBody = z.object({ code: pilotCode, role: pilotRole });
+const approveBody = z.object({ code: pilotCode, capabilities: capabilitySet });
 
 /**
  * Powód odrzucenia jest WYMAGANY (min. 3 znaki po przycięciu).

@@ -71,11 +71,15 @@ export function AppShell({
   logoutPending,
   children,
 }: AppShellProps) {
-  const items = navItemsFor(capabilities);
+  // Rodzaj sesji rozstrzyga Kalendarz (issue #216): każda sesja KLUBU go ma - także
+  // z pustym zakresem - a platforma nie ma go wcale. Bez kafla zakresu (rama w testach)
+  // rysujemy ramę klubu, bo platforma ZAWSZE ma kafel.
+  const kind = scope?.kind ?? 'org';
+  const items = navItemsFor(capabilities, kind);
   return (
     <>
       <header className="topbar">
-        <Link className="brand" to={homeFor(capabilities)}>
+        <Link className="brand" to={homeFor(capabilities, kind)}>
           <span className="brand-mark">
             <PlaneIcon size={14} />
           </span>

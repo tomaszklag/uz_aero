@@ -119,7 +119,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // Pierwszy dzień w klubie jest stanem normalnym. 404 mówiłoby „zasobu nie ma",
     // a zasób jest - rejestr tego pilota jest po prostu pusty.
     const { app } = await testHarness();
-    const res = await pull(app, await login(app, 'TMK'));
+    const res = await pull(app, await login(app, 'AKO'));
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ events: [], nextCursor: null, hasMore: false });
@@ -130,13 +130,13 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // „Historia dni" pokazuje wszystko, co leży w rejestrze telefonu, więc dopisanie
     // cudzej sesji dałoby pilotowi dzień, którego nie prowadził - z ołówkiem korekty.
     const { app } = await testHarness();
-    await send(app, 'TMK', [{ uuid: 'evt-moje-1', session: 's-tmk', pic: 'TMK' }]);
+    await send(app, 'AKO', [{ uuid: 'evt-moje-1', session: 's-ako', pic: 'AKO' }]);
     await send(app, 'KRZ', [
       { uuid: 'evt-cudze-1', session: 's-krz', pic: 'KRZ' },
-      { uuid: 'evt-cudze-2-dual', session: 's-krz-dual', pic: 'KRZ', dual: 'TMK' },
+      { uuid: 'evt-cudze-2-dual', session: 's-krz-dual', pic: 'KRZ', dual: 'AKO' },
     ]);
 
-    const body = (await pull(app, await login(app, 'TMK'))).json();
+    const body = (await pull(app, await login(app, 'AKO'))).json();
     expect(body.events.map((e: { uuid: string }) => e.uuid)).toEqual(['evt-moje-1']);
   });
 
@@ -147,8 +147,8 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     const { app } = await testHarness();
     const sent = envelope({
       uuid: 'evt-pelna-koperta',
-      session: 's-tmk',
-      pic: 'TMK',
+      session: 's-ako',
+      pic: 'AKO',
       dual: 'KRZ',
       type: 'preflight_confirm',
       payload: {
@@ -160,12 +160,12 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
       },
     });
 
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
     await app.inject({
       method: 'POST',
       url: '/events',
       headers: { authorization: `Bearer ${token}` },
-      payload: { events: [envelope({ uuid: 'evt-claim-1', session: 's-tmk', pic: 'TMK' }), sent] },
+      payload: { events: [envelope({ uuid: 'evt-claim-1', session: 's-ako', pic: 'AKO' }), sent] },
     });
 
     const body = (await pull(app, token)).json();
@@ -189,18 +189,18 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // transakcja, więc jej wiersze mają wspólny stempel i rozstrzyga je dopiero uuid.
     // Granica strony wypada wtedy w ŚRODKU paczki - i to jest przypadek, dla którego
     // tie-breaker w kursorze w ogóle istnieje.
-    await send(app, 'TMK', [
-      { uuid: 'evt-a1xx', session: 's1', pic: 'TMK' },
-      { uuid: 'evt-a2xx', session: 's1', pic: 'TMK', type: 'engine_start' },
-      { uuid: 'evt-a3xx', session: 's1', pic: 'TMK', type: 'takeoff', payload: { method: 'manual' } },
+    await send(app, 'AKO', [
+      { uuid: 'evt-a1xx', session: 's1', pic: 'AKO' },
+      { uuid: 'evt-a2xx', session: 's1', pic: 'AKO', type: 'engine_start' },
+      { uuid: 'evt-a3xx', session: 's1', pic: 'AKO', type: 'takeoff', payload: { method: 'manual' } },
     ]);
-    await send(app, 'TMK', [
-      { uuid: 'evt-b1xx', session: 's1', pic: 'TMK', type: 'landing', payload: { method: 'manual' } },
-      { uuid: 'evt-b2xx', session: 's1', pic: 'TMK', type: 'engine_stop' },
+    await send(app, 'AKO', [
+      { uuid: 'evt-b1xx', session: 's1', pic: 'AKO', type: 'landing', payload: { method: 'manual' } },
+      { uuid: 'evt-b2xx', session: 's1', pic: 'AKO', type: 'engine_stop' },
     ]);
     await send(app, 'KRZ', [{ uuid: 'evt-obcy-1', session: 's-krz', pic: 'KRZ' }]);
 
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
     const seen = await pullAll(app, token, 2);
 
     expect(new Set(seen)).toEqual(new Set(['evt-a1xx', 'evt-a2xx', 'evt-a3xx', 'evt-b1xx', 'evt-b2xx']));
@@ -214,12 +214,12 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // stronie - inaczej telefon nie miałby czego zapamiętać i przy każdej okazji
     // ściągałby ogon rejestru od nowa.
     const { app } = await testHarness();
-    await send(app, 'TMK', [
-      { uuid: 'evt-stare-1', session: 's1', pic: 'TMK' },
-      { uuid: 'evt-stare-2', session: 's1', pic: 'TMK', type: 'engine_start' },
+    await send(app, 'AKO', [
+      { uuid: 'evt-stare-1', session: 's1', pic: 'AKO' },
+      { uuid: 'evt-stare-2', session: 's1', pic: 'AKO', type: 'engine_start' },
     ]);
 
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
     const all = (await pull(app, token, '?limit=50')).json();
     expect(all.events.map((e: { uuid: string }) => e.uuid)).toEqual(['evt-stare-1', 'evt-stare-2']);
     expect(all.hasMore).toBe(false);
@@ -231,7 +231,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     const quiet = (await pull(app, token, end)).json();
     expect(quiet).toEqual({ events: [], nextCursor: null, hasMore: false });
 
-    await send(app, 'TMK', [{ uuid: 'evt-nowe-1', session: 's2', pic: 'TMK' }]);
+    await send(app, 'AKO', [{ uuid: 'evt-nowe-1', session: 's2', pic: 'AKO' }]);
 
     const after = (await pull(app, token, end)).json();
     expect(after.events.map((e: { uuid: string }) => e.uuid)).toEqual(['evt-nowe-1']);
@@ -242,9 +242,9 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
     // Ciche zaczęcie od początku byłoby gorsze niż błąd: telefon uznałby, że posunął
     // się naprzód, a stanąłby w miejscu - i robiłby to przy każdej okazji synca.
     const { app } = await testHarness();
-    await send(app, 'TMK', [{ uuid: 'evt-e1xx', session: 's1', pic: 'TMK' }]);
+    await send(app, 'AKO', [{ uuid: 'evt-e1xx', session: 's1', pic: 'AKO' }]);
 
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
     const res = await pull(app, token, '?cursor=to-nie-jest-kursor');
 
     expect(res.statusCode).toBe(400);
@@ -253,7 +253,7 @@ describe('GET /me/events (odtworzenie rejestru telefonu)', () => {
 
   it('limit spoza zakresu → 400 (koperta ma jeden sufit w obie strony)', async () => {
     const { app } = await testHarness();
-    const token = await login(app, 'TMK');
+    const token = await login(app, 'AKO');
 
     expect((await pull(app, token, '?limit=501')).statusCode).toBe(400);
     expect((await pull(app, token, '?limit=0')).statusCode).toBe(400);

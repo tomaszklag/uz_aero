@@ -20,6 +20,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
+
 import type { Database, Queryable } from '../src/application/common/ports.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { MIGRATIONS } from '../src/infrastructure/pg/schema.ts';
@@ -234,21 +236,41 @@ describe('migracja 8 - backfill jednego klubu z danych 1.x', () => {
     }
   });
 
-  it('każde konto 1.x → członkostwo z tym samym kodem, rolą i znacznikiem unieważnienia', async () => {
+  it('każde konto 1.x → członkostwo z kodem, ZAKRESEM z roli i znacznikiem unieważnienia', async () => {
     const db = await legacyClubDb();
     await migrate(db, MIGRATIONS, { seedOrg: { name: 'Klub', slug: 'klub' } });
 
     const { rows } = await db.query<{
       pilot_id: string;
       code: string;
-      role: string;
       status: string;
       joined_via: string;
       credentials_valid_from: string | Date | null;
-    }>('SELECT pilot_id, code, role, status, joined_via, credentials_valid_from FROM memberships ORDER BY pilot_id');
+    }>('SELECT pilot_id, code, status, joined_via, credentials_valid_from FROM memberships ORDER BY pilot_id');
     expect(rows.map((r) => ({ ...r, credentials_valid_from: r.credentials_valid_from == null ? null : 'set' }))).toEqual([
-      { pilot_id: 'PWI', code: 'PWI', role: 'pilot', status: 'disabled', joined_via: 'backfill', credentials_valid_from: 'set' },
-      { pilot_id: 'admin', code: 'admin', role: 'admin', status: 'active', joined_via: 'backfill', credentials_valid_from: null },
+      { pilot_id: 'PWI', code: 'PWI', status: 'disabled', joined_via: 'backfill', credentials_valid_from: 'set' },
+      { pilot_id: 'admin', code: 'admin', status: 'active', joined_via: 'backfill', credentials_valid_from: null },
+    ]);
+
+    // ══ DRUGI BACKFILL, TA SAMA BAZA: ROLA → ZBIÓR ZDOLNOŚCI (migracja 12, #197) ══
+    // Konto 1.x z rolą `admin` ma po obu migracjach KOMPLET zdolności klubowych,
+    // a pilot - ani jednej. Kolumny roli już nie ma, więc to jedyne miejsce, z którego
+    // da się odczytać, kto przed wdrożeniem miał władzę nad klubem.
+    const caps = await db.query<{ pilot_id: string; capability: string }>(
+      'SELECT pilot_id, capability FROM membership_capabilities ORDER BY pilot_id, capability',
+    );
+    expect(caps.rows.filter((r) => r.pilot_id === 'PWI')).toEqual([]);
+    expect(caps.rows.filter((r) => r.pilot_id === 'admin').map((r) => r.capability)).toEqual([
+      'accounts.manage',
+      'audit.read',
+      'events.correct',
+      'flags.resolve',
+      'fleet.manage',
+      'maintenance.run',
+      'panel.access',
+      'reservations.approve',
+      'reservations.manage',
+      'thresholds.manage',
     ]);
 
     // Wyłączone konto stało się wyłączonym CZŁONKOSTWEM, a osoba jest odtąd aktywna
@@ -351,15 +373,15 @@ describe('migracja 8 - backfill jednego klubu z danych 1.x', () => {
 describe('logowanie: klub aktywny w tokenie i w odpowiedzi', () => {
   it('osoba z JEDNYM członkostwem dostaje token tego klubu, `org` i komplet członkostw', async () => {
     const { app, tokens } = await testHarness();
-    const res = await login(app, 'TMK');
+    const res = await login(app, 'AKO');
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.org).toEqual({ id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' });
     expect(body.memberships).toEqual([
-      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'TMK', role: 'admin' },
+      { org: { id: ORG_A, slug: 'aeroklub-alfa', name: 'Aeroklub Alfa' }, code: 'AKO' },
     ]);
-    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin' });
+    expect(tokens.verify(body.token)).toMatchObject({ pilotId: 'AKO', orgId: ORG_A, code: 'AKO' });
   });
 
   it('osoba w DWU klubach: klub aktywny = pierwszy alfabetycznie, kod z TEGO klubu, dwa członkostwa', async () => {
@@ -475,7 +497,7 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     const res = await panelLogin(app, googleTokenFor('BAD'));
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
-      pilot: { id: 'BAD', code: 'BAD', role: 'admin' },
+      pilot: { id: 'BAD', code: 'BAD' },
       org: { id: ORG_B, slug: 'aeroklub-beta', name: 'Aeroklub Beta' },
     });
 
@@ -491,11 +513,13 @@ describe('logowanie do panelu: sesja klubu albo sesja platformowa', () => {
     expect(me.json().pilot.code).toBe('BAD');
   });
 
-  it('pilot BEZ roli panelu w żadnym klubie → 403 `no_panel_access`', async () => {
+  it('pilot bez ani jednej zdolności WCHODZI do panelu z pustym zakresem (issue #216)', async () => {
+    // Do 3.1.0 odbijał się tu o `no_panel_access`; odtąd odmowę dostaje wyłącznie osoba
+    // bez aktywnego członkostwa (`no_membership`, `adminAuth.test.ts`).
     const { app } = await testHarness();
     const res = await panelLogin(app, googleTokenFor('PWI'));
-    expect(res.statusCode).toBe(403);
-    expect(res.json()).toEqual({ error: 'no_panel_access' });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json()).toMatchObject({ org: { id: ORG_A }, capabilities: [] });
   });
 
   it('SUPERADMINISTRATOR bez klubu dostaje sesję PLATFORMOWĄ: `org: null`, sama zdolność `platform.manage`', async () => {
@@ -611,10 +635,10 @@ describe('to samo w dwóch klubach to dwa byty', () => {
        VALUES ('SP-AXA-B', $1, 'SP-AXA', 'Cessna 182', 330, 'hhmm')`,
       [ORG_B],
     );
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
     const b = await tokenOf(app, 'BAD');
 
-    expect((await post(app, a, day('sess-a', 'SP-AXA', 'TMK'))).statusCode).toBe(200);
+    expect((await post(app, a, day('sess-a', 'SP-AXA', 'AKO'))).statusCode).toBe(200);
     expect((await post(app, b, day('sess-b', 'SP-AXA-B', 'BAD'))).statusCode).toBe(200);
 
     // Po jednej karcie na klub, każda w kluczu SWOJEGO klubu.
@@ -632,7 +656,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     // Własna karta - z własnym pilotem…
     const seenByA = await read(a, '2026-06-22_SP-AXA');
     expect(seenByA.statusCode).toBe(200);
-    expect(JSON.stringify(seenByA.json().rows)).toContain('TMK');
+    expect(JSON.stringify(seenByA.json().rows)).toContain('AKO');
     const seenByB = await read(b, '2026-06-22_SP-AXA-B');
     expect(seenByB.statusCode).toBe(200);
     expect(JSON.stringify(seenByB.json().rows)).toContain('BAD');
@@ -645,19 +669,19 @@ describe('to samo w dwóch klubach to dwa byty', () => {
   it('ten sam KOD pilota w dwóch klubach jest dopuszczalny, w jednym - nie', async () => {
     const { db } = await testHarness();
     await db.query(`INSERT INTO pilots (id, name, email, active) VALUES ('X', 'Ktoś', 'x@x.pl', TRUE)`);
-    // TMK jest zajęty w Alfie…
+    // AKO jest zajęty w Alfie…
     await expect(
       db.query(
-        `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+         VALUES ($1, 'X', 'AKO', 'active', 'platform')`,
         [ORG_A],
       ),
     ).rejects.toThrow();
     // …a w Becie wolny.
     await expect(
       db.query(
-        `INSERT INTO memberships (org_id, pilot_id, code, role, status, joined_via)
-         VALUES ($1, 'X', 'TMK', 'pilot', 'active', 'platform')`,
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via)
+         VALUES ($1, 'X', 'AKO', 'active', 'platform')`,
         [ORG_B],
       ),
     ).resolves.toBeDefined();
@@ -669,7 +693,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     const a = (await app.inject({
       method: 'GET',
       url: '/reference',
-      headers: { authorization: `Bearer ${await tokenOf(app, 'TMK')}` },
+      headers: { authorization: `Bearer ${await tokenOf(app, 'AKO')}` },
     })).json();
     const b = (await app.inject({
       method: 'GET',
@@ -680,7 +704,7 @@ describe('to samo w dwóch klubach to dwa byty', () => {
     expect(a.aircraft.map((x: { reg: string }) => x.reg).sort()).toEqual(['SP-ANK', 'SP-AXA', 'SP-FGK', 'SP-KWA']);
     expect(b.aircraft.map((x: { reg: string }) => x.reg)).toEqual(['SP-BBB']);
 
-    expect(a.pilots.map((p: { code: string }) => p.code).sort()).toEqual(['AKO', 'JSE', 'KRZ', 'PWI', 'TMK']);
+    expect(a.pilots.map((p: { code: string }) => p.code).sort()).toEqual(['AKO', 'BNO', 'JSE', 'KRZ', 'PWI']);
     // PWI w Becie nazywa się PWB - ta sama osoba, kod z członkostwa w klubie z tokenu.
     expect(b.pilots.map((p: { id: string; code: string }) => [p.id, p.code])).toEqual([
       ['BAD', 'BAD'],
@@ -700,15 +724,17 @@ describe('to samo w dwóch klubach to dwa byty', () => {
         })
       ).json();
 
-    const alfa = await listFor('TMK');
+    const alfa = await listFor('AKO');
     const beta = await listFor('BAD');
-    expect(alfa.items.map((i: { code: string }) => i.code).sort()).toEqual(['AKO', 'JSE', 'KRZ', 'PWI', 'TMK']);
+    expect(alfa.items.map((i: { code: string }) => i.code).sort()).toEqual(['AKO', 'BNO', 'JSE', 'KRZ', 'PWI']);
     expect(beta.items.map((i: { id: string; code: string; orgId: string }) => [i.id, i.code, i.orgId])).toEqual([
       ['BAD', 'BAD', ORG_B],
       ['BPI', 'BPI', ORG_B],
       ['PWI', 'PWB', ORG_B],
     ]);
-    expect(beta.counts).toMatchObject({ total: 3, admin: 1, pilot: 2 });
+    // Podziału po rolach w licznikach nie ma (epik #197) - kafel liczy CZŁONKÓW,
+    // a na pytanie „kto wejdzie do panelu" odpowiada chip ze zdolnością.
+    expect(beta.counts).toMatchObject({ total: 3, active: 3 });
   });
 });
 
@@ -725,9 +751,9 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
   it('paczka z tokenu klubu A do maszyny klubu B → 200 z kompletem uuidów w `withheld`, zero wierszy', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
 
-    const batch = day('sess-x', 'SP-BBB', 'TMK');
+    const batch = day('sess-x', 'SP-BBB', 'AKO');
     const res = await post(app, a, batch);
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ accepted: 0, duplicates: 0 });
@@ -739,10 +765,10 @@ describe('ingest wstrzymuje zapis do cudzego klubu', () => {
   it('w JEDNEJ paczce zapisy do własnego klubu wchodzą, a do cudzego są wstrzymane', async () => {
     const { app, db } = await testHarness();
     await seedBetaFleet(db);
-    const a = await tokenOf(app, 'TMK');
+    const a = await tokenOf(app, 'AKO');
 
-    const own = day('sess-own', 'SP-AXA', 'TMK');
-    const foreign = day('sess-foreign', 'SP-BBB', 'TMK');
+    const own = day('sess-own', 'SP-AXA', 'AKO');
+    const foreign = day('sess-foreign', 'SP-BBB', 'AKO');
     const res = await post(app, a, [...own, ...foreign]);
     expect(res.statusCode).toBe(200);
     expect(res.json().accepted).toBe(own.length);

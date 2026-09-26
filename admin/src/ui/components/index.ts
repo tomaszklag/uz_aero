@@ -23,6 +23,7 @@ export { PageHead } from './PageHead';
 export { PasswordInput } from './PasswordInput';
 export { Pill, type PillTone } from './Pill';
 export { SearchInput } from './SearchInput';
+export { Select } from './Select';
 export { TableSkeleton } from './TableSkeleton';
 export { TextInput } from './TextInput';
 export { TrackMap, type MapPlot } from './TrackMap';

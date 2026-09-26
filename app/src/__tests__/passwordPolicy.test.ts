@@ -55,10 +55,10 @@ describe('polityka hasła (NIST SP 800-63B)', () => {
   });
 
   it('fragment imienia i nazwiska blokuje, bez ogonków i wielkości liter', () => {
-    const context = { name: 'Tomasz Małkiewicz' };
-    expect(checkPassword('malkiewicz2026', context)).toBe('contains_name');
-    expect(checkPassword('TOMASZ-lata-wysoko', context)).toBe('contains_name');
-    expect(checkPassword('tomaszmalkiewicz', context)).toBe('contains_name');
+    const context = { name: 'Adam Kowalski' };
+    expect(checkPassword('kowalski2026', context)).toBe('contains_name');
+    expect(checkPassword('ADAM-lata-wysoko', context)).toBe('contains_name');
+    expect(checkPassword('adamkowalski', context)).toBe('contains_name');
     expect(checkPassword('szybowiec nad polem', context)).toBeNull();
   });
 

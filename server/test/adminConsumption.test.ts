@@ -35,7 +35,7 @@ function wire(
     uuid: `cons-${seq}-${type}`,
     sessionUuid,
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -106,7 +106,7 @@ async function ingest(app: Harness['app'], events: object[]): Promise<void> {
   const res = await app.inject({
     method: 'POST',
     url: '/events',
-    headers: bearer(await token(app, 'TMK')),
+    headers: bearer(await token(app, 'AKO')),
     payload: { events },
   });
   if (res.statusCode !== 200) throw new Error(`ingest odrzucony: ${res.statusCode} ${res.body}`);
@@ -153,7 +153,7 @@ async function report(app: Harness['app'], query = '') {
   const res = await app.inject({
     method: 'GET',
     url: `/admin/api/fleet/SP-AXA/consumption${query}`,
-    headers: bearer(await token(app, 'TMK')),
+    headers: bearer(await token(app, 'AKO')),
   });
   expect(res.statusCode).toBe(200);
   return res.json();
@@ -267,7 +267,7 @@ describe('A10b · poniżej progu publikacji ekran mówi „za mało danych"', ()
     const res = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-FGK/consumption',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
 
     expect(res.statusCode).toBe(200);
@@ -283,7 +283,7 @@ describe('A10a · brama uprawnień i walidacja', () => {
     const panel = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-AXA/consumption',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
     expect(panel.statusCode).toBe(200);
 
@@ -310,7 +310,7 @@ describe('A10a · brama uprawnień i walidacja', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-NIEMA/consumption',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
     expect(res.statusCode).toBe(404);
     expect(res.json()).toEqual({ error: 'not_found' });
@@ -321,7 +321,7 @@ describe('A10a · brama uprawnień i walidacja', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-AXA/consumption?from=2026-02-30',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: 'bad_request' });
@@ -332,7 +332,7 @@ describe('A10a · brama uprawnień i walidacja', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/admin/api/fleet/SP-AXA/consumption?from=2026-06-30&to=2026-06-01',
-      headers: bearer(await token(app, 'TMK')),
+      headers: bearer(await token(app, 'AKO')),
     });
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: 'bad_range' });

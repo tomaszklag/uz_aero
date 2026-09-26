@@ -7,7 +7,7 @@
  * (`GET /aircraft/:id/readings-chain`); ten moduł zamienia to na dwie rzeczy:
  *
  *  • **wiersze odniesienia w arkuszu odczytu** - liczba Z PODANYM ŹRÓDŁEM („zostawione
- *    przed lotem · AKO · 16 SIE 09:00"). Zgłoszenie mówiło wprost: „jeśli jest domyślna
+ *    przed lotem · BNO · 16 SIE 09:00"). Zgłoszenie mówiło wprost: „jeśli jest domyślna
  *    wartość, to należy wypisać, z czego ona wynika";
  *  • **ostrzeżenia o rozjeździe** - i tylko ostrzeżenia.
  *

@@ -11,7 +11,7 @@
  * szło przed 3.0.0. Degraduje się łagodnie, bo nigdy nie było warunkiem lotu.
  *
  * ══ NAZWISKO ZA SEPARATOREM ══
- * „zarezerwowana przez A. Kowalską" wymaga dopełniacza, a odmiany nie da się wyprowadzić
+ * „zarezerwowana przez J. Nowaka" wymaga dopełniacza, a odmiany nie da się wyprowadzić
  * regułą - ta sama decyzja, co przy powodach sugestii i odmowie zapisu.
  */
 

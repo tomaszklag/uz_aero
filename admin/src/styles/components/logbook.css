@@ -75,3 +75,87 @@ tbody tr.voided td {
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
+
+/**
+ * ══ DOBA NAGŁÓWKIEM (3.2.0, `docs/panel-3.2.md` §4.3) ══
+ *
+ * Grupowanie dniami na poziomie 2 obu osi: `<tbody class="day">` na dobę, a jego
+ * pierwszy wiersz to nagłówek z datą i SUMAMI doby (Operacje · Loty · Blok · Lot).
+ * Kolumna z datą przy każdym wierszu ZNIKŁA - powtarzałaby nagłówek stojący centymetr
+ * wyżej. Ten sam kształt dostała historia w telefonie (makieta `24`) i to jest
+ * zamierzone: jedna rzecz ma w produkcie jeden kształt (issue #42).
+ *
+ * Sumy przychodzą Z SERWERA (§4.4): strona kursorowa potrafi rozciąć dobę, a suma
+ * połowy doby policzona w przeglądarce wyglądałaby poprawnie. Nagłówek na tle
+ * `--surface-raised`, żeby dzielił listę bez drugiej ramki; kolejna doba dostaje
+ * mocniejszy włos od góry.
+ */
+tr.day-row th {
+  text-align: left;
+  padding: 9px 12px 7px;
+  background: var(--surface-raised);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody.day + tbody.day tr.day-row th {
+  border-top: 1px solid var(--border-strong);
+}
+
+tr.day-row:hover {
+  background: none;
+}
+
+.day-row-in {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+/* Dzień tygodnia obok daty krojem tekstowym i lżej: to podpis, nie druga data. */
+.day-dow {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Sumy doby po prawej, mono - liczba mocna, jednostka i nazwa wielkości lżej.
+   Kolejność jest STAŁA (Operacje · Loty · Blok · Lot), więc etykiety są krótkie. */
+.day-sums {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.day-sums b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Wiersz operacji, w której osoba z osi PILOTA była DRUGIM pilotem: obecny, ale
+   przygaszony i poza sumami doby - nalot liczy się dowódcy (ta sama atrybucja, co
+   w statystykach, §4.5). Reguła `tr.muted` z tabeli; klasa własna tylko po to, żeby
+   grep znajdował ten przypadek. */
+tbody tr.as-dual td {
+  color: var(--text-muted);
+}
+
+tbody tr.as-dual .cell-strong,
+tbody tr.as-dual .reg {
+  color: var(--text-secondary);
+}
+
+/* Nazwisko i znak w wierszu doby nie łamią się: dziesięć kolumn poziomu 2 zostawia
+   kolumnie „Pilot" tyle miejsca, ile trzeba na skrócone nazwisko - a „A. Kowalski"
+   złamane na dwie linie rozciągało wiersz, choć dane są jednowierszowe. */
+tbody.day .cell-strong,
+tbody.day .reg {
+  white-space: nowrap;
+}

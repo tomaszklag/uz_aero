@@ -32,8 +32,20 @@ import type {
   PasswordLoginResult,
   SetPasswordResult,
   BookingWriteResult,
+  DecisionRefusal,
+  DecisionResult,
+  InboxCursor,
+  RemoteApproval,
+  RemoteApprovalQueue,
+  RemoteAircraftPreview,
+  RemoteAircraftCard,
+  RemoteAircraftOperations,
+  RemoteWatchList,
+  OperationsCursor,
+  RemoteInbox,
   RemoteBooking,
   RemoteBookingDetail,
+  RemotePilotPreview,
   RemoteBookingDraft,
   RemoteBookingPatch,
   RemoteCalendar,
@@ -448,6 +460,53 @@ export class HttpServerApi implements ServerPort {
     return this.request('GET', `/bookings/${encodeURIComponent(id)}`, { token });
   }
 
+  getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview> {
+    return this.request(
+      'GET',
+      `/bookings/${encodeURIComponent(bookingId)}/preview/pilot/${encodeURIComponent(pilotId)}`,
+      { token },
+    );
+  }
+
+  getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview> {
+    return this.request('GET', `/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`, {
+      token,
+    });
+  }
+
+  getAircraftCard(token: string, aircraftId: string): Promise<RemoteAircraftCard> {
+    return this.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/card`, { token });
+  }
+
+  getAircraftOperations(
+    token: string,
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations> {
+    const query = new URLSearchParams();
+    if (page?.limit != null) query.set('limit', String(page.limit));
+    if (page?.before != null) {
+      query.set('beforeAt', page.before.beforeAt);
+      query.set('beforeUuid', page.before.beforeUuid);
+    }
+    const suffix = query.toString();
+    const path = `/aircraft/${encodeURIComponent(aircraftId)}/operations`;
+    return this.request('GET', suffix === '' ? path : `${path}?${suffix}`, { token });
+  }
+
+  getAircraftWatches(token: string): Promise<RemoteWatchList> {
+    return this.request('GET', '/aircraft/watches', { token });
+  }
+
+  async setAircraftWatch(token: string, aircraftId: string, on: boolean): Promise<void> {
+    const response = await this.send(
+      on ? 'PUT' : 'DELETE',
+      `/aircraft/${encodeURIComponent(aircraftId)}/watch`,
+      { token },
+    );
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
   getSlotSuggestions(
     token: string,
     params: { aircraftId: string; day: number; minutes: number; preferredAt?: number },
@@ -499,6 +558,66 @@ export class HttpServerApi implements ServerPort {
       { token, body: reason == null ? {} : { reason } },
     );
     return this.write(response);
+  }
+
+  getInbox(token: string, page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox> {
+    const query = new URLSearchParams();
+    if (page?.limit != null) query.set('limit', String(page.limit));
+    if (page?.before != null) {
+      query.set('beforeAt', page.before.beforeAt);
+      query.set('beforeId', page.before.beforeId);
+    }
+    const suffix = query.toString();
+    return this.request('GET', suffix === '' ? '/me/notifications' : `/me/notifications?${suffix}`, {
+      token,
+    });
+  }
+
+  async markNotificationRead(token: string, id: string): Promise<void> {
+    const response = await this.send('POST', `/me/notifications/${encodeURIComponent(id)}/read`, {
+      token,
+    });
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  getApprovalQueue(token: string): Promise<RemoteApprovalQueue> {
+    return this.request('GET', '/me/approvals/queue', { token });
+  }
+
+  async registerPushToken(token: string, deviceToken: string): Promise<void> {
+    const response = await this.send('POST', '/me/push-token', { token, body: { token: deviceToken } });
+    if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
+  }
+
+  /**
+   * Decyzja idzie przez `send`, jak zapis rezerwacji: odmowa NIESIE KOD, który ekran
+   * nazywa przy przycisku („podaj powód", „to nie Twój krok"), a `request` zamieniłby
+   * ją w wyjątek. Awaria sieci zostaje wyjątkiem - „nie wiem, czy zapisano" to inna
+   * wiadomość niż odmowa.
+   */
+  async decideBooking(
+    token: string,
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult> {
+    const response = await this.send('POST', `/bookings/${encodeURIComponent(id)}/decision`, {
+      token,
+      body,
+    });
+    const parsed = (await response.json().catch(() => null)) as
+      | { error?: string; status?: string; approval?: RemoteApproval }
+      | null;
+    if (response.ok) {
+      if (parsed?.status == null || parsed.approval == null) {
+        throw new ServerRejectedError(response.status, `http_${response.status}`);
+      }
+      return { ok: true, status: parsed.status, approval: parsed.approval };
+    }
+    const refusal = parsed?.error;
+    if (refusal == null) throw new ServerRejectedError(response.status, `http_${response.status}`);
+    // 401 zostaje wyjątkiem, żeby `authorizedFetch` odświeżył token i ponowił.
+    if (response.status === 401) throw new ServerRejectedError(response.status, refusal);
+    return { ok: false, refusal: refusal as DecisionRefusal };
   }
 
   /** Odpowiedź zapisu → wynik: sukces z wierszem albo odmowa z tym, co koliduje. */

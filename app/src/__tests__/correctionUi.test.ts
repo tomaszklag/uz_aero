@@ -19,7 +19,7 @@ function event(type: Event['type'], time: number, payload: unknown = {}): Event 
     uuid: `e-${seq}-${type}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,

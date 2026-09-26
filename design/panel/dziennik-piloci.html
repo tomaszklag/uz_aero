@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - Panel · Dziennik: cała flota (oś pilotów)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">DZIENNIK · OŚ PILOTÓW</span>
+  <span class="slug">panel/dziennik-piloci · #/dziennik?os=piloci&amp;od=&amp;do= · poziom 1 · oś pilotów</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ten sam zakres dat, to samo pytanie zadane o ludzi</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dziennik - siedem ekranów jednej rodziny</div>
+  <a class="vp-item" href="dziennik-flota.html">
+    <span class="vp-badge">L1</span>
+    <span class="vp-body">
+      <span class="vp-name">Cała flota w zakresie dat</span>
+      <span class="vp-when">Wejście domyślne, oś MASZYN. Lista obejmuje TAKŻE maszyny, które w zakresie nie latały - wiersz zer jest odpowiedzią, po którą się przyszło. Przełącznik osi stoi PRZED zakresem dat.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="dziennik-piloci.html">
+    <span class="vp-badge">L1b</span>
+    <span class="vp-body">
+      <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="dziennik-maszyna.html">
+    <span class="vp-badge">L2</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednej maszyny - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi maszyn. DOBA JEST NAGŁÓWKIEM z sumami doby, kolumny z datą przy wierszu NIE MA; godzina zostaje przy operacji, bo dwie zmiany jednej maszyny różnią się wyłącznie godzinami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-pilot.html">
+    <span class="vp-badge">L2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Operacje jednego pilota - dobami</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-operacja.html">
+    <span class="vp-badge">L3</span>
+    <span class="vp-body">
+      <span class="vp-name">Jedna operacja</span>
+      <span class="vp-when">Pełna strona: oś zdarzeń, komplet odczytów, ślad GPS. DWA WYJŚCIA: okruszki prowadzą na oś maszyny, nazwisko pilota w szczegółach - na oś pilota. Tym „powiązaniem list" jest link w obie strony, nie trzecia lista.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-edycja.html">
+    <span class="vp-badge amber">L3b</span>
+    <span class="vp-body">
+      <span class="vp-name">Tryb edycji: korekta zdarzeń</span>
+      <span class="vp-when">Ten sam ekran po „Popraw zdarzenia": ołówek przy każdym wierszu osi, szuflada korekty czasu / wartości / unieważnienia z podglądem „przed → po", baner kolizji z pilotem (nigdy odmowa), powód wymagany, historia zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="dziennik-dopisanie.html">
+    <span class="vp-badge amber">L3c</span>
+    <span class="vp-body">
+      <span class="vp-name">Dopisanie brakującego zdarzenia</span>
+      <span class="vp-when">Ostatni wiersz osi w trybie edycji. Wąska siatka typów - bez uruchomienia i wyłączenia silnika, bo one wyznaczają kopertę operacji - czas w granicach biegu, powód wymagany. Jedyna nowa droga zapisu w 3.2.0.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="SZABLON.html">
+    <span class="vp-badge amber">BAZA</span>
+    <span class="vp-body">
+      <span class="vp-name">Szablon i inwentarz komponentów</span>
+      <span class="vp-when">Rama okna, kolumna boczna i klasy do skopiowania. Ten ekran nie powtarza inwentarza - pokazuje wyłącznie własne stany.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Dziennik - oś pilotów">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/dziennik?os=piloci&amp;od=2026-09-01&amp;do=2026-09-07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (3.2.0): sześć pozycji, plakietka przy „Do sprawdzenia"
+           WYŁĄCZNIE przy niezerowej liczbie. Kanoniczna postać: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item active" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+            <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
+          </a>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- Ten sam nagłówek, co na osi maszyn: to JEDEN ekran w dwóch osiach, a nie
+           drugi moduł. Tytuł nie zmienia się na „Piloci" - tak nazywa się moduł kont
+           w kolumnie obok, a tu dalej patrzymy na to, co się WYDARZYŁO. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Dziennik</h1>
+        </div>
+      </div>
+
+      <!-- Przełącznik osi z włączonymi „Piloci"; zakres dat i chipy TE SAME, co na
+           osi maszyn - przełączenie osi ich nie rusza. -->
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Oś dziennika">
+          <a class="seg-btn" href="dziennik-flota.html">Samoloty</a>
+          <a class="seg-btn on" href="dziennik-piloci.html" aria-current="page">Piloci</a>
+        </div>
+        <label class="daterange">
+          <span class="visually-hidden">Od dnia</span>
+          <input type="date" value="2026-09-01">
+        </label>
+        <span class="daterange-sep" aria-hidden="true">→</span>
+        <label class="daterange">
+          <span class="visually-hidden">Do dnia</span>
+          <input type="date" value="2026-09-07">
+        </label>
+        <button type="button" class="chip" aria-pressed="false">Dzisiaj</button>
+        <button type="button" class="chip" aria-pressed="false">Weekend</button>
+        <button type="button" class="chip" aria-pressed="false">30 dni</button>
+        <button type="button" class="chip on" aria-pressed="true">Ten miesiąc</button>
+        <button type="button" class="chip" aria-pressed="false">Poprzedni miesiąc</button>
+      </div>
+
+      <!-- ══ OŚ PILOTÓW ══
+           Wiersz na CZŁONKA KLUBU z wielkościami kafelka operacji z telefonu
+           (Operacje · Loty · Blok · Lot) plus dni i maszyny, na których latał.
+           Lista obejmuje TAKŻE tych, którzy w zakresie nie latali - tak samo jak oś
+           maszyn pokazuje maszynę z zerami: „czy Jakub w ogóle latał we wrześniu"
+           jest pytaniem, po które się tu przychodzi.
+
+           NALOT LICZY SIĘ DOWÓDCY. Loty jako drugi pilot NIE wchodzą do bloku ani
+           do liczby operacji - ta sama atrybucja, co w statystykach (docs/panel-3.2.md
+           §4.5: jedna podstawa liczenia). Są za to WIDOCZNE jako podpis w kolumnie
+           „Operacje" - nalot ucznia i egzaminowanego jest pytaniem, tylko innym.
+           Sumy tej osi i osi maszyn dla tego samego zakresu SĄ RÓWNE co do minuty
+           (19:45 bloku, 33 loty) - i to jest test, który ma przejść P-B. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Piloci w wybranym zakresie dat</caption>
+          <thead>
+            <tr>
+              <th>Pilot</th>
+              <th class="num">Dni</th>
+              <th class="num">Operacje</th>
+              <th class="num">Loty</th>
+              <th class="num">Blok</th>
+              <th class="num">Lot</th>
+              <th>Samoloty</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Adam Kowalski</span>
+                <span class="cell-sub mono">AKO</span>
+              </td>
+              <td class="num">4</td>
+              <td class="num">4<span class="cell-sub">+1 jako drugi pilot</span></td>
+              <td class="num">15</td>
+              <td class="num">07:40</td>
+              <td class="num">06:20</td>
+              <td><span class="reg">SP-AXA</span></td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+            <!-- Pilot, który właśnie trzyma maszynę: ten sam sygnał „leci teraz", co
+                 w wierszu maszyny na osi obok. Suma NIE OBEJMUJE operacji w toku.
+                 Barbara Nowak niżej ma operację WISZĄCĄ (SP-KLM od wczoraj) - ten sam
+                 podpis, inne zdanie: „zajęty od", bo to sprawa w „Do sprawdzenia". -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Anna Kowal</span>
+                <span class="cell-sub mono">AKW</span>
+                <span class="cell-sub warn">leci teraz · SP-AXA</span>
+              </td>
+              <td class="num">3</td>
+              <td class="num">4</td>
+              <td class="num">10</td>
+              <td class="num">06:13</td>
+              <td class="num">04:51</td>
+              <td><span class="reg">SP-AXA</span> <span class="reg">SP-TWG</span></td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Barbara Nowak</span>
+                <span class="cell-sub mono">BNO</span>
+                <span class="cell-sub warn">nie zdała SP-KLM od 6 WRZ 08:15</span>
+              </td>
+              <td class="num">2</td>
+              <td class="num">2</td>
+              <td class="num">6</td>
+              <td class="num">04:12</td>
+              <td class="num">03:20</td>
+              <td><span class="reg">SP-KLM</span></td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+            <!-- Uczeń: zero operacji jako dowódca, dwie jako drugi pilot. Wiersz
+                 przygaszony jak maszyna, która nie latała - ale podpis mówi, że
+                 w samolocie BYŁ. Bez tego podpisu kurs latania byłby na tej osi
+                 niewidoczny. -->
+            <tr class="clickable muted">
+              <td>
+                <span class="cell-strong">Jakub Wrona</span>
+                <span class="cell-sub mono">JWR</span>
+              </td>
+              <td class="num">0</td>
+              <td class="num">0<span class="cell-sub">2 jako drugi pilot</span></td>
+              <td class="num">0</td>
+              <td class="num">00:00</td>
+              <td class="num">00:00</td>
+              <td>—</td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">Marta Zięba</span>
+                <span class="cell-sub mono">MZI</span>
+              </td>
+              <td class="num">1</td>
+              <td class="num">1</td>
+              <td class="num">2</td>
+              <td class="num">01:40</td>
+              <td class="num">01:15</td>
+              <td><span class="reg">SP-KLM</span></td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+            <tr class="clickable muted">
+              <td>
+                <span class="cell-strong">Piotr Wróbel</span>
+                <span class="cell-sub mono">PWR</span>
+              </td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+              <td class="num">00:00</td>
+              <td class="num">00:00</td>
+              <td>—</td>
+              <td class="row-actions"><span class="cell-go" aria-hidden="true">→</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Członkowie WYŁĄCZENI z klubu nie mają tu wiersza: oś pyta o ludzi, którzy
+           mogą latać. Ich stare operacje zostają widoczne w osi maszyn i na poziomie 3. -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">← Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-piloci.html" class="active">Dziennik · piloci</a>
+  <span>·</span>
+  <a href="dziennik-pilot.html">Dziennik · pilot →</a>
+  <span>·</span>
+  <a href="dziennik-maszyna.html">Dziennik · maszyna</a>
+  <span>·</span>
+  <a href="statystyki.html">Statystyki</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Dlaczego oś, a nie drugi moduł</span>
+        <span class="inv-when">Zamówienie mówi wprost, że lista operacji maszyny i lista operacji pilota „są ze sobą powiązane". To ta sama doba i te same operacje, oglądane z dwóch stron - więc przełącznik na jednym ekranie, a nie pozycja w kolumnie. Konsekwencja, której pilnuje test: sumy obu osi dla tego samego zakresu są RÓWNE co do minuty. Dwie liczby nalotu na jednym ekranie panelu byłyby nie do obrony.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="filters">
+          <div class="seg" role="group" aria-label="Oś dziennika - przykład">
+            <span class="seg-btn on">Samoloty</span>
+            <span class="seg-btn">Piloci</span>
+          </div>
+          <span class="inv-mark">oś maszyn · 19:45 bloku · 33 loty</span>
+        </div>
+        <div class="filters">
+          <div class="seg" role="group" aria-label="Oś dziennika - przykład">
+            <span class="seg-btn">Samoloty</span>
+            <span class="seg-btn on">Piloci</span>
+          </div>
+          <span class="inv-mark">oś pilotów · 19:45 bloku · 33 loty</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Drugi pilot: widoczny, poza sumami - DO POTWIERDZENIA</span>
+        <span class="inv-when">Nalot liczy się dowódcy, jak w statystykach - inaczej godzina lotu szkolnego liczyłaby się dwa razy. Ale uczeń, który w zakresie nie był ani razu dowódcą, nie może na tej osi ZNIKNĄĆ - stąd podpis „2 jako drugi pilot" pod liczbą operacji i przygaszony wiersz z plakietką na poziomie 2. To jest decyzja produktowa (czy klub chce widzieć czas „w prawym fotelu" osobno) i makieta stawia ją na widoku, żeby właściciel mógł ją potwierdzić albo odrzucić przed P-B.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Wiersz ucznia - przykład</caption>
+            <thead><tr><th>Pilot</th><th class="num">Operacje</th><th class="num">Blok</th></tr></thead>
+            <tbody>
+              <tr class="muted">
+                <td><span class="cell-strong">Jakub Wrona</span><span class="cell-sub mono">JWR</span></td>
+                <td class="num">0<span class="cell-sub">2 jako drugi pilot</span></td>
+                <td class="num">00:00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Klub bez ani jednego członka</span>
+        <span class="inv-when">Jedyny stan pusty tej osi - i mówi o KLUBIE, nie o zakresie dat. Członek, który nie latał, ma tu swój wiersz zer, więc „nikt nie latał w tym tygodniu" nie jest stanem pustym. Wskazuje drogę: kod klubu, bo od 2.0.0 to jedyna droga do klubu.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <span class="empty-title">Nie ma jeszcze żadnego pilota</span>
+          <span class="empty-note">Podaj pilotom kod klubu - zgłoszenia zatwierdzisz w module Piloci.</span>
+          <a class="btn sm" href="piloci-kod-klubu.html">Kod klubu</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie</span>
+        <span class="inv-when">Plamki w geometrii ośmiu kolumn, sześć wierszy - tyle ma typowy klub. Nagłówki znamy lokalnie, więc stoją gotowe; nigdy spinner i nigdy pustka.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap" aria-busy="true">
+          <table>
+            <caption class="visually-hidden">Wczytywanie listy</caption>
+            <thead><tr><th>Pilot</th><th class="num">Dni</th><th class="num">Operacje</th><th class="num">Loty</th><th class="num">Blok</th><th class="num">Lot</th><th>Samoloty</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skeleton cell" style="width:150px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:126px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:160px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:22px"></span></td><td><span class="skeleton cell" style="width:24px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td><td><span class="skeleton cell" style="width:120px"></span></td><td><span class="skeleton cell" style="width:20px"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="dziennik-flota.html">← Dziennik · flota</a>
+  <span>·</span>
+  <a href="dziennik-piloci.html" class="active">Dziennik · piloci</a>
+  <span>·</span>
+  <a href="dziennik-pilot.html">Dziennik · pilot →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

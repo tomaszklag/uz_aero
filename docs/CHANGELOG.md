@@ -35,7 +35,123 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
-## 3.0.0 (build 5) · 3 października 2026
+## 3.1.0 (build 6) · 26 września 2026
+
+> Rezerwacja ze zgodą klubu, skrzynka i powiadomienia na telefon, karta i obserwowanie samolotu, panel dla każdego członka klubu.
+
+### Nowości
+
+- **Panel klubu otwiera się każdemu członkowi.** Logujesz się tym samym kontem, co do
+  aplikacji, a o tym, co widzisz, decyduje Twój zakres uprawnień: każdy ma Moje konto
+  i kalendarz floty (cudze rezerwacje widać w nim tak, jak w aplikacji - godziny, maszyna
+  i pilot), a dziennik operacji, listę pilotów i karty samolotów otwiera zdolność
+  „Podgląd klubu" (dawne „Wejście do panelu"). Adres bez dostępu nie odsyła po cichu -
+  panel mówi, której zdolności brakuje i kto ją nadaje. Kto co widzi, opisuje nowa strona
+  dokumentacji „Zakresy uprawnień: kto co widzi".
+- **Klub może wymagać zgody na rezerwację.** Administrator układa ścieżkę: nadaje krokom
+  nazwy („Mechanik", „Szef wyszkolenia"), ustala ich kolejność i dopisuje do każdego osoby,
+  które mogą go zatwierdzić. Klub, który tego nie ustawi, pracuje dokładnie jak dotąd -
+  rezerwacja potwierdza się od razu.
+- **Kroki idą po kolei, a w kroku wystarczy zgoda jednej osoby z listy.** Przy odmowie
+  na pierwszym kroku nikt dalszy nie jest fatygowany, a termin wraca do puli natychmiast.
+- **Odmowa wymaga powodu**, który pilot przeczyta w aplikacji - bez niego „odrzucone"
+  zostawia go z pytaniem, na które musiałby zadzwonić.
+- **Zanim zdecydujesz, zobacz komu i czym.** Z karty sprawy - w panelu i w aplikacji -
+  otwiera się podgląd pilota (ile latał na tej maszynie i kiedy ostatnio, nalot z 30
+  i 90 dni, ostatnie loty, najbliższe rezerwacje z ostrzeżeniem, gdy nachodzą na
+  rozpatrywany termin) oraz podgląd samolotu (liczniki z ostatniego odczytu, ostatnie
+  30 dni, ostatnie loty, najbliższe terminy razem z przeglądami). Mechanik decydujący
+  z telefonu widzi dokładnie to samo, co administrator przy biurku.
+- **Zmiana ścieżki akceptacji porządkuje sprawy w toku.** Gdy klub zdejmie krok, rezerwacje,
+  które mają już komplet pozostałych zgód, zostają potwierdzone od razu, a pilot dostaje
+  wiadomość. Gdy krok dojdzie albo zmieni kolejność, osoby nowego kroku dostają prośbę
+  o zgodę. Panel mówi po zapisie, ile rezerwacji to dotknęło.
+- **Rezerwujący nie prosi sam siebie o zgodę**: kroki, na których stoi, przechodzą same,
+  a w historii widać, że przeszły właśnie w ten sposób.
+- **Rezerwacja czekająca na zgodę trzyma termin** - nikt inny nie zajmie go w międzyczasie.
+- **Karta samolotu w aplikacji** - dla technika, koordynatora lotów i osób akceptujących
+  rezerwacje: co dzieje się z maszyną teraz (kto ją ma, od kiedy, zgodnie z rezerwacją
+  czy poza planem - albo że stoi, jest wyłączona z użytku lub zarezerwowana), liczniki
+  z ostatniego odczytu, najbliższe terminy, wykresy motogodzin i paliwa z ostatnich
+  90 dni z kursorem i przybliżeniem oraz historia wszystkich operacji tej maszyny.
+  Otwiera się ze znaku maszyny w kalendarzu, z powiadomienia i z podglądu przy decyzji.
+- **Obserwowanie samolotu.** Jeden przełącznik na karcie maszyny, w ustawieniach
+  aplikacji albo w panelu na stronie Moje konto (cała flota z przełącznikami i stanem
+  „teraz") - i telefon budzi, gdy lot zbliża się
+  za godzinę, gdy silnik ruszył (z adnotacją, czy zgodnie z planem), gdy maszyna wróciła
+  z odczytami, gdy przypomniany termin odwołano i gdy nikt nie odebrał zarezerwowanej
+  maszyny. Wiadomość mówi czasem z rejestru, a gdy zapis dotarł później, dopisuje kiedy.
+  Powiadomienie z klubu, który nie jest teraz aktywny, prowadzi do skrzynki z instrukcją,
+  zamiast otwierać pustą kartę.
+- **Skrzynka powiadomień**: prośba o zgodę, decyzja i wygaśnięcie terminu trafiają do
+  pilota z historią, a powiadomienie na telefon jest tylko sygnałem, że coś przyszło.
+- **Termin, którego nikt nie rozpatrzył, wygasa z chwilą swojego początku** i wraca do
+  puli - maszyna nie stoi w sobotę zablokowana prośbą, o której wszyscy zapomnieli.
+- **Panel: ścieżka akceptacji i kolejka decyzji.** Administrator układa kroki w minutę -
+  nazwa, osoby, kolejność przestawiana chwytem - a ekran mówi od razu, gdy ktoś z kroku
+  stracił prawo akceptacji. Kto akceptuje, widzi w kalendarzu baner z liczbą spraw
+  czekających na jego zgodę i rozstrzyga je z jednego miejsca, z całym planem lotu przed
+  oczami. Rezerwacja czekająca na zgodę stoi na osi floty z przerywaną ramką, a jej karta
+  pokazuje historię decyzji: kto, kiedy i dlaczego. Klub, który akceptacji nie chce, nie
+  widzi w panelu ani jednego dodatkowego kroku.
+- **Skrzynka w telefonie i dzwonek na Pulpicie.** Prośby o zgodę, decyzje w Twojej sprawie
+  i wygaśnięcia terminów czekają pod dzwonkiem obok ustawień; licznik przy nim zapala się
+  tylko z nieprzeczytanymi. „Do decyzji" stoi przy sprawie, dopóki jej nie rozstrzygniesz -
+  samo zerknięcie na listę niczego nie ucisza. Skrzynka wymaga zasięgu, jak cały kalendarz.
+- **Decyzja z telefonu.** Kto akceptuje, widzi cały plan lotu - samolot, termin czasem
+  klubu, pilota i drugiego pilota, zadanie, trasę, plan i notatkę - i zatwierdza jednym
+  tapnięciem albo odmawia z powodem, który pilot przeczyta u siebie. Bez wchodzenia do panelu.
+- **Karta rezerwacji mówi, na czym stoi sprawa.** Czeka na zgodę (z krokami ścieżki
+  i od kiedy), doszedł krok, odrzucona z powodem, wygasła bez decyzji - każdy stan ma
+  własny baner, a zamknięta rezerwacja prowadzi wprost do wyboru innego terminu.
+  Rezerwacja czekająca traci zieleń także na Pulpicie: zielona obiecywałaby pewny lot.
+- **Przesunięcie terminu zaczyna ścieżkę od nowa.** Zgoda dotyczyła konkretnego terminu,
+  więc po poprawce osoby z pierwszego kroku dostają świeżą prośbę, a karta mówi o tym,
+  zanim tapniesz „PRZESUŃ I POPRAW".
+- **Powiadomienia na telefon.** Prośba o zgodę, decyzja w Twojej sprawie i wygaśnięcie
+  terminu budzą telefon powiadomieniem, a tapnięcie w nie otwiera od razu właściwy ekran -
+  także wtedy, gdy aplikacja była zamknięta. Powiadomienie jest tylko sygnałem: treść
+  zawsze czeka w skrzynce, więc bez zgody na powiadomienia nic nie ginie. Aplikacja pyta
+  o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - gdy akceptujesz cudze rezerwacje
+  albo gdy Twoja rezerwacja czeka na zgodę.
+- **Polityka prywatności opisuje rezerwacje i powiadomienia na telefon**: co zapisuje
+  kalendarz i kto co z niego widzi, czym jest token powiadomień i dlaczego ginie razem
+  z sesją logowania, kto pośredniczy w doręczeniu i co dostaje, jak powiadomienia wyłączyć -
+  skrzynka w aplikacji działa wtedy bez zmian.
+- **Uprawnienia nadaje się osobie, a nie roli.** Przy przyjęciu do klubu administrator wybiera
+  gotowy zestaw - pilot, akceptujący, koordynator lotów, technik, administrator - albo zaznacza
+  pojedyncze pozycje, na przykład samą zgodę na rezerwacje dla mechanika. Ta sama osoba może
+  mieć w dwóch klubach dwa różne zakresy.
+- **Konto zakłada się także z panelu.** „Załóż konto" pod kartą logowania pyta
+  o imię i nazwisko oraz adres i wysyła ten sam link, co przy zapomnianym haśle - konto
+  powstaje w chwili ustawienia hasła. Do klubu nadal wchodzi się kodem klubu w aplikacji,
+  a dostęp do panelu nadaje administrator klubu; ekran mówi to wprost, gdy konto jeszcze
+  klubu nie ma.
+
+### Poprawki
+
+- **„Nie pamiętam hasła" w panelu naprawdę wysyła list.** Od wydania 2.1.0 formularz
+  w panelu potwierdzał wysyłkę, ale list nigdy nie wychodził - działała wyłącznie ta sama
+  prośba złożona z telefonu albo link wysłany przez administratora z karty członka.
+
+### Dla testerów
+
+- **To wydanie wymaga zainstalowania nowego pliku ze [strony pobierania](../pobierz/).**
+  Aktualizacja w tle nie wystarczy: powiadomienia na telefon potrzebują nowej wersji
+  aplikacji. Dane z telefonu zostają na miejscu.
+- Aplikacja zapyta o zgodę na powiadomienia dopiero przy pierwszej sprawie, która Cię
+  dotyczy. Odmowa niczego nie wyłącza - skrzynka pod dzwonkiem działa tak samo.
+- Ścieżkę akceptacji ustawia się w panelu; decyzję podejmuje się z telefonu albo z panelu,
+  także bez dostępu do panelu - mechanik jest w klubie zwykłym pilotem.
+- Administrator z uprawnieniem do cudzych rezerwacji może rozstrzygnąć każdy krok z karty
+  rezerwacji w kalendarzu - to wyjście awaryjne, gdy krok stracił obsadę.
+- Prawo akceptacji nadaje się osobie w zakresie uprawnień, niezależnie od reszty
+  uprawnień panelu.
+- Powiadomienia na telefon wymagają NOWEJ instalacji z pliku (wersja 3.1.0) - dochodzi
+  moduł systemowy, którego aktualizacja w tle nie dowiezie. Do czasu skonfigurowania
+  Firebase po stronie serwera powiadomienia po prostu nie przychodzą; skrzynka działa.
+
+## 3.0.0 (build 5) · 22 września 2026
 
 > Rezerwacja samolotu i kalendarz całej floty w telefonie: kto ma którą maszynę i kiedy, a lot zaczyna się z gotowej rezerwacji.
 
@@ -169,7 +285,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Logowanie kontem Google.** Hasła znikają z aplikacji i z panelu. Nowy pilot loguje się kontem Google, jego zgłoszenie trafia do panelu, a administrator zatwierdza je i nadaje kod pilota. Aplikacja sama zauważa decyzję - do tego czasu pokazuje ekran „czeka na zatwierdzenie". Codzienne wejście to nadal PIN, bez internetu.
 - **Panel klubu 2.0.** Trzy moduły zamiast jedenastu ekranów: **Piloci**, **Samoloty** i **Dziennik** (flota w zakresie dat → operacje jednej maszyny → jedna operacja z osią zdarzeń i śladem GPS). Dziennik pokazuje wyłącznie odczyty z przyrządów; brak odczytu widać jako kreskę, nie jako zero.
 - **Administrator kończy operację, której pilot nie zamknął**, i może wpisać z panelu nadrzędne odczyty maszyny (paliwo, olej, motogodziny) z komentarzem. Telefon pilota nie wyśle już zdania po decyzji administratora, a pilot dostaje o tym czytelny komunikat.
-- **Nazwa operacji zamiast identyfikatora.** Każda operacja ma sygnaturę w rodzaju `SP-AXA/2026-09-05/TMK/1` (znak, doba, pilot, numer w dobie) - w aplikacji i w panelu.
+- **Nazwa operacji zamiast identyfikatora.** Każda operacja ma sygnaturę w rodzaju `SP-AXA/2026-09-05/AKO/1` (znak, doba, pilot, numer w dobie) - w aplikacji i w panelu.
 - **Karta samolotu w panelu**: pojemność zbiorników, norma zużycia paliwa i oleju z dokumentacji, minimum oleju, format licznika i aktualny stan liczników przy zakładaniu maszyny. Aplikacja pilnuje tych wartości u każdego pilota.
 - **Olej.** Pomiar przy przejęciu z podziałką i minimum, dolewka jako osobne zdarzenie (z kokpitu i przy przejęciu), karta „Olej" na logu operacji, oczekiwanie z normy w arkuszu pomiaru.
 - **Wpis lotu po fakcie** przebudowany: data w kalendarzu, oś operacji zamiast dwóch list (lot i zrzuty w swoim miejscu), paliwo jako trzy liczby (zastane, dolane, zostało), podpowiedź odczytów z poprzedniej operacji tej maszyny, kręgi jako liczba przy lądowaniu.
@@ -220,14 +336,14 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 3.1.0 · po wydaniu 3.0.0
+### 3.2.0 · planowane na koniec października 2026
 
-> Rezerwacja do akceptacji przez klub i powiadomienie o decyzji.
+> Rozbudowa panelu klubu - bez nowej instalacji aplikacji.
 
-- [ ] Ścieżka akceptacji: rezerwacja czeka na zgodę wskazanej osoby albo roli
-- [ ] Odmowa z powodem, który pilot czyta na swoim telefonie
-- [ ] Skrzynka powiadomień w aplikacji - działa też bez zasięgu
-- [ ] Powiadomienie na telefon, gdy decyzja zapadnie (wymaga zainstalowania nowej wersji aplikacji)
+- [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
+- [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
+- [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
+- [ ] Statystyki klubu i analityka zużycia maszyny
 
 ### 4.0.0 · termin do ustalenia
 
@@ -243,6 +359,5 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Poprawki zgłoszone przez pilotów w testach
 - [ ] Kalibracja normy paliwa i motogodzin na danych z prawdziwych lotów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
-- [ ] Panel: pulpit floty, statystyki, analityka zużycia, skrzynka rozjazdów i eksporty kart dnia w nowym stylu
 - [ ] Eksport karty dnia do arkusza Google klubu
 - [ ] Wdrożenie produkcyjne po sezonie testowym

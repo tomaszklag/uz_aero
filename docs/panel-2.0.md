@@ -448,7 +448,7 @@ kolumną o stałej wartości. Stoi w tytule strony.
 
 **Pierwsza kolumna nazywa się odtąd `Operacja`** (issue #68) i niesie dwie linie: datę
 (mocną - po niej skanuje się listę jednej maszyny) i pod nią SYGNATURĘ, czyli
-`SP-AXA/2026-09-01/AKO/1`. Dziesiątej kolumny to nie kosztuje, a odpowiada na pytanie,
+`SP-AXA/2026-09-01/BNO/1`. Dziesiątej kolumny to nie kosztuje, a odpowiada na pytanie,
 na które uuid w pasku adresu nie odpowiadał: **jak nazwać ten lot w rozmowie**. Sygnaturę
 składa SERWER i podaje gotową w DTO - panel nigdy nie skleja jej u siebie, bo druga
 konwencja nazw znaczyłaby, że administrator i pilot mówią o jednym locie dwoma napisami
@@ -950,7 +950,7 @@ Nie ma dziennika, nie ma floty, nie ma pilotów; ma Zgłoszenia (i od epiku E Or
   tylko odpowiedź na pytanie „czy ja tu mam czego szukać"
 - **lista zgłoszeń ma kolumnę „Klub"** i klub w podtytule szuflady: kolejka jest jedna
   dla całego serwera, a kod pilota jest jedyny W KLUBIE - bez tego dwa zgłoszenia od
-  dwóch różnych `TMA` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
+  dwóch różnych `AKO` czytałyby się jak dwa zgłoszenia jednej osoby. W szufladzie klub
   stoi na końcu listy kontekstu, razem z chwilą przyjęcia: oba pola pochodzą od SERWERA,
   a nie z kontekstu, który przysłał telefon - i lista ma tego nie mieszać
 - **filtra po klubie NIE MA** - kolejka fazy testów ma kilkanaście pozycji, a chip
@@ -971,9 +971,11 @@ zmienia się w REGUŁACH TEGO dokumentu:
   odpowiada na „czyj to dziennik" przy każdym wklejonym linku - ale LINKIEM jest dopiero
   wtedy, gdy jest dokąd przełączyć. Ekran wyboru z jedną kartą obiecywałby wybór,
   którego nie ma, więc kafel bez przełącznika nie jest klikalny (`ui/shell/scope.ts`).
-- **§3.3 (brak uprawnień = brak przycisku) obejmuje ekran wyboru klubu**: klub, w którym
-  ta osoba jest tylko pilotem, na liście się NIE POJAWIA. Karta „bez dostępu"
-  obiecywałaby wejście, którego reguły odmówią - a o takim klubie i tak mówi telefon.
+- **§3.3 (brak uprawnień = brak przycisku) obejmowało ekran wyboru klubu** do issue #216:
+  klub, w którym ta osoba jest tylko pilotem, na liście się nie pojawiał. Od 2026-09-25
+  panel jest dla każdego członka (§15), więc taka karta stoi na liście z podpisem „pilot"
+  i nie obiecuje niczego, czego reguły odmówią - sesja tego klubu otwiera Moje konto
+  i kalendarz.
 - **§3.4 (stan operacyjny osobno od konfiguracji) dostaje trzeci kształt szuflady
   w module Piloci**: obok karty członka i karty kodu klubu stoi KOLEJKA zgłoszeń -
   zadanie do zrobienia, więc nad listą, a nie w niej. Pusta kolejka nie dostaje karty
@@ -989,3 +991,30 @@ zmienia się w REGUŁACH TEGO dokumentu:
   też adresu klubu ani nie rotuje kodu klubu. Imienia osoby nie blokujemy przy drugim
   członkostwie (propozycja z §8.3 czeka na kontrakt - lista członków nie niesie informacji
   o innych klubach tej osoby).
+
+## 15. Panel dla każdego członka (issue #216, 2026-09-25)
+
+Decyzje mieszkają w `docs/uprawnienia.md` §13 i **nie są tu powtórzone**. Tutaj zostaje to,
+co zmienia się w REGUŁACH TEGO dokumentu:
+
+- **§3.0a (ekran logowania)**: odmowa 403 znaczy odtąd wyłącznie osobę bez aktywnego
+  członkostwa (`no_membership`); członek z pustym zakresem wchodzi. Zdanie odmowy mówi
+  o kodzie klubu, a nie o administratorze nadającym dostęp.
+- **§3.3 (brak uprawnień = brak przycisku) dostaje WYJĄTEK dla adresu**: pozycji bez dostępu
+  w kolumnie dalej nie ma, ale adres modułu wklejony z rozmowy nie przekierowuje po cichu -
+  rysuje ekran „Brak dostępu" (`.no-access` z inwentarza SZABLONU, makieta
+  `design/panel/brak-dostepu.html`): co tu jest, której zdolności brakuje, kto ją nadaje.
+  Powód: odkąd panel jest dla każdego, adres bez dostępu jest codziennością, a ciche
+  odesłanie wyglądało dla pilota jak awaria.
+- **§3.6 (jedna reguła, jedno zdanie)**: „Wejście do panelu" → **„Podgląd klubu"** - ta sama
+  zdolność (`panel.access`), inna nazwa, bo przestała być drzwiami. Etykiety w karcie
+  członka, podręczniku i makietach poszły za tym.
+- **§13 (dwa rodzaje sesji)**: kolumna klubu ma pozycję, której nie otwiera żadna zdolność -
+  Kalendarz jest dla każdej sesji klubu (`Access = Capability | 'club'` w `nav.ts`); ekran
+  startowy pilota to Kalendarz, administratora Dziennik, platformy Organizacje.
+- **§14 (wybór klubu)**: klub, w którym osoba jest tylko pilotem, stoi na liście wyboru
+  z podpisem „pilot".
+- **kalendarz pyta, kto patrzy** (jak telefon, `docs/rezerwacje.md` §17): cudza rezerwacja
+  dla zwykłego członka niesie godziny, maszynę, pilota i rodzaj; komplet widzi właściciel,
+  „Podgląd klubu", akceptacja i władza nad cudzymi. Nazwiska i znaki kalendarz bierze
+  z nowego słownika `GET /admin/api/directory`, nie z list modułów Piloci i Samoloty.

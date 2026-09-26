@@ -16,7 +16,7 @@
  *  5. **nowa para jest parą DLA CELU** - `org` w odpowiedzi i klub aktywny przy następnym
  *     logowaniu (`lastOrgFor` czyta najświeższy refresh).
  *
- * Izolację samej trasy (TMK → Beta) trzyma `tenantIsolation.test.ts`; tutaj chodzi o pilota,
+ * Izolację samej trasy (AKO → Beta) trzyma `tenantIsolation.test.ts`; tutaj chodzi o pilota,
  * który NAPRAWDĘ ma dwa kluby - w świecie testowym jest nim PWI (`PWI` w Alfie, `PWB` w Becie).
  */
 
@@ -39,7 +39,7 @@ async function loginOf(app: Harness['app'], code: string) {
     token: string;
     refreshToken: string;
     org: { id: string; slug: string; name: string };
-    pilot: { id: string; code: string; name: string; role: string };
+    pilot: { id: string; code: string; name: string };
     memberships: { org: { id: string }; code: string }[];
   };
 }
@@ -87,7 +87,7 @@ describe('POST /auth/switch - przełączenie klubu w telefonie', () => {
 
   it('klub, w którym ta osoba nie lata, jest NIEISTNIEJĄCY (404, bez tokenów)', async () => {
     const { app } = await testHarness();
-    const login = await loginOf(app, 'TMK'); // wyłącznie Alfa
+    const login = await loginOf(app, 'AKO'); // wyłącznie Alfa
 
     const res = await switchTo(app, login.token, ORG_B);
     expect(res.statusCode).toBe(404);
@@ -96,7 +96,7 @@ describe('POST /auth/switch - przełączenie klubu w telefonie', () => {
 
   it('identyfikator klubu, którego nie ma, dostaje TĘ SAMĄ odpowiedź co cudzy', async () => {
     const { app } = await testHarness();
-    const login = await loginOf(app, 'TMK');
+    const login = await loginOf(app, 'AKO');
 
     expect((await switchTo(app, login.token, 'org-nie-ma')).statusCode).toBe(404);
   });
@@ -160,7 +160,7 @@ describe('POST /auth/switch - przełączenie klubu w telefonie', () => {
     const { app } = await testHarness();
 
     expect((await switchTo(app, null, ORG_A)).statusCode).toBe(401);
-    const login = await loginOf(app, 'TMK');
+    const login = await loginOf(app, 'AKO');
     expect((await switchTo(app, login.token, '')).statusCode).toBe(400);
   });
 });

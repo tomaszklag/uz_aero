@@ -126,10 +126,10 @@ async function auditRows(db: Harness['db']) {
 async function overlapping(options: Parameters<typeof testHarness>[0] = {}) {
   const harness = await testHarness(options);
   const { app, db } = harness;
-  const tmk = await login(app, 'TMK');
+  const ako = await login(app, 'AKO');
   const krz = await login(app, 'KRZ');
 
-  await post(app, tmk, openDay('sess-1', 'TMK', 1234.5));
+  await post(app, ako, openDay('sess-1', 'AKO', 1234.5));
   await post(app, krz, openDay('sess-2', 'KRZ', 1236.87));
   await post(app, krz, [
     event(
@@ -154,7 +154,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     // To jest test, który dowodzi zdania „zmiana bez śladu nie ma prawa się zapisać".
     // Bez niego `AuditedWrite` byłby wyłącznie obietnicą złożoną w docblocku.
     const { app, db, flagId } = await overlapping({ audit: failingAudit });
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await resolve(app, flagId, admin, 'Wyjaśnione, odblokowuję kartę.');
 
@@ -169,8 +169,8 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
 
   it('NIEUDANY SKUTEK nie zostawia śladu - odbita próba nie dopisuje wiersza', async () => {
     const { app, db, flagId } = await overlapping();
-    const admin = await login(app, 'TMK');
-    const otherAdmin = await login(app, 'AKO');
+    const admin = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'BNO');
 
     await resolve(app, flagId, admin, 'Pierwsze rozstrzygnięcie.');
     const second = await resolve(app, flagId, otherAdmin, 'Drugie rozstrzygnięcie.');
@@ -180,21 +180,21 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     // dziennik nie zna akcji, która się nie odbyła.
     const rows = await auditRows(db);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ actor_pilot_id: 'TMK' });
+    expect(rows[0]).toMatchObject({ actor_pilot_id: 'AKO' });
   });
 
-  it('wpis niesie aktora, jego rolę, akcję i identyfikator flagi', async () => {
+  it('wpis niesie aktora, jego zakres, akcję i identyfikator flagi', async () => {
     const { app, db, flagId } = await overlapping();
-    // Aktorem jest DRUGI administrator, nie TMK: wpis ma dowieść, że dziennik zapisuje
+    // Aktorem jest DRUGI administrator, nie AKO: wpis ma dowieść, że dziennik zapisuje
     // tego, kto akcję wykonał, a nie tego, kim jest pierwsze konto ze świata testowego.
-    const otherAdmin = await login(app, 'AKO');
+    const otherAdmin = await login(app, 'BNO');
 
     await resolve(app, flagId, otherAdmin, 'Nakładka pozorna - dane dosłane z kopii.');
 
     expect(await auditRows(db)).toMatchObject([
       {
-        actor_pilot_id: 'AKO',
-        actor_role: 'admin',
+        actor_pilot_id: 'BNO',
+        actor_role: 'full',
         action: 'flag.resolve',
         target_type: 'flag',
         target_id: String(flagId),
@@ -207,17 +207,23 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
     ]);
   });
 
-  it('`actor_role` to rola Z CHWILI AKCJI - późniejsza zmiana konta jej nie przepisuje', async () => {
-    // Dziennik jest zapisem historycznym, nie złączeniem z `pilots`. Gdyby rola szła
+  it('`actor_role` to ZAKRES Z CHWILI AKCJI - późniejsza zmiana konta go nie przepisuje', async () => {
+    // Dziennik jest zapisem historycznym, nie złączeniem z `pilots`. Gdyby zakres szedł
     // z konta przy odczycie, odebranie uprawnień zafałszowałoby odpowiedź na pytanie
     // „kto miał wtedy prawo to zrobić" - czyli jedyne, po co ten dziennik istnieje.
+    //
+    // Od 3.1.0 w kolumnie stoi KLUCZ ZAKRESU (`full`/`partial`/`none`) liczony ze zbioru
+    // zdolności sprawcy. Wiersze starsze mówią `admin`/`pilot` i tak zostaje - dziennik
+    // opisuje to, co się wtedy wydarzyło, a nie dzisiejszy słownik.
     const { app, db, flagId } = await overlapping();
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     await resolve(app, flagId, admin, 'Rozstrzygnięte przez administratora.');
-    await db.query("UPDATE memberships SET role = 'pilot' WHERE pilot_id = 'TMK' AND org_id = 'org-a'");
+    await db.query(
+      "DELETE FROM membership_capabilities WHERE pilot_id = 'AKO' AND org_id = 'org-a'",
+    );
 
-    expect((await auditRows(db))[0]).toMatchObject({ actor_pilot_id: 'TMK', actor_role: 'admin' });
+    expect((await auditRows(db))[0]).toMatchObject({ actor_pilot_id: 'AKO', actor_role: 'full' });
   });
 });
 
@@ -267,7 +273,7 @@ async function seedAudit(db: Harness['db'], rows: readonly AuditSeed[]): Promise
 
 const JOURNAL: readonly AuditSeed[] = [
   {
-    actor: 'TMK',
+    actor: 'AKO',
     role: 'admin',
     action: 'pilot.create',
     targetType: 'pilot',
@@ -277,7 +283,7 @@ const JOURNAL: readonly AuditSeed[] = [
     at: stamp(-2, 9, 0),
   },
   {
-    actor: 'TMK',
+    actor: 'AKO',
     role: 'admin',
     action: 'aircraft.update',
     targetType: 'aircraft',
@@ -287,7 +293,7 @@ const JOURNAL: readonly AuditSeed[] = [
     at: stamp(-1, 10, 0),
   },
   {
-    actor: 'AKO',
+    actor: 'BNO',
     role: 'admin',
     action: 'flag.resolve',
     targetType: 'flag',
@@ -297,7 +303,7 @@ const JOURNAL: readonly AuditSeed[] = [
     at: stamp(0, 8, 30),
   },
   {
-    actor: 'TMK',
+    actor: 'AKO',
     role: 'admin',
     action: 'event.correct',
     targetType: 'event',
@@ -313,7 +319,7 @@ const JOURNAL: readonly AuditSeed[] = [
     at: stamp(0, 11, 2),
   },
   {
-    actor: 'TMK',
+    actor: 'AKO',
     role: 'admin',
     action: 'export.retry',
     targetType: 'sheet',
@@ -364,7 +370,7 @@ function getAudit(app: Harness['app'], token: string | null, query = '') {
 async function journal() {
   const harness = await testHarness();
   await seedAudit(harness.db, JOURNAL);
-  return { ...harness, admin: await login(harness.app, 'TMK') };
+  return { ...harness, admin: await login(harness.app, 'AKO') };
 }
 
 const actionsOf = (body: { items: AuditEntryWire[] }): string[] =>
@@ -390,9 +396,9 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
     ]);
 
     expect(body.items[3]).toMatchObject({
-      actorPilotId: 'AKO',
-      actorCode: 'AKO',
-      actorName: 'Anna Kowalska',
+      actorPilotId: 'BNO',
+      actorCode: 'BNO',
+      actorName: 'Barbara Nowak',
       actorRole: 'admin',
       targetType: 'flag',
       targetId: '1044',
@@ -457,7 +463,7 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
   it('filtruje po aktorze oraz po TYPIE I IDENTYFIKATORZE obiektu', async () => {
     const { app, admin } = await journal();
 
-    const byActor = (await getAudit(app, admin, '?actor=AKO')).json() as { items: AuditEntryWire[] };
+    const byActor = (await getAudit(app, admin, '?actor=BNO')).json() as { items: AuditEntryWire[] };
     expect(actionsOf(byActor)).toEqual(['flag.resolve']);
 
     // To jest wejście z kontekstem, którego wymaga ekran korekty („ślad w audycie
@@ -558,8 +564,8 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
 
     await seedAudit(db, [
       {
-        actor: 'TMK',
-        role: 'admin',
+        actor: 'AKO',
+        role: 'full',
         action: 'maintenance.rebuild_projections',
         targetType: null,
         targetId: null,
@@ -658,15 +664,15 @@ describe('dziennik audytu - strona odczytu (A09)', () => {
     // byłby nieokreślony, a kursor po pierwszej stronie albo GUBIŁBY wiersz, albo
     // pokazywał go drugi raz - i jedno, i drugie wyglądałoby na poprawną listę.
     const harness = await testHarness();
-    const admin = await login(harness.app, 'TMK');
+    const admin = await login(harness.app, 'AKO');
 
     const sameMoment = stamp(0, 12, 0);
     await seedAudit(
       harness.db,
       ['pilot.create', 'pilot.update', 'pilot.deactivate', 'aircraft.create', 'export.retry'].map(
         (action, i) => ({
-          actor: 'TMK',
-          role: 'admin',
+          actor: 'AKO',
+          role: 'full',
           action,
           targetType: 'pilot',
           targetId: `P-${i}`,
@@ -762,7 +768,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
     await harness.db.query(
       `INSERT INTO admin_audit
          (org_id, actor_pilot_id, actor_role, action, target_type, target_id, details, ip, created_at)
-       SELECT '${ORG_A}', CASE WHEN g % 4 = 0 THEN 'TMK' ELSE 'AKO' END,
+       SELECT '${ORG_A}', CASE WHEN g % 4 = 0 THEN 'AKO' ELSE 'BNO' END,
               'admin', 'flag.resolve', 'flag', g::text, '{}'::jsonb, NULL,
               TIMESTAMPTZ '2026-01-01 00:00:00+00' + (g * INTERVAL '1 second')
          FROM generate_series(1, 4000) AS g`,
@@ -808,7 +814,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
       // PIERWSZA strona zawężenia kosztowała tyle, co cały dziennik.
       const { db } = await bigJournal();
 
-      const plan = await planOf(db, filter({ direction, actorPilotId: 'TMK' }));
+      const plan = await planOf(db, filter({ direction, actorPilotId: 'AKO' }));
       expect(plan).not.toMatch(/Sort/);
       expect(plan).toContain('idx_audit_actor');
     },

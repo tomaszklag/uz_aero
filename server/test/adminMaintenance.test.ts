@@ -37,7 +37,7 @@ function event(type: string, time: number, payload: Record<string, unknown>) {
     uuid: `m-${seq}-${type}`,
     sessionUuid: 'sess-1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,
@@ -79,7 +79,7 @@ function manySessions(count: number) {
     uuid: `bulk-${String(i).padStart(4, '0')}-claim`,
     sessionUuid: `bulk-${String(i).padStart(4, '0')}`,
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type: 'session_claim',
     deviceTime: DAY + i * 1000,
@@ -94,7 +94,7 @@ type Harness = Awaited<ReturnType<typeof testHarness>>;
 /**
  * Zestaw z jednym pełnym dniem lotnym w rejestrze i zalogowanym administratorem.
  *
- * `login` to `TMK` z ziarna (`infrastructure/pg/seed.ts`) - konto z rolą `admin`,
+ * `login` to `AKO` z ziarna (`infrastructure/pg/seed.ts`) - konto z rolą `admin`,
  * czyli jedyną, która ma dziś `maintenance.run`.
  */
 async function withDay(options: Parameters<typeof testHarness>[0] = {}) {
@@ -102,7 +102,7 @@ async function withDay(options: Parameters<typeof testHarness>[0] = {}) {
   const login = await harness.app.inject({
     method: 'POST',
     url: '/auth/google',
-    payload: { idToken: googleTokenFor('TMK') },
+    payload: { idToken: googleTokenFor('AKO') },
   });
   const token = login.json().token as string;
 
@@ -516,7 +516,7 @@ describe('A11 · wygasłe refresh tokeny - jedyna operacja, która kasuje', () =
       ['hash-martwy-swiezy', '2026-06-20T09:02:00.000Z'],
       ['hash-zywy', '2026-09-01T00:00:00.000Z'],
     ] as const) {
-      await seedRefresh(harness.db, { tokenHash, pilotId: 'TMK', orgId: ORG_A, expiresAt });
+      await seedRefresh(harness.db, { tokenHash, pilotId: 'AKO', orgId: ORG_A, expiresAt });
     }
   }
 

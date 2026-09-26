@@ -49,14 +49,14 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
   it('adres znany i nieznany dostają IDENTYCZNĄ odpowiedź; list wychodzi tylko do znanego', async () => {
     const { app, mail } = await testHarness();
 
-    const known = await forgot(app, 'tomasz@ninerdeck.pl');
+    const known = await forgot(app, 'adam@ninerdeck.pl');
     const unknown = await forgot(app, 'nikogo-takiego@ninerdeck.pl');
     expect(known.statusCode).toBe(202);
     expect(unknown.statusCode).toBe(202);
     expect(unknown.body).toBe(known.body);
 
     expect(mail.sent).toHaveLength(1);
-    const letter = mail.lastTo('tomasz@ninerdeck.pl')!;
+    const letter = mail.lastTo('adam@ninerdeck.pl')!;
     expect(letter.subject).toBe('Ninerdeck - ustaw hasło');
     expect(letter.text).toContain(`${TEST_BASE_URL}/haslo/#`);
     expect(letter.text).toContain('60 minut');
@@ -64,11 +64,11 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
 
   it('link ustawia hasło, zrywa WSZYSTKIE sesje osoby i nie wydaje sesji w odpowiedzi', async () => {
     const { app, clock, mail } = await testHarness();
-    const before = await googleLogin(app, 'TMK');
+    const before = await googleLogin(app, 'AKO');
     clock.advance(60_000);
 
-    await forgot(app, 'Tomasz@Ninerdeck.pl');
-    const token = tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!);
+    await forgot(app, 'Adam@Ninerdeck.pl');
+    const token = tokenIn(mail.lastTo('adam@ninerdeck.pl')!);
 
     const res = await reset(app, token, PASSWORD);
     expect(res.statusCode, res.body).toBe(204);
@@ -82,15 +82,15 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
     expect(access.statusCode).toBe(401);
 
     // Nowe hasło loguje - i dopiero to wydaje sesję.
-    const login = await passwordLogin(app, 'tomasz@ninerdeck.pl', PASSWORD);
+    const login = await passwordLogin(app, 'adam@ninerdeck.pl', PASSWORD);
     expect(login.statusCode, login.body).toBe(200);
     expect(login.json().org.id).toBe(ORG_A);
   });
 
   it('token jest jednorazowy; obcy, zużyty i po terminie dają JEDNO `invalid_token`', async () => {
     const { app, clock, mail } = await testHarness();
-    await forgot(app, 'tomasz@ninerdeck.pl');
-    const token = tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!);
+    await forgot(app, 'adam@ninerdeck.pl');
+    const token = tokenIn(mail.lastTo('adam@ninerdeck.pl')!);
 
     expect((await reset(app, token, PASSWORD)).statusCode).toBe(204);
     const reused = await reset(app, token, PASSWORD + '-2');
@@ -101,8 +101,8 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
     expect(foreign.body).toBe(reused.body);
 
     mail.clear();
-    await forgot(app, 'anna@ninerdeck.pl');
-    const expiring = tokenIn(mail.lastTo('anna@ninerdeck.pl')!);
+    await forgot(app, 'barbara@ninerdeck.pl');
+    const expiring = tokenIn(mail.lastTo('barbara@ninerdeck.pl')!);
     clock.advance(RESET_LINK_TTL_MS + 1);
     const late = await reset(app, expiring, PASSWORD);
     expect(late.statusCode).toBe(401);
@@ -111,10 +111,10 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
 
   it('nowy link zużywa stary - działa wyłącznie ten z ostatniego listu', async () => {
     const { app, mail } = await testHarness();
-    await forgot(app, 'tomasz@ninerdeck.pl');
-    const first = tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!);
-    await forgot(app, 'tomasz@ninerdeck.pl');
-    const second = tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!);
+    await forgot(app, 'adam@ninerdeck.pl');
+    const first = tokenIn(mail.lastTo('adam@ninerdeck.pl')!);
+    await forgot(app, 'adam@ninerdeck.pl');
+    const second = tokenIn(mail.lastTo('adam@ninerdeck.pl')!);
     expect(second).not.toBe(first);
 
     expect((await reset(app, first, PASSWORD)).statusCode).toBe(401);
@@ -123,14 +123,14 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
 
   it('słabe hasło oddaje powód i NIE spala linku', async () => {
     const { app, mail } = await testHarness();
-    await forgot(app, 'tomasz@ninerdeck.pl');
-    const token = tokenIn(mail.lastTo('tomasz@ninerdeck.pl')!);
+    await forgot(app, 'adam@ninerdeck.pl');
+    const token = tokenIn(mail.lastTo('adam@ninerdeck.pl')!);
 
     const weak = await reset(app, token, 'krotkie');
     expect(weak.statusCode).toBe(400);
     expect(weak.json()).toEqual({ error: 'weak_password', reason: 'too_short' });
     // Polityka zna OSOBĘ z tokenu: fragment nazwiska blokuje.
-    expect((await reset(app, token, 'malkiewicz-lata-wysoko')).json()).toEqual({ error: 'weak_password', reason: 'contains_name' });
+    expect((await reset(app, token, 'kowalski-lata-wysoko')).json()).toEqual({ error: 'weak_password', reason: 'contains_name' });
 
     expect((await reset(app, token, PASSWORD)).statusCode).toBe(204);
   });
@@ -138,10 +138,10 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
   it('limit wysyłek: 3 listy na adres w oknie, potem to samo 202 BEZ listu', async () => {
     const { app, mail } = await testHarness();
     for (let i = 0; i < SEND_PER_ADDRESS; i += 1) {
-      expect((await forgot(app, 'tomasz@ninerdeck.pl')).statusCode).toBe(202);
+      expect((await forgot(app, 'adam@ninerdeck.pl')).statusCode).toBe(202);
     }
     expect(mail.sent).toHaveLength(SEND_PER_ADDRESS);
-    const over = await forgot(app, 'tomasz@ninerdeck.pl');
+    const over = await forgot(app, 'adam@ninerdeck.pl');
     expect(over.statusCode).toBe(202);
     expect(over.json()).toEqual({ status: 'accepted' });
     expect(mail.sent).toHaveLength(SEND_PER_ADDRESS);
@@ -152,12 +152,36 @@ describe('„Nie pamiętam hasła" (§5.4)', () => {
     expect((await forgot(app, 'to-nie-adres')).statusCode).toBe(202);
     expect((await app.inject({ method: 'POST', url: '/auth/password/forgot', payload: {} })).statusCode).toBe(400);
   });
+
+  it('PANEL ma tę samą trasę pod swoim prefiksem (issue #180) - ten sam list, ta sama odpowiedź', async () => {
+    // Panel woła WYŁĄCZNIE `/admin/api/*` (jeden origin, nagłówek CSRF), więc trasa
+    // istniejąca tylko pod `/auth/…` była dla niego 404 - a ekran „Nie pamiętam hasła"
+    // ukrywał to za zdaniem „link już idzie", bo każdą odmowę serwera traktuje jak 202.
+    const { app, mail } = await testHarness();
+    const panel = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/password/forgot',
+      headers: ADMIN_CSRF_HEADERS,
+      payload: { email: 'adam@ninerdeck.pl' },
+    });
+    expect(panel.statusCode).toBe(202);
+    expect(panel.body).toBe((await forgot(app, 'nikogo-takiego@ninerdeck.pl')).body);
+    expect(mail.lastTo('adam@ninerdeck.pl')!.subject).toBe('Ninerdeck - ustaw hasło');
+
+    // Bez nagłówka CSRF strażnik odbija - jak każdą mutację panelu.
+    const noCsrf = await app.inject({
+      method: 'POST',
+      url: '/admin/api/auth/password/forgot',
+      payload: { email: 'adam@ninerdeck.pl' },
+    });
+    expect(noCsrf.statusCode).toBe(403);
+  });
 });
 
 describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
   it('administrator wysyła TEN SAM list członkowi swojego klubu; odpowiedź bez linku; wpis audytu bez tokenu', async () => {
     const { app, db, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'POST',
@@ -197,7 +221,7 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
     expect((await forgot(app, 'jan@ninerdeck.pl')).statusCode).toBe(202);
     const bySelf = mail.lastTo('jan@ninerdeck.pl')!;
 
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     const sent = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots/JSE/password-link',
@@ -217,7 +241,7 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
 
   it('członek bez adresu → 409 `email_required` (tu wolno powiedzieć wprost)', async () => {
     const { app, db, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     await db.query(`UPDATE pilots SET email = NULL WHERE id = 'KRZ'`);
     const res = await app.inject({
       method: 'POST',
@@ -232,11 +256,18 @@ describe('link z PANELU - członek klubu (`accounts.manage`, §5.4)', () => {
 
   it('bez `accounts.manage` (pilot) → 403; awaria poczty → 502, a token i wpis zostają', async () => {
     const { app, db, mail } = await testHarness();
-    // JSE jest pilotem - do panelu nie wchodzi wcale.
-    const pilot = await app.inject({ method: 'POST', url: '/admin/api/auth/login', headers: ADMIN_CSRF_HEADERS, payload: { idToken: googleTokenFor('JSE') } });
+    // JSE jest pilotem: do panelu WCHODZI (issue #216), ale listu nie wyśle - zdolność
+    // stoi na trasie, nie na drzwiach.
+    const pilot = await app.inject({
+      method: 'POST',
+      url: '/admin/api/pilots/KRZ/password-link',
+      headers: ADMIN_CSRF_HEADERS,
+      cookies: { ninerdeck_admin: await panelCookie(app, 'JSE') },
+    });
     expect(pilot.statusCode).toBe(403);
+    expect(pilot.json()).toEqual({ error: 'forbidden', required: 'accounts.manage' });
 
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
     mail.failing = true;
     const res = await app.inject({
       method: 'POST',
@@ -281,7 +312,7 @@ describe('zaproszenie administratora klubu z PLATFORMY (`platform.manage`, D8)',
       payload: { email: 'grazyna@gamma.pl', password: PASSWORD },
     });
     expect(login.statusCode, login.body).toBe(200);
-    expect(login.json()).toMatchObject({ org: { slug: 'aeroklub-gamma' }, pilot: { code: 'GGA', role: 'admin' } });
+    expect(login.json()).toMatchObject({ org: { slug: 'aeroklub-gamma' }, pilot: { code: 'GGA' } });
   });
 
   it('„Wyślij ponownie" - ten sam list dla administratora TEGO klubu; cudza osoba → 404', async () => {

@@ -33,7 +33,7 @@ export interface SessionCardVm {
   /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „OPERACJA 1" (01). */
   title: string;
   /**
-   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/AKO/1" (issue #68). Nazwa, którą operacja
+   * SYGNATURA OPERACJI - „SP-AXA/2026-09-01/BNO/1" (issue #68). Nazwa, którą operacja
    * ma poza tym telefonem: ten sam napis stoi w panelu, więc pilot i administrator
    * mówią o jednym locie tak samo.
    *

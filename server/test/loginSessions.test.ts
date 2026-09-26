@@ -74,10 +74,10 @@ const sidOf = (harness: Harness, token: string): string | null =>
 describe('sesja powstaje przy każdym wejściu (§4.3)', () => {
   it('telefon i panel dostają OSOBNE wiersze - po jednym na powierzchnię', async () => {
     const { app, db } = await testHarness();
-    await login(app, 'TMK');
-    await panelLogin(app, 'TMK');
+    await login(app, 'AKO');
+    await panelLogin(app, 'AKO');
 
-    const rows = await sessionRows(db, 'TMK');
+    const rows = await sessionRows(db, 'AKO');
     expect(rows.map((r) => r.surface).sort()).toEqual(['mobile', 'panel']);
     expect(rows.every((r) => r.method === 'google')).toBe(true);
     expect(rows.every((r) => r.org_id === ORG_A)).toBe(true);
@@ -86,15 +86,15 @@ describe('sesja powstaje przy każdym wejściu (§4.3)', () => {
 
   it('logowanie HASŁEM zapisuje metodę `password`, nie `google`', async () => {
     const { app, db, passwords } = await testHarness();
-    await passwords.change('TMK', null, 'zielone-smiglo-leci-2026', null);
+    await passwords.change('AKO', null, 'zielone-smiglo-leci-2026', null);
 
     const res = await app.inject({
       method: 'POST',
       url: '/auth/password',
-      payload: { login: 'tomasz@ninerdeck.pl', password: 'zielone-smiglo-leci-2026' },
+      payload: { login: 'adam@ninerdeck.pl', password: 'zielone-smiglo-leci-2026' },
     });
     expect(res.statusCode, res.body).toBe(200);
-    expect((await sessionRows(db, 'TMK')).map((r) => r.method)).toEqual(['password']);
+    expect((await sessionRows(db, 'AKO')).map((r) => r.method)).toEqual(['password']);
   });
 
   it('ROTACJA zachowuje sesję, a przełączenie klubu zakłada NOWĄ', async () => {
@@ -135,7 +135,7 @@ describe('sesja powstaje przy każdym wejściu (§4.3)', () => {
       method: 'POST',
       url: '/auth/google',
       headers: { 'x-ninerdeck-device': 'Android 14 · Pixel 7' },
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     await app.inject({
       method: 'POST',
@@ -145,13 +145,13 @@ describe('sesja powstaje przy każdym wejściu (§4.3)', () => {
         'user-agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
       },
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
 
     // Po POWIERZCHNI, nie po kolejności wstawienia: oba wiersze powstają w tej samej
     // chwili sterowanego zegara, więc porządek `created_at` nic tu nie rozstrzyga.
     const bySurface = Object.fromEntries(
-      (await sessionRows(db, 'TMK')).map((r) => [r.surface, r.device_label]),
+      (await sessionRows(db, 'AKO')).map((r) => [r.surface, r.device_label]),
     );
     expect(bySurface).toEqual({
       mobile: 'Android 14 · Pixel 7',
@@ -164,12 +164,12 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
   it('sesja UNIEWAŻNIONA odbija żądanie telefonu i odświeżenie - z powodem', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const { token, refreshToken } = await login(app, 'TMK');
+    const { token, refreshToken } = await login(app, 'AKO');
 
     expect((await app.inject({ method: 'GET', url: '/reference', headers: bearer(token) })).statusCode).toBe(200);
 
     await db.query(
-      `UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin' WHERE pilot_id = 'TMK'`,
+      `UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin' WHERE pilot_id = 'AKO'`,
     );
 
     // Trasa telefonu: zwykłe 401 - aplikacja reaguje na nie próbą odświeżenia…
@@ -188,14 +188,14 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
     // Gdyby sesję sprawdzać PO rotacji, każda próba synca wylogowanego telefonu
     // zostawiałaby świeży, nikomu niedoręczony token na kolejne 90 dni.
     const { app, db } = await testHarness();
-    const { refreshToken } = await login(app, 'TMK');
+    const { refreshToken } = await login(app, 'AKO');
     await db.query(
-      `UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin' WHERE pilot_id = 'TMK'`,
+      `UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin' WHERE pilot_id = 'AKO'`,
     );
 
-    const before = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'TMK'");
+    const before = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'AKO'");
     await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken } });
-    const after = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'TMK'");
+    const after = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'AKO'");
     expect(after.rows).toEqual(before.rows);
   });
 
@@ -205,14 +205,14 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
     // `sid` nieznany to co innego: ktoś wskazuje sesję, której nie ma.
     const harness = await testHarness();
     const { app, tokens } = harness;
-    await login(app, 'TMK');
+    await login(app, 'AKO');
 
     const unknown = tokens.sign(
-      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin', sessionId: 'sesja-widmo' },
+      { pilotId: 'AKO', orgId: ORG_A, code: 'AKO', sessionId: 'sesja-widmo' },
       3600,
     );
     const legacy = tokens.sign(
-      { pilotId: 'TMK', orgId: ORG_A, code: 'TMK', role: 'admin', sessionId: '' },
+      { pilotId: 'AKO', orgId: ORG_A, code: 'AKO', sessionId: '' },
       3600,
     );
 
@@ -222,10 +222,10 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
 
   it('PANEL dostaje nazwany powód od razu - nie ma czego odświeżyć', async () => {
     const { app, db } = await testHarness();
-    const cookie = await panelLogin(app, 'TMK');
+    const cookie = await panelLogin(app, 'AKO');
     await db.query(
       `UPDATE login_sessions SET revoked_at = now(), revoked_by = 'admin'
-        WHERE pilot_id = 'TMK' AND surface = 'panel'`,
+        WHERE pilot_id = 'AKO' AND surface = 'panel'`,
     );
 
     const res = await app.inject({ method: 'GET', url: '/admin/api/me', headers: cookieOf(cookie) });
@@ -235,12 +235,12 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
 
   it('„ostatnio aktywny" zapisuje się NAJWYŻEJ RAZ NA MINUTĘ', async () => {
     const { app, db, clock } = await testHarness();
-    const { token } = await login(app, 'TMK');
+    const { token } = await login(app, 'AKO');
 
     // Sterownik oddaje `timestamptz` jako `Date`, więc porównujemy ZAPIS, nie obiekt:
     // dwie instancje o tej samej chwili nie są tym samym obiektem.
     const seen = async () =>
-      new Date((await sessionRows(db, 'TMK'))[0]!.last_seen_at).toISOString();
+      new Date((await sessionRows(db, 'AKO'))[0]!.last_seen_at).toISOString();
     const ping = async () => {
       await app.inject({ method: 'GET', url: '/reference', headers: bearer(token) });
       return seen();
@@ -264,13 +264,13 @@ describe('brama sprawdza sesję przy każdym żądaniu (§6)', () => {
 describe('wylogowanie (§5.5)', () => {
   it('telefon: refresh znika z bazy, a sesja dostaje stempel `self`', async () => {
     const { app, db } = await testHarness();
-    const { refreshToken } = await login(app, 'TMK');
+    const { refreshToken } = await login(app, 'AKO');
 
     expect((await app.inject({ method: 'POST', url: '/auth/logout', payload: { refreshToken } })).statusCode).toBe(204);
 
-    const { rows } = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'TMK'");
+    const { rows } = await db.query("SELECT token_hash FROM refresh_tokens WHERE pilot_id = 'AKO'");
     expect(rows).toHaveLength(0);
-    expect(await sessionRows(db, 'TMK')).toMatchObject([{ revoked_by: 'self' }]);
+    expect(await sessionRows(db, 'AKO')).toMatchObject([{ revoked_by: 'self' }]);
   });
 
   it('nieznany refresh kończy się `204`, nie błędem', async () => {
@@ -287,7 +287,7 @@ describe('wylogowanie (§5.5)', () => {
 
   it('panel: wylogowanie stempluje wiersz sesji, nie tylko kasuje ciasteczko', async () => {
     const { app, db } = await testHarness();
-    const cookie = await panelLogin(app, 'TMK');
+    const cookie = await panelLogin(app, 'AKO');
 
     expect(
       (
@@ -299,7 +299,7 @@ describe('wylogowanie (§5.5)', () => {
       ).statusCode,
     ).toBe(204);
 
-    expect(await sessionRows(db, 'TMK')).toMatchObject([{ surface: 'panel', revoked_by: 'self' }]);
+    expect(await sessionRows(db, 'AKO')).toMatchObject([{ surface: 'panel', revoked_by: 'self' }]);
   });
 });
 
@@ -307,10 +307,10 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
   it('ZMIANA HASŁA wylogowuje pozostałe urządzenia, a bieżące zostawia', async () => {
     const harness = await testHarness();
     const { app, db } = harness;
-    const stay = await login(app, 'TMK');
-    await login(app, 'TMK');
-    await panelLogin(app, 'TMK');
-    expect(await sessionRows(db, 'TMK')).toHaveLength(3);
+    const stay = await login(app, 'AKO');
+    await login(app, 'AKO');
+    await panelLogin(app, 'AKO');
+    expect(await sessionRows(db, 'AKO')).toHaveLength(3);
 
     const res = await app.inject({
       method: 'PUT',
@@ -320,7 +320,7 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
     });
     expect(res.statusCode, res.body).toBe(204);
 
-    const live = (await sessionRows(db, 'TMK')).filter((r) => r.revoked_at == null);
+    const live = (await sessionRows(db, 'AKO')).filter((r) => r.revoked_at == null);
     expect(live.map((r) => r.id)).toEqual([sidOf(harness, stay.token)]);
     // Telefon, z którego padła zmiana, pracuje dalej - inaczej „zmień hasło" kończyłoby
     // się ekranem logowania i wyglądało jak błąd.
@@ -329,11 +329,11 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
 
   it('REALIZACJA LINKU zrywa WSZYSTKIE sesje osoby - stare hasło mogło wyciec', async () => {
     const { app, db, mail, passwords } = await testHarness();
-    await login(app, 'TMK');
-    await panelLogin(app, 'TMK');
+    await login(app, 'AKO');
+    await panelLogin(app, 'AKO');
 
-    await passwords.forgot('tomasz@ninerdeck.pl', null);
-    const link = mail.lastTo('tomasz@ninerdeck.pl')!;
+    await passwords.forgot('adam@ninerdeck.pl', null);
+    const link = mail.lastTo('adam@ninerdeck.pl')!;
     const token = /#([A-Za-z0-9_-]+)/.exec(link.text)![1]!;
     expect(
       (
@@ -345,7 +345,7 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
       ).statusCode,
     ).toBe(204);
 
-    const rows = await sessionRows(db, 'TMK');
+    const rows = await sessionRows(db, 'AKO');
     expect(rows).toHaveLength(2);
     expect(rows.every((r) => r.revoked_by === 'system')).toBe(true);
   });
@@ -365,7 +365,7 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
     expect(switched.statusCode, switched.body).toBe(200);
     expect(await sessionRows(db, 'PWI')).toHaveLength(2);
 
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
     const off = await app.inject({
       method: 'POST',
       url: '/admin/api/pilots/PWI/active',
@@ -383,8 +383,8 @@ describe('unieważnianie przy innych decyzjach (§5.3, §5.4)', () => {
 describe('sesje w panelu (§5.6)', () => {
   it('`GET /me/sessions` pokazuje moje urządzenia i oznacza BIEŻĄCE', async () => {
     const { app } = await testHarness();
-    await login(app, 'TMK');
-    const cookie = await panelLogin(app, 'TMK');
+    await login(app, 'AKO');
+    const cookie = await panelLogin(app, 'AKO');
 
     const res = await app.inject({
       method: 'GET',
@@ -400,8 +400,8 @@ describe('sesje w panelu (§5.6)', () => {
   it('własnej BIEŻĄCEJ sesji nie da się wyłączyć tą trasą; cudzej - też nie', async () => {
     const harness = await testHarness();
     const { app } = harness;
-    const phone = await login(app, 'TMK');
-    const cookie = await panelLogin(app, 'TMK');
+    const phone = await login(app, 'AKO');
+    const cookie = await panelLogin(app, 'AKO');
     const mine = (
       await app.inject({ method: 'GET', url: '/admin/api/me/sessions', headers: cookieOf(cookie) })
     ).json() as Array<{ id: string; current: boolean }>;
@@ -428,7 +428,7 @@ describe('sesje w panelu (§5.6)', () => {
     const harness = await testHarness();
     const { app, db } = harness;
     const member = await login(app, 'PWI');
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const list = await app.inject({
       method: 'GET',
@@ -470,7 +470,7 @@ describe('sesje w panelu (§5.6)', () => {
         })
       ).statusCode,
     ).toBe(200);
-    const admin = await login(app, 'TMK');
+    const admin = await login(app, 'AKO');
 
     const res = await app.inject({
       method: 'POST',

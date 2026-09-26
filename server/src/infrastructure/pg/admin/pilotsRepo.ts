@@ -37,11 +37,12 @@ import type {
   PilotScopeCounts,
   PilotsAdminPort,
 } from '../../../application/admin/ports.ts';
+import type { DirectoryMember } from '../../../application/admin/contracts/directory.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 import type { IssuedLoginMethod } from '../../../domain/loginSessions.ts';
 import { membershipStatusOf } from '../../../domain/memberships.ts';
 import { normalizeEmailOrNull } from '../../../domain/email.ts';
-import { DEFAULT_ROLE, isPilotRole, PILOT_ROLES } from '../../../domain/roles.ts';
+import { isCapability, type Capability } from '../../../domain/roles.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
 interface MemberDbRow {
@@ -51,7 +52,7 @@ interface MemberDbRow {
   name: string;
   email: string | null;
   status: string;
-  role: string;
+  capabilities: string;
   updated_at: string | Date;
   /** Najświeższa ŻYWA sesja w tym klubie; `null` = żadnej (2.1.0, issue #133). */
   last_seen_at: string | Date | null;
@@ -76,6 +77,18 @@ interface TargetDbRow extends RequestDbRow {
   active: boolean;
 }
 
+/**
+ * Zbiór z jednego napisu (`string_agg`), a nie z kolumny tablicowej: tablice
+ * Postgresa serializuje STEROWNIK, a testy jadą na PGlite i produkcja na `pg`.
+ * Ta sama decyzja, co przy `IN (…)` zamiast `= ANY ($n)` niżej.
+ *
+ * Napis spoza katalogu WYPADA. W bazie nie ma `CHECK`-a (katalog żyje w TypeScripcie
+ * i rośnie), więc filtr jest tu jedynym miejscem, w którym literówka przestaje
+ * wyglądać jak nadane uprawnienie - `can` i tak by jej nie uznał.
+ */
+const toCapabilities = (value: string): Capability[] =>
+  value === '' ? [] : value.split(',').filter(isCapability);
+
 const toAccount = (r: {
   id: string;
   org_id: string;
@@ -83,7 +96,7 @@ const toAccount = (r: {
   name: string;
   email: string | null;
   status: string;
-  role: string;
+  capabilities: string;
 }): AdminPilotAccount => ({
   id: r.id,
   orgId: r.org_id,
@@ -91,9 +104,7 @@ const toAccount = (r: {
   name: r.name,
   email: r.email,
   active: r.status === 'active',
-  // Ta sama nieufność, co w adapterze logowania: bazy pilnuje CHECK na `memberships.role`,
-  // ale nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
-  role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
+  capabilities: toCapabilities(r.capabilities),
 });
 
 const toJoin = (r: MemberDbRow): AdminPilotJoin => ({
@@ -155,7 +166,10 @@ const flyingDaysSql = (org: string, from: string, to: string): string => `
        AND claim_time BETWEEN ${from} AND ${to}
   ) s GROUP BY pilot_id`;
 
-const MEMBER_COLUMNS = 'p.id, m.org_id, m.code, p.name, p.email, m.status, m.role';
+const MEMBER_COLUMNS = `p.id, m.org_id, m.code, p.name, p.email, m.status,
+              COALESCE((SELECT string_agg(mc.capability, ',' ORDER BY mc.capability)
+                 FROM membership_capabilities mc
+                WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id), '') AS capabilities`;
 
 export class PgAdminPilotsRepo implements PilotsAdminPort {
   async list(
@@ -213,6 +227,27 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     return { items: rows.map(toJoin), total: Number(total.rows[0]?.n ?? 0) };
   }
 
+  async directory(db: Queryable, orgId: string): Promise<DirectoryMember[]> {
+    // Ten sam krąg, co lista modułu (`LISTED`: aktywni i wyłączeni, bez kolejki
+    // zgłoszeń), ale CZTERY kolumny: słownik podpisuje zajętości i decyzje, a nazwisko
+    // członka wyłączonego wciąż stoi przy jego dawnej rezerwacji. Klub jest pierwszym
+    // warunkiem, jak w każdym zapytaniu tego pliku (issue #99).
+    const { rows } = await db.query<{ id: string; code: string; name: string; status: string }>(
+      `SELECT p.id, m.code, p.name, m.status
+         FROM memberships m
+         JOIN pilots p ON p.id = m.pilot_id
+        WHERE m.org_id = $1 AND ${LISTED}
+        ORDER BY p.name ASC, m.code ASC`,
+      [orgId],
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      active: row.status === 'active',
+    }));
+  }
+
   async counts(
     db: Queryable,
     orgId: string,
@@ -220,13 +255,7 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
   ): Promise<PilotCounts> {
     const { rows } = await db.query<Record<string, string>>(
       `SELECT COUNT(*) AS total,
-              COUNT(*) FILTER (WHERE m.status = 'active') AS active,
-              COUNT(*) FILTER (WHERE m.role = 'admin') AS admin,
-              -- Wszystko, co NIE jest administratorem, liczy się jako pilot - także
-              -- wiersz z rolą spoza katalogu. Tak samo czyta to reszta serwera:
-              -- isPilotRole(role) albo DEFAULT_ROLE. Liczenie go osobno albo pomijanie
-              -- dawałoby kafel, którego suma nie zgadza się z total.
-              COUNT(*) FILTER (WHERE m.role IS DISTINCT FROM 'admin') AS pilot
+              COUNT(*) FILTER (WHERE m.status = 'active') AS active
          FROM memberships m
         WHERE m.org_id = $1 AND ${LISTED}`,
       [orgId],
@@ -242,18 +271,10 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     const total = Number(row.total ?? 0);
     const active = Number(row.active ?? 0);
 
-    // `Record<PilotRole, number>` składamy z katalogu ról, nie z kluczy wiersza:
-    // dopisanie roli w `domain/roles.ts` ma wywalić kompilację tutaj, a nie oddać
-    // panelowi kartę „Rola w panelu" z brakującą pozycją.
-    const byRole = Object.fromEntries(
-      PILOT_ROLES.map((role) => [role, Number(row[role] ?? 0)]),
-    ) as Record<(typeof PILOT_ROLES)[number], number>;
-
     return {
       total,
       active,
       inactive: total - active,
-      byRole,
       flyingDays: Number(days.rows[0]?.n ?? 0),
     };
   }
@@ -280,10 +301,14 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
       `SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE m.status = 'active') AS active,
               COUNT(*) FILTER (WHERE m.status <> 'active') AS inactive,
-              -- „Z rolą panelu" = dziś dokładnie administratorzy: po wycofaniu
-              -- training_lead (2026-08-30) nie ma innej roli, która wpuszcza do
-              -- back-office'u. Chip zostaje, bo wraca razem z trzecią rolą.
-              COUNT(*) FILTER (WHERE m.role = 'admin') AS panel
+              -- „Z dostępem do panelu" pyta o ZDOLNOŚĆ, nie o rolę (epik #197):
+              -- od 3.1.0 wejscie do panelu nadaje sie pojedynczo, wiec ma je
+              -- ma je i administrator, i technik, i nikt inny.
+              COUNT(*) FILTER (WHERE EXISTS (
+                SELECT 1 FROM membership_capabilities mc
+                 WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id
+                   AND mc.capability = 'panel.access'
+              )) AS panel
          FROM memberships m
          JOIN pilots p ON p.id = m.pilot_id ${sql.where()}`,
       sql.params(),
@@ -353,15 +378,26 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
         [id, patch.name ?? null, normalizeEmailOrNull(patch.email), patch.email !== undefined],
       );
     }
-    if (patch.code !== undefined || patch.role !== undefined) {
+    if (patch.code !== undefined || patch.capabilities !== undefined) {
       await tx.query(
         `UPDATE memberships
             SET code = COALESCE($3, code),
-                role = COALESCE($4, role),
                 updated_at = now()
           WHERE org_id = $1 AND pilot_id = $2`,
-        [orgId, id, patch.code ?? null, patch.role ?? null],
+        [orgId, id, patch.code ?? null],
       );
+    }
+    // ZAKRES ZAPISUJE SIĘ W CAŁOŚCI: kasujemy zbiór i wstawiamy nowy, zamiast liczyć
+    // różnicę. Panel wysyła stan docelowy (`PilotPatch.capabilities`), a różnica
+    // policzona tutaj rozjechałaby się z tym, co administrator widzi na ekranie -
+    // wystarczyłyby dwie otwarte karty. Obie operacje idą TĄ SAMĄ transakcją, więc
+    // nie ma chwili, w której członek nie ma żadnej zdolności.
+    if (patch.capabilities !== undefined) {
+      await tx.query(
+        `DELETE FROM membership_capabilities WHERE org_id = $1 AND pilot_id = $2`,
+        [orgId, id],
+      );
+      await insertCapabilities(tx, orgId, id, patch.capabilities);
     }
   }
 
@@ -392,10 +428,14 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
     );
   }
 
-  async countActiveAdmins(tx: Queryable, orgId: string): Promise<number> {
+  async countActiveManagers(tx: Queryable, orgId: string): Promise<number> {
     const { rows } = await tx.query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM memberships
-        WHERE org_id = $1 AND status = 'active' AND role = 'admin'`,
+      `SELECT COUNT(*) AS n
+         FROM memberships m
+         JOIN membership_capabilities mc
+           ON mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id
+          AND mc.capability = 'accounts.manage'
+        WHERE m.org_id = $1 AND m.status = 'active'`,
       [orgId],
     );
     return Number(rows[0]?.n ?? 0);
@@ -544,14 +584,21 @@ export class PgAdminPilotsRepo implements PilotsAdminPort {
       `UPDATE memberships
           SET status = 'active',
               code = $3,
-              role = $4,
               reject_reason = NULL,
-              decided_at = $5,
-              decided_by = $6,
+              decided_at = $4,
+              decided_by = $5,
               updated_at = now()
         WHERE org_id = $1 AND pilot_id = $2 AND status = 'pending'`,
-      [orgId, pilotId, decision.code, decision.role, decision.at.toISOString(), decision.by],
+      [orgId, pilotId, decision.code, decision.at.toISOString(), decision.by],
     );
+    // Zgłoszenie czekające nie ma jeszcze żadnej zdolności, więc samo wstawienie
+    // wystarczy - ale kasujemy najpierw i tak: przy powtórzonym zatwierdzeniu
+    // (`reopen` → `approve`) zbiór ma być tym, co administrator właśnie wybrał.
+    await tx.query(
+      `DELETE FROM membership_capabilities WHERE org_id = $1 AND pilot_id = $2`,
+      [orgId, pilotId],
+    );
+    await insertCapabilities(tx, orgId, pilotId, decision.capabilities);
   }
 
   /** `pending` → `rejected` z powodem; kod zostaje pusty, bo członkostwa nie ma. */
@@ -614,12 +661,13 @@ function applyFilters(sql: SqlFilter, filter: PilotListFilter): void {
   if (filter.active !== undefined) {
     sql.add(filter.active ? "m.status = 'active'" : "m.status <> 'active'");
   }
-  if (filter.roles !== undefined && filter.roles.length > 0) {
-    // `IN (…)` z osobnych miejsc na wartości, nie `= ANY ($n)` z tablicą: tablicę
-    // trzeba by serializować do literału Postgresa, co jest zachowaniem STEROWNIKA,
-    // a testy jadą na PGlite, produkcja na `pg`. Ta sama decyzja co w `auditReadRepo`.
-    const holes = filter.roles.map(() => '?').join(', ');
-    sql.add(`m.role IN (${holes})`, ...filter.roles);
+  if (filter.capability !== undefined) {
+    sql.add(
+      `EXISTS (SELECT 1 FROM membership_capabilities mc
+                WHERE mc.org_id = m.org_id AND mc.pilot_id = m.pilot_id
+                  AND mc.capability = ?)`,
+      filter.capability,
+    );
   }
   applySearch(sql, filter.search);
 }
@@ -643,5 +691,29 @@ function applySearch(sql: SqlFilter, search: string | undefined): void {
     search,
     search,
     search,
+  );
+}
+
+/**
+ * Wstawienie zbioru zdolności - JEDNO zapytanie z tyloma miejscami, ile pozycji.
+ *
+ * Pusty zbiór nie pisze nic i to jest stan domyślny członka (pilot pracuje
+ * w aplikacji), a nie przypadek brzegowy. `ON CONFLICT DO NOTHING` broni przed
+ * powtórzoną pozycją w żądaniu - walidator ją odsiewa, ale klucz główny jest tu
+ * ostatnim słowem.
+ */
+async function insertCapabilities(
+  tx: Queryable,
+  orgId: string,
+  pilotId: string,
+  capabilities: readonly Capability[],
+): Promise<void> {
+  if (capabilities.length === 0) return;
+  const holes = capabilities.map((_, i) => `($1, $2, $${i + 3})`).join(
+);
+  await tx.query(
+    `INSERT INTO membership_capabilities (org_id, pilot_id, capability)
+     VALUES ${holes} ON CONFLICT DO NOTHING`,
+    [orgId, pilotId, ...capabilities],
   );
 }

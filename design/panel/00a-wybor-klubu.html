@@ -74,7 +74,7 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
         </span>
         <span class="login-title">NINERDECK</span>
-        <span class="login-note">Panel administracyjny · Tomasz Małkiewicz</span>
+        <span class="login-note">Panel administracyjny · Adam Kowalski</span>
       </div>
 
       <div class="login-card">
@@ -85,7 +85,7 @@
           <a class="opt" role="option" href="dziennik-flota.html">
             <span class="opt-body">
               <span class="opt-name">Aeroklub Zielonogórski</span>
-              <span class="opt-desc">administrator · Twój kod TMK</span>
+              <span class="opt-desc">administrator · Twój kod AKO</span>
             </span>
             <span class="opt-go" aria-hidden="true">›</span>
           </a>
@@ -96,10 +96,18 @@
             </span>
             <span class="opt-go" aria-hidden="true">›</span>
           </a>
+          <!-- Klub, w którym osoba jest tylko PILOTEM, JEST na liście (issue #216, „panel
+               dla wszystkich"): druga linia mówi „pilot", a sesja tego klubu otwiera Moje
+               konto i Kalendarz - więc karta nie obiecuje niczego, czego reguły odmówią.
+               Do 3.1.0 serwer takiego klubu nie wysyłał, bo panel był dla administratora. -->
+          <a class="opt" role="option" href="kalendarz-flota.html">
+            <span class="opt-body">
+              <span class="opt-name">Aeroklub Śląski</span>
+              <span class="opt-desc">pilot · Twój kod PWI</span>
+            </span>
+            <span class="opt-go" aria-hidden="true">›</span>
+          </a>
         </div>
-        <!-- Klub, w którym osoba jest tylko PILOTEM, na listę NIE wchodzi: panel jest
-             dla administratora, a karta „bez dostępu" obiecywałaby wejście, którego
-             reguły odmówią (zasada z 10B). O takim klubie mówi aplikacja, nie panel. -->
       </div>
 
     </div>

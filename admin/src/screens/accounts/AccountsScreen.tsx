@@ -46,7 +46,7 @@ import { ClubCodeDrawer } from './ClubCodeDrawer';
 import { PendingCard } from './PendingCard';
 import { RequestDrawer } from './RequestDrawer';
 
-const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Rola', 'Status', ''];
+const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Zakres', 'Status', ''];
 
 /** Która szuflada stoi nad listą - rozstrzyga TRASA, nie ekran (patrz nagłówek pliku). */
 export type AccountsDrawer = 'account' | 'request' | 'club-code';
@@ -105,8 +105,8 @@ export function AccountsScreen({ drawer }: { drawer: AccountsDrawer }) {
     { key: 'email', header: 'E-mail', cellClass: 'cell-sub', render: (row) => row.email },
     {
       key: 'role',
-      header: 'Rola',
-      render: (row) => <Pill tone={row.roleTone}>{row.roleLabel}</Pill>,
+      header: 'Zakres',
+      render: (row) => <Pill tone={row.scopeTone}>{row.scopeLabel}</Pill>,
     },
     {
       key: 'status',

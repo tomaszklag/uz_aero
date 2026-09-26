@@ -10,8 +10,20 @@
  *
  * Stąd trzy zakazy, wypisane jako CZYSTE FUNKCJE, nie jako `if`-y w komendzie:
  *  1. nie deaktywujesz własnego konta,
- *  2. nie odbierasz sobie roli administratora,
- *  3. nie odbierasz roli OSTATNIEMU aktywnemu administratorowi.
+ *  2. nie odbierasz sobie zdolności `accounts.manage`,
+ *  3. nie odbierasz jej OSTATNIEMU aktywnemu nosicielowi w klubie.
+ *
+ * ══ OŚ PRZESZŁA Z ROLI NA ZDOLNOŚĆ (epik #197) ══
+ * Do 3.1.0 zapora pytała o rolę `admin`, bo rola nadawała wszystko naraz. Odkąd
+ * zdolności nadaje się pojedynczo, „administrator" przestał być bytem - a klub
+ * zamyka się dokładnie wtedy, gdy nikt nie ma `accounts.manage`, bo tylko ta
+ * zdolność potrafi nadać komukolwiek cokolwiek. Pozostałe można odebrać do zera
+ * i klub żyje dalej: nie będzie miał kto rozwiązywać flag, ale będzie miał kto
+ * przywrócić prawa.
+ *
+ * **Ta sama zapora obejmuje TRZY drogi**: odebranie zdolności, wyłączenie
+ * członkostwa i usunięcie konta. Pilnowanie jednej z nich zamykałoby klub
+ * pozostałymi dwiema.
  *
  * Dlaczego osobny plik, a nie warunki w `commands/pilots.ts`: to jest ta sama zasada,
  * co w `roles.ts` - pytanie „czego panel NIE MOŻE zrobić z kontem" ma mieć jedną
@@ -24,7 +36,7 @@
  * (`design/admin/`, reguła „nigdy cichy brak").
  */
 
-import type { PilotRole } from './roles.ts';
+import { can, type Capability } from './roles.ts';
 
 /**
  * Powód odmowy. Kody są SUROWE i takie jadą na drut - nazwanie ich po polsku jest
@@ -33,9 +45,9 @@ import type { PilotRole } from './roles.ts';
 export type AccountRefusal =
   /** Deaktywacja własnego konta - administrator odciąłby sam siebie. */
   | 'self_deactivate'
-  /** Odebranie sobie roli administratora - to samo odcięcie, inną drogą. */
+  /** Odebranie sobie zdolności `accounts.manage` - to samo odcięcie, inną drogą. */
   | 'self_demote'
-  /** Ostatni AKTYWNY administrator traci rolę albo dostęp - klub zostaje bez nikogo. */
+  /** Ostatni AKTYWNY nosiciel `accounts.manage` traci ją albo dostęp - klub zostaje bez nikogo. */
   | 'last_admin'
   /**
    * Konto nieaktywne przy operacji, która wymaga działającego dostępu.
@@ -51,59 +63,61 @@ export type AccountRefusal =
   /** Usunięcie konta, do którego coś się odwołuje - zostałaby historia bez właściciela. */
   | 'has_history';
 
-export interface RoleChange {
+export interface ScopeChange {
   actorPilotId: string;
   targetPilotId: string;
-  currentRole: PilotRole;
-  nextRole: PilotRole;
-  /** Czy konto celu jest aktywne - nieaktywny administrator nie liczy się do puli. */
+  currentCapabilities: readonly Capability[];
+  nextCapabilities: readonly Capability[];
+  /** Czy członkostwo celu jest aktywne - nieaktywny nosiciel nie liczy się do puli. */
   targetActive: boolean;
-  /** Ile kont AKTYWNYCH ma dziś rolę `admin`, łącznie z celem zmiany. */
-  activeAdmins: number;
+  /** Ile AKTYWNYCH członkostw klubu ma dziś `accounts.manage`, łącznie z celem. */
+  activeManagers: number;
 }
 
 /**
- * Zmiana roli: odmowa albo `null`.
+ * Zmiana zakresu: odmowa albo `null`.
  *
- * Pilnujemy wyłącznie ODEBRANIA roli administratora - nadanie jej komukolwiek jest
+ * Pilnujemy WYŁĄCZNIE odebrania `accounts.manage` - nadanie czegokolwiek jest
  * bezpieczne w tym sensie, o który tu chodzi (nie zmniejsza liczby ludzi zdolnych
- * naprawić system). Odebranie roli komuś, kto nie jest administratorem, nie zamyka
- * nikogo poza panelem: po wycofaniu `training_lead` (2026-08-30) druga rola nie ma
- * ani jednej zdolności.
+ * naprawić system), a odebranie pozostałych zdolności odbiera funkcje, nie drogę
+ * powrotu: zostaje ktoś, kto potrafi je nadać z powrotem.
  */
-export function refuseRoleChange(change: RoleChange): AccountRefusal | null {
-  if (change.nextRole === change.currentRole) return null;
-  if (change.currentRole !== 'admin') return null;
+export function refuseScopeChange(change: ScopeChange): AccountRefusal | null {
+  const had = can(change.currentCapabilities, 'accounts.manage');
+  const has = can(change.nextCapabilities, 'accounts.manage');
+  if (!had || has) return null;
 
   if (change.actorPilotId === change.targetPilotId) return 'self_demote';
-  // Nieaktywny administrator nie trzyma nikogo przy życiu, więc jego degradacja
-  // nie może być ostatnią kroplą - do puli liczą się wyłącznie konta aktywne.
-  if (change.targetActive && change.activeAdmins <= 1) return 'last_admin';
+  // Nieaktywny nosiciel nie trzyma nikogo przy życiu, więc odebranie mu zdolności
+  // nie może być ostatnią kroplą - do puli liczą się wyłącznie członkostwa aktywne.
+  if (change.targetActive && change.activeManagers <= 1) return 'last_admin';
   return null;
 }
 
 export interface ActiveChange {
   actorPilotId: string;
   targetPilotId: string;
-  currentRole: PilotRole;
-  activeAdmins: number;
+  /** Czy WYŁĄCZANE członkostwo ma dziś `accounts.manage`. */
+  targetManagesAccounts: boolean;
+  /** Ile AKTYWNYCH członkostw klubu ma dziś tę zdolność, łącznie z celem. */
+  activeManagers: number;
 }
 
 /**
  * Deaktywacja: odmowa albo `null`.
  *
  * Warunek „ostatni administrator" wyglądał na nadmiarowy obok blokady na sobie samym
- * (działający administrator sam jest aktywnym administratorem, więc cudze konto niby
+ * (działający administrator sam nosi `accounts.manage`, więc cudze konto niby
  * nigdy nie jest ostatnie) - i to rozumowanie było prawdziwe wyłącznie w jednym
  * żądaniu naraz. Od 2026-08-01 gałąź jest OSIĄGALNA: mutacje zmieniające populację
- * administratorów szereguje blokada advisory (`PilotsAdminPort.lockAdminPopulation`),
+ * nosicieli szereguje blokada advisory (`PilotsAdminPort.lockAdminPopulation`),
  * więc druga transakcja wyścigu liczy administratorów PO pierwszej i widzi, że jej
  * własny actor przestał już nim być. Wtedy cudze konto naprawdę jest ostatnie.
  * Przypadki: `test/adminAccounts.test.ts`, „wyścig o populację administratorów".
  */
 export function refuseDeactivate(change: ActiveChange): AccountRefusal | null {
   if (change.actorPilotId === change.targetPilotId) return 'self_deactivate';
-  if (change.currentRole === 'admin' && change.activeAdmins <= 1) return 'last_admin';
+  if (change.targetManagesAccounts && change.activeManagers <= 1) return 'last_admin';
   return null;
 }
 

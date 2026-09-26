@@ -51,18 +51,18 @@ async function methodsOf(app: App, cookie: string, code: string): Promise<string
 describe('plakietki metod w karcie członka (D4)', () => {
   it('pusto, dopóki nikt nie wszedł; Google po logowaniu; hasło po realizacji linku', async () => {
     const { app, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     // Administrator właśnie wszedł Googlem, więc ma dokładnie jedną metodę…
-    expect(await methodsOf(app, cookie, 'TMK')).toEqual(['google']);
+    expect(await methodsOf(app, cookie, 'AKO')).toEqual(['google']);
     // …a członkini, której nikt jeszcze nie wpuścił, NIE MA ŻADNEJ. To jest stan
     // prawdziwy, nie brak danych: konto założone adresem czeka na pierwsze wejście.
-    expect(await methodsOf(app, cookie, 'AKO')).toEqual([]);
+    expect(await methodsOf(app, cookie, 'BNO')).toEqual([]);
 
     // Administrator wysyła TEN SAM list, który pilotka wysłałaby sobie sama…
     const sent = await app.inject({
       method: 'POST',
-      url: '/admin/api/pilots/AKO/password-link',
+      url: '/admin/api/pilots/BNO/password-link',
       headers: ADMIN_CSRF_HEADERS,
       cookies: { ninerdeck_admin: cookie },
     });
@@ -71,24 +71,24 @@ describe('plakietki metod w karcie członka (D4)', () => {
     expect(Object.keys(sent.json()).sort()).toEqual(['expiresAt', 'sentTo']);
 
     // Sam wysłany list metody NIE DODAJE - dodaje ją dopiero ustawione hasło.
-    const letter = mail.lastTo('anna@ninerdeck.pl')!;
-    expect(await methodsOf(app, cookie, 'AKO')).toEqual([]);
+    const letter = mail.lastTo('barbara@ninerdeck.pl')!;
+    expect(await methodsOf(app, cookie, 'BNO')).toEqual([]);
     expect(
       (await app.inject({ method: 'POST', url: '/auth/password/reset', payload: { token: tokenIn(letter), password: PASSWORD } })).statusCode,
     ).toBe(204);
 
-    expect(await methodsOf(app, cookie, 'AKO')).toEqual(['password']);
+    expect(await methodsOf(app, cookie, 'BNO')).toEqual(['password']);
 
     // Kolejność jest kolejnością plakietek w mockupie: Google przed hasłem, także
     // wtedy, gdy hasło powstało wcześniej.
-    const google = await app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor('AKO') } });
+    const google = await app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor('BNO') } });
     expect(google.statusCode, google.body).toBe(200);
-    expect(await methodsOf(app, cookie, 'AKO')).toEqual(['google', 'password']);
+    expect(await methodsOf(app, cookie, 'BNO')).toEqual(['google', 'password']);
   });
 
   it('lista nie niesie ani skrótu hasła, ani niczego, czym dałoby się wejść', async () => {
     const { app } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const res = await app.inject({
       method: 'GET',
@@ -103,7 +103,7 @@ describe('plakietki metod w karcie członka (D4)', () => {
 describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
   it('oddaje adres i metody zalogowanego - i rośnie o hasło po jego ustawieniu', async () => {
     const { app, mail } = await testHarness();
-    const cookie = await panelCookie(app, 'TMK');
+    const cookie = await panelCookie(app, 'AKO');
 
     const before = await app.inject({
       method: 'GET',
@@ -111,7 +111,7 @@ describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
       cookies: { ninerdeck_admin: cookie },
     });
     expect(before.statusCode, before.body).toBe(200);
-    expect(before.json()).toEqual({ email: 'tomasz@ninerdeck.pl', methods: ['google'] });
+    expect(before.json()).toEqual({ email: 'adam@ninerdeck.pl', methods: ['google'] });
 
     // Hasło ustawia się TĄ SAMĄ komendą, co na telefonie - osoba bez hasła nie podaje
     // obecnego, bo nie ma czego podać.
@@ -130,7 +130,7 @@ describe('moje konto w panelu (`GET /admin/api/me/account`, D6)', () => {
       url: '/admin/api/me/account',
       cookies: { ninerdeck_admin: cookie },
     });
-    expect(after.json()).toEqual({ email: 'tomasz@ninerdeck.pl', methods: ['google', 'password'] });
+    expect(after.json()).toEqual({ email: 'adam@ninerdeck.pl', methods: ['google', 'password'] });
   });
 
   it('odpowiada też sesji PLATFORMOWEJ - hasło ma każdy zalogowany, nie tylko klub', async () => {
@@ -164,7 +164,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     expect(login.statusCode, login.body).toBe(200);
     const token = login.json().token as string;
@@ -176,7 +176,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
     });
     expect(before.statusCode, before.body).toBe(200);
     expect(before.json()).toEqual({
-      email: 'tomasz@ninerdeck.pl',
+      email: 'adam@ninerdeck.pl',
       hasGoogle: true,
       hasPassword: false,
     });
@@ -195,7 +195,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
       headers: { authorization: `Bearer ${token}` },
     });
     expect(after.json()).toEqual({
-      email: 'tomasz@ninerdeck.pl',
+      email: 'adam@ninerdeck.pl',
       hasGoogle: true,
       hasPassword: true,
     });
@@ -206,7 +206,7 @@ describe('moje konto na TELEFONIE (`GET /me/account`, issue #135 E7)', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/google',
-      payload: { idToken: googleTokenFor('TMK') },
+      payload: { idToken: googleTokenFor('AKO') },
     });
     const res = await app.inject({
       method: 'GET',

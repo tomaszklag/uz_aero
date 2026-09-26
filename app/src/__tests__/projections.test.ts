@@ -19,7 +19,7 @@ import type { Event, EventType, EventPayloadMap } from '../domain';
 
 const SESSION = 'sess-22jun';
 const AC = 'sp-axa';
-const PIC = 'tmk';
+const PIC = 'ako';
 
 /** Baza doby scenariusza (22 JUNE 2026, 00:00 UTC) - konkretna data nie ma znaczenia. */
 const DAY0 = Date.UTC(2026, 5, 22, 0, 0, 0);

@@ -51,16 +51,16 @@ const BETA: OrgRef = { id: 'org-b', slug: 'beta', name: 'Aeroklub Beta' };
 const tokens: AuthTokens = {
   token: 'jwt-1',
   refreshToken: 'refresh-1',
-  pilot: { id: 'p1', code: 'TMK', name: 'Tomasz' },
+  pilot: { id: 'p1', code: 'AKO', name: 'Adam' },
   org: ALFA,
-  memberships: [{ org: ALFA, code: 'TMK', role: 'pilot' }],
+  memberships: [{ org: ALFA, code: 'AKO', role: 'pilot' }],
 };
 
 const betaTokens: AuthTokens = {
   ...tokens,
   token: 'jwt-b',
   refreshToken: 'refresh-b',
-  pilot: { id: 'p1', code: 'TMB', name: 'Tomasz' },
+  pilot: { id: 'p1', code: 'AKB', name: 'Adam' },
   org: BETA,
 };
 
@@ -377,7 +377,7 @@ describe('switchClub - przełączenie klubu', () => {
 
     expect(outcome.kind).toBe('switched');
     expect(creds.credentials?.org).toEqual(BETA);
-    expect(creds.credentials?.pilot.code).toBe('TMB'); // kod należy do CZŁONKOSTWA
+    expect(creds.credentials?.pilot.code).toBe('AKB'); // kod należy do CZŁONKOSTWA
     expect(creds.credentials?.pin).toEqual({ salt: 's', hash: 'h' });
     expect(club.reported).toEqual([BETA.id]);
   });
@@ -443,7 +443,7 @@ describe('loginWithPassword', () => {
       new FakeDeviceClubs(),
     );
 
-    const result = await auth.loginWithPassword({ login: 'tmk@ninerdeck.pl', password: 'dobre-haslo-2026' });
+    const result = await auth.loginWithPassword({ login: 'adam@ninerdeck.pl', password: 'dobre-haslo-2026' });
 
     expect(result).toEqual({ kind: 'signed_in', stored: creds.credentials });
     expect(creds.credentials?.org).toEqual(ALFA);
@@ -483,9 +483,9 @@ describe('loginWithPassword', () => {
       clubs,
     );
 
-    await auth.loginWithPassword({ login: 'AKO', password: 'dobre-haslo-2026' });
+    await auth.loginWithPassword({ login: 'BNO', password: 'dobre-haslo-2026' });
 
-    expect(seen).toEqual([{ login: 'AKO', password: 'dobre-haslo-2026', orgId: ALFA.id }]);
+    expect(seen).toEqual([{ login: 'BNO', password: 'dobre-haslo-2026', orgId: ALFA.id }]);
   });
 
   it('świeże urządzenie nie zna żadnego klubu - jedzie bez niego, loginem zostaje adres', async () => {
@@ -498,7 +498,7 @@ describe('loginWithPassword', () => {
       new FakeDeviceClubs(),
     );
 
-    await auth.loginWithPassword({ login: 'tmk@ninerdeck.pl', password: 'dobre-haslo-2026' });
+    await auth.loginWithPassword({ login: 'adam@ninerdeck.pl', password: 'dobre-haslo-2026' });
 
     expect(seen[0]?.orgId).toBeNull();
   });
@@ -517,7 +517,7 @@ describe('loginWithPassword', () => {
       new FakeDeviceClubs(),
     );
 
-    expect(await auth.loginWithPassword({ login: 'AKO', password: 'zle' })).toEqual(refusal);
+    expect(await auth.loginWithPassword({ login: 'BNO', password: 'zle' })).toEqual(refusal);
     expect(creds.credentials).toBeNull();
     expect(creds.person).toBeNull();
   });
@@ -531,7 +531,7 @@ describe('loginWithPassword', () => {
       new FakeDeviceClubs(),
     );
 
-    expect(await auth.loginWithPassword({ login: 'AKO', password: 'x' })).toEqual({ kind: 'unreachable' });
+    expect(await auth.loginWithPassword({ login: 'BNO', password: 'x' })).toEqual({ kind: 'unreachable' });
   });
 });
 
@@ -734,7 +734,7 @@ describe('sesja unieważniona zdalnie (D7)', () => {
       new FakeDeviceClubs(),
     );
 
-    await auth.loginWithPassword({ login: 'AKO', password: 'dobre-haslo-2026' });
+    await auth.loginWithPassword({ login: 'BNO', password: 'dobre-haslo-2026' });
 
     expect(await auth.revoked()).toBe(false);
     expect(creds.credentials?.revoked).toBeUndefined();

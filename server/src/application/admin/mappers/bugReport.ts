@@ -26,7 +26,7 @@ export const bugReport = (r: BugReportRecord): AdminBugReport => ({
   context: r.context,
   status: r.status,
   statusNote: r.statusNote,
-  // Panel dostaje KOD, nie identyfikator: „TMK" mówi coś człowiekowi, uuid nie mówi nic.
+  // Panel dostaje KOD, nie identyfikator: „AKO" mówi coś człowiekowi, uuid nie mówi nic.
   statusBy: r.statusByCode,
   statusAt: r.statusAt?.toISOString() ?? null,
 });

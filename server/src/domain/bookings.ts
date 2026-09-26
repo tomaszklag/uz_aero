@@ -49,7 +49,13 @@ export type BookingStatus =
   | 'rejected'
   | 'cancelled'
   | 'fulfilled'
-  | 'released';
+  | 'released'
+  /**
+   * Termin nadszedł, a ścieżka akceptacji nie została rozstrzygnięta (3.1.0, §11.5).
+   * OSOBNY od `released` i to jest cała różnica między nimi: tam maszyny nie przejęto,
+   * tu zgody nie wydano - a pilot ma usłyszeć, którą z tych dwóch rzeczy przegapiono.
+   */
+  | 'expired';
 
 /**
  * Stany, które TRZYMAJĄ SLOT - dokładnie ten zbiór stoi w predykacie ograniczenia
@@ -77,12 +83,13 @@ export function holdsSlot(status: BookingStatus): boolean {
  * operacja, która się odbyła, nie przestaje się była odbyć przez odwołanie rezerwacji.
  */
 const TRANSITIONS: Readonly<Record<BookingStatus, readonly BookingStatus[]>> = {
-  pending: ['confirmed', 'rejected', 'cancelled'],
+  pending: ['confirmed', 'rejected', 'cancelled', 'expired'],
   confirmed: ['fulfilled', 'cancelled', 'released'],
   rejected: [],
   cancelled: [],
   fulfilled: [],
   released: [],
+  expired: [],
 };
 
 export function canTransition(from: BookingStatus, to: BookingStatus): boolean {

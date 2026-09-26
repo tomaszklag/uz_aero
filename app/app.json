@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ninerdeck",
     "slug": "ninerdeck",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -31,7 +31,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.ninerdeck.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -52,7 +52,15 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2ECC71",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "owner": "tomekklag",
     "extra": {

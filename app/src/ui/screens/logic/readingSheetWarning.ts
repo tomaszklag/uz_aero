@@ -56,7 +56,7 @@ export interface MhSheetContext {
   beforeMh: number | null;
 }
 
-/** „AKO" - kto zostawił maszynę w tym stanie; bez pilota sam znacznik czasu nie pomaga. */
+/** „BNO" - kto zostawił maszynę w tym stanie; bez pilota sam znacznik czasu nie pomaga. */
 function who(link: RemoteReadingsChainLink): string {
   return link.picId.toUpperCase();
 }

@@ -419,6 +419,13 @@ export interface RemoteCalendar {
    */
   days: RemoteCalendarDay[];
   bookings: RemoteBooking[];
+  /**
+   * KTO PATRZY (obserwowanie 3.2.0, §6.6): `watch` = ta osoba ma zdolność
+   * „Obserwowanie samolotów", więc nagłówek wiersza maszyny prowadzi w jej kartę (27).
+   * Telefon zdolności nie zna i bit dojeżdża w odpowiedzi; opcjonalne, bo serwer
+   * sprzed 3.2.0 go nie niesie - wiersz jest wtedy samą etykietą.
+   */
+  viewer?: { watch?: boolean };
 }
 
 export interface RemoteCalendarDay {
@@ -457,6 +464,8 @@ export interface RemoteBooking {
   plannedFuelL?: number | null;
   sessionUuid?: string | null;
   note?: string | null;
+  /** Chwila złożenia (3.1.0) - „czeka od" na ekranie decyzji; w kształcie pełnym. */
+  createdAt?: string;
 }
 
 /**
@@ -471,7 +480,332 @@ export interface RemoteBookingDetail {
   timezone: string;
   day: RemoteCalendarDay;
   booking: RemoteBooking;
+  /**
+   * Stan ścieżki akceptacji (3.1.0, §11) - jedzie WYŁĄCZNIE tutaj, nie w oknie
+   * kalendarza. Opcjonalne, bo serwer sprzed 3.1.0 go nie wysyła: karta bez bloku
+   * czyta się wtedy jak w 3.0.0 (klub bez ścieżki).
+   */
+  approval?: RemoteApproval;
 }
+
+// ── Podgląd pilota i samolotu przy decyzji (3.1.0, issue #206; ekrany 26A/26B) ──
+//
+// TEN SAM komplet faktów, który dostaje szuflada w panelu - serwer składa go jednym
+// zapytaniem dla obu powierzchni, a telefon niczego nie liczy sam. Wiersze niosą
+// identyfikatory; nazwiska i znaki rozwiązuje cache klubu, jak wszędzie. CAŁY MODUŁ
+// WYMAGA SIECI (§12.1): bez zasięgu ekran mówi, że podgląd składa serwer.
+
+/** Trójka Loty · Blok · Lot - stała w całym produkcie. */
+export interface RemotePreviewFlying {
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+}
+
+export interface RemotePreviewRecent {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie); ISO, UTC jak rejestr. */
+  at: string | null;
+  aircraftId: string;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  blockMs: number;
+  flights: number;
+}
+
+export interface RemotePreviewUpcoming {
+  id: string;
+  aircraftId: string;
+  kind: 'flight' | 'block';
+  status: string;
+  startsAt: string;
+  endsAt: string;
+  pilotId: string | null;
+  blockReason: string | null;
+  /** Rozpatrywana sprawa - wiersz „· ta sprawa". */
+  thisCase: boolean;
+  /** Nachodzi na rozpatrywany termin - ten sam człowiek nie poleci dwiema maszynami. */
+  overlaps: boolean;
+  /** Doba klubu początku terminu - godziny liczą się odejmowaniem (§6.1). */
+  day: RemoteCalendarDay;
+}
+
+export interface RemotePilotPreview {
+  timezone: string;
+  bookingId: string;
+  pilot: {
+    id: string;
+    code: string | null;
+    name: string | null;
+    memberSince: string | null;
+  };
+  lastFlightAt: string | null;
+  /** Doświadczenie NA EGZEMPLARZU sprawy - pierwsza karta, bo to pytanie decyzji. */
+  onAircraft: {
+    aircraftId: string;
+    operations: number;
+    lastAt: string | null;
+    flights: number;
+    blockMs: number;
+    flightMs: number;
+  };
+  flying: {
+    last30: RemotePreviewFlying;
+    last90: RemotePreviewFlying;
+    total: RemotePreviewFlying;
+  };
+  recent: RemotePreviewRecent[];
+  upcoming: RemotePreviewUpcoming[];
+}
+
+/** Nagłówek maszyny - ten sam kształt na podglądzie 26B i na karcie 27. */
+export interface RemoteAircraftHead {
+  id: string;
+  reg: string;
+  type: string;
+  serviceStatus: 'active' | 'disabled';
+  capacityL: number;
+  mhFormat: 'hhmm' | 'decimal';
+  oilMinL: number | null;
+}
+
+/** Ostatni odczyt liczników ZE ŹRÓDŁEM - liczba bez metryczki wygląda na stan bieżący. */
+export interface RemoteAircraftCounters {
+  mh: number;
+  fuelL: number;
+  oilL: number | null;
+  at: string;
+  source: 'handover' | 'open_session' | 'initial' | 'admin';
+  byPilotId: string | null;
+  enteredBy: string | null;
+}
+
+/** Okno dni maszyny: dni z lotami, starty, silnik i lot - 26B („30 dni") i 27 („30 i 90 dni"). */
+export interface RemoteAircraftWindow {
+  daysWithFlights: number;
+  takeoffs: number;
+  blockMs: number;
+  flightMs: number;
+}
+
+export interface RemoteAircraftPreview {
+  timezone: string;
+  bookingId: string;
+  aircraft: RemoteAircraftHead;
+  lastFlightAt: string | null;
+  counters: RemoteAircraftCounters | null;
+  last30: RemoteAircraftWindow;
+  recent: RemotePreviewRecent[];
+  upcoming: RemotePreviewUpcoming[];
+  /**
+   * Czy patrzący ma zdolność „Obserwowanie samolotów" (3.2.0): stopka 26B prowadzi
+   * wtedy w kartę maszyny (27). Opcjonalne - serwer sprzed 3.2.0 tego nie niesie.
+   */
+  viewer?: { watch?: boolean };
+}
+
+// ── Karta maszyny i obserwowanie (3.2.0, issue #205; ekrany 27, 13C, 25C) ──────────
+//
+// CAŁY MODUŁ WYMAGA SIECI (`docs/obserwowanie-samolotu.md` §2.2): karta czyta cudze
+// operacje, zajętość i odczyty innych pilotów, których telefon nie ma u siebie -
+// cache'u nie ma i nie wolno go dorobić po cichu. Przełącznik zapisuje się na serwerze
+// wprost, nie przez outbox: to ustawienie osoby, nie fakt z kabiny.
+
+/**
+ * STAN „TERAZ" maszyny - jedno z siedmiu zdań (§6.3), liczone na serwerze z rejestru
+ * i kalendarza. Operacja W TOKU niesie załogę, zadanie i lotnisko startu; wyłączenie -
+ * powód i koniec; rezerwacja - właściciela i godziny; wolna - najbliższy termin.
+ */
+export type RemoteAircraftNow =
+  | { kind: 'retired' }
+  | {
+      kind: 'flying' | 'claimed' | 'after_flight';
+      sessionUuid: string;
+      pilotId: string;
+      dualId: string | null;
+      operation: string | null;
+      departureIcao: string | null;
+      /** Uruchomienie / przejęcie / wyłączenie silnika (ISO UTC); `null` przy przejęciu bez stempla. */
+      since: string | null;
+    }
+  | { kind: 'blocked'; bookingId: string; reason: string | null; until: string }
+  | { kind: 'booked'; bookingId: string; pilotId: string | null; startsAt: string; endsAt: string }
+  | { kind: 'free'; next: { bookingId: string; kind: 'flight' | 'block'; startsAt: string } | null };
+
+/**
+ * Punkt serii wykresu (§6.4) - odczyt z rejestru ze ŹRÓDŁEM: przejęcie, zdanie,
+ * tankowanie (stan po dolewce) albo wpis administratora. Serie liczy SERWER; telefon
+ * liczy wyłącznie geometrię ekranu.
+ */
+export interface RemoteSeriesPoint {
+  at: string;
+  value: number;
+  source: 'claim' | 'release' | 'refuel' | 'admin';
+  sessionUuid: string | null;
+  pilotId: string | null;
+}
+
+/** Termin na karcie maszyny: zajętość jak w kalendarzu (P2) razem z jej dobą. */
+export type RemoteAircraftUpcoming = RemoteBooking & { day: RemoteCalendarDay };
+
+/** Karta maszyny (`GET /aircraft/:id/card`, ekran 27). */
+export interface RemoteAircraftCard {
+  timezone: string;
+  aircraft: RemoteAircraftHead;
+  now: RemoteAircraftNow;
+  /**
+   * Chwila DOTARCIA ostatniej paczki z rejestru tej maszyny (§2.3): pod herosem stoi
+   * „wg zapisów, które dotarły do 09:40", a nie „teraz". `null` = rejestr pusty.
+   */
+  lastRecordAt: string | null;
+  counters: RemoteAircraftCounters | null;
+  lastFlightAt: string | null;
+  last30: RemoteAircraftWindow;
+  last90: RemoteAircraftWindow;
+  upcoming: RemoteAircraftUpcoming[];
+  series: { mh: RemoteSeriesPoint[]; fuel: RemoteSeriesPoint[] };
+  /** Czy TA osoba obserwuje tę maszynę. */
+  watching: boolean;
+  viewer: { watch: boolean };
+}
+
+/** Jedna operacja w historii maszyny - zwarty wiersz z odczytami po obu stronach biegu. */
+export interface RemoteAircraftOperation {
+  sessionUuid: string;
+  /** Chwila operacji (uruchomienie silnika, awaryjnie przejęcie), ISO UTC. */
+  at: string | null;
+  pilotId: string;
+  dualId: string | null;
+  operation: string | null;
+  status: string;
+  manualEntry: boolean;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  mhStart: number | null;
+  mhEnd: number | null;
+  fuelStartL: number | null;
+  fuelEndL: number | null;
+  fuelAddedL: number | null;
+}
+
+/** Kursor strony historii - PARA, jak w skrzynce: sam stempel nie porządkuje jednoznacznie. */
+export interface OperationsCursor {
+  beforeAt: string;
+  beforeUuid: string;
+}
+
+/** Strona historii maszyny (`GET /aircraft/:id/operations`), najnowsze pierwsze. */
+export interface RemoteAircraftOperations {
+  /** Ile operacji ma CAŁA historia - nagłówek sekcji i wiersz „Pokaż starsze". */
+  total: number;
+  items: RemoteAircraftOperation[];
+  next: OperationsCursor | null;
+}
+
+/** Cała flota klubu ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`, sekcja 13C). */
+export interface RemoteWatchList {
+  timezone: string;
+  viewer: { watch: boolean };
+  items: {
+    aircraftId: string;
+    reg: string;
+    type: string;
+    serviceStatus: 'active' | 'disabled';
+    watching: boolean;
+    now: RemoteAircraftNow;
+  }[];
+}
+
+/**
+ * ŚCIEŻKA AKCEPTACJI jednej rezerwacji, tak jak widzi ją PILOT (3.1.0, epik R-I).
+ *
+ * NAZWISK DECYDUJĄCYCH NIE MA (§9.4): krok bywa obsadzony przez kilka osób i rozstrzyga
+ * pierwsza - jedno nazwisko byłoby nieprawdą, a trzy listą do przepisania. Ścieżka
+ * odpowiada na „ile kroków zostało i kto je trzyma" NAZWĄ kroku.
+ */
+export interface RemoteApproval {
+  outcome: 'pending' | 'confirmed' | 'rejected';
+  steps: RemoteApprovalStep[];
+}
+
+export interface RemoteApprovalStep {
+  id: string;
+  label: string;
+  /** Czy to jego pytamy TERAZ. */
+  current: boolean;
+  /** `null` = jeszcze nie zapadła. `via: 'self'` = przeszedł sam, bo rezerwujący jest na liście. */
+  decision: {
+    decision: 'approved' | 'rejected';
+    via: 'person' | 'self';
+    reason: string | null;
+    decidedAt: string;
+  } | null;
+}
+
+/** Wiadomość ze skrzynki (`GET /me/notifications`, §12.1). */
+export interface RemoteNotification {
+  id: string;
+  /**
+   * `approval_requested` | `booking_approved` | `booking_rejected` | `booking_expired` -
+   * jako NAPIS, bo serwer nowszy niż aplikacja dokłada rodzaje, a wiadomość nieznanego
+   * rodzaju ma się pokazać, nie zniknąć.
+   */
+  kind: string;
+  /** Identyfikatory rzeczy, o której mowa (`bookingId`, `aircraftId`, `startsAt`, `reason`…). */
+  payload: Record<string, unknown>;
+  createdAt: string;
+  readAt: string | null;
+  /**
+   * DOBA KLUBU terminu, o którym mówi wiadomość - telefon liczy z niej godziny
+   * odejmowaniem (§6.1). `null`, gdy wiadomość nie mówi o terminie.
+   */
+  day: RemoteCalendarDay | null;
+}
+
+export interface RemoteInbox {
+  timezone: string;
+  /** Nieprzeczytane w CAŁEJ skrzynce - licznik przy dzwonku na Pulpicie. */
+  unread: number;
+  items: RemoteNotification[];
+  /**
+   * Czy ta osoba ROZSTRZYGA cudze terminy (epik R-J): Pulpit prosi wtedy o zgodę na
+   * powiadomienia od razu. Opcjonalne - serwer sprzed 3.1.0 tego pola nie niesie.
+   */
+  approver?: boolean;
+}
+
+/** Kursor strony skrzynki - PARA, bo sam stempel nie porządkuje jednoznacznie. */
+export interface InboxCursor {
+  beforeAt: string;
+  beforeId: string;
+}
+
+/**
+ * CO CZEKA NA MOJĄ DECYZJĘ (`GET /me/approvals/queue`): rezerwacje na kroku, na którego
+ * liście stoi pytający. Z tego liczy się plakietka „Do decyzji" - skrzynka mówi
+ * o wiadomościach i gaśnie z przeczytaniem, sprawa stoi do decyzji (§9.4).
+ */
+export interface RemoteApprovalQueue {
+  items: {
+    booking: RemoteBooking;
+    step: { id: string; label: string; members: number; next: string | null };
+  }[];
+}
+
+/** Odmowy decyzji - kody surowe z domeny serwera; zdania po polsku należą do ekranu. */
+export type DecisionRefusal =
+  | 'not_pending'
+  | 'not_your_step'
+  | 'reason_required'
+  | 'booking_closed'
+  | 'forbidden'
+  | 'not_found';
+
+export type DecisionResult =
+  | { ok: true; status: string; approval: RemoteApproval }
+  | { ok: false; refusal: DecisionRefusal };
 
 /** Propozycje wolnych slotów z `GET /bookings/suggestions` (domena R-C liczy je na serwerze). */
 export interface RemoteSlotSuggestions {
@@ -738,6 +1072,31 @@ export interface ServerPort {
    * są nie do odróżnienia - obie kończą się 404, jak cudza operacja.
    */
   getBooking(token: string, id: string): Promise<RemoteBookingDetail>;
+  /**
+   * Podgląd pilota stojącego na sprawie (issue #206) - `GET /bookings/:id/preview/pilot/:pilotId`.
+   * Osoba spoza sprawy i sprawa cudzego klubu kończą się 404, jak cudza operacja.
+   */
+  getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview>;
+  /** Podgląd maszyny sprawy (issue #206) - `GET /bookings/:id/preview/aircraft`. */
+  getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview>;
+  /**
+   * Karta maszyny (`GET /aircraft/:id/card`, obserwowanie 3.2.0). Bez zdolności
+   * „Obserwowanie samolotów" serwer odmawia 403; cudza i nieznana maszyna to 404.
+   */
+  getAircraftCard(token: string, aircraftId: string): Promise<RemoteAircraftCard>;
+  /** Historia maszyny stronami (`GET /aircraft/:id/operations`), kursor parą. */
+  getAircraftOperations(
+    token: string,
+    aircraftId: string,
+    page?: { limit?: number; before?: OperationsCursor },
+  ): Promise<RemoteAircraftOperations>;
+  /** Cała flota ze stanem „teraz" i bitem obserwowania (`GET /aircraft/watches`). */
+  getAircraftWatches(token: string): Promise<RemoteWatchList>;
+  /**
+   * Włączenie / wyłączenie obserwowania (`PUT` / `DELETE /aircraft/:id/watch`) -
+   * ZAPIS wprost na serwerze, nie przez outbox (§2.2).
+   */
+  setAircraftWatch(token: string, aircraftId: string, on: boolean): Promise<void>;
   /** Propozycje wolnych slotów dla maszyny w dobie (`GET /bookings/suggestions`). */
   getSlotSuggestions(
     token: string,
@@ -755,6 +1114,30 @@ export interface ServerPort {
   patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); powód opcjonalny. */
   cancelBooking(token: string, id: string, reason: string | null): Promise<BookingWriteResult>;
+  /**
+   * Skrzynka (`GET /me/notifications`, 3.1.0) - strona najnowszych, licznik CAŁEJ
+   * skrzynki i doba klubu przy każdym terminie. WYŁĄCZNIE online (§12.1): cache'u
+   * powiadomień nie ma i nie wolno go dorobić po cichu.
+   */
+  getInbox(token: string, page?: { limit?: number; before?: InboxCursor }): Promise<RemoteInbox>;
+  /** Przeczytanie wiadomości (`POST /me/notifications/:id/read`) - powtórzone nie przesuwa stempla. */
+  markNotificationRead(token: string, id: string): Promise<void>;
+  /** Sprawy czekające na MOJĄ decyzję (`GET /me/approvals/queue`). */
+  getApprovalQueue(token: string): Promise<RemoteApprovalQueue>;
+  /**
+   * Decyzja o cudzej rezerwacji (`POST /bookings/:id/decision`). Jak zapis rezerwacji:
+   * odmowa NIESIE kod (`reason_required`, `not_your_step`…), więc nie idzie wyjątkiem.
+   */
+  decideBooking(
+    token: string,
+    id: string,
+    body: { decision: 'approved' | 'rejected'; reason: string | null },
+  ): Promise<DecisionResult>;
+  /**
+   * Rejestracja tokenu push TEGO urządzenia (`POST /me/push-token`, epik R-J). Serwer
+   * przypina go do sesji logowania z tokenu żądania (§12.2) - telefon nie podaje sesji.
+   */
+  registerPushToken(token: string, deviceToken: string): Promise<void>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

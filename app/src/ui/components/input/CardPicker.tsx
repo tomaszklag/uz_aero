@@ -46,7 +46,7 @@ export interface PickerTag {
 
 export interface PickerOption<T extends string> {
   value: T;
-  /** Główna etykieta (np. „SP-AXA", „Anna Kowalska"). */
+  /** Główna etykieta (np. „SP-AXA", „Barbara Nowak"). */
   label: string;
   /** Wartość po prawej: typ samolotu. Mono, przygaszona. */
   detail?: string;
@@ -62,7 +62,7 @@ export interface PickerOption<T extends string> {
    */
   note?: string;
   /**
-   * Druga linia NEUTRALNA - opis pozycji, nie ostrzeżenie („Twój kod: TMK · 4 samoloty"
+   * Druga linia NEUTRALNA - opis pozycji, nie ostrzeżenie („Twój kod: AKO · 4 samoloty"
    * na liście klubów, 13A). Osobna od `note`, bo tam bursztyn jest znaczeniem, a nie
    * stylem: opis przy KAŻDEJ pozycji listy w kolorze uwagi uczy oko go pomijać.
    */

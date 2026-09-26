@@ -478,25 +478,25 @@ body {
  *
  * KOLORY SĄ GOOGLE'A i to jedyne miejsce w arkuszu z wartością spoza palety -
  * znaku towarowego nie wolno przemalować na tokeny marki. Geometria trzyma się
- * plamki (`.login-google-skeleton`): 44 px i pigułka.
+ * plamki (`.login-google-skeleton`) i przycisku nad nią: 40 px, pełna szerokość
+ * kolumny, prostokąt. Wygląd = motyw GIS `filled_black` (`auth/googleIdentity.ts`).
  */
 .login-google-mock {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  height: 44px;
+  height: 40px;
   width: 100%;
-  max-width: 336px;
   padding: 0 20px;
-  border: 1px solid #747775;
-  border-radius: 22px;
-  background: #ffffff;
-  color: #1f1f1f;
+  border: 1px solid #8e918f;
+  border-radius: 4px;
+  background: #131314;
+  color: #e3e3e3;
   font-family: 'Roboto', var(--font-body);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.15px;
+  letter-spacing: 0.25px;
   cursor: pointer;
 }
 

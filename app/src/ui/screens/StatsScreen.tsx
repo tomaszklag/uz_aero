@@ -130,7 +130,7 @@ export function StatsScreen({
 
   /**
    * Piloci z cache'u referencyjnego (§4.8) - dwa zastosowania, jeden odczyt.
-   * Karty załogi pokazują KOD (TMK/AKO), a tryb edycji potrzebuje pełnej listy jako
+   * Karty załogi pokazują KOD (AKO/BNO), a tryb edycji potrzebuje pełnej listy jako
    * wyboru Duala. Osobny odczyt dla arkusza byłby drugim zapytaniem o to samo.
    */
   const [pilots, setPilots] = useState<readonly { id: string; code: string; name: string }[]>(
@@ -899,7 +899,7 @@ function issuesTitle(count: number): string {
 }
 
 /**
- * Nagłówek ekranu: SYGNATURA JEST TYTUŁEM („SP-AXA/2026-09-01/AKO/1", issue #68)
+ * Nagłówek ekranu: SYGNATURA JEST TYTUŁEM („SP-AXA/2026-09-01/BNO/1", issue #68)
  * i stoi SAMA. Wiersz „OPERACJA" nad nią odpadł przy przeglądzie 2026-09-02
  * (powtarzał kategorię, którą sygnatura już niesie), a podtytuł z zadaniem uwagą
  * z urządzenia z tego samego dnia: „daj tylko sygnaturę, nie ma sensu pisać, jakie
@@ -927,7 +927,7 @@ function headerIdentity(
   return { title: 'OPERACJA', subtitle: parts.length > 0 ? parts.join(' · ') : undefined };
 }
 
-/** „TMK · zalogowany (Ty)" - kod pilota z cache'u referencyjnego. */
+/** „AKO · zalogowany (Ty)" - kod pilota z cache'u referencyjnego. */
 function crewLabel(
   pilotId: string | null,
   currentPilotId: string | null,

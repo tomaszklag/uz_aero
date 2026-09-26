@@ -28,7 +28,7 @@ function event<T extends EventType>(
     uuid: options.uuid ?? `e-${seq}`,
     sessionUuid: 's1',
     aircraftId: 'SP-AXA',
-    picId: 'TMK',
+    picId: 'AKO',
     dualId: null,
     type,
     deviceTime: time,

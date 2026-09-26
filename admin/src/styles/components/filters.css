@@ -82,3 +82,55 @@
   color: var(--bg);
   font-weight: 600;
 }
+
+/**
+ * PRZEŁĄCZNIK OSI - „Samoloty | Piloci" na poziomie 1 dziennika (3.2.0, §4.1).
+ *
+ * Nie para chipów: chip ZAWĘŻA listę (można nie zapalić żadnego), a oś ROZSTRZYGA,
+ * o co pyta ekran - dokładnie jedna pozycja jest zawsze włączona. Segment mówi to
+ * kształtem: jedno pudełko, dwie połowy, żadnej „pustej" konfiguracji. Zaznaczenie
+ * odwrócone, jak chip i pozycja kolumny - jeden język zaznaczenia w całym panelu.
+ * Stoi PRZED zakresem dat, bo zmienia pytanie, a daty tylko je zawężają.
+ */
+.seg {
+  display: inline-flex;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.seg-btn + .seg-btn {
+  border-left: 1px solid var(--border-strong);
+}
+
+.seg-btn:hover {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.seg-btn.on {
+  background: var(--text-primary);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.seg-btn svg {
+  flex-shrink: 0;
+}

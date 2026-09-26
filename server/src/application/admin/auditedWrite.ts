@@ -32,6 +32,7 @@
  * platformy `PlatformActor`, a mianownik istnieje wyłącznie dla tego jednego `INSERT`-a.
  */
 
+import { scopeKey } from '../../domain/roles.ts';
 import type { Clock, Database, Queryable } from '../common/ports.ts';
 import type { AuditActor, AdminAuditPort, AuditEntry } from './ports.ts';
 
@@ -68,7 +69,7 @@ export class AuditedWrite {
       await this.audit.append(tx, {
         ...audit,
         actorPilotId: actor.pilotId,
-        actorRole: 'platformRole' in actor ? actor.platformRole : actor.role,
+        actorRole: 'platformRole' in actor ? actor.platformRole : scopeKey(actor.capabilities),
         orgId: 'platformRole' in actor ? null : actor.orgId,
         ip: actor.ip,
         createdAt: this.clock.now(),

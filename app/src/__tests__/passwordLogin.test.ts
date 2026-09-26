@@ -6,24 +6,24 @@ import { canSubmitLogin, looksLikeEmail, normalizeLogin } from '../ui/screens/lo
 
 describe('looksLikeEmail', () => {
   it('rozstrzyga OBECNOŚĆ „@", bo pole ma rozpoznać intencję, nie sprawdzić pocztę', () => {
-    expect(looksLikeEmail('tmk@ninerdeck.pl')).toBe(true);
-    expect(looksLikeEmail('AKO')).toBe(false);
+    expect(looksLikeEmail('adam@ninerdeck.pl')).toBe(true);
+    expect(looksLikeEmail('BNO')).toBe(false);
     // Adres popsuty jest nadal adresem: pójdzie na serwer i wróci jedną odmową.
-    expect(looksLikeEmail('tmk@')).toBe(true);
+    expect(looksLikeEmail('ako@')).toBe(true);
   });
 });
 
 describe('normalizeLogin', () => {
   it('adres małą literą - tak trzyma go serwer od 2.1.0', () => {
-    expect(normalizeLogin('  TMK@Ninerdeck.PL ')).toBe('tmk@ninerdeck.pl');
+    expect(normalizeLogin('  ADAM@Ninerdeck.PL ')).toBe('adam@ninerdeck.pl');
   });
 
   it('kod pilota wersalikami - tak stoi w klubie i tak czyta go człowiek', () => {
-    expect(normalizeLogin(' ako ')).toBe('AKO');
+    expect(normalizeLogin(' bno ')).toBe('BNO');
   });
 
   it('autokapitalizacja tabletu nie może rozdzielać tej samej osoby', () => {
-    expect(normalizeLogin('Ako')).toBe(normalizeLogin('AKO'));
+    expect(normalizeLogin('Bno')).toBe(normalizeLogin('BNO'));
   });
 });
 
@@ -31,13 +31,13 @@ describe('canSubmitLogin', () => {
   it('puste pole blokuje - i robi to BEZ zdania, bo blokadę widać z pól', () => {
     expect(canSubmitLogin('', 'dobre-haslo-2026')).toBe(false);
     expect(canSubmitLogin('   ', 'dobre-haslo-2026')).toBe(false);
-    expect(canSubmitLogin('AKO', '')).toBe(false);
-    expect(canSubmitLogin('AKO', 'x')).toBe(true);
+    expect(canSubmitLogin('BNO', '')).toBe(false);
+    expect(canSubmitLogin('BNO', 'x')).toBe(true);
   });
 
   it('krótkiego hasła NIE blokuje - polityka dotyczy ustawiania, nie logowania', () => {
     // Konto sprzed zaostrzenia reguł musi dać się otworzyć, a zdanie „za krótkie"
     // przy logowaniu mówiłoby pilotowi o cudzej regule.
-    expect(canSubmitLogin('AKO', 'krotkie')).toBe(true);
+    expect(canSubmitLogin('BNO', 'krotkie')).toBe(true);
   });
 });

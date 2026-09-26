@@ -32,8 +32,8 @@ const FLOTA: CalendarAircraft[] = [
 ];
 
 const OSOBY: Record<string, Person> = {
-  p1: { name: 'Tomasz Małkiewicz', code: 'TMK' },
-  p2: { name: 'Anna Kowalska', code: 'AKO' },
+  p1: { name: 'Adam Kowalski', code: 'AKO' },
+  p2: { name: 'Barbara Nowak', code: 'BNO' },
 };
 const osoba = (id: string): Person | null => OSOBY[id] ?? null;
 

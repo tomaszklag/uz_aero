@@ -34,7 +34,7 @@
  * bo nakłada je sama projekcja.
  */
 
-import { projectSession, type Event } from '@ninerdeck/domain';
+import { eventTime, projectSession, type Event } from '@ninerdeck/domain';
 
 import { clockDriftFlag } from '../../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
@@ -45,6 +45,9 @@ import {
   type ConsumptionNormPorts,
 } from '../../common/consumptionNorm.ts';
 import type { DayExporter } from '../../common/export/dayExporter.ts';
+import { aircraftEngineStarted, aircraftReleased } from '../../common/notify/aircraftNotices.ts';
+import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
+import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type {
   BookingsPort,
   AircraftConfigPort,
@@ -54,6 +57,7 @@ import type {
   FlagRecord,
   FlagsPort,
   Queryable,
+  SessionRow,
   SessionsProjectionPort,
 } from '../../common/ports.ts';
 
@@ -108,6 +112,13 @@ export class IngestCommands {
      * `fulfilled`. Rejestr nie wie o rezerwacjach nic poza tym identyfikatorem.
      */
     private readonly bookings: BookingsPort | null = null,
+    /**
+     * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Ingest budzi
+     * obserwujących przy PRZYJĘTYM uruchomieniu silnika i zdaniu maszyny (§5.3, §5.4):
+     * adresatów liczy `AircraftWatching`, wiadomość powstaje w tej samej transakcji,
+     * co projekcja, a budzik dzwoni po commicie.
+     */
+    private readonly watching: AircraftWatching | null = null,
   ) {}
 
   async ingest(
@@ -170,7 +181,7 @@ export class IngestCommands {
       }
     }
 
-    const { closedNow, ...result } = await this.db.transaction(async (tx) => {
+    const { closedNow, notices, ...result } = await this.db.transaction(async (tx) => {
       // Blokada advisory per sesja (audyt: lost update) - dwie równoległe paczki tej
       // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
       // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
@@ -205,7 +216,7 @@ export class IngestCommands {
         toInsert = toInsert.filter((e) => e.sessionUuid !== sessionUuid);
       }
 
-      const { accepted, duplicates } = await this.events.insertBatch(
+      const { accepted, duplicates, inserted } = await this.events.insertBatch(
         tx,
         orgId,
         toInsert,
@@ -216,12 +227,24 @@ export class IngestCommands {
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
       const sessionUuids = [...new Set(toInsert.map((e) => e.sessionUuid))];
       const closedNow: string[] = [];
+      // Wiersze projekcji i rezerwacja z przejęcia - materiał powiadomień obserwujących
+      // (niżej), zebrany w tej samej pętli, żeby nie czytać strumienia drugi raz.
+      const rows = new Map<string, SessionRow>();
+      const reservations = new Map<string, string | null>();
 
       for (const sessionUuid of sessionUuids) {
         const stream = await this.events.sessionEvents(tx, orgId, sessionUuid);
         if (stream.length === 0) continue;
         const row = sessionRowFrom(sessionUuid, stream, orgId);
         await this.sessions.upsert(tx, row);
+        rows.set(sessionUuid, row);
+        const claim = stream.find((e) => e.type === 'session_claim');
+        const reservationId = (claim?.payload as { reservationId?: string | null } | undefined)
+          ?.reservationId;
+        reservations.set(
+          sessionUuid,
+          typeof reservationId === 'string' && reservationId !== '' ? reservationId : null,
+        );
         aircraftIds.add(row.aircraftId);
         picIds.add(row.picId);
         if (row.status === 'closed') closedNow.push(sessionUuid);
@@ -296,12 +319,97 @@ export class IngestCommands {
           if (event.type !== 'session_claim') continue;
           const id = (event.payload as { reservationId?: string | null }).reservationId;
           if (typeof id !== 'string' || id === '') continue;
-          await this.bookings.fulfil(tx, orgId, id, event.sessionUuid, this.clock.now());
+          await this.bookings.fulfil(
+            tx,
+            orgId,
+            id,
+            { sessionUuid: event.sessionUuid, pilotId: event.picId, aircraftId: event.aircraftId },
+            this.clock.now(),
+          );
         }
       }
+      /*
+       * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205; `docs/obserwowanie-samolotu.md` §5.3, §5.4).
+       *
+       * Budzimy WYŁĄCZNIE przy zdarzeniu, które NAPRAWDĘ weszło (`inserted`) - ponowiona
+       * paczka nie dzwoni drugi raz o tym samym. Paczka niosąca uruchomienie I zdanie
+       * tej samej operacji rodzi TYLKO „zdana" (§2.3): wiadomość o zdaniu niesie czas
+       * uruchomienia, a „uruchomiona" obok niej byłaby zdaniem o stanie, który już nie
+       * istnieje. Wpis ręczny milczy (decyzja 3) - opisuje przeszłość, nie to, co dzieje
+       * się z maszyną teraz. Uruchomienie dosłane do operacji już ZAMKNIĘTEJ też milczy
+       * z tego samego powodu. Adresaci: obserwujący z prawem sprawdzonym przy wysyłce,
+       * bez PIC-a i Duala operacji - o własnym locie nikogo nie budzimy. Czas wiadomości
+       * to czas Z REJESTRU (`eventTime`), nie chwila dotarcia paczki.
+       */
+      const notices: NotificationDraft[] = [];
+      if (this.watching != null) {
+        const arrived = new Set(inserted);
+        for (const sessionUuid of sessionUuids) {
+          const row = rows.get(sessionUuid);
+          if (row == null || row.manualEntry === true || row.status === 'voided') continue;
+          const fresh = toInsert.filter((e) => e.sessionUuid === sessionUuid && arrived.has(e.uuid));
+          const close = fresh.find((e) => e.type === 'day_close');
+          const start = fresh.find((e) => e.type === 'engine_start');
+          if (close != null) {
+            if (row.status !== 'closed') continue;
+            const audience = await this.watching.audience(tx, orgId, row.aircraftId, [row.picId, row.dualId]);
+            if (audience == null) continue;
+            const payload = close.payload as { noFlightReason?: string | null };
+            notices.push(
+              ...aircraftReleased(audience, {
+                sessionUuid,
+                aircraftId: row.aircraftId,
+                pilotId: row.picId,
+                dualId: row.dualId,
+                at: eventTime(close),
+                engineStartAt: row.engineStartAt,
+                engineStopAt: row.engineStopAt,
+                blockMs: row.blockMs,
+                flights: row.flightsCount,
+                fuelEndL: row.fuelEndL,
+                mhEnd: row.mhEnd,
+                noFlightReason: payload.noFlightReason ?? null,
+                closedBy: 'pilot',
+                reason: null,
+              }),
+            );
+          } else if (start != null && row.status === 'active') {
+            const audience = await this.watching.audience(tx, orgId, row.aircraftId, [row.picId, row.dualId]);
+            if (audience == null) continue;
+            // „Zgodnie z planem" = rezerwacja ZREALIZOWANA tą operacją (`fulfil` wyżej),
+            // nie sam identyfikator w przejęciu: rezerwacja odwołana w międzyczasie nie
+            // jest planem, na który mechanik czekał.
+            const bookingId = reservations.get(sessionUuid) ?? null;
+            const booking =
+              bookingId == null || this.bookings == null
+                ? null
+                : await this.bookings.byId(tx, orgId, bookingId);
+            const planned = booking != null && booking.sessionUuid === sessionUuid;
+            notices.push(
+              ...aircraftEngineStarted(audience, {
+                sessionUuid,
+                aircraftId: row.aircraftId,
+                pilotId: row.picId,
+                dualId: row.dualId,
+                at: eventTime(start),
+                operation: row.operation,
+                planned,
+                bookingId: planned ? bookingId : null,
+              }),
+            );
+          }
+        }
+        await this.watching.record(tx, orgId, notices, this.clock.now());
+      }
+
       const flags = await openFlagsFor(this.flags, tx, orgId, sessionUuids);
-      return { accepted, duplicates, flags, closedNow, withheld: [...withheld] };
+      return { accepted, duplicates, flags, closedNow, notices, withheld: [...withheld] };
     });
+
+    // Budzik obserwujących PO commicie (obserwowanie §5): push jest budzikiem, nie
+    // treścią - wiersze skrzynki już są, a awaria dostawcy ma kosztować ciszę
+    // w telefonie, nie przyjętą paczkę.
+    if (this.watching != null) await this.watching.wake(orgId, notices);
 
     // Eksport §4.7 - PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
     // za PRZYJĘCIE zdarzeń, a arkusz jest skutkiem, nie warunkiem. Awaria Sheets nie

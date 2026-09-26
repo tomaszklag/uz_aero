@@ -24,7 +24,7 @@ import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 
 const T0 = Date.UTC(2026, 8, 4, 9, 41, 0);
-const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
+const PILOT = { id: 'AKO', code: 'AKO', name: 'Adam Kowalski' };
 /** Klub, DLA KTÓREGO wydano parę tokenów (wielofirmowość §6). */
 const ORG = { id: 'org-a', slug: 'alfa', name: 'Aeroklub Alfa' };
 const CREDS: StoredCredentials = { token: 'jwt-1', refreshToken: 'r1', pilot: PILOT, org: ORG, memberships: [] };
@@ -53,7 +53,51 @@ class BugServer implements ServerPort {
     throw new Error('nieużywane');
   }
 
+  async getPilotPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftPreview(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftCard(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftOperations(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getAircraftWatches(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async setAircraftWatch(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
   async getSlotSuggestions(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getInbox(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async markNotificationRead(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async getApprovalQueue(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async decideBooking(): Promise<never> {
+    throw new Error('nieużywane');
+  }
+
+  async registerPushToken(): Promise<never> {
     throw new Error('nieużywane');
   }
 

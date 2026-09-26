@@ -17,7 +17,7 @@ import { projectPilotDay, utcDayStart, emptySessionState } from '../domain';
 import type { SessionState, Leg, Flight } from '../domain';
 
 const DAY0 = Date.UTC(2026, 7, 6, 0, 0, 0); // 06 SIE 2026
-const PIC = 'tmk';
+const PIC = 'ako';
 const MIN = 60_000;
 
 function at(hhmm: string): number {

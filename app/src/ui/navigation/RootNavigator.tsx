@@ -19,13 +19,19 @@
  * a natywny pasek stosu jest wyłączony (patrz `screenOptions` niżej).
  */
 
-import React from 'react';
-import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
+import React, { useState } from 'react';
+import {
+  NavigationContainer,
+  DarkTheme,
+  DefaultTheme,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
 
 import { useTheme } from '../theme';
 import { setBugRoute } from '../components/bug/bugReporter';
+import { usePushNavigation } from '../hooks/usePushNavigation';
 import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightTaskScreen } from '../screens/PreflightTaskScreen';
@@ -37,7 +43,12 @@ import {
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { BookingDetailsScreen } from '../screens/BookingDetailsScreen';
+import { DecisionScreen } from '../screens/DecisionScreen';
+import { AircraftCardScreen } from '../screens/AircraftCardScreen';
+import { AircraftPreviewScreen } from '../screens/AircraftPreviewScreen';
+import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { TabsNavigator, type TabsParamList } from './TabsNavigator';
@@ -81,6 +92,27 @@ export type RootStackParamList = {
   NewBooking: { aircraftId?: string; startsAt?: number; bookingId?: string } | undefined;
   /** Karta rezerwacji (23) - z kalendarza, z Pulpitu i po zapisie formularza. */
   BookingDetails: { bookingId: string };
+  /**
+   * 25 - skrzynka powiadomień (3.1.0): decyzje o moich rezerwacjach i prośby o moją
+   * zgodę. Wejście DZWONKIEM z Pulpitu - czwartej zakładki nie ma (§9.4).
+   */
+  Notifications: { foreignClub?: true } | undefined;
+  /** 26 - decyzja o CUDZEJ rezerwacji: zgoda albo odmowa z powodem. Wejście z wiersza „Do decyzji". */
+  Decision: { bookingId: string };
+  /**
+   * 26A/26B - podgląd pilota i samolotu przy decyzji (issue #206): ten sam komplet
+   * faktów, co szuflada w panelu. EKRANY, nie arkusze - cztery karty i tabela to treść
+   * na cały ekran. Wejście z wierszy karty decyzji; jedyne wyjście - wstecz do niej.
+   */
+  PilotPreview: { bookingId: string; pilotId: string };
+  AircraftPreview: { bookingId: string };
+  /**
+   * 27 - KARTA MASZYNY (obserwowanie 3.2.0): stan „teraz", przełącznik obserwowania,
+   * liczniki, terminy, wykresy 90 dni, historia wszystkich operacji. Wejście z nagłówka
+   * wiersza maszyny w kalendarzu, ze skrzynki, z powiadomienia i ze stopki 26B - dla
+   * osoby ze zdolnością „Obserwowanie samolotów". Leży NAD zakładkami, jak 23/25/26.
+   */
+  Aircraft: { aircraftId: string };
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -104,6 +136,13 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+/**
+ * Uchwyt nawigatora dla wejść SPOZA drzewa ekranów - dziś jedynego: tapnięcia
+ * w powiadomienie push (epik R-J, `hooks/usePushNavigation.ts`). Ekrany dalej nawigują
+ * własnym `navigation`; uchwyt istnieje dla zdarzeń, które nie mają ekranu.
+ */
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 /**
  * Nazwa trasy, na której pilot NAPRAWDĘ stoi.
@@ -133,6 +172,11 @@ export function RootNavigator({
 }) {
   const { theme } = useTheme();
 
+  // Tapnięcie w powiadomienie prowadzi do rezerwacji albo skrzynki - także z zimnego
+  // startu, więc nawigator mówi hookowi, KIEDY jest gotów przyjąć wejście.
+  const [navReady, setNavReady] = useState(false);
+  usePushNavigation(navigationRef, navReady);
+
   // Motyw nawigacji budujemy z naszych tokenów, żeby tła ekranów i przejść nie
   // migały kolorem spoza systemu (zasada: kolory wyłącznie z tokenów).
   const navTheme = {
@@ -149,12 +193,16 @@ export function RootNavigator({
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       theme={navTheme}
       /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87). Tutaj, a nie
          w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter istnieje,
          a nowy ekran dostaje kontekst w chwili dopisania do stosu. */
       onStateChange={(state) => setBugRoute(activeRoute(state))}
-      onReady={() => setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName)}
+      onReady={() => {
+        setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName);
+        setNavReady(true);
+      }}
     >
       <Stack.Navigator
         initialRouteName={initialRouteName}
@@ -179,6 +227,11 @@ export function RootNavigator({
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="NewBooking" component={NewBookingScreen} />
         <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Decision" component={DecisionScreen} />
+        <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
+        <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
+        <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

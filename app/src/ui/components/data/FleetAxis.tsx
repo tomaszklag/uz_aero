@@ -30,6 +30,7 @@ import {
 import type { BarTone, CalendarBar, FleetGrid, FleetRow } from '../../screens/logic/calendarGrid';
 import { useTheme, type Theme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 
 export interface FleetAxisProps {
   grid: FleetGrid;
@@ -44,12 +45,18 @@ export interface FleetAxisProps {
   onPick: (aircraftId: string, at: number) => void;
   /** Nagłówek karty - tytuł doby i chip filtra; stoją w tej samej ramce, co oś. */
   header?: React.ReactNode;
+  /**
+   * Tapnięcie w ZNAK maszyny po lewej osi otwiera jej kartę (27, obserwowanie 3.2.0) -
+   * dla osoby ze zdolnością „Obserwowanie samolotów". Bez tego nagłówek wiersza jest
+   * SAMĄ ETYKIETĄ (nie wyszarzoną akcją): szewron pojawia się razem z celem.
+   */
+  onOpenAircraft?: (aircraftId: string) => void;
 }
 
 /** Wysokość ścieżki - cel dotknięcia, nie kreska. */
 const TRACK_H = 30;
 
-export function FleetAxis({ grid, onOpen, onPick, header }: FleetAxisProps) {
+export function FleetAxis({ grid, onOpen, onPick, header, onOpenAircraft }: FleetAxisProps) {
   const { theme } = useTheme();
   const s = styles(theme);
   const [trackWidth, setTrackWidth] = useState(0);
@@ -79,6 +86,7 @@ export function FleetAxis({ grid, onOpen, onPick, header }: FleetAxisProps) {
           onOpen={onOpen}
           onPick={pick}
           onMeasure={measure}
+          onOpenAircraft={onOpenAircraft}
           theme={theme}
         />
       ))}
@@ -123,6 +131,7 @@ function Row({
   onOpen,
   onPick,
   onMeasure,
+  onOpenAircraft,
   theme,
 }: {
   row: FleetRow;
@@ -130,13 +139,14 @@ function Row({
   onOpen: (bookingId: string) => void;
   onPick: (aircraftId: string, x: number) => void;
   onMeasure: (e: LayoutChangeEvent) => void;
+  onOpenAircraft?: (aircraftId: string) => void;
   theme: Theme;
 }) {
   const s = styles(theme);
 
-  return (
-    <View style={s.row}>
-      <View style={s.regCol}>
+  const head = (
+    <>
+      <View style={s.regText}>
         <AppText variant="mono" style={s.reg} numberOfLines={1}>
           {row.reg}
         </AppText>
@@ -144,6 +154,25 @@ function Row({
           {row.type}
         </AppText>
       </View>
+      {onOpenAircraft != null && <Icon name="more" size={12} color={theme.colors.textMuted} />}
+    </>
+  );
+
+  return (
+    <View style={s.row}>
+      {onOpenAircraft == null ? (
+        <View style={s.regCol}>{head}</View>
+      ) : (
+        <Pressable
+          style={({ pressed }) => [s.regCol, s.regLink, pressed && { opacity: 0.6 }]}
+          onPress={() => onOpenAircraft(row.aircraftId)}
+          accessibilityRole="button"
+          accessibilityLabel={`${row.reg} - karta maszyny`}
+          hitSlop={{ top: 6, bottom: 6, left: 6 }}
+        >
+          {head}
+        </Pressable>
+      )}
 
       <Pressable
         style={s.track}
@@ -255,7 +284,10 @@ const styles = (t: Theme) =>
       gap: 7,
     },
     row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    regCol: { width: 50, gap: 1 },
+    regCol: { width: 50 },
+    regText: { gap: 1, flexShrink: 1, minWidth: 0 },
+    // Znak i szewron w jednym wierszu: cel dotknięcia to CAŁY nagłówek, szewron mówi tylko, że coś otworzy.
+    regLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     reg: { fontSize: 10, lineHeight: 12, letterSpacing: 1, color: t.colors.textSecondary },
     regType: { fontSize: 7, lineHeight: 9, letterSpacing: 0.5, color: t.colors.textMuted },
     track: {

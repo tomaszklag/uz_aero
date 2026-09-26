@@ -30,6 +30,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 ## Dzień lotny
 - moj-dzien
 - rezerwacja-samolotu
+- akceptacja-rezerwacji
 - rozpoczecie-lotu
 - kokpit
 - zdanie-samolotu
@@ -43,6 +44,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 
 ## Bez zasięgu i ustawienia
 - praca-bez-zasiegu
+- powiadomienia
 - ustawienia
 
 ## Jak to działa
@@ -59,6 +61,7 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 
 ## Panel klubu
 - panel-wprowadzenie
+- uprawnienia
 - panel-piloci
 - panel-samoloty
 - panel-dziennik

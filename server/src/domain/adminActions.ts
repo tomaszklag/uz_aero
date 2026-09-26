@@ -213,6 +213,21 @@ export const ADMIN_ACTIONS = [
    * odpowiedzi na pytanie, dlaczego w sobotę nikt nie poleciał.
    */
   'booking.block',
+  /**
+   * ŚCIEŻKA AKCEPTACJI KLUBU ZMIENIONA (3.1.0, `docs/rezerwacje.md` §11.2).
+   *
+   * Kroki i ich obsada rozstrzygają, czyja zgoda jest potrzebna, żeby ktokolwiek
+   * poleciał - a krok bez ani jednej żywej osoby zatrzymuje rezerwacje całego klubu.
+   * `details` niosą ścieżkę PRZED i PO, bo pytanie brzmi zwykle „od kiedy to tak
+   * działa i kto to przestawił".
+   *
+   * DECYZJI NA REZERWACJI TU NIE MA i to jest decyzja, nie przeoczenie: zapada ona
+   * z TELEFONU (osobą kroku bywa zwykły pilot bez dostępu do panelu, §11.2), a jej
+   * rejestrem jest append-only `booking_approvals` - z powodem, krokiem i adnotacją,
+   * czy krok przeszedł sam. To jest ślad BOGATSZY niż wiersz dziennika panelu,
+   * a `admin_audit` opisuje akcje panelu i tym ma zostać.
+   */
+  'approval.steps',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

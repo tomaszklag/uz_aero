@@ -33,7 +33,7 @@
 
 import { refuseApprove, type AccountRefusal } from '../../../domain/accountGuards.ts';
 import type { MembershipStatus } from '../../../domain/memberships.ts';
-import type { PilotRole } from '../../../domain/roles.ts';
+import type { Capability } from '../../../domain/roles.ts';
 import type { Clock } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -41,7 +41,7 @@ import type { Actor, AdminPilotAccount, PilotsAdminPort } from '../ports.ts';
 
 export interface ApproveMembershipInput {
   code: string;
-  role: PilotRole;
+  capabilities: readonly Capability[];
 }
 
 /** Stan członkostwa PO odrzuceniu albo cofnięciu odrzucenia - tyle, ile pokaże panel. */
@@ -128,7 +128,7 @@ export class AdminMembershipCommands {
 
         await this.pilots.approve(tx, actor.orgId, pilotId, {
           code: input.code,
-          role: input.role,
+          capabilities: input.capabilities,
           at: this.clock.now(),
           by: actor.pilotId,
         });
@@ -140,7 +140,7 @@ export class AdminMembershipCommands {
           name: target.name,
           email: target.email,
           active: true,
-          role: input.role,
+          capabilities: input.capabilities,
         };
 
         return {
@@ -156,7 +156,7 @@ export class AdminMembershipCommands {
               code: member.code,
               name: member.name,
               email: member.email,
-              role: member.role,
+              capabilities: member.capabilities,
               requestedAt: target.requestedAt.toISOString(),
             },
           },

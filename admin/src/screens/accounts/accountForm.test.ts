@@ -14,16 +14,16 @@ import {
 
 const pilot: PilotListItemDto = {
   id: 'p-1',
-  code: 'TMK',
-  name: 'Tomasz Małkiewicz',
-  email: 't.malkiewicz@ninerdeck.pl',
+  code: 'AKO',
+  name: 'Adam Kowalski',
+  email: 'a.kowalski@ninerdeck.pl',
   active: true,
-  role: 'pilot',
+  capabilities: [],
   lastSeenAt: null,
   loginMethods: ['google'],
 };
 
-const filled = { ...EMPTY_ACCOUNT, code: 'TMK', name: 'Tomasz Małkiewicz' };
+const filled = { ...EMPTY_ACCOUNT, code: 'AKO', name: 'Adam Kowalski' };
 
 describe('kod pilota', () => {
   it('normalizuje do wersalików, jak serwer', () => {
@@ -87,8 +87,11 @@ describe('werdykt', () => {
 
 describe('ciało żądania', () => {
   it('PATCH niesie WYŁĄCZNIE to, co się zmieniło', () => {
-    const draft = { ...draftOf(pilot), role: 'admin' as const };
-    expect(updateBodyOf(pilot, draft)).toEqual({ role: 'admin' });
+    const draft = {
+      ...draftOf(pilot),
+      capabilities: ['panel.access' as const, 'accounts.manage' as const],
+    };
+    expect(updateBodyOf(pilot, draft)).toEqual({ capabilities: ['panel.access', 'accounts.manage'] });
   });
 
   it('otwarcie i zapisanie konta BEZ zmian nie jest zmianą', () => {

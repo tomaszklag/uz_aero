@@ -27,7 +27,7 @@ import type { BookingKind, BookingStatus } from '../../domain/bookings.ts';
 import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { LoginMethod, RevokedBy, SessionSurface } from '../../domain/loginSessions.ts';
-import type { PilotRole, PlatformRole } from '../../domain/roles.ts';
+import type { Capability, PlatformRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ export interface Database extends Queryable {
  *
  * ══ CZEGO TU NIE MA OD WIELOFIRMOWOŚCI: KODU I ROLI ══
  * Kod pilota i rola panelu są własnością CZŁONKOSTWA w klubie (`Membership`), nie osoby:
- * ten sam człowiek bywa `TMK` w jednym klubie i `TOM` w drugim, administratorem tu
+ * ten sam człowiek bywa `AKO` w jednym klubie i `TOM` w drugim, administratorem tu
  * i zwykłym pilotem tam. `active` znaczy odtąd blokadę PLATFORMOWĄ (nakłada ją wyłącznie
  * superadministrator); codzienne „wyłącz konto" w panelu klubu jest stanem członkostwa.
  */
@@ -100,7 +100,11 @@ export interface Membership {
   orgActive: boolean;
   /** Kod pilota W TYM klubie; `null` wyłącznie przy `pending` (CHECK w bazie). */
   code: string | null;
-  role: PilotRole;
+  /**
+   * ZAKRES UPRAWNIEŃ W TYM KLUBIE (epik #197) - zbiór, nie rola. Pusty zbiór to stan
+   * domyślny: pilot pracuje w aplikacji i panel go nie dotyczy.
+   */
+  capabilities: readonly Capability[];
   status: MembershipStatus;
   /** Unieważnienie poświadczeń PER KLUB - druga z dwóch dat, które sprawdza brama. */
   credentialsValidFrom: Date | null;
@@ -132,7 +136,11 @@ export interface MembershipAuthSnapshot {
   name: string;
   /** Osoba aktywna platformowo I klub działa I członkostwo `active`. */
   active: boolean;
-  role: PilotRole;
+  /**
+   * Zbiór czytany TYM SAMYM zapytaniem, co członkostwo - brama pyta o niego przy każdym
+   * żądaniu, więc odebranie zdolności działa natychmiast, a nie po wygaśnięciu tokenu.
+   */
+  capabilities: readonly Capability[];
   /**
    * Od kiedy poświadczenia OSOBY są ważne (`pilots.credentials_valid_from`). `null` =
    * nigdy ich nie unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy - to jedyny
@@ -245,7 +253,7 @@ export interface PilotPrefsPort {
  *
  * ══ TOKEN NIESIE OSOBĘ I KLUB (decyzja właściciela 2026-09-08, wielofirmowość §6) ══
  * `orgId` jest kontekstem KAŻDEJ trasy klubowej: flota, przejęcie, rejestr, karta arkusza
- * należą do klubu z tokenu. `code` i `role` są kodem i rolą Z CZŁONKOSTWA w tym klubie.
+ * należą do klubu z tokenu. `code` jest kodem Z CZŁONKOSTWA w tym klubie.
  * Przełączenie klubu to NOWA para tokenów (`POST /auth/switch`, epik F), nie nagłówek -
  * drugie źródło prawdy o klubie obok tokenu było rozważone i odrzucone.
  */
@@ -253,7 +261,12 @@ export interface Identity {
   pilotId: string;
   orgId: string;
   code: string;
-  role: PilotRole;
+  /*
+   * ROLI W TOKENIE NIE MA (epik #197). Była tym, Z CZEGO wyliczały się zdolności;
+   * odkąd czyta je brama z bazy, claim nie miał już władzy - a claim wyglądający na
+   * nadający uprawnienia, który nic nie nadaje, jest gorszy niż jego brak. Tokeny
+   * wydane przed wdrożeniem przechodzą dalej, bo brama i tak ich o rolę nie pyta.
+   */
   /**
    * SESJA LOGOWANIA (claim `sid`, 2.1.0 §6) - wiersz `login_sessions`, który brama
    * sprawdza przy KAŻDYM żądaniu. Dzięki niemu „Wyloguj to urządzenie" odbija następne
@@ -822,6 +835,12 @@ export interface AircraftReadingsPort {
   latestAt(db: Queryable, orgId: string): Promise<Date | null>;
   /** `orgId` = klub maszyny (wiersz niesie go denormalizowany, jak każda tabela klubu). */
   insert(tx: Queryable, orgId: string, aircraftId: string, reading: AdminReading): Promise<void>;
+  /**
+   * Wpisy maszyny od chwili `since`, najstarsze pierwsze - punkty wykresów karty maszyny
+   * (obserwowanie, §6.4): odczyt administratora jest punktem serii tak samo, jak
+   * przejęcie i zdanie, tylko z innym ŹRÓDŁEM.
+   */
+  listSince(db: Queryable, orgId: string, aircraftId: string, since: Date): Promise<AdminReading[]>;
 }
 
 // ── zgłoszenia błędów z aplikacji pilota (issue #87, na czas testów) ────────────
@@ -984,6 +1003,13 @@ export interface BookingRecord {
   updatedAt: number;
   closedAt: number | null;
   closeReason: string | null;
+  /**
+   * Stempel przypomnienia „za godzinę" dla obserwujących maszynę (3.2.0, issue #205,
+   * §4.2 tamtego dokumentu). `null` = nikomu jeszcze nie przypomniano; odwołanie
+   * terminu Z tym stemplem rodzi wiadomość „odwołany lot", bez stempla odwołuje się
+   * po cichu. Przesunięcie początku terminu ZERUJE go (robi to adapter przy `update`).
+   */
+  remindedAt: number | null;
 }
 
 /**
@@ -1038,6 +1064,8 @@ export interface BookingQuery {
   from: number;
   to: number;
   aircraftId?: string;
+  /** Terminy tej OSOBY - jako pilot albo drugi pilot (podgląd przy decyzji, issue #206). */
+  pilotId?: string;
   /** Domyślnie same czynne (`pending`, `confirmed`) - kalendarz nie rysuje odwołanych. */
   includeClosed?: boolean;
 }
@@ -1057,6 +1085,13 @@ export interface BookingsPort {
    */
   list(db: Queryable, orgId: string, query: BookingQuery): Promise<BookingRecord[]>;
   byId(db: Queryable, orgId: string, id: string): Promise<BookingRecord | null>;
+  /**
+   * Ten sam wiersz co `byId`, ale ZABLOKOWANY do końca transakcji (`FOR UPDATE`).
+   * Decyzja o rezerwacji czyta pod nim stan PONOWNIE: dwie osoby z tego samego kroku
+   * klikające jednocześnie ustawiają się w kolejce na tym wierszu, a druga widzi już
+   * rozstrzygnięcie pierwszej (przegląd bezpieczeństwa 3.1.0, issue #169).
+   */
+  lock(tx: Queryable, orgId: string, id: string): Promise<BookingRecord | null>;
   /**
    * Wstawia albo oddaje wiersz już istniejący pod tym uuidem (idempotencja).
    * Nakładkę odbija BAZA (`bookings_no_overlap`) - adapter tłumaczy jej wyjątek
@@ -1081,20 +1116,63 @@ export interface BookingsPort {
     change: { status: BookingStatus; at: Date; reason: string | null },
   ): Promise<BookingRecord | null>;
   /**
+   * Rezerwacja przeszła ścieżkę akceptacji (3.1.0, §11): `pending` → `confirmed`.
+   *
+   * Osobno od `close`, bo to jest przejście DO stanu czynnego, a tamta metoda stempluje
+   * `closed_at` i powód - tutaj nie ma czego zamykać ani kto by powód podał. Warunek
+   * `status = 'pending'` jest w SQL-u: `null` znaczy „ktoś zdążył przed nami" (odwołanie
+   * pilota, decyzja panelu), a to nie jest awaria, tylko ta sama odpowiedź.
+   */
+  confirm(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+  /**
+   * Ścieżka ruszyła OD NOWA po poprawce terminu (3.1.0, §9.4): `confirmed` → `pending`.
+   * Odwrotność `confirm`, z tym samym warunkiem w SQL-u (status czynny) i z tego samego
+   * powodu: `null` znaczy „ktoś zdążył przed nami". Rezerwacja już czekająca zostaje
+   * czekającą - wiersz i tak wraca, bo poprawka ma go pokazać w nowym stanie.
+   */
+  reopen(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+  /**
+   * Rezerwacje CZEKAJĄCE NA ZGODĘ, których termin już się zaczął (§11.5) - drugie
+   * pytanie zadania okresowego. Bez `orgId` z tego samego powodu, co `due()`: zadanie
+   * przemiata cały serwer i nie działa w imieniu żadnego klubu.
+   *
+   * Lista nie ma jak rosnąć w nieskończoność, choć nie pyta o koniec terminu (inaczej
+   * niż `due`): wygaszony wiersz przestaje być `pending`, więc wypada z niej na zawsze.
+   */
+  undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]>;
+  /**
+   * Rezerwacje KLUBU czekające na zgodę (3.1.0, issue #165) - materiał kolejki decyzji
+   * w panelu. Bez okna dat, bo kolejka go nie ma: prośba o zgodę sprzed tygodnia na
+   * termin za miesiąc czeka tak samo, jak złożona dziś na jutro. Lista nie rośnie bez
+   * końca z tego samego powodu, co `undecided`: rozstrzygnięty wiersz przestaje być
+   * `pending`. Najstarsze pierwsze - to one są najbliżej wygaśnięcia (§11.5).
+   */
+  pending(db: Queryable, orgId: string): Promise<BookingRecord[]>;
+  /**
    * Rezerwacja zrealizowana operacją (B7). Jedyne miejsce, w którym rejestr dotyka
    * rezerwacji, i tylko w jedną stronę. `false`, gdy wiersza nie ma albo nie jest
    * czynny - ingest nie ma się wtedy o co potykać.
+   *
+   * Realizuje WYŁĄCZNIE rezerwację POTWIERDZONĄ, należącą do PIC-a operacji i tej samej
+   * maszyny (przegląd bezpieczeństwa 3.1.0, issue #169): identyfikator każdej rezerwacji
+   * klubu stoi w oknie kalendarza, więc bez tych warunków zmodyfikowany klient mógł
+   * „zrealizować" termin kolegi. `pending` nie przeskakuje do realizacji - tak mówi
+   * domena (`canTransition`). Cudza, inna maszyna, czekająca: `false`, lot wchodzi.
    */
   fulfil(
     tx: Queryable,
     orgId: string,
     id: string,
-    sessionUuid: string,
+    by: { sessionUuid: string; pilotId: string; aircraftId: string },
     at: Date,
   ): Promise<boolean>;
   /**
-   * Kandydaci do zwolnienia slotu (§4.1): rezerwacje czynne, które zaczęły się przed
-   * `startedBefore` i których termin JESZCZE TRWA w `endsAfter`.
+   * Kandydaci do zwolnienia slotu (§4.1): rezerwacje POTWIERDZONE, które zaczęły się
+   * przed `startedBefore` i których termin JESZCZE TRWA w `endsAfter`.
+   *
+   * Wyłącznie `confirmed`, odkąd `pending` wszedł do życia (3.1.0): rezerwacji czekającej
+   * na zgodę nikt nie mógł przejąć, bo jeszcze jej nie zatwierdzono - zwolnienie jej jako
+   * „pilot się nie zjawił" byłoby zdaniem nieprawdziwym. Jej termin rozstrzyga `undecided`.
    *
    * Drugi warunek nie jest optymalizacją, tylko regułą: rezerwacja, której termin
    * MINĄŁ, zostaje `confirmed` na zawsze (§4 - „minęła bez operacji NIE zmienia stanu
@@ -1115,6 +1193,251 @@ export interface BookingsPort {
    * gdy klub nie ma ani jednej zajętości.
    */
   latestChangeAt(db: Queryable, orgId: string): Promise<number | null>;
+  /**
+   * Rezerwacje, którym za chwilę zaczyna się termin, a NIKT o tym jeszcze nie przypomniał
+   * (obserwowanie samolotu, §5.1): potwierdzone loty ze startem przed `startsBefore`,
+   * trwające po `endsAfter`, bez stempla. Bez `orgId` z tego samego powodu, co `due` -
+   * to trzecie pytanie tego samego zadania okresowego.
+   */
+  dueReminders(
+    db: Queryable,
+    window: { startsBefore: Date; endsAfter: Date },
+  ): Promise<BookingDue[]>;
+  /**
+   * Stempel „przypomniano" (§4.2). Warunek `reminded_at IS NULL` i stan `confirmed` stoją
+   * w SQL-u: `null` = ktoś zdążył przed nami (drugi przebieg, odwołanie w międzyczasie),
+   * a to nie jest awaria, tylko ta sama odpowiedź.
+   */
+  markReminded(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ŚCIEŻKA AKCEPTACJI, SKRZYNKA I BUDZIK (milestone 3.1.0, issue #164;
+ * `docs/rezerwacje.md` §11, §12).
+ *
+ * Porty są w `common/`, bo ścieżkę UKŁADA panel, a KLIKA po niej telefon - osobą kroku
+ * bywa zwykły pilot bez dostępu do panelu (§11.2). Rozstrzygnięcia („który krok pyta
+ * teraz", „czy ta decyzja może zapaść") mieszkają w `domain/approvals.ts`; tutaj jest
+ * wyłącznie dostęp do wierszy.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Krok ścieżki razem z listą osób - w tej postaci czyta go i panel, i decyzja. */
+export interface ApprovalStepRecord {
+  id: string;
+  position: number;
+  label: string;
+  /** Pula uprawnionych, nie komplet podpisów: wystarczy zgoda JEDNEJ z tych osób. */
+  memberIds: string[];
+}
+
+/**
+ * Krok w zamówieniu panelu. `id` jest tu ZAWSZE - krokom nowym nadaje je komenda
+ * (`newId` z composition rootu, jak wszędzie), a krok istniejący ma PRZEŻYĆ zapis razem
+ * ze swoimi decyzjami (§11.2: ścieżka jest bieżąca, ale zapadłe podpisy zostają przy
+ * swoich krokach).
+ */
+export interface ApprovalStepDraft {
+  id: string;
+  label: string;
+  memberIds: readonly string[];
+}
+
+export interface ApprovalStepsPort {
+  /**
+   * ŚCIEŻKA ŻYWA klubu (`removed_at IS NULL`), w kolejności pytania. Pusta = klub bez
+   * akceptacji, czyli stan domyślny (§11.1).
+   */
+  path(db: Queryable, orgId: string): Promise<ApprovalStepRecord[]>;
+  /**
+   * Zapisuje ścieżkę W CAŁOŚCI: kroki z zamówienia dostają kolejne `position`, kroki
+   * spoza niego - stempel `removed_at`. Zamówienie zamiast pojedynczych operacji, bo
+   * kolejność jest własnością CAŁEJ listy, a nie żadnego kroku z osobna.
+   */
+  replace(
+    tx: Queryable,
+    orgId: string,
+    steps: readonly ApprovalStepDraft[],
+    at: Date,
+  ): Promise<ApprovalStepRecord[]>;
+}
+
+/** Zapadła decyzja - wiersz `booking_approvals`. */
+export interface BookingApprovalRecord {
+  stepId: string;
+  decision: ApprovalVerdict;
+  /** `self` = krok pominięty, bo rezerwujący jest na jego liście (§11.2). */
+  via: ApprovalVia;
+  reason: string | null;
+  decidedBy: string;
+  decidedAt: number;
+}
+
+export type ApprovalVerdict = 'approved' | 'rejected';
+export type ApprovalVia = 'person' | 'self';
+
+/** Nowa decyzja. Klub, rezerwację i chwilę dokłada adapter - nie powtarzamy ich w wierszu. */
+export interface NewApproval {
+  stepId: string;
+  decision: ApprovalVerdict;
+  via: ApprovalVia;
+  reason: string | null;
+  decidedBy: string;
+}
+
+export interface BookingApprovalsPort {
+  /**
+   * Decyzje ŻYWE jednej rezerwacji, najstarsze pierwsze. Decyzje zastąpione poprawką
+   * terminu (`superseded_at`, migracja 14) zostają w tabeli, ale do rozstrzygnięcia
+   * już nie wchodzą - dotyczyły innego terminu.
+   */
+  listFor(db: Queryable, orgId: string, bookingId: string): Promise<BookingApprovalRecord[]>;
+  /**
+   * Poprawka terminu CZYŚCI ZGODY (§9.4): każda żywa decyzja tej rezerwacji dostaje
+   * stempel zastąpienia. Zwraca, ile ich było - zero znaczy, że nie było czego czyścić.
+   * Rejestr zostaje append-only: to stempel, nie nadpisanie decyzji.
+   */
+  supersede(tx: Queryable, orgId: string, bookingId: string, at: Date): Promise<number>;
+  /**
+   * Dopisuje decyzje. Wiele naraz, bo rezerwujący potrafi pominąć KILKA kroków jednym
+   * zapisem, a wszystkie należą do tej samej transakcji, co powstanie rezerwacji.
+   */
+  insert(
+    tx: Queryable,
+    orgId: string,
+    bookingId: string,
+    decisions: readonly NewApproval[],
+    at: Date,
+  ): Promise<void>;
+}
+
+/** Wiersz skrzynki. `payload` opisuje rzecz, o której mowa - kształt zna aplikacja. */
+export interface NotificationRecord {
+  id: string;
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: number;
+  readAt: number | null;
+}
+
+/** Nowe powiadomienie. Klub i chwilę dokłada adapter; `id` nadaje wołający. */
+export interface NewNotification {
+  id: string;
+  pilotId: string;
+  kind: string;
+  payload: Record<string, unknown>;
+}
+
+/**
+ * Kursor skrzynki: PARA, a nie sam stempel. Powiadomienia jednej decyzji rodzą się
+ * w tej samej transakcji, więc `createdAt` nie porządkuje ich jednoznacznie i strona
+ * potrafiłaby zgubić wiersz.
+ */
+export interface NotificationCursor {
+  createdAt: number;
+  id: string;
+}
+
+export interface NotificationsPort {
+  /** W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1). */
+  insert(
+    tx: Queryable,
+    orgId: string,
+    rows: readonly NewNotification[],
+    at: Date,
+  ): Promise<void>;
+  /** Strona skrzynki, od najnowszego. `before` = kursor poprzedniej strony. */
+  list(
+    db: Queryable,
+    orgId: string,
+    pilotId: string,
+    page: { before?: NotificationCursor; limit: number },
+  ): Promise<NotificationRecord[]>;
+  /** Ile nieprzeczytanych - liczba przy zakładce Pulpit. */
+  unreadCount(db: Queryable, orgId: string, pilotId: string): Promise<number>;
+  /**
+   * Stempluje przeczytanie. `false` = wiersza nie ma w tej skrzynce (cudzy klub, cudza
+   * osoba); trasa robi z tego 404. Powtórzone przeczytanie NIE przesuwa stempla - to
+   * fakt „widziałem", a nie licznik wejść.
+   */
+  markRead(
+    db: Queryable,
+    orgId: string,
+    pilotId: string,
+    id: string,
+    at: Date,
+  ): Promise<boolean>;
+}
+
+/**
+ * Token push urządzenia. BEZ KLUBU i to jest zgodne z regułą, nie wyjątkiem od niej:
+ * token opisuje URZĄDZENIE osoby, a ta bywa w kilku klubach naraz i przełącza je bez
+ * wylogowania. Klub niesie powiadomienie, czyli treść, która przez ten token wychodzi.
+ */
+export interface PushTokensPort {
+  /** Rejestracja tokenu urządzenia; powtórzona przypina go do BIEŻĄCEJ sesji. */
+  register(
+    db: Queryable,
+    token: { token: string; sessionId: string; pilotId: string },
+    at: Date,
+  ): Promise<void>;
+  /**
+   * Na które urządzenia zadzwonić - WYŁĄCZNIE te z żywą sesją logowania (wylogowanie
+   * gasi budzik). Osoba bez tokenu po prostu nie ma wiersza.
+   */
+  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]>;
+  /** Token odrzucony przez dostawcę jako martwy - urządzenie odinstalowało aplikację. */
+  forget(db: Queryable, tokens: readonly string[]): Promise<void>;
+}
+
+/** Budzik na jedno urządzenie. Treść jest w skrzynce - tu jedzie tylko zaczepka. */
+export interface PushMessage {
+  token: string;
+  title: string;
+  body: string;
+  /** Co otworzyć po tapnięciu; aplikacja czyta z tego trasę. */
+  data: Record<string, unknown>;
+}
+
+/**
+ * PUSH JEST BUDZIKIEM, NIE TREŚCIĄ (§12.1), i stąd dwie różnice wobec `MailPort`:
+ * `PUSH_PROVIDER` NIE jest wymagany (domyślnie `log`), a nieudana wysyłka NIE MOŻE
+ * przewrócić zapisu decyzji - prośba czeka wtedy w skrzynce, kompletna i z historią.
+ *
+ * Oddaje tokeny, które dostawca uznał za MARTWE: urządzenie odinstalowało aplikację,
+ * więc wiersz ma zniknąć, zamiast obrastać kolejką nieodebranych budzików.
+ */
+export interface PushPort {
+  send(messages: readonly PushMessage[]): Promise<{ dead: string[] }>;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205; `docs/obserwowanie-samolotu.md` §2, §4).
+ *
+ * Wiersz `aircraft_watches` to ZAMIAR osoby („chcę wiedzieć, co się dzieje z tą maszyną
+ * w tym klubie"), nie uprawnienie: zdolność `fleet.watch` mówi „wolno ci", wiersz mówi
+ * „chcę". Port jest w `common/`, bo ustawienie zapisuje telefon (karta maszyny 27,
+ * lista 13C) i panel (karta „Obserwowane samoloty" w `#/konto`, decyzja 12) - a czyta
+ * je ingest, komendy rezerwacji i zadanie okresowe, gdy szukają, kogo obudzić.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+export interface AircraftWatchesPort {
+  /**
+   * Włącza obserwowanie - IDEMPOTENTNIE (drugie tapnięcie nie robi drugiego wiersza).
+   * Maszyna spoza klubu nie dostaje wiersza: `false` = nie ma jej w tym klubie,
+   * a trasa robi z tego 404, nie 403 (epik C).
+   */
+  set(db: Queryable, orgId: string, aircraftId: string, pilotId: string, at: Date): Promise<boolean>;
+  /** Wyłącza obserwowanie; brak wiersza nie jest błędem - stan końcowy jest ten sam. */
+  unset(db: Queryable, orgId: string, aircraftId: string, pilotId: string): Promise<void>;
+  isWatching(db: Queryable, orgId: string, aircraftId: string, pilotId: string): Promise<boolean>;
+  /** Maszyny klubu obserwowane przez osobę - materiał listy w ustawieniach i w `#/konto`. */
+  watchedBy(db: Queryable, orgId: string, pilotId: string): Promise<Set<string>>;
+  /**
+   * KOGO OBUDZIĆ przy zdarzeniu maszyny: obserwujący z AKTYWNYM członkostwem, aktywną
+   * osobą, aktywnym klubem i zdolnością `fleet.watch` - złączenie W SQL-u, nie w kodzie
+   * (§2.1: prawo sprawdza się przy wysyłce). Wołane WYŁĄCZNIE przy przyjętym
+   * uruchomieniu/zdaniu i przy zmianie terminu, per maszyna (§10 R4).
+   */
+  watchersOf(db: Queryable, orgId: string, aircraftId: string): Promise<string[]>;
 }
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
@@ -1203,13 +1526,17 @@ export interface EventsStorePort {
    * (wielofirmowość §2: żadna reguła domeny nie czyta `org_id`) - klub jest własnością
    * WIERSZA rejestru, a rozstrzyga o nim wołający: token telefonu albo klub sesji
    * przy zapisie z panelu.
+   *
+   * `inserted` = uuidy, które NAPRAWDĘ weszły (bez duplikatów) - obserwowanie samolotu
+   * (issue #205) budzi ludzi wyłącznie przy PRZYJĘTYM uruchomieniu i zdaniu; ponowiona
+   * paczka nie ma prawa zadzwonić drugi raz o tym samym.
    */
   insertBatch(
     tx: Queryable,
     orgId: string,
     events: readonly Event[],
     sourceDevice: string | null,
-  ): Promise<{ accepted: number; duplicates: number }>;
+  ): Promise<{ accepted: number; duplicates: number; inserted: string[] }>;
   /**
    * Pełny strumień sesji KLUBU - wejście `projectSession`.
    *
@@ -1413,6 +1740,12 @@ export interface SessionsProjectionPort {
    */
   listByPilot(db: Queryable, orgId: string, picId: string): Promise<SessionRow[]>;
   /**
+   * Operacje, w których osoba siedziała na KTÓRYMKOLWIEK fotelu (PIC albo Dual) -
+   * podgląd pilota przy decyzji (3.1.0, issue #206): uczeń lata jako Dual i bez tego
+   * fotela nie miałby ani jednego lotu na koncie.
+   */
+  listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]>;
+  /**
    * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *
    * Osobno od `listByAircraft`, choć zawężenie jest jego podzbiorem: tamten czyta CAŁĄ
@@ -1434,6 +1767,36 @@ export interface SessionsProjectionPort {
     aircraftId: string,
     range: { fromMs: number; toMs: number },
   ): Promise<SessionRow[]>;
+  /**
+   * HISTORIA MASZYNY STRONAMI (karta maszyny, obserwowanie §6.2 pkt 7): najnowsze
+   * pierwsze, kursor PARĄ (chwila operacji + uuid), jak skrzynka - dwie operacje
+   * potrafią mieć tę samą chwilę, a sam stempel gubiłby wtedy wiersz na granicy stron.
+   *
+   * Chwilą operacji jest uruchomienie silnika, awaryjnie przejęcie (`operationAt`
+   * z `domain/decisionPreview.ts`); wiersz bez obu nie ma kiedy się wydarzył i nie
+   * wchodzi. Unieważnione i PUSTE zapisy (issue #75, `emptySessionSql`) nie wchodzą
+   * tak samo, jak nie wchodzą do żadnej listy dziennika. BEZ dolnej granicy czasu -
+   * decyzja właściciela P5 2026-09-25: lista sięga po wszystkie operacje.
+   */
+  listByAircraftPage(
+    db: Queryable,
+    orgId: string,
+    aircraftId: string,
+    page: { before?: OperationCursor; limit: number },
+  ): Promise<SessionRow[]>;
+  /**
+   * Ile operacji liczy historia maszyny W CAŁOŚCI - tym samym warunkiem, co strona
+   * (`listByAircraftPage`): nagłówek sekcji pisze „218 operacji", a wiersz „Pokaż
+   * starsze" - ile jeszcze zostało. Liczba osobno od strony, bo strona nie wie,
+   * ile jest za nią.
+   */
+  countByAircraft(db: Queryable, orgId: string, aircraftId: string): Promise<number>;
+}
+
+/** Kursor historii operacji: chwila operacji (ms UTC) i uuid - patrz `listByAircraftPage`. */
+export interface OperationCursor {
+  at: number;
+  sessionUuid: string;
 }
 
 /**
@@ -1467,6 +1830,14 @@ export interface AircraftConfigPort {
     orgId: string,
     aircraftId: string,
   ): Promise<ServiceStatus | null>;
+  /**
+   * Znak rejestracyjny maszyny W TYM KLUBIE; `null` = nieznana albo cudza.
+   *
+   * Do TYTUŁU budzika obserwującego (`docs/obserwowanie-samolotu.md` §5): znak jest
+   * daną klubu, nie osoby, więc wolno mu paść na ekranie blokady - inaczej niż
+   * nazwisku i godzinie, których push nie niesie nigdy.
+   */
+  regOf(db: Queryable, orgId: string, aircraftId: string): Promise<string | null>;
 }
 
 /**

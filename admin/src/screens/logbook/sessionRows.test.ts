@@ -9,14 +9,14 @@ const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
 
 const session: SessionListItemDto = {
   sessionUuid: 's-1',
-  signature: 'SP-KLM/2026-08-12/TMK/1',
+  signature: 'SP-KLM/2026-08-12/AKO/1',
   aircraftId: 'a-1',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 182',
   mhFormat: 'decimal',
   picId: 'p-1',
-  picCode: 'TMK',
-  picName: 'Tomasz Małkiewicz',
+  picCode: 'AKO',
+  picName: 'Adam Kowalski',
   dualCode: null,
   dualName: null,
   status: 'closed',
@@ -136,7 +136,7 @@ describe('reszta wiersza', () => {
   });
 
   it('nazwisko skraca się tak samo, jak w aplikacji pilota', () => {
-    expect(sessionRow(session).pic).toBe('T. Małkiewicz');
+    expect(sessionRow(session).pic).toBe('A. Kowalski');
   });
 
   it('plakietka RĘCZNIE dotyczy całego wiersza, a unieważnienie go przekreśla', () => {

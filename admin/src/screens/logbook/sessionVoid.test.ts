@@ -9,14 +9,14 @@ const at = (h: number, m: number): number => DAY + h * 3600_000 + m * 60_000;
 
 const session: SessionListItemDto = {
   sessionUuid: 's-1',
-  signature: 'SP-KLM/2026-08-12/TMK/1',
+  signature: 'SP-KLM/2026-08-12/AKO/1',
   aircraftId: 'a-1',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 182',
   mhFormat: 'decimal',
   picId: 'p-1',
-  picCode: 'TMK',
-  picName: 'Tomasz Małkiewicz',
+  picCode: 'AKO',
+  picName: 'Adam Kowalski',
   dualCode: null,
   dualName: null,
   status: 'closed',
@@ -56,10 +56,10 @@ describe('potwierdzenie nazywa KONKRETNY wpis', () => {
     // po polsku, bez roku - od 2026-09-07). Potwierdzenie składa fakty z `sessionRow`,
     // więc nie ma prawa mówić datą w innym dialekcie niż lista, z której się przyszło.
     expect(voidFacts(session)).toEqual([
-      { label: 'Operacja', value: 'SP-KLM/2026-08-12/TMK/1' },
+      { label: 'Operacja', value: 'SP-KLM/2026-08-12/AKO/1' },
       { label: 'Dzień', value: '12 SIERPNIA' },
       { label: 'Silnik', value: '08:42 → 10:22' },
-      { label: 'Pilot', value: 'T. Małkiewicz' },
+      { label: 'Pilot', value: 'A. Kowalski' },
       { label: 'Loty', value: '3' },
       { label: 'Czas blokowy', value: '1:40' },
     ]);

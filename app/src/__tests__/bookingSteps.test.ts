@@ -181,7 +181,7 @@ describe('krok 2: zadanie i plan', () => {
     expect(step2Blocker({ ...two, aircraft: AN2 })).toBe(
       'Wybierz drugiego pilota - ten samolot wymaga załogi dwuosobowej.',
     );
-    expect(step2Blocker({ ...two, aircraft: AN2, draft: draft({ dualId: 'ako' }) })).toBeNull();
+    expect(step2Blocker({ ...two, aircraft: AN2, draft: draft({ dualId: 'bno' }) })).toBeNull();
   });
 
   it('czas lotu nie ma plakietki „opcjonalne", więc bramka go egzekwuje', () => {

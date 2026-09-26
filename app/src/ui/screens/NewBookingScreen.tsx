@@ -52,6 +52,7 @@ import {
 import { airfieldValueProps } from '../components/input/airfieldMark';
 import { uuidv4 } from '../../infrastructure/id';
 import type { RemoteBooking } from '../../application/ports';
+import { askForPush } from '../hooks/askForPush';
 import { useAbandonExit } from '../hooks/useAbandonExit';
 import { useBooking } from '../hooks/useBooking';
 import { useCalendar } from '../hooks/useCalendar';
@@ -75,6 +76,7 @@ import {
 
 import { buildAircraftOptions } from './logic/aircraftAvailability';
 import { bookingDeny, BOOKING_OFFLINE, type BookingDenyVm } from './logic/bookingDeny';
+import { optInAfterBooking } from './logic/pushOptIn';
 import {
   aircraftChanged,
   bookingChanged,
@@ -407,6 +409,9 @@ export function NewBookingScreen({
       // Szkic ustępuje: następne wejście w formularz zaczyna od nowa, a nie od
       // wyborów sprzed chwili (reguła rezygnacji z issue #55).
       draft.reset();
+      // Prośba o zgodę na powiadomienia (epik R-J, J3) - wyłącznie przy rezerwacji,
+      // która CZEKA: o jej losie pilot ma się dowiedzieć bez otwierania aplikacji.
+      void askForPush(optInAfterBooking(result.booking.status));
       navigation.replace('BookingDetails', { bookingId: result.booking.id });
     } finally {
       setSaving(false);
