@@ -12,11 +12,11 @@
  * Druga kopia w panelu rozjechałaby się przy pierwszej zmianie reguły - i to w miejscu,
  * które istnieje po to, żeby pokazywać prawdę o rejestrze.
  *
- * **`adminCorrected` przychodzi z ZEWNĄTRZ tej funkcji** (zbiór uuid-ów korekt
- * zapisanych przez panel), bo ze strumienia zdarzeń nie da się go wyliczyć: korekta
- * administratora i korekta pilota z okna 24 h mają identyczny kształt, a różni je
- * kolumna serwera `events.source_device`, której `Event` nie zna i znać nie powinien
- * (`application/admin/ports.ts` → `EventsAdminPort.adminCorrectionUuids`).
+ * **`adminCorrected` i `adminAuthorId` przychodzą z ZEWNĄTRZ tej funkcji** (mapa
+ * uuid → konto panelu dla zapisów panelu), bo ze strumienia zdarzeń nie da się ich
+ * wyliczyć: korekta administratora i korekta pilota z okna 24 h mają identyczny
+ * kształt, a różni je kolumna serwera `events.source_device`, której `Event` nie zna
+ * i znać nie powinien (`application/admin/ports.ts` → `EventsAdminPort.adminAuthors`).
  *
  * Czysta funkcja: testowana bez bazy, jak `sessionRow.ts`.
  */
@@ -30,8 +30,8 @@ const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
 
 export function eventTimeline(
   raw: Event[],
-  /** Uuidy zdarzeń `event_correction` zapisanych PRZEZ PANEL; puste = same korekty pilota. */
-  adminCorrectionUuids: ReadonlySet<string>,
+  /** Zapisy PANELU: uuid zdarzenia → konto, które je wpisało; puste = wszystko z telefonu. */
+  adminAuthors: ReadonlyMap<string, string>,
 ): AdminTimelineEntry[] {
   const effective = new Map(applyCorrections(raw).map((e) => [e.uuid, e]));
 
@@ -43,7 +43,7 @@ export function eventTimeline(
    */
   const adminCorrected = new Set<string>();
   for (const e of raw) {
-    if (e.type === 'event_correction' && adminCorrectionUuids.has(e.uuid)) {
+    if (e.type === 'event_correction' && adminAuthors.has(e.uuid)) {
       adminCorrected.add(e.payload.targetUuid);
     }
   }
@@ -57,17 +57,22 @@ export function eventTimeline(
   const ordered = [...raw].sort((a, b) => at(a) - at(b));
 
   return ordered.map((event) => {
+    // Kto wpisał TEN wiersz - fakt o zapisie, osobny od „kto go poprawił".
+    const adminAuthorId = adminAuthors.get(event.uuid) ?? null;
+
     // Same korekty zostają na osi jako zwykłe wpisy (A02a liczy je: „84 zdarzenia,
     // w tym 1 korekta”). `applyCorrections` ich nie zwraca, więc pytanie o ich
     // unieważnienie w ogóle nie ma sensu - poprawia się fakt, nie poprawkę.
     if (event.type === 'event_correction') {
-      return { event, voided: false, correctedTime: null, adminCorrected: false };
+      return { event, voided: false, correctedTime: null, adminCorrected: false, adminAuthorId };
     }
 
     const byAdmin = adminCorrected.has(event.uuid);
 
     const after = effective.get(event.uuid);
-    if (after == null) return { event, voided: true, correctedTime: null, adminCorrected: byAdmin };
+    if (after == null) {
+      return { event, voided: true, correctedTime: null, adminCorrected: byAdmin, adminAuthorId };
+    }
 
     const corrected = at(after);
     return {
@@ -75,6 +80,7 @@ export function eventTimeline(
       voided: false,
       correctedTime: corrected === at(event) ? null : corrected,
       adminCorrected: byAdmin,
+      adminAuthorId,
     };
   });
 }

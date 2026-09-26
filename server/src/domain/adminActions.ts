@@ -21,6 +21,14 @@ export const ADMIN_ACTIONS = [
   'flag.resolve',
   /** Dopisanie `event_correction` po oknie 24 h (przekrój 3, `A02b`). */
   'event.correct',
+  /**
+   * DOPISANIE BRAKUJĄCEGO FAKTU z panelu (3.2.0, `docs/panel-3.2.md` §5.4): lądowanie,
+   * start, kołowanie, tankowanie, zrzut, załadunek, dolewka oleju - do operacji, której
+   * pilot już nie poprawi sam. Osobna pozycja obok `event.correct`, bo dziennik ma
+   * odpowiadać na inne pytanie: tam „co komu poprawiono", tu „co powstało z niczego".
+   * Celem wpisu jest DOPISANE zdarzenie; `details` niosą typ, chwilę faktu i powód.
+   */
+  'event.add',
   /** Ręczne ponowienie eksportu karty dnia (przekrój 5, `A05`). */
   'export.retry',
   /**

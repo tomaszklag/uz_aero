@@ -39,6 +39,7 @@
 
 import {
   projectSession,
+  sessionInconsistencies,
   type AircraftLimits,
   type Event,
   type EventCorrectionPayload,
@@ -47,9 +48,13 @@ import {
 } from '@ninerdeck/domain';
 
 import {
+  addedEventCandidate,
   correctionCandidate,
   correctionViolations,
   correctionWarnings,
+  insertionViolations,
+  insertionWarnings,
+  type AddedEventInput,
 } from '../correctionCandidate.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
 import { adminSourceDevice } from '../sourceDevice.ts';
@@ -112,6 +117,44 @@ export interface CorrectionResult {
  */
 export type CorrectEventOutcome =
   | { ok: true; result: CorrectionResult }
+  | { ok: false; reason: 'session_not_found' }
+  | { ok: false; reason: 'rule_violation'; violations: RuleViolation[] };
+
+/**
+ * Wejście DOPISANIA FAKTU (3.2.0, `docs/panel-3.2.md` §5.4): co zaszło, kiedy i dlaczego
+ * tego nie ma w rejestrze. Kształt faktu bierze się ze wspólnego helpera, żeby podgląd
+ * i zapis pytały o dokładnie tę samą rzecz.
+ */
+export interface AddEventInput {
+  sessionUuid: string;
+  event: AddedEventInput;
+  /** Uzasadnienie administratora; obowiązkowe, trafia do audytu (`event.add`). */
+  reason: string;
+}
+
+export interface AddEventResult {
+  sessionUuid: string;
+  /** Uuid DOPISANEGO zdarzenia - adres faktu w rejestrze i na osi. */
+  eventUuid: string;
+  type: AddedEventInput['type'];
+  /** Chwila FAKTU (epoch ms) - ta, którą podał administrator. */
+  at: number;
+  recordedAt: Date;
+  /** Stan operacji PO dopisaniu, policzony `projectSession` - jak przy korekcie. */
+  state: SessionState;
+  /** Kolizje z pracą pilota i miękkie reguły per typ, policzone PRZED zapisem. */
+  warnings: RuleViolation[];
+  /**
+   * Niespójności logu PO dopisaniu (`rules/consistency.ts`) - odpowiedź na baner,
+   * z którym administrator wszedł w edycję: wpis dopisany po to, żeby domknąć lot,
+   * ma pokazać, że lot jest domknięty.
+   */
+  consistency: RuleViolation[];
+  reexport: ExportOutcome | null;
+}
+
+export type AddEventOutcome =
+  | { ok: true; result: AddEventResult }
   | { ok: false; reason: 'session_not_found' }
   | { ok: false; reason: 'rule_violation'; violations: RuleViolation[] };
 
@@ -297,6 +340,94 @@ export class AdminCorrectionCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
+        reexport: await this.reexport(actor.orgId, input.sessionUuid),
+      },
+    };
+  }
+
+  /**
+   * DOPISANIE BRAKUJĄCEGO FAKTU (3.2.0, `docs/panel-3.2.md` §5.4) - młodsza siostra
+   * korekty, nie drugi ingest: ta sama blokada operacji, ten sam znacznik zapisu panelu,
+   * ta sama projekcja po zapisie, ten sam re-eksport karty PO commicie. Różnią się
+   * dwie rzeczy i obie są nazwane: kandydat (`addedEventCandidate` - fakt z chwilą,
+   * nie korekta z celem) i pytanie do reguł (`insertionViolations` - stan z CHWILI
+   * FAKTU, bo na stanie końcowym każde brakujące lądowanie odbijałoby się o zdany
+   * samolot). Flag łańcucha NIE przeliczamy: dopisywane typy nie ruszają odczytów
+   * z przejęcia i zdania, które są jedynym wejściem `chainFlags`.
+   */
+  async add(actor: Actor, input: AddEventInput): Promise<AddEventOutcome> {
+    const at = this.clock.now();
+
+    let applied: Applied & { consistency: RuleViolation[] };
+    try {
+      applied = await this.write.run(actor, async (tx) => {
+        await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [input.sessionUuid]);
+
+        const orgId = actor.orgId;
+        const row = await this.sessions.get(tx, orgId, input.sessionUuid);
+        if (row == null) throw new SessionNotFound();
+
+        const stream = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
+        if (stream.length === 0) throw new SessionNotFound();
+
+        const before = projectSession(stream);
+        const candidate = addedEventCandidate(before, stream, input.event, this.newId());
+        const limits: AircraftLimits = {
+          capacityL: await this.aircraft.capacityL(tx, orgId, candidate.aircraftId),
+          oilMinL: null,
+          oilCapacityL: null,
+        };
+
+        const errors = insertionViolations(stream, candidate, limits, at);
+        if (errors.length > 0) throw new RuleRejection(errors);
+        const warnings = insertionWarnings(stream, candidate, limits, at);
+
+        await this.events.insertBatch(tx, orgId, [candidate], adminSourceDevice(actor.pilotId));
+
+        const after = await this.events.sessionEvents(tx, orgId, input.sessionUuid);
+        const state = projectSession(after);
+        await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after, orgId));
+
+        return {
+          result: {
+            candidate,
+            state,
+            warnings,
+            consistency: sessionInconsistencies(state, after, limits),
+          },
+          audit: {
+            action: 'event.add',
+            targetType: 'event',
+            // Celem jest DOPISANE zdarzenie - innego nie ma: fakt powstał z niczego.
+            targetId: candidate.uuid,
+            details: {
+              sessionUuid: input.sessionUuid,
+              type: input.event.type,
+              at: input.event.at,
+              reason: input.reason,
+            },
+          },
+        };
+      });
+    } catch (err) {
+      if (err instanceof SessionNotFound) return { ok: false, reason: 'session_not_found' };
+      if (err instanceof RuleRejection) {
+        return { ok: false, reason: 'rule_violation', violations: err.violations };
+      }
+      throw err;
+    }
+
+    return {
+      ok: true,
+      result: {
+        sessionUuid: input.sessionUuid,
+        eventUuid: applied.candidate.uuid,
+        type: input.event.type,
+        at: input.event.at,
+        recordedAt: at,
+        state: applied.state,
+        warnings: applied.warnings,
+        consistency: applied.consistency,
         reexport: await this.reexport(actor.orgId, input.sessionUuid),
       },
     };

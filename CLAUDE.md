@@ -4872,6 +4872,97 @@ Reguły obowiązujące odtąd KAŻDĄ zmianę dziennika:
 - **czego P-B NIE ROBI**: podręcznika (B8 → P-W, #187), kolumny „Drugi pilot"
   w statystykach (P-E, #186), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
 
+## Panel 3.2.0 - epik P-C: edycja przesłanych zdarzeń - korekty i dopisywanie w panelu (issue #184, 2026-09-26)
+Tryb edycji operacji 1:1 z makiet `dziennik-edycja` i `dziennik-dopisanie` (§5 `docs/panel-3.2.md`),
+plaster serwera (`consistency` i autor zapisu w odpowiedzi o operacji) oraz JEDYNA nowa droga
+zapisu milestone - dopisanie brakującego faktu. Odstępstwa i ich powody: `docs/panel-3.2.md` §16.
+Reguły obowiązujące odtąd:
+- **FAKT Z PRZESZŁOŚCI OCENIA SIĘ NA STANIE Z CHWILI, W KTÓREJ ZASZEDŁ** - `checkInsert`
+  + `stateAsOf` w `packages/domain/src/rules/insertion.ts`. `checkAppend` pyta o stan
+  KOŃCOWY („czy TERAZ wolno dopisać") i na zdanym samolocie odbija każdy typ spoza
+  katalogu korekt (`DAY_CLOSED`), a lądowanie po wyłączeniu silnika - o stan silnika.
+  `stateAsOf` = strumień EFEKTYWNY (korekty nałożone PRZED przycięciem - unieważniony
+  start sprzed tej chwili ma nie istnieć) przycięty do zdarzeń nie późniejszych niż chwila
+  faktu, ta sama projekcja. Reguły per typ zostają identyczne dla pilota i administratora
+  (to samo `checkAppend`): lądowanie bez otwartego lotu → `NOT_IN_FLIGHT`, tankowanie
+  w biegu → `REFUEL_ENGINE_RUNNING`, fakt PO zdaniu → `DAY_CLOSED` (należy do następnej
+  operacji), fakt sprzed przejęcia → `SESSION_NOT_CLAIMED`
+- **OKNO KOREKTY WRACA OSOBNO, na stanie końcowym i chwili WPISANIA** (`now` jest
+  ARGUMENTEM `checkInsert`, nie polem kandydata): pilot dopisuje w tym samym oknie 24 h,
+  w którym poprawia; administrator dostaje te same dwa ostrzeżenia o kolizji
+  (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`). `correctionWindowVerdict`
+  jest WYCIĄGNIĘTE z `checkCorrectionWindow` (bez bramki typów), nie skopiowane - nowa
+  kolizja albo nowy powód wygaśnięcia obejmuje korektę i dopisanie w tej samej chwili.
+  Pominięte uprawnienie znaczy pilota, jak wszędzie (`insertion.test.ts` w `app/`)
+- **LUKA TELEFONU NAZWANA, NIE NAPRAWIONA**: arkusz 10H po zdaniu samolotu odbija się dziś
+  o `DAY_CLOSED` (komenda `execute` woła `checkAppend` na stanie końcowym), więc „telefon
+  dopisuje w oknie 24 h" z §5.4 jest nieprawdziwe - dopisanie działa wyłącznie z kokpitu
+  przed zdaniem. Domena ma już właściwą regułę; przepięcie komendy telefonu na `checkInsert`
+  to osobne zgłoszenie, poza P-C (`app/` w tym epiku nietknięte poza testem domeny)
+- **CZWARTA DROGA ZAPISU PANELU MIESZKA W `correctionCandidate.ts`** (`addedEventCandidate`,
+  `insertionViolations`/`insertionWarnings`) - literał `'administrative'` ma nadal JEDNO
+  miejsce (`architecture.test.ts`). Biała lista `ADDED_EVENT_TYPES` = to, co telefon oferuje
+  na 10H (start, lądowanie, kołowanie, tankowanie, zrzut, załadunek, dolewka oleju); zod
+  odbija resztę jako 400, zanim ktokolwiek zapyta domenę. Start i lądowanie z panelu są
+  `manual` bez pozycji, zrzut i załadunek BEZ składu (skład dopisuje się korektą `amend`),
+  tankowanie podaje dwie liczby z trzech - trzecią liczy serwer; `dropNumber` jak
+  w komendzie telefonu (`drops.count + 1`)
+- **OBA ZEGARY DOPISANEGO FAKTU = CHWILA FAKTU** (inaczej niż korekta: oba = chwila
+  wpisania). Zapis z panelu nie ma zegara telefonu, więc `deviceTime` = teraz rodziłby
+  przy każdym dopisaniu sprzed dwóch dni ostrzeżenie `CLOCK_DRIFT` o rozjeździe, którego
+  nie było. Chwila wpisania żyje w `received_at` i w audycie
+- **KOMENDA `add` OBOK `correct` W `AdminCorrectionCommands`** - ta sama blokada advisory,
+  ten sam `adminSourceDevice`, ta sama projekcja po zapisie, ten sam re-eksport karty PO
+  commicie, osobna akcja audytu **`event.add`** (celem DOPISANE zdarzenie; `details`: typ,
+  chwila faktu, powód). Flag łańcucha NIE przelicza: dopisywane typy nie ruszają odczytów
+  z przejęcia i zdania. Trasy `POST /admin/api/sessions/:uuid/events[/preview]` na
+  `events.correct`; odmowy jak przy korekcie (404 cudza/nieznana, 422 domena); podgląd bez
+  `reason`, zapis z powodem; obie z sondami w `tenantIsolation.test.ts`
+- **PODGLĄD DOPISANIA NIESIE KANDYDATA I NIESPÓJNOŚCI PRZED/PO** - karta skutku pisze
+  „Domyka lot 5 · start …", „Czas lotu 5 — → 0:20", „Niespójności 1 → 0"; podgląd korekty
+  zostaje przy liczbach operacji (makieta wiersza niespójności nie ma)
+- **`GET /admin/api/sessions/:uuid` niesie `consistency`** (wynik `sessionInconsistencies`
+  na całym strumieniu, limity z `AircraftConfigPort` - `AdminSessionQueries` dostało go
+  w konstruktorze) **i `adminAuthorId` na każdym wierszu osi** (port `adminAuthors`
+  zastąpił `adminCorrectionUuids`: mapa uuid → konto dla KAŻDEGO zapisu panelu, nie tylko
+  korekt; `adminAuthorOf` w `sourceDevice.ts` jest jedynym miejscem rozbierającym znacznik).
+  `adminCorrected` zostaje osobno - tamto mówi o zdarzeniu POPRAWIANYM, to o ZAPISANYM
+- **PANEL: TRYB EDYCJI = STAN EKRANU POD ADRESEM `…/edycja`** (`sessionEditPath`,
+  trasa za `RequireCapability access="events.correct"`, `SessionScreen editing`). Wejście
+  „Popraw zdarzenia" w nagłówku tylko ze zdolnością i nie przy wpisie wycofanym; „Zakończ
+  edycję" jest LINKIEM, bo niczego nie zapisuje. Piąta kolumna `td.pen`, cały wiersz celem
+  kliknięcia (`tr.editable`), otwarty `tr.opened`, podejrzany `tr.flagged` z podpisem
+  z `ISSUE_HINT`; plakietka `.tag-corrected` „popr." w OBU trybach; baner niespójności
+  nad osią = zdanie domeny pogrubione + instrukcja z `FIX_HINT`; „Dodaj wpis" ostatnim
+  wierszem osi (`tr.axis-add`), nie przy wpisie wycofanym; po zapisie baner `ok` z tym, co
+  zapisano i którą rewizję dostała karta. Moduł czysty `screens/logbook/sessionEdit.ts`
+  (z testami): która szuflada dla którego typu (`editTargetOf`: przejęcie sam czas bez
+  kosza, zadanie i zdanie odczyty bez czasu i kosza, zrzut czas + skład, korekty
+  i unieważnienia bez ołówka), zegar (`timeOnDay` na dobę kotwicy z przeskokiem
+  o dobę przy operacji spod północy, `shiftHint` tylko przy zmianie), skutek jako PARY
+  z serwera (`timeEffectRows`, `readingEffectRows`, `addEffectRows`, `sheetRevisionRow`),
+  historia celu (`historyOf` - para czasu liczy się od poprzedniej poprawki), autor
+  (`authorLabel` - nazwisko ze słownika klubu, nigdy identyfikator)
+- **SZUFLADA KOREKTY (`CorrectionDrawer`)**: kosz w linii tytułu (`Drawer.actions` -
+  nowy slot, `.drawer-head-actions` w `drawer.css`, `TrashIcon`), kolizja banerem `warn`
+  („Twoja korekta zapisze się mimo to"), odmowa reguły banerem `danger` z zapisem
+  zablokowanym, powód WYMAGANY (blokada bez zdania - puste pole widać nad przyciskiem),
+  drugi pilot z `Select` (słownik klubu), historia `.hist` z zapisem pierwotnym jako
+  ostatnią kropką. Czas i skład zmienione naraz = DWIE korekty po sobie
+- **SZUFLADA DOPISANIA (`AddEventDrawer`, `.drawer.wide`)**: siatka `.type-grid` z ikonami
+  makiety (lokalne, poza `icons.tsx`), godzina startuje wypełniona końcem biegu silnika
+  (bez doby nie miałaby czego liczyć), podpis pod polem = koperta biegu jako instrukcja
+  (`runHint`), pola per typ (tankowanie: stan przed + dolano; olej: dolano; zrzut:
+  wysokość opcjonalnie), skutek z `addEffectRows`
+- **PODGLĄDY SĄ ODCZYTEM** (`useCorrectionPreview`/`useAddEventPreview` w `useLog.ts`,
+  klucz `keys.log.preview(uuid, kształt)` pod korzeniem dziennika, `keepPreviousData`),
+  mutacje `useCorrectEvent`/`useAddEvent` w `useLogCommands.ts` unieważniają korzeń
+  dziennika. `SessionListItemDto` dostało `exportRevision` (serwer wysyłał je od 2.0)
+- **strażnik napisów panelu widzi `' ? payload.x : '` między dwoma pustymi literałami
+  jako zdanie z żargonem** - zmienna lokalna na treść zdarzenia nazywa się `data`
+- **czego P-C NIE ROBI**: podręcznika (C13 → P-W, #187), przepięcia 10H telefonu na
+  `checkInsert` (osobne zgłoszenie), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

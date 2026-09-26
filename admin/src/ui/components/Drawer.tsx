@@ -56,11 +56,19 @@ interface DrawerProps {
    * klucz–wartość łamie się na dwie linie i karta przestaje się czytać kolumnami.
    */
   wide?: boolean;
+  /**
+   * Akcja W LINII TYTUŁU, przed zamknięciem (`.drawer-head-actions`): kosz „tego
+   * zdarzenia nie było" w szufladzie korekty (3.2.0, §5; wzorzec 10E z telefonu,
+   * issue #43). Intencją wchodzącego jest POPRAWKA, a unieważnienie ma być dostępne,
+   * nie eksponowane - czerwony przycisk w stopce robiłby z niego najgłośniejszy
+   * element szuflady.
+   */
+  actions?: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function Drawer({ title, sub, footer, wide = false, onClose, children }: DrawerProps) {
+export function Drawer({ title, sub, footer, wide = false, actions, onClose, children }: DrawerProps) {
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,9 +121,12 @@ export function Drawer({ title, sub, footer, wide = false, onClose, children }: 
             <div className="drawer-title">{title}</div>
             <div className="drawer-sub">{sub}</div>
           </div>
-          <button type="button" className="x-btn" aria-label="Zamknij" onClick={onClose}>
-            <CloseIcon size={14} />
-          </button>
+          <div className="drawer-head-actions">
+            {actions ?? null}
+            <button type="button" className="x-btn" aria-label="Zamknij" onClick={onClose}>
+              <CloseIcon size={14} />
+            </button>
+          </div>
         </div>
 
         <div className="drawer-body">{children}</div>

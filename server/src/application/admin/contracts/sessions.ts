@@ -17,7 +17,14 @@
  * więc każda taka zmiana stawałaby się zmianą łamiącą panel.
  */
 
-import type { Event, FlagType, MhFormat, OperationType, SessionState } from '@ninerdeck/domain';
+import type {
+  Event,
+  FlagType,
+  MhFormat,
+  OperationType,
+  RuleViolation,
+  SessionState,
+} from '@ninerdeck/domain';
 
 import type { AdminFlagListItem } from './flags.ts';
 
@@ -184,6 +191,14 @@ export interface AdminTimelineEntry {
    * wtedy, gdy to pole jest `true`.
    */
   adminCorrected: boolean;
+  /**
+   * KONTO PANELU, które WPISAŁO ten wiersz (korektę, dopisany fakt, unieważnienie,
+   * zakończenie); `null` = zapis z telefonu. Osobno od `adminCorrected`, bo to inne
+   * pytanie: tamto mówi o zdarzeniu POPRAWIANYM, to o zdarzeniu ZAPISANYM. Panel
+   * podpisuje z tego wiersz osi nazwiskiem („dopisał administrator · A. Kowalski"),
+   * rozwiązując konto ze słownika klubu - identyfikator nie wychodzi na ekran.
+   */
+  adminAuthorId: string | null;
 }
 
 /**
@@ -201,4 +216,13 @@ export interface AdminSessionDetail {
   timeline: AdminTimelineEntry[];
   /** Flagi sesji RAZEM z rozwiązanymi - inaczej historia decyzji znikałaby z karty. */
   flags: AdminFlagListItem[];
+  /**
+   * NIESPÓJNOŚCI LOGU (3.2.0, plaster P-C; decyzja właściciela 2026-09-26): wynik
+   * `rules/consistency.ts` na całym strumieniu - lot bez lądowania, zdarzenie poza
+   * biegiem silnika, zrzut na ziemi, cofnięty licznik. TE SAME zdania, które pilot
+   * czyta na 10D; `details.uuid` adresuje wiersz osi, którego dotyczą. Liczy serwer,
+   * bo panelowi wolno brać z domeny wyłącznie typy - trzeciego imiennego wyjątku
+   * od tej reguły nie ma. Wszystkie miękkie: opisują rejestr, nie kandydata.
+   */
+  consistency: RuleViolation[];
 }

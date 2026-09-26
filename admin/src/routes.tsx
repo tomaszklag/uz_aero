@@ -104,6 +104,17 @@ export const router = createHashRouter([
           </RequireCapability>
         ),
       },
+      // TRYB EDYCJI operacji (3.2.0, §5.3) - stan tego samego ekranu pod własnym adresem,
+      // za zdolnością do pisania w cudzym rejestrze: adres wklejony komuś bez niej rysuje
+      // ekran „Brak dostępu", a nie oś z ołówkami, które odbiją się o serwer.
+      {
+        path: 'dziennik/:reg/:uuid/edycja',
+        element: (
+          <RequireCapability access="events.correct">
+            <SessionScreen editing />
+          </RequireCapability>
+        ),
+      },
 
       // Konta i flota: lista i karta pod JEDNĄ trasą, z segmentem opcjonalnym. Karta
       // otwiera się NAD listą, więc lista ma zostać pod spodem - osobna trasa

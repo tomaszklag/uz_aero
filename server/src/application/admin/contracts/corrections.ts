@@ -86,3 +86,24 @@ export interface AdminCorrectionPreview {
    */
   warnings: RuleViolation[];
 }
+
+/**
+ * Odpowiedź `POST /admin/api/sessions/:uuid/events/preview` - podgląd DOPISANIA FAKTU
+ * (3.2.0, §5.4), młodsza siostra podglądu korekty i z tych samych powodów: liczby
+ * operacji mają jedno źródło (`projectSession`), a panel nie ma prawa policzyć ich sam.
+ *
+ * Dwie różnice wobec `AdminCorrectionPreview`. Nie ma `target`, bo nie ma zdarzenia
+ * poprawianego - jest `candidate`, czyli fakt, który POWSTANIE (panel opisuje go tym
+ * samym kodem, co wiersz osi, i ma z czego złożyć „domyka lot 5"). Jest za to
+ * `consistency` PRZED i PO: makieta odpowiada nim na baner nad osią („Niespójności
+ * 1 → 0") - administrator ma widzieć, że wpis załatwia to, po co przyszedł.
+ */
+export interface AdminAddEventPreview {
+  sessionUuid: string;
+  candidate: Event;
+  before: SessionState;
+  after: SessionState;
+  violations: RuleViolation[];
+  warnings: RuleViolation[];
+  consistency: { before: RuleViolation[]; after: RuleViolation[] };
+}

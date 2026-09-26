@@ -135,6 +135,12 @@ export const keys = {
     sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
     session: (uuid: string) => ['log', 'session', uuid] as const,
     track: (uuid: string) => ['log', 'track', uuid] as const,
+    /**
+     * Podglądy „przed → po" (3.2.0): KSZTAŁT korekty albo dopisania jest częścią klucza,
+     * bo każdy inny kształt to inne pytanie. Pod korzeniem dziennika, więc zapis w rejestrze
+     * unieważnia je razem z kartą - podgląd sprzed zapisu opisywałby inną operację.
+     */
+    preview: (uuid: string, shape: unknown) => ['log', 'preview', uuid, shape] as const,
   },
 
   /**

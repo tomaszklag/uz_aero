@@ -41,3 +41,12 @@ export function pilotLogPath(code: string, range: DayRange): string {
 export function sessionPath(reg: string, uuid: string, range: DayRange): string {
   return `/dziennik/${encodeURIComponent(reg)}/${encodeURIComponent(uuid)}${withRange(new URLSearchParams(), range)}`;
 }
+
+/**
+ * TRYB EDYCJI operacji (3.2.0, §5.3) - stan tego samego ekranu pod WŁASNYM adresem,
+ * żeby dało się go wkleić w rozmowie („popraw to"). Segment `edycja` za uuid-em:
+ * router nie pomyli go z operacją, bo operacja ma dokładnie jeden segment więcej.
+ */
+export function sessionEditPath(reg: string, uuid: string, range: DayRange): string {
+  return `/dziennik/${encodeURIComponent(reg)}/${encodeURIComponent(uuid)}/edycja${withRange(new URLSearchParams(), range)}`;
+}

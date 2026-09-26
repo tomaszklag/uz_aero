@@ -9,6 +9,12 @@
  *
  * Rejestracja jest w tytule powtórzona z poziomu 2 świadomie: link do sesji bywa
  * wklejony komuś, kto poziomu 2 nigdy nie widział.
+ *
+ * ══ TRYB EDYCJI JEST STANEM TEGO SAMEGO EKRANU (3.2.0, `docs/panel-3.2.md` §5.3) ══
+ * Ten sam ślad, ta sama oś, te same odczyty - plus ołówek przy każdym wierszu, baner
+ * niespójności nad osią i wiersz dopisania na jej końcu (wzorzec 10D z telefonu,
+ * issue #43). Adres `…/edycja` istnieje, żeby dało się go wkleić; „Zakończ edycję"
+ * niczego nie zapisuje - każda korekta zapisała się w chwili zatwierdzenia szuflady.
  */
 
 import { dateUtcShort } from '@ninerdeck/format';
@@ -17,6 +23,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import type { SessionListItemDto, SessionTrackDto } from '../../api/dto';
 import { can } from '../../auth/can';
+import { useDirectory } from '../../queries/useDirectory';
 import { useCloseSession, useVoidSession } from '../../queries/useLogCommands';
 import { useSessionDetail, useSessionTrack } from '../../queries/useLog';
 import { useSession } from '../../queries/useSession';
@@ -27,6 +34,7 @@ import {
   Card,
   EmptyState,
   Field,
+  LinkButton,
   Loadable,
   OptionButton,
   PageHead,
@@ -35,11 +43,22 @@ import {
   TrackMap,
   VerticalProfile,
 } from '../../ui/components';
-import { PlaneIcon } from '../../ui/components/icons';
+import { EditIcon, PlaneIcon, PlusIcon } from '../../ui/components/icons';
+import { personLookup } from '../calendar/directoryLookups';
 import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
+import { AddEventDrawer } from './AddEventDrawer';
+import { CorrectionDrawer } from './CorrectionDrawer';
 import type { DayRange } from './dateRanges';
-import { aircraftLogPath, logbookPath, pilotLogPath } from './logbookPaths';
+import { aircraftLogPath, logbookPath, pilotLogPath, sessionEditPath, sessionPath } from './logbookPaths';
+import {
+  authorLabel,
+  correctedUuids,
+  editTargetOf,
+  issueHints,
+  issueLines,
+  type EditTarget,
+} from './sessionEdit';
 import { operationLabel } from './sessionRows';
 import { voidFacts } from './sessionVoid';
 import { timelineRow } from './timelineRows';
@@ -47,7 +66,7 @@ import { mapPlot, peakLabel, profilePlot } from './trackChart';
 import { hasTrack, noTrackReason, trackFacts } from './trackFacts';
 import { trackMarkers } from './trackMarkers';
 
-export function SessionScreen() {
+export function SessionScreen({ editing = false }: { editing?: boolean }) {
   const { reg = '', uuid } = useParams();
   const [params] = useSearchParams();
   const range: DayRange = { from: params.get('od') ?? '', to: params.get('do') ?? '' };
@@ -55,7 +74,34 @@ export function SessionScreen() {
 
   const detail = useSessionDetail(uuid);
   const session = detail.data?.session;
-  const rows = (detail.data?.timeline ?? []).map(timelineRow);
+  const timeline = detail.data?.timeline ?? [];
+  const rows = timeline.map(timelineRow);
+
+  // Tryb edycji: który wiersz otwiera którą szufladę, które wiersze są podejrzane,
+  // które ktoś już poprawiał. Wszystko z modułu czystego - ekran wyłącznie rysuje.
+  const state = detail.data?.state;
+  const targets = new Map<string, EditTarget>();
+  if (editing && state != null) {
+    for (const entry of timeline) {
+      const target = editTargetOf(entry, state);
+      if (target != null) targets.set(entry.event.uuid, target);
+    }
+  }
+  const consistency = detail.data?.consistency ?? [];
+  const hints = editing ? issueHints(consistency) : new Map<string, string>();
+  const corrected = correctedUuids(timeline);
+  const [open, setOpen] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const directory = useDirectory();
+  const person = personLookup(directory.data);
+  const opened = open == null ? undefined : targets.get(open);
+
+  const saved = (message: string): void => {
+    setOpen(null);
+    setAdding(false);
+    setNotice(message);
+  };
 
   // Ślad idzie OSOBNYM żądaniem: karta sesji ma kilkadziesiąt zdarzeń, nagranie -
   // kilkaset wierzchołków po kompresji. Mapa dociąga się pod gotowym ekranem, zamiast
@@ -78,6 +124,8 @@ export function SessionScreen() {
      operacji bywa wklejony komuś, kto listy nigdy nie widział, więc identyfikacja
      musi stać na stronie, a nie tylko w pasku adresu (gdzie stoi uuid). */
   const identity = session?.signature ?? day;
+  const readPath = uuid == null ? back : sessionPath(reg, uuid, range);
+  const editPath = uuid == null ? back : sessionEditPath(reg, uuid, range);
 
   return (
     <>
@@ -105,11 +153,42 @@ export function SessionScreen() {
             {session?.status === 'closed' && detail.data?.state.closedByAdmin === true ? (
               <Pill tone="amber">Zakończona przez administratora</Pill>
             ) : null}
+            {/* WEJŚCIE W EDYCJĘ tylko ze zdolnością do pisania w cudzym rejestrze i nie
+                przy wpisie wycofanym (nie ma czego poprawiać). Plakietka w rogu trzyma
+                stan TRYBU; „Zakończ edycję" jest linkiem, bo niczego nie zapisuje. */}
+            {editing ? <Pill tone="amber">Edycja</Pill> : null}
+            {editing ? (
+              <LinkButton to={readPath} size="sm">
+                Zakończ edycję
+              </LinkButton>
+            ) : voidable && session != null && session.status !== 'voided' ? (
+              <LinkButton to={editPath} size="sm">
+                <EditIcon size={13} /> Popraw zdarzenia
+              </LinkButton>
+            ) : null}
           </>
         }
       />
 
       {detail.error == null ? null : <Banner tone="danger">{errorMessage(detail.error)}</Banner>}
+
+      {notice == null ? null : (
+        <Banner tone="ok" live>
+          {notice}
+        </Banner>
+      )}
+
+      {/* NIESPÓJNOŚCI nad osią, bo wymagają czynności - te same zdania, które pilot
+          czyta na 10D, liczone przez serwer. Wiersz osi, którego dotyczą, dostaje
+          bursztynowe tło i podpis: baner mówi „jest problem", wiersz mówi „ten". */}
+      {editing
+        ? issueLines(consistency).map((line) => (
+            <Banner tone="warn" key={line.message}>
+              <b>{line.message}</b>
+              {line.fix == null ? null : ` ${line.fix}`}
+            </Banner>
+          ))
+        : null}
 
       <Loadable
         pending={detail.isPending}
@@ -148,40 +227,133 @@ export function SessionScreen() {
             <Card title="Log zdarzeń">
               <div className="table-wrap plain">
                 <table>
-                  <caption className="visually-hidden">Zdarzenia operacji</caption>
+                  <caption className="visually-hidden">
+                    {editing ? 'Zdarzenia operacji - tryb edycji' : 'Zdarzenia operacji'}
+                  </caption>
                   <thead>
                     <tr>
                       <th>Czas</th>
                       <th>Zdarzenie</th>
                       <th>Szczegół</th>
                       <th>Zapis</th>
+                      {editing ? (
+                        <th>
+                          <span className="visually-hidden">Popraw</span>
+                        </th>
+                      ) : null}
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.uuid} className={row.voided ? 'voided' : undefined}>
-                        <td className="num">
-                          <span className={row.correctedTime == null ? undefined : 'clock-val struck'}>
-                            {row.time}
-                          </span>
-                          {row.correctedTime == null ? null : (
-                            <span className="cell-sub">{row.correctedTime}</span>
-                          )}
-                        </td>
-                        <td className="cell-strong">
-                          {row.name}
-                          {row.adminCorrected ? (
-                            <span className="cell-sub">poprawił administrator</span>
+                    {rows.map((row) => {
+                      const target = targets.get(row.uuid);
+                      const hint = hints.get(row.uuid);
+                      const entry = timeline.find((e) => e.event.uuid === row.uuid);
+                      const classes = [
+                        row.voided ? 'voided' : null,
+                        target == null ? null : 'editable',
+                        open === row.uuid ? 'opened' : null,
+                        hint == null ? null : 'flagged',
+                      ].filter((c) => c != null);
+                      return (
+                        <tr
+                          key={row.uuid}
+                          className={classes.length === 0 ? undefined : classes.join(' ')}
+                          onClick={target == null ? undefined : () => setOpen(row.uuid)}
+                        >
+                          <td className="num">
+                            <span className={row.correctedTime == null ? undefined : 'clock-val struck'}>
+                              {row.time}
+                            </span>
+                            {row.correctedTime == null ? null : (
+                              <span className="cell-sub">{row.correctedTime}</span>
+                            )}
+                          </td>
+                          <td className="cell-strong">
+                            {row.name}
+                            {/* Plakietka „popr." w OBU trybach - fakt o danych, nie akcja. */}
+                            {corrected.has(row.uuid) ? <span className="tag-corrected">popr.</span> : null}
+                            {row.adminCorrected ? (
+                              <span className="cell-sub">poprawił administrator</span>
+                            ) : null}
+                            {entry?.adminAuthorId == null ? null : (
+                              <span className="cell-sub">
+                                {entry.event.type === 'event_correction' ? 'wpisał ' : 'dopisał '}
+                                {authorLabel(entry.adminAuthorId, person)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="cell-sub">
+                            {hint == null ? (
+                              (row.detail ?? '')
+                            ) : (
+                              <>
+                                {row.detail == null ? null : `${row.detail} · `}
+                                <span className="cell-sub warn" style={{ display: 'inline' }}>
+                                  {hint}
+                                </span>
+                              </>
+                            )}
+                          </td>
+                          <td className="cell-sub">{row.source}</td>
+                          {editing ? (
+                            <td className="pen">
+                              {target == null ? null : (
+                                <button
+                                  type="button"
+                                  className="pen-btn"
+                                  aria-label={row.voided ? 'Historia i przywrócenie' : `Popraw: ${row.name}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpen(row.uuid);
+                                  }}
+                                >
+                                  <EditIcon size={14} />
+                                </button>
+                              )}
+                            </td>
                           ) : null}
+                        </tr>
+                      );
+                    })}
+                    {/* DOPISANIE FAKTU jako OSTATNI WIERSZ OSI (§5.4): dopisywany fakt trafia
+                        do przebiegu operacji, więc wejście stoi tam, gdzie skończy się jego
+                        skutek. Przy wpisie wycofanym nie ma czego dopisywać. */}
+                    {editing && session.status !== 'voided' ? (
+                      <tr className="axis-add">
+                        <td colSpan={5}>
+                          <button type="button" className="axis-add-btn" onClick={() => setAdding(true)}>
+                            <PlusIcon size={14} /> Dodaj wpis
+                          </button>
                         </td>
-                        <td className="cell-sub">{row.detail ?? ''}</td>
-                        <td className="cell-sub">{row.source}</td>
                       </tr>
-                    ))}
+                    ) : null}
                   </tbody>
                 </table>
               </div>
             </Card>
+
+            {opened == null || state == null ? null : (
+              <CorrectionDrawer
+                key={opened.entry.event.uuid}
+                session={session}
+                state={state}
+                timeline={timeline}
+                target={opened}
+                members={directory.data?.members ?? []}
+                person={person}
+                onClose={() => setOpen(null)}
+                onSaved={saved}
+              />
+            )}
+
+            {adding && state != null ? (
+              <AddEventDrawer
+                session={session}
+                state={state}
+                onClose={() => setAdding(false)}
+                onSaved={saved}
+              />
+            ) : null}
 
             <Card title="Szczegóły">
               {/* DWA WYJŚCIA z operacji (3.2.0, §4.1): okruszki prowadzą na oś MASZYNY,

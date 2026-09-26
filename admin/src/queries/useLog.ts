@@ -9,6 +9,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type {
+  AddedEventDto,
+  AddEventPreviewDto,
+  CorrectionPreviewDto,
+  CorrectionShapeDto,
   LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
@@ -21,6 +25,8 @@ import {
   loadLogPilots,
   loadSession,
   loadSessionTrack,
+  previewAddEvent,
+  previewCorrection,
   type LogPilotsQuery,
   type LogRangeQuery,
   type SessionListQuery,
@@ -103,5 +109,31 @@ export function useSessionTrack(uuid: string | undefined) {
     queryFn: () => loadSessionTrack(uuid as string),
     enabled: uuid != null && uuid !== '',
     staleTime: Infinity,
+  });
+}
+
+/**
+ * PODGLĄD KOREKTY „przed → po" (3.2.0, §5.2) - ODCZYT, choć jedzie `POST`-em: serwer
+ * niczego nie zapisuje, a kształt korekty jest parametrem pytania, nie filtrem listy.
+ * `shape: null` = formularz jeszcze nie ma czego pokazać (nic się nie zmieniło).
+ * `placeholderData` trzyma poprzednią odpowiedź, żeby karta skutku nie migała przy
+ * każdej minucie wpisanej w polu czasu.
+ */
+export function useCorrectionPreview(uuid: string, shape: CorrectionShapeDto | null) {
+  return useQuery<CorrectionPreviewDto>({
+    queryKey: keys.log.preview(uuid, shape),
+    queryFn: () => previewCorrection(uuid, shape as CorrectionShapeDto),
+    enabled: shape != null,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Podgląd DOPISANIA (§5.4) - ta sama natura, co podgląd korekty. */
+export function useAddEventPreview(uuid: string, event: AddedEventDto | null) {
+  return useQuery<AddEventPreviewDto>({
+    queryKey: keys.log.preview(uuid, event),
+    queryFn: () => previewAddEvent(uuid, event as AddedEventDto),
+    enabled: event != null,
+    placeholderData: keepPreviousData,
   });
 }

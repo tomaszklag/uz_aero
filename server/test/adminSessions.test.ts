@@ -377,7 +377,35 @@ describe('karta dnia (A02a)', () => {
       'day_close',
     ]);
     expect(body.timeline.every((e: { voided: boolean }) => !e.voided)).toBe(true);
+    // Zapisy z telefonu nie mają autora z panelu.
+    expect(body.timeline.every((e: { adminAuthorId: string | null }) => e.adminAuthorId === null)).toBe(
+      true,
+    );
     expect(body.flags).toEqual([]);
+    // Dzień spójny: lista niespójności jest pusta, nie nieobecna.
+    expect(body.consistency).toEqual([]);
+  });
+
+  it('`consistency` niesie TE SAME zdania, które pilot czyta na 10D, z adresem wiersza', async () => {
+    // Lot bez lądowania (GPS zgubił przyziemienie): ingest przyjmuje, karta ma to nazwać.
+    const { app, admin } = await threeDays();
+    const day = flyingDay({ sessionUuid: 'sess-9', picId: 'AKO', dayOffset: 5, mh: 1300 }).filter(
+      (e) => e.type !== 'landing',
+    );
+    const res = await post(app, admin, day);
+    expect(res.statusCode).toBe(200);
+
+    const card = (
+      await app.inject({
+        method: 'GET',
+        url: '/admin/api/sessions/sess-9',
+        headers: { authorization: `Bearer ${admin}` },
+      })
+    ).json();
+    const takeoff = card.state.flights[0].takeoffUuid;
+    expect(card.consistency).toMatchObject([
+      { code: 'FLIGHT_WITHOUT_LANDING', severity: 'warning', details: { uuid: takeoff, flight: 1 } },
+    ]);
   });
 
   it('oś jest CHRONOLOGICZNA także wtedy, gdy uuidy sortują się odwrotnie', async () => {
@@ -575,9 +603,10 @@ describe('karta dnia (A02a)', () => {
     expect(byPilot.statusCode).toBe(200);
 
     const timeline = (await card()).timeline as {
-      event: { uuid: string };
+      event: { uuid: string; type: string };
       voided: boolean;
       adminCorrected: boolean;
+      adminAuthorId: string | null;
     }[];
     const find = (uuid: string) => timeline.find((e) => e.event.uuid === uuid)!;
 
@@ -586,6 +615,11 @@ describe('karta dnia (A02a)', () => {
     // …a ślad w dzienniku ma tylko jedno z nich.
     expect(find(flight.takeoffUuid).adminCorrected).toBe(true);
     expect(find(flight.landingUuid).adminCorrected).toBe(false);
+
+    // Sama KOREKTA (wiersz osi) niesie autora: ta z panelu konto, ta z telefonu `null`.
+    const corrections = timeline.filter((e) => e.event.type === 'event_correction');
+    expect(corrections.map((e) => e.adminAuthorId)).toEqual(['AKO', null]);
+    expect(find(flight.takeoffUuid).adminAuthorId).toBeNull();
 
     // Kontrola: w `admin_audit` jest DOKŁADNIE jeden wpis `event.correct` i wskazuje
     // na zdarzenie poprawione przez panel. To jest ta sama lista, którą po kliknięciu

@@ -186,6 +186,17 @@ export function SignOutIcon({ size = 13 }: IconProps) {
   );
 }
 
+/** Kosz - „tego zdarzenia nie było" w linii tytułu szuflady korekty (3.2.0, §5). */
+export function TrashIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </Stroke>
+  );
+}
+
 /** Plus - założenie nowego konta i nowej jednostki floty. */
 export function PlusIcon({ size = 13 }: IconProps) {
   return (

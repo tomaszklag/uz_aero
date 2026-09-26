@@ -1360,6 +1360,17 @@ Kryterium przy dokładaniu warstwy: **czy junior wchodzący w projekt szybciej z
 2. Sprawdzenie w `checkAppend`.
 3. Test w `rules.test.ts`: przypadek przechodzący **i** odrzucany. Sama ścieżka szczęśliwa niczego nie dowodzi.
 
+**Dopisanie faktu PO CZASIE nie jest `checkAppend`** (3.2.0, `domain/rules/insertion.ts`):
+`checkAppend` pyta o stan KOŃCOWY („czy TERAZ wolno dopisać"), a brakujące lądowanie
+z 10:33 dopisywane do operacji zdanej o 12:15 odbiłoby się o zdany samolot (`DAY_CLOSED`)
+i o stan silnika. `checkInsert(events, candidate, now, limits, authority)` ocenia kandydata
+na stanie Z CHWILI FAKTU (`stateAsOf`) tym samym `checkAppend`, a okno korekty i kolizje
+liczy osobno na stanie końcowym (`correctionWindowVerdict`). Nowa reguła per typ dopisana
+do `checkAppend` obowiązuje więc obie drogi bez dopisywania czegokolwiek drugi raz.
+Dziś woła je panel (dopisanie z `correctionCandidate.ts` serwera); arkusz 10H telefonu
+nadal idzie przez `execute` → `checkAppend` i po zdaniu samolotu odbija się o `DAY_CLOSED`
+- przepięcie go na `checkInsert` jest osobnym zgłoszeniem.
+
 ### Nowy ekran
 
 Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).

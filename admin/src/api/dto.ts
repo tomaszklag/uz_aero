@@ -783,6 +783,11 @@ export interface SessionListItemDto {
 
   /** Sesja wpisana ręcznie po fakcie - plakietka przy dacie, nie przy wartościach. */
   manualEntry: boolean | null;
+  /**
+   * Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. Karta skutku
+   * korekty mówi z tego, którą rewizję dostanie klub po zapisie (3.2.0, §5.2).
+   */
+  exportRevision: number | null;
   updatedAt: string;
 }
 
@@ -832,6 +837,23 @@ export interface TimelineEntryDto {
   correctedTime: number | null;
   /** `true` = poprawił to administrator z panelu, a nie pilot w oknie 24 h. */
   adminCorrected: boolean;
+  /**
+   * Konto panelu, które WPISAŁO ten wiersz (korektę, dopisany fakt); `null` = telefon.
+   * Osobno od `adminCorrected`: tamto mówi o zdarzeniu poprawianym, to o zapisanym.
+   * Nazwisko panel bierze ze słownika klubu - identyfikator nie wychodzi na ekran.
+   */
+  adminAuthorId: string | null;
+}
+
+/**
+ * Naruszenie reguły rejestru - zdanie po polsku wprost od domeny (3.2.0). `details`
+ * niesie adres zdarzenia (`uuid`), którego naruszenie dotyczy, gdy takie jest.
+ */
+export interface RuleViolationDto {
+  code: string;
+  severity: 'error' | 'warning';
+  message: string;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -845,6 +867,126 @@ export interface SessionDetailDto {
   session: SessionListItemDto;
   state: SessionState;
   timeline: TimelineEntryDto[];
+  /**
+   * NIESPÓJNOŚCI LOGU (3.2.0): lot bez lądowania, zdarzenie poza biegiem silnika, zrzut
+   * na ziemi, cofnięty licznik - TE SAME zdania, które pilot czyta w trybie edycji na
+   * telefonie. Liczy serwer; panel wyłącznie nazywa i przypina do wiersza osi.
+   */
+  consistency: RuleViolationDto[];
+}
+
+/**
+ * Wynik przebudowy karty arkusza po zapisie w rejestrze; `null` = arkusz nie odpowiedział.
+ * Rewizja mówi, którą wersję dokumentu dostał klub.
+ */
+export interface ReexportDto {
+  exported: boolean;
+  tab?: string;
+  revision?: number;
+}
+
+/**
+ * KOREKTA ZDARZENIA (3.2.0, `docs/panel-3.2.md` §5) - kształt korekty bez powodu,
+ * wspólny dla podglądu i zapisu: obie trasy pytają o dokładnie tę samą rzecz.
+ * Trzy akcje, jak w domenie: przesunięcie czasu, unieważnienie, poprawka wartości.
+ */
+export type CorrectionShapeDto =
+  | { targetUuid: string; action: 'retime'; newTime: number }
+  | { targetUuid: string; action: 'void' }
+  | { targetUuid: string; action: 'amend'; fields: AmendFieldsDto };
+
+/** Pola poprawki wartości - biała lista per typ celu egzekwuje domena serwera. */
+export interface AmendFieldsDto {
+  fuelL?: number;
+  mh?: number;
+  oilL?: number;
+  jumpers?: { tandem: number; aff: number; solo: number } | null;
+  notes?: string | null;
+  dualId?: string | null;
+}
+
+/** Zdarzenie korygowane, tak jak leży w rejestrze; `null` = celu nie ma w tej operacji. */
+export interface CorrectionTargetDto {
+  uuid: string;
+  type: Event['type'];
+  deviceTime: number;
+  gpsTime: number | null;
+  effectiveTime: number | null;
+  voided: boolean;
+  sourceDevice: string | null;
+  event: Event;
+}
+
+/**
+ * Podgląd korekty (`POST /sessions/:uuid/corrections/preview`): liczby operacji PRZED
+ * i PO liczy serwer tą samą projekcją, co dzień - panel formatuje i nic nie liczy.
+ * `violations` to dokładnie to, co zablokowałoby zapis; `warnings` - kolizje z pracą
+ * pilota, które zapisu nie wstrzymują.
+ */
+export interface CorrectionPreviewDto {
+  sessionUuid: string;
+  target: CorrectionTargetDto | null;
+  before: SessionState;
+  after: SessionState;
+  violations: RuleViolationDto[];
+  warnings: RuleViolationDto[];
+}
+
+export interface CorrectionResultDto {
+  sessionUuid: string;
+  correctionUuid: string;
+  targetUuid: string;
+  action: CorrectionShapeDto['action'];
+  recordedAt: string;
+  state: SessionState;
+  warnings: RuleViolationDto[];
+  reexport: ReexportDto | null;
+}
+
+/**
+ * DOPISANIE BRAKUJĄCEGO FAKTU (3.2.0, §5.4) - wąska lista typów, ta sama, którą telefon
+ * oferuje w arkuszu dopisania: uruchomienia i wyłączenia silnika tu NIE MA (wyznaczają
+ * kopertę operacji), nie ma też przejęcia, zadania ani zdania. Tankowanie podaje dwie
+ * liczby z trzech - trzecią liczy serwer.
+ */
+export type AddedEventDto =
+  | { type: 'takeoff' | 'landing' | 'taxi'; at: number }
+  | { type: 'refuel'; at: number; beforeL: number; addedL: number }
+  | { type: 'oil_add'; at: number; addedL: number }
+  | {
+      type: 'drop';
+      at: number;
+      altitudeFt: number | null;
+      /** Skład w rozbiciu; `null` = niepodany, nie zero. */
+      jumpers: { tandem: number; aff: number; solo: number } | null;
+    }
+  | { type: 'boarding'; at: number };
+
+/**
+ * Podgląd dopisania (`POST /sessions/:uuid/events/preview`): jak podgląd korekty,
+ * plus KANDYDAT (fakt, który powstanie) i niespójności PRZED i PO - odpowiedź na baner
+ * nad osią, z którym administrator wszedł w edycję.
+ */
+export interface AddEventPreviewDto {
+  sessionUuid: string;
+  candidate: Event;
+  before: SessionState;
+  after: SessionState;
+  violations: RuleViolationDto[];
+  warnings: RuleViolationDto[];
+  consistency: { before: RuleViolationDto[]; after: RuleViolationDto[] };
+}
+
+export interface AddEventResultDto {
+  sessionUuid: string;
+  eventUuid: string;
+  type: AddedEventDto['type'];
+  at: number;
+  recordedAt: string;
+  state: SessionState;
+  warnings: RuleViolationDto[];
+  consistency: RuleViolationDto[];
+  reexport: ReexportDto | null;
 }
 
 /**

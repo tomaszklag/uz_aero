@@ -58,6 +58,19 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   do wklejenia w rozmowie jak rejestracja.
 - **Kalendarz stoi w kolumnie panelu zaraz pod Dziennikiem** - kolejność modułów klubu
   jest odtąd stała: Dziennik, Kalendarz, Piloci, Samoloty.
+- **Operację poprawia się w panelu.** Przycisk „Popraw zdarzenia" przełącza stronę
+  operacji w tryb edycji pod własnym adresem: każdy wiersz osi ma ołówek i otwiera
+  szufladę z poprawką czasu, odczytów albo składu zrzutu, z podglądem „przed → po"
+  policzonym przez serwer, powodem (zobaczy go pilot w historii zmian) i historią
+  dotychczasowych poprawek z nazwiskiem. Zdarzenie, którego nie było, unieważnia się
+  koszem w linii tytułu. Nad osią stoją te same ostrzeżenia o niespójnościach, które
+  pilot widzi na telefonie - lot bez lądowania, zdarzenie poza pracą silnika - z tym,
+  czym się je naprawia.
+- **Brakujący fakt da się dopisać z panelu.** Ostatni wiersz osi „Dodaj wpis" przyjmuje
+  lądowanie, start, kołowanie, tankowanie, zrzut, załadunek albo dolewkę oleju z godziną
+  i powodem; fakt ocenia się tak, jak wyglądała operacja w tej chwili (lądowanie musi
+  mieć start, tankowanie stojący silnik), a podgląd mówi, który lot domyka i ile
+  niespójności znika. Pilot zobaczy wpis na telefonie, karta arkusza dostaje nową rewizję.
 
 ### Poprawki
 

@@ -621,6 +621,30 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(0);
   },
 
+  'POST /admin/api/sessions/:uuid/events/preview': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/sess-b/events/preview',
+      headers: writer(a),
+      payload: { type: 'landing', at: 0 },
+    });
+    expect(res.statusCode).toBe(404);
+  },
+
+  'POST /admin/api/sessions/:uuid/events': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/sess-b/events',
+      headers: writer(a),
+      payload: { event: { type: 'landing', at: 0 }, reason: 'próba' },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM events WHERE session_uuid = 'sess-b' AND source_device LIKE 'admin:%'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   'GET /admin/api/dashboard': async ({ app, a }) => {
     const res = await app.inject({ method: 'GET', url: '/admin/api/dashboard', headers: bearer(a) });
     expectClean(res, '/dashboard');

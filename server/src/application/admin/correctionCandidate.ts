@@ -22,15 +22,23 @@
  * Dlatego mieszka tu także kandydat DRUGIEJ drogi zapisu panelu - unieważnienia całej
  * sesji (`sessionVoidCandidate`, 2026-08-31). Oceniają go te same dwie funkcje niżej:
  * biorą KANDYDATA, a nie typ zdarzenia, więc obie drogi przechodzą przez jedną furtkę.
+ *
+ * Od 3.2.0 (`docs/panel-3.2.md` §5.4) jest tu i CZWARTA droga - DOPISANIE BRAKUJĄCEGO
+ * FAKTU (`addedEventCandidate`), oceniane parą `insertionViolations`/`insertionWarnings`
+ * na tym samym literale. Różni ją pytanie, nie furtka: fakt z przeszłości ocenia się
+ * na stanie Z CHWILI, W KTÓREJ ZASZEDŁ (`checkInsert` w domenie), a nie na stanie
+ * końcowym - inaczej każde brakujące lądowanie odbijałoby się o zdany samolot.
  */
 
 import {
   CURRENT_SCHEMA_VERSION,
   checkAppend,
+  checkInsert,
   errorsOf,
   type AircraftLimits,
   type Event,
   type EventCorrectionPayload,
+  type EventType,
   type RuleViolation,
   type SessionState,
   warningsOf,
@@ -206,4 +214,132 @@ export function correctionWarnings(
   limits: AircraftLimits,
 ): RuleViolation[] {
   return warningsOf(checkAppend(state, candidate, limits, 'administrative'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dopisanie brakującego faktu (3.2.0, §5.4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * BIAŁA LISTA typów, które panel umie DOPISAĆ - dokładnie to, co telefon oferuje
+ * na arkuszu `10H`. Uruchomienia i wyłączenia silnika NIE MA: wyznaczają kopertę
+ * operacji, a dopisanie ich z panelu znaczyłoby stworzenie biegu silnika, którego
+ * nikt nie widział. Poza listą stoją z tego samego powodu przejęcie, zadanie
+ * i zdanie (tożsamość operacji, końce łańcucha motogodzin).
+ */
+export const ADDED_EVENT_TYPES = [
+  'takeoff',
+  'landing',
+  'taxi',
+  'refuel',
+  'drop',
+  'boarding',
+  'oil_add',
+] as const satisfies readonly EventType[];
+
+export type AddedEventType = (typeof ADDED_EVENT_TYPES)[number];
+
+/**
+ * Co panel wie o dopisywanym fakcie. Kształt jest CELOWO węższy od payloadów domeny:
+ * start i lądowanie z panelu są zawsze `manual` i bez pozycji (przy biurku nie ma
+ * GPS-u), załadunek nie niesie składu (jak na `10H`), zrzut niesie skład OPCJONALNIE
+ * (`null` = niepodany, nie zero - C12 z issue #184: skład jest treścią zrzutu, którą
+ * administrator często zna z listy skoków), a tankowanie podaje dwie liczby z trzech,
+ * bo trzecia jest ich sumą i liczy ją serwer, nie formularz.
+ */
+export interface AddedJumpers {
+  tandem: number;
+  aff: number;
+  solo: number;
+}
+
+export type AddedEventInput =
+  | { type: 'takeoff' | 'landing' | 'taxi'; at: number }
+  | { type: 'refuel'; at: number; beforeL: number; addedL: number }
+  | { type: 'oil_add'; at: number; addedL: number }
+  | { type: 'drop'; at: number; altitudeFt: number | null; jumpers: AddedJumpers | null }
+  | { type: 'boarding'; at: number };
+
+/**
+ * Kandydat DOPISANIA FAKTU (`docs/panel-3.2.md` §5.4).
+ *
+ * ══ OBA ZEGARY = CHWILA FAKTU ══
+ * `deviceTime` i `gpsTime` opisują dwa zegary TELEFONU (§5.1): kiedy zapisał i kiedy
+ * według GPS zaszło. Zapis z panelu nie ma zegara telefonu, który mógłby się rozjechać,
+ * więc oba niosą chwilę faktu (`at`) - inaczej każde dopisanie sprzed dwóch dni
+ * przynosiłoby ostrzeżenie `CLOCK_DRIFT` o rozjeździe zegarów, którego nie było.
+ * Chwila WPISANIA żyje tam, gdzie żyje przy korekcie: w `events.received_at`
+ * i w `admin_audit` - i stamtąd bierze ją okno korekty (`insertionViolations`).
+ *
+ * Nagłówek z SESJI, jak przy każdej drodze zapisu panelu (`adminHeader`): `picId`
+ * to PIC operacji, bo zdarzenie opisuje JEGO lot - kto je wpisał, mówi
+ * `events.source_device` i audyt (`event.add`).
+ */
+export function addedEventCandidate(
+  state: SessionState,
+  stream: readonly Event[],
+  input: AddedEventInput,
+  uuid: string,
+): Event {
+  const header = { ...adminHeader(state, stream, uuid, new Date(input.at)), deviceTime: input.at, gpsTime: input.at };
+  switch (input.type) {
+    case 'takeoff':
+    case 'landing':
+    case 'taxi':
+      return { ...header, type: input.type, payload: { method: 'manual', position: null } };
+    case 'refuel':
+      return {
+        ...header,
+        type: 'refuel',
+        payload: {
+          beforeL: input.beforeL,
+          addedL: input.addedL,
+          afterL: input.beforeL + input.addedL,
+          consumptionLPerH: null,
+        },
+      };
+    case 'oil_add':
+      return { ...header, type: 'oil_add', payload: { addedL: input.addedL } };
+    case 'drop':
+      return {
+        ...header,
+        type: 'drop',
+        payload: {
+          // Numer kolejny w operacji - jak w komendzie telefonu (`state.drops.count + 1`).
+          dropNumber: state.drops.count + 1,
+          altitudeFt: input.altitudeFt,
+          jumpers: input.jumpers,
+          client: state.client,
+          position: null,
+        },
+      };
+    case 'boarding':
+      return { ...header, type: 'boarding', payload: { jumpers: null } };
+  }
+}
+
+/**
+ * Naruszenia, które ZABLOKOWAŁYBY dopisanie - ta sama furtka (`'administrative'`),
+ * inne pytanie: `checkInsert` ocenia kandydata na stanie z chwili faktu, a okno
+ * korekty liczy na stanie końcowym i chwili WPISANIA (`now`). Lądowanie bez startu,
+ * tankowanie przy pracującym silniku czy fakt po zdaniu samolotu odbijają się tak
+ * samo, jak odbiłyby się telefonowi.
+ */
+export function insertionViolations(
+  stream: readonly Event[],
+  candidate: Event,
+  limits: AircraftLimits,
+  now: Date,
+): RuleViolation[] {
+  return errorsOf(checkInsert(stream, candidate, now.getTime(), limits, 'administrative'));
+}
+
+/** Ostrzeżenia dopisania - kolizje z pracą pilota i miękkie reguły per typ (zrzut poza lotem). */
+export function insertionWarnings(
+  stream: readonly Event[],
+  candidate: Event,
+  limits: AircraftLimits,
+  now: Date,
+): RuleViolation[] {
+  return warningsOf(checkInsert(stream, candidate, now.getTime(), limits, 'administrative'));
 }

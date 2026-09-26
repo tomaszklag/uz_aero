@@ -45,6 +45,7 @@ const session: SessionListItemDto = {
   oilAddedL: 1,
   oilAfterL: 11.2,
   manualEntry: false,
+  exportRevision: null,
   updatedAt: '2026-08-12T16:45:00.000Z',
 };
 

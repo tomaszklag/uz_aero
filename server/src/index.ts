@@ -554,6 +554,10 @@ const app = await buildServer({
     events,
     adminFlagsRepo,
     new PgAdminEventsRepo(),
+    // Pojemność zbiorników → limity dla `sessionInconsistencies` (3.2.0): karta operacji
+    // niesie te same niespójności, które pilot widzi na 10D, więc pyta o samolot
+    // tym samym portem, co korekta.
+    aircraftConfig,
   ),
   // Ślad sesji w dzienniku: okno biegu z rejestru, geometria z plików NDJSON. Ten sam
   // egzemplarz, z którego czyta telefon - patrz wyżej.

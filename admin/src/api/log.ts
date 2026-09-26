@@ -10,6 +10,12 @@
  */
 
 import type {
+  AddedEventDto,
+  AddEventPreviewDto,
+  AddEventResultDto,
+  CorrectionPreviewDto,
+  CorrectionResultDto,
+  CorrectionShapeDto,
   LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
@@ -117,5 +123,50 @@ export function closeSession(
   return apiPost<SessionCloseResultDto>(`/sessions/${encodeURIComponent(uuid)}/close`, {
     reason,
     void: withVoid,
+  });
+}
+
+/**
+ * KOREKTA ZDARZENIA (3.2.0, `docs/panel-3.2.md` §5) - trzeci zapis w module, na kolekcji
+ * `corrections` sesji: powstaje NOWY fakt „to zdarzenie poprawiono", oryginał zostaje.
+ * Podgląd jest tym samym pytaniem bez powodu - „najpierw zobacz skutek, potem wytłumacz".
+ */
+export function previewCorrection(
+  uuid: string,
+  shape: CorrectionShapeDto,
+): Promise<CorrectionPreviewDto> {
+  return apiPost<CorrectionPreviewDto>(
+    `/sessions/${encodeURIComponent(uuid)}/corrections/preview`,
+    shape,
+  );
+}
+
+export function correctEvent(
+  uuid: string,
+  shape: CorrectionShapeDto,
+  reason: string,
+): Promise<CorrectionResultDto> {
+  return apiPost<CorrectionResultDto>(`/sessions/${encodeURIComponent(uuid)}/corrections`, {
+    ...shape,
+    reason,
+  });
+}
+
+/**
+ * DOPISANIE BRAKUJĄCEGO FAKTU (3.2.0, §5.4) - `POST` na kolekcji `events` sesji: powstaje
+ * zdarzenie, którego w rejestrze nie było. Ta sama zdolność, co korekta.
+ */
+export function previewAddEvent(uuid: string, event: AddedEventDto): Promise<AddEventPreviewDto> {
+  return apiPost<AddEventPreviewDto>(`/sessions/${encodeURIComponent(uuid)}/events/preview`, event);
+}
+
+export function addEvent(
+  uuid: string,
+  event: AddedEventDto,
+  reason: string,
+): Promise<AddEventResultDto> {
+  return apiPost<AddEventResultDto>(`/sessions/${encodeURIComponent(uuid)}/events`, {
+    event,
+    reason,
   });
 }

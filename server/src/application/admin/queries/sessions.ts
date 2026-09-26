@@ -13,9 +13,9 @@
  * niż ekran 10.
  */
 
-import { projectSession } from '@ninerdeck/domain';
+import { projectSession, sessionInconsistencies, type AircraftLimits } from '@ninerdeck/domain';
 
-import type { Database, EventsStorePort } from '../../common/ports.ts';
+import type { AircraftConfigPort, Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';
 import { eventTimeline } from '../mappers/eventTimeline.ts';
 import { flagListItem } from '../mappers/flagListItem.ts';
@@ -55,6 +55,11 @@ export class AdminSessionQueries {
      * ma co pokazać.
      */
     private readonly eventsMeta: EventsAdminPort,
+    /**
+     * Pojemność zbiorników → limity dla `sessionInconsistencies` (3.2.0): niespójność
+     * „paliwo ponad pojemność" bez pojemności śpi, jak przy korekcie i na telefonie.
+     */
+    private readonly aircraft: AircraftConfigPort,
   ) {}
 
   async list(orgId: string, filter: SessionListFilter): Promise<SessionListOutcome> {
@@ -91,14 +96,26 @@ export class AdminSessionQueries {
     // Flagi TEJ sesji razem z rozwiązanymi: karta dnia ma pokazywać także decyzje już
     // podjęte, inaczej historia rozstrzygnięć znika dokładnie tam, gdzie jest potrzebna.
     const { items } = await this.flags.list(this.db, orgId, { sessionUuid, limit: FLAGS_PER_DAY });
-    const byAdmin = await this.eventsMeta.adminCorrectionUuids(this.db, orgId, sessionUuid);
+    const adminAuthors = await this.eventsMeta.adminAuthors(this.db, orgId, sessionUuid);
+
+    // JEDYNE wywołanie `projectSession` na żądanie w całym panelu.
+    const state = projectSession(stream);
+    const limits: AircraftLimits = {
+      capacityL: await this.aircraft.capacityL(this.db, orgId, join.row.aircraftId),
+      // Kolumny konfiguracji oleju - jak przy korekcie: dopóki port ich nie niesie,
+      // reguły olejowe śpią (niespójności i tak o olej nie pytają).
+      oilMinL: null,
+      oilCapacityL: null,
+    };
 
     return {
       session: sessionListItem(join),
-      // JEDYNE wywołanie `projectSession` na żądanie w całym panelu.
-      state: projectSession(stream),
-      timeline: eventTimeline(stream, new Set(byAdmin)),
+      state,
+      timeline: eventTimeline(stream, adminAuthors),
       flags: items.map(flagListItem),
+      // TE SAME zdania, które pilot czyta na 10D - liczone tą samą funkcją domeny,
+      // na tym samym strumieniu, z których powstał `state`.
+      consistency: sessionInconsistencies(state, stream, limits),
     };
   }
 }

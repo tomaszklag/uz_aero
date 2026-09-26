@@ -511,6 +511,10 @@ const lastSeen = new LastSeenThrottle();
       events,
       adminFlagsRepo,
       new PgAdminEventsRepo(),
+      // Pojemność zbiorników → limity dla `sessionInconsistencies` (3.2.0): karta operacji
+      // niesie te same niespójności, które pilot widzi na 10D, więc pyta o samolot
+      // tym samym portem, co korekta.
+      aircraftConfig,
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
     adminMeQueries: new AdminMeQueries(pilots, accountQuery),

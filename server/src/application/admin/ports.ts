@@ -604,7 +604,8 @@ export interface EventsAdminPort {
   ): Promise<{ sourceDevice: string | null } | null>;
 
   /**
-   * Uuidy tych zdarzeń `event_correction` sesji, które zapisał PANEL.
+   * AUTORZY ZAPISÓW PANELU w tej sesji: uuid zdarzenia → identyfikator konta, które je
+   * wpisało z panelu. Zdarzeń z telefonu na liście NIE MA.
    *
    * Istnieje, bo `event_correction` emitują DWIE powierzchnie: administrator przez
    * `POST /admin/api/sessions/:uuid/corrections` (a więc przez `AuditedWrite`, czyli
@@ -612,9 +613,11 @@ export interface EventsAdminPort {
    * droga bramy audytu nie dotyka i śladu w dzienniku nie zostawia. Z samego strumienia
    * zdarzeń tych dwóch przypadków rozróżnić się NIE DA: payload jest identyczny.
    * Rozróżnia je `source_device` (`application/admin/sourceDevice.ts`) i to jest jedyne
-   * miejsce, w którym ten fakt jest zapisany.
+   * miejsce, w którym ten fakt jest zapisany. Od 3.2.0 odpowiedź obejmuje KAŻDY typ
+   * (dopisany fakt, unieważnienie, zakończenie), bo oś podpisuje wszystkie zapisy panelu
+   * jednym zdaniem - i niesie KONTO, bo podpis mówi nazwiskiem, nie samym „administrator".
    */
-  adminCorrectionUuids(db: Queryable, orgId: string, sessionUuid: string): Promise<string[]>;
+  adminAuthors(db: Queryable, orgId: string, sessionUuid: string): Promise<Map<string, string>>;
 }
 
 // ── rejestr zdarzeń (lista śledcza, A04) ────────────────────────────────────────

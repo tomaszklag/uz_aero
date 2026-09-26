@@ -299,9 +299,15 @@ drugi ingest:
   „jeden piszący" (`WRITER_MISMATCH`) i fałszuje się atrybucja nalotu. Na pytanie „kto to
   zrobił" odpowiada audyt (`event.add`, obok istniejącego `event.correct`)
   i `source_device`;
-- **twarde reguły domeny obowiązują identycznie** (`checkAppend` z uprawnieniem
-  `'administrative'`, `writeAuthority.test.ts`): lądowanie bez startu, zrzut na ziemi czy
-  tankowanie przy pracującym silniku odbijają się tak samo, jak odbiłyby się telefonowi;
+- **twarde reguły domeny obowiązują identycznie** (`writeAuthority.test.ts`): lądowanie
+  bez startu, zrzut na ziemi czy tankowanie przy pracującym silniku odbijają się tak samo,
+  jak odbiłyby się telefonowi. **Uściślenie z P-C (2026-09-26): pytaniem jest `checkInsert`,
+  nie `checkAppend`** - fakt z przeszłości ocenia się na STANIE Z CHWILI, W KTÓREJ ZASZEDŁ
+  (`stateAsOf`: strumień efektywny przycięty do tej chwili), a nie na stanie końcowym.
+  Na stanie końcowym każde brakujące lądowanie odbijałoby się o `DAY_CLOSED` (samolot już
+  zdany) i o stan silnika (już nie pracuje). Reguły per typ zostają te same - to jest to
+  samo `checkAppend`, tylko na innym stanie - a okno korekty i kolizje z pilotem wracają
+  osobno, na stanie końcowym i chwili WPISANIA (`correctionWindowVerdict`); patrz §16;
 - **biała lista typów jest WĄSKA** - to, co telefon oferuje na `10H`: start, lądowanie,
   tankowanie, zrzut, dolewka oleju, załadunek. **Uruchomienia i wyłączenia silnika na niej
   NIE MA**, bo wyznaczają kopertę operacji, a dopisanie ich z panelu znaczyłoby stworzenie
@@ -612,6 +618,14 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 | P-B | **Podtytuł poziomu 2 osi pilota bez zestawu uprawnień** („· pilot ·" z makiety): słownik klubu, z którego ekran zna osobę, zestawu nie niesie, a zestaw jest sprawą modułu Piloci - stoi tam pod „Karta członka". Liczby zakresu w podtytule idą z wiersza osi pilotów tego samego zakresu (`GET /log?os=piloci`), nie z sumowania nagłówków dób w przeglądarce. Makieta poprawiona | §4.1 |
 | P-B | **Doba nagłówka liczy się po chwili PRZEJĘCIA** (`claim_time`), po tej samej osi, co kursor i zakres - żeby strona rozcinała dobę na dwie sąsiednie części. Doba sygnatury (kotwica uruchomienia silnika) bywa inna dla biegu zaczętego po północy; sygnatura stoi w wierszu, więc rozjazd jest widoczny | §4.3, §4.4 |
 | P-B | **Kolumna „Drugi pilot" w tabeli pilotów STATYSTYK zostaje na P-E** (§17.1 pkt 1 nazywa oba epiki): P-B naprawił wyłącznie podstawę liczenia (§4.5 - puste zapisy poza sumami `GET /stats`), bo przebudowa ekranu statystyk jest treścią P-E | §4.5, §17.1 |
+| P-C | **Dopisany fakt ocenia się na stanie Z CHWILI, W KTÓREJ ZASZEDŁ** (`checkInsert` + `stateAsOf` w `packages/domain/src/rules/insertion.ts`), nie na stanie końcowym, jak zapowiadał §5.4 („`checkAppend` z uprawnieniem `'administrative'`"). Odkryte przy pisaniu komendy: `checkAppend` na stanie końcowym odbija KAŻDY typ spoza katalogu korekt na zdanym samolocie (`DAY_CLOSED`), a lądowanie po wyłączeniu silnika - o stan silnika; funkcja byłaby więc bezużyteczna dokładnie w przypadku, dla którego powstała. Reguły per typ zostają identyczne (to samo `checkAppend`, inny stan), a okno korekty i kolizje wracają osobno na stanie końcowym (`correctionWindowVerdict` wyciągnięte z `checkCorrectionWindow`, bez bramki typów). **Ta sama analiza pokazała, że arkusz 10H TELEFONU po zdaniu samolotu też odbija się o `DAY_CLOSED`** - „telefon umie dopisać w oknie 24 h" z §5.4 jest dziś nieprawdziwe (dopisanie działa wyłącznie z kokpitu przed zdaniem). Domena ma już właściwą regułę; przepięcie komendy telefonu na `checkInsert` to osobne zgłoszenie, poza P-C | §5.4 |
+| P-C | **Oba zegary dopisanego faktu = chwila faktu** (`deviceTime` = `gpsTime` = `at`), inaczej niż przy korekcie (oba = chwila wpisania). Zapis z panelu nie ma zegara telefonu, więc zegar telefonu równy chwili wpisania rodziłby przy każdym dopisaniu sprzed dwóch dni ostrzeżenie `CLOCK_DRIFT` o rozjeździe, którego nie było. Chwila wpisania żyje w `received_at` i w audycie (`event.add`) i stamtąd bierze ją okno korekty | §5.4 |
+| P-C | **Oś operacji niesie AUTORA każdego zapisu panelu** (`adminAuthorId` w `TimelineEntry`; port `adminAuthors` zamiast `adminCorrectionUuids`): §5.3 zapowiadał plakietkę „popr." i historię zmian, a historia bez nazwiska („poprawił administrator") nie odpowiada na pytanie „do kogo zadzwonić". Nazwisko rozwiązuje słownik klubu; konto spoza słownika zostaje samym „administrator" | §5.3 |
+| P-C | **Skład zrzutu w szufladzie to TRZY pola** (tandem · AFF · solo), nie jedna liczba jak na 10G telefonu: rejestr niesie skład w rozbiciu, a jedna liczba wpisana jako „solo" zafałszowałaby przychód dnia. Czas i skład zmienione naraz idą jako DWIE korekty tego samego celu (rejestr nie ma jednego zdarzenia na obie) - druga dopiero po udanej pierwszej | §5.3 |
+| P-C | **Podgląd dopisania niesie niespójności PRZED i PO** (`consistency: { before, after }`) - makieta odpowiada nimi na baner nad osią („Niespójności 1 → 0"), a §5.4 wymieniał wyłącznie „przed → po" liczb operacji. Podgląd korekty tego nie dostał: makieta `dziennik-edycja` wiersza niespójności nie ma | §5.4, §17 pkt 5 |
+| P-C | **Uuid dopisanego zdarzenia nadaje SERWER, nie klient** (C11 zapowiadało „idempotencję po uuid nadanym przez klienta"): dopisanie idzie tą samą drogą, co korekta (`newId` w komendzie), a podwójne kliknięcie trzyma przycisk zablokowany na czas zapisu. Uuid z przeglądarki byłby drugą konwencją nadawania identyfikatorów obok telefonu i korekty - bez zysku, bo panel nie ma kolejki, którą trzeba by ponawiać | §5.4 |
+| P-C | **Odmowa „poza kopertą operacji" jest zdaniem DOMENY w banerze, nie zdaniem przy polu** (C11): fakt po zdaniu odbija `DAY_CLOSED`, sprzed przejęcia `SESSION_NOT_CLAIMED`, lądowanie po wyłączeniu silnika, ale przed zdaniem, przechodzi z niespójnością `EVENT_OUTSIDE_RUN` w karcie skutku - tak samo, jak przeszłoby telefonowi. Podpis pod polem podaje kopertę biegu jako instrukcję (`runHint`); drugie zdanie o tym samym przy polu powtarzałoby baner | §5.4 |
+| P-C | **Wiersz „Karta arkusza" w skutku liczy rewizję z `exportRevision` wiersza sesji** („rewizja 2 → rewizja 3"), nie z nazwy karty jak na makiecie („2026-09-06_SP-AXA → rewizja 3") - odpowiedź o sesji nazwy karty nie niesie, a rewizja jest tym, co się zmienia | §17 pkt 5 |
 
 ---
 
