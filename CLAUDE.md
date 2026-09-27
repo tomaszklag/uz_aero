@@ -5165,6 +5165,37 @@ powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ 
   i komponent nie mają prawa różnić się samą wielkością litery** - czysty nosi przyrostek
   (`…View`, `…Rows`, `…Labels`)
 
+## Zlecenia na lot 4.0.0 - PROJEKT (issue #239, 2026-09-27, gałąź `feature-239-zlecenia-projekt`)
+Koordynator (albo instruktor) tworzy zlecenie lotu - termin + maszyna - i wysyła je pilotom;
+ci odpowiadają, rozmawiają ze zlecającym, a zlecający widzi, kto odczytał. Dokument decyzji:
+**`docs/zlecenia.md`** (31 decyzji właściciela w czterech turach, §1; trzecia i czwarta
+pytane POJEDYNCZO). Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0". Stan: PROJEKT -
+makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy implementacji:
+- **zlecenie = rezerwacja z pustymi fotelami + adresaci**: termin zajęty OD UTWORZENIA
+  (`bookings.order_id`, poluzowany CHECK `booking_flight_fields`), bez ścieżki akceptacji.
+  Druga tabela zajętości byłaby drugim wykluczeniem nakładania - nie powstaje
+- **dwa fotele, trzy stany** (dowódca: ja / szukany; drugi pilot: ja / szukany / brak),
+  **trzy sposoby adresowania**: imiennie na fotel (potwierdzenie obsadza), grupa na fotel
+  (zgłoszenia, wybiera prowadzący), wspólna lista (potwierdzają termin, fotele przydziela
+  prowadzący). **Trybu „kto pierwszy" NIE MA**, innego pilota nie wpisuje się bez jego
+  potwierdzenia; uczeń = drugi pilot, instruktor = dowódca „ja"
+- **odpowiedzi zeruje WYŁĄCZNIE zmiana terminu**; każda inna zmiana = „edytowane · co"
+  bez nazwiska, bez potwierdzeń. Powód ZAWSZE opcjonalny. Wygaśnięcie W CAŁOŚCI na początku
+  terminu, ostrzeżenie 3 h wcześniej
+- **adresat nie wie NIC o innych adresatach**; „odczytane" = otwarcie karty zlecenia
+- **wątek prywatny autor ↔ adresat, ale czyta go `reservations.manage`** (bez pisania,
+  z jednym zdaniem w wątku); cudze zlecenia prowadzą wszyscy z `reservations.manage` naraz
+- **cały moduł na żywo (WebSocket)** - nowa zależność serwera (`@fastify/websocket`), token
+  telefonu w PIERWSZEJ RAMCE (nigdy w adresie), `Origin` w panelu, REST źródłem prawdy,
+  zmiany zlecenia jako sygnał bez treści, połączenie tylko z aplikacją na wierzchu i nigdy
+  w kokpicie. Moduł poza tym jest sieciowy - cache’u zleceń w SQLite NIE MA
+- **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
+  `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
+- **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - zapisy
+  „Play schodzi do 4.0.0" w sekcjach o sklepie i nowej instancji czytaj jako 5.0.0
+  (poprawka w Z-W). 3.2.0 wydane 27 września 2026 (PR #240), więc brama integracyjna jest
+  otwarta: `develop` niesie odtąd 4.0.0
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
