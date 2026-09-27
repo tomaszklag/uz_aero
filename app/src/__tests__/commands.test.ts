@@ -11,7 +11,7 @@
  * Wszystko na `InMemoryAdapter` - bez natywnego SQLite.
  */
 
-import { DomainRuleError, projectSession, type EventOf } from '../domain';
+import { DomainRuleError, projectSession, sessionInconsistencies, type EventOf } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
 import { SessionCommands, type SessionContext } from '../application/commands';
 import { SessionQueries } from '../application/queries';
@@ -594,5 +594,128 @@ describe('manualFlight - kompletna operacja po fakcie (ekrany 15 → 15C)', () =
     ).rejects.toMatchObject({ code: 'MH_REGRESSION' });
 
     expect(await h.repo.getAllEvents()).toHaveLength(0);
+  });
+});
+
+describe('SessionCommands - dopisanie faktu po czasie (10H, issue #234)', () => {
+  /** Zdany dzień: start 25, lądowanie 78, silnik 12-154, zdanie 170. */
+  async function releasedDay(h: ReturnType<typeof setup>): Promise<void> {
+    await h.seedCache();
+    await openDay(h.commands, h.clock);
+    h.clock.set(min(12));
+    await h.commands.startEngine(CTX);
+    h.clock.set(min(25));
+    await h.commands.takeoff(CTX, 'manual');
+    h.clock.set(min(78));
+    await h.commands.landing(CTX, 'manual');
+    h.clock.set(min(154));
+    await h.commands.stopEngine(CTX);
+    h.clock.set(min(170));
+    await h.commands.releaseAircraft(CTX, { finalReading: { fuelL: 150, mh: MH_START + 2.3 } });
+  }
+
+  const REFUEL = { beforeL: 100, addedL: 50, afterL: 150 };
+
+  it('tankowanie po wyłączeniu silnika dopisane PO ZDANIU wchodzi - kokpitowa ścieżka je odbija', async () => {
+    const h = setup();
+    await releasedDay(h);
+    h.clock.set(min(300));
+
+    // Dawna droga 10H: `checkAppend` na stanie końcowym - samolot zdany.
+    await expect(h.commands.refuel(CTX, REFUEL, min(160))).rejects.toMatchObject({ code: 'DAY_CLOSED' });
+
+    const result = await h.commands.insertPast(CTX, { type: 'refuel', at: min(160), payload: REFUEL });
+    // Chwila faktu w `gpsTime`, chwila wpisania w `deviceTime`.
+    expect(result.event.gpsTime).toBe(min(160));
+    expect(result.event.deviceTime).toBe(min(300));
+  });
+
+  it('zgubiony CAŁY lot (start i lądowanie) da się dopisać po zdaniu, fakt po fakcie', async () => {
+    const h = setup();
+    await releasedDay(h);
+    h.clock.set(min(300));
+
+    await h.commands.insertPast(CTX, { type: 'takeoff', at: min(100) });
+    await h.commands.insertPast(CTX, { type: 'landing', at: min(110) });
+
+    const state = projectSession(await h.repo.getSessionEvents(SESSION));
+    expect(state.flights.map((f) => [f.takeoffAt, f.landingAt])).toEqual([
+      [min(25), min(78)],
+      [min(100), min(110)],
+    ]);
+    expect(state.closed).toBe(true);
+  });
+
+  it('po oknie 24 h od zdania - odmowa jak przy każdej korekcie pilota', async () => {
+    const h = setup();
+    await releasedDay(h);
+    h.clock.set(min(170) + 25 * 60 * 60_000);
+    await expect(
+      h.commands.insertPast(CTX, { type: 'refuel', at: min(160), payload: REFUEL }),
+    ).rejects.toMatchObject({ code: 'CORRECTION_WINDOW_EXPIRED' });
+  });
+
+  it('fakt z godziną PO zdaniu należy do następnej operacji - nazwana odmowa, zero zapisu', async () => {
+    const h = setup();
+    await releasedDay(h);
+    h.clock.set(min(300));
+    const before = (await h.repo.getAllEvents()).length;
+    await expect(
+      h.commands.insertPast(CTX, { type: 'refuel', at: min(200), payload: REFUEL }),
+    ).rejects.toMatchObject({
+      code: 'DAY_CLOSED',
+      message: expect.stringMatching(/^O tej godzinie samolot był już zdany/),
+    });
+    expect(await h.repo.getAllEvents()).toHaveLength(before);
+  });
+
+  it('podgląd mówi to samo, co zapis, i niczego nie zapisuje', async () => {
+    const h = setup();
+    await releasedDay(h);
+    h.clock.set(min(300));
+    const before = (await h.repo.getAllEvents()).length;
+    const errors = (v: { severity: string; code: string; message: string }[]) =>
+      v.filter((x) => x.severity === 'error');
+
+    const inRun = await h.commands.previewPast(CTX, { type: 'refuel', at: min(60), payload: REFUEL });
+    expect(errors(inRun).map((v) => v.code)).toEqual(['REFUEL_ENGINE_RUNNING']);
+    expect(errors(inRun)[0]?.message).toMatch(/^O tej godzinie pracował silnik/);
+
+    const noFlight = await h.commands.previewPast(CTX, { type: 'landing', at: min(90) });
+    expect(errors(noFlight).map((v) => v.code)).toEqual(['NOT_IN_FLIGHT']);
+
+    expect(errors(await h.commands.previewPast(CTX, { type: 'refuel', at: min(160), payload: REFUEL }))).toEqual([]);
+    expect(await h.repo.getAllEvents()).toHaveLength(before);
+  });
+});
+
+describe('SessionCommands - baner niespójności gaśnie po dopisaniu (issue #234)', () => {
+  it('lądowanie unieważnione po zdaniu, dopisane na nowo po czasie - „lot bez lądowania" znika', async () => {
+    const h = setup();
+    await h.seedCache();
+    await openDay(h.commands, h.clock);
+    h.clock.set(min(12));
+    await h.commands.startEngine(CTX);
+    h.clock.set(min(25));
+    await h.commands.takeoff(CTX, 'manual');
+    h.clock.set(min(78));
+    const landing = await h.commands.landing(CTX, 'manual');
+    h.clock.set(min(154));
+    await h.commands.stopEngine(CTX);
+    h.clock.set(min(170));
+    await h.commands.releaseAircraft(CTX, { finalReading: { fuelL: 150, mh: MH_START + 2.3 } });
+
+    // Pilot uznał, że lądowanie zapisało się o złej godzinie, unieważnił je - i oś
+    // mówi „lot bez lądowania" (ten sam baner, co 10D i panel).
+    h.clock.set(min(300));
+    await h.commands.correctEvent(CTX, { targetUuid: landing.event.uuid, action: 'void' });
+    const issues = async (): Promise<string[]> => {
+      const events = await h.repo.getSessionEvents(SESSION);
+      return sessionInconsistencies(projectSession(events), events, { capacityL: 330, oilMinL: null, oilCapacityL: null }).map((v) => v.code);
+    };
+    expect(await issues()).toContain('FLIGHT_WITHOUT_LANDING');
+
+    await h.commands.insertPast(CTX, { type: 'landing', at: min(82) });
+    expect(await issues()).toEqual([]);
   });
 });

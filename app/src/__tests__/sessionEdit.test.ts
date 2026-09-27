@@ -19,6 +19,7 @@ import {
   addableTypes,
   editTargetFor,
   issueHints,
+  pastEventOf,
   withIssues,
 } from '../ui/screens/logic/sessionEdit';
 
@@ -219,5 +220,32 @@ describe('co wolno dopisać', () => {
       'refuel',
       'oil_add',
     ]);
+  });
+});
+
+describe('dopisanie z arkusza 10H → wejście komendy (issue #234)', () => {
+  const AT = Date.UTC(2026, 5, 22, 9, 18);
+
+  it('fakty ruchu i skoków idą z chwilą faktu; zrzut i załadunek z PUSTYM składem', () => {
+    expect(pastEventOf('landing', AT)).toEqual({ type: 'landing', at: AT });
+    expect(pastEventOf('taxi', AT)).toEqual({ type: 'taxi', at: AT });
+    expect(pastEventOf('drop', AT)).toEqual({ type: 'drop', at: AT, jumpers: { tandem: 0, aff: 0, solo: 0 } });
+  });
+
+  it('tankowanie i dolewka bez liczb to wpis NIEKOMPLETNY - nie ma czego sprawdzać ani zapisywać', () => {
+    expect(pastEventOf('refuel', AT)).toBeNull();
+    expect(pastEventOf('oil_add', AT)).toBeNull();
+    const refuel = { beforeL: 100, addedL: 50, afterL: 150 };
+    expect(pastEventOf('refuel', AT, { refuel })).toEqual({ type: 'refuel', at: AT, payload: refuel });
+    expect(pastEventOf('oil_add', AT, { oilAddedL: 0.5 })).toEqual({
+      type: 'oil_add',
+      at: AT,
+      payload: { addedL: 0.5 },
+    });
+  });
+
+  it('typ spoza listy arkusza (np. uruchomienie silnika) nie ma drogi dopisania', () => {
+    expect(pastEventOf('engine_start', AT)).toBeNull();
+    expect(pastEventOf('', AT)).toBeNull();
   });
 });

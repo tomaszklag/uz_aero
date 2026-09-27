@@ -168,6 +168,44 @@ describe('dopisanie po czasie (checkInsert) kontra dopisanie teraz (checkAppend)
   });
 });
 
+describe('odmowa mówi o TAMTEJ chwili, nie o kokpicie (issue #234)', () => {
+  const message = (v: RuleViolation[]): string => errorsOf(v)[0]?.message ?? '';
+
+  it('tankowanie w biegu: „O tej godzinie pracował silnik", a nie „wyłącz silnik"', () => {
+    const refuel = ev('refuel', { beforeL: 100, addedL: 50, afterL: 150 }, min(60));
+    const text = message(checkInsert(dayWithoutLanding(), refuel, LATER, LIMITS, 'administrative'));
+    expect(text).toMatch(/^O tej godzinie pracował silnik/);
+    expect(text).not.toMatch(/wyłącz silnik\.$/);
+  });
+
+  it('lądowanie bez lotu, fakt po zdaniu, fakt przed przejęciem - każdy nazwany swoją chwilą', () => {
+    const stream = dayWithoutLanding();
+    expect(message(checkInsert(stream, ev('landing', { method: 'manual' }, min(20)), LATER, LIMITS, 'administrative'))).toBe(
+      'O tej godzinie nie trwał żaden lot - dopisz najpierw start.',
+    );
+    expect(
+      message(
+        checkInsert(stream, ev('refuel', { beforeL: 100, addedL: 50, afterL: 150 }, min(180)), LATER, LIMITS, 'administrative'),
+      ),
+    ).toMatch(/^O tej godzinie samolot był już zdany/);
+    expect(
+      message(
+        checkInsert(stream, ev('refuel', { beforeL: 100, addedL: 50, afterL: 150 }, min(-30)), LATER, LIMITS, 'administrative'),
+      ),
+    ).toMatch(/^O tej godzinie operacja jeszcze się nie zaczęła/);
+  });
+
+  it('kod reguły zostaje ten sam - zmienia się wyłącznie zdanie dla człowieka', () => {
+    const refuel = ev('refuel', { beforeL: 100, addedL: 50, afterL: 150 }, min(60));
+    expect(hard(checkInsert(dayWithoutLanding(), refuel, LATER, LIMITS, 'administrative'))).toEqual([
+      'REFUEL_ENGINE_RUNNING',
+    ]);
+    // Kokpit (dopisanie TERAZ) mówi dalej swoim zdaniem.
+    const live = checkAppend(stateAsOf(dayWithoutLanding(), min(60)), refuel, LIMITS);
+    expect(message(live)).toBe('Tankowanie przy pracującym silniku - wyłącz silnik.');
+  });
+});
+
 describe('okno korekty liczy się na stanie KOŃCOWYM i chwili WPISANIA', () => {
   it('pilot dopisuje w oknie 24 h od zdania, po oknie - odmowa jak przy korekcie', () => {
     const stream = dayWithoutLanding();

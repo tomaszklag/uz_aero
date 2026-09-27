@@ -4894,11 +4894,9 @@ Reguły obowiązujące odtąd:
   jest WYCIĄGNIĘTE z `checkCorrectionWindow` (bez bramki typów), nie skopiowane - nowa
   kolizja albo nowy powód wygaśnięcia obejmuje korektę i dopisanie w tej samej chwili.
   Pominięte uprawnienie znaczy pilota, jak wszędzie (`insertion.test.ts` w `app/`)
-- **LUKA TELEFONU NAZWANA, NIE NAPRAWIONA**: arkusz 10H po zdaniu samolotu odbija się dziś
-  o `DAY_CLOSED` (komenda `execute` woła `checkAppend` na stanie końcowym), więc „telefon
-  dopisuje w oknie 24 h" z §5.4 jest nieprawdziwe - dopisanie działa wyłącznie z kokpitu
-  przed zdaniem. Domena ma już właściwą regułę; przepięcie komendy telefonu na `checkInsert`
-  to osobne zgłoszenie, poza P-C (`app/` w tym epiku nietknięte poza testem domeny)
+- **LUKA TELEFONU NAZWANA W P-C, NAPRAWIONA W #234** (sekcja niżej): arkusz 10H po zdaniu
+  samolotu odbijał się o `DAY_CLOSED`, bo szedł komendami kokpitu (`checkAppend` na stanie
+  końcowym)
 - **CZWARTA DROGA ZAPISU PANELU MIESZKA W `correctionCandidate.ts`** (`addedEventCandidate`,
   `insertionViolations`/`insertionWarnings`) - literał `'administrative'` ma nadal JEDNO
   miejsce (`architecture.test.ts`). Biała lista `ADDED_EVENT_TYPES` = to, co telefon oferuje
@@ -4961,7 +4959,36 @@ Reguły obowiązujące odtąd:
 - **strażnik napisów panelu widzi `' ? payload.x : '` między dwoma pustymi literałami
   jako zdanie z żargonem** - zmienna lokalna na treść zdarzenia nazywa się `data`
 - **czego P-C NIE ROBI**: podręcznika (C13 → P-W, #187), przepięcia 10H telefonu na
-  `checkInsert` (osobne zgłoszenie), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+  `checkInsert` (zrobione w #234), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+
+## Telefon: dopisanie faktu po czasie przez `checkInsert` (issue #234, 2026-09-27, wydanie 3.2.0 jako OTA)
+Luka nazwana w P-C: arkusz „Dodaj wpis" (10H) szedł komendami KOKPITU, więc każdy fakt
+dopisywany po zdaniu samolotu odbijał się o `DAY_CLOSED`, a „dopisz w oknie 24 h" działało
+wyłącznie z kokpitu przed zdaniem. Decyzja właściciela 2026-09-27: poprawka jedzie do
+telefonów JEDNĄ aktualizacją OTA razem z 3.2.0 (razem ze skrzynką z #233), bez podbicia
+`version` - `docs/panel-3.2.md` §11.
+- **DWIE DROGI OCENY KANDYDATA, JEDEN `execute`**: `SessionCommands.execute(…, mode)` -
+  `append` (kokpit, `checkAppend` na stanie KOŃCOWYM, także z `at` autodetekcji i 05f, bo
+  tam zdarzenie zachodzi teraz) albo `insert` (`checkInsert`: stan z CHWILI FAKTU, okno 24 h
+  na stanie końcowym z chwilą WPISANIA = `deviceTime` stempla). Nowe wejście dopisania po
+  czasie idzie przez `insertPast`, nigdy przez komendy kokpitu z `at`
+- **PODGLĄD TO TEN SAM RACHUNEK BEZ ZAPISU** (`previewPast` → prywatne `check`): arkusz 10H
+  pyta go na żywo przy każdej zmianie typu, godziny i liczb (licznik porządkowy odrzuca
+  spóźnione odpowiedzi) i stawia powód WEWNĄTRZ przycisku (issue #55). Uproszczona kopia
+  reguł w UI rozjechałaby się z domeną
+- **PRZYCISK ARKUSZA STOI ZAWSZE**: do #234 `onConfirm: undefined` przy niekompletnym wpisie
+  (tankowanie bez liczb) chował „DODAJ WPIS" w całości - `Sheet` bez akcji nie rysuje
+  przycisku. Brak liczby widać z pól → `confirmDisabled` bez zdania; odmowy z chwili faktu
+  z pól nie widać → `confirmDisabledReason`
+- **ODMOWY `checkInsert` MÓWIĄ JĘZYKIEM FAKTU Z PRZESZŁOŚCI** (`inPastTense`
+  w `packages/domain/src/rules/insertion.ts`): „O tej godzinie pracował silnik - tankowanie
+  wpisz przed uruchomieniem albo po wyłączeniu" zamiast kokpitowego „wyłącz silnik". Kod
+  reguły bez zmian (rejestr, testy i panel pytają o KOD), zdanie zmienia się w domenie -
+  więc tak samo w telefonie i w panelu. Dokładając regułę, którą da się złamać dopisaniem,
+  dopisz jej zdanie do `PAST_TENSE`
+- **wybór z arkusza → wejście komendy** liczy czysta funkcja `pastEventOf`
+  (`logic/sessionEdit.ts`, z testem): zrzut i załadunek z PUSTYM składem (poprawia się go
+  ołówkiem 10G), tankowanie i dolewka bez liczb = `null` (nie ma czego sprawdzać)
 
 ## Panel 3.2.0 - epik P-D: „Do sprawdzenia" - rozjazdy, karty dnia, operacje wiszące (issue #185, 2026-09-26)
 Moduł jednego pytania („co wymaga mojej reakcji") 1:1 z makiet `sprawdzenie-lista`,

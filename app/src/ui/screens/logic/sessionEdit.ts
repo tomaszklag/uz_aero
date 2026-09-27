@@ -16,6 +16,7 @@
  * („na ziemi - sprawdź czas") jest sprawą tego ekranu.
  */
 
+import type { PastEventInput } from '../../../application';
 import type { Event, EventType, OperationType, RuleViolation } from '../../../domain';
 import { isJumpOperation } from '../../../domain';
 import type { AxisRow } from './sessionAxis';
@@ -193,6 +194,42 @@ export interface AddableType {
  * egzaminie ich po prostu nie ma. To brak akcji, nie blokada z powodem - `drop` nie może
  * się tam wydarzyć.
  */
+/**
+ * Wybór z arkusza 10H → wejście komendy dopisania po czasie (issue #234); `null` = wpis
+ * jeszcze niekompletny (tankowanie bez pary liczb, dolewka bez ilości) - nie ma czego
+ * sprawdzać ani zapisywać.
+ *
+ * Zrzut i załadunek idą z PUSTYM składem: arkusz 10H o skład nie pyta (poprawia się go
+ * potem ołówkiem 10G), a pusty skład komenda zapisuje jako „niepodany", nie „zero".
+ */
+export function pastEventOf(
+  typeId: string,
+  at: number,
+  extra?: {
+    refuel?: { beforeL: number; addedL: number; afterL: number };
+    oilAddedL?: number;
+  },
+): PastEventInput | null {
+  switch (typeId) {
+    case 'takeoff':
+    case 'landing':
+    case 'taxi':
+      return { type: typeId, at };
+    case 'drop':
+      return { type: 'drop', at, jumpers: NO_JUMPERS };
+    case 'boarding':
+      return { type: 'boarding', at, jumpers: NO_JUMPERS };
+    case 'refuel':
+      return extra?.refuel == null ? null : { type: 'refuel', at, payload: extra.refuel };
+    case 'oil_add':
+      return extra?.oilAddedL == null ? null : { type: 'oil_add', at, payload: { addedL: extra.oilAddedL } };
+    default:
+      return null;
+  }
+}
+
+const NO_JUMPERS = { tandem: 0, aff: 0, solo: 0 } as const;
+
 export function addableTypes(operation: OperationType | null): AddableType[] {
   const base: AddableType[] = [
     { type: 'takeoff', label: 'Start' },
