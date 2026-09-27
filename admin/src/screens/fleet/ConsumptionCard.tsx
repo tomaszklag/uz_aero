@@ -5,7 +5,7 @@
  * Analityka jest własnością MASZYNY, więc mieszka obok norm z dokumentacji i stanu
  * bieżącego, a nie w kolumnie panelu. Komponent SAM rozstrzyga, czy ma co pokazać:
  * bez opublikowanego modelu karty NIE MA (issue #69) - szuflada idzie wprost
- * z „Motogodziny" do „Poprawy odczytów". Treść liczy `consumptionCard.ts`; tu jest
+ * z „Motogodziny" do „Poprawy odczytów". Treść liczy `consumptionCardView.ts`; tu jest
  * wyłącznie układ: pasmo jako wypełnienie, norma z dokumentacji jako marker, wiersze
  * klucz-wartość.
  */
@@ -13,7 +13,7 @@
 import { useConsumption } from '../../queries/useFleet';
 import { Banner, Card, Pill } from '../../ui/components';
 import { errorMessage } from '../common/apiMessage';
-import { consumptionCardView, type ConsumptionKv } from './consumptionCard';
+import { consumptionCardView, type ConsumptionKv } from './consumptionCardView';
 
 interface ConsumptionCardProps {
   aircraftId: string;

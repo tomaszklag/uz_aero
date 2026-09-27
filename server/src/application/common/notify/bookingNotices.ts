@@ -32,6 +32,12 @@ export type NotificationKind =
   | 'booking_rejected'
   /** „Nikt nie zdążył zdecydować" (§11.5) - do rezerwującego. */
   | 'booking_expired'
+  /**
+   * „Prośba o zgodę wycofana" (3.2.0, issue #233) - do osób kroku BIEŻĄCEGO, gdy
+   * czekającą rezerwację odwołano. Bez niej osoba kroku miała w skrzynce prośbę, której
+   * nie było już jak rozstrzygnąć, a kolejka „Do decyzji" gasła bez słowa dlaczego.
+   */
+  | 'approval_withdrawn'
   /*
    * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205) - pięć rodzajów do obserwujących maszynę,
    * treści w `aircraftNotices.ts`. Stoją w TEJ unii, bo to jest kontrakt skrzynki:
@@ -128,6 +134,29 @@ export function bookingRejected(
     payload: { ...about(booking), ...refusal },
     push: { title: 'Rezerwacja odrzucona', body: 'Otwórz, żeby przeczytać powód.' },
   };
+}
+
+/**
+ * Prośba wycofana - do osób kroku, którego pytano (3.2.0, issue #233; decyzja właściciela
+ * 2026-09-27). `cancelledBy` jedzie obok rezerwującego, bo odwołać czekającą sprawę może
+ * też administrator z `reservations.manage` - skrzynka rozwiązuje nazwisko sama, tak jak
+ * rezerwującego. Push bez nazwisk, jak każdy (§12.1).
+ */
+export function approvalWithdrawn(
+  booking: NoticeBooking,
+  approverIds: readonly string[],
+  step: { id: string; label: string },
+  cancelledBy: string,
+): NotificationDraft[] {
+  return approverIds.map((pilotId) => ({
+    pilotId,
+    kind: 'approval_withdrawn' as const,
+    payload: { ...about(booking), stepId: step.id, stepLabel: step.label, cancelledBy },
+    push: {
+      title: 'Prośba wycofana',
+      body: 'Rezerwacja, o którą Cię pytano, została odwołana.',
+    },
+  }));
 }
 
 /**

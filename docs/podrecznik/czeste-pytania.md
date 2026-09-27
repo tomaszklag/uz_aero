@@ -124,7 +124,7 @@ Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, 
 
 ### Jestem pilotem - czy mogę wejść do panelu?
 
-Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - cudze rezerwacje widzisz w nim tak, jak w aplikacji. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
+Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - rezerwujesz w nim tak samo, jak w aplikacji, a cudze rezerwacje widzisz tak, jak tam. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
 
 ### Jak wpuścić nowego pilota?
 

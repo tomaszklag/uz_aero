@@ -31,6 +31,12 @@ export interface DirectoryAircraft {
   reg: string;
   type: string;
   serviceStatus: ServiceStatus;
+  /**
+   * Wymóg załogi dwuosobowej (issue #233): szuflada własnej rezerwacji mówi o nim
+   * plakietką przy drugim pilocie, tym samym zdaniem, co 02, 15 i 22A w telefonie.
+   * Właściwość maszyny, którą każdy członek widzi także w aplikacji.
+   */
+  dualRequired: boolean;
 }
 
 export interface AdminDirectory {

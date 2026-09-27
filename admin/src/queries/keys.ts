@@ -7,7 +7,7 @@
  */
 
 import type { ExportListQuery, FlagListQuery } from '../api/attention';
-import type { CalendarRange } from '../api/bookings';
+import type { CalendarRange, SuggestionsQuery } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
 import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
@@ -182,6 +182,13 @@ export const keys = {
      * od tej samej rzeczy - decyzja przestawia i pasek na siatce, i kartę w szufladzie.
      */
     detail: (id: string) => ['calendar', 'detail', id] as const,
+    /**
+     * Sugestie slotów dla własnej rezerwacji (issue #233). Pod korzeniem kalendarza, bo
+     * każda zmiana zajętości zmienia też to, co da się zaproponować.
+     */
+    suggestions: (query: SuggestionsQuery) => ['calendar', 'suggestions', query] as const,
+    /** Kroki ścieżki, przez które przejdzie MOJA rezerwacja - stopka szuflady (#233). */
+    myPath: ['calendar', 'my-path'] as const,
   },
 
   /**

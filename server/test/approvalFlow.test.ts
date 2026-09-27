@@ -1130,6 +1130,103 @@ describe('telefon: kolejka spraw i skrzynka z dobą klubu', () => {
   });
 });
 
+describe('odwołanie czekającej rezerwacji wycofuje prośbę o zgodę (#233)', () => {
+  /** Dwa kroki: KRZ pyta pierwszy, BNO czeka za nim - i dostać nie ma nic. */
+  async function twoSteps(app: App, db: Db): Promise<Record<string, string>> {
+    await grantApprove(db, 'KRZ');
+    const cookie = await panelCookie(app, 'AKO');
+    const path = await setPath(app, cookie, [
+      { label: 'Mechanik', memberIds: ['KRZ'] },
+      { label: 'Szef wyszkolenia', memberIds: ['BNO'] },
+    ]);
+    expect(path.statusCode, path.body).toBe(200);
+    return cookie;
+  }
+
+  const kinds = async (app: App, token: string): Promise<string[]> =>
+    ((await inbox(app, token)).json().items as { kind: string }[]).map((n) => n.kind);
+
+  it('pilot odwołuje z telefonu: osoba kroku BIEŻĄCEGO dostaje wiadomość, dalszy krok - nic', async () => {
+    const { app, db } = await testHarness();
+    await twoSteps(app, db);
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    const off = await app.inject({ method: 'DELETE', url: `/bookings/${id}`, headers: bearer(pwi), payload: {} });
+    expect(off.statusCode, off.body).toBe(200);
+
+    const krz = await login(app, 'KRZ');
+    // Zegar testów stoi, więc obie wiadomości mają ten sam stempel - kolejność w skrzynce
+    // rozstrzyga wtedy identyfikator, nie czas. Pytamy o zbiór, nie o kolejność.
+    const items = (await inbox(app, krz)).json().items as { kind: string; payload: Record<string, unknown> }[];
+    expect(items.map((n) => n.kind).sort()).toEqual(['approval_requested', 'approval_withdrawn']);
+    expect(items.find((n) => n.kind === 'approval_withdrawn')!.payload).toMatchObject({
+      bookingId: id,
+      pilotId: 'PWI',
+      stepLabel: 'Mechanik',
+      cancelledBy: 'PWI',
+    });
+    expect(await kinds(app, await login(app, 'BNO'))).toEqual([]);
+  });
+
+  it('własna z panelu i cudza odwołana przez administratora - ta sama wiadomość; odwołujący nie budzi sam siebie', async () => {
+    const { app, db } = await testHarness();
+    const cookie = await twoSteps(app, db);
+
+    // Własna rezerwacja PWI z panelu (issue #233) i odwołanie tą samą drogą.
+    const pwiPanel = await panelCookie(app, 'PWI');
+    const own = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/bookings',
+      headers: pwiPanel,
+      payload: { id: nextId(), aircraftId: 'SP-AXA', startsAt: iso(JUTRO + 8 * H), endsAt: iso(JUTRO + 10 * H), operation: 'skoki' },
+    });
+    expect(own.statusCode, own.body).toBe(201);
+    expect(own.json().status).toBe('pending');
+    const offOwn = await app.inject({ method: 'DELETE', url: `/admin/api/me/bookings/${own.json().id}`, headers: pwiPanel });
+    expect(offOwn.statusCode, offOwn.body).toBe(200);
+
+    // Cudza czekająca, odwołana przez administratora stojącego NA KROKU bieżącym.
+    await setPath(app, cookie, [{ label: 'Mechanik', memberIds: ['KRZ', 'AKO'] }]);
+    const pwi = await login(app, 'PWI');
+    const foreign = (await book(app, pwi, JUTRO + 12 * H, JUTRO + 14 * H)).json().id as string;
+    const offForeign = await app.inject({
+      method: 'POST',
+      url: `/admin/api/bookings/${foreign}/cancel`,
+      headers: cookie,
+      payload: { reason: 'maszyna idzie na przegląd' },
+    });
+    expect(offForeign.statusCode, offForeign.body).toBe(200);
+
+    const krz = await login(app, 'KRZ');
+    const withdrawn = ((await inbox(app, krz)).json().items as { kind: string; payload: Record<string, unknown> }[])
+      .filter((n) => n.kind === 'approval_withdrawn')
+      .map((n) => n.payload.cancelledBy)
+      .sort();
+    expect(withdrawn).toEqual(['AKO', 'PWI']);
+
+    const ako = await login(app, 'AKO');
+    expect(await kinds(app, ako)).not.toContain('approval_withdrawn');
+  });
+
+  it('odwołanie POTWIERDZONEJ nikogo nie budzi - nikt już o nic nie był pytany', async () => {
+    const { app, db } = await testHarness();
+    await twoSteps(app, db);
+    const pwi = await login(app, 'PWI');
+    const id = (await book(app, pwi)).json().id as string;
+
+    const krz = await login(app, 'KRZ');
+    expect((await decide(app, krz, id, { decision: 'approved' })).statusCode).toBe(200);
+    const bno = await login(app, 'BNO');
+    expect((await decide(app, bno, id, { decision: 'approved' })).json().status).toBe('confirmed');
+
+    const off = await app.inject({ method: 'DELETE', url: `/bookings/${id}`, headers: bearer(pwi), payload: {} });
+    expect(off.statusCode, off.body).toBe(200);
+    expect(await kinds(app, krz)).not.toContain('approval_withdrawn');
+    expect(await kinds(app, bno)).not.toContain('approval_withdrawn');
+  });
+});
+
 describe('izolacja klubów', () => {
   it('ścieżka i skrzynka NIE PRZECIEKAJĄ do drugiego klubu', async () => {
     const { app, db } = await testHarness();

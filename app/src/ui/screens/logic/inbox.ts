@@ -316,6 +316,19 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           opens: todo ? 'decision' : opensBooking,
         };
       }
+      case 'approval_withdrawn': {
+        // Rezerwację, o którą pytano, odwołano (3.2.0, issue #233). Rzeczownik i nazwisko
+        // za separatorem, jak przy odmowie: czasownika nie da się odmienić bez płci.
+        const name = who(str(n.payload.pilotId));
+        return {
+          ...base,
+          tone: 'info',
+          title: name == null ? 'Prośba o zgodę wycofana' : `Prośba wycofana · ${name}`,
+          reason: 'Rezerwację odwołano - nie ma już o czym decydować.',
+          todo: false,
+          opens: opensBooking,
+        };
+      }
       case 'booking_approved':
         return {
           ...base,

@@ -2,12 +2,13 @@
  * Ninerdeck (serwer) - trasy KALENDARZA dla panelu (milestone 3.0.0, issue #158 B6;
  * `docs/rezerwacje.md` §5.2, §8).
  *
- * Cztery trasy i TRZY różne zdolności - to nie jest rozdrobnienie, tylko trzy różne
- * pytania o władzę:
+ * Trzy różne zdolności - to nie jest rozdrobnienie, tylko trzy różne pytania o władzę:
  *
  *  - **odczyt** dla KAŻDEGO członka klubu (`capability: null`, issue #216): kalendarz
  *    w panelu widzi ten sam krąg osób, co w aplikacji - a kształt cudzej rezerwacji
  *    pyta, kto patrzy (`bookingWire.ts`);
+ *  - **własna rezerwacja** (`/me/bookings*` i sugestie slotów) też dla każdego członka
+ *    (issue #233): właściciel z sesji, ta sama komenda, co z telefonu, bez audytu;
  *  - **rezerwacja za pilota i odwołanie cudzej** na `reservations.manage`: władza nad
  *    czyimś planem;
  *  - **wyłączenie z użytku** na `fleet.manage`: stan MASZYNY rozciągnięty w czasie,
@@ -24,11 +25,20 @@ import { z } from 'zod';
 
 import type { AdminBookingCommands } from '../../../application/admin/commands/bookings.ts';
 import type { ApprovalFlow } from '../../../application/common/commands/approvals.ts';
+import type { BookingCommands } from '../../../application/common/commands/bookings.ts';
+import type { BookingRecord } from '../../../application/common/ports.ts';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
 import type { BookingRefusal } from '../../../domain/bookings.ts';
+import { askSuggestions, suggestionsQuery, suggestionsWire } from '../common/suggestionsWire.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { panelApprovalWire } from './approvals.ts';
-import { bookingWire as wire, FULL_VIEWER, seesFull, viewerOf } from './bookingWire.ts';
+import {
+  bookingWire as wire,
+  FULL_VIEWER,
+  seesFull,
+  viewerOf,
+  type PanelBookingViewer,
+} from './bookingWire.ts';
 
 const ICAO = z.string().trim().min(3).max(8);
 const NOTE_MAX = 500;
@@ -64,6 +74,40 @@ const block = z.object({
 });
 
 /**
+ * WŁASNA rezerwacja z panelu (issue #233) - to samo zamówienie, co z telefonu, więc
+ * te same pola i te same sufity. Właściciela w ciele NIE MA: bierze się z sesji,
+ * a pole `pilotId` doklejone przez klienta zod po prostu odrzuca.
+ */
+const own = z.object({
+  id: z.string().min(1).max(100),
+  aircraftId: z.string().min(1).max(100),
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+  operation: z.string().trim().min(1).max(40),
+  dualId: z.string().min(1).max(100).nullable().optional(),
+  fromIcao: ICAO.nullable().optional(),
+  toIcao: ICAO.nullable().optional(),
+  plannedAirMin: z.number().int().positive().max(24 * 60).nullable().optional(),
+  plannedFuelL: z.number().nonnegative().max(10_000).nullable().optional(),
+  note: z.string().trim().max(NOTE_MAX).nullable().optional(),
+});
+
+/** Poprawka własnej rezerwacji niesie SAMĄ RÓŻNICĘ - pola pominięte zostają z wiersza. */
+const ownPatch = z
+  .object({
+    startsAt: z.string().datetime(),
+    endsAt: z.string().datetime(),
+    operation: z.string().trim().min(1).max(40),
+    dualId: z.string().min(1).max(100).nullable(),
+    fromIcao: ICAO.nullable(),
+    toIcao: ICAO.nullable(),
+    plannedAirMin: z.number().int().positive().max(24 * 60).nullable(),
+    plannedFuelL: z.number().nonnegative().max(10_000).nullable(),
+    note: z.string().trim().max(NOTE_MAX).nullable(),
+  })
+  .partial();
+
+/**
  * Powód odwołania jest tu OPCJONALNY na poziomie schematu, a wymaga go DOMENA -
  * i tylko przy cudzej rezerwacji (`reason_required`). Wymuszenie go w zodzie odbiłoby
  * zdjęcie wyłączenia z użytku, które powodu nie potrzebuje: nie ma komu tłumaczyć.
@@ -84,10 +128,134 @@ const STATUS: Readonly<Record<BookingRefusal, number>> = {
 export function registerAdminBookingRoutes(
   app: FastifyInstance,
   bookings: AdminBookingCommands,
+  mine: BookingCommands,
   calendar: BookingQueries,
   approvals: ApprovalFlow,
   gate: AdminGate,
 ): void {
+  /**
+   * SUGESTIE SLOTÓW dla własnej rezerwacji (issue #233) - bliźniak trasy telefonu, bo
+   * panel woła wyłącznie `/admin/api/*` (reguła z #180). Każdy członek: sugestie opisują
+   * wolne godziny maszyny, czyli to samo, co oś kalendarza, którą i tak widzi.
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'GET', url: '/bookings/suggestions', capability: null },
+    async (req, reply, actor) => {
+      const q = suggestionsQuery.safeParse(req.query);
+      if (!q.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const view = await askSuggestions(calendar, actor.orgId, q.data);
+      if (view == null) return reply.code(404).send({ error: 'not_found' });
+      return reply.send(suggestionsWire(view));
+    },
+  );
+
+  /**
+   * Kroki ścieżki, przez które przejdzie rezerwacja ZALOGOWANEGO (issue #233) - stopka
+   * szuflady nazywa je przed kliknięciem. Pusta lista = potwierdza się od razu (klub bez
+   * ścieżki albo osoba stojąca na każdym kroku). Same nazwy, bez obsady kroków.
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'GET', url: '/me/approval-path', capability: null },
+    async (_req, reply, actor) => {
+      const steps = await approvals.stepsAhead(actor.orgId, actor.pilotId);
+      return reply.send({ steps: steps.map((s) => s.label) });
+    },
+  );
+
+  /**
+   * WŁASNA REZERWACJA Z PANELU (issue #233) - trzy trasy pod `/me/`, bo dotyczą
+   * ZALOGOWANEGO, a nie dowolnego pilota: właściciel bierze się z sesji, więc zwykły
+   * członek nie ma jak założyć rezerwacji za kogoś innego (to robi `POST /bookings`
+   * na `reservations.manage`). Każdy członek (`capability: null`), jak kalendarz.
+   *
+   * Ta sama komenda, co z telefonu - ścieżka akceptacji, wiadomości i czyszczenie zgód
+   * przy poprawce terminu działają identycznie - i BEZ wpisu w dzienniku audytu: własna
+   * rezerwacja jest zwykłą pracą pilota (§3.5 `docs/rezerwacje.md`).
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'POST', url: '/me/bookings', capability: null },
+    async (req, reply, actor) => {
+      const b = own.safeParse(req.body);
+      if (!b.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const result = await mine.create(actor.orgId, actor.pilotId, {
+        id: b.data.id,
+        aircraftId: b.data.aircraftId,
+        startsAt: Date.parse(b.data.startsAt),
+        endsAt: Date.parse(b.data.endsAt),
+        operation: b.data.operation,
+        dualId: b.data.dualId ?? null,
+        fromIcao: b.data.fromIcao ?? null,
+        toIcao: b.data.toIcao ?? null,
+        plannedAirMin: b.data.plannedAirMin ?? null,
+        plannedFuelL: b.data.plannedFuelL ?? null,
+        note: b.data.note ?? null,
+      });
+      const viewer = viewerOf(actor);
+      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
+      // Powtórzony zapis (drugie kliknięcie przy wolnym łączu) wraca `200` z tym samym
+      // wierszem - `201` kłamałoby o tym, że coś właśnie powstało.
+      return reply.code(result.created ? 201 : 200).send(wire(result.booking, viewer));
+    },
+  );
+
+  adminRoute(
+    app,
+    gate,
+    { method: 'PATCH', url: '/me/bookings/:id', capability: null },
+    async (req, reply, actor) => {
+      const p = params.safeParse(req.params);
+      if (!p.success) return reply.code(400).send({ error: 'bad_request' });
+      const b = ownPatch.safeParse(req.body);
+      if (!b.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const d = b.data;
+      const result = await mine.patch(actor.orgId, actor.pilotId, p.data.id, {
+        ...(d.startsAt === undefined ? {} : { startsAt: Date.parse(d.startsAt) }),
+        ...(d.endsAt === undefined ? {} : { endsAt: Date.parse(d.endsAt) }),
+        ...(d.operation === undefined ? {} : { operation: d.operation }),
+        ...(d.dualId === undefined ? {} : { dualId: d.dualId }),
+        ...(d.fromIcao === undefined ? {} : { fromIcao: d.fromIcao }),
+        ...(d.toIcao === undefined ? {} : { toIcao: d.toIcao }),
+        ...(d.plannedAirMin === undefined ? {} : { plannedAirMin: d.plannedAirMin }),
+        ...(d.plannedFuelL === undefined ? {} : { plannedFuelL: d.plannedFuelL }),
+        ...(d.note === undefined ? {} : { note: d.note }),
+      });
+      if (result == null) return reply.code(404).send({ error: 'not_found' });
+      const viewer = viewerOf(actor);
+      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
+      return reply.send(wire(result.booking, viewer));
+    },
+  );
+
+  /**
+   * Odwołanie WŁASNEJ rezerwacji - `DELETE` bez ciała, bo powodu tu nie ma: czyta go
+   * pilot, którego plan zdjęto, a przy własnym nie ma komu tłumaczyć (decyzja 4 makiety
+   * K2b). Cudzą odwołuje `POST /bookings/:id/cancel` z powodem wymaganym.
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'DELETE', url: '/me/bookings/:id', capability: null },
+    async (req, reply, actor) => {
+      const p = params.safeParse(req.params);
+      if (!p.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const result = await mine.cancel(actor.orgId, actor.pilotId, p.data.id, null);
+      if (result == null) return reply.code(404).send({ error: 'not_found' });
+      const viewer = viewerOf(actor);
+      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
+      return reply.send(wire(result.booking, viewer));
+    },
+  );
+
   /**
    * JEDNA zajętość razem ze stanem jej ścieżki (3.1.0, issue #165) - dla szuflady
    * `#/kalendarz/:id`. Stan ścieżki jedzie TUTAJ, nie w oknie kalendarza: siatka rysuje
@@ -217,6 +385,26 @@ export function registerAdminBookingRoutes(
       return answer(reply, outcome, 200);
     },
   );
+}
+
+/**
+ * Odmowa WŁASNEJ rezerwacji na drut. Kolidująca zajętość jest zwykle CUDZA, więc idzie
+ * kształtem dla tego widza - szuflada mówi o niej tyle, ile potrzebuje („SP-AXA
+ * 11:00 → 13:00 · rezerwację ma J. Nowak", K7b). `takenAt` stoi OBOK zajętości, jak na
+ * telefonie: „weszła 3 min temu" odróżnia wyścig o slot od planu sprzed tygodnia.
+ */
+function refuseOwn(
+  reply: { code: (n: number) => { send: (body: unknown) => unknown } },
+  viewer: PanelBookingViewer,
+  refusal: BookingRefusal,
+  taken: BookingRecord | null | undefined,
+): unknown {
+  return reply.code(STATUS[refusal]).send({
+    error: refusal,
+    ...(taken == null
+      ? {}
+      : { taken: wire(taken, viewer), takenAt: new Date(taken.createdAt).toISOString() }),
+  });
 }
 
 type Outcome = Awaited<ReturnType<AdminBookingCommands['cancel']>>;

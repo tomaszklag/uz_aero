@@ -88,7 +88,7 @@ import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts'
 import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from '../src/application/common/queries/bookings.ts';
 import { DecisionPreviewQueries } from '../src/application/common/queries/decisionPreview.ts';
-import { BookingCommands } from '../src/application/mobile/commands/bookings.ts';
+import { BookingCommands } from '../src/application/common/commands/bookings.ts';
 import { AdminBookingCommands } from '../src/application/admin/commands/bookings.ts';
 import { BugReportCommands } from '../src/application/mobile/commands/bugReports.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
@@ -670,7 +670,7 @@ const lastSeen = new LastSeenThrottle();
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
-    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, watching),
+    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

@@ -260,6 +260,16 @@
   text-decoration: none;
 }
 
+/* W panelu wolne miejsce jest PRZYCISKIEM (otwiera szufladę bez adresu, issue #233),
+   w makiecie - odnośnikiem. Oprawa przeglądarki schodzi, jak przy `button.go`. */
+button.cal-add {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .cal-add:hover,
 .cal-add:focus-visible {
   background: var(--surface-hover);

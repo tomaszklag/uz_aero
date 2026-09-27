@@ -56,7 +56,7 @@ import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { SessionTrackQueries } from '../application/common/queries/sessionTrack.ts';
 import type { MySessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
-import type { BookingCommands } from '../application/mobile/commands/bookings.ts';
+import type { BookingCommands } from '../application/common/commands/bookings.ts';
 import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
 import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
 import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
@@ -575,7 +575,7 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminBookingRoutes(app, deps.adminBookings, deps.calendar, deps.approvals, gate);
+  registerAdminBookingRoutes(app, deps.adminBookings, deps.bookings, deps.calendar, deps.approvals, gate);
   registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
   // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
   // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.

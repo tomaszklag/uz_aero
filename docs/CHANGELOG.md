@@ -107,6 +107,19 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   z dokumentacji stoi obok jako marker z odchyłką - to dwie różne liczby i karta nazywa,
   którą pokazuje. Młoda maszyna bez policzonej normy nie dostaje ani zer, ani zdania
   o braku danych - karty po prostu nie ma.
+- **Rezerwujesz także z kalendarza w panelu - tak samo jak w aplikacji.** Każdy członek
+  klubu ma w kalendarzu przycisk „Zarezerwuj", a wolne miejsce przy maszynie w danym dniu
+  też otwiera rezerwację - z tą maszyną i tym dniem. Najpierw termin i samolot: pasek
+  zajętości maszyny w wybranym dniu, wolne godziny słowami i sugerowane terminy z powodem
+  („tuż przed rezerwacją · A. Kowalski"); potem zadanie, trasa, drugi pilot i plan lotu.
+  Godziny wpisuje się w czasie klubu. Gdy ktoś zajął termin w międzyczasie, formularz
+  wraca do godzin i podpowiada najbliższe wolne miejsce tej samej długości.
+- **Twoje rezerwacje są na osi zielone**, a ich karta ma „Przesuń i popraw" i „Odwołaj" -
+  bez pola powodu, bo to Twój plan. Klub ze ścieżką akceptacji mówi przed zapisem, na czyją
+  zgodę rezerwacja zaczeka, a przy poprawce terminu - że dotychczasowe zgody przepadną.
+- **Odwołanie rezerwacji czekającej na zgodę zawiadamia tych, których pytano.** Osoby
+  z kroku, który miał zdecydować, dostają w skrzynce wiadomość, że prośba została
+  wycofana - nie muszą już się nią zajmować.
 
 ### Poprawki
 
@@ -423,6 +436,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [x] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
 - [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [x] Statystyki klubu i analityka zużycia maszyny
+- [x] Własna rezerwacja z kalendarza w panelu - tak samo jak w aplikacji
 
 ### 4.0.0 · termin do ustalenia
 

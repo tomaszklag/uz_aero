@@ -48,7 +48,7 @@ Kolumna klubu ma sześć pozycji w stałej kolejności: najpierw to, co się wyd
 |---|---|---|
 | [**Dziennik**](panel-dziennik) | cała flota albo wszyscy piloci w zakresie dat → operacje jednej maszyny albo jednej osoby, dniami → jedna operacja z osią zdarzeń i śladem GPS; korekty i dopisywanie zdarzeń, zakończenie operacji, której pilot nie zdał, unieważnienie wpisu | Podgląd klubu (zmiany: Korekty w dzienniku) |
 | [**Do sprawdzenia**](panel-do-sprawdzenia) | rozjazdy między zapisami, doby bez karty w arkuszu i operacje wiszące - z liczbą w kolumnie, gdy coś czeka | Podgląd klubu (zamykanie: Uwagi serwera, ponowienie eksportu: Flota) |
-| **Kalendarz** | oś całej floty na dni: rezerwacje pilotów i wyłączenia maszyn z użytku, ścieżka akceptacji i kolejka decyzji ([rezerwacja samolotu](rezerwacja-samolotu)) | każdy członek |
+| **Kalendarz** | oś całej floty na dni: rezerwacje pilotów i wyłączenia maszyn z użytku, własna rezerwacja tak samo jak w aplikacji, ścieżka akceptacji i kolejka decyzji ([kalendarz w panelu](panel-kalendarz)) | każdy członek |
 | [**Statystyki**](panel-statystyki) | nalot klubu w zakresie dat: sumy, dzień po dniu, per samolot, pilot i zadanie | Podgląd klubu |
 | [**Piloci**](panel-piloci) | kolejka zgłoszeń z aplikacji do zatwierdzenia, konta pilotów i administratorów, kody pilotów, zakresy uprawnień, wyłączanie kont | Podgląd klubu |
 | [**Samoloty**](panel-samoloty) | karta każdej maszyny: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika, aktualny stan, zużycie zmierzone z lotów; poprawa odczytów | Podgląd klubu |
@@ -86,7 +86,7 @@ Każdy ekran i okienko aplikacji (poza logowaniem i PIN-em) ma w prawym górnym 
 
 ## Czego w tym wydaniu nie ma
 
-Panel ma dziś sześć modułów klubu. Wciąż nie ma ekranu **dziennika akcji administratorów** - każda decyzja (zatwierdzenie konta, korekta, zamknięcie rozjazdu, ponowienie eksportu) zostawia w nim ślad z nazwiskiem i notatką, ale przegląda się go dopiero w kolejnym wydaniu. Karty dnia leżą w arkuszu klubu z adresem dla skarbnika; wysyłka do arkusza Google przyjdzie osobno. Własna rezerwacja z kalendarza panelu jest w przygotowaniu - do tego czasu pilot rezerwuje w aplikacji, a panel pokazuje wynik.
+Panel ma dziś sześć modułów klubu. Wciąż nie ma ekranu **dziennika akcji administratorów** - każda decyzja (zatwierdzenie konta, korekta, zamknięcie rozjazdu, ponowienie eksportu) zostawia w nim ślad z nazwiskiem i notatką, ale przegląda się go dopiero w kolejnym wydaniu. Karty dnia leżą w arkuszu klubu z adresem dla skarbnika; wysyłka do arkusza Google przyjdzie osobno.
 
 ## Dlaczego tak to działa
 

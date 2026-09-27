@@ -365,7 +365,7 @@ co kto widzi. Każdy zarejestrowany powinien móc się zalogować. Dostęp do mo
 funkcjonalności modułu powinien być ograniczony uprawnieniem."* Pytanie doprecyzowujące
 (co widzi członek z zestawem „Pilot") właściciel rozstrzygnął tego samego dnia: **„powinien
 widzieć swoje konto oraz mieć podgląd do kalendarza w celu rezerwacji samolotu"**; własną
-rezerwację Z PANELU odłożył do epiku przebudowy panelu (§13.6).
+rezerwację Z PANELU odłożył do epiku przebudowy panelu (§13.6 - wykonane w 3.2.0, issue #233).
 
 ### 13.1 Model po zmianie
 
@@ -451,13 +451,14 @@ Kto co widzi na telefonie - tabela w podręczniku (`docs/podrecznik/uprawnienia.
 `00a-wybor-klubu` (karta klubu, w którym osoba jest pilotem), `piloci-konto` („Podgląd klubu"),
 `kalendarz-wpis` (stan „cudza rezerwacja bez Podglądu klubu"), `index.html` (karta BD).
 
-### 13.6 Poza zakresem - do epiku przebudowy panelu (3.2.0)
+### 13.6 Poza zakresem #216 - WYKONANE w 3.2.0 (issue #233)
 
-**Własna rezerwacja z panelu.** Kalendarz w panelu ma dziś wyłącznie „Zarezerwuj za pilota"
-na `reservations.manage`; pilot z pustym zakresem ogląda kalendarz, a rezerwuje w aplikacji.
-Właściciel: *„Chyba że tego jeszcze nie ma. Mamy w planie przebudowę panelu, więc może trzeba
-tam do epika to dodać"* - punkt dopisany w `docs/panel-3.2.md` §10 (formularz jak 22/22A
-z telefonu: termin i maszyna, potem zadanie; sugestie slotów z `GET /bookings/suggestions`).
+**Własna rezerwacja z panelu.** Do 3.2.0 kalendarz w panelu miał wyłącznie „Zarezerwuj za
+pilota" na `reservations.manage`; pilot z pustym zakresem oglądał kalendarz, a rezerwował
+w aplikacji. Właściciel: *„Chyba że tego jeszcze nie ma. Mamy w planie przebudowę panelu,
+więc może trzeba tam do epika to dodać"*. Wykonane w #233: trasy `/admin/api/me/bookings*`,
+`/admin/api/bookings/suggestions` i `/admin/api/me/approval-path` na `capability: null`,
+właściciel z sesji, ta sama komenda, co telefon, bez audytu (`docs/rezerwacje.md` §5.2, §10).
 
 ### 13.7 Odrzucone - nie wracać
 

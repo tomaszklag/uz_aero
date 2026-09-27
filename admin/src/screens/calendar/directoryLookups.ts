@@ -36,5 +36,6 @@ export function calendarAircraft(directory: DirectoryDto | undefined): CalendarA
     reg: a.reg,
     type: a.type,
     inService: a.serviceStatus === 'active',
+    dualRequired: a.dualRequired,
   }));
 }
