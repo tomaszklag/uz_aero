@@ -35,6 +35,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 3.2.0 · 27 września 2026
+
+> Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.
+
 ### Nowości
 
 - **Dziennik odpowiada też na pytanie „kto latał".** Nad tabelą stoi przełącznik osi:
@@ -135,6 +139,15 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
   (zdanie samolotu bez biegu, lotów i zmian odczytów), tak jak dziennik - ten sam zakres
   dat nie daje już dwóch sum na dwóch ekranach.
+
+### Dla testerów
+
+- **Nowego pliku instalować nie trzeba.** Panel zmienia się na serwerze, a dwie poprawki
+  w telefonie - dopisanie faktu po zdaniu samolotu i wiadomość „Prośba wycofana" w skrzynce -
+  dotrą same aktualizacją w tle do aplikacji w wersji 3.1.0. Wchodzą przy **następnym
+  uruchomieniu** aplikacji po pobraniu, nie od razu.
+- Kto ma jeszcze wersję 3.0.0, aktualizacji w tle nie dostanie - potrzebuje pliku 3.1.0
+  ze [strony pobierania](../pobierz/).
 
 ## 3.1.0 (build 6) · 26 września 2026
 
@@ -436,17 +449,6 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ## Plan wydań
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
-
-### 3.2.0 · planowane na koniec października 2026
-
-> Rozbudowa panelu klubu - bez nowej instalacji aplikacji.
-
-- [x] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
-- [x] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
-- [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
-- [x] Statystyki klubu i analityka zużycia maszyny
-- [x] Własna rezerwacja z kalendarza w panelu - tak samo jak w aplikacji
-- [x] Dopisanie brakującego faktu w telefonie także po zdaniu samolotu (aktualizacja w tle)
 
 ### 4.0.0 · termin do ustalenia
 
