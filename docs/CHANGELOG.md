@@ -139,6 +139,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
   (zdanie samolotu bez biegu, lotów i zmian odczytów), tak jak dziennik - ten sam zakres
   dat nie daje już dwóch sum na dwóch ekranach.
+- **Polityka prywatności i regulamin nadążają za panelem.** Mówią, kto w klubie widzi
+  dziennik, że nalot jest w panelu zestawiany także po osobach, że rezerwację składa się
+  również w panelu, a brakujący fakt da się dopisać. Regulamin opisuje przy okazji
+  logowanie hasłem, dołączanie kodem klubu i rezerwacje.
 
 ### Dla testerów
 

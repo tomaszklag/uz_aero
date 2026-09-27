@@ -7,7 +7,7 @@
 Ninerdeck składa się z **aplikacji pilota** na Androida i **panelu klubu** w przeglądarce. Obie pracują na tym samym dzienniku operacji.
 
 - **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć. Obok lotu ma **[kalendarz floty](rezerwacja-samolotu)** z rezerwacją, a pod dzwonkiem na pulpicie **[skrzynkę powiadomień](powiadomienia)** - te dwie rzeczy potrzebują zasięgu.
-- **[Panel klubu](panel-wprowadzenie)** otwiera się każdemu członkowi klubu, a to, co kto widzi, wyznacza jego [zakres uprawnień](uprawnienia): dziennik operacji z osią zdarzeń i śladem GPS, konta pilotów do zatwierdzenia, karty samolotów z normami zużycia, kalendarz floty ze [ścieżką akceptacji](akceptacja-rezerwacji), a na czas testów także zgłoszenia wysłane z aplikacji.
+- **[Panel klubu](panel-wprowadzenie)** otwiera się każdemu członkowi klubu, a to, co kto widzi, wyznacza jego [zakres uprawnień](uprawnienia): [dziennik](panel-dziennik) operacji po maszynach albo po pilotach, z osią zdarzeń, śladem GPS, poprawkami i dopisywaniem brakujących faktów; lista spraw [do sprawdzenia](panel-do-sprawdzenia) - rozjazdy, karty dnia, operacje wiszące; [kalendarz floty](panel-kalendarz), w którym każdy rezerwuje tak samo jak w aplikacji, ze [ścieżką akceptacji](akceptacja-rezerwacji); [statystyki](panel-statystyki) nalotu klubu; konta pilotów do zatwierdzenia i karty samolotów z normami i zużyciem z lotów, a na czas testów także zgłoszenia wysłane z aplikacji.
 
 @screen 20-pulpit "Ekran domowy aplikacji pilota"
 
