@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ConsumptionReportDto } from '../../api/dto';
-import { consumptionCardView } from './consumptionCard';
+import { consumptionCardView } from './consumptionCardView';
 
 const HOUR = 3_600_000;
 
