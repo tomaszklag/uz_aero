@@ -208,6 +208,10 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
 
     expect(report.totals).toMatchObject({
       sessions: 2,
+      // Dwie doby z zamkniętą operacją (20 i 21 czerwca) - „Dni lotne 2 z 4".
+      activeDays: 2,
+      // LOTY (start → lądowanie) - ta sama liczba, co „Loty" w dzienniku.
+      flights: 2,
       aircraft: 2,
       // PIC ∪ Dual: AKO, PWI i JSE - dzień szkolny należy do OBU członków załogi.
       pilots: 3,
@@ -217,9 +221,14 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
       landings: 2,
       staleRows: 0,
       openSessionsInRange: 1,
+      // Prawy fotel w całym zakresie: jedna operacja szkolna (PWI + JSE) - własna suma
+      // kolumny „Drugi pilot", NIE dodawana do `blockMs`.
+      dual: { operations: 1, blockMs: BLOCK_MS },
     });
     // Paliwo: (150−88) + (150−96); Δ MH: 2×2.2 - floaty porównujemy z tolerancją.
     expect(report.totals.fuelConsumedL).toBeCloseTo(62 + 54, 9);
+    // Wiersz „Razem" tabeli samolotów: średnia FLOTY na godzinę blokową liczy serwer.
+    expect(report.totals.avgLitresPerBlockHour).toBeCloseTo((62 + 54) / ((2 * BLOCK_MS) / HOUR_MS), 9);
     expect(report.totals.mhDeltaH).toBeCloseTo(4.4, 9);
     // Iloraz liczy SERWER - panel nie ma prawa dzielić dwóch sum po swojemu.
     expect(report.totals.flightVsBlockPct).toBeCloseTo(((2 * FLIGHT_MS) / (2 * BLOCK_MS)) * 100, 9);
@@ -240,17 +249,28 @@ describe('A10 · sumy zakresu z kolumn projekcji', () => {
       expect(rows.reduce((acc, r) => acc + r.flightMs, 0)).toBe(report.totals.flightMs);
       expect(rows.reduce((acc, r) => acc + r.sessions, 0)).toBe(report.totals.sessions);
     }
-    // Blok „jako PIC" też sumuje się do nalotu floty (hint mockupu) - Duala tu nie ma.
+    // Blok DOWÓDCY sumuje się do nalotu floty (hint mockupu); prawy fotel stoi OSOBNO
+    // i do tej sumy nie wchodzi - wiersz ucznia ma tu zero.
     expect(report.pilots.reduce((acc, r) => acc + r.blockMs, 0)).toBe(report.totals.blockMs);
 
     expect(report.aircraft.map((r) => r.reg).sort()).toEqual(['SP-AXA', 'SP-FGK']);
     // Bloki obu operacji są tu RÓWNE, więc rozstrzyga tie-breaker alfabetyczny.
     expect(report.operations.map((r) => r.operation)).toEqual(['ferry', 'skoki']);
-    // Bloki obu PIC-ów są równe - rozstrzyga tie-breaker po identyfikatorze konta.
-    expect(report.pilots.map((r) => r.code)).toEqual(['AKO', 'PWI']);
+    // Bloki obu PIC-ów są równe - rozstrzyga tie-breaker po identyfikatorze konta;
+    // JSE latał WYŁĄCZNIE w prawym fotelu, więc stoi na końcu z zerowym nalotem.
+    expect(report.pilots.map((r) => r.code)).toEqual(['AKO', 'PWI', 'JSE']);
     expect(report.pilots.find((r) => r.code === 'PWI')).toMatchObject({
       regs: ['SP-FGK'],
       sessions: 1,
+      dual: null,
+    });
+    expect(report.pilots.find((r) => r.code === 'JSE')).toMatchObject({
+      sessions: 0,
+      blockMs: 0,
+      flightMs: 0,
+      takeoffs: 0,
+      dual: { operations: 1, blockMs: BLOCK_MS },
+      regs: ['SP-FGK'],
     });
   });
 
@@ -682,5 +702,156 @@ describe('A10 · brama i walidacja', () => {
     expect(pilot.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
 
     expect((await app.inject({ method: 'GET', url: '/admin/api/stats' })).statusCode).toBe(401);
+  });
+});
+
+/**
+ * KOLUMNA „DRUGI PILOT" (3.2.0, `docs/panel-3.2.md` §17.1 pkt 1, epik P-E): czas w prawym
+ * fotelu jest OSOBNĄ liczbą z własną sumą - nigdy dodawaną do bloku dowódcy, bo tę samą
+ * godzinę lotu szkolnego niesie wiersz instruktora i ucznia. Wiersz pilota statystyk ma
+ * ten sam kształt, co wiersz osi pilotów dziennika, i to ten test przybija.
+ */
+describe('A10 · prawy fotel osobno (3.2.0)', () => {
+  const logPilots = async (app: Harness['app'], t: string, range: string) => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/admin/api/log${range}&os=piloci`,
+      headers: bearer(t),
+    });
+    expect(res.statusCode).toBe(200);
+    return res.json() as {
+      pilots: { pilotId: string; sessions: number; blockMs: number; dual: { operations: number; blockMs: number } | null }[];
+    };
+  };
+
+  it('instruktor i uczeń: ta sama godzina w obu wierszach, w różnych kolumnach', async () => {
+    const { app, stats } = await threeDays();
+    // Drugi dzień szkolny z ODWRÓCONĄ załogą: JSE dowodzi, PWI siedzi w prawym fotelu.
+    // Każdy z nich ma odtąd jedną operację jako dowódca i jedną jako drugi pilot.
+    await ingest(
+      app,
+      flyingDay({
+        sessionUuid: 'st-swap',
+        aircraftId: 'SP-FGK',
+        picId: 'JSE',
+        dualId: 'PWI',
+        dayStart: D22,
+        operation: 'ferry',
+        mh: 502.2,
+      }),
+    );
+
+    const report = await stats();
+    const pwi = report.pilots.find((r) => r.code === 'PWI')!;
+    const jse = report.pilots.find((r) => r.code === 'JSE')!;
+    expect(pwi).toMatchObject({ sessions: 1, blockMs: BLOCK_MS, dual: { operations: 1, blockMs: BLOCK_MS } });
+    expect(jse).toMatchObject({ sessions: 1, blockMs: BLOCK_MS, dual: { operations: 1, blockMs: BLOCK_MS } });
+
+    // Nalot floty = suma bloków DOWÓDCÓW (trzy operacje), prawy fotel liczy się osobno
+    // (dwie operacje szkolne) - i nie wolno tych dwóch sum dodać do siebie.
+    expect(report.totals.blockMs).toBe(3 * BLOCK_MS);
+    expect(report.pilots.reduce((acc, r) => acc + r.blockMs, 0)).toBe(3 * BLOCK_MS);
+    expect(report.pilots.reduce((acc, r) => acc + (r.dual?.blockMs ?? 0), 0)).toBe(2 * BLOCK_MS);
+    // Fakt „Piloci" liczy ludzi latających w DOWOLNYM fotelu = liczba wierszy tabeli.
+    expect(report.totals.pilots).toBe(3);
+    expect(report.pilots).toHaveLength(3);
+    // Suma kolumny „Drugi pilot" przychodzi z serwera i równa się sumie wierszy.
+    expect(report.totals.dual).toEqual({ operations: 2, blockMs: 2 * BLOCK_MS });
+    expect(report.pilots.find((r) => r.code === 'JSE')!.flights).toBe(1);
+    // AKO latał sam - prawego fotela nie ma, więc `null`, nie para zer.
+    expect(report.pilots.find((r) => r.code === 'AKO')!.dual).toBeNull();
+  });
+
+  it('wiersz pilota statystyk równa się wierszowi osi pilotów dziennika dla tego samego zakresu', async () => {
+    const { app, admin, stats } = await threeDays();
+    await ingest(
+      app,
+      flyingDay({ sessionUuid: 'st-swap-2', aircraftId: 'SP-FGK', picId: 'JSE', dualId: 'PWI', dayStart: D22, operation: 'ferry', mh: 502.2 }),
+    );
+    // Zakres obejmuje w całości wszystkie doby, więc oś zakresu (`claim_time` w dzienniku,
+    // `close_time` w statystykach) niczego nie rozdziela - liczy się sama podstawa.
+    const range = '?from=2026-06-19&to=2026-06-22';
+    const report = await stats(range);
+    const people = await logPilots(app, admin, range);
+
+    expect(report.pilots.length).toBeGreaterThan(0);
+    for (const row of report.pilots) {
+      const twin = people.pilots.find((p) => p.pilotId === row.pilotId);
+      expect(twin, `oś pilotów dziennika nie zna ${row.pilotId}`).toBeDefined();
+      expect({ sessions: twin!.sessions, blockMs: twin!.blockMs, dual: twin!.dual }).toEqual({
+        sessions: row.sessions,
+        blockMs: row.blockMs,
+        dual: row.dual,
+      });
+    }
+  });
+});
+
+/**
+ * JEDNA PODSTAWA LICZENIA dla dziennika i statystyk (3.2.0, `docs/panel-3.2.md` §4.5):
+ * do 3.2.0 statystyki liczyły KAŻDĄ zamkniętą operację, a dziennik pomijał puste
+ * zapisy - ten sam zakres dawał dwie sumy na dwóch ekranach.
+ */
+describe('A10 · ta sama podstawa liczenia, co dziennik', () => {
+  const statsOf = (app: Harness['app'], t: string, query: string) =>
+    app.inject({ method: 'GET', url: `/admin/api/stats${query}`, headers: { authorization: `Bearer ${t}` } });
+  const logOf = (app: Harness['app'], t: string, query: string) =>
+    app.inject({ method: 'GET', url: `/admin/api/log${query}`, headers: { authorization: `Bearer ${t}` } });
+
+  /** Zdanie BEZ biegu, lotów i zmian odczytów - śmieć z definicji właściciela (issue #75). */
+  function emptyDay(sessionUuid: string, dayStart: number) {
+    const base = { sessionUuid, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null };
+    const at = (h: number, m: number): number => dayStart + h * HOUR_MS + m * MIN_MS;
+    const ev = (type: string, time: number, payload: object = {}) => {
+      seq += 1;
+      return { uuid: `st-${String(seq).padStart(4, '0')}-${type}`, type, deviceTime: time, gpsTime: time, payload, schemaVersion: 1, ...base };
+    };
+    return [
+      ev('session_claim', at(7, 50), { mode: 'free' }),
+      ev('preflight_confirm', at(8, 0), {
+        operation: 'inne',
+        departureIcao: 'EPKK',
+        arrivalIcao: null,
+        reading: { fuelL: 150, mh: 1200 },
+        client: null,
+        mhFormat: 'hhmm',
+      }),
+      ev('day_close', at(8, 10), { finalReading: { fuelL: 150, mh: 1200 }, noFlightReason: 'weather' }),
+    ];
+  }
+
+  it('pusty zapis nie wchodzi do sum - ani do dni, ani do maszyn, ani do pilotów', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await ingest(app, emptyDay('st-empty', D21));
+    await ingest(app, flyingDay({ sessionUuid: 'st-real', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D22 }));
+
+    const report = (await statsOf(app, ako, '?from=2026-06-21&to=2026-06-22')).json() as AdminStatsReport;
+    expect(report.totals.sessions).toBe(1);
+    expect(report.totals.blockMs).toBe(BLOCK_MS);
+    expect(report.aircraft.find((a) => a.aircraftId === 'SP-AXA')?.sessions).toBe(1);
+    expect(report.pilots.find((p) => p.pilotId === 'AKO')?.sessions).toBe(1);
+  });
+
+  it('dziennik i statystyki podają TEN SAM nalot dla zakresu domkniętego w środku', async () => {
+    const { app } = await testHarness();
+    const ako = await token(app, 'AKO');
+    await ingest(app, emptyDay('st-empty-2', D20));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-1', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D20 }));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-2', aircraftId: 'SP-FGK', picId: 'KRZ', dayStart: D21, dualId: 'AKO' }));
+    await ingest(app, flyingDay({ sessionUuid: 'st-x-3', aircraftId: 'SP-AXA', picId: 'AKO', dayStart: D22 }));
+
+    // Zakres obejmuje w całości trzy doby, więc różnica osi (`claim_time` w dzienniku,
+    // `close_time` w statystykach) nie ma tu znaczenia - liczy się wyłącznie podstawa.
+    const range = '?from=2026-06-20&to=2026-06-22';
+    const report = (await statsOf(app, ako, range)).json() as AdminStatsReport;
+    const fleet = (await logOf(app, ako, range)).json();
+    const people = (await logOf(app, ako, `${range}&os=piloci`)).json();
+
+    const sum = (rows: { blockMs: number }[]): number => rows.reduce((acc, r) => acc + r.blockMs, 0);
+    expect(report.totals.sessions).toBe(3);
+    expect(sum(fleet.aircraft)).toBe(report.totals.blockMs);
+    expect(sum(people.pilots)).toBe(report.totals.blockMs);
+    expect(report.totals.blockMs).toBe(3 * BLOCK_MS);
   });
 });

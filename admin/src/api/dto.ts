@@ -19,13 +19,20 @@
  */
 
 import type {
+  ConsumptionModel,
+  ConsumptionNorm,
+  ConsumptionSummary,
   Event,
+  FlagStatus,
+  FlagType,
   MhFormat,
+  MhModel,
   OperationType,
   PasswordWeakness,
   ServiceStatus,
   SessionState,
   SessionTrackPayload,
+  SlotReason,
 } from '@ninerdeck/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
@@ -667,6 +674,48 @@ export interface LogReportDto {
   aircraft: LogAircraftDto[];
 }
 
+/**
+ * OŚ PILOTÓW dziennika (3.2.0, `docs/panel-3.2.md` §4.1, §17.1): ten sam zakres i ten
+ * sam zbiór operacji, co oś maszyn, rozłożony po ludziach. Nalot liczy się DOWÓDCY,
+ * a czas w prawym fotelu jest osobną liczbą - obu nie wolno dodać do siebie.
+ */
+export interface LogPilotDto {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  /** Członkostwo aktywne; wyłączony, który latał, zostaje na liście. */
+  active: boolean;
+  /** Dni z jakimkolwiek lotem zamkniętym, w dowolnym fotelu. */
+  activeDays: number;
+  /** Sumy dowódcy z operacji ZDANYCH - jak na osi maszyn i w statystykach. */
+  sessions: number;
+  /** Operacje dowódcy w toku w zakresie - poza sumami. */
+  openSessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Prawy fotel; `null` = ani jednej takiej operacji. */
+  dual: { operations: number; blockMs: number } | null;
+  /** Maszyny z operacji zamkniętych. */
+  regs: string[];
+  /** Operacja w toku jako dowódcy - o TERAZ, niezależnie od zakresu. */
+  open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;
+}
+
+export interface LogIdleMemberDto {
+  pilotId: string;
+  code: string;
+  name: string;
+}
+
+export interface LogPilotsReportDto {
+  at: string;
+  range: LogRangeDto;
+  pilots: LogPilotDto[];
+  /** Członkowie bez lotów: liczba zawsze, lista wyłącznie na żądanie (`null` = nie pytano). */
+  idle: { count: number; members: LogIdleMemberDto[] | null };
+}
+
 
 // -- dziennik: poziom 2 (sesje jednej maszyny) i poziom 3 (jedna sesja) ---------
 
@@ -701,6 +750,8 @@ export interface SessionListItemDto {
   picId: string;
   picCode: string | null;
   picName: string | null;
+  /** Osoba w prawym fotelu - po niej oś PILOTA poznaje wiersz „jako drugi pilot" (3.2.0). */
+  dualId: string | null;
   dualCode: string | null;
   dualName: string | null;
 
@@ -739,6 +790,17 @@ export interface SessionListItemDto {
 
   /** Sesja wpisana ręcznie po fakcie - plakietka przy dacie, nie przy wartościach. */
   manualEntry: boolean | null;
+  /**
+   * Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. Karta skutku
+   * korekty mówi z tego, którą rewizję dostanie klub po zapisie (3.2.0, §5.2).
+   */
+  exportRevision: number | null;
+  /**
+   * OTWARTE rozjazdy tej operacji (3.2.0, P-D; `docs/panel-3.2.md` §6): flaga opisuje
+   * operację, więc plakietka stoi PRZY NIEJ w gridzie, a nie wyłącznie w skrzynce.
+   * Identyfikator prowadzi do sprawy; liczby rozjazdu podpisują parę odczytów.
+   */
+  openFlags: OpenFlagDto[];
   updatedAt: string;
 }
 
@@ -753,6 +815,25 @@ export interface SessionPageDto {
   items: SessionListItemDto[];
   nextCursor: string | null;
   total: number;
+  /**
+   * NAGŁÓWKI DÓB (3.2.0, `docs/panel-3.2.md` §4.4) nad CAŁYM wynikiem filtra, w tej
+   * samej odpowiedzi, co wiersze. Strona kursorowa potrafi rozciąć dobę, więc suma
+   * z wierszy strony byłaby sumą połowy doby - a taka liczba wygląda poprawnie.
+   */
+  days: SessionDayDto[];
+}
+
+/** Jedna doba UTC (po chwili przejęcia) z sumami operacji ZAMKNIĘTYCH. */
+export interface SessionDayDto {
+  day: string;
+  operations: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Operacje w toku - poza sumami, ale nazwane w nagłówku. */
+  inProgress: number;
+  /** Czas w prawym fotelu pilota z filtra; `null` = bez filtra pilota albo bez takiego lotu. */
+  dual: { operations: number; blockMs: number } | null;
 }
 
 /**
@@ -769,6 +850,23 @@ export interface TimelineEntryDto {
   correctedTime: number | null;
   /** `true` = poprawił to administrator z panelu, a nie pilot w oknie 24 h. */
   adminCorrected: boolean;
+  /**
+   * Konto panelu, które WPISAŁO ten wiersz (korektę, dopisany fakt); `null` = telefon.
+   * Osobno od `adminCorrected`: tamto mówi o zdarzeniu poprawianym, to o zapisanym.
+   * Nazwisko panel bierze ze słownika klubu - identyfikator nie wychodzi na ekran.
+   */
+  adminAuthorId: string | null;
+}
+
+/**
+ * Naruszenie reguły rejestru - zdanie po polsku wprost od domeny (3.2.0). `details`
+ * niesie adres zdarzenia (`uuid`), którego naruszenie dotyczy, gdy takie jest.
+ */
+export interface RuleViolationDto {
+  code: string;
+  severity: 'error' | 'warning';
+  message: string;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -782,6 +880,128 @@ export interface SessionDetailDto {
   session: SessionListItemDto;
   state: SessionState;
   timeline: TimelineEntryDto[];
+  /**
+   * NIESPÓJNOŚCI LOGU (3.2.0): lot bez lądowania, zdarzenie poza biegiem silnika, zrzut
+   * na ziemi, cofnięty licznik - TE SAME zdania, które pilot czyta w trybie edycji na
+   * telefonie. Liczy serwer; panel wyłącznie nazywa i przypina do wiersza osi.
+   */
+  consistency: RuleViolationDto[];
+  /** Rozjazdy tej operacji RAZEM z rozstrzygniętymi - historia decyzji zostaje na karcie. */
+  flags: FlagDto[];
+}
+
+/**
+ * Wynik przebudowy karty arkusza po zapisie w rejestrze; `null` = arkusz nie odpowiedział.
+ * Rewizja mówi, którą wersję dokumentu dostał klub.
+ */
+export interface ReexportDto {
+  exported: boolean;
+  tab?: string;
+  revision?: number;
+}
+
+/**
+ * KOREKTA ZDARZENIA (3.2.0, `docs/panel-3.2.md` §5) - kształt korekty bez powodu,
+ * wspólny dla podglądu i zapisu: obie trasy pytają o dokładnie tę samą rzecz.
+ * Trzy akcje, jak w domenie: przesunięcie czasu, unieważnienie, poprawka wartości.
+ */
+export type CorrectionShapeDto =
+  | { targetUuid: string; action: 'retime'; newTime: number }
+  | { targetUuid: string; action: 'void' }
+  | { targetUuid: string; action: 'amend'; fields: AmendFieldsDto };
+
+/** Pola poprawki wartości - biała lista per typ celu egzekwuje domena serwera. */
+export interface AmendFieldsDto {
+  fuelL?: number;
+  mh?: number;
+  oilL?: number;
+  jumpers?: { tandem: number; aff: number; solo: number } | null;
+  notes?: string | null;
+  dualId?: string | null;
+}
+
+/** Zdarzenie korygowane, tak jak leży w rejestrze; `null` = celu nie ma w tej operacji. */
+export interface CorrectionTargetDto {
+  uuid: string;
+  type: Event['type'];
+  deviceTime: number;
+  gpsTime: number | null;
+  effectiveTime: number | null;
+  voided: boolean;
+  sourceDevice: string | null;
+  event: Event;
+}
+
+/**
+ * Podgląd korekty (`POST /sessions/:uuid/corrections/preview`): liczby operacji PRZED
+ * i PO liczy serwer tą samą projekcją, co dzień - panel formatuje i nic nie liczy.
+ * `violations` to dokładnie to, co zablokowałoby zapis; `warnings` - kolizje z pracą
+ * pilota, które zapisu nie wstrzymują.
+ */
+export interface CorrectionPreviewDto {
+  sessionUuid: string;
+  target: CorrectionTargetDto | null;
+  before: SessionState;
+  after: SessionState;
+  violations: RuleViolationDto[];
+  warnings: RuleViolationDto[];
+}
+
+export interface CorrectionResultDto {
+  sessionUuid: string;
+  correctionUuid: string;
+  targetUuid: string;
+  action: CorrectionShapeDto['action'];
+  recordedAt: string;
+  state: SessionState;
+  warnings: RuleViolationDto[];
+  reexport: ReexportDto | null;
+}
+
+/**
+ * DOPISANIE BRAKUJĄCEGO FAKTU (3.2.0, §5.4) - wąska lista typów, ta sama, którą telefon
+ * oferuje w arkuszu dopisania: uruchomienia i wyłączenia silnika tu NIE MA (wyznaczają
+ * kopertę operacji), nie ma też przejęcia, zadania ani zdania. Tankowanie podaje dwie
+ * liczby z trzech - trzecią liczy serwer.
+ */
+export type AddedEventDto =
+  | { type: 'takeoff' | 'landing' | 'taxi'; at: number }
+  | { type: 'refuel'; at: number; beforeL: number; addedL: number }
+  | { type: 'oil_add'; at: number; addedL: number }
+  | {
+      type: 'drop';
+      at: number;
+      altitudeFt: number | null;
+      /** Skład w rozbiciu; `null` = niepodany, nie zero. */
+      jumpers: { tandem: number; aff: number; solo: number } | null;
+    }
+  | { type: 'boarding'; at: number };
+
+/**
+ * Podgląd dopisania (`POST /sessions/:uuid/events/preview`): jak podgląd korekty,
+ * plus KANDYDAT (fakt, który powstanie) i niespójności PRZED i PO - odpowiedź na baner
+ * nad osią, z którym administrator wszedł w edycję.
+ */
+export interface AddEventPreviewDto {
+  sessionUuid: string;
+  candidate: Event;
+  before: SessionState;
+  after: SessionState;
+  violations: RuleViolationDto[];
+  warnings: RuleViolationDto[];
+  consistency: { before: RuleViolationDto[]; after: RuleViolationDto[] };
+}
+
+export interface AddEventResultDto {
+  sessionUuid: string;
+  eventUuid: string;
+  type: AddedEventDto['type'];
+  at: number;
+  recordedAt: string;
+  state: SessionState;
+  warnings: RuleViolationDto[];
+  consistency: RuleViolationDto[];
+  reexport: ReexportDto | null;
 }
 
 /**
@@ -985,11 +1205,38 @@ export interface CalendarDayDto {
 }
 
 export interface CalendarDto {
-  /** Strefa klubu - NAPIS do wyświetlenia, nie materiał do rachunku. */
+  /**
+   * Strefa klubu. Siatka dób przychodzi gotowa (niżej), a strefa służy do formatowania
+   * godzin - i od issue #233 do zamiany „dzień + godzina czasu klubu" na chwilę
+   * w szufladzie własnej rezerwacji (`screens/calendar/clubClock.ts`).
+   */
   timezone: string;
   homeIcao: string | null;
   days: CalendarDayDto[];
   bookings: BookingDto[];
+}
+
+/**
+ * SUGESTIE SLOTÓW - `GET /admin/api/bookings/suggestions` (issue #233), ten sam kształt,
+ * co trasa telefonu (`server/src/http/routes/common/suggestionsWire.ts`).
+ *
+ * `window` to doba LOTNA klubu (świt → zmrok z lotniska macierzystego albo okno domyślne,
+ * `basis`) - pasek zajętości doby w szufladzie rysuje się w jej granicach.
+ */
+export interface SuggestionsDto {
+  day: CalendarDayDto;
+  window: { from: string; to: string; basis: 'solar' | 'default' };
+  suggestions: SlotSuggestionDto[];
+  /** Wolne pasma maszyny w oknie doby - liczy je domena na serwerze, panel je tylko pisze. */
+  free: { startsAt: string; endsAt: string }[];
+}
+
+export interface SlotSuggestionDto {
+  startsAt: string;
+  endsAt: string;
+  reason: SlotReason;
+  gapBeforeMin: number;
+  gapAfterMin: number;
 }
 
 /**
@@ -1013,6 +1260,8 @@ export interface DirectoryAircraftDto {
   reg: string;
   type: string;
   serviceStatus: ServiceStatus;
+  /** Wymóg załogi dwuosobowej - plakietka przy drugim pilocie w szufladzie rezerwacji (#233). */
+  dualRequired: boolean;
 }
 
 export interface DirectoryDto {
@@ -1305,3 +1554,354 @@ export interface WatchListDto {
   items: WatchListItemDto[];
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * DO SPRAWDZENIA (3.2.0, P-D; `docs/panel-3.2.md` §6, §7, §9) - rozjazdy, karty dnia,
+ * operacje wiszące. Trzy istniejące kontrakty serwera pod jednym pytaniem
+ * („co wymaga mojej reakcji"); panel niczego z nich nie liczy - nazywa i prowadzi.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Otwarta flaga przy wierszu operacji. `details` to liczby policzone przy przyjęciu
+ * zapisu - kształt zależy od rodzaju i czyta go WYŁĄCZNIE `screens/attention/flagLabels.ts`.
+ */
+export interface OpenFlagDto {
+  id: number;
+  type: FlagType;
+  details: Record<string, unknown>;
+}
+
+/** Operacja objęta rozjazdem - nazwana, nie adresowana (sygnatura, pilot, chwile, karta). */
+export interface FlagSessionDto {
+  sessionUuid: string;
+  signature: string | null;
+  aircraftId: string;
+  reg: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  status: 'active' | 'closed' | 'voided';
+  claimedAt: number | null;
+  closeTime: number | null;
+  /** Nazwa karty doby tej operacji - nakładka mówi, KTÓRĄ kartę trzyma poza arkuszem. */
+  tab: string | null;
+}
+
+/** Jedna sprawa skrzynki rozjazdów (`GET /admin/api/flags`). */
+export interface FlagDto {
+  id: number;
+  type: FlagType;
+  status: FlagStatus;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+  sessionUuids: string[];
+  /** W kolejności `sessionUuids`; operacja nieznana serwerowi po prostu tu nie stoi. */
+  sessions: FlagSessionDto[];
+  details: Record<string, unknown>;
+  createdAt: string;
+  resolvedAt: string | null;
+  /** Identyfikator osoby - nazwisko ze słownika klubu, jak przy autorze korekty. */
+  resolvedBy: string | null;
+  resolutionNote: string | null;
+  /** Czy TA flaga trzyma kartę dnia poza arkuszem - kolumna „Skutek" i pierwszy klucz porządku. */
+  blocksExport: boolean;
+}
+
+export interface FlagPageDto {
+  items: FlagDto[];
+  /** Liczba spraw spełniających filtr - także wtedy, gdy limit obciął listę. */
+  total: number;
+}
+
+/**
+ * Stan karty dnia - lustro `ExportState` z kontraktu monitora eksportu (serwer wnioskuje
+ * go z czterech faktów naraz; panel wyłącznie nazywa). Strażnik: `test/mirrors.test.ts`.
+ */
+export type ExportStateDto = 'waiting' | 'blocked' | 'impossible' | 'missing' | 'current';
+
+/** Powód ODMOWY eksportera - stan świata, nie błąd. Lustro `ExportRefusalDto` serwera. */
+export type ExportRefusalDto = 'no_events' | 'session_open' | 'no_preflight' | 'overlap_flag';
+
+/** Rodzaj AWARII próby eksportu. Lustro `ExportFailureDto` serwera. */
+export type ExportFailureDto = 'sheets_adapter' | 'unexpected';
+
+export type ExportOutcomeDto =
+  | { exported: true; tab: string; revision: number; url: string }
+  | { exported: false; reason: ExportRefusalDto };
+
+/** Wynik `POST /admin/api/flags/:id/resolve` - z próbami re-eksportu kart, które flaga trzymała. */
+export interface ResolveFlagResultDto {
+  flagId: number;
+  type: FlagType;
+  resolvedAt: string;
+  /** Pusta lista przy fladze, która karty nie trzymała - odpowiedź nie kłamie o skutku. */
+  exports: { sessionUuid: string; outcome: ExportOutcomeDto | null }[];
+}
+
+/** Wiersz monitora kart dnia: operacja, nazwana kartą (dobą samolotu), którą zasila. */
+export interface ExportListItemDto {
+  sessionUuid: string;
+  signature: string | null;
+  tab: string | null;
+  day: string | null;
+  claimedAt: number | null;
+  closeTime: number | null;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  sessionStatus: 'active' | 'closed' | 'voided';
+  state: ExportStateDto;
+  revision: number | null;
+  exportedAt: string | null;
+  sheetUrl: string | null;
+  blockingFlagIds: number[];
+  updatedAt: string;
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/** Liczniki CAŁEGO zakresu filtra, niezależnie od zawężenia chipem stanu. */
+export interface ExportCountsDto {
+  total: number;
+  current: number;
+  blocked: number;
+  missing: number;
+  waiting: number;
+  impossible: number;
+  revised: number;
+  overwritten: number;
+}
+
+export interface ExportPageDto {
+  items: ExportListItemDto[];
+  counts: ExportCountsDto;
+  matched: number;
+  /** `true` = limit obciął listę - ekran ma o tym powiedzieć, nie udawać komplet. */
+  truncated: boolean;
+}
+
+export interface ExportRevisionDto {
+  revision: number;
+  day: string;
+  sheetUrl: string;
+  exportedAt: string;
+}
+
+/** Historia rewizji jednej karty (`GET /admin/api/exports/:uuid`). */
+export interface ExportHistoryDto {
+  sessionUuid: string;
+  tab: string | null;
+  state: ExportStateDto;
+  revisions: ExportRevisionDto[];
+  sheetRows: number;
+  /** Adres karty, który DZIAŁA DZIŚ (bieżący host, slug i sekret klubu); `null` bez karty. */
+  address: string | null;
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/** Treść karty tak, jak leży w arkuszu - dosłowne wiersze dokumentu. */
+export interface SheetPreviewDto {
+  tab: string;
+  rows: string[][];
+  updatedAt: string;
+}
+
+/** Wynik `POST /admin/api/exports/:uuid/retry` - także odmowa i awaria są ODPOWIEDZIĄ, nie błędem. */
+export interface ExportRetryResultDto {
+  sessionUuid: string;
+  tab: string | null;
+  revisionBefore: number | null;
+  revisionAfter: number | null;
+  outcome: ExportOutcomeDto | null;
+  failure: ExportFailureDto | null;
+  retriedAt: string;
+}
+
+export interface ExportRetryResponseDto {
+  retry: ExportRetryResultDto;
+  /** Wiersz monitora PO próbie - ekran odświeża go bez drugiego żądania. */
+  row: ExportListItemDto | null;
+}
+
+/**
+ * „Do sprawdzenia" (`GET /admin/api/dashboard`) - TE pola odpowiedzi, które panel czyta.
+ * Trzy źródła w trzech istniejących kształtach (spłaszczenie wymagałoby czwartej
+ * definicji „sprawy"), każde przycięte limitem; ile spraw jest naprawdę, mówią `counts`.
+ */
+export interface AttentionDto {
+  /** Chwila zbudowania odpowiedzi wg zegara SERWERA - od niej liczy się wiek spraw. */
+  at: string;
+  /** Okno korekty pilota (ms) - próg, od którego wiek sprawy jest czerwony. */
+  correctionWindowMs: number;
+  counts: {
+    openFlags: number;
+    exports: ExportCountsDto;
+    staleOpenDays: number;
+    /** SUMA trzech źródeł - plakietka w kolumnie; liczy serwer. */
+    attention: number;
+  };
+  attention: {
+    flags: FlagDto[];
+    failedExports: ExportListItemDto[];
+    staleOpenDays: SessionListItemDto[];
+  };
+}
+
+// -- statystyki zakresu (3.2.0, P-E) --------------------------------------------
+
+/**
+ * `GET /admin/api/stats` - TE pola odpowiedzi, które panel czyta (serwer przysyła też
+ * starty/lądowania, zrzuty i klientów strony przychodowej; panel 3.2 ich nie rysuje).
+ *
+ * Konstytucja ekranu: KAŻDA liczba - także iloraz („Śr. L/h", udział, wykorzystanie,
+ * średnia floty) - przychodzi policzona. Panel formatuje i układa; nie dodaje, nie
+ * dzieli, nie odejmuje (`admin/test/architecture.test.ts`). Ta sama podstawa liczenia,
+ * co dziennik (§4.5): operacje ZAMKNIĘTE w zakresie, bez unieważnionych i pustych.
+ */
+export interface StatsRangeDto {
+  /** Dni UTC `YYYY-MM-DD`, włącznie - po DNIU ZAMKNIĘCIA operacji. */
+  fromDay: string;
+  toDay: string;
+  /** Mianownik „Dni lotne n z m". */
+  calendarDays: number;
+  /** `true` = zakresu nie podano i serwer wybrał domyślny (ostatnie 30 dni). */
+  defaulted: boolean;
+}
+
+export interface StatsTotalsDto {
+  sessions: number;
+  /** Doby z co najmniej jedną zamkniętą operacją. */
+  activeDays: number;
+  /** LOTY (start → lądowanie) - ta sama liczba, co „Loty" w dzienniku. */
+  flights: number;
+  aircraft: number;
+  /** Ludzie, którzy latali w DOWOLNYM fotelu - liczba wierszy tabeli pilotów. */
+  pilots: number;
+  blockMs: number;
+  flightMs: number;
+  /** `null` = choć jedna operacja bez bilansu albo wiersze nieprzeliczone. */
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  /** Średnia FLOTY na godzinę blokową - wiersz „Razem"; liczy serwer. */
+  avgLitresPerBlockHour: number | null;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  /** Prawy fotel w całym zakresie - własna suma kolumny „Drugi pilot"; `null` = ani jednej. */
+  dual: { operations: number; blockMs: number } | null;
+  staleRows: number;
+  /** Operacje W TOKU z przejęciem w zakresie - celowo poza sumami, nazwane w podtytule. */
+  openSessionsInRange: number;
+  /** Operacje w toku BEZ daty przejęcia (rejestr niekompletny) - liczone zawsze. */
+  openSessionsUndated: number;
+}
+
+/** Punkt „nalot dzień po dniu" - pełny kalendarz zakresu, dzień bez lotów to prawdziwe zero. */
+export interface StatsDailyPointDto {
+  /** Dzień UTC `YYYY-MM-DD`. */
+  day: string;
+  blockMs: number;
+}
+
+export interface StatsAircraftDto {
+  aircraftId: string;
+  /** `null` = jednostki nie ma już w rejestrze floty; wiersz zostaje. */
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  avgLitresPerBlockHour: number | null;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  activeDays: number;
+  /** `activeDays / calendarDays` w %; `null` przy zerowym mianowniku. */
+  utilizationPct: number | null;
+  staleRows: number;
+}
+
+/**
+ * Wiersz pilota - ten sam kształt, co oś pilotów dziennika (§17.1 pkt 1): nalot liczy
+ * się dowódcy, czas w prawym fotelu jest osobną liczbą i NIE dodaje się do bloku.
+ */
+export interface StatsPilotDto {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  dual: { operations: number; blockMs: number } | null;
+  /** Maszyny z operacji zamkniętych, dowolny fotel. */
+  regs: string[];
+  staleRows: number;
+}
+
+export interface StatsOperationDto {
+  /** `null` = operacje bez potwierdzonego zadania. */
+  operation: OperationType | null;
+  sessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Udział bloku zadania w nalocie zakresu (%); liczy serwer. */
+  blockSharePct: number | null;
+  regs: string[];
+  staleRows: number;
+}
+
+export interface StatsReportDto {
+  /** Zegar SERWERA - kotwica szybkich filtrów dat. */
+  at: string;
+  range: StatsRangeDto;
+  totals: StatsTotalsDto;
+  daily: StatsDailyPointDto[];
+  /** Malejąco po bloku - porządek tabel. */
+  aircraft: StatsAircraftDto[];
+  pilots: StatsPilotDto[];
+  operations: StatsOperationDto[];
+}
+
+// -- analityka zużycia jednej maszyny (3.2.0, P-E) ------------------------------
+
+/**
+ * `GET /admin/api/fleet/:id/consumption` - TE pola, które czyta karta „Zużycie z lotów"
+ * w szufladzie samolotu. Model, norma i podsumowanie jadą JAKO TYPY DOMENOWE (kopia
+ * rozjechałaby się z oryginałem po cichu); panel z nich wyłącznie CZYTA - pasmo,
+ * stawki i odchyłkę od dokumentacji liczy serwer.
+ */
+export interface ConsumptionReportDto {
+  at: string;
+  aircraft: {
+    aircraftId: string;
+    reg: string;
+    mhFormat: MhFormat;
+    /** Norma z DOKUMENTACJI (issue #66) - zadeklarowana, nie zmierzona; `null` = nie wpisano. */
+    fuelNormLPerH: number | null;
+  };
+  headline: {
+    litersPerFlightHour: number | null;
+    litersPerBlockHour: number | null;
+    /** Odchyłka pomiaru od normy z dokumentacji w % normy; `null` bez jednej z liczb. */
+    vsDocumentationPct: number | null;
+  };
+  basis: {
+    /** Operacje zamknięte, które weszły do analizy. */
+    sessions: number;
+    firstDay: number | null;
+  };
+  summary: ConsumptionSummary;
+  /** `published: false` = poniżej progu publikacji - karty wtedy NIE MA wcale (issue #69). */
+  fuel: ConsumptionModel;
+  /** Ta sama norma, którą dostaje telefon; `null` razem z niepublikowanym modelem. */
+  norm: ConsumptionNorm | null;
+  mh: MhModel;
+}

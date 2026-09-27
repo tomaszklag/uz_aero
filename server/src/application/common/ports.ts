@@ -1937,6 +1937,13 @@ export interface SheetsReadPort {
   readDaySheet(orgId: string, tab: string): Promise<StoredDaySheet | null>;
   /** Klub po slugu z adresu karty; `null` = nie ma takiego klubu (albo jest wyłączony). */
   addressOf(slug: string): Promise<SheetAddress | null>;
+  /**
+   * ADRES KARTY klubu, jaki serwer wpisałby do dziennika DZIŚ (3.2.0, P-D): bieżący
+   * `PUBLIC_BASE_URL` + slug + sekret. Osobno od `sheetUrl` zapisanego w `export_log`,
+   * bo tamten niesie host z chwili wysyłki (domena zmieniła się przy issue #124).
+   * `null` = klub nieznany albo wyłączony - jego karty nie mają adresu.
+   */
+  sheetUrl(orgId: string, tab: string): Promise<string | null>;
 }
 
 /**

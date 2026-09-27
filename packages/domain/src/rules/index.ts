@@ -3,3 +3,4 @@ export * from './tolerances';
 export * from './authority';
 export * from './sessionRules';
 export * from './consistency';
+export * from './insertion';

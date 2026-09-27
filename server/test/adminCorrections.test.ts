@@ -180,6 +180,47 @@ async function exportRevisions(db: Harness['db']) {
 }
 
 /**
+ * Dzień Z LOTEM BEZ LĄDOWANIA - GPS zgubił przyziemienie, silnik stanął, samolot
+ * zdany (scenariusz makiety `dziennik-dopisanie`). Ingest nie odrzuca takiego dnia
+ * (§4.5: serwer flaguje, nie odmawia), więc to jest normalny stan rejestru, który
+ * naprawia się WYŁĄCZNIE dopisaniem.
+ */
+async function dayWithoutLanding(options: { closed?: boolean; advanceMs?: number } = {}) {
+  const harness = await testHarness();
+  const { app, clock } = harness;
+  const pic = await login(app, PIC);
+
+  const flown = DAY_EVENTS.filter((e) => e.uuid !== UUID.landing);
+  const payload = options.closed === false ? flown : [...flown, CLOSE_EVENT];
+  const res = await app.inject({
+    method: 'POST',
+    url: '/events',
+    headers: { authorization: `Bearer ${pic}` },
+    payload: { events: payload, sourceDevice: DEVICE },
+  });
+  expect(res.statusCode).toBe(200);
+
+  clock.advance(options.advanceMs ?? 2 * 24 * HOUR_MS);
+  return harness;
+}
+
+function addEvent(
+  app: Harness['app'],
+  sessionUuid: string,
+  options: { token?: string; body?: unknown; preview?: boolean },
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/admin/api/sessions/${sessionUuid}/events${options.preview === true ? '/preview' : ''}`,
+    headers: {
+      ...ADMIN_CSRF_HEADERS,
+      ...(options.token == null ? {} : { authorization: `Bearer ${options.token}` }),
+    },
+    payload: options.body ?? {},
+  });
+}
+
+/**
  * Dzień zamknięty i wyeksportowany, zegar przesunięty POZA okno korekty pilota.
  *
  * `closed: false` zostawia samolot NIEZDANY - od 2026-08-07 to już nie odmowa, tylko
@@ -935,5 +976,244 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     });
     expect(incomplete.statusCode).toBe(400);
     expect(incomplete.json()).toEqual({ error: 'bad_request' });
+  });
+});
+
+describe('dopisanie brakującego faktu (3.2.0, §5.4)', () => {
+  it('lądowanie: dopisuje fakt PIC-em sesji, domyka lot, przelicza dzień i podbija rewizję', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    // Przed dopisaniem: sześć zdarzeń (bez lądowania), lot otwarty, czas lotu zero.
+    expect(await eventRows(db)).toHaveLength(6);
+    expect(await sessionRow(db)).toMatchObject({ flightMs: 0, flightsCount: 1 });
+    expect(await exportRevisions(db)).toEqual([{ session_uuid: SESSION, revision: 1 }]);
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: {
+        event: { type: 'landing', at: at(9, 18) },
+        reason: 'Telefon stracił fixa na pasie - lądowanie 09:18 wg dziennika lotniska.',
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body).toMatchObject({
+      sessionUuid: SESSION,
+      type: 'landing',
+      at: at(9, 18),
+      state: { blockTimeMs: BLOCK_MS, flightTimeMs: FLIGHT_MS },
+      // Lot jest domknięty, więc niespójności PO dopisaniu nie ma żadnej.
+      consistency: [],
+      reexport: { exported: true, tab: '2026-06-22_SP-AXA', revision: 2 },
+    });
+    // Zdany samolot po oknie pilota - żadnej kolizji.
+    expect(body.warnings).toEqual([]);
+
+    // ── rejestr: DOPISANY fakt, oba zegary = chwila faktu, autor w `source_device` ──
+    const rows = await eventRows(db);
+    expect(rows).toHaveLength(7);
+    const added = rows.find((r) => r.uuid === body.eventUuid)!;
+    expect(added.type).toBe('landing');
+    expect(added.pic_id).toBe(PIC);
+    expect(added.source_device).toBe('admin:AKO');
+    expect(Number(added.gps_time)).toBe(at(9, 18));
+    expect(Number(added.device_time)).toBe(at(9, 18));
+    expect(added.payload).toEqual({ method: 'manual', position: null });
+
+    // ── projekcja: lot ma czas, dzień ma czas w powietrzu ─────────────────────
+    expect(await sessionRow(db)).toEqual({ blockMs: BLOCK_MS, flightMs: FLIGHT_MS, flightsCount: 1 });
+
+    // ── audyt: osobna akcja, celem DOPISANE zdarzenie ─────────────────────────
+    expect(await auditRows(db)).toMatchObject([
+      {
+        actor_pilot_id: 'AKO',
+        action: 'event.add',
+        target_type: 'event',
+        target_id: body.eventUuid,
+        details: {
+          sessionUuid: SESSION,
+          type: 'landing',
+          at: at(9, 18),
+          reason: 'Telefon stracił fixa na pasie - lądowanie 09:18 wg dziennika lotniska.',
+        },
+      },
+    ]);
+
+    // ── arkusz: klub dostaje domknięty lot ────────────────────────────────────
+    expect(await exportRevisions(db)).toEqual([
+      { session_uuid: SESSION, revision: 1 },
+      { session_uuid: SESSION, revision: 2 },
+    ]);
+
+    // ── karta operacji: fakt stoi na osi z autorem, niespójność zniknęła ──────
+    const card = (
+      await app.inject({
+        method: 'GET',
+        url: `/admin/api/sessions/${SESSION}`,
+        headers: { authorization: `Bearer ${admin}` },
+      })
+    ).json();
+    const entry = card.timeline.find((e: { event: { uuid: string } }) => e.event.uuid === body.eventUuid);
+    expect(entry).toMatchObject({ voided: false, adminCorrected: false, adminAuthorId: 'AKO' });
+    expect(card.consistency).toEqual([]);
+  });
+
+  it('podgląd: skutek przed → po i niespójności 1 → 0, bez jednego zapisu', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      preview: true,
+      body: { type: 'landing', at: at(9, 18) },
+    });
+    expect(res.statusCode).toBe(200);
+    const preview = res.json();
+    expect(preview.candidate).toMatchObject({ type: 'landing', picId: PIC, gpsTime: at(9, 18) });
+    expect(preview.before.flightTimeMs).toBe(0);
+    expect(preview.after.flightTimeMs).toBe(FLIGHT_MS);
+    expect(preview.violations).toEqual([]);
+    expect(preview.consistency.before.map((v: { code: string }) => v.code)).toEqual([
+      'FLIGHT_WITHOUT_LANDING',
+    ]);
+    expect(preview.consistency.after).toEqual([]);
+
+    // Zero skutków ubocznych: rejestr, audyt i dziennik eksportu nietknięte.
+    expect(await eventRows(db)).toHaveLength(6);
+    expect(await auditRows(db)).toEqual([]);
+    expect(await exportRevisions(db)).toEqual([{ session_uuid: SESSION, revision: 1 }]);
+  });
+
+  it('fakt oceniany w SWOJEJ chwili: lądowanie przed startem → 422 NOT_IN_FLIGHT', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'landing', at: at(8, 20) }, reason: 'próba' },
+    });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().violations.map((v: { code: string }) => v.code)).toEqual(['NOT_IN_FLIGHT']);
+    expect(await eventRows(db)).toHaveLength(6);
+    expect(await auditRows(db)).toEqual([]);
+  });
+
+  it('fakt z czasem PO zdaniu samolotu należy do następnej operacji → 422 DAY_CLOSED', async () => {
+    const { app } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: {
+        event: { type: 'refuel', at: at(17, 0), beforeL: 88, addedL: 60 },
+        reason: 'tankowanie po locie',
+      },
+    });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().violations.map((v: { code: string }) => v.code)).toEqual(['DAY_CLOSED']);
+  });
+
+  it('tankowanie: w środku biegu odbija, po wyłączeniu silnika wchodzi z policzonym stanem po', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    const inRun = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'refuel', at: at(9, 0), beforeL: 100, addedL: 40 }, reason: 'x' },
+    });
+    expect(inRun.statusCode).toBe(422);
+    expect(inRun.json().violations.map((v: { code: string }) => v.code)).toEqual([
+      'REFUEL_ENGINE_RUNNING',
+    ]);
+
+    const afterStop = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'refuel', at: at(11, 0), beforeL: 100, addedL: 40 }, reason: 'x' },
+    });
+    expect(afterStop.statusCode).toBe(200);
+    const added = (await eventRows(db)).find((r) => r.uuid === afterStop.json().eventUuid)!;
+    // Trzecią liczbę liczy serwer - formularz podaje dwie.
+    expect(added.payload).toEqual({ beforeL: 100, addedL: 40, afterL: 140, consumptionLPerH: null });
+  });
+
+  it('zrzut: skład i wysokość wchodzą do zdarzenia, numer zrzutu liczy serwer', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: {
+        event: { type: 'drop', at: at(8, 40), altitudeFt: 4000, jumpers: { tandem: 2, aff: 1, solo: 5 } },
+        reason: 'z listy skoków',
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const added = (await eventRows(db)).find((r) => r.uuid === res.json().eventUuid)!;
+    expect(added.payload).toEqual({
+      dropNumber: 1,
+      altitudeFt: 4000,
+      jumpers: { tandem: 2, aff: 1, solo: 5 },
+      client: null,
+      position: null,
+    });
+    // W locie (start 08:25, lądowania brak) - zrzut nie jest „na ziemi".
+    expect(res.json().warnings).toEqual([]);
+  });
+
+  it('operacja W TOKU: zapis przechodzi z ostrzeżeniem o kolizji z pilotem', async () => {
+    const { app } = await dayWithoutLanding({ closed: false, advanceMs: HOUR_MS });
+    const admin = await login(app, 'AKO');
+
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'landing', at: at(9, 18) }, reason: 'lot domknięty z pilotem' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().warnings.map((v: { code: string }) => v.code)).toEqual([
+      'ADMIN_EDIT_SESSION_ACTIVE',
+    ]);
+  });
+
+  it('spoza białej listy (uruchomienie silnika) → 400: koperty operacji panel nie tworzy', async () => {
+    const { app } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+    const res = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'engine_start', at: at(8, 0) }, reason: 'x' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('bez powodu → 400; podgląd powodu NIE wymaga', async () => {
+    const { app } = await dayWithoutLanding();
+    const admin = await login(app, 'AKO');
+    const noReason = await addEvent(app, SESSION, {
+      token: admin,
+      body: { event: { type: 'landing', at: at(9, 18) }, reason: '   ' },
+    });
+    expect(noReason.statusCode).toBe(400);
+
+    const preview = await addEvent(app, SESSION, {
+      token: admin,
+      preview: true,
+      body: { type: 'landing', at: at(9, 18) },
+    });
+    expect(preview.statusCode).toBe(200);
+  });
+
+  it('ta sama zdolność, co korekta: pilot → 403, bez tokenu → 401, nieznana sesja → 404', async () => {
+    const { app, db } = await dayWithoutLanding();
+    const pic = await login(app, PIC);
+    const admin = await login(app, 'AKO');
+    const body = { event: { type: 'landing', at: at(9, 18) }, reason: 'x' };
+
+    expect((await addEvent(app, SESSION, { token: pic, body })).statusCode).toBe(403);
+    expect((await addEvent(app, SESSION, { body })).statusCode).toBe(401);
+    expect((await addEvent(app, 'no-such', { token: admin, body })).statusCode).toBe(404);
+    expect(
+      (await addEvent(app, 'no-such', { token: admin, preview: true, body: body.event })).statusCode,
+    ).toBe(404);
+    expect(await eventRows(db)).toHaveLength(6);
   });
 });

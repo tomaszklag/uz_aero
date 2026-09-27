@@ -12,7 +12,7 @@
  */
 
 import type { EventsAdminPort } from '../../../application/admin/ports.ts';
-import { isAdminSourceDevice } from '../../../application/admin/sourceDevice.ts';
+import { adminAuthorOf } from '../../../application/admin/sourceDevice.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 
 export class PgAdminEventsRepo implements EventsAdminPort {
@@ -29,19 +29,23 @@ export class PgAdminEventsRepo implements EventsAdminPort {
     return row === undefined ? null : { sourceDevice: row.source_device };
   }
 
-  async adminCorrectionUuids(db: Queryable, orgId: string, sessionUuid: string): Promise<string[]> {
+  async adminAuthors(db: Queryable, orgId: string, sessionUuid: string): Promise<Map<string, string>> {
     const { rows } = await db.query<{ uuid: string; source_device: string | null }>(
       `SELECT uuid, source_device
          FROM events
         WHERE org_id = $1
-          AND session_uuid = $2
-          AND type = 'event_correction'`,
+          AND session_uuid = $2`,
       [orgId, sessionUuid],
     );
     // Rozpoznanie znacznika zostaje po stronie TypeScriptu, a nie w `LIKE 'admin:%'`:
-    // format znacznika ma jedno miejsce (`application/admin/sourceDevice.ts`), a korekt
-    // w jednym dniu lotnym są jednostki, więc filtrowanie tej garstki w pamięci nie
-    // kupuje nic drugiego zapytania ani drugiej definicji prefiksu.
-    return rows.filter((r) => isAdminSourceDevice(r.source_device)).map((r) => r.uuid);
+    // format znacznika ma jedno miejsce (`application/admin/sourceDevice.ts`), a zdarzeń
+    // jednej operacji są dziesiątki, więc filtrowanie ich w pamięci nie kupuje nic
+    // drugiego zapytania ani drugiej definicji prefiksu.
+    const authors = new Map<string, string>();
+    for (const row of rows) {
+      const author = adminAuthorOf(row.source_device);
+      if (author != null) authors.set(row.uuid, author);
+    }
+    return authors;
   }
 }

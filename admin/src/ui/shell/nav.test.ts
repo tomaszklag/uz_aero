@@ -21,7 +21,16 @@ const routes = (capabilities: readonly Capability[] | undefined, kind: 'org' | '
 
 describe('pozycje kolumny bocznej', () => {
   it('sesja KLUBU z Podglądem klubu dostaje moduły klubu i ani jednego modułu platformy', () => {
-    expect(routes(CLUB, 'org')).toEqual(['/dziennik', '/piloci', '/samoloty', '/kalendarz']);
+    // Sześć pozycji w stałej kolejności (3.2.0, §17): Dziennik · Do sprawdzenia ·
+    // Kalendarz · Statystyki · Piloci · Samoloty. Dziennik pierwszy = startowy.
+    expect(routes(CLUB, 'org')).toEqual([
+      '/dziennik',
+      '/do-sprawdzenia',
+      '/kalendarz',
+      '/statystyki',
+      '/piloci',
+      '/samoloty',
+    ]);
   });
 
   // Numer zgłoszenia zostaje w komentarzu: strażnik hexów czyta napisy testów jak kolory.

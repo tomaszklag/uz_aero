@@ -34,7 +34,7 @@ Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz 
 | godzina przejęcia | w tył to zwykła poprawka; w przód, za uruchomienie silnika, przesuwa cały bieg - ekran zapowiada to przed zapisem |
 | notatka, drugi pilot | to samo okienko, w którym powstały; drugi pilot zmienia się dla całej operacji wstecz |
 | tankowanie, dolewka oleju | przez unieważnienie i dopisanie na nowo - to trójka liczb, która musi się zgadzać |
-| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek |
+| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek. Fakt ocenia się tak, jak wyglądała operacja o jego godzinie - lądowanie musi mieć start, tankowanie stojący silnik, a godzina po zdaniu samolotu należy już do następnej operacji. Gdy godziny nie da się przyjąć, przycisk mówi dlaczego, zanim go naciśniesz |
 
 Powód korekty jest opcjonalny, ale to jedyne, z czego administrator dowie się, dlaczego liczba się zmieniła. Dowódcy nie da się zmienić w ogóle - to zdanie samolotu i nowe przejęcie, nie korekta.
 
@@ -64,7 +64,7 @@ Ekran nie przechowuje żadnych liczb - przelicza je za każdym razem z zapisu na
 
 ## Częste problemy
 
-- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Ekran jest wtedy podglądem; poprawkę zgłoś w klubie. Okienko normy i historia zmian otwierają się nadal.
+- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Ekran jest wtedy podglądem; poprawkę zgłoś w klubie - administrator naniesie ją z panelu, a Ty zobaczysz ją w historii zmian. Okienko normy i historia zmian otwierają się nadal.
 - **Poprawiłem godzinę przejęcia i przesunął się cały bieg** → tak działa przesunięcie w przód, za uruchomienie silnika: czasy trwania zostają, przesuwa się wszystko. Ekran mówi o tym przed zapisem, a bieg, który wyszedłby poza zdanie samolotu, jest odmawiany z powodem.
 - **Zniknął werdykt normy** → log ma niespójność (np. lot bez lądowania). Napraw ją - werdykt wróci sam, gdy rachunek znów będzie miał komplet danych.
 - **Chcę poprawić tankowanie** → tankowania nie zmienia się w miejscu: unieważnij wpis na osi i dopisz go jeszcze raz przez **DODAJ WPIS**, bo stan przed, dolane i stan po muszą się zgadzać.

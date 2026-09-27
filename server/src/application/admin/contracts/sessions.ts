@@ -17,9 +17,16 @@
  * więc każda taka zmiana stawałaby się zmianą łamiącą panel.
  */
 
-import type { Event, FlagType, MhFormat, OperationType, SessionState } from '@ninerdeck/domain';
+import type {
+  Event,
+  FlagType,
+  MhFormat,
+  OperationType,
+  RuleViolation,
+  SessionState,
+} from '@ninerdeck/domain';
 
-import type { AdminFlagListItem } from './flags.ts';
+import type { AdminFlagListItem, AdminOpenFlag } from './flags.ts';
 
 /** Jeden dzień lotny na liście `A02`. Czasy zdarzeń w epoch ms UTC, stemple w ISO. */
 export interface AdminSessionListItem {
@@ -111,8 +118,12 @@ export interface AdminSessionListItem {
   /** Stan oleju, z którym silnik ruszył (pomiar + dolewka) - liczy domena. */
   oilAfterL: number | null;
 
-  /** Typy OTWARTYCH flag dotyczących tej sesji - plakietka „2 flagi" w kolumnie „Stan". */
-  openFlags: FlagType[];
+  /**
+   * OTWARTE flagi tej sesji - plakietka przy operacji na poziomie 2 dziennika (3.2.0, §6:
+   * flaga opisuje operację, więc stoi przy niej, a nie wyłącznie w skrzynce). Z liczbami
+   * rozjazdu, bo wiersz podpisuje parę odczytów („przekazano 92 L"); w kolejności powstania.
+   */
+  openFlags: AdminOpenFlag[];
   /** Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. */
   exportRevision: number | null;
   /** Kiedy projekcja była ostatnio odświeżana = ostatnia przyjęta paczka tej sesji. */
@@ -128,6 +139,33 @@ export interface AdminSessionPage {
   items: AdminSessionListItem[];
   nextCursor: string | null;
   total: number;
+  /**
+   * NAGŁÓWKI DÓB nad CAŁYM wynikiem filtra (3.2.0, `docs/panel-3.2.md` §4.4) - w JEDNEJ
+   * odpowiedzi z wierszami, żeby suma i wiersze pod nią opisywały tę samą chwilę.
+   * Strona kursorowa potrafi rozciąć dobę, więc suma z wierszy strony byłaby sumą
+   * połowy doby, która wygląda poprawnie. Porządek dób = porządek listy.
+   */
+  days: AdminSessionDay[];
+}
+
+/**
+ * Jedna doba UTC (po chwili PRZEJĘCIA - tej samej osi, co kursor i zakres) z sumami
+ * operacji ZAMKNIĘTYCH: Operacje · Loty · Blok · Lot. Operacje w toku są policzone
+ * osobno i nazwane w nagłówku („· 1 w toku"); unieważnione nie liczą się nigdzie.
+ */
+export interface AdminSessionDay {
+  day: string;
+  /** Przy filtrze `pilotId` - operacje, w których pilot był DOWÓDCĄ. */
+  operations: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  inProgress: number;
+  /**
+   * Czas W PRAWYM FOTELU pilota z filtra (§17.1, wariant B) - piąta suma nagłówka,
+   * nigdy dodawana do bloku dowódcy. `null` = bez filtra pilota albo bez takiego lotu.
+   */
+  dual: { operations: number; blockMs: number } | null;
 }
 
 /**
@@ -157,6 +195,14 @@ export interface AdminTimelineEntry {
    * wtedy, gdy to pole jest `true`.
    */
   adminCorrected: boolean;
+  /**
+   * KONTO PANELU, które WPISAŁO ten wiersz (korektę, dopisany fakt, unieważnienie,
+   * zakończenie); `null` = zapis z telefonu. Osobno od `adminCorrected`, bo to inne
+   * pytanie: tamto mówi o zdarzeniu POPRAWIANYM, to o zdarzeniu ZAPISANYM. Panel
+   * podpisuje z tego wiersz osi nazwiskiem („dopisał administrator · A. Kowalski"),
+   * rozwiązując konto ze słownika klubu - identyfikator nie wychodzi na ekran.
+   */
+  adminAuthorId: string | null;
 }
 
 /**
@@ -174,4 +220,13 @@ export interface AdminSessionDetail {
   timeline: AdminTimelineEntry[];
   /** Flagi sesji RAZEM z rozwiązanymi - inaczej historia decyzji znikałaby z karty. */
   flags: AdminFlagListItem[];
+  /**
+   * NIESPÓJNOŚCI LOGU (3.2.0, plaster P-C; decyzja właściciela 2026-09-26): wynik
+   * `rules/consistency.ts` na całym strumieniu - lot bez lądowania, zdarzenie poza
+   * biegiem silnika, zrzut na ziemi, cofnięty licznik. TE SAME zdania, które pilot
+   * czyta na 10D; `details.uuid` adresuje wiersz osi, którego dotyczą. Liczy serwer,
+   * bo panelowi wolno brać z domeny wyłącznie typy - trzeciego imiennego wyjątku
+   * od tej reguły nie ma. Wszystkie miękkie: opisują rejestr, nie kandydata.
+   */
+  consistency: RuleViolation[];
 }

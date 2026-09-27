@@ -31,7 +31,7 @@
     <span class="vp-badge">L1b</span>
     <span class="vp-body">
       <span class="vp-name">Ta sama doba, oś PILOTÓW</span>
-      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot). Także ci, którzy nie latali. Adres: <code>?os=piloci</code>.</span>
+      <span class="vp-when">Ten sam zakres dat, to samo pytanie „co się wydarzyło" zadane o ludzi: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) i kolumną „Drugi pilot" z własną sumą. Członkowie bez lotów zwinięci w jeden wiersz pod listą. Adres: <code>?os=piloci</code>.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-maszyna.html">
@@ -45,7 +45,7 @@
     <span class="vp-badge">L2b</span>
     <span class="vp-body">
       <span class="vp-name">Operacje jednego pilota - dobami</span>
-      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot są WIDOCZNE, ale przygaszone i poza sumami.</span>
+      <span class="vp-when">Po kliknięciu w wiersz osi pilotów: <code>#/dziennik/pilot/AKO</code>. Ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot to zwykłe wiersze z plakietką i piątą sumą doby, poza nalotem dowódcy.</span>
     </span>
   </a>
   <a class="vp-item" href="dziennik-operacja.html">
@@ -182,8 +182,9 @@
       <!-- ══ NIESPÓJNOŚCI - NAD OSIĄ, BO WYMAGAJĄ CZYNNOŚCI ══
            Ten sam baner, który telefon rysuje na 10D: nazywa FAKT i mówi, czym się go
            naprawia. Liczy je domena na CAŁYM strumieniu (`rules/consistency.ts`)
-           i przysyła serwer razem z operacją - cienki plaster P-C, bo panelowi wolno
-           brać z domeny wyłącznie typy. Wiersz osi, którego to dotyczy, ma bursztynowe
+           i przysyła SERWER razem z operacją (`consistency` w odpowiedzi o operacji -
+           cienki plaster P-C; decyzja właściciela 2026-09-26: administrator widzi TE
+           SAME zdania, co pilot na 10D, bo panelowi wolno brać z domeny wyłącznie typy). Wiersz osi, którego to dotyczy, ma bursztynowe
            tło i podpis: baner mówi „jest problem", wiersz mówi „ten". -->
       <div class="banner warn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>

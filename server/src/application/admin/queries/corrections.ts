@@ -33,17 +33,26 @@
 import {
   applyCorrections,
   projectSession,
+  sessionInconsistencies,
   type AircraftLimits,
   type Event,
   type EventCorrectionPayload,
 } from '@ninerdeck/domain';
 
 import {
+  addedEventCandidate,
   correctionCandidate,
   correctionViolations,
   correctionWarnings,
+  insertionViolations,
+  insertionWarnings,
+  type AddedEventInput,
 } from '../correctionCandidate.ts';
-import type { AdminCorrectionPreview, AdminCorrectionTarget } from '../contracts/corrections.ts';
+import type {
+  AdminAddEventPreview,
+  AdminCorrectionPreview,
+  AdminCorrectionTarget,
+} from '../contracts/corrections.ts';
 import type {
   AircraftConfigPort,
   Clock,
@@ -71,6 +80,16 @@ export interface CorrectionPreviewInput {
  */
 export type CorrectionPreviewOutcome =
   | { ok: true; preview: AdminCorrectionPreview }
+  | { ok: false; reason: 'session_not_found' };
+
+/** Wejście podglądu DOPISANIA (3.2.0, §5.4): sam fakt, bez `reason` - jak przy korekcie. */
+export interface AddEventPreviewInput {
+  sessionUuid: string;
+  event: AddedEventInput;
+}
+
+export type AddEventPreviewOutcome =
+  | { ok: true; preview: AdminAddEventPreview }
   | { ok: false; reason: 'session_not_found' };
 
 /**
@@ -128,6 +147,44 @@ export class AdminCorrectionQueries {
         after: projectSession([...stream, candidate]),
         violations: correctionViolations(before, candidate, limits),
         warnings: correctionWarnings(before, candidate, limits),
+      },
+    };
+  }
+
+  /**
+   * PODGLĄD DOPISANIA FAKTU - ta sama zasada, co wyżej: zero zapisów, ta sama ocena,
+   * co komenda (`insertionViolations` na stanie z chwili faktu). Do tego niespójności
+   * PRZED i PO, bo makieta odpowiada nimi na baner nad osią („Niespójności 1 → 0").
+   * Kandydat jedzie w odpowiedzi w całości - panel opisuje go kodem wiersza osi.
+   */
+  async previewAdd(orgId: string, input: AddEventPreviewInput): Promise<AddEventPreviewOutcome> {
+    const stream = await this.events.sessionEvents(this.db, orgId, input.sessionUuid);
+    if (stream.length === 0) return { ok: false, reason: 'session_not_found' };
+
+    const before = projectSession(stream);
+    const candidate = addedEventCandidate(before, stream, input.event, PREVIEW_UUID);
+    const limits: AircraftLimits = {
+      capacityL: await this.aircraft.capacityL(this.db, orgId, candidate.aircraftId),
+      oilMinL: null,
+      oilCapacityL: null,
+    };
+    const now = this.clock.now();
+    const withCandidate = [...stream, candidate];
+    const after = projectSession(withCandidate);
+
+    return {
+      ok: true,
+      preview: {
+        sessionUuid: input.sessionUuid,
+        candidate,
+        before,
+        after,
+        violations: insertionViolations(stream, candidate, limits, now),
+        warnings: insertionWarnings(stream, candidate, limits, now),
+        consistency: {
+          before: sessionInconsistencies(before, stream, limits),
+          after: sessionInconsistencies(after, withCandidate, limits),
+        },
       },
     };
   }

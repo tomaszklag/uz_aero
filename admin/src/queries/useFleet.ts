@@ -7,12 +7,13 @@
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
-import type { AircraftToleranceDto, FleetPageDto } from '../api/dto';
+import type { AircraftToleranceDto, ConsumptionReportDto, FleetPageDto } from '../api/dto';
 import {
   createAircraft,
   deleteAircraft,
   getFuelTolerance,
   listFleet,
+  loadConsumption,
   recordReading,
   updateAircraft,
   type CreateAircraftBody,
@@ -99,5 +100,20 @@ export function useRecordReading() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: RecordReadingBody }) => recordReading(id, body),
     onSuccess: () => invalidateFleet(qc),
+  });
+}
+
+/**
+ * Analityka zużycia JEDNEJ maszyny (3.2.0, P-E) - pyta się dopiero, gdy szuflada
+ * pokazuje istniejącą jednostkę (`null` = nowy samolot albo lista jeszcze nie przyszła).
+ * Minuta świeżości: raport liczy się z całego okna rejestru, a otwarcie i zamknięcie
+ * tej samej szuflady dwa razy pod rząd nie ma go liczyć na nowo.
+ */
+export function useConsumption(aircraftId: string | null) {
+  return useQuery<ConsumptionReportDto>({
+    queryKey: keys.fleet.consumption(aircraftId ?? ''),
+    queryFn: () => loadConsumption(aircraftId as string),
+    enabled: aircraftId != null && aircraftId !== '',
+    staleTime: 60_000,
   });
 }

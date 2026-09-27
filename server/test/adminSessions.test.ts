@@ -377,7 +377,35 @@ describe('karta dnia (A02a)', () => {
       'day_close',
     ]);
     expect(body.timeline.every((e: { voided: boolean }) => !e.voided)).toBe(true);
+    // Zapisy z telefonu nie mają autora z panelu.
+    expect(body.timeline.every((e: { adminAuthorId: string | null }) => e.adminAuthorId === null)).toBe(
+      true,
+    );
     expect(body.flags).toEqual([]);
+    // Dzień spójny: lista niespójności jest pusta, nie nieobecna.
+    expect(body.consistency).toEqual([]);
+  });
+
+  it('`consistency` niesie TE SAME zdania, które pilot czyta na 10D, z adresem wiersza', async () => {
+    // Lot bez lądowania (GPS zgubił przyziemienie): ingest przyjmuje, karta ma to nazwać.
+    const { app, admin } = await threeDays();
+    const day = flyingDay({ sessionUuid: 'sess-9', picId: 'AKO', dayOffset: 5, mh: 1300 }).filter(
+      (e) => e.type !== 'landing',
+    );
+    const res = await post(app, admin, day);
+    expect(res.statusCode).toBe(200);
+
+    const card = (
+      await app.inject({
+        method: 'GET',
+        url: '/admin/api/sessions/sess-9',
+        headers: { authorization: `Bearer ${admin}` },
+      })
+    ).json();
+    const takeoff = card.state.flights[0].takeoffUuid;
+    expect(card.consistency).toMatchObject([
+      { code: 'FLIGHT_WITHOUT_LANDING', severity: 'warning', details: { uuid: takeoff, flight: 1 } },
+    ]);
   });
 
   it('oś jest CHRONOLOGICZNA także wtedy, gdy uuidy sortują się odwrotnie', async () => {
@@ -575,9 +603,10 @@ describe('karta dnia (A02a)', () => {
     expect(byPilot.statusCode).toBe(200);
 
     const timeline = (await card()).timeline as {
-      event: { uuid: string };
+      event: { uuid: string; type: string };
       voided: boolean;
       adminCorrected: boolean;
+      adminAuthorId: string | null;
     }[];
     const find = (uuid: string) => timeline.find((e) => e.event.uuid === uuid)!;
 
@@ -586,6 +615,11 @@ describe('karta dnia (A02a)', () => {
     // …a ślad w dzienniku ma tylko jedno z nich.
     expect(find(flight.takeoffUuid).adminCorrected).toBe(true);
     expect(find(flight.landingUuid).adminCorrected).toBe(false);
+
+    // Sama KOREKTA (wiersz osi) niesie autora: ta z panelu konto, ta z telefonu `null`.
+    const corrections = timeline.filter((e) => e.event.type === 'event_correction');
+    expect(corrections.map((e) => e.adminAuthorId)).toEqual(['AKO', null]);
+    expect(find(flight.takeoffUuid).adminAuthorId).toBeNull();
 
     // Kontrola: w `admin_audit` jest DOKŁADNIE jeden wpis `event.correct` i wskazuje
     // na zdarzenie poprawione przez panel. To jest ta sama lista, którą po kliknięciu
@@ -619,7 +653,10 @@ describe('karta dnia (A02a)', () => {
       'sess-1',
       'sess-2',
     ]);
-    expect(flagged.items[0].openFlags).toEqual(['aircraft_overlap']);
+    // Flaga przy wierszu niesie identyfikator (link do sprawy) i liczby rozjazdu (P-D).
+    expect(flagged.items[0].openFlags).toEqual([
+      { id: rows[0]!.id, type: 'aircraft_overlap', details: { openSessions: 2 } },
+    ]);
 
     await app.inject({
       method: 'POST',
@@ -655,5 +692,78 @@ describe('karta dnia (A02a)', () => {
       headers: { authorization: `Bearer ${admin}` },
     });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+/**
+ * NAGŁÓWKI DÓB (3.2.0, `docs/panel-3.2.md` §4.4): sumy jadą w TEJ SAMEJ odpowiedzi
+ * co wiersze i liczą się nad CAŁYM wynikiem filtra, nie nad stroną - strona
+ * kursorowa potrafi rozciąć dobę, a suma połowy doby wygląda poprawnie.
+ */
+describe('nagłówki dób w odpowiedzi listy', () => {
+  const BLOCK_MS = (2 * 60 + 22) * 60_000;
+  const FLIGHT_MS = 53 * 60_000;
+
+  it('suma doby obejmuje CAŁĄ dobę, także tę rozciętą stroną', async () => {
+    const { app } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const krz = await login(app, 'KRZ');
+    // Trzy zamknięte operacje jednej doby na trzech maszynach + jedna W TOKU dobę później.
+    expect((await post(app, ako, flyingDay({ sessionUuid: 'd-1', picId: 'AKO' }))).statusCode).toBe(200);
+    expect((await post(app, krz, flyingDay({ sessionUuid: 'd-2', picId: 'KRZ', aircraftId: 'SP-FGK' }))).statusCode).toBe(200);
+    expect((await post(app, krz, flyingDay({ sessionUuid: 'd-3', picId: 'KRZ', aircraftId: 'SP-ANK', dualId: 'AKO' }))).statusCode).toBe(200);
+    expect((await post(app, ako, flyingDay({ sessionUuid: 'd-4', picId: 'AKO', dayOffset: 1, close: false }))).statusCode).toBe(200);
+
+    const page = (await list(app, ako, '?from=2026-06-22&to=2026-06-23&limit=2')).json();
+    // Strona ma DWA wiersze (najnowszy to operacja w toku z doby 23), a nagłówki mówią
+    // prawdę o obu dobach w całości - także o dobie 22, z której na stronie stoi
+    // jeden wiersz z trzech.
+    expect(page.items).toHaveLength(2);
+    expect(page.nextCursor).not.toBeNull();
+    expect(page.days).toEqual([
+      { day: '2026-06-23', operations: 0, flights: 0, blockMs: 0, flightMs: 0, inProgress: 1, dual: null },
+      { day: '2026-06-22', operations: 3, flights: 3, blockMs: 3 * BLOCK_MS, flightMs: 3 * FLIGHT_MS, inProgress: 0, dual: null },
+    ]);
+  });
+
+  it('z filtrem pilota: sumy DOWÓDCY i osobna suma prawego fotela', async () => {
+    const { app } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const bno = await login(app, 'BNO');
+    // AKO dowódcą z BNO w prawym fotelu; BNO dowódcą na drugiej maszynie tej samej doby.
+    await post(app, ako, flyingDay({ sessionUuid: 'd-5', picId: 'AKO', dualId: 'BNO' }));
+    await post(app, bno, flyingDay({ sessionUuid: 'd-6', picId: 'BNO', aircraftId: 'SP-FGK' }));
+
+    // Lista BNO niesie OBA wiersze (dzień szkolny należy do obu), ale suma dowódcy
+    // liczy jeden, a lot w prawym fotelu stoi w piątej sumie - nigdy dodany do bloku.
+    const asBno = (await list(app, ako, '?from=2026-06-22&to=2026-06-22&pilotId=BNO')).json();
+    expect(asBno.items).toHaveLength(2);
+    expect(asBno.days).toEqual([
+      { day: '2026-06-22', operations: 1, flights: 1, blockMs: BLOCK_MS, flightMs: FLIGHT_MS, inProgress: 0, dual: { operations: 1, blockMs: BLOCK_MS } },
+    ]);
+
+    // Instruktor: bez lotu w prawym fotelu piąta suma jest `null`, nie parą zer.
+    const asAko = (await list(app, ako, '?from=2026-06-22&to=2026-06-22&pilotId=AKO')).json();
+    expect(asAko.days[0]).toMatchObject({ operations: 1, dual: null });
+  });
+
+  it('operacja unieważniona zostaje na liście, ale nie wchodzi do sum doby', async () => {
+    const { app } = await testHarness();
+    const ako = await login(app, 'AKO');
+    await post(app, ako, flyingDay({ sessionUuid: 'd-7', picId: 'AKO' }));
+    await post(app, ako, flyingDay({ sessionUuid: 'd-8', picId: 'AKO', aircraftId: 'SP-FGK' }));
+    const voided = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/d-8/void',
+      headers: { authorization: `Bearer ${ako}`, ...ADMIN_CSRF_HEADERS },
+      payload: { reason: 'wpis testowy' },
+    });
+    expect(voided.statusCode, voided.body).toBe(200);
+
+    const page = (await list(app, ako, '?from=2026-06-22&to=2026-06-22')).json();
+    expect(page.items.map((i: { status: string }) => i.status).sort()).toEqual(['closed', 'voided']);
+    expect(page.days).toEqual([
+      { day: '2026-06-22', operations: 1, flights: 1, blockMs: BLOCK_MS, flightMs: FLIGHT_MS, inProgress: 0, dual: null },
+    ]);
   });
 });

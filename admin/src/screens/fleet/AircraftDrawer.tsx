@@ -54,6 +54,7 @@ import {
   fleetRefusalMessage,
 } from './aircraftRefusal';
 import { AircraftReadingsCard } from './AircraftReadingsCard';
+import { ConsumptionCard } from './ConsumptionCard';
 import { currentStateLocked, currentStateView } from './currentState';
 import { mhFormatExample, mhFormatLabel, MH_FORMAT_ORDER } from './fleetRows';
 
@@ -440,6 +441,12 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
           </Field>
         )}
       </Card>
+
+      {/* ZUŻYCIE Z LOTÓW (3.2.0, P-E; `docs/panel-3.2.md` §8): analityka jest własnością
+          MASZYNY, więc stoi tu, obok norm z dokumentacji i stanu bieżącego - nie w kolumnie
+          panelu. Bez opublikowanego modelu karty NIE MA wcale (issue #69): komponent sam
+          rozstrzyga, czy ma co pokazać. */}
+      {aircraft == null ? null : <ConsumptionCard aircraftId={aircraft.id} />}
 
       {/* POPRAWA ODCZYTÓW (issue #81) - osobna akcja, gdy maszynę prowadzi już dziennik
           (pola „Aktualny stan" są wtedy do odczytu). Dopóki jedynym źródłem jest wpis

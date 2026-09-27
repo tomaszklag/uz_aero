@@ -17,6 +17,7 @@ const session: SessionListItemDto = {
   picId: 'p-1',
   picCode: 'AKO',
   picName: 'Adam Kowalski',
+  dualId: null,
   dualCode: null,
   dualName: null,
   status: 'closed',
@@ -44,6 +45,8 @@ const session: SessionListItemDto = {
   oilAddedL: 1,
   oilAfterL: 11.2,
   manualEntry: false,
+  exportRevision: null,
+  openFlags: [],
   updatedAt: '2026-08-12T16:45:00.000Z',
 };
 

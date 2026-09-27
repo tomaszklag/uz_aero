@@ -18,15 +18,23 @@
 
 import { Navigate, Outlet } from 'react-router-dom';
 
+import { useAttention } from '../queries/useAttention';
 import { useLogout } from '../queries/useSession';
 import { Loadable } from '../ui/components';
 import { AppShell } from '../ui/shell/AppShell';
+import { kindOf } from '../ui/shell/nav';
 import { shellScope } from '../ui/shell/scope';
+import { can } from './can';
 import { useSessionState } from './sessionContext';
 
 export function ShellRoute() {
   const { session, loading } = useSessionState();
   const logout = useLogout();
+  // Liczba „Do sprawdzenia" w kolumnie (3.2.0, P-D) - pyta się WYŁĄCZNIE sesja klubu
+  // z „Podglądem klubu": dla innych odpowiedź byłaby 403, czyli baner w ramie, w której
+  // nic złego się nie stało. Hook stoi tu, bo rama (`ui/`) nie zna zapytań.
+  const counted = session != null && kindOf(session) === 'org' && can(session.capabilities, 'panel.access');
+  const attention = useAttention(counted);
 
   if (loading) {
     return (
@@ -50,6 +58,7 @@ export function ShellRoute() {
       who={session.pilot.name}
       scope={shellScope(session)}
       capabilities={session.capabilities}
+      attentionCount={counted ? (attention.data?.counts.attention ?? null) : null}
       onLogout={() => logout.mutate()}
       logoutPending={logout.isPending}
     >

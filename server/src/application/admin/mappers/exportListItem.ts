@@ -20,6 +20,8 @@
  * Kolejność sprawdzeń niżej jest treścią, nie stylem, i jest opisana przy każdym kroku.
  */
 
+import { operationSignature } from '@ninerdeck/domain';
+
 import { sheetDay, sheetTabName } from '../../common/export/daySheetContent.ts';
 import type { AdminExportListItem, ExportState } from '../contracts/exports.ts';
 import type { AdminExportJoin } from '../ports.ts';
@@ -64,9 +66,18 @@ export function exportListItem(join: AdminExportJoin): AdminExportListItem {
 
   return {
     sessionUuid: join.sessionUuid,
+    // Sygnaturę SKŁADA domena z faktów zapytania (issue #68) - jak `sessionListItem`;
+    // napis zszyty tutaj byłby drugą konwencją nazw jednego lotu.
+    signature: operationSignature({
+      reg: join.reg,
+      startedAt: join.signatureAt,
+      picCode: join.picCode,
+      index: join.dayIndex,
+    }),
     tab,
     day: join.claimedAt == null ? null : sheetDay(join.claimedAt),
     claimedAt: join.claimedAt,
+    closeTime: join.closeTime,
 
     aircraftId: join.aircraftId,
     reg: join.reg,

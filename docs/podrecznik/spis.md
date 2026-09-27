@@ -65,6 +65,9 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 - panel-piloci
 - panel-samoloty
 - panel-dziennik
+- panel-do-sprawdzenia
+- panel-kalendarz
+- panel-statystyki
 
 ## Pomoc
 - czeste-pytania

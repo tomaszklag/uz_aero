@@ -23,11 +23,16 @@ import { HomeRedirect } from './auth/HomeRedirect';
 import { RequireCapability } from './auth/RequireCapability';
 import { ShellRoute } from './auth/ShellRoute';
 import { AccountsScreen } from './screens/accounts/AccountsScreen';
+import { AttentionScreen } from './screens/attention/AttentionScreen';
+import { ExportsScreen } from './screens/attention/ExportsScreen';
+import { FlagsScreen } from './screens/attention/FlagsScreen';
 import { BugsScreen } from './screens/bugs/BugsScreen';
 import { ScopePickScreen } from './screens/clubs/ScopePickScreen';
 import { AircraftLogScreen } from './screens/logbook/AircraftLogScreen';
 import { LogbookScreen } from './screens/logbook/LogbookScreen';
+import { PilotLogScreen } from './screens/logbook/PilotLogScreen';
 import { SessionScreen } from './screens/logbook/SessionScreen';
+import { StatsScreen } from './screens/stats/StatsScreen';
 import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
 import { DecisionQueueScreen } from './screens/calendar/DecisionQueueScreen';
@@ -74,6 +79,19 @@ export const router = createHashRouter([
           </RequireCapability>
         ),
       },
+      // OŚ PILOTA (3.2.0, `docs/panel-3.2.md` §4.2): segment STATYCZNY `pilot/` wygrywa
+      // w routerze z `:reg`, a „pilot" nigdy nie będzie znakiem rejestracyjnym - router
+      // nie zgaduje po kształcie napisu. W adresie stoi KOD pilota: jedyny w klubie
+      // i do wklejenia w rozmowie, jak rejestracja. Operacja z tej osi prowadzi do
+      // istniejącego `dziennik/:reg/:uuid`, bo operacja ma dokładnie jedną maszynę.
+      {
+        path: 'dziennik/pilot/:code',
+        element: (
+          <RequireCapability access="panel.access">
+            <PilotLogScreen />
+          </RequireCapability>
+        ),
+      },
       {
         path: 'dziennik/:reg',
         element: (
@@ -87,6 +105,57 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="panel.access">
             <SessionScreen />
+          </RequireCapability>
+        ),
+      },
+      // TRYB EDYCJI operacji (3.2.0, §5.3) - stan tego samego ekranu pod własnym adresem,
+      // za zdolnością do pisania w cudzym rejestrze: adres wklejony komuś bez niej rysuje
+      // ekran „Brak dostępu", a nie oś z ołówkami, które odbiją się o serwer.
+      {
+        path: 'dziennik/:reg/:uuid/edycja',
+        element: (
+          <RequireCapability access="events.correct">
+            <SessionScreen editing />
+          </RequireCapability>
+        ),
+      },
+
+      // „DO SPRAWDZENIA" (3.2.0, P-D): trzy ekrany jednego pytania - lista spraw, skrzynka
+      // rozjazdów (sprawa w szufladzie pod własnym adresem) i karty dnia (karta w szufladzie
+      // pod własnym adresem, zakres dat w adresie jak w dzienniku). Wszystkie na „Podglądzie
+      // klubu": to te same dane, które czyta dziennik, oglądane od strony „co wisi".
+      {
+        path: 'do-sprawdzenia',
+        element: (
+          <RequireCapability access="panel.access">
+            <AttentionScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'do-sprawdzenia/rozjazdy/:id?',
+        element: (
+          <RequireCapability access="panel.access">
+            <FlagsScreen />
+          </RequireCapability>
+        ),
+      },
+      {
+        path: 'do-sprawdzenia/karty/:uuid?',
+        element: (
+          <RequireCapability access="panel.access">
+            <ExportsScreen />
+          </RequireCapability>
+        ),
+      },
+
+      // STATYSTYKI (3.2.0, P-E): jeden ekran, zakres dat w adresie jak w dzienniku, bez
+      // podstron - analityka zużycia mieszka w karcie samolotu, nie tutaj (§8).
+      {
+        path: 'statystyki',
+        element: (
+          <RequireCapability access="panel.access">
+            <StatsScreen />
           </RequireCapability>
         ),
       },

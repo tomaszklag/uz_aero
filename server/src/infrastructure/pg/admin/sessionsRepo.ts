@@ -22,10 +22,12 @@
  * może, bo ingest widzi JEDNĄ operację, a numer zależy od pozostałych operacji doby.
  */
 
-import { isFlagType, type FlagType, type MhFormat } from '@ninerdeck/domain';
+import { isFlagType, type MhFormat } from '@ninerdeck/domain';
 
 import type { Queryable } from '../../../application/common/ports.ts';
+import type { AdminOpenFlag } from '../../../application/admin/contracts/flags.ts';
 import type {
+  AdminSessionDayAggregate,
   AdminSessionJoin,
   SessionListFilter,
   SessionsAdminPort,
@@ -40,10 +42,43 @@ import {
 } from '../keyset.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 import { SqlFilter } from '../sqlFilter.ts';
-import { anchorSql, emptySessionSql } from '../substanceSql.ts';
+import { anchorSql, dayIndexSql, emptySessionSql } from '../substanceSql.ts';
 
 /** Klucz porządku listy dni. `claim_time` jest NULL-owalne - stąd `NULLS LAST` i kursor. */
 const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
+
+/** Doba UTC w ms - dzielnik numeru doby w sumach dób (`claim_time / 86400000`). */
+const DAY_MS = 86_400_000;
+
+interface DayDbRow {
+  day_index: string;
+  operations: string;
+  flights: string | null;
+  block_ms: string | null;
+  flight_ms: string | null;
+  in_progress: string;
+  dual_operations: string | null;
+  dual_block_ms: string | null;
+}
+
+const int = (v: string | null | undefined): number => (v == null ? 0 : Number(v));
+
+const toDay = (r: DayDbRow, withDual: boolean): AdminSessionDayAggregate => {
+  const dualOperations = int(r.dual_operations);
+  return {
+    // Numer doby (`BIGINT` → tekst) z powrotem na dzień UTC - tak samo, jak robi to
+    // warstwa aplikacji przy szeregu dziennym statystyk.
+    day: new Date(Number(r.day_index) * DAY_MS).toISOString().slice(0, 10),
+    operations: int(r.operations),
+    flights: int(r.flights),
+    blockMs: int(r.block_ms),
+    flightMs: int(r.flight_ms),
+    inProgress: int(r.in_progress),
+    // Piąta suma nie rysuje się z zera (§17.1): bez filtra pilota i bez lotu w prawym
+    // fotelu pole jest `null`, nie parą zer.
+    dual: withDual && dualOperations > 0 ? { operations: dualOperations, blockMs: int(r.dual_block_ms) } : null,
+  };
+};
 
 /**
  * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny -
@@ -69,7 +104,7 @@ interface JoinedDbRow extends SessionDbRow {
   pic_name: string | null;
   dual_code: string | null;
   dual_name: string | null;
-  open_flags: string[] | null;
+  open_flags: { id: number; type: string; details: Record<string, unknown> }[] | null;
   export_revision: number | null;
 }
 
@@ -93,24 +128,9 @@ const SELECT = `
          -- (issue #75: uruchomienie silnika, a bez biegu - przejęcie zapisu zdanego
          -- z treścią; wyrażenie w substanceSql.ts, lustro operationAnchor). Doba
          -- i kolejność biorą się z kotwicy. Remis rozstrzyga session_uuid -
-         -- w domenie z tego samego powodu, czyli dla determinizmu.
-         --
-         -- Warunek dotyczy TEŻ WIERSZA PYTANEGO, nie tylko liczonych: bez części
-         -- o statusie operacja unieważniona dostawała numer równy liczbie ważnych
-         -- operacji przed nią - czyli NUMER SWOJEJ POPRZEDNICZKI. Dwie operacje
-         -- o jednej sygnaturze to dokładna odwrotność tego, po co ona jest.
-         CASE WHEN ${anchorSql('s')} IS NULL OR s.status = 'voided' THEN NULL ELSE (
-           SELECT COUNT(*)
-             FROM sessions x
-            WHERE x.pic_id = s.pic_id
-              -- Numer jest jednoznaczny W KLUBIE (wielofirmowość §3.6): ten sam pilot
-              -- w dwóch klubach jednej doby ma dwa niezależne numerowania.
-              AND x.org_id = s.org_id
-              AND x.status <> 'voided'
-              AND ${anchorSql('x')} IS NOT NULL
-              AND ${anchorSql('x')} / 86400000 = ${anchorSql('s')} / 86400000
-              AND (${anchorSql('x')}, x.session_uuid) <= (${anchorSql('s')}, s.session_uuid)
-         ) END                AS day_index,
+         -- w domenie z tego samego powodu, czyli dla determinizmu. Wyrażenie stoi
+         -- w substanceSql.ts (dayIndexSql), bo od 3.2.0 pisze je też monitor kart dnia.
+         ${dayIndexSql('s')}  AS day_index,
          -- Kotwica numeracji - z niej mapper bierze DOBĘ sygnatury. Liczona TYM SAMYM
          -- wyrażeniem, co ranga wyżej, żeby mapper nie odtwarzał reguły po swojemu.
          ${anchorSql('s')}    AS signature_at,
@@ -128,7 +148,11 @@ const SELECT = `
          -- ale wtedy izolacja klubów wisi na globalnej jedyności identyfikatora
          -- nadawanego przez TELEFON. Jawny predykat kosztuje jedną linijkę i nie
          -- zależy od tego, kto nadaje uuidy.
-         (SELECT array_agg(f.type ORDER BY f.id)
+         -- OTWARTE FLAGI z liczbami rozjazdu (3.2.0, P-D): wiersz poziomu 2 stawia
+         -- plakietkę z polską nazwą i podpis („przekazano 92 L"), więc sam typ nie
+         -- wystarcza - jedzie identyfikator (link do sprawy) i liczby z ingestu (details).
+         (SELECT jsonb_agg(jsonb_build_object('id', f.id, 'type', f.type, 'details', f.details)
+                           ORDER BY f.id)
             FROM flags f
            WHERE f.org_id = s.org_id
              AND f.status = 'open'
@@ -147,16 +171,18 @@ const SELECT = `
 const toMhFormat = (value: string | null): MhFormat | null =>
   value === 'decimal' || value === 'hhmm' ? value : null;
 
-const toFlagTypes = (values: string[] | null): FlagType[] => {
+const toOpenFlags = (
+  values: { id: number; type: string; details: Record<string, unknown> }[] | null,
+): AdminOpenFlag[] => {
   if (values == null) return [];
   // Ten sam strażnik i to samo uzasadnienie, co w adapterach flag: od wprowadzenia `flags_type_known`
   // pilnuje tego `CHECK`, więc wartość spoza katalogu znaczy ręczną ingerencję -
   // a ciche pominięcie flagi byłoby najgorszą z opcji, bo flaga istnieje po to,
   // żeby być widoczna.
-  for (const value of values) {
-    if (!isFlagType(value)) throw new Error(`Nieznany typ flagi w bazie: ${value}`);
-  }
-  return values as FlagType[];
+  return values.map((value) => {
+    if (!isFlagType(value.type)) throw new Error(`Nieznany typ flagi w bazie: ${value.type}`);
+    return { id: value.id, type: value.type, details: value.details };
+  });
 };
 
 const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
@@ -171,7 +197,7 @@ const toJoin = (r: JoinedDbRow): AdminSessionJoin => ({
   picName: r.pic_name,
   dualCode: r.dual_code,
   dualName: r.dual_name,
-  openFlags: toFlagTypes(r.open_flags),
+  openFlags: toOpenFlags(r.open_flags),
   exportRevision: r.export_revision,
   updatedAt: new Date(r.updated_at),
 });
@@ -181,7 +207,12 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     db: Queryable,
     orgId: string,
     filter: SessionListFilter,
-  ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null> {
+  ): Promise<{
+    items: AdminSessionJoin[];
+    nextCursor: string | null;
+    total: number;
+    days: AdminSessionDayAggregate[];
+  } | null> {
     const shape = shapeOf(filter.direction);
     const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
@@ -222,7 +253,57 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
       conditions.params(),
     );
 
-    return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0) };
+    const days = await this.days(db, orgId, filter);
+
+    return { items, nextCursor, total: Number(counted.rows[0]?.n ?? 0), days };
+  }
+
+  /**
+   * SUMY DÓB nad CAŁYM wynikiem filtra (3.2.0, §4.4) - bez kursora, bo strona potrafi
+   * rozciąć dobę, a suma połowy doby wyglądałaby poprawnie. Te same warunki, co
+   * licznik `total`, plus wymóg daty: operacja bez przejęcia nie ma doby i nie ma
+   * czego sumować (na liście jest, w nagłówku doby nie).
+   *
+   * Z filtrem pilota sumy dowódcy liczą wyłącznie operacje, w których pilot BYŁ
+   * dowódcą (filtr listy dopasowuje też Duala - tamte wiersze są na liście, ale
+   * w OSOBNEJ sumie prawego fotela). Agregaty kolumn projekcji, ani jednej nowej liczby.
+   */
+  private async days(
+    db: Queryable,
+    orgId: string,
+    f: SessionListFilter,
+  ): Promise<AdminSessionDayAggregate[]> {
+    const days = new SqlFilter();
+    days.add('s.org_id = ?', orgId);
+    this.applyFilters(days, f);
+    days.add('s.claim_time IS NOT NULL');
+    const dayMs = days.bind(DAY_MS);
+    const pic = f.pilotId === undefined ? null : days.bind(f.pilotId);
+    const closed = pic == null ? `s.status = 'closed'` : `s.status = 'closed' AND s.pic_id = ${pic}`;
+    const asDual =
+      pic == null ? null : `s.status = 'closed' AND s.dual_id = ${pic} AND s.pic_id <> ${pic}`;
+
+    const { rows } = await db.query<DayDbRow>(
+      `SELECT s.claim_time / ${dayMs}                                    AS day_index,
+              COUNT(*) FILTER (WHERE ${closed})                           AS operations,
+              SUM(s.flights_count) FILTER (WHERE ${closed})               AS flights,
+              SUM(s.block_ms) FILTER (WHERE ${closed})                    AS block_ms,
+              SUM(s.flight_ms) FILTER (WHERE ${closed})                   AS flight_ms,
+              COUNT(*) FILTER (WHERE s.status = 'active')                 AS in_progress,
+              ${
+                asDual == null
+                  ? 'NULL AS dual_operations, NULL AS dual_block_ms'
+                  : `COUNT(*) FILTER (WHERE ${asDual})          AS dual_operations,
+                     SUM(s.block_ms) FILTER (WHERE ${asDual})   AS dual_block_ms`
+              }
+         FROM sessions s
+         ${days.where()}
+        GROUP BY 1
+        ORDER BY 1 ${f.direction === 'asc' ? 'ASC' : 'DESC'}`,
+      days.params(),
+    );
+
+    return rows.map((r) => toDay(r, pic != null));
   }
 
   async byUuid(db: Queryable, orgId: string, sessionUuid: string): Promise<AdminSessionJoin | null> {
@@ -231,6 +312,21 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
       [orgId, sessionUuid],
     );
     return rows[0] == null ? null : toJoin(rows[0]);
+  }
+
+  /**
+   * Operacje objęte FLAGAMI (3.2.0, P-D) - jednym zapytaniem dla całej skrzynki, bo
+   * skrzynka ma do stu spraw po dwie operacje i sto wołań `byUuid` byłoby dwustoma
+   * zapytaniami na jedno otwarcie ekranu. Klub w warunku, jak wszędzie: cudza operacja
+   * o tym samym uuid-zie (nadaje go TELEFON) po prostu nie wraca.
+   */
+  async byUuids(db: Queryable, orgId: string, sessionUuids: readonly string[]): Promise<AdminSessionJoin[]> {
+    if (sessionUuids.length === 0) return [];
+    const { rows } = await db.query<JoinedDbRow>(
+      `${SELECT} WHERE s.org_id = $1 AND s.session_uuid = ANY ($2)`,
+      [orgId, [...sessionUuids]],
+    );
+    return rows.map(toJoin);
   }
 
   /**

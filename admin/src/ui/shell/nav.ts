@@ -32,7 +32,7 @@
 
 import type { Capability } from '../../api/dto';
 
-export type NavIcon = 'logbook' | 'people' | 'plane' | 'calendar' | 'bug' | 'building';
+export type NavIcon = 'logbook' | 'inbox' | 'people' | 'plane' | 'calendar' | 'chart' | 'bug' | 'building';
 
 /** Rodzaj sesji panelu: klub (członkostwo) albo platforma (superadministrator bez klubu). */
 export type SessionKind = 'org' | 'platform';
@@ -68,13 +68,25 @@ export const NAV_ITEMS: readonly NavItem[] = [
   // Dziennik jest PIERWSZY, bo ekran startowy ma być tym, po który się sięga:
   // konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień.
   { to: '/dziennik', label: 'Dziennik', icon: 'logbook', access: 'panel.access' },
+  // „Do sprawdzenia" DRUGIE (3.2.0, P-D; `docs/panel-3.2.md` §9, §17): jedno pytanie -
+  // co wymaga mojej reakcji - z trzech źródeł. NIE jest ekranem startowym: pulpit jako
+  // wejście kazałby czytać podsumowanie każdemu, kto przyszedł po jedną rzecz. Plakietkę
+  // z liczbą (`.nav-count`) dokłada rama WYŁĄCZNIE tej pozycji i wyłącznie przy
+  // niezerowej sumie (reguła SyncChipa, issue #12).
+  { to: '/do-sprawdzenia', label: 'Do sprawdzenia', icon: 'inbox', access: 'panel.access' },
+  // Kalendarz TRZECI (3.2.0, §17: Dziennik · Do sprawdzenia · Kalendarz · Statystyki ·
+  // Piloci · Samoloty). Kolejność nie jest kwestią
+  // gustu: `homeFor` bierze PIERWSZĄ dostępną pozycję, więc rozstrzyga, gdzie ląduje
+  // zalogowany. Dziennik zostaje ekranem startowym administratora; członek bez
+  // „Podglądu klubu" ma tylko Kalendarz i ląduje właśnie tu.
+  { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', access: 'club' },
+  // Statystyki CZWARTE (3.2.0, P-E): jedno pytanie - „ile tego było w tym sezonie" -
+  // na tej samej podstawie liczenia, co dziennik (§4.5). Na „Podglądzie klubu", bo to
+  // te same operacje, oglądane sumami; analityka zużycia pozycji NIE dostaje - jest
+  // własnością maszyny i mieszka w jej karcie (§8).
+  { to: '/statystyki', label: 'Statystyki', icon: 'chart', access: 'panel.access' },
   { to: '/piloci', label: 'Piloci', icon: 'people', access: 'panel.access' },
   { to: '/samoloty', label: 'Samoloty', icon: 'plane', access: 'panel.access' },
-  // Kalendarz stoi PO Samolotach i to nie jest kwestia gustu: `homeFor` bierze
-  // PIERWSZĄ dostępną pozycję, więc kolejność tej tablicy rozstrzyga, gdzie ląduje
-  // administrator po zalogowaniu. Dziennik ma zostać jego ekranem startowym; członek
-  // bez „Podglądu klubu" ma tylko tę pozycję i ląduje właśnie tu.
-  { to: '/kalendarz', label: 'Kalendarz', icon: 'calendar', access: 'club' },
   // ── PLATFORMA ────────────────────────────────────────────────────────────────
   // Dwie pozycje niżej należą do sesji superadministratora i w kolumnie klubu NIE MA
   // ich wcale. Organizacje stoją PRZED Zgłoszeniami, bo `homeFor` bierze pierwszą
@@ -129,6 +141,13 @@ export function homeFor(capabilities: readonly Capability[] | undefined, kind: S
  * (przekierowanie z ekranu logowania, gdy sesji jeszcze nie ma).
  */
 export const HOME = NAV_ITEMS[0]!.to;
+
+/**
+ * Pozycja, przy której rama stawia LICZBĘ spraw (`.nav-count`). Jedna i nazwana tutaj,
+ * a nie flagą na pozycji: liczba istnieje tylko dla jednego modułu, więc drugi taki
+ * licznik byłby decyzją produktową, nie dopisaniem pola.
+ */
+export const COUNTED = '/do-sprawdzenia';
 
 /**
  * MOJE KONTO (2.1.0, issue #134 D6) - jedyny ekran panelu, który jest O OSOBIE

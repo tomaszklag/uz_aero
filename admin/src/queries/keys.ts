@@ -6,12 +6,14 @@
  * filtra. Klucze dochodzą razem z ekranami, które ich używają - nigdy „na zapas".
  */
 
-import type { CalendarRange } from '../api/bookings';
+import type { ExportListQuery, FlagListQuery } from '../api/attention';
+import type { CalendarRange, SuggestionsQuery } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
-import type { LogRangeQuery, SessionListQuery } from '../api/log';
+import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
 import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
+import type { StatsQuery } from '../api/stats';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
@@ -119,6 +121,13 @@ export const keys = {
      * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo.
      */
     tolerance: (capacityL: number) => ['fleet', 'tolerance', capacityL] as const,
+    /**
+     * Analityka zużycia JEDNEJ maszyny (3.2.0, P-E) - karta w szufladzie samolotu. Pod
+     * prefiksem floty, ale POZA `lists`: zapis konfiguracji jej nie starzeje (liczy się
+     * z rejestru lotów, nie z pól karty), a nowa paczka zdarzeń i tak przychodzi
+     * dopiero przy następnym otwarciu szuflady.
+     */
+    consumption: (aircraftId: string) => ['fleet', 'consumption', aircraftId] as const,
   },
 
   /**
@@ -130,10 +139,25 @@ export const keys = {
   log: {
     all: ['log'] as const,
     fleet: (query: LogRangeQuery) => ['log', 'fleet', query] as const,
+    /** Oś pilotów tego samego zakresu (3.2.0); `idle` jest częścią pytania. */
+    pilots: (query: LogPilotsQuery) => ['log', 'pilots', query] as const,
     sessions: (query: SessionListQuery) => ['log', 'sessions', query] as const,
     session: (uuid: string) => ['log', 'session', uuid] as const,
     track: (uuid: string) => ['log', 'track', uuid] as const,
+    /**
+     * Podglądy „przed → po" (3.2.0): KSZTAŁT korekty albo dopisania jest częścią klucza,
+     * bo każdy inny kształt to inne pytanie. Pod korzeniem dziennika, więc zapis w rejestrze
+     * unieważnia je razem z kartą - podgląd sprzed zapisu opisywałby inną operację.
+     */
+    preview: (uuid: string, shape: unknown) => ['log', 'preview', uuid, shape] as const,
   },
+
+  /**
+   * Statystyki zakresu (3.2.0, P-E): jedno pytanie o jeden zbiór operacji w trzech
+   * przekrojach naraz. Zakres dat jest tożsamością pytania, jak w dzienniku - „ten
+   * sezon" i „30 dni" mają prawo żyć w cache obok siebie.
+   */
+  stats: (query: StatsQuery) => ['stats', query] as const,
 
   /**
    * Zgłoszenia błędów (issue #87). KORZEŃ obejmuje wszystko i to jest właściwe:
@@ -158,6 +182,13 @@ export const keys = {
      * od tej samej rzeczy - decyzja przestawia i pasek na siatce, i kartę w szufladzie.
      */
     detail: (id: string) => ['calendar', 'detail', id] as const,
+    /**
+     * Sugestie slotów dla własnej rezerwacji (issue #233). Pod korzeniem kalendarza, bo
+     * każda zmiana zajętości zmienia też to, co da się zaproponować.
+     */
+    suggestions: (query: SuggestionsQuery) => ['calendar', 'suggestions', query] as const,
+    /** Kroki ścieżki, przez które przejdzie MOJA rezerwacja - stopka szuflady (#233). */
+    myPath: ['calendar', 'my-path'] as const,
   },
 
   /**
@@ -180,5 +211,24 @@ export const keys = {
   bugs: {
     all: ['bugs'] as const,
     list: (query: BugListQuery) => ['bugs', 'list', query] as const,
+  },
+
+  /**
+   * „DO SPRAWDZENIA" (3.2.0, P-D). Trzy korzenie, bo trzy pytania o różnym rytmie:
+   * suma spraw (plakietka w kolumnie - pyta się przy każdej ramie), skrzynka rozjazdów
+   * (filtr w adresie) i karty dnia (zakres dat w adresie, jak dziennik). Rozstrzygnięcie
+   * flagi unieważnia WSZYSTKIE trzy i dziennik: zamknięta nakładka wysyła kartę, więc
+   * zmienia stan karty, plakietkę przy operacji i liczbę w kolumnie naraz.
+   */
+  attention: ['attention'] as const,
+  flags: {
+    all: ['flags'] as const,
+    list: (query: FlagListQuery) => ['flags', 'list', query] as const,
+  },
+  exports: {
+    all: ['exports'] as const,
+    list: (query: ExportListQuery) => ['exports', 'list', query] as const,
+    history: (uuid: string) => ['exports', 'history', uuid] as const,
+    sheet: (uuid: string) => ['exports', 'sheet', uuid] as const,
   },
 };

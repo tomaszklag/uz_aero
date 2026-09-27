@@ -111,6 +111,12 @@ export type ExportState = 'waiting' | 'blocked' | 'impossible' | 'missing' | 'cu
 /** Jeden dzień lotny w monitorze eksportu. */
 export interface AdminExportListItem {
   sessionUuid: string;
+  /**
+   * SYGNATURA operacji (issue #68) - wiersz monitora mówi „SP-AXA/2026-09-06/AKW/1",
+   * bo o operację pyta się słowami, a nie uuid-em (3.2.0, P-D). Składa ją domena z tych
+   * samych faktów, co lista operacji; `null` = nie ma jej z czego złożyć.
+   */
+  signature: string | null;
 
   /**
    * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`), policzona `sheetTabName` -
@@ -125,6 +131,8 @@ export interface AdminExportListItem {
   day: string | null;
   /** Chwila przejęcia (epoch ms UTC) - kolumna „Dzień". `null` = rejestr bez claimu. */
   claimedAt: number | null;
+  /** Chwila ZDANIA samolotu (epoch ms UTC); `null` = operacja jeszcze trwa. */
+  closeTime: number | null;
 
   aircraftId: string;
   /** `null` = samolotu nie ma już w rejestrze floty; dzień zostaje widoczny. */
@@ -263,6 +271,14 @@ export interface AdminExportHistory {
   state: ExportState;
   revisions: AdminExportRevisionItem[];
   sheetRows: number;
+  /**
+   * ADRES KARTY, KTÓRY DZIAŁA DZIŚ (3.2.0, P-D; `docs/panel-3.2.md` §7): złożony
+   * z bieżącego `PUBLIC_BASE_URL`, sluga klubu i sekretu - a nie przepisany z dziennika.
+   * `revisions[].sheetUrl` niesie host z chwili wysyłki, a domena zmieniła się przy
+   * issue #124: karty sprzed przeniesienia mają w dzienniku adres, który już nie
+   * odpowiada. `null` = karty w bazie nie ma (nie ma czego adresować).
+   */
+  address: string | null;
   /**
    * Ten sam FAKT, co w wierszu listy (`AdminExportListItem.overwrittenBy`), i jedzie
    * tu z konkretnego powodu: rozwinięcie pokazuje TREŚĆ karty. Gdy inna sesja zapisała

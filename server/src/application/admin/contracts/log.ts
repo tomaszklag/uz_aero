@@ -37,9 +37,15 @@ export interface AdminLogAircraftItem {
   /** Format licznika - panel formatuje nim motogodziny w gridzie poziomu 2. */
   mhFormat: MhFormat | null;
 
-  /** Ile sesji (biegów silnika) w zakresie - razem z otwartymi. */
+  /**
+   * Ile operacji ZDANYCH w zakresie - to jest podstawa wszystkich sum wiersza
+   * (decyzja właściciela 2026-09-26: sumy = operacje zamknięte, jak w statystykach).
+   */
   sessions: number;
-  /** Ile z nich jeszcze trwa. Wyróżnia maszynę, która lata w tej chwili. */
+  /**
+   * Ile operacji zakresu jeszcze TRWA - POZA sumami, nazwana osobno. Wyróżnia
+   * maszynę, która lata w tej chwili („leci teraz").
+   */
   openSessions: number;
   /**
    * Ile DNI maszyna pracowała - liczone po dobie UTC chwili przejęcia, nie po liczbie
@@ -110,4 +116,53 @@ export interface AdminLogReport {
   at: string;
   range: AdminLogRange;
   aircraft: AdminLogAircraftItem[];
+}
+
+/**
+ * ══ OŚ PILOTÓW (3.2.0, `docs/panel-3.2.md` §4.1, §17.1; `GET /log?os=piloci`) ══
+ * Ten sam zakres i ten sam zbiór operacji, co oś maszyn, rozłożony po ludziach.
+ * Wiersz niesie wielkości kafelka operacji z telefonu (Operacje · Loty · Blok · Lot)
+ * liczone DOWÓDCY, a czas w prawym fotelu OSOBNO - tej samej godziny lotu szkolnego
+ * nie wolno dodać do siebie z wiersza instruktora i ucznia.
+ */
+export interface AdminLogPilotItem {
+  pilotId: string;
+  /** Kod z członkostwa w tym klubie; `null` = osoba bez członkostwa (dane historyczne). */
+  code: string | null;
+  name: string | null;
+  /** Członkostwo aktywne; wyłączony członek, który latał, zostaje na liście. */
+  active: boolean;
+  /** Dni z JAKIMKOLWIEK lotem zamkniętym - w dowolnym fotelu. */
+  activeDays: number;
+  /** Nalot dowódcy z operacji ZDANYCH, jak na osi maszyn i w statystykach. */
+  sessions: number;
+  /** Operacje dowódcy w toku w zakresie - POZA sumami; o „teraz" mówi `open`. */
+  openSessions: number;
+  flights: number;
+  blockMs: number;
+  flightMs: number;
+  /** Prawy fotel: liczba operacji i czas; `null` = ani jednej. */
+  dual: { operations: number; blockMs: number } | null;
+  /** Maszyny z operacji zamkniętych, dowolny fotel, alfabetycznie. */
+  regs: string[];
+  /** Operacja W TOKU jako dowódcy - o TERAZ, niezależnie od zakresu; `null` = żadnej. */
+  open: { reg: string | null; claimedAt: number | null; engineRunning: boolean } | null;
+}
+
+/** Aktywny członek bez lotu w zakresie - lista zwinięta pod tabelą. */
+export interface AdminLogIdleMember {
+  pilotId: string;
+  code: string;
+  name: string;
+}
+
+export interface AdminLogPilotsReport {
+  at: string;
+  range: AdminLogRange;
+  pilots: AdminLogPilotItem[];
+  /**
+   * Członkowie bez lotów: LICZBA zawsze (stoi w napisie wiersza zwinięcia), LISTA
+   * na żądanie (`&idle=1`) - zwykle nikt jej nie rozwija. `null` = nie pytano.
+   */
+  idle: { count: number; members: AdminLogIdleMember[] | null };
 }

@@ -46,6 +46,7 @@ import type {
 import type { Notifier } from '../notify/notifier.ts';
 import {
   approvalRequested,
+  approvalWithdrawn,
   bookingApproved,
   bookingRejected,
   type NoticeBooking,
@@ -288,6 +289,54 @@ export class ApprovalFlow {
 
     await this.notifier.record(tx, orgId, out.notices, at);
     return out;
+  }
+
+  /**
+   * PROŚBA WYCOFANA (3.2.0, issue #233; decyzja właściciela 2026-09-27) - w TEJ SAMEJ
+   * transakcji, co odwołanie czekającej rezerwacji. Osoby kroku BIEŻĄCEGO dostały
+   * prośbę o zgodę; po odwołaniu nie mają już czego rozstrzygać, a bez tej wiadomości
+   * prośba stała w skrzynce, a kolejka „Do decyzji" gasła bez słowa dlaczego.
+   *
+   * Tylko krok bieżący: kroki dalsze nikogo jeszcze nie pytały, a wcześniejsze już
+   * zdecydowały - ich osoby nie mają w skrzynce niczego, co by się zmieniło. Odwołujący
+   * o sobie nie słyszy (administrator z `reservations.manage` bywa osobą kroku).
+   *
+   * Wołający przekazuje wiersz SPRZED odwołania, bo to jego stan decyduje: rezerwacja
+   * potwierdzona nikogo o nic nie pyta. Budzik (`wake`) zostaje wołającemu - po commicie.
+   */
+  async withdraw(
+    tx: Queryable,
+    orgId: string,
+    booking: BookingRecord,
+    cancelledBy: string,
+  ): Promise<NotificationDraft[]> {
+    if (booking.kind !== 'flight' || booking.status !== 'pending') return [];
+
+    const path = await this.steps.path(tx, orgId);
+    const decisions = await this.approvals.listFor(tx, orgId, booking.id);
+    const step = currentStep(path, decisions);
+    if (step == null) return [];
+
+    const to = pendingApprovers(path, decisions).filter((id) => id !== cancelledBy);
+    const notices = approvalWithdrawn(noticeOf(booking), to, step, cancelledBy);
+    await this.notifier.record(tx, orgId, notices, this.clock.now());
+    return notices;
+  }
+
+  /**
+   * KROKI, PRZEZ KTÓRE PRZEJDZIE REZERWACJA TEJ OSOBY (issue #233) - stopka szuflady
+   * własnej rezerwacji w panelu nazywa je PRZED kliknięciem („Zaczeka na zgodę:
+   * Mechanik → Szef wyszkolenia"). Bez kroków, na których osoba stoi sama - te przejdą
+   * same (§11.2), więc obiecywanie jej czekania na siebie byłoby nieprawdą.
+   *
+   * Same NAZWY kroków, bez osób: nazwę kroku widzi właściciel na karcie swojej rezerwacji
+   * i tak, a obsada kroku jest konfiguracją klubu na `accounts.manage`.
+   */
+  async stepsAhead(orgId: string, pilotId: string): Promise<{ id: string; label: string }[]> {
+    const path = await this.steps.path(this.db, orgId);
+    return orderedSteps(path)
+      .filter((step) => !step.memberIds.includes(pilotId))
+      .map((step) => ({ id: step.id, label: step.label }));
   }
 
   /**

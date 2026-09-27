@@ -47,6 +47,15 @@ const NAMES: Record<EventType, string> = {
 
 export const eventName = (type: EventType): string => NAMES[type];
 
+/**
+ * Nazwa dla NAPISU spoza typu (liczby rozjazdu zegara niosą typ zdarzenia jako tekst
+ * z bazy): `null` dla nieznanego, zamiast `undefined` wklejonego w zdanie. Panelowi
+ * nie wolno importować katalogu zdarzeń z domeny jako wartości, więc strażnikiem jest
+ * ten sam słownik, który nazywa oś.
+ */
+export const eventLabel = (type: string): string | null =>
+  Object.prototype.hasOwnProperty.call(NAMES, type) ? NAMES[type as EventType] : null;
+
 /** Odczyt liczby z payloadu bez udawania, że znamy jego kształt. */
 const num = (payload: Record<string, unknown>, key: string): number | null => {
   const value = payload[key];

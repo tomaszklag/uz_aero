@@ -2,9 +2,10 @@
  * Ninerdeck (serwer) - znacznik `events.source_device` dla zapisów PANELU.
  *
  * Rejestr zdarzeń ma jedno pole mówiące, CZYM zdarzenie przyszło, i tylko jedną
- * wartość tego pola, która nie pochodzi z telefonu: `admin:<pilotId>`. Wpisuje ją
- * korekta administratora (`commands/corrections.ts`) - jedyna droga, którą zdarzenie
- * trafia do rejestru spoza aplikacji pilota.
+ * wartość tego pola, która nie pochodzi z telefonu: `admin:<pilotId>`. Wpisują ją
+ * zapisy panelu (`commands/corrections.ts`: korekta i - od 3.2.0 - dopisanie faktu,
+ * unieważnienie i zakończenie operacji) - jedyna droga, którą zdarzenie trafia do
+ * rejestru spoza aplikacji pilota.
  *
  * **Dlaczego to jest osobny plik, a nie literał w komendzie.** Wartość ma dwóch
  * czytelników po przeciwnych stronach systemu: komenda ją ZAPISUJE, a adapter panelu
@@ -35,4 +36,17 @@ export function adminSourceDevice(pilotId: string): string {
  */
 export function isAdminSourceDevice(sourceDevice: string | null): boolean {
   return sourceDevice != null && sourceDevice.startsWith(ADMIN_PREFIX);
+}
+
+/**
+ * KONTO PANELU, które zapisało zdarzenie; `null` = zapis z telefonu (albo sprzed pola).
+ *
+ * Odwrotność `adminSourceDevice` i JEDYNE miejsce, które rozbiera znacznik: oś operacji
+ * w panelu (3.2.0) pisze przy wierszu „poprawił/dopisał administrator" z nazwiskiem,
+ * a nazwisko rozwiązuje się z identyfikatora konta - nie z napisu w kolumnie.
+ */
+export function adminAuthorOf(sourceDevice: string | null): string | null {
+  if (!isAdminSourceDevice(sourceDevice)) return null;
+  const id = (sourceDevice as string).slice(ADMIN_PREFIX.length);
+  return id === '' ? null : id;
 }

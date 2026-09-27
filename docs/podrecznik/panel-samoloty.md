@@ -48,6 +48,18 @@ Zużycie wpisane w karcie działa **od pierwszego lotu**: aplikacja liczy z nieg
 
 Do dziennika nic z tego nie wchodzi - tam stoją wyłącznie odczyty.
 
+## Zużycie z lotów
+
+Gdy maszyna ma dość zamkniętych operacji z odczytami paliwa, jej karta dostaje kartę **Zużycie z lotów** - i tylko wtedy: młoda maszyna nie widzi ani zer, ani zdania o braku danych. Plakietka w tytule mówi, z ilu operacji i od kiedy liczy się rachunek.
+
+- **Pasmo zużycia** - przedział, w którym mieści się 80 % zmierzonych operacji (10.–90. centyl), w litrach na godzinę pracy silnika; na pasku pod spodem stoi jako wypełnienie na osi w pełnych dziesiątkach.
+- **Z dokumentacji** - norma wpisana w sekcji Paliwo, bursztynem, jako marker na tym samym pasku; obok odchyłka zmierzonego zużycia od zadeklarowanego („z lotów +3 %"). To są dwie różne liczby - jedna zmierzona, druga zadeklarowana - i karta nazywa, którą pokazuje.
+- **W locie / na ziemi** - stawki fazowe, dokładnie te, z których aplikacja pilota liczy oczekiwanie dla konkretnej operacji; **Na godzinę lotu** - zużycie liczone wyłącznie czasem w powietrzu.
+- **Motogodziny** - o ile rośnie licznik na godzinę lotu i godzinę na ziemi, z rozpoznanym rodzajem licznika (obrotomierz albo licznik godzinowy). Wiersz gaśnie osobno, gdy przeliczników jeszcze nie ma - inne wejście, inny próg.
+- **Obserwacje** - ile operacji, ile pomiarów między odczytami (operacja z tankowaniem daje dwa), ile ze śladem GPS i ile odstających pominięto; **Ostatni miesiąc** - zużycie z ostatnich pomiarów, do porównania z pasmem.
+
+Karta jest odczytem: żadnej liczby nie da się tu zmienić, a norma z dokumentacji zmienia się w sekcji Paliwo. Skąd biorą się te liczby i kiedy zużycie z lotów wygrywa z dokumentacją: [norma zużycia](norma-zuzycia).
+
 ## Wyłączenie i usunięcie
 
 Maszyny wycofanej z klubu się nie kasuje - wyłącza. Wyłączona znika pilotom z listy wyboru, a jej dziennik zostaje w komplecie. Nie da się wyłączyć jednostki, którą ktoś właśnie trzyma; panel mówi to przy przycisku („Ktoś ma teraz ten samolot"), zanim stracisz wypełniony formularz. Trwałe usunięcie działa dopiero wtedy, gdy maszyna jest **już wyłączona** i nie ma za sobą ani jednego zapisu.

@@ -14,6 +14,7 @@
  */
 
 import {
+  buildConsumptionNorm,
   buildFuelIntervals,
   consumptionSummary,
   fitConsumptionModel,
@@ -78,6 +79,13 @@ export function consumptionReport(input: ConsumptionReportInput): AdminConsumpti
   const summary = consumptionSummary(intervals);
   const fuel = fitConsumptionModel(intervals);
   const mh = fitMhModel(equations);
+  // Norma PO dopasowaniu modelu: `fitConsumptionModel` oznacza odstające wprost na
+  // interwałach, więc kolejność wywołań decyduje o tym, co wejdzie do pasma rozrzutu.
+  const norm = buildConsumptionNorm(
+    { summary, model: fuel, intervals, mh },
+    input.range.calendarDays,
+    input.at.getTime(),
+  );
 
   return {
     at: input.at.toISOString(),
@@ -89,11 +97,13 @@ export function consumptionReport(input: ConsumptionReportInput): AdminConsumpti
       capacityL: input.aircraft.capacityL,
       mhFormat: input.aircraft.mhFormat,
       serviceStatus: input.aircraft.serviceStatus,
+      fuelNormLPerH: input.aircraft.fuelNormLPerH,
     },
-    headline: headline(input.sessions, summary),
+    headline: headline(input.sessions, summary, input.aircraft.fuelNormLPerH),
     basis: basis(input, summary),
     summary,
     fuel,
+    norm,
     mh,
     intervals,
   };
@@ -107,6 +117,7 @@ export function consumptionReport(input: ConsumptionReportInput): AdminConsumpti
 function headline(
   sessions: readonly ConsumptionSessionRef[],
   summary: ReturnType<typeof consumptionSummary>,
+  documentationLPerH: number | null,
 ): AdminConsumptionHeadline {
   let mhDelta = 0;
   let blockMs = 0;
@@ -124,6 +135,12 @@ function headline(
     litersPerBlockHour: summary.litersPerBlockHour,
     litersPerFlight: summary.litersPerFlight,
     mhPerBlockHour: over(mhDelta, blockMs / HOUR_MS),
+    // Odchyłka od dokumentacji na TEJ SAMEJ stawce, którą porównuje telefon (na godzinę
+    // pracy silnika, issue #66) - i liczona tu, żeby panel nie odejmował po swojemu.
+    vsDocumentationPct:
+      documentationLPerH == null || documentationLPerH <= 0 || summary.litersPerBlockHour == null
+        ? null
+        : ((summary.litersPerBlockHour - documentationLPerH) * 100) / documentationLPerH,
   };
 }
 

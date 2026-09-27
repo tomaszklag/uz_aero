@@ -56,8 +56,9 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
       capacity_l: number;
       mh_format: string;
       service_status: string;
+      fuel_norm_l_per_h: number | string | null;
     }>(
-      `SELECT id, reg, type, capacity_l, mh_format, service_status
+      `SELECT id, reg, type, capacity_l, mh_format, service_status, fuel_norm_l_per_h
          FROM aircraft WHERE org_id = $1 AND id = $2`,
       [orgId, aircraftId],
     );
@@ -72,6 +73,7 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
       capacityL: Number(row.capacity_l),
       mhFormat: toMhFormat(row.mh_format),
       serviceStatus: row.service_status,
+      fuelNormLPerH: row.fuel_norm_l_per_h == null ? null : Number(row.fuel_norm_l_per_h),
     };
   }
 

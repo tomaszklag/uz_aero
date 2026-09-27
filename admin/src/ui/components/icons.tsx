@@ -186,6 +186,17 @@ export function SignOutIcon({ size = 13 }: IconProps) {
   );
 }
 
+/** Kosz - „tego zdarzenia nie było" w linii tytułu szuflady korekty (3.2.0, §5). */
+export function TrashIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.2}>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </Stroke>
+  );
+}
+
 /** Plus - założenie nowego konta i nowej jednostki floty. */
 export function PlusIcon({ size = 13 }: IconProps) {
   return (
@@ -204,6 +215,57 @@ export function BookIcon({ size = 16 }: IconProps) {
     <Stroke size={size}>
       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </Stroke>
+  );
+}
+
+/** Skrzynka - moduł „Do sprawdzenia" (3.2.0, P-D); ścieżka 1:1 z makiety `sprawdzenie-lista`. */
+export function InboxIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+    </Stroke>
+  );
+}
+
+/** Chorągiewka - rozjazd (flaga) na liście spraw; ścieżka 1:1 z makiety `sprawdzenie-lista`. */
+export function FlagIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H5" />
+    </Stroke>
+  );
+}
+
+/** Karta arkusza - doba bez karty na liście spraw. */
+export function SheetIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18M9 4v16" />
+    </Stroke>
+  );
+}
+
+/** Zegar - operacja wisząca (przejęta, niezdana) na liście spraw. */
+export function ClockIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15 14" />
+    </Stroke>
+  );
+}
+
+/** Słupki - moduł Statystyki (3.2.0, P-E); ścieżka 1:1 z makiety `statystyki` (stan pusty). */
+export function ChartIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <line x1="6" y1="20" x2="6" y2="14" />
+      <line x1="12" y1="20" x2="12" y2="8" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="3" y1="20" x2="21" y2="20" />
     </Stroke>
   );
 }

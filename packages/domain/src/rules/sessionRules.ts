@@ -283,31 +283,7 @@ function checkCorrectionWindow(
 
   const now = eventTime(candidate);
 
-  if (authority === 'administrative') {
-    const v: RuleViolation[] = [];
-    // Kolizja 1: pilot nadal prowadzi sesję i może dopisywać zdarzenia. Jego paczka
-    // dosłana po synchronizacji trafi do tego samego strumienia.
-    if (!state.closed) {
-      v.push(
-        warning(
-          'ADMIN_EDIT_SESSION_ACTIVE',
-          'Pilot nadal prowadzi tę operację - może dopisać własne zdarzenia po synchronizacji.',
-        ),
-      );
-    }
-    // Kolizja 2: okno pilota jeszcze trwa, więc obie strony mogą poprawiać naraz.
-    // (Sesja zdana z otwartym oknem; sesję NIEZDANĄ pokrywa już kolizja 1.)
-    const window = correctionWindow(state, now);
-    if (window.confirmed && window.open) {
-      v.push(
-        warning(
-          'ADMIN_EDIT_PILOT_WINDOW_OPEN',
-          'Pilot może jeszcze poprawić tę operację samodzielnie (okno 24 h od zdania trwa).',
-        ),
-      );
-    }
-    return v;
-  }
+  if (authority === 'administrative') return adminCollisions(state, now);
 
   // Pilot: JEDNO okno sesji, kotwiczone w zdaniu (model 2026-08-10). Sesja w toku nie
   // podlega oknu - korekta w kokpicie przed zatwierdzeniem jest normalną pracą. Do
@@ -321,6 +297,61 @@ function checkCorrectionWindow(
   if (candidate.type === 'manual_log_entry' && !manualEntryTouchesRun(state, candidate)) {
     return [];
   }
+  return pilotWindow(state, now);
+}
+
+/**
+ * WERDYKT OKNA KOREKTY dla ZAPISU PO CZASIE - bez pytania o typ kandydata.
+ *
+ * `checkCorrectionWindow` wyżej pyta o okno wyłącznie zdarzenia z katalogu korekt,
+ * bo każde inne odbija na zdanym samolocie ogólna bramka `DAY_CLOSED`. Dopisanie
+ * FAKTU po czasie (`insertion.ts`: brakujące lądowanie, tankowanie) ocenia się na
+ * stanie z CHWILI faktu - a wtedy samolot nie był jeszcze zdany i `DAY_CLOSED`
+ * milczy. Okno musi więc wrócić OSOBNO, policzone na stanie KOŃCOWYM i na chwili
+ * WPISANIA (`now`), i bez bramki typów: dla pilota to jest ta sama granica, którą
+ * ma korekta (24 h od zdania), dla administratora - te same dwa ostrzeżenia o kolizji.
+ *
+ * Wyciągnięte z `checkCorrectionWindow`, a nie skopiowane: jedna implementacja obu
+ * gałęzi, więc nowa kolizja albo nowy powód wygaśnięcia obejmuje korektę i dopisanie
+ * w tej samej chwili.
+ */
+export function correctionWindowVerdict(
+  state: SessionState,
+  now: EpochMillis,
+  authority: WriteAuthority,
+): RuleViolation[] {
+  return authority === 'administrative' ? adminCollisions(state, now) : pilotWindow(state, now);
+}
+
+/** Administrator nie jest blokowany NIGDY - dostaje kolizje z pracą pilota jako ostrzeżenia. */
+function adminCollisions(state: SessionState, now: EpochMillis): RuleViolation[] {
+  const v: RuleViolation[] = [];
+  // Kolizja 1: pilot nadal prowadzi sesję i może dopisywać zdarzenia. Jego paczka
+  // dosłana po synchronizacji trafi do tego samego strumienia.
+  if (!state.closed) {
+    v.push(
+      warning(
+        'ADMIN_EDIT_SESSION_ACTIVE',
+        'Pilot nadal prowadzi tę operację - może dopisać własne zdarzenia po synchronizacji.',
+      ),
+    );
+  }
+  // Kolizja 2: okno pilota jeszcze trwa, więc obie strony mogą poprawiać naraz.
+  // (Sesja zdana z otwartym oknem; sesję NIEZDANĄ pokrywa już kolizja 1.)
+  const window = correctionWindow(state, now);
+  if (window.confirmed && window.open) {
+    v.push(
+      warning(
+        'ADMIN_EDIT_PILOT_WINDOW_OPEN',
+        'Pilot może jeszcze poprawić tę operację samodzielnie (okno 24 h od zdania trwa).',
+      ),
+    );
+  }
+  return v;
+}
+
+/** Pilot: okno 24 h od zdania; sesja w toku okna nie ma (praca w kokpicie). */
+function pilotWindow(state: SessionState, now: EpochMillis): RuleViolation[] {
   if (correctionWindow(state, now).open) return [];
   return [
     error(

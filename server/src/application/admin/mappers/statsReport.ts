@@ -108,6 +108,8 @@ function totalsFrom(
 
   return {
     sessions: row.sessions,
+    activeDays: row.activeDays,
+    flights: row.flights,
     aircraft: row.aircraft,
     pilots: row.pilots,
     blockMs: row.blockMs,
@@ -117,8 +119,13 @@ function totalsFrom(
     landings: unlessStale(row.staleRows, row.landings),
     fuelConsumedL: fuel,
     fuelUnknownSessions: unknownSessions(row, row.fuelKnownSessions),
+    // Wiersz „Razem" tabeli samolotów liczy się TU, tym samym rachunkiem, co wiersz
+    // maszyny - panel nie ma prawa dzielić sumy paliwa przez sumę bloku po swojemu.
+    avgLitresPerBlockHour: over(fuel, row.fuelBlockMs / HOUR_MS),
     mhDeltaH: mh,
     mhUnknownSessions: unknownSessions(row, row.mhKnownSessions),
+    // Prawy fotel: `null` bez ani jednej takiej operacji - suma kolumny nie rysuje się z zera.
+    dual: row.dualSessions > 0 ? { operations: row.dualSessions, blockMs: row.dualBlockMs } : null,
     mhBlockHours,
     mhVsBlockH: mh == null ? null : mh - mhBlockHours,
     staleRows: row.staleRows,
@@ -155,6 +162,7 @@ function aircraftItem(row: AdminStatsAircraftRow, calendarDays: number): AdminSt
     capacityL: row.capacityL,
     mhFormat: row.mhFormat,
     sessions: row.sessions,
+    flights: row.flights,
     blockMs: row.blockMs,
     flightMs: row.flightMs,
     takeoffs: unlessStale(row.staleRows, row.takeoffs),
@@ -180,10 +188,14 @@ function pilotItem(row: AdminStatsPilotRow): AdminStatsPilotItem {
     code: row.code,
     name: row.name,
     sessions: row.sessions,
+    flights: row.flights,
     blockMs: row.blockMs,
     flightMs: row.flightMs,
     takeoffs: unlessStale(row.staleRows, row.takeoffs),
     landings: unlessStale(row.staleRows, row.landings),
+    // Prawy fotel przechodzi BEZ zmian: `null` zostaje `null` - piąta suma nie rysuje
+    // się z zera, a wiersz ucznia niesie liczbę tam, gdzie ją ma.
+    dual: row.dual,
     regs: row.regs,
     staleRows: row.staleRows,
   };
@@ -194,6 +206,7 @@ function operationItem(row: AdminStatsOperationRow, totalBlockMs: number): Admin
   return {
     operation: row.operation,
     sessions: row.sessions,
+    flights: row.flights,
     blockMs: row.blockMs,
     flightMs: row.flightMs,
     takeoffs: unlessStale(row.staleRows, row.takeoffs),

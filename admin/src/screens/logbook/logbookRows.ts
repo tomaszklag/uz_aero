@@ -10,11 +10,11 @@
  * która liczy to samo inaczej i na innych danych.
  */
 
-import { hhmm } from '@ninerdeck/format';
+import { dateUtcDayMonth, hhmm, plural } from '@ninerdeck/format';
 
-import type { LogAircraftDto } from '../../api/dto';
+import type { LogAircraftDto, LogIdleMemberDto, LogPilotDto } from '../../api/dto';
 // Kreska braku i formatery, które ją stawiają - półpauza panelu, nie dywiz telefonu.
-import { litres, motoHours, NONE } from '../common/values';
+import { litres, motoHours, NONE, timeUtc } from '../common/values';
 
 export interface LogbookRow {
   aircraftId: string;
@@ -34,12 +34,14 @@ export interface LogbookRow {
   fuel: string;
   moto: string;
 
-  /** Maszyna, która w zakresie nie latała - wiersz przygaszony, ale obecny. */
+  /** Maszyna, na której w zakresie nic się nie działo - wiersz przygaszony, ale obecny. */
   idle: boolean;
 }
 
 export function logbookRow(a: LogAircraftDto): LogbookRow {
-  const idle = a.sessions === 0;
+  // Sumy liczą operacje ZDANE, ale maszyna z operacją w toku nie „stała": zera
+  // w sumach niesie razem z sygnałem „leci teraz", nie przygaszona.
+  const idle = a.sessions === 0 && a.openSessions === 0;
   return {
     aircraftId: a.aircraftId,
     reg: a.reg ?? NONE,
@@ -59,4 +61,104 @@ export function logbookRow(a: LogAircraftDto): LogbookRow {
 
     idle,
   };
+}
+
+/* ══ OŚ PILOTÓW (3.2.0, `docs/panel-3.2.md` §4.1, §17.1) ══ */
+
+export interface LogbookPilotRow {
+  pilotId: string;
+  code: string;
+  name: string;
+  /**
+   * Sygnał „TERAZ" w bursztynie: osoba trzyma maszynę albo właśnie leci. Stoi w JEJ
+   * wierszu i tylko wtedy, gdy jest prawdziwy - jak „leci teraz" na osi maszyn.
+   */
+  now: string | null;
+  /** Druga linia bez ostrzeżenia: „tylko jako drugi pilot", „członkostwo wyłączone". */
+  note: string | null;
+
+  days: string;
+  operations: string;
+  flights: string;
+  block: string;
+  flight: string;
+  /** Prawy fotel - OSOBNA liczba, nigdy dodawana do bloku; `null` = ani jednej operacji. */
+  dual: { block: string; note: string } | null;
+  regs: string[];
+}
+
+/** „trzyma SP-KLM od 06 WRZ 08:15" / „leci teraz · SP-AXA" - bez formy czasownika z płcią. */
+function nowLabel(open: LogPilotDto['open']): string | null {
+  if (open == null) return null;
+  const reg = open.reg ?? NONE;
+  if (open.engineRunning) return `leci teraz · ${reg}`;
+  if (open.claimedAt == null) return `trzyma ${reg}`;
+  return `trzyma ${reg} od ${dateUtcDayMonth(open.claimedAt)} ${timeUtc(open.claimedAt)}`;
+}
+
+const operationsCount = (n: number): string => `${n} ${plural(n, 'operacja', 'operacje', 'operacji')}`;
+
+export function logbookPilotRow(p: LogPilotDto): LogbookPilotRow {
+  return {
+    pilotId: p.pilotId,
+    code: p.code ?? NONE,
+    name: p.name ?? NONE,
+    now: nowLabel(p.open),
+    // Wyłączony, który latał, ZOSTAJE na liście - z podpisem, nie w ukryciu. Uczeń bez
+    // ani jednej operacji jako dowódca ma zera w nalocie i liczbę w kolumnie obok;
+    // podpis mówi, dlaczego zera nie są brakiem. Zera przy operacji dowódcy W TOKU
+    // tłumaczy sygnał „teraz", więc podpis wtedy milczy - „tylko jako drugi pilot"
+    // przy „leci teraz" byłoby nieprawdą.
+    note: !p.active
+      ? 'członkostwo wyłączone'
+      : p.sessions === 0 && p.openSessions === 0 && p.dual != null
+        ? 'tylko jako drugi pilot'
+        : null,
+    days: String(p.activeDays),
+    operations: String(p.sessions),
+    flights: String(p.flights),
+    // Sumy czasu w „HH:MM", jak na osi maszyn.
+    block: hhmm(p.blockMs),
+    flight: hhmm(p.flightMs),
+    dual: p.dual == null ? null : { block: hhmm(p.dual.blockMs), note: operationsCount(p.dual.operations) },
+    regs: p.regs,
+  };
+}
+
+/** Członek bez lotów po rozwinięciu - zwykły wiersz zer, przygaszony przez tabelę. */
+export function idlePilotRow(m: LogIdleMemberDto): LogbookPilotRow {
+  return {
+    pilotId: m.pilotId,
+    code: m.code,
+    name: m.name,
+    now: null,
+    note: null,
+    days: '0',
+    operations: '0',
+    flights: '0',
+    block: hhmm(0),
+    flight: hhmm(0),
+    dual: null,
+    regs: [],
+  };
+}
+
+/** Napisy wiersza zwinięcia: „+3 członków bez lotów w tym zakresie" / „Zwiń · 3 członków…". */
+export function idleFoldLabels(count: number): { closed: string; open: string } {
+  const members = `${count} ${plural(count, 'członek', 'członków', 'członków')} bez lotów w tym zakresie`;
+  return { closed: `+${members}`, open: `Zwiń · ${members}` };
+}
+
+/**
+ * Podtytuł poziomu 2 osi pilota: „w zakresie 4 operacje · 07:40 blok · 1 w toku · jako
+ * drugi pilot 02:12". Liczby przychodzą z wiersza osi pilotów TEGO SAMEGO zakresu - panel
+ * ich nie sumuje z nagłówków dób. Sumy to operacje ZDANE; operacja w toku stoi po
+ * separatorze tak samo, jak w nagłówku doby pod spodem („· 1 w toku") - inaczej pilot
+ * w pierwszym locie miesiąca miałby „0 operacji" nad tabelą, która pokazuje jedną.
+ */
+export function pilotRangeSummary(p: LogPilotDto): string {
+  const parts = [`w zakresie ${operationsCount(p.sessions)} · ${hhmm(p.blockMs)} blok`];
+  if (p.openSessions > 0) parts.push(`${p.openSessions} w toku`);
+  if (p.dual != null) parts.push(`jako drugi pilot ${hhmm(p.dual.blockMs)}`);
+  return parts.join(' · ');
 }

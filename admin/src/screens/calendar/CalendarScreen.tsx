@@ -5,10 +5,16 @@
  * jest od wtorku na przeglądzie". Oś to MASZYNY × DNI - inaczej niż na telefonie, gdzie
  * osią jest jedna doba całej floty. Ta sama zajętość, dwa pytania, dwa kadry.
  *
+ * ══ OŚ JEST WEJŚCIEM W REZERWACJĘ (issue #233) ══
+ * Od 3.2.0 każdy członek rezerwuje z tej samej osi, którą ogląda: „Zarezerwuj" w nagłówku
+ * (jedyna akcja główna - czynność każdego i najczęstsza w module) albo kliknięcie w wolne
+ * miejsce komórki, które podstawia maszynę i dzień. Własne wpisy są zielone - pilot szuka
+ * na osi przede wszystkim siebie. Akcje administratora schodzą do przycisków wyciszonych.
+ *
  * ══ CZEGO TU NIE MA ══
- * **Sugestii slotów.** To narzędzie pilota szukającego miejsca dla siebie; administrator
- * patrzy na całość i wpisuje konkretny termin (§10). Podpowiadanie mu, gdzie „najlepiej"
- * wcisnąć przegląd, byłoby radą w sprawie, o której wie więcej niż algorytm.
+ * **Sugestii slotów przy „Zarezerwuj za pilota".** Administrator patrzy na całość
+ * i wpisuje konkretny termin (§10). Sugestie ma WŁASNA rezerwacja - pilot szuka miejsca
+ * dla siebie, dokładnie dla tego przypadku powstały.
  *
  * ══ MASZYNY WYŁĄCZONE ZE SŁUŻBY ZOSTAJĄ W SIATCE ══
  * Zwijamy to, czego administrator NIE SZUKA, wchodząc na ekran - a „czemu nie ma czym
@@ -21,8 +27,9 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
+import type { BookingDto } from '../../api/dto';
 import { useApprovalQueue } from '../../queries/useApprovals';
-import { useCalendar } from '../../queries/useCalendar';
+import { useBooking, useCalendar } from '../../queries/useCalendar';
 import { useDirectory } from '../../queries/useDirectory';
 import {
   Banner,
@@ -37,8 +44,12 @@ import { CalendarIcon, PlaneIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
 import { BlockDrawer } from './BlockDrawer';
 import { BookingDrawer } from './BookingDrawer';
+import { dayMonthLabel, weekdayAccusative } from './bookingLabels';
 import { buildCalendarGrid, hasAnyItem } from './calendarGrid';
+import { clubToday } from './clubClock';
 import { calendarAircraft, personLookup } from './directoryLookups';
+import { OwnBookingDrawer } from './OwnBookingDrawer';
+import { draftFromBooking, emptyOwnDraft, rebookDraft, type OwnDraft } from './ownBookingForm';
 import { queueBanner } from './queueCards';
 import {
   DEFAULT_RANGE,
@@ -57,6 +68,8 @@ export function CalendarScreen() {
   const { id } = useParams();
   const [params, setParams] = useSearchParams();
   const [form, setForm] = useState<'block' | 'booking' | null>(null);
+  // Szuflada WŁASNEJ rezerwacji (#233): szkic startowy i - w poprawce - rezerwacja.
+  const [own, setOwn] = useState<{ seed: OwnDraft; editing: BookingDto | null } | null>(null);
 
   const range = (params.get('zakres') as RangeKey | null) ?? DEFAULT_RANGE;
   const known = RANGE_OPTIONS.some((o) => o.key === range) ? range : DEFAULT_RANGE;
@@ -85,6 +98,12 @@ export function CalendarScreen() {
   // reguła, przez którą dziennik rozwiązuje kody z listy, a nie z wiersza.
   const person = useMemo(() => personLookup(directory.data), [directory.data]);
 
+  const viewer = session?.pilot ?? null;
+  const timezone = calendar.data?.timezone ?? '';
+  // Bez znanej strefy klubu oś nie ma wejść - „dziś" przeglądarki bywa innym dniem niż
+  // „dziś" na lotnisku, a komórka wczorajsza z plusem obiecywałaby termin miniony.
+  const today = timezone === '' ? null : clubToday(Date.now(), timezone);
+
   const rows = useMemo(
     () =>
       buildCalendarGrid({
@@ -92,11 +111,17 @@ export function CalendarScreen() {
         aircraft,
         bookings: calendar.data?.bookings ?? [],
         person,
+        viewerId: viewer?.id ?? null,
+        today,
       }),
-    [calendar.data, aircraft, person],
+    [calendar.data, aircraft, person, viewer, today],
   );
 
-  const open = id == null ? null : (calendar.data?.bookings ?? []).find((b) => b.id === id) ?? null;
+  const fromGrid = id == null ? null : (calendar.data?.bookings ?? []).find((b) => b.id === id) ?? null;
+  // Wpisu spoza siatki (link do rezerwacji w innym tygodniu, rezerwacja już zamknięta)
+  // szuflada też ma otworzyć - pytamy o niego wprost.
+  const fetched = useBooking(id != null && fromGrid == null ? id : null);
+  const open = fromGrid ?? fetched.data?.booking ?? null;
 
   // Brak uprawnienia = BRAK przycisku, nie przycisk wyszarzony (`panel-2.0.md` §3.3).
   const canBlock = can(session?.capabilities, 'fleet.manage');
@@ -135,8 +160,15 @@ export function CalendarScreen() {
               </Button>
             ) : null}
             {canBlock ? (
-              <Button onClick={() => setForm('block')}>Wyłącz maszynę z użytku</Button>
+              <Button variant="ghost" onClick={() => setForm('block')}>
+                Wyłącz maszynę z użytku
+              </Button>
             ) : null}
+            {/* JEDYNA akcja główna ekranu - rezerwacja jest czynnością KAŻDEGO członka
+                i najczęstszą w module (#233). Akcje administratora wyżej są wyciszone. */}
+            {viewer == null || session?.org == null ? null : (
+              <Button onClick={() => setOwn({ seed: emptyOwnDraft(), editing: null })}>Zarezerwuj</Button>
+            )}
           </>
         }
       />
@@ -191,18 +223,30 @@ export function CalendarScreen() {
             />
           ) : (
             <>
-              <Grid rows={rows} days={calendar.data?.days ?? []} />
+              <Grid
+                rows={rows}
+                days={calendar.data?.days ?? []}
+                timezone={timezone}
+                onAdd={(aircraftId, date) =>
+                  setOwn({ seed: emptyOwnDraft({ aircraftId, date }), editing: null })
+                }
+              />
               {hasAnyItem(rows) ? null : (
                 <EmptyState
                   icon={<CalendarIcon />}
                   title="W tym zakresie nikt nic nie zaplanował"
-                  note="Flota jest wolna. Rezerwacje zakładają piloci w aplikacji."
+                  note="Flota jest wolna. Kliknij wolne miejsce przy maszynie, żeby ją zarezerwować."
                 />
               )}
               <div className="cal-legend">
                 <span className="cal-legend-item">
                   <span className="cal-swatch" />
                   Rezerwacja
+                </span>
+                {/* Pilot szuka na osi przede wszystkim SIEBIE (#233). */}
+                <span className="cal-legend-item">
+                  <span className="cal-swatch mine" />
+                  Twoja rezerwacja
                 </span>
                 {/* Stan „czeka na akceptację" różni się KSZTAŁTEM (przerywana ramka), nie
                     barwą - bursztyn niesie wyłączenie z użytku (issue #165, H4). */}
@@ -225,9 +269,31 @@ export function CalendarScreen() {
           booking={open}
           person={person}
           reg={aircraft.find((a) => a.id === open.aircraftId)?.reg ?? open.aircraftId}
-          timezone={calendar.data?.timezone ?? ''}
+          timezone={timezone}
           canManage={canManage}
+          viewerId={viewer?.id ?? null}
+          onEdit={(booking) => {
+            navigate('/kalendarz');
+            setOwn({ seed: draftFromBooking(booking, timezone), editing: booking });
+          }}
+          onRebook={(booking) => {
+            navigate('/kalendarz');
+            setOwn({ seed: rebookDraft(booking, timezone), editing: null });
+          }}
           onClose={() => navigate('/kalendarz')}
+        />
+      )}
+
+      {own == null || viewer == null ? null : (
+        <OwnBookingDrawer
+          aircraft={aircraft}
+          members={directory.data?.members ?? []}
+          viewer={viewer}
+          person={person}
+          timezone={timezone}
+          seed={own.seed}
+          editing={own.editing}
+          onClose={() => setOwn(null)}
         />
       )}
 
@@ -248,9 +314,12 @@ export function CalendarScreen() {
 interface GridProps {
   rows: ReturnType<typeof buildCalendarGrid>;
   days: NonNullable<ReturnType<typeof useCalendar>['data']>['days'];
+  timezone: string;
+  /** Kliknięcie w wolne miejsce komórki - szuflada własnej rezerwacji z maszyną i dniem. */
+  onAdd: (aircraftId: string, date: string) => void;
 }
 
-function Grid({ rows, days }: GridProps) {
+function Grid({ rows, days, timezone, onAdd }: GridProps) {
   const navigate = useNavigate();
   if (days.length === 0) return null;
 
@@ -288,7 +357,7 @@ function Grid({ rows, days }: GridProps) {
             </span>
           </span>
           <div className="cal-cells">
-            {row.cells.map((cell) => (
+            {row.cells.map((cell, j) => (
               <div
                 key={cell.date}
                 className={['cal-cell', cell.items.length === 0 ? 'off' : ''].join(' ').trim()}
@@ -303,6 +372,20 @@ function Grid({ rows, days }: GridProps) {
                     {item.continues ? `· ${item.label}` : item.label}
                   </button>
                 ))}
+                {/* Wolne miejsce komórki jest celem kliknięcia - w spoczynku nie rysuje
+                    nic, pod kursorem tło i plus (#233). Dzień miniony, maszyna poza
+                    służbą i doba zajęta w całości przeglądem celu NIE dostają. */}
+                {cell.addable ? (
+                  <button
+                    type="button"
+                    className="cal-add"
+                    title={addTitle(row.aircraft.reg, days[j], timezone)}
+                    aria-label={addTitle(row.aircraft.reg, days[j], timezone)}
+                    onClick={() => onAdd(row.aircraft.id, cell.date)}
+                  >
+                    +
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
@@ -329,10 +412,25 @@ const calVars = (days: number): React.CSSProperties =>
  * jeszcze niepotwierdzona jest wyciszona - bez tego termin, o którym nikt nie
  * zdecydował, wyglądał na pewny.
  */
-const itemClass = (item: { kind: string; status: string }): string =>
-  ['cal-item', item.kind === 'block' ? 'block' : '', item.status === 'pending' ? 'pending' : '']
+const itemClass = (item: { kind: string; status: string; mine: boolean }): string =>
+  [
+    'cal-item',
+    item.kind === 'block' ? 'block' : '',
+    item.status === 'pending' ? 'pending' : '',
+    item.mine ? 'mine' : '',
+  ]
     .filter((c) => c !== '')
     .join(' ');
+
+/**
+ * „Zarezerwuj SP-AXA na sobotę 26 września" - podpis celu kliknięcia. Dzień z POŁUDNIA
+ * doby klubu, jak nagłówek kolumny: jej początek wypada przed północą UTC.
+ */
+function addTitle(reg: string, day: { startsAt: string; endsAt: string } | undefined, tz: string): string {
+  if (day == null) return `Zarezerwuj ${reg}`;
+  const mid = new Date((Date.parse(day.startsAt) + Date.parse(day.endsAt)) / 2);
+  return `Zarezerwuj ${reg} na ${weekdayAccusative(mid, tz)} ${dayMonthLabel(mid, tz)}`;
+}
 
 /**
  * Plamki w geometrii docelowej: pięć wierszy, bo tyle ma typowa flota klubu. Nagłówek

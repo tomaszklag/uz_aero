@@ -48,3 +48,31 @@ export const emptySessionSql = (t: string): string => `(
   AND ${t}.fuel_start_l IS NOT NULL AND ${t}.fuel_end_l IS NOT NULL
   AND ${t}.mh_start IS NOT NULL AND ${t}.mh_end IS NOT NULL
 )`;
+
+/**
+ * NUMER OPERACJI W DOBIE PILOTA - ostatni człon sygnatury (issue #68), jako RANGA
+ * wiersza `t` wśród sąsiadów po kolumnach projekcji. Do 3.2.0 wyrażenie stało wprost
+ * w adapterze listy operacji; monitor kart dnia (P-D) pisze sygnaturę przy każdym
+ * wierszu, więc ranga ma JEDNO źródło - druga kopia rozjechałaby się przy pierwszej
+ * poprawce, a dwie sygnatury jednego lotu to dokładna odwrotność tego, po co ona jest.
+ *
+ * Reguła zgadza się co do znaku z `operationIndexes` (@ninerdeck/domain), bo telefon
+ * liczy ten sam numer u siebie, offline: ten sam pilot, TEN SAM KLUB, bez unieważnionych,
+ * wyłącznie operacje z kotwicą (`anchorSql`), doba i kolejność z kotwicy, remis po
+ * `session_uuid`. Warunek dotyczy TEŻ wiersza pytanego: bez części o statusie operacja
+ * unieważniona dostawała numer swojej poprzedniczki. Zgodność torów przybija
+ * `server/test/operationSignature.test.ts`.
+ */
+export const dayIndexSql = (t: string): string => `(CASE
+  WHEN ${anchorSql(t)} IS NULL OR ${t}.status = 'voided' THEN NULL
+  ELSE (
+    SELECT COUNT(*)
+      FROM sessions x
+     WHERE x.pic_id = ${t}.pic_id
+       AND x.org_id = ${t}.org_id
+       AND x.status <> 'voided'
+       AND ${anchorSql('x')} IS NOT NULL
+       AND ${anchorSql('x')} / 86400000 = ${anchorSql(t)} / 86400000
+       AND (${anchorSql('x')}, x.session_uuid) <= (${anchorSql(t)}, ${t}.session_uuid)
+  )
+END)`;

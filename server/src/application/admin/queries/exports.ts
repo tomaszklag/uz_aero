@@ -86,6 +86,10 @@ export class AdminExportQueries {
         exportedAt: revision.exportedAt.toISOString(),
       })),
       sheetRows: sheet == null ? 0 : 1,
+      // Adres, który DZIŚ otwiera kartę - z bieżącego hosta, nie z dziennika (P-D, §7):
+      // linki zapisane przed zmianą domeny (issue #124) niosą host, który nie odpowiada.
+      // Bez karty w bazie adresu nie ma: pokazywałby drzwi do pustego pokoju.
+      address: sheet == null || item.tab == null ? null : await this.sheets.sheetUrl(join.orgId, item.tab),
       // Jedzie razem z podglądem, bo to podgląd jest tu wprowadzany w błąd: gdy kartę
       // nadpisała inna sesja, `readDaySheet(tab)` oddaje TAMTEN dzień pracy pod nazwą
       // tego dnia. Bez tego pola rozwinięcie wyglądałoby na treść klikniętego wiersza.

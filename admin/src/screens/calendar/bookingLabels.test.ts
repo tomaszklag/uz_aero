@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { BookingDto } from '../../api/dto';
 import {
   cellLabel,
+  dayMonthLabel,
   drawerHeading,
   hoursLabel,
+  onWeekday,
   originLabel,
   plannedLabel,
+  weekdayAccusative,
   type Person,
 } from './bookingLabels';
 
@@ -162,17 +165,32 @@ describe('nagłówek szuflady', () => {
 });
 
 describe('pochodzenie zajętości', () => {
-  it('rezerwacja pilota założona przez niego samego mówi o APLIKACJI', () => {
-    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-1' }), person)).toBe(
-      'przez pilota, z aplikacji',
-    );
+  // Issue #233: pilot rezerwuje też z panelu.
+  it('właściciel sam: „przez Ciebie" dla niego, „przez pilota" dla innych - BEZ powierzchni', () => {
+    // Od #233 pilot rezerwuje też z panelu, więc „z aplikacji" wywnioskowane z pary
+    // autor–właściciel byłoby nieprawdą.
+    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-1' }), person, 'p-1')).toBe('przez Ciebie');
+    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-1' }), person, 'p-2')).toBe('przez pilota');
   });
 
-  it('cudza ręka to PANEL, a kto - mówi kod, bo kod się nie odmienia', () => {
-    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-2' }), person)).toBe('z panelu · AKO');
+  it('cudza ręka: „za pilota", a kto - mówi kod, bo kod się nie odmienia', () => {
+    expect(originLabel(booking({ pilotId: 'p-1', createdBy: 'p-2' }), person, 'p-2')).toBe('za pilota · AKO');
   });
 
   it('autor spoza cache członków nie zostawia po sobie pustego napisu', () => {
-    expect(originLabel(booking({ createdBy: 'ktoś-obcy' }), person)).toBe('z panelu');
+    expect(originLabel(booking({ createdBy: 'ktoś-obcy' }), person, null)).toBe('za pilota');
+  });
+});
+
+// Issue #233: podpis wolnej komórki osi i pasek zajętości doby.
+describe('dzień tygodnia w bierniku', () => {
+  it('„na sobotę", „we wtorek" - odmiana z tabeli, data w dopełniaczu od Intl', () => {
+    const TZ = 'Europe/Warsaw';
+    const sobota = new Date('2026-09-26T10:00:00.000Z');
+    const wtorek = new Date('2026-09-22T10:00:00.000Z');
+    expect(weekdayAccusative(sobota, TZ)).toBe('sobotę');
+    expect(onWeekday(sobota, TZ)).toBe('w sobotę');
+    expect(onWeekday(wtorek, TZ)).toBe('we wtorek');
+    expect(dayMonthLabel(sobota, TZ)).toBe('26 września');
   });
 });

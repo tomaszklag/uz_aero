@@ -43,16 +43,15 @@ import type {
 import type { AdminAircraftListItem } from '../contracts/fleet.ts';
 import { exportListItem } from '../mappers/exportListItem.ts';
 import { engineState } from '../mappers/engineState.ts';
-import { flagListItem } from '../mappers/flagListItem.ts';
 import { recentEvent } from '../mappers/recentEvent.ts';
 import { sessionListItem } from '../mappers/sessionListItem.ts';
 import type {
   DashboardAdminPort,
   ExportsAdminPort,
-  FlagsAdminPort,
   PilotsAdminPort,
   SessionsAdminPort,
 } from '../ports.ts';
+import type { AdminFlagQueries } from './flags.ts';
 import type { AdminFleetQueries } from './fleet.ts';
 
 /**
@@ -85,7 +84,12 @@ export class AdminDashboardQueries {
      */
     private readonly fleet: AdminFleetQueries,
     private readonly sessions: SessionsAdminPort,
-    private readonly flags: FlagsAdminPort,
+    /**
+     * Flagi przez ZAPYTANIE skrzynki (3.2.0), z tego samego powodu, co flota przez
+     * `AdminFleetQueries`: to ono nazywa operacje flagi sygnaturą i nazwiskiem, a wiersz
+     * „Do sprawdzenia" ma być tym samym wierszem, który zobaczy się w skrzynce.
+     */
+    private readonly flags: AdminFlagQueries,
     private readonly exports: ExportsAdminPort,
     private readonly dashboard: DashboardAdminPort,
     /** Strumień otwartej sesji - WYŁĄCZNIE do stanu silnika (patrz nagłówek pliku). */
@@ -113,7 +117,7 @@ export class AdminDashboardQueries {
           direction: 'asc',
           limit: ATTENTION_PER_SOURCE,
         }),
-        this.flags.list(this.db, orgId, { status: 'open', limit: ATTENTION_PER_SOURCE }),
+        this.flags.list(orgId, { status: 'open', limit: ATTENTION_PER_SOURCE }),
         // Jedno zapytanie, dwie odpowiedzi: `items` zawężone do kart, których NIE MA
         // (awaria eksportu), a `counts` policzone nad całym zakresem NIEZALEŻNIE od
         // zawężenia stanem - tak stanowi kontrakt monitora.
@@ -149,10 +153,18 @@ export class AdminDashboardQueries {
         openDays: openDays?.total ?? notCounted('dni otwarte'),
         openFlags: flagPage.total,
         exports: exportPage.counts,
+        staleOpenDays: staleOpenDays?.total ?? notCounted('operacje wiszące'),
+        // Suma trzech źródeł „Do sprawdzenia" (P-D) - policzona TU, przy trzech
+        // składnikach, a nie w panelu: plakietka w kolumnie ma obiecywać dokładnie
+        // tyle spraw, ile pokażą trzy karty pod nią.
+        attention:
+          flagPage.total +
+          exportPage.counts.missing +
+          (staleOpenDays?.total ?? notCounted('operacje wiszące')),
       },
       fleet: await this.withEngine(fleetPage.items),
       attention: {
-        flags: flagPage.items.map(flagListItem),
+        flags: flagPage.items,
         failedExports: exportPage.items.map(exportListItem),
         staleOpenDays: (staleOpenDays?.items ?? []).map(sessionListItem),
       },

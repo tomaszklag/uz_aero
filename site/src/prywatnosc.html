@@ -24,7 +24,7 @@
 <main class="doc">
   <p class="eyebrow">Dokument</p>
   <h1>Polityka prywatności</h1>
-  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel administratora · obowiązuje od 26 września 2026</p>
+  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel klubu · obowiązuje od 27 września 2026</p>
 
   <h2>1. Kto przetwarza dane</h2>
   <p>Operatorem aplikacji Ninerdeck i administratorem danych jest Tomasz Klag, prowadzący aplikację
@@ -93,7 +93,7 @@
   dane z punktów 2.1-2.3.</p>
   <p>Do klubu wchodzi się, wpisując <strong>kod klubu</strong> otrzymany od jego administratora.
   Dopiero wtedy powstaje zgłoszenie, które administrator tego klubu zatwierdza - nadając kod
-  pilota i rolę - albo odrzuca z powodem, który czytasz na swoim ekranie. Administrator widzi
+  pilota i zakres uprawnień - albo odrzuca z powodem, który czytasz na swoim ekranie. Administrator widzi
   wówczas Twoje imię, nazwisko i adres e-mail. Zgłoszenie odrzucone możesz w każdej chwili
   poprosić o usunięcie.</p>
 
@@ -108,9 +108,15 @@
         operacją aplikacja nie rejestruje lokalizacji; w ustawieniach jest tylko diagnostyka
         odbiornika GPS pokazywana na żądanie i nigdzie niezapisywana.</li>
   </ul>
-  <p>Te dane są dziennikiem eksploatacji samolotów klubu. Widzi je administrator klubu, w którym
-  odbyła się operacja, a w zakresie własnych operacji - pilot w aplikacji. Klub widzi wyłącznie
-  swoje operacje: jeśli latasz w dwóch klubach, żaden z nich nie widzi lotów wykonanych w drugim.</p>
+  <p>Te dane są dziennikiem eksploatacji samolotów klubu. Własne operacje widzisz w aplikacji.
+  W panelu klubu dziennik widzą osoby, którym administrator klubu nadał uprawnienie
+  <strong>„Podgląd klubu"</strong> - sam administrator, a także na przykład koordynator lotów
+  albo technik. Klub widzi wyłącznie swoje operacje: jeśli latasz w dwóch klubach, żaden z nich
+  nie widzi lotów wykonanych w drugim.</p>
+  <p>W panelu te same wpisy są zestawiane także <strong>po osobach</strong>: dla każdego pilota
+  klubu liczba operacji, czas blokowy i czas lotu w wybranym okresie - osobno jako dowódca
+  i jako drugi pilot - oraz statystyki klubu po dniach, samolotach, pilotach i zadaniach.
+  To zestawienia danych opisanych wyżej, bez żadnych nowych; widzą je te same osoby, co dziennik.</p>
 
   <h3>4.1. Zapis surowych odczytów do strojenia wykrywania faz lotu</h3>
   <p>Równolegle z powyższym, <strong>również tylko przy pracującym silniku</strong>, telefon
@@ -146,7 +152,9 @@
   planowany czas lotu i notatkę. Członkowie klubu widzą w kalendarzu <strong>tylko to, czego
   potrzebują, żeby zaplanować własny lot</strong>: godziny, maszynę, kto ją zarezerwował
   i rodzaj zajętości (przy wyłączeniu z użytku - także powód). Zadanie, trasę, plan i notatkę
-  widzi rezerwujący, osoby akceptujące rezerwacje w tym klubie oraz administrator w panelu.</p>
+  widzi rezerwujący, osoby akceptujące rezerwacje w tym klubie oraz - w panelu - osoby
+  z uprawnieniem „Podgląd klubu" albo zarządzające rezerwacjami. Rezerwację składa się
+  w aplikacji albo w panelu; w obu miejscach zapisuje się to samo.</p>
   <p>Jeśli klub ustawił ścieżkę akceptacji, każda decyzja - zgoda albo odmowa - zapisuje się
   z osobą, chwilą i powodem; przy odmowie powód jest wymagany, bo czyta go rezerwujący.
   Historia decyzji jest dopisywalna jak dziennik: przesunięcie terminu unieważnia zgody, ale
@@ -158,7 +166,7 @@
   liczniki, terminy i historię jej operacji.</p>
 
   <h3>5.2. Skrzynka powiadomień i powiadomienia na telefon</h3>
-  <p>Prośby o zgodę, decyzje w Twojej sprawie, wygaśnięcie terminu oraz - po włączeniu
+  <p>Prośby o zgodę i ich wycofanie, decyzje w Twojej sprawie, wygaśnięcie terminu oraz - po włączeniu
   obserwowania samolotu - wiadomości o lotach tej maszyny trafiają do <strong>skrzynki
   w aplikacji</strong>. Skrzynka jest na serwerze klubu i to ona jest treścią: przechowuje
   wiadomość, chwilę jej powstania i to, czy została przeczytana. Widzisz ją wyłącznie Ty.</p>
@@ -189,11 +197,12 @@
   <h2>6. Gdzie i jak długo</h2>
   <p>Dane są przechowywane na serwerze aplikacji u dostawcy infrastruktury chmurowej oraz
   <strong>lokalnie na telefonie pilota</strong>. Zapis lokalny nie znika po wysłaniu i nie ma
-  takiego znikać: to on pozwala aplikacji działać bez zasięgu i z niego liczą się „Mój dzień"
-  i historia. Wyjątkiem jest zapis surowych odczytów z punktu 4.1 - jego kopię telefon kasuje
+  takiego znikać: to on pozwala aplikacji działać bez zasięgu i z niego liczą się pulpit
+  i historia lotów. Wyjątkiem jest zapis surowych odczytów z punktu 4.1 - jego kopię telefon kasuje
   zaraz po przesłaniu.</p>
   <p>Dziennik operacji jest rejestrem prowadzonym przez czas działania klubu i jest
-  <strong>dopisywalny, a nie nadpisywalny</strong>: poprawka albo unieważnienie wpisu dokłada się
+  <strong>dopisywalny, a nie nadpisywalny</strong>: poprawka, dopisanie brakującego faktu albo
+  unieważnienie wpisu dokłada się
   do historii razem z autorem, chwilą i powodem, zamiast kasować poprzedni stan. Dane konta
   usuwamy na Twoje żądanie, o ile nie są potrzebne do zachowania integralności dziennika operacji,
   w których brałeś udział - wtedy członkostwo zostaje wyłączone, a wpisy pozostają w dzienniku
@@ -203,7 +212,7 @@
   wysyłki poczty (punkt 2.4) oraz dostawcami doręczania powiadomień na telefon (punkt 5.2).</p>
 
   <h2>7. Pliki cookie i dane na urządzeniu</h2>
-  <p>Panel administratora używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.
+  <p>Panel klubu używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.
   Nie stosujemy plików cookie analitycznych ani reklamowych; aplikacja i panel nie zawierają
   narzędzi śledzących, nie profilują i nie podejmują decyzji w sposób zautomatyzowany wobec osób.</p>
   <p>Aplikacja przechowuje dane <strong>na samym urządzeniu</strong>: dziennik operacji (punkt 6),

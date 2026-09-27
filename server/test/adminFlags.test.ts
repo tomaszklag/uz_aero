@@ -438,6 +438,41 @@ describe('skrzynka flag (A03)', () => {
     expect(body.total).toBe(2);
   });
 
+  it('nazywa operacje flagi sygnaturą, pilotem i kartą doby - w kolejności uuid-ów', async () => {
+    // Uuid adresuje, sygnatura identyfikuje (issue #68): wiersz skrzynki mówi „B. Nowak
+    // trzyma maszynę od 08:00, M. Zięba przejęła ją i zdała", a nakładka nazywa kartę,
+    // którą trzyma poza arkuszem. Nazwy przychodzą z listy operacji, więc sygnatura tu
+    // i w dzienniku to jedno wyliczenie.
+    const { app, admin } = await mixedInbox();
+    const body = (await inbox(app, admin)).json();
+
+    const overlap = body.items[0];
+    expect(overlap.sessions.map((s: { sessionUuid: string }) => s.sessionUuid)).toEqual(overlap.sessionUuids);
+    const bySession = (uuid: string) => overlap.sessions.find((s: { sessionUuid: string }) => s.sessionUuid === uuid);
+    expect(bySession('sess-1')).toMatchObject({
+      signature: 'SP-AXA/2026-06-22/AKO/1',
+      reg: 'SP-AXA',
+      picCode: 'AKO',
+      picName: 'Adam Kowalski',
+      status: 'active',
+      claimedAt: at(8, 0),
+      closeTime: null,
+      tab: '2026-06-22_SP-AXA',
+    });
+    // Druga strona nakładki też nie zdała samolotu - obie operacje trwają.
+    expect(bySession('sess-2')).toMatchObject({
+      signature: 'SP-AXA/2026-06-22/KRZ/1',
+      picCode: 'KRZ',
+      status: 'active',
+      closeTime: null,
+    });
+    expect(overlap.mhFormat).toBe('hhmm');
+
+    // Luka w liczniku na SP-FGK: dwa ogniwa z dwóch dób, każde z własną kartą.
+    const gap = body.items[1];
+    expect(gap.sessions.map((s: { tab: string }) => s.tab)).toEqual(['2026-06-22_SP-FGK', '2026-06-23_SP-FGK']);
+  });
+
   it('MŁODSZA flaga blokująca wyprzedza starszą nieblokującą', async () => {
     // To jest właściwy dowód na pierwszy klucz sortowania: gdyby skrzynka szła samym
     // wiekiem, karta dnia stojąca poza arkuszem czekałaby na dole listy.

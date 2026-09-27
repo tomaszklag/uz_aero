@@ -27,8 +27,8 @@ const DNI: CalendarDayDto[] = [
 ];
 
 const FLOTA: CalendarAircraft[] = [
-  { id: 'a1', reg: 'SP-AXA', type: 'C172', inService: true },
-  { id: 'a2', reg: 'SP-KWA', type: 'C152', inService: false },
+  { id: 'a1', reg: 'SP-AXA', type: 'C172', inService: true, dualRequired: false },
+  { id: 'a2', reg: 'SP-KWA', type: 'C152', inService: false, dualRequired: false },
 ];
 
 const OSOBY: Record<string, Person> = {
@@ -64,7 +64,7 @@ function booking(over: Partial<BookingDto> = {}): BookingDto {
 }
 
 const grid = (bookings: BookingDto[]) =>
-  buildCalendarGrid({ days: DNI, aircraft: FLOTA, bookings, person: osoba });
+  buildCalendarGrid({ days: DNI, aircraft: FLOTA, bookings, person: osoba, viewerId: null, today: null });
 
 describe('siatka kalendarza', () => {
   it('wiersz na KAŻDĄ maszynę, także tę bez ani jednej rezerwacji', () => {
@@ -118,6 +118,54 @@ describe('siatka kalendarza', () => {
     const rows = grid([booking({ aircraftId: 'a2' })]);
     expect(rows[0]!.cells[0]!.items).toHaveLength(0);
     expect(rows[1]!.cells[0]!.items).toHaveLength(1);
+  });
+
+  // Issue #233: odkąd kalendarz ogląda pilot, własne wpisy są zielone.
+  it('WŁASNA rezerwacja jest „moja" - cudza i wyłączenie z użytku nie', () => {
+    const rows = buildCalendarGrid({
+      days: DNI,
+      aircraft: FLOTA,
+      person: osoba,
+      viewerId: 'p1',
+      today: null,
+      bookings: [
+        booking({ id: 'moja' }),
+        booking({ id: 'cudza', pilotId: 'p2', startsAt: '2026-09-15T10:00:00Z', endsAt: '2026-09-15T11:00:00Z' }),
+      ],
+    });
+    expect(rows[0]!.cells[0]!.items.map((i) => [i.id, i.mine])).toEqual([
+      ['moja', true],
+      ['cudza', false],
+    ]);
+  });
+
+  it('WEJŚCIE W REZERWACJĘ: od dziś w przód, nie na maszynie poza służbą i nie w dobie zajętej w całości przeglądem', () => {
+    const rows = buildCalendarGrid({
+      days: DNI,
+      aircraft: FLOTA,
+      person: osoba,
+      viewerId: 'p1',
+      today: '2026-09-16',
+      bookings: [
+        // Przegląd od 16 rano do końca 17: doba 17 zajęta W CAŁOŚCI, 16 - tylko częściowo.
+        booking({
+          id: 'blk',
+          kind: 'block',
+          pilotId: null,
+          operation: null,
+          blockReason: 'maintenance',
+          startsAt: '2026-09-16T06:00:00Z',
+          endsAt: '2026-09-17T23:00:00Z',
+        }),
+      ],
+    });
+    expect(rows[0]!.cells.map((c) => c.addable)).toEqual([false, true, false]);
+    // Maszyna poza służbą: serwer i tak odmówi (`aircraft_disabled`), więc celu nie ma.
+    expect(rows[1]!.cells.map((c) => c.addable)).toEqual([false, false, false]);
+  });
+
+  it('bez znanej doby klubu oś nie ma wejść - nie zgadujemy, co jest „dziś"', () => {
+    expect(grid([]).flatMap((r) => r.cells.map((c) => c.addable)).some(Boolean)).toBe(false);
   });
 
   it('zajętość SPOZA zakresu nie pokazuje się nigdzie', () => {

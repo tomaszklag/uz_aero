@@ -35,6 +35,124 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 3.2.0 · 27 września 2026
+
+> Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.
+
+### Nowości
+
+- **Dziennik odpowiada też na pytanie „kto latał".** Nad tabelą stoi przełącznik osi:
+  Samoloty (jak dotąd) albo Piloci - wiersz na członka klubu z dniami, operacjami, lotami,
+  czasem blokowym i czasem w powietrzu z tego samego zakresu dat. Nalot liczy się dowódcy,
+  a czas w prawym fotelu ma własną kolumnę „Drugi pilot" z własną sumą - tej samej
+  godziny lotu szkolnego nie dodaje się do siebie z wiersza instruktora i ucznia.
+  Członkowie bez lotów w zakresie są zwinięci w jeden wiersz pod listą i rozwijają się
+  kliknięciem. Wiersz mówi też, kto trzyma maszynę albo właśnie leci.
+- **Sumy dziennika liczą wyłącznie operacje zdane** - na obu osiach, w nagłówkach dób
+  i w statystykach tak samo. Operacja w toku nie dokłada się do nalotu, dopóki samolot
+  nie zostanie zdany; zamiast tego wiersz nazywa ją wprost („leci teraz", „1 w toku"),
+  więc ten sam zakres dat daje jedną liczbę nalotu na każdym ekranie panelu.
+- **Operacje maszyny i pilota pogrupowane dniami.** Doba jest nagłówkiem z sumami
+  (operacje, loty, blok, lot - liczone przez serwer nad całą dobą, także gdy lista jest
+  przycięta), operacje w toku są nazwane osobno, a czas trwania biegu silnika ma własną
+  kolumnę. Strona pilota pokazuje jego loty w prawym fotelu jako zwykłe wiersze
+  z plakietką i piątą sumą doby.
+- **Z operacji wychodzi się w dwie strony:** okruszki prowadzą na oś maszyny, a nazwisko
+  pilota i drugiego pilota - na oś tej osoby. Strona pilota ma własny adres z jego kodem,
+  do wklejenia w rozmowie jak rejestracja.
+- **Kolumna panelu ma sześć pozycji w stałej kolejności**: Dziennik, Do sprawdzenia,
+  Kalendarz, Statystyki, Piloci, Samoloty - najpierw to, co się wydarzyło i co wymaga
+  reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu.
+- **Podręcznik opisuje panel taki, jaki jest**: nowe strony „Do sprawdzenia"
+  i „Statystyki", dziennik z dwiema osiami i trybem edycji, zużycie z lotów na karcie
+  samolotu, zakresy uprawnień z nowymi ekranami.
+- **Operację poprawia się w panelu.** Przycisk „Popraw zdarzenia" przełącza stronę
+  operacji w tryb edycji pod własnym adresem: każdy wiersz osi ma ołówek i otwiera
+  szufladę z poprawką czasu, odczytów albo składu zrzutu, z podglądem „przed → po"
+  policzonym przez serwer, powodem (zobaczy go pilot w historii zmian) i historią
+  dotychczasowych poprawek z nazwiskiem. Zdarzenie, którego nie było, unieważnia się
+  koszem w linii tytułu. Nad osią stoją te same ostrzeżenia o niespójnościach, które
+  pilot widzi na telefonie - lot bez lądowania, zdarzenie poza pracą silnika - z tym,
+  czym się je naprawia.
+- **Brakujący fakt da się dopisać z panelu.** Ostatni wiersz osi „Dodaj wpis" przyjmuje
+  lądowanie, start, kołowanie, tankowanie, zrzut, załadunek albo dolewkę oleju z godziną
+  i powodem; fakt ocenia się tak, jak wyglądała operacja w tej chwili (lądowanie musi
+  mieć start, tankowanie stojący silnik), a podgląd mówi, który lot domyka i ile
+  niespójności znika. Pilot zobaczy wpis na telefonie, karta arkusza dostaje nową rewizję.
+- **„Do sprawdzenia" - jedno miejsce na to, co wymaga reakcji.** Nowa pozycja w kolumnie
+  panelu, druga po Dzienniku, z liczbą spraw wyłącznie wtedy, gdy coś czeka. Trzy karty:
+  rozjazdy między zapisami (dwie operacje naraz, pilot w dwóch maszynach, luka albo
+  cofnięcie licznika, rozjazd paliwa, rozjazd zegara), doby bez karty w arkuszu
+  i operacje, których nikt nie zdał od ponad doby. Każdy wiersz prowadzi tam, gdzie
+  sprawę da się zamknąć; gdy nic nie czeka, ekran mówi to wprost.
+- **Skrzynka rozjazdów.** Do tej pory serwer wykrywał nieścisłości między zapisami, ale
+  nie pokazywał ich nikomu. Teraz każda ma nazwę po polsku, liczby, których dotyczy,
+  operacje z sygnaturami, zdanie o tym, czym się to naprawia, i notatkę rozstrzygnięcia,
+  która zostaje w dzienniku akcji. Sprawa „Dwie operacje naraz" mówi przed kliknięciem,
+  że jej zamknięcie wyśle kartę doby do arkusza. Otwarty rozjazd widać też przy operacji
+  w dzienniku - plakietką na liście i banerem na stronie operacji.
+- **Karty dnia i eksport.** Stan karty każdej doby samolotu (w arkuszu, bez karty,
+  wstrzymana rozjazdem, czeka na zdanie, unieważniona), rewizje, treść karty tak, jak
+  leży w arkuszu, adres karty do podania skarbnikowi (działa bez logowania) i ponowienie
+  eksportu z odpowiedzią, co poszło albo dlaczego nie.
+
+- **Statystyki klubu.** Nowa pozycja w kolumnie: nalot w wybranym zakresie dat jako
+  pasek sum (operacje, dni lotne, loty, blok, lot, paliwo, przyrost licznika, piloci),
+  słupki dzień po dniu i trzy tabele jednego zbioru operacji - samoloty, piloci, zadania -
+  każda z wierszem „Razem". Szybkie zakresy: 30 dni, ten i poprzedni miesiąc, ten
+  i poprzedni sezon. Podtytuł mówi, że liczą się operacje zdane, i ile trwa poza sumami.
+- **Czas jako drugi pilot także w statystykach.** Tabela pilotów ma kolumnę „Drugi pilot"
+  z własną sumą - uczeń bez ani jednej operacji jako dowódca ma swój wiersz z liczbą
+  w tej kolumnie, a nalot dowódców sumuje się do nalotu floty co do minuty tak samo,
+  jak w dzienniku.
+- **Zużycie z lotów na karcie samolotu.** Gdy maszyna ma dość zapisanych operacji, jej
+  karta w panelu pokazuje pasmo typowego zużycia zmierzone z lotów, stawki w locie
+  i na ziemi, przeliczniki licznika motogodzin i trend z ostatniego miesiąca. Norma
+  z dokumentacji stoi obok jako marker z odchyłką - to dwie różne liczby i karta nazywa,
+  którą pokazuje. Młoda maszyna bez policzonej normy nie dostaje ani zer, ani zdania
+  o braku danych - karty po prostu nie ma.
+- **Rezerwujesz także z kalendarza w panelu - tak samo jak w aplikacji.** Każdy członek
+  klubu ma w kalendarzu przycisk „Zarezerwuj", a wolne miejsce przy maszynie w danym dniu
+  też otwiera rezerwację - z tą maszyną i tym dniem. Najpierw termin i samolot: pasek
+  zajętości maszyny w wybranym dniu, wolne godziny słowami i sugerowane terminy z powodem
+  („tuż przed rezerwacją · A. Kowalski"); potem zadanie, trasa, drugi pilot i plan lotu.
+  Godziny wpisuje się w czasie klubu. Gdy ktoś zajął termin w międzyczasie, formularz
+  wraca do godzin i podpowiada najbliższe wolne miejsce tej samej długości.
+- **Twoje rezerwacje są na osi zielone**, a ich karta ma „Przesuń i popraw" i „Odwołaj" -
+  bez pola powodu, bo to Twój plan. Klub ze ścieżką akceptacji mówi przed zapisem, na czyją
+  zgodę rezerwacja zaczeka, a przy poprawce terminu - że dotychczasowe zgody przepadną.
+- **Odwołanie rezerwacji czekającej na zgodę zawiadamia tych, których pytano.** Osoby
+  z kroku, który miał zdecydować, dostają w skrzynce wiadomość, że prośba została
+  wycofana - nie muszą już się nią zajmować.
+
+### Poprawki
+
+- **Brakujący fakt dopiszesz w telefonie także po zdaniu samolotu.** „Dodaj wpis" w trybie
+  edycji operacji przyjmuje zgubione lądowanie, start, tankowanie czy dolewkę oleju przez
+  całą dobę od zdania - do tej pory działał wyłącznie z kokpitu, zanim samolot został zdany.
+  Godzinę faktu ocenia się tak, jak wyglądała wtedy operacja, a gdy nie da się jej przyjąć,
+  przycisk mówi dlaczego, zanim go naciśniesz. Poprawka dotrze do telefonów aktualizacją
+  w tle, bez nowej instalacji.
+- **Odmowa dopisania mówi o tamtej chwili**, w telefonie i w panelu: „O tej godzinie
+  pracował silnik - tankowanie wpisz przed uruchomieniem albo po wyłączeniu" zamiast rady
+  z kokpitu, żeby wyłączyć silnik, który dawno stoi.
+- **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
+  (zdanie samolotu bez biegu, lotów i zmian odczytów), tak jak dziennik - ten sam zakres
+  dat nie daje już dwóch sum na dwóch ekranach.
+- **Polityka prywatności i regulamin nadążają za panelem.** Mówią, kto w klubie widzi
+  dziennik, że nalot jest w panelu zestawiany także po osobach, że rezerwację składa się
+  również w panelu, a brakujący fakt da się dopisać. Regulamin opisuje przy okazji
+  logowanie hasłem, dołączanie kodem klubu i rezerwacje.
+
+### Dla testerów
+
+- **Nowego pliku instalować nie trzeba.** Panel zmienia się na serwerze, a dwie poprawki
+  w telefonie - dopisanie faktu po zdaniu samolotu i wiadomość „Prośba wycofana" w skrzynce -
+  dotrą same aktualizacją w tle do aplikacji w wersji 3.1.0. Wchodzą przy **następnym
+  uruchomieniu** aplikacji po pobraniu, nie od razu.
+- Kto ma jeszcze wersję 3.0.0, aktualizacji w tle nie dostanie - potrzebuje pliku 3.1.0
+  ze [strony pobierania](../pobierz/).
+
 ## 3.1.0 (build 6) · 26 września 2026
 
 > Rezerwacja ze zgodą klubu, skrzynka i powiadomienia na telefon, karta i obserwowanie samolotu, panel dla każdego członka klubu.
@@ -335,15 +453,6 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 ## Plan wydań
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
-
-### 3.2.0 · planowane na koniec października 2026
-
-> Rozbudowa panelu klubu - bez nowej instalacji aplikacji.
-
-- [ ] Dziennik w panelu także z osi pilota, z dobami jako nagłówkami i sumami doby
-- [ ] Korekty i dopisywanie brakujących zdarzeń z panelu, z historią zmian
-- [ ] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
-- [ ] Statystyki klubu i analityka zużycia maszyny
 
 ### 4.0.0 · termin do ustalenia
 

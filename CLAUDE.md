@@ -4687,7 +4687,7 @@ Reguły obowiązujące odtąd:
 Zgłoszenie właściciela: „Panel web powinien być dostępny dla wszystkich. Nie tylko dla
 »admin«. Mamy sterowanie scope uprawnień i to powinno decydować, co kto widzi." Decyzja
 doprecyzowująca tego samego dnia: członek z zestawem „Pilot" **widzi Moje konto i kalendarz**
-(własna rezerwacja Z PANELU - do epiku przebudowy panelu 3.2.0). Pełny zapis, tabela
+(własna rezerwacja Z PANELU - wykonana w 3.2.0, issue #233, sekcja niżej). Pełny zapis, tabela
 zdolność → trasy i odrzucone warianty: **`docs/uprawnienia.md` §13**; podręcznik: nowa
 strona `docs/podrecznik/uprawnienia.md` („Kto co widzi") z żywymi ekranami panelu i telefonu.
 Reguły obowiązujące odtąd KAŻDĄ trasę i KAŻDY ekran panelu:
@@ -4755,8 +4755,19 @@ Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
 - **DOBA NAGŁÓWKIEM na poziomie 2 obu osi** (`tbody.day` + `tr.day-row`, sumy z serwera
   jedną odpowiedzią - strona kursorowa potrafi rozciąć dobę); kolumny daty przy wierszu
   NIE MA; pierwsza komórka = para godzin biegu + sygnatura (kształt kafelka z telefonu)
-- **NALOT LICZY SIĘ DOWÓDCY; loty jako drugi pilot WIDOCZNE, poza sumami** (`tr.as-dual`,
-  podpis „+n jako drugi pilot") - decyzja postawiona na widoku, DO POTWIERDZENIA przed P-B
+- **NALOT LICZY SIĘ DOWÓDCY, A CZAS JAKO DRUGI PILOT MA WŁASNĄ KOLUMNĘ I WŁASNĄ SUMĘ**
+  (decyzja właściciela 2026-09-26, wariant B spośród trzech na zestawieniu; `docs/panel-3.2.md`
+  §17.1): kolumna „Drugi pilot" na osi pilotów I w tabeli pilotów statystyk, wiersz
+  `tr.as-dual` na poziomie 2 PEŁNYM tonem z plakietką `.pill.blue`, doba z takim lotem
+  dostaje PIĄTĄ sumę po separatorze („· 2:12 drugi pilot", nigdy z zera). Kolumn „Blok"
+  i „Drugi pilot" NIE WOLNO dodać - tę samą godzinę niesie wiersz instruktora i ucznia
+- **LISTA PILOTÓW = CI, KTÓRZY LATALI (dowódca ALBO drugi pilot) + ZWINIĘCI BEZ LOTÓW**
+  (ta sama decyzja): wiersz `tr.fold-row` / `.fold-btn` pod listą z LICZBĄ w napisie
+  („+3 członków bez lotów w tym zakresie"), rozwinięcie dopisuje wiersze `tr.muted`;
+  bez plamki skeletonu. Nie „wszyscy z zerami" i nie „tylko latający"
+- **BANER NIESPÓJNOŚCI W TRYBIE EDYCJI = TE SAME ZDANIA, CO NA TELEFONIE (10D)**, liczone
+  przez SERWER i przysyłane razem z operacją (`consistency` w odpowiedzi o operacji,
+  plaster P-C) - trzeciego imiennego wyjątku „panel liczy z domeny" nie dokładamy
 - **TRYB EDYCJI = STAN EKRANU POD WŁASNYM ADRESEM** (`…/edycja`): ołówek w piątej kolumnie
   osi (`td.pen`), plakietka `.tag-corrected` w OBU trybach, korekta w szufladzie z podglądem
   „przed → po" (liczy serwer), baner kolizji `ADMIN_EDIT_*` NAD formularzem i nigdy
@@ -4776,6 +4787,383 @@ Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
   `npm run panel:css` w `admin/`, wpis w inwentarzu `SZABLON.html`, karta w `index.html`
   (sekcje w kolejności kolumny bocznej), panel wariantów w całej rodzinie; martwe linki
   łapie grep po `href`
+
+## Panel 3.2.0 - epik P-B: dziennik - oś pilota, doby nagłówkiem, powiązanie list (issue #183, 2026-09-26)
+Pierwszy epik KODU milestone 3.2.0, 1:1 z makiet P-A (`dziennik-flota`, `-piloci`,
+`-maszyna`, `-pilot`, `-operacja`). Odstępstwa i ich powody: `docs/panel-3.2.md` §16.
+Reguły obowiązujące odtąd KAŻDĄ zmianę dziennika:
+- **DWIE OSIE POD JEDNYM ADRESEM**: `GET /admin/api/log?os=piloci` to PRZEŁĄCZNIK OSI
+  (segment `.seg` na poziomie 1, oś maszyn domyślna i poza adresem), nie druga trasa -
+  osobny `/log/pilots` sugerowałby drugi raport o innym zakresie. `LogAdminPort.byPilot`
+  czyta DOKŁADNIE ten zbiór operacji, co `byAircraft` (jeden napis `inRange(org)`:
+  zakres po `claim_time`, bez unieważnionych i pustych) i rozkłada go po ludziach CTE
+  `crew` (`UNION ALL`: dowódca + drugi pilot, gdy nie jest tą samą osobą). **Sumy
+  dowódcy obu osi są RÓWNE co do minuty** i pilnuje tego test (`adminLog.test.ts`)
+- **SUMY DZIENNIKA LICZĄ WYŁĄCZNIE OPERACJE ZDANE, W TOKU JEST NAZWANA OSOBNO** (decyzja
+  właściciela 2026-09-26, w dwóch turach; potwierdza kanwy makiet i §4.5). Do 3.2.0 oś
+  maszyn sumowała operację w toku „tym, co już zapisała" (reguła z 2.0: „inaczej
+  dzisiejszy dzień byłby pusty do wieczora") i pierwsza wersja P-B przeniosła to na oś
+  pilotów - właściciel to cofnął: JEDNA podstawa liczenia dla obu osi, nagłówków dób
+  i statystyk. W `logRepo` zakres (`inRange`) decyduje, KTÓRE operacje należą do
+  wiersza, a filtr `closed(alias)` - które się SUMUJĄ; `openSessions` liczy w toku
+  osobno. Dzisiejszy dzień nie jest pusty: wiersz maszyny mówi „leci teraz", wiersz
+  osoby „leci teraz · SP-AXA", nagłówek doby „· 1 w toku", podtytuł karty pilota
+  „· 1 w toku". Maszyna i osoba z SAMĄ operacją w toku stoją na liście z zerami
+  (maszyna nieprzygaszona, osoba nie wśród zwiniętych, bez podpisu „tylko jako drugi
+  pilot") - zera tłumaczy sygnał „teraz". Lista `regs` też z zamkniętych: maszynę
+  trzymaną nazywa sygnał, nie kolumna „Samoloty"; `lastEngineStopAt` zostaje faktem
+  z każdej operacji, bo śmigło naprawdę stanęło
+- **NALOT LICZY SIĘ DOWÓDCY, PRAWY FOTEL OSOBNO** (§17.1 wariant B): wiersz niesie
+  `dual: { operations, blockMs } | null` - `null` znaczy „ani jednej", nie parę zer
+  (piąta suma nie rysuje się z zera). `Dni` liczy doby z JAKIMKOLWIEK lotem. Uczeń bez
+  operacji jako dowódca ma zera w nalocie, liczbę w kolumnie „Drugi pilot" i podpis
+  „tylko jako drugi pilot". Kolumn „Blok" i „Drugi pilot" NIE WOLNO dodać do siebie
+- **ZWINIĘCI = AKTYWNI CZŁONKOWIE BEZ LOTU W ZAKRESIE**: `idle.count` jedzie zawsze
+  (wiersz zwinięcia czeka na LICZBĘ), `idle.members` wyłącznie z `&idle=1` (zwykle nikt
+  nie rozwija; w panelu rozwinięcie jest częścią klucza zapytania z `keepPreviousData`).
+  Wyłączeni nie liczą się do zwiniętych; wyłączony, który LATAŁ, zostaje na liście
+  z `active: false` i podpisem „członkostwo wyłączone". Liczba zerowa = brak wiersza
+  zwinięcia (reguła SyncChipa)
+- **SYGNAŁ „TERAZ" MÓWI O TERAZ**: `open` (operacja w toku dowódcy) jedzie w wierszu
+  NIEZALEŻNIE od zakresu dat - maszyna nieoddana od tygodnia jest sprawą właśnie wtedy,
+  gdy wypada poza zakres. Brzmienie BEZ formy z płcią: „leci teraz · SP-AXA" /
+  „trzyma SP-KLM od 06 WRZ 08:15" (makieta miała „nie zdała" - poprawiona)
+- **SUMY DÓB LICZY SERWER W TEJ SAMEJ ODPOWIEDZI** (`GET /sessions` → `days[]`, §4.4):
+  nad CAŁYM wynikiem filtra, bez kursora, bo strona rozcina dobę i suma połowy doby
+  wygląda poprawnie (test na dobę rozciętą `limit=2`). Doba = doba UTC chwili
+  PRZEJĘCIA - ta sama oś, co kursor i zakres, więc strona rozcina ją na dwie SĄSIEDNIE
+  części; doba sygnatury (kotwica uruchomienia) bywa inna po północy i to widać
+  w wierszu. Do sum wchodzą wyłącznie ZAMKNIĘTE; `inProgress` nazwane osobno
+  („· 1 w toku"); unieważnione nigdzie. Z filtrem `pilotId` sumy dowódcy liczą
+  `pic_id = pilot`, a `dual` - prawy fotel (`null` bez filtra pilota). Doba bez
+  zamkniętej operacji NIE dostaje czwórki zer (`daySums`)
+- **PANEL: GRUPY I ZWINIĘCIE SĄ DANYMI TABELI** (`DataTable.groups` → `tbody.day` +
+  `tr.day-row`; `DataTable.fold` → `tr.fold-row` + wiersze `muted`), jak kolumny.
+  `dayGroups.ts` NAZYWA sumy z serwera i niczego nie dodaje; `SessionCells.tsx`
+  (`Pair`, `OperationCell`, `DayHeader`) jest wspólny dla obu osi poziomu 2 - grid
+  maszyny i pilota różnią się DOKŁADNIE jedną kolumną (Pilot ↔ Samolot). Czas trwania
+  biegu przeszedł z drugiej linii pary do kolumny „Blok" (kreska, dopóki śmigło pracuje)
+- **ADRESY DZIENNIKA MAJĄ JEDNO ŹRÓDŁO** (`screens/logbook/logbookPaths.ts`): pięć
+  kształtów, każdy niesie zakres, a pusty zakres NIE wchodzi do adresu. Oś pilota to
+  `#/dziennik/pilot/:code` (segment STATYCZNY wygrywa z `:reg`; w adresie KOD pilota,
+  rozwiązywany osobą ze słownika klubu - także członek wyłączony). Wiersz „jako drugi
+  pilot" poznaje się po IDENTYFIKATORZE (`asDual`), nie po nazwisku; podpis komórki
+  „Samolot" mówi o załodze („z A. Kowal", „dowódca B. Nowak") albo o typie
+- **PODTYTUŁ POZIOMU 2 PILOTA LICZY SERWER**: liczby zakresu idą z wiersza
+  `GET /log?os=piloci` tego samego zakresu (`pilotRangeSummary`), nie z sumowania
+  nagłówków dób w przeglądarce; zestawu uprawnień w podtytule NIE MA (makieta
+  poprawiona - słownik klubu go nie niesie, zestaw jest sprawą modułu Piloci)
+- **DWA WYJŚCIA Z OPERACJI**: okruszki na oś maszyny, nazwisko pilota i drugiego
+  pilota (`PilotExit`, `.cell-link`) na oś osoby. Osoba bez kodu w klubie (dane
+  historyczne) zostaje napisem
+- **KALENDARZ STOI DRUGI W KOLUMNIE** (B9): Dziennik · Kalendarz · Piloci · Samoloty;
+  „Do sprawdzenia" i „Statystyki" dochodzą z P-D/P-E na swoich miejscach. `homeFor`
+  bez zmian znaczenia (administrator w Dzienniku, członek bez Podglądu klubu
+  w Kalendarzu) - `nav.test.ts` przybija kolejność
+- **JEDNA PODSTAWA LICZENIA DZIENNIKA I STATYSTYK** (§4.5): `CLOSED_IN_RANGE`
+  w `statsRepo` dostało `NOT emptySessionSql` - do 3.2.0 statystyki liczyły puste
+  zapisy, a dziennik nie. Test krzyżowy `/log` ↔ `/log?os=piloci` ↔ `/stats` na
+  zakresie domkniętym w środku. Kolumna „Drugi pilot" w tabeli pilotów STATYSTYK
+  zostaje na P-E
+- **przy okazji: strażnik `org_id` był czerwony na `develop`** (po scaleniu 3.1.0):
+  `LATEST_SQL` w `aircraftReadingsRepo.ts` niesie odtąd `WHERE org_id = $1` w szablonie
+  - klub jest pierwszym warunkiem każdego odczytu tej tabeli, a szablon bez niego
+  czytał się skanerowi jak zapytanie ponad klubami
+- **czego P-B NIE ROBI**: podręcznika (B8 → P-W, #187), kolumny „Drugi pilot"
+  w statystykach (P-E, #186), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+
+## Panel 3.2.0 - epik P-C: edycja przesłanych zdarzeń - korekty i dopisywanie w panelu (issue #184, 2026-09-26)
+Tryb edycji operacji 1:1 z makiet `dziennik-edycja` i `dziennik-dopisanie` (§5 `docs/panel-3.2.md`),
+plaster serwera (`consistency` i autor zapisu w odpowiedzi o operacji) oraz JEDYNA nowa droga
+zapisu milestone - dopisanie brakującego faktu. Odstępstwa i ich powody: `docs/panel-3.2.md` §16.
+Reguły obowiązujące odtąd:
+- **FAKT Z PRZESZŁOŚCI OCENIA SIĘ NA STANIE Z CHWILI, W KTÓREJ ZASZEDŁ** - `checkInsert`
+  + `stateAsOf` w `packages/domain/src/rules/insertion.ts`. `checkAppend` pyta o stan
+  KOŃCOWY („czy TERAZ wolno dopisać") i na zdanym samolocie odbija każdy typ spoza
+  katalogu korekt (`DAY_CLOSED`), a lądowanie po wyłączeniu silnika - o stan silnika.
+  `stateAsOf` = strumień EFEKTYWNY (korekty nałożone PRZED przycięciem - unieważniony
+  start sprzed tej chwili ma nie istnieć) przycięty do zdarzeń nie późniejszych niż chwila
+  faktu, ta sama projekcja. Reguły per typ zostają identyczne dla pilota i administratora
+  (to samo `checkAppend`): lądowanie bez otwartego lotu → `NOT_IN_FLIGHT`, tankowanie
+  w biegu → `REFUEL_ENGINE_RUNNING`, fakt PO zdaniu → `DAY_CLOSED` (należy do następnej
+  operacji), fakt sprzed przejęcia → `SESSION_NOT_CLAIMED`
+- **OKNO KOREKTY WRACA OSOBNO, na stanie końcowym i chwili WPISANIA** (`now` jest
+  ARGUMENTEM `checkInsert`, nie polem kandydata): pilot dopisuje w tym samym oknie 24 h,
+  w którym poprawia; administrator dostaje te same dwa ostrzeżenia o kolizji
+  (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`). `correctionWindowVerdict`
+  jest WYCIĄGNIĘTE z `checkCorrectionWindow` (bez bramki typów), nie skopiowane - nowa
+  kolizja albo nowy powód wygaśnięcia obejmuje korektę i dopisanie w tej samej chwili.
+  Pominięte uprawnienie znaczy pilota, jak wszędzie (`insertion.test.ts` w `app/`)
+- **LUKA TELEFONU NAZWANA W P-C, NAPRAWIONA W #234** (sekcja niżej): arkusz 10H po zdaniu
+  samolotu odbijał się o `DAY_CLOSED`, bo szedł komendami kokpitu (`checkAppend` na stanie
+  końcowym)
+- **CZWARTA DROGA ZAPISU PANELU MIESZKA W `correctionCandidate.ts`** (`addedEventCandidate`,
+  `insertionViolations`/`insertionWarnings`) - literał `'administrative'` ma nadal JEDNO
+  miejsce (`architecture.test.ts`). Biała lista `ADDED_EVENT_TYPES` = to, co telefon oferuje
+  na 10H (start, lądowanie, kołowanie, tankowanie, zrzut, załadunek, dolewka oleju); zod
+  odbija resztę jako 400, zanim ktokolwiek zapyta domenę. Start i lądowanie z panelu są
+  `manual` bez pozycji, zrzut i załadunek BEZ składu (skład dopisuje się korektą `amend`),
+  tankowanie podaje dwie liczby z trzech - trzecią liczy serwer; `dropNumber` jak
+  w komendzie telefonu (`drops.count + 1`)
+- **OBA ZEGARY DOPISANEGO FAKTU = CHWILA FAKTU** (inaczej niż korekta: oba = chwila
+  wpisania). Zapis z panelu nie ma zegara telefonu, więc `deviceTime` = teraz rodziłby
+  przy każdym dopisaniu sprzed dwóch dni ostrzeżenie `CLOCK_DRIFT` o rozjeździe, którego
+  nie było. Chwila wpisania żyje w `received_at` i w audycie
+- **KOMENDA `add` OBOK `correct` W `AdminCorrectionCommands`** - ta sama blokada advisory,
+  ten sam `adminSourceDevice`, ta sama projekcja po zapisie, ten sam re-eksport karty PO
+  commicie, osobna akcja audytu **`event.add`** (celem DOPISANE zdarzenie; `details`: typ,
+  chwila faktu, powód). Flag łańcucha NIE przelicza: dopisywane typy nie ruszają odczytów
+  z przejęcia i zdania. Trasy `POST /admin/api/sessions/:uuid/events[/preview]` na
+  `events.correct`; odmowy jak przy korekcie (404 cudza/nieznana, 422 domena); podgląd bez
+  `reason`, zapis z powodem; obie z sondami w `tenantIsolation.test.ts`
+- **PODGLĄD DOPISANIA NIESIE KANDYDATA I NIESPÓJNOŚCI PRZED/PO** - karta skutku pisze
+  „Domyka lot 5 · start …", „Czas lotu 5 — → 0:20", „Niespójności 1 → 0"; podgląd korekty
+  zostaje przy liczbach operacji (makieta wiersza niespójności nie ma)
+- **`GET /admin/api/sessions/:uuid` niesie `consistency`** (wynik `sessionInconsistencies`
+  na całym strumieniu, limity z `AircraftConfigPort` - `AdminSessionQueries` dostało go
+  w konstruktorze) **i `adminAuthorId` na każdym wierszu osi** (port `adminAuthors`
+  zastąpił `adminCorrectionUuids`: mapa uuid → konto dla KAŻDEGO zapisu panelu, nie tylko
+  korekt; `adminAuthorOf` w `sourceDevice.ts` jest jedynym miejscem rozbierającym znacznik).
+  `adminCorrected` zostaje osobno - tamto mówi o zdarzeniu POPRAWIANYM, to o ZAPISANYM
+- **PANEL: TRYB EDYCJI = STAN EKRANU POD ADRESEM `…/edycja`** (`sessionEditPath`,
+  trasa za `RequireCapability access="events.correct"`, `SessionScreen editing`). Wejście
+  „Popraw zdarzenia" w nagłówku tylko ze zdolnością i nie przy wpisie wycofanym; „Zakończ
+  edycję" jest LINKIEM, bo niczego nie zapisuje. Piąta kolumna `td.pen`, cały wiersz celem
+  kliknięcia (`tr.editable`), otwarty `tr.opened`, podejrzany `tr.flagged` z podpisem
+  z `ISSUE_HINT`; plakietka `.tag-corrected` „popr." w OBU trybach; baner niespójności
+  nad osią = zdanie domeny pogrubione + instrukcja z `FIX_HINT`; „Dodaj wpis" ostatnim
+  wierszem osi (`tr.axis-add`), nie przy wpisie wycofanym; po zapisie baner `ok` z tym, co
+  zapisano i którą rewizję dostała karta. Moduł czysty `screens/logbook/sessionEdit.ts`
+  (z testami): która szuflada dla którego typu (`editTargetOf`: przejęcie sam czas bez
+  kosza, zadanie i zdanie odczyty bez czasu i kosza, zrzut czas + skład, korekty
+  i unieważnienia bez ołówka), zegar (`timeOnDay` na dobę kotwicy z przeskokiem
+  o dobę przy operacji spod północy, `shiftHint` tylko przy zmianie), skutek jako PARY
+  z serwera (`timeEffectRows`, `readingEffectRows`, `addEffectRows`, `sheetRevisionRow`),
+  historia celu (`historyOf` - para czasu liczy się od poprzedniej poprawki), autor
+  (`authorLabel` - nazwisko ze słownika klubu, nigdy identyfikator)
+- **SZUFLADA KOREKTY (`CorrectionDrawer`)**: kosz w linii tytułu (`Drawer.actions` -
+  nowy slot, `.drawer-head-actions` w `drawer.css`, `TrashIcon`), kolizja banerem `warn`
+  („Twoja korekta zapisze się mimo to"), odmowa reguły banerem `danger` z zapisem
+  zablokowanym, powód WYMAGANY (blokada bez zdania - puste pole widać nad przyciskiem),
+  drugi pilot z `Select` (słownik klubu), historia `.hist` z zapisem pierwotnym jako
+  ostatnią kropką. Czas i skład zmienione naraz = DWIE korekty po sobie
+- **SZUFLADA DOPISANIA (`AddEventDrawer`, `.drawer.wide`)**: siatka `.type-grid` z ikonami
+  makiety (lokalne, poza `icons.tsx`), godzina startuje wypełniona końcem biegu silnika
+  (bez doby nie miałaby czego liczyć), podpis pod polem = koperta biegu jako instrukcja
+  (`runHint`), pola per typ (tankowanie: stan przed + dolano; olej: dolano; zrzut:
+  wysokość opcjonalnie), skutek z `addEffectRows`
+- **PODGLĄDY SĄ ODCZYTEM** (`useCorrectionPreview`/`useAddEventPreview` w `useLog.ts`,
+  klucz `keys.log.preview(uuid, kształt)` pod korzeniem dziennika, `keepPreviousData`),
+  mutacje `useCorrectEvent`/`useAddEvent` w `useLogCommands.ts` unieważniają korzeń
+  dziennika. `SessionListItemDto` dostało `exportRevision` (serwer wysyłał je od 2.0)
+- **strażnik napisów panelu widzi `' ? payload.x : '` między dwoma pustymi literałami
+  jako zdanie z żargonem** - zmienna lokalna na treść zdarzenia nazywa się `data`
+- **czego P-C NIE ROBI**: podręcznika (C13 → P-W, #187), przepięcia 10H telefonu na
+  `checkInsert` (zrobione w #234), sprawdzenia w przeglądarce na żywym serwerze (→ P-W)
+
+## Telefon: dopisanie faktu po czasie przez `checkInsert` (issue #234, 2026-09-27, wydanie 3.2.0 jako OTA)
+Luka nazwana w P-C: arkusz „Dodaj wpis" (10H) szedł komendami KOKPITU, więc każdy fakt
+dopisywany po zdaniu samolotu odbijał się o `DAY_CLOSED`, a „dopisz w oknie 24 h" działało
+wyłącznie z kokpitu przed zdaniem. Decyzja właściciela 2026-09-27: poprawka jedzie do
+telefonów JEDNĄ aktualizacją OTA razem z 3.2.0 (razem ze skrzynką z #233), bez podbicia
+`version` - `docs/panel-3.2.md` §11.
+- **DWIE DROGI OCENY KANDYDATA, JEDEN `execute`**: `SessionCommands.execute(…, mode)` -
+  `append` (kokpit, `checkAppend` na stanie KOŃCOWYM, także z `at` autodetekcji i 05f, bo
+  tam zdarzenie zachodzi teraz) albo `insert` (`checkInsert`: stan z CHWILI FAKTU, okno 24 h
+  na stanie końcowym z chwilą WPISANIA = `deviceTime` stempla). Nowe wejście dopisania po
+  czasie idzie przez `insertPast`, nigdy przez komendy kokpitu z `at`
+- **PODGLĄD TO TEN SAM RACHUNEK BEZ ZAPISU** (`previewPast` → prywatne `check`): arkusz 10H
+  pyta go na żywo przy każdej zmianie typu, godziny i liczb (licznik porządkowy odrzuca
+  spóźnione odpowiedzi) i stawia powód WEWNĄTRZ przycisku (issue #55). Uproszczona kopia
+  reguł w UI rozjechałaby się z domeną
+- **PRZYCISK ARKUSZA STOI ZAWSZE**: do #234 `onConfirm: undefined` przy niekompletnym wpisie
+  (tankowanie bez liczb) chował „DODAJ WPIS" w całości - `Sheet` bez akcji nie rysuje
+  przycisku. Brak liczby widać z pól → `confirmDisabled` bez zdania; odmowy z chwili faktu
+  z pól nie widać → `confirmDisabledReason`
+- **ODMOWY `checkInsert` MÓWIĄ JĘZYKIEM FAKTU Z PRZESZŁOŚCI** (`inPastTense`
+  w `packages/domain/src/rules/insertion.ts`): „O tej godzinie pracował silnik - tankowanie
+  wpisz przed uruchomieniem albo po wyłączeniu" zamiast kokpitowego „wyłącz silnik". Kod
+  reguły bez zmian (rejestr, testy i panel pytają o KOD), zdanie zmienia się w domenie -
+  więc tak samo w telefonie i w panelu. Dokładając regułę, którą da się złamać dopisaniem,
+  dopisz jej zdanie do `PAST_TENSE`
+- **wybór z arkusza → wejście komendy** liczy czysta funkcja `pastEventOf`
+  (`logic/sessionEdit.ts`, z testem): zrzut i załadunek z PUSTYM składem (poprawia się go
+  ołówkiem 10G), tankowanie i dolewka bez liczb = `null` (nie ma czego sprawdzać)
+
+## Panel 3.2.0 - epik P-D: „Do sprawdzenia" - rozjazdy, karty dnia, operacje wiszące (issue #185, 2026-09-26)
+Moduł jednego pytania („co wymaga mojej reakcji") 1:1 z makiet `sprawdzenie-lista`,
+`sprawdzenie-rozjazdy`, `sprawdzenie-karty` (§6, §7, §9 `docs/panel-3.2.md`), plaster serwera
+i plakietka flagi w dzienniku. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły
+obowiązujące odtąd:
+- **FLAGA NAZYWA SWOJE OPERACJE** (`AdminFlagListItem.sessions`: sygnatura, pilot, chwile,
+  karta doby) i dostaje je w JEDNYM miejscu - `AdminFlagQueries` (jedno zapytanie
+  `SessionsAdminPort.byUuids` na całą skrzynkę). Karta operacji i pulpit wołają TO
+  zapytanie, nie port flag: flaga ma wyglądać wszędzie tak samo. Nowy konsument flag
+  nie sięga do `FlagsAdminPort` wprost
+- **SUMĘ „DO SPRAWDZENIA" LICZY SERWER** (`counts.attention` = flagi otwarte + karty
+  `missing` + operacje wiszące `counts.staleOpenDays` w `GET /dashboard`) - plakietka
+  `.nav-count` w kolumnie pokazuje ją WYŁĄCZNIE przy liczbie dodatniej i WYŁĄCZNIE przy
+  pozycji `COUNTED` (`ui/shell/nav.ts`); zero i „nie wiem" wyglądają tak samo (reguła
+  SyncChipa). Zapytanie stawia `ShellRoute` (rama nie zna zapytań) i tylko dla sesji
+  klubu z `panel.access` - dla innych odpowiedź byłaby 403 w ramie, w której nic złego
+  się nie stało. Minuta świeżości i odświeżenie w tle
+- **KODY FLAG NIE WYCHODZĄ NA EKRAN** - słownik `screens/attention/flagLabels.ts`
+  (`Record<FlagType, …>`, więc nowy rodzaj wywala kompilację): nazwa (plakietka), podpis
+  z liczb ingestu (`details` czytane bez udawania, że znamy kształt - brak liczby daje
+  podpis bez niej, nie `undefined`), zdanie o CZYNNOŚCI (szuflada), fakty do karty
+  „Co się nie zgadza", baner na L3 (`flagIssue`) i podpis przy parze odczytów na L2
+  (`rowFlagNote`). W adresie rodzaj jedzie polskim slugiem (`?rodzaj=rozjazd-paliwa`)
+- **OTWARTE FLAGI PRZY WIERSZU OPERACJI NIOSĄ LICZBY** (`openFlags: { id, type,
+  details }[]` na serwerze i w `SessionListItemDto`; SQL `jsonb_agg`): plakietka
+  z polską nazwą przy parze godzin jest LINKIEM do sprawy (`.pill.amber` jako `<Link>`),
+  a podpis bursztynem („przekazano 92 L") stoi pod parą, której dotyczy. Który koniec
+  łańcucha to ten wiersz, rozstrzyga odczyt WIERSZA, bo flaga tego nie mówi
+- **SYGNATURA MA JEDNO WYRAŻENIE SQL** - `dayIndexSql` w `substanceSql.ts` (wyjęte
+  z `sessionsRepo`), bo od P-D pisze ją też monitor kart (`AdminExportListItem.signature`).
+  Dokładając sygnaturę do trzeciego zapytania, bierz stamtąd - nie kopiuj rangi
+- **ADRES KARTY, KTÓRY DZIAŁA DZIŚ** (`AdminExportHistory.address` z `SheetsReadPort.sheetUrl`:
+  bieżący host + slug + sekret) - nie `sheetUrl` z dziennika, bo domena zmieniła się przy
+  issue #124. Karta „Adres karty" z „Kopiuj" i jednym zdaniem, komu go dawać; istnieje
+  wyłącznie przy karcie w arkuszu
+- **STAN KARTY WNIOSKUJE SERWER, PANEL NAZYWA** (`exportRows.ts`: W arkuszu / Bez karty /
+  Wstrzymana flagą / Czeka na zdanie / Unieważniona); „Rewizje" jest WYMIAREM zawężanym
+  nad listą, nie stanem `?state=`. Nieudane ponowienie to ODPOWIEDŹ z powodem
+  (`retryNotice`): odmowa eksportera tonem informacyjnym, awaria arkusza „spróbuj za
+  chwilę", awaria po naszej stronie „zgłoś operatorowi z nazwą karty". Ponowienie
+  z wiersza wyłącznie przy braku karty; kartę w arkuszu ponawia się z szuflady
+- **ZAMKNIĘCIE SPRAWY MÓWI SKUTEK PRZED KLIKNIĘCIEM**: przy `aircraft_overlap` baner
+  „Zamknięcie tej sprawy wyśle kartę do arkusza" NAD przyciskiem i przycisk nazywający
+  oba skutki („Zamknij sprawę i wyślij kartę"); notatka WYMAGANA, blokada przycisku bez
+  zdania (puste pole widać nad nim, issue #55); bez `flags.resolve` stopka jest pusta, nie
+  wyszarzona. Odmowa 409 nazywa osobę i chwilę z ciała odpowiedzi (`alreadyResolvedText`).
+  Rozstrzygnięcie flagi unieważnia CZTERY korzenie zapytań (`flags`, `attention`,
+  `exports`, `log`) - zamknięta nakładka wysyła kartę, gasi plakietkę przy operacji
+  i zmniejsza liczbę w kolumnie
+- **LUSTRA UNII EKSPORTU** (`ExportStateDto`, `ExportRefusalDto`, `ExportFailureDto`)
+  czyta `admin/test/mirrors.test.ts` z `server/src/application/admin/contracts/exports.ts` -
+  pierwszy plik spoza domeny i portów w tym strażniku; `FlagType`/`FlagStatus` panel bierze
+  jako TYPY z `@ninerdeck/domain`, więc lustra nie mają
+- **ZDANIA BEZ FORMY Z PŁCIĄ** także tutaj: „trzyma maszynę od", „przejęcie …, zdanie …",
+  „samolot niezdany", role operacji rzeczownikiem („Oddanie samolotu", „Przejęcie",
+  „Operacja w toku"); rozjazd zegara „od GPS", nie „za GPS" - kierunku ingest nie zna
+- **strażnik napisów panelu czyta identyfikator `claimedAt` między dwoma literałami jako
+  zdanie z żargonem** - chwile do etykiet wyciąga się do zmiennych (`takenAt`) PRZED
+  literałem; ta sama pułapka, co `payload` przy P-C
+- **czego P-D NIE ROBI**: podręcznika (D9 → P-W, #187), sprawdzenia w przeglądarce na
+  żywym serwerze (→ P-W), przyczyny rewizji przy wierszach rewizji (dziennik eksportu jej
+  nie zapisuje - wróci z osobnym pytaniem do dziennika akcji)
+
+## Panel 3.2.0 - epik P-E: statystyki i analityka zużycia (issue #186, 2026-09-26)
+Moduł Statystyki 1:1 z makiety `statystyki` (§8, §17 pkt 10) i karta „Zużycie z lotów"
+w szufladzie samolotu 1:1 z `samoloty-karta` S2c (§17 pkt 11), z plastrem serwera na obu
+trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązujące odtąd:
+- **STATYSTYKI TO CZWARTA POZYCJA KOLUMNY** (Dziennik · Do sprawdzenia · Kalendarz ·
+  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia), na „Podglądzie klubu";
+  adres `#/statystyki?od=&do=` z zakresem ZAWSZE w adresie, jak w dzienniku. Analityka
+  zużycia pozycji NIE dostaje - jest własnością maszyny i mieszka w jej karcie (§8)
+- **JEDNA PODSTAWA LICZENIA Z DZIENNIKIEM** (§4.5): operacje ZAMKNIĘTE, bez unieważnionych
+  i pustych; `flights` w każdym wierszu `GET /stats` to LOTY z `flights_count` (kolumna
+  „Loty" jak na osiach dziennika, nie starty ze zdarzeń), a podtytuł NAZYWA podstawę
+  („1–7 września 2026 · operacje zamknięte w zakresie · 2 w toku poza sumami"; zero nie
+  dostaje członu, operacje bez daty przejęcia osobno)
+- **PRAWY FOTEL OSOBNO, TAKŻE TU** (§17.1 pkt 1): `statsRepo.byPilot` idzie tym samym CTE
+  `crew`, co oś pilotów dziennika; wiersz pilota niesie `dual: { operations, blockMs } |
+  null`, uczeń bez operacji jako dowódca ma wiersz z zerami nalotu i podpisem „tylko jako
+  drugi pilot", `totals.dual` jest własną sumą kolumny - kolumn „Blok" i „Drugi pilot" NIE
+  WOLNO dodać. Fakt „Piloci" liczy ludzi z dowolnego fotela = liczbę wierszy. Równość
+  wiersza pilota z `GET /log?os=piloci` (sesje, blok, prawy fotel) przybija test
+- **KAŻDA LICZBA MAKIETY MA POLE W KONTRAKCIE**: `totals.activeDays` („Dni lotne n z m"),
+  `totals.avgLitresPerBlockHour` (wiersz „Razem"), `totals.dual`, `utilizationPct`,
+  `blockSharePct`. Panel formatuje i układa (`screens/stats/statsRows.ts`, czysty,
+  z testami); jedyna arytmetyka to GEOMETRIA słupków - procent względem najwyższego dnia,
+  ta sama kategoria, co `trackChart.ts`. Kreska tam, gdzie serwer nie wie, z podpisem
+  „n operacji bez odczytu" pod paliwem; zero znaczy zero
+- **TABELA MA WIERSZ SUM JAKO DANE** (`DataTable.foot`: lista komórek w kolejności kolumn,
+  wyrównanie z kolumny) - tabela nie sumuje wierszy sama, bo nie wie, których liczb nie
+  wolno dodawać. Δ MH w sumach w godzinach DZIESIĘTNYCH („19,9 h"), bo flota miesza
+  formaty licznika; w wierszu maszyny w JEJ formacie
+- **„SEZON" NA CHIPACH = ROK KALENDARZOWY** (`rangeOf('sezon')`, potwierdzone przez
+  właściciela 2026-09-27, issue #235 - nie wracać); `DateRange` dostał prop `quick` i dwa zestawy jednego słownika:
+  `LOGBOOK_QUICK` (dziś, weekend, 30 dni, miesiące) i `STATS_QUICK` (30 dni, miesiące,
+  sezony). `activeQuickRange` rozpoznaje każdy zakres niezależnie od ekranu
+- **STAN PUSTY ZASTĘPUJE CAŁĄ TREŚĆ POD FILTRAMI** przy zerze zamkniętych operacji: „Żadnej
+  zamkniętej operacji w tym zakresie · Zmień zakres dat. Operacje w toku pojawią się tu po
+  zdaniu samolotu." Tabela sum z samymi zerami wyglądałaby jak awaria liczenia
+- **KARTA „ZUŻYCIE Z LOTÓW" ISTNIEJE WYŁĄCZNIE Z OPUBLIKOWANYM MODELEM** (issue #69):
+  `consumptionCardView` oddaje `null` i komponent nie rysuje NIC - ani zer, ani zdania
+  o braku danych, ani plamki w trakcie pobierania (obiecywałaby kartę, która może nie
+  przyjść). Wiersz „Motogodziny" gaśnie OSOBNO (`norm.mh == null`). Awaria pobrania to
+  INNY stan i dostaje baner `warn`
+- **STAWKI FAZOWE KARTY IDĄ Z NORMY DLA TELEFONU** (`AdminConsumptionReport.norm` =
+  `buildConsumptionNorm`, ta sama co w `/reference`): model czterofazowy nie ma jednej
+  stawki „w locie", a domena skleja go do pary ziemia + powietrze. Administrator i pilot
+  patrzą na TĘ SAMĄ parę liczb. `fuel.rates` panel nie czyta
+- **DWIE RÓŻNE LICZBY, NAZWANE** (issue #66): pasmo 10.–90. centyla ZMIERZONE jako
+  wypełnienie `.band` w zieleni, norma z dokumentacji (`aircraft.fuelNormLPerH` w raporcie)
+  ZADEKLAROWANA jako bursztynowy marker i wiersz „30,0 L/h · zadeklarowane, nie zmierzone
+  · z lotów +3 %" - odchyłkę (`headline.vsDocumentationPct`) liczy SERWER. Oś paska
+  w pełnych dziesiątkach L/h obejmujących pasmo i marker, nie węższa niż dwie działki
+- **LICZBY KARTY NAZYWAJĄ TO, CZYM SĄ**: „Obserwacje 42 · operacje · 40 pomiarów, 38 ze
+  śladem GPS · 3 odstające pominięte" i „Ostatni miesiąc 31,1 L/h · 9 pomiarów" - pomiar
+  to interwał między odczytami paliwa (operacja z tankowaniem daje dwa), więc makietowe
+  „38 ze śladem GPS" jako operacje byłoby nieprawdą; zero odstających nie dostaje członu
+- **czego P-E NIE ROBI**: podręcznika (E8 → P-W, #187), sprawdzenia w przeglądarce na
+  żywym serwerze (→ P-W), rysowania tabeli interwałów i strony przychodowej (zrzuty,
+  klienci) - kontrakt je niesie, panel 3.2 świadomie nie rysuje
+
+## Własna rezerwacja z panelu (issue #233, 2026-09-27, milestone 3.2.0)
+Punkt spoza planu P-A, odłożony decyzją właściciela przy #216: pilot z pustym zakresem
+widział kalendarz w panelu, ale rezerwował wyłącznie w aplikacji. Makiety Z1
+(`kalendarz-rezerwacja` K7/K7a/K7b, ramka K2b w `kalendarz-wpis`) i kod Z2–Z5 WYKONANE.
+Pełny zapis: `docs/rezerwacje.md` §5.2 i §10, odstępstwa `docs/panel-3.2.md` §16,
+podręcznik `docs/podrecznik/panel-kalendarz.md`. Decyzje właściciela 2026-09-27 - nie
+wracać: cztery decyzje makiety zatwierdzone („Zarezerwuj" jedyną akcją główną kalendarza
+dla KAŻDEGO członka, sugestie przy własnej, własne wpisy zielone, odwołanie własnej bez
+powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ powierzchni.
+- **WŁASNA REZERWACJA TO JEDNA KOMENDA DLA DWÓCH POWIERZCHNI**: `BookingCommands` przeszło
+  z `application/mobile/` do `application/common/commands/bookings.ts`, a panel woła je
+  trasami `/admin/api/me/bookings` (`POST`, `PATCH`, `DELETE` bez ciała) na
+  `capability: null`. Właściciel z SESJI (pole `pilotId` w ciele zod odrzuca), BEZ audytu,
+  cudza przez `/me/` = `403 not_your_booking` - jak telefon. Rezerwacja ZA PILOTA zostaje
+  na `POST /admin/api/bookings` (`reservations.manage`, audyt `booking.create`)
+- **SUGESTIE MAJĄ JEDEN KSZTAŁT DLA TELEFONU I PANELU** (`http/routes/common/
+  suggestionsWire.ts`) i niosą `free` - wolne pasma liczone DOMENOWYM `freeSpans`. Panel
+  nie scala zajętości po swojemu (druga definicja „wolnego"), a panel nie importuje wartości
+  z domeny - więc liczy serwer
+- **STOPKA SZUFLADY NAZYWA KROKI ŚCIEŻKI**: `GET /admin/api/me/approval-path` oddaje SAME
+  NAZWY kroków, przez które przejdzie rezerwacja zalogowanego (bez kroków, na których stoi
+  sam - `ApprovalFlow.stepsAhead`). Obsady nie oddaje: ta jest na `accounts.manage`
+- **ODWOŁANIE CZEKAJĄCEJ REZERWACJI BUDZI OSOBY KROKU BIEŻĄCEGO** (`approval_withdrawn`,
+  `ApprovalFlow.withdraw` w tej samej transakcji, co odwołanie, budzik po commicie) - z
+  telefonu, z panelu (własna) i z panelu przez `reservations.manage` (cudza). Odwołujący
+  nie budzi sam siebie; potwierdzona nikogo nie budzi. Nowy rodzaj wiadomości nie wymaga
+  migracji (`notifications.kind` bez CHECK), a telefon kieruje go do skrzynki
+  (`pushTarget`: brak sprawy do rozstrzygnięcia) - dokładając rodzaj, dopisz gałąź
+  w `app/src/ui/screens/logic/inbox.ts`, inaczej wiersz mówi „Wiadomość z klubu"
+- **GODZINY WŁASNEJ REZERWACJI SĄ CZASEM KLUBU** (`screens/calendar/clubClock.ts`: `Intl`
+  ze strefą klubu, godzina nieistniejąca w dobie zmiany czasu = odmowa, nie cicha godzina
+  obok). „Zarezerwuj za pilota" i wyłączenie z użytku zostają przy `datetime-local`
+  przeglądarki - to świadoma różnica, nie niekonsekwencja
+- **KOLIZJA WIDOCZNA NA PASKU DOBY NIE BLOKUJE „DALEJ"** (inaczej niż na 22 w telefonie):
+  bursztynowe zdanie pod parą godzin, bo o terminie rozstrzyga serwer, a obraz paska
+  jest z chwili otwarcia. Odmowa `slot_taken` WRACA NA KROK 1 z banerem (co stoi, „weszła
+  N min temu", „Weź …" = najbliższe wolne tej samej długości), szkic kroku 2 zostaje
+- **SZUFLADA ZAJĘTOŚCI MA TRZECI WIDOK - WŁASNA** (K2b): „Ty · nazwisko KOD", „Przesuń
+  i popraw" tylko przed początkiem, „Odwołaj" także trwającą, zamknięta ma jedno wyjście
+  „Zarezerwuj inny termin" (zadanie i trasa przechodzą, termin i maszyna NIE). Karty
+  „Decyzja za krok" przy własnej sprawie NIE MA, nawet z `reservations.manage`. Stan
+  bierze się z odczytu `GET /bookings/:id` (świeższy niż siatka), a wpis spoza siatki
+  (inny tydzień, zamknięty) ekran dociąga sam
+- **WYMÓG ZAŁOGI 2-OS. JEDZIE W SŁOWNIKU KLUBU** (`dualRequired` w `GET /admin/api/directory`)
+  - plakietka przy drugim pilocie, blokada bez zdania (widać z kontrolki, issue #55)
+- **WIERSZ „ZAŁOŻONA" NIE MÓWI O POWIERZCHNI**: „przez Ciebie" / „przez pilota" /
+  „za pilota · KOD" (`originLabel(booking, person, viewerId)`). Nie przywracać „z aplikacji" -
+  wynikało z pary autor–właściciel, co od #233 kłamie, a kolumny z powierzchnią nie ma
+- **`screens/fleet/consumptionCard.ts` → `consumptionCardView.ts`** (usterka P-E złapana
+  przy okazji): moduł czysty i komponent `ConsumptionCard.tsx` różniły się wyłącznie
+  wielkością litery, więc na Windowsie `tsc` i Vite brały jeden za drugi. **Moduł czysty
+  i komponent nie mają prawa różnić się samą wielkością litery** - czysty nosi przyrostek
+  (`…View`, `…Rows`, `…Labels`)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

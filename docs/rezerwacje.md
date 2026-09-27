@@ -447,6 +447,9 @@ stan niż utrata nowego.
 | `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
 | `GET /admin/api/approvals/queue` *(3.1)* - co czeka na MOJĄ zgodę | `reservations.approve` |
 | `GET`/`PUT /admin/api/approval-steps` *(3.1)* | `accounts.manage` |
+| *(3.2, #233)* `POST /admin/api/me/bookings`, `PATCH`/`DELETE /admin/api/me/bookings/:id` - WŁASNA rezerwacja z panelu: `pilot_id` z sesji (pole w ciele zod odrzuca), TA SAMA komenda, co telefon (`application/common/commands/bookings.ts`); BEZ audytu (zwykła praca pilota); `DELETE` bez ciała i bez powodu; cudza przez `/me/` = `403 not_your_booking` | każdy członek (`capability: null`) |
+| *(3.2, #233)* `GET /admin/api/bookings/suggestions` - bliźniak trasy telefonu, JEDEN kształt zapytania i odpowiedzi (`http/routes/common/suggestionsWire.ts`); odpowiedź niesie też `free` - wolne pasma liczone domenowym `freeSpans` (podpis pod paskiem doby) | każdy członek (`capability: null`) |
+| *(3.2, #233)* `GET /admin/api/me/approval-path` - NAZWY kroków, przez które przejdzie rezerwacja zalogowanego (bez kroków, na których sam stoi); stopka szuflady „Zaczeka na zgodę: …" | każdy członek (`capability: null`) |
 
 Wpisy administratora idą przez `AuditedWrite` - akcje w `domain/adminActions.ts`:
 `booking.create`, `booking.cancel`, `booking.block`, `approval.steps`. **Decyzja o rezerwacji
@@ -966,6 +969,9 @@ generowany (`npm run panel:css`):
 - (3.1) `kalendarz-sciezka` - kroki akceptacji klubu (kolejność przestawia się
   chwytem, nie strzałkami), `kalendarz-kolejka` - co czeka na decyzję,
   `kalendarz-podglad` - szuflada pilota i samolotu nad kolejką.
+- (3.2, issue #233) `kalendarz-rezerwacja` - WŁASNA rezerwacja każdego członka
+  z osi floty: szuflada w dwóch krokach jak 22/22A (K7, K7a, K7b); `kalendarz-wpis`
+  ramka K2b - własna zajętość z „Przesuń i popraw" i „Odwołaj".
 
 **STAN „CZEKA NA AKCEPTACJĘ" NA OSI FLOTY WYGLĄDA JAK ZAJĘTOŚĆ, BO NIĄ JEST** (L4):
 rezerwacja złożona trzyma termin od razu, nie od zgody - wiersz w `bookings` powstaje
@@ -992,8 +998,10 @@ częścią odpowiedzi, a nie sąsiadem - zostawiony na zewnątrz rozcinał jedn�
 **Drugi pilot ma własne wejście**: przy locie szkolnym i załodze dwuosobowej to jego
 nalot bywa pytaniem, a nie dowódcy.
 
-Panel NIE pokazuje sugestii slotów: to narzędzie pilota szukającego miejsca dla siebie,
-a administrator patrzy na całość i wpisuje konkretny termin.
+Panel przy „Zarezerwuj za pilota" NIE pokazuje sugestii slotów: to narzędzie pilota
+szukającego miejsca dla siebie, a administrator patrzy na całość i wpisuje konkretny
+termin. **Własna rezerwacja z panelu (3.2.0, issue #233) sugestie DOSTAJE** - jest
+dokładnie przypadkiem, dla którego powstały (akapit „WŁASNA REZERWACJA Z PANELU" niżej).
 
 **HISTORIA DECYZJI I ODBLOKOWANIE UTKNIĘTEGO KROKU MIESZKAJĄ W SZUFLADZIE ZAJĘTOŚCI**
 (K2a, decyzja właściciela 2026-09-23, epik R-H). Kolejka K5 pokazuje wyłącznie sprawy
@@ -1006,6 +1014,67 @@ Dla `reservations.manage` przy sprawie w toku dochodzi karta „Decyzja za krok 
 akt z nazwiskiem w historii, powód wymagany przy odmowie. Klub bez ścieżki karty NIE MA.
 Rozstrzygnięcie idzie RZECZOWNIKIEM („zgoda · Jan Bąk"), bo czasownika nie da się odmienić
 bez znajomości płci.
+
+**WŁASNA REZERWACJA Z PANELU (K7, K2b) - MAKIETY 2026-09-26 (issue #233, epik 3.2.0).**
+Od issue #216 kalendarz w panelu ma każdy członek, a rezerwował wyłącznie w aplikacji -
+„Zarezerwuj za pilota" stoi na `reservations.manage`. Makiety `kalendarz-rezerwacja`
+i ramka K2b w `kalendarz-wpis` rozstrzygają, jak to wygląda; kod (Z2–Z5) czeka na
+zatwierdzenie makiet. Decyzje makiet:
+
+- **oś jest WEJŚCIEM w rezerwację**: wolne miejsce każdej komórki (maszyna × dzień) od
+  dziś w przód jest odnośnikiem (`.cal-add`) - w spoczynku nie rysuje nic (plus w każdej
+  wolnej komórce zamieniłby oś w farmę guzików), pod kursorem tło i plus; kliknięcie
+  otwiera szufladę z PODSTAWIONĄ maszyną i dniem. Dni minione i maszyna wyłączona
+  z użytku odnośnika nie dostają: brak celu, nie cel wyszarzony. Drugie wejście to
+  „Zarezerwuj" w nagłówku strony - bez podstawień;
+- **„Zarezerwuj" jest JEDYNĄ akcją główną kalendarza** - dla każdego członka. To
+  czynność każdego i najczęstsza w module, więc u administratora „Wyłącz maszynę
+  z użytku" schodzi do przycisku wyciszonego obok ścieżki i „Zarezerwuj za pilota"
+  (K1 poprawiona). Pilot z pustym zakresem widzi sam „Zarezerwuj";
+- **własne wpisy na osi są ZIELONE** (`.cal-item.mine`, jak `.ac-busy.mine` na 21/22):
+  pilot szuka na osi przede wszystkim siebie. Zieleń stoi na TLE, nie na ramce, żeby
+  stan „czeka" (ramka przerywana) dało się dołożyć do własnego wpisu; legenda dostaje
+  czwarty wzór „Twoja rezerwacja";
+- **szuflada w DWÓCH krokach jak 22/22A** (`.steps`): termin i maszyna → zadanie. Krok 1
+  w kontrolkach web (maszyna `<select>` - zbiór rosnący z klubem, dzień polem daty,
+  godziny parą pól) plus dwie rzeczy, których szuflada nie ma prawa pominąć: PASEK
+  ZAJĘTOŚCI wybranej maszyny w wybranym dniu (`.daytrack`: doba lotna klubu, cudze
+  w tonie osi, własny szkic zielenią, wolne pasma słowami - komórka doby nie ma godzin,
+  a godziny są całą treścią rezerwacji) i SUGESTIE SLOTÓW (`.slots`) z
+  `GET /bookings/suggestions`, tym samym zdaniem, co na 22 (powód z domeny, sąsiad ze
+  słownika klubu, nazwisko za separatorem w mianowniku). Kafelek trafiający w parę
+  godzin jest zaznaczony; kliknięcie w inny przestawia parę;
+- **krok 2 = te same pola, co 22A**: rodzaj operacji listą kart bez wartości
+  podstawionej, trasa wg issue #13 (pole „Lądowanie" ZNIKA przy skokach), drugi pilot
+  z listy członków (opcjonalny, chyba że maszyna wymaga załogi 2-os. - wtedy plakietka
+  przy polu i „Zarezerwuj" zablokowany bez zdania), plan lotu (czas + paliwo
+  opcjonalne) z podpisem „zostawia 30 min na obsługę", notatka. Przycisk mówi, CO SIĘ
+  STANIE („Zarezerwuj 11:00 → 13:00"); w klubie ze ścieżką notatka stopki nazywa
+  kroki PRZED kliknięciem, bez ścieżki notatki nie ma;
+- **odmowa `slot_taken` wraca na krok 1 z banerem bursztynowym** (K7b, kanwa 22C):
+  co stoi w tym czasie, od kiedy („weszła 3 min temu" = wyścig), najbliższe wolne
+  pasmo tej samej długości jako akcja banera; pasek doby i sugestie odświeżone, szkic
+  kroku 2 ZOSTAJE. Nigdy „spróbuj ponownie";
+- **K2b, własna zajętość w szufladzie**: „Przesuń i popraw" (wyłącznie przed
+  początkiem; ta sama szuflada w trybie poprawki, tytuł „Przesuń rezerwację", stopka
+  „Zapisz zmiany"; poprawka niesie samą różnicę; INNA MASZYNA = nowa rezerwacja
+  i odwołanie starej po jej potwierdzeniu, jak na telefonie) i „Odwołaj" (także przy
+  trwającym, BEZ pola powodu - nie ma komu tłumaczyć). Przy czekającej karta zmiany
+  mówi PRZED kliknięciem, że zmiana terminu wyczyści zgody; zamknięta ma jedno
+  wyjście „Zarezerwuj inny termin". Wiersz „Pilot" mówi „Ty"; historia ścieżki niesie
+  osobę także dla właściciela (ten sam odczyt i ta sama karta, co K2a);
+- **zamknięcie szuflady z niepustym szkicem pyta potwierdzeniem inline**; maszyna
+  i dzień podstawione z komórki nie liczą się jako wpis (reguła z telefonu);
+- **rozstrzygnięte przy kodzie (Z2–Z4, decyzje właściciela 2026-09-27)**: decyzje makiety
+  1–4 (jedna akcja główna, sugestie przy własnej, zielone własne wpisy, odwołanie własnej
+  bez powodu) ZATWIERDZONE; poprawka własnej czekającej rezerwacji z panelu idzie tym
+  samym `PATCH` → `restart`, co na telefonie (szuflada mówi o czyszczeniu zgód banerem
+  PRZED zapisem, gdy ścieżka klubu pyta tę osobę o cokolwiek); **odwołanie CZEKAJĄCEJ
+  rezerwacji budzi osoby kroku bieżącego wiadomością `approval_withdrawn`** („Prośba
+  wycofana") - z telefonu, z panelu i przy odwołaniu cudzej przez `reservations.manage`,
+  bez odwołującego (§12.1). Wiersz „Założona" mówi „przez Ciebie" / „przez pilota" /
+  „za pilota · KOD" - BEZ powierzchni (z panelu / z aplikacji): baza jej nie zapisuje,
+  a wnioskowanie z pary autor–właściciel od #233 kłamałoby.
 
 **Podgląd pilota i samolotu (K6/K6a) - WYKONANY w #206 (2026-09-24).** Znak maszyny na
 tytule karty kolejki oraz pilot i drugi pilot w wierszach są wartościami PROWADZĄCYMI
@@ -1244,7 +1313,8 @@ Ta pozycja jest na drodze krytycznej 3.1.0 tak samo, jak poczta (#137) była dla
   nie rodzi żadnego powiadomienia, więc przy niej nie pytamy o zgodę na nic.
 - **Tapnięcie** (`logic/pushTarget.ts`): `approval_requested` → ekran decyzji 26;
   `booking_approved` / `booking_rejected` / `booking_expired` → karta 23; wszystko inne
-  (także rodzaj z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
+  (także `approval_withdrawn` z 3.2.0 - sprawy do rozstrzygnięcia już nie ma - i rodzaj
+  z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
   w skrzynce". Z zimnego startu i sprzed odblokowania PIN-em tapnięcie czeka jako
   „ostatnia odpowiedź" i czyta się je, gdy nawigator stanie; identyfikator obsłużonego
   tapnięcia trzyma stan modułu, żeby ponowne zamontowanie nawigatora nie otwierało

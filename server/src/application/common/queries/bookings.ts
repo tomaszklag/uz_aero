@@ -17,7 +17,9 @@
 import {
   airfieldByIcao,
   flightDayWindow,
+  freeSpans,
   suggestSlots,
+  type BusySpan,
   type SlotSuggestion,
 } from '@ninerdeck/domain';
 
@@ -66,6 +68,13 @@ export interface SuggestionsView {
    */
   window: { from: number; to: number; basis: 'solar' | 'default' };
   suggestions: SlotSuggestion[];
+  /**
+   * Wolne pasma maszyny w oknie doby (issue #233) - podpis pod paskiem zajętości
+   * w szufladzie panelu („wolne: 06:00 → 13:00 · 16:00 → 21:00"). Liczy je TA SAMA
+   * funkcja domeny, z której sugestie wybierają kandydatów; panel, który scalałby
+   * zajętości po swojemu, miałby drugą definicję słowa „wolne".
+   */
+  free: BusySpan[];
 }
 
 export class BookingQueries {
@@ -205,6 +214,7 @@ export class BookingQueries {
         preferredAt: opts.preferredAt ?? null,
         now: this.clock.now().getTime(),
       }),
+      free: freeSpans(window, busy),
     };
   }
 }

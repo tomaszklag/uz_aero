@@ -73,7 +73,7 @@
       <span class="idx-body">
         <span class="idx-name">dziennik-piloci</span>
         <span class="idx-route">#/dziennik?os=piloci&amp;od=&amp;do=</span>
-        <span class="idx-when">Ta sama doba, oś PILOTÓW: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) plus dni i maszyny - także ci, którzy nie latali. Nalot liczy się dowódcy (jak w statystykach); loty jako drugi pilot są podpisem, nie sumą. Sumy obu osi są równe co do minuty.</span>
+        <span class="idx-when">Ta sama doba, oś PILOTÓW: wiersz na członka klubu z wielkościami kafelka operacji (Operacje · Loty · Blok · Lot) plus dni, kolumna „Drugi pilot" z własną sumą i maszyny. Nalot liczy się dowódcy (jak w statystykach), czas w prawym fotelu osobno - obu kolumn nie wolno dodać. Członkowie bez lotów w zakresie zwinięci w jeden wiersz pod listą. Sumy dowódcy obu osi są równe co do minuty.</span>
       </span>
     </a>
     <a class="idx-card" href="dziennik-maszyna.html">
@@ -89,7 +89,7 @@
       <span class="idx-body">
         <span class="idx-name">dziennik-pilot</span>
         <span class="idx-route">#/dziennik/pilot/AKO?od=&amp;do=</span>
-        <span class="idx-when">Operacje jednego pilota DOBAMI - ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot widoczne, przygaszone i poza sumami (decyzja do potwierdzenia). Adres ze statycznym segmentem <code>pilot/</code>, bo „pilot" nigdy nie będzie znakiem rejestracyjnym.</span>
+        <span class="idx-when">Operacje jednego pilota DOBAMI - ten sam kształt, co L2, tylko kolumna „Pilot" zamienia się w „Samolot". Loty jako drugi pilot to zwykłe wiersze z plakietką i PIĄTĄ sumą doby „drugi pilot" - poza czterema sumami nalotu dowódcy (rozstrzygnięte 26 września). Adres ze statycznym segmentem <code>pilot/</code>, bo „pilot" nigdy nie będzie znakiem rejestracyjnym.</span>
       </span>
     </a>
     <a class="idx-card" href="dziennik-operacja.html">
@@ -165,7 +165,7 @@
       <span class="idx-body">
         <span class="idx-name">kalendarz-wpis</span>
         <span class="idx-route">#/kalendarz/:id</span>
-        <span class="idx-when">Szuflada zajętości: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku dzielą jedną szufladę w dwóch stanach.</span>
+        <span class="idx-when">Szuflada zajętości: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku dzielą jedną szufladę w dwóch stanach; od 3.2.0 trzeci widok - własna rezerwacja z „Przesuń i popraw" i „Odwołaj" (K2b).</span>
       </span>
     </a>
     <a class="idx-card" href="kalendarz-blokada.html">
@@ -190,6 +190,14 @@
         <span class="idx-name">kalendarz-kolejka</span>
         <span class="idx-route">#/kalendarz/decyzje</span>
         <span class="idx-when">Kolejka decyzji (3.1.0): rezerwacje czekające na zgodę zalogowanego, z CAŁYM planem - bez trasy, zadania i notatki zgoda zapadałaby na podstawie samych godzin.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="kalendarz-rezerwacja.html">
+      <span class="idx-badge">K7</span>
+      <span class="idx-body">
+        <span class="idx-name">kalendarz-rezerwacja</span>
+        <span class="idx-route">#/kalendarz?od=&amp;do= · szuflada bez adresu</span>
+        <span class="idx-when">Własna rezerwacja z panelu (3.2.0, issue #233): każdy członek rezerwuje z osi, którą ogląda - „Zarezerwuj" albo kliknięcie w wolne miejsce komórki otwiera szufladę w dwóch krokach jak 22/22A (termin i maszyna z paskiem zajętości doby i sugestiami slotów, potem zadanie). Odmowa „termin właśnie zajęto" wraca na krok 1 z kolidującą zajętością i najbliższym wolnym pasmem. Ścieżka akceptacji jak z telefonu.</span>
       </span>
     </a>
   </div>

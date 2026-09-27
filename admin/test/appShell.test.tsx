@@ -158,6 +158,30 @@ describe('AppShell - rama stylu lekkiego', () => {
     expect(html).toContain(`class="brand" href="${HOME}"`);
   });
 
+  it('liczba „Do sprawdzenia" stoi przy JEDNEJ pozycji i wyłącznie, gdy jest dodatnia (3.2.0)', () => {
+    const withCount = renderToStaticMarkup(
+      <MemoryRouter initialEntries={[HOME]}>
+        <AppShell who="Adam Kowalski" capabilities={CLUB} attentionCount={5} onLogout={() => undefined} logoutPending={false}>
+          <p>treść</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(withCount.match(/class="nav-count"/g)).toHaveLength(1);
+    expect(withCount).toMatch(/href="\/do-sprawdzenia"[^<]*<svg[\s\S]*?Do sprawdzenia<span class="nav-count"/);
+
+    // Zero i „nie wiem" wyglądają tak samo: stan „nic nie czeka" nie dostaje ozdoby.
+    for (const count of [0, null, undefined]) {
+      const html = renderToStaticMarkup(
+        <MemoryRouter initialEntries={[HOME]}>
+          <AppShell who="Adam Kowalski" capabilities={CLUB} attentionCount={count} onLogout={() => undefined} logoutPending={false}>
+            <p>treść</p>
+          </AppShell>
+        </MemoryRouter>,
+      );
+      expect(html).not.toContain('nav-count');
+    }
+  });
+
   it('pisze inicjały zalogowanego w kółku i nazwisko obok', () => {
     const html = render(HOME);
     expect(html).toContain('class="avatar" aria-hidden="true">AK<');

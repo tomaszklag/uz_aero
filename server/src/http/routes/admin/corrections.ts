@@ -19,9 +19,11 @@ import { z } from 'zod';
 import type { EventCorrectionPayload } from '@ninerdeck/domain';
 
 import type {
+  AddEventResult,
   AdminCorrectionCommands,
   CorrectionResult,
 } from '../../../application/admin/commands/corrections.ts';
+import type { AddedEventInput } from '../../../application/admin/correctionCandidate.ts';
 import type { AdminCorrectionQueries } from '../../../application/admin/queries/corrections.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
 
@@ -105,6 +107,84 @@ function payloadOf(
   if (data.action === 'amend') return { ...base, action: 'amend', fields: data.fields };
   return { ...base, action: 'void' };
 }
+
+/**
+ * DOPISANIE FAKTU (3.2.0, §5.4) - kształt zdarzenia bez powodu, wspólny dla podglądu
+ * i zapisu z tego samego powodu, co `correctionShape`. Unia po `type` odpowiada
+ * białej liście `ADDED_EVENT_TYPES` z helpera kandydata: uruchomienia, wyłączenia,
+ * przejęcia, zadania i zdania tu NIE MA i zod odbija je jako 400, zanim ktokolwiek
+ * zapyta domenę. Liczby: dolewka dodatnia (zero nie jest faktem), stan przed
+ * nieujemny; wysokość zrzutu opcjonalna, `null` = nieznana.
+ */
+const epochMs = z.number().int().nonnegative();
+const litres = z.number().finite();
+
+const addedShape = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('takeoff'), at: epochMs }),
+  z.object({ type: z.literal('landing'), at: epochMs }),
+  z.object({ type: z.literal('taxi'), at: epochMs }),
+  z.object({
+    type: z.literal('refuel'),
+    at: epochMs,
+    beforeL: litres.nonnegative(),
+    addedL: litres.positive(),
+  }),
+  z.object({ type: z.literal('oil_add'), at: epochMs, addedL: litres.positive() }),
+  z.object({
+    type: z.literal('drop'),
+    at: epochMs,
+    altitudeFt: litres.nullable().optional(),
+    jumpers: z
+      .object({
+        tandem: z.number().int().nonnegative(),
+        aff: z.number().int().nonnegative(),
+        solo: z.number().int().nonnegative(),
+      })
+      .nullable()
+      .optional(),
+  }),
+  z.object({ type: z.literal('boarding'), at: epochMs }),
+]);
+
+const addedBody = z.object({
+  event: addedShape,
+  reason: z.string().trim().min(1).max(2000),
+});
+
+/** Kształt zoda → wejście helpera kandydata; jawnie, pole po polu (jak `payloadOf`). */
+function addedOf(data: z.infer<typeof addedShape>): AddedEventInput {
+  switch (data.type) {
+    case 'takeoff':
+    case 'landing':
+    case 'taxi':
+      return { type: data.type, at: data.at };
+    case 'refuel':
+      return { type: 'refuel', at: data.at, beforeL: data.beforeL, addedL: data.addedL };
+    case 'oil_add':
+      return { type: 'oil_add', at: data.at, addedL: data.addedL };
+    case 'drop':
+      return {
+        type: 'drop',
+        at: data.at,
+        altitudeFt: data.altitudeFt ?? null,
+        jumpers: data.jumpers ?? null,
+      };
+    case 'boarding':
+      return { type: 'boarding', at: data.at };
+  }
+}
+
+const addResultToWire = (result: AddEventResult) => ({
+  sessionUuid: result.sessionUuid,
+  eventUuid: result.eventUuid,
+  type: result.type,
+  at: result.at,
+  recordedAt: result.recordedAt.toISOString(),
+  state: result.state,
+  warnings: result.warnings,
+  consistency: result.consistency,
+  reexport: result.reexport,
+});
 
 const resultToWire = (result: CorrectionResult) => ({
   sessionUuid: result.sessionUuid,
@@ -197,6 +277,61 @@ export function registerAdminCorrectionRoutes(
       }
 
       return reply.send(resultToWire(outcome.result));
+    },
+  );
+
+  /**
+   * DOPISANIE FAKTU (3.2.0, §5.4): `POST` na kolekcji `events` sesji - powstaje NOWY
+   * zasób, którego w rejestrze nie było. Ta sama zdolność, co korekta: to jest ta sama
+   * władza - pisanie w cudzym rejestrze. Podgląd bez `reason`, zapis z powodem; odmowy
+   * te same, co przy korekcie (404 cudza/nieznana operacja, 422 domena odmawia).
+   */
+  adminRoute(
+    app,
+    gate,
+    { method: 'POST', url: '/sessions/:uuid/events/preview', capability: 'events.correct' },
+    async (req, reply, actor) => {
+      const params = correctionParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const body = addedShape.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await preview.previewAdd(actor.orgId, {
+        sessionUuid: params.data.uuid,
+        event: addedOf(body.data),
+      });
+      if (!outcome.ok) return reply.code(404).send({ error: 'not_found' });
+
+      return reply.send(outcome.preview);
+    },
+  );
+
+  adminRoute(
+    app,
+    gate,
+    { method: 'POST', url: '/sessions/:uuid/events', capability: 'events.correct' },
+    async (req, reply, actor) => {
+      const params = correctionParams.safeParse(req.params);
+      if (!params.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const body = addedBody.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const outcome = await corrections.add(actor, {
+        sessionUuid: params.data.uuid,
+        event: addedOf(body.data.event),
+        reason: body.data.reason,
+      });
+
+      if (!outcome.ok) {
+        if (outcome.reason === 'session_not_found') {
+          return reply.code(404).send({ error: 'not_found' });
+        }
+        return reply.code(422).send({ error: 'rule_violation', violations: outcome.violations });
+      }
+
+      return reply.send(addResultToWire(outcome.result));
     },
   );
 }

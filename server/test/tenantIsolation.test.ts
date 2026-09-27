@@ -621,6 +621,30 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(0);
   },
 
+  'POST /admin/api/sessions/:uuid/events/preview': async ({ app, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/sess-b/events/preview',
+      headers: writer(a),
+      payload: { type: 'landing', at: 0 },
+    });
+    expect(res.statusCode).toBe(404);
+  },
+
+  'POST /admin/api/sessions/:uuid/events': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/sess-b/events',
+      headers: writer(a),
+      payload: { event: { type: 'landing', at: 0 }, reason: 'próba' },
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM events WHERE session_uuid = 'sess-b' AND source_device LIKE 'admin:%'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+  },
+
   'GET /admin/api/dashboard': async ({ app, a }) => {
     const res = await app.inject({ method: 'GET', url: '/admin/api/dashboard', headers: bearer(a) });
     expectClean(res, '/dashboard');
@@ -875,6 +899,103 @@ const CASES: Record<string, Probe> = {
     );
     expect(rows[0]!.status).toBe('confirmed');
   },
+
+  // ── własna rezerwacja z panelu (3.2.0, issue #233) ────────────────────────────
+  'GET /admin/api/bookings/suggestions': async ({ app, a }) => {
+    // Bliźniak trasy telefonu: maszyna klubu B ma dla panelu klubu A nie istnieć -
+    // żadna godzina Bety nie wycieka jako „brak miejsca".
+    const res = await app.inject({
+      method: 'GET',
+      url: `/admin/api/bookings/suggestions?aircraftId=SP-BBB&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expectClean(res, '/admin/api/bookings/suggestions');
+    const own = await app.inject({
+      method: 'GET',
+      url: `/admin/api/bookings/suggestions?aircraftId=SP-AXA&day=${new Date(BOOK_FROM).toISOString()}&minutes=120`,
+      headers: bearer(a),
+    });
+    expect(own.statusCode, own.body).toBe(200);
+    expect(own.json().suggestions.length).toBeGreaterThan(0);
+  },
+
+  'GET /admin/api/me/approval-path': async ({ app, a }) => {
+    // Ścieżka klubu SESJI - nazwy kroków Bety nie mają jak tu trafić.
+    const res = await app.inject({ method: 'GET', url: '/admin/api/me/approval-path', headers: bearer(a) });
+    expectClean(res, '/admin/api/me/approval-path');
+    expect(Array.isArray(res.json().steps)).toBe(true);
+  },
+
+  'POST /admin/api/me/bookings': async ({ app, db, a }) => {
+    // Maszyna klubu B z sesji klubu A: 404 `aircraft_not_found`, wiersz nie powstaje.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/bookings',
+      headers: writer(a),
+      payload: {
+        id: 'iso-me-book-obcy',
+        aircraftId: 'SP-BBB',
+        startsAt: new Date(BOOK_FROM + 4 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 4 * 86_400_000 + 3_600_000).toISOString(),
+        operation: 'skoki',
+      },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error).toBe('aircraft_not_found');
+    const { rows } = await db.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM bookings WHERE id = 'iso-me-book-obcy'`,
+    );
+    expect(Number(rows[0]!.n)).toBe(0);
+
+    // Kontrola pozytywna: własna maszyna ląduje w klubie sesji.
+    const own = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/bookings',
+      headers: writer(a),
+      payload: {
+        id: 'iso-me-book-wlasny',
+        aircraftId: 'SP-AXA',
+        startsAt: new Date(BOOK_FROM + 5 * 86_400_000).toISOString(),
+        endsAt: new Date(BOOK_FROM + 5 * 86_400_000 + 3_600_000).toISOString(),
+        operation: 'skoki',
+      },
+    });
+    expect(own.statusCode, own.body).toBe(201);
+    const org = await db.query<{ org_id: string }>(
+      `SELECT org_id FROM bookings WHERE id = 'iso-me-book-wlasny'`,
+    );
+    expect(org.rows[0]!.org_id).toBe(ORG_A);
+    await db.query(`DELETE FROM bookings WHERE id = 'iso-me-book-wlasny'`);
+  },
+
+  'PATCH /admin/api/me/bookings/:id': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/admin/api/me/bookings/book-b',
+      headers: writer(a),
+      payload: { note: 'przejete' },
+    });
+    // 404, nie 403: rezerwacja klubu B ma być dla tej sesji nieistniejąca.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ note: string | null }>(
+      `SELECT note FROM bookings WHERE id = 'book-b'`,
+    );
+    expect(rows[0]!.note).toBeNull();
+  },
+
+  'DELETE /admin/api/me/bookings/:id': async ({ app, db, a }) => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/admin/api/me/bookings/book-b',
+      headers: writer(a),
+    });
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ status: string }>(
+      `SELECT status FROM bookings WHERE id = 'book-b'`,
+    );
+    expect(rows[0]!.status).toBe('confirmed');
+  },
+
   'POST /admin/api/fleet': async ({ app, db, a }) => {
     // Nowa maszyna ląduje w klubie aktora; rejestracja zajęta w B nie jest kolizją w A.
     const res = await app.inject({
@@ -927,6 +1048,21 @@ const CASES: Record<string, Probe> = {
     const res = await app.inject({ method: 'GET', url: '/admin/api/log', headers: bearer(a) });
     expectClean(res, '/log');
     expect(res.json().aircraft.map((x: { reg: string }) => x.reg)).toContain('SP-AXA');
+
+    // OŚ PILOTÓW (3.2.0) pod tym samym adresem: PWI jest w OBU klubach, ale latał
+    // wyłącznie w Becie - w Alfie stoi wśród zwiniętych, nie wśród latających,
+    // a lista zwiniętych niesie kody Z CZŁONKOSTWA Alfy i żadnej osoby Bety.
+    const people = await app.inject({
+      method: 'GET',
+      url: '/admin/api/log?os=piloci&idle=1',
+      headers: bearer(a),
+    });
+    expectClean(people, '/log?os=piloci');
+    const flew = people.json().pilots.map((p: { code: string }) => p.code);
+    expect(flew).toEqual(['AKO']);
+    const idle = people.json().idle.members.map((m: { code: string }) => m.code);
+    expect(idle).toContain('PWI');
+    expect(idle).not.toContain('PWB');
   },
 
   'GET /admin/api/maintenance/projections/compare': async ({ app, a }) => {

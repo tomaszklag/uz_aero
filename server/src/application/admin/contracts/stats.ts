@@ -41,13 +41,18 @@ export interface AdminStatsRange {
 
 /** Sumy całego zakresu - kafle nagłówkowe `A10`. */
 export interface AdminStatsTotals {
-  /** Dni lotne = sesje ZAMKNIĘTE w zakresie. */
+  /** Operacje ZAMKNIĘTE w zakresie. */
   sessions: number;
+  /** Doby (UTC, po dniu zamknięcia) z co najmniej jedną zamkniętą operacją - „Dni lotne n z m". */
+  activeDays: number;
+  /** LOTY (start → lądowanie) - ta sama liczba, co „Loty" na obu osiach dziennika (§4.5). */
+  flights: number;
   /** Ile RÓŻNYCH jednostek latało. */
   aircraft: number;
   /**
-   * Ilu RÓŻNYCH pilotów brało udział: PIC ∪ OSTATNI dual każdego dnia (`dual_id`
-   * niesie tylko jego) - dual zastąpiony w środku dnia może nie być policzony.
+   * Ilu RÓŻNYCH ludzi latało w DOWOLNYM fotelu: PIC ∪ OSTATNI dual każdego dnia
+   * (`dual_id` niesie tylko jego) - dual zastąpiony w środku dnia może nie być policzony.
+   * Ta sama liczba, co liczba wierszy tabeli pilotów (§17.1 pkt 1).
    */
   pilots: number;
   blockMs: number;
@@ -61,8 +66,19 @@ export interface AdminStatsTotals {
   fuelConsumedL: number | null;
   /** Dni zamknięte BEZ bilansu paliwa (świeże wiersze) - nie wchodzą do sumy. */
   fuelUnknownSessions: number;
+  /**
+   * Średnie zużycie floty na godzinę BLOKOWĄ (L/h) - wiersz „Razem" tabeli samolotów.
+   * Ten sam rachunek, co w wierszu maszyny: licznik i mianownik z dni Z bilansem.
+   */
+  avgLitresPerBlockHour: number | null;
   mhDeltaH: number | null;
   mhUnknownSessions: number;
+  /**
+   * Prawy fotel w CAŁYM zakresie: operacje z drugim pilotem innym niż dowódca i ich blok -
+   * własna suma kolumny „Drugi pilot" (§17.1 pkt 1). `null` = ani jednej takiej operacji.
+   * NIE dodaje się do `blockMs`: tę samą godzinę niesie wiersz instruktora i ucznia.
+   */
+  dual: { operations: number; blockMs: number } | null;
   /**
    * Blok dni ZE ZNANYM Δ MH, w godzinach dziesiętnych - mianownik rozjazdu.
    * TEN SAM zbiór dni co licznik: pełny blok przy częściowej sumie Δ robiłby
@@ -104,6 +120,8 @@ export interface AdminStatsAircraftItem {
   capacityL: number | null;
   mhFormat: MhFormat | null;
   sessions: number;
+  /** LOTY (start → lądowanie), jak „Loty" w dzienniku. */
+  flights: number;
   blockMs: number;
   flightMs: number;
   takeoffs: number | null;
@@ -129,19 +147,32 @@ export interface AdminStatsAircraftItem {
   staleRows: number;
 }
 
-/** Wiersz ujęcia „per pilot" - atrybucja po PIC-u (starty/lądowania też). */
+/**
+ * Wiersz ujęcia „per pilot" - osoba, która w zakresie latała w DOWOLNYM fotelu
+ * (3.2.0, `docs/panel-3.2.md` §17.1 pkt 1; ta sama reguła, co oś pilotów dziennika).
+ *
+ * Nalot (`sessions`, `blockMs`, `flightMs`, starty i lądowania) liczy się DOWÓDCY i sumuje
+ * do nalotu floty. Czas w prawym fotelu jest OSOBNĄ liczbą (`dual`) z własną sumą - kolumn
+ * „Blok" i „Drugi pilot" NIE WOLNO dodać do siebie, bo tę samą godzinę lotu szkolnego
+ * niesie wiersz instruktora i ucznia. Uczeń bez ani jednej operacji jako dowódca ma
+ * wiersz z zerami nalotu i liczbą w `dual`.
+ */
 export interface AdminStatsPilotItem {
   pilotId: string;
   /** `null` = konta nie ma już w `pilots`; wiersz zostaje z identyfikatorem. */
   code: string | null;
   name: string | null;
   sessions: number;
+  /** LOTY jako dowódca, jak „Loty" na osi pilotów dziennika. */
+  flights: number;
   /** Blok sesji, w których pilot był PIC-em - sumuje się do nalotu floty. */
   blockMs: number;
   flightMs: number;
   takeoffs: number | null;
   landings: number | null;
-  /** Rejestracje jednostek, na których latał (jako PIC), alfabetycznie. */
+  /** Prawy fotel: liczba operacji i czas; `null` = ani jednej (nie para zer). */
+  dual: { operations: number; blockMs: number } | null;
+  /** Rejestracje jednostek, na których latał (dowolny fotel), alfabetycznie. */
   regs: string[];
   staleRows: number;
 }
@@ -150,6 +181,8 @@ export interface AdminStatsPilotItem {
 export interface AdminStatsOperationItem {
   operation: OperationType | null;
   sessions: number;
+  /** LOTY (start → lądowanie), jak „Loty" w dzienniku. */
+  flights: number;
   blockMs: number;
   flightMs: number;
   takeoffs: number | null;

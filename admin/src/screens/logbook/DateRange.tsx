@@ -18,10 +18,11 @@ import { FilterChip } from '../../ui/components';
 import {
   activeQuickRange,
   dayOf,
+  LOGBOOK_QUICK,
   quickRangeLabel,
-  QUICK_RANGES,
   rangeOf,
   type DayRange,
+  type QuickRange,
 } from './dateRanges';
 
 interface DateRangeProps {
@@ -33,10 +34,12 @@ interface DateRangeProps {
    * co znaczy „dziś", zależy, które wiersze człowiek zobaczy - i czy uzna je za komplet.
    */
   now: number;
+  /** Które chipy stoją na pasku - zestaw ekranu (`LOGBOOK_QUICK` domyślnie, `STATS_QUICK` w statystykach). */
+  quick?: readonly QuickRange[];
   onChange: (range: DayRange) => void;
 }
 
-export function DateRange({ range, now, onChange }: DateRangeProps) {
+export function DateRange({ range, now, quick = LOGBOOK_QUICK, onChange }: DateRangeProps) {
   const today = dayOf(now);
   const active = activeQuickRange(range, now);
 
@@ -65,15 +68,15 @@ export function DateRange({ range, now, onChange }: DateRangeProps) {
         />
       </label>
 
-      {QUICK_RANGES.map((quick) => (
+      {quick.map((item) => (
         <FilterChip
-          key={quick}
-          label={quickRangeLabel(quick)}
+          key={item}
+          label={quickRangeLabel(item)}
           // Chip jest zapalony, gdy zakres RÓWNA SIĘ jego wartości - nie gdy go
           // kliknięto. Dzięki temu ręczna zmiana daty gasi go sama, a wpisanie tego
           // samego miesiąca z klawiatury zapala go z powrotem.
-          on={active === quick}
-          onToggle={() => onChange(rangeOf(quick, now))}
+          on={active === item}
+          onToggle={() => onChange(rangeOf(item, now))}
         />
       ))}
     </>

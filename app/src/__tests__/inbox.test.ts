@@ -96,6 +96,25 @@ describe('wiersze skrzynki', () => {
     expect(wygasla!.reason).toContain('złóż rezerwację jeszcze raz');
   });
 
+  it('prośba wycofana (issue #233): rzeczownik z rezerwującym, bez „do decyzji", także z sprawą w kolejce', () => {
+    const [wycofana, bezNazwiska] = rows(
+      [
+        note({ kind: 'approval_withdrawn', payload: { ...TERM, stepLabel: 'Mechanik', cancelledBy: 'jwr' } }),
+        note({ id: 'n2', kind: 'approval_withdrawn', payload: { ...TERM, pilotId: 'ghost' } }),
+      ],
+      ['b1'],
+    );
+    expect(wycofana).toMatchObject({
+      tone: 'info',
+      title: 'Prośba wycofana · Jakub Wrona',
+      sub: 'SP-AXA · sob 26 WRZ 09:00-12:00',
+      todo: false,
+      opens: 'booking',
+    });
+    expect(wycofana!.reason).toContain('nie ma już o czym decydować');
+    expect(bezNazwiska!.title).toBe('Prośba o zgodę wycofana');
+  });
+
   it('osoba poza cache’em nie daje surowego identyfikatora, a rodzaj nieznany nie znika', () => {
     const [bezNazwiska, obcy] = rows([
       note({ payload: { pilotId: 'ghost' } }),

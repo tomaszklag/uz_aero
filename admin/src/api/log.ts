@@ -10,6 +10,13 @@
  */
 
 import type {
+  AddedEventDto,
+  AddEventPreviewDto,
+  AddEventResultDto,
+  CorrectionPreviewDto,
+  CorrectionResultDto,
+  CorrectionShapeDto,
+  LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
   SessionPageDto,
@@ -40,14 +47,31 @@ export function loadLog(query: LogRangeQuery): Promise<LogReportDto> {
 }
 
 /**
- * Poziom 2: sesje JEDNEJ maszyny w zakresie.
+ * Poziom 1, OŚ PILOTÓW (3.2.0): ten sam adres z `os=piloci` - to przełącznik osi,
+ * nie drugi moduł. `idle` dokłada listę członków bez lotów; sama liczba jedzie zawsze.
+ */
+export interface LogPilotsQuery extends LogRangeQuery {
+  idle?: boolean;
+}
+
+export function loadLogPilots(query: LogPilotsQuery): Promise<LogPilotsReportDto> {
+  const { idle, ...range } = query;
+  return apiGet<LogPilotsReportDto>(
+    `/log?${queryString({ ...range, os: 'piloci', idle: idle === true ? '1' : undefined })}`,
+  );
+}
+
+/**
+ * Poziom 2: sesje JEDNEJ maszyny albo JEDNEGO pilota w zakresie (osi są dwie, §4.1;
+ * filtr pilota dopasowuje też prawy fotel - dzień szkolny należy do obu).
  *
  * `limit` jest bezpiecznikiem, nie stronicowaniem: zakres wybiera człowiek, a klub
  * nie robi setek sesji w miesiącu. Gdy odpowiedź ma `nextCursor`, ekran mówi wprost,
  * że lista jest przycięta - lista ucięta po cichu wygląda jak komplet.
  */
 export interface SessionListQuery extends LogRangeQuery {
-  aircraftId: string;
+  aircraftId?: string;
+  pilotId?: string;
   limit: number;
 }
 
@@ -99,5 +123,50 @@ export function closeSession(
   return apiPost<SessionCloseResultDto>(`/sessions/${encodeURIComponent(uuid)}/close`, {
     reason,
     void: withVoid,
+  });
+}
+
+/**
+ * KOREKTA ZDARZENIA (3.2.0, `docs/panel-3.2.md` §5) - trzeci zapis w module, na kolekcji
+ * `corrections` sesji: powstaje NOWY fakt „to zdarzenie poprawiono", oryginał zostaje.
+ * Podgląd jest tym samym pytaniem bez powodu - „najpierw zobacz skutek, potem wytłumacz".
+ */
+export function previewCorrection(
+  uuid: string,
+  shape: CorrectionShapeDto,
+): Promise<CorrectionPreviewDto> {
+  return apiPost<CorrectionPreviewDto>(
+    `/sessions/${encodeURIComponent(uuid)}/corrections/preview`,
+    shape,
+  );
+}
+
+export function correctEvent(
+  uuid: string,
+  shape: CorrectionShapeDto,
+  reason: string,
+): Promise<CorrectionResultDto> {
+  return apiPost<CorrectionResultDto>(`/sessions/${encodeURIComponent(uuid)}/corrections`, {
+    ...shape,
+    reason,
+  });
+}
+
+/**
+ * DOPISANIE BRAKUJĄCEGO FAKTU (3.2.0, §5.4) - `POST` na kolekcji `events` sesji: powstaje
+ * zdarzenie, którego w rejestrze nie było. Ta sama zdolność, co korekta.
+ */
+export function previewAddEvent(uuid: string, event: AddedEventDto): Promise<AddEventPreviewDto> {
+  return apiPost<AddEventPreviewDto>(`/sessions/${encodeURIComponent(uuid)}/events/preview`, event);
+}
+
+export function addEvent(
+  uuid: string,
+  event: AddedEventDto,
+  reason: string,
+): Promise<AddEventResultDto> {
+  return apiPost<AddEventResultDto>(`/sessions/${encodeURIComponent(uuid)}/events`, {
+    event,
+    reason,
   });
 }

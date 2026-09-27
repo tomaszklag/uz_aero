@@ -12,7 +12,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { closeSession, voidSession } from '../api/log';
+import type { AddedEventDto, CorrectionShapeDto } from '../api/dto';
+import { addEvent, closeSession, correctEvent, voidSession } from '../api/log';
 import { keys } from './keys';
 
 /**
@@ -49,6 +50,31 @@ export function useVoidSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ uuid, reason }: { uuid: string; reason: string }) => voidSession(uuid, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.log.all }),
+  });
+}
+
+/**
+ * KOREKTA ZDARZENIA (3.2.0, §5): czas, unieważnienie albo wartość. Czyścimy KORZEŃ
+ * dziennika - korekta zmienia liczby operacji, a przez nie sumy dób, wiersz maszyny
+ * i pilota w zakresie; podglądy „przed → po" stoją pod tym samym korzeniem i też
+ * mają się przeliczyć.
+ */
+export function useCorrectEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uuid, shape, reason }: { uuid: string; shape: CorrectionShapeDto; reason: string }) =>
+      correctEvent(uuid, shape, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.log.all }),
+  });
+}
+
+/** DOPISANIE BRAKUJĄCEGO FAKTU (§5.4) - te same unieważnienia, co korekta. */
+export function useAddEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uuid, event, reason }: { uuid: string; event: AddedEventDto; reason: string }) =>
+      addEvent(uuid, event, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.log.all }),
   });
 }

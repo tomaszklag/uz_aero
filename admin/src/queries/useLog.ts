@@ -6,9 +6,14 @@
  * z telefonu - o której panel i tak dowiaduje się dopiero przy następnym pytaniu.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type {
+  AddedEventDto,
+  AddEventPreviewDto,
+  CorrectionPreviewDto,
+  CorrectionShapeDto,
+  LogPilotsReportDto,
   LogReportDto,
   SessionDetailDto,
   SessionPageDto,
@@ -17,8 +22,12 @@ import type {
 import {
   listSessions,
   loadLog,
+  loadLogPilots,
   loadSession,
   loadSessionTrack,
+  previewAddEvent,
+  previewCorrection,
+  type LogPilotsQuery,
   type LogRangeQuery,
   type SessionListQuery,
 } from '../api/log';
@@ -41,13 +50,39 @@ export function useLogFleet(range: LogRangeQuery) {
   });
 }
 
+/**
+ * Poziom 1, OŚ PILOTÓW (3.2.0): ten sam zakres, drugie pytanie. Rozwinięcie
+ * zwiniętych (`idle`) jest częścią klucza, a poprzednia odpowiedź zostaje na ekranie,
+ * dopóki nie przyjdzie pełna - lista latających nie ma migać przez jedno kliknięcie.
+ */
+export function useLogPilots(query: LogPilotsQuery) {
+  return useQuery<LogPilotsReportDto>({
+    queryKey: keys.log.pilots(query),
+    queryFn: () => loadLogPilots(query),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** Poziom 2: sesje jednej maszyny. `aircraftId` pusty = ekran jeszcze nie wie, której. */
-export function useAircraftSessions(query: Omit<SessionListQuery, 'limit'>) {
+export function useAircraftSessions(query: LogRangeQuery & { aircraftId: string }) {
   const full: SessionListQuery = { ...query, limit: SESSION_LIST_LIMIT };
   return useQuery<SessionPageDto>({
     queryKey: keys.log.sessions(full),
     queryFn: () => listSessions(full),
     enabled: query.aircraftId !== '',
+  });
+}
+
+/**
+ * Poziom 2, OŚ PILOTA (3.2.0): operacje jednej osoby - jako dowódcy I w prawym fotelu,
+ * bo filtr serwera dopasowuje oba. `pilotId` pusty = kod z adresu jeszcze nierozwiązany.
+ */
+export function usePilotSessions(query: LogRangeQuery & { pilotId: string }) {
+  const full: SessionListQuery = { ...query, limit: SESSION_LIST_LIMIT };
+  return useQuery<SessionPageDto>({
+    queryKey: keys.log.sessions(full),
+    queryFn: () => listSessions(full),
+    enabled: query.pilotId !== '',
   });
 }
 
@@ -74,5 +109,31 @@ export function useSessionTrack(uuid: string | undefined) {
     queryFn: () => loadSessionTrack(uuid as string),
     enabled: uuid != null && uuid !== '',
     staleTime: Infinity,
+  });
+}
+
+/**
+ * PODGLĄD KOREKTY „przed → po" (3.2.0, §5.2) - ODCZYT, choć jedzie `POST`-em: serwer
+ * niczego nie zapisuje, a kształt korekty jest parametrem pytania, nie filtrem listy.
+ * `shape: null` = formularz jeszcze nie ma czego pokazać (nic się nie zmieniło).
+ * `placeholderData` trzyma poprzednią odpowiedź, żeby karta skutku nie migała przy
+ * każdej minucie wpisanej w polu czasu.
+ */
+export function useCorrectionPreview(uuid: string, shape: CorrectionShapeDto | null) {
+  return useQuery<CorrectionPreviewDto>({
+    queryKey: keys.log.preview(uuid, shape),
+    queryFn: () => previewCorrection(uuid, shape as CorrectionShapeDto),
+    enabled: shape != null,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Podgląd DOPISANIA (§5.4) - ta sama natura, co podgląd korekty. */
+export function useAddEventPreview(uuid: string, event: AddedEventDto | null) {
+  return useQuery<AddEventPreviewDto>({
+    queryKey: keys.log.preview(uuid, event),
+    queryFn: () => previewAddEvent(uuid, event as AddedEventDto),
+    enabled: event != null,
+    placeholderData: keepPreviousData,
   });
 }

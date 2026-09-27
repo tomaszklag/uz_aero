@@ -124,7 +124,7 @@ Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, 
 
 ### Jestem pilotem - czy mogę wejść do panelu?
 
-Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - cudze rezerwacje widzisz w nim tak, jak w aplikacji. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
+Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - rezerwujesz w nim tak samo, jak w aplikacji, a cudze rezerwacje widzisz tak, jak tam. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
 
 ### Jak wpuścić nowego pilota?
 
@@ -136,7 +136,11 @@ Otwórz tę operację w [dzienniku](panel-dziennik) i użyj **Zakończenia opera
 
 ### Czy mogę poprawić godzinę startu z panelu?
 
-W tym wydaniu nie: panel ma dwa wyjścia awaryjne - zakończenie operacji i unieważnienie wpisu. Pojedyncze zdarzenia i odczyty poprawia pilot w aplikacji przez 24 godziny od zdania; stan maszyny na teraz ustawia **Popraw odczyty** w karcie samolotu ([korekty i rejestr](korekty-i-rejestr)).
+Tak, ze zdolnością **Korekty w dzienniku**: na stronie operacji w [dzienniku](panel-dziennik) przycisk **Popraw zdarzenia** włącza tryb edycji - każdy wiersz osi ma ołówek, szuflada pokazuje skutek przed zapisem, a powód jest wymagany, bo pilot czyta go w historii zmian. Brakujące lądowanie albo tankowanie dopisuje ostatni wiersz osi. Pilot poprawia własne wpisy w aplikacji przez 24 godziny od zdania; administratora czas nie ogranicza ([korekty i rejestr](korekty-i-rejestr)).
+
+### Co znaczy liczba przy „Do sprawdzenia"?
+
+Ile spraw czeka na reakcję: rozjazdów między zapisami (np. odczyt przy przejęciu inny niż przy poprzednim zdaniu), dób bez karty w arkuszu i operacji, których nikt nie zdał od ponad doby. Bez spraw plakietki nie ma. Każdy wiersz prowadzi tam, gdzie sprawę da się zamknąć ([Do sprawdzenia](panel-do-sprawdzenia)).
 
 ### Mam uwagę do aplikacji. Gdzie ją zgłosić?
 
