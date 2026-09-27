@@ -53,6 +53,7 @@ import {
   type DropInput,
   type EventRestoreOutcome,
   type ManualFlightInput,
+  type PastEventInput,
   type EventsRepo,
   type SessionContext,
   type SyncOutcome,
@@ -194,6 +195,13 @@ export interface SessionStore {
   boarding(input: BoardingInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
+  /**
+   * Fakt Z PRZESZŁOŚCI dopisywany arkuszem 10H (issue #234) - oceniany na stanie z chwili,
+   * w której zaszedł (`checkInsert`), a nie na stanie końcowym, jak zdarzenia kokpitu.
+   */
+  insertPast(input: PastEventInput): Promise<CommandResult>;
+  /** Ten sam rachunek BEZ zapisu - powód odmowy w przycisku arkusza, zanim pilot kliknie. */
+  previewPast(input: PastEventInput): Promise<RuleViolation[]>;
   /**
    * Ręczny wpis CAŁEGO lotu z 01 (ekran 15) - tworzy kompletną, ZAKOŃCZONĄ sesję.
    * Nie wymaga kontekstu: sesja historyczna nie jest „bieżącą" i nie ma jej wznawiać.
@@ -549,6 +557,16 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     manualLogEntry(payload) {
       return run(() => requireCommands().manualLogEntry(requireContext(), payload));
+    },
+
+    insertPast(input) {
+      return run(() => requireCommands().insertPast(requireContext(), input));
+    },
+
+    // Podgląd nie przechodzi przez `run`: niczego nie zapisuje, więc nie ma czego
+    // odświeżać, a odmowa jest TREŚCIĄ odpowiedzi, nie błędem do `lastError`.
+    previewPast(input) {
+      return requireCommands().previewPast(requireContext(), input);
     },
 
     manualFlight(input) {

@@ -24,6 +24,7 @@ import {
   aircraftLimitsFrom,
   assertNoErrors,
   checkAppend,
+  checkInsert,
   projectSession,
   warningsOf,
   type AircraftLimits,
@@ -45,6 +46,8 @@ import {
   type EventCorrectionPayload,
   type OilAddPayload,
   type RefuelPayload,
+  type RuleViolation,
+  type Event,
   type SessionClaimMode,
   type SessionState,
 } from '../../domain';
@@ -173,6 +176,24 @@ export interface BoardingInput {
 }
 
 /**
+ * Fakt Z PRZESZŁOŚCI dopisywany arkuszem 10H (issue #234) - `at` to chwila, w której
+ * zaszedł. Te same typy, które arkusz oferuje; uruchomienia i wyłączenia silnika nie ma,
+ * bo wyznaczają kopertę operacji (`logic/sessionEdit.ts`).
+ */
+export type PastEventInput =
+  | { type: 'takeoff' | 'landing' | 'taxi'; at: EpochMillis }
+  | { type: 'drop'; at: EpochMillis; jumpers: JumperCounts; altitudeFt?: number | null }
+  | { type: 'boarding'; at: EpochMillis; jumpers: JumperCounts }
+  | { type: 'refuel'; at: EpochMillis; payload: RefuelPayload }
+  | { type: 'oil_add'; at: EpochMillis; payload: OilAddPayload };
+
+/**
+ * Jak ocenić kandydata: `append` - na stanie KOŃCOWYM (kokpit, zdarzenie zachodzi teraz),
+ * `insert` - na stanie Z CHWILI FAKTU (`checkInsert`, dopisanie po czasie).
+ */
+type CheckMode = 'append' | 'insert';
+
+/**
  * Skład o sumie 0 zapisujemy jako `null` - „nie podano", nie „zero skoczków".
  * Arkusze nie mają pola „bez deklaracji": pilot po prostu nie rusza liczników, a znak
  * tej decyzji nie może zależeć od tego, który ekran zapisywał (zrzut i załadunek
@@ -180,6 +201,20 @@ export interface BoardingInput {
  */
 function declaredJumpers(jumpers: JumperCounts): JumperCounts | null {
   return jumpers.tandem + jumpers.aff + jumpers.solo > 0 ? jumpers : null;
+}
+
+/** Payload zrzutu - jeden dla kokpitu i dopisania po czasie (10H). */
+function dropPayload(
+  state: SessionState,
+  input: { jumpers: JumperCounts; altitudeFt?: number | null; dropNumber?: number; position?: GpsPosition | null },
+): EventPayloadMap['drop'] {
+  return {
+    dropNumber: input.dropNumber ?? state.drops.count + 1,
+    altitudeFt: input.altitudeFt ?? null,
+    jumpers: declaredJumpers(input.jumpers),
+    client: state.client,
+    position: input.position ?? null,
+  };
 }
 
 export class SessionCommands {
@@ -317,13 +352,7 @@ export class SessionCommands {
   /** Zrzut; `dropNumber` domyślnie kolejny, klient dziedziczony z preflightu (§5.1). */
   drop(ctx: SessionContext, input: DropInput): Promise<CommandResult> {
     return this.execute(ctx, 'drop', (state) => ({
-      payload: {
-        dropNumber: input.dropNumber ?? state.drops.count + 1,
-        altitudeFt: input.altitudeFt ?? null,
-        jumpers: declaredJumpers(input.jumpers),
-        client: state.client,
-        position: input.position ?? null,
-      },
+      payload: dropPayload(state, input),
       ...(input.at !== undefined ? { gpsTime: input.at } : {}),
     }));
   }
@@ -343,6 +372,66 @@ export class SessionCommands {
   /** Wpis ręczny (§3.8) - jedyny nośnik korekty historii, także po `day_close` (24 h). */
   manualLogEntry(ctx: SessionContext, payload: ManualLogEntryPayload): Promise<CommandResult> {
     return this.execute(ctx, 'manual_log_entry', () => ({ payload }));
+  }
+
+  // ── dopisanie faktu po czasie (10H, issue #234) ─────────────────────────────
+
+  /**
+   * DOPISANIE FAKTU Z PRZESZŁOŚCI (arkusz 10H) - brakujące lądowanie, zapomniane
+   * tankowanie. Te same payloady, co w kokpicie, ale kandydata ocenia `checkInsert`:
+   * na stanie z CHWILI FAKTU, a okno 24 h i kolizje - na stanie końcowym z chwilą
+   * WPISANIA. Do #234 szło to przez `checkAppend` na stanie końcowym, więc po zdaniu
+   * samolotu każdy fakt odbijał się o `DAY_CLOSED`, a lądowanie po wyłączeniu silnika -
+   * o stan silnika: „dopisz w oknie 24 h" działało wyłącznie z kokpitu przed zdaniem.
+   *
+   * Kokpit zostaje przy `checkAppend`, także z `at` (autodetekcja, 05f): tam zdarzenie
+   * zachodzi TERAZ, a przesunięcie o kilkanaście sekund czasu fixa nie jest „przeszłością".
+   *
+   * Chwila faktu jedzie w `gpsTime`, chwila wpisania w `deviceTime` (stempel magazynu) -
+   * jak wpis ręczny 05f i `manualFlight`. Okno korekty liczy się od zdania i dopisanie
+   * go nie przedłuża: `day_close` zostaje, gdzie był.
+   */
+  insertPast(ctx: SessionContext, input: PastEventInput): Promise<CommandResult> {
+    return this.executePast(ctx, input, 'write') as Promise<CommandResult>;
+  }
+
+  /**
+   * Ten sam rachunek, co `insertPast`, BEZ zapisu - arkusz 10H mówi powód odmowy
+   * w przycisku, zanim pilot kliknie (issue #55), i mówi go TĄ SAMĄ regułą, która
+   * odbiłaby zapis. Druga, uproszczona kopia reguł w UI rozjechałaby się z domeną.
+   */
+  previewPast(ctx: SessionContext, input: PastEventInput): Promise<RuleViolation[]> {
+    return this.executePast(ctx, input, 'preview') as Promise<RuleViolation[]>;
+  }
+
+  private executePast(
+    ctx: SessionContext,
+    input: PastEventInput,
+    run: 'write' | 'preview',
+  ): Promise<CommandResult | RuleViolation[]> {
+    const gpsTime = { gpsTime: input.at };
+    const go = <K extends EventType>(
+      type: K,
+      build: (state: SessionState) => { payload: EventPayloadMap[K]; gpsTime?: EpochMillis | null },
+    ): Promise<CommandResult | RuleViolation[]> =>
+      run === 'write' ? this.execute(ctx, type, build, 'insert') : this.check(ctx, type, build, 'insert').then((c) => c.violations);
+
+    switch (input.type) {
+      case 'takeoff':
+        return go('takeoff', () => ({ payload: { method: 'manual', position: null }, ...gpsTime }));
+      case 'landing':
+        return go('landing', () => ({ payload: { method: 'manual', position: null }, ...gpsTime }));
+      case 'taxi':
+        return go('taxi', () => ({ payload: { method: 'manual', position: null }, ...gpsTime }));
+      case 'drop':
+        return go('drop', (state) => ({ payload: dropPayload(state, input), ...gpsTime }));
+      case 'boarding':
+        return go('boarding', () => ({ payload: { jumpers: declaredJumpers(input.jumpers) }, ...gpsTime }));
+      case 'refuel':
+        return go('refuel', () => ({ payload: input.payload, ...gpsTime }));
+      case 'oil_add':
+        return go('oil_add', () => ({ payload: input.payload, ...gpsTime }));
+    }
   }
 
   // `closeLeg` (potwierdzenie wzlotu, ekran 09) żyło tu między 2026-08-06 a 2026-08-10
@@ -573,7 +662,31 @@ export class SessionCommands {
       payload: EventPayloadMap[K];
       gpsTime?: EpochMillis | null;
     },
+    mode: CheckMode = 'append',
   ): Promise<CommandResult> {
+    const { candidate, violations } = await this.check(ctx, type, build, mode);
+
+    // Twarde naruszenie → wyjątek PRZED zapisem: strumień append-only nigdy nie zobaczy
+    // zdarzenia, które nie mogło się wydarzyć.
+    assertNoErrors(violations);
+
+    const event = await this.repo.appendStamped(candidate);
+    return { event, warnings: warningsOf(violations) };
+  }
+
+  /**
+   * Kandydat ostemplowany i oceniony - BEZ zapisu. Wspólne dla zapisu i podglądu
+   * (`previewPast`), żeby podgląd nie miał jak powiedzieć czegoś innego niż zapis.
+   */
+  private async check<K extends EventType>(
+    ctx: SessionContext,
+    type: K,
+    build: (state: SessionState) => {
+      payload: EventPayloadMap[K];
+      gpsTime?: EpochMillis | null;
+    },
+    mode: CheckMode,
+  ): Promise<{ candidate: Event; violations: RuleViolation[] }> {
     const events = await this.repo.getSessionEvents(ctx.sessionUuid);
     const state = projectSession(events);
     const draft = build(state);
@@ -591,14 +704,13 @@ export class SessionCommands {
     } as AppendEventInput;
 
     const candidate = this.repo.stampEvent(input);
-    const violations = checkAppend(state, candidate, await this.limitsFor(ctx.aircraftId));
-
-    // Twarde naruszenie → wyjątek PRZED zapisem: strumień append-only nigdy nie zobaczy
-    // zdarzenia, które nie mogło się wydarzyć.
-    assertNoErrors(violations);
-
-    const event = await this.repo.appendStamped(candidate);
-    return { event, warnings: warningsOf(violations) };
+    const limits = await this.limitsFor(ctx.aircraftId);
+    const violations =
+      mode === 'insert'
+        ? // Chwila WPISANIA to stempel urządzenia - od niej liczy się okno 24 h.
+          checkInsert(events, candidate, candidate.deviceTime, limits)
+        : checkAppend(state, candidate, limits);
+    return { candidate, violations };
   }
 
   /** Limity samolotu z cache referencyjnego; brak wpisu = limity nieznane (§4.8). */

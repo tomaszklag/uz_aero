@@ -24,8 +24,6 @@ import {
   type CorrectionHistoryEntry,
   type CorrectionValue,
   type Event,
-  type EventType,
-  type JumperCounts,
   type MhFormat,
 } from '../../domain';
 import {
@@ -64,6 +62,7 @@ import { fieldLabel, needsFieldLabels } from '../screens/logic/correctionHistory
 import {
   addableTypes,
   editTargetFor,
+  pastEventOf,
   preflightUuid,
   type EditTarget,
 } from '../screens/logic/sessionEdit';
@@ -130,13 +129,8 @@ export function useSessionEdit(
   const events = useSessionStore((s) => s.events);
   const projection = useSessionStore((s) => s.projection);
   const correctEvent = useSessionStore((s) => s.correctEvent);
-  const takeoff = useSessionStore((s) => s.takeoff);
-  const landing = useSessionStore((s) => s.landing);
-  const taxi = useSessionStore((s) => s.taxi);
-  const drop = useSessionStore((s) => s.drop);
-  const boarding = useSessionStore((s) => s.boarding);
-  const refuel = useSessionStore((s) => s.refuel);
-  const addOil = useSessionStore((s) => s.addOil);
+  const insertPast = useSessionStore((s) => s.insertPast);
+  const previewPast = useSessionStore((s) => s.previewPast);
   const manualLogEntry = useSessionStore((s) => s.manualLogEntry);
 
   const aircraft = useAircraft(projection.aircraftId);
@@ -530,20 +524,35 @@ export function useSessionEdit(
     [projection.flights, projection.flightTimeMs, projection.legs],
   );
 
+  /**
+   * Powód odmowy dopisania - TĄ SAMĄ regułą, która odbiłaby zapis (`previewPast`),
+   * zanim pilot kliknie (issue #234, reguła z issue #55: powód w przycisku, nie cichy
+   * błąd po tapnięciu). `null` = wolno albo wpis jeszcze niekompletny.
+   */
+  const validateAdd = useCallback(
+    async (typeId: string, time: number, extra?: AddEventExtra): Promise<string | null> => {
+      const input = pastEventOf(typeId, time, extra);
+      if (input == null) return null;
+      try {
+        const verdict = await previewPast(input);
+        return verdict.find((v) => v.severity === 'error')?.message ?? null;
+      } catch {
+        // Podgląd, który się nie udał, nie może blokować zapisu - rozstrzygnie zapis.
+        return null;
+      }
+    },
+    [previewPast],
+  );
+
   const addEvent = useCallback(
     async (typeId: string, time: number, note: string | null, extra?: AddEventExtra) => {
       setBusy(true);
       try {
-        const type = typeId as EventType;
-        if (type === 'takeoff') await takeoff('manual', null, time);
-        else if (type === 'landing') await landing('manual', null, time);
-        else if (type === 'taxi') await taxi('manual', null, time);
-        else if (type === 'drop') await drop({ jumpers: EMPTY_JUMPERS, at: time });
-        else if (type === 'boarding') await boarding({ jumpers: EMPTY_JUMPERS, at: time });
-        else if (type === 'refuel' && extra?.refuel != null) await refuel(extra.refuel, time);
-        else if (type === 'oil_add' && extra?.oilAddedL != null) {
-          await addOil({ addedL: extra.oilAddedL }, time);
-        }
+        // Fakt Z PRZESZŁOŚCI (issue #234): oceniany na stanie z chwili, w której zaszedł,
+        // więc brakujące lądowanie da się dopisać także PO zdaniu samolotu (w oknie 24 h).
+        // Do #234 szło to przez komendy kokpitu i każdy fakt odbijał się o `DAY_CLOSED`.
+        const input = pastEventOf(typeId, time, extra);
+        if (input != null) await insertPast(input);
       } catch {
         // Odrzucenie reguł jest w `lastError`.
       } finally {
@@ -565,7 +574,7 @@ export function useSessionEdit(
         }
       }
     },
-    [addOil, boarding, drop, landing, manualLogEntry, refuel, taxi, takeoff],
+    [insertPast, manualLogEntry],
   );
 
   // ── arkusze ─────────────────────────────────────────────────────────────────
@@ -702,6 +711,7 @@ export function useSessionEdit(
         refsFor={addRefs}
         fuelBeforeL={projection.fuel.lastReadingL}
         busy={busy}
+        validate={validateAdd}
         onConfirm={(typeId, time, note, extra) => void addEvent(typeId, time, note, extra)}
         onCancel={() => setAdding(false)}
       />
@@ -777,7 +787,6 @@ export function useSessionEdit(
   };
 }
 
-const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
 
 /**
  * Zakresy historii dla arkuszy zdarzenia WIELOWYMIAROWEGO.

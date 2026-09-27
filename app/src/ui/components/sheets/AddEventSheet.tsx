@@ -17,7 +17,7 @@
  * rejestru i panelu, nie codziennego czytania.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '../foundation/AppText';
@@ -48,6 +48,12 @@ export interface AddEventSheetProps {
   /** Stan paliwa W CHWILI otwarcia arkusza - podpowiedź „przed" dla tankowania. */
   fuelBeforeL?: number | null;
   busy?: boolean;
+  /**
+   * Powód, dla którego wpisu nie da się dopisać O TEJ GODZINIE (issue #234) - liczy go
+   * ta sama reguła, która odbiłaby zapis, i stoi WEWNĄTRZ przycisku (issue #55), zanim
+   * pilot kliknie. `null` = wolno. Bez tej funkcji arkusz nie sprawdza niczego sam.
+   */
+  validate?: (typeId: string, time: number, extra?: AddEventExtra) => Promise<string | null>;
   onConfirm: (typeId: string, time: number, note: string | null, extra?: AddEventExtra) => void;
   onCancel: () => void;
 }
@@ -68,6 +74,7 @@ export function AddEventSheet({
   refsFor,
   fuelBeforeL,
   busy = false,
+  validate,
   onConfirm,
   onCancel,
 }: AddEventSheetProps) {
@@ -100,6 +107,31 @@ export function AddEventSheet({
   const oilAdded = parseNumber(oilText);
   const refuelReady = !isRefuel || (before != null && added != null && added > 0);
   const oilReady = !isOilAdd || (oilAdded != null && oilAdded > 0);
+  const extra: AddEventExtra | undefined = useMemo(
+    () =>
+      isRefuel && before != null && added != null && after != null
+        ? { refuel: { beforeL: before, addedL: added, afterL: after } }
+        : isOilAdd && oilAdded != null
+          ? { oilAddedL: oilAdded }
+          : undefined,
+    [isRefuel, isOilAdd, before, added, after, oilAdded],
+  );
+
+  // Odmowa z chwili faktu liczona NA ŻYWO - przy każdej zmianie typu, godziny i liczb.
+  // Licznik porządkowy odrzuca odpowiedź, która przyszła po nowszym pytaniu: szybkie
+  // klikanie ± nie może zostawić w przycisku powodu sprzed dwóch minut.
+  const [blocker, setBlocker] = useState<string | null>(null);
+  const asked = useRef(0);
+  useEffect(() => {
+    if (!visible || validate == null || typeId === '') {
+      setBlocker(null);
+      return;
+    }
+    const seq = ++asked.current;
+    void validate(typeId, time, extra).then((reason) => {
+      if (seq === asked.current) setBlocker(reason);
+    });
+  }, [visible, validate, typeId, time, extra]);
 
   return (
     <Sheet
@@ -107,21 +139,13 @@ export function AddEventSheet({
       title="DODAJ WPIS"
       rows={rows}
       confirmLabel="DODAJ WPIS"
-      onConfirm={
-        typeId === '' || busy || !refuelReady || !oilReady
-          ? undefined
-          : () =>
-              onConfirm(
-                typeId,
-                time,
-                note.trim() === '' ? null : note.trim(),
-                isRefuel && before != null && added != null && after != null
-                  ? { refuel: { beforeL: before, addedL: added, afterL: after } }
-                  : isOilAdd && oilAdded != null
-                    ? { oilAddedL: oilAdded }
-                    : undefined,
-              )
-      }
+      // Przycisk stoi ZAWSZE (issue #55): brak liczby przy tankowaniu albo dolewce widać
+      // z pól nad nim, więc blokuje bez zdania; odmowy z chwili faktu z pól nie widać,
+      // więc niesie ją zdanie w przycisku. Znikający przycisk w wypełnianym arkuszu
+      // czytał się jak usterka - tak było tu do issue #234.
+      confirmDisabledReason={blocker}
+      confirmDisabled={typeId === '' || busy || !refuelReady || !oilReady}
+      onConfirm={() => onConfirm(typeId, time, note.trim() === '' ? null : note.trim(), extra)}
       onCancel={onCancel}
     >
       <Field label="Co się wydarzyło">

@@ -34,7 +34,7 @@ Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz 
 | godzina przejęcia | w tył to zwykła poprawka; w przód, za uruchomienie silnika, przesuwa cały bieg - ekran zapowiada to przed zapisem |
 | notatka, drugi pilot | to samo okienko, w którym powstały; drugi pilot zmienia się dla całej operacji wstecz |
 | tankowanie, dolewka oleju | przez unieważnienie i dopisanie na nowo - to trójka liczb, która musi się zgadzać |
-| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek |
+| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek. Fakt ocenia się tak, jak wyglądała operacja o jego godzinie - lądowanie musi mieć start, tankowanie stojący silnik, a godzina po zdaniu samolotu należy już do następnej operacji. Gdy godziny nie da się przyjąć, przycisk mówi dlaczego, zanim go naciśniesz |
 
 Powód korekty jest opcjonalny, ale to jedyne, z czego administrator dowie się, dlaczego liczba się zmieniła. Dowódcy nie da się zmienić w ogóle - to zdanie samolotu i nowe przejęcie, nie korekta.
 

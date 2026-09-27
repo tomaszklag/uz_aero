@@ -76,9 +76,51 @@ export function checkInsert(
   limits: AircraftLimits = UNKNOWN_LIMITS,
   authority: WriteAuthority = 'pilot',
 ): RuleViolation[] {
-  const verdict = checkAppend(stateAsOf(events, eventTime(candidate)), candidate, limits, authority);
+  const verdict = checkAppend(stateAsOf(events, eventTime(candidate)), candidate, limits, authority).map(
+    (v) => inPastTense(v, candidate),
+  );
   // Twarda odmowa z chwili faktu wystarcza - okno i kolizje opisywałyby zapis,
   // którego i tak nie będzie (ta sama zasada, co koperta w `checkAppend`).
   if (verdict.some((v) => v.severity === 'error')) return verdict;
   return [...verdict, ...correctionWindowVerdict(projectSession([...events]), now, authority)];
 }
+
+/**
+ * ODMOWA NAZWANA JĘZYKIEM FAKTU Z PRZESZŁOŚCI (issue #234).
+ *
+ * Komunikaty `checkAppend` są pisane dla kokpitu, w którym zdarzenie zachodzi TERAZ:
+ * „Tankowanie przy pracującym silniku - wyłącz silnik", „Lądowanie bez startu. Dopisz
+ * start albo użyj listy ręcznej". Przy dopisywaniu faktu sprzed dwóch godzin ta sama
+ * reguła odbija się o STAN Z TAMTEJ CHWILI, a rada „wyłącz silnik" nie ma sensu -
+ * silnik dawno stoi, to godzina jest zła. Kod reguły zostaje ten sam (rejestr, testy
+ * i panel pytają o kod), zmienia się wyłącznie zdanie, które czyta człowiek - i zmienia
+ * się tu, w jednym miejscu, bo tym samym `checkInsert` dopisuje telefon (10H) i panel.
+ *
+ * Kody spoza tej listy zostają przy swoich zdaniach: mówią o WARTOŚCI (paliwo, skład
+ * zrzutu), a ta nie zależy od tego, kiedy ją wpisano.
+ */
+function inPastTense(v: RuleViolation, candidate: Event): RuleViolation {
+  const message = PAST_TENSE[v.code]?.(candidate.type);
+  return message == null ? v : { ...v, message };
+}
+
+const PAST_TENSE: Partial<Record<RuleViolation['code'], (type: Event['type']) => string>> = {
+  SESSION_NOT_CLAIMED: () =>
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+  PREFLIGHT_REQUIRED: () =>
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+  DAY_CLOSED: () =>
+    'O tej godzinie samolot był już zdany - fakt po zdaniu należy do następnej operacji.',
+  ENGINE_NOT_RUNNING: () =>
+    'O tej godzinie silnik nie pracował - wpis musi mieścić się w biegu silnika.',
+  ALREADY_IN_FLIGHT: (type) =>
+    type === 'takeoff'
+      ? 'O tej godzinie trwał już lot - dopisz najpierw jego lądowanie albo wybierz inną godzinę.'
+      : 'O tej godzinie samolot był w powietrzu - kołowanie wypada przed startem albo po lądowaniu.',
+  ALREADY_TAXIING: () => 'O tej godzinie kołowanie już trwało - drugi wpis byłby powtórzeniem.',
+  NOT_IN_FLIGHT: () => 'O tej godzinie nie trwał żaden lot - dopisz najpierw start.',
+  REFUEL_ENGINE_RUNNING: () =>
+    'O tej godzinie pracował silnik - tankowanie wpisz przed uruchomieniem albo po wyłączeniu.',
+  OIL_ADD_ENGINE_RUNNING: () =>
+    'O tej godzinie pracował silnik - dolewkę wpisz przed uruchomieniem albo po wyłączeniu.',
+};

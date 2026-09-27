@@ -123,6 +123,15 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Poprawki
 
+- **Brakujący fakt dopiszesz w telefonie także po zdaniu samolotu.** „Dodaj wpis" w trybie
+  edycji operacji przyjmuje zgubione lądowanie, start, tankowanie czy dolewkę oleju przez
+  całą dobę od zdania - do tej pory działał wyłącznie z kokpitu, zanim samolot został zdany.
+  Godzinę faktu ocenia się tak, jak wyglądała wtedy operacja, a gdy nie da się jej przyjąć,
+  przycisk mówi dlaczego, zanim go naciśniesz. Poprawka dotrze do telefonów aktualizacją
+  w tle, bez nowej instalacji.
+- **Odmowa dopisania mówi o tamtej chwili**, w telefonie i w panelu: „O tej godzinie
+  pracował silnik - tankowanie wpisz przed uruchomieniem albo po wyłączeniu" zamiast rady
+  z kokpitu, żeby wyłączyć silnik, który dawno stoi.
 - **Statystyki i dziennik liczą ten sam nalot.** Statystyki pomijają odtąd puste zapisy
   (zdanie samolotu bez biegu, lotów i zmian odczytów), tak jak dziennik - ten sam zakres
   dat nie daje już dwóch sum na dwóch ekranach.
@@ -437,6 +446,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [x] „Do sprawdzenia": rozjazdy liczników, nieudane eksporty kart i operacje wiszące w jednym miejscu
 - [x] Statystyki klubu i analityka zużycia maszyny
 - [x] Własna rezerwacja z kalendarza w panelu - tak samo jak w aplikacji
+- [x] Dopisanie brakującego faktu w telefonie także po zdaniu samolotu (aktualizacja w tle)
 
 ### 4.0.0 · termin do ustalenia
 
