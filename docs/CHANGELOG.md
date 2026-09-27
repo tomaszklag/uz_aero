@@ -454,7 +454,19 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 4.0.0 · termin do ustalenia
+### 4.0.0 · planowane na 1 października 2026
+
+> Zlecenia lotów: koordynator pyta pilotów o lot w aplikacji, zamiast dzwonić do każdego po kolei.
+
+- [ ] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
+- [ ] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
+- [ ] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
+- [ ] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
+- [ ] Zlecający widzi, kto już odczytał zlecenie
+- [ ] Grupy pilotów w klubie
+- [ ] Instruktor umawia lot z uczniem jednym zleceniem
+
+### 5.0.0 · termin do ustalenia
 
 > Aplikacja w sklepie Google Play.
 
