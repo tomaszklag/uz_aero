@@ -154,6 +154,39 @@ export const stempel = (at: Date, tz: string): string =>
 const dobaZDniem = (at: Date, tz: string): string =>
   fmt(tz, { weekday: 'long', day: 'numeric', month: 'long' }).format(at);
 
+/** „sobota, 20 września" - doba w strefie klubu, jak w nagłówku szuflady zajętości. */
+export const dayLongLabel = dobaZDniem;
+
+/** „20 września" - data w dopełniaczu (odmianę bierze się od `Intl`, nie z reguły). */
+export const dayMonthLabel = (at: Date, tz: string): string =>
+  fmt(tz, { day: 'numeric', month: 'long' }).format(at);
+
+/**
+ * Dzień tygodnia w BIERNIKU - „na sobotę", „w środę" (issue #233: podpis wolnej komórki
+ * osi i pasek zajętości doby w szufladzie). `Intl` daje wyłącznie mianownik, a tu
+ * odmianę da się zapisać tabelą, bo dni jest siedem - inaczej niż nazwisk.
+ */
+const BIERNIK: Readonly<Record<string, string>> = {
+  poniedziałek: 'poniedziałek',
+  wtorek: 'wtorek',
+  środa: 'środę',
+  czwartek: 'czwartek',
+  piątek: 'piątek',
+  sobota: 'sobotę',
+  niedziela: 'niedzielę',
+};
+
+export function weekdayAccusative(at: Date, tz: string): string {
+  const name = fmt(tz, { weekday: 'long' }).format(at);
+  return BIERNIK[name] ?? name;
+}
+
+/** „w sobotę", „we wtorek" - przyimek przed „w" zmiękcza się do „we". */
+export function onWeekday(at: Date, tz: string): string {
+  const day = weekdayAccusative(at, tz);
+  return `${day === 'wtorek' ? 'we' : 'w'} ${day}`;
+}
+
 /**
  * „23-25 września" w jednym miesiącu, „30 września - 2 października" na przełomie:
  * miesiąc powtarzany po obu stronach czyta się jak dwie osobne daty, a nie jak zakres.
@@ -176,21 +209,26 @@ const czesc = (f: Intl.DateTimeFormat, at: Date, typ: Intl.DateTimeFormatPartTyp
   f.formatToParts(at).find((p) => p.type === typ)?.value ?? '';
 
 /**
- * Pochodzenie zajętości: „przez pilota, z aplikacji" albo „z panelu".
+ * Pochodzenie zajętości: „przez Ciebie", „przez pilota" albo „za pilota · AKO".
  *
- * Makieta odpowiada tu na SKĄD, nie na KTO - i to jest lepsze pytanie: administrator
- * patrzy na cudzy termin i chce wiedzieć, czy założył go pilot sam, czy ktoś z biurka.
- * Przy okazji omija ODMIANĘ nazwiska: „przez Adam Kowalski" jest błędem, a odmiany
- * nie da się wyprowadzić regułą (ta sama granica, przez którą blokady arkuszy mówią
- * o skutku zamiast wołać nazwy pól po imieniu). Kto - mówi KOD, który się nie odmienia.
+ * Pytanie brzmi: czy termin założył jego WŁAŚCICIEL, czy ktoś za niego. Do 3.2.0 napis
+ * mówił też SKĄD („z aplikacji" / „z panelu") i wyprowadzał to z pary autor–właściciel -
+ * od issue #233 pilot rezerwuje także z panelu, więc tamto wnioskowanie kłamałoby,
+ * a baza powierzchni nie zapisuje (decyzja właściciela 2026-09-27: bez nowej kolumny;
+ * rozróżnienie panel/aplikacja przy własnym planie niczego nie rozstrzyga).
+ *
+ * Omija ODMIANĘ nazwiska: „przez Adam Kowalski" jest błędem, a odmiany nie da się
+ * wyprowadzić regułą. Kto wpisał cudzą rezerwację - mówi KOD, który się nie odmienia.
  */
-export function originLabel(booking: BookingDto, person: PersonLookup): string {
+export function originLabel(booking: BookingDto, person: PersonLookup, viewerId: string | null): string {
   // Cudza rezerwacja bez „Podglądu klubu" (issue #216) autora nie niesie - wiersza
   // „Założona" wtedy nie ma, więc ten napis nie ma gdzie stanąć; pusty jest bezpieczny.
   if (booking.createdBy == null) return '';
-  if (booking.pilotId != null && booking.createdBy === booking.pilotId) return 'przez pilota, z aplikacji';
+  if (booking.pilotId != null && booking.createdBy === booking.pilotId) {
+    return booking.createdBy === viewerId ? 'przez Ciebie' : 'przez pilota';
+  }
   const kto = person(booking.createdBy);
-  return kto == null ? 'z panelu' : `z panelu · ${kto.code}`;
+  return kto == null ? 'za pilota' : `za pilota · ${kto.code}`;
 }
 
 /**

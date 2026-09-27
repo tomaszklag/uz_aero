@@ -35,7 +35,9 @@ import type {
   Clock,
   NewBooking,
 } from '../../common/ports.ts';
+import type { ApprovalFlow } from '../../common/commands/approvals.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
+import type { Notifier } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
 import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
@@ -87,6 +89,12 @@ export class AdminBookingCommands {
     private readonly bookings: BookingsPort,
     private readonly aircraft: AircraftConfigPort,
     private readonly clock: Clock,
+    /**
+     * Ścieżka akceptacji - odwołanie CZEKAJĄCEJ rezerwacji wycofuje prośbę o zgodę
+     * (issue #233), tak samo jak odwołanie z telefonu i z własnej rezerwacji w panelu.
+     */
+    private readonly approvals: ApprovalFlow,
+    private readonly notifier: Notifier,
     /** Obserwowanie samolotu (3.2.0): odwołanie przypomnianego terminu budzi obserwujących, bez administratora. */
     private readonly watching: AircraftWatching | null = null,
   ) {}
@@ -151,6 +159,7 @@ export class AdminBookingCommands {
   ): Promise<AdminBookingOutcome> {
     const at = this.clock.now();
     let watchNotices: NotificationDraft[] = [];
+    let withdrawn: NotificationDraft[] = [];
     try {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
@@ -167,6 +176,10 @@ export class AdminBookingCommands {
         // Wiersz przestał być czynny między odczytem a zapisem (telefon pilota, zadanie
         // okresowe). Ta sama odpowiedź, co przy rezerwacji już zamkniętej.
         if (closed == null) throw new Refused('booking_closed');
+
+        // Czekająca sprawa: osoby kroku bieżącego dowiadują się, że prośba jest wycofana
+        // (issue #233) - administrator nie budzi przy tym sam siebie.
+        withdrawn = await this.approvals.withdraw(tx, actor.orgId, current, actor.pilotId);
 
         // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2) - tą samą transakcją, co
         // odwołanie i ślad audytu; administrator o własnej decyzji nie słyszy.
@@ -197,6 +210,7 @@ export class AdminBookingCommands {
           },
         };
       });
+      if (withdrawn.length > 0) await this.notifier.wake(actor.orgId, withdrawn);
       if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
       return { ok: true, booking };
     } catch (err) {

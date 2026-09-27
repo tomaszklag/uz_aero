@@ -652,10 +652,18 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
 | P-E | **Stan pusty zastępuje CAŁĄ treść pod filtrami** (pasek faktów, słupki i trzy tabele), gdy w zakresie nie ma ani jednej zamkniętej operacji - kanwa makiety pokazuje sam komunikat, a tabela sum z samymi zerami wyglądałaby jak awaria liczenia | §17 pkt 10 |
 | P-E | **Awaria pobrania analityki nie milczy**: karta „Zużycie z lotów" znika przy braku modelu (issue #69), ale zerwane łącze dostaje baner `warn` - inaczej młoda maszyna bez danych i serwer, który nie odpowiedział, wyglądałyby tak samo. W trakcie pobierania nie ma ani karty, ani plamki: plamka obiecywałaby kartę, która może nie przyjść | §8 |
 | #233 | **Makieta własnej rezerwacji z panelu (Z1) powstała PO epikach P-B…P-E, nie w P-A** - P-A poszło za sześcioma epikami §12, a punkt spoza planu dostał własny krok design-first. Nowa makieta `kalendarz-rezerwacja` (K7, K7a, K7b) i ramka K2b w `kalendarz-wpis`; decyzje w `docs/rezerwacje.md` §10 (akapit „WŁASNA REZERWACJA Z PANELU") | §10, §17 pkt 13 |
-| #233 | **„Zarezerwuj" staje się JEDYNĄ akcją główną kalendarza dla każdego członka**, a „Wyłącz maszynę z użytku" schodzi u administratora do przycisku wyciszonego (K1 poprawiona). Zgłoszenie mówiło o wejściu z osi; przycisk w nagłówku dochodzi jako drugie wejście, bo pilot bez niego nie odkryłby, że wolne miejsce komórki jest celem kliknięcia - telefon (21) też ma oba wejścia. **Do potwierdzenia przez właściciela przy zatwierdzaniu makiety** | §10 rezerwacji |
+| #233 | **„Zarezerwuj" staje się JEDYNĄ akcją główną kalendarza dla każdego członka**, a „Wyłącz maszynę z użytku" schodzi u administratora do przycisku wyciszonego (K1 poprawiona). Zgłoszenie mówiło o wejściu z osi; przycisk w nagłówku dochodzi jako drugie wejście, bo pilot bez niego nie odkryłby, że wolne miejsce komórki jest celem kliknięcia - telefon (21) też ma oba wejścia. **Zatwierdzone przez właściciela 2026-09-27** razem z trzema kolejnymi wierszami | §10 rezerwacji |
 | #233 | **Sugestie slotów w panelu jednak SĄ - przy własnej rezerwacji.** `docs/rezerwacje.md` §10 mówił „panel nie pokazuje sugestii, administrator wpisuje konkretny termin" - zdanie zostaje prawdziwe dla „Zarezerwuj za pilota", a własna rezerwacja jest dokładnie przypadkiem, dla którego sugestie powstały. Trasa `GET /bookings/suggestions` dostanie bliźniaka pod `/admin/api` (panel woła wyłącznie `/admin/api/*`, reguła z #180) | §10 rezerwacji |
 | #233 | **Własne wpisy na osi zielone** (`.cal-item.mine`) i legenda z czwartym wzorem - K1 do 3.1.0 nie odróżniała własnych od cudzych, bo oglądał ją administrator; odkąd ogląda ją pilot, „kiedy lecę" jest pierwszym pytaniem do osi. Zieleń na tle, nie na ramce, żeby złożyć się ze stanem „czeka" | §10 rezerwacji |
 | #233 | **Odwołanie WŁASNEJ rezerwacji z panelu bez pola powodu** (K2b): powód czyta pilot, którego plan zdjęto - przy własnym nie ma komu tłumaczyć. Cudzej dotyczy dotychczasowa karta z powodem wymaganym (`reservations.manage`) | §10 rezerwacji |
+| #233 | **Odwołanie CZEKAJĄCEJ rezerwacji budzi osoby kroku bieżącego** (`approval_withdrawn`, „Prośba wycofana"; decyzja właściciela 2026-09-27 - makieta K2b to obiecywała, serwer nie wysyłał). Z telefonu, z panelu i przy odwołaniu cudzej przez `reservations.manage`; odwołujący nie budzi sam siebie; potwierdzona nikogo nie budzi. Nowy rodzaj bez migracji (`notifications.kind` jest tekstem bez CHECK); telefon czyta go od tego wydania aplikacji (`inbox.ts`), starszy pokaże „Wiadomość z klubu" | §12.1 rezerwacji |
+| #233 | **`GET /admin/api/me/approval-path` - trasa, której plan nie przewidywał**: stopka K7a nazywa kroki PRZED kliknięciem („Zaczeka na zgodę: Mechanik"), a ścieżkę czyta dziś wyłącznie `accounts.manage`. Oddaje SAME NAZWY kroków, przez które przejdzie rezerwacja zalogowanego (bez kroków, na których stoi sam) - obsady nie | §5.2 rezerwacji |
+| #233 | **Sugestie niosą `free`** - wolne pasma liczone domenowym `freeSpans` (podpis pod paskiem doby). Panel nie scala zajętości po swojemu: druga definicja „wolnego" rozjechałaby się z sugestiami. Pole jest addytywne, telefon go nie czyta | §7.2 rezerwacji |
+| #233 | **Godziny w szufladzie własnej rezerwacji są czasem KLUBU** (`screens/calendar/clubClock.ts`, `Intl` ze strefą klubu, test na dobę zmiany czasu), a „Zarezerwuj za pilota" i wyłączenie z użytku zostają przy `datetime-local` przeglądarki - makieta K7 mówi „godziny w czasie klubu" wyłącznie o własnej | §6 rezerwacji |
+| #233 | **Wiersz „Założona" bez powierzchni** (decyzja właściciela 2026-09-27): „przez Ciebie" / „przez pilota" / „za pilota · KOD". Do 3.2.0 napis „z aplikacji" wynikał z pary autor–właściciel, co od #233 byłoby nieprawdą; kolumny z powierzchnią nie dokładamy | §10 rezerwacji |
+| #233 | **Słownik klubu niesie `dualRequired`** maszyny - krok 2 szuflady żąda drugiego pilota plakietką „wymagany · załoga 2-os.", jak 02/15/22A; właściwość widoczna dla każdego członka także w aplikacji | §10 rezerwacji |
+| #233 | **Komenda własnej rezerwacji przeszła z `application/mobile/` do `common/`** - zakłada ją odtąd telefon i panel, a druga kopia rozjechałaby się przy pierwszej poprawce reguły czyszczenia zgód | - |
+| #233 | *(usterka spoza zakresu)* **`screens/fleet/consumptionCard.ts` → `consumptionCardView.ts`**: od P-E obok leżał `ConsumptionCard.tsx`, a na systemie plików bez rozróżniania wielkości liter (Windows) `tsc` i Vite brały moduł czysty za komponent - panel nie kompilował się lokalnie | - |
 
 ---
 
@@ -797,8 +805,12 @@ powstania, nie w przeglądzie.
   strażnik `copy.test.ts` pilnuje, że nie ma ich w literałach z żargonem.
 - **Adresy dziennika niosą kod pilota, nie identyfikator** (`#/dziennik/pilot/:code`):
   kod rozwiązuje się osobą ze słownika KLUBU sesji - kod z innego klubu nie trafia nikogo.
-- **Makiety #233 nie dodały tras** - Z2 dostanie sondy razem z trasami (Z3), a `pilot_id`
-  z sesji, nie z ciała, jest treścią osobnego testu tamtego zadania.
+- **Własna rezerwacja z panelu (#233, Z2–Z3)**: cztery trasy `capability: null`
+  (`/me/bookings` ×3, `/bookings/suggestions`) i `/me/approval-path` mają sondy
+  w `tenantIsolation.test.ts` (maszyna i rezerwacja klubu B = 404); `pilot_id` bierze się
+  z SESJI - `pilotId` doklejony do ciała nie zmienia właściciela (test w
+  `ownBookingPanel.test.ts`), a cudza rezerwacja przez `/me/` odpowiada `403
+  not_your_booking`, jak na telefonie. Nazwy kroków ścieżki idą bez obsady.
 
 **Świadomie NIE zmienione w 3.2.0** (zapisane do przyszłych epików):
 

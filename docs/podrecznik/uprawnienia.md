@@ -16,9 +16,9 @@ Bez ani jednej zdolności - z zestawem **Pilot** - masz w klubie:
 |---|---|
 | aplikacja | wszystko, czego potrzeba do latania: rozpoczęcie lotu, kokpit, zdanie samolotu, własne operacje i korekty, wpis lotu po fakcie, kalendarz floty i własne rezerwacje, skrzynka powiadomień, ustawienia |
 | panel - **Moje konto** | adres i metody logowania, hasło, własne urządzenia |
-| panel - **Kalendarz** | oś całej floty na dni, jak w aplikacji: własne rezerwacje w komplecie, cudze jako godziny, maszyna i pilot |
+| panel - **Kalendarz** | oś całej floty na dni, jak w aplikacji: własne rezerwacje w komplecie i zakładane tak samo jak w aplikacji, cudze jako godziny, maszyna i pilot |
 
-W kalendarzu panelu nie ma jeszcze przycisku własnej rezerwacji - rezerwujesz w aplikacji, a panel pokazuje wynik. Cudza rezerwacja niesie dla Ciebie tyle, ile pokazuje pasek w aplikacji: kto, czym i kiedy. Jej zadanie, trasę, plan i notatkę widzi wyłącznie właściciel oraz osoby z podglądem klubu, akceptacją albo władzą nad cudzymi rezerwacjami.
+W kalendarzu panelu rezerwujesz tak samo, jak w aplikacji ([kalendarz w panelu](panel-kalendarz)). Cudza rezerwacja niesie dla Ciebie tyle, ile pokazuje pasek w aplikacji: kto, czym i kiedy. Jej zadanie, trasę, plan i notatkę widzi wyłącznie właściciel oraz osoby z podglądem klubu, akceptacją albo władzą nad cudzymi rezerwacjami.
 
 @screen 21-kalendarz "Kalendarz w aplikacji: to samo, co widzi każdy w panelu" | 22-rezerwacja "Własna rezerwacja - z aplikacji"
 

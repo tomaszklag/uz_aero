@@ -4687,7 +4687,7 @@ Reguły obowiązujące odtąd:
 Zgłoszenie właściciela: „Panel web powinien być dostępny dla wszystkich. Nie tylko dla
 »admin«. Mamy sterowanie scope uprawnień i to powinno decydować, co kto widzi." Decyzja
 doprecyzowująca tego samego dnia: członek z zestawem „Pilot" **widzi Moje konto i kalendarz**
-(własna rezerwacja Z PANELU - do epiku przebudowy panelu 3.2.0). Pełny zapis, tabela
+(własna rezerwacja Z PANELU - wykonana w 3.2.0, issue #233, sekcja niżej). Pełny zapis, tabela
 zdolność → trasy i odrzucone warianty: **`docs/uprawnienia.md` §13**; podręcznik: nowa
 strona `docs/podrecznik/uprawnienia.md` („Kto co widzi") z żywymi ekranami panelu i telefonu.
 Reguły obowiązujące odtąd KAŻDĄ trasę i KAŻDY ekran panelu:
@@ -5084,24 +5084,59 @@ trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązuj�
   żywym serwerze (→ P-W), rysowania tabeli interwałów i strony przychodowej (zrzuty,
   klienci) - kontrakt je niesie, panel 3.2 świadomie nie rysuje
 
-## Własna rezerwacja z panelu - MAKIETY (issue #233, 2026-09-26, milestone 3.2.0)
+## Własna rezerwacja z panelu (issue #233, 2026-09-27, milestone 3.2.0)
 Punkt spoza planu P-A, odłożony decyzją właściciela przy #216: pilot z pustym zakresem
-widzi kalendarz w panelu, ale rezerwował wyłącznie w aplikacji. Krok Z1 (design-first)
-WYKONANY - kod (Z2–Z5) czeka na zatwierdzenie makiet. Pełny zapis: `docs/rezerwacje.md`
-§10 (akapit „WŁASNA REZERWACJA Z PANELU"), odstępstwa `docs/panel-3.2.md` §16.
-- **makiety**: `design/panel/kalendarz-rezerwacja.html` (K7 krok 1 z paskiem zajętości
-  doby i sugestiami slotów, K7a krok 2, K7b odmowa `slot_taken`, stany) i ramka K2b
-  w `kalendarz-wpis.html` (własna zajętość: „Przesuń i popraw", „Odwołaj", czekająca,
-  zamknięta). K1 poprawiona: „Zarezerwuj" JEDYNĄ akcją główną (wyłączenie z użytku
-  schodzi do wyciszonego), własne wpisy zielone, wolne miejsce komórki celem kliknięcia
-- **komponenty** w `calendar.css` (`.cal-add`, `.cal-item.mine`, `.slots`, `.daytrack`)
-  i `drawer.css` (`.steps`); inwentarz `SZABLON.html`; `panel.css` przegenerowany
-- **dwie decyzje DO POTWIERDZENIA przy makiecie**: „Zarezerwuj" jako jedyny primary
-  kalendarza dla każdego członka; sugestie slotów w panelu przy własnej rezerwacji
-  (przy „Zarezerwuj za pilota" dalej ich nie ma)
-- **w kodzie (Z2) obowiązuje**: panel woła wyłącznie `/admin/api/*` (#180), własna
-  rezerwacja = `pilot_id` z sesji, ten sam `BookingsPort`/`ApprovalFlow`, co telefon,
-  BEZ audytu; strażnicy epiku C (sonda `tenantIsolation`, `org_id` w adapterze)
+widział kalendarz w panelu, ale rezerwował wyłącznie w aplikacji. Makiety Z1
+(`kalendarz-rezerwacja` K7/K7a/K7b, ramka K2b w `kalendarz-wpis`) i kod Z2–Z5 WYKONANE.
+Pełny zapis: `docs/rezerwacje.md` §5.2 i §10, odstępstwa `docs/panel-3.2.md` §16,
+podręcznik `docs/podrecznik/panel-kalendarz.md`. Decyzje właściciela 2026-09-27 - nie
+wracać: cztery decyzje makiety zatwierdzone („Zarezerwuj" jedyną akcją główną kalendarza
+dla KAŻDEGO członka, sugestie przy własnej, własne wpisy zielone, odwołanie własnej bez
+powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ powierzchni.
+- **WŁASNA REZERWACJA TO JEDNA KOMENDA DLA DWÓCH POWIERZCHNI**: `BookingCommands` przeszło
+  z `application/mobile/` do `application/common/commands/bookings.ts`, a panel woła je
+  trasami `/admin/api/me/bookings` (`POST`, `PATCH`, `DELETE` bez ciała) na
+  `capability: null`. Właściciel z SESJI (pole `pilotId` w ciele zod odrzuca), BEZ audytu,
+  cudza przez `/me/` = `403 not_your_booking` - jak telefon. Rezerwacja ZA PILOTA zostaje
+  na `POST /admin/api/bookings` (`reservations.manage`, audyt `booking.create`)
+- **SUGESTIE MAJĄ JEDEN KSZTAŁT DLA TELEFONU I PANELU** (`http/routes/common/
+  suggestionsWire.ts`) i niosą `free` - wolne pasma liczone DOMENOWYM `freeSpans`. Panel
+  nie scala zajętości po swojemu (druga definicja „wolnego"), a panel nie importuje wartości
+  z domeny - więc liczy serwer
+- **STOPKA SZUFLADY NAZYWA KROKI ŚCIEŻKI**: `GET /admin/api/me/approval-path` oddaje SAME
+  NAZWY kroków, przez które przejdzie rezerwacja zalogowanego (bez kroków, na których stoi
+  sam - `ApprovalFlow.stepsAhead`). Obsady nie oddaje: ta jest na `accounts.manage`
+- **ODWOŁANIE CZEKAJĄCEJ REZERWACJI BUDZI OSOBY KROKU BIEŻĄCEGO** (`approval_withdrawn`,
+  `ApprovalFlow.withdraw` w tej samej transakcji, co odwołanie, budzik po commicie) - z
+  telefonu, z panelu (własna) i z panelu przez `reservations.manage` (cudza). Odwołujący
+  nie budzi sam siebie; potwierdzona nikogo nie budzi. Nowy rodzaj wiadomości nie wymaga
+  migracji (`notifications.kind` bez CHECK), a telefon kieruje go do skrzynki
+  (`pushTarget`: brak sprawy do rozstrzygnięcia) - dokładając rodzaj, dopisz gałąź
+  w `app/src/ui/screens/logic/inbox.ts`, inaczej wiersz mówi „Wiadomość z klubu"
+- **GODZINY WŁASNEJ REZERWACJI SĄ CZASEM KLUBU** (`screens/calendar/clubClock.ts`: `Intl`
+  ze strefą klubu, godzina nieistniejąca w dobie zmiany czasu = odmowa, nie cicha godzina
+  obok). „Zarezerwuj za pilota" i wyłączenie z użytku zostają przy `datetime-local`
+  przeglądarki - to świadoma różnica, nie niekonsekwencja
+- **KOLIZJA WIDOCZNA NA PASKU DOBY NIE BLOKUJE „DALEJ"** (inaczej niż na 22 w telefonie):
+  bursztynowe zdanie pod parą godzin, bo o terminie rozstrzyga serwer, a obraz paska
+  jest z chwili otwarcia. Odmowa `slot_taken` WRACA NA KROK 1 z banerem (co stoi, „weszła
+  N min temu", „Weź …" = najbliższe wolne tej samej długości), szkic kroku 2 zostaje
+- **SZUFLADA ZAJĘTOŚCI MA TRZECI WIDOK - WŁASNA** (K2b): „Ty · nazwisko KOD", „Przesuń
+  i popraw" tylko przed początkiem, „Odwołaj" także trwającą, zamknięta ma jedno wyjście
+  „Zarezerwuj inny termin" (zadanie i trasa przechodzą, termin i maszyna NIE). Karty
+  „Decyzja za krok" przy własnej sprawie NIE MA, nawet z `reservations.manage`. Stan
+  bierze się z odczytu `GET /bookings/:id` (świeższy niż siatka), a wpis spoza siatki
+  (inny tydzień, zamknięty) ekran dociąga sam
+- **WYMÓG ZAŁOGI 2-OS. JEDZIE W SŁOWNIKU KLUBU** (`dualRequired` w `GET /admin/api/directory`)
+  - plakietka przy drugim pilocie, blokada bez zdania (widać z kontrolki, issue #55)
+- **WIERSZ „ZAŁOŻONA" NIE MÓWI O POWIERZCHNI**: „przez Ciebie" / „przez pilota" /
+  „za pilota · KOD" (`originLabel(booking, person, viewerId)`). Nie przywracać „z aplikacji" -
+  wynikało z pary autor–właściciel, co od #233 kłamie, a kolumny z powierzchnią nie ma
+- **`screens/fleet/consumptionCard.ts` → `consumptionCardView.ts`** (usterka P-E złapana
+  przy okazji): moduł czysty i komponent `ConsumptionCard.tsx` różniły się wyłącznie
+  wielkością litery, więc na Windowsie `tsc` i Vite brały jeden za drugi. **Moduł czysty
+  i komponent nie mają prawa różnić się samą wielkością litery** - czysty nosi przyrostek
+  (`…View`, `…Rows`, `…Labels`)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

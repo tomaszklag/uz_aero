@@ -35,6 +35,7 @@ export class AdminDirectoryQueries {
         reg: join.aircraft.reg,
         type: join.aircraft.type,
         serviceStatus: join.aircraft.serviceStatus,
+        dualRequired: join.aircraft.dualRequired,
       })),
     };
   }

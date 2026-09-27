@@ -26,6 +26,8 @@ export interface CalendarAircraft {
   reg: string;
   type: string;
   inService: boolean;
+  /** Wymóg załogi dwuosobowej - szuflada własnej rezerwacji żąda wtedy drugiego pilota (#233). */
+  dualRequired: boolean;
 }
 
 /** Jedna zajętość w komórce, gotowa do narysowania. */
@@ -39,11 +41,22 @@ export interface CalendarItem {
   endsAt: number;
   /** Zajętość zaczęła się PRZED tą dobą - pasek jest jej ciągiem dalszym. */
   continues: boolean;
+  /**
+   * Własna rezerwacja patrzącego (issue #233) - zielona na osi. Odkąd kalendarz ogląda
+   * pilot, „kiedy lecę" jest pierwszym pytaniem do osi.
+   */
+  mine: boolean;
 }
 
 export interface CalendarCell {
   date: string;
   items: CalendarItem[];
+  /**
+   * Czy wolne miejsce tej komórki jest wejściem w rezerwację (`.cal-add`, issue #233).
+   * Dzień miniony, maszyna poza służbą i doba zajęta W CAŁOŚCI wyłączeniem z użytku
+   * odnośnika NIE dostają: brak celu, nie cel wyszarzony.
+   */
+  addable: boolean;
 }
 
 export interface CalendarRow {
@@ -57,6 +70,13 @@ export interface GridInput {
   bookings: readonly BookingDto[];
   /** Członek klubu z identyfikatora; `null` = nie ma go w cache członków. */
   person: PersonLookup;
+  /** Zalogowany - jego rezerwacje są „moje"; `null` = sesja bez osoby (nie ma czego zaznaczać). */
+  viewerId: string | null;
+  /**
+   * Dzisiejsza doba KLUBU (`YYYY-MM-DD`) - od niej w przód komórki są wejściem
+   * w rezerwację. `null` = oś bez wejść (strefa klubu jeszcze nieznana).
+   */
+  today: string | null;
 }
 
 /**
@@ -75,17 +95,37 @@ export function buildCalendarGrid(input: GridInput): CalendarRow[] {
 
   return input.aircraft.map((aircraft) => ({
     aircraft,
-    cells: input.days.map((day) => ({
-      date: day.date,
-      items: itemsIn(byAircraft.get(aircraft.id) ?? [], day, input.person),
-    })),
+    cells: input.days.map((day) => {
+      const items = itemsIn(byAircraft.get(aircraft.id) ?? [], day, input.person, input.viewerId);
+      return {
+        date: day.date,
+        items,
+        addable:
+          input.today != null &&
+          // Daty `YYYY-MM-DD` porównują się leksykalnie tak samo jak w czasie.
+          day.date >= input.today &&
+          aircraft.inService &&
+          !wholeDayBlocked(items, day),
+      };
+    }),
   }));
+}
+
+/**
+ * Doba zajęta W CAŁOŚCI wyłączeniem z użytku - przegląd od wczoraj do jutra. Wtedy nie ma
+ * wolnego miejsca, w które dałoby się kliknąć; blokada kilku godzin zostawia resztę doby.
+ */
+function wholeDayBlocked(items: readonly CalendarItem[], day: CalendarDayDto): boolean {
+  const from = Date.parse(day.startsAt);
+  const to = Date.parse(day.endsAt);
+  return items.some((i) => i.kind === 'block' && i.startsAt <= from && i.endsAt >= to);
 }
 
 function itemsIn(
   bookings: readonly BookingDto[],
   day: CalendarDayDto,
   person: PersonLookup,
+  viewerId: string | null,
 ): CalendarItem[] {
   const from = Date.parse(day.startsAt);
   const to = Date.parse(day.endsAt);
@@ -108,6 +148,7 @@ function itemsIn(
       startsAt,
       endsAt,
       continues: startsAt < from,
+      mine: viewerId != null && booking.kind === 'flight' && booking.pilotId === viewerId,
     }));
 }
 

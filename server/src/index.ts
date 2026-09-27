@@ -67,7 +67,7 @@ import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
 import { BookingQueries } from './application/common/queries/bookings.ts';
 import { DecisionPreviewQueries } from './application/common/queries/decisionPreview.ts';
-import { BookingCommands } from './application/mobile/commands/bookings.ts';
+import { BookingCommands } from './application/common/commands/bookings.ts';
 import { AdminBookingCommands } from './application/admin/commands/bookings.ts';
 import { PgBugReportsRepo } from './infrastructure/pg/common/bugReportsRepo.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
@@ -738,7 +738,7 @@ const app = await buildServer({
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
   // Kalendarz panelu - przez bramę audytu: rezerwacja za pilota, odwołanie cudzej
   // i wyłączenie maszyny z użytku to trzy decyzje o cudzych sprawach.
-  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, watching),
+  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,

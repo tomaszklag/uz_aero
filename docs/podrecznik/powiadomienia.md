@@ -27,6 +27,7 @@ Skrzynka, jak kalendarz, **wymaga zasięgu**: wiadomości przychodzą z serwera.
 | **Zgoda** - rezerwacja potwierdzona | pilot, który rezerwował |
 | **Odmowa** - z powodem | pilot, który rezerwował |
 | **Termin wygasł** bez decyzji | pilot, który rezerwował |
+| **Prośba wycofana** - rezerwację czekającą na zgodę odwołano | osoby z kroku, który miał decydować - sprawy do rozstrzygnięcia już nie ma. Do najbliższej aktualizacji aplikacji telefon pokazuje ją jako „Wiadomość z klubu" |
 | **Zbliża się lot, silnik ruszył, maszyna zdana, odwołany termin, nikt nie odebrał** | osoby, które obserwują ten samolot ([obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu)) |
 
 O własnym działaniu nikt nie dostaje wiadomości. W klubie bez ścieżki akceptacji i bez obserwowanych samolotów skrzynka zwykle stoi pusta - i tak ma być.

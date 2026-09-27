@@ -9,8 +9,8 @@ const SLOWNIK: DirectoryDto = {
     { id: 'p-2', code: 'BNO', name: 'Barbara Nowak', active: false },
   ],
   aircraft: [
-    { id: 'a-1', reg: 'SP-AXA', type: 'C182', serviceStatus: 'active' },
-    { id: 'a-2', reg: 'SP-KWA', type: 'C172', serviceStatus: 'disabled' },
+    { id: 'a-1', reg: 'SP-AXA', type: 'C182', serviceStatus: 'active', dualRequired: false },
+    { id: 'a-2', reg: 'SP-KWA', type: 'An-2', serviceStatus: 'disabled', dualRequired: true },
   ],
 };
 
@@ -30,8 +30,8 @@ describe('słownik klubu → podpisy zajętości', () => {
 
   it('wiersze osi floty: maszyna wyłączona z użytku ZOSTAJE, tylko poza służbą', () => {
     expect(calendarAircraft(SLOWNIK)).toEqual([
-      { id: 'a-1', reg: 'SP-AXA', type: 'C182', inService: true },
-      { id: 'a-2', reg: 'SP-KWA', type: 'C172', inService: false },
+      { id: 'a-1', reg: 'SP-AXA', type: 'C182', inService: true, dualRequired: false },
+      { id: 'a-2', reg: 'SP-KWA', type: 'An-2', inService: false, dualRequired: true },
     ]);
   });
 

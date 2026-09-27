@@ -20,7 +20,7 @@ Tapnięcie w pasek otwiera szczegóły tej rezerwacji. Tapnięcie w **wolne pasm
 
 ## Jak zarezerwować
 
-Formularz ma dwa kroki i zaczyna się od tego, o co konkurują piloci.
+Formularz ma dwa kroki i zaczyna się od tego, o co konkurują piloci. Te same dwa kroki ma kalendarz w panelu klubu - rezerwujesz tam, gdzie akurat jesteś ([kalendarz w panelu](panel-kalendarz)).
 
 **Krok 1 - kiedy i czym.** Wybierz dzień, samolot i godziny. Każda karta samolotu pokazuje jego pasek zajętości i wypisane wolne pasma („wolne: 06:00-13:00 · 16:00-21:00"), więc widać od razu, co da się wziąć. Nad godzinami stoją gotowe propozycje z powodem - „tuż po rezerwacji · J. Nowak", „początek dnia" - i wystarczy w nie tapnąć. Możesz też ustawić dowolne własne godziny.
 

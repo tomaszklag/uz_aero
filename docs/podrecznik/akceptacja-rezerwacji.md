@@ -49,6 +49,8 @@ Prośba o zgodę przychodzi do skrzynki pod dzwonkiem na pulpicie (więcej: [pow
 - **ZATWIERDŹ** - jednym tapnięciem. Rezerwacja idzie do następnego kroku albo, przy ostatnim, jest potwierdzona - ekran mówi, co stanie się dalej.
 - **ODMÓW** - otwiera pole na powód. Powód jest wymagany: pilot przeczyta go u siebie.
 
+Gdy rezerwację, o którą Cię pytano, odwołano - pilot sam albo administrator - dostajesz wiadomość **„Prośba wycofana"**, a sprawa znika z „Do decyzji".
+
 @screen 26-decyzja "Ekran decyzji" | 26c-odmowa "Odmowa z powodem"
 
 Zanim zdecydujesz, możesz sprawdzić **komu i czym**. Wiersze samolotu, pilota i drugiego pilota prowadzą do podglądu:

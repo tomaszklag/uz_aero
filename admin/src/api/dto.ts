@@ -32,6 +32,7 @@ import type {
   ServiceStatus,
   SessionState,
   SessionTrackPayload,
+  SlotReason,
 } from '@ninerdeck/domain';
 
 // -- sesja panelu (logowanie, `GET /me`) ----------------------------------------
@@ -1204,11 +1205,38 @@ export interface CalendarDayDto {
 }
 
 export interface CalendarDto {
-  /** Strefa klubu - NAPIS do wyświetlenia, nie materiał do rachunku. */
+  /**
+   * Strefa klubu. Siatka dób przychodzi gotowa (niżej), a strefa służy do formatowania
+   * godzin - i od issue #233 do zamiany „dzień + godzina czasu klubu" na chwilę
+   * w szufladzie własnej rezerwacji (`screens/calendar/clubClock.ts`).
+   */
   timezone: string;
   homeIcao: string | null;
   days: CalendarDayDto[];
   bookings: BookingDto[];
+}
+
+/**
+ * SUGESTIE SLOTÓW - `GET /admin/api/bookings/suggestions` (issue #233), ten sam kształt,
+ * co trasa telefonu (`server/src/http/routes/common/suggestionsWire.ts`).
+ *
+ * `window` to doba LOTNA klubu (świt → zmrok z lotniska macierzystego albo okno domyślne,
+ * `basis`) - pasek zajętości doby w szufladzie rysuje się w jej granicach.
+ */
+export interface SuggestionsDto {
+  day: CalendarDayDto;
+  window: { from: string; to: string; basis: 'solar' | 'default' };
+  suggestions: SlotSuggestionDto[];
+  /** Wolne pasma maszyny w oknie doby - liczy je domena na serwerze, panel je tylko pisze. */
+  free: { startsAt: string; endsAt: string }[];
+}
+
+export interface SlotSuggestionDto {
+  startsAt: string;
+  endsAt: string;
+  reason: SlotReason;
+  gapBeforeMin: number;
+  gapAfterMin: number;
 }
 
 /**
@@ -1232,6 +1260,8 @@ export interface DirectoryAircraftDto {
   reg: string;
   type: string;
   serviceStatus: ServiceStatus;
+  /** Wymóg załogi dwuosobowej - plakietka przy drugim pilocie w szufladzie rezerwacji (#233). */
+  dualRequired: boolean;
 }
 
 export interface DirectoryDto {

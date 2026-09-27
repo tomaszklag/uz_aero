@@ -4,7 +4,14 @@
  * Adres własny, bo szuflada opisuje osobny byt - tak jak w module Piloci. Dzięki temu
  * link do konkretnej rezerwacji da się wkleić w rozmowie („zobacz, co stoi we wtorek").
  *
- * ══ ODWOŁANIE WYMAGA POWODU, ALE NIE ZAWSZE ══
+ * ══ TRZY WIDOKI: CUDZA, WYŁĄCZENIE Z UŻYTKU I WŁASNA (K2b, issue #233) ══
+ * Odkąd każdy członek rezerwuje z panelu, własny termin ma tu te same akcje, co karta 23
+ * w telefonie: „Przesuń i popraw" (przed początkiem) i „Odwołaj" (także trwający) - BEZ
+ * pola powodu, bo przy własnym planie nie ma komu tłumaczyć. Zamknięta ma jedno wyjście.
+ * Karty „Decyzja za krok" przy własnej sprawie NIE MA: własnej sprawy nie rozstrzyga się
+ * samemu, nawet z uprawnieniem.
+ *
+ * ══ ODWOŁANIE CUDZEJ WYMAGA POWODU, ALE NIE ZAWSZE ══
  * Pilot czyta powód w aplikacji, więc zdjęcie CUDZEGO planu bez słowa byłoby samym
  * zniknięciem wiersza. Zdjęcie wyłączenia z użytku powodu nie potrzebuje - nie ma komu
  * tłumaczyć. Rozstrzyga to domena serwera; tutaj rozstrzyga, czy pole w ogóle stoi.
@@ -13,7 +20,7 @@
 import { useState } from 'react';
 
 import type { BookingDto } from '../../api/dto';
-import { useBooking, useCancelBooking } from '../../queries/useCalendar';
+import { useBooking, useCancelBooking, useCancelOwnBooking } from '../../queries/useCalendar';
 import { Button, Card, Drawer, EmptyState, Field, TextInput } from '../../ui/components';
 import { BookIcon } from '../../ui/components/icons';
 import { errorMessage } from '../common/apiMessage';
@@ -29,6 +36,7 @@ import {
   plannedLabel,
   type PersonLookup,
 } from './bookingLabels';
+import { ownBookingState } from './ownBookingForm';
 
 interface Props {
   booking: BookingDto;
@@ -36,19 +44,42 @@ interface Props {
   timezone: string;
   person: PersonLookup;
   canManage: boolean;
+  /** Zalogowany - jego rezerwacja dostaje widok własny (K2b). */
+  viewerId: string | null;
+  /** „Przesuń i popraw" - szuflada własnej rezerwacji w trybie poprawki. */
+  onEdit: (booking: BookingDto) => void;
+  /** „Zarezerwuj inny termin" po rezerwacji zamkniętej. */
+  onRebook: (booking: BookingDto) => void;
   onClose: () => void;
 }
 
-export function BookingDrawer({ booking, reg, timezone, person, canManage, onClose }: Props) {
+export function BookingDrawer({
+  booking: fromGrid,
+  reg,
+  timezone,
+  person,
+  canManage,
+  viewerId,
+  onEdit,
+  onRebook,
+  onClose,
+}: Props) {
   const [reason, setReason] = useState('');
   const cancel = useCancelBooking();
+  const cancelOwn = useCancelOwnBooking();
 
-  const isBlock = booking.kind === 'block';
-  const naglowek = drawerHeading(booking, reg, timezone);
+  const isBlock = fromGrid.kind === 'block';
 
   // Stan ścieżki akceptacji (3.1.0) jedzie OSOBNYM odczytem, nie w oknie kalendarza:
   // siatka o kroki nie pyta. Wyłączenie z użytku ścieżki nie ma - nie pytamy.
-  const detail = useBooking(isBlock ? null : booking.id);
+  const detail = useBooking(isBlock ? null : fromGrid.id);
+  // Wiersz z tego odczytu jest świeższy o decyzje sprzed chwili - stan (czeka, odrzucona)
+  // bierze się stąd, gdy już przyszedł.
+  const booking = detail.data?.booking ?? fromGrid;
+  const naglowek = drawerHeading(booking, reg, timezone);
+
+  const own = !isBlock && viewerId != null && booking.pilotId === viewerId;
+  const state = ownBookingState(booking, Date.now());
 
   // Powód wymagany WYŁĄCZNIE przy cudzej rezerwacji - zdjęcie wyłączenia z użytku
   // idzie bez niego, bo nie ma komu tłumaczyć.
@@ -56,17 +87,13 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
   const blocked = needsReason && reason.trim() === '';
 
   return (
-    <Drawer
-      title={naglowek.title}
-      sub={naglowek.sub}
-      onClose={onClose}
-    >
+    <Drawer title={naglowek.title} sub={naglowek.sub} onClose={onClose}>
       <Card title={isBlock ? 'Wyłączenie z użytku' : 'Rezerwacja'}>
         {isBlock ? (
           <Row label="Powód">{blockReasonLabel(booking.blockReason)}</Row>
         ) : (
           <>
-            <Row label="Pilot">{personLabel(booking.pilotId, person)}</Row>
+            <Row label="Pilot">{own ? ownLabel(booking.pilotId, person) : personLabel(booking.pilotId, person)}</Row>
             {booking.dualId == null ? null : (
               <Row label="Drugi pilot">{personLabel(booking.dualId, person)}</Row>
             )}
@@ -93,7 +120,7 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
         {booking.createdAt == null ? null : (
           <Row label="Założona">
             {stempel(new Date(booking.createdAt), timezone)}{' '}
-            <span className="cell-sub">{originLabel(booking, person)}</span>
+            <span className="cell-sub">{originLabel(booking, person, viewerId)}</span>
           </Row>
         )}
       </Card>
@@ -112,14 +139,14 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
           view={detail.data.approval}
           person={person}
           timezone={detail.data.timezone === '' ? timezone : detail.data.timezone}
-          canDecide={canManage && detail.data.booking.status === 'pending'}
+          canDecide={canManage && !own && booking.status === 'pending'}
         />
       )}
 
       {/* Operacja, która ją zrealizowała - pojawia się DOPIERO po locie, bo wiąże je
           zdarzenie z rejestru. Do tego czasu wiersza nie ma: pusty byłby zdaniem
           o przyszłości. */}
-      {isBlock ? null : (
+      {isBlock || (own && state === 'closed') ? null : (
         <Card title="Realizacja">
           {booking.sessionUuid == null ? (
             <EmptyState
@@ -135,14 +162,60 @@ export function BookingDrawer({ booking, reg, timezone, person, canManage, onClo
         </Card>
       )}
 
-      {/* Zamkniętej zajętości nie odwołuje się drugi raz, a bez uprawnienia nie ma
-          przycisku - nie ma przycisku wyszarzonego (`panel-2.0.md` §3.3). */}
-      {canManage && (booking.status === 'confirmed' || booking.status === 'pending') ? (
+      {own ? (
+        <>
+          {state !== 'movable' ? null : (
+            <Card title="Zmiana terminu">
+              {booking.status === 'pending' ? (
+                <p className="card-note">
+                  <b>Zmiana terminu wyczyści dotychczasowe zgody</b> - ścieżka zacznie od nowa. Zadanie,
+                  trasę i notatkę możesz poprawić bez tego.
+                </p>
+              ) : (
+                <p className="card-note">
+                  Poprawka wraca do formularza z Twoim wpisem. Inna maszyna to nowa rezerwacja.
+                </p>
+              )}
+              <Button onClick={() => onEdit(booking)}>Przesuń i popraw</Button>
+            </Card>
+          )}
+          {state === 'closed' ? (
+            <Card title="Co dalej">
+              <p className="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
+              <Button onClick={() => onRebook(booking)}>Zarezerwuj inny termin</Button>
+            </Card>
+          ) : (
+            <Card title="Odwołanie rezerwacji" tone="danger">
+              {/* Czekająca sprawa miała prośbę o zgodę - jej osoby dostaną wiadomość
+                  (decyzja właściciela 2026-09-27). Powodu nie ma: to własny plan. */}
+              <p className="card-note">
+                {booking.status === 'pending'
+                  ? 'Osoby z kroku dostaną wiadomość, że prośba została wycofana.'
+                  : 'Termin zwolni się natychmiast.'}
+              </p>
+              {cancelOwn.error == null ? null : (
+                <p className="card-note danger">{bookingErrorMessage(cancelOwn.error, timezone, person)}</p>
+              )}
+              <Button
+                variant="danger"
+                disabled={cancelOwn.isPending}
+                onClick={() => cancelOwn.mutate(booking.id, { onSuccess: onClose })}
+              >
+                Odwołaj rezerwację
+              </Button>
+            </Card>
+          )}
+        </>
+      ) : canManage && (booking.status === 'confirmed' || booking.status === 'pending') ? (
+        /* Zamkniętej zajętości nie odwołuje się drugi raz, a bez uprawnienia nie ma
+           przycisku - nie ma przycisku wyszarzonego (`panel-2.0.md` §3.3). */
         <Card title={isBlock ? 'Zdjęcie wyłączenia' : 'Odwołanie rezerwacji'} tone="danger">
           <p className="card-note">
             {isBlock
               ? 'Termin zwolni się natychmiast i maszyna wróci do kalendarza.'
-              : 'Pilot zobaczy powód w aplikacji. Termin zwolni się natychmiast.'}
+              : booking.status === 'pending'
+                ? 'Pilot zobaczy powód w aplikacji, a osoby z kroku - że prośba została wycofana.'
+                : 'Pilot zobaczy powód w aplikacji. Termin zwolni się natychmiast.'}
           </p>
           {needsReason ? (
             <Field htmlFor="cancel-reason" label="Powód">
@@ -194,6 +267,20 @@ function personLabel(id: string | null, person: PersonLookup): React.ReactNode {
   return (
     <>
       {who.name} <span className="cell-sub mono">{who.code}</span>
+    </>
+  );
+}
+
+/** „Ty · Michał Wilk MWI" - nazwisko własne czytałoby się jak cudze (makieta K2b). */
+function ownLabel(id: string | null, person: PersonLookup): React.ReactNode {
+  const who = id == null ? null : person(id);
+  if (who == null) return 'Ty';
+  return (
+    <>
+      Ty{' '}
+      <span className="cell-sub">
+        · {who.name} <span className="mono">{who.code}</span>
+      </span>
     </>
   );
 }

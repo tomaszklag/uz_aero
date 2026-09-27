@@ -1,6 +1,12 @@
 /**
- * Ninerdeck (serwer) - ZAPIS REZERWACJI Z TELEFONU (milestone 3.0.0, issue #158 B5;
+ * Ninerdeck (serwer) - ZAPIS WŁASNEJ REZERWACJI (milestone 3.0.0, issue #158 B5;
  * `docs/rezerwacje.md` §2.2, §5.1).
+ *
+ * ══ W `common/`, BO WŁASNĄ REZERWACJĘ ZAKŁADA SIĘ Z OBU POWIERZCHNI ══
+ * Do 3.2.0 wyłącznie z telefonu; od issue #233 także z kalendarza panelu (trasy
+ * `/admin/api/me/bookings`). To jest TA SAMA czynność - właściciel z tokenu albo z sesji,
+ * ta sama ścieżka akceptacji, te same wiadomości - więc i ta sama komenda. Druga kopia
+ * w `admin/` rozjechałaby się przy pierwszej poprawce reguły czyszczenia zgód.
  *
  * ══ TO JEDYNE MIEJSCE PILOTA, KTÓRE WYMAGA SIECI I NIE JEST WYJĄTKIEM OD OFFLINE-FIRST ══
  * Rejestr operacji jest append-only i ma jednego piszącego, więc telefon zapisuje
@@ -9,8 +15,9 @@
  * znaczyłby „zarezerwowane" na ekranie i odmowę po powrocie zasięgu - a to gorsze niż
  * uczciwe „bez sieci nie zarezerwujesz". ODCZYT działa z cache jak wszystko inne.
  *
- * Ślad w dzienniku audytu NIE POWSTAJE: to zwykła praca pilota, jak wpisanie lotu.
- * Dziennik jest od decyzji administratora o cudzych sprawach (`booking.*` w panelu).
+ * Ślad w dzienniku audytu NIE POWSTAJE - także wtedy, gdy rezerwacja przychodzi z panelu:
+ * to zwykła praca pilota, jak wpisanie lotu. Dziennik jest od decyzji administratora
+ * o cudzych sprawach (`booking.*` w `admin/commands/bookings.ts`).
  */
 
 import {
@@ -20,11 +27,11 @@ import {
   refuseWindow,
   type BookingRefusal,
 } from '../../../domain/bookings.ts';
-import type { ApprovalFlow } from '../../common/commands/approvals.ts';
-import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
-import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
-import type { Notifier } from '../../common/notify/notifier.ts';
+import type { ApprovalFlow } from './approvals.ts';
+import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
+import type { AircraftWatching } from '../notify/aircraftWatching.ts';
+import type { NotificationDraft } from '../notify/bookingNotices.ts';
+import type { Notifier } from '../notify/notifier.ts';
 import type {
   AircraftConfigPort,
   BookingPatch,
@@ -33,7 +40,7 @@ import type {
   Clock,
   Database,
   NewBooking,
-} from '../../common/ports.ts';
+} from '../ports.ts';
 
 /** Zamówienie pilota. Klub, właściciela i autora dokłada komenda - nie przychodzą z drutu. */
 export interface BookingDraft {
@@ -231,15 +238,21 @@ export class BookingCommands {
 
     const watching = this.watching;
     let watchNotices: NotificationDraft[] = [];
+    let withdrawn: NotificationDraft[] = [];
     const closed = await this.db.transaction(async (tx) => {
       const row = await this.bookings.close(tx, orgId, id, {
         status: 'cancelled',
         at: this.clock.now(),
         reason,
       });
+      if (row == null) return row;
+      // Czekająca sprawa miała otwartą prośbę o zgodę - jej osoby dowiadują się, że nie
+      // ma już czego rozstrzygać (issue #233). Stan SPRZED odwołania, bo to on mówi,
+      // kogo pytano.
+      withdrawn = await this.approvals.withdraw(tx, orgId, current, pilotId);
       // Obserwujący słyszą o odwołaniu WYŁĄCZNIE terminu, o którym już im przypomniano
       // (§5.2) - i nigdy o własnym; wiadomość idzie tą samą transakcją, co odwołanie.
-      if (row == null || current.remindedAt == null || watching == null) return row;
+      if (current.remindedAt == null || watching == null) return row;
       const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
       if (audience != null) {
         watchNotices = aircraftFlightCancelled(audience, current, null);
@@ -250,6 +263,7 @@ export class BookingCommands {
     // Przegrany wyścig z zadaniem okresowym albo z panelem: wiersz przestał być czynny
     // między odczytem a zapisem. To nie jest awaria - to jest ta sama odpowiedź.
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
+    if (withdrawn.length > 0) await this.notifier.wake(orgId, withdrawn);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
     return { ok: true, booking: closed, created: false };
   }

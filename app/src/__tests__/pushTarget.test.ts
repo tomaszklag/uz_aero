@@ -31,6 +31,10 @@ describe('dokąd prowadzi tapnięcie', () => {
     }
   });
 
+  it('prośba WYCOFANA otwiera skrzynkę - sprawy do rozstrzygnięcia już nie ma (issue #233)', () => {
+    expect(pushTarget({ kind: 'approval_withdrawn', bookingId: 'b3' })).toEqual({ screen: 'Notifications' });
+  });
+
   it('pięć wiadomości o maszynie otwiera KARTĘ MASZYNY; bez identyfikatora - skrzynkę', () => {
     for (const kind of ['aircraft_flight_soon', 'aircraft_flight_cancelled', 'aircraft_engine_started', 'aircraft_released', 'aircraft_not_taken']) {
       expect(pushTarget({ kind, aircraftId: 'a1', bookingId: 'b1' })).toEqual({ screen: 'Aircraft', params: { aircraftId: 'a1' } });

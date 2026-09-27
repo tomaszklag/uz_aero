@@ -447,7 +447,9 @@ stan niż utrata nowego.
 | `POST /admin/api/bookings/:id/decision` *(3.1)* - ten sam rdzeń i rejestr, co telefon | `reservations.approve` **albo** `reservations.manage` |
 | `GET /admin/api/approvals/queue` *(3.1)* - co czeka na MOJĄ zgodę | `reservations.approve` |
 | `GET`/`PUT /admin/api/approval-steps` *(3.1)* | `accounts.manage` |
-| *(3.2, #233 - planowane, po zatwierdzeniu makiet)* `POST /admin/api/me/bookings`, `PATCH`/`DELETE /admin/api/me/bookings/:id`, `GET /admin/api/bookings/suggestions` - WŁASNA rezerwacja z panelu: `pilot_id` z sesji, ten sam `BookingsPort`/`ApprovalFlow`, co telefon; BEZ audytu (zwykła praca pilota, jak z telefonu) | każdy członek (`capability: null`) |
+| *(3.2, #233)* `POST /admin/api/me/bookings`, `PATCH`/`DELETE /admin/api/me/bookings/:id` - WŁASNA rezerwacja z panelu: `pilot_id` z sesji (pole w ciele zod odrzuca), TA SAMA komenda, co telefon (`application/common/commands/bookings.ts`); BEZ audytu (zwykła praca pilota); `DELETE` bez ciała i bez powodu; cudza przez `/me/` = `403 not_your_booking` | każdy członek (`capability: null`) |
+| *(3.2, #233)* `GET /admin/api/bookings/suggestions` - bliźniak trasy telefonu, JEDEN kształt zapytania i odpowiedzi (`http/routes/common/suggestionsWire.ts`); odpowiedź niesie też `free` - wolne pasma liczone domenowym `freeSpans` (podpis pod paskiem doby) | każdy członek (`capability: null`) |
+| *(3.2, #233)* `GET /admin/api/me/approval-path` - NAZWY kroków, przez które przejdzie rezerwacja zalogowanego (bez kroków, na których sam stoi); stopka szuflady „Zaczeka na zgodę: …" | każdy członek (`capability: null`) |
 
 Wpisy administratora idą przez `AuditedWrite` - akcje w `domain/adminActions.ts`:
 `booking.create`, `booking.cancel`, `booking.block`, `approval.steps`. **Decyzja o rezerwacji
@@ -1063,10 +1065,16 @@ zatwierdzenie makiet. Decyzje makiet:
   osobę także dla właściciela (ten sam odczyt i ta sama karta, co K2a);
 - **zamknięcie szuflady z niepustym szkicem pyta potwierdzeniem inline**; maszyna
   i dzień podstawione z komórki nie liczą się jako wpis (reguła z telefonu);
-- **czego makieta NIE rysuje** (do rozstrzygnięcia przy Z2): kształt odmowy dla
-  poprawki własnej czekającej rezerwacji z panelu (na telefonie `PATCH` → `restart`
-  ścieżki - w panelu tak samo); wiadomość do osób kroku po odwołaniu prośby (dziś
-  serwer jej nie wysyła - makieta K2b obiecuje, do potwierdzenia albo wycięcia).
+- **rozstrzygnięte przy kodzie (Z2–Z4, decyzje właściciela 2026-09-27)**: decyzje makiety
+  1–4 (jedna akcja główna, sugestie przy własnej, zielone własne wpisy, odwołanie własnej
+  bez powodu) ZATWIERDZONE; poprawka własnej czekającej rezerwacji z panelu idzie tym
+  samym `PATCH` → `restart`, co na telefonie (szuflada mówi o czyszczeniu zgód banerem
+  PRZED zapisem, gdy ścieżka klubu pyta tę osobę o cokolwiek); **odwołanie CZEKAJĄCEJ
+  rezerwacji budzi osoby kroku bieżącego wiadomością `approval_withdrawn`** („Prośba
+  wycofana") - z telefonu, z panelu i przy odwołaniu cudzej przez `reservations.manage`,
+  bez odwołującego (§12.1). Wiersz „Założona" mówi „przez Ciebie" / „przez pilota" /
+  „za pilota · KOD" - BEZ powierzchni (z panelu / z aplikacji): baza jej nie zapisuje,
+  a wnioskowanie z pary autor–właściciel od #233 kłamałoby.
 
 **Podgląd pilota i samolotu (K6/K6a) - WYKONANY w #206 (2026-09-24).** Znak maszyny na
 tytule karty kolejki oraz pilot i drugi pilot w wierszach są wartościami PROWADZĄCYMI
@@ -1305,7 +1313,8 @@ Ta pozycja jest na drodze krytycznej 3.1.0 tak samo, jak poczta (#137) była dla
   nie rodzi żadnego powiadomienia, więc przy niej nie pytamy o zgodę na nic.
 - **Tapnięcie** (`logic/pushTarget.ts`): `approval_requested` → ekran decyzji 26;
   `booking_approved` / `booking_rejected` / `booking_expired` → karta 23; wszystko inne
-  (także rodzaj z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
+  (także `approval_withdrawn` z 3.2.0 - sprawy do rozstrzygnięcia już nie ma - i rodzaj
+  z nowszego serwera) → skrzynka 25, bo każdy nasz budzik mówi „masz coś
   w skrzynce". Z zimnego startu i sprzed odblokowania PIN-em tapnięcie czeka jako
   „ostatnia odpowiedź" i czyta się je, gdy nawigator stanie; identyfikator obsłużonego
   tapnięcia trzyma stan modułu, żeby ponowne zamontowanie nawigatora nie otwierało
