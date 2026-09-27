@@ -5082,8 +5082,8 @@ trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązuj�
   wyrównanie z kolumny) - tabela nie sumuje wierszy sama, bo nie wie, których liczb nie
   wolno dodawać. Δ MH w sumach w godzinach DZIESIĘTNYCH („19,9 h"), bo flota miesza
   formaty licznika; w wierszu maszyny w JEJ formacie
-- **„SEZON" NA CHIPACH = ROK KALENDARZOWY** (`rangeOf('sezon')`, do potwierdzenia przez
-  właściciela - §16); `DateRange` dostał prop `quick` i dwa zestawy jednego słownika:
+- **„SEZON" NA CHIPACH = ROK KALENDARZOWY** (`rangeOf('sezon')`, potwierdzone przez
+  właściciela 2026-09-27, issue #235 - nie wracać); `DateRange` dostał prop `quick` i dwa zestawy jednego słownika:
   `LOGBOOK_QUICK` (dziś, weekend, 30 dni, miesiące) i `STATS_QUICK` (30 dni, miesiące,
   sezony). `activeQuickRange` rozpoznaje każdy zakres niezależnie od ekranu
 - **STAN PUSTY ZASTĘPUJE CAŁĄ TREŚĆ POD FILTRAMI** przy zerze zamkniętych operacji: „Żadnej
