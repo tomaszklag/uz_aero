@@ -4235,6 +4235,15 @@ body {
   border-color: var(--amber-border);
 }
 
+/* Błękit = ekran modułu ZLECEŃ (4.0.0) - ten sam podział, co w panelach wariantów
+   makiet telefonu 28-32: zielony ekran zwykły, bursztynowy stan ostrzegawczy,
+   błękitny zlecenie („rzecz, która się dzieje"). Klasa kanwy, nie produktu. */
+.vp-badge.blue {
+  color: var(--blue);
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+}
+
 .vp-body {
   display: flex;
   flex-direction: column;
@@ -4575,6 +4584,828 @@ body {
   font-weight: 500;
   letter-spacing: 0.25px;
   cursor: pointer;
+}
+
+/* ══ ZLECENIA (4.0.0) - czekają na kod epiku Z-D ══════════════════════════════════
+   Makiety modułu „Zlecenia na lot" (`docs/zlecenia.md` §15, issue #244). Klasy
+   PRODUKTU, nie ramy: gdy epik Z-D je zaimplementuje, przechodzą pod TYMI SAMYMI
+   nazwami do `admin/src/styles/components/` (kalendarzowe do `calendar.css`, reszta
+   do arkusza zleceń) i znikają stąd - dokładnie tak czekał `.club-code` przed
+   epikiem E. Kolory WYŁĄCZNIE z tokenów: po przeprowadzce obowiązuje je reguła
+   „zero literałów koloru w admin/src/styles/".
+
+   Język wizualny jest ten sam, co w makietach telefonu 28/29/32: BŁĘKIT niesie
+   zlecenie (pytanie klubu, „rzecz, która się dzieje"), ZIELEŃ - odpowiedź, na którą
+   prowadzący czeka („Może lecieć"), i akcję główną; BURSZTYN - to, co trzeba
+   zauważyć przed decyzją; CZERWIEŃ - to, co komuś coś odbiera (odwołanie, odebranie
+   zlecenia, cofnięcie przydziału).
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── GRUPY KOLUMNY BOCZNEJ (decyzja właściciela 2026-09-28, `docs/zlecenia.md` §15) ──
+   Zlecenia są siódmym modułem klubu, a `docs/panel-3.2.md` §3 kazał przy siódmym wrócić
+   do decyzji o grupach: pozycje stoją odtąd w trzech - Loty (Dziennik, Do sprawdzenia,
+   Statystyki), Planowanie (Kalendarz, Zlecenia), Klub (Piloci, Samoloty). Nagłówek jest
+   SAMYM PODPISEM: grupy się nie zwijają, bo siedem pozycji mieści się w kolumnie, a przycisk
+   bez funkcji nie wchodzi (to samo zdanie, przez które w pasku nie ma wyszukiwarki).
+   Nagłówki istnieją WYŁĄCZNIE przy co najmniej dwóch widocznych grupach - pilot z samym
+   Kalendarzem i Zleceniami ma listę płaską, tak samo rama superadministratora - a grupa
+   bez widocznej pozycji znika w całości. Krój tekstowy w pisowni zdaniowej, nie
+   mono-wersaliki (styl lekki, issue #107); przy przeprowadzce idzie do `shell.css`. */
+.nav-group {
+  padding: 14px 10px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nav-group:first-child {
+  padding-top: 2px;
+}
+
+/* ── MENU KOMÓRKI KALENDARZA (decyzja właściciela 2026-09-28) ──
+   Osoba z „Zlecaniem lotów" po kliknięciu w wolne miejsce komórki dostaje wybór
+   „Zarezerwuj / Zleć lot" - ten sam wybór, który w telefonie daje arkusz wolnego pasma
+   (21E). Bez tego uprawnienia menu nie ma: kliknięcie otwiera rezerwację od razu, jak
+   w 3.2.0, bo menu z jedną pozycją byłoby krokiem o nic. Obie pozycje startują
+   z maszyną i dniem klikniętej komórki. To ta sama warstwa `.menu`, co menu adresata,
+   tylko zaczepiona o lewą krawędź komórki. */
+.menu.cell-menu {
+  left: 0;
+  right: auto;
+  min-width: 180px;
+}
+
+.cal-cell:has(> .cell-menu) {
+  overflow: visible;
+  z-index: 6;
+}
+
+/* ── ZLECENIE NA OSI KALENDARZA (§5, §13.1) ──
+   Zlecenie JEST rezerwacją, więc trzyma termin od chwili utworzenia i stoi na osi
+   w tym samym miejscu, co każda zajętość - pasek węższy albo przygaszony kłamałby
+   o dostępności maszyny. Różni się KSZTAŁTEM i barwą: przerywana ramka mówi „jeszcze
+   nieostateczne" (jak przy rezerwacji czekającej na zgodę), błękit - że to PYTANIE
+   klubu, a nie czyjś lot. Szary „czeka" i bursztynowe „wyłączona" zostają nietknięte:
+   trzy stany przejściowe w jednej barwie przestałyby się odróżniać z kąta oka.
+   Napis mówi, KOGO brakuje („Zlecenie · szuka załogi"), a obsadzony fotel dopisuje
+   nazwisko; członek spoza adresatów widzi ten napis i nic więcej (§13.1). */
+.cal-item.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+/* Pod kursorem jaśnieje sam napis - ramka JEST znaczeniem i zostaje błękitna.
+   Reguła jawna, bo `.cal-item.order` stoi za `.cal-item:hover` o tej samej wadze
+   i bez niej przykryłaby reakcję na kursor. */
+.cal-item.order:hover {
+  color: var(--text-primary);
+}
+
+.cal-swatch.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+}
+
+/* Zlecenie na pasku doby w formularzu (szkic nowego albo cudze zlecenie w tym dniu) -
+   rysowane tak, jak stoi na osi: błękit, nie zieleń własnego terminu, bo zlecenie nie
+   jest jeszcze niczyim lotem. */
+.daytrack-busy.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+}
+
+/* ── FOTELE W FORMULARZU (§4.1, §14.4) ──
+   Stany fotela to karty wyboru (`.opt`): zbiór zamknięty i krótki, więc widoczność
+   wszystkich stanów naraz jest całą wartością (reguła „lista kart" obowiązuje też
+   w panelu). Siatka TRZECH kolumn stoi także przy dowódcy, który ma stany dwa
+   („brak" nie istnieje - lot bez dowódcy nie istnieje): kolumny „Ja" i „Szukam"
+   trzymają się wtedy jednej linii w obu fotelach, a puste trzecie pole czyta się
+   jako brak trzeciej możliwości, nie jako usterka. */
+.seat-states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+/* Członek WYŁĄCZONY na liście grupy (§6.1): zostaje zaznaczony, bo konfiguracji
+   klubu nie czyścimy po cichu (ta sama reguła, co obsada kroku ścieżki), ale
+   nazwisko schodzi o stopień - administrator ma widzieć, że na tę osobę nie liczy,
+   bo zleceń ona nie dostaje. Powód niesie `.opt-desc`. Karta zostaje KLIKALNA:
+   zdjęcie takiej osoby z grupy jest zwykłą poprawką. */
+.opt.dim .opt-name {
+  color: var(--text-muted);
+}
+
+/* ── FOTELE W WIERSZU LISTY ZLECEŃ (§6.2) ──
+   Komórka „Fotele" to etykieta adresowania z serwera (`audience_label`) rozpisana na
+   wiersze: fotel po lewej, do kogo poszedł po prawej. Nazwisko znaczy „imiennie",
+   nazwa grupy - „grupa", więc słowa „imiennie" nie trzeba dopisywać. Fotel w stanie
+   „brak" wiersza nie ma - zdanie o pustym fotelu byłoby zdaniem o niczym. */
+.order-seats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+  row-gap: 2px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.order-seat-k {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Druga linia komórki w tonie ODPOWIEDZI, na którą prowadzący czeka („2 mogą
+   lecieć"). Jedyna liczba wiersza w zieleni: odczyty mówią, czy ktoś zlecenie
+   widział, a ta - czy jest z kogo wybrać. */
+.cell-sub.ok {
+  color: var(--green);
+}
+
+/* ── NOWA WIADOMOŚĆ W WIERSZU LISTY (§7.3, wzorzec 30) ──
+   Ikona rozmowy z błękitną kropką przed plakietką stanu - tylko przy WŁASNYCH
+   zleceniach i tylko z treścią: cudze rozmowy koordynator wyłącznie czyta, więc nie
+   ma w nich wiadomości do niego, a pusta ikona przy każdym wierszu byłaby szumem.
+   Kropka mówi o ROZMOWIE, nie o zleceniu - o tym, że zlecenie na coś czeka, mówi
+   plakietka obok. Poza szufladą nową wiadomość zapowiada jeszcze skrzynka pod
+   dzwonkiem (kanał klubu, K7) - jednym wierszem na rozmowę. */
+.msg-ind {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+
+.msg-ind::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* ── WIERSZ ADRESATA - widok prowadzącego (§8, §13.1) ──
+   Kształt wiersza sesji (`.session-row`): treść po lewej, akcje w stałej kolumnie
+   po prawej. Status jest ZDANIEM BEZ PŁCI - czasownik w trzeciej osobie („Może
+   lecieć", „Nie może", „Leci") albo forma nijaka („Odczytane 18:52") - i kolor ma
+   wyłącznie „Może lecieć" i „Leci": to odpowiedzi, na które prowadzący czeka.
+   Kolejność wierszy układa serwer: najpierw ci, którzy mogą (w kolejności zgłoszeń),
+   potem odczytane, nieodczytane, na końcu odmowy - prowadzący czyta od góry to,
+   co może zrobić. Adresat tej listy NIE WIDZI nigdy (decyzja 18). */
+.rcp-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rcp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.rcp:last-child {
+  border-bottom: none;
+}
+
+.rcp-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rcp-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Kod pilota W TYM klubie - wartość maszynowa, więc mono, i przygaszona: nazwisko
+   jest odpowiedzią na „kto", kod ją tylko ujednoznacznia. */
+.rcp-code {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.rcp-status {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.rcp-status.ok {
+  color: var(--green);
+}
+
+.rcp-status.no {
+  color: var(--text-muted);
+}
+
+.rcp-status.unread {
+  color: var(--text-placeholder);
+}
+
+/* Bursztyn WYŁĄCZNIE dla tego, co prowadzący ma zauważyć przed wyborem: zmiana
+   nieodczytana po edycji (§8) i kolizja z inną rezerwacją tej samej osoby (§4.3 -
+   nie blokuje, bo baza pilnuje egzemplarza, nie człowieka). */
+.rcp-status.warn {
+  color: var(--amber);
+}
+
+/* Dopisek przy osobie z terminem do potwierdzenia (decyzje 37, 38): na który fotel ta
+   osoba może jeszcze trafić - wybór na jeden zdejmuje ją z listy drugiego. Błękit, bo to
+   informacja o zleceniu, nie ostrzeżenie (jak dopisek na telefonie, 32 ramka 3). */
+.rcp-status.blue {
+  color: var(--blue);
+}
+
+/* Podpis pod polem osoby wskazanej imiennie, która jest też w grupie drugiego fotela
+   (decyzja 39): dostanie termin do potwierdzenia. `.hint b` jest bursztynowe - tu
+   pogrubienie niesie informację, nie ostrzeżenie, więc błękit. Niczego nie blokuje. */
+.hint.info b {
+  color: var(--blue);
+}
+
+/* Powód odmowy albo rezygnacji - zdanie adresata, więc krojem tekstowym, kursywą,
+   jak cytat w historii zmian. */
+.rcp-reason {
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.rcp-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Ikona rozmowy i „⋯" - ciche, w stałej kolumnie, jak ołówek osi (`.pen-btn`).
+   Kropka zapala się przy nieprzeczytanej wiadomości od tej osoby. */
+.rcp-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.rcp-icon:hover,
+.rcp-icon:focus-visible,
+.rcp-icon[aria-expanded='true'] {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.rcp-icon .dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* Wiersz fotela JUŻ OBSADZONEGO przez kogoś innego: status zostaje (to zapis, a po
+   rezygnacji przydzielonego zgłoszeni dalej się liczą - §5.3), ale schodzi o stopień
+   i traci „Wybierz", bo nie ma czego wybierać. */
+.rcp.muted .rcp-name {
+  color: var(--text-secondary);
+}
+
+.rcp.muted .rcp-status {
+  color: var(--text-muted);
+}
+
+/* ── MENU ADRESATA (§5.2, §5.3) ──
+   Trzy czynności, które zmieniają czyjś udział w zleceniu - zamiana osoby, odebranie
+   zlecenia, cofnięcie przydziału - stoją pod „⋯", a nie jako trzy przyciski w każdym
+   wierszu: sześć wierszy razy trzy przyciski to farma guzików. Menu ma WYŁĄCZNIE to,
+   co dla tego wiersza jest możliwe (osoby przydzielonej nie da się usunąć wprost -
+   najpierw cofnięcie przydziału), bez pozycji wyszarzonych. Skutek każdej czynności
+   pada PRZED zapisem, w miejscu wiersza (`.confirm`). Cień jak szuflady: menu jest
+   warstwą nad kartą, nie jej częścią. */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--surface-raised);
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.menu-item.danger,
+.menu-item.danger svg {
+  color: var(--red);
+}
+
+/* ── KARTA „ZAŁOGA" PROWADZĄCEGO (§4.3, wzorzec 32A/32B) ──
+   Dopóki fotel szuka imiennie albo z grupy, jest NAGŁÓWKIEM karty swoich adresatów.
+   Przy komplecie i przy wspólnej liście układ się odwraca: obsadzone fotele stoją
+   razem w karcie „Załoga" NAD listą - odpowiedź „co już mam" - a lista pod spodem to
+   „z czego jeszcze wybieram". Osoba przydzielona PRZECHODZI z listy do tej karty
+   (stojąca w obu miejscach byłaby jedną osobą policzoną dwa razy) i zabiera ze sobą
+   rozmowę oraz „⋯", bo przydział da się cofnąć. Nazwa fotela w stałej kolumnie po
+   lewej, tym samym krojem, co klucz w `.kv`. */
+.rcp-seat {
+  width: 96px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── WIERSZ, O KTÓRY EKRAN PYTA (§6.3, §4.3) ──
+   Fotel zaproponowany TOBIE (widok adresata, jak `.seat.you` na 28) i fotel PUSTY
+   w karcie „Załoga" prowadzącego (jak `.cseat.open` na 32A) mają jeden znak: błękitną
+   krawędź i poświatę - jedyny kolorowy wiersz karty, bo jedyny, o który ekran pyta.
+   Wiersz sięga krawędzi karty (ujemny margines równy jej paddingowi), więc krawędź
+   stoi tam, gdzie zielona krawędź wiersza otwartego w tabeli. */
+.kv.you,
+.rcp.open {
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: linear-gradient(90deg, var(--blue-muted), transparent 70%);
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+/* ── PASEK ZLECENIA NAD ROZMOWĄ (§7, wzorzec 29) ──
+   Rozmowa jest ZAWSZE o jednym zleceniu, więc jego skrót stoi przypięty między
+   nagłówkiem szuflady a wiadomościami i prowadzi z powrotem do karty zlecenia. Bez
+   niego „mogę dopiero o 14" nie ma punktu odniesienia po przewinięciu. */
+.order-strip {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 20px 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--blue-border);
+  background: linear-gradient(90deg, var(--blue-muted), transparent 70%);
+  color: inherit;
+  text-decoration: none;
+}
+
+.order-strip:hover,
+.order-strip:focus-visible {
+  border-color: var(--blue);
+}
+
+.order-strip-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.order-strip-top {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+}
+
+.order-strip-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.order-strip-go {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+/* ── WIADOMOŚCI - na żywo (§7, §11; kanał klubu) ──
+   Wiadomość pojawia się bez odświeżania i ekran NIE MA wskaźnika połączenia: zerwane
+   łącze nie jest awarią, po powrocie panel dociąga przegapione zwykłym odczytem.
+   Dymki różni STRONA i odcień, nie kolor akcentu - własne w zieleni świeciłyby jak
+   przyciski. */
+.msgs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.day-sep::before,
+.day-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 80%;
+}
+
+.msg.in {
+  align-self: flex-start;
+}
+
+.msg.out {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+/* Autor nad dymkiem - WYŁĄCZNIE w rozmowie do czytania (koordynator): tam żadna
+   strona nie jest „moja", więc samo położenie nie mówi, kto pisze. */
+.msg-who {
+  padding: 0 4px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.bubble {
+  padding: 8px 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.msg.in .bubble {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 12px 4px;
+}
+
+.msg.out .bubble {
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px 12px 4px 12px;
+}
+
+.msg-time {
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+/* „Odczytane" WYŁĄCZNIE pod ostatnią własną wiadomością - przy każdej byłoby szumem,
+   a pytanie brzmi „czy przeczytano to, co napisałem na końcu". Forma nijaka, bez
+   płci. Odczyt koordynatora, który rozmowę tylko czyta, go nie zapala (§7.1). */
+.msg-read {
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: var(--blue);
+}
+
+/* ── STOPKA ROZMOWY: JAWNOŚĆ + POLE (§7.1) ──
+   Stoi w miejscu stopki szuflady - pisze się tam, gdzie w innych szufladach stoją
+   akcje. Zdanie o koordynatorach NAD polem na stałe (decyzja 19): to SKUTEK dla
+   piszącego, a nie opis budowy aplikacji. „Wyślij" przy pustym polu jest zablokowany
+   BEZ zdania - puste pole widać tuż obok (wąski wyjątek reguły issue #55). */
+.composer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 20px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.composer-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.composer-note svg {
+  flex-shrink: 0;
+}
+
+.composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Pole rozmowy zaczyna od dwóch linii, nie od 92 px komentarza do odczytu: to
+   wiadomość w komunikatorze, a nie formularz. */
+.composer-row .input.area {
+  flex: 1;
+  min-height: 40px;
+  resize: none;
+}
+
+/* ══ KANAŁ KLUBU (4.0.0) - czekają na kod epiku KK-D ═══════════════════════════════
+   Dzwonek, skrzynka i baner panelu (`docs/kanal-klubu.md` K7, §3.4). Klasy PRODUKTU,
+   nie ramy: w epiku KK-D przechodzą pod TYMI SAMYMI nazwami do
+   `admin/src/styles/components/` (dzwonek do `shell.css`, reszta do arkusza
+   powiadomień) i znikają stąd - jak klasy zleceń wyżej.
+
+   Wiersz skrzynki ma KSZTAŁT wiersza skrzynki telefonu (25, 25C, 25D): ta sama osoba
+   czyta obie, a przeczytane w jednej jest przeczytane w drugiej (K7). Różnice idą
+   wyłącznie za stylem lekkim panelu: podpis krojem tekstowym (mono tylko przy
+   godzinach i kodach), plakietki sprawy to zwykłe `.pill`.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── DZWONEK W PASKU GÓRNYM (K7) ──
+   Stoi w KAŻDEJ ramie klubu, przed nazwiskiem zalogowanego: skrzynka należy do osoby
+   W KLUBIE, więc rama platformy dzwonka nie ma (kanału tam nie ma, K3). Cichy, jak
+   „Wyloguj" obok - ton chrome'u, bez ramki; o nowych mówi licznik, nie kolor ikony.
+   Licznik WYŁĄCZNIE przy liczbie dodatniej (reguła SyncChipa, issue #12), zielony
+   jak na Pulpicie telefonu i wycięty z ikony obwódką w kolorze tła - bez niej cyfra
+   siada na kresce dzwonka. Otwarta skrzynka trzyma dzwonek wciśniętym (tło jak pod
+   kursorem), a licznik gaśnie w chwili otwarcia listy - „nowe" to wiadomości od
+   ostatniego zajrzenia, nie sprawy do załatwienia. */
+.bell-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.bell-btn:hover,
+.bell-btn[aria-expanded="true"] {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.bell-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--green);
+  color: var(--bg);
+  border: 2px solid var(--bg);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+}
+
+/* ── SKRZYNKA W SZUFLADZIE (K7) ──
+   Szuflada BEZ WŁASNEGO ADRESU, inaczej niż szuflady modułów: skrzynka jest osobista,
+   więc wklejony link nie miałby czego otworzyć u drugiej osoby. Otwiera ją dzwonek
+   z każdego ekranu; zamyka „×", Esc i kliknięcie w tło.
+
+   Lista chronologiczna, najnowsze na górze, nic się nie przypina. NOWE (zielona
+   krawędź) - od ostatniego zajrzenia; gasną z otwarciem listy w panelu ALBO
+   w telefonie, a krawędź zostaje do końca tej wizyty, żeby było widać, co doszło.
+   SPRAWA to plakietka (`.pill.green`: „Do decyzji", „Do odpowiedzi") - stoi, dopóki
+   coś od Ciebie zależy. Nieprzeczytana wiadomość w rozmowie: `.pill.blue` z liczbą,
+   jeden wiersz na wątek (`docs/zlecenia.md` §7.3). CAŁY WIERSZ jest linkiem:
+   zlecenie → szuflada zlecenia, rozmowa → rozmowa, prośba o zgodę → kolejka decyzji,
+   samolot → karta samolotu. Starsze dociąga „Pokaż starsze" pod listą. */
+.inbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inbox-row,
+.toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px 12px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.inbox-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.inbox-row:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+}
+
+.inbox-row.new {
+  border-color: var(--border-strong);
+}
+
+.inbox-row.new::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--green);
+}
+
+/* Ikona niesie RODZAJ tonem, jak w telefonie: zielona - odpowiedź, na którą czekasz,
+   i zdanie samolotu; błękitna - pytanie klubu i rozmowa; bursztynowa - coś, co trzeba
+   zauważyć; czerwona - coś odebrano; neutralna - zmiana bez prośby i odmowa. */
+.inbox-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.inbox-icon.ok {
+  color: var(--green);
+  border-color: var(--green-border);
+  background: var(--green-muted);
+}
+
+.inbox-icon.warn {
+  color: var(--amber);
+  border-color: var(--amber-border);
+  background: var(--amber-muted);
+}
+
+.inbox-icon.no {
+  color: var(--red);
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.inbox-icon.ask {
+  color: var(--blue);
+  border-color: var(--blue-border);
+  background: var(--blue-muted);
+}
+
+.inbox-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.inbox-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.inbox-row:not(.new) .inbox-title {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.inbox-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.inbox-text {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.inbox-text b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.inbox-text s {
+  color: var(--text-muted);
+}
+
+.inbox-when {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+/* ── BANER NOWEGO POWIADOMIENIA (K7) ──
+   Mówi to samo, co wiersz skrzynki, bez plakietki sprawy (sprawa stoi w skrzynce,
+   dopóki nie odpowiesz; baner znika po kilku sekundach). Znika SAM, bez dźwięku;
+   najechanie kursorem wstrzymuje odliczanie, kliknięcie otwiera rzecz. „×" nie ma -
+   jak w telefonie (25E). Kilka naraz: widać ostatni, licznik przy dzwonku mówi resztę.
+   Nie pojawia się nad szufladą, której dotyczy (ta się po prostu odświeża), ani przy
+   otwartej skrzynce - tam nowy wiersz wjeżdża na górę listy.
+
+   LEWY DOLNY RÓG OBSZARU TREŚCI, nie prawy górny pod dzwonkiem: tam stoją akcje
+   strony („Zleć lot", „Zarezerwuj") i nagłówek otwartej szuflady z jej „×", a w prawym
+   dolnym - stopka szuflady z akcją główną. Baner zasłaniałby na pięć sekund dokładnie
+   to, w co administrator akurat celuje; w lewym dolnym rogu zasłania co najwyżej róg
+   listy. Nad przesłoną szuflady, bo mówi o czymś spoza niej. */
+.toast {
+  position: fixed;
+  left: calc(var(--sidebar-w) + 16px);
+  bottom: 16px;
+  z-index: 70;
+  width: 380px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.toast:hover {
+  border-color: var(--text-muted);
 }
 
 /* ══ SPIS MAKIET (`design/panel/index.html`) ══

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 29B Rozmowa do czytania</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ NAGŁÓWEK: DWIE STRONY ROZMOWY ═══
+     Na 29 tytułem jest ROZMÓWCA, bo patrzy uczestnik. Tu patrzy trzecia osoba -
+     koordynator, który prowadzi cudze zlecenie (decyzja 20) - więc nagłówek musi
+     nazwać OBIE strony. Tytułem jest ADRESAT, bo to on wyznacza rozmowę: w zleceniu
+     jest jeden autor i wielu adresatów, a wątek jest parą autor × adresat (§10.5) -
+     z karty 32 koordynator otwiera go ikoną przy konkretnym adresacie. Autor stoi
+     w podtytule za separatorem, bez odmiany (reguła z 22).
+
+     Powrót prowadzi na kartę prowadzonego zlecenia (32) - to jedyne wejście w cudzą
+     rozmowę. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .head-center { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); }
+  .screen-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* ═══ PASEK ZLECENIA ═══ jak na 29, ale druga linia mówi, na JAKI FOTEL i przez
+     którą grupę trafiło zlecenie do tego adresata - to jest kontekst, w którym
+     koordynator czyta negocjację („do której skoki?"). Adresat widzi w tym miejscu
+     „proponowany fotel"; koordynator widzi, skąd adresat się wziął. */
+  .order-strip {
+    display:grid; grid-template-columns:1fr 14px; align-items:center; gap:10px;
+    margin:10px 14px 0; padding:10px 12px; border-radius:12px;
+    border:1px solid var(--blue-border); background:linear-gradient(90deg, rgba(52,152,219,0.07) 0%, var(--surface) 70%);
+    text-decoration:none; color:inherit; flex-shrink:0;
+  }
+  .os-main { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .os-top { font-family:var(--font-mono); font-size:11.5px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .os-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .os-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     WIADOMOŚCI OCZAMI TRZECIEJ OSOBY - dwie strony, żadna nie jest „moja"
+
+     STRONĘ ROZRÓŻNIA POŁOŻENIE: autor zlecenia po PRAWEJ, adresat po LEWEJ - dokładnie
+     tak, jak rozmowa wygląda u autora (29 oczami Marty). Koordynator prowadzi to samo
+     zlecenie co autor (decyzja 20), więc czyta rozmowę ze strony zlecenia; a skoro
+     prowadzący rozmawiają o tych samych wątkach, „po prawej" ma u nich znaczyć to samo.
+     To jest też układ znany z paneli obsługi klienta: strona organizacji po prawej,
+     klient po lewej, także gdy patrzy ktoś trzeci.
+
+     ŻADEN DYMEK NIE MA ODCIENIA „WŁASNYCH". Na 29 jaśniejsza powierzchnia znaczy
+     „to napisałeś Ty" - a tutaj koordynator nie napisał niczego i napisać nie może.
+     Oba dymki mają więc ton karty; stronę niesie położenie i odbite zaokrąglenie.
+
+     NAZWISKO STOI NAD PIERWSZYM DYMKIEM SERII, po stronie dymka: przy dwóch cudzych
+     stronach samo położenie trzeba raz nazwać, a przy każdym dymku podpis byłby
+     szumem. Nowa seria zaczyna się przy zmianie autora i po separatorze dnia.
+     Imię i nazwisko w kroju tekstu, kod w mono - jak w wierszu adresata na 32.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .messages { flex:1; overflow-y:auto; padding:12px 14px 10px; display:flex; flex-direction:column; gap:6px; scrollbar-width:none; }
+  .messages::-webkit-scrollbar { display:none; }
+  .day-sep { display:flex; align-items:center; gap:10px; margin:8px 0 4px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .day-sep::before, .day-sep::after { content:''; flex:1; height:1px; background:var(--border); }
+  .msg { display:flex; flex-direction:column; gap:3px; max-width:80%; }
+  .msg.in { align-self:flex-start; }
+  .msg.by-author { align-self:flex-end; align-items:flex-end; }
+  .bubble { padding:9px 12px; font-size:13px; line-height:1.45; color:var(--text-primary); background:var(--surface); border:1px solid var(--border); }
+  .msg.in .bubble { border-radius:14px 14px 14px 4px; }
+  .msg.by-author .bubble { border-radius:14px 14px 4px 14px; }
+  .msg-author { font-size:10.5px; font-weight:600; color:var(--text-secondary); padding:0 4px 1px; margin-top:4px; }
+  .msg-author .code { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .msg-time { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); padding:0 4px; }
+  /* „Odczytane" pod ostatnią wiadomością mówi o DRUGIM UCZESTNIKU - tu: Anna otworzyła
+     wiadomość Marty o 07:40. Odczyt koordynatora go nie zapala i nie gasi kropki
+     nieprzeczytanej wiadomości u autora (decyzja 19): czytelnik z uprawnieniem do
+     cudzych rezerwacji nie jest uczestnikiem wątku i nie ma własnego „odczytu" (§10.5). */
+  .read { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--blue); padding:0 4px; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     STOPKA: ZDANIE ZAMIAST POLA
+     Pisze wyłącznie autor zlecenia (decyzja 20), więc pola wiadomości tu NIE MA -
+     wyszarzone obiecywałoby akcję, której reguły nie dopuszczą (zasada z 10B i 02G).
+     W jego miejscu stoi JEDNO zdanie: kto prowadzi tę rozmowę (powód, dla którego
+     nie ma pola) i co wolno patrzącemu. Stopka ma tło i krawędź stopki z 29, żeby
+     było widać, że to miejsce, w którym u uczestników stoi pole.
+
+     Zdania „Rozmowę widzą też koordynatorzy lotów klubu." tu NIE MA: mówi ono
+     UCZESTNIKOM, kto jeszcze czyta, a patrzy właśnie koordynator.
+
+     TEN SAM KSZTAŁT - zdanie zamiast pola - ma rozmowa UCZESTNIKA po zamknięciu
+     zlecenia (nieaktualne, odebrane, odwołane, wygasłe; wejście z 28B): wszystko, co
+     napisano, zostaje do odczytu, ale nie ma już o czym negocjować. Różnice są dwie
+     i obie wynikają z tego, kto patrzy: własne wiadomości stoją wtedy po prawej
+     w odcieniu „własnych", jak na 29 (nazwisk nad seriami nie trzeba - to zwykła
+     rozmowa dwóch osób), a zdanie mówi, DLACZEGO nie da się pisać, np. „Zlecenie jest
+     nieaktualne - rozmowę możesz czytać.". */
+  .readonly { flex-shrink:0; border-top:1px solid var(--border); padding:14px 16px 30px; background:var(--bg); display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--text-secondary); line-height:1.5; }
+  .readonly svg { flex-shrink:0; color:var(--text-muted); }
+  .readonly b { color:var(--text-primary); font-weight:600; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 29B</span>
+  <span class="slug">rozmowa · do czytania</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Rozmowa w cudzym zleceniu, tylko do czytania">
+  <div class="status-bar">
+    <span>08:05</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="32-zlecenie-prowadzone.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="head-center">
+        <span class="screen-title">ANNA KOWAL</span>
+        <span class="screen-sub">rozmowa · Marta Zięba</span>
+      </span>
+      <span></span>
+    </div>
+
+    <!-- Zlecenie B: skoki SP-ANA, dowódca imiennie (Jakub Wrona), drugi pilot z grupy
+         „Piloci An-2" - przez nią trafiło do Anny. -->
+    <a class="order-strip" href="32-zlecenie-prowadzone.html">
+      <span class="os-main">
+        <span class="os-top">SP-ANA · sob 3 PAŹ · 09:00-13:00</span>
+        <span class="os-sub">Skoki EPKP · drugi pilot · Piloci An-2</span>
+      </span>
+      <span class="os-go">&#8250;</span>
+    </a>
+
+    <!-- Treść: adresat pyta o godzinę końca, bo ma dyżur - i zgłasza się, gdy dostaje
+         odpowiedź. Zgłoszenie („MOGĘ LECIEĆ") poszło przyciskiem na karcie zlecenia
+         o 19:10; rozmowa tylko je poprzedziła. Dzisiejsza wiadomość autora mówi
+         o zmianie planu lotu, którą wprowadził właśnie patrzący koordynator
+         (historia zmian na 32: „Plan lotu 2:00 → 3:00 · Paweł Wilk"). -->
+    <div class="messages">
+      <div class="day-sep">Wczoraj</div>
+
+      <div class="msg in">
+        <span class="msg-author">Anna Kowal<span class="code">AKW</span></span>
+        <div class="bubble">Dzień dobry! Do której planowane są skoki?</div>
+        <span class="msg-time">19:03</span>
+      </div>
+      <div class="msg in">
+        <div class="bubble">W sobotę od 14 mam dyżur w Balicach.</div>
+        <span class="msg-time">19:04</span>
+      </div>
+
+      <div class="msg by-author">
+        <span class="msg-author">Marta Zięba<span class="code">MZI</span></span>
+        <div class="bubble">Kończymy o 13:00 - dwa wyloty przed południem.</div>
+        <span class="msg-time">19:07</span>
+      </div>
+
+      <div class="msg in">
+        <span class="msg-author">Anna Kowal<span class="code">AKW</span></span>
+        <div class="bubble">To zdążę. Zgłaszam się na drugiego pilota.</div>
+        <span class="msg-time">19:10</span>
+      </div>
+
+      <div class="day-sep">Dziś</div>
+
+      <div class="msg by-author">
+        <span class="msg-author">Marta Zięba<span class="code">MZI</span></span>
+        <div class="bubble">Plan lotu wydłużony do 3:00, ale termin zostaje - kończymy o 13:00.</div>
+        <span class="msg-time">07:25</span>
+        <span class="read">Odczytane 07:40</span>
+      </div>
+    </div>
+
+    <div class="readonly">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Rozmowę prowadzi <b>Marta Zięba</b> - możesz ją czytać.</span>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="29-watek.html">
+    <span class="vp-badge blue">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa na żywo</span>
+      <span class="vp-when">Uczestnik rozmowy - autor zlecenia albo adresat - pisze i czyta; „Odczytane" stoi pod ostatnią własną wiadomością, a nad polem zdanie, że rozmowę widzą też koordynatorzy (decyzja 19).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29a-watek-offline.html">
+    <span class="vp-badge amber">29A</span>
+    <span class="vp-body">
+      <span class="vp-name">Bez połączenia</span>
+      <span class="vp-when">Wczytane wiadomości zostają, nowej nie da się wysłać - powód stoi w polu wiadomości. Kolejki na później nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="29b-watek-podglad.html">
+    <span class="vp-badge">29B</span>
+    <span class="vp-body">
+      <span class="vp-name">Do czytania - koordynator</span>
+      <span class="vp-when">Koordynator (uprawnienie do cudzych rezerwacji) prowadzi cudze zlecenie i otwiera rozmowę ikoną przy adresacie na karcie 32. Pisze wyłącznie autor zlecenia (decyzja 20), więc zamiast pola stoi jedno zdanie. Autor po prawej, adresat po lewej - jak u autora - z nazwiskiem nad pierwszą wiadomością serii; żaden dymek nie ma odcienia „własnych", bo nic tu nie jest jego. „Odczytane" pod ostatnią wiadomością mówi o uczestnikach i NIE zmienia się od tego, że koordynator czyta: jego odczyt nie zapala „Odczytane" i nie gasi kropki nieprzeczytanej wiadomości u autora (decyzja 19). Ten sam kształt - zdanie zamiast pola - ma rozmowa uczestnika po zamknięciu zlecenia (wejście z 28B): własne wiadomości po prawej, jak na 29, a zdanie mówi, dlaczego nie da się pisać.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie prowadzone (wejście)</span>
+      <span class="vp-when">Ikona rozmowy przy każdym adresacie. Autor otwiera nią rozmowę do pisania (29), każdy inny prowadzący - ten ekran.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28b-zlecenie-nieaktualne.html">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie zamknięte (drugie wejście)</span>
+      <span class="vp-when">Wiersz „Rozmowa · do odczytu" na karcie nieaktualnego, odwołanego albo wygasłego zlecenia prowadzi do rozmowy w tym samym kształcie - bez pola, z jednym zdaniem.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">← 32 Prowadzone</a>
+  <a href="28-zlecenie.html">28 Zlecenie</a>
+  <a href="28b-zlecenie-nieaktualne.html">28B Zamknięte</a>
+  <span>·</span>
+  <a href="29-watek.html">29 Rozmowa</a>
+  <a href="29a-watek-offline.html">29A Offline</a>
+  <a href="29b-watek-podglad.html" class="active">29B Do czytania</a>
+</nav>
+
+</body>
+</html>

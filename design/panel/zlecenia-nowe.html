@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - panel: nowe zlecenie lotu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">ZLECENIA · NOWE ZLECENIE</span>
+  <span class="slug">panel/zlecenia-nowe · #/zlecenia?widok=zlecone · szuflada bez adresu · ZL2</span>
+  <span class="canvas-meta"><span class="pulse"></span>Moduł zleceń · 4.0.0 · issue #244</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Moduł zleceń - kiedy który ekran</div>
+  <a class="vp-item" href="zlecenia-lista.html">
+    <span class="vp-badge blue">ZL1</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista zleceń</span>
+      <span class="vp-when">Stąd „Zleć lot" (akcja główna, tylko z uprawnieniem „Zlecanie lotów"). Szuflada leży nad listą, która zostaje czytelna pod przesłoną.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="zlecenia-nowe.html">
+    <span class="vp-badge blue">ZL2</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowe zlecenie - krok 3: załoga i adresaci</span>
+      <span class="vp-when">Te same pytania, co 31-31B na telefonie, w trzech krokach: termin i maszyna (jak rezerwacja K7), zadanie, potem fotele i adresaci. W ramie krok 3 - jedyny nowy: fotele „Ja / Szukam / Brak", adresowanie per fotel „Osoba" (imiennie) albo „Grupa" (lub kilka osób), albo przełącznik „Wspólna lista". Stopka mówi skutek przed kliknięciem: do ilu osób trafi zlecenie.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#krok1">
+    <span class="vp-badge blue">ZL2a</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 1 i 2 - termin, maszyna, zadanie</span>
+      <span class="vp-when">Kroki rezerwacji (22/22A, K7) bez drugiego pilota - ten stał się fotelem w kroku 3. Pasek doby rysuje szkic zlecenia błękitem, tak jak stanie na osi.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#wspolna">
+    <span class="vp-badge blue">ZL2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista, „Ja" w fotelu, imiennie i w grupie</span>
+      <span class="vp-when">Przełącznik nad fotelami zamienia adresowanie per fotel w jedną listę; instruktor jako dowódca „Ja" wysyła drugi fotel imiennie do ucznia; osoba wskazana imiennie, która jest też w grupie drugiego fotela, dostaje podpis o terminie do potwierdzenia (decyzja 39).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#blokady">
+    <span class="vp-badge amber">ZL2c</span>
+    <span class="vp-body">
+      <span class="vp-name">Blokady, termin zajęty, edycja</span>
+      <span class="vp-when">Brak szukanego fotela i wymóg załogi 2-os. mówią powodem w przycisku; odmowa „termin właśnie zajęto" wraca na krok 1; edycja mówi PRZED zapisem, że zmiana terminu zacznie odpowiedzi od nowa.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-szczegoly.html">
+    <span class="vp-badge blue">ZL3</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie po wysłaniu</span>
+      <span class="vp-when">Karta zlecenia z fotelami, adresatami i odczytami - tu prowadzący wybiera spośród zgłoszonych.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-flota.html">
+    <span class="vp-badge">K1</span>
+    <span class="vp-body">
+      <span class="vp-name">Kalendarz - drugie wejście</span>
+      <span class="vp-when">„Zleć lot" obok „Zarezerwuj" otwiera tę samą szufladę bez terminu, a menu wolnej komórki - z maszyną i dniem tej komórki.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="../31-zlecenie-nowe.html">
+    <span class="vp-badge amber">31</span>
+    <span class="vp-body">
+      <span class="vp-name">Telefon: ten sam formularz</span>
+      <span class="vp-when">31 → 31A → 31B i arkusz adresatów 31C. Zlecasz tak samo z telefonu i z panelu; różnią się kontrolki (pola web zamiast arkuszy).</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA: KOORDYNATORKA ZLECA DZIEŃ SKOKOWY ══
+     Marta Zięba („Koordynator lotów") zleca skoki na SP-ANA: dowódca imiennie Jakub
+     Wrona, drugi pilot z grupy „Piloci An-2". Szuflada NIE MA ADRESU (jak rezerwacja
+     K7): opisuje byt, który dopiero powstanie. -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - nowe zlecenie lotu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/zlecenia?widok=zlecone
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">MZ</span>
+          <span class="who-name">Marta Zięba</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (od 4.0.0 trzy grupy: Loty, Planowanie, Klub). Kanoniczna postać: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item active" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Zlecenia</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="zlecenia-nowe.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Zleć lot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Które zlecenia">
+          <a class="seg-btn" href="zlecenia-lista.html#do-mnie">Do mnie</a>
+          <a class="seg-btn on" href="zlecenia-lista.html" aria-current="page">Zlecone</a>
+        </div>
+        <button type="button" class="chip on" aria-pressed="true">Nadchodzące</button>
+        <button type="button" class="chip" aria-pressed="false">Minione</button>
+      </div>
+
+      <!-- Lista pod szufladą w chwili, w której powstaje zlecenie B: czwartek przed 18:40.
+           Stoi na niej tylko zlecenie Pawła Wilka (obsadzone o 16:20); A i B dopiszą się
+           po wysłaniu - telefon 28 i 32 mówią o obu „wysłane 18:40". -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Zlecenia klubu - nadchodzące terminy</caption>
+          <thead>
+            <tr>
+              <th>Termin</th>
+              <th>Samolot</th>
+              <th>Zadanie</th>
+              <th>Fotele</th>
+              <th>Odpowiedzi</th>
+              <th>Stan</th>
+              <th>Zleca</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">14:00 → 15:30</span> · za 2 dni</span></td>
+              <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+              <td>Lot tech.<span class="cell-sub mono">EPKK</span></td>
+              <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>B. Nowak</span></span></td>
+              <td>Przyjęte 16:20</td>
+              <td><span class="pill green">Komplet załogi</span></td>
+              <td>Paweł Wilk<span class="cell-sub mono">PWI</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#komplet">Otwórz</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ZL2 · KROK 3: ZAŁOGA I ADRESACI ══
+         Kroki 1 i 2 to kroki rezerwacji (22/22A, K7) - termin i maszyna, potem zadanie
+         (§14.4). Krok 3 jest NOWY i ma w sobie cały model zlecenia (§4):
+
+         1. PRZEŁĄCZNIK „WSPÓLNA LISTA" NAD FOTELAMI - sposób trzeci obejmuje wszystkie
+            szukane fotele naraz i z pozostałymi się nie miesza, więc stoi nad nimi,
+            a nie w którymś fotelu. Karta `.opt` z rolą checkbox - panelowy przełącznik
+            (ten sam, co obserwowane samoloty na #/konto). Wyłączony = adresowanie per fotel;
+         2. FOTELE: dowódca (Ja / Szukam) i drugi pilot (Ja / Szukam / Brak) jako karty
+            stanu. „Ja" może stać tylko w jednym fotelu, co najmniej jeden fotel jest
+            szukany. Wymóg załogi 2-os. SP-ANA wyłącza „Brak" - plakietka przy tytule
+            fotela i powód W KARCIE „Brak" (§4.1, wspólne zdanie z `dualRequirement`);
+         3. POD SZUKANYM FOTELEM - DO KOGO: „Osoba" (imiennie; jej „Przyjmuję" obsadza
+            fotel) albo „Grupa" (lub kilka osób; odpowiedź to zgłoszenie, fotel obsadza
+            prowadzący „Wybierz") - te same dwie nazwy z tymi samymi dopiskami, co na 31B.
+            Druga linia karty mówi dopisek i SKUTEK wyboru, bo to jest cała różnica
+            między dwoma sposobami (decyzja 10, 11);
+         4. OSOBA = `<select>` (zbiór rośnie z klubem - wyjątek z 2026-09-20), GRUPA ALBO
+            KILKA OSÓB = lista kart wielokrotnego wyboru, grupy NAD osobami, z wyszukiwarką.
+            Osoba wskazana imiennie na jeden fotel jest na liście drugiego DOSTĘPNA
+            z podpisem: zaznaczona dostanie termin do potwierdzenia (decyzja 37); osoby, do których zlecenie
+            dojdzie przez zaznaczoną grupę, stoją zaznaczone i zablokowane z adnotacją
+            „przez grupę" - widać, kto naprawdę je dostanie. Osoba zlecająca nie jest
+            adresatem, nawet gdy należy do grupy (§6.2), więc na liście jej nie ma.
+
+         Stopka mówi SKUTEK przed kliknięciem: „Trafi do 6 osób" (Jakub imiennie + pięć
+         osób z grupy). Ścieżka akceptacji zlecenia nie dotyczy (decyzja 5), więc notatki
+         „zaczeka na zgodę" tu nie ma - stan domyślny nie dostaje zdania.
+
+         Drugi fotel sięga poniżej dolnej krawędzi szuflady - treść się przewija, stopka
+         zostaje. Jego pełna treść stoi na kanwie niżej (ZL2 - dalsza część). -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowe zlecenie">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Nowe zlecenie</div>
+          <div class="drawer-sub">SP-ANA · sobota 3 października · 09:00 → 13:00 czasu klubu · skoki EPKP</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <ol class="steps" aria-label="Kroki zlecenia">
+        <li class="step done">1 · Termin i maszyna</li>
+        <li class="step done">2 · Zadanie</li>
+        <li class="step on" aria-current="step">3 · Załoga i adresaci</li>
+      </ol>
+
+      <div class="drawer-body">
+
+        <button type="button" class="opt" role="checkbox" aria-checked="false">
+          <span class="opt-body">
+            <span class="opt-name">Wspólna lista · fotele przydzielę po odpowiedziach</span>
+            <span class="opt-desc">Adresaci potwierdzają termin, a Ty decydujesz, kto siedzi na którym fotelu.</span>
+          </span>
+          <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </button>
+
+        <section class="card">
+          <h2 class="card-title">Dowódca</h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel dowódcy">
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Wyślesz zlecenie</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <div class="field">
+            <span class="label">Do kogo</span>
+            <div class="field-pair" role="radiogroup" aria-label="Do kogo idzie fotel dowódcy">
+              <button type="button" class="opt selected" role="radio" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Osoba</span><span class="opt-desc">Imiennie - jej „Przyjmuję" od razu obsadza fotel</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="radio" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Grupa</span><span class="opt-desc">Lub kilka osób - zbierasz zgłoszenia i wybierasz osobę</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <label class="field">
+            <span class="label">Osoba</span>
+            <select class="input">
+              <option>Wybierz osobę</option>
+              <option>Adam Kowalski · AKO</option>
+              <option>Anna Kowal · AKW</option>
+              <option>Barbara Nowak · BNO</option>
+              <option>Ewa Sowa · ESO</option>
+              <option selected>Jakub Wrona · JWR</option>
+              <option>Paweł Wilk · PWI</option>
+              <option>Piotr Lis · PLI</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Drugi pilot <span class="spacer"></span><span class="pill amber">wymagany · załoga 2-os.</span></h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel drugiego pilota">
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Wyślesz zlecenie</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false" disabled>
+              <span class="opt-body"><span class="opt-name">Brak</span><span class="opt-desc">SP-ANA wymaga załogi dwuosobowej</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <div class="field">
+            <span class="label">Do kogo</span>
+            <div class="field-pair" role="radiogroup" aria-label="Do kogo idzie fotel drugiego pilota">
+              <button type="button" class="opt" role="radio" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Osoba</span><span class="opt-desc">Imiennie - jej „Przyjmuję" od razu obsadza fotel</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="radio" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Grupa</span><span class="opt-desc">Lub kilka osób - zbierasz zgłoszenia i wybierasz osobę</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <label class="search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input value="" placeholder="Szukaj osoby albo grupy" aria-label="Szukaj adresata drugiego fotela">
+          </label>
+          <div class="field">
+            <span class="label">Grupy</span>
+            <div class="opt-list" role="group" aria-label="Grupy - drugi pilot">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Piloci An-2</span><span class="opt-desc">5 osób</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Instruktorzy</span><span class="opt-desc">3 osoby</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Osoby</span>
+            <div class="opt-list" role="group" aria-label="Osoby - drugi pilot">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Adam Kowalski</span><span class="opt-desc">AKO · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Anna Kowal</span><span class="opt-desc">AKW · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy · po zaznaczeniu termin do potwierdzenia</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Paweł Wilk</span><span class="opt-desc">PWI</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <p class="hint">Zgłoszenia zobaczysz na karcie zlecenia - fotel obsadzisz przyciskiem „Wybierz".</p>
+        </section>
+
+      </div>
+
+      <div class="drawer-foot">
+        <span class="drawer-note">Trafi do 6 osób</span>
+        <button type="button" class="btn ghost">Wstecz</button>
+        <button type="button" class="btn primary">Wyślij zlecenie</button>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html">ZL1 Zlecenia</a>
+  <a href="zlecenia-nowe.html" class="active">ZL2 Nowe</a>
+  <a href="zlecenia-szczegoly.html">ZL3 Zlecenie</a>
+  <a href="zlecenia-watek.html">ZL4 Rozmowa</a>
+  <span>·</span>
+  <a href="#dalej">↓ Krok 3 dalej</a>
+  <a href="#krok1">↓ ZL2a Kroki 1-2</a>
+  <a href="#wspolna">↓ ZL2b Wspólna lista</a>
+  <a href="#blokady">↓ ZL2c Blokady i edycja</a>
+  <span>·</span>
+  <a href="kalendarz-rezerwacja.html">K7 Rezerwacja (te same kroki)</a>
+  <span>·</span>
+  <a href="../31-zlecenie-nowe.html">Telefon · 31</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ ZL2 · DALSZA CZĘŚĆ KROKU 3 ══
+     To, co w ramie leży poniżej dolnej krawędzi szuflady: lista adresatów drugiego
+     fotela w całości i stopka. -->
+<section class="canvas-section" id="dalej">
+  <div class="canvas-section-title">ZL2 · krok 3 po przewinięciu · adresaci fotela z grupy</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Grupy nad osobami - kto naprawdę dostanie zlecenie</span>
+        <span class="inv-when">Grupy stoją NAD osobami, bo jednym wyborem obejmują wielu i to od nich zaczyna się zwykle adresowanie (§6). Zaznaczona grupa zaznacza swoich członków na liście osób i blokuje ich z adnotacją „przez grupę" - ktoś, kto zaznacza „Piloci An-2", widzi pięć nazwisk, do których zlecenie trafi. Jakub Wrona jest wskazany imiennie na fotel dowódcy - na liście drugiego fotela da się go zaznaczyć, a podpis mówi skutek: trafi wtedy na listy obu foteli i dostanie termin do potwierdzenia (decyzja 37). Marty na liście nie ma - osoba zlecająca nie jest adresatem, nawet gdy należy do grupy (§6.2). Członek wyłączony nie stoi tu wcale: zleceń nie dostaje. Lista osób rośnie z klubem, więc ma wyszukiwarkę; wybór zostaje listą kart, bo jest WIELOKROTNY - `&lt;select&gt;` nie pokazałby, kogo zaznaczono.</span>
+        <span class="inv-classes">.search · .opt-list[role=group] · .opt[role=checkbox] · .opt.selected:disabled („przez grupę") · .opt:disabled (powód w .opt-desc) · .drawer-note</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card" style="max-width: 620px;">
+          <h2 class="card-title">Drugi pilot <span class="spacer"></span><span class="pill amber">wymagany · załoga 2-os.</span></h2>
+          <label class="search" style="max-width: none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input value="" placeholder="Szukaj osoby albo grupy" aria-label="Szukaj adresata drugiego fotela">
+          </label>
+          <div class="field">
+            <span class="label">Grupy</span>
+            <div class="opt-list" role="group" aria-label="Grupy - drugi pilot">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Piloci An-2</span><span class="opt-desc">5 osób</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Instruktorzy</span><span class="opt-desc">3 osoby</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Osoby</span>
+            <div class="opt-list" role="group" aria-label="Osoby - drugi pilot">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Adam Kowalski</span><span class="opt-desc">AKO · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Anna Kowal</span><span class="opt-desc">AKW · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Barbara Nowak</span><span class="opt-desc">BNO · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Ewa Sowa</span><span class="opt-desc">ESO · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy · po zaznaczeniu termin do potwierdzenia</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Paweł Wilk</span><span class="opt-desc">PWI</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
+                <span class="opt-body"><span class="opt-name">Piotr Lis</span><span class="opt-desc">PLI · przez grupę Piloci An-2</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <p class="hint">Zgłoszenia zobaczysz na karcie zlecenia - fotel obsadzisz przyciskiem „Wybierz".</p>
+          <div class="drawer-foot" style="padding: 12px 0 0;">
+            <span class="drawer-note">Trafi do 6 osób</span>
+            <button type="button" class="btn ghost">Wstecz</button>
+            <button type="button" class="btn primary">Wyślij zlecenie</button>
+          </div>
+        </section>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ ZL2a · KROKI 1 I 2 ══
+     Kroki rezerwacji w kształcie K7 - bo zlecenie JEST rezerwacją (§2.1) i o termin
+     konkuruje tak samo. Dwie różnice: szkic na pasku doby jest BŁĘKITNY (tak stanie na
+     osi - zlecenie nie jest jeszcze niczyim lotem), a w kroku 2 nie ma drugiego pilota
+     - ten stał się fotelem w kroku 3. Opis zlecenia zajmuje miejsce notatki rezerwacji:
+     adresat czyta go jako treść zlecenia. -->
+<section class="canvas-section" id="krok1">
+  <div class="canvas-section-title">ZL2a · krok 1 - termin i maszyna · krok 2 - zadanie</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Krok 1 - termin i maszyna, szkic zlecenia błękitem</span>
+        <span class="inv-when">Maszyna z listy (`&lt;select&gt;`, zbiór rośnie z klubem), dzień, para godzin czasem klubu. Pasek doby lotnej pokazuje cudze zajętości w tonie osi i SZKIC ZLECENIA błękitem z przerywaną ramką. Sugestie slotów liczy ta sama domena, co przy rezerwacji; tu żadna nie trafia w wpisaną parę, więc żadna nie jest zaznaczona. Kolizja widoczna na pasku nie blokuje „Dalej" - o terminie rozstrzyga serwer (ZL2c). Z menu wolnej komórki kalendarza szuflada startuje z podstawioną maszyną i dniem; z przycisku „Zleć lot" nad osią i z listy - pusta.</span>
+        <span class="inv-classes">.steps · .daytrack · <b>.daytrack-busy.order</b> · .slots · .field-row · .hint</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 700px;">
+          <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowe zlecenie - krok 1" style="width: 100%;">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Nowe zlecenie</div>
+                <div class="drawer-sub">godziny w czasie klubu</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <ol class="steps" aria-label="Kroki zlecenia">
+              <li class="step on" aria-current="step">1 · Termin i maszyna</li>
+              <li class="step">2 · Zadanie</li>
+              <li class="step">3 · Załoga i adresaci</li>
+            </ol>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Kiedy i czym</h2>
+                <div class="field-row">
+                  <label class="field" style="flex: 1;">
+                    <span class="label">Samolot</span>
+                    <select class="input">
+                      <option selected>SP-ANA · Antonov An-2</option>
+                      <option>SP-AXA · Cessna 172</option>
+                      <option>SP-BKL · Piper PA-28</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span class="label">Dzień</span>
+                    <input class="input mono" type="date" value="2026-10-03" min="2026-10-01" />
+                  </label>
+                </div>
+                <div class="field">
+                  <span class="label">Zajętość SP-ANA w sobotę</span>
+                  <div class="daytrack">
+                    <div class="daytrack-bar" role="img" aria-label="Zajęte 14:00-16:00 przez M. Wilk; szkic zlecenia 09:00-13:00">
+                      <span class="daytrack-busy" style="left:58.3%; width:16.7%;" title="M. Wilk · 14:00 → 16:00"></span>
+                      <span class="daytrack-busy order" style="left:16.7%; width:33.3%;" title="Szkic zlecenia · 09:00 → 13:00"></span>
+                    </div>
+                    <div class="daytrack-scale"><span>07:00</span><span>10:00</span><span>13:00</span><span>16:00</span><span>19:00</span></div>
+                    <span class="daytrack-free">wolne: 07:00 → 14:00 · 16:00 → 19:00</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <div class="label-row"><span class="label">Sugerowane godziny</span><span class="pill dim">4 h</span></div>
+                  <div class="slots">
+                    <button type="button" class="slot" aria-pressed="false"><span class="slot-h">10:00 → 14:00</span><span class="slot-why">tuż przed rezerwacją · M. Wilk</span></button>
+                    <button type="button" class="slot" aria-pressed="false"><span class="slot-h">07:00 → 11:00</span><span class="slot-why">początek dnia</span></button>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <label class="field" style="flex: 1;"><span class="label">Od</span><input class="input mono" type="time" value="09:00" step="300" /></label>
+                  <label class="field" style="flex: 1;"><span class="label">Do</span><input class="input mono" type="time" value="13:00" step="300" /></label>
+                </div>
+                <p class="hint">4 h · SP-ANA wolna w tych godzinach</p>
+              </section>
+            </div>
+            <div class="drawer-foot">
+              <button type="button" class="btn ghost">Anuluj</button>
+              <button type="button" class="btn primary">Dalej</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Krok 2 - zadanie, lotnisko, plan, opis</span>
+        <span class="inv-when">Rodzaj operacji listą kart, bez wartości podstawionej (wybór ma być świadomy). Skoki mają JEDNO lotnisko (issue #13) - pola „Lądowanie" nie ma, a nie jest wyszarzone; przy przelocie wraca para start → lądowanie. Plan lotu i opis jak w rezerwacji, z plakietką „opcjonalne" w linii etykiety. Opis to zdanie, które adresat przeczyta na karcie zlecenia - placeholder mówi, co w nim zwykle stoi.</span>
+        <span class="inv-classes">.opt-list · .opt.selected · .label-row · .pill.dim („opcjonalne") · .input.area</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 700px;">
+          <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Nowe zlecenie - krok 2" style="width: 100%;">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Nowe zlecenie</div>
+                <div class="drawer-sub">SP-ANA · sobota 3 października · 09:00 → 13:00 · 4 h</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <ol class="steps" aria-label="Kroki zlecenia">
+              <li class="step done">1 · Termin i maszyna</li>
+              <li class="step on" aria-current="step">2 · Zadanie</li>
+              <li class="step">3 · Załoga i adresaci</li>
+            </ol>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Rodzaj operacji</h2>
+                <div class="opt-list" role="radiogroup" aria-label="Rodzaj operacji">
+                  <button type="button" class="opt selected" role="radio" aria-checked="true"><span class="opt-body"><span class="opt-name">Skoki</span><span class="opt-desc">Dzień skokowy - jedno lotnisko</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt" role="radio" aria-checked="false"><span class="opt-body"><span class="opt-name">Przelot</span><span class="opt-desc">Lot z lotniska na lotnisko</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt" role="radio" aria-checked="false"><span class="opt-body"><span class="opt-name">Egzamin</span><span class="opt-desc">Lot egzaminacyjny albo sprawdzian</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt" role="radio" aria-checked="false"><span class="opt-body"><span class="opt-name">Lot techniczny</span><span class="opt-desc">Oblot, próba po obsłudze</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                  <button type="button" class="opt" role="radio" aria-checked="false"><span class="opt-body"><span class="opt-name">Inne</span><span class="opt-desc">Pozostałe</span></span><span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span></button>
+                </div>
+              </section>
+              <section class="card">
+                <h2 class="card-title">Lotnisko</h2>
+                <label class="field">
+                  <span class="label">Start i lądowanie</span>
+                  <input class="input mono" type="text" value="EPKP" placeholder="Kod ICAO" />
+                </label>
+                <p class="hint">Kraków-Pobiednik Wielki</p>
+              </section>
+              <section class="card">
+                <h2 class="card-title">Plan lotu</h2>
+                <div class="field-pair">
+                  <label class="field">
+                    <span class="label">Czas lotu (h:mm)</span>
+                    <input class="input mono" type="text" value="2:00" inputmode="numeric" />
+                  </label>
+                  <div class="field">
+                    <div class="label-row"><label class="label" for="zn-fuel">Paliwo do zabrania (L)</label><span class="pill dim">opcjonalne</span></div>
+                    <input class="input mono" id="zn-fuel" type="text" value="600" inputmode="numeric" />
+                  </div>
+                </div>
+                <p class="hint">Termin 4 h · plan lotu 2:00 zostawia 2 h na obsługę</p>
+              </section>
+              <section class="card">
+                <h2 class="card-title">Opis <span class="spacer"></span><span class="pill dim">opcjonalne</span></h2>
+                <textarea class="input area" rows="2" placeholder="Np. dla kogo, ile wylotów, na co uważać…">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</textarea>
+              </section>
+            </div>
+            <div class="drawer-foot">
+              <button type="button" class="btn ghost">Wstecz</button>
+              <button type="button" class="btn primary">Dalej</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ ZL2b · WSPÓLNA LISTA I „JA" W FOTELU ══ -->
+<section class="canvas-section" id="wspolna">
+  <div class="canvas-section-title">ZL2b · wspólna lista · „Ja" w fotelu dowódcy · imiennie i w grupie</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wspólna lista - jedna lista dla obu foteli</span>
+        <span class="inv-when">Przełącznik włączony: fotele zostają ze swoimi STANAMI (co jest szukane), ale adresowanie per fotel znika i zastępuje je JEDNA lista - grupy nad osobami. Adresaci potwierdzają termin („Mogę lecieć"), a fotele przydziela prowadzący na karcie zlecenia: „Na dowódcę" / „Na drugiego pilota" (§4.3). Z pozostałymi sposobami się nie miesza, więc karty „Do kogo" przy fotelach nie ma wcale. Przełącznik nie gubi wyboru (decyzje 47, 48): włączony przenosi adresatów obu foteli na tę listę, wyłączony przywraca podział sprzed włączenia - kogo dopisano w międzyczasie, ten staje przy obu szukanych fotelach z terminem do potwierdzenia.</span>
+        <span class="inv-classes">.opt[role=checkbox].selected · .seat-states · .opt-list</span>
+      </div>
+      <div class="inv-demo">
+        <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+          <span class="opt-body">
+            <span class="opt-name">Wspólna lista · fotele przydzielę po odpowiedziach</span>
+            <span class="opt-desc">Adresaci potwierdzają termin, a Ty decydujesz, kto siedzi na którym fotelu.</span>
+          </span>
+          <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </button>
+        <section class="card">
+          <h2 class="card-title">Dowódca</h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel dowódcy - wspólna lista">
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Z listy niżej</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Drugi pilot <span class="spacer"></span><span class="pill amber">wymagany · załoga 2-os.</span></h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel drugiego pilota - wspólna lista">
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Z listy niżej</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false" disabled>
+              <span class="opt-body"><span class="opt-name">Brak</span><span class="opt-desc">SP-ANA wymaga załogi dwuosobowej</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Adresaci</h2>
+          <div class="field">
+            <span class="label">Grupy</span>
+            <div class="opt-list" role="group" aria-label="Grupy - wspólna lista">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Piloci An-2</span><span class="opt-desc">5 osób</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Instruktorzy</span><span class="opt-desc">3 osoby</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+          <p class="hint">Fotele przydzielisz na karcie zlecenia: „Na dowódcę" albo „Na drugiego pilota" przy każdej osobie, która może lecieć.</p>
+        </section>
+        <div class="drawer-foot" style="padding: 0;">
+          <span class="drawer-note">Trafi do 5 osób</span>
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary">Wyślij zlecenie</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">„Ja" w fotelu dowódcy - instruktor zleca lot uczniowi</span>
+        <span class="inv-when">Osoba zlecająca zajmuje fotel dowódcy, a drugi fotel wysyła imiennie do ucznia - ten sam przypadek, który przejmie moduł szkoleniowy (§17). „Ja" może stać tylko w jednym fotelu, więc karta „Ja" przy drugim pilocie jest zablokowana z powodem w środku. Innego pilota nie da się wpisać do fotela bez jego potwierdzenia (decyzja 12) - „Przyjmuję" ucznia obsadzi fotel jednym tapnięciem. PA-28 nie wymaga załogi dwuosobowej, więc „Brak" jest dostępny, a plakietki przy tytule nie ma.</span>
+        <span class="inv-classes">.seat-states · .opt:disabled (powód w .opt-desc) · select.input</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Dowódca</h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel dowódcy">
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Wyślesz zlecenie</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Drugi pilot</h2>
+          <div class="seat-states" role="radiogroup" aria-label="Fotel drugiego pilota">
+            <button type="button" class="opt" role="radio" aria-checked="false" disabled>
+              <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Jesteś w fotelu dowódcy</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="radio" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Wyślesz zlecenie</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="radio" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Brak</span><span class="opt-desc">Lot bez drugiego pilota</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <label class="field">
+            <span class="label">Osoba</span>
+            <select class="input">
+              <option>Wybierz osobę</option>
+              <option selected>Ewa Sowa · ESO</option>
+              <option>Piotr Lis · PLI</option>
+            </select>
+          </label>
+        </section>
+        <div class="drawer-foot" style="padding: 0;">
+          <span class="drawer-note">Trafi do 1 osoby</span>
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary">Wyślij zlecenie</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Imiennie i w grupie drugiego fotela - podpis przy osobie</span>
+        <span class="inv-when">Osoba wskazana imiennie na dowódcę jest też w grupie wybranej na drugiego pilota (tu Adam Kowalski i „Piloci An-2"). Dostanie JEDNO zlecenie z terminem do potwierdzenia (decyzja 37) - jej „Mogę lecieć" będzie zgłoszeniem, a fotel wybierzesz po odpowiedziach. Formularz mówi to pod polem osoby, zanim zlecenie wyjdzie (decyzja 39): pogrubienie błękitem, bo to informacja o zleceniu, a nie ostrzeżenie. Nic nie jest zablokowane - zostaw tak albo odznacz grupę; podpis znika razem z warunkiem. Stopka liczy osobę raz: „Trafi do 5 osób". Ten sam stan, co telefon 31B (ramka 3).</span>
+        <span class="inv-classes"><b>.hint.info</b> · select.input · .opt[role=checkbox]</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Dowódca</h2>
+          <label class="field">
+            <span class="label">Osoba</span>
+            <select class="input">
+              <option>Wybierz osobę</option>
+              <option selected>Adam Kowalski · AKO</option>
+              <option>Jakub Wrona · JWR</option>
+              <option>Paweł Wilk · PWI</option>
+            </select>
+          </label>
+          <p class="hint info"><b>Jest też w grupie „Piloci An-2"</b> · dostanie termin do potwierdzenia, fotel wybierzesz po odpowiedzi.</p>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Drugi pilot <span class="spacer"></span><span class="pill amber">wymagany · załoga 2-os.</span></h2>
+          <div class="field">
+            <span class="label">Grupy</span>
+            <div class="opt-list" role="group" aria-label="Grupy - drugi pilot, przykład">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Piloci An-2</span><span class="opt-desc">5 osób</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <div class="drawer-foot" style="padding: 0;">
+          <span class="drawer-note">Trafi do 5 osób</span>
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary">Wyślij zlecenie</button>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ ZL2c · BLOKADY, TERMIN ZAJĘTY, EDYCJA, REZYGNACJA ══ -->
+<section class="canvas-section" id="blokady">
+  <div class="canvas-section-title">ZL2c · blokady · termin właśnie zajęto · edycja zlecenia · rezygnacja ze szkicu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Blokady - powód w przycisku albo cisza</span>
+        <span class="inv-when">Dwie blokady NIE WIDAĆ z kontrolki nad przyciskiem, więc niosą powód w jego etykiecie (issue #55, wzorzec „Zapisz - wskaż przynajmniej jedną osobę" z K4), tymi samymi słowami, co przycisk na 31B: żaden fotel nie jest szukany („Ja" + „Brak" to zwykła rezerwacja, a nie zlecenie) i „Brak" zostawiony przy maszynie, która wymaga załogi dwuosobowej (zmiana maszyny w kroku 1 po wyborze „Brak" - ten sam powód, co w karcie). Zdania POD przyciskiem nie ma: pojawiałoby się i znikało razem ze stanem. Szukany fotel „Osoba" bez wybranej osoby i „Grupa" bez zaznaczenia blokują BEZ zdania - puste pole widać tuż nad przyciskiem.</span>
+        <span class="inv-classes">.btn.primary:disabled · .opt.selected:disabled</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-foot" style="padding: 0;">
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary" disabled>Wyślij zlecenie - ustaw „Szukam" przy co najmniej jednym fotelu</button>
+        </div>
+        <div class="seat-states" role="radiogroup" aria-label="Fotel drugiego pilota - przykład">
+          <button type="button" class="opt" role="radio" aria-checked="false">
+            <span class="opt-body"><span class="opt-name">Ja</span><span class="opt-desc">Lecisz w tym fotelu</span></span>
+            <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button type="button" class="opt" role="radio" aria-checked="false">
+            <span class="opt-body"><span class="opt-name">Szukam</span><span class="opt-desc">Wyślesz zlecenie</span></span>
+            <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+          <button type="button" class="opt selected" role="radio" aria-checked="true" disabled>
+            <span class="opt-body"><span class="opt-name">Brak</span><span class="opt-desc">SP-ANA wymaga załogi dwuosobowej</span></span>
+            <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+          </button>
+        </div>
+        <div class="drawer-foot" style="padding: 0;">
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary" disabled>Wyślij zlecenie - SP-ANA wymaga załogi dwuosobowej</button>
+        </div>
+        <span class="inv-mark">u góry: dowódca „Ja", drugi pilot „Brak" · u dołu: maszyna zmieniona na An-2 po wyborze „Brak"</span>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odmowa serwera: ten termin właśnie zajęto</span>
+        <span class="inv-when">Wzorzec K7b: szuflada wraca na KROK 1 (tam stoją kontrolki, którymi da się to naprawić), baner mówi, CO stoi w tym czasie i OD KIEDY, a jego akcją jest najbliższe wolne pasmo tej samej długości. Kolizją bywa inne ZLECENIE - wtedy zamiast nazwiska stoi „zlecenie · szuka załogi" (§16 pkt 3), a forma nijaka („weszło") pasuje do zlecenia. Szkic kroków 2 i 3 zostaje - poprawia się godzinę, nie wypełnia formularza od nowa.</span>
+        <span class="inv-classes">.banner.warn z akcją · .daytrack-busy.order</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span><b>Ten termin właśnie zajęto.</b> SP-ANA 09:00 → 13:00 · zlecenie · szuka załogi · weszło 2 min temu.</span>
+          <button type="button" class="btn ghost sm">Weź 10:00 → 14:00</button>
+        </div>
+        <div class="daytrack">
+          <div class="daytrack-bar" role="img" aria-label="Zajęte 09:00-13:00 przez inne zlecenie i 14:00-16:00 przez M. Wilk; Twój szkic 09:00-13:00 koliduje">
+            <span class="daytrack-busy order" style="left:16.7%; width:33.3%;" title="Zlecenie · szuka załogi · 09:00 → 13:00"></span>
+            <span class="daytrack-busy" style="left:58.3%; width:16.7%;" title="M. Wilk · 14:00 → 16:00"></span>
+          </div>
+          <div class="daytrack-scale"><span>07:00</span><span>10:00</span><span>13:00</span><span>16:00</span><span>19:00</span></div>
+          <span class="daytrack-free">wolne: 07:00 → 09:00 · 13:00 → 14:00 · 16:00 → 19:00</span>
+        </div>
+        <p class="hint">4 h · <b>w tych godzinach SP-ANA jest już zajęta</b> · zlecenie 09:00 → 13:00</p>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Edycja - zmiana terminu zaczyna odpowiedzi od nowa</span>
+        <span class="inv-when">„Edytuj" na karcie zlecenia otwiera tę samą szufladę z wypełnionymi krokami. Zmiana TERMINU podnosi wersję zlecenia (§5.1): baner mówi PRZED zapisem, że adresaci odpowiedzą jeszcze raz, a obsadzone fotele zostają. Każda inna zmiana (maszyna, zadanie, plan, opis, fotele) dociera jako „Edytowane · co", bez prośby o odpowiedź (decyzja 13) - notatka stopki mówi to jednym zdaniem. Dopisanie adresatów w kroku 3 wysyła zlecenie tylko nowym.</span>
+        <span class="inv-classes">.banner.warn · .drawer-note · .kv-v .was</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-head" style="padding: 0 0 12px;">
+          <div>
+            <div class="drawer-title">Edytuj zlecenie</div>
+            <div class="drawer-sub">SP-ANA · sobota 3 października · skoki EPKP</div>
+          </div>
+        </div>
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span><b>Zmiana terminu zacznie odpowiedzi od nowa.</b> Adresaci dostaną prośbę o ponowną odpowiedź, a osoby już w fotelach zostają i mogą zrezygnować.</span>
+        </div>
+        <div class="kv"><span class="kv-k">Termin</span><span class="kv-v"><span class="was">09:00-13:00</span> → 10:00-14:00</span></div>
+        <div class="drawer-foot" style="padding: 0;">
+          <span class="drawer-note">Adresaci zobaczą, co zmieniono</span>
+          <button type="button" class="btn ghost">Anuluj</button>
+          <button type="button" class="btn primary">Zapisz zmiany</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Rezygnacja z niepustego szkicu</span>
+        <span class="inv-when">Zamknięcie szuflady (krzyżyk, przesłona, „Anuluj") przy niepustym szkicu pyta w miejscu - pusty wychodzi bez pytania. Maszyna i dzień podstawione z komórki kalendarza nie liczą się jako wpis. Pytanie mówi, CO przepadnie, i nic więcej.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="confirm">
+          <span class="confirm-q">Porzucić zlecenie? Wpisane zadanie, fotele i adresaci przepadną.</span>
+          <span class="confirm-actions">
+            <button type="button" class="btn ghost sm">Wróć do formularza</button>
+            <button type="button" class="btn danger sm">Porzuć</button>
+          </span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html">← ZL1 Zlecenia</a>
+  <span>·</span>
+  <a href="zlecenia-nowe.html" class="active">ZL2 Nowe zlecenie</a>
+  <span>·</span>
+  <a href="zlecenia-szczegoly.html">ZL3 Zlecenie →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

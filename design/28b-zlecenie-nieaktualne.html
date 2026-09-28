@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 28B Zlecenie nieaktualne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Nagłówek z powrotem (wzorzec 28). Strzałka jest tu JEDYNYM wyjściem - patrz komentarz
+     przy końcu treści. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BANER „CO SIĘ STAŁO" - nad terminem, wzorzec 23C/23D
+     Stoi NAD kartą terminu, bo odpowiada na pierwsze pytanie wchodzącego („czy to mnie
+     jeszcze dotyczy"), a nie na drugie („o której"). Ton idzie za przyczyną:
+       - fotel obsadzony / zlecenie cofnięte / wygasło → NEUTRALNY: nic tu nie jest
+         błędem ani ostrzeżeniem, a pilot nie ma czego naprawiać;
+       - odwołanie → CZERWONY: zlecenie zostało skasowane - czerwień niesie w tej
+         aplikacji rzecz niszczącą (i tylko ją).
+     Treść bez nazwisk tych, którzy dostali fotel (decyzja 18). Powód, jeśli jest,
+     stoi w cudzysłowie jako cytat - to zdanie człowieka, nie aplikacji.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .state-banner {
+    display:flex; align-items:flex-start; gap:10px; padding:12px 13px; border-radius:14px;
+    border:1px solid var(--border-strong); background:var(--surface);
+  }
+  .state-banner.red { border-color:var(--red-border); background:var(--red-muted); }
+  .sb-icon { flex-shrink:0; margin-top:1px; color:var(--text-secondary); }
+  .state-banner.red .sb-icon { color:var(--red); }
+  .sb-text { font-size:12px; line-height:1.55; color:var(--text-secondary); }
+  .sb-text b { color:var(--text-primary); font-weight:600; display:block; margin-bottom:2px; font-size:12.5px; }
+  .sb-quote { display:block; font-style:italic; color:var(--text-primary); }
+  .sb-meta { display:block; margin-top:4px; font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ═══ HERO: TERMIN - wygaszony ═══
+     Zlecenie zamknięte wraca do tonu NEUTRALNEGO (jak rezerwacja zamknięta w 23C/23D):
+     błękit mówił „to pytanie czeka na Ciebie", a już nie czeka. Nie jest za to
+     półprzezroczyste - to dalej zapis, który pilot czyta. Odliczanie („JUTRO") znika:
+     lot może się odbyć, ale nie jest Twój, więc liczenie do niego byłoby cudzym zegarem. */
+  .hero {
+    background:var(--surface); border:1px solid var(--border-strong); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:5px; padding:3px 7px; }
+  .hero-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-secondary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+
+  /* ═══ KARTA DANYCH ═══ treść zlecenia do odczytu, jak na 28 - bez karty „Załoga": fotel,
+     o który pytano, jest już nieaktualny, a nazwisk nowej załogi adresat nie dostaje. */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══ ROZMOWA DO ODCZYTU ═══ ten sam wiersz, co na 28, ale prowadzi do rozmowy BEZ pola
+     (kształt 29B, z Twoimi wiadomościami po prawej, jak na 29): pisanie o zleceniu,
+     które Cię już nie dotyczy, nie ma adresata. */
+  .thread-row {
+    display:grid; grid-template-columns:32px 1fr 14px; align-items:center; gap:10px;
+    padding:11px 13px; text-decoration:none; color:inherit;
+  }
+  .thread-row:hover { background:var(--surface-raised); }
+  .tr-icon { width:32px; height:32px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+  .tr-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tr-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tr-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .tr-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">zlecenie · nieaktualne · fotel obsadzony</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie nieaktualne, fotel obsadzony">
+  <div class="status-bar">
+    <span>22:14</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ FOTEL OBSADZONY ═══
+           Ciąg dalszy 28A: Adam zgłosił się o 21:52, a osoba zlecająca wybrała na drugi
+           fotel kogoś innego. Wiadomość i baner mówią TYLKO, że fotel jest zajęty -
+           kto go dostał, adresat się nie dowie (decyzja 18), bo lista adresatów i ich
+           odpowiedzi należą do prowadzących. Jedno zdanie, bez „niestety" i bez
+           dziękowania: to stan zlecenia, nie ocena zgłoszenia. -->
+      <div class="state-banner">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span class="sb-text"><b>Fotel obsadzony</b>Fotel drugiego pilota na tym locie jest już zajęty.</span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Nieaktualne</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <!-- ═══ ZLECENIE - do odczytu ═══
+           Treść zostaje, bo pilot bywa tu z pytaniem „o który lot chodziło". Linijki
+           „Edytowane · co" tu NIE MA: mówi o zmianie, na którą adresat miałby
+           zareagować, a zlecenie już na nic nie czeka. -->
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <!-- ═══ ROZMOWA - do odczytu ═══
+           Wątek był (Adam pisał po zgłoszeniu), więc zostaje - ale bez pola wiadomości,
+           jak rozmowa, którą koordynator czyta na 29B (tyle że własne wiadomości Adama
+           stoją po prawej, jak na 29). Gdyby wątku nie było, wiersza
+           NIE MA wcale (ramka 2 niżej): prowadziłby do pustej rozmowy, w której nie da się
+           nic napisać. -->
+      <div class="card">
+        <a class="thread-row" href="29b-watek-podglad.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Rozmowa · Marta Zięba</span>
+            <span class="tr-sub">do odczytu</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+      <!-- ═══ BEZ PASA AKCJI ═══
+           Jedynym wyjściem jest strzałka w nagłówku. Przycisk „WRÓĆ DO ZLECEŃ" na dole
+           tylko by ją powtarzał, a przycisk, który wyłącznie wychodzi z ekranu, obiecuje
+           czynność, której nie ma (issue #42 - to samo zdjęło „WRÓĆ DO DNIA" z 10).
+           Wyszarzonych „PRZYJMUJĘ / NIE MOGĘ" też nie ma: obiecywałyby odpowiedź, której
+           zlecenie już nie przyjmie (zasada z 10B i 02G). -->
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="28-zlecenie.html">
+    <span class="vp-badge blue">28</span>
+    <span class="vp-body">
+      <span class="vp-name">Fotel wskazany imiennie</span>
+      <span class="vp-when">Zlecający wysłał dany fotel do Ciebie i tylko do Ciebie - „PRZYJMUJĘ" obsadza go od razu i lot staje się Twoją rezerwacją (23F).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28a-zlecenie-grupa.html">
+    <span class="vp-badge blue">28A</span>
+    <span class="vp-body">
+      <span class="vp-name">Grupa albo wspólna lista</span>
+      <span class="vp-when">Zlecenie przyszło przez grupę - „MOGĘ LECIEĆ" jest zgłoszeniem, a fotel wybiera osoba zlecająca (decyzja 11). Po zgłoszeniu karta czeka na decyzję.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="28b-zlecenie-nieaktualne.html">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Nieaktualne i odwołane</span>
+      <span class="vp-when">Zlecenie przestało czekać na Twoją odpowiedź. Ramka 1 - fotel obsadził ktoś inny: baner mówi tylko tyle, że fotel jest zajęty, bez nazwiska (decyzja 18). Ramka 2 (niżej) - odwołanie: powód jest opcjonalny (decyzja 16), a gdy jest, stoi w czerwonym banerze jako cytat pod tytułem „Odwołanie · nazwisko"; bez powodu baner niesie sam tytuł. W obu: hero w tonie neutralnym bez odliczania, treść zlecenia do odczytu i ŻADNEGO pasa akcji - wyjściem jest strzałka w nagłówku. Rozmowa zostaje do odczytu (29B), jeśli była; bez niej wiersza nie ma.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#wygaslo">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Wygasło - termin bez kompletu załogi</span>
+      <span class="vp-when">Początek terminu nadszedł, a nie wszystkie szukane fotele były obsadzone - zlecenie wygasa W CAŁOŚCI, także przy jednym obsadzonym fotelu (decyzja 15), a termin wraca do puli. Ramka 3 (niżej): plakietka „Wygasło" i neutralny baner bez nazwiska - zrobił to zegar, nie człowiek. Dostają to adresaci bez odmowy; osoba już przydzielona widzi, że jej rezerwacja ze zlecenia (23F) zniknęła razem z nim.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#cofniete">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie cofnięte</span>
+      <span class="vp-when">Osoba zlecająca odebrała Ci zlecenie - usunęła Cię z adresatów albo zamieniła na kogoś innego (decyzja 29). Ramka 4 (niżej): plakietka „Nieaktualne", baner „Zlecenie cofnięte" i powód, jeśli ktoś go podał (zawsze opcjonalny), bez nazwisk. Twoje zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu (29B).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
+    <span class="vp-badge amber">28C</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin zmieniony</span>
+      <span class="vp-when">Zmiana TERMINU zaczyna odpowiedzi od nowa (decyzja 13) - poprzednia stoi przekreślona. Inne zmiany mówią tylko „Edytowane · co", bez prośby o odpowiedź.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28d-zlecenie-nie-moge.html">
+    <span class="vp-badge">28D</span>
+    <span class="vp-body">
+      <span class="vp-name">„Nie mogę" - arkusz</span>
+      <span class="vp-when">Powód jest opcjonalny (decyzja 16): przycisk działa od razu, a zdanie, jeśli jest, osoba zlecająca czyta przy odpowiedzi.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28e-zlecenie-offline.html">
+    <span class="vp-badge amber">28E</span>
+    <span class="vp-body">
+      <span class="vp-name">Bez połączenia</span>
+      <span class="vp-when">Cały moduł zleceń wymaga sieci (§2.2) - wzorzec 21B, bez przycisku ponowienia; ekran wraca sam.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29b-watek-podglad.html">
+    <span class="vp-badge">29B</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa do odczytu</span>
+      <span class="vp-when">Wiersz „do odczytu" prowadzi do rozmowy bez pola wiadomości - kształt 29B, tyle że Twoje wiadomości stoją po prawej, jak na 29. Wszystko, co napisano, zostaje.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">25D Skrzynka</a>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <span>·</span>
+  <a href="28-zlecenie.html">28 Imiennie</a>
+  <a href="28a-zlecenie-grupa.html">28A Grupa</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="28c-zlecenie-termin-zmieniony.html">28C Termin</a>
+  <a href="28d-zlecenie-nie-moge.html">28D Nie mogę</a>
+  <a href="28e-zlecenie-offline.html">28E Offline</a>
+  <span>·</span>
+  <a href="29-watek.html">29 Rozmowa →</a>
+  <a href="#odwolane">↓ odwołane</a>
+  <a href="#wygaslo">↓ wygasło</a>
+  <a href="#cofniete">↓ cofnięte</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: ZLECENIE ODWOŁANE ══
+     Inny los tego samego zlecenia B: maszyna idzie do serwisu i osoba zlecająca odwołuje
+     cały lot, zanim ktokolwiek zdążył obsadzić fotele. Różnice względem ramki 1:
+       - baner CZERWONY, bo zlecenie skasowano (termin wrócił do puli), a nie tylko
+         obsadzono. Tytuł to RZECZOWNIK i nazwisko za separatorem („Odwołanie · Marta
+         Zięba") - bez czasownika w czasie przeszłym, który wymagałby formy z płcią;
+       - powód jako cytat: jest opcjonalny (decyzja 16), a gdy go nie ma, baner niesie
+         sam tytuł i godzinę - żadnego zastępczego „bez podania przyczyny";
+       - wiersza rozmowy NIE MA: Adam nie zdążył napisać, więc wątek nie powstał
+         (zakłada go pierwsza wiadomość, §7.1) - a pusta rozmowa bez pola nie ma treści.
+     Wiadomość „Zlecenie odwołane" dostają adresaci bez odmowy i przydzieleni (§12). -->
+<header class="canvas-label" id="odwolane">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">stan: zlecenie odwołane z powodem</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie odwołane z powodem">
+  <div class="status-bar">
+    <span>16:24</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="state-banner red">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span class="sb-text"><b>Odwołanie · Marta Zięba</b><span class="sb-quote">„Maszyna idzie do serwisu, skoki przenosimy na przyszłą sobotę."</span><span class="sb-meta">dziś 16:20</span></span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge red">Odwołane</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">← 25D Skrzynka</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="30-zlecenia.html">30 Zlecenia →</a>
+</nav>
+
+<!-- ══ TRZECIA RAMKA: ZLECENIE WYGASŁO (decyzja 46) ══
+     Inny los zlecenia B: do soboty 09:00 nikt nie obsadził foteli - Jakub nie odpowiedział,
+     a Marta nie wybrała drugiego pilota spośród zgłoszonych. Z początkiem terminu zlecenie
+     wygasa W CAŁOŚCI (decyzja 15), a termin wraca do puli. Adam zgłosił się o 21:52 i nie
+     dostał odmowy, więc dostaje „Zlecenie wygasło" (§12) i otwiera kartę z pusha o 09:04.
+     Różnice względem ramki 1:
+       - plakietka „Wygasło" i klepsydra w banerze (ta sama ikona, co w skrzynce 25D);
+       - baner BEZ nazwiska - zrobił to zegar, nie człowiek (ta sama reguła, co w historii
+         zmian i w skrzynce), i bez koloru: nic się nie zepsuło, termin po prostu nadszedł;
+       - rozmowa zostaje do odczytu, bo Adam pisał po zgłoszeniu (jak w ramce 1).
+     Ostrzeżenie „Zlecenie bez kompletu załogi" dostała wcześniej WYŁĄCZNIE osoba zlecająca -
+     w piątek o 18:00 czasu klubu (decyzja 45); adresaci o nim nie wiedzą. -->
+<header class="canvas-label" id="wygaslo">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">stan: zlecenie wygasło</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie wygasło">
+  <div class="status-bar">
+    <span>09:04</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="state-banner">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>
+        <span class="sb-text"><b>Zlecenie wygasło</b>Początek terminu bez kompletu załogi - termin wrócił do puli.<span class="sb-meta">dziś 09:00</span></span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Wygasło</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29b-watek-podglad.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Rozmowa · Marta Zięba</span>
+            <span class="tr-sub">do odczytu</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">← 25D Skrzynka</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="30-zlecenia.html">30 Zlecenia →</a>
+</nav>
+
+<!-- ══ CZWARTA RAMKA: ZLECENIE COFNIĘTE (decyzja 46) ══
+     Inny los zlecenia B: Adam zgłosił się o 21:52, a o 21:58 Marta Zięba odebrała mu
+     zlecenie (decyzja 29) - w tym czasie Adam ma już przelot SP-AXA (zlecenie A, przyjęte
+     o 07:40; kolizję widać było przed odpowiedzią, 28A). Adam otwiera kartę z pusha o 22:00.
+     Różnice względem ramki 1:
+       - baner mówi „Zlecenie cofnięte", a nie „Fotel obsadzony", i niesie powód jako
+         cytat - jest opcjonalny (decyzja 16), bez niego baner ma sam tytuł i godzinę;
+       - NAZWISK nie ma: ani osoby, która cofnęła (prowadzi kilka osób naraz, a skrzynka
+         pisze ten rodzaj bez nazwisk, §12), ani tej, która dostała fotel w zamian
+         (decyzja 18);
+       - plakietka „Nieaktualne" jak w ramce 1 - push i skrzynka mówią „Zlecenie
+         nieaktualne", ten sam tytuł, co przy obsadzonym fotelu (§12); różni je treść.
+     Zgłoszenie Adama przestaje się liczyć, a rozmowa zostaje do odczytu (29B). -->
+<header class="canvas-label" id="cofniete">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">stan: zlecenie cofnięte z powodem</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie cofnięte">
+  <div class="status-bar">
+    <span>22:00</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="state-banner">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        <span class="sb-text"><b>Zlecenie cofnięte</b><span class="sb-quote">„W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym."</span><span class="sb-meta">dziś 21:58</span></span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Nieaktualne</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29b-watek-podglad.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Rozmowa · Marta Zięba</span>
+            <span class="tr-sub">do odczytu</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">← 25D Skrzynka</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="30-zlecenia.html">30 Zlecenia →</a>
+</nav>
+
+</body>
+</html>

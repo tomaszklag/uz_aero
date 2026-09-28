@@ -35,7 +35,7 @@
     <span class="vp-badge">BD</span>
     <span class="vp-body">
       <span class="vp-name">Członek klubu pod modułem klubu</span>
-      <span class="vp-when">Pilot bez „Podglądu klubu" wpisał #/dziennik, #/piloci albo #/samoloty. Ekran nazywa zdolność tak, jak nazywa ją karta członka, i mówi, że nadaje ją administrator klubu. Kolumna ma jedną pozycję - Kalendarz - i tam prowadzi przycisk.</span>
+      <span class="vp-when">Pilot bez „Podglądu klubu" wpisał #/dziennik, #/piloci albo #/samoloty. Ekran nazywa zdolność tak, jak nazywa ją karta członka, i mówi, że nadaje ją administrator klubu. Kolumna ma dwie pozycje - Kalendarz i (od 4.0.0) Zlecenia - a przycisk prowadzi na ekran startowy, czyli do Kalendarza.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -91,6 +91,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">PW</span>
           <span class="who-name">Piotr Wiśniewski</span>
@@ -105,7 +108,9 @@
     <div class="workspace">
 
       <!-- KOLUMNA BOCZNA członka z PUSTYM zakresem: kafel klubu (bez przełącznika - jeden
-           klub) i JEDNA pozycja. Żadnej wyszarzonej pozycji ani kłódki (§3.3): kolumna
+           klub) i DWIE pozycje - Kalendarz i Zlecenia (4.0.0, `docs/zlecenia.md` §15:
+           moduł ma `access: 'club'`, bo zlecenie trafia do każdego członka). Żadnej
+           wyszarzonej pozycji ani kłódki (§3.3): kolumna
            mówi, co ta osoba MA, a ekran obok - czego jej brakuje. Kalendarz nie jest
            aktywny: adres w pasku to dziennik, a dziennika w kolumnie nie ma. -->
       <aside class="sidebar" aria-label="Nawigacja panelu">
@@ -120,6 +125,10 @@
           <a class="nav-item" href="kalendarz-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
           </a>
         </nav>
       </aside>

@@ -43,6 +43,14 @@
   zużycia weszła do karty samolotu. Sekcje niżej idą w kolejności kolumny bocznej.
 </p>
 
+<p class="idx-lead">
+  <b>Zlecenia na lot 4.0.0 (issue #244, <code>docs/zlecenia.md</code>): cztery nowe makiety modułu, grupy klubu w module Piloci i dwie ramki w kalendarzu.</b>
+  Kolumna klubu ma odtąd trzy grupy - Loty (Dziennik, Do sprawdzenia, Statystyki), Planowanie (Kalendarz, Zlecenia) i Klub (Piloci, Samoloty); „Zlecenia" widzi każdy członek (zakładka „Do mnie"); „Zlecone" dochodzi z uprawnieniem
+  „Zlecanie lotów" albo „Cudze rezerwacje", a „Zleć lot" - wyłącznie ze „Zlecaniem lotów". Zlecenie jest rezerwacją, która szuka załogi: trzyma termin od utworzenia (na osi - błękitny pasek z przerywaną ramką),
+  a fotele obsadza przyjęcie osoby wskazanej imiennie albo wybór prowadzącego spośród zgłoszonych. Adresat nie wie nic o innych adresatach, rozmowa jest prywatna
+  (czytają ją też koordynatorzy), a cały moduł odświeża się na żywo kanałem klubu - z dzwonkiem i skrzynką w pasku górnym. Komponenty czekające na kod epiku Z-D stoją w <code>rama.css</code> i w inwentarzu <code>SZABLON.html</code>.
+</p>
+
 <section class="canvas-section">
   <div class="canvas-section-title">Fundament</div>
   <div class="idx-grid">
@@ -52,6 +60,14 @@
         <span class="idx-name">SZABLON</span>
         <span class="idx-route">rama okna · pasek i kolumna · inwentarz</span>
         <span class="idx-when">Od tego pliku zaczyna się każda nowa makieta panelu: gotowy <code>&lt;head&gt;</code>, okno przeglądarki 1440×900, kanoniczna rama stylu lekkiego (pasek górny, kolumna boczna z kontekstem klubu, okruszki) i inwentarz komponentów z podpisem, kiedy którego używać.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="powiadomienia.html">
+      <span class="idx-badge">PW</span>
+      <span class="idx-body">
+        <span class="idx-name">powiadomienia</span>
+        <span class="idx-route">dzwonek w pasku · skrzynka w szufladzie · baner (4.0.0)</span>
+        <span class="idx-when">Kanał klubu w panelu (<code>docs/kanal-klubu.md</code> K7): dzwonek w pasku górnym każdej ramy klubu, z licznikiem wyłącznie przy nowych; skrzynka w szufladzie bez własnego adresu - te same rodzaje i ten sam kształt wiersza, co w telefonie, wspólny stan przeczytania; baner nowego powiadomienia w lewym dolnym rogu treści, znika sam, bez dźwięku. Trzy stany: baner (PW1), skrzynka otwarta (PW2), dzwonek i pusta skrzynka (PW3).</span>
       </span>
     </a>
   </div>
@@ -157,7 +173,7 @@
       <span class="idx-body">
         <span class="idx-name">kalendarz-flota</span>
         <span class="idx-route">#/kalendarz?od=&amp;do=</span>
-        <span class="idx-when">Wejście modułu: maszyny w pionie, dni w poziomie. Panel patrzy SZERZEJ NIŻ TELEFON - pilot pyta „czym polecę dzisiaj", administrator układa tydzień.</span>
+        <span class="idx-when">Wejście modułu: maszyny w pionie, dni w poziomie. Panel patrzy SZERZEJ NIŻ TELEFON - pilot pyta „czym polecę dzisiaj", administrator układa tydzień. Od 4.0.0 na osi stoi też ZLECENIE (błękitny pasek z przerywaną ramką - „Zlecenie · szuka załogi"), a obok „Zarezerwuj" wyciszony przycisk „Zleć lot" dla uprawnienia „Zlecanie lotów".</span>
       </span>
     </a>
     <a class="idx-card" href="kalendarz-wpis.html">
@@ -165,7 +181,7 @@
       <span class="idx-body">
         <span class="idx-name">kalendarz-wpis</span>
         <span class="idx-route">#/kalendarz/:id</span>
-        <span class="idx-when">Szuflada zajętości: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku dzielą jedną szufladę w dwóch stanach; od 3.2.0 trzeci widok - własna rezerwacja z „Przesuń i popraw" i „Odwołaj" (K2b).</span>
+        <span class="idx-when">Szuflada zajętości: kto, czym, kiedy, z jakim zadaniem i notatką - oraz odwołanie z powodem. Rezerwacja i wyłączenie z użytku dzielą jedną szufladę w dwóch stanach; od 3.2.0 trzeci widok - własna rezerwacja z „Przesuń i popraw" i „Odwołaj" (K2b), od 4.0.0 czwarty - zajętość ze zleceniem (K2c): stan, kogo brakuje, kto zleca i „Otwórz zlecenie", a odwołanie z kalendarza jest odwołaniem zlecenia z powodem opcjonalnym; po obsadzeniu fotela - Twoja rezerwacja ze zlecenia, z rozmową zamiast przesunięcia i „Rezygnuję" zamiast odwołania.</span>
       </span>
     </a>
     <a class="idx-card" href="kalendarz-blokada.html">
@@ -198,6 +214,44 @@
         <span class="idx-name">kalendarz-rezerwacja</span>
         <span class="idx-route">#/kalendarz?od=&amp;do= · szuflada bez adresu</span>
         <span class="idx-when">Własna rezerwacja z panelu (3.2.0, issue #233): każdy członek rezerwuje z osi, którą ogląda - „Zarezerwuj" albo kliknięcie w wolne miejsce komórki otwiera szufladę w dwóch krokach jak 22/22A (termin i maszyna z paskiem zajętości doby i sugestiami slotów, potem zadanie). Odmowa „termin właśnie zajęto" wraca na krok 1 z kolidującą zajętością i najbliższym wolnym pasmem. Ścieżka akceptacji jak z telefonu.</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="canvas-section">
+  <div class="canvas-section-title">Zlecenia · cztery ekrany (4.0.0)</div>
+  <div class="idx-grid">
+    <a class="idx-card" href="zlecenia-lista.html">
+      <span class="idx-badge">ZL1</span>
+      <span class="idx-body">
+        <span class="idx-name">zlecenia-lista</span>
+        <span class="idx-route">#/zlecenia · #/zlecenia?widok=zlecone</span>
+        <span class="idx-when">W grupie „Planowanie", zaraz po Kalendarzu. „Do mnie" (każdy członek; wejście z kolumny otwiera ją, gdy coś tu czeka na odpowiedź, a inaczej „Zlecone"): zlecenia, na które się odpowiada - fotel zaproponowany Tobie i Twoja odpowiedź, nic o innych adresatach; wiersz „Przyjęte" otwiera już rezerwację w kalendarzu. „Zlecone" (z uprawnieniem): termin, maszyna, zadanie, fotele wg etykiety adresowania, postęp („5 z 6 odczytało · 2 mogą lecieć" przy grupie, stan osoby przy fotelu imiennym), stan („Szuka załogi / dowódcy / drugiego pilota", „Komplet załogi"), ikona rozmowy z kropką przy nowej wiadomości i kto zleca - z „Cudzymi rezerwacjami" wszystkie zlecenia klubu, także cudze. Odwołane i wygasłe na końcu, przygaszone; po terminie w „Minionych".</span>
+      </span>
+    </a>
+    <a class="idx-card" href="zlecenia-nowe.html">
+      <span class="idx-badge">ZL2</span>
+      <span class="idx-body">
+        <span class="idx-name">zlecenia-nowe</span>
+        <span class="idx-route">szuflada bez adresu · „Zleć lot" z listy albo z kalendarza</span>
+        <span class="idx-when">Szuflada szeroka w trzech krokach - te same pytania, co 31-31B na telefonie: termin i maszyna (jak rezerwacja K7, szkic zlecenia błękitem na pasku doby), zadanie, potem fotele „Ja / Szukam / Brak" (wymóg załogi 2-os. wyłącza „Brak" z powodem w karcie), adresowanie per fotel „Osoba" (imiennie) albo „Grupa" (lub kilka osób), albo „Wspólna lista · fotele przydzielę po odpowiedziach", adresaci jako lista kart - grupy nad osobami. Stopka: „Trafi do 6 osób" i „Wyślij zlecenie".</span>
+      </span>
+    </a>
+    <a class="idx-card" href="zlecenia-szczegoly.html">
+      <span class="idx-badge">ZL3</span>
+      <span class="idx-body">
+        <span class="idx-name">zlecenia-szczegoly</span>
+        <span class="idx-route">#/zlecenia/&lt;id&gt;</span>
+        <span class="idx-when">Dwie ramy. Prowadzący: fotele z adresatami - odczyt, odpowiedź z godziną, powód - „Wybierz" przy „Może lecieć" w fotelu z grupy, „⋯" przy każdym adresacie (zamiana osoby przy fotelu imiennym, odebranie zlecenia, cofnięcie przydziału), przy komplecie i wspólnej liście karta „Załoga" nad listą, historia zmian z nazwiskami, odwołanie, „Edytuj" i „Wyślij ponownie". Adresat: fotel zaproponowany Tobie, treść zlecenia, rozmowa i „Przyjmuję" / „Nie mogę" (przy grupie „Mogę lecieć") - bez listy adresatów i bez nazwy grupy; po przyjęciu lot otwiera się jako rezerwacja w kalendarzu (K2c).</span>
+      </span>
+    </a>
+    <a class="idx-card" href="zlecenia-watek.html">
+      <span class="idx-badge">ZL4</span>
+      <span class="idx-body">
+        <span class="idx-name">zlecenia-watek</span>
+        <span class="idx-route">#/zlecenia/&lt;id&gt;/rozmowa/&lt;adresat&gt;</span>
+        <span class="idx-when">Prywatna rozmowa osoby zlecającej z jednym adresatem, na żywo: pasek zlecenia nad wiadomościami, dymki (własne po prawej), „Odczytane" pod ostatnią własną, nad polem zdanie „Rozmowę widzą też koordynatorzy lotów klubu.". Druga rama: koordynator czyta cudzą rozmowę bez pola - „Rozmowę prowadzi Marta Zięba.".</span>
       </span>
     </a>
   </div>
@@ -250,6 +304,14 @@
         <span class="idx-name">piloci-kod-klubu</span>
         <span class="idx-route">#/piloci/kod</span>
         <span class="idx-when">Szuflada „Kod klubu": jeden kod na klub, wielorazowy, do przeczytania przez telefon - kto go wpisze na 00E albo 13A, trafia do ZGŁOSZEŃ (P3). „Wygeneruj nowy" (stary gaśnie od razu, zgłoszenia zostają) i „Wyłącz dołączanie kodem" (do czasu nowego kodu nikt nie dołączy - innej drogi nie ma). Druga ramka: stan wyłączony. Dawne `piloci-zaproszenie` z trzema drogami zniknęło (2026-09-09).</span>
+      </span>
+    </a>
+    <a class="idx-card" href="piloci-grupy.html">
+      <span class="idx-badge">P5</span>
+      <span class="idx-body">
+        <span class="idx-name">piloci-grupy</span>
+        <span class="idx-route">#/piloci/grupy</span>
+        <span class="idx-when">Grupy klubu (4.0.0) - druga połowa modułu pod przełącznikiem „Członkowie · Grupy", nie osobna pozycja kolumny. Grupa to nazwa i lista członków; zakłada, zmienia i kasuje ją wyłącznie administrator klubu, koordynator z niej korzysta w adresowaniu zleceń. Szuflada: nazwa i obsada listą kart wielokrotnego wyboru (członek z wyłączonym członkostwem zostaje, przygaszony), usunięcie z kartą skutku - wysłane zlecenia zostają bez zmian.</span>
       </span>
     </a>
   </div>
@@ -337,7 +399,7 @@
       <span class="idx-body">
         <span class="idx-name">konto</span>
         <span class="idx-route">#/konto</span>
-        <span class="idx-when">Własne konto zalogowanego - wejście z nazwiska w pasku górnym, w ramie klubu i superadministratora. Trzy karty: „Logowanie" (adres, metody), „Hasło" (zmiana z obecnym hasłem albo „Ustaw hasło" dla osoby, która wchodziła dotąd Googlem - droga na wspólny tablet; zapis wylogowuje pozostałe urządzenia) i „Moje sesje" ze wszystkich powierzchni i klubów, z „Wyloguj" przy każdej poza bieżącą. Od 3.2.0 (#205): karta „Obserwowane samoloty" - cała flota klubu z przełącznikami, dla osoby ze zdolnością obserwowania; powiadomienia i tak idą na telefon.</span>
+        <span class="idx-when">Własne konto zalogowanego - wejście z nazwiska w pasku górnym, w ramie klubu i superadministratora. Trzy karty: „Logowanie" (adres, metody), „Hasło" (zmiana z obecnym hasłem albo „Ustaw hasło" dla osoby, która wchodziła dotąd Googlem - droga na wspólny tablet; zapis wylogowuje pozostałe urządzenia) i „Moje sesje" ze wszystkich powierzchni i klubów, z „Wyloguj" przy każdej poza bieżącą. Od 3.2.0 (#205): karta „Obserwowane samoloty" - cała flota klubu z przełącznikami, dla osoby ze zdolnością obserwowania; powiadomienia trafiają do skrzynki - pod dzwonkiem w panelu i w aplikacji.</span>
       </span>
     </a>
     <a class="idx-card" href="00a-wybor-klubu.html">

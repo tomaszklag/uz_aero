@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - panel: grupy klubu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">PILOCI · GRUPY</span>
+  <span class="slug">panel/piloci-grupy · #/piloci/grupy · P5</span>
+  <span class="canvas-meta"><span class="pulse"></span>Moduł pilotów · 4.0.0 · issue #244</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty i sąsiedzi tego ekranu</div>
+  <a class="vp-item active" href="piloci-grupy.html">
+    <span class="vp-badge">P5</span>
+    <span class="vp-body">
+      <span class="vp-name">Grupy klubu + szuflada grupy</span>
+      <span class="vp-when">Druga połowa modułu Piloci, pod przełącznikiem „Członkowie · Grupy" - nie osobna pozycja kolumny. Grupa to nazwa i lista członków, nic więcej (`docs/zlecenia.md` §6.1). Zakłada, zmienia i kasuje ją WYŁĄCZNIE administrator klubu (uprawnienie „Konta pilotów"); każdy z „Podglądem klubu" widzi grupy do odczytu, a osoba zlecająca loty wybiera je jako adresatów. W ramie: administrator otwiera grupę z członkiem, którego członkostwo jest wyłączone.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#stany">
+    <span class="vp-badge">P5a</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowa grupa, nazwa zajęta, usunięcie</span>
+      <span class="vp-when">„Nowa grupa" otwiera tę samą szufladę pustą. Nazwa jest jedyna w klubie bez względu na wielkość liter; usunięcie pyta w miejscu i mówi, że wysłane zlecenia zostają bez zmian.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#podglad">
+    <span class="vp-badge">P5b</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd bez zarządzania</span>
+      <span class="vp-when">Koordynator z „Podglądem klubu" bez uprawnienia do kont: lista bez „Nowa grupa", szuflada bez pól, bez stopki i bez usunięcia - brak uprawnienia znaczy brak przycisku.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="piloci-lista.html">
+    <span class="vp-badge">P1</span>
+    <span class="vp-body">
+      <span class="vp-name">Członkowie klubu (pierwsza połowa modułu)</span>
+      <span class="vp-when">Ten sam przełącznik „Członkowie · Grupy" pod nagłówkiem; lista członków ma swoją akcję główną - „Kod klubu".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-nowe.html">
+    <span class="vp-badge blue">ZL2</span>
+    <span class="vp-body">
+      <span class="vp-name">Gdzie grupy się przydają - nowe zlecenie</span>
+      <span class="vp-when">Grupy stoją NAD osobami w wyborze adresatów fotela. Przy wysłaniu grupa rozwija się w osoby, więc ktoś dopisany do grupy jutro nie dostanie zlecenia wysłanego dziś.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA: ADMINISTRATOR ZARZĄDZA GRUPAMI ══
+     Zalogowany jest Marek Sowa - administrator klubu (komplet zdolności, w tym „Konta
+     pilotów", `accounts.manage`, które jako jedyne pozwala zmieniać skład grup -
+     decyzja 22). Grupa rozdaje dostęp do treści zleceń (a później ogłoszeń), więc jej
+     zmiany idą do dziennika akcji (`group.create`, `group.update`, `group.remove`). -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - grupy klubu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/piloci/grupy/9a41…c07
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">MS</span>
+          <span class="who-name">Marek Sowa</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (od 4.0.0 trzy grupy: Loty, Planowanie, Klub). Grupy pilotów NIE dostają własnej pozycji:
+           to druga połowa modułu Piloci (lista osób i listy osób), a kolumna wymienia
+           moduły klubu. Kanoniczna postać ramy: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
+          <a class="nav-item active" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- Tytuł zostaje „Piloci" - to ten sam moduł. Akcja główna zależy od połowy:
+           na członkach „Kod klubu", na grupach „Nowa grupa" (tylko administrator). -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Piloci</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="#stany">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nowa grupa
+          </a>
+        </div>
+      </div>
+
+      <!-- ══ PRZEŁĄCZNIK „CZŁONKOWIE · GRUPY" ══
+           Segment (`.seg`), jak oś dziennika i „Do mnie / Zlecone": dwie połowy modułu
+           odpowiadają na dwa pytania - „kto jest w klubie" i „jakie listy ludzi klub
+           ma" - i dokładnie jedna jest zawsze włączona. Stoi w pierwszym rzędzie pod
+           nagłówkiem W OBU połowach, także nad kartą zgłoszeń na liście członków, żeby
+           nie skakał, gdy tamta karta się pojawia i znika. „Członkowie" to adres
+           `#/piloci`, „Grupy" - `#/piloci/grupy` (`docs/zlecenia.md` §6.1). -->
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Część modułu Piloci">
+          <a class="seg-btn" href="piloci-lista.html">Członkowie</a>
+          <a class="seg-btn on" href="piloci-grupy.html" aria-current="page">Grupy</a>
+        </div>
+      </div>
+
+      <!-- ══ TABELA GRUP ══
+           Nazwa, liczba członków i skład jednym zdaniem - grupa to lista ludzi i tylko
+           to ma do powiedzenia. Kolumny „gdzie użyta" NIE MA: adresaci są zapisywani
+           imiennie w chwili wysłania (§6.2), więc grupa nie jest z niczym związana
+           po wysłaniu, a liczba zleceń przy niej sugerowałaby zależność, której nie ma.
+           Członkostwo wyłączone liczy się do składu (konfiguracji nie czyścimy po
+           cichu) i mówi o sobie podpisem pod liczbą. -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Grupy klubu</caption>
+          <thead>
+            <tr>
+              <th>Grupa</th>
+              <th class="num">Członkowie</th>
+              <th>Skład</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable opened">
+              <td class="cell-strong">Instruktorzy</td>
+              <td class="num">4<span class="cell-sub">1 członkostwo wyłączone</span></td>
+              <td><span class="cell-sub">Adam Kowalski, Marek Sowa, Paweł Wilk, Paweł Nowak</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-grupy.html">Edytuj</a></td>
+            </tr>
+            <tr class="clickable">
+              <td class="cell-strong">Piloci An-2</td>
+              <td class="num">5</td>
+              <td><span class="cell-sub">Adam Kowalski, Anna Kowal, Barbara Nowak, Ewa Sowa, Piotr Lis</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="piloci-grupy.html">Edytuj</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SZUFLADA GRUPY ══
+         NAZWA I OBSADA - nic więcej (§6.1). Obsada to lista kart wielokrotnego wyboru
+         (`.opt` z rolą checkbox - ten sam komponent, co obsada kroku ścieżki K4a),
+         zaznaczeni NA GÓRZE: szuflada odpowiada najpierw na „kto jest w tej grupie",
+         a dopiero potem na „kogo mogę dopisać". Lista rośnie z klubem, więc ma
+         wyszukiwarkę; `<select>` odpada, bo wybór jest WIELOKROTNY.
+
+         CZŁONEK WYŁĄCZONY zostaje zaznaczony i przygaszony z adnotacją (`.opt.dim`):
+         konfiguracji klubu nie czyścimy po cichu - ta sama reguła, co osoba bez
+         prawa akceptacji w kroku ścieżki (K4c). Karta zostaje klikalna: zdjęcie takiej
+         osoby z grupy jest zwykłą poprawką.
+
+         Zdanie pod listą mówi SKUTEK składu: kto dostaje zlecenie wysłane do grupy.
+         Usunięcie grupy czerwoną kartą na końcu (jak odwołanie rezerwacji w K2),
+         z tym, co przy usunięciu naprawdę się dzieje - wysłanych zleceń nie rusza,
+         bo ich adresaci są zapisani imiennie (§6.1). Karta leży poniżej krawędzi
+         szuflady; na kanwie stoi pytanie, które pada po kliknięciu (#stany).
+
+         „Zapisz" zablokowany BEZ zdania - nic jeszcze nie zmieniono, a brak zmiany
+         widać z formularza nad przyciskiem (issue #55). -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Grupa Instruktorzy">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Instruktorzy</div>
+          <div class="drawer-sub">4 członków · 1 członkostwo wyłączone</div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+
+        <section class="card">
+          <h2 class="card-title">Grupa</h2>
+          <label class="field">
+            <span class="label">Nazwa</span>
+            <input class="input" type="text" value="Instruktorzy" />
+          </label>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">Członkowie</h2>
+          <label class="search" style="max-width: none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input value="" placeholder="Szukaj członka: nazwisko albo kod" aria-label="Szukaj członka klubu">
+          </label>
+          <div class="opt-list" role="group" aria-label="Członkowie grupy Instruktorzy">
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Adam Kowalski</span><span class="opt-desc">AKO</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Marek Sowa</span><span class="opt-desc">MSO</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Paweł Wilk</span><span class="opt-desc">PWI</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt selected dim" role="checkbox" aria-checked="true">
+              <span class="opt-body"><span class="opt-name">Paweł Nowak</span><span class="opt-desc">PNO · członkostwo wyłączone - nie dostaje zleceń</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Anna Kowal</span><span class="opt-desc">AKW</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Barbara Nowak</span><span class="opt-desc">BNO</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Ewa Sowa</span><span class="opt-desc">ESO</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Marta Zięba</span><span class="opt-desc">MZI</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opt" role="checkbox" aria-checked="false">
+              <span class="opt-body"><span class="opt-name">Piotr Lis</span><span class="opt-desc">PLI</span></span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+          <p class="hint">Zlecenie wysłane do grupy trafia do jej aktywnych członków - w składzie z chwili wysłania.</p>
+        </section>
+
+        <section class="card danger">
+          <h2 class="card-title">Usunięcie grupy</h2>
+          <p class="card-note">Wysłane zlecenia zostają bez zmian - ich adresaci dostali je imiennie. Grupa zniknie z wyboru adresatów.</p>
+          <button type="button" class="btn danger">Usuń grupę</button>
+        </section>
+
+      </div>
+
+      <div class="drawer-foot">
+        <button type="button" class="btn ghost">Anuluj</button>
+        <button type="button" class="btn primary" disabled>Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="piloci-lista.html">P1 Piloci</a>
+  <span>·</span>
+  <a href="piloci-konto.html">P2 Konto</a>
+  <span>·</span>
+  <a href="piloci-zgloszenie.html">P3 Zgłoszenie</a>
+  <span>·</span>
+  <a href="piloci-kod-klubu.html">P4 Kod klubu</a>
+  <span>·</span>
+  <a href="piloci-grupy.html" class="active">P5 Grupy</a>
+  <span>·</span>
+  <a href="#stany">↓ P5a Nowa grupa i usunięcie</a>
+  <a href="#podglad">↓ P5b Podgląd</a>
+  <span>·</span>
+  <a href="zlecenia-nowe.html">ZL2 Nowe zlecenie →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ P5a · NOWA GRUPA, NAZWA ZAJĘTA, USUNIĘCIE ══ -->
+<section class="canvas-section" id="stany">
+  <div class="canvas-section-title">P5a · nowa grupa · nazwa zajęta · usunięcie · klub bez grup</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Nowa grupa - ta sama szuflada, pusta</span>
+        <span class="inv-when">„Nowa grupa" otwiera szufladę bez adresu, jak każda szuflada tworząca byt, którego jeszcze nie ma. Pusta nazwa blokuje „Utwórz grupę" BEZ zdania - puste pole widać tuż nad przyciskiem (issue #55). Grupa bez członków jest dozwolona: klub zakłada czasem listę na zapas, a zlecenie do pustej grupy trafi do nikogo - stopka formularza zlecenia powie „Trafi do 0 osób".</span>
+        <span class="inv-classes">.drawer · .field · .opt-list[role=group] · .btn.primary:disabled</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 520px;">
+          <div class="drawer" role="dialog" aria-modal="true" aria-label="Nowa grupa" style="width: 100%;">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Nowa grupa</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Grupa</h2>
+                <label class="field">
+                  <span class="label">Nazwa</span>
+                  <input class="input" type="text" value="" placeholder="Np. Piloci skokowi" />
+                </label>
+              </section>
+              <section class="card">
+                <h2 class="card-title">Członkowie</h2>
+                <div class="opt-list" role="group" aria-label="Członkowie nowej grupy">
+                  <button type="button" class="opt" role="checkbox" aria-checked="false">
+                    <span class="opt-body"><span class="opt-name">Adam Kowalski</span><span class="opt-desc">AKO</span></span>
+                    <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  </button>
+                  <button type="button" class="opt" role="checkbox" aria-checked="false">
+                    <span class="opt-body"><span class="opt-name">Anna Kowal</span><span class="opt-desc">AKW</span></span>
+                    <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  </button>
+                </div>
+              </section>
+            </div>
+            <div class="drawer-foot">
+              <button type="button" class="btn ghost">Anuluj</button>
+              <button type="button" class="btn primary" disabled>Utwórz grupę</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Nazwa zajęta - błąd przy polu</span>
+        <span class="inv-when">Nazwa jest jedyna w klubie bez względu na wielkość liter („instruktorzy" to ta sama grupa, co „Instruktorzy"). Odmowa serwera stoi pod polem, którego dotyczy, czerwoną ramką i zdaniem - nie banerem nad formularzem.</span>
+        <span class="inv-classes">.input.invalid · .hint.danger</span>
+      </div>
+      <div class="inv-demo">
+        <label class="field">
+          <span class="label">Nazwa</span>
+          <input class="input invalid" type="text" value="instruktorzy" aria-invalid="true" />
+          <span class="hint danger">Grupa o tej nazwie już jest w klubie.</span>
+        </label>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Usunięcie - pytanie w miejscu kliknięcia</span>
+        <span class="inv-when">„Usuń grupę" pyta tam, gdzie kliknięto - nie osobnym oknem. Pytanie nazywa grupę po dwukropku (bez odmiany), a zdanie pod nim mówi dokładnie to, o co administrator się martwi: zlecenia już wysłane zostają nietknięte, bo ich adresaci są zapisani imiennie (§6.1).</span>
+        <span class="inv-classes">.card.danger · .confirm · .confirm-q · .confirm-actions</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card danger">
+          <h2 class="card-title">Usunięcie grupy</h2>
+          <div class="confirm" style="margin-top: 0;">
+            <p class="confirm-q">Usunąć grupę: Instruktorzy?</p>
+            <p class="hint">Wysłane zlecenia zostają bez zmian. Grupa zniknie z wyboru adresatów w nowych zleceniach.</p>
+            <div class="confirm-actions">
+              <button type="button" class="btn ghost sm">Nie</button>
+              <button type="button" class="btn danger sm">Usuń grupę</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Klub bez żadnej grupy</span>
+        <span class="inv-when">Stan każdego klubu w dniu wdrożenia 4.0.0 - więc mówi o WARTOŚCI grup jednym zdaniem i daje jedyną czynność, która tę listę wypełnia. Koordynator bez uprawnienia do kont widzi ten sam stan bez przycisku i ze zdaniem, kto grupy zakłada.</span>
+        <span class="inv-classes">.empty · .empty-icon · .empty-title · .empty-note</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg></span>
+          <span class="empty-title">Klub nie ma jeszcze grup</span>
+          <span class="empty-note">Grupa to nazwana lista członków - zlecenie lotu trafia do niej jednym wyborem, bez wskazywania każdej osoby z osobna.</span>
+          <a class="btn primary" href="#stany">Nowa grupa</a>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ P5b · PODGLĄD BEZ ZARZĄDZANIA ══ -->
+<section class="canvas-section" id="podglad">
+  <div class="canvas-section-title">P5b · podgląd grup bez uprawnienia do kont</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Koordynator widzi grupy, ale ich nie zmienia</span>
+        <span class="inv-when">Skład grup zmienia WYŁĄCZNIE administrator (decyzja 22). Koordynator lotów ma „Podgląd klubu", więc moduł Piloci i obie jego połowy widzi - ale bez „Nowa grupa" w nagłówku, z „Otwórz" zamiast „Edytuj" w wierszu i z szufladą BEZ pól: skład jako zwykła lista wierszy, bez stopki i bez karty usunięcia. Brak uprawnienia znaczy brak przycisku, nie przycisk wyszarzony. Członkostwo wyłączone mówi o sobie podpisem przy kodzie - zamiast kodu samego.</span>
+        <span class="inv-classes">.kv · .kv-v small · .row-actions (Otwórz)</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 360px;">
+          <div class="drawer" role="dialog" aria-modal="true" aria-label="Grupa Instruktorzy - podgląd">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">Instruktorzy</div>
+                <div class="drawer-sub">4 członków · 1 członkostwo wyłączone</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Członkowie</h2>
+                <div class="kv"><span class="kv-k">Adam Kowalski</span><span class="kv-v">AKO</span></div>
+                <div class="kv"><span class="kv-k">Marek Sowa</span><span class="kv-v">MSO</span></div>
+                <div class="kv"><span class="kv-k">Paweł Wilk</span><span class="kv-v">PWI</span></div>
+                <div class="kv"><span class="kv-k">Paweł Nowak</span><span class="kv-v"><small>PNO · członkostwo wyłączone</small></span></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="piloci-lista.html">← P1 Piloci</a>
+  <span>·</span>
+  <a href="piloci-grupy.html" class="active">P5 Grupy</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html">ZL1 Zlecenia →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

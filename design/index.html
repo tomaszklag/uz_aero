@@ -359,6 +359,32 @@
   <a href="25c-powiadomienia-samolot.html" class="flow-step">25C Skrzynka o maszynie</a>
 </div>
 
+<!-- ZLECENIA NA LOT (4.0.0, zgłoszenie #239) - dwa pasma, bo to dwie role: ta, która
+     zleca i prowadzi, i ta, która odpowiada. Po przyjęciu zlecenie staje się zwykłą
+     rezerwacją pilota (23F) - dalej biegnie już flow lotu. -->
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="21e-kalendarz-zlecenie.html" class="flow-step">21E Kalendarz</a>
+  <span class="flow-sep">→</span>
+  <a href="31-zlecenie-nowe.html" class="flow-step">31 Nowe zlecenie</a>
+  <span class="flow-sep">→</span>
+  <a href="31b-zlecenie-zaloga.html" class="flow-step">31B Załoga i adresaci</a>
+  <span class="flow-sep">→</span>
+  <a href="32-zlecenie-prowadzone.html" class="flow-step">32 Prowadzone</a>
+  <span class="flow-sep">→</span>
+  <a href="32b-zlecenie-obsadzone.html" class="flow-step">32B Komplet załogi</a>
+</div>
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="20f-pulpit-zlecenia.html" class="flow-step">20F Pulpit</a>
+  <span class="flow-sep">→</span>
+  <a href="30-zlecenia.html" class="flow-step">30 Zlecenia</a>
+  <span class="flow-sep">→</span>
+  <a href="28-zlecenie.html" class="flow-step">28 Zlecenie</a>
+  <span class="flow-sep">→</span>
+  <a href="29-watek.html" class="flow-step">29 Rozmowa</a>
+  <span class="flow-sep">→</span>
+  <a href="23f-rezerwacja-ze-zlecenia.html" class="flow-step">23F Twoja rezerwacja</a>
+</div>
+
 
 <div class="section-title">Rezerwacje i kalendarz (3.0.0)</div>
 <div class="cards">
@@ -475,6 +501,93 @@
     </div>
   </a>
 </div>
+<!-- ══ ZLECENIA NA LOT (4.0.0, zgłoszenie #239) ══
+     Makiety z epiku Z-A (#244); decyzje: docs/zlecenia.md. Kolor modułu to BŁĘKIT -
+     zlecenie jest pytaniem klubu, które czeka na odczyt, a po przyjęciu staje się zieloną
+     rezerwacją pilota. -->
+<div class="section-title">Zlecenia na lot (4.0.0)</div>
+<div class="cards">
+  <a href="28-zlecenie.html" class="card">
+    <div class="card-num">28</div>
+    <div class="card-body">
+      <div class="card-title">28-zlecenie</div>
+      <div class="card-desc">ZLECENIE oczami adresata: termin w błękitnym hero, karta „Załoga" z fotelem zaproponowanym Tobie i załogą, która już jest - bez listy innych adresatów (decyzja 18). Fotel wskazany imiennie: „PRZYJMUJĘ" obsadza go od razu i lot staje się Twoją rezerwacją (23F). Otwarcie karty zapala „Odczytane" u osoby zlecającej. Warianty: 28A grupa albo wspólna lista (zgłoszenie „MOGĘ LECIEĆ"), 28B nieaktualne i odwołane, 28C termin zmieniony, 28D „nie mogę", 28E bez połączenia</div>
+      <div class="card-tags"><span class="tag green">zlecenie</span><span class="tag">adresat</span><span class="tag amber">wymaga sieci</span></div>
+    </div>
+  </a>
+  <a href="32-zlecenie-prowadzone.html" class="card">
+    <div class="card-num">32</div>
+    <div class="card-body">
+      <div class="card-title">32-zlecenie-prowadzone</div>
+      <div class="card-desc">ZLECENIE oczami prowadzącego (autor i każdy koordynator - prowadzą naraz, decyzja 20): każdy szukany fotel ma własną kartę z adresatami - odczyt, odpowiedź, rozmowa; „WYBIERZ" tylko przy „Może lecieć". Historia zmian z nazwiskiem zmieniającego. Osoba z terminem do potwierdzenia stoi przy obu fotelach. Ramki: odwołane (zapis bez akcji, „Powiel" w nagłówku) i osoba przy obu fotelach. Warianty: 32A wspólna lista (fotele przydzielasz sam), 32B komplet załogi, 32C odwołanie, 32D zamień osobę albo odbierz zlecenie</div>
+      <div class="card-tags"><span class="tag green">prowadzenie</span><span class="tag">fotele</span><span class="tag">na żywo</span></div>
+    </div>
+  </a>
+  <a href="31-zlecenie-nowe.html" class="card">
+    <div class="card-num">31</div>
+    <div class="card-body">
+      <div class="card-title">31-zlecenie-nowe</div>
+      <div class="card-desc">NOWE ZLECENIE w trzech krokach: termin i maszyna (ten sam krok, co rezerwacja 22) → zadanie, trasa, plan i opis dla adresatów → ZAŁOGA I ADRESACI (31B): dwa fotele „Ja / Szukam / Brak", pod szukanym fotelem osoba albo grupa, albo przełącznik „Wspólna lista · fotele przydzielę po odpowiedziach". 31C arkusz adresatów: grupy nad osobami. Osoba wskazana imiennie, która jest też w grupie drugiego fotela, dostaje podpis o terminie do potwierdzenia. Termin jest zajęty od wysłania</div>
+      <div class="card-tags"><span class="tag green">formularz</span><span class="tag">grupy</span><span class="tag">fotele</span></div>
+    </div>
+  </a>
+  <a href="29-watek.html" class="card">
+    <div class="card-num">29</div>
+    <div class="card-body">
+      <div class="card-title">29-watek</div>
+      <div class="card-desc">ROZMOWA przy zleceniu - prywatna, autor zlecenia ↔ jeden adresat, na żywo (kanał klubu); w otwartej rozmowie nowa wiadomość nie pokazuje banera. Pasek zlecenia nad wiadomościami, „Odczytane" tylko pod ostatnią własną, a nad polem stała linijka, że rozmowę widzą też koordynatorzy (decyzja 19). Termin zmienia się edycją zlecenia, nie w rozmowie. Warianty: 29A bez połączenia, 29B do czytania dla koordynatora</div>
+      <div class="card-tags"><span class="tag green">rozmowa</span><span class="tag">na żywo</span><span class="tag amber">wymaga sieci</span></div>
+    </div>
+  </a>
+  <a href="30-zlecenia.html" class="card">
+    <div class="card-num">30</div>
+    <div class="card-body">
+      <div class="card-title">30-zlecenia</div>
+      <div class="card-desc">LISTA ZLECEŃ nad zakładkami (czwartej zakładki nie ma - decyzja 7): „Do mnie" i „Zlecone"; drugi segment tylko dla osoby, która zleca albo prowadzi. Koordynator widzi zlecenia całego klubu z postępem „odczytało · mogą lecieć". Wejście z karty „Zlecenia" na Pulpicie (20F). 30A: nic nie przyszło</div>
+      <div class="card-tags"><span class="tag green">lista</span><span class="tag">do mnie</span><span class="tag">zlecone</span></div>
+    </div>
+  </a>
+  <a href="20f-pulpit-zlecenia.html" class="card">
+    <div class="card-num">20F</div>
+    <div class="card-body">
+      <div class="card-title">20f-pulpit-zlecenia</div>
+      <div class="card-desc">Pulpit z kartą „Zlecenia" - wyłącznie gdy jest treść: ile czeka na Twoją odpowiedź i ile prowadzonych szuka załogi. Zero nie dostaje karty (reguła SyncChipa); bez zasięgu karty nie ma, jak karty rezerwacji. Liczby odświeżają się na żywo (kanał klubu)</div>
+      <div class="card-tags"><span class="tag">pulpit</span><span class="tag">wejście</span></div>
+    </div>
+  </a>
+  <a href="21e-kalendarz-zlecenie.html" class="card">
+    <div class="card-num">21E</div>
+    <div class="card-body">
+      <div class="card-title">21e-kalendarz-zlecenie</div>
+      <div class="card-desc">Kalendarz z zajętością ZLECENIA: przerywana błękitna ramka - „jeszcze niekompletne" i „zlecenie" naraz, odróżnialne od czekającej rezerwacji (przerywana zieleń). Druga ramka: tapnięcie w wolne pasmo przez osobę, która może zlecać, otwiera wybór „Zarezerwuj dla siebie / Zleć lot"; bez tej zdolności kalendarz działa jak dziś</div>
+      <div class="card-tags"><span class="tag">kalendarz</span><span class="tag">wejście</span></div>
+    </div>
+  </a>
+  <a href="25d-powiadomienia-zlecenia.html" class="card">
+    <div class="card-num">25D</div>
+    <div class="card-body">
+      <div class="card-title">25d-powiadomienia-zlecenia</div>
+      <div class="card-desc">Skrzynka z wiadomościami o zleceniach: nowe zlecenie z plakietką „Do odpowiedzi" (stoi, dopóki nie odpowiesz), jedna pozycja na rozmowę zamiast pozycji na wiadomość, odpowiedzi adresatów dla autora zlecenia, przydział, zmiana terminu, nieaktualne, odwołane z powodem, zlecenie bez kompletu załogi. Push bez nazwisk i godzin</div>
+      <div class="card-tags"><span class="tag green">skrzynka</span><span class="tag">zlecenia</span></div>
+    </div>
+  </a>
+  <a href="25e-baner-w-aplikacji.html" class="card">
+    <div class="card-num">25E</div>
+    <div class="card-body">
+      <div class="card-title">25e-baner-w-aplikacji</div>
+      <div class="card-desc">Baner w aplikacji (kanał klubu): przy otwartej aplikacji powiadomienie przychodzi kanałem zamiast pushem i staje u góry ekranu - ta sama treść, co wiersz skrzynki, bez plakietki sprawy; znika sam po kilku sekundach, bez dźwięku, przesunięcie w górę zamyka. Nie ma go na ekranie, którego dotyczy, ani w kokpicie. Druga ramka: wiadomość z innego klubu - przychodzi pushem, z nazwą klubu, tapnięcie prowadzi do skrzynki z instrukcją przełączenia</div>
+      <div class="card-tags"><span class="tag green">kanał klubu</span><span class="tag">na żywo</span><span class="tag">powiadomienia</span></div>
+    </div>
+  </a>
+  <a href="23f-rezerwacja-ze-zlecenia.html" class="card">
+    <div class="card-num">23F</div>
+    <div class="card-body">
+      <div class="card-title">23f-rezerwacja-ze-zlecenia</div>
+      <div class="card-desc">Po przyjęciu zlecenie JEST rezerwacją pilota - zielona karta 23, wejście w lot z rezerwacji jak dotąd. Różnice: „PRZESUŃ I POPRAW" nie ma (termin prowadzi zlecenie, zmianę uzgadnia się w rozmowie), a zamiast odwołania stoi „REZYGNUJĘ" - fotel wraca do szukania, termin zostaje zajęty</div>
+      <div class="card-tags"><span class="tag">rezerwacja</span><span class="tag">rezygnacja</span></div>
+    </div>
+  </a>
+</div>
 <div class="section-title">Główny flow</div>
 <div class="grid">
   <a href="00-login.html" class="card">
@@ -553,6 +666,127 @@
 
 <div class="section-title">Warianty i stany</div>
 <div class="grid">
+  <!-- ══ ZLECENIA NA LOT (4.0.0) ══ warianty kart 28, 29, 30, 31 i 32 -->
+  <a href="28a-zlecenie-grupa.html" class="card">
+    <div class="card-num">28A</div>
+    <div class="card-body">
+      <div class="card-title">28a-zlecenie-grupa</div>
+      <div class="card-desc">Zlecenie przyszło przez GRUPĘ albo wspólną listę: „MOGĘ LECIEĆ" jest zgłoszeniem, a fotel przydziela osoba zlecająca (decyzja 11). Trzy ramki: przed odpowiedzią, po zgłoszeniu i termin do potwierdzenia (wspólna lista albo listy obu foteli)</div>
+      <div class="card-tags"><span class="tag">grupa</span><span class="tag">zgłoszenie</span></div>
+    </div>
+  </a>
+  <a href="28b-zlecenie-nieaktualne.html" class="card amber">
+    <div class="card-num">28B</div>
+    <div class="card-body">
+      <div class="card-title">28b-zlecenie-nieaktualne</div>
+      <div class="card-desc">Zlecenie NIEAKTUALNE i ODWOŁANE - cztery ramki: fotel obsadził ktoś inny, odwołanie z powodem, wygasło z początkiem terminu, zlecenie cofnięte. Jedno wyjście, bez akcji; rozmowa zostaje do odczytu. Bez nazwiska osoby, która dostała fotel</div>
+      <div class="card-tags"><span class="tag amber">nieaktualne</span><span class="tag">odwołane</span></div>
+    </div>
+  </a>
+  <a href="28c-zlecenie-termin-zmieniony.html" class="card amber">
+    <div class="card-num">28C</div>
+    <div class="card-body">
+      <div class="card-title">28c-zlecenie-termin-zmieniony</div>
+      <div class="card-desc">Zmiana TERMINU zaczyna odpowiedzi od nowa (decyzja 13): poprzednia odpowiedź przekreślona, pas odpowiedzi wraca. Każda inna zmiana pokazuje tylko „Edytowane · co" bez prośby o odpowiedź i bez nazwiska zmieniającego</div>
+      <div class="card-tags"><span class="tag amber">termin</span><span class="tag">wersja</span></div>
+    </div>
+  </a>
+  <a href="28d-zlecenie-nie-moge.html" class="card">
+    <div class="card-num">28D</div>
+    <div class="card-body">
+      <div class="card-title">28d-zlecenie-nie-moge</div>
+      <div class="card-desc">Arkusz „NIE MOGĘ" - powód opcjonalny (decyzja 16), więc przycisk działa od razu; zdanie, jeśli jest, osoba zlecająca przeczyta jako treść odpowiedzi. Odmowa nie jest czerwona - nikomu niczego nie zabiera</div>
+      <div class="card-tags"><span class="tag">arkusz</span><span class="tag">powód opcjonalny</span></div>
+    </div>
+  </a>
+  <a href="28e-zlecenie-offline.html" class="card amber">
+    <div class="card-num">28E</div>
+    <div class="card-body">
+      <div class="card-title">28e-zlecenie-offline</div>
+      <div class="card-desc">Zlecenie bez połączenia - cały moduł wymaga sieci (§2.2), telefon nie trzyma kopii zleceń. Wzorzec 21B: bez przycisku ponowienia, ekran wraca sam</div>
+      <div class="card-tags"><span class="tag amber">offline</span></div>
+    </div>
+  </a>
+  <a href="29a-watek-offline.html" class="card amber">
+    <div class="card-num">29A</div>
+    <div class="card-body">
+      <div class="card-title">29a-watek-offline</div>
+      <div class="card-desc">Rozmowa bez połączenia: wczytane wiadomości zostają, nowej nie da się wysłać - powód stoi w miejscu blokady. Kolejki wiadomości na później nie ma</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">rozmowa</span></div>
+    </div>
+  </a>
+  <a href="29b-watek-podglad.html" class="card">
+    <div class="card-num">29B</div>
+    <div class="card-body">
+      <div class="card-title">29b-watek-podglad</div>
+      <div class="card-desc">Rozmowa DO CZYTANIA dla koordynatora, który prowadzi cudze zlecenie: bez pola wiadomości, bo pisze wyłącznie autor zlecenia (decyzja 20). Odczyt koordynatora nie zapala „Odczytane"</div>
+      <div class="card-tags"><span class="tag">koordynator</span><span class="tag">do czytania</span></div>
+    </div>
+  </a>
+  <a href="30a-zlecenia-pusto.html" class="card">
+    <div class="card-num">30A</div>
+    <div class="card-body">
+      <div class="card-title">30a-zlecenia-pusto</div>
+      <div class="card-desc">Lista zleceń bez ani jednego zlecenia do Ciebie - stan pusty mówi o wartości ekranu, nie o tym, skąd biorą się dane</div>
+      <div class="card-tags"><span class="tag">pusto</span></div>
+    </div>
+  </a>
+  <a href="31a-zlecenie-zadanie.html" class="card">
+    <div class="card-num">31A</div>
+    <div class="card-body">
+      <div class="card-title">31a-zlecenie-zadanie</div>
+      <div class="card-desc">Krok 2/3 nowego zlecenia: zadanie, lotnisko albo trasa, plan lotu i OPIS - to jedyne pole pisane dla adresatów</div>
+      <div class="card-tags"><span class="tag">formularz</span><span class="tag">krok 2</span></div>
+    </div>
+  </a>
+  <a href="31b-zlecenie-zaloga.html" class="card">
+    <div class="card-num">31B</div>
+    <div class="card-body">
+      <div class="card-title">31b-zlecenie-zaloga</div>
+      <div class="card-desc">Krok 3/3 - ZAŁOGA I ADRESACI: dwa fotele „Ja / Szukam / Brak" („Brak" niedostępne przy wymogu załogi 2-os.), pod szukanym fotelem osoba albo grupa; druga ramka z przełącznikiem „Wspólna lista · fotele przydzielę po odpowiedziach"</div>
+      <div class="card-tags"><span class="tag green">fotele</span><span class="tag">adresowanie</span></div>
+    </div>
+  </a>
+  <a href="31c-zlecenie-adresaci.html" class="card">
+    <div class="card-num">31C</div>
+    <div class="card-body">
+      <div class="card-title">31c-zlecenie-adresaci</div>
+      <div class="card-desc">Arkusz adresatów fotela: wyszukiwarka, grupy nad osobami, wybór wielokrotny; osoba wskazana imiennie na drugi fotel niedostępna z powodem</div>
+      <div class="card-tags"><span class="tag">arkusz</span><span class="tag">grupy</span></div>
+    </div>
+  </a>
+  <a href="32a-zlecenie-wspolna-lista.html" class="card">
+    <div class="card-num">32A</div>
+    <div class="card-body">
+      <div class="card-title">32a-zlecenie-wspolna-lista</div>
+      <div class="card-desc">WSPÓLNA LISTA: adresaci potwierdzili termin, a prowadzący przydziela fotele przyciskami „NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA"</div>
+      <div class="card-tags"><span class="tag">wspólna lista</span><span class="tag">przydział</span></div>
+    </div>
+  </a>
+  <a href="32b-zlecenie-obsadzone.html" class="card">
+    <div class="card-num">32B</div>
+    <div class="card-body">
+      <div class="card-title">32b-zlecenie-obsadzone</div>
+      <div class="card-desc">KOMPLET ZAŁOGI - zlecenie jest rezerwacją tej załogi (zielone hero). Pozostali adresaci zwinięci; przydział da się cofnąć, fotel wraca wtedy do szukania, a drugi zostaje (decyzja 14)</div>
+      <div class="card-tags"><span class="tag green">komplet</span><span class="tag">rezerwacja</span></div>
+    </div>
+  </a>
+  <a href="32c-zlecenie-odwolanie.html" class="card amber">
+    <div class="card-num">32C</div>
+    <div class="card-body">
+      <div class="card-title">32c-zlecenie-odwolanie</div>
+      <div class="card-desc">Arkusz ODWOŁANIA zlecenia: termin wraca do puli, adresaci bez odmowy dostają wiadomość z powodem. Powód opcjonalny</div>
+      <div class="card-tags"><span class="tag amber">odwołanie</span><span class="tag">arkusz</span></div>
+    </div>
+  </a>
+  <a href="32d-zlecenie-adresat.html" class="card amber">
+    <div class="card-num">32D</div>
+    <div class="card-body">
+      <div class="card-title">32d-zlecenie-adresat</div>
+      <div class="card-desc">Menu adresata (decyzja 29): „ZAMIEŃ OSOBĘ" przy fotelu imiennym, „ODBIERZ ZLECENIE", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ". Usunięty dostaje „Zlecenie nieaktualne"</div>
+      <div class="card-tags"><span class="tag amber">adresat</span><span class="tag">zamiana</span></div>
+    </div>
+  </a>
   <a href="27a-samolot-wolna.html" class="card">
     <div class="card-num">27A</div>
     <div class="card-body">

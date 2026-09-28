@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 21E Kalendarz ze zleceniem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+
+  .scroll { flex:1; overflow-y:auto; padding:12px 14px 14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+  .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* Pasek dni - wzorzec 21 (czternaście dób, siedem na ekranie). Dzisiaj piątek,
+     wybrana sobota: linii „teraz" na osi nie ma, bo stoi wyłącznie w dobie dzisiejszej. */
+  .days { display:flex; gap:7px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .days::-webkit-scrollbar { display:none; }
+  .day-chip {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    min-width:46px; padding:7px 8px; border-radius:11px;
+    border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:var(--text-secondary); flex-shrink:0;
+  }
+  .day-chip:hover { border-color:var(--border-strong); }
+  .day-chip.on { background:var(--text-primary); border-color:var(--text-primary); color:#0D0D0D; }
+  .dc-dow { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; }
+  .dc-day { font-family:var(--font-display); font-size:17px; letter-spacing:1px; line-height:1; }
+  .dc-dot { width:4px; height:4px; border-radius:50%; background:var(--green); }
+  .day-chip.on .dc-dot { background:#0D0D0D; }
+  .dc-dot.empty { background:transparent; }
+
+  /* Oś floty - wzorzec 21: maszyny × godziny, okno doby lotnej 06-21 w czasie klubu. */
+  .grid-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:11px 12px 9px; display:flex; flex-direction:column; gap:7px; }
+  .grid-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .grid-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .filter-chip {
+    display:inline-flex; align-items:center; gap:5px; padding:4px 6px; border-radius:7px;
+    border:none; background:transparent; text-decoration:none;
+    font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .filter-chip:hover { color:var(--text-primary); }
+  .filter-chip.on { color:var(--text-secondary); }
+  .row { display:grid; grid-template-columns:50px 1fr; align-items:center; gap:8px; }
+  .row-reg { display:flex; flex-direction:column; gap:1px; }
+  a.row-reg { text-decoration:none; color:inherit; position:relative; padding-right:9px; }
+  a.row-reg::after { content:"\203A"; position:absolute; right:0; top:50%; transform:translateY(-55%); font-family:var(--font-mono); font-size:12px; color:var(--text-muted); }
+  a.row-reg:hover .reg { color:var(--text-primary); }
+  .reg { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .reg-type { font-family:var(--font-mono); font-size:7px; letter-spacing:0.5px; color:var(--text-muted); }
+  .track { position:relative; height:30px; border-radius:7px; background:var(--surface-raised); overflow:hidden; }
+  .ticks { position:absolute; inset:0; background:
+    repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px calc(100%/15));
+  }
+  .ticks3 { position:absolute; inset:0; background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 1px, transparent 1px calc(100%/5));
+  }
+  .busy {
+    position:absolute; top:3px; bottom:3px; border-radius:5px;
+    display:flex; align-items:center; padding:0 5px; overflow:hidden;
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:0.5px; white-space:nowrap;
+    background:var(--surface-hover); border:1px solid var(--border-strong); color:var(--text-secondary);
+    text-decoration:none;
+  }
+  .busy:hover { border-color:var(--text-muted); color:var(--text-primary); }
+  .busy.mine { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .busy.pending { background:var(--green-muted); border:1px dashed var(--green-border); color:var(--green); }
+  .busy.block {
+    background:repeating-linear-gradient(135deg, var(--amber-muted) 0 5px, transparent 5px 10px);
+    border-color:var(--amber-border); color:var(--amber);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ZAJĘTOŚĆ ZLECENIA - PRZERYWANA BŁĘKITNA RAMKA
+
+     Termin zlecenia jest zajęty OD UTWORZENIA (decyzja 1), więc stoi na osi jak każda
+     zajętość - z tłem, a nie samym obrysem: pusty prostokąt czytałby się jak pasmo
+     wolne z zaznaczeniem, a nikt inny tego terminu już nie weźmie.
+
+     Dwa znaki, dwa znaczenia, ten sam podział, co przy czekającej rezerwacji:
+      - KSZTAŁT (przerywana ramka) = „jeszcze niekompletne". Czekająca rezerwacja
+        (`.pending`) czeka na zgodę, zlecenie - na załogę; oba stany są przejściowe
+        i oba odróżniają się od zwykłej zajętości ramką, nie samym kolorem;
+      - KOLOR (błękit) = „zlecenie" - ten sam błękit, co hero karty zlecenia (28, 32),
+        więc oko łączy pasek z kartą bez podpisu. Czekająca rezerwacja jest przerywaną
+        ZIELENIĄ (to moja rezerwacja, tylko jeszcze bez zgody) - tych dwóch nie da się
+        pomylić ani kolorem, ani treścią.
+
+     Stąd pozycja „Zlecenie" w legendzie, choć „Czeka" w niej nie ma (R-F): czekająca
+     rezerwacja różni się od mojej wyłącznie kształtem, a zlecenie wprowadza NOWY kolor -
+     kolor bez legendy byłby zagadką.
+
+     Po komplecie załogi zlecenie JEST rezerwacją tej załogi (§2.1) i pasek przechodzi
+     w zwykły kształt: nazwisko dowódcy, ramka ciągła, tło neutralne (albo zieleń
+     u osoby, która leci). Tak wygląda tu SP-AXA 10-12 - zlecenie przyjęte przez
+     Adama Kowalskiego jest już tylko jego rezerwacją.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .busy.order { background:var(--blue-muted); border:1px dashed var(--blue-border); color:var(--blue); }
+  .busy.order:hover { border-color:var(--blue); color:var(--blue); }
+
+  /* Tapnięcie w wolne pasmo. W aplikacji celem jest CAŁA ścieżka - w makiecie jeden
+     obszar (SP-BKL 09-15), żeby dało się przejść do drugiej ramki. */
+  .free-hit { position:absolute; top:0; bottom:0; border-radius:5px; }
+  .free-hit:hover { background:var(--hairline); }
+
+  .scale { display:grid; grid-template-columns:50px 1fr; gap:8px; padding-top:1px; }
+  .scale-ticks { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:7.5px; color:var(--text-muted); }
+  .legend { display:flex; gap:11px; flex-wrap:wrap; font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); padding-top:3px; border-top:1px solid var(--border); }
+  .lg { display:inline-flex; align-items:center; gap:5px; }
+  .lg-sw { width:12px; height:8px; border-radius:2px; border:1px solid var(--border-strong); background:var(--surface-hover); }
+  .lg-sw.mine { background:var(--green-muted); border-color:var(--green-border); }
+  .lg-sw.order { background:var(--blue-muted); border:1px dashed var(--blue-border); }
+  .lg-sw.block { background:repeating-linear-gradient(135deg, var(--amber-muted) 0 4px, transparent 4px 8px); border-color:var(--amber-border); }
+
+  .res-card {
+    background:var(--surface); border:1px solid var(--green-border); border-radius:13px;
+    padding:11px 12px; display:flex; flex-direction:column; gap:7px;
+    text-decoration:none; color:inherit;
+  }
+  .res-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .res-hours { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .res-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
+  .res-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:11.5px; color:var(--text-secondary); }
+  .res-dot { width:3px; height:3px; border-radius:50%; background:var(--border-strong); }
+
+  .action-bar { padding:10px 14px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:15px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:20px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+
+  .tabbar { display:grid; grid-template-columns:repeat(3, 1fr); border-top:1px solid var(--border); background:var(--surface); padding:6px 8px 22px; flex-shrink:0; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 4px; border-radius:10px; text-decoration:none; color:var(--text-muted); min-height:44px; }
+  .tab.active { color:var(--green); }
+  .tab:hover { color:var(--text-secondary); }
+  .tab.active:hover { color:var(--green); }
+  .tab-label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ARKUSZ WOLNEGO PASMA - „dla siebie" albo „zleć"
+     Rama wspólna z resztą arkuszy (sufit 56 px, uchwyt). TYTUŁEM JEST WSKAZANE PASMO:
+     maszyna, doba i wolne godziny to jedyne, co oba wybory mają wspólne - i jedyne,
+     czego pilot nie widzi już na osi pod pasem tła. Godziny w tym samym kroju, co
+     termin w hero karty rezerwacji i zlecenia, bo za chwilę staną się terminem.
+
+     WSKAZANA GODZINA dalej jest PREFEROWANĄ PORĄ, nie terminem (reguła z 21):
+     obie drogi dostają maszynę i porę dla sugestii godzin, a termin wybiera się
+     w formularzu (22 albo 31 - krok 1 zlecenia to krok 1 rezerwacji, §14.4).
+
+     Dwie karty, nie przyciski: to są dwie DROGI, z których każda prowadzi do innego
+     formularza, a szewron mówi „to prowadzi dalej" jak w całej aplikacji. Kolor ikony
+     powtarza kolor paska, który za chwilę stanie na osi: zieleń własnej rezerwacji,
+     błękit zlecenia. Żadna nie jest wyróżniona - arkusz pyta, a nie podpowiada.
+
+     Bez „ANULUJ": arkusz niczego nie zapisuje, a tapnięcie w pas tła nad nim wraca
+     do kalendarza - tak jak w filtrze maszyn (21D) jedynym „anuluj" byłby brak wyboru.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 16px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .sheet-head { display:flex; flex-direction:column; gap:6px; padding:2px 2px 4px; }
+  .sheet-kicker { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .sheet-hours-row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .sheet-hours { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .sheet-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .choice {
+    display:grid; grid-template-columns:38px 1fr 14px; align-items:center; gap:12px;
+    min-height:66px; padding:12px 13px; border-radius:14px;
+    border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:inherit;
+  }
+  .choice:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .ci { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-strong); background:var(--surface-raised); }
+  .ci.green { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
+  .ci.blue { color:var(--blue); border-color:var(--blue-border); background:var(--blue-muted); }
+  .choice-body { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .choice-title { font-size:14px; font-weight:600; color:var(--text-primary); }
+  .choice-sub { font-size:11px; color:var(--text-secondary); line-height:1.4; }
+  .choice-go { font-family:var(--font-mono); font-size:16px; color:var(--text-muted); }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ═══ PIERWSZA RAMKA: DOBA FLOTY ZE ZLECENIAMI ═══
+     Patrzy Marta Zięba - osoba, która zleca i prowadzi oba zlecenia na SP-ANA. -->
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 21E</span>
+  <span class="slug">kalendarz · zajętość zlecenia</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Kalendarz floty z zajętością zlecenia">
+  <div class="status-bar">
+    <span>07:48</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">KALENDARZ</span>
+        <span class="header-subtitle">FLOTA · CZAS KLUBU</span>
+      </div>
+      <div class="app-header-right">
+        <a href="22-rezerwacja.html" class="icon-btn" title="Nowa rezerwacja">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <div class="days">
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Pt</span><span class="dc-day">2</span><span class="dc-dot empty"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip on">
+          <span class="dc-dow">Sob</span><span class="dc-day">3</span><span class="dc-dot"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Nd</span><span class="dc-day">4</span><span class="dc-dot empty"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Pn</span><span class="dc-day">5</span><span class="dc-dot empty"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Wt</span><span class="dc-day">6</span><span class="dc-dot empty"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Śr</span><span class="dc-day">7</span><span class="dc-dot empty"></span>
+        </a>
+        <a href="21e-kalendarz-zlecenie.html" class="day-chip">
+          <span class="dc-dow">Czw</span><span class="dc-day">8</span><span class="dc-dot empty"></span>
+        </a>
+      </div>
+
+      <div class="grid-card">
+        <div class="grid-head">
+          <span class="grid-title">Sobota 3 października</span>
+          <a href="21d-kalendarz-filtr.html" class="filter-chip on">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V20l-4-2v-6.5z"/></svg>
+            6 z 12
+          </a>
+        </div>
+
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-AXA</span><span class="reg-type">C172</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <a href="23-rezerwacja-szczegoly.html" class="busy" style="left:26.667%; width:13.333%;">A. Kowalski</a>
+            <a href="23-rezerwacja-szczegoly.html" class="busy" style="left:53.333%; width:20%;">B. Nowak</a>
+          </span>
+        </div>
+
+        <!-- ═══ SP-ANA: DWA ZLECENIA, DWA NAPISY ═══
+             Dzień skokowy na dwie zmiany = dwa zlecenia („Powiel" na drugą zmianę -
+             kilku terminów w jednym zleceniu nie ma, §22).
+
+             NAPIS: PIERWSZE SŁOWO TO TEN, KTO LECI. Pasek czterogodzinny ma na tym
+             ekranie ~70 px, czyli mieści około jedenastu znaków - resztę ucina bez
+             wielokropka, jak nazwisko na krótkim pasku rezerwacji (21). Czyta się więc
+             PIERWSZE słowo, a dalszy ciąg jest dopowiedzeniem dla szerszych pasków
+             i dla karty zlecenia. Dwa przykłady w tym wierszu rozstrzygają kolejność:
+              - „ZLECENIE · SZUKA ZAŁOGI" - w fotelach nikogo nie ma, więc w miejscu
+                nazwiska staje słowo ZLECENIE (jak „Przegląd 100 h" na wyłączeniu
+                z użytku). Ucięte do „ZLECENIE ·" dalej mówi prawdę;
+              - „J. WRONA · SZUKA 2. PILOTA" - fotel dowódcy obsadzony, więc napis
+                zaczyna się od NAZWISKA, jak każdy inny pasek na osi (jedna konwencja
+                w rzędzie, decyzja z 2026-09-21). Ucięte do „J. WRONA ·" mówi, kto leci,
+                a że skład jest niekompletny, mówi KSZTAŁT paska.
+             Przegrała wersja „ZLECENIE · J. WRONA · SZUKA 2. PILOTA": ucięta do
+             „ZLECENIE · J" zużywa widoczną szerokość na to, co i tak mówią przerywana
+             ramka, błękit i legenda, a gubi jedyną informację, której kształt nie
+             niesie - nazwisko. Reguła: nazwisko z obsadzonego fotela (dowódca przed
+             drugim pilotem), bez obsady słowo ZLECENIE, „szuka …" zawsze na końcu.
+             To samo zdanie („Zlecenie · szuka dowódcy / drugiego pilota / załogi",
+             §5) dostaje każdy członek klubu - napis nie zdradza adresatów.
+
+             DOKĄD PROWADZI PASEK: prowadzącego (autor, koordynator) - do karty 32;
+             adresata tego zlecenia - do jego karty (28). Dla pozostałych członków to
+             CUDZA ZAJĘTOŚĆ: wąski kształt rezerwacji z samym „szuka …" (§13.1),
+             bez zadania, trasy, opisu i listy adresatów. -->
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-ANA</span><span class="reg-type">AN-2</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <a href="32-zlecenie-prowadzone.html" class="busy order" style="left:20%; width:26.667%;">ZLECENIE · SZUKA ZAŁOGI</a>
+            <a href="32a-zlecenie-wspolna-lista.html" class="busy order" style="left:53.333%; width:26.667%;">J. WRONA · SZUKA 2. PILOTA</a>
+          </span>
+        </div>
+
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-BKL</span><span class="reg-type">PA-28</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <a href="23-rezerwacja-szczegoly.html" class="busy" style="left:6.667%; width:13.333%;">E. Sowa</a>
+            <a href="#wybor" class="free-hit" style="left:20%; width:40%;" aria-label="Wolne pasmo 09:00-15:00"></a>
+            <a href="23-rezerwacja-szczegoly.html" class="busy mine" style="left:60%; width:13.333%;">M. Zięba</a>
+          </span>
+        </div>
+
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-DKM</span><span class="reg-type">C152</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <a href="23-rezerwacja-szczegoly.html" class="busy" style="left:33.333%; width:13.333%;">P. Lis</a>
+            <a href="23-rezerwacja-szczegoly.html" class="busy pending" style="left:73.333%; width:13.333%;">P. Wilk</a>
+          </span>
+        </div>
+
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-ELG</span><span class="reg-type">Aquila</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+          </span>
+        </div>
+
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-FGK</span><span class="reg-type">C182</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <a href="23-rezerwacja-szczegoly.html" class="busy block" style="left:0%; width:100%;">Usterka - radio</a>
+          </span>
+        </div>
+
+        <div class="scale">
+          <span></span>
+          <span class="scale-ticks"><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span></span>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="lg-sw mine"></span>Twoja</span>
+          <span class="lg"><span class="lg-sw"></span>Zajęte</span>
+          <span class="lg"><span class="lg-sw order"></span>Zlecenie</span>
+          <span class="lg"><span class="lg-sw block"></span>Wyłączony</span>
+        </div>
+      </div>
+
+      <!-- Kropka pod sobotą i ta sekcja liczą WŁASNE rezerwacje - zlecenie, które
+           Marta prowadzi, ale w którym nie siedzi w fotelu, własną rezerwacją nie jest
+           (reguła kropki z 21 bez zmian). -->
+      <div class="group-lbl">Twoje rezerwacje</div>
+      <a href="23-rezerwacja-szczegoly.html" class="res-card">
+        <div class="res-top">
+          <span class="res-hours">15:00 → 17:00</span>
+          <span class="res-ac">SP-BKL</span>
+        </div>
+        <div class="res-meta">
+          <span>Lot tech.</span>
+          <span class="res-dot"></span>
+          <span>EPKK</span>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- „ZLEĆ LOT" NIE DOSTAJE DRUGIEGO PRZYCISKU w pasie akcji: zlecenie tworzy się
+         z wolnego pasma (druga ramka) i z listy zleceń (30) - §14.1. Pas akcji zostaje
+         przy jednej czynności, tej samej dla każdego członka klubu. -->
+    <div class="action-bar">
+      <a href="22-rezerwacja.html" class="btn-primary">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        ZAREZERWUJ
+      </a>
+    </div>
+
+    <nav class="tabbar">
+      <a href="20f-pulpit-zlecenia.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tab-label">Pulpit</span>
+      </a>
+      <a href="21e-kalendarz-zlecenie.html" class="tab active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="tab-label">Kalendarz</span>
+      </a>
+      <a href="24-historia.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="tab-label">Historia</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<!-- ═══ DRUGA RAMKA: TAPNIĘCIE W WOLNE PASMO - „DLA SIEBIE" ALBO „ZLEĆ" ═══
+     Arkusz istnieje WYŁĄCZNIE dla osoby, która może zlecać (bit `viewer.order`
+     w oknie kalendarza - telefon zdolności nie zna, wzorzec `viewer.watch`).
+     Bez tej zdolności tapnięcie w wolne pasmo prowadzi wprost do rezerwacji (22),
+     dokładnie jak dziś: pytanie z jedną odpowiedzią byłoby krokiem o niczym.
+     Tapnięcie w PASEK (zajętość) arkusza nie otwiera nigdy - pasek prowadzi do
+     swojej karty. -->
+<header class="canvas-label" id="wybor">
+  <span class="film-strip">NINERDECK - 21E</span>
+  <span class="slug">stan: wolne pasmo · rezerwacja albo zlecenie</span>
+  <span class="canvas-meta">4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Arkusz wolnego pasma z wyborem zlecenia">
+  <div class="status-bar">
+    <span>07:49</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">KALENDARZ</span>
+        <span class="header-subtitle">FLOTA · CZAS KLUBU</span>
+      </div>
+      <div class="app-header-right">
+        <span class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="days">
+        <span class="day-chip"><span class="dc-dow">Pt</span><span class="dc-day">2</span><span class="dc-dot empty"></span></span>
+        <span class="day-chip on"><span class="dc-dow">Sob</span><span class="dc-day">3</span><span class="dc-dot"></span></span>
+        <span class="day-chip"><span class="dc-dow">Nd</span><span class="dc-day">4</span><span class="dc-dot empty"></span></span>
+        <span class="day-chip"><span class="dc-dow">Pn</span><span class="dc-day">5</span><span class="dc-dot empty"></span></span>
+        <span class="day-chip"><span class="dc-dow">Wt</span><span class="dc-day">6</span><span class="dc-dot empty"></span></span>
+        <span class="day-chip"><span class="dc-dow">Śr</span><span class="dc-day">7</span><span class="dc-dot empty"></span></span>
+        <span class="day-chip"><span class="dc-dow">Czw</span><span class="dc-day">8</span><span class="dc-dot empty"></span></span>
+      </div>
+
+      <div class="grid-card">
+        <div class="grid-head">
+          <span class="grid-title">Sobota 3 października</span>
+          <span class="filter-chip on">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V20l-4-2v-6.5z"/></svg>
+            6 z 12
+          </span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-AXA</span><span class="reg-type">C172</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <span class="busy" style="left:26.667%; width:13.333%;">A. Kowalski</span>
+            <span class="busy" style="left:53.333%; width:20%;">B. Nowak</span>
+          </span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-ANA</span><span class="reg-type">AN-2</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <span class="busy order" style="left:20%; width:26.667%;">ZLECENIE · SZUKA ZAŁOGI</span>
+            <span class="busy order" style="left:53.333%; width:26.667%;">J. WRONA · SZUKA 2. PILOTA</span>
+          </span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-BKL</span><span class="reg-type">PA-28</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <span class="busy" style="left:6.667%; width:13.333%;">E. Sowa</span>
+            <span class="busy mine" style="left:60%; width:13.333%;">M. Zięba</span>
+          </span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-DKM</span><span class="reg-type">C152</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <span class="busy" style="left:33.333%; width:13.333%;">P. Lis</span>
+            <span class="busy pending" style="left:73.333%; width:13.333%;">P. Wilk</span>
+          </span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-ELG</span><span class="reg-type">Aquila</span></a>
+          <span class="track"><span class="ticks"></span><span class="ticks3"></span></span>
+        </div>
+        <div class="row">
+          <a class="row-reg" href="27-samolot.html"><span class="reg">SP-FGK</span><span class="reg-type">C182</span></a>
+          <span class="track">
+            <span class="ticks"></span><span class="ticks3"></span>
+            <span class="busy block" style="left:0%; width:100%;">Usterka - radio</span>
+          </span>
+        </div>
+        <div class="scale">
+          <span></span>
+          <span class="scale-ticks"><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span></span>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="lg-sw mine"></span>Twoja</span>
+          <span class="lg"><span class="lg-sw"></span>Zajęte</span>
+          <span class="lg"><span class="lg-sw order"></span>Zlecenie</span>
+          <span class="lg"><span class="lg-sw block"></span>Wyłączony</span>
+        </div>
+      </div>
+
+      <div class="group-lbl">Twoje rezerwacje</div>
+      <span class="res-card">
+        <span class="res-top">
+          <span class="res-hours">15:00 → 17:00</span>
+          <span class="res-ac">SP-BKL</span>
+        </span>
+        <span class="res-meta">
+          <span>Lot tech.</span>
+          <span class="res-dot"></span>
+          <span>EPKK</span>
+        </span>
+      </span>
+    </div>
+
+    <div class="action-bar">
+      <span class="btn-primary">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        ZAREZERWUJ
+      </span>
+    </div>
+
+    <nav class="tabbar">
+      <span class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tab-label">Pulpit</span>
+      </span>
+      <span class="tab active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="tab-label">Kalendarz</span>
+      </span>
+      <span class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="tab-label">Historia</span>
+      </span>
+    </nav>
+
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+
+        <div class="sheet-head">
+          <span class="sheet-kicker">SP-BKL · PA-28 · sobota 3 października</span>
+          <span class="sheet-hours-row">
+            <span class="sheet-hours">09:00 → 15:00</span>
+            <span class="sheet-zone">wolne · czas klubu</span>
+          </span>
+        </div>
+
+        <a class="choice" href="22-rezerwacja.html">
+          <span class="ci green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><polyline points="9 15.5 11 17.5 15 13.5"/></svg>
+          </span>
+          <span class="choice-body">
+            <span class="choice-title">Zarezerwuj dla siebie</span>
+            <span class="choice-sub">Lecisz Ty - rezerwacja na Twoje nazwisko.</span>
+          </span>
+          <span class="choice-go">&#8250;</span>
+        </a>
+
+        <a class="choice" href="31-zlecenie-nowe.html">
+          <span class="ci blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/></svg>
+          </span>
+          <span class="choice-body">
+            <span class="choice-title">Zleć lot</span>
+            <span class="choice-sub">Szukasz załogi - termin jest zajęty od wysłania.</span>
+          </span>
+          <span class="choice-go">&#8250;</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="21-kalendarz.html">
+    <span class="vp-badge">21</span>
+    <span class="vp-body">
+      <span class="vp-name">Doba floty - stan podstawowy</span>
+      <span class="vp-when">Jedna doba, wszystkie maszyny, siatka 06-21 w czasie klubu. Tapnięcie w wolne pasmo zakłada rezerwację, tapnięcie w pasek otwiera szczegóły.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="21b-kalendarz-offline.html">
+    <span class="vp-badge amber">21B</span>
+    <span class="vp-body">
+      <span class="vp-name">Bez zasięgu - kalendarz wymaga sieci</span>
+      <span class="vp-when">Karta „BRAK POŁĄCZENIA" zamiast pustej siatki; bez przycisku ponowienia, ekran wraca sam. Zlecenia niczego tu nie zmieniają - też wymagają sieci.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="21c-kalendarz-pusty.html">
+    <span class="vp-badge blue">21C</span>
+    <span class="vp-body">
+      <span class="vp-name">Doba bez rezerwacji</span>
+      <span class="vp-when">Flota wolna: puste ścieżki i stan pusty mówiący, co się stanie po tapnięciu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="21d-kalendarz-filtr.html">
+    <span class="vp-badge blue">21D</span>
+    <span class="vp-body">
+      <span class="vp-name">Filtr maszyn</span>
+      <span class="vp-when">Arkusz wyboru maszyn na osi - preferencja patrzenia, lokalnie per pilot i klub.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="21e-kalendarz-zlecenie.html">
+    <span class="vp-badge blue">21E</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenia na osi i arkusz „dla siebie / zleć"</span>
+      <span class="vp-when">Od 4.0.0. Termin zlecenia jest zajęty od wysłania (decyzja 1), więc stoi na osi jak każda zajętość - w przerywanej błękitnej ramce, dopóki któryś szukany fotel jest pusty: przerywana = jeszcze niekompletne, błękit = zlecenie (czekająca rezerwacja ma przerywaną zieleń). Napis zaczyna się od nazwiska z obsadzonego fotela, a bez obsady od słowa ZLECENIE; „szuka …" na końcu. Po komplecie pasek staje się zwykłą rezerwacją. Pasek prowadzi prowadzącego do karty 32, adresata do jego karty 28, a dla pozostałych członków jest cudzą zajętością bez treści zlecenia. DRUGA RAMKA: tapnięcie w wolne pasmo przez osobę, która może zlecać, otwiera arkusz „Zarezerwuj dla siebie / Zleć lot" z pasmem w nagłówku; bez tej zdolności arkusza nie ma i tapnięcie prowadzi wprost do rezerwacji (22), jak dziś.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="31-zlecenie-nowe.html">
+    <span class="vp-badge">31</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowe zlecenie (dalej po „Zleć lot")</span>
+      <span class="vp-when">Krok 1 to krok 1 rezerwacji - maszyna z pasma i pora jako preferencja dla sugestii godzin; potem zadanie, załoga i adresaci.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Karta prowadzącego (z paska zlecenia)</span>
+      <span class="vp-when">Fotele, adresaci, odczyty i odpowiedzi - widzi ją autor zlecenia i każdy, kto prowadzi zlecenia klubu (decyzja 20).</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20f-pulpit-zlecenia.html">← 20F Pulpit</a>
+  <span>·</span>
+  <a href="21-kalendarz.html">21 Kalendarz</a>
+  <a href="21b-kalendarz-offline.html">21B Offline</a>
+  <a href="21c-kalendarz-pusty.html">21C Pusty</a>
+  <a href="21d-kalendarz-filtr.html">21D Filtr</a>
+  <a href="21e-kalendarz-zlecenie.html" class="active">21E Zlecenie</a>
+  <a href="#wybor">21E Arkusz</a>
+  <span>·</span>
+  <a href="22-rezerwacja.html">22 Rezerwacja</a>
+  <a href="31-zlecenie-nowe.html">31 Zleć lot →</a>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone</a>
+</nav>
+
+</body>
+</html>
