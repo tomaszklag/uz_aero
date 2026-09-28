@@ -321,12 +321,12 @@
 
   <div class="screen">
     <!-- APP HEADER - ten sam co na 10, plus plakietka trybu.
-         Powrót zostaje „‹ Dzień": tryb edycji nie jest osobnym ekranem i nie ma
+         Powrót zostaje „‹ Historia": tryb edycji nie jest osobnym ekranem i nie ma
          własnego stosu nawigacji. Wyjście z trybu stoi na dole, przy akcjach. -->
     <div class="app-header">
-      <a href="20-pulpit.html" class="back-btn" title="Wróć na Pulpit">
+      <a href="24-historia.html" class="back-btn" title="Wróć do Historii">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Dzień
+        Historia
       </a>
       <div class="app-header-center">
         <span class="screen-title">SP-AXA/2026-08-06/AKO/1</span>
@@ -770,7 +770,7 @@
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Zostaw</a>
-          <a href="20-pulpit.html" class="btn-void-confirm">
+          <a href="24-historia.html" class="btn-void-confirm">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             Usuń wpis
           </a>
@@ -794,11 +794,18 @@
       <span class="vp-when">Stan domyślny: oś czysto opisowa, wiersz 28 px, bez ołówków. Znacznik „popr." zostaje - mówi o danych, nie o możliwości zapisu - i tam JEST celem dotknięcia: otwiera historię zmian (10I), bo bez arkusza korekty nie ma innej drogi do pytania „co właściwie zmieniono".</span>
     </span>
   </a>
-  <a class="vp-item active" href="10d-edycja.html">
+  <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
       <span class="vp-name">Operacja - tryb edycji</span>
       <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane operacji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty - po 24 h od zdania ekran jest podglądem (10B).</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="10l-usun-sesje.html">
+    <span class="vp-badge">10L</span>
+    <span class="vp-body">
+      <span class="vp-name">Usunięcie całego wpisu</span>
+      <span class="vp-when">Potwierdzenie nad trybem edycji (10D): wiersze nazywają konkretną operację (maszyna, bieg silnika, Loty · Blok · Lot), baner mówi o skutku - wpis znika z dnia, historii i sum, a zapis zostaje w rejestrze i widzi go administrator. Powód opcjonalny.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

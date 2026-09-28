@@ -25,7 +25,7 @@ i `@ninerdeck/format` (czasy UTC, czas blokowy, motogodziny, litry). Wszystkie t
 z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności -
 kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE - `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
-Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami; od issue #107 (2026-09-08) w STYLU LEKKIM: kolumna boczna z ikonami i kontekstem klubu, okruszki w dzienniku, typografia zdaniowa - sekcja „Styl lekki panelu". Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) jest odtąd ARCHIWUM panelu 1.0**, nie specyfikacją.
+Faza 7 **panel administracyjny (web)** - backend wdrożony w całości (role, `/admin/*`, cykl życia flagi, audyt) i **nietknięty**; klient web przepisany na **PANEL 2.0** (2026-08-30, gałąź `panel-2.0`): dwa moduły - **PILOCI i SAMOLOTY** - zamiast jedenastu ekranów, bez banerów wyjaśniających, bez kafli z licznikami; od issue #107 (2026-09-08) w STYLU LEKKIM: kolumna boczna z ikonami i kontekstem klubu, okruszki w dzienniku, typografia zdaniowa - sekcja „Styl lekki panelu". Trzeci moduł - **DZIENNIK** (2026-08-30): trzy poziomy (flota w zakresie dat → grid operacji jednej maszyny → jedna operacja z osią zdarzeń), dziewięć kolumn zamiast siedemnastu, wyłącznie ODCZYTY - zero szacunków i prognoz, brak odczytu widoczny jako kreska. Wymagał migracji 3 (osiem kolumn projekcji: bieg silnika, koperta lotów, lotniska, dolewka paliwa, wpis ręczny, olej do lotu) i **przebudowy projekcji na istniejących wierszach**. Decyzje, reguły redakcyjne i liczby: **`docs/panel-2.0.md`**; szkielet warstw dalej w `docs/architektura-panelu-frontend.md`. Pozostałe ekrany (pulpit, dni, flagi, zdarzenia, eksporty, audyt, statystyki, analityka, konserwacja) usunięte z kodu i odzyskiwalne z historii gita - wracają pojedynczo, każdy przepisany pod reguły 2.0. **`design/admin/` (23 ekrany, `SZABLON.html`, `ANALIZA.md`) było ARCHIWUM panelu 1.0 i zostało USUNIĘTE 2026-09-28** (decyzja właściciela: nieużywane i źle zaprojektowane) - odzyskiwalne z historii gita, nie jest specyfikacją niczego.
 **Analityka zużycia** (2026-08-05) - wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
 (ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
@@ -302,7 +302,7 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 > **PANEL WRACA DO DESIGN-FIRST** (decyzja właściciela 2026-09-07, odwraca zapis
 > „panel 2.0 nie ma makiet"): najpierw powstaje makieta HTML, potem kod - ta sama reguła,
 > co w aplikacji pilota. Uzasadnienie i historia: `docs/panel-2.0.md` §3.7.
-> **`design/admin/` (23 pliki) zostaje ARCHIWUM panelu 1.0** i nie jest specyfikacją.
+> **`design/admin/` (archiwum panelu 1.0) USUNIĘTE 2026-09-28** - zostaje wyłącznie w historii gita.
 
 Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
 (działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
@@ -452,9 +452,16 @@ akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak now
   KAŻDEGO ekranu z arkuszem i dlatego poprawka siedzi w ramie, nie w ekranie
 
 ### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
-- Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")
-- Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`
-- Po zmianach: zero martwych linków (sprawdzaj greppem po `href`)
+- Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html`. Spis jest ułożony
+  RODZINAMI ekranów w kolejności użycia aplikacji (od 2026-09-28): karta - także wariantu
+  literowego, stanu i arkusza - idzie do sekcji swojej rodziny (numer w nazwie pliku),
+  z `data-kind` (Ekran / Krok / Wariant / Stan / Arkusz / Podgląd / Wzorzec / Archiwum);
+  makieta, która zmienia flow, dostaje też krok na mapie flow (sekcja 1). Liczby w spisie
+  treści liczy skrypt strony - ręcznie ich nie wpisujemy. Makiety panelu mają własny spis
+  (`design/panel/index.html`)
+- Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z klasą `active` i tagiem „ten ekran" (arkusz: „ten arkusz"); badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`. Panel kopiowany od sąsiada MUSI dostać własną pozycję i przenieść na nią oba znaczniki - 18 paneli wskazywało do 2026-09-28 cudzy plik
+- **Makiety to PROTOTYP** (cel właściciela, 2026-09-28): przegląd polega na przeklikaniu się przez ekrany tak, jak przeszedłby pilot. Akcja w ramce telefonu prowadzi tam, dokąd prowadzi w aplikacji (cel sprawdzaj w kodzie nawigacji, nie w starszej makiecie), a bieżący ekran NIE prowadzi do archiwum linii 2.x bez dopisku „2.x" w linku
+- **Strażnik `app/src/__tests__/designMockups.test.ts`** pilnuje tego wszystkiego naraz: każda makieta ma kartę w spisie (także `design/panel/`), zero martwych linków i kotwic w całym `design/`, panel wariantów oznacza jako bieżący wyłącznie swój plik, żadnego przejścia do archiwum bez „2.x", a każdy bieżący ekran jest osiągalny klikaniem od `00-login.html` bez spisu. **Rejestrem jest spis**: to z kart (`data-kind`, klasa `archive`) test wie, co jest ekranem, wzorcem i archiwum - przeniesienie makiety do archiwum to zmiana jednej karty. Po zmianie w `design/` uruchom `npx jest designMockups tokensCssVars` w `app/`
 
 ### Nagłówek ekranu (issue #23 pkt 7 - jeden wzorzec dla całej aplikacji)
 Tytuł i podtytuł wyrównane **DO LEWEJ**, ustawienia (zębatka) zawsze **PO PRAWEJ** -
@@ -705,8 +712,8 @@ i dokumentacja.
   (panelu, przeglądarki, telefonu). „Sesja wygasła. Zaloguj się jeszcze raz",
   `ADMIN_SESSION_TTL_SEC`, `refresh_tokens`, ciasteczko `ninerdeck_admin` - tam „sesja"
   znaczy dostęp, nie lot. Przemianowanie ich byłoby błędem rzeczowym
-- **`design/admin/` (archiwum panelu 1.0) NIE zostało przemianowane** - to zamrożony
-  zapis decyzji sprzed 2026-08-30, nie specyfikacja
+- **`design/admin/` (archiwum panelu 1.0) NIE zostało przemianowane** - był to zamrożony
+  zapis decyzji sprzed 2026-08-30; od 2026-09-28 usunięty w całości
 - komentarze w kodzie przemianowano tam, gdzie i tak zmieniał się plik; reszta mówi
   „sesja" dalej i nie jest to niespójność do naprawiania hurtem - docblock stoi obok
   identyfikatora, który nazywa się `session`
@@ -2319,7 +2326,10 @@ ekran z podglądem motywów jest do usunięcia i nie jest już potrzebny."
   był jednym plikiem naraz: ekranem podglądu i słownikiem wartości, a skasowaliśmy ekran.
   Reguła „ekran wdrażamy 1:1 z `design/*.html`" zostaje w mocy dla wszystkich pozostałych
   ekranów aplikacji; kolory mockupów dalej stoją w bloku `:root` ich `<head>`, a równość
-  z tokenami przybija `app/src/__tests__/tokensCssVars.test.ts`
+  z tokenami przybija `app/src/__tests__/tokensCssVars.test.ts` - od 2026-09-28 w KAŻDEJ
+  makiecie `design/*.html`, nie w jednej. Przez czytanie jednego pliku `--text-placeholder`
+  rozjechał się w 38 makietach na dwie niezatwierdzone wartości (`#5A5A5A`, `#5C5C5C`),
+  a telefon i panel rysowały `#565656` - każdy skopiowany `<head>` jest osobną kopią palety
 
 ## Log zdarzeń jest JEDEN - kokpit rysuje oś operacji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej operacji: oś na ekranie operacji (10) i osobny
@@ -3825,7 +3835,7 @@ issue #157–#163, workflow akceptacji i push = milestone 3.1.0 (#164–#169).
 - **MAKIETY 3.0 MAJĄ NOWE NUMERY** (20-24), a `01` i `12` zostają specyfikacją linii 2.x
   aż do wydania - podręcznik osadza rodzinę `01` w 13 miejscach i opisuje wersję, którą
   piloci mają w telefonach. Plan przejścia i los tych plików (archiwum w miejscu, jak
-  `design/admin/`): `docs/rezerwacje.md` §9.1a.
+  kiedyś `design/admin/` - to usunięto 2026-09-28): `docs/rezerwacje.md` §9.1a.
 - **PANEL PATRZY SZERZEJ NIŻ TELEFON**: na telefonie osią kalendarza jest JEDNA DOBA całej
   floty („czym polecę dzisiaj"), w panelu maszyny × DNI („kto ma zaplanowane loty, kiedy
   wcisnąć przegląd"). Ta sama zajętość, dwa pytania, dwa kadry. Komponenty osi mieszkają
@@ -3961,6 +3971,11 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   tapnięcia: ołówek (okno korekty) albo oko (podgląd po oknie). Archiwum jest zwinięte
   i zwija się przy KAŻDYM wejściu - pytanie „co mogę poprawić" wraca za każdym razem,
   a „co latałem w maju" pada raz na jakiś czas
+- **POWRÓT Z EKRANU OPERACJI TO „‹ Historia"** - w 10 i w podglądzie 10B jednakowo
+  (decyzja właściciela 2026-09-28). Napis mówi, DOKĄD się wraca, nazwą zakładki: „‹ Dzień"
+  i „‹ Dni" przetrwały z linii 2.x („Mój dzień", „Poprzednie dni"), a makiety prowadziły
+  przy tym na Pulpit i do archiwalnego 12, choć kod od 3.0.0 wraca do Historii (także po
+  usunięciu wpisu). Wyjątek bez zmian: wejście z kokpitu (04 → 10D) wraca do kokpitu
 - **`MyDayScreen` (01) SKASOWANY**, a `buildHistory`/`editableBadge`/`remainingLabel`
   umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
   archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
@@ -5263,7 +5278,10 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 
 ## Reguły przy zlecaniu agentom
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
-1. Pełne design tokeny CSS z `:root` (z sekcji wyżej)
+1. Pełne design tokeny CSS z `:root` - skopiowane z istniejącej makiety (np.
+   `design/20-pulpit.html`), nie przepisane z pamięci ani z sekcji wyżej, która nie niesie
+   kompletu (brak w niej m.in. `--text-placeholder`). Test tokenów czyta `:root` KAŻDEJ
+   makiety, więc wartość spoza palety jest czerwonym testem
 2. Szablon ramki właściwej dla powierzchni: aplikacja pilota → phone frame (393×852px,
    `--phone-scale`, Dynamic Island); panel → kopia ramy z `design/panel/SZABLON.html`
    (okno 1440×900, pasek górny, kolumna boczna z kontekstem klubu, `.content > .page`),
@@ -5274,7 +5292,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera - stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** - plakietka istnieje wyłącznie offline
-7. Gdy ekran ma warianty - panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
+7. Gdy ekran ma warianty - panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej), z WŁASNĄ pozycją oznaczoną `active` + „ten ekran"; karta w `design/index.html` w sekcji rodziny; na koniec strażnik `npx jest designMockups tokensCssVars` w `app/` musi być zielony
 8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek - sekcje „Operacja = jeden bieg silnika" i „Dzień pilota = lista operacji" wyżej**: operacja = jeden bieg silnika (po STOP nie ma drugiego startu - hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest OPERACJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA OPERACJI - klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo - dokładnie tak powstał flow, który właśnie przebudowaliśmy
 9. **Gdy ekran czeka na jakikolwiek odczyt** - sekcja „Stan ładowania" niżej i arkusz
    `design/LOADERY.html`: skeleton w geometrii docelowej, nigdy spinner, nigdy pustka;

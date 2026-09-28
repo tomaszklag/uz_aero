@@ -77,12 +77,12 @@
   .scroll > * { flex-shrink:0; }
 
   /* ===== SKELETON - jedyny nowy prymityw tego arkusza =====
-     Plamka w kolorze `--surface-hover` - środek zakresu, po którym w panelu webowym
-     przesuwa się gradient; jedyny odcień widoczny i na `--surface` (wnętrze karty),
-     i na `--bg` (goła treść ekranu), we wszystkich pięciu motywach.
-     Puls, NIE shimmer: panel admin (`design/admin/SZABLON.html`) przesuwa gradient, bo
-     w przeglądarce to darmowe; aplikacja jest React Native bez modułu natywnego do
-     gradientów, a animacja `opacity` jedzie na wątku UI (`useNativeDriver`).
+     Plamka w kolorze `--surface-hover` - jedyny odcień widoczny i na `--surface`
+     (wnętrze karty), i na `--bg` (goła treść ekranu), w obu motywach.
+     Puls, NIE shimmer: aplikacja jest React Native bez modułu natywnego do gradientów,
+     a animacja `opacity` jedzie na wątku UI (`useNativeDriver`). Panel webowy pulsuje
+     tak samo (`.skeleton` w `design/panel/panel.css`) - gradient wędrujący pod maską
+     był drugą animacją i drugim powodem do przemalowania.
      Wszystkie plamki na ekranie oddychają WSPÓLNYM rytmem - rozjechane fazy czyta się
      jak migotanie, a nie jak jedna rzecz, która się ładuje. */
   .skel { display:block; height:13px; border-radius:6px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
@@ -302,7 +302,7 @@
     <span class="vp-badge">7</span>
     <span class="vp-body">
       <span class="vp-name">Puls, nie shimmer</span>
-      <span class="vp-when">Plamka pulsuje przezroczystością 1 → 0.45 w cyklu 1400 ms, wspólnym dla całego ekranu. Panel webowy przesuwa gradient (`.skel` w `design/admin/SZABLON.html`), bo w przeglądarce to darmowe; aplikacja jest React Native bez modułu natywnego do gradientów, a `opacity` animuje się na wątku UI. Rozjechane fazy czytają się jak migotanie - dlatego rytm jest jeden.</span>
+      <span class="vp-when">Plamka pulsuje przezroczystością 1 → 0.45 w cyklu 1400 ms, wspólnym dla całego ekranu. Aplikacja jest React Native bez modułu natywnego do gradientów, a `opacity` animuje się na wątku UI; panel webowy pulsuje tak samo (`.skeleton` w `design/panel/panel.css`). Rozjechane fazy czytają się jak migotanie - dlatego rytm jest jeden.</span>
     </span>
   </div>
 </aside>
@@ -397,7 +397,7 @@
   <a href="07-zmiana-zalogi.html">07 Załoga</a>
   <a href="13-ustawienia.html">13 Ustawienia</a>
   <span>·</span>
-  <a href="admin/SZABLON.html">Szablon panelu →</a>
+  <a href="panel/SZABLON.html">Szablon panelu →</a>
 </nav>
 
 </body>

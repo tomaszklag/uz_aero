@@ -32,8 +32,8 @@ export const fontFamilyNative = {
 /**
  * Rodziny czcionek dla CSS. Trzy, nie osiem - w przeglądarce grubość jest OSOBNĄ
  * właściwością (`font-weight`), więc nie należy do nazwy rodziny. Te same trzy
- * wartości stoją w `design/admin/SZABLON.html` jako `--font-display`, `--font-body`
- * i `--font-mono`.
+ * wartości stoją w bloku `:root` makiet `design/*.html` jako `--font-display`,
+ * `--font-body` i `--font-mono`.
  */
 export const fontFamilyCss = {
   display: "'Bebas Neue', sans-serif",

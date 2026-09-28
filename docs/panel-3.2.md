@@ -37,8 +37,8 @@ Organizacje i Zgłoszenia, a produkt urósł o wielofirmowość, logowanie hasł
 i rezerwacje. Ten milestone domyka listę z zamówienia.
 
 **Ostatnie zdanie zamówienia jest twarde i obowiązuje każdy epik**: nie odzyskujemy
-ekranów panelu 1.0 z historii gita „jak stały". `design/admin/` (23 pliki) zostaje
-ARCHIWUM i nie jest specyfikacją. Każdy ekran powstaje od nowa: najpierw wymagania, potem
+ekranów panelu 1.0 z historii gita „jak stały". `design/admin/` (23 pliki) było
+ARCHIWUM i nie było specyfikacją - usunięte 2026-09-28. Każdy ekran powstaje od nowa: najpierw wymagania, potem
 makieta z `design/panel/SZABLON.html`, potem kod (§15, wariant odrzucony pierwszy).
 
 ---

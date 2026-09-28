@@ -251,7 +251,7 @@ wcześniej.
 **Panel wraca do design-first** (decyzja właściciela): najpierw powstaje makieta HTML,
 potem kod - dokładnie ta sama reguła, co w aplikacji pilota. Makiety panelu 2.0 mieszkają
 w **`design/panel/`** (`SZABLON.html` + `panel.css` + ekrany); `design/admin/` (23 pliki)
-zostaje archiwum panelu 1.0 i nie jest specyfikacją niczego.
+było archiwum panelu 1.0 i nie było specyfikacją niczego - usunięte 2026-09-28 (w historii gita).
 
 **Co obowiązuje odtąd:** nowy ekran panelu zaczyna się od skopiowania
 `design/panel/SZABLON.html`. Wątpliwość do makiety = rozmowa przed implementacją, nie

@@ -1329,10 +1329,10 @@ dotarcia paczki, bo pilot bez zasięgu dosyła zapisy po godzinach.
 
 Administracja danymi referencyjnymi (samoloty, konfiguracje, piloci), a także rozwiązywanie
 flag, korekty po oknie 24 h i nadzór nad eksportem: **osobna aplikacja web** (decyzja
-2026-07-31, odwraca 2026-07-24). Projekt UI: `design/admin/` - 20 ekranów w ramce okna
-1440×900 na tych samych tokenach i czcionkach co mockupy telefonu (`design/admin/SZABLON.html`).
-Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z wyceną:
-`design/admin/ANALIZA.md`.
+2026-07-31, odwraca 2026-07-24). Projekt UI: `design/panel/` - makiety panelu 2.0 w ramce
+okna 1440×900 na tych samych tokenach i czcionkach co mockupy telefonu (spis:
+`design/panel/index.html`, rama i inwentarz: `design/panel/SZABLON.html`). Makiety panelu
+1.0 (`design/admin/` z analizą `ANALIZA.md`) usunięto 2026-09-28 - są w historii gita.
 
 ---
 
