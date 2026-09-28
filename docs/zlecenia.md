@@ -964,10 +964,9 @@ Rezerwacja z pustym fotelem łamie założenie „lot ma pilota" w tych miejscac
 Numeracja **Z** (zlecenia). Strzałka = zależność twarda.
 
 ```
-Z-A projekt i makiety (telefon + panel) ──────────────┬─► Z-C aplikacja pilota ──┐
-                                                      │                         ├─► Z-W wydanie 4.0.0
-Z-B serwer: migracja 16, grupy, zlecenia, ──┬─────────┴─► Z-D panel ────────────┤   (nowy APK)
-    odpowiedzi, wątki, powiadomienia, zegar  └─► Z-E kanał klubu ───────────────┘
+Z-A projekt i makiety (telefon + panel) ──┐
+Z-B serwer: migracja 16, grupy, zlecenia ─┼─┬─► Z-C aplikacja pilota ──┐
+Z-E kanał klubu (moduł całej aplikacji) ──┘ └─► Z-D panel ─────────────┴─► Z-W wydanie 4.0.0 (nowy APK)
 ```
 
 1. **Z-A** - makiety z §14.2 i §15 oraz makiety kanału klubu (baner w aplikacji, dzwonek
@@ -977,7 +976,9 @@ Z-B serwer: migracja 16, grupy, zlecenia, ──┬─────────�
    i API. Najdłuższy kawałek.
 3. **Z-E** - **kanał klubu** (#246): moduł całej aplikacji - serwer, łącze w aplikacji
    i w panelu, rozdzielnik powiadomień, skrzynka w panelu i podpięcie modułów z K3
-   (`docs/kanal-klubu.md` §8: KK-A…KK-D).
+   (`docs/kanal-klubu.md` §8: KK-A…KK-D). Rusza RÓWNOLEGLE z Z-B i na niego nie czeka:
+   kanał jest modułem ogólnym, a tematy zleceń i rozmów dokładają Z-B (serwer - za
+   portem z atrapą, dopóki kanału nie ma), Z-C i Z-D.
 4. **Z-C** - aplikacja (po Z-A, Z-B; tematy zleceń i rozmów po Z-E).
 5. **Z-D** - panel (po Z-A, Z-B; tematy zleceń i rozmów po Z-E), razem z grupami w module
    Piloci.
