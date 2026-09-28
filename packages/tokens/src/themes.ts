@@ -11,7 +11,8 @@
  * podglądu motywów, skasowany razem z ekranem, który pokazywał) - odtąd palety żyją
  * w kodzie, a mockupy aplikacji biorą kolory z bloku `:root` swojego `<head>`.
  * Kopia dla panelu (`admin/src/styles/tokens.css`) jest GENEROWANA stąd, a równości
- * z `design/admin/SZABLON.html` pilnuje `app/src/__tests__/tokensCssVars.test.ts`.
+ * z blokiem `:root` KAŻDEJ makiety `design/*.html` pilnuje
+ * `app/src/__tests__/tokensCssVars.test.ts`.
  *
  * Solar nadpisuje część tokenów Night i dziedziczy resztę spreadem `...nightColors` -
  * odwzorowanie kaskady, którą miał mockup (`[data-theme="solar"]` nadpisywał wybrane

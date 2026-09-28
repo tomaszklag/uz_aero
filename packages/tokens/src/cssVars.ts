@@ -2,15 +2,15 @@
  * Ninerdeck - motyw jako ZMIENNE CSS (dla panelu webowego).
  *
  * Aplikacja mobilna czyta tokeny jako obiekt (`Theme`), bo React Native nie ma CSS.
- * Przeglądarka woli zmienne: mockupy w `design/admin/` są napisane na `var(--green)`,
+ * Przeglądarka woli zmienne: makiety w `design/` są napisane na `var(--green)`,
  * `var(--surface-raised)` i tak dalej, a `CLAUDE.md` zakazuje hardcoded kolorów.
  * Ten moduł zamienia jedno na drugie, żeby panel nie musiał trzymać DRUGIEJ kopii
  * palety - dokładnie tego problemu, dla którego ten pakiet powstał.
  *
  * Nazwy zmiennych powstają mechanicznie z nazw tokenów (`surfaceRaised` →
  * `--surface-raised`), więc zgadzają się z mockupami bez ręcznego słownika, którego
- * nikt by nie pilnował. Test w tym pakiecie porównuje wynik z blokiem `:root`
- * w `design/admin/SZABLON.html`.
+ * nikt by nie pilnował. Test `app/src/__tests__/tokensCssVars.test.ts` porównuje wynik
+ * z blokiem `:root` każdej makiety `design/*.html`.
  */
 
 import type { Theme } from './theme';

@@ -43,7 +43,8 @@
 > na nazwy rzeczy; numery zostały wyłącznie w narracji historycznej.
 
 > Zakres: `server/` i `packages/domain` - czyli to, co panel konsumuje.
-> Zakres UI panelu (20 ekranów, role, mapowanie ekran→endpoint): `design/admin/ANALIZA.md`.
+> Zakres UI panelu 1.0 (20 ekranów, role, mapowanie ekran→endpoint): `design/admin/ANALIZA.md` -
+> usunięte 2026-09-28 razem z archiwum panelu 1.0, w historii gita. Bieżące makiety: `design/panel/`.
 > Architektura istniejącego kodu i reguły twarde: `docs/architektura-kodu.md`.
 > Kontrakt API i model danych: `docs/_main.md.txt` §4.6, §5.3.
 >

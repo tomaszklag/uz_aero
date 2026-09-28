@@ -247,7 +247,8 @@ nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
 
 **Czego wymaga panel administracyjny (faza 7, decyzja 2026-07-31)** - braki wykryte przy
 projektowaniu `design/admin/`, ODRĘBNE od listy wyżej. Pełne mapowanie ekran → endpoint
-i wycena: `design/admin/ANALIZA.md`.
+i wycena: `design/admin/ANALIZA.md` (archiwum panelu 1.0, usunięte 2026-09-28 - w historii
+gita).
 
 - ~~**Rola nie istnieje nigdzie.**~~ **ZROBIONE 2026-07-31.** Migracja 7 dokłada
   `pilots.role` (CHECK na słowniku, `DEFAULT 'pilot'`), JWT niesie trzeci claim, a mapa
@@ -356,11 +357,15 @@ drożej niż w pliku, którego nikt jeszcze nie renderuje.
 - **Migracja bez regresu**: `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są
   shimami (`export * from …`), więc kilkadziesiąt plików ekranów nie zmieniło ani znaku.
 - **Rozjazd tokenów z mockupami pilnuje test** `app/src/__tests__/tokensCssVars.test.ts`:
-  porównuje `themeCssVars(THEMES.night)` z blokiem `:root` w `design/admin/SZABLON.html`.
-  Ma kontrolę samego siebie (część wspólna > 20 zmiennych), bo bez niej „zgodne" mogłoby
-  znaczyć „zero wspólnych nazw". Sprawdza też, że wymiary ramy panelu (`--sidebar-w`,
-  `--topbar-h`, `--app-scale`) NIE wyciekają do tokenów produktu - to układ jednego
-  ekranu, nie token designu.
+  porównuje `themeCssVars(THEMES.night)` z blokiem `:root` KAŻDEJ makiety `design/*.html`
+  (do 2026-09-28 z jednym plikiem - `design/admin/SZABLON.html`, usuniętym razem
+  z archiwum panelu 1.0 - i przez to nie widział, jak `--text-placeholder` rozjechał się
+  w 38 skopiowanych `<head>`). Ma kontrolę samego siebie (ponad 50 przeczytanych makiet,
+  a w kotwicy `20-pulpit.html` część wspólna > 20 zmiennych), bo bez niej „zgodne"
+  mogłoby znaczyć „nie przeczytano nic" albo „zero wspólnych nazw". Makiety panelu
+  (`design/panel/`) własnego `:root` nie mają - ich `panel.css` jest generowany z tokenów. Sprawdza też, że wymiary ramy makiet (`--phone-scale`
+  telefonu oraz `--sidebar-w`, `--topbar-h`, `--app-scale` okna panelu) NIE wyciekają do
+  tokenów produktu - to układ jednego ekranu, nie token designu.
 
 **Przekrój 0 panelu - zrobione 2026-07-31.** Dwie rzeczy, które musiały wejść przed
 cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
