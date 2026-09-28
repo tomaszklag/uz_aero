@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 28A Zlecenie przez grupę</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Nagłówek z powrotem, wzorzec 28: zlecenie otwiera się z listy (30), ze skrzynki albo
+     z pusha. Zakładek tu nie ma - moduł zleceń leży NAD nimi (decyzja 7). */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══ HERO: TERMIN ═══ w błękicie, jak na 28 - zlecenie jest PYTANIEM klubu, a nie
+     jeszcze czyimś lotem. Sposób adresowania (imiennie / grupa) NIE zmienia wyglądu
+     karty: zmienia wyłącznie to, co znaczy odpowiedź - i to mówi pas akcji na dole. */
+  .hero {
+    background:linear-gradient(180deg, rgba(52,152,219,0.08) 0%, var(--surface) 55%);
+    border:1px solid var(--blue-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:5px; padding:3px 7px; }
+  /* „Zgłoszone" (ramka 2) w tonie NEUTRALNYM, jak ta sama plakietka na liście (30):
+     kolor stoi tam, gdzie coś zależy od patrzącego, a po zgłoszeniu decyduje osoba
+     zlecająca. Karta zostaje błękitna - zlecenie dalej trwa, tylko nie czeka na Ciebie. */
+  .hero-badge.dim { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border-strong); }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--blue); }
+
+  /* ═══ ZAŁOGA - fotele, nie adresaci (wzorzec 28) ═══ */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .seat { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:10px; padding:12px 13px; border-bottom:1px solid var(--border); }
+  .seat:last-child { border-bottom:none; }
+  .seat-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .seat-v { font-size:13px; color:var(--text-primary); line-height:1.35; }
+  .seat.you { background:linear-gradient(90deg, rgba(52,152,219,0.09) 0%, transparent 70%); box-shadow:inset 3px 0 0 var(--blue); }
+  .seat.you .seat-v { font-weight:600; }
+  .seat-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.3px; text-transform:uppercase; border-radius:5px; padding:3px 6px; white-space:nowrap; }
+  .seat-tag.blue { color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); }
+  /* FOTEL SZUKANY pisze „szukany" i nic więcej. Dowódcę zlecono komuś imiennie, ale
+     adresat grupy nie wie, do kogo ani do ilu osób poszło zlecenie (decyzja 18). Gdy
+     fotel ktoś zajmie, wiersz pokaże nazwisko - załoga jest treścią zlecenia, adresaci
+     nie są. Bez plakietki i w kolorze podpisu: o ten fotel ekran Cię nie pyta. */
+  .seat-v.sought { color:var(--text-muted); }
+  /* NAZWY GRUPY przy „Ty" NIE MA (decyzja 18): „przez grupę Piloci An-2" mówiłoby wprost,
+     że zlecenie dostali też inni - a adresat nie wie nic o innych adresatach, ani kto,
+     ani ilu. To, że Twoje „tak" jest zgłoszeniem, mówi przycisk („MOGĘ LECIEĆ" zamiast
+     „PRZYJMUJĘ") i zdanie-skutek pod pasem odpowiedzi. */
+
+  /* ═══ KOLIZJA Z TWOJĄ INNĄ REZERWACJĄ (§4.3) ═══
+     Adam ma już rezerwację SP-AXA 10:00-12:00 z przyjętego zlecenia A (23F), a to zlecenie
+     trwa 09:00-13:00. Baza pilnuje egzemplarza, nie człowieka, więc kolizja NIE blokuje -
+     ale karta mówi o niej bursztynem PRZED odpowiedzią. Ostrzeżenie warunkowe (Typ B):
+     znika samo z warunkiem, nie zamyka się ręcznie. Tę samą informację dostaje prowadzący
+     przy wyborze. */
+  .clash { display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--amber-border); background:var(--amber-muted); font-size:12px; color:var(--amber); line-height:1.45; }
+  .clash svg { flex-shrink:0; margin-top:1px; }
+  .clash .mono { font-family:var(--font-mono); font-size:11px; letter-spacing:0.5px; }
+
+  /* ═══ KARTA DANYCH ═══ jak na 28: ekran odpowiada, a nie oferuje - ołówków nie ma. */
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     „EDYTOWANE · CO" - stopka karty zlecenia
+     Zmiana inna niż termin NIE prosi o nową odpowiedź (decyzja 13, §5.2): odpowiedź
+     zostaje ważna, a karta mówi tylko, CO się zmieniło i kiedy - BEZ nazwiska
+     zmieniającego (decyzja 31). Kto, widzą prowadzący w historii zmian (32).
+     Stoi w stopce karty „Zlecenie", bo zmiana dotyczy jej pól, a nie terminu w hero.
+     Każda zmiana dostaje własną linię, najnowsza na górze; ołówek jest tu glifem
+     „zmieniono", nie akcją - nic w tej linii nie jest celem dotknięcia.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .edited { display:flex; align-items:center; gap:7px; padding:9px 13px; font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-secondary); }
+  .edited svg { flex-shrink:0; color:var(--text-muted); }
+  .edited b { color:var(--text-primary); font-weight:500; }
+
+  /* ═══ WEJŚCIE W ROZMOWĘ ═══ jeden wiersz z szewronem, nie trzeci przycisk (wzorzec 28). */
+  .thread-row {
+    display:grid; grid-template-columns:32px 1fr 14px; align-items:center; gap:10px;
+    padding:11px 13px; text-decoration:none; color:inherit;
+  }
+  .thread-row:hover { background:var(--surface-raised); }
+  .tr-icon { width:32px; height:32px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+  .tr-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tr-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tr-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .tr-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TWOJA ODPOWIEDŹ (ramka 2)
+     Po zgłoszeniu karta zostaje z odpowiedzią i godziną - zniknięcie pytania bez słowa
+     wyglądałoby tak samo przy zapisie i przy awarii (reguła „każda akcja zostawia ślad").
+     Odpowiedź stoi W PIERWSZEJ OSOBIE, bo to cytat Twojego przycisku, a nie status dla
+     innych - ten, w trzeciej osobie („Może lecieć · 21:52"), widzą prowadzący na 32.
+     Zieleń, bo to odpowiedź, na którą osoba zlecająca czeka (słownik §3).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .answer { display:flex; flex-direction:column; gap:4px; padding:12px 13px; }
+  .ans-v { display:inline-flex; align-items:center; gap:7px; font-size:14px; font-weight:600; color:var(--text-primary); }
+  .ans-v.ok { color:var(--green); }
+  .ans-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ═══ PAS ODPOWIEDZI ═══
+     Adresat grupy: „MOGĘ LECIEĆ" jest ZGŁOSZENIEM - fotel obsadza osoba zlecająca
+     przyciskiem „WYBIERZ" (decyzja 11). Dalej jest akcją główną w zieleni, bo to
+     odpowiedź, o którą karta pyta; „NIE MOGĘ" wyciszone, nie czerwone - odmowa nikomu
+     niczego nie zabiera. Obie w pierwszej osobie: bez formy z płcią. */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; padding:14px; border-radius:14px;
+    background:var(--green); color:#0D0D0D; border:none;
+    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; text-decoration:none;
+    box-shadow:0 0 28px rgba(46,204,113,0.28);
+  }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+
+  /* Jedno zdanie o SKUTKU tapnięcia, pod pasem akcji i raz - wzorzec z 26/28. */
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:2px 4px 0; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  /* Wariant BEZ osobnej makiety: opis zamiast linku. Ramka przerywana i plakietka
+     „bez makiety" mówią, że to nie jest zgubiony link. */
+  .vp-item.static { border-style:dashed; background:transparent; }
+  .vp-item.static:hover { border-color:var(--border); }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+  .vp-tag.muted { color:var(--text-muted); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 28A</span>
+  <span class="slug">zlecenie · grupa · przed odpowiedzią</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie przez grupę, przed odpowiedzią">
+  <div class="status-bar">
+    <span>21:48</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ TERMIN ═══
+           Zlecenie B z 32, oczami Adama: trafiło do niego wczoraj o 18:40 przez grupę
+           „Piloci An-2" (tego karta nie mówi), otwiera ją pierwszy raz dopiero teraz (na 32 o 21:40 stoi
+           jeszcze „Nieodczytane"). Otwarcie zapala prowadzącym „Odczytane 21:48" - ekran
+           o tym nie mówi, bo to skutek patrzenia, a nie czynność (decyzja 17). -->
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Czeka na odpowiedź</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-count">ZA 11 H 12 MIN</span>
+        </div>
+      </div>
+
+      <!-- ═══ ZAŁOGA ═══
+           An-2 wymaga załogi dwuosobowej, więc oba fotele są w karcie. Dowódca jest
+           „szukany" - że zlecono go komuś imiennie, adresat grupy się nie dowie
+           (decyzja 18). Proponowany jest Tobie fotel DRUGIEGO PILOTA - bez nazwy grupy,
+           przez którą przyszło zlecenie (ta mówiłaby, że dostali je też inni). -->
+      <div class="section-lbl">Załoga</div>
+      <div class="card">
+        <div class="seat">
+          <span class="seat-k">Dowódca</span>
+          <span class="seat-v sought">szukany</span>
+          <span></span>
+        </div>
+        <div class="seat you">
+          <span class="seat-k">Drugi pilot</span>
+          <span class="seat-v">Ty</span>
+          <span class="seat-tag blue">Proponowany fotel</span>
+        </div>
+      </div>
+
+      <!-- ═══ ZLECENIE ═══
+           Skoki = jedno lotnisko (issue #13), więc wiersz nazywa się „Lotnisko", nie
+           „Trasa". Plan zmieniono dziś o 07:10 - już po tym, jak zlecenie do Ciebie
+           trafiło - więc w stopce stoi „Edytowane" BEZ nazwiska (decyzja 31); na 32
+           ta sama zmiana ma w historii nazwisko, bo patrzy prowadzący. -->
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+        <div class="edited">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Edytowane 07:10 · <b>plan lotu</b> 2:00 → 3:00</span>
+        </div>
+      </div>
+
+      <!-- ═══ ROZMOWA ═══ prywatna, osoba zlecająca ↔ Ty (decyzja 3). Bez wiadomości wiersz
+           mówi, do kogo napiszesz - stan pusty nie dostaje zdania. -->
+      <div class="card">
+        <a class="thread-row" href="29-watek.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Napisz wiadomość</span>
+            <span class="tr-sub">Marta Zięba · zleca</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+      <div class="clash">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>W tym czasie masz rezerwację · <span class="mono">SP-AXA 10:00-12:00</span></span>
+      </div>
+      <a class="btn-primary" href="#zgloszone">MOGĘ LECIEĆ</a>
+      <a class="btn-secondary" href="28d-zlecenie-nie-moge.html">NIE MOGĘ</a>
+
+      <!-- Skutek tapnięcia, raz, pod pasem. To JEDYNA rzecz, która różni 28A od 28:
+           przy grupie „tak" nie obsadza fotela - więc ekran mówi to wprost, zanim pilot
+           uzna, że już leci. „Osoba zlecająca", nie „zlecający/zlecająca": bez formy
+           z płcią (słownik §3). -->
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>„MOGĘ LECIEĆ" to <b>zgłoszenie</b> - fotel przydziela osoba zlecająca, a o decyzji dostaniesz wiadomość.</span>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="28-zlecenie.html">
+    <span class="vp-badge blue">28</span>
+    <span class="vp-body">
+      <span class="vp-name">Fotel wskazany imiennie</span>
+      <span class="vp-when">Zlecający wysłał dany fotel do Ciebie i tylko do Ciebie - „PRZYJMUJĘ" obsadza go od razu i lot staje się Twoją rezerwacją (23F). Karta mówi o fotelach i załodze, nigdy o innych adresatach (decyzja 18).</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="28a-zlecenie-grupa.html">
+    <span class="vp-badge blue">28A</span>
+    <span class="vp-body">
+      <span class="vp-name">Grupa albo kilka osób - zgłoszenie</span>
+      <span class="vp-when">Fotel zaadresowano grupą albo kilkoma osobami. Karta wygląda jak 28, różni się odpowiedzią: „MOGĘ LECIEĆ" jest ZGŁOSZENIEM, a fotel wybiera osoba zlecająca przyciskiem „WYBIERZ" (decyzja 11). Drugi fotel pisze „szukany", dopóki nikt go nie zajmie - potem nazwisko, bo to załoga, nie adresaci (decyzja 18). Ramka 2 (niżej): po zgłoszeniu plakietka „Zgłoszone", odpowiedź z godziną i „NIE MOGĘ" do zmiany zdania. Po wyborze przychodzi „Lot przydzielony" i lot jest Twoją rezerwacją (23F) bez drugiego potwierdzania; gdy fotel dostał ktoś inny - 28B.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <div class="vp-item static">
+    <span class="vp-badge blue">28A</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista - termin do potwierdzenia</span>
+      <span class="vp-when">Przy wspólnej liście bez foteli - i gdy jesteś na listach obu foteli (decyzja 30) - karta nie proponuje fotela: oba stoją jako „szukany", a pod nimi wiersz „Ty" z plakietką „Termin do potwierdzenia". Odpowiedź, przyciski i ramka 2 bez zmian; fotel przydziela osoba zlecająca. Wskazanie imienne na jeden fotel wygrywa z grupą drugiego - wtedy to jest 28.</span>
+      <span class="vp-tag muted">bez makiety</span>
+    </span>
+  </div>
+  <div class="vp-item static">
+    <span class="vp-badge amber">28A</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolizja z Twoją inną rezerwacją</span>
+      <span class="vp-when">Gdy w tym terminie masz już inną rezerwację, nad pasem odpowiedzi stoi bursztynowe ostrzeżenie z jej maszyną i godzinami (Typ B - znika z warunkiem) - obie ramki tego pliku je pokazują: Adam ma SP-AXA 10:00-12:00 z przyjętego zlecenia A. Nigdy blokada: zajętość wyklucza baza dla egzemplarza, nie dla człowieka (§4.3). To samo ostrzeżenie dostaje karta 28.</span>
+      <span class="vp-tag muted">w obu ramkach</span>
+    </span>
+  </div>
+  <a class="vp-item" href="28b-zlecenie-nieaktualne.html">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Nieaktualne, odwołane, wygasłe</span>
+      <span class="vp-when">Fotel obsadził ktoś inny, zlecenie cofnięto, odwołano albo wygasło z początkiem terminu. Bez pasa akcji - wyjściem jest strzałka w nagłówku; rozmowa zostaje do odczytu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
+    <span class="vp-badge amber">28C</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin zmieniony</span>
+      <span class="vp-when">Zmiana TERMINU zaczyna odpowiedzi od nowa (decyzja 13) - także zgłoszenie z ramki 2; poprzednia odpowiedź stoi przekreślona. Inne zmiany mówią tylko „Edytowane · co", jak stopka karty wyżej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28d-zlecenie-nie-moge.html">
+    <span class="vp-badge">28D</span>
+    <span class="vp-body">
+      <span class="vp-name">„Nie mogę" - arkusz</span>
+      <span class="vp-when">Powód jest opcjonalny (decyzja 16): przycisk działa od razu. W ramce 2 ten sam arkusz wycofuje zgłoszenie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28e-zlecenie-offline.html">
+    <span class="vp-badge amber">28E</span>
+    <span class="vp-body">
+      <span class="vp-name">Bez połączenia</span>
+      <span class="vp-when">Cały moduł zleceń wymaga sieci (§2.2) - wzorzec 21B, bez przycisku ponowienia; ekran wraca sam.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29-watek.html">
+    <span class="vp-badge blue">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa z osobą zlecającą</span>
+      <span class="vp-when">Prywatny wątek na żywo - np. „mogę tylko na pierwszy wylot", zanim padnie odpowiedź.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23f-rezerwacja-ze-zlecenia.html">
+    <span class="vp-badge">23F</span>
+    <span class="vp-body">
+      <span class="vp-name">Po przydziale - Twoja rezerwacja</span>
+      <span class="vp-when">Wybrany z grupy nie potwierdza drugi raz: lot przychodzi wiadomością „Lot przydzielony" i od tej chwili jest zieloną kartą rezerwacji - drugi pilot widzi ją tak samo jak dowódca (decyzja 23).</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20f-pulpit-zlecenia.html">20F Pulpit</a>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <span>·</span>
+  <a href="28-zlecenie.html">28 Imiennie</a>
+  <a href="28a-zlecenie-grupa.html" class="active">28A Grupa</a>
+  <a href="28b-zlecenie-nieaktualne.html">28B Nieaktualne</a>
+  <a href="28c-zlecenie-termin-zmieniony.html">28C Termin</a>
+  <a href="28d-zlecenie-nie-moge.html">28D Nie mogę</a>
+  <a href="28e-zlecenie-offline.html">28E Offline</a>
+  <span>·</span>
+  <a href="29-watek.html">29 Rozmowa →</a>
+  <a href="#zgloszone">↓ po zgłoszeniu</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: PO ZGŁOSZENIU ══
+     Adam tapnął „MOGĘ LECIEĆ" o 21:52. Karta NIE ZAMYKA SIĘ i nie przeskakuje na listę:
+     zgłoszenie nie jest jeszcze lotem, więc ekran zostaje z tym samym zleceniem
+     i mówi, w jakim jest stanie. Trzy zmiany względem ramki 1, każda o jednej rzeczy:
+       1. plakietka hero: „Czeka na odpowiedź" (błękit) → „Zgłoszone" (neutralna, jak
+          na liście 30 - teraz decyduje ktoś inny; forma nijaka, bez płci);
+       2. karta „Twoja odpowiedź" z godziną i tym, KTO przydziela fotel - nazwisko
+          w mianowniku, bez odmiany („fotel przydziela Marta Zięba");
+       3. pas akcji traci „MOGĘ LECIEĆ" (odpowiedź już padła) - zostaje „NIE MOGĘ",
+          którym zgłoszenie się wycofuje. Arkusz 28D obsługuje oba przypadki.
+     Załoga bez zmian: fotel jest dalej PROPONOWANY, nie Twój. Gdy osoba zlecająca
+     wybierze - przychodzi „Lot przydzielony" (23F) albo „Zlecenie nieaktualne" (28B). -->
+<header class="canvas-label" id="zgloszone">
+  <span class="film-strip">NINERDECK - 28A</span>
+  <span class="slug">stan: po zgłoszeniu</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie przez grupę, po zgłoszeniu">
+  <div class="status-bar">
+    <span>21:52</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge dim">Zgłoszone</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-count">ZA 11 H 8 MIN</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Załoga</div>
+      <div class="card">
+        <div class="seat">
+          <span class="seat-k">Dowódca</span>
+          <span class="seat-v sought">szukany</span>
+          <span></span>
+        </div>
+        <div class="seat you">
+          <span class="seat-k">Drugi pilot</span>
+          <span class="seat-v">Ty</span>
+          <span class="seat-tag blue">Proponowany fotel</span>
+        </div>
+      </div>
+
+      <!-- ═══ TWOJA ODPOWIEDŹ ═══ tuż pod załogą, bo dotyczy fotela z wiersza wyżej. -->
+      <div class="section-lbl">Twoja odpowiedź</div>
+      <div class="card">
+        <div class="answer">
+          <span class="ans-v ok">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Mogę lecieć
+          </span>
+          <span class="ans-sub">Zgłoszone 21:52 · fotel przydziela Marta Zięba</span>
+        </div>
+      </div>
+      <div class="clash">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>W tym czasie masz rezerwację · <span class="mono">SP-AXA 10:00-12:00</span></span>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+        <div class="edited">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Edytowane 07:10 · <b>plan lotu</b> 2:00 → 3:00</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29-watek.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Napisz wiadomość</span>
+            <span class="tr-sub">Marta Zięba · zleca</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+      <!-- Zmiana zdania - jeden przycisk, wyciszony. „MOGĘ LECIEĆ" znika, bo odpowiedź
+           już padła; wyszarzony obiecywałby akcję, której nie ma (zasada z 10B). -->
+      <a class="btn-secondary" href="28d-zlecenie-nie-moge.html">NIE MOGĘ</a>
+
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>Jeśli coś się zmieni, „NIE MOGĘ" wycofa Twoje zgłoszenie.</span>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="28a-zlecenie-grupa.html" class="active">28A Grupa</a>
+  <a href="28b-zlecenie-nieaktualne.html">28B Fotel obsadzony</a>
+  <a href="23f-rezerwacja-ze-zlecenia.html">23F Po przydziale →</a>
+</nav>
+
+</body>
+</html>

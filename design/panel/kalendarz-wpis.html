@@ -43,6 +43,20 @@
     </span>
     <span class="vp-tag amber">3.1.0</span>
   </a>
+  <a class="vp-item" href="#wlasna">
+    <span class="vp-badge">K2b</span>
+    <span class="vp-body">
+      <span class="vp-name">Własna rezerwacja</span>
+      <span class="vp-when">Ta sama szuflada, gdy termin jest zalogowanego (3.2.0): „Przesuń i popraw" przed początkiem, „Odwołaj" także trwającą, a zamknięta ma jedno wyjście - „Zarezerwuj inny termin".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#zlecenie">
+    <span class="vp-badge blue">K2c</span>
+    <span class="vp-body">
+      <span class="vp-name">Zajętość ze zleceniem</span>
+      <span class="vp-when">Ta sama szuflada, gdy pasek jest ZLECENIEM szukającym załogi (4.0.0): stan i to, kogo brakuje, widzi każdy członek; treść, kto zleca i „Otwórz zlecenie" - prowadzący i adresaci. Odwołanie z kalendarza jest odwołaniem zlecenia, z powodem opcjonalnym. Po obsadzeniu fotela lot jest Twoją rezerwacją: wiersz „Ze zlecenia" prowadzi do rozmowy, a zamiast przesunięcia i odwołania stoi „Rezygnuję" (jak 23F w telefonie).</span>
+    </span>
+  </a>
   <a class="vp-item" href="kalendarz-blokada.html">
     <span class="vp-badge">K3</span>
     <span class="vp-body">
@@ -133,6 +147,7 @@
           <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
         </a>
         <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
           <a class="nav-item" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
@@ -141,14 +156,20 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
             Do sprawdzenia
           </a>
-          <a class="nav-item active" href="kalendarz-flota.html">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-            Kalendarz
-          </a>
           <a class="nav-item" href="statystyki.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
             Statystyki
           </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item active" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -434,6 +455,7 @@
   <span>·</span>
   <a href="#czeka">↓ K2a Czeka na zgodę</a>
   <a href="#wlasna">↓ K2b Własna rezerwacja</a>
+  <a href="#zlecenie">↓ K2c Zlecenie</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>
@@ -641,6 +663,171 @@
           <p class="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
           <a class="btn" href="kalendarz-rezerwacja.html">Zarezerwuj inny termin</a>
         </section>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ K2c · ZAJĘTOŚĆ ZE ZLECENIEM (4.0.0, `docs/zlecenia.md` §5, §13.1, §16) ══
+     Zlecenie JEST rezerwacją, która szuka załogi (§2.1): trzyma termin na maszynie
+     od chwili utworzenia, więc kliknięcie w jego pasek otwiera TĘ SAMĄ szufladę
+     zajętości - bo to ten sam wiersz `bookings`, tylko z pustym fotelem i wskazaniem
+     zlecenia. Szuflada NIE powtarza karty zlecenia: adresatów, odczyty, zgłoszenia
+     i wybór załogi prowadzi moduł „Zlecenia" (ZL3), a stąd prowadzi do niego jedne
+     drzwi - „Otwórz zlecenie".
+
+     KSZTAŁT ZALEŻY OD WIDZA, jak przy każdej cudzej rezerwacji (§13.1):
+     · prowadzący (autor zlecenia i każdy z „Cudzymi rezerwacjami") - komplet: treść,
+       kto zleca, stan foteli, „Otwórz zlecenie" i odwołanie;
+     · adresat - to, kogo brakuje, i „Otwórz zlecenie" (treść czyta na karcie
+       zlecenia, bez niczego o innych adresatach);
+     · członek spoza adresatów - termin i to, kogo brakuje. Treści zlecenia nie widzi.
+
+     ODWOŁANIE Z KALENDARZA TO ODWOŁANIE ZLECENIA (§16 pkt 9): te same wiadomości, co
+     z karty zlecenia, i powód OPCJONALNY (decyzja 16) - reguła P4 („odwołanie cudzej
+     rezerwacji wymaga powodu") dotyczy rezerwacji pilotów, nie zleceń (§5.6).
+
+     PO OBSADZENIU (§14.3) zlecenie jest zwykłą rezerwacją tej załogi, więc osoba
+     w fotelu dostaje szufladę WŁASNEJ rezerwacji (K2b) - z tymi samymi trzema
+     różnicami, co karta 23F w telefonie (ostatni przykład niżej).
+
+     Dane trzech pierwszych przykładów pasują do paska na osi K1 (SP-CDR, sobota
+     20 września); czwarty to zlecenie A ze świata modułu zleceń (SP-AXA, sobota
+     3 października), bo to ono przeszło w telefonie drogę 28 → 28C → 23F. -->
+<section class="canvas-section" id="zlecenie">
+  <div class="canvas-section-title">K2c · zajętość ze zleceniem · szuka załogi · fotel obsadzony</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Prowadzący - skrót zlecenia i jedne drzwi do niego</span>
+        <span class="inv-when">Podtytuł zaczyna się od plakietki stanu - błękit, bo zlecenie to rzecz, która się dzieje. Karta „Zlecenie" niesie treść i stan foteli JEDNYM wierszem na fotel (nazwiska adresatów i odczyty są na karcie zlecenia, nie tu), a na jej końcu „Otwórz zlecenie". Odwołanie czerwoną kartą, jak przy rezerwacji - ale z powodem opcjonalnym i skutkiem zlecenia. Karty „Realizacja" NIE MA, dopóki fotele szukają: lot bez załogi nie ma czego realizować.</span>
+        <span class="inv-classes">.drawer-sub .pill.blue · .kv · .card.danger · .label-row + .pill.dim („opcjonalne")</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 640px;">
+          <div class="drawer" role="dialog" aria-modal="true" aria-label="Zlecenie SP-CDR, sobota 20 września" style="width: 100%;">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">SP-CDR · sobota 20 września</div>
+                <div class="drawer-sub"><span class="pill blue">Szuka załogi</span> 09:00 → 13:00 czasu klubu · 4 h · zlecenie</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Zlecenie</h2>
+                <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
+                <div class="kv"><span class="kv-k">Lotnisko</span><span class="kv-v">EPZG</span></div>
+                <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">3:00 · paliwo 600 L</span></div>
+                <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">szukany<span class="cell-sub">imiennie · bez odpowiedzi</span></span></div>
+                <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">szukany<span class="cell-sub">Piloci An-2 · 2 mogą lecieć</span></span></div>
+                <div class="kv"><span class="kv-k">Zleca</span><span class="kv-v">Marta Zięba<span class="cell-sub">MZI · wysłane 18 WRZ 18:40</span></span></div>
+                <a class="btn" href="zlecenia-szczegoly.html">Otwórz zlecenie</a>
+              </section>
+              <section class="card danger">
+                <h2 class="card-title">Odwołanie zlecenia</h2>
+                <p class="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+                <div class="field">
+                  <div class="label-row"><label class="label" for="k2c-reason">Powód</label><span class="pill dim">opcjonalne</span></div>
+                  <input class="input" id="k2c-reason" type="text" value="" placeholder="Np. prognoza - front od zachodu" />
+                </div>
+                <button type="button" class="btn danger">Odwołaj zlecenie</button>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Adresat i członek spoza adresatów</span>
+        <span class="inv-when">ADRESAT widzi, że zlecenie czeka na JEGO odpowiedź, i drzwi do karty zlecenia - tam przeczyta treść i odpowie. Nie widzi nazwisk ani liczby innych adresatów (decyzja 18). CZŁONEK SPOZA ADRESATÓW dostaje wąski kształt cudzej rezerwacji z jednym nowym polem - kogo zlecenie szuka (§13.1: `order.seeking`) - i nic więcej: bez zadania, trasy, opisu i osoby zlecającej, bez drzwi, bo karty zlecenia nie otworzy. Wiersze, których nie ma, NIE STOJĄ z kreską - kreska mówiłaby „nikt nie wpisał", a wpisano.</span>
+        <span class="inv-classes">.pill.blue · .kv · .btn</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Zlecenie <span class="spacer"></span><span class="pill blue">Czeka na Twoją odpowiedź</span></h2>
+          <div class="kv"><span class="kv-k">Szuka</span><span class="kv-v">dowódcy i drugiego pilota</span></div>
+          <a class="btn" href="zlecenia-szczegoly.html#adresat">Otwórz zlecenie</a>
+        </section>
+        <span class="inv-mark">adresat zlecenia</span>
+        <section class="card">
+          <h2 class="card-title">Zlecenie <span class="spacer"></span><span class="pill blue">Szuka załogi</span></h2>
+          <div class="kv"><span class="kv-k">Szuka</span><span class="kv-v">dowódcy i drugiego pilota</span></div>
+        </section>
+        <span class="inv-mark">członek klubu spoza adresatów</span>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Napis paska mówi, kogo brakuje</span>
+        <span class="inv-when">Jeden kształt, trzy napisy - zależnie od tego, które fotele szukają (§5): oba („szuka załogi"), jeden bez nikogo w drugim („szuka dowódcy"), jeden z osobą już w drugim - wtedy pasek zaczyna się od jej nazwiska, jak każda rezerwacja na osi. Po obsadzeniu obu foteli pasek traci ramkę i błękit - jest zwykłą rezerwacją tej załogi. Zlecenie odwołane albo wygasłe znika z osi (termin wraca do puli).</span>
+        <span class="inv-classes"><b>.cal-item.order</b> · <b>.cal-swatch.order</b></span>
+      </div>
+      <div class="inv-demo">
+        <div class="cal" style="--cal-days:3; --cal-reg-col:72px;">
+          <div class="cal-row">
+            <span class="cal-reg"><span class="cal-reg-mark">SP-CDR</span><span class="cal-reg-type">AN-2</span></span>
+            <div class="cal-cells">
+              <div class="cal-cell"><a class="cal-item order" href="#zlecenie">Zlecenie · szuka załogi</a></div>
+              <div class="cal-cell"><a class="cal-item order" href="#zlecenie">Zlecenie · szuka dowódcy</a></div>
+              <div class="cal-cell"><a class="cal-item order" href="#zlecenie">J. Wrona · szuka drugiego pilota</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-swatch order"></span>Zlecenie · szuka załogi</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full" id="ze-zlecenia">
+      <div class="inv-head">
+        <span class="inv-name">Twoja rezerwacja ze zlecenia - fotel obsadzony</span>
+        <span class="inv-when">Po „Przyjmuję" albo po przydziale zlecenie JEST rezerwacją tej załogi (§14.3) i otwiera się jak każda własna (K2b) - z trzema różnicami, tymi samymi, co karta 23F w telefonie. Wiersz „Ze zlecenia" z nazwiskiem prowadzi do rozmowy. Karty „Zmiana terminu" NIE MA: termin prowadzi zlecenie, a zlecenie prowadzi ktoś inny - zmianę uzgadnia się w rozmowie, a wprowadza osoba zlecająca edycją, którą widzą wszyscy (wyszarzony przycisk obiecywałby akcję, której reguły nie dopuszczą). Zamiast odwołania stoi „Rezygnuję": termin zostaje zajęty, fotel wraca do szukania, osoba zlecająca dostaje „Rezygnacja z lotu", powód opcjonalny (decyzja 16). Drugi pilot ze zlecenia widzi tę samą szufladę z wierszem „Dowódca" (decyzja 23). Tę szufladę otwiera też wiersz „Przyjęte" z listy „Do mnie" (ZL1a) - karty zlecenia w stanie „przyjęte" nie ma, jak w telefonie.</span>
+        <span class="inv-classes">.drawer-sub .pill.green · .kv · .go · .card.danger · .label-row + .pill.dim („opcjonalne")</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-demo" style="height: 560px;">
+          <div class="drawer" role="dialog" aria-modal="true" aria-label="Rezerwacja SP-AXA, sobota 3 października" style="width: 100%;">
+            <div class="drawer-head">
+              <div>
+                <div class="drawer-title">SP-AXA · sobota 3 października</div>
+                <div class="drawer-sub"><span class="pill green">Potwierdzona</span> 10:00 → 12:00 czasu klubu · 2 h · jutro</div>
+              </div>
+              <button type="button" class="x-btn" aria-label="Zamknij">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="drawer-body">
+              <section class="card">
+                <h2 class="card-title">Rezerwacja</h2>
+                <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Ty <span class="cell-sub">· Adam Kowalski <span class="mono">AKO</span></span></span></div>
+                <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
+                <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPKK → EPRJ</span></div>
+                <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 120 L</span></div>
+                <div class="kv"><span class="kv-k">Notatka</span><span class="kv-v">Odbiór części z serwisu w Jasionce, powrót tego samego dnia.</span></div>
+                <div class="kv"><span class="kv-k">Ze zlecenia</span><span class="kv-v"><a class="go" href="zlecenia-watek.html" aria-label="Rozmowa · Marta Zięba">Marta Zięba <span class="cell-sub mono">MZI</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/></svg></a><span class="cell-sub">termin uzgodnisz w rozmowie</span></span></div>
+              </section>
+              <section class="card danger">
+                <h2 class="card-title">Rezygnacja z lotu</h2>
+                <p class="card-note">Fotel wróci do szukania, a Marta Zięba dostanie wiadomość. Termin zostaje zajęty.</p>
+                <div class="field">
+                  <div class="label-row"><label class="label" for="k2c-resign">Powód</label><span class="pill dim">opcjonalne</span></div>
+                  <input class="input" id="k2c-resign" type="text" value="" placeholder="Np. w sobotę jednak nie dam rady" />
+                </div>
+                <button type="button" class="btn danger">Rezygnuję</button>
+              </section>
+            </div>
+          </div>
+        </div>
+        <span class="inv-mark">Adam Kowalski po przyjęciu zlecenia A · piątek 2 października</span>
       </div>
     </article>
 

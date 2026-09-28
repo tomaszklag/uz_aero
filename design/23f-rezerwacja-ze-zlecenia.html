@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 23F Rezerwacja ze zlecenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* Nagłówek z powrotem, jak na 23: karta rezerwacji otwiera się z kalendarza, z karty
+     „Twoja rezerwacja" na Pulpicie i - ta jedna - z „PRZYJMUJĘ" na karcie zlecenia. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══ HERO: TERMIN - ZIELEŃ ═══
+     Po przyjęciu zlecenie JEST rezerwacją tej załogi (§14.3), więc karta wraca do
+     zieleni z 23: „moje i w normie". Błękit zlecenia został na 28 - tam lot był jeszcze
+     pytaniem. Rezerwacja ze zlecenia nie przechodzi ścieżki akceptacji (decyzja 5),
+     więc od pierwszej chwili jest „Potwierdzona". */
+  .hero {
+    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--green-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--green); }
+
+  /* ═══ KARTA DANYCH ═══ jak na 23: ekran odpowiada, a nie oferuje - bez ołówków. */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     WIERSZ „ZE ZLECENIA" - prowadzi w głąb (wzorzec 26: szewron w spoczynku)
+     Mówi, SKĄD jest ten lot i z kim o nim rozmawiać. Prowadzi do ROZMOWY (29), a nie
+     do karty zlecenia: po obsadzeniu zlecenie jest tą rezerwacją, więc druga karta
+     powtarzałaby tę samą treść - a jedyne, co zostało do zrobienia ze zleceniem, to
+     uzgodnienie zmiany z osobą zlecającą. Nazwisko w mianowniku, bez odmiany.
+     Jedyny wiersz karty z szewronem - nie uczy oka pomijać prawej krawędzi.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  a.kv { text-decoration:none; color:inherit; position:relative; }
+  a.kv:hover { background:var(--surface-raised); }
+  a.kv .kv-v { padding-right:16px; }
+  a.kv::after {
+    content:"\203A"; position:absolute; right:13px; top:50%; transform:translateY(-52%);
+    font-family:var(--font-mono); font-size:15px; color:var(--text-muted);
+  }
+
+  /* ═══ AKCJA ═══
+     REZYGNACJA zamiast odwołania (§5.3): rezerwacja ze zlecenia nie oddaje slotu -
+     termin zostaje zajęty, a Twój fotel wraca do szukania. Obramowana czerwienią, jak
+     odwołanie na 23: zwalnia fotel, na który osoba zlecająca już liczy, i nie da się
+     jej cofnąć jednym tapnięciem. Obramowana, nie wypełniona - czerwień mówi „uwaga",
+     nie „zrób to" (issue #55 / 10L). */
+  .btn-danger {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:transparent; color:var(--red);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--red-border); text-decoration:none;
+  }
+  .btn-danger:hover { background:var(--red-muted); }
+
+  /* Jedno zdanie o SKUTKU tapnięcia, pod przyciskiem i raz - wzorzec z 26/28. */
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:2px 4px 0; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 23F</span>
+  <span class="slug">rezerwacja · ze zlecenia</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Rezerwacja ze zlecenia">
+  <div class="status-bar">
+    <span>07:45</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="21-kalendarz.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="screen-title">REZERWACJA</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ TERMIN ═══
+           Zlecenie A po zmianie terminu i przyjęciu (28C → „PRZYJMUJĘ" o 07:40, rozmowa
+           29). Plakietka „Potwierdzona" jak na 23 - pochodzenie lotu mówi wiersz niżej,
+           nie hero: bohaterem tej karty zostaje termin. -->
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Potwierdzona</span>
+        </div>
+        <div class="hero-hours">10:00 → 12:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">2 h</span>
+          <span class="hero-count">ZA 1 DZIEŃ 2 H</span>
+        </div>
+      </div>
+
+      <!-- ═══ CO REZERWUJESZ ═══
+           Te same wiersze, co na 23, plus „Ze zlecenia" na końcu. Wiersza „Drugi pilot"
+           nie ma, bo Cessny nie zlecano z drugim fotelem - pusty wiersz byłby zdaniem
+           o niczym. Pilot przydzielony jako DRUGI PILOT widzi tu wiersz „Dowódca"
+           (decyzja 23: karta liczy oba fotele). -->
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-AXA</span><span class="kv-sub">Cessna 172 · C172</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Przelot</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Trasa</span>
+          <span class="kv-v"><span class="mono">EPKK → EPRJ</span><span class="kv-sub">Kraków-Balice → Rzeszów-Jasionka</span></span>
+        </div>
+        <a class="kv" href="29-watek.html">
+          <span class="kv-k">Ze zlecenia</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · termin uzgodnisz w rozmowie</span></span>
+        </a>
+      </div>
+
+      <div class="section-lbl">Plan</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Czas lotu</span>
+          <span class="kv-v"><span class="mono">1:30</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Paliwo</span>
+          <span class="kv-v"><span class="mono">120 L</span><span class="kv-sub">do zabrania</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Notatka</span>
+          <span class="kv-v">Odbiór części z serwisu w Jasionce, powrót tego samego dnia.</span>
+        </div>
+      </div>
+
+      <!-- ═══ AKCJE ═══
+           „PRZESUŃ I POPRAW" TU NIE MA: termin prowadzi zlecenie, a zlecenie prowadzi ktoś
+           inny. Przesunięcie przez pilota zmieniłoby cudze zlecenie za plecami pozostałych,
+           więc reguła je odrzuca (§16 pkt 7) - a wyszarzony przycisk obiecywałby akcję,
+           której reguły nie dopuszczą (zasada z 10B). Zmianę uzgadnia się w rozmowie
+           (wiersz „Ze zlecenia" wyżej), a wprowadza ją osoba zlecająca edycją zlecenia.
+
+           „REZYGNUJĘ" otwiera arkusz kształtu 28D (tytuł „REZYGNUJĘ", powód opcjonalny -
+           decyzja 16). Po rezygnacji lot znika z Twoich rezerwacji, a karta wraca do
+           kalendarza. -->
+      <a href="28d-zlecenie-nie-moge.html" class="btn-danger">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        REZYGNUJĘ
+      </a>
+
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>Po rezygnacji <b>fotel wraca do szukania</b>, a Marta Zięba dostanie wiadomość.</span>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="23-rezerwacja-szczegoly.html">
+    <span class="vp-badge">23</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezerwacja potwierdzona</span>
+      <span class="vp-when">Bohaterem ekranu jest TERMIN - to on jest przedmiotem rezerwacji, a maszyna i zadanie go opisują. Zmiana idzie jedną drogą („PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem), ołówków przy wierszach NIE MA (issue #40). Odwołanie jest obramowane, nie wypełnione, i stoi na końcu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23a-rezerwacja-kolizja.html">
+    <span class="vp-badge amber">23A</span>
+    <span class="vp-body">
+      <span class="vp-name">Kolizja przy przejęciu maszyny</span>
+      <span class="vp-when">Pilot bierze samolot, który na ten czas ma zarezerwowany ktoś inny: baner OSTRZEGA i pokazuje, czyja to rezerwacja - ale NIGDY nie blokuje (§2.3). Wymaga sieci (§2.2): bez zasięgu ostrzeżenia nie ma, a lot idzie dalej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="22-rezerwacja.html">
+    <span class="vp-badge">22</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowa rezerwacja</span>
+      <span class="vp-when">Dwa kroki: termin i maszyna → zadanie, trasa, plan lotu. Ten sam formularz obsługuje przesunięcie istniejącej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23b-rezerwacja-czeka.html">
+    <span class="vp-badge amber">23B</span>
+    <span class="vp-body">
+      <span class="vp-name">Czeka na zgodę</span>
+      <span class="vp-when">Klub ma ścieżkę akceptacji. Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Poprawka czyści zgody i zaczyna ścieżkę od nowa. Rezerwacji ze zlecenia to nie dotyczy (decyzja 5).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23e-rezerwacja-nowy-krok.html">
+    <span class="vp-badge amber">23E</span>
+    <span class="vp-body">
+      <span class="vp-name">Doszedł krok akceptacji</span>
+      <span class="vp-when">Klub dopisał krok, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest żywa i to jest jej cena.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23c-rezerwacja-odrzucona.html">
+    <span class="vp-badge amber">23C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odrzucona z powodem</span>
+      <span class="vp-when">Powód jest po stronie decydującego wymagany i stoi tu jako treść. Termin wrócił do puli, więc zostaje jedno wyjście - wybrać inny.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23d-rezerwacja-wygasla.html">
+    <span class="vp-badge amber">23D</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin minął bez decyzji</span>
+      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i oddaje slot: milczenie nie znaczy zgody.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="23f-rezerwacja-ze-zlecenia.html">
+    <span class="vp-badge">23F</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezerwacja ze zlecenia</span>
+      <span class="vp-when">Lot, który przyszedł ze zlecenia: po „PRZYJMUJĘ" (28, 28C) albo po przydziale z grupy (28A, wiadomość „Lot przydzielony"). Ta sama zielona karta, co 23 - zlecenie po obsadzeniu JEST rezerwacją i nie przechodzi ścieżki akceptacji (decyzja 5). Trzy różnice: wiersz „Ze zlecenia" z nazwiskiem prowadzi do rozmowy (29); „PRZESUŃ I POPRAW" nie ma, bo termin prowadzi zlecenie - zmianę uzgadnia się w rozmowie, a wprowadza osoba zlecająca edycją, którą widzą wszyscy; zamiast odwołania stoi „REZYGNUJĘ" - termin zostaje zajęty, fotel wraca do szukania, a osoba zlecająca dostaje „Rezygnacja z lotu" (§5.3). Zmiana terminu przez osobę zlecającą fotela nie zdejmuje (decyzja 13): karta pokazuje nowe godziny, pilot dostaje wiadomość i może zrezygnować. Drugi pilot ze zlecenia widzi tę samą kartę z wierszem „Dowódca" (decyzja 23).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="28-zlecenie.html">
+    <span class="vp-badge blue">28</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie przed przyjęciem</span>
+      <span class="vp-when">Błękitna karta pytania: fotel zaproponowany imiennie, „PRZYJMUJĘ" / „NIE MOGĘ". To z niej pilot trafia tutaj.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29-watek.html">
+    <span class="vp-badge blue">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa z osobą zlecającą</span>
+      <span class="vp-when">Wejście z wiersza „Ze zlecenia": prywatny wątek na żywo - tu uzgadnia się zmianę terminu po przyjęciu.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20-pulpit.html">20 Pulpit</a>
+  <a href="21-kalendarz.html">← 21 Kalendarz</a>
+  <span>·</span>
+  <a href="22-rezerwacja.html">22 Krok 1</a>
+  <a href="22a-rezerwacja-zadanie.html">22A Krok 2</a>
+  <span>·</span>
+  <a href="23-rezerwacja-szczegoly.html">23 Szczegóły</a>
+  <a href="23a-rezerwacja-kolizja.html">23A Kolizja</a>
+  <span>·</span>
+  <a href="23b-rezerwacja-czeka.html">23B Czeka</a>
+  <a href="23e-rezerwacja-nowy-krok.html">23E Krok</a>
+  <a href="23c-rezerwacja-odrzucona.html">23C Odrzucona</a>
+  <a href="23d-rezerwacja-wygasla.html">23D Wygasła</a>
+  <a href="23f-rezerwacja-ze-zlecenia.html" class="active">23F Ze zlecenia</a>
+  <span>·</span>
+  <a href="28-zlecenie.html">28 Zlecenie</a>
+  <a href="29-watek.html">29 Rozmowa →</a>
+</nav>
+
+</body>
+</html>

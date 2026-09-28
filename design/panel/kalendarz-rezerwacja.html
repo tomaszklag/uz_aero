@@ -81,7 +81,8 @@
 
 <!-- ══ RAMA: PILOT Z PUSTYM ZAKRESEM ══
      Zalogowany jest zwykły członek klubu (zestaw „Pilot", issue #216): kolumna ma
-     dla niego JEDNĄ pozycję, a nagłówek strony JEDNĄ akcję - „Zarezerwuj". Ani
+     dla niego DWIE pozycje (Kalendarz i - od 4.0.0 - Zlecenia, oba dla każdego
+     członka), a nagłówek strony JEDNĄ akcję - „Zarezerwuj". Ani
      „Zarezerwuj za pilota", ani „Wyłącz maszynę z użytku", ani banera kolejki: brak
      uprawnienia znaczy brak przycisku. U administratora te akcje dochodzą jako
      przyciski wyciszone (K1) - „Zarezerwuj" zostaje jedyną akcją główną ekranu, bo
@@ -121,8 +122,8 @@
     <div class="workspace">
 
       <!-- KOLUMNA BOCZNA członka z pustym zakresem (issue #216): kontekst klubu
-           i JEDNA pozycja. Pozycje bramkuje zdolność - kto nie ma prawa wejść,
-           nie widzi zakładki. -->
+           i DWIE pozycje - Kalendarz i Zlecenia (4.0.0, `access: 'club'`). Pozycje
+           bramkuje zdolność - kto nie ma prawa wejść, nie widzi zakładki. -->
       <aside class="sidebar" aria-label="Nawigacja panelu">
         <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
           <span class="context-mark" aria-hidden="true">AZ</span>
@@ -136,6 +137,10 @@
           <a class="nav-item active" href="kalendarz-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
             Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
           </a>
         </nav>
       </aside>

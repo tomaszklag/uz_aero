@@ -4745,7 +4745,8 @@ CSS, `panel.css` przegenerowany. Decyzje makiet: **`docs/panel-3.2.md` §17**; o
 Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
 - **KOLUMNA KLUBU MA SZEŚĆ POZYCJI W STAŁEJ KOLEJNOŚCI**: Dziennik · Do sprawdzenia ·
   Kalendarz · Statystyki · Piloci · Samoloty (`homeFor` bierze pierwszą - Dziennik zostaje
-  ekranem startowym; lista płaska, grupy od siódmej). Plakietka `.nav-count` WYŁĄCZNIE przy
+  ekranem startowym; lista płaska, grupy od siódmej - od 4.0.0 TRZY GRUPY i Statystyki przed
+  Kalendarzem, sekcja „Epik Z-A" niżej). Plakietka `.nav-count` WYŁĄCZNIE przy
   „Do sprawdzenia" i WYŁĄCZNIE przy niezerowej sumie trzech źródeł `attention` (reguła
   SyncChipa). Makiety Kalendarza/Pilotów/Samolotów pokazują stan BEZ plakietki, dziennik
   i „Do sprawdzenia" - z „5": oba stany mają być widoczne w zestawie
@@ -5058,7 +5059,8 @@ Moduł Statystyki 1:1 z makiety `statystyki` (§8, §17 pkt 10) i karta „Zuży
 w szufladzie samolotu 1:1 z `samoloty-karta` S2c (§17 pkt 11), z plastrem serwera na obu
 trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązujące odtąd:
 - **STATYSTYKI TO CZWARTA POZYCJA KOLUMNY** (Dziennik · Do sprawdzenia · Kalendarz ·
-  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia), na „Podglądzie klubu";
+  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia; od 4.0.0 stoją w grupie
+  „Loty", przed Kalendarzem - sekcja „Epik Z-A"), na „Podglądzie klubu";
   adres `#/statystyki?od=&do=` z zakresem ZAWSZE w adresie, jak w dzienniku. Analityka
   zużycia pozycji NIE dostaje - jest własnością maszyny i mieszka w jej karcie (§8)
 - **JEDNA PODSTAWA LICZENIA Z DZIENNIKIEM** (§4.5): operacje ZAMKNIĘTE, bez unieważnionych
@@ -5168,8 +5170,8 @@ powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ 
 ## Zlecenia na lot 4.0.0 - PROJEKT (issue #239, 2026-09-27, gałąź `feature-239-zlecenia-projekt`)
 Koordynator (albo instruktor) tworzy zlecenie lotu - termin + maszyna - i wysyła je pilotom;
 ci odpowiadają, rozmawiają ze zlecającym, a zlecający widzi, kto odczytał. Dokument decyzji:
-**`docs/zlecenia.md`** (31 decyzji właściciela w czterech turach, §1; trzecia i czwarta
-pytane POJEDYNCZO). Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0". Stan: PROJEKT -
+**`docs/zlecenia.md`** (36 decyzji właściciela: 31 w czterech turach z 2026-09-27 i 5
+z przeglądu makiet 2026-09-28, §1; od trzeciej tury pytane POJEDYNCZO). Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0". Stan: PROJEKT -
 makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy implementacji:
 - **zlecenie = rezerwacja z pustymi fotelami + adresaci**: termin zajęty OD UTWORZENIA
   (`bookings.order_id`, poluzowany CHECK `booking_flight_fields`), bez ścieżki akceptacji.
@@ -5195,6 +5197,51 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
   „Play schodzi do 4.0.0" w sekcjach o sklepie i nowej instancji czytaj jako 5.0.0
   (poprawka w Z-W). 3.2.0 wydane 27 września 2026 (PR #240), więc brama integracyjna jest
   otwarta: `develop` niesie odtąd 4.0.0
+
+### Epik Z-A: makiety zleceń (issue #244, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
+Design-first przed kodem: telefon `20f`, `21e`, `23f`, `25d`, `28`–`28e`, `29`–`29b`,
+`30`–`30a`, `31`–`31c`, `32`–`32d`; panel `zlecenia-lista` (ZL1/ZL1a), `zlecenia-nowe` (ZL2),
+`zlecenia-szczegoly` (ZL3–ZL3d), `zlecenia-watek`, `piloci-grupy` (P5) oraz ramki
+w istniejących (`kalendarz-flota`, `kalendarz-wpis` K2c, `piloci-lista`, `piloci-konto`,
+kolumna boczna wszystkich ram klubu). Spis: `docs/zlecenia.md` §14.2 i §15. Makiety przeszły
+przegląd spójności z aplikacją, architekturą i decyzjami; reguły z tego przeglądu:
+- **KOLUMNA PANELU W TRZECH GRUPACH** (pkt 32–34): **Loty** - Dziennik · Do sprawdzenia ·
+  Statystyki; **Planowanie** - Kalendarz · Zlecenia; **Klub** - Piloci · Samoloty.
+  Statystyki liczą te same zamknięte operacje, co Dziennik, więc stoją w jego grupie -
+  PRZED Kalendarzem (zmiana kolejności `NAV_ITEMS` w Z-D; `homeFor` bez zmian znaczenia,
+  pilnuje `nav.test.ts`). Nagłówek `.nav-group` jest SAMYM PODPISEM - grupy się nie
+  zwijają - i stoi WYŁĄCZNIE przy co najmniej dwóch widocznych grupach: pilot z pustym
+  zakresem (Kalendarz, Zlecenia) i rama superadministratora mają listę płaską, grupa bez
+  widocznej pozycji znika. Nie proponować zwijania ani grup przy jednej widocznej
+- **MENU WOLNEJ KOMÓRKI KALENDARZA PANELU** (pkt 35): osoba z `orders.create` po kliknięciu
+  dostaje „Zarezerwuj / Zleć lot", oba z maszyną i dniem komórki - ten sam wybór, co arkusz
+  wolnego pasma 21E w telefonie. Bez uprawnienia kliknięcie otwiera rezerwację wprost (menu
+  z jedną pozycją byłoby krokiem o nic); „Zleć lot" nad osią otwiera zlecenie BEZ terminu.
+  `.menu.cell-menu` + `.cal-cell:has(> .cell-menu)` (komórka zdejmuje `overflow: hidden`)
+- **LISTA ZLECEŃ STARTUJE TAM, GDZIE COŚ CZEKA - NA OBU POWIERZCHNIACH** (pkt 36): wejście
+  z Pulpitu (telefon) i z kolumny (`#/zlecenia` bez parametru, panel) otwiera „Do mnie",
+  gdy coś tam czeka na odpowiedź, inaczej „Zlecone" (przekierowanie na `?widok=zlecone`).
+  Segment niesie JAWNY parametr (`?widok=do-mnie` / `?widok=zlecone`), więc wklejony adres
+  znaczy to samo dla każdego; członek bez uprawnień segmentu nie ma
+- **„ZLEĆ LOT" / „NOWE ZLECENIE" WYŁĄCZNIE Z `orders.create`** - zakładkę „Zlecone" otwiera
+  też `reservations.manage` (prowadzenie cudzych), ale prowadzenie nie daje prawa wysyłania
+- **JEDNA OŚ CZASU DLA CAŁEGO ZESTAWU**: zlecenie A (przelot SP-AXA, Adam imiennie na
+  dowódcę; w piątek 07:31 termin 09:00-11:00 → 10:00-12:00, 07:40 przyjęte) i zlecenie B
+  (skoki SP-ANA; dowódca imiennie, drugi pilot z grupy „Piloci An-2"; piątek 07:10 edycja
+  planu lotu, 21:52 zgłoszenie Adama, 22:12 przydział Anny) mają te same chwile w telefonie
+  i w panelu, a ramy piszą „ten sam moment, co …". Zmieniasz chwilę w jednej ramie -
+  sprawdź ramy, które się na nią powołują, i skrzynkę 25D (jej wiersze są tą samą historią)
+- **„ZMIANA NIEODCZYTANA" U PROWADZĄCEGO**: adresat, który otworzył zlecenie przed ostatnią
+  edycją, ma przy statusie bursztynowe „zmiana z 07:10 nieodczytana" (`last_seen_at` <
+  ostatnia edycja, `docs/zlecenia.md` §8); wiersze sprzed doby piszą „wcz." / „wczoraj"
+- **DWUNASTA ZDOLNOŚĆ `orders.create` („Zlecanie lotów")** stoi w `piloci-konto` w zestawach
+  Koordynator lotów i Administrator; Akceptujący i Technik jej nie mają
+- **NOWE KLASY PANELU CZEKAJĄ W `design/panel/rama.css`** (sekcja „ZLECENIA (4.0.0) - czekają
+  na kod epiku Z-D"): `.nav-group`, `.menu.cell-menu` i komponenty zleceń idą przy kodzie do
+  `admin/src/styles/components/` pod TĄ SAMĄ nazwą; `panel.css` po każdej zmianie przez
+  `npm run panel:css` (strażnik `panelCss.generated.test.ts`)
+- **czego Z-A NIE ROBI**: kodu (Z-B serwer, Z-C na żywo, Z-D panel, Z-E aplikacja) ani
+  podręcznika (Z-W); stany bez makiety są w panelach wariantów jako pozycje „bez makiety"
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

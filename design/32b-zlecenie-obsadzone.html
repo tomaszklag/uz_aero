@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 32B Zlecenie, komplet załogi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     HERO W ZIELENI - zlecenie przestało być pytaniem
+     Przy komplecie załogi zlecenie JEST zwykłą rezerwacją tej załogi (§2.1), więc
+     hero przechodzi z błękitu zlecenia na zieleń karty rezerwacji (23): ten sam
+     gradient, ta sama ramka, to samo odliczanie. Błękit niesie „rzecz, która się
+     dzieje i czeka na odczyt" - a tu nikt już na nic nie czeka. Plakietka mówi
+     „Komplet załogi", a nie „Potwierdzona": dla prowadzącego ważne jest, że oba
+     fotele są obsadzone, bo to przy nich zostają akcje (cofnięcie przydziału).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .hero {
+    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--green-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--green); }
+  .hero-ac { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-secondary); }
+
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+
+  /* ═══ ZAŁOGA ═══ ta sama karta, co na 32A: fotel = wiersz, przy nim rozmowa i ⋯.
+     Menu ⋯ prowadzi do 32D, gdzie przy osobie PRZYDZIELONEJ stoi „COFNIJ PRZYDZIAŁ" -
+     odebrać zlecenia wprost się jej nie da, żeby nie zniknęła z lotu bez śladu (§5.2).
+     Podpis mówi, JAK fotel się obsadził: „przyjęte" (fotel imienny, odpowiedź obsadziła
+     go sama) albo „przydział" (grupa albo lista, wskazał prowadzący) - obie formy bez
+     płci, bo opisują zlecenie, nie osobę. */
+  .cseat { display:grid; grid-template-columns:86px 1fr auto; align-items:center; gap:10px; padding:10px 8px 10px 13px; border-bottom:1px solid var(--border); min-height:58px; }
+  .cseat:last-child { border-bottom:none; }
+  .cseat-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .cseat-main { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .cseat-name { font-size:13px; color:var(--text-primary); font-weight:600; }
+  .cseat-name .code { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .cseat-status { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.3px; color:var(--text-secondary); }
+  .cseat-status .ok { color:var(--green); }
+
+  .rcp { display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; padding:10px 8px 10px 13px; border-bottom:1px solid var(--border); }
+  .rcp:last-child { border-bottom:none; }
+  .rcp-main { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .rcp-name { font-size:13px; color:var(--text-secondary); font-weight:600; }
+  .rcp-name .code { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .rcp-status { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.3px; color:var(--text-muted); }
+  .rcp-status.unread { color:var(--text-placeholder); }
+  .rcp-reason { font-size:11px; color:var(--text-muted); font-style:italic; }
+  .rcp-actions { display:flex; align-items:center; gap:2px; }
+  .rcp-icon { position:relative; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; color:var(--text-muted); text-decoration:none; }
+  .rcp-icon:hover { background:var(--surface-raised); color:var(--text-secondary); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     POZOSTALI ADRESACI - ZWINIĘCI, NIE USUNIĘCI
+     Po obsadzeniu fotela lista adresatów przestaje być pytaniem („kogo wybrać"),
+     więc nie zajmuje ekranu. Nie znika jednak: po rezygnacji albo cofnięciu przydziału
+     fotel wraca do szukania, a zgłoszenia pozostałych DALEJ SIĘ LICZĄ (decyzja 14) - to jest
+     lista rezerwowych, do której prowadzący wraca jednym tapnięciem.
+
+     Wzorzec `.expand` z Historii (24): przerywana ramka w tonie podpisu, bo to droga
+     do RESZTY, a nie akcja ekranu. Rozwija się W MIEJSCU (element details), bez
+     osobnego ekranu. Po rozwinięciu wiersze są BEZ zieleni i bez „WYBIERZ" - fotel
+     jest zajęty, więc „Może lecieć" nikt teraz nie może użyć; kolor wraca razem
+     z przyciskiem, gdy fotel znów zacznie szukać. Rozmowa zostaje przy każdym.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  details.more { display:block; }
+  details.more > summary { list-style:none; }
+  details.more > summary::-webkit-details-marker { display:none; }
+  .expand {
+    display:flex; align-items:center; gap:8px; min-height:42px; padding:0 12px;
+    border-radius:11px; border:1px dashed var(--border-strong); background:transparent;
+    color:var(--text-muted); text-decoration:none; cursor:pointer;
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+  }
+  .expand:hover { border-color:var(--text-muted); color:var(--text-secondary); }
+  .expand svg { flex-shrink:0; transition:transform 0.15s; }
+  details.more[open] .expand svg { transform:rotate(180deg); }
+  .expand-label { flex:1; }
+  .expand-label b { font-weight:700; color:var(--text-secondary); }
+  details.more > .card { margin-top:8px; }
+
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+
+  .hist { display:flex; flex-direction:column; }
+  .hist-row { display:grid; grid-template-columns:62px 1fr; gap:10px; padding:9px 13px; border-bottom:1px solid var(--border); }
+  .hist-row:last-child { border-bottom:none; }
+  .hist-when { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); padding-top:1px; }
+  .hist-what { font-size:12px; color:var(--text-secondary); line-height:1.4; }
+  .hist-what b { color:var(--text-primary); font-weight:600; }
+  .hist-who { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); display:block; margin-top:1px; }
+
+  /* ═══ AKCJE ═══ „WYŚLIJ PONOWNIE" znika razem z szukaniem - nie ma już czego
+     rozsyłać. Zostaje edycja (ten sam formularz 31) i odwołanie: rezerwacja ze
+     zlecenia odwołuje się zasadami zlecenia, z powodem opcjonalnym (§5.6). */
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+  .btn-danger {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:transparent; color:var(--red);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--red-border); text-decoration:none;
+  }
+  .btn-danger:hover { background:var(--red-muted); }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 32B</span>
+  <span class="slug">zlecenie · komplet załogi</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie z kompletem załogi">
+  <div class="status-bar">
+    <span>22:30</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <a href="31-zlecenie-nowe.html" class="icon-btn" title="Powiel" aria-label="Powiel zlecenie">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+      </a>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Komplet załogi</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-ac">SP-ANA · AN-2</span>
+          <span class="hero-count">ZA 10 H 30 MIN</span>
+        </div>
+      </div>
+
+      <!-- ═══ ZAŁOGA ═══ Jakub Wrona obsadził fotel imienny sam („PRZYJMUJĘ"),
+           Annę Kowal wskazał prowadzący spośród zgłoszonych z grupy. Oboje widzą lot
+           jako swoją rezerwację na Pulpicie - karta liczy OBA fotele (decyzja 23). -->
+      <div class="section-lbl">Załoga</div>
+      <div class="card">
+        <div class="cseat">
+          <span class="cseat-k">Dowódca</span>
+          <span class="cseat-main">
+            <span class="cseat-name">Jakub Wrona<span class="code">JWR</span></span>
+            <span class="cseat-status"><span class="ok">Leci</span> · przyjęte 22:05</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="cseat">
+          <span class="cseat-k">Drugi pilot</span>
+          <span class="cseat-main">
+            <span class="cseat-name">Anna Kowal<span class="code">AKW</span></span>
+            <span class="cseat-status"><span class="ok">Leci</span> · przydział 22:12</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <!-- ═══ POZOSTALI ═══ czterech adresatów grupy „Piloci An-2" bez przydziału.
+           Ci bez odmowy dostali „Zlecenie nieaktualne" bez nazwiska osoby, która
+           dostała fotel (decyzja 18) - stąd dopisek w wierszu zwinięcia: to jest stan
+           zlecenia z ICH strony, a nie ocena ich odpowiedzi. -->
+      <details class="more">
+        <summary class="expand">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="expand-label">Pozostali adresaci · <b>4</b> · zlecenie nieaktualne</span>
+        </summary>
+        <div class="card">
+          <div class="rcp">
+            <span class="rcp-main">
+              <span class="rcp-name">Barbara Nowak<span class="code">BNO</span></span>
+              <span class="rcp-status">Może lecieć · 21:30</span>
+            </span>
+            <span class="rcp-actions">
+              <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+              </a>
+            </span>
+          </div>
+          <div class="rcp">
+            <span class="rcp-main">
+              <span class="rcp-name">Adam Kowalski<span class="code">AKO</span></span>
+              <span class="rcp-status">Może lecieć · 21:52</span>
+            </span>
+            <span class="rcp-actions">
+              <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+              </a>
+            </span>
+          </div>
+          <div class="rcp">
+            <span class="rcp-main">
+              <span class="rcp-name">Ewa Sowa<span class="code">ESO</span></span>
+              <span class="rcp-status">Odczytane wcz. 20:05</span>
+            </span>
+            <span class="rcp-actions">
+              <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+              </a>
+            </span>
+          </div>
+          <div class="rcp">
+            <span class="rcp-main">
+              <span class="rcp-name">Piotr Lis<span class="code">PLI</span></span>
+              <span class="rcp-status">Nie może · wcz. 19:48</span>
+              <span class="rcp-reason">„W sobotę mam egzamin w Mielcu."</span>
+            </span>
+            <span class="rcp-actions">
+              <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+              </a>
+            </span>
+          </div>
+        </div>
+      </details>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Ty<span class="kv-sub">wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <!-- Obsadzenie fotela jest wpisem historii w obu odmianach: „Przyjęcie" pisze
+           osoba z fotela imiennego, „Przydział" - prowadzący. Nazwisko działającego
+           stoi tu, bo patrzy prowadzący (decyzja 31). -->
+      <div class="section-lbl">Historia zmian</div>
+      <div class="card hist">
+        <div class="hist-row">
+          <span class="hist-when">dziś 22:12</span>
+          <span class="hist-what"><b>Przydział</b> · drugi pilot: Anna Kowal<span class="hist-who">Ty</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">dziś 22:05</span>
+          <span class="hist-what"><b>Przyjęcie</b> · dowódca<span class="hist-who">Jakub Wrona</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">dziś 07:10</span>
+          <span class="hist-what"><b>Plan lotu</b> 2:00 → 3:00<span class="hist-who">Paweł Wilk</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">wcz. 21:05</span>
+          <span class="hist-what"><b>Wysłano ponownie</b> · przypomnienie dla 4 osób<span class="hist-who">Ty</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">wcz. 18:40</span>
+          <span class="hist-what"><b>Utworzone</b> · dowódca imiennie, drugi pilot z grupy<span class="hist-who">Ty</span></span>
+        </div>
+      </div>
+
+      <a class="btn-secondary" href="31-zlecenie-nowe.html">EDYTUJ</a>
+      <a class="btn-danger" href="32c-zlecenie-odwolanie.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        ODWOŁAJ ZLECENIE
+      </a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Fotele i adresaci</span>
+      <span class="vp-when">Zlecenie jeszcze szuka: każdy szukany fotel ma własną kartę z adresatami, odczytami i odpowiedziami. Stąd „WYBIERZ" prowadzi tutaj.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32a-zlecenie-wspolna-lista.html">
+    <span class="vp-badge blue">32A</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista - fotele przydzielasz Ty</span>
+      <span class="vp-when">Adresaci potwierdzili termin, prowadzący przydziela fotele. Po przydziale ostatniego fotela ekran wygląda jak ten - z podpisem „przydział" przy obu osobach.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="32b-zlecenie-obsadzone.html">
+    <span class="vp-badge">32B</span>
+    <span class="vp-body">
+      <span class="vp-name">Komplet załogi</span>
+      <span class="vp-when">Wszystkie szukane fotele obsadzone: zlecenie jest zwykłą rezerwacją tej załogi, więc hero przechodzi w zieleń karty rezerwacji (23). Przy każdej osobie menu ⋯ z „COFNIJ PRZYDZIAŁ" (32D) - fotel wraca wtedy do szukania, drugi fotel i termin zostają, a zgłoszenia pozostałych dalej się liczą (decyzja 14). Pozostali adresaci zwinięci w jeden wiersz, rozwijany w miejscu. Bez „WYŚLIJ PONOWNIE" - nie ma już czego rozsyłać.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="32c-zlecenie-odwolanie.html">
+    <span class="vp-badge amber">32C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odwołanie zlecenia - arkusz</span>
+      <span class="vp-when">Także przy komplecie: termin wraca do puli, a przydzieleni i adresaci bez odmowy dostają „Zlecenie odwołane". Powód opcjonalny (decyzja 16).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32d-zlecenie-adresat.html">
+    <span class="vp-badge amber">32D</span>
+    <span class="vp-body">
+      <span class="vp-name">Adresat - zamień, odbierz, cofnij przydział</span>
+      <span class="vp-when">Menu ⋯ przy osobie w fotelu: zamiast „ODBIERZ ZLECENIE" stoi „COFNIJ PRZYDZIAŁ". Pilot dostaje „Przydział cofnięty", powód opcjonalny.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23f-rezerwacja-ze-zlecenia.html">
+    <span class="vp-badge">23F</span>
+    <span class="vp-body">
+      <span class="vp-name">Ten sam lot oczami pilota w fotelu</span>
+      <span class="vp-when">Zielona karta rezerwacji bez „PRZESUŃ I POPRAW" (termin prowadzi zlecenie) i z „REZYGNUJĘ" zamiast odwołania.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="31-zlecenie-nowe.html">31 Nowe</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone</a>
+  <a href="32a-zlecenie-wspolna-lista.html">32A Lista</a>
+  <a href="32b-zlecenie-obsadzone.html" class="active">32B Komplet</a>
+  <a href="32c-zlecenie-odwolanie.html">32C Odwołanie</a>
+  <a href="32d-zlecenie-adresat.html">32D Adresat</a>
+  <span>·</span>
+  <a href="23f-rezerwacja-ze-zlecenia.html">23F Rezerwacja pilota →</a>
+</nav>
+
+</body>
+</html>

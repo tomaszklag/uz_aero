@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 32D Adresat zlecenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ EKRAN POD ARKUSZEM ═══ górna część 32 - wiersz, z którego otwarto menu,
+     widać nad sufitem arkusza. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+  .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .scroll > * { flex-shrink:0; }
+  .hero {
+    background:linear-gradient(180deg, rgba(52,152,219,0.08) 0%, var(--surface) 55%);
+    border:1px solid var(--blue-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--blue); }
+  .hero-ac { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-secondary); }
+  .seat-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:2px 2px 0; }
+  .sh-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .sh-title b { color:var(--text-secondary); font-weight:500; }
+  .sh-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--green); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .rcp { display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; padding:10px 8px 10px 13px; border-bottom:1px solid var(--border); }
+  .rcp:last-child { border-bottom:none; }
+  .rcp-main { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .rcp-name { font-size:13px; color:var(--text-primary); font-weight:600; }
+  .rcp-name .code { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .rcp-status { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.3px; color:var(--text-secondary); }
+  .rcp-status.ok { color:var(--green); }
+  .rcp-actions { display:flex; align-items:center; gap:2px; }
+  .rcp-icon { position:relative; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; color:var(--text-muted); text-decoration:none; }
+  /* Wiersz, z którego otwarto menu - jaśniejsza ikona ⋯ (stan „wciśnięty"), żeby
+     przez pas tła było widać, KOGO dotyczy arkusz. */
+  .rcp-icon.pressed { background:var(--surface-hover); color:var(--text-primary); }
+  .rcp-pick { font-family:var(--font-display); font-size:13px; letter-spacing:1.5px; color:var(--green); border:1px solid var(--green-border); background:var(--green-muted); border-radius:9px; padding:7px 10px 6px; text-decoration:none; margin-left:4px; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ARKUSZ ADRESATA - jedna osoba, trzy drogi
+     Rama z 26C (sufit, uchwyt, przypięte na dole akcje). Górna krawędź NEUTRALNA,
+     nie czerwona jak w 32C: arkusz niesie też zwykłą rozmowę, a kasuje tylko jedna
+     z trzech dróg - i ta ma własny czerwony obrys.
+
+     KOLEJNOŚĆ = KOLEJNOŚĆ PYTAŃ PROWADZĄCEGO: najpierw „napiszę i zapytam"
+     (najczęstsza odpowiedź na „odczytane, bez odpowiedzi"), potem „wezmę kogoś
+     innego", na końcu „odbiorę zlecenie". Najcięższa akcja stoi najniżej, z dala
+     od kciuka, który sięga po rozmowę.
+
+     NAGŁÓWEK MÓWI, KIM JEST TA OSOBA W TYM ZLECENIU: fotel, sposób adresowania
+     i to, co zrobiła (odczyt, odpowiedź). Nazwisko w mianowniku jako tytuł, jak
+     nagłówek rozmowy (29) - bez odmiany.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 16px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .sheet-person { display:flex; flex-direction:column; gap:3px; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); line-height:1.1; }
+  .sheet-role { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .sheet-state { font-family:var(--font-mono); font-size:10px; letter-spacing:0.3px; color:var(--text-secondary); }
+
+  /* Rozmowa jako wiersz z szewronem - ten sam kształt, co „Napisz wiadomość" na
+     karcie adresata (28): wątek jest drogą do NEGOCJACJI, a nie akcją tego arkusza. */
+  .sheet-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .thread-row {
+    display:grid; grid-template-columns:32px 1fr 14px; align-items:center; gap:10px;
+    padding:11px 13px; text-decoration:none; color:inherit;
+  }
+  .thread-row:hover { background:var(--surface-hover); }
+  .tr-icon { width:32px; height:32px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+  .tr-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tr-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tr-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .tr-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+
+  /* POWÓD - opcjonalny (decyzja 16), wspólny dla zamiany i odebrania: w obu
+     przypadkach ta osoba traci zlecenie i czyta go w wiadomości „Zlecenie
+     nieaktualne". Stoi NAD obiema akcjami, bo dotyczy obu. */
+  .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:-4px; }
+  .modal-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  .modal-field {
+    border:1px solid var(--border-strong); background:var(--surface); border-radius:12px;
+    padding:12px 13px; min-height:62px; font-size:13px; line-height:1.5; color:var(--text-placeholder);
+  }
+
+  /* ZAMIEŃ OSOBĘ - wyciszony, bo zlecenie dalej żyje, a fotel dostaje nową osobę
+     tym samym ruchem (usunięcie i dopisanie w jednym żądaniu, §5.2). Prowadzi do
+     arkusza adresatów (31C) zawężonego do tego fotela. */
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+  /* ODBIERZ ZLECENIE - obramowany czerwienią, nie wypełniony: czerwień mówi
+     „uwaga", nie „zrób to" (issue #55 / 10L). Arkusz sam jest krokiem potwierdzenia,
+     więc drugiego pytania „na pewno?" nie ma. */
+  .btn-danger {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:transparent; color:var(--red);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--red-border); text-decoration:none;
+  }
+  .btn-danger:hover { background:var(--red-muted); }
+  /* Skutek pod akcjami, raz - wzorzec przypisu z 26 i 28. */
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:0 4px; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 32D</span>
+  <span class="slug">zlecenie · adresat</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Arkusz adresata zlecenia">
+  <div class="status-bar">
+    <span>21:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <a href="31-zlecenie-nowe.html" class="icon-btn" title="Powiel" aria-label="Powiel zlecenie">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+      </a>
+    </div>
+
+    <div class="scroll">
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Szuka załogi</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-ac">SP-ANA · AN-2</span>
+          <span class="hero-count">ZA 11 H 19 MIN</span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Dowódca · <b>imiennie</b></span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Jakub Wrona<span class="code">JWR</span></span>
+            <span class="rcp-status">Odczytane 08:15 · bez odpowiedzi</span>
+          </span>
+          <span class="rcp-actions">
+            <span class="rcp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg></span>
+            <span class="rcp-icon pressed"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Drugi pilot · <b>Piloci An-2</b></span>
+        <span class="sh-count">2 mogą lecieć</span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Anna Kowal<span class="code">AKW</span></span>
+            <span class="rcp-status ok">Może lecieć · wcz. 19:10</span>
+          </span>
+          <span class="rcp-actions">
+            <span class="rcp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg></span>
+            <span class="rcp-pick">WYBIERZ</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ARKUSZ ═══
+         Otwarty z ⋯ przy Jakubie Wronie: fotel imienny, odczytane ponad dwie godziny
+         temu, bez odpowiedzi - dokładnie moment, w którym prowadzący pisze albo
+         zamienia osobę (komentarz na 32).
+
+         PIERWSZA DROGA ZALEŻY OD TEGO, KTO PATRZY: autor zlecenia pisze („Napisz
+         wiadomość" → 29), koordynator, który prowadzi cudze zlecenie, dostaje w tym
+         miejscu „Rozmowa · do odczytu" (29B) - wątki prowadzi autor (decyzja 20). -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="sheet-person">
+          <span class="modal-title">JAKUB WRONA</span>
+          <span class="sheet-role">Dowódca · imiennie · JWR</span>
+          <span class="sheet-state">Odczytane 08:15 · bez odpowiedzi</span>
+        </div>
+
+        <div class="sheet-card">
+          <a class="thread-row" href="29-watek.html">
+            <span class="tr-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </span>
+            <span class="tr-body">
+              <span class="tr-title">Napisz wiadomość</span>
+              <span class="tr-sub">Rozmowa · Jakub Wrona</span>
+            </span>
+            <span class="tr-go">&#8250;</span>
+          </a>
+        </div>
+
+        <div class="modal-field-head">
+          <span class="modal-lbl">Powód</span>
+          <span class="optional-tag">opcjonalne</span>
+        </div>
+        <div class="modal-field">Np. w sobotę potrzebny jest pilot z uprawnieniem instruktora.</div>
+
+        <a class="btn-secondary" href="31c-zlecenie-adresaci.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 7h18"/><path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/></svg>
+          ZAMIEŃ OSOBĘ
+        </a>
+        <a class="btn-danger" href="32-zlecenie-prowadzone.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          ODBIERZ ZLECENIE
+        </a>
+
+        <div class="foot-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          <span><b>Jakub Wrona</b> dostanie wiadomość, że zlecenie jest nieaktualne - przy zamianie i przy odebraniu. Rozmowa zostaje do odczytu.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Fotele i adresaci</span>
+      <span class="vp-when">Ekran pod arkuszem - menu ⋯ stoi przy adresacie fotela imiennego.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32a-zlecenie-wspolna-lista.html">
+    <span class="vp-badge blue">32A</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista - fotele przydzielasz Ty</span>
+      <span class="vp-when">Menu ⋯ przy osobie przydzielonej z listy - w arkuszu stoi wtedy „COFNIJ PRZYDZIAŁ".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32b-zlecenie-obsadzone.html">
+    <span class="vp-badge">32B</span>
+    <span class="vp-body">
+      <span class="vp-name">Komplet załogi</span>
+      <span class="vp-when">Obie osoby w fotelach mają ⋯ - obie z „COFNIJ PRZYDZIAŁ".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32c-zlecenie-odwolanie.html">
+    <span class="vp-badge amber">32C</span>
+    <span class="vp-body">
+      <span class="vp-name">Odwołanie zlecenia - arkusz</span>
+      <span class="vp-when">Całe zlecenie zamiast jednej osoby: termin wraca do puli, wiadomość dostają wszyscy bez odmowy.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="32d-zlecenie-adresat.html">
+    <span class="vp-badge amber">32D</span>
+    <span class="vp-body">
+      <span class="vp-name">Adresat - zamień, odbierz, cofnij przydział</span>
+      <span class="vp-when">Po ⋯ przy adresacie (decyzja 29). Adresat NIEPRZYDZIELONY: „Napisz wiadomość", „ZAMIEŃ OSOBĘ" (wyłącznie przy fotelu imiennym - nowa osoba dostaje ten fotel imiennie, a jej potwierdzenie dalej go obsadza) i „ODBIERZ ZLECENIE" - usunięty dostaje „Zlecenie nieaktualne", jego zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu. Osoba PRZYDZIELONA (32A, 32B): zamiast zamiany i odebrania stoi jeden przycisk „COFNIJ PRZYDZIAŁ" - fotel wraca do szukania, drugi fotel i termin zostają, zgłoszenia pozostałych dalej się liczą, a pilot dostaje „Przydział cofnięty" (decyzje 14 i 29); odebrać zlecenia osobie w fotelu wprost się nie da, żeby nie zniknęła z lotu bez śladu. Koordynator niebędący autorem widzi „Rozmowa · do odczytu" (29B) zamiast „Napisz wiadomość". Powód zawsze opcjonalny (decyzja 16).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="31c-zlecenie-adresaci.html">
+    <span class="vp-badge">31C</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz adresatów (dalej po „ZAMIEŃ OSOBĘ")</span>
+      <span class="vp-when">Ten sam wybór, co przy tworzeniu zlecenia, dla jednego fotela: zapis zamiany następuje dopiero po wskazaniu nowej osoby.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="31-zlecenie-nowe.html">31 Nowe</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone</a>
+  <a href="32a-zlecenie-wspolna-lista.html">32A Lista</a>
+  <a href="32b-zlecenie-obsadzone.html">32B Komplet</a>
+  <a href="32c-zlecenie-odwolanie.html">32C Odwołanie</a>
+  <a href="32d-zlecenie-adresat.html" class="active">32D Adresat</a>
+  <span>·</span>
+  <a href="29-watek.html">29 Rozmowa →</a>
+  <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
+</nav>
+
+</body>
+</html>

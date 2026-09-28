@@ -149,7 +149,8 @@ Trzy ograniczenia z `admin/src/ui/shell/nav.ts`, których nie wolno naruszyć:
 1. **kolejność tablicy JEST ekranem startowym** - `homeFor` bierze pierwszą dostępną
    pozycję. Dziennik zostaje pierwszy;
 2. **grupy mają sens od siedmiu pozycji w górę** - przy sześciu lista zostaje płaska;
-   pierwszy siódmy moduł wraca do tej decyzji;
+   pierwszy siódmy moduł wraca do tej decyzji (wrócił z Zleceniami 4.0.0: trzy grupy -
+   Loty, Planowanie, Klub, decyzja 2026-09-28, `docs/zlecenia.md` §15);
 3. **pozycja należy do zdolności** - moduł bez prawa wejścia nie jest wyszarzony, tylko
    go nie ma.
 
@@ -572,7 +573,7 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 | R3 | **Kontrakty pisane pod makiety 1.0** | Przy każdym epiku sprawdzić, czy trasa odpowiada na TO pytanie; cienki plaster serwera jest tańszy niż ekran naginany do cudzej odpowiedzi |
 | R4 | **Makiet jest realnie 8-12** i to jest praca, nie formalność | Cała w P-A, przed kodem; inwentarz komponentów w `SZABLON.html` rośnie razem z nimi |
 | R5 | **Doba rozcięta stroną** (§4.4) | Sumy doby liczy serwer; test na dobę przeciętą granicą strony |
-| R6 | **Kolumna rośnie do sześciu pozycji** (§3) | Lista zostaje płaska; siódmy moduł wraca do decyzji o grupach |
+| R6 | **Kolumna rośnie do sześciu pozycji** (§3) | Lista zostaje płaska; siódmy moduł wraca do decyzji o grupach (4.0.0: trzy grupy, `docs/zlecenia.md` §15) |
 | R7 | **Nowe odczyty a izolacja klubów** | Każda nowa trasa płaci za obu strażników epiku C - inaczej `tenantIsolation.test.ts` nie przejdzie i to jest zamierzone |
 | R8 | **Dopisywanie zdarzeń z panelu** (§5.4) - pierwsza droga, którą do rejestru trafia fakt niezaobserwowany przez telefon | Wąska biała lista typów, powód wymagany, audyt `event.add`, te same twarde reguły domeny (`writeAuthority.test.ts`) i ta sama przebudowa projekcji oraz flag, co przy korekcie |
 

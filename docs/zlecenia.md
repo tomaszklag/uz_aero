@@ -4,9 +4,10 @@
 > makietami - ta sama kolejność, co przy rezerwacjach (`docs/rezerwacje.md`), zakresach
 > uprawnień (`docs/uprawnienia.md`) i obserwowaniu samolotu (`docs/obserwowanie-samolotu.md`).
 >
-> Stan: **31 decyzji właściciela z 2026-09-27 w czterech turach** (§1 - trzecia i czwarta
-> tura pytane pojedynczo przekształciły model: dwa fotele, trzy sposoby adresowania, bez
-> trybu „kto pierwszy", cały moduł na żywo). Decyzje wąskie, które dokument podjął sam, stoją w §21 -
+> Stan: **36 decyzji właściciela - 31 z 2026-09-27 w czterech turach i 5 z przeglądu makiet
+> Z-A (2026-09-28)** (§1 - trzecia i czwarta tura pytane pojedynczo przekształciły model:
+> dwa fotele, trzy sposoby adresowania, bez trybu „kto pierwszy", cały moduł na żywo;
+> piąta ułożyła kolumnę panelu w grupy i dopięła wejścia w zlecenie w panelu). Decyzje wąskie, które dokument podjął sam, stoją w §21 -
 > rozjazd z nimi to rozmowa przy przeglądzie, nie cicha zmiana w kodzie. Wydanie: **4.0.0
 > nowym APK**, milestone „Zlecenia na lot 4.0.0" (#5), termin 1 października 2026,
 > **po wydaniu 3.2.0** (wydane 27 września 2026). Etapy Z-A…Z-W w §18.
@@ -52,7 +53,7 @@ Aplikacja nie dostaje żadnego modułu natywnego (`expo-notifications` jest od 3
 `WebSocket` jest wbudowany w React Native). Nowy APK wynika wyłącznie z numeru wersji
 (§19). Serwer dostaje jedną nową zależność - obsługę WebSocket (§11).
 
-## 1. Decyzje właściciela (2026-09-27) - nie wracać do nich w dyskusji
+## 1. Decyzje właściciela (2026-09-27 i 2026-09-28) - nie wracać do nich w dyskusji
 
 Pierwsza tura - kształt:
 
@@ -144,6 +145,27 @@ Czwarta tura - decyzje, które wynikły z trzeciej (też pojedynczo):
     Rozstrzygnięcie pochodne: wskazanie IMIENNE na jeden fotel wygrywa z grupą drugiego (§4.2).
 31. **Po edycji adresat widzi, CO zmieniono, bez nazwiska** („Edytowane 15:10 · maszyna
     SP-AXA → SP-KLM"); kto zmienił, widzą prowadzący w historii zmian (§5.2, §10.3).
+
+Piąta tura - przegląd makiet Z-A (2026-09-28, pojedynczo):
+
+32. **Kolumna panelu w TRZECH GRUPACH**: Loty (Dziennik, Do sprawdzenia, Statystyki),
+    Planowanie (Kalendarz, Zlecenia), Klub (Piloci, Samoloty). Zlecenia są siódmym modułem,
+    a `docs/panel-3.2.md` §3 kazał przy siódmym wrócić do decyzji o grupach. Statystyki
+    liczą te same zamknięte operacje, co Dziennik, więc stoją w jego grupie - przed
+    Kalendarzem; ekran startowy bez zmian (§15).
+33. **Nagłówek grupy WYŁĄCZNIE przy co najmniej dwóch widocznych grupach** - pilot z samym
+    Kalendarzem i Zleceniami ma listę płaską, tak samo rama superadministratora; grupa bez
+    widocznej pozycji znika w całości.
+34. **Grupy się NIE zwijają** - nagłówek jest samym podpisem: siedem pozycji mieści się
+    w kolumnie, a przycisk bez funkcji nie wchodzi.
+35. **Kalendarz panelu: kliknięcie w wolne miejsce komórki daje osobie z `orders.create`
+    menu „Zarezerwuj / Zleć lot"**, oba z maszyną i dniem komórki - ten sam wybór, co arkusz
+    wolnego pasma 21E w telefonie. Bez uprawnienia kliknięcie otwiera rezerwację wprost,
+    a „Zleć lot" nad osią otwiera zlecenie bez terminu (§15).
+36. **Domyślna połowa listy zleceń w panelu - jak w telefonie**: wejście z kolumny
+    (`#/zlecenia` bez parametru) otwiera „Do mnie", gdy coś tam czeka na odpowiedź,
+    a inaczej przekierowuje na „Zlecone" (osobę, która je widzi). Adres z parametrem
+    (`?widok=do-mnie`, `?widok=zlecone`) znaczy to samo dla każdego (§15).
 
 ## 2. Czym JEST zlecenie w tym systemie
 
@@ -240,7 +262,7 @@ czasownikiem w trzeciej osobie czasu teraźniejszego albo rzeczownikiem - „Mo�
 
 Sposoby 1 i 2 mieszają się per fotel (dowódca imiennie, drugi pilot z grupy). Sposób 3
 obejmuje wszystkie szukane fotele i z pozostałymi się nie miesza - to przełącznik nad
-fotelami w formularzu („Wspólna lista - fotele przydzielę sam").
+fotelami w formularzu („Wspólna lista · fotele przydzielę po odpowiedziach").
 
 **Osoba na liście obu foteli** (dwie grupy się pokrywają) dostaje JEDNO zlecenie
 z tematem „termin do potwierdzenia" - jej odpowiedź jest zgłoszeniem, a fotel wybiera
@@ -787,8 +809,9 @@ wskazać tylko siebie. Cudze zlecenie, cudzy wątek i zlecenie innego klubu to *
 | `32` | Zlecenie - widok prowadzącego | fotele z adresatami, odczytem i odpowiedzią (na żywo), WYBIERZ, „Odbierz zlecenie" / „Zamień osobę" przy adresacie, wątek każdego, EDYTUJ / ODWOŁAJ, historia zmian |
 | `32a` | jw., wspólna lista | zgłoszeni z „NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA" |
 | `32b` | komplet załogi | przydzieleni, „Cofnij przydział" |
-| `32c` | arkusz odwołania / cofnięcia | powód opcjonalny |
-| `23` (wariant) | rezerwacja ze zlecenia | bez „PRZESUŃ I POPRAW", „ODWOŁAJ" = „REZYGNUJĘ" |
+| `32c` | arkusz odwołania zlecenia | powód opcjonalny, termin wraca do puli |
+| `32d` | arkusz adresata (menu ⋯ przy każdym adresacie) | „Napisz wiadomość", „ZAMIEŃ OSOBĘ" (fotel imienny), „ODBIERZ ZLECENIE", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ"; powód opcjonalny |
+| `23f` | rezerwacja ze zlecenia (wariant karty 23) | bez „PRZESUŃ I POPRAW", „ODWOŁAJ" = „REZYGNUJĘ", wejście w wątek |
 
 ### 14.3 Po obsadzeniu zlecenie jest rezerwacją
 
@@ -802,25 +825,39 @@ w wątku), a „ODWOŁAJ" znaczy „REZYGNUJĘ".
 
 Kroki 31/31a to kroki 22/22a. Krok 31b jest nowy: dwa wiersze foteli z kartami stanu
 („Ja" / „Szukam" / „Brak"), pod szukanym fotelem wybór adresatów (osoba albo grupy),
-a nad fotelami przełącznik „Wspólna lista - fotele przydzielę sam". „Powiel" na karcie 32
+a nad fotelami przełącznik „Wspólna lista · fotele przydzielę po odpowiedziach". „Powiel" na karcie 32
 otwiera formularz z tą samą treścią i pustym terminem.
 
 ## 15. Panel
 
-- **Moduł „Zlecenia"** w kolumnie po Kalendarzu (`access: 'club'` - widzi go każdy członek;
-  zakładka „Zlecone" i „Zleć lot" tylko z `orders.create` albo `reservations.manage`).
-  Kolejność kolumny: Dziennik · Do sprawdzenia · Kalendarz · **Zlecenia** · Statystyki ·
-  Piloci · Samoloty. `homeFor` bez zmian znaczenia.
+- **Moduł „Zlecenia"** w grupie „Planowanie", po Kalendarzu (`access: 'club'` - widzi go
+  każdy członek; zakładka „Zlecone" z `orders.create` albo `reservations.manage`, „Zleć lot"
+  wyłącznie z `orders.create`, bo tworzy zlecenie - §9).
+- **Kolumna w trzech grupach** (pkt 32–34): **Loty** - Dziennik · Do sprawdzenia ·
+  Statystyki; **Planowanie** - Kalendarz · **Zlecenia**; **Klub** - Piloci · Samoloty.
+  Nagłówek grupy (`.nav-group`) jest samym podpisem, bez zwijania, i stoi wyłącznie przy
+  co najmniej dwóch widocznych grupach; grupa bez widocznej pozycji znika. `homeFor` bez
+  zmian znaczenia (administrator w Dzienniku, członek bez Podglądu klubu w Kalendarzu),
+  choć Statystyki stają przed Kalendarzem - pilnuje tego `nav.test.ts`.
+- **Domyślna połowa listy** (pkt 36): `#/zlecenia` bez parametru otwiera „Do mnie", gdy
+  coś tam czeka na odpowiedź, a inaczej przekierowuje na `?widok=zlecone` - osobę, która tę
+  połowę widzi; członek bez uprawnień zostaje przy „Do mnie". Segment niesie jawny parametr
+  (`?widok=do-mnie` / `?widok=zlecone`), więc wklejony adres znaczy to samo dla każdego.
 - **Makiety** (`design/panel/`, z `SZABLON.html`): `zlecenia-lista` (segment Do mnie /
-  Zlecone, fotele, termin, maszyna, zlecający, „3 z 8 odczytało · 1 może lecieć"),
+  Zlecone, fotele, termin, maszyna, zlecający, „5 z 6 odczytało · 2 mogą lecieć"),
   `zlecenia-nowe` (szuflada szeroka - te same pola, co telefon), `zlecenia-szczegoly`
   (szuflada prowadzącego: fotele, adresaci, odczyty, WYBIERZ, historia; widok adresata
   z PRZYJMUJĘ / MOGĘ LECIEĆ / NIE MOGĘ), `zlecenia-watek` (wątek na żywo; wariant do
   czytania), `piloci-grupy` (lista grup + szuflada z obsadą - `OptionButton multiple`,
   członek wyłączony przygaszony). Ramki w istniejących: `kalendarz-flota` (pasek zlecenia,
-  przycisk „Zleć lot"), `kalendarz-wpis` K2c (zajętość ze zleceniem).
+  przycisk „Zleć lot", otwarte menu wolnej komórki), `kalendarz-wpis` K2c (zajętość ze
+  zleceniem), `piloci-lista` (przełącznik „Członkowie · Grupy"), `piloci-konto` (dwunasta
+  zdolność „Zlecanie lotów" w zestawach), kolumna boczna wszystkich ram klubu (trzy grupy).
 - **Kalendarz panelu**: obok „Zarezerwuj" przycisk **„Zleć lot"** (tylko `orders.create`),
-  otwierający `zlecenia-nowe` z podstawionym terminem.
+  otwierający `zlecenia-nowe` bez terminu. Kliknięcie w wolne miejsce komórki daje osobie
+  z `orders.create` **menu „Zarezerwuj / Zleć lot"** (pkt 35) - oba z maszyną i dniem
+  komórki, jak arkusz wolnego pasma 21E w telefonie; bez uprawnienia kliknięcie otwiera
+  rezerwację wprost, jak w 3.2.0 (menu z jedną pozycją byłoby krokiem o nic).
 
 ## 16. Co dotyka istniejącego kodu (lista kontrolna dla Z-B…Z-D)
 

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 30 Zlecenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ NAGŁÓWEK ═══ wzorzec LISTY otwartej z Pulpitu (25): powrót po lewej, tytuł
+     i podtytuł wyrównane do lewej. Karty pojedynczych rzeczy (28, 32) mają tytuł na
+     środku - lista zachowuje się jak skrzynka, bo tak jak ona otwiera się z Pulpitu
+     i na niego wraca.
+
+     PASKA ZAKŁADEK TU NIE MA: czwartej zakładki nie ma (decyzja 7), a wszystko otwarte
+     z Pulpitu leży NAD zakładkami i przykrywa je w całości - jak 23, 25 i 26.
+     Podtytuł mówi „czasy klubu", bo godziny w wierszach są TERMINAMI (umową między
+     ludźmi), a nie rejestrem - ta sama oś, co kalendarz i skrzynka. */
+  .app-header {
+    display:flex; align-items:center; gap:4px;
+    padding:6px 16px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SEGMENT „DO MNIE / ZLECONE" - dwie listy, nie filtr
+     Segment, a nie para chipów, z tego samego powodu, co oś dziennika w panelu (3.2.0):
+     chip ZAWĘŻA listę (można nie zapalić żadnego), a segment ROZSTRZYGA, o co pyta
+     ekran - dokładnie jedna połowa jest zawsze włączona. Ta sama nazwa klas (`.seg`,
+     `.seg-btn.on`), co w panelu, i ten sam język zaznaczenia: ODWRÓCONE (jasne tło,
+     ciemny napis), jak wybrany dzień w kalendarzu (21) - mówi „tu jesteś", a nie
+     „to jest w normie".
+
+     DRUGI SEGMENT ISTNIEJE WYŁĄCZNIE dla osoby, która może zlecać albo prowadzi
+     zlecenia (§14.2). Telefon zdolności nie zna - rozstrzygają bity z serwera
+     (`canCreate`, `canManage`). Pilot bez nich widzi samą listę „Do mnie" pod
+     nagłówkiem, bez segmentu: jedna połowa przełącznika nie jest przełącznikiem.
+     „NOWE ZLECENIE" stoi wyłącznie przy `canCreate` - samo prowadzenie cudzych zleceń
+     (`canManage`) nie daje prawa wysyłania nowych (§9).
+
+     LISTA OTWIERA SIĘ na „Do mnie", gdy coś tam czeka na Twoją odpowiedź; inaczej na
+     „Zlecone". Koordynator, do którego nic nie przyszło, nie ma zaczynać każdej wizyty
+     od pustej połowy (30A).
+
+     Liczba przy segmencie stoi WYŁĄCZNIE przy tym NIEWŁĄCZONYM i wyłącznie z treścią:
+     przy włączonym powtarzałaby listę pod spodem, a zero niczego nie odróżnia (reguła
+     SyncChipa, issue #12). Mówi to samo, co karta „Zlecenia" na Pulpicie (20F) - błękit
+     przy „czeka na Twoją odpowiedź", ton neutralny przy „szuka załogi". */
+  .seg-wrap { padding:10px 14px 2px; flex-shrink:0; }
+  .seg { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; border-radius:13px; border:1px solid var(--border); background:var(--surface); }
+  .seg-btn {
+    display:flex; align-items:center; justify-content:center; gap:7px; min-height:40px; border-radius:10px;
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-secondary); text-decoration:none;
+  }
+  .seg-btn:hover { color:var(--text-primary); background:var(--surface-raised); }
+  .seg-btn.on { background:var(--text-primary); color:var(--bg); font-weight:700; }
+  .seg-count { min-width:17px; height:17px; padding:0 5px; border-radius:9px; font-size:9px; font-weight:700; letter-spacing:0; line-height:15px; text-align:center; border:1px solid var(--border-strong); color:var(--text-secondary); }
+  .seg-count.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+
+  .scroll { flex:1; overflow-y:auto; padding:12px 14px 14px; display:flex; flex-direction:column; gap:14px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DZIEŃ JAKO NAGŁÓWEK, ZLECENIA JAKO ZWARTE WIERSZE (wzorzec Historii, 24)
+     Data pada RAZ, jako nagłówek grupy - dzień z trzema zleceniami nie powtarza jej
+     trzy razy. Nagłówek niesie DZIEŃ TYGODNIA, inaczej niż w Historii: tam patrzy się
+     wstecz, tu planuje, a to, czy lot wypada w sobotę, jest częścią decyzji.
+
+     Wewnątrz dnia kolejność idzie godziną startu, a nie wagą: lista jest chronologiczna
+     i nic się w niej nie przypina do góry. Sprawę wyróżnia PLAKIETKA, nie pozycja
+     (reguła skrzynki, 25) - przypięcie kazałoby czytać listę dwa razy.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .day-group { display:flex; flex-direction:column; gap:6px; }
+  .day-head { display:flex; align-items:baseline; gap:10px; padding:0 13px 2px; }
+  .day-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* Wiersz zlecenia: godziny → maszyna, zadanie, trasa → fotel albo postęp. Cały
+     wiersz jest celem dotknięcia i otwiera kartę zlecenia; szewron w stałej kolumnie
+     mówi „prowadzi dalej" (glif z 26), tak jak ikona po prawej w Historii. */
+  .ord {
+    display:grid; grid-template-columns:1fr 14px; align-items:center; gap:10px;
+    padding:10px 10px 10px 12px; border-radius:12px;
+    border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:inherit;
+  }
+  .ord:hover { border-color:var(--border-strong); }
+  .ord-main { display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .ord-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .ord-hours { font-family:var(--font-mono); font-size:12.5px; font-weight:700; letter-spacing:1px; color:var(--text-primary); white-space:nowrap; }
+  .ord-flags { display:inline-flex; align-items:center; gap:8px; flex-shrink:0; }
+  .ord-line { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:11.5px; color:var(--text-secondary); }
+  .ord-ac { font-family:var(--font-mono); font-size:10.5px; letter-spacing:1px; color:var(--text-primary); }
+  .ord-route { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-secondary); }
+  .ord-dot { width:3px; height:3px; border-radius:50%; background:var(--border-strong); flex-shrink:0; }
+  /* Fotel i autor - zdanie o LUDZIACH, więc krojem tekstu. Nazwisko zlecającego stoi
+     w mianowniku jako podmiot („zleca Marta Zięba"), nigdy w odmianie. */
+  .ord-meta { font-size:10.5px; color:var(--text-muted); line-height:1.4; }
+  .ord-meta b { color:var(--text-secondary); font-weight:600; }
+  /* Postęp prowadzonego zlecenia - liczby i godziny, więc mono, jak status adresata
+     na 32. Zieleń WYŁĄCZNIE przy „mogą lecieć": to jest liczba, na którą prowadzący
+     czeka (ten sam kolor, co licznik przy fotelu na 32). */
+  .ord-progress { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.3px; color:var(--text-secondary); }
+  .ord-progress .ok { color:var(--green); }
+  .ord-progress .dim { color:var(--text-placeholder); }
+  .ord-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); text-align:center; }
+  .ord:hover .ord-go { color:var(--text-secondary); }
+
+  /* ═══ PLAKIETKA STANU ═══
+     Kolor stoi tam, gdzie coś ZALEŻY OD PATRZĄCEGO (reguła SyncChipa, issue #12):
+      - „Czeka na odpowiedź" w BŁĘKICIE - zlecenie pyta Ciebie (błękit = zlecenie i rzecz,
+        która się dzieje, jak hero karty 28);
+      - „Zgłoszone" w tonie neutralnym - odpowiedź już padła, teraz decyduje osoba
+        zlecająca, a Ty nie masz tu nic do zrobienia;
+      - u prowadzącego „Szuka dowódcy / drugiego pilota / załogi" w błękicie (słownik §3,
+        te same słowa, co pasek zlecenia w kalendarzu), „Komplet załogi" w ZIELENI -
+        stan w normie, lot ma swoją załogę;
+      - w „Zakończonych" plakietka jest neutralna, a cały wiersz przygasa kolorami. */
+  .tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.3px; text-transform:uppercase; border-radius:5px; padding:3px 6px; white-space:nowrap; border:1px solid var(--border-strong); color:var(--text-muted); }
+  .tag.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .tag.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
+
+  /* NIEPRZECZYTANA WIADOMOŚĆ W ROZMOWIE - ta sama ikona z kropką, co przy adresacie
+     na 32. Zapala się tylko z treścią; wiersz bez nowej wiadomości nie ma ikony wcale
+     (pusta ikona przy każdym wierszu byłaby szumem). Kropka mówi o ROZMOWIE, nie
+     o zleceniu - o tym, że zlecenie czeka na odpowiedź, mówi plakietka obok. */
+  .msg-ind { position:relative; display:inline-flex; color:var(--text-muted); }
+  .msg-ind::after { content:''; position:absolute; top:-2px; right:-3px; width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 2px var(--surface); }
+
+  /* ═══ ZAKOŃCZONE ═══ na końcu listy, najnowsze pierwsze: zlecenia nieaktualne,
+     odwołane, wygasłe i takie, których termin minął. Nagłówek z linią, jak granica
+     archiwum w Historii (24A) - widać, gdzie kończy się to, na co można odpowiedzieć.
+     Wiersz przygasa KOLORAMI (bez przezroczystości), a data wchodzi do wiersza, bo ta
+     sekcja nie ma nagłówków dni. Wiersz dalej otwiera kartę: rozmowa zostaje tam
+     do odczytu (28B). */
+  .older-head { display:flex; align-items:center; gap:8px; padding:0 4px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .older-head::after { content:''; flex:1; height:1px; background:var(--border); }
+  .ord.done { background:transparent; }
+  .ord.done .ord-hours { color:var(--text-secondary); font-weight:500; }
+  .ord.done .ord-ac, .ord.done .ord-line, .ord.done .ord-route, .ord.done .ord-meta { color:var(--text-muted); }
+
+  /* ═══ PRZYPIĘTY PAS AKCJI - tylko w „Zlecone" ═══
+     Wzorzec przypiętego pasa z kalendarza (21): lista bywa dłuższa niż ekran, więc
+     akcja główna nie może mieszkać na jej dnie. Stoi WYŁĄCZNIE w segmencie „Zlecone" -
+     tam, gdzie nowe zlecenie potem zamieszka; w „Do mnie" akcją jest odpowiedź,
+     a ta żyje na karcie zlecenia. Pod pasem jest miejsce na wskaźnik ekranu głównego,
+     bo zakładek pod spodem nie ma. */
+  .action-bar { padding:10px 14px 26px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:15px;
+    background:var(--green); color:var(--bg);
+    font-family:var(--font-display); font-size:20px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ══ PIERWSZA RAMKA: „DO MNIE" - Adam Kowalski ══
+     Adam jest pilotem i zarazem instruktorem: „Zlecanie lotów" ma przez własny zakres
+     (§9), więc widzi oba segmenty - i sam prowadzi jedno zlecenie (niedzielny lot
+     z uczennicą, widać je w drugiej ramie niżej), stąd „1" przy „Zlecone".
+     Stan: piątek 21:50. Zlecenie B (skoki) - odczytane o 21:48, jeszcze bez odpowiedzi,
+     więc lista wystartowała na „Do mnie": coś tu czeka na Twoją odpowiedź (osoba, do
+     której nic nie przyszło, zaczyna od „Zlecone"). O 21:52 padnie „MOGĘ LECIEĆ" i wiersz
+     zmieni się w neutralne „Zgłoszone" (28A, ramka 2). Zlecenie A (przelot, fotel
+     imiennie) - przyjęte rano o 07:40, więc jest już rezerwacją i wiersz prowadzi do
+     niej (23F). -->
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 30</span>
+  <span class="slug">zlecenia · do mnie</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenia, lista Do mnie">
+  <div class="status-bar">
+    <span>21:50</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="20f-pulpit-zlecenia.html" class="icon-btn" title="Wróć na Pulpit" aria-label="Wróć na Pulpit">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="app-header-left">
+        <span class="screen-title">ZLECENIA</span>
+        <span class="header-subtitle">CZASY KLUBU</span>
+      </div>
+    </div>
+
+    <div class="seg-wrap">
+      <div class="seg" role="tablist" aria-label="Lista zleceń">
+        <a href="30-zlecenia.html" class="seg-btn on" role="tab" aria-selected="true">Do mnie</a>
+        <a href="#zlecone" class="seg-btn" role="tab" aria-selected="false">Zlecone <span class="seg-count">1</span></a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ JUTRO ═══
+           Adresat widzi ZLECENIE, fotel, który mu zaproponowano, i osobę zlecającą -
+           nigdy innych adresatów ani ich liczby (decyzja 18). Kolejność godziną
+           startu: skoki od 9, przelot od 10. -->
+      <div class="day-group">
+        <div class="day-head">
+          <span class="day-label">Jutro · sobota 3 października</span>
+        </div>
+
+        <!-- Zlecenie B przez grupę „Piloci An-2" - odczytane, bez odpowiedzi: błękitne
+             „Czeka na odpowiedź", bo zlecenie pyta Ciebie. Po „MOGĘ LECIEĆ" plakietka
+             zmieni się w neutralne „Zgłoszone" - to zgłoszenie, a fotel wybiera osoba
+             zlecająca (decyzja 11). Nazwy grupy adresat nie widzi (decyzja 18). -->
+        <a href="28a-zlecenie-grupa.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">09:00 → 13:00</span>
+              <span class="ord-flags">
+                <span class="tag blue">Czeka na odpowiedź</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-ANA</span><span class="ord-dot"></span><span>Skoki</span><span class="ord-dot"></span><span class="ord-route">EPKP</span>
+            </span>
+            <span class="ord-meta">Fotel: <b>drugi pilot</b> · zleca Marta Zięba</span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+
+        <!-- Zlecenie A - fotel wskazany imiennie, termin już po zmianie (10:00-12:00).
+             Nowa wiadomość od osoby zlecającej zapala ikonę rozmowy. -->
+        <a href="23f-rezerwacja-ze-zlecenia.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">10:00 → 12:00</span>
+              <span class="ord-flags">
+                <span class="tag green">Przyjęte</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-AXA</span><span class="ord-dot"></span><span>Przelot</span><span class="ord-dot"></span><span class="ord-route">EPKK → EPRJ</span>
+            </span>
+            <span class="ord-meta">Fotel: <b>dowódca</b> · zleca Marta Zięba</span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+      </div>
+
+      <!-- ═══ ZAKOŃCZONE ═══
+           Fotel obsadził ktoś inny, zanim padła odpowiedź - „Nieaktualne" (28B). Wiersz
+           mówi tylko tyle, że fotel jest zajęty: kto go zajął, adresata nie dotyczy
+           (decyzja 18). -->
+      <div class="older-head">Zakończone</div>
+      <a href="28b-zlecenie-nieaktualne.html" class="ord done">
+        <span class="ord-main">
+          <span class="ord-top">
+            <span class="ord-hours">27 WRZ · 08:00 → 12:00</span>
+            <span class="ord-flags">
+              <span class="tag">Nieaktualne</span>
+            </span>
+          </span>
+          <span class="ord-line">
+            <span class="ord-ac">SP-ANA</span><span class="ord-dot"></span><span>Skoki</span><span class="ord-dot"></span><span class="ord-route">EPKP</span>
+          </span>
+          <span class="ord-meta">Fotel obsadzony · zleca Paweł Wilk</span>
+        </span>
+        <span class="ord-go">&#8250;</span>
+      </a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item active" href="30-zlecenia.html">
+    <span class="vp-badge blue">30</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista zleceń - „Do mnie" i „Zlecone"</span>
+      <span class="vp-when">Otwiera się z karty „Zlecenia" na Pulpicie (20F), nad zakładkami - czwartej zakładki nie ma (decyzja 7). Rama pierwsza: „Do mnie" - zlecenia, które trafiły do Ciebie, z fotelem, osobą zlecającą i stanem; błękitna plakietka tylko tam, gdzie czeka Twoja odpowiedź, ikona z kropką przy nowej wiadomości w rozmowie. Rama druga: „Zlecone" - dla osoby, która może zlecać albo prowadzi zlecenia; koordynator widzi zlecenia całego klubu z postępem „odczytało · mogą lecieć", a przy cudzym - kto zleca. „NOWE ZLECENIE" stoi wyłącznie w „Zlecone". Liczby i stany odświeżają się na żywo (decyzja 27).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="30a-zlecenia-pusto.html">
+    <span class="vp-badge blue">30A</span>
+    <span class="vp-body">
+      <span class="vp-name">Nic do mnie nie przyszło</span>
+      <span class="vp-when">Pusta połowa „Do mnie": stan pusty mówi, co tu trafia, a nie „brak danych". Osoba z drugim segmentem widzi ją po przełączeniu - lista startuje na „Do mnie" tylko wtedy, gdy coś tam czeka na odpowiedź.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28-zlecenie.html">
+    <span class="vp-badge blue">28</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie - widok adresata (dalej)</span>
+      <span class="vp-when">Wiersz z „Do mnie" otwiera kartę zlecenia: fotel imiennie (28), grupa albo wspólna lista (28A), nieaktualne (28B).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie prowadzone (dalej)</span>
+      <span class="vp-when">Wiersz z „Zlecone" otwiera kartę prowadzącego: fotele z adresatami, odczytami i „WYBIERZ" (32), komplet załogi (32B).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="20f-pulpit-zlecenia.html">
+    <span class="vp-badge blue">20F</span>
+    <span class="vp-body">
+      <span class="vp-name">Pulpit z kartą „Zlecenia" (wejście)</span>
+      <span class="vp-when">Karta istnieje wyłącznie z treścią: ile czeka na Twoją odpowiedź i ile prowadzonych szuka załogi - te same liczby, które stoją tu przy segmentach.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20f-pulpit-zlecenia.html">← 20F Pulpit</a>
+  <span>·</span>
+  <a href="30-zlecenia.html" class="active">30 Zlecenia</a>
+  <a href="30a-zlecenia-pusto.html">30A Pusto</a>
+  <a href="#zlecone">↓ zlecone</a>
+  <span>·</span>
+  <a href="28-zlecenie.html">28 Zlecenie →</a>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+  <a href="31-zlecenie-nowe.html">31 Nowe zlecenie →</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: „ZLECONE" - Marta Zięba, koordynatorka lotów ══
+     Koordynator (uprawnienie do cudzych rezerwacji) prowadzi WSZYSTKIE zlecenia klubu
+     naraz (decyzja 20), więc „Zlecone" to u niego zlecenia całego klubu - własne i cudze;
+     osoba z samym „Zlecaniem lotów" widzi tu tylko własne (§13).
+
+     POSTĘP W WIERSZU ODPOWIADA NA PYTANIE „JAK IDZIE", w dwóch kształtach:
+      - fotel z GRUPY albo kilku osób - liczby: „5 z 6 odczytało · 2 mogą lecieć"
+        (zlecenie B, te same dane, co na 32: odczytali wszyscy poza Adamem, zgłosiły się
+        Anna i Barbara);
+      - JEDNA osoba imiennie - ta osoba i jej stan („Ewa Sowa · Nieodczytane",
+        „Adam Kowalski · przyjęte 07:40"), bo „1 z 1 odczytało" mówiłoby to samo gorzej.
+     Nazwisk wszystkich adresatów lista nie wypisuje - to treść karty 32.
+
+     Przy zleceniu kogoś innego dochodzi linijka „zleca …" (Paweł Wilk, Adam Kowalski);
+     przy własnym jej nie ma - to Ty. Kropka rozmowy zapala się wyłącznie przy WŁASNYCH
+     zleceniach: cudze rozmowy koordynator tylko czyta (29B), więc nie ma w nich
+     nieprzeczytanych wiadomości do siebie. -->
+<header class="canvas-label" id="zlecone">
+  <span class="film-strip">NINERDECK - 30</span>
+  <span class="slug">stan: zlecone · koordynatorka</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenia, lista Zlecone koordynatora">
+  <div class="status-bar">
+    <span>21:45</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="20f-pulpit-zlecenia.html" class="icon-btn" title="Wróć na Pulpit" aria-label="Wróć na Pulpit">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="app-header-left">
+        <span class="screen-title">ZLECENIA</span>
+        <span class="header-subtitle">CZASY KLUBU</span>
+      </div>
+    </div>
+
+    <!-- Do Marty nic nie przyszło, więc przy „Do mnie" liczby nie ma, a lista wystartowała
+         na „Zlecone". Tapnięcie w „Do mnie" pokazuje stan pusty 30A. -->
+    <div class="seg-wrap">
+      <div class="seg" role="tablist" aria-label="Lista zleceń">
+        <a href="30a-zlecenia-pusto.html" class="seg-btn" role="tab" aria-selected="false">Do mnie</a>
+        <a href="#zlecone" class="seg-btn on" role="tab" aria-selected="true">Zlecone</a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <div class="day-group">
+        <div class="day-head">
+          <span class="day-label">Jutro · sobota 3 października</span>
+        </div>
+
+        <!-- Zlecenie B - własne. Oba fotele szukane (dowódca imiennie, drugi pilot
+             z grupy), więc „Szuka załogi". Kropka: nieprzeczytana wiadomość od Anny
+             (ta sama, która zapala kropkę przy Annie na 32). -->
+        <a href="32-zlecenie-prowadzone.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">09:00 → 13:00</span>
+              <span class="ord-flags">
+                <span class="msg-ind" title="Nowa wiadomość w rozmowie" aria-label="Nowa wiadomość w rozmowie">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </span>
+                <span class="tag blue">Szuka załogi</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-ANA</span><span class="ord-dot"></span><span>Skoki</span><span class="ord-dot"></span><span class="ord-route">EPKP</span>
+            </span>
+            <span class="ord-progress">5 z 6 odczytało · <span class="ok">2 mogą lecieć</span></span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+
+        <!-- Zlecenie A - własne, szukany sam dowódca, wysłany imiennie do jednej osoby. -->
+        <a href="32b-zlecenie-obsadzone.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">10:00 → 12:00</span>
+              <span class="ord-flags">
+                <span class="tag green">Komplet załogi</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-AXA</span><span class="ord-dot"></span><span>Przelot</span><span class="ord-dot"></span><span class="ord-route">EPKK → EPRJ</span>
+            </span>
+            <span class="ord-progress">Adam Kowalski · przyjęte 07:40</span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+
+        <!-- Cudze zlecenie z kompletem załogi - zielona plakietka, pod spodem załoga
+             i osoba zlecająca. Po obsadzeniu zlecenie jest zwykłą rezerwacją tej załogi,
+             ale na liście prowadzących zostaje, dopóki termin nie minie. -->
+        <a href="32b-zlecenie-obsadzone.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">14:00 → 15:30</span>
+              <span class="ord-flags">
+                <span class="tag green">Komplet załogi</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-BKL</span><span class="ord-dot"></span><span>Lot tech.</span><span class="ord-dot"></span><span class="ord-route">EPKK</span>
+            </span>
+            <span class="ord-meta">Załoga: <b>Barbara Nowak</b> · zleca Paweł Wilk</span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+      </div>
+
+      <div class="day-group">
+        <div class="day-head">
+          <span class="day-label">Niedziela · 4 października</span>
+        </div>
+
+        <!-- Zlecenie instruktora: dowódca „ja" (Adam), drugi pilot imiennie do uczennicy.
+             Koordynatorka widzi je, bo prowadzi wszystkie zlecenia klubu. -->
+        <a href="32-zlecenie-prowadzone.html" class="ord">
+          <span class="ord-main">
+            <span class="ord-top">
+              <span class="ord-hours">10:00 → 11:30</span>
+              <span class="ord-flags">
+                <span class="tag blue">Szuka drugiego pilota</span>
+              </span>
+            </span>
+            <span class="ord-line">
+              <span class="ord-ac">SP-BKL</span><span class="ord-dot"></span><span>Przelot</span><span class="ord-dot"></span><span class="ord-route">EPKK → EPKP</span>
+            </span>
+            <span class="ord-progress">Ewa Sowa · <span class="dim">Nieodczytane</span></span>
+            <span class="ord-meta">zleca Adam Kowalski</span>
+          </span>
+          <span class="ord-go">&#8250;</span>
+        </a>
+      </div>
+
+      <!-- Wygasło: termin nadszedł bez kompletu załogi i zlecenie wygasło W CAŁOŚCI
+           (decyzja 15) - slot wrócił do puli. -->
+      <div class="older-head">Zakończone</div>
+      <a href="32-zlecenie-prowadzone.html" class="ord done">
+        <span class="ord-main">
+          <span class="ord-top">
+            <span class="ord-hours">1 PAŹ · 16:00 → 18:00</span>
+            <span class="ord-flags">
+              <span class="tag">Wygasło</span>
+            </span>
+          </span>
+          <span class="ord-line">
+            <span class="ord-ac">SP-BKL</span><span class="ord-dot"></span><span>Przelot</span><span class="ord-dot"></span><span class="ord-route">EPKK → EPRJ</span>
+          </span>
+          <span class="ord-meta">Bez kompletu załogi</span>
+        </span>
+        <span class="ord-go">&#8250;</span>
+      </a>
+
+    </div>
+
+    <div class="action-bar">
+      <a href="31-zlecenie-nowe.html" class="btn-primary">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        NOWE ZLECENIE
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html" class="active">30 Zlecenia</a>
+  <a href="30a-zlecenia-pusto.html">30A Pusto</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+  <a href="32b-zlecenie-obsadzone.html">32B Komplet →</a>
+  <a href="31-zlecenie-nowe.html">31 Nowe zlecenie →</a>
+</nav>
+
+</body>
+</html>

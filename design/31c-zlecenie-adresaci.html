@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 31C Adresaci fotela</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ EKRAN POD ARKUSZEM - krok 3 (31B), 1:1 ═══ */
+  .step-header {
+    display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .step-head-mid { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
+  .step-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); }
+  .step-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .step-badge { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:4px 8px; }
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+  .toggle-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; padding:10px 13px; border-radius:14px; border:1px solid var(--border); background:var(--surface); }
+  .tg-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tg-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tg-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .switch { width:42px; height:24px; border-radius:12px; background:var(--green); position:relative; flex-shrink:0; }
+  .switch::after { content:''; position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:#0D0D0D; }
+  .switch.off { background:var(--border-strong); }
+  .switch.off::after { right:auto; left:3px; background:var(--text-secondary); }
+  .seat-block { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:11px; display:flex; flex-direction:column; gap:8px; }
+  .sb-head { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:16px; }
+  .sb-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); }
+  .sb-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 1px 0; }
+  .required-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  .state-grid { display:grid; gap:6px; }
+  .state-grid.two { grid-template-columns:1fr 1fr; }
+  .state-grid.three { grid-template-columns:1fr 1fr 1fr; }
+  .state-opt { display:flex; align-items:center; justify-content:center; gap:7px; min-height:38px; padding:7px 8px; border-radius:11px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); font-size:12.5px; font-weight:600; }
+  .state-opt svg { color:var(--text-muted); flex-shrink:0; }
+  .state-opt.on { border-color:var(--green-border); background:var(--green-muted); color:var(--green); }
+  .state-opt.on svg { color:var(--green); }
+  .state-opt.off { opacity:0.4; }
+  .addr-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .addr-opt { display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:11px; border:1px solid var(--border); background:var(--surface-raised); }
+  .addr-opt svg { color:var(--text-muted); flex-shrink:0; }
+  .ao-body { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .ao-title { font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+  .ao-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.3px; color:var(--text-muted); }
+  .addr-opt.on { border-color:var(--green-border); background:var(--green-muted); }
+  .addr-opt.on svg, .addr-opt.on .ao-title { color:var(--green); }
+  .rcp-chip { display:grid; grid-template-columns:30px 1fr 32px; align-items:center; gap:10px; padding:6px 6px 6px 8px; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); }
+  .rc-avatar { width:30px; height:30px; border-radius:9px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--text-secondary); }
+  .rc-body { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .rc-name { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .rc-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.3px; color:var(--text-muted); }
+  .rc-clear { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:9px; color:var(--text-muted); }
+  .add-row { display:grid; grid-template-columns:30px 1fr 14px; align-items:center; gap:10px; padding:6px 10px 6px 8px; border-radius:12px; border:1px dashed var(--border-strong); text-decoration:none; color:inherit; min-height:44px; }
+  .add-icon { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); background:var(--surface-raised); border:1px solid var(--border); }
+  .add-label { font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .add-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+  .action-bar { padding:10px 14px 12px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; display:flex; flex-direction:column; gap:9px; }
+  .summary { display:flex; align-items:flex-start; gap:8px; padding:0 2px; font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .summary b { color:var(--text-primary); font-weight:600; }
+  .summary svg { flex-shrink:0; margin-top:2px; color:var(--text-muted); }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:15px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:20px; letter-spacing:3px;
+    border:none; text-decoration:none;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ARKUSZ ADRESATÓW - rama wspólna z resztą arkuszy (wzorzec 26C)
+     Sufit 56 dp nad bezpiecznym obszarem, uchwyt, tytuł, akcje przypięte na dole -
+     a lista PRZEWIJA SIĘ W ŚRODKU (`.sheet-body`), bo osób w klubie bywa kilkadziesiąt.
+     Skraca się to, co da się doczytać przewinięciem, nie rząd akcji.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; flex-shrink:0; }
+  /* Tytuł nazywa FOTEL - ten sam arkusz obsługuje dowódcę, drugiego pilota i wspólną
+     listę („WSPÓLNA LISTA · ADRESACI"), a osoba wskazana imiennie na drugi fotel jest
+     wyłączona właśnie ze względu na to, KTÓREGO fotela arkusz dotyczy. */
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); flex-shrink:0; }
+
+  /* Wyszukiwarka - filtr OBU sekcji naraz (grupy i osoby). Pole spoczynkowe: bez
+     kursora i bez klawiatury (patrz komentarz przy arkuszu). Placeholder składem
+     tekstowym - to instrukcja, nie wartość (issue #58). */
+  .search-row { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); flex-shrink:0; }
+  .search-row svg { color:var(--text-muted); flex-shrink:0; }
+  .search-ph { font-family:var(--font-body); font-size:15px; color:var(--text-placeholder); }
+
+  .sheet-body { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:6px; scrollbar-width:none; }
+  .sheet-body::-webkit-scrollbar { display:none; }
+  .sheet-body > * { flex-shrink:0; }
+  .sheet-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+  .sheet-lbl.next { margin-top:8px; }
+
+  /* Wiersz wyboru - LISTA KART (nigdy natywny select), zaznaczona = zielona obramówka.
+     Pole wyboru jest KWADRATOWE, a nie okrągłe jak na liście Duali (02): kształt mówi
+     „można zaznaczyć kilka", zanim palec cokolwiek dotknie. */
+  .opt-list { display:flex; flex-direction:column; gap:6px; }
+  .po-row { display:grid; grid-template-columns:30px 1fr 20px; align-items:center; gap:10px; min-height:44px; padding:6px 12px 6px 8px; border-radius:12px; border:1px solid var(--border); background:var(--surface); cursor:pointer; }
+  .po-row:hover { border-color:var(--border-strong); }
+  .po-row.on { border-color:var(--green-border); background:var(--green-muted); }
+  .po-avatar { width:30px; height:30px; border-radius:9px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--text-secondary); }
+  .po-avatar svg { color:var(--text-secondary); }
+  .po-row.on .po-avatar { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .po-row.on .po-avatar svg { color:var(--green); }
+  .po-body { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .po-name { font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .po-row.on .po-name, .po-row.inherit .po-name { color:var(--text-primary); }
+  .po-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.3px; color:var(--text-muted); }
+  .chk { width:20px; height:20px; border-radius:6px; border:2px solid var(--border-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .chk.on { background:var(--green); border-color:var(--green); color:#0D0D0D; }
+
+  /* OSOBA OBJĘTA ZAZNACZONĄ GRUPĄ - zaznaczenie PRZYGASZONE i podpis „z grupy …".
+     Grupa jest wybierana w CAŁOŚCI i rozwija się w osoby dopiero przy wysłaniu (§6.2),
+     więc jej członka nie da się odznaczyć pojedynczo - wiersz nie jest celem dotknięcia.
+     Kto chce kogoś pominąć, odznacza grupę i wybiera osoby po nazwisku. Wiersz zostaje
+     na liście mimo to: odpowiada na pytanie „do kogo to NAPRAWDĘ pójdzie", a licznik
+     w „GOTOWE" liczy dokładnie te osoby. Bez zielonej obramówki - ta należy do wyboru
+     zrobionego RĘCZNIE, a tu wybrano grupę. */
+  .po-row.inherit { cursor:default; }
+  .po-row.inherit:hover { border-color:var(--border); }
+  .chk.inherit { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+
+  /* OSOBA WSKAZANA IMIENNIE NA DRUGI FOTEL - wyłączona (§4.1, §4.2): stoi już w fotelu
+     dowódcy, a jedna osoba nie trafia na listy obu foteli. Przygaszona i bez celu
+     dotknięcia - brak akcji, nie blokada z powodem; powód mówi podpis w tym samym
+     wierszu. */
+  .po-row.off { opacity:0.45; pointer-events:none; }
+
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; flex-shrink:0; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
+  .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; box-shadow:0 0 24px rgba(46,204,113,0.3); }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 31C</span>
+  <span class="slug">nowe zlecenie · adresaci drugiego pilota</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Arkusz adresatów fotela drugiego pilota">
+  <div class="status-bar">
+    <span>18:39</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <!-- Ekran pod arkuszem: krok 3 (31B) w stanie, z którego tapnięto „Dodaj adresatów"
+         przy fotelu drugiego pilota. -->
+    <div class="step-header">
+      <a href="31a-zlecenie-zadanie.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-head-mid">
+        <span class="step-title">ZLECENIE</span>
+        <span class="step-sub">Sob 3 PAŹ · 09:00 → 13:00 · SP-ANA</span>
+      </span>
+      <span class="step-badge">3/3</span>
+    </div>
+
+    <div class="scroll">
+      <div class="toggle-row">
+        <span class="tg-body">
+          <span class="tg-title">Wspólna lista</span>
+          <span class="tg-sub">fotele przydzielę po odpowiedziach</span>
+        </span>
+        <span class="switch off"></span>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head"><span class="sb-title">Dowódca</span></div>
+        <div class="state-grid two">
+          <div class="state-opt">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+        </div>
+        <div class="sb-lbl">Wyślij do</div>
+        <div class="addr-grid">
+          <div class="addr-opt on">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span class="ao-body"><span class="ao-title">Osoba</span><span class="ao-sub">imiennie</span></span>
+          </div>
+          <div class="addr-opt">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="ao-body"><span class="ao-title">Grupa</span><span class="ao-sub">lub kilka osób</span></span>
+          </div>
+        </div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">JWR</span>
+          <span class="rc-body"><span class="rc-name">Jakub Wrona</span></span>
+          <span class="rc-clear">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head">
+          <span class="sb-title">Drugi pilot</span>
+          <span class="required-tag">wymagany · załoga 2-os.</span>
+        </div>
+        <div class="state-grid three">
+          <div class="state-opt">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+          <div class="state-opt off">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>
+            Brak
+          </div>
+        </div>
+        <div class="sb-lbl">Wyślij do</div>
+        <div class="addr-grid">
+          <div class="addr-opt">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span class="ao-body"><span class="ao-title">Osoba</span><span class="ao-sub">imiennie</span></span>
+          </div>
+          <div class="addr-opt on">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="ao-body"><span class="ao-title">Grupa</span><span class="ao-sub">lub kilka osób</span></span>
+          </div>
+        </div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <span class="rc-body"><span class="rc-name">Piloci An-2</span><span class="rc-sub">5 osób</span></span>
+          <span class="rc-clear">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span>
+        </div>
+        <span class="add-row">
+          <span class="add-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="add-label">Dodaj adresatów</span>
+          <span class="add-go">&#8250;</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <div class="summary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Zlecenie trafi do <b>6 osób</b>. Dowódcę obsadzi odpowiedź osoby wskazanej imiennie, drugiego pilota wybierzesz spośród zgłoszonych.</span>
+      </div>
+      <span class="btn-primary">WYŚLIJ ZLECENIE</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         ARKUSZ: DRUGI PILOT · ADRESACI
+         Otwiera się z „Dodaj adresatów" pod fotelem adresowanym GRUPĄ i pokazuje BIEŻĄCY
+         wybór tego fotela (grupa „Piloci An-2" jest już zaznaczona) - arkusz dopisuje
+         i odpisuje, a nie zaczyna od zera.
+
+         GRUPY NAD OSOBAMI (§14.2): grupa jest przypadkiem częstszym - koordynator pisze do
+         „Pilotów An-2", a nie wyklikuje pięciu nazwisk. Liczba przy grupie to osoby, do
+         których zlecenie z niej trafi: aktywni członkowie (wyłączony zostaje na liście
+         grupy w panelu, ale zleceń nie dostaje, §6.1), bez Ciebie.
+
+         KLAWIATURA NIE WCHODZI SAMA - świadome odejście od reguły „arkusz z polem wpisu
+         otwiera się z klawiaturą" (issue #58). Tamta reguła dotyczy arkuszy, w których
+         wpis jest JEDYNĄ drogą (lotnisko z katalogu, notatka); tu drogą główną są listy,
+         a wyszukiwarka filtruje je dopiero w dużym klubie. Klawiatura wchodząca sama
+         zasłoniłaby grupy - czyli dokładnie to, po co arkusz się otwiera. Ta sama granica,
+         co przy arkuszu czasu z wpisaną godziną (issue #62: klawiatura wchodzi sama tylko
+         tam, gdzie bez niej nie ma czego zrobić).
+
+         CZEGO NA LIŚCIE NIE MA:
+           • Ciebie - zlecający nie jest adresatem nawet przez grupę (§6.2);
+           • członków wyłączonych - nie dostają zleceń (§6.1).
+         Osoba wskazana imiennie na dowódcę (Jakub Wrona) STOI na liście, ale wyłączona,
+         z podpisem - gdyby zniknęła, zlecający szukałby jej i nie wiedział, dlaczego jej
+         nie ma. Grupa, w której stoi, rozwija się bez niej (wskazanie imienne wygrywa
+         z grupą, §4.2) - dlatego prawdę o zasięgu mówi licznik w „GOTOWE", a nie suma
+         liczb przy grupach (osoba w dwóch grupach liczy się raz).
+
+         „GOTOWE · 5" - 5 osób po rozwinięciu grup: Anna Kowal, Adam Kowalski, Piotr Lis,
+         Barbara Nowak, Ewa Sowa. „ANULUJ" wraca bez zmian. -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">DRUGI PILOT · ADRESACI</div>
+
+        <div class="search-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="search-ph">Szukaj osoby albo grupy</span>
+        </div>
+
+        <div class="sheet-body">
+          <div class="sheet-lbl">Grupy</div>
+          <div class="opt-list">
+            <div class="po-row on" role="checkbox" aria-checked="true">
+              <span class="po-avatar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <span class="po-body"><span class="po-name">Piloci An-2</span><span class="po-sub">5 osób</span></span>
+              <span class="chk on">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row" role="checkbox" aria-checked="false">
+              <span class="po-avatar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <span class="po-body"><span class="po-name">Instruktorzy</span><span class="po-sub">3 osoby</span></span>
+              <span class="chk"></span>
+            </div>
+          </div>
+
+          <!-- Osoby alfabetycznie po nazwisku, kod pilota w kwadracie - jak lista Duali
+               na 02, bo to ta sama lista członków klubu. -->
+          <div class="sheet-lbl next">Osoby</div>
+          <div class="opt-list">
+            <div class="po-row inherit" role="checkbox" aria-checked="true" aria-disabled="true">
+              <span class="po-avatar">AKW</span>
+              <span class="po-body"><span class="po-name">Anna Kowal</span><span class="po-sub">z grupy Piloci An-2</span></span>
+              <span class="chk inherit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row inherit" role="checkbox" aria-checked="true" aria-disabled="true">
+              <span class="po-avatar">AKO</span>
+              <span class="po-body"><span class="po-name">Adam Kowalski</span><span class="po-sub">z grupy Piloci An-2</span></span>
+              <span class="chk inherit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row inherit" role="checkbox" aria-checked="true" aria-disabled="true">
+              <span class="po-avatar">PLI</span>
+              <span class="po-body"><span class="po-name">Piotr Lis</span><span class="po-sub">z grupy Piloci An-2</span></span>
+              <span class="chk inherit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row inherit" role="checkbox" aria-checked="true" aria-disabled="true">
+              <span class="po-avatar">BNO</span>
+              <span class="po-body"><span class="po-name">Barbara Nowak</span><span class="po-sub">z grupy Piloci An-2</span></span>
+              <span class="chk inherit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row inherit" role="checkbox" aria-checked="true" aria-disabled="true">
+              <span class="po-avatar">ESO</span>
+              <span class="po-body"><span class="po-name">Ewa Sowa</span><span class="po-sub">z grupy Piloci An-2</span></span>
+              <span class="chk inherit">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div class="po-row" role="checkbox" aria-checked="false">
+              <span class="po-avatar">PWI</span>
+              <span class="po-body"><span class="po-name">Paweł Wilk</span></span>
+              <span class="chk"></span>
+            </div>
+            <!-- Podpis bez formy z płcią: „imiennie na dowódcę", nie „wskazany na
+                 dowódcę" - imiesłów odmieniłby się przez płeć tej osoby. -->
+            <div class="po-row off" role="checkbox" aria-checked="false" aria-disabled="true">
+              <span class="po-avatar">JWR</span>
+              <span class="po-body"><span class="po-name">Jakub Wrona</span><span class="po-sub">imiennie na dowódcę</span></span>
+              <span class="chk"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <a class="modal-btn-cancel" href="31b-zlecenie-zaloga.html">ANULUJ</a>
+          <a class="modal-btn-confirm" href="31b-zlecenie-zaloga.html">GOTOWE · 5</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="31-zlecenie-nowe.html">
+    <span class="vp-badge blue">31</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 1 - termin i maszyna</span>
+      <span class="vp-when">Nowe zlecenie z listy zleceń (30) albo z wolnego pasma w kalendarzu (21E - dzień i maszyna podstawione). Ten sam krok, co rezerwacja (22). Termin będzie zajęty od chwili wysłania (decyzja 1).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31a-zlecenie-zadanie.html">
+    <span class="vp-badge blue">31A</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 2 - zadanie i opis</span>
+      <span class="vp-when">Rodzaj operacji, lotnisko (przy skokach jedno), plan lotu i opis - treść, którą przeczytają adresaci na karcie zlecenia (28). Drugiego pilota tu nie ma: oba fotele mieszkają w kroku 3.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31b-zlecenie-zaloga.html">
+    <span class="vp-badge blue">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 - załoga i adresaci</span>
+      <span class="vp-when">Dwa fotele z kartami „Ja / Szukam / Brak" („Brak" niedostępne, gdy maszyna wymaga załogi dwuosobowej). Pod szukanym fotelem: osoba imiennie albo grupa. Zdanie nad przyciskiem mówi, do ilu osób trafi zlecenie i kto obsadzi fotele.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31b-zlecenie-zaloga.html#wspolna-lista">
+    <span class="vp-badge amber">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista · bez połączenia</span>
+      <span class="vp-when">Przełącznik „Wspólna lista" włączony: fotele mówią sam stan, pod nimi jedna lista adresatów, którzy potwierdzają termin (decyzja 10). Ta sama ramka pokazuje brak zasięgu: powód w przycisku, wypełniony formularz zostaje.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="31c-zlecenie-adresaci.html">
+    <span class="vp-badge">31C</span>
+    <span class="vp-body">
+      <span class="vp-name">Adresaci fotela - arkusz</span>
+      <span class="vp-when">Otwiera się z „Dodaj adresatów" pod fotelem adresowanym grupą albo pod wspólną listą (wtedy tytuł „WSPÓLNA LISTA · ADRESACI"). Grupy klubu nad osobami, wybór wielokrotny, wyszukiwanie bez klawiatury na wejściu. Członkowie zaznaczonej grupy stoją z przygaszonym zaznaczeniem, osoba wskazana imiennie na drugi fotel jest wyłączona, Ciebie na liście nie ma. „GOTOWE" liczy osoby po rozwinięciu grup.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Po wysłaniu - zlecenie prowadzone</span>
+      <span class="vp-when">„WYŚLIJ ZLECENIE" zajmuje termin i otwiera kartę prowadzącego: fotele z adresatami, odczytem i odpowiedzią na żywo. „EDYTUJ" i „Powiel" wracają do tego formularza.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="21e-kalendarz-zlecenie.html">21E Kalendarz</a>
+  <span>·</span>
+  <a href="31-zlecenie-nowe.html">31 Krok 1</a>
+  <a href="31a-zlecenie-zadanie.html">31A Krok 2</a>
+  <a href="31b-zlecenie-zaloga.html">31B Krok 3</a>
+  <a href="31c-zlecenie-adresaci.html" class="active">31C Adresaci</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+</nav>
+
+</body>
+</html>

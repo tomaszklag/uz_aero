@@ -24,7 +24,7 @@
     <span class="vp-badge">K1</span>
     <span class="vp-body">
       <span class="vp-name">Oś maszyn i dni</span>
-      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry. W 3.1.0 dochodzi stan CZEKA NA AKCEPTACJĘ (przerywana ramka) i baner kolejki - widoczny wyłącznie wtedy, gdy coś czeka na zalogowanego.</span>
+      <span class="vp-when">Wejście domyślne. Panel patrzy SZERZEJ NIŻ TELEFON i to jest cała różnica między tymi dwoma kalendarzami: pilot pyta „czym polecę dzisiaj" (na telefonie osią jest jedna doba całej floty), administrator układa tydzień - kto ma zaplanowane loty, kiedy wcisnąć przegląd, czy da się zwolnić maszynę na wyjazd. Ta sama zajętość, dwa pytania, dwa kadry. W 3.1.0 dochodzi stan CZEKA NA AKCEPTACJĘ (przerywana ramka) i baner kolejki - widoczny wyłącznie wtedy, gdy coś czeka na zalogowanego. W 4.0.0 - ZLECENIE (błękitna przerywana ramka, „Zlecenie · szuka załogi") i „Zleć lot" dla uprawnienia „Zlecanie lotów": obok „Zarezerwuj" nad osią (bez terminu) i w menu wolnej komórki (z maszyną i dniem).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -77,6 +77,20 @@
       <span class="vp-when">Od 3.2.0 (issue #233) każdy członek rezerwuje z tej samej osi, którą ogląda: przycisk „Zarezerwuj" albo kliknięcie w wolne miejsce komórki otwiera szufladę w dwóch krokach jak 22/22A - termin i maszyna z sugestiami slotów, potem zadanie. Ścieżka akceptacji obowiązuje tak samo jak z telefonu.</span>
     </span>
   </a>
+  <a class="vp-item" href="kalendarz-wpis.html#zlecenie">
+    <span class="vp-badge blue">K2c</span>
+    <span class="vp-body">
+      <span class="vp-name">Zajętość ze zleceniem (4.0.0)</span>
+      <span class="vp-when">Kliknięcie w pasek zlecenia: stan („szuka załogi"), kto zleca, a dla prowadzących i adresatów - „Otwórz zlecenie". Członek spoza adresatów widzi sam termin i to, kogo brakuje.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-lista.html">
+    <span class="vp-badge blue">ZL1</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenia (moduł obok)</span>
+      <span class="vp-when">Zlecenie JEST rezerwacją, która szuka załogi - trzyma termin na osi, a adresatów, odczyty, odpowiedzi i rozmowy prowadzi moduł „Zlecenia". „Zleć lot" otwiera jego szufladę (ZL2).</span>
+    </span>
+  </a>
 </aside>
 
 <main class="browser" role="region" aria-label="Kalendarz - cała flota">
@@ -125,6 +139,7 @@
           <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
         </a>
         <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
           <a class="nav-item" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
@@ -133,14 +148,20 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
             Do sprawdzenia
           </a>
-          <a class="nav-item active" href="kalendarz-flota.html">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-            Kalendarz
-          </a>
           <a class="nav-item" href="statystyki.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
             Statystyki
           </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item active" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -171,9 +192,18 @@
              wyłączenie z użytku schodzi do przycisku wyciszonego obok ścieżki
              i „Zarezerwuj za pilota" (`reservations.manage`). Pilot z pustym zakresem
              widzi sam „Zarezerwuj" (K7). -->
+        <!-- OD 4.0.0 (`docs/zlecenia.md` §15) OBOK „ZAREZERWUJ" STOI „ZLEĆ LOT" - wyłącznie
+             z uprawnieniem „Zlecanie lotów". Wyciszony, nie drugi pełny przycisk: dwie
+             akcje tej samej wagi obok siebie nie mówią, która jest główna, a „Zarezerwuj"
+             zostaje czynnością KAŻDEGO członka. Otwiera szufladę nowego zlecenia (ZL2)
+             bez terminu. Kliknięcie w wolne miejsce komórki daje tej samej osobie
+             MENU „Zarezerwuj / Zleć lot" z maszyną i dniem komórki (decyzja 2026-09-28 -
+             ten sam wybór, co arkusz wolnego pasma 21E w telefonie); bez uprawnienia
+             plus prowadzi wprost do rezerwacji (K7), bez menu z jedną pozycją. -->
         <div class="page-actions">
           <a class="btn ghost" href="kalendarz-sciezka.html">Ścieżka akceptacji</a>
           <a class="btn ghost" href="kalendarz-blokada.html">Wyłącz maszynę z użytku</a>
+          <a class="btn ghost" href="zlecenia-nowe.html">Zleć lot</a>
           <a class="btn" href="kalendarz-rezerwacja.html">Zarezerwuj</a>
         </div>
       </div>
@@ -224,7 +254,9 @@
       <!-- ══ OŚ JEST TEŻ WEJŚCIEM W REZERWACJĘ (3.2.0, issue #233) ══
            Wolne miejsce każdej komórki od dziś w przód jest odnośnikiem (`.cal-add`):
            w spoczynku nie rysuje nic, pod kursorem tło i plus; kliknięcie otwiera
-           szufladę K7 z podstawioną maszyną i dniem. Dni minione i maszyna wyłączona
+           szufladę K7 z podstawioną maszyną i dniem - a osobie z „Zlecaniem lotów" najpierw
+           MENU „Zarezerwuj / Zleć lot" (otwarte przy SP-ELG w sobotę, jak w ramie
+           zalogowanego administratora). Dni minione i maszyna wyłączona
            z użytku odnośnika nie dostają. Własne wpisy zalogowanego są ZIELONE
            (`.cal-item.mine`) - pilot szuka na osi przede wszystkim siebie. -->
       <div class="card">
@@ -345,7 +377,16 @@
             <div class="cal-cell off"></div>
             <div class="cal-cell off"></div>
             <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na piątek 19 września">+</a></div>
-            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na sobotę 20 września">+</a></div>
+            <!-- MENU KOMÓRKI OTWARTE (decyzja 2026-09-28): zalogowany ma „Zlecanie lotów", więc
+                 plus nie prowadzi wprost do rezerwacji, tylko daje wybór - dwie pozycje, obie
+                 z maszyną i dniem tej komórki. Bez uprawnienia menu nie ma. -->
+            <div class="cal-cell off">
+              <button type="button" class="cal-add" aria-haspopup="menu" aria-expanded="true" title="SP-ELG, sobota 20 września">+</button>
+              <div class="menu cell-menu" role="menu" aria-label="SP-ELG, sobota 20 września">
+                <a class="menu-item" role="menuitem" href="kalendarz-rezerwacja.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Zarezerwuj</a>
+                <a class="menu-item" role="menuitem" href="zlecenia-nowe.html#krok1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Zleć lot</a>
+              </div>
+            </div>
             <div class="cal-cell">
               <a class="cal-item" href="kalendarz-wpis.html">M. Wilk</a>
               <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-ELG na niedzielę 21 września">+</a>
@@ -371,7 +412,15 @@
               <a class="cal-item block" href="kalendarz-wpis.html">Przegląd 100 h</a>
             </div>
             <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na piątek 19 września">+</a></div>
-            <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na sobotę 20 września">+</a></div>
+            <!-- ZLECENIE NA OSI (4.0.0, `docs/zlecenia.md` §5): termin zajęty od chwili
+                 utworzenia, więc pasek stoi w komórce jak każda zajętość, ale ma własny
+                 KSZTAŁT - przerywaną błękitną ramkę - i napis o tym, kogo brakuje.
+                 Obsadzony fotel dopisałby nazwisko („J. Wrona · szuka drugiego pilota").
+                 Wolne miejsce komórki dalej jest odnośnikiem rezerwacji. -->
+            <div class="cal-cell">
+              <a class="cal-item order" href="kalendarz-wpis.html#zlecenie">Zlecenie · szuka załogi</a>
+              <a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na sobotę 20 września">+</a>
+            </div>
             <div class="cal-cell off"><a class="cal-add" href="kalendarz-rezerwacja.html" title="Zarezerwuj SP-CDR na niedzielę 21 września">+</a></div>
           </div>
         </div>
@@ -399,6 +448,7 @@
             <span class="cal-legend-item"><span class="cal-swatch"></span>Rezerwacja</span>
             <span class="cal-legend-item"><span class="cal-swatch mine"></span>Twoja rezerwacja</span>
             <span class="cal-legend-item"><span class="cal-swatch pending"></span>Czeka na akceptację</span>
+            <span class="cal-legend-item"><span class="cal-swatch order"></span>Zlecenie · szuka załogi</span>
             <span class="cal-legend-item"><span class="cal-swatch block"></span>Wyłączona z użytku</span>
           </div>
         </div>
@@ -423,6 +473,9 @@
   <a href="kalendarz-kolejka.html">Kalendarz · kolejka</a>
   <a href="kalendarz-podglad.html">Kalendarz · podgląd</a>
   <a href="kalendarz-rezerwacja.html">Kalendarz · rezerwacja</a>
+  <a href="kalendarz-wpis.html#zlecenie">Kalendarz · zlecenie</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html">Zlecenia</a>
   <span>·</span>
   <a href="dziennik-maszyna.html">Dziennik · maszyna →</a>
   <span>·</span>

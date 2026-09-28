@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 31 Nowe zlecenie (1/3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ NAGŁÓWEK KROKU ═══
+     Układ wyśrodkowany z powrotem po lewej i plakietką kroku po prawej - wyjątek
+     przewidziany wzorcem z issue #23 pkt 7 dla KROKÓW FORMULARZA, ten sam co na
+     02/15/22. Tytuł „ZLECENIE", a nie „NOWE ZLECENIE": ten sam formularz otwiera
+     „EDYTUJ" i „Powiel" z karty prowadzącego (32), więc przymiotnik kłamałby w dwóch
+     wejściach z trzech - tak samo formularz rezerwacji mówi po prostu „REZERWACJA". */
+  .step-header {
+    display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .step-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; text-align:center; color:var(--text-primary); }
+  .step-badge { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:4px 8px; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:14px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  .field { display:flex; flex-direction:column; gap:7px; }
+  .field-label { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  /* Adnotacja przy etykiecie (nie plakietka): mówi o bieżącej WARTOŚCI pola widzianej
+     inaczej - tu o tym, że kalendarz liczy w strefie klubu. Plakietka mówiłaby
+     o właściwości pola (issue #62). */
+  .label-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; color:var(--text-muted); }
+
+  /* ═══ DATA ═══ chipy dni jak w kalendarzu (21) i rezerwacji (22), bo to ten sam wybór. */
+  .days { display:flex; gap:7px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .days::-webkit-scrollbar { display:none; }
+  .day-chip {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    min-width:46px; padding:7px 8px; border-radius:11px;
+    border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:var(--text-secondary); flex-shrink:0;
+  }
+  .day-chip.on { background:var(--text-primary); border-color:var(--text-primary); color:#0D0D0D; }
+  .dc-dow { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; }
+  .dc-day { font-family:var(--font-display); font-size:17px; letter-spacing:1px; line-height:1; }
+  /* Kalendarz miesięczny mieszka w arkuszu (15E) i wchodzi się w niego stąd - chipy
+     obsługują najbliższe dni, czyli niemal każde zlecenie. */
+  .day-more {
+    display:flex; align-items:center; justify-content:center; min-width:46px; padding:7px;
+    border-radius:11px; border:1px dashed var(--border-strong); background:transparent;
+    color:var(--text-muted); text-decoration:none; flex-shrink:0;
+  }
+
+  /* ═══ SAMOLOT ═══
+     Lista KART, nigdy natywny select (reguła design systemu). Każda karta niesie
+     ZAJĘTOŚĆ WYBRANEGO DNIA - ta sama ścieżka co w kalendarzu (21), zawężona do jednej
+     doby i podana przy wyborze, 1:1 z krokiem 1 rezerwacji (22). */
+  .ac-card {
+    display:flex; flex-direction:column; gap:8px; padding:11px 12px;
+    border-radius:13px; border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:inherit;
+  }
+  .ac-card:hover { border-color:var(--border-strong); }
+  .ac-card.on { border-color:var(--green-border); background:rgba(46,204,113,0.05); }
+  .ac-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .ac-left { display:flex; align-items:baseline; gap:9px; }
+  .ac-reg { font-family:var(--font-mono); font-size:13px; letter-spacing:1.5px; color:var(--text-primary); }
+  .ac-type { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); }
+  .ac-check { color:var(--green); }
+  .ac-track { position:relative; height:14px; border-radius:5px; background:var(--surface-raised); overflow:hidden; }
+  .ac-busy { position:absolute; top:0; bottom:0; background:var(--surface-hover); border:1px solid var(--border-strong); border-radius:4px; }
+  /* ZLECENIE INNEJ OSOBY - KSZTAŁT ZLECENIA, a nie zwykły pasek zajętości.
+     Przerywana błękitna ramka, ta sama, co na osi kalendarza (21E): błękit mówi
+     „zlecenie", przerywana linia - „jeszcze bez kompletu załogi". Rysunek odpowiada
+     lustrzanie czekającej rezerwacji (przerywana zieleń na 21): stan przejściowy
+     odróżnia się KSZTAŁTEM, nie samym kolorem.
+     Dla wybierającego maszynę to jest zajętość jak każda inna - zlecenie trzyma termin
+     od utworzenia (decyzja 1), więc wolne okna pod paskiem liczą się bez niego. */
+  .ac-busy.order { background:var(--blue-muted); border:1px dashed var(--blue-border); }
+  .ac-free { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ═══ GODZINY ═══
+     Kontrolka pary od-do; wpisanie i krok ±1 min siedzą w arkuszu czasu (22B),
+     bo to ta sama kontrolka, co w całej aplikacji (TimeStepper, issue #43/#62). */
+  .time-row { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:9px; }
+  .time-box {
+    display:flex; flex-direction:column; gap:3px; padding:10px 12px;
+    border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised);
+    text-decoration:none; color:inherit;
+  }
+  .time-box:hover { border-color:var(--green-border); }
+  .tb-key { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .tb-val { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  .time-arrow { color:var(--text-muted); }
+  .dur-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; color:var(--text-muted); text-align:center; }
+
+  /* ═══ SUGESTIE SLOTÓW („jak w kinie") ═══
+     Podpowiedź, nie przymus - ten sam rachunek domeny (upakowanie dnia), co w 22.
+     Kafelki są DWA i to nie jest zubożenie: kandydaci nie nakładają się nawzajem
+     (reguła `slots.ts`), a przy czterech godzinach wolny poranek mieści jeden taki
+     slot, wolne popołudnie - drugi. Trzeci kafelek byłby tą samą propozycją
+     przesuniętą o kwadrans. */
+  .slots { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .slots::-webkit-scrollbar { display:none; }
+  .slot {
+    display:flex; flex-direction:column; gap:3px; padding:9px 11px; min-width:118px;
+    border-radius:11px; border:1px solid var(--border); background:var(--surface);
+    text-decoration:none; color:inherit; flex-shrink:0;
+  }
+  .slot:hover { border-color:var(--green-border); }
+  .slot.on { border-color:var(--green-border); background:rgba(46,204,113,0.05); }
+  .slot-h { font-family:var(--font-mono); font-size:12.5px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .slot-why { font-size:10px; color:var(--text-muted); line-height:1.3; }
+
+  /* ═══ PAS AKCJI ═══ */
+  .action-bar { padding:10px 14px; border-top:1px solid var(--border); background:var(--surface); flex-shrink:0; display:flex; flex-direction:column; gap:6px; }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:15px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:20px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 31</span>
+  <span class="slug">nowe zlecenie · krok 1/3</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Nowe zlecenie, krok 1: termin i maszyna">
+  <div class="status-bar">
+    <span>18:36</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <!-- ═══ KROK 1 ZLECENIA = KROK 1 REZERWACJI (§14.4) ═══
+         Zlecenie JEST rezerwacją, która szuka załogi (§2.1): trzyma termin na maszynie
+         od chwili wysłania (decyzja 1), więc pierwsze pytanie jest dokładnie to samo, co
+         w 22 - kto zajmie tę maszynę w tych godzinach. Te same chipy dni, te same karty
+         maszyn z zajętością, te same sugestie i ta sama para Od/Do. Różnice są dwie:
+         tytuł i plakietka „1/3" (krok 3 - załoga i adresaci - jest nowy).
+
+         WEJŚCIA SĄ TRZY i każde wypełnia ten krok inaczej:
+           • „NOWE ZLECENIE" na liście (30) - pusty szkic;
+           • „Zleć lot" w arkuszu wolnego pasma w kalendarzu (21E) - dzień, maszyna
+             i godzina z tapniętego pasma, jako PREFEROWANA PORA sugestii (reguła z 22:
+             podstawiona godzina wyglądałaby jak wpisana);
+           • „EDYTUJ" / „Powiel" z karty prowadzącego (32) - szkic zlecenia; przy
+             „Powiel" z pustym terminem.
+         Strzałka wraca na listę zleceń. „Wstecz" przy niepustym szkicu pyta o rezygnację
+         (arkusz 02H, ten sam dla każdej drogi do lotu) - pusty szkic wychodzi bez pytania.
+
+         Moduł wymaga sieci (§2.2): bez niej zajętości maszyn nie ma skąd wziąć i ten
+         krok wygląda jak kalendarz bez zasięgu (21B) - karta „BRAK POŁĄCZENIA", bez
+         przycisku ponowienia. -->
+    <div class="step-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-title">ZLECENIE</span>
+      <span class="step-badge">1/3</span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ═══ KIEDY ═══
+           Dziś jest czwartek 1 października; zlecenie dotyczy soboty. -->
+      <div class="field">
+        <div class="field-label">
+          <span class="label">Dzień</span>
+          <span class="label-note">czas klubu</span>
+        </div>
+        <div class="days">
+          <a href="31-zlecenie-nowe.html" class="day-chip"><span class="dc-dow">Czw</span><span class="dc-day">1</span></a>
+          <a href="31-zlecenie-nowe.html" class="day-chip"><span class="dc-dow">Pt</span><span class="dc-day">2</span></a>
+          <a href="31-zlecenie-nowe.html" class="day-chip on"><span class="dc-dow">Sob</span><span class="dc-day">3</span></a>
+          <a href="31-zlecenie-nowe.html" class="day-chip"><span class="dc-dow">Nd</span><span class="dc-day">4</span></a>
+          <a href="31-zlecenie-nowe.html" class="day-chip"><span class="dc-dow">Pn</span><span class="dc-day">5</span></a>
+          <a href="15e-reczny-data.html" class="day-more" title="Wybierz z kalendarza" aria-label="Wybierz z kalendarza">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- ═══ CZYM ═══
+           Pasek zajętości W KARCIE maszyny: wybór i skutek wyboru w jednym miejscu.
+           Oś doby 06:00-21:00, jak w 22. Wymogu załogi dwuosobowej tu NIE piszemy:
+           mówi o nim plakietka przy fotelu drugiego pilota w kroku 3 (31B) - czyli
+           tam, gdzie ten wymóg cokolwiek zmienia. Na karcie maszyny byłby adnotacją
+           o niczym, czego w tym kroku da się dotknąć. -->
+      <div class="field">
+        <span class="label">Samolot</span>
+
+        <a href="31-zlecenie-nowe.html" class="ac-card on">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-ANA</span><span class="ac-type">AN-2</span></span>
+            <span class="ac-check">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy" style="left:46.67%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-13:00 · 16:00-21:00</span>
+        </a>
+
+        <a href="31-zlecenie-nowe.html" class="ac-card">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-AXA</span><span class="ac-type">C172</span></span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy" style="left:53.33%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-14:00 · 17:00-21:00</span>
+        </a>
+
+        <!-- Na SP-BKL stoi już zlecenie innej osoby (11:00-13:00, szuka dowódcy) -
+             przerywana błękitna ramka, jak na osi 21E. Zwykła rezerwacja obok ma
+             zwykły pasek. Nazwisk na pasku w karcie nie ma - karta jest wyborem
+             maszyny, a nie kalendarzem; kto trzyma termin, mówi oś 21. -->
+        <a href="31-zlecenie-nowe.html" class="ac-card">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-BKL</span><span class="ac-type">PA-28</span></span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy order" style="left:33.33%; width:13.33%;"></span>
+            <span class="ac-busy" style="left:60%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-11:00 · 13:00-15:00 · 18:00-21:00</span>
+        </a>
+      </div>
+
+      <!-- ═══ SUGESTIE SLOTÓW ═══
+           Powód liczy domena, sąsiada dokłada ekran - nazwisko ZA SEPARATOREM, bo
+           „tuż przed rezerwacją P. Wilka" wymagałoby odmiany (reguła z 22). -->
+      <div class="field">
+        <div class="field-label">
+          <span class="label">Sugerowane godziny</span>
+          <span class="label-note">4 h</span>
+        </div>
+        <div class="slots">
+          <a href="31-zlecenie-nowe.html" class="slot on">
+            <span class="slot-h">09:00 → 13:00</span>
+            <span class="slot-why">tuż przed rezerwacją · P. Wilk</span>
+          </a>
+          <a href="31-zlecenie-nowe.html" class="slot">
+            <span class="slot-h">16:00 → 20:00</span>
+            <span class="slot-why">tuż po rezerwacji · P. Wilk</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ═══ GODZINY ═══
+           Kontrolka pary; wpis i krok ±1 min w arkuszu czasu (22B) - ta sama kontrolka,
+           co przy każdym czasie w aplikacji, z granicami wolnego pasma wybranej maszyny. -->
+      <div class="field">
+        <span class="label">Godziny</span>
+        <div class="time-row">
+          <a href="22b-rezerwacja-czas.html" class="time-box">
+            <span class="tb-key">Od</span>
+            <span class="tb-val">09:00</span>
+          </a>
+          <span class="time-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </span>
+          <a href="22b-rezerwacja-czas.html" class="time-box">
+            <span class="tb-key">Do</span>
+            <span class="tb-val">13:00</span>
+          </a>
+        </div>
+        <div class="dur-note">4 h · SP-ANA wolna w tych godzinach</div>
+      </div>
+
+    </div>
+
+    <div class="action-bar">
+      <a href="31a-zlecenie-zadanie.html" class="btn-primary">
+        DALEJ
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item active" href="31-zlecenie-nowe.html">
+    <span class="vp-badge blue">31</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 1 - termin i maszyna</span>
+      <span class="vp-when">Nowe zlecenie z listy zleceń (30) albo z wolnego pasma w kalendarzu (21E - dzień i maszyna podstawione). Ten sam krok, co rezerwacja (22): karta maszyny niesie zajętość wybranego dnia (cudze zlecenie ma kształt zlecenia - przerywaną błękitną ramkę), sugestie godzin mówią, dlaczego proponują daną porę. Termin będzie zajęty od chwili wysłania (decyzja 1).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="31a-zlecenie-zadanie.html">
+    <span class="vp-badge blue">31A</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 2 - zadanie i opis</span>
+      <span class="vp-when">Rodzaj operacji, lotnisko (przy skokach jedno), plan lotu i opis - treść, którą przeczytają adresaci na karcie zlecenia (28). Drugiego pilota tu nie ma: oba fotele mieszkają w kroku 3.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31b-zlecenie-zaloga.html">
+    <span class="vp-badge blue">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 - załoga i adresaci</span>
+      <span class="vp-when">Dwa fotele z kartami „Ja / Szukam / Brak" („Brak" niedostępne, gdy maszyna wymaga załogi dwuosobowej). Pod szukanym fotelem: osoba imiennie albo grupa. Zdanie nad przyciskiem mówi, do ilu osób trafi zlecenie i kto obsadzi fotele.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31b-zlecenie-zaloga.html#wspolna-lista">
+    <span class="vp-badge amber">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Wspólna lista · bez połączenia</span>
+      <span class="vp-when">Przełącznik „Wspólna lista" włączony: fotele mówią sam stan, pod nimi jedna lista adresatów, którzy potwierdzają termin (decyzja 10). Ta sama ramka pokazuje brak zasięgu: powód w przycisku, wypełniony formularz zostaje.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="31c-zlecenie-adresaci.html">
+    <span class="vp-badge">31C</span>
+    <span class="vp-body">
+      <span class="vp-name">Adresaci fotela - arkusz</span>
+      <span class="vp-when">„Dodaj adresatów" przy fotelu adresowanym grupą: grupy klubu nad osobami, wybór wielokrotny, wyszukiwanie. Osoba wskazana imiennie na drugi fotel jest wyłączona, Ciebie na liście nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="32-zlecenie-prowadzone.html">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Po wysłaniu - zlecenie prowadzone</span>
+      <span class="vp-when">„WYŚLIJ ZLECENIE" zajmuje termin i otwiera kartę prowadzącego: fotele z adresatami, odczytem i odpowiedzią na żywo. „EDYTUJ" i „Powiel" wracają do tego formularza.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="21e-kalendarz-zlecenie.html">21E Kalendarz</a>
+  <span>·</span>
+  <a href="31-zlecenie-nowe.html" class="active">31 Krok 1</a>
+  <a href="31a-zlecenie-zadanie.html">31A Krok 2</a>
+  <a href="31b-zlecenie-zaloga.html">31B Krok 3</a>
+  <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
+  <span>·</span>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+</nav>
+
+</body>
+</html>
