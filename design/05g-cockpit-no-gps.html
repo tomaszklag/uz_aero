@@ -307,7 +307,7 @@
 
   <div class="screen">
 
-    <!-- COMPACT APP BAR - SyncChip pokazuje SIEĆ, nie GPS. Tu: zielony SYNC. -->
+    <!-- COMPACT APP BAR - SyncChip pokazuje SIEĆ, nie GPS; online nie rysuje nic (issue #12). -->
     <div class="compact-bar">
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA/2026-08-06/AKO/1</span>
@@ -533,7 +533,7 @@
   <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
   <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem - potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
   <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno - online SyncChip nie rysuje nic"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 
@@ -543,7 +543,7 @@
     <span class="vp-badge amber">05G</span>
     <span class="vp-body">
       <span class="vp-name">Kokpit bez fixa GPS</span>
-      <span class="vp-when">Silnik ON / w locie, a GPS stracił sygnał. To awaria <b>czujnika</b>, nie łączności - sieć może działać, więc SyncChip zostaje zielony (jak tutaj), a wysyłka zdarzeń biegnie dalej. Autodetekcja staje (ryzyko 🔴 z sekcji 8: niezauważone = niezapisane lądowanie), wejścia ręczne przejmują; timery i log liczą z zegara. Baner to Typ A - przyrząd, znika sam z powrotem fixa.</span>
+      <span class="vp-when">Silnik ON / w locie, a GPS stracił sygnał. To awaria <b>czujnika</b>, nie łączności - sieć może działać, więc SyncChipa nie ma (online nie rysuje nic), a wysyłka zdarzeń biegnie dalej - mówi to jedno zdanie w banerze GPS. Autodetekcja staje (ryzyko 🔴 z sekcji 8: niezauważone = niezapisane lądowanie), wejścia ręczne przejmują; timery i log liczą z zegara. Baner to Typ A - przyrząd, znika sam z powrotem fixa.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
