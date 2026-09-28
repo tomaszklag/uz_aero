@@ -31,7 +31,7 @@
     <span class="vp-badge blue">ZL3</span>
     <span class="vp-body">
       <span class="vp-name">Zlecenie - widok prowadzącego</span>
-      <span class="vp-when">Widzi autor zlecenia i każdy z „Cudzymi rezerwacjami" (decyzja 20). Każdy szukany fotel ma swoją kartę z adresatami: odczyt, odpowiedź z godziną, powód. „Wybierz" wyłącznie przy „Może lecieć" w fotelu z grupy; fotel imienny obsadza przyjęcie. „⋯" przy adresacie: zamiana osoby (fotel imienny), odebranie zlecenia, cofnięcie przydziału. Odświeża się na żywo.</span>
+      <span class="vp-when">Widzi autor zlecenia i każdy z „Cudzymi rezerwacjami" (decyzja 20). Każdy szukany fotel ma swoją kartę z adresatami: odczyt, odpowiedź z godziną, powód. „Wybierz" wyłącznie przy „Może lecieć" w fotelu z grupy; fotel imienny obsadza przyjęcie. „⋯" przy adresacie: zamiana osoby (fotel imienny), odebranie zlecenia, cofnięcie przydziału. Odświeża się na żywo - kanałem klubu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -52,8 +52,8 @@
   <a class="vp-item" href="#komplet">
     <span class="vp-badge">ZL3c</span>
     <span class="vp-body">
-      <span class="vp-name">Komplet załogi, wspólna lista, zamknięte</span>
-      <span class="vp-when">Fotele obsadzone („Leci") w karcie „Załoga" nad zwiniętymi pozostałymi adresatami, przydział ze wspólnej listy („Na dowódcę" / „Na drugiego pilota" - tylko dla fotela, który jeszcze szuka) i zlecenie odwołane albo wygasłe z jednym wyjściem - „Powiel zlecenie".</span>
+      <span class="vp-name">Komplet załogi, wspólna lista, obie listy, zamknięte</span>
+      <span class="vp-when">Fotele obsadzone („Leci") w karcie „Załoga" nad zwiniętymi pozostałymi adresatami, przydział ze wspólnej listy („Na dowódcę" / „Na drugiego pilota" - tylko dla fotela, który jeszcze szuka), osoba z terminem do potwierdzenia przy obu fotelach (decyzja 38) i zlecenie odwołane albo wygasłe z jednym wyjściem - „Powiel zlecenie".</span>
     </span>
   </a>
   <a class="vp-item" href="#adresat-stany">
@@ -111,6 +111,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">MZ</span>
           <span class="who-name">Marta Zięba</span>
@@ -520,6 +523,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">AK</span>
           <span class="who-name">Adam Kowalski</span>
@@ -842,7 +848,7 @@
 
 <!-- ══ ZL3c · KOMPLET ZAŁOGI, WSPÓLNA LISTA, ZAMKNIĘTE ══ -->
 <section class="canvas-section" id="komplet">
-  <div class="canvas-section-title">ZL3c · komplet załogi · wspólna lista · zlecenie odwołane albo wygasłe</div>
+  <div class="canvas-section-title">ZL3c · komplet załogi · wspólna lista · osoba przy obu fotelach · zlecenie odwołane albo wygasłe</div>
   <div class="inv-grid">
 
     <article class="inv">
@@ -1041,6 +1047,126 @@
       </div>
     </article>
 
+    <article class="inv" id="oba-fotele">
+      <div class="inv-head">
+        <span class="inv-name">Termin do potwierdzenia - osoba przy obu fotelach</span>
+        <span class="inv-when">Osoba z list obu foteli - wskazana imiennie na jeden i obecna w grupie drugiego (decyzja 37) albo w grupach obu (decyzja 30) - dostała JEDNO zlecenie z terminem do potwierdzenia, więc jej „Może lecieć" jest zgłoszeniem także w bloku imiennym: fotel nie obsadza się sam. Prowadzący widzi ją przy KAŻDYM fotelu, na który może trafić, z własnym „Wybierz" i dopiskiem w błękicie, na który fotel może jeszcze pójść (decyzja 38). Wybór na jeden fotel zdejmuje ją z listy drugiego. Ten sam stan, co telefon 32 (ramka 3).</span>
+        <span class="inv-classes"><b>.rcp-status.blue</b> · .btn.ok.sm · .pill.green</span>
+      </div>
+      <div class="inv-demo">
+        <div class="drawer-head" style="padding: 0 0 4px; border: 0;">
+          <div>
+            <div class="drawer-title">SP-ANA · sobota 3 października</div>
+            <div class="drawer-sub"><span class="pill blue">Szuka załogi</span> 09:00 → 13:00 czasu klubu · 4 h · jutro</div>
+          </div>
+        </div>
+        <section class="card">
+          <h2 class="card-title">Dowódca · imiennie <span class="spacer"></span><span class="pill green">1 może lecieć</span></h2>
+          <div class="rcp-list">
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Adam Kowalski<span class="rcp-code">AKO</span></span>
+                <span class="rcp-status ok">Może lecieć · 21:52</span>
+                <span class="rcp-status blue">także na drugiego pilota</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Adam Kowalski" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </a>
+                <a class="btn ok sm" href="#komplet">Wybierz</a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Adam Kowalski" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+          </div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Drugi pilot · Piloci An-2 <span class="spacer"></span><span class="pill green">3 mogą lecieć</span></h2>
+          <div class="rcp-list">
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Anna Kowal<span class="rcp-code">AKW</span></span>
+                <span class="rcp-status ok">Może lecieć · wczoraj 19:10</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Anna Kowal, nieprzeczytana wiadomość" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                  <span class="dot"></span>
+                </a>
+                <a class="btn ok sm" href="#komplet">Wybierz</a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Anna Kowal" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Barbara Nowak<span class="rcp-code">BNO</span></span>
+                <span class="rcp-status ok">Może lecieć · 21:30</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Barbara Nowak" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </a>
+                <a class="btn ok sm" href="#komplet">Wybierz</a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Barbara Nowak" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Adam Kowalski<span class="rcp-code">AKO</span></span>
+                <span class="rcp-status ok">Może lecieć · 21:52</span>
+                <span class="rcp-status blue">także na dowódcę</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Adam Kowalski" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </a>
+                <a class="btn ok sm" href="#komplet">Wybierz</a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Adam Kowalski" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Ewa Sowa<span class="rcp-code">ESO</span></span>
+                <span class="rcp-status">Odczytane wczoraj 20:05</span>
+                <span class="rcp-status warn">zmiana z 07:10 nieodczytana</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Ewa Sowa" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Ewa Sowa" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+            <div class="rcp">
+              <span class="rcp-body">
+                <span class="rcp-name">Piotr Lis<span class="rcp-code">PLI</span></span>
+                <span class="rcp-status no">Nie może · wczoraj 19:48</span>
+                <span class="rcp-reason">„W sobotę mam egzamin w Mielcu."</span>
+              </span>
+              <span class="rcp-actions">
+                <a class="rcp-icon" href="zlecenia-watek.html" aria-label="Rozmowa · Piotr Lis" title="Rozmowa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+                </a>
+                <button type="button" class="rcp-icon" aria-label="Więcej · Piotr Lis" aria-haspopup="menu" aria-expanded="false">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+              </span>
+            </div>
+          </div>
+        </section>
+        <span class="inv-mark">inny wariant zlecenia B: dowódca imiennie Adam Kowalski, który jest też w grupie Piloci An-2 · piątek 21:55</span>
+      </div>
+    </article>
+
     <article class="inv" id="zamkniete">
       <div class="inv-head">
         <span class="inv-name">Odwołane albo wygasłe - jedno wyjście</span>
@@ -1131,7 +1257,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Grupa albo wspólna lista - „Mogę lecieć" to zgłoszenie</span>
-        <span class="inv-when">Zlecenie przyszło przez grupę albo do kilku osób, więc odpowiedź jest ZGŁOSZENIEM, a fotel przydziela osoba zlecająca (decyzja 11). Nazwy grupy adresat NIE WIDZI - ani na karcie, ani na liście (decyzja 18): wie, który fotel mu zaproponowano, a nie przez kogo jeszcze zlecenie przeszło. Drugi fotel pisze „szukany", dopóki nikt go nie zajmie - że zlecono go komuś imiennie, adresat się nie dowie; potem nazwisko, bo to załoga, nie adresaci. Kolizja z WŁASNĄ rezerwacją stoi bursztynem nad przyciskami i nie blokuje (§4.3). Po odpowiedzi szuflada się nie zamyka: plakietka przechodzi na neutralne „Zgłoszone", odpowiedź dostaje godzinę i nazwisko osoby, która przydziela fotel, a w stopce zostaje „Nie mogę" - nim zgłoszenie się wycofuje. Przy wspólnej liście i przy osobie z list obu foteli zamiast fotela stoi „Termin do potwierdzenia".</span>
+        <span class="inv-when">Zlecenie przyszło przez grupę albo do kilku osób, więc odpowiedź jest ZGŁOSZENIEM, a fotel przydziela osoba zlecająca (decyzja 11). Nazwy grupy adresat NIE WIDZI - ani na karcie, ani na liście (decyzja 18): wie, który fotel mu zaproponowano, a nie przez kogo jeszcze zlecenie przeszło. Drugi fotel pisze „szukany", dopóki nikt go nie zajmie - że zlecono go komuś imiennie, adresat się nie dowie; potem nazwisko, bo to załoga, nie adresaci. Kolizja z WŁASNĄ rezerwacją stoi bursztynem nad przyciskami i nie blokuje (§4.3). Po odpowiedzi szuflada się nie zamyka: plakietka przechodzi na neutralne „Zgłoszone", odpowiedź dostaje godzinę i nazwisko osoby, która przydziela fotel, a w stopce zostaje „Nie mogę" - nim zgłoszenie się wycofuje. Przy wspólnej liście i przy osobie z list obu foteli - także wskazanej imiennie i obecnej w grupie drugiego (decyzja 37) - zamiast fotela stoi „Termin do potwierdzenia".</span>
         <span class="inv-classes">.kv.you · .kv-v .was · .hint b · .pill.blue · .pill.dim · .drawer-note</span>
       </div>
       <div class="inv-demo">

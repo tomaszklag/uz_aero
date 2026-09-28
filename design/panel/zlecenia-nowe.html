@@ -45,8 +45,8 @@
   <a class="vp-item" href="#wspolna">
     <span class="vp-badge blue">ZL2b</span>
     <span class="vp-body">
-      <span class="vp-name">Wspólna lista i „Ja" w fotelu</span>
-      <span class="vp-when">Przełącznik nad fotelami zamienia adresowanie per fotel w jedną listę; instruktor jako dowódca „Ja" wysyła drugi fotel imiennie do ucznia.</span>
+      <span class="vp-name">Wspólna lista, „Ja" w fotelu, imiennie i w grupie</span>
+      <span class="vp-when">Przełącznik nad fotelami zamienia adresowanie per fotel w jedną listę; instruktor jako dowódca „Ja" wysyła drugi fotel imiennie do ucznia; osoba wskazana imiennie, która jest też w grupie drugiego fotela, dostaje podpis o terminie do potwierdzenia (decyzja 39).</span>
     </span>
   </a>
   <a class="vp-item" href="#blokady">
@@ -104,6 +104,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">MZ</span>
           <span class="who-name">Marta Zięba</span>
@@ -242,8 +245,8 @@
             między dwoma sposobami (decyzja 10, 11);
          4. OSOBA = `<select>` (zbiór rośnie z klubem - wyjątek z 2026-09-20), GRUPA ALBO
             KILKA OSÓB = lista kart wielokrotnego wyboru, grupy NAD osobami, z wyszukiwarką.
-            Osoba wskazana imiennie na jeden fotel jest na liście drugiego NIEDOSTĘPNA
-            z powodem (wskazanie imienne wygrywa z grupą - §4.2); osoby, do których zlecenie
+            Osoba wskazana imiennie na jeden fotel jest na liście drugiego DOSTĘPNA
+            z podpisem: zaznaczona dostanie termin do potwierdzenia (decyzja 37); osoby, do których zlecenie
             dojdzie przez zaznaczoną grupę, stoją zaznaczone i zablokowane z adnotacją
             „przez grupę" - widać, kto naprawdę je dostanie. Osoba zlecająca nie jest
             adresatem, nawet gdy należy do grupy (§6.2), więc na liście jej nie ma.
@@ -380,8 +383,8 @@
                 <span class="opt-body"><span class="opt-name">Anna Kowal</span><span class="opt-desc">AKW · przez grupę Piloci An-2</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
-              <button type="button" class="opt" role="checkbox" aria-checked="false" disabled>
-                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy</span></span>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy · po zaznaczeniu termin do potwierdzenia</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
               <button type="button" class="opt" role="checkbox" aria-checked="false">
@@ -435,7 +438,7 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Grupy nad osobami - kto naprawdę dostanie zlecenie</span>
-        <span class="inv-when">Grupy stoją NAD osobami, bo jednym wyborem obejmują wielu i to od nich zaczyna się zwykle adresowanie (§6). Zaznaczona grupa zaznacza swoich członków na liście osób i blokuje ich z adnotacją „przez grupę" - ktoś, kto zaznacza „Piloci An-2", widzi pięć nazwisk, do których zlecenie trafi. Jakub Wrona jest wskazany imiennie na fotel dowódcy, więc na liście drugiego fotela jest NIEDOSTĘPNY z powodem (wskazanie imienne wygrywa z grupą, §4.2). Marty na liście nie ma - osoba zlecająca nie jest adresatem, nawet gdy należy do grupy (§6.2). Członek wyłączony nie stoi tu wcale: zleceń nie dostaje. Lista osób rośnie z klubem, więc ma wyszukiwarkę; wybór zostaje listą kart, bo jest WIELOKROTNY - `&lt;select&gt;` nie pokazałby, kogo zaznaczono.</span>
+        <span class="inv-when">Grupy stoją NAD osobami, bo jednym wyborem obejmują wielu i to od nich zaczyna się zwykle adresowanie (§6). Zaznaczona grupa zaznacza swoich członków na liście osób i blokuje ich z adnotacją „przez grupę" - ktoś, kto zaznacza „Piloci An-2", widzi pięć nazwisk, do których zlecenie trafi. Jakub Wrona jest wskazany imiennie na fotel dowódcy - na liście drugiego fotela da się go zaznaczyć, a podpis mówi skutek: trafi wtedy na listy obu foteli i dostanie termin do potwierdzenia (decyzja 37). Marty na liście nie ma - osoba zlecająca nie jest adresatem, nawet gdy należy do grupy (§6.2). Członek wyłączony nie stoi tu wcale: zleceń nie dostaje. Lista osób rośnie z klubem, więc ma wyszukiwarkę; wybór zostaje listą kart, bo jest WIELOKROTNY - `&lt;select&gt;` nie pokazałby, kogo zaznaczono.</span>
         <span class="inv-classes">.search · .opt-list[role=group] · .opt[role=checkbox] · .opt.selected:disabled („przez grupę") · .opt:disabled (powód w .opt-desc) · .drawer-note</span>
       </div>
       <div class="inv-demo">
@@ -477,8 +480,8 @@
                 <span class="opt-body"><span class="opt-name">Ewa Sowa</span><span class="opt-desc">ESO · przez grupę Piloci An-2</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
-              <button type="button" class="opt" role="checkbox" aria-checked="false" disabled>
-                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy</span></span>
+              <button type="button" class="opt" role="checkbox" aria-checked="false">
+                <span class="opt-body"><span class="opt-name">Jakub Wrona</span><span class="opt-desc">JWR · imiennie na fotel dowódcy · po zaznaczeniu termin do potwierdzenia</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
               <button type="button" class="opt" role="checkbox" aria-checked="false">
@@ -663,13 +666,13 @@
 
 <!-- ══ ZL2b · WSPÓLNA LISTA I „JA" W FOTELU ══ -->
 <section class="canvas-section" id="wspolna">
-  <div class="canvas-section-title">ZL2b · wspólna lista · „Ja" w fotelu dowódcy</div>
+  <div class="canvas-section-title">ZL2b · wspólna lista · „Ja" w fotelu dowódcy · imiennie i w grupie</div>
   <div class="inv-grid">
 
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Wspólna lista - jedna lista dla obu foteli</span>
-        <span class="inv-when">Przełącznik włączony: fotele zostają ze swoimi STANAMI (co jest szukane), ale adresowanie per fotel znika i zastępuje je JEDNA lista - grupy nad osobami. Adresaci potwierdzają termin („Mogę lecieć"), a fotele przydziela prowadzący na karcie zlecenia: „Na dowódcę" / „Na drugiego pilota" (§4.3). Z pozostałymi sposobami się nie miesza, więc karty „Do kogo" przy fotelach nie ma wcale.</span>
+        <span class="inv-when">Przełącznik włączony: fotele zostają ze swoimi STANAMI (co jest szukane), ale adresowanie per fotel znika i zastępuje je JEDNA lista - grupy nad osobami. Adresaci potwierdzają termin („Mogę lecieć"), a fotele przydziela prowadzący na karcie zlecenia: „Na dowódcę" / „Na drugiego pilota" (§4.3). Z pozostałymi sposobami się nie miesza, więc karty „Do kogo" przy fotelach nie ma wcale. Przełącznik nie gubi wyboru (decyzje 47, 48): włączony przenosi adresatów obu foteli na tę listę, wyłączony przywraca podział sprzed włączenia - kogo dopisano w międzyczasie, ten staje przy obu szukanych fotelach z terminem do potwierdzenia.</span>
         <span class="inv-classes">.opt[role=checkbox].selected · .seat-states · .opt-list</span>
       </div>
       <div class="inv-demo">
@@ -782,6 +785,46 @@
         </section>
         <div class="drawer-foot" style="padding: 0;">
           <span class="drawer-note">Trafi do 1 osoby</span>
+          <button type="button" class="btn ghost">Wstecz</button>
+          <button type="button" class="btn primary">Wyślij zlecenie</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Imiennie i w grupie drugiego fotela - podpis przy osobie</span>
+        <span class="inv-when">Osoba wskazana imiennie na dowódcę jest też w grupie wybranej na drugiego pilota (tu Adam Kowalski i „Piloci An-2"). Dostanie JEDNO zlecenie z terminem do potwierdzenia (decyzja 37) - jej „Mogę lecieć" będzie zgłoszeniem, a fotel wybierzesz po odpowiedziach. Formularz mówi to pod polem osoby, zanim zlecenie wyjdzie (decyzja 39): pogrubienie błękitem, bo to informacja o zleceniu, a nie ostrzeżenie. Nic nie jest zablokowane - zostaw tak albo odznacz grupę; podpis znika razem z warunkiem. Stopka liczy osobę raz: „Trafi do 5 osób". Ten sam stan, co telefon 31B (ramka 3).</span>
+        <span class="inv-classes"><b>.hint.info</b> · select.input · .opt[role=checkbox]</span>
+      </div>
+      <div class="inv-demo">
+        <section class="card">
+          <h2 class="card-title">Dowódca</h2>
+          <label class="field">
+            <span class="label">Osoba</span>
+            <select class="input">
+              <option>Wybierz osobę</option>
+              <option selected>Adam Kowalski · AKO</option>
+              <option>Jakub Wrona · JWR</option>
+              <option>Paweł Wilk · PWI</option>
+            </select>
+          </label>
+          <p class="hint info"><b>Jest też w grupie „Piloci An-2"</b> · dostanie termin do potwierdzenia, fotel wybierzesz po odpowiedzi.</p>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Drugi pilot <span class="spacer"></span><span class="pill amber">wymagany · załoga 2-os.</span></h2>
+          <div class="field">
+            <span class="label">Grupy</span>
+            <div class="opt-list" role="group" aria-label="Grupy - drugi pilot, przykład">
+              <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+                <span class="opt-body"><span class="opt-name">Piloci An-2</span><span class="opt-desc">5 osób</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <div class="drawer-foot" style="padding: 0;">
+          <span class="drawer-note">Trafi do 5 osób</span>
           <button type="button" class="btn ghost">Wstecz</button>
           <button type="button" class="btn primary">Wyślij zlecenie</button>
         </div>

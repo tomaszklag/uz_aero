@@ -164,6 +164,14 @@
   .add-label { font-size:13px; font-weight:600; color:var(--text-secondary); }
   .add-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
 
+  /* Podpis pod osobą wskazaną imiennie, która jest też na liście drugiego fotela
+     (decyzje 37, 39): dostanie termin do potwierdzenia, więc jej „tak" nie obsadzi fotela
+     samo. Błękit - informacja o zleceniu, nie ostrzeżenie (jak dopisek „także na ..."
+     na 32). Znika razem z warunkiem; niczego nie blokuje. */
+  .seat-hint { display:flex; align-items:flex-start; gap:7px; padding:1px 2px 0; font-size:11px; line-height:1.45; color:var(--blue); }
+  .seat-hint svg { flex-shrink:0; margin-top:2px; }
+  .seat-hint b { font-weight:600; }
+
   /* ═══ PAS AKCJI: SKUTEK NAD PRZYCISKIEM ═══
      Jedno zdanie o tym, CO SIĘ STANIE po tapnięciu - ile osób dostanie zlecenie i kto
      obsadzi fotele. Stoi PRZYPIĘTE razem z przyciskiem, bo liczy się na żywo z wyborów
@@ -231,9 +239,11 @@
          REGUŁY, KTÓRE TEN EKRAN EGZEKWUJE, I JAK:
            • „Ja" tylko w jednym fotelu - „Ja" w drugim gaśnie (brak akcji);
            • wymóg załogi dwuosobowej wyłącza „Brak" - gaśnie, plakietka przy nagłówku;
-           • osoba wskazana imiennie na jeden fotel nie trafia na listę drugiego - w arkuszu
-             adresatów (31C) jej wiersz jest wyłączony z podpisem, a grupa, w której stoi,
-             rozwija się bez niej (wskazanie imienne wygrywa z grupą, §4.2);
+           • osoba wskazana imiennie na jeden fotel, a obecna na liście drugiego (przez
+             grupę albo zaznaczona w arkuszu 31C), dostaje TERMIN DO POTWIERDZENIA
+             (decyzje 37-39): jej „tak" jest zgłoszeniem, a pod jej nazwiskiem stoi
+             podpis, który mówi to przed wysłaniem - bez blokady (ramka „Imiennie
+             i w grupie" niżej);
            • zlecający nie jest adresatem nawet przez grupę (§6.2) - nie ma go w arkuszu;
            • co najmniej jeden fotel szukany - POWÓD W PRZYCISKU (patrz niżej).
 
@@ -321,7 +331,8 @@
            prowadzący przyciskiem „WYBIERZ" (§4.3). Adresatów bywa kilku (grupy i osoby
            naraz), stąd wiersz „Dodaj adresatów" pod listą → arkusz 31C.
            „5 osób" to osoby, do których zlecenie NAPRAWDĘ trafi: aktywni członkowie
-           grupy, bez Ciebie i bez osoby wskazanej imiennie na dowódcę. -->
+           grupy, bez Ciebie (§6.2). Gdyby osoba wskazana imiennie na dowódcę była
+           w tej grupie, zostałaby na liście z terminem do potwierdzenia - ramka 3. -->
       <div class="seat-block">
         <div class="sb-head">
           <span class="sb-title">Drugi pilot</span>
@@ -405,11 +416,12 @@
      na którym fotelu (§4.2 pkt 3, karta 32A: „NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA").
      Liczba spada do 5 osób, bo nikogo nie wskazano imiennie - grupa jest tą samą grupą.
 
-     CO DZIEJE SIĘ Z ADRESATAMI PRZY PRZEŁĄCZENIU w trakcie wypełniania - DO
-     ROZSTRZYGNIĘCIA w Z-C. Propozycja: grupy i osoby z obu foteli przechodzą na wspólną
-     listę (formularz nie gubi wyboru po cichu), a wskazanie imienne traci moc obsadzania,
-     bo na wspólnej liście każda odpowiedź jest zgłoszeniem. Ta ramka pokazuje zlecenie
-     złożone od początku jako wspólna lista.
+     PRZEŁĄCZNIK NIE GUBI WYBORU (decyzje 47, 48): włączony w trakcie wypełniania
+     przenosi grupy i osoby z obu foteli na wspólną listę, a wskazanie imienne traci moc
+     obsadzania - na wspólnej liście każda odpowiedź jest zgłoszeniem. Wyłączony przywraca
+     podział sprzed włączenia; kogo dopisano w międzyczasie, ten staje przy obu szukanych
+     fotelach z terminem do potwierdzenia. Ta ramka pokazuje zlecenie złożone od początku
+     jako wspólna lista.
 
      Pusta lista blokowałaby „WYŚLIJ ZLECENIE" BEZ zdania: pusty wiersz „Dodaj adresatów"
      stoi tuż nad przyciskiem i to on jest kontrolką, na której widać brak (issue #55).
@@ -574,11 +586,18 @@
       <span class="vp-when">Przełącznik „Wspólna lista" włączony: fotele mówią sam stan, pod nimi jedna lista adresatów, którzy potwierdzają termin - fotele przydzielasz po odpowiedziach (decyzja 10; po wysłaniu karta 32A). Bez zasięgu formularz zostaje, a nieudana wysyłka mówi o tym po tapnięciu - jak zapis rezerwacji.</span>
     </span>
   </a>
+  <a class="vp-item" href="#imiennie-i-grupa">
+    <span class="vp-badge blue">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Imiennie i w grupie</span>
+      <span class="vp-when">Osoba wskazana imiennie na jeden fotel jest też w grupie drugiego: pod jej nazwiskiem podpis, że dostanie termin do potwierdzenia, a fotel wybierzesz po odpowiedzi (decyzje 37, 39). Nic nie jest zablokowane - zostaw tak albo odznacz grupę.</span>
+    </span>
+  </a>
   <a class="vp-item" href="31c-zlecenie-adresaci.html">
     <span class="vp-badge">31C</span>
     <span class="vp-body">
       <span class="vp-name">Adresaci fotela - arkusz</span>
-      <span class="vp-when">„Dodaj adresatów" przy fotelu adresowanym grupą (albo przy wspólnej liście): grupy klubu nad osobami, wybór wielokrotny, wyszukiwanie. Osoba wskazana imiennie na drugi fotel jest wyłączona, Ciebie na liście nie ma.</span>
+      <span class="vp-when">„Dodaj adresatów" przy fotelu adresowanym grupą (albo przy wspólnej liście): grupy klubu nad osobami, wybór wielokrotny, wyszukiwanie. Osoba wskazana imiennie na drugi fotel stoi z podpisem - zaznaczona dostanie termin do potwierdzenia; Ciebie na liście nie ma.</span>
     </span>
   </a>
   <a class="vp-item" href="32-zlecenie-prowadzone.html">
@@ -602,6 +621,170 @@
   <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
   <span>·</span>
   <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+  <a href="#wspolna-lista">↓ wspólna lista</a>
+  <a href="#imiennie-i-grupa">↓ imiennie i w grupie</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     TRZECIA RAMKA: IMIENNIE I W GRUPIE (decyzje 37, 39)
+     Inny wariant zlecenia B: na dowódcę Marta wskazuje imiennie Adama Kowalskiego,
+     a drugiego pilota wysyła do grupy „Piloci An-2" - w której Adam też jest. Adam
+     dostanie więc JEDNO zlecenie z terminem do potwierdzenia (decyzja 37): jego „tak"
+     będzie zgłoszeniem, a nie przyjęciem, i fotel dowódcy nie obsadzi się sam.
+     Formularz mówi to PRZED wysłaniem podpisem pod nazwiskiem (decyzja 39):
+       - podpis stoi przy OSOBIE, bo to jej wskazanie traci moc - nie przy grupie;
+       - błękit, jak dopisek „także na drugiego pilota" na karcie prowadzącego (32,
+         ramka 3): informacja o zleceniu, nie ostrzeżenie - nic się tu nie psuje;
+       - nic nie jest zablokowane: zlecający może zostawić tak albo odznaczyć grupę
+         (wtedy podpis znika razem z warunkiem - Typ B).
+     Liczba w zdaniu nad przyciskiem to 5, a nie 6: Adam jest wśród pięciu członków grupy,
+     a osoba liczy się raz. Zdanie mówi skutek bez nazwiska (odmiana - reguła z 22). -->
+<header class="canvas-label" id="imiennie-i-grupa">
+  <span class="film-strip">NINERDECK - 31B</span>
+  <span class="slug">stan: wskazany imiennie jest też w grupie drugiego fotela</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Nowe zlecenie, krok 3: wskazany imiennie jest też w grupie">
+  <div class="status-bar">
+    <span>18:39</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="step-header">
+      <a href="31a-zlecenie-zadanie.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-head-mid">
+        <span class="step-title">ZLECENIE</span>
+        <span class="step-sub">Sob 3 PAŹ · 09:00 → 13:00 · SP-ANA</span>
+      </span>
+      <span class="step-badge">3/3</span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="toggle-row">
+        <span class="tg-body">
+          <span class="tg-title">Wspólna lista</span>
+          <span class="tg-sub">fotele przydzielę po odpowiedziach</span>
+        </span>
+        <span class="switch off" role="switch" aria-checked="false" aria-label="Wspólna lista"></span>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head">
+          <span class="sb-title">Dowódca</span>
+        </div>
+        <div class="state-grid two">
+          <div class="state-opt" role="radio" aria-checked="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on" role="radio" aria-checked="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+        </div>
+        <div class="sb-lbl">Wyślij do</div>
+        <div class="addr-grid">
+          <div class="addr-opt on" role="radio" aria-checked="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span class="ao-body"><span class="ao-title">Osoba</span><span class="ao-sub">imiennie</span></span>
+          </div>
+          <div class="addr-opt" role="radio" aria-checked="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="ao-body"><span class="ao-title">Grupa</span><span class="ao-sub">lub kilka osób</span></span>
+          </div>
+        </div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">AKO</span>
+          <span class="rc-body"><span class="rc-name">Adam Kowalski</span></span>
+          <span class="rc-clear" role="button" aria-label="Usuń: Adam Kowalski">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span>
+        </div>
+        <div class="seat-hint">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><b>Jest też w grupie „Piloci An-2"</b> - dostanie termin do potwierdzenia, fotel wybierzesz po odpowiedzi.</span>
+        </div>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head">
+          <span class="sb-title">Drugi pilot</span>
+          <span class="required-tag">wymagany · załoga 2-os.</span>
+        </div>
+        <div class="state-grid three">
+          <div class="state-opt" role="radio" aria-checked="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on" role="radio" aria-checked="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+          <div class="state-opt off" role="radio" aria-checked="false" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>
+            Brak
+          </div>
+        </div>
+        <div class="sb-lbl">Wyślij do</div>
+        <div class="addr-grid">
+          <div class="addr-opt" role="radio" aria-checked="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span class="ao-body"><span class="ao-title">Osoba</span><span class="ao-sub">imiennie</span></span>
+          </div>
+          <div class="addr-opt on" role="radio" aria-checked="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="ao-body"><span class="ao-title">Grupa</span><span class="ao-sub">lub kilka osób</span></span>
+          </div>
+        </div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <span class="rc-body"><span class="rc-name">Piloci An-2</span><span class="rc-sub">5 osób</span></span>
+          <span class="rc-clear" role="button" aria-label="Usuń: Piloci An-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span>
+        </div>
+        <a class="add-row" href="31c-zlecenie-adresaci.html">
+          <span class="add-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="add-label">Dodaj adresatów</span>
+          <span class="add-go">&#8250;</span>
+        </a>
+      </div>
+
+    </div>
+
+    <div class="action-bar">
+      <div class="summary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Zlecenie trafi do <b>5 osób</b>. Oba fotele wybierzesz spośród zgłoszonych - osoba wskazana imiennie jest też w grupie drugiego pilota.</span>
+      </div>
+      <a class="btn-primary" href="32-zlecenie-prowadzone.html#oba-fotele">
+        <span class="btn-label">WYŚLIJ ZLECENIE</span>
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="31b-zlecenie-zaloga.html" class="active">31B Krok 3</a>
+  <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
+  <a href="32-zlecenie-prowadzone.html#oba-fotele">32 Oba fotele →</a>
 </nav>
 
 </body>

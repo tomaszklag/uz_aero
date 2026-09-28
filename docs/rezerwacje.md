@@ -1465,6 +1465,22 @@ z §4.1 dostaje przy tym trzecie pytanie - przypomnienie „za godzinę" ze stem
 `bookings.reminded_at` - a jego plik zmienia nazwę na mówiącą o trzech pytaniach.
 Przepis „nowy rodzaj powiadomienia": `docs/architektura-kodu.md` §7.
 
+### 12.8 Kanał klubu: powiadomienie na żywo, push tylko bez połączenia (4.0.0, projekt 2026-09-28)
+
+Od 4.0.0 powiadomienia idą rozdzielnikiem **kanału klubu** (`docs/kanal-klubu.md`).
+`Notifier.record` zostaje bez zmian - skrzynka jest dalej źródłem prawdy - a
+`Notifier.wake` wysyła ramkę `notification` do połączonych sesji odbiorcy i push
+WYŁĄCZNIE na urządzenia bez połączenia w klubie powiadomienia (K4 - wiadomość z innego
+klubu tej samej osoby idzie pushem, jak dotąd). Przy otwartej aplikacji pilot widzi własny
+baner w aplikacji (K5); w kokpicie łącze jest rozłączone, a push przychodzi po cichu (K6).
+Panel dostaje tę samą skrzynkę z dzwonkiem (K7) - `GET /admin/api/me/notifications`,
+ta sama `NotificationQueries`.
+
+Wszystko, co wyżej mówi o skrzynce, tokenach przypiętych do sesji, danych pusha
+i tapnięciu, zostaje w mocy; zmienia się tylko to, KIEDY push w ogóle wychodzi. Pętla
+„co 60 s" skrzynki (`useInbox`) znika - skrzynka odświeża się ramką i przy ponownym
+połączeniu.
+
 ## 13. Etapy i kolejność realizacji
 
 Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zależność twarda.

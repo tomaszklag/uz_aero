@@ -83,6 +83,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <!-- WEJŚCIE NA TĘ STRONĘ: nazwisko w pasku jest linkiem na `#/konto` (2.1.0) -
              tu prowadzi do siebie. Bez własnej barwy linku, odwrócone tło pod kursorem. -->
         <a class="who" href="konto.html" title="Moje konto">
@@ -233,7 +236,8 @@
                  rachunek, co hero karty w aplikacji. Karta istnieje wyłącznie przy
                  zdolności „Obserwowanie samolotów" (Koordynator lotów, Technik,
                  Administrator); Akceptujący bez panelu zarządza z aplikacji (13C).
-                 Powiadomienia i tak przychodzą na telefon - panel niesie samą listę. -->
+                 Powiadomienia trafiają do skrzynki osoby - od 4.0.0 także pod dzwonkiem
+                 w pasku panelu (kanał klubu, K7). -->
             <div class="card span-2">
               <div class="card-title">Obserwowane samoloty</div>
               <div class="opt-list" role="group" aria-label="Obserwowane samoloty w tym klubie">
@@ -266,7 +270,7 @@
                   <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
                 </button>
               </div>
-              <span class="hint">Zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach przychodzą na telefon - w skrzynce aplikacji.</span>
+              <span class="hint">Zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach trafiają do skrzynki - pod dzwonkiem tutaj i w aplikacji.</span>
             </div>
 
             <!-- MOJE SESJE (§5.6, `GET /admin/api/me/sessions`): własne sesje ze WSZYSTKICH

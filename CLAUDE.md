@@ -5170,8 +5170,10 @@ powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ 
 ## Zlecenia na lot 4.0.0 - PROJEKT (issue #239, 2026-09-27, gałąź `feature-239-zlecenia-projekt`)
 Koordynator (albo instruktor) tworzy zlecenie lotu - termin + maszyna - i wysyła je pilotom;
 ci odpowiadają, rozmawiają ze zlecającym, a zlecający widzi, kto odczytał. Dokument decyzji:
-**`docs/zlecenia.md`** (36 decyzji właściciela: 31 w czterech turach z 2026-09-27 i 5
-z przeglądu makiet 2026-09-28, §1; od trzeciej tury pytane POJEDYNCZO). Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0". Stan: PROJEKT -
+**`docs/zlecenia.md`** (49 decyzji właściciela: 31 w czterech turach z 2026-09-27 i 18
+z przeglądu makiet 2026-09-28 w trzech turach, §1; od trzeciej tury pytane POJEDYNCZO).
+Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0" (Z-E = kanał klubu, #246 - sekcja
+„Kanał klubu" niżej). Stan: PROJEKT -
 makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy implementacji:
 - **zlecenie = rezerwacja z pustymi fotelami + adresaci**: termin zajęty OD UTWORZENIA
   (`bookings.order_id`, poluzowany CHECK `booking_flight_fields`), bez ścieżki akceptacji.
@@ -5181,16 +5183,33 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
   (zgłoszenia, wybiera prowadzący), wspólna lista (potwierdzają termin, fotele przydziela
   prowadzący). **Trybu „kto pierwszy" NIE MA**, innego pilota nie wpisuje się bez jego
   potwierdzenia; uczeń = drugi pilot, instruktor = dowódca „ja"
+- **osoba z list obu foteli dostaje TERMIN DO POTWIERDZENIA** - także wskazana imiennie na
+  jeden fotel i obecna w grupie drugiego (pkt 37, odwraca „imienne wygrywa z grupą"): jej
+  „tak" jest zgłoszeniem, prowadzący widzi ją przy OBU fotelach z „WYBIERZ" i dopiskiem
+  „także na …" (pkt 38), a formularz mówi to przed wysłaniem podpisem pod nazwiskiem
+  (pkt 39; bez blokady). Przełącznik „Wspólna lista" NIE GUBI wyboru: włączony przenosi
+  adresatów obu foteli na jedną listę, wyłączony przywraca podział sprzed włączenia
+  (pkt 47, 48)
 - **odpowiedzi zeruje WYŁĄCZNIE zmiana terminu**; każda inna zmiana = „edytowane · co"
   bez nazwiska, bez potwierdzeń. Powód ZAWSZE opcjonalny. Wygaśnięcie W CAŁOŚCI na początku
-  terminu, ostrzeżenie 3 h wcześniej
+  terminu; ostrzeżenie „bez kompletu załogi" do zlecającego o 18:00 czasu klubu
+  W PRZEDDZIEŃ (pkt 45 - „3 h przed" przychodziło o świcie i za późno), zlecenie wysłane
+  później ostrzeżenia nie dostaje
 - **adresat nie wie NIC o innych adresatach**; „odczytane" = otwarcie karty zlecenia
 - **wątek prywatny autor ↔ adresat, ale czyta go `reservations.manage`** (bez pisania,
   z jednym zdaniem w wątku); cudze zlecenia prowadzą wszyscy z `reservations.manage` naraz
-- **cały moduł na żywo (WebSocket)** - nowa zależność serwera (`@fastify/websocket`), token
-  telefonu w PIERWSZEJ RAMCE (nigdy w adresie), `Origin` w panelu, REST źródłem prawdy,
-  zmiany zlecenia jako sygnał bez treści, połączenie tylko z aplikacją na wierzchu i nigdy
-  w kokpicie. Moduł poza tym jest sieciowy - cache’u zleceń w SQLite NIE MA
+- **ODŚWIEŻANIE KANAŁEM KLUBU** (pkt 49 - odwraca pkt 42 z szóstej tury, przywraca „na
+  żywo" pkt 21 i 27): zlecenia i rozmowy są pierwszym klientem modułu klubu (sekcja „Kanał
+  klubu" niżej). Zapis RESTem, kanał rozsyła; wiadomość rozmowy idzie ramką `message`
+  w całości, zmiana zlecenia - sygnałem `changed order:<id>` bez treści (treść per widz
+  liczy REST). Powiadomienie dotyczące OTWARTEGO ekranu nie pokazuje banera, tylko go
+  odświeża (pkt 43). Push niesie same identyfikatory (`orderId`, `recipientId`) i idzie
+  wyłącznie na urządzenia bez połączenia. Moduł jest sieciowy - cache’u zleceń w SQLite
+  NIE MA
+- **CISZA W KOKPICIE** (pkt 44): dopóki pilot trzyma samolot, WSZYSTKIE powiadomienia
+  (także rezerwacji i obserwowania) idą bez banera i bez dźwięku - na listę systemową
+  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem. Decyzja
+  jako czysta funkcja z testem, obsługa w `expoNotifications.ts`
 - **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
   `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
 - **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - zapisy
@@ -5200,7 +5219,10 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
 
 ### Epik Z-A: makiety zleceń (issue #244, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
 Design-first przed kodem: telefon `20f`, `21e`, `23f`, `25d`, `28`–`28e`, `29`–`29b`,
-`30`–`30a`, `31`–`31c`, `32`–`32d`; panel `zlecenia-lista` (ZL1/ZL1a), `zlecenia-nowe` (ZL2),
+`30`–`30a`, `31`–`31c`, `32`–`32d` (w szóstej turze doszły ramki: 28A termin do
+potwierdzenia, 28B wygasło i cofnięte, 31B imiennie i w grupie, 32 odwołane i osoba przy
+obu fotelach; w siódmej - `25e` baner w aplikacji, KK-A kanału klubu); panel
+`powiadomienia` (dzwonek w każdej ramie klubu, skrzynka, baner - KK-A), `zlecenia-lista` (ZL1/ZL1a), `zlecenia-nowe` (ZL2),
 `zlecenia-szczegoly` (ZL3–ZL3d), `zlecenia-watek`, `piloci-grupy` (P5) oraz ramki
 w istniejących (`kalendarz-flota`, `kalendarz-wpis` K2c, `piloci-lista`, `piloci-konto`,
 kolumna boczna wszystkich ram klubu). Spis: `docs/zlecenia.md` §14.2 i §15. Makiety przeszły
@@ -5237,11 +5259,68 @@ przegląd spójności z aplikacją, architekturą i decyzjami; reguły z tego pr
 - **DWUNASTA ZDOLNOŚĆ `orders.create` („Zlecanie lotów")** stoi w `piloci-konto` w zestawach
   Koordynator lotów i Administrator; Akceptujący i Technik jej nie mają
 - **NOWE KLASY PANELU CZEKAJĄ W `design/panel/rama.css`** (sekcja „ZLECENIA (4.0.0) - czekają
-  na kod epiku Z-D"): `.nav-group`, `.menu.cell-menu` i komponenty zleceń idą przy kodzie do
+  na kod epiku Z-D"): `.nav-group`, `.menu.cell-menu`, `.rcp-status.blue`, `.hint.info`
+  i komponenty zleceń idą przy kodzie do
   `admin/src/styles/components/` pod TĄ SAMĄ nazwą; `panel.css` po każdej zmianie przez
   `npm run panel:css` (strażnik `panelCss.generated.test.ts`)
-- **czego Z-A NIE ROBI**: kodu (Z-B serwer, Z-C na żywo, Z-D panel, Z-E aplikacja) ani
-  podręcznika (Z-W); stany bez makiety są w panelach wariantów jako pozycje „bez makiety"
+- **STANY NIE ZOSTAJĄ „BEZ MAKIETY"** (pkt 46): stan, który aplikacja wdroży, dostaje ramkę -
+  jako „inny los" tego samego zlecenia w tym samym pliku, z kotwicą i pozycją w panelu
+  wariantów (wzorzec: 28B ramki 2-4, 32 ramki 2-3)
+- **czego Z-A NIE ROBI**: kodu (Z-B serwer, Z-C aplikacja, Z-D panel, Z-E kanał klubu) ani
+  podręcznika (Z-W)
+
+## Kanał klubu 4.0.0 - PROJEKT (zlecenia pkt 49, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
+Siódma tura przeglądu zleceń odwróciła „bez połączenia na żywo" (pkt 42): właściciel -
+„myśleć jak o module wymiany wiadomości w klubie, wszelkie powiadomienia po WebSocket,
+globalny moduł do zarządzania powiadomieniami oraz połączeniem z serwerem, nie chcę
+pollingu na każdej karcie". Dokument decyzji: **`docs/kanal-klubu.md`** (K1–K7, epik #246
+= Z-E, etapy KK-A…KK-D). Decyzje właściciela z 2026-09-28 - nie wracać:
+- **K1 JEDEN MODUŁ, JEDNO POŁĄCZENIE**: łącze na urządzenie (telefon) i na kartę przeglądarki
+  (panel) niesie wszystkie powiadomienia i odświeżenia ekranów; ekrany NICZEGO nie odpytują.
+  Funkcja podpina się tematami (`useLiveTopic` w aplikacji, mapa temat → klucze zapytań
+  w panelu) i o kanale nie wie nic więcej. Pętle `RETRY_MS` (60 s) w `useCalendar`,
+  `useInbox`, `useAircraftCard`, `useAircraftWatches` znikają
+- **K2 ZAPIS ZAWSZE RESTem, KANAŁ TYLKO ROZSYŁA** i nie jest źródłem prawdy (skrzynka
+  w bazie i odpowiedzi REST są). Od klienta przychodzą wyłącznie `auth` i podtrzymanie;
+  po każdym (ponownym) połączeniu ekran dociąga stan zwykłym odczytem, więc zgubiona ramka
+  niczego nie gubi. Sygnał `changed` nie niesie treści - treść per widz liczy REST
+- **K3 ZAKRES 4.0.0**: skrzynka i dzwonek (WSZYSTKIE rodzaje), zlecenia i rozmowy, kalendarz
+  z kolejką zgód, karta samolotu i lista obserwowanych, dziennik i „Do sprawdzenia" (panel).
+  Piloci, Samoloty, Statystyki, Organizacje, Zgłoszenia błędów - przy wejściu, jak dziś.
+  Platforma kanału nie ma
+- **K4 PUSH WYŁĄCZNIE DO URZĄDZEŃ BEZ POŁĄCZENIA - W KLUBIE POWIADOMIENIA**: sesja i łącze
+  należą do jednego klubu, więc wiadomość z innego klubu tej samej osoby idzie PUSHEM, jak
+  w 3.1.0 (poprawka przy rysowaniu 25E: ramka dałaby 5-sekundowy baner bez śladu, bo dzwonek
+  liczy tylko klub aktywny, a kanał niósłby dane klubu, którym się nie uwierzytelnił)
+- **K5 BANER W APLIKACJI** (makieta 25E): u góry, pod paskiem systemowym, ta sama treść, co
+  wiersz skrzynki BEZ plakietki sprawy; znika sam po ok. 5 s, bez dźwięku, bez „×",
+  przesunięcie w górę zamyka, tapnięcie = cel pusha. Kilka naraz - widać ostatni. Nie ma go
+  na ekranie, którego dotyczy (pkt 43), w kokpicie i przy aplikacji w tle. Dwa źródła,
+  jeden wygląd: ramka `notification` i push odebrany na wierzchu (inny klub - z nazwą klubu,
+  tapnięcie → skrzynka z instrukcją przełączenia; na liście systemowej zostaje po cichu)
+- **K6 W KOKPICIE ŁĄCZE SIĘ ROZŁĄCZA**: push przychodzi po cichu na listę systemową i do
+  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości
+- **K7 PANEL DOSTAJE DZWONEK I SKRZYNKĘ** (makieta `design/panel/powiadomienia.html`):
+  dzwonek w pasku górnym KAŻDEJ ramy klubu, przed nazwiskiem (rama platformy - bez), licznik
+  tylko przy nowych; skrzynka w szufladzie BEZ własnego adresu (jest osobista), te same
+  rodzaje i kształt wiersza, co w telefonie, wspólny stan przeczytania; baner w LEWYM
+  DOLNYM rogu treści (prawy górny zasłaniałby akcje strony i nagłówek szuflady, prawy dolny -
+  stopkę szuflady), kursor wstrzymuje odliczanie. REST: `GET /admin/api/me/notifications`
+  + `POST …/:id/read` na tej samej `NotificationQueries`
+- **ARCHITEKTURA** (`docs/kanal-klubu.md` §3): `LivePort` + adapter w pamięci procesu
+  (druga instancja = `LISTEN/NOTIFY`), `@fastify/websocket` (nowa zależność serwera)
+  wyłącznie na hoście aplikacji; `GET /live` - token w PIERWSZEJ ramce (`auth`, 5 s),
+  nigdy w adresie; `GET /admin/api/live` - ciasteczko + ŚCISŁE `Origin` (Cross-Site
+  WebSocket Hijacking). `Notifier.record` bez zmian, `Notifier.wake` staje się
+  rozdzielnikiem; `LiveSignals.changed(orgId, tematy, odbiorcy)` po commicie. Połączenie
+  zamyka się przy każdym odebraniu dostępu (ramka `bye` z powodem). W aplikacji JEDEN plik
+  zna WebSocket (`infrastructure/live/liveSocket.ts`, exact-list), łącze tylko z aplikacją
+  na wierzchu i nigdy w kokpicie; w panelu moduł `admin/src/live/`
+- **makiety KK-A zrobione w PR Z-A (#251)**: telefon `25e-baner-w-aplikacji` (dwie ramki:
+  zmiana terminu, wiadomość z innego klubu), panel `powiadomienia` (PW1 baner, PW2
+  skrzynka, PW3 stany), dzwonek w 36 ramach klubu; klasy `.bell-btn`, `.bell-count`,
+  `.inbox*`, `.toast` czekają w `rama.css` (sekcja „KANAŁ KLUBU (4.0.0) - czekają na kod
+  epiku KK-D")
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

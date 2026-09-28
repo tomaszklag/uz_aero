@@ -140,10 +140,6 @@
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
   .vp-item:hover { border-color:var(--green-border); }
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
-  /* Wariant BEZ osobnej makiety: opis zamiast linku. Ramka przerywana i plakietka
-     „bez makiety" mówią, że to nie jest zgubiony link. */
-  .vp-item.static { border-style:dashed; background:transparent; }
-  .vp-item.static:hover { border-color:var(--border); }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
@@ -151,7 +147,6 @@
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
   .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
-  .vp-tag.muted { color:var(--text-muted); }
 </style>
 </head>
 <body>
@@ -293,22 +288,20 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <div class="vp-item static">
+  <a class="vp-item" href="#wygaslo">
     <span class="vp-badge amber">28B</span>
     <span class="vp-body">
       <span class="vp-name">Wygasło - termin bez kompletu załogi</span>
-      <span class="vp-when">Początek terminu nadszedł, a nie wszystkie szukane fotele były obsadzone - zlecenie wygasa W CAŁOŚCI, także przy jednym obsadzonym fotelu (decyzja 15), a termin wraca do puli. Wygląda jak ramka 1: plakietka „Wygasło" i neutralny baner bez powodu, bo nikt go nie pisał - termin po prostu minął. Dostają to adresaci bez odmowy; osoba już przydzielona widzi, że jej rezerwacja ze zlecenia (23F) zniknęła razem z nim.</span>
-      <span class="vp-tag muted">bez makiety · kształt ramki 1</span>
+      <span class="vp-when">Początek terminu nadszedł, a nie wszystkie szukane fotele były obsadzone - zlecenie wygasa W CAŁOŚCI, także przy jednym obsadzonym fotelu (decyzja 15), a termin wraca do puli. Ramka 3 (niżej): plakietka „Wygasło" i neutralny baner bez nazwiska - zrobił to zegar, nie człowiek. Dostają to adresaci bez odmowy; osoba już przydzielona widzi, że jej rezerwacja ze zlecenia (23F) zniknęła razem z nim.</span>
     </span>
-  </div>
-  <div class="vp-item static">
+  </a>
+  <a class="vp-item" href="#cofniete">
     <span class="vp-badge amber">28B</span>
     <span class="vp-body">
       <span class="vp-name">Zlecenie cofnięte</span>
-      <span class="vp-when">Osoba zlecająca odebrała Ci zlecenie - usunęła Cię z adresatów albo zamieniła na kogoś innego (decyzja 29). Kształt ramki 1: plakietka „Nieaktualne", baner „Zlecenie cofnięte" i powód, jeśli ktoś go podał (zawsze opcjonalny); bez nazwiska osoby, która dostała zlecenie w zamian. Twoje zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu (29B).</span>
-      <span class="vp-tag muted">bez makiety · kształt ramki 1</span>
+      <span class="vp-when">Osoba zlecająca odebrała Ci zlecenie - usunęła Cię z adresatów albo zamieniła na kogoś innego (decyzja 29). Ramka 4 (niżej): plakietka „Nieaktualne", baner „Zlecenie cofnięte" i powód, jeśli ktoś go podał (zawsze opcjonalny), bez nazwisk. Twoje zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu (29B).</span>
     </span>
-  </div>
+  </a>
   <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
     <span class="vp-badge amber">28C</span>
     <span class="vp-body">
@@ -354,6 +347,8 @@
   <span>·</span>
   <a href="29-watek.html">29 Rozmowa →</a>
   <a href="#odwolane">↓ odwołane</a>
+  <a href="#wygaslo">↓ wygasło</a>
+  <a href="#cofniete">↓ cofnięte</a>
 </nav>
 
 <!-- ══ DRUGA RAMKA: ZLECENIE ODWOŁANE ══
@@ -438,6 +433,227 @@
           <span class="kv-k">Zleca</span>
           <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
         </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">← 25D Skrzynka</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="30-zlecenia.html">30 Zlecenia →</a>
+</nav>
+
+<!-- ══ TRZECIA RAMKA: ZLECENIE WYGASŁO (decyzja 46) ══
+     Inny los zlecenia B: do soboty 09:00 nikt nie obsadził foteli - Jakub nie odpowiedział,
+     a Marta nie wybrała drugiego pilota spośród zgłoszonych. Z początkiem terminu zlecenie
+     wygasa W CAŁOŚCI (decyzja 15), a termin wraca do puli. Adam zgłosił się o 21:52 i nie
+     dostał odmowy, więc dostaje „Zlecenie wygasło" (§12) i otwiera kartę z pusha o 09:04.
+     Różnice względem ramki 1:
+       - plakietka „Wygasło" i klepsydra w banerze (ta sama ikona, co w skrzynce 25D);
+       - baner BEZ nazwiska - zrobił to zegar, nie człowiek (ta sama reguła, co w historii
+         zmian i w skrzynce), i bez koloru: nic się nie zepsuło, termin po prostu nadszedł;
+       - rozmowa zostaje do odczytu, bo Adam pisał po zgłoszeniu (jak w ramce 1).
+     Ostrzeżenie „Zlecenie bez kompletu załogi" dostała wcześniej WYŁĄCZNIE osoba zlecająca -
+     w piątek o 18:00 czasu klubu (decyzja 45); adresaci o nim nie wiedzą. -->
+<header class="canvas-label" id="wygaslo">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">stan: zlecenie wygasło</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie wygasło">
+  <div class="status-bar">
+    <span>09:04</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="state-banner">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>
+        <span class="sb-text"><b>Zlecenie wygasło</b>Początek terminu bez kompletu załogi - termin wrócił do puli.<span class="sb-meta">dziś 09:00</span></span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Wygasło</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29b-watek-podglad.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Rozmowa · Marta Zięba</span>
+            <span class="tr-sub">do odczytu</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25d-powiadomienia-zlecenia.html">← 25D Skrzynka</a>
+  <a href="28b-zlecenie-nieaktualne.html" class="active">28B Nieaktualne</a>
+  <a href="30-zlecenia.html">30 Zlecenia →</a>
+</nav>
+
+<!-- ══ CZWARTA RAMKA: ZLECENIE COFNIĘTE (decyzja 46) ══
+     Inny los zlecenia B: Adam zgłosił się o 21:52, a o 21:58 Marta Zięba odebrała mu
+     zlecenie (decyzja 29) - w tym czasie Adam ma już przelot SP-AXA (zlecenie A, przyjęte
+     o 07:40; kolizję widać było przed odpowiedzią, 28A). Adam otwiera kartę z pusha o 22:00.
+     Różnice względem ramki 1:
+       - baner mówi „Zlecenie cofnięte", a nie „Fotel obsadzony", i niesie powód jako
+         cytat - jest opcjonalny (decyzja 16), bez niego baner ma sam tytuł i godzinę;
+       - NAZWISK nie ma: ani osoby, która cofnęła (prowadzi kilka osób naraz, a skrzynka
+         pisze ten rodzaj bez nazwisk, §12), ani tej, która dostała fotel w zamian
+         (decyzja 18);
+       - plakietka „Nieaktualne" jak w ramce 1 - push i skrzynka mówią „Zlecenie
+         nieaktualne", ten sam tytuł, co przy obsadzonym fotelu (§12); różni je treść.
+     Zgłoszenie Adama przestaje się liczyć, a rozmowa zostaje do odczytu (29B). -->
+<header class="canvas-label" id="cofniete">
+  <span class="film-strip">NINERDECK - 28B</span>
+  <span class="slug">stan: zlecenie cofnięte z powodem</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie cofnięte">
+  <div class="status-bar">
+    <span>22:00</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="state-banner">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        <span class="sb-text"><b>Zlecenie cofnięte</b><span class="sb-quote">„W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym."</span><span class="sb-meta">dziś 21:58</span></span>
+      </div>
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Nieaktualne</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29b-watek-podglad.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Rozmowa · Marta Zięba</span>
+            <span class="tr-sub">do odczytu</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
       </div>
 
     </div>

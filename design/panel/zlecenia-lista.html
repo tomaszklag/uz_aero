@@ -107,6 +107,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">MZ</span>
           <span class="who-name">Marta Zięba</span>
@@ -488,8 +491,8 @@
 <!-- ══ STANY TEGO EKRANU ══
      Nie inwentarz komponentów (ten mieszka w `SZABLON.html`), tylko pozostałe stany,
      w których ta sama lista się pokazuje. Wskaźnika połączenia nie ma w żadnym:
-     moduł działa na żywo (§11), a zerwany kanał nie jest awarią - po powrocie lista
-     dociąga się zwykłym odczytem. -->
+     lista odświeża się na żywo kanałem klubu (§11, `docs/kanal-klubu.md`), a zerwane
+     łącze nie jest awarią - po powrocie lista dociąga się zwykłym odczytem. -->
 <section class="canvas-section" id="stany">
   <div class="canvas-section-title">Stany tego ekranu</div>
   <div class="inv-grid">

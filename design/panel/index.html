@@ -48,7 +48,7 @@
   Kolumna klubu ma odtąd trzy grupy - Loty (Dziennik, Do sprawdzenia, Statystyki), Planowanie (Kalendarz, Zlecenia) i Klub (Piloci, Samoloty); „Zlecenia" widzi każdy członek (zakładka „Do mnie"); „Zlecone" dochodzi z uprawnieniem
   „Zlecanie lotów" albo „Cudze rezerwacje", a „Zleć lot" - wyłącznie ze „Zlecaniem lotów". Zlecenie jest rezerwacją, która szuka załogi: trzyma termin od utworzenia (na osi - błękitny pasek z przerywaną ramką),
   a fotele obsadza przyjęcie osoby wskazanej imiennie albo wybór prowadzącego spośród zgłoszonych. Adresat nie wie nic o innych adresatach, rozmowa jest prywatna
-  (czytają ją też koordynatorzy), a cały moduł odświeża się na żywo. Komponenty czekające na kod epiku Z-D stoją w <code>rama.css</code> i w inwentarzu <code>SZABLON.html</code>.
+  (czytają ją też koordynatorzy), a cały moduł odświeża się na żywo kanałem klubu - z dzwonkiem i skrzynką w pasku górnym. Komponenty czekające na kod epiku Z-D stoją w <code>rama.css</code> i w inwentarzu <code>SZABLON.html</code>.
 </p>
 
 <section class="canvas-section">
@@ -60,6 +60,14 @@
         <span class="idx-name">SZABLON</span>
         <span class="idx-route">rama okna · pasek i kolumna · inwentarz</span>
         <span class="idx-when">Od tego pliku zaczyna się każda nowa makieta panelu: gotowy <code>&lt;head&gt;</code>, okno przeglądarki 1440×900, kanoniczna rama stylu lekkiego (pasek górny, kolumna boczna z kontekstem klubu, okruszki) i inwentarz komponentów z podpisem, kiedy którego używać.</span>
+      </span>
+    </a>
+    <a class="idx-card" href="powiadomienia.html">
+      <span class="idx-badge">PW</span>
+      <span class="idx-body">
+        <span class="idx-name">powiadomienia</span>
+        <span class="idx-route">dzwonek w pasku · skrzynka w szufladzie · baner (4.0.0)</span>
+        <span class="idx-when">Kanał klubu w panelu (<code>docs/kanal-klubu.md</code> K7): dzwonek w pasku górnym każdej ramy klubu, z licznikiem wyłącznie przy nowych; skrzynka w szufladzie bez własnego adresu - te same rodzaje i ten sam kształt wiersza, co w telefonie, wspólny stan przeczytania; baner nowego powiadomienia w lewym dolnym rogu treści, znika sam, bez dźwięku. Trzy stany: baner (PW1), skrzynka otwarta (PW2), dzwonek i pusta skrzynka (PW3).</span>
       </span>
     </a>
   </div>
@@ -391,7 +399,7 @@
       <span class="idx-body">
         <span class="idx-name">konto</span>
         <span class="idx-route">#/konto</span>
-        <span class="idx-when">Własne konto zalogowanego - wejście z nazwiska w pasku górnym, w ramie klubu i superadministratora. Trzy karty: „Logowanie" (adres, metody), „Hasło" (zmiana z obecnym hasłem albo „Ustaw hasło" dla osoby, która wchodziła dotąd Googlem - droga na wspólny tablet; zapis wylogowuje pozostałe urządzenia) i „Moje sesje" ze wszystkich powierzchni i klubów, z „Wyloguj" przy każdej poza bieżącą. Od 3.2.0 (#205): karta „Obserwowane samoloty" - cała flota klubu z przełącznikami, dla osoby ze zdolnością obserwowania; powiadomienia i tak idą na telefon.</span>
+        <span class="idx-when">Własne konto zalogowanego - wejście z nazwiska w pasku górnym, w ramie klubu i superadministratora. Trzy karty: „Logowanie" (adres, metody), „Hasło" (zmiana z obecnym hasłem albo „Ustaw hasło" dla osoby, która wchodziła dotąd Googlem - droga na wspólny tablet; zapis wylogowuje pozostałe urządzenia) i „Moje sesje" ze wszystkich powierzchni i klubów, z „Wyloguj" przy każdej poza bieżącą. Od 3.2.0 (#205): karta „Obserwowane samoloty" - cała flota klubu z przełącznikami, dla osoby ze zdolnością obserwowania; powiadomienia trafiają do skrzynki - pod dzwonkiem w panelu i w aplikacji.</span>
       </span>
     </a>
     <a class="idx-card" href="00a-wybor-klubu.html">

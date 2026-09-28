@@ -367,20 +367,19 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <div class="vp-item static">
+  <a class="vp-item" href="#termin">
     <span class="vp-badge blue">28A</span>
     <span class="vp-body">
-      <span class="vp-name">Wspólna lista - termin do potwierdzenia</span>
-      <span class="vp-when">Przy wspólnej liście bez foteli - i gdy jesteś na listach obu foteli (decyzja 30) - karta nie proponuje fotela: oba stoją jako „szukany", a pod nimi wiersz „Ty" z plakietką „Termin do potwierdzenia". Odpowiedź, przyciski i ramka 2 bez zmian; fotel przydziela osoba zlecająca. Wskazanie imienne na jeden fotel wygrywa z grupą drugiego - wtedy to jest 28.</span>
-      <span class="vp-tag muted">bez makiety</span>
+      <span class="vp-name">Termin do potwierdzenia</span>
+      <span class="vp-when">Ramka 3 (niżej): zlecenie nie proponuje Ci fotela - przyszło wspólną listą albo jesteś na listach obu foteli (dwie grupy - decyzja 30; imiennie na jeden fotel i w grupie drugiego - decyzja 37). Fotele stoją jako „szukany" albo z nazwiskiem osoby już przydzielonej, a pod nimi wiersz „Ty" z plakietką „Termin do potwierdzenia". „MOGĘ LECIEĆ" potwierdza termin; fotel przydziela osoba zlecająca.</span>
     </span>
-  </div>
+  </a>
   <div class="vp-item static">
     <span class="vp-badge amber">28A</span>
     <span class="vp-body">
       <span class="vp-name">Kolizja z Twoją inną rezerwacją</span>
-      <span class="vp-when">Gdy w tym terminie masz już inną rezerwację, nad pasem odpowiedzi stoi bursztynowe ostrzeżenie z jej maszyną i godzinami (Typ B - znika z warunkiem) - obie ramki tego pliku je pokazują: Adam ma SP-AXA 10:00-12:00 z przyjętego zlecenia A. Nigdy blokada: zajętość wyklucza baza dla egzemplarza, nie dla człowieka (§4.3). To samo ostrzeżenie dostaje karta 28.</span>
-      <span class="vp-tag muted">w obu ramkach</span>
+      <span class="vp-when">Gdy w tym terminie masz już inną rezerwację, nad pasem odpowiedzi stoi bursztynowe ostrzeżenie z jej maszyną i godzinami (Typ B - znika z warunkiem) - wszystkie trzy ramki tego pliku je pokazują: Adam ma SP-AXA 10:00-12:00 z przyjętego zlecenia A. Nigdy blokada: zajętość wyklucza baza dla egzemplarza, nie dla człowieka (§4.3). To samo ostrzeżenie dostaje karta 28.</span>
+      <span class="vp-tag muted">we wszystkich ramkach</span>
     </span>
   </div>
   <a class="vp-item" href="28b-zlecenie-nieaktualne.html">
@@ -442,6 +441,7 @@
   <span>·</span>
   <a href="29-watek.html">29 Rozmowa →</a>
   <a href="#zgloszone">↓ po zgłoszeniu</a>
+  <a href="#termin">↓ termin do potwierdzenia</a>
 </nav>
 
 <!-- ══ DRUGA RAMKA: PO ZGŁOSZENIU ══
@@ -590,6 +590,153 @@
   <span>·</span>
   <a href="28a-zlecenie-grupa.html" class="active">28A Grupa</a>
   <a href="28b-zlecenie-nieaktualne.html">28B Fotel obsadzony</a>
+  <a href="23f-rezerwacja-ze-zlecenia.html">23F Po przydziale →</a>
+</nav>
+
+<!-- ══ TRZECIA RAMKA: TERMIN DO POTWIERDZENIA (decyzje 30, 37, 46) ══
+     Ta sama karta, gdy zlecenie NIE proponuje Ci fotela: przyszło wspólną listą (32A - ten
+     sam piątek, jedna lista „Piloci An-2" dla obu foteli) albo jesteś na listach obu
+     foteli - przez dwie grupy (decyzja 30) albo wskazano Cię imiennie na jeden fotel,
+     a jesteś też w grupie drugiego (decyzja 37). Adam otwiera kartę pierwszy raz o 21:48,
+     jak w ramce 1 (na 32A o 21:40 stoi przy nim jeszcze „Nieodczytane").
+     Różnice względem ramki 1:
+       - w karcie „Załoga" żaden fotel nie jest Twój: szukany stoi jako „szukany",
+         obsadzony z nazwiskiem - Barbarę Nowak przydzielono na dowódcę o 21:35 (32A);
+         załoga jest treścią zlecenia, adresaci nie są (decyzja 18);
+       - pod fotelami wiersz „Ty" z plakietką „Termin do potwierdzenia" - tej samej, którą
+         lista ZL1a w panelu pisze w kolumnie „Twój fotel";
+       - zdanie pod pasem mówi, że „MOGĘ LECIEĆ" potwierdza TERMIN, a fotel wybierze
+         osoba zlecająca. Przyciski te same, co w ramce 1.
+     Po odpowiedzi karta wygląda jak ramka 2, z wierszem „Ty" zamiast proponowanego
+     fotela; przydział przychodzi wiadomością „Lot przydzielony" (23F). -->
+<header class="canvas-label" id="termin">
+  <span class="film-strip">NINERDECK - 28A</span>
+  <span class="slug">stan: termin do potwierdzenia</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie, termin do potwierdzenia">
+  <div class="status-bar">
+    <span>21:48</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Czeka na odpowiedź</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-count">ZA 11 H 12 MIN</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Załoga</div>
+      <div class="card">
+        <div class="seat">
+          <span class="seat-k">Dowódca</span>
+          <span class="seat-v">Barbara Nowak</span>
+          <span></span>
+        </div>
+        <div class="seat">
+          <span class="seat-k">Drugi pilot</span>
+          <span class="seat-v sought">szukany</span>
+          <span></span>
+        </div>
+        <!-- Wiersz „Ty" bez fotela: lista w kolumnie etykiet zostaje pusta, bo żaden
+             fotel nie jest Twój - to mówi plakietka. -->
+        <div class="seat you">
+          <span class="seat-k"></span>
+          <span class="seat-v">Ty</span>
+          <span class="seat-tag blue">Termin do potwierdzenia</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-ANA</span><span class="kv-sub">An-2 · AN-2</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane wczoraj 18:40</span></span>
+        </div>
+        <div class="edited">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Edytowane 07:10 · <b>plan lotu</b> 2:00 → 3:00</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29-watek.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Napisz wiadomość</span>
+            <span class="tr-sub">Marta Zięba · zleca</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+      <div class="clash">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>W tym czasie masz rezerwację · <span class="mono">SP-AXA 10:00-12:00</span></span>
+      </div>
+      <a class="btn-primary" href="#zgloszone">MOGĘ LECIEĆ</a>
+      <a class="btn-secondary" href="28d-zlecenie-nie-moge.html">NIE MOGĘ</a>
+
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>„MOGĘ LECIEĆ" potwierdza <b>termin</b> - fotel przydzieli osoba zlecająca, a o decyzji dostaniesz wiadomość.</span>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="28a-zlecenie-grupa.html" class="active">28A Grupa</a>
+  <a href="32a-zlecenie-wspolna-lista.html">32A Wspólna lista</a>
   <a href="23f-rezerwacja-ze-zlecenia.html">23F Po przydziale →</a>
 </nav>
 

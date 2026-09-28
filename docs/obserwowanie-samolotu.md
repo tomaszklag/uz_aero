@@ -311,6 +311,14 @@ i CZASY; znak i nazwisko rozwiązuje aplikacja z cache floty, jak wszędzie.
 z `aircraftId`. Aplikacja sprzed tej zmiany kieruje je do skrzynki - to jest
 zaprojektowane w R-J i niczego nie trzeba dla niej robić.
 
+**Od 4.0.0 wszystkie pięć idzie kanałem klubu** (`docs/kanal-klubu.md`): urządzenie
+połączone dostaje ramkę i baner w aplikacji, push tylko urządzenie bez połączenia (K4),
+a w panelu stoją w skrzynce pod dzwonkiem z wierszem prowadzącym do karty samolotu
+w module Samoloty (K7).
+Producenci nie zmieniają ani linijki - zmienia się rozdzielnik (`Notifier.wake`). Karta
+maszyny (27) i lista obserwowanych (13C) odświeżają się sygnałem `aircraft:<id>` zamiast
+pętli „co 60 s" (K3).
+
 ### 5.1 Za godzinę
 
 Trzecie pytanie `BookingReleaseJob` (plik dostaje przy okazji nazwę mówiącą o trzech
@@ -539,8 +547,9 @@ miejscach, które są O OSOBIE, nie o maszynie:
   zdolności), zaznaczony = obserwuję, zapis od razu, BEZ audytu - to decyzja osoby
   o sobie, jak motyw. Karta stoi w `#/konto`, bo to jedyny ekran panelu o osobie
   patrzącej; widzą ją Koordynator lotów, Technik i Administrator, Akceptujący bez panelu
-  zarządza z aplikacji. Powiadomienia i tak przychodzą na telefon - panel niesie samą
-  listę, a podpis pod kartą to mówi. Makieta `konto`.
+  zarządza z aplikacji. Powiadomienia przychodzą do skrzynki osoby - od 4.0.0 także pod
+  dzwonkiem w panelu (`docs/kanal-klubu.md` K7) - a podpis pod kartą to mówi. Makieta
+  `konto`.
 
 Czego tu NIE MA: listy obserwujących na karcie SAMOLOTU w module Samoloty („kto dostanie
 powiadomienie o tej maszynie") - to pytanie administratora o cudze ustawienia; wraca,

@@ -176,11 +176,9 @@
   .po-row.inherit:hover { border-color:var(--border); }
   .chk.inherit { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
 
-  /* OSOBA WSKAZANA IMIENNIE NA DRUGI FOTEL - wyłączona (§4.1, §4.2): stoi już w fotelu
-     dowódcy, a jedna osoba nie trafia na listy obu foteli. Przygaszona i bez celu
-     dotknięcia - brak akcji, nie blokada z powodem; powód mówi podpis w tym samym
-     wierszu. */
-  .po-row.off { opacity:0.45; pointer-events:none; }
+  /* OSOBA WSKAZANA IMIENNIE NA DRUGI FOTEL - dostępna (decyzja 37): zaznaczona trafi
+     na listy obu foteli i dostanie TERMIN DO POTWIERDZENIA - jej „tak" jest wtedy
+     zgłoszeniem. Podpis w wierszu mówi to przed zaznaczeniem; nic nie jest zablokowane. */
 
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; flex-shrink:0; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
@@ -353,11 +351,12 @@
          CZEGO NA LIŚCIE NIE MA:
            • Ciebie - zlecający nie jest adresatem nawet przez grupę (§6.2);
            • członków wyłączonych - nie dostają zleceń (§6.1).
-         Osoba wskazana imiennie na dowódcę (Jakub Wrona) STOI na liście, ale wyłączona,
-         z podpisem - gdyby zniknęła, zlecający szukałby jej i nie wiedział, dlaczego jej
-         nie ma. Grupa, w której stoi, rozwija się bez niej (wskazanie imienne wygrywa
-         z grupą, §4.2) - dlatego prawdę o zasięgu mówi licznik w „GOTOWE", a nie suma
-         liczb przy grupach (osoba w dwóch grupach liczy się raz).
+         Osoba wskazana imiennie na dowódcę (Jakub Wrona) STOI na liście i da się ją
+         zaznaczyć: trafi wtedy na listy obu foteli i dostanie TERMIN DO POTWIERDZENIA
+         (decyzja 37). Podpis w wierszu mówi to przed zaznaczeniem, a na kroku 31B pod
+         jej nazwiskiem stanie ten sam skutek (decyzja 39). Tak samo, gdy osoba wskazana
+         imiennie należy do zaznaczonej grupy. Prawdę o zasięgu mówi licznik w „GOTOWE",
+         a nie suma liczb przy grupach (osoba w dwóch grupach liczy się raz).
 
          „GOTOWE · 5" - 5 osób po rozwinięciu grup: Anna Kowal, Adam Kowalski, Piotr Lis,
          Barbara Nowak, Ewa Sowa. „ANULUJ" wraca bez zmian. -->
@@ -438,9 +437,9 @@
             </div>
             <!-- Podpis bez formy z płcią: „imiennie na dowódcę", nie „wskazany na
                  dowódcę" - imiesłów odmieniłby się przez płeć tej osoby. -->
-            <div class="po-row off" role="checkbox" aria-checked="false" aria-disabled="true">
+            <div class="po-row" role="checkbox" aria-checked="false">
               <span class="po-avatar">JWR</span>
-              <span class="po-body"><span class="po-name">Jakub Wrona</span><span class="po-sub">imiennie na dowódcę</span></span>
+              <span class="po-body"><span class="po-name">Jakub Wrona</span><span class="po-sub">imiennie na dowódcę · po zaznaczeniu termin do potwierdzenia</span></span>
               <span class="chk"></span>
             </div>
           </div>

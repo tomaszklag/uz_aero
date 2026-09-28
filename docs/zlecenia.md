@@ -4,11 +4,13 @@
 > makietami - ta sama kolejność, co przy rezerwacjach (`docs/rezerwacje.md`), zakresach
 > uprawnień (`docs/uprawnienia.md`) i obserwowaniu samolotu (`docs/obserwowanie-samolotu.md`).
 >
-> Stan: **36 decyzji właściciela - 31 z 2026-09-27 w czterech turach i 5 z przeglądu makiet
-> Z-A (2026-09-28)** (§1 - trzecia i czwarta tura pytane pojedynczo przekształciły model:
-> dwa fotele, trzy sposoby adresowania, bez trybu „kto pierwszy", cały moduł na żywo;
-> piąta ułożyła kolumnę panelu w grupy i dopięła wejścia w zlecenie w panelu). Decyzje wąskie, które dokument podjął sam, stoją w §21 -
-> rozjazd z nimi to rozmowa przy przeglądzie, nie cicha zmiana w kodzie. Wydanie: **4.0.0
+> Stan: **49 decyzji właściciela - 31 z 2026-09-27 w czterech turach i 18 z przeglądu makiet
+> Z-A (2026-09-28) w trzech** (§1 - trzecia i czwarta tura pytane pojedynczo przekształciły
+> model: dwa fotele, trzy sposoby adresowania, bez trybu „kto pierwszy"; piąta ułożyła
+> kolumnę panelu w grupy i dopięła wejścia w zlecenie w panelu; szósta zamknęła decyzje
+> wąskie z §21 - termin do potwierdzenia przy imiennym w grupie, ostrzeżenie w przeddzień,
+> cisza w kokpicie; siódma zamieniła odświeżanie pushem na KANAŁ KLUBU - osobny moduł,
+> `docs/kanal-klubu.md`). Rozjazd z decyzjami to rozmowa, nie cicha zmiana w kodzie. Wydanie: **4.0.0
 > nowym APK**, milestone „Zlecenia na lot 4.0.0" (#5), termin 1 października 2026,
 > **po wydaniu 3.2.0** (wydane 27 września 2026). Etapy Z-A…Z-W w §18.
 
@@ -45,13 +47,14 @@ zamiast dzwonić i umawiać termin - element, który przejmie moduł szkoleniowy
 **Drugiej połowy nie ma wcale** i to jest właściwa praca tego wydania: w systemie nie
 istnieje ani **grupa osób** (jedyną nazwaną listą ludzi jest obsada kroku ścieżki
 akceptacji), ani **rozmowa** (najbliżej stoją jednorazowe pola: powód odmowy, notatka
-rezerwacji), ani **połączenie na żywo** (serwer odpowiada wyłącznie na żądania). Wszystkie
-trzy projektujemy tak, żeby przejęły je kolejne milestone’y: „Ogłoszenia wewnątrz
-organizacji" (#10) i „Grupy dyskusyjne" (#11) - §17.
+rezerwacji). Obie projektujemy tak, żeby przejęły je kolejne milestone’y: „Ogłoszenia
+wewnątrz organizacji" (#10) i „Grupy dyskusyjne" (#11) - §17. **Połączenie na żywo powstaje
+jako moduł CAŁEGO KLUBU** (pkt 49, `docs/kanal-klubu.md`): zlecenia są jego pierwszym
+klientem, obok skrzynki, kalendarza i dziennika (§11).
 
 Aplikacja nie dostaje żadnego modułu natywnego (`expo-notifications` jest od 3.1.0,
 `WebSocket` jest wbudowany w React Native). Nowy APK wynika wyłącznie z numeru wersji
-(§19). Serwer dostaje jedną nową zależność - obsługę WebSocket (§11).
+(§19). Serwer dostaje jedną nową zależność - obsługę WebSocket (`docs/kanal-klubu.md`).
 
 ## 1. Decyzje właściciela (2026-09-27 i 2026-09-28) - nie wracać do nich w dyskusji
 
@@ -104,7 +107,8 @@ Trzecia tura - pytana pojedynczo:
     drugi obsadzony fotel zostaje, a pozostali chętni do tego fotela dalej się liczą (§5.3).
 15. **Zlecenie bez kompletu załogi wygasa na początku terminu, W CAŁOŚCI** - także przy
     jednym obsadzonym fotelu - a wcześniej zlecający dostaje jedno ostrzeżenie
-    (3 h, do kalibracji) (§5.5).
+    (~~3 h, do kalibracji~~ - **ZMIENIONE w szóstej turze (pkt 45): wieczorem
+    w przeddzień**) (§5.5).
 16. **Powód jest ZAWSZE OPCJONALNY** - przy odmowie, rezygnacji, cofnięciu przydziału
     i odwołaniu (§5.6).
 17. **„Odczytane" = adresat otworzył kartę zlecenia** - nie doręczenie powiadomienia (§8).
@@ -116,7 +120,8 @@ Trzecia tura - pytana pojedynczo:
 20. **Cudze zlecenie prowadzą wszyscy z `reservations.manage` naraz** - wybór chętnych,
     zmiana, odwołanie - bez przejmowania. Wątki prowadzi dalej autor (§9).
 21. **Wątek działa NA ŻYWO (WebSocket)** - wiadomość pojawia się natychmiast, jak
-    w komunikatorze (§11).
+    w komunikatorze (§11). _Szósta tura zdjęła połączenie (pkt 42), siódma przywróciła je
+    jako kanał klubu (pkt 49)._
 22. **Skład grup zmienia wyłącznie Administrator** (`accounts.manage`); koordynator z grup
     korzysta (§6.1).
 23. **Karta „Twoja rezerwacja" na Pulpicie liczy OBA fotele** - uczeń przydzielony jako
@@ -133,7 +138,8 @@ Trzecia tura - pytana pojedynczo:
 Czwarta tura - decyzje, które wynikły z trzeciej (też pojedynczo):
 
 27. **Na żywo działa CAŁY moduł zleceń** - wątki, karty zleceń (odczyty, odpowiedzi,
-    przydziały), listy i licznik na karcie „Zlecenia" na Pulpicie (§11).
+    przydziały), listy i licznik na karcie „Zlecenia" na Pulpicie (§11). _Siódma tura
+    rozszerzyła to na cały klub (pkt 49)._
 28. **Push o odpowiedzi adresata dostaje WYŁĄCZNIE autor zlecenia**; pozostali prowadzący
     widzą odpowiedzi na karcie i liście na żywo (§12).
 29. **Prowadzący może odebrać zlecenie adresatowi** - usunąć go albo zamienić na kogoś innego
@@ -142,7 +148,9 @@ Czwarta tura - decyzje, które wynikły z trzeciej (też pojedynczo):
     odpina cofnięcie przydziału (§5.2).
 30. **Osoba z list obu foteli dostaje JEDNO zlecenie** z „terminem do potwierdzenia",
     a fotel przydziela prowadzący - „i tak później zleceniodawca decyduje, kto gdzie leci".
-    Rozstrzygnięcie pochodne: wskazanie IMIENNE na jeden fotel wygrywa z grupą drugiego (§4.2).
+    ~~Rozstrzygnięcie pochodne: wskazanie IMIENNE na jeden fotel wygrywa z grupą drugiego~~ -
+    **ZMIENIONE w szóstej turze (pkt 37): osoba wskazana imiennie i obecna w grupie
+    drugiego fotela też dostaje termin do potwierdzenia** (§4.2).
 31. **Po edycji adresat widzi, CO zmieniono, bez nazwiska** („Edytowane 15:10 · maszyna
     SP-AXA → SP-KLM"); kto zmienił, widzą prowadzący w historii zmian (§5.2, §10.3).
 
@@ -166,6 +174,58 @@ Piąta tura - przegląd makiet Z-A (2026-09-28, pojedynczo):
     (`#/zlecenia` bez parametru) otwiera „Do mnie", gdy coś tam czeka na odpowiedź,
     a inaczej przekierowuje na „Zlecone" (osobę, która je widzi). Adres z parametrem
     (`?widok=do-mnie`, `?widok=zlecone`) znaczy to samo dla każdego (§15).
+
+Szósta tura - decyzje wąskie z §21 i stany z przeglądu makiet (2026-09-28, pojedynczo):
+
+37. **Osoba wskazana imiennie na jeden fotel, a obecna w grupie drugiego, dostaje „termin
+    do potwierdzenia"** - tak jak osoba z list obu foteli (pkt 30): „MOGĘ LECIEĆ" jest
+    zgłoszeniem, a fotel wybiera prowadzący. Wskazanie imienne traci w tym przypadku moc
+    obsadzania fotela od razu (§4.2).
+38. **Prowadzący widzi taką osobę przy OBU fotelach** - na liście każdego fotela, na który
+    może trafić, z własnym „WYBIERZ" i dopiskiem „także na drugi fotel"; wybór na jeden
+    fotel zdejmuje ją z drugiego (§4.3).
+39. **Formularz mówi o tym przed wysłaniem podpisem przy osobie** („Jest też w grupie
+    „Piloci An-2" - dostanie termin do potwierdzenia, fotel wybierzesz po odpowiedzi");
+    podpis nie blokuje - zlecający może zostawić tak albo odznaczyć grupę (§14.4, §15).
+40. **Zlecenia mają własną historię zmian** na karcie zlecenia, bez wierszy w dzienniku
+    akcji; zmiany GRUP idą do dziennika akcji (§6.1, §10.3).
+41. **„Wyślij ponownie" wysyła zlecenie nowym członkom grup i przypomina tym, którzy nie
+    odpowiedzieli**; kto już odpowiedział, nie dostaje nic (§5.3, §6.2).
+42. ~~**BEZ POŁĄCZENIA NA ŻYWO**: push budzi zawsze, ekran odświeża się przy wejściu i po
+    pushu, a panel odpytuje otwartą kartę i rozmowę co kilkanaście sekund; epik Z-E odpada~~ -
+    **ZMIENIONE w siódmej turze (pkt 49): kanał klubu.** Z tej decyzji zostaje zasada
+    „sygnał i pobranie": sygnał zmiany nie niesie treści, a kształt zlecenia per widz liczy
+    wyłącznie REST (`docs/kanal-klubu.md` §2).
+43. **Powiadomienie dotyczące otwartego ekranu nie pokazuje banera** - rozmowa albo karta
+    po prostu się odświeża, jak w komunikatorze; baner pojawia się tylko dla spraw spoza
+    otwartego ekranu (§11; od siódmej tury to reguła banera w aplikacji -
+    `docs/kanal-klubu.md` K5).
+44. **Cisza w kokpicie**: dopóki pilot trzyma samolot, powiadomienia - WSZYSTKIE rodzaje,
+    także rezerwacji i obserwowania - trafiają na listę systemową i do skrzynki bez banera
+    i bez dźwięku (§11, §16). Łącze kanału klubu jest wtedy rozłączone
+    (`docs/kanal-klubu.md` K6).
+45. **Ostrzeżenie „Zlecenie bez kompletu załogi" o 18:00 czasu klubu w przeddzień
+    terminu**; zlecenie wysłane później ostrzeżenia nie dostaje (odwraca „3 h" z pkt 15,
+    §5.5).
+46. **Stany, które makiety opisywały jako „bez makiety", dostają ramki**: termin do
+    potwierdzenia u adresata (28A), zlecenie wygasłe i cofnięte u adresata (28B),
+    odwołane albo wygasłe u prowadzącego (32) (§14.2).
+47. **Włączenie „Wspólnej listy" w trakcie wypełniania PRZENOSI wybranych adresatów obu
+    foteli na jedną listę** - nic nie znika po cichu; wskazanie imienne traci moc
+    obsadzania, bo na wspólnej liście każde „tak" jest zgłoszeniem (§14.4).
+48. **Wyłączenie „Wspólnej listy" przywraca podział sprzed włączenia**; kogo dopisano
+    w trakcie wspólnej listy, ten staje przy obu szukanych fotelach i dostanie termin do
+    potwierdzenia (§14.4).
+
+Siódma tura - kanał klubu (2026-09-28, pojedynczo; decyzje K1–K7 w `docs/kanal-klubu.md`):
+
+49. **Zlecenia odświeżają się KANAŁEM KLUBU** (odwraca pkt 42, rozszerza pkt 21 i 27):
+    jedno połączenie na urządzenie niesie wszystkie powiadomienia i odświeżenia ekranów
+    całej aplikacji, a ekrany niczego nie odpytują. Zapis zawsze RESTem, kanał tylko
+    rozsyła; push wyłącznie do urządzeń bez połączenia; przy otwartej aplikacji własny
+    baner (znika sam, bez dźwięku); w kokpicie łącze się rozłącza; panel dostaje dzwonek
+    i skrzynkę. Zlecenia są pierwszym klientem modułu - obok skrzynki, kalendarza z kolejką
+    zgód, karty samolotu, dziennika i „Do sprawdzenia" (§11).
 
 ## 2. Czym JEST zlecenie w tym systemie
 
@@ -197,7 +257,9 @@ MIĘDZY LUDŹMI, której arbitrem jest serwer. **Cache’u zleceń i wątków w 
 i nie wolno go dorobić po cichu. Bez zasięgu karta „Zlecenia" na Pulpicie znika (jak karta
 rezerwacji), a ekrany zleceń mówią „BRAK POŁĄCZENIA" z ponowieniem co 60 s bez przycisku
 (wzorzec `21b`/`25b`). Wysłanie wiadomości bez zasięgu = przycisk z powodem, nigdy cichy
-błąd. Kanał na żywo (§11) niczego tu nie zmienia: bez sieci go nie ma.
+błąd. Kanał klubu (§11) niczego tu nie zmienia: bez sieci go nie ma, a ekran „BRAK
+POŁĄCZENIA" wraca sam w chwili, w której wraca łącze - pętla „co 60 s" znika
+(`docs/kanal-klubu.md` §3.3).
 
 §4.1 („brak sieci nigdy nie blokuje pracy pilota") zostaje nietknięty: zlecenie nie
 warunkuje lotu (§2.3), a przydzielony dowódca przejmuje maszynę z rezerwacji jak dotąd -
@@ -264,12 +326,12 @@ Sposoby 1 i 2 mieszają się per fotel (dowódca imiennie, drugi pilot z grupy).
 obejmuje wszystkie szukane fotele i z pozostałymi się nie miesza - to przełącznik nad
 fotelami w formularzu („Wspólna lista · fotele przydzielę po odpowiedziach").
 
-**Osoba na liście obu foteli** (dwie grupy się pokrywają) dostaje JEDNO zlecenie
-z tematem „termin do potwierdzenia" - jej odpowiedź jest zgłoszeniem, a fotel wybiera
-prowadzący, jak przy wspólnej liście (pkt 30). **Wskazanie imienne wygrywa z grupą**:
-osoba wskazana imiennie na jeden fotel, a obecna w grupie drugiego, dostaje propozycję
-swojego fotela („PRZYJMUJĘ") i wypada z rozwinięcia tamtej grupy - zlecający wskazał ją
-świadomie, a w grupie drugiego fotela znalazła się przypadkiem.
+**Osoba na liście obu foteli** - dwie grupy się pokrywają (pkt 30) albo wskazano ją
+imiennie na jeden fotel, a jest też w grupie drugiego (pkt 37) - dostaje JEDNO zlecenie
+z tematem „termin do potwierdzenia": jej odpowiedź jest zgłoszeniem, a fotel wybiera
+prowadzący, jak przy wspólnej liście. Wskazanie imienne traci w tym przypadku moc
+obsadzania fotela od razu. Prowadzący widzi taką osobę przy OBU fotelach (pkt 38, §4.3),
+a formularz uprzedza o tym zlecającego podpisem przy osobie (pkt 39, §14.4).
 
 ### 4.3 Kto obsadza fotel
 
@@ -278,6 +340,12 @@ swojego fotela („PRZYJMUJĘ") i wypada z rozwinięcia tamtej grupy - zlecając
 | imiennie | „PRZYJMUJĘ" | odpowiedź sama |
 | grupa / kilka osób | „MOGĘ LECIEĆ" = zgłoszenie | prowadzący („WYBIERZ") |
 | wspólna lista | „MOGĘ LECIEĆ" = zgłoszenie terminu | prowadzący („NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA") |
+
+**Termin do potwierdzenia przy fotelach wysłanych osobno** (pkt 37, 38): osoba z list obu
+foteli stoi na karcie prowadzącego przy KAŻDYM z nich - w bloku imiennym fotela, na który
+ją wskazano, albo na liście grupy - z własnym „WYBIERZ" i dopiskiem „także na drugi fotel".
+Wybór na jeden fotel zdejmuje ją z listy drugiego; jej „MOGĘ LECIEĆ" niczego nie obsadza
+samo, także przy fotelu imiennym.
 
 Przydzielony z grupy albo listy nie potwierdza drugi raz - zgłosił się, więc przydział jest
 ostateczny i przychodzi do niego wiadomością „Lot przydzielony". Pozostali adresaci
@@ -370,10 +438,13 @@ dotyka, bo przegląda wyłącznie `pending`. Decyzja 5.
 Zadanie okresowe dostaje czwarte pytanie (kolejność: wygaszanie → zwalnianie →
 przypomnienie → **zlecenia**):
 
-- **ostrzeżenie** „Zlecenie bez kompletu załogi" do zlecającego raz,
-  `ORDER_UNFILLED_WARN_MS` przed początkiem (stała w `packages/domain/src/booking/policy.ts`,
-  **DO KALIBRACJI**, 3 h), ze stemplem `flight_orders.unfilled_warned_at` - idempotencja
-  jak przy `reminded_at`;
+- **ostrzeżenie** „Zlecenie bez kompletu załogi" do zlecającego raz, **o 18:00 czasu
+  klubu w przeddzień terminu** (pkt 45; godzina `ORDER_UNFILLED_WARN_HOUR` w
+  `packages/domain/src/booking/policy.ts`, doba liczona granicami dób klubu jak
+  w kalendarzu), ze stemplem `flight_orders.unfilled_warned_at` - idempotencja jak przy
+  `reminded_at`. Zlecenie utworzone PO tej chwili ostrzeżenia nie dostaje -
+  powstało już z wiedzą, ile zostało czasu. Przy porannym locie ostrzeżenie „3 h przed"
+  przychodziło o świcie i za późno na znalezienie pilota - stąd zmiana;
 - **wygaśnięcie** w chwili początku terminu, **w całości** (pkt 15): zlecenie → `expired`,
   rezerwacja → `released` (slot wraca do puli, bez powodu - `close_reason` niesie zdanie
   CZŁOWIEKA). Wiadomość „Zlecenie wygasło" do zlecającego, do przydzielonego i do adresatów,
@@ -410,7 +481,8 @@ imiennie) plus etykietę dla prowadzących (`audience_label`: „dowódca: Instr
 drugi pilot: A. Nowak"). Konsekwencje:
 
 - ktoś dopisany do grupy JUTRO nie dostaje zlecenia wysłanego DZIŚ - „Wyślij ponownie"
-  rozwija grupy od nowa i dopisuje nowych;
+  rozwija grupy od nowa, dopisuje nowych i przypomina tym, którzy nie odpowiedzieli
+  (pkt 41); kto już odpowiedział, nie dostaje nic;
 - adresatem bywa wyłącznie **aktywny członek klubu**; zlecający wypada z adresatów, nawet
   gdy jest w grupie.
 
@@ -443,13 +515,15 @@ obsadzeniu fotela przez kogoś innego mówi tylko tyle, że fotel jest zajęty.
   prowadzący edycją zlecenia (§5.1), którą widzą wszyscy. Przycisk „przyjmij propozycję"
   to §22.
 - **Odczytanie wątku** (`last_read_at` uczestnika) daje pod ostatnią wiadomością
-  „Odczytane 14:05" - na żywo (§11).
+  „Odczytane 14:05" - na żywo, ramką `read` kanału klubu (§11).
 
 ### 7.3 Skrzynka nie zalewa się wiadomościami
 
 Nowa wiadomość NIE dopisuje wiersza do skrzynki, tylko odświeża JEDEN nieprzeczytany wiersz
-„Wiadomość w zleceniu" na wątek (z licznikiem). Push idzie przy każdej wiadomości - to jest
-rozmowa - chyba że odbiorca ma ten wątek otwarty (wtedy wiadomość przyszła kanałem na żywo).
+„Wiadomość w zleceniu" na wątek (z licznikiem). Każda wiadomość budzi odbiorcę - to jest
+rozmowa: kanałem, gdy urządzenie jest połączone, pushem, gdy nie jest
+(`docs/kanal-klubu.md` K4). Odbiorca, który ma ten wątek otwarty, nie widzi banera:
+wiadomość po prostu dopisuje się do rozmowy (pkt 43).
 
 ## 8. „Odczytane": definicja i kto je widzi
 
@@ -540,9 +614,14 @@ CREATE TABLE order_recipients (
   org_id             TEXT NOT NULL,
   order_id           TEXT NOT NULL REFERENCES flight_orders(id),
   pilot_id           TEXT NOT NULL REFERENCES pilots(id),
-  -- fotel, na który trafił; NULL = wspólna lista albo osoba z list obu foteli (§4.2)
+  -- fotel, na który trafił; NULL = wspólna lista albo termin do potwierdzenia
+  -- (osoba z list obu foteli - także wskazana imiennie i obecna w grupie drugiego, §4.2)
   seat               TEXT CHECK (seat IN ('pic', 'dual')),
-  -- wskazany imiennie jako JEDYNY adresat fotela: jego „tak" obsadza fotel (§4.3)
+  -- fotel, na który wskazano ją imiennie - przy terminie do potwierdzenia stoi w bloku
+  -- imiennym tego fotela na karcie prowadzącego (pkt 37, 38)
+  named_seat         TEXT CHECK (named_seat IN ('pic', 'dual')),
+  -- wskazany imiennie jako JEDYNY adresat fotela i nieobecny na liście drugiego:
+  -- jego „tak" obsadza fotel (§4.3)
   direct             BOOLEAN NOT NULL DEFAULT false,
   via_group_id       TEXT,              -- bez klucza obcego: grupa bywa skasowana
   seen_at            TIMESTAMPTZ,       -- pierwsze otwarcie w bieżącej wersji
@@ -635,69 +714,36 @@ w TypeScripcie. Czytelnicy z `reservations.manage` NIE są uczestnikami (brak wi
 dostęp rozstrzyga warunek w zapytaniu), więc nie mają `last_read_at` i nie ruszają odczytów.
 Strona wiadomości: kursor PARĄ `(created_at, id)`, niepełny = 400 (wzorzec skrzynki).
 
-## 11. Kanał na żywo (WebSocket)
+## 11. Odświeżanie: kanał klubu
 
-Pkt 21 i 27. Serwer odpowiadał dotąd wyłącznie na żądania - to jest jego pierwsze stałe
-połączenie z klientem, więc projektujemy je jako **kanał ogólny**. W 4.0.0 niesie CAŁY
-moduł zleceń: wątki, karty zleceń, listy i licznik na Pulpicie. Skrzynka, kalendarz i inne
-moduły na żywo to późniejsze, osobne decyzje.
+Pkt 21, 27 i 49. Zlecenia nie mają własnego połączenia - są pierwszym klientem **kanału
+klubu**, modułu całej aplikacji opisanego w `docs/kanal-klubu.md` (decyzje K1–K7,
+architektura, bezpieczeństwo, testy). Tu stoi wyłącznie to, co zlecenia do niego dokładają:
 
-- **REST zostaje źródłem prawdy, kanał PRZYSPIESZA.** Każdy zapis idzie `POST`-em/`PATCH`-em
-  jak dotąd; kanał rozsyła zdarzenie subskrybentom już po commicie (ta sama granica, co
-  `wake` budzika). Po każdym (ponownym) połączeniu klient dociąga stroną REST to, co
-  przegapił - zgubiona ramka nie gubi niczego, a zerwane połączenie nie jest awarią, tylko
-  powrotem do stanu sprzed kanału.
-- **Dwa rodzaje ramek, dwa rodzaje treści.** Wiadomość w wątku jedzie W CAŁOŚCI (`message`,
-  `read`) - odbiorcy są sprawdzeni przy subskrypcji wątku, a rozmowa ma być natychmiastowa.
-  Zmiany zlecenia jadą jako SYGNAŁ bez treści (`order.changed { orderId }`,
-  `summary.changed`), a klient pobiera kartę, listę albo liczniki przez REST. Powód: kształt
-  zlecenia zależy od widza (§13.1 - adresat nie widzi innych adresatów, prowadzący widzi
-  komplet), a liczenie go osobno dla każdego subskrybenta w chwili rozsyłania byłoby drugim
-  miejscem tej reguły obok REST - i pierwszym, w którym by się rozjechała.
-- **Adresaci sygnału `order.changed`**: autor, adresaci niewykreśleni, przydzieleni i każdy
-  zalogowany w klubie z `reservations.manage` (prowadzi wszystkie zlecenia - pkt 20).
-  `summary.changed` idzie do osób, którym zmieniły się liczniki karty „Zlecenia".
-- **Trasy**: `GET /live` (telefon) i `GET /admin/api/live` (panel) z przejściem na
-  WebSocket; wtyczka `@fastify/websocket` (oficjalna, na bibliotece `ws`) - **nowa
-  zależność serwera** i jedyna tego wydania. Wyłącznie host aplikacji (`hostSplit.ts`).
-- **Uwierzytelnienie telefonu: pierwsza ramka** `{ type: 'auth', token }`, nigdy token
-  w adresie - adres ląduje w dziennikach żądań. Ta sama brama członkostwa, co trasy telefonu
-  (aktywne członkostwo, sesja nieunieważniona). Bez ramki `auth` w 5 s - zamknięcie.
-- **Uwierzytelnienie panelu: ciasteczko sesji przy nawiązaniu + ŚCISŁE sprawdzenie
-  `Origin`** z `PUBLIC_BASE_URL`. Strażnik CSRF panelu pilnuje metod zapisu, a nawiązanie
-  połączenia jest GET-em - bez sprawdzenia pochodzenia obca strona otworzyłaby kanał
-  ciasteczkiem zalogowanego administratora (Cross-Site WebSocket Hijacking).
-- **Strumień osoby jest automatyczny, wątek - na subskrypcję.** Po uwierzytelnieniu
-  połączenie dostaje sygnały zleceń, które ta osoba widzi (§13.1). Wiadomości wątku
-  wymagają subskrypcji (`{ type: 'subscribe', orderId, pilotId }`) sprawdzanej TYM SAMYM
-  warunkiem, co odczyt wątku przez REST (uczestnik albo `reservations.manage` w klubie
-  tokenu). Wątek innego klubu = odmowa bez rozróżnienia „nie ma" / „nie wolno". Koperta
-  `{ type, … }` jest ogólna - nowy moduł na żywo dokłada swój rodzaj ramki.
-- **Zamykanie**: wygaśnięcie tokenu (klient odświeża parę i łączy się ponownie),
-  unieważnienie sesji (H-C) i wyłączenie członkostwa zamykają połączenia tej sesji albo
-  osoby NATYCHMIAST - w tych samych miejscach, które dziś unieważniają dostęp.
-- **Rozsyłanie w pamięci procesu** - jedna instancja serwera (§8.8 architektury). Druga
-  instancja wymagałaby rozsyłania przez bazę (`LISTEN/NOTIFY`) - ryzyko Z4.
-- **Telefon łączy się, gdy aplikacja jest NA WIERZCHU** (licznik na Pulpicie ma być żywy),
-  i rozłącza przy zejściu w tło - Android i tak ubija tam połączenia, a w tle budzi push.
-  Wznawia z rosnącym odstępem. `WebSocket` jest wbudowany w React Native - bez modułu
-  natywnego. W kokpicie połączenia NIE MA: lot nie potrzebuje zleceń na żywo, a kokpit
-  ma nie wydawać baterii ani transferu na nic poza sobą. **Panel** łączy się w module
-  „Zlecenia" (lista, szuflada zlecenia, wątek).
-- **Utrzymanie**: ping co 25 s - pośrednicy hostingu zamykają bezczynne połączenia.
-- **CSP panelu**: sprawdzić, że `connect-src 'self'` obejmuje `wss:` tego samego hosta
-  w przeglądarkach docelowych; inaczej jawny adres.
-- **Testy**: trasy WebSocket nie przejdą przez `inject` - test na porcie efemerycznym
-  albo `injectWS` wtyczki; `tenantIsolation.test.ts` dostaje przypadki kanału (subskrypcja
-  wątku cudzego klubu, sygnał zlecenia cudzego klubu nie dochodzi), strażnik rejestru tras
-  widzi `/live` jak każdą trasę. Test „kto dostaje `order.changed`" przybija, że adresat
-  wykreślony i adresat innego zlecenia sygnału NIE dostają.
+- **Sygnał `order:<id>`** po każdej zmianie zlecenia (odpowiedź, odczyt, przydział, edycja,
+  odebranie, odwołanie, wygaśnięcie) - do autora, adresatów niewykreślonych,
+  przydzielonych i każdego z `reservations.manage` w klubie (prowadzą wszystkie zlecenia,
+  pkt 20). Karta zlecenia (28, 32, ZL3) pobiera się wtedy RESTem, bo jej kształt zależy od
+  widza (§13.1).
+- **Sygnał `orders`** - listy i licznik karty „Zlecenia" na Pulpicie (20F, 30, ZL1), do tych
+  samych osób, każdej osobno.
+- **Ramki `message` i `read`** - wiadomość w rozmowie w całości i „Odczytane" - do
+  uczestników wątku i czytających z `reservations.manage` (pkt 19).
+- **Powiadomienia** (§12) idą rozdzielnikiem kanału: urządzenie połączone dostaje ramkę
+  i baner w aplikacji (z wyjątkiem otwartego ekranu - pkt 43), niepołączone - push.
+- **Kalendarz** odświeża się tematami rezerwacji (`calendar:<doba>`, `booking:<id>`) -
+  zlecenie JEST rezerwacją, więc każda zmiana terminu, maszyny albo załogi ogłasza też je.
+- **Cena znana i przyjęta**: moduł rośnie z zakresem 4.0.0 (`docs/kanal-klubu.md` K3), ale
+  w zamian żaden ekran niczego nie odpytuje, a ogłoszenia (#10) i grupy dyskusyjne (#11)
+  dostaną połączenie gotowe.
 
 ## 12. Powiadomienia
 
 Skrzynka źródłem prawdy, push budzikiem (`docs/rezerwacje.md` §12.1). Tytuły
 RZECZOWNIKIEM, push BEZ nazwisk i godzin (ekran blokady widzi każdy), `payload` wozi
-identyfikatory. `PUSH_DATA_KEYS` dostaje `orderId` (dziś `bookingId`, `aircraftId`).
+identyfikatory. `PUSH_DATA_KEYS` dostaje `orderId` i `recipientId` (adresat wątku -
+wątek to para zlecenie × adresat, §7.1; bez niego aplikacja nie wie, czy push dotyczy
+otwartej rozmowy, pkt 43). Dziś niesie `bookingId` i `aircraftId`.
 
 | Rodzaj | Do kogo | Kiedy | Push (tytuł) |
 | --- | --- | --- | --- |
@@ -717,6 +763,10 @@ identyfikatory. `PUSH_DATA_KEYS` dostaje `orderId` (dziś `bookingId`, `aircraft
 - **Sprawca nie budzi sam siebie** (reguła obserwowania samolotu). Odpowiedzi adresatów
   budzą WYŁĄCZNIE autora (pkt 28); pozostali prowadzący widzą je na karcie i liście na
   żywo (§11) - inaczej każda odpowiedź budziłaby wszystkich koordynatorów klubu.
+- **Droga powiadomienia** (`docs/kanal-klubu.md` K4–K6): urządzenie połączone dostaje je
+  kanałem i baner w aplikacji - chyba że dotyczy otwartego ekranu (pkt 43); push idzie
+  wyłącznie na urządzenia bez połączenia; w kokpicie łącze jest rozłączone, a push
+  przychodzi po cichu (pkt 44).
 - `order_filled` i `order_removed` mają ten sam tytuł, bo adresat pyta o to samo - czy
   zlecenie jest dla niego aktualne. Skrzynka różni je treścią („fotel obsadzony" /
   „zlecenie cofnięte"), bez nazwisk (pkt 18).
@@ -752,7 +802,7 @@ z panelu (#233).
 | `GET /orders/:id/threads/:pilotId/messages?before=` | uczestnik, `reservations.manage` | strona wiadomości |
 | `POST /orders/:id/threads/:pilotId/messages` | uczestnik | wiadomość (uuid klienta) |
 | `POST /orders/:id/threads/:pilotId/read` | uczestnik | odczyt wątku |
-| `GET /live`, `GET /admin/api/live` | członek | kanał na żywo (§11) |
+| `GET /live`, `GET /admin/api/live` | członek | kanał klubu (`docs/kanal-klubu.md`): sygnały `order:<id>`, `orders`, ramki `message` i `read` |
 | `GET /admin/api/groups` | `panel.access`, `orders.create` | grupy z liczbą członków |
 | `POST/PATCH/DELETE /admin/api/groups[/:id]` | `accounts.manage` | zarządzanie, audyt |
 | `GET /groups` (telefon) | `orders.create` | grupy do adresowania |
@@ -794,19 +844,19 @@ wskazać tylko siebie. Cudze zlecenie, cudzy wątek i zlecenie innego klubu to *
 | `21e` | Kalendarz ze zleceniem | pasek „szuka dowódcy / załogi", arkusz wolnego pasma z „Zleć lot" |
 | `25d` | Skrzynka ze zleceniami | rodzaje z §12, wiersz wątku z licznikiem |
 | `28` | Zlecenie - adresat, fotel imiennie | termin, maszyna, zadanie, trasa, zlecający, „Proponowany fotel: dowódca", załoga już obsadzona, PRZYJMUJĘ / NIE MOGĘ, wejście w wątek |
-| `28a` | adresat grupy albo wspólnej listy | „MOGĘ LECIEĆ"; po odpowiedzi „Zgłoszone · decyzja zlecającego" |
-| `28b` | nieaktualne (fotel obsadzony albo zlecenie cofnięte) / odwołane / wygasłe | jedno wyjście, bez akcji; wątek do odczytu |
+| `28a` | adresat grupy albo wspólnej listy | „MOGĘ LECIEĆ"; po odpowiedzi „Zgłoszone · decyzja zlecającego"; ramka terminu do potwierdzenia (wspólna lista, obie listy, imiennie i w grupie drugiego fotela - pkt 37) |
+| `28b` | nieaktualne (fotel obsadzony albo zlecenie cofnięte) / odwołane / wygasłe | jedno wyjście, bez akcji; wątek do odczytu; ramki: fotel obsadzony, odwołane, wygasłe, cofnięte (pkt 46) |
 | `28c` | termin zmieniony | poprzednia odpowiedź przekreślona, prośba o nową |
 | `28d` | arkusz odpowiedzi „nie mogę" | powód opcjonalny |
 | `28e` | offline | wzorzec `21b` |
-| `29` | Wątek | wiadomości na żywo, „Odczytane 14:05", zdanie o koordynatorach, pole z WYŚLIJ |
+| `29` | Wątek | wiadomości na żywo (kanał klubu; w otwartej rozmowie bez banera - pkt 43), „Odczytane 14:05", zdanie o koordynatorach, pole z WYŚLIJ |
 | `29a` | Wątek offline | przycisk z powodem |
 | `29b` | Wątek do czytania (koordynator) | bez pola wiadomości |
 | `30` | Zlecenia - lista | segment „Do mnie / Zlecone" (drugi tylko z `canCreate`/`canManage`), NOWE ZLECENIE |
 | `30a` | lista pusta | |
 | `31`, `31a`, `31b` | Nowe zlecenie - trzy kroki | termin + maszyna (komponenty 22) → zadanie, trasa, plan, opis → załoga i adresaci |
-| `31c` | arkusz adresatów | grupy nad osobami, z wyszukiwaniem |
-| `32` | Zlecenie - widok prowadzącego | fotele z adresatami, odczytem i odpowiedzią (na żywo), WYBIERZ, „Odbierz zlecenie" / „Zamień osobę" przy adresacie, wątek każdego, EDYTUJ / ODWOŁAJ, historia zmian |
+| `31c` | arkusz adresatów | grupy nad osobami, z wyszukiwaniem; podpis przy osobie wskazanej imiennie i obecnej w grupie drugiego fotela (pkt 39) |
+| `32` | Zlecenie - widok prowadzącego | fotele z adresatami, odczytem i odpowiedzią, osoba z terminem do potwierdzenia przy obu fotelach (pkt 38), ramka odwołanego albo wygasłego (pkt 46), WYBIERZ, „Odbierz zlecenie" / „Zamień osobę" przy adresacie, wątek każdego, EDYTUJ / ODWOŁAJ, historia zmian |
 | `32a` | jw., wspólna lista | zgłoszeni z „NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA" |
 | `32b` | komplet załogi | przydzieleni, „Cofnij przydział" |
 | `32c` | arkusz odwołania zlecenia | powód opcjonalny, termin wraca do puli |
@@ -826,7 +876,14 @@ w wątku), a „ODWOŁAJ" znaczy „REZYGNUJĘ".
 Kroki 31/31a to kroki 22/22a. Krok 31b jest nowy: dwa wiersze foteli z kartami stanu
 („Ja" / „Szukam" / „Brak"), pod szukanym fotelem wybór adresatów (osoba albo grupy),
 a nad fotelami przełącznik „Wspólna lista · fotele przydzielę po odpowiedziach". „Powiel" na karcie 32
-otwiera formularz z tą samą treścią i pustym terminem.
+otwiera formularz z tą samą treścią i pustym terminem. Osoba wskazana imiennie, która jest
+też w wybranej grupie drugiego fotela, dostaje w formularzu podpis „Jest też w grupie
+„Piloci An-2" - dostanie termin do potwierdzenia, fotel wybierzesz po odpowiedzi" (pkt 39) -
+bez blokady; zlecający może zostawić tak albo odznaczyć grupę. **Przełącznik „Wspólna
+lista" nie gubi wyboru** (pkt 47, 48): włączony w trakcie wypełniania przenosi adresatów
+obu foteli na jedną listę (wskazanie imienne traci moc obsadzania), a wyłączony przywraca
+podział sprzed włączenia - kogo dopisano w międzyczasie, ten staje przy obu szukanych
+fotelach z terminem do potwierdzenia.
 
 ## 15. Panel
 
@@ -845,14 +902,18 @@ otwiera formularz z tą samą treścią i pustym terminem.
   (`?widok=do-mnie` / `?widok=zlecone`), więc wklejony adres znaczy to samo dla każdego.
 - **Makiety** (`design/panel/`, z `SZABLON.html`): `zlecenia-lista` (segment Do mnie /
   Zlecone, fotele, termin, maszyna, zlecający, „5 z 6 odczytało · 2 mogą lecieć"),
-  `zlecenia-nowe` (szuflada szeroka - te same pola, co telefon), `zlecenia-szczegoly`
-  (szuflada prowadzącego: fotele, adresaci, odczyty, WYBIERZ, historia; widok adresata
-  z PRZYJMUJĘ / MOGĘ LECIEĆ / NIE MOGĘ), `zlecenia-watek` (wątek na żywo; wariant do
-  czytania), `piloci-grupy` (lista grup + szuflada z obsadą - `OptionButton multiple`,
+  `zlecenia-nowe` (szuflada szeroka - te same pola, co telefon, z podpisem przy osobie
+  wskazanej imiennie i obecnej w grupie drugiego fotela), `zlecenia-szczegoly`
+  (szuflada prowadzącego: fotele, adresaci, odczyty, WYBIERZ, osoba z terminem do
+  potwierdzenia przy obu fotelach, historia; widok adresata z PRZYJMUJĘ / MOGĘ LECIEĆ /
+  NIE MOGĘ), `zlecenia-watek` (wątek na żywo; wariant do czytania), `piloci-grupy` (lista grup + szuflada z obsadą - `OptionButton multiple`,
   członek wyłączony przygaszony). Ramki w istniejących: `kalendarz-flota` (pasek zlecenia,
   przycisk „Zleć lot", otwarte menu wolnej komórki), `kalendarz-wpis` K2c (zajętość ze
   zleceniem), `piloci-lista` (przełącznik „Członkowie · Grupy"), `piloci-konto` (dwunasta
   zdolność „Zlecanie lotów" w zestawach), kolumna boczna wszystkich ram klubu (trzy grupy).
+- **Odświeżanie w panelu** (pkt 49): kanał klubu - sygnały zleceń unieważniają zapytania,
+  bez odpytywania; dzwonek i skrzynka w pasku górnym (`docs/kanal-klubu.md` K7, makieta
+  `powiadomienia`).
 - **Kalendarz panelu**: obok „Zarezerwuj" przycisk **„Zleć lot"** (tylko `orders.create`),
   otwierający `zlecenia-nowe` bez terminu. Kliknięcie w wolne miejsce komórki daje osobie
   z `orders.create` **menu „Zarezerwuj / Zleć lot"** (pkt 35) - oba z maszyną i dniem
@@ -883,8 +944,10 @@ Rezerwacja z pustym fotelem łamie założenie „lot ma pilota" w tych miejscac
    odwołanie zlecenia z jego wiadomościami i powodem opcjonalnym (§5.6);
 10. `ApprovalFlow` - bez zmian w kodzie, ale test przybija, że zlecenie nie trafia do
     kolejki decyzji i nie rusza go `reconcile`;
-11. unieważnienie sesji i wyłączenie członkostwa (H-C, D6) zamykają też połączenia kanału
-    na żywo (§11).
+11. kanał klubu (`docs/kanal-klubu.md`): tematy zleceń (`order:<id>`, `orders`) i ramki
+    rozmów (`message`, `read`) ogłaszane po commicie; reguła banera w aplikacji (pkt 43)
+    i cisza w kokpicie (pkt 44, łącze rozłączone) obejmują WSZYSTKIE rodzaje powiadomień -
+    decyzje jako czyste funkcje z testem.
 
 ## 17. Co przejmą kolejne milestone’y
 
@@ -894,7 +957,7 @@ Rezerwacja z pustym fotelem łamie założenie „lot ma pilota" w tych miejscac
 - **Ogłoszenia (#10)**: adresowanie grupami (§6) jest ogólne - ogłoszenie trafi do tych
   samych grup tym samym rozwinięciem przy wysłaniu, a „odczytane" (§8) ma tę samą definicję.
 - **Grupy dyskusyjne (#11)**: grupy (§6.1), wątki (§10.5) z nowym `subject_kind` i kanał
-  na żywo (§11) - bez nowej tabeli wiadomości ani nowego połączenia.
+  klubu (`docs/kanal-klubu.md`) - bez nowej tabeli wiadomości ani nowego połączenia.
 
 ## 18. Etapy
 
@@ -904,18 +967,20 @@ Numeracja **Z** (zlecenia). Strzałka = zależność twarda.
 Z-A projekt i makiety (telefon + panel) ──────────────┬─► Z-C aplikacja pilota ──┐
                                                       │                         ├─► Z-W wydanie 4.0.0
 Z-B serwer: migracja 16, grupy, zlecenia, ──┬─────────┴─► Z-D panel ────────────┤   (nowy APK)
-    odpowiedzi, wątki, powiadomienia, zegar  └─► Z-E kanał na żywo ─────────────┘
+    odpowiedzi, wątki, powiadomienia, zegar  └─► Z-E kanał klubu ───────────────┘
 ```
 
-1. **Z-A** - makiety z §14.2 i §15, spisy, panele wariantów, `panel.css` z generatora.
-   Design-first: blokuje Z-C i Z-D.
-2. **Z-B** - serwer. Rusza RÓWNOLEGLE z Z-A, bo decyzje z §1 wystarczą dla modelu i API.
-   Najdłuższy kawałek.
-3. **Z-E** - kanał na żywo: serwer (trasa, uwierzytelnienie, strumień osoby, subskrypcja
-   wątku, rozsyłanie po commicie, zamykanie) i klienci telefonu i panelu. Po modelu zleceń
-   i wątków z Z-B.
-4. **Z-C** - aplikacja (po Z-A, Z-B; żywe odświeżanie po Z-E).
-5. **Z-D** - panel (po Z-A, Z-B; żywe odświeżanie po Z-E), razem z grupami w module Piloci.
+1. **Z-A** - makiety z §14.2 i §15 oraz makiety kanału klubu (baner w aplikacji, dzwonek
+   i skrzynka w panelu), spisy, panele wariantów, `panel.css` z generatora. Design-first:
+   blokuje Z-C i Z-D.
+2. **Z-B** - serwer zleceń. Rusza RÓWNOLEGLE z Z-A, bo decyzje z §1 wystarczą dla modelu
+   i API. Najdłuższy kawałek.
+3. **Z-E** - **kanał klubu** (#246): moduł całej aplikacji - serwer, łącze w aplikacji
+   i w panelu, rozdzielnik powiadomień, skrzynka w panelu i podpięcie modułów z K3
+   (`docs/kanal-klubu.md` §8: KK-A…KK-D).
+4. **Z-C** - aplikacja (po Z-A, Z-B; tematy zleceń i rozmów po Z-E).
+5. **Z-D** - panel (po Z-A, Z-B; tematy zleceń i rozmów po Z-E), razem z grupami w module
+   Piloci.
 6. **Z-W** - wydanie 4.0.0.
 
 **Brama integracyjna** (pkt 25): kod Z-B…Z-E wchodzi do `develop` dopiero po wycięciu gałęzi
@@ -932,7 +997,7 @@ i z niego, jak zawsze, nie buduje się APK ani nie wysyła aktualizacji w tle.
 - **4.0.0 nowym APK**. Warstwa natywna się nie zmienia, ale przy `runtimeVersion:
   appVersion` aktualizacja w tle nie może podnieść numeru wersji, a numer jest tym, co pilot
   podaje w zgłoszeniu i co klub czyta na stronie wydań (ta sama decyzja, co 3.0.0 i 2.1.0).
-  Kolejność: serwer z migracją 16 i kanałem na żywo PRZED rozesłaniem APK.
+  Kolejność: serwer z migracją 16 i kanałem klubu PRZED rozesłaniem APK.
 - **Termin 1 października** (pkt 8, 26) stoi w milestone’ie i na stronie publicznej.
   Dokument nie ukrywa rachunku: do tego dnia realnie powstaje projekt, makiety i model
   danych; reszta idzie po terminie.
@@ -945,30 +1010,36 @@ i z niego, jak zawsze, nie buduje się APK ani nie wysyła aktualizacji w tle.
 
 | # | Ryzyko | Co z nim robimy |
 | --- | --- | --- |
-| Z1 | Termin (4 dni) wobec sześciu epików | Pkt 8 i 26 - świadomie; §19 mówi, co realnie powstanie do 1 X |
+| Z1 | Termin (4 dni) wobec sześciu epików (Z-E urósł do kanału klubu, pkt 49) | Pkt 8 i 26 - świadomie; §19 mówi, co realnie powstanie do 1 X |
 | Z2 | Rezerwacja z pustym fotelem wywróci któreś z kilkunastu miejsc czytania | Lista kontrolna §16 + test na każde miejsce w Z-B; typy serwera mają już `pilotId: string \| null`, telefon nie |
 | Z3 | Dwa przydziały naraz (dwóch prowadzących, pkt 20) | Blokada wiersza zlecenia (`SELECT … FOR UPDATE`) w jednej transakcji z przydziałem; drugi dostaje „fotel już obsadzony" jako odpowiedź, nie błąd |
-| Z4 | Kanał na żywo w jednej instancji serwera | Rozsyłanie w pamięci procesu wystarcza dziś (§8.8 architektury); druga instancja = `LISTEN/NOTIFY` - osobna decyzja w dniu skalowania. REST jest źródłem prawdy, więc awaria kanału nie gubi niczego |
-| Z9 | Bateria i transfer telefonu przy stałym połączeniu | Połączenie tylko z aplikacją na wierzchu, nigdy w kokpicie; ping co 25 s to kilkadziesiąt bajtów; w tle budzi push |
-| Z5 | Bezpieczeństwo kanału (przejęcie połączenia, token w adresie) | `Origin` w panelu, token w pierwszej ramce na telefonie, zamykanie przy unieważnieniu; przegląd bezpieczeństwa w Z-W |
+| Z10 | Push nie dochodzi albo dochodzi z opóźnieniem (aplikacja w tle, oszczędzanie baterii, telefon bez usług Google) | Push jest budzikiem, nie źródłem: skrzynka zostaje źródłem prawdy, a po otwarciu aplikacji łącze dociąga stan (`docs/kanal-klubu.md` K4) |
+| Z4, Z5, Z9 | Ryzyka kanału (jedna instancja, bezpieczeństwo połączenia, bateria) | Przeniesione do `docs/kanal-klubu.md` §9 (KK1–KK4) - kanał jest modułem klubu, nie zleceń |
 | Z6 | Prywatność: odczyty i rozmowy | Odczyty widzą prowadzący, wątki uczestnicy i `reservations.manage` - i wątek mówi to pilotom wprost (§7.1) |
 | Z7 | Zalew powiadomień | Jeden wiersz skrzynki na wątek; „nieaktualne" tylko do adresatów obsadzonego fotela bez odmowy; odpowiedzi pushem wyłącznie do autora |
 | Z8 | Usunięcie konta (5.0.0, Play) | Wiadomości autora zostają z nazwiskiem jak loty w rejestrze - decyzja przyjdzie z #105; zanotowane tam |
 
-## 21. Decyzje wąskie podjęte w dokumencie - do potwierdzenia przy przeglądzie
+## 21. Decyzje wąskie - zadane pojedynczo przy przeglądzie makiet (2026-09-28)
 
-Po czwartej turze (2026-09-27) zostały wyłącznie rozstrzygnięcia techniczne albo pochodne
-od decyzji właściciela:
+Sześć rozstrzygnięć, które dokument podjął sam po czwartej turze, poszło do właściciela
+pojedynczo (szósta tura, §1):
 
-1. **Wskazanie imienne wygrywa z grupą drugiego fotela** - pochodna pkt 30 (§4.2).
-2. **Zlecenia mają własną historię zmian zamiast dziennika akcji**, grupy idą do dziennika
-   akcji (§6.1, §10.3).
-3. **„Wyślij ponownie"** rozsyła do nowych członków grup i przypomina niezdecydowanym (§5.3).
-4. **Kanał: wiadomość w całości, zmiana zlecenia jako sygnał bez treści** - kształt
-   zlecenia per widz liczy wyłącznie REST (§11).
-5. **Kanał nie łączy się w kokpicie** i schodzi z aplikacją w tło (§11).
-6. **Ostrzeżenie o niepełnej załodze 3 h przed początkiem** - stała do kalibracji (§5.5;
-   liczba padła w pytaniu o wygaśnięcie).
+1. Wskazanie imienne wygrywa z grupą drugiego fotela - **ZMIENIONE**: termin do
+   potwierdzenia, osoba przy obu fotelach, podpis w formularzu (pkt 37–39).
+2. Własna historia zmian zlecenia, grupy w dzienniku akcji - **potwierdzone** (pkt 40).
+3. „Wyślij ponownie" do nowych członków grup i niezdecydowanych - **potwierdzone** (pkt 41).
+4. Wiadomość w całości, zmiana zlecenia jako sygnał bez treści - **potwierdzone**; to
+   zasada całego kanału klubu (`docs/kanal-klubu.md` §2).
+5. Kanał nie łączy się w kokpicie - **potwierdzone w siódmej turze** (`docs/kanal-klubu.md`
+   K6), razem z ciszą w kokpicie dla wszystkich powiadomień (pkt 44).
+6. Ostrzeżenie 3 h przed początkiem - **ZMIENIONE**: o 18:00 w przeddzień (pkt 45).
+
+Do tego stany „bez makiety" z przeglądu - dorysowane (pkt 46) - i rozstrzygnięcie, które
+makieta 31B zostawiła „do rozstrzygnięcia w Z-C": przełącznik „Wspólna lista" w trakcie
+wypełniania (pkt 47, 48). Parametry techniczne tej
+tury (`ORDER_UNFILLED_WARN_HOUR` w `policy.ts`, klucz `recipientId` w danych pusha)
+wynikają z decyzji i nie są nowymi rozstrzygnięciami. Kanał klubu (siódma tura) ma własne
+decyzje K1–K7 w `docs/kanal-klubu.md`.
 
 ## 22. Poza zakresem 4.0.0 i odrzucone warianty
 
@@ -978,8 +1049,9 @@ od decyzji właściciela:
 | Adresat wybiera fotel przy odpowiedzi | Pkt 10 - fotel wynika z adresowania albo z decyzji prowadzącego |
 | Wpisanie innego pilota do fotela bez potwierdzenia | Pkt 12 - od tego jest rezerwacja za pilota w module rezerwacji |
 | Jawne przejęcie prowadzenia cudzego zlecenia | Pkt 20 - prowadzą wszyscy z `reservations.manage` naraz |
-| Odpytywanie serwera zamiast połączenia na żywo | Pkt 21 i 27 |
-| Skrzynka, kalendarz i inne moduły na żywo | Kanał jest ogólny, ale każde rozszerzenie to osobna decyzja - 4.0.0 obejmuje moduł zleceń (pkt 27) |
+| Push i odświeżanie przy wejściu, bez połączenia na żywo; panel odpytujący otwarte ekrany | Pkt 42 - odwrócony przez pkt 49 (kanał klubu, `docs/kanal-klubu.md`) |
+| Wskazanie imienne wygrywające z grupą drugiego fotela | Pkt 37 - osoba z obu list dostaje termin do potwierdzenia |
+| Ostrzeżenie o niepełnej załodze kilka godzin przed początkiem | Pkt 45 - przy porannych lotach przychodziło o świcie i za późno na znalezienie pilota |
 | Push o odpowiedziach do wszystkich prowadzących | Pkt 28 - budzi się wyłącznie autor |
 | Zlecenie bez konkretnej maszyny („dowolny An-2") | Pkt 1 - zlecenie trzyma slot, a slot należy do egzemplarza |
 | Kilka terminów w jednym zleceniu (dwie zmiany dnia skokowego) | Wykluczenie nakładania; dwa terminy = dwa zlecenia, „Powiel" |

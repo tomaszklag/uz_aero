@@ -190,11 +190,23 @@
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
   .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
-  .vp-tag.muted { color:var(--text-muted); }
-  /* Wariant BEZ osobnej makiety: opis zamiast linku. Ramka przerywana i plakietka
-     „bez makiety" mówią, że to nie jest zgubiony link. */
-  .vp-item.static { border-style:dashed; background:transparent; }
-  .vp-item.static:hover { border-color:var(--border); }
+
+  /* ═══ ZLECENIE ZAMKNIĘTE (ramka „Odwołane", decyzja 46) ═══
+     Odwołane albo wygasłe wraca do tonu NEUTRALNEGO, jak karta adresata (28B): błękit
+     mówił „szukam załogi", a zlecenie już nie szuka. Czerwień niesie wyłącznie wpis
+     „Odwołanie" w historii - ta sama rzecz niszcząca, co w panelu (ZL3c). */
+  .hero.closed { background:var(--surface); border-color:var(--border-strong); }
+  .hero.closed .hero-hours { color:var(--text-secondary); }
+  .hero-badge.dim { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border-strong); }
+  .hist-what b.void { color:var(--red); }
+  .hist-reason { display:block; font-style:italic; color:var(--text-primary); margin-top:1px; }
+
+  /* ═══ OSOBA PRZY OBU FOTELACH (ramka 3, decyzje 37, 38) ═══
+     Termin do potwierdzenia: „Może lecieć" jest zgłoszeniem także w bloku imiennym, więc
+     wiersz ma „WYBIERZ", a dopisek mówi, na który fotel ta osoba może jeszcze trafić.
+     Błękit, bo to informacja o zleceniu, która zmienia wybór: wybór na jeden fotel
+     zdejmuje osobę z listy drugiego. */
+  .rcp-also { font-family:var(--font-mono); font-size:9px; letter-spacing:0.3px; color:var(--blue); }
 </style>
 </head>
 <body>
@@ -417,7 +429,7 @@
     <span class="vp-badge blue">32</span>
     <span class="vp-body">
       <span class="vp-name">Fotele i adresaci</span>
-      <span class="vp-when">Widzi autor zlecenia i każdy z uprawnieniem do cudzych rezerwacji (decyzja 20). Każdy szukany fotel ma własną kartę: imiennie - odpowiedź obsadza; grupa - „WYBIERZ" przy „Może lecieć". Odczyty i odpowiedzi odświeżają się na żywo (decyzja 27).</span>
+      <span class="vp-when">Widzi autor zlecenia i każdy z uprawnieniem do cudzych rezerwacji (decyzja 20). Każdy szukany fotel ma własną kartę: imiennie - odpowiedź obsadza; grupa - „WYBIERZ" przy „Może lecieć". Odczyty i odpowiedzi odświeżają się na żywo - kanałem klubu (decyzja 49).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -449,14 +461,20 @@
       <span class="vp-when">Menu ⋯ przy adresacie (decyzja 29): „ZAMIEŃ OSOBĘ" przy fotelu imiennym, „ODBIERZ ZLECENIE", „COFNIJ PRZYDZIAŁ" przy osobie przydzielonej. Powód opcjonalny.</span>
     </span>
   </a>
-  <div class="vp-item static">
+  <a class="vp-item" href="#odwolane">
     <span class="vp-badge">32</span>
     <span class="vp-body">
       <span class="vp-name">Odwołane albo wygasłe</span>
-      <span class="vp-when">Termin wrócił do puli, a zlecenie zeszło z osi kalendarza. Karty foteli zostają jako zapis - bez „WYBIERZ", bez menu ⋯ i bez pasa akcji; plakietka w hero „Odwołane" albo „Wygasło", historia podaje odwołanie z nazwiskiem i powodem albo wygaśnięcie bez nazwiska (zrobił to zegar, §5.5). Jedyna czynność: „Powiel" w nagłówku - ta sama treść z pustym terminem. Tu prowadzą „Zakończone" z listy 30; w panelu to ZL3c.</span>
-      <span class="vp-tag muted">bez makiety</span>
+      <span class="vp-when">Ramka 2 (niżej): termin wrócił do puli, a zlecenie zeszło z osi kalendarza. Karty foteli zostają jako zapis - bez „WYBIERZ", bez menu ⋯ i bez pasa akcji; plakietka w hero „Odwołane" albo „Wygasło", historia podaje odwołanie z nazwiskiem i powodem albo wygaśnięcie bez nazwiska (zrobił to zegar, §5.5). Jedyna czynność: „Powiel" w nagłówku - ta sama treść z pustym terminem. Tu prowadzą „Zakończone" z listy 30; w panelu to ZL3c.</span>
     </span>
-  </div>
+  </a>
+  <a class="vp-item" href="#oba-fotele">
+    <span class="vp-badge blue">32</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin do potwierdzenia - osoba przy obu fotelach</span>
+      <span class="vp-when">Ramka 3 (niżej): osoba z list obu foteli - wskazana imiennie na jeden i w grupie drugiego (decyzja 37) albo w grupach obu (decyzja 30) - stoi przy KAŻDYM fotelu z własnym „WYBIERZ" i dopiskiem, na który fotel może jeszcze trafić. Jej „Może lecieć" niczego nie obsadza samo; wybór na jeden fotel zdejmuje ją z drugiego (decyzja 38).</span>
+    </span>
+  </a>
   <a class="vp-item" href="28-zlecenie.html">
     <span class="vp-badge blue">28</span>
     <span class="vp-body">
@@ -479,6 +497,411 @@
   <a href="32d-zlecenie-adresat.html">32D Adresat</a>
   <span>·</span>
   <a href="29-watek.html">29 Rozmowa →</a>
+  <a href="#odwolane">↓ odwołane</a>
+  <a href="#oba-fotele">↓ oba fotele</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: ZLECENIE ODWOŁANE (decyzja 46) ══
+     Inny los zlecenia B - ten sam, co ramka 2 na 28B i ZL3c w panelu: w piątek o 16:20
+     maszyna idzie do serwisu i Marta odwołuje cały lot, zanim ktokolwiek obsadził fotele.
+     Karta prowadzącego zostaje ZAPISEM:
+       - hero w tonie neutralnym, plakietka „Odwołane", bez odliczania - błękit mówił
+         „szukam załogi", a zlecenie już niczego nie szuka;
+       - karty foteli zostają z odpowiedziami z chwili odwołania, ale BEZ „WYBIERZ" i bez
+         menu ⋯ - nie ma czego obsadzać ani komu odbierać. Ikona rozmowy zostaje, bo
+         rozmowę dalej da się przeczytać; licznik „mogą lecieć" znika z nagłówka fotela,
+         a bursztynowe „zmiana nieodczytana" też - to podpowiedź do działania;
+       - historia podaje odwołanie z nazwiskiem i powodem (patrzy prowadzący, decyzja 31);
+         wygasłe wygląda tak samo, z plakietką „Wygasło" i wpisem „Wygasło" bez nazwiska -
+         zrobił to zegar, nie człowiek (§5.5);
+       - pasa akcji NIE MA. Jedyna czynność to „Powiel" w nagłówku - ta sama treść
+         z pustym terminem, na przyszłą sobotę z powodu odwołania. -->
+<header class="canvas-label" id="odwolane">
+  <span class="film-strip">NINERDECK - 32</span>
+  <span class="slug">stan: zlecenie odwołane</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie prowadzone, odwołane">
+  <div class="status-bar">
+    <span>16:22</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <a href="31-zlecenie-nowe.html" class="icon-btn" title="Powiel" aria-label="Powiel zlecenie">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+      </a>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero closed">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge dim">Odwołane</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-ac">SP-ANA · AN-2</span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Dowódca · <b>imiennie</b></span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Jakub Wrona<span class="code">JWR</span></span>
+            <span class="rcp-status">Odczytane 08:15 · bez odpowiedzi</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Drugi pilot · <b>Piloci An-2</b></span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Anna Kowal<span class="code">AKW</span></span>
+            <span class="rcp-status ok">Może lecieć · wcz. 19:10</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Ewa Sowa<span class="code">ESO</span></span>
+            <span class="rcp-status">Odczytane wcz. 20:05</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Barbara Nowak<span class="code">BNO</span></span>
+            <span class="rcp-status unread">Nieodczytane</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Adam Kowalski<span class="code">AKO</span></span>
+            <span class="rcp-status unread">Nieodczytane</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Piotr Lis<span class="code">PLI</span></span>
+            <span class="rcp-status no">Nie może · wcz. 19:48</span>
+            <span class="rcp-reason">„W sobotę mam egzamin w Mielcu."</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Ty<span class="kv-sub">wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Historia zmian</div>
+      <div class="card hist">
+        <div class="hist-row">
+          <span class="hist-when">dziś 16:20</span>
+          <span class="hist-what"><b class="void">Odwołanie</b><span class="hist-reason">„Maszyna idzie do serwisu, skoki przenosimy na przyszłą sobotę."</span><span class="hist-who">Ty</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">dziś 07:10</span>
+          <span class="hist-what"><b>Plan lotu</b> 2:00 → 3:00<span class="hist-who">Paweł Wilk</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">wcz. 21:05</span>
+          <span class="hist-what"><b>Wysłano ponownie</b> · przypomnienie dla 4 osób<span class="hist-who">Ty</span></span>
+        </div>
+        <div class="hist-row">
+          <span class="hist-when">wcz. 18:40</span>
+          <span class="hist-what"><b>Utworzone</b> · dowódca imiennie, drugi pilot z grupy<span class="hist-who">Ty</span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="32-zlecenie-prowadzone.html" class="active">32 Prowadzone</a>
+  <a href="32b-zlecenie-obsadzone.html">32B Komplet →</a>
+</nav>
+
+<!-- ══ TRZECIA RAMKA: OSOBA PRZY OBU FOTELACH (decyzje 37, 38, 46) ══
+     Inny wariant zlecenia B: Marta wskazała na dowódcę IMIENNIE Adama Kowalskiego, a Adam
+     jest też w grupie „Piloci An-2", do której poszedł fotel drugiego pilota. Dostał więc
+     JEDNO zlecenie z terminem do potwierdzenia (28A, ramka 3), a jego „MOGĘ LECIEĆ"
+     o 21:52 jest ZGŁOSZENIEM, nie przyjęciem - fotel dowódcy nie obsadził się sam
+     (decyzja 37). Marta patrzy o 21:55:
+       - Adam stoi przy OBU fotelach - w bloku imiennym dowódcy i na liście grupy -
+         z własnym „WYBIERZ" w każdym wierszu (decyzja 38);
+       - dopisek w błękicie mówi, na który fotel Adam może jeszcze trafić („także na
+         drugiego pilota" / „także na dowódcę"); wybór na jeden fotel zdejmuje go
+         z listy drugiego;
+       - formularz uprzedził o tym Martę przed wysłaniem podpisem pod nazwiskiem
+         (31B, ramka „Imiennie i w grupie" - decyzja 39).
+     Reszta karty (zlecenie, historia, pas akcji) jak w ramce 1. -->
+<header class="canvas-label" id="oba-fotele">
+  <span class="film-strip">NINERDECK - 32</span>
+  <span class="slug">stan: termin do potwierdzenia · osoba przy obu fotelach</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Zlecenie prowadzone, osoba przy obu fotelach">
+  <div class="status-bar">
+    <span>21:55</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <a href="31-zlecenie-nowe.html" class="icon-btn" title="Powiel" aria-label="Powiel zlecenie">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+      </a>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Szuka załogi</span>
+        </div>
+        <div class="hero-hours">09:00 → 13:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">4 h</span>
+          <span class="hero-ac">SP-ANA · AN-2</span>
+          <span class="hero-count">ZA 11 H 5 MIN</span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Dowódca · <b>imiennie</b></span>
+        <span class="sh-count">1 może lecieć</span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Adam Kowalski<span class="code">AKO</span></span>
+            <span class="rcp-status ok">Może lecieć · 21:52</span>
+            <span class="rcp-also">także na drugiego pilota</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+            <a class="rcp-pick" href="32b-zlecenie-obsadzone.html">WYBIERZ</a>
+          </span>
+        </div>
+      </div>
+
+      <div class="seat-head">
+        <span class="sh-title">Drugi pilot · <b>Piloci An-2</b></span>
+        <span class="sh-count">3 mogą lecieć</span>
+      </div>
+      <div class="card">
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Anna Kowal<span class="code">AKW</span></span>
+            <span class="rcp-status ok">Może lecieć · wcz. 19:10</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+              <span class="dot"></span>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+            <a class="rcp-pick" href="32b-zlecenie-obsadzone.html">WYBIERZ</a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Barbara Nowak<span class="code">BNO</span></span>
+            <span class="rcp-status ok">Może lecieć · 21:30</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+            <a class="rcp-pick" href="32b-zlecenie-obsadzone.html">WYBIERZ</a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Adam Kowalski<span class="code">AKO</span></span>
+            <span class="rcp-status ok">Może lecieć · 21:52</span>
+            <span class="rcp-also">także na dowódcę</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+            <a class="rcp-pick" href="32b-zlecenie-obsadzone.html">WYBIERZ</a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Ewa Sowa<span class="code">ESO</span></span>
+            <span class="rcp-status">Odczytane wcz. 20:05</span>
+            <span class="rcp-status warn">zmiana z 07:10 nieodczytana</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+          </span>
+        </div>
+        <div class="rcp">
+          <span class="rcp-main">
+            <span class="rcp-name">Piotr Lis<span class="code">PLI</span></span>
+            <span class="rcp-status no">Nie może · wcz. 19:48</span>
+            <span class="rcp-reason">„W sobotę mam egzamin w Mielcu."</span>
+          </span>
+          <span class="rcp-actions">
+            <a class="rcp-icon" href="29-watek.html" title="Rozmowa" aria-label="Rozmowa">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+            </a>
+            <a class="rcp-icon" href="32d-zlecenie-adresat.html" title="Więcej" aria-label="Więcej">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Skoki</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Lotnisko</span>
+          <span class="kv-v"><span class="mono">EPKP</span><span class="kv-sub">Kraków-Pobiednik Wielki</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">3:00 · paliwo 600 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Sobotni dzień skokowy - dwa wyloty przed południem, grupa kursowa AFF.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Ty<span class="kv-sub">wysłane wczoraj 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn-secondary" href="31-zlecenie-nowe.html">EDYTUJ</a>
+        <a class="btn-secondary" href="32-zlecenie-prowadzone.html">WYŚLIJ PONOWNIE</a>
+      </div>
+      <a class="btn-danger" href="32c-zlecenie-odwolanie.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        ODWOŁAJ ZLECENIE
+      </a>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <a href="32-zlecenie-prowadzone.html" class="active">32 Prowadzone</a>
+  <a href="32b-zlecenie-obsadzone.html">32B Komplet →</a>
 </nav>
 
 </body>
