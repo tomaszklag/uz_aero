@@ -459,8 +459,9 @@ akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak now
   makieta, która zmienia flow, dostaje też krok na mapie flow (sekcja 1). Liczby w spisie
   treści liczy skrypt strony - ręcznie ich nie wpisujemy. Makiety panelu mają własny spis
   (`design/panel/index.html`)
-- Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`
-- Po zmianach: zero martwych linków (sprawdzaj greppem po `href`)
+- Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z klasą `active` i tagiem „ten ekran" (arkusz: „ten arkusz"); badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`. Panel kopiowany od sąsiada MUSI dostać własną pozycję i przenieść na nią oba znaczniki - 18 paneli wskazywało do 2026-09-28 cudzy plik
+- **Makiety to PROTOTYP** (cel właściciela, 2026-09-28): przegląd polega na przeklikaniu się przez ekrany tak, jak przeszedłby pilot. Akcja w ramce telefonu prowadzi tam, dokąd prowadzi w aplikacji (cel sprawdzaj w kodzie nawigacji, nie w starszej makiecie), a bieżący ekran NIE prowadzi do archiwum linii 2.x bez dopisku „2.x" w linku
+- **Strażnik `app/src/__tests__/designMockups.test.ts`** pilnuje tego wszystkiego naraz: każda makieta ma kartę w spisie (także `design/panel/`), zero martwych linków i kotwic w całym `design/`, panel wariantów oznacza jako bieżący wyłącznie swój plik, żadnego przejścia do archiwum bez „2.x", a każdy bieżący ekran jest osiągalny klikaniem od `00-login.html` bez spisu. **Rejestrem jest spis**: to z kart (`data-kind`, klasa `archive`) test wie, co jest ekranem, wzorcem i archiwum - przeniesienie makiety do archiwum to zmiana jednej karty. Po zmianie w `design/` uruchom `npx jest designMockups tokensCssVars` w `app/`
 
 ### Nagłówek ekranu (issue #23 pkt 7 - jeden wzorzec dla całej aplikacji)
 Tytuł i podtytuł wyrównane **DO LEWEJ**, ustawienia (zębatka) zawsze **PO PRAWEJ** -
@@ -5291,7 +5292,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera - stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** - plakietka istnieje wyłącznie offline
-7. Gdy ekran ma warianty - panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
+7. Gdy ekran ma warianty - panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej), z WŁASNĄ pozycją oznaczoną `active` + „ten ekran"; karta w `design/index.html` w sekcji rodziny; na koniec strażnik `npx jest designMockups tokensCssVars` w `app/` musi być zielony
 8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek - sekcje „Operacja = jeden bieg silnika" i „Dzień pilota = lista operacji" wyżej**: operacja = jeden bieg silnika (po STOP nie ma drugiego startu - hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest OPERACJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA OPERACJI - klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo - dokładnie tak powstał flow, który właśnie przebudowaliśmy
 9. **Gdy ekran czeka na jakikolwiek odczyt** - sekcja „Stan ładowania" niżej i arkusz
    `design/LOADERY.html`: skeleton w geometrii docelowej, nigdy spinner, nigdy pustka;

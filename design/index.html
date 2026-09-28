@@ -19,7 +19,11 @@
   - ton karty: `main` = główny ekran rodziny, `amber` = offline, ostrzeżenie,
     blokada; `red` = kolejka stoi albo zdanie samolotu; `archive` = archiwum;
   - makieta, która doszła do flow, dostaje też krok na mapie flow (sekcja 1);
-  - po zmianie: zero martwych linków i zero plików poza spisem (grep po href).
+  - TEN SPIS JEST REJESTREM MAKIET: test app/src/__tests__/designMockups.test.ts czyta
+    z kart (data-kind, klasa archive), co jest ekranem, wzorcem i archiwum, i pilnuje:
+    karty każdej makiety, zera martwych linków, panelu wariantów oznaczającego siebie,
+    braku przejść do archiwum bez „2.x" i osiągalności każdego ekranu klikaniem od
+    00-login.html. Po zmianie: `npx jest designMockups tokensCssVars` w app/.
   Makiety panelu web mają WŁASNY spis: panel/index.html (sekcja „Panel web").
 -->
 <style>
