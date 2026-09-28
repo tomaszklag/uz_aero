@@ -3970,6 +3970,11 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   tapnięcia: ołówek (okno korekty) albo oko (podgląd po oknie). Archiwum jest zwinięte
   i zwija się przy KAŻDYM wejściu - pytanie „co mogę poprawić" wraca za każdym razem,
   a „co latałem w maju" pada raz na jakiś czas
+- **POWRÓT Z EKRANU OPERACJI TO „‹ Historia"** - w 10 i w podglądzie 10B jednakowo
+  (decyzja właściciela 2026-09-28). Napis mówi, DOKĄD się wraca, nazwą zakładki: „‹ Dzień"
+  i „‹ Dni" przetrwały z linii 2.x („Mój dzień", „Poprzednie dni"), a makiety prowadziły
+  przy tym na Pulpit i do archiwalnego 12, choć kod od 3.0.0 wraca do Historii (także po
+  usunięciu wpisu). Wyjątek bez zmian: wejście z kokpitu (04 → 10D) wraca do kokpitu
 - **`MyDayScreen` (01) SKASOWANY**, a `buildHistory`/`editableBadge`/`remainingLabel`
   umarły razem z pełnowymiarowym kafelkiem. Same pliki `design/01*` ZOSTAJĄ jako
   archiwum linii 2.x (`rezerwacje.md` §9.1a) - podręcznik osadza je w 13 miejscach
