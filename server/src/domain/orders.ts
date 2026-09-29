@@ -66,6 +66,23 @@ export function isLive(status: OrderStatus): boolean {
 export type OrderAnswer = 'yes' | 'no';
 
 /**
+ * Rodzaje wpisów HISTORII ZMIAN zlecenia (§10.3). Zapis jest historyczny i w bazie nie ma
+ * CHECK-a (jak `admin_audit.action`), więc czytelnik musi przeżyć rodzaj, którego nie
+ * zna - ta unia mówi, co serwer dziś PISZE, a nie, co wolno przeczytać.
+ */
+export type OrderChangeKind =
+  | 'created'
+  | 'edited'
+  | 'recipients_added'
+  | 'recipients_removed'
+  | 'resent'
+  | 'assigned'
+  | 'unassigned'
+  | 'withdrawn'
+  | 'cancelled'
+  | 'expired';
+
+/**
  * Załoga z rezerwacji: `null` = fotel bez osoby. Przy fotelu „ja" stoi w nim zlecający -
  * to też jest załoga, nie adresat (§6.3).
  */

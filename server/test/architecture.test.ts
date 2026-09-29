@@ -127,6 +127,16 @@ const SCOPED_TABLES = [
   'approval_step_members',
   'booking_approvals',
   'notifications',
+  // Zlecenia na lot (4.0.0, issue #245). Grupy, zlecenia, adresaci, historia zmian
+  // i wątki należą do KLUBU - adresat wątku z cudzego klubu byłby wyciekiem rozmowy.
+  'member_groups',
+  'member_group_members',
+  'flight_orders',
+  'order_recipients',
+  'order_changes',
+  'threads',
+  'thread_participants',
+  'thread_messages',
 ] as const;
 
 /**

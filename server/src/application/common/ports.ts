@@ -28,6 +28,16 @@ import type { BugSeverity, BugStatus } from '../../domain/bugReports.ts';
 import type { MembershipStatus } from '../../domain/memberships.ts';
 import type { LoginMethod, RevokedBy, SessionSurface } from '../../domain/loginSessions.ts';
 import type { Capability, PlatformRole } from '../../domain/roles.ts';
+import type { OrderAudience, PlannedRecipient } from '../../domain/orderAddressing.ts';
+import type {
+  OrderAddressing,
+  OrderAnswer,
+  OrderChangeKind,
+  OrderCrew,
+  OrderSeats,
+  OrderStatus,
+  Seat,
+} from '../../domain/orders.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
@@ -1010,6 +1020,12 @@ export interface BookingRecord {
    * po cichu. Przesunięcie początku terminu ZERUJE go (robi to adapter przy `update`).
    */
   remindedAt: number | null;
+  /**
+   * Zlecenie, dla którego ta rezerwacja trzyma termin (4.0.0, issue #245, §10.4) - `null`
+   * przy zwykłej rezerwacji pilota i wyłączeniu z użytku. Rezerwacja zlecenia może mieć
+   * PUSTE fotele (`pilotId`/`dualId` = `null`): to jedyny nowy stan rezerwacji.
+   */
+  orderId: string | null;
 }
 
 /**
@@ -1034,6 +1050,8 @@ export interface NewBooking {
   blockReason: string | null;
   note: string | null;
   createdBy: string;
+  /** Rezerwacja zlecenia (§10.4); pominięte = zwykła rezerwacja albo wyłączenie z użytku. */
+  orderId?: string | null;
 }
 
 /** Pola, które wolno zmienić w istniejącej zajętości. Pominięte zostają bez zmian. */
@@ -1209,6 +1227,16 @@ export interface BookingsPort {
    * a to nie jest awaria, tylko ta sama odpowiedź.
    */
   markReminded(tx: Queryable, orgId: string, id: string, at: Date): Promise<BookingRecord | null>;
+  /**
+   * ZAŁOGA rezerwacji zlecenia (4.0.0, §4.3): fotele obsadza odpowiedź albo przydział,
+   * a zwalnia rezygnacja, cofnięcie i przestawienie fotela. Osobno od `update`, bo
+   * `BookingPatch` jest poprawką WŁASNEJ rezerwacji pilota i pola dowódcy mieć nie może -
+   * zmiana właściciela terminu to zupełnie inna władza. Warunek `order_id IS NOT NULL`
+   * i stan trzymający slot stoją w SQL-u: `null` = to nie jest żywa rezerwacja zlecenia.
+   */
+  setCrew(tx: Queryable, orgId: string, id: string, crew: OrderCrew, at: Date): Promise<BookingRecord | null>;
+  /** Rezerwacje wskazanych zleceń, klucz = identyfikator zlecenia. */
+  byOrders(db: Queryable, orgId: string, orderIds: readonly string[]): Promise<Map<string, BookingRecord>>;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -1439,6 +1467,320 @@ export interface AircraftWatchesPort {
    */
   watchersOf(db: Queryable, orgId: string, aircraftId: string): Promise<string[]>;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ZLECENIA NA LOT (4.0.0, issue #245; `docs/zlecenia.md` §6, §7, §10).
+ *
+ * Zlecenie to rezerwacja, która szuka załogi (termin i załogę trzyma `bookings`), plus
+ * to, czego rezerwacja nie wie: fotele, adresaci z odpowiedziami i odczytami per wersja,
+ * historia zmian i prywatne wątki. Porty są w `common/`, bo zlecenie wysyła się i prowadzi
+ * z telefonu I z panelu, a odpowiada na nie telefon (§13). Reguły mieszkają w domenie
+ * (`domain/order*.ts`); tutaj jest wyłącznie dostęp do wierszy.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Grupa klubu - nazwa i lista osób, nic więcej (§6.1). */
+export interface MemberGroupRecord {
+  id: string;
+  name: string;
+  memberIds: string[];
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface NewMemberGroup {
+  id: string;
+  name: string;
+  memberIds: readonly string[];
+  createdBy: string;
+}
+
+/**
+ * Wynik zapisu grupy. Nazwa jest jedyna W KLUBIE bez względu na wielkość liter
+ * (`idx_member_groups_name`) - odmowę odbija baza, a adapter tłumaczy ją na powód.
+ */
+export type MemberGroupWrite =
+  | { ok: true; group: MemberGroupRecord; created: boolean }
+  | { ok: false; reason: 'name_taken' };
+
+export interface MemberGroupsPort {
+  /** Wszystkie grupy klubu z listami osób - materiał listy i rozwinięcia adresatów. */
+  list(db: Queryable, orgId: string): Promise<MemberGroupRecord[]>;
+  byId(db: Queryable, orgId: string, id: string): Promise<MemberGroupRecord | null>;
+  /** Idempotentnie po uuidzie klienta; lista osób zapisuje się w tej samej transakcji. */
+  insert(tx: Queryable, orgId: string, group: NewMemberGroup, at: Date): Promise<MemberGroupWrite>;
+  /** `null` = grupy nie ma w tym klubie. Lista osób, gdy podana, zastępuje poprzednią W CAŁOŚCI. */
+  update(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    patch: { name?: string; memberIds?: readonly string[] },
+    at: Date,
+  ): Promise<MemberGroupWrite | null>;
+  /** Skasowanie grupy nie rusza wysłanych zleceń - adresaci są zapisani imiennie (§6.2). */
+  remove(tx: Queryable, orgId: string, id: string): Promise<boolean>;
+}
+
+/** Zlecenie w postaci, w jakiej czyta je reszta serwera (czasy w ms). */
+export interface FlightOrderRecord {
+  id: string;
+  createdBy: string;
+  seats: OrderSeats;
+  addressing: OrderAddressing;
+  status: OrderStatus;
+  /** Wersja - podnosi ją WYŁĄCZNIE zmiana terminu (§5.1). */
+  revision: number;
+  audienceLabel: string;
+  /** Definicja adresowania sprzed rozwinięcia - materiał „Wyślij ponownie" (pkt 41). */
+  audience: OrderAudience;
+  /** Ostatnia edycja INNA niż termin - „zmiana z 15:10 nieodczytana" (§8). */
+  editedAt: number | null;
+  unfilledWarnedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+  closedAt: number | null;
+  /** `null` przy wygaśnięciu - zamknął czas, nie człowiek. */
+  closedBy: string | null;
+  closeReason: string | null;
+}
+
+/** Nowe zlecenie. `id` nadaje KLIENT - powtórzony `POST` wraca tym samym zleceniem. */
+export interface NewFlightOrder {
+  id: string;
+  createdBy: string;
+  seats: OrderSeats;
+  addressing: OrderAddressing;
+  status: OrderStatus;
+  audience: OrderAudience;
+  audienceLabel: string;
+}
+
+/** Pola zlecenia, które zmienia komenda; pominięte zostają bez zmian. */
+export interface FlightOrderPatch {
+  seats?: OrderSeats;
+  /** Wyłącznie między stanami ŻYWYMI (`open` ↔ `filled`) - zamknięcie ma własną metodę. */
+  status?: 'open' | 'filled';
+  /** Podniesienie wersji o jeden - wyłącznie przy zmianie terminu (§5.1). */
+  bumpRevision?: boolean;
+  audience?: OrderAudience;
+  audienceLabel?: string;
+  /** Stempel edycji innej niż termin - to on zapala „zmiana nieodczytana" (§8). */
+  edited?: boolean;
+}
+
+/** Filtr list zleceń - klub jest argumentem metody, nie polem filtra (epik C). */
+export interface FlightOrderQuery {
+  /** „Zlecone" autora; pominięte = wszystkie zlecenia klubu (`reservations.manage`). */
+  createdBy?: string;
+  /** „Do mnie" - zlecenia, w których osoba jest adresatem (także odebranym). */
+  recipientId?: string;
+  /** Zamknięte zlecenia wchodzą, gdy zamknięto je nie wcześniej niż ta chwila. */
+  closedSince?: Date;
+}
+
+/** Otwarte zlecenie w zasięgu zadania okresowego (ostrzeżenie i wygaśnięcie, §5.5). */
+export interface FlightOrderDue {
+  orderId: string;
+  orgId: string;
+  bookingId: string;
+  startsAt: number;
+  createdAt: number;
+  unfilledWarnedAt: number | null;
+}
+
+export interface FlightOrdersPort {
+  byId(db: Queryable, orgId: string, id: string): Promise<FlightOrderRecord | null>;
+  /**
+   * Ten sam wiersz co `byId`, ale ZABLOKOWANY do końca transakcji (`FOR UPDATE`). Dwa
+   * przydziały naraz (dwóch prowadzących, pkt 20) i odpowiedź obok przydziału ustawiają
+   * się na nim w kolejce - drugi widzi już stan pierwszego (§20 Z3).
+   */
+  lock(tx: Queryable, orgId: string, id: string): Promise<FlightOrderRecord | null>;
+  /** `false` = zlecenie o tym uuidzie już jest (powtórzony zapis). */
+  insert(tx: Queryable, orgId: string, order: NewFlightOrder, at: Date): Promise<boolean>;
+  /** `null` = zlecenia nie ma w tym klubie albo jest zamknięte. */
+  update(tx: Queryable, orgId: string, id: string, patch: FlightOrderPatch, at: Date): Promise<FlightOrderRecord | null>;
+  /** Odwołanie albo wygaśnięcie - wyłącznie zlecenia żywego; `null` = ktoś zdążył przed nami. */
+  close(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    change: { status: 'cancelled' | 'expired'; at: Date; by: string | null; reason: string | null },
+  ): Promise<FlightOrderRecord | null>;
+  list(db: Queryable, orgId: string, query: FlightOrderQuery): Promise<FlightOrderRecord[]>;
+  /**
+   * Otwarte zlecenia, których termin zaczyna się przed `startsBefore` - bez `orgId`, bo
+   * zadanie okresowe przemiata cały serwer (jak `BookingsPort.due`). Klub każdego wiersza
+   * jedzie w wyniku, żeby zapis wrócił we właściwy.
+   */
+  dueOpen(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]>;
+  /** Stempel ostrzeżenia „bez kompletu załogi"; `false` = już ostrzeżono albo zlecenie przestało być otwarte. */
+  markWarned(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean>;
+}
+
+/** Adresat zlecenia - wiersz `order_recipients`. */
+export interface OrderRecipientRecord {
+  pilotId: string;
+  seat: Seat | null;
+  namedSeat: Seat | null;
+  direct: boolean;
+  viaGroupId: string | null;
+  seenAt: number | null;
+  seenRevision: number | null;
+  lastSeenAt: number | null;
+  answer: OrderAnswer | null;
+  answerReason: string | null;
+  answeredAt: number | null;
+  answeredRevision: number | null;
+  threadId: string | null;
+  removedAt: number | null;
+  removedBy: string | null;
+}
+
+export interface OrderRecipientsPort {
+  /** Adresaci zlecenia w kolejności dopisania (odebrani też - to zapis, §5.2). */
+  listFor(db: Queryable, orgId: string, orderId: string): Promise<OrderRecipientRecord[]>;
+  /** To samo dla wielu zleceń naraz - listy „Do mnie" i „Zlecone" liczą z tego odczyty i zgłoszenia. */
+  listForOrders(db: Queryable, orgId: string, orderIds: readonly string[]): Promise<Map<string, OrderRecipientRecord[]>>;
+  /**
+   * Dopisuje adresatów; wiersz już istniejący (także ODEBRANY) zostaje nietknięty -
+   * odebrany nie wraca przez ponowne rozwinięcie. Oddaje identyfikatory DOPISANYCH:
+   * wyłącznie oni dostają „Zlecenie lotu" (§5.2, pkt 41).
+   */
+  insertMany(tx: Queryable, orgId: string, orderId: string, rows: readonly PlannedRecipient[]): Promise<string[]>;
+  /**
+   * Uaktualnia fotel, wskazanie imienne, „imiennie" i grupę ŻYWYCH wierszy po zmianie
+   * adresowania - dopisanie osoby na fotel imienny robi z niego fotel „kilku osób".
+   */
+  updatePlan(tx: Queryable, orgId: string, orderId: string, rows: readonly PlannedRecipient[]): Promise<void>;
+  /** Odpowiedź w wersji `revision` - nadpisuje poprzednią (zmiana zdania, makieta 28A). */
+  answer(
+    tx: Queryable,
+    orgId: string,
+    orderId: string,
+    pilotId: string,
+    answer: { answer: OrderAnswer; reason: string | null; revision: number },
+    at: Date,
+  ): Promise<boolean>;
+  /**
+   * Otwarcie karty (§8): `seen_at` stempluje PIERWSZE otwarcie w bieżącej wersji,
+   * `last_seen_at` - każde. `false` = osoba nie jest żywym adresatem.
+   */
+  seen(db: Queryable, orgId: string, orderId: string, pilotId: string, revision: number, at: Date): Promise<boolean>;
+  /** Odebranie zlecenia (pkt 29): stempel, nie kasowanie - wątek zostaje do odczytu. */
+  remove(tx: Queryable, orgId: string, orderId: string, pilotId: string, by: string, at: Date): Promise<boolean>;
+  attachThread(tx: Queryable, orgId: string, orderId: string, pilotId: string, threadId: string): Promise<void>;
+}
+
+/** Wpis historii zmian zlecenia. `kind` jest napisem: zapis historyczny przeżywa rodzaj spoza unii. */
+export interface OrderChangeRecord {
+  id: string;
+  actorId: string | null;
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: number;
+}
+
+export interface NewOrderChange {
+  id: string;
+  /** `null` = zegar (wygaśnięcie). */
+  actorId: string | null;
+  kind: OrderChangeKind;
+  payload: Record<string, unknown>;
+}
+
+export interface OrderChangesPort {
+  /** Append-only, w transakcji zmiany, o której mówi. */
+  insert(tx: Queryable, orgId: string, orderId: string, changes: readonly NewOrderChange[], at: Date): Promise<void>;
+  /** Historia jednego zlecenia, najstarsze pierwsze. */
+  listFor(db: Queryable, orgId: string, orderId: string): Promise<OrderChangeRecord[]>;
+}
+
+/** Wątek z uczestnikami. Czytelnicy z `reservations.manage` uczestnikami NIE są (§10.5). */
+export interface ThreadRecord {
+  id: string;
+  subjectKind: string;
+  subjectId: string;
+  createdAt: number;
+  participants: Array<{ pilotId: string; lastReadAt: number | null }>;
+}
+
+export interface ThreadsPort {
+  byId(db: Queryable, orgId: string, id: string): Promise<ThreadRecord | null>;
+  /** Wątek z uczestnikami, w cudzej transakcji - zakłada go pierwsza wiadomość (§7.1). */
+  create(
+    tx: Queryable,
+    orgId: string,
+    thread: { id: string; subjectKind: string; subjectId: string; participantIds: readonly string[] },
+    at: Date,
+  ): Promise<void>;
+  /** Odczyt wątku przez UCZESTNIKA; `false` = osoba nie pisze w tym wątku. */
+  markRead(db: Queryable, orgId: string, threadId: string, pilotId: string, at: Date): Promise<boolean>;
+}
+
+export interface ThreadMessageRecord {
+  id: string;
+  threadId: string;
+  authorId: string;
+  body: string;
+  createdAt: number;
+}
+
+/** Kursor rozmowy - PARA, jak w skrzynce: wiadomości tej samej chwili nie gubią się na granicy strony. */
+export interface ThreadMessageCursor {
+  createdAt: number;
+  id: string;
+}
+
+export interface ThreadMessagesPort {
+  /**
+   * Idempotentnie po uuidzie klienta - powtórzony `POST` przy słabym łączu to ta sama
+   * wiadomość. `null` = uuid zajęty w innym klubie: wołający odmawia, nie potwierdza.
+   */
+  insert(
+    tx: Queryable,
+    orgId: string,
+    message: { id: string; threadId: string; authorId: string; body: string },
+    at: Date,
+  ): Promise<{ message: ThreadMessageRecord; created: boolean } | null>;
+  /** Strona rozmowy od najnowszej; `before` = kursor poprzedniej strony. */
+  page(
+    db: Queryable,
+    orgId: string,
+    threadId: string,
+    page: { before?: ThreadMessageCursor; limit: number },
+  ): Promise<ThreadMessageRecord[]>;
+  /** Wiadomości CUDZE nieprzeczytane przez osobę - licznik wiersza „Wiadomość w zleceniu" (§7.3). */
+  unreadFor(db: Queryable, orgId: string, threadId: string, pilotId: string): Promise<number>;
+}
+
+/**
+ * Odbiorcy sygnału kanału klubu (`docs/kanal-klubu.md` §3.1): cały klub, konkretne
+ * osoby albo posiadacze zdolności - liczeni na AKTYWNYCH członkostwach, jak `watchersOf`.
+ */
+export type LiveAudience =
+  | { kind: 'club' }
+  | { kind: 'people'; pilotIds: readonly string[] }
+  | { kind: 'capability'; capability: Capability };
+
+/**
+ * SYGNAŁY KANAŁU KLUBU (4.0.0; `docs/kanal-klubu.md` §3). Wołane PO commicie, obok budzika,
+ * i nigdy nie rzucają: zgubiona ramka niczego nie gubi, bo źródłem prawdy są odpowiedzi
+ * REST i skrzynka, a ekran po każdym (ponownym) połączeniu dociąga stan zwykłym odczytem.
+ *
+ * Rozsyłanie przychodzi z epikiem Z-E (#246); do tego czasu composition root wstawia
+ * atrapę, a zlecenia mimo to ogłaszają swoje tematy - dzięki temu Z-E podłącza kanał
+ * bez ani jednej zmiany w komendach.
+ */
+export interface LiveSignalsPort {
+  /** `changed` - tematy bez treści; kształt per widz liczy REST (§2). */
+  changed(orgId: string, topics: readonly string[], audiences: readonly LiveAudience[]): void;
+  /** Wiadomość w rozmowie w całości (ramka `message`). */
+  message(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
+  /** Odczytanie rozmowy (ramka `read`) - „Odczytane 14:05". */
+  read(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
+}
+
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
 export interface ReferenceSnapshot {
   aircraft: ReferenceAircraft[];
@@ -1838,6 +2180,30 @@ export interface AircraftConfigPort {
    * nazwisku i godzinie, których push nie niesie nigdy.
    */
   regOf(db: Queryable, orgId: string, aircraftId: string): Promise<string | null>;
+  /**
+   * Wymóg załogi dwuosobowej maszyny W TYM KLUBIE; `null` = nieznana albo cudza.
+   * Zlecenie pyta o niego przy fotelu drugiego pilota „brak" (`docs/zlecenia.md` §4.1).
+   */
+  dualRequired(db: Queryable, orgId: string, aircraftId: string): Promise<boolean | null>;
+}
+
+/** Członek klubu w przekroju, którego potrzebują zlecenia i grupy (§6). */
+export interface ClubMember {
+  pilotId: string;
+  name: string;
+  code: string | null;
+  /** Aktywne członkostwo, aktywna osoba, aktywny klub - tylko taki dostaje zlecenie (§6.2). */
+  active: boolean;
+}
+
+/**
+ * Członkowie klubu jednym zapytaniem, w transakcji wołającego - rozwinięcie adresatów
+ * pyta o aktywność KAŻDEJ osoby z grup, a osobne zapytanie na osobę (albo odczyt cudzym
+ * uchwytem w otwartej transakcji, który w PGlite czeka do jej końca) nie wchodzi w grę.
+ */
+export interface ClubMembersPort {
+  /** Wszyscy z członkostwem w klubie (także wyłączeni - grupa ich trzyma, §6.1). */
+  list(db: Queryable, orgId: string): Promise<ClubMember[]>;
 }
 
 /**
