@@ -40,9 +40,26 @@ export type MemberGroupOutcome =
   | { ok: true; group: MemberGroupRecord }
   | { ok: false; reason: MemberGroupRefusal };
 
+/** Założenie mówi też, czy grupa POWSTAŁA - trasa odróżnia `201` od powtórki (`200`). */
+export type MemberGroupCreateOutcome =
+  | { ok: true; group: MemberGroupRecord; created: boolean }
+  | { ok: false; reason: MemberGroupRefusal };
+
 class Refused extends Error {
   constructor(readonly reason: MemberGroupRefusal) {
     super(`odmowa: ${reason}`);
+  }
+}
+
+/**
+ * Powtórzony zapis tym samym uuidem (ponowione żądanie): grupa już jest, więc nie ma czego
+ * audytować. `AuditedWrite` dopisuje ślad do KAŻDEGO skutku, a zwrócona wartość nie umie
+ * go pominąć - wyjątek wycofuje transakcję razem z wpisem. Dziennik akcji mówi o zmianach,
+ * nie o ponowionych żądaniach.
+ */
+class Repeated extends Error {
+  constructor(readonly group: MemberGroupRecord) {
+    super('powtórzony zapis grupy');
   }
 }
 
@@ -57,29 +74,39 @@ export class MemberGroupCommands {
   ) {}
 
   /** Nowa grupa; `id` nadaje klient - powtórzony zapis oddaje tę samą grupę. */
-  async create(actor: Actor, input: { id: string; name: string; memberIds: readonly string[] }): Promise<MemberGroupOutcome> {
-    return outcomeOf(async () =>
-      this.write.run(actor, async (tx) => {
-        const memberIds = unique(input.memberIds);
-        checkMembers(await this.members.list(tx, actor.orgId), memberIds, new Set());
-        const write = await this.groups.insert(
-          tx,
-          actor.orgId,
-          { id: input.id, name: input.name, memberIds, createdBy: actor.pilotId },
-          this.clock.now(),
-        );
-        if (!write.ok) throw new Refused(write.reason);
-        return {
-          result: write.group,
-          audit: {
-            action: 'group.create' as const,
-            targetType: 'group',
-            targetId: write.group.id,
-            details: { name: write.group.name, memberIds: write.group.memberIds },
-          },
-        };
-      }),
-    );
+  async create(
+    actor: Actor,
+    input: { id: string; name: string; memberIds: readonly string[] },
+  ): Promise<MemberGroupCreateOutcome> {
+    try {
+      const outcome = await outcomeOf(async () =>
+        this.write.run(actor, async (tx) => {
+          const memberIds = unique(input.memberIds);
+          checkMembers(await this.members.list(tx, actor.orgId), memberIds, new Set());
+          const write = await this.groups.insert(
+            tx,
+            actor.orgId,
+            { id: input.id, name: input.name, memberIds, createdBy: actor.pilotId },
+            this.clock.now(),
+          );
+          if (!write.ok) throw new Refused(write.reason);
+          if (!write.created) throw new Repeated(write.group);
+          return {
+            result: write.group,
+            audit: {
+              action: 'group.create' as const,
+              targetType: 'group',
+              targetId: write.group.id,
+              details: { name: write.group.name, memberIds: write.group.memberIds },
+            },
+          };
+        }),
+      );
+      return outcome.ok ? { ...outcome, created: true } : outcome;
+    } catch (err) {
+      if (err instanceof Repeated) return { ok: true, group: err.group, created: false };
+      throw err;
+    }
   }
 
   /** Zmiana nazwy albo składu (lista zastępuje poprzednią W CAŁOŚCI). `null` = grupy nie ma w tym klubie. */

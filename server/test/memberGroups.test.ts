@@ -39,6 +39,21 @@ describe('grupy klubu', () => {
     expect(await audit('group.create')).toHaveLength(1);
   });
 
+  it('powtórzony zapis tym samym uuidem oddaje tę samą grupę BEZ drugiego wpisu w dzienniku', async () => {
+    expect(await w.groups.create(adminActor, { id: 'g-1', name: 'Piloci', memberIds: ['PWI'] })).toMatchObject({
+      ok: true,
+      created: true,
+    });
+    // Ponowione żądanie (słabe łącze) - nawet z inną treścią grupa zostaje taka, jaka jest.
+    const again = await w.groups.create(adminActor, { id: 'g-1', name: 'Piloci', memberIds: ['PWI', 'KRZ'] });
+    expect(again).toMatchObject({ ok: true, created: false, group: { name: 'Piloci', memberIds: ['PWI'] } });
+    expect(await audit('group.create')).toHaveLength(1);
+    // Uuid zajęty w INNYM klubie: dla tego klubu grupy nie ma - odmowa, bez jej treści.
+    expect(
+      await w.groups.create({ ...adminActor, orgId: ORG_B, pilotId: 'BAD' }, { id: 'g-1', name: 'Beta', memberIds: [] }),
+    ).toEqual({ ok: false, reason: 'name_taken' });
+  });
+
   it('osoba spoza klubu i dopisywany członek wyłączony - odmowa', async () => {
     expect(await w.groups.create(adminActor, { id: 'g-1', name: 'G', memberIds: ['BPI'] })).toEqual({
       ok: false,

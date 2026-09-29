@@ -144,6 +144,26 @@ import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
 import type { HostSplit } from '../src/http/hostSplit.ts';
 import { buildServer } from '../src/http/server.ts';
+import { PgClubMembersRepo } from '../src/infrastructure/pg/common/clubMembersRepo.ts';
+import { PgFlightOrdersRepo } from '../src/infrastructure/pg/common/flightOrdersRepo.ts';
+import { PgMemberGroupsRepo } from '../src/infrastructure/pg/common/memberGroupsRepo.ts';
+import { PgOrderChangesRepo } from '../src/infrastructure/pg/common/orderChangesRepo.ts';
+import { PgOrderRecipientsRepo } from '../src/infrastructure/pg/common/orderRecipientsRepo.ts';
+import { PgThreadMessagesRepo } from '../src/infrastructure/pg/common/threadMessagesRepo.ts';
+import { PgThreadsRepo } from '../src/infrastructure/pg/common/threadsRepo.ts';
+import { MemberGroupCommands } from '../src/application/admin/commands/memberGroups.ts';
+import { OrderAssignmentCommands } from '../src/application/common/commands/orderAssignments.ts';
+import { OrderEditCommands } from '../src/application/common/commands/orderEdit.ts';
+import { OrderCommands } from '../src/application/common/commands/orders.ts';
+import { OrderResponseCommands } from '../src/application/common/commands/orderResponses.ts';
+import { ThreadCommands } from '../src/application/common/commands/threads.ts';
+import { OrderSignals } from '../src/application/common/notify/orderSignals.ts';
+import { OrderRecords } from '../src/application/common/orderRecords.ts';
+import { OrderSeating } from '../src/application/common/orderSeating.ts';
+import { MemberGroupQueries } from '../src/application/common/queries/memberGroups.ts';
+import { OrderQueries } from '../src/application/common/queries/orders.ts';
+import { ThreadQueries } from '../src/application/common/queries/threads.ts';
+import { FakeLiveSignals } from './fakeLiveSignals.ts';
 import { seedTestWorld } from './testWorld.ts';
 import { TestIdentityProvider } from './testIdentityProvider.ts';
 import { newPglite } from './pglite';
@@ -395,6 +415,18 @@ const lastSeen = new LastSeenThrottle();
     notifier,
     clock,
   );
+  const clubSettingsRepo = new PgClubSettingsRepo();
+  const flightOrders = new PgFlightOrdersRepo();
+  const orderRecipients = new PgOrderRecipientsRepo();
+  const orderChanges = new PgOrderChangesRepo();
+  const memberGroups = new PgMemberGroupsRepo();
+  const clubMembers = new PgClubMembersRepo();
+  const orderThreads = new PgThreadsRepo();
+  const threadMessages = new PgThreadMessagesRepo();
+  const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
+  const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
+  const live = new FakeLiveSignals();
+  const orderSignals = new OrderSignals(live);
 
   const app = await buildServer({
     // Logowanie: PRAWDZIWE tożsamości w bazie (`PgExternalIdentitiesRepo`) i prawdziwa
@@ -462,6 +494,33 @@ const lastSeen = new LastSeenThrottle();
     bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
     calendar,
     approvals,
+    // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
+    // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
+    orders: {
+      orders: new OrderCommands(
+        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+        clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+      ),
+      edits: new OrderEditCommands(
+        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+        clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+      ),
+      responses: new OrderResponseCommands(
+        db, orderRecords, orderSeating, orderRecipients, orderChanges, notifier, orderSignals, clock, randomUUID,
+      ),
+      assignments: new OrderAssignmentCommands(
+        db, orderRecords, orderSeating, orderChanges, clubMembers, notifier, orderSignals, clock, randomUUID,
+      ),
+      threads: new ThreadCommands(
+        db, orderRecords, orderRecipients, orderThreads, threadMessages, notifier, orderSignals, clock, randomUUID,
+      ),
+      queries: new OrderQueries(
+        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, threadMessages, clubSettingsRepo, clock,
+      ),
+      threadQueries: new ThreadQueries(db, orderRecords, orderThreads, threadMessages),
+    },
+    groupQueries: new MemberGroupQueries(db, memberGroups),
+    adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
     // Podgląd pilota i samolotu przy decyzji (issue #206) - te same adaptery, co
     // w produkcji, bo test ma przejść dokładnie drogę szuflady panelu i ekranu 26A.
@@ -709,5 +768,6 @@ const lastSeen = new LastSeenThrottle();
     push,
     passwordHasher,
     passwords,
+    live,
   };
 }

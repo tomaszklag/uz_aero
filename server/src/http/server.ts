@@ -87,6 +87,11 @@ import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminApprovalRoutes } from './routes/admin/approvals.ts';
 import { registerAdminPreviewRoutes } from './routes/admin/previews.ts';
+import { registerAdminGroupRoutes } from './routes/admin/groups.ts';
+import { registerAdminOrderRoutes } from './routes/admin/orders.ts';
+import type { OrderDeps } from './routes/common/orderEndpoints.ts';
+import type { MemberGroupCommands } from '../application/admin/commands/memberGroups.ts';
+import type { MemberGroupQueries } from '../application/common/queries/memberGroups.ts';
 import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
@@ -121,6 +126,7 @@ import { registerBookingRoutes } from './routes/mobile/bookings.ts';
 import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
 import { registerPreviewRoutes } from './routes/mobile/previews.ts';
 import { registerAircraftRoutes } from './routes/mobile/aircraft.ts';
+import { registerOrderRoutes } from './routes/mobile/orders.ts';
 import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
 import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
 import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
@@ -192,6 +198,15 @@ export interface ServerDeps {
   aircraftCards: AircraftCardQueries;
   /** Włączanie i wyłączanie obserwowania - ustawienie osoby o sobie, bez audytu. */
   aircraftWatch: AircraftWatchCommands;
+  /**
+   * Zlecenia na lot i rozmowy (4.0.0, issue #245) - JEDEN pakiet komend i zapytań dla
+   * obu powierzchni; trasy telefonu i panelu dzielą tablicę punktów końcowych.
+   */
+  orders: OrderDeps;
+  /** Grupy klubu do odczytu - adresaci zleceń (telefon) i moduł Piloci (panel). */
+  groupQueries: MemberGroupQueries;
+  /** Grupy klubu układane w panelu (`accounts.manage`, dziennik akcji). */
+  adminGroups: MemberGroupCommands;
   /** Ścieżka akceptacji układana w panelu (`accounts.manage`). */
   adminApprovalSteps: ApprovalStepsCommands;
   /**
@@ -513,6 +528,7 @@ export async function buildServer(
   registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
   registerPreviewRoutes(app, deps.previews, memberGate);
   registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, memberGate);
+  registerOrderRoutes(app, deps.orders, deps.groupQueries, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -582,6 +598,8 @@ export async function buildServer(
   registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
   // Podgląd pilota i samolotu z kolejki (issue #206) - ten sam widok, co w telefonie.
   registerAdminPreviewRoutes(app, deps.previews, gate);
+  registerAdminOrderRoutes(app, deps.orders, gate);
+  registerAdminGroupRoutes(app, deps.adminGroups, deps.groupQueries, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie
