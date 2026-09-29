@@ -145,6 +145,8 @@ const ADMIN_SCOPE = [
   // ŚWIADOMIE: `scopeKey` liczy „komplet" z katalogu, więc administrator świata
   // testowego bez niej czytałby się w dzienniku jako zakres częściowy.
   'fleet.watch',
+  // Zlecanie lotów (4.0.0, issue #245) - dwunasta pozycja, z tego samego powodu.
+  'orders.create',
 ] as const;
 
 export async function seedTestWorld(db: Queryable): Promise<void> {

@@ -34,6 +34,12 @@ const CLUB_CAPABILITIES = [
   'thresholds.manage',
   'audit.read',
   'maintenance.run',
+  // Dopisane przy 4.0.0 (issue #245): lista nie znała rezerwacji ani obserwowania,
+  // choć komentarz wyżej obiecuje „każdy nowy wpis" - uzupełniona razem z dwunastą.
+  'reservations.manage',
+  'reservations.approve',
+  'fleet.watch',
+  'orders.create',
 ] as const;
 
 /**

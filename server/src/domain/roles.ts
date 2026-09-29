@@ -177,6 +177,22 @@ export type Capability =
    * zdolności wycisza od razu, bez sprzątania wierszy.
    */
   | 'fleet.watch'
+  /**
+   * ZLECANIE LOTÓW (4.0.0, issue #239; `docs/zlecenia.md` §9): wysłanie zlecenia lotu -
+   * termin i maszyna trafiają do pilotów albo grup, które szukają załogi - i prowadzenie
+   * WŁASNYCH zleceń: wybór załogi spośród zgłoszonych, zmiany, odwołanie.
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE `reservations.manage` ══
+   * Tamta jest WŁADZĄ NAD CUDZYM PLANEM i od 4.0.0 prowadzi też WSZYSTKIE zlecenia klubu
+   * (pkt 20). Ta pozwala zlecenie WYSŁAĆ: instruktor umawia lekcję z uczniem, nie
+   * dostając prawa odwoływania terminów kolegów. Zlanie ich oddawałoby instruktorowi
+   * władzę, o którą nikt nie prosił - dokładnie ten rachunek, przez który role rozbito
+   * na zbiory (epik #197).
+   *
+   * **Odpowiadanie na zlecenie i rozmowa nie potrzebują żadnej zdolności**: trasa sprawdza
+   * ADRESATA, nie zakres (wzorzec decyzji z 3.1.0).
+   */
+  | 'orders.create'
   | 'bugs.triage'
   /**
    * Zakładanie i wyłączanie KLUBÓW oraz zapraszanie ich pierwszych administratorów
@@ -214,6 +230,7 @@ export const CLUB_CAPABILITIES: readonly Capability[] = [
   'reservations.manage',
   'reservations.approve',
   'fleet.watch',
+  'orders.create',
 ];
 
 /**

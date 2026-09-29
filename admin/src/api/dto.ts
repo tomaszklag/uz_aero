@@ -64,6 +64,8 @@ export type Capability =
   | 'reservations.approve'
   /** Karta maszyny w aplikacji i powiadomienia o jej lotach (3.2.0, issue #205). */
   | 'fleet.watch'
+  /** Wysyłanie zleceń lotu i prowadzenie własnych (4.0.0, issue #239). */
+  | 'orders.create'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';
