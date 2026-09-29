@@ -184,15 +184,34 @@ describe('zlecenia', () => {
     expect(await orders.list(db, ORG_B, since)).toEqual([]);
   });
 
-  it('zegar widzi otwarte zlecenia przed terminem; ostrzeżenie stempluje się raz', async () => {
+  it('zegar widzi otwarte zlecenia przed terminem; ostrzeżenie rozstrzyga się raz', async () => {
     const booking = await order('o-1', AT.getTime() + 2 * H);
     const due = await orders.dueOpen(db, new Date(AT.getTime() + 3 * H));
     expect(due).toEqual([
-      expect.objectContaining({ orderId: 'o-1', orgId: ORG_A, bookingId: booking, unfilledWarnedAt: null }),
+      expect.objectContaining({ orderId: 'o-1', orgId: ORG_A, bookingId: booking, status: 'open', unfilledWarnedAt: null }),
     ]);
     expect(await orders.dueOpen(db, new Date(AT.getTime() + H))).toEqual([]);
-    expect(await db.transaction((tx) => orders.markWarned(tx, ORG_A, 'o-1', AT))).toBe(true);
-    expect(await db.transaction((tx) => orders.markWarned(tx, ORG_A, 'o-1', AT))).toBe(false);
+    expect(await db.transaction((tx) => orders.markWarnDecided(tx, ORG_A, 'o-1', AT))).toBe(true);
+    expect(await db.transaction((tx) => orders.markWarnDecided(tx, ORG_A, 'o-1', AT))).toBe(false);
+  });
+
+  it('rozstrzygnięcia czekają zlecenia otwarte I z kompletem - bez już rozstrzygniętych', async () => {
+    await order('o-open', AT.getTime() + 2 * H);
+    await order('o-full', AT.getTime() + 2 * H, 'SP-FGK');
+    await order('o-done', AT.getTime() + 2 * H, 'SP-ANK');
+    await db.transaction(async (tx) => {
+      await orders.update(tx, ORG_A, 'o-full', { status: 'filled' }, AT);
+      await orders.markWarnDecided(tx, ORG_A, 'o-done', AT);
+    });
+    const due = await orders.dueWarnDecisions(db, new Date(AT.getTime() + 3 * H));
+    expect(due.map((d) => [d.orderId, d.status]).sort()).toEqual([
+      ['o-full', 'filled'],
+      ['o-open', 'open'],
+    ]);
+    // Zlecenie z kompletem da się rozstrzygnąć (bez wiadomości), zamknięte - nie.
+    expect(await db.transaction((tx) => orders.markWarnDecided(tx, ORG_A, 'o-full', AT))).toBe(true);
+    await db.transaction((tx) => orders.close(tx, ORG_A, 'o-open', { status: 'cancelled', at: AT, by: 'AKO', reason: null }));
+    expect(await db.transaction((tx) => orders.markWarnDecided(tx, ORG_A, 'o-open', AT))).toBe(false);
   });
 });
 

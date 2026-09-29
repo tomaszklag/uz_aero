@@ -1,7 +1,7 @@
 /**
  * Ninerdeck (serwer) - DANE BUDZIKA (issue #228): `data` push niesie dokładnie to, co
- * telefon czyta w `pushTarget.ts` - `kind`, `orgId`, `bookingId`, `aircraftId` - i nic
- * z reszty payloadu wiadomości. Payloady w teście są kopią kształtów z `bookingNotices.ts`
+ * telefon czyta w `pushTarget.ts` - `kind`, `orgId`, `bookingId`, `aircraftId`, a od
+ * zleceń (4.0.0) także `orderId` i `recipientId` - i nic z reszty payloadu wiadomości. Payloady w teście są kopią kształtów z `bookingNotices.ts`
  * i `aircraftNotices.ts`, żeby było widać, CO zostaje za drzwiami.
  */
 
@@ -69,11 +69,48 @@ describe('pushData - dane budzika (#228)', () => {
     expect(data).toEqual({ kind: 'approval_requested', orgId: ORG });
   });
 
-  it('klucze wyniku są ZAWSZE podzbiorem czterech dozwolonych', () => {
+  it('wiadomość w zleceniu: zlecenie i ADRESAT wątku jadą, treść i autor zostają w skrzynce (pkt 43)', () => {
+    const data = pushData(ORG, {
+      kind: 'order_message',
+      payload: {
+        orderId: 'o-1',
+        bookingId: 'b-1',
+        aircraftId: 'SP-AXA',
+        startsAt: '2026-06-24T10:00:00.000Z',
+        endsAt: '2026-06-24T12:00:00.000Z',
+        operation: 'przelot',
+        createdBy: 'JSE',
+        threadId: 't-1',
+        recipientId: 'PWI',
+        authorId: 'PWI',
+        unread: 2,
+      },
+    });
+    expect(data).toEqual({
+      kind: 'order_message',
+      orgId: ORG,
+      bookingId: 'b-1',
+      aircraftId: 'SP-AXA',
+      orderId: 'o-1',
+      recipientId: 'PWI',
+    });
+  });
+
+  it('zmiana zlecenia: co się zmieniło, zostaje w skrzynce', () => {
+    const data = pushData(ORG, {
+      kind: 'order_changed',
+      payload: { orderId: 'o-1', bookingId: 'b-1', aircraftId: 'SP-AXA', term: true, changes: { note: { from: null, to: 'x' } } },
+    });
+    expect(data).toEqual({ kind: 'order_changed', orgId: ORG, bookingId: 'b-1', aircraftId: 'SP-AXA', orderId: 'o-1' });
+  });
+
+  it('klucze wyniku są ZAWSZE podzbiorem sześciu dozwolonych', () => {
     const data = pushData(ORG, {
       kind: 'booking_approved',
       payload: { bookingId: 'b-1', aircraftId: 'SP-AXA', pilotId: 'AKO', anything: { nested: true } },
     });
-    for (const key of Object.keys(data)) expect(['kind', 'orgId', 'bookingId', 'aircraftId']).toContain(key);
+    for (const key of Object.keys(data)) {
+      expect(['kind', 'orgId', 'bookingId', 'aircraftId', 'orderId', 'recipientId']).toContain(key);
+    }
   });
 });

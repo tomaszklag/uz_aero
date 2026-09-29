@@ -17,6 +17,8 @@ import { randomUUID } from 'node:crypto';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import type { Actor } from '../src/application/admin/ports.ts';
 import { MemberGroupCommands } from '../src/application/admin/commands/memberGroups.ts';
+import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
+import { OrderClock } from '../src/application/common/commands/orderClock.ts';
 import { OrderAssignmentCommands } from '../src/application/common/commands/orderAssignments.ts';
 import { OrderEditCommands } from '../src/application/common/commands/orderEdit.ts';
 import { OrderCommands, type OrderDraft } from '../src/application/common/commands/orders.ts';
@@ -44,6 +46,7 @@ import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificatio
 import { PgOrderChangesRepo } from '../src/infrastructure/pg/common/orderChangesRepo.ts';
 import { PgOrderRecipientsRepo } from '../src/infrastructure/pg/common/orderRecipientsRepo.ts';
 import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo.ts';
+import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { PgThreadMessagesRepo } from '../src/infrastructure/pg/common/threadMessagesRepo.ts';
 import { PgThreadsRepo } from '../src/infrastructure/pg/common/threadsRepo.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
@@ -86,6 +89,8 @@ export interface OrderWorld {
   threadQueries: ThreadQueries;
   groups: MemberGroupCommands;
   groupQueries: MemberGroupQueries;
+  /** Zadanie okresowe kalendarza z czwartym pytaniem - zegarem zleceń. */
+  clockJob: BookingClockJob;
 }
 
 export async function orderWorld(): Promise<OrderWorld> {
@@ -129,6 +134,8 @@ export async function orderWorld(): Promise<OrderWorld> {
   const records = new OrderRecords(ordersRepo, bookings, recipients);
   const seating = new OrderSeating(ordersRepo, bookings);
   const signals = new OrderSignals(live);
+  const clubs = new PgClubSettingsRepo();
+  const orderClock = new OrderClock(db, records, ordersRepo, bookings, changes, clubs, notifier, signals, randomUUID, clock, watching);
 
   return {
     db,
@@ -144,10 +151,11 @@ export async function orderWorld(): Promise<OrderWorld> {
     responses: new OrderResponseCommands(db, records, seating, recipients, changes, notifier, signals, clock, randomUUID),
     assignments: new OrderAssignmentCommands(db, records, seating, changes, members, notifier, signals, clock, randomUUID),
     threads: new ThreadCommands(db, records, recipients, threadsRepo, messages, notifier, signals, clock, randomUUID),
-    queries: new OrderQueries(db, records, ordersRepo, bookings, recipients, changes, messages, new PgClubSettingsRepo(), clock),
+    queries: new OrderQueries(db, records, ordersRepo, bookings, recipients, changes, messages, clubs, clock),
     threadQueries: new ThreadQueries(db, records, threadsRepo, messages),
     groups: new MemberGroupCommands(new AuditedWrite(db, new PgAdminAuditRepo(), clock), groupsRepo, members, clock),
     groupQueries: new MemberGroupQueries(db, groupsRepo),
+    clockJob: new BookingClockJob(db, bookings, new PgSessionsProjection(), clock, notifier, watching, orderClock),
   };
 }
 

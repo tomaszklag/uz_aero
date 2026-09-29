@@ -27,10 +27,15 @@
  *  2. **rezerwacja POTWIERDZONA, której nikt nie odebrał** przez godzinę - slot wraca
  *     do puli jako `released` (§4.1), a obserwujący maszynę dostają „nie odebrano";
  *  3. **rezerwacja POTWIERDZONA, do której zostało mniej niż `FLIGHT_SOON_MS`** - raz,
- *     ze stemplem `reminded_at`: obserwujący dostają „zbliża się lot". Idzie OSTATNIE,
- *     po zwolnieniu: rezerwacja, którą przebieg właśnie zwolnił, nie jest już
+ *     ze stemplem `reminded_at`: obserwujący dostają „zbliża się lot". Idzie po
+ *     zwolnieniu: rezerwacja, którą przebieg właśnie zwolnił, nie jest już
  *     potwierdzona i nie ma o czym przypominać - w odwrotnej kolejności ten sam
- *     przebieg mówiłby „za godzinę" i „nie odebrano" o jednym terminie naraz.
+ *     przebieg mówiłby „za godzinę" i „nie odebrano" o jednym terminie naraz;
+ *  4. **ZLECENIA** (4.0.0, `orderClock.ts`) - zlecenie bez kompletu załogi wygasa na
+ *     początku terminu, a zlecający dostaje ostrzeżenie o 18:00 czasu klubu
+ *     w przeddzień. Idzie OSTATNIE: rezerwacji zlecenia bez kompletu trzy pierwsze
+ *     pytania nie dotyczą (nie zwalnia się jej po godzinie ani o niej nie przypomina),
+ *     więc o jej losie rozstrzyga dopiero ono.
  *
  * Stany `released` i `expired` są OSOBNE i to jest ich cała różnica: tam maszyny nie
  * przejęto, tu zgody nie wydano - a pilot ma usłyszeć, którą z tych dwóch rzeczy
@@ -62,6 +67,7 @@ import {
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import { bookingExpired, type NotificationDraft } from '../notify/bookingNotices.ts';
 import type { Notifier } from '../notify/notifier.ts';
+import type { OrderClock } from './orderClock.ts';
 
 /** Co ile sprawdzamy. Rezerwacja zwalnia się po godzinie, więc kwadrans dokładności wystarczy. */
 export const RELEASE_TICK_MS = 5 * 60_000;
@@ -73,6 +79,10 @@ export interface ClockRun {
   expired: number;
   /** Terminy, o których przypomniano obserwującym (3.2.0) - osobno, bo to nie zmiana stanu. */
   reminded: number;
+  /** Zlecenia wygaszone bez kompletu załogi (4.0.0). */
+  ordersExpired: number;
+  /** Zlecający ostrzeżeni o niepełnej załodze (4.0.0). */
+  ordersWarned: number;
 }
 
 export class BookingClockJob {
@@ -88,6 +98,8 @@ export class BookingClockJob {
      * (idempotencja zadania nie zależy od tego, czy ktoś obserwuje).
      */
     private readonly watching: AircraftWatching | null = null,
+    /** Zegar zleceń (4.0.0) - `null` = zlecenia wyłączone; trzy pierwsze pytania bez zmian. */
+    private readonly orderClock: OrderClock | null = null,
   ) {}
 
   /**
@@ -99,7 +111,8 @@ export class BookingClockJob {
     const expired = await this.expire(now);
     const { checked, released } = await this.release(now);
     const reminded = await this.remind(now);
-    return { checked, released, expired, reminded };
+    const orders = this.orderClock == null ? { expired: 0, warned: 0 } : await this.orderClock.run(now);
+    return { checked, released, expired, reminded, ordersExpired: orders.expired, ordersWarned: orders.warned };
   }
 
   private async release(now: Date): Promise<{ checked: number; released: number }> {

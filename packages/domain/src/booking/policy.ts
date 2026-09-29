@@ -109,3 +109,14 @@ export const DEFAULT_DAY_END_H = 21;
  * zdanie liczy się z terminu w chwili wysyłki, nie z tej stałej.
  */
 export const FLIGHT_SOON_MS = 60 * MINUTE_MS;
+
+/**
+ * GODZINA ostrzeżenia „Zlecenie bez kompletu załogi" - czas KLUBU, w przeddzień terminu
+ * (`docs/zlecenia.md` §5.5; decyzja właściciela 2026-09-28, pkt 45).
+ *
+ * Godzina, nie wyprzedzenie: ostrzeżenie „3 h przed" przychodziło przy porannym locie
+ * o świcie i za późno, żeby jeszcze kogoś znaleźć. Wieczór poprzedniego dnia to chwila,
+ * w której zlecający zdąży jeszcze zadzwonić. Zlecenie wysłane PÓŹNIEJ ostrzeżenia nie
+ * dostaje - powstało już z wiedzą, ile zostało czasu.
+ */
+export const ORDER_UNFILLED_WARN_HOUR = 18;

@@ -1603,11 +1603,12 @@ export interface FlightOrderQuery {
   endsAfter: Date;
 }
 
-/** Otwarte zlecenie w zasięgu zadania okresowego (ostrzeżenie i wygaśnięcie, §5.5). */
+/** Żywe zlecenie w zasięgu zadania okresowego (ostrzeżenie i wygaśnięcie, §5.5). */
 export interface FlightOrderDue {
   orderId: string;
   orgId: string;
   bookingId: string;
+  status: 'open' | 'filled';
   startsAt: number;
   createdAt: number;
   unfilledWarnedAt: number | null;
@@ -1639,8 +1640,19 @@ export interface FlightOrdersPort {
    * jedzie w wyniku, żeby zapis wrócił we właściwy.
    */
   dueOpen(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]>;
-  /** Stempel ostrzeżenia „bez kompletu załogi"; `false` = już ostrzeżono albo zlecenie przestało być otwarte. */
-  markWarned(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean>;
+  /**
+   * Żywe zlecenia (otwarte i z kompletem) z jeszcze NIEROZSTRZYGNIĘTYM ostrzeżeniem,
+   * których termin zaczyna się przed `startsBefore` - bez `orgId`, jak `dueOpen`.
+   */
+  dueWarnDecisions(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]>;
+  /**
+   * Stempel ROZSTRZYGNIĘCIA ostrzeżenia „bez kompletu załogi" (decyzja właściciela
+   * 2026-09-29): pada RAZ, przy pierwszym przebiegu zegara po 18:00 w przeddzień - razem
+   * z wiadomością, gdy brakuje załogi, i bez niej przy komplecie. Rezygnacja po tej chwili
+   * już nie ostrzega: zlecający dostaje wtedy „Rezygnacja z lotu". `false` = rozstrzygnięte
+   * wcześniej albo zlecenie zamknięte.
+   */
+  markWarnDecided(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean>;
 }
 
 /** Adresat zlecenia - wiersz `order_recipients`. */

@@ -17,18 +17,26 @@
  *
  * Nowe pole czytane przez `pushTarget` dopisuje się do `PUSH_DATA_KEYS` - tu i w teście;
  * `notifier.ts` nie zna listy pól.
+ *
+ * ══ ZLECENIA (4.0.0, `docs/zlecenia.md` §12) ══
+ * `orderId` otwiera kartę zlecenia, a `recipientId` mówi, CZYJA to rozmowa - wątek jest
+ * parą zlecenie × adresat (§7.1). Bez niego telefon nie wiedziałby, czy budzik dotyczy
+ * rozmowy, którą pilot właśnie ma otwartą, i pokazałby baner nad nią samą (pkt 43).
+ * Treść wiadomości, nazwiska i godziny dalej zostają w skrzynce.
  */
 
 import type { NotificationDraft } from './bookingNotices.ts';
 
 /** Identyfikatory, po których telefon wybiera ekran; poza nimi jadą `kind` i `orgId`. */
-export const PUSH_DATA_KEYS = ['bookingId', 'aircraftId'] as const;
+export const PUSH_DATA_KEYS = ['bookingId', 'aircraftId', 'orderId', 'recipientId'] as const;
 
 export type PushData = {
   kind: NotificationDraft['kind'];
   orgId: string;
   bookingId?: string;
   aircraftId?: string;
+  orderId?: string;
+  recipientId?: string;
 };
 
 /** Dane budzika dla jednej wiadomości - czysta funkcja, bez dostępu do bazy. */

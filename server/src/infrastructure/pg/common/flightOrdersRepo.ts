@@ -4,7 +4,8 @@
  *
  * W `common/`, bo zlecenie wysyła się i prowadzi z telefonu I z panelu (§13). Termin
  * i załogę trzyma rezerwacja (`bookings.order_id`) - ten plik czyta ją WYŁĄCZNIE tam,
- * gdzie potrzebny jest porządek po terminie (listy) albo termin dla zegara (`dueOpen`).
+ * gdzie potrzebny jest porządek po terminie (listy) albo termin dla zegara (`dueOpen`,
+ * `dueWarnDecisions`).
  *
  * ══ STANY ŻYWE I KOŃCOWE ══
  * `update` zmienia wyłącznie zlecenie żywe (`open`/`filled`), a zamknięcie ma własną
@@ -193,19 +194,39 @@ export class PgFlightOrdersRepo implements FlightOrdersPort {
     return rows.map(toRecord);
   }
 
-  async dueOpen(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]> {
+  dueOpen(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]> {
+    return this.due(db, `fo.status = 'open'`, startsBefore);
+  }
+
+  dueWarnDecisions(db: Queryable, startsBefore: Date): Promise<FlightOrderDue[]> {
+    return this.due(db, `fo.status IN ${LIVE} AND fo.unfilled_warned_at IS NULL`, startsBefore);
+  }
+
+  async markWarnDecided(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean> {
+    const { rows } = await tx.query<{ id: string }>(
+      `UPDATE flight_orders fo SET unfilled_warned_at = $3
+        WHERE fo.org_id = $1 AND fo.id = $2 AND fo.status IN ${LIVE} AND fo.unfilled_warned_at IS NULL
+        RETURNING fo.id`,
+      [orgId, id, at],
+    );
+    return rows.length > 0;
+  }
+
+  /** Wspólny przegląd zegara: warunek stanu jest stałą z kodu, nigdy wartością z zewnątrz. */
+  private async due(db: Queryable, condition: string, startsBefore: Date): Promise<FlightOrderDue[]> {
     const { rows } = await db.query<{
       id: string;
       org_id: string;
       booking_id: string;
+      status: string;
       starts_at: string | Date;
       created_at: string | Date;
       unfilled_warned_at: string | Date | null;
     }>(
-      `SELECT fo.id, fo.org_id, b.id AS booking_id, b.starts_at, fo.created_at, fo.unfilled_warned_at
+      `SELECT fo.id, fo.org_id, b.id AS booking_id, fo.status, b.starts_at, fo.created_at, fo.unfilled_warned_at
          FROM flight_orders fo
          JOIN bookings b ON b.order_id = fo.id AND b.org_id = fo.org_id
-        WHERE fo.status = 'open' AND b.starts_at < $1
+        WHERE ${condition} AND b.starts_at < $1
         ORDER BY b.starts_at, fo.id`,
       [startsBefore],
     );
@@ -213,19 +234,10 @@ export class PgFlightOrdersRepo implements FlightOrdersPort {
       orderId: r.id,
       orgId: r.org_id,
       bookingId: r.booking_id,
+      status: r.status === 'filled' ? 'filled' : 'open',
       startsAt: ms(r.starts_at),
       createdAt: ms(r.created_at),
       unfilledWarnedAt: msOrNull(r.unfilled_warned_at),
     }));
-  }
-
-  async markWarned(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean> {
-    const { rows } = await tx.query<{ id: string }>(
-      `UPDATE flight_orders fo SET unfilled_warned_at = $3
-        WHERE fo.org_id = $1 AND fo.id = $2 AND fo.status = 'open' AND fo.unfilled_warned_at IS NULL
-        RETURNING fo.id`,
-      [orgId, id, at],
-    );
-    return rows.length > 0;
   }
 }
