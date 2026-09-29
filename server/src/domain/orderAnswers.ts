@@ -57,6 +57,46 @@ export function eligibleSeats(order: OrderView, recipient: Pick<RecipientView, '
   return recipient.seat == null ? sought : sought.filter((seat) => seat === recipient.seat);
 }
 
+/**
+ * Adresat ma jeszcze NA CO CZEKAĆ: zlecenia mu nie odebrano, a przed nim stoi wolny fotel,
+ * na który może trafić. Stanu zlecenia nie sprawdza - odbiorców odwołania i wygaśnięcia
+ * liczy się na stanie sprzed zamknięcia, a pytanie brzmi tam „kto jeszcze czekał".
+ */
+export function awaitsSeat(order: OrderView, recipient: Pick<RecipientView, 'seat' | 'removed'>): boolean {
+  return !recipient.removed && eligibleSeats(order, recipient).some((seat) => order.crew[seat] == null);
+}
+
+/**
+ * Czy adresat jest jeszcze W GRZE (makieta 28B): zlecenie żyje, zlecenia mu nie odebrano,
+ * a on siedzi w fotelu albo ma przed sobą wolny fotel. Wypadnięcie z gry to „Zlecenie
+ * nieaktualne" - karta bez akcji i rozmowa do odczytu, po obu stronach wątku.
+ */
+export function inPlay(order: OrderView, recipient: Pick<RecipientView, 'pilotId' | 'seat' | 'removed'>): boolean {
+  if (!isLive(order.status) || recipient.removed) return false;
+  return assignedSeat(order, recipient.pilotId) != null || awaitsSeat(order, recipient);
+}
+
+/**
+ * DLACZEGO zlecenie przestało być dla adresata aktualne - to jest treść baneru karty 28B
+ * i wiadomości „Zlecenie nieaktualne". `null` = adresat jest w grze.
+ *  - `closed` - zlecenie odwołane albo wygasłe;
+ *  - `removed` - zlecenie mu odebrano (pkt 29);
+ *  - `seat_dropped` - jego fotel przestawiono na „ja" albo „brak": nie jest już potrzebny,
+ *    ale adresat wraca do gry, gdy fotel znów będzie szukany (decyzja 2026-09-29);
+ *  - `seat_filled` - fotel, na który mógł trafić, obsadził ktoś inny.
+ */
+export type StaleReason = 'closed' | 'removed' | 'seat_dropped' | 'seat_filled';
+
+export function staleReason(
+  order: OrderView,
+  recipient: Pick<RecipientView, 'pilotId' | 'seat' | 'removed'>,
+): StaleReason | null {
+  if (inPlay(order, recipient)) return null;
+  if (!isLive(order.status)) return 'closed';
+  if (recipient.removed) return 'removed';
+  return eligibleSeats(order, recipient).length === 0 ? 'seat_dropped' : 'seat_filled';
+}
+
 /** Odmowa odpowiedzi - wyłącznie „NIE MOGĘ" od osoby już przydzielonej (§5.3). */
 export function refuseAnswer(
   order: OrderView,

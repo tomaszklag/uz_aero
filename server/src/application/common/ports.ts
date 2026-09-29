@@ -1058,6 +1058,14 @@ export interface NewBooking {
 export interface BookingPatch {
   startsAt?: number;
   endsAt?: number;
+  /**
+   * Maszyna - WYŁĄCZNIE rezerwacja zlecenia (4.0.0, `docs/zlecenia.md` §5.2: zmiana maszyny
+   * to „edytowane", odpowiedzi zostają ważne). Zwykła rezerwacja pilota zmienia maszynę
+   * jako NOWA rezerwacja (decyzja 2026-09-21) i jej trasy tego pola nie przyjmują.
+   * Zmiana zeruje stempel przypomnienia, jak przesunięcie początku - „za godzinę" należy
+   * się obserwującym NOWEJ maszyny.
+   */
+  aircraftId?: string;
   dualId?: string | null;
   operation?: string | null;
   fromIcao?: string | null;
@@ -1380,6 +1388,19 @@ export interface NotificationsPort {
     pilotId: string,
     page: { before?: NotificationCursor; limit: number },
   ): Promise<NotificationRecord[]>;
+  /**
+   * Wiersz, który ODŚWIEŻA poprzedni zamiast dopisywać nowy (4.0.0, `docs/zlecenia.md`
+   * §7.3): nieprzeczytany wiersz tej osoby i tego rodzaju z tą samą wartością pola
+   * `collapse.field` w payloadzie dostaje nową treść i nową chwilę, a gdy go nie ma -
+   * powstaje. Rozmowa nie zalewa skrzynki: jeden nieprzeczytany wiersz na wątek.
+   */
+  collapseUnread(
+    tx: Queryable,
+    orgId: string,
+    row: NewNotification,
+    collapse: { field: string; value: string },
+    at: Date,
+  ): Promise<void>;
   /** Ile nieprzeczytanych - liczba przy zakładce Pulpit. */
   unreadCount(db: Queryable, orgId: string, pilotId: string): Promise<number>;
   /**
@@ -1574,8 +1595,12 @@ export interface FlightOrderQuery {
   createdBy?: string;
   /** „Do mnie" - zlecenia, w których osoba jest adresatem (także odebranym). */
   recipientId?: string;
-  /** Zamknięte zlecenia wchodzą, gdy zamknięto je nie wcześniej niż ta chwila. */
-  closedSince?: Date;
+  /**
+   * Zakres listy PO TERMINIE: zlecenia, których termin kończy się nie wcześniej niż ta
+   * chwila - żywe i zamknięte. Po terminie, a nie po stanie, bo zlecenie z kompletem
+   * załogi zostaje `filled` na zawsze i lista bez dolnej granicy rosłaby bez końca.
+   */
+  endsAfter: Date;
 }
 
 /** Otwarte zlecenie w zasięgu zadania okresowego (ostrzeżenie i wygaśnięcie, §5.5). */
@@ -1669,6 +1694,13 @@ export interface OrderRecipientsPort {
   seen(db: Queryable, orgId: string, orderId: string, pilotId: string, revision: number, at: Date): Promise<boolean>;
   /** Odebranie zlecenia (pkt 29): stempel, nie kasowanie - wątek zostaje do odczytu. */
   remove(tx: Queryable, orgId: string, orderId: string, pilotId: string, by: string, at: Date): Promise<boolean>;
+  /**
+   * Przywrócenie ODEBRANEGO adresata, którego prowadzący jawnie dopisał z powrotem
+   * (decyzja właściciela 2026-09-29): zlecenie wraca do niego jak nowe - bez poprzedniej
+   * odpowiedzi i odczytu, z nowym planem. Rozmowa zostaje przy wierszu i znów przyjmuje
+   * wiadomości. Oddaje identyfikatory PRZYWRÓCONYCH.
+   */
+  restore(tx: Queryable, orgId: string, orderId: string, rows: readonly PlannedRecipient[]): Promise<string[]>;
   attachThread(tx: Queryable, orgId: string, orderId: string, pilotId: string, threadId: string): Promise<void>;
 }
 

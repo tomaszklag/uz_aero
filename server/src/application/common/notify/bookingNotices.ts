@@ -52,7 +52,36 @@ export type NotificationKind =
   /** Maszyna zdana (z odczytami) albo operację zakończył administrator. */
   | 'aircraft_released'
   /** Nikt nie odebrał zarezerwowanej maszyny - slot wrócił do puli. */
-  | 'aircraft_not_taken';
+  | 'aircraft_not_taken'
+  /*
+   * ZLECENIA NA LOT (4.0.0, issue #245; `docs/zlecenia.md` §12) - treści w
+   * `orderNotices.ts`. Tapnięcie każdego z nich otwiera kartę zlecenia, a `order_message`
+   * od razu rozmowę; rodzaj nieznany starszej aplikacji ląduje w skrzynce.
+   */
+  /** „Zlecenie lotu" - wysłanie, dopisanie adresatów, „Wyślij ponownie". */
+  | 'order_offered'
+  /** „Zlecenie zmienione" (termin) albo „Zlecenie edytowane" (reszta). */
+  | 'order_changed'
+  /** „Odpowiedź na zlecenie" - wyłącznie do autora. */
+  | 'order_answered'
+  /** „Lot przydzielony" - wybrany z grupy albo listy. */
+  | 'order_assigned'
+  /** „Zlecenie nieaktualne" - fotel obsadzony (przy liście wspólnej: komplet). */
+  | 'order_filled'
+  /** „Zlecenie nieaktualne" - zlecenie odebrane adresatowi. */
+  | 'order_removed'
+  /** „Rezygnacja z lotu" - do autora. */
+  | 'order_withdrawn'
+  /** „Przydział cofnięty" - cofnięcie albo fotel przestawiony na „ja"/„brak". */
+  | 'order_unassigned'
+  /** „Zlecenie odwołane". */
+  | 'order_cancelled'
+  /** „Zlecenie bez kompletu załogi" - do autora, w przeddzień o 18:00 czasu klubu. */
+  | 'order_unfilled'
+  /** „Zlecenie wygasło" - termin nadszedł bez kompletu. */
+  | 'order_expired'
+  /** „Wiadomość w zleceniu" - jeden nieprzeczytany wiersz na wątek. */
+  | 'order_message';
 
 /** Rezerwacja w postaci, w jakiej opisuje ją wiadomość. */
 export interface NoticeBooking {

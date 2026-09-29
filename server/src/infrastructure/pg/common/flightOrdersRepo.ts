@@ -180,12 +180,8 @@ export class PgFlightOrdersRepo implements FlightOrdersPort {
                   WHERE r.order_id = fo.id AND r.org_id = fo.org_id AND r.pilot_id = $${params.length})`,
       );
     }
-    if (query.closedSince != null) {
-      params.push(query.closedSince);
-      where.push(`(fo.status IN ${LIVE} OR fo.closed_at >= $${params.length})`);
-    } else {
-      where.push(`fo.status IN ${LIVE}`);
-    }
+    params.push(query.endsAfter);
+    where.push(`b.ends_at >= $${params.length}`);
     // Porządek po TERMINIE - lista odpowiada na „co najbliżej", nie „co najnowsze".
     const { rows } = await db.query<OrderDbRow>(
       `SELECT ${COLUMNS} FROM flight_orders fo

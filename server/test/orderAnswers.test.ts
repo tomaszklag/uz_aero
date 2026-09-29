@@ -11,7 +11,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   answerOutcome,
+  awaitsSeat,
   eligibleSeats,
+  inPlay,
+  staleReason,
   refuseAnswer,
   refuseAssign,
   refuseRemoveRecipient,
@@ -150,5 +153,41 @@ describe('cofnięcie przydziału, rezygnacja, odebranie zlecenia', () => {
     expect(refuseRemoveRecipient(seated, recipient('JWR', { answer: 'yes' }))).toBe('recipient_assigned');
     expect(refuseRemoveRecipient(seated, recipient('PIE'))).toBeNull();
     expect(refuseRemoveRecipient(seated, recipient('PIE', { removed: true }))).toBe('not_recipient');
+  });
+});
+
+describe('adresat w grze - „nieaktualne" i rozmowa do odczytu (28B)', () => {
+  it('czeka ten, przed kim stoi wolny fotel; obsadzony przez kogoś innego - już nie', () => {
+    expect(awaitsSeat(order(), recipient('PIE'))).toBe(true);
+    const taken = order({ crew: { pic: 'BNO', dual: null } });
+    expect(awaitsSeat(taken, recipient('PIE'))).toBe(false);
+    // Termin do potwierdzenia ma jeszcze drugi fotel.
+    expect(awaitsSeat(taken, recipient('ANN', { seat: null }))).toBe(true);
+    expect(awaitsSeat(order(), recipient('PIE', { removed: true }))).toBe(false);
+  });
+
+  it('w grze jest przydzielony i czekający, ale nikt w zleceniu zamkniętym ani po odebraniu', () => {
+    const seated = order({ status: 'filled', seats: { pic: 'sought', dual: 'none' }, crew: { pic: 'JWR', dual: null } });
+    expect(inPlay(seated, recipient('JWR'))).toBe(true);
+    expect(inPlay(seated, recipient('PIE'))).toBe(false);
+    expect(inPlay(order(), recipient('PIE'))).toBe(true);
+    expect(inPlay(order({ status: 'cancelled' }), recipient('PIE'))).toBe(false);
+    expect(inPlay(order(), recipient('PIE', { removed: true }))).toBe(false);
+  });
+
+  it('odmowa nie wyjmuje z gry - adresat może jeszcze zmienić zdanie (28A)', () => {
+    expect(inPlay(order(), recipient('PIE', { answer: 'no' }))).toBe(true);
+  });
+
+  it('powód „nieaktualne": odwołane, odebrane, fotel niepotrzebny albo obsadzony (28B)', () => {
+    expect(staleReason(order(), recipient('PIE'))).toBeNull();
+    expect(staleReason(order({ status: 'expired' }), recipient('PIE'))).toBe('closed');
+    expect(staleReason(order(), recipient('PIE', { removed: true }))).toBe('removed');
+    // Fotel przestawiony na „brak" - adresat śpi, ale wraca, gdy fotel znów będzie szukany.
+    const noDual = order({ seats: { pic: 'sought', dual: 'none' } });
+    expect(staleReason(noDual, recipient('ANN', { seat: 'dual' }))).toBe('seat_dropped');
+    expect(staleReason(order(), recipient('ANN', { seat: 'dual' }))).toBeNull();
+    const taken = order({ crew: { pic: 'BNO', dual: null } });
+    expect(staleReason(taken, recipient('PIE'))).toBe('seat_filled');
   });
 });

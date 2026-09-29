@@ -51,6 +51,27 @@ export class Notifier {
   }
 
   /**
+   * Wiersz, który ODŚWIEŻA poprzedni nieprzeczytany zamiast dopisywać nowy (4.0.0,
+   * `docs/zlecenia.md` §7.3) - rozmowa nie zalewa skrzynki. Budzik idzie mimo to przy
+   * KAŻDEJ wiadomości (`wake`): to jest rozmowa, a nie ogłoszenie.
+   */
+  async recordCollapsed(
+    tx: Queryable,
+    orgId: string,
+    draft: NotificationDraft,
+    collapse: { field: string; value: string },
+    at: Date,
+  ): Promise<void> {
+    await this.notifications.collapseUnread(
+      tx,
+      orgId,
+      { id: this.newId(), pilotId: draft.pilotId, kind: draft.kind, payload: draft.payload },
+      collapse,
+      at,
+    );
+  }
+
+  /**
    * Budzik - PO commicie. NIGDY nie rzuca: wyjątek tutaj znaczyłby, że decyzja
    * o rezerwacji nie powiodła się, bo dostawca push miał przerwę.
    *

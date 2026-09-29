@@ -188,6 +188,31 @@ export class PgOrderRecipientsRepo implements OrderRecipientsPort {
     return rows.length > 0;
   }
 
+  async restore(
+    tx: Queryable,
+    orgId: string,
+    orderId: string,
+    rows: readonly PlannedRecipient[],
+  ): Promise<string[]> {
+    const restored: string[] = [];
+    for (const row of rows) {
+      // Jak nowy: bez odpowiedzi i bez odczytu - „Nie może" sprzed odebrania nie mówi nic
+      // o tym, czy dziś może, a „Odczytane" dotyczyło zlecenia, którego już nie miał.
+      const { rows: done } = await tx.query<{ pilot_id: string }>(
+        `UPDATE order_recipients
+            SET seat = $4, named_seat = $5, direct = $6, via_group_id = $7,
+                removed_at = NULL, removed_by = NULL,
+                answer = NULL, answer_reason = NULL, answered_at = NULL, answered_revision = NULL,
+                seen_at = NULL, seen_revision = NULL, last_seen_at = NULL
+          WHERE org_id = $1 AND order_id = $2 AND pilot_id = $3 AND removed_at IS NOT NULL
+          RETURNING pilot_id`,
+        [orgId, orderId, row.pilotId, row.seat, row.namedSeat, row.direct, row.viaGroupId],
+      );
+      if (done[0] != null) restored.push(done[0].pilot_id);
+    }
+    return restored;
+  }
+
   async attachThread(
     tx: Queryable,
     orgId: string,

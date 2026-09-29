@@ -14,6 +14,8 @@ import {
   expireAudience,
   filledAudience,
   openRecipients,
+  remindAudience,
+  staleAudience,
   type AudienceState,
 } from '../src/domain/orderAudiences.ts';
 import type { OrderView, RecipientView } from '../src/domain/orders.ts';
@@ -67,7 +69,18 @@ describe('zmiana i odwołanie', () => {
       recipient('PIE'),
     ]);
     expect(assignedPilots(filled.view.seats, filled.view.crew)).toEqual(['BNO']);
-    expect(changeAudience(filled, 'AKO')).toEqual(['BNO', 'PIE']);
+    // PIE czekał na TEN fotel i dostał już „Zlecenie nieaktualne" - dalszych zmian
+    // zlecenia, w którym nie ma już dla niego miejsca, nie potrzebuje (28B).
+    expect(changeAudience(filled, 'AKO')).toEqual(['BNO']);
+  });
+
+  it('adresat obsadzonego fotela wypada ze zmian; termin do potwierdzenia ma jeszcze drugi fotel', () => {
+    const s = state({ seats: { pic: 'sought', dual: 'sought' }, crew: { pic: 'BNO', dual: null } }, [
+      recipient('PIE', { seat: 'pic' }),
+      recipient('ANN', { seat: null, namedSeat: 'pic' }),
+      recipient('JWR', { seat: 'dual' }),
+    ]);
+    expect(openRecipients(s)).toEqual(['ANN', 'JWR']);
   });
 
   it('wygaśnięcie nie ma sprawcy - zlecający też dostaje wiadomość', () => {
@@ -108,5 +121,50 @@ describe('„Zlecenie nieaktualne" po obsadzeniu fotela', () => {
       recipients,
     );
     expect(filledAudience(full, 'dual')).toEqual(['JWR']);
+  });
+});
+
+describe('„Zlecenie nieaktualne" po edycji i przypomnienie przy „Wyślij ponownie"', () => {
+  it('drugi fotel na „brak" domyka komplet - lista wspólna nie ma już na co czekać', () => {
+    const recipients = [
+      recipient('ANN', { seat: null }),
+      recipient('JWR', { seat: null, answer: 'no' }),
+      recipient('OFF', { seat: null, removed: true }),
+    ];
+    const before = state(
+      { addressing: 'shared', seats: { pic: 'sought', dual: 'sought' }, crew: { pic: 'BNO', dual: null } },
+      [...recipients, recipient('BNO', { seat: null, answer: 'yes' })],
+    );
+    const after = state(
+      { addressing: 'shared', status: 'filled', seats: { pic: 'sought', dual: 'none' }, crew: { pic: 'BNO', dual: null } },
+      [...recipients, recipient('BNO', { seat: null, answer: 'yes' })],
+    );
+    // JWR odmówił, OFF-owi odebrano zlecenie, BNO siedzi w fotelu - wiadomość idzie do ANN.
+    expect(staleAudience(before, after)).toEqual(['ANN']);
+  });
+
+  it('kto przestał czekać JUŻ WCZEŚNIEJ, nie dostaje drugiego „nieaktualne"', () => {
+    const taken = state({ seats: { pic: 'sought', dual: 'sought' }, crew: { pic: 'BNO', dual: null } }, [
+      recipient('PIE', { seat: 'pic' }),
+    ]);
+    expect(staleAudience(taken, taken)).toEqual([]);
+  });
+
+  it('odebrany w tej zmianie dostaje „odebrane", nie „nieaktualne"', () => {
+    const before = state({}, [recipient('PIE')]);
+    const after = state({}, [recipient('PIE', { removed: true })]);
+    expect(staleAudience(before, after)).toEqual([]);
+  });
+
+  it('przypomnienie dostają wyłącznie niezdecydowani, którzy jeszcze czekają na fotel', () => {
+    const s = state({ seats: { pic: 'sought', dual: 'sought' }, crew: { pic: 'BNO', dual: null } }, [
+      recipient('BNO', { seat: 'pic', answer: 'yes' }),
+      recipient('PIE', { seat: 'pic' }),
+      recipient('ANN', { seat: 'dual' }),
+      recipient('JWR', { seat: 'dual', answer: 'no' }),
+      recipient('KRZ', { seat: 'dual', answer: 'yes' }),
+      recipient('OFF', { seat: 'dual', removed: true }),
+    ]);
+    expect(remindAudience(s)).toEqual(['ANN']);
   });
 });

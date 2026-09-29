@@ -250,12 +250,22 @@ export class PgBookingsRepo implements BookingsPort {
       params.push(value);
       sets.push(`${column} = $${params.length}`);
     };
+    // Przesunięcie POCZĄTKU i zmiana MASZYNY (rezerwacja zlecenia) zerują stempel
+    // przypomnienia (obserwowanie, §4.2): nowy termin albo nowa maszyna dostaje własne
+    // „za godzinę". Kolumny po prawej stronie `SET` to wartości SPRZED zapisu, więc
+    // poprawka, która ich nie zmienia, stempla nie rusza. Jeden `CASE` na oba warunki,
+    // bo dwa przypisania tej samej kolumny w jednym `SET` to błąd składni.
+    const keepReminder: string[] = [];
     if (patch.startsAt !== undefined) {
       set('starts_at', new Date(patch.startsAt));
-      // Przesunięcie POCZĄTKU zeruje stempel przypomnienia (obserwowanie, §4.2): nowy
-      // termin dostanie własne „za godzinę". Kolumna po prawej stronie `SET` to wartość
-      // SPRZED zapisu, więc poprawka niezmieniająca początku stempla nie rusza.
-      sets.push(`reminded_at = CASE WHEN starts_at = $${params.length} THEN reminded_at ELSE NULL END`);
+      keepReminder.push(`starts_at = $${params.length}`);
+    }
+    if (patch.aircraftId !== undefined) {
+      set('aircraft_id', patch.aircraftId);
+      keepReminder.push(`aircraft_id = $${params.length}`);
+    }
+    if (keepReminder.length > 0) {
+      sets.push(`reminded_at = CASE WHEN ${keepReminder.join(' AND ')} THEN reminded_at ELSE NULL END`);
     }
     if (patch.endsAt !== undefined) set('ends_at', new Date(patch.endsAt));
     if (patch.dualId !== undefined) set('dual_id', patch.dualId);
@@ -286,7 +296,7 @@ export class PgBookingsRepo implements BookingsPort {
         ok: false,
         taken: await this.colliding(tx, orgId, {
           id,
-          aircraftId: current.aircraftId,
+          aircraftId: patch.aircraftId ?? current.aircraftId,
           startsAt: patch.startsAt ?? current.startsAt,
           endsAt: patch.endsAt ?? current.endsAt,
         }),

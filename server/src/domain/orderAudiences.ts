@@ -11,12 +11,16 @@
  *  2. **odmowa wycisza** - adresat, który w bieżącej wersji odpowiedział „NIE MOGĘ", nie
  *     dostaje zmian ani odwołania tego zlecenia (§12: „adresaci bez odmowy"). Zmiana
  *     TERMINU tej reguły nie łamie, tylko ją zeruje: podnosi wersję, więc odmowa
- *     „nie mogę w sobotę" przestaje się liczyć - i wtedy pytamy wszystkich od nowa.
+ *     „nie mogę w sobotę" przestaje się liczyć - i wtedy pytamy wszystkich od nowa;
+ *  3. **„nieaktualne" też wycisza** - adresat, którego fotel obsadził ktoś inny, dostał
+ *     już „Zlecenie nieaktualne" i dalszych zmian tego zlecenia nie potrzebuje (jego
+ *     karta nie ma akcji, a rozmowa jest do odczytu - makieta 28B).
  *
  * Wyniki są listami BEZ POWTÓRZEŃ w stałej kolejności (przydzieleni, adresaci, zlecający),
  * żeby test porównywał listy, a nie zbiory.
  */
 
+import { awaitsSeat } from './orderAnswers.ts';
 import { crewComplete } from './orderSeats.ts';
 import {
   soughtSeats,
@@ -41,11 +45,14 @@ export function assignedPilots(seats: OrderSeats, crew: OrderCrew): string[] {
     .filter((pilotId): pilotId is string => pilotId != null);
 }
 
-/** Adresaci niewykreśleni, bez odmowy w bieżącej wersji (i bez przydzielonych). */
+/**
+ * Adresaci, którzy jeszcze CZEKAJĄ na fotel (niewykreśleni, z wolnym fotelem przed sobą),
+ * bez odmowy w bieżącej wersji i bez przydzielonych.
+ */
 export function openRecipients(state: AudienceState): string[] {
   const seated = new Set(assignedPilots(state.view.seats, state.view.crew));
   return state.recipients
-    .filter((r) => !r.removed && r.answer !== 'no' && !seated.has(r.pilotId))
+    .filter((r) => r.answer !== 'no' && !seated.has(r.pilotId) && awaitsSeat(state.view, r))
     .map((r) => r.pilotId);
 }
 
@@ -90,6 +97,34 @@ export function filledAudience(state: AudienceState, justFilled: Seat): string[]
   return state.recipients
     .filter((r) => !r.removed && r.answer !== 'no' && !seated.has(r.pilotId))
     .filter((r) => (r.seat == null ? complete : r.seat === justFilled))
+    .map((r) => r.pilotId);
+}
+
+/**
+ * „Zlecenie nieaktualne" po EDYCJI (§5.2): adresaci, którzy przed zmianą czekali na fotel,
+ * a po niej już nie - np. drugi fotel przestawiony na „brak" domknął komplet, więc lista
+ * wspólna nie ma już na co czekać. Odebranym w tej zmianie wiadomość mówi co innego
+ * (`order_removed`), a przydzielony nie dostaje „nieaktualne" nigdy.
+ */
+export function staleAudience(before: AudienceState, after: AudienceState): string[] {
+  const waited = new Set(
+    before.recipients.filter((r) => r.answer !== 'no' && awaitsSeat(before.view, r)).map((r) => r.pilotId),
+  );
+  const seated = new Set(assignedPilots(after.view.seats, after.view.crew));
+  return after.recipients
+    .filter((r) => waited.has(r.pilotId) && !r.removed && !seated.has(r.pilotId))
+    .filter((r) => r.answer !== 'no' && !awaitsSeat(after.view, r))
+    .map((r) => r.pilotId);
+}
+
+/**
+ * „Wyślij ponownie" (pkt 41): przypomnienie niezdecydowanym - czekającym na fotel, bez
+ * odpowiedzi w bieżącej wersji. Kto już odpowiedział, nie dostaje nic.
+ */
+export function remindAudience(state: AudienceState): string[] {
+  const seated = new Set(assignedPilots(state.view.seats, state.view.crew));
+  return state.recipients
+    .filter((r) => r.answer == null && !seated.has(r.pilotId) && awaitsSeat(state.view, r))
     .map((r) => r.pilotId);
 }
 

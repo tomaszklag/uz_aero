@@ -161,22 +161,27 @@ describe('zlecenia', () => {
     ).toBeNull();
   });
 
-  it('lista idzie po TERMINIE; „Do mnie" zawęża do adresata; zamknięte tylko z `closedSince`', async () => {
+  it('lista idzie po TERMINIE i sięga po terminy kończące się po `endsAfter` - żywe i zamknięte', async () => {
     await order('o-late', AT.getTime() + 48 * H);
     await order('o-soon', AT.getTime() + 24 * H, 'SP-FGK');
+    await order('o-past', AT.getTime() - 48 * H, 'SP-FGK');
     await db.transaction((tx) =>
       recipients.insertMany(tx, ORG_A, 'o-late', [{ pilotId: 'JSE', seat: 'pic', namedSeat: null, direct: true, viaGroupId: null }]),
     );
-    expect((await orders.list(db, ORG_A, {})).map((o) => o.id)).toEqual(['o-soon', 'o-late']);
-    expect((await orders.list(db, ORG_A, { recipientId: 'JSE' })).map((o) => o.id)).toEqual(['o-late']);
+    const since = { endsAfter: AT };
+    expect((await orders.list(db, ORG_A, since)).map((o) => o.id)).toEqual(['o-soon', 'o-late']);
+    expect((await orders.list(db, ORG_A, { ...since, recipientId: 'JSE' })).map((o) => o.id)).toEqual(['o-late']);
 
+    // Odwołane zostaje na liście, dopóki termin nie minie - „Zakończone" na makiecie 30.
     await db.transaction((tx) => orders.close(tx, ORG_A, 'o-soon', { status: 'cancelled', at: AT, by: 'AKO', reason: null }));
-    expect((await orders.list(db, ORG_A, {})).map((o) => o.id)).toEqual(['o-late']);
-    expect((await orders.list(db, ORG_A, { closedSince: new Date(AT.getTime() - H) })).map((o) => o.id)).toEqual([
+    expect((await orders.list(db, ORG_A, since)).map((o) => o.id)).toEqual(['o-soon', 'o-late']);
+    // Termin sprzed granicy wypada, także żywy - komplet załogi jest `filled` na zawsze.
+    expect((await orders.list(db, ORG_A, { endsAfter: new Date(AT.getTime() - 72 * H) })).map((o) => o.id)).toEqual([
+      'o-past',
       'o-soon',
       'o-late',
     ]);
-    expect(await orders.list(db, ORG_B, {})).toEqual([]);
+    expect(await orders.list(db, ORG_B, since)).toEqual([]);
   });
 
   it('zegar widzi otwarte zlecenia przed terminem; ostrzeżenie stempluje się raz', async () => {
@@ -269,6 +274,44 @@ describe('adresaci', () => {
     ).toBe(false);
     const jse = (await recipients.listFor(db, ORG_A, 'o-1')).find((r) => r.pilotId === 'JSE');
     expect(jse).toMatchObject({ answer: 'no', answerReason: 'dyżur', answeredRevision: 1 });
+  });
+});
+
+describe('przywrócenie odebranego adresata (decyzja 2026-09-29)', () => {
+  it('wraca jak nowy: bez odpowiedzi i odczytu, z nowym planem; żywego wiersza nie rusza', async () => {
+    await order('o-1');
+    await db.transaction((tx) =>
+      recipients.insertMany(tx, ORG_A, 'o-1', [
+        { pilotId: 'JSE', seat: 'pic', namedSeat: null, direct: true, viaGroupId: null },
+        { pilotId: 'PWI', seat: 'pic', namedSeat: null, direct: false, viaGroupId: null },
+      ]),
+    );
+    await db.transaction(async (tx) => {
+      await recipients.answer(tx, ORG_A, 'o-1', 'JSE', { answer: 'no', reason: 'Urlop', revision: 1 }, AT);
+      await recipients.seen(tx, ORG_A, 'o-1', 'JSE', 1, AT);
+      await recipients.remove(tx, ORG_A, 'o-1', 'JSE', 'AKO', AT);
+    });
+
+    const restored = await db.transaction((tx) =>
+      recipients.restore(tx, ORG_A, 'o-1', [
+        { pilotId: 'JSE', seat: 'pic', namedSeat: null, direct: false, viaGroupId: null },
+        { pilotId: 'PWI', seat: 'pic', namedSeat: null, direct: true, viaGroupId: null },
+      ]),
+    );
+    expect(restored).toEqual(['JSE']);
+    const rows = await recipients.listFor(db, ORG_A, 'o-1');
+    expect(rows.find((r) => r.pilotId === 'JSE')).toMatchObject({
+      removedAt: null,
+      answer: null,
+      answerReason: null,
+      seenRevision: null,
+      direct: false,
+    });
+    // Żywego wiersza przywrócenie nie dotyka - to nie jest droga zmiany planu.
+    expect(rows.find((r) => r.pilotId === 'PWI')).toMatchObject({ direct: false });
+    expect(await db.transaction((tx) => recipients.restore(tx, ORG_B, 'o-1', [
+      { pilotId: 'JSE', seat: 'pic', namedSeat: null, direct: false, viaGroupId: null },
+    ]))).toEqual([]);
   });
 });
 
