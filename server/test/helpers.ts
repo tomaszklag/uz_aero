@@ -167,6 +167,8 @@ import { MemberGroupQueries } from '../src/application/common/queries/memberGrou
 import { OrderQueries } from '../src/application/common/queries/orders.ts';
 import { ThreadQueries } from '../src/application/common/queries/threads.ts';
 import { FakeLiveSignals } from './fakeLiveSignals.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
+import type { LiveTiming } from '../src/http/routes/common/liveConnection.ts';
 import { seedTestWorld } from './testWorld.ts';
 import { TestIdentityProvider } from './testIdentityProvider.ts';
 import { newPglite } from './pglite';
@@ -273,6 +275,11 @@ export async function testHarness(
      * podaje nagłówka `Host` i nie ma prawa od niego zależeć.
      */
     hostSplit?: HostSplit;
+    /**
+     * Czasy kanału klubu - wyłącznie testy wejść WebSocket, które nie mogą czekać 5 s na
+     * brak `auth` ani 25 s na ping. Bez podmiany kanał działa na czasach produkcyjnych.
+     */
+    liveTiming?: Partial<LiveTiming>;
   } = {},
 ) {
   const pglite = newPglite();
@@ -428,7 +435,11 @@ const lastSeen = new LastSeenThrottle();
   const threadMessages = new PgThreadMessagesRepo();
   const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
   const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-  const live = new FakeLiveSignals();
+  // Kanał klubu: PRAWDZIWY rejestr połączeń (trasy WebSocket go dostają), a przed nim
+  // atrapa, która ZAPISUJE sygnały i przekazuje je dalej - testy komend pytają o zapis,
+  // testy tras o ramki, które naprawdę doszły.
+  const liveRegistry = new LiveRegistry();
+  const live = new FakeLiveSignals(liveRegistry);
   const orderSignals = new OrderSignals(live);
   // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
   // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
@@ -526,6 +537,8 @@ const lastSeen = new LastSeenThrottle();
     approvals,
     orders,
     bookingOrders,
+    live: liveRegistry,
+    liveOrigin: new URL(TEST_BASE_URL).origin,
     groupQueries: new MemberGroupQueries(db, memberGroups),
     adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
@@ -763,6 +776,7 @@ const lastSeen = new LastSeenThrottle();
     adminDistDir: options.adminDistDir,
     siteDistDir: options.siteDistDir,
     hostSplit: options.hostSplit ?? null,
+    ...(options.liveTiming == null ? {} : { liveTiming: options.liveTiming }),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
@@ -785,5 +799,6 @@ const lastSeen = new LastSeenThrottle();
     passwordHasher,
     passwords,
     live,
+    liveRegistry,
   };
 }

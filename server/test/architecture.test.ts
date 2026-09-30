@@ -445,8 +445,16 @@ describe('granice, których nie pilnuje kompilator', () => {
       // wszystko, co panel wie, przychodzi później z `/admin/api/*` przez bramę.
       'http/routes/admin/staticPanel.ts',
     ];
+    // Trasy z WŁASNĄ bramą przy nawiązaniu połączenia - nie publiczne, tylko nie HTTP:
+    // `adminRoute` odpowiada jedną odpowiedzią, a tu po bramie zostaje otwarte połączenie.
+    const ownGate = [
+      // Kanał klubu (4.0.0, `docs/kanal-klubu.md` §3.1): ciasteczko sesji + ścisły `Origin`
+      // + `authorizeOrg` w hooku PRZED przejściem na WebSocket. Zdolności tu nie ma - kanał
+      // należy do każdego członka klubu, a odbiorców każdej ramki wyznacza serwer.
+      'http/routes/admin/live.ts',
+    ];
     const offenders = filesUnder('http/routes/admin')
-      .filter((f) => !publicByDesign.includes(f))
+      .filter((f) => !publicByDesign.includes(f) && !ownGate.includes(f))
       .filter((f) => /\bapp\.(get|post|put|patch|delete|route)\s*\(/.test(read(f)));
     expect(offenders).toEqual([]);
   });

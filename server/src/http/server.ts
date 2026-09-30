@@ -8,6 +8,7 @@
 
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
+import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
@@ -128,6 +129,10 @@ import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
 import { registerPreviewRoutes } from './routes/mobile/previews.ts';
 import { registerAircraftRoutes } from './routes/mobile/aircraft.ts';
 import { registerOrderRoutes } from './routes/mobile/orders.ts';
+import { registerLiveRoute } from './routes/mobile/live.ts';
+import { registerAdminLiveRoute } from './routes/admin/live.ts';
+import { LIVE_TIMING, type LiveTiming } from './routes/common/liveConnection.ts';
+import type { LivePort } from '../application/common/ports.ts';
 import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
 import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
 import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
@@ -209,6 +214,17 @@ export interface ServerDeps {
    * otworzyć. Czyta je każda trasa, która oddaje rezerwację, bo każda może oddać zlecenie.
    */
   bookingOrders: BookingOrderQueries;
+  /**
+   * Kanał klubu (4.0.0, `docs/kanal-klubu.md` §3.1) - rejestr połączeń obu wejść
+   * WebSocket. Ten sam obiekt, który komendy znają jako `LiveSignalsPort`: sygnały
+   * i połączenia spotykają się w jednym rejestrze na proces.
+   */
+  live: LivePort;
+  /**
+   * Jedyny `Origin`, z którego panel wolno połączyć z kanałem - origin `PUBLIC_BASE_URL`
+   * (Cross-Site WebSocket Hijacking, `http/routes/admin/live.ts`).
+   */
+  liveOrigin: string;
   /** Grupy klubu do odczytu - adresaci zleceń (telefon) i moduł Piloci (panel). */
   groupQueries: MemberGroupQueries;
   /** Grupy klubu układane w panelu (`accounts.manage`, dziennik akcji). */
@@ -413,6 +429,11 @@ export interface ServerOptions {
    */
   requestLog?: boolean;
   /**
+   * Czasy i limity kanału klubu - WYŁĄCZNIE dla testów, które nie mogą czekać 5 s na
+   * brak `auth` ani 25 s na ping. W produkcji stałe z dokumentu (`LIVE_TIMING`).
+   */
+  liveTiming?: Partial<LiveTiming>;
+  /**
    * Podmiana katalogu buildu panelu - WYŁĄCZNIE dla testów (`adminStatic.test.ts`
    * podstawia katalog tymczasowy). Nieustawiona = wbudowane `admin/dist`
    * (`staticPanel.ts`, §9 architektury frontendu); katalog nieistniejący (dev bez
@@ -497,6 +518,14 @@ export async function buildServer(
     threshold: 1024,
   });
 
+  // KANAŁ KLUBU (4.0.0, `docs/kanal-klubu.md`) - wtyczka WebSocket. `await` z TEGO SAMEGO
+  // powodu, co przy kompresji: wtyczka przejmuje trasy `{ websocket: true }` hookiem
+  // `onRoute`, więc musi stać ZANIM wejścia kanału powstaną. `maxPayload` to limit
+  // ramki od klienta sprawdzany przed parsowaniem - od klienta przychodzi wyłącznie
+  // uwierzytelnienie i podtrzymanie (K2), więc cztery kilobajty są z zapasem.
+  const liveTiming: LiveTiming = { ...LIVE_TIMING, ...options.liveTiming };
+  await app.register(websocket, { options: { maxPayload: liveTiming.maxPayload } });
+
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu
   // ciasteczek (`secret`) - wartością jest podpisany JWT, więc drugi podpis nad
@@ -535,6 +564,7 @@ export async function buildServer(
   registerPreviewRoutes(app, deps.previews, memberGate);
   registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, deps.bookingOrders, memberGate);
   registerOrderRoutes(app, deps.orders, deps.groupQueries, deps.bookingOrders, memberGate);
+  registerLiveRoute(app, deps.live, memberGate, liveTiming, deps.clock);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -553,6 +583,7 @@ export async function buildServer(
   };
 
   registerAdminAuthRoutes(app, deps.auth, deps.passwords, deps.googleWebClientId, gate);
+  registerAdminLiveRoute(app, deps.live, gate, deps.liveOrigin, liveTiming, deps.clock);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
   registerAdminMeWatchRoutes(app, deps.aircraftCards, deps.aircraftWatch, gate);

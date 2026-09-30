@@ -577,6 +577,9 @@ const app = await buildServer({
   approvals,
   orders,
   bookingOrders,
+  live,
+  // Origin panelu - jedyny, z którego wolno otworzyć kanał panelu (`http/routes/admin/live.ts`).
+  liveOrigin: new URL(publicBaseUrl).origin,
   groupQueries: new MemberGroupQueries(db, memberGroups),
   adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
   notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),

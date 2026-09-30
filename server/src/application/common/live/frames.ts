@@ -38,3 +38,20 @@ export function readFrame(orgId: string, body: Record<string, unknown>): LiveFra
 export function byeFrame(reason: LiveByeReason): LiveFrame {
   return { v: LIVE_VERSION, type: 'bye', reason };
 }
+
+/**
+ * Powitanie po uwierzytelnieniu - sesja, do której należy połączenie, i czas serwera
+ * (klient widzi rozjazd zegara bez osobnego żądania).
+ */
+export function helloFrame(sessionId: string | null, at: Date): LiveFrame {
+  return { v: LIVE_VERSION, type: 'hello', session: sessionId, serverTime: at.toISOString() };
+}
+
+/** Podtrzymanie połączenia - w obie strony (§3.2). */
+export function pingFrame(): LiveFrame {
+  return { v: LIVE_VERSION, type: 'ping' };
+}
+
+export function pongFrame(): LiveFrame {
+  return { v: LIVE_VERSION, type: 'pong' };
+}

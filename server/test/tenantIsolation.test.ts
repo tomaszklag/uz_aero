@@ -26,6 +26,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, seedRefresh, TEST_BASE_URL, testHarness } from './helpers.ts';
+import { connectLive, sendFrame, type LiveInbox } from './liveClients.ts';
+import { panelSession } from './routeClients.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_SHEETS_KEY, ORG_B, ORG_B_SHEETS_KEY, seedBetaFleet } from './testWorld.ts';
 
@@ -636,6 +638,48 @@ function orderCases(prefix: '' | '/admin/api'): Record<string, Probe> {
 }
 
 const groupIds = (res: { json(): { groups: { id: string }[] } }): string[] => res.json().groups.map((g) => g.id);
+
+let liveNote = 0;
+
+/**
+ * Kanał klubu (4.0.0, epik Z-E #246, `docs/kanal-klubu.md` §5): połączenie uwierzytelnione
+ * w ALFIE nie dostaje ani sygnału o zmianie w BECIE, ani wiadomości z rozmowy Bety, choć
+ * wszystko idzie przez jeden rejestr połączeń - a to samo z Alfy dostaje (kontrola
+ * pozytywna). Zmiany to prawdziwe zapisy obu klubów: notatka zlecenia za każdym razem inna,
+ * bo zapis bez zmiany niczego nie ogłasza, i wiadomość w wątku, w którym autor zlecenia
+ * rozmawia z adresatem.
+ */
+async function expectLiveIsolation(w: World, inbox: LiveInbox): Promise<void> {
+  const post = (token: string, url: string, method: 'PATCH' | 'POST', payload: object) =>
+    w.app.inject({ method, url, headers: bearer(token), payload });
+  const next = () => (liveNote += 1);
+
+  expect((await post(w.b, '/orders/order-b', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.b, '/orders/order-b/threads/BPI/messages', 'POST', {
+        id: `live-msg-b-${next()}`,
+        body: 'wiadomosc-beta z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+  expect((await post(w.a, '/orders/order-a', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.a, '/orders/order-a/threads/PWI/messages', 'POST', {
+        id: `live-msg-a-${next()}`,
+        body: 'wiadomosc-alfa z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+
+  await inbox.waitFor((f) => f.type === 'changed' && (f.topics as string[]).includes('order:order-a'));
+  await inbox.waitFor((f) => f.type === 'message' && f.orderId === 'order-a');
+  for (const frame of inbox.frames) {
+    const text = JSON.stringify(frame);
+    for (const marker of B_MARKERS) expect(text, `ramka kanału zdradza „${marker}"`).not.toContain(marker);
+  }
+}
 
 /** Grupy klubu (4.0.0, issue #245): odczyt na obu powierzchniach, zapis wyłącznie w panelu. */
 function groupCases(): Record<string, Probe> {
@@ -2209,6 +2253,26 @@ const CASES: Record<string, Probe> = {
   ...orderCases(''),
   ...orderCases('/admin/api'),
   ...groupCases(),
+
+  // ── kanał klubu (4.0.0, epik Z-E #246) ──────────────────────────────────────
+  'GET /live': async (w) => {
+    const { ws, inbox } = await connectLive(w.app, '/live');
+    sendFrame(ws, { type: 'auth', token: w.a });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
+  },
+
+  'GET /admin/api/live': async (w) => {
+    const session = await panelSession(w.app, 'AKO');
+    const { ws, inbox } = await connectLive(w.app, '/admin/api/live', {
+      cookie: session.cookie ?? '',
+      origin: new URL(TEST_BASE_URL).origin,
+    });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
+  },
 };
 
 /**
