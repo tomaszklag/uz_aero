@@ -25,6 +25,7 @@ import { OrderCommands, type OrderDraft } from '../src/application/common/comman
 import { OrderResponseCommands } from '../src/application/common/commands/orderResponses.ts';
 import { ThreadCommands } from '../src/application/common/commands/threads.ts';
 import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
+import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
 import { OrderSignals } from '../src/application/common/notify/orderSignals.ts';
 import type { OrderActor } from '../src/application/common/orderAccess.ts';
@@ -145,7 +146,8 @@ export async function orderWorld(): Promise<OrderWorld> {
   const watching = new AircraftWatching(new PgAircraftWatchesRepo(), aircraft, notifier);
   const records = new OrderRecords(ordersRepo, bookings, recipients);
   const seating = new OrderSeating(ordersRepo, bookings);
-  const signals = new OrderSignals(live);
+  const clubSignals = new ClubSignals(live, db, clubs, new PgSessionsProjection());
+  const signals = new OrderSignals(live, clubSignals);
   const orderClock = new OrderClock(db, records, ordersRepo, bookings, changes, clubs, notifier, signals, randomUUID, clock, watching);
 
   return {
@@ -166,7 +168,7 @@ export async function orderWorld(): Promise<OrderWorld> {
     threadQueries: new ThreadQueries(db, records, threadsRepo, messages),
     groups: new MemberGroupCommands(new AuditedWrite(db, new PgAdminAuditRepo(), clock), groupsRepo, members, clock),
     groupQueries: new MemberGroupQueries(db, groupsRepo),
-    clockJob: new BookingClockJob(db, bookings, new PgSessionsProjection(), clock, notifier, watching, orderClock),
+    clockJob: new BookingClockJob(db, bookings, new PgSessionsProjection(), clock, notifier, clubSignals, watching, orderClock),
   };
 }
 

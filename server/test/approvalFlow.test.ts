@@ -35,6 +35,7 @@ import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalSte
 import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentClubSignals } from './fakeLiveSignals.ts';
 import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
@@ -258,7 +259,15 @@ describe('dwie decyzje naraz (przegląd bezpieczeństwa 3.1.0)', () => {
       }
       return rows;
     };
-    const flow = new ApprovalFlow(db, new PgApprovalStepsRepo(), gated, new PgBookingsRepo(), silentNotifier(db), clock);
+    const flow = new ApprovalFlow(
+      db,
+      new PgApprovalStepsRepo(),
+      gated,
+      new PgBookingsRepo(),
+      silentNotifier(db),
+      clock,
+      silentClubSignals(db),
+    );
     return { flow, atGate, release };
   }
 
@@ -729,6 +738,7 @@ describe('termin nadszedł, a decyzji nie ma (§11.5)', () => {
         new PgSessionsProjection(),
         { now: () => now },
         silentNotifier(db),
+        silentClubSignals(db),
       ).run();
 
     // Przed terminem nic się nie dzieje - sprawa ma jeszcze czas.

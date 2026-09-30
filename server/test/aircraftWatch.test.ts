@@ -16,6 +16,7 @@ import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftCo
 import { PgAircraftWatchesRepo } from '../src/infrastructure/pg/common/aircraftWatchesRepo.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentClubSignals } from './fakeLiveSignals.ts';
 import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
@@ -140,6 +141,7 @@ function clockJob(db: Db, now: number): BookingClockJob {
     new PgSessionsProjection(),
     { now: () => new Date(now) },
     notifier,
+    silentClubSignals(db),
     new AircraftWatching(new PgAircraftWatchesRepo(), new PgAircraftConfigRepo(), notifier),
   );
 }

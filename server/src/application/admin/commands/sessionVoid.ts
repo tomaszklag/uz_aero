@@ -43,6 +43,7 @@ import type {
 import { aircraftReleased } from '../../common/notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
 import type { RecordedNotice } from '../../common/notify/notifier.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -119,6 +120,8 @@ export class AdminSessionVoidCommands {
     private readonly clock: Clock,
     /** Generator uuid - funkcja, nie port: nie ma tu adaptera do podmiany. */
     private readonly newId: () => string,
+    /** Kanał klubu (4.0.0): dziennik, karta samolotu i „Do sprawdzenia" na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205; §5.4): unieważnienie operacji W TOKU
      * rodzi obserwującym „zdana" z `closedBy: 'admin'` i powodem, bez odczytów. Bez tego
@@ -252,9 +255,20 @@ export class AdminSessionVoidCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(actor.orgId, input.sessionUuid),
+        reexport: await this.afterCommit(actor.orgId, input.sessionUuid),
       },
     };
+  }
+
+/**
+   * PO COMMICIE: karta dnia, potem kanał klubu - dziennik, karta samolotu i „Do
+   * sprawdzenia" mają zobaczyć stan łącznie z nową rewizją karty.
+   */
+  private async afterCommit(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
+    const outcome = await this.reexport(orgId, sessionUuid);
+    await this.signals.operations(orgId, [sessionUuid]);
+    this.signals.attention(orgId);
+    return outcome;
   }
 
   /**

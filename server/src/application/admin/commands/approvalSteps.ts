@@ -32,6 +32,7 @@ import type {
   Clock,
 } from '../../common/ports.ts';
 import type { ApprovalFlow, PathReconcile } from '../../common/commands/approvals.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { Notifier } from '../../common/notify/notifier.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, PilotsAdminPort } from '../ports.ts';
@@ -74,6 +75,8 @@ export class ApprovalStepsCommands {
     private readonly notifier: Notifier,
     private readonly newId: () => string,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): zmiana ścieżki przerysowuje karty czekających rezerwacji. */
+    private readonly signals: ClubSignals,
   ) {}
 
   /**
@@ -127,6 +130,7 @@ export class ApprovalStepsCommands {
       // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
       // awaria ma kosztować ciszę w telefonie, a nie niezapisaną ścieżkę.
       await this.notifier.wake(actor.orgId, reconciled.notices);
+      await this.signals.bookings(actor.orgId, reconciled.touched.map((booking) => ({ now: booking })));
       return {
         ok: true,
         steps,

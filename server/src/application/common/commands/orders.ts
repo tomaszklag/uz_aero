@@ -199,7 +199,7 @@ export class OrderCommands {
       // Budzik i sygnał PO commicie: push jest budzikiem, a nie treścią (§12).
       if (written.created) {
         await this.notifier.wake(orgId, written.notices);
-        this.signals.changed(orgId, written.loaded);
+        await this.signals.changed(orgId, written.loaded);
       }
       return { ok: true as const, loaded: written.loaded, created: written.created };
     });
@@ -256,7 +256,7 @@ export class OrderCommands {
 
       await this.notifier.wake(orgId, written.notices);
       if (written.watchNotices.length > 0) await watching?.wake(orgId, written.watchNotices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
       return { ok: true as const, loaded: written.loaded, created: false };
     });
   }

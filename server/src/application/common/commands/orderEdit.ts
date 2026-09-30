@@ -340,13 +340,19 @@ export class OrderEditCommands {
           }
         }
 
-        return { loaded: fresh, notices: recorded, watchNotices, removedNow };
+        // Termin i maszyna SPRZED edycji - stara doba kalendarza i stara karta samolotu
+        // też mają się odświeżyć, gdy zlecenie się z nich wyprowadziło.
+        const previous =
+          changed.term != null || changed.aircraft != null
+            ? { aircraftId: before.aircraftId, startsAt: before.startsAt, endsAt: before.endsAt }
+            : null;
+        return { loaded: fresh, notices: recorded, watchNotices, removedNow, previous };
       });
       if (written == null) return null;
 
       await this.notifier.wake(orgId, written.notices);
       if (written.watchNotices.length > 0) await watching?.wake(orgId, written.watchNotices);
-      this.signals.changed(orgId, written.loaded, written.removedNow);
+      await this.signals.changed(orgId, written.loaded, written.removedNow, written.previous);
       return { ok: true as const, loaded: written.loaded, created: false };
     });
   }

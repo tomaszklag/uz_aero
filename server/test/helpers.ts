@@ -73,6 +73,7 @@ import { FakeMail } from './fakeMail.ts';
 import { FakePush } from './fakePush.ts';
 import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from '../src/application/admin/commands/approvalSteps.ts';
+import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
 import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
 import { AircraftWatchCommands } from '../src/application/common/commands/aircraftWatch.ts';
@@ -427,6 +428,9 @@ const lastSeen = new LastSeenThrottle();
     new PgClubSettingsRepo(),
     randomUUID,
   );
+  // Sygnały zmian klubu przez atrapę, która ZAPISUJE - testy pytają, kto dostał który
+  // temat - i przekazuje dalej do prawdziwego rejestru połączeń.
+  const clubSignals = new ClubSignals(live, db, new PgClubSettingsRepo(), sessions);
   // Obserwowanie samolotu (issue #205) - prawdziwy adapter i ta sama odpowiedź na „kogo
   // obudzić", co w produkcji; budzik jest atrapą jak przy ścieżce akceptacji.
   const aircraftWatches = new PgAircraftWatchesRepo();
@@ -438,6 +442,7 @@ const lastSeen = new LastSeenThrottle();
     bookingsRepo,
     notifier,
     clock,
+    clubSignals,
   );
   const clubSettingsRepo = new PgClubSettingsRepo();
   const flightOrders = new PgFlightOrdersRepo();
@@ -449,7 +454,7 @@ const lastSeen = new LastSeenThrottle();
   const threadMessages = new PgThreadMessagesRepo();
   const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
   const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-  const orderSignals = new OrderSignals(live);
+  const orderSignals = new OrderSignals(live, clubSignals);
   // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
   // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
   const orders: OrderDeps = {
@@ -523,7 +528,7 @@ const lastSeen = new LastSeenThrottle();
       events,
       aircraftReadings,
     ),
-    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo, watching),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, clubSignals, bookingsRepo, watching),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
@@ -541,7 +546,7 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
-    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, clubSignals, watching),
     calendar,
     approvals,
     orders,
@@ -584,6 +589,7 @@ const lastSeen = new LastSeenThrottle();
       notifier,
       randomUUID,
       clock,
+      clubSignals,
     ),
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
@@ -595,7 +601,7 @@ const lastSeen = new LastSeenThrottle();
     // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
     // „deaktywacja odcina natychmiast" (`roles.test.ts`, `adminAccounts.test.ts`).
     pilots,
-    adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
+    adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock, clubSignals),
     adminSessionQueries: new AdminSessionQueries(
       db,
       adminSessionsRepo,
@@ -655,7 +661,7 @@ const lastSeen = new LastSeenThrottle();
     // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
-    adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+    adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID, clubSignals),
     // Odczyty administratora (issue #81) - ta sama brama audytu i ten sam adapter,
     // z którego `GET /reference` liczy przekazanie.
     adminAircraftReadings: new AdminAircraftReadingCommands(
@@ -663,12 +669,13 @@ const lastSeen = new LastSeenThrottle();
       adminFleetRepo,
       aircraftReadings,
       clock,
+      clubSignals,
     ),
     adminFleetQueries,
     // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
     // ingest - także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
     // Podgląd karty czyta ZAWSZE z bazy (`pgSheets`), tak jak `GET /sheets/:tab`.
-    adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+    adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock, clubSignals),
     adminExportQueries: new AdminExportQueries(db, adminExportsRepo, pgSheets),
     // `randomUUID` jak w produkcji - uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
@@ -681,6 +688,7 @@ const lastSeen = new LastSeenThrottle();
       flags,
       clock,
       randomUUID,
+      clubSignals,
     ),
     adminCorrectionQueries: new AdminCorrectionQueries(
       db,
@@ -699,6 +707,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      clubSignals,
       watching,
     ),
     // Zakończenie administracyjne (issue #81) - jak unieważnienie, z tym samym eksporterem.
@@ -710,6 +719,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      clubSignals,
       watching,
     ),
     // Odczyt dziennika jedzie PRAWDZIWYM adapterem także wtedy, gdy `options.audit`
@@ -766,6 +776,7 @@ const lastSeen = new LastSeenThrottle();
       approvals,
       notifier,
       orderBookings,
+      clubSignals,
       watching,
     ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),

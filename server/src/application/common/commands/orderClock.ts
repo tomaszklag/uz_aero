@@ -130,7 +130,7 @@ export class OrderClock {
       expired += 1;
       await this.notifier.wake(candidate.orgId, written.notices);
       if (written.watchNotices.length > 0) await this.watching?.wake(candidate.orgId, written.watchNotices);
-      this.signals.changed(candidate.orgId, written.loaded);
+      await this.signals.changed(candidate.orgId, written.loaded);
     }
     return expired;
   }

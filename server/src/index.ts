@@ -55,6 +55,7 @@ import { AircraftCardQueries } from './application/common/queries/aircraftCard.t
 import { PgAircraftWatchesRepo } from './infrastructure/pg/common/aircraftWatchesRepo.ts';
 import { ApprovalFlow } from './application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from './application/admin/commands/approvalSteps.ts';
+import { ClubSignals } from './application/common/notify/clubSignals.ts';
 import { Notifier } from './application/common/notify/notifier.ts';
 import { NotificationQueries } from './application/mobile/queries/notifications.ts';
 import { PgApprovalStepsRepo } from './infrastructure/pg/common/approvalStepsRepo.ts';
@@ -432,6 +433,9 @@ const pushTokensRepo = new PgPushTokensRepo(clock);
 // powiadomień (ramka albo push, K4) spotykają się tutaj.
 const live = new LiveRegistry();
 const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, live, clubSettings, randomUUID);
+// Sygnały zmian klubu (`docs/kanal-klubu.md` §4): kalendarz, karta samolotu, dziennik
+// i „Do sprawdzenia" - JEDNA reguła „kto dostaje co" dla wszystkich producentów.
+const clubSignals = new ClubSignals(live, db, clubSettings, sessions);
 // Obserwowanie samolotu (3.2.0, issue #205): jeden adapter dla telefonu i panelu, jedna
 // odpowiedź na „kogo obudzić" dla ingestu, rezerwacji, zakończenia z panelu i zegara.
 const aircraftWatches = new PgAircraftWatchesRepo();
@@ -443,6 +447,7 @@ const approvals = new ApprovalFlow(
   bookingsRepo,
   notifier,
   clock,
+  clubSignals,
 );
 // Zlecenia na lot (4.0.0, issue #245): adaptery WSPÓLNE dla telefonu i panelu - zlecenie
 // wysyła się i prowadzi z obu. Rezerwacja zlecenia to zwykły wiersz `bookings`, więc
@@ -456,7 +461,7 @@ const orderThreads = new PgThreadsRepo();
 const threadMessages = new PgThreadMessagesRepo();
 const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
 const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-const orderSignals = new OrderSignals(live);
+const orderSignals = new OrderSignals(live, clubSignals);
 const orders: OrderDeps = {
   orders: new OrderCommands(
     db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
@@ -552,7 +557,7 @@ const app = await buildServer({
     events,
     aircraftReadings,
   ),
-  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo, watching),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, clubSignals, bookingsRepo, watching),
   // Droga POWROTNA outboxa (§4.9, issue #32) - własny adapter obok `PgEventsStore`,
   // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
   // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
@@ -573,7 +578,7 @@ const app = await buildServer({
   bugReports: new BugReportCommands(db, bugReports),
   // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
   // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
-  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, clubSignals, watching),
   calendar,
   approvals,
   orders,
@@ -620,6 +625,7 @@ const app = await buildServer({
     notifier,
     randomUUID,
     clock,
+    clubSignals,
   ),
   // Podpowiedzi zadania dnia (issue #14) - własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
@@ -631,7 +637,7 @@ const app = await buildServer({
   // Brama tras panelu czyta konto przy KAŻDYM żądaniu - bez tego „Deaktywuj" na A06
   // odcinałby dostęp dopiero po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).
   pilots,
-  adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
+  adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock, clubSignals),
   adminSessionQueries: new AdminSessionQueries(
     db,
     adminSessionsRepo,
@@ -695,7 +701,7 @@ const app = await buildServer({
   // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki - rejestracja jest
   // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
   // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.
-  adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+  adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID, clubSignals),
   // Odczyty wpisane ręką administratora (issue #81) - osobna komenda i osobny wpis
   // audytu, bo to nie jest konfiguracja jednostki, tylko decyzja o jednej chwili.
   adminAircraftReadings: new AdminAircraftReadingCommands(
@@ -703,6 +709,7 @@ const app = await buildServer({
     adminFleetRepo,
     aircraftReadings,
     clock,
+    clubSignals,
   ),
   // Zapytania floty dostają projekcję sesji, bo claim i ostatni odczyt liczników są
   // REGUŁĄ (`application/common/aircraftStateView.ts`) - tą samą, którą `GET /reference`
@@ -712,7 +719,7 @@ const app = await buildServer({
   // Eksporty (A05). Komenda ponowienia woła TEGO SAMEGO `exporter`, którego używa
   // ingest i rozwiązanie flagi - ponowienie jest powtórzeniem tej samej operacji,
   // a nie jej wersją uprzywilejowaną, więc bramki §4.7 obowiązują ją tak samo.
-  adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+  adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock, clubSignals),
   // Zapytania monitora dostają `SheetsReadPort`, bo podgląd karty w panelu czyta tę
   // samą treść, co `GET /sheets/:tab` z telefonu - inaczej panel pokazywałby drugą,
   // własną wersję dokumentu klubu.
@@ -730,6 +737,7 @@ const app = await buildServer({
     flags,
     clock,
     randomUUID,
+    clubSignals,
   ),
   // Unieważnienie CAŁEJ sesji (2026-08-31). Ten sam `exporter`, co korekta i ingest:
   // karta doby ma po wycofaniu wpisu powstać od nowa, bez niego. Flag łańcucha NIE
@@ -742,6 +750,7 @@ const app = await buildServer({
     exporter,
     clock,
     randomUUID,
+    clubSignals,
     watching,
   ),
   // Zakończenie administracyjne operacji osieroconej (issue #81) - te same zależności,
@@ -754,6 +763,7 @@ const app = await buildServer({
     exporter,
     clock,
     randomUUID,
+    clubSignals,
     watching,
   ),
   // Podgląd korekty dostaje `db` wprost i NIE dostaje `AuditedWrite` - nie ma czym
@@ -825,6 +835,7 @@ const app = await buildServer({
     approvals,
     notifier,
     orderBookings,
+    clubSignals,
     watching,
   ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
@@ -850,7 +861,7 @@ const app = await buildServer({
 // okresowy w tym serwerze. Startuje po `listen`, bo jest porządkowaniem kalendarza,
 // a nie warunkiem przyjmowania żądań.
 if (env.BOOKING_RELEASE !== '0') {
-  new BookingClockJob(db, bookingsRepo, sessions, clock, notifier, watching, orderClock).start();
+  new BookingClockJob(db, bookingsRepo, sessions, clock, notifier, clubSignals, watching, orderClock).start();
 }
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

@@ -43,6 +43,7 @@ import type {
   NewApproval,
   Queryable,
 } from '../ports.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import {
   approvalRequested,
@@ -127,6 +128,12 @@ export interface PathReconcile {
   moved: number;
   /** Zapisane wiadomości do budzika PO commicie - zostają wołającemu, jak przy `recordPlan`. */
   notices: RecordedNotice[];
+  /**
+   * Sprawy w toku, których karta się zmieniła - dla kanału klubu PO commicie. Ścieżka
+   * jest zawsze bieżąca (§11.2), więc jej zmiana przerysowuje kroki KAŻDEJ czekającej
+   * rezerwacji, nie tylko potwierdzonej albo przekierowanej.
+   */
+  touched: BookingRecord[];
 }
 
 export class ApprovalFlow {
@@ -137,6 +144,8 @@ export class ApprovalFlow {
     private readonly bookings: BookingsPort,
     private readonly notifier: Notifier,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): decyzja przerysowuje kartę rezerwacji i pasek w kalendarzu. */
+    private readonly signals: ClubSignals,
   ) {}
 
   /**
@@ -248,10 +257,12 @@ export class ApprovalFlow {
     const at = this.clock.now();
     const out = { confirmed: 0, moved: 0 };
     const drafts: NotificationDraft[] = [];
+    const touched: BookingRecord[] = [];
 
     for (const booking of await this.bookings.pending(tx, orgId)) {
       const requester = booking.pilotId;
       if (requester == null) continue;
+      touched.push(booking);
       const had = await this.approvals.listFor(tx, orgId, booking.id);
       const wasAt = currentStep(before, had);
 
@@ -288,7 +299,7 @@ export class ApprovalFlow {
       out.moved += 1;
     }
 
-    return { ...out, notices: await this.notifier.record(tx, orgId, drafts, at) };
+    return { ...out, touched, notices: await this.notifier.record(tx, orgId, drafts, at) };
   }
 
   /**
@@ -509,6 +520,7 @@ export class ApprovalFlow {
     if (!written.ok) return written;
 
     await this.notifier.wake(orgId, written.notices);
+    await this.signals.booking(orgId, written.row);
     return { ok: true, booking: written.row, view: await this.view(orgId, bookingId) };
   }
 }

@@ -11,30 +11,51 @@
  *  - `order:<id>` i `orders` - autor, adresaci niewykreśleni, przydzieleni i każdy
  *    z `reservations.manage` (prowadzą wszystkie zlecenia, pkt 20). Kształt karty zależy
  *    od widza, więc sygnał nie niesie treści - ekran pobiera ją RESTem (§13.1);
- *  - `booking:<id>` - cały klub: zlecenie JEST rezerwacją i stoi w kalendarzu każdego.
- *    Tematu doby kalendarza (`calendar:<doba>`) zlecenie nie ogłasza samo - dobę liczy
- *    się strefą klubu dla KAŻDEJ rezerwacji, nie tylko zlecenia, i to jest zakres Z-E;
+ *  - `booking:<id>`, `calendar:<doba klubu>` i `aircraft:<id>` - jak przy KAŻDEJ
+ *    rezerwacji, bo zlecenie JEST rezerwacją: tematy terminu liczy `ClubSignals` (doba
+ *    strefą klubu, karta samolotu dla obserwujących). Otwarcie karty przez adresata
+ *    („Odczytane") terminu nie zmienia i ogłasza WYŁĄCZNIE tematy zlecenia (`seen`);
  *  - `message` i `read` - uczestnicy wątku (autor i adresat) i czytający z
  *    `reservations.manage` (pkt 19).
  */
 
+import { topic } from '../live/topics.ts';
 import type { LoadedOrder } from '../orderRecords.ts';
 import type { LiveAudience, LiveSignalsPort, ThreadMessageRecord } from '../ports.ts';
+import type { ClubSignals, TermSpan } from './clubSignals.ts';
 
 const MANAGERS: LiveAudience = { kind: 'capability', capability: 'reservations.manage' };
 
 export class OrderSignals {
-  constructor(private readonly live: LiveSignalsPort) {}
+  constructor(
+    private readonly live: LiveSignalsPort,
+    private readonly club: ClubSignals,
+  ) {}
 
   /**
-   * Zmiana zlecenia. `extra` - osoby, którym ta zmiana ODEBRAŁA zlecenie: nie są już
-   * adresatami niewykreślonymi, a ich otwarta karta ma się odświeżyć do „cofnięte".
+   * Zmiana zlecenia i jego terminu. `extra` - osoby, którym ta zmiana ODEBRAŁA zlecenie:
+   * nie są już adresatami niewykreślonymi, a ich otwarta karta ma się odświeżyć do
+   * „cofnięte". `before` - termin i maszyna SPRZED edycji, gdy się zmieniły: stara doba
+   * i stara karta samolotu też mają się odświeżyć.
    */
-  changed(orgId: string, loaded: LoadedOrder, extra: readonly string[] = []): void {
+  async changed(
+    orgId: string,
+    loaded: LoadedOrder,
+    extra: readonly string[] = [],
+    before: TermSpan | null = null,
+  ): Promise<void> {
+    this.seen(orgId, loaded, extra);
+    await this.club.booking(orgId, loaded.booking, before);
+  }
+
+  /**
+   * Wyłącznie tematy zlecenia - „Odczytane" u prowadzącego. Termin się nie zmienił, więc
+   * kalendarz całego klubu nie ma czego czytać od nowa.
+   */
+  seen(orgId: string, loaded: LoadedOrder, extra: readonly string[] = []): void {
     this.safely(() => {
       const people = audienceOf(loaded, extra);
-      this.live.changed(orgId, [`order:${loaded.order.id}`, 'orders'], [{ kind: 'people', pilotIds: people }, MANAGERS]);
-      this.live.changed(orgId, [`booking:${loaded.booking.id}`], [{ kind: 'club' }]);
+      this.live.changed(orgId, [topic.order(loaded.order.id), topic.orders], [{ kind: 'people', pilotIds: people }, MANAGERS]);
     });
   }
 

@@ -48,8 +48,10 @@ import type { DayExporter } from '../../common/export/dayExporter.ts';
 import { aircraftEngineStarted, aircraftReleased } from '../../common/notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
 import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { RecordedNotice } from '../../common/notify/notifier.ts';
 import type {
+  BookingRecord,
   BookingsPort,
   AircraftConfigPort,
   Clock,
@@ -107,6 +109,11 @@ export class IngestCommands {
      */
     private readonly norms: ConsumptionNormPorts | null,
     private readonly clock: Clock,
+    /**
+     * Kanał klubu (4.0.0): dziennik, karta samolotu i „Do sprawdzenia" odświeżają się na
+     * żywo po każdej paczce, która coś do rejestru wniosła.
+     */
+    private readonly signals: ClubSignals,
     /**
      * Rezerwacje (3.0.0) - `null` = wyłączone. Ingest dotyka ich w JEDNYM miejscu
      * i w jedną stronę: `session_claim` z `reservationId` przestawia rezerwację na
@@ -182,7 +189,7 @@ export class IngestCommands {
       }
     }
 
-    const { closedNow, notices, ...result } = await this.db.transaction(async (tx) => {
+    const { closedNow, notices, changed, fulfilled, ...result } = await this.db.transaction(async (tx) => {
       // Blokada advisory per sesja (audyt: lost update) - dwie równoległe paczki tej
       // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
       // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
@@ -223,6 +230,15 @@ export class IngestCommands {
         toInsert,
         sourceDevice,
       );
+      // Operacje, do których ta paczka NAPRAWDĘ coś wniosła - ponowiona paczka (słabe
+      // łącze) niczego nie zmienia i nie ma o czym ogłaszać na kanale klubu.
+      const insertedUuids = new Set(inserted);
+      const changed = [
+        ...new Set(toInsert.filter((e) => insertedUuids.has(e.uuid)).map((e) => e.sessionUuid)),
+      ];
+      // Rezerwacje zrealizowane tą paczką - wiersz PO zapisie, czytany w tej samej
+      // transakcji: sygnał po commicie nie ma już czego czytać i czym się wywrócić.
+      const fulfilled: BookingRecord[] = [];
 
       // Projekcje przeliczamy per DOTKNIĘTA sesja - pełny strumień, nie przyrost.
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
@@ -320,13 +336,16 @@ export class IngestCommands {
           if (event.type !== 'session_claim') continue;
           const id = (event.payload as { reservationId?: string | null }).reservationId;
           if (typeof id !== 'string' || id === '') continue;
-          await this.bookings.fulfil(
+          const done = await this.bookings.fulfil(
             tx,
             orgId,
             id,
             { sessionUuid: event.sessionUuid, pilotId: event.picId, aircraftId: event.aircraftId },
             this.clock.now(),
           );
+          if (!done) continue;
+          const row = await this.bookings.byId(tx, orgId, id);
+          if (row != null) fulfilled.push(row);
         }
       }
       /*
@@ -405,7 +424,7 @@ export class IngestCommands {
       }
 
       const flags = await openFlagsFor(this.flags, tx, orgId, sessionUuids);
-      return { accepted, duplicates, flags, closedNow, notices, withheld: [...withheld] };
+      return { accepted, duplicates, flags, closedNow, notices, changed, fulfilled, withheld: [...withheld] };
     });
 
     // Budzik obserwujących PO commicie (obserwowanie §5): push jest budzikiem, nie
@@ -443,6 +462,13 @@ export class IngestCommands {
         }
       }
     }
+
+    // Kanał klubu PO karcie dnia i normie (§4): dziennik, karta samolotu i „Do
+    // sprawdzenia" mają zobaczyć stan, który ta paczka zostawiła - łącznie z nową
+    // rewizją karty. Rezerwacja zrealizowana przejęciem zmienia stan w kalendarzu.
+    await this.signals.operations(orgId, changed);
+    if (changed.length > 0) this.signals.attention(orgId);
+    await this.signals.bookings(orgId, fulfilled.map((booking) => ({ now: booking })));
 
     return { ok: true, result };
   }

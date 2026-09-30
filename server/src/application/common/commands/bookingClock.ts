@@ -66,6 +66,7 @@ import {
 } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import { bookingExpired, type NotificationDraft } from '../notify/bookingNotices.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type { OrderClock } from './orderClock.ts';
 
@@ -92,6 +93,8 @@ export class BookingClockJob {
     private readonly sessions: SessionsProjectionPort,
     private readonly clock: Clock,
     private readonly notifier: Notifier,
+    /** Kanał klubu (4.0.0): zwolniony i wygaszony termin znika z kalendarza na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0) - `null` = wyłączone: przebieg dalej zwalnia
      * i wygasza, tylko nikogo o maszynie nie budzi. Stempel przypomnienia pada mimo to
@@ -158,6 +161,7 @@ export class BookingClockJob {
 
       released += 1;
       await this.watching?.wake(candidate.orgId, notices);
+      await this.signals.booking(candidate.orgId, closed);
     }
     return { checked: candidates.length, released };
   }
@@ -181,7 +185,7 @@ export class BookingClockJob {
       if (booking == null || booking.status !== 'pending' || booking.pilotId == null) continue;
 
       const notice = bookingExpired(booking, booking.pilotId);
-      const recorded = await this.db.transaction(async (tx) => {
+      const written = await this.db.transaction(async (tx) => {
         const row = await this.bookings.close(tx, candidate.orgId, candidate.id, {
           status: 'expired',
           at: now,
@@ -190,12 +194,13 @@ export class BookingClockJob {
         if (row == null) return null;
         // Wiadomość TĄ SAMĄ transakcją, co wygaszenie: pilot, który stracił termin,
         // ma się o tym dowiedzieć zawsze, a nie „jeśli drugi zapis też się uda".
-        return this.notifier.record(tx, candidate.orgId, [notice], now);
+        return { row, recorded: await this.notifier.record(tx, candidate.orgId, [notice], now) };
       });
-      if (recorded == null) continue;
+      if (written == null) continue;
 
       expired += 1;
-      await this.notifier.wake(candidate.orgId, recorded);
+      await this.notifier.wake(candidate.orgId, written.recorded);
+      await this.signals.booking(candidate.orgId, written.row);
     }
     return expired;
   }

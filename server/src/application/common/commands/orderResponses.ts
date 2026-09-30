@@ -83,7 +83,7 @@ export class OrderResponseCommands {
     const firstInRevision = row.seenRevision !== loaded.order.revision;
     const editedAt = loaded.order.editedAt;
     const firstAfterEdit = editedAt != null && (row.lastSeenAt == null || row.lastSeenAt < editedAt);
-    if (firstInRevision || firstAfterEdit) this.signals.changed(orgId, loaded);
+    if (firstInRevision || firstAfterEdit) this.signals.seen(orgId, loaded);
     return { ok: true };
   }
 
@@ -159,7 +159,7 @@ export class OrderResponseCommands {
     if ('refusal' in written) return { ok: false, refusal: written.refusal };
     if (written.changed) {
       await this.notifier.wake(orgId, written.notices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
     }
     return { ok: true, outcome: written.outcome, loaded: written.loaded };
   }
@@ -202,7 +202,7 @@ export class OrderResponseCommands {
       });
       if (written == null) return null;
       await this.notifier.wake(orgId, written.notices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
       return { ok: true as const, loaded: written.loaded, created: false };
     });
   }

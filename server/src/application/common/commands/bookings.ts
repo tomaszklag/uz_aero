@@ -33,6 +33,7 @@ import type { ApprovalFlow } from './approvals.ts';
 import type { OrderBookingCommands } from './orderBookings.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type {
   AircraftConfigPort,
@@ -76,6 +77,8 @@ export class BookingCommands {
      * rezygnacją z fotela albo odwołaniem zlecenia - decyduje, kim jest odwołujący.
      */
     private readonly orderBookings: OrderBookingCommands,
+    /** Kanał klubu (4.0.0): termin na osi kalendarza i na karcie samolotu odświeża się na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Odwołanie albo
      * przesunięcie terminu, o którym JUŻ przypomniano obserwującym, rodzi „odwołany lot"
@@ -144,7 +147,10 @@ export class BookingCommands {
 
     // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
     // awaria ma kosztować ciszę w telefonie, a nie utraconą rezerwację.
-    if (write.created) await this.notifier.wake(orgId, requested);
+    if (write.created) {
+      await this.notifier.wake(orgId, requested);
+      await this.signals.booking(orgId, write.booking);
+    }
     return write;
   }
 
@@ -230,6 +236,8 @@ export class BookingCommands {
     // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
     if (requested.length > 0) await this.notifier.wake(orgId, requested);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    // Przesunięcie odświeża OBIE doby i - przy zmianie maszyny - obie karty samolotu.
+    await this.signals.booking(orgId, write.booking, current);
     return write;
   }
 
@@ -290,6 +298,7 @@ export class BookingCommands {
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
     if (withdrawn.length > 0) await this.notifier.wake(orgId, withdrawn);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    await this.signals.booking(orgId, closed);
     return { ok: true, booking: closed, created: false };
   }
 }

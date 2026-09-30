@@ -7,7 +7,10 @@
  * naprawdę doszły, na tym samym harnessie.
  */
 
-import type { LiveAudience, LiveSignalsPort } from '../src/application/common/ports.ts';
+import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
+import type { Database, LiveAudience, LiveSignalsPort } from '../src/application/common/ports.ts';
+import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
+import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 
 export interface RecordedSignal {
   kind: 'changed' | 'message' | 'read';
@@ -47,4 +50,12 @@ export class FakeLiveSignals implements LiveSignalsPort {
   clear(): void {
     this.signals.length = 0;
   }
+}
+
+/**
+ * Sygnały zmian klubu na atrapie, która tylko zapisuje - dla testów, które składają
+ * komendy wprost (zegar rezerwacji, ścieżka zgód) i o kanał klubu nie pytają.
+ */
+export function silentClubSignals(db: Database): ClubSignals {
+  return new ClubSignals(new FakeLiveSignals(), db, new PgClubSettingsRepo(), new PgSessionsProjection());
 }

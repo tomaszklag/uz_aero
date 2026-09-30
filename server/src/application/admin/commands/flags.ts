@@ -17,6 +17,7 @@
 
 import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
 import type { Clock } from '../../common/ports.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, AdminFlag, FlagsAdminPort, ResolvedFlag } from '../ports.ts';
 
@@ -70,6 +71,8 @@ export class AdminFlagCommands {
     private readonly flags: FlagsAdminPort,
     private readonly exporter: DayExporter,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): zamknięty rozjazd gaśnie w „Do sprawdzenia" i przy operacji. */
+    private readonly signals: ClubSignals,
   ) {}
 
   async resolve(actor: Actor, id: number, note: string): Promise<ResolveFlagOutcome> {
@@ -116,13 +119,18 @@ export class AdminFlagCommands {
     // 2) PO COMMICIE: karty, które ta flaga blokowała. Kolejność jest tu regułą,
     //    nie stylem - eksport przed commitem utrwaliłby w dokumencie klubu dzień
     //    opisany stanem, który mógł się nie zapisać.
+    const exports = await this.reexport(actor.orgId, closed);
+    // Kanał klubu PO kartach: plakietka przy operacji i licznik „Do sprawdzenia" gasną
+    // razem ze sprawą, a karta, którą sprawa wstrzymywała, pokazuje nową rewizję.
+    await this.signals.operations(actor.orgId, closed.sessionUuids);
+    this.signals.attention(actor.orgId);
     return {
       ok: true,
       result: {
         flagId: id,
         type: closed.type,
         resolvedAt: at,
-        exports: await this.reexport(actor.orgId, closed),
+        exports,
       },
     };
   }

@@ -37,6 +37,7 @@ import { SheetsAdapterError, type DayExporter, type ExportOutcome } from '../../
 import type { Clock } from '../../common/ports.ts';
 import type { AdminExportRetryResult, ExportFailureDto } from '../contracts/exports.ts';
 import { exportListItem } from '../mappers/exportListItem.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, ExportsAdminPort } from '../ports.ts';
 
@@ -46,6 +47,8 @@ export class AdminExportCommands {
     private readonly exports: ExportsAdminPort,
     private readonly exporter: DayExporter,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): stan karty w „Do sprawdzenia" i rewizja przy operacji na żywo. */
+    private readonly signals: ClubSignals,
   ) {}
 
   /**
@@ -62,7 +65,7 @@ export class AdminExportCommands {
     const { outcome, failure } = await this.attempt(actor.orgId, sessionUuid);
     const at = this.clock.now();
 
-    return this.write.run(actor, async (tx) => {
+    const result = await this.write.run(actor, async (tx) => {
       // Stan PO próbie - czytany w transakcji śladu, więc opisuje dokładnie to, co
       // dziennik za chwilę utrwali.
       const after = await this.exports.byUuid(tx, actor.orgId, sessionUuid);
@@ -120,6 +123,10 @@ export class AdminExportCommands {
         },
       };
     });
+    // Kanał klubu PO śladzie: stan karty w „Do sprawdzenia" i rewizja przy operacji.
+    await this.signals.operations(actor.orgId, [sessionUuid]);
+    this.signals.attention(actor.orgId);
+    return result;
   }
 
   /**

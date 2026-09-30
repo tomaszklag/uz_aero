@@ -137,7 +137,7 @@ export class OrderAssignmentCommands {
       if (written == null) return null;
       if (written.changed) {
         await this.notifier.wake(orgId, written.notices);
-        this.signals.changed(orgId, written.loaded);
+        await this.signals.changed(orgId, written.loaded);
       }
       return { ok: true as const, loaded: written.loaded, created: false };
     });

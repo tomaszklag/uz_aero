@@ -39,6 +39,7 @@ import type { ApprovalFlow } from '../../common/commands/approvals.ts';
 import type { OrderBookingCommands } from '../../common/commands/orderBookings.ts';
 import { orderActorOf } from '../../common/orderAccess.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
@@ -110,6 +111,8 @@ export class AdminBookingCommands {
     private readonly notifier: Notifier,
     /** Rezerwacja zlecenia (4.0.0): odwołanie z kalendarza jest odwołaniem zlecenia (§16 pkt 9). */
     private readonly orderBookings: OrderBookingCommands,
+    /** Kanał klubu (4.0.0): termin na osi kalendarza i na karcie samolotu odświeża się na żywo. */
+    private readonly signals: ClubSignals,
     /** Obserwowanie samolotu (3.2.0): odwołanie przypomnianego terminu budzi obserwujących, bez administratora. */
     private readonly watching: AircraftWatching | null = null,
   ) {}
@@ -229,6 +232,7 @@ export class AdminBookingCommands {
       });
       if (withdrawn.length > 0) await this.notifier.wake(actor.orgId, withdrawn);
       if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
+      await this.signals.booking(actor.orgId, booking);
       return { ok: true, booking };
     } catch (err) {
       if (err instanceof OrderBookingCancelled) return this.cancelOrder(actor, err.orderId, reason);
@@ -286,6 +290,7 @@ export class AdminBookingCommands {
           },
         };
       });
+      await this.signals.booking(actor.orgId, booking);
       return { ok: true, booking };
     } catch (err) {
       return outcomeOf(err);
