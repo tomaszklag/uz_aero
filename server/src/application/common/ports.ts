@@ -1842,9 +1842,9 @@ export type LiveAudience =
  * i nigdy nie rzucają: zgubiona ramka niczego nie gubi, bo źródłem prawdy są odpowiedzi
  * REST i skrzynka, a ekran po każdym (ponownym) połączeniu dociąga stan zwykłym odczytem.
  *
- * Rozsyłanie przychodzi z epikiem Z-E (#246); do tego czasu composition root wstawia
- * atrapę, a zlecenia mimo to ogłaszają swoje tematy - dzięki temu Z-E podłącza kanał
- * bez ani jednej zmiany w komendach.
+ * Rozsyła je rejestr połączeń (`LivePort` niżej, adapter `infrastructure/live/liveRegistry.ts`)
+ * - wyłącznie do połączeń klubu `orgId`. Komendy o rejestrze nie wiedzą nic: ogłaszają
+ * tematy i odbiorców, a kto akurat jest połączony, rozstrzyga adapter.
  */
 export interface LiveSignalsPort {
   /** `changed` - tematy bez treści; kształt per widz liczy REST (§2). */
@@ -1853,6 +1853,69 @@ export interface LiveSignalsPort {
   message(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
   /** Odczytanie rozmowy (ramka `read`) - „Odczytane 14:05". */
   read(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
+}
+
+/**
+ * Ramka kanału klubu - koperta `{ v: 1, type, … }` (`docs/kanal-klubu.md` §3.2). Koperta
+ * jest ogólna: nowy moduł dokłada swój rodzaj ramki, nie nowe połączenie.
+ */
+export interface LiveFrame {
+  v: 1;
+  type: string;
+  [field: string]: unknown;
+}
+
+/**
+ * Powód zamknięcia połączenia (ramka `bye`, §3.1) - klient robi to, co dziś robi przy tej
+ * samej odmowie REST. Blokada osoby i wyłączenie klubu to dla połączenia `membership_disabled`:
+ * w obu przypadkach TEN klub przestał być dla tej osoby dostępny, a klient ma zareagować tak
+ * samo.
+ */
+export type LiveByeReason = 'session_revoked' | 'membership_disabled' | 'token_expired';
+
+/** Wyjście połączenia, przez które rejestr wysyła ramki - adapter WebSocket (`http/live/`). */
+export interface LiveSink {
+  send(frame: LiveFrame): void;
+  /** Ramka `bye` z powodem i zamknięcie połączenia. */
+  close(reason: LiveByeReason): void;
+}
+
+/** Kto stoi po drugiej stronie połączenia - z tej samej bramy członkostwa, co REST. */
+export interface LivePeer {
+  orgId: string;
+  pilotId: string;
+  /**
+   * Sesja logowania (claim `sid`) - po niej rozdzielnik wie, którego urządzenia nie budzić
+   * pushem (K4). `null` przy tokenie sprzed 2.1.0: takie połączenie niczego nie wycisza.
+   */
+  sessionId: string | null;
+  surface: 'mobile' | 'panel';
+  /** Zbiór z bramy w chwili nawiązania - po nim idą sygnały do posiadaczy zdolności. */
+  capabilities: readonly Capability[];
+}
+
+/** Które połączenia zamknąć przy odebraniu dostępu (§3.1). */
+export type LiveCloseScope =
+  | { kind: 'sessions'; sessionIds: readonly string[] }
+  | { kind: 'member'; orgId: string; pilotId: string }
+  | { kind: 'person'; pilotId: string }
+  | { kind: 'club'; orgId: string };
+
+/**
+ * REJESTR POŁĄCZEŃ KANAŁU KLUBU (`docs/kanal-klubu.md` §3.1). Jedna instancja serwera =
+ * adapter w pamięci procesu; druga = adapter na `LISTEN/NOTIFY` Postgresa, bez zmian
+ * w tym, co go woła. Nic tu nie rzuca - połączenie, które padło w trakcie wysyłki, rejestr
+ * po cichu odłącza, bo ramka, która nie doszła, niczego nie gubi (K2).
+ */
+export interface LivePort {
+  /** Połączenie po uwierzytelnieniu. Oddaje funkcję odłączenia - koniec połączenia. */
+  attach(peer: LivePeer, sink: LiveSink): () => void;
+  /** Sesje osoby połączone W TYM klubie - rozdzielnik omija ich tokeny push (K4). */
+  connectedSessions(orgId: string, pilotId: string): ReadonlySet<string>;
+  /** Ramka do połączeń osoby W TYM klubie; oddaje, ile połączeń ją dostało. */
+  sendToPerson(orgId: string, pilotId: string, frame: LiveFrame): number;
+  /** Zamknięcie z powodem przy odebraniu dostępu: sesje, członkostwo, osoba, klub. */
+  close(scope: LiveCloseScope, reason: LiveByeReason): void;
 }
 
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */

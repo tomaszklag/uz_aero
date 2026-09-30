@@ -1,0 +1,40 @@
+/**
+ * Ninerdeck (serwer) - RAMKI KANAŁU KLUBU (4.0.0, `docs/kanal-klubu.md` §3.2).
+ *
+ * Koperta `{ v: 1, type, … }` jest jedna dla wszystkich modułów - zlecenia, skrzynka,
+ * kalendarz, dziennik - a nowy moduł dokłada swój rodzaj ramki, nie nowe połączenie.
+ * Klient ignoruje ramkę nieznanego typu (starszy telefon nie wywraca się na nowej), więc
+ * nowy `type` wolno dołożyć bez podbijania `v`; `v` rośnie dopiero, gdy zmienia się
+ * znaczenie ramki, którą klient już zna.
+ *
+ * Każda ramka z danymi niesie `org` - klub, którym połączenie się uwierzytelniło. Kanał nie
+ * niesie danych innego klubu nigdy (§5), a klient porównuje `org` z klubem aktywnym tak
+ * samo, jak robi to z pushem.
+ *
+ * Pola koperty idą PO treści: treść, która przypadkiem niesie własne `type` albo `org`,
+ * nie przestawi rodzaju ramki ani klubu.
+ */
+
+import type { LiveByeReason, LiveFrame } from '../ports.ts';
+
+export const LIVE_VERSION = 1;
+
+/** Sygnał zmiany - same tematy, bez treści; kształt per widz liczy REST (§2). */
+export function changedFrame(orgId: string, topics: readonly string[]): LiveFrame {
+  return { v: LIVE_VERSION, type: 'changed', org: orgId, topics: [...topics] };
+}
+
+/** Wiadomość w rozmowie w całości, w kształcie REST. */
+export function messageFrame(orgId: string, body: Record<string, unknown>): LiveFrame {
+  return { ...body, v: LIVE_VERSION, type: 'message', org: orgId };
+}
+
+/** Odczytanie rozmowy - kto i kiedy. */
+export function readFrame(orgId: string, body: Record<string, unknown>): LiveFrame {
+  return { ...body, v: LIVE_VERSION, type: 'read', org: orgId };
+}
+
+/** Powód zamknięcia połączenia - klient reaguje jak na tę samą odmowę REST. */
+export function byeFrame(reason: LiveByeReason): LiveFrame {
+  return { v: LIVE_VERSION, type: 'bye', reason };
+}

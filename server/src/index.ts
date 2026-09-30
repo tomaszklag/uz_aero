@@ -72,7 +72,7 @@ import { PgOrderChangesRepo } from './infrastructure/pg/common/orderChangesRepo.
 import { PgOrderRecipientsRepo } from './infrastructure/pg/common/orderRecipientsRepo.ts';
 import { PgThreadMessagesRepo } from './infrastructure/pg/common/threadMessagesRepo.ts';
 import { PgThreadsRepo } from './infrastructure/pg/common/threadsRepo.ts';
-import { SilentLiveSignals } from './infrastructure/live/silentLiveSignals.ts';
+import { LiveRegistry } from './infrastructure/live/liveRegistry.ts';
 import { MemberGroupCommands } from './application/admin/commands/memberGroups.ts';
 import { OrderAssignmentCommands } from './application/common/commands/orderAssignments.ts';
 import { OrderBookingCommands } from './application/common/commands/orderBookings.ts';
@@ -440,10 +440,12 @@ const approvals = new ApprovalFlow(
   notifier,
   clock,
 );
+// Kanał klubu (4.0.0, epik Z-E #246; `docs/kanal-klubu.md` §3.1): JEDEN rejestr połączeń
+// na proces - sygnały zmian z komend i połączenia z obu wejść WebSocket spotykają się tutaj.
+const live = new LiveRegistry();
 // Zlecenia na lot (4.0.0, issue #245): adaptery WSPÓLNE dla telefonu i panelu - zlecenie
 // wysyła się i prowadzi z obu. Rezerwacja zlecenia to zwykły wiersz `bookings`, więc
-// termin trzyma ten sam adapter, co kalendarz. Kanał klubu jest jeszcze atrapą:
-// rozsyłanie przychodzi z Z-E (#246), a komendy ogłaszają swoje tematy już teraz.
+// termin trzyma ten sam adapter, co kalendarz.
 const flightOrders = new PgFlightOrdersRepo();
 const orderRecipients = new PgOrderRecipientsRepo();
 const orderChanges = new PgOrderChangesRepo();
@@ -453,7 +455,7 @@ const orderThreads = new PgThreadsRepo();
 const threadMessages = new PgThreadMessagesRepo();
 const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
 const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-const orderSignals = new OrderSignals(new SilentLiveSignals());
+const orderSignals = new OrderSignals(live);
 const orders: OrderDeps = {
   orders: new OrderCommands(
     db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
