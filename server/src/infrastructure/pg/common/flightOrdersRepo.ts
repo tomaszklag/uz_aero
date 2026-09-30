@@ -20,6 +20,7 @@ import type {
   FlightOrderRecord,
   FlightOrdersPort,
   NewFlightOrder,
+  OrderBookingFacts,
   Queryable,
 } from '../../../application/common/ports.ts';
 import type { OrderAudience } from '../../../domain/orderAddressing.ts';
@@ -239,5 +240,40 @@ export class PgFlightOrdersRepo implements FlightOrdersPort {
       createdAt: ms(r.created_at),
       unfilledWarnedAt: msOrNull(r.unfilled_warned_at),
     }));
+  }
+
+  async bookingFacts(
+    db: Queryable,
+    orgId: string,
+    orderIds: readonly string[],
+    viewerId: string,
+  ): Promise<Map<string, OrderBookingFacts>> {
+    const out = new Map<string, OrderBookingFacts>();
+    if (orderIds.length === 0) return out;
+    const { rows } = await db.query<{
+      id: string;
+      created_by: string;
+      pic_seat: string;
+      dual_seat: string;
+      status: string;
+      viewer_is_recipient: boolean;
+    }>(
+      `SELECT fo.id, fo.created_by, fo.pic_seat, fo.dual_seat, fo.status,
+              EXISTS (SELECT 1 FROM order_recipients r
+                       WHERE r.order_id = fo.id AND r.org_id = fo.org_id AND r.pilot_id = $3) AS viewer_is_recipient
+         FROM flight_orders fo
+        WHERE fo.org_id = $1 AND fo.id = ANY($2::text[])`,
+      [orgId, [...orderIds], viewerId],
+    );
+    for (const r of rows) {
+      out.set(r.id, {
+        id: r.id,
+        createdBy: r.created_by,
+        seats: { pic: r.pic_seat as PicSeatState, dual: r.dual_seat as DualSeatState },
+        status: r.status as OrderStatus,
+        viewerIsRecipient: r.viewer_is_recipient,
+      });
+    }
+    return out;
   }
 }

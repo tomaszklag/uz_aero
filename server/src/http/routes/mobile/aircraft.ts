@@ -28,6 +28,8 @@ import type { AircraftWatchCommands } from '../../../application/common/commands
 import type { MembershipAuthSnapshot } from '../../../application/common/ports.ts';
 import type { AircraftCard } from '../../../application/common/queries/aircraftCard.ts';
 import type { AircraftCardQueries } from '../../../application/common/queries/aircraftCard.ts';
+import type { BookingOrderQueries, BookingOrders } from '../../../application/common/queries/bookingOrders.ts';
+import { orderActorOf } from '../../../application/common/orderAccess.ts';
 import { HISTORY_PAGE_SIZE, type SeriesPoint } from '../../../domain/aircraftCard.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
@@ -69,7 +71,7 @@ function seriesWire(points: readonly SeriesPoint[]): Record<string, unknown>[] {
   }));
 }
 
-function cardWire(view: AircraftCard, viewer: BookingViewer): Record<string, unknown> {
+function cardWire(view: AircraftCard, viewer: BookingViewer, orders: BookingOrders): Record<string, unknown> {
   return {
     timezone: view.timezone,
     aircraft: aircraftHeadWire(view.aircraft),
@@ -80,7 +82,7 @@ function cardWire(view: AircraftCard, viewer: BookingViewer): Record<string, unk
     last30: view.last30,
     last90: view.last90,
     upcoming: view.upcoming.map(({ booking, day }) => ({
-      ...bookingWire(booking, viewer),
+      ...bookingWire(booking, viewer, orders),
       day: { date: day.date, startsAt: iso(day.startsAt), endsAt: iso(day.endsAt) },
     })),
     series: { mh: seriesWire(view.series.mh), fuel: seriesWire(view.series.fuel) },
@@ -93,6 +95,7 @@ export function registerAircraftRoutes(
   app: FastifyInstance,
   cards: AircraftCardQueries,
   watch: AircraftWatchCommands,
+  bookingOrders: BookingOrderQueries,
   gate: MemberGate,
 ): void {
   /** Cała flota klubu ze stanem „teraz" i bitem obserwowania - sekcja 13C. */
@@ -113,7 +116,13 @@ export function registerAircraftRoutes(
 
     const view = await cards.card(who.orgId, req.params.id, who.pilotId);
     if (view == null) return reply.code(404).send({ error: 'not_found' });
-    return reply.send(cardWire(view, viewerOf(who)));
+    // Najbliższe terminy bywają zleceniami (§16 pkt 5) - pasek pisze wtedy, kogo brakuje.
+    const orders = await bookingOrders.of(
+      who.orgId,
+      orderActorOf(who.pilotId, who.capabilities),
+      view.upcoming.map((term) => term.booking),
+    );
+    return reply.send(cardWire(view, viewerOf(who), orders));
   });
 
   app.get<{ Params: { id: string } }>('/aircraft/:id/operations', async (req, reply) => {

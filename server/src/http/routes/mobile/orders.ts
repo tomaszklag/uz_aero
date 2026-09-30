@@ -14,6 +14,7 @@
 import type { FastifyInstance } from 'fastify';
 
 import { orderActorOf } from '../../../application/common/orderAccess.ts';
+import type { BookingOrderQueries } from '../../../application/common/queries/bookingOrders.ts';
 import type { MemberGroupQueries } from '../../../application/common/queries/memberGroups.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
@@ -25,12 +26,18 @@ export function registerOrderRoutes(
   app: FastifyInstance,
   deps: OrderDeps,
   groups: MemberGroupQueries,
+  bookingOrders: BookingOrderQueries,
   gate: MemberGate,
 ): void {
   const endpoints = orderEndpoints(deps, {
-    // Kolizja w kształcie telefonu: cudza zajętość pyta, KTO PATRZY (`bookingWire`).
-    takenWire: (row, ctx) =>
-      bookingWire(row, { pilotId: ctx.actor.pilotId, approves: can(ctx.capabilities, 'reservations.approve') }),
+    // Kolizja w kształcie telefonu: cudza zajętość pyta, KTO PATRZY (`bookingWire`),
+    // a bywa zleceniem - wtedy mówi, kogo brakuje (§16 pkt 3).
+    takenWire: async (row, ctx) =>
+      bookingWire(
+        row,
+        { pilotId: ctx.actor.pilotId, approves: can(ctx.capabilities, 'reservations.approve') },
+        await bookingOrders.of(ctx.orgId, ctx.actor, [row]),
+      ),
   });
 
   for (const endpoint of endpoints) {

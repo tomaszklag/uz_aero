@@ -153,6 +153,9 @@ import { PgThreadMessagesRepo } from '../src/infrastructure/pg/common/threadMess
 import { PgThreadsRepo } from '../src/infrastructure/pg/common/threadsRepo.ts';
 import { MemberGroupCommands } from '../src/application/admin/commands/memberGroups.ts';
 import { OrderAssignmentCommands } from '../src/application/common/commands/orderAssignments.ts';
+import { OrderBookingCommands } from '../src/application/common/commands/orderBookings.ts';
+import { BookingOrderQueries } from '../src/application/common/queries/bookingOrders.ts';
+import type { OrderDeps } from '../src/http/routes/common/orderEndpoints.ts';
 import { OrderEditCommands } from '../src/application/common/commands/orderEdit.ts';
 import { OrderCommands } from '../src/application/common/commands/orders.ts';
 import { OrderResponseCommands } from '../src/application/common/commands/orderResponses.ts';
@@ -427,6 +430,33 @@ const lastSeen = new LastSeenThrottle();
   const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
   const live = new FakeLiveSignals();
   const orderSignals = new OrderSignals(live);
+  // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
+  // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
+  const orders: OrderDeps = {
+    orders: new OrderCommands(
+      db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+      clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+    ),
+    edits: new OrderEditCommands(
+      db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+      clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+    ),
+    responses: new OrderResponseCommands(
+      db, orderRecords, orderSeating, orderRecipients, orderChanges, notifier, orderSignals, clock, randomUUID,
+    ),
+    assignments: new OrderAssignmentCommands(
+      db, orderRecords, orderSeating, orderChanges, clubMembers, notifier, orderSignals, clock, randomUUID,
+    ),
+    threads: new ThreadCommands(
+      db, orderRecords, orderRecipients, orderThreads, threadMessages, notifier, orderSignals, clock, randomUUID,
+    ),
+    queries: new OrderQueries(
+      db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, threadMessages, clubSettingsRepo, clock,
+    ),
+    threadQueries: new ThreadQueries(db, orderRecords, orderThreads, threadMessages),
+  };
+  const orderBookings = new OrderBookingCommands(db, orderRecords, orders.orders, orders.responses);
+  const bookingOrders = new BookingOrderQueries(db, flightOrders);
 
   const app = await buildServer({
     // Logowanie: PRAWDZIWE tożsamości w bazie (`PgExternalIdentitiesRepo`) i prawdziwa
@@ -491,34 +521,11 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
-    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
     calendar,
     approvals,
-    // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
-    // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
-    orders: {
-      orders: new OrderCommands(
-        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
-        clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
-      ),
-      edits: new OrderEditCommands(
-        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
-        clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
-      ),
-      responses: new OrderResponseCommands(
-        db, orderRecords, orderSeating, orderRecipients, orderChanges, notifier, orderSignals, clock, randomUUID,
-      ),
-      assignments: new OrderAssignmentCommands(
-        db, orderRecords, orderSeating, orderChanges, clubMembers, notifier, orderSignals, clock, randomUUID,
-      ),
-      threads: new ThreadCommands(
-        db, orderRecords, orderRecipients, orderThreads, threadMessages, notifier, orderSignals, clock, randomUUID,
-      ),
-      queries: new OrderQueries(
-        db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, threadMessages, clubSettingsRepo, clock,
-      ),
-      threadQueries: new ThreadQueries(db, orderRecords, orderThreads, threadMessages),
-    },
+    orders,
+    bookingOrders,
     groupQueries: new MemberGroupQueries(db, memberGroups),
     adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
@@ -729,7 +736,16 @@ const lastSeen = new LastSeenThrottle();
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
     adminBugReportQueries: new AdminBugReportQueries(db, bugReportsRepo),
     adminBugReports: new AdminBugReportCommands(auditedWrite, bugReportsRepo, clock),
-    adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+    adminBookings: new AdminBookingCommands(
+      auditedWrite,
+      bookingsRepo,
+      aircraftConfig,
+      clock,
+      approvals,
+      notifier,
+      orderBookings,
+      watching,
+    ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
     // Analityka zużycia (A10a/A10b) - dostaje TEN SAM `events`, co reszta harnessu,
     // więc dekorator liczący odczyty strumienia widzi też jej wywołania.

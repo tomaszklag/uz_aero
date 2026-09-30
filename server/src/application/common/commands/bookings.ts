@@ -24,10 +24,13 @@ import {
   refuseCancel,
   refuseChange,
   refuseCreate,
+  refuseOrderBookingChange,
   refuseWindow,
   type BookingRefusal,
 } from '../../../domain/bookings.ts';
+import type { OrderActor } from '../orderAccess.ts';
 import type { ApprovalFlow } from './approvals.ts';
+import type { OrderBookingCommands } from './orderBookings.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import type { NotificationDraft } from '../notify/bookingNotices.ts';
@@ -69,6 +72,11 @@ export class BookingCommands {
     private readonly clock: Clock,
     private readonly approvals: ApprovalFlow,
     private readonly notifier: Notifier,
+    /**
+     * Rezerwacja ZLECENIA (4.0.0, `docs/zlecenia.md` §16 pkt 6): jej odwołanie jest
+     * rezygnacją z fotela albo odwołaniem zlecenia - decyduje, kim jest odwołujący.
+     */
+    private readonly orderBookings: OrderBookingCommands,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Odwołanie albo
      * przesunięcie terminu, o którym JUŻ przypomniano obserwującym, rodzi „odwołany lot"
@@ -154,6 +162,8 @@ export class BookingCommands {
     const now = this.clock.now().getTime();
     const actor = { pilotId, manages: false };
     const refusal =
+      // Termin zlecenia prowadzi zlecenie (§16 pkt 7) - także dla załogi, która w nim siedzi.
+      refuseOrderBookingChange(current, pilotId) ??
       refuseChange(current, actor, now) ??
       // Nowe okno sprawdzamy osobno: przesunięcie w przeszłość jest odmową o czym innym
       // niż „to już minęło" (tamto mówi o wierszu, to o wpisanych godzinach).
@@ -226,13 +236,25 @@ export class BookingCommands {
    */
   async cancel(
     orgId: string,
-    pilotId: string,
+    actor: OrderActor,
     id: string,
     reason: string | null,
   ): Promise<BookingResult | null> {
     const current = await this.bookings.byId(this.db, orgId, id);
     if (current == null) return null;
 
+    // ══ REZERWACJA ZLECENIA (4.0.0, §16 pkt 6) ══
+    // Nie oddaje slotu: przydzielony rezygnuje z fotela, a zlecający odwołuje zlecenie.
+    // Obie czynności mają własne wiadomości, więc idą komendami zlecenia, nie zamknięciem wiersza.
+    if (current.orderId != null) {
+      const outcome = await this.orderBookings.cancelOwn(orgId, actor, current.orderId, reason);
+      if (outcome == null) return null;
+      return outcome.ok
+        ? { ok: true, booking: outcome.booking, created: false }
+        : { ok: false, refusal: outcome.refusal };
+    }
+
+    const pilotId = actor.pilotId;
     const refusal = refuseCancel(current, { pilotId, manages: false }, reason);
     if (refusal != null) return { ok: false, refusal };
 

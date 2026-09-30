@@ -92,6 +92,7 @@ import { registerAdminOrderRoutes } from './routes/admin/orders.ts';
 import type { OrderDeps } from './routes/common/orderEndpoints.ts';
 import type { MemberGroupCommands } from '../application/admin/commands/memberGroups.ts';
 import type { MemberGroupQueries } from '../application/common/queries/memberGroups.ts';
+import type { BookingOrderQueries } from '../application/common/queries/bookingOrders.ts';
 import { registerApprovalStepRoutes } from './routes/admin/approvalSteps.ts';
 import { registerAdminBookingRoutes } from './routes/admin/bookings.ts';
 import { registerAdminBugReportRoutes } from './routes/admin/bugReports.ts';
@@ -203,6 +204,11 @@ export interface ServerDeps {
    * obu powierzchni; trasy telefonu i panelu dzielą tablicę punktów końcowych.
    */
   orders: OrderDeps;
+  /**
+   * Zlecenie widziane z rezerwacji (4.0.0, §16 pkt 2) - czego szuka i czy pytający może je
+   * otworzyć. Czyta je każda trasa, która oddaje rezerwację, bo każda może oddać zlecenie.
+   */
+  bookingOrders: BookingOrderQueries;
   /** Grupy klubu do odczytu - adresaci zleceń (telefon) i moduł Piloci (panel). */
   groupQueries: MemberGroupQueries;
   /** Grupy klubu układane w panelu (`accounts.manage`, dziennik akcji). */
@@ -523,12 +529,12 @@ export async function buildServer(
   registerMePasswordRoutes(app, deps.passwords, memberGate);
   registerMeAccountRoutes(app, deps.accounts, memberGate);
   registerBugReportRoutes(app, deps.bugReports, memberGate);
-  registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, memberGate);
+  registerBookingRoutes(app, deps.bookings, deps.calendar, deps.approvals, deps.bookingOrders, memberGate);
   registerApprovalRoutes(app, deps.approvals, memberGate);
   registerNotificationRoutes(app, deps.notifications, deps.calendar, memberGate);
   registerPreviewRoutes(app, deps.previews, memberGate);
-  registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, memberGate);
-  registerOrderRoutes(app, deps.orders, deps.groupQueries, memberGate);
+  registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, deps.bookingOrders, memberGate);
+  registerOrderRoutes(app, deps.orders, deps.groupQueries, deps.bookingOrders, memberGate);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -591,14 +597,22 @@ export async function buildServer(
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
   registerAdminBugReportRoutes(app, deps.adminBugReportQueries, deps.adminBugReports, gate);
-  registerAdminBookingRoutes(app, deps.adminBookings, deps.bookings, deps.calendar, deps.approvals, gate);
+  registerAdminBookingRoutes(
+    app,
+    deps.adminBookings,
+    deps.bookings,
+    deps.calendar,
+    deps.approvals,
+    deps.bookingOrders,
+    gate,
+  );
   registerApprovalStepRoutes(app, deps.adminApprovalSteps, deps.approvals, gate);
   // Kolejka decyzji i decyzja z panelu (3.1.0, issue #165) - ten sam `ApprovalFlow`,
   // którym decyduje telefon: jedna decyzja, jeden rejestr, dwie powierzchnie.
   registerAdminApprovalRoutes(app, deps.approvals, deps.calendar, gate);
   // Podgląd pilota i samolotu z kolejki (issue #206) - ten sam widok, co w telefonie.
   registerAdminPreviewRoutes(app, deps.previews, gate);
-  registerAdminOrderRoutes(app, deps.orders, gate);
+  registerAdminOrderRoutes(app, deps.orders, deps.bookingOrders, gate);
   registerAdminGroupRoutes(app, deps.adminGroups, deps.groupQueries, gate);
 
   // Pliki statyczne - na końcu, żeby czytać ten plik w kolejności „API, potem pliki";

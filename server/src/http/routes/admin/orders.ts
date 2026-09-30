@@ -11,14 +11,26 @@
 import type { FastifyInstance } from 'fastify';
 
 import { orderActorOf } from '../../../application/common/orderAccess.ts';
+import type { BookingOrderQueries } from '../../../application/common/queries/bookingOrders.ts';
 import { orderEndpoints, type OrderDeps } from '../common/orderEndpoints.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { bookingWire, viewerOf } from './bookingWire.ts';
 
-export function registerAdminOrderRoutes(app: FastifyInstance, deps: OrderDeps, gate: AdminGate): void {
+export function registerAdminOrderRoutes(
+  app: FastifyInstance,
+  deps: OrderDeps,
+  bookingOrders: BookingOrderQueries,
+  gate: AdminGate,
+): void {
   const endpoints = orderEndpoints(deps, {
-    // Kolizja w kształcie panelu - ta sama reguła widza, co w kalendarzu panelu.
-    takenWire: (row, ctx) => bookingWire(row, viewerOf({ pilotId: ctx.actor.pilotId, capabilities: ctx.capabilities })),
+    // Kolizja w kształcie panelu - ta sama reguła widza, co w kalendarzu panelu; bywa
+    // zleceniem i wtedy mówi, kogo brakuje (§16 pkt 3).
+    takenWire: async (row, ctx) =>
+      bookingWire(
+        row,
+        viewerOf({ pilotId: ctx.actor.pilotId, capabilities: ctx.capabilities }),
+        await bookingOrders.of(ctx.orgId, ctx.actor, [row]),
+      ),
   });
 
   for (const endpoint of endpoints) {

@@ -28,6 +28,9 @@ import type { ApprovalFlow } from '../../../application/common/commands/approval
 import type { BookingCommands } from '../../../application/common/commands/bookings.ts';
 import type { BookingRecord } from '../../../application/common/ports.ts';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
+import type { BookingOrderQueries, BookingOrders } from '../../../application/common/queries/bookingOrders.ts';
+import { orderActorOf } from '../../../application/common/orderAccess.ts';
+import type { Actor } from '../../../application/admin/ports.ts';
 import type { BookingRefusal } from '../../../domain/bookings.ts';
 import { askSuggestions, suggestionsQuery, suggestionsWire } from '../common/suggestionsWire.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
@@ -123,6 +126,7 @@ const STATUS: Readonly<Record<BookingRefusal, number>> = {
   booking_order: 400,
   booking_closed: 409,
   reason_required: 400,
+  booking_from_order: 409,
 };
 
 export function registerAdminBookingRoutes(
@@ -131,8 +135,17 @@ export function registerAdminBookingRoutes(
   mine: BookingCommands,
   calendar: BookingQueries,
   approvals: ApprovalFlow,
+  bookingOrders: BookingOrderQueries,
   gate: AdminGate,
 ): void {
+  /** Zlecenia za tymi rezerwacjami, widziane przez zalogowanego (§16 pkt 2). */
+  const ordersOf = (actor: Actor, rows: readonly (BookingRecord | null | undefined)[]): Promise<BookingOrders> =>
+    bookingOrders.of(
+      actor.orgId,
+      orderActorOf(actor.pilotId, actor.capabilities),
+      rows.filter((row): row is BookingRecord => row != null),
+    );
+
   /**
    * SUGESTIE SLOTÓW dla własnej rezerwacji (issue #233) - bliźniak trasy telefonu, bo
    * panel woła wyłącznie `/admin/api/*` (reguła z #180). Każdy członek: sugestie opisują
@@ -199,10 +212,12 @@ export function registerAdminBookingRoutes(
         note: b.data.note ?? null,
       });
       const viewer = viewerOf(actor);
-      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
+      if (!result.ok) {
+        return refuseOwn(reply, viewer, result.refusal, result.taken, await ordersOf(actor, [result.taken]));
+      }
       // Powtórzony zapis (drugie kliknięcie przy wolnym łączu) wraca `200` z tym samym
       // wierszem - `201` kłamałoby o tym, że coś właśnie powstało.
-      return reply.code(result.created ? 201 : 200).send(wire(result.booking, viewer));
+      return reply.code(result.created ? 201 : 200).send(wire(result.booking, viewer, await ordersOf(actor, [result.booking])));
     },
   );
 
@@ -230,8 +245,10 @@ export function registerAdminBookingRoutes(
       });
       if (result == null) return reply.code(404).send({ error: 'not_found' });
       const viewer = viewerOf(actor);
-      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
-      return reply.send(wire(result.booking, viewer));
+      if (!result.ok) {
+        return refuseOwn(reply, viewer, result.refusal, result.taken, await ordersOf(actor, [result.taken]));
+      }
+      return reply.send(wire(result.booking, viewer, await ordersOf(actor, [result.booking])));
     },
   );
 
@@ -248,11 +265,18 @@ export function registerAdminBookingRoutes(
       const p = params.safeParse(req.params);
       if (!p.success) return reply.code(400).send({ error: 'bad_request' });
 
-      const result = await mine.cancel(actor.orgId, actor.pilotId, p.data.id, null);
+      const result = await mine.cancel(
+        actor.orgId,
+        orderActorOf(actor.pilotId, actor.capabilities),
+        p.data.id,
+        null,
+      );
       if (result == null) return reply.code(404).send({ error: 'not_found' });
       const viewer = viewerOf(actor);
-      if (!result.ok) return refuseOwn(reply, viewer, result.refusal, result.taken);
-      return reply.send(wire(result.booking, viewer));
+      if (!result.ok) {
+        return refuseOwn(reply, viewer, result.refusal, result.taken, await ordersOf(actor, [result.taken]));
+      }
+      return reply.send(wire(result.booking, viewer, await ordersOf(actor, [result.booking])));
     },
   );
 
@@ -284,7 +308,7 @@ export function registerAdminBookingRoutes(
         : null;
       return reply.send({
         timezone: view.timezone,
-        booking: wire(view.booking, viewer),
+        booking: wire(view.booking, viewer, await ordersOf(actor, [view.booking])),
         approval,
       });
     },
@@ -307,6 +331,7 @@ export function registerAdminBookingRoutes(
       if (view == null) return reply.code(404).send({ error: 'not_found' });
 
       const viewer = viewerOf(actor);
+      const orders = await ordersOf(actor, view.bookings);
       return reply.send({
         timezone: view.timezone,
         homeIcao: view.homeIcao,
@@ -315,7 +340,7 @@ export function registerAdminBookingRoutes(
           startsAt: new Date(d.startsAt).toISOString(),
           endsAt: new Date(d.endsAt).toISOString(),
         })),
-        bookings: view.bookings.map((row) => wire(row, viewer)),
+        bookings: view.bookings.map((row) => wire(row, viewer, orders)),
       });
     },
   );
@@ -340,7 +365,7 @@ export function registerAdminBookingRoutes(
         toIcao: b.data.toIcao ?? null,
         note: b.data.note ?? null,
       });
-      return answer(reply, outcome, 201);
+      return answer(reply, outcome, 201, await ordersOf(actor, outcomeRows(outcome)));
     },
   );
 
@@ -360,7 +385,7 @@ export function registerAdminBookingRoutes(
         blockReason: b.data.blockReason,
         note: b.data.note ?? null,
       });
-      return answer(reply, outcome, 201);
+      return answer(reply, outcome, 201, await ordersOf(actor, outcomeRows(outcome)));
     },
   );
 
@@ -382,7 +407,7 @@ export function registerAdminBookingRoutes(
       if (!b.success) return reply.code(400).send({ error: 'bad_request' });
 
       const outcome = await bookings.cancel(actor, p.data.id, b.data.reason ?? null);
-      return answer(reply, outcome, 200);
+      return answer(reply, outcome, 200, await ordersOf(actor, outcomeRows(outcome)));
     },
   );
 }
@@ -398,31 +423,39 @@ function refuseOwn(
   viewer: PanelBookingViewer,
   refusal: BookingRefusal,
   taken: BookingRecord | null | undefined,
+  orders: BookingOrders,
 ): unknown {
   return reply.code(STATUS[refusal]).send({
     error: refusal,
     ...(taken == null
       ? {}
-      : { taken: wire(taken, viewer), takenAt: new Date(taken.createdAt).toISOString() }),
+      : { taken: wire(taken, viewer, orders), takenAt: new Date(taken.createdAt).toISOString() }),
   });
 }
 
 type Outcome = Awaited<ReturnType<AdminBookingCommands['cancel']>>;
 
+/** Wiersze odpowiedzi mutacji - rezerwacja po zapisie albo kolizja; zlecenie bywa za każdą. */
+function outcomeRows(outcome: Outcome): (BookingRecord | null)[] {
+  if (outcome.ok) return [outcome.booking];
+  return outcome.reason === 'refused' ? [outcome.taken] : [];
+}
+
 function answer(
   reply: { code: (n: number) => { send: (body: unknown) => unknown }; send: (body: unknown) => unknown },
   outcome: Outcome,
   okStatus: number,
+  orders: BookingOrders,
 ): unknown {
   // Mutacje stoją na `reservations.manage` / `fleet.manage`, a kolidujący wiersz jest
   // treścią odmowy dla kogoś, kto ma prawo go przesunąć - komplet, bez pytania kto patrzy.
   if (outcome.ok) {
-    const body = wire(outcome.booking, FULL_VIEWER);
+    const body = wire(outcome.booking, FULL_VIEWER, orders);
     return okStatus === 200 ? reply.send(body) : reply.code(okStatus).send(body);
   }
   if (outcome.reason === 'not_found') return reply.code(404).send({ error: 'not_found' });
   return reply.code(STATUS[outcome.refusal]).send({
     error: outcome.refusal,
-    ...(outcome.taken == null ? {} : { taken: wire(outcome.taken, FULL_VIEWER) }),
+    ...(outcome.taken == null ? {} : { taken: wire(outcome.taken, FULL_VIEWER, orders) }),
   });
 }

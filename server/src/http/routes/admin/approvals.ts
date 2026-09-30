@@ -33,6 +33,7 @@ import type { BookingQueries } from '../../../application/common/queries/booking
 import type { ApprovalRefusal } from '../../../domain/approvals.ts';
 import { can } from '../../../domain/roles.ts';
 import { adminRoute, type AdminGate } from './adminRoute.ts';
+import { NO_ORDERS } from '../../../application/common/queries/bookingOrders.ts';
 import { bookingWire, FULL_VIEWER } from './bookingWire.ts';
 
 const REASON_MAX = 500;
@@ -105,7 +106,8 @@ export function registerAdminApprovalRoutes(
       return reply.send({
         timezone,
         // Kolejkę czyta wyłącznie akceptujący, a ten widzi komplet (§17) - bez pytania kto patrzy.
-        items: items.map((item) => ({ booking: bookingWire(item.booking, FULL_VIEWER), step: item.step })),
+        // Zlecenie nie przechodzi ścieżki akceptacji (decyzja 5), więc w kolejce go nie ma.
+        items: items.map((item) => ({ booking: bookingWire(item.booking, FULL_VIEWER, NO_ORDERS), step: item.step })),
       });
     },
   );

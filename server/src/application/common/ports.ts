@@ -1218,7 +1218,15 @@ export interface BookingsPort {
    * Chwila ostatniej zmiany w klubie - materiał na ETag okna kalendarza. `null`,
    * gdy klub nie ma ani jednej zajętości.
    */
-  latestChangeAt(db: Queryable, orgId: string): Promise<number | null>;
+  /**
+   * Znacznik zmian kalendarza klubu - do ETagu okna. Od 4.0.0 niesie DWA stemple osobno:
+   * ostatnią zmianę rezerwacji i ostatnią zmianę zleceń (pole `order` rezerwacji mówi,
+   * których foteli zlecenie szuka, a przestawienie fotela na „brak" zmienia zlecenie bez
+   * dotykania wiersza rezerwacji). Osobno, a nie „późniejszy z nich": stempel rezerwacji
+   * nadaje przy założeniu zegar BAZY, a zlecenia - zegar APLIKACJI, więc porównanie ich
+   * potrafiło przykryć świeżą zmianę zlecenia zmianą rezerwacji z innego zegara.
+   */
+  changeMark(db: Queryable, orgId: string): Promise<string>;
   /**
    * Rezerwacje, którym za chwilę zaczyna się termin, a NIKT o tym jeszcze nie przypomniał
    * (obserwowanie samolotu, §5.1): potwierdzone loty ze startem przed `startsBefore`,
@@ -1653,6 +1661,28 @@ export interface FlightOrdersPort {
    * wcześniej albo zlecenie zamknięte.
    */
   markWarnDecided(tx: Queryable, orgId: string, id: string, at: Date): Promise<boolean>;
+  /**
+   * Zlecenia widziane Z REZERWACJI (§13.1, §16 pkt 2): czego szukają i czy PYTAJĄCY jest
+   * ich adresatem. Kalendarz, karta rezerwacji, karta samolotu i odmowa `slot_taken`
+   * rysują rezerwację zlecenia inaczej niż zwykłą, a „Otwórz zlecenie" należy się
+   * wyłącznie prowadzącym i adresatom (także ODEBRANYM - karta mówi im „nieaktualne").
+   */
+  bookingFacts(
+    db: Queryable,
+    orgId: string,
+    orderIds: readonly string[],
+    viewerId: string,
+  ): Promise<Map<string, OrderBookingFacts>>;
+}
+
+/** Zlecenie w tym zakresie, w jakim potrzebuje go rezerwacja - `FlightOrdersPort.bookingFacts`. */
+export interface OrderBookingFacts {
+  id: string;
+  createdBy: string;
+  seats: OrderSeats;
+  status: OrderStatus;
+  /** Czy pytający ma wiersz adresata tego zlecenia (także odebrany). */
+  viewerIsRecipient: boolean;
 }
 
 /** Adresat zlecenia - wiersz `order_recipients`. */

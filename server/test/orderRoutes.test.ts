@@ -12,43 +12,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
-import { googleTokenFor } from './testIdentityProvider.ts';
-import { ORG_A } from './testWorld.ts';
-
-type Harness = Awaited<ReturnType<typeof testHarness>>;
-type App = Harness['app'];
+import { testHarness } from './helpers.ts';
+import { grant, login, panel, panelSession, phone, type Send } from './routeClients.ts';
 
 const H = 3_600_000;
 /** Termin zleceń: środa 24 czerwca 2026, 10:00-12:00 UTC (zegar świata: poniedziałek 08:00). */
 const STARTS = Date.UTC(2026, 5, 24, 10, 0, 0);
 const iso = (t: number): string => new Date(t).toISOString();
-const bearer = (t: string) => ({ authorization: `Bearer ${t}` });
-
-async function login(app: App, who: string): Promise<string> {
-  const res = await app.inject({ method: 'POST', url: '/auth/google', payload: { idToken: googleTokenFor(who) } });
-  expect(res.statusCode, `logowanie ${who}: ${res.body}`).toBe(200);
-  return res.json().token as string;
-}
-
-/** Sesja panelu: ciasteczko razem z nagłówkiem CSRF, którego wymaga każdy zapis. */
-async function panelSession(app: App, who: string): Promise<Record<string, string>> {
-  const res = await app.inject({
-    method: 'POST',
-    url: '/admin/api/auth/login',
-    headers: ADMIN_CSRF_HEADERS,
-    payload: { idToken: googleTokenFor(who) },
-  });
-  expect(res.statusCode, `panel ${who}: ${res.body}`).toBe(200);
-  const cookie = res.cookies.find((c) => c.name === 'ninerdeck_admin')!;
-  return { cookie: `ninerdeck_admin=${cookie.value}`, ...ADMIN_CSRF_HEADERS };
-}
-
-const grant = (h: Harness, pilotId: string, capability: string) =>
-  h.db.query(
-    `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-    [ORG_A, pilotId, capability],
-  );
 
 function draft(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -65,22 +35,6 @@ function draft(over: Record<string, unknown> = {}): Record<string, unknown> {
     ...over,
   };
 }
-
-/** Odpowiedź `inject` w tym, czego testy używają (typ biblioteki ma przeciążenia). */
-interface Reply {
-  statusCode: number;
-  body: string;
-  json: () => any;
-}
-
-/** Wysyłka z nagłówkami powierzchni - telefon: token; panel: ciasteczko i CSRF. */
-type Send = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, payload?: object) => Promise<Reply>;
-
-const phone = (app: App, token: string): Send => (method, url, payload) =>
-  app.inject({ method, url, headers: bearer(token), ...(payload === undefined ? {} : { payload }) });
-
-const panel = (app: App, session: Record<string, string>): Send => (method, url, payload) =>
-  app.inject({ method, url: `/admin/api${url}`, headers: session, ...(payload === undefined ? {} : { payload }) });
 
 describe('trasy zleceń - telefon', () => {
   it('zlecający zakłada zlecenie; powtórka tym samym uuidem wraca 200 z tym samym zleceniem', async () => {

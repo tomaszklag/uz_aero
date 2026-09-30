@@ -75,6 +75,8 @@ import { PgThreadsRepo } from './infrastructure/pg/common/threadsRepo.ts';
 import { SilentLiveSignals } from './infrastructure/live/silentLiveSignals.ts';
 import { MemberGroupCommands } from './application/admin/commands/memberGroups.ts';
 import { OrderAssignmentCommands } from './application/common/commands/orderAssignments.ts';
+import { OrderBookingCommands } from './application/common/commands/orderBookings.ts';
+import { BookingOrderQueries } from './application/common/queries/bookingOrders.ts';
 import { OrderClock } from './application/common/commands/orderClock.ts';
 import { OrderEditCommands } from './application/common/commands/orderEdit.ts';
 import { OrderCommands } from './application/common/commands/orders.ts';
@@ -475,6 +477,10 @@ const orders: OrderDeps = {
   ),
   threadQueries: new ThreadQueries(db, orderRecords, orderThreads, threadMessages),
 };
+// Rezerwacja zlecenia widziana z tras rezerwacji (§16): odwołanie z karty 23 i z kalendarza
+// panelu idzie komendami zlecenia, a każda rezerwacja na drucie niesie pole `order`.
+const orderBookings = new OrderBookingCommands(db, orderRecords, orders.orders, orders.responses);
+const bookingOrders = new BookingOrderQueries(db, flightOrders);
 const orderClock = new OrderClock(
   db, orderRecords, flightOrders, bookingsRepo, orderChanges, clubSettings, notifier, orderSignals, randomUUID, clock,
   watching,
@@ -564,10 +570,11 @@ const app = await buildServer({
   bugReports: new BugReportCommands(db, bugReports),
   // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
   // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
-  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
   calendar,
   approvals,
   orders,
+  bookingOrders,
   groupQueries: new MemberGroupQueries(db, memberGroups),
   adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
   notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
@@ -804,7 +811,16 @@ const app = await buildServer({
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
   // Kalendarz panelu - przez bramę audytu: rezerwacja za pilota, odwołanie cudzej
   // i wyłączenie maszyny z użytku to trzy decyzje o cudzych sprawach.
-  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+  adminBookings: new AdminBookingCommands(
+    auditedWrite,
+    bookingsRepo,
+    aircraftConfig,
+    clock,
+    approvals,
+    notifier,
+    orderBookings,
+    watching,
+  ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,

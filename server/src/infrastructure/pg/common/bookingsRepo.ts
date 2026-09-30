@@ -500,13 +500,14 @@ export class PgBookingsRepo implements BookingsPort {
     }));
   }
 
-  async latestChangeAt(db: Queryable, orgId: string): Promise<number | null> {
-    const { rows } = await db.query<{ at: string | Date | null }>(
-      'SELECT MAX(updated_at) AS at FROM bookings WHERE org_id = $1',
+  async changeMark(db: Queryable, orgId: string): Promise<string> {
+    const { rows } = await db.query<{ bookings_at: string | Date | null; orders_at: string | Date | null }>(
+      `SELECT (SELECT MAX(updated_at) FROM bookings WHERE org_id = $1) AS bookings_at,
+              (SELECT MAX(updated_at) FROM flight_orders WHERE org_id = $1) AS orders_at`,
       [orgId],
     );
-    const at = rows[0]?.at;
-    return at == null ? null : ms(at);
+    const at = (value: string | Date | null | undefined): number => (value == null ? 0 : ms(value));
+    return `${at(rows[0]?.bookings_at)}.${at(rows[0]?.orders_at)}`;
   }
 
   /**

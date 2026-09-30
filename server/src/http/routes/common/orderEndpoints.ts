@@ -79,7 +79,7 @@ export interface OrderEndpoint {
  * zakresie (telefon pyta, kto patrzy - `mobile/bookings.ts`; panel ma własny kontrakt).
  */
 export interface OrderSurface {
-  takenWire(row: BookingRecord, ctx: OrderContext): unknown;
+  takenWire(row: BookingRecord, ctx: OrderContext): Promise<unknown>;
 }
 
 /** Odmowa → status. Treść żądania - 400; stan zlecenia - 409; prawo - 403. */
@@ -109,6 +109,7 @@ const STATUS: Readonly<Record<OrderCommandRefusal, number>> = {
   already_assigned: 409,
   recipient_assigned: 409,
   not_leader: 403,
+  booking_from_order: 409,
 };
 
 const THREAD_STATUS: Readonly<Record<ThreadRefusal, number>> = {
@@ -131,14 +132,17 @@ export function orderEndpoints(deps: OrderDeps, surface: OrderSurface): OrderEnd
     return view == null ? NOT_FOUND : { status, body: orderCardWire(view) };
   };
 
-  const refuse = (ctx: OrderContext, failure: OrderFailure): EndpointReply => ({
+  const refuse = async (ctx: OrderContext, failure: OrderFailure): Promise<EndpointReply> => ({
     status: STATUS[failure.refusal],
     body: {
       error: failure.refusal,
       // Kolizja z tym, co stoi w tym czasie - ekran ma to nazwać (22C), jak przy rezerwacji.
       ...(failure.taken == null
         ? {}
-        : { taken: surface.takenWire(failure.taken, ctx), takenAt: new Date(failure.taken.createdAt).toISOString() }),
+        : {
+            taken: await surface.takenWire(failure.taken, ctx),
+            takenAt: new Date(failure.taken.createdAt).toISOString(),
+          }),
     },
   });
 
