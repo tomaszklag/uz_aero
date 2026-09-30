@@ -427,7 +427,11 @@ const approvalStepsRepo = new PgApprovalStepsRepo();
 const bookingApprovalsRepo = new PgBookingApprovalsRepo();
 const notificationsRepo = new PgNotificationsRepo();
 const pushTokensRepo = new PgPushTokensRepo(clock);
-const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+// Kanał klubu (4.0.0, epik Z-E #246; `docs/kanal-klubu.md` §3.1): JEDEN rejestr połączeń
+// na proces - sygnały zmian z komend, połączenia z obu wejść WebSocket i rozdzielnik
+// powiadomień (ramka albo push, K4) spotykają się tutaj.
+const live = new LiveRegistry();
+const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, live, clubSettings, randomUUID);
 // Obserwowanie samolotu (3.2.0, issue #205): jeden adapter dla telefonu i panelu, jedna
 // odpowiedź na „kogo obudzić" dla ingestu, rezerwacji, zakończenia z panelu i zegara.
 const aircraftWatches = new PgAircraftWatchesRepo();
@@ -440,9 +444,6 @@ const approvals = new ApprovalFlow(
   notifier,
   clock,
 );
-// Kanał klubu (4.0.0, epik Z-E #246; `docs/kanal-klubu.md` §3.1): JEDEN rejestr połączeń
-// na proces - sygnały zmian z komend i połączenia z obu wejść WebSocket spotykają się tutaj.
-const live = new LiveRegistry();
 // Zlecenia na lot (4.0.0, issue #245): adaptery WSPÓLNE dla telefonu i panelu - zlecenie
 // wysyła się i prowadzi z obu. Rezerwacja zlecenia to zwykły wiersz `bookings`, więc
 // termin trzyma ten sam adapter, co kalendarz.

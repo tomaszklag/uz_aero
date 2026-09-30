@@ -49,6 +49,7 @@ import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { PgThreadMessagesRepo } from '../src/infrastructure/pg/common/threadMessagesRepo.ts';
 import { PgThreadsRepo } from '../src/infrastructure/pg/common/threadsRepo.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { FakeLiveSignals } from './fakeLiveSignals.ts';
 import { FakePush } from './fakePush.ts';
@@ -129,12 +130,22 @@ export async function orderWorld(): Promise<OrderWorld> {
   const aircraft = new PgAircraftConfigRepo();
   const threadsRepo = new PgThreadsRepo();
   const messages = new PgThreadMessagesRepo();
-  const notifier = new Notifier(db, new PgNotificationsRepo(), new PgPushTokensRepo(clock), push, randomUUID);
+  const clubs = new PgClubSettingsRepo();
+  // Pusty rejestr połączeń: testy zleceń pytają o zapis i o budzik, nie o ramki kanału,
+  // więc nikt nie jest połączony i każda wiadomość idzie pushem, jak przed 4.0.0.
+  const notifier = new Notifier(
+    db,
+    new PgNotificationsRepo(),
+    new PgPushTokensRepo(clock),
+    push,
+    new LiveRegistry(),
+    clubs,
+    randomUUID,
+  );
   const watching = new AircraftWatching(new PgAircraftWatchesRepo(), aircraft, notifier);
   const records = new OrderRecords(ordersRepo, bookings, recipients);
   const seating = new OrderSeating(ordersRepo, bookings);
   const signals = new OrderSignals(live);
-  const clubs = new PgClubSettingsRepo();
   const orderClock = new OrderClock(db, records, ordersRepo, bookings, changes, clubs, notifier, signals, randomUUID, clock, watching);
 
   return {

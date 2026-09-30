@@ -49,6 +49,13 @@ export class LiveRegistry implements LivePort, LiveSignalsPort {
     };
   }
 
+  isConnected(orgId: string, pilotId: string): boolean {
+    for (const { peer } of this.connections.values()) {
+      if (peer.orgId === orgId && peer.pilotId === pilotId) return true;
+    }
+    return false;
+  }
+
   connectedSessions(orgId: string, pilotId: string): ReadonlySet<string> {
     const sessions = new Set<string>();
     for (const { peer } of this.connections.values()) {

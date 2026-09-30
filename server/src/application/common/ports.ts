@@ -1382,13 +1382,17 @@ export interface NotificationCursor {
 }
 
 export interface NotificationsPort {
-  /** W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1). */
+  /**
+   * W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1).
+   * Oddaje identyfikatory wierszy, które NAPRAWDĘ powstały: adresat spoza klubu wiersza
+   * nie dostaje, więc nie dostaje też ani ramki kanału, ani budzika.
+   */
   insert(
     tx: Queryable,
     orgId: string,
     rows: readonly NewNotification[],
     at: Date,
-  ): Promise<void>;
+  ): Promise<string[]>;
   /** Strona skrzynki, od najnowszego. `before` = kursor poprzedniej strony. */
   list(
     db: Queryable,
@@ -1401,6 +1405,8 @@ export interface NotificationsPort {
    * §7.3): nieprzeczytany wiersz tej osoby i tego rodzaju z tą samą wartością pola
    * `collapse.field` w payloadzie dostaje nową treść i nową chwilę, a gdy go nie ma -
    * powstaje. Rozmowa nie zalewa skrzynki: jeden nieprzeczytany wiersz na wątek.
+   * Oddaje identyfikator wiersza, który stoi w skrzynce po zapisie - odświeżonego albo
+   * nowego - a `null`, gdy adresat nie jest w klubie i wiersz nie powstał.
    */
   collapseUnread(
     tx: Queryable,
@@ -1408,7 +1414,7 @@ export interface NotificationsPort {
     row: NewNotification,
     collapse: { field: string; value: string },
     at: Date,
-  ): Promise<void>;
+  ): Promise<string | null>;
   /** Ile nieprzeczytanych - liczba przy zakładce Pulpit. */
   unreadCount(db: Queryable, orgId: string, pilotId: string): Promise<number>;
   /**
@@ -1423,6 +1429,17 @@ export interface NotificationsPort {
     id: string,
     at: Date,
   ): Promise<boolean>;
+}
+
+/**
+ * Urządzenie do obudzenia - token, osoba i SESJA LOGOWANIA, do której jest przypięty.
+ * Sesja jest tu po to, żeby rozdzielnik (K4) ominął urządzenie połączone kanałem klubu:
+ * ono dostaje ramkę, a push dzwoniłby drugi raz o tej samej wiadomości.
+ */
+export interface PushTarget {
+  token: string;
+  sessionId: string;
+  pilotId: string;
 }
 
 /**
@@ -1441,7 +1458,7 @@ export interface PushTokensPort {
    * Na które urządzenia zadzwonić - WYŁĄCZNIE te z żywą sesją logowania (wylogowanie
    * gasi budzik). Osoba bez tokenu po prostu nie ma wiersza.
    */
-  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]>;
+  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<PushTarget[]>;
   /** Token odrzucony przez dostawcę jako martwy - urządzenie odinstalowało aplikację. */
   forget(db: Queryable, tokens: readonly string[]): Promise<void>;
 }
@@ -1910,6 +1927,12 @@ export type LiveCloseScope =
 export interface LivePort {
   /** Połączenie po uwierzytelnieniu. Oddaje funkcję odłączenia - koniec połączenia. */
   attach(peer: LivePeer, sink: LiveSink): () => void;
+  /**
+   * Czy osoba ma W TYM klubie choć jedno połączenie - także bez sesji logowania (token
+   * sprzed 2.1.0). Rozdzielnik pyta o to, zanim złoży ramkę, bo licznik nieprzeczytanych
+   * kosztuje odczyt, a zwykle nikt nie jest połączony.
+   */
+  isConnected(orgId: string, pilotId: string): boolean;
   /** Sesje osoby połączone W TYM klubie - rozdzielnik omija ich tokeny push (K4). */
   connectedSessions(orgId: string, pilotId: string): ReadonlySet<string>;
   /** Ramka do połączeń osoby W TYM klubie; oddaje, ile połączeń ją dostało. */

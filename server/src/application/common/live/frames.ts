@@ -15,6 +15,7 @@
  * nie przestawi rodzaju ramki ani klubu.
  */
 
+import type { InboxItem } from '../notify/inboxItem.ts';
 import type { LiveByeReason, LiveFrame } from '../ports.ts';
 
 export const LIVE_VERSION = 1;
@@ -22,6 +23,15 @@ export const LIVE_VERSION = 1;
 /** Sygnał zmiany - same tematy, bez treści; kształt per widz liczy REST (§2). */
 export function changedFrame(orgId: string, topics: readonly string[]): LiveFrame {
   return { v: LIVE_VERSION, type: 'changed', org: orgId, topics: [...topics] };
+}
+
+/**
+ * Nowa wiadomość w skrzynce (K4): pozycja w kształcie REST - ta sama, którą oddaje
+ * odczyt skrzynki - i liczba nieprzeczytanych PO jej zapisie, więc licznik przy dzwonku
+ * odświeża się bez drugiego żądania.
+ */
+export function notificationFrame(orgId: string, item: InboxItem, unread: number): LiveFrame {
+  return { item, unread, v: LIVE_VERSION, type: 'notification', org: orgId };
 }
 
 /** Wiadomość w rozmowie w całości, w kształcie REST. */

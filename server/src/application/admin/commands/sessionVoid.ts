@@ -42,7 +42,7 @@ import type {
 } from '../../common/ports.ts';
 import { aircraftReleased } from '../../common/notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
+import type { RecordedNotice } from '../../common/notify/notifier.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -104,8 +104,8 @@ interface Applied {
   candidate: Event;
   state: SessionState;
   warnings: RuleViolation[];
-  /** Wiadomości do obserwujących maszynę (3.2.0) - budzik dzwoni po commicie. */
-  notices: NotificationDraft[];
+  /** Zapisane wiadomości do obserwujących maszynę (3.2.0) - budzik dzwoni po commicie. */
+  notices: RecordedNotice[];
 }
 
 export class AdminSessionVoidCommands {
@@ -182,7 +182,7 @@ export class AdminSessionVoidCommands {
         // Obserwujący maszynę: „zdana" z ręki administratora, bez sprawców (administrator,
         // PIC i Dual operacji), tą samą transakcją, co zapis i ślad audytu.
         // Wyłącznie dla operacji W TOKU - unieważnienie już zdanej niczego nie domyka.
-        let notices: NotificationDraft[] = [];
+        let notices: RecordedNotice[] = [];
         if (this.watching != null && row.status === 'active') {
           const audience = await this.watching.audience(tx, orgId, row.aircraftId, [
             actor.pilotId,
@@ -190,7 +190,7 @@ export class AdminSessionVoidCommands {
             row.dualId,
           ]);
           if (audience != null) {
-            notices = aircraftReleased(audience, {
+            const drafts = aircraftReleased(audience, {
               sessionUuid: input.sessionUuid,
               aircraftId: row.aircraftId,
               pilotId: row.picId,
@@ -206,7 +206,7 @@ export class AdminSessionVoidCommands {
               closedBy: 'admin',
               reason: input.reason,
             });
-            await this.watching.record(tx, orgId, notices, at);
+            notices = await this.watching.record(tx, orgId, drafts, at);
           }
         }
 

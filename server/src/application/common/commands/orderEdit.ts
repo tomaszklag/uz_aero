@@ -56,7 +56,7 @@ import { isLive, SEATS, type OrderSeats, type RecipientView, type Seat } from '.
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import {
   orderChanged,
   orderFilled,
@@ -302,7 +302,7 @@ export class OrderEditCommands {
           const audienceIds = changeAudience(afterState, actor.pilotId).filter((p) => !told.has(p));
           notices.push(...orderChanged(notice, audienceIds, changed));
         }
-        await this.notifier.record(tx, orgId, notices, now);
+        const recorded = await this.notifier.record(tx, orgId, notices, now);
 
         // ── historia zmian (§10.3) ───────────────────────────────────────────────
         const entries: Array<Omit<NewOrderChange, 'id' | 'actorId'>> = [];
@@ -326,21 +326,21 @@ export class OrderEditCommands {
 
         // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2): przesunięcie początku albo
         // zmiana maszyny terminu, o którym już przypomniano obserwującym STAREJ maszyny.
-        let watchNotices: NotificationDraft[] = [];
+        let watchNotices: RecordedNotice[] = [];
         const moved = changed.term != null && after.startsAt !== before.startsAt;
         if (watching != null && booking.remindedAt != null && (moved || changed.aircraft != null)) {
           const watchers = await watching.audience(tx, orgId, booking.aircraftId, [actor.pilotId]);
           if (watchers != null) {
-            watchNotices = aircraftFlightCancelled(
+            const drafts = aircraftFlightCancelled(
               watchers,
               booking,
               changed.aircraft != null ? null : { startsAt: after.startsAt, endsAt: after.endsAt },
             );
-            await watching.record(tx, orgId, watchNotices, now);
+            watchNotices = await watching.record(tx, orgId, drafts, now);
           }
         }
 
-        return { loaded: fresh, notices, watchNotices, removedNow };
+        return { loaded: fresh, notices: recorded, watchNotices, removedNow };
       });
       if (written == null) return null;
 

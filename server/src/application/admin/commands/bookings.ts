@@ -39,9 +39,8 @@ import type { ApprovalFlow } from '../../common/commands/approvals.ts';
 import type { OrderBookingCommands } from '../../common/commands/orderBookings.ts';
 import { orderActorOf } from '../../common/orderAccess.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
-import type { Notifier } from '../../common/notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -174,8 +173,8 @@ export class AdminBookingCommands {
     reason: string | null,
   ): Promise<AdminBookingOutcome> {
     const at = this.clock.now();
-    let watchNotices: NotificationDraft[] = [];
-    let withdrawn: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let withdrawn: RecordedNotice[] = [];
     try {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
@@ -206,8 +205,8 @@ export class AdminBookingCommands {
             actor.pilotId,
           ]);
           if (audience != null) {
-            watchNotices = aircraftFlightCancelled(audience, current, null);
-            await this.watching.record(tx, actor.orgId, watchNotices, at);
+            const drafts = aircraftFlightCancelled(audience, current, null);
+            watchNotices = await this.watching.record(tx, actor.orgId, drafts, at);
           }
         }
 

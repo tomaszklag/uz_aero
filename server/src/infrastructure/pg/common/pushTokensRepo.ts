@@ -22,7 +22,7 @@
  * i to tam (`notifications.org_id`) stoi zawężenie.
  */
 
-import type { Clock, PushTokensPort, Queryable } from '../../../application/common/ports.ts';
+import type { Clock, PushTarget, PushTokensPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgPushTokensRepo implements PushTokensPort {
   constructor(private readonly clock: Clock) {}
@@ -47,14 +47,14 @@ export class PgPushTokensRepo implements PushTokensPort {
     );
   }
 
-  async byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]> {
+  async byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<PushTarget[]> {
     if (pilotIds.length === 0) return [];
     // Sesja: ŻYWA, ale z DOWOLNEGO klubu - token opisuje urządzenie, a powiadomienie
     // z klubu B ma dojść także przy aktywnym klubie A (obserwowanie §8 R6). Klub
     // POWIADOMIENIA wchodzi przez członkostwo: adresat musi dziś w nim być (ten sam
     // warunek, co przy zapisie skrzynki - `PgNotificationsRepo.insert`).
-    const { rows } = await db.query<{ token: string }>(
-      `SELECT t.token
+    const { rows } = await db.query<{ token: string; session_id: string; pilot_id: string }>(
+      `SELECT t.token, t.session_id, t.pilot_id
          FROM push_tokens t
          JOIN login_sessions s
            ON s.id = t.session_id AND s.revoked_at IS NULL AND s.expires_at > $2
@@ -64,7 +64,7 @@ export class PgPushTokensRepo implements PushTokensPort {
         WHERE t.pilot_id = ANY($1::text[])`,
       [pilotIds, this.clock.now().toISOString(), orgId],
     );
-    return rows.map((r) => r.token);
+    return rows.map((r) => ({ token: r.token, sessionId: r.session_id, pilotId: r.pilot_id }));
   }
 
   async forget(db: Queryable, tokens: readonly string[]): Promise<void> {

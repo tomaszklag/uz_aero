@@ -412,7 +412,21 @@ const lastSeen = new LastSeenThrottle();
   const bookingApprovalsRepo = new PgBookingApprovalsRepo();
   const notificationsRepo = new PgNotificationsRepo();
   const pushTokensRepo = new PgPushTokensRepo(clock);
-  const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+  // Kanał klubu: PRAWDZIWY rejestr połączeń - dostają go trasy WebSocket i rozdzielnik
+  // powiadomień (ramka albo push, K4) - a przed nim atrapa, która ZAPISUJE sygnały
+  // i przekazuje je dalej: testy komend pytają o zapis, testy tras o ramki, które
+  // naprawdę doszły.
+  const liveRegistry = new LiveRegistry();
+  const live = new FakeLiveSignals(liveRegistry);
+  const notifier = new Notifier(
+    db,
+    notificationsRepo,
+    pushTokensRepo,
+    push,
+    liveRegistry,
+    new PgClubSettingsRepo(),
+    randomUUID,
+  );
   // Obserwowanie samolotu (issue #205) - prawdziwy adapter i ta sama odpowiedź na „kogo
   // obudzić", co w produkcji; budzik jest atrapą jak przy ścieżce akceptacji.
   const aircraftWatches = new PgAircraftWatchesRepo();
@@ -435,11 +449,6 @@ const lastSeen = new LastSeenThrottle();
   const threadMessages = new PgThreadMessagesRepo();
   const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
   const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-  // Kanał klubu: PRAWDZIWY rejestr połączeń (trasy WebSocket go dostają), a przed nim
-  // atrapa, która ZAPISUJE sygnały i przekazuje je dalej - testy komend pytają o zapis,
-  // testy tras o ramki, które naprawdę doszły.
-  const liveRegistry = new LiveRegistry();
-  const live = new FakeLiveSignals(liveRegistry);
   const orderSignals = new OrderSignals(live);
   // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
   // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.

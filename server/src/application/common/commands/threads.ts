@@ -19,7 +19,7 @@
  */
 
 import { inPlay } from '../../../domain/orderAnswers.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import { orderMessage } from '../notify/orderNotices.ts';
 import type { OrderSignals } from '../notify/orderSignals.ts';
 import { leads, noticeOrderOf, orderView, recipientView, type OrderActor } from '../orderAccess.ts';
@@ -126,7 +126,9 @@ export class ThreadCommands {
 
       const inserted = await this.messages.insert(tx, orgId, { id: input.id, threadId, authorId: actor.pilotId, body }, now);
       if (inserted == null) return refused('message_exists');
-      if (!inserted.created) return { kind: 'sent' as const, message: inserted.message, created: false, loaded, notice: null };
+      if (!inserted.created) {
+        return { kind: 'sent' as const, message: inserted.message, created: false, loaded, notices: [] as RecordedNotice[] };
+      }
 
       // Drugi uczestnik dostaje jeden wiersz na wątek - z liczbą nieprzeczytanych.
       const other = actor.pilotId === recipientId ? loaded.order.createdBy : recipientId;
@@ -137,14 +139,14 @@ export class ThreadCommands {
         authorId: actor.pilotId,
         unread,
       });
-      await this.notifier.recordCollapsed(tx, orgId, notice, { field: 'threadId', value: threadId }, now);
-      return { kind: 'sent' as const, message: inserted.message, created: true, loaded, notice };
+      const notices = await this.notifier.recordCollapsed(tx, orgId, notice, { field: 'threadId', value: threadId }, now);
+      return { kind: 'sent' as const, message: inserted.message, created: true, loaded, notices };
     });
 
     if (written == null) return null;
     if (written.kind === 'refused') return { ok: false, refusal: written.refusal };
-    if (written.created && written.notice != null) {
-      await this.notifier.wake(orgId, [written.notice]);
+    if (written.created) {
+      await this.notifier.wake(orgId, written.notices);
       this.signals.message(
         orgId,
         { orderId, recipientId, participantIds: [written.loaded.order.createdBy, recipientId] },

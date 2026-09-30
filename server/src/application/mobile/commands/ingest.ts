@@ -48,6 +48,7 @@ import type { DayExporter } from '../../common/export/dayExporter.ts';
 import { aircraftEngineStarted, aircraftReleased } from '../../common/notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
 import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
+import type { RecordedNotice } from '../../common/notify/notifier.ts';
 import type {
   BookingsPort,
   AircraftConfigPort,
@@ -341,7 +342,8 @@ export class IngestCommands {
        * bez PIC-a i Duala operacji - o własnym locie nikogo nie budzimy. Czas wiadomości
        * to czas Z REJESTRU (`eventTime`), nie chwila dotarcia paczki.
        */
-      const notices: NotificationDraft[] = [];
+      const drafts: NotificationDraft[] = [];
+      let notices: RecordedNotice[] = [];
       if (this.watching != null) {
         const arrived = new Set(inserted);
         for (const sessionUuid of sessionUuids) {
@@ -355,7 +357,7 @@ export class IngestCommands {
             const audience = await this.watching.audience(tx, orgId, row.aircraftId, [row.picId, row.dualId]);
             if (audience == null) continue;
             const payload = close.payload as { noFlightReason?: string | null };
-            notices.push(
+            drafts.push(
               ...aircraftReleased(audience, {
                 sessionUuid,
                 aircraftId: row.aircraftId,
@@ -385,7 +387,7 @@ export class IngestCommands {
                 ? null
                 : await this.bookings.byId(tx, orgId, bookingId);
             const planned = booking != null && booking.sessionUuid === sessionUuid;
-            notices.push(
+            drafts.push(
               ...aircraftEngineStarted(audience, {
                 sessionUuid,
                 aircraftId: row.aircraftId,
@@ -399,7 +401,7 @@ export class IngestCommands {
             );
           }
         }
-        await this.watching.record(tx, orgId, notices, this.clock.now());
+        notices = await this.watching.record(tx, orgId, drafts, this.clock.now());
       }
 
       const flags = await openFlagsFor(this.flags, tx, orgId, sessionUuids);

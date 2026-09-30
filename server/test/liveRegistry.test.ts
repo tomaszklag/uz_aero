@@ -118,6 +118,18 @@ describe('rejestr połączeń kanału klubu', () => {
     expect([...live.connectedSessions(ORG_A, 'JSE')]).toEqual([]);
   });
 
+  it('połączenie liczy się W KLUBIE - także bez sesji logowania (rozdzielnik pyta o to przed ramką)', () => {
+    const { live } = world();
+    expect(live.isConnected(ORG_A, 'PWI')).toBe(true);
+    expect(live.isConnected(ORG_B, 'PWI')).toBe(true);
+    expect(live.isConnected(ORG_B, 'KRZ')).toBe(false);
+    expect(live.isConnected(ORG_A, 'JSE')).toBe(false);
+
+    // Token sprzed 2.1.0 nie niesie sesji: niczego nie wycisza, ale ramkę dostaje.
+    live.attach(peer({ pilotId: 'JSE', sessionId: null }), new FakeSink());
+    expect(live.isConnected(ORG_A, 'JSE')).toBe(true);
+  });
+
   it('ramka do osoby idzie na każde jej połączenie w klubie - i mówi, ile ich było', () => {
     const { live, sinks } = world();
     const tablet = new FakeSink();
