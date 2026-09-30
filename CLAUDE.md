@@ -5322,6 +5322,48 @@ pollingu na każdej karcie". Dokument decyzji: **`docs/kanal-klubu.md`** (K1–K
   `.inbox*`, `.toast` czekają w `rama.css` (sekcja „KANAŁ KLUBU (4.0.0) - czekają na kod
   epiku KK-D")
 
+## Zlecenia 4.0.0 - epik Z-B: serwer (issue #245, 2026-09-29/30, gałąź `feature-245-zlecenia-serwer`)
+Migracja 16 z backfillem „Zlecania lotów", czysta domena, porty i adaptery, komendy
+i zapytania zleceń, grup i rozmów, zegar zleceń, trasy obu powierzchni i lista §16.
+Decyzje z implementacji (pytane pojedynczo, 2026-09-29 i 2026-09-30): `docs/zlecenia.md`
+§1 pkt 50–57; architektura: `docs/architektura-panelu-serwer.md` §7.11. Reguły
+obowiązujące odtąd:
+- **JEDNA TABLICA TRAS NA DWIE POWIERZCHNIE** (`http/routes/common/orderEndpoints.ts`):
+  telefon i panel tylko rejestrują jej punkty końcowe. Nowa trasa zleceń dopisuje się
+  TAM, a o prawie rozstrzyga komenda - prowadzący (autor z `orders.create` albo każdy
+  z `reservations.manage`), adresat albo 404
+- **ADRESAT NIE DOSTAJE NIC O INNYCH ADRESATACH** - pola prowadzącego jadą `null`,
+  etykieta adresowania wyłącznie prowadzącemu, cudza rozmowa to 404
+- **KAŻDA REZERWACJA NA DRUCIE NIESIE `order`**: `null` przy zwykłej, `{ seeking }` dla
+  każdego członka, `{ seeking, id, createdBy }` dla prowadzącego i adresata
+  (`queries/bookingOrders.ts`). Funkcje kształtu rezerwacji mają trzeci argument
+  `orders` BEZ wartości domyślnej - trasa oddająca rezerwację dociąga
+  `bookingOrders.of(...)`, a `NO_ORDERS` podaje wyłącznie tam, gdzie zlecenia być nie może
+- **PEŁNY KSZTAŁT „WŁASNEJ" REZERWACJI LICZY OBA FOTELE** (pkt 23) - drugi pilot widzi
+  komplet, na telefonie i w panelu
+- **ODWOŁANIE Z TRAS REZERWACJI TO KOMENDA ZLECENIA** (`commands/orderBookings.ts`):
+  przydzielony rezygnuje z fotela, zlecający w swoim fotelu „ja" odwołuje zlecenie
+  (decyzja 2026-09-30), prowadzący z kalendarza panelu - też, z powodem opcjonalnym
+  i BEZ dziennika akcji. Poprawka rezerwacji zlecenia drogą rezerwacji to
+  `booking_from_order` (409) dla każdego, kto w niej JEST
+- **ZNACZNIK ZMIAN KALENDARZA TO DWA STEMPLE** (`BookingsPort.changeMark`: rezerwacje
+  i zlecenia osobno) - nie „późniejszy z nich", bo stemple nadają dwa zegary (baza przy
+  założeniu rezerwacji, aplikacja przy zmianie zlecenia)
+- **WYJĄTEK W `AuditedWrite` WYCOFUJE WPIS** - to wzorzec na „ten zapis nie trafia do
+  dziennika akcji" (`Repeated` przy ponowionym założeniu grupy, `OrderBookingCancelled`
+  przy odwołaniu zlecenia z kalendarza); zwrócona wartość tego nie umie
+- **KANAŁ KLUBU JEST PORTEM Z ATRAPĄ** (`SilentLiveSignals` w produkcji do Z-E #246,
+  `FakeLiveSignals` w testach) - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
+  `message`/`read` już teraz
+- **IZOLACJA ZLECEŃ MA DWIE WARSTWY** (zlecenie i jego rezerwacja czytane osobno
+  z klubem) - sonda regresji musi łamać obie; sondy zleceń w `tenantIsolation.test.ts`
+  biorą świeży token PWI w Alfie (`pwiInAlfa`), bo sonda „wyloguj wszędzie" zrywa jej
+  sesje w Alfie w połowie przebiegu
+- **KLIENCI DOGANIAJĄ W Z-C I Z-D**: `booking_from_order` w mapach odmów aplikacji
+  (`serverPort.ts`) i panelu (`bookingRefusal.ts`), pole `order` w `CalendarBooking`
+  i etykiecie paska, `nextBooking.ts` z oboma fotelami, „REZYGNUJĘ" zamiast „ODWOŁAJ"
+  na 23F - tabela w `docs/zlecenia.md` §16
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

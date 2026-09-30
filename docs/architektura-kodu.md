@@ -1551,14 +1551,20 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    BEZ NAZWISK I GODZIN terminu - ląduje na ekranie blokady, który widzi każdy, kto
    akurat patrzy na telefon. **`payload` jest treścią SKRZYNKI, a do `data` budzika
    wchodzi z niego wyłącznie to, co telefon czyta w `pushTarget.ts`** - `kind`, `orgId`,
-   `bookingId`, `aircraftId` (`notify/pushData.ts`, issue #228; klucz tylko z niepustym
-   napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
+   `bookingId`, `aircraftId`, a od 4.0.0 `orderId` i `recipientId` (adresat rozmowy
+   zlecenia: przy OTWARTEJ rozmowie baner nie pada, `docs/zlecenia.md` pkt 43)
+   (`notify/pushData.ts`, issue #228; klucz tylko z niepustym napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
    z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
    jedzie przez Expo i FCM „na zapas".
 3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
    mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
    uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
    się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
+   **Wiadomość, która przychodzi SERIĄ, ma jeden nieprzeczytany wiersz** (rozmowa
+   zlecenia, `docs/zlecenia.md` §7.3): `Notifier.recordCollapsed` zamiast `record` -
+   nieprzeczytany wiersz tego samego rodzaju z tym samym kluczem w `payload`
+   (`threadId`) dostaje nową treść i chwilę, zamiast stawać obok. Przeczytany zostaje,
+   a następna wiadomość zakłada nowy.
 4. **Wiadomość o zdarzeniu Z REJESTRU niesie czas Z REJESTRU**, nie chwilę dotarcia
    paczki: telefon dosyła zapisy po godzinach, a „lot się rozpoczął" powstaje, gdy paczka
    dojechała. Skrzynka pisze czas zdarzenia i osobno „zapis dotarł …", gdy zwłoka jest
@@ -1572,6 +1578,9 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    sprawcy)` → `record` → `wake`) - i nowy producent woła jego, a nie port obserwowania
    wprost. Producent z REJESTRU budzi wyłącznie przy zdarzeniu, które NAPRAWDĘ weszło
    (`insertBatch` oddaje uuidy przyjęte) - ponowiona paczka nie dzwoni drugi raz.
+   Adresatów ZLECEŃ liczą czyste funkcje `domain/orderAudiences.ts` (kto jest w grze,
+   kto dostaje zmianę, odwołanie, wygaśnięcie) - sprawca wypada z listy w nich, nie
+   w SQL-u, bo adresaci zlecenia są jego wierszami, a nie subskrypcją.
 6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
    da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
    wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED
@@ -1579,7 +1588,12 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
 7. **Wiadomość o TERMINIE dostaje `day`** (doba klubu, §6.1 rezerwacji) i telefon liczy
    godzinę odejmowaniem; wiadomość o OPERACJI niesie `at` w UTC, a `day` ma `null`.
    Dwa zegary, świadomie - jak na ekranie podglądu 26B.
-8. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
+8. **Zmiana widoczna na OTWARTYM ekranie ogłasza się też kanałem klubu**
+   (`LiveSignalsPort`: `changed(org, tematy, odbiorcy)`, `message`, `read` -
+   `docs/kanal-klubu.md` §4) - po commicie, jak budzik. Do epiku Z-E (#246) port ma
+   w produkcji atrapę (`SilentLiveSignals`), a testy zapisują sygnały (`FakeLiveSignals`);
+   tematy zleceń i ich odbiorców składa `notify/orderSignals.ts`.
+9. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
    ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
    strażniki izolacji klubów.
 

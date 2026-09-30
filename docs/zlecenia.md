@@ -227,6 +227,31 @@ Siódma tura - kanał klubu (2026-09-28, pojedynczo; decyzje K1–K7 w `docs/kan
     i skrzynkę. Zlecenia są pierwszym klientem modułu - obok skrzynki, kalendarza z kolejką
     zgód, karty samolotu, dziennika i „Do sprawdzenia" (§11).
 
+Ósma tura - implementacja serwera (Z-B, 2026-09-29 i 2026-09-30, pojedynczo, każda
+z przykładem):
+
+50. **Fotel przestawiony na „brak" albo „ja" USYPIA adresatów tego fotela** - dostają
+    wiadomość, że fotel przestał być szukany (`order_filled` z powodem `seat_dropped`),
+    ich zgłoszenia zostają ważne, a gdy fotel wróci do szukania, wracają razem z nim (§5.2).
+51. **Imienne dopisanie osoby wcześniej ODEBRANEJ przywraca ją jak nową** - świeży wiersz
+    odpowiedzi i własna wiadomość; grupa ani „Wyślij ponownie" nikogo odebranego nie
+    przywracają (§5.2, pkt 41).
+52. **Po „nieaktualne" adresat nie dostaje już zmian ani odwołania** - zlecenie przestało
+    go dotyczyć, a dowiedział się o tym ostatnią wiadomością (§12).
+53. **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (odebrany, jego fotel
+    obsadzony kimś innym albo zniesiony, zlecenie zamknięte) - historia zostaje do
+    czytania (§7.1).
+54. **„Tak" na fotel, który zdążył zająć ktoś inny, zapisuje się jako gotowość** - bez
+    budzenia zlecającego; prowadzący widzi ją przy adresacie (§4.3).
+55. **Lista „Zakończone" pokazuje ostatnie 14 dni** - to granica WYŚWIETLANIA, dane zostają
+    w bazie (§14, §15).
+56. **Ostrzeżenie „bez kompletu załogi" rozstrzyga się RAZ**, przy pierwszym przebiegu
+    zegara po 18:00 w przeddzień: przy komplecie pada sam stempel, więc późniejsza
+    rezygnacja już nie ostrzega - zlecający dostaje wtedy „Rezygnacja z lotu" (§5.5).
+57. **„ODWOŁAJ" u zlecającego siedzącego w swoim fotelu („ja") odwołuje CAŁE zlecenie**
+    (2026-09-30) - dla niego rezerwacja jest zleceniem; to samo znaczenie, co odwołanie
+    z kalendarza panelu przez prowadzącego (§5.3, §16 pkt 6 i 9).
+
 ## 2. Czym JEST zlecenie w tym systemie
 
 ### 2.1 Zlecenie = rezerwacja, która szuka załogi, plus adresaci
@@ -426,6 +451,10 @@ prowadzący widzą też, KTO. Trzy zmiany mają skutek dla ludzi i mówią o nim
   albo przestawia fotel.
 - Rezygnacja działa też przyciskiem „ODWOŁAJ" na karcie rezerwacji (23) - rezerwacja
   ze zlecenia nie oddaje wtedy slotu, tylko zwalnia fotel (§16 pkt 6).
+- **Zlecający siedzący w swoim fotelu („ja")** nie ma z czego zrezygnować - „ODWOŁAJ" na
+  karcie rezerwacji odwołuje u niego CAŁE zlecenie, z wiadomościami adresatów i powodem
+  opcjonalnym (pkt 57). „PRZESUŃ I POPRAW" nie ma także u niego: termin zmienia się
+  edycją zlecenia, a poprawka drogą rezerwacji to odmowa `booking_from_order` (§16 pkt 7).
 
 ### 5.4 Bez ścieżki akceptacji
 
@@ -443,7 +472,10 @@ przypomnienie → **zlecenia**):
   `packages/domain/src/booking/policy.ts`, doba liczona granicami dób klubu jak
   w kalendarzu), ze stemplem `flight_orders.unfilled_warned_at` - idempotencja jak przy
   `reminded_at`. Zlecenie utworzone PO tej chwili ostrzeżenia nie dostaje -
-  powstało już z wiedzą, ile zostało czasu. Przy porannym locie ostrzeżenie „3 h przed"
+  powstało już z wiedzą, ile zostało czasu. Ostrzeżenie rozstrzyga się RAZ (pkt 56):
+  przebieg po 18:00 stempluje zlecenie także przy komplecie, więc rezygnacja po tej chwili
+  już nie ostrzega - zlecający dostaje wtedy „Rezygnacja z lotu". Przy porannym locie
+  ostrzeżenie „3 h przed"
   przychodziło o świcie i za późno na znalezienie pilota - stąd zmiana;
 - **wygaśnięcie** w chwili początku terminu, **w całości** (pkt 15): zlecenie → `expired`,
   rezerwacja → `released` (slot wraca do puli, bez powodu - `close_reason` niesie zdanie
@@ -507,6 +539,9 @@ obsadzeniu fotela przez kogoś innego mówi tylko tyle, że fotel jest zajęty.
   kategoria, co „zapis zostaje w rejestrze i widzi go administrator" przy usuwaniu lotu.
 - Operator platformy (superadministrator) wątków nie czyta - nie wchodzi w dane klubu
   (`docs/wielofirmowosc.md` §3.3).
+- **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (pkt 53): odebrany, jego
+  fotel obsadzony kimś innym albo zniesiony, zlecenie zamknięte. Historia zostaje do
+  czytania; nowej wiadomości nie wyśle ani adresat, ani zlecający (`thread_closed`).
 
 ### 7.2 Treść
 
@@ -822,6 +857,11 @@ wskazać tylko siebie. Cudze zlecenie, cudzy wątek i zlecenie innego klubu to *
 - **Członek klubu spoza adresatów**: w kalendarzu wąski kształt rezerwacji z nowym polem
   `order: { seeking: ('pic' | 'dual')[] } | null` - „Zlecenie · szuka dowódcy". Treści
   zlecenia nie widzi (reguła cudzej rezerwacji, `docs/rezerwacje.md` §17).
+- **Prowadzący i adresat** dostają w tym samym polu także `id` i `createdBy` - „Otwórz
+  zlecenie" i „kto zleca" (szuflada K2c, karta 23F). Liczy je jedno zapytanie
+  (`queries/bookingOrders.ts`) dla każdej trasy, która oddaje rezerwację: kalendarz, karta
+  rezerwacji, karta samolotu, odmowa `slot_taken`, wynik odwołania. Drugi pilot widzi
+  rezerwację w pełnym kształcie tak samo jak dowódca (pkt 23, §16 pkt 8).
 
 ## 14. Aplikacja pilota
 
@@ -948,6 +988,28 @@ Rezerwacja z pustym fotelem łamie założenie „lot ma pilota" w tych miejscac
     rozmów (`message`, `read`) ogłaszane po commicie; reguła banera w aplikacji (pkt 43)
     i cisza w kokpicie (pkt 44, łącze rozłączone) obejmują WSZYSTKIE rodzaje powiadomień -
     decyzje jako czyste funkcje z testem.
+
+**Stan po Z-B (2026-09-30)** - serwer zamknął swoją część listy, każdy punkt z testem
+(`test/orderBookings.test.ts`, zegar w `orderRepos.test.ts`, sygnały przy komendach).
+Klienci doganiają w Z-C i Z-D:
+
+| Pkt | Serwer (Z-B) | Zostaje dla klientów |
+| --- | --- | --- |
+| 1 | migracja 16 | - |
+| 2 | pole `order` na obu powierzchniach, `pilotId: null` przy pustym fotelu | `CalendarBooking` i etykieta paska (`calendarGrid.ts`, Z-C); oś kalendarza panelu (Z-D) |
+| 3 | kolizja niesie `order` w kształcie pytającego | karta odmowy 22C (Z-C), K7 (Z-D) |
+| 4 | przypomnienie i zwalnianie pomijają zlecenie `open` | - |
+| 5 | stan `booked` z `pilotId: null`, najbliższe terminy z `order` | napis „zlecenie · szuka załogi" na 27 (Z-C) |
+| 6 | `OrderBookingCommands`: przydzielony rezygnuje, zlecający „ja" odwołuje zlecenie (pkt 57) | „REZYGNUJĘ" na 23F (Z-C) i K2c (Z-D) |
+| 7 | odmowa `booking_from_order` (409) dla każdego, kto w rezerwacji jest | mapy odmów aplikacji (`serverPort.ts`) i panelu (`bookingRefusal.ts`) |
+| 8 | pełny kształt dla drugiego pilota | `nextBooking.ts` z oboma fotelami (Z-C) |
+| 9 | odwołanie z kalendarza panelu = odwołanie zlecenia, bez dziennika akcji | przycisk w K2c (Z-D) |
+| 10 | test: rezerwacja zlecenia `confirmed`, poza kolejką i poza `reconcile` | - |
+| 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie (Z-E), baner i cisza w kokpicie (Z-C) |
+
+Znacznik zmian kalendarza (ETag okna) niesie od Z-B DWA stemple - rezerwacji i zleceń:
+przestawienie fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a pole
+`order` musi to pokazać bez czekania na inną zmianę.
 
 ## 17. Co przejmą kolejne milestone’y
 
