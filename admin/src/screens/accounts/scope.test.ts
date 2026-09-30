@@ -47,6 +47,11 @@ describe('nazwa zakresu', () => {
     // Technik SPRZED 3.2.0 (bez obserwowania) też jest własnym zakresem - nikomu nic nie
     // odjęto, ale zestaw w nowym brzmieniu ma o jedną pozycję więcej (issue #205, §3.2).
     expect(scopeLabel(['panel.access', 'fleet.manage'])).toBe('Własny zakres');
+    // Koordynator lotów SPRZED 4.0.0 (bez zlecania) - ta sama reguła; migracja 16
+    // dopisała `orders.create` zbiorom równym dawnemu brzmieniu, więc na bazie ich nie ma.
+    expect(
+      scopeLabel(['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch']),
+    ).toBe('Własny zakres');
   });
 
   it('każdy zestaw katalogu nazywa się SOBĄ - inaczej lista proponowałaby nieosiągalny stan', () => {
@@ -87,15 +92,15 @@ describe('podpis karty', () => {
 
   it('podaje LICZBĘ i nazwy, a przy długiej liście skraca', () => {
     expect(scopeSummary(['reservations.manage'])).toBe(
-      'Nadane 1 z 11 zdolności · Cudze rezerwacje',
+      'Nadane 1 z 12 zdolności · Cudze rezerwacje',
     );
-    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('11 z 11');
-    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('i 8 więcej');
+    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('12 z 12');
+    expect(scopeSummary(CLUB_CAPABILITIES)).toContain('i 9 więcej');
   });
 
   it('zdolność NIEZNANA panelowi nie wywraca podpisu - po prostu się nie liczy', () => {
     const fromFuture: Capability[] = ['reservations.manage', 'nowa.zdolnosc' as Capability];
-    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 11 zdolności · Cudze rezerwacje');
+    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 12 zdolności · Cudze rezerwacje');
   });
 });
 

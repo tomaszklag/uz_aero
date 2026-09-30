@@ -43,6 +43,8 @@ export type CapabilityWire =
   | 'reservations.approve'
   /** Obserwowanie samolotów (3.2.0, issue #205) - karta maszyny i powiadomienia o jej lotach. */
   | 'fleet.watch'
+  /** Zlecanie lotów (4.0.0, issue #239) - wysyłanie zleceń lotu i prowadzenie własnych. */
+  | 'orders.create'
   | 'bugs.triage'
   | 'platform.manage';
 

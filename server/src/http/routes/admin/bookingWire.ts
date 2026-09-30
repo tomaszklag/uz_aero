@@ -25,7 +25,9 @@
 
 import type { Actor } from '../../../application/admin/ports.ts';
 import type { BookingRecord } from '../../../application/common/ports.ts';
+import type { BookingOrders } from '../../../application/common/queries/bookingOrders.ts';
 import { can } from '../../../domain/roles.ts';
+import { bookingOrderWire } from '../common/bookingOrderWire.ts';
 
 export interface PanelBookingViewer {
   pilotId: string;
@@ -49,10 +51,19 @@ export const FULL_VIEWER: PanelBookingViewer = { pilotId: '', full: true };
 
 /** Czy ten widz czyta zajętość w komplecie (własną albo z prawem do cudzych). */
 export function seesFull(row: BookingRecord, viewer: PanelBookingViewer): boolean {
-  return viewer.full || (row.pilotId != null && row.pilotId === viewer.pilotId);
+  // Drugi pilot też: „Twoja rezerwacja" liczy OBA fotele (4.0.0, `docs/zlecenia.md` pkt 23).
+  return (
+    viewer.full ||
+    (row.pilotId != null && row.pilotId === viewer.pilotId) ||
+    (row.dualId != null && row.dualId === viewer.pilotId)
+  );
 }
 
-export function bookingWire(row: BookingRecord, viewer: PanelBookingViewer): Record<string, unknown> {
+export function bookingWire(
+  row: BookingRecord,
+  viewer: PanelBookingViewer,
+  orders: BookingOrders,
+): Record<string, unknown> {
   const wire: Record<string, unknown> = {
     id: row.id,
     aircraftId: row.aircraftId,
@@ -62,6 +73,8 @@ export function bookingWire(row: BookingRecord, viewer: PanelBookingViewer): Rec
     endsAt: new Date(row.endsAt).toISOString(),
     pilotId: row.pilotId,
     blockReason: row.blockReason,
+    // Zlecenie za rezerwacją (4.0.0, §16 pkt 2) - kogo brakuje, widzi każdy członek (K2c).
+    order: bookingOrderWire(row, orders),
   };
 
   if (!seesFull(row, viewer)) return wire;

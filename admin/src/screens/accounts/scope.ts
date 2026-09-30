@@ -42,6 +42,7 @@ export const CLUB_CAPABILITIES: readonly Capability[] = [
   'reservations.manage',
   'reservations.approve',
   'fleet.watch',
+  'orders.create',
   'thresholds.manage',
   'audit.read',
   'maintenance.run',
@@ -75,7 +76,9 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   },
   'reservations.manage': {
     label: 'Cudze rezerwacje',
-    desc: 'Odwoływanie i przesuwanie cudzych terminów oraz wpisanie rezerwacji za pilota.',
+    // Od 4.0.0 (issue #239, pkt 20) ta sama władza prowadzi WSZYSTKIE zlecenia klubu:
+    // wybór załogi, zmiany i odwołanie - bez przejmowania, razem z autorem.
+    desc: 'Odwoływanie i przesuwanie cudzych terminów, wpisanie rezerwacji za pilota i prowadzenie wszystkich zleceń lotów klubu.',
   },
   'reservations.approve': {
     label: 'Akceptacja rezerwacji',
@@ -84,6 +87,12 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   'fleet.watch': {
     label: 'Obserwowanie samolotów',
     desc: 'Karta maszyny w aplikacji (stan, liczniki, terminy, historia, wykresy) i powiadomienia o jej lotach po włączeniu obserwowania.',
+  },
+  // Wysłać zlecenie to co innego niż prowadzić cudze: instruktor umawia lekcję z uczniem,
+  // nie dostając władzy nad terminami kolegów (`docs/zlecenia.md` §9).
+  'orders.create': {
+    label: 'Zlecanie lotów',
+    desc: 'Wysyłanie zleceń lotu do pilotów i grup oraz prowadzenie własnych: wybór załogi, zmiany i odwołanie.',
   },
   'thresholds.manage': {
     label: 'Progi i reguły',
@@ -132,7 +141,9 @@ export const SCOPE_PRESETS: readonly ScopePreset[] = [
   {
     id: 'dispatcher',
     label: 'Koordynator lotów',
-    capabilities: ['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch'],
+    // `orders.create` od 4.0.0 (issue #239): koordynator lotów zleca loty pilotom
+    // i grupom - migracja 16 dopisała je zbiorom równym dawnemu brzmieniu zestawu.
+    capabilities: ['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch', 'orders.create'],
   },
   { id: 'tech', label: 'Technik', capabilities: ['panel.access', 'fleet.manage', 'fleet.watch'] },
   { id: 'admin', label: 'Administrator', capabilities: CLUB_CAPABILITIES },

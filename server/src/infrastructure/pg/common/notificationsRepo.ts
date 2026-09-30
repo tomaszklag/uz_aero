@@ -66,6 +66,28 @@ export class PgNotificationsRepo implements NotificationsPort {
     }
   }
 
+  async collapseUnread(
+    tx: Queryable,
+    orgId: string,
+    row: NewNotification,
+    collapse: { field: string; value: string },
+    at: Date,
+  ): Promise<void> {
+    // Nazwa pola jedzie PARAMETREM (`payload ->> $5`), nie wklejką w SQL - to napis
+    // z kodu, ale zapytanie nie ma prawa zależeć od tego, że ktoś o tym pamięta.
+    // Chwila idzie do przodu razem z treścią: wiersz odświeżony ma stanąć na górze
+    // skrzynki, jak wiadomość, którą właśnie jest.
+    const { rows } = await tx.query<{ id: string }>(
+      `UPDATE notifications SET payload = $6::jsonb, created_at = $7
+        WHERE org_id = $1 AND pilot_id = $2 AND kind = $3 AND read_at IS NULL
+          AND payload ->> $4 = $5
+        RETURNING id`,
+      [orgId, row.pilotId, row.kind, collapse.field, collapse.value, JSON.stringify(row.payload), at],
+    );
+    if (rows.length > 0) return;
+    await this.insert(tx, orgId, [row], at);
+  }
+
   async list(
     db: Queryable,
     orgId: string,

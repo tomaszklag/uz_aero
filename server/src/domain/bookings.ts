@@ -127,7 +127,13 @@ export type BookingRefusal =
   /** Rezerwacja w stanie końcowym: odwołana, odrzucona, zwolniona albo zrealizowana. */
   | 'booking_closed'
   /** Odwołanie CUDZEJ rezerwacji bez powodu - pilot czyta go w aplikacji (P4). */
-  | 'reason_required';
+  | 'reason_required'
+  /**
+   * Zmiana drogą REZERWACJI terminu, który trzyma ZLECENIE (4.0.0, `docs/zlecenia.md`
+   * §14.3, §16 pkt 7): termin prowadzi zlecenie - zmianę uzgadnia się w rozmowie,
+   * a wprowadza ją zlecający edycją zlecenia, którą widzą wszyscy adresaci.
+   */
+  | 'booking_from_order';
 
 /** Okno terminu w milisekundach - ta sama jednostka, co w reszcie domeny. */
 export interface BookingWindow {
@@ -219,6 +225,23 @@ export function refuseChange(
   if (!holdsSlot(subject.status)) return 'booking_closed';
   if (subject.endsAt <= now) return 'booking_in_past';
   return null;
+}
+
+/**
+ * Rezerwacja trzymająca termin ZLECENIA (4.0.0, §16 pkt 7) - odmowa `booking_from_order`
+ * dla każdego, kto w niej JEST: przydzielonego pilota, drugiego pilota i zlecającego.
+ * Stoi PRZED regułą właściciela, bo inaczej przydzielony drugi pilot dostałby „to nie
+ * twoje" o locie, w którym siedzi. Osoba spoza załogi, która nie jest autorem, dostaje
+ * zwykłe `not_your_booking` - odmowa nie zdradza, że za rezerwacją stoi zlecenie.
+ */
+export function refuseOrderBookingChange(
+  subject: { orderId: string | null; pilotId: string | null; dualId: string | null; createdBy: string },
+  actorId: string,
+): BookingRefusal | null {
+  if (subject.orderId == null) return null;
+  const involved =
+    subject.pilotId === actorId || subject.dualId === actorId || subject.createdBy === actorId;
+  return involved ? 'booking_from_order' : null;
 }
 
 /**

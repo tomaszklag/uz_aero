@@ -150,7 +150,7 @@ export class BookingQueries {
       to: span.to,
       aircraftId,
     });
-    const changed = await this.bookings.latestChangeAt(this.db, orgId);
+    const changed = await this.bookings.changeMark(this.db, orgId);
 
     return {
       timezone,
@@ -161,7 +161,7 @@ export class BookingQueries {
       // rezerwacji USUNIĘTEJ z okna przez przesunięcie na inny dzień: `updated_at`
       // rośnie wtedy w klubie, ale gdyby zmiana wyszła poza okno, znacznik zostałby ten
       // sam przy innej treści. Klub i okno też - ten sam telefon pyta o kilka dni.
-      etag: `W/"${orgId}:${span.from}-${span.to}:${aircraftId ?? '*'}:${changed ?? 0}:${rows.length}"`,
+      etag: `W/"${orgId}:${span.from}-${span.to}:${aircraftId ?? '*'}:${changed}:${rows.length}"`,
     };
   }
 

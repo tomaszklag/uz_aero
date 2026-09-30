@@ -141,7 +141,9 @@ describe('rezerwacje: zapis z telefonu', () => {
     expect(moje.plannedFuelL).toBe(120);
 
     // KOLEGA z tego samego klubu dostaje pięć rzeczy, których używa oś floty,
-    // karta samolotu i ostrzeżenie o kolizji - i ani pola więcej.
+    // karta samolotu i ostrzeżenie o kolizji - i ani pola więcej. Szóste od 4.0.0 to
+    // `order` (`docs/zlecenia.md` §16 pkt 2): pasek pisze z niego „Zlecenie · szuka
+    // dowódcy", a przy zwykłej rezerwacji jest `null`.
     const cudze = (await calendar(app, pwi)).json().bookings[0];
     expect(Object.keys(cudze).sort()).toEqual([
       'aircraftId',
@@ -149,10 +151,12 @@ describe('rezerwacje: zapis z telefonu', () => {
       'endsAt',
       'id',
       'kind',
+      'order',
       'pilotId',
       'startsAt',
       'status',
     ]);
+    expect(cudze.order).toBeNull();
 
     // To samo na karcie rezerwacji: cudzy termin otwarty z osi mówi, KTO i KIEDY.
     const karta = await app.inject({

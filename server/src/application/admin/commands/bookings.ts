@@ -36,6 +36,8 @@ import type {
   NewBooking,
 } from '../../common/ports.ts';
 import type { ApprovalFlow } from '../../common/commands/approvals.ts';
+import type { OrderBookingCommands } from '../../common/commands/orderBookings.ts';
+import { orderActorOf } from '../../common/orderAccess.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
 import type { Notifier } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
@@ -74,6 +76,18 @@ export type AdminBookingOutcome =
 
 class BookingNotFound extends Error {}
 
+/**
+ * Rezerwacja ZLECENIA w odwołaniu z kalendarza (§16 pkt 9). Wyjątek, bo `AuditedWrite`
+ * dopisuje ślad do KAŻDEGO skutku, a odwołanie zlecenia do dziennika akcji nie trafia
+ * (zlecenia mają własną historię zmian, §10.3) - rzucony w transakcji wycofuje ją razem
+ * z wpisem, a odwołanie idzie komendą zlecenia.
+ */
+class OrderBookingCancelled extends Error {
+  constructor(readonly orderId: string) {
+    super('rezerwacja zlecenia');
+  }
+}
+
 class Refused extends Error {
   constructor(
     readonly refusal: BookingRefusal,
@@ -95,6 +109,8 @@ export class AdminBookingCommands {
      */
     private readonly approvals: ApprovalFlow,
     private readonly notifier: Notifier,
+    /** Rezerwacja zlecenia (4.0.0): odwołanie z kalendarza jest odwołaniem zlecenia (§16 pkt 9). */
+    private readonly orderBookings: OrderBookingCommands,
     /** Obserwowanie samolotu (3.2.0): odwołanie przypomnianego terminu budzi obserwujących, bez administratora. */
     private readonly watching: AircraftWatching | null = null,
   ) {}
@@ -164,6 +180,8 @@ export class AdminBookingCommands {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
         if (current == null) throw new BookingNotFound();
+        // Z jego wiadomościami i powodem OPCJONALNYM (§5.6) - inaczej niż cudza rezerwacja.
+        if (current.orderId != null) throw new OrderBookingCancelled(current.orderId);
 
         const refusal = refuseCancel(current, { pilotId: actor.pilotId, manages: true }, reason);
         if (refusal != null) throw new Refused(refusal);
@@ -214,8 +232,22 @@ export class AdminBookingCommands {
       if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
       return { ok: true, booking };
     } catch (err) {
+      if (err instanceof OrderBookingCancelled) return this.cancelOrder(actor, err.orderId, reason);
       return outcomeOf(err);
     }
+  }
+
+  private async cancelOrder(actor: Actor, orderId: string, reason: string | null): Promise<AdminBookingOutcome> {
+    const outcome = await this.orderBookings.cancelAsLeader(
+      actor.orgId,
+      orderActorOf(actor.pilotId, actor.capabilities),
+      orderId,
+      reason,
+    );
+    if (outcome == null) return { ok: false, reason: 'not_found' };
+    return outcome.ok
+      ? { ok: true, booking: outcome.booking }
+      : { ok: false, reason: 'refused', refusal: outcome.refusal, taken: null };
   }
 
   private async insert(

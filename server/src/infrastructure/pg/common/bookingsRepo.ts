@@ -37,6 +37,7 @@ import type {
   NewBooking,
   Queryable,
 } from '../../../application/common/ports.ts';
+import type { OrderCrew } from '../../../domain/orders.ts';
 import { SLOT_HOLDING_STATUSES, type BookingKind, type BookingStatus } from '../../../domain/bookings.ts';
 
 interface BookingDbRow {
@@ -64,13 +65,25 @@ interface BookingDbRow {
   close_reason: string | null;
   /** Stempel przypomnienia „za godzinę" (migracja 15, obserwowanie samolotu). */
   reminded_at: string | Date | null;
+  /** Zlecenie, dla którego rezerwacja trzyma termin (migracja 16, zlecenia na lot). */
+  order_id: string | null;
 }
 
 const COLUMNS = `
   id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, dual_id, operation,
   from_icao, to_icao, planned_air_min, planned_fuel_l, session_uuid, block_reason,
-  note, created_by, created_at, updated_at, closed_at, close_reason, reminded_at
+  note, created_by, created_at, updated_at, closed_at, close_reason, reminded_at, order_id
 `;
+
+/**
+ * Rezerwacja zlecenia BEZ KOMPLETU załogi (4.0.0, §16 pkt 4) - warunek dla zegara:
+ * przypomnienie „Zbliża się lot" jej nie dotyczy (mechanik nie szykuje maszyny dla
+ * nikogo), a zwolnienie po godzinie też nie, bo takie zlecenie WYGASA na początku terminu
+ * w całości (§5.5) i ma na to własne pytanie zadania okresowego.
+ */
+const NOT_UNFILLED_ORDER = `NOT EXISTS (
+  SELECT 1 FROM flight_orders fo
+   WHERE fo.id = bookings.order_id AND fo.org_id = bookings.org_id AND fo.status = 'open')`;
 
 /** Lista stanów trzymających slot w postaci gotowej do `IN (...)` - jedno źródło z domeną. */
 const HOLDING = SLOT_HOLDING_STATUSES.map((s) => `'${s}'`).join(', ');
@@ -103,6 +116,7 @@ const toRecord = (r: BookingDbRow): BookingRecord => ({
   closedAt: r.closed_at == null ? null : ms(r.closed_at),
   closeReason: r.close_reason,
   remindedAt: r.reminded_at == null ? null : ms(r.reminded_at),
+  orderId: r.order_id,
 });
 
 /**
@@ -185,8 +199,8 @@ export class PgBookingsRepo implements BookingsPort {
         `INSERT INTO bookings (
            id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, dual_id,
            operation, from_icao, to_icao, planned_air_min, planned_fuel_l, block_reason,
-           note, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+           note, created_by, order_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          ON CONFLICT (id) DO NOTHING
          RETURNING ${COLUMNS}`,
         [
@@ -207,6 +221,7 @@ export class PgBookingsRepo implements BookingsPort {
           draft.blockReason,
           draft.note,
           draft.createdBy,
+          draft.orderId ?? null,
         ],
       );
       if (rows[0] != null) return { ok: true, booking: toRecord(rows[0]), created: true };
@@ -235,12 +250,22 @@ export class PgBookingsRepo implements BookingsPort {
       params.push(value);
       sets.push(`${column} = $${params.length}`);
     };
+    // Przesunięcie POCZĄTKU i zmiana MASZYNY (rezerwacja zlecenia) zerują stempel
+    // przypomnienia (obserwowanie, §4.2): nowy termin albo nowa maszyna dostaje własne
+    // „za godzinę". Kolumny po prawej stronie `SET` to wartości SPRZED zapisu, więc
+    // poprawka, która ich nie zmienia, stempla nie rusza. Jeden `CASE` na oba warunki,
+    // bo dwa przypisania tej samej kolumny w jednym `SET` to błąd składni.
+    const keepReminder: string[] = [];
     if (patch.startsAt !== undefined) {
       set('starts_at', new Date(patch.startsAt));
-      // Przesunięcie POCZĄTKU zeruje stempel przypomnienia (obserwowanie, §4.2): nowy
-      // termin dostanie własne „za godzinę". Kolumna po prawej stronie `SET` to wartość
-      // SPRZED zapisu, więc poprawka niezmieniająca początku stempla nie rusza.
-      sets.push(`reminded_at = CASE WHEN starts_at = $${params.length} THEN reminded_at ELSE NULL END`);
+      keepReminder.push(`starts_at = $${params.length}`);
+    }
+    if (patch.aircraftId !== undefined) {
+      set('aircraft_id', patch.aircraftId);
+      keepReminder.push(`aircraft_id = $${params.length}`);
+    }
+    if (keepReminder.length > 0) {
+      sets.push(`reminded_at = CASE WHEN ${keepReminder.join(' AND ')} THEN reminded_at ELSE NULL END`);
     }
     if (patch.endsAt !== undefined) set('ends_at', new Date(patch.endsAt));
     if (patch.dualId !== undefined) set('dual_id', patch.dualId);
@@ -271,7 +296,7 @@ export class PgBookingsRepo implements BookingsPort {
         ok: false,
         taken: await this.colliding(tx, orgId, {
           id,
-          aircraftId: current.aircraftId,
+          aircraftId: patch.aircraftId ?? current.aircraftId,
           startsAt: patch.startsAt ?? current.startsAt,
           endsAt: patch.endsAt ?? current.endsAt,
         }),
@@ -364,6 +389,7 @@ export class PgBookingsRepo implements BookingsPort {
          FROM bookings
         WHERE kind = 'flight' AND status = 'confirmed'
           AND starts_at < $1 AND ends_at > $2
+          AND ${NOT_UNFILLED_ORDER}
         ORDER BY starts_at`,
       [window.startedBefore, window.endsAfter],
     );
@@ -391,6 +417,7 @@ export class PgBookingsRepo implements BookingsPort {
          FROM bookings
         WHERE kind = 'flight' AND status = 'confirmed' AND reminded_at IS NULL
           AND starts_at <= $1 AND ends_at > $2
+          AND ${NOT_UNFILLED_ORDER}
         ORDER BY starts_at`,
       [window.startsBefore, window.endsAfter],
     );
@@ -420,6 +447,38 @@ export class PgBookingsRepo implements BookingsPort {
     return rows[0] == null ? null : toRecord(rows[0]);
   }
 
+  async setCrew(
+    tx: Queryable,
+    orgId: string,
+    id: string,
+    crew: OrderCrew,
+    at: Date,
+  ): Promise<BookingRecord | null> {
+    const { rows } = await tx.query<BookingDbRow>(
+      `UPDATE bookings
+          SET pilot_id = $3, dual_id = $4, updated_at = $5
+        WHERE org_id = $1 AND id = $2 AND order_id IS NOT NULL AND status IN (${HOLDING})
+        RETURNING ${COLUMNS}`,
+      [orgId, id, crew.pic, crew.dual, at],
+    );
+    return rows[0] == null ? null : toRecord(rows[0]);
+  }
+
+  async byOrders(
+    db: Queryable,
+    orgId: string,
+    orderIds: readonly string[],
+  ): Promise<Map<string, BookingRecord>> {
+    const out = new Map<string, BookingRecord>();
+    if (orderIds.length === 0) return out;
+    const { rows } = await db.query<BookingDbRow>(
+      `SELECT ${COLUMNS} FROM bookings WHERE org_id = $1 AND order_id = ANY($2::text[])`,
+      [orgId, [...orderIds]],
+    );
+    for (const row of rows) out.set(row.order_id!, toRecord(row));
+    return out;
+  }
+
   async undecided(db: Queryable, startedBefore: Date): Promise<BookingDue[]> {
     const { rows } = await db.query<{
       id: string;
@@ -441,13 +500,14 @@ export class PgBookingsRepo implements BookingsPort {
     }));
   }
 
-  async latestChangeAt(db: Queryable, orgId: string): Promise<number | null> {
-    const { rows } = await db.query<{ at: string | Date | null }>(
-      'SELECT MAX(updated_at) AS at FROM bookings WHERE org_id = $1',
+  async changeMark(db: Queryable, orgId: string): Promise<string> {
+    const { rows } = await db.query<{ bookings_at: string | Date | null; orders_at: string | Date | null }>(
+      `SELECT (SELECT MAX(updated_at) FROM bookings WHERE org_id = $1) AS bookings_at,
+              (SELECT MAX(updated_at) FROM flight_orders WHERE org_id = $1) AS orders_at`,
       [orgId],
     );
-    const at = rows[0]?.at;
-    return at == null ? null : ms(at);
+    const at = (value: string | Date | null | undefined): number => (value == null ? 0 : ms(value));
+    return `${at(rows[0]?.bookings_at)}.${at(rows[0]?.orders_at)}`;
   }
 
   /**

@@ -245,8 +245,9 @@ describe('POST /admin/api/organizations - założenie klubu', () => {
         WHERE o.slug = 'ks-gliwice' ORDER BY mc.capability`,
     );
     expect(caps.rows.map((r) => r.capability)).toContain('accounts.manage');
-    // Komplet klubowy: jedenaście pozycji od 3.2.0 (`fleet.watch`, obserwowanie samolotu).
-    expect(caps.rows).toHaveLength(11);
+    // Komplet klubowy: dwanaście pozycji od 4.0.0 (`orders.create`, zlecanie lotów;
+    // jedenasta - `fleet.watch` - od 3.2.0).
+    expect(caps.rows).toHaveLength(12);
     // Sekret adresu kart arkusza losuje BAZA - klub dostaje go przy założeniu.
     const secret = await db.query<{ sheets_key: string }>(
       `SELECT sheets_key FROM organizations WHERE slug = 'ks-gliwice'`,

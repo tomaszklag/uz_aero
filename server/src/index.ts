@@ -65,6 +65,30 @@ import { ExpoPush } from './infrastructure/push/expoPush.ts';
 import { LogPush } from './infrastructure/push/logPush.ts';
 import { PgBookingsRepo } from './infrastructure/pg/common/bookingsRepo.ts';
 import { PgClubSettingsRepo } from './infrastructure/pg/common/clubSettingsRepo.ts';
+import { PgClubMembersRepo } from './infrastructure/pg/common/clubMembersRepo.ts';
+import { PgFlightOrdersRepo } from './infrastructure/pg/common/flightOrdersRepo.ts';
+import { PgMemberGroupsRepo } from './infrastructure/pg/common/memberGroupsRepo.ts';
+import { PgOrderChangesRepo } from './infrastructure/pg/common/orderChangesRepo.ts';
+import { PgOrderRecipientsRepo } from './infrastructure/pg/common/orderRecipientsRepo.ts';
+import { PgThreadMessagesRepo } from './infrastructure/pg/common/threadMessagesRepo.ts';
+import { PgThreadsRepo } from './infrastructure/pg/common/threadsRepo.ts';
+import { SilentLiveSignals } from './infrastructure/live/silentLiveSignals.ts';
+import { MemberGroupCommands } from './application/admin/commands/memberGroups.ts';
+import { OrderAssignmentCommands } from './application/common/commands/orderAssignments.ts';
+import { OrderBookingCommands } from './application/common/commands/orderBookings.ts';
+import { BookingOrderQueries } from './application/common/queries/bookingOrders.ts';
+import { OrderClock } from './application/common/commands/orderClock.ts';
+import { OrderEditCommands } from './application/common/commands/orderEdit.ts';
+import { OrderCommands } from './application/common/commands/orders.ts';
+import { OrderResponseCommands } from './application/common/commands/orderResponses.ts';
+import { ThreadCommands } from './application/common/commands/threads.ts';
+import { OrderSignals } from './application/common/notify/orderSignals.ts';
+import { OrderRecords } from './application/common/orderRecords.ts';
+import { OrderSeating } from './application/common/orderSeating.ts';
+import { MemberGroupQueries } from './application/common/queries/memberGroups.ts';
+import { OrderQueries } from './application/common/queries/orders.ts';
+import { ThreadQueries } from './application/common/queries/threads.ts';
+import type { OrderDeps } from './http/routes/common/orderEndpoints.ts';
 import { BookingQueries } from './application/common/queries/bookings.ts';
 import { DecisionPreviewQueries } from './application/common/queries/decisionPreview.ts';
 import { BookingCommands } from './application/common/commands/bookings.ts';
@@ -416,6 +440,51 @@ const approvals = new ApprovalFlow(
   notifier,
   clock,
 );
+// Zlecenia na lot (4.0.0, issue #245): adaptery WSPÓLNE dla telefonu i panelu - zlecenie
+// wysyła się i prowadzi z obu. Rezerwacja zlecenia to zwykły wiersz `bookings`, więc
+// termin trzyma ten sam adapter, co kalendarz. Kanał klubu jest jeszcze atrapą:
+// rozsyłanie przychodzi z Z-E (#246), a komendy ogłaszają swoje tematy już teraz.
+const flightOrders = new PgFlightOrdersRepo();
+const orderRecipients = new PgOrderRecipientsRepo();
+const orderChanges = new PgOrderChangesRepo();
+const memberGroups = new PgMemberGroupsRepo();
+const clubMembers = new PgClubMembersRepo();
+const orderThreads = new PgThreadsRepo();
+const threadMessages = new PgThreadMessagesRepo();
+const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
+const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
+const orderSignals = new OrderSignals(new SilentLiveSignals());
+const orders: OrderDeps = {
+  orders: new OrderCommands(
+    db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+    clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+  ),
+  edits: new OrderEditCommands(
+    db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, memberGroups,
+    clubMembers, aircraftConfig, notifier, orderSignals, clock, randomUUID, watching,
+  ),
+  responses: new OrderResponseCommands(
+    db, orderRecords, orderSeating, orderRecipients, orderChanges, notifier, orderSignals, clock, randomUUID,
+  ),
+  assignments: new OrderAssignmentCommands(
+    db, orderRecords, orderSeating, orderChanges, clubMembers, notifier, orderSignals, clock, randomUUID,
+  ),
+  threads: new ThreadCommands(
+    db, orderRecords, orderRecipients, orderThreads, threadMessages, notifier, orderSignals, clock, randomUUID,
+  ),
+  queries: new OrderQueries(
+    db, orderRecords, flightOrders, bookingsRepo, orderRecipients, orderChanges, threadMessages, clubSettings, clock,
+  ),
+  threadQueries: new ThreadQueries(db, orderRecords, orderThreads, threadMessages),
+};
+// Rezerwacja zlecenia widziana z tras rezerwacji (§16): odwołanie z karty 23 i z kalendarza
+// panelu idzie komendami zlecenia, a każda rezerwacja na drucie niesie pole `order`.
+const orderBookings = new OrderBookingCommands(db, orderRecords, orders.orders, orders.responses);
+const bookingOrders = new BookingOrderQueries(db, flightOrders);
+const orderClock = new OrderClock(
+  db, orderRecords, flightOrders, bookingsRepo, orderChanges, clubSettings, notifier, orderSignals, randomUUID, clock,
+  watching,
+);
 const adminFleetQueries = new AdminFleetQueries(
   db,
   adminFleetRepo,
@@ -501,9 +570,13 @@ const app = await buildServer({
   bugReports: new BugReportCommands(db, bugReports),
   // Rezerwacje pilota - zapis wymaga sieci (§2.2), stan służby maszyny czyta
   // `aircraftConfig`, bo wyłączenie ze służby nie ma terminu i baza o nim nie wie.
-  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+  bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
   calendar,
   approvals,
+  orders,
+  bookingOrders,
+  groupQueries: new MemberGroupQueries(db, memberGroups),
+  adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
   notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
   // Podgląd pilota i samolotu przy decyzji (issue #206): jeden widok dla telefonu
   // i panelu, składany z TYCH SAMYCH adapterów, którymi czytają kalendarz, dziennik
@@ -738,7 +811,16 @@ const app = await buildServer({
   adminBugReports: new AdminBugReportCommands(auditedWrite, bugReports, clock),
   // Kalendarz panelu - przez bramę audytu: rezerwacja za pilota, odwołanie cudzej
   // i wyłączenie maszyny z użytku to trzy decyzje o cudzych sprawach.
-  adminBookings: new AdminBookingCommands(auditedWrite, bookingsRepo, aircraftConfig, clock, approvals, notifier, watching),
+  adminBookings: new AdminBookingCommands(
+    auditedWrite,
+    bookingsRepo,
+    aircraftConfig,
+    clock,
+    approvals,
+    notifier,
+    orderBookings,
+    watching,
+  ),
   adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
   // Analityka zużycia (A10a/A10b) - bierze TEN SAM magazyn zdarzeń, co reszta serwera:
   // strumienie sesji są jej wejściem, a licznik odczytów w `contract.test.ts` pilnuje,
@@ -758,10 +840,11 @@ const app = await buildServer({
 });
 
 // Zegar rezerwacji (zwalnianie slotów §4.1, wygaszanie §11.5, „zbliża się lot" §5.1
-// obserwowania) - PIERWSZY wątek okresowy w tym serwerze. Startuje po `listen`, bo
-// jest porządkowaniem kalendarza, a nie warunkiem przyjmowania żądań.
+// obserwowania, a od 4.0.0 zlecenia: wygaśnięcie i ostrzeżenie o 18:00) - PIERWSZY wątek
+// okresowy w tym serwerze. Startuje po `listen`, bo jest porządkowaniem kalendarza,
+// a nie warunkiem przyjmowania żądań.
 if (env.BOOKING_RELEASE !== '0') {
-  new BookingClockJob(db, bookingsRepo, sessions, clock, notifier, watching).start();
+  new BookingClockJob(db, bookingsRepo, sessions, clock, notifier, watching, orderClock).start();
 }
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

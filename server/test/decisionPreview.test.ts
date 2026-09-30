@@ -149,6 +149,7 @@ function bookingRecord(over: Partial<BookingRecord> & { id: string }): BookingRe
     closedAt: null,
     closeReason: null,
     remindedAt: null,
+    orderId: null,
     ...over,
   };
 }

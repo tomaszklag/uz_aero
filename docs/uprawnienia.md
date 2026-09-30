@@ -53,7 +53,7 @@ niesie. Katalog **ZATWIERDZONY tego samego dnia** („zostawmy te zestawy uprawn
 | --- | --- |
 | **Pilot** | żadnych - stan domyślny, wyłącznie aplikacja na telefonie |
 | **Akceptujący** | akceptacja rezerwacji (`reservations.approve`) + obserwowanie samolotów (`fleet.watch`) - BEZ wejścia do panelu: mechanik rozstrzyga swój krok z telefonu i tam ogląda kartę maszyny |
-| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja + obserwowanie samolotów |
+| **Koordynator lotów** | wejście do panelu + cudze rezerwacje + akceptacja + obserwowanie samolotów + zlecanie lotów |
 | **Technik** | wejście do panelu + flota + obserwowanie samolotów |
 | **Administrator** | komplet zdolności klubowych |
 | **Własny zakres** | cokolwiek innego |
@@ -67,6 +67,15 @@ właściciela 2026-09-25: baza nie ma jeszcze prawdziwych klubów - „jeszcze n
 aplikacji, więc startujemy od zera"), więc członkostwo z dawnym zbiorem zestawu czyta się
 po wdrożeniu jako „Własny zakres", dopóki administrator nie nada zakresu od nowa; reguła
 na przyszłość, gdy będzie miała na czym działać - §12.
+
+**Dwunasta zdolność klubowa - `orders.create` „Zlecanie lotów"** (wysyłanie zleceń lotu
+do pilotów i grup oraz prowadzenie WŁASNYCH - 4.0.0, `docs/zlecenia.md` §9) stoi
+w Koordynatorze lotów i w komplecie. Prowadzenie CUDZYCH zleceń nie jest osobną zdolnością:
+daje je `reservations.manage` („Cudze rezerwacje"), a jego opis w panelu mówi to drugą
+połową zdania. Wysłać zlecenie to co innego niż prowadzić cudze - instruktor umawia lekcję
+z uczniem, nie dostając władzy nad terminami kolegów. Migracja 16 dopisała `orders.create`
+członkostwom o zbiorze DOKŁADNIE równym Koordynatorowi lotów albo kompletowi (reguła §12,
+zestawy wypisane w migracji, test w `schema.test.ts`).
 
 **ZESTAW NIE JEST BYTEM W MODELU.** Po wybraniu w bazie stoi ZBIÓR ZDOLNOŚCI, nie nazwa -
 zestaw jest skrótem myślowym przy wypełnianiu, a etykieta liczy się z powrotem ze zbioru
@@ -394,10 +403,10 @@ wymaga sondy dla każdej):
 
 | Zdolność | Trasy |
 | --- | --- |
-| **`null` - każdy członek** | `GET /me`, `GET /me/account`, `POST /auth/switch`, `GET/DELETE /me/sessions*`, `PUT /me/password`, **`GET /directory`** (nowa), `GET /bookings`, `GET /bookings/:id`, `POST /bookings/:id/decision` (1), `GET /bookings/:id/preview/*` (1) |
+| **`null` - każdy członek** | `GET /me`, `GET /me/account`, `POST /auth/switch`, `GET/DELETE /me/sessions*`, `PUT /me/password`, **`GET /directory`** (nowa), `GET /bookings`, `GET /bookings/:id`, `POST /bookings/:id/decision` (1), `GET /bookings/:id/preview/*` (1), `/orders*` (2), `GET /groups` (2) |
 | `panel.access` - Podgląd klubu | `GET /sessions*`, `/sessions/:uuid/track`, `/log`, `/stats`, `/dashboard`, `/events`, `/flags`, `/exports*`, `GET /fleet`, `/fleet/tolerance`, `/fleet/:id/consumption`, `GET /pilots` |
 | `fleet.manage` | `POST/PATCH/DELETE /fleet*`, `/fleet/:id/readings`, `/bookings/blocks`, `/exports/:uuid/retry` |
-| `accounts.manage` | `PATCH /pilots/:id`, `/pilots/:id/active`, `DELETE /pilots/:id`, `/pilots/:id/password-link`, `/pilots/:id/sessions*`, `/memberships/*`, `/club-code*`, `/approval-steps`, `/maintenance/refresh-tokens*` |
+| `accounts.manage` | `PATCH /pilots/:id`, `/pilots/:id/active`, `DELETE /pilots/:id`, `/pilots/:id/password-link`, `/pilots/:id/sessions*`, `/memberships/*`, `/club-code*`, `/approval-steps`, `/maintenance/refresh-tokens*`, `POST/PATCH/DELETE /groups*` |
 | `reservations.manage` | `POST /bookings`, `/bookings/:id/cancel` |
 | `reservations.approve` | `GET /approvals/queue` |
 | `events.correct` | `/sessions/:uuid/corrections*`, `/void`, `/close` |
@@ -407,6 +416,12 @@ wymaga sondy dla każdej):
 (1) decyzja i podglądy mają zdolność rozstrzyganą W HANDLERZE (`reservations.approve`
 ALBO `reservations.manage`), jak od R-G; do #216 stały dodatkowo na `panel.access`, co
 odcinało akceptującego bez podglądu klubu od decyzji z panelu.
+
+(2) zlecenia i rozmowy (4.0.0): o prawie do KONKRETNEGO zlecenia rozstrzyga komenda -
+prowadzący (autor z `orders.create` albo każdy z `reservations.manage`), adresat albo 404;
+`GET /groups` wpuszcza `panel.access` ALBO `orders.create`. Te same trasy zleceń stoją
+w telefonie, a `GET /groups` jest tam wyłącznie dla `orders.create` - telefon pokazuje
+grupy jako adresatów zlecenia (`docs/zlecenia.md` §13).
 
 **Kształt cudzej rezerwacji pyta, kto patrzy** (`http/routes/admin/bookingWire.ts`) -
 ta sama reguła, co na telefonie (`docs/rezerwacje.md` §17). Widz PEŁNY: własna rezerwacja

@@ -24,6 +24,7 @@ import type { ApprovalRefusal } from '../../../domain/approvals.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 import { approvalWire } from './approvalWire.ts';
+import { NO_ORDERS } from '../../../application/common/queries/bookingOrders.ts';
 import { bookingWire } from './bookings.ts';
 
 const REASON_MAX = 500;
@@ -69,7 +70,8 @@ export function registerApprovalRoutes(
     const items = await approvals.queueFor(who.orgId, who.pilotId);
     const viewer = { pilotId: who.pilotId, approves: can(who.capabilities, 'reservations.approve') };
     return reply.send({
-      items: items.map((item) => ({ booking: bookingWire(item.booking, viewer), step: item.step })),
+      // Zlecenie nie przechodzi ścieżki akceptacji (decyzja 5), więc w kolejce go nie ma.
+      items: items.map((item) => ({ booking: bookingWire(item.booking, viewer, NO_ORDERS), step: item.step })),
     });
   });
 
