@@ -177,6 +177,39 @@ describe('rejestr połączeń kanału klubu', () => {
     expect([...live.connectedSessions(ORG_A, 'PWI')]).toEqual([]);
   });
 
+  it('zakres osoby z wyjątkiem: bieżąca sesja przeżywa, pozostałe i połączenia bez sesji - nie', () => {
+    const { live, sinks } = world();
+    const legacy = new FakeSink();
+    live.attach(peer({ pilotId: 'PWI', sessionId: null }), legacy);
+
+    live.close({ kind: 'person', pilotId: 'PWI', exceptSessionId: 'sid-PWB' }, 'session_revoked');
+    expect(sinks.pwiA.closed).toBe('session_revoked');
+    expect(legacy.closed).toBe('session_revoked');
+    expect(sinks.pwiB.closed).toBeNull();
+    expect(sinks.krz.closed).toBeNull();
+
+    // `null` = żadna sesja nie przeżywa (reset hasła z linku).
+    live.close({ kind: 'person', pilotId: 'PWI', exceptSessionId: null }, 'session_revoked');
+    expect(sinks.pwiB.closed).toBe('session_revoked');
+  });
+
+  it('nowy zakres uprawnień obowiązuje otwarte połączenia członka W TYM klubie od razu', () => {
+    const { live, sinks } = world();
+    const managers = [{ kind: 'capability', capability: 'reservations.manage' }] as const;
+
+    live.updateCapabilities(ORG_A, 'AKO', ['panel.access']);
+    live.message(ORG_A, managers, { orderId: 'zl-1', text: 'Czy lecimy o 9?' });
+    expect(sinks.ako.frames).toEqual([]);
+
+    live.updateCapabilities(ORG_A, 'PWI', ['reservations.manage']);
+    live.message(ORG_A, managers, { orderId: 'zl-1', text: 'Czy lecimy o 9?' });
+    expect(sinks.pwiA.frames).toHaveLength(1);
+    // Ta sama osoba w innym klubie ma tam inny zakres - zmiana w Alfie go nie rusza.
+    live.message(ORG_B, managers, { orderId: 'zl-2', text: 'Beta' });
+    expect(sinks.pwiB.frames).toEqual([]);
+    expect(sinks.pwiA.closed).toBeNull();
+  });
+
   it('odłączenie kończy połączenie w rejestrze', () => {
     const live = new LiveRegistry();
     const sink = new FakeSink();

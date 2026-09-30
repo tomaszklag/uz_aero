@@ -304,6 +304,12 @@ export interface VerifiedIdentity extends Omit<Identity, 'sessionId'> {
    */
   issuedAt: number;
   /**
+   * `exp` w SEKUNDACH epoki - chwila, po której token nie przechodzi już weryfikacji.
+   * Czyta go kanał klubu (4.0.0): połączenie otwarte tym tokenem żyje najwyżej do tej
+   * chwili, bo brama sprawdza je tylko przy nawiązaniu.
+   */
+  expiresAt: number;
+  /**
    * `null` = token wydany PRZED 2.1.0, czyli bez sesji w bazie. Brama przyjmuje taki
    * token do jego wygaśnięcia (1 h dostępu, 8 h ciasteczka panelu) - inaczej wdrożenie
    * wylogowałoby wszystkich naraz - ale `sid` NIEZNANY albo unieważniony odbija zawsze.
@@ -1915,7 +1921,12 @@ export interface LivePeer {
 export type LiveCloseScope =
   | { kind: 'sessions'; sessionIds: readonly string[] }
   | { kind: 'member'; orgId: string; pilotId: string }
-  | { kind: 'person'; pilotId: string }
+  /**
+   * Wszystkie połączenia osoby, we wszystkich klubach. `exceptSessionId` - sesja, która
+   * PRZEŻYWA (zmiana hasła wylogowuje pozostałe urządzenia, nie to, przy którym człowiek
+   * siedzi); połączenia bez sesji logowania zamykają się zawsze.
+   */
+  | { kind: 'person'; pilotId: string; exceptSessionId?: string | null }
   | { kind: 'club'; orgId: string };
 
 /**
@@ -1939,6 +1950,13 @@ export interface LivePort {
   sendToPerson(orgId: string, pilotId: string, frame: LiveFrame): number;
   /** Zamknięcie z powodem przy odebraniu dostępu: sesje, członkostwo, osoba, klub. */
   close(scope: LiveCloseScope, reason: LiveByeReason): void;
+  /**
+   * Nowy zakres uprawnień członka dla jego OTWARTYCH połączeń - od tej chwili sygnały do
+   * posiadaczy zdolności liczą się według niego. Bez tego odebrana zdolność działałaby
+   * w kanale do końca połączenia: rozmowy ze zleceń (`reservations.manage`) szłyby dalej
+   * do kogoś, kto w REST dostaje już 403.
+   */
+  updateCapabilities(orgId: string, pilotId: string, capabilities: readonly Capability[]): void;
 }
 
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */

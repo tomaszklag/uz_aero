@@ -10,9 +10,9 @@
  * ══ ODBIORCÓW WYZNACZA SERWER (§2) ══
  * Klient niczego nie subskrybuje: ramka idzie do połączeń klubu `orgId`, które pasują do
  * któregokolwiek odbiorcy sygnału - cały klub, wymienione osoby albo posiadacze zdolności.
- * Zdolności są te z bramy w chwili nawiązania połączenia; kanał nie jest źródłem prawdy,
- * więc najgorszym skutkiem nieaktualnego zbioru jest sygnał „coś się zmieniło" do kogoś,
- * kto po odczycie REST i tak zobaczy wyłącznie to, co mu wolno.
+ * Zdolności są te z bramy w chwili nawiązania połączenia, a zmiana zakresu członka
+ * przestawia je od razu (`updateCapabilities`) - ramka `message` niesie treść rozmowy,
+ * więc nie może dojść do kogoś, komu odebrano prawo jej czytania.
  *
  * ══ NIC NIE RZUCA ══
  * Połączenie, które padło w trakcie wysyłki, jest po cichu odłączane, a pozostałe dostają
@@ -30,9 +30,10 @@ import type {
   LiveSignalsPort,
   LiveSink,
 } from '../../application/common/ports.ts';
-import { can } from '../../domain/roles.ts';
+import { can, type Capability } from '../../domain/roles.ts';
 
 interface Connection {
+  /** Zmienne wyłącznie w jednym miejscu: nowy zakres uprawnień członka (`updateCapabilities`). */
   peer: LivePeer;
   sink: LiveSink;
 }
@@ -83,6 +84,13 @@ export class LiveRegistry implements LivePort, LiveSignalsPort {
       } catch {
         // Połączenie zerwane wcześniej - zamykać nie ma czego.
       }
+    }
+  }
+
+  updateCapabilities(orgId: string, pilotId: string, capabilities: readonly Capability[]): void {
+    for (const connection of this.connections.values()) {
+      if (connection.peer.orgId !== orgId || connection.peer.pilotId !== pilotId) continue;
+      connection.peer = { ...connection.peer, capabilities: [...capabilities] };
     }
   }
 
@@ -137,7 +145,7 @@ function inScope(peer: LivePeer, scope: LiveCloseScope): boolean {
     case 'member':
       return peer.orgId === scope.orgId && peer.pilotId === scope.pilotId;
     case 'person':
-      return peer.pilotId === scope.pilotId;
+      return peer.pilotId === scope.pilotId && (peer.sessionId == null || peer.sessionId !== scope.exceptSessionId);
     case 'club':
       return peer.orgId === scope.orgId;
   }

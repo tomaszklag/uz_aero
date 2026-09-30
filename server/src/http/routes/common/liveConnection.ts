@@ -6,6 +6,7 @@
  * różnią się WYŁĄCZNIE tym, jak połączenie dowodzi tożsamości; od chwili, w której rejestr
  * zna osobę, klub i sesję, protokół jest jeden:
  *  - `hello` na powitanie - sesja i czas serwera;
+ *  - `bye token_expired` w chwili wygaśnięcia tokenu, którym połączenie otwarto;
  *  - ping serwera co 25 s; DWA cykle bez żadnej ramki od klienta zamykają połączenie.
  *    Pośrednicy hostingu zamykają bezczynne połączenia, a martwe połączenie trzymałoby
  *    w rejestrze sesję „połączoną" i wstrzymywało jej push (K4);
@@ -75,13 +76,32 @@ export function sayBye(socket: WebSocket, reason: LiveByeReason): void {
 }
 
 /**
+ * Najdłuższe opóźnienie `setTimeout` - dłuższe Node skraca po cichu do 1 ms, czyli
+ * zamknąłby połączenie od razu. Token żyje najwyżej 8 h, więc to wyłącznie bezpiecznik.
+ */
+const MAX_TIMER_MS = 2 ** 31 - 1;
+
+/** Ile połączenie ma jeszcze żyć - od teraz do terminu tokenu, nie mniej niż zero. */
+export function untilExpiry(expiresAt: Date, now: Date): number {
+  return Math.min(Math.max(expiresAt.getTime() - now.getTime(), 0), MAX_TIMER_MS);
+}
+
+/**
  * Połączenie PO uwierzytelnieniu: wpis w rejestrze, powitanie, ping i odbiór ramek.
  * Koniec połączenia - z którejkolwiek strony - odłącza je od rejestru.
+ *
+ * ══ POŁĄCZENIE NIE PRZEŻYWA TOKENU, KTÓRYM JE OTWARTO ══
+ * Brama sprawdza połączenie raz, przy nawiązaniu; REST - przy każdym żądaniu. O każdym
+ * odebraniu dostępu, które zna serwer, kanał mówi sam (`LiveAccess`), a termin tokenu
+ * jest granicą dla wszystkiego, czego nie zna: w chwili `exp` przychodzi `bye
+ * token_expired`, telefon odświeża parę tokenów i łączy się ponownie - przez bramę,
+ * która widzi stan bieżący. Panel po ośmiu godzinach i tak loguje się od nowa.
  */
 export function serveLive(
   socket: WebSocket,
   live: LivePort,
   peer: LivePeer,
+  expiresAt: Date,
   timing: LiveTiming,
   clock: Clock,
 ): void {
@@ -90,6 +110,11 @@ export function serveLive(
     close: (reason) => sayBye(socket, reason),
   });
   sendFrame(socket, helloFrame(peer.sessionId, clock.now()));
+
+  const expiry = setTimeout(() => {
+    detach();
+    sayBye(socket, 'token_expired');
+  }, untilExpiry(expiresAt, clock.now()));
 
   let unanswered = 0;
   const ping = setInterval(() => {
@@ -116,6 +141,7 @@ export function serveLive(
 
   socket.on('close', () => {
     clearInterval(ping);
+    clearTimeout(expiry);
     detach();
   });
 }

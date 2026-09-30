@@ -15,28 +15,21 @@ import { describe, expect, it } from 'vitest';
 
 import { hostSplitFrom } from '../src/http/hostSplit.ts';
 import { testHarness } from './helpers.ts';
-import { connectLive, listen, sendFrame, waitUntil, type Frame } from './liveClients.ts';
+import {
+  connectLive,
+  LIVE_ORIGIN as ORIGIN,
+  listen,
+  panelLive,
+  phoneLive,
+  sendFrame,
+  waitUntil,
+  type Frame,
+} from './liveClients.ts';
 import { login, panelSession, type Harness } from './routeClients.ts';
 import { ORG_A } from './testWorld.ts';
 
-const ORIGIN = 'http://ninerdeck.test';
-
 const send = sendFrame;
 const connect = (h: Harness, path: string, headers: Record<string, string> = {}) => connectLive(h.app, path, headers);
-
-/** Telefon po uwierzytelnieniu - połączenie z powitaniem w ręku. */
-async function phoneLive(h: Harness, who: string) {
-  const token = await login(h.app, who);
-  const { ws, inbox } = await connect(h, '/live');
-  send(ws, { type: 'auth', token });
-  const hello = await inbox.waitFor((f) => f.type === 'hello');
-  return { ws, inbox, hello, token };
-}
-
-async function panelLive(h: Harness, who: string, headers: Record<string, string> = {}) {
-  const session = await panelSession(h.app, who);
-  return connect(h, '/admin/api/live', { cookie: session.cookie ?? '', origin: ORIGIN, ...headers });
-}
 
 describe('kanał klubu - telefon (`GET /live`)', () => {
   it('pierwsza ramka `auth` → powitanie, sygnał klubu dochodzi, ping dostaje pong', async () => {

@@ -9,7 +9,8 @@
  * panel na Vite przedstawia się adresem serwera przez własne proxy.
  *
  * Odmowa pada PRZED przejściem na WebSocket, zwykłą odpowiedzią HTTP (403 za `Origin`,
- * 401 za sesję). Brama `authorizeOrg` bez zdolności - kanał ma każdy członek klubu,
+ * 401 za sesję). Połączenie żyje najwyżej do wygaśnięcia ciasteczka sesji - potem
+ * `bye token_expired` (`serveLive`). Brama `authorizeOrg` bez zdolności - kanał ma każdy członek klubu,
  * a odbiorców ramek wyznacza serwer (§2). Sesja platformowa kanału nie ma (K3): jej token
  * nie przechodzi bramy klubu.
  *
@@ -21,7 +22,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 import type { Clock, LivePort, MembershipAuthSnapshot } from '../../../application/common/ports.ts';
-import { authorizeOrg } from '../../authorize.ts';
+import { authorizeOrg, tokenExpiresAt } from '../../authorize.ts';
 import { touchSession } from '../../sessionTouch.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 import { CLOSE_POLICY, serveLive, type LiveTiming } from '../common/liveConnection.ts';
@@ -37,7 +38,7 @@ export function registerAdminLiveRoute(
 ): void {
   // Konto z bramy przechodzi do obsługi połączenia przez żądanie - bramą jest hook przed
   // przejściem na WebSocket, a połączenie dostaje już tylko jego wynik.
-  const accounts = new WeakMap<FastifyRequest, MembershipAuthSnapshot>();
+  const accounts = new WeakMap<FastifyRequest, { account: MembershipAuthSnapshot; expiresAt: Date }>();
 
   app.get(
     '/admin/api/live',
@@ -47,18 +48,22 @@ export function registerAdminLiveRoute(
         if (req.headers.origin !== allowedOrigin) {
           return reply.code(403).send({ error: 'origin_forbidden' });
         }
-        const outcome = await authorizeOrg(gate.tokens, gate.accounts, tokenFromRequest(req), null);
+        const token = tokenFromRequest(req);
+        const outcome = await authorizeOrg(gate.tokens, gate.accounts, token, null);
         if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
-        accounts.set(req, outcome.account);
+        const expiresAt = tokenExpiresAt(gate.tokens, token);
+        if (expiresAt == null) return reply.code(401).send({ error: 'unauthorized' });
+        accounts.set(req, { account: outcome.account, expiresAt });
         await touchSession(gate, req, outcome.account.sessionId);
       },
     },
     (socket, req) => {
-      const account = accounts.get(req);
-      if (account == null) {
+      const entry = accounts.get(req);
+      if (entry == null) {
         socket.close(CLOSE_POLICY, 'unauthorized');
         return;
       }
+      const { account, expiresAt } = entry;
       serveLive(
         socket,
         live,
@@ -69,6 +74,7 @@ export function registerAdminLiveRoute(
           surface: 'panel',
           capabilities: account.capabilities,
         },
+        expiresAt,
         timing,
         clock,
       );

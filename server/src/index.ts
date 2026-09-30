@@ -55,6 +55,7 @@ import { AircraftCardQueries } from './application/common/queries/aircraftCard.t
 import { PgAircraftWatchesRepo } from './infrastructure/pg/common/aircraftWatchesRepo.ts';
 import { ApprovalFlow } from './application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from './application/admin/commands/approvalSteps.ts';
+import { LiveAccess } from './application/common/live/liveAccess.ts';
 import { ClubSignals } from './application/common/notify/clubSignals.ts';
 import { Notifier } from './application/common/notify/notifier.ts';
 import { NotificationQueries } from './application/mobile/queries/notifications.ts';
@@ -332,6 +333,12 @@ const mail =
   env.MAIL_PROVIDER === 'resend'
     ? new ResendMail(env.MAIL_API_KEY ?? '', env.MAIL_FROM ?? '')
     : new LogMail();
+// Kanał klubu (4.0.0, epik Z-E #246; `docs/kanal-klubu.md` §3.1): JEDEN rejestr połączeń
+// na proces - sygnały zmian z komend, połączenia z obu wejść WebSocket i rozdzielnik
+// powiadomień (ramka albo push, K4) spotykają się tutaj. Powstaje przed komendami
+// logowania i hasła, bo te zamykają połączenia przy odebraniu dostępu (`LiveAccess`).
+const live = new LiveRegistry();
+const liveAccess = new LiveAccess(live);
 const passwords = new PasswordCommands(
   db,
   pilots,
@@ -345,6 +352,7 @@ const passwords = new PasswordCommands(
   clock,
   randomUUID,
   loginSessions,
+  liveAccess,
 );
 
 // Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
@@ -428,10 +436,6 @@ const approvalStepsRepo = new PgApprovalStepsRepo();
 const bookingApprovalsRepo = new PgBookingApprovalsRepo();
 const notificationsRepo = new PgNotificationsRepo();
 const pushTokensRepo = new PgPushTokensRepo(clock);
-// Kanał klubu (4.0.0, epik Z-E #246; `docs/kanal-klubu.md` §3.1): JEDEN rejestr połączeń
-// na proces - sygnały zmian z komend, połączenia z obu wejść WebSocket i rozdzielnik
-// powiadomień (ramka albo push, K4) spotykają się tutaj.
-const live = new LiveRegistry();
 const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, live, clubSettings, randomUUID);
 // Sygnały zmian klubu (`docs/kanal-klubu.md` §4): kalendarz, karta samolotu, dziennik
 // i „Do sprawdzenia" - JEDNA reguła „kto dostaje co" dla wszystkich producentów.
@@ -527,6 +531,7 @@ const app = await buildServer({
     { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
     loginSessions,
     db,
+    liveAccess,
   ),
   passwords,
   loginSessions,
@@ -668,6 +673,7 @@ const app = await buildServer({
     loginSessions,
     randomUUID,
     clock,
+    liveAccess,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
   // Słownik klubu (issue #216): te same adaptery, co listy modułów, cztery pola na drut.
@@ -685,6 +691,7 @@ const app = await buildServer({
     adminPilotsRepo,
     loginSessions,
     clock,
+    liveAccess,
   ),
   adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
   // Moduł Organizacje - jedyna komenda panelu działająca POZA klubem (`PlatformActor`,
@@ -696,6 +703,7 @@ const app = await buildServer({
     randomUUID,
     randomBytes,
     clock,
+    liveAccess,
   ),
   platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
   // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki - rejestracja jest

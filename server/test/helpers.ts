@@ -73,6 +73,7 @@ import { FakeMail } from './fakeMail.ts';
 import { FakePush } from './fakePush.ts';
 import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from '../src/application/admin/commands/approvalSteps.ts';
+import { LiveAccess } from '../src/application/common/live/liveAccess.ts';
 import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
 import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
@@ -322,6 +323,11 @@ const lastSeen = new LastSeenThrottle();
   const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
   const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
   const mail = new FakeMail();
+  // Kanał klubu: PRAWDZIWY rejestr połączeń - dostają go trasy WebSocket, rozdzielnik
+  // powiadomień (ramka albo push, K4) i zamykanie połączeń przy odebraniu dostępu.
+  // Powstaje tu, przed komendami hasła, bo i one zamykają połączenia (`LiveAccess`).
+  const liveRegistry = new LiveRegistry();
+  const liveAccess = new LiveAccess(liveRegistry);
   const passwords = new PasswordCommands(
     db,
     pilots,
@@ -335,6 +341,7 @@ const lastSeen = new LastSeenThrottle();
     clock,
     randomUUID,
     loginSessions,
+    liveAccess,
   );
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
@@ -413,11 +420,8 @@ const lastSeen = new LastSeenThrottle();
   const bookingApprovalsRepo = new PgBookingApprovalsRepo();
   const notificationsRepo = new PgNotificationsRepo();
   const pushTokensRepo = new PgPushTokensRepo(clock);
-  // Kanał klubu: PRAWDZIWY rejestr połączeń - dostają go trasy WebSocket i rozdzielnik
-  // powiadomień (ramka albo push, K4) - a przed nim atrapa, która ZAPISUJE sygnały
-  // i przekazuje je dalej: testy komend pytają o zapis, testy tras o ramki, które
-  // naprawdę doszły.
-  const liveRegistry = new LiveRegistry();
+  // Przed rejestrem połączeń atrapa, która ZAPISUJE sygnały i przekazuje je dalej:
+  // testy komend pytają o zapis, testy tras o ramki, które naprawdę doszły.
   const live = new FakeLiveSignals(liveRegistry);
   const notifier = new Notifier(
     db,
@@ -498,6 +502,7 @@ const lastSeen = new LastSeenThrottle();
       { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
       loginSessions,
       db,
+      liveAccess,
     ),
     passwords,
     loginSessions,
@@ -628,6 +633,7 @@ const lastSeen = new LastSeenThrottle();
       loginSessions,
       randomUUID,
       clock,
+      liveAccess,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
     adminDirectoryQueries: new AdminDirectoryQueries(db, adminPilotsRepo, adminFleetRepo),
@@ -646,6 +652,7 @@ const lastSeen = new LastSeenThrottle();
       adminPilotsRepo,
       loginSessions,
       clock,
+      liveAccess,
     ),
     adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
     // Moduł Organizacje - `randomUUID` i losowe bajty jak w produkcji; test czyta
@@ -656,6 +663,7 @@ const lastSeen = new LastSeenThrottle();
       randomUUID,
       options.clubCodeBytes ?? randomBytes,
       clock,
+      liveAccess,
     ),
     platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
     // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy

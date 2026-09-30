@@ -9,6 +9,9 @@
 import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from 'ws';
 
+import { TEST_BASE_URL } from './helpers.ts';
+import { login, panelSession, type Harness } from './routeClients.ts';
+
 export type Frame = { type: string; [field: string]: unknown };
 
 /** Zbiera ramki od serwera; `waitFor` bierze także te, które przyszły wcześniej. */
@@ -64,4 +67,25 @@ export async function connectLive(
   let inbox: LiveInbox | null = null;
   const ws = await app.injectWS(path, { headers }, { onInit: (socket) => (inbox = listen(socket)) });
   return { ws, inbox: inbox! };
+}
+
+/**
+ * Telefon po uwierzytelnieniu - połączenie z powitaniem w ręku. Bez `token` loguje osobę
+ * Googlem; z `token` łączy się podanym (drugie urządzenie, token krótkiego życia).
+ */
+export async function phoneLive(h: Harness, who: string, token?: string) {
+  const access = token ?? (await login(h.app, who));
+  const { ws, inbox } = await connectLive(h.app, '/live');
+  sendFrame(ws, { type: 'auth', token: access });
+  const hello = await inbox.waitFor((f) => f.type === 'hello');
+  return { ws, inbox, hello, token: access };
+}
+
+/** `Origin` panelu w testach - host aplikacji z `TEST_BASE_URL`. */
+export const LIVE_ORIGIN = TEST_BASE_URL;
+
+/** Panel: ciasteczko sesji i właściwy `Origin`; powitanie odbiera wołający. */
+export async function panelLive(h: Harness, who: string, headers: Record<string, string> = {}) {
+  const session = await panelSession(h.app, who);
+  return connectLive(h.app, '/admin/api/live', { cookie: session.cookie ?? '', origin: LIVE_ORIGIN, ...headers });
 }

@@ -45,6 +45,9 @@ describe('POST /auth/google - konto ZATWIERDZONE', () => {
       // CHWILA WYDANIA (`iat`, sekundy epoki) - bez niej brama panelu nie umiałaby
       // odpowiedzieć na pytanie „czy to poświadczenie jest starsze niż unieważnienie".
       issuedAt: Math.floor(clock.now().getTime() / 1000),
+      // TERMIN (`exp`) - godzina życia tokenu dostępu. Czyta go kanał klubu (4.0.0):
+      // połączenie otwarte tym tokenem kończy się razem z nim.
+      expiresAt: Math.floor(clock.now().getTime() / 1000) + ACCESS_TTL_SEC,
       // SESJA (`sid`, 2.1.0): każde logowanie zakłada wiersz `login_sessions`, a brama
       // sprawdza go przy każdym żądaniu - stąd „Wyloguj to urządzenie" działa od razu.
       // Wartość jest uuidem z composition rootu, więc test pyta o KSZTAŁT, nie o treść.

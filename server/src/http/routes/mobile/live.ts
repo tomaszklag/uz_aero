@@ -9,13 +9,14 @@
  *
  * Token, który bramy nie przechodzi, dostaje `bye token_expired`: klient robi to, co przy
  * 401 z REST - odświeża parę tokenów i łączy się ponownie. Unieważnioną sesję rozpozna
- * wtedy samo odświeżenie (`session_revoked`), jak dziś.
+ * wtedy samo odświeżenie (`session_revoked`), jak dziś. Ten sam `bye` przychodzi w chwili
+ * wygaśnięcia tokenu, którym połączenie otwarto (`serveLive`).
  */
 
 import type { FastifyInstance } from 'fastify';
 
 import type { Clock, LivePort } from '../../../application/common/ports.ts';
-import { authorizeMember } from '../../authorize.ts';
+import { authorizeMember, tokenExpiresAt } from '../../authorize.ts';
 import type { MemberGate } from '../../memberGate.ts';
 import { touchSession } from '../../sessionTouch.ts';
 import { CLOSE_POLICY, parseClientFrame, sayBye, serveLive, type LiveTiming } from '../common/liveConnection.ts';
@@ -40,9 +41,10 @@ export function registerLiveRoute(
           return;
         }
         const account = await authorizeMember(gate.tokens, gate.accounts, frame.token);
+        const expiresAt = tokenExpiresAt(gate.tokens, frame.token);
         // Klient zdążył odejść w trakcie sprawdzania - nie ma kogo witać.
         if (socket.readyState !== socket.OPEN) return;
-        if (account == null) {
+        if (account == null || expiresAt == null) {
           sayBye(socket, 'token_expired');
           return;
         }
@@ -57,6 +59,7 @@ export function registerLiveRoute(
             surface: 'mobile',
             capabilities: account.capabilities,
           },
+          expiresAt,
           timing,
           clock,
         );
