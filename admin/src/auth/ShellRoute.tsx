@@ -18,6 +18,7 @@
 
 import { Navigate, Outlet } from 'react-router-dom';
 
+import { useLiveChannel } from '../live/useLiveChannel';
 import { useAttention } from '../queries/useAttention';
 import { useLogout } from '../queries/useSession';
 import { Loadable } from '../ui/components';
@@ -35,6 +36,9 @@ export function ShellRoute() {
   // nic złego się nie stało. Hook stoi tu, bo rama (`ui/`) nie zna zapytań.
   const counted = session != null && kindOf(session) === 'org' && can(session.capabilities, 'panel.access');
   const attention = useAttention(counted);
+  // Kanał klubu (4.0.0, K3): jedno połączenie na kartę, wyłącznie w sesji klubu. Klub
+  // i osoba są tożsamością połączenia - przełączenie klubu otwiera nowe.
+  useLiveChannel(session?.org == null ? null : `${session.org.id}:${session.pilot.id}`);
 
   if (loading) {
     return (

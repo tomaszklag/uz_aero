@@ -653,7 +653,7 @@ export async function buildServer(
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie
   // PIERWSZY, bo to jego rejestracja dekoruje `reply.sendFile`, a strona ma
   // `decorateReply: false` - druga dekoracja tej samej nazwy przewraca start.
-  registerAdminPanelStatic(app, options.adminDistDir);
+  registerAdminPanelStatic(app, options.adminDistDir, deps.liveOrigin);
   registerPublicSiteStatic(app, options.siteDistDir);
 
   app.get('/health', async () => ({ ok: true }));

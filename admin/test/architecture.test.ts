@@ -128,6 +128,8 @@ describe('granice warstw panelu', () => {
 
     // Skaner `fetch` widzi jedyne prawdziwe wystąpienie…
     expect(codeOf('api/httpClient.ts')).toMatch(/\bfetch\(/);
+    // …a skaner gniazda - jedyne wystąpienie `WebSocket` (kanał klubu, 4.0.0).
+    expect(codeOf('live/liveSocket.ts')).toMatch(/\bWebSocket\b/);
     // …a zdejmowanie komentarzy zjada prozę, nie kod.
     expect(codeOf('api/httpClient.ts')).not.toContain('JEDYNE miejsce');
 
@@ -148,6 +150,32 @@ describe('granice warstw panelu', () => {
     const offenders = filesUnder('.')
       .filter((f) => f !== 'api/httpClient.ts')
       .filter((f) => /\bfetch\(/.test(codeOf(f)));
+    expect(offenders).toEqual([]);
+  });
+
+  it('`WebSocket` występuje WYŁĄCZNIE w live/liveSocket.ts', () => {
+    // Kanał klubu ma jedne drzwi z tego samego powodu, co sieć: „skąd przyszła ta
+    // ramka" ma mieć jedną odpowiedź, a drugie gniazdo w komponencie byłoby drugim
+    // połączeniem tej samej karty - dokładnie tym, czego K1 zabrania.
+    const offenders = filesUnder('.')
+      .filter((f) => f !== 'live/liveSocket.ts')
+      .filter((f) => /\bWebSocket\b/.test(codeOf(f)));
+    expect(offenders).toEqual([]);
+  });
+
+  it('`live/` nie zna ekranów, komponentów ani klienta HTTP', () => {
+    // Kanał podaje ramki dalej i unieważnia zapytania - nie rysuje niczego, nie pyta
+    // serwera sam i nie wie, który ekran akurat stoi. Ekran, który chce odświeżenia,
+    // dopisuje swój klucz w `live/topicKeys.ts`, a nie odwrotnie.
+    const offenders: string[] = [];
+    for (const file of filesUnder('live')) {
+      for (const from of importedFrom(codeOf(file))) {
+        const resolved = resolveImport(file, from);
+        if (inLayer(resolved, 'screens') || inLayer(resolved, 'ui') || inLayer(resolved, 'api')) {
+          offenders.push(`${file} → ${from}`);
+        }
+      }
+    }
     expect(offenders).toEqual([]);
   });
 
@@ -197,9 +225,12 @@ describe('granice warstw panelu', () => {
       for (const from of importedFrom(code)) {
         const resolved = resolveImport(file, from);
         if (resolved === 'api/dto' && !valueImportsFrom(code, from)) continue;
-        if (inLayer(resolved, 'api') || inLayer(resolved, 'queries') || inLayer(resolved, 'screens')) {
-          offenders.push(`${file} → ${from}`);
-        }
+        const forbidden =
+          inLayer(resolved, 'api') ||
+          inLayer(resolved, 'queries') ||
+          inLayer(resolved, 'screens') ||
+          inLayer(resolved, 'live');
+        if (forbidden) offenders.push(`${file} → ${from}`);
       }
     }
     expect(offenders).toEqual([]);
