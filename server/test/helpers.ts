@@ -80,7 +80,7 @@ import { AircraftWatching } from '../src/application/common/notify/aircraftWatch
 import { AircraftWatchCommands } from '../src/application/common/commands/aircraftWatch.ts';
 import { AircraftCardQueries } from '../src/application/common/queries/aircraftCard.ts';
 import { PgAircraftWatchesRepo } from '../src/infrastructure/pg/common/aircraftWatchesRepo.ts';
-import { NotificationQueries } from '../src/application/mobile/queries/notifications.ts';
+import { NotificationQueries } from '../src/application/common/queries/notifications.ts';
 import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalStepsRepo.ts';
 import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
 import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';

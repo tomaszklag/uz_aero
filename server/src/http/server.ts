@@ -60,7 +60,7 @@ import type { MySessionTrackQueries } from '../application/mobile/queries/sessio
 import type { BookingCommands } from '../application/common/commands/bookings.ts';
 import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
 import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
-import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
+import type { NotificationQueries } from '../application/common/queries/notifications.ts';
 import type { DecisionPreviewQueries } from '../application/common/queries/decisionPreview.ts';
 import type { BookingQueries } from '../application/common/queries/bookings.ts';
 import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
@@ -134,6 +134,7 @@ import { registerAdminLiveRoute } from './routes/admin/live.ts';
 import { LIVE_TIMING, type LiveTiming } from './routes/common/liveConnection.ts';
 import type { LivePort } from '../application/common/ports.ts';
 import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
+import { registerAdminMeNotificationRoutes } from './routes/admin/meNotifications.ts';
 import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
 import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
@@ -587,6 +588,8 @@ export async function buildServer(
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
   registerAdminMeWatchRoutes(app, deps.aircraftCards, deps.aircraftWatch, gate);
+  // Skrzynka panelu (4.0.0, K7) - ta sama skrzynka i ten sam kształt, co w telefonie.
+  registerAdminMeNotificationRoutes(app, deps.notifications, deps.calendar, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);

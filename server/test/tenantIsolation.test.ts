@@ -2228,6 +2228,57 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(1);
   },
 
+  'GET /admin/api/me/notifications': async (w) => {
+    const { app, db, pwiB } = w;
+    // Skrzynka panelu (4.0.0, K7) - ta sama reguła, co w telefonie: jedna osoba w DWÓCH
+    // klubach, a wiadomość z Bety nie ma prawa pokazać się w panelu Alfy. Świeży token
+    // Alfy, bo sonda „Wyloguj wszędzie" zrywa sesje PWI w Alfie w połowie przebiegu.
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel', $1, 'PWI', 'approval_requested', $2::jsonb)`,
+      [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
+    );
+    const idsIn = async (orgId: string): Promise<string[]> =>
+      (
+        await db.query<{ id: string }>(`SELECT id FROM notifications WHERE org_id = $1 AND pilot_id = 'PWI'`, [orgId])
+      ).rows
+        .map((r) => r.id)
+        .sort();
+    const idsOf = (body: { json(): { items: { id: string }[] } }): string[] =>
+      body.json().items.map((i) => i.id).sort();
+
+    const res = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiA) });
+    expectClean(res, '/admin/api/me/notifications');
+    expect(idsOf(res)).toEqual(await idsIn(ORG_A));
+
+    // Kontrola pozytywna: ta sama osoba w sesji klubu B widzi ją od razu.
+    const wBecie = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiB) });
+    expect(wBecie.statusCode, wBecie.body).toBe(200);
+    expect(idsOf(wBecie)).toContain('note-b-panel');
+  },
+
+  'POST /admin/api/me/notifications/:id/read': async (w) => {
+    const { app, db } = w;
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel-read', $1, 'PWI', 'booking_approved', '{}'::jsonb)`,
+      [ORG_B],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/notifications/note-b-panel-read/read',
+      headers: writer(pwiA),
+    });
+    // Cudzy klub odpowiada tak samo jak wiersz nieistniejący, a stempel NIE PADA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ read_at: string | null }>(
+      `SELECT read_at FROM notifications WHERE id = 'note-b-panel-read'`,
+    );
+    expect(rows[0]!.read_at).toBeNull();
+  },
+
   'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {
     expect(
       (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))

@@ -58,7 +58,7 @@ import { ApprovalStepsCommands } from './application/admin/commands/approvalStep
 import { LiveAccess } from './application/common/live/liveAccess.ts';
 import { ClubSignals } from './application/common/notify/clubSignals.ts';
 import { Notifier } from './application/common/notify/notifier.ts';
-import { NotificationQueries } from './application/mobile/queries/notifications.ts';
+import { NotificationQueries } from './application/common/queries/notifications.ts';
 import { PgApprovalStepsRepo } from './infrastructure/pg/common/approvalStepsRepo.ts';
 import { PgBookingApprovalsRepo } from './infrastructure/pg/common/bookingApprovalsRepo.ts';
 import { PgNotificationsRepo } from './infrastructure/pg/common/notificationsRepo.ts';

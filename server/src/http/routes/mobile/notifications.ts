@@ -15,22 +15,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { inboxItem } from '../../../application/common/notify/inboxItem.ts';
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
-import type { NotificationQueries } from '../../../application/mobile/queries/notifications.ts';
+import type { NotificationQueries } from '../../../application/common/queries/notifications.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
-
-/**
- * Strona skrzynki. Kursor jest PARĄ (stempel + identyfikator): powiadomienia jednej
- * decyzji rodzą się w tej samej transakcji, więc sam stempel nie porządkuje ich
- * jednoznacznie i strona potrafiłaby zgubić wiersz.
- */
-const page = z.object({
-  limit: z.coerce.number().int().positive().max(100).optional(),
-  beforeAt: z.string().datetime().optional(),
-  beforeId: z.string().min(1).max(100).optional(),
-});
+import { inboxPageOf, inboxWire } from '../common/inboxWire.ts';
 
 /**
  * Token urządzenia z Expo. Bez własnego wzorca na kształt napisu: format należy do
@@ -39,8 +28,6 @@ const page = z.object({
  * zmianie (ta sama zasada, co przy kontekście zgłoszenia błędu, issue #87).
  */
 const token = z.object({ token: z.string().trim().min(1).max(500) });
-
-const DEFAULT_LIMIT = 30;
 
 export function registerNotificationRoutes(
   app: FastifyInstance,
@@ -52,39 +39,23 @@ export function registerNotificationRoutes(
     const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
-    const parsed = page.safeParse(req.query);
-    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
-    const q = parsed.data;
-
-    // Kursor niepełny jest BŁĘDEM ŻĄDANIA, a nie cichym „od początku": strona od
-    // początku wygląda jak strona z wynikami, więc telefon pętliłby się po pierwszej
-    // stronie i nikt by tego nie zauważył.
-    if ((q.beforeAt == null) !== (q.beforeId == null)) {
-      return reply.code(400).send({ error: 'bad_request' });
-    }
+    const page = inboxPageOf(req.query);
+    if (page == null) return reply.code(400).send({ error: 'bad_request' });
 
     const timezone = await calendar.timezone(who.orgId);
     if (timezone == null) return reply.code(404).send({ error: 'not_found' });
 
-    const view = await notifications.inbox(who.orgId, who.pilotId, {
-      limit: q.limit ?? DEFAULT_LIMIT,
-      before:
-        q.beforeAt == null || q.beforeId == null
-          ? undefined
-          : { createdAt: Date.parse(q.beforeAt), id: q.beforeId },
-    });
-
+    const view = await notifications.inbox(who.orgId, who.pilotId, page);
     return reply.send({
-      timezone,
-      unread: view.unread,
+      // Ten sam kształt, co skrzynka panelu i ramka `notification` (`inboxWire.ts`).
+      ...inboxWire(view, timezone),
       // Czy ta osoba ROZSTRZYGA cudze terminy (3.1.0, epik R-J): telefon pyta o to
       // przy wejściu na Pulpit, bo akceptującego prosi o zgodę na powiadomienia
       // od razu, a pozostałych dopiero przy rezerwacji, która czeka (§12.5).
       // Jedzie tu, a nie osobną trasą - Pulpit i tak czyta skrzynkę przy każdym
-      // wejściu, a druga trasa byłaby drugim żądaniem o jeden bit.
+      // wejściu, a druga trasa byłaby drugim żądaniem o jeden bit. Panel go nie
+      // dostaje: o zgodę na powiadomienia pyta wyłącznie telefon.
       approver: can(who.capabilities, 'reservations.approve'),
-      // Ten sam kształt niesie ramka `notification` kanału klubu (`inboxItem.ts`).
-      items: view.items.map((n) => inboxItem(n, timezone)),
     });
   });
 
