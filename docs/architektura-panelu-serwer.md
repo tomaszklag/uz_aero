@@ -1648,6 +1648,36 @@ zlecenia stoją w obu klubach, a PWI jest adresatem w obu; sondy zleceń biorą 
 PWI w Alfie (przełączeniem z sesji w Becie - `pwiInAlfa`), bo wcześniejsza sonda „wyloguj
 wszędzie w tym klubie" zrywa jej sesje w Alfie w połowie przebiegu.
 
+### 7.12 Kanał klubu - rejestr połączeń, rozdzielnik, sygnały, zamykanie (epik KK-B, 2026-09-30/10-01)
+
+Pełny opis, mapa plików i przepisy: `docs/kanal-klubu.md` §3.1 i §11. Cztery rzeczy warto
+znać przed dopisaniem czegokolwiek w tym obszarze:
+
+1. **Brama sprawdza połączenie RAZ** (przy nawiązaniu), a REST przy każdym żądaniu. Stąd
+   trzy obowiązki, których REST nie ma: decyzja odbierająca dostęp zamyka połączenia
+   sama (`application/common/live/liveAccess.ts` - powód i zakres w jednym miejscu),
+   zmiana zakresu przestawia zdolności otwartych połączeń
+   (`LivePort.updateCapabilities`), a połączenie kończy się razem z tokenem, którym je
+   otwarto (`serveLive`, `bye token_expired` - termin z `VerifiedIdentity.expiresAt`).
+2. **Wszystko PO commicie i nic nie rzuca.** Sygnał wysłany przed commitem ogłosiłby
+   zmianę, która może się wycofać, a połączenie zamknięte przed commitem zdążyłoby wrócić
+   przez bramę, która jeszcze nie widzi decyzji. Wyjątek z kanału wróciłby do komendy,
+   która JUŻ zapisała - rejestr połączeń połyka awarie gniazd, a `ClubSignals` łapie
+   i loguje własne odczyty.
+3. **Odbiorców i tematy liczy jedno miejsce na obszar** (`notify/clubSignals.ts`,
+   `notify/orderSignals.ts`): producent podaje FAKT, a sygnał nie niesie treści, bo
+   kształt per widz liczy wyłącznie REST. Ingest ogłasza tylko operacje z NAPRAWDĘ
+   wstawionymi zdarzeniami (`insertBatch` oddaje uuidy przyjęte) - ponowiona paczka
+   milczy - a wiersz rezerwacji zrealizowanej przejęciem czyta w transakcji zapisu, żeby
+   sygnał po commicie nie miał już czego czytać i czym się wywrócić.
+4. **Trasy WebSocket nie idą przez `adminRoute`** (ta odpowiada JEDNĄ odpowiedzią HTTP,
+   a tu po bramie zostaje otwarte połączenie) - imienny wyjątek w
+   `test/architecture.test.ts`. Rejestr tras widzi je mimo to, więc obie mają sondy
+   w `tenantIsolation.test.ts`. W testach przez `injectWS` gniazdo serwera po zamknięciu
+   przez klienta dostaje `end`, ale nigdy `close` - odłączenie z rejestru sprawdza się
+   na prawdziwym porcie, a test, który zamknął połączenie pomocnicze, nie może potem
+   pytać rejestru o tę samą osobę.
+
 ## 8. Sesja przeglądarkowa - dwa źródła tokenu, jedna autoryzacja
 
 ### 8.1 Zmiana: `authorize` przestaje czytać nagłówek

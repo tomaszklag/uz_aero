@@ -1468,13 +1468,16 @@ Przepis „nowy rodzaj powiadomienia": `docs/architektura-kodu.md` §7.
 ### 12.8 Kanał klubu: powiadomienie na żywo, push tylko bez połączenia (4.0.0, projekt 2026-09-28)
 
 Od 4.0.0 powiadomienia idą rozdzielnikiem **kanału klubu** (`docs/kanal-klubu.md`).
-`Notifier.record` zostaje bez zmian - skrzynka jest dalej źródłem prawdy - a
-`Notifier.wake` wysyła ramkę `notification` do połączonych sesji odbiorcy i push
-WYŁĄCZNIE na urządzenia bez połączenia w klubie powiadomienia (K4 - wiadomość z innego
+`Notifier.record` zapisuje w transakcji jak dotąd - skrzynka jest dalej źródłem prawdy -
+i oddaje zapisane wiersze, a `Notifier.wake` wysyła z nich ramkę `notification` do
+połączonych sesji odbiorcy i push WYŁĄCZNIE na urządzenia bez połączenia w klubie
+powiadomienia (K4 - wiadomość z innego
 klubu tej samej osoby idzie pushem, jak dotąd). Przy otwartej aplikacji pilot widzi własny
 baner w aplikacji (K5); w kokpicie łącze jest rozłączone, a push przychodzi po cichu (K6).
-Panel dostaje tę samą skrzynkę z dzwonkiem (K7) - `GET /admin/api/me/notifications`,
-ta sama `NotificationQueries`.
+Panel dostaje tę samą skrzynkę z dzwonkiem (K7) - `GET /admin/api/me/notifications`
+i `POST …/:id/read`, ta sama `NotificationQueries` i ten sam kształt (serwer gotowy
+w KK-B, 2026-10-01). Kalendarz i karta rezerwacji odświeżają się sygnałami `booking:<id>`
+i `calendar:<doba klubu>` (`ClubSignals`).
 
 Wszystko, co wyżej mówi o skrzynce, tokenach przypiętych do sesji, danych pusha
 i tapnięciu, zostaje w mocy; zmienia się tylko to, KIEDY push w ogóle wychodzi. Pętla

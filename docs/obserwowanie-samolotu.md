@@ -315,9 +315,11 @@ zaprojektowane w R-J i niczego nie trzeba dla niej robić.
 połączone dostaje ramkę i baner w aplikacji, push tylko urządzenie bez połączenia (K4),
 a w panelu stoją w skrzynce pod dzwonkiem z wierszem prowadzącym do karty samolotu
 w module Samoloty (K7).
-Producenci nie zmieniają ani linijki - zmienia się rozdzielnik (`Notifier.wake`). Karta
+Zmienia się rozdzielnik (`Notifier.wake`); producenci przekazują mu dalej wynik zapisu
+(`record` → `RecordedNotice[]` → `wake`), a ich zachowanie się nie zmienia. Karta
 maszyny (27) i lista obserwowanych (13C) odświeżają się sygnałem `aircraft:<id>` zamiast
-pętli „co 60 s" (K3).
+pętli „co 60 s" (K3) - ogłasza go `ClubSignals` przy terminie, operacji, odczycie
+z panelu i zmianie floty.
 
 ### 5.1 Za godzinę
 

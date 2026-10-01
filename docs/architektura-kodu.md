@@ -1557,8 +1557,11 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
    jedzie przez Expo i FCM „na zapas".
 3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
-   mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
-   uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
+   mówi, i `Notifier.wake(orgId, recorded)` PO commicie - z tym, co `record` oddał
+   (`RecordedNotice[]`: wiersz i jego chwila), bo od 4.0.0 `wake` jest rozdzielnikiem
+   kanału klubu (ramka `notification` do połączonych sesji odbiorcy, push do pozostałych,
+   `docs/kanal-klubu.md` K4) i składa ramkę z zapisanego wiersza. Sygnatury to wymuszają:
+   `record` żąda uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
    się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
    **Wiadomość, która przychodzi SERIĄ, ma jeden nieprzeczytany wiersz** (rozmowa
    zlecenia, `docs/zlecenia.md` §7.3): `Notifier.recordCollapsed` zamiast `record` -
@@ -1590,9 +1593,14 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    Dwa zegary, świadomie - jak na ekranie podglądu 26B.
 8. **Zmiana widoczna na OTWARTYM ekranie ogłasza się też kanałem klubu**
    (`LiveSignalsPort`: `changed(org, tematy, odbiorcy)`, `message`, `read` -
-   `docs/kanal-klubu.md` §4) - po commicie, jak budzik. Do epiku Z-E (#246) port ma
-   w produkcji atrapę (`SilentLiveSignals`), a testy zapisują sygnały (`FakeLiveSignals`);
-   tematy zleceń i ich odbiorców składa `notify/orderSignals.ts`.
+   `docs/kanal-klubu.md` §4) - po commicie, jak budzik. Od epiku KK-B (#246) port ma
+   w produkcji prawdziwy rejestr połączeń (`infrastructure/live/liveRegistry.ts`), a testy
+   zapisują sygnały atrapą, która przekazuje je dalej do rejestru (`FakeLiveSignals`).
+   Tematy i odbiorców składa jedno miejsce na obszar: `notify/clubSignals.ts` (kalendarz,
+   rezerwacje, samolot, dziennik, „Do sprawdzenia") i `notify/orderSignals.ts` (zlecenia
+   i rozmowy) - nowy temat dopisuje się tam, nigdy wprost w komendzie (przepis:
+   `docs/kanal-klubu.md` §11). Decyzja, która ODBIERA dostęp, zamyka połączenia przez
+   `live/liveAccess.ts`.
 9. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
    ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
    strażniki izolacji klubów.

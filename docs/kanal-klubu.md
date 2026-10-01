@@ -9,6 +9,10 @@
 > i 27 z modułu zleceń na cały klub. Wydanie: **4.0.0** razem ze zleceniami (milestone
 > „Zlecenia na lot 4.0.0"), epik **#246** - dawny „kanał na żywo zleceń", odtąd „Kanał
 > klubu".
+>
+> **KK-B (serwer) WYKONANE 2026-09-30/10-01** na gałęzi `feature-246-kanal-klubu` -
+> sześć etapów, każdy z testami i sondami regresji; stan, mapa plików i przepisy „jak
+> dopisać temat / decyzję odbierającą dostęp" w §11. Zostają KK-C (aplikacja) i KK-D (panel).
 
 ## 0. Skąd to się wzięło
 
@@ -115,7 +119,8 @@ KLIENT (aplikacja; panel tak samo)
   procesu w `infrastructure/live/`). Połączenie zna OSOBĘ, KLUB (z tokenu albo sesji
   panelu) i SESJĘ LOGOWANIA (`login_sessions`, claim `sid`). Port: dostarcz ramkę
   osobie / odbiorcom w klubie, powiedz, które sesje są połączone, zamknij połączenia
-  sesji / członkostwa / osoby z powodem.
+  sesji / członkostwa / osoby / klubu z powodem, przestaw zdolności otwartych połączeń
+  członka po zmianie jego zakresu.
 - **Dwa wejścia, jedna koperta** (wtyczka `@fastify/websocket`, wyłącznie host aplikacji -
   `hostSplit.ts`):
   - `GET /live` - telefon. Token klubu w **PIERWSZEJ RAMCE** (`auth`), nigdy w adresie -
@@ -127,12 +132,16 @@ KLIENT (aplikacja; panel tak samo)
     ciasteczkiem zalogowanego administratora (Cross-Site WebSocket Hijacking). Brama
     `authorizeOrg`. Sesja platformowa kanału w 4.0.0 nie ma (K3 - moduły platformy
     odświeżają się przy wejściu).
-- **Rozdzielnik powiadomień.** `Notifier.record` bez zmian (w transakcji, skrzynka jest
-  źródłem prawdy). `Notifier.wake` - po commicie, nigdy nie rzuca - staje się
-  rozdzielnikiem (K4): dla każdej pozycji skrzynki wysyła ramkę `notification` do
-  połączonych sesji ODBIORCY, a push do jego tokenów (`push_tokens`, przypiętych do
-  sesji), których sesja połączona NIE jest. Istniejący producenci (zgody, obserwowanie
-  samolotu, zlecenia) nie zmieniają ani linijki.
+- **Rozdzielnik powiadomień.** `Notifier.record` - w transakcji, skrzynka jest źródłem
+  prawdy - oddaje to, co zapisał (`RecordedNotice[]`: identyfikator wiersza i jego
+  chwila; przy rozmowie wiersz odświeżony), a `Notifier.wake(orgId, recorded)` - po
+  commicie, nigdy nie rzuca - przyjmuje WYŁĄCZNIE takie wiadomości i jest rozdzielnikiem
+  (K4): dla każdej pozycji skrzynki wysyła ramkę `notification` do połączonych sesji
+  ODBIORCY, a push do jego tokenów (`push_tokens`, przypiętych do sesji), których sesja
+  połączona NIE jest. Adresat spoza klubu nie dostaje wiersza, więc ani ramki, ani pusha.
+  Producenci (zgody, obserwowanie samolotu, zlecenia) przekazują dalej wynik zapisu, a ich
+  zachowanie się nie zmienia; awaria odczytu przed ramką kończy się pushem do wszystkich -
+  dwa sygnały są lepsze niż cisza.
   - **„Połączona" znaczy: połączona W KLUBIE POWIADOMIENIA.** Sesja logowania i łącze
     należą do jednego klubu (przełączenie klubu zakłada nową sesję), a token push jest
     przypięty do sesji. Powiadomienie klubu B dla osoby połączonej w klubie A idzie więc
@@ -143,14 +152,33 @@ KLIENT (aplikacja; panel tak samo)
     systemowej zostaje do tapnięcia. Przy okazji kanał nigdy nie niesie danych innego
     klubu niż ten, którym się uwierzytelnił (§5).
 - **Sygnały zmian** (`LiveSignals.changed(orgId, topics, audience)`) - po commicie, obok
-  budzika. Każda funkcja ogłasza SWOJE tematy (§4), a odbiorców wyznacza jednym z trzech
-  sposobów: cały klub, konkretne osoby, posiadacze zdolności (liczone na aktywnych
-  członkostwach - ta sama reguła, co `watchersOf` obserwowania). Ramki `changed` trafiają
-  wyłącznie do połączeń TEGO klubu.
-- **Zamykanie** w tych samych miejscach, które dziś unieważniają dostęp: unieważnienie
-  sesji (`revoke`, `revokeAll` - 2.1.0 H-C), wyłączenie członkostwa, blokada osoby,
-  wyłączenie klubu. Ramka `bye` niesie powód (`session_revoked`, `membership_disabled`,
-  `token_expired`), a klient robi to, co robi dziś przy takiej odmowie REST.
+  budzika, i nigdy nie rzucają. Producent podaje FAKT (który termin, która operacja),
+  a tematy i odbiorców liczy jedno miejsce: `ClubSignals` (kalendarz, rezerwacje,
+  samolot, dziennik, „Do sprawdzenia") i `OrderSignals` (zlecenia i rozmowy). Odbiorców
+  wyznacza się jednym z trzech sposobów: cały klub, konkretne osoby, posiadacze zdolności -
+  zbiór z bramy przy nawiązaniu, przestawiany przy zmianie zakresu (zamykanie niżej).
+  Ramki `changed` trafiają wyłącznie do połączeń TEGO klubu.
+- **Zamykanie.** Brama sprawdza połączenie RAZ, przy nawiązaniu (REST - przy każdym
+  żądaniu), więc każda decyzja, która odbiera dostęp w REST, zamyka po commicie
+  połączenia, których dotyczy - `LiveAccess` jest jedynym miejscem reguły „który powód
+  i który zakres". Ramka `bye` niesie powód, a klient robi to, co robi dziś przy takiej
+  odmowie REST:
+  - `session_revoked` - wylogowanie telefonu i panelu, własne urządzenie wyłączone
+    z `#/konto`, „Wyloguj to urządzenie" i „Wyloguj wszędzie w tym klubie" z karty
+    członka (tylko ten klub), zmiana hasła (wszystkie sesje POZA bieżącą) i reset hasła
+    z linku (wszystkie sesje osoby, we wszystkich klubach);
+  - `membership_disabled` - wyłączone członkostwo (ta sama osoba w innym klubie pracuje
+    dalej) i wyłączony klub;
+  - `token_expired` - połączenie nie przeżywa tokenu, którym je otwarto (telefon 1 h,
+    panel 8 h): telefon odświeża parę tokenów i łączy się ponownie przez bramę, która
+    widzi stan bieżący. To granica dla wszystkiego, czego serwer nie zamknął sam.
+
+  Zmiana zakresu uprawnień NIE zamyka połączenia - członek dalej jest w klubie - tylko
+  przestawia jego zdolności: ramka `message` z treścią rozmowy nie dochodzi do kogoś,
+  komu odebrano prawo jej czytania. Blokady osoby na całej platformie nie ma czym wywołać
+  (żadna komenda nie wyłącza `pilots.active`); gdy powstanie, zamknie połączenia zakresem
+  osoby. Usunięcie członka wymaga wcześniejszego wyłączenia członkostwa, więc jego
+  połączenia są już wtedy zamknięte.
 - **Podtrzymanie**: ping serwera co 25 s (pośrednicy hostingu zamykają bezczynne
   połączenia), zamknięcie po dwóch cyklach bez odpowiedzi.
 - **Skalowanie**: rozsyłanie w pamięci procesu wystarcza przy jednej instancji
@@ -169,7 +197,7 @@ połączenie.
 | serwer → klient | `changed` | klub + tematy, bez treści |
 | serwer → klient | `message` | wiadomość w rozmowie w kształcie REST (zlecenie, adresat wątku) |
 | serwer → klient | `read` | odczytanie rozmowy (kto, kiedy) - „Odczytane 14:05" |
-| serwer → klient | `bye` | powód zamknięcia |
+| serwer → klient | `bye` | powód zamknięcia: `session_revoked`, `membership_disabled`, `token_expired` |
 | klient → serwer | `auth` | wyłącznie telefon, pierwsza ramka: token klubu |
 | oba kierunki | `ping` / `pong` | podtrzymanie |
 
@@ -229,9 +257,12 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
   akcje strony i nagłówek otwartej szuflady z jej „×", w prawym dolnym stopka szuflady
   z akcją główną; znika sam, bez dźwięku, kursor na nim wstrzymuje odliczanie, „×" nie
   ma. Nie pojawia się nad szufladą, której dotyczy, ani przy otwartej skrzynce.
-- **REST panelu**: `GET /admin/api/me/notifications` i `POST
+- **REST panelu** (wykonane w KK-B): `GET /admin/api/me/notifications` i `POST
   /admin/api/me/notifications/:id/read` - ta sama `NotificationQueries`, co telefon
-  (skrzynka należy do osoby w klubie, nie do powierzchni).
+  (skrzynka należy do osoby w klubie, nie do powierzchni), i ten sam kształt strony
+  i odpowiedzi (`http/routes/common/inboxWire.ts`). Skrzynkę ma każdy aktywny członek,
+  bez zdolności; sesja platformowa jej nie ma. Bit `approver` dostaje wyłącznie telefon -
+  o zgodę na powiadomienia pyta tylko on.
 - **CSP**: `connect-src 'self'` w polityce panelu obejmuje `wss:` tego samego hosta
   w przeglądarkach docelowych (CSP poziomu 3) - do sprawdzenia w Z-D; inaczej jawny adres.
 
@@ -246,8 +277,15 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
 | Kalendarz | `changed calendar:<doba klubu>` | cały klub | telefon (21, Pulpit), panel (K1) |
 | Rezerwacja i jej ścieżka zgód | `changed booking:<id>` | cały klub | telefon (23, 26), panel (K2, K5) |
 | Karta samolotu, obserwowane | `changed aircraft:<id>` | posiadacze `fleet.watch` | telefon (27, 13C), panel (`#/konto`) |
-| Dziennik | `changed log:<doba UTC>`, `changed session:<uuid>` | posiadacze `panel.access` | panel (L1–L3) |
+| Dziennik | `changed log:<doba UTC przejęcia>`, `changed session:<uuid>` | posiadacze `panel.access` | panel (L1–L3) |
 | Do sprawdzenia | `changed attention` | posiadacze `panel.access` | panel (moduł i licznik w kolumnie) |
+
+Szczegóły, które ustaliła implementacja (KK-B): przesunięcie terminu i zmiana maszyny
+ogłaszają OBIE doby i OBIE karty samolotu; termin przez północ KLUBU ma dwie doby,
+a długie wyłączenie z użytku najwyżej 62. Przyjęcie lotu ogłasza wyłącznie operacje, do
+których paczka naprawdę coś wniosła - ponowiona paczka milczy. „Odczytane" w zleceniu
+rusza tylko tematy zlecenia, bo termin się nie zmienił. Odczyt i konfiguracja maszyny
+z panelu ogłaszają samą kartę samolotu.
 
 Czego kanał w 4.0.0 NIE obejmuje: Piloci, Samoloty, Statystyki, Organizacje, Zgłoszenia
 błędów (K3); sesja platformowa; ekrany osoby bez klubu (00C–00E - czekanie na
@@ -265,19 +303,26 @@ zatwierdzenie zostaje przy dzisiejszym sprawdzaniu); dane lotu (§2).
   widzi `/live` i `/admin/api/live` jak każdą trasę, więc `tenantIsolation.test.ts` wymaga
   dla nich przypadków: sygnał cudzego klubu nie dochodzi, wątek cudzego klubu nie dochodzi.
 - **Zamykanie** przy każdym odebraniu dostępu (§3.1) - połączenie nie przeżywa
-  wylogowania zdalnego ani wyłączenia członkostwa.
-- **Od klienta tylko dwie ramki** (K2): limit rozmiaru i tempa; wszystko inne zamyka
-  połączenie.
+  wylogowania zdalnego, wyłączenia członkostwa ani klubu, zmiany hasła ani tokenu,
+  którym je otwarto.
+- **Od klienta tylko `auth` i `ping`/`pong`** (K2): ramka poprawnego kształtu, ale
+  nieznanego typu, jest ignorowana (§3.2 - starszy serwer nie wywraca się na nowszym
+  kliencie); ramka, która nie jest obiektem JSON z `type`, binarna, za duża (4 KB) albo
+  za częsta (20 w 10 s) zamyka połączenie.
 - **Push dalej bez nazwisk i godzin** (ekran blokady widzi każdy) - treść idzie kanałem
   wyłącznie do uprawnionych albo czeka w skrzynce.
 
 ## 6. Testy
 
-- **Serwer**: trasy WebSocket przez `injectWS` wtyczki albo port efemeryczny;
-  rozdzielnik (połączony → ramka bez pusha, niepołączony → push, połączony w innym
-  klubie → push bez ramki); „kto dostaje `changed`" dla każdego tematu z §4 (osoba wykreślona i osoba
-  spoza zlecenia NIE dostają); zamykanie przy unieważnieniu sesji i wyłączeniu
-  członkostwa; izolacja klubów.
+- **Serwer** (wykonane w KK-B, pliki w §11): trasy WebSocket przez `injectWS` wtyczki
+  albo port efemeryczny; rozdzielnik (połączony → ramka bez pusha, niepołączony → push,
+  połączony w innym klubie → push bez ramki); „kto dostaje `changed`" dla każdego tematu
+  z §4 (osoba wykreślona i osoba spoza zlecenia NIE dostają); zamykanie przy każdym
+  odebraniu dostępu, z kontrolą, że połączenia spoza zakresu decyzji zostają otwarte;
+  izolacja klubów. Pułapka: w `injectWS` gniazdo serwera po zamknięciu przez klienta
+  dostaje `end`, ale nigdy `close` - test odłączenia z rejestru idzie na prawdziwym
+  porcie, a test, który zamyka połączenie pomocnicze, nie może potem pytać rejestru
+  o tę samą osobę.
 - **Aplikacja**: czyste funkcje - reguła „kiedy łącze działa" (na wierzchu × poświadczenie
   × kokpit), reguła banera (ekran, którego dotyczy / kokpit / inny klub / push odebrany na
   wierzchu), szyna ramek.
@@ -291,7 +336,8 @@ zatwierdzenie zostaje przy dzisiejszym sprawdzaniu); dane lotu (§2).
 - **`docs/rezerwacje.md` §12**: skrzynka zostaje źródłem prawdy; push budzi WYŁĄCZNIE
   urządzenia bez połączenia, a połączone dostają powiadomienie kanałem (§12.8).
 - **`docs/obserwowanie-samolotu.md`**: pięć wiadomości obserwowania idzie rozdzielnikiem
-  (kanał albo push) - bez zmian u producentów.
+  (kanał albo push) - producenci przekazują wynik zapisu (`record` → `wake`), ich
+  zachowanie się nie zmienia.
 - **`CLAUDE.md`**: sekcja „Kanał klubu".
 
 ## 8. Etapy
@@ -308,7 +354,8 @@ KK-B serwer ───────────────────┴─► K
    (dzwonek, szuflada, baner), dzwonek w pasku górnym wszystkich ram klubu - **zrobione
    w PR #251** razem z makietami zleceń.
 2. **KK-B** - serwer: rejestr połączeń, dwa wejścia, rozdzielnik, sygnały, zamykanie,
-   testy; tematy kalendarza, rezerwacji, samolotu, dziennika i „Do sprawdzenia".
+   testy; tematy kalendarza, rezerwacji, samolotu, dziennika i „Do sprawdzenia" -
+   **zrobione 2026-09-30/10-01** (§11).
 3. **KK-C** - aplikacja: łącze, szyna, hak, baner, usunięcie pętli `RETRY_MS`.
 4. **KK-D** - panel: łącze, mapa tematów, dzwonek i skrzynka, baner.
 5. Tematy zleceń i rozmów wchodzą z epikami Z-B (serwer), Z-C (aplikacja), Z-D (panel).
@@ -340,3 +387,49 @@ KK-B serwer ───────────────────┴─► K
 | Subskrypcje tematów od klienta | §2 - odbiorców wyznacza serwer; mniej powierzchni do autoryzacji |
 | Na żywo także Piloci, Samoloty, Statystyki, Organizacje, Zgłoszenia błędów | K3 |
 | Wspólne połączenie kart przeglądarki (`SharedWorker`) | Poza 4.0.0 - zysk przy kilku kartach nie jest wart złożoności |
+
+## 11. KK-B - serwer (wykonane 2026-09-30/10-01, gałąź `feature-246-kanal-klubu`)
+
+| Etap | Commit | Co weszło |
+| --- | --- | --- |
+| 1 | `c1bb7aa3` | rejestr połączeń w pamięci procesu i koperty ramek |
+| 2 | `cb5125c6` | wejścia `GET /live` i `GET /admin/api/live` (`@fastify/websocket` 11.3.1), protokół po uwierzytelnieniu, limity 4 KB i 20 ramek na 10 s |
+| 3 | `26e8d0a2` | rozdzielnik: ramka `notification` albo push (K4), `record` → `RecordedNotice[]` → `wake` |
+| 4 | `575d615e` | sygnały `changed` dla tematów §4, `ClubSignals` |
+| 5 | `9432a8bd` | zamykanie połączeń przy odebraniu dostępu, termin tokenu, zmiana zakresu |
+| 6 | `13a97c65` | skrzynka panelu przez REST, wspólny kształt z telefonem |
+
+**Mapa plików serwera**:
+
+- `application/common/ports.ts` - `LivePort` (połączenia) i `LiveSignalsPort` (sygnały),
+  `LiveFrame`, `LivePeer`, `LiveCloseScope`, `LiveByeReason`;
+- `infrastructure/live/liveRegistry.ts` - jedna klasa w obu rolach, w pamięci procesu;
+  druga instancja serwera wymieni ją na adapter `LISTEN/NOTIFY` (KK1);
+- `application/common/live/` - `frames.ts` (koperty ramek), `topics.ts` (nazwy tematów),
+  `liveAccess.ts` (zamykanie przy odebraniu dostępu: powód i zakres);
+- `application/common/notify/` - `notifier.ts` (rozdzielnik), `inboxItem.ts` (pozycja
+  skrzynki - ten sam kształt w REST i w ramce), `clubSignals.ts` (kalendarz, rezerwacje,
+  samolot, dziennik, „Do sprawdzenia"), `orderSignals.ts` (zlecenia i rozmowy);
+- `http/routes/mobile/live.ts` i `http/routes/admin/live.ts` - wejścia (różnią się
+  WYŁĄCZNIE tym, jak połączenie dowodzi tożsamości), `http/routes/common/liveConnection.ts`
+  - protokół po uwierzytelnieniu (powitanie, ping, termin tokenu, odbiór ramek),
+  `liveRate.ts` - tempo ramek;
+- `http/routes/common/inboxWire.ts` i `http/routes/admin/meNotifications.ts` - skrzynka
+  panelu.
+
+**Testy serwera**: `liveRegistry.test.ts` (rejestr), `liveRoutes.test.ts` (wejścia
+i protokół), `notificationDelivery.test.ts` (rozdzielnik), `liveTopics.test.ts` (kto
+dostaje który temat), `liveClose.test.ts` (zamykanie i termin tokenu),
+`adminNotifications.test.ts` (skrzynka panelu) oraz sondy obu wejść i skrzynki panelu
+w `tenantIsolation.test.ts`. Pomocniki połączeń: `test/liveClients.ts` (`phoneLive`,
+`panelLive`); atrapa sygnałów, która zapisuje i przekazuje dalej do prawdziwego rejestru:
+`test/fakeLiveSignals.ts`.
+
+**Jak dopisać temat**: nazwa w `topics.ts`, odbiorcy w `ClubSignals` (nowa metoda - nigdy
+wprost z komendy), wywołanie PO commicie w producencie. `ClubSignals` jest wymaganym
+parametrem konstruktora, więc kompilator wskaże każde miejsce kompozycji. Do tego przypadek
+w `liveTopics.test.ts` prawdziwą trasą i sonda regresji, która go łamie.
+
+**Jak dopisać decyzję odbierającą dostęp**: metoda w `LiveAccess` (powód i zakres w jednym
+miejscu), wywołanie PO commicie i wyłącznie przy udanej decyzji, przypadek w
+`liveClose.test.ts` - z kontrolą, że połączenie spoza zakresu decyzji zostaje otwarte.

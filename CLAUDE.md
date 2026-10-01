@@ -5352,9 +5352,10 @@ obowiązujące odtąd:
 - **WYJĄTEK W `AuditedWrite` WYCOFUJE WPIS** - to wzorzec na „ten zapis nie trafia do
   dziennika akcji" (`Repeated` przy ponowionym założeniu grupy, `OrderBookingCancelled`
   przy odwołaniu zlecenia z kalendarza); zwrócona wartość tego nie umie
-- **KANAŁ KLUBU JEST PORTEM Z ATRAPĄ** (`SilentLiveSignals` w produkcji do Z-E #246,
-  `FakeLiveSignals` w testach) - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
-  `message`/`read` już teraz
+- **KANAŁ KLUBU JEST PORTEM** - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
+  `message`/`read` przez `OrderSignals`; od KK-B (#246) w produkcji prawdziwy rejestr
+  połączeń, w testach `FakeLiveSignals`, która zapisuje i przekazuje dalej (sekcja
+  „Kanał klubu 4.0.0 - epik KK-B" niżej)
 - **IZOLACJA ZLECEŃ MA DWIE WARSTWY** (zlecenie i jego rezerwacja czytane osobno
   z klubem) - sonda regresji musi łamać obie; sondy zleceń w `tenantIsolation.test.ts`
   biorą świeży token PWI w Alfie (`pwiInAlfa`), bo sonda „wyloguj wszędzie" zrywa jej
@@ -5363,6 +5364,40 @@ obowiązujące odtąd:
   (`serverPort.ts`) i panelu (`bookingRefusal.ts`), pole `order` w `CalendarBooking`
   i etykiecie paska, `nextBooking.ts` z oboma fotelami, „REZYGNUJĘ" zamiast „ODWOŁAJ"
   na 23F - tabela w `docs/zlecenia.md` §16
+
+## Kanał klubu 4.0.0 - epik KK-B: serwer (issue #246, 2026-09-30/10-01, gałąź `feature-246-kanal-klubu`)
+Sześć etapów z przeglądem przed każdym commitem; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §11**, architektura: `docs/architektura-panelu-serwer.md` §7.12.
+Reguły obowiązujące odtąd:
+- **„KTO DOSTAJE CO" MA JEDNO MIEJSCE NA OBSZAR**: `ClubSignals` (kalendarz, rezerwacje,
+  samolot, dziennik, „Do sprawdzenia") i `OrderSignals` (zlecenia, rozmowy); nazwy tematów
+  w `application/common/live/topics.ts`. Producent podaje FAKT (termin, operację), nigdy
+  tematów ani odbiorców; `ClubSignals` jest WYMAGANYM parametrem konstruktora, więc
+  kompilator wskazuje każde miejsce kompozycji. Nowy temat = metoda w `ClubSignals`,
+  wywołanie PO commicie, przypadek w `liveTopics.test.ts` i sonda regresji
+- **BUDZIK JEST ROZDZIELNIKIEM**: `Notifier.record` (w transakcji) oddaje
+  `RecordedNotice[]`, a `Notifier.wake(orgId, recorded)` przyjmuje WYŁĄCZNIE to, co
+  zapisano - ramka `notification` do połączonych sesji odbiorcy, push do tokenów sesji
+  NIEpołączonych w klubie powiadomienia (K4). Awaria odczytu przed ramką = push do
+  wszystkich
+- **DECYZJA ODBIERAJĄCA DOSTĘP ZAMYKA POŁĄCZENIA SAMA** - przez `LiveAccess`
+  (`application/common/live/liveAccess.ts`), po commicie i tylko przy udanej decyzji:
+  `session_revoked` (wylogowania, sesje z karty członka, hasło), `membership_disabled`
+  (członkostwo, klub). Zmiana zakresu przestawia zdolności otwartych połączeń zamiast je
+  zamykać. Połączenie żyje najwyżej do terminu tokenu (`bye token_expired`). Nowa
+  decyzja tego rodzaju = metoda w `LiveAccess` i przypadek w `liveClose.test.ts`
+  z kontrolą, że połączenie spoza zakresu zostaje otwarte
+- **SKRZYNKA PANELU = SKRZYNKA TELEFONU**: `GET/POST /admin/api/me/notifications`
+  (każdy aktywny członek, bez zdolności; platforma 401), `NotificationQueries`
+  w `application/common/queries/`, stronę i odpowiedź składa wspólny
+  `http/routes/common/inboxWire.ts`. Bit `approver` dostaje wyłącznie telefon
+- **PUŁAPKI TESTÓW**: w `injectWS` gniazdo serwera nie dostaje `close` po zamknięciu
+  przez klienta (odłączenie - na prawdziwym porcie); sondy izolacji tras PWI w Alfie
+  biorą świeży token (`pwiInAlfa`), bo sonda „Wyloguj wszędzie" zrywa jej sesje
+  w połowie przebiegu; pomocniki połączeń w `test/liveClients.ts`
+- **czego KK-B NIE ROBI**: klienta kanału w aplikacji (KK-C) i panelu (KK-D), czyli
+  łącza, szyny, banerów, dzwonka, usunięcia pętli `RETRY_MS`; sprawdzenia CSP dla `wss:`
+  w przeglądarkach (KK-D)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
