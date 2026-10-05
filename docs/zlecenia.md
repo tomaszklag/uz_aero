@@ -1005,7 +1005,7 @@ Klienci doganiają w Z-C i Z-D:
 | 8 | pełny kształt dla drugiego pilota | `nextBooking.ts` z oboma fotelami (Z-C) |
 | 9 | odwołanie z kalendarza panelu = odwołanie zlecenia, bez dziennika akcji | przycisk w K2c (Z-D) |
 | 10 | test: rezerwacja zlecenia `confirmed`, poza kolejką i poza `reconcile` | - |
-| 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie (Z-E), baner i cisza w kokpicie (Z-C) |
+| 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie i baner w aplikacji - wykonane w Z-E (`docs/kanal-klubu.md` §13); ekrany zlecenia i rozmowy w regule banera oraz cisza w kokpicie przy aplikacji w tle (Z-C, tamże „Otwarte") |
 
 Znacznik zmian kalendarza (ETag okna) niesie od Z-B DWA stemple - rezerwacji i zleceń:
 przestawienie fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a pole

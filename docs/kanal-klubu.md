@@ -218,7 +218,9 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
   `bye session_revoked` → istniejąca ścieżka zdalnego wylogowania (2.1.0, `auth_revoked`).
 - **Szyna** (`LiveBus`, czysta, w warstwie aplikacji): rozdziela ramki na funkcje.
   Funkcja podpina się jednym hakiem - `useLiveTopic(tematy, odśwież)` - i nic więcej o
-  kanale nie wie. Skrzynka i licznik przy dzwonku dostają `notification` wprost.
+  kanale nie wie. Skrzynka i licznik przy dzwonku podpinają się tak samo: ramka
+  `notification` jest dla nich lokalnym tematem `inbox` i czytają po niej od nowa
+  (KK-C, §13 - „Do decyzji" liczy się z kolejki, której ramka nie niesie).
 - **Po (ponownym) połączeniu** każdy zamontowany ekran z hakiem odświeża się sam, a pętle
   `RETRY_MS` (60 s) w `useCalendar`, `useInbox`, `useAircraftCard` i `useAircraftWatches`
   znikają: ekran „BRAK POŁĄCZENIA" wraca w chwili, w której wraca łącze.
@@ -234,9 +236,10 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
   - kilka powiadomień naraz: widać ostatnie, licznik przy dzwonku mówi resztę;
   - wiadomość z innego klubu niesie nazwę klubu nad tytułem, a tapnięcie otwiera skrzynkę
     z instrukcją przełączenia (R6) - rzeczy z innego klubu telefon nie otworzy.
-- **Push** bez zmian po stronie aplikacji (`usePushNavigation`, kanał Androida). Zmienia
-  się tylko to, że serwer nie wysyła go na urządzenie połączone. W kokpicie push przychodzi
-  i jest wyciszony (pkt 44 zleceń).
+- **Push**: tapnięcie i kanał Androida bez zmian (`usePushNavigation`); serwer nie wysyła
+  go na urządzenie połączone. Przy OTWARTEJ aplikacji system nie pokazuje własnego banera
+  i nie gra - zapowiada go baner aplikacji, a budzik zostaje po cichu na liście systemowej.
+  To obejmuje kokpit na wierzchu (pkt 44 zleceń); kokpit z aplikacją w tle - §13, „Otwarte".
 
 ### 3.4 Panel
 
@@ -356,7 +359,8 @@ KK-B serwer ───────────────────┴─► K
 2. **KK-B** - serwer: rejestr połączeń, dwa wejścia, rozdzielnik, sygnały, zamykanie,
    testy; tematy kalendarza, rezerwacji, samolotu, dziennika i „Do sprawdzenia" -
    **zrobione 2026-09-30/10-01** (§11).
-3. **KK-C** - aplikacja: łącze, szyna, hak, baner, usunięcie pętli `RETRY_MS`.
+3. **KK-C** - aplikacja: łącze, szyna, hak, baner, usunięcie pętli `RETRY_MS` -
+   **zrobione 2026-10-05/10-06** (§13).
 4. **KK-D** - panel: łącze, mapa tematów, dzwonek i skrzynka, baner - **zrobione
    2026-10-01/10-05** (§12).
 5. Tematy zleceń i rozmów wchodzą z epikami Z-B (serwer), Z-C (aplikacja), Z-D (panel).
@@ -502,3 +506,123 @@ zbudowanym panelu z CSP; zdalne wylogowanie przenosi na logowanie; licznik i wie
 przychodzą ramką bez przeładowania; jedno „przeczytaj" na wiadomość; baner - pozycja i treść
 jak w PW1, zniknięcie po 5 s, pauza pod kursorem z resztą odliczania, brak banera na
 kolejce decyzji i przy otwartej skrzynce, ostatni z dwóch, kliknięcie otwiera kolejkę.
+
+## 13. KK-C - aplikacja pilota (wykonane 2026-10-05/10-06, gałąź `feature-246-kanal-klubu`)
+
+| Etap | Commit | Co weszło |
+| --- | --- | --- |
+| 0 | `90a02fb5` | jedno odświeżenie tokenów dla wołających naraz (`AuthService.rotate` dzieli obietnicę) - warunek łącza, które odświeża tokeny obok pętli synca |
+| 1 | `82a3388a` | łącze: jedno połączenie poza kokpitem, token w pierwszej ramce, `pong`, strażnik ciszy, wznowienie z rozrzutem, `bye` → odświeżenie tokenów |
+| 2 | `7fc55651` | szyna i hak `useLiveTopic`; odczyty ekranów odświeża sygnał, pętle `RETRY_MS` usunięte |
+| 3 | `b4493c1f` | baner w aplikacji (25E) z ramki i z pusha odebranego na wierzchu; system przy otwartej aplikacji milczy |
+
+**Mapa plików aplikacji** (`app/src/`):
+
+- `application/live/` - czyste: `frames.ts` (parser ramek; pozycja skrzynki w kształcie
+  REST), `linkRule.ts` (`linkTarget`, `isForegroundState`), `liveLink.ts` (łącze),
+  `liveBus.ts` (szyna: tematy, sklejanie serii, `onNotification` dla banera),
+  `reconnect.ts`, `liveUrl.ts`, `timers.ts`;
+- `application/ports/livePort.ts` - port gniazda; `infrastructure/live/liveSocket.ts`
+  (`RnLiveSockets`) - JEDYNE miejsce z `WebSocket`;
+- `ui/bootstrap/appBootstrap.ts` składa szynę i łącze, `useLive()` w `servicesContext.ts`;
+- `ui/hooks/` - `useLiveLink.ts` (binder `LiveLinkBinder` w `App.tsx`, za bramką
+  tożsamości i po `loadSession`; most „push klubu aktywnego → szyna"),
+  `useAppForeground.ts`, `useLiveTopic.ts`;
+- `ui/screens/logic/` - `liveRefresh.ts` (ciche odświeżenie), `aircraftOperationsPage.ts`,
+  `inbox.ts` (`keepVisitNew`), `inAppBanner.ts` (treść i reguła banera), `pushTarget.ts`
+  (`isActiveClubPush`);
+- `ui/navigation/` - `BannerHost.tsx` (gospodarz banera nad nawigacją), `activeRoute.ts`
+  (trasa na czubku stosu razem z parametrami), `openTarget.ts` (jedno otwarcie celu dla
+  tapnięcia w push i w baner);
+- `ui/components/status/InAppBanner.tsx` i `InboxRowContent`
+  w `components/data/InboxRow.tsx` - treść wiersza skrzynki wspólna z banerem;
+- `infrastructure/push/expoNotifications.ts` - handler przy otwartej aplikacji (bez banera
+  systemowego i dźwięku) i `onNotificationReceived`.
+
+**Kto czego słucha**:
+
+| Ekran | Hak | Tematy |
+| --- | --- | --- |
+| Kalendarz (21), krok 1 rezerwacji (22) | `useCalendar` | `calendar` |
+| Karta rezerwacji (23), decyzja (26), czekająca rezerwacja na Pulpicie (20E) | `useBooking` | `booking:<id>` |
+| Skrzynka (25) | `useInbox` | `inbox`, `booking` |
+| Dzwonek na Pulpicie | `useUnreadCount` | `inbox` |
+| Karta samolotu (27) i jej historia | `useAircraftCard`, `useAircraftOperations` | `aircraft:<id>` |
+| Lista obserwowanych (13C) | `useAircraftWatches` | `aircraft` |
+
+**Reguły, które wyszły przy wdrażaniu**:
+
+- **odświeżenie tokenów jest wspólne dla wołających w tej samej chwili**: serwer zużywa
+  refresh atomowo, więc łącze po `bye` i pętla synca po 401 dostawały naraz dwie
+  odpowiedzi, z których druga była odmową - a dla łącza odmowa znaczy „nie ma
+  poświadczeń" i koniec łączenia się;
+- **połączenie liczy się od powitania**, nie od otwarcia gniazda - i KAŻDE powitanie,
+  także pierwsze po starcie bez zasięgu, każe podpiętym ekranom dociągnąć stan. To ono
+  zastąpiło pętle `RETRY_MS`: ekran „BRAK POŁĄCZENIA" wraca razem z łączem;
+- **minuta ciszy = połączenie martwe**, także przed powitaniem (zmiana sieci, uśpione
+  radio); świeży token odrzucony przed powitaniem zatrzymuje łącze - resztę powie REST;
+- **podpięty jest tylko ekran widoczny** (`useIsFocused`): ekran pod spodem stosu i w
+  nieaktywnej zakładce czyta od nowa przy wejściu, jak dotąd;
+- **odświeżenie z sygnału jest CICHE**: bez plamek, a odpowiedź, której nie było, nie
+  zamienia wiedzy w niewiedzę (`quietResult`); świeża pierwsza strona historii samolotu nie
+  zwija doładowanych stron; wiadomość zobaczona w skrzynce jako nowa zostaje nowa do końca
+  wizyty;
+- **seria sygnałów jednej zmiany to jedno odświeżenie** (250 ms, osobno dla każdego
+  podpięcia); ekran odpięty w trakcie nie dostaje odświeżenia w drodze;
+- **skrzynka i dzwonek czytają od nowa na ramkę `notification`**, zamiast brać jej treść
+  wprost (świadoma różnica wobec §3.3 sprzed wdrożenia): plakietka „Do decyzji" liczy się
+  z kolejki decyzji, której ramka nie niesie, a push odebrany na wierzchu nie niesie
+  licznika - jedna droga obsługuje oba źródła, a sklejanie serii robi z niej jedno żądanie;
+- **przełącznik obserwowania zostaje „zajęty", dopóki nie przyjdzie nowy stan** - zwolniony
+  przed cichym odświeżeniem mignąłby starą wartością;
+- **baner mówi zdaniem wiersza skrzynki, gdy je ma**: ramka niesie pozycję w kształcie REST,
+  więc treść składa ta sama funkcja (`inboxRows`), bez plakietki sprawy i z „teraz". Push
+  niesie tylko tytuł i identyfikatory, więc baner z pusha mówi tytułem ze znakiem maszyny
+  z pamięci floty;
+- **baner nie staje w kokpicie, w tle ani na ekranie rzeczy, której dotyczy** (karta tej
+  rezerwacji, decyzja o niej, karta tej maszyny, otwarta skrzynka), a wejście na taki ekran
+  gasi baner, który już stoi (`bannerFits`). Wiadomość z innego klubu staje zawsze, także
+  nad otwartą skrzynką - jej rzeczy na tym telefonie nie widać;
+- **push klubu aktywnego na wierzchu wchodzi na szynę jako ramka bez pozycji**: skrzynka
+  i dzwonek odświeżają się jak od kanału, a baner pokazuje sam push (ramkę bez pozycji
+  pomija), więc nie ma dwóch banerów jednej wiadomości;
+- **baner stoi w nawigatorze, czyli za bramką tożsamości** - nad zamkiem PIN-u pokazałby
+  treść komuś, kto telefonu nie odblokował; arkusze żyją we własnych oknach i zostają nad
+  nim;
+- **jedno otwarcie celu** (`openTarget`): tapnięcie w push i w baner idą tą samą drogą, cel
+  liczy jedna mapa (`pushTarget`).
+
+**Otwarte - cisza w kokpicie przy aplikacji w TLE** (dla Z-C, gdzie `docs/zlecenia.md` §16
+pkt 11 kładzie ciszę w kokpicie): handler powiadomień działa wyłącznie przy otwartej
+aplikacji, więc kokpit na wierzchu jest cichy, ale kokpit z zablokowanym ekranem
+(aplikacja w tle) dostaje push tak, jak pokazuje go kanał Androida - z banerem systemowym
+i dźwiękiem. Aplikacja w tle nie ma jak tego zmienić. Do rozstrzygnięcia: serwer wybiera
+cichy kanał dla odbiorcy, który trzyma samolot (zna operacje w toku z rejestru, ale nie
+przejęcia czekające jeszcze w kolejce telefonu), albo przyjmujemy ten stan.
+
+**Testy aplikacji**: `liveFrames.test.ts`, `liveLinkRule.test.ts`, `liveLink.test.ts`
+(atrapa gniazda i zegara), `liveBus.test.ts`, `liveRefresh.test.ts`, `inbox.test.ts`
+(`keepVisitNew`), `inAppBanner.test.ts`, `activeRoute.test.ts`, `pushTarget.test.ts`
+(`isActiveClubPush`), `authService.test.ts` (wspólne odświeżenie) oraz strażnicy
+w `architecture.test.ts` (`WebSocket` wyłącznie w `liveSocket.ts`; plik UI, który czyta
+serwer, bez `setInterval`).
+
+**Jak podpiąć ekran aplikacji pod odświeżanie na żywo**: w haku, który czyta serwer,
+`useLiveTopic(tematy, odśwież)` z cichym odświeżeniem (`quietResult`). Tematy są kontraktem
+serwera (§11, „Jak dopisać temat"); lokalny jest wyłącznie `inbox`. Pętli `setInterval`
+nie dokładaj - strażnik architektury jej nie przepuści.
+
+**Jak dopisać ekran rzeczy do reguły banera** (np. karta zlecenia w Z-C): rodzaj
+wiadomości → ekran w `pushTarget.ts`, rzecz w `targetThing`/`routeThing`
+w `inAppBanner.ts` z przypadkiem „na ekranie tej rzeczy baner nie staje" i trasa
+w `openTarget.ts`. Zdanie banera przychodzi samo z gałęzi rodzaju w `logic/inbox.ts`.
+
+**Sprawdzone na lokalnym serwerze** (2026-10-05/06, tymczasowa baza, łącze z Node):
+śmieciowy token dostaje `bye token_expired`, odświeżenie daje nową parę i powitanie;
+połączenie przeżywa trzy cykle pingu; rezerwacja Piotra Lisa przynosi `notification`
+i `changed` z klubem logowania, powitanie odświeża każdy podpięty temat raz, a seria ramek -
+kalendarz, tę rezerwację, skrzynkę i samoloty po jednym razie, temat zleceń wcale; z ramki
+tej rezerwacji baner mówi „Piotr Lis prosi o zgodę na lot · SP-KKD · pt 23 PAŹ
+09:00-11:00 · teraz" i prowadzi do decyzji, a na karcie tej rezerwacji, w skrzynce,
+w kokpicie i w tle nie staje. Na urządzeniu (animacja, gest, czytnik ekranu, push przy
+otwartej aplikacji) - w Z-W.

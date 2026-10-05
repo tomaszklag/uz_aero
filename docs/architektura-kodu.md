@@ -1228,6 +1228,7 @@ Porty w `application/ports/`, każdy z realnym powodem:
 | `ClockPort` | Czas musi być deterministyczny w testach; produkcyjnie dwa zegary (device + GPS, §4.5). |
 | `IdPort` | UUID zdarzenia = klucz idempotencji; w testach przewidywalny. |
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
+| `LiveSocketPort` | Kanał klubu (4.0.0, `docs/kanal-klubu.md` §13): łącze (`LiveLink`) ma uwierzytelnienie pierwszą ramką, ping, strażnika ciszy i wznawianie z rozrzutem - wszystko to sprawdzają testy na atrapie gniazda i zegara. Implementacja: `infrastructure/live/liveSocket.ts` (`RnLiveSockets`) - JEDYNY plik z `WebSocket` (obiekt globalny RN, więc strażnik czyta kod, nie importy). |
 | `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
 Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`,
@@ -1587,7 +1588,10 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
 6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
    da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
    wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED
-   aplikacją.
+   aplikacją. Baner w aplikacji (4.0.0) bierze zdanie z tej samej gałęzi sam; nowy EKRAN
+   RZECZY, na którym baner nie ma stawać (bo ten ekran się odświeża), dopisuje się
+   w `targetThing`/`routeThing` w `logic/inAppBanner.ts` z testem i w
+   `navigation/openTarget.ts` (`docs/kanal-klubu.md` §13).
 7. **Wiadomość o TERMINIE dostaje `day`** (doba klubu, §6.1 rezerwacji) i telefon liczy
    godzinę odejmowaniem; wiadomość o OPERACJI niesie `at` w UTC, a `day` ma `null`.
    Dwa zegary, świadomie - jak na ekranie podglądu 26B.
@@ -1604,6 +1608,29 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
 9. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
    ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
    strażniki izolacji klubów.
+
+### Nowy temat kanału klubu (4.0.0, `docs/kanal-klubu.md` §11–§13)
+
+Kanał NIE NIESIE TREŚCI (K2): temat mówi „to, co pokazujesz, się zmieniło", a ekran czyta
+od nowa RESTem, więc kształt danych per widz liczy jak zawsze serwer. Nowy temat dotyka
+trzech miejsc i w każdym jednego:
+
+1. **Serwer** - nazwa w `application/common/live/topics.ts`, odbiorcy w `ClubSignals`
+   (zlecenia i rozmowy: `OrderSignals`) jako nowa metoda, wywołanie PO commicie
+   w producencie - nigdy wprost z komendy. Przypadek w `liveTopics.test.ts` prawdziwą
+   trasą i sonda regresji, która go łamie (§11).
+2. **Panel** - temat → klucz zapytania w `admin/src/live/topicKeys.ts` z przypadkiem
+   w `topicKeys.test.ts`; React Query pobierze tylko to, co jest na ekranie (§12).
+3. **Aplikacja** - hak, który czyta serwer, woła `useLiveTopic(tematy, odśwież)`
+   z cichym odświeżeniem (`quietResult` w `screens/logic/liveRefresh.ts`): bez plamek,
+   a odpowiedź, której nie było, nie kasuje danych. Wzorzec bez dwukropka łapie cały
+   rodzaj (`calendar`), z dwukropkiem - dokładnie ten temat (`booking:<id>`). Podpięty
+   jest wyłącznie ekran widoczny, a każde powitanie łącza i tak każe mu dociągnąć stan
+   (§13).
+
+Czego NIE robić: pętli `setInterval` w haku czytającym serwer (strażnik
+`architecture.test.ts` po obu stronach), tematu wymyślonego przez klienta (odbiorców
+wyznacza serwer, §2 dokumentu kanału) i treści w sygnale `changed`.
 
 ---
 

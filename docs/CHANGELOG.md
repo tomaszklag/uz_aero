@@ -44,6 +44,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   a kliknięcie otwiera to, czego dotyczy.
 - **Panel odświeża się sam.** Kalendarz z kolejką decyzji, dziennik i „Do sprawdzenia"
   pokazują zmiany z telefonów i z innych kart przeglądarki od razu, bez przeładowania strony.
+- **Baner nowej wiadomości w aplikacji.** Gdy aplikacja jest otwarta, nowa wiadomość
+  pojawia się na kilka sekund u góry ekranu - z tym samym zdaniem, co w skrzynce, i bez
+  dźwięku. Tapnięcie otwiera to, czego dotyczy, a przesunięcie w górę chowa baner. Nie
+  przerywa na ekranie sprawy, której dotyczy (ten się odświeża), ani w kokpicie.
+- **Aplikacja odświeża się sama.** Kalendarz, karta rezerwacji, skrzynka z licznikiem przy
+  dzwonku, karta samolotu i lista obserwowanych pokazują zmiany od razu, gdy ktoś coś
+  zapisze - bez wychodzenia z ekranu. Ekran „Brak połączenia" znika sam, gdy wróci zasięg.
 
 ## 3.2.0 · 27 września 2026
 
@@ -475,7 +482,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Zlecający widzi, kto już odczytał zlecenie
 - [ ] Grupy pilotów w klubie
 - [ ] Instruktor umawia lot z uczniem jednym zleceniem
-- [~] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, ekrany odświeżają się same
+- [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
 
 ### 5.0.0 · termin do ustalenia
 

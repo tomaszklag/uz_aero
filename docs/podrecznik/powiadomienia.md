@@ -1,6 +1,6 @@
 # Powiadomienia
 
-> Skrzynka pod dzwonkiem na pulpicie i w panelu klubu oraz powiadomienia na telefon: co przychodzi, do kogo, jak wyłączyć i dlaczego bez zgody na powiadomienia nic nie ginie.
+> Skrzynka pod dzwonkiem na pulpicie i w panelu klubu, baner przy otwartej aplikacji i powiadomienia na telefon: co przychodzi, do kogo, jak wyłączyć i dlaczego bez zgody na powiadomienia nic nie ginie.
 
 ## Skrzynka pod dzwonkiem
 
@@ -34,7 +34,17 @@ O własnym działaniu nikt nie dostaje wiadomości. W klubie bez ścieżki akcep
 
 ## Powiadomienia na telefon
 
-Każda wiadomość ze skrzynki budzi też telefon **powiadomieniem**. Tapnięcie w nie otwiera od razu właściwy ekran - także wtedy, gdy aplikacja była zamknięta albo czekała na PIN (po odblokowaniu trafiasz tam, gdzie prowadzi powiadomienie).
+Każda wiadomość ze skrzynki daje o sobie znać także poza nią - a jak, zależy od tego, czy aplikacja jest otwarta.
+
+**Aplikacja otwarta** - u góry ekranu na kilka sekund pojawia się **baner** z tym samym zdaniem, co w skrzynce. Znika sam i bez dźwięku, przesunięcie w górę chowa go od razu, a dopóki trzymasz na nim palec, czeka. Tapnięcie otwiera to, czego dotyczy. Gdy przyjdzie kilka wiadomości naraz, widać ostatnią - resztę mówi licznik przy dzwonku.
+
+@screen 25e-baner-w-aplikacji "Baner nowej wiadomości przy otwartej aplikacji"
+
+Baner **nie pojawia się na ekranie, którego dotyczy** - na karcie tej rezerwacji, na ekranie decyzji o niej, na karcie tego samolotu ani przy otwartej skrzynce. Ten ekran po prostu się odświeża. Nie ma go też w kokpicie: dopóki trzymasz samolot, aplikacja nie przerywa Ci banerem, a wiadomość czeka po cichu na liście powiadomień telefonu i w skrzynce.
+
+Otwarta aplikacja w ogóle **pokazuje zmiany od razu**: kalendarz, karta rezerwacji, skrzynka, karta samolotu i lista obserwowanych odświeżają się same, gdy ktoś coś zapisze - w telefonie albo w panelu.
+
+**Aplikacja zamknięta albo w tle** - telefon pokazuje zwykłe **powiadomienie**. Tapnięcie w nie otwiera od razu właściwy ekran - także wtedy, gdy aplikacja czekała na PIN (po odblokowaniu trafiasz tam, gdzie prowadzi powiadomienie).
 
 Powiadomienie jest **tylko sygnałem**, że coś przyszło. Na ekranie blokady stoi rodzaj sprawy („Prośba o zgodę"), bez nazwisk i godzin - te czekają w skrzynce, którą widzisz dopiero po odblokowaniu.
 
@@ -44,7 +54,7 @@ Powiadomienie jest **tylko sygnałem**, że coś przyszło. Na ekranie blokady s
 - gdy Twoja rezerwacja czeka na zgodę - zaraz po jej zapisaniu;
 - gdy włączysz obserwowanie samolotu.
 
-Jeśli powiadomienie przyjdzie z klubu, który nie jest teraz aktywny w aplikacji, tapnięcie otworzy skrzynkę z informacją, że trzeba przełączyć klub w [ustawieniach](ustawienia).
+Jeśli wiadomość przyjdzie z klubu, który nie jest teraz aktywny w aplikacji, baner pokazuje nad nią nazwę klubu, a tapnięcie - w baner albo w powiadomienie - otworzy skrzynkę z informacją, że trzeba przełączyć klub w [ustawieniach](ustawienia).
 
 ## Skrzynka w panelu
 
@@ -70,12 +80,15 @@ Po wylogowaniu telefon przestaje dostawać powiadomienia od razu - także wtedy,
 
 > **Dlaczego powiadomienie nie mówi, kto i o której.** Ekran blokady widzi każdy, kto akurat patrzy na telefon - także na wspólnym tablecie w samolocie. Plan lotu i nazwiska członków klubu zostają w aplikacji.
 
+> **Dlaczego przy otwartej aplikacji baner, a nie powiadomienie systemu.** Pilot z otwartą aplikacją właśnie w niej pracuje - powiadomienie z dźwiękiem nad kalendarzem czy kartą rezerwacji przerywałoby mu w pół ruchu. Baner mówi to samo, znika sam i nie gra, a na ekranie sprawy w ogóle się nie pojawia, bo ten ekran i tak pokazuje zmianę.
+
 > **Dlaczego aplikacja nie pyta o zgodę od razu.** Pytanie bez powodu uczy odmawiać. Pilot, który nigdy nie akceptuje rezerwacji i nie obserwuje samolotu, nie dostanie ani jednego powiadomienia - więc nie ma po co go pytać.
 
 ## Częste problemy
 
 - **Nie przychodzą powiadomienia** → sprawdź w ustawieniach systemu, czy Ninerdeck ma zgodę na powiadomienia i czy nie jest usypiany przez oszczędzanie baterii. Wiadomości i tak czekają w skrzynce.
 - **Nie ma licznika przy dzwonku** → albo nie ma nic nowego, albo telefon jest bez zasięgu.
+- **Wiadomość przyszła, a baneru nie było** → byłeś na ekranie, którego dotyczy (ten się odświeżył), w otwartej skrzynce albo w kokpicie. Wiadomość czeka w skrzynce.
 - **Licznik w panelu zgasł, choć niczego tam nie otwierałeś** → wiadomości przeczytałeś w telefonie - przeczytane w jednym miejscu jest przeczytane w drugim.
 - **Plakietka „Do decyzji" nie znika** → znika dopiero po decyzji. Otwórz prośbę i zatwierdź albo odmów.
 - **Powiadomienie otwiera skrzynkę zamiast rezerwacji** → przyszło z innego klubu niż aktywny. Przełącz klub w ustawieniach.

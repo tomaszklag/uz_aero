@@ -1473,11 +1473,14 @@ i oddaje zapisane wiersze, a `Notifier.wake` wysyła z nich ramkę `notification
 połączonych sesji odbiorcy i push WYŁĄCZNIE na urządzenia bez połączenia w klubie
 powiadomienia (K4 - wiadomość z innego
 klubu tej samej osoby idzie pushem, jak dotąd). Przy otwartej aplikacji pilot widzi własny
-baner w aplikacji (K5); w kokpicie łącze jest rozłączone, a push przychodzi po cichu (K6).
+baner w aplikacji (K5); w kokpicie łącze jest rozłączone, a push przychodzi po cichu (K6 -
+przy aplikacji na wierzchu; z zablokowanym ekranem pokazuje go kanał Androida, z dźwiękiem:
+`docs/kanal-klubu.md` §13, „Otwarte").
 Panel dostaje tę samą skrzynkę z dzwonkiem (K7) - `GET /admin/api/me/notifications`
 i `POST …/:id/read`, ta sama `NotificationQueries` i ten sam kształt (serwer gotowy
 w KK-B, 2026-10-01). Kalendarz i karta rezerwacji odświeżają się sygnałami `booking:<id>`
-i `calendar:<doba klubu>` (`ClubSignals`).
+i `calendar:<doba klubu>` (`ClubSignals`). Aplikacja (KK-C, 2026-10-06): łącze, ciche
+odświeżanie ekranów i baner w aplikacji - `docs/kanal-klubu.md` §13.
 
 Wszystko, co wyżej mówi o skrzynce, tokenach przypiętych do sesji, danych pusha
 i tapnięciu, zostaje w mocy; zmienia się tylko to, KIEDY push w ogóle wychodzi. Pętla
