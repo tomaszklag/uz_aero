@@ -11,3 +11,4 @@ export * from './tracePort';
 export * from './bugReportPort';
 export * from './themePrefsPort';
 export * from './pushDevicePort';
+export * from './livePort';
