@@ -13,10 +13,15 @@ import type { DirectoryDto } from '../api/dto';
 import { getDirectory } from '../api/directory';
 import { keys } from './keys';
 
-export function useDirectory() {
+/**
+ * `enabled` - baner nowego powiadomienia prosi o słownik dopiero przy pierwszej
+ * wiadomości: ekran bez banera nie płaci za niego żądaniem przy każdym wejściu do panelu.
+ */
+export function useDirectory(enabled = true) {
   return useQuery<DirectoryDto>({
     queryKey: keys.directory,
     queryFn: getDirectory,
     staleTime: 5 * 60_000,
+    enabled,
   });
 }

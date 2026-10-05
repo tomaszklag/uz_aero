@@ -14,6 +14,9 @@ import type { InfiniteData } from '@tanstack/react-query';
 import type { InboxCursor } from '../api/notifications';
 import type { InboxItemDto, InboxPageDto } from '../api/dto';
 
+/** Kształt wiadomości dla kanału klubu - `live/` nie importuje z `api/` (strażnik architektury). */
+export type { InboxItemDto };
+
 export type InboxData = InfiniteData<InboxPageDto, InboxCursor | null>;
 
 /** Kursor następnej strony - ostatni wiersz tej strony. */

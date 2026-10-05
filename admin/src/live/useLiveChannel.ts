@@ -18,13 +18,14 @@
  *    pobrana lista nie ma prawa mignąć następnej osobie przy tej przeglądarce. Sesja,
  *    która przeżyła, łączy się od nowa;
  *  - `notification` → wiadomość na górę skrzynki i nowa liczba przy dzwonku, bez
- *    drugiego żądania (pozycja przychodzi w kształcie REST, a liczbę liczy serwer).
+ *    drugiego żądania (pozycja przychodzi w kształcie REST, a liczbę liczy serwer) -
+ *    i do odbiorcy banera (`onNotification`), który o niej rozstrzyga sam.
  */
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { asInboxItem, withNotification, type InboxData } from '../queries/inboxCache';
+import { asInboxItem, withNotification, type InboxData, type InboxItemDto } from '../queries/inboxCache';
 import { keys } from '../queries/keys';
 import { LiveSocket } from './liveSocket';
 import { liveUrl } from './liveUrl';
@@ -32,9 +33,18 @@ import { prefixesForTopics } from './topicKeys';
 
 const notIdentity = (query: { queryKey: readonly unknown[] }): boolean => query.queryKey[0] !== keys.me[0];
 
-/** `scopeKey` - klub i osoba sesji klubu; `null` = brak kanału (platforma, brak sesji). */
-export function useLiveChannel(scopeKey: string | null): void {
+/**
+ * `scopeKey` - klub i osoba sesji klubu; `null` = brak kanału (platforma, brak sesji).
+ * `onNotification` - nowa wiadomość z kanału (nie z odczytu skrzynki): baner stoi tylko
+ * przy tej, która PRZYSZŁA, gdy panel był otwarty.
+ */
+export function useLiveChannel(scopeKey: string | null, onNotification?: (item: InboxItemDto) => void): void {
   const qc = useQueryClient();
+  // Najświeższy odbiorca - nowa funkcja przy każdym renderze nie otwiera nowego połączenia.
+  const notify = useRef(onNotification);
+  useEffect(() => {
+    notify.current = onNotification;
+  });
 
   useEffect(() => {
     if (scopeKey == null) return;
@@ -49,6 +59,7 @@ export function useLiveChannel(scopeKey: string | null): void {
         const item = asInboxItem(frame.item);
         if (item == null) return;
         qc.setQueryData<InboxData>(keys.notifications.inbox, (data) => withNotification(data, item, frame.unread));
+        notify.current?.(item);
       },
       onOpen: (reconnected) => {
         if (reconnected) void qc.invalidateQueries({ predicate: notIdentity });

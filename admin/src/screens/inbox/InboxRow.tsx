@@ -59,15 +59,13 @@ function Segments({ items }: { items: readonly Segment[] }) {
   );
 }
 
-interface InboxRowProps {
-  row: InboxRowVm;
-  /** Kliknięcie wiersza z adresem - szuflada zamyka się, a rzecz otwiera. */
-  onOpen: () => void;
-}
-
-export function InboxRow({ row, onOpen }: InboxRowProps) {
+/**
+ * Ikona, zdanie i godzina wiadomości - wspólne dla wiersza skrzynki i banera nowego
+ * powiadomienia, bo oba mówią TO SAMO (makieta `powiadomienia` PW1 i PW2).
+ */
+export function InboxRowBody({ row }: { row: InboxRowVm }) {
   const Icon = ICONS[row.icon];
-  const body = (
+  return (
     <>
       <span className={TONE[row.tone]}>
         <Icon size={15} />
@@ -89,12 +87,26 @@ export function InboxRow({ row, onOpen }: InboxRowProps) {
       <span className="inbox-when">{row.when}</span>
     </>
   );
+}
 
+interface InboxRowProps {
+  row: InboxRowVm;
+  /** Kliknięcie wiersza z adresem - szuflada zamyka się, a rzecz otwiera. */
+  onOpen: () => void;
+}
+
+export function InboxRow({ row, onOpen }: InboxRowProps) {
   const className = row.isNew ? 'inbox-row new' : 'inbox-row';
-  if (row.href == null) return <div className={className}>{body}</div>;
+  if (row.href == null) {
+    return (
+      <div className={className}>
+        <InboxRowBody row={row} />
+      </div>
+    );
+  }
   return (
     <Link className={className} to={row.href} onClick={onOpen}>
-      {body}
+      <InboxRowBody row={row} />
     </Link>
   );
 }
