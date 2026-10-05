@@ -163,6 +163,16 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('panel niczego nie odpytuje - świeżość daje kanał klubu (K1)', () => {
+    // Odpytywanie co minutę przetrwało z czasów sprzed kanału (licznik „Do sprawdzenia"):
+    // przy wyłączonym serwerze karta stukała w niego bez końca, a przy działającym
+    // kosztowała żądanie na minutę za odpowiedź, którą temat `attention` przynosi sam.
+    // Ekran, który chce świeżości, dopisuje swój klucz w `live/topicKeys.ts`, a wznowione
+    // łącze dociąga resztę. Tykający zegar to inna sprawa - dostałby imienny wyjątek.
+    const offenders = filesUnder('.').filter((f) => /\b(refetchInterval|setInterval)\b/.test(codeOf(f)));
+    expect(offenders).toEqual([]);
+  });
+
   it('`live/` nie zna ekranów, komponentów ani klienta HTTP', () => {
     // Kanał podaje ramki dalej i unieważnia zapytania - nie rysuje niczego, nie pyta
     // serwera sam i nie wie, który ekran akurat stoi. Ekran, który chce odświeżenia,
