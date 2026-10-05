@@ -16,13 +16,15 @@
  *    członkostwo albo klub i wygasłe ciasteczko kończą się odpowiedzią `null`, czyli
  *    ekranem logowania - jak przy wylogowaniu, razem z wyczyszczonym cache'em: żadna
  *    pobrana lista nie ma prawa mignąć następnej osobie przy tej przeglądarce. Sesja,
- *    która przeżyła, łączy się od nowa.
- * Ramkę `notification` czyta skrzynka (dzwonek i szuflada).
+ *    która przeżyła, łączy się od nowa;
+ *  - `notification` → wiadomość na górę skrzynki i nowa liczba przy dzwonku, bez
+ *    drugiego żądania (pozycja przychodzi w kształcie REST, a liczbę liczy serwer).
  */
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { asInboxItem, withNotification, type InboxData } from '../queries/inboxCache';
 import { keys } from '../queries/keys';
 import { LiveSocket } from './liveSocket';
 import { liveUrl } from './liveUrl';
@@ -40,8 +42,13 @@ export function useLiveChannel(scopeKey: string | null): void {
     const socket = new LiveSocket({
       url: liveUrl(window.location),
       onFrame: (frame) => {
-        if (frame.type !== 'changed') return;
-        for (const queryKey of prefixesForTopics(frame.topics)) void qc.invalidateQueries({ queryKey });
+        if (frame.type === 'changed') {
+          for (const queryKey of prefixesForTopics(frame.topics)) void qc.invalidateQueries({ queryKey });
+          return;
+        }
+        const item = asInboxItem(frame.item);
+        if (item == null) return;
+        qc.setQueryData<InboxData>(keys.notifications.inbox, (data) => withNotification(data, item, frame.unread));
       },
       onOpen: (reconnected) => {
         if (reconnected) void qc.invalidateQueries({ predicate: notIdentity });

@@ -16,11 +16,15 @@
  * (`skeletonGate.ts`): typowe `GET /me` wraca szybciej.
  */
 
+import { useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 import { useLiveChannel } from '../live/useLiveChannel';
+import { unreadCount } from '../queries/inboxCache';
 import { useAttention } from '../queries/useAttention';
+import { useInbox } from '../queries/useNotifications';
 import { useLogout } from '../queries/useSession';
+import { InboxDrawer } from '../screens/inbox/InboxDrawer';
 import { Loadable } from '../ui/components';
 import { AppShell } from '../ui/shell/AppShell';
 import { kindOf } from '../ui/shell/nav';
@@ -39,6 +43,11 @@ export function ShellRoute() {
   // Kanał klubu (4.0.0, K3): jedno połączenie na kartę, wyłącznie w sesji klubu. Klub
   // i osoba są tożsamością połączenia - przełączenie klubu otwiera nowe.
   useLiveChannel(session?.org == null ? null : `${session.org.id}:${session.pilot.id}`);
+  // Skrzynka (K7): dzwonek w każdej ramie KLUBU - liczba z pierwszej strony, którą kanał
+  // trzyma świeżą; szuflada bez własnego adresu, więc jej stan mieszka tutaj.
+  const club = session?.org != null;
+  const inbox = useInbox(club);
+  const [inboxOpen, setInboxOpen] = useState(false);
 
   if (loading) {
     return (
@@ -63,10 +72,14 @@ export function ShellRoute() {
       scope={shellScope(session)}
       capabilities={session.capabilities}
       attentionCount={counted ? (attention.data?.counts.attention ?? null) : null}
+      bell={
+        club ? { count: unreadCount(inbox.data), open: inboxOpen, onToggle: () => setInboxOpen((open) => !open) } : null
+      }
       onLogout={() => logout.mutate()}
       logoutPending={logout.isPending}
     >
       <Outlet />
+      {club && inboxOpen ? <InboxDrawer onClose={() => setInboxOpen(false)} /> : null}
     </AppShell>
   );
 }

@@ -1264,6 +1264,8 @@ export interface DirectoryAircraftDto {
   serviceStatus: ServiceStatus;
   /** Wymóg załogi dwuosobowej - plakietka przy drugim pilocie w szufladzie rezerwacji (#233). */
   dualRequired: boolean;
+  /** Format licznika - odczyt w wiadomości „Zdana" w skrzynce, tak jak na tarczy maszyny. */
+  mhFormat: MhFormat;
 }
 
 export interface DirectoryDto {
@@ -1906,4 +1908,38 @@ export interface ConsumptionReportDto {
   /** Ta sama norma, którą dostaje telefon; `null` razem z niepublikowanym modelem. */
   norm: ConsumptionNorm | null;
   mh: MhModel;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * SKRZYNKA POWIADOMIEŃ (4.0.0, K7 `docs/kanal-klubu.md`; epik KK-D #246)
+ *
+ * Ta sama skrzynka, co w telefonie: `GET /admin/api/me/notifications` oddaje ten sam
+ * kształt wiersza, co ramka `notification` kanału klubu (`server/.../notify/inboxItem.ts`).
+ * `payload` wozi identyfikatory i czasy, nie zdania - nazwisko i znak maszyny panel
+ * rozwiązuje ze słownika klubu, a zdanie składa `screens/inbox/inboxRows.ts`.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Doba KLUBU terminu, o którym mówi wiadomość - granice jako chwile ISO. */
+export interface InboxTermDayDto {
+  date: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface InboxItemDto {
+  id: string;
+  /** Rodzaj wiadomości - napis z kontraktu skrzynki; nieznany dostaje wiersz ogólny. */
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  /** `null` = nieprzeczytana - zielona krawędź i liczba przy dzwonku. */
+  readAt: string | null;
+  day: InboxTermDayDto | null;
+}
+
+/** Strona skrzynki - najnowsze pierwsze; liczba nieprzeczytanych liczy CAŁĄ skrzynkę. */
+export interface InboxPageDto {
+  timezone: string;
+  unread: number;
+  items: InboxItemDto[];
 }

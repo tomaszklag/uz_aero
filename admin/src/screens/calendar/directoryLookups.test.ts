@@ -9,8 +9,8 @@ const SLOWNIK: DirectoryDto = {
     { id: 'p-2', code: 'BNO', name: 'Barbara Nowak', active: false },
   ],
   aircraft: [
-    { id: 'a-1', reg: 'SP-AXA', type: 'C182', serviceStatus: 'active', dualRequired: false },
-    { id: 'a-2', reg: 'SP-KWA', type: 'An-2', serviceStatus: 'disabled', dualRequired: true },
+    { id: 'a-1', reg: 'SP-AXA', type: 'C182', serviceStatus: 'active', dualRequired: false, mhFormat: 'hhmm' },
+    { id: 'a-2', reg: 'SP-KWA', type: 'An-2', serviceStatus: 'disabled', dualRequired: true, mhFormat: 'hhmm' },
   ],
 };
 

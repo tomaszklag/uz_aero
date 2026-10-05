@@ -225,6 +225,15 @@ export const keys = {
     all: ['flags'] as const,
     list: (query: FlagListQuery) => ['flags', 'list', query] as const,
   },
+  /**
+   * Skrzynka powiadomień (4.0.0, K7). Jedno pytanie w stronach - dzwonek czyta z pierwszej
+   * strony liczbę nieprzeczytanych, szuflada listę. Ramka `notification` kanału klubu
+   * dopisuje się do tej samej pamięci, bez drugiego żądania.
+   */
+  notifications: {
+    all: ['notifications'] as const,
+    inbox: ['notifications', 'inbox'] as const,
+  },
   exports: {
     all: ['exports'] as const,
     list: (query: ExportListQuery) => ['exports', 'list', query] as const,

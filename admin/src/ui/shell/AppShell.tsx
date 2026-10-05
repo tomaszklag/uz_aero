@@ -25,6 +25,7 @@ import { Link, NavLink } from 'react-router-dom';
 
 import type { Capability } from '../../api/dto';
 import {
+  BellIcon,
   CalendarIcon,
   BookIcon,
   BugIcon,
@@ -36,6 +37,7 @@ import {
   SignOutIcon,
   SwitchIcon,
 } from '../components/icons';
+import { bellLabel } from './bell';
 import { initials } from './initials';
 import { ACCOUNT, COUNTED, homeFor, navItemsFor, type NavIcon } from './nav';
 import type { ShellScope } from './scope';
@@ -69,6 +71,13 @@ interface AppShellProps {
    * nie dostaje ozdoby (reguła SyncChipa, issue #12). Liczbę liczy serwer.
    */
   attentionCount?: number | null;
+  /**
+   * Dzwonek skrzynki (4.0.0, K7) - stoi w KAŻDEJ ramie klubu, przed nazwiskiem; rama
+   * platformy go nie ma (`null`), bo kanału i skrzynki tam nie ma. Liczba wyłącznie przy
+   * nowych (reguła SyncChipa) - `null` i zero wyglądają tak samo. Otwarta skrzynka trzyma
+   * dzwonek wciśniętym.
+   */
+  bell?: { count: number | null; open: boolean; onToggle: () => void } | null;
   onLogout: () => void;
   logoutPending: boolean;
   children: React.ReactNode;
@@ -79,6 +88,7 @@ export function AppShell({
   scope,
   capabilities,
   attentionCount = null,
+  bell = null,
   onLogout,
   logoutPending,
   children,
@@ -99,6 +109,19 @@ export function AppShell({
         </Link>
 
         <div className="topbar-right">
+          {bell == null ? null : (
+            <button
+              type="button"
+              className="bell-btn"
+              title="Powiadomienia"
+              aria-label={bellLabel(bell.count)}
+              aria-expanded={bell.open}
+              onClick={bell.onToggle}
+            >
+              <BellIcon size={16} />
+              {bell.count != null && bell.count > 0 ? <span className="bell-count">{bell.count}</span> : null}
+            </button>
+          )}
           {/* NAZWISKO JEST WEJŚCIEM NA `#/konto` (2.1.0, issue #134 D6). Konto nie jest
               modułem klubu, więc nie ma pozycji w kolumnie - a wejście z nazwiska w pasku
               jest tym miejscem, w którym każdy szuka go z innych aplikacji web. */}

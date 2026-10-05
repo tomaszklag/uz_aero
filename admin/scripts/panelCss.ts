@@ -54,6 +54,7 @@ const SHEETS: readonly { file: string; title: string }[] = [
   { file: 'components/bugs.css', title: 'ZGŁOSZENIA BŁĘDÓW' },
   { file: 'components/attention.css', title: 'DO SPRAWDZENIA - LISTA SPRAW' },
   { file: 'components/stats.css', title: 'STATYSTYKI I ANALITYKA - SŁUPKI, PASMO' },
+  { file: 'components/inbox.css', title: 'POWIADOMIENIA - SKRZYNKA I BANER' },
 ];
 
 export const PANEL_CSS_HEADER = `/* ══════════════════════════════════════════════════════════════════════════════

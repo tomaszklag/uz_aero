@@ -36,6 +36,7 @@ export class AdminDirectoryQueries {
         type: join.aircraft.type,
         serviceStatus: join.aircraft.serviceStatus,
         dualRequired: join.aircraft.dualRequired,
+        mhFormat: join.aircraft.mhFormat,
       })),
     };
   }
