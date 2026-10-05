@@ -252,7 +252,8 @@ export function CalendarScreen({ navigation }: { navigation: Nav }) {
  * obiecywałby akcję, której reguły nie dopuszczą (zasada z 10B i 02G).
  *
  * PRZYCISKU PONOWIENIA TEŻ NIE MA - drogą wyjścia jest zdanie „Wróć tu z zasięgiem",
- * a pytanie ponawia samo wejście na zakładkę (`useFocusEffect` w `useCalendar`).
+ * a pytanie ponawia samo wejście na zakładkę (`useFocusEffect` w `useCalendar`) albo
+ * powitanie łącza kanału klubu, które przychodzi razem z zasięgiem (4.0.0).
  * Tak rysuje to makieta i tak zostaje: ekran bez sieci ma powiedzieć, co się dzieje,
  * a nie dokładać kontrolki do klikania w oczekiwaniu na zasięg.
  */

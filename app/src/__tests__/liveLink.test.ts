@@ -10,7 +10,8 @@
  */
 
 import type { LiveDataFrame } from '../application/live/frames';
-import { LiveLink, SILENCE_MS, type LiveAuth, type Timers } from '../application/live/liveLink';
+import { LiveLink, SILENCE_MS, type LiveAuth } from '../application/live/liveLink';
+import type { Timers } from '../application/live/timers';
 import { RECONNECT_BASE_MS } from '../application/live/reconnect';
 import type { LiveConnection } from '../application/ports';
 
@@ -112,7 +113,7 @@ function world() {
   const timers = new FakeTimers();
   const auth = new FakeAuth();
   const frames: LiveDataFrame[] = [];
-  const opens: boolean[] = [];
+  let opens = 0;
   let revoked = 0;
   const link = new LiveLink({
     url: URL,
@@ -128,12 +129,14 @@ function world() {
     random: () => 1,
     timers,
     onFrame: (frame) => frames.push(frame),
-    onOpen: (reconnected) => opens.push(reconnected),
+    onOpen: () => {
+      opens += 1;
+    },
     onRevoked: () => {
       revoked += 1;
     },
   });
-  return { link, sockets, timers, auth, frames, opens, revoked: () => revoked };
+  return { link, sockets, timers, auth, frames, opens: () => opens, revoked: () => revoked };
 }
 
 const HELLO = { v: 1, type: 'hello', session: 's1', serverTime: '2026-10-05T08:00:00.000Z' };
@@ -159,9 +162,9 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     sockets[0]!.openNow();
     expect(sockets[0]!.sent).toEqual([{ type: 'auth', token: 'jwt-1' }]);
     // Połączenie liczy się dopiero po powitaniu - wcześniej serwer jeszcze nie wpuścił.
-    expect(opens).toEqual([]);
+    expect(opens()).toBe(0);
     sockets[0]!.receive(HELLO);
-    expect(opens).toEqual([false]);
+    expect(opens()).toBe(1);
   });
 
   it('odpowiada na ping; podaje dalej `changed` i `notification` WYŁĄCZNIE swojego klubu', async () => {
@@ -200,7 +203,7 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     expect(frames).toEqual([{ type: 'changed', org: 'org-b', topics: ['calendar:2026-10-05'] }]);
   });
 
-  it('zerwane połączenie wznawia się z rosnącym odstępem; powitanie zeruje licznik i mówi „wznowione"', async () => {
+  it('zerwane połączenie wznawia się z rosnącym odstępem; powitanie zeruje licznik i melduje się wyżej', async () => {
     const { sockets, timers, opens } = await connected();
     sockets[0]!.drop();
     expect(timers.delays()).toEqual([RECONNECT_BASE_MS]);
@@ -215,7 +218,7 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     await flush();
     sockets[2]!.openNow();
     sockets[2]!.receive(HELLO);
-    expect(opens).toEqual([false, true]);
+    expect(opens()).toBe(2);
     sockets[2]!.drop();
     expect(timers.delays()).toEqual([RECONNECT_BASE_MS]);
   });
@@ -260,7 +263,7 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     sockets[1]!.openNow();
     expect(sockets[1]!.sent).toEqual([{ type: 'auth', token: 'jwt-2' }]);
     sockets[1]!.receive(HELLO);
-    expect(opens).toEqual([false, true]);
+    expect(opens()).toBe(2);
     // Spóźnione zamknięcie starego gniazda niczego już nie planuje.
     sockets[0]!.drop();
     expect(timers.delays()).toEqual([SILENCE_MS]);

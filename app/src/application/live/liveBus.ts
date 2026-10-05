@@ -10,8 +10,14 @@
  *
  * Sygnał NIE NIESIE TREŚCI (K2): ekran po nim czyta od nowa RESTem, więc kształt danych
  * per widz liczy jak zawsze serwer. Z tego samego powodu zgubiona ramka niczego nie
- * gubi - po wznowieniu łącza (`reopened`) KAŻDY podpięty ekran dociąga stan zwykłym
- * odczytem, bo w przerwie mogło przepaść cokolwiek.
+ * gubi - po każdym powitaniu łącza (`reopened`) KAŻDY podpięty ekran dociąga stan
+ * zwykłym odczytem, bo bez połączenia mogło przepaść cokolwiek.
+ *
+ * SERIA SYGNAŁÓW TO JEDNO ODŚWIEŻENIE: jedna zmiana przychodzi kilkoma ramkami
+ * (rezerwacja z dobą kalendarza, osobno samolot; do tego wiadomość w skrzynce), a ekran
+ * podpięty pod kilka tematów pytałby serwer tyle razy, ile ramek. Szyna czeka chwilę
+ * (`LIVE_COALESCE_MS`) i odświeża raz - opóźnienie jest niezauważalne, zysk jest
+ * w każdej serii.
  *
  * Tematy są kontraktem z serwerem (`server/src/application/common/live/topics.ts`):
  * wzorzec bez dwukropka łapie cały rodzaj (`calendar` - każda doba), z dwukropkiem -
@@ -21,9 +27,13 @@
  */
 
 import type { LiveDataFrame } from './frames';
+import { GLOBAL_TIMERS, type Timers } from './timers';
 
 /** Temat lokalny telefonu: nowa wiadomość w skrzynce (ramka `notification`). */
 export const INBOX_TOPIC = 'inbox';
+
+/** Ile szyna czeka, zanim odświeży ekran - tyle trwa seria ramek jednej zmiany. */
+export const LIVE_COALESCE_MS = 250;
 
 /** Wzorzec bez dwukropka = cały rodzaj tematów, z dwukropkiem = dokładnie ten temat. */
 export function topicMatches(pattern: string, topic: string): boolean {
@@ -34,39 +44,46 @@ export function topicMatches(pattern: string, topic: string): boolean {
 interface Subscription {
   topics: readonly string[];
   refresh: () => void;
+  /** Odświeżenie zaplanowane i jeszcze niewykonane - kolejne sygnały się do niego doklejają. */
+  pending: unknown;
 }
 
 export class LiveBus {
   private readonly subscriptions = new Set<Subscription>();
 
+  constructor(private readonly timers: Timers = GLOBAL_TIMERS) {}
+
   /** Ekran podpina się tematami; wynik odpina go (zejście ze stosu, zmiana tematów). */
   subscribe(topics: readonly string[], refresh: () => void): () => void {
-    const subscription: Subscription = { topics, refresh };
+    const subscription: Subscription = { topics, refresh, pending: null };
     this.subscriptions.add(subscription);
     return () => {
       this.subscriptions.delete(subscription);
+      // Ekran, który zszedł ze stosu, nie ma czego odświeżać - także w drodze.
+      if (subscription.pending != null) this.timers.clear(subscription.pending);
+      subscription.pending = null;
     };
   }
 
-  /** Ramka z danymi od łącza - każdy pasujący ekran odświeża się RAZ, choćby pasowało kilka tematów. */
+  /** Ramka z danymi od łącza - pasujące ekrany dostają odświeżenie. */
   publish(frame: LiveDataFrame): void {
     const topics = frame.type === 'changed' ? frame.topics : [INBOX_TOPIC];
-    this.dispatch((s) => s.topics.some((pattern) => topics.some((topic) => topicMatches(pattern, topic))));
-  }
-
-  /** Łącze wróciło po przerwie - KAŻDY podpięty ekran dociąga stan (K2). */
-  reopened(): void {
-    this.dispatch(() => true);
-  }
-
-  /**
-   * Rozsyłanie po migawce, ale z pytaniem o obecność: ekran odpięty w trakcie (zszedł ze
-   * stosu w odpowiedzi na inne odświeżenie) nie dostaje już tej ramki, a pozostali nie
-   * przepadają przez zmianę zbioru w środku pętli - zasada jak przy zdarzeniach DOM.
-   */
-  private dispatch(wanted: (subscription: Subscription) => boolean): void {
-    for (const subscription of [...this.subscriptions]) {
-      if (this.subscriptions.has(subscription) && wanted(subscription)) subscription.refresh();
+    for (const subscription of this.subscriptions) {
+      const wanted = subscription.topics.some((pattern) => topics.some((topic) => topicMatches(pattern, topic)));
+      if (wanted) this.signal(subscription);
     }
+  }
+
+  /** Łącze przywitane - KAŻDY podpięty ekran dociąga stan (K2). */
+  reopened(): void {
+    for (const subscription of this.subscriptions) this.signal(subscription);
+  }
+
+  private signal(subscription: Subscription): void {
+    if (subscription.pending != null) return;
+    subscription.pending = this.timers.set(() => {
+      subscription.pending = null;
+      if (this.subscriptions.has(subscription)) subscription.refresh();
+    }, LIVE_COALESCE_MS);
   }
 }

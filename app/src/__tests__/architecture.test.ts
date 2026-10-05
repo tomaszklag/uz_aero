@@ -77,6 +77,9 @@ const codeOf = (file: string): string =>
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
 
+/** Odczyt z serwera przez silnik synca (`sync.fetchCalendar(…)` i rodzina). */
+const SERVER_READ = /\.fetch[A-Z]\w*\(/;
+
 /** Pakiety spoza domeny: framework UI, natywne moduły, store. */
 const FRAMEWORK = [
   /^react$/,
@@ -123,6 +126,8 @@ describe('granice warstw', () => {
     expect(readFileSync(join(SRC, 'application/live/liveLink.ts'), 'utf8')).toMatch(/\bWebSocket\b/);
     expect(codeOf('application/live/liveLink.ts')).not.toMatch(/\bWebSocket\b/);
     expect(codeOf('infrastructure/api/apiBaseUrl.ts')).toContain('http://');
+    // Skaner odczytów serwera widzi hook, który pyta przez silnik synca.
+    expect(codeOf('ui/hooks/useCalendar.ts')).toMatch(SERVER_READ);
   });
 
   it('domain (packages/domain) nie importuje Reacta, RN, Expo, SQLite ani Zustanda', () => {
@@ -277,6 +282,18 @@ describe('granice warstw', () => {
       .filter((file) => /\bWebSocket\b/.test(codeOf(file)))
       .sort();
     expect(users).toEqual(['infrastructure/live/liveSocket.ts']);
+  });
+
+  it('ekran z danymi z serwera NICZEGO nie odpytuje - świeżość daje kanał klubu (K1)', () => {
+    // Do 4.0.0 kalendarz, skrzynka, karta samolotu i lista obserwowanych pytały serwer
+    // co minutę, dopóki nie wiedziały. Od kanału klubu ekran podpina się tematem
+    // (`useLiveTopic`), a stan „nie wiem" wraca z powitaniem łącza, które przychodzi
+    // razem z zasięgiem. Plik, który czyta serwer przez silnik synca, pętli nie ma;
+    // tykające zegary ekranów i pętla synca to inne sprawy w innych plikach.
+    const offenders = sourceFiles('ui')
+      .filter((file) => SERVER_READ.test(codeOf(file)))
+      .filter((file) => /\bsetInterval\b/.test(codeOf(file)));
+    expect(offenders).toEqual([]);
   });
 
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {

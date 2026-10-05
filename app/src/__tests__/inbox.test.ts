@@ -7,7 +7,7 @@
  */
 
 import type { RemoteNotification } from '../application';
-import { agoLabel, inboxRows, lateNote, termLabel, unreadIds } from '../ui/screens/logic/inbox';
+import { agoLabel, inboxRows, keepVisitNew, lateNote, termLabel, unreadIds } from '../ui/screens/logic/inbox';
 
 const H = 3_600_000;
 const NOW = Date.UTC(2026, 8, 24, 8, 0);
@@ -239,5 +239,31 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
 
   it('przeczytane liczą się jak dotąd', () => {
     expect(unreadIds([note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })])).toEqual(['n1']);
+  });
+});
+
+describe('„nowe" do końca wizyty (kanał klubu 4.0.0)', () => {
+  const READ = '2026-09-24T08:00:30Z';
+
+  it('wiadomość, którą pilot zobaczył jako nową, zostaje nowa po cichym odświeżeniu', () => {
+    // Skrzynka oznacza przeczytanie zaraz po odczycie, więc serwer zna je już przy
+    // pierwszym sygnale z kanału - a zielona krawędź ma trwać do końca wizyty.
+    const shown = [note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })];
+    const fresh = [
+      note({ id: 'n3' }),
+      note({ readAt: READ }),
+      note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' }),
+    ];
+    expect(keepVisitNew(shown, fresh).map((n) => [n.id, n.readAt])).toEqual([
+      ['n3', null],
+      ['n1', null],
+      ['n2', '2026-09-24T07:00:00Z'],
+    ]);
+  });
+
+  it('przeczytana przed wizytą zostaje przeczytana; nowa z kanału przychodzi jako nowa', () => {
+    const shown = [note({ readAt: READ })];
+    const fresh = [note({ id: 'n9' }), note({ readAt: READ })];
+    expect(unreadIds(keepVisitNew(shown, fresh))).toEqual(['n9']);
   });
 });

@@ -39,6 +39,7 @@ import type { AuthService } from '../auth/authService';
 import type { LiveConnection, LiveSocketPort } from '../ports';
 import { parseFrame, type LiveDataFrame } from './frames';
 import { reconnectDelay } from './reconnect';
+import { GLOBAL_TIMERS, type Timers } from './timers';
 
 /** Minuta ciszy od serwera = połączenie martwe (serwer pinguje co 25 s). */
 export const SILENCE_MS = 60_000;
@@ -49,25 +50,18 @@ const CLOSE_NORMAL = 1000;
 /** To, czego łącze potrzebuje od serwisu poświadczeń - w testach atrapa. */
 export type LiveAuth = Pick<AuthService, 'freshToken' | 'rotate' | 'revoked'>;
 
-/** Zegar odstępów - w produkcji `setTimeout`, w testach zegar sterowany ręcznie. */
-export interface Timers {
-  set(fn: () => void, ms: number): unknown;
-  clear(handle: unknown): void;
-}
-
-const GLOBAL_TIMERS: Timers = {
-  set: (fn, ms) => setTimeout(fn, ms),
-  clear: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
-};
-
 export interface LiveLinkOptions {
   url: string;
   auth: LiveAuth;
   sockets: LiveSocketPort;
   /** Ramki z treścią: `changed` i `notification` - wyłącznie klubu, dla którego łącze stoi. */
   onFrame: (frame: LiveDataFrame) => void;
-  /** Serwer przywitał połączenie; `reconnected` = nie pierwsze w tym uruchomieniu aplikacji. */
-  onOpen: (reconnected: boolean) => void;
+  /**
+   * Serwer przywitał połączenie - KAŻDE, także pierwsze: telefon łączy się przy każdym
+   * powrocie z tła, a pierwsze połączenie po starcie bez zasięgu przychodzi dopiero
+   * z zasięgiem. W obu przypadkach ekrany mają dociągnąć to, co ominęło je bez łącza.
+   */
+  onOpen: () => void;
   /** Sesję zerwano zdalnie (D7) - łącze stoi, aż pilot zaloguje się ponownie. */
   onRevoked: () => void;
   random?: () => number;
@@ -85,7 +79,6 @@ export class LiveLink {
    */
   private generation = 0;
   private socket: LiveConnection | null = null;
-  private everOpened = false;
   private attempt = 0;
   /** Bieżący token wydało odświeżenie po `bye`, a serwer jeszcze go nie przywitał. */
   private freshTokenOnTrial = false;
@@ -152,14 +145,11 @@ export class LiveLink {
       const frame = typeof data === 'string' ? parseFrame(data) : null;
       if (frame == null) return;
       switch (frame.type) {
-        case 'hello': {
-          const reconnected = this.everOpened;
-          this.everOpened = true;
+        case 'hello':
           this.attempt = 0;
           this.freshTokenOnTrial = false;
-          this.options.onOpen(reconnected);
+          this.options.onOpen();
           return;
-        }
         case 'ping':
           socket.send(JSON.stringify({ type: 'pong' }));
           return;

@@ -170,8 +170,9 @@ export function useAppBootstrap(): BootstrapStatus {
         // Kanał klubu (4.0.0, epik KK-C): JEDNO łącze na telefon (K1) - ten sam host, co
         // REST, ten sam serwis poświadczeń, co sync (odświeżenia tokenów naraz dzielą jedno
         // wywołanie serwera). Kiedy łącze stoi, rozstrzyga binder za bramką tożsamości;
-        // tutaj tylko składamy części. Wznowione połączenie każe ekranom dociągnąć stan,
-        // bo w przerwie mogła przepaść dowolna ramka (K2). Zerwana sesja idzie tą samą
+        // tutaj tylko składamy części. KAŻDE powitanie łącza każe ekranom dociągnąć stan,
+        // bo bez połączenia mogła przepaść dowolna ramka (K2) - to ono zastępuje pętle
+        // ponawiania, które ekrany miały przed kanałem. Zerwana sesja idzie tą samą
         // ścieżką, co odmowa odświeżenia w syncu - znacznikiem w store, PIN dalej otwiera.
         const bus = new LiveBus();
         const link = new LiveLink({
@@ -179,9 +180,7 @@ export function useAppBootstrap(): BootstrapStatus {
           auth,
           sockets: new RnLiveSockets(),
           onFrame: (frame) => bus.publish(frame),
-          onOpen: (reconnected) => {
-            if (reconnected) bus.reopened();
-          },
+          onOpen: () => bus.reopened(),
           onRevoked: () => useAuthStore.setState({ revoked: true }),
         });
 
