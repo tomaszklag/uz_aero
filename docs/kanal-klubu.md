@@ -357,7 +357,8 @@ KK-B serwer ───────────────────┴─► K
    testy; tematy kalendarza, rezerwacji, samolotu, dziennika i „Do sprawdzenia" -
    **zrobione 2026-09-30/10-01** (§11).
 3. **KK-C** - aplikacja: łącze, szyna, hak, baner, usunięcie pętli `RETRY_MS`.
-4. **KK-D** - panel: łącze, mapa tematów, dzwonek i skrzynka, baner.
+4. **KK-D** - panel: łącze, mapa tematów, dzwonek i skrzynka, baner - **zrobione
+   2026-10-01/10-05** (§12).
 5. Tematy zleceń i rozmów wchodzą z epikami Z-B (serwer), Z-C (aplikacja), Z-D (panel).
 
 ## 9. Ryzyka
@@ -433,3 +434,71 @@ w `liveTopics.test.ts` prawdziwą trasą i sonda regresji, która go łamie.
 **Jak dopisać decyzję odbierającą dostęp**: metoda w `LiveAccess` (powód i zakres w jednym
 miejscu), wywołanie PO commicie i wyłącznie przy udanej decyzji, przypadek w
 `liveClose.test.ts` - z kontrolą, że połączenie spoza zakresu decyzji zostaje otwarte.
+
+## 12. KK-D - panel (wykonane 2026-10-01/10-05, gałąź `feature-246-kanal-klubu`)
+
+| Etap | Commit | Co weszło |
+| --- | --- | --- |
+| 1 | `5eb626ba` | łącze: jedno połączenie na kartę w sesji klubu, `changed` → unieważnienie zapytań, wznowienie z rozrzutem i strażnik ciszy, `bye` → brama REST; proxy Vite z `Origin` serwera; CSP z jawnym `ws(s)://` |
+| - | `81d41e82` | licznik „Do sprawdzenia" bez odpytywania co minutę i strażnik K1 w teście architektury |
+| 2 | `caeecc4a` | dzwonek w pasku ram klubu, skrzynka w szufladzie bez adresu, ramka `notification` w pamięci skrzynki, format licznika w słowniku klubu |
+| 3 | `78104626` | baner nowego powiadomienia w lewym dolnym rogu treści |
+
+**Mapa plików panelu** (`admin/src/`):
+
+- `live/` - `liveSocket.ts` (JEDYNE miejsce z `WebSocket`), `frames.ts`, `reconnect.ts`,
+  `liveUrl.ts`, `topicKeys.ts`, `useLiveChannel.ts` (woła je `auth/ShellRoute.tsx`);
+- `api/notifications.ts`, `queries/useNotifications.ts`, `queries/inboxCache.ts` - skrzynka
+  w stronach i jej czyste przekształcenia (ramka, przeczytanie, kursor);
+- `screens/inbox/` - `InboxDrawer.tsx`, `InboxRow.tsx` (wspólny środek `InboxRowBody`),
+  `InboxToast.tsx`; czyste: `inboxRows.ts` (zdanie wiersza, ten sam słownik, co w telefonie),
+  `inboxLookups.ts`, `toast.ts` (baner i jego odliczanie);
+- `ui/shell/bell.ts` i dzwonek w `AppShell.tsx`; style `styles/components/inbox.css`
+  (skrzynka, baner) i dzwonek w `shell.css` - klasy przeszły z `design/panel/rama.css`
+  pod tymi samymi nazwami.
+
+**Reguły, które wyszły przy wdrażaniu**:
+
+- **przeczytanie idzie RAZ na wiadomość w wizycie**: efekt szuflady w StrictMode i odczyt
+  w locie wysyłały je po trzy razy. Odczyt w locie jest wstrzymany przed zapisem w pamięci,
+  a po zapisie skrzynka czyta się od nowa - przeczytanie, które nie doszło, wraca jako nowe;
+- **szuflada nie rysuje wierszy bez słownika klubu i kolejki decyzji** - inaczej zdanie
+  przeskakiwało z ogólnego („Prośba o zgodę na lot") na pełne. Przyczyna leży we wspólnym
+  `Loadable`, który pod progiem plamek rysuje treść; poprawka całego panelu jest osobnym
+  zadaniem;
+- **baner nie stoi przy otwartej skrzynce ani na ekranie, którego dotyczy** (adres rzeczy
+  i adresy pod nim), a baner, który nie ma prawa stać, znika na dobre. Kursor ALBO fokus
+  wstrzymuje odliczanie, zejście wznawia je od tego, co zostało. Przełączenie klubu kończy
+  baner poprzedniego;
+- **świeża prośba o zgodę prowadzi do kolejki decyzji**, zanim kolejka w pamięci zdąży się
+  odświeżyć - serwer wysyła ją osobom kroku bieżącego;
+- **kliknięcie banera otwiera rzecz i niczego nie przeczytuje** - „Nowe" gaśnie z otwarciem
+  listy, jak w telefonie;
+- **region `role="status"` stoi w ramie klubu zawsze**, a baner wchodzi do środka: czytnik
+  ekranu ogłasza zmianę treści regionu, który już jest. To jedyna świadoma różnica wobec
+  makiety PW1, która stawia rolę na samym linku;
+- **słownik klubu dociąga się dopiero przy pierwszym banerze** (`useDirectory(enabled)`) -
+  ekran bez banera nie płaci za niego żądaniem;
+- **ramka `notification` nie przecieka między klubami**: gniazdo starego klubu milknie
+  (warunek `this.socket !== socket` w każdym handlerze), zanim ruszy odczyt skrzynki nowego,
+  a ramka bez pobranej skrzynki niczego nie dopisuje.
+
+**Testy panelu**: `live/*.test.ts` (ramki, wznowienie, adres, gniazdo na atrapie, mapa
+tematów), `queries/inboxCache.test.ts`, `screens/inbox/{inboxRows,inboxLookups,toast}.test.ts`,
+`ui/shell/bell.test.ts` i strażnicy w `test/architecture.test.ts` (`WebSocket` wyłącznie
+w `liveSocket.ts`; `live/` bez ekranów, komponentów i `api/`; zero `refetchInterval`
+i `setInterval`).
+
+**Jak podpiąć ekran pod odświeżanie na żywo**: klucz zapytania w `queries/keys.ts`, temat →
+klucz w `live/topicKeys.ts` z przypadkiem w `topicKeys.test.ts`. Tematu, którego nie ma,
+nie wymyśla panel - dopisuje go serwer (§11, „Jak dopisać temat").
+
+**Jak dopisać rodzaj wiadomości w panelu**: gałąź w `screens/inbox/inboxRows.ts` z testem -
+zdanie jak w telefonie (`app/src/ui/screens/logic/inbox.ts`) i adres rzeczy w `href`. Baner
+bierze to samo zdanie sam (`toast.ts`).
+
+**Sprawdzone w przeglądarce** (2026-10-01/05, tymczasowa baza): łącze przez proxy Vite i na
+zbudowanym panelu z CSP; zdalne wylogowanie przenosi na logowanie; licznik i wiersz skrzynki
+przychodzą ramką bez przeładowania; jedno „przeczytaj" na wiadomość; baner - pozycja i treść
+jak w PW1, zniknięcie po 5 s, pauza pod kursorem z resztą odliczania, brak banera na
+kolejce decyzji i przy otwartej skrzynce, ostatni z dwóch, kliknięcie otwiera kolejkę.

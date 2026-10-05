@@ -40,7 +40,7 @@ Hasło ustawione tutaj działa też na wspólnym tablecie w samolocie - i po to 
 
 ## Moduły
 
-Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje tylko znak i zalogowanego. Ekranem startowym jest pierwszy dostępny moduł: dla administratora Dziennik (konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień), dla pilota bez podglądu klubu - Kalendarz. **Kolumna pokazuje to, do czego masz prawo** - moduł poza Twoim zakresem nie stoi w niej wyszarzony, po prostu go nie ma. Adres takiego modułu wklejony z rozmowy otwiera ekran, który mówi, której zdolności brakuje i kto ją nadaje.
+Nawigacja to kolumna po lewej z pozycjami modułów; nad nimi stoi nazwa klubu, a pasek u góry pokazuje znak, [dzwonek ze skrzynką](powiadomienia#skrzynka-w-panelu) i zalogowanego. Ekranem startowym jest pierwszy dostępny moduł: dla administratora Dziennik (konta i flotę zakłada się raz na sezon, dziennik ogląda się co tydzień), dla pilota bez podglądu klubu - Kalendarz. **Kolumna pokazuje to, do czego masz prawo** - moduł poza Twoim zakresem nie stoi w niej wyszarzony, po prostu go nie ma. Adres takiego modułu wklejony z rozmowy otwiera ekran, który mówi, której zdolności brakuje i kto ją nadaje.
 
 Kolumna klubu ma sześć pozycji w stałej kolejności: najpierw to, co się wydarzyło i co wymaga reakcji, potem to, co zaplanowane i ile tego było, na końcu konfiguracja klubu.
 

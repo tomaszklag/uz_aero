@@ -35,6 +35,16 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Dzwonek i skrzynka w panelu.** W pasku górnym panelu klubu stoi dzwonek z liczbą nowych
+  wiadomości - tych samych, co pod dzwonkiem na pulpicie telefonu: prośby o zgodę, decyzje
+  w Twoich rezerwacjach, wiadomości o obserwowanych samolotach. Przeczytane w panelu jest
+  przeczytane w telefonie. Nowa wiadomość pojawia się na kilka sekund w lewym dolnym rogu,
+  a kliknięcie otwiera to, czego dotyczy.
+- **Panel odświeża się sam.** Kalendarz z kolejką decyzji, dziennik i „Do sprawdzenia"
+  pokazują zmiany z telefonów i z innych kart przeglądarki od razu, bez przeładowania strony.
+
 ## 3.2.0 · 27 września 2026
 
 > Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.
@@ -465,6 +475,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Zlecający widzi, kto już odczytał zlecenie
 - [ ] Grupy pilotów w klubie
 - [ ] Instruktor umawia lot z uczniem jednym zleceniem
+- [~] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, ekrany odświeżają się same
 
 ### 5.0.0 · termin do ustalenia
 

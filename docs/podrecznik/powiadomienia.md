@@ -1,6 +1,6 @@
 # Powiadomienia
 
-> Skrzynka pod dzwonkiem na pulpicie i powiadomienia na telefon: co przychodzi, do kogo, jak wyłączyć i dlaczego bez zgody na powiadomienia nic nie ginie.
+> Skrzynka pod dzwonkiem na pulpicie i w panelu klubu oraz powiadomienia na telefon: co przychodzi, do kogo, jak wyłączyć i dlaczego bez zgody na powiadomienia nic nie ginie.
 
 ## Skrzynka pod dzwonkiem
 
@@ -46,6 +46,18 @@ Powiadomienie jest **tylko sygnałem**, że coś przyszło. Na ekranie blokady s
 
 Jeśli powiadomienie przyjdzie z klubu, który nie jest teraz aktywny w aplikacji, tapnięcie otworzy skrzynkę z informacją, że trzeba przełączyć klub w [ustawieniach](ustawienia).
 
+## Skrzynka w panelu
+
+Ta sama skrzynka stoi w panelu klubu - pod **dzwonkiem w pasku górnym**, przed Twoim nazwiskiem. Wiadomości są te same, co pod dzwonkiem w telefonie, i **przeczytane w jednym miejscu jest przeczytane w drugim**. Licznik zapala się tylko przy nowych.
+
+Dzwonek otwiera listę z boku ekranu. Zielona krawędź i plakietka „Do decyzji" znaczą to samo, co w telefonie, a kliknięcie w wiadomość otwiera to, czego dotyczy: prośba o zgodę - kolejkę decyzji w kalendarzu, rezerwacja - jej kartę, samolot - jego kartę w module Samoloty.
+
+Gdy panel jest otwarty, **nowa wiadomość pojawia się na kilka sekund w lewym dolnym rogu** - z tym samym zdaniem, co w skrzynce. Znika sama i bez dźwięku, a dopóki trzymasz na niej kursor, czeka. Kliknięcie otwiera rzecz. Nie pojawia się przy otwartej skrzynce (wiadomość wjeżdża wtedy na górę listy) ani na ekranie, którego dotyczy - ten odświeża się sam.
+
+@panel powiadomienia "Nowa wiadomość w rogu panelu, skrzynka pod dzwonkiem"
+
+Panel nie potrzebuje przy tym przeładowania strony: **kalendarz z kolejką decyzji, dziennik i „Do sprawdzenia" pokazują zmiany od razu**, gdy ktoś coś zapisze - w telefonie albo w innej karcie przeglądarki.
+
 ## Jak wyłączyć
 
 Powiadomienia wyłącza się w **ustawieniach systemu telefonu** (Ustawienia → Aplikacje → Ninerdeck → Powiadomienia) - tak samo jak w każdej innej aplikacji. **Skrzynka działa wtedy bez zmian**: wiadomości czekają pod dzwonkiem, licznik się zapala, decyzje podejmujesz tak samo. Tracisz wyłącznie szybkość reakcji - o prośbie dowiesz się, gdy otworzysz aplikację, a nie wtedy, gdy przyszła.
@@ -64,6 +76,7 @@ Po wylogowaniu telefon przestaje dostawać powiadomienia od razu - także wtedy,
 
 - **Nie przychodzą powiadomienia** → sprawdź w ustawieniach systemu, czy Ninerdeck ma zgodę na powiadomienia i czy nie jest usypiany przez oszczędzanie baterii. Wiadomości i tak czekają w skrzynce.
 - **Nie ma licznika przy dzwonku** → albo nie ma nic nowego, albo telefon jest bez zasięgu.
+- **Licznik w panelu zgasł, choć niczego tam nie otwierałeś** → wiadomości przeczytałeś w telefonie - przeczytane w jednym miejscu jest przeczytane w drugim.
 - **Plakietka „Do decyzji" nie znika** → znika dopiero po decyzji. Otwórz prośbę i zatwierdź albo odmów.
 - **Powiadomienie otwiera skrzynkę zamiast rezerwacji** → przyszło z innego klubu niż aktywny. Przełącz klub w ustawieniach.
 - **Po reinstalacji powiadomienia nie przychodzą** → zaloguj się ponownie; telefon zgłasza się do powiadomień przy pierwszym połączeniu po zalogowaniu.

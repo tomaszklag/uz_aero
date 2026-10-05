@@ -5399,6 +5399,42 @@ Reguły obowiązujące odtąd:
   łącza, szyny, banerów, dzwonka, usunięcia pętli `RETRY_MS`; sprawdzenia CSP dla `wss:`
   w przeglądarkach (KK-D)
 
+## Kanał klubu 4.0.0 - epik KK-D: panel (issue #246, 2026-10-01/05, gałąź `feature-246-kanal-klubu`)
+Łącze, dzwonek, skrzynka i baner w panelu; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §12**, warstwa `live/`: `docs/architektura-panelu-frontend.md` §2
+i §4.6. Reguły obowiązujące odtąd:
+- **PANEL NICZEGO NIE ODPYTUJE** (K1): `refetchInterval` i `setInterval` w `admin/src/`
+  wywala strażnik architektury. Ekran, który chce świeżości, dopisuje klucz w
+  `live/topicKeys.ts` z testem; tematu nie wymyśla panel - dopisuje go serwer
+  w `ClubSignals`. Licznik „Do sprawdzenia" przestał pytać serwer co minutę
+- **JEDNO POŁĄCZENIE NA KARTĘ, JEDNE DRZWI**: `WebSocket` wyłącznie w `live/liveSocket.ts`;
+  `live/` nie importuje ekranów, komponentów ani `api/` (kształt wiadomości bierze
+  z `queries/inboxCache.ts`), a `ui/` nie zna `live/`. Łącze woła `ShellRoute` wyłącznie
+  w sesji klubu
+- **SKRZYNKA PANELU MÓWI TO SAMO, CO SKRZYNKA TELEFONU**: zdanie wiersza składa
+  `screens/inbox/inboxRows.ts` tym samym słownikiem, co `app/src/ui/screens/logic/inbox.ts`,
+  więc nowy rodzaj wiadomości dostaje gałąź w OBU. „Nowe" gaśnie z otwarciem listy, każda
+  wiadomość przeczytuje się RAZ na wizytę (`notSentYet`), „Do decyzji" liczy się z kolejki
+  decyzji. Ramka `notification` wpisuje się w pamięć skrzynki bez drugiego żądania
+- **SZUFLADA I BANER CZEKAJĄ NA SŁOWNIK KLUBU** - zdanie bez nazwiska przeskakiwałoby
+  na pełne. Przyczyna leży we wspólnym `Loadable`, który pod progiem plamek rysuje treść
+  (osobne zadanie); do tego czasu ekran, którego treść zależy od drugiego zapytania,
+  bramkuje ją sam (`pending ? null : …`)
+- **BANER** (makieta PW1, czysty `screens/inbox/toast.ts`): zdanie wiersza bez plakietki
+  sprawy i z „teraz", lewy dolny róg treści, 5 s; kursor ALBO fokus wstrzymuje odliczanie,
+  zejście wznawia je od reszty; kilka naraz - ostatni. Nie stoi przy otwartej skrzynce ani
+  na ekranie, którego dotyczy (adres rzeczy i adresy pod nim), i taki znika na dobre.
+  Kliknięcie otwiera rzecz bez przeczytania; świeża prośba o zgodę prowadzi do kolejki
+  decyzji; przełączenie klubu kończy baner; słownik dociąga się przy pierwszym banerze
+- **REGION `role="status"` STOI W RAMIE KLUBU ZAWSZE**, a baner wchodzi do środka - jedyna
+  świadoma różnica wobec makiety, w której rola na linku odbierała mu rolę linku
+- **PRÓBY W PRZEGLĄDARCE**: nawigacja na ten sam adres z innym `#` NIE przeładowuje
+  strony (`location.reload()`); „204 … ERR_ABORTED" w logu podglądu to nieodczytane ciało
+  odpowiedzi, nie awaria; port 3000 bywa zajęty przez serwer innej rozmowy - wtedy serwer
+  na innym porcie podaje zbudowany panel sam (`Origin` kanału to `PUBLIC_BASE_URL` albo
+  `http://localhost:PORT`)
+- **czego KK-D NIE ROBI**: zleceń i rozmów w panelu (Z-D), kanału w aplikacji pilota (KK-C)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
