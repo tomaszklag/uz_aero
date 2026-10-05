@@ -52,6 +52,7 @@ export * from './status/CrewRow';
 export * from './status/StepList';
 export * from './status/PillButton';
 export * from './status/GhostAction';
+export * from './status/InAppBanner';
 
 // Wprowadzanie danych
 export * from './input/AirfieldSuggestions';

@@ -22,6 +22,12 @@
  * bez `orgId` (serwer sprzed 3.2.0) idzie jak dotąd.
  *
  * ══ MASZYNA (3.2.0) ══ pięć rodzajów z `aircraftNotices.ts` → karta maszyny (27).
+ *
+ * ══ PUSH NA WIERZCHU (kanał klubu 4.0.0, K4) ══ serwer budzi pushem tylko urządzenie
+ * bez połączenia, więc push odebrany przy otwartej aplikacji znaczy chwilę bez łącza
+ * (pierwsze sekundy po powrocie z tła, przerwa w zasięgu). Skrzynka i dzwonek dostają
+ * wtedy ten sam sygnał, co od ramki `notification` - ale tylko z klubu AKTYWNEGO
+ * (`isActiveClubPush`): liczą jego wiadomości, a token innego klubu ich nie otworzy.
  */
 
 export type PushTarget =
@@ -64,4 +70,15 @@ export function pushTarget(data: unknown, activeOrgId: string | null = null): Pu
   if (kind === 'approval_requested') return { screen: 'Decision', params: { bookingId } };
   if (typeof kind === 'string' && MINE.has(kind)) return { screen: 'BookingDetails', params: { bookingId } };
   return { screen: 'Notifications' };
+}
+
+/**
+ * Czy push należy do skrzynki klubu AKTYWNEGO - wtedy odświeża ją jak ramka kanału.
+ * Budzik bez klubu (serwer sprzed 3.2.0) należy do aktywnego, bo innego wtedy nie było;
+ * bez klubu aktywnego nie ma skrzynki, którą dałoby się odświeżyć.
+ */
+export function isActiveClubPush(data: unknown, activeOrgId: string | null): boolean {
+  if (activeOrgId == null || data == null || typeof data !== 'object') return false;
+  const orgId = id((data as Record<string, unknown>).orgId);
+  return orgId == null || orgId === activeOrgId;
 }

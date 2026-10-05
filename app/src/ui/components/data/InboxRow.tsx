@@ -10,6 +10,11 @@
  *    widoczna; świeci wyłącznie tam, gdzie coś od pilota ZALEŻY (reguła SyncChipa).
  * Przeczytane BLEDNIE, ale nie znika: skrzynka jest też miejscem, w którym sprawdza
  * się, co ktoś odpowiedział trzy dni temu.
+ *
+ * Treść wiersza (`InboxRowContent`: ikona, zdania, wiek) jest wspólna z banerem w aplikacji
+ * (kanał klubu 4.0.0, makieta 25E) - baner mówi zdaniem wiersza słowo w słowo, więc ma też
+ * jego kształt. Różnice należą do banera: nazwa klubu nad tytułem i o pół stopnia większy
+ * tytuł i zdanie (`prominent`), bo baner czyta się w przelocie, nad cudzym ekranem.
  */
 
 import React from 'react';
@@ -49,7 +54,6 @@ const TONE: Record<InboxTone, Tone> = {
 export function InboxRow({ row, onPress }: InboxRowProps) {
   const { theme } = useTheme();
   const s = styles(theme);
-  const c = toneColors(theme, TONE[row.tone]);
 
   return (
     <Pressable
@@ -64,13 +68,40 @@ export function InboxRow({ row, onPress }: InboxRowProps) {
       ]}
     >
       {row.isNew && <View style={s.edge} />}
+      <InboxRowContent row={row} />
+    </Pressable>
+  );
+}
 
+export interface InboxRowContentProps {
+  row: InboxRowVm;
+  /** Nazwa klubu nad tytułem - baner wiadomości z innego klubu; lista skrzynki jej nie ma. */
+  club?: string | null;
+  /** Baner w aplikacji: tytuł i zdanie o pół stopnia większe (makieta 25E). */
+  prominent?: boolean;
+}
+
+/** Ikona w tonie rodzaju, zdania wiersza i wiek - bez ramy wiersza listy. */
+export function InboxRowContent({ row, club = null, prominent = false }: InboxRowContentProps) {
+  const { theme } = useTheme();
+  const s = styles(theme);
+  const c = toneColors(theme, TONE[row.tone]);
+
+  return (
+    <>
       <View style={[s.icon, { borderColor: c.border, backgroundColor: c.muted }]}>
         <Icon name={ICON[row.tone]} size={15} color={c.accent} />
       </View>
 
       <View style={s.body}>
-        <AppText variant="body" style={[s.title, !row.isNew && s.titleRead]}>
+        {club != null && (
+          <View style={s.club}>
+            <AppText variant="mono" style={s.clubText} numberOfLines={1}>
+              {club}
+            </AppText>
+          </View>
+        )}
+        <AppText variant="body" style={[s.title, !row.isNew && s.titleRead, prominent && s.titleProminent]}>
           {row.title}
         </AppText>
         {row.sub != null && (
@@ -79,7 +110,7 @@ export function InboxRow({ row, onPress }: InboxRowProps) {
           </AppText>
         )}
         {(row.reason != null || row.lead != null) && (
-          <AppText variant="body" style={s.reason}>
+          <AppText variant="body" style={[s.reason, prominent && s.reasonProminent]}>
             {/* Wyróżniony początek („Poza planem", „Paliwo 128 L") - ton z makiety 25C:
                 bursztyn mówi „uwaga", zieleń „w normie"; reszta zdania tonem podpisu. */}
             {row.lead != null && (
@@ -104,7 +135,7 @@ export function InboxRow({ row, onPress }: InboxRowProps) {
       <AppText variant="mono" style={s.when}>
         {row.when}
       </AppText>
-    </Pressable>
+    </>
   );
 }
 
@@ -138,10 +169,24 @@ const styles = (t: Theme) =>
     body: { flex: 1, minWidth: 0, gap: 4, alignItems: 'flex-start' },
     title: { fontSize: 12.5, lineHeight: 17, fontWeight: '600', color: t.colors.textPrimary },
     titleRead: { fontWeight: '500', color: t.colors.textSecondary },
+    titleProminent: { fontSize: 13, lineHeight: 17.5 },
+    // `.inapp-club` z makiety 25E - ta sama plakietka klubu, co na kafelku operacji pilota
+    // dwóch klubów (01E); przy klubie aktywnym byłaby szumem, więc jej tam nie ma.
+    club: {
+      borderWidth: t.borderWidth,
+      borderColor: t.colors.borderStrong,
+      borderRadius: 5,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      marginBottom: 2,
+      maxWidth: 220,
+    },
+    clubText: { fontSize: 7.5, lineHeight: 10, letterSpacing: 1, textTransform: 'uppercase', color: t.colors.textSecondary },
     // Odstęp mniejszy niż w innych podpisach mono: termin to znak, data i para godzin,
     // czyli najdłuższy napis w tej liście - przy 1 px łamał się na dwie linie.
     sub: { fontSize: 9.5, lineHeight: 13, letterSpacing: 0.5, textTransform: 'uppercase', color: t.colors.textMuted },
     reason: { fontSize: 11, lineHeight: 16.5, color: t.colors.textSecondary },
+    reasonProminent: { fontSize: 11.5, lineHeight: 16.5 },
     lead: { fontWeight: '600' },
     // `.n-late`: zwłoka zapisu w tonie podpisu - fakt o rejestrze, nie o locie.
     late: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.8, color: t.colors.textMuted },

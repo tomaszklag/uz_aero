@@ -131,6 +131,30 @@ describe('szyna kanału klubu', () => {
     expect([inbox.count(), calendar.count()]).toEqual([1, 1]);
   });
 
+  it('nowa wiadomość idzie do słuchaczy banera OD RAZU i w całości - baner nie czeka na serię', () => {
+    const { bus, timers } = world();
+    const seen: unknown[] = [];
+    const off = bus.onNotification((frame) => seen.push(frame));
+    const item = {
+      id: 'n1',
+      kind: 'approval_requested',
+      payload: { bookingId: 'b1' },
+      createdAt: '2026-10-05T08:00:00.000Z',
+      readAt: null,
+      day: null,
+    };
+
+    bus.publish({ type: 'notification', org: 'org-a', item, unread: 3 });
+    bus.publish(changed('calendar:2026-10-05'));
+    expect(seen).toEqual([{ type: 'notification', org: 'org-a', item, unread: 3 }]);
+    // Słuchacz banera nie jest ekranem: niczego nie planuje u siebie na później.
+    expect(timers.delays()).toEqual([]);
+
+    off();
+    bus.publish({ type: 'notification', org: 'org-a', item, unread: 4 });
+    expect(seen).toHaveLength(1);
+  });
+
   it('odpięty ekran nie dostaje już niczego - także odświeżenia, które było w drodze', () => {
     const { bus, timers } = world();
     const first = counter();

@@ -19,6 +19,10 @@
  * (`LIVE_COALESCE_MS`) i odświeża raz - opóźnienie jest niezauważalne, zysk jest
  * w każdej serii.
  *
+ * BANER SŁUCHA OSOBNO (`onNotification`): nowa wiadomość idzie do niego OD RAZU i W CAŁOŚCI,
+ * bez sklejania - baner pokazuje treść wiadomości, a nie czyta niczego od nowa, więc nie ma
+ * na co czekać, a każda wiadomość jest osobnym banerem (widać ostatni).
+ *
  * Tematy są kontraktem z serwerem (`server/src/application/common/live/topics.ts`):
  * wzorzec bez dwukropka łapie cały rodzaj (`calendar` - każda doba), z dwukropkiem -
  * dokładnie ten temat (`booking:<id>`). Jeden wyjątek jest LOKALNY: `inbox` - ramka
@@ -48,8 +52,12 @@ interface Subscription {
   pending: unknown;
 }
 
+/** Ramka nowej wiadomości - to, co dostaje baner. */
+export type NotificationFrame = Extract<LiveDataFrame, { type: 'notification' }>;
+
 export class LiveBus {
   private readonly subscriptions = new Set<Subscription>();
+  private readonly notificationListeners = new Set<(frame: NotificationFrame) => void>();
 
   constructor(private readonly timers: Timers = GLOBAL_TIMERS) {}
 
@@ -65,8 +73,19 @@ export class LiveBus {
     };
   }
 
-  /** Ramka z danymi od łącza - pasujące ekrany dostają odświeżenie. */
+  /** Baner podpina się pod nowe wiadomości; wynik go odpina. */
+  onNotification(listener: (frame: NotificationFrame) => void): () => void {
+    this.notificationListeners.add(listener);
+    return () => {
+      this.notificationListeners.delete(listener);
+    };
+  }
+
+  /** Ramka z danymi od łącza - pasujące ekrany dostają odświeżenie, a baner wiadomość. */
   publish(frame: LiveDataFrame): void {
+    if (frame.type === 'notification') {
+      for (const listener of [...this.notificationListeners]) listener(frame);
+    }
     const topics = frame.type === 'changed' ? frame.topics : [INBOX_TOPIC];
     for (const subscription of this.subscriptions) {
       const wanted = subscription.topics.some((pattern) => topics.some((topic) => topicMatches(pattern, topic)));
