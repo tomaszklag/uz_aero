@@ -53,9 +53,14 @@ export interface TermStepProps {
   nameOf: (id: string | null) => string | null;
   /** „Długość rezerwacji" / „Długość terminu" - wiersz arkusza godziny. */
   lengthLabel: string;
+  /**
+   * Zdanie o skutku zmiany terminu, pod godzinami - tam, gdzie zmiana się dzieje (edycja
+   * zlecenia, ramka 2 makiety 31). Bez niego krok kończy się na godzinach.
+   */
+  footer?: React.ReactNode;
 }
 
-export function TermStep({ picker, term, patch, deny, pilotId, now, nameOf, lengthLabel }: TermStepProps) {
+export function TermStep({ picker, term, patch, deny, pilotId, now, nameOf, lengthLabel, footer }: TermStepProps) {
   const { theme } = useTheme();
   const s = styles(theme);
   const [timeEdge, setTimeEdge] = useState<'start' | 'end' | null>(null);
@@ -141,6 +146,8 @@ export function TermStep({ picker, term, patch, deny, pilotId, now, nameOf, leng
           />
         </View>
       </Field>
+
+      {footer}
 
       {day != null && (
         <BookingTimeSheet

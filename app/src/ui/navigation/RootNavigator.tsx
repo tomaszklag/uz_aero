@@ -141,10 +141,11 @@ export type RootStackParamList = {
   /**
    * 31/31A/31B - FORMULARZ ZLECENIA w trzech krokach (termin → zadanie → załoga i adresaci).
    * Wejścia: „NOWE ZLECENIE" w „Zlecone" (30), „Powiel" na karcie prowadzącego (32 -
-   * `duplicateOf`, ta sama treść z pustymi godzinami) i wolne pasmo w kalendarzu (21E -
-   * maszyna i preferowana pora sugestii).
+   * `duplicateOf`, ta sama treść z pustymi godzinami), „EDYTUJ" (32 - `orderId`, ten sam
+   * formularz z wypełnionym szkicem) i wolne pasmo w kalendarzu (21E - maszyna
+   * i preferowana pora sugestii).
    */
-  NewOrder: { aircraftId?: string; startsAt?: number; duplicateOf?: string } | undefined;
+  NewOrder: { aircraftId?: string; startsAt?: number; duplicateOf?: string; orderId?: string } | undefined;
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**

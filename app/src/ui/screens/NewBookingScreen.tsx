@@ -21,7 +21,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { CommonActions, type NavigationAction } from '@react-navigation/native';
+import { CommonActions, StackActions, type NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
@@ -258,7 +258,7 @@ export function NewBookingScreen({
       if (editId != null && base != null && !aircraftChanged(draft, base)) {
         const changes = bookingChanges(draft, base);
         if (changes == null) {
-          navigation.replace('BookingDetails', { bookingId: editId });
+          exit.proceed(StackActions.replace('BookingDetails', { bookingId: editId }));
           return;
         }
 
@@ -275,7 +275,7 @@ export function NewBookingScreen({
         }
 
         draft.reset();
-        navigation.replace('BookingDetails', { bookingId: editId });
+        exit.proceed(StackActions.replace('BookingDetails', { bookingId: editId }));
         return;
       }
 
@@ -325,11 +325,11 @@ export function NewBookingScreen({
       // Prośba o zgodę na powiadomienia (epik R-J, J3) - wyłącznie przy rezerwacji,
       // która CZEKA: o jej losie pilot ma się dowiedzieć bez otwierania aplikacji.
       void askForPush(optInAfterBooking(result.booking.status));
-      navigation.replace('BookingDetails', { bookingId: result.booking.id });
+      exit.proceed(StackActions.replace('BookingDetails', { bookingId: result.booking.id }));
     } finally {
       setSaving(false);
     }
-  }, [sync, day, saving, draft, editId, base, refusalVm, navigation]);
+  }, [sync, day, saving, draft, editId, base, refusalVm, exit]);
 
   /**
    * Odmowa opisuje KONKRETNY termin i maszynę, więc gaśnie, gdy któreś się zmieni -

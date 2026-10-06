@@ -6,6 +6,12 @@
  *
  * Rezygnacja z wartości to „×" PRZY NIEJ, w stałej kolumnie - nie czerwony kosz: kosz
  * odejmuje coś z rejestru, a tu niczego jeszcze nie ma (reguła issue #62).
+ *
+ * W EDYCJI zlecenia (ramka 4 makiety 31B) adresat bywa:
+ *  - `sent` - zlecenie już poszło: w miejscu „×" kłódka, bo odebranie zlecenia to osobna
+ *    czynność z wiadomością i powodem, w menu ⋯ na karcie prowadzącego (32D);
+ *  - `new` - dopisany w tej edycji: zielona obwódka i podpis „nowy" - jeszcze go nikt nie
+ *    dostał, więc „×" jest zwykłym cofnięciem wyboru.
  */
 
 import React from 'react';
@@ -24,15 +30,18 @@ export interface AddressChipProps {
   name: string;
   /** „5 osób" przy grupie. */
   sub?: string | null;
-  onClear: () => void;
+  /** `draft` - wybór w formularzu; `sent` - wysłany (kłódka); `new` - dopisany w edycji. */
+  status?: 'draft' | 'sent' | 'new';
+  /** Wymagane wszędzie poza `sent`. */
+  onClear?: () => void;
 }
 
-export function AddressChip({ kind, code, name, sub, onClear }: AddressChipProps) {
+export function AddressChip({ kind, code, name, sub, status = 'draft', onClear }: AddressChipProps) {
   const { theme } = useTheme();
   const s = styles(theme);
 
   return (
-    <View style={s.chip}>
+    <View style={[s.chip, status === 'new' && s.chipNew]}>
       <View style={s.avatar}>
         {kind === 'group' ? (
           <Icon name="group" size={15} color={theme.colors.textSecondary} />
@@ -47,12 +56,18 @@ export function AddressChip({ kind, code, name, sub, onClear }: AddressChipProps
           {name}
         </AppText>
         {sub != null && (
-          <AppText variant="mono" style={s.sub}>
+          <AppText variant="mono" style={[s.sub, status === 'new' && s.subNew]}>
             {sub}
           </AppText>
         )}
       </View>
-      <IconAction name="clear" accessibilityLabel={`Usuń: ${name}`} onPress={onClear} />
+      {status === 'sent' || onClear == null ? (
+        <View style={s.lock} accessible accessibilityLabel={`${name}: wysłane - odebrać można w menu przy adresacie`}>
+          <Icon name="lock" size={13} color={theme.colors.textMuted} />
+        </View>
+      ) : (
+        <IconAction name="clear" accessibilityLabel={`Usuń: ${name}`} onPress={onClear} />
+      )}
     </View>
   );
 }
@@ -86,4 +101,8 @@ const styles = (t: Theme) =>
     body: { flex: 1, minWidth: 0, gap: 1 },
     name: { fontFamily: t.fontFamily.bodySemiBold, fontSize: 13, lineHeight: 17, color: t.colors.textPrimary },
     sub: { fontSize: 9, lineHeight: 12, letterSpacing: 0.3, color: t.colors.textMuted },
+    chipNew: { borderColor: t.colors.greenBorder },
+    subNew: { color: t.colors.green },
+    // Kłódka zajmuje kolumnę „×" - wiersz ma tę samą geometrię co wybór w formularzu.
+    lock: { width: 44, height: 32, alignItems: 'center', justifyContent: 'center', opacity: 0.7 },
   });

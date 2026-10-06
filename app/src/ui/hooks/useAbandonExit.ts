@@ -33,6 +33,16 @@ export interface UseAbandonExit {
   stay: () => void;
   /** Pilot potwierdził rezygnację - rusza sekwencja wyjścia. */
   leave: () => void;
+  /**
+   * Formularz SKOŃCZYŁ (zapisano) - wyjdź bez pytania, akcją podaną przez formularz.
+   *
+   * Wyjście po zapisie nie może iść wprost `navigation.replace`/`goBack`: bramka czyta
+   * stan z OSTATNIEGO renderu, a ten wciąż ma podniesioną bramkę (krok 2 albo 3) - więc
+   * przechwyciłaby własne wyjście formularza i cofnęła go o krok, choć zapis już się
+   * udał. Tu bramka opada najpierw, a akcja jedzie po re-renderze - ta sama kolejność,
+   * co po potwierdzonej rezygnacji.
+   */
+  proceed: (action: NavigationAction) => void;
 }
 
 /**
@@ -67,6 +77,13 @@ export function useAbandonExit(
     onLeave?.();
   }, [onLeave]);
 
+  // Bez arkusza nie ma okna do zamknięcia, więc faza `closing` jest zbędna - od razu
+  // `leaving`, w którym bramka już nie łapie, a akcja czeka na re-render.
+  const proceed = useCallback((next: NavigationAction) => {
+    setAction(next);
+    setPhase('leaving');
+  }, []);
+
   /*
    * Bramka opada z chwilą potwierdzenia (`abandonGuards`), więc zatrzymana akcja ma
    * już czym wyjechać. Warunek `when` liczy formularz - hook go tylko przepuszcza.
@@ -95,5 +112,5 @@ export function useAbandonExit(
     if (abandonDispatches(phase) && action != null) navigation.dispatch(action);
   }, [phase, action, navigation]);
 
-  return { sheetMounted: abandonSheetMounted(phase), ask, stay, leave };
+  return { sheetMounted: abandonSheetMounted(phase), ask, stay, leave, proceed };
 }

@@ -96,9 +96,15 @@ export function multiSheetVm(
     /** Wybór w toku - kopia, którą „ANULUJ" porzuca. */
     selection: RemoteAddressList;
     groups: readonly RemoteMemberGroup[];
+    /**
+     * Osoby, które zlecenie JUŻ mają (edycja): nie stoją na liście i nie liczą się do
+     * „GOTOWE · N" - dopisanie wyśle zlecenie wyłącznie nowym (§5.2).
+     */
+    exclude?: ReadonlySet<string>;
   },
 ): MultiSheetVm {
   const active = new Set(input.members.filter((m) => isCandidate(m, input.me)).map((m) => m.id));
+  const listed = (id: string): boolean => active.has(id) && input.exclude?.has(id) !== true;
   const membersOf = (group: RemoteMemberGroup): string[] => group.memberIds.filter((id) => active.has(id));
 
   const groups = [...input.groups]
@@ -114,7 +120,7 @@ export function multiSheetVm(
   }
 
   const persons: PersonOptionVm[] = input.members
-    .filter((m) => active.has(m.id))
+    .filter((m) => listed(m.id))
     .sort((a, b) => bySurname(a.name, b.name))
     .map((m) => {
       const via = inheritedFrom.get(m.id);
@@ -129,8 +135,8 @@ export function multiSheetVm(
     });
 
   const total = new Set([
-    ...input.selection.pilotIds.filter((id) => active.has(id)),
-    ...inheritedFrom.keys(),
+    ...input.selection.pilotIds.filter(listed),
+    ...[...inheritedFrom.keys()].filter(listed),
   ]).size;
 
   return { groups, persons, total };

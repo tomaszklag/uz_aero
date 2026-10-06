@@ -88,7 +88,8 @@ function seatOf(list: RemoteAddressList): SeatAddress {
   return { mode: 'group', person: null, list };
 }
 
-function listsOf(card: RemoteOrderCard): Record<RemoteSeat | 'shared', RemoteAddressList> {
+/** Adresaci zlecenia złożeni z powrotem w definicję - osoba bez grupy imiennie, grupa jako grupa. */
+export function listsOf(card: RemoteOrderCard): Record<RemoteSeat | 'shared', RemoteAddressList> {
   const out: Record<RemoteSeat | 'shared', RemoteAddressList> = {
     pic: emptyList(),
     dual: emptyList(),
