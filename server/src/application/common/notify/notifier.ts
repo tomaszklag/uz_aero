@@ -34,6 +34,9 @@
  * dostaje budzik CICHYM kanałem: na listę powiadomień i do skrzynki, bez dźwięku i bez
  * wyskakującego banera. Rozstrzyga serwer, bo w kokpicie łącza nie ma (K6), a ekran
  * telefonu w locie zwykle gaśnie - aplikacja w tle nie ma jak wyciszyć powiadomienia sama.
+ * Ta sama osoba dostaje też ramkę i dane budzika z flagą `quiet`, bo drugi pilot bywa
+ * połączony (jego telefon nie jest w trybie kokpitu), a decyzja obejmuje także baner przy
+ * otwartej aplikacji. Załogę czyta się RAZ na wysyłkę - ramka i budzik pytają o to samo.
  * Awaria tego odczytu nie wycisza nikogo: lepszy dzwonek w locie niż zgubiona wiadomość.
  */
 
@@ -128,8 +131,10 @@ export class Notifier {
    */
   async wake(orgId: string, notices: readonly RecordedNotice[]): Promise<void> {
     if (notices.length === 0) return;
-    const framed = await this.frame(orgId, notices);
-    await this.ring(orgId, notices, framed);
+    // Załoga operacji w toku - JEDEN odczyt, bo ramka i budzik pytają o to samo.
+    const inCockpit = await this.inOperation(notices.map((n) => n.pilotId));
+    const framed = await this.frame(orgId, notices, inCockpit);
+    await this.ring(orgId, notices, framed, inCockpit);
   }
 
   /**
@@ -139,6 +144,7 @@ export class Notifier {
   private async frame(
     orgId: string,
     notices: readonly RecordedNotice[],
+    inCockpit: ReadonlySet<string>,
   ): Promise<ReadonlyMap<string, ReadonlySet<string>>> {
     const framed = new Map<string, ReadonlySet<string>>();
     try {
@@ -168,7 +174,7 @@ export class Notifier {
           },
           timezone,
         );
-        if (this.live.sendToPerson(orgId, notice.pilotId, notificationFrame(orgId, item, count)) > 0) {
+        if (this.live.sendToPerson(orgId, notice.pilotId, notificationFrame(orgId, item, count, inCockpit.has(notice.pilotId))) > 0) {
           framed.set(notice.pilotId, this.live.connectedSessions(orgId, notice.pilotId));
         }
       }
@@ -188,12 +194,11 @@ export class Notifier {
     orgId: string,
     notices: readonly RecordedNotice[],
     framed: ReadonlyMap<string, ReadonlySet<string>>,
+    inCockpit: ReadonlySet<string>,
   ): Promise<void> {
     try {
       const people = [...new Set(notices.map((n) => n.pilotId))];
       const targets = await this.tokens.byPilots(this.db, orgId, people);
-      if (targets.length === 0) return;
-      const inCockpit = await this.inOperation(targets.map((t) => t.pilotId));
       // Jedna wiadomość na URZĄDZENIE, nie na osobę: pilot bywa zalogowany na telefonie
       // i na tablecie klubu, a budzik ma zadzwonić tam, gdzie akurat patrzy - i NIE tam,
       // gdzie ta sama wiadomość przyszła już ramką kanału (K4).
@@ -213,7 +218,7 @@ export class Notifier {
             // a ekran otwarty tokenem A odpowiedziałby 404 - telefon porównuje ten klub
             // z aktywnym i przy różnicy otwiera skrzynkę z instrukcją zamiast karty,
             // która nie ma jak się wczytać.
-            data: pushData(orgId, notice),
+            data: pushData(orgId, notice, inCockpit.has(notice.pilotId)),
             quiet: inCockpit.has(notice.pilotId),
           });
         }

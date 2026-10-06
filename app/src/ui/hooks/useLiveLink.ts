@@ -52,7 +52,13 @@ export function useLiveLink(): void {
       // Klub aktywny W CHWILI wiadomości - pilot mógł go przełączyć, odkąd słuchacz stoi.
       const active = useAuthStore.getState().org?.id ?? null;
       if (!isActiveClubPush(received.data, active)) return;
-      live.bus.publish({ type: 'notification', org: active, item: null, unread: null });
+      live.bus.publish({
+        type: 'notification',
+        org: active,
+        item: null,
+        unread: null,
+        quiet: received.data.quiet === true,
+      });
     });
   }, [live]);
 }

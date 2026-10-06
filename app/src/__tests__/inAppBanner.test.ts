@@ -63,7 +63,7 @@ function ctx(over: Partial<BannerContext> = {}): BannerContext {
   };
 }
 
-const frame = (item: RemoteNotification = note()): BannerSource => ({ kind: 'frame', item });
+const frame = (item: RemoteNotification = note(), quiet = false): BannerSource => ({ kind: 'frame', item, quiet });
 
 const push = (data: Record<string, unknown>, title = 'Prośba o zgodę', body: string | null = null): BannerSource => ({
   kind: 'push',
@@ -133,6 +133,12 @@ describe('baner z ramki kanału', () => {
     expect(inAppBanner(frame(), ctx({ holdsAircraft: true }))).toBeNull();
     expect(inAppBanner(frame(), ctx({ foreground: false }))).toBeNull();
   });
+
+  it('ramka oznaczona jako cicha nie stawia banera - załoga operacji w toku, także drugi pilot', () => {
+    // Telefon drugiego pilota nie jest w trybie kokpitu, więc o ciszy mówi serwer
+    // (decyzje 2026-10-06): wiadomość trafia do skrzynki, baneru nie ma.
+    expect(inAppBanner(frame(note(), true), ctx())).toBeNull();
+  });
 });
 
 describe('baner z pusha odebranego na wierzchu', () => {
@@ -187,6 +193,14 @@ describe('baner z pusha odebranego na wierzchu', () => {
 
   it('w kokpicie push przychodzi po cichu - banera nie ma nawet z innego klubu (pkt 44)', () => {
     expect(inAppBanner(push({ kind: 'approval_requested', orgId: OTHER }), ctx({ holdsAircraft: true }))).toBeNull();
+  });
+
+  it('push oznaczony jako cichy nie stawia banera - drugi pilot w chwili bez łącza', () => {
+    expect(inAppBanner(push({ kind: 'approval_requested', orgId: ACTIVE, bookingId: 'b1', quiet: true }), ctx())).toBeNull();
+    // Z innego klubu tak samo - cisza dotyczy osoby w kabinie, nie klubu wiadomości.
+    expect(inAppBanner(push({ kind: 'approval_requested', orgId: OTHER, quiet: true }), ctx())).toBeNull();
+    // Flaga inna niż `true` nie wycisza - cisza jest wyjątkiem, nie domysłem.
+    expect(inAppBanner(push({ kind: 'approval_requested', orgId: ACTIVE, bookingId: 'b1', quiet: 'tak' }), ctx())).not.toBeNull();
   });
 });
 

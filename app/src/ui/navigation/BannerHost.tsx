@@ -86,7 +86,7 @@ export function BannerHost({ route, onOpen }: BannerHostProps) {
     // Ramka bez pozycji skrzynki (sygnał z pusha klubu aktywnego, `useLiveLink`) nie ma
     // czego powiedzieć - baner pokaże wtedy sam push.
     const offFrames = live?.bus.onNotification((frame) => {
-      if (frame.item != null) show({ kind: 'frame', item: frame.item });
+      if (frame.item != null) show({ kind: 'frame', item: frame.item, quiet: frame.quiet });
     });
     const offPushes = onNotificationReceived((received) =>
       show({ kind: 'push', id: received.id, title: received.title, body: received.body, data: received.data }),

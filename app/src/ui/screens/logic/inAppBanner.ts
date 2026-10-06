@@ -25,7 +25,11 @@
  *    który już stoi, gdy pilot wejdzie na ekran jego rzeczy (`bannerFits`);
  *  - wiadomość z innego klubu nie ma „ekranu, którego dotyczy" - jej rzeczy na tym
  *    telefonie nie widać, a dzwonek liczy tylko klub aktywny. Staje więc zawsze, także
- *    nad otwartą skrzynką.
+ *    nad otwartą skrzynką;
+ *  - wiadomość CICHA (ramka i push z flagą `quiet`) nie stawia banera nigdy: adresat
+ *    siedzi w załodze operacji w toku (cisza w kokpicie, decyzje 2026-10-06). Telefon
+ *    dowódcy wie to sam (kokpit), ale telefon drugiego pilota nie - jego łącze stoi,
+ *    więc o ciszy mówi serwer.
  *
  * Cel tapnięcia liczy `pushTarget` - JEDNA mapa rodzaj → ekran dla banera i pusha.
  */
@@ -49,8 +53,8 @@ export const FOREIGN_CLUB_HINT = 'Przełącz klub w Ustawieniach, żeby je otwor
 const FALLBACK_TITLE = 'Wiadomość z klubu';
 
 export type BannerSource =
-  /** Ramka `notification` kanału - pozycja skrzynki w kształcie REST. */
-  | { kind: 'frame'; item: RemoteNotification }
+  /** Ramka `notification` kanału - pozycja skrzynki w kształcie REST i flaga ciszy. */
+  | { kind: 'frame'; item: RemoteNotification; quiet: boolean }
   /** Push odebrany przy otwartej aplikacji - tytuł, treść i identyfikatory z serwera. */
   | {
       kind: 'push';
@@ -92,7 +96,7 @@ const str = (value: unknown): string | null => (typeof value === 'string' && val
 
 /** Baner albo `null`, gdy nie ma prawa stanąć. */
 export function inAppBanner(source: BannerSource, ctx: BannerContext): BannerVm | null {
-  if (!ctx.foreground) return null;
+  if (!ctx.foreground || quietSource(source)) return null;
   const banner = source.kind === 'frame' ? frameBanner(source.item, ctx) : pushBanner(source, ctx);
   return banner != null && bannerFits(banner, ctx.route, ctx.holdsAircraft) ? banner : null;
 }
@@ -176,6 +180,11 @@ function toneOf(kind: string, data: Readonly<Record<string, unknown>>, ctx: Bann
     day: null,
   };
   return inboxRows({ items: [probe], todoIds: NO_TODO, now: ctx.now, regOf: ctx.regOf, nameOf: ctx.nameOf })[0]?.tone ?? 'info';
+}
+
+/** Cisza w kokpicie: wyłącznie flaga równa `true` - cisza jest wyjątkiem, nie domysłem. */
+function quietSource(source: BannerSource): boolean {
+  return source.kind === 'frame' ? source.quiet : source.data.quiet === true;
 }
 
 /** Rzecz, którą otwiera tapnięcie - `null` = rzeczy z tego telefonu nie widać (inny klub). */

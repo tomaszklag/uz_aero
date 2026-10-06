@@ -97,6 +97,8 @@ describe('rozdzielnik powiadomień - ramka albo push (K4)', () => {
     await book(h, 'PWI');
     const frame = await inbox.waitFor((f) => f.type === 'notification');
     expect(frame).toMatchObject({ v: 1, org: ORG_A, unread: 1, item: { kind: 'approval_requested', readAt: null } });
+    // Poza załogą operacji w toku ramka nie niesie flagi ciszy - baner w aplikacji staje.
+    expect(frame).not.toHaveProperty('quiet');
     expect(h.push.to('ExponentPushToken[KRZ-telefon]')).toEqual([]);
 
     // Ramka niesie DOKŁADNIE to, co odczyt skrzynki - baner i wiersz listy to jedna rzecz.
@@ -385,7 +387,25 @@ describe('cisza w kokpicie - załoga operacji w toku dostaje budzik bez dźwięk
     const sent = h.push.to('ExponentPushToken[KRZ-telefon]');
     expect(sent).toHaveLength(1);
     expect(sent[0]!.quiet).toBe(true);
-    expect(sent[0]!.data).toMatchObject({ kind: 'approval_requested', orgId: ORG_A });
+    // Dane tapnięcia bez zmian, plus flaga dla reguły banera: push odebrany przy otwartej
+    // aplikacji (chwila bez łącza) też nie stawia banera nad ekranem załogi.
+    expect(sent[0]!.data).toMatchObject({ kind: 'approval_requested', orgId: ORG_A, quiet: true });
+  });
+
+  it('drugi pilot z OTWARTĄ aplikacją dostaje ramkę oznaczoną jako cichą - telefon nie stawia banera', async () => {
+    // Telefon ucznia nie jest w trybie kokpitu (samolot trzyma instruktor), więc łącze
+    // stoi i wiadomość przychodzi ramką, nie pushem. Decyzja 2026-10-06: cała załoga
+    // operacji w toku nie dostaje banera także przy otwartej aplikacji.
+    const h = await withApprover('KRZ');
+    const krz = await login(h.app, 'KRZ');
+    const { ws, inbox } = await phoneLive(h, krz);
+    const jse = await login(h.app, 'JSE');
+    await startOperation(h, jse, onFgk('op-jse', 'JSE', 'KRZ'));
+
+    await book(h, 'PWI');
+    const frame = await inbox.waitFor((f) => f.type === 'notification');
+    expect(frame).toMatchObject({ quiet: true, item: { kind: 'approval_requested' } });
+    ws.close();
   });
 
   it('drugi pilot operacji w toku też - uczeń w locie szkolnym nie słyszy dzwonka', async () => {
@@ -419,7 +439,9 @@ describe('cisza w kokpicie - załoga operacji w toku dostaje budzik bez dźwięk
     await releaseAircraft(h, krz, op);
 
     await book(h, 'PWI');
-    expect(h.push.to('ExponentPushToken[KRZ-telefon]')).toMatchObject([{ quiet: false }]);
+    const sent = h.push.to('ExponentPushToken[KRZ-telefon]');
+    expect(sent).toMatchObject([{ quiet: false }]);
+    expect(sent[0]!.data).not.toHaveProperty('quiet');
   });
 
   it('operacja w toku w INNYM klubie też wycisza - telefon jest w kokpicie bez względu na klub wiadomości', async () => {

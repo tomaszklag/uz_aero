@@ -35,6 +35,7 @@ describe('ramki kanału klubu na telefonie', () => {
       org: 'org-a',
       item: ITEM,
       unread: 3,
+      quiet: false,
     });
     expect(parseFrame(frame({ v: 1, type: 'bye', reason: 'token_expired' }))).toEqual({
       type: 'bye',
@@ -53,6 +54,7 @@ describe('ramki kanału klubu na telefonie', () => {
       org: null,
       item: ITEM,
       unread: 1,
+      quiet: false,
     });
   });
 
@@ -62,23 +64,40 @@ describe('ramki kanału klubu na telefonie', () => {
       org: 'org-a',
       item: null,
       unread: 2,
+      quiet: false,
     });
     expect(parseFrame(frame({ type: 'notification', org: 'org-a' }))).toEqual({
       type: 'notification',
       org: 'org-a',
       item: null,
       unread: null,
+      quiet: false,
     });
     // Doba terminu nie do przeczytania nie odbiera wiadomości - wiersz pokaże się bez godzin.
     expect(
       parseFrame(frame({ type: 'notification', org: 'org-a', item: { ...ITEM, day: { date: 1 } }, unread: 1 })),
-    ).toEqual({ type: 'notification', org: 'org-a', item: { ...ITEM, day: null }, unread: 1 });
+    ).toEqual({ type: 'notification', org: 'org-a', item: { ...ITEM, day: null }, unread: 1, quiet: false });
+  });
+
+  it('wiadomość do ZAŁOGI operacji w toku przychodzi cicha - wyłącznie z flagą równą `true`', () => {
+    // Cisza w kokpicie (decyzje 2026-10-06): baner w aplikacji jej nie pokaże.
+    expect(parseFrame(frame({ type: 'notification', org: 'org-a', item: ITEM, unread: 1, quiet: true }))).toEqual({
+      type: 'notification',
+      org: 'org-a',
+      item: ITEM,
+      unread: 1,
+      quiet: true,
+    });
+    // Wartość nie-logiczna nie wycisza - cisza jest wyjątkiem, nie domysłem.
+    expect(parseFrame(frame({ type: 'notification', org: 'org-a', item: ITEM, unread: 1, quiet: 'tak' }))).toMatchObject({
+      quiet: false,
+    });
   });
 
   it('pola obce nie przechodzą dalej; tematy wyłącznie napisami', () => {
     expect(
       parseFrame(frame({ type: 'notification', org: 'org-a', item: { ...ITEM, secret: 'x' }, unread: 1, extra: true })),
-    ).toEqual({ type: 'notification', org: 'org-a', item: ITEM, unread: 1 });
+    ).toEqual({ type: 'notification', org: 'org-a', item: ITEM, unread: 1, quiet: false });
     expect(parseFrame(frame({ type: 'changed', org: 'org-a', topics: ['booking:b1', 7, null] }))).toEqual({
       type: 'changed',
       org: 'org-a',

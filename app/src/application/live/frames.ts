@@ -31,9 +31,17 @@ export type LiveFrame =
   | { type: 'changed'; org: string | null; topics: string[] }
   /**
    * Nowa wiadomość w skrzynce. `item` = `null`, gdy pozycja nie ma kształtu REST
-   * (licznik i tak się przyda), `unread` = nieprzeczytane w całej skrzynce PO zapisie.
+   * (licznik i tak się przyda), `unread` = nieprzeczytane w całej skrzynce PO zapisie,
+   * `quiet` = adresat siedzi w załodze operacji w toku (cisza w kokpicie, decyzje
+   * 2026-10-06) - skrzynka się odświeża, baneru nie ma.
    */
-  | { type: 'notification'; org: string | null; item: RemoteNotification | null; unread: number | null }
+  | {
+      type: 'notification';
+      org: string | null;
+      item: RemoteNotification | null;
+      unread: number | null;
+      quiet: boolean;
+    }
   /** Powód zamknięcia - łącze reaguje jak REST na tę samą odmowę: odświeża tokeny. */
   | { type: 'bye'; reason: string }
   | { type: 'ignored' };
@@ -92,6 +100,8 @@ export function parseFrame(raw: string): LiveFrame | null {
         org: text(value.org),
         item: notificationOf(value.item),
         unread: typeof value.unread === 'number' ? value.unread : null,
+        // Wyłącznie `true` wycisza - cisza jest wyjątkiem, nie domysłem.
+        quiet: value.quiet === true,
       };
     case 'bye':
       return { type: 'bye', reason: text(value.reason) ?? 'unknown' };

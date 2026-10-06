@@ -182,7 +182,7 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     socket.receive({ v: 1, type: 'notification', org: 'org-a', unread: 2 });
     expect(frames).toEqual([
       { type: 'changed', org: 'org-a', topics: ['calendar:2026-10-05'] },
-      { type: 'notification', org: 'org-a', item: null, unread: 2 },
+      { type: 'notification', org: 'org-a', item: null, unread: 2, quiet: false },
     ]);
   });
 

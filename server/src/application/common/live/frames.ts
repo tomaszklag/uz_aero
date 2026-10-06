@@ -29,9 +29,13 @@ export function changedFrame(orgId: string, topics: readonly string[]): LiveFram
  * Nowa wiadomość w skrzynce (K4): pozycja w kształcie REST - ta sama, którą oddaje
  * odczyt skrzynki - i liczba nieprzeczytanych PO jej zapisie, więc licznik przy dzwonku
  * odświeża się bez drugiego żądania.
+ *
+ * `quiet: true` - adresat siedzi w załodze operacji w toku (cisza w kokpicie, pkt 44
+ * zleceń; decyzje 2026-10-06): telefon dociąga skrzynkę, ale banera nie stawia. Pole
+ * istnieje tylko z wartością - poza załogą ramka wygląda jak dotąd.
  */
-export function notificationFrame(orgId: string, item: InboxItem, unread: number): LiveFrame {
-  return { item, unread, v: LIVE_VERSION, type: 'notification', org: orgId };
+export function notificationFrame(orgId: string, item: InboxItem, unread: number, quiet: boolean): LiveFrame {
+  return { item, unread, ...(quiet ? { quiet: true } : {}), v: LIVE_VERSION, type: 'notification', org: orgId };
 }
 
 /** Wiadomość w rozmowie w całości, w kształcie REST. */

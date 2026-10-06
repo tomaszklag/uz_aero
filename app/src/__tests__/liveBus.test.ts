@@ -96,7 +96,7 @@ describe('szyna kanału klubu', () => {
     bus.subscribe(['booking:b1', 'calendar', INBOX_TOPIC], card.refresh);
     bus.publish(changed('booking:b1', 'calendar:2026-10-05'));
     bus.publish(changed('calendar:2026-10-06'));
-    bus.publish({ type: 'notification', org: 'org-a', item: null, unread: 2 });
+    bus.publish({ type: 'notification', org: 'org-a', item: null, unread: 2, quiet: false });
     expect(timers.delays()).toEqual([LIVE_COALESCE_MS]);
     expect(card.count()).toBe(0);
 
@@ -115,7 +115,7 @@ describe('szyna kanału klubu', () => {
     const calendar = counter();
     bus.subscribe([INBOX_TOPIC], inbox.refresh);
     bus.subscribe(['calendar'], calendar.refresh);
-    bus.publish({ type: 'notification', org: 'org-a', item: null, unread: 4 });
+    bus.publish({ type: 'notification', org: 'org-a', item: null, unread: 4, quiet: false });
     timers.fireAll();
     expect([inbox.count(), calendar.count()]).toEqual([1, 0]);
   });
@@ -144,14 +144,14 @@ describe('szyna kanału klubu', () => {
       day: null,
     };
 
-    bus.publish({ type: 'notification', org: 'org-a', item, unread: 3 });
+    bus.publish({ type: 'notification', org: 'org-a', item, unread: 3, quiet: false });
     bus.publish(changed('calendar:2026-10-05'));
-    expect(seen).toEqual([{ type: 'notification', org: 'org-a', item, unread: 3 }]);
+    expect(seen).toEqual([{ type: 'notification', org: 'org-a', item, unread: 3, quiet: false }]);
     // Słuchacz banera nie jest ekranem: niczego nie planuje u siebie na później.
     expect(timers.delays()).toEqual([]);
 
     off();
-    bus.publish({ type: 'notification', org: 'org-a', item, unread: 4 });
+    bus.publish({ type: 'notification', org: 'org-a', item, unread: 4, quiet: false });
     expect(seen).toHaveLength(1);
   });
 
