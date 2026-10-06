@@ -1474,8 +1474,8 @@ połączonych sesji odbiorcy i push WYŁĄCZNIE na urządzenia bez połączenia 
 powiadomienia (K4 - wiadomość z innego
 klubu tej samej osoby idzie pushem, jak dotąd). Przy otwartej aplikacji pilot widzi własny
 baner w aplikacji (K5); w kokpicie łącze jest rozłączone, a push przychodzi po cichu (K6 -
-przy aplikacji na wierzchu; z zablokowanym ekranem pokazuje go kanał Androida, z dźwiękiem:
-`docs/kanal-klubu.md` §13, „Otwarte").
+cichym kanałem Androida, który serwer wybiera dla dowódcy i drugiego pilota operacji w toku,
+także przy zgaszonym ekranie: `docs/kanal-klubu.md` §13).
 Panel dostaje tę samą skrzynkę z dzwonkiem (K7) - `GET /admin/api/me/notifications`
 i `POST …/:id/read`, ta sama `NotificationQueries` i ten sam kształt (serwer gotowy
 w KK-B, 2026-10-01). Kalendarz i karta rezerwacji odświeżają się sygnałami `booking:<id>`

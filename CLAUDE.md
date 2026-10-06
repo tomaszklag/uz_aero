@@ -5208,8 +5208,10 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
   NIE MA
 - **CISZA W KOKPICIE** (pkt 44): dopóki pilot trzyma samolot, WSZYSTKIE powiadomienia
   (także rezerwacji i obserwowania) idą bez banera i bez dźwięku - na listę systemową
-  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem. Decyzja
-  jako czysta funkcja z testem, obsługa w `expoNotifications.ts`
+  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem.
+  **Rozstrzygnięte 2026-10-06**: wycisza SERWER - cichy kanał Androida `quiet` dla załogi
+  operacji w toku (dowódcy I drugiego pilota, w dowolnym klubie), bo w locie ekran gaśnie,
+  a aplikacja w tle nie ma jak wyciszyć się sama (sekcja KK-C niżej)
 - **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
   `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
 - **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - zapisy
@@ -5299,7 +5301,8 @@ pollingu na każdej karcie". Dokument decyzji: **`docs/kanal-klubu.md`** (K1–K
   jeden wygląd: ramka `notification` i push odebrany na wierzchu (inny klub - z nazwą klubu,
   tapnięcie → skrzynka z instrukcją przełączenia; na liście systemowej zostaje po cichu)
 - **K6 W KOKPICIE ŁĄCZE SIĘ ROZŁĄCZA**: push przychodzi po cichu na listę systemową i do
-  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości
+  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości. Cichy kanał
+  wybiera serwer dla dowódcy i drugiego pilota operacji w toku (2026-10-06, sekcja KK-C)
 - **K7 PANEL DOSTAJE DZWONEK I SKRZYNKĘ** (makieta `design/panel/powiadomienia.html`):
   dzwonek w pasku górnym KAŻDEJ ramy klubu, przed nazwiskiem (rama platformy - bez), licznik
   tylko przy nowych; skrzynka w szufladzie BEZ własnego adresu (jest osobista), te same
@@ -5473,9 +5476,18 @@ i przepisy: **`docs/kanal-klubu.md` §13**. Reguły obowiązujące odtąd:
   i w `openTarget`
 - **TRASA NA CZUBKU STOSU NIESIE PARAMETRY** (`navigation/activeRoute.ts`) - po nich baner
   poznaje ekran rzeczy; zgłoszenie błędu dostaje jak dotąd samą nazwę
-- **OTWARTE dla Z-C**: kokpit z aplikacją w TLE (zablokowany ekran w locie) dostaje push
-  z dźwiękiem z kanału Androida - handler działa tylko na wierzchu. Rozstrzygnięcie (cichy
-  kanał wybierany przez serwer albo przyjęcie tego stanu) czeka w `docs/kanal-klubu.md` §13
+- **CISZĘ W KOKPICIE ROZSTRZYGA SERWER** (decyzje właściciela 2026-10-06, pkt 44): w locie
+  ekran gaśnie, a handler powiadomień działa tylko na wierzchu - więc `Notifier` przy
+  wysyłce pyta `SessionsProjectionPort.crewInOperation`, kto z adresatów siedzi w załodze
+  operacji w toku (dowódca ALBO drugi pilot, w DOWOLNYM klubie - imienny wyjątek
+  w strażniku `org_id`), i takiemu budzik idzie kanałem `quiet` bez dźwięku. Aplikacja
+  zakłada ten kanał przy starcie (niska ważność). Awaria odczytu załogi nie wycisza nikogo;
+  starsza aplikacja bez kanału dostaje budzik kanałem zapasowym `expo-notifications`
+- **ZAŁOGA NIE DOSTAJE TEŻ BANERA W APLIKACJI** (druga decyzja 2026-10-06): telefon drugiego
+  pilota nie jest w trybie kokpitu, więc jego łącze stoi i wiadomość przychodzi ramką. Ten
+  sam odczyt załogi (RAZ na `wake`) oznacza ramkę `notification` i dane pusha flagą
+  `quiet: true` (tylko z wartością), a `inAppBanner` pomija każdą cichą wiadomość.
+  Skrzynka i dzwonek odświeżają się jak zawsze; panel flagę ignoruje
 - **czego KK-C NIE ROBI**: zleceń i rozmów w aplikacji (Z-C), sprawdzenia na urządzeniu -
   animacja, gest, czytnik ekranu, push przy otwartej aplikacji (Z-W)
 

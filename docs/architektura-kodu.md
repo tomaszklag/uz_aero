@@ -1553,7 +1553,8 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    akurat patrzy na telefon. **`payload` jest treścią SKRZYNKI, a do `data` budzika
    wchodzi z niego wyłącznie to, co telefon czyta w `pushTarget.ts`** - `kind`, `orgId`,
    `bookingId`, `aircraftId`, a od 4.0.0 `orderId` i `recipientId` (adresat rozmowy
-   zlecenia: przy OTWARTEJ rozmowie baner nie pada, `docs/zlecenia.md` pkt 43)
+   zlecenia: przy OTWARTEJ rozmowie baner nie pada, `docs/zlecenia.md` pkt 43) oraz
+   `quiet` dla załogi operacji w toku (reguła banera, cisza w kokpicie)
    (`notify/pushData.ts`, issue #228; klucz tylko z niepustym napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
    z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
    jedzie przez Expo i FCM „na zapas".
@@ -1561,7 +1562,10 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    mówi, i `Notifier.wake(orgId, recorded)` PO commicie - z tym, co `record` oddał
    (`RecordedNotice[]`: wiersz i jego chwila), bo od 4.0.0 `wake` jest rozdzielnikiem
    kanału klubu (ramka `notification` do połączonych sesji odbiorcy, push do pozostałych,
-   `docs/kanal-klubu.md` K4) i składa ramkę z zapisanego wiersza. Sygnatury to wymuszają:
+   `docs/kanal-klubu.md` K4) i składa ramkę z zapisanego wiersza. Kanał pusha też wybiera
+   rozdzielnik: załoga operacji w toku (dowódca albo drugi pilot, `crewInOperation`)
+   dostaje budzik cichym kanałem, a ramkę i dane pusha z flagą `quiet` - producent nic
+   o tym nie wie (cisza w kokpicie, `docs/kanal-klubu.md` §13). Sygnatury to wymuszają:
    `record` żąda uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
    się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
    **Wiadomość, która przychodzi SERIĄ, ma jeden nieprzeczytany wiersz** (rozmowa

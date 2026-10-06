@@ -68,9 +68,11 @@ K5. **Przy otwartej aplikacji - własny baner w aplikacji** (makieta 25E): u gó
     skrzynkę z instrukcją przełączenia; na liście systemowej zostaje po cichu, bo dzwonek
     liczy tylko klub aktywny.
 
-K6. **W kokpicie łącze się rozłącza.** Serwer wysyła wtedy push, a aplikacja kładzie go
-    po cichu na listę systemową i do skrzynki (pkt 44 zleceń). Kokpit nie zużywa baterii
-    ani transferu na nic poza lotem; po oddaniu samolotu łącze wraca i dociąga zaległości.
+K6. **W kokpicie łącze się rozłącza.** Serwer wysyła wtedy push, który trafia po cichu na
+    listę systemową i do skrzynki (pkt 44 zleceń). Kokpit nie zużywa baterii ani transferu
+    na nic poza lotem; po oddaniu samolotu łącze wraca i dociąga zaległości. *Uściślone
+    2026-10-06 (§13): cichy kanał Androida wybiera SERWER - dla dowódcy i drugiego pilota
+    operacji w toku, bo w locie ekran gaśnie, a aplikacja w tle nie ma jak wyciszyć się sama.*
 
 K7. **Panel dostaje dzwonek i skrzynkę.** Ta sama skrzynka, co w telefonie - dzwonek
     z licznikiem w pasku górnym, lista w szufladzie, baner przy nowym powiadomieniu
@@ -193,7 +195,7 @@ połączenie.
 | Kierunek | Ramka | Treść |
 | --- | --- | --- |
 | serwer → klient | `hello` | po uwierzytelnieniu: sesja, czas serwera |
-| serwer → klient | `notification` | klub + pozycja skrzynki w kształcie REST + liczba nieprzeczytanych |
+| serwer → klient | `notification` | klub + pozycja skrzynki w kształcie REST + liczba nieprzeczytanych; `quiet: true` wyłącznie dla załogi operacji w toku (§13) |
 | serwer → klient | `changed` | klub + tematy, bez treści |
 | serwer → klient | `message` | wiadomość w rozmowie w kształcie REST (zlecenie, adresat wątku) |
 | serwer → klient | `read` | odczytanie rozmowy (kto, kiedy) - „Odczytane 14:05" |
@@ -239,7 +241,8 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
 - **Push**: tapnięcie i kanał Androida bez zmian (`usePushNavigation`); serwer nie wysyła
   go na urządzenie połączone. Przy OTWARTEJ aplikacji system nie pokazuje własnego banera
   i nie gra - zapowiada go baner aplikacji, a budzik zostaje po cichu na liście systemowej.
-  To obejmuje kokpit na wierzchu (pkt 44 zleceń); kokpit z aplikacją w tle - §13, „Otwarte".
+  W kokpicie (pkt 44 zleceń) budzik idzie cichym kanałem `quiet`, który serwer wybiera dla
+  załogi operacji w toku - także przy zgaszonym ekranie (§13).
 
 ### 3.4 Panel
 
@@ -515,6 +518,8 @@ kolejce decyzji i przy otwartej skrzynce, ostatni z dwóch, kliknięcie otwiera 
 | 1 | `82a3388a` | łącze: jedno połączenie poza kokpitem, token w pierwszej ramce, `pong`, strażnik ciszy, wznowienie z rozrzutem, `bye` → odświeżenie tokenów |
 | 2 | `7fc55651` | szyna i hak `useLiveTopic`; odczyty ekranów odświeża sygnał, pętle `RETRY_MS` usunięte |
 | 3 | `b4493c1f` | baner w aplikacji (25E) z ramki i z pusha odebranego na wierzchu; system przy otwartej aplikacji milczy |
+| 4 | `2d69acef` | dokumentacja: ten rozdział, przepis „nowy temat kanału", podręcznik |
+| 5 | `3b59acc6` | cisza w kokpicie: serwer wycisza załogę operacji w toku kanałem `quiet` (decyzje 2026-10-06) |
 
 **Mapa plików aplikacji** (`app/src/`):
 
@@ -592,13 +597,41 @@ kolejce decyzji i przy otwartej skrzynce, ostatni z dwóch, kliknięcie otwiera 
 - **jedno otwarcie celu** (`openTarget`): tapnięcie w push i w baner idą tą samą drogą, cel
   liczy jedna mapa (`pushTarget`).
 
-**Otwarte - cisza w kokpicie przy aplikacji w TLE** (dla Z-C, gdzie `docs/zlecenia.md` §16
-pkt 11 kładzie ciszę w kokpicie): handler powiadomień działa wyłącznie przy otwartej
-aplikacji, więc kokpit na wierzchu jest cichy, ale kokpit z zablokowanym ekranem
-(aplikacja w tle) dostaje push tak, jak pokazuje go kanał Androida - z banerem systemowym
-i dźwiękiem. Aplikacja w tle nie ma jak tego zmienić. Do rozstrzygnięcia: serwer wybiera
-cichy kanał dla odbiorcy, który trzyma samolot (zna operacje w toku z rejestru, ale nie
-przejęcia czekające jeszcze w kolejce telefonu), albo przyjmujemy ten stan.
+**Cisza w kokpicie - rozstrzygnięte 2026-10-06** (decyzje właściciela, pkt 44 zleceń; do
+tego dnia stało tu jako „Otwarte"): w locie ekran telefonu zwykle gaśnie - aplikacja nie
+trzyma go włączonego - więc aplikacja jest w tle, a jej handler powiadomień działa
+wyłącznie na wierzchu. Push dzwonił więc z kanału Androida mimo kokpitu. Rozstrzyga
+SERWER: `Notifier` przy wysyłce pyta `SessionsProjectionPort.crewInOperation`, kto
+z adresatów siedzi w załodze operacji w toku - dowódca ALBO drugi pilot (uczeń w locie
+szkolnym też), w DOWOLNYM klubie - i takiemu budzik idzie kanałem `quiet` bez dźwięku.
+Aplikacja zakłada ten kanał przy starcie („Podczas lotu - bez dźwięku", niska ważność: na
+listę powiadomień, bez dźwięku, wibracji i banera).
+
+**Banera w aplikacji załoga też nie dostaje** (druga decyzja tego dnia: „także przy otwartej
+aplikacji"). Telefon dowódcy wie to sam - kokpit (`holdsAircraft`), łącze rozłączone - ale
+telefon drugiego pilota nie: nie jest w trybie kokpitu, więc łącze stoi i wiadomość
+przychodzi RAMKĄ. Dlatego ten sam odczyt załogi oznacza ramkę `notification` i dane pusha
+flagą `quiet: true` (pole istnieje tylko z wartością - poza załogą kształt bez zmian),
+a reguła banera (`inAppBanner`) pomija każdą cichą wiadomość, z ramki i z pusha odebranego
+na wierzchu. Skrzynka i dzwonek odświeżają się jak zawsze. Załogę czyta się RAZ na wysyłkę.
+Panel flagę ignoruje - przy biurku kabiny nie ma.
+
+- **„w toku" znaczy to samo, co kokpit telefonu**: od przejęcia do zdania samolotu (albo
+  zakończenia lub unieważnienia przez administratora) - status `active` projekcji;
+- **ponad klubami świadomie** (imienny wyjątek w strażniku `org_id`): telefon jest
+  w kokpicie bez względu na to, z którego klubu przyszła wiadomość, a wynik to bit
+  o adresacie - żadnych danych operacji;
+- **awaria odczytu załogi nie wycisza nikogo** - lepszy dzwonek w locie niż zgubiona
+  wiadomość;
+- **granica**: serwer zna przejęcie wtedy, gdy dotrze do niego zapis - zwykle od razu, na
+  ziemi. Bez zasięgu push i tak nie dochodzi, więc okno „trzymam samolot, a serwer jeszcze
+  o tym nie wie" jest wąskie i przyjęte;
+- **starsza aplikacja** bez kanału `quiet` dostaje budzik kanałem zapasowym
+  `expo-notifications` - zadzwoni, ale nie zginie; 4.0.0 i tak idzie nowym APK;
+- testy: `notificationDelivery.test.ts` (dowódca, drugi pilot, drugi pilot połączony -
+  ramka cicha, cudza operacja, po zdaniu, inny klub, awaria odczytu), `expoPush.test.ts`
+  (kanał i dźwięk), `pushData.test.ts` (flaga), a w aplikacji `liveFrames.test.ts`
+  i `inAppBanner.test.ts` (cicha ramka i cichy push bez banera).
 
 **Testy aplikacji**: `liveFrames.test.ts`, `liveLinkRule.test.ts`, `liveLink.test.ts`
 (atrapa gniazda i zegara), `liveBus.test.ts`, `liveRefresh.test.ts`, `inbox.test.ts`

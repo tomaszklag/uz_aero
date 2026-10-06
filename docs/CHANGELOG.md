@@ -51,6 +51,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Aplikacja odświeża się sama.** Kalendarz, karta rezerwacji, skrzynka z licznikiem przy
   dzwonku, karta samolotu i lista obserwowanych pokazują zmiany od razu, gdy ktoś coś
   zapisze - bez wychodzenia z ekranu. Ekran „Brak połączenia" znika sam, gdy wróci zasięg.
+- **Cisza w locie.** Od przejęcia samolotu do jego zdania telefon pilota - i drugiego
+  pilota - nie dzwoni i nie wyskakuje z powiadomieniami, także przy zgaszonym ekranie.
+  Wiadomości czekają po cichu na liście powiadomień i w skrzynce.
 
 ## 3.2.0 · 27 września 2026
 
