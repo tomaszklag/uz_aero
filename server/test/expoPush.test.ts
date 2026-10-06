@@ -20,6 +20,7 @@ const message = (token: string): PushMessage => ({
   title: 'Prośba o zgodę',
   body: 'Rezerwacja czeka na Twoją decyzję.',
   data: { kind: 'approval_requested' },
+  quiet: false,
 });
 
 /** Dostawca odpowiadający biletami - po jednym na wiadomość, W KOLEJNOŚCI wysyłki. */
@@ -49,6 +50,19 @@ describe('budzik przez Expo Push API', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toHaveLength(2);
     expect(calls[0]![0]).toMatchObject({ to: 'a', title: 'Prośba o zgodę', priority: 'high' });
+  });
+
+  it('CISZA W KOKPICIE: budzik dla załogi operacji w toku idzie kanałem „quiet" i bez dźwięku', async () => {
+    // Kanały zakłada aplikacja (`expoNotifications.ts`): „default" z wysoką ważnością,
+    // „quiet" z niską - na listę powiadomień, bez dźwięku i bez wyskakującego banera.
+    const calls: unknown[][] = [];
+    const push = new ExpoPush('', ticketing(() => ({ status: 'ok' }), calls));
+
+    await push.send([{ ...message('w-locie'), quiet: true }, message('na-ziemi')]);
+    const [inFlight, onGround] = calls[0] as Record<string, unknown>[];
+    expect(inFlight).toMatchObject({ to: 'w-locie', channelId: 'quiet' });
+    expect(inFlight).not.toHaveProperty('sound');
+    expect(onGround).toMatchObject({ to: 'na-ziemi', channelId: 'default', sound: 'default' });
   });
 
   it('DZIELI wysyłkę na części po sto - krok ścieżki bywa listą kilkudziesięciu osób', async () => {

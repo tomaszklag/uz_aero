@@ -73,12 +73,14 @@ import { FakeMail } from './fakeMail.ts';
 import { FakePush } from './fakePush.ts';
 import { ApprovalFlow } from '../src/application/common/commands/approvals.ts';
 import { ApprovalStepsCommands } from '../src/application/admin/commands/approvalSteps.ts';
+import { LiveAccess } from '../src/application/common/live/liveAccess.ts';
+import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
 import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
 import { AircraftWatchCommands } from '../src/application/common/commands/aircraftWatch.ts';
 import { AircraftCardQueries } from '../src/application/common/queries/aircraftCard.ts';
 import { PgAircraftWatchesRepo } from '../src/infrastructure/pg/common/aircraftWatchesRepo.ts';
-import { NotificationQueries } from '../src/application/mobile/queries/notifications.ts';
+import { NotificationQueries } from '../src/application/common/queries/notifications.ts';
 import { PgApprovalStepsRepo } from '../src/infrastructure/pg/common/approvalStepsRepo.ts';
 import { PgBookingApprovalsRepo } from '../src/infrastructure/pg/common/bookingApprovalsRepo.ts';
 import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';
@@ -167,6 +169,8 @@ import { MemberGroupQueries } from '../src/application/common/queries/memberGrou
 import { OrderQueries } from '../src/application/common/queries/orders.ts';
 import { ThreadQueries } from '../src/application/common/queries/threads.ts';
 import { FakeLiveSignals } from './fakeLiveSignals.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
+import type { LiveTiming } from '../src/http/routes/common/liveConnection.ts';
 import { seedTestWorld } from './testWorld.ts';
 import { TestIdentityProvider } from './testIdentityProvider.ts';
 import { newPglite } from './pglite';
@@ -273,6 +277,11 @@ export async function testHarness(
      * podaje nagłówka `Host` i nie ma prawa od niego zależeć.
      */
     hostSplit?: HostSplit;
+    /**
+     * Czasy kanału klubu - wyłącznie testy wejść WebSocket, które nie mogą czekać 5 s na
+     * brak `auth` ani 25 s na ping. Bez podmiany kanał działa na czasach produkcyjnych.
+     */
+    liveTiming?: Partial<LiveTiming>;
   } = {},
 ) {
   const pglite = newPglite();
@@ -314,6 +323,11 @@ const lastSeen = new LastSeenThrottle();
   const passwordLimiter = new AttemptLimiter(clock, PASSWORD_WINDOW_MS);
   const accountQuery = new AccountQuery(pilots, identities, passwordCredentials);
   const mail = new FakeMail();
+  // Kanał klubu: PRAWDZIWY rejestr połączeń - dostają go trasy WebSocket, rozdzielnik
+  // powiadomień (ramka albo push, K4) i zamykanie połączeń przy odebraniu dostępu.
+  // Powstaje tu, przed komendami hasła, bo i one zamykają połączenia (`LiveAccess`).
+  const liveRegistry = new LiveRegistry();
+  const liveAccess = new LiveAccess(liveRegistry);
   const passwords = new PasswordCommands(
     db,
     pilots,
@@ -327,6 +341,7 @@ const lastSeen = new LastSeenThrottle();
     clock,
     randomUUID,
     loginSessions,
+    liveAccess,
   );
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
@@ -405,7 +420,22 @@ const lastSeen = new LastSeenThrottle();
   const bookingApprovalsRepo = new PgBookingApprovalsRepo();
   const notificationsRepo = new PgNotificationsRepo();
   const pushTokensRepo = new PgPushTokensRepo(clock);
-  const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, randomUUID);
+  // Przed rejestrem połączeń atrapa, która ZAPISUJE sygnały i przekazuje je dalej:
+  // testy komend pytają o zapis, testy tras o ramki, które naprawdę doszły.
+  const live = new FakeLiveSignals(liveRegistry);
+  const notifier = new Notifier(
+    db,
+    notificationsRepo,
+    pushTokensRepo,
+    push,
+    liveRegistry,
+    new PgClubSettingsRepo(),
+    sessions,
+    randomUUID,
+  );
+  // Sygnały zmian klubu przez atrapę, która ZAPISUJE - testy pytają, kto dostał który
+  // temat - i przekazuje dalej do prawdziwego rejestru połączeń.
+  const clubSignals = new ClubSignals(live, db, new PgClubSettingsRepo(), sessions);
   // Obserwowanie samolotu (issue #205) - prawdziwy adapter i ta sama odpowiedź na „kogo
   // obudzić", co w produkcji; budzik jest atrapą jak przy ścieżce akceptacji.
   const aircraftWatches = new PgAircraftWatchesRepo();
@@ -417,6 +447,7 @@ const lastSeen = new LastSeenThrottle();
     bookingsRepo,
     notifier,
     clock,
+    clubSignals,
   );
   const clubSettingsRepo = new PgClubSettingsRepo();
   const flightOrders = new PgFlightOrdersRepo();
@@ -428,8 +459,7 @@ const lastSeen = new LastSeenThrottle();
   const threadMessages = new PgThreadMessagesRepo();
   const orderRecords = new OrderRecords(flightOrders, bookingsRepo, orderRecipients);
   const orderSeating = new OrderSeating(flightOrders, bookingsRepo);
-  const live = new FakeLiveSignals();
-  const orderSignals = new OrderSignals(live);
+  const orderSignals = new OrderSignals(live, clubSignals);
   // Zlecenia (4.0.0, issue #245) - skład jak w `src/index.ts`; kanał klubu to atrapa,
   // która ZAPISUJE sygnały, żeby testy tras mogły zapytać, komu poszły.
   const orders: OrderDeps = {
@@ -473,6 +503,7 @@ const lastSeen = new LastSeenThrottle();
       { credentials: passwordCredentials, hasher: passwordHasher, limiter: passwordLimiter },
       loginSessions,
       db,
+      liveAccess,
     ),
     passwords,
     loginSessions,
@@ -503,7 +534,7 @@ const lastSeen = new LastSeenThrottle();
       events,
       aircraftReadings,
     ),
-    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, bookingsRepo, watching),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock, clubSignals, bookingsRepo, watching),
     // Odtworzenie rejestru telefonu (§4.9, issue #32) - prawdziwy adapter, więc test
     // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
     // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
@@ -521,11 +552,13 @@ const lastSeen = new LastSeenThrottle();
     adminSessionTrack: sessionTrack,
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     bugReports: new BugReportCommands(db, bugReportsRepo),
-    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, watching),
+    bookings: new BookingCommands(db, bookingsRepo, aircraftConfig, clock, approvals, notifier, orderBookings, clubSignals, watching),
     calendar,
     approvals,
     orders,
     bookingOrders,
+    live: liveRegistry,
+    liveOrigin: new URL(TEST_BASE_URL).origin,
     groupQueries: new MemberGroupQueries(db, memberGroups),
     adminGroups: new MemberGroupCommands(auditedWrite, memberGroups, clubMembers, clock),
     notifications: new NotificationQueries(db, notificationsRepo, pushTokensRepo, clock),
@@ -562,6 +595,7 @@ const lastSeen = new LastSeenThrottle();
       notifier,
       randomUUID,
       clock,
+      clubSignals,
     ),
     // Podpowiedzi zadania dnia (issue #14) - PRAWDZIWY adapter nad projekcją, jak
     // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
@@ -573,7 +607,7 @@ const lastSeen = new LastSeenThrottle();
     // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
     // „deaktywacja odcina natychmiast" (`roles.test.ts`, `adminAccounts.test.ts`).
     pilots,
-    adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
+    adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock, clubSignals),
     adminSessionQueries: new AdminSessionQueries(
       db,
       adminSessionsRepo,
@@ -600,6 +634,7 @@ const lastSeen = new LastSeenThrottle();
       loginSessions,
       randomUUID,
       clock,
+      liveAccess,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
     adminDirectoryQueries: new AdminDirectoryQueries(db, adminPilotsRepo, adminFleetRepo),
@@ -618,6 +653,7 @@ const lastSeen = new LastSeenThrottle();
       adminPilotsRepo,
       loginSessions,
       clock,
+      liveAccess,
     ),
     adminClubCodeQueries: new AdminClubCodeQueries(db, clubCodeRepo),
     // Moduł Organizacje - `randomUUID` i losowe bajty jak w produkcji; test czyta
@@ -628,12 +664,13 @@ const lastSeen = new LastSeenThrottle();
       randomUUID,
       options.clubCodeBytes ?? randomBytes,
       clock,
+      liveAccess,
     ),
     platformOrganizationQueries: new PlatformOrganizationQueries(db, organizationsRepo),
     // Flota (A07/A07a) - `randomUUID` jak w produkcji: identyfikator jednostki testy
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
-    adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+    adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID, clubSignals),
     // Odczyty administratora (issue #81) - ta sama brama audytu i ten sam adapter,
     // z którego `GET /reference` liczy przekazanie.
     adminAircraftReadings: new AdminAircraftReadingCommands(
@@ -641,12 +678,13 @@ const lastSeen = new LastSeenThrottle();
       adminFleetRepo,
       aircraftReadings,
       clock,
+      clubSignals,
     ),
     adminFleetQueries,
     // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
     // ingest - także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
     // Podgląd karty czyta ZAWSZE z bazy (`pgSheets`), tak jak `GET /sheets/:tab`.
-    adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+    adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock, clubSignals),
     adminExportQueries: new AdminExportQueries(db, adminExportsRepo, pgSheets),
     // `randomUUID` jak w produkcji - uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
@@ -659,6 +697,7 @@ const lastSeen = new LastSeenThrottle();
       flags,
       clock,
       randomUUID,
+      clubSignals,
     ),
     adminCorrectionQueries: new AdminCorrectionQueries(
       db,
@@ -677,6 +716,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      clubSignals,
       watching,
     ),
     // Zakończenie administracyjne (issue #81) - jak unieważnienie, z tym samym eksporterem.
@@ -688,6 +728,7 @@ const lastSeen = new LastSeenThrottle();
       exporter,
       clock,
       randomUUID,
+      clubSignals,
       watching,
     ),
     // Odczyt dziennika jedzie PRAWDZIWYM adapterem także wtedy, gdy `options.audit`
@@ -744,6 +785,7 @@ const lastSeen = new LastSeenThrottle();
       approvals,
       notifier,
       orderBookings,
+      clubSignals,
       watching,
     ),
     adminLogQueries: new AdminLogQueries(db, new PgAdminLogRepo(), clock),
@@ -763,6 +805,7 @@ const lastSeen = new LastSeenThrottle();
     adminDistDir: options.adminDistDir,
     siteDistDir: options.siteDistDir,
     hostSplit: options.hostSplit ?? null,
+    ...(options.liveTiming == null ? {} : { liveTiming: options.liveTiming }),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
@@ -785,5 +828,6 @@ const lastSeen = new LastSeenThrottle();
     passwordHasher,
     passwords,
     live,
+    liveRegistry,
   };
 }

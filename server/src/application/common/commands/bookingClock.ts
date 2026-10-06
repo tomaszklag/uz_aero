@@ -66,7 +66,8 @@ import {
 } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import { bookingExpired, type NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type { OrderClock } from './orderClock.ts';
 
 /** Co ile sprawdzamy. Rezerwacja zwalnia się po godzinie, więc kwadrans dokładności wystarczy. */
@@ -92,6 +93,8 @@ export class BookingClockJob {
     private readonly sessions: SessionsProjectionPort,
     private readonly clock: Clock,
     private readonly notifier: Notifier,
+    /** Kanał klubu (4.0.0): zwolniony i wygaszony termin znika z kalendarza na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0) - `null` = wyłączone: przebieg dalej zwalnia
      * i wygasza, tylko nikogo o maszynie nie budzi. Stempel przypomnienia pada mimo to
@@ -146,7 +149,7 @@ export class BookingClockJob {
           // „zwolniono automatycznie" udawałby uzasadnienie.
           reason: null,
         });
-        if (row == null) return { closed: null, notices: [] as NotificationDraft[] };
+        if (row == null) return { closed: null, notices: [] as RecordedNotice[] };
         // „Nie odebrano" do obserwujących (§5.5) - tą samą transakcją, co zwolnienie,
         // bez PIC-a i Duala rezerwacji: to oni nie przyszli, nie ich budzimy.
         const notices = await this.aircraftNotices(tx, candidate.orgId, row, (audience) =>
@@ -158,6 +161,7 @@ export class BookingClockJob {
 
       released += 1;
       await this.watching?.wake(candidate.orgId, notices);
+      await this.signals.booking(candidate.orgId, closed);
     }
     return { checked: candidates.length, released };
   }
@@ -181,7 +185,7 @@ export class BookingClockJob {
       if (booking == null || booking.status !== 'pending' || booking.pilotId == null) continue;
 
       const notice = bookingExpired(booking, booking.pilotId);
-      const closed = await this.db.transaction(async (tx) => {
+      const written = await this.db.transaction(async (tx) => {
         const row = await this.bookings.close(tx, candidate.orgId, candidate.id, {
           status: 'expired',
           at: now,
@@ -190,13 +194,13 @@ export class BookingClockJob {
         if (row == null) return null;
         // Wiadomość TĄ SAMĄ transakcją, co wygaszenie: pilot, który stracił termin,
         // ma się o tym dowiedzieć zawsze, a nie „jeśli drugi zapis też się uda".
-        await this.notifier.record(tx, candidate.orgId, [notice], now);
-        return row;
+        return { row, recorded: await this.notifier.record(tx, candidate.orgId, [notice], now) };
       });
-      if (closed == null) continue;
+      if (written == null) continue;
 
       expired += 1;
-      await this.notifier.wake(candidate.orgId, [notice]);
+      await this.notifier.wake(candidate.orgId, written.recorded);
+      await this.signals.booking(candidate.orgId, written.row);
     }
     return expired;
   }
@@ -223,7 +227,7 @@ export class BookingClockJob {
     for (const candidate of due) {
       const { stamped, notices } = await this.db.transaction(async (tx) => {
         const row = await this.bookings.markReminded(tx, candidate.orgId, candidate.id, now);
-        if (row == null) return { stamped: null, notices: [] as NotificationDraft[] };
+        if (row == null) return { stamped: null, notices: [] as RecordedNotice[] };
         const notices = await this.aircraftNotices(tx, candidate.orgId, row, (audience) =>
           aircraftFlightSoon(audience, row, now.getTime()),
         );
@@ -247,7 +251,7 @@ export class BookingClockJob {
     orgId: string,
     booking: BookingRecord,
     draft: (audience: WatchAudience) => NotificationDraft[],
-  ): Promise<NotificationDraft[]> {
+  ): Promise<RecordedNotice[]> {
     if (this.watching == null) return [];
     // Klub z KANDYDATA: `BookingRecord` klubu nie niesie (czytelnicy znają go z tokenu
     // albo z aktora), a zadanie okresowe zna go wyłącznie z wiersza `due`/`dueReminders`.
@@ -256,9 +260,7 @@ export class BookingClockJob {
       booking.dualId,
     ]);
     if (audience == null) return [];
-    const notices = draft(audience);
-    await this.watching.record(tx, orgId, notices, this.clock.now());
-    return notices;
+    return this.watching.record(tx, orgId, draft(audience), this.clock.now());
   }
 
   /** Uruchamia pętlę i oddaje funkcję, która ją zatrzymuje. */

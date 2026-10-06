@@ -56,6 +56,7 @@ import {
   type AccountRefusal,
 } from '../../../domain/accountGuards.ts';
 import { can, type Capability } from '../../../domain/roles.ts';
+import type { LiveAccess } from '../../common/live/liveAccess.ts';
 import type { Clock, LoginSessionsPort } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -167,6 +168,11 @@ export class AdminPilotCommands {
      * i porównanie tych dwóch odpowiadałoby na pytanie o dwa różne czasy.
      */
     private readonly clock: Clock,
+    /**
+     * Kanał klubu (4.0.0): wyłączone członkostwo zamyka otwarte połączenia, a nowy zakres
+     * uprawnień obowiązuje je od razu.
+     */
+    private readonly access: LiveAccess,
   ) {}
 
   async update(
@@ -232,6 +238,7 @@ export class AdminPilotCommands {
         };
       });
 
+      if (input.capabilities !== undefined) this.access.scopeChanged(actor.orgId, id, account.capabilities);
       return { ok: true, result: { account, revokedSessions: 0 } };
     } catch (err) {
       return this.asOutcome(err);
@@ -312,6 +319,7 @@ export class AdminPilotCommands {
         };
       });
 
+      if (!active) this.access.membershipDisabled(actor.orgId, id);
       return { ok: true, result };
     } catch (err) {
       return this.asOutcome(err);

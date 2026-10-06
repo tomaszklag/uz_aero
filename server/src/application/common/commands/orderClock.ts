@@ -28,8 +28,7 @@ import { safeZone } from '../../../domain/clubTime.ts';
 import { warnDecision } from '../../../domain/orderDeadlines.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import { orderExpired, orderUnfilled } from '../notify/orderNotices.ts';
 import type { OrderSignals } from '../notify/orderSignals.ts';
 import { audienceStateOf, crewOf, noticeOrderOf } from '../orderAccess.ts';
@@ -106,18 +105,22 @@ export class OrderClock {
           now,
         );
 
-        const notices = orderExpired(noticeOrderOf(order, loaded.booking), expireAudience(before));
-        await this.notifier.record(tx, candidate.orgId, notices, now);
+        const notices = await this.notifier.record(
+          tx,
+          candidate.orgId,
+          orderExpired(noticeOrderOf(order, loaded.booking), expireAudience(before)),
+          now,
+        );
 
         // Termin, o którym przypomniano obserwującym (zlecenie miało komplet, a potem ktoś
         // zrezygnował), zostaje odwołany - obserwujący nie mają czekać na lot, którego nie będzie.
-        let watchNotices: NotificationDraft[] = [];
+        let watchNotices: RecordedNotice[] = [];
         if (this.watching != null && loaded.booking.remindedAt != null) {
           const crew = crewOf(loaded.booking);
           const audience = await this.watching.audience(tx, candidate.orgId, loaded.booking.aircraftId, [crew.pic, crew.dual]);
           if (audience != null) {
-            watchNotices = aircraftFlightCancelled(audience, loaded.booking, null);
-            await this.watching.record(tx, candidate.orgId, watchNotices, now);
+            const drafts = aircraftFlightCancelled(audience, loaded.booking, null);
+            watchNotices = await this.watching.record(tx, candidate.orgId, drafts, now);
           }
         }
         return { loaded: { order, booking, recipients: loaded.recipients }, notices, watchNotices };
@@ -127,7 +130,7 @@ export class OrderClock {
       expired += 1;
       await this.notifier.wake(candidate.orgId, written.notices);
       if (written.watchNotices.length > 0) await this.watching?.wake(candidate.orgId, written.watchNotices);
-      this.signals.changed(candidate.orgId, written.loaded);
+      await this.signals.changed(candidate.orgId, written.loaded);
     }
     return expired;
   }
@@ -151,7 +154,7 @@ export class OrderClock {
       // Wstępny odsiew bez blokady - właściwe rozstrzygnięcie pada niżej, na stanie PO blokadzie.
       if (decision(candidate.status === 'filled') == null) continue;
 
-      const notice = await this.db.transaction(async (tx) => {
+      const recorded = await this.db.transaction(async (tx) => {
         const loaded = await this.records.lock(tx, candidate.orgId, candidate.orderId);
         if (loaded == null || (loaded.order.status !== 'open' && loaded.order.status !== 'filled')) return null;
         const decided = decision(loaded.order.status === 'filled');
@@ -160,13 +163,12 @@ export class OrderClock {
         if (decided === 'quiet') return null;
         const seats = openSeats(loaded.order.seats, crewOf(loaded.booking));
         const draft = orderUnfilled(noticeOrderOf(loaded.order, loaded.booking), loaded.order.createdBy, seats);
-        await this.notifier.record(tx, candidate.orgId, [draft], this.clock.now());
-        return draft;
+        return this.notifier.record(tx, candidate.orgId, [draft], this.clock.now());
       });
-      if (notice == null) continue;
+      if (recorded == null) continue;
 
       warned += 1;
-      await this.notifier.wake(candidate.orgId, [notice]);
+      await this.notifier.wake(candidate.orgId, recorded);
     }
     return warned;
   }

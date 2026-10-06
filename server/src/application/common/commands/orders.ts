@@ -27,8 +27,7 @@ import { refuseSeats } from '../../../domain/orderSeats.ts';
 import { isLive, type OrderSeats } from '../../../domain/orders.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import { orderCancelled, orderOffered } from '../notify/orderNotices.ts';
 import type { OrderSignals } from '../notify/orderSignals.ts';
 import {
@@ -141,7 +140,7 @@ export class OrderCommands {
         if (!inserted) {
           const existing = await this.records.read(tx, orgId, draft.id);
           if (existing == null || existing.order.createdBy !== actor.pilotId) throw new OrderDenied('slot_taken');
-          return { loaded: existing, created: false, notices: [] as NotificationDraft[] };
+          return { loaded: existing, created: false, notices: [] as RecordedNotice[] };
         }
 
         // Fotel „ja" to zlecający - siedzi w rezerwacji od początku; szukany jest pusty.
@@ -193,15 +192,14 @@ export class OrderCommands {
 
         const loaded = await this.records.read(tx, orgId, draft.id);
         if (loaded == null) throw new Error('zlecenie zniknęło w transakcji, która je zapisała');
-        const notices = orderOffered(noticeOrderOf(loaded.order, loaded.booking), added, false);
-        await this.notifier.record(tx, orgId, notices, now);
-        return { loaded, created: true, notices };
+        const drafts = orderOffered(noticeOrderOf(loaded.order, loaded.booking), added, false);
+        return { loaded, created: true, notices: await this.notifier.record(tx, orgId, drafts, now) };
       });
 
       // Budzik i sygnał PO commicie: push jest budzikiem, a nie treścią (§12).
       if (written.created) {
         await this.notifier.wake(orgId, written.notices);
-        this.signals.changed(orgId, written.loaded);
+        await this.signals.changed(orgId, written.loaded);
       }
       return { ok: true as const, loaded: written.loaded, created: written.created };
     });
@@ -238,18 +236,18 @@ export class OrderCommands {
           now,
         );
 
-        const notices = orderCancelled(noticeOrderOf(order, loaded.booking), cancelAudience(before, actor.pilotId), {
+        const drafts = orderCancelled(noticeOrderOf(order, loaded.booking), cancelAudience(before, actor.pilotId), {
           reason,
           cancelledBy: actor.pilotId,
         });
-        await this.notifier.record(tx, orgId, notices, now);
+        const notices = await this.notifier.record(tx, orgId, drafts, now);
 
-        let watchNotices: NotificationDraft[] = [];
+        let watchNotices: RecordedNotice[] = [];
         if (watching != null && loaded.booking.remindedAt != null) {
           const audience = await watching.audience(tx, orgId, loaded.booking.aircraftId, [actor.pilotId]);
           if (audience != null) {
-            watchNotices = aircraftFlightCancelled(audience, loaded.booking, null);
-            await watching.record(tx, orgId, watchNotices, now);
+            const cancelled = aircraftFlightCancelled(audience, loaded.booking, null);
+            watchNotices = await watching.record(tx, orgId, cancelled, now);
           }
         }
         return { loaded: { order, booking, recipients: loaded.recipients }, notices, watchNotices };
@@ -258,7 +256,7 @@ export class OrderCommands {
 
       await this.notifier.wake(orgId, written.notices);
       if (written.watchNotices.length > 0) await watching?.wake(orgId, written.watchNotices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
       return { ok: true as const, loaded: written.loaded, created: false };
     });
   }

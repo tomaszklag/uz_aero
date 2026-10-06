@@ -304,6 +304,12 @@ export interface VerifiedIdentity extends Omit<Identity, 'sessionId'> {
    */
   issuedAt: number;
   /**
+   * `exp` w SEKUNDACH epoki - chwila, po której token nie przechodzi już weryfikacji.
+   * Czyta go kanał klubu (4.0.0): połączenie otwarte tym tokenem żyje najwyżej do tej
+   * chwili, bo brama sprawdza je tylko przy nawiązaniu.
+   */
+  expiresAt: number;
+  /**
    * `null` = token wydany PRZED 2.1.0, czyli bez sesji w bazie. Brama przyjmuje taki
    * token do jego wygaśnięcia (1 h dostępu, 8 h ciasteczka panelu) - inaczej wdrożenie
    * wylogowałoby wszystkich naraz - ale `sid` NIEZNANY albo unieważniony odbija zawsze.
@@ -1382,13 +1388,17 @@ export interface NotificationCursor {
 }
 
 export interface NotificationsPort {
-  /** W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1). */
+  /**
+   * W CUDZEJ transakcji - powiadomienie powstaje razem z rzeczą, o której mówi (§12.1).
+   * Oddaje identyfikatory wierszy, które NAPRAWDĘ powstały: adresat spoza klubu wiersza
+   * nie dostaje, więc nie dostaje też ani ramki kanału, ani budzika.
+   */
   insert(
     tx: Queryable,
     orgId: string,
     rows: readonly NewNotification[],
     at: Date,
-  ): Promise<void>;
+  ): Promise<string[]>;
   /** Strona skrzynki, od najnowszego. `before` = kursor poprzedniej strony. */
   list(
     db: Queryable,
@@ -1401,6 +1411,8 @@ export interface NotificationsPort {
    * §7.3): nieprzeczytany wiersz tej osoby i tego rodzaju z tą samą wartością pola
    * `collapse.field` w payloadzie dostaje nową treść i nową chwilę, a gdy go nie ma -
    * powstaje. Rozmowa nie zalewa skrzynki: jeden nieprzeczytany wiersz na wątek.
+   * Oddaje identyfikator wiersza, który stoi w skrzynce po zapisie - odświeżonego albo
+   * nowego - a `null`, gdy adresat nie jest w klubie i wiersz nie powstał.
    */
   collapseUnread(
     tx: Queryable,
@@ -1408,7 +1420,7 @@ export interface NotificationsPort {
     row: NewNotification,
     collapse: { field: string; value: string },
     at: Date,
-  ): Promise<void>;
+  ): Promise<string | null>;
   /** Ile nieprzeczytanych - liczba przy zakładce Pulpit. */
   unreadCount(db: Queryable, orgId: string, pilotId: string): Promise<number>;
   /**
@@ -1423,6 +1435,17 @@ export interface NotificationsPort {
     id: string,
     at: Date,
   ): Promise<boolean>;
+}
+
+/**
+ * Urządzenie do obudzenia - token, osoba i SESJA LOGOWANIA, do której jest przypięty.
+ * Sesja jest tu po to, żeby rozdzielnik (K4) ominął urządzenie połączone kanałem klubu:
+ * ono dostaje ramkę, a push dzwoniłby drugi raz o tej samej wiadomości.
+ */
+export interface PushTarget {
+  token: string;
+  sessionId: string;
+  pilotId: string;
 }
 
 /**
@@ -1441,7 +1464,7 @@ export interface PushTokensPort {
    * Na które urządzenia zadzwonić - WYŁĄCZNIE te z żywą sesją logowania (wylogowanie
    * gasi budzik). Osoba bez tokenu po prostu nie ma wiersza.
    */
-  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<string[]>;
+  byPilots(db: Queryable, orgId: string, pilotIds: readonly string[]): Promise<PushTarget[]>;
   /** Token odrzucony przez dostawcę jako martwy - urządzenie odinstalowało aplikację. */
   forget(db: Queryable, tokens: readonly string[]): Promise<void>;
 }
@@ -1453,6 +1476,14 @@ export interface PushMessage {
   body: string;
   /** Co otworzyć po tapnięciu; aplikacja czyta z tego trasę. */
   data: Record<string, unknown>;
+  /**
+   * CISZA W KOKPICIE (pkt 44 zleceń; decyzje właściciela 2026-10-06): adresat siedzi
+   * w załodze operacji w toku - dowódca albo drugi pilot - więc budzik idzie kanałem bez
+   * dźwięku i bez wyskakującego banera, na listę powiadomień i do skrzynki. Rozstrzyga
+   * serwer, bo telefon w locie ma zwykle zgaszony ekran, a aplikacja w tle nie ma jak
+   * wyciszyć powiadomienia sama (`docs/kanal-klubu.md` §13).
+   */
+  quiet: boolean;
 }
 
 /**
@@ -1842,9 +1873,9 @@ export type LiveAudience =
  * i nigdy nie rzucają: zgubiona ramka niczego nie gubi, bo źródłem prawdy są odpowiedzi
  * REST i skrzynka, a ekran po każdym (ponownym) połączeniu dociąga stan zwykłym odczytem.
  *
- * Rozsyłanie przychodzi z epikiem Z-E (#246); do tego czasu composition root wstawia
- * atrapę, a zlecenia mimo to ogłaszają swoje tematy - dzięki temu Z-E podłącza kanał
- * bez ani jednej zmiany w komendach.
+ * Rozsyła je rejestr połączeń (`LivePort` niżej, adapter `infrastructure/live/liveRegistry.ts`)
+ * - wyłącznie do połączeń klubu `orgId`. Komendy o rejestrze nie wiedzą nic: ogłaszają
+ * tematy i odbiorców, a kto akurat jest połączony, rozstrzyga adapter.
  */
 export interface LiveSignalsPort {
   /** `changed` - tematy bez treści; kształt per widz liczy REST (§2). */
@@ -1853,6 +1884,87 @@ export interface LiveSignalsPort {
   message(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
   /** Odczytanie rozmowy (ramka `read`) - „Odczytane 14:05". */
   read(orgId: string, audiences: readonly LiveAudience[], frame: Record<string, unknown>): void;
+}
+
+/**
+ * Ramka kanału klubu - koperta `{ v: 1, type, … }` (`docs/kanal-klubu.md` §3.2). Koperta
+ * jest ogólna: nowy moduł dokłada swój rodzaj ramki, nie nowe połączenie.
+ */
+export interface LiveFrame {
+  v: 1;
+  type: string;
+  [field: string]: unknown;
+}
+
+/**
+ * Powód zamknięcia połączenia (ramka `bye`, §3.1) - klient robi to, co dziś robi przy tej
+ * samej odmowie REST. Blokada osoby i wyłączenie klubu to dla połączenia `membership_disabled`:
+ * w obu przypadkach TEN klub przestał być dla tej osoby dostępny, a klient ma zareagować tak
+ * samo.
+ */
+export type LiveByeReason = 'session_revoked' | 'membership_disabled' | 'token_expired';
+
+/** Wyjście połączenia, przez które rejestr wysyła ramki - adapter WebSocket (`http/live/`). */
+export interface LiveSink {
+  send(frame: LiveFrame): void;
+  /** Ramka `bye` z powodem i zamknięcie połączenia. */
+  close(reason: LiveByeReason): void;
+}
+
+/** Kto stoi po drugiej stronie połączenia - z tej samej bramy członkostwa, co REST. */
+export interface LivePeer {
+  orgId: string;
+  pilotId: string;
+  /**
+   * Sesja logowania (claim `sid`) - po niej rozdzielnik wie, którego urządzenia nie budzić
+   * pushem (K4). `null` przy tokenie sprzed 2.1.0: takie połączenie niczego nie wycisza.
+   */
+  sessionId: string | null;
+  surface: 'mobile' | 'panel';
+  /** Zbiór z bramy w chwili nawiązania - po nim idą sygnały do posiadaczy zdolności. */
+  capabilities: readonly Capability[];
+}
+
+/** Które połączenia zamknąć przy odebraniu dostępu (§3.1). */
+export type LiveCloseScope =
+  | { kind: 'sessions'; sessionIds: readonly string[] }
+  | { kind: 'member'; orgId: string; pilotId: string }
+  /**
+   * Wszystkie połączenia osoby, we wszystkich klubach. `exceptSessionId` - sesja, która
+   * PRZEŻYWA (zmiana hasła wylogowuje pozostałe urządzenia, nie to, przy którym człowiek
+   * siedzi); połączenia bez sesji logowania zamykają się zawsze.
+   */
+  | { kind: 'person'; pilotId: string; exceptSessionId?: string | null }
+  | { kind: 'club'; orgId: string };
+
+/**
+ * REJESTR POŁĄCZEŃ KANAŁU KLUBU (`docs/kanal-klubu.md` §3.1). Jedna instancja serwera =
+ * adapter w pamięci procesu; druga = adapter na `LISTEN/NOTIFY` Postgresa, bez zmian
+ * w tym, co go woła. Nic tu nie rzuca - połączenie, które padło w trakcie wysyłki, rejestr
+ * po cichu odłącza, bo ramka, która nie doszła, niczego nie gubi (K2).
+ */
+export interface LivePort {
+  /** Połączenie po uwierzytelnieniu. Oddaje funkcję odłączenia - koniec połączenia. */
+  attach(peer: LivePeer, sink: LiveSink): () => void;
+  /**
+   * Czy osoba ma W TYM klubie choć jedno połączenie - także bez sesji logowania (token
+   * sprzed 2.1.0). Rozdzielnik pyta o to, zanim złoży ramkę, bo licznik nieprzeczytanych
+   * kosztuje odczyt, a zwykle nikt nie jest połączony.
+   */
+  isConnected(orgId: string, pilotId: string): boolean;
+  /** Sesje osoby połączone W TYM klubie - rozdzielnik omija ich tokeny push (K4). */
+  connectedSessions(orgId: string, pilotId: string): ReadonlySet<string>;
+  /** Ramka do połączeń osoby W TYM klubie; oddaje, ile połączeń ją dostało. */
+  sendToPerson(orgId: string, pilotId: string, frame: LiveFrame): number;
+  /** Zamknięcie z powodem przy odebraniu dostępu: sesje, członkostwo, osoba, klub. */
+  close(scope: LiveCloseScope, reason: LiveByeReason): void;
+  /**
+   * Nowy zakres uprawnień członka dla jego OTWARTYCH połączeń - od tej chwili sygnały do
+   * posiadaczy zdolności liczą się według niego. Bez tego odebrana zdolność działałaby
+   * w kanale do końca połączenia: rozmowy ze zleceń (`reservations.manage`) szłyby dalej
+   * do kogoś, kto w REST dostaje już 403.
+   */
+  updateCapabilities(orgId: string, pilotId: string, capabilities: readonly Capability[]): void;
 }
 
 /** Flota + piloci dla `GET /reference` (§4.6, §4.8). */
@@ -2161,6 +2273,16 @@ export interface SessionsProjectionPort {
    * fotela nie miałby ani jednego lotu na koncie.
    */
   listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]>;
+  /**
+   * Kto z podanych osób siedzi TERAZ w załodze operacji w toku - dowódca albo drugi pilot
+   * - w DOWOLNYM klubie (cisza w kokpicie, pkt 44 zleceń, `docs/kanal-klubu.md` §13).
+   *
+   * Ponad klubami świadomie: telefon jest w kokpicie bez względu na to, z którego klubu
+   * przyszła wiadomość, a wynik to bit o samym adresacie - żadnych danych operacji nie
+   * oddaje. „W toku" znaczy to samo, co w kokpicie telefonu: od przejęcia do zdania
+   * samolotu (albo zakończenia i unieważnienia przez administratora).
+   */
+  crewInOperation(db: Queryable, pilotIds: readonly string[]): Promise<Set<string>>;
   /**
    * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *

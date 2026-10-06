@@ -5,6 +5,7 @@ import {
   conflictField,
   errorMessage,
   invalidField,
+  loadErrorMessage,
   refusalOf,
   ruleViolationMessage,
 } from './apiMessage';
@@ -64,6 +65,38 @@ describe('zdanie dla człowieka', () => {
 
   it('„nic się nie zmieniło" nie brzmi jak awaria', () => {
     expect(errorMessage(http(400, { error: 'no_changes' }))).toBe('Nic się nie zmieniło.');
+  });
+
+  it('nieudany ZAPIS mówi wprost, że zmiana nie weszła', () => {
+    expect(errorMessage(http(500, { error: 'internal' }))).toContain('zapisać');
+  });
+});
+
+describe('zdanie po nieudanym ODCZYCIE', () => {
+  it('awaria serwera mówi o wczytaniu, nie o zapisie - i niesie kod', () => {
+    // Lista, która się nie wczytała, mówiła „Nie udało się zapisać" - o czynności,
+    // której nikt nie wykonał.
+    const message = loadErrorMessage(http(500, { error: 'internal' }));
+    expect(message).toContain('wczytać');
+    expect(message).not.toContain('zapisać');
+    expect(message).toContain('500');
+  });
+
+  it('brak dostępu mówi o danych, nie o zmianie', () => {
+    expect(loadErrorMessage(http(403, { error: 'forbidden' }))).toBe('Nie masz dostępu do tych danych.');
+  });
+
+  it('400 przy odczycie nie każe poprawiać pól, których nie ma', () => {
+    expect(loadErrorMessage(http(400, { error: 'bad_request' }))).not.toContain('pola');
+  });
+
+  it('brak sieci, wygasła sesja i „tego już nie ma" brzmią tak samo jak przy zapisie', () => {
+    const shared = [
+      new TypeError('Failed to fetch'),
+      http(401, { error: 'unauthorized' }),
+      http(404, { error: 'not_found' }),
+    ];
+    for (const error of shared) expect(loadErrorMessage(error)).toBe(errorMessage(error));
   });
 });
 

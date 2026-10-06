@@ -46,7 +46,11 @@ function focusablesIn(root: HTMLElement | null): HTMLElement[] {
 
 interface DrawerProps {
   title: string;
-  sub: ReactNode;
+  /**
+   * Podtytuł pod tytułem; bez niego szuflada go nie rysuje. Skrzynka powiadomień nie ma
+   * podtytułu (makieta `powiadomienia` PW2): należy do osoby w klubie, a klub stoi w kolumnie.
+   */
+  sub?: ReactNode;
   /** Stopka z akcjami (`.drawer-foot`) - kolejność jak w mockupie: anuluj, potem akcja. */
   footer?: ReactNode;
   /**
@@ -119,7 +123,7 @@ export function Drawer({ title, sub, footer, wide = false, actions, onClose, chi
         <div className="drawer-head">
           <div>
             <div className="drawer-title">{title}</div>
-            <div className="drawer-sub">{sub}</div>
+            {sub == null ? null : <div className="drawer-sub">{sub}</div>}
           </div>
           <div className="drawer-head-actions">
             {actions ?? null}

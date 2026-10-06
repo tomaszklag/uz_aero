@@ -1228,6 +1228,7 @@ Porty w `application/ports/`, każdy z realnym powodem:
 | `ClockPort` | Czas musi być deterministyczny w testach; produkcyjnie dwa zegary (device + GPS, §4.5). |
 | `IdPort` | UUID zdarzenia = klucz idempotencji; w testach przewidywalny. |
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
+| `LiveSocketPort` | Kanał klubu (4.0.0, `docs/kanal-klubu.md` §13): łącze (`LiveLink`) ma uwierzytelnienie pierwszą ramką, ping, strażnika ciszy i wznawianie z rozrzutem - wszystko to sprawdzają testy na atrapie gniazda i zegara. Implementacja: `infrastructure/live/liveSocket.ts` (`RnLiveSockets`) - JEDYNY plik z `WebSocket` (obiekt globalny RN, więc strażnik czyta kod, nie importy). |
 | `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
 Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`,
@@ -1552,13 +1553,20 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
    akurat patrzy na telefon. **`payload` jest treścią SKRZYNKI, a do `data` budzika
    wchodzi z niego wyłącznie to, co telefon czyta w `pushTarget.ts`** - `kind`, `orgId`,
    `bookingId`, `aircraftId`, a od 4.0.0 `orderId` i `recipientId` (adresat rozmowy
-   zlecenia: przy OTWARTEJ rozmowie baner nie pada, `docs/zlecenia.md` pkt 43)
+   zlecenia: przy OTWARTEJ rozmowie baner nie pada, `docs/zlecenia.md` pkt 43) oraz
+   `quiet` dla załogi operacji w toku (reguła banera, cisza w kokpicie)
    (`notify/pushData.ts`, issue #228; klucz tylko z niepustym napisem). Nowe pole potrzebne tapnięciu dopisuje się do `PUSH_DATA_KEYS` razem
    z testem; `Notifier` listy pól nie zna. Pole, którego `pushTarget` nie czyta, nie
    jedzie przez Expo i FCM „na zapas".
 3. **Producent woła `Notifier.record(tx, …)` W TEJ SAMEJ transakcji**, co rzecz, o której
-   mówi, i `Notifier.wake(drafts)` PO commicie. Sygnatury to wymuszają: `record` żąda
-   uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
+   mówi, i `Notifier.wake(orgId, recorded)` PO commicie - z tym, co `record` oddał
+   (`RecordedNotice[]`: wiersz i jego chwila), bo od 4.0.0 `wake` jest rozdzielnikiem
+   kanału klubu (ramka `notification` do połączonych sesji odbiorcy, push do pozostałych,
+   `docs/kanal-klubu.md` K4) i składa ramkę z zapisanego wiersza. Kanał pusha też wybiera
+   rozdzielnik: załoga operacji w toku (dowódca albo drugi pilot, `crewInOperation`)
+   dostaje budzik cichym kanałem, a ramkę i dane pusha z flagą `quiet` - producent nic
+   o tym nie wie (cisza w kokpicie, `docs/kanal-klubu.md` §13). Sygnatury to wymuszają:
+   `record` żąda uchwytu transakcji, `wake` go nie przyjmuje i nigdy nie rzuca. Wiadomość o czymś, co
    się nie zapisało, i zapis bez wiadomości to ten sam błąd widziany z dwóch stron.
    **Wiadomość, która przychodzi SERIĄ, ma jeden nieprzeczytany wiersz** (rozmowa
    zlecenia, `docs/zlecenia.md` §7.3): `Notifier.recordCollapsed` zamiast `record` -
@@ -1584,18 +1592,49 @@ wiadomości NIE dokłada ani tabeli, ani trasy: dokłada TREŚĆ i PRODUCENTA.
 6. **Aplikacja: `logic/inbox.ts` dostaje gałąź** z tytułem RZECZOWNIKIEM (czasownika nie
    da się odmienić bez płci) i `logic/pushTarget.ts` cel tapnięcia. Rodzaj NIEZNANY temu
    wydaniu idzie do skrzynki - to jest zaprojektowane, więc serwer wolno wdrożyć PRZED
-   aplikacją.
+   aplikacją. Baner w aplikacji (4.0.0) bierze zdanie z tej samej gałęzi sam; nowy EKRAN
+   RZECZY, na którym baner nie ma stawać (bo ten ekran się odświeża), dopisuje się
+   w `targetThing`/`routeThing` w `logic/inAppBanner.ts` z testem i w
+   `navigation/openTarget.ts` (`docs/kanal-klubu.md` §13).
 7. **Wiadomość o TERMINIE dostaje `day`** (doba klubu, §6.1 rezerwacji) i telefon liczy
    godzinę odejmowaniem; wiadomość o OPERACJI niesie `at` w UTC, a `day` ma `null`.
    Dwa zegary, świadomie - jak na ekranie podglądu 26B.
 8. **Zmiana widoczna na OTWARTYM ekranie ogłasza się też kanałem klubu**
    (`LiveSignalsPort`: `changed(org, tematy, odbiorcy)`, `message`, `read` -
-   `docs/kanal-klubu.md` §4) - po commicie, jak budzik. Do epiku Z-E (#246) port ma
-   w produkcji atrapę (`SilentLiveSignals`), a testy zapisują sygnały (`FakeLiveSignals`);
-   tematy zleceń i ich odbiorców składa `notify/orderSignals.ts`.
+   `docs/kanal-klubu.md` §4) - po commicie, jak budzik. Od epiku KK-B (#246) port ma
+   w produkcji prawdziwy rejestr połączeń (`infrastructure/live/liveRegistry.ts`), a testy
+   zapisują sygnały atrapą, która przekazuje je dalej do rejestru (`FakeLiveSignals`).
+   Tematy i odbiorców składa jedno miejsce na obszar: `notify/clubSignals.ts` (kalendarz,
+   rezerwacje, samolot, dziennik, „Do sprawdzenia") i `notify/orderSignals.ts` (zlecenia
+   i rozmowy) - nowy temat dopisuje się tam, nigdy wprost w komendzie (przepis:
+   `docs/kanal-klubu.md` §11). Decyzja, która ODBIERA dostęp, zamyka połączenia przez
+   `live/liveAccess.ts`.
 9. **Testy**: brzmienie i adresaci w teście treści; producent w teście komendy albo
    ingestu z atrapą `Notifier` (wzorzec `approvalFlow.test.ts`); nowa trasa płaci za oba
    strażniki izolacji klubów.
+
+### Nowy temat kanału klubu (4.0.0, `docs/kanal-klubu.md` §11–§13)
+
+Kanał NIE NIESIE TREŚCI (K2): temat mówi „to, co pokazujesz, się zmieniło", a ekran czyta
+od nowa RESTem, więc kształt danych per widz liczy jak zawsze serwer. Nowy temat dotyka
+trzech miejsc i w każdym jednego:
+
+1. **Serwer** - nazwa w `application/common/live/topics.ts`, odbiorcy w `ClubSignals`
+   (zlecenia i rozmowy: `OrderSignals`) jako nowa metoda, wywołanie PO commicie
+   w producencie - nigdy wprost z komendy. Przypadek w `liveTopics.test.ts` prawdziwą
+   trasą i sonda regresji, która go łamie (§11).
+2. **Panel** - temat → klucz zapytania w `admin/src/live/topicKeys.ts` z przypadkiem
+   w `topicKeys.test.ts`; React Query pobierze tylko to, co jest na ekranie (§12).
+3. **Aplikacja** - hak, który czyta serwer, woła `useLiveTopic(tematy, odśwież)`
+   z cichym odświeżeniem (`quietResult` w `screens/logic/liveRefresh.ts`): bez plamek,
+   a odpowiedź, której nie było, nie kasuje danych. Wzorzec bez dwukropka łapie cały
+   rodzaj (`calendar`), z dwukropkiem - dokładnie ten temat (`booking:<id>`). Podpięty
+   jest wyłącznie ekran widoczny, a każde powitanie łącza i tak każe mu dociągnąć stan
+   (§13).
+
+Czego NIE robić: pętli `setInterval` w haku czytającym serwer (strażnik
+`architecture.test.ts` po obu stronach), tematu wymyślonego przez klienta (odbiorców
+wyznacza serwer, §2 dokumentu kanału) i treści w sygnale `changed`.
 
 ---
 

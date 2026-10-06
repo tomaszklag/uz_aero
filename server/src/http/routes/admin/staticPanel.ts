@@ -55,15 +55,26 @@ const ADMIN_DIST = fileURLToPath(new URL('../../../../../admin/dist', import.met
  * zaczyna się od `'self'`, bo jawna dyrektywa PRZESŁANIA `default-src`, a bez `'self'`
  * własny build panelu przestałby się ładować. Nie ma tu `*.google.com` ani `gstatic`:
  * przycisk standardowy nie sięga po obrazki spoza `gsi/`.
+ *
+ * ══ KANAŁ KLUBU: JAWNY ADRES `ws(s)://` OBOK `'self'` (4.0.0, epik KK-D #246) ══
+ * Panel otwiera połączenie z tym samym hostem (`/admin/api/live`). CSP poziomu 3 każe
+ * `'self'` obejmować `ws:`/`wss:` tego hosta, ale przeglądarki doszły do tego w różnym
+ * czasie, a kanał, którego polityka nie przepuści, wygląda jak panel bez odświeżeń - bez
+ * jednego błędu na ekranie. Jawny adres z `PUBLIC_BASE_URL` nie kosztuje nic i nie zależy
+ * od wersji przeglądarki administratora (`docs/kanal-klubu.md` §3.4).
  */
-const PANEL_CSP =
-  "default-src 'self'; " +
-  "script-src 'self' https://accounts.google.com/gsi/client; " +
-  "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; " +
-  "frame-src https://accounts.google.com/gsi/; " +
-  "connect-src 'self' https://accounts.google.com/gsi/; " +
-  "img-src 'self' data:; " +
-  "object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+export function panelCsp(liveOrigin: string | null): string {
+  const live = liveOrigin == null ? '' : ` ${liveOrigin.replace(/^http/, 'ws')}`;
+  return (
+    "default-src 'self'; " +
+    "script-src 'self' https://accounts.google.com/gsi/client; " +
+    "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; " +
+    "frame-src https://accounts.google.com/gsi/; " +
+    `connect-src 'self'${live} https://accounts.google.com/gsi/; ` +
+    "img-src 'self' data:; " +
+    "object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  );
+}
 
 /**
  * Cache z §9: Vite hashuje nazwy plików w `assets/`, więc raz pobrany plik nie zmieni
@@ -79,8 +90,16 @@ function cacheControlFor(filePath: string): string {
     : 'no-cache';
 }
 
-/** `distDir` podmieniają WYŁĄCZNIE testy - `adminStatic.test.ts` podstawia katalog tymczasowy. */
-export function registerAdminPanelStatic(app: FastifyInstance, distDir: string = ADMIN_DIST): void {
+/**
+ * `distDir` podmieniają WYŁĄCZNIE testy - `adminStatic.test.ts` podstawia katalog tymczasowy.
+ * `liveOrigin` - origin panelu z `PUBLIC_BASE_URL`, z którego CSP składa adres kanału klubu.
+ */
+export function registerAdminPanelStatic(
+  app: FastifyInstance,
+  distDir: string = ADMIN_DIST,
+  liveOrigin: string | null = null,
+): void {
+  const csp = panelCsp(liveOrigin);
   app.register(fastifyStatic, {
     root: distDir,
     prefix: '/admin/',
@@ -90,7 +109,7 @@ export function registerAdminPanelStatic(app: FastifyInstance, distDir: string =
     // stawia `setHeaders` per plik.
     cacheControl: false,
     setHeaders: (res, filePath) => {
-      res.setHeader('content-security-policy', PANEL_CSP);
+      res.setHeader('content-security-policy', csp);
       res.setHeader('cache-control', cacheControlFor(filePath));
     },
   });

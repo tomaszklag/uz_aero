@@ -12,19 +12,21 @@
  * CAŁĄ treść, więc ekran musi powiedzieć wprost, że nie wie. Pusta siatka wyglądałaby
  * dokładnie jak flota wolna na wylot (makieta 21B).
  *
- * ODŚWIEŻA SIĘ PRZY WEJŚCIU NA EKRAN, nie w pętli: zajętość zmienia kolega przy innym
- * telefonie, a nie ten pilot, więc odpytywanie co puls kosztowałoby baterię za
- * odpowiedź, na którą i tak nikt nie patrzy. Wejście jest chwilą, w której pilot pyta
- * „co jest wolne" - i wtedy pytamy serwer.
+ * ODŚWIEŻA SIĘ PRZY WEJŚCIU NA EKRAN, a potem NA SYGNAŁ KANAŁU KLUBU (4.0.0, K1):
+ * zajętość zmienia kolega przy innym telefonie, więc serwer mówi `calendar:<doba>`,
+ * gdy coś na osi się ruszy, i ekran czyta się po cichu od nowa. Odpytywania nie ma -
+ * kosztowałoby baterię za odpowiedź, na którą i tak nikt nie patrzy.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { utcDayStart } from '../../domain';
 import { useSessionStore } from '../store';
 
 import { toCalendar, type CalendarData } from '../screens/logic/calendarData';
+import { quietResult } from '../screens/logic/liveRefresh';
+import { useLiveTopic } from './useLiveTopic';
 import { useMinuteTicker } from './useMinuteTicker';
 
 /**
@@ -39,16 +41,15 @@ import { useMinuteTicker } from './useMinuteTicker';
 export const CALENDAR_DAYS = 14;
 
 /**
- * Co ile ekran pyta ponownie, DOPÓKI NIE WIE (decyzja właściciela 2026-09-21).
+ * Tematy kanału, na które kalendarz się odświeża: każda doba klubu. Zmiana rezerwacji,
+ * wyłączenia z użytku i zlecenia mówi `calendar:<doba>`, więc rodzaj wystarcza.
  *
- * Przycisku ponowienia nie ma - makieta 21B go nie rysuje, a przy braku zasięgu
- * i tak nic by nie zmienił. Zamiast niego kalendarz wraca SAM, dokładnie tak jak
- * formularz przy pustej flocie na 02G: pilot ze wróconym zasięgiem nie ma się
- * domyślać, że musi przeskoczyć zakładkę i wrócić.
- *
- * Minuta, nie puls: zajętość zmienia kolega przy innym telefonie, a nie ten pilot.
+ * Przycisku ponowienia nie ma (decyzja właściciela 2026-09-21) - makieta 21B go nie
+ * rysuje. Kalendarz w stanie „nie wiem" wraca SAM, jak formularz przy pustej flocie
+ * na 02G: do 4.0.0 robiła to pętla co minutę, od kanału klubu - powitanie łącza, które
+ * przychodzi razem z zasięgiem i każe podpiętym ekranom dociągnąć stan.
  */
-const RETRY_MS = 60_000;
+const CALENDAR_TOPICS = ['calendar'];
 
 const DAY_MS = 86_400_000;
 
@@ -74,7 +75,6 @@ export interface UseCalendar {
  */
 export function useCalendarWindow(from: number | null, to: number | null): UseCalendar {
   const sync = useSessionStore((s) => s.sync);
-  const focused = useIsFocused();
   const [data, setData] = useState<CalendarData | null | undefined>(undefined);
   const alive = useRef(true);
 
@@ -85,36 +85,35 @@ export function useCalendarWindow(from: number | null, to: number | null): UseCa
     };
   }, []);
 
-  const load = useCallback(() => {
-    if (sync == null || from == null || to == null) {
-      setData(null);
-      return;
-    }
+  /** `quiet` = sygnał kanału: bez plamek, a brak odpowiedzi zostawia to, co było. */
+  const read = useCallback(
+    (quiet: boolean) => {
+      if (sync == null || from == null || to == null) {
+        setData(null);
+        return;
+      }
 
-    setData(undefined);
-    void sync
-      .fetchCalendar({ from, to })
-      .then((wire) => {
-        if (alive.current) setData(wire == null ? null : toCalendar(wire));
-      })
-      .catch(() => {
-        // `authorizedFetch` zwija offline i odmowy do `null`; tu łapiemy resztę.
-        // Nieudane pytanie o kalendarz nie ma prawa wywrócić ekranu.
-        if (alive.current) setData(null);
-      });
-  }, [sync, from, to]);
+      if (!quiet) setData(undefined);
+      void sync
+        .fetchCalendar({ from, to })
+        .then((wire) => {
+          const next = wire == null ? null : toCalendar(wire);
+          if (alive.current) setData((previous) => (quiet ? quietResult(previous, next) : next));
+        })
+        .catch(() => {
+          // `authorizedFetch` zwija offline i odmowy do `null`; tu łapiemy resztę.
+          // Nieudane pytanie o kalendarz nie ma prawa wywrócić ekranu.
+          if (alive.current && !quiet) setData(null);
+        });
+    },
+    [sync, from, to],
+  );
+
+  const load = useCallback(() => read(false), [read]);
+  const refresh = useCallback(() => read(true), [read]);
 
   useFocusEffect(load);
-
-  // Ponawiamy WYŁĄCZNIE w stanie „nie wiem" i WYŁĄCZNIE na widocznym ekranie:
-  // `undefined` znaczy pytanie w toku, a ekran pod spodem nie ma komu odpowiadać.
-  // Po każdej nieudanej próbie `data` wraca na `null`, więc efekt startuje od nowa
-  // i odstęp liczy się OD KOŃCA próby - dwa żądania nie mają jak się nałożyć.
-  useEffect(() => {
-    if (!focused || data !== null) return;
-    const id = setInterval(load, RETRY_MS);
-    return () => clearInterval(id);
-  }, [focused, data, load]);
+  useLiveTopic(CALENDAR_TOPICS, refresh);
 
   return { data, reload: load };
 }

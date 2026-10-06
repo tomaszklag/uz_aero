@@ -35,6 +35,47 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Nowości
+
+- **Dzwonek i skrzynka w panelu.** W pasku górnym panelu klubu stoi dzwonek z liczbą nowych
+  wiadomości - tych samych, co pod dzwonkiem na pulpicie telefonu: prośby o zgodę, decyzje
+  w Twoich rezerwacjach, wiadomości o obserwowanych samolotach. Przeczytane w panelu jest
+  przeczytane w telefonie. Nowa wiadomość pojawia się na kilka sekund w lewym dolnym rogu,
+  a kliknięcie otwiera to, czego dotyczy.
+- **Panel odświeża się sam.** Kalendarz z kolejką decyzji, dziennik i „Do sprawdzenia"
+  pokazują zmiany z telefonów i z innych kart przeglądarki od razu, bez przeładowania strony.
+- **Baner nowej wiadomości w aplikacji.** Gdy aplikacja jest otwarta, nowa wiadomość
+  pojawia się na kilka sekund u góry ekranu - z tym samym zdaniem, co w skrzynce, i bez
+  dźwięku. Tapnięcie otwiera to, czego dotyczy, a przesunięcie w górę chowa baner. Nie
+  przerywa na ekranie sprawy, której dotyczy (ten się odświeża), ani w kokpicie.
+- **Aplikacja odświeża się sama.** Kalendarz, karta rezerwacji, skrzynka z licznikiem przy
+  dzwonku, karta samolotu i lista obserwowanych pokazują zmiany od razu, gdy ktoś coś
+  zapisze - bez wychodzenia z ekranu. Ekran „Brak połączenia" znika sam, gdy wróci zasięg.
+- **Cisza w locie.** Od przejęcia samolotu do jego zdania telefon pilota - i drugiego
+  pilota - nie dzwoni i nie wyskakuje z powiadomieniami, także przy zgaszonym ekranie.
+  Wiadomości czekają po cichu na liście powiadomień i w skrzynce.
+
+### Poprawki
+
+- **Panel nie mówi „nic tu nie ma", zanim przyjdą dane.** Przy pierwszym wejściu w listę -
+  pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
+  mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
+  nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
+  Tabela dziennika nie znika już na moment zaraz po wejściu, a karty w kolejce decyzji
+  nie pojawiają się bez nazwisk.
+- **„Obserwowane samoloty" podpisują maszyny nazwiskiem także u Akceptującego.** Członek
+  bez „Podglądu klubu" widział przy maszynie samo „Zarezerwowana", bez osoby, która ją
+  ma - teraz zdanie jest pełne, jak u administratora.
+- **Moje konto nie każe „ustawić" hasła komuś, kto je ma.** Zaraz po wejściu karta hasła
+  pokazywała przez chwilę wariant dla konta bez hasła. Teraz czeka na odczyt konta, a gdy
+  ten się nie uda, mówi o tym na górze strony zamiast pokazywać zgadnięty formularz.
+- **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast stać bez słowa
+  na plamkach ładowania.
+- **Gdy coś się nie wczyta, panel mówi to wprost.** Komunikat brzmi „Nie udało się
+  wczytać", a nie „Nie udało się zapisać", jak dotąd przy każdej liście, która nie
+  dojechała. Pod nim nie staje już fałszywe „nie ma jeszcze żadnego pilota" ani
+  pulsujące bez końca plamki. Lista wczytana wcześniej zostaje na ekranie.
+
 ## 3.2.0 · 27 września 2026
 
 > Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.
@@ -465,6 +506,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [ ] Zlecający widzi, kto już odczytał zlecenie
 - [ ] Grupy pilotów w klubie
 - [ ] Instruktor umawia lot z uczniem jednym zleceniem
+- [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
 
 ### 5.0.0 · termin do ustalenia
 

@@ -38,6 +38,16 @@ export function authorize(tokens: TokenService, token: string | null): VerifiedI
 }
 
 /**
+ * Termin tokenu KLUBU - kanał klubu (4.0.0) trzyma połączenie najwyżej do tej chwili,
+ * bo brama sprawdza je raz, przy nawiązaniu. `null` = to nie jest (już) ważny token
+ * klubu; wołający traktuje to tak samo, jak odmowę bramy.
+ */
+export function tokenExpiresAt(tokens: TokenService, token: string | null): Date | null {
+  const identity = authorize(tokens, token);
+  return identity == null ? null : new Date(identity.expiresAt * 1000);
+}
+
+/**
  * Brama tras TELEFONU (epik C wielofirmowości, issue #99): token klubu I aktywne
  * członkostwo w tym klubie, czytane przy KAŻDYM żądaniu - dokładnie tak, jak panel
  * (`authorizeOrg` niżej), z tego samego powodu i tą samą regułą.

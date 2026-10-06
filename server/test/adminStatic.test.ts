@@ -35,6 +35,11 @@ describe('statyczny build panelu', () => {
     expect(index.body).toContain('NINERDECK panel');
     // CSP wchodzi razem z self-hostem czcionek: panel nie sięga poza własny origin.
     expect(index.headers['content-security-policy']).toContain("default-src 'self'");
+    // Kanał klubu (4.0.0): jawny adres `ws:` hosta aplikacji obok `'self'` - przeglądarka,
+    // której `'self'` nie obejmuje gniazd, i tak przepuści połączenie z panelem.
+    expect(index.headers['content-security-policy']).toContain(
+      "connect-src 'self' ws://ninerdeck.test https://accounts.google.com/gsi/;",
+    );
 
     const asset = await app.inject({ method: 'GET', url: '/admin/assets/app.js' });
     expect(asset.statusCode).toBe(200);

@@ -375,3 +375,18 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
 /** Identyfikatory wiadomości do przeczytania przy otwarciu listy. */
 export const unreadIds = (items: readonly RemoteNotification[]): string[] =>
   items.filter((n) => n.readAt == null).map((n) => n.id);
+
+/**
+ * Wiadomość, którą pilot zobaczył w tej wizycie jako NOWĄ, zostaje nowa do jej końca -
+ * także po cichym odświeżeniu z kanału klubu (4.0.0), choć serwer zna już jej
+ * przeczytanie: lista oznacza je w tle zaraz po odczycie. Bez tego zielona krawędź
+ * gasłaby pod palcem przy pierwszej cudzej decyzji w klubie. Następne wejście czyta
+ * skrzynkę od nowa i wtedy przeczytane są już przeczytane.
+ */
+export function keepVisitNew(
+  shown: readonly RemoteNotification[],
+  fresh: readonly RemoteNotification[],
+): RemoteNotification[] {
+  const wasNew = new Set(unreadIds(shown));
+  return fresh.map((n) => (n.readAt != null && wasNew.has(n.id) ? { ...n, readAt: null } : n));
+}

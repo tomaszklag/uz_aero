@@ -13,8 +13,11 @@ import { randomUUID } from 'node:crypto';
 
 import type { Database, PushMessage, PushPort } from '../src/application/common/ports.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
+import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
 import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';
 import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo.ts';
+import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 
 export class FakePush implements PushPort {
   readonly sent: PushMessage[] = [];
@@ -47,5 +50,16 @@ export function silentNotifier(db: Database): Notifier {
   // Zegar systemowy wystarczy: ten powiadamiacz nie pokazuje budzika nikomu, a zegar
   // adaptera tokenów odróżnia wyłącznie sesje żywe od wygasłych przy wysyłce.
   const clock = { now: () => new Date() };
-  return new Notifier(db, new PgNotificationsRepo(), new PgPushTokensRepo(clock), new FakePush(), randomUUID);
+  // Pusty rejestr połączeń: nikt nie jest połączony kanałem, więc rozdzielnik działa
+  // dokładnie jak budzik sprzed 4.0.0 - wszystko idzie pushem.
+  return new Notifier(
+    db,
+    new PgNotificationsRepo(),
+    new PgPushTokensRepo(clock),
+    new FakePush(),
+    new LiveRegistry(),
+    new PgClubSettingsRepo(),
+    new PgSessionsProjection(),
+    randomUUID,
+  );
 }

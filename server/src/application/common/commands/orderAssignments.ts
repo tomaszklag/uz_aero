@@ -22,7 +22,7 @@ import { refuseAssign, refuseUnassign } from '../../../domain/orderAnswers.ts';
 import { filledAudience } from '../../../domain/orderAudiences.ts';
 import type { Seat } from '../../../domain/orders.ts';
 import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import { orderAssigned, orderFilled, orderUnassigned } from '../notify/orderNotices.ts';
 import type { OrderSignals } from '../notify/orderSignals.ts';
 import {
@@ -129,15 +129,15 @@ export class OrderAssignmentCommands {
         if (!leads(loaded.order, actor)) throw new OrderDenied('not_leader');
         if (!holdsSlot(loaded.booking.status)) throw new OrderDenied('booking_closed');
         const result = await step(tx, loaded, now);
-        if (result == null) return { loaded, notices: [] as NotificationDraft[], changed: false };
-        await this.notifier.record(tx, orgId, result.notices, now);
+        if (result == null) return { loaded, notices: [] as RecordedNotice[], changed: false };
+        const notices = await this.notifier.record(tx, orgId, result.notices, now);
         const fresh = (await this.records.read(tx, orgId, id)) ?? result.loaded;
-        return { loaded: fresh, notices: result.notices, changed: true };
+        return { loaded: fresh, notices, changed: true };
       });
       if (written == null) return null;
       if (written.changed) {
         await this.notifier.wake(orgId, written.notices);
-        this.signals.changed(orgId, written.loaded);
+        await this.signals.changed(orgId, written.loaded);
       }
       return { ok: true as const, loaded: written.loaded, created: false };
     });

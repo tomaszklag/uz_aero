@@ -445,8 +445,16 @@ describe('granice, których nie pilnuje kompilator', () => {
       // wszystko, co panel wie, przychodzi później z `/admin/api/*` przez bramę.
       'http/routes/admin/staticPanel.ts',
     ];
+    // Trasy z WŁASNĄ bramą przy nawiązaniu połączenia - nie publiczne, tylko nie HTTP:
+    // `adminRoute` odpowiada jedną odpowiedzią, a tu po bramie zostaje otwarte połączenie.
+    const ownGate = [
+      // Kanał klubu (4.0.0, `docs/kanal-klubu.md` §3.1): ciasteczko sesji + ścisły `Origin`
+      // + `authorizeOrg` w hooku PRZED przejściem na WebSocket. Zdolności tu nie ma - kanał
+      // należy do każdego członka klubu, a odbiorców każdej ramki wyznacza serwer.
+      'http/routes/admin/live.ts',
+    ];
     const offenders = filesUnder('http/routes/admin')
-      .filter((f) => !publicByDesign.includes(f))
+      .filter((f) => !publicByDesign.includes(f) && !ownGate.includes(f))
       .filter((f) => /\bapp\.(get|post|put|patch|delete|route)\s*\(/.test(read(f)));
     expect(offenders).toEqual([]);
   });
@@ -574,6 +582,11 @@ describe('granice, których nie pilnuje kompilator', () => {
         'metoda i żywotność sesji z `sid` w tokenie - dla rotacji i przełączenia klubu',
       'infrastructure/pg/common/loginSessionsRepo.ts#isRevoked':
         'brama PLATFORMOWA pyta o sesję bez klubu - superadministrator go nie ma',
+      // Cisza w kokpicie (pkt 44 zleceń, `docs/kanal-klubu.md` §13): budzik pyta, czy
+      // ADRESAT siedzi w załodze operacji w toku. Telefon jest wtedy w kokpicie bez
+      // względu na klub wiadomości, a wynik to bit o tej samej osobie - nic z operacji.
+      'infrastructure/pg/common/sessionsProjection.ts#crewInOperation':
+        'cisza w kokpicie: osoba lecąca w jednym klubie nie słyszy budzika z drugiego - wynik to bit o adresacie',
     };
 
     const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {

@@ -30,7 +30,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { InfoIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { BugDrawer } from './BugDrawer';
 import { bugRow, type BugRow } from './bugRows';
 import { BUG_STATUS_ORDER, BUG_WORKING_STATUSES, bugStatusLabel } from './bugStatus';
@@ -129,10 +129,11 @@ export function BugsScreen() {
         <FilterChip label="Wszystkie" on={showsAll} onToggle={() => setStatus(showsAll ? null : '')} />
       </div>
 
-      {bugs.error == null ? null : <Banner tone="danger">{errorMessage(bugs.error)}</Banner>}
+      {bugs.error == null ? null : <Banner tone="danger">{loadErrorMessage(bugs.error)}</Banner>}
 
       <Loadable
         pending={bugs.isPending}
+        loaded={bugs.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[74, 84, 150, 68, 260, 88]} rows={5} />}
       >
         {rows.length === 0 ? (

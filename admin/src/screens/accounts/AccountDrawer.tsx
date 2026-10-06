@@ -59,7 +59,7 @@ import {
   TextInput,
 } from '../../ui/components';
 import { CheckIcon } from '../../ui/components/icons';
-import { conflictField, errorMessage, refusalOf } from '../common/apiMessage';
+import { conflictField, errorMessage, loadErrorMessage, refusalOf } from '../common/apiMessage';
 import { SessionList } from '../common/SessionList';
 import { linkBlocker, linkFailureText, linkSentText, methodLabels } from './passwordAccess';
 import { lastSeenText, sessionRows } from './sessionRows';
@@ -528,8 +528,13 @@ export function AccountDrawer({
           że zapisy na urządzeniu NIE ZNIKAJĄ. */}
       {pilot == null || readOnly ? null : (
         <Card title="Sesje">
+          {/* Odczyt, który padł, nie jest „brakiem sesji" - mówi o sobie sam. */}
+          {sessions.error == null ? null : (
+            <p className="hint danger">{loadErrorMessage(sessions.error)}</p>
+          )}
           <Loadable
             pending={sessions.isPending}
+            loaded={sessions.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 48 }} />}
           >
             {(sessions.data ?? []).length === 0 ? (

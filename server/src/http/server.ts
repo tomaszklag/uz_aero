@@ -8,6 +8,7 @@
 
 import compress from '@fastify/compress';
 import cookie from '@fastify/cookie';
+import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
@@ -59,7 +60,7 @@ import type { MySessionTrackQueries } from '../application/mobile/queries/sessio
 import type { BookingCommands } from '../application/common/commands/bookings.ts';
 import type { ApprovalFlow } from '../application/common/commands/approvals.ts';
 import type { ApprovalStepsCommands } from '../application/admin/commands/approvalSteps.ts';
-import type { NotificationQueries } from '../application/mobile/queries/notifications.ts';
+import type { NotificationQueries } from '../application/common/queries/notifications.ts';
 import type { DecisionPreviewQueries } from '../application/common/queries/decisionPreview.ts';
 import type { BookingQueries } from '../application/common/queries/bookings.ts';
 import type { AdminBookingCommands } from '../application/admin/commands/bookings.ts';
@@ -128,7 +129,12 @@ import { registerNotificationRoutes } from './routes/mobile/notifications.ts';
 import { registerPreviewRoutes } from './routes/mobile/previews.ts';
 import { registerAircraftRoutes } from './routes/mobile/aircraft.ts';
 import { registerOrderRoutes } from './routes/mobile/orders.ts';
+import { registerLiveRoute } from './routes/mobile/live.ts';
+import { registerAdminLiveRoute } from './routes/admin/live.ts';
+import { LIVE_TIMING, type LiveTiming } from './routes/common/liveConnection.ts';
+import type { LivePort } from '../application/common/ports.ts';
 import { registerAdminMeWatchRoutes } from './routes/admin/meWatches.ts';
+import { registerAdminMeNotificationRoutes } from './routes/admin/meNotifications.ts';
 import type { AircraftCardQueries } from '../application/common/queries/aircraftCard.ts';
 import type { AircraftWatchCommands } from '../application/common/commands/aircraftWatch.ts';
 import { registerBugReportRoutes } from './routes/mobile/bugReports.ts';
@@ -209,6 +215,17 @@ export interface ServerDeps {
    * otworzyć. Czyta je każda trasa, która oddaje rezerwację, bo każda może oddać zlecenie.
    */
   bookingOrders: BookingOrderQueries;
+  /**
+   * Kanał klubu (4.0.0, `docs/kanal-klubu.md` §3.1) - rejestr połączeń obu wejść
+   * WebSocket. Ten sam obiekt, który komendy znają jako `LiveSignalsPort`: sygnały
+   * i połączenia spotykają się w jednym rejestrze na proces.
+   */
+  live: LivePort;
+  /**
+   * Jedyny `Origin`, z którego panel wolno połączyć z kanałem - origin `PUBLIC_BASE_URL`
+   * (Cross-Site WebSocket Hijacking, `http/routes/admin/live.ts`).
+   */
+  liveOrigin: string;
   /** Grupy klubu do odczytu - adresaci zleceń (telefon) i moduł Piloci (panel). */
   groupQueries: MemberGroupQueries;
   /** Grupy klubu układane w panelu (`accounts.manage`, dziennik akcji). */
@@ -413,6 +430,11 @@ export interface ServerOptions {
    */
   requestLog?: boolean;
   /**
+   * Czasy i limity kanału klubu - WYŁĄCZNIE dla testów, które nie mogą czekać 5 s na
+   * brak `auth` ani 25 s na ping. W produkcji stałe z dokumentu (`LIVE_TIMING`).
+   */
+  liveTiming?: Partial<LiveTiming>;
+  /**
    * Podmiana katalogu buildu panelu - WYŁĄCZNIE dla testów (`adminStatic.test.ts`
    * podstawia katalog tymczasowy). Nieustawiona = wbudowane `admin/dist`
    * (`staticPanel.ts`, §9 architektury frontendu); katalog nieistniejący (dev bez
@@ -497,6 +519,14 @@ export async function buildServer(
     threshold: 1024,
   });
 
+  // KANAŁ KLUBU (4.0.0, `docs/kanal-klubu.md`) - wtyczka WebSocket. `await` z TEGO SAMEGO
+  // powodu, co przy kompresji: wtyczka przejmuje trasy `{ websocket: true }` hookiem
+  // `onRoute`, więc musi stać ZANIM wejścia kanału powstaną. `maxPayload` to limit
+  // ramki od klienta sprawdzany przed parsowaniem - od klienta przychodzi wyłącznie
+  // uwierzytelnienie i podtrzymanie (K2), więc cztery kilobajty są z zapasem.
+  const liveTiming: LiveTiming = { ...LIVE_TIMING, ...options.liveTiming };
+  await app.register(websocket, { options: { maxPayload: liveTiming.maxPayload } });
+
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu
   // ciasteczek (`secret`) - wartością jest podpisany JWT, więc drugi podpis nad
@@ -535,6 +565,7 @@ export async function buildServer(
   registerPreviewRoutes(app, deps.previews, memberGate);
   registerAircraftRoutes(app, deps.aircraftCards, deps.aircraftWatch, deps.bookingOrders, memberGate);
   registerOrderRoutes(app, deps.orders, deps.groupQueries, deps.bookingOrders, memberGate);
+  registerLiveRoute(app, deps.live, memberGate, liveTiming, deps.clock);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, memberGate);
 
   // Panel administracyjny - trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
@@ -553,9 +584,12 @@ export async function buildServer(
   };
 
   registerAdminAuthRoutes(app, deps.auth, deps.passwords, deps.googleWebClientId, gate);
+  registerAdminLiveRoute(app, deps.live, gate, deps.liveOrigin, liveTiming, deps.clock);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.auth, gate);
   registerAdminMePasswordRoutes(app, deps.passwords, gate);
   registerAdminMeWatchRoutes(app, deps.aircraftCards, deps.aircraftWatch, gate);
+  // Skrzynka panelu (4.0.0, K7) - ta sama skrzynka i ten sam kształt, co w telefonie.
+  registerAdminMeNotificationRoutes(app, deps.notifications, deps.calendar, gate);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
@@ -619,7 +653,7 @@ export async function buildServer(
   // w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji. Panel idzie
   // PIERWSZY, bo to jego rejestracja dekoruje `reply.sendFile`, a strona ma
   // `decorateReply: false` - druga dekoracja tej samej nazwy przewraca start.
-  registerAdminPanelStatic(app, options.adminDistDir);
+  registerAdminPanelStatic(app, options.adminDistDir, deps.liveOrigin);
   registerPublicSiteStatic(app, options.siteDistDir);
 
   app.get('/health', async () => ({ ok: true }));

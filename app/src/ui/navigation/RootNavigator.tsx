@@ -27,11 +27,14 @@ import {
   createNavigationContainerRef,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
+import type { NavigatorScreenParams } from '@react-navigation/native';
 
 import { useTheme } from '../theme';
 import { setBugRoute } from '../components/bug/bugReporter';
 import { usePushNavigation } from '../hooks/usePushNavigation';
+import { activeRoute, type ScreenRoute } from './activeRoute';
+import { BannerHost } from './BannerHost';
+import { openTarget } from './openTarget';
 import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightTaskScreen } from '../screens/PreflightTaskScreen';
@@ -138,28 +141,12 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * Uchwyt nawigatora dla wejść SPOZA drzewa ekranów - dziś jedynego: tapnięcia
- * w powiadomienie push (epik R-J, `hooks/usePushNavigation.ts`). Ekrany dalej nawigują
- * własnym `navigation`; uchwyt istnieje dla zdarzeń, które nie mają ekranu.
+ * Uchwyt nawigatora dla wejść SPOZA drzewa ekranów: tapnięcia w powiadomienie push
+ * (epik R-J, `hooks/usePushNavigation.ts`) i tapnięcia w baner w aplikacji (kanał klubu
+ * 4.0.0, `BannerHost`). Ekrany dalej nawigują własnym `navigation`; uchwyt istnieje dla
+ * zdarzeń, które nie mają ekranu.
  */
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
-
-/**
- * Nazwa trasy, na której pilot NAPRAWDĘ stoi.
- *
- * Od zakładek (3.0.0) czubek stosu bywa nawigatorem, nie ekranem: `state.routes[i].name`
- * oddawało wtedy „Tabs" dla Pulpitu, Kalendarza i Historii naraz - czyli zgłoszenie
- * błędu (issue #87) przestawało mówić, KTÓRY ekran pilot miał przed sobą. Schodzimy
- * więc do najgłębszego stanu; `state` zagnieżdżonego nawigatora ma ten sam kształt.
- */
-function activeRoute(state: NavigationState | undefined): string | null {
-  let route = state?.routes[state.index ?? 0];
-  while (route?.state != null) {
-    const child = route.state as NavigationState;
-    route = child.routes[child.index ?? 0];
-  }
-  return route?.name ?? null;
-}
 
 export function RootNavigator({
   initialRouteName = 'Tabs',
@@ -177,6 +164,10 @@ export function RootNavigator({
   const [navReady, setNavReady] = useState(false);
   usePushNavigation(navigationRef, navReady);
 
+  // Ekran, na którym pilot stoi - dla banera w aplikacji (nie staje na ekranie rzeczy,
+  // której dotyczy) i dla kontekstu zgłoszenia błędu.
+  const [route, setRoute] = useState<ScreenRoute | null>(null);
+
   // Motyw nawigacji budujemy z naszych tokenów, żeby tła ekranów i przejść nie
   // migały kolorem spoza systemu (zasada: kolory wyłącznie z tokenów).
   const navTheme = {
@@ -192,51 +183,61 @@ export function RootNavigator({
   };
 
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      theme={navTheme}
-      /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87). Tutaj, a nie
-         w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter istnieje,
-         a nowy ekran dostaje kontekst w chwili dopisania do stosu. */
-      onStateChange={(state) => setBugRoute(activeRoute(state))}
-      onReady={() => {
-        setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName);
-        setNavReady(true);
-      }}
-    >
-      <Stack.Navigator
-        initialRouteName={initialRouteName}
-        screenOptions={{
-          // Bez natywnego paska nawigacji. W mockupach ekran idzie od status bara prosto
-          // do własnego nagłówka (`.app-header`) - pasek systemowy dokładałby drugi tytuł,
-          // drugą strzałkę wstecz i ~56 px wysokości, których design nie przewiduje.
-          // Powrót między krokami prowadzi `ScreenHeader onBack`; sprzętowy „wstecz"
-          // Androida działa niezależnie od tego ustawienia.
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.bg },
+    <>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={navTheme}
+        /* Bieżąca trasa dla kontekstu zgłoszenia błędu (issue #87) i dla banera w aplikacji.
+           Tutaj, a nie w ekranach: dzięki temu żaden ekran nie musi wiedzieć, że reporter
+           i baner istnieją, a nowy ekran dostaje oba w chwili dopisania do stosu. */
+        onStateChange={(state) => {
+          const leaf = activeRoute(state);
+          setBugRoute(leaf?.name ?? null);
+          setRoute(leaf);
+        }}
+        onReady={() => {
+          setBugRoute(initialRouteName === 'Tabs' ? 'Dashboard' : initialRouteName);
+          setRoute(activeRoute(navigationRef.getRootState()));
+          setNavReady(true);
         }}
       >
-        <Stack.Screen name="Tabs" component={TabsNavigator} />
-        <Stack.Screen name="Cockpit" component={CockpitScreen} />
-        <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
-        <Stack.Screen name="PreflightTask" component={PreflightTaskScreen} />
-        <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />
-        <Stack.Screen name="CockpitReadonly" component={CockpitReadonlyScreen} />
-        <Stack.Screen name="Refuel" component={RefuelScreen} />
-        <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
-        <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
-        <Stack.Screen name="NewBooking" component={NewBookingScreen} />
-        <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} />
-        <Stack.Screen name="Decision" component={DecisionScreen} />
-        <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
-        <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
-        <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
-        <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
-        <Stack.Screen name="Stats" component={StatsScreen} />
-        <Stack.Screen name="Track" component={TrackScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+        <Stack.Navigator
+          initialRouteName={initialRouteName}
+          screenOptions={{
+            // Bez natywnego paska nawigacji. W mockupach ekran idzie od status bara prosto
+            // do własnego nagłówka (`.app-header`) - pasek systemowy dokładałby drugi tytuł,
+            // drugą strzałkę wstecz i ~56 px wysokości, których design nie przewiduje.
+            // Powrót między krokami prowadzi `ScreenHeader onBack`; sprzętowy „wstecz"
+            // Androida działa niezależnie od tego ustawienia.
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.colors.bg },
+          }}
+        >
+          <Stack.Screen name="Tabs" component={TabsNavigator} />
+          <Stack.Screen name="Cockpit" component={CockpitScreen} />
+          <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
+          <Stack.Screen name="PreflightTask" component={PreflightTaskScreen} />
+          <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />
+          <Stack.Screen name="CockpitReadonly" component={CockpitReadonlyScreen} />
+          <Stack.Screen name="Refuel" component={RefuelScreen} />
+          <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
+          <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
+          <Stack.Screen name="NewBooking" component={NewBookingScreen} />
+          <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
+          <Stack.Screen name="Decision" component={DecisionScreen} />
+          <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
+          <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
+          <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
+          <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
+          <Stack.Screen name="Stats" component={StatsScreen} />
+          <Stack.Screen name="Track" component={TrackScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      {/* Baner w aplikacji (kanał klubu 4.0.0, K5) - NAD nawigacją, czyli nad każdym
+          ekranem; arkusze żyją we własnych oknach i zostają nad nim. */}
+      <BannerHost route={route} onOpen={(target) => openTarget(navigationRef, target)} />
+    </>
   );
 }

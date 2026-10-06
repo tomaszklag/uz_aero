@@ -25,6 +25,7 @@ import { OrderCommands, type OrderDraft } from '../src/application/common/comman
 import { OrderResponseCommands } from '../src/application/common/commands/orderResponses.ts';
 import { ThreadCommands } from '../src/application/common/commands/threads.ts';
 import { AircraftWatching } from '../src/application/common/notify/aircraftWatching.ts';
+import { ClubSignals } from '../src/application/common/notify/clubSignals.ts';
 import { Notifier } from '../src/application/common/notify/notifier.ts';
 import { OrderSignals } from '../src/application/common/notify/orderSignals.ts';
 import type { OrderActor } from '../src/application/common/orderAccess.ts';
@@ -49,6 +50,7 @@ import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { PgThreadMessagesRepo } from '../src/infrastructure/pg/common/threadMessagesRepo.ts';
 import { PgThreadsRepo } from '../src/infrastructure/pg/common/threadsRepo.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { FakeLiveSignals } from './fakeLiveSignals.ts';
 import { FakePush } from './fakePush.ts';
@@ -129,12 +131,24 @@ export async function orderWorld(): Promise<OrderWorld> {
   const aircraft = new PgAircraftConfigRepo();
   const threadsRepo = new PgThreadsRepo();
   const messages = new PgThreadMessagesRepo();
-  const notifier = new Notifier(db, new PgNotificationsRepo(), new PgPushTokensRepo(clock), push, randomUUID);
+  const clubs = new PgClubSettingsRepo();
+  // Pusty rejestr połączeń: testy zleceń pytają o zapis i o budzik, nie o ramki kanału,
+  // więc nikt nie jest połączony i każda wiadomość idzie pushem, jak przed 4.0.0.
+  const notifier = new Notifier(
+    db,
+    new PgNotificationsRepo(),
+    new PgPushTokensRepo(clock),
+    push,
+    new LiveRegistry(),
+    clubs,
+    new PgSessionsProjection(),
+    randomUUID,
+  );
   const watching = new AircraftWatching(new PgAircraftWatchesRepo(), aircraft, notifier);
   const records = new OrderRecords(ordersRepo, bookings, recipients);
   const seating = new OrderSeating(ordersRepo, bookings);
-  const signals = new OrderSignals(live);
-  const clubs = new PgClubSettingsRepo();
+  const clubSignals = new ClubSignals(live, db, clubs, new PgSessionsProjection());
+  const signals = new OrderSignals(live, clubSignals);
   const orderClock = new OrderClock(db, records, ordersRepo, bookings, changes, clubs, notifier, signals, randomUUID, clock, watching);
 
   return {
@@ -155,7 +169,7 @@ export async function orderWorld(): Promise<OrderWorld> {
     threadQueries: new ThreadQueries(db, records, threadsRepo, messages),
     groups: new MemberGroupCommands(new AuditedWrite(db, new PgAdminAuditRepo(), clock), groupsRepo, members, clock),
     groupQueries: new MemberGroupQueries(db, groupsRepo),
-    clockJob: new BookingClockJob(db, bookings, new PgSessionsProjection(), clock, notifier, watching, orderClock),
+    clockJob: new BookingClockJob(db, bookings, new PgSessionsProjection(), clock, notifier, clubSignals, watching, orderClock),
   };
 }
 

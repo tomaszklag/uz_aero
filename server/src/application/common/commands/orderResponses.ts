@@ -21,7 +21,7 @@ import { answerOutcome, refuseAnswer, refuseWithdraw, type AnswerOutcome } from 
 import { filledAudience } from '../../../domain/orderAudiences.ts';
 import { crewSeatOf, type OrderAnswer, type OrderCrew } from '../../../domain/orders.ts';
 import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import { orderAnswered, orderFilled, orderWithdrawn } from '../notify/orderNotices.ts';
 import type { OrderSignals } from '../notify/orderSignals.ts';
 import {
@@ -83,7 +83,7 @@ export class OrderResponseCommands {
     const firstInRevision = row.seenRevision !== loaded.order.revision;
     const editedAt = loaded.order.editedAt;
     const firstAfterEdit = editedAt != null && (row.lastSeenAt == null || row.lastSeenAt < editedAt);
-    if (firstInRevision || firstAfterEdit) this.signals.changed(orgId, loaded);
+    if (firstInRevision || firstAfterEdit) this.signals.seen(orgId, loaded);
     return { ok: true };
   }
 
@@ -112,14 +112,14 @@ export class OrderResponseCommands {
 
         const outcome = answerOutcome(view, me, input.answer);
         // Zlecenie zamknięte albo odebrane - nie ma czego zapisać, jest tylko odpowiedź.
-        if (outcome.kind === 'closed') return { outcome, loaded, notices: [] as NotificationDraft[], changed: false };
+        if (outcome.kind === 'closed') return { outcome, loaded, notices: [] as RecordedNotice[], changed: false };
 
         // Powtórzona ta sama odpowiedź (słabe łącze, drugie tapnięcie) - bez zapisu i bez
         // drugiej wiadomości do autora.
         const repeated = row.answeredRevision === revision && row.answer === input.answer && row.answerReason === reason;
         const seatedAlready = crewSeatOf(view.crew, actor.pilotId) != null;
         if (repeated && (outcome.kind !== 'assigned' || seatedAlready)) {
-          return { outcome, loaded, notices: [] as NotificationDraft[], changed: false };
+          return { outcome, loaded, notices: [] as RecordedNotice[], changed: false };
         }
 
         await this.recipients.answer(tx, orgId, id, actor.pilotId, { answer: input.answer, reason, revision }, now);
@@ -151,8 +151,7 @@ export class OrderResponseCommands {
             }),
           );
         }
-        await this.notifier.record(tx, orgId, notices, now);
-        return { outcome, loaded: fresh, notices, changed: true };
+        return { outcome, loaded: fresh, notices: await this.notifier.record(tx, orgId, notices, now), changed: true };
       }),
     );
 
@@ -160,7 +159,7 @@ export class OrderResponseCommands {
     if ('refusal' in written) return { ok: false, refusal: written.refusal };
     if (written.changed) {
       await this.notifier.wake(orgId, written.notices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
     }
     return { ok: true, outcome: written.outcome, loaded: written.loaded };
   }
@@ -197,13 +196,13 @@ export class OrderResponseCommands {
           fresh.order.createdBy === actor.pilotId
             ? []
             : [orderWithdrawn(noticeOrderOf(fresh.order, fresh.booking), fresh.order.createdBy, { pilotId: actor.pilotId, seat, reason })];
-        await this.notifier.record(tx, orgId, notices, now);
+        const recorded = await this.notifier.record(tx, orgId, notices, now);
         const reread = (await this.records.read(tx, orgId, id)) ?? fresh;
-        return { loaded: reread, notices };
+        return { loaded: reread, notices: recorded };
       });
       if (written == null) return null;
       await this.notifier.wake(orgId, written.notices);
-      this.signals.changed(orgId, written.loaded);
+      await this.signals.changed(orgId, written.loaded);
       return { ok: true as const, loaded: written.loaded, created: false };
     });
   }

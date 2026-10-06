@@ -1,8 +1,10 @@
 /**
- * Ninerdeck (serwer) - SKRZYNKA PILOTA (milestone 3.1.0, issue #164;
- * `docs/rezerwacje.md` §12.1).
+ * Ninerdeck (serwer) - SKRZYNKA POWIADOMIEŃ (milestone 3.1.0, issue #164;
+ * `docs/rezerwacje.md` §12.1) - telefon i, od 4.0.0, panel (K7, `docs/kanal-klubu.md`).
  *
  * Cienka warstwa nad portem: strona listy + licznik nieprzeczytanych JEDNYM żądaniem.
+ * Skrzynka jest JEDNA dla osoby w klubie: panel i telefon czytają te same wiersze,
+ * więc wiadomość przeczytana na jednej powierzchni jest przeczytana na obu.
  *
  * ══ LICZNIK JEDZIE RAZEM Z LISTĄ, NIE OSOBNĄ TRASĄ ══
  * Zapala się przy dzwonku na Pulpicie, a telefon pyta o skrzynkę przy każdym wejściu -
@@ -25,7 +27,7 @@ import type {
   NotificationsPort,
   PushTokensPort,
   Clock,
-} from '../../common/ports.ts';
+} from '../ports.ts';
 
 export interface InboxView {
   items: NotificationRecord[];

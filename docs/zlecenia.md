@@ -203,7 +203,9 @@ Szósta tura - decyzje wąskie z §21 i stany z przeglądu makiet (2026-09-28, p
 44. **Cisza w kokpicie**: dopóki pilot trzyma samolot, powiadomienia - WSZYSTKIE rodzaje,
     także rezerwacji i obserwowania - trafiają na listę systemową i do skrzynki bez banera
     i bez dźwięku (§11, §16). Łącze kanału klubu jest wtedy rozłączone
-    (`docs/kanal-klubu.md` K6).
+    (`docs/kanal-klubu.md` K6). *2026-10-06: obejmuje też drugiego pilota, a wycisza
+    serwer - cichym kanałem Androida, bo w locie ekran gaśnie i aplikacja w tle nie ma jak
+    wyciszyć się sama (`docs/kanal-klubu.md` §13).*
 45. **Ostrzeżenie „Zlecenie bez kompletu załogi" o 18:00 czasu klubu w przeddzień
     terminu**; zlecenie wysłane później ostrzeżenia nie dostaje (odwraca „3 h" z pkt 15,
     §5.5).
@@ -801,7 +803,8 @@ otwartej rozmowy, pkt 43). Dziś niesie `bookingId` i `aircraftId`.
 - **Droga powiadomienia** (`docs/kanal-klubu.md` K4–K6): urządzenie połączone dostaje je
   kanałem i baner w aplikacji - chyba że dotyczy otwartego ekranu (pkt 43); push idzie
   wyłącznie na urządzenia bez połączenia; w kokpicie łącze jest rozłączone, a push
-  przychodzi po cichu (pkt 44).
+  przychodzi po cichu - kanałem, który serwer wybiera dla dowódcy i drugiego pilota
+  operacji w toku (pkt 44).
 - `order_filled` i `order_removed` mają ten sam tytuł, bo adresat pyta o to samo - czy
   zlecenie jest dla niego aktualne. Skrzynka różni je treścią („fotel obsadzony" /
   „zlecenie cofnięte"), bez nazwisk (pkt 18).
@@ -987,7 +990,7 @@ Rezerwacja z pustym fotelem łamie założenie „lot ma pilota" w tych miejscac
 11. kanał klubu (`docs/kanal-klubu.md`): tematy zleceń (`order:<id>`, `orders`) i ramki
     rozmów (`message`, `read`) ogłaszane po commicie; reguła banera w aplikacji (pkt 43)
     i cisza w kokpicie (pkt 44, łącze rozłączone) obejmują WSZYSTKIE rodzaje powiadomień -
-    decyzje jako czyste funkcje z testem.
+    z testami (reguła banera jako czysta funkcja w aplikacji, cisza w rozdzielniku serwera).
 
 **Stan po Z-B (2026-09-30)** - serwer zamknął swoją część listy, każdy punkt z testem
 (`test/orderBookings.test.ts`, zegar w `orderRepos.test.ts`, sygnały przy komendach).
@@ -1005,7 +1008,7 @@ Klienci doganiają w Z-C i Z-D:
 | 8 | pełny kształt dla drugiego pilota | `nextBooking.ts` z oboma fotelami (Z-C) |
 | 9 | odwołanie z kalendarza panelu = odwołanie zlecenia, bez dziennika akcji | przycisk w K2c (Z-D) |
 | 10 | test: rezerwacja zlecenia `confirmed`, poza kolejką i poza `reconcile` | - |
-| 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie (Z-E), baner i cisza w kokpicie (Z-C) |
+| 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie i baner w aplikacji - wykonane w Z-E (`docs/kanal-klubu.md` §13); cisza w kokpicie - wykonana w Z-E (serwer wycisza załogę operacji w toku); ekrany zlecenia i rozmowy w regule banera (Z-C) |
 
 Znacznik zmian kalendarza (ETag okna) niesie od Z-B DWA stemple - rezerwacji i zleceń:
 przestawienie fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a pole

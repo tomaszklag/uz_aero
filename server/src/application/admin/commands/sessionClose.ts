@@ -65,7 +65,8 @@ import type {
 } from '../../common/ports.ts';
 import { aircraftReleased } from '../../common/notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
+import type { RecordedNotice } from '../../common/notify/notifier.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -110,8 +111,8 @@ interface Applied {
   voided: Event | null;
   state: SessionState;
   warnings: RuleViolation[];
-  /** Wiadomości do obserwujących maszynę (3.2.0) - budzik dzwoni po commicie. */
-  notices: NotificationDraft[];
+  /** Zapisane wiadomości do obserwujących maszynę (3.2.0) - budzik dzwoni po commicie. */
+  notices: RecordedNotice[];
 }
 
 export class AdminSessionCloseCommands {
@@ -123,6 +124,8 @@ export class AdminSessionCloseCommands {
     private readonly exporter: DayExporter,
     private readonly clock: Clock,
     private readonly newId: () => string,
+    /** Kanał klubu (4.0.0): dziennik, karta samolotu i „Do sprawdzenia" na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205; §5.4): zakończenie operacji z panelu
      * rodzi obserwującym „zdana" z `closedBy: 'admin'` i powodem, bez odczytów. Bez tego
@@ -189,7 +192,7 @@ export class AdminSessionCloseCommands {
 
         // Obserwujący maszynę: „zdana" z ręki administratora, bez sprawców (administrator,
         // PIC i Dual operacji), tą samą transakcją, co zapis i ślad audytu.
-        let notices: NotificationDraft[] = [];
+        let notices: RecordedNotice[] = [];
         if (this.watching != null) {
           const audience = await this.watching.audience(tx, orgId, row.aircraftId, [
             actor.pilotId,
@@ -197,7 +200,7 @@ export class AdminSessionCloseCommands {
             row.dualId,
           ]);
           if (audience != null) {
-            notices = aircraftReleased(audience, {
+            const drafts = aircraftReleased(audience, {
               sessionUuid: input.sessionUuid,
               aircraftId: row.aircraftId,
               pilotId: row.picId,
@@ -213,7 +216,7 @@ export class AdminSessionCloseCommands {
               closedBy: 'admin',
               reason: input.reason,
             });
-            await this.watching.record(tx, orgId, notices, at);
+            notices = await this.watching.record(tx, orgId, drafts, at);
           }
         }
 
@@ -262,9 +265,20 @@ export class AdminSessionCloseCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(actor.orgId, input.sessionUuid),
+        reexport: await this.afterCommit(actor.orgId, input.sessionUuid),
       },
     };
+  }
+
+/**
+   * PO COMMICIE: karta dnia, potem kanał klubu - dziennik, karta samolotu i „Do
+   * sprawdzenia" mają zobaczyć stan łącznie z nową rewizją karty.
+   */
+  private async afterCommit(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
+    const outcome = await this.reexport(orgId, sessionUuid);
+    await this.signals.operations(orgId, [sessionUuid]);
+    this.signals.attention(orgId);
+    return outcome;
   }
 
   /** Karta doby PO COMMICIE - jak przy unieważnieniu: awaria arkusza nie cofa decyzji. */

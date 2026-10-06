@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { uniqueConflictField } from '../src/application/admin/commands/pilots.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
+import { LiveAccess } from '../src/application/common/live/liveAccess.ts';
 import type { PilotsAdminPort } from '../src/application/admin/ports.ts';
 import { CLUB_CAPABILITIES } from '../src/domain/roles.ts';
 import type { Database, Queryable } from '../src/application/common/ports.ts';
@@ -31,6 +32,7 @@ import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgLoginSessions } from '../src/infrastructure/pg/common/loginSessionsRepo.ts';
+import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, TEST_PILOTS, TEST_PILOTS_B } from './testWorld.ts';
@@ -169,6 +171,7 @@ function pilotCommands(
     new PgLoginSessions(harness.db, harness.clock),
     randomUUID,
     harness.clock,
+    new LiveAccess(new LiveRegistry()),
   );
 }
 

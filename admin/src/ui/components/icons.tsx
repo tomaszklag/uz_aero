@@ -417,3 +417,59 @@ export function PreviewIcon({ size = 12 }: IconProps) {
     </Stroke>
   );
 }
+
+/*
+ * ══ SKRZYNKA POWIADOMIEŃ (4.0.0, K7) - ścieżki 1:1 z makiety `design/panel/powiadomienia.html` ══
+ * Ikona wiersza niesie RODZAJ wiadomości; ton (kolor ramki) dokłada `.inbox-icon.ok/ask/…`.
+ */
+
+/** Dzwonek - wejście w skrzynkę w pasku górnym i ikona pustej skrzynki. */
+export function BellIcon({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+/** Dymek - wiadomość w rozmowie o zleceniu. */
+export function ChatIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 4h16v12H5.2L4 17.5V4Z" />
+    </svg>
+  );
+}
+
+/** Osoba z ptaszkiem - zgoda na zlecenie, lot przydzielony. */
+export function PersonCheckIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
+  );
+}
+
+/** Osoba z krzyżykiem - odmowa, rezygnacja, cofnięty przydział. */
+export function PersonXIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <line x1="17" y1="9" x2="21" y2="13" />
+      <line x1="21" y1="9" x2="17" y2="13" />
+    </svg>
+  );
+}
+
+/** Ołówek wiersza skrzynki - zlecenie edytowane cudzą ręką. */
+export function PencilIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4Z" />
+    </svg>
+  );
+}

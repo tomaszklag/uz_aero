@@ -46,10 +46,10 @@ export function useAttention(enabled = true) {
     queryKey: keys.attention,
     queryFn: loadAttention,
     enabled,
-    // Plakietka w kolumnie ma mówić o TERAZ, ale nie kosztem żądania przy każdej
-    // zmianie ekranu: minuta świeżości i odświeżenie w tle, gdy karta jest widoczna.
+    // Plakietka w kolumnie mówi o TERAZ, bo odświeża ją kanał klubu (temat `attention`,
+    // K1), a wznowione łącze dociąga wszystko. Minuta świeżości zostaje, żeby zmiana
+    // ekranu nie kosztowała żądania - odpytywania co minutę już nie ma.
     staleTime: 60_000,
-    refetchInterval: 60_000,
   });
 }
 

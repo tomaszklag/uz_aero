@@ -104,6 +104,19 @@ describe('pushData - dane budzika (#228)', () => {
     expect(data).toEqual({ kind: 'order_changed', orgId: ORG, bookingId: 'b-1', aircraftId: 'SP-AXA', orderId: 'o-1' });
   });
 
+  it('budzik do ZAŁOGI operacji w toku niesie `quiet` - telefon nie stawia nad nim banera (cisza w kokpicie)', () => {
+    const draft = { kind: 'approval_requested' as const, payload: { bookingId: 'b-1', aircraftId: 'SP-AXA' } };
+    expect(pushData(ORG, draft, true)).toEqual({
+      kind: 'approval_requested',
+      orgId: ORG,
+      bookingId: 'b-1',
+      aircraftId: 'SP-AXA',
+      quiet: true,
+    });
+    // Poza załogą flagi NIE MA - klucz istnieje tylko z wartością, jak identyfikatory.
+    expect(pushData(ORG, draft)).not.toHaveProperty('quiet');
+  });
+
   it('klucze wyniku są ZAWSZE podzbiorem sześciu dozwolonych', () => {
     const data = pushData(ORG, {
       kind: 'booking_approved',

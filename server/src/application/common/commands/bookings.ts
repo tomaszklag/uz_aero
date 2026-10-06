@@ -33,8 +33,8 @@ import type { ApprovalFlow } from './approvals.ts';
 import type { OrderBookingCommands } from './orderBookings.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type {
   AircraftConfigPort,
   BookingPatch,
@@ -77,6 +77,8 @@ export class BookingCommands {
      * rezygnacją z fotela albo odwołaniem zlecenia - decyduje, kim jest odwołujący.
      */
     private readonly orderBookings: OrderBookingCommands,
+    /** Kanał klubu (4.0.0): termin na osi kalendarza i na karcie samolotu odświeża się na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Odwołanie albo
      * przesunięcie terminu, o którym JUŻ przypomniano obserwującym, rodzi „odwołany lot"
@@ -129,20 +131,26 @@ export class BookingCommands {
       note: draft.note,
       createdBy: pilotId,
     };
+    let requested: RecordedNotice[] = [];
     const write = await this.db.transaction(async (tx) => {
       const result = await this.bookings.insert(tx, orgId, row);
       // Pominięcia kroków i prośby o zgodę idą TĄ SAMĄ transakcją, co rezerwacja -
       // inaczej prośba istnieje, a nikt o niej nie wie, albo odwrotnie (§12.1).
       // Tylko przy wierszu NOWYM: powtórzony zapis (telefon ponowił przy słabym łączu)
       // nie ma prawa wysłać drugiej prośby o tę samą zgodę.
-      if (result.ok && result.created) await this.approvals.recordPlan(tx, orgId, draft.id, plan);
+      if (result.ok && result.created) {
+        requested = await this.approvals.recordPlan(tx, orgId, draft.id, plan);
+      }
       return result;
     });
     if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
 
     // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
     // awaria ma kosztować ciszę w telefonie, a nie utraconą rezerwację.
-    if (write.created) await this.notifier.wake(orgId, plan.notices);
+    if (write.created) {
+      await this.notifier.wake(orgId, requested);
+      await this.signals.booking(orgId, write.booking);
+    }
     return write;
   }
 
@@ -198,7 +206,8 @@ export class BookingCommands {
     const watching = this.watching;
     const announce =
       watching != null && current.remindedAt != null && startsAt !== current.startsAt;
-    let watchNotices: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let requested: RecordedNotice[] = [];
 
     const write = await this.db.transaction(async (tx) => {
       const result = await this.bookings.update(tx, orgId, id, patch);
@@ -206,13 +215,13 @@ export class BookingCommands {
       if (announce && watching != null) {
         const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
         if (audience != null) {
-          watchNotices = aircraftFlightCancelled(audience, current, { startsAt, endsAt });
-          await watching.record(tx, orgId, watchNotices, this.clock.now());
+          const drafts = aircraftFlightCancelled(audience, current, { startsAt, endsAt });
+          watchNotices = await watching.record(tx, orgId, drafts, this.clock.now());
         }
       }
       if (plan == null || !restart) return result;
 
-      await this.approvals.restart(tx, orgId, id, plan);
+      requested = await this.approvals.restart(tx, orgId, id, plan);
       // Stan wiersza idzie ZA planem: czeka, gdy jest o co pytać; potwierdza się od
       // razu, gdy rezerwujący stoi na każdym kroku. `null` = ktoś zamknął ją w międzyczasie.
       const row =
@@ -225,8 +234,10 @@ export class BookingCommands {
     if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
 
     // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
-    if (plan != null && restart) await this.notifier.wake(orgId, plan.notices);
+    if (requested.length > 0) await this.notifier.wake(orgId, requested);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    // Przesunięcie odświeża OBIE doby i - przy zmianie maszyny - obie karty samolotu.
+    await this.signals.booking(orgId, write.booking, current);
     return write;
   }
 
@@ -259,8 +270,8 @@ export class BookingCommands {
     if (refusal != null) return { ok: false, refusal };
 
     const watching = this.watching;
-    let watchNotices: NotificationDraft[] = [];
-    let withdrawn: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let withdrawn: RecordedNotice[] = [];
     const closed = await this.db.transaction(async (tx) => {
       const row = await this.bookings.close(tx, orgId, id, {
         status: 'cancelled',
@@ -277,8 +288,8 @@ export class BookingCommands {
       if (current.remindedAt == null || watching == null) return row;
       const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
       if (audience != null) {
-        watchNotices = aircraftFlightCancelled(audience, current, null);
-        await watching.record(tx, orgId, watchNotices, this.clock.now());
+        const drafts = aircraftFlightCancelled(audience, current, null);
+        watchNotices = await watching.record(tx, orgId, drafts, this.clock.now());
       }
       return row;
     });
@@ -287,6 +298,7 @@ export class BookingCommands {
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
     if (withdrawn.length > 0) await this.notifier.wake(orgId, withdrawn);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    await this.signals.booking(orgId, closed);
     return { ok: true, booking: closed, created: false };
   }
 }

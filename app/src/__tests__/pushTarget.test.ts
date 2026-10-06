@@ -12,7 +12,7 @@ import {
   optInOnDashboard,
   PushOptInGate,
 } from '../ui/screens/logic/pushOptIn';
-import { pushTarget } from '../ui/screens/logic/pushTarget';
+import { isActiveClubPush, pushTarget } from '../ui/screens/logic/pushTarget';
 
 describe('dokąd prowadzi tapnięcie', () => {
   it('prośba o zgodę otwiera EKRAN DECYZJI tej rezerwacji', () => {
@@ -53,6 +53,18 @@ describe('dokąd prowadzi tapnięcie', () => {
     // Bez klubu w danych (serwer sprzed 3.2.0) i bez klubu aktywnego nie ma czego porównać.
     expect(pushTarget({ kind: 'aircraft_engine_started', aircraftId: 'a1' }, 'club-a').screen).toBe('Aircraft');
     expect(pushTarget(data, null).screen).toBe('Aircraft');
+  });
+
+  it('push klubu AKTYWNEGO odświeża skrzynkę i dzwonek; z innego klubu - nie (kanał klubu 4.0.0)', () => {
+    // Push na wierzchu znaczy chwilę bez łącza: skrzynka i dzwonek dostają ten sam sygnał,
+    // co od ramki. Wiadomość z innego klubu do nich nie należy - liczą klub aktywny.
+    expect(isActiveClubPush({ kind: 'approval_requested', orgId: 'club-a' }, 'club-a')).toBe(true);
+    expect(isActiveClubPush({ kind: 'approval_requested', orgId: 'club-b' }, 'club-a')).toBe(false);
+    // Serwer sprzed 3.2.0 klubu w budziku nie wozi - wtedy był tylko klub aktywny.
+    expect(isActiveClubPush({ kind: 'approval_requested' }, 'club-a')).toBe(true);
+    // Bez klubu aktywnego nie ma skrzynki, którą dałoby się odświeżyć; śmieci - nic.
+    expect(isActiveClubPush({ kind: 'approval_requested', orgId: 'club-a' }, null)).toBe(false);
+    expect(isActiveClubPush(null, 'club-a')).toBe(false);
   });
 
   it('rodzaj nieznany, brak identyfikatora albo śmieci - SKRZYNKA, nigdy wywrotka', () => {

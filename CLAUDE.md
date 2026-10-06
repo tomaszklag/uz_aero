@@ -5208,8 +5208,10 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
   NIE MA
 - **CISZA W KOKPICIE** (pkt 44): dopóki pilot trzyma samolot, WSZYSTKIE powiadomienia
   (także rezerwacji i obserwowania) idą bez banera i bez dźwięku - na listę systemową
-  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem. Decyzja
-  jako czysta funkcja z testem, obsługa w `expoNotifications.ts`
+  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem.
+  **Rozstrzygnięte 2026-10-06**: wycisza SERWER - cichy kanał Androida `quiet` dla załogi
+  operacji w toku (dowódcy I drugiego pilota, w dowolnym klubie), bo w locie ekran gaśnie,
+  a aplikacja w tle nie ma jak wyciszyć się sama (sekcja KK-C niżej)
 - **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
   `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
 - **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - zapisy
@@ -5299,7 +5301,8 @@ pollingu na każdej karcie". Dokument decyzji: **`docs/kanal-klubu.md`** (K1–K
   jeden wygląd: ramka `notification` i push odebrany na wierzchu (inny klub - z nazwą klubu,
   tapnięcie → skrzynka z instrukcją przełączenia; na liście systemowej zostaje po cichu)
 - **K6 W KOKPICIE ŁĄCZE SIĘ ROZŁĄCZA**: push przychodzi po cichu na listę systemową i do
-  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości
+  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości. Cichy kanał
+  wybiera serwer dla dowódcy i drugiego pilota operacji w toku (2026-10-06, sekcja KK-C)
 - **K7 PANEL DOSTAJE DZWONEK I SKRZYNKĘ** (makieta `design/panel/powiadomienia.html`):
   dzwonek w pasku górnym KAŻDEJ ramy klubu, przed nazwiskiem (rama platformy - bez), licznik
   tylko przy nowych; skrzynka w szufladzie BEZ własnego adresu (jest osobista), te same
@@ -5352,9 +5355,10 @@ obowiązujące odtąd:
 - **WYJĄTEK W `AuditedWrite` WYCOFUJE WPIS** - to wzorzec na „ten zapis nie trafia do
   dziennika akcji" (`Repeated` przy ponowionym założeniu grupy, `OrderBookingCancelled`
   przy odwołaniu zlecenia z kalendarza); zwrócona wartość tego nie umie
-- **KANAŁ KLUBU JEST PORTEM Z ATRAPĄ** (`SilentLiveSignals` w produkcji do Z-E #246,
-  `FakeLiveSignals` w testach) - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
-  `message`/`read` już teraz
+- **KANAŁ KLUBU JEST PORTEM** - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
+  `message`/`read` przez `OrderSignals`; od KK-B (#246) w produkcji prawdziwy rejestr
+  połączeń, w testach `FakeLiveSignals`, która zapisuje i przekazuje dalej (sekcja
+  „Kanał klubu 4.0.0 - epik KK-B" niżej)
 - **IZOLACJA ZLECEŃ MA DWIE WARSTWY** (zlecenie i jego rezerwacja czytane osobno
   z klubem) - sonda regresji musi łamać obie; sondy zleceń w `tenantIsolation.test.ts`
   biorą świeży token PWI w Alfie (`pwiInAlfa`), bo sonda „wyloguj wszędzie" zrywa jej
@@ -5363,6 +5367,130 @@ obowiązujące odtąd:
   (`serverPort.ts`) i panelu (`bookingRefusal.ts`), pole `order` w `CalendarBooking`
   i etykiecie paska, `nextBooking.ts` z oboma fotelami, „REZYGNUJĘ" zamiast „ODWOŁAJ"
   na 23F - tabela w `docs/zlecenia.md` §16
+
+## Kanał klubu 4.0.0 - epik KK-B: serwer (issue #246, 2026-09-30/10-01, gałąź `feature-246-kanal-klubu`)
+Sześć etapów z przeglądem przed każdym commitem; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §11**, architektura: `docs/architektura-panelu-serwer.md` §7.12.
+Reguły obowiązujące odtąd:
+- **„KTO DOSTAJE CO" MA JEDNO MIEJSCE NA OBSZAR**: `ClubSignals` (kalendarz, rezerwacje,
+  samolot, dziennik, „Do sprawdzenia") i `OrderSignals` (zlecenia, rozmowy); nazwy tematów
+  w `application/common/live/topics.ts`. Producent podaje FAKT (termin, operację), nigdy
+  tematów ani odbiorców; `ClubSignals` jest WYMAGANYM parametrem konstruktora, więc
+  kompilator wskazuje każde miejsce kompozycji. Nowy temat = metoda w `ClubSignals`,
+  wywołanie PO commicie, przypadek w `liveTopics.test.ts` i sonda regresji
+- **BUDZIK JEST ROZDZIELNIKIEM**: `Notifier.record` (w transakcji) oddaje
+  `RecordedNotice[]`, a `Notifier.wake(orgId, recorded)` przyjmuje WYŁĄCZNIE to, co
+  zapisano - ramka `notification` do połączonych sesji odbiorcy, push do tokenów sesji
+  NIEpołączonych w klubie powiadomienia (K4). Awaria odczytu przed ramką = push do
+  wszystkich
+- **DECYZJA ODBIERAJĄCA DOSTĘP ZAMYKA POŁĄCZENIA SAMA** - przez `LiveAccess`
+  (`application/common/live/liveAccess.ts`), po commicie i tylko przy udanej decyzji:
+  `session_revoked` (wylogowania, sesje z karty członka, hasło), `membership_disabled`
+  (członkostwo, klub). Zmiana zakresu przestawia zdolności otwartych połączeń zamiast je
+  zamykać. Połączenie żyje najwyżej do terminu tokenu (`bye token_expired`). Nowa
+  decyzja tego rodzaju = metoda w `LiveAccess` i przypadek w `liveClose.test.ts`
+  z kontrolą, że połączenie spoza zakresu zostaje otwarte
+- **SKRZYNKA PANELU = SKRZYNKA TELEFONU**: `GET/POST /admin/api/me/notifications`
+  (każdy aktywny członek, bez zdolności; platforma 401), `NotificationQueries`
+  w `application/common/queries/`, stronę i odpowiedź składa wspólny
+  `http/routes/common/inboxWire.ts`. Bit `approver` dostaje wyłącznie telefon
+- **PUŁAPKI TESTÓW**: w `injectWS` gniazdo serwera nie dostaje `close` po zamknięciu
+  przez klienta (odłączenie - na prawdziwym porcie); sondy izolacji tras PWI w Alfie
+  biorą świeży token (`pwiInAlfa`), bo sonda „Wyloguj wszędzie" zrywa jej sesje
+  w połowie przebiegu; pomocniki połączeń w `test/liveClients.ts`
+- **czego KK-B NIE ROBI**: klienta kanału w aplikacji (KK-C) i panelu (KK-D), czyli
+  łącza, szyny, banerów, dzwonka, usunięcia pętli `RETRY_MS`; sprawdzenia CSP dla `wss:`
+  w przeglądarkach (KK-D)
+
+## Kanał klubu 4.0.0 - epik KK-D: panel (issue #246, 2026-10-01/05, gałąź `feature-246-kanal-klubu`)
+Łącze, dzwonek, skrzynka i baner w panelu; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §12**, warstwa `live/`: `docs/architektura-panelu-frontend.md` §2
+i §4.6. Reguły obowiązujące odtąd:
+- **PANEL NICZEGO NIE ODPYTUJE** (K1): `refetchInterval` i `setInterval` w `admin/src/`
+  wywala strażnik architektury. Ekran, który chce świeżości, dopisuje klucz w
+  `live/topicKeys.ts` z testem; tematu nie wymyśla panel - dopisuje go serwer
+  w `ClubSignals`. Licznik „Do sprawdzenia" przestał pytać serwer co minutę
+- **JEDNO POŁĄCZENIE NA KARTĘ, JEDNE DRZWI**: `WebSocket` wyłącznie w `live/liveSocket.ts`;
+  `live/` nie importuje ekranów, komponentów ani `api/` (kształt wiadomości bierze
+  z `queries/inboxCache.ts`), a `ui/` nie zna `live/`. Łącze woła `ShellRoute` wyłącznie
+  w sesji klubu
+- **SKRZYNKA PANELU MÓWI TO SAMO, CO SKRZYNKA TELEFONU**: zdanie wiersza składa
+  `screens/inbox/inboxRows.ts` tym samym słownikiem, co `app/src/ui/screens/logic/inbox.ts`,
+  więc nowy rodzaj wiadomości dostaje gałąź w OBU. „Nowe" gaśnie z otwarciem listy, każda
+  wiadomość przeczytuje się RAZ na wizytę (`notSentYet`), „Do decyzji" liczy się z kolejki
+  decyzji. Ramka `notification` wpisuje się w pamięć skrzynki bez drugiego żądania
+- **SZUFLADA I BANER CZEKAJĄ NA SŁOWNIK KLUBU** - zdanie bez nazwiska przeskakiwałoby
+  na pełne. Szuflada czeka przez `pending` wspólnego `Loadable` (liczy też słownik
+  i kolejkę decyzji), który od 2026-10-06 pod progiem plamek nie rysuje NIC - obejście
+  `pending ? null` zdjęte; baner czeka sam, bo plamek nie ma. Skrzynka, która się nie
+  wczytała, to zdanie o błędzie ODCZYTU (`loadErrorMessage`) bez stanu pustego pod nim
+- **BANER** (makieta PW1, czysty `screens/inbox/toast.ts`): zdanie wiersza bez plakietki
+  sprawy i z „teraz", lewy dolny róg treści, 5 s; kursor ALBO fokus wstrzymuje odliczanie,
+  zejście wznawia je od reszty; kilka naraz - ostatni. Nie stoi przy otwartej skrzynce ani
+  na ekranie, którego dotyczy (adres rzeczy i adresy pod nim), i taki znika na dobre.
+  Kliknięcie otwiera rzecz bez przeczytania; świeża prośba o zgodę prowadzi do kolejki
+  decyzji; przełączenie klubu kończy baner; słownik dociąga się przy pierwszym banerze
+- **REGION `role="status"` STOI W RAMIE KLUBU ZAWSZE**, a baner wchodzi do środka - jedyna
+  świadoma różnica wobec makiety, w której rola na linku odbierała mu rolę linku
+- **PRÓBY W PRZEGLĄDARCE**: nawigacja na ten sam adres z innym `#` NIE przeładowuje
+  strony (`location.reload()`); „204 … ERR_ABORTED" w logu podglądu to nieodczytane ciało
+  odpowiedzi, nie awaria; port 3000 bywa zajęty przez serwer innej rozmowy - wtedy serwer
+  na innym porcie podaje zbudowany panel sam (`Origin` kanału to `PUBLIC_BASE_URL` albo
+  `http://localhost:PORT`)
+- **czego KK-D NIE ROBI**: zleceń i rozmów w panelu (Z-D), kanału w aplikacji pilota (KK-C)
+
+## Kanał klubu 4.0.0 - epik KK-C: aplikacja (issue #246, 2026-10-05/06, gałąź `feature-246-kanal-klubu`)
+Łącze, szyna, odświeżanie ekranów i baner w aplikacji pilota; stan, mapa plików
+i przepisy: **`docs/kanal-klubu.md` §13**. Reguły obowiązujące odtąd:
+- **EKRAN APLIKACJI NICZEGO NIE ODPYTUJE** (K1): hak, który czyta serwer, podpina się
+  `useLiveTopic(tematy, odśwież)` i odświeża się CICHO (`quietResult` - bez plamek,
+  a odpowiedź, której nie było, nie kasuje danych). `setInterval` w pliku UI czytającym
+  serwer wywala strażnik architektury. Stan „nie wiem" wraca sam: KAŻDE powitanie łącza
+  (także pierwsze po starcie bez zasięgu) każe podpiętym ekranom dociągnąć stan
+- **JEDNO ŁĄCZE, JEDNE DRZWI**: `WebSocket` wyłącznie w `infrastructure/live/liveSocket.ts`;
+  kiedy łącze stoi, mówi czysta `linkTarget` (na wierzchu, po odblokowaniu, z żywą sesją,
+  poza kokpitem, dla klubu aktywnego - zmiana klubu to nowe połączenie). Binder
+  `useLiveLink` stoi obok usługi GPS: za bramką tożsamości i po `loadSession`
+- **KAŻDE `bye` = ODŚWIEŻENIE TOKENÓW**, jak REST po 401, a odświeżenie jest wspólne dla
+  wołających w tej samej chwili (`AuthService.rotate` dzieli obietnicę): drugie równoległe
+  zużyłoby refresh, a łącze wzięłoby odmowę za koniec poświadczeń
+- **PODPIĘTY JEST TYLKO EKRAN WIDOCZNY** (`useIsFocused`), a seria sygnałów jednej zmiany
+  to jedno odświeżenie (250 ms, osobno dla każdego podpięcia)
+- **SKRZYNKA I DZWONEK CZYTAJĄ OD NOWA na ramkę `notification`** (lokalny temat `inbox`),
+  zamiast brać jej treść wprost - „Do decyzji" liczy się z kolejki decyzji, której ramka
+  nie niesie
+- **BANER W APLIKACJI (25E) MA JEDNEGO GOSPODARZA** (`navigation/BannerHost.tsx`, nad
+  nawigacją i za bramką tożsamości) i dwa źródła: ramkę `notification` (zdanie wiersza
+  skrzynki przez `inboxRows`, bez plakietki sprawy, z „teraz") i push odebrany na wierzchu
+  (tytuł pusha ze znakiem z pamięci floty; inny klub - nazwa klubu i zdanie o przełączeniu).
+  Czy staje, liczy czysta `logic/inAppBanner.ts`: nie w kokpicie, nie w tle, nie na ekranie
+  rzeczy, której dotyczy (karta tej rezerwacji, decyzja o niej, karta tej maszyny, otwarta
+  skrzynka); wejście na taki ekran gasi baner, który już stoi. Wiadomość z innego klubu
+  staje zawsze
+- **PRZY OTWARTEJ APLIKACJI SYSTEM MILCZY** (handler bez banera systemowego i dźwięku,
+  wpis na liście zostaje). Push klubu aktywnego na wierzchu wchodzi na szynę jako ramka
+  BEZ pozycji (`isActiveClubPush`) - skrzynka i dzwonek się odświeżają, a baner pokazuje
+  sam push
+- **TAPNIĘCIE W PUSH I W BANER TO JEDNA DROGA** (`navigation/openTarget.ts`, cel
+  z `pushTarget`). Nowy ekran rzeczy (karta zlecenia w Z-C) dopisuje się w `pushTarget`,
+  w `targetThing`/`routeThing` banera - z testem „na ekranie tej rzeczy baner nie staje" -
+  i w `openTarget`
+- **TRASA NA CZUBKU STOSU NIESIE PARAMETRY** (`navigation/activeRoute.ts`) - po nich baner
+  poznaje ekran rzeczy; zgłoszenie błędu dostaje jak dotąd samą nazwę
+- **CISZĘ W KOKPICIE ROZSTRZYGA SERWER** (decyzje właściciela 2026-10-06, pkt 44): w locie
+  ekran gaśnie, a handler powiadomień działa tylko na wierzchu - więc `Notifier` przy
+  wysyłce pyta `SessionsProjectionPort.crewInOperation`, kto z adresatów siedzi w załodze
+  operacji w toku (dowódca ALBO drugi pilot, w DOWOLNYM klubie - imienny wyjątek
+  w strażniku `org_id`), i takiemu budzik idzie kanałem `quiet` bez dźwięku. Aplikacja
+  zakłada ten kanał przy starcie (niska ważność). Awaria odczytu załogi nie wycisza nikogo;
+  starsza aplikacja bez kanału dostaje budzik kanałem zapasowym `expo-notifications`
+- **ZAŁOGA NIE DOSTAJE TEŻ BANERA W APLIKACJI** (druga decyzja 2026-10-06): telefon drugiego
+  pilota nie jest w trybie kokpitu, więc jego łącze stoi i wiadomość przychodzi ramką. Ten
+  sam odczyt załogi (RAZ na `wake`) oznacza ramkę `notification` i dane pusha flagą
+  `quiet: true` (tylko z wartością), a `inAppBanner` pomija każdą cichą wiadomość.
+  Skrzynka i dzwonek odświeżają się jak zawsze; panel flagę ignoruje
+- **czego KK-C NIE ROBI**: zleceń i rozmów w aplikacji (Z-C), sprawdzenia na urządzeniu -
+  animacja, gest, czytnik ekranu, push przy otwartej aplikacji (Z-W)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

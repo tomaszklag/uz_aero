@@ -19,8 +19,8 @@ import { Link } from 'react-router-dom';
 import type { ExportListItemDto } from '../../api/dto';
 import { useExportHistory, useRetryExport, useSheetPreview } from '../../queries/useAttention';
 import { useAircraftSessions } from '../../queries/useLog';
-import { Banner, Button, Card, Drawer, LinkButton, Pill } from '../../ui/components';
-import { errorMessage } from '../common/apiMessage';
+import { Banner, Button, Card, Drawer, LinkButton, Loadable, Pill } from '../../ui/components';
+import { errorMessage, loadErrorMessage } from '../common/apiMessage';
 import { NONE, timeUtc } from '../common/values';
 import { sessionPath } from '../logbook/logbookPaths';
 import { operationLabel } from '../logbook/sessionRows';
@@ -169,35 +169,49 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         </Banner>
       )}
 
+      {/* Plamki zamiast „Wczytywanie…", a po nieudanym odczycie zdanie o nim zamiast
+          „Brak operacji w tej dobie" - to byłoby zdanie o dobie, której nie znamy. */}
       <Card title="Operacje w tej dobie">
-        {dayRows.length === 0 ? (
-          <p className="hint">{sessions.isPending ? 'Wczytywanie…' : 'Brak operacji w tej dobie.'}</p>
-        ) : (
-          dayRows.map((session) => (
-            <div className="kv" key={session.sessionUuid}>
-              <span className="kv-k">
-                {timeUtc(session.engineStartAt)} → {session.status === 'active' ? 'w toku' : timeUtc(session.engineStopAt)}
-              </span>
-              <span className="kv-v">
-                {session.status === 'voided' ? (
-                  <>
-                    <span className="was">wpis unieważniony</span> <small>nie wchodzi do karty</small>
-                  </>
-                ) : (
-                  <>
-                    <Link className="cell-link" to={sessionPath(session.reg ?? session.aircraftId, session.sessionUuid, EMPTY_RANGE)}>
-                      {session.signature ?? session.reg ?? NONE}
-                    </Link>{' '}
-                    <small>
-                      {operationLabel(session.operation).toLowerCase()} · {session.flightsCount}{' '}
-                      {session.flightsCount === 1 ? 'lot' : session.flightsCount >= 2 && session.flightsCount <= 4 ? 'loty' : 'lotów'}
-                    </small>
-                  </>
-                )}
-              </span>
+        {sessions.error == null ? null : <p className="hint danger">{loadErrorMessage(sessions.error)}</p>}
+        <Loadable
+          pending={sessions.isPending}
+          loaded={sessions.data != null}
+          skeleton={[0, 1].map((row) => (
+            <div className="kv" key={row}>
+              <span className="skeleton cell" style={{ width: 110 }} />
+              <span className="skeleton cell" style={{ width: 180 }} />
             </div>
-          ))
-        )}
+          ))}
+        >
+          {dayRows.length === 0 ? (
+            <p className="hint">Brak operacji w tej dobie.</p>
+          ) : (
+            dayRows.map((session) => (
+              <div className="kv" key={session.sessionUuid}>
+                <span className="kv-k">
+                  {timeUtc(session.engineStartAt)} → {session.status === 'active' ? 'w toku' : timeUtc(session.engineStopAt)}
+                </span>
+                <span className="kv-v">
+                  {session.status === 'voided' ? (
+                    <>
+                      <span className="was">wpis unieważniony</span> <small>nie wchodzi do karty</small>
+                    </>
+                  ) : (
+                    <>
+                      <Link className="cell-link" to={sessionPath(session.reg ?? session.aircraftId, session.sessionUuid, EMPTY_RANGE)}>
+                        {session.signature ?? session.reg ?? NONE}
+                      </Link>{' '}
+                      <small>
+                        {operationLabel(session.operation).toLowerCase()} · {session.flightsCount}{' '}
+                        {session.flightsCount === 1 ? 'lot' : session.flightsCount >= 2 && session.flightsCount <= 4 ? 'loty' : 'lotów'}
+                      </small>
+                    </>
+                  )}
+                </span>
+              </div>
+            ))
+          )}
+        </Loadable>
         <div className="kv">
           <span className="kv-k">Ostatni zapis z telefonu</span>
           <span className="kv-v">{stamp(item.updatedAt)}</span>

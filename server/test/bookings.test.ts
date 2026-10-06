@@ -27,6 +27,7 @@ import { describe, expect, it } from 'vitest';
 import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentClubSignals } from './fakeLiveSignals.ts';
 import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
@@ -591,6 +592,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
         new PgSessionsProjection(),
         { now: () => now },
         silentNotifier(db),
+        silentClubSignals(db),
       ).run();
 
     // Pół godziny po starcie pilot jest po prostu spóźniony.
@@ -647,6 +649,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
       new PgSessionsProjection(),
       { now: () => new Date(start + 70 * 60_000) },
       silentNotifier(db),
+      silentClubSignals(db),
     ).run();
     expect(run.released).toBe(0);
 

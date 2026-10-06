@@ -26,6 +26,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, seedRefresh, TEST_BASE_URL, testHarness } from './helpers.ts';
+import { connectLive, sendFrame, type LiveInbox } from './liveClients.ts';
+import { panelSession } from './routeClients.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_SHEETS_KEY, ORG_B, ORG_B_SHEETS_KEY, seedBetaFleet } from './testWorld.ts';
 
@@ -636,6 +638,48 @@ function orderCases(prefix: '' | '/admin/api'): Record<string, Probe> {
 }
 
 const groupIds = (res: { json(): { groups: { id: string }[] } }): string[] => res.json().groups.map((g) => g.id);
+
+let liveNote = 0;
+
+/**
+ * Kanał klubu (4.0.0, epik Z-E #246, `docs/kanal-klubu.md` §5): połączenie uwierzytelnione
+ * w ALFIE nie dostaje ani sygnału o zmianie w BECIE, ani wiadomości z rozmowy Bety, choć
+ * wszystko idzie przez jeden rejestr połączeń - a to samo z Alfy dostaje (kontrola
+ * pozytywna). Zmiany to prawdziwe zapisy obu klubów: notatka zlecenia za każdym razem inna,
+ * bo zapis bez zmiany niczego nie ogłasza, i wiadomość w wątku, w którym autor zlecenia
+ * rozmawia z adresatem.
+ */
+async function expectLiveIsolation(w: World, inbox: LiveInbox): Promise<void> {
+  const post = (token: string, url: string, method: 'PATCH' | 'POST', payload: object) =>
+    w.app.inject({ method, url, headers: bearer(token), payload });
+  const next = () => (liveNote += 1);
+
+  expect((await post(w.b, '/orders/order-b', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.b, '/orders/order-b/threads/BPI/messages', 'POST', {
+        id: `live-msg-b-${next()}`,
+        body: 'wiadomosc-beta z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+  expect((await post(w.a, '/orders/order-a', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.a, '/orders/order-a/threads/PWI/messages', 'POST', {
+        id: `live-msg-a-${next()}`,
+        body: 'wiadomosc-alfa z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+
+  await inbox.waitFor((f) => f.type === 'changed' && (f.topics as string[]).includes('order:order-a'));
+  await inbox.waitFor((f) => f.type === 'message' && f.orderId === 'order-a');
+  for (const frame of inbox.frames) {
+    const text = JSON.stringify(frame);
+    for (const marker of B_MARKERS) expect(text, `ramka kanału zdradza „${marker}"`).not.toContain(marker);
+  }
+}
 
 /** Grupy klubu (4.0.0, issue #245): odczyt na obu powierzchniach, zapis wyłącznie w panelu. */
 function groupCases(): Record<string, Probe> {
@@ -2184,6 +2228,57 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(1);
   },
 
+  'GET /admin/api/me/notifications': async (w) => {
+    const { app, db, pwiB } = w;
+    // Skrzynka panelu (4.0.0, K7) - ta sama reguła, co w telefonie: jedna osoba w DWÓCH
+    // klubach, a wiadomość z Bety nie ma prawa pokazać się w panelu Alfy. Świeży token
+    // Alfy, bo sonda „Wyloguj wszędzie" zrywa sesje PWI w Alfie w połowie przebiegu.
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel', $1, 'PWI', 'approval_requested', $2::jsonb)`,
+      [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
+    );
+    const idsIn = async (orgId: string): Promise<string[]> =>
+      (
+        await db.query<{ id: string }>(`SELECT id FROM notifications WHERE org_id = $1 AND pilot_id = 'PWI'`, [orgId])
+      ).rows
+        .map((r) => r.id)
+        .sort();
+    const idsOf = (body: { json(): { items: { id: string }[] } }): string[] =>
+      body.json().items.map((i) => i.id).sort();
+
+    const res = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiA) });
+    expectClean(res, '/admin/api/me/notifications');
+    expect(idsOf(res)).toEqual(await idsIn(ORG_A));
+
+    // Kontrola pozytywna: ta sama osoba w sesji klubu B widzi ją od razu.
+    const wBecie = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiB) });
+    expect(wBecie.statusCode, wBecie.body).toBe(200);
+    expect(idsOf(wBecie)).toContain('note-b-panel');
+  },
+
+  'POST /admin/api/me/notifications/:id/read': async (w) => {
+    const { app, db } = w;
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel-read', $1, 'PWI', 'booking_approved', '{}'::jsonb)`,
+      [ORG_B],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/notifications/note-b-panel-read/read',
+      headers: writer(pwiA),
+    });
+    // Cudzy klub odpowiada tak samo jak wiersz nieistniejący, a stempel NIE PADA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ read_at: string | null }>(
+      `SELECT read_at FROM notifications WHERE id = 'note-b-panel-read'`,
+    );
+    expect(rows[0]!.read_at).toBeNull();
+  },
+
   'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {
     expect(
       (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))
@@ -2209,6 +2304,26 @@ const CASES: Record<string, Probe> = {
   ...orderCases(''),
   ...orderCases('/admin/api'),
   ...groupCases(),
+
+  // ── kanał klubu (4.0.0, epik Z-E #246) ──────────────────────────────────────
+  'GET /live': async (w) => {
+    const { ws, inbox } = await connectLive(w.app, '/live');
+    sendFrame(ws, { type: 'auth', token: w.a });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
+  },
+
+  'GET /admin/api/live': async (w) => {
+    const session = await panelSession(w.app, 'AKO');
+    const { ws, inbox } = await connectLive(w.app, '/admin/api/live', {
+      cookie: session.cookie ?? '',
+      origin: new URL(TEST_BASE_URL).origin,
+    });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
+  },
 };
 
 /**

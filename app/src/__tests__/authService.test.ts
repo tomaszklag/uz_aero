@@ -417,6 +417,30 @@ describe('rotate', () => {
     expect(creds.credentials?.pin).toEqual({ salt: 's', hash: 'h' }); // PIN przeżywa rotację
     expect(club.reported).toEqual([ALFA.id]);
   });
+
+  it('dwa odświeżenia NARAZ to jedno wywołanie serwera - łącze kanału i pętla synca dzielą wynik', async () => {
+    // Serwer zużywa refresh atomowo: drugie równoległe wywołanie tym samym tokenem dostałoby
+    // `invalid_refresh`, czyli `null`, a łącze kanału klubu uznałoby wtedy, że poświadczeń
+    // nie ma, i przestało się łączyć (KK-C).
+    const creds = new FakeCredentials();
+    creds.credentials = { token: 'stary', refreshToken: 'r-stary', pilot: tokens.pilot, org: ALFA };
+    const calls: string[] = [];
+    const auth = new AuthService(fakeServer({ refresh: tokens, calls }), creds, pinCrypto, clubSink().sink);
+
+    expect(await Promise.all([auth.rotate(), auth.rotate()])).toEqual(['jwt-1', 'jwt-1']);
+    expect(calls).toEqual(['refresh']);
+  });
+
+  it('po zakończonym odświeżeniu następne pyta serwer od nowa', async () => {
+    const creds = new FakeCredentials();
+    creds.credentials = { token: 'stary', refreshToken: 'r-stary', pilot: tokens.pilot, org: ALFA };
+    const calls: string[] = [];
+    const auth = new AuthService(fakeServer({ refresh: tokens, calls }), creds, pinCrypto, clubSink().sink);
+
+    await auth.rotate();
+    await auth.rotate();
+    expect(calls).toEqual(['refresh', 'refresh']);
+  });
 });
 
 describe('abandonPerson', () => {

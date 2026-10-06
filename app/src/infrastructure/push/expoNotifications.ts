@@ -8,10 +8,12 @@
  * Do barrela infrastruktury NIE trafia (testy w Node).
  *
  * ══ PUSH JEST BUDZIKIEM (§12.1) ══
- * Treść stoi w skrzynce; stąd wychodzą DOKŁADNIE trzy rzeczy: adres urządzenia dla
+ * Treść stoi w skrzynce; stąd wychodzą DOKŁADNIE cztery rzeczy: adres urządzenia dla
  * serwera (`ExpoPushDevice`), sposób pokazania budzika przy otwartej aplikacji i na
- * kanale Androida (`configureNotifications`) oraz TAPNIĘCIE w budzik (`onNotificationTap`,
- * `lastNotificationTap`), z którego nawigacja wyprowadza ekran (`logic/pushTarget.ts`).
+ * kanale Androida (`configureNotifications`), budzik ODEBRANY przy otwartej aplikacji
+ * (`onNotificationReceived` - zasila baner w aplikacji, kanał klubu 4.0.0) oraz TAPNIĘCIE
+ * w budzik (`onNotificationTap`, `lastNotificationTap`), z którego nawigacja wyprowadza
+ * ekran (`logic/pushTarget.ts`).
  *
  * ══ KAŻDA AWARIA JEST CISZĄ, NIE WYWROTKĄ ══
  * Build bez pliku Firebase, Expo Go, telefon bez usług Google - `getExpoPushTokenAsync`
@@ -33,23 +35,48 @@ import type { PushDevicePort } from '../../application/ports/pushDevicePort';
  */
 export const PUSH_CHANNEL_ID = 'default';
 
+/**
+ * CICHY kanał - CISZA W KOKPICIE (pkt 44 zleceń; decyzje właściciela 2026-10-06). Serwer
+ * adresuje go, gdy adresat siedzi w załodze operacji w toku (dowódca albo drugi pilot):
+ * ważność NISKA, czyli powiadomienie trafia na listę systemową bez dźwięku, wibracji
+ * i wyskakującego banera. Rozstrzyga serwer, bo w locie ekran zwykle gaśnie, a aplikacja
+ * w tle nie ma jak wyciszyć powiadomienia sama - handler niżej działa tylko na wierzchu.
+ */
+export const QUIET_PUSH_CHANNEL_ID = 'quiet';
+
 /** Tapnięcie w powiadomienie: identyfikator (do odróżnienia powtórek) i dane z serwera. */
 export interface NotificationTap {
   id: string;
   data: Record<string, unknown>;
 }
 
+/** Budzik odebrany przy otwartej aplikacji: tytuł i treść od serwera oraz identyfikatory. */
+export interface ReceivedNotification {
+  id: string;
+  title: string | null;
+  body: string | null;
+  data: Record<string, unknown>;
+}
+
 /**
  * Ustawienia obowiązujące przez całe życie procesu - wołane raz przy starcie aplikacji.
- * Budzik przy OTWARTEJ aplikacji też ma się pokazać: pilot patrzący na kalendarz nie
- * widzi skrzynki, a licznik przy dzwonku odświeża się dopiero przy wejściu na Pulpit.
+ *
+ * PRZY OTWARTEJ APLIKACJI SYSTEM MILCZY (kanał klubu 4.0.0, K5): ani systemowego banera,
+ * ani dźwięku - budzik zostaje po cichu na liście systemowej, a zapowiada go WŁASNY baner
+ * aplikacji (`onNotificationReceived` → baner nad nawigacją). Ten sam rachunek obejmuje
+ * kokpit, w którym banera aplikacji nie ma wcale (pkt 44 zleceń), i ekran PIN-u, nad
+ * którym baner pokazałby treść komuś, kto telefonu nie odblokował. Zwykle push na
+ * wierzchu nie przychodzi wcale - przy działającym łączu serwer wysyła ramkę (K4) - więc
+ * dotyczy to wiadomości z INNEGO klubu i chwil bez łącza. Przy aplikacji w tle o dźwięku
+ * decyduje kanał Androida, nie ten handler - i dlatego załoga operacji w toku dostaje
+ * budzik kanałem cichym (`QUIET_PUSH_CHANNEL_ID`), także przy zgaszonym ekranie.
  */
 export function configureNotifications(): void {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowBanner: true,
+      shouldShowBanner: false,
       shouldShowList: true,
-      shouldPlaySound: true,
+      shouldPlaySound: false,
       shouldSetBadge: false,
     }),
   });
@@ -61,6 +88,15 @@ export function configureNotifications(): void {
     }).catch(() => {
       // Kanał zakłada się przy pierwszym udanym starcie; bez niego system użyje
       // własnego domyślnego - budzik dalej dzwoni, tylko ciszej.
+    });
+    void Notifications.setNotificationChannelAsync(QUIET_PUSH_CHANNEL_ID, {
+      name: 'Podczas lotu - bez dźwięku',
+      importance: Notifications.AndroidImportance.LOW,
+      sound: null,
+      enableVibrate: false,
+    }).catch(() => {
+      // Bez tego kanału budzik do załogi trafi do kanału zapasowego systemu - zadzwoni,
+      // ale nie zginie; kanał założy się przy następnym starcie.
     });
   }
 }
@@ -77,6 +113,20 @@ export class ExpoPushDevice implements PushDevicePort {
       return null;
     }
   }
+}
+
+/** Budzik odebrany przy OTWARTEJ aplikacji - źródło banera w aplikacji. Zwraca wypis. */
+export function onNotificationReceived(listener: (received: ReceivedNotification) => void): () => void {
+  const subscription = Notifications.addNotificationReceivedListener((notification) => {
+    const content = notification.request.content;
+    listener({
+      id: notification.request.identifier,
+      title: content.title ?? null,
+      body: content.body ?? null,
+      data: (content.data ?? {}) as Record<string, unknown>,
+    });
+  });
+  return () => subscription.remove();
 }
 
 /** Tapnięcie w budzik przy ŻYJĄCEJ aplikacji (na wierzchu albo w tle). Zwraca wypis. */

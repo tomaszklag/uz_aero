@@ -28,6 +28,7 @@
 
 import { refuseInitialState, type FleetRefusal } from '../../../domain/fleetGuards.ts';
 import type { AdminReading, AircraftReadingsPort, Clock } from '../../common/ports.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, FleetAdminPort } from '../ports.ts';
 
@@ -59,6 +60,8 @@ export class AdminAircraftReadingCommands {
     private readonly fleet: FleetAdminPort,
     private readonly readings: AircraftReadingsPort,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): liczniki na karcie samolotu odświeżają się na żywo. */
+    private readonly signals: ClubSignals,
   ) {}
 
   async record(actor: Actor, input: RecordReadingInput): Promise<RecordReadingOutcome> {
@@ -111,6 +114,7 @@ export class AdminAircraftReadingCommands {
           },
         };
       });
+      this.signals.aircraft(actor.orgId, [input.aircraftId]);
       return { ok: true, result: reading };
     } catch (err) {
       if (err instanceof AircraftNotFound) return { ok: false, reason: 'not_found' };

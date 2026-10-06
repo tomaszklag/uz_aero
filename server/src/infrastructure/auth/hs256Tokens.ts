@@ -260,6 +260,8 @@ export class Hs256Tokens implements TokenService {
       orgId: claims.org,
       code: claims.code,
       issuedAt,
+      // `claimsOf` odrzuca token bez liczbowego `exp` - tu termin już jest.
+      expiresAt: claims.exp,
       sessionId: sidOf(claims),
     };
   }
