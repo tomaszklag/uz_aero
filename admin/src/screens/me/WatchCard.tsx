@@ -8,8 +8,10 @@
  * w formularz. Karta istnieje WYŁĄCZNIE przy zdolności `fleet.watch` i w sesji klubu -
  * rozstrzyga o tym wołający (`AccountScreen`), a ten komponent zakłada, że wolno pytać.
  *
- * Nazwiska rozwiązuje lista członków, którą panel i tak ma (`usePilots`) - jak
- * kalendarz: odpowiedź listy niesie identyfikatory, nie napisy.
+ * Nazwiska rozwiązuje SŁOWNIK klubu (`useDirectory`) - jak kalendarz i kolejka decyzji:
+ * odpowiedź listy niesie identyfikatory, nie napisy. Nie lista modułu Piloci: ta stoi na
+ * „Podglądzie klubu", a kartę widzi każdy z `fleet.watch` - zestaw Akceptujący ma ją bez
+ * podglądu, dostawał więc 403 i zdania o maszynach traciły nazwiska bez słowa.
  *
  * Powiadomienia i tak przychodzą na telefon - panel niesie samą listę, a podpis pod
  * kartą to mówi.
@@ -18,27 +20,22 @@
 import { useMemo, useState } from 'react';
 
 import { useSessionState } from '../../auth/sessionContext';
-import { usePilots } from '../../queries/usePilots';
+import { useDirectory } from '../../queries/useDirectory';
 import { useMyWatches, useSetWatch } from '../../queries/useWatches';
 import { Banner, Card, Loadable, OptionButton } from '../../ui/components';
-import type { Person } from '../calendar/bookingLabels';
+import { personLookup } from '../calendar/directoryLookups';
 import { errorMessage } from '../common/apiMessage';
 import { watchRows, type WatchRow } from './watchRows';
 
 export function WatchCard() {
   const { session } = useSessionState();
   const watches = useMyWatches();
-  const pilots = usePilots({});
+  const directory = useDirectory();
   const set = useSetWatch();
   // Przygasa WYŁĄCZNIE wiersz, który właśnie się zapisuje - reszta listy działa dalej.
   const [pendingId, setPendingId] = useState<string | null>(null);
 
-  const person = useMemo(() => {
-    const byId = new Map<string, Person>(
-      (pilots.data?.items ?? []).map((p) => [p.id, { name: p.name, code: p.code }]),
-    );
-    return (pilotId: string): Person | null => byId.get(pilotId) ?? null;
-  }, [pilots.data?.items]);
+  const person = useMemo(() => personLookup(directory.data), [directory.data]);
 
   const me = session?.pilot.id ?? '';
   const rows = useMemo(
@@ -60,8 +57,10 @@ export function WatchCard() {
           {errorMessage(set.error)}
         </Banner>
       )}
+      {/* Czeka też na słownik: zdanie o maszynie bez nazwiska doskoczyłoby do pełnego
+          chwilę później - ta sama reguła, co w kolejce decyzji. */}
       <Loadable
-        pending={watches.isPending}
+        pending={watches.isPending || directory.isPending}
         skeleton={<span className="skeleton" style={{ width: '100%', height: 46 }} />}
       >
         {watches.isError ? (

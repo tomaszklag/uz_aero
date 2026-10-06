@@ -43,6 +43,14 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
   Tabela dziennika nie znika już na moment zaraz po wejściu, a karty w kolejce decyzji
   nie pojawiają się bez nazwisk.
+- **„Obserwowane samoloty" podpisują maszyny nazwiskiem także u Akceptującego.** Członek
+  bez „Podglądu klubu" widział przy maszynie samo „Zarezerwowana", bez osoby, która ją
+  ma - teraz zdanie jest pełne, jak u administratora.
+- **Moje konto nie każe „ustawić" hasła komuś, kto je ma.** Zaraz po wejściu karta hasła
+  pokazywała przez chwilę wariant dla konta bez hasła. Teraz czeka na odczyt konta, a gdy
+  ten się nie uda, mówi o tym na górze strony zamiast pokazywać zgadnięty formularz.
+- **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast stać bez słowa
+  na plamkach ładowania.
 
 ## 3.2.0 · 27 września 2026
 

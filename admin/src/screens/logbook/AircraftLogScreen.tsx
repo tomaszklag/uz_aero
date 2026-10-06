@@ -153,6 +153,10 @@ export function AircraftLogScreen() {
         />
       ) : null}
 
+      {/* Lista floty, która nie dojechała, zostawiłaby ekran na plamkach bez słowa -
+          znak z adresu nie ma się wtedy z czego rozwiązać, a operacje czekają na
+          identyfikator (ten sam baner, co przy słowniku na osi pilota). */}
+      {fleet.error == null ? null : <Banner tone="danger">{errorMessage(fleet.error)}</Banner>}
       {sessions.error == null ? null : <Banner tone="danger">{errorMessage(sessions.error)}</Banner>}
 
       {missing ? null : (
