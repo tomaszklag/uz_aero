@@ -54,8 +54,12 @@ export interface NextBooking {
   operation: string | null;
   /** Trasa („EPKK → EPRJ"); `null` = bez trasy. */
   route: string | null;
-  /** Kod drugiego pilota; `null` = lot bez Duala. */
-  dualCode: string | null;
+  /**
+   * Druga osoba w kabinie, gotowa do wyświetlenia: „Dual: BNO" u dowódcy, „Dowódca: MZI"
+   * u drugiego pilota (decyzja 23 zleceń - rezerwacja liczy oba fotele); `null` = lot
+   * bez drugiej osoby albo kod poza cache'em.
+   */
+  crew: string | null;
   /**
    * Czeka na zgodę (3.1.0, makieta 20E): karta traci zieleń, bo zielona obiecywałaby,
    * że lot jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od decyzji.

@@ -118,6 +118,14 @@ describe('rezerwacje: zapis z telefonu', () => {
     );
   });
 
+  it('okno niesie bity PATRZĄCEGO: karta maszyny i zlecanie lotów (21E) - telefon zdolności nie zna', async () => {
+    const { app } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const pwi = await login(app, 'PWI');
+    expect((await calendar(app, ako)).json().viewer).toEqual({ watch: true, order: true });
+    expect((await calendar(app, pwi)).json().viewer).toEqual({ watch: false, order: false });
+  });
+
   it('CUDZA zajętość niesie tylko to, co ekran z niej czyta', async () => {
     const { app } = await testHarness();
     const ako = await login(app, 'AKO');

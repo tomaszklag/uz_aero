@@ -77,6 +77,11 @@ export interface CalendarData {
    * prowadzi wtedy w jej kartę (27). Serwer sprzed 3.2.0 bitu nie niesie - `false`.
    */
   canWatch: boolean;
+  /**
+   * Czy patrzący ma „Zlecanie lotów" (4.0.0, 21E): tapnięcie w wolne pasmo pyta wtedy
+   * „Zarezerwuj dla siebie / Zleć lot". Serwer sprzed 4.0.0 bitu nie niesie - `false`.
+   */
+  canOrder: boolean;
 }
 
 /**
@@ -102,6 +107,7 @@ export function toCalendar(wire: RemoteCalendar): CalendarData {
       return parsed == null ? [] : [parsed];
     }),
     canWatch: wire.viewer?.watch === true,
+    canOrder: wire.viewer?.order === true,
   };
 }
 

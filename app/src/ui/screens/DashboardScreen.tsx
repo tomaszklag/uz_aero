@@ -134,7 +134,7 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
       regOf: (id) => regOf(id),
       codeOf: (id) => codeOf(id),
     });
-    return claimSeed(row, now);
+    return claimSeed(row, now, pilotId);
   }, [calendar.data, pilotId, now, regOf, codeOf]);
 
   const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
@@ -468,9 +468,9 @@ function BookingCard({
               {booking.route}
             </AppText>
           )}
-          {booking.dualCode != null && (
+          {booking.crew != null && (
             <AppText variant="mono" tone="muted">
-              Dual: {booking.dualCode}
+              {booking.crew}
             </AppText>
           )}
           {stepOfN != null && (

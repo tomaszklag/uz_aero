@@ -231,6 +231,7 @@ const LEGEND: Record<BarTone, string> = {
   // ma ten sam; różni się KSZTAŁTEM ramki, a to widać przy samym pasku.
   pending: 'Twoja - czeka na zgodę',
   other: 'Zajęte',
+  order: 'Zlecenie',
   block: 'Wyłączony',
 };
 
@@ -244,6 +245,10 @@ function barTone(tone: BarTone, t: Theme): ViewStyle {
         borderColor: t.colors.greenBorder,
         borderStyle: 'dashed',
       };
+    // Zlecenie bez kompletu załogi (21E): tło jak każda zajętość - nikt inny tego terminu
+    // już nie weźmie - ale ramka przerywana i błękitna: „jeszcze niekompletne" i „zlecenie".
+    case 'order':
+      return { backgroundColor: t.colors.blueMuted, borderColor: t.colors.blueBorder, borderStyle: 'dashed' };
     case 'block':
       return { backgroundColor: t.colors.amberMuted, borderColor: t.colors.amberBorder };
     default:
@@ -253,6 +258,7 @@ function barTone(tone: BarTone, t: Theme): ViewStyle {
 
 function barText(tone: BarTone, t: Theme) {
   if (tone === 'block') return { color: t.colors.amber };
+  if (tone === 'order') return { color: t.colors.blue };
   return tone === 'other' ? { color: t.colors.textSecondary } : { color: t.colors.green };
 }
 

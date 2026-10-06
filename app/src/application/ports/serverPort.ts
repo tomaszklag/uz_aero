@@ -425,8 +425,12 @@ export interface RemoteCalendar {
    * „Obserwowanie samolotów", więc nagłówek wiersza maszyny prowadzi w jej kartę (27).
    * Telefon zdolności nie zna i bit dojeżdża w odpowiedzi; opcjonalne, bo serwer
    * sprzed 3.2.0 go nie niesie - wiersz jest wtedy samą etykietą.
+   *
+   * `order` (4.0.0, 21E) = „Zlecanie lotów": tapnięcie w wolne pasmo pyta wtedy
+   * „Zarezerwuj dla siebie / Zleć lot". Bez bitu (i na serwerze sprzed 4.0.0) tapnięcie
+   * prowadzi wprost do rezerwacji, jak dotąd.
    */
-  viewer?: { watch?: boolean };
+  viewer?: { watch?: boolean; order?: boolean };
 }
 
 export interface RemoteCalendarDay {

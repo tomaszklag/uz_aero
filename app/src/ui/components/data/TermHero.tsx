@@ -3,13 +3,16 @@
  *
  * Data i stan w jednej linii, godziny pod nimi, a niżej strefa, długość i odliczanie.
  * Godziny stoją POGRUBIONYM KROJEM CYFR (mono 26), a nie krojem nagłówkowym - to odczyt
- * terminu, nie tytuł ekranu. Wygląd idzie 1:1 za makietą; karta rezerwacji (23) i decyzji
- * (26) dochodzą do tych samych komponentów (decyzja właściciela 2026-10-06).
+ * terminu, nie tytuł ekranu. Wygląd idzie 1:1 za makietą; karta rezerwacji (23) stoi na
+ * tym samym komponencie (decyzja właściciela 2026-10-06). Karta decyzji (26) bohatera
+ * terminu nie ma - tam termin jest jednym z wierszy, bo ekran pyta o decyzję, nie o godzinę.
  *
  * ══ TON KARTY MÓWI, CZYJA TO RZECZ ══
  *  - `blue`  - zlecenie: pytanie klubu, jeszcze niczyje (28, 32);
  *  - `green` - moja rezerwacja w normie (23);
  *  - `amber` - czeka na cudzą decyzję (23B);
+ *  - `neutral` - cudza rezerwacja w normie: zwykła ramka karty, jak szary pasek cudzej
+ *              rezerwacji na osi (decyzja właściciela 2026-10-06) - zieleń mówi „moje";
  *  - `off`   - zapis zamknięty: neutralna ramka, przygaszone godziny, bez odliczania
  *              (28B, 23C) - lot może się odbyć, ale liczenie do niego byłoby cudzym zegarem.
  * Gradientu z makiety nie ma - RN nie rysuje go bez modułu natywnego (ta sama reguła,
@@ -26,7 +29,7 @@ import { useTheme, type Theme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { toneColors } from '../tone';
 
-export type TermHeroTone = 'blue' | 'green' | 'amber' | 'off';
+export type TermHeroTone = 'blue' | 'green' | 'amber' | 'neutral' | 'off';
 
 /** `dim` i `neutral` wyglądają tak samo - oba mówią „to już nie czeka na Ciebie". */
 export type TermBadgeTone = 'blue' | 'green' | 'amber' | 'red' | 'neutral' | 'dim';

@@ -265,3 +265,38 @@ describe('zawężenie floty', () => {
     expect(g.rows.map((r) => r.reg)).toEqual(['SP-BKL']);
   });
 });
+
+describe('zlecenie na osi (21E; zlecenia 4.0.0)', () => {
+  const names = (id: string | null) => (id === 'jwr' ? 'Jakub Wrona' : id === 'inny' ? 'Jan Nowak' : null);
+
+  it('bez obsady - słowo ZLECENIE; „szuka …" na końcu; przerywany błękit i pozycja w legendzie', () => {
+    const g = grid({
+      nameOf: names,
+      bookings: [booking({ id: 'z1', aircraftId: 'a1', pilotId: null, order: { seeking: ['pic', 'dual'], id: null, createdBy: null } })],
+    });
+    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'ZLECENIE · SZUKA ZAŁOGI', tone: 'order' });
+    expect(g.legend).toEqual(['order']);
+  });
+
+  it('fotel obsadzony - napis zaczyna się od NAZWISKA, jak każdy pasek w rzędzie', () => {
+    const g = grid({
+      nameOf: names,
+      bookings: [booking({ id: 'z2', aircraftId: 'a1', pilotId: 'jwr', order: { seeking: ['dual'], id: null, createdBy: null } })],
+    });
+    expect(g.rows[0]!.bars[0]!.label).toBe('J. WRONA · SZUKA 2. PILOTA');
+    const pic = grid({
+      nameOf: names,
+      bookings: [booking({ id: 'z3', aircraftId: 'a1', pilotId: null, dualId: 'inny', order: { seeking: ['pic'], id: null, createdBy: null } })],
+    });
+    expect(pic.rows[0]!.bars[0]!.label).toBe('J. NOWAK · SZUKA DOWÓDCY');
+  });
+
+  it('po komplecie załogi zlecenie jest zwykłą rezerwacją - u drugiego pilota zieloną', () => {
+    const g = grid({
+      nameOf: names,
+      bookings: [booking({ id: 'z4', aircraftId: 'a1', pilotId: 'inny', dualId: 'ja', order: { seeking: [], id: 'o1', createdBy: 'mzi' } })],
+    });
+    expect(g.rows[0]!.bars[0]).toMatchObject({ label: 'J. Nowak', tone: 'mine' });
+    expect(g.legend).toEqual(['mine']);
+  });
+});

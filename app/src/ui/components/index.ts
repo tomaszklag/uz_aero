@@ -99,6 +99,8 @@ export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';
 export * from './sheets/JoinClubSheet';
 export * from './sheets/FleetFilterSheet';
+// Zlecenia (4.0.0, 21E): wolne pasmo - „Zarezerwuj dla siebie" albo „Zleć lot".
+export * from './sheets/FreeBandSheet';
 // Rezerwacja (3.0.0): godzina terminu, drugi pilot i pojedyncza liczba planu.
 export * from './sheets/BookingTimeSheet';
 export * from './sheets/DualSheet';

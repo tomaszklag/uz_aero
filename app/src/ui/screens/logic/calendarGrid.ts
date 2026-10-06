@@ -23,13 +23,20 @@
 import { airfieldByIcao, flightDayWindow, type DayWindow } from '@ninerdeck/domain';
 import { shortName } from '@ninerdeck/format';
 
+import type { RemoteSeat } from '../../../application';
 import type { ReferenceAircraft } from '../../../domain';
 
 import { bookingsOnDay, type CalendarBooking } from './calendarData';
 import { clubAtHour, clubHour, type ClubDayBounds } from './clubClock';
 
-/** Ton paska - kolor i kształt niosą, CZYJA to zajętość i co z nią wolno zrobić. */
-export type BarTone = 'mine' | 'pending' | 'other' | 'block';
+/**
+ * Ton paska - kolor i kształt niosą, CZYJA to zajętość i co z nią wolno zrobić.
+ *
+ * `order` (4.0.0, 21E) - zlecenie, któremu brakuje załogi: PRZERYWANA BŁĘKITNA ramka.
+ * Kształt mówi „jeszcze niekompletne" (jak czekająca rezerwacja), kolor - „zlecenie"
+ * (błękit hero karty zlecenia). Po komplecie załogi pasek jest zwykłą rezerwacją.
+ */
+export type BarTone = 'mine' | 'pending' | 'other' | 'order' | 'block';
 
 export interface CalendarBar {
   bookingId: string;
@@ -134,7 +141,9 @@ export function buildFleetGrid(input: FleetGridInput): FleetGrid {
     rows,
     // Kolejność legendy jest STAŁA, a nie taka, w jakiej tony trafiły się na osi:
     // legenda przestawiająca się przy każdej zmianie doby każe czytać ją od nowa.
-    legend: (['mine', 'other', 'block'] as const).filter((t) => tones.has(t)),
+    // „Zlecenie" stoi w niej, choć „czeka" nie stoi: czekająca różni się od mojej samym
+    // kształtem, a zlecenie wprowadza NOWY kolor - kolor bez legendy byłby zagadką (21E).
+    legend: (['mine', 'other', 'order', 'block'] as const).filter((t) => tones.has(t)),
   };
 }
 
@@ -195,17 +204,40 @@ function bar(
 function barLabel(booking: CalendarBooking, input: FleetGridInput): string {
   if (booking.kind === 'block') return booking.blockReason ?? 'Wyłączony z użytku';
 
-  const name = input.nameOf(booking.pilotId);
-  if (name != null) return shortName(name);
+  const seeking = booking.order?.seeking ?? [];
+  if (seeking.length > 0) return orderBarLabel(booking, seeking, input);
 
-  const code = input.codeOf(booking.pilotId);
-  if (code != null) return code;
-  return booking.pilotId === input.pilotId ? 'Twoja' : 'Zajęte';
+  return personLabel(booking.pilotId, input) ?? (booking.pilotId === input.pilotId ? 'Twoja' : 'Zajęte');
+}
+
+function personLabel(id: string | null, input: FleetGridInput): string | null {
+  const name = input.nameOf(id);
+  if (name != null) return shortName(name);
+  return input.codeOf(id);
+}
+
+/**
+ * Pasek zlecenia bez kompletu załogi (21E): PIERWSZE SŁOWO TO TEN, KTO LECI - nazwisko
+ * z obsadzonego fotela (dowódca przed drugim pilotem), a bez obsady słowo ZLECENIE, jak
+ * „Przegląd 100 h" na wyłączeniu z użytku; „szuka …" zawsze na końcu. Krótki pasek ucina
+ * resztę i dalej mówi prawdę („ZLECENIE ·", „J. WRONA ·") - że skład jest niekompletny,
+ * mówi KSZTAŁT paska. Wersaliki jak w makiecie. Każdy członek klubu dostaje to samo
+ * zdanie - napis nie zdradza adresatów (§6.3).
+ */
+function orderBarLabel(booking: CalendarBooking, seeking: readonly RemoteSeat[], input: FleetGridInput): string {
+  const sitting =
+    (seeking.includes('pic') ? null : personLabel(booking.pilotId, input)) ??
+    (seeking.includes('dual') ? null : personLabel(booking.dualId, input));
+  const wanted = seeking.length > 1 ? 'SZUKA ZAŁOGI' : seeking[0] === 'pic' ? 'SZUKA DOWÓDCY' : 'SZUKA 2. PILOTA';
+  return `${(sitting ?? 'Zlecenie').toUpperCase()} · ${wanted}`;
 }
 
 function barTone(booking: CalendarBooking, pilotId: string): BarTone {
   if (booking.kind === 'block') return 'block';
-  if (booking.pilotId !== pilotId) return 'other';
+  if ((booking.order?.seeking.length ?? 0) > 0) return 'order';
+  // Rezerwacja liczy OBA fotele (decyzja 23 zleceń): drugi pilot leci tym samym lotem,
+  // więc pasek jest „jego" tak samo jak dowódcy.
+  if (booking.pilotId !== pilotId && booking.dualId !== pilotId) return 'other';
   // Czeka na akceptację (3.1.0) - ten sam ton, inny KSZTAŁT ramki. Stan przejściowy
   // odróżnia się kształtem, nie samym kolorem.
   return booking.status === 'pending' ? 'pending' : 'mine';

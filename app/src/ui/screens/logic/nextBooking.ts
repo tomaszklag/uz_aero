@@ -37,7 +37,9 @@ export function nextBookingRow(input: NextBookingInput): CalendarBooking | null 
     .filter(
       (b) =>
         b.kind === 'flight' &&
-        b.pilotId === input.pilotId &&
+        // Rezerwacja liczy OBA fotele (decyzja 23 zleceń): lot, w którym siedzę jako drugi
+        // pilot - także przydzielony ze zlecenia - jest moim najbliższym lotem.
+        (b.pilotId === input.pilotId || b.dualId === input.pilotId) &&
         (b.status === 'confirmed' || b.status === 'pending') &&
         b.endsAt > input.now,
     )
@@ -63,9 +65,19 @@ export function nextBooking(input: NextBookingInput): NextBooking | null {
     aircraft: input.regOf(first.aircraftId) ?? first.aircraftId,
     operation: operationLabelOf(first.operation),
     route: route(first),
-    dualCode: first.dualId == null ? null : input.codeOf(first.dualId),
+    crew: crewOf(first, input),
     pending: first.status === 'pending',
   };
+}
+
+/** Druga osoba w kabinie - u drugiego pilota dowódca, u dowódcy drugi pilot. */
+function crewOf(b: CalendarBooking, input: NextBookingInput): string | null {
+  if (b.dualId === input.pilotId) {
+    const pic = b.pilotId == null ? null : input.codeOf(b.pilotId);
+    return pic == null ? null : `Dowódca: ${pic}`;
+  }
+  const dual = b.dualId == null ? null : input.codeOf(b.dualId);
+  return dual == null ? null : `Dual: ${dual}`;
 }
 
 function route(b: CalendarBooking): string | null {

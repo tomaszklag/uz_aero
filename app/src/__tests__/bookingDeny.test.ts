@@ -103,6 +103,14 @@ describe('pozostałe odmowy', () => {
     expect(vm.body).toContain('Wybierz inny samolot');
   });
 
+  it('termin prowadzony przez zlecenie mówi, KTO go zmienia - bez nazwy reguły w nawiasie', () => {
+    const vm = bookingDeny(input({ refusal: 'booking_from_order', taken: null }));
+    expect(vm.title).toBe('Termin prowadzi zlecenie');
+    expect(vm.body).toContain('osoba zlecająca');
+    expect(vm.body).not.toContain('booking_from_order');
+    expect(vm.offerFix).toBe(false);
+  });
+
   it('odmowa nieznana temu wydaniu niesie KOD - pilot przeczyta go administratorowi', () => {
     const vm = bookingDeny(input({ refusal: 'jakas_nowa_regula', taken: null }));
     expect(vm.body).toContain('jakas_nowa_regula');
@@ -119,5 +127,20 @@ describe('zapis, który nie dojechał', () => {
     expect(BOOKING_OFFLINE.title).toBe('Rezerwacja wymaga połączenia');
     expect(BOOKING_OFFLINE.body).toContain('Slot potwierdza serwer');
     expect(BOOKING_OFFLINE.offerFix).toBe(false);
+  });
+});
+
+describe('termin zajęty przez zlecenie (22C; zlecenia 4.0.0, §16 pkt 3)', () => {
+  it('zamiast nazwiska - to samo zdanie, co pasek na osi; bez adresatów', () => {
+    const vm = bookingDeny(
+      input({ taken: booking({ pilotId: null, order: { seeking: ['pic', 'dual'], id: null, createdBy: null } }) }),
+    );
+    expect(vm.body).toBe('SP-AXA jest zajęta 11:00 → 13:00 · zlecenie · szuka załogi. Zlecenie weszło 3 min temu.');
+    expect(vm.offerFix).toBe(true);
+  });
+
+  it('zlecenie z kompletem załogi jest zwykłą rezerwacją', () => {
+    const vm = bookingDeny(input({ taken: booking({ order: { seeking: [], id: null, createdBy: null } }) }));
+    expect(vm.body).toContain('rezerwację ma J. Nowak');
   });
 });

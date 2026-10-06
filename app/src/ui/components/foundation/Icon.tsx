@@ -196,6 +196,17 @@ const REGISTRY = {
   group: f('users'),
   'seat-none': f('slash'),
   hint: f('info'),
+  /**
+   * Arkusz wolnego pasma (21E): „Zarezerwuj dla siebie" (kalendarz z ptaszkiem - termin
+   * na Twoje nazwisko) i „Zleć lot" (sylwetka z plusem - szukasz załogi).
+   */
+  'book-self': m('calendar-check-outline'),
+  'order-new': f('user-plus'),
+  /**
+   * Rezygnacja z lotu ze zlecenia (23F) - drzwi ze strzałką, jak w makiecie: wychodzisz
+   * z załogi, ale termin zostaje zajęty, więc to nie jest kosz odwołania.
+   */
+  resign: f('log-out'),
   swap: f('repeat'),
   unassign: m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
