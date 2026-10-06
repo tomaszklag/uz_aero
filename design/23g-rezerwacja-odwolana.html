@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 23 Szczegóły rezerwacji</title>
+<title>Ninerdeck - 23G Rezerwacja odwołana przez klub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -124,6 +124,64 @@
   }
   .btn-danger:hover { background:var(--red-muted); }
 
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     STANY REZERWACJI - plakietka, baner i ścieżka
+
+     Plakietka `hero-badge` niesie STAN i miejsce na nią przewidziano już w 3.0.0,
+     kiedy stan był jeden („Potwierdzona"). Teraz są cztery, więc dochodzą TONY -
+     i tylko one, bo układ ekranu zostaje ten sam. Ekran, który przy odmowie
+     przestawia karty, każe czytać go od nowa w najgorszym momencie.
+
+     Baner stoi NAD kartą terminu, bo odpowiada na pierwsze pytanie wchodzącego
+     („co z moim lotem"), a nie na drugie („o której"). Niesie POWÓD i DROGĘ WYJŚCIA;
+     stan bez jednego i drugiego jest zdaniem o niczym.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .hero-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .hero-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .hero-badge.dim { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border-strong); }
+
+
+  /* ══ TON KARTY TERMINU IDZIE ZA STANEM ══
+     Zieleń znaczy „w normie" i niesie akcję główną, więc na karcie rezerwacji
+     obiecuje, że lot jest pewny. Dopóki ktoś nie zdecydował, nie jest - stąd ton
+     ostrzeżenia. Rezerwacja ZAMKNIĘTA (odrzucona, wygasła) wraca do tonu
+     neutralnego, a nie czerwonego: czerwień niesie baner, a dwa czerwone pudełka
+     pod sobą przestają się odróżniać - i tak samo nie jest wygaszona, bo to dalej
+     zapis, który pilot czyta. */
+  .hero.wait { background:linear-gradient(180deg, rgba(243,156,18,0.07) 0%, var(--surface) 55%); border-color:var(--amber-border); }
+  .hero.wait .hero-count { color:var(--amber); }
+  .hero.off { background:var(--surface); border-color:var(--border-strong); }
+  .state-banner {
+    display:flex; align-items:flex-start; gap:10px; padding:12px 13px; border-radius:14px;
+    border:1px solid var(--border-strong); background:var(--surface);
+  }
+  .state-banner.amber { border-color:var(--amber-border); background:var(--amber-muted); }
+  .state-banner.red { border-color:var(--red-border); background:var(--red-muted); }
+  .sb-icon { flex-shrink:0; margin-top:1px; }
+  .state-banner.amber .sb-icon { color:var(--amber); }
+  .state-banner.red .sb-icon { color:var(--red); }
+  .sb-text { font-size:12px; line-height:1.55; color:var(--text-secondary); }
+  .sb-text b { color:var(--text-primary); font-weight:600; display:block; margin-bottom:2px; font-size:12.5px; }
+
+  /* ═══ ŚCIEŻKA AKCEPTACJI ═══
+     Pilot widzi, ILE kroków zostało i KTO je trzyma - bo to jedyna odpowiedź na
+     pytanie „do kogo mam zadzwonić". Nazwisk decydujących NIE MA: krok bywa obsadzony
+     przez kilka osób i rozstrzyga PIERWSZA, więc jedno nazwisko byłoby nieprawdą,
+     a trzy - listą do przepisania przy każdej zmianie obsady. */
+  .step { display:flex; align-items:center; gap:10px; padding:10px 13px; border-bottom:1px solid var(--border); }
+  .step:last-child { border-bottom:none; }
+  .step-mark {
+    width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border-strong); color:var(--text-muted); background:var(--surface-raised);
+  }
+  .step-mark.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
+  .step-mark.now { color:var(--amber); border-color:var(--amber-border); background:var(--amber-muted); }
+  .step-mark.no { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
+  .step-name { font-size:12.5px; color:var(--text-primary); flex:1; }
+  .step-when { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .step.pending .step-name { color:var(--text-secondary); }
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
@@ -141,9 +199,9 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">NINERDECK - 23</span>
-  <span class="slug">rezerwacja · szczegóły</span>
-  <span class="canvas-meta"><span class="pulse"></span>Ekran 3</span>
+  <span class="film-strip">NINERDECK - 23G</span>
+  <span class="slug">rezerwacja · odwołana przez klub</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant</span>
 </header>
 
 <main class="phone" role="region" aria-label="Mockup - Szczegóły rezerwacji">
@@ -168,21 +226,37 @@
 
     <div class="scroll">
 
-      <!-- ═══ TERMIN ═══
-           Plakietka mówi STAN rezerwacji. W 3.0.0 jest jeden („Potwierdzona") i dlatego
-           mógłby go nie być wcale - ale w 3.1.0 dochodzi „Czeka na zgodę" i „Odrzucona",
-           więc miejsce jest przewidziane od początku, żeby ekran nie zmieniał wtedy
-           układu. -->
-      <div class="hero">
+      <!-- ═══ ODWOŁANA PRZEZ KLUB (§12.9, 2026-10-06) ═══
+           Ten sam układ, co odmowa (23C), i z tego samego powodu: pilot stracił termin
+           DECYZJĄ CZŁOWIEKA, a powód jest jej treścią. Panel żąda powodu przy odwołaniu
+           cudzej rezerwacji (P4) i pisze administratorowi „Pilot zobaczy powód
+           w aplikacji" - a do tej zmiany powód zostawał w bazie i nie docierał nigdzie.
+
+           Tytuł RZECZOWNIKIEM z nazwiskiem za separatorem („Rezerwacja odwołana ·
+           Jan Bąk"), nie „Jan Bąk odwołał": czasownika nie da się odmienić bez
+           znajomości płci - ta sama reguła, co „Odmowa zgody · …" w skrzynce.
+
+           Baner stoi WYŁĄCZNIE wtedy, gdy odwołał KTOŚ INNY niż osoba, która patrzy.
+           Pilot, który odwołał własną rezerwację, widzi samą plakietkę „Odwołana" -
+           wie, co zrobił, a jego ewentualny powód był zdaniem dla klubu. Stąd zapis,
+           KTO zamknął wiersz (`bookings.closed_by`, migracja 17): z samego powodu tego
+           nie widać, bo pilot też może go podać przy odwołaniu własnej. -->
+      <div class="state-banner red">
+        <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span class="sb-text"><b>Rezerwacja odwołana · Jan Bąk</b>SP-DKM idzie w piątek na przegląd 100 h - przesunięty z poniedziałku. Wolne są SP-AXA i SP-BKL.</span>
+      </div>
+
+      <!-- Plakietka „Odwołana" zostaje NEUTRALNA, jak przy każdym zamkniętym terminie:
+           czerwień niesie baner, a dwa czerwone pudełka pod sobą przestają się odróżniać. -->
+      <div class="hero off">
         <div class="hero-top">
-          <span class="hero-date">Sobota · 19 września</span>
-          <span class="hero-badge">Potwierdzona</span>
+          <span class="hero-date">Piątek · 25 września</span>
+          <span class="hero-badge dim">Odwołana</span>
         </div>
-        <div class="hero-hours">09:00 → 11:00</div>
+        <div class="hero-hours">14:00 → 16:00</div>
         <div class="hero-meta">
           <span class="hero-zone">czas klubu</span>
           <span class="hero-dur">2 h</span>
-          <span class="hero-count">ZA 1 H 15 MIN</span>
         </div>
       </div>
 
@@ -190,15 +264,15 @@
       <div class="card">
         <div class="kv">
           <span class="kv-k">Samolot</span>
-          <span class="kv-v"><span class="mono">SP-AXA</span><span class="kv-sub">Cessna 172 · C172</span></span>
+          <span class="kv-v"><span class="mono">SP-DKM</span><span class="kv-sub">Cessna 152 · C152</span></span>
         </div>
         <div class="kv">
           <span class="kv-k">Zadanie</span>
-          <span class="kv-v">Przelot</span>
+          <span class="kv-v">Inne</span>
         </div>
         <div class="kv">
           <span class="kv-k">Trasa</span>
-          <span class="kv-v"><span class="mono">EPKK → EPRJ</span><span class="kv-sub">Kraków-Balice → Rzeszów-Jasionka</span></span>
+          <span class="kv-v"><span class="mono">EPKK → EPKK</span><span class="kv-sub">Kraków-Balice</span></span>
         </div>
         <div class="kv">
           <span class="kv-k">Drugi pilot</span>
@@ -206,11 +280,10 @@
         </div>
       </div>
 
-      <!-- ═══ PLAN ═══
-           Liczby, których rejestr nie zna, bo dotyczą przyszłości. Po locie mają swoje
-           faktyczne odpowiedniki na ekranie operacji (10) - i to TAMTE wchodzą do
-           rozliczenia. Karty „plan kontra fakt" tu nie ma i nie będzie: rezerwacja
-           zamyka się w chwili, w której zaczyna się operacja. -->
+      <!-- ŚCIEŻKI AKCEPTACJI TU NIE MA, bo ten klub jej nie ma. Gdy jest, stoi pod kartą
+           jak na 23 - jako zapis z kompletem zgód: odwołanie nie cofa decyzji, tylko
+           zamyka termin. Czekającą rezerwację odwołuje się tak samo, a osoby kroku
+           bieżącego dostają osobną wiadomość „Prośba wycofana" (issue #233). -->
       <div class="section-lbl">Plan</div>
       <div class="card">
         <div class="kv">
@@ -218,37 +291,17 @@
           <span class="kv-v"><span class="mono">1:30</span></span>
         </div>
         <div class="kv">
-          <span class="kv-k">Paliwo</span>
-          <span class="kv-v"><span class="mono">120 L</span><span class="kv-sub">do zabrania</span></span>
-        </div>
-        <div class="kv">
           <span class="kv-k">Notatka</span>
-          <span class="kv-v">Odbiór części w Jasionce, powrót tego samego dnia.</span>
+          <span class="kv-v">Kręgi z instruktorem przed egzaminem.</span>
         </div>
       </div>
 
-      <!-- ═══ AKCJE ═══
-           „PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem i zapisuje SAMĄ
-           RÓŻNICĘ - pola, których pilot nie tknął, zostają nietknięte także
-           w rejestrze zajętości.
-
-           ZMIANA MASZYNY JEST NOWĄ REZERWACJĄ (decyzja właściciela 2026-09-21):
-           termin należy do konkretnego egzemplarza, więc ekran zakłada go od nowa
-           i odwołuje stary. Kolejność jest częścią tej decyzji - najpierw nowy,
-           potem odwołanie starego; odwrotna oddawałaby slot, zanim wiadomo, czy
-           jest co wziąć w zamian.
-
-           Odwołania NIE MA przy cudzej rezerwacji ani po terminie, a poprawki -
-           przy terminie, który już trwa: maszynę można oddać (pilot nie poleci),
-           ale przesuwanie trwającego terminu opisywałoby przeszłość. -->
-      <a href="22-rezerwacja.html" class="btn-secondary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        PRZESUŃ I POPRAW
-      </a>
-
-      <a href="21-kalendarz.html" class="btn-danger">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-        ODWOŁAJ REZERWACJĘ
+      <!-- JEDNO WYJŚCIE, jak na 23C. Termin wrócił do puli, więc nie ma czego przesuwać
+           ani odwoływać - wyszarzone przyciski obiecywałyby akcje, których reguły nie
+           dopuszczą (zasada z 10B i 02G). Zostaje to, co pilot naprawdę zrobi. -->
+      <a href="21-kalendarz.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        WYBIERZ INNY TERMIN
       </a>
 
     </div>
@@ -258,61 +311,54 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
-  <a class="vp-item active" href="23-rezerwacja-szczegoly.html">
+  <a class="vp-item" href="23-rezerwacja-szczegoly.html">
     <span class="vp-badge">23</span>
     <span class="vp-body">
-      <span class="vp-name">Rezerwacja potwierdzona</span>
-      <span class="vp-when">Bohaterem ekranu jest TERMIN - to on jest przedmiotem rezerwacji, a maszyna i zadanie go opisują. Zmiana idzie jedną drogą („PRZESUŃ I POPRAW" wraca do kroku 1 z wypełnionym szkicem), ołówków przy wierszach NIE MA (issue #40). Odwołanie jest obramowane, nie wypełnione, i stoi na końcu.</span>
-    </span>
-    <span class="vp-tag">ten ekran</span>
-  </a>
-  <a class="vp-item" href="23a-rezerwacja-kolizja.html">
-    <span class="vp-badge amber">23A</span>
-    <span class="vp-body">
-      <span class="vp-name">Kolizja przy przejęciu maszyny</span>
-      <span class="vp-when">Pilot bierze samolot, który na ten czas ma zarezerwowany ktoś inny: baner OSTRZEGA i pokazuje, czyja to rezerwacja - ale NIGDY nie blokuje (§2.3). Wymaga sieci (§2.2): bez zasięgu ostrzeżenia nie ma, a lot idzie dalej - rezerwacja nigdy nie warunkowała przejęcia.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="22-rezerwacja.html">
-    <span class="vp-badge">22</span>
-    <span class="vp-body">
-      <span class="vp-name">Nowa rezerwacja</span>
-      <span class="vp-when">Dwa kroki: termin i maszyna → zadanie, trasa, plan lotu. Ten sam formularz obsługuje przesunięcie istniejącej.</span>
+      <span class="vp-name">Potwierdzona</span>
+      <span class="vp-when">Komplet zgód albo klub bez ścieżki akceptacji. Pełen pas akcji: przesunięcie i odwołanie.</span>
     </span>
   </a>
   <a class="vp-item" href="23b-rezerwacja-czeka.html">
     <span class="vp-badge amber">23B</span>
     <span class="vp-body">
       <span class="vp-name">Czeka na zgodę</span>
-      <span class="vp-when">Klub ma ścieżkę akceptacji. Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Poprawka czyści zgody i zaczyna ścieżkę od nowa.</span>
+      <span class="vp-when">Termin jest już zajęty - rezerwacja trzyma slot od złożenia, nie od zgody. Ścieżka mówi, ile kroków zostało i kto je trzyma; nazwisk nie ma, bo krok bywa obsadzony przez kilka osób i rozstrzyga pierwsza. Poprawka CZYŚCI zgody i zaczyna ścieżkę od nowa - inaczej ktoś zatwierdziłby dwie godziny, a poleciałoby się przez pół dnia.</span>
     </span>
   </a>
   <a class="vp-item" href="23e-rezerwacja-nowy-krok.html">
     <span class="vp-badge amber">23E</span>
     <span class="vp-body">
       <span class="vp-name">Doszedł krok akceptacji</span>
-      <span class="vp-when">Klub dopisał krok, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest żywa i to jest jej cena.</span>
+      <span class="vp-when">Klub dopisał krok do ścieżki, a rezerwacja jeszcze czekała - więc czeka dalej, mimo że pierwszą zgodę już ma. Ścieżka jest ŻYWA i to jest jej cena; zgody już wydane zostają, bo dotyczyły tego samego terminu.</span>
     </span>
   </a>
   <a class="vp-item" href="23c-rezerwacja-odrzucona.html">
-    <span class="vp-badge amber">23C</span>
+    <span class="vp-badge">23C</span>
     <span class="vp-body">
       <span class="vp-name">Odrzucona z powodem</span>
-      <span class="vp-when">Powód jest po stronie decydującego wymagany i stoi tu jako treść. Termin wrócił do puli, więc zostaje jedno wyjście - wybrać inny.</span>
+      <span class="vp-when">Powód jest wymagany po stronie decydującego i stoi tu jako treść. Termin wrócił do puli, więc odwoływać nie ma czego - zostaje jedno wyjście: wybrać inny termin.</span>
     </span>
   </a>
   <a class="vp-item" href="23d-rezerwacja-wygasla.html">
     <span class="vp-badge amber">23D</span>
     <span class="vp-body">
       <span class="vp-name">Termin minął bez decyzji</span>
-      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i oddaje slot: milczenie nie znaczy zgody.</span>
+      <span class="vp-when">Rezerwacja nierozstrzygnięta wygasa z początkiem swojego terminu i zwalnia slot (milczenie NIE znaczy zgody). Ekran mówi to wprost razem z tym, co robić dalej.</span>
     </span>
   </a>
-  <a class="vp-item" href="23g-rezerwacja-odwolana.html">
+  <a class="vp-item active" href="23g-rezerwacja-odwolana.html">
     <span class="vp-badge amber">23G</span>
     <span class="vp-body">
       <span class="vp-name">Odwołana przez klub</span>
-      <span class="vp-when">Rezerwację odwołał ktoś inny niż patrzący: klub z panelu (powód wymagany) albo dowódca, gdy patrzy drugi pilot. Powód stoi jako treść, z nazwiskiem odwołującego; kto odwołał sam, banera nie dostaje. §12.9, 2026-10-06.</span>
+      <span class="vp-when">Rezerwację odwołał ktoś inny niż patrzący: klub z panelu (powód wymagany) albo dowódca, gdy patrzy drugi pilot. Powód stoi jako treść, z nazwiskiem odwołującego; bez powodu baner mówi „Termin wrócił do puli". Wchodzi się tu z wiadomości „Rezerwacja odwołana" w skrzynce (25) albo z kalendarza. Kto odwołał sam, banera nie dostaje. §12.9, 2026-10-06.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="20e-pulpit-rezerwacja-czeka.html">
+    <span class="vp-badge blue">20E</span>
+    <span class="vp-body">
+      <span class="vp-name">Pulpit z rezerwacją czekającą</span>
+      <span class="vp-when">Karta najbliższej rezerwacji traci zieleń i poświatę: zielona obiecywałaby, że lot jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od tego, czy ktoś zdążył zdecydować, i właśnie ta para jest tu całą informacją.</span>
     </span>
   </a>
 </aside>
@@ -320,21 +366,17 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="20-pulpit.html">20 Pulpit</a>
   <a href="21-kalendarz.html">← 21 Kalendarz</a>
   <span>·</span>
-  <a href="22-rezerwacja.html">22 Krok 1</a>
-  <a href="22a-rezerwacja-zadanie.html">22A Krok 2</a>
-  <span>·</span>
-  <a href="23-rezerwacja-szczegoly.html" class="active">23 Szczegóły</a>
-  <a href="23a-rezerwacja-kolizja.html">23A Kolizja</a>
-
-  <span>·</span>
+  <a href="23-rezerwacja-szczegoly.html">23 Potwierdzona</a>
   <a href="23b-rezerwacja-czeka.html">23B Czeka</a>
-  <a href="23e-rezerwacja-nowy-krok.html">23E Krok</a>
+  <a href="23e-rezerwacja-nowy-krok.html">23E Doszedł</a>
   <a href="23c-rezerwacja-odrzucona.html">23C Odrzucona</a>
-  <a href="23d-rezerwacja-wygasla.html">23D Wygasła</a>
-  <a href="23g-rezerwacja-odwolana.html">23G Odwołana</a>
+  <a href="23d-rezerwacja-wygasla.html">23D Termin</a>
+  <a href="23g-rezerwacja-odwolana.html" class="active">23G Odwołana</a>
+  <a href="20e-pulpit-rezerwacja-czeka.html">20E Pulpit</a>
+  <span>·</span>
+  <a href="25-powiadomienia.html">25 Skrzynka →</a>
 </nav>
 
 </body>

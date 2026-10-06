@@ -350,6 +350,20 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           opens: opensBooking,
         };
       }
+      case 'booking_cancelled': {
+        // Odwołanie rezerwacji - do osób w fotelach poza odwołującym (§12.9, `design/23g`).
+        // Rzeczownik i nazwisko za separatorem, jak przy odmowie: czasownika nie da się
+        // odmienić bez płci. Powód bywa pusty (odwołanie własnej) - wtedy mówi skutek.
+        const name = who(str(n.payload.cancelledBy));
+        return {
+          ...base,
+          tone: 'no',
+          title: name == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${name}`,
+          reason: str(n.payload.reason) ?? 'Termin wrócił do puli.',
+          todo: false,
+          opens: opensBooking,
+        };
+      }
       case 'booking_expired':
         return {
           ...base,

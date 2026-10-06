@@ -33,6 +33,7 @@ import type { ApprovalFlow } from './approvals.ts';
 import type { OrderBookingCommands } from './orderBookings.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
+import { bookingCancelled } from '../notify/bookingNotices.ts';
 import type { ClubSignals } from '../notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type {
@@ -272,21 +273,29 @@ export class BookingCommands {
     const watching = this.watching;
     let watchNotices: RecordedNotice[] = [];
     let withdrawn: RecordedNotice[] = [];
+    let cancelled: RecordedNotice[] = [];
     const closed = await this.db.transaction(async (tx) => {
       const row = await this.bookings.close(tx, orgId, id, {
         status: 'cancelled',
         at: this.clock.now(),
         reason,
+        by: pilotId,
       });
       if (row == null) return row;
+      // Drugi pilot traci ten sam lot, więc dowiaduje się o tym tą samą transakcją
+      // (§12.9, D2) - odwołujący o sobie nie słyszy. Kto dostał tę wiadomość, nie
+      // dostaje drugiej o tym samym fakcie w innej roli (krok zgody, obserwujący).
+      const seated = bookingCancelled(current, { reason, cancelledBy: pilotId });
+      const told = seated.map((d) => d.pilotId);
+      cancelled = await this.notifier.record(tx, orgId, seated, this.clock.now());
       // Czekająca sprawa miała otwartą prośbę o zgodę - jej osoby dowiadują się, że nie
       // ma już czego rozstrzygać (issue #233). Stan SPRZED odwołania, bo to on mówi,
       // kogo pytano.
-      withdrawn = await this.approvals.withdraw(tx, orgId, current, pilotId);
+      withdrawn = await this.approvals.withdraw(tx, orgId, current, pilotId, told);
       // Obserwujący słyszą o odwołaniu WYŁĄCZNIE terminu, o którym już im przypomniano
       // (§5.2) - i nigdy o własnym; wiadomość idzie tą samą transakcją, co odwołanie.
       if (current.remindedAt == null || watching == null) return row;
-      const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
+      const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId, ...told]);
       if (audience != null) {
         const drafts = aircraftFlightCancelled(audience, current, null);
         watchNotices = await watching.record(tx, orgId, drafts, this.clock.now());
@@ -296,7 +305,7 @@ export class BookingCommands {
     // Przegrany wyścig z zadaniem okresowym albo z panelem: wiersz przestał być czynny
     // między odczytem a zapisem. To nie jest awaria - to jest ta sama odpowiedź.
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
-    if (withdrawn.length > 0) await this.notifier.wake(orgId, withdrawn);
+    await this.notifier.wake(orgId, [...withdrawn, ...cancelled]);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
     await this.signals.booking(orgId, closed);
     return { ok: true, booking: closed, created: false };

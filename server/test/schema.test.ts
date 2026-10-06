@@ -100,7 +100,8 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'bookings',
       // `reminded_at` na końcu - migracja 15 (obserwowanie samolotu): stempel „za godzinę".
       // `order_id` za nim - migracja 16 (zlecenia na lot): rezerwacja szukająca załogi.
-      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at', 'order_id'],
+      // `closed_by` na końcu - migracja 17 (§12.9): kto odwołał albo odrzucił.
+      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at', 'order_id', 'closed_by'],
     ],
     // Obserwowanie samolotu (migracja 15, issue #205): ZAMIAR osoby, bez statusu i bez
     // rodzajów - prawo do powiadomienia sprawdza się przy wysyłce, nie w wierszu.

@@ -146,6 +146,25 @@ describe('co wolno zrobić', () => {
   });
 });
 
+describe('odwołanie zawiadamia osoby w fotelach (§12.9)', () => {
+  it('arkusz odwołania mówi PRZED tapnięciem, że drugi pilot dostanie wiadomość', () => {
+    expect(vm().cancelWarning).toBe('Slot wróci do kalendarza i będzie mógł go zająć ktoś inny.');
+    expect(vm({ booking: booking({ dualId: 'jse' }) }).cancelWarning).toBe(
+      'Slot wróci do kalendarza i będzie mógł go zająć ktoś inny. Drugi pilot dostanie wiadomość.',
+    );
+  });
+
+  it('drugi pilot odwołanej rezerwacji dostaje wyjście „inny termin", ale nie odwołanie ani poprawkę', () => {
+    const asDual = vm({ booking: booking({ dualId: 'jse', status: 'cancelled' }), pilotId: 'jse' });
+    expect(asDual.closed).toBe(true);
+    const openAsDual = vm({ booking: booking({ dualId: 'jse' }), pilotId: 'jse' });
+    expect(openAsDual.canCancel).toBe(false);
+    expect(openAsDual.canEdit).toBe(false);
+    // Ktoś spoza foteli - nadal bez żadnej akcji.
+    expect(vm({ booking: booking({ dualId: 'jse', status: 'cancelled' }), pilotId: 'krz' }).closed).toBe(false);
+  });
+});
+
 describe('poprawka', () => {
   const base = draftOfBooking(booking(), day);
 

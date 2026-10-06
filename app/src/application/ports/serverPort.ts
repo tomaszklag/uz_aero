@@ -473,6 +473,13 @@ export interface RemoteBooking {
   note?: string | null;
   /** Chwila złożenia (3.1.0) - „czeka od" na ekranie decyzji; w kształcie pełnym. */
   createdAt?: string;
+  /**
+   * Powód zamknięcia i kto zamknął (§12.9) - karta odwołanej rezerwacji pokazuje je
+   * osobom w fotelach, gdy odwołał ktoś inny (23G). `closedBy: null` = zamknął czas
+   * (zwolnienie slotu, wygaśnięcie) albo wiersz sprzed tej zmiany.
+   */
+  closeReason?: string | null;
+  closedBy?: string | null;
 }
 
 /**

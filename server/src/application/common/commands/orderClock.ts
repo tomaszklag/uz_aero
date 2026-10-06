@@ -95,7 +95,7 @@ export class OrderClock {
         });
         if (order == null) return null;
         const booking =
-          (await this.bookings.close(tx, candidate.orgId, loaded.booking.id, { status: 'released', at: now, reason: null })) ??
+          (await this.bookings.close(tx, candidate.orgId, loaded.booking.id, { status: 'released', at: now, reason: null, by: null })) ??
           loaded.booking;
         await this.changes.insert(
           tx,

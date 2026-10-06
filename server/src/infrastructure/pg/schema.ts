@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1901,6 +1901,23 @@ export const MIGRATION_16 = `
   ON CONFLICT DO NOTHING;
 `;
 
+/**
+ * Migracja 17 - KTO ZAMKNĄŁ REZERWACJĘ (`docs/rezerwacje.md` §12.9, propozycja 2026-10-06).
+ *
+ * Odwołanie rezerwacji zawiadamia osoby w fotelach poza odwołującym, a karta rezerwacji
+ * w telefonie pokazuje im powód z nazwiskiem odwołującego. Z samego `close_reason` tego
+ * nie widać: pilot może podać powód także przy odwołaniu WŁASNEJ, więc karta nie
+ * odróżniłaby „odwołał klub" od „odwołałem sam". Kolumna jest lustrem
+ * `flight_orders.closed_by`.
+ *
+ * Addytywna: wiersze sprzed migracji mają `NULL` i karta pokazuje je jak dotąd - samą
+ * plakietką „Odwołana". `NULL` zostaje też przy zamknięciu przez CZAS (`released`,
+ * `expired`): zamknął czas, nie człowiek.
+ */
+export const MIGRATION_17 = `
+  ALTER TABLE bookings ADD COLUMN IF NOT EXISTS closed_by TEXT REFERENCES pilots(id);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1918,6 +1935,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_14,
   MIGRATION_15,
   MIGRATION_16,
+  MIGRATION_17,
 ];
 
 /**
@@ -1955,4 +1973,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Poprawka terminu czyści zgody (3.1.0, issue #166): decyzje na rezerwacji dostają własny klucz i stempel zastąpienia - przesunięcie terminu unieważnia dotychczasowe zgody i ścieżka rusza od nowa, a rejestr decyzji zostaje append-only',
   'Obserwowanie samolotu (3.2.0, issue #205): zapis obserwowania maszyny przez członka klubu (znika razem z członkostwem) i stempel przypomnienia „za godzinę" na rezerwacji - bez backfillu, sam DDL',
   'Zlecenia na lot (4.0.0, issue #245): grupy członków klubu, zlecenie jako rezerwacja szukająca załogi z adresatami per fotel albo wspólną listą, odpowiedziami i odczytami per wersja, historia zmian zlecenia, prywatne wątki zlecający-adresat oraz zdolność „Zlecanie lotów" dopisana koordynatorom i administratorom',
+  'Kto zamknął rezerwację (§12.9): osoba, która odwołała albo odrzuciła rezerwację - karta w telefonie odróżnia odwołanie przez klub od własnego i pokazuje powód z nazwiskiem; bez backfillu, sam DDL',
 ];

@@ -27,6 +27,7 @@ Skrzynka, jak kalendarz, **wymaga zasięgu**: wiadomości przychodzą z serwera.
 | **Zgoda** - rezerwacja potwierdzona | pilot, który rezerwował |
 | **Odmowa** - z powodem | pilot, który rezerwował |
 | **Termin wygasł** bez decyzji | pilot, który rezerwował |
+| **Rezerwacja odwołana** - z powodem i nazwiskiem osoby, która odwołała | pilot i drugi pilot rezerwacji - poza osobą, która ją odwołała. Gdy odwoła klub, dostają ją oboje; gdy odwoła sam pilot, dostaje ją drugi pilot |
 | **Prośba wycofana** - rezerwację czekającą na zgodę odwołano | osoby z kroku, który miał decydować - sprawy do rozstrzygnięcia już nie ma. Do najbliższej aktualizacji aplikacji telefon pokazuje ją jako „Wiadomość z klubu" |
 | **Zbliża się lot, silnik ruszył, maszyna zdana, odwołany termin, nikt nie odebrał** | osoby, które obserwują ten samolot ([obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu)) |
 

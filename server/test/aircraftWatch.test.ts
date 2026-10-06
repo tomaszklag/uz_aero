@@ -530,8 +530,9 @@ describe('powiadomienia o terminie', () => {
     expect((await kinds(app, krz)).sort()).toEqual(['aircraft_flight_cancelled', 'aircraft_flight_soon']);
     expect(await kinds(app, bno)).toEqual([]);
     // AKO nie jest sprawcą odwołania, ale jest PIC-em terminu: wiadomość dostaje, bo
-    // odwołał go KTO INNY (§5.2: „bez odwołującego").
-    expect(await kinds(app, ako)).toEqual(['aircraft_flight_cancelled']);
+    // odwołał go KTO INNY (§5.2: „bez odwołującego"). Od §12.9 dostaje ją JAKO OSOBA
+    // W FOTELU - z powodem - i nie dostaje drugiej o tym samym fakcie jako obserwujący.
+    expect(await kinds(app, ako)).toEqual(['booking_cancelled']);
   });
 
   it('nikt nie odebrał maszyny - slot wraca do puli i budzi obserwujących', async () => {

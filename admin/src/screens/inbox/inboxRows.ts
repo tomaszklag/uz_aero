@@ -268,6 +268,21 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           href: toBooking,
         };
       }
+      case 'booking_cancelled': {
+        // Odwołanie rezerwacji - do osób w fotelach poza odwołującym (§12.9). Ten sam
+        // słownik, co skrzynka telefonu: rzeczownik z odwołującym, powód jako treść,
+        // a bez powodu skutek.
+        const who = name('cancelledBy');
+        return {
+          ...base,
+          tone: 'no',
+          icon: 'cross',
+          title: who == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${who}`,
+          sub: regTerm,
+          text: plain(str(p.reason)) ?? [{ text: 'Termin wrócił do puli.' }],
+          href: toBooking,
+        };
+      }
       case 'booking_expired':
         return {
           ...base,
