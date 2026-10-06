@@ -430,6 +430,7 @@ const lastSeen = new LastSeenThrottle();
     push,
     liveRegistry,
     new PgClubSettingsRepo(),
+    sessions,
     randomUUID,
   );
   // Sygnały zmian klubu przez atrapę, która ZAPISUJE - testy pytają, kto dostał który

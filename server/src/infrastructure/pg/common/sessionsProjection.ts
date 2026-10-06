@@ -226,4 +226,19 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     );
     return rows.map(toSessionRow);
   }
+
+  async crewInOperation(db: Queryable, pilotIds: readonly string[]): Promise<Set<string>> {
+    if (pilotIds.length === 0) return new Set();
+    // Ponad klubami świadomie (imienny wyjątek w strażniku architektury): pytanie dotyczy
+    // OSOBY, a jej telefon jest w kokpicie niezależnie od klubu wiadomości.
+    const { rows } = await db.query<{ id: string }>(
+      `SELECT s.pic_id AS id FROM sessions s
+        WHERE s.status = 'active' AND s.pic_id = ANY($1::text[])
+       UNION
+       SELECT s.dual_id AS id FROM sessions s
+        WHERE s.status = 'active' AND s.dual_id = ANY($1::text[])`,
+      [pilotIds],
+    );
+    return new Set(rows.map((r) => r.id));
+  }
 }

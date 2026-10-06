@@ -21,6 +21,7 @@ export class LogPush implements PushPort {
           `Do:     ${message.token}`,
           `Tytuł:  ${message.title}`,
           `Treść:  ${message.body}`,
+          `Kanał:  ${message.quiet ? 'cichy (załoga operacji w toku)' : 'zwykły'}`,
           `Dane:   ${JSON.stringify(message.data)}`,
           '──────────────────────────────────',
         ].join('\n'),

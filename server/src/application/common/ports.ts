@@ -1476,6 +1476,14 @@ export interface PushMessage {
   body: string;
   /** Co otworzyć po tapnięciu; aplikacja czyta z tego trasę. */
   data: Record<string, unknown>;
+  /**
+   * CISZA W KOKPICIE (pkt 44 zleceń; decyzje właściciela 2026-10-06): adresat siedzi
+   * w załodze operacji w toku - dowódca albo drugi pilot - więc budzik idzie kanałem bez
+   * dźwięku i bez wyskakującego banera, na listę powiadomień i do skrzynki. Rozstrzyga
+   * serwer, bo telefon w locie ma zwykle zgaszony ekran, a aplikacja w tle nie ma jak
+   * wyciszyć powiadomienia sama (`docs/kanal-klubu.md` §13).
+   */
+  quiet: boolean;
 }
 
 /**
@@ -2265,6 +2273,16 @@ export interface SessionsProjectionPort {
    * fotela nie miałby ani jednego lotu na koncie.
    */
   listByCrew(db: Queryable, orgId: string, pilotId: string): Promise<SessionRow[]>;
+  /**
+   * Kto z podanych osób siedzi TERAZ w załodze operacji w toku - dowódca albo drugi pilot
+   * - w DOWOLNYM klubie (cisza w kokpicie, pkt 44 zleceń, `docs/kanal-klubu.md` §13).
+   *
+   * Ponad klubami świadomie: telefon jest w kokpicie bez względu na to, z którego klubu
+   * przyszła wiadomość, a wynik to bit o samym adresacie - żadnych danych operacji nie
+   * oddaje. „W toku" znaczy to samo, co w kokpicie telefonu: od przejęcia do zdania
+   * samolotu (albo zakończenia i unieważnienia przez administratora).
+   */
+  crewInOperation(db: Queryable, pilotIds: readonly string[]): Promise<Set<string>>;
   /**
    * Sesje jednej maszyny przejęte w danym oknie czasu - SKŁAD KARTY DOBY (§4.7).
    *

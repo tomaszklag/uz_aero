@@ -18,6 +18,7 @@ import type { ClubSettingsPort, LiveFrame } from '../src/application/common/port
 import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
 import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';
 import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo.ts';
+import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 import { FakePush } from './fakePush.ts';
 import { testHarness } from './helpers.ts';
 import { connectLive, sendFrame, type Frame } from './liveClients.ts';
@@ -27,6 +28,7 @@ import { ORG_A, ORG_B } from './testWorld.ts';
 const TERAZ = Date.UTC(2026, 5, 22, 8, 0, 0);
 const JUTRO = TERAZ + 86_400_000;
 const H = 3_600_000;
+const MIN = 60_000;
 const iso = (t: number): string => new Date(t).toISOString();
 
 let seq = 0;
@@ -221,6 +223,7 @@ describe('rozdzielnik - zapis i awaria', () => {
       new FakePush(),
       new LiveRegistry(),
       { calendar: async () => ({ timezone: 'Europe/Warsaw', homeIcao: null }) },
+      new PgSessionsProjection(),
       randomUUID,
     );
     const at = h.clock.now();
@@ -259,6 +262,7 @@ describe('rozdzielnik - zapis i awaria', () => {
       push,
       live,
       broken,
+      new PgSessionsProjection(),
       randomUUID,
     );
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -272,5 +276,174 @@ describe('rozdzielnik - zapis i awaria', () => {
     // Dwa sygnały o jednej wiadomości są lepsze niż cisza.
     expect(frames).toEqual([]);
     expect(push.to('ExponentPushToken[KRZ-telefon]')).toHaveLength(1);
+  });
+
+  it('awaria odczytu załogi - budzik dzwoni zwykłym kanałem; cisza nie ma prawa zgubić wiadomości', async () => {
+    const h = await testHarness();
+    const krz = await login(h.app, 'KRZ');
+    await registerDevice(h, krz, 'ExponentPushToken[KRZ-telefon]');
+    const push = new FakePush();
+    const notifier = new Notifier(
+      h.db,
+      new PgNotificationsRepo(),
+      new PgPushTokensRepo(h.clock),
+      push,
+      new LiveRegistry(),
+      { calendar: async () => ({ timezone: 'Europe/Warsaw', homeIcao: null }) },
+      {
+        crewInOperation: async () => {
+          throw new Error('baza nie odpowiada');
+        },
+      },
+      randomUUID,
+    );
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const recorded = await h.db.transaction((tx) => notifier.record(tx, ORG_A, [draft('KRZ')], h.clock.now()));
+      await notifier.wake(ORG_A, recorded);
+      expect(quiet).toHaveBeenCalled();
+    } finally {
+      quiet.mockRestore();
+    }
+    expect(push.to('ExponentPushToken[KRZ-telefon]')).toMatchObject([{ quiet: false }]);
+  });
+});
+
+/**
+ * CISZA W KOKPICIE (pkt 44 zleceń; decyzje właściciela 2026-10-06): dopóki osoba siedzi
+ * w załodze operacji w toku - jako dowódca ALBO drugi pilot - budzik idzie kanałem bez
+ * dźwięku i bez wyskakującego banera. W kokpicie łącza nie ma (K6), więc dochodzi wyłącznie
+ * push, a ekran telefonu w locie zwykle gaśnie: aplikacja w tle nie ma jak wyciszyć go sama.
+ */
+describe('cisza w kokpicie - załoga operacji w toku dostaje budzik bez dźwięku', () => {
+  interface Operation {
+    sessionUuid: string;
+    aircraftId: string;
+    picId: string;
+    dualId: string | null;
+    mhFormat: 'hhmm' | 'decimal';
+  }
+
+  /** Zdarzenie rejestru z nagłówkiem operacji - tak, jak wysyła je telefon dowódcy. */
+  const event = (op: Operation, type: string, time: number, payload: Record<string, unknown> = {}) => ({
+    uuid: nextId(`ev-${type}`),
+    sessionUuid: op.sessionUuid,
+    aircraftId: op.aircraftId,
+    picId: op.picId,
+    dualId: op.dualId,
+    type,
+    deviceTime: time,
+    gpsTime: time,
+    payload,
+    schemaVersion: 1,
+  });
+
+  const ingest = async (h: Harness, token: string, events: unknown[]): Promise<void> => {
+    const res = await h.app.inject({ method: 'POST', url: '/events', headers: bearer(token), payload: { events } });
+    expect(res.statusCode, res.body).toBe(200);
+  };
+
+  /** Przejęcie, zadanie i uruchomienie silnika - operacja W TOKU, telefon dowódcy w kokpicie. */
+  const startOperation = (h: Harness, token: string, op: Operation): Promise<void> =>
+    ingest(h, token, [
+      event(op, 'session_claim', TERAZ - 2 * H, { mode: 'free' }),
+      event(op, 'preflight_confirm', TERAZ - 2 * H, {
+        operation: 'skoki',
+        departureIcao: 'EPKK',
+        arrivalIcao: null,
+        reading: { fuelL: 150, mh: 1234.5 },
+        client: null,
+        mhFormat: op.mhFormat,
+      }),
+      event(op, 'engine_start', TERAZ - 2 * H + 10 * MIN),
+    ]);
+
+  /** Lot i zdanie samolotu - koniec operacji. */
+  const releaseAircraft = (h: Harness, token: string, op: Operation): Promise<void> =>
+    ingest(h, token, [
+      event(op, 'takeoff', TERAZ - 2 * H + 20 * MIN, { method: 'auto' }),
+      event(op, 'landing', TERAZ - H, { method: 'auto' }),
+      event(op, 'engine_stop', TERAZ - H + 10 * MIN),
+      event(op, 'day_close', TERAZ - H + 20 * MIN, { finalReading: { fuelL: 100, mh: 1235.6 } }),
+    ]);
+
+  const onFgk = (sessionUuid: string, picId: string, dualId: string | null = null): Operation => ({
+    sessionUuid,
+    aircraftId: 'SP-FGK',
+    picId,
+    dualId,
+    mhFormat: 'hhmm',
+  });
+
+  it('dowódca operacji w toku dostaje budzik CICHYM kanałem - dane tapnięcia bez zmian', async () => {
+    const h = await withApprover('KRZ');
+    const krz = await login(h.app, 'KRZ');
+    await registerDevice(h, krz, 'ExponentPushToken[KRZ-telefon]');
+    await startOperation(h, krz, onFgk('op-krz', 'KRZ'));
+
+    await book(h, 'PWI');
+    const sent = h.push.to('ExponentPushToken[KRZ-telefon]');
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.quiet).toBe(true);
+    expect(sent[0]!.data).toMatchObject({ kind: 'approval_requested', orgId: ORG_A });
+  });
+
+  it('drugi pilot operacji w toku też - uczeń w locie szkolnym nie słyszy dzwonka', async () => {
+    const h = await withApprover('KRZ');
+    const krz = await login(h.app, 'KRZ');
+    await registerDevice(h, krz, 'ExponentPushToken[KRZ-telefon]');
+    const jse = await login(h.app, 'JSE');
+    await startOperation(h, jse, onFgk('op-jse', 'JSE', 'KRZ'));
+
+    await book(h, 'PWI');
+    expect(h.push.to('ExponentPushToken[KRZ-telefon]')).toMatchObject([{ quiet: true }]);
+  });
+
+  it('cudza operacja w toku nie wycisza nikogo poza jej załogą', async () => {
+    const h = await withApprover('KRZ');
+    const krz = await login(h.app, 'KRZ');
+    await registerDevice(h, krz, 'ExponentPushToken[KRZ-telefon]');
+    const jse = await login(h.app, 'JSE');
+    await startOperation(h, jse, onFgk('op-jse', 'JSE'));
+
+    await book(h, 'PWI');
+    expect(h.push.to('ExponentPushToken[KRZ-telefon]')).toMatchObject([{ quiet: false }]);
+  });
+
+  it('po zdaniu samolotu budzik znowu dzwoni zwykłym kanałem', async () => {
+    const h = await withApprover('KRZ');
+    const krz = await login(h.app, 'KRZ');
+    await registerDevice(h, krz, 'ExponentPushToken[KRZ-telefon]');
+    const op = onFgk('op-krz', 'KRZ');
+    await startOperation(h, krz, op);
+    await releaseAircraft(h, krz, op);
+
+    await book(h, 'PWI');
+    expect(h.push.to('ExponentPushToken[KRZ-telefon]')).toMatchObject([{ quiet: false }]);
+  });
+
+  it('operacja w toku w INNYM klubie też wycisza - telefon jest w kokpicie bez względu na klub wiadomości', async () => {
+    // PWI lata w Becie, a prośba o zgodę przychodzi z Alfy.
+    const h = await withApprover('PWI');
+    const inAlfa = await login(h.app, 'PWI');
+    const switched = await h.app.inject({
+      method: 'POST',
+      url: '/auth/switch',
+      headers: bearer(inAlfa),
+      payload: { orgId: ORG_B },
+    });
+    expect(switched.statusCode, switched.body).toBe(200);
+    const inBeta = switched.json().token as string;
+    await registerDevice(h, inBeta, 'ExponentPushToken[PWI]');
+    await startOperation(h, inBeta, {
+      sessionUuid: 'op-pwi-beta',
+      aircraftId: 'SP-BBB',
+      picId: 'PWI',
+      dualId: null,
+      mhFormat: 'decimal',
+    });
+
+    await book(h, 'JSE');
+    expect(h.push.to('ExponentPushToken[PWI]')).toMatchObject([{ quiet: true }]);
   });
 });

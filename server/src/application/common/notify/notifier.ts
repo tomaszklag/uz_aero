@@ -28,6 +28,13 @@
  * którym się uwierzytelniło, a dzwonek liczy tylko klub aktywny. Gdy ramka nie wyjdzie
  * (awaria odczytu przed wysyłką), push dzwoni do wszystkich - dwa sygnały o jednej
  * wiadomości są lepsze niż cisza.
+ *
+ * ══ CISZA W KOKPICIE (pkt 44 zleceń; decyzje właściciela 2026-10-06) ══
+ * Adresat w załodze operacji w toku - dowódca albo drugi pilot, w dowolnym klubie -
+ * dostaje budzik CICHYM kanałem: na listę powiadomień i do skrzynki, bez dźwięku i bez
+ * wyskakującego banera. Rozstrzyga serwer, bo w kokpicie łącza nie ma (K6), a ekran
+ * telefonu w locie zwykle gaśnie - aplikacja w tle nie ma jak wyciszyć powiadomienia sama.
+ * Awaria tego odczytu nie wycisza nikogo: lepszy dzwonek w locie niż zgubiona wiadomość.
  */
 
 import { safeZone } from '../../../domain/clubTime.ts';
@@ -42,6 +49,7 @@ import type {
   PushPort,
   PushTokensPort,
   Queryable,
+  SessionsProjectionPort,
 } from '../ports.ts';
 import type { NotificationDraft } from './bookingNotices.ts';
 import { inboxItem } from './inboxItem.ts';
@@ -63,6 +71,8 @@ export class Notifier {
     private readonly push: PushPort,
     private readonly live: LivePort,
     private readonly clubs: ClubSettingsPort,
+    /** Kto siedzi w załodze operacji w toku - ten dostaje budzik cichym kanałem. */
+    private readonly crew: Pick<SessionsProjectionPort, 'crewInOperation'>,
     private readonly newId: () => string,
   ) {}
 
@@ -182,6 +192,8 @@ export class Notifier {
     try {
       const people = [...new Set(notices.map((n) => n.pilotId))];
       const targets = await this.tokens.byPilots(this.db, orgId, people);
+      if (targets.length === 0) return;
+      const inCockpit = await this.inOperation(targets.map((t) => t.pilotId));
       // Jedna wiadomość na URZĄDZENIE, nie na osobę: pilot bywa zalogowany na telefonie
       // i na tablecie klubu, a budzik ma zadzwonić tam, gdzie akurat patrzy - i NIE tam,
       // gdzie ta sama wiadomość przyszła już ramką kanału (K4).
@@ -202,6 +214,7 @@ export class Notifier {
             // z aktywnym i przy różnicy otwiera skrzynkę z instrukcją zamiast karty,
             // która nie ma jak się wczytać.
             data: pushData(orgId, notice),
+            quiet: inCockpit.has(notice.pilotId),
           });
         }
       }
@@ -211,6 +224,16 @@ export class Notifier {
       if (dead.length > 0) await this.tokens.forget(this.db, dead);
     } catch (err) {
       console.error('budzik nie zadzwonił:', err);
+    }
+  }
+
+  /** Załoga operacji w toku spośród adresatów; awaria odczytu = nikt (zwykły kanał). */
+  private async inOperation(pilotIds: readonly string[]): Promise<ReadonlySet<string>> {
+    try {
+      return await this.crew.crewInOperation(this.db, [...new Set(pilotIds)]);
+    } catch (err) {
+      console.error('odczyt załogi operacji w toku nie wyszedł - budzik idzie zwykłym kanałem:', err);
+      return new Set();
     }
   }
 }

@@ -436,7 +436,7 @@ const approvalStepsRepo = new PgApprovalStepsRepo();
 const bookingApprovalsRepo = new PgBookingApprovalsRepo();
 const notificationsRepo = new PgNotificationsRepo();
 const pushTokensRepo = new PgPushTokensRepo(clock);
-const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, live, clubSettings, randomUUID);
+const notifier = new Notifier(db, notificationsRepo, pushTokensRepo, push, live, clubSettings, sessions, randomUUID);
 // Sygnały zmian klubu (`docs/kanal-klubu.md` §4): kalendarz, karta samolotu, dziennik
 // i „Do sprawdzenia" - JEDNA reguła „kto dostaje co" dla wszystkich producentów.
 const clubSignals = new ClubSignals(live, db, clubSettings, sessions);

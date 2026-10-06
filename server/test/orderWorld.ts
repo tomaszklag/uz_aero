@@ -141,6 +141,7 @@ export async function orderWorld(): Promise<OrderWorld> {
     push,
     new LiveRegistry(),
     clubs,
+    new PgSessionsProjection(),
     randomUUID,
   );
   const watching = new AircraftWatching(new PgAircraftWatchesRepo(), aircraft, notifier);

@@ -37,6 +37,17 @@ const TIMEOUT_MS = 10_000;
  */
 const BATCH = 100;
 
+/**
+ * Kanały Androida, które zakłada APLIKACJA przy starcie (`infrastructure/push/
+ * expoNotifications.ts`): `default` z wysoką ważnością (dźwięk i wyskakujący baner)
+ * i `quiet` z niską - na listę powiadomień, bez dźwięku i bez banera. Cichym kanałem idzie
+ * budzik do załogi operacji w toku (cisza w kokpicie, `PushMessage.quiet`). Zmiana nazwy
+ * tutaj wymaga zmiany tam - bez kanału o tej nazwie system wrzuciłby budzik do kanału
+ * zapasowego o ważności, której nie kontrolujemy.
+ */
+const CHANNEL_DEFAULT = 'default';
+const CHANNEL_QUIET = 'quiet';
+
 /** Wstrzykiwane, żeby test nie chodził do sieci - jak `HttpPost` w `resendMail.ts`. */
 export type HttpPost = (
   url: string,
@@ -88,14 +99,14 @@ export class ExpoPush implements PushPort {
             body: m.body,
             data: m.data,
             // Budzik ma obudzić: dźwięk domyślny i wysoki priorytet na Androidzie,
-            // bo prośba o zgodę na cudzy lot bywa pilna (termin jest jutro).
-            sound: 'default',
+            // bo prośba o zgodę na cudzy lot bywa pilna (termin jest jutro). Załoga
+            // operacji w toku dźwięku nie dostaje - na Androidzie i tak rozstrzyga kanał,
+            // a brak pola mówi to samo każdej innej platformie.
+            sound: m.quiet ? undefined : 'default',
             priority: 'high',
-            // Kanał Androida zakłada APLIKACJA przy starcie (`infrastructure/push/
-            // expoNotifications.ts`, epik R-J) z wysoką ważnością - bez nazwanego kanału
-            // system wrzuciłby budzik do kanału domyślnego o ważności, której nie
-            // kontrolujemy.
-            channelId: 'default',
+            // Kanał nazwany, bo bez niego system wrzuciłby budzik do kanału domyślnego
+            // o ważności, której nie kontrolujemy (patrz `CHANNEL_DEFAULT`).
+            channelId: m.quiet ? CHANNEL_QUIET : CHANNEL_DEFAULT,
           })),
         ),
         signal: AbortSignal.timeout(TIMEOUT_MS),

@@ -17,6 +17,7 @@ import { LiveRegistry } from '../src/infrastructure/live/liveRegistry.ts';
 import { PgClubSettingsRepo } from '../src/infrastructure/pg/common/clubSettingsRepo.ts';
 import { PgNotificationsRepo } from '../src/infrastructure/pg/common/notificationsRepo.ts';
 import { PgPushTokensRepo } from '../src/infrastructure/pg/common/pushTokensRepo.ts';
+import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
 
 export class FakePush implements PushPort {
   readonly sent: PushMessage[] = [];
@@ -58,6 +59,7 @@ export function silentNotifier(db: Database): Notifier {
     new FakePush(),
     new LiveRegistry(),
     new PgClubSettingsRepo(),
+    new PgSessionsProjection(),
     randomUUID,
   );
 }

@@ -582,6 +582,11 @@ describe('granice, których nie pilnuje kompilator', () => {
         'metoda i żywotność sesji z `sid` w tokenie - dla rotacji i przełączenia klubu',
       'infrastructure/pg/common/loginSessionsRepo.ts#isRevoked':
         'brama PLATFORMOWA pyta o sesję bez klubu - superadministrator go nie ma',
+      // Cisza w kokpicie (pkt 44 zleceń, `docs/kanal-klubu.md` §13): budzik pyta, czy
+      // ADRESAT siedzi w załodze operacji w toku. Telefon jest wtedy w kokpicie bez
+      // względu na klub wiadomości, a wynik to bit o tej samej osobie - nic z operacji.
+      'infrastructure/pg/common/sessionsProjection.ts#crewInOperation':
+        'cisza w kokpicie: osoba lecąca w jednym klubie nie słyszy budzika z drugiego - wynik to bit o adresacie',
     };
 
     const scopedOffenders = (code: string, allow: (unit: string) => boolean): string[] => {
