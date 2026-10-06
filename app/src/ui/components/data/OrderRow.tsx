@@ -135,8 +135,10 @@ const styles = (t: Theme) =>
     ordDone: { backgroundColor: 'transparent' },
     main: { flex: 1, minWidth: 0, gap: 4 },
     top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    hours: { fontSize: 12.5, fontWeight: '700', letterSpacing: 1, color: t.colors.textPrimary },
-    hoursDone: { fontWeight: '500', color: t.colors.textSecondary },
+    // Grubość idzie osobnym plikiem kroju - `fontWeight` na Androidzie nie działa
+    // na czcionkach wczytanych z pakietu (typografia w `@ninerdeck/tokens`).
+    hours: { fontFamily: t.fontFamily.monoBold, fontSize: 12.5, letterSpacing: 1, color: t.colors.textPrimary },
+    hoursDone: { fontFamily: t.fontFamily.monoMedium, color: t.colors.textSecondary },
     flags: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
     line: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 7 },
     ac: { fontSize: 10.5, letterSpacing: 1, color: t.colors.textPrimary },
@@ -146,7 +148,7 @@ const styles = (t: Theme) =>
     dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: t.colors.borderStrong },
     progress: { fontSize: 9.5, letterSpacing: 0.3, color: t.colors.textSecondary },
     meta: { fontSize: 10.5, lineHeight: 14.7, color: t.colors.textMuted },
-    metaStrong: { color: t.colors.textSecondary, fontWeight: '600' },
+    metaStrong: { color: t.colors.textSecondary, fontFamily: t.fontFamily.bodySemiBold },
     go: { width: 14, fontSize: 15, textAlign: 'center', color: t.colors.textMuted },
     msg: { position: 'relative' },
     // Kropka 7 px z pierścieniem w kolorze karty (`box-shadow: 0 0 0 2px` w makiecie) -

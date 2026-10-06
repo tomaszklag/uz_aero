@@ -90,7 +90,8 @@ const styles = (t: Theme) =>
     },
     btnOn: { backgroundColor: t.colors.textPrimary },
     label: { fontSize: 9.5, letterSpacing: 1.5, color: t.colors.textSecondary },
-    labelOn: { color: t.colors.bg, fontWeight: '700' },
+    // Grubość osobnym plikiem kroju - `fontWeight` na Androidzie nie działa na krojach z pakietu.
+    labelOn: { color: t.colors.bg, fontFamily: t.fontFamily.monoBold },
     count: {
       minWidth: 17,
       height: 17,
@@ -102,6 +103,6 @@ const styles = (t: Theme) =>
       borderColor: t.colors.borderStrong,
     },
     countBlue: { backgroundColor: t.colors.blueMuted, borderColor: t.colors.blueBorder },
-    countText: { fontSize: 9, fontWeight: '700', letterSpacing: 0, color: t.colors.textSecondary },
+    countText: { fontFamily: t.fontFamily.monoBold, fontSize: 9, letterSpacing: 0, color: t.colors.textSecondary },
     countTextBlue: { color: t.colors.blue },
   });

@@ -15,6 +15,7 @@ import {
   orderDay,
   orderHours,
   orderLength,
+  orderReference,
   orderSpan,
   personLabel,
   planLine,
@@ -53,6 +54,12 @@ describe('termin czasem klubu', () => {
   it('godzina spoza doby liczy się na dobie przesuniętej - piątek wieczór i niedziela rano', () => {
     expect(orderSpan(localMs(-1, '18:00'), localMs(-1, '20:30'), day)).toBe('18:00-20:30');
     expect(orderHours(localMs(1, '10:00'), localMs(1, '11:30'), day)).toBe('10:00 → 11:30');
+  });
+
+  it('wiersz odniesienia arkusza - znak, dzień tygodnia DOBY KLUBU i godziny (28D)', () => {
+    expect(orderReference('SP-AXA', day, localMs(0, '09:00'), localMs(0, '11:00'))).toBe('SP-AXA · sob 3 PAŹ 09:00-11:00');
+    // Sobota 00:30 w Warszawie to jeszcze piątek w UTC - dzień tygodnia ma być klubu.
+    expect(orderReference('SP-ANA', day, localMs(0, '00:30'), localMs(0, '02:00'))).toBe('SP-ANA · sob 3 PAŹ 00:30-02:00');
   });
 
   it('odliczanie do początku; trwający termin to „TRWA", miniony - nic', () => {

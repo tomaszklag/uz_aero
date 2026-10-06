@@ -11,7 +11,7 @@
  * - nigdy w odmianie i nigdy z czasownikiem w czasie przeszłym.
  */
 
-import { dateUtcDayMonthLong, duration, litres, relativeAge, weekdayUtc } from '@ninerdeck/format';
+import { dateUtcDayMonthLong, duration, litres, relativeAge, weekdayShortUtc, weekdayUtc } from '@ninerdeck/format';
 
 import type { RemoteSeat } from '../../../application';
 
@@ -132,6 +132,16 @@ export function orderCountdown(startsAt: number, endsAt: number, now: number): s
 export function orderDayShort(day: ClubDayBounds, at: number): string {
   const [date, month] = dateUtcDayMonthLong(clubInstant(at, day)).split(' ');
   return `${date} ${(month ?? '').slice(0, 3).toUpperCase()}`;
+}
+
+/**
+ * „SP-AXA · sob 3 PAŹ 09:00-11:00" - wiersz odniesienia w arkuszach odpowiedzi,
+ * rezygnacji i odwołania (28D, 23F, 32C): NA CO odpowiadasz, maszyna i termin w jednej
+ * linii mono, jak w arkuszu odmowy zgody (26C). Termin czasem klubu.
+ */
+export function orderReference(reg: string, day: ClubDayBounds, startsAt: number, endsAt: number): string {
+  const dow = weekdayShortUtc(clubInstant(startsAt, day)).toLowerCase();
+  return `${reg} · ${dow} ${orderDayShort(day, startsAt)} ${orderSpan(startsAt, endsAt, day)}`;
 }
 
 /**

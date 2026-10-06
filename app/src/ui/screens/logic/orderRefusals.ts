@@ -23,6 +23,12 @@ export const ORDER_OFFLINE = 'Zlecenie potwierdza serwer - potrzebne połączeni
 /** Wiadomość, która nie dojechała - pole wiadomości mówi to samo zdaniem o rozmowie (29A). */
 export const MESSAGE_OFFLINE = 'Wiadomość wysyła serwer - potrzebne połączenie.';
 
+/**
+ * Odpowiedź adresata, która nie dojechała (28, 28D) - to samo zdanie, co decyzja o cudzej
+ * rezerwacji (26): o tym, czy fotel jest Twój, rozstrzyga serwer.
+ */
+export const ANSWER_OFFLINE = 'Odpowiedź zapisuje serwer - potrzebne połączenie.';
+
 const ORDER_REFUSAL: Readonly<Record<string, string>> = {
   aircraft_disabled: 'Ta maszyna jest wyłączona z użytku - wybierz inny samolot.',
   aircraft_not_found: 'Wybierz samolot jeszcze raz - flota klubu mogła się zmienić.',

@@ -127,10 +127,15 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   error?: string | null;
   /** Pola kodowe (ICAO, kod pilota) - mono, rozstrzelone, wersaliki. */
   mono?: boolean;
+  /**
+   * Uchwyt pola - arkusz, który wchodzi RAZEM z klawiaturą, podaje tu `inputRef`
+   * z `useSheetInputFocus` (ten sam kształt, co w `PasswordField`).
+   */
+  inputRef?: React.Ref<TextInput>;
   style?: ViewStyle;
 }
 
-export function TextField({ label, tag, hint, error, mono = false, style, ...input }: TextFieldProps) {
+export function TextField({ label, tag, hint, error, mono = false, inputRef, style, ...input }: TextFieldProps) {
   const { theme } = useTheme();
   const green = toneColors(theme, 'green');
   const red = toneColors(theme, 'red');
@@ -139,6 +144,7 @@ export function TextField({ label, tag, hint, error, mono = false, style, ...inp
   return (
     <Field label={label} tag={tag} hint={hint} error={error} style={style}>
       <TextInput
+        ref={inputRef}
         placeholderTextColor={theme.colors.textPlaceholder}
         selectionColor={green.accent}
         {...input}
@@ -151,7 +157,10 @@ export function TextField({ label, tag, hint, error, mono = false, style, ...inp
           input.onBlur?.(e);
         }}
         style={{
-          minHeight: 46, // cel dotykowy dla rękawic
+          // Cel dotykowy dla rękawic; pole wielolinijkowe (powód w arkuszu - 26C, 28D)
+          // od razu ma wysokość akapitu, jak `.modal-field` z makiet, i pisze od góry.
+          minHeight: input.multiline === true ? 86 : 46,
+          textAlignVertical: input.multiline === true ? 'top' : 'center',
           paddingHorizontal: 13,
           paddingVertical: 11,
           borderRadius: theme.radius.md,

@@ -103,6 +103,10 @@ describe('28 - fotel wskazany imiennie', () => {
     expect(flat(v.note)).toBe('Po przyjęciu lot jest [Twoją rezerwacją] - zobaczysz go na Pulpicie i w kalendarzu.');
     expect([v.banner, v.answer, v.clash, v.edited]).toEqual([null, null, null, null]);
   });
+
+  it('arkusz „Nie mogę" (28D): wiersz odniesienia - znak i termin czasem klubu', () => {
+    expect(v.reference).toBe('SP-AXA · sob 3 PAŹ 09:00-11:00');
+  });
 });
 
 describe('28A - grupa, zgłoszenie, termin do potwierdzenia', () => {
@@ -246,6 +250,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
     expect(v.kind).toBe('stale');
     expect(v.hero).toMatchObject({ badge: { text: 'Nieaktualne', tone: 'neutral' }, countdown: null });
     expect(v.banner).toEqual({
+      kind: 'filled',
       title: 'Fotel obsadzony',
       text: 'Fotel drugiego pilota na tym locie jest już zajęty.',
       quote: null,
@@ -272,6 +277,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
     );
     expect(v.hero.badge).toEqual({ text: 'Odwołane', tone: 'red' });
     expect(v.banner).toEqual({
+      kind: 'cancelled',
       title: 'Odwołanie · Marta Zięba',
       text: null,
       quote: 'Maszyna idzie do serwisu, skoki przenosimy na przyszłą sobotę.',
@@ -291,6 +297,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
     );
     expect(v.hero.badge).toEqual({ text: 'Wygasło', tone: 'neutral' });
     expect(v.banner).toEqual({
+      kind: 'expired',
       title: 'Zlecenie wygasło',
       text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.',
       quote: null,
@@ -310,6 +317,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
       localMs(-1, '22:00'),
     );
     expect(v.banner).toEqual({
+      kind: 'removed',
       title: 'Zlecenie cofnięte',
       text: null,
       quote: 'W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym.',

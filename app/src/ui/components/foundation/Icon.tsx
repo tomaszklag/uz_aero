@@ -157,6 +157,21 @@ const REGISTRY = {
    */
   message: f('message-square'),
   inbox: f('inbox'),
+  /**
+   * Linijka „Edytowane · co" pod kartą zlecenia (28A, 28C) - ołówek z podkreśleniem
+   * jest tu GLIFEM „zmieniono", nie akcją; `edit` (bez podkreślenia) obiecuje poprawkę.
+   */
+  edited: f('edit-3'),
+  /**
+   * Banery stanu zlecenia nieaktualnego (28B) - cztery losy, cztery glify z makiety:
+   * „i" (fotel obsadzony - nic złego się nie stało, więc nie wykrzyknik `info`),
+   * przekreślone koło (odwołanie), klepsydra (wygasło - zrobił to zegar) i strzałka
+   * cofnięcia (zlecenie odebrane).
+   */
+  'order-filled': f('info'),
+  'order-cancelled': f('x-circle'),
+  'order-expired': m('timer-sand-empty'),
+  'order-removed': m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 

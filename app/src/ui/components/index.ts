@@ -54,6 +54,9 @@ export * from './status/PillButton';
 export * from './status/GhostAction';
 export * from './status/InAppBanner';
 export * from './status/EmptyState';
+// Karty terminu (zlecenia 4.0.0): los rzeczy nad kartą i przypis pod pasem akcji.
+export * from './status/StateBanner';
+export * from './status/FootNote';
 
 // Wprowadzanie danych
 export * from './input/AirfieldSuggestions';
@@ -152,6 +155,14 @@ export * from './data/PreviewBody';
 export * from './data/InboxRow';
 export * from './data/OrderRow';
 export * from './data/PathSteps';
+// Karta zlecenia i rezerwacji (4.0.0, epik Z-C): termin, wiersze danych, fotele,
+// odpowiedź, zmiana i wejście w rozmowę - 1:1 z makiet 23, 26, 28, 32.
+export * from './data/TermHero';
+export * from './data/DetailRow';
+export * from './data/CrewSeatRow';
+export * from './data/AnswerBlock';
+export * from './data/EditedLine';
+export * from './data/ThreadRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.
 export * from './data/TrackPolyline';

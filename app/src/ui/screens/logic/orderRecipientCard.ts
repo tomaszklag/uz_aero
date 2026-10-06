@@ -41,6 +41,7 @@ import {
   orderDayShort,
   orderHours,
   orderLength,
+  orderReference,
   orderSpan,
   personLabel,
   planLine,
@@ -85,6 +86,8 @@ export interface DetailRowVm {
 }
 
 export interface OrderBannerVm {
+  /** Los zlecenia - po nim ekran dobiera glif banera (28B: „i", krzyżyk, klepsydra, cofnięcie). */
+  kind: 'filled' | 'cancelled' | 'expired' | 'removed';
   title: string;
   /** Zdanie pod tytułem („Fotel drugiego pilota na tym locie jest już zajęty."). */
   text: string | null;
@@ -133,6 +136,8 @@ export interface RecipientCardVm {
   decline: boolean;
   /** Zdanie pod pasem - skutek tapnięcia, z jednym pogrubieniem. */
   note: ChangePart[] | null;
+  /** „SP-AXA · sob 3 PAŹ 09:00-11:00" - na co odpowiadasz, w arkuszu „Nie mogę" (28D). */
+  reference: string;
 }
 
 export interface RecipientCardInput {
@@ -180,7 +185,13 @@ export function recipientCardVm(input: RecipientCardInput): RecipientCardVm | nu
     primary: stale || me.answer === 'yes' ? null : me.direct && me.seat != null ? 'accept' : 'volunteer',
     decline: !stale && me.answer !== 'no',
     note: stale ? null : noteOf(me),
+    reference: orderReference(regOf(card, input), day, startsAt, endsAt),
   };
+}
+
+/** Znak maszyny z pamięci floty; kreska, gdy maszyny tam nie ma (inny klub, skasowana). */
+function regOf(card: RemoteOrderCard, input: RecipientCardInput): string {
+  return input.aircraft?.reg ?? input.regOf(card.booking.aircraftId) ?? NONE;
 }
 
 function badgeOf(card: RemoteOrderCard, me: RemoteOrderMe, termChanged: boolean): OrderHeroVm['badge'] {
@@ -215,6 +226,7 @@ function bannerOf(card: RemoteOrderCard, me: RemoteOrderMe, day: ClubDayBounds, 
     // Tytuł RZECZOWNIKIEM i nazwisko za separatorem - bez czasownika z płcią.
     const by = card.order.closedBy == null ? null : personLabel(card.order.closedBy, input.pilotId, input.nameOf);
     return {
+      kind: 'cancelled',
       title: by == null ? 'Odwołanie' : `Odwołanie · ${by}`,
       text: null,
       quote: card.order.closeReason,
@@ -225,6 +237,7 @@ function bannerOf(card: RemoteOrderCard, me: RemoteOrderMe, day: ClubDayBounds, 
   if (card.order.status === 'expired') {
     // Bez nazwiska - zrobił to zegar, nie człowiek; bez koloru - nic się nie zepsuło.
     return {
+      kind: 'expired',
       title: 'Zlecenie wygasło',
       text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.',
       quote: null,
@@ -233,12 +246,20 @@ function bannerOf(card: RemoteOrderCard, me: RemoteOrderMe, day: ClubDayBounds, 
     };
   }
   if (me.staleReason === 'removed') {
-    return { title: 'Zlecenie cofnięte', text: null, quote: me.removeReason, meta: at(me.removedAt), tone: 'neutral' };
+    return {
+      kind: 'removed',
+      title: 'Zlecenie cofnięte',
+      text: null,
+      quote: me.removeReason,
+      meta: at(me.removedAt),
+      tone: 'neutral',
+    };
   }
   // Fotel obsadzony - i fotel zniesiony, który adresat czyta tak samo (decyzja właściciela
   // 2026-10-06). Kto dostał fotel, adresata nie dotyczy (pkt 18).
   const seat = me.seat ?? me.namedSeat;
   return {
+    kind: 'filled',
     title: 'Fotel obsadzony',
     text: seat == null ? 'Załoga na tym locie jest już kompletna.' : `Fotel ${seatGenitive(seat)} na tym locie jest już zajęty.`,
     quote: null,
@@ -308,7 +329,7 @@ function clashOf(card: RemoteOrderCard, day: ClubDayBounds, input: RecipientCard
 function detailRows(card: RemoteOrderCard, day: ClubDayBounds, input: RecipientCardInput, creator: string): DetailRowVm[] {
   const b = card.booking;
   const rows: DetailRowVm[] = [
-    { label: 'Samolot', value: input.aircraft?.reg ?? input.regOf(b.aircraftId) ?? NONE, sub: input.aircraft?.type ?? null, mono: true },
+    { label: 'Samolot', value: regOf(card, input), sub: input.aircraft?.type ?? null, mono: true },
   ];
   const task = operationLabelOf(b.operation);
   if (task != null) rows.push({ label: 'Zadanie', value: task, sub: null, mono: false });

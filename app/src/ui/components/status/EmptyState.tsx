@@ -78,5 +78,5 @@ const styles = (t: Theme) =>
     emptyIconAmber: { borderColor: t.colors.amberBorder, backgroundColor: t.colors.amberMuted },
     emptyTitle: { fontSize: 30, lineHeight: 32, letterSpacing: 3, textAlign: 'center' },
     emptyText: { fontSize: 13, lineHeight: 19, color: t.colors.textSecondary, textAlign: 'center' },
-    emptyBold: { color: t.colors.textPrimary, fontWeight: '600' },
+    emptyBold: { color: t.colors.textPrimary, fontFamily: t.fontFamily.bodySemiBold },
   });
