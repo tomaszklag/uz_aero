@@ -98,7 +98,9 @@ export function DecisionQueueScreen() {
         </Banner>
       )}
 
-      <Loadable pending={queue.isPending} skeleton={<QueueSkeleton />}>
+      {/* Karty biorą nazwiska i znaki ze SŁOWNIKA, więc czekają także na niego - inaczej
+          kolejka, która przyszła pierwsza, weszłaby z kreskami zamiast nazwisk. */}
+      <Loadable pending={queue.isPending || directory.isPending} skeleton={<QueueSkeleton />}>
         {cards.length === 0 ? (
           <EmptyState
             icon={<ChecklistIcon />}

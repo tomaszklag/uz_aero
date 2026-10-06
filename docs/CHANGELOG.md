@@ -41,6 +41,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
   mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
   nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
+  Tabela dziennika nie znika już na moment zaraz po wejściu, a karty w kolejce decyzji
+  nie pojawiają się bez nazwisk.
 
 ## 3.2.0 · 27 września 2026
 
