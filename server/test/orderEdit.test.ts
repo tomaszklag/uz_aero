@@ -78,6 +78,22 @@ describe('termin i „edytowane"', () => {
     const card = await w.queries.card(ORG_A, pilot('KRZ'), 'o-1');
     expect(card?.me).toMatchObject({ answer: null, previousAnswer: 'no', seen: false });
     expect(card?.lastTermChange?.from).toEqual({ startsAt: new Date(STARTS).toISOString(), endsAt: new Date(ENDS).toISOString() });
+    // 28C: poprzednia odpowiedź stoi przekreślona RAZEM z godziną i powodem - „wczoraj 19:14 ·
+    // poprzedni termin" i cytat (epik Z-C #247). Odpowiedź w bieżącej wersji jeszcze nie padła.
+    expect(card?.me).toMatchObject({
+      answeredAt: null,
+      answerReason: null,
+      previousAnswerAt: w.clock.now().getTime() - 60_000,
+      previousAnswerReason: 'Nie w środę',
+    });
+  });
+
+  it('nowa odpowiedź po zmianie terminu zastępuje poprzednią - przekreślenia już nie ma', async () => {
+    await w.edits.edit(ORG_A, coordinator, 'o-1', { startsAt: STARTS + 24 * H, endsAt: ENDS + 24 * H });
+    step();
+    await w.responses.answer(ORG_A, pilot('KRZ'), 'o-1', { answer: 'yes', reason: null });
+    const card = await w.queries.card(ORG_A, pilot('KRZ'), 'o-1');
+    expect(card?.me).toMatchObject({ answer: 'yes', previousAnswer: null, previousAnswerAt: null, previousAnswerReason: null });
   });
 
   it('zmiana opisu: „edytowane" bez nowej wersji; odmowa wycisza, zgłoszenia zostają ważne', async () => {
@@ -200,9 +216,31 @@ describe('adresaci: dopisanie, zamiana osoby, „Wyślij ponownie"', () => {
     expect((await inbox(w.db, 'PWI')).at(-1)).toMatchObject({ kind: 'order_removed', payload: { reason: 'Jednak Tomek' } });
     expect(await recipient('TOM')).toMatchObject({ direct: true });
     expect(await row('o-1')).toMatchObject({ label: 'dowódca: Tomasz Mazur' });
+    // 28B „Zlecenie cofnięte": karta odebranego niesie godzinę i powód z historii zmian.
+    const removedAt = w.clock.now().getTime();
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({
+      removed: true,
+      inPlay: false,
+      staleReason: 'removed',
+      removedAt,
+      removeReason: 'Jednak Tomek',
+    });
     // Odebrany nie wraca przez ponowne wysłanie (pkt 29).
     await w.edits.edit(ORG_A, author, 'o-1', { resend: true });
     expect(await recipient('PWI')).toMatchObject({ removed: true });
+  });
+
+  it('odebranie bez powodu - karta ma godzinę, a powodu nie wymyśla', async () => {
+    await w.edits.edit(ORG_A, author, 'o-1', {
+      removeRecipients: ['PWI'],
+      addRecipients: [{ seat: 'pic', list: { pilotIds: ['TOM'], groupIds: [] } }],
+    });
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({
+      removedAt: w.clock.now().getTime(),
+      removeReason: null,
+    });
+    // Ktoś, komu nic nie odebrano, nie ma ani godziny, ani powodu.
+    expect((await w.queries.card(ORG_A, pilot('TOM'), 'o-1'))?.me).toMatchObject({ removedAt: null, removeReason: null });
   });
 
   it('jawne dopisanie odebranej osoby przywraca jej zlecenie jak nowe; grupa ani „Wyślij ponownie" - nie', async () => {

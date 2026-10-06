@@ -58,8 +58,18 @@ export interface MyRecipientState {
   answeredAt: number | null;
   /** Odpowiedź z poprzedniego terminu - przekreślona na 28C. */
   previousAnswer: OrderAnswer | null;
+  /** Kiedy i z jakim powodem padła poprzednia odpowiedź - „wczoraj 19:14 · poprzedni termin" (28C). */
+  previousAnswerAt: number | null;
+  previousAnswerReason: string | null;
   seen: boolean;
   removed: boolean;
+  /** Odebranie zlecenia (pkt 29) - godzina baneru „Zlecenie cofnięte" (28B). */
+  removedAt: number | null;
+  /**
+   * Powód odebrania z historii zmian - cytat w banerze 28B. Zna go WYŁĄCZNIE karta
+   * (lista historii nie czyta); `null` = bez powodu albo wiersz listy.
+   */
+  removeReason: string | null;
   /** Czy zlecenie jest dla mnie jeszcze w grze - inaczej „Nieaktualne" (28B). */
   inPlay: boolean;
   /** Dlaczego nieaktualne - treść baneru 28B; `null` = w grze. */
@@ -69,6 +79,11 @@ export interface MyRecipientState {
   threadId: string | null;
   /** Nieprzeczytane wiadomości w mojej rozmowie. */
   unread: number;
+  /**
+   * Chwila najnowszej z nich - „1 nowa wiadomość · 07:31" (28C). Liczy ją WYŁĄCZNIE karta;
+   * w wierszu listy `null` (tam stoi sama kropka, a zapytanie na wiersz byłoby kosztem bez ekranu).
+   */
+  lastUnreadAt: number | null;
 }
 
 /** Adresat widziany przez prowadzącego - karta 32. */
@@ -222,7 +237,20 @@ export class OrderQueries {
     const row = loaded.recipients.find((r) => r.pilotId === actor.pilotId);
     const myUnread =
       row?.threadId == null ? 0 : await this.messages.unreadFor(this.db, orgId, row.threadId, actor.pilotId);
-    const me = this.meOf(loaded, actor.pilotId, myUnread);
+    const listed = this.meOf(loaded, actor.pilotId, myUnread);
+    // Karta dokłada to, czego wiersz listy nie potrzebuje: powód odebrania (historia)
+    // i godzinę najnowszej nieprzeczytanej wiadomości (28B, 28C).
+    const me =
+      listed == null || row == null
+        ? listed
+        : {
+            ...listed,
+            removeReason: listed.removed ? removeReasonOf(history, actor.pilotId) : null,
+            lastUnreadAt:
+              myUnread > 0 && row.threadId != null
+                ? await this.messages.lastUnreadAt(this.db, orgId, row.threadId, actor.pilotId)
+                : null,
+          };
 
     return {
       timezone,
@@ -287,6 +315,7 @@ export class OrderQueries {
     const { order } = loaded;
     const rv = recipientView(row, order.revision);
     const view = orderView(order, loaded.booking);
+    const previous = previousAnswerOf(row, order.revision);
     return {
       seat: row.seat,
       namedSeat: row.namedSeat,
@@ -294,14 +323,20 @@ export class OrderQueries {
       answer: rv.answer,
       answerReason: rv.answer == null ? null : row.answerReason,
       answeredAt: rv.answer == null ? null : row.answeredAt,
-      previousAnswer: previousAnswerOf(row, order.revision),
+      previousAnswer: previous,
+      // Ten sam wiersz niesie odpowiedź z poprzedniej wersji, dopóki nie padnie nowa (§10.2).
+      previousAnswerAt: previous == null ? null : row.answeredAt,
+      previousAnswerReason: previous == null ? null : row.answerReason,
       seen: row.seenRevision === order.revision,
       removed: rv.removed,
+      removedAt: row.removedAt,
+      removeReason: null,
       inPlay: inPlay(view, rv),
       staleReason: staleReason(view, rv),
       assignedSeat: assignedSeatOf(loaded, pilotId),
       threadId: row.threadId,
       unread,
+      lastUnreadAt: null,
     };
   }
 
@@ -361,6 +396,22 @@ function progressOf(loaded: LoadedOrder): OrderProgress {
             answeredAt: single.answeredRevision === order.revision ? single.answeredAt : null,
           },
   };
+}
+
+/**
+ * Powód odebrania zlecenia tej osobie - z NAJNOWSZEGO wpisu, który ją odebrał (pkt 29;
+ * osoba przywrócona i odebrana drugi raz czyta powód drugiego razu). Pusty napis to brak.
+ */
+function removeReasonOf(history: readonly OrderChangeRecord[], pilotId: string): string | null {
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const entry = history[i]!;
+    if (entry.kind !== 'recipients_removed') continue;
+    const ids = entry.payload.pilotIds;
+    if (!Array.isArray(ids) || !ids.includes(pilotId)) continue;
+    const reason = entry.payload.reason;
+    return typeof reason === 'string' && reason.trim() !== '' ? reason : null;
+  }
+  return null;
 }
 
 /** Ostatnia edycja inna niż termin - z historii, bez sprawcy (pkt 31). */

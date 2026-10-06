@@ -139,7 +139,7 @@ function whatRows(input: BookingDetailsInput): BookingDetailRow[] {
     rows.push({ label: 'Zadanie', value: zadanie, sub: null });
   }
 
-  const route = routeRow(input);
+  const route = routeDetailRow(b.fromIcao, b.toIcao, input.airfieldName);
   if (route != null) rows.push(route);
 
   if (b.dualId != null) {
@@ -153,8 +153,15 @@ function whatRows(input: BookingDetailsInput): BookingDetailRow[] {
   return rows;
 }
 
-function routeRow(input: BookingDetailsInput): BookingDetailRow | null {
-  const { fromIcao, toIcao } = input.booking;
+/**
+ * Wiersz trasy - „Trasa EPKK → EPRJ" albo „Lotnisko EPKP" - z rozwinięciem nazw. Wspólny
+ * dla karty rezerwacji (23) i karty zlecenia (28, 32), bo to ten sam termin i te same pola.
+ */
+export function routeDetailRow(
+  fromIcao: string | null,
+  toIcao: string | null,
+  airfieldName: (icao: string) => string | null,
+): BookingDetailRow | null {
   if (fromIcao == null && toIcao == null) return null;
 
   // Skoki startują i lądują na tym samym placu, więc para powtarzałaby kod dwa razy
@@ -162,14 +169,14 @@ function routeRow(input: BookingDetailsInput): BookingDetailRow | null {
   const same = fromIcao != null && toIcao != null && fromIcao === toIcao;
   if (same || toIcao == null) {
     const icao = fromIcao ?? toIcao!;
-    return { label: 'Lotnisko', value: icao, sub: input.airfieldName(icao) };
+    return { label: 'Lotnisko', value: icao, sub: airfieldName(icao) };
   }
   if (fromIcao == null) {
-    return { label: 'Lądowanie', value: toIcao, sub: input.airfieldName(toIcao) };
+    return { label: 'Lądowanie', value: toIcao, sub: airfieldName(toIcao) };
   }
 
-  const from = input.airfieldName(fromIcao);
-  const to = input.airfieldName(toIcao);
+  const from = airfieldName(fromIcao);
+  const to = airfieldName(toIcao);
   return {
     label: 'Trasa',
     value: `${fromIcao} → ${toIcao}`,

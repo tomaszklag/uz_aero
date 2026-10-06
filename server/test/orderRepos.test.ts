@@ -396,6 +396,22 @@ describe('wątki i wiadomości', () => {
     expect(await messages.unreadFor(db, ORG_A, 't-1', 'AKO')).toBe(0);
   });
 
+  it('godzina najnowszej nieprzeczytanej - z tego samego zbioru, co licznik', async () => {
+    await thread();
+    const later = new Date(AT.getTime() + 10 * 60_000);
+    await db.transaction((tx) => messages.insert(tx, ORG_A, { id: 'm-1', threadId: 't-1', authorId: 'JSE', body: 'a' }, AT));
+    await db.transaction((tx) => messages.insert(tx, ORG_A, { id: 'm-2', threadId: 't-1', authorId: 'JSE', body: 'b' }, later));
+    // Własna wiadomość - nawet późniejsza - nie jest „nową wiadomością" dla autora.
+    await db.transaction((tx) =>
+      messages.insert(tx, ORG_A, { id: 'm-3', threadId: 't-1', authorId: 'AKO', body: 'c' }, new Date(later.getTime() + H)),
+    );
+    expect(await messages.lastUnreadAt(db, ORG_A, 't-1', 'AKO')).toBe(later.getTime());
+    await threads.markRead(db, ORG_A, 't-1', 'AKO', new Date(later.getTime() + 2 * H));
+    expect(await messages.lastUnreadAt(db, ORG_A, 't-1', 'AKO')).toBeNull();
+    // Inny klub nie widzi cudzej rozmowy.
+    expect(await messages.lastUnreadAt(db, ORG_B, 't-1', 'JSE')).toBeNull();
+  });
+
   it('uuid zajęty w innym klubie - odmowa zamiast potwierdzenia cudzej treści', async () => {
     await thread();
     await db.transaction((tx) => messages.insert(tx, ORG_A, { id: 'm-x', threadId: 't-1', authorId: 'AKO', body: 'tajne' }, AT));

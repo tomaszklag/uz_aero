@@ -100,8 +100,15 @@ export interface RemoteOrderMe {
   answeredAt: string | null;
   /** Odpowiedź z poprzedniego terminu - przekreślona na 28C. */
   previousAnswer: RemoteOrderAnswer | null;
+  /** Kiedy i z jakim powodem padła - „wczoraj 19:14 · poprzedni termin" i cytat (28C). */
+  previousAnswerAt: string | null;
+  previousAnswerReason: string | null;
   seen: boolean;
   removed: boolean;
+  /** Odebranie zlecenia (pkt 29) - godzina baneru „Zlecenie cofnięte" (28B). */
+  removedAt: string | null;
+  /** Powód odebrania - cytat w banerze 28B; zna go wyłącznie karta (w wierszu listy `null`). */
+  removeReason: string | null;
   /** Czy zlecenie jest dla mnie jeszcze w grze - inaczej 28B. */
   inPlay: boolean;
   staleReason: RemoteStaleReason | null;
@@ -110,6 +117,11 @@ export interface RemoteOrderMe {
   threadId: string | null;
   /** Nieprzeczytane wiadomości w mojej rozmowie. */
   unread: number;
+  /**
+   * Chwila najnowszej z nich - „1 nowa wiadomość · 07:31" (28C). Liczy ją wyłącznie karta;
+   * w wierszu listy `null` (tam stoi sama kropka).
+   */
+  lastUnreadAt: string | null;
 }
 
 /** Inna rezerwacja osoby w tym terminie - bursztyn przy wyborze i przed odpowiedzią (§4.3). */

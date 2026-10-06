@@ -62,6 +62,22 @@ describe('wiadomości', () => {
     expect(row!.payload.unread).toBe(1);
   });
 
+  it('karta adresata: licznik i GODZINA najnowszej nieprzeczytanej - „1 nowa wiadomość · 07:31" (28C)', async () => {
+    await w.threads.send(ORG_A, pilot('PWI'), 'o-1', 'PWI', { id: 'm-1', body: 'Pytanie' });
+    step();
+    await w.threads.send(ORG_A, author, 'o-1', 'PWI', { id: 'm-2', body: 'Odpowiedź' });
+    const sentAt = w.clock.now().getTime();
+    step();
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({ unread: 1, lastUnreadAt: sentAt });
+
+    // Po przeczytaniu godziny nie ma - licznik i godzina mówią o tych samych wiadomościach.
+    await w.threads.read(ORG_A, pilot('PWI'), 'o-1', 'PWI');
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({ unread: 0, lastUnreadAt: null });
+    // Wiersz listy godziny nie liczy - tam stoi sama kropka.
+    const list = await w.queries.list(ORG_A, pilot('PWI'), 'inbox');
+    expect(list?.items[0]?.me).toMatchObject({ lastUnreadAt: null });
+  });
+
   it('koordynator czyta, ale nie pisze - i jego odczyt niczego nie rusza', async () => {
     await w.threads.send(ORG_A, pilot('PWI'), 'o-1', 'PWI', { id: 'm-1', body: 'Hej' });
     expect(await w.threads.send(ORG_A, coordinator, 'o-1', 'PWI', { id: 'm-2', body: 'Wtrącę się' })).toEqual({

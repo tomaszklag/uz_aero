@@ -89,4 +89,19 @@ export class PgThreadMessagesRepo implements ThreadMessagesPort {
     );
     return Number(rows[0]?.count ?? 0);
   }
+
+  async lastUnreadAt(db: Queryable, orgId: string, threadId: string, pilotId: string): Promise<number | null> {
+    // Ten sam zbiór, co `unreadFor` - liczba i godzina mówią o TYCH SAMYCH wiadomościach.
+    const { rows } = await db.query<{ last: string | Date | null }>(
+      `SELECT MAX(m.created_at) AS last
+         FROM thread_messages m
+         LEFT JOIN thread_participants p
+           ON p.thread_id = m.thread_id AND p.org_id = m.org_id AND p.pilot_id = $3
+        WHERE m.org_id = $1 AND m.thread_id = $2 AND m.author_id <> $3
+          AND (p.last_read_at IS NULL OR m.created_at > p.last_read_at)`,
+      [orgId, threadId, pilotId],
+    );
+    const last = rows[0]?.last;
+    return last == null ? null : new Date(last).getTime();
+  }
 }
