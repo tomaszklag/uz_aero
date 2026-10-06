@@ -24,7 +24,7 @@ import { useDirectory } from '../../queries/useDirectory';
 import { useInbox, useMarkRead } from '../../queries/useNotifications';
 import { Banner, Button, Drawer, EmptyState, Loadable } from '../../ui/components';
 import { BellIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { InboxRow } from './InboxRow';
 import { inboxLookups } from './inboxLookups';
 import { inboxPending, inboxRows, notSentYet, unreadIdsOf } from './inboxRows';
@@ -77,34 +77,33 @@ export function InboxDrawer({ onClose }: InboxDrawerProps) {
 
   return (
     <Drawer title="Powiadomienia" onClose={onClose}>
-      <Loadable pending={pending} skeleton={<InboxSkeleton />}>
-        {/* `Loadable` rysuje treść, dopóki plamki nie wyjdą zza progu - a wiersz bez
-            słownika i kolejki mówiłby najpierw ogólnie, potem przeskakiwał na pełne
-            zdanie. Póki czekamy, treści nie ma wcale. */}
-        {pending ? null : (
-          <>
-            {inbox.isError && items.length === 0 ? (
-              <Banner tone="warn">{errorMessage(inbox.error)}</Banner>
-            ) : rows.length === 0 ? (
-              <EmptyState
-                icon={<BellIcon size={20} />}
-                title="Nic nie przyszło"
-                note="Tu trafiają zlecenia lotów, decyzje o Twoich rezerwacjach i wiadomości o obserwowanych samolotach, a jeśli rozstrzygasz cudze rezerwacje - prośby o zgodę."
-              />
-            ) : (
-              <div className="inbox">
-                {rows.map((row) => (
-                  <InboxRow key={row.id} row={row} onOpen={onClose} />
-                ))}
-              </div>
-            )}
-            {inbox.hasNextPage ? (
-              <Button variant="ghost" size="sm" disabled={inbox.isFetchingNextPage} onClick={() => void inbox.fetchNextPage()}>
-                Pokaż starsze
-              </Button>
-            ) : null}
-          </>
+      {inbox.error == null ? null : (
+        <Banner tone="danger" live>
+          {loadErrorMessage(inbox.error)}
+        </Banner>
+      )}
+      {/* Wiersz bierze nazwisko i znak ze SŁOWNIKA, a „Do decyzji" z kolejki, więc treść
+          czeka także na nie (`inboxPending`) - inaczej mówiłaby najpierw ogólnie, a po
+          chwili przeskakiwała na pełne zdanie. Bez skrzynki nie ma czego pokazać. */}
+      <Loadable pending={pending} loaded={inbox.data != null} skeleton={<InboxSkeleton />}>
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={<BellIcon size={20} />}
+            title="Nic nie przyszło"
+            note="Tu trafiają zlecenia lotów, decyzje o Twoich rezerwacjach i wiadomości o obserwowanych samolotach, a jeśli rozstrzygasz cudze rezerwacje - prośby o zgodę."
+          />
+        ) : (
+          <div className="inbox">
+            {rows.map((row) => (
+              <InboxRow key={row.id} row={row} onOpen={onClose} />
+            ))}
+          </div>
         )}
+        {inbox.hasNextPage ? (
+          <Button variant="ghost" size="sm" disabled={inbox.isFetchingNextPage} onClick={() => void inbox.fetchNextPage()}>
+            Pokaż starsze
+          </Button>
+        ) : null}
       </Loadable>
     </Drawer>
   );

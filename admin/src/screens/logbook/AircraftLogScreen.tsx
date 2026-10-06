@@ -36,7 +36,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { PlaneIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { DateRange } from './DateRange';
 import { dayGroups } from './dayGroups';
 import type { DayRange } from './dateRanges';
@@ -153,11 +153,19 @@ export function AircraftLogScreen() {
         />
       ) : null}
 
-      {sessions.error == null ? null : <Banner tone="danger">{errorMessage(sessions.error)}</Banner>}
+      {/* Lista floty, która nie dojechała, zostawiłaby ekran na plamkach bez słowa -
+          znak z adresu nie ma się wtedy z czego rozwiązać, a operacje czekają na
+          identyfikator (ten sam baner, co przy słowniku na osi pilota). */}
+      {fleet.error == null ? null : <Banner tone="danger">{loadErrorMessage(fleet.error)}</Banner>}
+      {sessions.error == null ? null : <Banner tone="danger">{loadErrorMessage(sessions.error)}</Banner>}
 
       {missing ? null : (
         <Loadable
-          pending={sessions.isPending}
+          // Operacje czekają na identyfikator z listy floty. Gdy lista padła, zapytanie
+          // o nie nigdy nie wystartuje - `isPending` zostałby `true` na zawsze, a plamki
+          // pulsowałyby pod banerem błędu, jakby coś się jeszcze wczytywało.
+          pending={fleet.isPending || (aircraft != null && sessions.isPending)}
+          loaded={sessions.data != null}
           skeleton={
             <TableSkeleton
               headers={HEADERS}

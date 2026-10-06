@@ -5420,9 +5420,10 @@ i §4.6. Reguły obowiązujące odtąd:
   wiadomość przeczytuje się RAZ na wizytę (`notSentYet`), „Do decyzji" liczy się z kolejki
   decyzji. Ramka `notification` wpisuje się w pamięć skrzynki bez drugiego żądania
 - **SZUFLADA I BANER CZEKAJĄ NA SŁOWNIK KLUBU** - zdanie bez nazwiska przeskakiwałoby
-  na pełne. Przyczyna leży we wspólnym `Loadable`, który pod progiem plamek rysuje treść
-  (osobne zadanie); do tego czasu ekran, którego treść zależy od drugiego zapytania,
-  bramkuje ją sam (`pending ? null : …`)
+  na pełne. Szuflada czeka przez `pending` wspólnego `Loadable` (liczy też słownik
+  i kolejkę decyzji), który od 2026-10-06 pod progiem plamek nie rysuje NIC - obejście
+  `pending ? null` zdjęte; baner czeka sam, bo plamek nie ma. Skrzynka, która się nie
+  wczytała, to zdanie o błędzie ODCZYTU (`loadErrorMessage`) bez stanu pustego pod nim
 - **BANER** (makieta PW1, czysty `screens/inbox/toast.ts`): zdanie wiersza bez plakietki
   sprawy i z „teraz", lewy dolny róg treści, 5 s; kursor ALBO fokus wstrzymuje odliczanie,
   zejście wznawia je od reszty; kilka naraz - ostatni. Nie stoi przy otwartej skrzynce ani

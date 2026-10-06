@@ -16,7 +16,7 @@ import { useMemo } from 'react';
 
 import { useAircraftPreview, usePilotPreview } from '../../queries/useApprovals';
 import { Banner, Button, Card, Drawer, LinkButton, Loadable } from '../../ui/components';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import type { PersonLookup } from './bookingLabels';
 import {
   aircraftPreview,
@@ -71,10 +71,10 @@ export function PreviewDrawer({ target, person, reg, onClose }: PreviewDrawerPro
     >
       {query.error == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(query.error)}
+          {loadErrorMessage(query.error)}
         </Banner>
       )}
-      <Loadable pending={query.isPending} skeleton={<PreviewSkeleton />}>
+      <Loadable pending={query.isPending} loaded={query.data != null} skeleton={<PreviewSkeleton />}>
         {view == null ? null : (
           <>
             {view.cards.map((card) => (

@@ -404,7 +404,7 @@ admin/
         InboxDrawer.tsx · InboxRow.tsx · InboxToast.tsx
         inboxRows.ts · inboxLookups.ts · toast.ts
       login/            LoginScreen.tsx · loginMessage.ts
-      common/           wspólne dla ekranów: apiMessage.ts (odmowy) · values.ts (kreska braku)
+      common/           wspólne dla ekranów: apiMessage.ts (odmowy; zdanie błędu zapisu i odczytu) · values.ts (kreska braku)
 
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)

@@ -43,7 +43,7 @@ import {
   TableSkeleton,
 } from '../../ui/components';
 import { ChecklistIcon, DragHandleIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import {
   asInput,
   moveStep,
@@ -117,7 +117,7 @@ export function ApprovalPathScreen() {
 
       {error == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(error)}
+          {loadErrorMessage(error)}
         </Banner>
       )}
       {replace.error == null ? null : (
@@ -159,8 +159,11 @@ export function ApprovalPathScreen() {
         </Banner>
       )}
 
+      {/* Bez odczytu ścieżki pusta tabela mówiłaby „rezerwacje potwierdzają się od razu"
+          i proponowała pierwszy krok - zdanie o ścieżce, której nie znamy. */}
       <Loadable
         pending={path.isPending || pilots.isPending}
+        loaded={path.data != null && pilots.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[28, 32, 150, 220, 54]} rows={2} />}
       >
         {steps.length === 0 ? (

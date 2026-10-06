@@ -28,7 +28,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { BuildingIcon, PlusIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { OrganizationDrawer } from './OrganizationDrawer';
 import { NEW_ORGANIZATION } from './organizationForm';
 import { organizationRow, type OrganizationRow } from './organizationRows';
@@ -147,11 +147,12 @@ export function OrganizationsScreen() {
       </div>
 
       {organizations.error == null ? null : (
-        <Banner tone="danger">{errorMessage(organizations.error)}</Banner>
+        <Banner tone="danger">{loadErrorMessage(organizations.error)}</Banner>
       )}
 
       <Loadable
         pending={organizations.isPending}
+        loaded={organizations.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[190, 78, 70, 140, 90, 96, 54]} rows={4} />}
       >
         {rows.length === 0 ? (

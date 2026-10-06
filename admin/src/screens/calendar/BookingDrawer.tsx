@@ -23,7 +23,7 @@ import type { BookingDto } from '../../api/dto';
 import { useBooking, useCancelBooking, useCancelOwnBooking } from '../../queries/useCalendar';
 import { Button, Card, Drawer, EmptyState, Field, TextInput } from '../../ui/components';
 import { BookIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { ApprovalCard } from './ApprovalCard';
 import { bookingErrorMessage } from './bookingRefusal';
 import { NONE } from '../common/values';
@@ -132,7 +132,7 @@ export function BookingDrawer({
       {/* Cudza sprawa bez „Podglądu klubu" (issue #216) przychodzi z `approval: null`:
           historia kroków i powody odmowy są treścią tej samej klasy, co notatka. */}
       {isBlock ? null : detail.error != null ? (
-        <p className="card-note danger">{errorMessage(detail.error)}</p>
+        <p className="card-note danger">{loadErrorMessage(detail.error)}</p>
       ) : detail.data?.approval == null ? null : (
         <ApprovalCard
           bookingId={booking.id}

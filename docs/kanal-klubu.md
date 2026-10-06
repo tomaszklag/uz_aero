@@ -470,9 +470,10 @@ miejscu), wywołanie PO commicie i wyłącznie przy udanej decyzji, przypadek w
   w locie wysyłały je po trzy razy. Odczyt w locie jest wstrzymany przed zapisem w pamięci,
   a po zapisie skrzynka czyta się od nowa - przeczytanie, które nie doszło, wraca jako nowe;
 - **szuflada nie rysuje wierszy bez słownika klubu i kolejki decyzji** - inaczej zdanie
-  przeskakiwało z ogólnego („Prośba o zgodę na lot") na pełne. Przyczyna leży we wspólnym
-  `Loadable`, który pod progiem plamek rysuje treść; poprawka całego panelu jest osobnym
-  zadaniem;
+  przeskakiwało z ogólnego („Prośba o zgodę na lot") na pełne. Czeka przez `pending`
+  wspólnego `Loadable`, który od 2026-10-06 pod progiem plamek nie rysuje nic (wcześniej
+  rysował treść i szuflada bramkowała ją sama). Skrzynka, która się nie wczytała, to
+  zdanie o błędzie odczytu bez stanu pustego pod nim;
 - **baner nie stoi przy otwartej skrzynce ani na ekranie, którego dotyczy** (adres rzeczy
   i adresy pod nim), a baner, który nie ma prawa stać, znika na dobre. Kursor ALBO fokus
   wstrzymuje odliczanie, zejście wznawia je od tego, co zostało. Przełączenie klubu kończy

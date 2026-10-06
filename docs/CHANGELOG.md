@@ -55,6 +55,27 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   pilota - nie dzwoni i nie wyskakuje z powiadomieniami, także przy zgaszonym ekranie.
   Wiadomości czekają po cichu na liście powiadomień i w skrzynce.
 
+### Poprawki
+
+- **Panel nie mówi „nic tu nie ma", zanim przyjdą dane.** Przy pierwszym wejściu w listę -
+  pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
+  mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
+  nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
+  Tabela dziennika nie znika już na moment zaraz po wejściu, a karty w kolejce decyzji
+  nie pojawiają się bez nazwisk.
+- **„Obserwowane samoloty" podpisują maszyny nazwiskiem także u Akceptującego.** Członek
+  bez „Podglądu klubu" widział przy maszynie samo „Zarezerwowana", bez osoby, która ją
+  ma - teraz zdanie jest pełne, jak u administratora.
+- **Moje konto nie każe „ustawić" hasła komuś, kto je ma.** Zaraz po wejściu karta hasła
+  pokazywała przez chwilę wariant dla konta bez hasła. Teraz czeka na odczyt konta, a gdy
+  ten się nie uda, mówi o tym na górze strony zamiast pokazywać zgadnięty formularz.
+- **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast stać bez słowa
+  na plamkach ładowania.
+- **Gdy coś się nie wczyta, panel mówi to wprost.** Komunikat brzmi „Nie udało się
+  wczytać", a nie „Nie udało się zapisać", jak dotąd przy każdej liście, która nie
+  dojechała. Pod nim nie staje już fałszywe „nie ma jeszcze żadnego pilota" ani
+  pulsujące bez końca plamki. Lista wczytana wcześniej zostaje na ekranie.
+
 ## 3.2.0 · 27 września 2026
 
 > Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.

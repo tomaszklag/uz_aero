@@ -34,7 +34,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { PeopleIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { DateRange } from './DateRange';
 import { dayGroups } from './dayGroups';
 import type { DayRange } from './dateRanges';
@@ -185,12 +185,15 @@ export function PilotLogScreen() {
 
       {/* Słownik klubu, który nie dojechał, zostawiłby ekran na plamkach bez słowa -
           osoba z adresu nie ma się wtedy z czego rozwiązać. */}
-      {directory.error == null ? null : <Banner tone="danger">{errorMessage(directory.error)}</Banner>}
-      {sessions.error == null ? null : <Banner tone="danger">{errorMessage(sessions.error)}</Banner>}
+      {directory.error == null ? null : <Banner tone="danger">{loadErrorMessage(directory.error)}</Banner>}
+      {sessions.error == null ? null : <Banner tone="danger">{loadErrorMessage(sessions.error)}</Banner>}
 
       {missing ? null : (
         <Loadable
-          pending={directory.isPending || sessions.isPending}
+          // Operacje czekają na osobę ze słownika. Gdy słownik padł, zapytanie o nie
+          // nigdy nie wystartuje, a plamki pulsowałyby pod banerem błędu bez końca.
+          pending={directory.isPending || (member != null && sessions.isPending)}
+          loaded={directory.data != null && sessions.data != null}
           skeleton={
             <TableSkeleton
               headers={HEADERS}
