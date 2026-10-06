@@ -4,11 +4,19 @@
  *
  * Pod obserwacją: dopasowanie tematów (cały rodzaj albo dokładnie ten), sklejanie serii
  * sygnałów w JEDNO odświeżenie ekranu (jedna zmiana przychodzi kilkoma ramkami),
- * skrzynka jako temat lokalny telefonu, dociągnięcie stanu przez KAŻDY podpięty ekran
+ * skrzynka i rozmowy zleceń jako tematy lokalne telefonu, ramki rozmów w całości dla
+ * otwartej rozmowy (epik Z-C #247), dociągnięcie stanu przez KAŻDY podpięty ekran
  * po powitaniu łącza (K2) i odpięcie, także z odświeżeniem w drodze.
  */
 
-import { INBOX_TOPIC, LIVE_COALESCE_MS, LiveBus, topicMatches } from '../application/live/liveBus';
+import {
+  INBOX_TOPIC,
+  LIVE_COALESCE_MS,
+  LiveBus,
+  THREAD_TOPIC,
+  threadTopic,
+  topicMatches,
+} from '../application/live/liveBus';
 import type { Timers } from '../application/live/timers';
 
 /** Zegar w pamięci - odpala zaplanowane, gdy test każe. */
@@ -153,6 +161,65 @@ describe('szyna kanału klubu', () => {
     off();
     bus.publish({ type: 'notification', org: 'org-a', item, unread: 4, quiet: false });
     expect(seen).toHaveLength(1);
+  });
+
+  it('ramka rozmowy idzie do otwartej rozmowy OD RAZU i w całości - rozmowa nie czeka na serię', () => {
+    // Wiadomość niesie treść (`docs/zlecenia.md` §11): rozmowa dopisuje ją bez pytania
+    // serwera, więc czekanie na sklejenie serii byłoby opóźnieniem bez zysku.
+    const { bus, timers } = world();
+    const seen: unknown[] = [];
+    const off = bus.onThread((frame) => seen.push(frame));
+    const message = {
+      type: 'message' as const,
+      org: 'org-a',
+      orderId: 'o1',
+      recipientId: 'p2',
+      message: { id: 'm1', authorId: 'p2', body: 'Mogę od 10.', createdAt: '2026-10-05T08:00:00.000Z' },
+    };
+    const read = {
+      type: 'read' as const,
+      org: 'org-a',
+      orderId: 'o1',
+      recipientId: 'p2',
+      pilotId: 'p1',
+      at: '2026-10-05T08:01:00.000Z',
+    };
+
+    bus.publish(message);
+    bus.publish(read);
+    bus.publish(changed('order:o1'));
+    bus.publish({ type: 'notification', org: 'org-a', item: null, unread: 1, quiet: false });
+    expect(seen).toEqual([message, read]);
+
+    off();
+    bus.publish(message);
+    expect(seen).toHaveLength(2);
+    expect(timers.delays()).toEqual([]);
+  });
+
+  it('ruch w rozmowach zlecenia odświeża ekrany podpięte pod `thread:<zlecenie>` - i tylko je', () => {
+    // Karta prowadzącego i lista liczą nieprzeczytane wiadomości przy adresatach - ramka
+    // rozmowy jest dla nich tym, czym `changed` dla kalendarza (temat lokalny telefonu).
+    const { bus, timers } = world();
+    const card = counter();
+    const other = counter();
+    const anyThread = counter();
+    const order = counter();
+    bus.subscribe([threadTopic('o1')], card.refresh);
+    bus.subscribe([threadTopic('o2')], other.refresh);
+    bus.subscribe([THREAD_TOPIC], anyThread.refresh);
+    bus.subscribe(['order:o1'], order.refresh);
+
+    bus.publish({
+      type: 'read',
+      org: 'org-a',
+      orderId: 'o1',
+      recipientId: 'p2',
+      pilotId: 'p1',
+      at: '2026-10-05T08:01:00.000Z',
+    });
+    timers.fireAll();
+    expect([card.count(), other.count(), anyThread.count(), order.count()]).toEqual([1, 0, 1, 0]);
   });
 
   it('odpięty ekran nie dostaje już niczego - także odświeżenia, które było w drodze', () => {

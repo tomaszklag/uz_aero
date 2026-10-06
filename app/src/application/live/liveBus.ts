@@ -23,18 +23,32 @@
  * bez sklejania - baner pokazuje treść wiadomości, a nie czyta niczego od nowa, więc nie ma
  * na co czekać, a każda wiadomość jest osobnym banerem (widać ostatni).
  *
+ * OTWARTA ROZMOWA SŁUCHA OSOBNO TAK SAMO (`onThread`, epik Z-C #247): ramki `message`
+ * i `read` niosą treść w całości (`docs/zlecenia.md` §11), więc rozmowa dopisuje
+ * wiadomość i „Odczytane 14:05" od razu, bez pytania serwera.
+ *
  * Tematy są kontraktem z serwerem (`server/src/application/common/live/topics.ts`):
  * wzorzec bez dwukropka łapie cały rodzaj (`calendar` - każda doba), z dwukropkiem -
- * dokładnie ten temat (`booking:<id>`). Jeden wyjątek jest LOKALNY: `inbox` - ramka
- * `notification` jest dla skrzynki tym, czym `changed` dla kalendarza, więc ekrany
- * skrzynki podpinają się tak samo, jak każdy inny.
+ * dokładnie ten temat (`booking:<id>`). Dwa wyjątki są LOKALNE: `inbox` - ramka
+ * `notification` jest dla skrzynki tym, czym `changed` dla kalendarza - i `thread:<id
+ * zlecenia>` - ruch w rozmowach zlecenia, po którym karta prowadzącego i lista czytają
+ * od nowa liczniki nieprzeczytanych. Ekrany podpinają się pod nie tak samo, jak pod
+ * każdy inny temat.
  */
 
-import type { LiveDataFrame } from './frames';
+import type { LiveDataFrame, ThreadFrame } from './frames';
 import { GLOBAL_TIMERS, type Timers } from './timers';
 
 /** Temat lokalny telefonu: nowa wiadomość w skrzynce (ramka `notification`). */
 export const INBOX_TOPIC = 'inbox';
+
+/** Temat lokalny telefonu: ruch w rozmowach zleceń (ramki `message` i `read`). */
+export const THREAD_TOPIC = 'thread';
+
+/** Ruch w rozmowach JEDNEGO zlecenia - wszystkie jego rozmowy naraz. */
+export function threadTopic(orderId: string): string {
+  return `${THREAD_TOPIC}:${orderId}`;
+}
 
 /** Ile szyna czeka, zanim odświeży ekran - tyle trwa seria ramek jednej zmiany. */
 export const LIVE_COALESCE_MS = 250;
@@ -58,6 +72,7 @@ export type NotificationFrame = Extract<LiveDataFrame, { type: 'notification' }>
 export class LiveBus {
   private readonly subscriptions = new Set<Subscription>();
   private readonly notificationListeners = new Set<(frame: NotificationFrame) => void>();
+  private readonly threadListeners = new Set<(frame: ThreadFrame) => void>();
 
   constructor(private readonly timers: Timers = GLOBAL_TIMERS) {}
 
@@ -81,12 +96,29 @@ export class LiveBus {
     };
   }
 
-  /** Ramka z danymi od łącza - pasujące ekrany dostają odświeżenie, a baner wiadomość. */
+  /**
+   * Otwarta rozmowa podpina się pod ramki rozmów; wynik ją odpina. Ramka przychodzi dla
+   * KAŻDEJ rozmowy, którą widzi to urządzenie - swoją wybiera słuchający (zlecenie × adresat).
+   */
+  onThread(listener: (frame: ThreadFrame) => void): () => void {
+    this.threadListeners.add(listener);
+    return () => {
+      this.threadListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Ramka z danymi od łącza - pasujące ekrany dostają odświeżenie, baner wiadomość,
+   * a otwarta rozmowa - wiadomość albo odczyt w całości.
+   */
   publish(frame: LiveDataFrame): void {
     if (frame.type === 'notification') {
       for (const listener of [...this.notificationListeners]) listener(frame);
     }
-    const topics = frame.type === 'changed' ? frame.topics : [INBOX_TOPIC];
+    if (frame.type === 'message' || frame.type === 'read') {
+      for (const listener of [...this.threadListeners]) listener(frame);
+    }
+    const topics = topicsOf(frame);
     for (const subscription of this.subscriptions) {
       const wanted = subscription.topics.some((pattern) => topics.some((topic) => topicMatches(pattern, topic)));
       if (wanted) this.signal(subscription);
@@ -104,5 +136,18 @@ export class LiveBus {
       subscription.pending = null;
       if (this.subscriptions.has(subscription)) subscription.refresh();
     }, LIVE_COALESCE_MS);
+  }
+}
+
+/** Tematy, które ramka zmienia: serwerowe z `changed`, lokalne ze skrzynki i rozmów. */
+function topicsOf(frame: LiveDataFrame): readonly string[] {
+  switch (frame.type) {
+    case 'changed':
+      return frame.topics;
+    case 'notification':
+      return [INBOX_TOPIC];
+    case 'message':
+    case 'read':
+      return [threadTopic(frame.orderId)];
   }
 }

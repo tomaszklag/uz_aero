@@ -4,8 +4,8 @@
  *
  * Pod obserwacją: rozpoznanie tego, z czego telefon korzysta, klub przy ramkach z danymi
  * (łącze porównuje go z klubem, dla którego je otwarto), pozycja skrzynki w kształcie
- * REST, ignorowanie ramek nieznanego typu (nowszy serwer nie wywraca starszej aplikacji)
- * i odrzucenie tego, co ramką nie jest.
+ * REST, rozmowy zleceń (`message`, `read`; epik Z-C #247), ignorowanie ramek nieznanego
+ * typu (nowszy serwer nie wywraca starszej aplikacji) i odrzucenie tego, co ramką nie jest.
  */
 
 import { parseFrame } from '../application/live/frames';
@@ -111,13 +111,64 @@ describe('ramki kanału klubu na telefonie', () => {
     expect(parseFrame(frame({ type: 'bye' }))).toEqual({ type: 'bye', reason: 'unknown' });
   });
 
-  it('ramka nieznanego typu jest ignorowana, nie odrzucana - nowszy serwer nie psuje starszej aplikacji', () => {
-    // Rozmowy zleceń przyjdą z ekranami zleceń (Z-C) - do tego czasu są ramką nieznaną.
-    expect(parseFrame(frame({ v: 1, type: 'message', org: 'org-a', text: 'Czy lecimy?' }))).toEqual({
+  it('rozmowa zlecenia: wiadomość w całości i odczyt, rozmowa wskazana parą zlecenie × adresat', () => {
+    // Kształt jak `messageFrame`/`readFrame` serwera: treść, a po niej koperta.
+    const message = { id: 'm1', threadId: 't1', authorId: 'p2', body: 'Mogę od 10.', createdAt: '2026-10-05T08:00:00.000Z' };
+    expect(
+      parseFrame(frame({ orderId: 'o1', recipientId: 'p2', message, v: 1, type: 'message', org: 'org-a' })),
+    ).toEqual({
+      type: 'message',
+      org: 'org-a',
+      orderId: 'o1',
+      recipientId: 'p2',
+      // `threadId` zostaje na serwerze - wiadomość ma kształt REST, jak w stronie rozmowy.
+      message: { id: 'm1', authorId: 'p2', body: 'Mogę od 10.', createdAt: '2026-10-05T08:00:00.000Z' },
+    });
+    expect(
+      parseFrame(
+        frame({ orderId: 'o1', recipientId: 'p2', pilotId: 'p1', at: '2026-10-05T08:01:00.000Z', v: 1, type: 'read', org: 'org-a' }),
+      ),
+    ).toEqual({
+      type: 'read',
+      org: 'org-a',
+      orderId: 'o1',
+      recipientId: 'p2',
+      pilotId: 'p1',
+      at: '2026-10-05T08:01:00.000Z',
+    });
+    // Bez klubu - `null`, jak każda ramka z danymi: łącze jej nie poda dalej.
+    expect(parseFrame(frame({ orderId: 'o1', recipientId: 'p2', message, type: 'message' }))).toMatchObject({
+      type: 'message',
+      org: null,
+    });
+  });
+
+  it('ramka rozmowy, której nie da się przypisać albo przeczytać, jest ignorowana', () => {
+    const message = { id: 'm1', authorId: 'p2', body: 'Mogę od 10.', createdAt: '2026-10-05T08:00:00.000Z' };
+    // Bez wskazania rozmowy nie ma komu jej dać.
+    expect(parseFrame(frame({ type: 'message', org: 'org-a', recipientId: 'p2', message }))).toEqual({ type: 'ignored' });
+    expect(parseFrame(frame({ type: 'message', org: 'org-a', orderId: 'o1', message }))).toEqual({ type: 'ignored' });
+    // Wiadomość spoza kształtu REST - nie dopisujemy połowy wiadomości.
+    expect(
+      parseFrame(frame({ type: 'message', org: 'org-a', orderId: 'o1', recipientId: 'p2', message: { ...message, body: 7 } })),
+    ).toEqual({ type: 'ignored' });
+    expect(parseFrame(frame({ type: 'message', org: 'org-a', orderId: 'o1', recipientId: 'p2', text: 'Czy lecimy?' }))).toEqual({
       type: 'ignored',
     });
-    expect(parseFrame(frame({ v: 1, type: 'read', org: 'org-a' }))).toEqual({ type: 'ignored' });
+    // Odczyt bez osoby albo chwili.
+    expect(parseFrame(frame({ type: 'read', org: 'org-a', orderId: 'o1', recipientId: 'p2', at: '2026-10-05T08:01:00.000Z' }))).toEqual({
+      type: 'ignored',
+    });
+    expect(parseFrame(frame({ type: 'read', org: 'org-a', orderId: 'o1', recipientId: 'p2', pilotId: 'p1' }))).toEqual({
+      type: 'ignored',
+    });
+  });
+
+  it('ramka nieznanego typu jest ignorowana, nie odrzucana - nowszy serwer nie psuje starszej aplikacji', () => {
     expect(parseFrame(frame({ v: 2, type: 'cos-nowego' }))).toEqual({ type: 'ignored' });
+    expect(parseFrame(frame({ v: 1, type: 'announcement', org: 'org-a', text: 'Zebranie w sobotę' }))).toEqual({
+      type: 'ignored',
+    });
   });
 
   it('to, co nie jest obiektem JSON z napisem `type`, nie jest ramką', () => {

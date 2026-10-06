@@ -11,9 +11,21 @@
  * gdyby kiedyś wracał magazyn, będzie to osobna decyzja i osobny plik.
  */
 
-import type { RemoteBooking, RemoteCalendar } from '../../../application';
+import type { RemoteBooking, RemoteBookingOrder, RemoteCalendar, RemoteSeat } from '../../../application';
 
 import type { ClubDayBounds } from './clubClock';
+
+/**
+ * Zlecenie za rezerwacją (4.0.0, `docs/zlecenia.md` §13.1, §16 pkt 2). Przychodzi
+ * w WĄSKIM kształcie, więc każdy członek klubu wie, że termin szuka załogi; `id`
+ * i `createdBy` dostaje wyłącznie prowadzący i adresat („Otwórz zlecenie", „kto zleca").
+ */
+export interface CalendarOrder {
+  /** Fotele bez osoby; pusta lista = komplet załogi (fotele niosą wtedy nazwiska). */
+  seeking: RemoteSeat[];
+  id: string | null;
+  createdBy: string | null;
+}
 
 /** Jedna zajętość maszyny: rezerwacja pilota albo wyłączenie z użytku. */
 export interface CalendarBooking {
@@ -39,6 +51,12 @@ export interface CalendarBooking {
    * którego nie dało się przeczytać.
    */
   createdAt?: number | null;
+  /**
+   * Zlecenie za rezerwacją (4.0.0). Opcjonalne jak `createdAt`: brak pola i `null`
+   * znaczą to samo - zwykła rezerwacja albo wyłączenie z użytku (także odpowiedź serwera
+   * sprzed 4.0.0, który pola nie niesie).
+   */
+  order?: CalendarOrder | null;
 }
 
 export interface CalendarData {
@@ -108,6 +126,7 @@ export function toBooking(wire: RemoteBooking): CalendarBooking | null {
     blockReason: wire.blockReason,
     note: wire.note ?? null,
     createdAt: parsedOrNull(wire.createdAt),
+    order: orderOf(wire.order),
   };
 }
 
@@ -116,6 +135,12 @@ const parsedOrNull = (iso: string | undefined): number | null => {
   const at = Date.parse(iso);
   return Number.isFinite(at) ? at : null;
 };
+
+/** Zlecenie z drutu; brak pól prowadzącego = widz spoza zlecenia (pkt 18). */
+function orderOf(wire: RemoteBookingOrder | null | undefined): CalendarOrder | null {
+  if (wire == null) return null;
+  return { seeking: [...wire.seeking], id: wire.id ?? null, createdBy: wire.createdBy ?? null };
+}
 
 /**
  * Zajętości NACHODZĄCE na dobę - z klamrą obustronnie otwartą, bo rezerwacja
