@@ -5,6 +5,11 @@
  * (odpowiedź w 90 ms nie ma prawa mrugnąć) i zostają co najmniej minimum (skeleton
  * pokazany i schowany w 30 ms czyta się jak usterka rysowania).
  *
+ * Pod progiem nie rysuje NIC - ani plamek, ani treści (`loadableView`). Do 2026-10-05
+ * rysował wtedy treść, a ta liczyła wiersze z `data ?? []`: pierwsze wejście w moduł
+ * potrafiło pokazać „nikogo nie ma", zanim wyszły plamki albo dane. Co ma stać
+ * w trakcie odczytu (nagłówek, filtry, pola), stoi POZA `Loadable`.
+ *
  * Dlaczego komponent, a nie hook: reguła panelu mówi, że plik `.tsx` eksportuje
  * wyłącznie komponenty, a moduł `.ts` w `ui/` nie zna Reacta. Timer musi więc mieszkać
  * w komponencie - a przy okazji wychodzi z tego lepsze API: ekran pisze, CO pokazać
@@ -13,7 +18,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { remainingHoldMs, SKELETON_DELAY_MS } from './skeletonGate';
+import { loadableView, remainingHoldMs, SKELETON_DELAY_MS } from './skeletonGate';
 
 interface LoadableProps {
   pending: boolean;
@@ -51,5 +56,6 @@ export function Loadable({ pending, skeleton, children }: LoadableProps) {
     return () => clearTimeout(timer);
   }, [pending]);
 
-  return <>{visible ? skeleton : children}</>;
+  const view = loadableView(pending, visible);
+  return <>{view === 'skeleton' ? skeleton : view === 'content' ? children : null}</>;
 }

@@ -35,6 +35,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+### Poprawki
+
+- **Panel nie mówi „nic tu nie ma", zanim przyjdą dane.** Przy pierwszym wejściu w listę -
+  pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
+  mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
+  nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
+
 ## 3.2.0 · 27 września 2026
 
 > Rozbudowa panelu klubu: dziennik z osią pilotów i poprawkami operacji, „Do sprawdzenia", statystyki i rezerwacja z kalendarza w przeglądarce - bez nowej instalacji aplikacji.

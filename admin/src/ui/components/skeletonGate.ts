@@ -13,6 +13,10 @@
  *    przyszły zaraz po nim. Bez tego wolniejsze łącze daje błysk plamek zamiast
  *    spokojnego przejścia.
  *
+ * Pod progiem nie ma też TREŚCI (`loadableView`): stan pusty narysowany w trakcie
+ * odczytu jest nieprawdą o danych. Na telefonie ten sam efekt daje flaga `loaded`,
+ * na którą czeka stan pusty.
+ *
  * Panel czyta z sieci, nie z lokalnej bazy, więc próg przekracza tu więcej odpowiedzi
  * niż na telefonie - i tak ma być: to jest ta sama reguła, tylko postawiona przed
  * wolniejszym źródłem.
@@ -34,4 +38,24 @@ export function remainingHoldMs(shownAt: number | null, now: number): number {
   if (shownAt == null) return 0;
   const elapsed = now - shownAt;
   return elapsed >= SKELETON_MIN_MS ? 0 : SKELETON_MIN_MS - elapsed;
+}
+
+/** Co `Loadable` rysuje w danej chwili. */
+export type LoadableView = 'skeleton' | 'nothing' | 'content';
+
+/**
+ * Co rysuje `Loadable` przy danym stanie odczytu (`pending`) i plamek (`visible`).
+ *
+ * Stany są TRZY, nie dwa: pod progiem odczyt trwa, a plamek jeszcze nie ma - i wtedy
+ * nie rysujemy NIC. Treść w tym oknie nie jest neutralna: ekrany liczą wiersze
+ * z `query.data ?? []`, więc pusta tablica rysowała stan pusty („nikogo nie ma"), zanim
+ * wyszły plamki albo dane. Skeleton nie jest stanem pustym, a stan pusty pokazany
+ * w trakcie odczytu jest nieprawdą o danych.
+ *
+ * Plamki wygrywają z `pending`: po przyjściu danych dotrzymują minimum
+ * (`remainingHoldMs`), więc `visible` bez `pending` to nadal skeleton.
+ */
+export function loadableView(pending: boolean, visible: boolean): LoadableView {
+  if (visible) return 'skeleton';
+  return pending ? 'nothing' : 'content';
 }

@@ -210,11 +210,17 @@ export function CalendarScreen() {
         ))}
       </div>
 
-      <div className="card">
-        <Loadable
-          pending={calendar.isPending || directory.isPending}
-          skeleton={<CalendarSkeleton days={rangeDays(known)} />}
-        >
+      {/* Ramka karty jedzie RAZEM z plamkami i z treścią, nie wokół `Loadable`: pod
+          progiem nie rysuje on nic, więc karta na zewnątrz stałaby pusta. */}
+      <Loadable
+        pending={calendar.isPending || directory.isPending}
+        skeleton={
+          <div className="card">
+            <CalendarSkeleton days={rangeDays(known)} />
+          </div>
+        }
+      >
+        <div className="card">
           {aircraft.length === 0 ? (
             <EmptyState
               icon={<PlaneIcon />}
@@ -261,8 +267,8 @@ export function CalendarScreen() {
               </div>
             </>
           )}
-        </Loadable>
-      </div>
+        </div>
+      </Loadable>
 
       {open == null ? null : (
         <BookingDrawer

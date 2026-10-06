@@ -228,7 +228,11 @@ docelowej - nigdy spinnera i nigdy pustki") **nie była w panelu 1.0 wdrożona w
 
 W 2.0: `ui/components/Loadable.tsx` + `TableSkeleton.tsx`, próg 180 ms i minimum
 420 ms w module czystym z testem (`skeletonGate.ts`) - te same liczby, co w aplikacji
-pilota. Nagłówki tabeli rysują się od razu, bo znamy je lokalnie.
+pilota. Nagłówki tabeli rysują się od razu, bo znamy je lokalnie. **Pod progiem
+`Loadable` nie rysuje nic** - ani plamek, ani treści (`loadableView`, 2026-10-05),
+bo treść licząca wiersze z `data ?? []` pokazywała przy pierwszym wejściu w moduł stan
+pusty, zanim wyszły plamki albo dane; co ma stać w trakcie odczytu (nagłówek, filtry,
+pola formularza), stoi poza `Loadable`.
 
 ### 3.6 Jedna reguła, jedno zdanie
 
