@@ -151,6 +151,12 @@ const REGISTRY = {
   settings: f('settings'),
   // Skrzynka powiadomień (3.1.0) - dzwonek w nagłówku Pulpitu, obok zębatki (makieta 20E).
   bell: f('bell'),
+  /**
+   * Zlecenia na lot (4.0.0): rozmowa w zleceniu (ikona z kropką nowej wiadomości - 30, 32)
+   * i stan pusty listy „nic nie przyszło" (30A) - te same glify, co w makietach.
+   */
+  message: f('message-square'),
+  inbox: f('inbox'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 
