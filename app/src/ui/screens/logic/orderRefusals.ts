@@ -20,8 +20,11 @@ import { DUAL_REQUIRED_REASON } from './dualRequirement';
 /** Zdanie przy przycisku zapisu, który nie dojechał (brak sieci, wygasła sesja). */
 export const ORDER_OFFLINE = 'Zlecenie potwierdza serwer - potrzebne połączenie.';
 
-/** Wiadomość, która nie dojechała - pole wiadomości mówi to samo zdaniem o rozmowie (29A). */
-export const MESSAGE_OFFLINE = 'Wiadomość wysyła serwer - potrzebne połączenie.';
+/**
+ * Rozmowa bez połączenia (29A) - powód stoi W POLU wiadomości, bo pole i WYŚLIJ to jedna
+ * kontrolka (issue #55). Mówi, kiedy da się wysłać, a nie dlaczego się nie da.
+ */
+export const MESSAGE_OFFLINE = 'Bez połączenia - wiadomość wyślesz z zasięgiem';
 
 /**
  * Odpowiedź adresata, która nie dojechała (28, 28D) - to samo zdanie, co decyzja o cudzej

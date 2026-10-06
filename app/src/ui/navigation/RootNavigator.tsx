@@ -53,6 +53,7 @@ import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { OrderScreen } from '../screens/OrderScreen';
+import { OrderThreadScreen } from '../screens/OrderThreadScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -131,6 +132,11 @@ export type RootStackParamList = {
    * (`logic/orderCardMode.ts`). Lot, który już jest pilota, przechodzi na kartę rezerwacji.
    */
   Order: { orderId: string; as?: 'recipient' | 'leader' };
+  /**
+   * 29 - ROZMOWA W ZLECENIU: autor zlecenia z jednym adresatem (para zlecenie × adresat,
+   * §7.1). Uczestnik pisze, koordynator czyta (29B) - rozstrzyga serwer, nie trasa.
+   */
+  OrderThread: { orderId: string; recipientId: string };
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -246,6 +252,7 @@ export function RootNavigator({
           <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
           <Stack.Screen name="Orders" component={OrdersScreen} />
           <Stack.Screen name="Order" component={OrderScreen} />
+          <Stack.Screen name="OrderThread" component={OrderThreadScreen} />
           <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
           <Stack.Screen name="Stats" component={StatsScreen} />
           <Stack.Screen name="Track" component={TrackScreen} />

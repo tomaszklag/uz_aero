@@ -84,8 +84,11 @@ export function dayAround(day: ClubDayBounds, at: number): ClubDayBounds {
   return shift === 0 ? day : { date: day.date, startsAt: day.startsAt + shift, endsAt: day.endsAt + shift };
 }
 
-/** Ile dób klubu dzieli chwilę od doby odniesienia (0 = ta sama doba, -1 = poprzednia). */
-function dayIndex(day: ClubDayBounds, at: number): number {
+/**
+ * Ile dób klubu dzieli chwilę od doby odniesienia (0 = ta sama doba, -1 = poprzednia).
+ * Czyta go też rozmowa (29): separator „Dziś" / „Wczoraj" to ta sama różnica dób.
+ */
+export function dayIndex(day: ClubDayBounds, at: number): number {
   return Math.floor((at - day.startsAt) / DAY_MS);
 }
 

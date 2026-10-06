@@ -34,7 +34,12 @@ export interface UseOrderCard {
   accept: (card: RemoteOrderCard) => void;
 }
 
-export function useOrderCard(orderId: string | null): UseOrderCard {
+/**
+ * `seen: false` - karta czytana poza ekranem zlecenia (pasek zlecenia nad rozmową, 29):
+ * otwarcie rozmowy nie jest otwarciem karty, więc „Odczytane" się nie zapisuje.
+ */
+export function useOrderCard(orderId: string | null, options: { seen?: boolean } = {}): UseOrderCard {
+  const marksSeen = options.seen !== false;
   const orders = useOrders();
   const [data, setData] = useState<Reading<RemoteOrderCard>>(undefined);
   const alive = useRef(true);
@@ -62,13 +67,13 @@ export function useOrderCard(orderId: string | null): UseOrderCard {
         .then((next) => {
           if (!alive.current || asked.current !== orderId) return;
           setData((previous) => (quiet ? quietResult(previous, next) : next));
-          if (entry && next?.viewer.recipient != null) void orders.markSeen(orderId);
+          if (entry && marksSeen && next?.viewer.recipient != null) void orders.markSeen(orderId);
         })
         .catch(() => {
           if (alive.current && asked.current === orderId && !quiet) setData(null);
         });
     },
-    [orders, orderId],
+    [orders, orderId, marksSeen],
   );
 
   const refresh = useCallback(() => read(true, false), [read]);

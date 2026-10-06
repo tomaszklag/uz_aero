@@ -57,6 +57,8 @@ export * from './status/EmptyState';
 // Karty terminu (zlecenia 4.0.0): los rzeczy nad kartą i przypis pod pasem akcji.
 export * from './status/StateBanner';
 export * from './status/FootNote';
+// Rozmowa w zleceniu (29B): zdanie zamiast pola, gdy tu się nie pisze.
+export * from './status/ReadOnlyNote';
 
 // Wprowadzanie danych
 export * from './input/AirfieldSuggestions';
@@ -74,6 +76,7 @@ export * from './input/PlaceholderOverlay';
 export * from './input/CounterRow';
 export * from './input/ReasonField';
 export * from './input/SegmentedControl';
+export * from './input/ThreadComposer';
 
 // Odczyty z liczników
 export * from './readouts/Readout';
@@ -170,6 +173,10 @@ export * from './data/RecipientRow';
 export * from './data/OrderCrewRow';
 export * from './data/OrderHistoryRow';
 export * from './data/ExpandToggle';
+// Rozmowa w zleceniu (29): zlecenie nad wiadomościami, granica doby i dymek.
+export * from './data/OrderStrip';
+export * from './data/DaySeparator';
+export * from './data/MessageBubble';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.
 export * from './data/TrackPolyline';

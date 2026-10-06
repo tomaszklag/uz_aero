@@ -181,6 +181,12 @@ const REGISTRY = {
   overflow: f('more-horizontal'),
   /** Rozwinięcie w miejscu (`.expand`, 32B) - szewron w dół, obrócony przy otwartej liście. */
   expand: f('chevron-down'),
+  /**
+   * Rozmowa w zleceniu (29): papierowy samolot na WYŚLIJ i oko przy zdaniu o tym, KTO
+   * jeszcze czyta rozmowę (koordynatorzy - 29; „możesz ją czytać" - 29B).
+   */
+  send: f('send'),
+  readers: f('eye'),
   swap: f('repeat'),
   unassign: m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
