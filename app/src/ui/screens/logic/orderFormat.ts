@@ -143,8 +143,18 @@ export function orderDayShort(day: ClubDayBounds, at: number): string {
  * linii mono, jak w arkuszu odmowy zgody (26C). Termin czasem klubu.
  */
 export function orderReference(reg: string, day: ClubDayBounds, startsAt: number, endsAt: number): string {
-  const dow = weekdayShortUtc(clubInstant(startsAt, day)).toLowerCase();
-  return `${reg} · ${dow} ${orderDayShort(day, startsAt)} ${orderSpan(startsAt, endsAt, day)}`;
+  return `${reg} · ${orderTerm(day, startsAt, endsAt)}`;
+}
+
+/** „sob 3 PAŹ" - doba chwili z dniem tygodnia, czasem klubu (podpis wiersza skrzynki, 25D). */
+export function orderDayWeekday(day: ClubDayBounds, at: number): string {
+  const dow = weekdayShortUtc(clubInstant(at, day)).toLowerCase();
+  return `${dow} ${orderDayShort(day, at)}`;
+}
+
+/** „sob 3 PAŹ 09:00-11:00" - termin w zwartym zapisie: arkusze (28D, 32C) i skrzynka (25D). */
+export function orderTerm(day: ClubDayBounds, startsAt: number, endsAt: number): string {
+  return `${orderDayWeekday(day, startsAt)} ${orderSpan(startsAt, endsAt, day)}`;
 }
 
 /**

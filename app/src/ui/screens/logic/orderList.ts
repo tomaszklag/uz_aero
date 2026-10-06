@@ -21,7 +21,7 @@
 
 import { dateUtcDayMonthLong, plural, weekdayUtc } from '@ninerdeck/format';
 
-import type { RemoteOrderBox, RemoteOrderList, RemoteOrderListItem, RemoteSeat } from '../../../application';
+import type { RemoteOrderBox, RemoteOrderList, RemoteOrderListItem, RemoteOrderMe, RemoteSeat } from '../../../application';
 
 import type { ClubDayBounds } from './clubClock';
 import { operationLabelOf } from './operations';
@@ -166,6 +166,25 @@ const joined = (...groups: (ListPart[] | null)[]): ListPart[] | null => {
   return out.length === 0 ? null : out;
 };
 
+/**
+ * Zlecenie czeka na MOJĄ odpowiedź: jestem w grze, fotela jeszcze nie mam, odpowiedź
+ * w bieżącej wersji nie padła, a termin się nie skończył. Jedna reguła dla niebieskiej
+ * plakietki „Czeka na odpowiedź" na liście (30) i „Do odpowiedzi" w skrzynce (25D).
+ */
+export function awaitsMyAnswer(me: RemoteOrderMe, endsAt: number, now: number): boolean {
+  return me.inPlay && me.assignedSeat == null && me.answer == null && endsAt > now;
+}
+
+/** Zlecenia z listy „Do mnie", które czekają na moją odpowiedź - dla plakietek skrzynki. */
+export function awaitingAnswerIds(list: RemoteOrderList, now: number): Set<string> {
+  const ids = new Set<string>();
+  for (const item of list.items) {
+    const endsAt = instant(item.booking.endsAt);
+    if (item.me != null && endsAt != null && awaitsMyAnswer(item.me, endsAt, now)) ids.add(item.order.id);
+  }
+  return ids;
+}
+
 /** Wiersz „Do mnie" - zlecenie oczami adresata. */
 function inboxRow(p: Placed, input: OrderListInput): OrderRowVm | null {
   const me = p.item.me;
@@ -201,7 +220,7 @@ function inboxRow(p: Placed, input: OrderListInput): OrderRowVm | null {
       // a karta pozwala zmienić zdanie.
       tag = { text: 'Nie mogę', tone: 'neutral' };
     } else {
-      tag = { text: 'Czeka na odpowiedź', tone: done ? 'neutral' : 'blue' };
+      tag = { text: 'Czeka na odpowiedź', tone: awaitsMyAnswer(me, p.endsAt, input.now) ? 'blue' : 'neutral' };
     }
     const seat: RemoteSeat | null = me.assignedSeat ?? me.seat;
     lead = seat == null ? [{ text: 'Termin do potwierdzenia' }] : [{ text: 'Fotel: ' }, { text: seatLower(seat), strong: true }];

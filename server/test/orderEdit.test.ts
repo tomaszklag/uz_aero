@@ -102,7 +102,7 @@ describe('termin i „edytowane"', () => {
     expect(await row('o-1')).toMatchObject({ revision: 1, edited: true });
     expect((await inbox(w.db, 'PWI')).at(-1)).toMatchObject({
       kind: 'order_changed',
-      payload: { term: false, changes: { note: { from: null, to: 'Zabierz kamizelki' } } },
+      payload: { term: false, respond: false, changes: { note: { from: null, to: 'Zabierz kamizelki' } } },
     });
     expect(await kinds(w.db, 'KRZ')).toEqual(['order_offered']);
     expect(await historyKinds(w.db, 'o-1')).toEqual(['created', 'edited']);
@@ -137,6 +137,23 @@ describe('fotele i maszyna', () => {
     await w.responses.answer(ORG_A, pilot('EWA'), 'o-1', { answer: 'yes', reason: null });
     await w.responses.answer(ORG_A, pilot('KRZ'), 'o-1', { answer: 'yes', reason: null });
     step();
+  });
+
+  it('wiadomości niosą fotel, trasę i to, czy odpowiadać od nowa (25D, 25E)', async () => {
+    // „Zlecenie lotu" mówi, o który fotel pytamy - imiennie dowódca, z grupy drugi pilot.
+    expect((await inbox(w.db, 'EWA'))[0]).toMatchObject({
+      kind: 'order_offered',
+      payload: { seat: 'pic', fromIcao: 'EPKK', toIcao: 'EPRJ' },
+    });
+    expect((await inbox(w.db, 'KRZ'))[0]).toMatchObject({ kind: 'order_offered', payload: { seat: 'dual' } });
+
+    const result = await w.edits.edit(ORG_A, coordinator, 'o-1', { startsAt: STARTS + 24 * H, endsAt: ENDS + 24 * H });
+    if (result == null || !result.ok) throw new Error('zmiana nie przeszła');
+    // Zmiana terminu zeruje odpowiedź zgłoszonego; przydzielona fotel zachowuje (decyzja 13),
+    // a zlecający nie odpowiada wcale - „Odpowiedz na nowy termin" mówi się tylko pierwszemu.
+    expect((await inbox(w.db, 'KRZ')).at(-1)).toMatchObject({ kind: 'order_changed', payload: { term: true, respond: true } });
+    expect((await inbox(w.db, 'EWA')).at(-1)).toMatchObject({ kind: 'order_changed', payload: { term: true, respond: false } });
+    expect((await inbox(w.db, 'JSE')).at(-1)).toMatchObject({ kind: 'order_changed', payload: { term: true, respond: false } });
   });
 
   it('drugi fotel na „brak": jego adresaci są „nieaktualni", ale ZOSTAJĄ i wracają z fotelem (decyzja 2026-09-29)', async () => {

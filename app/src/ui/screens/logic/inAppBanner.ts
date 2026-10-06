@@ -20,7 +20,8 @@
  *    na listę systemową i do skrzynki (K6, pkt 44 zleceń);
  *  - przy aplikacji w tle - wtedy dzwoni system, z kanału Androida;
  *  - na ekranie RZECZY, której dotyczy - karta tej rezerwacji, decyzja o niej, karta tej
- *    maszyny, otwarta skrzynka: ten ekran po prostu się odświeża (pkt 43 zleceń), a baner
+ *    maszyny, karta tego zlecenia, ta rozmowa, otwarta skrzynka: ten ekran po prostu się
+ *    odświeża (pkt 43 zleceń), a baner
  *    o rzeczy, na którą pilot patrzy, byłby powtórzeniem. Ten sam rachunek gasi baner,
  *    który już stoi, gdy pilot wejdzie na ekran jego rzeczy (`bannerFits`);
  *  - wiadomość z innego klubu nie ma „ekranu, którego dotyczy" - jej rzeczy na tym
@@ -37,7 +38,7 @@
 import type { RemoteNotification } from '../../../application';
 import type { ScreenRoute } from '../../navigation/activeRoute';
 
-import { inboxRows, type InboxRowVm, type InboxTone } from './inbox';
+import { inboxRows, type InboxGlyph, type InboxRowVm, type InboxTone } from './inbox';
 import { pushTarget, type PushTarget } from './pushTarget';
 
 /** Ile baner stoi, zanim zniknie sam. */
@@ -127,8 +128,9 @@ function frameBanner(item: RemoteNotification, ctx: BannerContext): BannerVm | n
   return {
     id: item.id,
     club: null,
-    // Plakietki sprawy baner nie ma (stoi w skrzynce), a wiadomość jest świeża z definicji.
-    row: { ...row, todo: false, isNew: true, when: NOW_LABEL },
+    // Plakietek baner nie ma - ani sprawy, ani licznika rozmowy (stoją w skrzynce, 25E),
+    // a wiadomość jest świeża z definicji.
+    row: { ...row, todo: false, count: null, isNew: true, when: NOW_LABEL },
     // Ramka przychodzi wyłącznie dla klubu aktywnego, więc o klub nie pytamy.
     target: pushTarget({ ...item.payload, kind: item.kind }, null),
   };
@@ -141,13 +143,15 @@ function pushBanner(source: Extract<BannerSource, { kind: 'push' }>, ctx: Banner
   const aircraftId = str(data.aircraftId);
   const reg = aircraftId == null ? null : ctx.regOf(aircraftId);
   const base = source.title ?? FALLBACK_TITLE;
+  const look = lookOf(str(data.kind) ?? '', data, ctx);
 
   return {
     id: source.id,
     club: foreign && orgId != null ? ctx.clubNameOf(orgId) : null,
     row: {
       id: source.id,
-      tone: toneOf(str(data.kind) ?? '', data, ctx),
+      tone: look.tone,
+      glyph: look.glyph,
       // Znak maszyny dopisuje telefon z pamięci floty - tytuły o maszynie niosą go same.
       title: reg != null && !base.includes(reg) ? `${base} · ${reg}` : base,
       sub: null,
@@ -166,11 +170,18 @@ function pushBanner(source: Extract<BannerSource, { kind: 'push' }>, ctx: Banner
 }
 
 /**
- * Ton ikony pusha - TEN SAM, co wiersz skrzynki tego rodzaju: wiersz składa się z rodzaju
- * i identyfikatorów pusha, a ton bierze się z niego. Druga mapa rodzaj → ton rozjechałaby
- * się z pierwszą przy pierwszym nowym rodzaju wiadomości.
+ * Ikona pusha - ton i znak TE SAME, co wiersz skrzynki tego rodzaju (kartka zlecenia na
+ * banerze z innego klubu, 25E): wiersz składa się z rodzaju i identyfikatorów pusha, a ikona
+ * bierze się z niego. Druga mapa rodzaj → ikona rozjechałaby się z pierwszą przy pierwszym
+ * nowym rodzaju wiadomości. Budzik nie niesie treści, więc przy `order_changed` nie wie, czy
+ * zmienił się termin - ikona jest wtedy ikoną edycji (zdarza się to tylko bez łącza albo
+ * z innego klubu, a zdanie mówi tytuł pusha).
  */
-function toneOf(kind: string, data: Readonly<Record<string, unknown>>, ctx: BannerContext): InboxTone {
+function lookOf(
+  kind: string,
+  data: Readonly<Record<string, unknown>>,
+  ctx: BannerContext,
+): { tone: InboxTone; glyph: InboxGlyph | null } {
   const probe: RemoteNotification = {
     id: 'push',
     kind,
@@ -179,7 +190,8 @@ function toneOf(kind: string, data: Readonly<Record<string, unknown>>, ctx: Bann
     readAt: null,
     day: null,
   };
-  return inboxRows({ items: [probe], todoIds: NO_TODO, now: ctx.now, regOf: ctx.regOf, nameOf: ctx.nameOf })[0]?.tone ?? 'info';
+  const row = inboxRows({ items: [probe], todoIds: NO_TODO, now: ctx.now, regOf: ctx.regOf, nameOf: ctx.nameOf })[0];
+  return { tone: row?.tone ?? 'info', glyph: row?.glyph ?? null };
 }
 
 /** Cisza w kokpicie: wyłącznie flaga równa `true` - cisza jest wyjątkiem, nie domysłem. */
@@ -195,17 +207,29 @@ function targetThing(target: PushTarget): string | null {
       return `booking:${target.params.bookingId}`;
     case 'Aircraft':
       return `aircraft:${target.params.aircraftId}`;
+    case 'Order':
+      return `order:${target.params.orderId}`;
+    case 'OrderThread':
+      return `thread:${target.params.orderId}:${target.params.recipientId}`;
     case 'Notifications':
       return target.params?.foreignClub === true ? null : 'inbox';
   }
 }
 
-/** Rzecz, którą pokazuje ekran na czubku stosu (skrzynkę rozstrzyga `bannerFits` wcześniej). */
+/**
+ * Rzecz, którą pokazuje ekran na czubku stosu (skrzynkę rozstrzyga `bannerFits` wcześniej).
+ * Karta zlecenia i rozmowa to dwie RÓŻNE rzeczy (pkt 43): baner o nowej wiadomości nie
+ * staje nad otwartą rozmową, ale nad kartą zlecenia - tak, bo treści wiadomości tam nie ma.
+ */
 function routeThing(route: ScreenRoute): string | null {
   const params = route.params ?? {};
   if ((route.name === 'Decision' || route.name === 'BookingDetails') && typeof params.bookingId === 'string') {
     return `booking:${params.bookingId}`;
   }
   if (route.name === 'Aircraft' && typeof params.aircraftId === 'string') return `aircraft:${params.aircraftId}`;
+  if (route.name === 'Order' && typeof params.orderId === 'string') return `order:${params.orderId}`;
+  if (route.name === 'OrderThread' && typeof params.orderId === 'string' && typeof params.recipientId === 'string') {
+    return `thread:${params.orderId}:${params.recipientId}`;
+  }
   return null;
 }

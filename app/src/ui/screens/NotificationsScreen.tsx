@@ -61,6 +61,7 @@ export function NotificationsScreen({
     return inboxRows({
       items: data.items,
       todoIds: data.todoIds,
+      answerIds: data.answerIds,
       now,
       regOf,
       nameOf: (id) => pilots.find((p) => p.id === id)?.name ?? null,
@@ -72,6 +73,17 @@ export function NotificationsScreen({
     if (row.opens == null) return;
     if (row.opens === 'aircraft') {
       if (row.aircraftId != null) navigation.navigate('Aircraft', { aircraftId: row.aircraftId });
+      return;
+    }
+    // Zlecenie (4.0.0): karta sama rozstrzyga, kogo pokazuje (28, 32 albo 23F); wiersz
+    // rozmowy otwiera od razu rozmowę - tę samą parę zlecenie × adresat, co budzik.
+    if (row.opens === 'order' || row.opens === 'thread') {
+      if (row.orderId == null) return;
+      if (row.opens === 'thread' && row.recipientId != null) {
+        navigation.navigate('OrderThread', { orderId: row.orderId, recipientId: row.recipientId });
+      } else {
+        navigation.navigate('Order', { orderId: row.orderId });
+      }
       return;
     }
     if (row.bookingId == null) return;

@@ -8,7 +8,7 @@
  */
 
 import type { RemoteCalendarDay, RemoteOrderListItem } from '../application';
-import { orderListVm, type ListPart, type OrderRowVm } from '../ui/screens/logic/orderList';
+import { awaitingAnswerIds, awaitsMyAnswer, orderListVm, type ListPart, type OrderRowVm } from '../ui/screens/logic/orderList';
 import { booking, local, localMs, me, nameOf, order, regOf, SATURDAY } from './support/orderFixtures';
 
 const flat = (parts: readonly ListPart[] | null): string | null =>
@@ -272,5 +272,31 @@ describe('wiersz bez dającego się przeczytać terminu', () => {
       regOf,
     });
     expect(vm).toEqual({ days: [], done: [] });
+  });
+});
+
+describe('czeka na moją odpowiedź - plakietki skrzynki (25D)', () => {
+  const list = (items: RemoteOrderListItem[]) => ({ timezone: 'Europe/Warsaw', items });
+  const NOW = localMs(-1, '21:50');
+
+  it('w grze, bez fotela, bez odpowiedzi i przed końcem terminu - czeka; reszta nie', () => {
+    const ids = awaitingAnswerIds(
+      list([
+        item({ order: order({ id: 'czeka' }), me: me() }),
+        item({ order: order({ id: 'zgloszone' }), me: me({ answer: 'yes' }) }),
+        item({ order: order({ id: 'nie-moge' }), me: me({ answer: 'no' }) }),
+        item({ order: order({ id: 'przydzielone' }), me: me({ assignedSeat: 'dual' }) }),
+        item({ order: order({ id: 'nieaktualne' }), me: me({ inPlay: false, staleReason: 'seat_filled' }) }),
+        item({ order: order({ id: 'minelo' }), booking: booking({ endsAt: local(-1, '20:00') }), me: me() }),
+        item({ order: order({ id: 'prowadzone' }), me: null }),
+      ]),
+      NOW,
+    );
+    expect([...ids]).toEqual(['czeka']);
+  });
+
+  it('ta sama reguła maluje plakietkę listy na niebiesko - jedna definicja dla dwóch ekranów', () => {
+    expect(awaitsMyAnswer(me(), localMs(0, '13:00'), NOW)).toBe(true);
+    expect(awaitsMyAnswer(me(), localMs(0, '13:00'), localMs(0, '13:00'))).toBe(false);
   });
 });

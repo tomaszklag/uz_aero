@@ -40,6 +40,7 @@ import {
 } from '../../../domain/orderAddressing.ts';
 import {
   changeAudience,
+  openRecipients,
   remindAudience,
   staleAudience,
   type AudienceState,
@@ -70,6 +71,7 @@ import {
   crewOf,
   leads,
   noticeOrderOf,
+  offeredTo,
   orderView,
   personNames,
   recipientView,
@@ -275,14 +277,14 @@ export class OrderEditCommands {
         const notice = noticeOrderOf(fresh.order, fresh.booking);
         const self = (pilotId: string): boolean => pilotId === actor.pilotId;
         const notices: NotificationDraft[] = [];
-        notices.push(...orderOffered(notice, offered.filter((p) => !self(p)), false));
+        notices.push(...orderOffered(notice, offeredTo(fresh.recipients, offered.filter((p) => !self(p))), false));
         // Przy zmianie terminu przypomnienie byłoby drugą wiadomością o tym samym -
         // „Zlecenie zmienione" i tak prosi wszystkich o odpowiedź od nowa.
         const reminded =
           patch.resend === true && !termChanged
             ? remindAudience(afterState).filter((p) => !offered.includes(p) && !self(p))
             : [];
-        notices.push(...orderOffered(notice, reminded, true));
+        notices.push(...orderOffered(notice, offeredTo(fresh.recipients, reminded), true));
         for (const pilotId of removedNow) {
           if (!self(pilotId)) notices.push(orderRemoved(notice, pilotId, reason));
         }
@@ -300,7 +302,10 @@ export class OrderEditCommands {
         if (Object.keys(changed).length > 0) {
           const told = new Set([...offered, ...stale, ...removedNow, ...lostIds]);
           const audienceIds = changeAudience(afterState, actor.pilotId).filter((p) => !told.has(p));
-          notices.push(...orderChanged(notice, audienceIds, changed));
+          // „Odpowiedz na nowy termin" mówi się tylko adresatom, którym zmiana terminu
+          // wyzerowała odpowiedź - przydzieleni fotel zachowują (decyzja 13), autor nie odpowiada.
+          const respond = new Set(termChanged ? openRecipients(afterState) : []);
+          notices.push(...orderChanged(notice, audienceIds.map((pilotId) => ({ pilotId, respond: respond.has(pilotId) })), changed));
         }
         const recorded = await this.notifier.record(tx, orgId, notices, now);
 

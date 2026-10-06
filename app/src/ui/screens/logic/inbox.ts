@@ -41,7 +41,10 @@ import type { RemoteCalendarDay, RemoteNotification } from '../../../application
 
 import { dayShort } from './calendarHeading';
 import { clubHhmm, type ClubDayBounds } from './clubClock';
+import { orderInboxRow } from './inboxOrders';
 import { operationLabelOf } from './operations';
+
+const NO_ANSWERS: ReadonlySet<string> = new Set();
 
 /**
  * Ton ikony wiersza - kolory z makiety: prośba błękitem, zgoda zielenią, odmowa
@@ -55,6 +58,35 @@ export interface InboxLead {
   text: string;
   tone: 'amber' | 'green';
 }
+
+/**
+ * Kawałek zdania wiersza zlecenia (25D): nazwisko pogrubione, wartość sprzed zmiany
+ * przekreślona, nowa pogrubiona - para „było → jest" z historii zmian - a odpowiedź
+ * „może lecieć" zielenią.
+ */
+export interface InboxPart {
+  text: string;
+  strong?: boolean;
+  strike?: boolean;
+  tone?: 'ok';
+}
+
+/**
+ * Własny znak w ikonie wiersza (zlecenia, 25D) - klucz, a nie nazwa z rejestru ikon, bo
+ * moduł jest czysty. Bez niego ikona niesie znak TONU (zegar prośby, ptaszek, krzyżyk).
+ */
+export type InboxGlyph =
+  | 'order'
+  | 'message'
+  | 'edit'
+  | 'clock'
+  | 'expired'
+  | 'removed'
+  | 'stale'
+  | 'person-ok'
+  | 'person-off'
+  | 'resign'
+  | 'unassign';
 
 export interface InboxRowVm {
   id: string;
@@ -74,10 +106,28 @@ export interface InboxRowVm {
   isNew: boolean;
   /** Sprawa czeka na MOJĄ decyzję - plakietka „Do decyzji"; stoi do decyzji. */
   todo: boolean;
+  /** Napis plakietki sprawy - „Do odpowiedzi" przy zleceniu (25D); bez niego „Do decyzji". */
+  todoLabel?: string;
   bookingId: string | null;
   aircraftId: string | null;
-  /** Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23), karta maszyny (27) albo nigdzie. */
-  opens: 'decision' | 'booking' | 'aircraft' | null;
+  /**
+   * Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23), karta maszyny (27),
+   * karta zlecenia (28/32), rozmowa w zleceniu (29) albo nigdzie.
+   */
+  opens: 'decision' | 'booking' | 'aircraft' | 'order' | 'thread' | null;
+  /** Zdanie wiersza w kawałkach (zlecenia, 25D) - wypiera `lead` i `reason`. */
+  parts?: readonly InboxPart[] | null;
+  /** Własny znak w ikonie; bez niego - znak tonu. */
+  glyph?: InboxGlyph | null;
+  /**
+   * „1 nowa wiadomość" - licznik rozmowy (25D). Błękit, nie zieleń: nieprzeczytana
+   * wiadomość jest nowiną, nie sprawą - czytanie jej niczego nie rozstrzyga.
+   */
+  count?: string | null;
+  /** Zlecenie, w które prowadzi wiersz (`opens: 'order' | 'thread'`). */
+  orderId?: string | null;
+  /** Adresat rozmowy - rozmowa to para zlecenie × adresat (§7.1); przy `opens: 'thread'`. */
+  recipientId?: string | null;
 }
 
 export interface InboxInput {
@@ -91,6 +141,11 @@ export interface InboxInput {
   nameOf: (pilotId: string) => string | null;
   /** Format licznika maszyny z cache floty - do odczytu przy „zdana"; `null` = poza cache'em. */
   mhFormatOf?: (aircraftId: string) => 'hhmm' | 'decimal' | null;
+  /**
+   * Zlecenia czekające na MOJĄ odpowiedź - z listy „Do mnie" (4.0.0); plakietka „Do
+   * odpowiedzi" stoi, dopóki odpowiedź nie padnie, także na przeczytanym wierszu.
+   */
+  answerIds?: ReadonlySet<string>;
 }
 
 const str = (value: unknown): string | null =>
@@ -185,6 +240,18 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
       bookingId,
       aircraftId,
     };
+    // Zlecenia (4.0.0) mają własny słownik i własny kształt wiersza (25D) - osobny moduł.
+    const order = orderInboxRow({
+      n,
+      base: { id: base.id, when: base.when, isNew: base.isNew, bookingId, aircraftId },
+      // Surowy identyfikator maszyny nie staje w tytule zlecenia - poza pamięcią floty „samolot".
+      regTitle: (aircraftId == null ? null : input.regOf(aircraftId)) ?? 'samolot',
+      regOf: input.regOf,
+      nameOf: input.nameOf,
+      answerIds: input.answerIds ?? NO_ANSWERS,
+    });
+    if (order != null) return order;
+
     const opensBooking = bookingId == null ? null : ('booking' as const);
     const opensAircraft = aircraftId == null ? null : ('aircraft' as const);
     const regTitle = reg ?? 'samolot';

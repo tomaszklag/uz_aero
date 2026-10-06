@@ -33,6 +33,8 @@ describe('wiadomości', () => {
     const messages = (await inbox(w.db, 'JSE')).filter((n) => n.kind === 'order_message');
     expect(messages).toHaveLength(1);
     expect(messages[0]!.payload).toMatchObject({ recipientId: 'PWI', authorId: 'PWI', unread: 2 });
+    // Wiersz skrzynki mówi OSTATNIĄ wiadomość - na nią się odpowiada (25D).
+    expect(messages[0]!.payload.preview).toBe('Albo o 15.');
     // Ramka `message` do uczestników i czytających z `reservations.manage` (pkt 19).
     const frame = w.live.signals.filter((s) => s.kind === 'message').at(-1)!;
     expect(frame.frame).toMatchObject({ orderId: 'o-1', recipientId: 'PWI', message: { id: 'm-2' } });

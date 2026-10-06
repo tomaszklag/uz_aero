@@ -64,84 +64,101 @@ function routeValue(value: unknown): string {
   return `${from}-${to}`;
 }
 
-const arrow = (from: string, to: string): ChangePart => ({ text: ` ${from} → ${to}` });
+/**
+ * Jedna zmiana pola - nazwa i para „było → jest" jako gotowe napisy. Linijka „Edytowane"
+ * (28) i historia zmian (32) składają z niej „plan lotu 2:00 → 3:00", a wiersz skrzynki
+ * (25D) - „Plan lotu ~~2:00~~ → **3:00**": ta sama para w innym składzie, więc przekład
+ * kluczy i wartości jest jeden.
+ */
+export interface FieldChange {
+  /** „termin", „plan lotu", „drugi pilot" - nazwa pola w środku zdania. */
+  field: string;
+  /** Wartości przed i po; obie `null` przy polu, które mówi samo o sobie (opis - za długi do pary). */
+  from: string | null;
+  to: string | null;
+}
 
-/** Jedna zmiana pola: nazwa i „przed → po"; `null` dla klucza nieznanego albo zepsutego. */
-function partsOf(key: string, change: Json, ctx: ChangeContext): ChangePart[] | null {
+/** Zmiany jednego klucza - zwykle jedna, przy fotelach po jednej na fotel; `null` = klucz nieznany albo zepsuty. */
+function fieldsOf(key: string, change: Json, ctx: ChangeContext): FieldChange[] | null {
   const { from, to } = change;
   switch (key) {
     case 'term': {
       const before = termSpan(from, ctx.day);
       const after = termSpan(to, ctx.day);
-      return before == null || after == null ? null : [{ text: 'termin', strong: true }, arrow(before, after)];
+      return before == null || after == null ? null : [{ field: 'termin', from: before, to: after }];
     }
     case 'aircraft': {
       const reg = (value: unknown): string => {
         const id = text(value);
         return id == null ? NONE : (ctx.regOf(id) ?? NONE);
       };
-      return [{ text: 'maszyna', strong: true }, arrow(reg(from), reg(to))];
+      return [{ field: 'maszyna', from: reg(from), to: reg(to) }];
     }
     case 'operation':
-      return [
-        { text: 'zadanie', strong: true },
-        arrow(operationLabelOf(text(from)) ?? NONE, operationLabelOf(text(to)) ?? NONE),
-      ];
+      return [{ field: 'zadanie', from: operationLabelOf(text(from)) ?? NONE, to: operationLabelOf(text(to)) ?? NONE }];
     case 'route':
-      return [{ text: 'trasa', strong: true }, arrow(routeValue(from), routeValue(to))];
+      return [{ field: 'trasa', from: routeValue(from), to: routeValue(to) }];
     case 'plannedAirMin': {
       const plan = (value: unknown): string => {
         const minutes = num(value);
         return minutes == null ? NONE : duration(minutes * 60_000);
       };
-      return [{ text: 'plan lotu', strong: true }, arrow(plan(from), plan(to))];
+      return [{ field: 'plan lotu', from: plan(from), to: plan(to) }];
     }
     case 'plannedFuelL': {
       const fuel = (value: unknown): string => {
         const l = num(value);
         return l == null ? NONE : litres(l);
       };
-      return [{ text: 'paliwo', strong: true }, arrow(fuel(from), fuel(to))];
+      return [{ field: 'paliwo', from: fuel(from), to: fuel(to) }];
     }
     case 'note':
       // Opis bywa długi - zdanie mówi, ŻE się zmienił, a nowy jest na karcie wyżej.
-      return [{ text: 'opis', strong: true }];
+      return [{ field: 'opis', from: null, to: null }];
     case 'seats':
-      return seatParts(from, to);
+      return seatFields(from, to);
     default:
       return null;
   }
 }
 
-/** „drugi pilot szukany → brak" - po jednym kawałku na zmieniony fotel. */
-function seatParts(from: unknown, to: unknown): ChangePart[] | null {
+/** „drugi pilot szukany → brak" - po jednej zmianie na zmieniony fotel. */
+function seatFields(from: unknown, to: unknown): FieldChange[] | null {
   if (!isObject(from) || !isObject(to)) return null;
-  const parts: ChangePart[] = [];
+  const out: FieldChange[] = [];
   for (const seat of ['pic', 'dual'] as RemoteSeat[]) {
     const before = text(from[seat]);
     const after = text(to[seat]);
     if (before == null || after == null || before === after) continue;
-    if (parts.length > 0) parts.push({ text: ' · ' });
-    parts.push({ text: seatLower(seat), strong: true }, arrow(SEAT_STATE[before] ?? before, SEAT_STATE[after] ?? after));
+    out.push({ field: seatLower(seat), from: SEAT_STATE[before] ?? before, to: SEAT_STATE[after] ?? after });
   }
-  return parts.length === 0 ? null : parts;
+  return out.length === 0 ? null : out;
 }
 
 /**
- * Zmiany jednej edycji w stałej kolejności, połączone „ · ". `skip` pomija klucze, które
- * ekran mówi osobno - karta adresata pisze termin własną linijką („Termin zmieniony"),
- * a „Edytowane" mówi o reszcie (§5.2).
+ * Zmiany jednej edycji w stałej kolejności. `skip` pomija klucze, które ekran mówi osobno -
+ * karta adresata pisze termin własną linijką („Termin zmieniony"), a „Edytowane" mówi
+ * o reszcie (§5.2).
  */
-export function changesParts(changes: Json, ctx: ChangeContext, skip: readonly string[] = []): ChangePart[] {
-  const out: ChangePart[] = [];
+export function fieldChanges(changes: Json, ctx: ChangeContext, skip: readonly string[] = []): FieldChange[] {
+  const out: FieldChange[] = [];
   for (const key of ORDER) {
     if (skip.includes(key)) continue;
     const change = changes[key];
     if (!isObject(change)) continue;
-    const parts = partsOf(key, change, ctx);
-    if (parts == null) continue;
+    const fields = fieldsOf(key, change, ctx);
+    if (fields != null) out.push(...fields);
+  }
+  return out;
+}
+
+/** Zmiany jednej edycji zdaniem „plan lotu 2:00 → 3:00 · opis", połączone „ · ". */
+export function changesParts(changes: Json, ctx: ChangeContext, skip: readonly string[] = []): ChangePart[] {
+  const out: ChangePart[] = [];
+  for (const change of fieldChanges(changes, ctx, skip)) {
     if (out.length > 0) out.push({ text: ' · ' });
-    out.push(...parts);
+    out.push({ text: change.field, strong: true });
+    if (change.from != null && change.to != null) out.push({ text: ` ${change.from} → ${change.to}` });
   }
   return out;
 }

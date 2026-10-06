@@ -20,6 +20,12 @@
  * prośbę, która przestała być sprawą, jako sprawę. Kolejka, która nie dojechała,
  * NIE gasi listy - wiersze są wtedy bez plakietki, a to mniejsze kłamstwo niż pustka.
  *
+ * ══ ZLECENIA (4.0.0) ══
+ * Plakietka „Do odpowiedzi" przy zleceniu liczy się z listy „Do mnie" (`GET /orders`) -
+ * trzecie pytanie tej samej wizyty, z tym samym prawem: lista, która nie dojechała, nie gasi
+ * skrzynki, tylko zdejmuje plakietki. Zmiany zleceń w klubie (temat `orders`) czytają
+ * skrzynkę po cichu od nowa, bo odpowiedź z karty zlecenia gasi plakietkę.
+ *
  * ══ „NOWE" GAŚNIE Z OTWARCIEM LISTY ══
  * Nieprzeczytane oznaczamy po udanym odczycie, w tle i bez ponownego pytania: zielona
  * krawędź zostaje na czas TEJ wizyty (pilot ma zobaczyć, co przyszło) - także po cichym
@@ -32,14 +38,19 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { INBOX_TOPIC } from '../../application/live/liveBus';
 import type { RemoteNotification } from '../../application/ports';
+import { useOrders } from '../bootstrap/servicesContext';
 import { useSessionStore } from '../store';
 
 import { keepVisitNew, unreadIds } from '../screens/logic/inbox';
+import { awaitingAnswerIds } from '../screens/logic/orderList';
 import { quietResult } from '../screens/logic/liveRefresh';
 import { useLiveTopic } from './useLiveTopic';
 
-/** Nowe wiadomości i decyzje w klubie, które zmieniają kolejkę spraw („Do decyzji"). */
-const INBOX_TOPICS = [INBOX_TOPIC, 'booking'];
+/**
+ * Nowe wiadomości, decyzje w klubie, które zmieniają kolejkę spraw („Do decyzji"), i zmiany
+ * zleceń, które zmieniają listę czekających na odpowiedź („Do odpowiedzi").
+ */
+const INBOX_TOPICS = [INBOX_TOPIC, 'booking', 'orders'];
 /** Strona skrzynki - tyle, ile pilot doczyta; starsze wiadomości nie zmieniają decyzji. */
 const PAGE_LIMIT = 50;
 
@@ -49,6 +60,8 @@ export interface InboxData {
   items: RemoteNotification[];
   /** Rezerwacje czekające na MOJĄ decyzję; pusty zbiór także wtedy, gdy kolejka nie dojechała. */
   todoIds: Set<string>;
+  /** Zlecenia czekające na MOJĄ odpowiedź; pusty zbiór także wtedy, gdy lista nie dojechała. */
+  answerIds: Set<string>;
 }
 
 export interface UseInbox {
@@ -59,6 +72,7 @@ export interface UseInbox {
 
 export function useInbox(): UseInbox {
   const sync = useSessionStore((s) => s.sync);
+  const orders = useOrders();
   const [data, setData] = useState<InboxData | null | undefined>(undefined);
   const alive = useRef(true);
 
@@ -78,8 +92,11 @@ export function useInbox(): UseInbox {
       }
 
       if (!quiet) setData(undefined);
-      void Promise.all([sync.fetchInbox({ limit: PAGE_LIMIT }), sync.fetchApprovalQueue()])
-        .then(([inbox, queue]) => {
+      // Lista zleceń odpowiada `null` także przy kliencie, którego jeszcze nie ma - wtedy
+      // wiersze stoją bez plakietek, a skrzynka nie czeka.
+      const toMe = orders == null ? Promise.resolve(null) : orders.fetchList('inbox').catch(() => null);
+      void Promise.all([sync.fetchInbox({ limit: PAGE_LIMIT }), sync.fetchApprovalQueue(), toMe])
+        .then(([inbox, queue, list]) => {
           if (!alive.current) return;
           const next: InboxData | null =
             inbox == null
@@ -89,6 +106,7 @@ export function useInbox(): UseInbox {
                   unread: inbox.unread,
                   items: inbox.items,
                   todoIds: new Set((queue?.items ?? []).map((i) => i.booking.id)),
+                  answerIds: list == null ? new Set<string>() : awaitingAnswerIds(list, Date.now()),
                 };
           setData((previous) => {
             if (!quiet) return next;
@@ -104,7 +122,7 @@ export function useInbox(): UseInbox {
           if (alive.current && !quiet) setData(null);
         });
     },
-    [sync],
+    [sync, orders],
   );
 
   const load = useCallback(() => read(false), [read]);

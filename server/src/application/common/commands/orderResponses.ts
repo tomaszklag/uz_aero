@@ -148,6 +148,7 @@ export class OrderResponseCommands {
               answer: input.answer,
               reason,
               assignedSeat: outcome.kind === 'assigned' ? outcome.seat : null,
+              seat: me.seat,
             }),
           );
         }

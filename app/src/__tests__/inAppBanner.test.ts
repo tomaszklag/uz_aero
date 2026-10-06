@@ -119,6 +119,29 @@ describe('baner z ramki kanału', () => {
     ).toBeNull();
   });
 
+  it('zlecenie: nie staje nad kartą tego zlecenia ani nad tą rozmową - nad inną staje (pkt 43)', () => {
+    const changed = note({ kind: 'order_changed', payload: { orderId: 'o-1', aircraftId: 'a1', term: false, changes: {} } });
+    expect(inAppBanner(frame(changed), ctx({ route: at('Order', { orderId: 'o-1' }) }))).toBeNull();
+    expect(inAppBanner(frame(changed), ctx({ route: at('Order', { orderId: 'o-2' }) }))).not.toBeNull();
+
+    const message = note({
+      kind: 'order_message',
+      payload: { orderId: 'o-1', recipientId: 'ako', authorId: 'p-jwr', unread: 1, preview: 'Mogę o 14?' },
+    });
+    expect(inAppBanner(frame(message), ctx())).not.toBeNull();
+    // Licznik rozmowy jest plakietką skrzynki - baner mówi samo zdanie (25E).
+    expect(inAppBanner(frame(message), ctx())!.row.count).toBeNull();
+    expect(inAppBanner(frame(message), ctx())!.target).toEqual({
+      screen: 'OrderThread',
+      params: { orderId: 'o-1', recipientId: 'ako' },
+    });
+    expect(inAppBanner(frame(message), ctx({ route: at('OrderThread', { orderId: 'o-1', recipientId: 'ako' }) }))).toBeNull();
+    // Rozmowa z KIMŚ INNYM w tym samym zleceniu to inna rzecz - baner staje.
+    expect(inAppBanner(frame(message), ctx({ route: at('OrderThread', { orderId: 'o-1', recipientId: 'ews' }) }))).not.toBeNull();
+    // Karta zlecenia nie pokazuje treści wiadomości - baner o niej staje także tam.
+    expect(inAppBanner(frame(message), ctx({ route: at('Order', { orderId: 'o-1' }) }))).not.toBeNull();
+  });
+
   it('staje nad kartą INNEJ rzeczy - inna rezerwacja, inna maszyna', () => {
     expect(inAppBanner(frame(), ctx({ route: at('BookingDetails', { bookingId: 'b2' }) }))).not.toBeNull();
     expect(
@@ -155,6 +178,14 @@ describe('baner z pusha odebranego na wierzchu', () => {
     expect(banner!.row.sub).toBeNull();
     expect(banner!.row.when).toBe(NOW_LABEL);
     expect(banner!.target).toEqual({ screen: 'Notifications', params: { foreignClub: true } });
+  });
+
+  it('zlecenie z innego klubu niesie ikonę wiersza skrzynki - kartkę zlecenia w błękicie (25E)', () => {
+    const banner = inAppBanner(
+      push({ kind: 'order_offered', orgId: OTHER, orderId: 'o-9', bookingId: 'b9', aircraftId: 'a9' }, 'Zlecenie lotu'),
+      ctx(),
+    );
+    expect(banner!.row).toMatchObject({ title: 'Zlecenie lotu · SP-KLM', tone: 'ask', glyph: 'order' });
   });
 
   it('z innego klubu staje także nad otwartą skrzynką - tamtej wiadomości w niej nie ma', () => {

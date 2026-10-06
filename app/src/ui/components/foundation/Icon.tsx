@@ -173,6 +173,14 @@ const REGISTRY = {
   'order-expired': m('timer-sand-empty'),
   'order-removed': m('undo-variant'),
   /**
+   * Skrzynka (25D): „Zlecenie lotu" - kartka z podkładką (prośba, która czeka na odpowiedź),
+   * „Zlecenie nieaktualne" - przekreślone koło (zlecenie przestało dotyczyć Ciebie, nic się
+   * nie zepsuło) i „Odpowiedź na zlecenie · nie może" - sylwetka z krzyżykiem.
+   */
+  order: f('clipboard'),
+  'order-stale': f('slash'),
+  'person-off': f('user-x'),
+  /**
    * Karta prowadzącego (32, 32D): „Powiel" w nagłówku (kopia - ta sama treść z pustym
    * terminem), menu ⋯ przy adresacie, „ZAMIEŃ OSOBĘ" (dwie strzałki) i „COFNIJ PRZYDZIAŁ"
    * (strzałka cofnięcia - fotel wraca do szukania).
