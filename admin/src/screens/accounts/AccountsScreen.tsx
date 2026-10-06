@@ -39,7 +39,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { KeyIcon, PeopleIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
 import { ClubCodeDrawer } from './ClubCodeDrawer';
@@ -172,10 +172,11 @@ export function AccountsScreen({ drawer }: { drawer: AccountsDrawer }) {
       {/* Nieudany odczyt KOLEJKI mówi o sobie tak samo jak nieudany odczyt listy: bez
           tego karta zgłoszeń po prostu by nie wjechała, czyli awaria wyglądałaby jak
           „nikt nie czeka" - a to jest gorsze niż komunikat o błędzie. */}
-      {listError == null ? null : <Banner tone="danger">{errorMessage(listError)}</Banner>}
+      {listError == null ? null : <Banner tone="danger">{loadErrorMessage(listError)}</Banner>}
 
       <Loadable
         pending={pilots.isPending}
+        loaded={pilots.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[42, 150, 190, 96, 78, 54]} rows={6} />}
       >
         {rows.length === 0 ? (

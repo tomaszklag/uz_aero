@@ -22,7 +22,7 @@ import { useState } from 'react';
 
 import { useClubCode, useDisableClubCode, useRotateClubCode } from '../../queries/useClubCode';
 import { Banner, Button, Card, Drawer, Loadable, Pill } from '../../ui/components';
-import { errorMessage } from '../common/apiMessage';
+import { errorMessage, loadErrorMessage } from '../common/apiMessage';
 import { dateWithYear } from '../common/values';
 
 /** Odmiana rzeczownika przy liczbie - „1 zgłoszenie", „2 zgłoszenia", „5 zgłoszeń". */
@@ -43,7 +43,11 @@ export function ClubCodeDrawer({ orgName, onClose }: { orgName: string; onClose:
   const [confirm, setConfirm] = useState<'rotate' | 'disable' | null>(null);
 
   const pending = rotate.isPending || disable.isPending;
-  const error = code.error ?? rotate.error ?? disable.error;
+  // Odczyt kodu i jego zmiana to dwa różne zdania: nieudane wczytanie nie jest
+  // „nieudanym zapisem", a zapis, który nie wszedł, ma to powiedzieć wprost.
+  const writeError = rotate.error ?? disable.error;
+  const message =
+    code.error != null ? loadErrorMessage(code.error) : writeError != null ? errorMessage(writeError) : null;
   const state = code.data ?? null;
   const enabled = state?.formatted != null;
 
@@ -58,14 +62,17 @@ export function ClubCodeDrawer({ orgName, onClose }: { orgName: string; onClose:
         </Button>
       }
     >
-      {error == null ? null : (
+      {message == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(error)}
+          {message}
         </Banner>
       )}
 
+      {/* Bez odczytu karta nie ma czego pokazać: kod „— — —" z plakietką „Wyłączone"
+          i przyciskiem „Wygeneruj kod" byłby zdaniem o klubie, którego nie znamy. */}
       <Loadable
         pending={code.isPending}
+        loaded={code.data != null}
         skeleton={
           <Card title="Aktualny kod">
             <span className="skeleton" style={{ width: 160, height: 24 }} />

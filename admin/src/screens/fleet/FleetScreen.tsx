@@ -32,7 +32,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { PlaneIcon, PlusIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { NONE } from '../common/values';
 import { AircraftDrawer } from './AircraftDrawer';
 import { fleetRow, type FleetRow } from './fleetRows';
@@ -140,10 +140,11 @@ export function FleetScreen() {
         />
       </div>
 
-      {fleet.error == null ? null : <Banner tone="danger">{errorMessage(fleet.error)}</Banner>}
+      {fleet.error == null ? null : <Banner tone="danger">{loadErrorMessage(fleet.error)}</Banner>}
 
       <Loadable
         pending={fleet.isPending}
+        loaded={fleet.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[80, 40, 62, 96, 74, 78, 54]} rows={5} />}
       >
         {rows.length === 0 ? (

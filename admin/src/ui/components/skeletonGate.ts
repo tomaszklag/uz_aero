@@ -44,7 +44,8 @@ export function remainingHoldMs(shownAt: number | null, now: number): number {
 export type LoadableView = 'skeleton' | 'nothing' | 'content';
 
 /**
- * Co rysuje `Loadable` przy danym stanie odczytu (`pending`) i plamek (`visible`).
+ * Co rysuje `Loadable` przy danym stanie odczytu (`pending`), plamek (`visible`)
+ * i danych (`loaded` - czy treść ma z czego się policzyć).
  *
  * Stany są TRZY, nie dwa: pod progiem odczyt trwa, a plamek jeszcze nie ma - i wtedy
  * nie rysujemy NIC. Treść w tym oknie nie jest neutralna: ekrany liczą wiersze
@@ -52,10 +53,14 @@ export type LoadableView = 'skeleton' | 'nothing' | 'content';
  * wyszły plamki albo dane. Skeleton nie jest stanem pustym, a stan pusty pokazany
  * w trakcie odczytu jest nieprawdą o danych.
  *
+ * Ta sama nieprawda stała pod banerem błędu: odczyt, który PADŁ, gasi `pending`, a danych
+ * dalej nie ma - stąd `loaded` (decyzja 2026-10-06). Bez danych nie ma treści także po
+ * odczycie; dane sprzed nieudanego odświeżenia zostają, bo są prawdą o chwili przed awarią.
+ *
  * Plamki wygrywają z `pending`: po przyjściu danych dotrzymują minimum
  * (`remainingHoldMs`), więc `visible` bez `pending` to nadal skeleton.
  */
-export function loadableView(pending: boolean, visible: boolean): LoadableView {
+export function loadableView(pending: boolean, visible: boolean, loaded: boolean): LoadableView {
   if (visible) return 'skeleton';
-  return pending ? 'nothing' : 'content';
+  return pending || !loaded ? 'nothing' : 'content';
 }

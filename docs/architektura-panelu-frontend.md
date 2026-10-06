@@ -392,7 +392,7 @@ admin/
       bugs/             ZGŁOSZENIA błędów - moduł PLATFORMY, na czas testów (issue #87)
         BugsScreen.tsx · BugDrawer.tsx · bugRows.ts · bugStatus.ts
       login/            LoginScreen.tsx · loginMessage.ts
-      common/           wspólne dla ekranów: apiMessage.ts (odmowy) · values.ts (kreska braku)
+      common/           wspólne dla ekranów: apiMessage.ts (odmowy; zdanie błędu zapisu i odczytu) · values.ts (kreska braku)
 
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)

@@ -24,7 +24,7 @@ import { useDirectory } from '../../queries/useDirectory';
 import { useMyWatches, useSetWatch } from '../../queries/useWatches';
 import { Banner, Card, Loadable, OptionButton } from '../../ui/components';
 import { personLookup } from '../calendar/directoryLookups';
-import { errorMessage } from '../common/apiMessage';
+import { errorMessage, loadErrorMessage } from '../common/apiMessage';
 import { watchRows, type WatchRow } from './watchRows';
 
 export function WatchCard() {
@@ -57,15 +57,21 @@ export function WatchCard() {
           {errorMessage(set.error)}
         </Banner>
       )}
+      {/* Zdanie o nieudanym odczycie stoi PRZED listą, nie zamiast niej: lista sprzed
+          nieudanego odświeżenia zostaje (przełączniki dalej działają), a bez danych
+          `Loadable` nie rysuje nic - pod zdaniem nie staje „nie ma żadnej maszyny". */}
+      {watches.error == null ? null : (
+        <span className="hint danger">{loadErrorMessage(watches.error)}</span>
+      )}
       {/* Czeka też na słownik: zdanie o maszynie bez nazwiska doskoczyłoby do pełnego
-          chwilę później - ta sama reguła, co w kolejce decyzji. */}
+          chwilę później - ta sama reguła, co w kolejce decyzji. Słownik, który PADŁ,
+          nie zabiera jednak listy: przełączniki działają i bez nazwisk. */}
       <Loadable
         pending={watches.isPending || directory.isPending}
+        loaded={watches.data != null}
         skeleton={<span className="skeleton" style={{ width: '100%', height: 46 }} />}
       >
-        {watches.isError ? (
-          <span className="hint danger">{errorMessage(watches.error)}</span>
-        ) : rows.length === 0 ? (
+        {rows.length === 0 ? (
           <span className="cell-sub">W klubie nie ma jeszcze żadnej maszyny.</span>
         ) : (
           <div className="opt-list" role="group" aria-label="Obserwowane samoloty w tym klubie">

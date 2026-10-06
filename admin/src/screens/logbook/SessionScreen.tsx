@@ -47,7 +47,7 @@ import { EditIcon, PlaneIcon, PlusIcon } from '../../ui/components/icons';
 import { flagPath } from '../attention/attentionPaths';
 import { flagIssue, flagLabel } from '../attention/flagLabels';
 import { personLookup } from '../calendar/directoryLookups';
-import { errorMessage, ruleViolationMessage } from '../common/apiMessage';
+import { errorMessage, loadErrorMessage, ruleViolationMessage } from '../common/apiMessage';
 import { litres, motoHours, NONE, oilLitres, timeUtc } from '../common/values';
 import { AddEventDrawer } from './AddEventDrawer';
 import { CorrectionDrawer } from './CorrectionDrawer';
@@ -181,7 +181,7 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
         }
       />
 
-      {detail.error == null ? null : <Banner tone="danger">{errorMessage(detail.error)}</Banner>}
+      {detail.error == null ? null : <Banner tone="danger">{loadErrorMessage(detail.error)}</Banner>}
 
       {openFlags.map((flag) => {
         const issue = flagIssue(flag);
@@ -216,6 +216,7 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
 
       <Loadable
         pending={detail.isPending}
+        loaded={detail.data != null}
         skeleton={
           <Card title="Log zdarzeń">
             {[0, 1, 2, 3, 4, 5].map((row) => (

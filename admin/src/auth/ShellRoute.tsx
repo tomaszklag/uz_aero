@@ -40,6 +40,8 @@ export function ShellRoute() {
     return (
       <Loadable
         pending
+        // Treści przed odpowiedzią nie ma - po niej ekran wychodzi z tej gałęzi.
+        loaded={false}
         skeleton={
           <div className="centered">
             <span className="skeleton" style={{ width: 220, height: 12 }} />

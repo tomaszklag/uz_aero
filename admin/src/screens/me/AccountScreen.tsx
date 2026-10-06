@@ -35,7 +35,7 @@ import {
 } from '../../queries/useSession';
 import { Banner, Button, Card, Field, Loadable, PageHead, PasswordInput, Pill } from '../../ui/components';
 import { sessionRows } from '../accounts/sessionRows';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { SessionList } from '../common/SessionList';
 import { NONE } from '../common/values';
 import { EMPTY_PASSWORD, passwordFailure, verdictOf } from './passwordForm';
@@ -104,7 +104,7 @@ export function AccountScreen() {
       )}
       {/* Konto, które nie dojechało, nie mówi, CZY osoba ma hasło - a od tego zależy cały
           formularz obok. Karty o koncie milczą, a baner mówi dlaczego. */}
-      {account.error == null ? null : <Banner tone="danger">{errorMessage(account.error)}</Banner>}
+      {account.error == null ? null : <Banner tone="danger">{loadErrorMessage(account.error)}</Banner>}
 
       <div className="card-grid">
         {/* LOGOWANIE - czym ta osoba wchodzi. Adres DO ODCZYTU (jest tożsamością, nie
@@ -113,6 +113,7 @@ export function AccountScreen() {
         <Card title="Logowanie">
           <Loadable
             pending={account.isPending}
+            loaded={account.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 44 }} />}
           >
             {/* Bez odczytu nie ma czego pokazać: „jeszcze żadnej" przy metodach byłoby
@@ -148,7 +149,7 @@ export function AccountScreen() {
             Wariant wynika z odczytu konta, więc karta czeka na niego W CAŁOŚCI, a bez
             odczytu nie rysuje się wcale: zgadnięty wariant mówił osobie Z hasłem „Ustaw
             hasło" i wysłałby zapis bez obecnego. */}
-        <Loadable pending={account.isPending} skeleton={<PasswordSkeleton />}>
+        <Loadable pending={account.isPending} loaded={account.data != null} skeleton={<PasswordSkeleton />}>
           {account.data == null ? null : (
             <Card title={hasPassword ? 'Hasło' : 'Ustaw hasło'}>
               {!hasPassword ? null : (
@@ -225,8 +226,13 @@ export function AccountScreen() {
         {/* MOJE SESJE: własne urządzenia ze WSZYSTKICH powierzchni i klubów - to są moje
             urządzenia, a nie dane klubu. Bieżąca przeglądarka ma plakietkę i ŻADNEJ akcji. */}
         <Card title="Moje sesje" span2>
+          {/* Odczyt, który padł, nie jest pustą listą urządzeń - mówi o sobie sam. */}
+          {sessions.error == null ? null : (
+            <p className="hint danger">{loadErrorMessage(sessions.error)}</p>
+          )}
           <Loadable
             pending={sessions.isPending}
+            loaded={sessions.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 48 }} />}
           >
             <SessionList

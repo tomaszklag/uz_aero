@@ -35,7 +35,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { ChecklistIcon, SheetIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { DateRange } from '../logbook/DateRange';
 import { defaultRange, type DayRange } from '../logbook/dateRanges';
 import { ATTENTION, exportPath, exportsPath, flagPath, type ExportFilter } from './attentionPaths';
@@ -164,10 +164,11 @@ export function ExportsScreen() {
         ))}
       </div>
 
-      {exports.error == null ? null : <Banner tone="danger">{errorMessage(exports.error)}</Banner>}
+      {exports.error == null ? null : <Banner tone="danger">{loadErrorMessage(exports.error)}</Banner>}
 
       <Loadable
         pending={exports.isPending}
+        loaded={exports.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[150, 170, 110, 40, 80, 60]} rows={6} />}
       >
         {rows.length === 0 ? (

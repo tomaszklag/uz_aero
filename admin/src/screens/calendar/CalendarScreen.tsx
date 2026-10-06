@@ -41,7 +41,7 @@ import {
   PageHead,
 } from '../../ui/components';
 import { CalendarIcon, PlaneIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { BlockDrawer } from './BlockDrawer';
 import { BookingDrawer } from './BookingDrawer';
 import { dayMonthLabel, weekdayAccusative } from './bookingLabels';
@@ -178,7 +178,7 @@ export function CalendarScreen() {
           z ostatnimi danymi: puste miejsce po awarii wygląda jak pusty klub. */}
       {error == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(error)}
+          {loadErrorMessage(error)}
         </Banner>
       )}
 
@@ -214,6 +214,7 @@ export function CalendarScreen() {
           progiem nie rysuje on nic, więc karta na zewnątrz stałaby pusta. */}
       <Loadable
         pending={calendar.isPending || directory.isPending}
+        loaded={calendar.data != null && directory.data != null}
         skeleton={
           <div className="card">
             <CalendarSkeleton days={rangeDays(known)} />

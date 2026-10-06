@@ -234,6 +234,15 @@ bo treść licząca wiersze z `data ?? []` pokazywała przy pierwszym wejściu w
 pusty, zanim wyszły plamki albo dane; co ma stać w trakcie odczytu (nagłówek, filtry,
 pola formularza), stoi poza `Loadable`.
 
+**Po nieudanym odczycie: baner i nic pod nim** (2026-10-06). Odczyt, który padł, gasi
+`pending`, a danych dalej nie ma - lista rysowała więc pod banerem błędu „Nie ma jeszcze
+żadnego samolotu", a osie dziennika pulsowały plamkami bez końca, bo zapytanie o operacje
+czekało na identyfikator, którego nie będzie. Odtąd `Loadable` ma **wymagane** `loaded`
+(`query.data != null`; przy kilku zapytaniach wszystkie): bez danych nie dostaje treści
+także po odczycie, a zdanie o błędzie stoi poza nim. Dane sprzed nieudanego odświeżenia
+zostają na ekranie - są prawdą o chwili przed awarią. Prop nie ma wartości domyślnej,
+bo zapomniany wracałby po cichu do starej usterki; kompilator wskazuje każdy ekran.
+
 ### 3.6 Jedna reguła, jedno zdanie
 
 Powody odmowy serwera są mapowane `Record<Refusal, string>`, więc nowy powód
@@ -249,6 +258,13 @@ Dwie reguły, które widać wprost w polach (pojemność większa od zera, minim
 nie większe od zbiornika), formularz blokuje TĄ SAMĄ stałą, którą wyświetla przy
 odmowie serwera - to nie jest druga kopia reguły, tylko ta sama reguła powiedziana
 wcześniej.
+
+**Odczyt i zapis mają osobne zdania** (decyzja właściciela 2026-10-06): `errorMessage`
+mówi o ZAPISIE („Nie udało się zapisać (kod 500)…", 403 „…do tej zmiany") i tam to
+zdanie niesie najważniejszą wiadomość - zmiana nie weszła. Lista, karta i szuflada,
+które się nie wczytały, mówią `loadErrorMessage` („Nie udało się wczytać (kod 500).
+Odśwież stronę…", 403 „Nie masz dostępu do tych danych."). Brak sieci, wygasła sesja
+i „tego już nie ma" brzmią w obu tak samo i stoją w `apiMessage.ts` raz.
 
 ### 3.7 Makiety panelu: decyzja ODWRÓCONA 2026-09-07
 

@@ -51,6 +51,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   ten się nie uda, mówi o tym na górze strony zamiast pokazywać zgadnięty formularz.
 - **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast stać bez słowa
   na plamkach ładowania.
+- **Gdy coś się nie wczyta, panel mówi to wprost.** Komunikat brzmi „Nie udało się
+  wczytać", a nie „Nie udało się zapisać", jak dotąd przy każdej liście, która nie
+  dojechała. Pod nim nie staje już fałszywe „nie ma jeszcze żadnego pilota" ani
+  pulsujące bez końca plamki. Lista wczytana wcześniej zostaje na ekranie.
 
 ## 3.2.0 · 27 września 2026
 

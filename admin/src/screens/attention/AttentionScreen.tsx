@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { useAttention } from '../../queries/useAttention';
 import { Banner, Card, EmptyState, LinkButton, Loadable, PageHead } from '../../ui/components';
 import { ChecklistIcon, ClockIcon, FlagIcon, SheetIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { attentionCards, type TodoCard } from './attentionRows';
 
 const ICONS: Record<TodoCard['key'], (props: { size?: number }) => React.ReactNode> = {
@@ -33,10 +33,11 @@ export function AttentionScreen() {
     <>
       <PageHead title="Do sprawdzenia" />
 
-      {attention.error == null ? null : <Banner tone="danger">{errorMessage(attention.error)}</Banner>}
+      {attention.error == null ? null : <Banner tone="danger">{loadErrorMessage(attention.error)}</Banner>}
 
       <Loadable
         pending={attention.isPending}
+        loaded={attention.data != null}
         skeleton={
           <Card title="Rozjazdy">
             {[0, 1, 2].map((row) => (

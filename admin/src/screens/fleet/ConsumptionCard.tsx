@@ -12,7 +12,7 @@
 
 import { useConsumption } from '../../queries/useFleet';
 import { Banner, Card, Pill } from '../../ui/components';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { consumptionCardView, type ConsumptionKv } from './consumptionCardView';
 
 interface ConsumptionCardProps {
@@ -24,7 +24,7 @@ export function ConsumptionCard({ aircraftId }: ConsumptionCardProps) {
 
   // Awaria pobrania to INNY stan niż brak modelu: o tym drugim karta milczy, o pierwszym
   // mówi - inaczej zerwane łącze wyglądałoby jak młoda maszyna bez danych.
-  if (report.error != null) return <Banner tone="warn">{errorMessage(report.error)}</Banner>;
+  if (report.error != null) return <Banner tone="warn">{loadErrorMessage(report.error)}</Banner>;
 
   const view = report.data == null ? null : consumptionCardView(report.data);
   // W trakcie pobierania też nic: plamka obiecywałaby kartę, która może nie przyjść.

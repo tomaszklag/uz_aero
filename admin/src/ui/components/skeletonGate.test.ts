@@ -33,18 +33,30 @@ describe('co rysuje `Loadable`', () => {
   it('pod progiem NIC - odczyt trwa, a plamek jeszcze nie ma', () => {
     // Treść w tym oknie nie jest neutralna: ekran liczy wiersze z `data ?? []`, więc
     // pusta tablica rysowała stan pusty, zanim wyszły plamki albo dane.
-    expect(loadableView(true, false)).toBe('nothing');
+    expect(loadableView(true, false, false)).toBe('nothing');
   });
 
   it('plamki, gdy już wyszły zza progu', () => {
-    expect(loadableView(true, true)).toBe('skeleton');
+    expect(loadableView(true, true, false)).toBe('skeleton');
   });
 
   it('plamki także po przyjściu danych - do końca minimum', () => {
-    expect(loadableView(false, true)).toBe('skeleton');
+    expect(loadableView(false, true, true)).toBe('skeleton');
   });
 
-  it('treść, gdy dane są, a plamek nie ma', () => {
-    expect(loadableView(false, false)).toBe('content');
+  it('treść, gdy dane są - także gdy ostatnie odświeżenie padło', () => {
+    // Dane sprzed nieudanego odświeżenia są prawdą o chwili sprzed awarii; baner mówi
+    // resztę. Pusty ekran zamiast nich byłby gorszy od starej, ale prawdziwej listy.
+    expect(loadableView(false, false, true)).toBe('content');
+  });
+
+  it('po nieudanym odczycie NIC - pod banerem błędu nie staje stan pusty', () => {
+    // Odczyt się skończył (`pending` gaśnie), a danych nie ma: treść policzyłaby wiersze
+    // z pustej tablicy i napisała „nikogo nie ma" - zdanie o danych, których nie znamy.
+    expect(loadableView(false, false, false)).toBe('nothing');
+  });
+
+  it('plamki dotrzymują minimum także wtedy, gdy odczyt padł', () => {
+    expect(loadableView(false, true, false)).toBe('skeleton');
   });
 });
