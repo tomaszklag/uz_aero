@@ -187,6 +187,15 @@ const REGISTRY = {
    */
   send: f('send'),
   readers: f('eye'),
+  /**
+   * Formularz zlecenia, krok 3 (31B, 31C): „Ja" i „Osoba · imiennie" (sylwetka), „Grupa
+   * · lub kilka osób" i awatar grupy (dwie sylwetki), „Brak" (przekreślone koło) oraz
+   * podpis o terminie do potwierdzenia - „i" informacji, nie wykrzyknik ostrzeżenia.
+   */
+  person: f('user'),
+  group: f('users'),
+  'seat-none': f('slash'),
+  hint: f('info'),
   swap: f('repeat'),
   unassign: m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"

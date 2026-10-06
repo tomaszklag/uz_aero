@@ -24,7 +24,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { RemoteOrderBox } from '../../application';
-import { AppText, EmptyState, OrderRow, Screen, ScreenHeader, SegmentedControl, SkeletonRows } from '../components';
+import { ActionButton, AppText, EmptyState, OrderRow, Screen, ScreenHeader, SegmentedControl, SkeletonRows } from '../components';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { useOrderList } from '../hooks/useOrderList';
@@ -194,6 +194,14 @@ export function OrdersScreen({
           </>
         )}
       </ScrollView>
+
+      {/* „NOWE ZLECENIE" stoi wyłącznie w „Zlecone" i wyłącznie przy „Zlecaniu lotów" -
+          samo prowadzenie cudzych zleceń nie daje prawa wysyłania nowych (§9). */}
+      {box === 'managed' && summary.data?.canCreate === true && (
+        <View style={s.actionBar}>
+          <ActionButton label="NOWE ZLECENIE" icon="add" tone="green" onPress={() => navigation.navigate('NewOrder')} />
+        </View>
+      )}
     </Screen>
   );
 }
@@ -211,4 +219,11 @@ const styles = (t: Theme) =>
     olderHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4, marginBottom: 8 },
     olderLabel: { fontSize: 8.5, letterSpacing: 1.5, color: t.colors.textMuted },
     olderLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border },
+    actionBar: {
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderTopWidth: 1,
+      borderTopColor: t.colors.border,
+      backgroundColor: t.colors.surface,
+    },
   });

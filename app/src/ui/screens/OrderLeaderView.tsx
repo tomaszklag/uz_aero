@@ -243,7 +243,11 @@ export function OrderLeaderView({ card, navigation, canCreate, onCard, reload }:
   if (vm == null) return null;
 
   const crew = vm.crew;
-  const { edit, resend: canResend, cancel: canCancel } = vm.actions;
+  const { resend: canResend, cancel: canCancel } = vm.actions;
+  // „EDYTUJ" czeka na tryb edycji formularza (31/31B - ramki edycji do akceptacji
+  // właściciela): dziś trasa formularza zakłada NOWE zlecenie, więc przycisk otwierałby
+  // pusty szkic zamiast tego zlecenia. Wraca razem z edycją.
+  const edit = false;
 
   return (
     <>

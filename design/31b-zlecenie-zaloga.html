@@ -168,6 +168,28 @@
      (decyzje 37, 39): dostanie termin do potwierdzenia, więc jej „tak" nie obsadzi fotela
      samo. Błękit - informacja o zleceniu, nie ostrzeżenie (jak dopisek „także na ..."
      na 32). Znika razem z warunkiem; niczego nie blokuje. */
+  /* ═══ EDYCJA (ramka 4) ═══
+     „Wspólna lista" ZABLOKOWANA: sposób adresowania ustala wysłanie - zmiana jednego
+     sposobu na drugi zmieniłaby, kto i czym obsadza fotele u osób, które już odpowiedziały.
+     Przełącznik zostaje (mówi, jaki sposób jest), ale przygaszony, z kłódką i podpisem
+     „po wysłaniu bez zmian" - przygaszony BEZ zdania byłby przyciskiem, który nic nie
+     robi (§6 pkt 3). Inny sposób = nowe zlecenie przez „Powiel".
+     WYSŁANI ADRESACI bez „×": odebranie zlecenia to osobna czynność z wiadomością
+     i powodem (pkt 29), więc mieszka w menu ⋯ przy adresacie na karcie prowadzącego (32D),
+     a nie w formularzu. W miejscu „×" stoi kłódka. Dopisani w tej edycji mają „×" - ich
+     jeszcze nikt nie dostał. */
+  .toggle-row.locked .switch { opacity:0.4; }
+  .tg-right { display:flex; align-items:center; gap:8px; color:var(--text-muted); }
+  .rc-lock { width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); opacity:0.7; }
+  .rcp-chip.new { border-color:var(--green-border); }
+  .rc-sub.new { color:var(--green); }
+  .term-warn {
+    display:flex; align-items:flex-start; gap:9px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:12px; padding:10px 12px;
+    font-family:var(--font-body); font-size:12px; color:var(--amber); line-height:1.5;
+  }
+  .term-warn svg { flex-shrink:0; margin-top:2px; }
   .seat-hint { display:flex; align-items:flex-start; gap:7px; padding:1px 2px 0; font-size:11px; line-height:1.45; color:var(--blue); }
   .seat-hint svg { flex-shrink:0; margin-top:2px; }
   .seat-hint b { font-weight:600; }
@@ -593,6 +615,13 @@
       <span class="vp-when">Osoba wskazana imiennie na jeden fotel jest też w grupie drugiego: pod jej nazwiskiem podpis, że dostanie termin do potwierdzenia, a fotel wybierzesz po odpowiedzi (decyzje 37, 39). Nic nie jest zablokowane - zostaw tak albo odznacz grupę.</span>
     </span>
   </a>
+  <a class="vp-item" href="#edycja">
+    <span class="vp-badge amber">31B</span>
+    <span class="vp-body">
+      <span class="vp-name">Edycja - wysłani adresaci i dopisany</span>
+      <span class="vp-when">„EDYTUJ" z karty prowadzącego (32): „Wspólna lista" zablokowana (po wysłaniu bez zmian), wysłani adresaci jako lista z kłódką - odbiera się ich menu ⋯ na karcie (32D), dopisani w tej edycji mają „×" i podpis „nowy". Nad „ZAPISZ ZMIANY": ostrzeżenie o zmianie terminu i zdanie, do ilu nowych osób trafi zlecenie.</span>
+    </span>
+  </a>
   <a class="vp-item" href="31c-zlecenie-adresaci.html">
     <span class="vp-badge">31C</span>
     <span class="vp-body">
@@ -623,6 +652,7 @@
   <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
   <a href="#wspolna-lista">↓ wspólna lista</a>
   <a href="#imiennie-i-grupa">↓ imiennie i w grupie</a>
+  <a href="#edycja">↓ edycja</a>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════════
@@ -785,6 +815,184 @@
   <a href="31b-zlecenie-zaloga.html" class="active">31B Krok 3</a>
   <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
   <a href="32-zlecenie-prowadzone.html#oba-fotele">32 Oba fotele →</a>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     CZWARTA RAMKA: EDYCJA ZLECENIA - KROK 3 (do akceptacji, 2026-10-06)
+     Dalszy ciąg ramki „edycja" makiety 31: zlecenie B, termin przesunięty z 09:00 na 10:00,
+     a prowadzący dopisuje do drugiego fotela Pawła Wilka.
+
+     CO SIĘ ZMIENIA WOBEC NOWEGO ZLECENIA (ramki 1-3):
+     • „Wspólna lista" zablokowana - przygaszony przełącznik z kłódką i podpisem „po
+       wysłaniu bez zmian". Sposób adresowania ustala wysłanie (zmiana obejmowałaby
+       odpowiedzi, które już padły); inny sposób to nowe zlecenie przez „Powiel".
+     • „Wysłane do" zamiast „Wyślij do", BEZ kart „Osoba / Grupa": wysłanych adresatów
+       nie przestawia się z imiennego na grupę. Lista pokazuje ich tak, jak ich wybrano
+       (osoba imiennie, grupa z liczbą osób), z kłódką zamiast „×" - odebranie zlecenia
+       to osobna czynność z wiadomością i powodem (pkt 29), więc mieszka w menu ⋯ przy
+       adresacie na karcie prowadzącego (32D).
+     • „Dodaj adresatów" przy każdym szukanym fotelu - ten sam arkusz 31C (grupy nad
+       osobami); dopisani wysłanych nie dotykają. Dopisani w tej edycji stoją z „×"
+       i podpisem „nowy", bo jeszcze nikt im zlecenia nie wysłał - zlecenie dostaną
+       WYŁĄCZNIE oni (§5.2).
+     • Stan fotela da się zmienić (§5.2). Fotel przestawiony na „Ja" albo „Brak", w którym
+       ktoś już siedzi, zdejmie tę osobę - dostanie „Przydział cofnięty"; formularz mówi
+       to bursztynem pod kartami stanu, zanim prowadzący zapisze (ta ramka tego stanu
+       nie rysuje - drugi fotel jest tu szukany i pusty).
+
+     NAD „ZAPISZ ZMIANY" stoi to, co zapis zrobi z ludźmi:
+     • zmiana terminu - to samo bursztynowe zdanie, co pod godzinami w kroku 1 (§5.1);
+     • zdanie o skutku, jak w nowym zleceniu, tylko o tym, co NOWE: do ilu nowych osób
+       trafi zlecenie i że pozostali dostaną wiadomość o zmianie. Nazwisk w zdaniu nie ma
+       (odmiana - reguła z 22).
+     Przycisk mówi „ZAPISZ ZMIANY", nie „WYŚLIJ ZLECENIE": zlecenie już wysłano, a zapis
+     bez zmian po prostu wraca na kartę (jak poprawka rezerwacji bez różnicy). -->
+<header class="canvas-label" id="edycja">
+  <span class="film-strip">NINERDECK - 31B</span>
+  <span class="slug">stan: edycja zlecenia · krok 3</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Edycja zlecenia, krok 3: wysłani adresaci i dopisany">
+  <div class="status-bar">
+    <span>07:30</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="step-header">
+      <a href="31a-zlecenie-zadanie.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-head-mid">
+        <span class="step-title">ZLECENIE</span>
+        <span class="step-sub">Sob 3 PAŹ · 10:00 → 13:00 · SP-ANA</span>
+      </span>
+      <span class="step-badge">3/3</span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="toggle-row locked">
+        <span class="tg-body">
+          <span class="tg-title">Wspólna lista</span>
+          <span class="tg-sub">po wysłaniu bez zmian</span>
+        </span>
+        <span class="tg-right">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span class="switch off" role="switch" aria-checked="false" aria-disabled="true" aria-label="Wspólna lista"></span>
+        </span>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head">
+          <span class="sb-title">Dowódca</span>
+        </div>
+        <div class="state-grid two">
+          <div class="state-opt" role="radio" aria-checked="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on" role="radio" aria-checked="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+        </div>
+        <div class="sb-lbl">Wysłane do</div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">JWR</span>
+          <span class="rc-body"><span class="rc-name">Jakub Wrona</span><span class="rc-sub">imiennie</span></span>
+          <span class="rc-lock" aria-label="Wysłane - odebrać można w menu przy adresacie">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+        </div>
+        <a class="add-row" href="31c-zlecenie-adresaci.html">
+          <span class="add-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="add-label">Dodaj adresatów</span>
+          <span class="add-go">&#8250;</span>
+        </a>
+      </div>
+
+      <div class="seat-block">
+        <div class="sb-head">
+          <span class="sb-title">Drugi pilot</span>
+          <span class="required-tag">wymagany · załoga 2-os.</span>
+        </div>
+        <div class="state-grid three">
+          <div class="state-opt" role="radio" aria-checked="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ja
+          </div>
+          <div class="state-opt on" role="radio" aria-checked="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Szukam
+          </div>
+          <div class="state-opt off" role="radio" aria-checked="false" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>
+            Brak
+          </div>
+        </div>
+        <div class="sb-lbl">Wysłane do</div>
+        <div class="rcp-chip">
+          <span class="rc-avatar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <span class="rc-body"><span class="rc-name">Piloci An-2</span><span class="rc-sub">5 osób</span></span>
+          <span class="rc-lock" aria-label="Wysłane - odebrać można w menu przy adresacie">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+        </div>
+        <!-- Dopisany w tej edycji - jeszcze go nikt nie dostał, więc „×" przy nim jest
+             zwykłym cofnięciem wyboru, a nie odebraniem zlecenia. -->
+        <div class="rcp-chip new">
+          <span class="rc-avatar">PWL</span>
+          <span class="rc-body"><span class="rc-name">Paweł Wilk</span><span class="rc-sub new">nowy · dostanie zlecenie po zapisie</span></span>
+          <span class="rc-clear" role="button" aria-label="Usuń: Paweł Wilk">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </span>
+        </div>
+        <a class="add-row" href="31c-zlecenie-adresaci.html">
+          <span class="add-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <span class="add-label">Dodaj adresatów</span>
+          <span class="add-go">&#8250;</span>
+        </a>
+      </div>
+
+    </div>
+
+    <div class="action-bar">
+      <div class="term-warn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Zmieniasz termin (było 09:00 → 13:00) - adresaci odpowiedzą od nowa, obsadzone fotele zostają.</span>
+      </div>
+      <div class="summary">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Zlecenie trafi do <b>1 nowej osoby</b>. Pozostali adresaci dostaną wiadomość o zmianie.</span>
+      </div>
+      <a class="btn-primary" href="32-zlecenie-prowadzone.html">
+        <span class="btn-label">ZAPISZ ZMIANY</span>
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="31-zlecenie-nowe.html#edycja">← 31 Edycja · krok 1</a>
+  <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
+  <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
 </nav>
 
 </body>

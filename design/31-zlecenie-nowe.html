@@ -144,6 +144,21 @@
   .tb-val { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
   .time-arrow { color:var(--text-muted); }
   .dur-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; color:var(--text-muted); text-align:center; }
+  /* ═══ EDYCJA: SKUTEK ZMIANY TERMINU (ramka 2) ═══
+     Zmiana terminu podnosi WERSJĘ zlecenia (§5.1): zgłoszenia i odmowy przestają się
+     liczyć, adresaci odpowiadają od nowa, a obsadzone fotele zostają. Zdanie stoi TAM,
+     GDZIE ZMIANA SIĘ DZIEJE - pod godzinami - i wraca nad „ZAPISZ ZMIANY" (31B, ramka 4),
+     bo tam się ją zatwierdza. Ten sam kształt, co ostrzeżenie arkusza odczytu (02B):
+     trójkąt i zdanie w bursztynie. Niczego nie blokuje - przesunięcie terminu jest
+     zwykłą czynnością prowadzącego. Pojawia się WYŁĄCZNIE przy zmianie: godziny bez
+     zmiany nie mają skutku, o którym trzeba mówić. */
+  .term-warn {
+    display:flex; align-items:flex-start; gap:9px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:12px; padding:11px 13px;
+    font-family:var(--font-body); font-size:12px; color:var(--amber); line-height:1.5;
+  }
+  .term-warn svg { flex-shrink:0; margin-top:2px; }
 
   /* ═══ SUGESTIE SLOTÓW („jak w kinie") ═══
      Podpowiedź, nie przymus - ten sam rachunek domeny (upakowanie dnia), co w 22.
@@ -358,6 +373,161 @@
   </div>
 </main>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     DRUGA RAMKA: EDYCJA ZLECENIA - KROK 1, TERMIN PRZESUNIĘTY (do akceptacji, 2026-10-06)
+
+     „EDYTUJ" z karty prowadzącego (32) otwiera TEN SAM formularz z wypełnionym szkicem -
+     nie osobny ekran edycji (ta sama zasada, co „PRZESUŃ I POPRAW" w rezerwacji, 23).
+     Tytuł zostaje „ZLECENIE", strzałka wraca na kartę prowadzącego.
+
+     TERMIN ZLECENIA NIE ZDERZA SIĘ SAM ZE SOBĄ: karta SP-ANA pokazuje zajętość bez tego
+     zlecenia (09:00-13:00 jest tu „wolne"), a bramka „DALEJ" nie widzi kolizji z terminem,
+     który sama poprawia. Bez tego wyjątku edycja zaczynałaby się od „SP-ANA jest w tych
+     godzinach zajęta".
+
+     ZMIANA TERMINU MÓWI SKUTEK PRZY GODZINACH: prowadzący przesunął początek z 09:00 na
+     10:00. Zmiana terminu podnosi wersję zlecenia (§5.1) - odpowiedzi adresatów przestają
+     się liczyć, a obsadzone fotele zostają - więc pod godzinami staje bursztynowe zdanie
+     z poprzednim terminem. Ostrzeżenie, nie blokada; to samo zdanie wraca nad
+     „ZAPISZ ZMIANY" (31B, ramka 4), bo tam się zmianę zatwierdza. Bez zmiany godzin
+     zdania nie ma.
+
+     Maszyna też jest do zmiany - to „edytowane", bez nowych odpowiedzi (§5.2).
+     Kroki 2 i 3 idą tak samo: krok 2 (31A) wypełniony, krok 3 - ramka 4 makiety 31B. -->
+<header class="canvas-label" id="edycja">
+  <span class="film-strip">NINERDECK - 31</span>
+  <span class="slug">stan: edycja zlecenia · termin przesunięty</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Edycja zlecenia, krok 1: termin przesunięty">
+  <div class="status-bar">
+    <span>07:28</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="step-header">
+      <a href="32-zlecenie-prowadzone.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <span class="step-title">ZLECENIE</span>
+      <span class="step-badge">1/3</span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="field">
+        <div class="field-label">
+          <span class="label">Dzień</span>
+          <span class="label-note">czas klubu</span>
+        </div>
+        <div class="days">
+          <a href="#edycja" class="day-chip"><span class="dc-dow">Pt</span><span class="dc-day">2</span></a>
+          <a href="#edycja" class="day-chip on"><span class="dc-dow">Sob</span><span class="dc-day">3</span></a>
+          <a href="#edycja" class="day-chip"><span class="dc-dow">Nd</span><span class="dc-day">4</span></a>
+          <a href="#edycja" class="day-chip"><span class="dc-dow">Pn</span><span class="dc-day">5</span></a>
+          <a href="#edycja" class="day-chip"><span class="dc-dow">Wt</span><span class="dc-day">6</span></a>
+          <a href="15e-reczny-data.html" class="day-more" title="Wybierz z kalendarza" aria-label="Wybierz z kalendarza">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Własny termin zlecenia (09:00-13:00) NIE stoi na pasku SP-ANA - zostaje sama
+           rezerwacja P. Wilka 13:00-16:00, jak w ramce 1. -->
+      <div class="field">
+        <span class="label">Samolot</span>
+        <a href="#edycja" class="ac-card on">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-ANA</span><span class="ac-type">AN-2</span></span>
+            <span class="ac-check">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy" style="left:46.67%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-13:00 · 16:00-21:00</span>
+        </a>
+        <a href="#edycja" class="ac-card">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-AXA</span><span class="ac-type">C172</span></span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy" style="left:53.33%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-14:00 · 17:00-21:00</span>
+        </a>
+        <a href="#edycja" class="ac-card">
+          <div class="ac-top">
+            <span class="ac-left"><span class="ac-reg">SP-BKL</span><span class="ac-type">PA-28</span></span>
+          </div>
+          <span class="ac-track">
+            <span class="ac-busy order" style="left:33.33%; width:13.33%;"></span>
+            <span class="ac-busy" style="left:60%; width:20%;"></span>
+          </span>
+          <span class="ac-free">wolne: 06:00-11:00 · 13:00-15:00 · 18:00-21:00</span>
+        </a>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span class="label">Sugerowane godziny</span>
+          <span class="label-note">3 h</span>
+        </div>
+        <div class="slots">
+          <a href="#edycja" class="slot on">
+            <span class="slot-h">10:00 → 13:00</span>
+            <span class="slot-why">tuż przed rezerwacją · P. Wilk</span>
+          </a>
+          <a href="#edycja" class="slot">
+            <span class="slot-h">16:00 → 19:00</span>
+            <span class="slot-why">tuż po rezerwacji · P. Wilk</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">Godziny</span>
+        <div class="time-row">
+          <a href="22b-rezerwacja-czas.html" class="time-box">
+            <span class="tb-key">Od</span>
+            <span class="tb-val">10:00</span>
+          </a>
+          <span class="time-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </span>
+          <a href="22b-rezerwacja-czas.html" class="time-box">
+            <span class="tb-key">Do</span>
+            <span class="tb-val">13:00</span>
+          </a>
+        </div>
+        <div class="dur-note">3 h · SP-ANA wolna w tych godzinach</div>
+      </div>
+
+      <div class="term-warn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Zmieniasz termin (było 09:00 → 13:00) - adresaci odpowiedzą od nowa, obsadzone fotele zostają.</span>
+      </div>
+
+    </div>
+
+    <div class="action-bar">
+      <a href="31b-zlecenie-zaloga.html#edycja" class="btn-primary">
+        DALEJ
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+  </div>
+</main>
+
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
   <a class="vp-item active" href="31-zlecenie-nowe.html">
@@ -367,6 +537,13 @@
       <span class="vp-when">Nowe zlecenie z listy zleceń (30) albo z wolnego pasma w kalendarzu (21E - dzień i maszyna podstawione). Ten sam krok, co rezerwacja (22): karta maszyny niesie zajętość wybranego dnia (cudze zlecenie ma kształt zlecenia - przerywaną błękitną ramkę), sugestie godzin mówią, dlaczego proponują daną porę. Termin będzie zajęty od chwili wysłania (decyzja 1).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#edycja">
+    <span class="vp-badge amber">31</span>
+    <span class="vp-body">
+      <span class="vp-name">Edycja - termin przesunięty</span>
+      <span class="vp-when">„EDYTUJ" z karty prowadzącego (32) otwiera ten sam formularz z wypełnionym szkicem. Termin zlecenia nie zderza się sam ze sobą. Przesunięcie godzin dostaje pod nimi bursztynowe zdanie: adresaci odpowiedzą od nowa, obsadzone fotele zostają (§5.1) - ostrzeżenie, nie blokada; bez zmiany godzin zdania nie ma.</span>
+    </span>
   </a>
   <a class="vp-item" href="31a-zlecenie-zadanie.html">
     <span class="vp-badge blue">31A</span>
@@ -417,6 +594,7 @@
   <a href="31c-zlecenie-adresaci.html">31C Adresaci</a>
   <span>·</span>
   <a href="32-zlecenie-prowadzone.html">32 Prowadzone →</a>
+  <a href="#edycja">↓ edycja</a>
 </nav>
 
 </body>

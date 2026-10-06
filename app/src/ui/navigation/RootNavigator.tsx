@@ -51,6 +51,7 @@ import { AircraftCardScreen } from '../screens/AircraftCardScreen';
 import { AircraftPreviewScreen } from '../screens/AircraftPreviewScreen';
 import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
+import { NewOrderScreen } from '../screens/NewOrderScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { OrderScreen } from '../screens/OrderScreen';
 import { OrderThreadScreen } from '../screens/OrderThreadScreen';
@@ -137,6 +138,13 @@ export type RootStackParamList = {
    * §7.1). Uczestnik pisze, koordynator czyta (29B) - rozstrzyga serwer, nie trasa.
    */
   OrderThread: { orderId: string; recipientId: string };
+  /**
+   * 31/31A/31B - FORMULARZ ZLECENIA w trzech krokach (termin → zadanie → załoga i adresaci).
+   * Wejścia: „NOWE ZLECENIE" w „Zlecone" (30), „Powiel" na karcie prowadzącego (32 -
+   * `duplicateOf`, ta sama treść z pustymi godzinami) i wolne pasmo w kalendarzu (21E -
+   * maszyna i preferowana pora sugestii).
+   */
+  NewOrder: { aircraftId?: string; startsAt?: number; duplicateOf?: string } | undefined;
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -253,6 +261,7 @@ export function RootNavigator({
           <Stack.Screen name="Orders" component={OrdersScreen} />
           <Stack.Screen name="Order" component={OrderScreen} />
           <Stack.Screen name="OrderThread" component={OrderThreadScreen} />
+          <Stack.Screen name="NewOrder" component={NewOrderScreen} />
           <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
           <Stack.Screen name="Stats" component={StatsScreen} />
           <Stack.Screen name="Track" component={TrackScreen} />

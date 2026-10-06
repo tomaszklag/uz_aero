@@ -77,6 +77,10 @@ export * from './input/CounterRow';
 export * from './input/ReasonField';
 export * from './input/SegmentedControl';
 export * from './input/ThreadComposer';
+// Formularz zlecenia, krok 3 (31B): karty stanu fotela i sposobu adresowania,
+// przełącznik „Wspólna lista".
+export * from './input/ChoiceCards';
+export * from './input/ToggleRow';
 
 // Odczyty z liczników
 export * from './readouts/Readout';
@@ -99,7 +103,7 @@ export * from './sheets/FleetFilterSheet';
 export * from './sheets/BookingTimeSheet';
 export * from './sheets/DualSheet';
 export * from './sheets/NumberSheet';
-// Zlecenia (4.0.0): wybór adresatów (31C) - dziś jedna osoba, z formularzem także grupy.
+// Zlecenia (4.0.0): wybór adresatów (31C) - jedna osoba albo grupy nad osobami.
 export * from './sheets/AddresseeSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
@@ -177,6 +181,9 @@ export * from './data/ExpandToggle';
 export * from './data/OrderStrip';
 export * from './data/DaySeparator';
 export * from './data/MessageBubble';
+// Formularz zlecenia (31B): wybrany adresat fotela i wiersz „Dodaj adresatów".
+export * from './data/AddressChip';
+export * from './data/AddRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.
 export * from './data/TrackPolyline';
