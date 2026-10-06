@@ -1487,6 +1487,95 @@ i tapnięciu, zostaje w mocy; zmienia się tylko to, KIEDY push w ogóle wychodz
 „co 60 s" skrzynki (`useInbox`) znika - skrzynka odświeża się ramką i przy ponownym
 połączeniu.
 
+### 12.9 Odwołanie rezerwacji: wiadomość do osób w fotelach (PROPOZYCJA 2026-10-06, decyzje D1-D3 rozstrzygnięte)
+
+**Problem: obietnica bez pokrycia.** Panel żąda powodu przy odwołaniu CUDZEJ rezerwacji
+(P4, `refuseCancel`: „pilot, któremu ktoś zdjął sobotę, czyta w aplikacji dlaczego")
+i pisze administratorowi nad przyciskiem „Pilot zobaczy powód w aplikacji"
+(`BookingDrawer`, makieta K2). Powód nie dociera jednak nigdzie:
+
+- **żadna wiadomość go nie niesie** - odwołanie z panelu budzi wyłącznie osoby kroku
+  bieżącego (`approval_withdrawn`, przy czekającej) i obserwujących maszynę
+  (`aircraft_flight_cancelled`, po przypomnieniu). Właściciel rezerwacji nie dostaje nic;
+- **karta rezerwacji go nie dostaje** - `close_reason` zostaje po stronie serwera
+  (`bookingWire` telefonu), a karta pokazuje samą plakietkę „Odwołana".
+
+Pilot dowiaduje się o odwołaniu wyłącznie z tego, że pasek zniknął z kalendarza - i nie
+wie dlaczego. Ta sama luka dotyczy drugiego pilota, gdy dowódca odwołuje WŁASNĄ
+rezerwację: nikt mu tego nie mówi. Kanał klubu (§12.8) niczego tu nie zmienia: rozsyła
+to, co zapisano, a tu nie zapisano nic.
+
+**Propozycja** (makiety: `design/23g-rezerwacja-odwolana.html`, wiersz w `25`,
+wiersz w `design/panel/powiadomienia.html`):
+
+1. **Nowy rodzaj `booking_cancelled`** w `notify/bookingNotices.ts`, kształt jak
+   `booking_rejected`: `about(booking)` + `reason` (bywa `null`) + `cancelledBy`.
+   Push „Rezerwacja odwołana" i treść zależna od powodu: z powodem „Otwórz, żeby
+   przeczytać powód.", bez powodu „Termin wrócił do puli." - bez nazwisk i godzin (§12.1).
+2. **JEDNA REGUŁA (D1 + D2): odwołanie rezerwacji lotu zawiadamia osoby w fotelach POZA
+   odwołującym.** Producenci są dwaj i obaj liczą adresatów tą samą funkcją:
+   - `AdminBookingCommands.cancel` (panel, `reservations.manage`, cudza - powód
+     wymagany) → dowódca i drugi pilot;
+   - `BookingCommands.cancel` (własna, z telefonu i z panelu - powód opcjonalny
+     w telefonie, w panelu go nie ma) → drugi pilot, jeśli jest.
+   Wiadomość TĄ SAMĄ transakcją, co zamknięcie wiersza (i ślad audytu w panelu), budzik
+   po commicie razem z `withdrawn`. Administrator siedzący w którymś fotelu nie słyszy
+   o sobie. Bez zmian zostają: rezerwacja zlecenia (odwołuje się ją komendą zlecenia,
+   z własnymi wiadomościami - `docs/zlecenia.md` §16 pkt 6) i wyłączenie z użytku
+   (nie ma foteli).
+3. **Kto zamknął wiersz: `bookings.closed_by`** (migracja 17, addytywna, lustro
+   `flight_orders.closed_by`). `NULL` przy wierszach sprzed migracji i przy zamknięciu
+   przez czas (`released`, `expired`) - zamknął czas, nie człowiek. `BookingsPort.close`
+   dostaje `by`. Bez tej kolumny karty nie da się zbudować: z samego powodu nie widać,
+   kto odwołał, bo pilot może go podać także przy odwołaniu własnej.
+4. **Karta rezerwacji 23G**: `bookingWire` telefonu w KOMPLECIE (`seesFull` - właściciel,
+   drugi pilot, akceptujący) niesie `closeReason` i `closedBy`; wąski kształt cudzej
+   rezerwacji ich nie dostaje (§17). `approvalView` rozpoznaje odwołanie cudzą ręką
+   (`status = cancelled`, `closedBy` różne od patrzącego) i stawia baner jak przy
+   odmowie: rzeczownik z nazwiskiem za separatorem („Rezerwacja odwołana · Jan Bąk"),
+   powód jako treść (bez powodu: „Termin wrócił do puli."), plakietka „Odwołana"
+   neutralna, jedno wyjście „WYBIERZ INNY TERMIN". Ten sam baner widzi drugi pilot, gdy
+   rezerwację odwołał dowódca. Kto odwołał sam, banera nie dostaje.
+   **Skutek mówi się PRZED kliknięciem**: przy rezerwacji z drugim pilotem arkusz
+   odwołania w telefonie i karta „Odwołanie rezerwacji" w panelu (K2, K2b) dopisują
+   „Drugi pilot dostanie wiadomość" (przy odwołaniu cudzej: „Pilot i drugi pilot
+   dostaną wiadomość z powodem").
+5. **Skrzynka**: gałąź `booking_cancelled` w `app/src/ui/screens/logic/inbox.ts`
+   i `admin/src/screens/inbox/inboxRows.ts` - ton `no`, krzyżyk, znak i termin
+   w podpisie, powód jako treść, prowadzi do karty rezerwacji. `pushTarget`: rodzaj
+   wchodzi do zbioru `MINE` (→ karta rezerwacji). Banery w aplikacji i w panelu biorą
+   zdanie wiersza - bez osobnej pracy.
+6. **Kanał klubu bez zmian**: `ClubSignals.booking` już leci przy odwołaniu,
+   a `Notifier.wake` rozdziela ramkę i push jak dla każdego innego rodzaju.
+7. **Testy, każdy z dowodem, że upada przed poprawką**: wiadomość do obu foteli przy
+   odwołaniu z panelu (rodzaj, powód, push bez nazwisk); wiadomość do drugiego pilota
+   przy odwołaniu własnej przez dowódcę (bez powodu - push „Termin wrócił do puli.");
+   brak wiadomości dla odwołującego w fotelu, przy rezerwacji bez drugiego pilota
+   odwołanej przez dowódcę i przy wyłączeniu z użytku; `closed_by` zapisany;
+   `closeReason`/`closedBy` wyłącznie w pełnym kształcie (sonda wąskiego widza);
+   aplikacja - `inbox.ts`, `approvalView`, `pushTarget`; panel - `inboxRows.ts`.
+8. **Wydanie: serwer + OTA**, bez modułu natywnego. Starsza aplikacja nie wywraca się na
+   nieznanym rodzaju: wiersz „Wiadomość z klubu" prowadzi do karty rezerwacji (§12.5).
+
+**Decyzje przed kodem** (zadawane pojedynczo, wszystkie rozstrzygnięte 2026-10-06):
+
+- **D1 - drugi pilot też dostaje wiadomość? ROZSTRZYGNIĘTE 2026-10-06: TAK, oba fotele.**
+  Od 4.0.0 „Twoja rezerwacja" liczy OBA fotele (`docs/zlecenia.md` pkt 23), a drugi pilot
+  traci ten sam lot. Napis w panelu: „Pilot i drugi pilot dostaną wiadomość z powodem"
+  (bez drugiego pilota - o samym pilocie). Odwołujący siedzący w którymś fotelu nie
+  słyszy o sobie.
+- **D2 - ta sama wiadomość, gdy dowódca odwołuje WŁASNĄ rezerwację z drugim pilotem?
+  ROZSTRZYGNIĘTE 2026-10-06: TAK, jedna reguła** - „odwołanie zawiadamia osoby
+  w fotelach poza odwołującym" (pkt 2). Poszerza zgłoszenie o drugi przypadek tej samej
+  luki: drugi pilot nie dowiadywał się o odwołaniu niczego, bez względu na to, kto odwołał.
+- **D3 - karta 23G razem z migracją 17, czy sama wiadomość? ROZSTRZYGNIĘTE 2026-10-06:
+  karta i migracja.** Wiadomość prowadzi na kartę, a karta bez powodu po tapnięciu
+  w wiadomość z powodem mówiłaby co innego niż skrzynka sekundę wcześniej.
+
+**Poza zakresem tej propozycji** (osobne pytania, też bez wiadomości do pilota dziś):
+slot zwolniony przez zadanie okresowe po godzinie bez przejęcia (§4.1 - obserwujący
+dostają „nie odebrano", pilot nic) i rezerwacja założona ZA pilota z panelu.
+
 ## 13. Etapy i kolejność realizacji
 
 Numeracja **R** (rezerwacje), jak **H** przy logowaniu hasłem. Strzałka = zależność twarda.
