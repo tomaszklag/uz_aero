@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { Icon, type IconName } from '../foundation/Icon';
@@ -31,6 +31,12 @@ export interface IconActionProps {
   tone?: Tone;
   size?: number;
   disabled?: boolean;
+  /**
+   * Błękitna kropka w rogu - nowa wiadomość w rozmowie (`.rcp-icon .dot`, karta
+   * prowadzącego 32). Zapala się tylko z treścią: pusta ikona przy każdym wierszu
+   * byłaby szumem, a kropka przy każdym - też.
+   */
+  dot?: boolean;
 }
 
 export function IconAction({
@@ -40,6 +46,7 @@ export function IconAction({
   tone = 'neutral',
   size = 16,
   disabled = false,
+  dot = false,
 }: IconActionProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
@@ -65,6 +72,12 @@ export function IconAction({
       ]}
     >
       <Icon name={name} size={size} color={tone === 'neutral' ? theme.colors.textMuted : c.accent} />
+      {dot && (
+        <View
+          pointerEvents="none"
+          style={[styles.dot, { backgroundColor: theme.colors.blue, borderColor: theme.colors.surface }]}
+        />
+      )}
     </Pressable>
   );
 }
@@ -73,4 +86,6 @@ const styles = StyleSheet.create({
   // 36 dp rysunku + `hitSlop` do progu rękawic: pełne 44 dp kwadratu obok tytułu
   // wyglądałoby jak przycisk, a to ma być ikona.
   btn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  // Kropka 7 px z pierścieniem 2 px w kolorze karty - w RN pierścień jest obramowaniem.
+  dot: { position: 'absolute', top: 5, right: 5, width: 11, height: 11, borderRadius: 5.5, borderWidth: 2 },
 });

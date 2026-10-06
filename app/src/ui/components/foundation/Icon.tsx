@@ -172,6 +172,17 @@ const REGISTRY = {
   'order-cancelled': f('x-circle'),
   'order-expired': m('timer-sand-empty'),
   'order-removed': m('undo-variant'),
+  /**
+   * Karta prowadzącego (32, 32D): „Powiel" w nagłówku (kopia - ta sama treść z pustym
+   * terminem), menu ⋯ przy adresacie, „ZAMIEŃ OSOBĘ" (dwie strzałki) i „COFNIJ PRZYDZIAŁ"
+   * (strzałka cofnięcia - fotel wraca do szukania).
+   */
+  duplicate: f('copy'),
+  overflow: f('more-horizontal'),
+  /** Rozwinięcie w miejscu (`.expand`, 32B) - szewron w dół, obrócony przy otwartej liście. */
+  expand: f('chevron-down'),
+  swap: f('repeat'),
+  unassign: m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 

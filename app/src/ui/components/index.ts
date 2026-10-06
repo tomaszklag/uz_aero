@@ -96,6 +96,8 @@ export * from './sheets/FleetFilterSheet';
 export * from './sheets/BookingTimeSheet';
 export * from './sheets/DualSheet';
 export * from './sheets/NumberSheet';
+// Zlecenia (4.0.0): wybór adresatów (31C) - dziś jedna osoba, z formularzem także grupy.
+export * from './sheets/AddresseeSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
 // ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu
@@ -163,6 +165,11 @@ export * from './data/CrewSeatRow';
 export * from './data/AnswerBlock';
 export * from './data/EditedLine';
 export * from './data/ThreadRow';
+// Karta prowadzącego (32): adresat, fotel w „Załodze", historia zmian i zwinięta reszta.
+export * from './data/RecipientRow';
+export * from './data/OrderCrewRow';
+export * from './data/OrderHistoryRow';
+export * from './data/ExpandToggle';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.
 export * from './data/TrackPolyline';

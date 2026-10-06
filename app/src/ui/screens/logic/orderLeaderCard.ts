@@ -102,10 +102,18 @@ export interface CrewSeatVm {
   status: StatusPart[];
   /** Menu ⋯ z „COFNIJ PRZYDZIAŁ" - przy osobie przydzielonej do szukanego fotela. */
   menu: boolean;
+  /** Rozmowa z osobą w fotelu - jak przy adresacie: autor pisze, koordynator czyta. */
+  thread: 'write' | 'read' | null;
+  unread: boolean;
 }
 
 export interface LeaderCardVm {
   hero: {
+    /**
+     * Ton karty terminu: błękit, dopóki zlecenie szuka; zieleń przy komplecie - zlecenie
+     * JEST wtedy zwykłą rezerwacją tej załogi (32B); neutralny w zapisie zamkniętym.
+     */
+    tone: 'blue' | 'green' | 'off';
     date: string;
     badge: { text: string; tone: BadgeTone };
     hours: string;
@@ -161,11 +169,13 @@ export function leaderCardVm(input: LeaderCardInput): LeaderCardVm | null {
   const blocks = card.order.addressing === 'shared' ? sharedBlocks(recipients, ctx) : perSeatBlocks(recipients, ctx);
   const inBlocks = new Set(blocks.flatMap((b) => b.rows.map((r) => r.pilotId)));
   const leftover = recipients.filter((r) => !inBlocks.has(r.pilotId));
+  const badge = badgeOf(status, open);
 
   return {
     hero: {
+      tone: !live ? 'off' : badge.tone === 'green' ? 'green' : 'blue',
       date: orderDate(day),
-      badge: badgeOf(status, open),
+      badge,
       hours: orderHours(startsAt, endsAt, day),
       length: orderLength(startsAt, endsAt),
       aircraft: [input.aircraft?.reg ?? input.regOf(card.booking.aircraftId) ?? NONE, input.aircraft?.type ?? null]
@@ -205,8 +215,9 @@ interface RowContext {
 /**
  * Etykieta adresowania z serwera („dowódca: Jakub Wrona · drugi pilot: Piloci An-2",
  * „wspólna lista: Piloci An-2") pocięta na fotele - nazwy grup zna wyłącznie ona.
+ * Czyta ją też arkusz adresata (32D), żeby powiedzieć, przez co osoba dostała zlecenie.
  */
-function audienceOf(label: string | undefined): { pic: string | null; dual: string | null; shared: string | null } {
+export function audienceOf(label: string | undefined): { pic: string | null; dual: string | null; shared: string | null } {
   const out = { pic: null as string | null, dual: null as string | null, shared: null as string | null };
   for (const segment of (label ?? '').split(' · ')) {
     const at = segment.indexOf(': ');
@@ -343,6 +354,8 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
         // Instrukcja, nie opis stanu - to, że szuka, powiedziała już plakietka w hero.
         status: ctx.live ? [{ text: card.order.addressing === 'shared' ? 'przydziel z listy niżej' : 'wybierz z listy niżej' }] : [],
         menu: false,
+        thread: null,
+        unread: false,
       });
       continue;
     }
@@ -355,12 +368,17 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
         code: input.codeOf(person),
         status: [{ text: 'osoba zlecająca' }],
         menu: false,
+        thread: null,
+        unread: false,
       });
       continue;
     }
     const entry = lastSeating(card, seat, person);
     const at = entry == null ? null : instant(entry.at);
     const verb = entry?.payload.via === 'answer' ? 'przyjęte' : 'przydział';
+    // Rozmowa należy do adresata, którym ta osoba była, zanim usiadła w fotelu.
+    const recipient = (card.recipients ?? []).find((r) => r.pilotId === person) ?? null;
+    const author = card.order.createdBy === input.pilotId;
     rows.push({
       seat,
       label: seatLabel(seat),
@@ -369,6 +387,8 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
       code: input.codeOf(person),
       status: at == null ? [{ text: 'Leci', tone: 'ok' }] : [{ text: 'Leci', tone: 'ok' }, { text: ` · ${verb} ${momentLabel(at, day, input.now, SHORT)}` }],
       menu: ctx.live,
+      thread: recipient == null ? null : author ? 'write' : recipient.threadId != null ? 'read' : null,
+      unread: (recipient?.unread ?? 0) > 0,
     });
   }
   return rows;

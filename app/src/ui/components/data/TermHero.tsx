@@ -41,12 +41,17 @@ export interface TermHeroProps {
   was?: string | null;
   /** „2 h". */
   length: string;
+  /**
+   * „SP-ANA · AN-2" - maszyna w linii terminu, gdy karta nie ma wiersza „Samolot" (32):
+   * prowadzący pyta „kiedy i czym", a odpowiedź ma stać razem.
+   */
+  aircraft?: string | null;
   /** „ZA 1 DZIEŃ 14 H"; `null` = bez odliczania. */
   countdown?: string | null;
   tone: TermHeroTone;
 }
 
-export function TermHero({ date, badge, hours, was = null, length, countdown = null, tone }: TermHeroProps) {
+export function TermHero({ date, badge, hours, was = null, length, aircraft = null, countdown = null, tone }: TermHeroProps) {
   const { theme } = useTheme();
   const s = styles(theme);
   const off = tone === 'off';
@@ -77,6 +82,11 @@ export function TermHero({ date, badge, hours, was = null, length, countdown = n
         <AppText variant="mono" style={s.length}>
           {length}
         </AppText>
+        {aircraft != null && (
+          <AppText variant="mono" style={s.aircraft}>
+            {aircraft}
+          </AppText>
+        )}
         {countdown != null && !off && (
           <AppText variant="display" style={[s.countdown, { color: accent }]}>
             {countdown}
@@ -131,5 +141,6 @@ const styles = (t: Theme) =>
     meta: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 },
     zone: { fontSize: 8, lineHeight: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: t.colors.textMuted },
     length: { fontSize: 10, lineHeight: 13, letterSpacing: 1, color: t.colors.textSecondary },
+    aircraft: { fontSize: 10, lineHeight: 13, letterSpacing: 1.5, color: t.colors.textSecondary },
     countdown: { fontSize: 17, lineHeight: 19, letterSpacing: 1.5 },
   });

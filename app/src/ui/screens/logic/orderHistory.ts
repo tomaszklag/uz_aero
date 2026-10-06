@@ -29,6 +29,11 @@ export interface HistoryRowVm {
   reason: string | null;
   /** „Ty", nazwisko; `null` = zegar. */
   who: string | null;
+  /**
+   * Wpis, który coś SKASOWAŁ - dziś wyłącznie odwołanie. Czerwień niesie w tej aplikacji
+   * rzecz niszczącą i tylko ją (32, ramka 2; ZL3c w panelu).
+   */
+  void: boolean;
 }
 
 export interface HistoryInput {
@@ -57,6 +62,7 @@ export function orderHistoryRows(input: HistoryInput): HistoryRowVm[] {
       what: whatOf(entry, input),
       reason: reasonOf(entry),
       who: entry.actorId == null ? null : personLabel(entry.actorId, input.pilotId, input.nameOf),
+      void: entry.kind === 'cancelled',
     });
   }
   return rows.reverse();

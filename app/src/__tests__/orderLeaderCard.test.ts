@@ -77,6 +77,7 @@ describe('32 - fotele i adresaci (ramka 1, piątek 21:40)', () => {
 
   it('hero: szuka załogi, maszyna z typem, odliczanie', () => {
     expect(v.hero).toEqual({
+      tone: 'blue',
       date: 'Sobota · 3 października',
       badge: { text: 'Szuka załogi', tone: 'blue' },
       hours: '09:00 → 13:00',
@@ -158,7 +159,7 @@ describe('32 - zlecenie odwołane (ramka 2) jest zapisem', () => {
   );
 
   it('hero neutralne bez odliczania, bez pasa akcji', () => {
-    expect(v.hero).toMatchObject({ badge: { text: 'Odwołane', tone: 'dim' }, countdown: null });
+    expect(v.hero).toMatchObject({ tone: 'off', badge: { text: 'Odwołane', tone: 'dim' }, countdown: null });
     expect([v.closed, v.actions]).toEqual([true, { edit: false, resend: false, cancel: false }]);
   });
 
@@ -267,12 +268,20 @@ describe('32B - komplet załogi', () => {
   );
 
   it('hero w zieleni; załoga z „przyjęte" i „przydział"; bez bloków', () => {
+    expect(v.hero.tone).toBe('green');
     expect(v.hero.badge).toEqual({ text: 'Komplet załogi', tone: 'green' });
     expect(v.crew?.map((c) => [c.name, c.code, c.status.map((s) => s.text).join(''), c.menu])).toEqual([
       ['Jakub Wrona', 'JWR', 'Leci · przyjęte 22:05', true],
       ['Anna Kowal', 'AKW', 'Leci · przydział 22:12', true],
     ]);
     expect(v.blocks).toEqual([]);
+  });
+
+  it('przy osobie w fotelu zostaje rozmowa - ta sama, co przy adresacie, z którego usiadła', () => {
+    expect(v.crew?.map((c) => [c.pilotId, c.thread])).toEqual([
+      ['JWR', 'write'],
+      ['AKW', 'write'],
+    ]);
   });
 
   it('„Pozostali adresaci" - zwinięci, bez tonów i bez akcji', () => {
@@ -302,9 +311,9 @@ describe('zlecenie instruktora - fotel „ja"', () => {
       localMs(-1, '21:45'),
       'AKO',
     );
-    expect(v.crew?.map((c) => [c.label, c.name, c.status.map((s) => s.text).join(''), c.menu])).toEqual([
-      ['Dowódca', 'Ty', 'osoba zlecająca', false],
-      ['Drugi pilot', null, 'wybierz z listy niżej', false],
+    expect(v.crew?.map((c) => [c.label, c.name, c.status.map((s) => s.text).join(''), c.menu, c.thread])).toEqual([
+      ['Dowódca', 'Ty', 'osoba zlecająca', false, null],
+      ['Drugi pilot', null, 'wybierz z listy niżej', false, null],
     ]);
     expect(v.blocks.map((b) => [b.title, b.sub])).toEqual([['Drugi pilot', 'imiennie']]);
   });

@@ -17,12 +17,14 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
-import { EmptyState, Screen, ScreenHeader, Skeleton } from '../components';
+import { EmptyState, IconAction, Screen, ScreenHeader, Skeleton } from '../components';
 import { useOrderCard } from '../hooks/useOrderCard';
+import { useOrderSummary } from '../hooks/useOrderSummary';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useTheme, type Theme } from '../theme';
 
 import { orderCardMode, type OrderCardIntent } from './logic/orderCardMode';
+import { OrderLeaderView } from './OrderLeaderView';
 import { OrderRecipientView } from './OrderRecipientView';
 
 type Nav = {
@@ -46,7 +48,22 @@ export function OrderScreen({
   const skeleton = useSkeleton(card.data === undefined);
   const mode = card.data == null ? null : orderCardMode(card.data.viewer, route?.params?.as);
 
-  const header = <ScreenHeader title="ZLECENIE" size="md" backLabel="Wróć" onBack={() => navigation.goBack()} />;
+  // „Powiel" tworzy NOWE zlecenie, więc stoi wyłącznie z prawem zlecania - bit z serwera
+  // (telefon zdolności nie zna, §9). Ikona w nagłówku, nie przycisk w pasie: to skrót
+  // (ta sama treść z pustym terminem), a nie czynność tego zlecenia.
+  const canCreate = useOrderSummary().data?.canCreate === true;
+  const duplicate =
+    mode === 'leader' && canCreate && orderId != null ? (
+      <IconAction
+        name="duplicate"
+        accessibilityLabel="Powiel zlecenie"
+        onPress={() => navigation.navigate('NewOrder', { duplicateOf: orderId })}
+      />
+    ) : undefined;
+
+  const header = (
+    <ScreenHeader title="ZLECENIE" size="md" backLabel="Wróć" onBack={() => navigation.goBack()} right={duplicate} />
+  );
 
   return (
     <Screen padded={false} header={header}>
@@ -76,6 +93,8 @@ export function OrderScreen({
         </ScrollView>
       ) : mode === 'recipient' ? (
         <OrderRecipientView card={card.data} navigation={navigation} onCard={card.accept} reload={card.reload} />
+      ) : mode === 'leader' ? (
+        <OrderLeaderView card={card.data} navigation={navigation} canCreate={canCreate} onCard={card.accept} reload={card.reload} />
       ) : null}
     </Screen>
   );

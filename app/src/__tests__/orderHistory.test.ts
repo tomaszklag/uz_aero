@@ -69,6 +69,18 @@ describe('historia zmian u prowadzącego', () => {
     ]);
   });
 
+  it('czerwień niesie WYŁĄCZNIE odwołanie - jedyny wpis, który coś kasuje (32, ramka 2)', () => {
+    const history = [
+      entry('h1', local(-1, '18:40'), 'created', { audience: 'wspólna lista: Piloci An-2' }),
+      entry('h2', local(0, '07:10'), 'recipients_removed', { pilotIds: ['AKO'], reason: 'Inny lot.' }),
+      entry('h3', local(0, '16:20'), 'cancelled', {}),
+    ];
+    const marks = orderHistoryRows({ history, day: orderDay(SATURDAY)!, now: localMs(0, '16:22'), pilotId: 'MZI', nameOf, regOf }).map(
+      (r) => r.void,
+    );
+    expect(marks).toEqual([true, false, false]);
+  });
+
   it('wygaśnięcie robi zegar - wpis bez nazwiska', () => {
     expect(rows([entry('h1', local(0, '09:00'), 'expired', {}, null)])).toEqual([
       { when: 'dziś 09:00', what: '[Wygasło]', reason: null, who: null },
