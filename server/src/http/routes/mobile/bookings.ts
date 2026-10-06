@@ -74,8 +74,9 @@ const patch = z
 const cancel = z.object({ reason: z.string().trim().max(NOTE_MAX).nullable().optional() });
 
 /**
- * Zajętość na drucie. `createdBy`, `updatedAt` i `closeReason` zostają po stronie
- * serwera - telefon rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian.
+ * Zajętość na drucie. `createdBy` i `updatedAt` zostają po stronie serwera - telefon
+ * rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian. `closeReason`
+ * i `closedBy` jadą od §12.9 wyłącznie w kształcie pełnym (karta odwołanej rezerwacji).
  *
  * ══ CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRANY Z NIEJ CZYTAJĄ ══
  * (przegląd bezpieczeństwa W7, decyzja właściciela 2026-09-21). Oś floty, sugestie
@@ -156,6 +157,11 @@ export function bookingWire(
     // rezerwacji - od kiedy stoi na kroku. W kształcie pełnym, bo pyta o to wyłącznie
     // ten, kto widzi komplet; na osi floty wiek wiersza nie znaczy nic.
     createdAt: new Date(row.createdAt).toISOString(),
+    // Powód zamknięcia i kto zamknął (§12.9): karta odwołanej rezerwacji pokazuje je
+    // osobom w fotelach, gdy odwołał ktoś inny. Ta sama klasa treści, co powód odmowy -
+    // zdanie człowieka DO PILOTA - więc wyłącznie w kształcie pełnym (przegląd W7).
+    closeReason: row.closeReason,
+    closedBy: row.closedBy,
   };
 }
 

@@ -26,6 +26,7 @@ import { BookIcon } from '../../ui/components/icons';
 import { loadErrorMessage } from '../common/apiMessage';
 import { ApprovalCard } from './ApprovalCard';
 import { bookingErrorMessage } from './bookingRefusal';
+import { cancelNote } from './cancelNote';
 import { NONE } from '../common/values';
 import {
   blockReasonLabel,
@@ -85,6 +86,14 @@ export function BookingDrawer({
   // idzie bez niego, bo nie ma komu tłumaczyć.
   const needsReason = !isBlock;
   const blocked = needsReason && reason.trim() === '';
+
+  // Fotele i stan - z nich zdanie o skutku odwołania mówi, kto dostanie wiadomość.
+  const seats = {
+    kind: booking.kind,
+    status: booking.status,
+    pilotId: booking.pilotId,
+    dualId: booking.dualId ?? null,
+  };
 
   return (
     <Drawer title={naglowek.title} sub={naglowek.sub} onClose={onClose}>
@@ -187,12 +196,9 @@ export function BookingDrawer({
           ) : (
             <Card title="Odwołanie rezerwacji" tone="danger">
               {/* Czekająca sprawa miała prośbę o zgodę - jej osoby dostaną wiadomość
-                  (decyzja właściciela 2026-09-27). Powodu nie ma: to własny plan. */}
-              <p className="card-note">
-                {booking.status === 'pending'
-                  ? 'Osoby z kroku dostaną wiadomość, że prośba została wycofana.'
-                  : 'Termin zwolni się natychmiast.'}
-              </p>
+                  (decyzja właściciela 2026-09-27), a drugi pilot - że lotu nie będzie
+                  (§12.9). Powodu nie ma: to własny plan. */}
+              <p className="card-note">{cancelNote({ ...seats, viewerId })}</p>
               {cancelOwn.error == null ? null : (
                 <p className="card-note danger">{bookingErrorMessage(cancelOwn.error, timezone, person)}</p>
               )}
@@ -210,13 +216,9 @@ export function BookingDrawer({
         /* Zamkniętej zajętości nie odwołuje się drugi raz, a bez uprawnienia nie ma
            przycisku - nie ma przycisku wyszarzonego (`panel-2.0.md` §3.3). */
         <Card title={isBlock ? 'Zdjęcie wyłączenia' : 'Odwołanie rezerwacji'} tone="danger">
-          <p className="card-note">
-            {isBlock
-              ? 'Termin zwolni się natychmiast i maszyna wróci do kalendarza.'
-              : booking.status === 'pending'
-                ? 'Pilot zobaczy powód w aplikacji, a osoby z kroku - że prośba została wycofana.'
-                : 'Pilot zobaczy powód w aplikacji. Termin zwolni się natychmiast.'}
-          </p>
+          {/* Skutek PRZED kliknięciem (§12.9): osoby w fotelach dostają powód w aplikacji -
+              poza odwołującym, który bywa drugim pilotem. */}
+          <p className="card-note">{cancelNote({ ...seats, viewerId })}</p>
           {needsReason ? (
             <Field htmlFor="cancel-reason" label="Powód">
               <TextInput

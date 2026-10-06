@@ -49,6 +49,7 @@ import { useTheme, type Theme } from '../theme';
 import { airfieldByIcao } from '../../domain';
 
 import { approvalView, type ApprovalState } from './logic/bookingApproval';
+import { cancellationBanner } from './logic/bookingCancellation';
 import { bookingDetails, type BookingDetailRow } from './logic/bookingDetails';
 import { setBugBooking } from '../components/bug/bugReporter';
 
@@ -127,6 +128,25 @@ export function BookingDetailsScreen({
   );
 
   /**
+   * Odwołanie cudzą ręką (23G, §12.9) - klub odwołał rezerwację pilota albo dowódca
+   * odwołał własną, a patrzy drugi pilot. Baner ścieżki ma pierwszeństwo, ale przy
+   * odwołanej rezerwacji go nie ma: ścieżka jest wtedy już tylko zapisem.
+   */
+  const cancelled = useMemo(
+    () =>
+      data == null
+        ? null
+        : cancellationBanner({
+            status: data.booking.status,
+            closedBy: data.booking.closedBy,
+            closeReason: data.booking.closeReason,
+            viewerId: pilotId,
+            nameOf: (id) => pilots.find((p) => p.id === id)?.name ?? null,
+          }),
+    [data, pilotId, pilots],
+  );
+
+  /**
    * Zgłoszenie błędu z tego ekranu niesie REZERWACJĘ (#162 F10). Zdejmujemy ją przy
    * wyjściu, bo napis „Dołączamy automatycznie" jest obietnicą: zgłoszenie z Pulpitu
    * nie ma prawa wozić terminu oglądanego minutę wcześniej.
@@ -187,7 +207,7 @@ export function BookingDetailsScreen({
         ) : (
           <>
             {/* Baner stanu (23B–23E) - przyrząd, nie pouczenie: mówi, co ze sprawą, i co dalej. */}
-            {av.banner != null && (
+            {av.banner != null ? (
               <Banner
                 kind="status"
                 tone={av.banner.tone}
@@ -195,7 +215,15 @@ export function BookingDetailsScreen({
                 title={av.banner.title}
                 text={av.banner.text}
               />
-            )}
+            ) : cancelled != null ? (
+              <Banner
+                kind="status"
+                tone={cancelled.tone}
+                icon="blocker"
+                title={cancelled.title}
+                text={cancelled.text}
+              />
+            ) : null}
 
             {/* Ton karty terminu idzie za stanem: zieleń obiecuje pewny lot, bursztyn
                 mówi „czeka", karta wygaszona - „to już tylko zapis" (`.hero.wait` / `.hero.off`). */}
@@ -332,7 +360,7 @@ export function BookingDetailsScreen({
                 { label: 'Termin', value: `${vm.date} · ${vm.hours}` },
               ]
         }
-        warning="Slot wróci do kalendarza i będzie mógł go zająć ktoś inny."
+        warning={vm?.cancelWarning}
         warningTone="amber"
         confirmLabel="ODWOŁAJ"
         confirmTone="red"

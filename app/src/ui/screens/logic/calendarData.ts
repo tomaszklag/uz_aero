@@ -39,6 +39,12 @@ export interface CalendarBooking {
    * którego nie dało się przeczytać.
    */
   createdAt?: number | null;
+  /**
+   * Powód zamknięcia i kto zamknął (§12.9) - wyłącznie z kształtu pełnego; baner karty
+   * odwołanej rezerwacji (23G). Opcjonalne z tego samego powodu, co `createdAt`.
+   */
+  closeReason?: string | null;
+  closedBy?: string | null;
 }
 
 export interface CalendarData {
@@ -108,6 +114,8 @@ export function toBooking(wire: RemoteBooking): CalendarBooking | null {
     blockReason: wire.blockReason,
     note: wire.note ?? null,
     createdAt: parsedOrNull(wire.createdAt),
+    closeReason: wire.closeReason ?? null,
+    closedBy: wire.closedBy ?? null,
   };
 }
 

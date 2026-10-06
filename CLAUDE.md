@@ -4485,6 +4485,29 @@ rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refus
 - **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
   o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
 
+## Odwołanie rezerwacji zawiadamia osoby w fotelach (2026-10-06, gałąź `feature-odwolanie-rezerwacji-powiadomienie`)
+Panel pisał administratorowi „Pilot zobaczy powód w aplikacji", a powód nie docierał
+nigdzie. Decyzje właściciela (D1-D3) i stan: **`docs/rezerwacje.md` §12.9**; makieta `23G`.
+- **JEDNA REGUŁA**: odwołanie rezerwacji lotu zawiadamia osoby w fotelach POZA odwołującym -
+  przy odwołaniu przez klub dowódcę i drugiego pilota (z wymaganym powodem), przy własnej
+  drugiego pilota. Adresatów liczy wyłącznie `bookingCancelled` (`notify/bookingNotices.ts`);
+  rezerwacja zlecenia ma własne wiadomości, wyłączenie z użytku nie ma foteli
+- **JEDEN FAKT, JEDNA WIADOMOŚĆ NA OSOBĘ**: adresaci `booking_cancelled` są wykluczani
+  z „prośby wycofanej" (`ApprovalFlow.withdraw(…, alreadyTold)`) i z „Odwołano lot"
+  dla obserwujących (`audience(…, [odwołujący, ...told])`) - wiadomość z fotela ma powód
+  i jest pełniejsza. Nowy producent wiadomości o odwołaniu ma liczyć `told` tak samo
+- **`by` W `BookingsPort.close` JEST WYMAGANE** (`string | null`, kolumna `closed_by`,
+  migracja 17): człowiek zamyka swoim identyfikatorem (także przy odmowie), zegar `null`.
+  Nowe miejsce zamknięcia ma to świadomie zadeklarować - pominięte pole gasi baner 23G
+- **`closeReason` i `closedBy` jadą wyłącznie w PEŁNYM kształcie** rezerwacji telefonu
+  (`seesFull`) - zdanie człowieka do pilota, ta sama klasa treści, co powód odmowy (W7)
+- **karta 23G**: baner liczy `logic/bookingCancellation.ts` (niezależny od ścieżki),
+  stoi tylko, gdy odwołał KTOŚ INNY niż patrzący; drugi pilot dostaje na zamkniętej karcie
+  „WYBIERZ INNY TERMIN". Skutek przed kliknięciem: `bookingDetails.cancelWarning`
+  (telefon) i `screens/calendar/cancelNote.ts` (panel)
+- **poza zakresem, otwarte**: wiadomość przy zwolnieniu slotu przez zegar i przy rezerwacji
+  założonej ZA pilota; pole powodu przy odwołaniu własnej w panelu
+
 ## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.1.0)
 Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zdarzenia na
 samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,

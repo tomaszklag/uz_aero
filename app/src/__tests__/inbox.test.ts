@@ -96,6 +96,25 @@ describe('wiersze skrzynki', () => {
     expect(wygasla!.reason).toContain('złóż rezerwację jeszcze raz');
   });
 
+  it('rezerwacja odwołana (§12.9): rzeczownik z odwołującym, powód jako treść; bez powodu - skutek', () => {
+    const [przezKlub, wlasna, bezNazwiska] = rows([
+      note({ kind: 'booking_cancelled', payload: { ...TERM, reason: 'SP-AXA idzie na przegląd 100 h.', cancelledBy: 'akw' } }),
+      note({ id: 'n2', kind: 'booking_cancelled', payload: { ...TERM, reason: null, cancelledBy: 'jwr' } }),
+      note({ id: 'n3', kind: 'booking_cancelled', payload: { ...TERM, reason: null, cancelledBy: 'ghost' } }),
+    ]);
+    expect(przezKlub).toMatchObject({
+      tone: 'no',
+      title: 'Rezerwacja odwołana · Anna Kowal',
+      sub: 'SP-AXA · sob 26 WRZ 09:00-12:00',
+      reason: 'SP-AXA idzie na przegląd 100 h.',
+      todo: false,
+      opens: 'booking',
+    });
+    expect(wlasna).toMatchObject({ title: 'Rezerwacja odwołana · Jakub Wrona', reason: 'Termin wrócił do puli.' });
+    // Osoba spoza cache'u członków - tytuł ogólny, nigdy surowy identyfikator.
+    expect(bezNazwiska!.title).toBe('Rezerwacja odwołana');
+  });
+
   it('prośba wycofana (issue #233): rzeczownik z rezerwującym, bez „do decyzji", także z sprawą w kolejce', () => {
     const [wycofana, bezNazwiska] = rows(
       [

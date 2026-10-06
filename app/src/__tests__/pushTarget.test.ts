@@ -22,8 +22,8 @@ describe('dokąd prowadzi tapnięcie', () => {
     });
   });
 
-  it('decyzja i wygaśnięcie otwierają KARTĘ własnej rezerwacji', () => {
-    for (const kind of ['booking_approved', 'booking_rejected', 'booking_expired']) {
+  it('decyzja, wygaśnięcie i odwołanie (§12.9) otwierają KARTĘ rezerwacji', () => {
+    for (const kind of ['booking_approved', 'booking_rejected', 'booking_expired', 'booking_cancelled']) {
       expect(pushTarget({ kind, bookingId: 'b2' })).toEqual({
         screen: 'BookingDetails',
         params: { bookingId: 'b2' },

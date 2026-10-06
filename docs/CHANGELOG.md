@@ -54,6 +54,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Cisza w locie.** Od przejęcia samolotu do jego zdania telefon pilota - i drugiego
   pilota - nie dzwoni i nie wyskakuje z powiadomieniami, także przy zgaszonym ekranie.
   Wiadomości czekają po cichu na liście powiadomień i w skrzynce.
+- **Wiesz, dlaczego odwołano Twoją rezerwację.** Gdy administrator odwoła rezerwację
+  w panelu, pilot i drugi pilot dostają wiadomość z powodem, a karta rezerwacji pokazuje go
+  razem z nazwiskiem osoby, która odwołała. Drugi pilot dowiaduje się też, gdy rezerwację
+  odwoła sam dowódca. Panel i aplikacja mówią to przed kliknięciem „Odwołaj".
 
 ### Poprawki
 

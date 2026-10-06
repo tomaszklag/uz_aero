@@ -37,7 +37,13 @@ export type PushTarget =
   | { screen: 'Notifications'; params?: { foreignClub: true } };
 
 /** Rodzaje z `bookingNotices.ts` (serwer) - zmiana tam wymaga zmiany tutaj. */
-const MINE: ReadonlySet<string> = new Set(['booking_approved', 'booking_rejected', 'booking_expired']);
+const MINE: ReadonlySet<string> = new Set([
+  'booking_approved',
+  'booking_rejected',
+  'booking_expired',
+  // Odwołanie rezerwacji (§12.9) - karta pokazuje powód i nazwisko odwołującego (23G).
+  'booking_cancelled',
+]);
 /** Rodzaje z `aircraftNotices.ts` (serwer) - wszystkie otwierają kartę maszyny. */
 const AIRCRAFT: ReadonlySet<string> = new Set([
   'aircraft_flight_soon',

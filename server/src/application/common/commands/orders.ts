@@ -226,7 +226,7 @@ export class OrderCommands {
         const order = await this.orders.close(tx, orgId, id, { status: 'cancelled', at: now, by: actor.pilotId, reason });
         if (order == null) throw new OrderDenied('order_closed');
         const booking =
-          (await this.bookings.close(tx, orgId, loaded.booking.id, { status: 'cancelled', at: now, reason })) ??
+          (await this.bookings.close(tx, orgId, loaded.booking.id, { status: 'cancelled', at: now, reason, by: actor.pilotId })) ??
           loaded.booking;
         await this.changes.insert(
           tx,

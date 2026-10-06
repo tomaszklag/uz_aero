@@ -37,11 +37,19 @@ Formularz ma dwa kroki i zaczyna się od tego, o co konkurują piloci. Te same d
 Karta rezerwacji pokazuje termin jako pierwszą rzecz na ekranie: dzień, godziny czasem klubu, długość i odliczanie („ZA 1 H 15 MIN"). Pod nim maszyna, zadanie, trasa i drugi pilot, a niżej plan lotu - czas, paliwo i notatka.
 
 - **PRZESUŃ I POPRAW** wraca do formularza z wypełnionymi polami. Zmienisz godziny, zadanie, trasę i plan.
-- **ODWOŁAJ REZERWACJĘ** zwalnia termin - z pytaniem, które nazywa konkretny wpis, i z miejscem na powód. Powód jest dobrowolny, ale to po nim kolega pozna, czemu slot się zwolnił.
+- **ODWOŁAJ REZERWACJĘ** zwalnia termin - z pytaniem, które nazywa konkretny wpis, i z miejscem na powód. Powód jest dobrowolny, ale to po nim kolega pozna, czemu slot się zwolnił. Jeśli lecisz z drugim pilotem, pytanie mówi, że dostanie on wiadomość - razem z Twoim powodem, jeśli go podasz.
 
 Rezerwacji, która już trwa, nie da się przesunąć - można ją tylko oddać. Cudzej nie da się ani jedno, ani drugie.
 
 @screen 23-rezerwacja-szczegoly "Karta rezerwacji"
+
+### Gdy rezerwację odwoła ktoś inny
+
+Administrator klubu może odwołać Twoją rezerwację w panelu - na przykład gdy maszyna musi iść na przegląd. Podaje wtedy powód, a Ty i drugi pilot dostajecie wiadomość w skrzynce. Tak samo drugi pilot dostaje wiadomość, gdy rezerwację odwoła dowódca.
+
+Wiadomość prowadzi na kartę rezerwacji. U góry stoi wtedy czerwony baner z nazwiskiem osoby, która odwołała, i z powodem, a jedynym wyjściem jest **WYBIERZ INNY TERMIN**. Kto odwołał sam, banera nie widzi - wie, co zrobił.
+
+@screen 23g-rezerwacja-odwolana "Rezerwacja odwołana przez klub"
 
 ## Wejście w lot z rezerwacji
 
@@ -82,7 +90,7 @@ Technik przygotowujący maszynę i koordynator lotów mają dziś wobec samolotu
 **Obserwowanie** to jeden przełącznik na karcie. Włączone, daje pięć rodzajów wiadomości w skrzynce powiadomień aplikacji (dzwonek na pulpicie) i powiadomienie na telefon:
 
 1. **zbliża się lot** - godzinę przed potwierdzoną rezerwacją;
-2. **odwołany termin** - wyłącznie taki, o którym już przypomniano; termin odwołany wcześniej nikogo nie budzi, bo nikt na niego nie czekał;
+2. **odwołany termin** - wyłącznie taki, o którym już przypomniano; termin odwołany wcześniej nikogo nie budzi, bo nikt na niego nie czekał. Jeśli siedzisz w fotelu tej rezerwacji, dostajesz zamiast tego wiadomość „Rezerwacja odwołana" z powodem - jedną, nie dwie;
 3. **uruchomienie silnika** - z adnotacją, czy lot odbywa się zgodnie z rezerwacją, czy poza planem;
 4. **maszyna zdana** - z odczytami paliwa i licznika, czasem uruchomienia i wyłączenia, liczbą lotów;
 5. **nikt nie odebrał** - zarezerwowana maszyna stała godzinę bez przejęcia i termin wrócił do puli.
