@@ -1020,6 +1020,13 @@ export interface BookingRecord {
   closedAt: number | null;
   closeReason: string | null;
   /**
+   * Kto zamknął wiersz (migracja 17, `docs/rezerwacje.md` §12.9) - odwołujący albo
+   * odrzucający. `null` przy zamknięciu przez CZAS (zwolnienie slotu, wygaśnięcie)
+   * i przy wierszach sprzed migracji. Karta rezerwacji odróżnia po nim odwołanie przez
+   * klub od własnego - sam powód tego nie mówi, bo pilot podaje go też przy własnym.
+   */
+  closedBy: string | null;
+  /**
    * Stempel przypomnienia „za godzinę" dla obserwujących maszynę (3.2.0, issue #205,
    * §4.2 tamtego dokumentu). `null` = nikomu jeszcze nie przypomniano; odwołanie
    * terminu Z tym stemplem rodzi wiadomość „odwołany lot", bez stempla odwołuje się
@@ -1140,12 +1147,16 @@ export interface BookingsPort {
   /**
    * Zamknięcie: odwołanie, odrzucenie albo zwolnienie slotu. Status przychodzi
    * z zewnątrz, bo to komenda wie, KTÓRE z trzech się właśnie dzieje.
+   *
+   * `by` jest WYMAGANE, choć bywa `null` (zamknął czas): każde nowe miejsce zamknięcia
+   * ma świadomie powiedzieć, czy zamyka człowiek - pominięte pole zgasiłoby baner
+   * „Rezerwacja odwołana" na karcie pilota bez jednego czerwonego testu.
    */
   close(
     tx: Queryable,
     orgId: string,
     id: string,
-    change: { status: BookingStatus; at: Date; reason: string | null },
+    change: { status: BookingStatus; at: Date; reason: string | null; by: string | null },
   ): Promise<BookingRecord | null>;
   /**
    * Rezerwacja przeszła ścieżkę akceptacji (3.1.0, §11): `pending` → `confirmed`.

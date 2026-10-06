@@ -63,6 +63,8 @@ interface BookingDbRow {
   updated_at: string | Date;
   closed_at: string | Date | null;
   close_reason: string | null;
+  /** Kto zamknął wiersz (migracja 17) - `null` przy zamknięciu przez czas. */
+  closed_by: string | null;
   /** Stempel przypomnienia „za godzinę" (migracja 15, obserwowanie samolotu). */
   reminded_at: string | Date | null;
   /** Zlecenie, dla którego rezerwacja trzyma termin (migracja 16, zlecenia na lot). */
@@ -72,7 +74,8 @@ interface BookingDbRow {
 const COLUMNS = `
   id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, dual_id, operation,
   from_icao, to_icao, planned_air_min, planned_fuel_l, session_uuid, block_reason,
-  note, created_by, created_at, updated_at, closed_at, close_reason, reminded_at, order_id
+  note, created_by, created_at, updated_at, closed_at, close_reason, reminded_at, order_id,
+  closed_by
 `;
 
 /**
@@ -115,6 +118,7 @@ const toRecord = (r: BookingDbRow): BookingRecord => ({
   updatedAt: ms(r.updated_at),
   closedAt: r.closed_at == null ? null : ms(r.closed_at),
   closeReason: r.close_reason,
+  closedBy: r.closed_by,
   remindedAt: r.reminded_at == null ? null : ms(r.reminded_at),
   orderId: r.order_id,
 });
@@ -308,14 +312,14 @@ export class PgBookingsRepo implements BookingsPort {
     tx: Queryable,
     orgId: string,
     id: string,
-    change: { status: BookingStatus; at: Date; reason: string | null },
+    change: { status: BookingStatus; at: Date; reason: string | null; by: string | null },
   ): Promise<BookingRecord | null> {
     const { rows } = await tx.query<BookingDbRow>(
       `UPDATE bookings
-          SET status = $3, closed_at = $4, close_reason = $5, updated_at = $4
+          SET status = $3, closed_at = $4, close_reason = $5, closed_by = $6, updated_at = $4
         WHERE org_id = $1 AND id = $2 AND status IN (${HOLDING})
         RETURNING ${COLUMNS}`,
-      [orgId, id, change.status, change.at, change.reason],
+      [orgId, id, change.status, change.at, change.reason, change.by],
     );
     return rows[0] == null ? null : toRecord(rows[0]);
   }

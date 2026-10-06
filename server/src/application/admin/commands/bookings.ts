@@ -39,6 +39,7 @@ import type { ApprovalFlow } from '../../common/commands/approvals.ts';
 import type { OrderBookingCommands } from '../../common/commands/orderBookings.ts';
 import { orderActorOf } from '../../common/orderAccess.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
+import { bookingCancelled } from '../../common/notify/bookingNotices.ts';
 import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { Notifier, RecordedNotice } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
@@ -178,6 +179,7 @@ export class AdminBookingCommands {
     const at = this.clock.now();
     let watchNotices: RecordedNotice[] = [];
     let withdrawn: RecordedNotice[] = [];
+    let cancelled: RecordedNotice[] = [];
     try {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
@@ -192,20 +194,30 @@ export class AdminBookingCommands {
           status: 'cancelled',
           at,
           reason,
+          by: actor.pilotId,
         });
         // Wiersz przestał być czynny między odczytem a zapisem (telefon pilota, zadanie
         // okresowe). Ta sama odpowiedź, co przy rezerwacji już zamkniętej.
         if (closed == null) throw new Refused('booking_closed');
 
+        // Obietnica „Pilot zobaczy powód w aplikacji" (§12.9): oba fotele dostają powód
+        // tą samą transakcją, co odwołanie i ślad audytu. Wyłączenie z użytku nie ma
+        // foteli, więc wiadomości nie rodzi. Kto dostał tę wiadomość, nie dostaje drugiej
+        // o tym samym fakcie w innej roli (krok zgody, obserwujący).
+        const seated = bookingCancelled(current, { reason, cancelledBy: actor.pilotId });
+        const told = seated.map((d) => d.pilotId);
+        cancelled = await this.notifier.record(tx, actor.orgId, seated, at);
+
         // Czekająca sprawa: osoby kroku bieżącego dowiadują się, że prośba jest wycofana
         // (issue #233) - administrator nie budzi przy tym sam siebie.
-        withdrawn = await this.approvals.withdraw(tx, actor.orgId, current, actor.pilotId);
+        withdrawn = await this.approvals.withdraw(tx, actor.orgId, current, actor.pilotId, told);
 
         // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2) - tą samą transakcją, co
         // odwołanie i ślad audytu; administrator o własnej decyzji nie słyszy.
         if (this.watching != null && current.remindedAt != null) {
           const audience = await this.watching.audience(tx, actor.orgId, current.aircraftId, [
             actor.pilotId,
+            ...told,
           ]);
           if (audience != null) {
             const drafts = aircraftFlightCancelled(audience, current, null);
@@ -230,7 +242,7 @@ export class AdminBookingCommands {
           },
         };
       });
-      if (withdrawn.length > 0) await this.notifier.wake(actor.orgId, withdrawn);
+      await this.notifier.wake(actor.orgId, [...withdrawn, ...cancelled]);
       if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
       await this.signals.booking(actor.orgId, booking);
       return { ok: true, booking };

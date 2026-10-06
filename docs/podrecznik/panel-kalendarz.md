@@ -41,7 +41,7 @@ Zamknięcie formularza z wpisanymi godzinami albo zadaniem pyta, czy porzucić r
 Karta Twojej rezerwacji ma dwie akcje, jak w aplikacji:
 
 - **Przesuń i popraw** - wraca do formularza z Twoim wpisem; możliwe, dopóki termin się nie zaczął. Poprawka zmienia tylko to, co zmieniłeś. **Inna maszyna to nowa rezerwacja**: zapis zakłada nowy termin i dopiero wtedy odwołuje stary. W klubie ze ścieżką akceptacji **zmiana godzin czyści dotychczasowe zgody** - zgoda dotyczyła konkretnego terminu - i formularz mówi to przed zapisem. Zadanie, trasę i notatkę poprawiasz bez tego.
-- **Odwołaj rezerwację** - także taką, która już trwa (nie polecisz, oddajesz termin). Bez pola powodu: to Twój plan i nie ma komu go tłumaczyć. Termin zwalnia się natychmiast. Jeśli rezerwacja czekała na zgodę, osoby z kroku, który miał decydować, dostają wiadomość, że prośba została wycofana.
+- **Odwołaj rezerwację** - także taką, która już trwa (nie polecisz, oddajesz termin). Bez pola powodu: to Twój plan i nie ma komu go tłumaczyć. Termin zwalnia się natychmiast. Jeśli lecisz z drugim pilotem, dostaje on wiadomość o odwołaniu. Jeśli rezerwacja czekała na zgodę, osoby z kroku, który miał decydować, dostają wiadomość, że prośba została wycofana. Karta mówi to wszystko nad przyciskiem, zanim go klikniesz.
 
 Rezerwacja odrzucona albo wygasła ma jedno wyjście: **Zarezerwuj inny termin** - zadanie i trasa przechodzą do nowej rezerwacji, termin nie, bo to on przepadł.
 
@@ -49,7 +49,7 @@ Rezerwacja odrzucona albo wygasła ma jedno wyjście: **Zarezerwuj inny termin**
 
 ## Co ma w kalendarzu administrator
 
-Z odpowiednimi uprawnieniami nad osią dochodzą trzy przyciski wyciszone obok **Zarezerwuj**: **Ścieżka akceptacji** (kroki i osoby, [akceptacja rezerwacji](akceptacja-rezerwacji)), **Zarezerwuj za pilota** (rezerwacja na konto innego pilota, bez sugestii - wpisuje się konkretny termin) i **Wyłącz maszynę z użytku** (przegląd albo usterka na wybrane dni). Karta cudzej rezerwacji ma wtedy odwołanie z **wymaganym powodem** - pilot przeczyta go w aplikacji. Kto akceptuje rezerwacje, widzi nad osią baner z liczbą spraw czekających na jego zgodę.
+Z odpowiednimi uprawnieniami nad osią dochodzą trzy przyciski wyciszone obok **Zarezerwuj**: **Ścieżka akceptacji** (kroki i osoby, [akceptacja rezerwacji](akceptacja-rezerwacji)), **Zarezerwuj za pilota** (rezerwacja na konto innego pilota, bez sugestii - wpisuje się konkretny termin) i **Wyłącz maszynę z użytku** (przegląd albo usterka na wybrane dni). Karta cudzej rezerwacji ma wtedy odwołanie z **wymaganym powodem** - pilot i drugi pilot dostają go w wiadomości i widzą na karcie rezerwacji w aplikacji, razem z Twoim nazwiskiem. Jeśli sam siedzisz w którymś fotelu, wiadomości o własnym odwołaniu nie dostajesz. Kto akceptuje rezerwacje, widzi nad osią baner z liczbą spraw czekających na jego zgodę.
 
 ## Dlaczego tak to działa
 

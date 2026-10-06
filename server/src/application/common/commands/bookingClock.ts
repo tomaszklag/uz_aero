@@ -148,6 +148,8 @@ export class BookingClockJob {
           // nie powiedział - upłynął czas. Sam status `released` mówi wszystko, a napis
           // „zwolniono automatycznie" udawałby uzasadnienie.
           reason: null,
+          // Zamknął czas, nie człowiek - karta pilota nie ma kogo nazwać (§12.9).
+          by: null,
         });
         if (row == null) return { closed: null, notices: [] as RecordedNotice[] };
         // „Nie odebrano" do obserwujących (§5.5) - tą samą transakcją, co zwolnienie,
@@ -190,6 +192,7 @@ export class BookingClockJob {
           status: 'expired',
           at: now,
           reason: null,
+          by: null,
         });
         if (row == null) return null;
         // Wiadomość TĄ SAMĄ transakcją, co wygaszenie: pilot, który stracił termin,

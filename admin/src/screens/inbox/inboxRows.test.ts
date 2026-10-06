@@ -84,6 +84,21 @@ describe('wiersz skrzynki panelu', () => {
     expect(other).toMatchObject({ pill: null, href: '/kalendarz/b1' });
   });
 
+  it('rezerwacja odwołana (§12.9): rzeczownik z odwołującym, powód jako treść; bez powodu - skutek', () => {
+    const [byClub] = inboxRows(
+      input([item('booking_cancelled', { bookingId: 'b1', aircraftId: 'a2', ...TERM, pilotId: 'PLI', reason: 'Wymiana opony.', cancelledBy: 'JBA' })]),
+    );
+    expect(byClub).toMatchObject({ tone: 'no', icon: 'cross', title: 'Rezerwacja odwołana · Jan Bąk', href: '/kalendarz/b1' });
+    expect(text(byClub!.sub)).toBe('SP-DKM · sobota 3 PAŹ · 09:00 → 13:00');
+    expect(text(byClub!.text)).toBe('Wymiana opony.');
+
+    const [own] = inboxRows(
+      input([item('booking_cancelled', { bookingId: 'b2', aircraftId: 'a2', ...TERM, pilotId: 'PLI', reason: null, cancelledBy: 'ghost' })]),
+    );
+    expect(own!.title).toBe('Rezerwacja odwołana');
+    expect(text(own!.text)).toBe('Termin wrócił do puli.');
+  });
+
   it('zdana maszyna: chwila z rejestru w UTC, blok i loty, odczyty w formacie licznika maszyny', () => {
     const [row] = inboxRows(
       input([

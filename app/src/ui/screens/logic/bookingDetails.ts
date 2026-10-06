@@ -78,6 +78,12 @@ export interface BookingDetailsVm {
    * dotyczyła terminu.
    */
   editNote: string | null;
+  /**
+   * Ostrzeżenie arkusza odwołania - SKUTEK przed tapnięciem. Przy rezerwacji z drugim
+   * pilotem dochodzi zdanie o wiadomości do niego (§12.9, D2): odwołanie zawiadamia
+   * osoby w fotelach poza odwołującym.
+   */
+  cancelWarning: string;
 }
 
 const STATUS: Readonly<Record<string, string>> = {
@@ -109,10 +115,16 @@ export function bookingDetails(input: BookingDetailsInput): BookingDetailsVm {
     plan: planRows(b),
     canCancel: mine && open && b.endsAt > input.now,
     canEdit: mine && open && b.startsAt > input.now,
-    closed: mine && !open && b.kind === 'flight',
+    // Wyjście z zamkniętej należy do OBU foteli (§12.9): drugi pilot dostaje wiadomość
+    // o odwołaniu i ląduje tutaj - karta bez żadnej drogi dalej byłaby ślepym zaułkiem.
+    // Odwołać ani poprawić nie może nadal: to robi właściciel.
+    closed: (mine || b.dualId === input.pilotId) && !open && b.kind === 'flight',
     editNote: mine && open && b.startsAt > input.now && input.hasPath === true ? EDIT_NOTE : null,
+    cancelWarning: b.dualId == null ? CANCEL_WARNING : `${CANCEL_WARNING} Drugi pilot dostanie wiadomość.`,
   };
 }
+
+const CANCEL_WARNING = 'Slot wróci do kalendarza i będzie mógł go zająć ktoś inny.';
 
 function countdown(b: CalendarBooking, now: number, open: boolean): string | null {
   if (!open) return null;

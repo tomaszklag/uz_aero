@@ -314,12 +314,17 @@ export class ApprovalFlow {
    *
    * Wołający przekazuje wiersz SPRZED odwołania, bo to jego stan decyduje: rezerwacja
    * potwierdzona nikogo o nic nie pyta. Budzik (`wake`) zostaje wołającemu - po commicie.
+   *
+   * `alreadyTold` - osoby, które o TYM odwołaniu dostają już wiadomość w innej roli
+   * (fotel rezerwacji, `booking_cancelled`, §12.9). Drugi pilot stojący na kroku zgody
+   * dostaje jedną wiadomość o jednym fakcie - tę z powodem, nie dwie.
    */
   async withdraw(
     tx: Queryable,
     orgId: string,
     booking: BookingRecord,
     cancelledBy: string,
+    alreadyTold: readonly string[],
   ): Promise<RecordedNotice[]> {
     if (booking.kind !== 'flight' || booking.status !== 'pending') return [];
 
@@ -328,7 +333,9 @@ export class ApprovalFlow {
     const step = currentStep(path, decisions);
     if (step == null) return [];
 
-    const to = pendingApprovers(path, decisions).filter((id) => id !== cancelledBy);
+    const to = pendingApprovers(path, decisions).filter(
+      (id) => id !== cancelledBy && !alreadyTold.includes(id),
+    );
     const notices = approvalWithdrawn(noticeOf(booking), to, step, cancelledBy);
     return this.notifier.record(tx, orgId, notices, this.clock.now());
   }
@@ -508,6 +515,7 @@ export class ApprovalFlow {
                 // właściwym miejscem - inaczej niż przy zwolnieniu slotu i wygaśnięciu,
                 // gdzie nikt nic nie powiedział (§11.5).
                 reason: input.reason,
+                by: actor.pilotId,
               })
             : locked;
       // Pod blokadą wiersz jest `pending`, więc `confirm`/`close` zawsze coś oddają;

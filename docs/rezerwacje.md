@@ -1487,7 +1487,7 @@ i tapnięciu, zostaje w mocy; zmienia się tylko to, KIEDY push w ogóle wychodz
 „co 60 s" skrzynki (`useInbox`) znika - skrzynka odświeża się ramką i przy ponownym
 połączeniu.
 
-### 12.9 Odwołanie rezerwacji: wiadomość do osób w fotelach (PROPOZYCJA 2026-10-06, decyzje D1-D3 rozstrzygnięte)
+### 12.9 Odwołanie rezerwacji: wiadomość do osób w fotelach (2026-10-06, WYKONANE - stan na końcu sekcji)
 
 **Problem: obietnica bez pokrycia.** Panel żąda powodu przy odwołaniu CUDZEJ rezerwacji
 (P4, `refuseCancel`: „pilot, któremu ktoś zdjął sobotę, czyta w aplikacji dlaczego")
@@ -1575,6 +1575,39 @@ wiersz w `design/panel/powiadomienia.html`):
 **Poza zakresem tej propozycji** (osobne pytania, też bez wiadomości do pilota dziś):
 slot zwolniony przez zadanie okresowe po godzinie bez przejęcia (§4.1 - obserwujący
 dostają „nie odebrano", pilot nic) i rezerwacja założona ZA pilota z panelu.
+
+**Stan: WYKONANE 2026-10-06** (gałąź `feature-odwolanie-rezerwacji-powiadomienie`).
+Co doszło albo rozstrzygnęło się przy kodzie:
+
+- **`by` w `BookingsPort.close` jest WYMAGANE** (`string | null`), więc kompilator wskazał
+  każde z siedmiu miejsc zamknięcia. Człowiek zamyka swoim identyfikatorem - także przy
+  ODMOWIE (decydujący) i odwołaniu zlecenia; zwolnienie slotu, wygaśnięcie i zwolnienie
+  terminu zlecenia przez zegar piszą `null`. Nowe miejsce zamknięcia musi powiedzieć,
+  czy zamyka człowiek - pominięte pole zgasiłoby baner 23G bez czerwonego testu.
+- **Adresatów liczy JEDNA funkcja** (`bookingCancelled` w `notify/bookingNotices.ts`):
+  fotele minus odwołujący, bez powtórzeń. Obaj producenci (`AdminBookingCommands.cancel`,
+  `BookingCommands.cancel`) wołają ją w transakcji odwołania i budzą razem z
+  „prośbą wycofaną" jednym `wake`. **Jeden fakt, jedna wiadomość na osobę**: kto dostaje
+  „Rezerwację odwołaną" jako osoba w fotelu, nie dostaje drugiej o tym samym odwołaniu
+  w innej roli - ani „Prośby wycofanej" (drugi pilot na kroku zgody,
+  `ApprovalFlow.withdraw(…, alreadyTold)`), ani „Odwołano lot" jako obserwujący maszynę
+  (wykluczenie w `AircraftWatching.audience`). Wiadomość z fotela niesie powód
+  i prowadzi do karty rezerwacji, więc jest tą pełniejszą. Wyszło przy pełnej serii:
+  `aircraftWatch.test.ts` oczekiwał dla obserwującego pilota rezerwacji „Odwołano lot",
+  a dostałby dwie wiadomości.
+- **Karta 23G**: baner liczy osobny moduł `logic/bookingCancellation.ts` (niezależny od
+  ścieżki, więc poza `bookingApproval.ts`), a ekran pokazuje go, gdy baner ścieżki
+  milczy. **Drugi pilot dostaje na zamkniętej karcie wyjście „WYBIERZ INNY TERMIN"**
+  (`bookingDetails.closed`) - inaczej wiadomość prowadziłaby go w ślepy zaułek;
+  odwołanie i poprawka zostają przy właścicielu.
+- **Skutek przed kliknięciem**: w telefonie `bookingDetails.cancelWarning` (arkusz
+  odwołania), w panelu czysta funkcja `screens/calendar/cancelNote.ts` - zdanie zależy
+  od rodzaju wpisu, stanu i foteli, a odwołujący siedzący w fotelu nie obiecuje
+  wiadomości sobie.
+- **Testy z dowodem, że upadają bez poprawki**: serwer `bookingNotices.test.ts`
+  i `bookingCancelled.test.ts` (11 z 12 upada; strażnik wąskiego kształtu przechodzi
+  z definicji), aplikacja `bookingCancellation.test.ts` i przypadki w `inbox`,
+  `pushTarget`, `bookingDetails`, panel `cancelNote.test.ts` i przypadek w `inboxRows`.
 
 ## 13. Etapy i kolejność realizacji
 
