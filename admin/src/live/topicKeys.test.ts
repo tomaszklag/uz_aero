@@ -42,7 +42,15 @@ describe('temat kanału → klucze zapytań', () => {
     ]);
   });
 
-  it('tematy zleceń i nieznane nie odświeżają niczego - Z-D dopisze swoje klucze', () => {
-    expect(prefixesForTopics(['order:o1', 'orders', 'cos:nowego', 'booking:'])).toEqual([]);
+  it('zlecenia: temat `orders` odświeża obie połowy listy i liczby modułu', () => {
+    expect(prefixesForTopics(['orders'])).toEqual([keys.orders.all]);
+    // Prefiks korzenia jest początkiem każdego klucza modułu - inaczej sygnał nie
+    // dosięgnąłby listy, na którą ktoś właśnie patrzy.
+    expect(keys.orders.list('managed').slice(0, 1)).toEqual(keys.orders.all);
+    expect(keys.orders.summary.slice(0, 1)).toEqual(keys.orders.all);
+  });
+
+  it('tematy nieznane nie odświeżają niczego', () => {
+    expect(prefixesForTopics(['cos:nowego', 'booking:'])).toEqual([]);
   });
 });

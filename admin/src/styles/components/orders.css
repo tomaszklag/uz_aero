@@ -1,0 +1,57 @@
+/* ══ ZLECENIA NA LOT (4.0.0, `docs/zlecenia.md` §15; epik Z-D #248) ═══════════════
+   Klasy przeszły z `design/panel/rama.css` (sekcja „ZLECENIA (4.0.0) - czekają na kod
+   epiku Z-D") pod TYMI SAMYMI nazwami - makiety i panel widzą je z jednego miejsca.
+
+   Język wizualny jest ten sam, co w makietach telefonu 28/29/32: BŁĘKIT niesie
+   zlecenie (pytanie klubu, „rzecz, która się dzieje"), ZIELEŃ - odpowiedź, na którą
+   prowadzący czeka („Może lecieć"), i akcję główną; BURSZTYN - to, co trzeba
+   zauważyć przed decyzją; CZERWIEŃ - to, co komuś coś odbiera (odwołanie, odebranie
+   zlecenia, cofnięcie przydziału).
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── FOTELE W WIERSZU LISTY ZLECEŃ (§6.2) ──
+   Komórka „Fotele" to etykieta adresowania z serwera (`audience_label`) rozpisana na
+   wiersze: fotel po lewej, do kogo poszedł po prawej. Nazwisko znaczy „imiennie",
+   nazwa grupy - „grupa", więc słowa „imiennie" nie trzeba dopisywać. Fotel w stanie
+   „brak" wiersza nie ma - zdanie o pustym fotelu byłoby zdaniem o niczym. */
+.order-seats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+  row-gap: 2px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.order-seat-k {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── NOWA WIADOMOŚĆ W WIERSZU LISTY (§7.3, wzorzec 30) ──
+   Ikona rozmowy z błękitną kropką przed plakietką stanu - tylko z treścią: cudze
+   rozmowy koordynator wyłącznie czyta, więc nie ma w nich wiadomości do niego, a pusta
+   ikona przy każdym wierszu byłaby szumem. Kropka mówi o ROZMOWIE, nie o zleceniu -
+   o tym, że zlecenie na coś czeka, mówi plakietka obok. Poza szufladą nową wiadomość
+   zapowiada jeszcze skrzynka pod dzwonkiem (kanał klubu, K7) - jednym wierszem na
+   rozmowę. */
+.msg-ind {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
+  color: var(--text-muted);
+}
+
+.msg-ind::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--surface);
+}

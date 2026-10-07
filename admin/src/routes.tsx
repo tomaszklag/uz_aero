@@ -37,6 +37,7 @@ import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
 import { DecisionQueueScreen } from './screens/calendar/DecisionQueueScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
+import { OrdersScreen } from './screens/orders/OrdersScreen';
 import { AccountScreen } from './screens/me/AccountScreen';
 import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
@@ -236,6 +237,19 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="club">
             <CalendarScreen />
+          </RequireCapability>
+        ),
+      },
+
+      // ZLECENIA (4.0.0, epik Z-D #248; `docs/zlecenia.md` §15): moduł KAŻDEGO członka
+      // klubu (`club`), jak kalendarz - zlecenie trafia do każdego. Połowa listy i okres
+      // stoją w adresie (`?widok=`, `?okres=`); szuflada zlecenia i rozmowa dojdą pod
+      // własnymi adresami w kolejnych etapach epiku.
+      {
+        path: 'zlecenia',
+        element: (
+          <RequireCapability access="club">
+            <OrdersScreen />
           </RequireCapability>
         ),
       },

@@ -11,6 +11,7 @@ import type { CalendarRange, SuggestionsQuery } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
 import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
+import type { OrderBox } from '../api/orders';
 import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
 import type { StatsQuery } from '../api/stats';
@@ -211,6 +212,18 @@ export const keys = {
   bugs: {
     all: ['bugs'] as const,
     list: (query: BugListQuery) => ['bugs', 'list', query] as const,
+  },
+
+  /**
+   * Zlecenia na lot (4.0.0, epik Z-D #248). KORZEŃ obejmuje listy i liczby modułu, bo
+   * starzeją się od tej samej rzeczy - sygnału `orders` kanału klubu (odpowiedź, odczyt,
+   * przydział, nowe zlecenie). Połowa listy jest częścią pytania: „Do mnie" i „Zlecone"
+   * to dwie różne odpowiedzi serwera i obie mają prawo żyć w cache obok siebie.
+   */
+  orders: {
+    all: ['orders'] as const,
+    summary: ['orders', 'summary'] as const,
+    list: (box: OrderBox) => ['orders', 'list', box] as const,
   },
 
   /**

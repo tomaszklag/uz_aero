@@ -266,6 +266,13 @@ tbody tr.muted .cell-strong {
   color: var(--amber);
 }
 
+/* Druga linia komórki w tonie ODPOWIEDZI, na którą prowadzący czeka („2 mogą
+   lecieć", lista zleceń 4.0.0). Jedyna liczba wiersza w zieleni: odczyty mówią, czy
+   ktoś zlecenie widział, a ta - czy jest z kogo wybrać. */
+.cell-sub.ok {
+  color: var(--green);
+}
+
 /* Nazwisko PRZYGASZONE w obsadzie kroku ścieżki akceptacji (`kalendarz-sciezka` K4c):
    osoba, która nie rozstrzygnie kroku, ZOSTAJE na liście - to konfiguracja klubu
    i nie zmienia się sama - ale schodzi o stopień, żeby administrator na nią nie liczył.

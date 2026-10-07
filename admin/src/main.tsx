@@ -37,6 +37,7 @@ import './styles/components/bugs.css';
 import './styles/components/attention.css';
 import './styles/components/stats.css';
 import './styles/components/inbox.css';
+import './styles/components/orders.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

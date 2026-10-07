@@ -40,8 +40,12 @@ export interface Column<Row> {
   header: ReactNode;
   /** `num` = mono, do prawej, `tabular-nums` (klasa `.num` z szablonu). */
   align?: 'num';
-  /** Dodatkowe klasy komórki - wyłącznie modyfikatory z szablonu (`mono`, `dim`). */
-  cellClass?: string;
+  /**
+   * Dodatkowe klasy komórki - wyłącznie modyfikatory z szablonu (`mono`, `dim`). Funkcja,
+   * gdy modyfikator zależy od WIERSZA (`td.dim` przy „Nieodczytane" na liście zleceń) -
+   * nazwę klasy i tak wybiera moduł czysty, tabela ją tylko stawia.
+   */
+  cellClass?: string | ((row: Row) => string | undefined);
   /** Obecne wyłącznie na kolumnie, po której serwer FAKTYCZNIE umie sortować. */
   sort?: ColumnSort;
   render: (row: Row) => ReactNode;
@@ -125,7 +129,8 @@ export function DataTable<Row>({
           onClick={onRowClick == null ? undefined : () => onRowClick(row)}
         >
           {columns.map((column) => {
-            const cell = [column.align === 'num' ? 'num' : null, column.cellClass]
+            const extraCell = typeof column.cellClass === 'function' ? column.cellClass(row) : column.cellClass;
+            const cell = [column.align === 'num' ? 'num' : null, extraCell]
               .filter((c) => c != null)
               .join(' ');
             return (

@@ -87,7 +87,7 @@ const unionIn = (file: string, name: string): string[] =>
 const constIn = (file: string, name: string): string[] =>
   literalsInBlock(file, new RegExp(String.raw`export const ${name} = \[([\s\S]*?)\]`), name);
 
-/** Sześć luster: unia w panelu -> deklaracja na serwerze. */
+/** Lustra: unia w panelu -> deklaracja na serwerze. */
 const MIRRORS = [
   {
     panel: 'Capability',
@@ -210,6 +210,45 @@ const MIRRORS = [
     panel: 'ExportFailureDto',
     server: 'ExportFailureDto',
     read: () => unionIn(EXPORTS, 'ExportFailureDto'),
+  },
+  // ZLECENIA NA LOT (4.0.0, epik Z-D #248). Fotel, stany foteli, sposób adresowania,
+  // stan zlecenia, odpowiedź i powód „nieaktualne" - z każdego panel pisze napis przy
+  // wierszu listy albo w szufladzie, więc pozycja dodana na serwerze bez lustra
+  // wyszłaby na ekran surowym `seat_dropped`.
+  {
+    panel: 'SeatDto',
+    server: 'Seat',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'Seat'),
+  },
+  {
+    panel: 'PicSeatStateDto',
+    server: 'PicSeatState',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'PicSeatState'),
+  },
+  {
+    panel: 'DualSeatStateDto',
+    server: 'DualSeatState',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'DualSeatState'),
+  },
+  {
+    panel: 'OrderAddressingDto',
+    server: 'OrderAddressing',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderAddressing'),
+  },
+  {
+    panel: 'OrderStatusDto',
+    server: 'OrderStatus',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderStatus'),
+  },
+  {
+    panel: 'OrderAnswerDto',
+    server: 'OrderAnswer',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderAnswer'),
+  },
+  {
+    panel: 'StaleReasonDto',
+    server: 'StaleReason',
+    read: () => unionIn(join(SERVER, 'orderAnswers.ts'), 'StaleReason'),
   },
 ] as const;
 

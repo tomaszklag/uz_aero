@@ -236,6 +236,27 @@
   color: var(--bg);
 }
 
+/* ── GRUPY KOLUMNY BOCZNEJ (4.0.0, decyzja właściciela 2026-09-28, `docs/zlecenia.md` §15) ──
+   Zlecenia są siódmym modułem klubu, a `docs/panel-3.2.md` §3 kazał przy siódmym wrócić
+   do decyzji o grupach: pozycje stoją odtąd w trzech - Loty (Dziennik, Do sprawdzenia,
+   Statystyki), Planowanie (Kalendarz, Zlecenia), Klub (Piloci, Samoloty). Nagłówek jest
+   SAMYM PODPISEM: grupy się nie zwijają, bo siedem pozycji mieści się w kolumnie, a przycisk
+   bez funkcji nie wchodzi (to samo zdanie, przez które w pasku nie ma wyszukiwarki).
+   Nagłówki istnieją WYŁĄCZNIE przy co najmniej dwóch widocznych grupach - pilot z samym
+   Kalendarzem i Zleceniami ma listę płaską, tak samo rama superadministratora - a grupa
+   bez widocznej pozycji znika w całości (`ui/shell/nav.ts`, `navSectionsFor`). Krój
+   tekstowy w pisowni zdaniowej, nie mono-wersaliki (styl lekki, issue #107). */
+.nav-group {
+  padding: 14px 10px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nav-group:first-child {
+  padding-top: 2px;
+}
+
 /* ── okruszki ──
    Wyłącznie tam, gdzie ekran leży POD innym ekranem (dziennik: flota → maszyna →
    operacja). Na liście modułu okruszek opisywałby jedno kliknięcie w kolumnie obok -
