@@ -246,6 +246,14 @@ describe('krok terminu wspólny ze zleceniem (31; epik Z-C #247)', () => {
     expect(bookingsExcept([own], null)).toEqual([own]);
   });
 
+  it('wyjęty jest WYŁĄCZNIE poprawiany termin - cudza zajętość dalej blokuje', () => {
+    const own = booking({ id: 'moja', startsAt: at(11), endsAt: at(13) });
+    const other = booking({ id: 'cudza', startsAt: at(12), endsAt: at(14) });
+    expect(step1Blocker(gate({ bookings: bookingsExcept([own, other], 'moja') }))).toBe(
+      'SP-AXA jest w tych godzinach zajęta.',
+    );
+  });
+
   it('zlecenie mówi o terminie swoimi słowami - reguły te same', () => {
     const words = { noDay: 'Wybierz dzień lotu.', noHours: 'Ustaw godziny lotu.', reversed: 'Koniec terminu wypada przed jego początkiem.' };
     expect(step1Blocker(gate({ words, draft: draft({ date: null }) }))).toBe('Wybierz dzień lotu.');

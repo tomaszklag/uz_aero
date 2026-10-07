@@ -83,6 +83,12 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Poprawki
 
+- **Po zapisie rezerwacji otwiera się jej karta.** Po „Zarezerwuj" i „Zapisz" formularz
+  wracał pusty do pierwszego kroku, choć rezerwacja była już zapisana - łatwo było uznać,
+  że się nie udało.
+- **„Przesuń i popraw" działa od razu.** Poprawiana rezerwacja zderzała się sama ze sobą,
+  więc „Dalej" stało zablokowane, zanim cokolwiek się zmieniło, a karta samolotu pokazywała
+  jej własny termin jako zajęty.
 - **Nieudane odwołanie rezerwacji mówi o sobie w arkuszu odwołania** - do tej pory powód
   chował się pod arkuszem, a podpowiedź w polu powodu mówiła o GPS. Karta rezerwacji nie
   pokazuje też ciągu znaków zamiast nazwiska osoby spoza pamięci telefonu - stoi kreska.

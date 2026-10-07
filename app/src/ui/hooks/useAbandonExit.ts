@@ -11,6 +11,10 @@
  * należy do formularza - preflight pyta o niepusty szkic, a stepper wpisu ręcznego
  * najpierw cofa krok i pyta dopiero z pierwszego. Ta różnica jest treścią obu ekranów,
  * nie wspólną mechaniką.
+ *
+ * Formularz, który ZAPISAŁ i wychodzi, też wychodzi przez hook (`proceed`), nigdy wprost
+ * przez `navigation` - inaczej bramka przechwyciłaby jego własne wyjście (`PROCEED_PHASE`;
+ * pilnuje tego strażnik w `architecture.test.ts`).
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -21,6 +25,7 @@ import {
   abandonGuards,
   abandonSheetMounted,
   nextAbandonPhase,
+  PROCEED_PHASE,
   type AbandonPhase,
 } from './abandonExit';
 
@@ -78,10 +83,10 @@ export function useAbandonExit(
   }, [onLeave]);
 
   // Bez arkusza nie ma okna do zamknięcia, więc faza `closing` jest zbędna - od razu
-  // `leaving`, w którym bramka już nie łapie, a akcja czeka na re-render.
+  // faza, w której bramka już nie łapie, a akcja czeka na re-render (`PROCEED_PHASE`).
   const proceed = useCallback((next: NavigationAction) => {
     setAction(next);
-    setPhase('leaving');
+    setPhase(PROCEED_PHASE);
   }, []);
 
   /*
