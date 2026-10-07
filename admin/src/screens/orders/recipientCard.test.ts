@@ -230,3 +230,28 @@ describe('lot już mój', () => {
     expect(vmOf(card(me({ assignedSeat: 'pic', answer: 'yes' }), {}, {}, { pilotId: 'ako' })).kind).toBe('booking');
   });
 });
+
+describe('karta „Rozmowa" - z osobą zlecającą', () => {
+  it('bez wiadomości: do kogo napiszesz', () => {
+    expect(vmOf(card(me())).thread).toEqual({ title: 'Napisz wiadomość', sub: 'Marta Zięba · zleca', readOnly: false });
+  });
+
+  it('z nową wiadomością: ile i kiedy', () => {
+    const vm = vmOf(card(me({ threadId: 't1', unread: 2, lastUnreadAt: '2026-10-01T16:31:00Z' })));
+    expect(vm.thread).toEqual({ title: 'Rozmowa · Marta Zięba', sub: '2 nowe wiadomości · 18:31', readOnly: false });
+  });
+
+  it('rozmowa bez nowych - podpis jak nagłówek rozmowy', () => {
+    expect(vmOf(card(me({ threadId: 't1' }))).thread).toEqual({ title: 'Rozmowa · Marta Zięba', sub: 'zleca · MZI', readOnly: false });
+  });
+
+  it('zlecenie nieaktualne: rozmowa do odczytu, o ile powstała', () => {
+    const stale = me({ inPlay: false, staleReason: 'removed', removed: true });
+    expect(vmOf(card({ ...stale, threadId: 't1' })).thread).toEqual({
+      title: 'Rozmowa · Marta Zięba',
+      sub: 'do odczytu',
+      readOnly: true,
+    });
+    expect(vmOf(card(stale)).thread).toBeNull();
+  });
+});

@@ -266,6 +266,16 @@ export const router = createHashRouter([
           </RequireCapability>
         ),
       },
+      // Rozmowa z adresatem - szuflada nad tą samą listą, pod własnym adresem (link
+      // z wiadomości „Wiadomość w zleceniu" da się wkleić).
+      {
+        path: 'zlecenia/:id/rozmowa/:recipientId',
+        element: (
+          <RequireCapability access="club">
+            <OrdersScreen />
+          </RequireCapability>
+        ),
+      },
 
       // Moduł PLATFORMY (`docs/wielofirmowosc.md` §8.1), więc trasa pyta o zdolność -
       // ta sama reguła, co przy Zgłoszeniach: wklejony adres mówi administratorowi klubu,

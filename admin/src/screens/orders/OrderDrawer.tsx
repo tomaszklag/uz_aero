@@ -23,18 +23,20 @@ import { LeaderDrawer } from './LeaderDrawer';
 import { RecipientDrawer } from './RecipientDrawer';
 import { orderLookups } from './orderLookups';
 import { orderView } from './orderView';
-import type { OrderView } from './orderPaths';
+import { threadPath, type OrderPeriod, type OrderView } from './orderPaths';
 
 interface Props {
   orderId: string;
   /** Połowa listy pod szufladą - mówi, czy wchodzi się jako prowadzący, czy adresat. */
   from: OrderView | null;
   viewerId: string | null;
+  /** Okres listy pod szufladą - rozmowa otwiera się nad tą samą listą. */
+  period: OrderPeriod;
   directory: DirectoryDto | undefined;
   onClose: () => void;
 }
 
-export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Props) {
+export function OrderDrawer({ orderId, from, viewerId, period, directory, onClose }: Props) {
   const card = useOrder(orderId);
   const lookups = orderLookups(directory);
   const navigate = useNavigate();
@@ -67,6 +69,7 @@ export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Pro
         orderId={orderId}
         person={lookups.person}
         aircraft={lookups.aircraft}
+        threadHref={threadPath(orderId, viewerId ?? '', 'do-mnie', period)}
         onClose={onClose}
         onBooking={(bookingId) => navigate(toBooking(bookingId), { replace: true })}
       />
@@ -80,6 +83,7 @@ export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Pro
       person={lookups.person}
       aircraft={lookups.aircraft}
       members={directory?.members ?? []}
+      threadHref={(pilotId) => threadPath(orderId, pilotId, 'zlecone', period)}
       onClose={onClose}
     />
   );

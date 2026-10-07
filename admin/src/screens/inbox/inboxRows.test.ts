@@ -150,10 +150,34 @@ describe('wiersz skrzynki panelu', () => {
     expect(text(row!.text)).toBe('Termin 09:00-11:00 → 10:00-12:00. Odpowiedz na nowy termin.');
   });
 
-  it('rozmowa: autor pogrubiony i plakietka z liczbą nowych wiadomości', () => {
-    const [row] = inboxRows(input([item('order_message', { aircraftId: 'a1', ...TERM, authorId: 'BNO', unread: 2 })]));
+  it('rozmowa: autor pogrubiony, ostatnia wiadomość cytatem i plakietka z liczbą nowych', () => {
+    const [row] = inboxRows(
+      input([item('order_message', { aircraftId: 'a1', ...TERM, authorId: 'BNO', unread: 2, preview: 'Mogę od 10.' })]),
+    );
     expect(row).toMatchObject({ tone: 'ask', icon: 'chat', pill: { text: '2 nowe wiadomości', tone: 'blue' } });
-    expect(text(row!.text)).toBe('Barbara Nowak');
+    expect(text(row!.text)).toBe('Barbara Nowak · „Mogę od 10."');
+  });
+
+  it('rozmowa: licznik świeci, póki wiersz jest nowy', () => {
+    const [row] = inboxRows(
+      input([item('order_message', { aircraftId: 'a1', ...TERM, authorId: 'BNO', unread: 2 }, { readAt: new Date(NOW).toISOString() })]),
+    );
+    expect(row?.pill).toBeNull();
+  });
+
+  it('rozmowa prowadzi do szuflady rozmowy - nad połową listy tego, kto czyta', () => {
+    const order = { orderId: 'o1', bookingId: 'b1', aircraftId: 'a1', ...TERM };
+    const hrefs = inboxRows(
+      input([
+        // pisał adresat - czyta autor
+        item('order_message', { ...order, recipientId: 'BNO', authorId: 'BNO', unread: 1 }),
+        // pisał autor - czyta adresat
+        item('order_message', { ...order, recipientId: 'BNO', authorId: 'MZI', unread: 1 }),
+        // wiadomość bez wskazania rozmowy - wiersz nie jest linkiem
+        item('order_message', { ...order, authorId: 'MZI', unread: 1 }),
+      ]),
+    ).map((row) => row.href);
+    expect(hrefs).toEqual(['/zlecenia/o1/rozmowa/BNO?widok=zlecone', '/zlecenia/o1/rozmowa/BNO?widok=do-mnie', null]);
   });
 
   it('zlecenie otwiera się nad połową listy, z której perspektywy mówi wiadomość', () => {
@@ -171,7 +195,6 @@ describe('wiersz skrzynki panelu', () => {
         item('order_unfilled', { ...order, openSeats: ['dual'] }),
         item('order_expired', order),
         item('order_assigned', { ...order, seat: 'pic' }),
-        item('order_message', { ...order, authorId: 'BNO', unread: 1 }),
       ]),
     ).map((row) => row.href);
     expect(hrefs).toEqual([
@@ -189,8 +212,6 @@ describe('wiersz skrzynki panelu', () => {
       '/zlecenia/o1?widok=zlecone',
       // lot już mój - rezerwacja w kalendarzu (§14.3)
       '/kalendarz/b1',
-      // rozmowa ma własny adres w etapie 5
-      null,
     ]);
   });
 

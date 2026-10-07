@@ -27,7 +27,7 @@ import { duration, litres, motoHours, plural, timeUtc } from '@ninerdeck/format'
 
 import type { InboxItemDto } from '../../api/dto';
 import { clubDayIndex, godzina, operationLabel } from '../calendar/bookingLabels';
-import { orderPath, type OrderView } from '../orders/orderPaths';
+import { orderPath, threadPath, type OrderView } from '../orders/orderPaths';
 
 /** Ton ikony - zieleń: odpowiedź, na którą czekasz; błękit: pytanie i rozmowa; reszta jak w makiecie. */
 export type InboxTone = 'ok' | 'ask' | 'warn' | 'no' | 'plain';
@@ -534,20 +534,25 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           href: toOrder('zlecone'),
         };
       case 'order_message': {
+        // JEDEN wiersz na rozmowę z licznikiem (§7.3); treścią jest OSTATNIA wiadomość, bo
+        // na nią się odpowiada. Licznik świeci, póki wiersz jest nowy - jak w telefonie.
         const unread = num(p.unread) ?? 0;
+        const preview = str(p.preview);
+        const recipientId = str(p.recipientId);
+        // Pisał adresat - czyta autor nad „Zlecone"; pisał autor - czyta adresat nad „Do mnie".
+        const view: OrderView = str(p.authorId) === recipientId ? 'zlecone' : 'do-mnie';
         return {
           ...base,
           tone: 'ask',
           icon: 'chat',
           title: `Wiadomość w zleceniu · ${regTitle}`,
           sub: term,
-          text: bold(name('authorId')) ?? [],
+          text: join([bold(name('authorId')), plain(preview == null ? null : quoted(preview))]),
           pill:
-            unread > 0
+            base.isNew && unread > 0
               ? { text: `${unread} ${plural(unread, 'nowa wiadomość', 'nowe wiadomości', 'nowych wiadomości')}`, tone: 'blue' }
               : null,
-          // Rozmowa ma własny adres (etap 5 epiku Z-D) - do tego czasu wiersz nie jest linkiem.
-          href: null,
+          href: orderId == null || recipientId == null ? null : threadPath(orderId, recipientId, view),
         };
       }
 

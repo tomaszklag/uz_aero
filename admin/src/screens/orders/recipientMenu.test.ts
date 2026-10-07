@@ -75,6 +75,8 @@ const row = (over: Partial<LeaderRowVm>): LeaderRowVm => ({
   picks: [],
   menu: { swapSeat: 'pic' },
   muted: false,
+  thread: 'write',
+  unread: false,
   ...over,
 });
 
@@ -95,7 +97,7 @@ describe('pozycje menu - tylko to, co dla wiersza możliwe', () => {
   });
 
   it('osoba w fotelu: samo „Cofnij przydział"; fotel szukany i „ja" bez menu', () => {
-    const seated: CrewSeatVm = { seat: 'dual', label: 'Drugi pilot', pilotId: 'akw', asking: false, name: 'Anna Kowal', code: 'AKW', status: [], unassignable: true };
+    const seated: CrewSeatVm = { seat: 'dual', label: 'Drugi pilot', pilotId: 'akw', asking: false, name: 'Anna Kowal', code: 'AKW', status: [], unassignable: true, thread: 'write', unread: false };
     expect(crewMenu(seated).map((e) => [e.label, e.action])).toEqual([['Cofnij przydział', { kind: 'unassign', pilotId: 'akw', seat: 'dual' }]]);
     expect(crewMenu({ ...seated, pilotId: null, name: null, unassignable: false })).toEqual([]);
     expect(crewMenu({ ...seated, unassignable: false })).toEqual([]);

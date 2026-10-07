@@ -61,3 +61,11 @@ export function ordersPath(view: OrderView, period: OrderPeriod = 'upcoming'): s
 export function orderPath(id: string, view: OrderView, period: OrderPeriod = 'upcoming'): string {
   return `/zlecenia/${encodeURIComponent(id)}${query(view, period)}`;
 }
+
+/**
+ * Adres rozmowy z adresatem (`…/rozmowa/<adresat>`) - szuflada nad tą samą listą, więc
+ * połowa i okres zostają, a link z wiadomości „Wiadomość w zleceniu" da się wkleić.
+ */
+export function threadPath(id: string, recipientId: string, view: OrderView, period: OrderPeriod = 'upcoming'): string {
+  return `/zlecenia/${encodeURIComponent(id)}/rozmowa/${encodeURIComponent(recipientId)}${query(view, period)}`;
+}

@@ -8,12 +8,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   audienceBySeat,
+  dayMonthLabel,
   momentLabel,
   routeLabel,
   seekingLabel,
   termDayLabel,
   termHoursLabel,
   termRelative,
+  termShortDay,
 } from './orderLabels';
 
 const TZ = 'Europe/Warsaw';
@@ -67,6 +69,13 @@ describe('termin czasem klubu', () => {
     expect(momentLabel(at('2026-10-02T05:40:00Z'), now, TZ)).toBe('07:40');
     expect(momentLabel(at('2026-10-01T17:14:00Z'), now, TZ)).toBe('wczoraj 19:14');
     expect(momentLabel(at('2026-09-29T05:40:00Z'), now, TZ)).toBe('29 WRZ 07:40');
+  });
+
+  it('pasek nad rozmową: skrót dnia z telefonu, doba klubu', () => {
+    expect(termShortDay(at('2026-10-03T08:00:00Z'), TZ)).toBe('sob 3 PAŹ');
+    // Niedziela 01:30 w klubie, choć w UTC to wciąż sobota.
+    expect(termShortDay(at('2026-10-03T23:30:00Z'), TZ)).toBe('nd 4 PAŹ');
+    expect(dayMonthLabel(at('2026-09-29T05:40:00Z'), TZ)).toBe('29 WRZ');
   });
 });
 

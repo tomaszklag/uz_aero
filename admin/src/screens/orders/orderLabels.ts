@@ -16,7 +16,7 @@
  * dzień tygodnia i data mówią to same.
  */
 
-import { duration, shortName } from '@ninerdeck/format';
+import { duration, shortName, weekdayShortUtc } from '@ninerdeck/format';
 
 import type { SeatDto } from '../../api/dto';
 import { clubDayIndex, godzina } from '../calendar/bookingLabels';
@@ -93,10 +93,27 @@ export function momentLabel(at: number, now: number, tz: string): string {
   const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
   if (days === 0) return hour;
   if (days === 1) return `wczoraj ${hour}`;
+  return `${dayMonthLabel(at, tz)} ${hour}`;
+}
+
+/** „3 PAŹ" - dzień doby klubu i skrót miesiąca wersalikami. */
+export function dayMonthLabel(at: number, tz: string): string {
   const day = fmt(tz, { day: 'numeric' }).format(new Date(at));
   const month = fmt(tz, { month: 'short' }).format(new Date(at)).replace('.', '').toUpperCase();
-  return `${day} ${month} ${hour}`;
+  return `${day} ${month}`;
 }
+
+/**
+ * „sob 3 PAŹ" - pasek zlecenia nad rozmową. Skrót dnia tygodnia z tej samej tablicy, co
+ * w telefonie (`weekdayShortUtc`), liczony od doby KLUBU: przeglądarkowe „sob." i telefonowe
+ * „sob" mówiłyby o tym samym pasku dwoma kształtami.
+ */
+export function termShortDay(at: number, tz: string): string {
+  const weekday = weekdayShortUtc(clubDayIndex(at, tz) * DAY_MS + DAY_MS / 2).toLowerCase();
+  return `${weekday} ${dayMonthLabel(at, tz)}`;
+}
+
+const DAY_MS = 86_400_000;
 
 /** Cytat powodu w polskich cudzysłowach - powód jest zdaniem człowieka, nie etykietą. */
 export const quoted = (text: string): string => `„${text}"`;
@@ -189,9 +206,7 @@ export function historyMoment(at: number, now: number, tz: string): string {
   const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
   if (days === 0) return `dziś · ${hour}`;
   if (days === 1) return `wczoraj · ${hour}`;
-  const day = fmt(tz, { day: 'numeric' }).format(new Date(at));
-  const month = fmt(tz, { month: 'short' }).format(new Date(at)).replace('.', '').toUpperCase();
-  return `${day} ${month} · ${hour}`;
+  return `${dayMonthLabel(at, tz)} · ${hour}`;
 }
 
 /** Chwila w zdaniu o zmianie: „dziś 07:10", „wczoraj 19:14", dalej „2 PAŹ 07:40". */

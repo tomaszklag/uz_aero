@@ -10,7 +10,7 @@
  * drugi prowadzący zdążył wybrać przed chwilą, a zdanie mówi to wprost.
  */
 
-import type { OrderRefusalDto } from '../../api/dto';
+import type { OrderRefusalDto, ThreadRefusalDto } from '../../api/dto';
 import { isHttpError } from '../../api/httpClient';
 import type { PersonLookup } from '../calendar/bookingLabels';
 import { bookingErrorMessage, bookingRefusal } from '../calendar/bookingRefusal';
@@ -49,5 +49,24 @@ export function orderErrorMessage(error: unknown, timezone: string, person: Pers
   const refusal = orderRefusalOf(error);
   if (refusal != null) return REFUSALS[refusal];
   if (bookingRefusal(error) != null) return bookingErrorMessage(error, timezone, person);
+  return errorMessage(error);
+}
+
+const THREAD_REFUSALS: Record<ThreadRefusalDto, string> = {
+  read_only: 'Rozmowę prowadzi osoba zlecająca.',
+  thread_closed: 'Ta rozmowa jest już zamknięta - zostaje do odczytu.',
+  message_invalid: 'Wiadomość jest pusta albo za długa.',
+  message_exists: 'Ta wiadomość jest już wysłana.',
+};
+
+/**
+ * Zdanie pod polem wiadomości, gdy wysyłka nie doszła (ZL4b). Brak połączenia mówi, że
+ * tekst ZOSTAJE w polu - pilot, który pisał dwa zdania, nie ma ich pisać drugi raz, a
+ * „Wyślij" spróbuje jeszcze raz z tym samym identyfikatorem.
+ */
+export function threadErrorMessage(error: unknown): string {
+  if (!isHttpError(error)) return 'Brak połączenia - wiadomość nie wyszła i zostaje w polu.';
+  const code = (error.body as { error?: unknown }).error;
+  if (typeof code === 'string' && code in THREAD_REFUSALS) return THREAD_REFUSALS[code as ThreadRefusalDto];
   return errorMessage(error);
 }

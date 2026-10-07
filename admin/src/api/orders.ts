@@ -15,7 +15,17 @@
  * do pamięci zamiast pytać drugi raz (ta sama zasada, co odpowiedź na zlecenie).
  */
 
-import type { OrderAnswerDto, OrderAnswerResultDto, OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from './dto';
+import type {
+  OrderAnswerDto,
+  OrderAnswerResultDto,
+  OrderCardDto,
+  OrderListDto,
+  OrderSummaryDto,
+  SeatDto,
+  ThreadCursorDto,
+  ThreadMessageDto,
+  ThreadPageDto,
+} from './dto';
 import { apiGet, apiPatch, apiPost } from './httpClient';
 
 /** „Do mnie" (zlecenia, na które się odpowiada) albo „Zlecone" (prowadzone). */
@@ -101,4 +111,31 @@ export function answerOrder(id: string, body: { answer: OrderAnswerDto; reason: 
 /** „Odczytane" (pkt 17) - otwarcie karty przez adresata; skutek patrzenia, nie czynność. */
 export async function markOrderSeen(id: string): Promise<void> {
   await apiPost<null>(path(id, 'seen'));
+}
+
+const threadPath = (id: string, recipientId: string, tail: string): string =>
+  path(id, `threads/${encodeURIComponent(recipientId)}/${tail}`);
+
+/** Strona rozmowy z adresatem - od najnowszej; kursor prowadzi do starszych. */
+export function getThreadPage(id: string, recipientId: string, before: ThreadCursorDto | null): Promise<ThreadPageDto> {
+  const query = before == null ? '' : `?beforeAt=${encodeURIComponent(before.beforeAt)}&beforeId=${encodeURIComponent(before.beforeId)}`;
+  return apiGet<ThreadPageDto>(`${threadPath(id, recipientId, 'messages')}${query}`);
+}
+
+/**
+ * Wiadomość w rozmowie. Identyfikator nadaje panel: wysyłka ponowiona po zerwanym łączu
+ * niesie TEN SAM, więc serwer nie zapisze jej drugi raz (201 przy zapisie, 200 przy powtórce).
+ */
+export async function sendThreadMessage(
+  id: string,
+  recipientId: string,
+  message: { id: string; body: string },
+): Promise<ThreadMessageDto> {
+  const res = await apiPost<{ message: ThreadMessageDto }>(threadPath(id, recipientId, 'messages'), message);
+  return res.message;
+}
+
+/** Odczyt rozmowy przez uczestnika - „Odczytane" u drugiej strony; odczyt czytelnika nie zapala niczego. */
+export async function markThreadRead(id: string, recipientId: string): Promise<void> {
+  await apiPost<null>(threadPath(id, recipientId, 'read'));
 }

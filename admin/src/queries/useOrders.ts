@@ -12,9 +12,18 @@
  * (komplet załogi zmienia plakietkę wiersza, przydział - licznik „mogą lecieć").
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { OrderAnswerDto, OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from '../api/dto';
+import type {
+  OrderAnswerDto,
+  OrderCardDto,
+  OrderListDto,
+  OrderSummaryDto,
+  SeatDto,
+  ThreadCursorDto,
+  ThreadPageDto,
+} from '../api/dto';
+import { isHttpError } from '../api/httpClient';
 import {
   answerOrder,
   assignOrder,
@@ -22,14 +31,18 @@ import {
   getOrder,
   getOrderSummary,
   getOrders,
+  getThreadPage,
   markOrderSeen,
+  markThreadRead,
   removeRecipient,
   resendOrder,
+  sendThreadMessage,
   swapRecipient,
   unassignOrder,
   type OrderBox,
 } from '../api/orders';
 import { keys } from './keys';
+import { withMessage, type ThreadData } from './threadCache';
 
 /**
  * Liczby modułu. `enabled: false` = pytanie bez znaczenia: członek bez uprawnień ma
@@ -117,4 +130,59 @@ export function useAnswerOrder(id: string) {
 /** „Odczytane" przy otwarciu szuflady adresata - nic na ekranie się od tego nie zmienia. */
 export function useMarkOrderSeen(id: string) {
   return useMutation({ mutationFn: () => markOrderSeen(id) });
+}
+
+/** Ile wiadomości przychodzi na jedną stronę rozmowy - rozmowa zwykle mieści się w jednej. */
+export const THREAD_PAGE = 50;
+
+/**
+ * Rozmowa z adresatem w stronach, od najnowszej. Świeżość daje kanał klubu: ramki
+ * `message` i `read` wpisują się wprost do tej pamięci (`useLiveChannel`), a temat
+ * `order:<id>` i wznowienie połączenia czytają ją od nowa (K2 - zgubiona ramka niczego
+ * nie gubi). Zero odpytywania.
+ */
+export function useOrderThread(id: string, recipientId: string) {
+  return useInfiniteQuery<ThreadPageDto, Error, ThreadData, readonly unknown[], ThreadCursorDto | null>({
+    queryKey: keys.orders.thread(id, recipientId),
+    queryFn: ({ pageParam }) => getThreadPage(id, recipientId, pageParam),
+    initialPageParam: null as ThreadCursorDto | null,
+    getNextPageParam: (last) => last.next ?? undefined,
+  });
+}
+
+/**
+ * Wysyłka wiadomości. Odpowiedź wpisuje wiadomość do pamięci od razu - ta sama wiadomość
+ * przychodzi też ramką kanału i nie staje dwa razy (identyfikator). Odmowa reguły
+ * (rozmowa zamknęła się pod palcem) czyta rozmowę od nowa, żeby stopka pokazała jej NOWY
+ * stan zamiast pola, w którym nie da się już pisać.
+ */
+export function useSendThreadMessage(id: string, recipientId: string) {
+  const qc = useQueryClient();
+  const key = keys.orders.thread(id, recipientId);
+  return useMutation({
+    mutationFn: (message: { id: string; body: string }) => sendThreadMessage(id, recipientId, message),
+    onSuccess: (message) => {
+      qc.setQueryData<ThreadData>(key, (data) => withMessage(data, message));
+      // Pierwsza wiadomość zakłada wątek - karta zlecenia ma go odtąd znać.
+      void qc.invalidateQueries({ queryKey: keys.orders.card(id) });
+    },
+    onError: (error) => {
+      if (isHttpError(error)) void qc.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+/**
+ * Odczyt rozmowy przez uczestnika - „Odczytane" u drugiej strony. Karta i lista czytają się
+ * od nowa, bo gaśnie kropka nowej wiadomości; samej rozmowy odczyt nie zmienia.
+ */
+export function useMarkThreadRead(id: string, recipientId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => markThreadRead(id, recipientId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.orders.card(id) });
+      void qc.invalidateQueries({ queryKey: [...keys.orders.all, 'list'] });
+    },
+  });
 }

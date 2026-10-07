@@ -229,6 +229,13 @@ export const keys = {
      * rzeczy, co lista (odpowiedź, przydział); własny temat kanału ma też `order:<id>`.
      */
     card: (id: string) => ['orders', 'card', id] as const,
+    /**
+     * Rozmowy jednego zlecenia (`threads(id)`) i rozmowa z jednym adresatem - w stronach.
+     * Wiadomości i odczyty wpisuje do niej kanał klubu (ramki `message`, `read`), a temat
+     * `order:<id>` czyta ją od nowa: rozmowa zamyka się razem ze zleceniem.
+     */
+    threads: (id: string) => ['orders', 'thread', id] as const,
+    thread: (id: string, recipientId: string) => ['orders', 'thread', id, recipientId] as const,
   },
 
   /**

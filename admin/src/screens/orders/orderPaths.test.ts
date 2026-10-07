@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultView, orderPath, ordersPath, periodOf, viewOf } from './orderPaths';
+import { defaultView, orderPath, ordersPath, periodOf, threadPath, viewOf } from './orderPaths';
 
 describe('adresy listy zleceń', () => {
   it('połowa z adresu - wyłącznie znane napisy', () => {
@@ -24,6 +24,11 @@ describe('adresy listy zleceń', () => {
   it('szuflada zlecenia nad listą zachowuje połowę i okres', () => {
     expect(orderPath('o 1', 'zlecone')).toBe('/zlecenia/o%201?widok=zlecone');
     expect(orderPath('o1', 'zlecone', 'past')).toBe('/zlecenia/o1?widok=zlecone&okres=minione');
+  });
+
+  it('rozmowa z adresatem to szuflada nad tą samą listą', () => {
+    expect(threadPath('o1', 'p 2', 'do-mnie')).toBe('/zlecenia/o1/rozmowa/p%202?widok=do-mnie');
+    expect(threadPath('o1', 'p2', 'zlecone', 'past')).toBe('/zlecenia/o1/rozmowa/p2?widok=zlecone&okres=minione');
   });
 });
 

@@ -235,8 +235,8 @@ describe('komplet załogi', () => {
     expect(vm.pill).toEqual({ text: 'Komplet załogi', tone: 'green' });
     expect(vm.blocks).toEqual([]);
     expect(vm.crew).toEqual([
-      { seat: 'pic', label: 'Dowódca', pilotId: 'jwr', name: 'Jakub Wrona', code: 'JWR', status: [{ text: 'Leci · przyjęte 22:05', tone: 'ok' }], asking: false, unassignable: true },
-      { seat: 'dual', label: 'Drugi pilot', pilotId: 'akw', name: 'Anna Kowal', code: 'AKW', status: [{ text: 'Leci · przydział 22:12', tone: 'ok' }], asking: false, unassignable: true },
+      { seat: 'pic', label: 'Dowódca', pilotId: 'jwr', name: 'Jakub Wrona', code: 'JWR', status: [{ text: 'Leci · przyjęte 22:05', tone: 'ok' }], asking: false, unassignable: true, thread: 'write', unread: false },
+      { seat: 'dual', label: 'Drugi pilot', pilotId: 'akw', name: 'Anna Kowal', code: 'AKW', status: [{ text: 'Leci · przydział 22:12', tone: 'ok' }], asking: false, unassignable: true, thread: 'write', unread: true },
     ]);
   });
 
@@ -257,6 +257,32 @@ describe('komplet załogi', () => {
     expect(vm.others?.rows.every((r) => r.muted && r.picks.length === 0 && r.warn.length === 0 && r.menu == null)).toBe(true);
     expect(vm.resend).toBeNull();
     expect(vm.cancellable).toBe(true);
+  });
+});
+
+describe('rozmowa z adresatem (ZL4)', () => {
+  const rows = (vm: ReturnType<typeof leaderCard>) => [...(vm?.blocks.flatMap((b) => b.rows) ?? []), ...(vm?.others?.rows ?? [])];
+
+  it('autor pisze z każdym adresatem - także zanim ktokolwiek napisał; kropka przy nieprzeczytanej', () => {
+    const vm = leaderCard(input(card()))!;
+    expect(rows(vm).every((r) => r.thread === 'write')).toBe(true);
+    expect(rows(vm).filter((r) => r.unread).map((r) => r.pilotId)).toEqual(['akw']);
+  });
+
+  it('prowadzący inny niż autor czyta wyłącznie rozmowy, które powstały', () => {
+    const c = card({
+      recipients: [recipient('jwr', { threadId: 't-jwr' }), recipient('ako')],
+    });
+    const vm = leaderCard(input(c, 'pwi'))!;
+    expect(rows(vm).map((r) => [r.pilotId, r.thread])).toEqual([
+      ['jwr', 'read'],
+      ['ako', null],
+    ]);
+  });
+
+  it('rozmowa z wiadomościami zostaje też przy zwiniętych adresatach - do odczytu dla autora', () => {
+    const vm = leaderCard(input(card({}, {}, { pilotId: 'jwr', dualId: 'akw' })))!;
+    expect(vm.others?.rows.every((r) => r.thread === 'write')).toBe(true);
   });
 });
 

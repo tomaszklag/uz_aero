@@ -2232,3 +2232,42 @@ export interface OrderAnswerResultDto {
   outcome: OrderAnswerOutcomeDto;
   card: OrderCardDto | null;
 }
+
+// -- rozmowa w zleceniu (szuflada ZL4; `threadPageWire` na serwerze) -----------------
+
+/** Wiadomość rozmowy - identyfikator nadaje KLIENT, więc ponowiona wysyłka to ta sama wiadomość. */
+export interface ThreadMessageDto {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Kursor starszej strony rozmowy - PARA, jak w skrzynce. */
+export interface ThreadCursorDto {
+  beforeAt: string;
+  beforeId: string;
+}
+
+/**
+ * Strona rozmowy (`GET /orders/:id/threads/:pilotId/messages`). `role: 'reader'` - osoba
+ * z „Cudzymi rezerwacjami" czyta cudzą rozmowę bez pisania (pkt 19); `closed` mówi, czemu
+ * nie da się pisać (`null` = da się). Wiadomości od NAJNOWSZEJ; rozmowa bez ani jednej
+ * wiadomości nie ma jeszcze wątku (`threadId: null`).
+ */
+export interface ThreadPageDto {
+  role: 'participant' | 'reader';
+  closed: 'read_only' | 'thread_closed' | null;
+  threadId: string | null;
+  /** Uczestnicy z chwilą odczytu - „Odczytane 07:41" pod ostatnią wiadomością. */
+  participants: { pilotId: string; lastReadAt: string | null }[];
+  messages: ThreadMessageDto[];
+  /** Starsza strona; `null` = to już początek rozmowy. */
+  next: ThreadCursorDto | null;
+}
+
+/**
+ * Lustro `ThreadRefusal` (`server/src/application/common/commands/threads.ts`) - odmowa
+ * wysłania wiadomości. Kod jedzie w polu `error` odpowiedzi (403, 409, 400).
+ */
+export type ThreadRefusalDto = 'read_only' | 'thread_closed' | 'message_invalid' | 'message_exists';

@@ -20,10 +20,12 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 import type { OrderCardDto } from '../../api/dto';
 import { useAnswerOrder, useMarkOrderSeen } from '../../queries/useOrders';
 import { Banner, Button, Card, Drawer, Field, Pill } from '../../ui/components';
+import { ChatIcon } from '../../ui/components/icons';
 import type { PersonLookup } from '../calendar/bookingLabels';
 import { orderErrorMessage } from './orderRefusal';
 import { recipientCard, type AnswerVm, type CrewLineVm, type EditedVm, type OutcomeVm } from './recipientCard';
@@ -33,6 +35,8 @@ interface Props {
   orderId: string;
   person: PersonLookup;
   aircraft: (aircraftId: string) => { reg: string; type: string } | null;
+  /** Adres rozmowy z osobą zlecającą (szuflada nad tą samą listą). */
+  threadHref: string;
   onClose: () => void;
   /** Przyjęcie obsadziło fotel - lot jest rezerwacją, szuflada przechodzi do kalendarza. */
   onBooking: (bookingId: string) => void;
@@ -40,7 +44,7 @@ interface Props {
 
 const REASON_ID = 'order-decline-reason';
 
-export function RecipientDrawer({ card, orderId, person, aircraft, onClose, onBooking }: Props) {
+export function RecipientDrawer({ card, orderId, person, aircraft, threadHref, onClose, onBooking }: Props) {
   const vm = recipientCard({ card, now: Date.now(), person, aircraft });
   const answer = useAnswerOrder(orderId);
   const seen = useMarkOrderSeen(orderId);
@@ -149,6 +153,27 @@ export function RecipientDrawer({ card, orderId, person, aircraft, onClose, onBo
         ))}
         {vm.edited == null ? null : <EditedLine edited={vm.edited} />}
       </Card>
+
+      {vm.thread == null ? null : (
+        // Rozmowa to wiersz prowadzący dalej, a nie trzeci przycisk w stopce: akcją główną
+        // jest odpowiedź.
+        <Card title="Rozmowa">
+          <div className="todo-list">
+            <Link className="todo-row" to={threadHref}>
+              <span className={vm.thread.readOnly ? 'todo-icon' : 'todo-icon blue'} aria-hidden="true">
+                <ChatIcon size={15} />
+              </span>
+              <span className="todo-body">
+                <span className="todo-title">{vm.thread.title}</span>
+                <span className="todo-meta">{vm.thread.sub}</span>
+              </span>
+              <span className="todo-go" aria-hidden="true">
+                ›
+              </span>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {!declining ? null : (
         <Card title="Odpowiedź">

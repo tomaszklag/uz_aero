@@ -56,8 +56,9 @@ function prefixesFor(topic: string): readonly QueryPrefix[] {
       return [keys.orders.all];
     // Jedno zlecenie: jego karta w szufladzie (odczyt, odpowiedź, przydział, edycja,
     // odwołanie). Kształt karty zależy od widza, więc pobiera się RESTem (sygnał bez treści).
+    // Rozmowy tego zlecenia też: zamykają się razem z nim (odwołanie, odebranie, komplet).
     case 'order':
-      return id === '' ? [] : [keys.orders.card(id)];
+      return id === '' ? [] : [keys.orders.card(id), keys.orders.threads(id)];
     default:
       return [];
   }

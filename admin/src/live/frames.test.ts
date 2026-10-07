@@ -24,8 +24,28 @@ describe('ramki kanału klubu', () => {
   });
 
   it('ramka nieznanego typu jest ignorowana, nie odrzucana - nowszy serwer nie psuje starszego panelu', () => {
-    expect(parseFrame('{"v":1,"type":"message","org":"org-a","text":"Czy lecimy?"}')).toEqual({ type: 'ignored' });
     expect(parseFrame('{"v":2,"type":"cos-nowego"}')).toEqual({ type: 'ignored' });
+  });
+
+  it('rozmowa w zleceniu: wiadomość w całości i odczyt drugiej strony, ze wskazaniem rozmowy', () => {
+    const message = { id: 'm1', threadId: 't1', authorId: 'ako', body: 'Mogę od 10', createdAt: '2026-10-02T17:10:00.000Z' };
+    expect(
+      parseFrame(JSON.stringify({ v: 1, type: 'message', org: 'org-a', orderId: 'o1', recipientId: 'ako', message })),
+    ).toEqual({
+      type: 'message',
+      orderId: 'o1',
+      recipientId: 'ako',
+      message: { id: 'm1', authorId: 'ako', body: 'Mogę od 10', createdAt: '2026-10-02T17:10:00.000Z' },
+    });
+    expect(
+      parseFrame('{"v":1,"type":"read","org":"org-a","orderId":"o1","recipientId":"ako","pilotId":"mzi","at":"2026-10-03T05:41:00.000Z"}'),
+    ).toEqual({ type: 'read', orderId: 'o1', recipientId: 'ako', pilotId: 'mzi', at: '2026-10-03T05:41:00.000Z' });
+  });
+
+  it('ramka rozmowy bez wskazania rozmowy albo z treścią spoza kształtu jest ignorowana', () => {
+    expect(parseFrame('{"v":1,"type":"message","org":"org-a","text":"Czy lecimy?"}')).toEqual({ type: 'ignored' });
+    expect(parseFrame('{"type":"message","orderId":"o1","recipientId":"ako","message":{"id":"m1"}}')).toEqual({ type: 'ignored' });
+    expect(parseFrame('{"type":"read","orderId":"o1","recipientId":"ako"}')).toEqual({ type: 'ignored' });
   });
 
   it('to, co nie jest obiektem JSON z napisem `type`, nie jest ramką', () => {

@@ -46,6 +46,8 @@ const APPROVAL_STEPS = join(
  * eksportera są uniami W KONTRAKCIE panelu po stronie serwera, nie w domenie.
  */
 const EXPORTS = join(__dirname, '..', '..', 'server', 'src', 'application', 'admin', 'contracts', 'exports.ts');
+/** Komenda rozmowy w zleceniu (4.0.0) - powody odmowy wysłania wiadomości. */
+const THREADS = join(__dirname, '..', '..', 'server', 'src', 'application', 'common', 'commands', 'threads.ts');
 /** Komenda grup klubu (4.0.0) - powody odmowy zapisu grupy. */
 const MEMBER_GROUPS = join(
   __dirname,
@@ -278,6 +280,12 @@ const MIRRORS = [
     panel: 'GroupRefusalDto',
     server: 'MemberGroupRefusal',
     read: () => unionIn(MEMBER_GROUPS, 'MemberGroupRefusal'),
+  },
+  // Rozmowa w zleceniu: powód odmowy wysłania stoi pod polem wiadomości.
+  {
+    panel: 'ThreadRefusalDto',
+    server: 'ThreadRefusal',
+    read: () => unionIn(THREADS, 'ThreadRefusal'),
   },
 ] as const;
 

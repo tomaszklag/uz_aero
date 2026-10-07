@@ -77,7 +77,14 @@ export interface LeaderRowVm {
   menu: { swapSeat: SeatDto | null } | null;
   /** Zwinięcie „Pozostali adresaci" - o stopień ciszej, bez akcji. */
   muted: boolean;
+  /** Ikona rozmowy: `write` - autor pisze, `read` - prowadzący inny niż autor czyta (pkt 19, 20). */
+  thread: ThreadAccess;
+  /** Kropka przy ikonie - nieprzeczytana wiadomość od tej osoby (liczy serwer, u autora). */
+  unread: boolean;
 }
+
+/** Wejście w rozmowę z adresatem; `null` = nie ma czego otworzyć (cudza rozmowa, która nie powstała). */
+export type ThreadAccess = 'write' | 'read' | null;
 
 export interface SeatBlockVm {
   key: SeatDto | 'shared';
@@ -103,6 +110,9 @@ export interface CrewSeatVm {
   status: StatusPart[];
   /** Przydział da się cofnąć - osoba przydzielona do szukanego fotela, zlecenie żywe. */
   unassignable: boolean;
+  /** Rozmowa z osobą w fotelu - należy do adresata, którym ta osoba była, zanim usiadła. */
+  thread: ThreadAccess;
+  unread: boolean;
 }
 
 export interface LeaderCardVm {
@@ -326,7 +336,18 @@ function rowOf(r: OrderLeaderRecipientDto, ctx: Ctx, blockSeat: SeatDto | null, 
     picks,
     menu: active ? { swapSeat: named ? blockSeat : null } : null,
     muted,
+    thread: threadAccess(r, input),
+    unread: r.unread > 0,
   };
+}
+
+/**
+ * Autor pisze z każdym adresatem - także zanim ktokolwiek napisał. Prowadzący inny niż
+ * autor rozmowy nie prowadzi (pkt 20): czyta ją, o ile w ogóle powstała.
+ */
+function threadAccess(r: OrderLeaderRecipientDto, input: LeaderCardInput): ThreadAccess {
+  if (input.card.order.createdBy === input.viewerId) return 'write';
+  return r.threadId != null ? 'read' : null;
 }
 
 /** Karta „Załoga": kto leci (z godziną przyjęcia albo przydziału) i który fotel jeszcze szuka. */
@@ -349,6 +370,8 @@ function crewSeats(card: OrderCardDto, ctx: Ctx): CrewSeatVm[] {
         status: ctx.live ? [{ text: card.order.addressing === 'shared' ? 'przydziel z listy niżej' : 'wybierz z listy niżej' }] : [],
         asking: ctx.live,
         unassignable: false,
+        thread: null,
+        unread: false,
       });
       continue;
     }
@@ -362,6 +385,8 @@ function crewSeats(card: OrderCardDto, ctx: Ctx): CrewSeatVm[] {
         status: [{ text: 'osoba zlecająca' }],
         asking: false,
         unassignable: false,
+        thread: null,
+        unread: false,
       });
       continue;
     }
@@ -369,6 +394,7 @@ function crewSeats(card: OrderCardDto, ctx: Ctx): CrewSeatVm[] {
     const at = entry == null ? null : parsed(entry.at);
     const accepted = entry?.payload.via === 'answer';
     const when = at == null ? null : momentLabel(at, input.now, tz);
+    const recipient = (card.recipients ?? []).find((r) => r.pilotId === person) ?? null;
     rows.push({
       seat,
       label: SEAT_LABEL[seat],
@@ -384,6 +410,8 @@ function crewSeats(card: OrderCardDto, ctx: Ctx): CrewSeatVm[] {
           : [{ text: `${accepted ? 'Przyjęte' : 'Przydział'} ${when}` }],
       asking: false,
       unassignable: ctx.live,
+      thread: recipient == null ? null : threadAccess(recipient, input),
+      unread: (recipient?.unread ?? 0) > 0,
     });
   }
   return rows;

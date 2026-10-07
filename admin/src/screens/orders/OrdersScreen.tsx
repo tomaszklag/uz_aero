@@ -46,7 +46,8 @@ import { loadErrorMessage } from '../common/apiMessage';
 import { inboxRows, managedRows, type InboxRowVm, type ManagedRowVm, type OrderRowBase } from './orderListRows';
 import { orderLookups } from './orderLookups';
 import { OrderDrawer } from './OrderDrawer';
-import { BOX_OF, defaultView, orderPath, ordersPath, periodOf, viewOf, type OrderView } from './orderPaths';
+import { BOX_OF, defaultView, orderPath, ordersPath, periodOf, threadPath, viewOf, type OrderView } from './orderPaths';
+import { ThreadDrawer } from './ThreadDrawer';
 
 const MANAGED_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Fotele', 'Odpowiedzi', 'Stan', 'Zleca', ''];
 const INBOX_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Twój fotel', 'Zleca', 'Stan', ''];
@@ -54,7 +55,7 @@ const INBOX_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Twój fotel', 'Zleca', '
 export function OrdersScreen() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { id } = useParams();
+  const { id, recipientId } = useParams();
   const { session } = useSessionState();
   const capabilities = session?.capabilities;
   const seesManaged = can(capabilities, 'orders.create') || can(capabilities, 'reservations.manage');
@@ -68,8 +69,9 @@ export function OrdersScreen() {
   // Pierwsza połowa przy wejściu z kolumny (pkt 36) - liczba z serwera rozstrzyga ją
   // dopiero wtedy, gdy jest z czego wybierać.
   const summary = useOrderSummary(view == null && seesManaged);
-  // Adres szuflady (`#/zlecenia/:id`, np. z dzwonka) przeżywa uzupełnienie połowy listy.
-  const here = (v: OrderView): string => (id == null ? ordersPath(v, period) : orderPath(id, v, period));
+  // Adres szuflady (`#/zlecenia/:id`, także rozmowy - np. z dzwonka) przeżywa uzupełnienie połowy listy.
+  const here = (v: OrderView): string =>
+    id == null ? ordersPath(v, period) : recipientId != null ? threadPath(id, recipientId, v, period) : orderPath(id, v, period);
   useEffect(() => {
     if (view === requested && view != null) return;
     if (view != null) {
@@ -82,7 +84,7 @@ export function OrdersScreen() {
     }
     if (summary.data == null) return;
     navigate(here(defaultView({ awaitingAnswer: summary.data.awaitingAnswer, seesManaged })), { replace: true });
-  }, [view, requested, seesManaged, summary.data, period, id, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, requested, seesManaged, summary.data, period, id, recipientId, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = useOrderList(view == null ? null : BOX_OF[view]);
   const directory = useDirectory();
@@ -144,12 +146,23 @@ export function OrdersScreen() {
         )}
       </Loadable>
 
-      {id == null || view == null ? null : (
+      {id == null || view == null ? null : recipientId != null ? (
+        <ThreadDrawer
+          key={`${id}/${recipientId}`}
+          orderId={id}
+          recipientId={recipientId}
+          viewerId={session?.pilot.id ?? null}
+          period={period}
+          directory={directory.data}
+          onClose={() => navigate(ordersPath(view, period))}
+        />
+      ) : (
         <OrderDrawer
           key={id}
           orderId={id}
           from={view}
           viewerId={session?.pilot.id ?? null}
+          period={period}
           directory={directory.data}
           onClose={() => navigate(ordersPath(view, period))}
         />

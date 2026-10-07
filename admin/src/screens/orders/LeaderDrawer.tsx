@@ -28,6 +28,7 @@
  */
 
 import { Fragment, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 import type { DirectoryMemberDto, OrderCardDto } from '../../api/dto';
 import {
@@ -39,8 +40,9 @@ import {
   useUnassignOrder,
 } from '../../queries/useOrders';
 import { Button, Card, Drawer, Field, Pill, TextInput } from '../../ui/components';
+import { ChatIcon } from '../../ui/components/icons';
 import type { PersonLookup } from '../calendar/bookingLabels';
-import { leaderCard, type CrewSeatVm, type LeaderRowVm, type StatusPart } from './leaderCard';
+import { leaderCard, type CrewSeatVm, type LeaderRowVm, type StatusPart, type ThreadAccess } from './leaderCard';
 import type { HistoryRowVm } from './orderHistory';
 import { orderErrorMessage } from './orderRefusal';
 import { RecipientConfirm } from './RecipientConfirm';
@@ -56,6 +58,8 @@ interface Props {
   aircraft: (aircraftId: string) => { reg: string; type: string } | null;
   /** Członkowie klubu ze słownika - kandydaci do zamiany osoby. */
   members: readonly DirectoryMemberDto[];
+  /** Adres rozmowy z adresatem (szuflada nad tą samą listą). */
+  threadHref: (pilotId: string) => string;
   onClose: () => void;
 }
 
@@ -66,7 +70,7 @@ interface Pending {
   action: RecipientAction;
 }
 
-export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, members, onClose }: Props) {
+export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, members, threadHref, onClose }: Props) {
   const vm = leaderCard({ card, now: Date.now(), viewerId, person, aircraft });
   const assign = useAssignOrder(orderId);
   const resend = useResendOrder(orderId);
@@ -177,6 +181,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
                 <Fragment key={seat.seat}>
                   <CrewRow
                     seat={seat}
+                    threadHref={threadHref}
                     menu={
                       <RowMenu
                         name={seat.name ?? ''}
@@ -204,6 +209,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
                   <RecipientRow
                     row={row}
                     busy={busy}
+                    threadHref={threadHref}
                     onPick={(seat) => pick(row.pilotId, seat)}
                     menu={
                       <RowMenu
@@ -243,7 +249,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
           {othersOpen ? (
             <div className="rcp-list">
               {vm.others.rows.map((row) => (
-                <RecipientRow key={`others-${row.pilotId}`} row={row} busy={busy} onPick={() => undefined} />
+                <RecipientRow key={`others-${row.pilotId}`} row={row} busy={busy} threadHref={threadHref} onPick={() => undefined} />
               ))}
             </div>
           ) : null}
@@ -306,10 +312,11 @@ interface RecipientRowProps {
   onPick: (seat: LeaderRowVm['picks'][number]['seat']) => void;
   /** „⋯" w kolumnie akcji; zwinięci pozostali adresaci go nie mają. */
   menu?: ReactNode;
+  threadHref: (pilotId: string) => string;
 }
 
-function RecipientRow({ row, busy, onPick, menu }: RecipientRowProps) {
-  const withActions = row.picks.length > 0 || row.menu != null;
+function RecipientRow({ row, busy, onPick, menu, threadHref }: RecipientRowProps) {
+  const withActions = row.picks.length > 0 || row.menu != null || row.thread != null;
   return (
     <div className={row.muted ? 'rcp muted' : 'rcp'}>
       <span className="rcp-body">
@@ -330,6 +337,7 @@ function RecipientRow({ row, busy, onPick, menu }: RecipientRowProps) {
       </span>
       {!withActions ? null : (
         <span className="rcp-actions">
+          <ThreadLink access={row.thread} unread={row.unread} name={row.name} to={threadHref(row.pilotId)} />
           {row.picks.map((p) => (
             <Button key={p.seat} variant="ok" size="sm" onClick={() => onPick(p.seat)} disabled={busy}>
               {p.label}
@@ -342,7 +350,26 @@ function RecipientRow({ row, busy, onPick, menu }: RecipientRowProps) {
   );
 }
 
-function CrewRow({ seat, menu }: { seat: CrewSeatVm; menu: ReactNode }) {
+/**
+ * Ikona rozmowy przy osobie (`.rcp-icon`) - kropka znaczy nieprzeczytaną wiadomość od niej.
+ * Autor pisze z każdym adresatem, inny prowadzący czyta rozmowę, która powstała.
+ */
+function ThreadLink({ access, unread, name, to }: { access: ThreadAccess; unread: boolean; name: string; to: string }) {
+  if (access == null) return null;
+  return (
+    <Link
+      className="rcp-icon"
+      to={to}
+      title="Rozmowa"
+      aria-label={unread ? `Rozmowa · ${name}, nieprzeczytana wiadomość` : `Rozmowa · ${name}`}
+    >
+      <ChatIcon size={15} />
+      {unread ? <span className="dot" /> : null}
+    </Link>
+  );
+}
+
+function CrewRow({ seat, menu, threadHref }: { seat: CrewSeatVm; menu: ReactNode; threadHref: (pilotId: string) => string }) {
   return (
     <div className={seat.asking ? 'rcp open' : 'rcp'}>
       <span className="rcp-seat">{seat.label}</span>
@@ -361,7 +388,14 @@ function CrewRow({ seat, menu }: { seat: CrewSeatVm; menu: ReactNode }) {
           <StatusLine key={part.text} part={part} />
         ))}
       </span>
-      {!seat.unassignable ? null : <span className="rcp-actions">{menu}</span>}
+      {!seat.unassignable && seat.thread == null ? null : (
+        <span className="rcp-actions">
+          {seat.pilotId == null ? null : (
+            <ThreadLink access={seat.thread} unread={seat.unread} name={seat.name ?? ''} to={threadHref(seat.pilotId)} />
+          )}
+          {seat.unassignable ? menu : null}
+        </span>
+      )}
     </div>
   );
 }

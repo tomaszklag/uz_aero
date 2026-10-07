@@ -50,8 +50,9 @@ describe('temat kanału → klucze zapytań', () => {
     expect(keys.orders.summary.slice(0, 1)).toEqual(keys.orders.all);
   });
 
-  it('zlecenie: temat `order:<id>` odświeża jego kartę w szufladzie', () => {
-    expect(prefixesForTopics(['order:o1'])).toEqual([keys.orders.card('o1')]);
+  it('zlecenie: temat `order:<id>` odświeża jego kartę w szufladzie i jego rozmowy - zamykają się razem z nim', () => {
+    expect(prefixesForTopics(['order:o1'])).toEqual([keys.orders.card('o1'), keys.orders.threads('o1')]);
+    expect(keys.orders.thread('o1', 'ako').slice(0, 3)).toEqual(keys.orders.threads('o1'));
   });
 
   it('tematy nieznane nie odświeżają niczego', () => {

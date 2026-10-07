@@ -26,6 +26,8 @@
  * Moduł czysty - test obok.
  */
 
+import { plural } from '@ninerdeck/format';
+
 import type { OrderCardDto, OrderMeDto, SeatDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components';
 import { hoursLabel, operationLabel, type PersonLookup } from '../calendar/bookingLabels';
@@ -97,6 +99,17 @@ export interface EditedVm {
   changes: FieldChange[];
 }
 
+/**
+ * Wiersz karty „Rozmowa" (`.todo-row`) - z osobą zlecającą. Bez wiadomości mówi, do kogo
+ * napiszesz; z nową - ile i kiedy; w zleceniu nieaktualnym prowadzi do rozmowy do odczytu,
+ * o ile ta w ogóle powstała. Te same zdania, co wiersz rozmowy na karcie 28 w telefonie.
+ */
+export interface RecipientThreadVm {
+  title: string;
+  sub: string;
+  readOnly: boolean;
+}
+
 export type RecipientAnswer = 'accept' | 'volunteer';
 
 export interface RecipientCardVm {
@@ -111,6 +124,8 @@ export interface RecipientCardVm {
   clash: string | null;
   details: DetailVm[];
   edited: EditedVm | null;
+  /** Wejście w rozmowę; `null` = nie ma czego otworzyć (nieaktualne, a rozmowa nie powstała). */
+  thread: RecipientThreadVm | null;
   /** „Przyjmuję" albo „Mogę lecieć"; `null` = „tak" już padło albo zlecenie nieaktualne. */
   primary: RecipientAnswer | null;
   decline: boolean;
@@ -163,6 +178,7 @@ export function recipientCard(input: RecipientCardInput): RecipientCardVm | null
     clash: stale ? null : clashOf(card, input),
     details: detailRows(card, input, creator, plane),
     edited: stale ? null : editedOf(card, input, termChanged, startsAt),
+    thread: threadOf(me, creator, input.person(card.order.createdBy)?.code ?? null, input.now, tz, stale),
     primary: stale || me.answer === 'yes' ? null : me.direct && me.seat != null ? 'accept' : 'volunteer',
     decline: !stale && me.answer !== 'no',
     note: stale ? null : noteOf(me, creator),
@@ -329,4 +345,27 @@ function noteOf(me: OrderMeDto, creator: string): string {
   if (me.direct && me.seat != null) return 'Po przyjęciu lot jest Twoją rezerwacją';
   if (me.seat == null) return `„Mogę lecieć" potwierdza termin - fotel przydziela ${creator}`;
   return `„Mogę lecieć" to zgłoszenie - fotel przydziela ${creator}`;
+}
+
+function threadOf(
+  me: OrderMeDto,
+  creator: string,
+  code: string | null,
+  now: number,
+  tz: string,
+  stale: boolean,
+): RecipientThreadVm | null {
+  if (stale) return me.threadId == null ? null : { title: `Rozmowa · ${creator}`, sub: 'do odczytu', readOnly: true };
+  if (me.threadId == null) return { title: 'Napisz wiadomość', sub: `${creator} · zleca`, readOnly: false };
+  if (me.unread > 0) {
+    const last = parsed(me.lastUnreadAt);
+    const count = `${me.unread} ${plural(me.unread, 'nowa wiadomość', 'nowe wiadomości', 'nowych wiadomości')}`;
+    return {
+      title: `Rozmowa · ${creator}`,
+      sub: last == null ? count : `${count} · ${momentLabel(last, now, tz)}`,
+      readOnly: false,
+    };
+  }
+  // Rozmowa jest, nowych wiadomości nie ma - podpis jak nagłówek rozmowy: „zleca · MZI".
+  return { title: `Rozmowa · ${creator}`, sub: code == null ? 'zleca' : `zleca · ${code}`, readOnly: false };
 }
