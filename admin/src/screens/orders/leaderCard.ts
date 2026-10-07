@@ -305,7 +305,8 @@ function rowOf(r: OrderLeaderRecipientDto, ctx: Ctx, blockSeat: SeatDto | null, 
     else for (const seat of ctx.open) picks.push({ seat, label: `Na ${SEAT_ACCUSATIVE[seat]}` });
   }
 
-  const alsoSeat = blockSeat == null || r.seat != null ? null : other(blockSeat);
+  // Dopisek mówi, na który fotel osoba może JESZCZE trafić - po odmowie nie trafi na żaden.
+  const alsoSeat = blockSeat == null || r.seat != null || r.answer === 'no' ? null : other(blockSeat);
   return {
     pilotId: r.pilotId,
     name: nameOf(r.pilotId, input),

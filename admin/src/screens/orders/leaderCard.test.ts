@@ -197,6 +197,17 @@ describe('osoba przy obu fotelach (pkt 38)', () => {
     // tylko „tak" tej osoby jest zgłoszeniem, więc karta liczy, ile osób może.
     expect(vm.blocks[0]).toMatchObject({ title: 'Dowódca · imiennie', count: '1 może lecieć' });
   });
+
+  it('po odmowie dopisku nie ma - odmowa stoi przy obu fotelach, ale na żaden z nich ta osoba już nie trafi', () => {
+    const c = card({
+      recipients: [recipient('ako', { seat: null, namedSeat: 'pic', viaGroupId: null, answer: 'no', answeredAt: '2026-10-02T19:52:00Z', seen: true })],
+    });
+    const rows = leaderCard(input(c))!.blocks.flatMap((b) => b.rows);
+    expect(rows.map((r) => [r.pilotId, r.also])).toEqual([
+      ['ako', null],
+      ['ako', null],
+    ]);
+  });
 });
 
 describe('komplet załogi', () => {

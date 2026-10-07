@@ -317,7 +317,8 @@ function rowOf(r: RemoteOrderRecipient, ctx: RowContext, blockSeat: RemoteSeat |
     else for (const seat of ctx.open) picks.push({ seat, label: `NA ${seatAccusative(seat).toUpperCase()}` });
   }
 
-  const alsoSeat = blockSeat == null || r.seat != null ? null : other(blockSeat);
+  // Dopisek mówi, na który fotel osoba może JESZCZE trafić - po odmowie nie trafi na żaden.
+  const alsoSeat = blockSeat == null || r.seat != null || r.answer === 'no' ? null : other(blockSeat);
   return {
     pilotId: r.pilotId,
     name: personLabel(r.pilotId, input.pilotId, input.nameOf),

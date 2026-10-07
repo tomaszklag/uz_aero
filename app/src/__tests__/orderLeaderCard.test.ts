@@ -207,6 +207,21 @@ describe('32 - osoba przy obu fotelach (ramka 3, decyzje 37 i 38)', () => {
       ['PLI', null, []],
     ]);
   });
+
+  it('po odmowie dopisku nie ma - odmowa stoi przy obu fotelach, ale na żaden z nich ta osoba już nie trafi', () => {
+    const refused = vm(
+      zlecenieB({
+        order: order({ audienceLabel: 'dowódca: Adam Kowalski · drugi pilot: Piloci An-2', createdAt: local(-2, '18:40') }),
+        recipients: [
+          recipient('AKO', { seat: null, namedSeat: 'pic', answer: 'no', answeredAt: local(-1, '21:52'), seen: true }),
+          ...group.filter((r) => r.pilotId !== 'AKO'),
+        ],
+      }),
+      localMs(-1, '21:55'),
+    );
+    const ako = refused.blocks.flatMap((b) => b.rows).filter((r) => r.pilotId === 'AKO');
+    expect(ako.map((r) => r.also)).toEqual([null, null]);
+  });
 });
 
 describe('32A - wspólna lista, dowódca przydzielony', () => {
