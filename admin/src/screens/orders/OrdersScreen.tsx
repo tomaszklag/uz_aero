@@ -48,7 +48,7 @@ import { loadErrorMessage } from '../common/apiMessage';
 import { inboxRows, managedRows, type InboxRowVm, type ManagedRowVm, type OrderRowBase } from './orderListRows';
 import { orderLookups } from './orderLookups';
 import { OrderDrawer } from './OrderDrawer';
-import type { OrderSeed } from './orderForm';
+import { emptyOrderForm, type OrderFormDraft } from './orderForm';
 import { OrderFormDrawer } from './OrderFormDrawer';
 import { BOX_OF, defaultView, orderPath, ordersPath, periodOf, threadPath, viewOf, type OrderView } from './orderPaths';
 import { ThreadDrawer } from './ThreadDrawer';
@@ -66,7 +66,7 @@ export function OrdersScreen() {
   const seesManaged = canCreate || can(capabilities, 'reservations.manage');
   // Nowe zlecenie to szuflada BEZ adresu (decyzja 2026-10-07) - stan ekranu, jak własna
   // rezerwacja w kalendarzu; z listy startuje pusta.
-  const [creating, setCreating] = useState<OrderSeed | null>(null);
+  const [creating, setCreating] = useState<OrderFormDraft | null>(null);
 
   const requested = viewOf(params.get('widok'));
   // „Zlecone" w adresie u kogoś, dla kogo tej połowy nie ma, wraca do „Do mnie" -
@@ -114,7 +114,7 @@ export function OrdersScreen() {
           // Jedna akcja główna - wyłącznie ze „Zlecaniem lotów"; „Cudze rezerwacje" dają
           // prowadzenie cudzych zleceń, a nie prawo ich wysyłania.
           canCreate ? (
-            <Button variant="primary" onClick={() => setCreating({})}>
+            <Button variant="primary" onClick={() => setCreating(emptyOrderForm())}>
               <PlusIcon size={13} />
               Zleć lot
             </Button>
@@ -173,7 +173,8 @@ export function OrdersScreen() {
           viewerId={session.pilot.id}
           person={context.lookups.person}
           timezone={list.data.timezone}
-          seed={creating}
+          initial={creating}
+          editing={null}
           onClose={() => setCreating(null)}
           onSent={(orderId) => {
             setCreating(null);
@@ -200,6 +201,7 @@ export function OrdersScreen() {
           viewerId={session?.pilot.id ?? null}
           period={period}
           directory={directory.data}
+          canCreate={canCreate}
           onClose={() => navigate(ordersPath(view, period))}
         />
       )}

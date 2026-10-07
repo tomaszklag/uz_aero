@@ -208,7 +208,7 @@ export function leaderCard(input: LeaderCardInput): LeaderCardVm | null {
           }),
     resend:
       status === 'open'
-        ? { note: reminders === 0 ? null : `Przypomnienie dostaną ${reminders} ${plural(reminders, 'osoba', 'osoby', 'osób')} bez odpowiedzi` }
+        ? { note: reminders === 0 ? null : `Przypomnienie ${plural(reminders, 'dostanie', 'dostaną', 'dostanie')} ${reminders} ${plural(reminders, 'osoba', 'osoby', 'osób')} bez odpowiedzi` }
         : null,
     cancellable: live,
   };

@@ -40,7 +40,7 @@ import {
   useUnassignOrder,
 } from '../../queries/useOrders';
 import { Button, Card, Drawer, Field, Pill, TextInput } from '../../ui/components';
-import { ChatIcon } from '../../ui/components/icons';
+import { ChatIcon, CopyIcon } from '../../ui/components/icons';
 import type { PersonLookup } from '../calendar/bookingLabels';
 import { leaderCard, type CrewSeatVm, type LeaderRowVm, type StatusPart, type ThreadAccess } from './leaderCard';
 import type { HistoryRowVm } from './orderHistory';
@@ -60,6 +60,10 @@ interface Props {
   members: readonly DirectoryMemberDto[];
   /** Adres rozmowy z adresatem (szuflada nad tą samą listą). */
   threadHref: (pilotId: string) => string;
+  /** „Edytuj" - ten sam formularz, co zakładanie (ZL2); wyłącznie w zleceniu żywym. */
+  onEdit: () => void;
+  /** „Powiel" - nowe zlecenie z tą samą treścią; `null` = bez „Zlecania lotów". */
+  onDuplicate: (() => void) | null;
   onClose: () => void;
 }
 
@@ -70,7 +74,7 @@ interface Pending {
   action: RecipientAction;
 }
 
-export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, members, threadHref, onClose }: Props) {
+export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, members, threadHref, onEdit, onDuplicate, onClose }: Props) {
   const vm = leaderCard({ card, now: Date.now(), viewerId, person, aircraft });
   const assign = useAssignOrder(orderId);
   const resend = useResendOrder(orderId);
@@ -159,12 +163,29 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
         </>
       }
       onClose={onClose}
+      actions={
+        // „Powiel" w linii tytułu: to skrót (druga zmiana dnia skokowego), nie czynność
+        // tego zlecenia - ikoną, a nie przyciskiem w stopce. Zamknięte zlecenie ma go w
+        // stopce jako jedyne wyjście.
+        onDuplicate == null || vm.closed ? undefined : (
+          <button type="button" className="x-btn" aria-label="Powiel zlecenie" title="Powiel zlecenie" onClick={onDuplicate}>
+            <CopyIcon size={15} />
+          </button>
+        )
+      }
       footer={
-        vm.resend == null ? undefined : (
+        vm.closed ? (
+          onDuplicate == null ? undefined : <Button onClick={onDuplicate}>Powiel zlecenie</Button>
+        ) : (
           <>
-            {vm.resend.note == null ? null : <span className="drawer-note">{vm.resend.note}</span>}
-            <Button variant="ghost" onClick={() => resend.mutate(undefined)} disabled={busy}>
-              {resend.isPending ? 'Wysyłam…' : 'Wyślij ponownie'}
+            {vm.resend?.note == null ? null : <span className="drawer-note">{vm.resend.note}</span>}
+            {vm.resend == null ? null : (
+              <Button variant="ghost" onClick={() => resend.mutate(undefined)} disabled={busy}>
+                {resend.isPending ? 'Wysyłam…' : 'Wyślij ponownie'}
+              </Button>
+            )}
+            <Button onClick={onEdit} disabled={busy}>
+              Edytuj
             </Button>
           </>
         )

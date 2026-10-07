@@ -19,6 +19,7 @@ import type {
   OrderAnswerDto,
   OrderCardDto,
   OrderListDto,
+  OrderPatchDto,
   OrderSummaryDto,
   SeatDto,
   ThreadCursorDto,
@@ -30,6 +31,7 @@ import {
   assignOrder,
   cancelOrder,
   createOrder,
+  editOrder,
   getOrder,
   getOrderSummary,
   getOrders,
@@ -91,6 +93,10 @@ export function useAssignOrder(id: string) {
 
 export function useCancelOrder(id: string) {
   return useOrderCommand(id, (reason: string | null) => cancelOrder(id, reason));
+}
+
+export function useEditOrder(id: string) {
+  return useOrderCommand(id, (patch: OrderPatchDto) => editOrder(id, patch));
 }
 
 export function useResendOrder(id: string) {

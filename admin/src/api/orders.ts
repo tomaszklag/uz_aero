@@ -21,6 +21,7 @@ import type {
   OrderAnswerResultDto,
   OrderCardDto,
   OrderListDto,
+  OrderPatchDto,
   OrderSummaryDto,
   SeatDto,
   ThreadCursorDto,
@@ -59,6 +60,11 @@ export function getOrder(id: string): Promise<OrderCardDto> {
  */
 export function createOrder(body: NewOrderDto): Promise<OrderCardDto> {
   return apiPost<OrderCardDto>('/orders', body);
+}
+
+/** Edycja zlecenia (ZL2c) - sama różnica; odpowiedź to świeża karta prowadzącego. */
+export function editOrder(id: string, patch: OrderPatchDto): Promise<OrderCardDto> {
+  return apiPatch<OrderCardDto>(`/orders/${encodeURIComponent(id)}`, patch);
 }
 
 const path = (id: string, tail: string): string => `/orders/${encodeURIComponent(id)}/${tail}`;

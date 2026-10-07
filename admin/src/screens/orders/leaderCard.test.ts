@@ -188,6 +188,13 @@ describe('fotele - karta na szukany fotel', () => {
   it('stopka: przypomnienie dostaną osoby bez odpowiedzi (Jakub, Adam, Ewa)', () => {
     expect(vm.resend).toEqual({ note: 'Przypomnienie dostaną 3 osoby bez odpowiedzi' });
   });
+
+  it('stopka: czasownik idzie za liczbą - „dostanie 1 osoba", „dostanie 5 osób"', () => {
+    const one = card({ recipients: [recipient('ako')] });
+    expect(leaderCard(input(one))!.resend).toEqual({ note: 'Przypomnienie dostanie 1 osoba bez odpowiedzi' });
+    const five = card({ recipients: ['ako', 'akw', 'bno', 'eso', 'pli'].map((id) => recipient(id)) });
+    expect(leaderCard(input(five))!.resend).toEqual({ note: 'Przypomnienie dostanie 5 osób bez odpowiedzi' });
+  });
 });
 
 describe('osoba przy obu fotelach (pkt 38)', () => {

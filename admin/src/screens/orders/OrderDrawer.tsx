@@ -13,17 +13,22 @@
  * rezerwacji w kalendarzu.
  */
 
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import type { DirectoryDto } from '../../api/dto';
+import type { DirectoryDto, OrderCardDto } from '../../api/dto';
 import { useOrder } from '../../queries/useOrders';
 import { Drawer } from '../../ui/components';
+import { calendarAircraft } from '../calendar/directoryLookups';
 import { loadErrorMessage } from '../common/apiMessage';
 import { LeaderDrawer } from './LeaderDrawer';
+import { draftOfOrder, duplicateDraft } from './orderEdit';
+import type { OrderFormDraft } from './orderForm';
+import { OrderFormDrawer } from './OrderFormDrawer';
 import { RecipientDrawer } from './RecipientDrawer';
 import { orderLookups } from './orderLookups';
 import { orderView } from './orderView';
-import { threadPath, type OrderPeriod, type OrderView } from './orderPaths';
+import { orderPath, threadPath, type OrderPeriod, type OrderView } from './orderPaths';
 
 interface Props {
   orderId: string;
@@ -33,11 +38,20 @@ interface Props {
   /** Okres listy pod szufladą - rozmowa otwiera się nad tą samą listą. */
   period: OrderPeriod;
   directory: DirectoryDto | undefined;
+  /** „Zlecanie lotów" - „Powiel" zakłada nowe zlecenie, więc stoi wyłącznie z nim. */
+  canCreate: boolean;
   onClose: () => void;
 }
 
-export function OrderDrawer({ orderId, from, viewerId, period, directory, onClose }: Props) {
+/** Formularz nad kartą: edycja tego zlecenia albo nowe z powielonej treści. */
+interface FormState {
+  initial: OrderFormDraft;
+  editing: OrderCardDto | null;
+}
+
+export function OrderDrawer({ orderId, from, viewerId, period, directory, canCreate, onClose }: Props) {
   const card = useOrder(orderId);
+  const [form, setForm] = useState<FormState | null>(null);
   const lookups = orderLookups(directory);
   const navigate = useNavigate();
   const toBooking = (bookingId: string): string => `/kalendarz/${encodeURIComponent(bookingId)}`;
@@ -55,6 +69,30 @@ export function OrderDrawer({ orderId, from, viewerId, period, directory, onClos
           </>
         )}
       </Drawer>
+    );
+  }
+
+  const loaded = card.data;
+
+  // „Edytuj" i „Powiel" otwierają formularz ZAMIAST karty - ta sama szuflada w innym stanie,
+  // bez adresu (decyzja 2026-10-07). Po zapisie edycji karta wraca odświeżona; powielone
+  // zlecenie otwiera się pod własnym adresem.
+  if (form != null && directory != null && viewerId != null) {
+    return (
+      <OrderFormDrawer
+        aircraft={calendarAircraft(directory)}
+        members={directory.members}
+        viewerId={viewerId}
+        person={lookups.person}
+        timezone={card.data.timezone}
+        initial={form.initial}
+        editing={form.editing}
+        onClose={() => setForm(null)}
+        onSent={(savedId) => {
+          setForm(null);
+          if (savedId !== orderId) navigate(orderPath(savedId, 'zlecone', period));
+        }}
+      />
     );
   }
 
@@ -84,6 +122,8 @@ export function OrderDrawer({ orderId, from, viewerId, period, directory, onClos
       aircraft={lookups.aircraft}
       members={directory?.members ?? []}
       threadHref={(pilotId) => threadPath(orderId, pilotId, 'zlecone', period)}
+      onEdit={() => setForm({ initial: draftOfOrder(loaded), editing: loaded })}
+      onDuplicate={canCreate ? () => setForm({ initial: duplicateDraft(loaded, viewerId, Date.now()), editing: null }) : null}
       onClose={onClose}
     />
   );

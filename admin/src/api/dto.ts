@@ -2325,3 +2325,22 @@ export interface NewOrderDto {
   seats: OrderSeatsDto;
   audience: OrderAudienceDto;
 }
+
+/**
+ * Ciało `PATCH /orders/:id` w edycji (ZL2c) - SAMA różnica. Zmiana terminu podnosi wersję
+ * zlecenia (odpowiedzi od nowa, §5.1); dopisani dostają zlecenie, pozostali - „Zlecenie
+ * edytowane" (§5.2). Sposobu adresowania poprawka nie zmienia.
+ */
+export interface OrderPatchDto {
+  aircraftId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+  seats?: OrderSeatsDto;
+  addRecipients?: { seat: SeatDto | null; list: AddressListDto }[];
+}

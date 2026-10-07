@@ -421,6 +421,17 @@ export interface AddressOptionVm {
   disabled: boolean;
 }
 
+/**
+ * Wysłani adresaci w edycji (6b): zlecenie już do nich poszło, więc na liście stoją
+ * zaznaczeni i zablokowani - odebranie to osobna czynność („⋯" przy adresacie na karcie).
+ */
+export interface SentAddressees {
+  /** Osoby, które zlecenie mają (na dowolnym fotelu). */
+  people: ReadonlySet<string>;
+  /** Grupy wysłane na TĘ listę - z liczbą osób, do których przez nią poszło. */
+  groups: ReadonlyMap<string, number>;
+}
+
 export interface AddressOptionsInput {
   draft: OrderFormDraft;
   target: SeatDto | 'shared';
@@ -430,6 +441,8 @@ export interface AddressOptionsInput {
   ctx: AudienceContext;
   /** Wyszukiwarka nad listą - nazwa grupy, nazwisko albo kod osoby. */
   query: string;
+  /** Edycja - wysłani adresaci; bez tego lista jest listą nowego zlecenia. */
+  sent?: SentAddressees;
 }
 
 /**
@@ -448,14 +461,20 @@ export function addressOptions(input: AddressOptionsInput): { groups: AddressOpt
 
   const groups: AddressOptionVm[] = input.groups
     .filter((g) => hit(g.name))
-    .map((g) => ({
-      kind: 'group',
-      id: g.id,
-      name: g.name,
-      desc: peopleCount(peopleOf({ pilotIds: [], groupIds: [g.id] }, ctx)?.size ?? 0),
-      selected: list.groupIds.includes(g.id),
-      disabled: false,
-    }));
+    .map((g) => {
+      const sentTo = input.sent?.groups.get(g.id);
+      if (sentTo != null) {
+        return { kind: 'group', id: g.id, name: g.name, desc: `wysłane · ${peopleCount(sentTo)}`, selected: true, disabled: true };
+      }
+      return {
+        kind: 'group',
+        id: g.id,
+        name: g.name,
+        desc: peopleCount(peopleOf({ pilotIds: [], groupIds: [g.id] }, ctx)?.size ?? 0),
+        selected: list.groupIds.includes(g.id),
+        disabled: false,
+      };
+    });
 
   const groupName = new Map(input.groups.map((g) => [g.id, g.name]));
   const viaGroups = peopleOf({ pilotIds: [], groupIds: list.groupIds }, ctx) ?? new Map<string, Source>();
@@ -466,6 +485,9 @@ export function addressOptions(input: AddressOptionsInput): { groups: AddressOpt
   const people: AddressOptionVm[] = input.members
     .filter((m) => m.active && m.id !== ctx.me && hit(m.name, m.code))
     .map((m) => {
+      if (input.sent?.people.has(m.id) === true) {
+        return { kind: 'person', id: m.id, name: m.name, desc: `${m.code} · ma już zlecenie`, selected: true, disabled: true };
+      }
       const via = viaGroups.get(m.id);
       if (via?.viaGroupId != null) {
         return {
@@ -556,13 +578,13 @@ export function orderStep3Blocker(draft: OrderFormDraft, aircraft: FormAircraft 
 }
 
 /**
- * Czy zamknięcie szuflady ma zapytać o rezygnację. Maszyna i dzień PODSTAWIONE z komórki
- * kalendarza nie liczą się jako wpis (reguła z telefonu) - liczy się każde inne pole,
- * porównane z pustym szkicem.
+ * Czy szkic różni się od tego, od czego szuflada wystartowała - pytanie o rezygnację przy
+ * zamknięciu i bramka „Zapisz zmiany" w edycji. Punktem odniesienia jest szkic STARTOWY:
+ * pusty z maszyną i dniem z komórki kalendarza (podstawione nie liczą się jako wpis -
+ * reguła z telefonu), powielony albo odtworzony z karty zlecenia.
  */
-export function orderFormDirty(draft: OrderFormDraft): boolean {
-  const empty = emptyOrderForm({ aircraftId: draft.aircraftId, date: draft.date });
-  return (Object.keys(empty) as (keyof OrderFormDraft)[]).some((key) => JSON.stringify(draft[key]) !== JSON.stringify(empty[key]));
+export function orderFormDirty(draft: OrderFormDraft, initial: OrderFormDraft): boolean {
+  return (Object.keys(initial) as (keyof OrderFormDraft)[]).some((key) => JSON.stringify(draft[key]) !== JSON.stringify(initial[key]));
 }
 
 const orNull = (text: string): string | null => (text.trim() === '' ? null : text.trim());

@@ -284,10 +284,11 @@ describe('bramki (ZL2c)', () => {
 });
 
 describe('szkic i drut', () => {
-  it('maszyna i dzień z komórki kalendarza nie liczą się jako wpis', () => {
-    expect(orderFormDirty(emptyOrderForm({ aircraftId: 'ana', date: '2026-10-03' }))).toBe(false);
-    expect(orderFormDirty({ ...emptyOrderForm(), from: '09:00' })).toBe(true);
-    expect(orderFormDirty(withSeatState(emptyOrderForm(), 'pic', 'self', ANA))).toBe(true);
+  it('maszyna i dzień z komórki kalendarza nie liczą się jako wpis - liczy się różnica od szkicu startowego', () => {
+    const seeded = emptyOrderForm({ aircraftId: 'ana', date: '2026-10-03' });
+    expect(orderFormDirty(seeded, seeded)).toBe(false);
+    expect(orderFormDirty({ ...seeded, from: '09:00' }, seeded)).toBe(true);
+    expect(orderFormDirty(withSeatState(seeded, 'pic', 'self', ANA), seeded)).toBe(true);
   });
 
   it('ciało `POST /orders`: skoki bez lądowania, fotele i adresowanie tak, jak widać', () => {
