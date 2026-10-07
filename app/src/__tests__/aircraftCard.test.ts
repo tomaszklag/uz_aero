@@ -14,6 +14,7 @@ import {
   readingsLine,
   untilLabel,
   upcomingLabel,
+  upcomingRows,
   watchVm,
 } from '../ui/screens/logic/aircraftCard';
 
@@ -278,5 +279,25 @@ describe('historia', () => {
     expect(historyLabel(218)).toBe('218 operacji · UTC');
     expect(historyLabel(3)).toBe('3 operacje · UTC');
     expect(historyLabel(1)).toBe('1 operacja · UTC');
+  });
+});
+
+describe('zlecenie bez dowódcy (zlecenia 4.0.0, §16 pkt 5)', () => {
+  const order = { seeking: ['pic', 'dual'] as ('pic' | 'dual')[] };
+
+  it('heros „zarezerwowana" mówi, czego zlecenie szuka - zamiast kreski', () => {
+    const vm = aircraftCardVm(
+      card({
+        now: { kind: 'booked', bookingId: 'b1', pilotId: null, startsAt: iso(TODAY + 8 * H), endsAt: iso(TODAY + 12 * H) },
+        upcoming: [upcoming({ pilotId: null, order })],
+      }),
+      opts,
+    );
+    expect(vm?.hero.main).toBe('Zlecenie · szuka załogi');
+  });
+
+  it('wiersz najbliższych terminów - to samo zdanie', () => {
+    const rows = upcomingRows(card({ upcoming: [upcoming({ pilotId: null, order })] }), opts);
+    expect(rows[0]!.value).toBe('Zlecenie · szuka załogi');
   });
 });

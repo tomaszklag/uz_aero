@@ -5,8 +5,12 @@
  * Koperta `{ v: 1, type, … }` jest jedna dla telefonu i panelu. Telefon - jak panel -
  * rozpoznaje to, co zna, a ramkę poprawnego kształtu, ale nieznanego typu, IGNORUJE:
  * nowszy serwer dokłada rodzaje ramek bez psucia starszej aplikacji, a starszej
- * aplikacji nie da się zaktualizować w chwili wdrożenia serwera. Rozmowy zleceń
- * (`message`, `read`) przyjdą z ekranami zleceń (Z-C); do tego czasu są ramką nieznaną.
+ * aplikacji nie da się zaktualizować w chwili wdrożenia serwera.
+ *
+ * Rozmowy zleceń (`message`, `read`; epik Z-C #247, `docs/zlecenia.md` §11) niosą TREŚĆ
+ * w całości - otwarta rozmowa dopisuje wiadomość bez pytania serwera. Ramka rozmowy bez
+ * wskazania rozmowy (zlecenie × adresat) albo z wiadomością spoza kształtu REST jest
+ * ignorowana: nie ma czego z nią zrobić, a zgubiona ramka niczego nie gubi (K2).
  *
  * Ramki z danymi niosą `org` - klub, którym połączenie się uwierzytelniło. Łącze porównuje
  * go z klubem, dla którego połączenie otwarto (§5), tak jak tapnięcie w push porównuje
@@ -21,7 +25,7 @@
  * Czysty moduł: tekst → ramka albo `null` (to nie jest obiekt JSON z napisem `type`).
  */
 
-import type { RemoteCalendarDay, RemoteNotification } from '../ports';
+import type { RemoteCalendarDay, RemoteNotification, RemoteThreadMessage } from '../ports';
 
 /** Ramka po odczytaniu - wyłącznie pola, z których telefon korzysta. */
 export type LiveFrame =
@@ -42,12 +46,35 @@ export type LiveFrame =
       unread: number | null;
       quiet: boolean;
     }
+  /**
+   * Wiadomość w rozmowie zlecenia W CAŁOŚCI, w kształcie REST. Rozmowę wskazuje para
+   * zlecenie × adresat (§7.1) - ta sama, co w ścieżce `…/threads/:recipientId`.
+   */
+  | {
+      type: 'message';
+      org: string | null;
+      orderId: string;
+      recipientId: string;
+      message: RemoteThreadMessage;
+    }
+  /** Uczestnik przeczytał rozmowę - „Odczytane 14:05" pod ostatnią wiadomością. */
+  | {
+      type: 'read';
+      org: string | null;
+      orderId: string;
+      recipientId: string;
+      pilotId: string;
+      at: string;
+    }
   /** Powód zamknięcia - łącze reaguje jak REST na tę samą odmowę: odświeża tokeny. */
   | { type: 'bye'; reason: string }
   | { type: 'ignored' };
 
 /** Ramki z treścią dla aplikacji - te podaje dalej łącze. */
-export type LiveDataFrame = Extract<LiveFrame, { type: 'changed' | 'notification' }>;
+export type LiveDataFrame = Extract<LiveFrame, { type: 'changed' | 'notification' | 'message' | 'read' }>;
+
+/** Ramki rozmowy - otwarta rozmowa dostaje je od razu i w całości. */
+export type ThreadFrame = Extract<LiveDataFrame, { type: 'message' | 'read' }>;
 
 type Json = Record<string, unknown>;
 
@@ -73,6 +100,34 @@ function notificationOf(value: unknown): RemoteNotification | null {
   const createdAt = text(value.createdAt);
   if (id == null || kind == null || createdAt == null || !isObject(value.payload)) return null;
   return { id, kind, payload: value.payload, createdAt, readAt: text(value.readAt), day: dayOf(value.day) };
+}
+
+/** Wiadomość rozmowy w kształcie REST albo `null` - pola obce (`threadId`) zostają na serwerze. */
+function threadMessageOf(value: unknown): RemoteThreadMessage | null {
+  if (!isObject(value)) return null;
+  const id = text(value.id);
+  const authorId = text(value.authorId);
+  const body = text(value.body);
+  const createdAt = text(value.createdAt);
+  if (id == null || authorId == null || body == null || createdAt == null) return null;
+  return { id, authorId, body, createdAt };
+}
+
+/** Ramka rozmowy; bez wskazania rozmowy albo z treścią spoza kształtu - ignorowana. */
+function threadFrameOf(value: Json): LiveFrame {
+  const org = text(value.org);
+  const orderId = text(value.orderId);
+  const recipientId = text(value.recipientId);
+  if (orderId == null || recipientId == null) return { type: 'ignored' };
+  if (value.type === 'message') {
+    const message = threadMessageOf(value.message);
+    return message == null ? { type: 'ignored' } : { type: 'message', org, orderId, recipientId, message };
+  }
+  const pilotId = text(value.pilotId);
+  const at = text(value.at);
+  return pilotId == null || at == null
+    ? { type: 'ignored' }
+    : { type: 'read', org, orderId, recipientId, pilotId, at };
 }
 
 export function parseFrame(raw: string): LiveFrame | null {
@@ -103,6 +158,9 @@ export function parseFrame(raw: string): LiveFrame | null {
         // Wyłącznie `true` wycisza - cisza jest wyjątkiem, nie domysłem.
         quiet: value.quiet === true,
       };
+    case 'message':
+    case 'read':
+      return threadFrameOf(value);
     case 'bye':
       return { type: 'bye', reason: text(value.reason) ?? 'unknown' };
     default:

@@ -23,6 +23,11 @@
  *
  * ══ MASZYNA (3.2.0) ══ pięć rodzajów z `aircraftNotices.ts` → karta maszyny (27).
  *
+ * ══ ZLECENIA (4.0.0, `docs/zlecenia.md` §12) ══ każdy z dwunastu rodzajów `order_*` →
+ * karta zlecenia (`Order`), która sama rozstrzyga, kogo pokazuje: adresata (28), prowadzącego
+ * (32) albo - przy locie, który jest już Twój - kartę rezerwacji (23F). Wiadomość w rozmowie
+ * otwiera od razu ROZMOWĘ: wątek to para zlecenie × adresat, więc budzik niesie obu.
+ *
  * ══ PUSH NA WIERZCHU (kanał klubu 4.0.0, K4) ══ serwer budzi pushem tylko urządzenie
  * bez połączenia, więc push odebrany przy otwartej aplikacji znaczy chwilę bez łącza
  * (pierwsze sekundy po powrocie z tła, przerwa w zasięgu). Skrzynka i dzwonek dostają
@@ -34,6 +39,8 @@ export type PushTarget =
   | { screen: 'Decision'; params: { bookingId: string } }
   | { screen: 'BookingDetails'; params: { bookingId: string } }
   | { screen: 'Aircraft'; params: { aircraftId: string } }
+  | { screen: 'Order'; params: { orderId: string } }
+  | { screen: 'OrderThread'; params: { orderId: string; recipientId: string } }
   | { screen: 'Notifications'; params?: { foreignClub: true } };
 
 /** Rodzaje z `bookingNotices.ts` (serwer) - zmiana tam wymaga zmiany tutaj. */
@@ -53,6 +60,22 @@ const AIRCRAFT: ReadonlySet<string> = new Set([
   'aircraft_not_taken',
 ]);
 
+/** Rodzaje z `orderNotices.ts` (serwer) - wszystkie otwierają kartę zlecenia albo rozmowę. */
+export const ORDER_KINDS: ReadonlySet<string> = new Set([
+  'order_offered',
+  'order_changed',
+  'order_answered',
+  'order_assigned',
+  'order_filled',
+  'order_removed',
+  'order_withdrawn',
+  'order_unassigned',
+  'order_cancelled',
+  'order_unfilled',
+  'order_expired',
+  'order_message',
+]);
+
 const id = (value: unknown): string | null => (typeof value === 'string' && value !== '' ? value : null);
 
 /** @param activeOrgId klub AKTYWNY w telefonie; `null` = nie sprawdzamy (testy, brak klubu). */
@@ -69,6 +92,14 @@ export function pushTarget(data: unknown, activeOrgId: string | null = null): Pu
   if (typeof kind === 'string' && AIRCRAFT.has(kind)) {
     const aircraftId = id(d.aircraftId);
     return aircraftId == null ? { screen: 'Notifications' } : { screen: 'Aircraft', params: { aircraftId } };
+  }
+  if (typeof kind === 'string' && ORDER_KINDS.has(kind)) {
+    const orderId = id(d.orderId);
+    if (orderId == null) return { screen: 'Notifications' };
+    const recipientId = id(d.recipientId);
+    return kind === 'order_message' && recipientId != null
+      ? { screen: 'OrderThread', params: { orderId, recipientId } }
+      : { screen: 'Order', params: { orderId } };
   }
 
   const bookingId = id(d.bookingId);

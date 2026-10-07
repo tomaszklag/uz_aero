@@ -38,13 +38,52 @@ import { clubHhmm, type ClubDayBounds } from './clubClock';
 import { dualRequirementBlocker } from './dualRequirement';
 import { operationLabel } from './operations';
 
+/**
+ * TERMIN, o który pytają OBA formularze terminu - rezerwacja (22) i zlecenie (31; 4.0.0,
+ * epik Z-C #247). Zlecenie jest rezerwacją, która szuka załogi, więc jego krok 1 jest
+ * krokiem 1 rezerwacji 1:1 - i te same bramki mają go pilnować, a nie ich kopia.
+ */
+export type TermDraft = Pick<BookingDraft, 'date' | 'aircraftId' | 'startsAt' | 'endsAt'>;
+
+/**
+ * Rzeczowniki bramki terminu. Reguły są jedne, ale „koniec rezerwacji wypada przed JEJ
+ * początkiem" w zleceniu brzmi „koniec terminu wypada przed JEGO początkiem" - rodzaju
+ * gramatycznego nie da się podstawić regułą, więc każdy formularz podaje swoje zdania.
+ */
+export interface TermWords {
+  noDay: string;
+  noHours: string;
+  reversed: string;
+}
+
+export const BOOKING_TERM_WORDS: TermWords = {
+  noDay: 'Wybierz dzień rezerwacji.',
+  noHours: 'Ustaw godziny rezerwacji.',
+  reversed: 'Koniec rezerwacji wypada przed jej początkiem.',
+};
+
 export interface Step1Input {
-  draft: BookingDraft;
+  draft: TermDraft;
   /** Maszyna wskazana w szkicu; `null` = jeszcze nie wybrano albo nie ma jej w cache. */
   aircraft: ReferenceAircraft | null;
   /** Zajętości wybranej doby - WSZYSTKIE maszyny, filtrujemy sami. */
   bookings: readonly CalendarBooking[];
   now: number;
+  /** Zdania blokady; bez nich - rezerwacja. */
+  words?: TermWords;
+}
+
+/**
+ * Zajętości, wśród których termin szuka kolizji - BEZ terminu, który formularz właśnie
+ * poprawia. Poprawka rezerwacji („PRZESUŃ I POPRAW") i edycja zlecenia zaczynają od
+ * terminu, który stoi już w kalendarzu, więc bez tego wyjątku zderzałby się sam ze sobą
+ * i „DALEJ" stałby zablokowany, zanim pilot cokolwiek ruszy.
+ */
+export function bookingsExcept(
+  bookings: readonly CalendarBooking[],
+  except: string | null,
+): CalendarBooking[] {
+  return except == null ? [...bookings] : bookings.filter((b) => b.id !== except);
 }
 
 /**
@@ -52,15 +91,16 @@ export interface Step1Input {
  */
 export function step1Blocker(input: Step1Input): string | null {
   const { draft, aircraft, now } = input;
+  const words = input.words ?? BOOKING_TERM_WORDS;
 
-  if (draft.date == null) return 'Wybierz dzień rezerwacji.';
+  if (draft.date == null) return words.noDay;
   if (draft.aircraftId == null) return 'Wybierz samolot.';
-  if (draft.startsAt == null || draft.endsAt == null) return 'Ustaw godziny rezerwacji.';
+  if (draft.startsAt == null || draft.endsAt == null) return words.noHours;
 
   if (draft.endsAt <= draft.startsAt) {
     // Zdanie mówi o SKUTKU, nie o nazwach pól: „od" i „do" są w mianowniku, a odmiany
     // nie da się wyprowadzić regułą (ta sama decyzja, co w arkuszu czasów wpisu ręcznego).
-    return 'Koniec rezerwacji wypada przed jej początkiem.';
+    return words.reversed;
   }
 
   // Reguła terminu stoi na jego KOŃCU, nie początku (serwer, epik R-B): rezerwacja
@@ -103,26 +143,38 @@ export interface Step2Input {
   singleField: boolean;
 }
 
-/** Powód blokady „ZAREZERWUJ" na kroku 2; `null` = można zapisać. */
-export function step2Blocker(input: Step2Input): string | null {
-  const { draft } = input;
+/** Zadanie i trasa - pola kroku 2 wspólne dla rezerwacji (22A) i zlecenia (31A). */
+export type TaskDraft = Pick<BookingDraft, 'operation' | 'departureIcao' | 'arrivalIcao' | 'plannedAirMin'>;
 
+/** Rodzaj operacji i lotniska, w kolejności pól na ekranie; `null` = w porządku. */
+export function routeBlocker(draft: TaskDraft, singleField: boolean): string | null {
   if (draft.operation == null) return 'Wybierz rodzaj operacji.';
 
   if (draft.departureIcao.trim() === '') {
-    return input.singleField ? 'Wybierz lotnisko.' : 'Wybierz lotnisko startu.';
+    return singleField ? 'Wybierz lotnisko.' : 'Wybierz lotnisko startu.';
   }
-  if (!input.singleField && draft.arrivalIcao.trim() === '') return 'Wybierz lotnisko lądowania.';
-
-  const dual = dualRequirementBlocker(input.aircraft, draft.dualId);
-  if (dual != null) return dual;
-
-  // Czas lotu nie ma plakietki „opcjonalne", więc bramka go egzekwuje - pole bez
-  // plakietki obiecuje wymóg (issue #58). Plan jest też jedyną liczbą, z której
-  // formularz umie powiedzieć, ile ze slotu zostaje na obsługę.
-  if (draft.plannedAirMin == null) return 'Podaj planowany czas lotu.';
-
+  if (!singleField && draft.arrivalIcao.trim() === '') return 'Wybierz lotnisko lądowania.';
   return null;
+}
+
+/**
+ * Czas lotu nie ma plakietki „opcjonalne", więc bramka go egzekwuje - pole bez
+ * plakietki obiecuje wymóg (issue #58). Plan jest też jedyną liczbą, z której formularz
+ * umie powiedzieć, ile z terminu zostaje na obsługę.
+ */
+export function planBlocker(draft: TaskDraft): string | null {
+  return draft.plannedAirMin == null ? 'Podaj planowany czas lotu.' : null;
+}
+
+/** Powód blokady „ZAREZERWUJ" na kroku 2; `null` = można zapisać. */
+export function step2Blocker(input: Step2Input): string | null {
+  const { draft } = input;
+  return (
+    routeBlocker(draft, input.singleField) ??
+    // Drugi pilot stoi na ekranie między trasą a planem - i w tej kolejności pyta bramka.
+    dualRequirementBlocker(input.aircraft, draft.dualId) ??
+    planBlocker(draft)
+  );
 }
 
 /**
@@ -178,7 +230,21 @@ export interface PlanNote {
   tone: 'muted' | 'amber';
 }
 
-export function planNote(draft: BookingDraft): PlanNote | null {
+/**
+ * Jak podpis nazywa termin: rezerwacja mówi „Slot … nie mieści się w rezerwacji",
+ * zlecenie (31A) - „Termin … nie mieści się w terminie".
+ */
+export interface PlanWords {
+  lead: string;
+  overflow: string;
+}
+
+export const BOOKING_PLAN_WORDS: PlanWords = { lead: 'Slot', overflow: 'nie mieści się w rezerwacji' };
+
+export function planNote(
+  draft: Pick<BookingDraft, 'startsAt' | 'endsAt' | 'plannedAirMin'>,
+  words: PlanWords = BOOKING_PLAN_WORDS,
+): PlanNote | null {
   if (draft.startsAt == null || draft.endsAt == null || draft.plannedAirMin == null) return null;
 
   const slot = draft.endsAt - draft.startsAt;
@@ -189,19 +255,19 @@ export function planNote(draft: BookingDraft): PlanNote | null {
 
   if (rest < 0) {
     return {
-      text: `Slot ${relativeAge(slot)} · plan lotu ${duration(plan)} nie mieści się w rezerwacji`,
+      text: `${words.lead} ${relativeAge(slot)} · plan lotu ${duration(plan)} ${words.overflow}`,
       tone: 'amber',
     };
   }
   return {
-    text: `Slot ${relativeAge(slot)} · plan lotu ${duration(plan)} zostawia ${relativeAge(rest)} na obsługę`,
+    text: `${words.lead} ${relativeAge(slot)} · plan lotu ${duration(plan)} zostawia ${relativeAge(rest)} na obsługę`,
     tone: 'muted',
   };
 }
 
 /** Podtytuł kroku 2: „Nd 20 WRZ · 11:00 → 13:00 · SP-AXA" - co pilot już ustalił. */
 export function step2Subtitle(
-  draft: BookingDraft,
+  draft: TermDraft,
   day: ClubDayBounds | null,
   aircraft: ReferenceAircraft | null,
   dayLabel: string,

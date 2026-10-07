@@ -18,5 +18,7 @@ export function openTarget(ref: NavigationContainerRefWithCurrent<RootStackParam
   if (target.screen === 'Decision') ref.navigate('Decision', target.params);
   else if (target.screen === 'BookingDetails') ref.navigate('BookingDetails', target.params);
   else if (target.screen === 'Aircraft') ref.navigate('Aircraft', target.params);
+  else if (target.screen === 'Order') ref.navigate('Order', target.params);
+  else if (target.screen === 'OrderThread') ref.navigate('OrderThread', target.params);
   else ref.navigate('Notifications', target.params);
 }

@@ -17,6 +17,7 @@
  */
 
 import type { BugSeverity } from './bugReportPort';
+import type { RemoteSeat } from './orderServerPort';
 
 import type {
   Event,
@@ -424,8 +425,12 @@ export interface RemoteCalendar {
    * „Obserwowanie samolotów", więc nagłówek wiersza maszyny prowadzi w jej kartę (27).
    * Telefon zdolności nie zna i bit dojeżdża w odpowiedzi; opcjonalne, bo serwer
    * sprzed 3.2.0 go nie niesie - wiersz jest wtedy samą etykietą.
+   *
+   * `order` (4.0.0, 21E) = „Zlecanie lotów": tapnięcie w wolne pasmo pyta wtedy
+   * „Zarezerwuj dla siebie / Zleć lot". Bez bitu (i na serwerze sprzed 4.0.0) tapnięcie
+   * prowadzi wprost do rezerwacji, jak dotąd.
    */
-  viewer?: { watch?: boolean };
+  viewer?: { watch?: boolean; order?: boolean };
 }
 
 export interface RemoteCalendarDay {
@@ -446,6 +451,12 @@ export interface RemoteBooking {
   pilotId: string | null;
   /** Powód wyłączenia z użytku - nazywa zajętość, która nie ma właściciela. */
   blockReason: string | null;
+  /**
+   * Zlecenie za tą rezerwacją (4.0.0, `docs/zlecenia.md` §13.1, §16 pkt 2) - pole WĄSKIEGO
+   * kształtu, więc widzi je każdy członek klubu. `null` = zwykła rezerwacja albo
+   * wyłączenie z użytku. Opcjonalne, bo serwer sprzed 4.0.0 go nie niesie.
+   */
+  order?: RemoteBookingOrder | null;
 
   /**
    * ══ PONIŻSZE POLA PRZYCHODZĄ WYŁĄCZNIE PRZY WŁASNEJ REZERWACJI ══
@@ -473,6 +484,20 @@ export interface RemoteBooking {
    */
   closeReason?: string | null;
   closedBy?: string | null;
+}
+
+/**
+ * Zlecenie widziane z kalendarza: pasek pisze „Zlecenie · szuka dowódcy / drugiego
+ * pilota / załogi", a obsadzony fotel - nazwisko. Prowadzący i adresat dostają też
+ * `id` i `createdBy` („Otwórz zlecenie", „kto zleca" - karta 23F); pozostali członkowie
+ * klubu treści zlecenia nie widzą (reguła cudzej rezerwacji).
+ */
+export interface RemoteBookingOrder {
+  /** Fotele bez osoby; pusta lista = komplet załogi. */
+  seeking: RemoteSeat[];
+  /** Wyłącznie prowadzący i adresat. */
+  id?: string;
+  createdBy?: string;
 }
 
 /**
@@ -869,25 +894,6 @@ export interface RemoteBookingPatch {
 }
 
 /**
- * POPRAWKA istniejącej rezerwacji (`PATCH /bookings/:id`).
- *
- * MASZYNY TU NIE MA i to nie jest przeoczenie: rezerwacja należy do konkretnego
- * egzemplarza, a przeniesienie jej na inny jest INNĄ rezerwacją - zakłada się ją
- * od nowa i odwołuje starą. Pola pominięte zostają bez zmian.
- */
-export interface RemoteBookingPatch {
-  startsAt?: string;
-  endsAt?: string;
-  operation?: string;
-  dualId?: string | null;
-  fromIcao?: string | null;
-  toIcao?: string | null;
-  plannedAirMin?: number | null;
-  plannedFuelL?: number | null;
-  note?: string | null;
-}
-
-/**
  * Wynik zapisu rezerwacji.
  *
  * Odmowa NIE JEST wyjątkiem, bo `slot_taken` niesie TREŚĆ: kolidującą zajętość,
@@ -1115,8 +1121,6 @@ export interface ServerPort {
    * a nie drugim terminem.
    */
   createBooking(token: string, draft: RemoteBookingDraft): Promise<BookingWriteResult>;
-  /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
-  patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
   /** Poprawka WŁASNEJ rezerwacji (`PATCH /bookings/:id`) - ta sama trójka odpowiedzi. */
   patchBooking(token: string, id: string, patch: RemoteBookingPatch): Promise<BookingWriteResult>;
   /** Odwołanie WŁASNEJ rezerwacji (`DELETE /bookings/:id`); powód opcjonalny. */

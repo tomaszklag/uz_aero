@@ -4,7 +4,9 @@
  * ══ BOHATEREM JEST TERMIN ══
  * Godziny stoją wielkim składem na górze, bo to ich dotyczy cała rezerwacja - maszyna
  * i zadanie tylko je opisują. Odliczanie („ZA 1 H 15 MIN") odpowiada na pytanie, które
- * pilot zadaje sobie patrząc na tę kartę, a nie na samą godzinę.
+ * pilot zadaje sobie patrząc na tę kartę, a nie na samą godzinę. Karta terminu, wiersze
+ * i baner stanu to te same komponenty, co na karcie zlecenia (28, 32) - jedna rzecz ma
+ * w aplikacji jeden kształt (decyzja właściciela 2026-10-06).
  *
  * ══ OŁÓWKÓW PRZY WIERSZACH NIE MA ══
  * Zmiana idzie JEDNĄ drogą - „PRZESUŃ I POPRAW" wraca do formularza z wypełnionym
@@ -15,6 +17,12 @@
  * Czerwień mówi „uwaga", nie „zrób to" - intencją wchodzącego na tę kartę jest
  * sprawdzenie terminu, nie kasowanie. Potwierdzenie nazywa KONKRETNY wpis (wzorzec
  * 10L), bo dwie rezerwacje tej samej maszyny w dobie różnią się wyłącznie godzinami.
+ *
+ * ══ REZERWACJA ZE ZLECENIA (23F) ══
+ * Termin prowadzi zlecenie, więc poprawki nie ma. Przydzielony pilot REZYGNUJE (arkusz
+ * kształtu 28D) i wraca do kalendarza - lot przestaje być jego; zlecający w swoim fotelu
+ * odwołuje całe zlecenie (arkusz 32C) i zostaje na karcie, która pokazuje nowy stan.
+ * Wiersz „Ze zlecenia" prowadzi przydzielonego do rozmowy, a zlecającego do karty zlecenia.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -23,18 +31,21 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ActionButton,
   AppText,
-  Banner,
   Card,
+  DetailRow,
+  FootNote,
   GroupLabel,
   Icon,
-  KeyValueRow,
+  InlineNote,
   PathSteps,
   ReasonField,
   Screen,
   ScreenHeader,
   Sheet,
   Skeleton,
-  toneColors,
+  StateBanner,
+  TermHero,
+  TextField,
   type IconName,
 } from '../components';
 import { goHome } from '../navigation/goHome';
@@ -42,6 +53,7 @@ import { useAircraft } from '../hooks/useAircraft';
 import { useBooking } from '../hooks/useBooking';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { usePilots } from '../hooks/usePilots';
+import { useSheetInputFocus } from '../hooks/useSheetInputFocus';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useSessionStore } from '../store';
 import { useCurrentPilot } from '../store/currentPilot';
@@ -50,7 +62,8 @@ import { airfieldByIcao } from '../../domain';
 
 import { approvalView, type ApprovalState } from './logic/bookingApproval';
 import { cancellationBanner } from './logic/bookingCancellation';
-import { bookingDetails, type BookingDetailRow } from './logic/bookingDetails';
+import { bookingDetails, termTone, type BookingDetailRow } from './logic/bookingDetails';
+import { orderRefusalText } from './logic/orderRefusals';
 import { setBugBooking } from '../components/bug/bugReporter';
 
 /** Ikona banera stanu (23B–23E): zegar czeka, ogniwo dokłada krok, blokada odmawia, trójkąt wygasa. */
@@ -60,6 +73,13 @@ const BANNER_ICON: Partial<Record<ApprovalState, IconName>> = {
   rejected: 'blocker',
   expired: 'warning',
 };
+
+/** Powód zlecenia jest zdaniem do ludzi (wiadomość), nie przypisem do liczby - stąd 500, jak na 28D i 32C. */
+const REASON_MAX = 500;
+
+/** Zapis, który NIE DOJECHAŁ: slot i fotel zwalnia serwer, więc dopóki nie odpowiedział, nic się nie stało. */
+const CANCEL_OFFLINE = 'Odwołanie wymaga połączenia - slot zwalnia serwer.';
+const RESIGN_OFFLINE = 'Rezygnację zapisuje serwer - potrzebne połączenie.';
 
 type Nav = {
   navigate: (screen: string, params?: object) => void;
@@ -88,12 +108,14 @@ export function BookingDetailsScreen({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  /** Odwołanie, które się nie udało - stoi W ARKUSZU, bo pod arkuszem nikt by go nie zobaczył. */
   const [failed, setFailed] = useState<string | null>(null);
   const sync = useSessionStore((st) => st.sync);
+  const { inputRef, onShow } = useSheetInputFocus();
 
   const vm = useMemo(() => {
     if (data == null) return null;
-    const dual = pilots.find((p) => p.id === data.booking.dualId) ?? null;
+    const person = (id: string) => pilots.find((p) => p.id === id) ?? null;
 
     return bookingDetails({
       booking: data.booking,
@@ -102,8 +124,8 @@ export function BookingDetailsScreen({
       pilotId,
       hasPath: (data.approval?.steps.length ?? 0) > 0,
       aircraft: aircraft == null ? null : { reg: aircraft.reg, type: aircraft.type ?? null },
-      dualName: dual?.name ?? null,
-      dualCode: dual?.code ?? null,
+      nameOf: (id) => person(id)?.name ?? null,
+      codeOf: (id) => person(id)?.code ?? null,
       airfieldName: (icao) => airfieldByIcao(icao)?.name ?? null,
     });
   }, [data, now, pilotId, aircraft, pilots]);
@@ -111,7 +133,7 @@ export function BookingDetailsScreen({
   /**
    * Stan rezerwacji wobec ŚCIEŻKI AKCEPTACJI (3.1.0, makiety 23B–23E): baner na górze,
    * ton karty terminu, kroki ścieżki. Klub bez ścieżki dostaje `state: 'none'` i karta
-   * wygląda dokładnie jak w 3.0.0.
+   * wygląda dokładnie jak w 3.0.0. Rezerwacja ze zlecenia ścieżki nie przechodzi (decyzja 5).
    */
   const av = useMemo(
     () =>
@@ -157,6 +179,14 @@ export function BookingDetailsScreen({
     return () => setBugBooking(null);
   }, [vm, bookingId]);
 
+  const order = vm?.order ?? null;
+  const resigns = order?.role === 'assigned';
+
+  const openCancel = () => {
+    setFailed(null);
+    setCancelOpen(true);
+  };
+
   const cancel = useCallback(async () => {
     if (sync == null || bookingId == null || cancelling) return;
 
@@ -164,28 +194,44 @@ export function BookingDetailsScreen({
     setFailed(null);
     try {
       const trimmed = reason.trim();
+      // Rezerwacja ze zlecenia odwołuje się TĄ SAMĄ trasą - serwer sam rozpoznaje, czy
+      // to rezygnacja przydzielonego, czy odwołanie zlecenia (`OrderBookingCommands`).
       const result = await sync.cancelBooking(bookingId, trimmed === '' ? null : trimmed);
 
       // `null` = odwołanie NIE DOJECHAŁO. Slot zwalnia serwer, więc dopóki nie
       // odpowiedział, termin dalej stoi zajęty - i tak ma się to czytać.
       if (result == null) {
-        setFailed('Odwołanie wymaga połączenia - slot zwalnia serwer.');
+        setFailed(resigns ? RESIGN_OFFLINE : CANCEL_OFFLINE);
         return;
       }
       if (!result.ok) {
-        setFailed('Nie udało się odwołać tej rezerwacji.');
+        setFailed(order != null ? orderRefusalText(result.refusal) : 'Nie udało się odwołać tej rezerwacji.');
+        // Rezerwacja mogła się zmienić pod palcem - karta ma pokazać jej NOWY stan.
+        reload();
         return;
       }
 
       setCancelOpen(false);
       setReason('');
+      if (resigns) {
+        // Po rezygnacji lot przestaje być Twój, a karta cudzej rezerwacji nie ma tu
+        // nic do powiedzenia - wracasz tam, skąd planuje się dalej (23F).
+        goHome(navigation, 'Calendar');
+        return;
+      }
       // Karta ZOSTAJE i pokazuje nowy stan („Odwołana"): zniknięcie ekranu wyglądałoby
       // tak samo przy udanym odwołaniu i przy awarii, a pilot ma zobaczyć skutek.
       reload();
     } finally {
       setCancelling(false);
     }
-  }, [sync, bookingId, cancelling, reason, reload]);
+  }, [sync, bookingId, cancelling, reason, reload, resigns, order, navigation]);
+
+  const openOrderRow = () => {
+    if (order == null) return;
+    if (order.role === 'assigned') navigation.navigate('OrderThread', { orderId: order.orderId, recipientId: pilotId });
+    else navigation.navigate('Order', { orderId: order.orderId, as: 'leader' });
+  };
 
   const header = (
     <ScreenHeader title="REZERWACJA" size="md" backLabel="Wróć" onBack={() => navigation.goBack()} />
@@ -206,72 +252,44 @@ export function BookingDetailsScreen({
           <Missing theme={theme} />
         ) : (
           <>
-            {/* Baner stanu (23B–23E) - przyrząd, nie pouczenie: mówi, co ze sprawą, i co dalej. */}
+            {/* Baner stanu (23B–23E, 23G) - przyrząd, nie pouczenie: mówi, co ze sprawą, i co dalej. */}
             {av.banner != null ? (
-              <Banner
-                kind="status"
+              <StateBanner
+                icon={BANNER_ICON[av.state] ?? 'info'}
                 tone={av.banner.tone}
-                icon={BANNER_ICON[av.state]}
                 title={av.banner.title}
                 text={av.banner.text}
               />
             ) : cancelled != null ? (
-              <Banner
-                kind="status"
-                tone={cancelled.tone}
-                icon="blocker"
-                title={cancelled.title}
-                text={cancelled.text}
-              />
+              <StateBanner icon="blocker" tone={cancelled.tone} title={cancelled.title} text={cancelled.text} />
             ) : null}
 
             {/* Ton karty terminu idzie za stanem: zieleń obiecuje pewny lot, bursztyn
-                mówi „czeka", karta wygaszona - „to już tylko zapis" (`.hero.wait` / `.hero.off`). */}
-            <Card
-              flush
-              style={
-                av.heroTone === 'amber'
-                  ? { borderColor: toneColors(theme, 'amber').border }
-                  : av.heroTone === 'off'
-                    ? { borderColor: theme.colors.borderStrong }
-                    : undefined
-              }
-            >
-              <View style={s.hero}>
-                <View style={s.heroTop}>
-                  <AppText variant="body" style={s.heroDate}>
-                    {vm.date}
-                  </AppText>
-                  <AppText
-                    variant="mono"
-                    style={[s.heroBadge, { color: toneColors(theme, av.badgeTone === 'dim' ? 'neutral' : av.badgeTone).accent }]}
-                  >
-                    {vm.badge}
-                  </AppText>
-                </View>
+                mówi „czeka", karta wygaszona - „to już tylko zapis" (`.hero.wait` / `.hero.off`).
+                Cudza potwierdzona nie jest zielona - zieleń znaczy tu „moje" (`termTone`). */}
+            <TermHero
+              date={vm.date}
+              badge={{ text: vm.badge, tone: av.badgeTone }}
+              hours={vm.hours}
+              length={vm.length}
+              countdown={vm.countdown}
+              tone={termTone(av.heroTone, vm.seated)}
+            />
 
-                <AppText variant="display" style={s.heroHours}>
-                  {vm.hours}
-                </AppText>
-
-                <View style={s.heroMeta}>
-                  <AppText variant="mono" style={s.heroZone}>
-                    czas klubu
-                  </AppText>
-                  <AppText variant="mono" style={s.heroZone}>
-                    {vm.length}
-                  </AppText>
-                  {vm.countdown != null && (
-                    <AppText variant="mono" style={s.heroCount}>
-                      {vm.countdown}
-                    </AppText>
-                  )}
-                </View>
-              </View>
-            </Card>
-
-            <Card>
-              <Rows rows={vm.what} />
+            <Card flush>
+              <Rows rows={vm.what} last={order == null} />
+              {/* „Ze zlecenia" - jedyny wiersz z szewronem (23F): nie uczy oka pomijać prawej krawędzi. */}
+              {order != null && (
+                <DetailRow
+                  label={order.row.label}
+                  value={order.row.value}
+                  sub={order.row.sub}
+                  onPress={openOrderRow}
+                  // Nazwisko po separatorze, nie w narzędniku („z Martą Ziębą") - odmiany nie
+                  // da się wyprowadzić regułą (słownik zleceń §3).
+                  pressLabel={order.role === 'assigned' ? `Rozmowa o zleceniu · ${order.row.value}` : 'Karta zlecenia'}
+                />
+              )}
             </Card>
 
             {/* Ścieżka akceptacji - tylko gdy klub ją prowadzi. Nazwisk nie ma (§9.4). */}
@@ -288,19 +306,11 @@ export function BookingDetailsScreen({
                 wierszem o niczym (ta sama reguła, co przy karcie notatek na 10). */}
             {vm.plan.length > 0 && (
               <>
-                <AppText variant="micro" tone="muted" style={s.sectionLabel}>
-                  Plan
-                </AppText>
-                <Card>
-                  <Rows rows={vm.plan} />
+                <GroupLabel text="Plan" />
+                <Card flush>
+                  <Rows rows={vm.plan} last />
                 </Card>
               </>
-            )}
-
-            {failed != null && (
-              <AppText variant="body" style={s.failed}>
-                {failed}
-              </AppText>
             )}
 
             {/* Rezerwacja ZAMKNIĘTA ma jedno wyjście (23C/23D): nie ma czego przesuwać ani
@@ -334,52 +344,80 @@ export function BookingDetailsScreen({
 
             {vm.canCancel && (
               <ActionButton
-                label="ODWOŁAJ REZERWACJĘ"
-                icon="trash"
+                label={resigns ? 'REZYGNUJĘ' : order != null ? 'ODWOŁAJ ZLECENIE' : 'ODWOŁAJ REZERWACJĘ'}
+                icon={resigns ? 'resign' : 'trash'}
                 tone="red"
                 variant="secondary"
                 size="md"
-                onPress={() => setCancelOpen(true)}
+                onPress={openCancel}
               />
             )}
+            {/* Jedno zdanie o SKUTKU rezygnacji, pod przyciskiem i raz (23F). */}
+            {vm.canCancel && order?.note != null && <FootNote icon="message" parts={order.note} />}
           </>
         )}
       </ScrollView>
 
       {/* Potwierdzenie nazywa KONKRETNY wpis (wzorzec 10L). Powód OPCJONALNY: wymagany
           byłby tarciem przy własnej rezerwacji, a bez niego kolega patrzący na zwolniony
-          slot nie ma jak się dowiedzieć, czemu zniknął. */}
+          slot nie ma jak się dowiedzieć, czemu zniknął. Ze zlecenia - arkusz 28D
+          (rezygnacja) albo 32C (odwołanie zlecenia), bo to te same czynności. */}
       <Sheet
         visible={cancelOpen}
-        title="ODWOŁAĆ REZERWACJĘ?"
+        title={resigns ? 'REZYGNUJĘ' : order != null ? 'ODWOŁANIE ZLECENIA' : 'ODWOŁAĆ REZERWACJĘ?'}
         rows={
           vm == null
             ? []
-            : [
-                { label: 'Samolot', value: vm.what[0]?.value ?? '-' },
-                { label: 'Termin', value: `${vm.date} · ${vm.hours}` },
-              ]
+            : order != null
+              ? [{ label: 'Zlecenie', value: order.reference }]
+              : [
+                  { label: 'Samolot', value: vm.what[0]?.value ?? '-' },
+                  { label: 'Termin', value: `${vm.date} · ${vm.hours}` },
+                ]
         }
-        warning={vm?.cancelWarning}
+        warning={vm?.cancelWarning ?? undefined}
         warningTone="amber"
-        confirmLabel="ODWOŁAJ"
+        confirmLabel={resigns ? 'REZYGNUJĘ' : 'ODWOŁAJ'}
         confirmTone="red"
         confirmDisabled={cancelling}
         onConfirm={() => void cancel()}
-        cancelLabel="ZOSTAW"
+        cancelLabel={order != null ? 'ANULUJ' : 'ZOSTAW'}
         onCancel={() => setCancelOpen(false)}
+        onShow={resigns ? onShow : undefined}
       >
-        <ReasonField value={reason} onChangeText={setReason} />
+        {order != null ? (
+          <TextField
+            inputRef={resigns ? inputRef : undefined}
+            label="Powód"
+            tag={{ label: 'opcjonalne' }}
+            value={reason}
+            onChangeText={setReason}
+            placeholder={resigns ? 'Np. w sobotę mam dyżur…' : 'Np. maszyna idzie w sobotę na przegląd.'}
+            multiline
+            maxLength={REASON_MAX}
+          />
+        ) : (
+          <ReasonField value={reason} onChangeText={setReason} placeholder="np. zmiana planów - nie polecę" />
+        )}
+        {failed != null && <InlineNote icon="warning" tone="amber" text={failed} />}
       </Sheet>
     </Screen>
   );
 }
 
-function Rows({ rows }: { rows: readonly BookingDetailRow[] }) {
+/** Wiersze karty z linią pod każdym; `last` = karta kończy się na ostatnim z nich. */
+function Rows({ rows, last }: { rows: readonly BookingDetailRow[]; last: boolean }) {
   return (
     <>
-      {rows.map((row) => (
-        <KeyValueRow key={row.label} label={row.label} value={row.value} sub={row.sub} />
+      {rows.map((row, i) => (
+        <DetailRow
+          key={row.label}
+          label={row.label}
+          value={row.value}
+          sub={row.sub}
+          mono={row.mono}
+          divider={!last || i < rows.length - 1}
+        />
       ))}
     </>
   );
@@ -414,31 +452,8 @@ function Missing({ theme }: { theme: Theme }) {
 const styles = (t: Theme) =>
   StyleSheet.create({
     scroll: { flex: 1 },
-    content: { padding: 16, gap: 12, paddingBottom: 28 },
+    content: { padding: 14, gap: 12, paddingBottom: 28 },
 
-    hero: { gap: 6, padding: 14 },
-    heroTop: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 10,
-    },
-    heroDate: { fontSize: 13, color: t.colors.textSecondary },
-    heroBadge: {
-      fontSize: 9,
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
-      color: t.colors.green,
-    },
-    // Godziny są bohaterem ekranu, więc idą krojem display - tym samym, którym kokpit
-    // pisze czas blokowy.
-    heroHours: { fontSize: 34, letterSpacing: 2, color: t.colors.textPrimary },
-    heroMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    heroZone: { fontSize: 9, letterSpacing: 1, color: t.colors.textMuted },
-    heroCount: { fontSize: 9, letterSpacing: 1.5, color: t.colors.amber },
-
-    sectionLabel: { marginTop: 4 },
-    failed: { fontSize: 12, lineHeight: 17, color: t.colors.amber },
     // `.foot-note` pod „PRZESUŃ I POPRAW": przypis do akcji, nie baner - bez tła i ikony.
     editNote: { fontSize: 11, lineHeight: 16, color: t.colors.textSecondary, paddingHorizontal: 4, marginTop: -4 },
 

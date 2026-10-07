@@ -16,6 +16,8 @@ import { createEventsRepo, DeviceClubsStore, ThemePrefsStore } from '../../infra
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
+import { HttpOrderApi } from '../../infrastructure/api/httpOrderApi';
+import { HttpTransport } from '../../infrastructure/api/httpTransport';
 import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
 import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
@@ -28,6 +30,7 @@ import {
   LiveBus,
   LiveLink,
   liveUrl,
+  OrderClient,
   ReferenceSync,
   SyncEngine,
   ThemePrefsSync,
@@ -50,7 +53,7 @@ import type { LiveChannel } from './servicesContext';
 /** Stan startu aplikacji - UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
   | { phase: 'loading' }
-  | { phase: 'ready'; trace: TraceRecorder; live: LiveChannel }
+  | { phase: 'ready'; trace: TraceRecorder; live: LiveChannel; orders: OrderClient }
   | { phase: 'error'; message: string };
 
 /**
@@ -109,7 +112,11 @@ export function useAppBootstrap(): BootstrapStatus {
         // `infrastructure` nie ma prawa importować `ui`, a `Platform.constants` mieszka
         // tam. Composition root jest jedynym miejscem, w którym oba końce się widzą.
         const apiBase = apiBaseUrl();
-        const server = new HttpServerApi(apiBase, deviceLabel(deviceRelease()));
+        // JEDEN transport dla obu adapterów serwera: ten sam host, ta sama etykieta
+        // urządzenia, te same dwa limity czasu. Zlecenia (4.0.0) mają własny adapter,
+        // bo to osobny moduł, ale wysłanie żądania jest jedno.
+        const http = new HttpTransport(apiBase, deviceLabel(deviceRelease()));
+        const server = new HttpServerApi(http);
         // KLUB AKTYWNY (wielofirmowość §7): każda para tokenów jest parą DLA KLUBU,
         // więc serwis poświadczeń melduje go magazynowi - to nim stemplują się nowe
         // operacje i po nim zawęża się flota. Funkcja, nie port: `AuthService` nie ma
@@ -184,7 +191,13 @@ export function useAppBootstrap(): BootstrapStatus {
           onRevoked: () => useAuthStore.setState({ revoked: true }),
         });
 
-        setStatus({ phase: 'ready', trace, live: { link, bus } });
+        // Zlecenia na lot (4.0.0, epik Z-C #247): moduł SIECIOWY - cache'u w SQLite nie ma
+        // (`docs/zlecenia.md` §2.2), więc klient żyje obok synca, a nie w nim. Ten sam
+        // serwis poświadczeń, więc odświeżenie tokenów z ekranu zleceń, z łącza i z pętli
+        // synca w tej samej chwili dzieli jedno wywołanie serwera.
+        const orders = new OrderClient(new HttpOrderApi(http), auth);
+
+        setStatus({ phase: 'ready', trace, live: { link, bus }, orders });
       } catch (err) {
         if (cancelled) return;
         setStatus({

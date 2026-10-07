@@ -37,6 +37,28 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Nowości
 
+- **Zlecenia lotów w aplikacji.** Koordynator albo instruktor wysyła zlecenie lotu - termin,
+  samolot, zadanie i trasę - konkretnym pilotom albo grupie, na fotel dowódcy lub drugiego
+  pilota. Na Pulpicie stoi karta „Zlecenia" z tym, co czeka na Twoją odpowiedź; na zleceniu
+  odpowiadasz „Przyjmuję", „Mogę lecieć" albo „Nie mogę" (powód jest opcjonalny), a po
+  „Nie mogę" możesz jeszcze zmienić zdanie. Lot, który dostajesz, staje się Twoją
+  rezerwacją - z tej karty rezygnujesz z fotela.
+- **Zlecenie wysyłasz z telefonu.** Osoba z uprawnieniem „Zlecanie lotów" tworzy zlecenie
+  w trzech krokach: termin i samolot (jak przy rezerwacji, z podpowiedziami wolnych godzin),
+  zadanie i trasa, załoga - dla każdego fotela „ja", „szukam" (konkretna osoba albo grupa)
+  albo „brak". Na karcie zlecenia widzi, kto odczytał i kto odpowiedział, wybiera spośród
+  chętnych, może przesunąć termin, odebrać zlecenie, wysłać je ponownie albo powielić na
+  inny dzień.
+- **Rozmowa przy każdym zleceniu.** Zlecający i każdy z adresatów mają własną rozmowę - na
+  żywo, z „Odczytane". Koordynatorzy klubu mogą ją czytać i rozmowa mówi to wprost.
+- **Zlecenia w kalendarzu i w skrzynce.** Termin zlecenia, które szuka załogi, ma na osi
+  własny pasek („Zlecenie · szuka dowódcy"), a osoba ze „Zlecaniem lotów" po tapnięciu
+  w wolne miejsce wybiera „Zarezerwuj dla siebie" albo „Zleć lot". Nowe zlecenie, zmiana
+  terminu (poprzedni przekreślony, z prośbą o nową odpowiedź), przydział, odwołanie
+  i wiadomość w rozmowie mają w skrzynce własne wiersze, a zlecenia czekające na Ciebie -
+  plakietkę „Do odpowiedzi". Powiadomienie otwiera zlecenie albo od razu rozmowę.
+- **Drugi pilot widzi swoje loty jak dowódca.** Najbliższa rezerwacja na Pulpicie i „Moje
+  rezerwacje" liczą także loty, w których siedzisz w prawym fotelu - z nazwiskiem dowódcy.
 - **Dzwonek i skrzynka w panelu.** W pasku górnym panelu klubu stoi dzwonek z liczbą nowych
   wiadomości - tych samych, co pod dzwonkiem na pulpicie telefonu: prośby o zgodę, decyzje
   w Twoich rezerwacjach, wiadomości o obserwowanych samolotach. Przeczytane w panelu jest
@@ -61,6 +83,9 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Poprawki
 
+- **Nieudane odwołanie rezerwacji mówi o sobie w arkuszu odwołania** - do tej pory powód
+  chował się pod arkuszem, a podpowiedź w polu powodu mówiła o GPS. Karta rezerwacji nie
+  pokazuje też ciągu znaków zamiast nazwiska osoby spoza pamięci telefonu - stoi kreska.
 - **Panel nie mówi „nic tu nie ma", zanim przyjdą dane.** Przy pierwszym wejściu w listę -
   pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
   mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
@@ -503,13 +528,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 > Zlecenia lotów: koordynator pyta pilotów o lot w aplikacji, zamiast dzwonić do każdego po kolei.
 
-- [ ] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
-- [ ] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
-- [ ] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
-- [ ] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
-- [ ] Zlecający widzi, kto już odczytał zlecenie
-- [ ] Grupy pilotów w klubie
-- [ ] Instruktor umawia lot z uczniem jednym zleceniem
+- [~] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
+- [~] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
+- [~] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
+- [~] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
+- [~] Zlecający widzi, kto już odczytał zlecenie
+- [~] Grupy pilotów w klubie
+- [~] Instruktor umawia lot z uczniem jednym zleceniem
 - [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
 
 ### 5.0.0 · termin do ustalenia

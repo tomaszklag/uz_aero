@@ -5515,6 +5515,56 @@ i przepisy: **`docs/kanal-klubu.md` §13**. Reguły obowiązujące odtąd:
 - **czego KK-C NIE ROBI**: zleceń i rozmów w aplikacji (Z-C), sprawdzenia na urządzeniu -
   animacja, gest, czytnik ekranu, push przy otwartej aplikacji (Z-W)
 
+## Zlecenia 4.0.0 - epik Z-C: aplikacja (issue #247, 2026-10-06, gałąź `feature-247-zlecenia-aplikacja`)
+Ekrany zleceń w telefonie 1:1 z makiet Z-A: Pulpit 20F, lista 30, karta adresata 28,
+karta prowadzącego 32, rozmowa 29, formularz 31 z edycją, kalendarz 21E, karta 23F,
+skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.md` §1,
+§12, §14.5**. Reguły obowiązujące odtąd:
+- **MODUŁ SIECIOWY BEZ CACHE'U**: `OrderClient` (port `OrderServerPort`, adapter
+  `HttpOrderApi`, podany ekranom przez `useOrders`) oddaje `null` = „nie wiem", a ekran
+  rysuje „BRAK POŁĄCZENIA" bez przycisku i wraca z powitaniem łącza (temat kanału),
+  nigdy z pętli. Odmowa serwera jest TREŚCIĄ (`seat_filled`, `closed`), nie błędem
+- **KARTA ZLECENIA TO JEDNA TRASA** (`Order { orderId }`), a widok rozstrzyga sama
+  (`logic/orderCardMode.ts`): adresat 28, prowadzący 32, lot już Twój → karta rezerwacji
+  (23F). Push, baner, kalendarz i lista prowadzą tam bez wiedzy o patrzącym; wiadomość
+  rozmowy otwiera `OrderThread { orderId, recipientId }`
+- **NAPISY I STANY LICZĄ CZYSTE MODUŁY** (`ui/screens/logic/order*.ts`, `inboxOrders.ts`,
+  każdy z testem). Termin dobą klubu z granic doby z odpowiedzi (bez `Intl`), chwile
+  „dziś / wcz. / wczoraj" i wiekiem; zdania bez formy z płcią - rozstrzygnięcia
+  rzeczownikiem, nazwisko w mianowniku za separatorem
+- **JEDNA RZECZ, JEDEN KSZTAŁT - TAKŻE MIĘDZY MODUŁAMI**: karty 23 i 26 przeszły na klocki
+  karty zlecenia (`TermHero`, `StateBanner`, `DetailRow` z szewronem i podpisem w linii,
+  `FootNote`); ramka terminu zielona = moje i w normie, cudza potwierdzona - neutralna.
+  Nowa karta szczegółów zaczyna się od tych klocków, nie od własnej kopii
+- **KROK TERMINU JEST WSPÓLNY Z REZERWACJĄ** (`useTermPicker` + `TermStep`, bramki
+  `bookingSteps.ts` ze zdaniami `TermWords`/`PlanWords`): zlecenie jest rezerwacją
+  szukającą załogi. Termin, który formularz POPRAWIA, wypada z zajętości (`except` →
+  `bookingsExcept`) - inaczej zderza się sam ze sobą
+- **WYJŚCIE Z FORMULARZA PO ZAPISIE IDZIE PRZEZ `exit.proceed(akcja)`**, nigdy wprost
+  `navigation.replace`: bramka rezygnacji (`usePreventRemove`) czyta stan z OSTATNIEGO
+  renderu, w którym po zapisie wciąż stoi podniesiona, więc przechwyciłaby własne wyjście
+  formularza i cofnęła go o krok, choć zapis już się udał. Oba błędy formularza
+  rezerwacji (ten i kolizja poprawianego terminu) siedziały w 3.x od 3.0.0 - telefony
+  z 3.x dostaną je hotfixem od `main`
+- **EDYCJA ZLECENIA = TEN SAM FORMULARZ** ze szkicem z karty (`logic/orderEdit.ts`): zapis
+  niesie samą różnicę (`PATCH`), bez zmian wraca na kartę bez zapisu; wysłani adresaci
+  z kłódką, dopisani z „×", „Wspólna lista" zablokowana, skutek zmiany terminu stoi pod
+  godzinami i nad „ZAPISZ ZMIANY"
+- **NOWY RODZAJ WIADOMOŚCI `order_*` = gałąź w `logic/inboxOrders.ts` + pozycja
+  w `ORDER_KINDS` (`logic/pushTarget.ts`)**, a w Z-D także w skrzynce panelu
+  (`admin/src/screens/inbox/inboxRows.ts` mówi dziś o zleceniach zastępczymi zdaniami).
+  Plakietka „Do odpowiedzi" liczy się z listy „Do mnie" (`awaitingAnswerIds`) - trzecie
+  pytanie tej samej wizyty skrzynki; lista, która nie dojechała, zdejmuje plakietki,
+  nie gasi skrzynki
+- **TREŚĆ WIADOMOŚCI SERWERA JEST DLA SKRZYNKI, NIE DLA BUDZIKA** (pkt 65): `seat`,
+  `fromIcao`/`toIcao`, `respond`, `preview` (do 200 znaków) jadą w `payload`, a push
+  dalej niesie same identyfikatory (`PUSH_DATA_KEYS` bez zmian)
+- **TELEFON ZDOLNOŚCI NIE ZNA**: arkusz wolnego pasma z „Zleć lot" otwiera bit
+  `viewer.order` z okna kalendarza (plaster serwera Z-C), segment „Zlecone" i „NOWE
+  ZLECENIE" - `canCreate`/`canManage` z `GET /orders/summary`
+- **czego Z-C NIE ROBI**: panelu (Z-D: moduł Zlecenia, K2c, grupy, zdania zleceń
+  w skrzynce panelu), podręcznika i sprawdzenia na urządzeniu (Z-W)
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej

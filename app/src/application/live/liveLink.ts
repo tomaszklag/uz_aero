@@ -54,7 +54,10 @@ export interface LiveLinkOptions {
   url: string;
   auth: LiveAuth;
   sockets: LiveSocketPort;
-  /** Ramki z treścią: `changed` i `notification` - wyłącznie klubu, dla którego łącze stoi. */
+  /**
+   * Ramki z treścią: `changed`, `notification` i rozmowy zleceń (`message`, `read`) -
+   * wyłącznie klubu, dla którego łącze stoi.
+   */
   onFrame: (frame: LiveDataFrame) => void;
   /**
    * Serwer przywitał połączenie - KAŻDE, także pierwsze: telefon łączy się przy każdym
@@ -159,6 +162,8 @@ export class LiveLink {
           return;
         case 'changed':
         case 'notification':
+        case 'message':
+        case 'read':
           if (frame.org === this.orgId) this.options.onFrame(frame);
           return;
         default:

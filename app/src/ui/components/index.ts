@@ -53,6 +53,12 @@ export * from './status/StepList';
 export * from './status/PillButton';
 export * from './status/GhostAction';
 export * from './status/InAppBanner';
+export * from './status/EmptyState';
+// Karty terminu (zlecenia 4.0.0): los rzeczy nad kartą i przypis pod pasem akcji.
+export * from './status/StateBanner';
+export * from './status/FootNote';
+// Rozmowa w zleceniu (29B): zdanie zamiast pola, gdy tu się nie pisze.
+export * from './status/ReadOnlyNote';
 
 // Wprowadzanie danych
 export * from './input/AirfieldSuggestions';
@@ -69,6 +75,12 @@ export * from './input/CalendarGrid';
 export * from './input/PlaceholderOverlay';
 export * from './input/CounterRow';
 export * from './input/ReasonField';
+export * from './input/SegmentedControl';
+export * from './input/ThreadComposer';
+// Formularz zlecenia, krok 3 (31B): karty stanu fotela i sposobu adresowania,
+// przełącznik „Wspólna lista".
+export * from './input/ChoiceCards';
+export * from './input/ToggleRow';
 
 // Odczyty z liczników
 export * from './readouts/Readout';
@@ -87,10 +99,14 @@ export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';
 export * from './sheets/JoinClubSheet';
 export * from './sheets/FleetFilterSheet';
+// Zlecenia (4.0.0, 21E): wolne pasmo - „Zarezerwuj dla siebie" albo „Zleć lot".
+export * from './sheets/FreeBandSheet';
 // Rezerwacja (3.0.0): godzina terminu, drugi pilot i pojedyncza liczba planu.
 export * from './sheets/BookingTimeSheet';
 export * from './sheets/DualSheet';
 export * from './sheets/NumberSheet';
+// Zlecenia (4.0.0): wybór adresatów (31C) - jedna osoba albo grupy nad osobami.
+export * from './sheets/AddresseeSheet';
 export * from './sheets/ManualEventSheet';
 // `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) - komponent po usuniętym
 // ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu
@@ -148,7 +164,28 @@ export * from './data/KeyValueRow';
 export * from './data/PreviewBody';
 // Skrzynka powiadomień i ścieżka akceptacji (3.1.0, epik R-I).
 export * from './data/InboxRow';
+export * from './data/OrderRow';
 export * from './data/PathSteps';
+// Karta zlecenia i rezerwacji (4.0.0, epik Z-C): termin, wiersze danych, fotele,
+// odpowiedź, zmiana i wejście w rozmowę - 1:1 z makiet 23, 26, 28, 32.
+export * from './data/TermHero';
+export * from './data/DetailRow';
+export * from './data/CrewSeatRow';
+export * from './data/AnswerBlock';
+export * from './data/EditedLine';
+export * from './data/ThreadRow';
+// Karta prowadzącego (32): adresat, fotel w „Załodze", historia zmian i zwinięta reszta.
+export * from './data/RecipientRow';
+export * from './data/OrderCrewRow';
+export * from './data/OrderHistoryRow';
+export * from './data/ExpandToggle';
+// Rozmowa w zleceniu (29): zlecenie nad wiadomościami, granica doby i dymek.
+export * from './data/OrderStrip';
+export * from './data/DaySeparator';
+export * from './data/MessageBubble';
+// Formularz zlecenia (31B): wybrany adresat fotela i wiersz „Dodaj adresatów".
+export * from './data/AddressChip';
+export * from './data/AddRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.
 export * from './data/TrackPolyline';

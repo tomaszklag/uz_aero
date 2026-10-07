@@ -223,7 +223,9 @@ export function registerBookingRoutes(
       // nie zna, a znak przy osi kalendarza jest celem dotknięcia tylko z `fleet.watch`.
       // Jedzie tu, bo ekran i tak pyta serwer o okno - osobna trasa byłaby drugim
       // żądaniem o jeden bit (ten sam rachunek, co `approver` w skrzynce).
-      viewer: { watch: can(who.capabilities, 'fleet.watch') },
+      // `order` (4.0.0, `docs/zlecenia.md` §14.1): tapnięcie w wolne pasmo otwiera arkusz
+      // „Zarezerwuj dla siebie / Zleć lot" wyłącznie przy „Zlecaniu lotów" (21E).
+      viewer: { watch: can(who.capabilities, 'fleet.watch'), order: can(who.capabilities, 'orders.create') },
       days: view.days.map((d) => ({
         date: d.date,
         startsAt: new Date(d.startsAt).toISOString(),

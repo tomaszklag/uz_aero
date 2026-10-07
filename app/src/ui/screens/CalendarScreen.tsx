@@ -27,6 +27,7 @@ import {
   FilterChip,
   FleetAxis,
   FleetFilterSheet,
+  FreeBandSheet,
   Icon,
   IconAction,
   ReservationCard,
@@ -52,6 +53,8 @@ import { bookingsOnDay } from './logic/calendarData';
 import { buildDayChips, defaultDay } from './logic/calendarDays';
 import { buildFleetGrid } from './logic/calendarGrid';
 import { buildMyBookings } from './logic/calendarMine';
+import { barTarget, freeBandAt } from './logic/calendarTargets';
+import { clubHhmm } from './logic/clubClock';
 import { dayHeading } from './logic/calendarHeading';
 
 type Nav = { navigate: (screen: string, params?: object) => void };
@@ -70,6 +73,8 @@ export function CalendarScreen({ navigation }: { navigation: Nav }) {
 
   const [picked, setPicked] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  /** Wolne pasmo pod arkuszem „dla siebie / zleć" (21E) - wyłącznie przy „Zlecaniu lotów". */
+  const [band, setBand] = useState<{ aircraftId: string; at: number; startsAt: number; endsAt: number } | null>(null);
   const skeleton = useSkeleton(data === undefined);
 
   // Doba wybrana ręcznie wygrywa z domyślną, ale tylko dopóki jest w oknie - po zmianie
@@ -175,10 +180,20 @@ export function CalendarScreen({ navigation }: { navigation: Nav }) {
                     />
                   </View>
                 }
-                onOpen={(bookingId) => navigation.navigate('BookingDetails', { bookingId })}
-                onPick={(aircraftId, at) =>
-                  navigation.navigate('NewBooking', { aircraftId, startsAt: at })
-                }
+                onOpen={(bookingId) => {
+                  // Pasek zlecenia prowadzi do karty zlecenia temu, kto je widzi (21E).
+                  const target = barTarget(bookingId, data.bookings.find((b) => b.id === bookingId) ?? null, pilotId);
+                  navigation.navigate(target.screen, target.params);
+                }}
+                onPick={(aircraftId, at) => {
+                  // Przy „Zlecaniu lotów" wolne pasmo pyta „dla siebie czy zleć" (21E);
+                  // bez tej zdolności - wprost do rezerwacji, jak dotąd.
+                  const free = data.canOrder
+                    ? freeBandAt({ bookings: bookingsOnDay(data.bookings, day), aircraftId, window: { from: grid.from, to: grid.to }, at })
+                    : null;
+                  if (free != null) setBand({ aircraftId, at, ...free });
+                  else navigation.navigate('NewBooking', { aircraftId, startsAt: at });
+                }}
                 // Karta maszyny (27) - wyłącznie dla osoby ze zdolnością „Obserwowanie
                 // samolotów"; bez niej nagłówek wiersza jest samą etykietą (makieta 21).
                 onOpenAircraft={
@@ -241,6 +256,30 @@ export function CalendarScreen({ navigation }: { navigation: Nav }) {
         }}
         onCancel={() => setFilterOpen(false)}
       />
+
+      {/* 21E - wskazana godzina jedzie do obu formularzy jako PREFEROWANA PORA sugestii,
+          a nie termin (reguła z 21): termin wybiera się w kroku 1. */}
+      {day != null && (
+        <FreeBandSheet
+          visible={band != null}
+          kicker={(() => {
+            const ac = fleet.find((a) => a.id === band?.aircraftId);
+            return [ac?.reg, ac?.type, dayHeading(day)].filter((p): p is string => p != null && p !== '').join(' · ');
+          })()}
+          hours={band == null ? '' : `${clubHhmm(band.startsAt, day)} → ${clubHhmm(band.endsAt, day)}`}
+          onSelf={() => {
+            if (band == null) return;
+            setBand(null);
+            navigation.navigate('NewBooking', { aircraftId: band.aircraftId, startsAt: band.at });
+          }}
+          onOrder={() => {
+            if (band == null) return;
+            setBand(null);
+            navigation.navigate('NewOrder', { aircraftId: band.aircraftId, startsAt: band.at });
+          }}
+          onCancel={() => setBand(null)}
+        />
+      )}
     </Screen>
   );
 }

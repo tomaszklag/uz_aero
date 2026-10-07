@@ -109,3 +109,11 @@ describe('karty własnych rezerwacji', () => {
     expect(rows[0]!.reg).toBe('nieznana');
   });
 });
+
+describe('drugi pilot (decyzja 23 zleceń: rezerwacja liczy oba fotele)', () => {
+  it('lot, w którym siedzę jako drugi pilot, jest moją rezerwacją - z dowódcą w szczegółach', () => {
+    const rows = mine([booking({ id: 'jako-dual', pilotId: 'mzi', dualId: 'ja' })]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.meta).toEqual(['Przelot', 'EPKK → EPRJ', 'Dowódca: MZI']);
+  });
+});

@@ -186,6 +186,23 @@ describe('łącze kanału klubu w aplikacji pilota', () => {
     ]);
   });
 
+  it('podaje dalej rozmowy zleceń (`message`, `read`) WYŁĄCZNIE swojego klubu', async () => {
+    // Epik Z-C #247: rozmowa jest treścią klubu jak każda inna - ramka cudzego ginie.
+    const { sockets, frames } = await connected();
+    const socket = sockets[0]!;
+    const message = { id: 'm1', authorId: 'p2', body: 'Mogę od 10.', createdAt: '2026-10-05T08:00:00.000Z' };
+    const read = { orderId: 'o1', recipientId: 'p2', pilotId: 'p1', at: '2026-10-05T08:01:00.000Z' };
+
+    socket.receive({ orderId: 'o1', recipientId: 'p2', message, v: 1, type: 'message', org: 'org-b' });
+    socket.receive({ ...read, v: 1, type: 'read', org: 'org-b' });
+    socket.receive({ orderId: 'o1', recipientId: 'p2', message, v: 1, type: 'message', org: 'org-a' });
+    socket.receive({ ...read, v: 1, type: 'read', org: 'org-a' });
+    expect(frames).toEqual([
+      { type: 'message', org: 'org-a', orderId: 'o1', recipientId: 'p2', message },
+      { type: 'read', org: 'org-a', ...read },
+    ]);
+  });
+
   it('`start` dla tego samego klubu nic nie robi; dla innego - łączy od nowa i podaje tylko jego ramki', async () => {
     const { link, sockets, frames } = await connected();
     link.start('org-a');

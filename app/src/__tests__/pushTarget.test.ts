@@ -42,6 +42,36 @@ describe('dokąd prowadzi tapnięcie', () => {
     expect(pushTarget({ kind: 'aircraft_released', sessionUuid: 's1' })).toEqual({ screen: 'Notifications' });
   });
 
+  it('dwanaście rodzajów zlecenia otwiera KARTĘ ZLECENIA; rozmowa - od razu rozmowę (4.0.0)', () => {
+    for (const kind of [
+      'order_offered',
+      'order_changed',
+      'order_answered',
+      'order_assigned',
+      'order_filled',
+      'order_removed',
+      'order_withdrawn',
+      'order_unassigned',
+      'order_cancelled',
+      'order_unfilled',
+      'order_expired',
+    ]) {
+      expect(pushTarget({ kind, orderId: 'o-1', bookingId: 'b1', aircraftId: 'a1' })).toEqual({
+        screen: 'Order',
+        params: { orderId: 'o-1' },
+      });
+    }
+    // Wątek to para zlecenie × adresat (§7.1) - budzik niesie obu.
+    expect(pushTarget({ kind: 'order_message', orderId: 'o-1', recipientId: 'ako' })).toEqual({
+      screen: 'OrderThread',
+      params: { orderId: 'o-1', recipientId: 'ako' },
+    });
+    // Bez adresata rozmowy - karta zlecenia; bez zlecenia - skrzynka; rodzaj nieznany - skrzynka.
+    expect(pushTarget({ kind: 'order_message', orderId: 'o-1' })).toEqual({ screen: 'Order', params: { orderId: 'o-1' } });
+    expect(pushTarget({ kind: 'order_offered', bookingId: 'b1' })).toEqual({ screen: 'Notifications' });
+    expect(pushTarget({ kind: 'order_cos_nowego', orderId: 'o-1' })).toEqual({ screen: 'Notifications' });
+  });
+
   it('klub z budzika INNY niż aktywny → skrzynka z instrukcją; ten sam albo brak → jak dotąd (R6)', () => {
     const data = { kind: 'aircraft_engine_started', aircraftId: 'a1', orgId: 'club-b' };
     expect(pushTarget(data, 'club-a')).toEqual({ screen: 'Notifications', params: { foreignClub: true } });

@@ -5,7 +5,7 @@
  * rozdzielone celowo) i co jedzie na drut przy poprawce (sama różnica).
  */
 
-import { bookingDetails } from '../ui/screens/logic/bookingDetails';
+import { bookingDetails, termTone } from '../ui/screens/logic/bookingDetails';
 import {
   aircraftChanged,
   bookingChanged,
@@ -54,15 +54,31 @@ const vm = (over: Partial<Parameters<typeof bookingDetails>[0]> = {}) =>
     now: at(9),
     pilotId: 'ako',
     aircraft: { reg: 'SP-AXA', type: 'Cessna 172' },
-    dualName: null,
-    dualCode: null,
+    nameOf: () => null,
+    codeOf: () => null,
     airfieldName: (icao) => (icao === 'EPKK' ? 'Kraków-Balice' : null),
     ...over,
   });
 
+/** Pamięć klubu: zlecająca, dowódca i drugi pilot. */
+const PEOPLE: Readonly<Record<string, { name: string; code: string }>> = {
+  ako: { name: 'Adam Kowalski', code: 'AKO' },
+  mzi: { name: 'Marta Zięba', code: 'MZI' },
+  jse: { name: 'Jan Sęk', code: 'JSE' },
+};
+const known = {
+  nameOf: (id: string) => PEOPLE[id]?.name ?? null,
+  codeOf: (id: string) => PEOPLE[id]?.code ?? null,
+};
+
+const joined = (parts: readonly { text: string }[] | null | undefined): string | null =>
+  parts == null ? null : parts.map((p) => p.text).join('');
+
 describe('nagłówek karty', () => {
   it('termin jest bohaterem - godziny, długość i odliczanie', () => {
     const v = vm();
+    // Doba jak w karcie terminu zlecenia (28, 32): ten sam komponent, ten sam napis.
+    expect(v.date).toBe('Niedziela · 20 września');
     expect(v.hours).toBe('11:00 → 13:00');
     expect(v.length).toBe('2 h');
     expect(v.countdown).toBe('ZA 2 H');
@@ -110,6 +126,131 @@ describe('co rezerwujesz', () => {
 
   it('bez maszyny w cache’u wiersz nie zostaje pusty', () => {
     expect(vm({ aircraft: null }).what[0]!.value).toBe('a1');
+  });
+
+  it('wartości maszynowe idą krojem cyfr, zdania - nie', () => {
+    const v = vm();
+    expect(v.what.find((r) => r.label === 'Samolot')?.mono).toBe(true);
+    expect(v.what.find((r) => r.label === 'Trasa')?.mono).toBe(true);
+    expect(v.what.find((r) => r.label === 'Zadanie')?.mono).toBeFalsy();
+  });
+});
+
+describe('ton karty terminu - zieleń znaczy „moje" (decyzja właściciela 2026-10-06)', () => {
+  it('własna potwierdzona jest zielona, cudza - neutralna, jak szary pasek na osi', () => {
+    expect(vm().seated).toBe(true);
+    expect(termTone('green', vm().seated)).toBe('green');
+    expect(vm({ pilotId: 'krz' }).seated).toBe(false);
+    expect(termTone('green', vm({ pilotId: 'krz' }).seated)).toBe('neutral');
+  });
+
+  it('drugi pilot siedzi w rezerwacji - dla niego też jest zielona', () => {
+    expect(vm({ booking: booking({ dualId: 'jse' }), pilotId: 'jse' }).seated).toBe(true);
+  });
+
+  it('„czeka" i „zamknięta" są stanami terminu, nie przynależnością - zostają u każdego', () => {
+    expect(termTone('amber', false)).toBe('amber');
+    expect(termTone('off', false)).toBe('off');
+  });
+});
+
+describe('druga osoba w kabinie (decyzja 23 zleceń - karta liczy oba fotele)', () => {
+  it('dowódca widzi drugiego pilota: kod wartością, nazwisko rozwinięciem', () => {
+    const row = vm({ booking: booking({ dualId: 'jse' }), ...known }).what.at(-1);
+    expect(row).toEqual({ label: 'Drugi pilot', value: 'JSE', sub: 'Jan Sęk', mono: true });
+  });
+
+  it('drugi pilot widzi DOWÓDCĘ, a nie wiersz o sobie', () => {
+    const v = vm({ booking: booking({ dualId: 'jse' }), pilotId: 'jse', ...known });
+    expect(v.what.at(-1)).toEqual({ label: 'Dowódca', value: 'AKO', sub: 'Adam Kowalski', mono: true });
+    expect(v.what.some((r) => r.label === 'Drugi pilot')).toBe(false);
+  });
+
+  it('poza pamięcią klubu zostaje kreska - nigdy surowy identyfikator', () => {
+    const row = vm({ booking: booking({ dualId: 'jse' }) }).what.at(-1);
+    expect(row?.value).toBe('—');
+    expect(row?.sub).toBeNull();
+  });
+});
+
+describe('rezerwacja ze zlecenia (23F)', () => {
+  const order = (over: Partial<NonNullable<CalendarBooking['order']>> = {}) => ({
+    seeking: [],
+    id: 'o1',
+    createdBy: 'mzi',
+    ...over,
+  });
+
+  it('przydzielony pilot: wiersz „Ze zlecenia" z osobą zlecającą, rezygnacja zamiast poprawki', () => {
+    const v = vm({ booking: booking({ order: order() }), ...known });
+    expect(v.order?.role).toBe('assigned');
+    expect(v.order?.row).toEqual({
+      label: 'Ze zlecenia',
+      value: 'Marta Zięba',
+      sub: 'MZI · termin uzgodnisz w rozmowie',
+    });
+    // Termin prowadzi zlecenie - poprawkę serwer odrzuciłby jako `booking_from_order`.
+    expect(v.canEdit).toBe(false);
+    expect(v.editNote).toBeNull();
+    expect(v.canCancel).toBe(true);
+    // Skutek rezygnacji stoi przypisem pod przyciskiem, arkusz nie dokłada ostrzeżenia.
+    expect(v.cancelWarning).toBeNull();
+    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel wraca do szukania, a Marta Zięba dostanie wiadomość.');
+    expect(v.order?.note?.find((p) => p.strong === true)?.text).toBe('fotel wraca do szukania');
+    expect(v.order?.reference).toBe('SP-AXA · nd 20 WRZ 11:00-13:00');
+  });
+
+  it('zlecająca poza pamięcią klubu: kreska i zdanie bez nazwiska', () => {
+    const v = vm({ booking: booking({ order: order() }) });
+    expect(v.order?.row.value).toBe('—');
+    expect(v.order?.row.sub).toBe('termin uzgodnisz w rozmowie');
+    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel wraca do szukania, a osoba zlecająca dostanie wiadomość.');
+  });
+
+  it('zlecający w swoim fotelu odwołuje CAŁE zlecenie (pkt 57) i widzi szukany fotel', () => {
+    const v = vm({
+      booking: booking({ order: order({ createdBy: 'ako', seeking: ['dual'] }) }),
+      ...known,
+    });
+    expect(v.order?.role).toBe('author');
+    expect(v.order?.row).toEqual({ label: 'Ze zlecenia', value: 'Twoje zlecenie', sub: 'termin zmienisz edycją zlecenia' });
+    expect(v.order?.note).toBeNull();
+    expect(v.canCancel).toBe(true);
+    expect(v.canEdit).toBe(false);
+    expect(v.cancelWarning).toBe(
+      'Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość - z powodem, jeśli go podasz.',
+    );
+    expect(v.what.at(-1)).toEqual({ label: 'Drugi pilot', value: 'szukany', sub: null });
+  });
+
+  it('drugi pilot ze zlecenia bez dowódcy widzi „Dowódca: szukany"', () => {
+    const v = vm({
+      booking: booking({ pilotId: null, dualId: 'jse', order: order({ seeking: ['pic'] }) }),
+      pilotId: 'jse',
+      ...known,
+    });
+    expect(v.order?.role).toBe('assigned');
+    expect(v.what.at(-1)).toEqual({ label: 'Dowódca', value: 'szukany', sub: null });
+  });
+
+  it('bez autora zlecenia NIE MA żadnej akcji - zgadnięta rola mogłaby skasować całe zlecenie', () => {
+    const v = vm({ booking: booking({ order: { seeking: [], id: null, createdBy: null } }) });
+    expect(v.order).toBeNull();
+    expect(v.canCancel).toBe(false);
+    expect(v.canEdit).toBe(false);
+  });
+
+  it('patrzący spoza foteli: bez wiersza zlecenia, bez „szukany" i bez akcji', () => {
+    const v = vm({ booking: booking({ order: order({ seeking: ['dual'] }) }), pilotId: 'krz' });
+    expect(v.order).toBeNull();
+    expect(v.what.some((r) => r.value === 'szukany')).toBe(false);
+    expect(v.canCancel).toBe(false);
+  });
+
+  it('zamknięte zlecenie: zostaje jedno wyjście, rezygnacji już nie ma', () => {
+    const v = vm({ booking: booking({ status: 'cancelled', order: order() }), ...known });
+    expect(v.canCancel).toBe(false);
+    expect(v.closed).toBe(true);
   });
 });
 

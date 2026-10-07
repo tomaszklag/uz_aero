@@ -11,6 +11,11 @@
  * Przeczytane BLEDNIE, ale nie znika: skrzynka jest też miejscem, w którym sprawdza
  * się, co ktoś odpowiedział trzy dni temu.
  *
+ * Wiersz zlecenia (4.0.0, makieta 25D) mówi zdaniem w KAWAŁKACH (`parts`): nazwisko
+ * pogrubione, wartość sprzed zmiany przekreślona, nowa pogrubiona, „może lecieć" zielenią -
+ * i ma własny znak w ikonie (kartka zlecenia, dymek rozmowy, klepsydra…). Plakietka sprawy
+ * mówi tam „Do odpowiedzi", a rozmowa dokłada błękitny licznik nowych wiadomości.
+ *
  * Treść wiersza (`InboxRowContent`: ikona, zdania, wiek) jest wspólna z banerem w aplikacji
  * (kanał klubu 4.0.0, makieta 25E) - baner mówi zdaniem wiersza słowo w słowo, więc ma też
  * jego kształt. Różnice należą do banera: nazwa klubu nad tytułem i o pół stopnia większy
@@ -21,7 +26,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme, type Theme } from '../../theme';
-import type { InboxRowVm, InboxTone } from '../../screens/logic/inbox';
+import type { InboxGlyph, InboxPart, InboxRowVm, InboxTone } from '../../screens/logic/inbox';
 import { AppText } from '../foundation/AppText';
 import { Icon, type IconName } from '../foundation/Icon';
 import { Tag } from '../status/Tag';
@@ -39,6 +44,21 @@ const ICON: Record<InboxTone, IconName> = {
   warn: 'warning',
   info: 'info',
   news: 'info',
+};
+
+/** Własny znak wiersza zlecenia - glify z makiety 25D. */
+const GLYPH: Record<InboxGlyph, IconName> = {
+  order: 'order',
+  message: 'message',
+  edit: 'edit',
+  clock: 'clock',
+  expired: 'order-expired',
+  removed: 'order-removed',
+  stale: 'order-stale',
+  'person-ok': 'crew',
+  'person-off': 'person-off',
+  resign: 'resign',
+  unassign: 'unassign',
 };
 
 const TONE: Record<InboxTone, Tone> = {
@@ -90,7 +110,7 @@ export function InboxRowContent({ row, club = null, prominent = false }: InboxRo
   return (
     <>
       <View style={[s.icon, { borderColor: c.border, backgroundColor: c.muted }]}>
-        <Icon name={ICON[row.tone]} size={15} color={c.accent} />
+        <Icon name={row.glyph == null ? ICON[row.tone] : GLYPH[row.glyph]} size={15} color={c.accent} />
       </View>
 
       <View style={s.body}>
@@ -109,7 +129,15 @@ export function InboxRowContent({ row, club = null, prominent = false }: InboxRo
             {row.sub}
           </AppText>
         )}
-        {(row.reason != null || row.lead != null) && (
+        {row.parts != null ? (
+          <AppText variant="body" style={[s.reason, prominent && s.reasonProminent]}>
+            {row.parts.map((part, i) => (
+              <AppText key={i} variant="body" style={[s.reason, prominent && s.reasonProminent, partStyle(part, s)]}>
+                {part.text}
+              </AppText>
+            ))}
+          </AppText>
+        ) : (row.reason != null || row.lead != null) && (
           <AppText variant="body" style={[s.reason, prominent && s.reasonProminent]}>
             {/* Wyróżniony początek („Poza planem", „Paliwo 128 L") - ton z makiety 25C:
                 bursztyn mówi „uwaga", zieleń „w normie"; reszta zdania tonem podpisu. */}
@@ -129,7 +157,8 @@ export function InboxRowContent({ row, club = null, prominent = false }: InboxRo
             {row.late}
           </AppText>
         )}
-        {row.todo && <Tag label="Do decyzji" tone="green" size="sm" />}
+        {row.todo && <Tag label={row.todoLabel ?? 'Do decyzji'} tone="green" size="sm" />}
+        {row.count != null && <Tag label={row.count} tone="blue" size="sm" />}
       </View>
 
       <AppText variant="mono" style={s.when}>
@@ -137,6 +166,14 @@ export function InboxRowContent({ row, club = null, prominent = false }: InboxRo
       </AppText>
     </>
   );
+}
+
+/** Skład kawałka zdania: `.n-reason b`, `.n-reason s` i `.n-reason .ok` z makiety 25D. */
+function partStyle(part: InboxPart, s: ReturnType<typeof styles>) {
+  if (part.tone === 'ok') return s.partOk;
+  if (part.strike === true) return s.partStrike;
+  if (part.strong === true) return s.partStrong;
+  return null;
 }
 
 const styles = (t: Theme) =>
@@ -188,6 +225,11 @@ const styles = (t: Theme) =>
     reason: { fontSize: 11, lineHeight: 16.5, color: t.colors.textSecondary },
     reasonProminent: { fontSize: 11.5, lineHeight: 16.5 },
     lead: { fontWeight: '600' },
+    // Grubość idzie osobnym plikiem kroju - `fontWeight` na Androidzie nie działa na
+    // czcionkach wczytanych z pakietu (typografia w `@ninerdeck/tokens`).
+    partStrong: { fontFamily: t.fontFamily.bodySemiBold, color: t.colors.textPrimary },
+    partStrike: { textDecorationLine: 'line-through', color: t.colors.textMuted },
+    partOk: { fontFamily: t.fontFamily.bodySemiBold, color: t.colors.green },
     // `.n-late`: zwłoka zapisu w tonie podpisu - fakt o rejestrze, nie o locie.
     late: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.8, color: t.colors.textMuted },
     when: { fontSize: 9, lineHeight: 12, letterSpacing: 1, color: t.colors.textMuted, paddingTop: 2, flexShrink: 0 },

@@ -56,7 +56,7 @@ Aplikacja nie dostaje żadnego modułu natywnego (`expo-notifications` jest od 3
 `WebSocket` jest wbudowany w React Native). Nowy APK wynika wyłącznie z numeru wersji
 (§19). Serwer dostaje jedną nową zależność - obsługę WebSocket (`docs/kanal-klubu.md`).
 
-## 1. Decyzje właściciela (2026-09-27 i 2026-09-28) - nie wracać do nich w dyskusji
+## 1. Decyzje właściciela (2026-09-27 – 2026-10-06) - nie wracać do nich w dyskusji
 
 Pierwsza tura - kształt:
 
@@ -253,6 +253,33 @@ z przykładem):
 57. **„ODWOŁAJ" u zlecającego siedzącego w swoim fotelu („ja") odwołuje CAŁE zlecenie**
     (2026-09-30) - dla niego rezerwacja jest zleceniem; to samo znaczenie, co odwołanie
     z kalendarza panelu przez prowadzącego (§5.3, §16 pkt 6 i 9).
+
+Dziewiąta tura - implementacja aplikacji (Z-C, 2026-10-06, pojedynczo, każda z przykładem):
+
+58. **Po „NIE MOGĘ" zlecenie zostaje w „Do mnie" z drogą powrotu** - wiersz z plakietką
+    „Nie mogę", a na karcie zostaje sam przycisk zmiany zdania, bo zlecenie dalej żyje:
+    zmiana terminu zapyta jeszcze raz, a serwer przyjmuje zmianę odpowiedzi (§14.5).
+59. **Fotel zniesiony (pkt 50) wygląda u adresata jak „Fotel obsadzony"** (28B) - adresat
+    pyta o to samo: czy zlecenie jest dla niego aktualne.
+60. **„Przydzielone" obok „Przyjęte"** na liście „Do mnie": przyjęcie imienne to własne
+    „tak", przydział z grupy albo wspólnej listy - decyzja prowadzącego. Ta sama różnica, co
+    w historii zmian („Przyjęcie" / „Przydział").
+61. **„Utworzone" w historii zmian niesie etykietę adresowania z serwera**
+    („dowódca: Jakub Wrona · drugi pilot: Piloci An-2") - z niej nie da się pewnie
+    odczytać, które nazwy to osoby, a które grupy, więc wersji „imiennie / z grupy"
+    z makiety 32 nie składamy.
+62. **Karta zlecenia (28) jest 1:1 z makiety, a karty 23 i 26 doszły do jej klocków**
+    (godziny terminu cyframi pogrubionymi, etykieta w kolumnie, wartość obok) - makiety
+    23, 26 i 28 rysowały to samo, a aplikacja miała dwa kształty (§14.5).
+63. **„EDYTUJ" dostało ramki PRZED kodem** (31 i 31B, kotwica `#edycja`; reguła pkt 46):
+    wysłani adresaci z kłódką (odbiera się ich menu ⋯ na karcie), dopisani z „×" i podpisem
+    „nowy", „Wspólna lista" zablokowana, skutek zmiany terminu pod godzinami i nad
+    „ZAPISZ ZMIANY" (§5.1, §5.2).
+64. **Cudza potwierdzona rezerwacja ma na karcie 23 ramkę neutralną** - zieleń znaczy
+    „moje i w normie", jak w makiecie 23, która rysuje wyłącznie własną.
+65. **Wiadomości o zleceniu niosą treść dla skrzynki** (25D): trasę, fotel, o który pytano,
+    „odpowiedz ponownie" przy zmianie terminu i początek ostatniej wiadomości rozmowy -
+    wyłącznie w skrzynce, budzik dalej niesie same identyfikatory (§12).
 
 ## 2. Czym JEST zlecenie w tym systemie
 
@@ -778,9 +805,9 @@ architektura, bezpieczeństwo, testy). Tu stoi wyłącznie to, co zlecenia do ni
 
 Skrzynka źródłem prawdy, push budzikiem (`docs/rezerwacje.md` §12.1). Tytuły
 RZECZOWNIKIEM, push BEZ nazwisk i godzin (ekran blokady widzi każdy), `payload` wozi
-identyfikatory. `PUSH_DATA_KEYS` dostaje `orderId` i `recipientId` (adresat wątku -
+identyfikatory. `PUSH_DATA_KEYS` dostał w Z-B `orderId` i `recipientId` (adresat wątku -
 wątek to para zlecenie × adresat, §7.1; bez niego aplikacja nie wie, czy push dotyczy
-otwartej rozmowy, pkt 43). Dziś niesie `bookingId` i `aircraftId`.
+otwartej rozmowy, pkt 43) obok `bookingId` i `aircraftId`.
 
 | Rodzaj | Do kogo | Kiedy | Push (tytuł) |
 | --- | --- | --- | --- |
@@ -814,8 +841,19 @@ otwartej rozmowy, pkt 43). Dziś niesie `bookingId` i `aircraftId`.
   lot" NIE idzie przy zleceniu bez kompletu załogi (mechanik nie przygotowuje maszyny dla
   nikogo) - pójdzie przy najbliższym przebiegu zegara po obsadzeniu, jeśli przed
   początkiem (§16 pkt 4).
+- **Treść dla skrzynki, nie dla budzika** (pkt 65, Z-C): `payload` wiadomości o zleceniu
+  niesie poza identyfikatorami trasę (`fromIcao`, `toIcao` - podpis „sob 3 PAŹ · przelot
+  EPKK → EPRJ" odróżnia dwa zlecenia jednej maszyny tego samego dnia), fotel, o który
+  pytano (`seat` przy `order_offered` i `order_answered`; `null` = termin do potwierdzenia),
+  `respond` przy `order_changed` (zmiana terminu wyzerowała odpowiedź TEGO adresata -
+  „Odpowiedz na nowy termin"; przydzieleni i autor go nie dostają, bo nie odpowiadają od
+  nowa) i `preview` przy `order_message` (początek ostatniej wiadomości, do 200 znaków
+  z wielokropkiem, `MESSAGE_PREVIEW_MAX`). Do pusha nic z tego nie trafia -
+  `PUSH_DATA_KEYS` bez zmian.
 - Tapnięcie: każdy rodzaj `order_*` → karta zlecenia (`Order { orderId }`), `order_message`
-  → od razu wątek. Nieznany rodzaj - do skrzynki (reguła z 3.1.0).
+  → od razu wątek (`OrderThread { orderId, recipientId }`; bez adresata - karta). Karta
+  sama rozstrzyga, kogo pokazuje: adresata (28), prowadzącego (32) albo - przy locie, który
+  jest już Twój - kartę rezerwacji (23F). Nieznany rodzaj - do skrzynki (reguła z 3.1.0).
 
 ## 13. API
 
@@ -928,6 +966,64 @@ obu foteli na jedną listę (wskazanie imienne traci moc obsadzania), a wyłącz
 podział sprzed włączenia - kogo dopisano w międzyczasie, ten staje przy obu szukanych
 fotelach z terminem do potwierdzenia.
 
+### 14.5 Stan po Z-C (2026-10-06)
+
+Aplikacja zamknęła swoją część (issue #247, gałąź `feature-247-zlecenia-aplikacja`), każdy
+etap z testami czystych modułów logiki:
+
+| Etap | Co weszło |
+| --- | --- |
+| 1 | klient zleceń (`OrderServerPort`, `HttpOrderApi`, `OrderClient` podany przez `useOrders`); ramki `message` i `read` w łączu i szynie kanału klubu |
+| 2 | moduły logiki (napisy i stany poza JSX); serwer: godzina i powód poprzedniej odpowiedzi i odebrania, godzina najnowszej nieprzeczytanej wiadomości |
+| 3 | Pulpit z kartą „Zlecenia" (20F), lista (30, 30A) |
+| 4 | karta adresata (28–28E) |
+| 5 | karta prowadzącego (32–32D), arkusz adresatów (31C) w wersji „jedna osoba" |
+| 6 | rozmowa (29–29B) |
+| 7 | formularz (31–31C) z „Powiel"; edycja zlecenia według ramek `#edycja` (pkt 63) |
+| 8 | kalendarz ze zleceniem (21E), karta 23F, karty 23 i 26 na klockach karty zlecenia (pkt 62, 64); serwer: bit `viewer.order` w oknie kalendarza |
+| 9 | skrzynka (25D), push i baner w aplikacji; serwer: treść wiadomości dla skrzynki (pkt 65) |
+
+**Reguły, które wyszły przy wdrażaniu**:
+
+- **karta zlecenia to JEDNA trasa** (`Order`), a widok rozstrzyga sama
+  (`logic/orderCardMode.ts`): adresat dostaje 28, prowadzący 32, a lot, który jest już
+  jego, otwiera się jako rezerwacja (23F). Osoba prowadząca zlecenia klubu i będąca przy tym
+  adresatem dostaje kartę według tego, skąd przyszła („Do mnie" / „Zlecone"). Push, baner,
+  kalendarz i lista nie muszą wiedzieć, kim jest patrzący;
+- **krok terminu jest wspólny z rezerwacją** (`useTermPicker` + `TermStep`, bramki
+  `bookingSteps.ts` ze zdaniami `TermWords`): zlecenie jest rezerwacją szukającą załogi.
+  Termin, który formularz POPRAWIA (poprawka rezerwacji, edycja zlecenia), jest wyjęty
+  z zajętości (`bookingsExcept`) - inaczej zderzał się sam ze sobą i „DALEJ" stało
+  zablokowane, zanim pilot cokolwiek ruszył (błąd z 3.0.0 w formularzu rezerwacji);
+- **wyjście z formularza po zapisie idzie przez `useAbandonExit.proceed(akcja)`**: bramka
+  rezygnacji czyta stan z ostatniego renderu, w którym po zapisie wciąż stoi podniesiona,
+  więc `navigation.replace` wprost wracało jako „wstecz" - rezerwacja stała na serwerze,
+  a pilot widział pusty formularz w kroku 1 (błąd z 3.0.0). Oba błędy formularza rezerwacji
+  dostaną telefony z 3.x osobnym hotfixem od `main`;
+- **edycja zlecenia to ten sam formularz** ze szkicem z karty (`logic/orderEdit.ts`): zapis
+  niesie samą różnicę, bez zmian wraca na kartę bez zapisu, zdanie o skutku liczy wyłącznie
+  nowe osoby, a ostrzeżenie mówi o osobie, która przez zmianę traci przydział;
+- **skrzynka zleceń** (`logic/inboxOrders.ts`): tytuł rzeczownikiem ze znakiem maszyny,
+  termin dobą klubu z trasą, poprzedni termin przekreślony, „Odpowiedz na nowy termin"
+  tylko u tego, komu zmiana wyzerowała odpowiedź; plakietka „Do odpowiedzi" liczy się
+  z listy „Do mnie" (`awaitingAnswerIds`: zlecenie w grze, bez przydziału i bez odpowiedzi,
+  termin jeszcze trwa) - trzecie pytanie tej samej wizyty, a lista, która nie dojechała,
+  zdejmuje plakietki zamiast gasić skrzynkę; wiadomość rozmowy niesie licznik
+  nieprzeczytanych. Rozstrzygnięcia rzeczownikiem, nazwiska w mianowniku za separatorem;
+- **baner w aplikacji** nie staje nad kartą tego zlecenia ani nad tą rozmową, ale nad kartą
+  zlecenia baner o nowej wiadomości staje - treści wiadomości tam nie ma (pkt 43). Push
+  z innego klubu dostaje ikonę wiersza skrzynki tego rodzaju;
+- **telefon zdolności nie zna**: arkusz wolnego pasma z „Zleć lot" otwiera bit `viewer.order`
+  z okna kalendarza, segment „Zlecone" i „NOWE ZLECENIE" - `canCreate`/`canManage`
+  z `GET /orders/summary`.
+
+**Co zostaje dla Z-D i Z-W**: skrzynka panelu mówi dziś o zleceniach zastępczymi zdaniami
+(`admin/src/screens/inbox/inboxRows.ts`) - fotel, trasa, „Odpowiedz na nowy termin",
+początek wiadomości i ikony rodzajów trzeba dociągnąć do skrzynki telefonu (reguła
+„skrzynka panelu = skrzynka telefonu", `docs/kanal-klubu.md` §12); do tego moduł Zlecenia
+(ZL1–ZL3), szuflada K2c, grupy w module Piloci i zdanie odmowy `booking_from_order` w panelu
+(Z-D). Sprawdzenie na urządzeniu i podręcznik - Z-W.
+
 ## 15. Panel
 
 - **Moduł „Zlecenia"** w grupie „Planowanie", po Kalendarzu (`access: 'club'` - widzi go
@@ -1009,6 +1105,13 @@ Klienci doganiają w Z-C i Z-D:
 | 9 | odwołanie z kalendarza panelu = odwołanie zlecenia, bez dziennika akcji | przycisk w K2c (Z-D) |
 | 10 | test: rezerwacja zlecenia `confirmed`, poza kolejką i poza `reconcile` | - |
 | 11 | tematy i ramki ogłaszane przez port z atrapą | rozsyłanie i baner w aplikacji - wykonane w Z-E (`docs/kanal-klubu.md` §13); cisza w kokpicie - wykonana w Z-E (serwer wycisza załogę operacji w toku); ekrany zlecenia i rozmowy w regule banera (Z-C) |
+
+**Stan po Z-C (2026-10-06)** - część aplikacji z tej tabeli jest w kodzie: pkt 2
+(`CalendarBooking.pilotId` nullowalny, pole `order` i pasek „Zlecenie · szuka …"), 3 (karta
+odmowy 22C), 5 (napis na 27), 6 („REZYGNUJĘ" na 23F, a u zlecającego w fotelu „ja" -
+„ODWOŁAJ ZLECENIE"), 7 (zdanie odmowy `booking_from_order` w aplikacji), 8 (najbliższa
+rezerwacja i „Moje rezerwacje" z oboma fotelami; przejęcie wypełnia się wyłącznie
+dowódcy) i 11 (karta zlecenia i rozmowa w regule banera). Zostaje panel (Z-D).
 
 Znacznik zmian kalendarza (ETag okna) niesie od Z-B DWA stemple - rezerwacji i zleceń:
 przestawienie fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a pole

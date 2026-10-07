@@ -25,6 +25,12 @@ export interface NoticeOrder {
   startsAt: number;
   endsAt: number;
   operation: string | null;
+  /**
+   * Trasa - podpis wiersza skrzynki („sob 3 PAŹ · przelot EPKK → EPRJ", 25D) odróżnia nią
+   * dwa zlecenia jednej maszyny tego samego dnia.
+   */
+  fromIcao: string | null;
+  toIcao: string | null;
   createdBy: string;
 }
 
@@ -35,19 +41,34 @@ const about = (order: NoticeOrder): Record<string, unknown> => ({
   startsAt: new Date(order.startsAt).toISOString(),
   endsAt: new Date(order.endsAt).toISOString(),
   operation: order.operation,
+  fromIcao: order.fromIcao,
+  toIcao: order.toIcao,
   createdBy: order.createdBy,
 });
+
+/**
+ * Adresat zlecenia i fotel, o który go pytamy - „proponowany fotel: drugi pilot" w skrzynce
+ * (25D); `null` = termin do potwierdzenia (lista wspólna albo osoba przy obu fotelach, pkt 37).
+ */
+export interface OfferedRecipient {
+  pilotId: string;
+  seat: Seat | null;
+}
 
 /**
  * „Zlecenie lotu" - wysłanie, dopisanie adresatów albo „Wyślij ponownie" (pkt 41).
  * `reminder` odróżnia przypomnienie niezdecydowanemu od pierwszego wysłania: to ta sama
  * prośba, ale adresat ma wiedzieć, że nie jest nowa.
  */
-export function orderOffered(order: NoticeOrder, pilotIds: readonly string[], reminder: boolean): NotificationDraft[] {
-  return pilotIds.map((pilotId) => ({
+export function orderOffered(
+  order: NoticeOrder,
+  recipients: readonly OfferedRecipient[],
+  reminder: boolean,
+): NotificationDraft[] {
+  return recipients.map(({ pilotId, seat }) => ({
     pilotId,
     kind: 'order_offered' as const,
-    payload: { ...about(order), reminder },
+    payload: { ...about(order), reminder, seat },
     push: {
       title: 'Zlecenie lotu',
       body: reminder ? 'Zlecenie czeka na Twoją odpowiedź.' : 'Masz nowe zlecenie lotu.',
@@ -59,27 +80,44 @@ export function orderOffered(order: NoticeOrder, pilotIds: readonly string[], re
 export type OrderEdit = Record<string, { from: unknown; to: unknown }>;
 
 /**
+ * Odbiorca zmiany i to, czy ma odpowiedzieć OD NOWA - zdanie „Odpowiedz na nowy termin"
+ * w skrzynce i na banerze (25D, 25E). Zmiana terminu zeruje odpowiedzi adresatów, którzy
+ * czekają na fotel; przydzieleni fotel zachowują (decyzja 13), a zlecający nie odpowiada.
+ */
+export interface ChangedRecipient {
+  pilotId: string;
+  respond: boolean;
+}
+
+/**
  * „Zlecenie zmienione" (zmiana TERMINU - prośba o ponowną odpowiedź, §5.1) albo
  * „Zlecenie edytowane" (każda inna zmiana, bez potwierdzeń, §5.2). Nazwiska zmieniającego
  * wiadomość nie niesie (pkt 31) - widzą je prowadzący w historii zmian.
  */
-export function orderChanged(order: NoticeOrder, pilotIds: readonly string[], edit: OrderEdit): NotificationDraft[] {
+export function orderChanged(
+  order: NoticeOrder,
+  recipients: readonly ChangedRecipient[],
+  edit: OrderEdit,
+): NotificationDraft[] {
   const term = 'term' in edit;
-  return pilotIds.map((pilotId) => ({
+  return recipients.map(({ pilotId, respond }) => ({
     pilotId,
     kind: 'order_changed' as const,
-    payload: { ...about(order), term, changes: edit },
+    payload: { ...about(order), term, respond: term && respond, changes: edit },
     push: term
       ? { title: 'Zlecenie zmienione', body: 'Zmienił się termin - odpowiedz ponownie.' }
       : { title: 'Zlecenie edytowane', body: 'Sprawdź, co się zmieniło.' },
   }));
 }
 
-/** „Odpowiedź na zlecenie" - WYŁĄCZNIE do autora (pkt 28). */
+/**
+ * „Odpowiedź na zlecenie" - WYŁĄCZNIE do autora (pkt 28). `seat` to fotel, o który pytano
+ * (podpis „… · drugi pilot", 25D); `null` = termin do potwierdzenia.
+ */
 export function orderAnswered(
   order: NoticeOrder,
   authorId: string,
-  answer: { pilotId: string; answer: 'yes' | 'no'; reason: string | null; assignedSeat: Seat | null },
+  answer: { pilotId: string; answer: 'yes' | 'no'; reason: string | null; assignedSeat: Seat | null; seat: Seat | null },
 ): NotificationDraft {
   return {
     pilotId: authorId,
@@ -195,20 +233,35 @@ export function orderExpired(order: NoticeOrder, pilotIds: readonly string[]): N
   }));
 }
 
+/** Ile treści ostatniej wiadomości niesie wiersz skrzynki - całość czyta się w rozmowie. */
+export const MESSAGE_PREVIEW_MAX = 200;
+
+/**
+ * Początek wiadomości do wiersza „Wiadomość w zleceniu" (25D): zdanie, na które się
+ * odpowiada. Dłuższe ucina się na granicy znaku z wielokropkiem - wiersz skrzynki jest
+ * zapowiedzią rozmowy, a nie jej kopią.
+ */
+export function messagePreview(body: string): string {
+  const text = body.trim();
+  return text.length <= MESSAGE_PREVIEW_MAX ? text : `${text.slice(0, MESSAGE_PREVIEW_MAX - 1).trimEnd()}…`;
+}
+
 /**
  * „Wiadomość w zleceniu" - do drugiego uczestnika wątku. JEDEN nieprzeczytany wiersz na
  * wątek z licznikiem (§7.3): `threadId` jest kluczem odświeżenia, a `recipientId` mówi
- * aplikacji, czy push dotyczy otwartej rozmowy (pkt 43).
+ * aplikacji, czy push dotyczy otwartej rozmowy (pkt 43). `preview` - początek OSTATNIEJ
+ * wiadomości, bo to na nią się odpowiada; do budzika nie trafia (`PUSH_DATA_KEYS`).
  */
 export function orderMessage(
   order: NoticeOrder,
   pilotId: string,
-  message: { threadId: string; recipientId: string; authorId: string; unread: number },
+  message: { threadId: string; recipientId: string; authorId: string; unread: number; body: string },
 ): NotificationDraft {
+  const { body, ...rest } = message;
   return {
     pilotId,
     kind: 'order_message',
-    payload: { ...about(order), ...message },
+    payload: { ...about(order), ...rest, preview: messagePreview(body) },
     push: { title: 'Wiadomość w zleceniu', body: 'Masz nową wiadomość.' },
   };
 }

@@ -51,7 +51,11 @@ import { AircraftCardScreen } from '../screens/AircraftCardScreen';
 import { AircraftPreviewScreen } from '../screens/AircraftPreviewScreen';
 import { PilotPreviewScreen } from '../screens/PilotPreviewScreen';
 import { NewBookingScreen } from '../screens/NewBookingScreen';
+import { NewOrderScreen } from '../screens/NewOrderScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { OrderScreen } from '../screens/OrderScreen';
+import { OrderThreadScreen } from '../screens/OrderThreadScreen';
+import { OrdersScreen } from '../screens/OrdersScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { TabsNavigator, type TabsParamList } from './TabsNavigator';
@@ -116,6 +120,32 @@ export type RootStackParamList = {
    * osoby ze zdolnością „Obserwowanie samolotów". Leży NAD zakładkami, jak 23/25/26.
    */
   Aircraft: { aircraftId: string };
+  /**
+   * 30 - ZLECENIA NA LOT (4.0.0, epik Z-C #247): „Do mnie" i „Zlecone". Wejście kartą
+   * „Zlecenia" na Pulpicie (20F) - czwartej zakładki nie ma (decyzja 7), więc ekran leży
+   * NAD zakładkami, jak 23/25/26/27. `box` przestawia połowę na start; bez niego lista
+   * otwiera się tam, gdzie coś czeka na odpowiedź (pkt 36).
+   */
+  Orders: { box?: 'inbox' | 'managed' } | undefined;
+  /**
+   * 28/32 - JEDNO ZLECENIE: karta adresata (28) albo prowadzącego (32). `as` mówi, z której
+   * połowy listy pilot przyszedł - rozstrzyga tylko wtedy, gdy jest jednym i drugim naraz
+   * (`logic/orderCardMode.ts`). Lot, który już jest pilota, przechodzi na kartę rezerwacji.
+   */
+  Order: { orderId: string; as?: 'recipient' | 'leader' };
+  /**
+   * 29 - ROZMOWA W ZLECENIU: autor zlecenia z jednym adresatem (para zlecenie × adresat,
+   * §7.1). Uczestnik pisze, koordynator czyta (29B) - rozstrzyga serwer, nie trasa.
+   */
+  OrderThread: { orderId: string; recipientId: string };
+  /**
+   * 31/31A/31B - FORMULARZ ZLECENIA w trzech krokach (termin → zadanie → załoga i adresaci).
+   * Wejścia: „NOWE ZLECENIE" w „Zlecone" (30), „Powiel" na karcie prowadzącego (32 -
+   * `duplicateOf`, ta sama treść z pustymi godzinami), „EDYTUJ" (32 - `orderId`, ten sam
+   * formularz z wypełnionym szkicem) i wolne pasmo w kalendarzu (21E - maszyna
+   * i preferowana pora sugestii).
+   */
+  NewOrder: { aircraftId?: string; startsAt?: number; duplicateOf?: string; orderId?: string } | undefined;
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
@@ -229,6 +259,10 @@ export function RootNavigator({
           <Stack.Screen name="PilotPreview" component={PilotPreviewScreen} />
           <Stack.Screen name="AircraftPreview" component={AircraftPreviewScreen} />
           <Stack.Screen name="Aircraft" component={AircraftCardScreen} />
+          <Stack.Screen name="Orders" component={OrdersScreen} />
+          <Stack.Screen name="Order" component={OrderScreen} />
+          <Stack.Screen name="OrderThread" component={OrderThreadScreen} />
+          <Stack.Screen name="NewOrder" component={NewOrderScreen} />
           <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
           <Stack.Screen name="Stats" component={StatsScreen} />
           <Stack.Screen name="Track" component={TrackScreen} />

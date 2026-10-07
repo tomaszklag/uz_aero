@@ -147,7 +147,13 @@ function AppRoot() {
   }
 
   return (
-    <ServicesProvider gps={gps} sensors={sensors} trace={boot.trace} live={boot.live}>
+    <ServicesProvider
+      gps={gps}
+      sensors={sensors}
+      trace={boot.trace}
+      live={boot.live}
+      orders={boot.orders}
+    >
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       {/*
         Nieprzezroczyste tło POD nawigatorem.

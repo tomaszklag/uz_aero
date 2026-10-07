@@ -1868,6 +1868,11 @@ export interface ThreadMessagesPort {
   ): Promise<ThreadMessageRecord[]>;
   /** Wiadomości CUDZE nieprzeczytane przez osobę - licznik wiersza „Wiadomość w zleceniu" (§7.3). */
   unreadFor(db: Queryable, orgId: string, threadId: string, pilotId: string): Promise<number>;
+  /**
+   * Chwila NAJNOWSZEJ cudzej nieprzeczytanej wiadomości - „1 nowa wiadomość · 07:31" na
+   * karcie adresata (28C, epik Z-C #247); `null` = nic nieprzeczytanego.
+   */
+  lastUnreadAt(db: Queryable, orgId: string, threadId: string, pilotId: string): Promise<number | null>;
 }
 
 /**

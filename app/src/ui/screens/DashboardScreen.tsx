@@ -35,6 +35,8 @@ import {
 import { useAdminNotices } from '../hooks/useAdminNotices';
 import { useBooking } from '../hooks/useBooking';
 import { useUnreadCount } from '../hooks/useUnreadCount';
+import { useOrderSummary } from '../hooks/useOrderSummary';
+import { ordersCardRows, type OrdersCardRow } from './logic/orderSummary';
 import { askForPush } from '../hooks/askForPush';
 import { adminNoticeText } from './logic/adminNotices';
 import { approvalView } from './logic/bookingApproval';
@@ -132,7 +134,7 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
       regOf: (id) => regOf(id),
       codeOf: (id) => codeOf(id),
     });
-    return claimSeed(row, now);
+    return claimSeed(row, now, pilotId);
   }, [calendar.data, pilotId, now, regOf, codeOf]);
 
   const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
@@ -169,6 +171,13 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
    * bez zasięgu `null` i wtedy nie ma go wcale: wejście zostaje, znika liczba.
    */
   const glance = useUnreadCount();
+
+  /**
+   * Liczby zleceń (4.0.0, epik Z-C #247) - z serwera przy wejściu i na żywo z kanału
+   * klubu. Bez zasięgu i przy dwóch zerach karty nie ma (`ordersCardRows` → `null`).
+   */
+  const orderSummary = useOrderSummary();
+  const ordersRows = ordersCardRows(orderSummary.data ?? null);
 
   /**
    * Prośba o zgodę na powiadomienia (epik R-J, J3) - AKCEPTUJĄCEGO dotyczy każda
@@ -218,6 +227,11 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
 
         {ready && vm != null && <TodayCard vm={vm} totals={totals} navigation={navigation} />}
         {!ready && skeleton && <TodaySkeleton />}
+
+        {/* Zlecenia (4.0.0, makieta 20F): pod „Moim dniem", NAD rezerwacją - rezerwacja
+            jest informacją o planie, a zlecenie czeka na DECYZJĘ. Wyłącznie z treścią
+            i wyłącznie z zasięgiem, jak licznik przy dzwonku. */}
+        {ordersRows != null && <OrdersCard rows={ordersRows} navigation={navigation} />}
 
         {booking != null && <BookingCard booking={booking} now={now} navigation={navigation} />}
 
@@ -332,6 +346,50 @@ function TodayCard({
 }
 
 /**
+ * Karta „ZLECENIA" (4.0.0, makieta 20F) - wejście do listy zleceń (30).
+ *
+ * LICZBA NAJPIERW, jedna na wiersz, w kroju i komórce sum „Mojego dnia" - kolumna liczb
+ * czyta się w pionie. Błękit WYŁĄCZNIE przy „czeka na Twoją odpowiedź": to jedyna liczba,
+ * która czegoś od Ciebie chce. Cała karta prowadzi na listę, więc szewron stoi raz,
+ * w nagłówku - lista sama otwiera się na połowie, w której coś czeka.
+ */
+function OrdersCard({ rows, navigation }: { rows: OrdersCardRow[]; navigation: Nav }) {
+  const { theme } = useTheme();
+  const s = styles(theme);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Zlecenia: ${rows.map((r) => `${r.count} ${r.text}`).join(', ')}`}
+      onPress={() => navigation.navigate('Orders')}
+    >
+      <Card contentStyle={s.orders}>
+        <View style={s.ordersHead}>
+          <AppText variant="display" style={s.todayTitle}>
+            ZLECENIA
+          </AppText>
+          <AppText variant="mono" style={s.ordersGo}>
+            ›
+          </AppText>
+        </View>
+        <View style={s.ordersRows}>
+          {rows.map((row) => (
+            <View key={row.text} style={s.ordersRow}>
+              <AppText variant="display" style={[s.ordersNum, row.tone === 'blue' && { color: theme.colors.blue }]}>
+                {row.count}
+              </AppText>
+              <AppText variant="body" style={[s.ordersText, row.tone === 'blue' && s.ordersAsk]}>
+                {row.text}
+              </AppText>
+            </View>
+          ))}
+        </View>
+      </Card>
+    </Pressable>
+  );
+}
+
+/**
  * Karta najbliższej rezerwacji - odliczanie, godziny w STREFIE KLUBU i szczegóły planu.
  *
  * Własnego przycisku startu NIE MA (issue #42): „ROZPOCZNIJ LOT" ma w tej aplikacji jedno
@@ -410,9 +468,9 @@ function BookingCard({
               {booking.route}
             </AppText>
           )}
-          {booking.dualCode != null && (
+          {booking.crew != null && (
             <AppText variant="mono" tone="muted">
-              Dual: {booking.dualCode}
+              {booking.crew}
             </AppText>
           )}
           {stepOfN != null && (
@@ -459,6 +517,30 @@ const styles = (theme: Theme) =>
       flexWrap: 'wrap',
     },
     todayTitle: { fontSize: 19, lineHeight: 19, letterSpacing: 2 },
+
+    orders: { gap: 10 },
+    ordersHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+    ordersGo: { fontSize: 18, lineHeight: 18, color: theme.colors.textMuted },
+    // Wiersze rozdzielone włosem (`gap: 1px` na tle obramowania w makiecie).
+    ordersRows: {
+      gap: StyleSheet.hairlineWidth,
+      backgroundColor: theme.colors.border,
+      borderWidth: theme.borderWidth,
+      borderColor: theme.colors.border,
+      borderRadius: 11,
+      overflow: 'hidden',
+    },
+    ordersRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 9,
+      paddingHorizontal: 12,
+      backgroundColor: theme.colors.surfaceRaised,
+    },
+    ordersNum: { width: 30, fontSize: 24, lineHeight: 24, letterSpacing: 1, textAlign: 'right', color: theme.colors.textPrimary },
+    ordersText: { flex: 1, fontSize: 12.5, lineHeight: 17, color: theme.colors.textSecondary },
+    ordersAsk: { color: theme.colors.textPrimary },
 
     bookingTags: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     bookingClock: { gap: 3 },

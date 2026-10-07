@@ -33,6 +33,8 @@ describe('wiadomości', () => {
     const messages = (await inbox(w.db, 'JSE')).filter((n) => n.kind === 'order_message');
     expect(messages).toHaveLength(1);
     expect(messages[0]!.payload).toMatchObject({ recipientId: 'PWI', authorId: 'PWI', unread: 2 });
+    // Wiersz skrzynki mówi OSTATNIĄ wiadomość - na nią się odpowiada (25D).
+    expect(messages[0]!.payload.preview).toBe('Albo o 15.');
     // Ramka `message` do uczestników i czytających z `reservations.manage` (pkt 19).
     const frame = w.live.signals.filter((s) => s.kind === 'message').at(-1)!;
     expect(frame.frame).toMatchObject({ orderId: 'o-1', recipientId: 'PWI', message: { id: 'm-2' } });
@@ -60,6 +62,22 @@ describe('wiadomości', () => {
     await w.threads.send(ORG_A, pilot('PWI'), 'o-1', 'PWI', { id: 'm-3', body: 'Dzięki' });
     const [row] = (await inbox(w.db, 'JSE')).filter((n) => n.kind === 'order_message');
     expect(row!.payload.unread).toBe(1);
+  });
+
+  it('karta adresata: licznik i GODZINA najnowszej nieprzeczytanej - „1 nowa wiadomość · 07:31" (28C)', async () => {
+    await w.threads.send(ORG_A, pilot('PWI'), 'o-1', 'PWI', { id: 'm-1', body: 'Pytanie' });
+    step();
+    await w.threads.send(ORG_A, author, 'o-1', 'PWI', { id: 'm-2', body: 'Odpowiedź' });
+    const sentAt = w.clock.now().getTime();
+    step();
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({ unread: 1, lastUnreadAt: sentAt });
+
+    // Po przeczytaniu godziny nie ma - licznik i godzina mówią o tych samych wiadomościach.
+    await w.threads.read(ORG_A, pilot('PWI'), 'o-1', 'PWI');
+    expect((await w.queries.card(ORG_A, pilot('PWI'), 'o-1'))?.me).toMatchObject({ unread: 0, lastUnreadAt: null });
+    // Wiersz listy godziny nie liczy - tam stoi sama kropka.
+    const list = await w.queries.list(ORG_A, pilot('PWI'), 'inbox');
+    expect(list?.items[0]?.me).toMatchObject({ lastUnreadAt: null });
   });
 
   it('koordynator czyta, ale nie pisze - i jego odczyt niczego nie rusza', async () => {

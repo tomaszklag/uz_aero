@@ -34,6 +34,7 @@ import {
   audienceStateOf,
   leads,
   noticeOrderOf,
+  offeredTo,
   personNames,
   visibleTo,
   type OrderActor,
@@ -192,7 +193,7 @@ export class OrderCommands {
 
         const loaded = await this.records.read(tx, orgId, draft.id);
         if (loaded == null) throw new Error('zlecenie zniknęło w transakcji, która je zapisała');
-        const drafts = orderOffered(noticeOrderOf(loaded.order, loaded.booking), added, false);
+        const drafts = orderOffered(noticeOrderOf(loaded.order, loaded.booking), offeredTo(loaded.recipients, added), false);
         return { loaded, created: true, notices: await this.notifier.record(tx, orgId, drafts, now) };
       });
 

@@ -52,6 +52,8 @@ describe('odpowiedź imienna', () => {
     expect(await crewOf('o-1')).toEqual({ pilotId: 'PWI', dualId: null, status: 'filled' });
     const [answered] = await inbox(w.db, 'JSE');
     expect(answered).toMatchObject({ kind: 'order_answered', payload: { pilotId: 'PWI', answer: 'yes', assignedSeat: 'pic', reason: null } });
+    // Fotel, o który pytano - podpis „… · dowódca" w skrzynce autora (25D).
+    expect(answered!.payload.seat).toBe('pic');
     // Przyjmujący imiennie nie dostaje „Lot przydzielony" - odpowiedź przyszła na ekranie.
     expect(await kinds(w.db, 'PWI')).toEqual(['order_offered']);
     expect(await historyKinds(w.db, 'o-1')).toEqual(['created', 'assigned']);

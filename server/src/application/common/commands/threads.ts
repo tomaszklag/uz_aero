@@ -138,6 +138,7 @@ export class ThreadCommands {
         recipientId,
         authorId: actor.pilotId,
         unread,
+        body,
       });
       const notices = await this.notifier.recordCollapsed(tx, orgId, notice, { field: 'threadId', value: threadId }, now);
       return { kind: 'sent' as const, message: inserted.message, created: true, loaded, notices };

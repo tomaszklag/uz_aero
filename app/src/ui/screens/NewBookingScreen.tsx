@@ -21,29 +21,22 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { CommonActions, type NavigationAction } from '@react-navigation/native';
+import { CommonActions, StackActions, type NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
   ActionButton,
   AirfieldSheet,
   AppText,
-  BookingAircraftCard,
-  BookingDenyCard,
-  BookingTimeSheet,
   Card,
-  DayChips,
-  FlightDateSheet,
   DualSheet,
   Field,
   Icon,
-  IconAction,
   NumberSheet,
   OptionGrid,
   Screen,
   ScreenHeader,
   Skeleton,
-  SlotChips,
   TextEntrySheet,
   ValueBox,
   type GridOption,
@@ -55,26 +48,22 @@ import type { RemoteBooking } from '../../application/ports';
 import { askForPush } from '../hooks/askForPush';
 import { useAbandonExit } from '../hooks/useAbandonExit';
 import { useBooking } from '../hooks/useBooking';
-import { useCalendar } from '../hooks/useCalendar';
-import { useFleet } from '../hooks/useFleet';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { useNearbyPosition } from '../hooks/useNearbyPosition';
 import { usePilots } from '../hooks/usePilots';
-import { useSlotSuggestions } from '../hooks/useSlotSuggestions';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { useTermPicker } from '../hooks/useTermPicker';
 import { useSessionStore } from '../store';
 import { useCurrentPilot } from '../store/currentPilot';
 import { bookingDraftDirty, useBookingDraft, type BookingDraft } from '../store/bookingDraft';
 import { useTheme, type Theme } from '../theme';
 import { duration, litres, maskMotoHoursInput, parseLitres, parseMotoHours } from '../format';
-import { relativeAge } from '@ninerdeck/format';
 import {
   isSameFieldOperation,
   OPERATION_TYPES,
   type OperationType,
 } from '../../domain';
 
-import { buildAircraftOptions } from './logic/aircraftAvailability';
 import { bookingDeny, BOOKING_OFFLINE, type BookingDenyVm } from './logic/bookingDeny';
 import { optInAfterBooking } from './logic/pushOptIn';
 import {
@@ -86,19 +75,16 @@ import {
 import {
   confirmLabel,
   planNote,
-  slotNote,
   step1Blocker,
   step2Blocker,
   step2Subtitle,
 } from './logic/bookingSteps';
-import { bookingsOnDay, toBooking } from './logic/calendarData';
-import { buildDayChips, defaultDay } from './logic/calendarDays';
+import { toBooking } from './logic/calendarData';
 import { dayHeading, dayShort } from './logic/calendarHeading';
-import { buildFleetGrid } from './logic/calendarGrid';
 import { clubHhmm } from './logic/clubClock';
 import { dualRequirementBlocker } from './logic/dualRequirement';
 import { operationLabel } from './logic/operations';
-import { buildSlotChips } from './logic/slotChips';
+import { TermStep } from './TermStep';
 
 /** `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02 i 15. */
 type Nav = {
@@ -136,7 +122,6 @@ export function NewBookingScreen({
 
   const pilotId = useCurrentPilot((p) => p.id);
   const pilots = usePilots();
-  const { aircraft: fleet } = useFleet();
   const draft = useBookingDraft();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -179,91 +164,29 @@ export function NewBookingScreen({
     seeded.current = editId;
     start(base);
   }, [start, editId, base, route?.params?.aircraftId]);
-  const [anchor, setAnchor] = useState<number | null>(preferredAt);
-  const { data } = useCalendar(anchor);
+
+  const nameOf = useCallback(
+    (id: string | null) => (id == null ? null : (pilots.find((p) => p.id === id)?.name ?? null)),
+    [pilots],
+  );
+
+  // Krok terminu wspólny ze zleceniem (31). Poprawiany termin nie zderza się sam ze
+  // sobą: bez `except` „PRZESUŃ I POPRAW" zaczynało od „SP-AXA jest w tych godzinach
+  // zajęta." i nie dawało przejść dalej bez przesunięcia terminu w całości.
+  const picker = useTermPicker({
+    term: draft,
+    preferredAt,
+    active: step === 1,
+    except: editId,
+    now,
+    pilotId,
+    nameOf,
+  });
+  const { data, day, aircraft } = picker;
   const skeleton = useSkeleton(data === undefined);
 
-  // ── doba ──────────────────────────────────────────────────────────────────
-  const selected = useMemo(() => {
-    if (data == null) return null;
-    if (draft.date != null && data.days.some((d) => d.date === draft.date)) return draft.date;
-    return defaultDay(data.days, anchor ?? now);
-  }, [data, draft.date, anchor, now]);
-
-  const day = data?.days.find((d) => d.date === selected) ?? null;
-  const onDay = useMemo(
-    () => (data == null || day == null ? [] : bookingsOnDay(data.bookings, day)),
-    [data, day],
-  );
-
-  // Okno osi - to samo, w którym liczą się procenty pasków w kalendarzu. Bierzemy je
-  // z `buildFleetGrid`, żeby karta samolotu i zakładka Kalendarz nie rysowały tej samej
-  // doby w dwóch różnych skalach.
-  const grid = useMemo(
-    () =>
-      data == null || day == null
-        ? null
-        : buildFleetGrid({
-            day,
-            aircraft: fleet,
-            bookings: data.bookings,
-            homeIcao: data.homeIcao,
-            pilotId,
-            codeOf: () => null,
-            nameOf: () => null,
-            now,
-          }),
-    [data, day, fleet, pilotId, now],
-  );
-
-  const aircraft = fleet.find((a) => a.id === draft.aircraftId) ?? null;
-  const options = useMemo(
-    () =>
-      day == null || grid == null
-        ? []
-        : buildAircraftOptions({
-            aircraft: fleet,
-            bookings: onDay,
-            day,
-            window: { from: grid.from, to: grid.to },
-          }),
-    [fleet, onDay, day, grid],
-  );
-
-  // ── sugestie godzin ───────────────────────────────────────────────────────
-  const minutes =
-    draft.startsAt != null && draft.endsAt != null && draft.endsAt > draft.startsAt
-      ? Math.round((draft.endsAt - draft.startsAt) / 60_000)
-      : null;
-
-  const { data: slots } = useSlotSuggestions({
-    aircraftId: draft.aircraftId,
-    day: day == null ? null : (day.startsAt + day.endsAt) / 2,
-    // Bez ustawionego terminu proponujemy dwie godziny - tyle trwa typowy lot klubowy,
-    // a sugestia bez długości nie miałaby czego zaproponować.
-    minutes: minutes ?? 120,
-    preferredAt,
-    enabled: step === 1,
-  });
-
-  const chips = useMemo(
-    () =>
-      day == null || grid == null || slots == null
-        ? []
-        : buildSlotChips({
-            slots: slots.suggestions,
-            busy: onDay.filter((b) => b.aircraftId === draft.aircraftId),
-            day,
-            window: { from: grid.from, to: grid.to },
-            startsAt: draft.startsAt,
-            endsAt: draft.endsAt,
-            nameOf: (id) => (id == null ? null : (pilots.find((p) => p.id === id)?.name ?? null)),
-          }),
-    [slots, onDay, day, grid, draft.aircraftId, draft.startsAt, draft.endsAt, pilots],
-  );
-
   // ── bramki ────────────────────────────────────────────────────────────────
-  const gate1 = { draft, aircraft, bookings: onDay, now };
+  const gate1 = { draft, aircraft, bookings: picker.onDay, now };
   const blocker1 = data == null ? 'Rezerwacja wymaga połączenia.' : step1Blocker(gate1);
   const singleField = draft.operation != null && isSameFieldOperation(draft.operation);
   const blocker2 = step2Blocker({ draft, aircraft, singleField });
@@ -286,21 +209,11 @@ export function NewBookingScreen({
   );
 
   // ── arkusze ───────────────────────────────────────────────────────────────
-  const [timeEdge, setTimeEdge] = useState<'start' | 'end' | null>(null);
   const [icaoField, setIcaoField] = useState<'departure' | 'arrival' | null>(null);
   const [planField, setPlanField] = useState<'air' | 'fuel' | null>(null);
   const [dualOpen, setDualOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
-  const [dateOpen, setDateOpen] = useState(false);
   const position = useNearbyPosition(icaoField != null);
-
-  const pickSlot = useCallback(
-    (startsAt: number, endsAt: number) => {
-      draft.set('startsAt', startsAt);
-      draft.set('endsAt', endsAt);
-    },
-    [draft],
-  );
 
   /**
    * Uuid nadaje TELEFON i to on jest całą idempotencją zapisu (ta sama zasada, co
@@ -324,9 +237,9 @@ export function NewBookingScreen({
         day: day ?? { date: '', startsAt: 0, endsAt: 0 },
         reg: aircraft?.reg ?? null,
         pilotId,
-        nameOf: (id) => (id == null ? null : (pilots.find((p) => p.id === id)?.name ?? null)),
+        nameOf,
       }),
-    [day, aircraft, pilotId, pilots],
+    [day, aircraft, pilotId, nameOf],
   );
 
   const save = useCallback(async () => {
@@ -345,7 +258,7 @@ export function NewBookingScreen({
       if (editId != null && base != null && !aircraftChanged(draft, base)) {
         const changes = bookingChanges(draft, base);
         if (changes == null) {
-          navigation.replace('BookingDetails', { bookingId: editId });
+          exit.proceed(StackActions.replace('BookingDetails', { bookingId: editId }));
           return;
         }
 
@@ -362,7 +275,7 @@ export function NewBookingScreen({
         }
 
         draft.reset();
-        navigation.replace('BookingDetails', { bookingId: editId });
+        exit.proceed(StackActions.replace('BookingDetails', { bookingId: editId }));
         return;
       }
 
@@ -412,11 +325,11 @@ export function NewBookingScreen({
       // Prośba o zgodę na powiadomienia (epik R-J, J3) - wyłącznie przy rezerwacji,
       // która CZEKA: o jej losie pilot ma się dowiedzieć bez otwierania aplikacji.
       void askForPush(optInAfterBooking(result.booking.status));
-      navigation.replace('BookingDetails', { bookingId: result.booking.id });
+      exit.proceed(StackActions.replace('BookingDetails', { bookingId: result.booking.id }));
     } finally {
       setSaving(false);
     }
-  }, [sync, day, saving, draft, editId, base, refusalVm, navigation]);
+  }, [sync, day, saving, draft, editId, base, refusalVm, exit]);
 
   /**
    * Odmowa opisuje KONKRETNY termin i maszynę, więc gaśnie, gdy któreś się zmieni -
@@ -459,90 +372,16 @@ export function NewBookingScreen({
         ) : data === null ? (
           <Offline theme={theme} />
         ) : step === 1 ? (
-          <>
-            {deny != null && (
-              <BookingDenyCard
-                deny={deny}
-                {...(deny.offerFix && chips.length > 0
-                  ? {
-                      fix: {
-                        label: `Najbliższe wolne ${relativeAge(chips[0]!.endsAt - chips[0]!.startsAt)}`,
-                        hours: chips[0]!.hours,
-                        onPress: () => pickSlot(chips[0]!.startsAt, chips[0]!.endsAt),
-                      },
-                    }
-                  : {})}
-              />
-            )}
-
-            <Field label="Dzień" labelNote="czas klubu">
-              <View style={s.dayRow}>
-                <View style={s.dayStrip}>
-                  <DayChips
-                    days={buildDayChips({
-                      days: data.days,
-                      bookings: data.bookings,
-                      pilotId,
-                      selected: selected ?? '',
-                      now,
-                    })}
-                    onSelect={(date) => draft.set('date', date)}
-                  />
-                </View>
-                {/* `.day-more` z makiety: wyjście do pełnego kalendarza stoi NA KOŃCU
-                    paska, a nie w nagłówku - dotyczy tego jednego pola, nie ekranu.
-                    Ikona, nie przycisk z napisem: nazwanie go („Inna data") powtarzałoby
-                    etykietę pola dwa centymetry wyżej. */}
-                <IconAction
-                  name="calendar"
-                  accessibilityLabel="Wybierz datę z kalendarza"
-                  onPress={() => setDateOpen(true)}
-                />
-              </View>
-            </Field>
-
-            <Field label="Samolot">
-              <View style={s.cards}>
-                {options.map((option) => (
-                  <BookingAircraftCard
-                    key={option.aircraftId}
-                    option={option}
-                    bars={grid?.rows.find((r) => r.aircraftId === option.aircraftId)?.bars ?? []}
-                    selected={draft.aircraftId === option.aircraftId}
-                    onPress={() => draft.set('aircraftId', option.aircraftId)}
-                  />
-                ))}
-              </View>
-            </Field>
-
-            {chips.length > 0 && (
-              <Field label="Sugerowane godziny" labelNote={minutes == null ? '2 h' : duration(minutes * 60_000)}>
-                <SlotChips chips={chips} onSelect={pickSlot} />
-              </Field>
-            )}
-
-            <Field label="Godziny" hint={slotNote(gate1) ?? undefined}>
-              <View style={s.timeRow}>
-                <ValueBox
-                  value={draft.startsAt == null || day == null ? '' : clubHhmm(draft.startsAt, day)}
-                  placeholder="--:--"
-                  meta="Od"
-                  actionIcon="edit"
-                  onPress={() => setTimeEdge('start')}
-                  style={s.timeBox}
-                />
-                <Icon name="next" size={16} color={theme.colors.textMuted} />
-                <ValueBox
-                  value={draft.endsAt == null || day == null ? '' : clubHhmm(draft.endsAt, day)}
-                  placeholder="--:--"
-                  meta="Do"
-                  actionIcon="edit"
-                  onPress={() => setTimeEdge('end')}
-                  style={s.timeBox}
-                />
-              </View>
-            </Field>
-          </>
+          <TermStep
+            picker={picker}
+            term={draft}
+            patch={draft.patch}
+            deny={deny}
+            pilotId={pilotId}
+            now={now}
+            nameOf={nameOf}
+            lengthLabel="Długość rezerwacji"
+          />
         ) : (
           <>
             <Field label="Rodzaj operacji">
@@ -662,24 +501,7 @@ export function NewBookingScreen({
 
       {/* Arkusze zostają ZAMONTOWANE, a chowa je `visible` - rama przeżywa własną
           niewidzialność, żeby zdążyć z animacją wyjazdu (`SheetSurface`, issue #62).
-          Warunek na DANE zostaje warunkiem: bez odpowiedzi serwera żaden z nich nie ma
-          jak być otwarty, więc nic się przez niego nie przełącza w trakcie pracy. */}
-      {day != null && (
-        <BookingTimeSheet
-          visible={timeEdge != null}
-          edge={timeEdge ?? 'start'}
-          value={timeEdge === 'end' ? draft.endsAt : draft.startsAt}
-          day={day}
-          target={`${aircraft?.reg ?? 'Samolot'} · ${dayHeading(day)}`}
-          min={grid?.from ?? day.startsAt}
-          max={grid?.to ?? day.endsAt}
-          rows={timeRows(draft, day, onDay, pilots)}
-          onChange={(next) => draft.set(timeEdge === 'end' ? 'endsAt' : 'startsAt', next)}
-          onConfirm={() => setTimeEdge(null)}
-          onCancel={() => setTimeEdge(null)}
-        />
-      )}
-
+          Arkusze kroku terminu (godzina, kalendarz miesięczny) mieszkają w `TermStep`. */}
       <AirfieldSheet
         visible={icaoField != null}
         title={
@@ -787,25 +609,6 @@ export function NewBookingScreen({
         onCancel={() => setNoteOpen(false)}
       />
 
-      {/* Kalendarz miesięczny daty. `FlightDateSheet` powstał dla wpisu RĘCZNEGO,
-          gdzie przyszłość jest nonsensem i dlatego `now` jest tam GÓRNĄ GRANICĄ.
-          Rezerwacja patrzy dokładnie w drugą stronę, więc granicę przesuwamy o rok
-          do przodu - rozdzielenie ról `now` (granica kontra kotwica skrótów) należy
-          do epiku, który ten arkusz przepisze. */}
-      <FlightDateSheet
-        visible={dateOpen}
-        day={day?.startsAt ?? now}
-        now={now + 365 * 86_400_000}
-        onConfirm={(picked) => {
-          // Data spoza okna przestawia KOTWICĘ - następna odpowiedź przyniesie doby
-          // wokół niej, a pasek chipów pokaże je zamiast dzisiejszych.
-          setAnchor(picked);
-          draft.set('date', null);
-          setDateOpen(false);
-        }}
-        onCancel={() => setDateOpen(false)}
-      />
-
       {/* Rama arkusza przeżywa własną niewidzialność, więc warunek stoi tutaj,
           a nie w propie `visible` (`hooks/abandonExit.ts`). */}
       {exit.sheetMounted && (
@@ -844,37 +647,6 @@ function Offline({ theme }: { theme: Theme }) {
   );
 }
 
-/** Wiersze odniesienia arkusza godziny - co stoi obok tego terminu. */
-function timeRows(
-  draft: BookingDraft,
-  day: { startsAt: number; endsAt: number; date: string },
-  onDay: readonly { aircraftId: string; startsAt: number; endsAt: number; pilotId: string | null; kind: string }[],
-  pilots: readonly { id: string; name: string }[],
-): SheetRow[] {
-  const rows: SheetRow[] = [];
-
-  if (draft.startsAt != null && draft.endsAt != null && draft.endsAt > draft.startsAt) {
-    rows.push({
-      label: 'Długość rezerwacji',
-      value: duration(draft.endsAt - draft.startsAt),
-    });
-  }
-
-  const next = onDay
-    .filter((b) => b.aircraftId === draft.aircraftId && draft.startsAt != null && b.startsAt >= draft.startsAt)
-    .sort((a, b) => a.startsAt - b.startsAt)[0];
-
-  if (next != null) {
-    const who =
-      next.kind === 'block'
-        ? 'wyłączenie z użytku'
-        : (pilots.find((p) => p.id === next.pilotId)?.name ?? 'inna rezerwacja');
-    rows.push({ label: 'Następna zajętość', value: `${clubHhmm(next.startsAt, day)} · ${who}` });
-  }
-
-  return rows;
-}
-
 /** Wiersze arkusza rezygnacji - WYŁĄCZNIE faktyczne wybory pilota. */
 function abandonRows(
   draft: BookingDraft,
@@ -897,11 +669,6 @@ const styles = (t: Theme) =>
   StyleSheet.create({
     scroll: { flex: 1 },
     content: { padding: 14, gap: 14 },
-    dayRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    dayStrip: { flex: 1 },
-    cards: { gap: 7 },
-    timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    timeBox: { flex: 1 },
     twoCol: { flexDirection: 'row', gap: 10 },
     col: { flex: 1 },
     note: { fontSize: 11, lineHeight: 16, color: t.colors.textMuted, paddingHorizontal: 2 },

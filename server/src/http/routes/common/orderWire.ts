@@ -66,7 +66,13 @@ export function orderBookingWire(booking: BookingRecord): Record<string, unknown
 
 function meWire(me: MyRecipientState | null): Record<string, unknown> | null {
   if (me == null) return null;
-  return { ...me, answeredAt: isoOrNull(me.answeredAt) };
+  return {
+    ...me,
+    answeredAt: isoOrNull(me.answeredAt),
+    previousAnswerAt: isoOrNull(me.previousAnswerAt),
+    removedAt: isoOrNull(me.removedAt),
+    lastUnreadAt: isoOrNull(me.lastUnreadAt),
+  };
 }
 
 function leaderRecipientWire(entry: LeaderRecipientEntry): Record<string, unknown> {

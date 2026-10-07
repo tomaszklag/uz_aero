@@ -17,7 +17,7 @@
 import type { AudienceState } from '../../domain/orderAudiences.ts';
 import type { OrderView, OrderCrew, RecipientView } from '../../domain/orders.ts';
 import { can, type Capability } from '../../domain/roles.ts';
-import type { NoticeOrder } from './notify/orderNotices.ts';
+import type { NoticeOrder, OfferedRecipient } from './notify/orderNotices.ts';
 import type { BookingRecord, FlightOrderRecord, OrderRecipientRecord } from './ports.ts';
 
 /** Kto działa przy zleceniu - osoba i dwie zdolności, które mają tu znaczenie. */
@@ -117,6 +117,17 @@ export function noticeOrderOf(order: FlightOrderRecord, booking: BookingRecord):
     startsAt: booking.startsAt,
     endsAt: booking.endsAt,
     operation: booking.operation,
+    fromIcao: booking.fromIcao,
+    toIcao: booking.toIcao,
     createdBy: order.createdBy,
   };
+}
+
+/**
+ * Adresaci „Zlecenia lotu" z fotelem, o który pytamy - z wierszy adresatów tego zlecenia.
+ * Osoba bez wiersza (nie powinna się zdarzyć) dostaje termin do potwierdzenia, a nie fotel
+ * wzięty znikąd.
+ */
+export function offeredTo(rows: readonly OrderRecipientRecord[], pilotIds: readonly string[]): OfferedRecipient[] {
+  return pilotIds.map((pilotId) => ({ pilotId, seat: rows.find((r) => r.pilotId === pilotId)?.seat ?? null }));
 }

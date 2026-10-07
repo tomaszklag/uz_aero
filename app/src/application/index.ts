@@ -18,6 +18,7 @@ export * from './sync/bugReportSync';
 export * from './sync/sessionTrackFetch';
 export * from './sync/themePrefsSync';
 export * from './sync/pushTokenSync';
+export * from './sync/orderClient';
 export * from './traceRecorder';
 export * from './live/frames';
 export * from './live/liveBus';

@@ -23,6 +23,7 @@ import { relativeAge, shortName } from '@ninerdeck/format';
 
 import type { CalendarBooking } from './calendarData';
 import { clubHhmm, type ClubDayBounds } from './clubClock';
+import { seekingLabel } from './orderFormat';
 
 /** Jak świeża musi być kolizja, żeby nazwać ją wyścigiem, a nie stanem kalendarza. */
 const FRESH_MS = 60 * 60_000;
@@ -106,6 +107,16 @@ export function bookingDeny(input: BookingDenyInput): BookingDenyVm {
         offerFix: false,
       };
 
+    case 'booking_from_order':
+      // Termin rezerwacji ze zlecenia prowadzi zlecenie (4.0.0, §16 pkt 7). Karta 23F
+      // poprawki nie oferuje, więc ta odmowa nie ma jak tu dojść zwykłą drogą - zdanie
+      // stoi, żeby nazwa reguły serwera nie trafiła na ekran w nawiasie (gałąź domyślna).
+      return {
+        title: 'Termin prowadzi zlecenie',
+        body: 'Termin zmienia osoba zlecająca - edycją zlecenia. Zmianę uzgodnisz w rozmowie.',
+        offerFix: false,
+      };
+
     default:
       // Odmowa, której ten ekran nie zna (nowszy serwer). Kod jedzie na ekran, bo
       // pilot przeczyta go administratorowi - tak samo jak przy zablokowanej wysyłce.
@@ -136,6 +147,23 @@ function takenVm(input: BookingDenyInput, reg: string): BookingDenyVm {
     return {
       title: 'Maszyna jest w tych godzinach wyłączona',
       body: `${reg} jest wyłączona z użytku ${hours}${why}.`,
+      offerFix: true,
+    };
+  }
+
+  // Zlecenie bez kompletu załogi (4.0.0, §16 pkt 3): w fotelu nikogo nie ma albo brakuje
+  // drugiej osoby, więc zamiast nazwiska pada to samo zdanie, co na pasku osi (21E) -
+  // bez adresatów, których cudzy członek klubu nie widzi.
+  const seeking = taken.order?.seeking ?? [];
+  if (seeking.length > 0) {
+    const age =
+      input.takenAt == null ? '' : ` Zlecenie weszło ${relativeAge(Math.max(0, input.now - input.takenAt))} temu.`;
+    return {
+      title:
+        input.takenAt != null && input.now - input.takenAt < FRESH_MS
+          ? 'Ten termin właśnie zajęto'
+          : 'Ten termin jest już zajęty',
+      body: `${reg} jest zajęta ${hours} · zlecenie · ${(seekingLabel(seeking) ?? '').toLowerCase()}.${age}`,
       offerFix: true,
     };
   }
