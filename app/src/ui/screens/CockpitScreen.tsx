@@ -90,7 +90,7 @@ import {
 import { operationTag, routeLabel } from './logic/operations';
 import { isJumpOperation, isSameFieldOperation } from '../../domain';
 import type { Event, FlightPhase } from '../../domain';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 
 /** Co ile odświeżamy SZACUNKI paliwa i oleju (uwaga z urządzenia: „wystarczy co 5 minut"). */
 const ESTIMATE_REFRESH_MS = 5 * 60_000;
@@ -140,7 +140,7 @@ const PHASE_ICON: Record<FlightPhase, IconName> = {
 export function CockpitScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string, params?: object) => void };
+  navigation: HomeNavigator & { navigate: (screen: string, params?: object) => void };
 }) {
   const { theme } = useTheme();
   const gps = useGps();
@@ -823,7 +823,7 @@ export function CockpitScreen({
           // Odmiana z `flightsBadge` - „1 lotów" na żywym kokpicie wyglądało jak
           // literówka w przyrządzie. Ta sama funkcja liczy badge na 10.
           sub: `Czasy i odczyty · ${flightsBadge(projection.flights.length)}`,
-          onPress: () => navigation.navigate('Stats', { edit: true, from: 'Cockpit' }),
+          onPress: () => navigation.navigate('Stats', { edit: true }),
         },
       ]
     : [

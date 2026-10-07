@@ -88,7 +88,7 @@ import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { oilCard } from './logic/sessionOil';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 
 /** Wysokość miniatury śladu - proporcje z mockupu 10 przy szerokości telefonu. */
 const THUMB_HEIGHT = 168;
@@ -97,14 +97,13 @@ export function StatsScreen({
   navigation,
   route,
 }: {
-  navigation: { navigate: (screen: string, params?: object) => void };
+  navigation: HomeNavigator & { navigate: (screen: string, params?: object) => void; goBack: () => void };
   /**
-   * `edit` - wejść od razu w tryb edycji (kafelek „Popraw dane sesji" w kokpicie),
-   * `from` - dokąd wraca nagłówek. Kokpit jest stanem modalnym, więc wejście stamtąd
-   * musi wracać DO KOKPITU, a nie na „Mój dzień": inaczej pilot trzymający samolot
-   * wychodziłby z niego bokiem (`CLAUDE.md`, sekcja o modalności).
+   * `edit` - wejść od razu w tryb edycji (kafelek „Popraw dane operacji" w kokpicie).
+   * Dokąd wraca nagłówek, mówi sam stos (`goBack`) - parametr `from` z nazwą ekranu
+   * powrotu zniknął razem z `navigate`, który zamiast wracać do kokpitu dokładał drugi.
    */
-  route?: { params?: { edit?: boolean; from?: string } };
+  route?: { params?: { edit?: boolean } };
 }) {
   const { theme } = useTheme();
 
@@ -202,16 +201,6 @@ export function StatsScreen({
    * okno odbiera prawo do zmiany danych, nie do ich zrozumienia.
    */
   const readOnly = !window24h.open;
-  /**
-   * Wyjście wraca do HISTORII, bo stamtąd się tu wchodzi - od 3.0.0 lista operacji
-   * ma jedno miejsce i jest nim ta zakładka (Pulpit pokazuje same sumy, §9.1).
-   * Do 3.0.0 wejście w okno korekty prowadziło z „Mojego dnia", a po oknie
-   * z „Poprzednich dni" - dwa ekrany, więc i dwa wyjścia.
-   *
-   * Wejście z KOKPITU (issue #43) podaje `from` i wraca dokładnie tam, skąd przyszło:
-   * kokpit jest stanem modalnym, więc poprawka danych nie ma prawa z niego wyprowadzić.
-   */
-  const backTo = route?.params?.from;
 
   /**
    * Tryb edycji (issue #43). Po oknie 24 h nie da się w niego wejść - nie ma przycisku,
@@ -343,9 +332,13 @@ export function StatsScreen({
         <ScreenHeader
           title={header.title}
           size="md"
-          // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
-          // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
-          onBack={() => (backTo != null ? navigation.navigate(backTo) : goHome(navigation, 'History'))}
+          // Powrót JEST i prowadzi tam, skąd się tu weszło: do Historii (od 3.0.0 jedyna
+          // lista operacji, §9.1), do karty samolotu (27) albo - przy poprawce przed
+          // zdaniem samolotu (issue #43) - do kokpitu, który jest stanem modalnym i nie ma
+          // prawa wypuścić pilota bokiem. Dlatego `goBack`, a nie `navigate` z nazwą ekranu:
+          // w React Navigation 7 `navigate` do trasy leżącej pod spodem kładzie na wierzch
+          // DRUGI jej egzemplarz (drugi kokpit, drugie zakładki).
+          onBack={() => navigation.goBack()}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
           subtitle={header.subtitle}
           right={

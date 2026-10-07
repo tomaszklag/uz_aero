@@ -48,7 +48,7 @@ import {
   TextField,
   type IconName,
 } from '../components';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 import { useAircraft } from '../hooks/useAircraft';
 import { useBooking } from '../hooks/useBooking';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
@@ -81,7 +81,7 @@ const REASON_MAX = 500;
 const CANCEL_OFFLINE = 'Odwołanie wymaga połączenia - slot zwalnia serwer.';
 const RESIGN_OFFLINE = 'Rezygnację zapisuje serwer - potrzebne połączenie.';
 
-type Nav = {
+type Nav = HomeNavigator & {
   navigate: (screen: string, params?: object) => void;
   goBack: () => void;
 };

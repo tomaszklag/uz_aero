@@ -23,7 +23,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { CommonActions, type NavigationAction } from '@react-navigation/native';
+import type { NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
@@ -127,7 +127,7 @@ import { fuelSheetWarning, mhSheetWarning } from './logic/readingSheetWarning';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" - ta sama, co na 02E (issue #62 pkt 1). */
 import { airfieldValueProps } from '../components/input/airfieldMark';
-import { goHome } from '../navigation/goHome';
+import { homeAction, type HomeStack } from '../navigation/goHome';
 
 /** Kolejność kroków - indeks w tej tablicy jest numerem w plakietce „n / 4". */
 const STEPS: ManualFlightStep[] = ['aircraft', 'task', 'times', 'readings'];
@@ -145,11 +145,12 @@ const MIN = 60_000;
 export function ManualFlightScreen({
   navigation,
 }: {
-  // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02.
+  // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02,
+  // a `getState` mówi akcji powrotu, czy zakładki leżą pod spodem (`homeAction`).
   navigation: {
-    navigate: (screen: string) => void;
     goBack: () => void;
     dispatch: (action: NavigationAction) => void;
+    getState: () => HomeStack;
   };
 }) {
   const { theme } = useTheme();
@@ -361,14 +362,16 @@ export function ManualFlightScreen({
     setError(null);
     try {
       await manualFlight(input);
-      goHome(navigation);
+      // Przez bramkę, nie wprost: powrót cofa stos, więc przechodzi przez `beforeRemove`
+      // tego ekranu, a bramka stoi jeszcze podniesiona (krok 4) - złapałaby własne wyjście.
+      exit.proceed(homeAction(navigation.getState()));
     } catch (e) {
       // Powód odmowy domeny wprost przy przycisku - nigdy cichy błąd (§6 pkt 3).
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [draft, manualFlight, navigation, pilotId]);
+  }, [draft, manualFlight, navigation, pilotId, exit]);
 
   // ── opcje list ─────────────────────────────────────────────────────────────
   const aircraftOptions: PickerOption<string>[] = useMemo(
@@ -522,11 +525,12 @@ export function ManualFlightScreen({
           step={`${stepIndex + 1} / ${STEPS.length}`}
           /* Strzałka robi DOKŁADNIE to samo, co przycisk sprzętowy - łącznie z pytaniem
              o rezygnację nad niepustym formularzem. Dwa „wstecz" na jednym ekranie,
-             które zachowują się różnie, to była pierwsza połowa zgłoszenia. */
+             które zachowują się różnie, to była pierwsza połowa zgłoszenia. Z pierwszego
+             kroku to jest więc zwykłe `goBack`: nad niepustym formularzem pyta bramka,
+             a wejście jest jedno - z Pulpitu - więc „wstecz" ląduje tam, gdzie mówi napis. */
           onBack={() => {
             if (stepIndex > 0) setStepIndex(stepIndex - 1);
-            else if (dirty) exit.ask(CommonActions.navigate('Tabs'));
-            else goHome(navigation);
+            else navigation.goBack();
           }}
           backLabel={stepIndex === 0 ? 'Pulpit' : 'Wróć'}
           right={<SyncChip />}
