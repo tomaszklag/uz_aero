@@ -385,6 +385,15 @@ admin/
       stats/            STATYSTYKI (3.2.0): pasek sum, słupki, trzy tabele z tfoot
         StatsScreen.tsx
         statsRows.ts
+      orders/           ZLECENIA (4.0.0, epik Z-D): lista Do mnie / Zlecone, JEDNA szuflada zlecenia
+                        (widok rozstrzyga orderView), rozmowa, formularz bez adresu
+        OrdersScreen.tsx · OrderDrawer.tsx · LeaderDrawer.tsx · RecipientDrawer.tsx · RecipientConfirm.tsx
+        RowMenu.tsx · SwapForm.tsx · ThreadDrawer.tsx · OrderFormDrawer.tsx
+        orderListRows.ts · leaderCard.ts · recipientCard.ts · recipientMenu.ts · orderHistory.ts · orderChanges.ts
+        orderForm.ts · orderEdit.ts · orderThread.ts · orderLabels.ts · orderLookups.ts · orderPaths.ts
+        orderRefusal.ts · orderView.ts   (napisy słowo w słowo jak telefon - app/src/ui/screens/logic/order*.ts)
+      groups/           GRUPY KLUBU w module Piloci (#/piloci/grupy, 4.0.0)
+        GroupsScreen.tsx · GroupDrawer.tsx · groupForm.ts · groupRefusal.ts · groupRows.ts
       accounts/         PILOCI = członkowie klubu (+ kolejka zgłoszeń i kod klubu)
         AccountsScreen.tsx  lista + JEDNA z trzech szuflad (którą - mówi trasa)
         AccountDrawer.tsx · RequestDrawer.tsx · ClubCodeDrawer.tsx · PendingCard.tsx
@@ -409,7 +418,7 @@ admin/
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)
         Button.tsx · LinkButton.tsx · Card.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
-        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx
+        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx · Menu.tsx
         Field.tsx · TextInput.tsx · OptionButton.tsx · SearchInput.tsx · FilterChip.tsx
         PageHead.tsx · Breadcrumbs.tsx · TrackMap.tsx · VerticalProfile.tsx
         icons.tsx · index.ts

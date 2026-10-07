@@ -5283,11 +5283,11 @@ przegląd spójności z aplikacją, architekturą i decyzjami; reguły z tego pr
   ostatnia edycja, `docs/zlecenia.md` §8); wiersze sprzed doby piszą „wcz." / „wczoraj"
 - **DWUNASTA ZDOLNOŚĆ `orders.create` („Zlecanie lotów")** stoi w `piloci-konto` w zestawach
   Koordynator lotów i Administrator; Akceptujący i Technik jej nie mają
-- **NOWE KLASY PANELU CZEKAJĄ W `design/panel/rama.css`** (sekcja „ZLECENIA (4.0.0) - czekają
-  na kod epiku Z-D"): `.nav-group`, `.menu.cell-menu`, `.rcp-status.blue`, `.hint.info`
-  i komponenty zleceń idą przy kodzie do
-  `admin/src/styles/components/` pod TĄ SAMĄ nazwą; `panel.css` po każdej zmianie przez
-  `npm run panel:css` (strażnik `panelCss.generated.test.ts`)
+- **KLASY PANELU ZLECEŃ CZEKAŁY W `design/panel/rama.css`** i przeszły w Z-D (#248) do
+  `admin/src/styles/components/` (`orders.css`, `calendar.css`, `surfaces.css`,
+  `controls.css`) pod TĄ SAMĄ nazwą - sekcja „ZLECENIA (4.0.0)" zniknęła z `rama.css`.
+  `panel.css` po każdej zmianie przez `npm run panel:css` (strażnik
+  `panelCss.generated.test.ts`)
 - **STANY NIE ZOSTAJĄ „BEZ MAKIETY"** (pkt 46): stan, który aplikacja wdroży, dostaje ramkę -
   jako „inny los" tego samego zlecenia w tym samym pliku, z kotwicą i pozycją w panelu
   wariantów (wzorzec: 28B ramki 2-4, 32 ramki 2-3)
@@ -5551,8 +5551,8 @@ skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.
   z kłódką, dopisani z „×", „Wspólna lista" zablokowana, skutek zmiany terminu stoi pod
   godzinami i nad „ZAPISZ ZMIANY"
 - **NOWY RODZAJ WIADOMOŚCI `order_*` = gałąź w `logic/inboxOrders.ts` + pozycja
-  w `ORDER_KINDS` (`logic/pushTarget.ts`)**, a w Z-D także w skrzynce panelu
-  (`admin/src/screens/inbox/inboxRows.ts` mówi dziś o zleceniach zastępczymi zdaniami).
+  w `ORDER_KINDS` (`logic/pushTarget.ts`)** oraz gałąź w skrzynce panelu
+  (`admin/src/screens/inbox/inboxRows.ts`, od Z-D tym samym słownikiem).
   Plakietka „Do odpowiedzi" liczy się z listy „Do mnie" (`awaitingAnswerIds`) - trzecie
   pytanie tej samej wizyty skrzynki; lista, która nie dojechała, zdejmuje plakietki,
   nie gasi skrzynki
@@ -5564,6 +5564,57 @@ skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.
   ZLECENIE" - `canCreate`/`canManage` z `GET /orders/summary`
 - **czego Z-C NIE ROBI**: panelu (Z-D: moduł Zlecenia, K2c, grupy, zdania zleceń
   w skrzynce panelu), podręcznika i sprawdzenia na urządzeniu (Z-W)
+
+## Zlecenia 4.0.0 - epik Z-D: panel (issue #248, 2026-10-07, gałąź `feature-248-zlecenia-panel`)
+Moduł Zlecenia, grupy klubu, rozmowa i zlecenie w kalendarzu - 1:1 z makiet Z-A
+(`zlecenia-*`, `piloci-grupy`, `kalendarz-flota`, `kalendarz-wpis` K2c). Stan, etapy,
+decyzje pkt 66–69 i odstępstwa od makiet: **`docs/zlecenia.md` §1, §15.1, §16**. Reguły
+obowiązujące odtąd:
+- **NAPISY I STANY ZLECENIA LICZĄ CZYSTE MODUŁY, SŁOWO W SŁOWO JAK TELEFON**
+  (`screens/orders/`: `orderListRows`, `leaderCard`, `recipientCard`, `orderHistory`,
+  `recipientMenu`, `orderForm`, `orderEdit`, `orderThread`, `orderLabels`; w kalendarzu
+  `orderBooking.ts`), każdy z testem. Zmieniasz zdanie w jednym miejscu - sprawdź jego
+  bliźniaka w `app/src/ui/screens/logic/order*.ts`, bo pilot i administrator czytają
+  o tym samym zleceniu
+- **SZUFLADA ZLECENIA MA JEDEN ADRES, WIDOK ROZSTRZYGA `orderView`** (`#/zlecenia/:id`
+  z `?widok=`): z „Zlecone" - prowadzący, inaczej adresat (reguła `orderCardMode`
+  z telefonu). Połowa i okres stoją jawnie w adresie (`orderPaths.ts`), rozmowa ma
+  `…/rozmowa/:adresat`, a FORMULARZ ADRESU NIE MA (pkt 69 - jak makieta i K7)
+- **KAŻDA REZERWACJA W PANELU NIESIE `order`** (`BookingDto.order`) i każdy napis
+  o zajętości pyta o nie: pasek osi i pasek doby („Zlecenie · szuka załogi", obsadzony
+  fotel dopisuje nazwisko), baner odmowy, zdanie kolizji, sugestia godziny („tuż po
+  zleceniu"). Pusty fotel nie dostaje kreski - mówi, kogo brakuje. Dokładając napis
+  o rezerwacji, sprawdź `orderSeeking` (`calendar/bookingLabels.ts`)
+- **SZUFLADA ZAJĘTOŚCI ZE ZLECENIEM (K2c) ROZSTRZYGA ROLĘ Z SAMEJ REZERWACJI**
+  (`orderBookingRole`), bez czekania na kartę zlecenia: autor prowadzi (także w fotelu
+  „ja"), osoba w fotelu patrzy na swój lot („Ze zlecenia" do rozmowy, bez zmiany terminu,
+  „Rezygnuję"), „Cudze rezerwacje" prowadzą, adresat dostaje drzwi do karty, członek spoza
+  adresatów - samo „Szuka". Odwołanie i rezygnacja idą KOMENDAMI ZLECENIA
+  (`POST /orders/:id/cancel`, `…/withdraw`) - działają autorowi bez „Cudzych rezerwacji"
+  i niosą powód, którego `DELETE /admin/api/me/bookings` nie ma
+- **MENU NICZEGO NIE ZAPISUJE, A KLAWIATURA MENU JEST JEDNA** (`ui/components/Menu.tsx`:
+  fokus na pierwszej pozycji, strzałki, Escape zamyka menu, nie szufladę): „⋯" przy
+  adresacie stawia pytanie w miejscu wiersza, menu wolnej komórki („Zarezerwuj / Zleć lot",
+  wyłącznie z `orders.create`) otwiera szufladę. Nowe menu w panelu idzie przez ten
+  komponent, nie przez kopię obsługi klawiatury
+- **KROKI 1–2 ZLECENIA SĄ KROKAMI WŁASNEJ REZERWACJI** (`TermCard`, `OperationCard`,
+  `PlanCard` w `screens/calendar/`) - zlecenie jest rezerwacją szukającą załogi, a termin,
+  który formularz POPRAWIA (`exceptId`), nie koliduje sam ze sobą. Edycja niesie samą
+  różnicę, „Powiel" - treść i adresatów bez godzin
+- **RAMKI `message` I `read` WPISUJĄ SIĘ WPROST DO PAMIĘCI ROZMOWY**
+  (`queries/threadCache.ts`), temat `order:<id>` czyta kartę i rozmowy od nowa - bez
+  odpytywania (K1). Szuflada (`Drawer`) trzyma `onClose` w ref, więc odświeżenie listy
+  pod spodem nie wyrywa fokusu z pola wiadomości; nowy komponent z nasłuchem na dokumencie
+  robi to samo
+- **GRUPY KLUBU MIESZKAJĄ W MODULE PILOCI** (`#/piloci/grupy[/:id]`, segment „Członkowie
+  · Grupy"): odczyt na `panel.access`, zmiany na `accounts.manage`, obsada w kolejności
+  z chwili otwarcia (karta nie ucieka spod kursora), członek wyłączony przygaszony
+- **PASEK JEST „MÓJ" DLA OBU FOTELI** (decyzja 23, jak w telefonie), ale zlecenie
+  szukające załogi nie jest jeszcze niczyim lotem - ma własny ton `.cal-item.order`.
+  Akcje własnej ZWYKŁEJ rezerwacji ma nadal wyłącznie dowódca
+- **czego Z-D NIE ROBI**: podręcznika (strona „Zlecenia na lot", `panel-wprowadzenie`
+  z kolumną w trzech grupach, `panel-kalendarz`, `panel-piloci`, „Kto co widzi") i sprawdzenia
+  na produkcji - Z-W (#249)
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

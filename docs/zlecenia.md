@@ -4,13 +4,15 @@
 > makietami - ta sama kolejność, co przy rezerwacjach (`docs/rezerwacje.md`), zakresach
 > uprawnień (`docs/uprawnienia.md`) i obserwowaniu samolotu (`docs/obserwowanie-samolotu.md`).
 >
-> Stan: **49 decyzji właściciela - 31 z 2026-09-27 w czterech turach i 18 z przeglądu makiet
-> Z-A (2026-09-28) w trzech** (§1 - trzecia i czwarta tura pytane pojedynczo przekształciły
+> Stan: **69 decyzji właściciela - 31 z 2026-09-27 w czterech turach, 18 z przeglądu makiet
+> Z-A (2026-09-28) w trzech i 20 z implementacji serwera, aplikacji i panelu (Z-B, Z-C, Z-D,
+> 2026-09-29 – 2026-10-07)** (§1 - trzecia i czwarta tura pytane pojedynczo przekształciły
 > model: dwa fotele, trzy sposoby adresowania, bez trybu „kto pierwszy"; piąta ułożyła
 > kolumnę panelu w grupy i dopięła wejścia w zlecenie w panelu; szósta zamknęła decyzje
 > wąskie z §21 - termin do potwierdzenia przy imiennym w grupie, ostrzeżenie w przeddzień,
 > cisza w kokpicie; siódma zamieniła odświeżanie pushem na KANAŁ KLUBU - osobny moduł,
-> `docs/kanal-klubu.md`). Rozjazd z decyzjami to rozmowa, nie cicha zmiana w kodzie. Wydanie: **4.0.0
+> `docs/kanal-klubu.md`; ósma, dziewiąta i dziesiąta padły przy wdrażaniu i dopięły szczegóły
+serwera, aplikacji i panelu). Rozjazd z decyzjami to rozmowa, nie cicha zmiana w kodzie. Wydanie: **4.0.0
 > nowym APK**, milestone „Zlecenia na lot 4.0.0" (#5), termin 1 października 2026,
 > **po wydaniu 3.2.0** (wydane 27 września 2026). Etapy Z-A…Z-W w §18.
 
@@ -56,7 +58,7 @@ Aplikacja nie dostaje żadnego modułu natywnego (`expo-notifications` jest od 3
 `WebSocket` jest wbudowany w React Native). Nowy APK wynika wyłącznie z numeru wersji
 (§19). Serwer dostaje jedną nową zależność - obsługę WebSocket (`docs/kanal-klubu.md`).
 
-## 1. Decyzje właściciela (2026-09-27 – 2026-10-06) - nie wracać do nich w dyskusji
+## 1. Decyzje właściciela (2026-09-27 – 2026-10-07) - nie wracać do nich w dyskusji
 
 Pierwsza tura - kształt:
 
@@ -280,6 +282,19 @@ Dziewiąta tura - implementacja aplikacji (Z-C, 2026-10-06, pojedynczo, każda z
 65. **Wiadomości o zleceniu niosą treść dla skrzynki** (25D): trasę, fotel, o który pytano,
     „odpowiedz ponownie" przy zmianie terminu i początek ostatniej wiadomości rozmowy -
     wyłącznie w skrzynce, budzik dalej niesie same identyfikatory (§12).
+
+Dziesiąta tura - implementacja panelu (Z-D, 2026-10-07, pojedynczo, każda z przykładem):
+
+66. **Wiersz listy z jedną osobą mówi „Odczytane" bez godziny** - postęp na liście niesie
+    sam stan; godzinę odczytu ma szuflada zlecenia, otwierana jednym kliknięciem (§15).
+67. **Karta zlecenia w panelu pisze same kody ICAO** - jak szuflada rezerwacji w kalendarzu
+    panelu; nazwy stoją w telefonie, który niesie katalog lotnisk - panel go nie importuje.
+68. **Dopisek „także na …" gaśnie po odmowie** - w telefonie (32) i w panelu (szuflada
+    prowadzącego). Mówi, na który fotel osoba może JESZCZE trafić, a po „Nie mogę" nie
+    trafi na żaden; „Nie może" przy obu fotelach zostaje (pkt 38).
+69. **Formularz zlecenia w panelu to szuflada BEZ adresu** - jak makieta `zlecenia-nowe`
+    i własna rezerwacja K7. Adres `#/zlecenia/nowe` z listy zadań Z-D odpadł: szkic
+    w adresie obiecywałby, że wklejony link coś otworzy, a szkic żyje tylko w tej karcie.
 
 ## 2. Czym JEST zlecenie w tym systemie
 
@@ -1017,7 +1032,7 @@ etap z testami czystych modułów logiki:
   z okna kalendarza, segment „Zlecone" i „NOWE ZLECENIE" - `canCreate`/`canManage`
   z `GET /orders/summary`.
 
-**Co zostaje dla Z-D i Z-W**: skrzynka panelu mówi dziś o zleceniach zastępczymi zdaniami
+**Co zostaje dla Z-D i Z-W** (Z-D zamknął swoją część 2026-10-07 - §15.1): skrzynka panelu mówiła wtedy o zleceniach zastępczymi zdaniami
 (`admin/src/screens/inbox/inboxRows.ts`) - fotel, trasa, „Odpowiedz na nowy termin",
 początek wiadomości i ikony rodzajów trzeba dociągnąć do skrzynki telefonu (reguła
 „skrzynka panelu = skrzynka telefonu", `docs/kanal-klubu.md` §12); do tego moduł Zlecenia
@@ -1058,6 +1073,75 @@ początek wiadomości i ikony rodzajów trzeba dociągnąć do skrzynki telefonu
   z `orders.create` **menu „Zarezerwuj / Zleć lot"** (pkt 35) - oba z maszyną i dniem
   komórki, jak arkusz wolnego pasma 21E w telefonie; bez uprawnienia kliknięcie otwiera
   rezerwację wprost, jak w 3.2.0 (menu z jedną pozycją byłoby krokiem o nic).
+
+### 15.1 Stan po Z-D (2026-10-07)
+
+Panel zamknął swoją część (issue #248, gałąź `feature-248-zlecenia-panel`) w ośmiu etapach,
+każdy z testami czystych modułów (`admin/src/screens/orders/*.ts`,
+`admin/src/screens/calendar/orderBooking.ts`) i z przeglądem w przeglądarce na serwerze
+demo:
+
+| Etap | Co weszło |
+| --- | --- |
+| 1 | kolumna w trzech grupach (`navSectionsFor`), lista zleceń (ZL1, ZL1a) z połową i okresem w adresie |
+| 2 | grupy klubu w module Piloci (P5, P5a, P5b) - przełącznik „Członkowie · Grupy", `#/piloci/grupy[/:id]` |
+| 3 | szuflada prowadzącego (ZL3, ZL3a, ZL3c) i menu ⋯ przy adresacie (ZL3b) - zamiana, odebranie, cofnięcie przydziału |
+| 4 | szuflada adresata (ZL3a, ZL3d), „Odczytane" przy otwarciu, wiadomości o zleceniach w skrzynce panelu |
+| 5 | rozmowa (ZL4, ZL4a, ZL4b) pod `#/zlecenia/:id/rozmowa/:adresat`, ramki `message`/`read` kanału klubu |
+| 6 | nowe zlecenie (ZL2, pkt 69), edycja i „Powiel" w tym samym formularzu; rezerwacja niesie pole `order` także w panelu |
+| 7 | kalendarz: pasek zlecenia, „Zleć lot", menu wolnej komórki, szuflada zajętości K2c |
+| 8 | dokumentacja (ten dokument, `CLAUDE.md`, changelog) |
+
+**Reguły, które wyszły przy wdrażaniu**:
+
+- **szuflada zlecenia ma JEDEN adres** (`#/zlecenia/:id`), a widok rozstrzyga
+  `orderView`: z połowy „Zlecone" - prowadzący, inaczej adresat. Ta sama reguła, co
+  `orderCardMode` w telefonie: koordynator, do którego trafiło cudze zlecenie, dostaje kartę
+  oczami tej połowy, z której przyszedł;
+- **napisy i stany liczą czyste moduły słowo w słowo jak telefon** - `leaderCard`,
+  `recipientCard`, `orderListRows`, `orderHistory`, `orderForm`, `orderEdit`,
+  `orderThread`; panel niczego o zleceniu nie liczy po swojemu poza geometrią i nazwami;
+- **menu niczego nie zapisuje** (⋯ przy adresacie, menu wolnej komórki): wybór stawia
+  pytanie w miejscu wiersza albo otwiera szufladę, a skutek pada przed kliknięciem. Obsługa
+  klawiatury jest jedna (`ui/components/Menu.tsx`);
+- **kroki 1–2 formularza są krokami własnej rezerwacji K7** (`TermCard`, `OperationCard`,
+  `PlanCard`): zlecenie jest rezerwacją szukającą załogi, a termin, który formularz
+  POPRAWIA, nie koliduje sam ze sobą;
+- **każda rezerwacja w panelu niesie `order`** i każdy napis o zajętości pyta o nie: pasek
+  na osi i na pasku doby („Zlecenie · szuka załogi"), baner odmowy („zlecenie · szuka
+  załogi · weszło …"), zdanie kolizji („stoi zlecenie (szuka załogi)"), sugestia godziny
+  („tuż po zleceniu"). Pusty fotel nie dostaje kreski - mówi, kogo brakuje;
+- **szuflada zajętości ze zleceniem (K2c) rozstrzyga rolę z samej rezerwacji**
+  (`orderBooking.ts`), bez czekania na kartę zlecenia: autor prowadzi (także w fotelu „ja"),
+  osoba w fotelu patrzy na swój lot, „Cudze rezerwacje" prowadzą, adresat dostaje drzwi,
+  członek spoza adresatów - samo „Szuka". Odwołanie z kalendarza idzie komendą ZLECENIA
+  (`POST /orders/:id/cancel`), więc działa także autorowi bez „Cudzych rezerwacji";
+  rezygnacja osoby w fotelu - `POST /orders/:id/withdraw` z powodem opcjonalnym;
+- **rozmowa i karta odświeżają się kanałem klubu**: ramki `message` i `read` wpisują się
+  wprost do pamięci rozmowy (`queries/threadCache.ts`), temat `order:<id>` czyta kartę
+  i rozmowy od nowa. Szuflada nie odbiera fokusu, gdy lista pod nią się odświeża (pole
+  wiadomości w połowie pisania).
+
+**Odstępstwa od makiet** (zgłoszone właścicielowi przy etapie 7):
+
+- szuflada „Twoja rezerwacja ze zlecenia" ma podtytuł zwykłej własnej rezerwacji
+  („… · rezerwacja pilota"), bez plakietki „Potwierdzona … jutro" z ramki K2c - plakietka
+  stałaby wyłącznie w tym jednym wariancie tej samej szuflady;
+- koordynator z „Cudzymi rezerwacjami", do którego cudze zlecenie TEŻ trafiło, dostaje
+  w K2c skrót prowadzącego z plakietką „Czeka na Twoją odpowiedź", a „Otwórz zlecenie"
+  otwiera kartę z połowy „Do mnie" (makieta tego przypadku nie rysuje);
+- u adresata i członka spoza adresatów nad „Szuka" stoi fotel już obsadzony - to samo
+  nazwisko, które niesie pasek na osi;
+- pasek jest „mój" (zielony) także dla drugiego pilota, jak w telefonie (pkt 23); akcje
+  własnej rezerwacji przy zwykłej rezerwacji ma nadal wyłącznie dowódca, bo serwer drugiemu
+  ich nie pozwala;
+- po wysłaniu zlecenia z kalendarza panel otwiera jego kartę w module Zlecenia, jak telefon
+  po 21E.
+
+**Co zostaje dla Z-W**: podręcznik (strona „Zlecenia na lot" z `@panel` przy sekcjach,
+„Kto co widzi" z dwunastą zdolnością, `panel-wprowadzenie` z kolumną w trzech grupach,
+`panel-kalendarz` i `panel-piloci` ze zleceniami i grupami) i sprawdzenie zleceń
+z panelu na produkcji.
 
 ## 16. Co dotyka istniejącego kodu (lista kontrolna dla Z-B…Z-D)
 
@@ -1112,6 +1196,14 @@ odmowy 22C), 5 (napis na 27), 6 („REZYGNUJĘ" na 23F, a u zlecającego w fotel
 „ODWOŁAJ ZLECENIE"), 7 (zdanie odmowy `booking_from_order` w aplikacji), 8 (najbliższa
 rezerwacja i „Moje rezerwacje" z oboma fotelami; przejęcie wypełnia się wyłącznie
 dowódcy) i 11 (karta zlecenia i rozmowa w regule banera). Zostaje panel (Z-D).
+
+**Stan po Z-D (2026-10-07)** - panel domknął swoje pozycje: pkt 2 (oś kalendarza panelu -
+pasek „Zlecenie · szuka …" z nazwiskiem z obsadzonego fotela, legenda), 3 (baner odmowy K7
+i pasek doby mówią o zleceniu, zdanie kolizji w `bookingRefusal.ts`), 6 („Rezygnuję"
+w szufladzie K2c - komendą zlecenia `withdraw`, bo trasa `DELETE /admin/api/me/bookings`
+nie niesie powodu), 7 (zdanie odmowy `booking_from_order`) i 9 („Odwołanie zlecenia"
+w K2c z powodem opcjonalnym - komendą zlecenia, więc także dla autora bez „Cudzych
+rezerwacji"). Lista kontrolna jest zamknięta po wszystkich trzech stronach.
 
 Znacznik zmian kalendarza (ETag okna) niesie od Z-B DWA stemple - rezerwacji i zleceń:
 przestawienie fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a pole
