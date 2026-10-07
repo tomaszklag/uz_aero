@@ -23,7 +23,7 @@
       "env": {
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_API_URL": "https://app.ninerdeck.pl",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "552018567053-d1kvqatkc1mh5mg5kkdssg1cr20tv6ha.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "153560452565-agg2pcjh9loqa8o6h047009okml3lq7f.apps.googleusercontent.com"
       }
     }
   }

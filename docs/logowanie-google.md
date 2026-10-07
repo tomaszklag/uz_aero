@@ -343,11 +343,22 @@ To jest druga powierzchnia i osobna konfiguracja w Google Cloud - nie „przy ok
 
 1. Projekt w Google Cloud + ekran zgody OAuth (typ External; na czas testów wystarczy
    lista testowych użytkowników, publikacja dopiero przed szerszym gronem).
+   **Od 2026-10-07 to projekt Firebase `ninerdeck-81f75`** - ten sam, który niesie
+   powiadomienia push. Klienty z pierwotnego projektu (`552018567053`) zostały usunięte
+   i Google odpowiadał na nie `deleted_client` („The OAuth client was deleted"), więc
+   logowanie Google padło naraz w panelu i w aplikacji. Usunięty klient da się
+   przywrócić przez 30 dni (Google Auth Platform → Clients → usunięte) i wtedy
+   zachowuje identyfikator; nowy klient to nowy identyfikator na Railway i aktualizacja
+   OTA aplikacji (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` jest wklejony w bundle).
 2. Identyfikatory klienta: **Web** (weryfikacja `aud` na serwerze i logowanie do
    panelu - zmienna `GOOGLE_WEB_CLIENT_ID`, WYMAGANA: serwer bez niej nie wstaje, a panel
    pobiera ją z publicznej trasy `GET /admin/api/auth/google-client`, żeby narysować
    przycisk) oraz **Android** (package `com.ninerdeck.app` + odcisk SHA-1
-   z poświadczeń EAS - `GOOGLE_ANDROID_CLIENT_ID`, opcjonalna do builda aplikacji);
+   z poświadczeń EAS - `GOOGLE_ANDROID_CLIENT_ID`, opcjonalna do builda aplikacji).
+   **Klient Android MUSI mieć zaznaczone „Enable custom URI scheme"** (Advanced
+   settings): aplikacja wraca z przeglądarki adresem `com.ninerdeck.app:/oauthredirect`
+   (§9), a Google w NOWYCH klientach Androida taki powrót domyślnie blokuje - bez
+   tego pola przycisk w aplikacji nie zadziała, choć serwer i panel są w porządku;
    **iOS** dopiero gdy pojawi się ta platforma. Dwie zmienne zamiast listy po przecinku,
    bo identyfikator Web ma ROLĘ (jedzie do panelu), a pozycja na liście roli nie niesie.
    W kliencie Web trzeba dodać origin panelu - od issue #124 `https://app.ninerdeck.pl`
