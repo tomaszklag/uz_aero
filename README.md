@@ -69,8 +69,9 @@ obok produkcyjnego APK i ma własne dane. Raz, i po każdej zmianie modułów na
    `com.ninerdeck.app.dev` → Keystore) albo zakładka Credentials projektu na expo.dev.
    `keytool -printcert -jarfile` na pobranym APK NIE zadziała: EAS podpisuje wyłącznie
    schematem v2, a keytool czyta tylko podpis v1.
-3. Google Cloud (ten sam projekt, co produkcja) → klient OAuth typu **Android**: package
-   `com.ninerdeck.app.dev` + ten SHA-1.
+3. Google Cloud (ten sam projekt, co produkcja - `ninerdeck-81f75`) → klient OAuth typu
+   **Android**: package `com.ninerdeck.app.dev` + ten SHA-1, a w Advanced settings
+   zaznaczone **„Enable custom URI scheme"** (bez tego Google blokuje powrót do aplikacji).
 4. Identyfikator klienta wpisz do `app/.env` (`EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`) i do
    `server/.env` (`GOOGLE_ANDROID_CLIENT_ID`). Do logowania w panelu lokalnie klient **Web**
    musi mieć origin `http://localhost:5173` w „Authorized JavaScript origins".
@@ -128,9 +129,12 @@ same niczego nie rozdzielają. Konfiguracja buildu i healthcheck: `railway.json`
    Plan Hobby dopuszcza dwie domeny na usługę, czyli dokładnie te dwie - `www` odpada.
    Certyfikat wystawia się do godziny od propagacji DNS. Domenę wygenerowaną przez
    Railway można potem usunąć - kod jej nie potrzebuje.
-6. **Logowanie Google** (`docs/logowanie-google.md`): w Google Cloud załóż projekt,
-   ekran zgody OAuth i identyfikatory klienta - **Web** (panel + weryfikacja `aud`)
-   oraz **Android** (package `com.ninerdeck.app` + odcisk SHA-1 z poświadczeń EAS).
+6. **Logowanie Google** (`docs/logowanie-google.md`): w Google Cloud (projekt Firebase
+   `ninerdeck-81f75`, ten sam co push) ekran zgody OAuth i identyfikatory klienta -
+   **Web** (panel + weryfikacja `aud`) oraz **Android** (package `com.ninerdeck.app`
+   + odcisk SHA-1 z poświadczeń EAS, w Advanced settings zaznaczone **„Enable custom
+   URI scheme"**). Nowy klient Android = nowy identyfikator także w `app/eas.json`
+   i aktualizacja OTA.
    Wpisz je jako `GOOGLE_WEB_CLIENT_ID` (WYMAGANY - loguje się nim panel) i
    `GOOGLE_ANDROID_CLIENT_ID` (od builda aplikacji z Google); **bez pierwszego serwer
    nie wstanie** (pusty zbiór odbiorców przepuszczałby każdy token Google).
