@@ -4011,6 +4011,9 @@ KAŻDY ekran modułu rezerwacji:
 - **DWA KROKI TO JEDEN EKRAN NAWIGACJI** (wzorzec wpisu ręcznego): „wstecz" z kroku 2 cofa
   o krok, z kroku 1 przy niepustym szkicu pyta o rezygnację (`AbandonDraftSheet`). Termin
   i maszyna PODSTAWIONE przez nawigację nie liczą się jako wpis pilota
+- **ZAPIS WYCHODZI PRZEZ `exit.proceed`, A POPRAWIANY TERMIN WYPADA Z ZAJĘTOŚCI** -
+  dwa błędy z 3.0.0 (pusty formularz po „ZAREZERWUJ", zablokowane „DALEJ" przy
+  „PRZESUŃ I POPRAW"), naprawione w 4.0.0; reguły i strażnik w sekcji „epik Z-C"
 - **TAPNIĘCIE W WOLNE PASMO NIE USTAWIA TERMINU**, tylko przekazuje wskazaną godzinę jako
   PREFEROWANĄ PORĘ do zapytania o sugestie (`SLOT_PREFERRED_BONUS`). Podstawiona godzina
   wyglądałaby jak wpisana - to ta sama reguła, przez którą `Stepper` nie ma wartości
@@ -5543,9 +5546,12 @@ skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.
 - **WYJŚCIE Z FORMULARZA PO ZAPISIE IDZIE PRZEZ `exit.proceed(akcja)`**, nigdy wprost
   `navigation.replace`: bramka rezygnacji (`usePreventRemove`) czyta stan z OSTATNIEGO
   renderu, w którym po zapisie wciąż stoi podniesiona, więc przechwyciłaby własne wyjście
-  formularza i cofnęła go o krok, choć zapis już się udał. Oba błędy formularza
-  rezerwacji (ten i kolizja poprawianego terminu) siedziały w 3.x od 3.0.0 - telefony
-  z 3.x dostaną je hotfixem od `main`
+  formularza i cofnęła go o krok, choć zapis już się udał. Faza wyjścia to
+  `PROCEED_PHASE` w czystym `hooks/abandonExit.ts` (z testem), a strażnik
+  w `architecture.test.ts` nie przepuści ekranu z bramką, który woła `replace`, `dispatch`
+  albo `pop` prosto z `navigation`. Oba błędy formularza rezerwacji (ten i kolizja
+  poprawianego terminu) siedziały w 3.x od 3.0.0 i przychodzą z 4.0.0 - hotfixu dla 3.x
+  nie ma (decyzja właściciela 2026-10-07)
 - **EDYCJA ZLECENIA = TEN SAM FORMULARZ** ze szkicem z karty (`logic/orderEdit.ts`): zapis
   niesie samą różnicę (`PATCH`), bez zmian wraca na kartę bez zapisu; wysłani adresaci
   z kłódką, dopisani z „×", „Wspólna lista" zablokowana, skutek zmiany terminu stoi pod
