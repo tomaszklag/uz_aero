@@ -58,6 +58,21 @@ describe('pasek zajętości doby', () => {
     expect(vm.aria).toBe('Zajęte 13:00 → 16:00 · A. Kowalski; Twój termin 11:00 → 13:00');
   });
 
+  it('szkic zlecenia błękitem i swoim imieniem - tak, jak stanie na osi (ZL2a)', () => {
+    const vm = buildDayTrack({
+      day: DAY,
+      window: WINDOW,
+      busy: [rez('13:00', '16:00')],
+      slot: { startsAt: T('09:00'), endsAt: T('14:00') },
+      free: null,
+      tz: TZ,
+      person,
+      draft: 'order',
+    });
+    expect(vm.segments[1]).toMatchObject({ tone: 'order', title: 'Szkic zlecenia · 09:00 → 14:00', clash: true });
+    expect(vm.aria).toBe('Zajęte 13:00 → 16:00 · A. Kowalski; szkic zlecenia 09:00 → 14:00 koliduje');
+  });
+
   it('rezerwacja przed świtem ROZCIĄGA okno; wyłączenie z użytku - nie', () => {
     const vm = buildDayTrack({
       day: DAY,
@@ -85,6 +100,22 @@ describe('pasek zajętości doby', () => {
     });
     expect(slotNote({ startsAt: T('14:00'), endsAt: T('16:00') }, busy, 'SP-AXA', TZ, person)).toMatchObject({
       clash: null,
+    });
+  });
+
+  it('cudze zlecenie stoi błękitem i mówi, kogo szuka - bez nazwiska, którego jeszcze nie ma', () => {
+    const order = rez('09:00', '13:00', { pilotId: null, order: { seeking: ['pic', 'dual'] } });
+    const vm = buildDayTrack({ day: DAY, window: WINDOW, busy: [order], slot: null, free: null, tz: TZ, person });
+    expect(vm.segments[0]).toMatchObject({ tone: 'order', title: 'Zlecenie · szuka załogi · 09:00 → 13:00' });
+    expect(slotNote({ startsAt: T('10:00'), endsAt: T('14:00') }, [order], 'SP-ANA', TZ, person)?.clash).toEqual({
+      lead: 'w tych godzinach SP-ANA jest już zajęta',
+      who: 'zlecenie 09:00 → 13:00',
+    });
+    // Zlecenie obsadzone to zwykła zajętość z nazwiskiem dowódcy.
+    const filled = rez('09:00', '13:00', { order: { seeking: [] } });
+    expect(buildDayTrack({ day: DAY, window: WINDOW, busy: [filled], slot: null, free: null, tz: TZ, person }).segments[0]).toMatchObject({
+      tone: 'busy',
+      title: 'A. Kowalski · 09:00 → 13:00',
     });
   });
 });
@@ -123,6 +154,14 @@ describe('odmowa „termin zajęty" (K7b)', () => {
     expect(takenBanner(err({ error: 'slot_taken', taken: rez('11:00', '13:00'), takenAt: new Date(T('12:00')).toISOString() }), ctx)).toEqual({
       lead: 'Ten termin właśnie zajęto.',
       body: 'SP-AXA 11:00 → 13:00 · rezerwację ma A. Kowalski · weszła 3 min temu.',
+    });
+  });
+
+  it('kolizją jest inne zlecenie - kogo szuka, forma nijaka (ZL2c)', () => {
+    const order = rez('09:00', '13:00', { pilotId: null, order: { seeking: ['pic', 'dual'] } });
+    expect(takenBanner(err({ error: 'slot_taken', taken: order, takenAt: new Date(T('12:01')).toISOString() }), ctx)).toEqual({
+      lead: 'Ten termin właśnie zajęto.',
+      body: 'SP-AXA 09:00 → 13:00 · zlecenie · szuka załogi · weszło 2 min temu.',
     });
   });
 

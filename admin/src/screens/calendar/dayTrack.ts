@@ -19,14 +19,14 @@
 import { relativeAge, shortName } from '@ninerdeck/format';
 
 import type { BookingDto } from '../../api/dto';
-import { cellLabel, godzina, type PersonLookup } from './bookingLabels';
+import { cellLabel, godzina, orderSeeking, type PersonLookup } from './bookingLabels';
 
 export interface Span {
   startsAt: number;
   endsAt: number;
 }
 
-export type DayTrackTone = 'busy' | 'pending' | 'block' | 'mine';
+export type DayTrackTone = 'busy' | 'pending' | 'block' | 'mine' | 'order';
 
 export interface DayTrackSegment {
   /** Położenie i szerokość w procentach szerokości paska. */
@@ -59,6 +59,12 @@ export interface DayTrackInput {
   free: readonly { startsAt: string; endsAt: string }[] | null;
   tz: string;
   person: PersonLookup;
+  /**
+   * Czyj szkic stoi na pasku: własna rezerwacja (zieleń - Twój termin) albo zlecenie
+   * (błękit z przerywaną ramką, tak jak stanie na osi - zlecenie nie jest jeszcze niczyim
+   * lotem; makieta ZL2a). Domyślnie własna.
+   */
+  draft?: 'own' | 'order';
 }
 
 const hhmm = (at: number, tz: string): string => godzina(new Date(at), tz);
@@ -74,6 +80,9 @@ function spanOf(b: BookingDto): Span {
 /** Kto albo co stoi w tym czasie - nazwisko w MIANOWNIKU za separatorem (bez odmiany). */
 export function busyLabel(b: BookingDto, person: PersonLookup): string {
   if (b.kind === 'block') return cellLabel(b, person);
+  // Zlecenie, które szuka załogi, nie ma jeszcze lotnika - mówi, kogo brakuje (§16 pkt 3).
+  const seeking = orderSeeking(b);
+  if (seeking != null) return `zlecenie · ${seeking}`;
   const who = b.pilotId == null ? null : person(b.pilotId);
   return who == null ? 'rezerwacja' : shortName(who.name);
 }
@@ -107,8 +116,9 @@ export function buildDayTrack(input: DayTrackInput): DayTrackVm {
     const label = busyLabel(b, input.person);
     segments.push({
       ...at,
-      tone: b.kind === 'block' ? 'block' : b.status === 'pending' ? 'pending' : 'busy',
-      title: `${label} · ${hours(spanOf(b), tz)}`,
+      // Cudze zlecenie stoi tak, jak na osi: błękit z przerywaną ramką (ZL2c).
+      tone: b.kind === 'block' ? 'block' : orderSeeking(b) != null ? 'order' : b.status === 'pending' ? 'pending' : 'busy',
+      title: `${capital(label)} · ${hours(spanOf(b), tz)}`,
       clash: false,
     });
     parts.push(`zajęte ${hours(spanOf(b), tz)} · ${label}`);
@@ -118,8 +128,10 @@ export function buildDayTrack(input: DayTrackInput): DayTrackVm {
     const at = place(input.slot);
     if (at != null) {
       const clash = input.busy.some((b) => overlaps(spanOf(b), input.slot!));
-      segments.push({ ...at, tone: 'mine', title: `Twój termin · ${hours(input.slot, tz)}`, clash });
-      parts.push(`Twój termin ${hours(input.slot, tz)}${clash ? ' koliduje' : ''}`);
+      const order = input.draft === 'order';
+      const name = order ? 'Szkic zlecenia' : 'Twój termin';
+      segments.push({ ...at, tone: order ? 'order' : 'mine', title: `${name} · ${hours(input.slot, tz)}`, clash });
+      parts.push(`${order ? 'szkic zlecenia' : 'Twój termin'} ${hours(input.slot, tz)}${clash ? ' koliduje' : ''}`);
     }
   }
 
@@ -178,7 +190,8 @@ export function slotNote(
         hit.kind === 'block'
           ? `w tych godzinach ${reg} jest wyłączona z użytku`
           : `w tych godzinach ${reg} jest już zajęta`,
-      who: `${busyLabel(hit, person)} ${hours(spanOf(hit), tz)}`,
+      // Zlecenie mówi samo „zlecenie" - kogo szuka, mówi pasek nad parą godzin (ZL2c).
+      who: `${orderSeeking(hit) != null ? 'zlecenie' : busyLabel(hit, person)} ${hours(spanOf(hit), tz)}`,
     },
   };
 }

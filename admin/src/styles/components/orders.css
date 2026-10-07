@@ -413,3 +413,23 @@
   min-height: 40px;
   resize: none;
 }
+
+/* ── FOTELE W FORMULARZU (§4.1, §14.4) ──
+   Stany fotela to karty wyboru (`.opt`): zbiór zamknięty i krótki, więc widoczność
+   wszystkich stanów naraz jest całą wartością (reguła „lista kart" obowiązuje też
+   w panelu). Siatka TRZECH kolumn stoi także przy dowódcy, który ma stany dwa
+   („brak" nie istnieje - lot bez dowódcy nie istnieje): kolumny „Ja" i „Szukam"
+   trzymają się wtedy jednej linii w obu fotelach, a puste trzecie pole czyta się
+   jako brak trzeciej możliwości, nie jako usterka. */
+.seat-states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+/* Podpis pod polem osoby wskazanej imiennie, która jest też w grupie drugiego fotela
+   (decyzja 39): dostanie termin do potwierdzenia. `.hint b` jest bursztynowe - tu
+   pogrubienie niesie informację, nie ostrzeżenie, więc błękit. Niczego nie blokuje. */
+.hint.info b {
+  color: var(--blue);
+}

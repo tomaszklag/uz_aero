@@ -399,6 +399,15 @@ button.cal-add {
   border-color: var(--green);
 }
 
+/* Zlecenie na pasku doby w formularzu (szkic nowego albo cudze zlecenie w tym dniu) -
+   rysowane tak, jak stoi na osi: błękit, nie zieleń własnego terminu, bo zlecenie nie
+   jest jeszcze niczyim lotem. */
+.daytrack-busy.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+}
+
 .daytrack-scale {
   display: flex;
   justify-content: space-between;

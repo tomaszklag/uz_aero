@@ -18,7 +18,7 @@ import { relativeAge } from '@ninerdeck/format';
 
 import type { BookingDto } from '../../api/dto';
 import { isHttpError } from '../../api/httpClient';
-import { godzina, type PersonLookup } from './bookingLabels';
+import { godzina, orderSeeking, type PersonLookup } from './bookingLabels';
 import { bookingErrorMessage, bookingRefusal, takenBooking } from './bookingRefusal';
 import { busyLabel } from './dayTrack';
 
@@ -60,10 +60,16 @@ export function takenBanner(
 
   const at = takenAt(error);
   const fresh = at != null && ctx.now - at < FRESH_MS;
-  const age = at == null ? '' : ` · weszła ${relativeAge(Math.max(0, ctx.now - at))} temu`;
+  const lead = fresh ? 'Ten termin właśnie zajęto.' : 'Ten termin jest już zajęty.';
+  const ago = at == null ? null : relativeAge(Math.max(0, ctx.now - at));
+  const seeking = orderSeeking(taken);
+  if (seeking != null) {
+    // Kolizją jest inne ZLECENIE - zamiast nazwiska mówi, kogo szuka; forma nijaka (ZL2c).
+    return { lead, body: `${ctx.reg} ${hours} · zlecenie · ${seeking}${ago == null ? '' : ` · weszło ${ago} temu`}.` };
+  }
   return {
-    lead: fresh ? 'Ten termin właśnie zajęto.' : 'Ten termin jest już zajęty.',
-    body: `${ctx.reg} ${hours} · rezerwację ma ${busyLabel(taken, ctx.person)}${age}.`,
+    lead,
+    body: `${ctx.reg} ${hours} · rezerwację ma ${busyLabel(taken, ctx.person)}${ago == null ? '' : ` · weszła ${ago} temu`}.`,
   };
 }
 

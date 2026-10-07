@@ -1190,6 +1190,23 @@ export interface BookingDto {
   createdAt?: string;
   closedAt?: string | null;
   closeReason?: string | null;
+  /**
+   * Zlecenie za rezerwacją (4.0.0, `bookingOrderWire` na serwerze): `null` = zwykła
+   * rezerwacja. Zlecenie JEST rezerwacją z pustymi fotelami - na osi i w odmowie terminu
+   * mówi, KOGO brakuje („zlecenie · szuka załogi"), zamiast nazwiska (§16 pkt 3).
+   */
+  order?: BookingOrderDto | null;
+}
+
+/**
+ * Zlecenie widziane z rezerwacji. `seeking` - fotele, których szuka TERAZ (pusto po
+ * obsadzeniu i po zamknięciu); `id` i `createdBy` - wyłącznie dla prowadzącego i adresata,
+ * reszta klubu widzi tylko, kogo brakuje.
+ */
+export interface BookingOrderDto {
+  seeking: SeatDto[];
+  id?: string;
+  createdBy?: string;
 }
 
 /**
@@ -2271,3 +2288,40 @@ export interface ThreadPageDto {
  * wysłania wiadomości. Kod jedzie w polu `error` odpowiedzi (403, 409, 400).
  */
 export type ThreadRefusalDto = 'read_only' | 'thread_closed' | 'message_invalid' | 'message_exists';
+
+// -- nowe zlecenie (szuflada ZL2; `POST /orders`) ------------------------------------
+
+/** Lista adresatów fotela albo wspólnej listy - osoby imiennie i grupy klubu. */
+export interface AddressListDto {
+  pilotIds: string[];
+  groupIds: string[];
+}
+
+export interface OrderSeatsDto {
+  pic: PicSeatStateDto;
+  dual: DualSeatStateDto;
+}
+
+/**
+ * Adresowanie: per fotel (lista szukanego fotela; `null` przy fotelu, którego zlecenie nie
+ * szuka - inaczej odmowa `seat_not_sought`) albo jedna wspólna lista (§4.2).
+ */
+export type OrderAudienceDto =
+  | { kind: 'per_seat'; pic: AddressListDto | null; dual: AddressListDto | null }
+  | { kind: 'shared'; list: AddressListDto };
+
+/** Ciało `POST /orders` - identyfikator nadaje panel (powtórzony zapis to to samo zlecenie). */
+export interface NewOrderDto {
+  id: string;
+  aircraftId: string;
+  startsAt: string;
+  endsAt: string;
+  operation: string;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  note: string | null;
+  seats: OrderSeatsDto;
+  audience: OrderAudienceDto;
+}

@@ -58,6 +58,19 @@ export const blockReasonLabel = (reason: string | null): string =>
  * trzy wartości i przy czterech maszynach w serwisie wszystkie wyglądałyby tak samo.
  * Pusta notatka wraca do nazwy z katalogu - pasek bez napisu byłby plamką bez znaczenia.
  */
+/**
+ * Kogo brakuje zleceniu: „szuka załogi" / „szuka dowódcy" / „szuka drugiego pilota" - te
+ * same słowa, co plakietka zlecenia (`orderLabels.ts`), w środku zdania. `null` = zlecenie
+ * nie szuka już nikogo (obsadzone albo zamknięte) - wtedy to zwykła zajętość z nazwiskiem.
+ */
+export function orderSeeking(booking: Pick<BookingDto, 'order'>): string | null {
+  const seeking = booking.order?.seeking ?? [];
+  if (seeking.length >= 2) return 'szuka załogi';
+  if (seeking[0] === 'pic') return 'szuka dowódcy';
+  if (seeking[0] === 'dual') return 'szuka drugiego pilota';
+  return null;
+}
+
 export function cellLabel(booking: BookingDto, person: PersonLookup): string {
   if (booking.kind === 'block') {
     const note = booking.note?.trim() ?? '';

@@ -15,6 +15,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
+  NewOrderDto,
   OrderAnswerDto,
   OrderCardDto,
   OrderListDto,
@@ -28,6 +29,7 @@ import {
   answerOrder,
   assignOrder,
   cancelOrder,
+  createOrder,
   getOrder,
   getOrderSummary,
   getOrders,
@@ -183,6 +185,23 @@ export function useMarkThreadRead(id: string, recipientId: string) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: keys.orders.card(id) });
       void qc.invalidateQueries({ queryKey: [...keys.orders.all, 'list'] });
+    },
+  });
+}
+
+/**
+ * Nowe zlecenie. Odpowiedź jest kartą prowadzącego, więc trafia prosto do pamięci - szuflada
+ * zlecenia otwiera się po wysłaniu bez drugiego pytania; lista i kalendarz czytają się od
+ * nowa, bo zlecenie od chwili utworzenia trzyma termin na osi.
+ */
+export function useCreateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: NewOrderDto) => createOrder(body),
+    onSuccess: (card, body) => {
+      qc.setQueryData(keys.orders.card(body.id), card);
+      void qc.invalidateQueries({ queryKey: keys.orders.all, predicate: (q) => q.queryKey[1] !== 'card' });
+      void qc.invalidateQueries({ queryKey: keys.calendar.all });
     },
   });
 }

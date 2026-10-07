@@ -22,7 +22,7 @@
  * lot" (razem z formularzem) - przycisk bez formularza obiecywałby akcję, której nie ma.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
@@ -31,6 +31,7 @@ import { useDirectory } from '../../queries/useDirectory';
 import { useOrderList, useOrderSummary } from '../../queries/useOrders';
 import {
   Banner,
+  Button,
   DataTable,
   EmptyState,
   FilterChip,
@@ -41,11 +42,14 @@ import {
   TableSkeleton,
   type Column,
 } from '../../ui/components';
-import { ChatIcon, OrdersIcon } from '../../ui/components/icons';
+import { ChatIcon, OrdersIcon, PlusIcon } from '../../ui/components/icons';
+import { calendarAircraft } from '../calendar/directoryLookups';
 import { loadErrorMessage } from '../common/apiMessage';
 import { inboxRows, managedRows, type InboxRowVm, type ManagedRowVm, type OrderRowBase } from './orderListRows';
 import { orderLookups } from './orderLookups';
 import { OrderDrawer } from './OrderDrawer';
+import type { OrderSeed } from './orderForm';
+import { OrderFormDrawer } from './OrderFormDrawer';
 import { BOX_OF, defaultView, orderPath, ordersPath, periodOf, threadPath, viewOf, type OrderView } from './orderPaths';
 import { ThreadDrawer } from './ThreadDrawer';
 
@@ -58,7 +62,11 @@ export function OrdersScreen() {
   const { id, recipientId } = useParams();
   const { session } = useSessionState();
   const capabilities = session?.capabilities;
-  const seesManaged = can(capabilities, 'orders.create') || can(capabilities, 'reservations.manage');
+  const canCreate = can(capabilities, 'orders.create');
+  const seesManaged = canCreate || can(capabilities, 'reservations.manage');
+  // Nowe zlecenie to szuflada BEZ adresu (decyzja 2026-10-07) - stan ekranu, jak własna
+  // rezerwacja w kalendarzu; z listy startuje pusta.
+  const [creating, setCreating] = useState<OrderSeed | null>(null);
 
   const requested = viewOf(params.get('widok'));
   // „Zlecone" w adresie u kogoś, dla kogo tej połowy nie ma, wraca do „Do mnie" -
@@ -100,7 +108,19 @@ export function OrdersScreen() {
 
   return (
     <>
-      <PageHead title="Zlecenia" />
+      <PageHead
+        title="Zlecenia"
+        actions={
+          // Jedna akcja główna - wyłącznie ze „Zlecaniem lotów"; „Cudze rezerwacje" dają
+          // prowadzenie cudzych zleceń, a nie prawo ich wysyłania.
+          canCreate ? (
+            <Button variant="primary" onClick={() => setCreating({})}>
+              <PlusIcon size={13} />
+              Zleć lot
+            </Button>
+          ) : null
+        }
+      />
 
       <div className="filters">
         {seesManaged && view != null ? <ViewSwitch view={view} /> : null}
@@ -145,6 +165,22 @@ export function OrdersScreen() {
           />
         )}
       </Loadable>
+
+      {creating == null || list.data == null || directory.data == null || session == null ? null : (
+        <OrderFormDrawer
+          aircraft={calendarAircraft(directory.data)}
+          members={directory.data.members}
+          viewerId={session.pilot.id}
+          person={context.lookups.person}
+          timezone={list.data.timezone}
+          seed={creating}
+          onClose={() => setCreating(null)}
+          onSent={(orderId) => {
+            setCreating(null);
+            navigate(orderPath(orderId, 'zlecone', period));
+          }}
+        />
+      )}
 
       {id == null || view == null ? null : recipientId != null ? (
         <ThreadDrawer

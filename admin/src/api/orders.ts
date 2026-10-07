@@ -16,6 +16,7 @@
  */
 
 import type {
+  NewOrderDto,
   OrderAnswerDto,
   OrderAnswerResultDto,
   OrderCardDto,
@@ -50,6 +51,14 @@ export function getOrders(box: OrderBox): Promise<OrderListDto> {
 /** Karta zlecenia w kształcie widza (§13.1); cudze albo nieznane zlecenie to 404. */
 export function getOrder(id: string): Promise<OrderCardDto> {
   return apiGet<OrderCardDto>(`/orders/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Nowe zlecenie (ZL2). Odpowiedź to karta w kształcie widza - prowadzącego, bo właśnie je
+ * założył; odmowa terminu (`slot_taken`) niesie kolidującą zajętość, jak przy rezerwacji.
+ */
+export function createOrder(body: NewOrderDto): Promise<OrderCardDto> {
+  return apiPost<OrderCardDto>('/orders', body);
 }
 
 const path = (id: string, tail: string): string => `/orders/${encodeURIComponent(id)}/${tail}`;
