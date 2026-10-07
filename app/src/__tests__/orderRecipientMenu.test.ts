@@ -81,7 +81,7 @@ describe('32D - arkusz adresata', () => {
   });
 
   it('fotel „ja" i fotel szukany nie mają menu', () => {
-    const seat = { seat: 'pic' as const, label: 'Dowódca', pilotId: null, name: null, code: null, status: [], menu: false, thread: null, unread: false };
+    const seat = { seat: 'pic' as const, label: 'Dowódca', pilotId: null, name: null, code: null, status: [], asking: true, menu: false, thread: null, unread: false };
     expect(recipientMenuVm({ card: c, source: { kind: 'crew', crew: seat }, viewerId: 'MZI', nameOf, codeOf })).toBeNull();
   });
 });

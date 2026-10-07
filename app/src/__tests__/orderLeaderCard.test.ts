@@ -245,6 +245,50 @@ describe('32A - wspólna lista, dowódca przydzielony', () => {
   });
 });
 
+describe('32A po odwołaniu - karta „Załoga" jest zapisem', () => {
+  const v = vm(
+    card({
+      order: order({
+        status: 'cancelled',
+        addressing: 'shared',
+        audienceLabel: 'wspólna lista: Piloci An-2',
+        createdAt: local(-2, '18:40'),
+        closedAt: local(-1, '22:00'),
+        closedBy: 'MZI',
+        closeReason: 'Maszyna idzie do serwisu.',
+      }),
+      booking: booking({ pilotId: 'BNO' }),
+      viewer: { leads: true, recipient: null },
+      recipients: [recipient('BNO', { seat: null, answer: 'yes', answeredAt: local(-1, '21:30'), seen: true })],
+      history: [{ id: 'h1', actorId: 'MZI', kind: 'assigned', payload: { seat: 'pic', pilotId: 'BNO', via: 'leader' }, at: local(-1, '21:35') }],
+    }),
+    localMs(-1, '22:10'),
+  );
+
+  it('kto usiadł i kiedy - bez „Leci" i bez zieleni, bo lot się nie odbędzie; bez menu', () => {
+    expect(v.crew?.[0]).toMatchObject({ name: 'Barbara Nowak', status: [{ text: 'Przydział 21:35' }], menu: false });
+    expect(v.crew?.[0]?.status.some((s) => s.tone === 'ok')).toBe(false);
+  });
+
+  it('pusty fotel przestaje być pytaniem ekranu', () => {
+    expect(v.crew?.[1]).toMatchObject({ name: null, status: [], asking: false });
+  });
+
+  it('w zleceniu żywym ten sam pusty fotel pyta (wzorzec 32A)', () => {
+    const live = vm(
+      card({
+        order: order({ addressing: 'shared', audienceLabel: 'wspólna lista: Piloci An-2', createdAt: local(-2, '18:40') }),
+        booking: booking({ pilotId: 'BNO' }),
+        viewer: { leads: true, recipient: null },
+        recipients: [recipient('BNO', { seat: null, answer: 'yes', answeredAt: local(-1, '21:30'), seen: true })],
+        history: [],
+      }),
+      localMs(-1, '21:40'),
+    );
+    expect(live.crew?.map((c) => c.asking)).toEqual([false, true]);
+  });
+});
+
 describe('32B - komplet załogi', () => {
   const v = vm(
     card({

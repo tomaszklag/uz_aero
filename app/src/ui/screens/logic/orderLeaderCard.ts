@@ -98,6 +98,11 @@ export interface CrewSeatVm {
   pilotId: string | null;
   /** Osoba w fotelu; `null` = szukany. */
   name: string | null;
+  /**
+   * Fotel, o który ekran pyta (błękitna krawędź): pusty w zleceniu żywym. W odwołanym
+   * albo wygasłym ekran o nic już nie pyta, więc podświetlenie gaśnie razem z instrukcją.
+   */
+  asking: boolean;
   code: string | null;
   status: StatusPart[];
   /** Menu ⋯ z „COFNIJ PRZYDZIAŁ" - przy osobie przydzielonej do szukanego fotela. */
@@ -353,6 +358,7 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
         code: null,
         // Instrukcja, nie opis stanu - to, że szuka, powiedziała już plakietka w hero.
         status: ctx.live ? [{ text: card.order.addressing === 'shared' ? 'przydziel z listy niżej' : 'wybierz z listy niżej' }] : [],
+        asking: ctx.live,
         menu: false,
         thread: null,
         unread: false,
@@ -367,6 +373,7 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
         name: personLabel(person, input.pilotId, input.nameOf),
         code: input.codeOf(person),
         status: [{ text: 'osoba zlecająca' }],
+        asking: false,
         menu: false,
         thread: null,
         unread: false,
@@ -375,7 +382,8 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
     }
     const entry = lastSeating(card, seat, person);
     const at = entry == null ? null : instant(entry.at);
-    const verb = entry?.payload.via === 'answer' ? 'przyjęte' : 'przydział';
+    const accepted = entry?.payload.via === 'answer';
+    const when = at == null ? null : momentLabel(at, day, input.now, SHORT);
     // Rozmowa należy do adresata, którym ta osoba była, zanim usiadła w fotelu.
     const recipient = (card.recipients ?? []).find((r) => r.pilotId === person) ?? null;
     const author = card.order.createdBy === input.pilotId;
@@ -385,7 +393,16 @@ function crewSeats(ctx: RowContext, card: RemoteOrderCard): CrewSeatVm[] {
       pilotId: person,
       name: personLabel(person, input.pilotId, input.nameOf),
       code: input.codeOf(person),
-      status: at == null ? [{ text: 'Leci', tone: 'ok' }] : [{ text: 'Leci', tone: 'ok' }, { text: ` · ${verb} ${momentLabel(at, day, input.now, SHORT)}` }],
+      // „Leci" wyłącznie w zleceniu żywym: po odwołaniu albo wygaśnięciu lot się nie odbędzie,
+      // a karta zostaje zapisem - kto i kiedy usiadł w fotelu, bez zieleni odpowiedzi.
+      status: ctx.live
+        ? when == null
+          ? [{ text: 'Leci', tone: 'ok' }]
+          : [{ text: 'Leci', tone: 'ok' }, { text: ` · ${accepted ? 'przyjęte' : 'przydział'} ${when}` }]
+        : when == null
+          ? []
+          : [{ text: `${accepted ? 'Przyjęte' : 'Przydział'} ${when}` }],
+      asking: false,
       menu: ctx.live,
       thread: recipient == null ? null : author ? 'write' : recipient.threadId != null ? 'read' : null,
       unread: (recipient?.unread ?? 0) > 0,

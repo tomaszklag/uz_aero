@@ -10,7 +10,9 @@
  * cała linia w kolorze konkurowałaby z „Może lecieć" na liście niżej. Pusty fotel pisze
  * „Szukany" błękitem z krawędzią po lewej - to samo, co fotel zaproponowany adresatowi
  * (28): jedyny wiersz karty, o który ekran pyta. Gradient z makiety bez modułu natywnego
- * to płaska warstwa przygaszonego błękitu.
+ * to płaska warstwa przygaszonego błękitu. W zleceniu odwołanym albo wygasłym ekran
+ * o nic już nie pyta (`asking`): pusty fotel traci krawędź i błękit, a obsadzony mówi
+ * „Przyjęte"/„Przydział" bez „Leci" - lot się nie odbędzie.
  */
 
 import React from 'react';
@@ -31,7 +33,7 @@ export interface OrderCrewRowProps {
 export function OrderCrewRow({ seat, divider = false, onThread, onMenu }: OrderCrewRowProps) {
   const { theme } = useTheme();
   const s = styles(theme);
-  const open = seat.name == null;
+  const open = seat.asking;
   const who = seat.name ?? '';
 
   return (
@@ -43,8 +45,8 @@ export function OrderCrewRow({ seat, divider = false, onThread, onMenu }: OrderC
         {seat.label}
       </AppText>
       <View style={s.main}>
-        {open ? (
-          <AppText variant="body" style={s.open}>
+        {seat.name == null ? (
+          <AppText variant="body" style={open ? s.open : s.sought}>
             Szukany
           </AppText>
         ) : (
@@ -99,6 +101,8 @@ const styles = (t: Theme) =>
     // Grubość osobnym plikiem kroju - `fontWeight` na Androidzie nie działa na krojach z pakietu.
     name: { fontFamily: t.fontFamily.bodySemiBold, fontSize: 13, lineHeight: 17, color: t.colors.textPrimary },
     open: { fontFamily: t.fontFamily.bodySemiBold, fontSize: 13, lineHeight: 17, color: t.colors.blue },
+    // Fotel, którego nikt nie zajął, w zleceniu zamkniętym: zapis, nie pytanie - bez błękitu.
+    sought: { fontFamily: t.fontFamily.bodySemiBold, fontSize: 13, lineHeight: 17, color: t.colors.textMuted },
     code: { fontSize: 9, letterSpacing: 0.5, color: t.colors.textMuted },
     status: { fontSize: 9.5, lineHeight: 13, letterSpacing: 0.3, color: t.colors.textSecondary },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
