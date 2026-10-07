@@ -42,8 +42,7 @@ import {
   termRelative,
 } from './orderLabels';
 import type { OrderLookups } from './orderLookups';
-
-export type OrderPeriod = 'upcoming' | 'past';
+import { orderPath, type OrderPeriod } from './orderPaths';
 
 export interface OrderRowContext {
   lookups: OrderLookups;
@@ -72,7 +71,7 @@ export interface OrderRowBase {
   pillSub: string | null;
   /** Nowa wiadomość w rozmowie - ikona z kropką przed plakietką. */
   unread: boolean;
-  /** Dokąd prowadzi wiersz; `null` = nigdzie (szuflada zlecenia przychodzi w etapie 3). */
+  /** Dokąd prowadzi wiersz; `null` = nigdzie (szuflada adresata przychodzi w kolejnym etapie). */
   href: string | null;
 }
 
@@ -169,10 +168,10 @@ function closedPill(status: OrderStatusDto, reason: string | null): Pick<OrderRo
 // ── „ZLECONE" ──────────────────────────────────────────────────────────────────
 
 export function managedRows(items: readonly OrderListItemDto[], period: OrderPeriod, ctx: OrderRowContext): ManagedRowVm[] {
-  return arrange(place(items), period, ctx.now, (p, ended) => managedRow(p, ended, ctx));
+  return arrange(place(items), period, ctx.now, (p, ended) => managedRow(p, ended, period, ctx));
 }
 
-function managedRow(p: Placed, ended: boolean, ctx: OrderRowContext): ManagedRowVm {
+function managedRow(p: Placed, ended: boolean, period: OrderPeriod, ctx: OrderRowContext): ManagedRowVm {
   const { order } = p.item;
   const closed = closedPill(order.status, order.closeReason);
   const state: Pick<OrderRowBase, 'pill' | 'pillSub'> =
@@ -184,7 +183,8 @@ function managedRow(p: Placed, ended: boolean, ctx: OrderRowContext): ManagedRow
     ...base(p, ctx),
     ...state,
     muted: closed != null,
-    href: null,
+    // Szuflada prowadzącego nad listą - połowa i okres zostają w adresie.
+    href: orderPath(order.id, 'zlecone', period),
     seats: seatLines(p.item, ctx),
     answers: answersOf(p, ctx),
   };
@@ -207,7 +207,7 @@ export function seatLines(item: OrderListItemDto, ctx: OrderRowContext): { label
     if (sitting != null) {
       const person = ctx.lookups.person(sitting);
       who = person == null ? NONE : shortName(person.name);
-    } else if (audience === 'shared') {
+    } else if (item.order.addressing === 'shared' || audience === 'shared') {
       who = 'Wspólna lista';
     } else {
       who = audience[seat] ?? NONE;

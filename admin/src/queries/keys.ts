@@ -224,6 +224,11 @@ export const keys = {
     all: ['orders'] as const,
     summary: ['orders', 'summary'] as const,
     list: (box: OrderBox) => ['orders', 'list', box] as const,
+    /**
+     * Karta jednego zlecenia - pod korzeniem modułu, bo starzeje się od tych samych
+     * rzeczy, co lista (odpowiedź, przydział); własny temat kanału ma też `order:<id>`.
+     */
+    card: (id: string) => ['orders', 'card', id] as const,
   },
 
   /**

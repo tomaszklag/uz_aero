@@ -262,6 +262,16 @@ const MIRRORS = [
     server: 'StaleReason',
     read: () => unionIn(join(SERVER, 'orderAnswers.ts'), 'StaleReason'),
   },
+  {
+    panel: 'OrderChangeKindDto',
+    server: 'OrderChangeKind',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderChangeKind'),
+  },
+  {
+    panel: 'OrderRefusalDto',
+    server: 'OrderRefusal',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderRefusal'),
+  },
   // Grupy klubu: powód odmowy zapisu stoi pod polem nazwy albo w karcie obsady - bez
   // lustra kod dopisany na serwerze wyszedłby na ekran surowym napisem.
   {

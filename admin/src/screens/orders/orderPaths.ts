@@ -15,7 +15,9 @@
  */
 
 import type { OrderBox } from '../../api/orders';
-import type { OrderPeriod } from './orderListRows';
+
+/** Okres listy: termin jeszcze przed nami albo już za nami. */
+export type OrderPeriod = 'upcoming' | 'past';
 
 /** Połowa listy w adresie - po polsku, bo adres bywa wklejany w rozmowie. */
 export type OrderView = 'do-mnie' | 'zlecone';
@@ -43,7 +45,19 @@ export function defaultView(input: { awaitingAnswer: number; seesManaged: boolea
   return input.seesManaged && input.awaitingAnswer === 0 ? 'zlecone' : 'do-mnie';
 }
 
-/** Adres listy - połowa zawsze, okres tylko gdy nie jest domyślny. */
+/** Zapytanie adresu: połowa zawsze, okres tylko gdy nie jest domyślny. */
+const query = (view: OrderView, period: OrderPeriod): string =>
+  period === 'past' ? `?widok=${view}&okres=minione` : `?widok=${view}`;
+
+/** Adres listy. */
 export function ordersPath(view: OrderView, period: OrderPeriod = 'upcoming'): string {
-  return period === 'past' ? `/zlecenia?widok=${view}&okres=minione` : `/zlecenia?widok=${view}`;
+  return `/zlecenia${query(view, period)}`;
+}
+
+/**
+ * Adres szuflady zlecenia NAD listą - połowa i okres zostają, więc lista pod spodem się nie
+ * zmienia, a zamknięcie szuflady wraca dokładnie tam, skąd przyszło.
+ */
+export function orderPath(id: string, view: OrderView, period: OrderPeriod = 'upcoming'): string {
+  return `/zlecenia/${encodeURIComponent(id)}${query(view, period)}`;
 }

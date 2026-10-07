@@ -16,7 +16,7 @@
  * dzień tygodnia i data mówią to same.
  */
 
-import { shortName } from '@ninerdeck/format';
+import { duration, shortName } from '@ninerdeck/format';
 
 import type { SeatDto } from '../../api/dto';
 import { clubDayIndex, godzina } from '../calendar/bookingLabels';
@@ -112,24 +112,89 @@ export function audienceBySeat(
   label: string | undefined,
   memberNames: ReadonlySet<string>,
 ): Partial<Record<SeatDto, string>> | 'shared' {
-  if (label == null) return {};
-  if (label.startsWith('wspólna lista')) return 'shared';
-  const out: Partial<Record<SeatDto, string>> = {};
-  for (const part of label.split(' · ')) {
-    const colon = part.indexOf(': ');
-    if (colon < 0) continue;
-    const seat = AUDIENCE_SEAT[part.slice(0, colon)];
-    if (seat == null) continue;
-    out[seat] = part
-      .slice(colon + 2)
+  const parts = audienceParts(label);
+  if (parts.shared != null) return 'shared';
+  const short = (value: string): string =>
+    value
       .split(', ')
       .map((who) => (memberNames.has(who) ? shortName(who) : who))
       .join(', ');
+  const out: Partial<Record<SeatDto, string>> = {};
+  if (parts.pic != null) out.pic = short(parts.pic);
+  if (parts.dual != null) out.dual = short(parts.dual);
+  return out;
+}
+
+/**
+ * Ta sama etykieta pocięta na części BEZ skracania - podtytuł karty fotela w szufladzie
+ * („Drugi pilot · Piloci An-2") i nagłówek wspólnej listy. Nazwy grup zna wyłącznie ona.
+ */
+export function audienceParts(label: string | undefined): { pic: string | null; dual: string | null; shared: string | null } {
+  const out = { pic: null as string | null, dual: null as string | null, shared: null as string | null };
+  for (const part of (label ?? '').split(' · ')) {
+    const colon = part.indexOf(': ');
+    if (colon < 0) continue;
+    const head = part.slice(0, colon);
+    const value = part.slice(colon + 2).trim();
+    if (value === '') continue;
+    if (head === 'dowódca') out.pic = value;
+    else if (head === 'drugi pilot') out.dual = value;
+    else if (head === 'wspólna lista') out.shared = value;
   }
   return out;
 }
 
-const AUDIENCE_SEAT: Readonly<Record<string, SeatDto>> = {
-  dowódca: 'pic',
-  'drugi pilot': 'dual',
+/** Fotel w środku zdania - „plan lotu", „drugi pilot: Anna Kowal". */
+export const SEAT_LOWER: Readonly<Record<SeatDto, string>> = {
+  pic: 'dowódca',
+  dual: 'drugi pilot',
 };
+
+/** Fotel w bierniku - „Na dowódcę", „także na drugiego pilota". */
+export const SEAT_ACCUSATIVE: Readonly<Record<SeatDto, string>> = {
+  pic: 'dowódcę',
+  dual: 'drugiego pilota',
+};
+
+/**
+ * Dzień terminu w tytule szuflady: „sobota 3 października" - dopełniacz miesiąca bierze
+ * się z CZĘŚCI daty sformatowanej z dniem (samo pole miesiąca dałoby mianownik).
+ */
+export function termTitleDay(at: number, tz: string): string {
+  const date = new Date(at);
+  const weekday = fmt(tz, { weekday: 'long' }).format(date);
+  const parts = fmt(tz, { day: 'numeric', month: 'long' }).formatToParts(date);
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  return `${weekday} ${day} ${month}`;
+}
+
+/** Para godzin w zdaniu: „10:00-12:00" - kolizja, stary i nowy termin w historii. */
+export function hoursSpan(startsAt: number, endsAt: number, tz: string): string {
+  return `${godzina(new Date(startsAt), tz)}-${godzina(new Date(endsAt), tz)}`;
+}
+
+/** Chwila wpisu historii: „dziś · 07:10", „wczoraj · 21:05", dalej „29 WRZ · 07:10". */
+export function historyMoment(at: number, now: number, tz: string): string {
+  const hour = godzina(new Date(at), tz);
+  const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
+  if (days === 0) return `dziś · ${hour}`;
+  if (days === 1) return `wczoraj · ${hour}`;
+  const day = fmt(tz, { day: 'numeric' }).format(new Date(at));
+  const month = fmt(tz, { month: 'short' }).format(new Date(at)).replace('.', '').toUpperCase();
+  return `${day} ${month} · ${hour}`;
+}
+
+/** „wysłane wczoraj 18:40" - chwila wysłania przy osobie zlecającej. */
+export function sentLabel(at: number, now: number, tz: string): string {
+  const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
+  return `wysłane ${days === 0 ? `dziś ${godzina(new Date(at), tz)}` : momentLabel(at, now, tz)}`;
+}
+
+/** Plan lotu: „3:00 · paliwo 600 L"; pusty napis = wiersza nie ma. */
+export function planLabel(plannedAirMin: number | null, plannedFuelL: number | null): string {
+  const parts: string[] = [];
+  if (plannedAirMin != null) parts.push(duration(plannedAirMin * 60_000));
+  if (plannedFuelL != null) parts.push(`paliwo ${plannedFuelL} L`);
+  return parts.join(' · ');
+}

@@ -256,10 +256,10 @@ export const router = createHashRouter([
 
       // ZLECENIA (4.0.0, epik Z-D #248; `docs/zlecenia.md` §15): moduł KAŻDEGO członka
       // klubu (`club`), jak kalendarz - zlecenie trafia do każdego. Połowa listy i okres
-      // stoją w adresie (`?widok=`, `?okres=`); szuflada zlecenia i rozmowa dojdą pod
-      // własnymi adresami w kolejnych etapach epiku.
+      // stoją w adresie (`?widok=`, `?okres=`); szuflada zlecenia nad listą pod `:id`, jak
+      // szuflady modułów Piloci i Samoloty - lista zostaje pod spodem jako kontekst.
       {
-        path: 'zlecenia',
+        path: 'zlecenia/:id?',
         element: (
           <RequireCapability access="club">
             <OrdersScreen />

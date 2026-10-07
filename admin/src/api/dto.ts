@@ -2116,3 +2116,100 @@ export interface GroupListDto {
  * Kod jedzie w polu `error` odpowiedzi (409 i 400).
  */
 export type GroupRefusalDto = 'name_taken' | 'member_not_in_org';
+
+// -- karta zlecenia (szuflada ZL3; `orderCardWire` na serwerze) -----------------------
+
+/**
+ * Lustro `OrderChangeKind` (`server/src/domain/orders.ts`) - rodzaje wpisów historii zmian.
+ * Zapis jest historyczny i w bazie nie ma CHECK-a, więc ekran musi przeżyć rodzaj, którego
+ * nie zna (wpis ogólny „Zmiana") - lustro mówi, co serwer dziś PISZE.
+ */
+export type OrderChangeKindDto =
+  | 'created'
+  | 'edited'
+  | 'recipients_added'
+  | 'recipients_removed'
+  | 'resent'
+  | 'assigned'
+  | 'unassigned'
+  | 'withdrawn'
+  | 'cancelled'
+  | 'expired';
+
+/** Adresat widziany przez PROWADZĄCEGO - wiersz karty fotela (ZL3). Adresat tej listy nie widzi. */
+export interface OrderLeaderRecipientDto {
+  pilotId: string;
+  /** Fotel zaproponowany; `null` = wspólna lista albo termin do potwierdzenia (obie listy). */
+  seat: SeatDto | null;
+  namedSeat: SeatDto | null;
+  direct: boolean;
+  viaGroupId: string | null;
+  answer: OrderAnswerDto | null;
+  previousAnswer: OrderAnswerDto | null;
+  answerReason: string | null;
+  answeredAt: string | null;
+  seen: boolean;
+  seenAt: string | null;
+  lastSeenAt: string | null;
+  /** Otworzył kartę PRZED ostatnią edycją inną niż termin - „zmiana z 07:10 nieodczytana". */
+  editUnseen: boolean;
+  inPlay: boolean;
+  staleReason: StaleReasonDto | null;
+  assignedSeat: SeatDto | null;
+  removed: boolean;
+  removedAt: string | null;
+  /** Inna rezerwacja tej osoby w terminie zlecenia - bursztyn przy wyborze, nie blokada. */
+  conflict: { bookingId: string; aircraftId: string; startsAt: string; endsAt: string } | null;
+  threadId: string | null;
+  /** Nieprzeczytane przez AUTORA wiadomości od tej osoby; u pozostałych prowadzących 0. */
+  unread: number;
+}
+
+/** Wpis historii zmian - z nazwiskiem (`actorId`) wyłącznie dla prowadzącego; `null` = zegar. */
+export interface OrderHistoryEntryDto {
+  id: string;
+  actorId: string | null;
+  kind: OrderChangeKindDto | string;
+  payload: Record<string, unknown>;
+  at: string;
+}
+
+export interface OrderCardDto {
+  timezone: string;
+  day: OrderDayDto;
+  order: OrderDto;
+  booking: OrderBookingDto;
+  /** Kto patrzy: prowadzący, adresat - albo oba naraz (koordynator, do którego zlecenie trafiło). */
+  viewer: { leads: boolean; recipient: OrderMeDto | null };
+  /** Ostatnia edycja inna niż termin - BEZ nazwiska (pkt 31). */
+  lastEdit: { at: string; changes: Record<string, unknown> } | null;
+  lastTermChange: { at: string; from: unknown; to: unknown } | null;
+  /** Moje inne rezerwacje w tym terminie - adresat widzi je przed odpowiedzią. */
+  myConflicts: { bookingId: string; aircraftId: string; startsAt: string; endsAt: string }[];
+  /** Wyłącznie prowadzący; adresat dostaje `null`. */
+  recipients: OrderLeaderRecipientDto[] | null;
+  history: OrderHistoryEntryDto[] | null;
+}
+
+/**
+ * Lustro `OrderRefusal` (`server/src/domain/orders.ts`) - odmowy reguł zlecenia. Kod jedzie
+ * w polu `error` odpowiedzi (409 stan, 400 treść, 403 prawo). Odmowy terminu
+ * (`slot_taken` i spółka) i „nie prowadzisz" (`not_leader`, 403) nazywa osobna mapa.
+ */
+export type OrderRefusalDto =
+  | 'no_seat_sought'
+  | 'dual_required'
+  | 'no_recipients'
+  | 'seat_not_sought'
+  | 'unknown_group'
+  | 'not_member'
+  | 'order_closed'
+  | 'not_recipient'
+  | 'seat_filled'
+  | 'not_volunteered'
+  | 'wrong_seat'
+  | 'same_person_both_seats'
+  | 'seat_empty'
+  | 'not_assigned'
+  | 'already_assigned'
+  | 'recipient_assigned';

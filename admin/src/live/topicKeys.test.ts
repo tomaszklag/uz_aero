@@ -50,7 +50,11 @@ describe('temat kanału → klucze zapytań', () => {
     expect(keys.orders.summary.slice(0, 1)).toEqual(keys.orders.all);
   });
 
+  it('zlecenie: temat `order:<id>` odświeża jego kartę w szufladzie', () => {
+    expect(prefixesForTopics(['order:o1'])).toEqual([keys.orders.card('o1')]);
+  });
+
   it('tematy nieznane nie odświeżają niczego', () => {
-    expect(prefixesForTopics(['cos:nowego', 'booking:'])).toEqual([]);
+    expect(prefixesForTopics(['cos:nowego', 'booking:', 'order:'])).toEqual([]);
   });
 });

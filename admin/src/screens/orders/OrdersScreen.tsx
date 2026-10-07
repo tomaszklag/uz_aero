@@ -13,14 +13,17 @@
  * `live/topicKeys.ts`); zerwane łącze nie jest awarią - po powrocie lista dociąga się
  * zwykłym odczytem, więc ekran o łączu milczy.
  *
- * Czego tu jeszcze NIE MA (epik Z-D idzie etapami): szuflady zlecenia (etap 3 - wiersz
+ * ══ SZUFLADA NAD LISTĄ ══
+ * Zlecenie otwiera się szufladą pod adresem `#/zlecenia/:id` z połową i okresem listy
+ * w zapytaniu - lista zostaje pod spodem jako kontekst, a link da się wkleić.
+ *
+ * Czego tu jeszcze NIE MA (epik Z-D idzie etapami): szuflady adresata (wiersz „Do mnie"
  * prowadzi dziś tylko tam, gdzie cel już istnieje: do rezerwacji w kalendarzu) i „Zleć
- * lot" (etap 6, razem z formularzem) - przycisk bez formularza obiecywałby akcję, której
- * nie ma.
+ * lot" (razem z formularzem) - przycisk bez formularza obiecywałby akcję, której nie ma.
  */
 
 import { useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
 import { useSessionState } from '../../auth/sessionContext';
@@ -42,7 +45,8 @@ import { ChatIcon, OrdersIcon } from '../../ui/components/icons';
 import { loadErrorMessage } from '../common/apiMessage';
 import { inboxRows, managedRows, type InboxRowVm, type ManagedRowVm, type OrderRowBase } from './orderListRows';
 import { orderLookups } from './orderLookups';
-import { BOX_OF, defaultView, ordersPath, periodOf, viewOf, type OrderView } from './orderPaths';
+import { OrderDrawer } from './OrderDrawer';
+import { BOX_OF, defaultView, orderPath, ordersPath, periodOf, viewOf, type OrderView } from './orderPaths';
 
 const MANAGED_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Fotele', 'Odpowiedzi', 'Stan', 'Zleca', ''];
 const INBOX_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Twój fotel', 'Zleca', 'Stan', ''];
@@ -50,6 +54,7 @@ const INBOX_HEADERS = ['Termin', 'Samolot', 'Zadanie', 'Twój fotel', 'Zleca', '
 export function OrdersScreen() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { id } = useParams();
   const { session } = useSessionState();
   const capabilities = session?.capabilities;
   const seesManaged = can(capabilities, 'orders.create') || can(capabilities, 'reservations.manage');
@@ -63,21 +68,21 @@ export function OrdersScreen() {
   // Pierwsza połowa przy wejściu z kolumny (pkt 36) - liczba z serwera rozstrzyga ją
   // dopiero wtedy, gdy jest z czego wybierać.
   const summary = useOrderSummary(view == null && seesManaged);
+  // Adres szuflady (`#/zlecenia/:id`, np. z dzwonka) przeżywa uzupełnienie połowy listy.
+  const here = (v: OrderView): string => (id == null ? ordersPath(v, period) : orderPath(id, v, period));
   useEffect(() => {
     if (view === requested && view != null) return;
     if (view != null) {
-      navigate(ordersPath(view, period), { replace: true });
+      navigate(here(view), { replace: true });
       return;
     }
     if (!seesManaged) {
-      navigate(ordersPath('do-mnie', period), { replace: true });
+      navigate(here('do-mnie'), { replace: true });
       return;
     }
     if (summary.data == null) return;
-    navigate(ordersPath(defaultView({ awaitingAnswer: summary.data.awaitingAnswer, seesManaged }), period), {
-      replace: true,
-    });
-  }, [view, requested, seesManaged, summary.data, period, navigate]);
+    navigate(here(defaultView({ awaitingAnswer: summary.data.awaitingAnswer, seesManaged })), { replace: true });
+  }, [view, requested, seesManaged, summary.data, period, id, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = useOrderList(view == null ? null : BOX_OF[view]);
   const directory = useDirectory();
@@ -125,17 +130,30 @@ export function OrdersScreen() {
         {view === 'zlecone' ? (
           <ManagedTable
             rows={managedRows(list.data?.items ?? [], period, context)}
+            openedId={id ?? null}
             past={period === 'past'}
             onOpen={(href) => navigate(href)}
           />
         ) : (
           <InboxTable
             rows={inboxRows(list.data?.items ?? [], period, context)}
+            openedId={id ?? null}
             past={period === 'past'}
             onOpen={(href) => navigate(href)}
           />
         )}
       </Loadable>
+
+      {id == null || view == null ? null : (
+        <OrderDrawer
+          key={id}
+          orderId={id}
+          from={view}
+          viewerId={session?.pilot.id ?? null}
+          directory={directory.data}
+          onClose={() => navigate(ordersPath(view, period))}
+        />
+      )}
     </>
   );
 }
@@ -244,14 +262,20 @@ const actionsColumn: Column<OrderRowBase> = {
  */
 const clickable = (rows: readonly OrderRowBase[]): boolean => rows.every((row) => row.href != null);
 
+/** Wiersz otwarty w szufladzie i wiersz zakończony przed terminem - klasy modyfikatora. */
+const rowClassOf = (row: OrderRowBase, openedId: string | null): string | undefined =>
+  [row.key === openedId ? 'opened' : null, row.muted ? 'muted' : null].filter((c) => c != null).join(' ') || undefined;
+
 interface TableProps<Row> {
   rows: Row[];
+  /** Zlecenie otwarte w szufladzie - wiersz `.opened`. */
+  openedId: string | null;
   past: boolean;
   onOpen: (href: string) => void;
 }
 
 /** „Zlecone" - zlecenia oczami prowadzącego. */
-function ManagedTable({ rows, past, onOpen }: TableProps<ManagedRowVm>) {
+function ManagedTable({ rows, openedId, past, onOpen }: TableProps<ManagedRowVm>) {
   const columns: Column<ManagedRowVm>[] = [
     termColumn,
     aircraftColumn,
@@ -308,14 +332,14 @@ function ManagedTable({ rows, past, onOpen }: TableProps<ManagedRowVm>) {
       columns={columns}
       rows={rows}
       rowKey={(row) => row.key}
-      rowClass={(row) => (row.muted ? 'muted' : undefined)}
+      rowClass={(row) => rowClassOf(row, openedId)}
       onRowClick={clickable(rows) ? (row) => row.href != null && onOpen(row.href) : undefined}
     />
   );
 }
 
 /** „Do mnie" - zlecenia oczami adresata, bez słowa o innych adresatach (pkt 18). */
-function InboxTable({ rows, past, onOpen }: TableProps<InboxRowVm>) {
+function InboxTable({ rows, openedId, past, onOpen }: TableProps<InboxRowVm>) {
   const columns: Column<InboxRowVm>[] = [
     termColumn,
     aircraftColumn,
@@ -348,7 +372,7 @@ function InboxTable({ rows, past, onOpen }: TableProps<InboxRowVm>) {
       columns={columns}
       rows={rows}
       rowKey={(row) => row.key}
-      rowClass={(row) => (row.muted ? 'muted' : undefined)}
+      rowClass={(row) => rowClassOf(row, openedId)}
       onRowClick={clickable(rows) ? (row) => row.href != null && onOpen(row.href) : undefined}
     />
   );

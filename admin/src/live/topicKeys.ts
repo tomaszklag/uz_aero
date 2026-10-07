@@ -54,6 +54,10 @@ function prefixesFor(topic: string): readonly QueryPrefix[] {
     // zlecenie). Serwer wysyła ten temat każdej osobie, której listy to dotyczy.
     case 'orders':
       return [keys.orders.all];
+    // Jedno zlecenie: jego karta w szufladzie (odczyt, odpowiedź, przydział, edycja,
+    // odwołanie). Kształt karty zależy od widza, więc pobiera się RESTem (sygnał bez treści).
+    case 'order':
+      return id === '' ? [] : [keys.orders.card(id)];
     default:
       return [];
   }
