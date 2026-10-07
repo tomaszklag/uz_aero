@@ -140,6 +140,23 @@ describe('kafelki sugestii', () => {
     ]);
   });
 
+  it('sąsiad-zlecenie bez kompletu załogi nie jest „rezerwacją" - pusty fotel nie ma nazwiska', () => {
+    const order = rez('13:00', '16:00', { pilotId: null, order: { seeking: ['pic', 'dual'] } });
+    const at = (from: string, to: string, gapBeforeMin: number, gapAfterMin: number) =>
+      buildSlotTiles({
+        suggestions: [
+          { startsAt: new Date(T(from)).toISOString(), endsAt: new Date(T(to)).toISOString(), reason: 'next-to-booking', gapBeforeMin, gapAfterMin },
+        ],
+        busy: [order],
+        window: WINDOW,
+        slot: null,
+        tz: TZ,
+        person,
+      })[0]!.why;
+    expect(at('11:00', '13:00', 300, 0)).toBe('tuż przed zleceniem');
+    expect(at('16:00', '18:00', 0, 180)).toBe('tuż po zleceniu');
+  });
+
   it('najbliższe wolne pasmo tej samej długości - bez terminu, który właśnie zajęto', () => {
     expect(nearestTile(tiles, { startsAt: T('11:00'), endsAt: T('13:00') })!.hours).toBe('06:00 → 08:00');
     expect(nearestTile(tiles, null)).toBeNull();

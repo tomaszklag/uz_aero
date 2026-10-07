@@ -92,6 +92,14 @@ export interface SeatBlockVm {
   title: string;
   /** „2 mogą lecieć"; `null` = zero albo zlecenie zamknięte. */
   count: string | null;
+  /**
+   * Jak zapytano - to, co tytuł mówi po nazwie fotela: „imiennie", „Piloci An-2"; przy
+   * wspólnej liście jej adresaci. `null` = etykieta adresowania nie przyszła. Czyta to
+   * skrót zlecenia w szufladzie kalendarza (K2c), który nazwisk adresatów nie pokazuje.
+   */
+  how: string | null;
+  /** Odpowiedzi w karcie: „tak", „nie", jeszcze bez odpowiedzi - liczby do skrótu K2c. */
+  answers: { yes: number; no: number; open: number };
   rows: LeaderRowVm[];
 }
 
@@ -231,6 +239,14 @@ function sortRows(rows: readonly OrderLeaderRecipientDto[]): OrderLeaderRecipien
     .map((x) => x.r);
 }
 
+function answersOf(rows: readonly OrderLeaderRecipientDto[]): SeatBlockVm['answers'] {
+  return {
+    yes: rows.filter((r) => r.answer === 'yes').length,
+    no: rows.filter((r) => r.answer === 'no').length,
+    open: rows.filter((r) => r.answer == null).length,
+  };
+}
+
 /** „2 mogą lecieć" - liczba, na którą prowadzący czeka; zero i zlecenie zamknięte milczą. */
 function volunteers(rows: readonly OrderLeaderRecipientDto[], live: boolean): string | null {
   if (!live) return null;
@@ -251,6 +267,8 @@ function perSeatBlocks(recipients: readonly OrderLeaderRecipientDto[], ctx: Ctx)
       key: seat,
       title: how == null ? SEAT_LABEL[seat] : `${SEAT_LABEL[seat]} · ${how}`,
       count: volunteers(own, ctx.live),
+      how,
+      answers: answersOf(own),
       rows: sortRows(own).map((r) => rowOf(r, ctx, seat, false)),
     });
   }
@@ -265,6 +283,8 @@ function sharedBlocks(recipients: readonly OrderLeaderRecipientDto[], ctx: Ctx):
       key: 'shared',
       title: shared == null ? 'Wspólna lista' : `Wspólna lista · ${shared}`,
       count: volunteers(recipients, ctx.live),
+      how: shared,
+      answers: answersOf(recipients),
       rows: sortRows(recipients).map((r) => rowOf(r, ctx, null, false)),
     },
   ];

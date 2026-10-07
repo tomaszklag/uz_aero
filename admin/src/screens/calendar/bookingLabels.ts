@@ -52,13 +52,6 @@ export const blockReasonLabel = (reason: string | null): string =>
   BLOCK_LABEL[reason ?? 'other'] ?? BLOCK_LABEL.other!;
 
 /**
- * Napis na pasku siatki.
- *
- * Przy WYŁĄCZENIU Z UŻYTKU wygrywa notatka („Przegląd 100 h"), bo powód z katalogu ma
- * trzy wartości i przy czterech maszynach w serwisie wszystkie wyglądałyby tak samo.
- * Pusta notatka wraca do nazwy z katalogu - pasek bez napisu byłby plamką bez znaczenia.
- */
-/**
  * Kogo brakuje zleceniu: „szuka załogi" / „szuka dowódcy" / „szuka drugiego pilota" - te
  * same słowa, co plakietka zlecenia (`orderLabels.ts`), w środku zdania. `null` = zlecenie
  * nie szuka już nikogo (obsadzone albo zamknięte) - wtedy to zwykła zajętość z nazwiskiem.
@@ -71,16 +64,40 @@ export function orderSeeking(booking: Pick<BookingDto, 'order'>): string | null 
   return null;
 }
 
+/**
+ * Napis na pasku siatki.
+ *
+ * Przy WYŁĄCZENIU Z UŻYTKU wygrywa notatka („Przegląd 100 h"), bo powód z katalogu ma
+ * trzy wartości i przy czterech maszynach w serwisie wszystkie wyglądałyby tak samo.
+ * Pusta notatka wraca do nazwy z katalogu - pasek bez napisu byłby plamką bez znaczenia.
+ *
+ * ZLECENIE BEZ KOMPLETU ZAŁOGI (K2c, 4.0.0) mówi, KOGO brakuje: pierwsze słowo to ten, kto
+ * już leci (dowódca przed drugim pilotem), a bez nikogo w fotelach - „Zlecenie", jak
+ * „Przegląd" na wyłączeniu z użytku. Ten sam napis widzi każdy członek klubu: nie zdradza
+ * adresatów (§13.1). Obsadzone w komplecie jest zwykłą zajętością z nazwiskiem.
+ */
 export function cellLabel(booking: BookingDto, person: PersonLookup): string {
   if (booking.kind === 'block') {
     const note = booking.note?.trim() ?? '';
     return note === '' ? blockReasonLabel(booking.blockReason) : note;
   }
-  if (booking.pilotId == null) return NONE;
-  const who = person(booking.pilotId);
+  const seeking = orderSeeking(booking);
+  if (seeking != null) {
+    const sought = booking.order?.seeking ?? [];
+    const sitting =
+      (sought.includes('pic') ? null : personShort(booking.pilotId, person)) ??
+      (sought.includes('dual') ? null : personShort(booking.dualId ?? null, person));
+    return `${sitting ?? 'Zlecenie'} · ${seeking}`;
+  }
   // Brak w cache członków (pilot świeżo dodany, lista jeszcze nie doszła) daje kreskę,
   // nigdy surowego identyfikatora: `7c1e5a9b-…` nie mówi nic nikomu.
-  return who == null ? NONE : shortName(who.name);
+  return personShort(booking.pilotId, person) ?? NONE;
+}
+
+/** „J. Nowak" z identyfikatora; `null` = fotel pusty albo osoby nie ma w słowniku klubu. */
+function personShort(id: string | null, person: PersonLookup): string | null {
+  const who = id == null ? null : person(id);
+  return who == null ? null : shortName(who.name);
 }
 
 /**
@@ -114,7 +131,13 @@ export function hoursLabel(ms: number): string {
 export function drawerHeading(booking: BookingDto, reg: string, timezone: string): DrawerHeading {
   const od = new Date(booking.startsAt);
   const doo = new Date(booking.endsAt);
-  const rodzaj = booking.kind === 'block' ? 'wyłączenie z użytku' : 'rezerwacja pilota';
+  // Zlecenie bez kompletu załogi nie jest jeszcze niczyją rezerwacją (K2c).
+  const rodzaj =
+    booking.kind === 'block'
+      ? 'wyłączenie z użytku'
+      : orderSeeking(booking) != null
+        ? 'zlecenie'
+        : 'rezerwacja pilota';
   const ile = hoursLabel(doo.getTime() - od.getTime());
   const jednaDoba = dzien(od, timezone) === dzien(doo, timezone);
 

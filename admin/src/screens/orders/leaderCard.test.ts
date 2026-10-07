@@ -145,6 +145,13 @@ describe('fotele - karta na szukany fotel', () => {
     });
   });
 
+  it('skrót dla kalendarza (K2c): jak zapytano i ile odpowiedzi - bez nazwisk', () => {
+    expect(vm.blocks.map((b) => [b.how, b.answers])).toEqual([
+      ['imiennie', { yes: 0, no: 0, open: 1 }],
+      ['Piloci An-2', { yes: 2, no: 1, open: 2 }],
+    ]);
+  });
+
   it('kolejność: mogą (wg zgłoszenia) → odczytane → nieodczytane → odmowy', () => {
     expect(vm.blocks[1]!.rows.map((r) => r.pilotId)).toEqual(['akw', 'bno', 'eso', 'ako', 'pli']);
   });

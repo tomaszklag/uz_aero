@@ -43,6 +43,7 @@ import {
   sendThreadMessage,
   swapRecipient,
   unassignOrder,
+  withdrawOrder,
   type OrderBox,
 } from '../api/orders';
 import { keys } from './keys';
@@ -111,6 +112,10 @@ export function useSwapRecipient(id: string) {
   return useOrderCommand(id, (body: { seat: SeatDto; outgoing: string; incoming: string; reason: string | null }) =>
     swapRecipient(id, body),
   );
+}
+
+export function useWithdrawOrder(id: string) {
+  return useOrderCommand(id, (reason: string | null) => withdrawOrder(id, reason));
 }
 
 export function useUnassignOrder(id: string) {

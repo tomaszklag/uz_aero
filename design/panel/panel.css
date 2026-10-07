@@ -3644,6 +3644,55 @@ button.cal-add {
   border-color: var(--green-border);
 }
 
+/* ══ ZLECENIE NA OSI KALENDARZA (4.0.0, `docs/zlecenia.md` §5, §13.1; epik Z-D #248) ══
+   Zlecenie JEST rezerwacją, więc trzyma termin od chwili utworzenia i stoi na osi
+   w tym samym miejscu, co każda zajętość - pasek węższy albo przygaszony kłamałby
+   o dostępności maszyny. Różni się KSZTAŁTEM i barwą: przerywana ramka mówi „jeszcze
+   nieostateczne" (jak przy rezerwacji czekającej na zgodę), błękit - że to PYTANIE
+   klubu, a nie czyjś lot. Szary „czeka" i bursztynowe „wyłączona" zostają nietknięte:
+   trzy stany przejściowe w jednej barwie przestałyby się odróżniać z kąta oka.
+   Napis mówi, KOGO brakuje („Zlecenie · szuka załogi"), a obsadzony fotel dopisuje
+   nazwisko; członek spoza adresatów widzi ten napis i nic więcej (§13.1). Obsadzone
+   w komplecie traci ramkę i błękit - jest zwykłą rezerwacją tej załogi. */
+.cal-item.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+/* Pod kursorem jaśnieje sam napis - ramka JEST znaczeniem i zostaje błękitna.
+   Reguła jawna, bo `.cal-item.order` stoi za `.cal-item:hover` o tej samej wadze
+   i bez niej przykryłaby reakcję na kursor. */
+.cal-item.order:hover {
+  color: var(--text-primary);
+}
+
+.cal-swatch.order {
+  background: var(--blue-muted);
+  border-style: dashed;
+  border-color: var(--blue);
+}
+
+/* ── MENU WOLNEJ KOMÓRKI (decyzja właściciela 2026-09-28) ──
+   Osoba z „Zlecaniem lotów" po kliknięciu w wolne miejsce komórki dostaje wybór
+   „Zarezerwuj / Zleć lot" - ten sam wybór, który w telefonie daje arkusz wolnego pasma
+   (21E). Bez tego uprawnienia menu nie ma: kliknięcie otwiera rezerwację od razu, jak
+   w 3.2.0, bo menu z jedną pozycją byłoby krokiem o nic. Obie pozycje startują
+   z maszyną i dniem klikniętej komórki. To ta sama warstwa `.menu`, co menu adresata,
+   tylko zaczepiona o lewą krawędź komórki - która na czas otwarcia zdejmuje
+   `overflow: hidden`, inaczej warstwa ucięłaby się na jej krawędzi. */
+.menu.cell-menu {
+  left: 0;
+  right: auto;
+  min-width: 180px;
+}
+
+.cal-cell:has(> .cell-menu) {
+  overflow: visible;
+  z-index: 6;
+}
+
 /* ── SUGESTIE SLOTÓW („jak w kinie", §7) ──
    Trzy-cztery kafelki NAD kontrolką godzin, nie lista, z której trzeba wybrać: pilot
    może wpisać dowolny wolny termin, a sugestia ma mu oszczędzić szukania. Każdy
@@ -5364,68 +5413,6 @@ body {
   font-weight: 500;
   letter-spacing: 0.25px;
   cursor: pointer;
-}
-
-/* ══ ZLECENIA (4.0.0) - czekają na kod epiku Z-D ══════════════════════════════════
-   Makiety modułu „Zlecenia na lot" (`docs/zlecenia.md` §15, issue #244). Klasy
-   PRODUKTU, nie ramy: gdy epik Z-D je zaimplementuje, przechodzą pod TYMI SAMYMI
-   nazwami do `admin/src/styles/components/` (kalendarzowe do `calendar.css`, reszta
-   do arkusza zleceń) i znikają stąd - dokładnie tak czekał `.club-code` przed
-   epikiem E. Kolory WYŁĄCZNIE z tokenów: po przeprowadzce obowiązuje je reguła
-   „zero literałów koloru w admin/src/styles/".
-
-   Język wizualny jest ten sam, co w makietach telefonu 28/29/32: BŁĘKIT niesie
-   zlecenie (pytanie klubu, „rzecz, która się dzieje"), ZIELEŃ - odpowiedź, na którą
-   prowadzący czeka („Może lecieć"), i akcję główną; BURSZTYN - to, co trzeba
-   zauważyć przed decyzją; CZERWIEŃ - to, co komuś coś odbiera (odwołanie, odebranie
-   zlecenia, cofnięcie przydziału).
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-/* ── MENU KOMÓRKI KALENDARZA (decyzja właściciela 2026-09-28) ──
-   Osoba z „Zlecaniem lotów" po kliknięciu w wolne miejsce komórki dostaje wybór
-   „Zarezerwuj / Zleć lot" - ten sam wybór, który w telefonie daje arkusz wolnego pasma
-   (21E). Bez tego uprawnienia menu nie ma: kliknięcie otwiera rezerwację od razu, jak
-   w 3.2.0, bo menu z jedną pozycją byłoby krokiem o nic. Obie pozycje startują
-   z maszyną i dniem klikniętej komórki. To ta sama warstwa `.menu`, co menu adresata,
-   tylko zaczepiona o lewą krawędź komórki. */
-.menu.cell-menu {
-  left: 0;
-  right: auto;
-  min-width: 180px;
-}
-
-.cal-cell:has(> .cell-menu) {
-  overflow: visible;
-  z-index: 6;
-}
-
-/* ── ZLECENIE NA OSI KALENDARZA (§5, §13.1) ──
-   Zlecenie JEST rezerwacją, więc trzyma termin od chwili utworzenia i stoi na osi
-   w tym samym miejscu, co każda zajętość - pasek węższy albo przygaszony kłamałby
-   o dostępności maszyny. Różni się KSZTAŁTEM i barwą: przerywana ramka mówi „jeszcze
-   nieostateczne" (jak przy rezerwacji czekającej na zgodę), błękit - że to PYTANIE
-   klubu, a nie czyjś lot. Szary „czeka" i bursztynowe „wyłączona" zostają nietknięte:
-   trzy stany przejściowe w jednej barwie przestałyby się odróżniać z kąta oka.
-   Napis mówi, KOGO brakuje („Zlecenie · szuka załogi"), a obsadzony fotel dopisuje
-   nazwisko; członek spoza adresatów widzi ten napis i nic więcej (§13.1). */
-.cal-item.order {
-  background: var(--blue-muted);
-  border-style: dashed;
-  border-color: var(--blue);
-  color: var(--blue);
-}
-
-/* Pod kursorem jaśnieje sam napis - ramka JEST znaczeniem i zostaje błękitna.
-   Reguła jawna, bo `.cal-item.order` stoi za `.cal-item:hover` o tej samej wadze
-   i bez niej przykryłaby reakcję na kursor. */
-.cal-item.order:hover {
-  color: var(--text-primary);
-}
-
-.cal-swatch.order {
-  background: var(--blue-muted);
-  border-style: dashed;
-  border-color: var(--blue);
 }
 
 /* ══ SPIS MAKIET (`design/panel/index.html`) ══

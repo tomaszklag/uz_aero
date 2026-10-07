@@ -17,6 +17,7 @@ export { Field } from './Field';
 export { FilterChip } from './FilterChip';
 export { LinkButton } from './LinkButton';
 export { Loadable } from './Loadable';
+export { Menu, type MenuItem } from './Menu';
 export { NoAccess } from './NoAccess';
 export { OptionButton } from './OptionButton';
 export { PageHead } from './PageHead';

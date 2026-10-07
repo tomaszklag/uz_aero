@@ -110,6 +110,14 @@ export function swapRecipient(
   });
 }
 
+/**
+ * „Rezygnuję" osoby w fotelu (§5.3, karta 23F i szuflada K2c): fotel wraca do szukania,
+ * termin zostaje zajęty, zlecający dostaje „Rezygnacja z lotu". Powód opcjonalny (pkt 16).
+ */
+export function withdrawOrder(id: string, reason: string | null): Promise<OrderCardDto> {
+  return apiPost<OrderCardDto>(path(id, 'withdraw'), { reason });
+}
+
 /** „Cofnij przydział" (pkt 14): fotel wraca do szukania, zgłoszenia pozostałych dalej się liczą. */
 export function unassignOrder(id: string, body: { seat: SeatDto; reason: string | null }): Promise<OrderCardDto> {
   return apiPost<OrderCardDto>(path(id, 'unassign'), body);

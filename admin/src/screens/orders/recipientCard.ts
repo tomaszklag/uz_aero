@@ -154,7 +154,7 @@ export function recipientCard(input: RecipientCardInput): RecipientCardVm | null
 
   const stale = !me.inPlay;
   const kind: RecipientCardVm['kind'] = stale ? 'stale' : me.assignedSeat != null ? 'booking' : 'question';
-  const termChanged = !stale && me.answer == null && card.lastTermChange != null;
+  const termChanged = termChangedFor(card, me);
   const creator = input.person(card.order.createdBy)?.name ?? NONE;
   const plane = input.aircraft(card.booking.aircraftId);
 
@@ -186,7 +186,26 @@ export function recipientCard(input: RecipientCardInput): RecipientCardVm | null
   };
 }
 
-function pillOf(card: OrderCardDto, me: OrderMeDto, termChanged: boolean): RecipientCardVm['pill'] {
+/** Termin zmieniono, a ja jeszcze nie odpowiedziałem na nowy - przypomnienie w plakietce. */
+const termChangedFor = (card: OrderCardDto, me: OrderMeDto): boolean =>
+  me.inPlay && me.answer == null && card.lastTermChange != null;
+
+/**
+ * Plakietka adresata poza jego szufladą - w szufladzie zajętości kalendarza (K2c), gdzie
+ * „czeka na odpowiedź" trzeba dopowiedzieć słowem „Twoją": szuflada mówi tam o rezerwacji,
+ * nie o moim zleceniu. `null` = patrzący nie jest adresatem.
+ */
+export function recipientPill(card: OrderCardDto, waiting?: string): RecipientCardVm['pill'] | null {
+  const me = card.viewer.recipient;
+  return me == null ? null : pillOf(card, me, termChangedFor(card, me), waiting);
+}
+
+function pillOf(
+  card: OrderCardDto,
+  me: OrderMeDto,
+  termChanged: boolean,
+  waiting = 'Czeka na odpowiedź',
+): RecipientCardVm['pill'] {
   if (!me.inPlay) {
     if (card.order.status === 'cancelled') return { text: 'Odwołane', tone: 'red' };
     if (card.order.status === 'expired') return { text: 'Wygasło', tone: 'dim' };
@@ -195,7 +214,7 @@ function pillOf(card: OrderCardDto, me: OrderMeDto, termChanged: boolean): Recip
   if (termChanged) return { text: 'Termin zmieniony', tone: 'amber' };
   if (me.answer === 'yes') return { text: 'Zgłoszone', tone: 'dim' };
   if (me.answer === 'no') return { text: 'Nie mogę', tone: 'dim' };
-  return { text: 'Czeka na odpowiedź', tone: 'blue' };
+  return { text: waiting, tone: 'blue' };
 }
 
 /** „było 09:00-11:00" - poprzedni termin w godzinach doby klubu. */

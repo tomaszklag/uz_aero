@@ -301,6 +301,16 @@ export function CalendarIcon({ size = 16 }: IconProps) {
   );
 }
 
+/** Kartka kalendarza z plusem - „Zarezerwuj" w menu wolnej komórki (K1, 4.0.0). */
+export function CalendarPlusIcon({ size = 14 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+    </Stroke>
+  );
+}
+
 /**
  * Podkładka z ptaszkiem - moduł Zlecenia (4.0.0, kolumna boczna wszystkich ram klubu
  * w `design/panel/`). Zlecenie to zadanie do odhaczenia: ktoś je przyjmie albo nie.
