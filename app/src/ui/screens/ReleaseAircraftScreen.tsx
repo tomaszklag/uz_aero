@@ -71,7 +71,7 @@ import { fuelReleaseTrail, mhReleaseTrail } from './logic/releaseTrail';
 import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
 import { engineTimeInWindow, estimateFob, lastFuelReference } from './logic/refuelMath';
 import type { NoFlightReason } from '../../domain';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 
 /**
  * Siatka powodów (`.reason-grid` z 09C) - karty z ikonami, nigdy natywny `<select>`
@@ -108,7 +108,7 @@ function useHalfMinuteTicker(): number {
 export function ReleaseAircraftScreen({
   navigation,
 }: {
-  navigation: { navigate: (s: string) => void; goBack: () => void };
+  navigation: HomeNavigator & { goBack: () => void; popTo: (screen: string) => void };
 }) {
   const { theme } = useTheme();
   const projection = useSessionStore((s) => s.projection);
@@ -181,8 +181,9 @@ export function ReleaseAircraftScreen({
       await releaseAircraft(
         releasePayload({ fuelL: reading.fuelL, mh: reading.mh }, reason, note),
       );
-      // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
-      // a dzień pilota trwa dalej.
+      // Wszystko wraca na Pulpit, nie do kokpitu: samolotu już nie ma w ręce, a dzień
+      // pilota trwa dalej. Powrót zdejmuje kokpit ze stosu, a jego bramka (04D) puszcza,
+      // bo zdana maszyna przestała być trzymana (`holdsAircraft`).
       goHome(navigation);
     } catch {
       // Powód jest w `lastError` - pokazany banerem niżej.
@@ -244,12 +245,15 @@ export function ReleaseAircraftScreen({
             disabledReason={blocker}
             onPress={release}
           />
+          {/* `popTo`, nie `navigate`: kokpit leży już pod spodem, a `navigate` w React
+              Navigation 7 położyłby na wierzch DRUGI kokpit. `popTo` wraca do tego samego
+              także wtedy, gdy zdanie otworzyła zmiana załogi (07). */}
           <ActionButton
             label="JESZCZE NIE - WRÓĆ DO KOKPITU"
             tone="neutral"
             variant="secondary"
             size="md"
-            onPress={() => navigation.navigate('Cockpit')}
+            onPress={() => navigation.popTo('Cockpit')}
           />
         </View>
       }

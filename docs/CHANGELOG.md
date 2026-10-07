@@ -89,6 +89,11 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **„Przesuń i popraw" działa od razu.** Poprawiana rezerwacja zderzała się sama ze sobą,
   więc „Dalej" stało zablokowane, zanim cokolwiek się zmieniło, a karta samolotu pokazywała
   jej własny termin jako zajęty.
+- **„Wstecz" na Pulpicie nie wraca już do skończonego lotu.** Powrót na Pulpit zostawiał
+  pod spodem cały lot: „wstecz" otwierało zdany samolot, a po locie ręcznym wypełniony
+  formularz, którego ponowny zapis dublował lot. „Jeszcze nie - wróć do kokpitu" i powrót
+  z poprawki danych operacji wracają do tego samego kokpitu, zamiast otwierać drugi,
+  a ekran operacji otwarty z karty samolotu wraca na kartę samolotu.
 - **Nieudane odwołanie rezerwacji mówi o sobie w arkuszu odwołania** - do tej pory powód
   chował się pod arkuszem, a podpowiedź w polu powodu mówiła o GPS. Karta rezerwacji nie
   pokazuje też ciągu znaków zamiast nazwiska osoby spoza pamięci telefonu - stoi kreska.

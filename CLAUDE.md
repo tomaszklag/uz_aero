@@ -3952,9 +3952,10 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   byłaby zdaniem o niczym. Do epiku R-F (#162) ekran dostaje `null` i wygląda dokładnie
   jak ten wariant; zaślepki „wkrótce" nie ma
 - **POWRÓT NA EKRAN DOMOWY IDZIE PRZEZ `goHome()`** (`ui/navigation/goHome.ts`) - to
-  jedyne miejsce znające zagnieżdżony kształt trasy (`navigate('Tabs', { screen })`).
-  `navigate` przyjmuje dowolny napis, więc literówka w którymkolwiek z sześciu wyjść
-  z flow objawiłaby się dopiero w locie
+  jedyne miejsce znające zagnieżdżony kształt trasy (`{ screen }` w parametrach `Tabs`).
+  Nawigacja przyjmuje dowolny napis, więc literówka w którymkolwiek z wyjść z flow
+  objawiłaby się dopiero w locie. Od 4.0.0 powrót COFA stos - sekcja „Powrót cofa stos
+  ekranów" niżej (do tego czasu `navigate` dokładał drugie zakładki)
 - **HISTORIA: dzień NAGŁÓWKIEM, operacje zwartymi wierszami** (makieta `24`). Data pada
   RAZ, liczby stoją BEZ ETYKIET (kolejność Loty · Blok · Lot jest w aplikacji stała),
   suma doby wchodzi dopiero przy KILKU operacjach, a ikona po prawej niesie SKUTEK
@@ -5570,6 +5571,40 @@ skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.
   ZLECENIE" - `canCreate`/`canManage` z `GET /orders/summary`
 - **czego Z-C NIE ROBI**: panelu (Z-D: moduł Zlecenia, K2c, grupy, zdania zleceń
   w skrzynce panelu), podręcznika i sprawdzenia na urządzeniu (Z-W)
+
+## Powrót cofa stos ekranów (4.0.0, 2026-10-07, gałąź `feature-powrot-na-pulpit`)
+Błąd znaleziony przy formularzu rezerwacji: `goHome` robił `navigate('Tabs', …)`, a w React
+Navigation 7 (aplikacja stoi na 7.x od pierwszych ekranów) `navigate` cofa się do trasy
+wyłącznie wtedy, gdy jest BIEŻĄCA - inaczej dokłada nową. Każdy lot zostawiał pod Pulpitem
+całe flow z zamontowanym kokpitem (po trzech lotach 19 tras i trzy kokpity), a „wstecz"
+z Pulpitu wracało do zakończonego lotu - po locie ręcznym do wypełnionego formularza,
+którego ponowny zapis dublował lot. Reguły obowiązujące odtąd:
+- **NIGDY `navigate` DO EKRANU, KTÓRY LEŻY JUŻ POD SPODEM** - położy na wierzch drugi
+  egzemplarz. Powrót to `goBack` (tam, skąd się weszło), `popTo('Nazwa')` (do konkretnego
+  ekranu pod spodem) albo `navigate(…, …, { pop: true })` (jak `OrderThreadScreen`). Tak
+  wracają nagłówek ekranu operacji (`goBack` - do Historii, karty samolotu albo kokpitu;
+  parametr `from` usunięty) i „JESZCZE NIE - WRÓĆ DO KOKPITU" na 09B (`popTo`, także gdy
+  zdanie otworzyła zmiana załogi 07)
+- **`goHome` = `homeAction` wysłane od razu**: zakładki pod flow → `popTo` (te same
+  zakładki, bez przemontowania; parametry zawsze NOWYM obiektem, bo zagnieżdżony nawigator
+  konsumuje `screen` po tożsamości obiektu); zakładek pod spodem nie ma (wznowienie prosto
+  do kokpitu) → stos od nowa od zakładek. To jedyne zastąpienie całego stosu w aplikacji
+  i nie łamie reguły „żaden ekran nie kasuje stosu": pod spodem nie ma domu, a kokpit
+  trzymanej maszyny i tak je zatrzymuje
+- **COFNIĘCIE PRZECHODZI PRZEZ `beforeRemove` KAŻDEGO ZDEJMOWANEGO EKRANU**: kokpit
+  z trzymaną maszyną zatrzymuje powrót arkuszem 04D (modalność zostaje), a formularz
+  z bramką rezygnacji wychodzi przez `exit.proceed(homeAction(navigation.getState()))` -
+  strażnik w `architecture.test.ts` łapie odtąd także `goHome(` w ekranie z bramką. Lot
+  ręczny: zapis przez bramkę, strzałka „wstecz" z pierwszego kroku = `goBack` (nad
+  niepustym formularzem pyta bramka, jak przy przycisku sprzętowym)
+- **TEST NA PRAWDZIWYM ROUTERZE** (`__tests__/goHome.test.ts`): `@react-navigation/routers`
+  to czysty JS, więc Jest go transformuje (wyjątek w `transformIgnorePatterns`), a w teście
+  `@react-navigation/native` podmienia się na router. Sprawdza się STAN stosu, nie kształt
+  akcji - błąd siedział w zachowaniu routera
+- **do sprawdzenia na urządzeniu (Z-W)**: zdanie samolotu → Pulpit bez arkusza 04D (bramka
+  kokpitu czyta stan z ostatniego renderu, a store odświeża projekcję, zanim ekran wróci),
+  zapis lotu ręcznego → „wstecz" z Pulpitu nie otwiera formularza, wznowienie do kokpitu →
+  zdanie → Pulpit bez kokpitu pod spodem
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

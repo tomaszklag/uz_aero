@@ -149,13 +149,15 @@ export type RootStackParamList = {
   /** 09B/09C - zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
   /**
-   * 10 - detale i korekty JEDNEJ sesji; wejście kafelkiem sesji na 01 i w historii (12).
+   * 10 - detale i korekty JEDNEJ sesji; wejście wierszem w Historii (24), z karty
+   * samolotu (27) i z kokpitu po zatrzymaniu silnika.
    *
-   * `edit` włącza od razu TRYB EDYCJI (issue #43) - używa go kokpit po zatrzymaniu
-   * silnika, a `from` mówi, dokąd wraca nagłówek: kokpit jest stanem modalnym, więc
-   * wejście stamtąd musi wracać do kokpitu, nie na „Mój dzień".
+   * `edit` włącza od razu TRYB EDYCJI (issue #43) - używa go kokpit. Nagłówek wraca
+   * `goBack`, czyli tam, skąd się weszło: z kokpitu do TEGO SAMEGO kokpitu, bo jest stanem
+   * modalnym. Parametru z nazwą ekranu powrotu już nie ma - `navigate` do niej w React
+   * Navigation 7 kładł na wierzch drugi kokpit.
    */
-  Stats: { edit?: boolean; from?: string } | undefined;
+  Stats: { edit?: boolean } | undefined;
   /**
    * 14 - ślad CAŁEJ sesji: trasa, profil pionowy i log punktów. Wejście miniaturą z 10.
    * Ekran 16 (szczegóły jednego lotu) usunięty przy issue #38 - zapis GPS powstaje
