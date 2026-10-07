@@ -73,12 +73,15 @@ export function termHoursLabel(startsAt: number, endsAt: number, tz: string): st
   return `${godzina(new Date(startsAt), tz)} → ${end}`;
 }
 
-/** „dziś" / „jutro" przy terminie - albo nic. */
+/**
+ * „dziś" / „jutro" / „za 2 dni" przy terminie (makieta ZL3a) - albo nic, gdy termin minął.
+ * Liczy się dobą klubu, nie godzinami: termin jutro o 07:00 jest „jutro" także o 23:00.
+ */
 export function termRelative(startsAt: number, now: number, tz: string): string | null {
   const days = clubDayIndex(startsAt, tz) - clubDayIndex(now, tz);
   if (days === 0) return 'dziś';
   if (days === 1) return 'jutro';
-  return null;
+  return days > 1 ? `za ${days} dni` : null;
 }
 
 /**
@@ -191,10 +194,15 @@ export function historyMoment(at: number, now: number, tz: string): string {
   return `${day} ${month} · ${hour}`;
 }
 
+/** Chwila w zdaniu o zmianie: „dziś 07:10", „wczoraj 19:14", dalej „2 PAŹ 07:40". */
+export function dayMoment(at: number, now: number, tz: string): string {
+  const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
+  return days === 0 ? `dziś ${godzina(new Date(at), tz)}` : momentLabel(at, now, tz);
+}
+
 /** „wysłane wczoraj 18:40" - chwila wysłania przy osobie zlecającej. */
 export function sentLabel(at: number, now: number, tz: string): string {
-  const days = clubDayIndex(now, tz) - clubDayIndex(at, tz);
-  return `wysłane ${days === 0 ? `dziś ${godzina(new Date(at), tz)}` : momentLabel(at, now, tz)}`;
+  return `wysłane ${dayMoment(at, now, tz)}`;
 }
 
 /** Plan lotu: „3:00 · paliwo 600 L"; pusty napis = wiersza nie ma. */

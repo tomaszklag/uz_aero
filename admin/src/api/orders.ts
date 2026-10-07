@@ -15,7 +15,7 @@
  * do pamięci zamiast pytać drugi raz (ta sama zasada, co odpowiedź na zlecenie).
  */
 
-import type { OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from './dto';
+import type { OrderAnswerDto, OrderAnswerResultDto, OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from './dto';
 import { apiGet, apiPatch, apiPost } from './httpClient';
 
 /** „Do mnie" (zlecenia, na które się odpowiada) albo „Zlecone" (prowadzone). */
@@ -88,4 +88,17 @@ export function swapRecipient(
 /** „Cofnij przydział" (pkt 14): fotel wraca do szukania, zgłoszenia pozostałych dalej się liczą. */
 export function unassignOrder(id: string, body: { seat: SeatDto; reason: string | null }): Promise<OrderCardDto> {
   return apiPost<OrderCardDto>(path(id, 'unassign'), body);
+}
+
+/**
+ * Odpowiedź adresata (§5.1): „Przyjmuję" / „Mogę lecieć" (`yes`) albo „Nie mogę" (`no`,
+ * powód opcjonalny - pkt 16). Wraca wynik i świeża karta.
+ */
+export function answerOrder(id: string, body: { answer: OrderAnswerDto; reason: string | null }): Promise<OrderAnswerResultDto> {
+  return apiPost<OrderAnswerResultDto>(path(id, 'answer'), body);
+}
+
+/** „Odczytane" (pkt 17) - otwarcie karty przez adresata; skutek patrzenia, nie czynność. */
+export async function markOrderSeen(id: string): Promise<void> {
+  await apiPost<null>(path(id, 'seen'));
 }

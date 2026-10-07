@@ -55,7 +55,8 @@ describe('termin czasem klubu', () => {
     const now = at('2026-10-02T19:45:00Z'); // piątek 21:45 w klubie
     expect(termRelative(at('2026-10-03T07:00:00Z'), now, TZ)).toBe('jutro');
     expect(termRelative(at('2026-10-02T20:00:00Z'), now, TZ)).toBe('dziś');
-    expect(termRelative(at('2026-10-04T08:00:00Z'), now, TZ)).toBeNull();
+    expect(termRelative(at('2026-10-04T08:00:00Z'), now, TZ)).toBe('za 2 dni');
+    expect(termRelative(at('2026-10-01T08:00:00Z'), now, TZ)).toBeNull();
     // Po północy klubu (00:30 w sobotę) sobotni termin jest już „dziś", choć w UTC
     // to wciąż piątek.
     expect(termRelative(at('2026-10-03T07:00:00Z'), at('2026-10-02T22:30:00Z'), TZ)).toBe('dziś');

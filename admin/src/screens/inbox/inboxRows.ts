@@ -27,6 +27,7 @@ import { duration, litres, motoHours, plural, timeUtc } from '@ninerdeck/format'
 
 import type { InboxItemDto } from '../../api/dto';
 import { clubDayIndex, godzina, operationLabel } from '../calendar/bookingLabels';
+import { orderPath, type OrderView } from '../orders/orderPaths';
 
 /** Ton ikony - zieleń: odpowiedź, na którą czekasz; błękit: pytanie i rozmowa; reszta jak w makiecie. */
 export type InboxTone = 'ok' | 'ask' | 'warn' | 'no' | 'plain';
@@ -221,6 +222,10 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
       text: [] as Segment[],
     };
     const toBooking = bookingId == null ? null : `/kalendarz/${bookingId}`;
+    // Zlecenie otwiera się nad tą połową listy, z której perspektywy mówi wiadomość: adresat
+    // („Do mnie") albo prowadzący („Zlecone") - koordynator bywa jednym i drugim naraz.
+    const orderId = str(p.orderId);
+    const toOrder = (view: OrderView): string | null => (orderId == null ? null : orderPath(orderId, view));
     const toAircraft = aircraftId == null || !input.canOpen.fleet ? null : `/samoloty/${aircraftId}`;
     // Podpis wiadomości o terminie: znak i termin (przy rezerwacji) albo sam termin
     // (przy zleceniu i maszynie - znak stoi w tytule).
@@ -376,7 +381,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           href: toAircraft,
         };
 
-      // ── zlecenia na lot (4.0.0) - adresy dopisze moduł zleceń panelu (Z-D) ──
+      // ── zlecenia na lot (4.0.0) ──
       case 'order_offered':
         return {
           ...base,
@@ -385,7 +390,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Zlecenie lotu · ${regTitle}`,
           sub: term,
           text: join([bold(name('createdBy')), p.reminder === true ? plain('czeka na Twoją odpowiedź') : null]),
-          href: null,
+          href: toOrder('do-mnie'),
         };
       case 'order_changed': {
         const termChange = p.term === true;
@@ -413,7 +418,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
                 ]
               : [{ text: 'Zmienił się termin - odpowiedz na nowy.' }]
             : editSegments(changes, input.regOf),
-          href: null,
+          href: toOrder('do-mnie'),
         };
       }
       case 'order_answered': {
@@ -430,7 +435,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
             bold(name('pilotId')),
             plain(yes ? (assigned != null ? 'przyjęte - fotel obsadzony' : 'może lecieć') : reason == null ? 'nie może' : `nie może - ${quoted(reason)}`),
           ]),
-          href: null,
+          href: toOrder('zlecone'),
         };
       }
       case 'order_assigned':
@@ -441,7 +446,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Lot przydzielony · ${regTitle}`,
           sub: join([term, plain(seat == null ? null : (SEAT[seat] ?? null))]),
           text: [{ text: 'Lot jest Twoją rezerwacją.' }],
-          href: null,
+          href: toBooking,
         };
       case 'order_filled':
         return {
@@ -451,7 +456,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Zlecenie nieaktualne · ${regTitle}`,
           sub: term,
           text: [{ text: p.reason === 'seat_dropped' ? 'Fotel nie jest już potrzebny.' : 'Fotel jest już obsadzony.' }],
-          href: null,
+          href: toOrder('do-mnie'),
         };
       case 'order_removed': {
         const reason = str(p.reason);
@@ -462,7 +467,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Zlecenie nieaktualne · ${regTitle}`,
           sub: term,
           text: [{ text: reason == null ? 'Zlecenie cofnięte.' : `Zlecenie cofnięte - ${quoted(reason)}.` }],
-          href: null,
+          href: toOrder('do-mnie'),
         };
       }
       case 'order_withdrawn': {
@@ -474,7 +479,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Rezygnacja z lotu · ${regTitle}`,
           sub: join([term, plain(seat == null ? null : (SEAT[seat] ?? null))]),
           text: join([bold(name('pilotId')), plain(reason == null ? 'fotel wrócił do szukania' : quoted(reason))]),
-          href: null,
+          href: toOrder('zlecone'),
         };
       }
       case 'order_unassigned': {
@@ -486,7 +491,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Przydział cofnięty · ${regTitle}`,
           sub: join([term, plain(seat == null ? null : (SEAT[seat] ?? null))]),
           text: plain(reason == null ? null : quoted(reason)) ?? [],
-          href: null,
+          href: toOrder('do-mnie'),
         };
       }
       case 'order_cancelled': {
@@ -498,7 +503,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Zlecenie odwołane · ${regTitle}`,
           sub: term,
           text: join([bold(name('cancelledBy')), plain(reason == null ? null : quoted(reason))]),
-          href: null,
+          href: toOrder('do-mnie'),
         };
       }
       case 'order_unfilled': {
@@ -515,7 +520,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
               text: `${missing === '' ? 'Załoga nie jest kompletna' : `Brakuje ${missing}`}. Z początkiem terminu zlecenie wygaśnie w całości, a termin wróci do puli.`,
             },
           ],
-          href: null,
+          href: toOrder('zlecone'),
         };
       }
       case 'order_expired':
@@ -526,7 +531,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           title: `Zlecenie wygasło · ${regTitle}`,
           sub: term,
           text: [{ text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.' }],
-          href: null,
+          href: toOrder('zlecone'),
         };
       case 'order_message': {
         const unread = num(p.unread) ?? 0;
@@ -541,6 +546,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
             unread > 0
               ? { text: `${unread} ${plural(unread, 'nowa wiadomość', 'nowe wiadomości', 'nowych wiadomości')}`, tone: 'blue' }
               : null,
+          // Rozmowa ma własny adres (etap 5 epiku Z-D) - do tego czasu wiersz nie jest linkiem.
           href: null,
         };
       }

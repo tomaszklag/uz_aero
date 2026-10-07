@@ -220,7 +220,8 @@ describe('„Zlecone" - zlecenia oczami prowadzącego', () => {
 
   it('zlecenie instruktora: fotel „Ja" pisze zlecającego, drugi - imiennie; „Nieodczytane" przygaszone', () => {
     expect(rows[3]).toMatchObject({
-      termRelative: null,
+      // Termin w niedzielę, patrzymy w piątek - jak w makiecie ZL3a: „za 2 dni".
+      termRelative: 'za 2 dni',
       seats: [
         { label: 'Dowódca', who: 'A. Kowalski' },
         { label: 'Drugi pilot', who: 'E. Sowa' },
@@ -340,7 +341,8 @@ describe('„Do mnie" - zlecenia oczami adresata (Adam Kowalski)', () => {
       author: { name: 'Marta Zięba', code: 'MZI' },
       pill: { text: 'Czeka na odpowiedź', tone: 'blue' },
       pillSub: null,
-      href: null,
+      // Szuflada adresata nad listą „Do mnie" (ZL3a).
+      href: '/zlecenia/B?widok=do-mnie',
       muted: false,
     });
   });

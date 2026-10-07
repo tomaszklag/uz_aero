@@ -253,11 +253,11 @@ export function inboxRows(items: readonly OrderListItemDto[], period: OrderPerio
     place(items).filter((p) => p.item.me != null),
     period,
     ctx.now,
-    (p, ended) => inboxRow(p, p.item.me!, ended, ctx),
+    (p, ended) => inboxRow(p, p.item.me!, ended, period, ctx),
   );
 }
 
-function inboxRow(p: Placed, me: OrderMeDto, ended: boolean, ctx: OrderRowContext): InboxRowVm {
+function inboxRow(p: Placed, me: OrderMeDto, ended: boolean, period: OrderPeriod, ctx: OrderRowContext): InboxRowVm {
   const { booking } = p.item;
   const mine = me.inPlay && me.assignedSeat != null;
   const seat = me.assignedSeat ?? me.seat;
@@ -266,8 +266,9 @@ function inboxRow(p: Placed, me: OrderMeDto, ended: boolean, ctx: OrderRowContex
     ...inboxState(p.item, me, ended),
     muted: !me.inPlay,
     // Lot, który JUŻ JEST mój, jest rezerwacją - wiersz otwiera ją w kalendarzu (K2c),
-    // bo karta zlecenia w stanie „przyjęte" nie istnieje (§14.3).
-    href: mine ? `/kalendarz/${encodeURIComponent(booking.id)}` : null,
+    // bo karta zlecenia w stanie „przyjęte" nie istnieje (§14.3). Reszta - szufladę
+    // adresata nad listą „Do mnie".
+    href: mine ? `/kalendarz/${encodeURIComponent(booking.id)}` : orderPath(p.item.order.id, 'do-mnie', period),
     mySeat: seat == null ? NO_SEAT : SEAT_LABEL[seat],
   };
 }

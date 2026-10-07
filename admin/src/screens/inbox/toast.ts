@@ -44,11 +44,15 @@ export function toastRow(item: InboxItemDto, context: ToastContext): InboxRowVm 
 
 /**
  * Czy baner stoi: przy zamkniętej skrzynce i poza ekranem, którego dotyczy (sam adres
- * rzeczy albo adres pod nim - szuflada z zakładką to wciąż ta rzecz).
+ * rzeczy albo adres pod nim - szuflada z zakładką to wciąż ta rzecz). Porównuje się SAMĄ
+ * ŚCIEŻKĘ: adres zlecenia niesie połowę listy w parametrach (`?widok=do-mnie`), a szuflada
+ * tego zlecenia otwarta nad drugą połową to wciąż ta sama rzecz.
  */
 export function toastShows(href: string | null, state: { inboxOpen: boolean; path: string }): boolean {
   if (state.inboxOpen) return false;
-  return href == null || (state.path !== href && !state.path.startsWith(`${href}/`));
+  if (href == null) return true;
+  const thing = href.split('?')[0]!;
+  return state.path !== thing && !state.path.startsWith(`${thing}/`);
 }
 
 /**

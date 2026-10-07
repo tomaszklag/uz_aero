@@ -2213,3 +2213,22 @@ export type OrderRefusalDto =
   | 'not_assigned'
   | 'already_assigned'
   | 'recipient_assigned';
+
+/**
+ * Lustro `AnswerOutcome` (`server/src/domain/orderAnswers.ts`) - wynik odpowiedzi adresata.
+ * ZAWSZE 200: „fotel już zajęty" i „zamknięte" są odpowiedzią o stanie zlecenia, nie awarią
+ * (§20 Z3). Unia obiektów - strażnik luster czyta wyłącznie unie napisów, więc nowy rodzaj
+ * ujawnia kompilator przy `switch` w szufladzie adresata.
+ */
+export type OrderAnswerOutcomeDto =
+  | { kind: 'assigned'; seat: SeatDto }
+  | { kind: 'volunteered' }
+  | { kind: 'declined' }
+  | { kind: 'seat_filled' }
+  | { kind: 'closed' };
+
+/** `POST /orders/:id/answer` - wynik i świeża karta, żeby ekran nie pytał drugi raz. */
+export interface OrderAnswerResultDto {
+  outcome: OrderAnswerOutcomeDto;
+  card: OrderCardDto | null;
+}

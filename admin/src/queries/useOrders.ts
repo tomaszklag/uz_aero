@@ -14,13 +14,15 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from '../api/dto';
+import type { OrderAnswerDto, OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from '../api/dto';
 import {
+  answerOrder,
   assignOrder,
   cancelOrder,
   getOrder,
   getOrderSummary,
   getOrders,
+  markOrderSeen,
   removeRecipient,
   resendOrder,
   swapRecipient,
@@ -92,4 +94,27 @@ export function useSwapRecipient(id: string) {
 
 export function useUnassignOrder(id: string) {
   return useOrderCommand(id, (body: { seat: SeatDto; reason: string | null }) => unassignOrder(id, body));
+}
+
+/**
+ * Odpowiedź adresata. Karta wraca w odpowiedzi (także przy „fotel już zajęty" i „zamknięte"
+ * - to stan zlecenia, nie awaria), więc szuflada nie pyta drugi raz; lista „Do mnie"
+ * i kalendarz czytają się na nowo, bo przyjęcie zamienia zlecenie w rezerwację.
+ */
+export function useAnswerOrder(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { answer: OrderAnswerDto; reason: string | null }) => answerOrder(id, body),
+    onSuccess: (result) => {
+      if (result.card != null) qc.setQueryData(keys.orders.card(id), result.card);
+      else void qc.invalidateQueries({ queryKey: keys.orders.card(id) });
+      void qc.invalidateQueries({ queryKey: keys.orders.all, predicate: (q) => q.queryKey[1] !== 'card' });
+      void qc.invalidateQueries({ queryKey: keys.calendar.all });
+    },
+  });
+}
+
+/** „Odczytane" przy otwarciu szuflady adresata - nic na ekranie się od tego nie zmienia. */
+export function useMarkOrderSeen(id: string) {
+  return useMutation({ mutationFn: () => markOrderSeen(id) });
 }

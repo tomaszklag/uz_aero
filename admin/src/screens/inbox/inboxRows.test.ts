@@ -156,6 +156,44 @@ describe('wiersz skrzynki panelu', () => {
     expect(text(row!.text)).toBe('Barbara Nowak');
   });
 
+  it('zlecenie otwiera się nad połową listy, z której perspektywy mówi wiadomość', () => {
+    const order = { orderId: 'o1', bookingId: 'b1', aircraftId: 'a1', ...TERM };
+    const hrefs = inboxRows(
+      input([
+        item('order_offered', order),
+        item('order_changed', { ...order, term: true, changes: {} }),
+        item('order_filled', order),
+        item('order_removed', order),
+        item('order_unassigned', order),
+        item('order_cancelled', order),
+        item('order_answered', { ...order, pilotId: 'BNO', answer: 'yes' }),
+        item('order_withdrawn', { ...order, pilotId: 'BNO' }),
+        item('order_unfilled', { ...order, openSeats: ['dual'] }),
+        item('order_expired', order),
+        item('order_assigned', { ...order, seat: 'pic' }),
+        item('order_message', { ...order, authorId: 'BNO', unread: 1 }),
+      ]),
+    ).map((row) => row.href);
+    expect(hrefs).toEqual([
+      // do adresata
+      '/zlecenia/o1?widok=do-mnie',
+      '/zlecenia/o1?widok=do-mnie',
+      '/zlecenia/o1?widok=do-mnie',
+      '/zlecenia/o1?widok=do-mnie',
+      '/zlecenia/o1?widok=do-mnie',
+      '/zlecenia/o1?widok=do-mnie',
+      // do prowadzącego
+      '/zlecenia/o1?widok=zlecone',
+      '/zlecenia/o1?widok=zlecone',
+      '/zlecenia/o1?widok=zlecone',
+      '/zlecenia/o1?widok=zlecone',
+      // lot już mój - rezerwacja w kalendarzu (§14.3)
+      '/kalendarz/b1',
+      // rozmowa ma własny adres w etapie 5
+      null,
+    ]);
+  });
+
   it('brak kompletu: brakujące fotele w dopełniaczu', () => {
     const [row] = inboxRows(input([item('order_unfilled', { aircraftId: 'a1', ...TERM, openSeats: ['dual'] })]));
     expect(text(row!.text)).toBe(

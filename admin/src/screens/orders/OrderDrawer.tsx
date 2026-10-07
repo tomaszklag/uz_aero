@@ -7,15 +7,20 @@
  * (koordynator, do którego trafiło cudze zlecenie). Rozstrzyga połowa listy, z której
  * przyszła (`orderView.ts`) - ta sama reguła, co w telefonie (`orderCardMode`).
  *
- * Szuflada adresata dochodzi w kolejnym etapie epiku; do tego czasu adresat szuflady
- * nie dostaje, a wiersz „Do mnie" nigdzie jej nie otwiera.
+ * ══ LOT JUŻ MÓJ = REZERWACJA ══
+ * Karta zlecenia nie ma stanu „przyjęte" (§14.3): adresat, który siedzi w fotelu - po
+ * przyjęciu, przydziale albo z linku w wiadomości „Lot przydzielony" - trafia do szuflady
+ * rezerwacji w kalendarzu.
  */
+
+import { Navigate, useNavigate } from 'react-router-dom';
 
 import type { DirectoryDto } from '../../api/dto';
 import { useOrder } from '../../queries/useOrders';
 import { Drawer } from '../../ui/components';
 import { loadErrorMessage } from '../common/apiMessage';
 import { LeaderDrawer } from './LeaderDrawer';
+import { RecipientDrawer } from './RecipientDrawer';
 import { orderLookups } from './orderLookups';
 import { orderView } from './orderView';
 import type { OrderView } from './orderPaths';
@@ -32,6 +37,8 @@ interface Props {
 export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Props) {
   const card = useOrder(orderId);
   const lookups = orderLookups(directory);
+  const navigate = useNavigate();
+  const toBooking = (bookingId: string): string => `/kalendarz/${encodeURIComponent(bookingId)}`;
 
   if (card.data == null) {
     // Plamki w geometrii szuflady (tytuł i dwie karty), a nie pusty panel - i nie spinner.
@@ -50,7 +57,21 @@ export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Pro
   }
 
   const view = orderView(card.data.viewer, from);
-  if (view !== 'leader') return null;
+  if (view === 'none') return null;
+  if (view === 'recipient') {
+    const me = card.data.viewer.recipient;
+    if (me != null && me.inPlay && me.assignedSeat != null) return <Navigate to={toBooking(card.data.booking.id)} replace />;
+    return (
+      <RecipientDrawer
+        card={card.data}
+        orderId={orderId}
+        person={lookups.person}
+        aircraft={lookups.aircraft}
+        onClose={onClose}
+        onBooking={(bookingId) => navigate(toBooking(bookingId), { replace: true })}
+      />
+    );
+  }
   return (
     <LeaderDrawer
       card={card.data}
