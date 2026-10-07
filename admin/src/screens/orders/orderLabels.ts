@@ -156,6 +156,12 @@ export const SEAT_ACCUSATIVE: Readonly<Record<SeatDto, string>> = {
   dual: 'drugiego pilota',
 };
 
+/** Fotel w dopełniaczu - „fotel drugiego pilota", „na liście dowódcy". */
+export const SEAT_GENITIVE: Readonly<Record<SeatDto, string>> = {
+  pic: 'dowódcy',
+  dual: 'drugiego pilota',
+};
+
 /**
  * Dzień terminu w tytule szuflady: „sobota 3 października" - dopełniacz miesiąca bierze
  * się z CZĘŚCI daty sformatowanej z dniem (samo pole miesiąca dałoby mianownik).

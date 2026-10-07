@@ -15,7 +15,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { OrderCardDto, OrderListDto, OrderSummaryDto, SeatDto } from '../api/dto';
-import { assignOrder, cancelOrder, getOrder, getOrderSummary, getOrders, resendOrder, type OrderBox } from '../api/orders';
+import {
+  assignOrder,
+  cancelOrder,
+  getOrder,
+  getOrderSummary,
+  getOrders,
+  removeRecipient,
+  resendOrder,
+  swapRecipient,
+  unassignOrder,
+  type OrderBox,
+} from '../api/orders';
 import { keys } from './keys';
 
 /**
@@ -67,4 +78,18 @@ export function useCancelOrder(id: string) {
 
 export function useResendOrder(id: string) {
   return useOrderCommand(id, () => resendOrder(id));
+}
+
+export function useRemoveRecipient(id: string) {
+  return useOrderCommand(id, (body: { pilotId: string; reason: string | null }) => removeRecipient(id, body));
+}
+
+export function useSwapRecipient(id: string) {
+  return useOrderCommand(id, (body: { seat: SeatDto; outgoing: string; incoming: string; reason: string | null }) =>
+    swapRecipient(id, body),
+  );
+}
+
+export function useUnassignOrder(id: string) {
+  return useOrderCommand(id, (body: { seat: SeatDto; reason: string | null }) => unassignOrder(id, body));
 }

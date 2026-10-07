@@ -69,6 +69,12 @@ export interface LeaderRowVm {
   reason: string | null;
   /** Przydział spośród zgłoszonych: „Wybierz" albo „Na dowódcę" / „Na drugiego pilota". */
   picks: { seat: SeatDto; label: string }[];
+  /**
+   * Menu ⋯ (ZL3b): „Odbierz zlecenie" zawsze, „Zamień osobę" WYŁĄCZNIE przy fotelu imiennym
+   * (`swapSeat`) - przy grupie i wspólnej liście nie ma jednej osoby do podmiany. `null` =
+   * menu nie ma: zlecenie zamknięte albo wiersz zwinięty wśród pozostałych adresatów.
+   */
+  menu: { swapSeat: SeatDto | null } | null;
   /** Zwinięcie „Pozostali adresaci" - o stopień ciszej, bez akcji. */
   muted: boolean;
 }
@@ -307,6 +313,8 @@ function rowOf(r: OrderLeaderRecipientDto, ctx: Ctx, blockSeat: SeatDto | null, 
 
   // Dopisek mówi, na który fotel osoba może JESZCZE trafić - po odmowie nie trafi na żaden.
   const alsoSeat = blockSeat == null || r.seat != null || r.answer === 'no' ? null : other(blockSeat);
+  // Fotel imienny: osoba wskazana na niego wprost - także z terminem do potwierdzenia (pkt 37).
+  const named = blockSeat != null && ((r.direct && r.seat === blockSeat) || r.namedSeat === blockSeat);
   return {
     pilotId: r.pilotId,
     name: nameOf(r.pilotId, input),
@@ -316,6 +324,7 @@ function rowOf(r: OrderLeaderRecipientDto, ctx: Ctx, blockSeat: SeatDto | null, 
     also: active && alsoSeat != null && ctx.open.includes(alsoSeat) ? `także na ${SEAT_ACCUSATIVE[alsoSeat]}` : null,
     reason: r.answer === 'no' && r.answerReason != null && r.answerReason.trim() !== '' ? quoted(r.answerReason) : null,
     picks,
+    menu: active ? { swapSeat: named ? blockSeat : null } : null,
     muted,
   };
 }

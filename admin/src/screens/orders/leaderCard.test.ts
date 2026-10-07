@@ -180,6 +180,11 @@ describe('fotele - karta na szukany fotel', () => {
     expect(row.picks).toEqual([{ seat: 'dual', label: 'Wybierz' }]);
   });
 
+  it('menu ⋯: zamiana tylko przy fotelu imiennym, przy grupie samo odebranie', () => {
+    expect(vm.blocks[0]!.rows[0]!.menu).toEqual({ swapSeat: 'pic' });
+    expect(vm.blocks[1]!.rows.map((r) => r.menu)).toEqual(Array(5).fill({ swapSeat: null }));
+  });
+
   it('stopka: przypomnienie dostaną osoby bez odpowiedzi (Jakub, Adam, Ewa)', () => {
     expect(vm.resend).toEqual({ note: 'Przypomnienie dostaną 3 osoby bez odpowiedzi' });
   });
@@ -196,6 +201,8 @@ describe('osoba przy obu fotelach (pkt 38)', () => {
     // Fotel dalej zaadresowano imiennie (makieta ZL3, ramka „osoba przy obu fotelach"),
     // tylko „tak" tej osoby jest zgłoszeniem, więc karta liczy, ile osób może.
     expect(vm.blocks[0]).toMatchObject({ title: 'Dowódca · imiennie', count: '1 może lecieć' });
+    // Zamienić tę osobę da się przy fotelu, na który wskazano ją imiennie - nie przy grupie.
+    expect(vm.blocks.map((b) => b.rows[0]!.menu)).toEqual([{ swapSeat: 'pic' }, { swapSeat: null }]);
   });
 
   it('po odmowie dopisku nie ma - odmowa stoi przy obu fotelach, ale na żaden z nich ta osoba już nie trafi', () => {
@@ -237,13 +244,17 @@ describe('komplet załogi', () => {
     const cancelled = { ...c, order: { ...c.order, status: 'cancelled' as const }, booking: { ...c.booking, dualId: null } };
     const crew = leaderCard(input(cancelled, 'mzi'))!.crew!;
     expect(crew[0]).toMatchObject({ status: [{ text: 'Przyjęte 22:05' }], unassignable: false });
+    const closed = leaderCard(input(cancelled, 'mzi'))!;
+    const rows = [...closed.blocks.flatMap((b) => b.rows), ...(closed.others?.rows ?? [])];
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.menu == null)).toBe(true);
     // Fotel, którego nikt nie zajął, przestaje być pytaniem ekranu.
     expect(crew[1]).toMatchObject({ pilotId: null, status: [], asking: false });
   });
 
   it('pozostali adresaci zwinięci, o stopień ciszej i bez „Wybierz"', () => {
     expect(vm.others?.label).toBe('Pozostali adresaci · 4 · zlecenie nieaktualne');
-    expect(vm.others?.rows.every((r) => r.muted && r.picks.length === 0 && r.warn.length === 0)).toBe(true);
+    expect(vm.others?.rows.every((r) => r.muted && r.picks.length === 0 && r.warn.length === 0 && r.menu == null)).toBe(true);
     expect(vm.resend).toBeNull();
     expect(vm.cancellable).toBe(true);
   });

@@ -61,3 +61,31 @@ export function cancelOrder(id: string, reason: string | null): Promise<OrderCar
 export function resendOrder(id: string): Promise<OrderCardDto> {
   return apiPatch<OrderCardDto>(`/orders/${encodeURIComponent(id)}`, { resend: true });
 }
+
+/**
+ * „Odbierz zlecenie" (pkt 29): adresat wypada ze zlecenia, dostaje „Zlecenie nieaktualne",
+ * a rozmowa zostaje do odczytu. Też zmiana zlecenia (`PATCH`), powód opcjonalny.
+ */
+export function removeRecipient(id: string, body: { pilotId: string; reason: string | null }): Promise<OrderCardDto> {
+  return apiPatch<OrderCardDto>(`/orders/${encodeURIComponent(id)}`, { removeRecipients: [body.pilotId], reason: body.reason });
+}
+
+/**
+ * „Zamień osobę" - usunięcie i dopisanie w JEDNYM ruchu (pkt 29, §5.2), więc fotel imienny
+ * dalej obsadza przyjęcie, teraz nowej osoby.
+ */
+export function swapRecipient(
+  id: string,
+  body: { seat: SeatDto; outgoing: string; incoming: string; reason: string | null },
+): Promise<OrderCardDto> {
+  return apiPatch<OrderCardDto>(`/orders/${encodeURIComponent(id)}`, {
+    removeRecipients: [body.outgoing],
+    addRecipients: [{ seat: body.seat, list: { pilotIds: [body.incoming], groupIds: [] } }],
+    reason: body.reason,
+  });
+}
+
+/** „Cofnij przydział" (pkt 14): fotel wraca do szukania, zgłoszenia pozostałych dalej się liczą. */
+export function unassignOrder(id: string, body: { seat: SeatDto; reason: string | null }): Promise<OrderCardDto> {
+  return apiPost<OrderCardDto>(path(id, 'unassign'), body);
+}

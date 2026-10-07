@@ -487,3 +487,37 @@ export function PencilIcon({ size = 15 }: IconProps) {
     </svg>
   );
 }
+
+/** Trzy kropki - menu czynności przy wierszu („⋯" przy adresacie zlecenia). */
+export function MoreIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
+/** Dwie strzałki na skos - zamiana osoby w fotelu imiennym. */
+export function SwapIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 3h5v5" />
+      <path d="M21 3l-7 7" />
+      <path d="M8 21H3v-5" />
+      <path d="M3 21l7-7" />
+    </svg>
+  );
+}
+
+/** Osoba z minusem - odebranie zlecenia adresatowi. */
+export function PersonMinusIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="7" r="4" />
+      <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+      <line x1="17" y1="11" x2="23" y2="11" />
+    </svg>
+  );
+}

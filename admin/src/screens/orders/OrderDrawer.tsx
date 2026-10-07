@@ -58,6 +58,7 @@ export function OrderDrawer({ orderId, from, viewerId, directory, onClose }: Pro
       viewerId={viewerId}
       person={lookups.person}
       aircraft={lookups.aircraft}
+      members={directory?.members ?? []}
       onClose={onClose}
     />
   );
