@@ -551,10 +551,14 @@ kolejce decyzji i przy otwartej skrzynce, ostatni z dwóch, kliknięcie otwiera 
 | --- | --- | --- |
 | Kalendarz (21), krok 1 rezerwacji (22) | `useCalendar` | `calendar` |
 | Karta rezerwacji (23), decyzja (26), czekająca rezerwacja na Pulpicie (20E) | `useBooking` | `booking:<id>` |
-| Skrzynka (25) | `useInbox` | `inbox`, `booking` |
+| Skrzynka (25) | `useInbox` | `inbox`, `booking`, `orders` (od Z-C: plakietka „Do odpowiedzi") |
 | Dzwonek na Pulpicie | `useUnreadCount` | `inbox` |
 | Karta samolotu (27) i jej historia | `useAircraftCard`, `useAircraftOperations` | `aircraft:<id>` |
 | Lista obserwowanych (13C) | `useAircraftWatches` | `aircraft` |
+| Karta „Zlecenia" na Pulpicie (20F, Z-C) | `useOrderSummary` | `orders` |
+| Lista zleceń (30, Z-C) | `useOrderList` | `orders`, `thread` |
+| Karta zlecenia (28, 32, Z-C) | `useOrderCard` | `order:<id>`, `thread:<id>` |
+| Rozmowa (29, Z-C) | `useOrderThread` | `order:<id>`; wiadomości i odczyty prosto z ramek (`onThread`) |
 
 **Reguły, które wyszły przy wdrażaniu**:
 
@@ -643,13 +647,18 @@ serwer, bez `setInterval`).
 
 **Jak podpiąć ekran aplikacji pod odświeżanie na żywo**: w haku, który czyta serwer,
 `useLiveTopic(tematy, odśwież)` z cichym odświeżeniem (`quietResult`). Tematy są kontraktem
-serwera (§11, „Jak dopisać temat"); lokalny jest wyłącznie `inbox`. Pętli `setInterval`
-nie dokładaj - strażnik architektury jej nie przepuści.
+serwera (§11, „Jak dopisać temat"); lokalne są wyłącznie `inbox` (ramka `notification`)
+i - od Z-C - `thread:<id zlecenia>` (ramki rozmów `message` i `read`; samo `thread` łapie
+rozmowy wszystkich zleceń). Pętli `setInterval` nie dokładaj - strażnik architektury jej
+nie przepuści.
 
-**Jak dopisać ekran rzeczy do reguły banera** (np. karta zlecenia w Z-C): rodzaj
-wiadomości → ekran w `pushTarget.ts`, rzecz w `targetThing`/`routeThing`
+**Jak dopisać ekran rzeczy do reguły banera** (tak weszły w Z-C karta zlecenia i rozmowa,
+#247): rodzaj wiadomości → ekran w `pushTarget.ts`, rzecz w `targetThing`/`routeThing`
 w `inAppBanner.ts` z przypadkiem „na ekranie tej rzeczy baner nie staje" i trasa
-w `openTarget.ts`. Zdanie banera przychodzi samo z gałęzi rodzaju w `logic/inbox.ts`.
+w `openTarget.ts`. Zdanie banera przychodzi samo z gałęzi rodzaju w `logic/inbox.ts`
+(zlecenia: `logic/inboxOrders.ts`). Karta zlecenia i rozmowa to dwie RÓŻNE rzeczy: nad
+otwartą rozmową baner o jej wiadomości nie staje, nad kartą zlecenia - tak, bo treści
+wiadomości tam nie ma.
 
 **Sprawdzone na lokalnym serwerze** (2026-10-05/06, tymczasowa baza, łącze z Node):
 śmieciowy token dostaje `bye token_expired`, odświeżenie daje nową parę i powitanie;
