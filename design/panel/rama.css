@@ -593,15 +593,6 @@ body {
   gap: 6px;
 }
 
-/* Członek WYŁĄCZONY na liście grupy (§6.1): zostaje zaznaczony, bo konfiguracji
-   klubu nie czyścimy po cichu (ta sama reguła, co obsada kroku ścieżki), ale
-   nazwisko schodzi o stopień - administrator ma widzieć, że na tę osobę nie liczy,
-   bo zleceń ona nie dostaje. Powód niesie `.opt-desc`. Karta zostaje KLIKALNA:
-   zdjęcie takiej osoby z grupy jest zwykłą poprawką. */
-.opt.dim .opt-name {
-  color: var(--text-muted);
-}
-
 /* ── WIERSZ ADRESATA - widok prowadzącego (§8, §13.1) ──
    Kształt wiersza sesji (`.session-row`): treść po lewej, akcje w stałej kolumnie
    po prawej. Status jest ZDANIEM BEZ PŁCI - czasownik w trzeciej osobie („Może

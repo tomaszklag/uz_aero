@@ -991,6 +991,15 @@ a {
   font-weight: 600;
 }
 
+/* Członek WYŁĄCZONY na liście grupy (4.0.0, `docs/zlecenia.md` §6.1): zostaje
+   zaznaczony, bo konfiguracji klubu nie czyścimy po cichu (ta sama reguła, co obsada
+   kroku ścieżki), ale nazwisko schodzi o stopień - administrator ma widzieć, że na tę
+   osobę nie liczy, bo zleceń ona nie dostaje. Powód niesie `.opt-desc`. Karta zostaje
+   KLIKALNA: zdjęcie takiej osoby z grupy jest zwykłą poprawką. */
+.opt.dim .opt-name {
+  color: var(--text-muted);
+}
+
 /* Druga linia karty mówi o SKUTKU wyboru - krojem tekstowym, drobniej. Mono z 2.0
    zostało przy wartościach maszynowych (`.mono`), a skutek jest zdaniem. */
 .opt-desc {
@@ -4995,15 +5004,6 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-}
-
-/* Członek WYŁĄCZONY na liście grupy (§6.1): zostaje zaznaczony, bo konfiguracji
-   klubu nie czyścimy po cichu (ta sama reguła, co obsada kroku ścieżki), ale
-   nazwisko schodzi o stopień - administrator ma widzieć, że na tę osobę nie liczy,
-   bo zleceń ona nie dostaje. Powód niesie `.opt-desc`. Karta zostaje KLIKALNA:
-   zdjęcie takiej osoby z grupy jest zwykłą poprawką. */
-.opt.dim .opt-name {
-  color: var(--text-muted);
 }
 
 /* ── WIERSZ ADRESATA - widok prowadzącego (§8, §13.1) ──

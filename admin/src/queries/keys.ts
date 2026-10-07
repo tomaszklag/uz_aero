@@ -227,6 +227,13 @@ export const keys = {
   },
 
   /**
+   * Grupy klubu (4.0.0). Jedno pytanie - lista grup z obsadą - bez szczegółu: szuflada
+   * otwiera wiersz, który już jest na liście (klub ma kilka grup, nie setki). Grupy nie
+   * mają tematu w kanale klubu - odświeżają się przy wejściu i po własnym zapisie.
+   */
+  groups: ['groups'] as const,
+
+  /**
    * „DO SPRAWDZENIA" (3.2.0, P-D). Trzy korzenie, bo trzy pytania o różnym rytmie:
    * suma spraw (plakietka w kolumnie - pyta się przy każdej ramie), skrzynka rozjazdów
    * (filtr w adresie) i karty dnia (zakres dat w adresie, jak dziennik). Rozstrzygnięcie

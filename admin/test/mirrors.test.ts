@@ -46,6 +46,18 @@ const APPROVAL_STEPS = join(
  * eksportera są uniami W KONTRAKCIE panelu po stronie serwera, nie w domenie.
  */
 const EXPORTS = join(__dirname, '..', '..', 'server', 'src', 'application', 'admin', 'contracts', 'exports.ts');
+/** Komenda grup klubu (4.0.0) - powody odmowy zapisu grupy. */
+const MEMBER_GROUPS = join(
+  __dirname,
+  '..',
+  '..',
+  'server',
+  'src',
+  'application',
+  'admin',
+  'commands',
+  'memberGroups.ts',
+);
 const DTO = join(__dirname, '..', 'src', 'api', 'dto.ts');
 
 /**
@@ -249,6 +261,13 @@ const MIRRORS = [
     panel: 'StaleReasonDto',
     server: 'StaleReason',
     read: () => unionIn(join(SERVER, 'orderAnswers.ts'), 'StaleReason'),
+  },
+  // Grupy klubu: powód odmowy zapisu stoi pod polem nazwy albo w karcie obsady - bez
+  // lustra kod dopisany na serwerze wyszedłby na ekran surowym napisem.
+  {
+    panel: 'GroupRefusalDto',
+    server: 'MemberGroupRefusal',
+    read: () => unionIn(MEMBER_GROUPS, 'MemberGroupRefusal'),
   },
 ] as const;
 

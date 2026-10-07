@@ -2088,3 +2088,31 @@ export interface OrderSummaryDto {
   canCreate: boolean;
   canManage: boolean;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * GRUPY KLUBU (4.0.0, `docs/zlecenia.md` §6.1; makieta `piloci-grupy`; epik Z-D #248)
+ *
+ * Nazwa i lista członków - nic więcej. Odczyt na „Podglądzie klubu" albo „Zlecaniu
+ * lotów", zapis wyłącznie na „Kontach pilotów" (`accounts.manage`, decyzja 22) z wpisem
+ * w dzienniku akcji. Lista osób jedzie RAZEM z członkami wyłączonymi: grupa ich trzyma,
+ * a przygasić je jest sprawą ekranu, który zna stan członkostwa (słownik klubu).
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+export interface GroupDto {
+  id: string;
+  name: string;
+  memberIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupListDto {
+  groups: GroupDto[];
+}
+
+/**
+ * Lustro `MemberGroupRefusal` z `server/src/application/admin/commands/memberGroups.ts`:
+ * nazwa zajęta w klubie (bez względu na wielkość liter) i osoba spoza aktywnych członków.
+ * Kod jedzie w polu `error` odpowiedzi (409 i 400).
+ */
+export type GroupRefusalDto = 'name_taken' | 'member_not_in_org';

@@ -12,6 +12,10 @@
  * zrobienia nad stanem - a jedyną akcją główną jest „Kod klubu": nowy członek wchodzi
  * WYŁĄCZNIE kodem, z panelu nie da się nikogo dopisać ani adresem, ani linkiem.
  *
+ * == DRUGA POŁOWA MODUŁU: GRUPY (4.0.0) ==
+ * Pod nagłówkiem stoi przełącznik „Członkowie · Grupy" (`PilotsSwitch`) - grupy klubu
+ * mieszkają w `screens/groups/` pod `#/piloci/grupy`, nie w osobnej pozycji kolumny.
+ *
  * == TRZY SZUFLADY NAD JEDNĄ LISTĄ ==
  * Członek (`:id`), KANDYDAT z kolejki (`zgloszenia/:id`) i KOD KLUBU (`kod`) - każda ma
  * własny adres, bo każda opisuje inny byt. Który to, mówi TRASA (`routes.tsx`), a nie
@@ -44,6 +48,7 @@ import { AccountDrawer } from './AccountDrawer';
 import { accountRow, type AccountRow } from './accountRows';
 import { ClubCodeDrawer } from './ClubCodeDrawer';
 import { PendingCard } from './PendingCard';
+import { PilotsSwitch } from './PilotsSwitch';
 import { RequestDrawer } from './RequestDrawer';
 
 const HEADERS = ['Kod', 'Imię i nazwisko', 'E-mail', 'Zakres', 'Status', ''];
@@ -150,6 +155,8 @@ export function AccountsScreen({ drawer }: { drawer: AccountsDrawer }) {
           ) : undefined
         }
       />
+
+      <PilotsSwitch half="members" />
 
       <PendingCard queue={queue.data} />
 
