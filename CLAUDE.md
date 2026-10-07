@@ -3952,9 +3952,10 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   byłaby zdaniem o niczym. Do epiku R-F (#162) ekran dostaje `null` i wygląda dokładnie
   jak ten wariant; zaślepki „wkrótce" nie ma
 - **POWRÓT NA EKRAN DOMOWY IDZIE PRZEZ `goHome()`** (`ui/navigation/goHome.ts`) - to
-  jedyne miejsce znające zagnieżdżony kształt trasy (`navigate('Tabs', { screen })`).
-  `navigate` przyjmuje dowolny napis, więc literówka w którymkolwiek z sześciu wyjść
-  z flow objawiłaby się dopiero w locie
+  jedyne miejsce znające zagnieżdżony kształt trasy (`{ screen }` w parametrach `Tabs`).
+  Nawigacja przyjmuje dowolny napis, więc literówka w którymkolwiek z wyjść z flow
+  objawiłaby się dopiero w locie. Od 4.0.0 powrót COFA stos - sekcja „Powrót cofa stos
+  ekranów" niżej (do tego czasu `navigate` dokładał drugie zakładki)
 - **HISTORIA: dzień NAGŁÓWKIEM, operacje zwartymi wierszami** (makieta `24`). Data pada
   RAZ, liczby stoją BEZ ETYKIET (kolejność Loty · Blok · Lot jest w aplikacji stała),
   suma doby wchodzi dopiero przy KILKU operacjach, a ikona po prawej niesie SKUTEK
@@ -4011,6 +4012,9 @@ KAŻDY ekran modułu rezerwacji:
 - **DWA KROKI TO JEDEN EKRAN NAWIGACJI** (wzorzec wpisu ręcznego): „wstecz" z kroku 2 cofa
   o krok, z kroku 1 przy niepustym szkicu pyta o rezygnację (`AbandonDraftSheet`). Termin
   i maszyna PODSTAWIONE przez nawigację nie liczą się jako wpis pilota
+- **ZAPIS WYCHODZI PRZEZ `exit.proceed`, A POPRAWIANY TERMIN WYPADA Z ZAJĘTOŚCI** -
+  dwa błędy z 3.0.0 (pusty formularz po „ZAREZERWUJ", zablokowane „DALEJ" przy
+  „PRZESUŃ I POPRAW"), naprawione w 4.0.0; reguły i strażnik w sekcji „epik Z-C"
 - **TAPNIĘCIE W WOLNE PASMO NIE USTAWIA TERMINU**, tylko przekazuje wskazaną godzinę jako
   PREFEROWANĄ PORĘ do zapytania o sugestie (`SLOT_PREFERRED_BONUS`). Podstawiona godzina
   wyglądałaby jak wpisana - to ta sama reguła, przez którą `Stepper` nie ma wartości
@@ -5543,9 +5547,12 @@ skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.
 - **WYJŚCIE Z FORMULARZA PO ZAPISIE IDZIE PRZEZ `exit.proceed(akcja)`**, nigdy wprost
   `navigation.replace`: bramka rezygnacji (`usePreventRemove`) czyta stan z OSTATNIEGO
   renderu, w którym po zapisie wciąż stoi podniesiona, więc przechwyciłaby własne wyjście
-  formularza i cofnęła go o krok, choć zapis już się udał. Oba błędy formularza
-  rezerwacji (ten i kolizja poprawianego terminu) siedziały w 3.x od 3.0.0 - telefony
-  z 3.x dostaną je hotfixem od `main`
+  formularza i cofnęła go o krok, choć zapis już się udał. Faza wyjścia to
+  `PROCEED_PHASE` w czystym `hooks/abandonExit.ts` (z testem), a strażnik
+  w `architecture.test.ts` nie przepuści ekranu z bramką, który woła `replace`, `dispatch`
+  albo `pop` prosto z `navigation`. Oba błędy formularza rezerwacji (ten i kolizja
+  poprawianego terminu) siedziały w 3.x od 3.0.0 i przychodzą z 4.0.0 - hotfixu dla 3.x
+  nie ma (decyzja właściciela 2026-10-07)
 - **EDYCJA ZLECENIA = TEN SAM FORMULARZ** ze szkicem z karty (`logic/orderEdit.ts`): zapis
   niesie samą różnicę (`PATCH`), bez zmian wraca na kartę bez zapisu; wysłani adresaci
   z kłódką, dopisani z „×", „Wspólna lista" zablokowana, skutek zmiany terminu stoi pod
@@ -5615,6 +5622,40 @@ obowiązujące odtąd:
 - **czego Z-D NIE ROBI**: podręcznika (strona „Zlecenia na lot", `panel-wprowadzenie`
   z kolumną w trzech grupach, `panel-kalendarz`, `panel-piloci`, „Kto co widzi") i sprawdzenia
   na produkcji - Z-W (#249)
+
+## Powrót cofa stos ekranów (4.0.0, 2026-10-07, gałąź `feature-powrot-na-pulpit`)
+Błąd znaleziony przy formularzu rezerwacji: `goHome` robił `navigate('Tabs', …)`, a w React
+Navigation 7 (aplikacja stoi na 7.x od pierwszych ekranów) `navigate` cofa się do trasy
+wyłącznie wtedy, gdy jest BIEŻĄCA - inaczej dokłada nową. Każdy lot zostawiał pod Pulpitem
+całe flow z zamontowanym kokpitem (po trzech lotach 19 tras i trzy kokpity), a „wstecz"
+z Pulpitu wracało do zakończonego lotu - po locie ręcznym do wypełnionego formularza,
+którego ponowny zapis dublował lot. Reguły obowiązujące odtąd:
+- **NIGDY `navigate` DO EKRANU, KTÓRY LEŻY JUŻ POD SPODEM** - położy na wierzch drugi
+  egzemplarz. Powrót to `goBack` (tam, skąd się weszło), `popTo('Nazwa')` (do konkretnego
+  ekranu pod spodem) albo `navigate(…, …, { pop: true })` (jak `OrderThreadScreen`). Tak
+  wracają nagłówek ekranu operacji (`goBack` - do Historii, karty samolotu albo kokpitu;
+  parametr `from` usunięty) i „JESZCZE NIE - WRÓĆ DO KOKPITU" na 09B (`popTo`, także gdy
+  zdanie otworzyła zmiana załogi 07)
+- **`goHome` = `homeAction` wysłane od razu**: zakładki pod flow → `popTo` (te same
+  zakładki, bez przemontowania; parametry zawsze NOWYM obiektem, bo zagnieżdżony nawigator
+  konsumuje `screen` po tożsamości obiektu); zakładek pod spodem nie ma (wznowienie prosto
+  do kokpitu) → stos od nowa od zakładek. To jedyne zastąpienie całego stosu w aplikacji
+  i nie łamie reguły „żaden ekran nie kasuje stosu": pod spodem nie ma domu, a kokpit
+  trzymanej maszyny i tak je zatrzymuje
+- **COFNIĘCIE PRZECHODZI PRZEZ `beforeRemove` KAŻDEGO ZDEJMOWANEGO EKRANU**: kokpit
+  z trzymaną maszyną zatrzymuje powrót arkuszem 04D (modalność zostaje), a formularz
+  z bramką rezygnacji wychodzi przez `exit.proceed(homeAction(navigation.getState()))` -
+  strażnik w `architecture.test.ts` łapie odtąd także `goHome(` w ekranie z bramką. Lot
+  ręczny: zapis przez bramkę, strzałka „wstecz" z pierwszego kroku = `goBack` (nad
+  niepustym formularzem pyta bramka, jak przy przycisku sprzętowym)
+- **TEST NA PRAWDZIWYM ROUTERZE** (`__tests__/goHome.test.ts`): `@react-navigation/routers`
+  to czysty JS, więc Jest go transformuje (wyjątek w `transformIgnorePatterns`), a w teście
+  `@react-navigation/native` podmienia się na router. Sprawdza się STAN stosu, nie kształt
+  akcji - błąd siedział w zachowaniu routera
+- **do sprawdzenia na urządzeniu (Z-W)**: zdanie samolotu → Pulpit bez arkusza 04D (bramka
+  kokpitu czyta stan z ostatniego renderu, a store odświeża projekcję, zanim ekran wróci),
+  zapis lotu ręcznego → „wstecz" z Pulpitu nie otwiera formularza, wznowienie do kokpitu →
+  zdanie → Pulpit bez kokpitu pod spodem
 
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej

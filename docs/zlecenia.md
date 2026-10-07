@@ -1013,8 +1013,10 @@ etap z testami czystych modułów logiki:
 - **wyjście z formularza po zapisie idzie przez `useAbandonExit.proceed(akcja)`**: bramka
   rezygnacji czyta stan z ostatniego renderu, w którym po zapisie wciąż stoi podniesiona,
   więc `navigation.replace` wprost wracało jako „wstecz" - rezerwacja stała na serwerze,
-  a pilot widział pusty formularz w kroku 1 (błąd z 3.0.0). Oba błędy formularza rezerwacji
-  dostaną telefony z 3.x osobnym hotfixem od `main`;
+  a pilot widział pusty formularz w kroku 1 (błąd z 3.0.0). Faza wyjścia jest nazwana
+  (`PROCEED_PHASE`) i przetestowana, a strażnik w testach architektury nie przepuści
+  ekranu z bramką, który zdejmuje się sam przez `navigation`. Oba błędy formularza
+  rezerwacji przychodzą z 4.0.0 - hotfixu dla 3.x nie ma (decyzja właściciela 2026-10-07);
 - **edycja zlecenia to ten sam formularz** ze szkicem z karty (`logic/orderEdit.ts`): zapis
   niesie samą różnicę, bez zmian wraca na kartę bez zapisu, zdanie o skutku liczy wyłącznie
   nowe osoby, a ostrzeżenie mówi o osobie, która przez zmianę traci przydział;

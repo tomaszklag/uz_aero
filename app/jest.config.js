@@ -11,6 +11,11 @@
  * używa `babel-preset-expo`) - ta konfiguracja nie dotyka runtime RN.
  *
  * Testy komponentów RN (jeśli powstaną) można dołożyć osobnym projektem z presetem jest-expo.
+ *
+ * Jedyny pakiet z `node_modules`, który przechodzi przez transform, to router React
+ * Navigation: czysty JS bez React Native, ale wydany jako ESM. Test powrotu na Pulpit
+ * (`goHome.test.ts`) przepuszcza akcje przez PRAWDZIWY router - bez niego sprawdzałby
+ * kształt akcji zamiast stanu stosu, a tamten błąd siedział właśnie w zachowaniu routera.
  */
 
 /** @type {import('jest').Config} */
@@ -32,5 +37,6 @@ module.exports = {
       },
     ],
   },
+  transformIgnorePatterns: ['/node_modules/(?!@react-navigation/routers/)'],
   clearMocks: true,
 };

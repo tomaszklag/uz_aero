@@ -389,4 +389,32 @@ describe('nawigacja - decyzje zapisane w mockupach', () => {
       });
     }
   });
+
+  it('formularz z bramką rezygnacji nie zdejmuje się sam - wyjście po zapisie idzie przez `exit.proceed`', () => {
+    // Bramka (`usePreventRemove`) czyta stan z OSTATNIEGO renderu, a ten po zapisie wciąż ma
+    // ją podniesioną (krok 2 albo 3) - więc akcja zdejmująca ekran prosto z `navigation`
+    // wracała jako „wstecz": rezerwacja stała na serwerze, a pilot widział pusty formularz
+    // w kroku 1 (błąd z 3.0.0). `goBack` zostaje wolne: przechwycenie „wstecz" przez bramkę
+    // JEST zamierzone (pytanie o rezygnację) - błędem było przechwycenie WŁASNEGO wyjścia.
+    // `goHome` też zdejmuje: od 4.0.0 cofa stos do zakładek, więc formularz oddaje bramce
+    // `homeAction` zamiast wołać go sam (lot ręczny po zapisie).
+    const dir = join(SRC, 'ui/screens');
+    const gated = readdirSync(dir)
+      .filter((f) => f.endsWith('.tsx'))
+      .filter((f) => readFileSync(join(dir, f), 'utf8').includes('useAbandonExit('));
+    // sanity: skan widzi wszystkie formularze z bramką
+    expect(gated).toEqual(
+      expect.arrayContaining([
+        'ManualFlightScreen.tsx',
+        'NewBookingScreen.tsx',
+        'NewOrderScreen.tsx',
+        'PreflightAircraftScreen.tsx',
+      ]),
+    );
+    for (const file of gated) {
+      const source = readFileSync(join(dir, file), 'utf8');
+      const removes = /navigation\.(?:replace|dispatch|pop|popTo|popToTop)\s*\(|\bgoHome\s*\(/.test(source);
+      expect({ file, removes }).toEqual({ file, removes: false });
+    }
+  });
 });

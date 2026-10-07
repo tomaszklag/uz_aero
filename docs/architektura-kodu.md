@@ -1664,7 +1664,8 @@ wyznacza serwer, §2 dokumentu kanału) i treści w sygnale `changed`.
 | `releaseTrail.test.ts` | szlaku odczytu przy zdaniu samolotu (issue #84): przejęcie, tankowania i czas pracy silnika stoją także BEZ normy; ogniwo oczekiwania tylko z nią |
 | `pilotWarnings.test.ts` | odsiewu flag diagnostycznych z ekranu pilota (issue #84): rozjazd zegara znika, każda inna flaga przechodzi |
 | `themeToggle.test.ts` | przełącznika jasności w kokpicie (issue #82): ikona pokazuje motyw DOCELOWY, nieznana nazwa go nie unieruchamia |
-| `abandonExit.test.ts` | kolejności wyjścia z formularza po rezygnacji (issue #84): arkusz nigdy nie stoi w drzewie razem z wypuszczoną nawigacją |
+| `abandonExit.test.ts` | kolejności wyjścia z formularza po rezygnacji (issue #84): arkusz nigdy nie stoi w drzewie razem z wypuszczoną nawigacją; wyjście po zapisie (`PROCEED_PHASE`, błąd z 3.0.0) opuszcza bramkę i wypuszcza akcję bez arkusza |
+| `goHome.test.ts` | powrotu na ekran domowy (4.0.0) na PRAWDZIWYM routerze React Navigation: stos wraca do tych samych zakładek, kolejne loty go nie wydłużają, wznowienie do kokpitu kończy się samymi zakładkami, wskazana zakładka dochodzi nowym obiektem parametrów |
 | `sessionAxis.test.ts` | osi czasu operacji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), operacja bez pracy silnika |
 | `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej operacji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
 | `sessionNotes.test.ts` | notatek operacji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |
