@@ -93,8 +93,14 @@ export function ownDraftDirty(draft: OwnDraft, seed: OwnDraft, editing: boolean)
   return keys.some((k) => draft[k].trim() !== seed[k].trim());
 }
 
+/** Pola terminu - wspólne dla rezerwacji i zlecenia (zlecenie jest rezerwacją, §2.1). */
+export type TermFields = Pick<OwnDraft, 'aircraftId' | 'date' | 'from' | 'to'>;
+
+/** Pola zadania i planu - też wspólne; drugi pilot należy wyłącznie do rezerwacji. */
+export type TaskFields = Pick<OwnDraft, 'operation' | 'fromIcao' | 'toIcao' | 'plannedAir' | 'plannedFuel'>;
+
 /** Termin szkicu jako chwile; `null` = niekompletny albo godzina, której nie ma. */
-export function draftSlot(draft: OwnDraft, tz: string): { startsAt: number; endsAt: number } | null {
+export function draftSlot(draft: Pick<OwnDraft, 'date' | 'from' | 'to'>, tz: string): { startsAt: number; endsAt: number } | null {
   if (draft.date === '' || draft.from === '' || draft.to === '') return null;
   const startsAt = clubInstant(draft.date, draft.from, tz);
   const endsAt = clubInstant(draft.date, draft.to, tz);
@@ -113,8 +119,12 @@ export function suggestionMinutes(slot: { startsAt: number; endsAt: number } | n
 /** „2 h", „1 h 30 min" - długość terminu po ludzku, na plakietce przy sugestiach. */
 export const lengthLabel = (minutes: number): string => relativeAge(minutes * 60_000);
 
+/** Długość wpisanego terminu w podtytule kroku 2 („4 h"); `null` = para jeszcze nie stoi. */
+export const slotLength = (slot: { startsAt: number; endsAt: number } | null): string | null =>
+  slot == null || slot.endsAt <= slot.startsAt ? null : relativeAge(slot.endsAt - slot.startsAt);
+
 /** Powód blokady „Dalej" na kroku 1. */
-export function ownStep1Blocker(draft: OwnDraft, tz: string, now: number): Blocker {
+export function ownStep1Blocker(draft: TermFields, tz: string, now: number): Blocker {
   if (draft.aircraftId === '' || draft.date === '' || draft.from === '' || draft.to === '') {
     return 'incomplete';
   }
@@ -145,37 +155,55 @@ export function parseFuel(text: string): number | null | undefined {
   return Number.isFinite(litres) && litres >= 0 && litres <= 10_000 ? litres : undefined;
 }
 
-/** Powód blokady „Zarezerwuj" na kroku 2. */
-export function ownStep2Blocker(draft: OwnDraft, dualRequired: boolean): Blocker {
+/** Rodzaj operacji i trasa - pierwsza część bramki kroku 2 (rezerwacja i zlecenie). */
+export function routeBlocker(draft: TaskFields): Blocker {
   if (draft.operation === '') return 'incomplete';
-
   const one = singleField(draft.operation);
   if (draft.fromIcao.trim() === '' || (!one && draft.toIcao.trim() === '')) return 'incomplete';
   const codes = one ? [draft.fromIcao] : [draft.fromIcao, draft.toIcao];
   if (codes.some((c) => c.trim().length < 3)) return { reason: 'Kod lotniska ma co najmniej 3 znaki.' };
+  return null;
+}
 
-  // Wymóg Duala widać z plakietki przy polu - zdania nie dublujemy (wąski wyjątek #55).
-  if (dualRequired && draft.dualId === '') return 'incomplete';
-
+/** Plan lotu - druga część bramki kroku 2. */
+export function planBlocker(draft: TaskFields): Blocker {
   if (draft.plannedAir.trim() === '') return 'incomplete';
   if (parsePlannedAir(draft.plannedAir) == null) return { reason: 'Czas lotu wpisz jako h:mm, np. 1:30.' };
   if (parseFuel(draft.plannedFuel) === undefined) return { reason: 'Paliwo wpisz liczbą litrów.' };
   return null;
 }
 
+/** Powód blokady „Zarezerwuj" na kroku 2. */
+export function ownStep2Blocker(draft: OwnDraft, dualRequired: boolean): Blocker {
+  // Wymóg Duala widać z plakietki przy polu - zdania nie dublujemy (wąski wyjątek #55).
+  return routeBlocker(draft) ?? (dualRequired && draft.dualId === '' ? 'incomplete' : planBlocker(draft));
+}
+
+/** Słowa podpisu planu - rezerwacja ma „slot", zlecenie „termin" (makieta ZL2a). */
+export interface PlanWords {
+  lead: string;
+  overflow: string;
+}
+
+export const OWN_PLAN_WORDS: PlanWords = { lead: 'Slot', overflow: 'nie mieści się w rezerwacji' };
+
 /**
  * Podpis pod planem lotu: „Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę".
  * Plan dłuższy niż termin jest sprzecznością do zauważenia, nie blokadą - ton bursztynowy.
  */
-export function planNote(draft: OwnDraft, tz: string): { text: string; warn: boolean } | null {
+export function planNote(
+  draft: Pick<OwnDraft, 'date' | 'from' | 'to' | 'plannedAir'>,
+  tz: string,
+  words: PlanWords = OWN_PLAN_WORDS,
+): { text: string; warn: boolean } | null {
   const slot = draftSlot(draft, tz);
   const plan = parsePlannedAir(draft.plannedAir);
   if (slot == null || plan == null || slot.endsAt <= slot.startsAt) return null;
   const slotMs = slot.endsAt - slot.startsAt;
   const rest = slotMs - plan * 60_000;
   return rest < 0
-    ? { text: `Slot ${relativeAge(slotMs)} · plan lotu ${duration(plan * 60_000)} nie mieści się w rezerwacji`, warn: true }
-    : { text: `Slot ${relativeAge(slotMs)} · plan lotu ${duration(plan * 60_000)} zostawia ${relativeAge(rest)} na obsługę`, warn: false };
+    ? { text: `${words.lead} ${relativeAge(slotMs)} · plan lotu ${duration(plan * 60_000)} ${words.overflow}`, warn: true }
+    : { text: `${words.lead} ${relativeAge(slotMs)} · plan lotu ${duration(plan * 60_000)} zostawia ${relativeAge(rest)} na obsługę`, warn: false };
 }
 
 /**

@@ -21,7 +21,7 @@
 
 // `KeyboardEvent` Reacta pod własną nazwą - globalny `KeyboardEvent` DOM-u jest w tym
 // pliku potrzebny obok, przy nasłuchu `Esc` na dokumencie.
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref } from 'react';
 
 import { trapTarget } from './focusTrap';
 import { CloseIcon } from './icons';
@@ -68,18 +68,42 @@ interface DrawerProps {
    * element szuflady.
    */
   actions?: ReactNode;
+  /**
+   * Nazwa okna dla czytnika ekranu, gdy tytuł sam jej nie niesie - rozmowa w zleceniu
+   * ma tytułem rozmówcę, a okno nazywa się „Rozmowa · Marta Zięba". Bez niej - tytuł.
+   */
+  label?: string;
+  /**
+   * Treść przypięta pod nagłówkiem, POZA przewijaniem - pasek zlecenia nad rozmową
+   * (`.order-strip`): bez punktu odniesienia „mogę dopiero o 10" traci sens po przewinięciu.
+   */
+  pinned?: ReactNode;
+  /**
+   * Stopka WŁASNEGO kształtu w miejscu `.drawer-foot` - pole wiadomości rozmowy
+   * (`.composer`): pisze się tam, gdzie w innych szufladach stoją akcje. Wyklucza `footer`.
+   */
+  dock?: ReactNode;
+  /** Obszar przewijania - rozmowa przewija go do najnowszej wiadomości. */
+  bodyRef?: Ref<HTMLDivElement>;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function Drawer({ title, sub, footer, wide = false, actions, onClose, children }: DrawerProps) {
+export function Drawer({ title, sub, footer, wide = false, actions, label, pinned, dock, bodyRef, onClose, children }: DrawerProps) {
   const panel = useRef<HTMLDivElement>(null);
+  // Najświeższe `onClose` bez ponawiania efektu: ekran pod szufladą przekazuje zwykle NOWĄ
+  // funkcję przy każdym renderze (lista odświeża się kanałem klubu), a efekt ponawiany
+  // z nią przestawiałby fokus na panel - w rozmowie w połowie pisanej wiadomości.
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
 
   useEffect(() => {
     const opener = document.activeElement;
 
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') close.current();
     };
     document.addEventListener('keydown', onKey);
 
@@ -91,7 +115,7 @@ export function Drawer({ title, sub, footer, wide = false, actions, onClose, chi
       document.removeEventListener('keydown', onKey);
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
-  }, [onClose]);
+  }, []);
 
   // Nasłuch na PANELU, nie na dokumencie: pułapka ma działać wtedy i tylko wtedy, gdy
   // fokus jest w środku. Nasłuch globalny przejmowałby `Tab` także wtedy, gdy człowiek
@@ -116,7 +140,7 @@ export function Drawer({ title, sub, footer, wide = false, actions, onClose, chi
         className={wide ? 'drawer wide' : 'drawer'}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={label ?? title}
         tabIndex={-1}
         onKeyDown={onTab}
       >
@@ -133,9 +157,13 @@ export function Drawer({ title, sub, footer, wide = false, actions, onClose, chi
           </div>
         </div>
 
-        <div className="drawer-body">{children}</div>
+        {pinned ?? null}
 
-        {footer == null ? null : <div className="drawer-foot">{footer}</div>}
+        <div ref={bodyRef} className="drawer-body">
+          {children}
+        </div>
+
+        {dock ?? (footer == null ? null : <div className="drawer-foot">{footer}</div>)}
       </div>
     </>
   );

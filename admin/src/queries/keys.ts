@@ -11,6 +11,7 @@ import type { CalendarRange, SuggestionsQuery } from '../api/bookings';
 import type { FleetListQuery } from '../api/fleet';
 import type { LogPilotsQuery, LogRangeQuery, SessionListQuery } from '../api/log';
 import type { BugListQuery } from '../api/bugReports';
+import type { OrderBox } from '../api/orders';
 import type { OrganizationListQuery } from '../api/organizations';
 import type { PilotListQuery } from '../api/pilots';
 import type { StatsQuery } from '../api/stats';
@@ -212,6 +213,37 @@ export const keys = {
     all: ['bugs'] as const,
     list: (query: BugListQuery) => ['bugs', 'list', query] as const,
   },
+
+  /**
+   * Zlecenia na lot (4.0.0, epik Z-D #248). KORZEŃ obejmuje listy i liczby modułu, bo
+   * starzeją się od tej samej rzeczy - sygnału `orders` kanału klubu (odpowiedź, odczyt,
+   * przydział, nowe zlecenie). Połowa listy jest częścią pytania: „Do mnie" i „Zlecone"
+   * to dwie różne odpowiedzi serwera i obie mają prawo żyć w cache obok siebie.
+   */
+  orders: {
+    all: ['orders'] as const,
+    summary: ['orders', 'summary'] as const,
+    list: (box: OrderBox) => ['orders', 'list', box] as const,
+    /**
+     * Karta jednego zlecenia - pod korzeniem modułu, bo starzeje się od tych samych
+     * rzeczy, co lista (odpowiedź, przydział); własny temat kanału ma też `order:<id>`.
+     */
+    card: (id: string) => ['orders', 'card', id] as const,
+    /**
+     * Rozmowy jednego zlecenia (`threads(id)`) i rozmowa z jednym adresatem - w stronach.
+     * Wiadomości i odczyty wpisuje do niej kanał klubu (ramki `message`, `read`), a temat
+     * `order:<id>` czyta ją od nowa: rozmowa zamyka się razem ze zleceniem.
+     */
+    threads: (id: string) => ['orders', 'thread', id] as const,
+    thread: (id: string, recipientId: string) => ['orders', 'thread', id, recipientId] as const,
+  },
+
+  /**
+   * Grupy klubu (4.0.0). Jedno pytanie - lista grup z obsadą - bez szczegółu: szuflada
+   * otwiera wiersz, który już jest na liście (klub ma kilka grup, nie setki). Grupy nie
+   * mają tematu w kanale klubu - odświeżają się przy wejściu i po własnym zapisie.
+   */
+  groups: ['groups'] as const,
 
   /**
    * „DO SPRAWDZENIA" (3.2.0, P-D). Trzy korzenie, bo trzy pytania o różnym rytmie:

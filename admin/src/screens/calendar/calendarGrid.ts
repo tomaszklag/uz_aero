@@ -43,9 +43,15 @@ export interface CalendarItem {
   continues: boolean;
   /**
    * Własna rezerwacja patrzącego (issue #233) - zielona na osi. Odkąd kalendarz ogląda
-   * pilot, „kiedy lecę" jest pierwszym pytaniem do osi.
+   * pilot, „kiedy lecę" jest pierwszym pytaniem do osi. Liczy OBA fotele (decyzja 23
+   * zleceń, jak na telefonie): drugi pilot leci tym samym lotem.
    */
   mine: boolean;
+  /**
+   * Zlecenie, któremu brakuje załogi (K2c, 4.0.0) - błękitna przerywana ramka. Zlecenie
+   * obsadzone w komplecie jest zwykłą rezerwacją tej załogi i flagi nie ma.
+   */
+  order: boolean;
 }
 
 export interface CalendarCell {
@@ -140,16 +146,27 @@ function itemsIn(
     // dokładnie o północy należy do doby, która się wtedy kończy, a nie do obu.
     .filter((b) => b.startsAt < to && b.endsAt > from)
     .sort((a, b) => a.startsAt - b.startsAt)
-    .map(({ booking, startsAt, endsAt }) => ({
-      id: booking.id,
-      kind: booking.kind,
-      status: booking.status,
-      label: cellLabel(booking, person),
-      startsAt,
-      endsAt,
-      continues: startsAt < from,
-      mine: viewerId != null && booking.kind === 'flight' && booking.pilotId === viewerId,
-    }));
+    .map(({ booking, startsAt, endsAt }) => {
+      const order = (booking.order?.seeking.length ?? 0) > 0;
+      return {
+        id: booking.id,
+        kind: booking.kind,
+        status: booking.status,
+        label: cellLabel(booking, person),
+        startsAt,
+        endsAt,
+        continues: startsAt < from,
+        // Zlecenie szukające załogi nie jest jeszcze niczyim lotem - nawet osoby, która
+        // siedzi już w drugim fotelu: kształt mówi „skład niekompletny", zieleń mówiłaby
+        // „lecisz".
+        mine:
+          !order &&
+          viewerId != null &&
+          booking.kind === 'flight' &&
+          (booking.pilotId === viewerId || booking.dualId === viewerId),
+        order,
+      };
+    });
 }
 
 /**

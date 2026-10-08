@@ -80,6 +80,13 @@ describe('kiedy baner stoi', () => {
     // Siatka kalendarza nie jest kolejką decyzji.
     expect(toastShows('/kalendarz/decyzje', { inboxOpen: false, path: '/kalendarz' })).toBe(true);
   });
+
+  it('zlecenie z połową listy w adresie: liczy się ścieżka, nie parametry', () => {
+    // Szuflada tego zlecenia otwarta nad „Zlecone" to wciąż ta sama rzecz.
+    expect(toastShows('/zlecenia/o1?widok=do-mnie', { inboxOpen: false, path: '/zlecenia/o1' })).toBe(false);
+    expect(toastShows('/zlecenia/o1?widok=zlecone', { inboxOpen: false, path: '/zlecenia/o1/rozmowa/p1' })).toBe(false);
+    expect(toastShows('/zlecenia/o1?widok=do-mnie', { inboxOpen: false, path: '/zlecenia' })).toBe(true);
+  });
 });
 
 describe('odliczanie banera', () => {

@@ -17,50 +17,37 @@
  * wiadomo, czy jest co wziąć w zamian (decyzja z 3.0.0).
  */
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import type { BookingDto, DirectoryMemberDto } from '../../api/dto';
 import {
   useCancelOwnBooking,
   useCreateOwnBooking,
-  useDayOccupancy,
   useMyApprovalPath,
   usePatchOwnBooking,
-  useSuggestions,
 } from '../../queries/useCalendar';
-import {
-  Banner,
-  Button,
-  Card,
-  Drawer,
-  Field,
-  OptionButton,
-  Pill,
-  TextInput,
-} from '../../ui/components';
-import { dayLongLabel, onWeekday, type PersonLookup } from './bookingLabels';
+import { Banner, Button, Card, Drawer, Field, Pill, TextInput } from '../../ui/components';
+import { dayLongLabel, type PersonLookup } from './bookingLabels';
 import { bookingRefusal } from './bookingRefusal';
 import type { CalendarAircraft } from './calendarGrid';
-import { clubNoon, clubToday } from './clubClock';
-import { buildDayTrack, slotNote } from './dayTrack';
+import { clubNoon } from './clubClock';
 import {
   aircraftChanged,
   confirmLabel,
   createBody,
   draftSlot,
-  lengthLabel,
-  OWN_OPERATIONS,
   ownDraftDirty,
   ownStep1Blocker,
   ownStep2Blocker,
   patchBody,
   planNote,
   singleField,
-  suggestionMinutes,
+  slotLength,
   type OwnDraft,
 } from './ownBookingForm';
-import { ownRefusalMessage, takenBanner } from './ownBookingRefusal';
-import { buildSlotTiles, nearestTile } from './slotTiles';
+import { ownRefusalMessage } from './ownBookingRefusal';
+import { OperationCard, PlanCard } from './TaskCards';
+import { TermCard } from './TermCard';
 
 interface Props {
   aircraft: readonly CalendarAircraft[];
@@ -104,68 +91,14 @@ export function OwnBookingDrawer({
   const reg = chosen?.reg ?? '';
   const slot = draftSlot(draft, tz);
   const noon = draft.date === '' ? null : clubNoon(draft.date, tz);
-  const minutes = suggestionMinutes(slot);
 
-  const occupancy = useDayOccupancy(
-    noon == null || draft.aircraftId === ''
-      ? null
-      : { from: new Date(noon).toISOString(), to: new Date(noon + 1).toISOString(), aircraftId: draft.aircraftId },
-  );
-  const suggestions = useSuggestions(
-    noon == null || draft.aircraftId === ''
-      ? null
-      : { aircraftId: draft.aircraftId, day: new Date(noon).toISOString(), minutes },
-  );
-
-  // Poprawiana rezerwacja nie jest zajętością dla samej siebie - to jest szkic.
-  const busy = useMemo(
-    () => (occupancy.data?.bookings ?? []).filter((b) => b.id !== editing?.id),
-    [occupancy.data, editing],
-  );
-  const day = occupancy.data?.days[0];
-  const window = suggestions.data?.window;
-
-  const track = useMemo(
-    () =>
-      day == null || window == null
-        ? null
-        : buildDayTrack({
-            day: { startsAt: Date.parse(day.startsAt), endsAt: Date.parse(day.endsAt) },
-            window: { from: Date.parse(window.from), to: Date.parse(window.to) },
-            busy,
-            slot,
-            free: suggestions.data?.free ?? null,
-            tz,
-            person,
-          }),
-    [day, window, busy, slot, suggestions.data, tz, person],
-  );
-
-  const tiles = useMemo(
-    () =>
-      window == null
-        ? []
-        : buildSlotTiles({
-            suggestions: suggestions.data?.suggestions ?? [],
-            busy,
-            window: { from: Date.parse(window.from), to: Date.parse(window.to) },
-            slot,
-            tz,
-            person,
-          }),
-    [window, suggestions.data, busy, slot, tz, person],
-  );
-
-  const note = slotNote(slot, busy, reg, tz, person);
   const blocker1 = ownStep1Blocker(draft, tz, Date.now());
   const blocker2 = ownStep2Blocker(draft, chosen?.dualRequired ?? false);
   const plan = planNote(draft, tz);
   const steps = path.data?.steps ?? [];
 
   const error = create.error ?? patch.error ?? cancelOld.error;
-  const taken =
-    error == null ? null : takenBanner(error, { reg, tz, now: Date.now(), viewerId: viewer.id, person });
-  const fix = taken == null ? null : nearestTile(tiles, slot);
+  const taken = bookingRefusal(error) === 'slot_taken';
   const pending = create.isPending || patch.isPending || cancelOld.isPending;
 
   const dirty = ownDraftDirty(draft, seed, editingNow);
@@ -211,7 +144,7 @@ export function OwnBookingDrawer({
   const sub =
     step === 1
       ? [...head, 'godziny w czasie klubu'].join(' · ')
-      : [...head, `${draft.from} → ${draft.to}`, note?.length ?? ''].filter((p) => p !== '').join(' · ');
+      : [...head, `${draft.from} → ${draft.to}`, slotLength(slot) ?? ''].filter((p) => p !== '').join(' · ');
 
   const duals = members.filter((m) => m.active && m.id !== viewer.id);
   const dualRequired = chosen?.dualRequired ?? false;
@@ -282,180 +215,40 @@ export function OwnBookingDrawer({
       ) : null}
 
       {step === 1 ? (
-        <>
-          {taken == null ? null : (
-            <Banner
-              tone="warn"
-              live
-              action={
-                fix == null ? null : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => change({ from: fix.from, to: fix.to })}
-                  >
-                    Weź {fix.hours}
-                  </Button>
-                )
-              }
-            >
-              <b>{taken.lead}</b> {taken.body}
-            </Banner>
-          )}
-
-          {/* Poprawka terminu w klubie ze ścieżką czyści zgody - mówimy to PRZED
-              kliknięciem, nie po. Zadanie, trasa i notatka zgód nie ruszają. */}
-          {editingNow && steps.length > 0 ? (
-            <Banner tone="warn">
-              <b>Zmiana terminu wyczyści dotychczasowe zgody.</b> Ścieżka akceptacji zacznie od
-              nowa - zgoda dotyczyła konkretnego terminu.
-            </Banner>
-          ) : null}
-
-          <Card title="Kiedy i czym">
-            <div className="field-row">
-              <Field htmlFor="own-aircraft" label="Samolot">
-                <select
-                  id="own-aircraft"
-                  className="input"
-                  value={draft.aircraftId}
-                  onChange={(e) => change({ aircraftId: e.target.value })}
-                >
-                  <option value="">Wybierz maszynę</option>
-                  {aircraft.map((a) => (
-                    // Maszyna poza służbą stoi na liście, ale nie da się jej wybrać:
-                    // serwer i tak odmówiłby (`aircraft_disabled`).
-                    <option key={a.id} value={a.id} disabled={!a.inService}>
-                      {a.reg} · {a.type}
-                      {a.inService ? '' : ' · poza służbą'}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field htmlFor="own-day" label="Dzień">
-                <TextInput
-                  id="own-day"
-                  type="date"
-                  mono
-                  min={clubToday(Date.now(), tz)}
-                  value={draft.date}
-                  onChange={(e) => change({ date: e.target.value })}
-                />
-              </Field>
-            </div>
-            {editing != null && aircraftChanged(draft, editing) ? (
+        <TermCard
+          idPrefix="own"
+          term={draft}
+          onChange={change}
+          aircraft={aircraft}
+          tz={tz}
+          person={person}
+          viewerId={viewer.id}
+          exceptId={editing?.id ?? null}
+          draft="own"
+          error={error}
+          blocker={blocker1}
+          notice={
+            // Poprawka terminu w klubie ze ścieżką czyści zgody - mówimy to PRZED
+            // kliknięciem, nie po. Zadanie, trasa i notatka zgód nie ruszają.
+            editingNow && steps.length > 0 ? (
+              <Banner tone="warn">
+                <b>Zmiana terminu wyczyści dotychczasowe zgody.</b> Ścieżka akceptacji zacznie od
+                nowa - zgoda dotyczyła konkretnego terminu.
+              </Banner>
+            ) : null
+          }
+          aircraftHint={
+            editing != null && aircraftChanged(draft, editing) ? (
               <p className="hint">
                 <b>Inna maszyna to nowa rezerwacja.</b> Zapis założy nowy termin na {reg} i odwoła ten na{' '}
                 {aircraft.find((a) => a.id === editing.aircraftId)?.reg ?? 'poprzedniej maszynie'} - w tej kolejności.
               </p>
-            ) : null}
-
-            {track == null || dayAt == null ? null : (
-              <div className="field">
-                <span className="label">
-                  Zajętość {reg} {onWeekday(dayAt, tz)}
-                </span>
-                <div className="daytrack">
-                  <div className="daytrack-bar" role="img" aria-label={track.aria}>
-                    {track.segments.map((s, i) => (
-                      <span
-                        key={i}
-                        className={s.tone === 'busy' ? 'daytrack-busy' : `daytrack-busy ${s.tone}`}
-                        style={{ left: `${s.left}%`, width: `${s.width}%`, opacity: s.clash ? 0.7 : undefined }}
-                        title={s.title}
-                      />
-                    ))}
-                  </div>
-                  <div className="daytrack-scale">
-                    {track.scale.map((label, i) => (
-                      <span key={i}>{label}</span>
-                    ))}
-                  </div>
-                  {track.free == null ? null : <span className="daytrack-free">{track.free}</span>}
-                </div>
-              </div>
-            )}
-
-            {window == null ? null : (
-              <div className="field">
-                <div className="label-row">
-                  <span className="label">Sugerowane godziny</span>
-                  <Pill tone="dim">{lengthLabel(minutes)}</Pill>
-                </div>
-                {tiles.length === 0 ? (
-                  <p className="hint">W tej dobie nie ma wolnego miejsca tej długości.</p>
-                ) : (
-                  <div className="slots">
-                    {tiles.map((t) => (
-                      <button
-                        type="button"
-                        key={t.startsAt}
-                        className={t.on ? 'slot on' : 'slot'}
-                        aria-pressed={t.on}
-                        onClick={() => change({ from: t.from, to: t.to })}
-                      >
-                        <span className="slot-h">{t.hours}</span>
-                        <span className="slot-why">{t.why}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="field-row">
-              <Field htmlFor="own-from" label="Od">
-                <TextInput
-                  id="own-from"
-                  type="time"
-                  step={300}
-                  mono
-                  value={draft.from}
-                  onChange={(e) => change({ from: e.target.value })}
-                />
-              </Field>
-              <Field htmlFor="own-to" label="Do">
-                <TextInput
-                  id="own-to"
-                  type="time"
-                  step={300}
-                  mono
-                  value={draft.to}
-                  onChange={(e) => change({ to: e.target.value })}
-                />
-              </Field>
-            </div>
-            {note == null ? null : note.clash == null ? (
-              <p className="hint">
-                {note.length} · {note.reg} wolna w tych godzinach
-              </p>
-            ) : (
-              <p className="hint">
-                {note.length} · <b>{note.clash.lead}</b> · {note.clash.who}
-              </p>
-            )}
-
-            {/* Zdanie pada wyłącznie przy stanie, którego z kontrolek nie widać. */}
-            {blocker1 != null && blocker1 !== 'incomplete' ? (
-              <p className="card-note danger">{blocker1.reason}</p>
-            ) : null}
-          </Card>
-        </>
+            ) : null
+          }
+        />
       ) : (
         <>
-          <Card title="Rodzaj operacji">
-            <div className="opt-list">
-              {OWN_OPERATIONS.map((o) => (
-                <OptionButton
-                  key={o.value}
-                  name={o.name}
-                  desc={o.desc}
-                  selected={draft.operation === o.value}
-                  onSelect={() => change({ operation: o.value })}
-                />
-              ))}
-            </div>
-          </Card>
+          <OperationCard value={draft.operation} onSelect={(operation) => change({ operation })} />
 
           <Card title="Trasa">
             <div className="field-row">
@@ -516,36 +309,13 @@ export function OwnBookingDrawer({
             </Field>
           </Card>
 
-          <Card title="Plan lotu">
-            <div className="field-row">
-              <Field htmlFor="own-air" label="Czas lotu (h:mm)">
-                <TextInput
-                  id="own-air"
-                  mono
-                  inputMode="numeric"
-                  placeholder="1:30"
-                  value={draft.plannedAir}
-                  onChange={(e) => change({ plannedAir: e.target.value })}
-                />
-              </Field>
-              <Field htmlFor="own-fuel" label="Paliwo do zabrania (L)" action={<Pill tone="dim">opcjonalne</Pill>}>
-                <TextInput
-                  id="own-fuel"
-                  mono
-                  inputMode="decimal"
-                  value={draft.plannedFuel}
-                  onChange={(e) => change({ plannedFuel: e.target.value })}
-                />
-              </Field>
-            </div>
-            {plan == null ? null : plan.warn ? (
-              <p className="hint">
-                <b>{plan.text}</b>
-              </p>
-            ) : (
-              <p className="hint">{plan.text}</p>
-            )}
-          </Card>
+          <PlanCard
+            idPrefix="own"
+            air={draft.plannedAir}
+            fuel={draft.plannedFuel}
+            onChange={change}
+            note={plan}
+          />
 
           <Card
             title={
@@ -569,7 +339,7 @@ export function OwnBookingDrawer({
           {blocker2 != null && blocker2 !== 'incomplete' ? (
             <p className="card-note danger">{blocker2.reason}</p>
           ) : null}
-          {error == null || taken != null ? null : (
+          {error == null || taken ? null : (
             <p className="card-note danger">{ownRefusalMessage(error, tz, person)}</p>
           )}
         </>

@@ -29,6 +29,13 @@ interface OptionButtonProps {
    * Wygląd ten sam, inna semantyka dla czytnika ekranu.
    */
   multiple?: boolean;
+  /**
+   * Nazwa o stopień słabsza (`.opt.dim`) - członek WYŁĄCZONY na liście grupy (4.0.0,
+   * makieta `piloci-grupy`): zostaje zaznaczony, bo konfiguracji klubu nie czyścimy po
+   * cichu, ale administrator ma widzieć, że na tę osobę nie liczy. Karta zostaje
+   * klikalna - zdjęcie takiej osoby jest zwykłą poprawką.
+   */
+  dim?: boolean;
   onSelect: () => void;
 }
 
@@ -38,6 +45,7 @@ export function OptionButton({
   selected,
   disabled = false,
   multiple = false,
+  dim = false,
   onSelect,
 }: OptionButtonProps) {
   return (
@@ -46,7 +54,7 @@ export function OptionButton({
       role={multiple ? 'checkbox' : 'radio'}
       aria-checked={selected}
       disabled={disabled}
-      className={selected ? 'opt selected' : 'opt'}
+      className={['opt', selected ? 'selected' : null, dim ? 'dim' : null].filter((c) => c != null).join(' ')}
       onClick={onSelect}
     >
       <span className="opt-body">

@@ -10,9 +10,9 @@
  * Mapa jest jedna i czysta, a klucze bierze z `queries/keys.ts` - dokładając ekran
  * odświeżany na żywo, dopisuje się go TUTAJ, razem z testem.
  *
- * Czego tu nie ma: tematów zleceń (`order:<id>`, `orders`) - panelowy moduł zleceń
- * powstaje w Z-D i dopisze swoje klucze. Do tego czasu zlecenie odświeża kalendarz
- * tematami terminu (`booking:`, `calendar:`), które serwer wysyła razem z nimi.
+ * Zlecenia (epik Z-D #248): temat `orders` odświeża listy modułu; kalendarz odświeżają
+ * tematy terminu (`booking:`, `calendar:`), które serwer wysyła razem z nim, bo
+ * zlecenie JEST rezerwacją.
  */
 
 import { keys } from '../queries/keys';
@@ -50,6 +50,15 @@ function prefixesFor(topic: string): readonly QueryPrefix[] {
     // „Do sprawdzenia": suma w kolumnie, rozjazdy i karty dnia.
     case 'attention':
       return [keys.attention, keys.flags.all, keys.exports.all];
+    // Zlecenia: obie połowy listy i liczby modułu (odpowiedź, odczyt, przydział, nowe
+    // zlecenie). Serwer wysyła ten temat każdej osobie, której listy to dotyczy.
+    case 'orders':
+      return [keys.orders.all];
+    // Jedno zlecenie: jego karta w szufladzie (odczyt, odpowiedź, przydział, edycja,
+    // odwołanie). Kształt karty zależy od widza, więc pobiera się RESTem (sygnał bez treści).
+    // Rozmowy tego zlecenia też: zamykają się razem z nim (odwołanie, odebranie, komplet).
+    case 'order':
+      return id === '' ? [] : [keys.orders.card(id), keys.orders.threads(id)];
     default:
       return [];
   }

@@ -11,6 +11,14 @@
  * miejsce komórki, które podstawia maszynę i dzień. Własne wpisy są zielone - pilot szuka
  * na osi przede wszystkim siebie. Akcje administratora schodzą do przycisków wyciszonych.
  *
+ * ══ ZLECENIE NA OSI (4.0.0, `docs/zlecenia.md` §5, §15) ══
+ * Zlecenie JEST rezerwacją, która szuka załogi - trzyma termin od chwili utworzenia i stoi
+ * na osi błękitną przerywaną ramką z napisem „Zlecenie · szuka załogi". Osoba ze „Zlecaniem
+ * lotów" ma obok „Zarezerwuj" wyciszone „Zleć lot" (bez terminu), a kliknięcie w wolne
+ * miejsce komórki daje jej MENU „Zarezerwuj / Zleć lot" z maszyną i dniem tej komórki -
+ * ten sam wybór, co arkusz wolnego pasma 21E w telefonie. Bez uprawnienia menu nie ma:
+ * menu z jedną pozycją byłoby krokiem o nic.
+ *
  * ══ CZEGO TU NIE MA ══
  * **Sugestii slotów przy „Zarezerwuj za pilota".** Administrator patrzy na całość
  * i wpisuje konkretny termin (§10). Sugestie ma WŁASNA rezerwacja - pilot szuka miejsca
@@ -22,7 +30,7 @@
  * nie schowany.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { can } from '../../auth/can';
@@ -38,9 +46,14 @@ import {
   FilterChip,
   LinkButton,
   Loadable,
+  Menu,
   PageHead,
 } from '../../ui/components';
-import { CalendarIcon, PlaneIcon } from '../../ui/components/icons';
+import { CalendarIcon, CalendarPlusIcon, OrdersIcon, PlaneIcon } from '../../ui/components/icons';
+import { emptyOrderForm, type OrderFormDraft } from '../orders/orderForm';
+import { OrderFormDrawer } from '../orders/OrderFormDrawer';
+import { termTitleDay } from '../orders/orderLabels';
+import { orderPath } from '../orders/orderPaths';
 import { loadErrorMessage } from '../common/apiMessage';
 import { BlockDrawer } from './BlockDrawer';
 import { BookingDrawer } from './BookingDrawer';
@@ -70,6 +83,8 @@ export function CalendarScreen() {
   const [form, setForm] = useState<'block' | 'booking' | null>(null);
   // Szuflada WŁASNEJ rezerwacji (#233): szkic startowy i - w poprawce - rezerwacja.
   const [own, setOwn] = useState<{ seed: OwnDraft; editing: BookingDto | null } | null>(null);
+  // Szuflada NOWEGO zlecenia (4.0.0) - pusta z „Zleć lot" albo z maszyną i dniem komórki.
+  const [ordering, setOrdering] = useState<OrderFormDraft | null>(null);
 
   const range = (params.get('zakres') as RangeKey | null) ?? DEFAULT_RANGE;
   const known = RANGE_OPTIONS.some((o) => o.key === range) ? range : DEFAULT_RANGE;
@@ -131,6 +146,8 @@ export function CalendarScreen() {
   // akceptuje: bez zdolności odpowiedź byłaby 403 na ekranie, na którym nic nie zaszło.
   const canConfigure = can(session?.capabilities, 'accounts.manage');
   const canApprove = can(session?.capabilities, 'reservations.approve');
+  // „Zleć lot" i menu wolnej komórki (4.0.0) - wyłącznie ze „Zlecaniem lotów".
+  const canOrder = can(session?.capabilities, 'orders.create') && viewer != null && session?.org != null;
   const queue = useApprovalQueue(canApprove);
   const waiting = useMemo(
     () =>
@@ -162,6 +179,13 @@ export function CalendarScreen() {
             {canBlock ? (
               <Button variant="ghost" onClick={() => setForm('block')}>
                 Wyłącz maszynę z użytku
+              </Button>
+            ) : null}
+            {/* Wyciszone, nie drugi pełny przycisk: dwie akcje tej samej wagi obok siebie
+                nie mówią, która jest główna, a rezerwacja zostaje czynnością KAŻDEGO. */}
+            {canOrder ? (
+              <Button variant="ghost" onClick={() => setOrdering(emptyOrderForm())}>
+                Zleć lot
               </Button>
             ) : null}
             {/* JEDYNA akcja główna ekranu - rezerwacja jest czynnością KAŻDEGO członka
@@ -237,6 +261,7 @@ export function CalendarScreen() {
                 onAdd={(aircraftId, date) =>
                   setOwn({ seed: emptyOwnDraft({ aircraftId, date }), editing: null })
                 }
+                onOrder={canOrder ? (aircraftId, date) => setOrdering(emptyOrderForm({ aircraftId, date })) : null}
               />
               {hasAnyItem(rows) ? null : (
                 <EmptyState
@@ -261,6 +286,11 @@ export function CalendarScreen() {
                   <span className="cal-swatch pending" />
                   Czeka na akceptację
                 </span>
+                {/* Zlecenie różni się KSZTAŁTEM i barwą - błękit niesie pytanie klubu (K2c). */}
+                <span className="cal-legend-item">
+                  <span className="cal-swatch order" />
+                  Zlecenie · szuka załogi
+                </span>
                 <span className="cal-legend-item">
                   <span className="cal-swatch block" />
                   Wyłączona z użytku
@@ -279,6 +309,7 @@ export function CalendarScreen() {
           timezone={timezone}
           canManage={canManage}
           viewerId={viewer?.id ?? null}
+          aircraft={aircraft}
           onEdit={(booking) => {
             navigate('/kalendarz');
             setOwn({ seed: draftFromBooking(booking, timezone), editing: booking });
@@ -304,6 +335,25 @@ export function CalendarScreen() {
         />
       )}
 
+      {ordering == null || viewer == null || directory.data == null ? null : (
+        <OrderFormDrawer
+          aircraft={aircraft}
+          members={directory.data.members}
+          viewerId={viewer.id}
+          person={person}
+          timezone={timezone}
+          initial={ordering}
+          editing={null}
+          onClose={() => setOrdering(null)}
+          // Po wysłaniu - karta zlecenia nad listą „Zlecone": tam są adresaci, odczyty
+          // i odpowiedzi, a pasek na osi i tak pokaże zajęty termin.
+          onSent={(orderId) => {
+            setOrdering(null);
+            navigate(orderPath(orderId, 'zlecone'));
+          }}
+        />
+      )}
+
       {form == null ? null : (
         <BlockDrawer
           mode={form}
@@ -324,9 +374,14 @@ interface GridProps {
   timezone: string;
   /** Kliknięcie w wolne miejsce komórki - szuflada własnej rezerwacji z maszyną i dniem. */
   onAdd: (aircraftId: string, date: string) => void;
+  /**
+   * „Zleć lot" z maszyną i dniem komórki (4.0.0) - wtedy kliknięcie daje menu z wyborem.
+   * `null` = bez „Zlecania lotów": kliknięcie otwiera rezerwację od razu, jak w 3.2.0.
+   */
+  onOrder: ((aircraftId: string, date: string) => void) | null;
 }
 
-function Grid({ rows, days, timezone, onAdd }: GridProps) {
+function Grid({ rows, days, timezone, onAdd, onOrder }: GridProps) {
   const navigate = useNavigate();
   if (days.length === 0) return null;
 
@@ -382,7 +437,7 @@ function Grid({ rows, days, timezone, onAdd }: GridProps) {
                 {/* Wolne miejsce komórki jest celem kliknięcia - w spoczynku nie rysuje
                     nic, pod kursorem tło i plus (#233). Dzień miniony, maszyna poza
                     służbą i doba zajęta w całości przeglądem celu NIE dostają. */}
-                {cell.addable ? (
+                {!cell.addable ? null : onOrder == null ? (
                   <button
                     type="button"
                     className="cal-add"
@@ -392,13 +447,58 @@ function Grid({ rows, days, timezone, onAdd }: GridProps) {
                   >
                     +
                   </button>
-                ) : null}
+                ) : (
+                  <CellMenu
+                    label={cellLabelOf(row.aircraft.reg, days[j], timezone)}
+                    onBook={() => onAdd(row.aircraft.id, cell.date)}
+                    onOrder={() => onOrder(row.aircraft.id, cell.date)}
+                  />
+                )}
               </div>
             ))}
           </div>
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Wolne miejsce komórki dla osoby ze „Zlecaniem lotów" (4.0.0): plus otwiera MENU
+ * „Zarezerwuj / Zleć lot", obie pozycje z maszyną i dniem tej komórki. Menu jest
+ * bezpośrednim dzieckiem komórki - `.cal-cell:has(> .cell-menu)` zdejmuje wtedy jej
+ * `overflow: hidden`, inaczej warstwa ucięłaby się na krawędzi komórki.
+ */
+function CellMenu({ label, onBook, onOrder }: { label: string; onBook: () => void; onOrder: () => void }) {
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  return (
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        className="cal-add"
+        title={label}
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+      >
+        +
+      </button>
+      {open ? (
+        <Menu
+          label={label}
+          placement="cell-menu"
+          trigger={trigger}
+          onClose={() => setOpen(false)}
+          items={[
+            { key: 'book', label: 'Zarezerwuj', icon: <CalendarPlusIcon />, onSelect: onBook },
+            { key: 'order', label: 'Zleć lot', icon: <OrdersIcon size={14} />, onSelect: onOrder },
+          ]}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -419,12 +519,13 @@ const calVars = (days: number): React.CSSProperties =>
  * jeszcze niepotwierdzona jest wyciszona - bez tego termin, o którym nikt nie
  * zdecydował, wyglądał na pewny.
  */
-const itemClass = (item: { kind: string; status: string; mine: boolean }): string =>
+const itemClass = (item: { kind: string; status: string; mine: boolean; order: boolean }): string =>
   [
     'cal-item',
     item.kind === 'block' ? 'block' : '',
     item.status === 'pending' ? 'pending' : '',
     item.mine ? 'mine' : '',
+    item.order ? 'order' : '',
   ]
     .filter((c) => c !== '')
     .join(' ');
@@ -437,6 +538,12 @@ function addTitle(reg: string, day: { startsAt: string; endsAt: string } | undef
   if (day == null) return `Zarezerwuj ${reg}`;
   const mid = new Date((Date.parse(day.startsAt) + Date.parse(day.endsAt)) / 2);
   return `Zarezerwuj ${reg} na ${weekdayAccusative(mid, tz)} ${dayMonthLabel(mid, tz)}`;
+}
+
+/** „SP-ELG, sobota 20 września" - podpis menu komórki (makieta K1). Dzień z POŁUDNIA doby. */
+function cellLabelOf(reg: string, day: { startsAt: string; endsAt: string } | undefined, tz: string): string {
+  if (day == null) return reg;
+  return `${reg}, ${termTitleDay((Date.parse(day.startsAt) + Date.parse(day.endsAt)) / 2, tz)}`;
 }
 
 /**

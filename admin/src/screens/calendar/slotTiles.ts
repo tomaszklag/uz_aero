@@ -78,6 +78,9 @@ function whyOf(s: SlotSuggestionDto, startsAt: number, endsAt: number, input: Sl
       if (neighbour?.kind === 'block') {
         return before ? 'tuż po wyłączeniu z użytku' : 'tuż przed wyłączeniem z użytku';
       }
+      // Zlecenie bez kompletu załogi nie jest niczyją rezerwacją (K2c) - a kto w nim
+      // ewentualnie siedzi, mówi pasek nad kafelkami.
+      if ((neighbour?.order?.seeking.length ?? 0) > 0) return before ? 'tuż po zleceniu' : 'tuż przed zleceniem';
       const head = before ? 'tuż po rezerwacji' : 'tuż przed rezerwacją';
       const who = neighbour?.pilotId == null ? null : input.person(neighbour.pilotId);
       return who == null ? head : `${head} · ${shortName(who.name)}`;

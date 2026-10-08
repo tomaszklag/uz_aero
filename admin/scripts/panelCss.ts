@@ -55,6 +55,7 @@ const SHEETS: readonly { file: string; title: string }[] = [
   { file: 'components/attention.css', title: 'DO SPRAWDZENIA - LISTA SPRAW' },
   { file: 'components/stats.css', title: 'STATYSTYKI I ANALITYKA - SŁUPKI, PASMO' },
   { file: 'components/inbox.css', title: 'POWIADOMIENIA - SKRZYNKA I BANER' },
+  { file: 'components/orders.css', title: 'ZLECENIA NA LOT - LISTA, SZUFLADA, ROZMOWA' },
 ];
 
 export const PANEL_CSS_HEADER = `/* ══════════════════════════════════════════════════════════════════════════════

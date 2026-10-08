@@ -269,8 +269,9 @@ powiadomienia idzie do skrzynki (reguła z 3.1.0).
   i odpowiedzi (`http/routes/common/inboxWire.ts`). Skrzynkę ma każdy aktywny członek,
   bez zdolności; sesja platformowa jej nie ma. Bit `approver` dostaje wyłącznie telefon -
   o zgodę na powiadomienia pyta tylko on.
-- **CSP**: `connect-src 'self'` w polityce panelu obejmuje `wss:` tego samego hosta
-  w przeglądarkach docelowych (CSP poziomu 3) - do sprawdzenia w Z-D; inaczej jawny adres.
+- **CSP**: rozstrzygnięte w KK-D - polityka panelu niesie JAWNY `ws(s)://` tego samego
+  hosta (`staticPanel.ts`), zamiast liczyć na to, że `'self'` obejmie `wss:` w każdej
+  przeglądarce docelowej (§12, etap 1).
 
 ## 4. Co idzie kanałem w 4.0.0 (K3)
 

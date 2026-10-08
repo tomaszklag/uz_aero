@@ -57,6 +57,25 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   terminu (poprzedni przekreślony, z prośbą o nową odpowiedź), przydział, odwołanie
   i wiadomość w rozmowie mają w skrzynce własne wiersze, a zlecenia czekające na Ciebie -
   plakietkę „Do odpowiedzi". Powiadomienie otwiera zlecenie albo od razu rozmowę.
+- **Zlecenia w panelu klubu.** Kolumna panelu ma nowy moduł „Zlecenia" z dwiema listami:
+  „Do mnie" (to, o co pytają Ciebie) i „Zlecone" (to, co zlecasz albo prowadzisz jako
+  koordynator). Zlecenie wysyłasz z przeglądarki w tych samych trzech krokach, co
+  w telefonie. Na karcie zlecenia widzisz, kto odczytał i kto odpowiedział, wybierasz
+  spośród chętnych, zamieniasz osobę, odbierasz zlecenie, cofasz przydział, przesuwasz
+  termin, wysyłasz przypomnienie albo powielasz zlecenie na inny dzień. Adresat odpowiada
+  w panelu tak samo jak w aplikacji, a rozmowa ze zlecającym toczy się na żywo w obu
+  miejscach naraz.
+- **Zlecenia w kalendarzu panelu.** Zlecenie, które szuka załogi, stoi na osi własnym
+  paskiem („Zlecenie · szuka dowódcy"), a kliknięcie w wolne miejsce daje osobie
+  ze „Zlecaniem lotów" wybór „Zarezerwuj" albo „Zleć lot" - z samolotem i dniem tej
+  komórki. Kliknięcie w pasek zlecenia pokazuje, kogo brakuje, i prowadzi do karty
+  zlecenia; zlecający odwołuje je stamtąd, a pilot, który dostał lot, może z niego
+  zrezygnować.
+- **Grupy pilotów.** W module Piloci obok listy członków stoją grupy klubu (np. „Piloci
+  An-2"): administrator układa skład, a zlecenie wysłane do grupy trafia do wszystkich
+  jej członków.
+- **Kolumna panelu w trzech grupach**: Loty (Dziennik, Do sprawdzenia, Statystyki),
+  Planowanie (Kalendarz, Zlecenia) i Klub (Piloci, Samoloty).
 - **Drugi pilot widzi swoje loty jak dowódca.** Najbliższa rezerwacja na Pulpicie i „Moje
   rezerwacje" liczą także loty, w których siedzisz w prawym fotelu - z nazwiskiem dowódcy.
 - **Dzwonek i skrzynka w panelu.** W pasku górnym panelu klubu stoi dzwonek z liczbą nowych
@@ -539,13 +558,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 > Zlecenia lotów: koordynator pyta pilotów o lot w aplikacji, zamiast dzwonić do każdego po kolei.
 
-- [~] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
-- [~] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
-- [~] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
-- [~] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
-- [~] Zlecający widzi, kto już odczytał zlecenie
-- [~] Grupy pilotów w klubie
-- [~] Instruktor umawia lot z uczniem jednym zleceniem
+- [x] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
+- [x] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
+- [x] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
+- [x] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
+- [x] Zlecający widzi, kto już odczytał zlecenie
+- [x] Grupy pilotów w klubie
+- [x] Instruktor umawia lot z uczniem jednym zleceniem
 - [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
 
 ### 5.0.0 · termin do ustalenia

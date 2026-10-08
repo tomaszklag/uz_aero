@@ -40,8 +40,8 @@ export interface Timers {
 
 export interface LiveSocketOptions {
   url: string;
-  /** Ramki z treścią dla panelu: `changed` i `notification`. */
-  onFrame: (frame: Extract<LiveFrame, { type: 'changed' | 'notification' }>) => void;
+  /** Ramki z treścią dla panelu: `changed`, `notification` i rozmowa (`message`, `read`). */
+  onFrame: (frame: Extract<LiveFrame, { type: 'changed' | 'notification' | 'message' | 'read' }>) => void;
   /** Połączenie nawiązane; `reconnected` = po zerwaniu, nie pierwsze w tej karcie. */
   onOpen: (reconnected: boolean) => void;
   /** Serwer zamknął połączenie z powodem - gniazdo już się nie wznawia. */
@@ -135,6 +135,8 @@ export class LiveSocket {
           return;
         case 'changed':
         case 'notification':
+        case 'message':
+        case 'read':
           this.options.onFrame(frame);
           return;
         default:

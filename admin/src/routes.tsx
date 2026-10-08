@@ -37,6 +37,8 @@ import { ApprovalPathScreen } from './screens/calendar/ApprovalPathScreen';
 import { CalendarScreen } from './screens/calendar/CalendarScreen';
 import { DecisionQueueScreen } from './screens/calendar/DecisionQueueScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
+import { GroupsScreen } from './screens/groups/GroupsScreen';
+import { OrdersScreen } from './screens/orders/OrdersScreen';
 import { AccountScreen } from './screens/me/AccountScreen';
 import { ForgotPasswordScreen } from './screens/login/ForgotPasswordScreen';
 import { LoginScreen } from './screens/login/LoginScreen';
@@ -171,6 +173,18 @@ export const router = createHashRouter([
       // (`zgloszenia/:id` - osoba, która nie ma jeszcze kodu) i KOD KLUBU (`kod` -
       // konfiguracja klubu, nie człowiek). Rozstrzyga to trasa, a nie ekran czytający
       // adres w środku: `zgloszenia` i `kod` byłyby dla `:id?` zwykłym identyfikatorem.
+      // GRUPY KLUBU (4.0.0, epik Z-D #248): druga połowa modułu Piloci pod przełącznikiem
+      // „Członkowie · Grupy". PRZED `piloci/:id?` z tego samego powodu, co `kod` - słowo
+      // `grupy` byłoby dla niego identyfikatorem członka. Szuflada istniejącej grupy ma
+      // adres (`:id`); szuflada nowej - nie, bo tworzy byt, którego jeszcze nie ma.
+      {
+        path: 'piloci/grupy/:id?',
+        element: (
+          <RequireCapability access="panel.access">
+            <GroupsScreen />
+          </RequireCapability>
+        ),
+      },
       {
         path: 'piloci/kod',
         element: (
@@ -236,6 +250,29 @@ export const router = createHashRouter([
         element: (
           <RequireCapability access="club">
             <CalendarScreen />
+          </RequireCapability>
+        ),
+      },
+
+      // ZLECENIA (4.0.0, epik Z-D #248; `docs/zlecenia.md` §15): moduł KAŻDEGO członka
+      // klubu (`club`), jak kalendarz - zlecenie trafia do każdego. Połowa listy i okres
+      // stoją w adresie (`?widok=`, `?okres=`); szuflada zlecenia nad listą pod `:id`, jak
+      // szuflady modułów Piloci i Samoloty - lista zostaje pod spodem jako kontekst.
+      {
+        path: 'zlecenia/:id?',
+        element: (
+          <RequireCapability access="club">
+            <OrdersScreen />
+          </RequireCapability>
+        ),
+      },
+      // Rozmowa z adresatem - szuflada nad tą samą listą, pod własnym adresem (link
+      // z wiadomości „Wiadomość w zleceniu" da się wkleić).
+      {
+        path: 'zlecenia/:id/rozmowa/:recipientId',
+        element: (
+          <RequireCapability access="club">
+            <OrdersScreen />
           </RequireCapability>
         ),
       },

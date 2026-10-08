@@ -69,6 +69,20 @@ describe('napis na pasku siatki', () => {
     const block = booking({ kind: 'block', pilotId: null, blockReason: 'sabotaż' as never });
     expect(cellLabel(block, person)).toBe('Wyłączona');
   });
+
+  it('ZLECENIE bez kompletu załogi mówi, kogo brakuje - nie kreską za pusty fotel', () => {
+    const order = (seeking: ('pic' | 'dual')[], over: Partial<BookingDto> = {}) =>
+      booking({ pilotId: null, order: { seeking }, ...over });
+    expect(cellLabel(order(['pic', 'dual']), person)).toBe('Zlecenie · szuka załogi');
+    expect(cellLabel(order(['pic']), person)).toBe('Zlecenie · szuka dowódcy');
+    // Obsadzony fotel dopisuje nazwisko - jak każda zajętość na osi.
+    expect(cellLabel(order(['dual'], { pilotId: 'p-1' }), person)).toBe('J. Nowak · szuka drugiego pilota');
+    expect(cellLabel(order(['pic'], { dualId: 'p-2' }), person)).toBe('A. Kowalski · szuka dowódcy');
+  });
+
+  it('zlecenie obsadzone w komplecie jest zwykłą zajętością tej załogi', () => {
+    expect(cellLabel(booking({ order: { seeking: [], id: 'o-1', createdBy: 'p-2' } }), person)).toBe('J. Nowak');
+  });
 });
 
 describe('długość terminu', () => {
@@ -120,6 +134,20 @@ describe('nagłówek szuflady', () => {
     );
     expect(h.title).toBe('SP-AND · sobota, 26 września');
     expect(h.sub).toBe('09:00 → 17:00 czasu klubu · 8 h · rezerwacja pilota');
+  });
+
+  it('zlecenie bez kompletu załogi nie jest jeszcze niczyją rezerwacją', () => {
+    const h = drawerHeading(
+      booking({
+        pilotId: null,
+        startsAt: '2026-09-20T07:00:00.000Z',
+        endsAt: '2026-09-20T11:00:00.000Z',
+        order: { seeking: ['pic', 'dual'] },
+      }),
+      'SP-CDR',
+      TZ,
+    );
+    expect(h.sub).toBe('09:00 → 13:00 czasu klubu · 4 h · zlecenie');
   });
 
   it('KILKA DÓB: tytuł podaje zakres dat, a godziny dostają swoje dni', () => {
