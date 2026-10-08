@@ -18,7 +18,7 @@
 import { DUAL_REQUIRED_REASON } from './dualRequirement';
 
 /** Zdanie przy przycisku zapisu, który nie dojechał (brak sieci, wygasła sesja). */
-export const ORDER_OFFLINE = 'Zlecenie potwierdza serwer - potrzebne połączenie.';
+export const ORDER_OFFLINE = 'Zlecenie wymaga połączenia z internetem.';
 
 /**
  * Rozmowa bez połączenia (29A) - powód stoi W POLU wiadomości, bo pole i WYŚLIJ to jedna
@@ -30,16 +30,16 @@ export const MESSAGE_OFFLINE = 'Bez połączenia - wiadomość wyślesz z zasię
  * Odpowiedź adresata, która nie dojechała (28, 28D) - to samo zdanie, co decyzja o cudzej
  * rezerwacji (26): o tym, czy fotel jest Twój, rozstrzyga serwer.
  */
-export const ANSWER_OFFLINE = 'Odpowiedź zapisuje serwer - potrzebne połączenie.';
+export const ANSWER_OFFLINE = 'Odpowiedź wymaga połączenia z internetem.';
 
 const ORDER_REFUSAL: Readonly<Record<string, string>> = {
-  aircraft_disabled: 'Ta maszyna jest wyłączona z użytku - wybierz inny samolot.',
+  aircraft_disabled: 'Ta maszyna jest poza służbą - wybierz inny samolot.',
   aircraft_not_found: 'Wybierz samolot jeszcze raz - flota klubu mogła się zmienić.',
   booking_in_past: 'Ten termin już minął - ustaw godziny, które są jeszcze przed Tobą.',
   booking_order: 'Popraw godziny - koniec wypada przed początkiem.',
   booking_closed: 'Ten termin jest już zamknięty.',
   booking_from_order: 'Termin zmienia osoba zlecająca - edycją zlecenia.',
-  no_seat_sought: 'Zaznacz „Szukam" przy co najmniej jednym fotelu - inaczej to zwykła rezerwacja.',
+  no_seat_sought: 'Ustaw „Szukam" przy co najmniej jednym fotelu.',
   dual_required: DUAL_REQUIRED_REASON,
   no_recipients: 'Dodaj adresatów przy każdym szukanym fotelu.',
   seat_not_sought: 'Ten fotel nie jest szukany - zmień jego stan albo usuń adresatów.',
@@ -62,7 +62,7 @@ const ORDER_REFUSAL: Readonly<Record<string, string>> = {
 
 /** Odmowa zapisu zlecenia → zdanie przy przycisku. */
 export function orderRefusalText(refusal: string): string {
-  return ORDER_REFUSAL[refusal] ?? `Serwer odmówił zapisu (${refusal}).`;
+  return ORDER_REFUSAL[refusal] ?? `Nie udało się zapisać zlecenia - kod: ${refusal}.`;
 }
 
 const THREAD_REFUSAL: Readonly<Record<string, string>> = {
@@ -75,5 +75,5 @@ const THREAD_REFUSAL: Readonly<Record<string, string>> = {
 
 /** Odmowa wysłania wiadomości → zdanie w polu wiadomości (pole i WYŚLIJ to jedna kontrolka). */
 export function threadRefusalText(refusal: string): string {
-  return THREAD_REFUSAL[refusal] ?? `Serwer odmówił wysłania (${refusal}).`;
+  return THREAD_REFUSAL[refusal] ?? `Nie udało się wysłać wiadomości - kod: ${refusal}.`;
 }

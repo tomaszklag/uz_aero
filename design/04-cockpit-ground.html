@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 04 Cockpit · po zatrzymaniu silnika</title>
+<title>Ninerdeck - 04 Kokpit · po wyłączeniu silnika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -108,8 +108,8 @@
   .scroll > * { flex-shrink:0; }
 
   /* ===== HERO: ZDAJ SAMOLOT (model 2026-08-10) =====
-     Geometria 1:1 ze START ENGINE (04a) - ta sama ranga akcji, inny kolor: czerwień
-     zakończenia, jak STOP ENGINE i kafelek zdania. Po zatrzymaniu silnika to jest
+     Geometria 1:1 ze URUCHOM SILNIK (04a) - ta sama ranga akcji, inny kolor: czerwień
+     zakończenia, jak WYŁĄCZ SILNIK i kafelek zdania. Po zatrzymaniu silnika to jest
      JEDYNA droga naprzód, więc dostaje miejsce i rozmiar hero. */
   .release-hero {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
@@ -308,7 +308,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">NINERDECK - 04</span>
-  <span class="slug">cockpit · po zatrzymaniu silnika</span>
+  <span class="slug">kokpit · po wyłączeniu silnika</span>
   <span class="canvas-meta"><span class="pulse"></span>Operacja zakończona</span>
 </header>
 
@@ -363,7 +363,7 @@
     <div class="scroll">
 
       <!-- HERO: ZDAJ SAMOLOT - operacja jest zakończona (model 2026-08-10).
-           TU STAŁ START ENGINE. Operacja = JEDEN bieg silnika: po STOP ENGINE drugiego
+           TU STAŁ URUCHOM SILNIK. Operacja = JEDEN bieg silnika: po wyłączeniu silnika drugiego
            startu nie ma, więc hero mówi jedyną rzecz, która została do zrobienia -
            oddanie maszyny z odczytami (09b). Kolejny lot to NOWE przejęcie (02).
            Przed zdaniem wolno jeszcze dolać paliwa (kafelek niżej) - dolewka
@@ -455,7 +455,7 @@
           <div class="axis-row">
             <span class="axis-time dim">10:58</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">paliwo 112 L · 1 236:52</span></span>
+            <span class="axis-label"><span class="axis-name muted">Rozpoczęcie</span><span class="axis-sub">paliwo 112 L · 1 236:52</span></span>
             <span class="axis-right"></span>
           </div>
 
@@ -598,7 +598,7 @@
              była drugim widokiem tego samego logu z własnymi ołówkami: korekta ma
              odtąd jedne drzwi i jeden kształt.
              Wejście stoi w kokpicie, bo kokpit jest stanem modalnym - bez niego pilot
-             po STOP ENGINE nie miałby jak naprawić brakującego lądowania PRZED zdaniem
+             po wyłączeniu silnika nie miałby jak naprawić brakującego lądowania PRZED zdaniem
              samolotu, a zdanie zatwierdza log. -->
         <a href="10d-edycja.html" class="action-card">
           <div class="action-icon">
@@ -621,14 +621,14 @@
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu - pusty log operacji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po rozpoczęciu lotu - pusty log operacji, URUCHOM SILNIK, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item active" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego URUCHOM SILNIK nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -677,7 +677,7 @@
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
   <a href="10d-edycja.html">10D Edycja operacji</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
-  <a href="05-cockpit-running.html">05 Running →</a>
+  <a href="05-cockpit-running.html">05 W locie →</a>
   <span>·</span>
   <a href="06-tankowanie.html">06 Paliwo</a>
   <span>·</span>

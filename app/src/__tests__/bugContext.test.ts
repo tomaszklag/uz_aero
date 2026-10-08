@@ -67,7 +67,7 @@ describe('etykieta miejsca', () => {
     // Sam tytuł arkusza nie mówi, w którym miejscu aplikacji pilot stał - ten sam
     // arkusz korekty otwiera się z kilku ekranów.
     expect(bugPlaceLabel({ route: 'Stats', sheet: 'KOREKTA ODCZYTU' })).toBe(
-      'OPERACJA (10) · arkusz KOREKTA ODCZYTU',
+      'OPERACJA (10) · okienko KOREKTA ODCZYTU',
     );
     expect(bugPlaceLabel({ route: 'Stats', sheet: '   ' })).toBe('OPERACJA (10)');
   });

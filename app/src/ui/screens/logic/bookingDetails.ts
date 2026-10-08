@@ -138,15 +138,15 @@ const STATUS: Readonly<Record<string, string>> = {
   rejected: 'Odrzucona',
   expired: 'Wygasła',
   cancelled: 'Odwołana',
-  released: 'Slot zwolniony',
+  released: 'Niewykorzystana',
   fulfilled: 'Zrealizowana',
 };
 
 const EDIT_NOTE = 'Po przesunięciu ścieżka rusza od nowa - zgoda dotyczyła tego terminu.';
-const CANCEL_WARNING = 'Slot wróci do kalendarza i będzie mógł go zająć ktoś inny.';
+const CANCEL_WARNING = 'Termin się zwolni i będzie mógł go zająć ktoś inny.';
 /** To samo zdanie, co arkusz odwołania na karcie zlecenia (32C). */
 const ORDER_CANCEL_WARNING =
-  'Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość - z powodem, jeśli go podasz.';
+  'Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość - z powodem, jeśli go podasz.';
 
 export function bookingDetails(input: BookingDetailsInput): BookingDetailsVm {
   const b = input.booking;
@@ -293,7 +293,7 @@ function orderVm(input: BookingDetailsInput): BookingOrderVm | null {
     reference,
     note: [
       { text: 'Po rezygnacji ' },
-      { text: 'fotel wraca do szukania', strong: true },
+      { text: 'fotel znów będzie do obsadzenia', strong: true },
       { text: `, a ${name ?? 'osoba zlecająca'} dostanie wiadomość.` },
     ],
   };

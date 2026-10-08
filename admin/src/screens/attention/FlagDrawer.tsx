@@ -81,7 +81,7 @@ export function FlagDrawer({ id, flags, listPending, person, onClose }: FlagDraw
         }
       >
         {listPending ? null : (
-          <Banner tone="warn">Nie ma takiej sprawy w bieżącym zawężeniu. Zmień chip stanu albo rodzaju.</Banner>
+          <Banner tone="warn">Nie ma takiej sprawy w bieżącym zawężeniu. Zmień filtr stanu albo rodzaju.</Banner>
         )}
       </Drawer>
     );
@@ -178,7 +178,7 @@ export function FlagDrawer({ id, flags, listPending, person, onClose }: FlagDraw
             <>
               <Banner tone="warn">
                 <b>Zamknięcie tej sprawy wyśle kartę do arkusza.</b>{' '}
-                {heldTab == null ? 'Karta doby' : `Karta ${heldTab}`} powstanie od nowa z obiema operacjami
+                {heldTab == null ? 'Karta dnia' : `Karta ${heldTab}`} powstanie od nowa z obiema operacjami
                 {hanging == null
                   ? '.'
                   : ` - jeśli operacja ${sessionPilot(hanging)} nadal będzie w toku, karta pójdzie bez niej z adnotacją „niekompletna".`}
@@ -198,7 +198,7 @@ export function FlagDrawer({ id, flags, listPending, person, onClose }: FlagDraw
           ) : null}
 
           {allowed ? (
-            <Field htmlFor="flag-note" label="Notatka" hint="Zostaje w dzienniku akcji przy tej sprawie.">
+            <Field htmlFor="flag-note" label="Notatka" hint="Zostaje przy tej sprawie.">
               <textarea
                 id="flag-note"
                 className="input area"

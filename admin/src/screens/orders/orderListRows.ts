@@ -284,7 +284,7 @@ function inboxState(item: OrderListItemDto, me: OrderMeDto, ended: boolean): Pic
   if (!me.inPlay) {
     const closed = closedPill(order.status, order.closeReason);
     if (closed != null) return closed;
-    return { pill: { text: 'Nieaktualne', tone: 'dim' }, pillSub: me.staleReason === 'removed' ? 'Zlecenie cofnięte' : 'Fotel obsadzony' };
+    return { pill: { text: 'Nieaktualne', tone: 'dim' }, pillSub: me.staleReason === 'removed' ? 'Nie jest już do Ciebie' : 'Fotel obsadzony' };
   }
   if (me.assignedSeat != null) {
     return {

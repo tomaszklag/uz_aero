@@ -97,7 +97,7 @@ export function OrdersScreen({
   };
 
   const header = (
-    <ScreenHeader title="ZLECENIA" subtitle="CZASY KLUBU" size="md" backLabel="Pulpit" onBack={() => navigation.goBack()} />
+    <ScreenHeader title="ZLECENIA" subtitle="CZAS KLUBU" size="md" backLabel="Pulpit" onBack={() => navigation.goBack()} />
   );
 
   return (
@@ -124,10 +124,10 @@ export function OrdersScreen({
             lines={[
               [
                 { text: 'Zlecenia ' },
-                { text: 'wymagają połączenia', bold: true },
+                { text: 'wymagają połączenia z internetem', bold: true },
                 { text: ' - odpowiedzi i fotele zmieniają się na bieżąco.' },
               ],
-              [{ text: 'Wróć tu z zasięgiem. Lot z przyjętego zlecenia rozpoczniesz bez sieci - „ROZPOCZNIJ LOT" na Pulpicie.' }],
+              [{ text: 'Wróć tu z zasięgiem. Lot z przyjętego zlecenia rozpoczniesz także bez zasięgu - „ROZPOCZNIJ LOT" na Pulpicie.' }],
             ]}
           />
         ) : loading || vm == null ? (
@@ -154,7 +154,7 @@ export function OrdersScreen({
             <EmptyState
               tone="neutral"
               icon="inbox"
-              title="NIC NIE PRZYSZŁO"
+              title="BRAK ZLECEŃ"
               lines={[
                 [
                   { text: 'Tu trafią ' },

@@ -308,6 +308,7 @@ export function CalendarScreen() {
           reg={aircraft.find((a) => a.id === open.aircraftId)?.reg ?? open.aircraftId}
           timezone={timezone}
           canManage={canManage}
+          canSeeLog={can(session?.capabilities, 'panel.access')}
           viewerId={viewer?.id ?? null}
           aircraft={aircraft}
           onEdit={(booking) => {

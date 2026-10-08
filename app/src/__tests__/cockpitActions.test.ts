@@ -31,14 +31,14 @@ describe('przycisk główny - sekwencja idle → Taxi → Take off → Landing',
   test('zaraz po START ENGINE (samolot stoi) następne jest KOŁOWANIE, nie start', () => {
     const view = build();
     expect(view.primary).toBe('taxi');
-    expect(view.primaryLabel).toBe('Taxi');
+    expect(view.primaryLabel).toBe('Kołowanie');
     expect(view.primaryIcon).toBe('phase-taxi');
   });
 
   test('kołowanie trwa → przycisk zmienia się na Take off', () => {
     const view = build({ taxiing: true, phase: 'taxi' });
     expect(view.primary).toBe('takeoff');
-    expect(view.primaryLabel).toBe('Take off');
+    expect(view.primaryLabel).toBe('Start');
     expect(view.primaryIcon).toBe('takeoff');
   });
 
@@ -47,7 +47,7 @@ describe('przycisk główny - sekwencja idle → Taxi → Take off → Landing',
     // na nim polegać, gdy samolot jest w powietrzu.
     const view = build({ inFlight: true, taxiing: true, phase: 'cruise' });
     expect(view.primary).toBe('landing');
-    expect(view.primaryLabel).toBe('Landing');
+    expect(view.primaryLabel).toBe('Lądowanie');
     expect(view.primaryIcon).toBe('landing');
   });
 
@@ -63,8 +63,8 @@ describe('przycisk główny - sekwencja idle → Taxi → Take off → Landing',
     // `method: 'manual'` - brak fixa i zła detekcja przy zdrowym odbiorniku znaczą
     // dla niego to samo. Stan czujnika opisuje baner 05g i siatka parametrów.
     expect(build({ gpsLost: true })).toEqual(build({ gpsLost: false }));
-    expect(build({ gpsLost: true, taxiing: true }).primaryLabel).toBe('Take off');
-    expect(build({ gpsLost: true, inFlight: true }).primaryLabel).toBe('Landing');
+    expect(build({ gpsLost: true, taxiing: true }).primaryLabel).toBe('Start');
+    expect(build({ gpsLost: true, inFlight: true }).primaryLabel).toBe('Lądowanie');
   });
 });
 

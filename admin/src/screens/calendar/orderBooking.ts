@@ -150,5 +150,5 @@ function seekingSub(block: SeatBlockVm, closed: boolean): string | null {
 export function resignNote(booking: BookingDto, person: PersonLookup): string {
   const creator = booking.order?.createdBy == null ? null : person(booking.order.createdBy);
   const who = creator == null ? 'osoba zlecająca' : creator.name;
-  return `Fotel wróci do szukania, a ${who} dostanie wiadomość. Termin zostaje zajęty.`;
+  return `Fotel znów będzie do obsadzenia, a ${who} dostanie wiadomość. Termin zostaje zajęty.`;
 }

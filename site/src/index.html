@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ninerdeck - zaplanuj lot, resztę zapisze telefon</title>
-<meta name="description" content="Ninerdeck - kalendarz floty i dziennik lotów dla aeroklubów, stref zrzutu i szkół latania. Rezerwujesz maszynę, a starty, lądowania, paliwo i motogodziny zapisują się same - także bez zasięgu.">
+<meta name="description" content="Ninerdeck - kalendarz floty, zlecenia lotów i dziennik lotów dla aeroklubów, stref zrzutu i szkół latania. Starty, lądowania, paliwo i motogodziny zapisują się same - także bez zasięgu.">
 <meta property="og:title" content="Ninerdeck - zaplanuj lot, resztę zapisze telefon">
-<meta property="og:description" content="Kalendarz całej floty, rezerwacja w dwóch krokach, a po starcie dziennik, paliwo i motogodziny bez papieru i przepisywania. Klub widzi wszystko w jednym panelu.">
+<meta property="og:description" content="Kalendarz całej floty, rezerwacje i zlecenia lotów, a w powietrzu dziennik, paliwo i motogodziny bez papieru i przepisywania. Klub widzi wszystko w jednym panelu.">
 <meta name="theme-color" content="#0D0D0D">
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,10 +40,10 @@
       <span class="chip">działa bez zasięgu</span>
     </div>
     <h1>Zaplanuj lot.<br>Resztę <span class="grad">zapisze telefon.</span></h1>
-    <p class="lead">Rano widzisz, kto ma którą maszynę i o której - i bierzesz wolny termin w dwóch krokach.
-    Potem pilot odczytuje liczniki przy przejęciu i zdaniu samolotu, a resztę zapisuje telefon: starty,
-    lądowania, czas blokowy, paliwo i motogodziny. Dane trafiają do klubu same, gdy tylko jest zasięg.
-    Zarząd widzi flotę bez czekania na kartkę, mechanik ma resurs bez luk, a wieczorne przepisywanie znika.</p>
+    <p class="lead">Pilot rezerwuje samolot w dwóch krokach albo odpowiada na zlecenie lotu od koordynatora.
+    W kabinie odczytuje tylko liczniki na początku i na końcu lotu - starty, lądowania, czas lotu, paliwo
+    i motogodziny zapisuje telefon, także bez zasięgu. Zarząd widzi całą flotę bez czekania na kartki,
+    mechanik ma motogodziny bez luk, a wieczorne przepisywanie znika.</p>
     <div class="cta">
       <a class="btn primary" href="#ekrany">Zobacz aplikację <span class="arr">→</span></a>
       <a class="btn ghost" href="admin/">Panel klubu <span class="arr">→</span></a>
@@ -67,10 +67,10 @@
 <div class="marquee" aria-hidden="true">
   <div class="track">
     <ul>
-      <li>kalendarz floty <b>na jednym ekranie</b></li><li>rezerwacja <b>w dwóch krokach</b></li><li>zgoda na lot <b>jednym tapnięciem</b></li><li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>lot <b>działa bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li>
+      <li>kalendarz floty <b>na jednym ekranie</b></li><li>rezerwacja <b>w dwóch krokach</b></li><li>zlecenie lotu <b>do pilota albo grupy</b></li><li>zgoda na lot <b>jednym tapnięciem</b></li><li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>lot <b>także bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li>
     </ul>
     <ul>
-      <li>kalendarz floty <b>na jednym ekranie</b></li><li>rezerwacja <b>w dwóch krokach</b></li><li>zgoda na lot <b>jednym tapnięciem</b></li><li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>lot <b>działa bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li>
+      <li>kalendarz floty <b>na jednym ekranie</b></li><li>rezerwacja <b>w dwóch krokach</b></li><li>zlecenie lotu <b>do pilota albo grupy</b></li><li>zgoda na lot <b>jednym tapnięciem</b></li><li>start i lądowanie <b>zapisane automatycznie</b></li><li>paliwo <b>rozliczone na każdą operację</b></li><li>motogodziny <b>bez luk między pilotami</b></li><li>lot <b>także bez zasięgu</b></li><li>karta dnia <b>bez przepisywania</b></li><li>nowy pilot <b>gotowy tego samego dnia</b></li>
     </ul>
   </div>
 </div>
@@ -83,14 +83,14 @@
       <p class="kicker">Dla kogo</p>
       <h2 class="h-display">Każdy w klubie dostaje<br>swoją odpowiedź</h2>
     </div>
-    <p class="sub">Jedna aplikacja, trzy pytania, na które dziś odpowiada się przez telefon albo z kartki.</p>
+    <p class="sub">Jedna aplikacja odpowiada na pytania, na które dziś odpowiada się przez telefon albo z kartki.</p>
   </div>
   <div class="who reveal">
-    <div><span class="tag">Zarząd</span><h3>Ile lata i pali każda maszyna</h3><p>Operacje, czas blokowy i zużycie paliwa całej floty - dzień po dniu, bez zbierania kartek od pilotów i bez arkusza, który ktoś musi uzupełnić.</p></div>
-    <div><span class="tag">Mechanik</span><h3>Resurs bez luk</h3><p>Stan licznika motogodzin przekazywany z pilota na pilota, dolewki oleju i zużycie obok normy maszyny. Odchyłka widoczna, zanim stanie się usterką. Telefon powie mu, gdy maszyna wraca z lotu, a gdy klub tak ustawi, zatwierdza też rezerwacje - z własnego telefonu.</p></div>
-    <div><span class="tag">Szef wyszkolenia</span><h3>Kto, z kim, na czym</h3><p>Każda operacja z załogą, zadaniem i śladem lotu na mapie - do omówienia z uczniem i do wyjaśnienia każdego zdarzenia. Zanim zgodzi się na lot ucznia, widzi jego nalot na tej maszynie.</p></div>
+    <div><span class="tag">Zarząd</span><h3>Ile lata i pali każda maszyna</h3><p>Loty, czas pracy silników i zużycie paliwa całej floty - dzień po dniu, bez zbierania kartek od pilotów i bez arkusza, który ktoś musi uzupełniać.</p></div>
+    <div><span class="tag">Mechanik</span><h3>Motogodziny bez luk</h3><p>Stan licznika przechodzi z pilota na pilota, a dolewki oleju i zużycie paliwa stoją obok normy samolotu. Odchyłkę widać, zanim stanie się usterką. Telefon powie mechanikowi, gdy samolot wraca z lotu, a jeśli klub tak ustawi - mechanik zatwierdza też rezerwacje.</p></div>
+    <div><span class="tag">Szef wyszkolenia</span><h3>Kto, z kim, na czym</h3><p>Każdy lot z załogą, zadaniem i śladem na mapie - do omówienia z uczniem. Lot szkolny zleca uczniowi z telefonu, a zanim zgodzi się na lot, widzi nalot ucznia na tym samolocie.</p></div>
   </div>
-  <p class="who-pilot reveal"><b>A pilot?</b> Rezerwuje maszynę na wolny termin, a w locie robi dwa odczyty liczników - przy przejęciu i zdaniu samolotu. Resztę zapisuje telefon.</p>
+  <p class="who-pilot reveal"><b>A pilot?</b> Rezerwuje samolot albo przyjmuje zlecenie lotu, a w locie odczytuje liczniki dwa razy - na początku i na końcu. Resztę zapisuje telefon.</p>
 </section>
 
 <section class="section" id="planowanie">
@@ -99,22 +99,48 @@
       <p class="kicker">Planowanie</p>
       <h2 class="h-display">Kto ma którą maszynę<br>i o której</h2>
     </div>
-    <p class="sub">Dziennik opisuje to, co się wydarzyło. Kalendarz odpowiada na pytanie zadawane wcześniej:
-    czym dziś polecę i czy ktoś mi tego nie zabrał. Jeden ekran na całą flotę, rezerwacja w dwóch krokach,
-    ta sama dla pilota z telefonu i dla klubu z panelu.</p>
+    <p class="sub">Kalendarz odpowiada na pytanie zadawane przed lotem: czym dziś polecę i czy samolot jest wolny.
+    Jeden ekran na całą flotę i rezerwacja w dwóch krokach - tak samo w telefonie pilota i w panelu klubu.</p>
   </div>
   <div class="gallery reveal">
     <figure><div class="device" style="--s:0.5"><iframe src="screens/21-kalendarz.html" title="Kalendarz floty" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>kalendarz</span><b>Cała flota, jedna doba</b><p>Paski zajętości wszystkich maszyn obok siebie, godzinami klubu. Widać, kto lata, do której i czego nie ma - maszyna na przeglądzie zostaje na ekranie razem z powodem.</p></figcaption></figure>
+      <figcaption><span>kalendarz</span><b>Cała flota, jedna doba</b><p>Rezerwacje wszystkich samolotów obok siebie, w godzinach klubu. Widać, kto lata i do której, a samolot na przeglądzie zostaje na ekranie razem z powodem.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/22-rezerwacja.html" title="Rezerwacja terminu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>rezerwacja</span><b>Dzień, maszyna, godziny</b><p>Przy każdym samolocie wypisane wolne pasma, a nad godzinami gotowe propozycje z powodem: „tuż po rezerwacji J. Nowaka", „początek dnia". Wystarczy w nie tapnąć.</p></figcaption></figure>
+      <figcaption><span>rezerwacja</span><b>Dzień, maszyna, godziny</b><p>Przy każdym samolocie widać wolne godziny, a nad nimi gotowe propozycje: „tuż po rezerwacji J. Nowaka", „początek dnia". Wystarczy w nie tapnąć.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/23-rezerwacja-szczegoly.html" title="Twoja rezerwacja" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>twój termin</span><b>Odliczanie i jedno wejście w lot</b><p>Termin z odliczaniem, maszyna, zadanie i plan lotu. Stąd rezerwację przesuniesz albo oddasz, a gdy godzina nadejdzie - „ROZPOCZNIJ LOT" wypełni nią pierwszy krok przejęcia.</p></figcaption></figure>
+      <figcaption><span>twój termin</span><b>Odliczanie do lotu</b><p>Termin z odliczaniem, samolot, zadanie i plan lotu. Rezerwację przesuniesz albo odwołasz, a gdy przyjdzie godzina - „ROZPOCZNIJ LOT" sam wypełni pierwszy krok.</p></figcaption></figure>
   </div>
   <div class="who reveal">
-    <div><span class="tag">Terminy z sensem</span><h3>Propozycje liczone od świtu do zmroku</h3><p>Aplikacja nie proponuje lotu po zachodzie słońca: okno doby liczy się z efemeryd nad lotniskiem macierzystym klubu, więc w czerwcu jest szersze niż w listopadzie.</p></div>
-    <div><span class="tag">Przegląd to też termin</span><h3>Maszyna znika z kalendarza</h3><p>Wyłączenie z użytku na czas przeglądu albo usterki wpisuje się tak samo jak rezerwację - i od tej chwili nikt jej nie weźmie. Powód widzą wszyscy.</p></div>
-    <div><span class="tag">Nic nie blokuje lotu</span><h3>Rezerwacja pomaga, nie rządzi</h3><p>Bez rezerwacji polecisz dokładnie jak dotąd, także bez zasięgu. Jeśli ktoś ma tę maszynę zaklepaną na najbliższe godziny, aplikacja o tym powie - i na tym koniec.</p></div>
+    <div><span class="tag">Terminy z sensem</span><h3>Od świtu do zmroku</h3><p>Aplikacja proponuje terminy między wschodem a zachodem słońca nad lotniskiem klubu - w czerwcu dzień w kalendarzu jest dłuższy niż w listopadzie.</p></div>
+    <div><span class="tag">Przegląd to też termin</span><h3>Samolot w serwisie</h3><p>Przegląd albo usterkę wpisuje się w kalendarzu jak rezerwację - w tym czasie nikt samolotu nie zarezerwuje, a powód widzą wszyscy.</p></div>
+    <div><span class="tag">Rezerwacja pomaga</span><h3>Ale lotu nie blokuje</h3><p>Bez rezerwacji polecisz tak samo, także bez zasięgu. Jeśli ktoś ma ten samolot zarezerwowany na najbliższe godziny, aplikacja po prostu o tym powie.</p></div>
+  </div>
+</section>
+
+<section class="section" id="zlecenia">
+  <div class="head reveal">
+    <div>
+      <p class="kicker">Zlecenia lotów</p>
+      <h2 class="h-display">Potrzebny pilot?<br>Zleć lot z&nbsp;telefonu</h2>
+    </div>
+    <p class="sub">Koordynator albo instruktor wybiera termin i samolot, a lot wysyła konkretnej osobie
+    albo całej grupie, na przykład pilotom An-2. Piloci odpowiadają jednym tapnięciem, a przyjęty lot
+    od razu staje się ich rezerwacją.</p>
+  </div>
+  <div class="gallery reveal">
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/31b-zlecenie-zaloga.html" title="Nowe zlecenie lotu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>zlecenie</span><b>Fotele i adresaci</b><p>Przy każdym fotelu: lecisz sam albo szukasz pilota - imiennie albo w grupie. Termin jest zajęty od razu, więc nikt go w międzyczasie nie weźmie.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/28a-zlecenie-grupa.html" title="Zlecenie u pilota" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>u pilota</span><b>Mogę lecieć albo nie mogę</b><p>Pilot widzi termin, samolot, zadanie i plan lotu. Jeśli w tym czasie ma już inny lot, aplikacja mu o tym przypomni.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/32-zlecenie-prowadzone.html" title="Prowadzenie zlecenia" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>prowadzenie</span><b>Kto odczytał, kto może</b><p>Przy każdym adresacie widać, czy odczytał zlecenie i co odpowiedział. Fotel obsadzasz jednym przyciskiem, a pozostali dostają informację, że zlecenie jest już nieaktualne.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/29-watek.html" title="Rozmowa przy zleceniu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>rozmowa</span><b>Ustalenia przy zleceniu</b><p>Pilot i osoba zlecająca piszą do siebie przy samym zleceniu - na przykład o innej godzinie. Wszystko jest w jednym miejscu, nie w kilku komunikatorach.</p></figcaption></figure>
+  </div>
+  <div class="who reveal">
+    <div><span class="tag">Instruktor i uczeń</span><h3>Lot szkolny w minutę</h3><p>Instruktor siada w fotelu dowódcy, a fotel drugiego pilota wysyła uczniowi. Po przyjęciu obaj mają lot w kalendarzu.</p></div>
+    <div><span class="tag">Grupy pilotów</span><h3>Jeden adresat zamiast dziesięciu</h3><p>Klub zakłada w panelu grupy - na przykład instruktorów albo pilotów An-2 - i wysyła do nich zlecenia jednym wyborem.</p></div>
+    <div><span class="tag">Na czas</span><h3>Przypomnienie, gdy brakuje załogi</h3><p>Dzień przed terminem zlecający dostaje wiadomość, jeśli któryś fotel jest wciąż pusty. Zlecenie bez załogi wygasa samo i zwalnia termin.</p></div>
   </div>
 </section>
 
@@ -124,24 +150,24 @@
       <p class="kicker">Zgoda klubu</p>
       <h2 class="h-display">Kto ma się zgodzić,<br>zgodzi się z&nbsp;telefonu</h2>
     </div>
-    <p class="sub">Klub, który chce wiedzieć, kto i czym poleci, zanim to się stanie, układa w panelu ścieżkę
-    akceptacji - na przykład najpierw mechanik, potem szef wyszkolenia. Rezerwacja czeka na zgodę i przez ten czas
-    trzyma termin, a każda decyzja wraca do pilota z powodem. Klub, który ścieżki nie ustawi, pracuje jak dotąd.</p>
+    <p class="sub">Klub może wymagać zgody na każdą rezerwację - na przykład najpierw mechanika, potem szefa
+    wyszkolenia. Termin jest zajęty od chwili rezerwacji, a pilot dostaje każdą decyzję z powodem.
+    Klub, który tego nie potrzebuje, po prostu tego nie włącza.</p>
   </div>
   <div class="gallery reveal">
     <figure><div class="device" style="--s:0.5"><iframe src="screens/23b-rezerwacja-czeka.html" title="Rezerwacja czeka na zgodę" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>czeka na zgodę</span><b>Termin trzymany</b><p>Rezerwacja zajmuje maszynę od chwili złożenia, a karta mówi, który krok czeka i od kiedy. Gdy nikt nie zdąży zdecydować, termin wraca do puli z chwilą swojego początku.</p></figcaption></figure>
+      <figcaption><span>czeka na zgodę</span><b>Termin trzymany</b><p>Rezerwacja zajmuje samolot od razu, a karta mówi, na czyją zgodę czeka i od kiedy. Jeśli nikt nie zdecyduje do początku terminu, termin się zwalnia.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/26-decyzja.html" title="Decyzja o rezerwacji" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>decyzja</span><b>Zatwierdź albo odmów</b><p>Cały plan lotu na jednym ekranie: samolot, termin, załoga, zadanie i trasa. Zgoda to jedno tapnięcie, a odmowa wymaga powodu - pilot przeczyta go u siebie, zamiast dzwonić z pytaniem.</p></figcaption></figure>
+      <figcaption><span>decyzja</span><b>Zatwierdź albo odmów</b><p>Cały plan lotu na jednym ekranie: samolot, termin, załoga, zadanie i trasa. Zgoda to jedno tapnięcie, a odmowa ma powód, który pilot przeczyta u siebie.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/26a-podglad-pilota.html" title="Podgląd pilota" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>podgląd</span><b>Komu i czym</b><p>Ile pilot latał na tej maszynie i kiedy ostatnio, nalot z 30 i 90 dni, jego najbliższe terminy. Obok podgląd samolotu: liczniki, ostatnie loty i przeglądy.</p></figcaption></figure>
+      <figcaption><span>podgląd</span><b>Komu i czym</b><p>Ile pilot latał na tym samolocie i kiedy ostatnio, nalot z 30 i 90 dni, jego najbliższe terminy. Obok podgląd samolotu: liczniki, ostatnie loty i przeglądy.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/25-powiadomienia.html" title="Skrzynka powiadomień" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>skrzynka</span><b>Dzwonek na Pulpicie</b><p>Prośby o zgodę, decyzje w Twojej sprawie i wygasłe terminy w jednym miejscu. Telefon da znać powiadomieniem, a treść zawsze czeka w skrzynce.</p></figcaption></figure>
+      <figcaption><span>powiadomienia</span><b>Dzwonek na Pulpicie</b><p>Prośby o zgodę, decyzje i zlecenia lotów w jednym miejscu. Telefon da znać powiadomieniem, a wiadomość zawsze czeka pod dzwonkiem.</p></figcaption></figure>
   </div>
   <div class="who reveal">
-    <div><span class="tag">Bez panelu i komputera</span><h3>Mechanik decyduje w hangarze</h3><p>Do akceptowania wystarczy aplikacja. Osoba z prawem zgody widzi w telefonie to samo, co administrator przy biurku, i nie dostaje przy tym dostępu do floty ani kont.</p></div>
-    <div><span class="tag">Kroki po kolei</span><h3>W kroku wystarczy jedna zgoda</h3><p>Do kroku dopisuje się kilka osób, a decyduje ta, która zdąży pierwsza. Odmowa kończy sprawę od razu, bez fatygowania kolejnych kroków.</p></div>
-    <div><span class="tag">Zgoda na konkretną godzinę</span><h3>Nowy termin, nowa zgoda</h3><p>Po przesunięciu rezerwacji ścieżka rusza od pierwszego kroku, a karta mówi o tym przed zapisem. Kroki, na których stoi sam rezerwujący, przechodzą same.</p></div>
+    <div><span class="tag">Bez panelu i komputera</span><h3>Mechanik decyduje w hangarze</h3><p>Do zatwierdzania wystarczy telefon. Osoba, która zatwierdza, widzi plan lotu tak samo jak administrator przy biurku - bez dostępu do floty i kont.</p></div>
+    <div><span class="tag">Kroki po kolei</span><h3>W kroku wystarczy jedna zgoda</h3><p>W kroku może być kilka osób, a decyduje ta, która zdąży pierwsza. Odmowa kończy sprawę od razu.</p></div>
+    <div><span class="tag">Zgoda na konkretną godzinę</span><h3>Nowy termin, nowa zgoda</h3><p>Po przesunięciu rezerwacji zgody zbiera się od nowa - aplikacja uprzedza o tym przed zapisem. Kto sam zatwierdza dany krok, nie musi prosić siebie o zgodę.</p></div>
   </div>
 </section>
 
@@ -151,22 +177,22 @@
       <p class="kicker">Oko na samolot</p>
       <h2 class="h-display">Wiesz, że wróciła,<br>zanim ktoś zadzwoni</h2>
     </div>
-    <p class="sub">Technik przygotowujący maszynę i koordynator lotów nie muszą pytać, czy samolot już stoi.
-    Karta maszyny mówi, co się z nią dzieje w tej chwili, a jeden przełącznik sprawia, że telefon da znać,
-    gdy ktoś ją bierze, gdy wraca z odczytami i gdy zbliża się zarezerwowany lot.</p>
+    <p class="sub">Technik i koordynator lotów nie muszą pytać, czy samolot już stoi. Karta samolotu mówi,
+    co się z nim dzieje w tej chwili, a jeden przełącznik sprawia, że telefon da znać, gdy ktoś go bierze,
+    gdy wraca z odczytami i gdy zbliża się zarezerwowany lot.</p>
   </div>
   <div class="gallery reveal">
     <figure><div class="device" style="--s:0.5"><iframe src="screens/27-samolot.html" title="Karta samolotu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>karta maszyny</span><b>Co dzieje się teraz</b><p>Kto ma maszynę i od której, czy leci zgodnie z rezerwacją, liczniki z ostatniego odczytu, najbliższe terminy razem z przeglądami i wykresy motogodzin i paliwa z 90 dni.</p></figcaption></figure>
+      <figcaption><span>karta samolotu</span><b>Co dzieje się teraz</b><p>Kto ma samolot i od której, liczniki z ostatniego odczytu, najbliższe terminy razem z przeglądami oraz wykresy motogodzin i paliwa z 90 dni.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/25c-powiadomienia-samolot.html" title="Powiadomienia o samolocie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>powiadomienia</span><b>Ruszyła, wróciła, zbliża się</b><p>Godzina przed lotem, uruchomienie silnika, zdanie z odczytami paliwa i licznika, odwołany termin i maszyna, której nikt nie odebrał. Zawsze z godziną z zapisu pilota.</p></figcaption></figure>
+      <figcaption><span>powiadomienia</span><b>Ruszyła, wróciła, zbliża się</b><p>Godzina przed lotem, uruchomienie silnika, zdanie samolotu z odczytami paliwa i licznika, odwołany termin i samolot, którego nikt nie odebrał.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/13c-ustawienia-obserwowane.html" title="Obserwowane samoloty" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>obserwowane</span><b>Cała flota, jeden przełącznik</b><p>Lista wszystkich maszyn klubu ze stanem w tej chwili - włączasz te, którymi się zajmujesz. Ta sama lista stoi w panelu, na stronie Moje konto.</p></figcaption></figure>
+      <figcaption><span>obserwowane</span><b>Cała flota, jeden przełącznik</b><p>Lista wszystkich samolotów klubu ze stanem w tej chwili - włączasz te, którymi się zajmujesz. Ta sama lista jest w panelu klubu.</p></figcaption></figure>
   </div>
   <div class="who reveal">
-    <div><span class="tag">Dla tych, którzy przygotowują</span><h3>Technik i koordynator</h3><p>Kartę i obserwowanie ma osoba, której klub nada to uprawnienie - technik, koordynator lotów, osoby akceptujące rezerwacje. Pilot nie dostaje niczego, o co nie prosił.</p></div>
-    <div><span class="tag">Bez szumu</span><h3>O własnym locie nikt nie budzi</h3><p>Pilot, który sam uruchomił silnik, nie dostaje o tym wiadomości. Lot wpisany po fakcie też milczy - opisuje przeszłość, a nie to, co dzieje się z maszyną teraz.</p></div>
-    <div><span class="tag">Prawda o czasie</span><h3>Godzina z kabiny, nie z sieci</h3><p>Telefon bez zasięgu dosyła zapisy później. Wiadomość podaje wtedy godzinę zdarzenia i dopisuje, kiedy zapis dotarł - nikt nie pomyli późnej wiadomości z późnym lotem.</p></div>
+    <div><span class="tag">Dla tych, którzy przygotowują</span><h3>Technik i koordynator</h3><p>Kartę samolotu i obserwowanie ma osoba, której klub nada to uprawnienie - technik, koordynator lotów, osoby zatwierdzające rezerwacje.</p></div>
+    <div><span class="tag">Bez szumu</span><h3>O własnym locie nikt nie budzi</h3><p>Nikt nie dostaje wiadomości o własnych działaniach - pilot, który uruchamia silnik, nie dostanie o tym powiadomienia.</p></div>
+    <div><span class="tag">Prawdziwa godzina</span><h3>Godzina z kabiny</h3><p>Telefon bez zasięgu wysyła zapisy później. Wiadomość podaje wtedy godzinę zdarzenia i dopisuje, kiedy zapis dotarł.</p></div>
   </div>
 </section>
 
@@ -176,7 +202,7 @@
       <p class="kicker">Co zyskuje klub</p>
       <h2 class="h-display">Dziennik, paliwo i resurs<br>zgadzają się same</h2>
     </div>
-    <p class="sub">To, co dziś robicie długopisem i arkuszem kalkulacyjnym, aplikacja zapisuje w tle. Pilotowi zostaje jedno: spojrzeć na przyrządy przy przejęciu i zdaniu samolotu.</p>
+    <p class="sub">To, co dziś robicie długopisem i arkuszem kalkulacyjnym, aplikacja zapisuje sama. Pilotowi zostaje jedno: odczytać przyrządy na początku i na końcu lotu.</p>
   </div>
   <div class="bento">
     <div class="tile w2 h2 reveal">
@@ -197,13 +223,13 @@
       <span class="tag">Paliwo i motogodziny</span>
       <div class="chain"><code>1 234:16</code><span class="link">pilot A →</span><code>1 236:30</code><span class="link">pilot B →</span><code class="now">1 238:31</code></div>
       <h3>Rozliczone między pilotami, nie na koniec miesiąca</h3>
-      <p>Ile pilot zastał, dolał i zostawił - następny widzi to na starcie i potwierdza z przyrządów. Klub zna zużycie każdej operacji, a mechanik ma stan licznika bez luk. Koniec z pytaniem „kto ostatni tankował".</p>
+      <p>Ile pilot zastał, dolał i zostawił - następny widzi to przed startem i porównuje z przyrządami. Klub zna zużycie każdego lotu, a mechanik ma stan licznika bez luk. Koniec z pytaniem „kto ostatni tankował".</p>
     </div>
     <div class="tile reveal">
       <span class="tag">Kontrola kosztów</span>
       <div class="bar"><span class="band"></span><span class="fact"></span></div>
       <span class="verdict">W NORMIE · 17,9 L/h</span>
-      <p>Po każdej operacji zużycie staje obok normy tej maszyny. Odchyłkę widać od razu - zanim stanie się kosztem albo usterką silnika.</p>
+      <p>Po każdym locie zużycie paliwa stoi obok normy tego samolotu. Odchyłkę widać od razu - zanim stanie się kosztem albo usterką silnika.</p>
     </div>
     <div class="tile reveal">
       <span class="tag">Dziennik, któremu można ufać</span>
@@ -212,8 +238,8 @@
     </div>
     <div class="tile reveal">
       <span class="tag">Jedna zasada dla wszystkich</span>
-      <div class="big stack">1<small>bieg silnika<br>= 1 operacja</small></div>
-      <p>Od uruchomienia do wyłączenia silnika, z odczytem liczników na obu końcach. Nikt nie spiera się, co było lotem, a resurs nie ma dziur.</p>
+      <div class="big stack">1<small>operacja<br>na jedno uruchomienie</small></div>
+      <p>Od uruchomienia do wyłączenia silnika, z odczytem liczników na początku i na końcu. Nikt nie spiera się, co było lotem, a w motogodzinach nie ma luk.</p>
     </div>
     <div class="tile reveal">
       <span class="tag">Strefy zrzutu</span>
@@ -224,7 +250,7 @@
       <span class="tag">Lot bez telefonu?</span>
       <div class="timeline four"><div class="on">data i samolot</div><div class="on">zadanie</div><div>czasy i loty</div><div>liczniki</div></div>
       <h3>Pilot wpisze go w kilka minut</h3>
-      <p>Wpis po fakcie zadaje te same pytania, co lot na żywo, i podpowiada stan paliwa i licznika z poprzedniego lotu tej maszyny. Nic nie ginie, nawet gdy telefon został w samochodzie.</p>
+      <p>Wpis po fakcie zadaje te same pytania, co lot zapisany w kokpicie, i podpowiada stan paliwa i licznika z poprzedniego lotu tego samolotu. Nic nie ginie, nawet gdy telefon został w samochodzie.</p>
     </div>
   </div>
 </section>
@@ -238,16 +264,16 @@
     <div class="head-side"><p class="sub">Ciemny motyw do kokpitu, jasny na pełne słońce, duże przyciski i zero zbędnych pytań. Poniżej prawdziwe ekrany aplikacji - przewiń w bok.</p><div class="dl-wrap"><a class="dl" href="pobierz/"><span class="dl-ico"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.63.63 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.63.63 0 0 0-.83-.22c-.3.16-.42.54-.26.85L6.4 9.48A10.81 10.81 0 0 0 1 18h22a10.81 10.81 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg></span><span class="dl-txt"><b>Pobierz na Androida</b><small>Plik APK · bez sklepu Play</small></span><span class="dl-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></span></a><p class="dl-note"><span>instalacja w minutę</span><span>nowa wersja pod tym samym adresem</span></p></div></div>
   </div>
   <div class="gallery reveal">
-    <figure><div class="device" style="--s:0.5"><iframe src="screens/20-pulpit.html" title="Pulpit" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>ekran domowy</span><b>Pulpit</b><p>Sumy dnia i najbliższa rezerwacja z odliczaniem. Stąd pilot zaczyna lot i tu wraca po zdaniu samolotu; na dole pasek z Kalendarzem i Historią, u góry dzwonek ze skrzynką powiadomień.</p></figcaption></figure>
+    <figure><div class="device" style="--s:0.5"><iframe src="screens/20f-pulpit-zlecenia.html" title="Pulpit" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <figcaption><span>ekran domowy</span><b>Pulpit</b><p>Sumy dnia, zlecenia czekające na odpowiedź i najbliższa rezerwacja z odliczaniem. Stąd pilot zaczyna lot i tu wraca po zdaniu samolotu.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/02a-preflight.html" title="Rozpoczęcie lotu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
       <figcaption><span>rozpoczęcie lotu</span><b>Trzy kroki i lecisz</b><p>Samolot, zadanie, liczniki. Stan po poprzednim pilocie już czeka - wystarczy porównać z przyrządami i potwierdzić.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/05-cockpit-running.html" title="Kokpit w locie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>w locie</span><b>Kokpit</b><p>Faza lotu, czas od startu, szacunek paliwa na pokładzie i przebieg operacji. Pilot patrzy, nie pisze.</p></figcaption></figure>
+      <figcaption><span>w locie</span><b>Kokpit</b><p>Faza lotu, czas lotu, paliwo na pokładzie i przebieg lotu. Pilot patrzy, nie pisze.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/14-slad.html" title="Ślad operacji" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>po locie</span><b>Ślad na mapie</b><p>Trasa i profil wysokości całej operacji: do omówienia z uczniem, do wyjaśnienia zdarzenia, do archiwum klubu.</p></figcaption></figure>
+      <figcaption><span>po locie</span><b>Ślad na mapie</b><p>Trasa i profil wysokości całego lotu: do omówienia z uczniem, do wyjaśnienia zdarzenia, do archiwum klubu.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/24-historia.html" title="Historia lotów" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <figcaption><span>po locie</span><b>Historia</b><p>Wszystkie operacje pilota: dzień jest nagłówkiem, loty zwartymi wierszami. Widać od razu, co jeszcze można poprawić, a co jest już zamknięte.</p></figcaption></figure>
+      <figcaption><span>po locie</span><b>Historia</b><p>Wszystkie loty pilota, dzień po dniu. Widać od razu, co jeszcze można poprawić, a co jest już zamknięte.</p></figcaption></figure>
     <figure><div class="device" style="--s:0.5"><iframe src="screens/00a-login-full.html" title="Logowanie" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
       <figcaption><span>pierwsze uruchomienie</span><b>Konto Google albo hasło</b><p>Na własnym telefonie wystarczy konto Google. Na wspólnym tablecie w samolocie pilot loguje się e-mailem albo swoim kodem i hasłem. Na co dzień wchodzi PIN-em, także bez internetu.</p></figcaption></figure>
   </div>
@@ -257,17 +283,14 @@
   <div class="offline-card reveal">
     <p class="kicker">Działa tam, gdzie latacie</p>
     <h2 class="h-display">Bez zasięgu lata się tak samo</h2>
-    <p class="lead">Lotniska trawiaste rzadko mają dobry zasięg. Ninerdeck zapisuje wszystko na telefonie
-    i wysyła, gdy sieć wróci. Pilot nie zauważa różnicy, klub nie traci ani jednego zapisu. Internet
-    jest potrzebny do pierwszego logowania i do wysyłki - nie do pracy.</p>
-    <p class="lead">Jeden wyjątek jest i mówimy o nim wprost: <b>kalendarz, rezerwacja i skrzynka powiadomień potrzebują sieci</b>.
-    Termin przydziela klub, a nie telefon - dwa urządzenia bez zasięgu zapisałyby się na tę samą maszynę
-    o tej samej godzinie. Rezerwuje się przy biurku, lata bez zasięgu: sam lot nie zależy od rezerwacji
-    ani przez chwilę.</p>
+    <p class="lead">Lotniska trawiaste rzadko mają dobry zasięg. Ninerdeck zapisuje lot w telefonie
+    i wysyła do klubu, gdy wróci sieć. Pilot nie zauważa różnicy, a klub nie traci ani jednego zapisu.</p>
+    <p class="lead"><b>Kalendarz, zlecenia i powiadomienia potrzebują internetu</b> - z nich korzysta się
+    zwykle przy biurku, przed lotem. Sam lot nie zależy od nich ani przez chwilę.</p>
     <div class="three">
-      <div><b>Zapis w chwili zdarzenia</b><p>Start, lądowanie, tankowanie, zrzut: każde trafia do dziennika od razu, na telefonie. Nie ma „przypomnę sobie wieczorem".</p></div>
-      <div><b>Wysyłka w tle</b><p>Gdy pojawia się sieć, dane jadą do klubu same. Jeden wskaźnik mówi, ile zapisów czeka, i znika, gdy wszystko dotarło.</p><span class="pill-amber"><i></i>OFFLINE · 3</span></div>
-      <div><b>Logowanie raz, PIN na co dzień</b><p>Kontem Google albo hasłem pilot loguje się tylko przy pierwszym uruchomieniu. Potem wystarczy PIN - także w polu, bez internetu.</p></div>
+      <div><b>Zapis w chwili zdarzenia</b><p>Start, lądowanie, tankowanie, zrzut - każde zapisuje się od razu, w telefonie. Nie ma „przypomnę sobie wieczorem".</p></div>
+      <div><b>Wysyłka sama się dzieje</b><p>Gdy pojawia się sieć, zapisy trafiają do klubu same. Jedno oznaczenie mówi, ile zapisów czeka, i znika, gdy wszystko dotarło.</p><span class="pill-amber"><i></i>OFFLINE · 3</span></div>
+      <div><b>Logowanie raz, PIN na co dzień</b><p>Kontem Google albo hasłem pilot loguje się tylko za pierwszym razem. Potem wystarczy PIN - także na lotnisku bez internetu.</p></div>
     </div>
   </div>
 </section>
@@ -278,17 +301,18 @@
       <p class="kicker">Panel klubu · dla każdego członka, w nadanym zakresie</p>
       <h2 class="h-display">Cała flota w jednym oknie</h2>
       <p class="sub" style="margin-bottom:0">Kto lata, na czym, ile spalił i kiedy zdał samolot - na bieżąco, bez czekania na kartkę.
-      Karta dnia każdej maszyny powstaje sama, a to, co się nie zgadza, czeka na jednej liście do
-      sprawdzenia. Każda poprawka ma historię, brakujący fakt dopiszecie z panelu, a operację, której
-      pilot nie zamknął, zakończycie - zawsze z powodem zapisanym w historii. Wchodzi każdy członek klubu
-      tym samym kontem, co do aplikacji; co widzi, wyznacza zakres uprawnień, który mu nadacie.</p>
+      Karta dnia każdego samolotu powstaje sama, a to, co się nie zgadza, czeka na jednej liście do
+      sprawdzenia. Każda poprawka ma historię, a lot, którego pilot nie zamknął, zakończycie z panelu.
+      Wchodzi każdy członek klubu, tym samym kontem co do aplikacji - a co widzi, zależy od uprawnień,
+      które mu nadacie.</p>
       <ul class="modules">
-        <li><b>DZIENNIK</b><span>operacje floty po maszynach albo po pilotach, dzień po dniu z sumami, aż do pojedynczej operacji ze śladem GPS. Poprawka i dopisanie brakującego faktu z podglądem skutku przed zapisem. Wyłącznie odczyty z przyrządów, żadnych szacunków.</span></li>
-        <li><b>DO SPRAWDZENIA</b><span>wszystko, co wymaga Waszej reakcji, w jednym miejscu: rozjazdy między zapisami nazwane po polsku, doby bez karty w arkuszu i operacje, których nikt nie zdał. Każda sprawa prowadzi tam, gdzie da się ją zamknąć.</span></li>
-        <li><b>KALENDARZ</b><span>maszyny i dni obok siebie, w widoku na tydzień, dwa tygodnie albo miesiąc. Każdy członek rezerwuje tu tak samo jak w aplikacji, z podpowiedzią wolnych godzin; administrator dokłada rezerwację za pilota, wyłączenie maszyny z użytku, ścieżkę akceptacji i kolejkę spraw czekających na zgodę.</span></li>
-        <li><b>STATYSTYKI</b><span>nalot klubu w wybranym zakresie dat: dzień po dniu, po samolotach, pilotach i zadaniach, z czasem jako drugi pilot liczonym osobno. Te same liczby, co w dzienniku.</span></li>
-        <li><b>PILOCI</b><span>konta, kod klubu dla nowych, zatwierdzanie zgłoszeń. Uprawnienia nadajecie gotowym zestawem - pilot, akceptujący, koordynator lotów, technik, administrator - albo pozycja po pozycji. Każde urządzenie, na którym ktoś jest zalogowany, wylogujecie zdalnie.</span></li>
-        <li><b>SAMOLOTY</b><span>pojemność zbiorników, normy zużycia paliwa i oleju, minimum oleju, aktualny stan liczników, a gdy maszyna nalata swoje - typowe zużycie zmierzone z lotów obok normy z dokumentacji. Aplikacja pilnuje tego u każdego pilota.</span></li>
+        <li><b>DZIENNIK</b><span>loty floty według samolotów albo pilotów, dzień po dniu z sumami, aż do pojedynczego lotu ze śladem GPS. Poprawki i dopisywanie brakujących zdarzeń z podglądem skutku przed zapisem.</span></li>
+        <li><b>DO SPRAWDZENIA</b><span>wszystko, co wymaga Waszej reakcji, w jednym miejscu: niezgodności między zapisami, dni bez karty dnia i loty, których nikt nie zamknął. Każda sprawa prowadzi tam, gdzie da się ją załatwić.</span></li>
+        <li><b>STATYSTYKI</b><span>nalot klubu w wybranym okresie: dzień po dniu, według samolotów, pilotów i zadań, z czasem drugiego pilota liczonym osobno.</span></li>
+        <li><b>KALENDARZ</b><span>samoloty i dni obok siebie - na tydzień, dwa tygodnie albo miesiąc. Każdy członek rezerwuje tu tak samo jak w aplikacji; administrator dodaje rezerwację za pilota, przegląd samolotu i zasady zatwierdzania rezerwacji.</span></li>
+        <li><b>ZLECENIA</b><span>loty zlecone pilotom i grupom: kto odczytał, kto może lecieć, kto siedzi w którym fotelu - i rozmowa z każdym adresatem.</span></li>
+        <li><b>PILOCI</b><span>przyjmowanie nowych pilotów kodem klubu, uprawnienia nadawane gotowym zestawem albo pojedynczo, grupy pilotów i zdalne wylogowanie urządzeń.</span></li>
+        <li><b>SAMOLOTY</b><span>pojemność zbiorników, normy zużycia paliwa i oleju, minimum oleju, aktualny stan liczników, a z czasem - zużycie zmierzone z lotów obok normy z dokumentacji.</span></li>
       </ul>
       <div class="dl-wrap"><a class="dl ghost" href="admin/"><span class="dl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span><span class="dl-txt"><b>Otwórz panel klubu</b><small>W przeglądarce · logowanie Google albo hasłem</small></span><span class="dl-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span></a><p class="dl-note"><span>bez instalacji</span><span>ten sam dziennik, co w aplikacji</span></p></div>
     </div>
@@ -305,7 +329,7 @@
       <p class="kicker">Wdrożenie</p>
       <h2 class="h-display">Start w jeden dzień</h2>
     </div>
-    <p class="sub">Nic nie instalujecie w klubie i nikogo nie wysyłacie na szkolenie. Administrator wpisuje flotę w panelu i dostaje kod klubu - jeden na cały klub, do podania pilotom z ręki albo na grupie. Reszta dzieje się na ich telefonach.</p>
+    <p class="sub">Nic nie instalujecie w klubie i nikogo nie wysyłacie na szkolenie. Administrator wpisuje flotę w panelu i dostaje kod klubu - jeden na cały klub, do podania pilotom osobiście albo w grupie klubowej. Reszta dzieje się na ich telefonach.</p>
   </div>
   <div class="steps">
     <div class="step reveal">
@@ -316,12 +340,12 @@
     <div class="step reveal">
       <span class="n">2</span>
       <div class="device" style="--s:0.42"><iframe src="screens/00e-bez-klubu.html" title="Wpisanie kodu klubu" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
-      <div><h3>Wpisuje kod klubu</h3><p>Samo konto nie otwiera niczego. Pilot wpisuje kod klubu, a jego zgłoszenie staje w kolejce w panelu - to Wy decydujecie, kto wchodzi do dziennika.</p></div>
+      <div><h3>Wpisuje kod klubu</h3><p>Samo konto nie otwiera niczego. Pilot wpisuje kod klubu, a jego zgłoszenie trafia do panelu - to Wy decydujecie, kto wchodzi do klubu.</p></div>
     </div>
     <div class="step reveal">
       <span class="n">3</span>
       <div class="plain" aria-hidden="true">PIN<span class="dots"><i></i><i></i><i></i><i></i></span></div>
-      <div><h3>Zatwierdzacie, pilot ustawia PIN</h3><p>Nadajecie kod pilota i zakres uprawnień, a telefon sam zauważy, że konto jest gotowe. Od tej chwili pilot wchodzi PIN-em, a flota i kalendarz klubu są już na jego telefonie.</p></div>
+      <div><h3>Zatwierdzacie, pilot ustawia PIN</h3><p>Nadajecie kod pilota i uprawnienia, a aplikacja sama zauważy, że konto jest gotowe. Od tej chwili pilot wchodzi PIN-em i ma w telefonie flotę oraz kalendarz klubu.</p></div>
     </div>
   </div>
   <p class="note reveal"><b>Dane należą do klubu.</b> Samo konto nie daje dostępu do niczego - dopóki nie zatwierdzicie zgłoszenia, pilot nie widzi ani floty, ani dziennika.

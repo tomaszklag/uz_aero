@@ -54,7 +54,7 @@ export function ScopePickScreen() {
       lead={session.pilot.name}
       message={switchScope.error == null ? null : { tone: 'danger', text: errorMessage(switchScope.error) }}
     >
-      <div className="opt-list" role="list" aria-label="Wybierz zakres">
+      <div className="opt-list" role="list" aria-label="Wybierz klub">
         {scopeOptions(session.scopes).map((option) => (
           <button
             key={option.orgId ?? 'platform'}

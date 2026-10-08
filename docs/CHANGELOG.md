@@ -47,21 +47,22 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   w trzech krokach: termin i samolot (jak przy rezerwacji, z podpowiedziami wolnych godzin),
   zadanie i trasa, załoga - dla każdego fotela „ja", „szukam" (konkretna osoba albo grupa)
   albo „brak". Na karcie zlecenia widzi, kto odczytał i kto odpowiedział, wybiera spośród
-  chętnych, może przesunąć termin, odebrać zlecenie, wysłać je ponownie albo powielić na
-  inny dzień.
-- **Rozmowa przy każdym zleceniu.** Zlecający i każdy z adresatów mają własną rozmowę - na
-  żywo, z „Odczytane". Koordynatorzy klubu mogą ją czytać i rozmowa mówi to wprost.
+  chętnych, może przesunąć termin, usunąć osobę z adresatów, wysłać zlecenie ponownie albo
+  powielić je na inny dzień.
+- **Rozmowa przy każdym zleceniu.** Zlecający i każdy z adresatów mają własną rozmowę.
+  Nowe wiadomości pojawiają się od razu i widać, czy zostały odczytane. Koordynatorzy lotów
+  klubu mogą ją czytać, a rozmowa mówi o tym wprost.
 - **Zlecenia w kalendarzu i w skrzynce.** Termin zlecenia, które szuka załogi, ma na osi
   własny pasek („Zlecenie · szuka dowódcy"), a osoba ze „Zlecaniem lotów" po tapnięciu
   w wolne miejsce wybiera „Zarezerwuj dla siebie" albo „Zleć lot". Nowe zlecenie, zmiana
   terminu (poprzedni przekreślony, z prośbą o nową odpowiedź), przydział, odwołanie
   i wiadomość w rozmowie mają w skrzynce własne wiersze, a zlecenia czekające na Ciebie -
-  plakietkę „Do odpowiedzi". Powiadomienie otwiera zlecenie albo od razu rozmowę.
+  oznaczenie „Do odpowiedzi". Powiadomienie otwiera zlecenie albo od razu rozmowę.
 - **Zlecenia w panelu klubu.** Kolumna panelu ma nowy moduł „Zlecenia" z dwiema listami:
   „Do mnie" (to, o co pytają Ciebie) i „Zlecone" (to, co zlecasz albo prowadzisz jako
   koordynator). Zlecenie wysyłasz z przeglądarki w tych samych trzech krokach, co
   w telefonie. Na karcie zlecenia widzisz, kto odczytał i kto odpowiedział, wybierasz
-  spośród chętnych, zamieniasz osobę, odbierasz zlecenie, cofasz przydział, przesuwasz
+  spośród chętnych, zamieniasz osobę, usuwasz ją z adresatów, cofasz przydział, przesuwasz
   termin, wysyłasz przypomnienie albo powielasz zlecenie na inny dzień. Adresat odpowiada
   w panelu tak samo jak w aplikacji, a rozmowa ze zlecającym toczy się na żywo w obu
   miejscach naraz.
@@ -92,13 +93,23 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Aplikacja odświeża się sama.** Kalendarz, karta rezerwacji, skrzynka z licznikiem przy
   dzwonku, karta samolotu i lista obserwowanych pokazują zmiany od razu, gdy ktoś coś
   zapisze - bez wychodzenia z ekranu. Ekran „Brak połączenia" znika sam, gdy wróci zasięg.
-- **Cisza w locie.** Od przejęcia samolotu do jego zdania telefon pilota - i drugiego
+- **Cisza w locie.** Od rozpoczęcia lotu do zdania samolotu telefon pilota - i drugiego
   pilota - nie dzwoni i nie wyskakuje z powiadomieniami, także przy zgaszonym ekranie.
   Wiadomości czekają po cichu na liście powiadomień i w skrzynce.
 - **Wiesz, dlaczego odwołano Twoją rezerwację.** Gdy administrator odwoła rezerwację
   w panelu, pilot i drugi pilot dostają wiadomość z powodem, a karta rezerwacji pokazuje go
   razem z nazwiskiem osoby, która odwołała. Drugi pilot dowiaduje się też, gdy rezerwację
   odwoła sam dowódca. Panel i aplikacja mówią to przed kliknięciem „Odwołaj".
+- **Kokpit po polsku.** Przyciski i napisy kokpitu mówią po polsku: „URUCHOM SILNIK",
+  „WYŁĄCZ", „Kołowanie", „Start", „Lądowanie", a fazy lotu - „Wznoszenie", „Lot poziomy",
+  „Zniżanie".
+- **Prostszy język w aplikacji i panelu.** „Dowódca" i „drugi pilot" zamiast PIC i Dual,
+  „rozpoczęcie lotu" zamiast „przejęcia" samolotu, samolot wycofany z floty jest „poza
+  służbą", a w panelu nadaje się „uprawnienia". Komunikaty o błędach mówią po ludzku,
+  co się stało, a na końcu podają kod - do przekazania przy zgłoszeniu.
+- **Podręcznik jako samouczek.** Dokumentacja prowadzi krok po kroku: jak coś zrobić i co
+  zobaczysz na ekranie. Doszły strony o zleceniach lotów w aplikacji i w panelu oraz
+  o karcie samolotu.
 
 ### Poprawki
 
@@ -113,13 +124,13 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   formularz, którego ponowny zapis dublował lot. „Jeszcze nie - wróć do kokpitu" i powrót
   z poprawki danych operacji wracają do tego samego kokpitu, zamiast otwierać drugi,
   a ekran operacji otwarty z karty samolotu wraca na kartę samolotu.
-- **Nieudane odwołanie rezerwacji mówi o sobie w arkuszu odwołania** - do tej pory powód
-  chował się pod arkuszem, a podpowiedź w polu powodu mówiła o GPS. Karta rezerwacji nie
-  pokazuje też ciągu znaków zamiast nazwiska osoby spoza pamięci telefonu - stoi kreska.
+- **Nieudane odwołanie rezerwacji mówi o sobie w okienku odwołania** - do tej pory powód
+  chował się pod okienkiem, a podpowiedź w polu powodu mówiła o GPS. Karta rezerwacji nie
+  pokazuje też ciągu znaków zamiast nazwiska - gdy telefon nie zna osoby, stoi kreska.
 - **Panel nie mówi „nic tu nie ma", zanim przyjdą dane.** Przy pierwszym wejściu w listę -
   pilotów, samolotów, dziennika czy spraw do sprawdzenia - potrafił na ułamek sekundy
   mignąć komunikat o pustej liście, a dopiero po nim właściwe wiersze. Teraz w tym czasie
-  nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy stoją plamki ładowania.
+  nie ma nic, a gdy odpowiedź się spóźnia, w miejscu listy widać, że trwa ładowanie.
   Tabela dziennika nie znika już na moment zaraz po wejściu, a karty w kolejce decyzji
   nie pojawiają się bez nazwisk.
 - **„Obserwowane samoloty" podpisują maszyny nazwiskiem także u Akceptującego.** Członek
@@ -128,12 +139,17 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - **Moje konto nie każe „ustawić" hasła komuś, kto je ma.** Zaraz po wejściu karta hasła
   pokazywała przez chwilę wariant dla konta bez hasła. Teraz czeka na odczyt konta, a gdy
   ten się nie uda, mówi o tym na górze strony zamiast pokazywać zgadnięty formularz.
-- **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast stać bez słowa
-  na plamkach ładowania.
+- **Dziennik samolotu mówi, że nie udało się wczytać floty**, zamiast bez końca
+  pokazywać ładowanie.
 - **Gdy coś się nie wczyta, panel mówi to wprost.** Komunikat brzmi „Nie udało się
-  wczytać", a nie „Nie udało się zapisać", jak dotąd przy każdej liście, która nie
-  dojechała. Pod nim nie staje już fałszywe „nie ma jeszcze żadnego pilota" ani
-  pulsujące bez końca plamki. Lista wczytana wcześniej zostaje na ekranie.
+  wczytać", a nie „Nie udało się zapisać", jak dotąd przy każdej liście, której nie
+  udało się wczytać. Pod nim nie stoi już fałszywe „nie ma jeszcze żadnego pilota" ani
+  niekończące się ładowanie. Lista wczytana wcześniej zostaje na ekranie.
+
+### Dla testerów
+
+- **Wersja 4.0.0 to nowy plik do zainstalowania** ze [strony pobierania](../pobierz/) -
+  na istniejącą aplikację, bez odinstalowywania. Dane na telefonie zostają.
 
 ## 3.2.0 · 27 września 2026
 
@@ -153,11 +169,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   nie zostanie zdany; zamiast tego wiersz nazywa ją wprost („leci teraz", „1 w toku"),
   więc ten sam zakres dat daje jedną liczbę nalotu na każdym ekranie panelu.
 - **Operacje maszyny i pilota pogrupowane dniami.** Doba jest nagłówkiem z sumami
-  (operacje, loty, blok, lot - liczone przez serwer nad całą dobą, także gdy lista jest
-  przycięta), operacje w toku są nazwane osobno, a czas trwania biegu silnika ma własną
+  (operacje, loty, blok, lot - liczone za całą dobę, także gdy lista jest przycięta), operacje w toku są nazwane osobno, a czas trwania biegu silnika ma własną
   kolumnę. Strona pilota pokazuje jego loty w prawym fotelu jako zwykłe wiersze
-  z plakietką i piątą sumą doby.
-- **Z operacji wychodzi się w dwie strony:** okruszki prowadzą na oś maszyny, a nazwisko
+  z oznaczeniem i piątą sumą doby.
+- **Z operacji wychodzi się w dwie strony:** ścieżka nad tytułem prowadzi na oś maszyny, a nazwisko
   pilota i drugiego pilota - na oś tej osoby. Strona pilota ma własny adres z jego kodem,
   do wklejenia w rozmowie jak rejestracja.
 - **Kolumna panelu ma sześć pozycji w stałej kolejności**: Dziennik, Do sprawdzenia,
@@ -168,8 +183,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   samolotu, zakresy uprawnień z nowymi ekranami.
 - **Operację poprawia się w panelu.** Przycisk „Popraw zdarzenia" przełącza stronę
   operacji w tryb edycji pod własnym adresem: każdy wiersz osi ma ołówek i otwiera
-  szufladę z poprawką czasu, odczytów albo składu zrzutu, z podglądem „przed → po"
-  policzonym przez serwer, powodem (zobaczy go pilot w historii zmian) i historią
+  okno z poprawką czasu, odczytów albo składu zrzutu, z podglądem „przed → po",
+  powodem (zobaczy go pilot w historii zmian) i historią
   dotychczasowych poprawek z nazwiskiem. Zdarzenie, którego nie było, unieważnia się
   koszem w linii tytułu. Nad osią stoją te same ostrzeżenia o niespójnościach, które
   pilot widzi na telefonie - lot bez lądowania, zdarzenie poza pracą silnika - z tym,
@@ -178,21 +193,21 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
   lądowanie, start, kołowanie, tankowanie, zrzut, załadunek albo dolewkę oleju z godziną
   i powodem; fakt ocenia się tak, jak wyglądała operacja w tej chwili (lądowanie musi
   mieć start, tankowanie stojący silnik), a podgląd mówi, który lot domyka i ile
-  niespójności znika. Pilot zobaczy wpis na telefonie, karta arkusza dostaje nową rewizję.
+  niespójności znika. Pilot zobaczy wpis na telefonie, a karta dnia dostaje nową wersję.
 - **„Do sprawdzenia" - jedno miejsce na to, co wymaga reakcji.** Nowa pozycja w kolumnie
   panelu, druga po Dzienniku, z liczbą spraw wyłącznie wtedy, gdy coś czeka. Trzy karty:
   rozjazdy między zapisami (dwie operacje naraz, pilot w dwóch maszynach, luka albo
-  cofnięcie licznika, rozjazd paliwa, rozjazd zegara), doby bez karty w arkuszu
+  cofnięcie licznika, rozjazd paliwa, rozjazd zegara), dni bez karty dnia
   i operacje, których nikt nie zdał od ponad doby. Każdy wiersz prowadzi tam, gdzie
   sprawę da się zamknąć; gdy nic nie czeka, ekran mówi to wprost.
-- **Skrzynka rozjazdów.** Do tej pory serwer wykrywał nieścisłości między zapisami, ale
-  nie pokazywał ich nikomu. Teraz każda ma nazwę po polsku, liczby, których dotyczy,
-  operacje z sygnaturami, zdanie o tym, czym się to naprawia, i notatkę rozstrzygnięcia,
-  która zostaje w dzienniku akcji. Sprawa „Dwie operacje naraz" mówi przed kliknięciem,
-  że jej zamknięcie wyśle kartę doby do arkusza. Otwarty rozjazd widać też przy operacji
-  w dzienniku - plakietką na liście i banerem na stronie operacji.
+- **Lista rozjazdów.** Do tej pory nieścisłości między zapisami nie były nigdzie widoczne.
+  Teraz każda ma nazwę po polsku, liczby, których dotyczy, operacje z sygnaturami, zdanie
+  o tym, czym się to naprawia, i notatkę rozstrzygnięcia, która zostaje przy sprawie.
+  Sprawa „Dwie operacje naraz" mówi przed kliknięciem, że jej zamknięcie wyśle kartę dnia
+  do arkusza. Otwarty rozjazd widać też przy operacji w dzienniku - oznaczeniem na liście
+  i komunikatem na stronie operacji.
 - **Karty dnia i eksport.** Stan karty każdej doby samolotu (w arkuszu, bez karty,
-  wstrzymana rozjazdem, czeka na zdanie, unieważniona), rewizje, treść karty tak, jak
+  wstrzymana rozjazdem, czeka na zdanie, unieważniona), kolejne wersje, treść karty tak, jak
   leży w arkuszu, adres karty do podania skarbnikowi (działa bez logowania) i ponowienie
   eksportu z odpowiedzią, co poszło albo dlaczego nie.
 
@@ -246,7 +261,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ### Dla testerów
 
-- **Nowego pliku instalować nie trzeba.** Panel zmienia się na serwerze, a dwie poprawki
+- **Nowego pliku instalować nie trzeba.** Panel zmienia się sam, a dwie poprawki
   w telefonie - dopisanie faktu po zdaniu samolotu i wiadomość „Prośba wycofana" w skrzynce -
   dotrą same aktualizacją w tle do aplikacji w wersji 3.1.0. Wchodzą przy **następnym
   uruchomieniu** aplikacji po pobraniu, nie od razu.
@@ -554,7 +569,7 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 4.0.0 · planowane na 1 października 2026
+### 4.0.0 · planowane na koniec października 2026
 
 > Zlecenia lotów: koordynator pyta pilotów o lot w aplikacji, zamiast dzwonić do każdego po kolei.
 
@@ -566,6 +581,8 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 - [x] Grupy pilotów w klubie
 - [x] Instruktor umawia lot z uczniem jednym zleceniem
 - [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
+- [x] Prostszy język w aplikacji i w panelu, kokpit po polsku
+- [x] Podręcznik jako samouczek, ze stronami o zleceniach
 
 ### 5.0.0 · termin do ustalenia
 

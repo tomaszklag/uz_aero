@@ -104,13 +104,13 @@ describe('karta do rozpatrzenia', () => {
   it('zdanie pod pasem akcji nazywa NASTĘPNY krok; przy ostatnim mówi o potwierdzeniu', () => {
     const text = (parts: readonly { text: string }[]) => parts.map((p) => p.text).join('');
     expect(text(view().footnote)).toBe(
-      'Po zgodzie rezerwacja idzie do kroku Szef wyszkolenia. Po odmowie termin wraca do puli, a pilot dostaje powód.',
+      'Po zgodzie rezerwacja idzie do kroku Szef wyszkolenia. Po odmowie termin się zwalnia, a pilot dostaje powód.',
     );
     // Nazwa kroku jest sednem zdania - pogrubiona, jak `.foot-note b` w makiecie 26.
     expect(view().footnote.filter((p) => p.strong === true).map((p) => p.text)).toEqual(['Szef wyszkolenia']);
     const ostatni: RemoteApproval = { outcome: 'pending', steps: [{ id: 's1', label: 'Mechanik', current: true, decision: null }] };
     expect(text(view({}, ostatni).footnote)).toBe(
-      'Po zgodzie rezerwacja jest potwierdzona. Po odmowie termin wraca do puli, a pilot dostaje powód.',
+      'Po zgodzie rezerwacja jest potwierdzona. Po odmowie termin się zwalnia, a pilot dostaje powód.',
     );
     expect(view({}, ostatni).footnote.some((p) => p.strong === true)).toBe(false);
   });

@@ -248,7 +248,7 @@ function outcomeOf(card: OrderCardDto, me: OrderMeDto, input: RecipientCardInput
     return {
       kind: 'expired',
       title: 'Zlecenie wygasło',
-      text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.',
+      text: 'Do początku terminu nie zebrała się cała załoga - termin się zwolnił.',
       quote: null,
       meta: at(card.order.closedAt),
     };
@@ -256,7 +256,7 @@ function outcomeOf(card: OrderCardDto, me: OrderMeDto, input: RecipientCardInput
   if (me.staleReason === 'removed') {
     return {
       kind: 'removed',
-      title: 'Zlecenie cofnięte',
+      title: 'Zlecenie nie jest już do Ciebie',
       text: null,
       quote: me.removeReason == null || me.removeReason.trim() === '' ? null : quoted(me.removeReason),
       meta: at(me.removedAt),

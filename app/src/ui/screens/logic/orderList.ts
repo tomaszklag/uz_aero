@@ -205,7 +205,7 @@ function inboxRow(p: Placed, input: OrderListInput): OrderRowVm | null {
       lead = order.status === 'expired' ? [{ text: 'Bez kompletu załogi' }] : null;
     } else {
       tag = { text: 'Nieaktualne', tone: 'neutral' };
-      lead = [{ text: me.staleReason === 'removed' ? 'Zlecenie cofnięte' : 'Fotel obsadzony' }];
+      lead = [{ text: me.staleReason === 'removed' ? 'Nie jest już do Ciebie' : 'Fotel obsadzony' }];
     }
   } else {
     if (mine) {

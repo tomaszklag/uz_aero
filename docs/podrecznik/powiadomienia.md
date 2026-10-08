@@ -1,103 +1,105 @@
 # Powiadomienia
 
-> Skrzynka pod dzwonkiem na pulpicie i w panelu klubu, baner przy otwartej aplikacji i powiadomienia na telefon: co przychodzi, do kogo, jak wyłączyć i dlaczego bez zgody na powiadomienia nic nie ginie.
+> Wiadomości z klubu - o rezerwacjach, zleceniach i obserwowanych samolotach - czekają pod dzwonkiem w aplikacji i w panelu. Przy otwartej aplikacji pokazują się na chwilę u góry ekranu, a przy zamkniętej - jako powiadomienie w telefonie.
 
-## Skrzynka pod dzwonkiem
+## Dzwonek i lista wiadomości
 
-Na **pulpicie**, obok ustawień, stoi dzwonek. Otwiera skrzynkę - listę wiadomości, które klub wysłał do Ciebie, najnowsze na górze. Licznik przy dzwonku zapala się wyłącznie przy wiadomościach, których jeszcze nie widziałeś.
+Na **Pulpicie**, obok zębatki, stoi dzwonek. Otwiera listę wiadomości od klubu, najnowsze na górze. Licznik przy dzwonku pokazuje, ile jest nowych wiadomości.
 
-W skrzynce są dwa różne znaczniki i warto je odróżniać:
+Na liście są dwa rodzaje oznaczeń:
 
-- **nowe** - zielona krawędź przy wiadomości, której jeszcze nie oglądałeś. Gaśnie, gdy otworzysz listę;
-- **Do decyzji** - plakietka przy prośbie o zgodę. Stoi, **dopóki nie rozstrzygniesz sprawy** - samo zerknięcie na listę jej nie ucisza.
+- **zielony pasek** przy nowej wiadomości - znika, gdy otworzysz listę,
+- **„Do decyzji"** albo **„Do odpowiedzi"** - przy prośbie o zgodę i przy zleceniu lotu. Zostaje, dopóki nie zdecydujesz albo nie odpowiesz.
 
-Tapnięcie w wiadomość otwiera to, czego dotyczy: prośba - ekran decyzji, decyzja w Twojej sprawie - kartę rezerwacji, wiadomość o samolocie - kartę maszyny.
+Tapnięcie w wiadomość otwiera to, czego dotyczy: prośbę o zgodę, rezerwację, zlecenie, rozmowę albo kartę samolotu.
 
-@screen 25-powiadomienia "Skrzynka z prośbą i decyzjami" | 25c-powiadomienia-samolot "Wiadomości o obserwowanym samolocie" | 25a-powiadomienia-pusto "Pusta skrzynka"
+@screen 25-powiadomienia "Wiadomości o rezerwacjach" | 25d-powiadomienia-zlecenia "Wiadomości o zleceniach" | 25c-powiadomienia-samolot "Wiadomości o samolocie"
 
-Skrzynka, jak kalendarz, **wymaga zasięgu**: wiadomości przychodzą z serwera. Bez połączenia ekran mówi to wprost i wraca sam, gdy zasięg wróci; licznika przy dzwonku wtedy nie ma, bo telefon nie wie, ile czeka.
+Lista wiadomości wymaga internetu. Bez zasięgu ekran mówi „BRAK POŁĄCZENIA" i wraca sam, gdy pojawi się sieć. Licznika przy dzwonku wtedy nie ma.
 
-@screen 25b-powiadomienia-offline "Skrzynka bez zasięgu"
+## Jakie wiadomości przychodzą
 
-## Co przychodzi i do kogo
+### Rezerwacje
 
 | Wiadomość | Kto ją dostaje |
-| --- | --- |
-| **Prośba o zgodę** na rezerwację | osoby z kroku ścieżki, na którym rezerwacja właśnie czeka ([akceptacja rezerwacji](akceptacja-rezerwacji)) |
-| **Zgoda** - rezerwacja potwierdzona | pilot, który rezerwował |
-| **Odmowa** - z powodem | pilot, który rezerwował |
-| **Termin wygasł** bez decyzji | pilot, który rezerwował |
-| **Rezerwacja odwołana** - z powodem i nazwiskiem osoby, która odwołała | pilot i drugi pilot rezerwacji - poza osobą, która ją odwołała. Gdy odwoła klub, dostają ją oboje; gdy odwoła sam pilot, dostaje ją drugi pilot |
-| **Prośba wycofana** - rezerwację czekającą na zgodę odwołano | osoby z kroku, który miał decydować - sprawy do rozstrzygnięcia już nie ma. Do najbliższej aktualizacji aplikacji telefon pokazuje ją jako „Wiadomość z klubu" |
-| **Zbliża się lot, silnik ruszył, maszyna zdana, odwołany termin, nikt nie odebrał** | osoby, które obserwują ten samolot ([obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu)) |
+|---|---|
+| **Prośba o zgodę na lot** | osoby z kroku akceptacji, na którym czeka rezerwacja ([akceptacja rezerwacji](akceptacja-rezerwacji)) |
+| **Twoja rezerwacja jest zatwierdzona**, **Odmowa zgody** (z powodem), **Termin minął, zanim ktokolwiek zdecydował** | pilot, który zarezerwował samolot |
+| **Rezerwacja odwołana** - z powodem i nazwiskiem osoby, która odwołała | dowódca i drugi pilot rezerwacji, poza osobą, która ją odwołała |
+| **Prośba wycofana** | osoby z kroku akceptacji, gdy rezerwację czekającą na zgodę odwołano |
 
-O własnym działaniu nikt nie dostaje wiadomości. W klubie bez ścieżki akceptacji i bez obserwowanych samolotów skrzynka zwykle stoi pusta - i tak ma być.
+### Zlecenia lotów
 
-## Powiadomienia na telefon
+| Wiadomość | Kto ją dostaje |
+|---|---|
+| **Zlecenie lotu** | adresaci zlecenia ([zlecenia na lot](zlecenia-na-lot)) |
+| **Zlecenie zmienione** - nowy termin, trzeba odpowiedzieć od nowa | adresaci |
+| **Zlecenie edytowane** - inna zmiana, odpowiedź zostaje ważna | adresaci |
+| **Lot przydzielony** | pilot wybrany na fotel |
+| **Zlecenie nieaktualne** - fotel obsadzony albo usunięcie z adresatów | adresaci, których to dotyczy |
+| **Zlecenie odwołane**, **Zlecenie wygasło** | adresaci, którzy nie odmówili |
+| **Przydział cofnięty** | pilot, któremu cofnięto przydział |
+| **Odpowiedź na zlecenie**, **Rezygnacja z lotu**, **Zlecenie bez kompletu załogi** | osoba zlecająca |
+| **Wiadomość w zleceniu** | druga strona rozmowy |
 
-Każda wiadomość ze skrzynki daje o sobie znać także poza nią - a jak, zależy od tego, czy aplikacja jest otwarta.
+### Obserwowane samoloty
 
-**Aplikacja otwarta** - u góry ekranu na kilka sekund pojawia się **baner** z tym samym zdaniem, co w skrzynce. Znika sam i bez dźwięku, przesunięcie w górę chowa go od razu, a dopóki trzymasz na nim palec, czeka. Tapnięcie otwiera to, czego dotyczy. Gdy przyjdzie kilka wiadomości naraz, widać ostatnią - resztę mówi licznik przy dzwonku.
+**Zbliża się lot**, **Odwołany lot**, **Uruchomienie**, **Zdana** i **Nie odebrano** - dla osób, które obserwują samolot ([karta samolotu i obserwowanie](obserwowanie-samolotu)).
 
-@screen 25e-baner-w-aplikacji "Baner nowej wiadomości przy otwartej aplikacji"
+Nie dostajesz wiadomości o własnych działaniach.
 
-Baner **nie pojawia się na ekranie, którego dotyczy** - na karcie tej rezerwacji, na ekranie decyzji o niej, na karcie tego samolotu ani przy otwartej skrzynce. Ten ekran po prostu się odświeża. Nie ma go też w czasie lotu - o tym niżej.
+## Wiadomość przy otwartej aplikacji
 
-Otwarta aplikacja w ogóle **pokazuje zmiany od razu**: kalendarz, karta rezerwacji, skrzynka, karta samolotu i lista obserwowanych odświeżają się same, gdy ktoś coś zapisze - w telefonie albo w panelu.
+Gdy aplikacja jest otwarta, nowa wiadomość pokazuje się na kilka sekund u góry ekranu - z tym samym zdaniem, co na liście. Znika sama i bez dźwięku. Przesunięcie w górę chowa ją od razu, a dopóki trzymasz na niej palec, czeka. Tapnięcie otwiera to, czego dotyczy.
 
-**Aplikacja zamknięta albo w tle** - telefon pokazuje zwykłe **powiadomienie**. Tapnięcie w nie otwiera od razu właściwy ekran - także wtedy, gdy aplikacja czekała na PIN (po odblokowaniu trafiasz tam, gdzie prowadzi powiadomienie).
+Wiadomość nie pojawia się na ekranie, którego dotyczy - na przykład na karcie tego zlecenia albo przy otwartej liście wiadomości. Ten ekran po prostu sam się odświeża.
 
-Powiadomienie jest **tylko sygnałem**, że coś przyszło. Na ekranie blokady stoi rodzaj sprawy („Prośba o zgodę"), bez nazwisk i godzin - te czekają w skrzynce, którą widzisz dopiero po odblokowaniu.
+@screen 25e-baner-w-aplikacji "Nowa wiadomość przy otwartej aplikacji"
+
+Otwarte ekrany odświeżają się same: kalendarz, zlecenia, rozmowy, karta rezerwacji, lista wiadomości i karta samolotu pokazują zmiany od razu, gdy ktoś coś zapisze - w aplikacji albo w panelu.
+
+## Powiadomienia w telefonie
+
+Gdy aplikacja jest zamknięta albo w tle, telefon pokazuje zwykłe powiadomienie. Tapnięcie otwiera właściwy ekran - także wtedy, gdy aplikacja najpierw poprosi o PIN.
+
+Na ekranie blokady powiadomienie mówi tylko, czego dotyczy, na przykład „Prośba o zgodę". Nazwiska i godziny zobaczysz dopiero w aplikacji.
 
 ### W czasie lotu telefon milczy
 
-Od przejęcia samolotu do jego zdania - i tak samo, gdy lecisz jako **drugi pilot** - wiadomości nie dzwonią i nie wyskakują na ekran, także przy zgaszonym ekranie i telefonie w kieszeni. Trafiają po cichu na listę powiadomień telefonu i do skrzynki, a dźwięk wraca po zdaniu samolotu. W ustawieniach systemu ten rodzaj powiadomień Ninerdeck nazywa się „Podczas lotu - bez dźwięku".
+Od rozpoczęcia lotu do zdania samolotu - także gdy lecisz jako drugi pilot - powiadomienia przychodzą bez dźwięku i bez wyskakiwania na ekran. Trafiają na listę powiadomień telefonu i do listy w aplikacji, a dźwięk wraca po zdaniu samolotu. W ustawieniach telefonu ten rodzaj powiadomień Ninerdeck nazywa się „Podczas lotu - bez dźwięku".
 
-**Aplikacja pyta o zgodę na powiadomienia dopiero wtedy, gdy zaczyna Cię to dotyczyć**, a nie przy pierwszym uruchomieniu:
+### Kiedy aplikacja pyta o zgodę na powiadomienia
 
-- gdy akceptujesz cudze rezerwacje - przy wejściu na pulpit;
-- gdy Twoja rezerwacja czeka na zgodę - zaraz po jej zapisaniu;
+Nie przy pierwszym uruchomieniu, tylko wtedy, gdy zaczną Cię dotyczyć:
+
+- gdy akceptujesz rezerwacje innych pilotów - przy wejściu na Pulpit,
+- gdy Twoja rezerwacja czeka na zgodę - zaraz po jej zapisaniu,
 - gdy włączysz obserwowanie samolotu.
 
-Jeśli wiadomość przyjdzie z klubu, który nie jest teraz aktywny w aplikacji, baner pokazuje nad nią nazwę klubu, a tapnięcie - w baner albo w powiadomienie - otworzy skrzynkę z informacją, że trzeba przełączyć klub w [ustawieniach](ustawienia).
+Jeśli wiadomość przyjdzie z innego klubu niż ten, który masz teraz wybrany, zobaczysz nad nią nazwę klubu. Tapnięcie otworzy listę wiadomości z podpowiedzią, żeby zmienić klub w [ustawieniach](ustawienia).
 
-## Skrzynka w panelu
+## Powiadomienia w panelu
 
-Ta sama skrzynka stoi w panelu klubu - pod **dzwonkiem w pasku górnym**, przed Twoim nazwiskiem. Wiadomości są te same, co pod dzwonkiem w telefonie, i **przeczytane w jednym miejscu jest przeczytane w drugim**. Licznik zapala się tylko przy nowych.
+Ta sama lista wiadomości jest w panelu klubu - pod **dzwonkiem w pasku górnym**, obok Twojego nazwiska. Wiadomość przeczytana w aplikacji jest przeczytana także w panelu i odwrotnie.
 
-Dzwonek otwiera listę z boku ekranu. Zielona krawędź i plakietka „Do decyzji" znaczą to samo, co w telefonie, a kliknięcie w wiadomość otwiera to, czego dotyczy: prośba o zgodę - kolejkę decyzji w kalendarzu, rezerwacja - jej kartę, samolot - jego kartę w module Samoloty.
+Dzwonek otwiera listę z boku ekranu. Kliknięcie w wiadomość otwiera to, czego dotyczy: prośba o zgodę - kolejkę decyzji w kalendarzu, rezerwacja - jej kartę, zlecenie - jego kartę.
 
-Gdy panel jest otwarty, **nowa wiadomość pojawia się na kilka sekund w lewym dolnym rogu** - z tym samym zdaniem, co w skrzynce. Znika sama i bez dźwięku, a dopóki trzymasz na niej kursor, czeka. Kliknięcie otwiera rzecz. Nie pojawia się przy otwartej skrzynce (wiadomość wjeżdża wtedy na górę listy) ani na ekranie, którego dotyczy - ten odświeża się sam.
+Gdy panel jest otwarty, nowa wiadomość pokazuje się na kilka sekund w lewym dolnym rogu. Znika sama, a dopóki trzymasz na niej kursor, czeka. Kalendarz, zlecenia, dziennik i „Do sprawdzenia" odświeżają się same, bez przeładowania strony.
 
-@panel powiadomienia "Nowa wiadomość w rogu panelu, skrzynka pod dzwonkiem"
+@panel powiadomienia "Nowa wiadomość w rogu panelu i lista pod dzwonkiem"
 
-Panel nie potrzebuje przy tym przeładowania strony: **kalendarz z kolejką decyzji, dziennik i „Do sprawdzenia" pokazują zmiany od razu**, gdy ktoś coś zapisze - w telefonie albo w innej karcie przeglądarki.
+## Jak wyłączyć powiadomienia
 
-## Jak wyłączyć
+Powiadomienia wyłączysz w ustawieniach telefonu: **Ustawienia → Aplikacje → Ninerdeck → Powiadomienia**. Lista wiadomości pod dzwonkiem działa wtedy bez zmian - dowiesz się tylko później, że coś przyszło.
 
-Powiadomienia wyłącza się w **ustawieniach systemu telefonu** (Ustawienia → Aplikacje → Ninerdeck → Powiadomienia) - tak samo jak w każdej innej aplikacji. **Skrzynka działa wtedy bez zmian**: wiadomości czekają pod dzwonkiem, licznik się zapala, decyzje podejmujesz tak samo. Tracisz wyłącznie szybkość reakcji - o prośbie dowiesz się, gdy otworzysz aplikację, a nie wtedy, gdy przyszła.
-
-Po wylogowaniu telefon przestaje dostawać powiadomienia od razu - także wtedy, gdy administrator wylogował go zdalnie z panelu. Na wspólnym tablecie następny pilot nie zobaczy więc powiadomień poprzedniego.
-
-## Dlaczego tak to działa
-
-> **Dlaczego skrzynka, a nie same powiadomienia.** Powiadomienie potrafi nie dojść: telefon bez usług Google, wyłączona zgoda, rozładowana bateria, tryb oszczędzania. Gdyby treść żyła tylko w powiadomieniu, każda z tych rzeczy gubiłaby prośbę o zgodę albo powód odmowy. Skrzynka jest zapisem, a powiadomienie budzikiem - budzik może zawieść, zapis nie.
-
-> **Dlaczego powiadomienie nie mówi, kto i o której.** Ekran blokady widzi każdy, kto akurat patrzy na telefon - także na wspólnym tablecie w samolocie. Plan lotu i nazwiska członków klubu zostają w aplikacji.
-
-> **Dlaczego przy otwartej aplikacji baner, a nie powiadomienie systemu.** Pilot z otwartą aplikacją właśnie w niej pracuje - powiadomienie z dźwiękiem nad kalendarzem czy kartą rezerwacji przerywałoby mu w pół ruchu. Baner mówi to samo, znika sam i nie gra, a na ekranie sprawy w ogóle się nie pojawia, bo ten ekran i tak pokazuje zmianę.
-
-> **Dlaczego w locie telefon milczy.** Dzwonek w kabinie rozprasza w chwili, w której nie ma się czym zająć poza lotem - a prośba o zgodę czy wiadomość o samolocie i tak poczeka w skrzynce do zdania samolotu. Z tego samego powodu cisza obejmuje drugiego pilota: uczeń w locie szkolnym też nie powinien słyszeć telefonu.
-
-> **Dlaczego aplikacja nie pyta o zgodę od razu.** Pytanie bez powodu uczy odmawiać. Pilot, który nigdy nie akceptuje rezerwacji i nie obserwuje samolotu, nie dostanie ani jednego powiadomienia - więc nie ma po co go pytać.
+Po wylogowaniu telefon przestaje dostawać powiadomienia od razu, także gdy administrator wyloguje go zdalnie. Na wspólnym tablecie następny pilot nie zobaczy powiadomień poprzedniego.
 
 ## Częste problemy
 
-- **Nie przychodzą powiadomienia** → sprawdź w ustawieniach systemu, czy Ninerdeck ma zgodę na powiadomienia i czy nie jest usypiany przez oszczędzanie baterii. Wiadomości i tak czekają w skrzynce.
-- **Nie ma licznika przy dzwonku** → albo nie ma nic nowego, albo telefon jest bez zasięgu.
-- **Powiadomienie przyszło bez dźwięku** → byłeś wtedy w załodze lotu - trzymałeś samolot albo leciałeś jako drugi pilot. Dźwięk wraca po zdaniu samolotu.
-- **Wiadomość przyszła, a baneru nie było** → byłeś na ekranie, którego dotyczy (ten się odświeżył), w otwartej skrzynce albo w czasie lotu - jako dowódca albo drugi pilot. Wiadomość czeka w skrzynce.
-- **Licznik w panelu zgasł, choć niczego tam nie otwierałeś** → wiadomości przeczytałeś w telefonie - przeczytane w jednym miejscu jest przeczytane w drugim.
-- **Plakietka „Do decyzji" nie znika** → znika dopiero po decyzji. Otwórz prośbę i zatwierdź albo odmów.
-- **Powiadomienie otwiera skrzynkę zamiast rezerwacji** → przyszło z innego klubu niż aktywny. Przełącz klub w ustawieniach.
-- **Po reinstalacji powiadomienia nie przychodzą** → zaloguj się ponownie; telefon zgłasza się do powiadomień przy pierwszym połączeniu po zalogowaniu.
+- **Nie przychodzą powiadomienia** → sprawdź w ustawieniach telefonu, czy Ninerdeck ma zgodę na powiadomienia i czy oszczędzanie baterii go nie usypia. Wiadomości i tak czekają pod dzwonkiem.
+- **Nie ma licznika przy dzwonku** → nie ma nic nowego albo telefon nie ma internetu.
+- **Powiadomienie przyszło bez dźwięku** → w tym czasie trwała Twoja operacja - jako dowódcy albo drugiego pilota. Dźwięk wraca po zdaniu samolotu.
+- **Licznik w panelu zgasł bez otwierania listy** → wiadomości zostały przeczytane w aplikacji. Przeczytane w jednym miejscu są przeczytane w drugim.
+- **Oznaczenie „Do decyzji" albo „Do odpowiedzi" nie znika** → zniknie dopiero po decyzji albo odpowiedzi.
+- **Powiadomienie otwiera listę wiadomości zamiast rezerwacji** → przyszło z innego klubu niż wybrany. Zmień klub w ustawieniach.
+- **Po ponownej instalacji powiadomienia nie przychodzą** → zaloguj się ponownie - telefon zgłosi się do powiadomień przy pierwszym połączeniu.

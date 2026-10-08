@@ -246,8 +246,8 @@ export function StatsScreen({
   );
 
   const axis = useMemo(
-    () => buildSessionAxis(projection, events, Date.now()),
-    [projection, events],
+    () => buildSessionAxis(projection, events, Date.now(), codeOf),
+    [projection, events, codeOf],
   );
   const axisRows = useMemo(() => withIssues(axis.rows, issues), [axis.rows, issues]);
 
@@ -307,8 +307,7 @@ export function StatsScreen({
             BRAK DANYCH OPERACJI
           </AppText>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo -
-            również bez zasięgu.
+            Tu zobaczysz przebieg operacji, gdy rozpoczniesz lot - także bez zasięgu.
           </AppText>
         </View>
       </Screen>
@@ -339,7 +338,9 @@ export function StatsScreen({
           // w React Navigation 7 `navigate` do trasy leżącej pod spodem kładzie na wierzch
           // DRUGI jej egzemplarz (drugi kokpit, drugie zakładki).
           onBack={() => navigation.goBack()}
-          backLabel={readOnly ? 'Dni' : 'Dzień'}
+          // „Wróć", bo cel powrotu bywa trojaki (Historia, karta samolotu, kokpit) -
+          // „Dzień" i „Dni" zostały po ekranach 01 i 12 sprzed 3.0.0.
+          backLabel="Wróć"
           subtitle={header.subtitle}
           right={
             <>
@@ -558,7 +559,7 @@ export function StatsScreen({
           <SessionAxis
             rows={axisRows}
             foot={axis.foot}
-            emptyText="Ta operacja nie ma jeszcze ani jednego zdarzenia."
+            emptyText="Ta operacja nie ma jeszcze żadnego wpisu."
             onCorrect={editing ? edit.openRow : undefined}
             /* Historia otwiera się z plakietki „popr." w OBU trybach - patrz
                `CorrectedTag`. W odczycie to jedyne wejście, bo arkusza korekty
@@ -684,7 +685,7 @@ export function StatsScreen({
         */}
         <Card title="Załoga" flush>
           <ResultRow
-            label="PIC"
+            label="Dowódca"
             value={crewLabel(projection.picId, currentPilotId, codeOf)}
             tone="neutral"
             style={styles.firstRow}
@@ -869,7 +870,7 @@ export function StatsScreen({
             value: `${projection.flights.length} · ${duration(projection.blockTimeMs)} · ${duration(projection.flightTimeMs)}`,
           },
         ]}
-        warning="Wpis zniknie z Twojego dnia, z historii i z sum. Zapis zostaje w rejestrze i widzi go administrator - razem z powodem, jeśli go podasz."
+        warning="Wpis zniknie z Twojego dnia, z historii i z sum. Administrator klubu nadal go zobaczy - razem z powodem, jeśli go podasz."
         warningTone="amber"
         confirmLabel="USUŃ WPIS"
         confirmTone="red"
@@ -878,7 +879,7 @@ export function StatsScreen({
         cancelLabel="ZOSTAW"
         onCancel={() => setVoidOpen(false)}
       >
-        <ReasonField value={voidReason} onChangeText={setVoidReason} />
+        <ReasonField value={voidReason} onChangeText={setVoidReason} placeholder="np. ten lot jest wpisany dwa razy" />
       </Sheet>
 
     </Screen>
@@ -959,7 +960,7 @@ function CrewRow({
   const content = (
     <>
       <AppText variant="mono" tone="muted" style={styles.crewLabel}>
-        DUAL
+        DRUGI PILOT
       </AppText>
       {corrected && <CorrectedTag accessibilityContext="drugi pilot" onPress={onHistory} />}
       <AppText variant="mono" tone="primary" style={styles.crewValue}>
@@ -1048,7 +1049,7 @@ function CorrectionWindowBanner({
    * zrzutu, notatkę i drugiego pilota. Instrukcja obsługi przycisku, który stoi
    * na tym samym ekranie i nazywa się „EDYTUJ DANE", i tak była zbędna.
    */
-  const tail = 'Później korektę nanosi administrator.';
+  const tail = 'Później poprawki wprowadza administrator klubu.';
 
   if (!confirmed) {
     return (
@@ -1056,7 +1057,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h od zdania samolotu"
+        title="Czas na poprawki: 24 h od zdania samolotu"
         text={`Do zdania poprawiasz dane bez limitu; po zdaniu masz na to 24 h. ${tail}`}
       />
     );
@@ -1068,7 +1069,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h od zdania samolotu"
+        title="Czas na poprawki: 24 h od zdania samolotu"
         text={`Dane możesz poprawiać jeszcze do ${dateTimeUtcShort(closesAt)} UTC. ${tail}`}
       />
     );
@@ -1079,8 +1080,8 @@ function CorrectionWindowBanner({
       kind="status"
       tone="amber"
       icon="clock"
-      title="Okno korekty zamknięte"
-      text="Minęły 24 godziny od zdania samolotu - dalsze poprawki wprowadza administrator."
+      title="Czas na poprawki minął"
+      text="Minęły 24 godziny od zdania samolotu - dalsze poprawki wprowadza administrator klubu."
     />
   );
 }

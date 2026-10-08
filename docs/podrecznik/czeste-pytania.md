@@ -1,147 +1,151 @@
 # Częste pytania
 
-> Krótkie odpowiedzi na pytania, które padają najczęściej w pierwszych tygodniach z Ninerdeck - pilota i administratora klubu.
+> Krótkie odpowiedzi na pytania, które pilot i administrator klubu zadają najczęściej w pierwszych tygodniach z Ninerdeck.
 
 ## Logowanie i konto
 
 ### Jak założyć konto?
 
-Są dwie drogi: **Kontynuuj z Google** albo **Załóż konto** e-mailem - wtedy podajesz imię, nazwisko i adres, a konto powstaje w chwili, gdy ustawisz hasło z linku przysłanego na ten adres. Jedno i drugie daje to samo konto osoby. Do klubu i tak wchodzisz kodem klubu: administrator zatwierdza zgłoszenie, nadając Ci kod pilota - do tej chwili aplikacja pokazuje ekran oczekiwania i sprawdza stan sama. Potem codziennym wejściem jest PIN, a **Nie pamiętam PIN** pod klawiaturą oznacza ponowne logowanie, czyli internet. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
+Tapnij **Kontynuuj z Google** albo, na ekranie logowania hasłem, **Załóż konto** - wtedy podajesz imię, nazwisko i adres e-mail, a konto powstaje, gdy ustawisz hasło z linku w liście. Potem wpisujesz kod klubu i czekasz na zatwierdzenie przez administratora. Na co dzień otwierasz aplikację PIN-em. Krok po kroku: [pierwsze logowanie](pierwsze-logowanie).
 
-### Zapomniałem hasła
+### Nie pamiętam hasła
 
-Na ekranie logowania hasłem wybierz **Nie pamiętam hasła** i podaj swój adres. Przyjdzie na niego link ważny godzinę - otwórz go **na dowolnym urządzeniu**, także na telefonie, na którym czytasz pocztę, ustaw hasło i wróć zalogować się tam, gdzie pracujesz. Tą samą drogą ustawia się PIERWSZE hasło, jeśli dotąd wchodziłeś tylko kontem Google.
+Na ekranie logowania hasłem tapnij **Nie pamiętam hasła** i podaj adres e-mail. Przyjdzie link ważny godzinę - otwórz go na dowolnym urządzeniu, ustaw hasło i zaloguj się. Tą samą drogą ustawisz pierwsze hasło, jeśli do tej pory logowanie szło przez Google. Administrator nie zna Twojego hasła, ale może wysłać Ci ten sam list z panelu.
 
-Administrator nie zna Twojego hasła i nie może go podać - może natomiast wysłać Ci z panelu **ten sam list**, który wysłałbyś sobie sam. Kodów do przepisywania przez telefon nie ma w ogóle.
+### Jak zmienić pilota na wspólnym tablecie?
 
-### Jeden tablet w samolocie - jak się przelogować?
+Poprzedni pilot wybiera w ustawieniach **Wyloguj i zmień konto** - działa to dopiero, gdy jego loty dotrą do klubu. Następny pilot loguje się swoim kodem pilota i hasłem, ustawia własny PIN i leci. Kodu klubu nie trzeba wpisywać ponownie.
 
-Poprzedni pilot wybiera w ustawieniach **Wyloguj i zmień konto** (zadziała dopiero, gdy jego zapisy dojdą do klubu). Tablet staje wtedy od razu na logowaniu hasłem i pamięta, dla jakiego klubu pracuje - następny pilot wpisuje **swój kod pilota** i hasło, ustawia swój PIN i leci. Kodu klubu nie trzeba wpisywać drugi raz.
+### Administrator wylogował mój telefon. Czy stracę zapisy?
 
-Jeśli tablet obsługuje kilka klubów, pod logo stoi nazwa tego bieżącego, a **Zmień klub** pozwala wybrać inny z listy tych, z których na nim logowano.
+Nie. Telefon przestaje wysyłać zapisy do klubu i mówi o tym komunikatem, ale PIN dalej otwiera aplikację. Zapisy, które nie zdążyły dotrzeć do klubu, wyślą się po ponownym zalogowaniu tej samej osoby.
 
-### Administrator mnie wylogował - czy stracę zapisy?
+### Zgłoszenie do klubu zostało odrzucone. Co dalej?
 
-**Nie.** Telefon przestaje wysyłać do klubu i mówi o tym wprost - baner na ekranie PIN i w ustawieniach, czerwone **SYNC STOI** przy kolejce. Ale PIN dalej otwiera aplikację, dzień lotny masz cały, a zapisy, które nie zdążyły dojść, wyjdą po ponownym zalogowaniu **tej samej osoby**. Aplikacja nie wyrzuca do ekranu logowania i nie kasuje niczego z telefonu.
+Ekran pokazuje powód od administratora - to on mówi, co zrobić. Najczęściej chodzi o konto prywatne zamiast klubowego: tapnij **Zaloguj innym kontem Google** i spróbuj właściwym adresem.
 
-### Zgłoszenie zostało odrzucone. Co dalej?
+### Czy mogę latać z dwóch telefonów?
 
-Na ekranie stoi powód napisany przez administratora - to on mówi, co zrobić. Najczęściej chodzi o konto prywatne zamiast klubowego: wyjdź przez **Zaloguj innym kontem** i spróbuj właściwym adresem. Ponowne zgłoszenie tym samym kontem trafi na tę samą decyzję.
-
-### Czy mogę latać na drugim telefonie?
-
-Możesz zalogować się na innym telefonie (wymaga internetu), ale zapisy powstają na tym telefonie, na którym latasz, i to on musi je wysłać. Nie prowadź jednego dnia lotnego na dwóch telefonach naraz. Więcej: [synchronizacja](synchronizacja).
+Możesz zalogować się na innym telefonie, ale loty zapisują się w telefonie, na którym latasz, i to on musi je wysłać. Nie prowadź jednego dnia lotnego na dwóch telefonach naraz.
 
 ### Kto widzi moje dane?
 
-Klub, w którym latasz: administrator widzi w panelu dziennik operacji, ślady i zgłoszenia z aplikacji, a także listę Twoich urządzeń **w swoim klubie** (żeby dało się je zdalnie wylogować). Z konta Google aplikacja bierze imię i adres e-mail - do założenia i rozpoznania konta. Jeśli masz hasło, zapisany jest wyłącznie jego jednokierunkowy skrót; **samego hasła nie ma nigdzie** i nie pokazuje go żaden ekran. Szczegóły: [konta i bezpieczeństwo](konta-i-bezpieczenstwo) oraz [polityka prywatności](~/prywatnosc.html).
+Twój klub. Administrator widzi w panelu Twoje loty, ślady GPS i urządzenia, na których jesteś zalogowany w tym klubie. Z konta Google aplikacja pobiera tylko imię i adres e-mail. Hasła nie widzi nikt - nie pokazuje go żaden ekran. Szczegóły: [polityka prywatności](~/prywatnosc.html).
 
 ## Dzień lotny
 
 ### Czym różni się lot od operacji?
 
-Operacja to jeden bieg silnika: od przejęcia samolotu do jego zdania. Lot to odcinek od startu do lądowania - w jednej operacji może ich być wiele, także kręgi. Pełny model: [operacja, lot i doba pilota](model-operacji).
+Operacja to jedno uruchomienie silnika: od rozpoczęcia lotu do zdania samolotu. Lot to odcinek od startu do lądowania - w jednej operacji może być ich wiele, także kręgi.
 
-### Zgasiłem silnik, a chcę lecieć jeszcze raz
+### Po wyłączeniu silnika chcę lecieć jeszcze raz
 
-Po STOP ENGINE drugiego uruchomienia w tej samej operacji nie ma - głównym przyciskiem kokpitu staje się **ZDAJ SAMOLOT**. Kolejny lot to nowe przejęcie: trzy kroki z Twoimi własnymi odczytami już wpisanymi. Dzięki temu każda operacja ma odczyty z obu stron ([kokpit](kokpit)).
+Po wyłączeniu silnika w tej samej operacji nie ma drugiego uruchomienia - głównym przyciskiem kokpitu staje się **ZDAJ SAMOLOT**. Zdaj samolot i rozpocznij nowy lot z Pulpitu - odczyty z Twojego zdania będą już wpisane ([kokpit](kokpit)).
 
-### Aplikacja nie wykryła startu albo lądowania
+### Aplikacja nie rozpoznała startu albo lądowania
 
-W locie użyj przycisku ręcznego w kokpicie - wymaga przytrzymania przez sekundę. Po zatrzymaniu silnika, jeszcze przed zdaniem, kafelek **Popraw dane operacji** pozwala dopisać brakujące zdarzenie; po zdaniu robi to **DODAJ WPIS** w trybie edycji. Jak działa automat: [wykrywanie faz lotu](wykrywanie-faz-lotu).
+W locie przytrzymaj przycisk **Start** albo **Lądowanie** na dole kokpitu. Po wyłączeniu silnika brakujące zdarzenie dopiszesz przez **Popraw dane operacji** → **DODAJ WPIS**, a po zdaniu samolotu - w trybie edycji ekranu operacji.
 
 ### Skąd aplikacja wie, ile paliwa jest w samolocie?
 
-Z ostatniego zdania samolotu - poprzedni pilot wpisał odczyt, który staje się Twoim przekazaniem - a po biegu silnika liczy szacunek z normy maszyny. Podpowiedź jest podpowiedzią: paliwomierz ma rację i to jego odczyt wpisujesz. Więcej: [łańcuch odczytów](lancuch-odczytow).
+Z odczytu, który wpisał poprzedni pilot przy zdaniu samolotu. W trakcie lotu liczy szacunek według normy samolotu. To tylko podpowiedź - wpisujesz zawsze to, co pokazuje paliwomierz ([rozpoczęcie lotu](rozpoczecie-lotu)).
 
-### Nie poleciałem - pogoda. Zdawać samolot?
+### Nie było lotu z powodu pogody. Czy zdawać samolot?
 
-Tak. Zdanie ma wariant **bez lotu**: powód z listy i opcjonalny komentarz dla administratora. Jeśli nic się nie zmieniło - żadnego biegu silnika, dolewki ani innego odczytu - ekran uprzedzi, że taki zapis nigdzie nie trafi, ale zdania nie zablokuje: maszynę trzeba oddać ([zdanie samolotu](zdanie-samolotu)).
+Tak. Przed uruchomieniem silnika tapnij w kokpicie kafelek **Zdaj samolot**, wybierz powód i opcjonalnie dopisz komentarz ([zdanie samolotu](zdanie-samolotu#zdanie-bez-lotu)).
 
-## Rezerwacje i powiadomienia
+### Dlaczego wieczorny lot stoi pod następną datą?
+
+Doba w Ninerdeck liczy się w UTC, a operacja należy do doby, w której uruchomiono silnik. Latem lot uruchomiony po 02:00 czasu polskiego należy już do następnej doby UTC.
+
+## Rezerwacje i zlecenia
 
 ### Czy muszę rezerwować samolot, żeby polecieć?
 
-Nie. Rezerwacja daje pewny termin i wypełnia pierwszy krok rozpoczęcia lotu, ale bez niej polecisz dokładnie tak samo - także bez zasięgu. Gdy maszynę ma na najbliższe godziny zarezerwowaną ktoś inny, aplikacja powie kto i kiedy, i na tym koniec ([rezerwacja samolotu](rezerwacja-samolotu)).
+Nie. Rezerwacja daje pewny termin i wypełnia pierwszy krok rozpoczęcia lotu, ale bez niej polecisz tak samo. Jeśli samolot zarezerwował ktoś inny, aplikacja powie, kto i kiedy ([rezerwacja samolotu](rezerwacja-samolotu)).
 
-### Moja rezerwacja „czeka na zgodę" - co to znaczy?
+### Moja rezerwacja „czeka na zgodę". Co to znaczy?
 
-Klub ułożył ścieżkę akceptacji: rezerwację zatwierdzają kolejno wskazane osoby, na przykład mechanik, potem szef wyszkolenia. Termin jest już Twój i nikt go nie zajmie; karta rezerwacji pokazuje, który krok czeka i od kiedy. Gdy nikt nie zdąży zdecydować przed początkiem terminu, rezerwacja wygasa i termin wraca do puli ([akceptacja rezerwacji](akceptacja-rezerwacji)).
+Twój klub wymaga zgody na rezerwacje - zatwierdzają je kolejno wskazane osoby, na przykład mechanik. Termin jest już zajęty dla Ciebie. Jeśli nikt nie zdecyduje przed początkiem terminu, rezerwacja wygaśnie ([akceptacja rezerwacji](akceptacja-rezerwacji)).
 
-### Jak zostać osobą, która zatwierdza rezerwacje?
+### Jak zatwierdzać rezerwacje innych pilotów?
 
-Administrator nadaje Ci w zakresie uprawnień **Akceptację rezerwacji** i dopisuje Cię do kroku ścieżki. Nie potrzebujesz wejścia do dziennika ani kont - decydujesz z telefonu: prośba przychodzi do skrzynki pod dzwonkiem na pulpicie, a zgoda to jedno tapnięcie ([zakresy uprawnień](uprawnienia)).
+Administrator nadaje Ci uprawnienie **Akceptacja rezerwacji** i dodaje Cię do kroku akceptacji. Prośby przychodzą do powiadomień, a zgoda to jedno tapnięcie ([akceptacja rezerwacji](akceptacja-rezerwacji)).
+
+### Przyszło zlecenie lotu. Co dalej?
+
+Otwórz je z powiadomienia albo z karty **Zlecenia** na Pulpicie. Jeśli zlecenie jest imienne, tapnij **PRZYJMUJĘ** - lot stanie się Twoją rezerwacją. Jeśli przyszło do grupy, tapnij **MOGĘ LECIEĆ**, a osoba zlecająca wybierze pilota ([zlecenia na lot](zlecenia-na-lot)).
+
+### Jak zlecić lot pilotom?
+
+Potrzebujesz uprawnienia **Zlecanie lotów**. W kalendarzu tapnij wolne miejsce przy samolocie i wybierz **Zleć lot**, wybierz fotele i adresatów, a potem **WYŚLIJ ZLECENIE** ([zlecenia na lot](zlecenia-na-lot#jak-zlecic-lot)).
 
 ### Nie przychodzą powiadomienia
 
-Sprawdź w ustawieniach systemu telefonu, czy Ninerdeck ma zgodę na powiadomienia i czy nie usypia go oszczędzanie baterii. Aplikacja pyta o zgodę dopiero wtedy, gdy zaczyna Cię to dotyczyć - więc może jeszcze nie zapytała. Wiadomości i tak czekają w skrzynce pod dzwonkiem; powiadomienie jest tylko sygnałem, że coś przyszło ([powiadomienia](powiadomienia)).
+Sprawdź w ustawieniach telefonu, czy Ninerdeck ma zgodę na powiadomienia i czy oszczędzanie baterii go nie usypia. Aplikacja pyta o zgodę dopiero wtedy, gdy powiadomienia zaczynają Cię dotyczyć. Wiadomości i tak czekają pod dzwonkiem na Pulpicie ([powiadomienia](powiadomienia)).
 
-### Po wylogowaniu przestały przychodzić powiadomienia
+### Dlaczego powiadomienie przyszło bez dźwięku?
 
-Tak ma być: telefon, na którym nikt nie jest zalogowany, nie dostaje cudzych spraw - to chroni wspólny tablet w samolocie. Po zalogowaniu wracają same.
+W czasie lotu - od rozpoczęcia do zdania samolotu, także gdy lecisz jako drugi pilot - powiadomienia przychodzą bez dźwięku. Dźwięk wraca po zdaniu samolotu.
 
 ## Po locie
 
-### Wpisałem złą liczbę przy zdaniu. Da się poprawić?
+### W odczycie przy zdaniu jest błąd. Czy da się go poprawić?
 
-Tak, przez 24 godziny od zdania: kafelek operacji → **EDYTUJ DANE** → ołówek przy wierszu „Zdanie" → nowa wartość i opcjonalny powód. Stara liczba nie ginie - przy poprawionej staje oznaczenie **popr.** z całą historią zmian. Więcej: [ekran operacji i korekty](operacja-i-korekty).
+Tak, przez 24 godziny od zdania: w Historii otwórz operację, tapnij **EDYTUJ DANE**, potem ołówek przy wierszu „Zdanie" i wpisz nową wartość. Poprawiona liczba dostanie oznaczenie **popr.** z historią zmian ([ekran operacji i poprawki](operacja-i-korekty)).
 
 ### Minęły 24 godziny, a liczba jest zła
 
-Ekran operacji otwiera się wtedy w podglądzie: bez **EDYTUJ DANE**, ale z pełnym rachunkiem i historią zmian. Poprawkę zgłoś administratorowi - jego czasu na poprawki nic nie zamyka ([korekty i rejestr](korekty-i-rejestr)).
+Ekran operacji otwiera się wtedy tylko do podglądu. Zgłoś poprawkę administratorowi - on może poprawić wpis w każdej chwili.
 
-### Odjechałem, a samolotu nie zdałem. Co teraz?
+### Samolot nie został zdany, a pilot już odjechał
 
-Jeśli masz odczyty paliwa i motogodzin (zdjęcie, notatka), zdaj samolot z miejsca, w którym jesteś - czas blokowy liczy się z biegu silnika, nie z chwili zdania. Jeśli odczytów nie masz, poproś administratora o zakończenie operacji z panelu; do zdania albo zakończenia maszyna jest dla innych pilotów zajęta.
-
-### Dlaczego wczorajszy wieczorny lot stoi pod dzisiejszą datą?
-
-Bo doba w Ninerdeck liczy się w UTC, a operacja należy do doby, w której uruchomiono silnik. Latem lot po godzinie 02:00 czasu polskiego jest już w następnej dobie UTC, a lot o 01:30 - w poprzedniej ([model operacji](model-operacji)).
+Jeśli pilot ma odczyty paliwa i motogodzin (zdjęcie, notatka), może zdać samolot z dowolnego miejsca. Jeśli ich nie ma, administrator kończy operację w panelu. Do tego czasu samolot jest dla innych zajęty.
 
 ### Nie widzę śladu na mapie
 
-Ślad wraca z serwera, więc jako jedyna rzecz po locie wymaga zasięgu. Ekran nie zwija powodów do jednego: mówi, czy chodzi o lot wpisany po fakcie, o nagranie czekające jeszcze w kolejce, o brak nagrania, czy o brak sieci. Więcej: [ślad GPS](slad-gps).
+Ślad pobiera się z klubu, więc potrzebny jest internet. Ekran mówi, dlaczego trasy nie ma: lot wpisany po fakcie, nagranie czeka na wysłanie, brak nagrania albo brak internetu ([ślad GPS](slad-gps)).
 
-### Jak wpisać lot, którego nie było na telefonie?
+### Jak wpisać lot, który odbył się bez telefonu?
 
-Na Moim dniu stoi **DODAJ LOT RĘCZNIE** - cztery kroki: data i samolot, zadanie, czasy i loty, liczniki. Kręgi podaje się liczbą przy lądowaniu, a nie parami godzin. Taki wpis nie ma śladu GPS i dostaje oznaczenie **RĘCZNIE**: [wpis lotu po fakcie](wpis-lotu-po-fakcie).
+Na Pulpicie tapnij **DODAJ LOT RĘCZNIE** i przejdź cztery kroki: data i samolot, zadanie, przebieg lotu, liczniki ([wpis lotu po fakcie](wpis-lotu-po-fakcie)).
 
 ## Bez zasięgu
 
 ### Czy aplikacja działa bez internetu?
 
-Tak - wszystko, co dotyczy lotu, działa bez sieci: wejście PIN-em, rozpoczęcie lotu, kokpit, zdanie samolotu, korekty. Zapisy czekają w kolejce i wychodzą same, gdy wróci zasięg. Sieci wymagają pierwsze logowanie, wylogowanie, ślad GPS na mapie oraz wszystko, co rozstrzyga klub: kalendarz z rezerwacją, skrzynka powiadomień i decyzja o cudzej rezerwacji. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
+Tak - wszystko, co dotyczy lotu: PIN, rozpoczęcie lotu, kokpit, zdanie samolotu i poprawki. Zapisy wyślą się same, gdy wróci zasięg. Internetu wymagają logowanie, kalendarz, zlecenia, powiadomienia i ślad na mapie ([praca bez zasięgu](praca-bez-zasiegu)).
 
 ### Co znaczy czerwone „SYNC STOI"?
 
-Serwer odpowiedział i odmówił przyjęcia zapisów albo wygasła sesja - kolejka sama nie ruszy. Tapnij oznaczenie: baner nazywa powód, podaje kod odmowy dla administratora i drogę wyjścia. Twoje zapisy są bezpieczne na telefonie. Bursztynowe **OFFLINE · n** znaczy co innego: ostatnia próba nie dotarła i przejdzie sama, gdy wróci zasięg ([synchronizacja](synchronizacja)).
+Internet jest, ale wysyłka zapisów stoi i sama nie ruszy - na przykład trzeba zalogować się ponownie. Tapnij oznaczenie: komunikat powie, co zrobić. Twoje zapisy są bezpieczne w telefonie. Bursztynowe **OFFLINE** oznacza tylko, że ostatnia próba nie dotarła - wysyłka ruszy sama.
 
 ### Nie mogę się wylogować
 
-Wylogowanie jest zablokowane, dopóki kolejka wysyłki nie jest pusta - zapisy, które nie doszły do klubu, istnieją tylko na tym telefonie i przepadłyby razem z profilem. Znajdź zasięg, poczekaj, aż oznaczenie zgaśnie, i spróbuj jeszcze raz ([konta i bezpieczeństwo](konta-i-bezpieczenstwo)).
+Wylogowanie jest możliwe dopiero wtedy, gdy wszystkie zapisy dotrą do klubu - niewysłane loty są tylko w tym telefonie. Wróć w zasięg, poczekaj, aż oznaczenie zniknie, i spróbuj ponownie.
 
 ## Panel klubu
 
-### Jestem pilotem - czy mogę wejść do panelu?
+### Jestem pilotem. Czy mogę wejść do panelu?
 
-Tak, tym samym kontem, co do aplikacji. Bez żadnej zdolności masz w panelu Moje konto (hasło, urządzenia) i kalendarz floty - rezerwujesz w nim tak samo, jak w aplikacji, a cudze rezerwacje widzisz tak, jak tam. Dziennik, listę pilotów i karty samolotów otwiera zdolność **Podgląd klubu**, którą nadaje administrator. Kto co widzi: [zakresy uprawnień](uprawnienia).
+Tak, tym samym kontem, co do aplikacji. Każdy członek ma w panelu kalendarz, zlecenia i Moje konto. Dziennik, pilotów i samoloty otwiera uprawnienie **Podgląd klubu** ([kto co widzi](uprawnienia)).
 
-### Jak wpuścić nowego pilota?
+### Jak przyjąć nowego pilota do klubu?
 
-Podaj mu kod klubu. Pilot loguje się w aplikacji, wpisuje kod, a jego zgłoszenie staje w module [Piloci](panel-piloci) nad listą: **Rozpatrz**, kod pilota, zakres uprawnień, **Zatwierdź i przyjmij do klubu**. Innej drogi nie ma - z panelu nikogo nie dopisuje się ręcznie. Odrzucenie wymaga powodu, bo pilot czyta go na swoim ekranie.
+Podaj mu kod klubu. Pilot wpisuje go w aplikacji, a jego zgłoszenie pojawia się w module [Piloci](panel-piloci) nad listą członków. Kliknij **Rozpatrz**, nadaj kod pilota i uprawnienia, a potem **Zatwierdź i przyjmij do klubu**.
 
 ### Samolot jest zajęty przez pilota, który go nie zdał
 
-Otwórz tę operację w [dzienniku](panel-dziennik) i użyj **Zakończenia operacji** z powodem - maszyna zwolni się od razu, a pilot dostanie na telefonie baner z wyjaśnieniem. Zakończona tak operacja nie ma odczytów końcowych, więc aktualny stan licznika, paliwa i oleju wpisz potem w [karcie samolotu](panel-samoloty).
+Otwórz operację w [dzienniku](panel-dziennik) i użyj **Zakończenia operacji** z powodem. Samolot od razu się zwolni. Potem wpisz aktualny stan liczników w [karcie samolotu](panel-samoloty#poprawa-odczytow).
 
 ### Czy mogę poprawić godzinę startu z panelu?
 
-Tak, ze zdolnością **Korekty w dzienniku**: na stronie operacji w [dzienniku](panel-dziennik) przycisk **Popraw zdarzenia** włącza tryb edycji - każdy wiersz osi ma ołówek, szuflada pokazuje skutek przed zapisem, a powód jest wymagany, bo pilot czyta go w historii zmian. Brakujące lądowanie albo tankowanie dopisuje ostatni wiersz osi. Pilot poprawia własne wpisy w aplikacji przez 24 godziny od zdania; administratora czas nie ogranicza ([korekty i rejestr](korekty-i-rejestr)).
+Tak, z uprawnieniem **Korekty w dzienniku**: na stronie operacji kliknij **Popraw zdarzenia**, potem wiersz startu. Powód jest wymagany, bo pilot zobaczy go w historii zmian ([dziennik](panel-dziennik#jak-poprawic-operacje)).
 
 ### Co znaczy liczba przy „Do sprawdzenia"?
 
-Ile spraw czeka na reakcję: rozjazdów między zapisami (np. odczyt przy przejęciu inny niż przy poprzednim zdaniu), dób bez karty w arkuszu i operacji, których nikt nie zdał od ponad doby. Bez spraw plakietki nie ma. Każdy wiersz prowadzi tam, gdzie sprawę da się zamknąć ([Do sprawdzenia](panel-do-sprawdzenia)).
+Liczba spraw, które czekają na reakcję: rozjazdów między zapisami, kart dnia, które nie trafiły do arkusza, i operacji bez zdania od ponad doby ([Do sprawdzenia](panel-do-sprawdzenia)).
 
-### Mam uwagę do aplikacji. Gdzie ją zgłosić?
+### Gdzie zgłosić błąd w aplikacji?
 
-Przyciskiem w prawym górnym rogu ekranu albo okienka - zgłoszenie zabiera ze sobą kontekst (ekran, operacja, samolot, wersja aplikacji) i wysyła się samo, gdy jest sieć. Administrator czyta je w module Zgłoszenia w [panelu](panel-wprowadzenie) i nadaje im status.
+Przyciskiem w prawym górnym rogu ekranu albo okienka w aplikacji. Aplikacja dołączy informacje o ekranie, operacji i wersji, a zgłoszenie wyśle się samo, gdy będzie internet. Zgłoszenia czyta opiekun platformy.

@@ -138,7 +138,7 @@ describe('„Do mnie" - stany z decyzji właściciela (2026-10-06)', () => {
 
   it('fotel zniesiony czyta się jak obsadzony; odebrane - jak cofnięte; odwołane i wygasłe mają własną plakietkę', () => {
     expect(flat(rowFor({ inPlay: false, staleReason: 'seat_dropped' }).meta)).toBe('Fotel obsadzony · zleca Marta Zięba');
-    expect(flat(rowFor({ inPlay: false, staleReason: 'removed', removed: true }).meta)).toBe('Zlecenie cofnięte · zleca Marta Zięba');
+    expect(flat(rowFor({ inPlay: false, staleReason: 'removed', removed: true }).meta)).toBe('Nie jest już do Ciebie · zleca Marta Zięba');
     const cancelled = rowFor({ inPlay: false, staleReason: 'closed' }, { order: order({ status: 'cancelled' }) });
     expect([cancelled.tag.text, flat(cancelled.meta)]).toEqual(['Odwołane', 'zleca Marta Zięba']);
     const expired = rowFor({ inPlay: false, staleReason: 'closed' }, { order: order({ status: 'expired' }) });

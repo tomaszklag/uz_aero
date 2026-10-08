@@ -117,7 +117,7 @@ describe('okno osi', () => {
           kind: 'block',
           startsAt: day.startsAt,
           endsAt: day.endsAt,
-          blockReason: 'Przegląd 100 h',
+          blockReason: 'maintenance',
         }),
       ],
     });
@@ -194,14 +194,16 @@ describe('napis i ton paska', () => {
     expect(g.rows[0]!.bars[0]!.label).toBe('AKO');
   });
 
-  it('wyłączenie z użytku niesie POWÓD, a bez niego nazwę stanu', () => {
+  it('wyłączenie z użytku niesie POWÓD po polsku, a bez niego nazwę stanu', () => {
+    // Serwer wysyła wyłącznie kody (maintenance / defect / other) - do 4.0.0 pasek pisał
+    // je wprost.
     const g = grid({
       bookings: [
-        booking({ id: 'b1', aircraftId: 'a1', kind: 'block', blockReason: 'Usterka - radio' }),
+        booking({ id: 'b1', aircraftId: 'a1', kind: 'block', blockReason: 'defect' }),
         booking({ id: 'b2', aircraftId: 'a2', kind: 'block', blockReason: null }),
       ],
     });
-    expect(g.rows[0]!.bars[0]!.label).toBe('Usterka - radio');
+    expect(g.rows[0]!.bars[0]!.label).toBe('Usterka');
     expect(g.rows[1]!.bars[0]!.label).toBe('Wyłączony z użytku');
   });
 
@@ -251,7 +253,7 @@ describe('legenda', () => {
   it('opisuje wyłącznie tony obecne na osi i zawsze w tej samej kolejności', () => {
     const g = grid({
       bookings: [
-        booking({ id: 'b1', aircraftId: 'a2', kind: 'block', blockReason: 'Przegląd' }),
+        booking({ id: 'b1', aircraftId: 'a2', kind: 'block', blockReason: 'maintenance' }),
         booking({ id: 'b2', aircraftId: 'a1', pilotId: 'ja' }),
       ],
     });

@@ -19,17 +19,26 @@ import {
 import { oilLitres } from '../ui/format';
 import type { RemoteReadingsChain } from '../application';
 
+
+/**
+ * Serwer podaje IDENTYFIKATORY osób (od 2.0.0 długie ciągi znaków), a kod pilota bierze się
+ * z pamięci klubu na telefonie. Do 4.0.0 rozpiska pisała identyfikator wielkimi literami
+ * (przegląd treści 2026-10-08).
+ */
+const CODES: Record<string, string> = { 'p-bno': 'BNO', 'p-jkw': 'JKW', 'p-ako': 'AKO' };
+const codeOf = (id: string): string | null => CODES[id] ?? null;
+
 const chain: RemoteReadingsChain = {
   before: {
     sessionUuid: 'rano',
-    picId: 'bno',
+    picId: 'p-bno',
     at: Date.UTC(2026, 7, 16, 9, 0),
     fuelL: 140,
     mh: 1232,
   },
   after: {
     sessionUuid: 'wieczor',
-    picId: 'jkw',
+    picId: 'p-jkw',
     at: Date.UTC(2026, 7, 16, 15, 0),
     fuelL: 96,
     mh: 1240,
@@ -40,15 +49,18 @@ const chain: RemoteReadingsChain = {
 describe('wiersze odniesienia w arkuszu odczytu', () => {
   it('podają liczbę Z ŹRÓDŁEM - kto i kiedy', () => {
     // Zgłoszenie: „jeśli jest domyślna wartość, to należy wypisać, z czego ona wynika".
-    const before = fuelBeforeReference(chain);
+    const before = fuelBeforeReference(chain, codeOf);
     expect(before!.value).toBe('140 L');
     expect(before!.label).toContain('Zostawione przed lotem');
     expect(before!.label).toContain('BNO');
 
-    const after = fuelAfterReference(chain);
+    const after = fuelAfterReference(chain, codeOf);
     expect(after!.value).toBe('96 L');
     expect(after!.label).toContain('Zastane po locie');
     expect(after!.label).toContain('JKW');
+    // Pilot spoza pamięci klubu - sama data, nigdy identyfikator osoby.
+    expect(fuelBeforeReference(chain)!.label).not.toContain('p-bno');
+    expect(fuelBeforeReference(chain)!.label).not.toContain('P-BNO');
   });
 
   it('bez sąsiada milczą - kreska byłaby gorsza od braku wiersza', () => {
@@ -61,17 +73,17 @@ describe('wiersze odniesienia w arkuszu odczytu', () => {
 
 describe('ostrzeżenia o rozjeździe łańcucha', () => {
   it('milczą, gdy odczyty się zgadzają', () => {
-    expect(fuelContinuityWarnings(chain, 140, 96)).toEqual([]);
+    expect(fuelContinuityWarnings(chain, 140, 96, codeOf)).toEqual([]);
   });
 
   it('milczą w granicach podziałki paliwomierza', () => {
     // 4 L różnicy to mniej niż tolerancja - ostrzeżenie o tym byłoby fałszywym
     // alarmem przy każdej normalnej sesji.
-    expect(fuelContinuityWarnings(chain, 144, 92)).toEqual([]);
+    expect(fuelContinuityWarnings(chain, 144, 92, codeOf)).toEqual([]);
   });
 
   it('mówią o rozjeździe z POPRZEDNIM lotem i podają źródło', () => {
-    const [w] = fuelContinuityWarnings(chain, 100, 96);
+    const [w] = fuelContinuityWarnings(chain, 100, 96, codeOf);
     expect(w!.id).toBe('continuity-before');
     expect(w!.text).toContain('140 L');
     expect(w!.text).toContain('100 L');
@@ -79,7 +91,7 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
   });
 
   it('mówią o rozjeździe z NASTĘPNYM lotem', () => {
-    const [w] = fuelContinuityWarnings(chain, 140, 40);
+    const [w] = fuelContinuityWarnings(chain, 140, 40, codeOf);
     expect(w!.id).toBe('continuity-after');
     expect(w!.text).toContain('96 L');
   });
@@ -87,8 +99,8 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
   it('łapią rozjazd w OBIE strony - także paliwo, którego przybyło', () => {
     // Ktoś mógł dolać poza aplikacją: rejestr o tym nie wie, a zbiornik owszem.
     // Dlatego mówimy o różnicy, a nie o jej znaku, i nie nazywamy tego błędem.
-    expect(fuelContinuityWarnings(chain, 200, 96)).toHaveLength(1);
-    expect(fuelContinuityWarnings(chain, 140, 200)).toHaveLength(1);
+    expect(fuelContinuityWarnings(chain, 200, 96, codeOf)).toHaveLength(1);
+    expect(fuelContinuityWarnings(chain, 140, 200, codeOf)).toHaveLength(1);
   });
 
   it('bez łańcucha i bez odczytów nie ma o czym mówić', () => {
@@ -99,7 +111,7 @@ describe('ostrzeżenia o rozjeździe łańcucha', () => {
   it('ostrzeżenie jest TYLKO tekstem - nie niesie niczego, co mogłoby zablokować zapis', () => {
     // Gdyby kiedyś doszło pole w rodzaju `blocking`, ekran mógłby zacząć na nim
     // wyszarzać przycisk - a to jest dokładnie ta bramka, której tu nie ma być.
-    for (const w of fuelContinuityWarnings(chain, 100, 40)) {
+    for (const w of fuelContinuityWarnings(chain, 100, 40, codeOf)) {
       expect(Object.keys(w).sort()).toEqual(['id', 'src', 'text']);
     }
   });
@@ -109,7 +121,7 @@ describe('ciągłość MOTOGODZIN - łańcuch MH jest osią samolotu (§4.5)', (
   it('podaje odczyty obu sąsiadów jako wiersze odniesienia', () => {
     expect(mhBeforeReference(chain, 'decimal')!.value).toBe('1232.0');
     expect(mhAfterReference(chain, 'decimal')!.value).toBe('1240.0');
-    expect(mhBeforeReference(chain, 'decimal')!.label).toContain('BNO');
+    expect(mhBeforeReference(chain, 'decimal', codeOf)!.label).toContain('BNO');
   });
 
   it('milczy, gdy licznik trzyma łańcuch', () => {
@@ -137,13 +149,13 @@ describe('ciągłość OLEJU - kotwica, nie para „przed/po"', () => {
       levelL: 9.2,
       atMh: 1230,
       at: Date.UTC(2026, 7, 16, 7, 0),
-      byPilotId: 'bno',
+      byPilotId: 'p-bno',
       addedSinceL: 1,
     },
   };
 
   it('wiersz odniesienia niesie pomiar, autora i DOLEWKI od niego', () => {
-    const row = oilReference(withOil)!;
+    const row = oilReference(withOil, codeOf)!;
     expect(row.value).toBe(oilLitres(9.2));
     expect(row.label).toContain('BNO');
     expect(row.label).toContain('dolano');

@@ -209,7 +209,7 @@
            unieważniony zostaje przekreślony i też ma ołówek - prowadzi do historii
            i przywrócenia. Słownik jest jeden i polski, ten sam, co w telefonie. -->
       <div class="card">
-        <div class="card-title">Log zdarzeń</div>
+        <div class="card-title">Przebieg operacji</div>
         <div class="table-wrap plain">
           <table>
             <caption class="visually-hidden">Zdarzenia operacji - tryb edycji</caption>
@@ -225,10 +225,10 @@
             <tbody>
               <tr class="editable">
                 <td class="num">10:01:15</td>
-                <td class="cell-strong">Przejęcie</td>
+                <td class="cell-strong">Rozpoczęcie</td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
-                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw przejęcie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw: Rozpoczęcie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
               </tr>
               <tr class="editable">
                 <td class="num">10:03:40</td>
@@ -400,13 +400,13 @@
          „przed → po". Wzorzec: arkusz 10H z telefonu przełożony na szufladę FORMULARZA
          (`.drawer.wide`). Zdarzenie stempluje się PILOTEM operacji, więc pilot zobaczy
          wpis na swoim telefonie - podtytuł mówi to, bo to jest skutek, nie budowa. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer wide" role="dialog" aria-modal="true" aria-label="Dodaj wpis do operacji">
 
       <div class="drawer-head">
         <div>
           <div class="drawer-title">Dodaj wpis</div>
-          <div class="drawer-sub">SP-AXA/2026-09-05/AKW/1 · pilot zobaczy wpis na telefonie</div>
+          <div class="drawer-sub">SP-AXA/2026-09-05/AKW/1 · pilot zobaczy wpis w aplikacji</div>
         </div>
         <button type="button" class="x-btn" aria-label="Zamknij">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -476,7 +476,7 @@
           <div class="kv"><span class="kv-k">Czas lotu 5</span><span class="kv-v"><span class="was">—</span> → 0:20</span></div>
           <div class="kv"><span class="kv-k">Czas w powietrzu operacji</span><span class="kv-v"><span class="was">1:24</span> → 1:44</span></div>
           <div class="kv"><span class="kv-k">Niespójności</span><span class="kv-v"><span class="was">1</span> → 0</span></div>
-          <div class="kv"><span class="kv-k">Karta arkusza</span><span class="kv-v">2026-09-05_SP-AXA <small>→ rewizja 2</small></span></div>
+          <div class="kv"><span class="kv-k">Karta dnia</span><span class="kv-v">2026-09-05_SP-AXA <small>→ wersja 2</small></span></div>
         </div>
 
         <div class="card">
@@ -484,7 +484,7 @@
           <div class="field">
             <label class="label" for="a-reason">Powód dopisania</label>
             <textarea class="input area" id="a-reason" rows="2">Telefon stracił fixa na pasie - lądowanie 12:02 wg dziennika lotniska.</textarea>
-            <span class="hint">Zobaczy go pilot w historii zmian; zostaje w dzienniku audytu.</span>
+            <span class="hint">Pilot zobaczy go w aplikacji, w historii zmian.</span>
           </div>
         </div>
 
@@ -658,7 +658,7 @@
       <div class="inv-demo">
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-          <span>Lądowanie 12:02:00 dopisane - lot 5 domknięty. Karta <b>2026-09-05_SP-AXA</b> poszła do arkusza jako rewizja 2; pilot zobaczy wpis na telefonie.</span>
+          <span>Lądowanie 12:02:00 dopisane - lot 5 domknięty. Karta <b>2026-09-05_SP-AXA</b> poszła do arkusza jako wersja 2; pilot zobaczy wpis w aplikacji.</span>
         </div>
         <div class="table-wrap plain">
           <table>
@@ -666,7 +666,7 @@
             <tbody>
               <tr class="editable">
                 <td class="num">12:02:00</td>
-                <td class="cell-strong">Lądowanie<span class="cell-sub">dopisał administrator · 7 WRZ 12:20</span></td>
+                <td class="cell-strong">Lądowanie<span class="cell-sub">dopisek administratora · 7 WRZ 12:20</span></td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">ręcznie</span></td>
                 <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw czas lądowania"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>

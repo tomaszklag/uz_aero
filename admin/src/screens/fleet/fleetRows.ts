@@ -69,7 +69,7 @@ export function fleetRow(aircraft: AircraftListItemDto): FleetRow {
     mhFormatTone: mhFormatTone(aircraft.mhFormat),
     dualLabel: aircraft.dualRequired ? 'Wymagany' : null,
     inService,
-    statusLabel: inService ? 'W służbie' : 'Wyłączony',
+    statusLabel: inService ? 'W służbie' : 'Poza służbą',
     warning: !inService && aircraft.openSessions > 0 ? 'ktoś jeszcze na nim lata' : null,
     muted: !inService,
   };

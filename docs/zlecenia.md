@@ -144,8 +144,10 @@ Czwarta tura - decyzje, które wynikły z trzeciej (też pojedynczo):
     rozszerzyła to na cały klub (pkt 49)._
 28. **Push o odpowiedzi adresata dostaje WYŁĄCZNIE autor zlecenia**; pozostali prowadzący
     widzą odpowiedzi na karcie i liście na żywo (§12).
-29. **Prowadzący może odebrać zlecenie adresatowi** - usunąć go albo zamienić na kogoś innego
-    (przy fotelu imiennym to „zamień osobę"). Usunięty dostaje „Zlecenie nieaktualne", jego
+29. **Prowadzący może usunąć adresata** - zdjąć go z listy albo zamienić na kogoś innego
+    (przy fotelu imiennym to „zamień osobę"). Pozycja menu nazywa się od przeglądu treści
+    „Usuń z adresatów" (pkt 70). Usunięty dostaje wiadomość „Zlecenie nieaktualne" z treścią
+    „Zlecenie nie jest już do Ciebie", jego
     zgłoszenie przestaje się liczyć, wątek zostaje do odczytu; osobę przydzieloną najpierw
     odpina cofnięcie przydziału (§5.2).
 30. **Osoba z list obu foteli dostaje JEDNO zlecenie** z „terminem do potwierdzenia",
@@ -212,7 +214,7 @@ Szósta tura - decyzje wąskie z §21 i stany z przeglądu makiet (2026-09-28, p
     terminu**; zlecenie wysłane później ostrzeżenia nie dostaje (odwraca „3 h" z pkt 15,
     §5.5).
 46. **Stany, które makiety opisywały jako „bez makiety", dostają ramki**: termin do
-    potwierdzenia u adresata (28A), zlecenie wygasłe i cofnięte u adresata (28B),
+    potwierdzenia u adresata (28A), zlecenie wygasłe i usunięcie z adresatów u adresata (28B),
     odwołane albo wygasłe u prowadzącego (32) (§14.2).
 47. **Włączenie „Wspólnej listy" w trakcie wypełniania PRZENOSI wybranych adresatów obu
     foteli na jedną listę** - nic nie znika po cichu; wskazanie imienne traci moc
@@ -237,12 +239,12 @@ z przykładem):
 50. **Fotel przestawiony na „brak" albo „ja" USYPIA adresatów tego fotela** - dostają
     wiadomość, że fotel przestał być szukany (`order_filled` z powodem `seat_dropped`),
     ich zgłoszenia zostają ważne, a gdy fotel wróci do szukania, wracają razem z nim (§5.2).
-51. **Imienne dopisanie osoby wcześniej ODEBRANEJ przywraca ją jak nową** - świeży wiersz
-    odpowiedzi i własna wiadomość; grupa ani „Wyślij ponownie" nikogo odebranego nie
+51. **Imienne dopisanie osoby wcześniej USUNIĘTEJ z adresatów przywraca ją jak nową** - świeży
+    wiersz odpowiedzi i własna wiadomość; grupa ani „Wyślij ponownie" nikogo usuniętego nie
     przywracają (§5.2, pkt 41).
 52. **Po „nieaktualne" adresat nie dostaje już zmian ani odwołania** - zlecenie przestało
     go dotyczyć, a dowiedział się o tym ostatnią wiadomością (§12).
-53. **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (odebrany, jego fotel
+53. **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (usunięty z adresatów, jego fotel
     obsadzony kimś innym albo zniesiony, zlecenie zamknięte) - historia zostaje do
     czytania (§7.1).
 54. **„Tak" na fotel, który zdążył zająć ktoś inny, zapisuje się jako gotowość** - bez
@@ -274,7 +276,7 @@ Dziewiąta tura - implementacja aplikacji (Z-C, 2026-10-06, pojedynczo, każda z
     (godziny terminu cyframi pogrubionymi, etykieta w kolumnie, wartość obok) - makiety
     23, 26 i 28 rysowały to samo, a aplikacja miała dwa kształty (§14.5).
 63. **„EDYTUJ" dostało ramki PRZED kodem** (31 i 31B, kotwica `#edycja`; reguła pkt 46):
-    wysłani adresaci z kłódką (odbiera się ich menu ⋯ na karcie), dopisani z „×" i podpisem
+    wysłani adresaci z kłódką (usuwa się ich menu ⋯ na karcie), dopisani z „×" i podpisem
     „nowy", „Wspólna lista" zablokowana, skutek zmiany terminu pod godzinami i nad
     „ZAPISZ ZMIANY" (§5.1, §5.2).
 64. **Cudza potwierdzona rezerwacja ma na karcie 23 ramkę neutralną** - zieleń znaczy
@@ -295,6 +297,16 @@ Dziesiąta tura - implementacja panelu (Z-D, 2026-10-07, pojedynczo, każda z pr
 69. **Formularz zlecenia w panelu to szuflada BEZ adresu** - jak makieta `zlecenia-nowe`
     i własna rezerwacja K7. Adres `#/zlecenia/nowe` z listy zadań Z-D odpadł: szkic
     w adresie obiecywałby, że wklejony link coś otworzy, a szkic żyje tylko w tej karcie.
+
+Przegląd treści 4.0.0 (2026-10-08, decyzja 2 z dwunastu pytanych pojedynczo):
+
+70. **„Odbierz zlecenie" → „Usuń z adresatów"** - w menu ⋯ przy adresacie (panel i telefon),
+    w pytaniu („Usunąć z adresatów: Ewa Sowa?"), w historii zmian („Usunięcie z adresatów
+    · 2 osoby" - rzeczownik, bo forma „usunięci" zakłada liczbę i rodzaj) i w makietach.
+    Adresat czyta „Zlecenie nie jest już do Ciebie" zamiast „Zlecenie cofnięte": „odebrać
+    zlecenie" brzmiało, jakby zlecenie komuś zabierano, a czynność zdejmuje osobę z listy
+    adresatów. Tytuł wiadomości („Zlecenie nieaktualne") zostaje - mówi o stanie zlecenia
+    z punktu widzenia adresata, tak samo przy fotelu obsadzonym.
 
 ## 2. Czym JEST zlecenie w tym systemie
 
@@ -474,7 +486,7 @@ prowadzący widzą też, KTO. Trzy zmiany mają skutek dla ludzi i mówią o nim
 - **fotel przestawiony na „brak" albo „ja"** zdejmuje osobę, która go zajmowała - dostaje
   „Przydział cofnięty";
 - **dopisanie adresatów** wysyła zlecenie nowym (i tylko im);
-- **odebranie zlecenia adresatowi** (pkt 29) - usunięty dostaje „Zlecenie nieaktualne", jego
+- **usunięcie z adresatów** (pkt 29, 70) - usunięty dostaje „Zlecenie nieaktualne", jego
   zgłoszenie przestaje się liczyć, a wątek zostaje do odczytu bez pisania. Przy fotelu
   imiennym to jest „zamień osobę": usunięcie i dopisanie w jednym ruchu, więc fotel dalej
   obsadza potwierdzenie nowej osoby. Osoby PRZYDZIELONEJ nie da się usunąć wprost - najpierw
@@ -583,7 +595,7 @@ obsadzeniu fotela przez kogoś innego mówi tylko tyle, że fotel jest zajęty.
   kategoria, co „zapis zostaje w rejestrze i widzi go administrator" przy usuwaniu lotu.
 - Operator platformy (superadministrator) wątków nie czyta - nie wchodzi w dane klubu
   (`docs/wielofirmowosc.md` §3.3).
-- **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (pkt 53): odebrany, jego
+- **Rozmowa zamyka się dla OBU stron, gdy adresat wypadł z gry** (pkt 53): usunięty z adresatów, jego
   fotel obsadzony kimś innym albo zniesiony, zlecenie zamknięte. Historia zostaje do
   czytania; nowej wiadomości nie wyśle ani adresat, ani zlecający (`thread_closed`).
 
@@ -711,7 +723,7 @@ CREATE TABLE order_recipients (
   answered_at        TIMESTAMPTZ,
   answered_revision  INTEGER,
   thread_id          TEXT REFERENCES threads(id),
-  -- odebranie zlecenia (pkt 29): wiersz zostaje jako zapis, wątek do odczytu
+  -- usunięcie z adresatów (pkt 29): wiersz zostaje jako zapis, wątek do odczytu
   removed_at         TIMESTAMPTZ,
   removed_by         TEXT REFERENCES pilots(id),
   PRIMARY KEY (order_id, pilot_id),
@@ -800,7 +812,7 @@ klubu**, modułu całej aplikacji opisanego w `docs/kanal-klubu.md` (decyzje K1�
 architektura, bezpieczeństwo, testy). Tu stoi wyłącznie to, co zlecenia do niego dokładają:
 
 - **Sygnał `order:<id>`** po każdej zmianie zlecenia (odpowiedź, odczyt, przydział, edycja,
-  odebranie, odwołanie, wygaśnięcie) - do autora, adresatów niewykreślonych,
+  usunięcie z adresatów, odwołanie, wygaśnięcie) - do autora, adresatów niewykreślonych,
   przydzielonych i każdego z `reservations.manage` w klubie (prowadzą wszystkie zlecenia,
   pkt 20). Karta zlecenia (28, 32, ZL3) pobiera się wtedy RESTem, bo jej kształt zależy od
   widza (§13.1).
@@ -831,7 +843,7 @@ otwartej rozmowy, pkt 43) obok `bookingId` i `aircraftId`.
 | `order_answered` | autor | odpowiedź adresata | „Odpowiedź na zlecenie" |
 | `order_assigned` | przydzielony z grupy albo listy | przydział przez prowadzącego | „Lot przydzielony" |
 | `order_filled` | pozostali adresaci obsadzonego fotela bez odmowy | obsadzenie (przy wspólnej liście - kompletu) | „Zlecenie nieaktualne" |
-| `order_removed` | adresat, któremu odebrano zlecenie | usunięcie albo zamiana osoby (pkt 29) | „Zlecenie nieaktualne" |
+| `order_removed` | adresat usunięty z adresatów | usunięcie albo zamiana osoby (pkt 29) | „Zlecenie nieaktualne" |
 | `order_withdrawn` | autor | rezygnacja pilota | „Rezygnacja z lotu" |
 | `order_unassigned` | pilot | cofnięcie przydziału, fotel na „brak"/„ja" | „Przydział cofnięty" |
 | `order_cancelled` | adresaci bez odmowy, przydzieleni, autor (gdy odwołał ktoś inny) | odwołanie | „Zlecenie odwołane" |
@@ -849,7 +861,7 @@ otwartej rozmowy, pkt 43) obok `bookingId` i `aircraftId`.
   operacji w toku (pkt 44).
 - `order_filled` i `order_removed` mają ten sam tytuł, bo adresat pyta o to samo - czy
   zlecenie jest dla niego aktualne. Skrzynka różni je treścią („fotel obsadzony" /
-  „zlecenie cofnięte"), bez nazwisk (pkt 18).
+  „zlecenie nie jest już do Ciebie"), bez nazwisk (pkt 18).
 - Przyjmujący imiennie NIE dostaje „Lot przydzielony" - odpowiedź przyszła na ekranie
   w chwili tapnięcia.
 - Obserwujący maszynę dostają swoje pięć wiadomości jak dotąd, z jedną zmianą: „Zbliża się
@@ -941,7 +953,7 @@ wskazać tylko siebie. Cudze zlecenie, cudzy wątek i zlecenie innego klubu to *
 | `25d` | Skrzynka ze zleceniami | rodzaje z §12, wiersz wątku z licznikiem |
 | `28` | Zlecenie - adresat, fotel imiennie | termin, maszyna, zadanie, trasa, zlecający, „Proponowany fotel: dowódca", załoga już obsadzona, PRZYJMUJĘ / NIE MOGĘ, wejście w wątek |
 | `28a` | adresat grupy albo wspólnej listy | „MOGĘ LECIEĆ"; po odpowiedzi „Zgłoszone · decyzja zlecającego"; ramka terminu do potwierdzenia (wspólna lista, obie listy, imiennie i w grupie drugiego fotela - pkt 37) |
-| `28b` | nieaktualne (fotel obsadzony albo zlecenie cofnięte) / odwołane / wygasłe | jedno wyjście, bez akcji; wątek do odczytu; ramki: fotel obsadzony, odwołane, wygasłe, cofnięte (pkt 46) |
+| `28b` | nieaktualne (fotel obsadzony albo usunięcie z adresatów) / odwołane / wygasłe | jedno wyjście, bez akcji; wątek do odczytu; ramki: fotel obsadzony, odwołane, wygasłe, usunięcie z adresatów (pkt 46) |
 | `28c` | termin zmieniony | poprzednia odpowiedź przekreślona, prośba o nową |
 | `28d` | arkusz odpowiedzi „nie mogę" | powód opcjonalny |
 | `28e` | offline | wzorzec `21b` |
@@ -952,11 +964,11 @@ wskazać tylko siebie. Cudze zlecenie, cudzy wątek i zlecenie innego klubu to *
 | `30a` | lista pusta | |
 | `31`, `31a`, `31b` | Nowe zlecenie - trzy kroki | termin + maszyna (komponenty 22) → zadanie, trasa, plan, opis → załoga i adresaci |
 | `31c` | arkusz adresatów | grupy nad osobami, z wyszukiwaniem; podpis przy osobie wskazanej imiennie i obecnej w grupie drugiego fotela (pkt 39) |
-| `32` | Zlecenie - widok prowadzącego | fotele z adresatami, odczytem i odpowiedzią, osoba z terminem do potwierdzenia przy obu fotelach (pkt 38), ramka odwołanego albo wygasłego (pkt 46), WYBIERZ, „Odbierz zlecenie" / „Zamień osobę" przy adresacie, wątek każdego, EDYTUJ / ODWOŁAJ, historia zmian |
+| `32` | Zlecenie - widok prowadzącego | fotele z adresatami, odczytem i odpowiedzią, osoba z terminem do potwierdzenia przy obu fotelach (pkt 38), ramka odwołanego albo wygasłego (pkt 46), WYBIERZ, „Usuń z adresatów" / „Zamień osobę" przy adresacie, wątek każdego, EDYTUJ / ODWOŁAJ, historia zmian |
 | `32a` | jw., wspólna lista | zgłoszeni z „NA DOWÓDCĘ" / „NA DRUGIEGO PILOTA" |
 | `32b` | komplet załogi | przydzieleni, „Cofnij przydział" |
 | `32c` | arkusz odwołania zlecenia | powód opcjonalny, termin wraca do puli |
-| `32d` | arkusz adresata (menu ⋯ przy każdym adresacie) | „Napisz wiadomość", „ZAMIEŃ OSOBĘ" (fotel imienny), „ODBIERZ ZLECENIE", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ"; powód opcjonalny |
+| `32d` | arkusz adresata (menu ⋯ przy każdym adresacie) | „Napisz wiadomość", „ZAMIEŃ OSOBĘ" (fotel imienny), „USUŃ Z ADRESATÓW", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ"; powód opcjonalny |
 | `23f` | rezerwacja ze zlecenia (wariant karty 23) | bez „PRZESUŃ I POPRAW", „ODWOŁAJ" = „REZYGNUJĘ", wejście w wątek |
 
 ### 14.3 Po obsadzeniu zlecenie jest rezerwacją
@@ -989,7 +1001,7 @@ etap z testami czystych modułów logiki:
 | Etap | Co weszło |
 | --- | --- |
 | 1 | klient zleceń (`OrderServerPort`, `HttpOrderApi`, `OrderClient` podany przez `useOrders`); ramki `message` i `read` w łączu i szynie kanału klubu |
-| 2 | moduły logiki (napisy i stany poza JSX); serwer: godzina i powód poprzedniej odpowiedzi i odebrania, godzina najnowszej nieprzeczytanej wiadomości |
+| 2 | moduły logiki (napisy i stany poza JSX); serwer: godzina i powód poprzedniej odpowiedzi i usunięcia z adresatów, godzina najnowszej nieprzeczytanej wiadomości |
 | 3 | Pulpit z kartą „Zlecenia" (20F), lista (30, 30A) |
 | 4 | karta adresata (28–28E) |
 | 5 | karta prowadzącego (32–32D), arkusz adresatów (31C) w wersji „jedna osoba" |
@@ -1087,7 +1099,7 @@ demo:
 | --- | --- |
 | 1 | kolumna w trzech grupach (`navSectionsFor`), lista zleceń (ZL1, ZL1a) z połową i okresem w adresie |
 | 2 | grupy klubu w module Piloci (P5, P5a, P5b) - przełącznik „Członkowie · Grupy", `#/piloci/grupy[/:id]` |
-| 3 | szuflada prowadzącego (ZL3, ZL3a, ZL3c) i menu ⋯ przy adresacie (ZL3b) - zamiana, odebranie, cofnięcie przydziału |
+| 3 | szuflada prowadzącego (ZL3, ZL3a, ZL3c) i menu ⋯ przy adresacie (ZL3b) - zamiana, usunięcie z adresatów, cofnięcie przydziału |
 | 4 | szuflada adresata (ZL3a, ZL3d), „Odczytane" przy otwarciu, wiadomości o zleceniach w skrzynce panelu |
 | 5 | rozmowa (ZL4, ZL4a, ZL4b) pod `#/zlecenia/:id/rozmowa/:adresat`, ramki `message`/`read` kanału klubu |
 | 6 | nowe zlecenie (ZL2, pkt 69), edycja i „Powiel" w tym samym formularzu; rezerwacja niesie pole `order` także w panelu |

@@ -195,8 +195,8 @@ describe('rezerwacja ze zlecenia (23F)', () => {
     expect(v.canCancel).toBe(true);
     // Skutek rezygnacji stoi przypisem pod przyciskiem, arkusz nie dokłada ostrzeżenia.
     expect(v.cancelWarning).toBeNull();
-    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel wraca do szukania, a Marta Zięba dostanie wiadomość.');
-    expect(v.order?.note?.find((p) => p.strong === true)?.text).toBe('fotel wraca do szukania');
+    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel znów będzie do obsadzenia, a Marta Zięba dostanie wiadomość.');
+    expect(v.order?.note?.find((p) => p.strong === true)?.text).toBe('fotel znów będzie do obsadzenia');
     expect(v.order?.reference).toBe('SP-AXA · nd 20 WRZ 11:00-13:00');
   });
 
@@ -204,7 +204,7 @@ describe('rezerwacja ze zlecenia (23F)', () => {
     const v = vm({ booking: booking({ order: order() }) });
     expect(v.order?.row.value).toBe('—');
     expect(v.order?.row.sub).toBe('termin uzgodnisz w rozmowie');
-    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel wraca do szukania, a osoba zlecająca dostanie wiadomość.');
+    expect(joined(v.order?.note)).toBe('Po rezygnacji fotel znów będzie do obsadzenia, a osoba zlecająca dostanie wiadomość.');
   });
 
   it('zlecający w swoim fotelu odwołuje CAŁE zlecenie (pkt 57) i widzi szukany fotel', () => {
@@ -218,7 +218,7 @@ describe('rezerwacja ze zlecenia (23F)', () => {
     expect(v.canCancel).toBe(true);
     expect(v.canEdit).toBe(false);
     expect(v.cancelWarning).toBe(
-      'Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość - z powodem, jeśli go podasz.',
+      'Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość - z powodem, jeśli go podasz.',
     );
     expect(v.what.at(-1)).toEqual({ label: 'Drugi pilot', value: 'szukany', sub: null });
   });
@@ -289,9 +289,9 @@ describe('co wolno zrobić', () => {
 
 describe('odwołanie zawiadamia osoby w fotelach (§12.9)', () => {
   it('arkusz odwołania mówi PRZED tapnięciem, że drugi pilot dostanie wiadomość', () => {
-    expect(vm().cancelWarning).toBe('Slot wróci do kalendarza i będzie mógł go zająć ktoś inny.');
+    expect(vm().cancelWarning).toBe('Termin się zwolni i będzie mógł go zająć ktoś inny.');
     expect(vm({ booking: booking({ dualId: 'jse' }) }).cancelWarning).toBe(
-      'Slot wróci do kalendarza i będzie mógł go zająć ktoś inny. Drugi pilot dostanie wiadomość.',
+      'Termin się zwolni i będzie mógł go zająć ktoś inny. Drugi pilot dostanie wiadomość.',
     );
   });
 

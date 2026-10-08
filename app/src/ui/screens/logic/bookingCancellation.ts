@@ -40,6 +40,6 @@ export function cancellationBanner(input: CancellationInput): ApprovalBanner | n
   return {
     tone: 'red',
     title: name == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${name}`,
-    text: reason ? reason : 'Termin wrócił do puli.',
+    text: reason ? reason : 'Termin się zwolnił.',
   };
 }

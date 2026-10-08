@@ -140,7 +140,7 @@ function footnote(approval: RemoteApproval | null | undefined): DecisionVm['foot
   const steps = approval?.steps ?? [];
   const at = steps.findIndex((s) => s.current);
   const next = at >= 0 ? (steps[at + 1]?.label ?? null) : null;
-  const odmowa = { text: ' Po odmowie termin wraca do puli, a pilot dostaje powód.' };
+  const odmowa = { text: ' Po odmowie termin się zwalnia, a pilot dostaje powód.' };
   if (next == null) return [{ text: 'Po zgodzie rezerwacja jest potwierdzona.' }, odmowa];
   return [{ text: 'Po zgodzie rezerwacja idzie do kroku ' }, { text: next, strong: true }, { text: '.' }, odmowa];
 }
@@ -148,7 +148,7 @@ function footnote(approval: RemoteApproval | null | undefined): DecisionVm['foot
 /** Odmowa serwera → zdanie przy przycisku. Kody surowe nazywa ekran, nie serwer. */
 export const DECISION_REFUSAL_TEXT: Readonly<Record<DecisionRefusal, string>> = {
   not_pending: 'Ta rezerwacja nie czeka już na decyzję.',
-  not_your_step: 'To nie jest Twój krok - decyduje ktoś z listy kroku bieżącego.',
+  not_your_step: 'Tę rezerwację zatwierdza teraz ktoś inny.',
   reason_required: 'Napisz, dlaczego nie - pilot przeczyta to na swoim telefonie.',
   booking_closed: 'Ktoś rozstrzygnął tę rezerwację przed chwilą.',
   forbidden: 'Nie masz prawa akceptacji rezerwacji - nadaje je administrator klubu.',

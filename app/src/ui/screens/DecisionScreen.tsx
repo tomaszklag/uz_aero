@@ -112,7 +112,7 @@ export function DecisionScreen({
         // `null` = decyzja NIE DOJECHAŁA. Rozstrzyga serwer, więc dopóki nie odpowiedział,
         // sprawa dalej czeka - i tak ma się to czytać.
         if (result == null) {
-          setFailed('Decyzję zapisuje serwer - potrzebne połączenie.');
+          setFailed('Decyzja wymaga połączenia z internetem.');
           return;
         }
         if (!result.ok) {

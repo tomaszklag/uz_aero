@@ -197,7 +197,7 @@
            unieważniony zostaje przekreślony i też ma ołówek - prowadzi do historii
            i przywrócenia. Słownik jest jeden i polski, ten sam, co w telefonie. -->
       <div class="card">
-        <div class="card-title">Log zdarzeń</div>
+        <div class="card-title">Przebieg operacji</div>
         <div class="table-wrap plain">
           <table>
             <caption class="visually-hidden">Zdarzenia operacji - tryb edycji</caption>
@@ -213,10 +213,10 @@
             <tbody>
               <tr class="editable">
                 <td class="num">08:31:06</td>
-                <td class="cell-strong">Przejęcie</td>
+                <td class="cell-strong">Rozpoczęcie</td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
-                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw godzinę przejęcia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
+                <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw: Rozpoczęcie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>
               </tr>
               <tr class="editable">
                 <td class="num">08:33:41</td>
@@ -408,7 +408,7 @@
            na skutek. W tej makiecie pominięta: szuflada przykrywa dół strony. -->
       <div class="card">
         <div class="card-title">Szczegóły</div>
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="cell-link" href="dziennik-pilot.html">Adam Kowalski</a> <small>AKO</small></span></div>
+        <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v"><a class="cell-link" href="dziennik-pilot.html">Adam Kowalski</a> <small>AKO</small></span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">6</span></div>
         <div class="kv"><span class="kv-k">Paliwo</span><span class="kv-v">185 L → 108 L</span></div>
@@ -425,7 +425,7 @@
          W LINII TYTUŁU, nie czerwony przycisk w stopce (issue #43): intencją wchodzącego
          jest POPRAWKA, a unieważnienie jest rzadkim wyjątkiem, który ma być dostępny,
          nie eksponowany. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Korekta: lądowanie, lot 5">
 
       <div class="drawer-head">
@@ -485,7 +485,7 @@
           <div class="kv"><span class="kv-k">Czas lotu 5</span><span class="kv-v"><span class="was">0:16</span> → 0:15</span></div>
           <div class="kv"><span class="kv-k">Czas w powietrzu operacji</span><span class="kv-v"><span class="was">1:57</span> → 1:55</span></div>
           <div class="kv"><span class="kv-k">Czas blokowy</span><span class="kv-v">2:22 <small>bez zmian</small></span></div>
-          <div class="kv"><span class="kv-k">Karta arkusza</span><span class="kv-v">2026-09-06_SP-AXA <small>→ rewizja 3</small></span></div>
+          <div class="kv"><span class="kv-k">Karta dnia</span><span class="kv-v">2026-09-06_SP-AXA <small>→ wersja 3</small></span></div>
         </div>
 
         <!-- POWÓD WYMAGANY (§5.1): pilot poprawia własny wpis, administrator - cudzy
@@ -497,7 +497,7 @@
           <div class="field">
             <label class="label" for="c-reason">Powód korekty</label>
             <textarea class="input area" id="c-reason" rows="2">Lądowanie o 10:14 wg dziennika lotniska - GPS wykrył je za późno.</textarea>
-            <span class="hint">Zobaczy go pilot w historii zmian; zostaje w dzienniku audytu.</span>
+            <span class="hint">Pilot zobaczy go w aplikacji, w historii zmian.</span>
           </div>
         </div>
 
@@ -577,7 +577,7 @@
                 <div class="card-title">Skutek · przed → po</div>
                 <div class="kv"><span class="kv-k">Zużyte paliwo tej operacji</span><span class="kv-v"><span class="was">77 L</span> → 81 L</span></div>
                 <div class="kv"><span class="kv-k">Przekazanie dla AKW/1 (13:10)</span><span class="kv-v"><span class="was">108 L</span> → 104 L</span></div>
-                <div class="kv"><span class="kv-k">Karta arkusza</span><span class="kv-v">2026-09-06_SP-AXA <small>→ rewizja 3</small></span></div>
+                <div class="kv"><span class="kv-k">Karta dnia</span><span class="kv-v">2026-09-06_SP-AXA <small>→ wersja 3</small></span></div>
               </div>
               <div class="card">
                 <div class="card-title">Powód</div>
@@ -773,7 +773,7 @@
       <div class="inv-demo">
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-          <span>Korekta zapisana. Karta <b>2026-09-06_SP-AXA</b> poszła do arkusza jako rewizja 3; pilot zobaczy zmianę na telefonie.</span>
+          <span>Korekta zapisana. Karta <b>2026-09-06_SP-AXA</b> poszła do arkusza jako wersja 3; pilot zobaczy zmianę w aplikacji.</span>
         </div>
         <div class="table-wrap plain">
           <table>
@@ -781,7 +781,7 @@
             <tbody>
               <tr class="editable">
                 <td class="num"><span class="clock-val struck">10:16:22</span><span class="cell-sub">10:14:40</span></td>
-                <td class="cell-strong">Lądowanie <a class="tag-corrected" href="#historia">popr.</a><span class="cell-sub">poprawił administrator · 7 WRZ 12:05</span></td>
+                <td class="cell-strong">Lądowanie <a class="tag-corrected" href="#historia">popr.</a><span class="cell-sub">poprawka administratora · 7 WRZ 12:05</span></td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
                 <td class="pen"><button type="button" class="pen-btn" aria-label="Popraw czas lądowania"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td>

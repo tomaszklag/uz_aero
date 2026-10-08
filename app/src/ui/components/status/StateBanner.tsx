@@ -8,7 +8,7 @@
  * Czym różni się od `Banner`: tamten jest komunikatem o stanie EKRANU w taksonomii
  * status / ostrzeżenie / pouczenie, z tytułem w kolorze tonu. Ten opisuje LOS RZECZY,
  * którą pilot ogląda, i ton idzie za przyczyną:
- *  - `neutral` - fotel obsadzony, zlecenie cofnięte albo wygasłe: nic tu nie jest błędem,
+ *  - `neutral` - fotel obsadzony, usunięcie z adresatów albo wygasłe: nic tu nie jest błędem,
  *                a pilot nie ma czego naprawiać;
  *  - `amber`   - czeka na cudzą decyzję;
  *  - `red`     - odwołanie: czerwień niesie w tej aplikacji rzecz niszczącą, i tylko ją.

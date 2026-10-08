@@ -72,9 +72,9 @@ export interface CockpitActionsView {
 }
 
 const PRIMARY_LABEL: Record<CockpitPrimary, string> = {
-  taxi: 'Taxi',
-  takeoff: 'Take off',
-  landing: 'Landing',
+  taxi: 'Kołowanie',
+  takeoff: 'Start',
+  landing: 'Lądowanie',
 };
 
 const PRIMARY_ICON: Record<CockpitPrimary, CockpitActionsView['primaryIcon']> = {

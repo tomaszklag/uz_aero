@@ -16,8 +16,8 @@ describe('odmowy zlecenia', () => {
   });
 
   it('kod nieznany jedzie w nawiasie - nie „coś poszło nie tak"', () => {
-    expect(orderRefusalText('cos_nowego')).toBe('Serwer odmówił zapisu (cos_nowego).');
-    expect(threadRefusalText('cos_nowego')).toBe('Serwer odmówił wysłania (cos_nowego).');
+    expect(orderRefusalText('cos_nowego')).toBe('Nie udało się zapisać zlecenia - kod: cos_nowego.');
+    expect(threadRefusalText('cos_nowego')).toBe('Nie udało się wysłać wiadomości - kod: cos_nowego.');
   });
 
   it('rozmowa: zamknięta i tylko do odczytu mówią, co zostaje', () => {

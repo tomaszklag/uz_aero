@@ -15,10 +15,10 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
-import { eventsCount } from '../../format';
+import { plural } from '../../format';
 
 export interface OutboxGuardProps {
-  /** Liczba zdarzeń czekających na wysyłkę. */
+  /** Liczba zapisów czekających na wysyłkę. */
   count: number;
   /** Człon po pogrubionym leadzie; domyślnie wariant z ekranu 13. */
   tail?: string;
@@ -27,7 +27,7 @@ export interface OutboxGuardProps {
 
 export function OutboxGuard({
   count,
-  tail = ' nie dotarły jeszcze na serwer - wylogowanie by je osierociło. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.',
+  tail = '. Wylogujesz się, gdy się wyślą - wystarczy zasięg, wysyłka ruszy sama.',
   style,
 }: OutboxGuardProps) {
   const { theme } = useTheme();
@@ -50,7 +50,7 @@ export function OutboxGuard({
           variant="body"
           style={[styles.text, { color: theme.colors.amber, fontFamily: theme.fontFamily.bodySemiBold }]}
         >
-          {`${eventsCount(count)} z dzisiejszej operacji`}
+          {`${count} ${plural(count, 'zapis czeka', 'zapisy czekają', 'zapisów czeka')} na wysyłkę`}
         </AppText>
         {tail}
       </AppText>

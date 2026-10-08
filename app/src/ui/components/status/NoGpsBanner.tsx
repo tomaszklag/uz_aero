@@ -46,7 +46,7 @@ export interface NoGpsBannerProps {
 }
 
 export function NoGpsBanner({
-  title = 'GPS: brak sygnału · autodetekcja wstrzymana',
+  title = 'GPS: brak sygnału',
   text,
 }: NoGpsBannerProps) {
   const { theme } = useTheme();

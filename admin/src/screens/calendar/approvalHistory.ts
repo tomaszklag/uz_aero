@@ -23,7 +23,7 @@ export interface HistoryRow {
   id: string;
   /** „1 · Mechanik" - numer, bo kolejność jest treścią ścieżki. */
   label: string;
-  /** „zgoda" / „odmowa" / „przeszedł sam" / „czeka na decyzję" / kreska. */
+  /** „zgoda" / „odmowa" / „pominięty" / „czeka na decyzję" / kreska. */
   value: string;
   tone: 'amber' | 'plain' | 'dim';
   who: { name: string; code: string | null } | null;
@@ -48,11 +48,11 @@ export function historyRows(view: ApprovalViewDto, person: PersonLookup, timezon
       return {
         id: step.id,
         label,
-        value: 'przeszedł sam',
+        value: 'pominięty',
         tone: 'plain',
         who: null,
         when: null,
-        note: 'rezerwujący jest na liście kroku',
+        note: 'osoba rezerwująca jest na liście kroku',
       };
     }
     const p = person(d.decidedBy);

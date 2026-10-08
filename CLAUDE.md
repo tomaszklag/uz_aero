@@ -477,9 +477,9 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   (rezerwacja na TERAZ wypełnia krok 1; 23a ostrzega o cudzym planie, nigdy nie blokuje)
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
-→ START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
-→ STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
-  drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
+→ URUCHOM SILNIK → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
+→ WYŁĄCZ → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
+  drugiego URUCHOM SILNIK NIE MA - kolejny lot to nowe rozpoczęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
   wariant 09c: zdanie bez lotu) → 20-pulpit
 20-pulpit → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
@@ -565,7 +565,7 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
 - **operacja** = od URUCHOMIENIA do ZATRZYMANIA silnika - dokładnie jeden bieg na operację.
   **Lot** = od startu do lądowania; w jednej operacji wiele lotów (w tym touch and go).
   Słowo **„wzlot" jest WYCOFANE** ze słownika - zlało się z operacją.
-- po STOP ENGINE **nie ma drugiego startu**: hero kokpitu zmienia się w „ZDAJ SAMOLOT"
+- po wyłączeniu silnika (WYŁĄCZ) **nie ma drugiego startu**: hero kokpitu zmienia się w „ZDAJ SAMOLOT"
   (09b). Kolejny lot = NOWE przejęcie (02 → 02e → 02a).
 - odczyty paliwa i MH przy zdaniu są **OBOWIĄZKOWE** i są zatwierdzeniem logu operacji;
   trafiają do logu jako kolejne wpisy. `leg_close` znika z domeny, ekrany 09 i 09a
@@ -2107,8 +2107,8 @@ nie architekturą:
   identyfikatory UUID z panelu; ta sama klasa błędu, co guid w pasku kokpitu).
   Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u.
   **Ta sama poprawka na kafelku „Zmiana załogi" w kokpicie** (2026-09-03: podpis
-  kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał
-  „PIC: AKO · DUAL: BNO") - kody rozwiązuje odtąd hook `usePilotCode`
+  kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał kody
+  pilotów - dziś „Dowódca AKO · Drugi pilot BNO") - kody rozwiązuje odtąd hook `usePilotCode`
   (`hooks/usePilots.ts`, wzorzec `useAircraft`): `queries.pilots()` ładowało
   sobie już SZEŚĆ ekranów własnymi kopiami, siódma kopia byłaby dokładnie tym,
   przed czym ostrzega docblock tamtego hooka
@@ -2156,9 +2156,9 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   jedno zdarzenie, a ten przycisk CAŁY wpis
 - **arkusz nazywa KONKRETNY wpis** (maszyna, bieg silnika, Loty·Blok·Lot): dwie operacje
   tej samej maszyny w dobie różnią się wyłącznie godzinami. Baner mówi o SKUTKU
-  („zapis zostaje w rejestrze i widzi go administrator") - to NIE jest przypis o budowie
-  rejestru, tylko odpowiedź na pytanie, które pilot zada sobie przed tapnięciem
-  w czerwony przycisk. Powód OPCJONALNY, jak przy każdej korekcie
+  („Administrator klubu nadal go zobaczy - razem z powodem, jeśli go podasz") - to
+  odpowiedź na pytanie, które pilot zada sobie przed tapnięciem w czerwony przycisk;
+  słowa „rejestr" w nim nie ma (przegląd treści 2026-10-08). Powód OPCJONALNY, jak przy każdej korekcie
 - **ADMINISTRATOR MA DRUGĄ DROGĘ, BEZ OKNA** (zamówienie 2026-08-31: „z poziomu admina
   powinienem mieć możliwość w dowolnym momencie usunięcia operacji"). `POST
   /admin/api/sessions/:uuid/void` na zdolności `events.correct`, karta na dole ekranu
@@ -2344,7 +2344,8 @@ Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
   i ma na osi własny wiersz, a powtórzona w nawiasie mówiła to samo dwa razy
 - **słownik jest jeden i polski**: „Uruchomienie", „Kołowanie", „Start", „Lądowanie",
   „Wyłączenie" - zamiast „Start engine", „Taxi", „Takeoff", „Landing", „Stop engine".
-  Angielskie nazwy zostają tam, gdzie opisują FAZĘ lotu (hero 05), nie zapis w rejestrze
+  Od przeglądu treści 4.0.0 także fazy lotu w hero 05 są po polsku (Wznoszenie, Lot poziomy,
+  Zniżanie)
 - **wiersz „na żywo" nie ma godziny**: nie jest zdarzeniem rejestru, tylko czasem
   TRWANIA, a te w tej osi stoją po prawej (tam, gdzie czas lotu przy lądowaniu).
   W powietrzu liczy od startu, na ziemi od uruchomienia silnika
@@ -2482,6 +2483,11 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
   i zniżanie) norma zaniżała zużycie, a razem z nim rezerwę paliwa w kokpicie
 - `null` znaczy „nie ma czego pokazać" i ekran wtedy MILCZY: brak przeliczników MH nie
   unieważnia normy paliwa i odwrotnie (inne wejście, inny próg publikacji)
+- **ostrzeżenie `MH_DELTA_MISMATCH` przy zdaniu samolotu zapala się WYŁĄCZNIE przy przyroście
+  licznika WIĘKSZYM niż czas pracy silnika** (decyzja właściciela 2026-10-08): obrotomierz
+  na ziemi przyrasta wolniej niż zegar, więc mniejszy przyrost jest normą, a nie rozjazdem.
+  Ta sama reguła stoi w `sessionInconsistencies` (tryb poprawek i panel) - do 2026-10-08
+  reguła zdania ostrzegała w obie strony i była jedynym miejscem, które o tym nie wiedziało
 
 ## Zgłaszanie błędów z aplikacji (issue #87, 2026-09-04) - NA CZAS TESTÓW
 Zgłoszenie: „na każdym ekranie i w każdym popup dodaj w prawym górnym rogu przycisk
@@ -3752,9 +3758,10 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
 - **`docs/podrecznik/` jest ŹRÓDŁEM modułu „Dokumentacja"** (`/dokumentacja/`):
   `spis.md` (rozdziały i kolejność stron) + `<slug>.md` na stronę; renderuje
   `site/tools/render-docs.mjs` (drzewko, wyszukiwarka w przeglądarce, spis „na tej
-  stronie", żywe ekrany makiet przez dyrektywy `@screen` i `@panel`). Piszemy dla pilota i administratora, który szuka
-  pomocy: jak działa funkcja i jakie są założenia, ale językiem biznesowym - bez nazw
-  plików, identyfikatorów, numerów issue i żargonu (format i reguły: komentarz w `spis.md`).
+  stronie", żywe ekrany makiet przez dyrektywy `@screen` i `@panel`). Piszemy SAMOUCZEK
+  dla pilota i administratora: jak coś zrobić krok po kroku i co zobaczy na ekranie -
+  bez wykładu o założeniach, nazw plików, identyfikatorów, numerów issue i żargonu
+  (format i reguły: komentarz w `spis.md` i sekcja „Przegląd treści 4.0.0").
   Zmiana ekranu w PR = zmiana odpowiedniej strony podręcznika
 - **ŻYWY EKRAN STOI PRZY SEKCJI, KTÓREJ DOTYCZY** (uwaga użytkownika 2026-09-07:
   „w dokumentacji brakuje screenów, mamy przecież makiety"). Galeria hurtem na górze
@@ -3765,6 +3772,12 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   do design-first (`docs/panel-2.0.md` §3.7), zdanie „panel makiet NIE MA" jest
   nieaktualne. **`design/panel/` MUSI być zacommitowane**: obraz buduje stronę
   z repozytorium, więc brakująca makieta `@panel` wywraca build, a nie stronę
+- **polityka prywatności dzieli odpowiedzialność za dane** (decyzja właściciela 2026-10-08):
+  KLUB jest administratorem danych zapisanych w klubie (członkostwo, dziennik, kalendarz,
+  zlecenia, wiadomości), a operator - administratorem danych KONTA (logowanie, sesje, surowe
+  odczyty czujników, zgłoszenia błędów) i przetwarzającym dane klubu na podstawie umowy
+  powierzenia. Nowy rodzaj danych dopisuje się w punkcie 1 polityki po właściwej stronie
+  podziału; umowę powierzenia trzeba podpisać z każdym klubem, zanim zacznie pracować
 - **strona pobierania i landing mają jeden komponent przycisku** (`.dl`
   w `site/src/site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
@@ -4042,8 +4055,9 @@ KAŻDY ekran modułu rezerwacji:
   w `bookingWire`): „weszła 3 min temu" znaczy wyścig o slot, a plan sprzed tygodnia -
   stan kalendarza, którego pilot nie zauważył; na siatce ta liczba nie znaczy nic
 - **ZAPIS, KTÓRY NIE DOJECHAŁ, TO INNA KATEGORIA NIŻ ODMOWA REGUŁY**: `null` z portu
-  znaczy „o terminie nie wiemy nic", więc ekran mówi, CZYJĄ decyzją jest slot
-  („Slot potwierdza serwer"), a nie „spróbuj ponownie". Preemptywnego powodu
+  znaczy „o terminie nie wiemy nic", więc ekran mówi, że termin rozstrzyga klub
+  („Rezerwację zapiszesz tylko z zasięgiem - bez połączenia nie da się sprawdzić, czy
+  termin jest wolny."), a nie „spróbuj ponownie". Preemptywnego powodu
   w przycisku NIE MA i to jest świadome: `syncIndicator` opisuje kolejkę ZDARZEŃ,
   więc przy pustym outboksie milczałby dokładnie u pilota bez zasięgu
 - **KARTA REZERWACJI (23) MA JEDNE DRZWI DO ZMIANY**: „PRZESUŃ I POPRAW" wraca do
@@ -5657,6 +5671,55 @@ którego ponowny zapis dublował lot. Reguły obowiązujące odtąd:
   zapis lotu ręcznego → „wstecz" z Pulpitu nie otwiera formularza, wznowienie do kokpitu →
   zdanie → Pulpit bez kokpitu pod spodem
 
+## Przegląd treści 4.0.0 - język aplikacji, panelu, podręcznika i strony (2026-10-07/08, PR #260)
+Zamówienie właściciela: teksty „bardziej biznesowe niż techniczne", bez wstawek z decyzjami
+i technicznych uzasadnień, poprawną polszczyzną; podręcznik ma być SAMOUCZKIEM, a strona
+główna WIZYTÓWKĄ. Trzynaście decyzji pytanych pojedynczo; robione etapami 9-12 w PR #260.
+Reguły obowiązują KAŻDY nowy napis - w aplikacji, panelu, makietach, podręczniku i na stronie:
+- **słownik** (stary zapis → obowiązujący):
+  | było | jest |
+  | --- | --- |
+  | PIC / Dual | **Dowódca / Drugi pilot** (wszędzie, także kokpit i zmiana załogi) |
+  | przejęcie (własny start) | **rozpoczęcie lotu**, „Odczyt przy rozpoczęciu"; „PRZEJMIJ SAMOLOT" WYŁĄCZNIE przy odbiorze od innego pilota (04B) |
+  | START ENGINE / STOP ENGINE, Take off / Landing / Taxi | **URUCHOM SILNIK / WYŁĄCZ** (czytnik: „Wyłącz silnik"), **Kołowanie / Start / Lądowanie**; fazy: Silnik pracuje, Kołowanie, Wznoszenie, Lot poziomy, Zniżanie |
+  | Wycofana z użytku / Wyłączony ze służby (maszyna wycofana na stałe) | **Poza służbą**; „Wyłączona z użytku" WYŁĄCZNIE czasowa blokada w kalendarzu |
+  | zdolność (panel) | **uprawnienie** („Pokaż uprawnienia", „Nadane 3 z 12 uprawnień") |
+  | Odbierz zlecenie | **Usuń z adresatów**; adresat czyta „Zlecenie nie jest już do Ciebie" |
+  | karta arkusza / karta doby, rewizja | **karta dnia**, **wersja** (filtr „Wysłane ponownie") |
+  | Log zdarzeń (panel) | **Przebieg operacji** |
+  | superadministrator, operator | **opiekun platformy** |
+  | slot, termin wraca do puli | **termin**, „termin się zwolni" |
+  | „· z cache · sync 21 JUN 17:30" | „Dane z 21 cze 17:30" |
+  | Wysyłam… / Zapisuję… | **Wysyłanie… / Zapisywanie… / Odwoływanie… / Rezygnacja…** (rzeczownik) |
+  | arkusz (popup), plakietka, szlak, szuflada, chip, okruszki | okienko, oznaczenie, rozpiska, okno boczne, filtr, ścieżka nad tytułem - w tekstach DLA UŻYTKOWNIKA; nazwy komponentów w kodzie i w tym pliku zostają |
+- **serwer, rejestr, kolejka, projekcja, lokalnie, cache** nie stoją w napisach dla pilota
+  ani w podręczniku - mówi się „klub", „internet", „zapis w telefonie". Wyjątek: nazwy
+  elementów, które ekran pokazuje („Kolejka wysyłki" i „W kolejce" przy synchronizacji)
+- **błąd = zdanie po ludzku + kod na końcu** („Nie udało się zapisać… - kod: 500") - kod
+  jest numerem do zgłoszenia, nie treścią; brak sieci jednym zdaniem: „Brak połączenia.
+  Sprawdź internet i spróbuj za chwilę."
+- **bez form z płcią** w zwrotach do czytelnika („latałeś", „zapomniałem") - przepisuje się
+  na formy bezosobowe albo czas teraźniejszy; rozstrzygnięcia rzeczownikiem
+- **podgląd cudzej maszyny (04B) bez siatki wyszarzonych kafelków** - stan paliwa i załoga
+  jako wiersze nad „PRZEJMIJ SAMOLOT"
+- **strażnik napisów panelu** (`admin/test/copy.test.ts`) czyta tekst JSX i szablony
+  z `${…}` przez drzewo składni TypeScriptu; pomija klasy CSS, komentarze i `new …Error`/`super`
+- **PODRĘCZNIK = SAMOUCZEK** (`docs/podrecznik/`): każda strona odpowiada „jak to zrobić"
+  krokami i „co zobaczysz", z `@screen`/`@panel` przy sekcji, i - poza Częstymi pytaniami
+  i Słownikiem - kończy się sekcją „Częste problemy". Bez sekcji „Jak to działa" i „Dlaczego tak to działa", bez historii wersji
+  („od 3.0.0…"), bez nazw plików i identyfikatorów. **Rozdziału „Jak to działa" NIE MA**
+  (decyzja 2026-10-08): siedem stron (model operacji, wykrywanie faz, łańcuch odczytów,
+  norma, synchronizacja, korekty, konta) wchłonęły strony zadań i Słownik; nowe strony:
+  „Zlecenia na lot", „Karta samolotu i obserwowanie", „Zlecenia w panelu". Rozdział o panelu
+  idzie w kolejności kolumny. Odnośniki do sekcji (`strona#kotwica`) renderer przepuszcza bez
+  sprawdzenia, a kotwica to nagłówek bez polskich znaków i z myślnikami - zmieniając nagłówek,
+  znajdź greppem odnośniki do niego
+- **STRONA GŁÓWNA = WIZYTÓWKA** (`site/src/index.html`): krótkie zdania o korzyściach dla
+  pilota i klubu; bez uzasadnień w rodzaju „termin przydziela klub, bo dwa telefony…"
+  i notacji „X = Y"
+- makiety osadzane w podręczniku przechodzą ten sam słownik - także podpowiedzi `title`
+  przy elementach telefonu, bo na stronie widać je po najechaniu myszą
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
@@ -5677,7 +5740,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 - **Ślad GPS jest JEDYNYM świadomym wyjątkiem** (issue #47, 2026-08-14): nagranie idzie na serwer i telefon kasuje kopię, więc ekran 14 bez zasięgu nie narysuje trasy (wariant `14c` mówi to wprost i pokazuje czasy z lokalnego rejestru). Wyjątek dotyczy WYŁĄCZNIE geometrii - czasy, loty i rozliczenie operacji liczą się lokalnie jak dotąd. Sekcja „Ślad idzie z SERWERA" wyżej, pełny opis: `docs/_main.md.txt` §4.10
 - Komponenty dzielimy wg źródła danych:
   1. **dane operacji** (timery, log samolotu na `04`, lista operacji doby na `01`, liczniki, statystyki) - lokalne, zawsze świeże, zero wariantów offline
-  2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
+  2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` („Dane z 21 cze 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) - offline: disabled z podanym powodem, nigdy cichy błąd
 - Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe. **Arkusz MA akcję „PONÓW PRÓBĘ"** (uwaga z urządzenia, 2026-08-30) - odwraca to zdanie z issue #23 („arkusz jest INFORMACYJNY, bez akcji: przycisk-atrapa uczyłby, że trzeba pomagać"), bo ponowienie NIE JEST atrapą: robi to samo, co „SYNCHRONIZUJ TERAZ" w ustawieniach (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku, issue #55). Znikły za to stopka odsyłająca po ten przycisk do ustawień oraz zdanie „brak zasięgu niczego nie blokuje" - drugie odpowiadało na obawę, której pilot nie zgłosił, a przez to ją podsuwało
 - **„OFFLINE" ZNACZY WYNIK OSTATNIEJ PRÓBY, NIGDY NIEPUSTĄ KOLEJKĘ** (uwaga z urządzenia,

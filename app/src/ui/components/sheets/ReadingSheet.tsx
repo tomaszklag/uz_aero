@@ -171,7 +171,7 @@ export function ReadingSheet({
    * na nie, wpisując. Wpis NIECZYTELNY zdanie zachowuje, bo czerwona ramka mówi, KTÓRE
    * pole, ale nie mówi CZEMU zapisu nie ma; sama pustka mówi jedno i drugie naraz.
    */
-  const blocker = empty ? null : parsed == null ? 'Nie rozumiem tej wartości - popraw wpis' : null;
+  const blocker = empty ? null : parsed == null ? 'Popraw wpis - tej wartości nie da się odczytać' : null;
 
   /** Cyfry: akcent tonu (mockup 02b: `.modal-input-val` = `var(--amber)`). */
   const valueColor = tone === 'neutral' ? theme.colors.textPrimary : c.accent;

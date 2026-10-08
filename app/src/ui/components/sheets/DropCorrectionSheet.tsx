@@ -144,7 +144,7 @@ export function DropCorrectionSheet({
             {altitude}
           </AppText>
           <AppText variant="mono" tone="muted" style={styles.altTag}>
-            z GPS · średnia z okna
+            z GPS · średnia z 15 s
           </AppText>
         </View>
       )}

@@ -31,7 +31,7 @@
     <span class="vp-badge blue">ZL3</span>
     <span class="vp-body">
       <span class="vp-name">Zlecenie - widok prowadzącego</span>
-      <span class="vp-when">Widzi autor zlecenia i każdy z „Cudzymi rezerwacjami" (decyzja 20). Każdy szukany fotel ma swoją kartę z adresatami: odczyt, odpowiedź z godziną, powód. „Wybierz" wyłącznie przy „Może lecieć" w fotelu z grupy; fotel imienny obsadza przyjęcie. „⋯" przy adresacie: zamiana osoby (fotel imienny), odebranie zlecenia, cofnięcie przydziału. Odświeża się na żywo - kanałem klubu.</span>
+      <span class="vp-when">Widzi autor zlecenia i każdy z „Cudzymi rezerwacjami" (decyzja 20). Każdy szukany fotel ma swoją kartę z adresatami: odczyt, odpowiedź z godziną, powód. „Wybierz" wyłącznie przy „Może lecieć" w fotelu z grupy; fotel imienny obsadza przyjęcie. „⋯" przy adresacie: zamiana osoby (fotel imienny), usunięcie z adresatów, cofnięcie przydziału. Odświeża się na żywo - kanałem klubu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -45,8 +45,8 @@
   <a class="vp-item" href="#menu">
     <span class="vp-badge amber">ZL3b</span>
     <span class="vp-body">
-      <span class="vp-name">Menu adresata - zamiana, odebranie, cofnięcie</span>
-      <span class="vp-when">„⋯" stoi przy KAŻDYM adresacie - imiennym i z grupy (decyzja 29) - z tym, co dla wiersza możliwe: zamiana osoby tylko przy fotelu imiennym, odebranie przy każdym bez przydziału, cofnięcie przydziału przy osobie w fotelu. Skutek każdej czynności pada w miejscu wiersza, PRZED zapisem; powód zawsze opcjonalny (decyzja 16). Osoby przydzielonej nie da się usunąć wprost - najpierw cofnięcie przydziału.</span>
+      <span class="vp-name">Menu adresata - zamiana, usunięcie z adresatów, cofnięcie</span>
+      <span class="vp-when">„⋯" stoi przy KAŻDYM adresacie - imiennym i z grupy (decyzja 29) - z tym, co dla wiersza możliwe: zamiana osoby tylko przy fotelu imiennym, usunięcie z adresatów przy każdym bez przydziału, cofnięcie przydziału przy osobie w fotelu. Skutek każdej czynności pada w miejscu wiersza, PRZED zapisem; powód zawsze opcjonalny (decyzja 16). Osoby przydzielonej nie da się usunąć wprost - najpierw cofnięcie przydziału.</span>
     </span>
   </a>
   <a class="vp-item" href="#komplet">
@@ -284,7 +284,7 @@
          STOPKA: „Edytuj" (ten sam formularz, co utworzenie - ZL2) i „Wyślij ponownie",
          z notatką o skutku: przypomnienie dostaną osoby bez odpowiedzi, a nowi członkowie
          grup - zlecenie (§5.3). -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Zlecenie SP-ANA, sobota 3 października">
 
       <div class="drawer-head">
@@ -321,8 +321,8 @@
                 </button>
                 <!-- MENU STOI PRZY KAŻDYM ADRESACIE (decyzja 29) - tu otwarte przy fotelu
                      imiennym: zamiana osoby (usunięcie i dopisanie w jednym ruchu - fotel
-                     dalej obsadza przyjęcie nowej osoby) i odebranie zlecenia. Przy
-                     adresacie grupy menu ma samo „Odbierz zlecenie" (zamiana istnieje
+                     dalej obsadza przyjęcie nowej osoby) i usunięcie z adresatów. Przy
+                     adresacie grupy menu ma samo „Usuń z adresatów" (zamiana istnieje
                      wyłącznie przy fotelu imiennym, jak na 32D), a przy osobie już
                      przydzielonej - samo „Cofnij przydział". -->
                 <span class="menu" role="menu" aria-label="Czynności · Jakub Wrona">
@@ -332,7 +332,7 @@
                   </a>
                   <a class="menu-item danger" role="menuitem" href="#menu">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
-                    Odbierz zlecenie
+                    Usuń z adresatów
                   </a>
                 </span>
               </span>
@@ -445,7 +445,7 @@
 
         <section class="card danger">
           <h2 class="card-title">Odwołanie zlecenia</h2>
-          <p class="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+          <p class="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
           <div class="field">
             <div class="label-row"><label class="label" for="zs-reason">Powód</label><span class="pill dim">opcjonalne</span></div>
             <input class="input" id="zs-reason" type="text" value="" placeholder="Np. prognoza - front od zachodu" />
@@ -642,7 +642,7 @@
          STOPKA: „Przyjmuję" obsadza fotel od razu (decyzja 11) - zieleń, akcja główna.
          „Nie mogę" neutralne, nie czerwone: odmowa nikomu niczego nie zabiera. Obie
          w pierwszej osobie - bez formy z płcią. Notatka mówi skutek przed kliknięciem. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Zlecenie SP-AXA, sobota 3 października">
 
       <div class="drawer-head">
@@ -709,20 +709,20 @@
 <!-- ══ ZL3b · MENU ADRESATA ══
      Trzy czynności pod „⋯" (decyzja 29, §5.2, §5.3). „⋯" stoi przy KAŻDYM adresacie,
      a jego zawartość zależy od wiersza - tak samo jak w telefonie (32D):
-     · adresat fotela IMIENNEGO bez przydziału: „Zamień osobę" i „Odbierz zlecenie";
-     · adresat grupy albo wspólnej listy bez przydziału: samo „Odbierz zlecenie";
+     · adresat fotela IMIENNEGO bez przydziału: „Zamień osobę" i „Usuń z adresatów";
+     · adresat grupy albo wspólnej listy bez przydziału: samo „Usuń z adresatów";
      · osoba PRZYDZIELONA: samo „Cofnij przydział".
      Każda pokazuje skutek W MIEJSCU wiersza, zanim cokolwiek się zapisze - nie
      w osobnym oknie. Powód jest zawsze opcjonalny (decyzja 16), a jeśli jest, druga
      strona czyta go jako treść wiadomości. Pozycji wyszarzonych nie ma. -->
 <section class="canvas-section" id="menu">
-  <div class="canvas-section-title">ZL3b · menu adresata · zamiana osoby, odebranie zlecenia, cofnięcie przydziału</div>
+  <div class="canvas-section-title">ZL3b · menu adresata · zamiana osoby, usunięcie z adresatów, cofnięcie przydziału</div>
   <div class="inv-grid">
 
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Zamień osobę - fotel imienny</span>
-        <span class="inv-when">Usunięcie i dopisanie w JEDNYM ruchu (decyzja 29, §5.2), więc fotel dalej obsadza przyjęcie - teraz nowej osoby. Pozycja istnieje WYŁĄCZNIE przy fotelu imiennym, jak w telefonie (32D): przy grupie i wspólnej liście nie ma jednej osoby, którą dałoby się podmienić, więc menu ma samo „Odbierz zlecenie", a kogoś nowego dopisuje się edycją zlecenia. Wybór z listy członków (`&lt;select&gt;`, zbiór rośnie z klubem); zdanie pod polami mówi, co dostanie każda ze stron, nazwiskami w mianowniku.</span>
+        <span class="inv-when">Usunięcie i dopisanie w JEDNYM ruchu (decyzja 29, §5.2), więc fotel dalej obsadza przyjęcie - teraz nowej osoby. Pozycja istnieje WYŁĄCZNIE przy fotelu imiennym, jak w telefonie (32D): przy grupie i wspólnej liście nie ma jednej osoby, którą dałoby się podmienić, więc menu ma samo „Usuń z adresatów", a kogoś nowego dopisuje się edycją zlecenia. Wybór z listy członków (`&lt;select&gt;`, zbiór rośnie z klubem); zdanie pod polami mówi, co dostanie każda ze stron, nazwiskami w mianowniku.</span>
         <span class="inv-classes">.rcp · select.input · .label-row + .pill.dim („opcjonalne") · .hint · .confirm-actions</span>
       </div>
       <div class="inv-demo">
@@ -748,7 +748,7 @@
             <div class="label-row"><label class="label" for="zs-swap">Powód</label><span class="pill dim">opcjonalne</span></div>
             <input class="input" id="zs-swap" type="text" placeholder="Np. zmiana planu - leci instruktor" />
           </div>
-          <p class="hint">Jakub Wrona dostanie wiadomość „Zlecenie nieaktualne", a Paweł Wilk - to zlecenie z propozycją fotela dowódcy.</p>
+          <p class="hint">Jakub Wrona dostanie wiadomość „Zlecenie nie jest już do Ciebie", a Paweł Wilk dostanie to zlecenie z propozycją fotela dowódcy.</p>
           <div class="confirm-actions">
             <button type="button" class="btn ghost sm">Anuluj</button>
             <button type="button" class="btn sm">Zamień osobę</button>
@@ -759,21 +759,21 @@
 
     <article class="inv">
       <div class="inv-head">
-        <span class="inv-name">Odbierz zlecenie - każdy adresat bez przydziału</span>
+        <span class="inv-name">Usuń z adresatów - każdy adresat bez przydziału</span>
         <span class="inv-when">Adresat wypada ze zlecenia: jego zgłoszenie przestaje się liczyć, dostaje „Zlecenie nieaktualne", a rozmowa zostaje do odczytu bez pisania (decyzja 29). Pytanie w tonie czerwonym, bo odcina - dwukropek stawia nazwisko w mianowniku, a zdanie pod nim mówi, co dalej z rozmową.</span>
         <span class="inv-classes">.confirm · .confirm-q · .confirm-actions · .btn.danger</span>
       </div>
       <div class="inv-demo">
         <div class="confirm">
-          <p class="confirm-q">Odebrać zlecenie: Ewa Sowa?</p>
-          <p class="hint">Dostanie wiadomość „Zlecenie nieaktualne". Rozmowa zostanie do odczytu.</p>
+          <p class="confirm-q">Usunąć z adresatów: Ewa Sowa?</p>
+          <p class="hint">Dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostanie do odczytu.</p>
           <div class="field" style="margin-top: 10px;">
             <div class="label-row"><label class="label" for="zs-take">Powód</label><span class="pill dim">opcjonalne</span></div>
             <input class="input" id="zs-take" type="text" placeholder="Np. fotel obsadzamy z innej grupy" />
           </div>
           <div class="confirm-actions">
             <button type="button" class="btn ghost sm">Anuluj</button>
-            <button type="button" class="btn danger sm">Odbierz zlecenie</button>
+            <button type="button" class="btn danger sm">Usuń z adresatów</button>
           </div>
         </div>
       </div>
@@ -801,7 +801,7 @@
         </div>
         <div class="confirm">
           <p class="confirm-q">Cofnąć przydział: Anna Kowal?</p>
-          <p class="hint">Fotel drugiego pilota wróci do szukania, a Anna Kowal dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób dalej się liczą.</p>
+          <p class="hint">Fotel drugiego pilota znów będzie do obsadzenia, a Anna Kowal dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób nadal się liczą.</p>
           <div class="field" style="margin-top: 10px;">
             <div class="label-row"><label class="label" for="zs-undo">Powód</label><span class="pill dim">opcjonalne</span></div>
             <input class="input" id="zs-undo" type="text" placeholder="Np. potrzebny drugi pilot z uprawnieniem na An-2" />
@@ -1231,7 +1231,7 @@
       <div class="inv-demo">
         <section class="card danger">
           <h2 class="card-title">Odwołanie zlecenia</h2>
-          <p class="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+          <p class="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
           <div class="field">
             <div class="label-row"><label class="label" for="zs-reason2">Powód</label><span class="pill dim">opcjonalne</span></div>
             <input class="input" id="zs-reason2" type="text" value="" placeholder="Np. prognoza - front od zachodu" />
@@ -1384,7 +1384,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Nieaktualne, odwołane, wygasłe - bez akcji</span>
-        <span class="inv-when">Zlecenie przestało czekać na odpowiedź (28B). Fotel obsadził ktoś inny: karta mówi tylko tyle, że fotel jest zajęty - przez kogo, adresat się nie dowie (decyzja 18); jedno zdanie, bez „niestety", bo to stan zlecenia, nie ocena zgłoszenia. Odwołanie: baner czerwony „Odwołanie · nazwisko" z powodem jako cytatem, jeśli ktoś go podał (decyzja 16). Wygasło i zlecenie cofnięte mają kształt pierwszego przykładu („początek terminu bez kompletu załogi", „Zlecenie cofnięte" z powodem). Stopki nie ma - nie ma czego przyjmować; treść zlecenia zostaje do odczytu, bez linii „Edytowane", a rozmowa - do odczytu, jeśli była.</span>
+        <span class="inv-when">Zlecenie przestało czekać na odpowiedź (28B). Fotel obsadził ktoś inny: karta mówi tylko tyle, że fotel jest zajęty - przez kogo, adresat się nie dowie (decyzja 18); jedno zdanie, bez „niestety", bo to stan zlecenia, nie ocena zgłoszenia. Odwołanie: baner czerwony „Odwołanie · nazwisko" z powodem jako cytatem, jeśli ktoś go podał (decyzja 16). Wygasło i usunięcie z adresatów mają kształt pierwszego przykładu („Do początku terminu nie zebrała się cała załoga", „Zlecenie nie jest już do Ciebie" z powodem). Stopki nie ma - nie ma czego przyjmować; treść zlecenia zostaje do odczytu, bez linii „Edytowane", a rozmowa - do odczytu, jeśli była.</span>
         <span class="inv-classes">.pill.dim · .pill.red · .card-note · .banner.danger</span>
       </div>
       <div class="inv-demo">

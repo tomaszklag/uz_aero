@@ -90,9 +90,9 @@ export function clubSwitchBlock(
   offline: boolean,
   holdsAircraft = false,
 ): string | null {
-  if (holdsAircraft) return 'Najpierw zdaj samolot - operacja należy do klubu, w którym ją zaczęto';
+  if (holdsAircraft) return 'Najpierw zdaj samolot';
   if (pendingInActiveOrg > 0) {
-    return `Najpierw wyślij ${pendingInActiveOrg} ${plural(pendingInActiveOrg, 'zapis', 'zapisy', 'zapisów')} - należą do klubu, w którym powstały`;
+    return `Poczekaj, aż ${plural(pendingInActiveOrg, 'wyśle', 'wyślą', 'wyśle')} się ${pendingInActiveOrg} ${plural(pendingInActiveOrg, 'zapis', 'zapisy', 'zapisów')} z tego klubu`;
   }
   if (offline) return 'Zmiana klubu wymaga internetu';
   return null;

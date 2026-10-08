@@ -205,7 +205,7 @@ function timeRows(
 
   if (next != null) {
     const who = next.kind === 'block' ? 'wyłączenie z użytku' : (nameOf(next.pilotId) ?? 'inna rezerwacja');
-    rows.push({ label: 'Następna zajętość', value: `${clubHhmm(next.startsAt, day)} · ${who}` });
+    rows.push({ label: 'Następny termin', value: `${clubHhmm(next.startsAt, day)} · ${who}` });
   }
 
   return rows;

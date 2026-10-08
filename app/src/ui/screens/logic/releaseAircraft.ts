@@ -153,7 +153,7 @@ function flightReviewRows(state: SessionState): FlightReviewVm[] {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Podpis pod paliwem: „przy przejęciu 96 L · bez tankowania · zużyte 34 L".
+ * Podpis pod paliwem: „przy rozpoczęciu 96 L · bez tankowania · zużyte 34 L".
  *
  * Zużycie liczymy z wartości WPISYWANEJ, bo `fuel.consumedL` w projekcji domknie się
  * dopiero zdarzeniem `day_close` - czyli po tym, jak pilot ten przycisk naciśnie.
@@ -163,8 +163,8 @@ export function finalFuelHint(state: SessionState, fuelL: number | null): string
 
   return [
     state.fuel.startL != null
-      ? `przy przejęciu ${litres(state.fuel.startL)}`
-      : 'brak odczytu przy przejęciu',
+      ? `przy rozpoczęciu ${litres(state.fuel.startL)}`
+      : 'brak odczytu przy rozpoczęciu',
     state.fuel.addedL > 0 ? `dolane ${litres(state.fuel.addedL)}` : 'bez tankowania',
     used == null
       ? null
@@ -179,7 +179,7 @@ export function finalFuelHint(state: SessionState, fuelL: number | null): string
 }
 
 /**
- * Podpis pod motogodzinami: „format hh:mm · przy przejęciu 1 239:39 · Δ +1:30 · blok 1:30".
+ * Podpis pod motogodzinami: „format hh:mm · przy rozpoczęciu 1 239:39 · Δ +1:30 · blok 1:30".
  *
  * Mockup pisze w tym miejscu „Δ +1:30 (= blok)". Wypisujemy OBIE liczby zamiast twierdzić,
  * że są równe: inwariant §4.5 (Δ MH = czas blokowy) ma być tu sprawdzalny gołym okiem,
@@ -191,11 +191,11 @@ export function finalMhHint(state: SessionState, mh: number | null): string {
   const parts = [`format ${format === 'hhmm' ? 'hh:mm' : 'dziesiętny'}`];
 
   if (state.mh.start == null) {
-    parts.push('brak odczytu przy przejęciu - wpisz z licznika');
+    parts.push('brak odczytu przy rozpoczęciu - wpisz z licznika');
     return parts.join(' · ');
   }
 
-  parts.push(`przy przejęciu ${motoHours(state.mh.start, format)}`);
+  parts.push(`przy rozpoczęciu ${motoHours(state.mh.start, format)}`);
   if (mh != null) {
     parts.push(`Δ ${signed(mh - state.mh.start, format)}`, `blok ${duration(state.blockTimeMs)}`);
   }

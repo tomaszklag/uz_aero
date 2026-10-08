@@ -56,23 +56,23 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   // techniczny zostaje (`panel.access` = dostęp do modułów panelu), zmienia się nazwa.
   'panel.access': {
     label: 'Podgląd klubu',
-    desc: 'Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to Moje konto i kalendarz.',
+    desc: 'Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to kalendarz, zlecenia i Moje konto.',
   },
   'accounts.manage': {
     label: 'Konta i kod klubu',
-    desc: 'Przyjmowanie do klubu, zakresy uprawnień, kod klubu, wylogowywanie cudzych urządzeń.',
+    desc: 'Przyjmowanie do klubu, zakresy uprawnień, grupy pilotów, kod klubu, wylogowywanie cudzych urządzeń.',
   },
   'fleet.manage': {
     label: 'Flota',
-    desc: 'Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku.',
+    desc: 'Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku i ze służby.',
   },
   'events.correct': {
     label: 'Korekty w dzienniku',
-    desc: 'Poprawianie i unieważnianie cudzych operacji, także po oknie 24 godzin.',
+    desc: 'Poprawianie i unieważnianie cudzych operacji, także po upływie 24 godzin.',
   },
   'flags.resolve': {
-    label: 'Uwagi serwera',
-    desc: 'Rozstrzyganie tego, co serwer zgłasza przy operacjach: nakładki, rozjazdy liczników.',
+    label: 'Rozjazdy',
+    desc: 'Rozstrzyganie spraw z „Do sprawdzenia": dwie operacje naraz, luki w liczniku, rozjazdy paliwa.',
   },
   'reservations.manage': {
     label: 'Cudze rezerwacje',
@@ -96,15 +96,15 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   },
   'thresholds.manage': {
     label: 'Progi i reguły',
-    desc: 'Strojenie progów analityki zużycia.',
+    desc: 'Ustawianie progów, według których ocenia się zużycie paliwa.',
   },
   'audit.read': {
-    label: 'Dziennik zmian',
+    label: 'Historia zmian',
     desc: 'Odczyt tego, kto i co zmienił w panelu.',
   },
   'maintenance.run': {
     label: 'Narzędzia serwisowe',
-    desc: 'Przebudowa danych dziennika ze strumienia zdarzeń i odczyt stanu bazy.',
+    desc: 'Przeliczanie dziennika od nowa i podgląd stanu danych.',
   },
   'bugs.triage': {
     label: 'Zgłoszenia błędów',
@@ -112,7 +112,7 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   },
   'platform.manage': {
     label: 'Kluby',
-    desc: 'Zakładanie i wyłączanie klubów - wyłącznie superadministrator.',
+    desc: 'Zakładanie i wyłączanie klubów - wyłącznie opiekun platformy.',
   },
 };
 
@@ -194,11 +194,11 @@ export function scopeTone(capabilities: readonly Capability[]): 'blue' | 'amber'
  */
 export function scopeSummary(capabilities: readonly Capability[]): string {
   const known = capabilities.filter((c) => c in CAPABILITY_LABELS);
-  if (known.length === 0) return 'Bez zdolności panelu - wyłącznie aplikacja na telefonie.';
+  if (known.length === 0) return 'Bez dodatkowych uprawnień - w panelu kalendarz, zlecenia i własne konto.';
 
   const names = known.slice(0, 3).map((c) => CAPABILITY_LABELS[c].label);
   const tail = known.length > 3 ? ` i ${known.length - 3} więcej` : '';
-  return `Nadane ${known.length} z ${CLUB_CAPABILITIES.length} zdolności · ${names.join(' · ')}${tail}`;
+  return `Nadane ${known.length} z ${CLUB_CAPABILITIES.length} uprawnień · ${names.join(' · ')}${tail}`;
 }
 
 /**

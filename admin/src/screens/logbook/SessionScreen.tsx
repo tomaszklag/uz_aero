@@ -218,7 +218,7 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
         pending={detail.isPending}
         loaded={detail.data != null}
         skeleton={
-          <Card title="Log zdarzeń">
+          <Card title="Przebieg operacji">
             {[0, 1, 2, 3, 4, 5].map((row) => (
               <span key={row} className="skeleton cell" style={{ width: 320, marginBottom: 10 }} />
             ))}
@@ -232,8 +232,8 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
               // czerwony pill nad wypełnioną kartą czyta się jak ostrzeżenie o danych,
               // a nie jak informacja, że tych liczb nikt już nie liczy.
               <Banner tone="status">
-                Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do
-                karty arkusza. Powód stoi na osi zdarzeń.
+                Wpis wycofany - nie liczy się do nalotu pilota, sum dziennika ani karty dnia.
+                Powód widać w przebiegu operacji.
               </Banner>
             ) : null}
 
@@ -242,14 +242,12 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
               // dalej, ale bez odczytów końcowych - nie jest ogniwem łańcucha, a stan
               // maszyny ustawia się w jej karcie. Pilot nie poprawia już nic.
               <Banner tone="status">
-                Operację zakończył administrator - bez odczytów końcowych. Liczy się do
-                nalotu i sum dziennika, ale nie jest ogniwem przekazania: aktualny stan
-                maszyny wpisuje się w karcie samolotu. Zaległe zapisy pilota do tej
-                operacji telefon wstrzymuje. Powód stoi na osi zdarzeń.
+                Operację zakończył administrator, bez odczytów końcowych. Liczy się do nalotu
+                i sum dziennika, a aktualny stan maszyny wpisuje się w karcie samolotu.
               </Banner>
             ) : null}
 
-            <Card title="Log zdarzeń">
+            <Card title="Przebieg operacji">
               <div className="table-wrap plain">
                 <table>
                   <caption className="visually-hidden">
@@ -298,11 +296,11 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
                             {/* Plakietka „popr." w OBU trybach - fakt o danych, nie akcja. */}
                             {corrected.has(row.uuid) ? <span className="tag-corrected">popr.</span> : null}
                             {row.adminCorrected ? (
-                              <span className="cell-sub">poprawił administrator</span>
+                              <span className="cell-sub">poprawka administratora</span>
                             ) : null}
                             {entry?.adminAuthorId == null ? null : (
                               <span className="cell-sub">
-                                {entry.event.type === 'event_correction' ? 'wpisał ' : 'dopisał '}
+                                {entry.event.type === 'event_correction' ? 'korekta · ' : 'dopisek · '}
                                 {authorLabel(entry.adminAuthorId, person)}
                               </span>
                             )}
@@ -384,7 +382,7 @@ export function SessionScreen({ editing = false }: { editing?: boolean }) {
               {/* DWA WYJŚCIA z operacji (3.2.0, §4.1): okruszki prowadzą na oś MASZYNY,
                   a nazwisko - na oś PILOTA. Link w komórce, nie przycisk: to przejście. */}
               <Detail
-                label="Pilot"
+                label="Dowódca"
                 value={<PilotExit code={session.picCode} name={session.picName} range={range} />}
               />
               <Detail
@@ -565,8 +563,8 @@ function VoidCard({ session }: { session: SessionListItemDto }) {
   return (
     <Card title="Unieważnienie wpisu">
       <p className="hint">
-        Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
-        zostaje razem z powodem - widać, że lot był i że go wycofano.
+        Wycofany wpis wypada z nalotu pilota, sum dziennika i karty dnia. Zostaje w dzienniku
+        razem z powodem - widać, że lot był i że go wycofano.
       </p>
 
       {asking ? null : (
@@ -589,7 +587,7 @@ function VoidCard({ session }: { session: SessionListItemDto }) {
           <Field
             htmlFor="void-reason"
             label="Powód"
-            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+            hint="Pilot zobaczy go w aplikacji."
           >
             <TextInput
               id="void-reason"
@@ -663,10 +661,8 @@ function CloseCard({ session }: { session: SessionListItemDto }) {
   return (
     <Card title="Zakończenie operacji">
       <p className="hint">
-        Operacja w toku, której pilot nie zdał, blokuje maszynę. Zakończenie zwalnia ją
-        bez odczytów końcowych - aktualny stan licznika, paliwa i oleju wpisuje się potem
-        w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzyma;
-        poprawek w niej pilot już nie naniesie.
+        Niezdany samolot stoi zajęty. Zakończenie zwalnia go bez odczytów końcowych - stan
+        liczników wpiszesz w karcie samolotu, a pilot nie naniesie już poprawek.
       </p>
 
       {asking ? null : (
@@ -689,7 +685,7 @@ function CloseCard({ session }: { session: SessionListItemDto }) {
           <Field
             htmlFor="close-reason"
             label="Powód"
-            hint="Zobaczy go pilot na telefonie; zostaje w dzienniku."
+            hint="Pilot zobaczy go w aplikacji."
           >
             <TextInput
               id="close-reason"
@@ -711,7 +707,7 @@ function CloseCard({ session }: { session: SessionListItemDto }) {
             />
             <OptionButton
               name="Zakończ i od razu unieważnij"
-              desc="Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty arkusza."
+              desc="Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty dnia."
               selected={withVoid}
               onSelect={() => setWithVoid(true)}
             />

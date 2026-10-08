@@ -184,7 +184,7 @@ export function bugPlaceLabel(place: BugPlace): string {
   const screen = routeLabel(place.route);
   return place.sheet == null || place.sheet.trim() === ''
     ? screen
-    : `${screen} · arkusz ${place.sheet.trim()}`;
+    : `${screen} · okienko ${place.sheet.trim()}`;
 }
 
 /** „kolejka 3 · ostatnia 09:38 UTC" - jedna linia o stanie wysyłki. */

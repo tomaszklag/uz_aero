@@ -98,9 +98,9 @@ describe('karty', () => {
 
   it('niosą cały plan, bez kresek za pola, których nie ma', () => {
     const [karta] = queueCards([item({ dualId: null, note: null, plannedAirMin: null, plannedFuelL: null })], opts);
-    expect(karta!.rows.map((r) => r.label)).toEqual(['Pilot', 'Zadanie', 'Trasa', 'Czeka od']);
+    expect(karta!.rows.map((r) => r.label)).toEqual(['Dowódca', 'Zadanie', 'Trasa', 'Czeka od']);
     expect(karta!.rows[0]).toEqual({
-      label: 'Pilot',
+      label: 'Dowódca',
       value: 'Jakub Wrona',
       sub: 'JWR',
       subMono: true,
@@ -121,7 +121,7 @@ describe('karty', () => {
   it('z drugim pilotem, planem i notatką - komplet', () => {
     const [karta] = queueCards([item({ dualId: 'akw' })], opts);
     expect(karta!.rows.map((r) => r.label)).toEqual([
-      'Pilot',
+      'Dowódca',
       'Zadanie',
       'Trasa',
       'Drugi pilot',
@@ -167,10 +167,10 @@ describe('baner i zdanie pod listą', () => {
 
   it('zdanie mówi o kroku po nazwie przy jednym kroku, ogólnie przy kilku', () => {
     expect(decisionHint([item()])).toBe(
-      'Wystarczy Twoja zgoda - krok „Mechanik" ma 2 osoby i rozstrzyga pierwsza. Po zatwierdzeniu rezerwacja idzie do kroku „Szef wyszkolenia". Po odmowie zostaje odrzucona, termin wraca do puli i nikt jej już nie ogląda.',
+      'Wystarczy Twoja zgoda - krok „Mechanik" ma 2 osoby i rozstrzyga pierwsza. Po zatwierdzeniu rezerwacja idzie do kroku „Szef wyszkolenia". Po odmowie zostaje odrzucona, termin się zwalnia i nikt jej już nie ogląda.',
     );
     expect(decisionHint([item({}, { members: 1, next: null })])).toBe(
-      'Wystarczy Twoja zgoda. Po zatwierdzeniu rezerwacja jest potwierdzona. Po odmowie zostaje odrzucona, termin wraca do puli i nikt jej już nie ogląda.',
+      'Wystarczy Twoja zgoda. Po zatwierdzeniu rezerwacja jest potwierdzona. Po odmowie zostaje odrzucona, termin się zwalnia i nikt jej już nie ogląda.',
     );
     expect(decisionHint([item(), item({ id: 'x' }, { id: 'szef' })])).toContain('w każdym kroku');
   });

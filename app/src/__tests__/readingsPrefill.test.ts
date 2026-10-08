@@ -13,9 +13,18 @@ import {
 } from '../ui/screens/logic/readingsPrefill';
 import type { RemoteReadingsChainLink } from '../application';
 
+
+/**
+ * Serwer podaje IDENTYFIKATORY osób (od 2.0.0 długie ciągi znaków), a kod pilota bierze się
+ * z pamięci klubu na telefonie. Do 4.0.0 rozpiska pisała identyfikator wielkimi literami
+ * (przegląd treści 2026-10-08).
+ */
+const CODES: Record<string, string> = { 'p-bno': 'BNO', 'p-jkw': 'JKW', 'p-ako': 'AKO' };
+const codeOf = (id: string): string | null => CODES[id] ?? null;
+
 const before: RemoteReadingsChainLink = {
   sessionUuid: 'rano',
-  picId: 'bno',
+  picId: 'p-bno',
   at: Date.UTC(2026, 7, 16, 9, 0),
   fuelL: 140,
   mh: 1232.4,
@@ -70,8 +79,10 @@ describe('podstawianie odczytów zastanych', () => {
 
 describe('adnotacja źródła przy polu', () => {
   it('mówi, skąd liczba, dopóki jest to liczba sąsiada', () => {
-    expect(prefillSource(before, 'fuelL', 140)).toBe('z poprzedniego lotu · BNO');
-    expect(prefillSource(before, 'mh', 1232.4)).toBe('z poprzedniego lotu · BNO');
+    expect(prefillSource(before, 'fuelL', 140, codeOf)).toBe('z poprzedniego lotu · BNO');
+    expect(prefillSource(before, 'mh', 1232.4, codeOf)).toBe('z poprzedniego lotu · BNO');
+    // Spoza pamięci klubu - sam podpis pochodzenia, bez identyfikatora osoby.
+    expect(prefillSource(before, 'fuelL', 140)).toBe('z poprzedniego lotu');
   });
 
   it('MILCZY przy wartości poprawionej - inaczej podpisywałaby cudzym źródłem odczyt pilota', () => {

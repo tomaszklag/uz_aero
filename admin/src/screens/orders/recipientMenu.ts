@@ -45,7 +45,7 @@ export function rowMenu(row: LeaderRowVm): MenuEntry[] {
   if (row.menu.swapSeat != null) {
     entries.push({ action: { kind: 'swap', pilotId: row.pilotId, seat: row.menu.swapSeat }, label: 'Zamień osobę', danger: false });
   }
-  entries.push({ action: { kind: 'remove', pilotId: row.pilotId }, label: 'Odbierz zlecenie', danger: true });
+  entries.push({ action: { kind: 'remove', pilotId: row.pilotId }, label: 'Usuń z adresatów', danger: true });
   return entries;
 }
 
@@ -62,19 +62,19 @@ export interface ConfirmCopy {
   confirm: string;
 }
 
-/** Pytanie w miejscu wiersza przy odebraniu zlecenia i cofnięciu przydziału. */
+/** Pytanie w miejscu wiersza przy usunięciu z adresatów i cofnięciu przydziału. */
 export function confirmCopy(action: Exclude<RecipientAction, { kind: 'swap' }>, name: string): ConfirmCopy {
   if (action.kind === 'remove') {
     return {
-      question: `Odebrać zlecenie: ${name}?`,
-      hint: 'Dostanie wiadomość „Zlecenie nieaktualne". Rozmowa zostanie do odczytu.',
+      question: `Usunąć z adresatów: ${name}?`,
+      hint: 'Dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostanie do odczytu.',
       placeholder: 'Np. fotel obsadzamy z innej grupy',
-      confirm: 'Odbierz zlecenie',
+      confirm: 'Usuń z adresatów',
     };
   }
   return {
     question: `Cofnąć przydział: ${name}?`,
-    hint: `Fotel ${SEAT_GENITIVE[action.seat]} wróci do szukania, a ${name} dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób dalej się liczą.`,
+    hint: `Fotel ${SEAT_GENITIVE[action.seat]} znów będzie do obsadzenia, a ${name} dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób nadal się liczą.`,
     placeholder: 'Np. potrzebny drugi pilot z uprawnieniem na An-2',
     confirm: 'Cofnij przydział',
   };
@@ -123,8 +123,8 @@ export function swapOptions(input: {
 
 /** Zdanie pod polami zamiany: co dostanie każda ze stron. Bez wyboru - sama strona wychodząca. */
 export function swapHint(outgoing: string, pick: { name: string; bothSeats: boolean } | null, seat: SeatDto): string {
-  const leaving = `${outgoing} dostanie wiadomość „Zlecenie nieaktualne"`;
+  const leaving = `${outgoing} dostanie wiadomość „Zlecenie nie jest już do Ciebie"`;
   if (pick == null) return `${leaving}.`;
   if (pick.bothSeats) return `${leaving}. ${pick.name} ma już to zlecenie - zostanie przy obu fotelach z terminem do potwierdzenia.`;
-  return `${leaving}, a ${pick.name} - to zlecenie z propozycją fotela ${SEAT_GENITIVE[seat]}.`;
+  return `${leaving}, a ${pick.name} dostanie to zlecenie z propozycją fotela ${SEAT_GENITIVE[seat]}.`;
 }

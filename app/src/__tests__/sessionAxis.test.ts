@@ -345,17 +345,22 @@ describe('zdarzenia naziemne', () => {
     expect(rows.find((r) => r.id === 'boarding-2')!.sub).toBeNull();
   });
 
-  it('zmiana załogi mówi, kto kogo zmienił', () => {
+  it('zmiana załogi mówi, kto kogo zmienił - kodem z pamięci klubu, nie identyfikatorem', () => {
     const zZaloga = [
       ...sessionEvents(),
-      event('crew_change', at(9, 5), { role: 'dual', pilotOutId: null, pilotInId: 'BNO' }, 'crew-1'),
+      event('crew_change', at(9, 5), { role: 'dual', pilotOutId: null, pilotInId: 'p-bno' }, 'crew-1'),
+      event('crew_change', at(9, 6), { role: 'dual', pilotOutId: 'p-bno', pilotInId: 'p-obcy' }, 'crew-2'),
     ];
-    const row = axis(zZaloga).rows.find((r) => r.id === 'crew-1')!;
+    const codeOf = (id: string): string | null => (id === 'p-bno' ? 'BNO' : null);
+    const rows = buildSessionAxis(projectSession(zZaloga), zZaloga, at(12, 0), codeOf).rows;
+    const row = rows.find((r) => r.id === 'crew-1')!;
 
     expect(row.kind).toBe('crew');
     expect(row.name).toBe('Zmiana załogi');
-    // Myślnik = fotela nie było zajętego (dołączenie Duala), a nie „nie wiemy kto".
-    expect(row.sub).toBe('DUAL: - → BNO');
+    // Myślnik = fotela nie było zajętego (dołączenie drugiego pilota), a nie „nie wiemy kto".
+    expect(row.sub).toBe('Drugi pilot: - → BNO');
+    // Pilot spoza pamięci klubu - znak zapytania, nigdy identyfikator.
+    expect(rows.find((r) => r.id === 'crew-2')!.sub).toBe('Drugi pilot: BNO → ?');
   });
 
   it('uwaga bez czasów (wpis ręczny z samą notatką) nie jest punktem osi', () => {

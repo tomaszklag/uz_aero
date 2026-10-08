@@ -105,9 +105,9 @@ export interface RemoteOrderMe {
   previousAnswerReason: string | null;
   seen: boolean;
   removed: boolean;
-  /** Odebranie zlecenia (pkt 29) - godzina baneru „Zlecenie cofnięte" (28B). */
+  /** Usunięcie z adresatów (pkt 29) - godzina baneru „Zlecenie nie jest już do Ciebie" (28B). */
   removedAt: string | null;
-  /** Powód odebrania - cytat w banerze 28B; zna go wyłącznie karta (w wierszu listy `null`). */
+  /** Powód usunięcia - cytat w banerze 28B; zna go wyłącznie karta (w wierszu listy `null`). */
   removeReason: string | null;
   /** Czy zlecenie jest dla mnie jeszcze w grze - inaczej 28B. */
   inPlay: boolean;

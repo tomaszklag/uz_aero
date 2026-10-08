@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 04A Cockpit · przed uruchomieniem silnika</title>
+<title>Ninerdeck - 04A Kokpit · przed uruchomieniem silnika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -159,7 +159,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">NINERDECK - 04A</span>
-  <span class="slug">cockpit · przed uruchomieniem silnika</span>
+  <span class="slug">kokpit · przed uruchomieniem silnika</span>
   <span class="canvas-meta"><span class="pulse"></span>Brak lotów</span>
 </header>
 
@@ -208,16 +208,16 @@
 
     <div class="scroll">
 
-      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" - hero START ENGINE mówi to samo mocniej
+      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" - hero URUCHOM SILNIK mówi to samo mocniej
            (decyzja 2026-08-04, jak na 04). Chip stanu zostaje tylko na 04b („wg serwera"). -->
-      <!-- START ENGINE - główna akcja, bardziej prominentna niż w trakcie dnia.
+      <!-- URUCHOM SILNIK - główna akcja, bardziej prominentna niż w trakcie dnia.
            Prowadzi do 05H (Engine idle): zaraz po uruchomieniu samolot STOI, a pasek
            akcji podpowiada Taxi - stany lotu (05) przychodzą później, z sekwencją. -->
       <a href="05h-cockpit-idle.html" class="start-engine">
         <div class="start-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
-        <div class="start-engine-label">START ENGINE</div>
+        <div class="start-engine-label">URUCHOM SILNIK</div>
         <div class="start-engine-hint">Przytrzymaj 1 sekundę aby potwierdzić</div>
       </a>
 
@@ -260,7 +260,7 @@
           <div class="axis-row">
             <span class="axis-time dim">09:11</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">paliwo 150 L · 1 236:52</span></span>
+            <span class="axis-label"><span class="axis-name muted">Rozpoczęcie</span><span class="axis-sub">paliwo 150 L · 1 236:52</span></span>
             <span class="axis-right"></span>
           </div>
         </div>
@@ -316,7 +316,7 @@
           </div>
           <div>
             <div class="action-label">Zmiana załogi</div>
-            <div class="action-sub">PIC: AKO · DUAL: BNO</div>
+            <div class="action-sub">Dowódca AKO · Drugi pilot BNO</div>
           </div>
         </a>
         <!-- „Lista ręczna" ZNIKŁA ze stanu przed startem (2026-08-10): operacja nie ma
@@ -344,7 +344,7 @@
     <span class="vp-badge">04A</span>
     <span class="vp-body">
       <span class="vp-name">Przed uruchomieniem silnika</span>
-      <span class="vp-when">Zaraz po przejęciu - pusty log operacji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
+      <span class="vp-when">Zaraz po rozpoczęciu lotu - pusty log operacji, URUCHOM SILNIK, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" - dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -352,7 +352,7 @@
     <span class="vp-badge">04</span>
     <span class="vp-body">
       <span class="vp-name">Po zatrzymaniu silnika</span>
-      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego START ENGINE nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
+      <span class="vp-when">Operacja zakończona (operacja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT - drugiego URUCHOM SILNIK nie ma, log jednej operacji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">

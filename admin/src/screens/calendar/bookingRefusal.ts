@@ -32,14 +32,14 @@ export type BookingRefusalCode =
 
 const ZDANIA: Readonly<Record<BookingRefusalCode, string>> = {
   slot_taken: 'Ten termin jest już zajęty.',
-  aircraft_disabled: 'Ta maszyna jest wyłączona ze służby - nie da się zaplanować nią lotu.',
+  aircraft_disabled: 'Ta maszyna jest poza służbą - nie da się zaplanować nią lotu.',
   // Skasowana albo z innego klubu - serwer nie rozróżnia tego celowo, więc i my nie.
   aircraft_not_found: 'Nie ma już takiej maszyny w klubie. Odśwież stronę i wybierz inną.',
   not_your_booking: 'To nie jest Twoja rezerwacja.',
   booking_in_past: 'Ten termin już minął. Wybierz późniejszy.',
   booking_order: 'Koniec terminu musi wypadać po jego początku.',
-  booking_closed: 'Ta zajętość jest już zamknięta - ktoś rozstrzygnął ją przed chwilą.',
-  reason_required: 'Podaj powód - pilot przeczyta go w aplikacji.',
+  booking_closed: 'Ten termin jest już zamknięty - ktoś rozstrzygnął go przed chwilą.',
+  reason_required: 'Podaj powód - pilot zobaczy go w aplikacji.',
   // Termin rezerwacji ze zlecenia prowadzi zlecenie (4.0.0, §16 pkt 7) - to samo zdanie,
   // co w telefonie. Szuflada poprawki nie oferuje, więc dojdzie tu tylko wyścigiem.
   booking_from_order: 'Termin zmienia osoba zlecająca - edycją zlecenia.',

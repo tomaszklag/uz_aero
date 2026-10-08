@@ -160,7 +160,7 @@ describe('drugi pilot (decyzja 23 zleceń: rezerwacja liczy oba fotele)', () => 
   });
 
   it('u dowódcy - drugi pilot', () => {
-    expect(nextBooking(input([booking({ id: 'b1', dualId: 'bno' })]))?.crew).toBe('Dual: BNO');
+    expect(nextBooking(input([booking({ id: 'b1', dualId: 'bno' })]))?.crew).toBe('Drugi pilot: BNO');
   });
 
   it('przejęcia NIE wypełnia - maszynę bierze dowódca', () => {

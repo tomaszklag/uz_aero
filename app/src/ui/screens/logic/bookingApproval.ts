@@ -79,7 +79,7 @@ const BADGE: Readonly<Record<string, { label: string; tone: ApprovalVm['badgeTon
   rejected: { label: 'Odrzucona', tone: 'red' },
   expired: { label: 'Wygasła', tone: 'dim' },
   cancelled: { label: 'Odwołana', tone: 'dim' },
-  released: { label: 'Slot zwolniony', tone: 'dim' },
+  released: { label: 'Niewykorzystana', tone: 'dim' },
   fulfilled: { label: 'Zrealizowana', tone: 'dim' },
 };
 
@@ -128,7 +128,7 @@ export function approvalView(input: ApprovalInput): ApprovalVm {
 
   const rows: PathStepVm[] = steps.map((s, i) => {
     if (s.decision != null) {
-      if (s.decision.via === 'self') return { id: s.id, label: s.label, mark: 'ok', when: 'przeszedł sam' };
+      if (s.decision.via === 'self') return { id: s.id, label: s.label, mark: 'ok', when: 'pominięty - Twój krok' };
       const at = Date.parse(s.decision.decidedAt);
       const when = Number.isFinite(at) ? agoLabel(at, input.now) : '';
       return { id: s.id, label: s.label, mark: s.decision.decision === 'approved' ? 'ok' : 'no', when };
@@ -142,14 +142,14 @@ export function approvalView(input: ApprovalInput): ApprovalVm {
           when: waitingSince == null ? 'czeka' : `czeka od ${agoLabel(waitingSince, input.now)}`,
         };
       }
-      return { id: s.id, label: s.label, mark: 'idle', when: 'nie zaczął' };
+      return { id: s.id, label: s.label, mark: 'idle', when: 'jeszcze nie pytany' };
     }
     // Sprawa zamknięta bez decyzji na tym kroku: pierwszy niezdecydowany „nie zdecydował"
     // (23D - to na nim termin minął), dalsze „nie zaczął". Po odmowie każdy dalszy
     // „nie zaczął": nikt dalszy nie był fatygowany.
     const firstUndecided = steps.findIndex((x) => x.decision == null);
     const missed = state === 'expired' && i === firstUndecided;
-    return { id: s.id, label: s.label, mark: 'idle', when: missed ? 'nie zdecydował' : 'nie zaczął' };
+    return { id: s.id, label: s.label, mark: 'idle', when: missed ? 'bez decyzji' : 'jeszcze nie pytany' };
   });
 
   const current = currentAt >= 0 ? steps[currentAt] : null;
@@ -182,7 +182,7 @@ function banner(
       return {
         tone: 'amber',
         title: stepOfN == null ? 'Czeka na zgodę' : `Czeka na zgodę · ${stepOfN}`,
-        text: 'Termin jest już Twój - rezerwacja trzyma go od złożenia. Jeśli nikt nie zdecyduje do jego początku, wygaśnie i slot wróci do puli.',
+        text: 'Termin jest już Twój - rezerwacja trzyma go od złożenia. Jeśli nikt nie zdecyduje do jego początku, rezerwacja wygaśnie, a termin się zwolni.',
       };
     case 'stepAdded':
       return {
@@ -204,7 +204,7 @@ function banner(
       return {
         tone: 'amber',
         title: 'Termin minął, zanim ktokolwiek zdecydował',
-        text: 'Rezerwacja bez decyzji wygasa z początkiem swojego terminu i oddaje slot - milczenie nie znaczy zgody. Jeśli nadal chcesz lecieć, złóż ją jeszcze raz.',
+        text: 'Rezerwacja bez decyzji wygasa z początkiem terminu i go zwalnia - brak decyzji nie oznacza zgody. Jeśli nadal chcesz lecieć, złóż ją jeszcze raz.',
       };
     default:
       return null;

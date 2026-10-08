@@ -41,15 +41,15 @@ export function gpsAcquiringText(): string {
   return (
     // Nazwy przycisków jak w pasku akcji - skróty „T-O / LAND" zostały po czasach
     // przed issue #19 (patrz `gpsLossText` niżej).
-    'Odbiornik wyszukuje sygnał - autodetekcja uzbroi się z pierwszym fixem. ' +
-    'Do tego czasu start i lądowanie zapiszesz przyciskiem Take off / Landing.'
+    'Telefon szuka sygnału GPS. Do tego czasu starty i lądowania zapisuj ' +
+    'przyciskiem Start / Lądowanie.'
   );
 }
 
 /** Treść banera braku uprawnienia - jedyny stan, którego fix nie naprawi sam. */
 export function gpsPermissionText(): string {
   return (
-    'Aplikacja nie ma uprawnienia lokalizacji. Nadaj je w ustawieniach systemu ' +
+    'Aplikacja nie ma uprawnienia do lokalizacji. Nadaj je w ustawieniach systemu ' +
     '(Aplikacje → Ninerdeck → Uprawnienia → Lokalizacja) i wróć do kokpitu.'
   );
 }
@@ -69,8 +69,8 @@ export function fixAge(lastFixAt: number, now: number): string {
 export function gpsLossText(lastFixAt: number | null, now: number): string {
   const intro =
     lastFixAt != null
-      ? `Ostatni fix ${timeUtc(lastFixAt)} UTC (${fixAge(lastFixAt, now)}).`
-      : 'Ani jednego fixa od startu silnika.';
+      ? `Ostatni sygnał ${timeUtc(lastFixAt)} UTC (${fixAge(lastFixAt, now)}).`
+      : 'Brak sygnału od uruchomienia silnika.';
   return (
     // Baner nazywa przyciski DOKŁADNIE tak, jak są podpisane w pasku akcji (mockup
     // 05g): skróty „LAND / T-O" zostały po czasach przed issue #19. Od 2026-08-12 ta
@@ -78,18 +78,18 @@ export function gpsLossText(lastFixAt: number | null, now: number): string {
     // „· ręcznie" (rozróżnienie bez różnicy), a z samego banera dwa przyciski akcji
     // (dublowały pasek). Baner mówi, gdzie iść; iść trzeba na dół ekranu.
     `${intro} Startów i lądowań nie wykryjemy - zapisuj je ręcznie przyciskiem ` +
-    'Landing / Take off. Timery i log dnia liczą dalej z zegara.'
+    'Lądowanie / Start. Czasy liczą się dalej z zegara.'
   );
 }
 
-/** Adnotacja martwych komórek siatki („brak fixa od 15:58"). */
+/** Adnotacja martwych komórek siatki („brak sygnału od 15:58"). */
 export function staleCellNote(lastFixAt: number | null): string {
-  return lastFixAt != null ? `brak fixa od ${timeUtc(lastFixAt)}` : 'brak fixa';
+  return lastFixAt != null ? `brak sygnału od ${timeUtc(lastFixAt)}` : 'brak sygnału';
 }
 
-/** Druga linia `PhaseHero`: „FAZA NIEZNANA · BEZ FIXA OD 15:58". */
+/** Druga linia `PhaseHero`: „FAZA NIEZNANA · BEZ SYGNAŁU OD 15:58". */
 export function unknownPhaseDetail(lastFixAt: number | null): string {
   return lastFixAt != null
-    ? `FAZA NIEZNANA · BEZ FIXA OD ${timeUtc(lastFixAt)}`
-    : 'FAZA NIEZNANA · BEZ FIXA OD STARTU SILNIKA';
+    ? `FAZA NIEZNANA · BEZ SYGNAŁU OD ${timeUtc(lastFixAt)}`
+    : 'FAZA NIEZNANA · BEZ SYGNAŁU GPS';
 }

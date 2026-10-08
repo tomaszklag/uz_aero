@@ -18,7 +18,7 @@
  */
 
 import type { EpochMillis, Event, SessionState } from '../../../domain';
-import { timeUtc } from '../../format';
+import { litres, timeUtc } from '../../format';
 // Ten sam format daty co w oknie korekty na ekranie 10 („21 JUN 17:30"). Drugi zestaw
 // skrótów miesięcy dałby dwa różne zapisy tej samej rzeczy w jednej aplikacji.
 import { dateTimeUtcShort } from './statsDay';
@@ -107,17 +107,20 @@ export interface PeekBannerModel {
 }
 
 /** „KRZ · od 07:10" - wyróżniony fragment zdania o prowadzącym. */
-function leadPilot(picCode: string | null, claimSince: EpochMillis | null): string {
+/**
+ * „KRZ · od 08:00" - kto trzyma maszynę i od kiedy. Wspólne z listą wyboru samolotu (02):
+ * kod pilota z pamięci klubu, nigdy identyfikator (od 2.0.0 to długi ciąg znaków).
+ */
+export function leadPilot(picCode: string | null, claimSince: EpochMillis | null): string {
   const who = picCode ?? 'inny pilot';
   return claimSince != null ? `${who} · od ${timeUtc(claimSince)}` : who;
 }
 
 /**
- * Baner `.ro-banner` - jedyne miejsce, które mówi wprost, dlaczego ekran nic nie zapisuje.
+ * Baner `.ro-banner` - kto prowadzi samolot i z kiedy jest to, co widać niżej.
  *
- * Zdanie o single-writerze („dane zapisuje wyłącznie jego telefon") jest tu, a nie
- * w drobnym druku, bo to ono tłumaczy wszystkie blokady niżej. Bez niego wyszarzona
- * siatka akcji wygląda na awarię aplikacji, a nie na regułę (§4.1 pkt 3).
+ * Zdania o tym, czyj telefon zapisuje dane, już tu nie ma (przegląd treści 2026-10-08):
+ * tłumaczyło wyszarzoną siatkę akcji, a tej od 4.0.0 nie ma na ekranie.
  */
 export function peekBanner(input: PeekBannerInput): PeekBannerModel {
   const { freshness, picCode, claimSince, fetchedAt, lastActivityAt, now } = input;
@@ -126,17 +129,17 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
   const text: PeekTextSegment[] = [
     { text: 'Samolot prowadzi ' },
     { text: leadPilot(picCode, claimSince), strong: true },
-    { text: '. Dane zapisuje wyłącznie jego telefon - Ty widzisz stan pobrany z serwera.' },
+    { text: '.' },
   ];
 
   if (freshness === 'live') {
     const activity =
-      lastActivityAt != null ? ` · ostatnia aktywność ${who} ${timeUtc(lastActivityAt)}` : '';
+      lastActivityAt != null ? ` · ostatni zapis ${who} ${timeUtc(lastActivityAt)}` : '';
     return {
       tone: 'blue',
       text,
       warning: null,
-      meta: `Dane z serwera · pobrano ${timeUtc(fetchedAt)}${activity}`,
+      meta: `Pobrano ${timeUtc(fetchedAt)} UTC${activity}`,
       metaTone: 'green',
     };
   }
@@ -145,8 +148,8 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
     return {
       tone: 'amber',
       text,
-      warning: `Brak łączności - to ostatni znany stan. ${who} mógł już wylądować, zatankować albo zamknąć dzień.`,
-      meta: `Ostatnie pobrane dane · ${dateTimeUtcShort(fetchedAt)} · stan ${snapshotAgeLabel(now - fetchedAt)}`,
+      warning: 'Brak połączenia - to ostatni znany stan. Od tego czasu samolot mógł wylądować, zatankować albo zostać zdany.',
+      meta: `Dane z ${dateTimeUtcShort(fetchedAt)} UTC · ${snapshotAgeLabel(now - fetchedAt)}`,
       metaTone: 'amber',
     };
   }
@@ -156,8 +159,8 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
   return {
     tone: 'amber',
     text,
-    warning: 'Nie mamy jeszcze żadnej migawki tego dnia - przebieg pokażemy po pierwszym połączeniu z serwerem.',
-    meta: 'Brak danych z serwera - przebieg dnia nieznany',
+    warning: 'Przebieg pokażemy, gdy telefon złapie zasięg.',
+    meta: 'Brak danych - przebieg nieznany',
     metaTone: 'amber',
   };
 }
@@ -191,25 +194,55 @@ export function peekLogTitle(
   return `Log ${machine} · ${who} · UTC`;
 }
 
+/** Wiersz karty „Stan samolotu" w podglądzie cudzej maszyny. */
+export interface PeekFactRow {
+  label: string;
+  value: string;
+}
+
+/**
+ * „Stan samolotu" w podglądzie (04B): paliwo i załoga - dwie rzeczy, które pilot chce
+ * wiedzieć przed przejęciem. Do 4.0.0 stały w siatce WYSZARZONYCH kafelków akcji, a reguła
+ * projektu zakazuje przycisków obiecujących niedostępną czynność (decyzja właściciela
+ * 2026-10-08) - więc są zwykłymi wierszami informacji. Kody pilotów, nigdy identyfikatory.
+ */
+export function peekFacts(input: {
+  fuelL: number | null;
+  capacityL: number | null;
+  picCode: string | null;
+  dualCode: string | null;
+}): PeekFactRow[] {
+  const { fuelL, capacityL, picCode, dualCode } = input;
+  const fuel =
+    fuelL == null ? 'nieznany' : capacityL != null ? `${Math.round(fuelL)} / ${capacityL} L` : litres(fuelL);
+  const crew = [`Dowódca ${picCode ?? '-'}`, dualCode == null ? null : `Drugi pilot ${dualCode}`]
+    .filter((x): x is string => x != null)
+    .join(' · ');
+  return [
+    { label: 'Paliwo', value: fuel },
+    { label: 'Załoga', value: crew },
+  ];
+}
+
 export interface PeekStatus {
   label: string;
   tone: 'green' | 'blue' | 'neutral';
 }
 
 /**
- * Chip stanu (`.ground-chip`). Sufiks „wg serwera" jest częścią etykiety, a nie
- * przypisem obok: chip czyta się jednym spojrzeniem i to spojrzenie ma od razu wiedzieć,
- * że to cudzy stan, a nie odczyt z tego telefonu.
+ * Chip stanu (`.ground-chip`). Że to stan pobrany, a nie odczyt z tego telefonu, mówi
+ * baner nad nim (godzina pobrania) - sufiks „wg serwera" zszedł przy przeglądzie treści
+ * 2026-10-08 razem z innymi napisami o budowie aplikacji.
  */
 export function peekStatusChip(state: SessionState | null): PeekStatus {
-  if (state == null) return { label: 'Stan nieznany · brak danych z serwera', tone: 'neutral' };
+  if (state == null) return { label: 'Stan nieznany · brak danych', tone: 'neutral' };
   // `closed` znaczy ZDANY SAMOLOT, nie zamknięty dzień poprzednika (§3.6a): `day_close`
   // kończy pracę z tą maszyną, a pilot może za chwilę wziąć następną. Napis o „dniu"
   // mówił o cudzej służbie coś, czego strumień jednej sesji nie wie.
-  if (state.closed) return { label: 'Samolot zdany · wg serwera', tone: 'neutral' };
-  if (state.inFlight) return { label: 'W powietrzu · wg serwera', tone: 'blue' };
-  if (state.engineRunning) return { label: 'Running · silnik pracuje · wg serwera', tone: 'green' };
-  return { label: 'Ground · silnik wyłączony · wg serwera', tone: 'neutral' };
+  if (state.closed) return { label: 'Samolot zdany', tone: 'neutral' };
+  if (state.inFlight) return { label: 'W powietrzu', tone: 'blue' };
+  if (state.engineRunning) return { label: 'Silnik pracuje', tone: 'green' };
+  return { label: 'Na ziemi · silnik wyłączony', tone: 'neutral' };
 }
 
 /**
@@ -227,16 +260,15 @@ export function peekStatusChip(state: SessionState | null): PeekStatus {
  * z poprzednikiem zostanie oznaczona do wyjaśnienia.
  */
 export function takeoverWarning(freshness: PeekFreshness, picCode: string | null): string {
-  const who = picCode ?? 'poprzedni PIC';
+  const whose = picCode != null ? `pilota ${picCode}` : 'poprzedniego pilota';
   const base =
-    `${who} może mieć niewysłane dane. Po przejęciu tylko Ty będziesz wysyłać dane dla tego ` +
-    'samolotu - zweryfikuj odczyty paliwa i MH z liczników w kolejnym kroku. Spóźnione dane ' +
-    'poprzednika serwer scali automatycznie.';
+    `Zapisy ${whose} mogą jeszcze nie dotrzeć. W następnym kroku sprawdź paliwo ` +
+    'i motogodziny na przyrządach.';
 
   if (freshness === 'live') return base;
   return (
-    `${base} Przejęcie działa też bez sieci: zapisze się na telefonie i wyśle po powrocie ` +
-    `zasięgu, a jeśli ${who} nadal lata, oznaczymy to do wyjaśnienia.`
+    `${base} Przejąć możesz też bez zasięgu - jeśli ${picCode ?? 'poprzedni pilot'} nadal ` +
+    'leci tym samolotem, administrator klubu dostanie to do wyjaśnienia.'
   );
 }
 
@@ -249,6 +281,6 @@ export function takeoverWarning(freshness: PeekFreshness, picCode: string | null
  * z napisem „PRZEJMIJ".
  */
 export function takeoverHint(reg: string | null): string {
-  const what = reg ?? 'ten samolot';
-  return `Wrócisz do nowego lotu z wybranym ${what} - zapisze się dopiero po potwierdzeniu odczytów`;
+  const what = reg != null ? `samolotem ${reg}` : 'samolotem';
+  return `Wrócisz do nowego lotu z wybranym ${what}. Przejęcie zapisze się po potwierdzeniu odczytów.`;
 }

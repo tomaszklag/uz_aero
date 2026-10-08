@@ -35,8 +35,8 @@ export function noAccessCopy(access: Access, kind: SessionKind): NoAccessCopy {
   if (kind === 'platform') {
     return {
       title: 'Ten ekran należy do klubu',
-      reason: 'Zakres platformy',
-      note: 'Ta sesja pracuje na platformie. Ten ekran otwiera sesja klubu, w którym jesteś członkiem.',
+      reason: 'Panel platformy',
+      note: 'Jesteś w panelu platformy. Ten ekran otworzysz po przejściu do klubu, w którym jesteś członkiem.',
     };
   }
 
@@ -45,7 +45,7 @@ export function noAccessCopy(access: Access, kind: SessionKind): NoAccessCopy {
     return {
       title: 'Ten moduł jest poza Twoim zakresem',
       reason: denialReason(access),
-      note: `Otwiera go zdolność „${label}". Zakres zmienia administrator klubu w karcie członka - poproś go, jeśli ten ekran jest Ci potrzebny.`,
+      note: `Otwiera go uprawnienie „${label}". Uprawnienia nadaje administrator klubu w karcie członka - poproś go, jeśli ten ekran jest Ci potrzebny.`,
     };
   }
 
@@ -55,13 +55,13 @@ export function noAccessCopy(access: Access, kind: SessionKind): NoAccessCopy {
     return {
       title: 'Ten ekran jest poza Twoim zakresem',
       reason: denialReason('panel.access'),
-      note: 'Zakres zmienia administrator klubu w karcie członka - poproś go, jeśli ten ekran jest Ci potrzebny.',
+      note: 'Uprawnienia nadaje administrator klubu w karcie członka - poproś go, jeśli ten ekran jest Ci potrzebny.',
     };
   }
 
   return {
     title: 'To moduł opiekuna platformy',
     reason: 'Poza klubem',
-    note: 'Kluby i zgłoszenia z aplikacji prowadzi opiekun platformy, nie klub - nie ma zdolności, którą klub mógłby tu nadać.',
+    note: 'Kluby i zgłoszenia z aplikacji prowadzi opiekun platformy, nie klub - nie ma uprawnienia, które klub mógłby tu nadać.',
   };
 }

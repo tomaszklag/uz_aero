@@ -12,7 +12,8 @@ import { timeUtc } from '@ninerdeck/format';
 
 import type { RemoteAircraftNow, RemoteWatchList } from '../../../application';
 
-import { blockReasonLabel, clubMomentLabel } from './aircraftCard';
+import { clubMomentLabel } from './aircraftCard';
+import { blockReasonLabel } from './blockReason';
 import type { ClubDayBounds } from './clubClock';
 
 export interface WatchRowVm {
@@ -51,12 +52,12 @@ export function nowLine(now: RemoteAircraftNow, opts: WatchListOptions): { sub: 
     id == null ? null : id === opts.pilotId ? 'Ty' : (opts.shortNameOf(id) ?? null);
   switch (now.kind) {
     case 'retired':
-      return { sub: 'Wycofana z użytku', tone: 'amber' };
+      return { sub: 'Poza służbą', tone: 'amber' };
     case 'flying':
     case 'claimed':
     case 'after_flight': {
       const since = parse(now.since);
-      const head = now.kind === 'flying' ? 'W locie' : now.kind === 'claimed' ? 'Przejęta' : 'Po locie';
+      const head = now.kind === 'flying' ? 'W locie' : now.kind === 'claimed' ? 'Przed lotem' : 'Po locie';
       return {
         sub: [head, who(now.pilotId), since == null ? null : `od ${timeUtc(since)} UTC`]
           .filter((x): x is string => x != null)

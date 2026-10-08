@@ -47,7 +47,7 @@ describe('wiersz skrzynki', () => {
   });
 
   it('role operacji w karcie: łańcuch = oddanie i przejęcie, nakładka = w toku i zdana', () => {
-    expect(sessionRoleLabels(flag({}))).toEqual(['Oddanie samolotu', 'Przejęcie']);
+    expect(sessionRoleLabels(flag({}))).toEqual(['Oddanie samolotu', 'Rozpoczęcie']);
     expect(sessionRoleLabels(flag({ type: 'aircraft_overlap' }))).toEqual(['Operacja zdana', 'Operacja w toku']);
   });
 });

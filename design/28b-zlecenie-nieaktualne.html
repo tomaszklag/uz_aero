@@ -73,7 +73,7 @@
      BANER „CO SIĘ STAŁO" - nad terminem, wzorzec 23C/23D
      Stoi NAD kartą terminu, bo odpowiada na pierwsze pytanie wchodzącego („czy to mnie
      jeszcze dotyczy"), a nie na drugie („o której"). Ton idzie za przyczyną:
-       - fotel obsadzony / zlecenie cofnięte / wygasło → NEUTRALNY: nic tu nie jest
+       - fotel obsadzony / usunięcie z adresatów / wygasło → NEUTRALNY: nic tu nie jest
          błędem ani ostrzeżeniem, a pilot nie ma czego naprawiać;
        - odwołanie → CZERWONY: zlecenie zostało skasowane - czerwień niesie w tej
          aplikacji rzecz niszczącą (i tylko ją).
@@ -298,8 +298,8 @@
   <a class="vp-item" href="#cofniete">
     <span class="vp-badge amber">28B</span>
     <span class="vp-body">
-      <span class="vp-name">Zlecenie cofnięte</span>
-      <span class="vp-when">Osoba zlecająca odebrała Ci zlecenie - usunęła Cię z adresatów albo zamieniła na kogoś innego (decyzja 29). Ramka 4 (niżej): plakietka „Nieaktualne", baner „Zlecenie cofnięte" i powód, jeśli ktoś go podał (zawsze opcjonalny), bez nazwisk. Twoje zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu (29B).</span>
+      <span class="vp-name">Nie jest już do Ciebie</span>
+      <span class="vp-when">Osoba zlecająca usunęła Cię z adresatów albo zamieniła na kogoś innego (decyzja 29). Ramka 4 (niżej): plakietka „Nieaktualne", baner „Zlecenie nie jest już do Ciebie" i powód, jeśli ktoś go podał (zawsze opcjonalny), bez nazwisk. Twoje zgłoszenie przestaje się liczyć, rozmowa zostaje do odczytu (29B).</span>
     </span>
   </a>
   <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
@@ -348,7 +348,7 @@
   <a href="29-watek.html">29 Rozmowa →</a>
   <a href="#odwolane">↓ odwołane</a>
   <a href="#wygaslo">↓ wygasło</a>
-  <a href="#cofniete">↓ cofnięte</a>
+  <a href="#cofniete">↓ usunięcie z adresatów</a>
 </nav>
 
 <!-- ══ DRUGA RAMKA: ZLECENIE ODWOŁANE ══
@@ -489,7 +489,7 @@
 
       <div class="state-banner">
         <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>
-        <span class="sb-text"><b>Zlecenie wygasło</b>Początek terminu bez kompletu załogi - termin wrócił do puli.<span class="sb-meta">dziś 09:00</span></span>
+        <span class="sb-text"><b>Zlecenie wygasło</b>Do początku terminu nie zebrała się cała załoga - termin się zwolnił.<span class="sb-meta">dziś 09:00</span></span>
       </div>
 
       <div class="hero">
@@ -557,14 +557,14 @@
   <a href="30-zlecenia.html">30 Zlecenia →</a>
 </nav>
 
-<!-- ══ CZWARTA RAMKA: ZLECENIE COFNIĘTE (decyzja 46) ══
-     Inny los zlecenia B: Adam zgłosił się o 21:52, a o 21:58 Marta Zięba odebrała mu
-     zlecenie (decyzja 29) - w tym czasie Adam ma już przelot SP-AXA (zlecenie A, przyjęte
+<!-- ══ CZWARTA RAMKA: USUNIĘCIE Z ADRESATÓW (decyzja 46) ══
+     Inny los zlecenia B: Adam zgłosił się o 21:52, a o 21:58 Marta Zięba usunęła go
+     z adresatów (decyzja 29) - w tym czasie Adam ma już przelot SP-AXA (zlecenie A, przyjęte
      o 07:40; kolizję widać było przed odpowiedzią, 28A). Adam otwiera kartę z pusha o 22:00.
      Różnice względem ramki 1:
-       - baner mówi „Zlecenie cofnięte", a nie „Fotel obsadzony", i niesie powód jako
+       - baner mówi „Zlecenie nie jest już do Ciebie", a nie „Fotel obsadzony", i niesie powód jako
          cytat - jest opcjonalny (decyzja 16), bez niego baner ma sam tytuł i godzinę;
-       - NAZWISK nie ma: ani osoby, która cofnęła (prowadzi kilka osób naraz, a skrzynka
+       - NAZWISK nie ma: ani osoby, która to zrobiła (prowadzi kilka osób naraz, a skrzynka
          pisze ten rodzaj bez nazwisk, §12), ani tej, która dostała fotel w zamian
          (decyzja 18);
        - plakietka „Nieaktualne" jak w ramce 1 - push i skrzynka mówią „Zlecenie
@@ -572,11 +572,11 @@
      Zgłoszenie Adama przestaje się liczyć, a rozmowa zostaje do odczytu (29B). -->
 <header class="canvas-label" id="cofniete">
   <span class="film-strip">NINERDECK - 28B</span>
-  <span class="slug">stan: zlecenie cofnięte z powodem</span>
+  <span class="slug">stan: usunięcie z adresatów z powodem</span>
   <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup - Zlecenie cofnięte">
+<main class="phone" role="region" aria-label="Mockup - Zlecenie nie jest już do Ciebie">
   <div class="status-bar">
     <span>22:00</span>
     <span class="status-right">
@@ -600,7 +600,7 @@
 
       <div class="state-banner">
         <svg class="sb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
-        <span class="sb-text"><b>Zlecenie cofnięte</b><span class="sb-quote">„W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym."</span><span class="sb-meta">dziś 21:58</span></span>
+        <span class="sb-text"><b>Zlecenie nie jest już do Ciebie</b><span class="sb-quote">„W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym."</span><span class="sb-meta">dziś 21:58</span></span>
       </div>
 
       <div class="hero">

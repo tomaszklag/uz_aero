@@ -66,13 +66,13 @@ function meta(booking: CalendarBooking, pilotId: string, codeOf: (id: string | n
   const route = routeLabel(operationTypeOf(booking.operation), booking.fromIcao, booking.toIcao);
   if (route !== '') rows.push(route);
 
-  // Drugi pilot widzi tu DOWÓDCĘ - „Dual: ja" byłoby zdaniem o sobie samym.
+  // Drugi pilot widzi tu DOWÓDCĘ - „Drugi pilot: ja" byłoby zdaniem o sobie samym.
   if (booking.dualId === pilotId) {
     const pic = codeOf(booking.pilotId);
     if (pic != null) rows.push(`Dowódca: ${pic}`);
   } else {
     const dual = codeOf(booking.dualId);
-    if (dual != null) rows.push(`Dual: ${dual}`);
+    if (dual != null) rows.push(`Drugi pilot: ${dual}`);
   }
 
   return rows;

@@ -105,7 +105,7 @@ export function bookingLead(startsAt: number, now: number): string {
 export function startHint(booking: NextBooking | null): string | undefined {
   if (booking == null) return undefined;
   const godzina = booking.clock.split('→')[0]?.trim() ?? '';
-  return `Wypełni się rezerwacją ${godzina} · ${booking.aircraft}`;
+  return `Z Twojej rezerwacji: ${godzina} · ${booking.aircraft}`;
 }
 
 /** Długość terminu („2 h", „1:30") - do wiersza szczegółów karty. */

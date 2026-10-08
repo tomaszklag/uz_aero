@@ -209,7 +209,7 @@ function ScopeTile({ scope }: { scope: ShellScope }) {
   if (scope.switchTo == null) return <div className={className}>{body}</div>;
 
   return (
-    <Link className={className} to={scope.switchTo} title="Zmień zakres">
+    <Link className={className} to={scope.switchTo} title="Zmień klub">
       {body}
     </Link>
   );

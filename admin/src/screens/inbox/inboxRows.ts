@@ -284,7 +284,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'cross',
           title: who == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${who}`,
           sub: regTerm,
-          text: plain(str(p.reason)) ?? [{ text: 'Termin wrócił do puli.' }],
+          text: plain(str(p.reason)) ?? [{ text: 'Termin się zwolnił.' }],
           href: toBooking,
         };
       }
@@ -295,7 +295,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'clock',
           title: 'Termin minął, zanim ktokolwiek zdecydował',
           sub: regTerm,
-          text: [{ text: 'Maszyna wróciła do puli - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.' }],
+          text: [{ text: 'Termin się zwolnił - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.' }],
           href: toBooking,
         };
 
@@ -377,7 +377,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'warning',
           title: `Nie odebrano · ${regTitle}`,
           sub: termWho('pilotId'),
-          text: [{ text: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.' }],
+          text: [{ text: 'Przez godzinę nikt nie rozpoczął lotu - termin się zwolnił.' }],
           href: toAircraft,
         };
 
@@ -466,7 +466,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'cross',
           title: `Zlecenie nieaktualne · ${regTitle}`,
           sub: term,
-          text: [{ text: reason == null ? 'Zlecenie cofnięte.' : `Zlecenie cofnięte - ${quoted(reason)}.` }],
+          text: [{ text: reason == null ? 'Zlecenie nie jest już do Ciebie.' : `Zlecenie nie jest już do Ciebie - ${quoted(reason)}.` }],
           href: toOrder('do-mnie'),
         };
       }
@@ -478,7 +478,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'person-x',
           title: `Rezygnacja z lotu · ${regTitle}`,
           sub: join([term, plain(seat == null ? null : (SEAT[seat] ?? null))]),
-          text: join([bold(name('pilotId')), plain(reason == null ? 'fotel wrócił do szukania' : quoted(reason))]),
+          text: join([bold(name('pilotId')), plain(reason == null ? 'fotel znów jest do obsadzenia' : quoted(reason))]),
           href: toOrder('zlecone'),
         };
       }
@@ -490,7 +490,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'person-x',
           title: `Przydział cofnięty · ${regTitle}`,
           sub: join([term, plain(seat == null ? null : (SEAT[seat] ?? null))]),
-          text: plain(reason == null ? null : quoted(reason)) ?? [],
+          text: plain(reason == null ? 'Lot nie jest już Twoją rezerwacją.' : quoted(reason)) ?? [],
           href: toOrder('do-mnie'),
         };
       }
@@ -517,7 +517,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           sub: term,
           text: [
             {
-              text: `${missing === '' ? 'Załoga nie jest kompletna' : `Brakuje ${missing}`}. Z początkiem terminu zlecenie wygaśnie w całości, a termin wróci do puli.`,
+              text: `${missing === '' ? 'Załoga nie jest kompletna' : `Brakuje ${missing}`}. Jeśli do początku terminu nikt się nie znajdzie, zlecenie wygaśnie, a termin się zwolni.`,
             },
           ],
           href: toOrder('zlecone'),
@@ -530,7 +530,7 @@ export function inboxRows(input: InboxRowsInput): InboxRowVm[] {
           icon: 'clock',
           title: `Zlecenie wygasło · ${regTitle}`,
           sub: term,
-          text: [{ text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.' }],
+          text: [{ text: 'Do początku terminu nie zebrała się cała załoga - termin się zwolnił.' }],
           href: toOrder('zlecone'),
         };
       case 'order_message': {

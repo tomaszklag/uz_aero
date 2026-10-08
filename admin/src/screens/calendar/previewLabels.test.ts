@@ -210,7 +210,7 @@ describe('podgląd pilota', () => {
 describe('podgląd samolotu', () => {
   it('nagłówek i liczniki ze źródłem odczytu', () => {
     const view = aircraftPreview(aircraftDto(), opts);
-    expect(view.heading).toEqual({ title: 'SP-AXA', sub: 'Cessna 172 · w użytku · ostatni lot 20 WRZ' });
+    expect(view.heading).toEqual({ title: 'SP-AXA', sub: 'Cessna 172 · w służbie · ostatni lot 20 WRZ' });
     expect(view.cards[0]!.rows).toEqual([
       { label: 'Motogodziny', value: '1236:30', mono: true },
       { label: 'Paliwo', value: '112 L', sub: '· zbiornik 180 L' },

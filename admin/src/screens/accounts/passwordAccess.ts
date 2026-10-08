@@ -83,12 +83,12 @@ export function linkSentText(sent: PasswordLinkSentDto, now: number): string {
  * list, który nigdzie nie poszedł.
  */
 export function linkFailureText(error: unknown): string {
-  if (!isHttpError(error)) return 'Nie ma połączenia z serwerem. Spróbuj za chwilę.';
+  if (!isHttpError(error)) return 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.';
 
   if (error.status === 409 && error.body.error === 'email_required') {
     return 'Ta osoba nie ma adresu e-mail - nie ma dokąd wysłać linku.';
   }
   if (error.status === 429) return 'Za dużo wysyłek - spróbuj za chwilę.';
   if (error.status === 502) return 'Nie udało się wysłać listu. Spróbuj jeszcze raz.';
-  return `Nie udało się wysłać linku (kod ${error.status}).`;
+  return `Nie udało się wysłać linku - kod: ${error.status}.`;
 }

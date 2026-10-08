@@ -34,7 +34,7 @@ export function voidFacts(s: SessionListItemDto): VoidFact[] {
     // kolumną wiersza, więc arkusz składa ją sam z tej samej chwili).
     { label: 'Dzień', value: s.claimedAt == null ? NONE : dateUtcShort(s.claimedAt) },
     { label: 'Silnik', value: `${row.engine.from} → ${row.engine.to}` },
-    { label: 'Pilot', value: row.pic },
+    { label: 'Dowódca', value: row.pic },
     { label: 'Loty', value: row.flights },
     // Kreska, nie zero: sesja bez biegu silnika nie ma czasu blokowego, a `0:00`
     // czytałoby się jak zmierzone zero (reguła „brak odczytu zostaje brakiem").

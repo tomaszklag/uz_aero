@@ -89,7 +89,7 @@ describe('krok 2 - zadanie', () => {
 
   it('plan dłuższy niż termin jest sprzecznością do zauważenia, nie blokadą', () => {
     expect(planNote(full(), TZ)).toEqual({
-      text: 'Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
+      text: 'Termin 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
       warn: false,
     });
     expect(planNote(full({ plannedAir: '2:30' }), TZ)).toMatchObject({ warn: true });

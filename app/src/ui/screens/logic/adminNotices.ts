@@ -117,7 +117,7 @@ export function adminNoticeText(
   );
   if (notice.withheldCount > 0) {
     lines.push(
-      `${notice.withheldCount} ${plural(notice.withheldCount, 'zapis', 'zapisy', 'zapisów')} z tego telefonu do tej operacji nie ${notice.withheldCount === 1 ? 'wyjdzie' : 'wyjdą'} na serwer.`,
+      `${notice.withheldCount} ${plural(notice.withheldCount, 'zapis', 'zapisy', 'zapisów')} z tego telefonu do tej operacji nie ${plural(notice.withheldCount, 'trafi', 'trafią', 'trafi')} do dziennika klubu.`,
     );
   }
 

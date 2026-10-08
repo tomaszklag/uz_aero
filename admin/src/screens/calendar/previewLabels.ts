@@ -121,7 +121,7 @@ export function termLabel(startsAt: number, endsAt: number, tz: string): string 
 const SOURCE: Readonly<Record<NonNullable<AircraftPreviewDto['counters']>['source'], string>> = {
   handover: 'zdanie samolotu',
   open_session: 'operacja w toku',
-  initial: 'stan początkowy z panelu',
+  initial: 'stan początkowy z karty samolotu',
   admin: 'wpis administratora',
 };
 
@@ -243,7 +243,7 @@ export function aircraftPreview(dto: AircraftPreviewDto, opts: PreviewOptions): 
 
   const sub = [
     a.type,
-    a.serviceStatus === 'active' ? 'w użytku' : 'wyłączona z użytku',
+    a.serviceStatus === 'active' ? 'w służbie' : 'poza służbą',
     dto.lastFlightAt == null ? 'jeszcze bez lotu' : `ostatni lot ${dateUtcDayMonth(Date.parse(dto.lastFlightAt))}`,
   ].join(' · ');
 
@@ -285,7 +285,7 @@ export function aircraftPreview(dto: AircraftPreviewDto, opts: PreviewOptions): 
     ],
     recent: {
       title: 'Ostatnie loty',
-      whoHeader: 'Pilot',
+      whoHeader: 'Dowódca',
       rows: recentRows(dto.recent, (row) => {
         const p = opts.person(row.pilotId);
         return { value: p == null ? NONE : p.name, mono: false };

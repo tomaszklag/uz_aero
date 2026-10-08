@@ -1,71 +1,86 @@
-# Ekran operacji i korekty
+# Ekran operacji i poprawki
 
-> Każda operacja ma swój ekran: oś zdarzeń, ślad, rachunek paliwa i motogodzin wobec normy maszyny. Przez 24 godziny od zdania pilot poprawia własne wpisy; potem decyduje klub.
+> Każda operacja ma swój ekran: przebieg lotu, ślad na mapie oraz rozliczenie paliwa i motogodzin. Przez 24 godziny od zdania samolotu możesz poprawić własne wpisy.
 
 @screen 10-statystyki "Ekran operacji"
 
-## Jak tu wejść
+## Jak otworzyć ekran operacji
 
-- **Wierszem operacji** w [Historii](poprzednie-dni) - dzisiejszym albo z wcześniejszego dnia.
-- **Z kokpitu, po zatrzymaniu silnika** - kafelkiem **Popraw dane operacji**. To jedyne wejście przed zdaniem samolotu i wraca stamtąd do kokpitu, bo maszyna zostaje w Twoich rękach.
+- **Z Historii** - tapnij wiersz operacji, dzisiejszej albo wcześniejszej.
+- **Z kokpitu, po wyłączeniu silnika** - kafelek **Popraw dane operacji**. Stamtąd wracasz do kokpitu, bo samolot jest wciąż u Ciebie.
 
-Nagłówek nosi **sygnaturę** operacji, np. `SP-AXA/2026-09-05/AKO/1` - znak samolotu, doba UTC, kod pilota i numer operacji w Twojej dobie. Tak nazywa się tę operację w aplikacji, w panelu klubu i w rozmowie z administratorem. Obok sygnatury stoi oznaczenie trybu albo pochodzenia wpisu: **RĘCZNIE**, **EDYCJA**, **Podgląd**.
+W nagłówku stoi **sygnatura** operacji, na przykład `SP-AXA/2026-09-05/AKO/1`: znaki samolotu, data (doba UTC), kod dowódcy i numer operacji tego dowódcy w tej dobie. Pod tą nazwą operację znajdziesz w aplikacji i w panelu klubu - podawaj ją w rozmowie z administratorem.
 
-## Co zawiera
+## Co jest na ekranie
 
-- **Baner z czasem na poprawki** na samej górze: do zdania samolotu poprawiasz bez limitu, po zdaniu masz 24 godziny (z podaną godziną, do której), a po terminie stoi tu bursztynowa informacja, że korektę wprowadza już administrator.
-- **Przebieg operacji** - miniatura śladu (wejście w [pełny ślad](slad-gps)) i pod nią oś zdarzeń: przejęcie z odczytami paliwa, licznika i oleju, tankowania i dolewki oleju, uruchomienie, kołowanie, każdy start i lądowanie z czasem lotu, zrzuty, wyłączenie, zdanie. Stopka sumuje blok, czas lotu, starty i podaje lotnisko.
-- **Paliwo, Motogodziny, Olej** - rachunek operacji: odczyt przy przejęciu, dolane, odczyt przy zdaniu, zużycie. Oznaczenie werdyktu mówi, czy zużycie mieści się w [normie maszyny](norma-zuzycia); tapnięcie otwiera okienko „jak to policzone". Olej jest bez werdyktu - mierzy się go od pomiaru do pomiaru, więc zużycia jednej operacji nie da się policzyć.
-- **Zrzuty** (dzień skokowy) - wyniesienia i liczba skoczków, typy skoków, średnia wysokość i klient.
+- **Komunikat o czasie na poprawki** - do kiedy możesz poprawiać dane. Po tym terminie stoi tu informacja, że poprawki wprowadza administrator.
+- **Przebieg operacji** - miniatura śladu na mapie (tapnięcie otwiera [pełny ślad](slad-gps)) i lista zdarzeń: rozpoczęcie z odczytami, tankowania i dolewki oleju, uruchomienie, kołowanie, starty i lądowania z czasem lotu, zrzuty, wyłączenie i zdanie. Pod listą stoją sumy: czas blokowy, czas lotu, liczba startów i lotnisko.
+- **Paliwo** i **Motogodziny** - odczyt przy rozpoczęciu, dolane, odczyt przy zdaniu i zużycie, z oceną wobec normy samolotu (opis niżej).
+- **Olej** - pomiar przy rozpoczęciu, dolewki i stan po dolewkach.
+- **Zrzuty** - w dniu skokowym: wyniesienia, liczba skoczków i średnia wysokość.
 - **Załoga** - dowódca i drugi pilot.
-- **Notatki** - notatka z zadania i uwagi wpisów po fakcie; karta istnieje tylko wtedy, gdy coś w niej jest.
+- **Notatki** - jeśli zostały wpisane.
 
-## Czas na poprawki: 24 godziny od zdania
+## Ocena zużycia wobec normy
 
-Przycisk **EDYTUJ DANE** przełącza ten sam ekran w tryb edycji: każdy wiersz osi staje się miejscem do tapnięcia z ołówkiem, na końcu osi dochodzi **DODAJ WPIS**, a na górze - wykryte niespójności („Lot 2 nie ma lądowania", „Zrzut zapisany na ziemi") z podpowiedzią, czym je naprawić. Ostrzegają, nigdy nie blokują. Wyjście z trybu to **ZAKOŃCZ EDYCJĘ**.
+Przy paliwie i motogodzinach stoi oznaczenie **✓ W NORMIE** albo bursztynowe **↑ POWYŻEJ NORMY** / **↓ PONIŻEJ NORMY**. Tapnięcie otwiera wyliczenie: ile zużyto, ile oczekiwano i skąd wzięła się norma.
 
-@screen 10d-edycja "Tryb edycji" | 10e-korekta-zdarzenia "Okienko korekty czasu" | 10f-korekta-odczytu "Korekta odczytów"
+- **Skąd norma.** Na początku to wartość z dokumentacji samolotu, wpisana przez klub. Gdy samolot ma za sobą wystarczająco dużo lotów, aplikacja liczy normę z jego własnych lotów - wtedy pokazuje też, o ile różni się ona od dokumentacji.
+- **Norma dla tej operacji.** Oczekiwane zużycie liczy się osobno dla czasu w powietrzu i czasu na ziemi, na przykład „1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L". Dzięki temu długie kołowanie nie zaniża oceny.
+- **Ocena niczego nie blokuje.** „Powyżej normy" to sygnał do sprawdzenia: czy odczyt jest dobry, czy ktoś nie dolał paliwa poza aplikacją, czy kołowanie nie trwało wyjątkowo długo.
+
+Jeśli samolot nie ma normy, ocena się nie pojawia. Olej nie ma oceny - mierzy się go tylko przy rozpoczęciu lotu, więc zużycia jednej operacji nie da się policzyć.
+
+@screen 10c-norma-detale "Wyliczenie normy"
+
+## Jak poprawić dane
+
+Na dole ekranu tapnij **EDYTUJ DANE**. Ten sam ekran przechodzi w tryb edycji:
+
+- przy każdym wierszu przebiegu pojawia się ołówek - tapnij wiersz, żeby go poprawić,
+- na końcu listy pojawia się **DODAJ WPIS** - do dopisania brakującego zdarzenia,
+- na górze stoją wykryte niezgodności, na przykład „Lot 2 nie ma lądowania", z podpowiedzią, jak je naprawić.
+
+Gdy skończysz, tapnij **ZAKOŃCZ EDYCJĘ**. Poprawki zapisują się od razu.
+
+@screen 10d-edycja "Tryb edycji" | 10e-korekta-zdarzenia "Poprawka godziny" | 10f-korekta-odczytu "Poprawka odczytów"
 
 | Co poprawiasz | Jak |
 |---|---|
-| uruchomienie, kołowanie, start, lądowanie, wyłączenie | godzina (co minutę albo z klawiatury) oraz „tego nie było" |
-| odczyty przy przejęciu i zdaniu | paliwo i motogodziny; przy przejęciu także olej |
-| zrzut | godzina i skład; wysokość zostaje odczytem z GPS |
-| godzina przejęcia | w tył to zwykła poprawka; w przód, za uruchomienie silnika, przesuwa cały bieg - ekran zapowiada to przed zapisem |
-| notatka, drugi pilot | to samo okienko, w którym powstały; drugi pilot zmienia się dla całej operacji wstecz |
-| tankowanie, dolewka oleju | przez unieważnienie i dopisanie na nowo - to trójka liczb, która musi się zgadzać |
-| brakujący fakt | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek. Fakt ocenia się tak, jak wyglądała operacja o jego godzinie - lądowanie musi mieć start, tankowanie stojący silnik, a godzina po zdaniu samolotu należy już do następnej operacji. Gdy godziny nie da się przyjąć, przycisk mówi dlaczego, zanim go naciśniesz |
+| uruchomienie, kołowanie, start, lądowanie, wyłączenie | godzina - przyciskami o minutę albo z klawiatury; zdarzenie, którego nie było, usuwasz przyciskiem „tego nie było" |
+| odczyty przy rozpoczęciu i zdaniu | paliwo i motogodziny, a przy rozpoczęciu także olej |
+| zrzut | godzina i skład skoczków |
+| godzina rozpoczęcia | cofnięcie to zwykła poprawka; przesunięcie na później niż uruchomienie silnika przesuwa cały lot - ekran mówi o tym przed zapisem |
+| notatka, drugi pilot | w tym samym okienku, w którym powstały; zmiana drugiego pilota dotyczy całej operacji |
+| tankowanie, dolewka oleju | usuń wpis i dodaj go od nowa - stan przed, dolewka i stan po muszą do siebie pasować |
+| brakujące zdarzenie | **DODAJ WPIS**: start, lądowanie, kołowanie, tankowanie, dolewka oleju, a w dniu skokowym także zrzut i załadunek. Jeśli godzina nie pasuje do przebiegu - na przykład lądowanie bez wcześniejszego startu albo tankowanie przy pracującym silniku - przycisk powie dlaczego |
 
-Powód korekty jest opcjonalny, ale to jedyne, z czego administrator dowie się, dlaczego liczba się zmieniła. Dowódcy nie da się zmienić w ogóle - to zdanie samolotu i nowe przejęcie, nie korekta.
+Do każdej poprawki możesz dopisać powód. Nie jest obowiązkowy, ale dzięki niemu administrator wie, dlaczego liczba się zmieniła. Dowódcy nie da się zmienić - inny dowódca to zdanie samolotu i nowy lot.
 
-@screen 10g-korekta-zrzutu "Korekta zrzutu" | 10h-dodaj-wpis "Dopisanie brakującego faktu" | 10j-korekta-zalogi "Zmiana drugiego pilota"
 
 ## Historia zmian
 
-Poprawiona wartość nosi oznaczenie **popr.** - w obu trybach, także w podglądzie po terminie. Tapnięcie otwiera historię: kiedy, co było i co jest, kto zmienił (Ty albo administrator) i z jakim powodem. Zapis się dopisuje, nie nadpisuje - pierwotna wartość zostaje w dokumentacji klubu.
+Poprawiona wartość ma oznaczenie **popr.** - także po upływie czasu na poprawki. Tapnięcie otwiera historię zmian: kiedy, co było, co jest, kto zmienił (Ty albo administrator) i z jakim powodem. Pierwotna wartość nie znika - zostaje w historii.
 
-@screen 10i-historia-zmian "Kolejne wersje wartości" | 10k-korekta-notatki "Notatka z wejściem w historię"
+@screen 10h-dodaj-wpis "Dopisanie brakującego zdarzenia" | 10i-historia-zmian "Historia zmian"
 
 ## Usunięcie całego wpisu
 
-Na samym dole trybu edycji, za wszystkim, stoi obramowany czerwony **USUŃ CAŁY WPIS**. Okienko nazywa konkretną operację - sygnatura, godziny biegu silnika, Loty · Blok · Lot - i pyta o potwierdzenie; powód jest opcjonalny. Operacja przestaje się liczyć: wypada z Twojego dnia, z historii i z sum, przestaje trzymać samolot jako zajęty i nie jest już ogniwem łańcucha odczytów. Jej zapis zostaje w dokumentacji i widzi go administrator.
+Na samym dole trybu edycji stoi czerwony przycisk **USUŃ CAŁY WPIS** - na przykład gdy ten sam lot jest wpisany dwa razy. Okienko pokazuje, którą operację usuwasz, i prosi o potwierdzenie; powód możesz dopisać. Usunięty wpis znika z Twojego dnia, z Historii i z sum, a samolot przestaje być zajęty. Administrator klubu nadal go widzi - razem z powodem.
 
-@screen 10l-usun-sesje "Potwierdzenie usunięcia wpisu"
 
-## Jak to działa
+## Po 24 godzinach
 
-Ekran nie przechowuje żadnych liczb - przelicza je za każdym razem z zapisu na telefonie, dlatego działa bez sieci i pokazuje skutek poprawki natychmiast. Korekta nie zmienia istniejącego wpisu: dopisuje obok niego nowy, z autorem, godziną i powodem, a ekran pokazuje wartość aktualną. Twarde reguły obowiązują tu tak samo, jak w kokpicie - wyłączenie przed uruchomieniem, cofnięty licznik czy paliwo, którego przybyło bez dolewki, są odmawiane z powodem przy przycisku. Wszystko, co jest tylko oceną danych - werdykt normy, rozjazd z sąsiednią operacją - ostrzega. Decyzje administratora (zakończenie operacji, unieważnienie wpisu) wracają na telefon przy najbliższym połączeniu i widać je na tym samym ekranie. Mechanizm w całości: [korekty i rejestr](korekty-i-rejestr).
+24 godziny od zdania samolotu ekran operacji otwiera się już tylko do podglądu - bez **EDYTUJ DANE**. Wyliczenie normy i historia zmian dalej się otwierają. Jeśli coś trzeba poprawić, zgłoś to administratorowi: poprawi to w panelu, a poprawka pojawi się w historii zmian, z jego nazwiskiem.
 
-## Dlaczego tak to działa
+Jeśli administrator zakończył Twoją operację w panelu, czas na poprawki kończy się od razu.
 
-> **Dlaczego czas na poprawki liczy się od zdania.** Bo to zdanie samolotu zatwierdza log operacji. Z tego samego powodu godziny zdania nie da się poprawić - przesuwałaby własny termin - a samego zdania unieważnić: rozbiłoby operację w pół i zabrało następnemu pilotowi przekazanie.
-
-> **Dlaczego korekta ma jedne drzwi.** W trybie odczytu na osi nie ma ani jednego ołówka. Korekta ma jedne drzwi - **EDYTUJ DANE** - a kilkanaście identycznych celów w jednej kolumnie czytałoby się jak szum. Jedynym miejscem do tapnięcia w tym trybie jest oznaczenie **popr.**, bo historia zmian niczego nie zapisuje.
+@screen 10l-usun-sesje "Usunięcie całego wpisu" | 10b-rozliczenie-zamkniete "Podgląd po 24 godzinach"
 
 ## Częste problemy
 
-- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Ekran jest wtedy podglądem; poprawkę zgłoś w klubie - administrator naniesie ją z panelu, a Ty zobaczysz ją w historii zmian. Okienko normy i historia zmian otwierają się nadal.
-- **Poprawiłem godzinę przejęcia i przesunął się cały bieg** → tak działa przesunięcie w przód, za uruchomienie silnika: czasy trwania zostają, przesuwa się wszystko. Ekran mówi o tym przed zapisem, a bieg, który wyszedłby poza zdanie samolotu, jest odmawiany z powodem.
-- **Zniknął werdykt normy** → log ma niespójność (np. lot bez lądowania). Napraw ją - werdykt wróci sam, gdy rachunek znów będzie miał komplet danych.
-- **Chcę poprawić tankowanie** → tankowania nie zmienia się w miejscu: unieważnij wpis na osi i dopisz go jeszcze raz przez **DODAJ WPIS**, bo stan przed, dolane i stan po muszą się zgadzać.
-- **Usunąłem wpis przez pomyłkę** → zapis nie zniknął z dokumentacji, tylko przestał się liczyć. Zgłoś to administratorowi.
+- **Nie ma przycisku EDYTUJ DANE** → minęły 24 godziny od zdania albo operację zakończył administrator. Zgłoś poprawkę w klubie.
+- **Po poprawieniu godziny rozpoczęcia przesunął się cały lot** → tak działa przesunięcie na później niż uruchomienie silnika: wszystkie zdarzenia przesuwają się razem, a czasy trwania się nie zmieniają. Ekran mówi o tym przed zapisem.
+- **Zniknęła ocena normy** → w przebiegu jest niezgodność, na przykład lot bez lądowania. Napraw ją - ocena wróci sama.
+- **Chcę poprawić tankowanie** → tankowania nie zmienia się w miejscu: usuń wpis („tego nie było") i dodaj go od nowa przez **DODAJ WPIS**.
+- **Wpis został usunięty przez pomyłkę** → zgłoś to administratorowi - wpis nie zniknął z klubu, przestał się tylko liczyć.

@@ -1,114 +1,87 @@
 # Słownik pojęć
 
-> Słowa, którymi mówi aplikacja i panel - w tym znaczeniu, w jakim używa ich Ninerdeck. Układ jest tematyczny: od operacji przez liczniki po panel klubu.
+> Słowa, których używa aplikacja i panel - w znaczeniu, jakie mają w Ninerdeck.
 
 ## Operacja i lot
 
-- **Operacja** - jeden bieg silnika: od przejęcia samolotu przez pilota do jego zdania. W operacji może być wiele lotów. Jednostka zapisu, zatwierdzenia, korekty i rozliczenia - i wiersz w dzienniku klubu.
-- **Lot** - od startu do lądowania. Aplikacja wykrywa loty z GPS; w jednej operacji jest ich tyle, ile razy maszyna oderwała się od ziemi.
-- **Kręgi (touch and go)** - przyziemienia z natychmiastowym startem w jednym locie. W locie na żywo każdy krąg daje własną parę start → lądowanie; we wpisie po fakcie podaje się ich liczbę przy lądowaniu.
-- **Przejęcie** - rozpoczęcie operacji: pilot bierze samolot z odczytami paliwa, motogodzin i oleju. Słowa „przejęcie" używamy tam, gdzie maszynę odbiera się innemu pilotowi; na wolnym samolocie po prostu „rozpoczynasz lot".
-- **Zdanie samolotu** - zakończenie operacji z obowiązkowym odczytem paliwa i motogodzin. Zatwierdza log operacji i staje się przekazaniem dla następnego pilota.
-- **Zdanie bez lotu** - zdanie samolotu, gdy silnik nie pracował: pogoda, usterka, próba silnika. Ma powód z listy i opcjonalny komentarz.
-- **Pusty zapis** - operacja zdana bez biegu silnika, bez dolewek i z odczytami równymi przejęciu. Nie pokazuje jej żadna lista ani karta dnia; sam zapis zostaje w rejestrze.
-- **PIC / Dual** - dowódca statku powietrznego (pilot prowadzący operację) i drugi pilot. Dowódcy nie zmienia się w trakcie operacji.
-- **Zadanie** - rodzaj operacji: Skoki, Przelot, Egzamin, Lot techniczny, Inne. Skoki mają jedno lotnisko, pozostałe parę skąd → dokąd.
-- **Dzień skokowy** - operacja z zadaniem Skoki: jedno lotnisko, załadunek i zrzuty, zwykle kilka do kilkunastu lotów w jednym biegu silnika.
-- **Załadunek** - znacznik wejścia skoczków na pokład przed startem; skład jest opcjonalny i wypełnia potem okienko zrzutu.
-- **Zrzut** - wyniesienie skoczków w locie: skład i wysokość, którą aplikacja podstawia z GPS.
-- **Wpis lotu po fakcie** - lot wpisany z pamięci albo z kartki, w czterech krokach; dostaje oznaczenie **RĘCZNIE** i nie ma śladu GPS.
+- **Operacja** - jedno uruchomienie silnika: od rozpoczęcia lotu do zdania samolotu. W jednej operacji może być wiele lotów. Po wyłączeniu silnika operacja się kończy - kolejny lot to nowa operacja.
+- **Lot** - od startu do lądowania. Aplikacja rozpoznaje loty z GPS.
+- **Kręgi (touch and go)** - przyziemienie i od razu kolejny start. W kokpicie każdy krąg to osobny lot; we wpisie po fakcie podaje się liczbę kręgów przy lądowaniu.
+- **Rozpoczęcie lotu** - trzy kroki przed lotem: samolot i załoga, zadanie i trasa, liczniki. Kończy je przycisk **ROZPOCZNIJ LOT**.
+- **Przejęcie samolotu** - wzięcie samolotu, którego inny pilot nie zdał, przyciskiem **PRZEJMIJ SAMOLOT** w podglądzie.
+- **Zdanie samolotu** - koniec operacji z obowiązkowym odczytem paliwa i motogodzin. Zatwierdza zapis lotu i przekazuje samolot następnemu pilotowi.
+- **Zdanie bez lotu** - zdanie samolotu, gdy silnik nie ruszył: z powodem (pogoda, usterka, odwołane, inne) i opcjonalnym komentarzem. Jeśli nic się nie zmieniło, nic się nie zapisuje.
+- **Dowódca i drugi pilot** - dwa fotele w operacji. Dowódcy nie zmienia się w trakcie operacji; drugiego pilota można zmienić przed uruchomieniem silnika.
+- **Zadanie** - rodzaj operacji: Skoki, Przelot, Egzamin, Lot techniczny, Inne. Przy skokach podaje się jedno lotnisko, przy pozostałych - skąd i dokąd.
+- **Dzień skokowy** - operacja z zadaniem Skoki: jedno lotnisko, załadunki i zrzuty, zwykle kilka lub kilkanaście lotów w jednej operacji.
+- **Załadunek** - wejście skoczków na pokład przed startem. Skład jest opcjonalny i podpowiada się przy zrzucie.
+- **Zrzut** - wyniesienie skoczków w locie: skład i wysokość z GPS.
+- **Wpis lotu po fakcie** - lot wpisany z pamięci albo z kartki, w czterech krokach. Ma oznaczenie **RĘCZNIE** i nie ma śladu na mapie.
 
 ## Czas
 
-- **Blok (czas blokowy)** - czas od uruchomienia do wyłączenia silnika.
+- **Czas blokowy (blok)** - czas od uruchomienia do wyłączenia silnika.
 - **Czas lotu** - suma czasu w powietrzu wszystkich lotów operacji.
-- **Loty · Blok · Lot** - trójka na kafelku operacji i w sumach dnia: liczba lotów, czas blokowy, czas lotu.
-- **Doba UTC** - jednostka dnia w całym produkcie. Operacja należy do doby, w której uruchomiono silnik, więc lot z późnego wieczoru bywa pod inną datą niż w kalendarzu na ścianie.
-- **UTC** - czas uniwersalny, domyślny wszędzie. Czas nieoznaczony jest czasem UTC; czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
+- **Loty · Blok · Lot** - trzy liczby przy operacji i w sumach dnia: liczba lotów, czas blokowy i czas lotu.
+- **Doba UTC** - dzień w Ninerdeck zaczyna się o północy UTC. Operacja należy do doby, w której uruchomiono silnik.
+- **UTC** - czas uniwersalny, w którym zapisuje się godziny lotów. Czas lokalny pojawia się jako podpowiedź przy wpisywanej godzinie.
+- **Czas klubu** - strefa czasowa lotniska klubu. W niej podaje się godziny rezerwacji i zleceń.
 
-## Rezerwacje i kalendarz
+## Rezerwacje i zlecenia
 
-> **Uwaga.** Rezerwacje i kalendarz floty wchodzą w wydaniu 3.0.0. W aplikacji, którą piloci mają dziś na telefonach, tych ekranów jeszcze nie ma - hasła poniżej opisują, jak to będzie działać. Kiedy: [wydania i zmiany](~/wydania/).
+- **Rezerwacja** - zajęcie samolotu na określone godziny. Nie jest potrzebna do lotu.
+- **Wyłączenie z użytku** - samolot niedostępny przez kilka godzin albo dni: przegląd, usterka. Ustawia je administrator w kalendarzu.
+- **Sugerowane godziny** - propozycje terminów, które dobrze wypełniają dzień samolotu.
+- **Ścieżka akceptacji** - kolejne kroki, w których wskazane osoby zatwierdzają rezerwację. W każdym kroku wystarczy zgoda jednej osoby. Klub bez ścieżki potwierdza rezerwacje od razu.
+- **Zlecenie lotu** - termin i samolot wysłane przez koordynatora albo instruktora do wybranych pilotów, którzy odpowiadają na nie z telefonu. Po przyjęciu lot staje się rezerwacją pilota.
+- **Adresat** - osoba, do której wysłano zlecenie: imiennie, przez grupę albo przez wspólną listę.
+- **Wspólna lista** - zlecenie wysłane jednej liście osób na wszystkie szukane fotele naraz. Adresaci potwierdzają termin, a fotele przydziela osoba zlecająca.
+- **Termin do potwierdzenia** - zlecenie, w którym adresat potwierdza sam termin, a fotel wybiera mu osoba zlecająca.
+- **Grupa pilotów** - lista członków klubu, na przykład „Instruktorzy", do której wysyła się zlecenia. Grupy zakłada administrator w module Piloci.
 
-- **Rezerwacja** - zajęcie samolotu na konkretne godziny. Opisuje PLAN, a nie fakt: lot
-  zapisuje się osobno, w rejestrze operacji. Rezerwacja niczego nie warunkuje - można
-  polecieć bez niej, także bez zasięgu.
-- **Zajętość** - wszystko, co stoi w kalendarzu maszyny: rezerwacje pilotów i wyłączenia
-  z użytku. Dwa rodzaje jednego wpisu, dlatego nie da się zarezerwować maszyny, która
-  w tym czasie jest na przeglądzie.
-- **Wyłączenie z użytku** - maszyna niedostępna w danym okresie: przegląd, usterka, inny
-  powód. Wpisuje je administrator w panelu; w kalendarzu widać ją jako pasmo w skos.
-- **Slot** - pasmo czasu, na które da się zarezerwować maszynę. Aplikacja podpowiada
-  sloty przylegające do istniejących zajętości, żeby nie zostawiać dziur zbyt krótkich
-  na jakikolwiek lot.
-- **Czas klubu** - strefa czasowa, w której liczy się kalendarz. Rezerwacja jest umową
-  między ludźmi o godzinie, więc mówi czasem lotniska, a nie UTC; rejestr operacji
-  zostaje w UTC bez zmian. Gdy telefon ma inną strefę niż klub, przy godzinie staje
-  drobna adnotacja z czasem lokalnym.
-- **Okno doby lotnej** - godziny, w których klub lata; poza nimi kalendarz nie proponuje
-  slotów.
-- **Ścieżka akceptacji** *(3.1.0)* - kolejne kroki, w każdym jedna lub kilka osób, które
-  muszą zgodzić się na rezerwację, zanim stanie się potwierdzona; w kroku wystarczy zgoda
-  jednej z nich. Klub bez ścieżki nie zatwierdza niczego - rezerwacja jest gotowa od razu.
-  Odrzucenie wymaga powodu, a pilot czyta go w aplikacji. Więcej:
-  [akceptacja rezerwacji](akceptacja-rezerwacji).
-- **Obserwowanie samolotu** *(3.1.0)* - włącza się na karcie maszyny
-  w aplikacji; ma je osoba z uprawnieniem „Obserwowanie samolotów" (technik,
-  koordynator lotów, akceptujący rezerwacje). Daje powiadomienia o tej maszynie: lot
-  za godzinę, odwołany termin, uruchomienie silnika, zdanie z odczytami, nieodebrana
-  rezerwacja. Godzina w wiadomości jest godziną zapisu z telefonu pilota, nie chwilą,
-  w której wiadomość dotarła - telefon bez zasięgu dosyła zapisy później.
+## Samolot, paliwo i liczniki
 
-## Liczniki, paliwo i olej
+- **Motogodziny (MH)** - licznik pracy silnika. Format licznika: dziesiętny (`3907.8`) albo godziny i minuty (`3907:48`).
+- **Przekazanie** - odczyty paliwa i motogodzin z ostatniego zdania samolotu. Następny pilot widzi je przy rozpoczęciu lotu i porównuje z przyrządami.
+- **Ciągłość odczytów** - zasada, że ile paliwa i motogodzin zostawił jeden pilot, tyle powinien zastać następny. Różnica jest ostrzeżeniem dla pilota i sprawą do wyjaśnienia dla klubu.
+- **Stan początkowy** - licznik, paliwo i olej wpisane przez administratora przy dodawaniu samolotu. Pierwszy pilot zaczyna od tych wartości.
+- **Poprawa odczytów** - nowy stan licznika, paliwa i oleju wpisany przez administratora z komentarzem, gdy dziennik nie zgadza się z rzeczywistością.
+- **Minimum oleju** - najmniejsza ilość oleju przed lotem, ustawiona w karcie samolotu.
+- **Norma zużycia** - oczekiwane zużycie paliwa i przyrost motogodzin samolotu: na początku z dokumentacji, z czasem wyliczone z lotów tego samolotu.
+- **Ocena wobec normy** - oznaczenie **✓ W NORMIE**, **↑ POWYŻEJ NORMY** albo **↓ PONIŻEJ NORMY** przy paliwie i motogodzinach operacji. Niczego nie blokuje.
+- **Szacunek z normy** - podpowiedź, ile paliwa albo oleju powinno zostać, liczona z normy i czasu pracy silnika. Wpisujesz zawsze to, co pokazuje przyrząd.
+- **Poza służbą** - samolot trwale wycofany przez klub. Nie ma go na liście wyboru, ale jego loty zostają w dzienniku.
+- **Karta samolotu** - w aplikacji: stan samolotu, liczniki, terminy i historia lotów dla osób z uprawnieniem „Obserwowanie samolotów". W panelu: ustawienia samolotu - pojemności, normy, format licznika.
+- **Obserwowanie samolotu** - włączone na karcie samolotu daje powiadomienia o jego lotach.
 
-- **Motogodziny (MH)** - licznik pracy silnika maszyny. Odczyt przy przejęciu i przy zdaniu tworzy łańcuch: ile jeden pilot zostawił, tyle następny powinien zastać.
-- **Format licznika** - sposób, w jaki jednostka wyświetla motogodziny: dziesiętnie (`3907.8`) albo godzinami i minutami (`3907:48`). Ustawia go klub w karcie samolotu.
-- **Łańcuch odczytów** - ciągłość paliwa i motogodzin między kolejnymi operacjami tej samej maszyny. Rozjazd jest ostrzeżeniem dla pilota i sygnałem dla klubu, nigdy blokadą.
-- **Przekazanie** - odczyty z ostatniego zdania samolotu (kto, kiedy, ile), które następny pilot widzi przy rozpoczęciu lotu.
-- **Stan początkowy (aktualny stan)** - licznik, paliwo i olej wpisane w karcie samolotu przy zakładaniu maszyny. Jest pierwszym ogniwem łańcucha, dopóki maszyny nikt nie przekazał; potem pola pokazują ostatni odczyt z dziennika.
-- **Poprawa odczytów** - wpisanie przez administratora nadrzędnego stanu licznika, paliwa i oleju, z wymaganym komentarzem. Wchodzi do łańcucha jako punkt wyjścia dla następnego pilota, ale nie zmienia zapisów żadnej operacji.
-- **Minimum oleju** - poziom przed lotem zadeklarowany w karcie samolotu; aplikacja pokazuje go jako kreskę na podziałce i ostrzega przy zejściu poniżej.
-- **Dolewka oleju** - osobny zapis o dolanym oleju, z okienka przejęcia albo z kokpitu. Olej mierzy się tylko przy przejęciu, więc zużycie liczy się od pomiaru do pomiaru, przez wiele operacji.
+## Zapis i poprawki
 
-## Norma i werdykty
+- **Sygnatura operacji** - nazwa operacji, na przykład `SP-AXA/2026-09-05/AKO/1`: znaki samolotu, data (doba UTC), kod dowódcy i numer operacji tego dowódcy w tej dobie.
+- **Kod pilota** - krótki kod, na przykład `AKO`, nadany przez klub. Podpisuje operacje i stoi w sygnaturze.
+- **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Później poprawki wprowadza administrator.
+- **Oznaczenie „popr."** - znak przy poprawionej wartości. Tapnięcie otwiera historię zmian: co było, co jest, kto zmienił i dlaczego.
+- **Usunięcie wpisu** - pilot usuwa całą operację w trybie edycji, na przykład gdy lot jest wpisany dwa razy. Wpis przestaje się liczyć, ale administrator nadal go widzi.
+- **Unieważnienie** - to samo z panelu: administrator wycofuje operację z wymaganym powodem.
+- **Zakończenie przez administratora** - zakończenie w panelu operacji, której pilot nie zdał. Zwalnia samolot i liczy się do nalotu, ale nie ma odczytów końcowych.
+- **Ślad GPS** - zapis trasy całej operacji: mapa, wykres wysokości i statystyki.
+- **Rozjazd** - niezgodność między zapisami, na przykład inne paliwo przy rozpoczęciu lotu niż przy poprzednim zdaniu. Trafia do modułu „Do sprawdzenia" w panelu.
+- **Karta dnia** - dokument jednego dnia jednego samolotu dla klubu, z operacjami, lotami, paliwem i motogodzinami.
 
-- **Norma zużycia** - oczekiwane zużycie paliwa i przyrost licznika dla maszyny: z dokumentacji, a gdy jest dość lotów - wyliczone z lotów tego egzemplarza.
-- **Norma z dokumentacji** - liczba z instrukcji użytkowania wpisana w karcie samolotu, w litrach na godzinę pracy silnika. Działa od pierwszego lotu i ustępuje normie wyliczonej, gdy ta się pojawi.
-- **Pasmo normy** - widełki wokół oczekiwania, w których zużycie uchodzi za normalne. Przy normie z dokumentacji jest zadeklarowane (instrukcja podaje punkt, nie rozrzut); przy normie z lotów - zmierzone na historii tej maszyny.
-- **Szacunek z normy** - podpowiedź „ile zostało", liczona z normy i czasu pracy silnika: w kokpicie po uruchomieniu, przy tankowaniu i przy zdaniu samolotu. Nigdy nie wchodzi do pola sama - wpisujesz to, co pokazuje przyrząd.
-- **Werdykt** - oznaczenie na rachunku paliwa albo motogodzin: czy zużycie tej operacji mieści się w paśmie. Tapnięcie otwiera rachunek. Niczego nie blokuje i nie zmienia.
+## Łączność
 
-## Zapis, korekty i nazwy
-
-- **Sygnatura operacji** - nazwa operacji w rodzaju `SP-AXA/2026-09-05/AKO/1`: znak samolotu, doba UTC, kod pilota, numer operacji tego pilota w dobie.
-- **Kod pilota** - krótki kod (np. `AKO`) nadany w panelu przy zakładaniu konta; podpisuje operacje i stoi w sygnaturze.
-- **Czas na poprawki** - 24 godziny od zdania samolotu, w których pilot poprawia własne wpisy. Potem operacja jest w podglądzie, a poprawia administrator.
-- **Korekta** - poprawka godziny, odczytu, składu zrzutu, notatki albo drugiego pilota, z opcjonalnym powodem. Nie nadpisuje historii - dopisuje się do niej.
-- **Oznaczenie „popr."** - znak przy wartości, która nie jest tym, co zapisał przyrząd albo pilot za pierwszym razem. Tapnięcie otwiera historię zmian: „było → jest", z autorem, godziną i powodem.
-- **Podgląd po terminie** - ten sam ekran operacji po upływie 24 godzin: bez edycji, ale z pełnym rachunkiem, śladem i historią zmian. Upływ terminu odbiera prawo do zmiany danych, nie do ich zrozumienia.
-- **Unieważnienie** - wycofanie całej operacji z list i sum; zapis zostaje razem z powodem. Robi to pilot w oknie korekty albo administrator z panelu, gdzie powód jest wymagany.
-- **Zakończenie administracyjne** - zakończenie z panelu operacji, której pilot nie zdał: z powodem, bez odczytów. Zwalnia maszynę i liczy się do nalotu, ale nie jest ogniwem łańcucha odczytów.
-- **Ślad** - zapis GPS całej operacji: mapa z kołowaniem i lotami, profil wysokości i statystyki. Wraca z serwera, więc wymaga zasięgu.
-- **Profil wysokości** - wykres wysokości w czasie pod mapą śladu, z przerwami na czas spędzony na ziemi między lotami. Wysokość pochodzi z GPS i potrafi różnić się od wysokościomierza.
-
-## Sieć i dane
-
-- **Kolejka wysyłki** - zapisy czekające na telefonie na wysłanie do klubu. Wskaźnik **OFFLINE · n** pokazuje ich liczbę, gdy ostatnia próba nie dotarła.
-- **SYNC STOI** - czerwony wskaźnik: serwer odpowiedział i odmówił, wygasła sesja albo administrator ją zakończył, więc kolejka sama nie ruszy. Zapisy zostają nietknięte na telefonie.
-- **Link ustawienia hasła** - jednorazowy adres przysłany e-mailem, ważny godzinę (zaproszenie do klubu - trzy doby). Otwiera stronę, na której ustawia się hasło; działa na dowolnym urządzeniu i po użyciu przestaje działać. Każdy nowy link unieważnia poprzedni.
-- **Sesja logowania** - jedno zalogowane urządzenie: model albo przeglądarka, czym się zalogowano, od kiedy i kiedy było ostatnio aktywne. Swoje widzisz w panelu na „Moje konto", administrator widzi Twoje w swoim klubie; każdą da się wylogować osobno.
-- **Wspólny tablet** - urządzenie w samolocie używane przez kilku pilotów. Loguje się na nim hasłem (kodem pilota albo adresem), bo konta Google nie dodaje się do cudzego sprzętu. Tablet pamięta kluby, z których na nim logowano - nie pamięta osób.
-- **Dane referencyjne** - kopia floty, pilotów i przekazania pobrana z panelu na telefon. Bez sieci aplikacja pracuje na niej, z adnotacją o dacie ostatniego połączenia.
-- **Zgłoszenie z aplikacji** - uwaga albo błąd wysłany przyciskiem z rogu ekranu, razem z kontekstem: ekran, operacja, samolot, wersja aplikacji.
+- **Kolejka wysyłki** - zapisy, które czekają w telefonie na wysłanie do klubu.
+- **OFFLINE · n** - bursztynowe oznaczenie: n zapisów czeka, bo ostatnia próba wysyłki nie dotarła do klubu. Wyślą się same, gdy wróci zasięg.
+- **SYNC STOI · n** - czerwone oznaczenie: internet jest, ale wysyłka stoi i sama nie ruszy. Komunikat po tapnięciu mówi, co zrobić.
+- **Link do ustawienia hasła** - jednorazowy link wysłany e-mailem, ważny godzinę (zaproszenie pierwszego administratora - trzy doby).
+- **Wspólny tablet** - urządzenie w samolocie używane przez kilku pilotów. Loguje się na nim hasłem, adresem e-mail albo kodem pilota.
+- **Zgłoszenie błędu** - opis problemu wysłany przyciskiem z prawego górnego rogu ekranu, razem z informacją o ekranie i wersji aplikacji.
 
 ## Panel klubu
 
-- **Panel klubu** - strona w przeglądarce dla członków klubu: każdy ma w niej Moje konto i kalendarz, a zakres uprawnień otwiera dziennik, pilotów i samoloty.
-- **Administrator** - potocznie: członek klubu z pełnym zakresem uprawnień. Uprawnienia nadaje się jednak POJEDYNCZO (zob. **zakres uprawnień**), więc „administrator" jest nazwą zestawu, a nie osobnym bytem w systemie.
-- **Zakres uprawnień** - zbiór zdolności nadanych członkowi W TYM klubie: podgląd klubu, flota, akceptacja rezerwacji i tak dalej. Należy do członkostwa, więc w dwóch klubach ta sama osoba może mieć dwa różne zakresy. Pusty zakres to zestaw „Pilot".
-- **Podgląd klubu** - zdolność otwierająca w panelu dziennik operacji całej floty, listę pilotów i karty samolotów do odczytu. Bez niej panel to Moje konto i kalendarz.
-- **Rola** - dawniej: pilot albo administrator. Od wersji 3.1.0 zastąpił ją **zakres uprawnień**, a „Pilot" i „Administrator" są dziś nazwami gotowych zestawów.
-- **Sesja panelu** - zalogowanie w przeglądarce; wygasa po ośmiu godzinach i panel prosi o ponowne logowanie. Wyłączenie członkostwa zrywa ją od razu.
-- **Kolejka zgłoszeń** - lista osób, które wpisały w aplikacji kod klubu i czekają na decyzję. Stoi nad listą pilotów tylko wtedy, gdy ktoś w niej jest.
-- **Karta samolotu** - konfiguracja jednej maszyny w panelu: pojemności, normy z dokumentacji, minimum oleju, format licznika, wymóg drugiego pilota, stan służby i aktualny stan.
-- **Karta dnia maszyny** - dokument doby jednego samolotu dla klubu: operacje jako wiersze z odczytami, czasami i lotami.
+- **Panel klubu** - strona w przeglądarce dla członków klubu. Każdy ma w niej kalendarz, zlecenia i Moje konto, a uprawnienia otwierają kolejne moduły.
+- **Uprawnienie** - prawo do konkretnej części panelu albo aplikacji, na przykład „Podgląd klubu" albo „Zlecanie lotów". Nadaje je administrator klubu.
+- **Zestaw uprawnień** - gotowy zbiór uprawnień: Pilot, Akceptujący, Koordynator lotów, Technik, Administrator.
+- **Administrator** - członek klubu z pełnym zestawem uprawnień.
+- **Opiekun platformy** - osoba spoza klubów, która zakłada kluby i prowadzi zgłoszenia błędów z aplikacji.
+- **Kod klubu** - siedem znaków, na przykład `AZG-7K4M`, którymi pilot zgłasza się do klubu.
+- **Zgłoszenie do klubu** - prośba o przyjęcie, która powstaje po wpisaniu kodu klubu. Rozpatruje ją administrator.

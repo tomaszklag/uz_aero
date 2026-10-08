@@ -74,7 +74,7 @@ describe('karty własnych rezerwacji', () => {
     expect(mine([booking({ id: 'b1', dualId: 'bno' })])[0]!.meta).toEqual([
       'Przelot',
       'EPKK → EPRJ',
-      'Dual: BNO',
+      'Drugi pilot: BNO',
     ]);
   });
 

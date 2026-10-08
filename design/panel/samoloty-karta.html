@@ -210,7 +210,7 @@
     </div>
 
 
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="SP-AXA">
 
       <div class="drawer-head">
@@ -232,7 +232,7 @@
           <div class="field">
             <label class="label" for="e-reg">Rejestracja</label>
             <input class="input mono" id="e-reg" value="SP-AXA" disabled>
-            <span class="hint">Stała od założenia - stoi w dzienniku i w kartach arkusza.</span>
+            <span class="hint">Znaki z kadłuba, np. SP-KLM.</span>
           </div>
           <div class="field-pair">
             <div class="field">
@@ -275,7 +275,7 @@
             </button>
             <button type="button" class="opt" role="radio" aria-checked="false">
               <span class="opt-body">
-                <span class="opt-name">Wyłączony</span>
+                <span class="opt-name">Poza służbą</span>
                 <span class="opt-desc">Znika z listy. Zapisane loty zostają.</span>
               </span>
             </button>
@@ -396,6 +396,7 @@
              liczba wpisana z ręki bez powodu byłaby w dzienniku faktem znikąd. -->
         <div class="card">
           <div class="card-title">Poprawa odczytów</div>
+          <p class="hint">Wpisz aktualny stan z przyrządów - zastąpi ostatnie zdanie samolotu. Pilot zobaczy go przy rozpoczęciu lotu z dopiskiem „odczyty wpisał administrator".</p>
           <div class="field-pair">
             <div class="field">
               <label class="label" for="e-r-mh">Motogodziny</label>
@@ -409,7 +410,7 @@
           <div class="field">
             <label class="label" for="e-r-oil">Olej (L)</label>
             <input class="input mono" id="e-r-oil" inputmode="decimal" value="">
-            <span class="hint">Puste = stan oleju nieznany.</span>
+            <span class="hint">Zostaw puste, gdy stanu oleju nie znasz.</span>
           </div>
           <div class="field">
             <label class="label" for="e-r-note">Komentarz</label>
@@ -662,7 +663,7 @@
       </div>
     </div>
 
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Nowy samolot">
 
       <div class="drawer-head">
@@ -730,7 +731,7 @@
             </button>
             <button type="button" class="opt" role="radio" aria-checked="false">
               <span class="opt-body">
-                <span class="opt-name">Wyłączony</span>
+                <span class="opt-name">Poza służbą</span>
                 <span class="opt-desc">Znika z listy. Zapisane loty zostają.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>

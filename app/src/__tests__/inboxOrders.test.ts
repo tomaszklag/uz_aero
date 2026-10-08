@@ -166,13 +166,13 @@ describe('wiadomości autora', () => {
   it('rezygnacja: fotel wraca do szukania - bursztyn, bo coś przepadło', () => {
     const r = row(note('order_withdrawn', { pilotId: 'ews', seat: 'dual', reason: null }));
     expect(r.title).toBe('Rezygnacja z lotu · SP-AXA');
-    expect(text(r.parts)).toBe('Ewa Sowa · fotel wrócił do szukania');
+    expect(text(r.parts)).toBe('Ewa Sowa · fotel znów jest do obsadzenia');
     expect(r).toMatchObject({ tone: 'warn', glyph: 'resign' });
   });
 
   it('brak kompletu mówi, KOGO brakuje i co się stanie - bez skrótów do czynności', () => {
     expect(text(row(note('order_unfilled', { openSeats: ['dual'] })).parts)).toBe(
-      'Brakuje drugiego pilota. Z początkiem terminu zlecenie wygaśnie w całości, a termin wróci do puli.',
+      'Brakuje drugiego pilota. Jeśli do początku terminu nikt się nie znajdzie, zlecenie wygaśnie, a termin się zwolni.',
     );
     expect(text(row(note('order_unfilled', { openSeats: ['pic', 'dual'] })).parts)).toContain('Brakuje dowódcy i drugiego pilota.');
     expect(text(row(note('order_unfilled', { openSeats: [] })).parts)).toContain('Załoga nie jest kompletna.');
@@ -181,7 +181,7 @@ describe('wiadomości autora', () => {
   it('wygaśnięcie zrobił zegar - bez nazwiska i bez koloru', () => {
     const r = row(note('order_expired'));
     expect(r).toMatchObject({ title: 'Zlecenie wygasło · SP-AXA', tone: 'info', glyph: 'expired' });
-    expect(text(r.parts)).toBe('Początek terminu bez kompletu załogi - termin wrócił do puli.');
+    expect(text(r.parts)).toBe('Do początku terminu nie zebrała się cała załoga - termin się zwolnił.');
   });
 });
 
@@ -194,8 +194,8 @@ describe('los zlecenia u adresata', () => {
     expect(text(row(note('order_filled', { reason: 'seat_filled' })).parts)).toBe('Fotel jest już obsadzony.');
     expect(text(row(note('order_filled', { reason: 'seat_dropped' })).parts)).toBe('Fotel nie jest już potrzebny.');
     expect(row(note('order_filled', { reason: 'seat_filled' })).title).toBe('Zlecenie nieaktualne · SP-AXA');
-    expect(text(row(note('order_removed', { reason: 'Jednak Tomek' })).parts)).toBe('Zlecenie cofnięte - „Jednak Tomek".');
-    expect(text(row(note('order_removed', { reason: null })).parts)).toBe('Zlecenie cofnięte.');
+    expect(text(row(note('order_removed', { reason: 'Jednak Tomek' })).parts)).toBe('Zlecenie nie jest już do Ciebie - „Jednak Tomek".');
+    expect(text(row(note('order_removed', { reason: null })).parts)).toBe('Zlecenie nie jest już do Ciebie.');
   });
 
   it('cofnięty przydział i odwołanie - powód jest treścią wiadomości', () => {

@@ -4,7 +4,7 @@
  * Adnotacja wieku danych z serwera. §4.8 i `CLAUDE.md` dzielą takie wartości na trzy stany:
  *
  *  • `live`  - dane na żywo, **bez żadnej adnotacji** (cisza to informacja: jest świeżo);
- *  • `cache` - z ostatniej synchronizacji: „Ostatnie pobrane · 21 JUN 17:30", amber;
+ *  • `cache` - z ostatniego połączenia: „Dane z 21 cze 17:30", amber;
  *  • `brak`  - nie mamy nic: „Brak danych - wpisz z licznika", amber.
  *
  * Komponent istnieje po to, żeby tej reguły nie dało się zapomnieć: każde miejsce
@@ -68,8 +68,8 @@ export function FreshnessNote({
     ? manualLabel
     : state === 'cache'
       ? syncedAt != null
-        ? `Ostatnie pobrane · ${syncedAt}`
-        : 'Ostatnie pobrane · z cache'
+        ? `Dane z ${syncedAt}`
+        : 'Dane z ostatniego połączenia'
       : 'Brak danych - wpisz z licznika';
 
   return (

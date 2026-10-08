@@ -305,7 +305,7 @@ export function CorrectionDrawer({
       ) : null}
 
       {!voiding && kind === 'reading' ? (
-        <Card title={isPreflight ? 'Odczyty przy przejęciu' : 'Odczyty przy zdaniu'}>
+        <Card title={isPreflight ? 'Odczyty przy rozpoczęciu' : 'Odczyty przy zdaniu'}>
           <div className="field-pair">
             <Field htmlFor="c-fuel" label="Paliwo (L)">
               <TextInput
@@ -377,7 +377,7 @@ export function CorrectionDrawer({
         <Field
           htmlFor="c-reason"
           label={voiding ? 'Powód unieważnienia' : 'Powód korekty'}
-          hint="Zobaczy go pilot w historii zmian; zostaje w dzienniku."
+          hint="Pilot zobaczy go w aplikacji, w historii zmian."
         >
           <textarea
             id="c-reason"
@@ -440,7 +440,7 @@ export function CorrectionDrawer({
 
       {kind === 'reading' ? (
         <p className="hint">
-          Teraz w rejestrze:{' '}
+          Teraz zapisane:{' '}
           {isPreflight
             ? `paliwo ${litres(state.fuel.startL)} · licznik ${motoHours(state.mh.start, session.mhFormat)} · olej ${oilLitres(state.oil.levelL)}`
             : `paliwo ${litres(state.fuel.endL)} · licznik ${motoHours(state.mh.end, session.mhFormat)}`}

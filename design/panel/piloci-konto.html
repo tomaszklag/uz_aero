@@ -242,7 +242,7 @@
          mechanizm). Zerwanie dostępu w klubie ma odtąd DWA stopnie: „Wyloguj" (sesja,
          odwracalne ponownym zalogowaniem) i „Wyłącz członkostwo" (dostęp); inne kluby
          tej osoby nie widzą ani jednego, ani drugiego. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Anna Kowal">
 
       <div class="drawer-head">
@@ -397,8 +397,8 @@
                wchodzący na ekran NIE SZUKA. Administrator otwiera kartę członka po kod
                pilota, sesje albo hasło - zakres poprawia rzadziej. -->
           <div class="access-row">
-            <span class="cell-sub">Nadane 1 z 12 zdolności · Akceptacja rezerwacji</span>
-            <button type="button" class="btn ghost">Pokaż zdolności</button>
+            <span class="cell-sub">Nadane 1 z 12 uprawnień · Akceptacja rezerwacji</span>
+            <button type="button" class="btn ghost">Pokaż uprawnienia</button>
           </div>
 
         </div>
@@ -443,7 +443,7 @@
             <!-- Trzy rzeczy, po które sięga administrator: dostęp (od razu), dane
                  (zostają) i INNE KLUBY tej osoby (bez zmian) - trzecia jest nowa
                  i bez niej wyłączenie czytałoby się jak zablokowanie człowieka. -->
-            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; członkostwa w innych klubach bez zmian.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
               <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
@@ -583,7 +583,7 @@
           <p class="hint"><b>Zestawu nie da się tu zmienić</b> - Marek jest ostatnią aktywną osobą w klubie ze zdolnością „Konta i kod klubu", a bez niej nikt nie wpuści nikogo do panelu ani nie nada zakresu. Nadaj ją komuś innemu, zanim odbierzesz mu tę.</p>
           <div class="access-row">
             <span class="cell-sub">Nadane 12 z 12 zdolności</span>
-            <button type="button" class="btn ghost">Ukryj zdolności</button>
+            <button type="button" class="btn ghost">Ukryj uprawnienia</button>
           </div>
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
@@ -596,28 +596,28 @@
             <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
               <span class="opt-body">
                 <span class="opt-name">Konta i kod klubu</span>
-                <span class="opt-desc">Przyjmowanie do klubu, zakresy uprawnień, kod klubu, wylogowywanie cudzych urządzeń.</span>
+                <span class="opt-desc">Przyjmowanie do klubu, zakresy uprawnień, grupy pilotów, kod klubu, wylogowywanie cudzych urządzeń.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Flota</span>
-                <span class="opt-desc">Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku.</span>
+                <span class="opt-desc">Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku i ze służby.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Korekty w dzienniku</span>
-                <span class="opt-desc">Poprawianie i unieważnianie cudzych operacji, także po oknie 24 godzin.</span>
+                <span class="opt-desc">Poprawianie i unieważnianie cudzych operacji, także po upływie 24 godzin.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
-                <span class="opt-name">Uwagi serwera</span>
-                <span class="opt-desc">Rozstrzyganie tego, co serwer zgłasza przy operacjach: nakładki, rozjazdy liczników.</span>
+                <span class="opt-name">Rozjazdy</span>
+                <span class="opt-desc">Rozstrzyganie spraw z „Do sprawdzenia": dwie operacje naraz, luki w liczniku, rozjazdy paliwa.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
@@ -631,13 +631,13 @@
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Progi i reguły</span>
-                <span class="opt-desc">Strojenie progów analityki zużycia.</span>
+                <span class="opt-desc">Ustawianie progów, według których ocenia się zużycie paliwa.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
-                <span class="opt-name">Dziennik zmian</span>
+                <span class="opt-name">Historia zmian</span>
                 <span class="opt-desc">Odczyt tego, kto i co zmienił w panelu.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -645,7 +645,7 @@
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Narzędzia serwisowe</span>
-                <span class="opt-desc">Przebudowa danych dziennika ze strumienia zdarzeń i odczyt stanu bazy.</span>
+                <span class="opt-desc">Przeliczanie dziennika od nowa i podgląd stanu danych.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
@@ -704,7 +704,7 @@
           </label>
           <div class="access-row">
             <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
-            <button type="button" class="btn ghost">Pokaż zdolności</button>
+            <button type="button" class="btn ghost">Pokaż uprawnienia</button>
           </div>
         </div>
       </div>
@@ -730,7 +730,7 @@
           </label>
           <div class="access-row">
             <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
-            <button type="button" class="btn ghost">Ukryj zdolności</button>
+            <button type="button" class="btn ghost">Ukryj uprawnienia</button>
           </div>
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt" role="checkbox" aria-checked="false">
@@ -789,7 +789,7 @@
           </div>
           <div class="confirm">
             <p class="confirm-q">Wyłączyć członkostwo: Anna Kowal?</p>
-            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; członkostwa w innych klubach bez zmian.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
               <button type="button" class="btn danger sm">Wyłącz członkostwo</button>

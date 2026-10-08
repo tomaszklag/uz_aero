@@ -103,7 +103,7 @@ export function verdictOf(draft: PasswordDraft, identity: PasswordIdentity, hasP
  */
 export function passwordFailure(error: unknown): { field: string | null; banner: string | null } {
   if (!isHttpError(error)) {
-    return { field: null, banner: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
+    return { field: null, banner: 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.' };
   }
 
   if (error.status === 400 && error.body.error === 'weak_password') {
@@ -122,5 +122,5 @@ export function passwordFailure(error: unknown): { field: string | null; banner:
     return { field: null, banner: 'Za dużo prób - spróbuj za chwilę.' };
   }
 
-  return { field: null, banner: `Nie udało się zapisać hasła (kod ${error.status}).` };
+  return { field: null, banner: `Nie udało się zapisać hasła - kod: ${error.status}.` };
 }

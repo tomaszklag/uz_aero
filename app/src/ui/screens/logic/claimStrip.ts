@@ -40,14 +40,17 @@ export interface ClaimStripVm {
  * Buduje pasek dla CUDZEJ sesji (04B) - nieklikalny, bo to podgląd, nie sterowanie.
  *
  * @param picLabel kod albo nazwisko prowadzącego; ekran wie, którym dysponuje.
+ * @param reg znak rejestracyjny z pamięci floty; `null` = maszyny tam nie ma i pasek
+ *   zaczyna się od pilota - identyfikator maszyny nie mówiłby nic (przegląd 2026-10-08).
  */
-export function buildPeekStrip(state: SessionState, picLabel: string): ClaimStripVm | null {
+export function buildPeekStrip(state: SessionState, picLabel: string, reg: string | null): ClaimStripVm | null {
   if (state.aircraftId == null) return null;
 
+  const who = `${picLabel} od ${sinceLabel(state.claimedAt)} UTC`;
   return {
     // Strefa wypisana JAWNIE, w odróżnieniu od własnej sesji: przy cudzym samolocie
     // godzina jest przesłanką decyzji o przejęciu, a nie przypomnieniem własnego dnia.
-    label: `${state.aircraftId} · ${picLabel} od ${sinceLabel(state.claimedAt)} UTC`,
+    label: reg == null ? who : `${reg} · ${who}`,
     flights: flightsLine(state.flights.length),
     trailing: 'zajęty',
   };

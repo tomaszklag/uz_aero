@@ -94,7 +94,7 @@ describe('joinClub - z bramki (00E)', () => {
     atGate();
 
     const result = await useAuthStore.getState().joinClub('ZLY-KOD1');
-    expect(result).toEqual({ kind: 'error', message: expect.stringContaining('Nie znam takiego kodu') });
+    expect(result).toEqual({ kind: 'error', message: expect.stringContaining('Takiego kodu klubu nie ma') });
     expect(useAuthStore.getState().clubs?.status).toBe('none');
   });
 
@@ -184,7 +184,7 @@ describe('switchClub', () => {
 
     expect(await useAuthStore.getState().switchClub(BETA.id, 3)).toEqual({
       kind: 'blocked',
-      reason: expect.stringContaining('Najpierw wyślij 3 zapisy'),
+      reason: expect.stringContaining('wyślą się 3 zapisy'),
     });
     expect(asked).toBe(false);
   });

@@ -118,12 +118,11 @@ function noteOf(name: string, action: MenuAction): ChangePart[] {
   if (action.kind === 'unassign') {
     return [
       { text: name, strong: true },
-      { text: ' dostanie wiadomość, że przydział cofnięto - fotel wróci do szukania, a zgłoszenia pozostałych dalej się liczą.' },
+      { text: ' dostanie wiadomość, że przydział cofnięto - fotel znów będzie do obsadzenia, a zgłoszenia pozostałych nadal się liczą.' },
     ];
   }
-  const when = action.swapSeat == null ? '' : ' - przy zamianie i przy odebraniu';
   return [
     { text: name, strong: true },
-    { text: ` dostanie wiadomość, że zlecenie jest nieaktualne${when}. Rozmowa zostaje do odczytu.` },
+    { text: ' dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostaje do odczytu.' },
   ];
 }

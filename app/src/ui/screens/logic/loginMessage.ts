@@ -26,12 +26,12 @@ export function loginMessage(error: unknown): string | null {
     return 'Logowanie Google nie powiodło się. Spróbuj jeszcze raz.';
   }
   if (error instanceof ServerUnreachableError) {
-    return 'Brak połączenia z serwerem. Pierwsze logowanie wymaga internetu - zaloguj się przed wylotem w teren.';
+    return 'Brak połączenia z internetem. Pierwsze logowanie wymaga internetu - zaloguj się przed wylotem w teren.';
   }
   if (error instanceof ServerRejectedError) {
     if (error.code === 'account_disabled') return 'Konto jest wyłączone - skontaktuj się z administratorem.';
     if (error.status === 401) return 'Nie udało się potwierdzić konta Google. Spróbuj jeszcze raz.';
-    return `Serwer odrzucił logowanie (${error.code}).`;
+    return `Nie udało się zalogować - kod: ${error.code}.`;
   }
   return 'Nie udało się zalogować - spróbuj ponownie.';
 }

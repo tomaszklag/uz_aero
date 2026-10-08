@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 05B Cockpit · In Flight · Toast Takeoff</title>
+<title>Ninerdeck - 05B Kokpit · W locie · Wykryty start</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -178,7 +178,7 @@
   }
 
   .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* STOP ENGINE - wymaganie 3.2; w locie disabled z podanym powodem */
+  /* WYŁĄCZ SILNIK - wymaganie 3.2; w locie disabled z podanym powodem */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 14px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
@@ -223,8 +223,8 @@
 
 <header class="canvas-label">
   <span class="film-strip">NINERDECK - 05B</span>
-  <span class="slug">cockpit · in flight · autodetect T/O</span>
-  <span class="canvas-meta"><span class="pulse"></span>Toast widoczny · 4 s do zapisu</span>
+  <span class="slug">kokpit · w locie · wykryty start</span>
+  <span class="canvas-meta"><span class="pulse"></span>Komunikat widoczny · 4 s do zapisu</span>
 </header>
 
 <div class="phone-wrap"><main class="phone">
@@ -246,13 +246,13 @@
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci - zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zapisy wyślą się same po powrocie zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 9
         </div>
         <div class="running-badge">
           <span class="live-dot"></span>
-          RUNNING
+          SILNIK
         </div>
         <!-- Zębatka USUNIĘTA (issue #82): ustawienia mają jedno wejście, na „Mój dzień".
              W jej miejscu przełącznik jasności - w locie pilot nie może zejść
@@ -269,7 +269,7 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5,19H21.5V21H2.5V19M22.07,9.64C21.86,8.84 21.03,8.36 20.23,8.58L14.92,10L8,3.57L6.09,4.08L10.23,11.25L5.26,12.58L3.29,11.04L1.84,11.43L3.66,14.59L4.43,15.92L6.03,15.5L11.34,14.07L15.69,12.91L21,11.5C21.81,11.26 22.28,10.44 22.07,9.64Z"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name air">Climb</div>
+          <div class="phase-hero-name air">Wznoszenie</div>
           <!-- Bez prędkości wznoszenia - decyzja 2026-08-04, uzasadnienie w 05. -->
         </div>
       </div>
@@ -277,23 +277,23 @@
 
     <div class="param-grid">
       <div class="param-cell">
-        <div class="param-label">Ground Speed</div>
+        <div class="param-label">Prędkość</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">112</div><div class="param-unit">KT</div></div>
       </div>
       <div class="param-cell">
-        <div class="param-label">Altitude</div>
+        <div class="param-label">Wysokość</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">800</div><div class="param-unit">FT</div></div>
       </div>
       <!-- Paliwo i czas lotu bez wyróżnienia (issue #19) - to odczyty, jak Ground Speed
            i Altitude. Amber wraca dopiero blisko rezerwy; patrz `.param-cell.amber-bg`. -->
       <div class="param-cell">
-        <div class="param-label">Fuel on Board</div>
+        <div class="param-label">Paliwo</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~139</div><div class="param-unit">L</div></div>
       </div>
       <!-- Czas lotu CAŁEJ OPERACJI (patrz komentarz w 05). To PIERWSZY lot operacji, więc suma
            lotów zamkniętych jest zerowa i kafelek pokazuje sam licznik na żywo. -->
       <div class="param-cell">
-        <div class="param-label">Flight Time</div>
+        <div class="param-label">Czas lotu</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">00:03</div></div>
       </div>
     </div>
@@ -309,7 +309,7 @@
         <div class="axis-row">
           <span class="axis-time dim">12:58</span>
           <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-          <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">paliwo 141 L · 1 238:05</span></span>
+          <span class="axis-label"><span class="axis-name muted">Rozpoczęcie</span><span class="axis-sub">paliwo 141 L · 1 238:05</span></span>
           <span class="axis-right"></span>
         </div>
         <div class="axis-row">
@@ -349,7 +349,7 @@
       <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie - GPS nie wykrył zdarzenia albo wykrył za późno · przytrzymaj 1 s aby potwierdzić">
         <span class="primary-btn-main">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-          Landing
+          Lądowanie
         </span>
         <span class="hold-lbl">przytrzymaj 1 s</span>
       </a>
@@ -357,14 +357,14 @@
            poziomym, a ten stan to Climb tuż po starcie - przycisk stoi w pasku, żeby
            geometria nie skakała w locie (pilot sięga nie patrząc), ale aktywny robi
            się dopiero w Cruise. Pełna reguła w komentarzu BOTTOM ACTIONS w 05. -->
-      <span class="zrzut-btn disabled" title="Zrzut zapiszesz w locie poziomym (Cruise) - w Climb przycisk jest przygaszony">
+      <span class="zrzut-btn disabled" title="Zrzut zapiszesz w locie poziomym - we wznoszeniu przycisk jest przygaszony">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </span>
       <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-        STOP
-        <span class="stop-btn-lbl">po LDG</span>
+        WYŁĄCZ
+        <span class="stop-btn-lbl">po lądowaniu</span>
       </span>
     </div>
 
@@ -377,8 +377,8 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         </div>
         <div class="detect-text">
-          <div class="detect-label">Wykryto: Takeoff</div>
-          <div class="detect-meta">13:24 UTC · GS ≥ 60 KT</div>
+          <div class="detect-label">Wykryto: Start</div>
+          <div class="detect-meta">13:24 UTC · ≥ 60 KT</div>
         </div>
         <div class="detect-count">5</div>
       </div>
@@ -392,26 +392,26 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" class="active" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik pracuje, samolot jeszcze stoi - przycisk Kołowanie otwiera sekwencję; ruch zapisze też wykrywanie automatyczne"><span class="dot"></span>Silnik pracuje</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane automatycznie albo przyciskiem Kołowanie) - przycisk podpowiada Start"><span class="dot"></span>Kołowanie przed startem</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - faza lotu (wznoszenie / lot poziomy / zniżanie), GPS na żywo, log operacji"><span class="dot"></span>W locie</a>
+  <a href="05b-cockpit-inflight-toast.html" class="active" title="Kiedy: GPS wykrył start (GS > 50 kt) - komunikat z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Wykryty start</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Wykryte lądowanie</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal pracuje - kołowanie; kolejny start albo WYŁĄCZ SILNIK"><span class="dot"></span>Kołowanie po lądowaniu</a>
   <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił sygnał - parametry - -, wykrywanie wstrzymane, zapis ręczny aktywny; sieć osobno"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05a-cockpit-taxi.html">← 05A Taxi</a>
-  <a href="05b-cockpit-inflight-toast.html" class="active">05B Toast T/O</a>
-  <a href="05-cockpit-running.html">05 In Flight</a>
-  <a href="05c-cockpit-toast-ldg.html">05C Toast LDG →</a>
+  <a href="05a-cockpit-taxi.html">← 05A Kołowanie</a>
+  <a href="05b-cockpit-inflight-toast.html" class="active">05B Wykryty start</a>
+  <a href="05-cockpit-running.html">05 W locie</a>
+  <a href="05c-cockpit-toast-ldg.html">05C Wykryte lądowanie →</a>
   <span>·</span>
-  <a href="05d-cockpit-taxi-post.html">05D Taxi post</a>
+  <a href="05d-cockpit-taxi-post.html">05D Po lądowaniu</a>
   <span>·</span>
   <a href="04-cockpit-ground.html">04 Po zatrzymaniu →</a>
 </nav>

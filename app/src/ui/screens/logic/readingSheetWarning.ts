@@ -112,9 +112,9 @@ export function fuelSheetWarning(
     const gap = value - link.fuelL;
     if (Math.abs(gap) > CONTINUITY_TOLERANCE_L) {
       return field === 'found'
-        ? `Poprzednik (${who(link)}) zdał maszynę z ${litres(link.fuelL)}, a wpisujesz ` +
+        ? `Poprzedni lot (${who(link)}) skończył się z ${litres(link.fuelL)}, a wpisujesz ` +
             `${litres(value)}. Ktoś tankował poza aplikacją?`
-        : `Następny pilot (${who(link)}) zastał ${litres(link.fuelL)}, a wpisujesz ` +
+        : `Następny lot (${who(link)}) zaczął się od ${litres(link.fuelL)}, a wpisujesz ` +
             `${litres(value)}.`;
     }
   }
@@ -141,8 +141,8 @@ export function mhSheetWarning(field: MhField, value: number, ctx: MhSheetContex
   const link = field === 'before' ? ctx.chain?.before : ctx.chain?.after;
   if (link != null && Math.abs(value - link.mh) > CONTINUITY_TOLERANCE_H) {
     return field === 'before'
-      ? `Poprzednik (${who(link)}) zdał maszynę na ${fmt(link.mh)}, a wpisujesz ${fmt(value)}.`
-      : `Następny pilot (${who(link)}) zastał ${fmt(link.mh)}, a wpisujesz ${fmt(value)}.`;
+      ? `Poprzedni lot (${who(link)}) skończył się na ${fmt(link.mh)}, a wpisujesz ${fmt(value)}.`
+      : `Następny lot (${who(link)}) zaczął się od ${fmt(link.mh)}, a wpisujesz ${fmt(value)}.`;
   }
 
   return null;

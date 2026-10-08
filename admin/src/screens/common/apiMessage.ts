@@ -84,7 +84,7 @@ export function ruleViolationMessage(error: unknown): string | null {
  * Zdania, które znaczą TO SAMO przy zapisie i przy odczycie - dlatego stoją raz, a obie
  * funkcje niżej sięgają po nie zamiast trzymać własne kopie.
  */
-const NO_CONNECTION = 'Nie ma połączenia z serwerem. Spróbuj za chwilę.';
+const NO_CONNECTION = 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.';
 const SESSION_EXPIRED = 'Sesja wygasła. Zaloguj się jeszcze raz.';
 const GONE = 'Tego już nie ma - odśwież listę.';
 
@@ -106,7 +106,7 @@ export function errorMessage(error: unknown): string {
   if (error.status === 400 && error.body.error === 'no_changes') return 'Nic się nie zmieniło.';
   if (error.status === 400) return 'Popraw zaznaczone pola.';
 
-  return `Nie udało się zapisać (kod ${error.status}). Zgłoś to, jeśli się powtórzy.`;
+  return `Nie udało się zapisać. Jeśli to się powtórzy, zgłoś to - kod: ${error.status}.`;
 }
 
 /**
@@ -126,5 +126,5 @@ export function loadErrorMessage(error: unknown): string {
   if (error.status === 403) return 'Nie masz dostępu do tych danych.';
   if (error.status === 404) return GONE;
 
-  return `Nie udało się wczytać (kod ${error.status}). Odśwież stronę, a jeśli to się powtórzy - zgłoś to.`;
+  return `Nie udało się wczytać. Odśwież stronę, a jeśli to się powtórzy, zgłoś to - kod: ${error.status}.`;
 }

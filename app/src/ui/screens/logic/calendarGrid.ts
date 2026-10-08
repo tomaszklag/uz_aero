@@ -26,6 +26,7 @@ import { shortName } from '@ninerdeck/format';
 import type { RemoteSeat } from '../../../application';
 import type { ReferenceAircraft } from '../../../domain';
 
+import { blockReasonTitle } from './blockReason';
 import { bookingsOnDay, type CalendarBooking } from './calendarData';
 import { clubAtHour, clubHour, type ClubDayBounds } from './clubClock';
 
@@ -202,7 +203,7 @@ function bar(
  * nie istnieje, a surowy identyfikator na pasku byłby guidem na ekranie (issue #68).
  */
 function barLabel(booking: CalendarBooking, input: FleetGridInput): string {
-  if (booking.kind === 'block') return booking.blockReason ?? 'Wyłączony z użytku';
+  if (booking.kind === 'block') return blockReasonTitle(booking.blockReason);
 
   const seeking = booking.order?.seeking ?? [];
   if (seeking.length > 0) return orderBarLabel(booking, seeking, input);

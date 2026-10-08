@@ -94,7 +94,7 @@ describe('historia zmian u prowadzącego', () => {
       entry('h3', local(0, '08:20'), 'recipients_removed', { pilotIds: ['AKO'], reason: 'W tym czasie masz przelot.' }),
     ];
     expect(rows(history)).toEqual([
-      { when: 'dziś 08:20', what: '[Zlecenie cofnięte] · Adam Kowalski', reason: 'W tym czasie masz przelot.', who: 'Ty' },
+      { when: 'dziś 08:20', what: '[Usunięcie z adresatów] · Adam Kowalski', reason: 'W tym czasie masz przelot.', who: 'Ty' },
       { when: 'dziś 08:10', what: '[Cofnięty przydział] · dowódca: Jakub Wrona', reason: null, who: 'Ty' },
       { when: 'dziś 08:00', what: '[Rezygnacja] · drugi pilot', reason: 'Mam dyżur.', who: 'Anna Kowal' },
     ]);

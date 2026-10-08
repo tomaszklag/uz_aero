@@ -33,17 +33,17 @@ export function cancelNote(input: CancelNoteInput): string {
   const reason = own ? '' : ' z powodem';
   const who =
     pilot && dual
-      ? `Pilot i drugi pilot dostaną wiadomość${reason}`
+      ? `Dowódca i drugi pilot dostaną wiadomość${reason}`
       : pilot
-        ? `Pilot dostanie wiadomość${reason}`
+        ? `Dowódca dostanie wiadomość${reason}`
         : dual
           ? `Drugi pilot dostanie wiadomość${reason}`
           : null;
 
   if (pending) {
     return who == null
-      ? 'Osoby z kroku dostaną wiadomość, że prośba została wycofana.'
-      : `${who}, a osoby z kroku - że prośba została wycofana.`;
+      ? 'Osoby zatwierdzające dostaną wiadomość, że prośba została wycofana.'
+      : `${who}, a osoby zatwierdzające - że prośba została wycofana.`;
   }
   return who == null ? FREES : `${who}. ${FREES}`;
 }

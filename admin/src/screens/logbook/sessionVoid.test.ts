@@ -62,7 +62,7 @@ describe('potwierdzenie nazywa KONKRETNY wpis', () => {
       { label: 'Operacja', value: 'SP-KLM/2026-08-12/AKO/1' },
       { label: 'Dzień', value: '12 SIERPNIA' },
       { label: 'Silnik', value: '08:42 → 10:22' },
-      { label: 'Pilot', value: 'A. Kowalski' },
+      { label: 'Dowódca', value: 'A. Kowalski' },
       { label: 'Loty', value: '3' },
       { label: 'Czas blokowy', value: '1:40' },
     ]);

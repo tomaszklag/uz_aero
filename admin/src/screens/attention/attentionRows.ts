@@ -59,7 +59,7 @@ function flagMeta(flag: FlagDto): string {
     const parts = flag.sessions.map((session) =>
       session.status === 'active'
         ? `${pilotOf(session)} trzyma maszynę od ${stamp(session.claimedAt)}`
-        : `${pilotOf(session)}: przejęcie ${timeUtc(session.claimedAt)}, zdanie ${timeUtc(session.closeTime)}`,
+        : `${pilotOf(session)}: rozpoczęcie ${timeUtc(session.claimedAt)}, zdanie ${timeUtc(session.closeTime)}`,
     );
     const held = flag.sessions.find((session) => session.tab != null);
     const tab = held?.tab == null ? null : `trzyma kartę ${held.tab} poza arkuszem`;
@@ -102,7 +102,7 @@ function staleRow(session: SessionListItemDto, now: number, windowMs: number): T
     to: sessionPath(session.reg ?? session.aircraftId, session.sessionUuid, EMPTY_RANGE),
     tone: 'amber',
     title: `${session.signature ?? session.reg ?? session.aircraftId} · ${pilot} · samolot niezdany`,
-    meta: `przejęcie ${stamp(session.claimedAt)} · ${engine} · ostatni zapis ${dateTimeUtcShort(Date.parse(session.updatedAt))} · zakończ w dzienniku`,
+    meta: `rozpoczęcie ${stamp(session.claimedAt)} · ${engine} · ostatni zapis ${dateTimeUtcShort(Date.parse(session.updatedAt))} · zakończ w dzienniku`,
     ...ageOf(now, session.claimedAt, windowMs),
   };
 }
@@ -122,7 +122,7 @@ export function attentionCards(dto: AttentionDto): TodoCard[] {
       key: 'flags',
       title: 'Rozjazdy',
       count: dto.counts.openFlags,
-      link: { to: flagsTo, label: 'Skrzynka rozjazdów' },
+      link: { to: flagsTo, label: 'Wszystkie rozjazdy' },
       rows: dto.attention.flags.map((flag) => flagRow(flag, now, windowMs)),
       more: more(dto.counts.openFlags, dto.attention.flags.length, flagsTo),
     },

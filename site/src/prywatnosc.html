@@ -24,12 +24,23 @@
 <main class="doc">
   <p class="eyebrow">Dokument</p>
   <h1>Polityka prywatności</h1>
-  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel klubu · obowiązuje od 27 września 2026</p>
+  <p class="meta">Ninerdeck · aplikacja mobilna dla pilotów i panel klubu · obowiązuje od 31 października 2026</p>
 
-  <h2>1. Kto przetwarza dane</h2>
-  <p>Operatorem aplikacji Ninerdeck i administratorem danych jest Tomasz Klag, prowadzący aplikację
-  na potrzeby klubu lotniczego, którego piloci z niej korzystają. Kontakt w sprawach danych:
-  <a href="mailto:kontakt@ninerdeck.pl">kontakt@ninerdeck.pl</a> albo bezpośrednio przez administratora klubu.</p>
+  <h2>1. Kto odpowiada za dane</h2>
+  <p>Aplikację Ninerdeck prowadzi <strong>Tomasz Klag</strong> (dalej: operator). Korzystają z niej
+  kluby lotnicze, a odpowiedzialność za dane dzieli się między klub i operatora:</p>
+  <ul>
+    <li><strong>Klub jest administratorem danych</strong> zapisywanych w związku z członkostwem
+        w nim: kodu pilota i uprawnień (punkt 3), dziennika lotów (punkt 4) oraz kalendarza, zleceń
+        i wiadomości klubu (punkt 5). Operator przetwarza te dane w imieniu klubu, na podstawie umowy
+        powierzenia przetwarzania danych osobowych. Jeśli należysz do kilku klubów, każdy z nich
+        odpowiada za dane zapisane u siebie.</li>
+    <li><strong>Operator jest administratorem danych konta</strong>, które istnieje niezależnie
+        od klubów: logowania i sesji (punkt 2), zapisu surowych odczytów do strojenia wykrywania faz
+        lotu (punkt 4.1) i zgłoszeń błędów (punkt 4.2).</li>
+  </ul>
+  <p>Kontakt z operatorem: <a href="mailto:kontakt@ninerdeck.pl">kontakt@ninerdeck.pl</a>. Do kogo
+  zwrócić się ze swoją sprawą, mówi punkt 8.</p>
 
   <h2>2. Logowanie</h2>
   <p>Do aplikacji i panelu można zalogować się na dwa sposoby: <strong>kontem Google</strong>
@@ -102,7 +113,7 @@
   rejestruje telefon w trakcie operacji:</p>
   <ul>
     <li>czasy uruchomienia i zatrzymania silnika, startów i lądowań, zadanie, załoga, uwagi;</li>
-    <li>odczyty paliwa, oleju i licznika motogodzin przy przejęciu i zdaniu samolotu, tankowania;</li>
+    <li>odczyty paliwa, oleju i licznika motogodzin przy rozpoczęciu lotu i zdaniu samolotu, tankowania;</li>
     <li>pozycja GPS, wysokość i prędkość <strong>wyłącznie w trakcie operacji</strong> - od
         uruchomienia do zatrzymania silnika - do wykrywania faz lotu i rysowania śladu. Poza
         operacją aplikacja nie rejestruje lokalizacji; w ustawieniach jest tylko diagnostyka
@@ -141,11 +152,11 @@
   <p>Zgłoszenia trafiają do <strong>operatora aplikacji</strong> (punkt 1), a nie do administratora
   Twojego klubu - to jedna kolejka dla całego serwera i klub nie ma do niej dostępu.</p>
 
-  <h2>5. Rezerwacje i powiadomienia</h2>
+  <h2>5. Rezerwacje, zlecenia i powiadomienia</h2>
   <p>Aplikacja i panel prowadzą <strong>kalendarz floty</strong>: rezerwacje samolotów, ich
-  akceptację przez klub i wyłączenia maszyn z użytku. Te dane opisują zamiar, nie odbyty lot,
-  i są przechowywane osobno od dziennika operacji (punkt 4). Kalendarz wymaga połączenia
-  z serwerem - telefon nie trzyma jego kopii.</p>
+  akceptację przez klub, zlecenia lotów i wyłączenia maszyn z użytku. Te dane opisują zamiar,
+  nie odbyty lot, i są przechowywane osobno od dziennika operacji (punkt 4). Kalendarz i zlecenia
+  wymagają połączenia z serwerem - telefon nie trzyma ich kopii.</p>
 
   <h3>5.1. Rezerwacja samolotu</h3>
   <p>Rezerwacja zapisuje termin, samolot, rezerwującego i drugiego pilota, zadanie, trasę,
@@ -166,9 +177,10 @@
   liczniki, terminy i historię jej operacji.</p>
 
   <h3>5.2. Skrzynka powiadomień i powiadomienia na telefon</h3>
-  <p>Prośby o zgodę i ich wycofanie, decyzje w Twojej sprawie, wygaśnięcie terminu oraz - po włączeniu
-  obserwowania samolotu - wiadomości o lotach tej maszyny trafiają do <strong>skrzynki
-  w aplikacji</strong>. Skrzynka jest na serwerze klubu i to ona jest treścią: przechowuje
+  <p>Prośby o zgodę i ich wycofanie, decyzje w Twojej sprawie, wygaśnięcie terminu, zlecenia lotów
+  i odpowiedzi na nie, wiadomości z rozmów przy zleceniach oraz - po włączeniu obserwowania
+  samolotu - wiadomości o lotach tej maszyny trafiają do <strong>skrzynki w aplikacji</strong>
+  i w panelu. Skrzynka jest na serwerze klubu i to ona jest treścią: przechowuje
   wiadomość, chwilę jej powstania i to, czy została przeczytana. Widzisz ją wyłącznie Ty.</p>
   <p><strong>Powiadomienie na telefon jest tylko sygnałem</strong>, że w skrzynce coś czeka.
   Działa dopiero po Twojej zgodzie: system Android pyta o nią, a aplikacja prosi wyłącznie
@@ -188,28 +200,51 @@
     <tr><th>Dane</th><th>Po co</th></tr>
     <tr><td>token powiadomień</td><td>adres urządzenia, na które ma trafić sygnał</td></tr>
     <tr><td>tytuł i jedno zdanie powiadomienia - bez nazwisk (np. „Prośba o zgodę", „Rezerwacja odrzucona", „SP-ABC uruchomiona")</td><td>to, co widzisz na ekranie blokady</td></tr>
-    <tr><td>rodzaj wiadomości oraz identyfikatory klubu, rezerwacji i samolotu - bez osób, godzin, powodów i odczytów</td><td>tapnięcie otwiera właściwy ekran; treść aplikacja pobiera z serwera</td></tr>
+    <tr><td>rodzaj wiadomości oraz identyfikatory klubu, rezerwacji, zlecenia i samolotu - bez osób, godzin, powodów, treści rozmów i odczytów</td><td>tapnięcie otwiera właściwy ekran; treść aplikacja pobiera z serwera</td></tr>
   </table>
   <p>Dostawcy pośredniczą wyłącznie w doręczeniu i nie wykorzystują tych danych do własnych
   celów. Powiadomienia nie zawierają położenia ani danych z dziennika. Wyłączysz je w każdej
   chwili w ustawieniach systemu (punkt 8).</p>
+  <p>Gdy aplikacja albo panel są otwarte, utrzymują <strong>połączenie z serwerem</strong>, którym
+  przychodzą nowe wiadomości i zmiany na otwartym ekranie (na przykład nowa rezerwacja w kalendarzu).
+  Połączenie przenosi wyłącznie dane opisane w tej polityce, widoczne dla Ciebie także bez niego,
+  i kończy się z zamknięciem aplikacji albo strony.</p>
+
+  <h3>5.3. Zlecenia lotów</h3>
+  <p>Osoba z uprawnieniem do zlecania lotów może wysłać <strong>zlecenie lotu</strong>: termin,
+  samolot, zadanie, trasę, plan i opis, z fotelami do obsadzenia. Zlecenie trafia do wskazanych
+  osób - imiennie albo przez grupę pilotów utworzoną w klubie. Zapisujemy:</p>
+  <table>
+    <tr><th>Dane</th><th>Po co</th></tr>
+    <tr><td>treść zlecenia, osobę zlecającą i historię zmian (kto i kiedy zmienił, odwołał albo obsadził fotel)</td><td>prowadzenie zlecenia i wyjaśnienie, co się z nim działo</td></tr>
+    <tr><td>listę adresatów, chwilę, w której adresat otworzył zlecenie, jego odpowiedź z chwilą i - jeśli ją poda - powodem odmowy</td><td>wybór załogi przez osobę zlecającą</td></tr>
+    <tr><td>wiadomości z rozmowy przy zleceniu: nadawcę, treść, chwilę wysłania i odczytania</td><td>ustalenia między osobą zlecającą a adresatem</td></tr>
+    <tr><td>grupy pilotów: nazwę i członków</td><td>wysyłanie zleceń kilku osobom naraz</td></tr>
+  </table>
+  <p>Adresat widzi zlecenie wysłane do siebie i swoją rozmowę - <strong>nie widzi innych adresatów</strong>
+  ani ich odpowiedzi. Osoba zlecająca widzi wszystkich adresatów swojego zlecenia, to, czy otworzyli
+  zlecenie, ich odpowiedzi i rozmowy z nimi. Osoby z uprawnieniem do zarządzania rezerwacjami
+  w klubie widzą wszystkie zlecenia klubu i mogą czytać rozmowy przy nich, ale nie mogą w nich pisać -
+  rozmowa mówi o tym obu stronom. Grupy pilotów widzą w panelu osoby z uprawnieniem „Podgląd klubu".
+  Przyjęte zlecenie staje się rezerwacją pilota (punkt 5.1).</p>
 
   <h2>6. Gdzie i jak długo</h2>
   <p>Dane są przechowywane na serwerze aplikacji u dostawcy infrastruktury chmurowej oraz
-  <strong>lokalnie na telefonie pilota</strong>. Zapis lokalny nie znika po wysłaniu i nie ma
-  takiego znikać: to on pozwala aplikacji działać bez zasięgu i z niego liczą się pulpit
-  i historia lotów. Wyjątkiem jest zapis surowych odczytów z punktu 4.1 - jego kopię telefon kasuje
+  <strong>lokalnie na telefonie pilota</strong>. Zapis na telefonie zostaje także po wysłaniu:
+  dzięki niemu aplikacja działa bez zasięgu, a Pulpit i Historia pokazują Twoje loty. Wyjątkiem jest zapis surowych odczytów z punktu 4.1 - jego kopię telefon kasuje
   zaraz po przesłaniu.</p>
   <p>Dziennik operacji jest rejestrem prowadzonym przez czas działania klubu i jest
   <strong>dopisywalny, a nie nadpisywalny</strong>: poprawka, dopisanie brakującego faktu albo
   unieważnienie wpisu dokłada się
   do historii razem z autorem, chwilą i powodem, zamiast kasować poprzedni stan. Dane konta
-  usuwamy na Twoje żądanie, o ile nie są potrzebne do zachowania integralności dziennika operacji,
-  w których brałeś udział - wtedy członkostwo zostaje wyłączone, a wpisy pozostają w dzienniku
-  klubu jako dokument eksploatacji samolotów.</p>
+  usuwamy na Twoje żądanie, o ile nie są potrzebne do zachowania integralności dziennika operacji
+  z Twoim udziałem - wtedy członkostwo zostaje wyłączone, a wpisy pozostają w dzienniku
+  klubu jako dokument eksploatacji samolotów. O ich przechowywaniu decyduje klub.</p>
   <p>Danych nie sprzedajemy ani nie przekazujemy podmiotom trzecim poza dostawcami infrastruktury
   niezbędnymi do działania usługi: dostawcą hostingu, na którym stoi serwer i baza, dostawcą
-  wysyłki poczty (punkt 2.4) oraz dostawcami doręczania powiadomień na telefon (punkt 5.2).</p>
+  wysyłki poczty (punkt 2.4) oraz dostawcami doręczania powiadomień na telefon (punkt 5.2).
+  Zlecenia lotów, rozmowy przy nich i grupy pilotów przechowujemy razem z kalendarzem klubu, przez
+  czas jego działania.</p>
 
   <h2>7. Pliki cookie i dane na urządzeniu</h2>
   <p>Panel klubu używa jednego pliku cookie sesji, niezbędnego do utrzymania zalogowania.
@@ -227,8 +262,11 @@
 
   <h2>8. Twoje prawa</h2>
   <p>Masz prawo dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania
-  oraz sprzeciwu. W tym celu skontaktuj się z administratorem klubu albo napisz do operatora aplikacji
-  na adres <a href="mailto:kontakt@ninerdeck.pl">kontakt@ninerdeck.pl</a>.</p>
+  oraz sprzeciwu. W sprawie danych zapisanych w klubie zwróć się do klubu - najprościej przez jego
+  administratora; operator pomaga klubowi wykonać takie żądanie. W sprawie konta napisz do operatora
+  na adres <a href="mailto:kontakt@ninerdeck.pl">kontakt@ninerdeck.pl</a>. Jeśli nie wiesz, do kogo
+  się zwrócić, napisz do operatora - przekaże sprawę dalej. Masz też prawo wnieść skargę do Prezesa
+  Urzędu Ochrony Danych Osobowych.</p>
   <p>Część z tego zrobisz sam, bez niczyjej pomocy:</p>
   <ul>
     <li><strong>zobaczyć i zakończyć swoje sesje</strong> - w panelu, na stronie „Moje konto";</li>

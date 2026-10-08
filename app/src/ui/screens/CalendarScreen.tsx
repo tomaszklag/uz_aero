@@ -307,8 +307,7 @@ function Offline({ theme }: { theme: Theme }) {
           BRAK POŁĄCZENIA
         </AppText>
         <AppText variant="body" style={s.warningText}>
-          Kalendarz floty pokazuje, co jest zajęte w tej chwili - a tego telefon nie wie
-          bez połączenia z serwerem.
+          Kalendarz floty wymaga połączenia z internetem.
         </AppText>
         <AppText variant="body" style={s.warningText}>
           Wróć tu z zasięgiem. Lot możesz rozpocząć bez rezerwacji - wystarczy

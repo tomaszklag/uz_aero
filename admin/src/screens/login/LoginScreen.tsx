@@ -104,7 +104,7 @@ export function LoginScreen() {
     failure != null
       ? loginMessage(failure)
       : methods.error != null
-        ? { tone: 'danger' as const, text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' }
+        ? { tone: 'danger' as const, text: 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.' }
         : scriptError != null
           ? {
               tone: 'danger' as const,

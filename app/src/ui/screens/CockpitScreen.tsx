@@ -106,13 +106,13 @@ function useTicker(active: boolean): number {
   return now;
 }
 
-/** Napisy faz z mockupu 05 (`.phase-hero-name`). */
+/** Napisy faz z mockupu 05 (`.phase-hero-name`) - po polsku, jak cały kokpit (2026-10-08). */
 const PHASE_LABEL: Record<FlightPhase, string> = {
-  idle: 'Engine idle',
-  taxi: 'Taxi',
-  climb: 'Climb',
-  cruise: 'Cruise',
-  descent: 'Descent',
+  idle: 'Silnik pracuje',
+  taxi: 'Kołowanie',
+  climb: 'Wznoszenie',
+  cruise: 'Lot poziomy',
+  descent: 'Zniżanie',
 };
 
 /** Kolor fazy: niebieski = w powietrzu, zielony = ziemia z pracującym silnikiem. */
@@ -302,7 +302,7 @@ export function CockpitScreen({
    * i znaczniki outboxa. Format motogodzin bierze z projekcji sam builder, więc ekran
    * nie przekazuje go już osobno.
    */
-  const axis = buildCockpitAxis(events, projection, now);
+  const axis = buildCockpitAxis(events, projection, now, pilotCode);
 
   /**
    * Czas lotu SESJI: loty zamknięte (wszystko jedno, czy z GPS, czy dopisane ręcznie)
@@ -386,12 +386,12 @@ export function CockpitScreen({
   const toast =
     pending == null ? null : (
       <DetectToast
-        title={pending.detection === 'takeoff' ? 'Takeoff' : 'Landing'}
-        detail={`${timeUtc(pending.at)} UTC · GS ${
+        title={pending.detection === 'takeoff' ? 'Start' : 'Lądowanie'}
+        detail={`${timeUtc(pending.at)} UTC · ${
           pending.fix.groundSpeedKt != null ? Math.round(pending.fix.groundSpeedKt) : '-'
         } KT`}
         secondsLeft={pending.secondsLeft}
-        undoLabel={pending.detection === 'takeoff' ? 'COFNIJ - NIE BYŁO STARTU' : 'COFNIJ - TO PRZELOT'}
+        undoLabel={pending.detection === 'takeoff' ? 'COFNIJ - NIE BYŁO STARTU' : 'COFNIJ - NIE BYŁO LĄDOWANIA'}
         onUndo={undo}
       />
     );
@@ -404,7 +404,7 @@ export function CockpitScreen({
   const leaveSheet = (
     <LeaveCockpitSheet
       visible={leaveOpen}
-      aircraftId={projection.aircraftId ?? '-'}
+      reg={aircraft?.reg ?? '-'}
       since={projection.claimedAt != null ? `${timeUtc(projection.claimedAt)} UTC` : null}
       flightCount={projection.flights.length}
       onStay={() => setLeaveOpen(false)}
@@ -464,7 +464,7 @@ export function CockpitScreen({
       initialText=""
       rows={[
         ...(projection.oil.afterL != null
-          ? [{ label: 'Przy przejęciu · po dolewkach', value: oilLitres(projection.oil.afterL) }]
+          ? [{ label: 'Przy rozpoczęciu · po dolewkach', value: oilLitres(projection.oil.afterL) }]
           : []),
         ...(aircraft?.oilMinL != null
           ? [{ label: 'Minimum przed lotem', value: oilLitres(aircraft.oilMinL) }]
@@ -522,7 +522,7 @@ export function CockpitScreen({
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
               <SyncChip />
-              <StatusChip label="Running" tone="green" />
+              <StatusChip label="Silnik" tone="green" />
               {/* PRZEŁĄCZNIK JASNOŚCI W MIEJSCU ZĘBATKI (issue #82): ustawienia mają
                   odtąd jedno wejście, na „Mój dzień", a jasność zostaje tam, gdzie
                   jest odpowiedzią na słońce w ekranie - w locie pilot nie może zejść
@@ -557,13 +557,13 @@ export function CockpitScreen({
                z 04 - na przyrządzie wyglądało to jak drugi, konkurencyjny pasek akcji. ── */}
           {signal === 'acquiring' && (
             <NoGpsBanner
-              title="GPS: wyszukiwanie sygnału · autodetekcja uzbraja się"
+              title="GPS: wyszukiwanie sygnału"
               text={gpsAcquiringText()}
             />
           )}
           {signal === 'permission' && (
             <NoGpsBanner
-              title="GPS: brak uprawnienia · autodetekcja wyłączona"
+              title="GPS: brak uprawnienia do lokalizacji"
               text={gpsPermissionText()}
             />
           )}
@@ -571,7 +571,7 @@ export function CockpitScreen({
 
           <PhaseHero
             // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ - projekcja nie potrzebuje fixa.
-            phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
+            phase={gpsLost && inFlight ? 'W locie' : PHASE_LABEL[phase.phase]}
             icon={gpsLost && inFlight ? 'phase-cruise' : PHASE_ICON[phase.phase]}
             // Ton z FAZY, nie ze stanu odbiornika (decyzja 2026-08-12): brak fixa
             // przemalowywał hero na amber, a to sygnał o czujniku doklejony do napisu
@@ -588,33 +588,33 @@ export function CockpitScreen({
             cells={
               gpsLost
                 ? [
-                    { label: 'Ground speed', value: '- -', unit: 'KT', stale: true, note: staleCellNote(lastFixAt) },
-                    { label: 'Altitude', value: '- -', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
+                    { label: 'Prędkość', value: '- -', unit: 'KT', stale: true, note: staleCellNote(lastFixAt) },
+                    { label: 'Wysokość', value: '- -', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
                     {
-                      label: 'Fuel on board',
+                      label: 'Paliwo',
                       value: `~${Math.round(displayFobL ?? 0)}`,
                       unit: 'L',
                       // Ton z szacunku, nie „zawsze amber" - patrz `fuelToneNow`.
                       tone: fuelToneNow ?? 'neutral',
                       tint: fuelToneNow != null && fuelToneNow !== 'neutral',
-                      note: 'dane lokalne - bez GPS',
+                      note: 'szacunek ze zużycia - bez GPS',
                     },
                     {
-                      label: 'Flight time',
+                      label: 'Czas lotu',
                       value: hhmm(liveFlightMs),
-                      note: 'zegar - liczy normalnie',
+                      note: 'liczony z zegara',
                     },
                   ]
                 : [
                     {
-                      label: 'Ground speed',
+                      label: 'Prędkość',
                       // Brak prędkości od odbiornika to „-", nie „0" - zero jest odczytem,
                       // a tego odczytu nikt nie wykonał (patrz `toFix` w adapterze GPS).
                       value: fix?.groundSpeedKt != null ? `${Math.round(fix.groundSpeedKt)}` : '-',
                       unit: 'KT',
                     },
                     {
-                      label: 'Altitude',
+                      label: 'Wysokość',
                       value: fix?.altitudeFt != null ? thousands(fix.altitudeFt) : '-',
                       unit: 'FT',
                     },
@@ -622,7 +622,7 @@ export function CockpitScreen({
                       // Tylda jak w mockupach 05/05g - a od 2026-09-03 liczba pod nią
                       // naprawdę jest szacunkiem: `displayFobL` odejmuje zużycie
                       // z normy i spada w locie razem z tickerem.
-                      label: 'Fuel on board',
+                      label: 'Paliwo',
                       value: `~${Math.round(displayFobL ?? 0)}`,
                       unit: 'L',
                       // AMBER TYLKO WTEDY, GDY JEST O CO (issue #19): kolor ostrzegawczy
@@ -633,7 +633,7 @@ export function CockpitScreen({
                     // `hhmm` (00:47), nie `duration` (0:47) - mockup trzyma w tej komórce
                     // format karty lotów. Bez zieleni (issue #19): czas lotu jest odczytem,
                     // a nie stanem wymagającym uwagi - wyróżniał się bez powodu.
-                    { label: 'Flight time', value: hhmm(liveFlightMs) },
+                    { label: 'Czas lotu', value: hhmm(liveFlightMs) },
                   ]
             }
           />
@@ -709,7 +709,7 @@ export function CockpitScreen({
           onBoarding={actions.showBoarding ? openBoarding : undefined}
           onStop={handleStop}
           // `engine_stop` w powietrzu byłby fałszywym wpisem - blokujemy z powodem (§3.2).
-          stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
+          stopDisabledReason={inFlight ? 'Silnik wyłączysz po wylądowaniu i dobiegu' : null}
         />
 
         {/* ── zrzut (mockup 05e) - arkusz nad kokpitem, nie osobny ekran ── */}
@@ -852,7 +852,7 @@ export function CockpitScreen({
           label: 'Zmiana załogi',
           // KODY pilotów, nie surowe identyfikatory (uwaga z urządzenia,
           // 2026-09-03) - w produkcji id to uuid z panelu.
-          sub: `PIC: ${pilotCode(projection.picId) ?? '-'}${projection.dualId != null ? ` · DUAL: ${pilotCode(projection.dualId)}` : ''}`,
+          sub: `Dowódca ${pilotCode(projection.picId) ?? '-'}${projection.dualId != null ? ` · Drugi pilot ${pilotCode(projection.dualId) ?? '-'}` : ''}`,
           onPress: () => navigation.navigate('CrewChange'),
         },
         {
@@ -904,7 +904,7 @@ export function CockpitScreen({
           />
         ) : (
           <ActionButton
-            label="START ENGINE"
+            label="URUCHOM SILNIK"
             tone="green"
             size="hero"
             icon="start"
@@ -993,9 +993,9 @@ function NoSession({ onStart }: { onStart: () => void }) {
           BRAK OPERACJI
         </AppText>
         <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-          Dzień lotny zaczyna się od preflightu - wyboru samolotu i odczytu liczników.
+          Lot zaczyna się od wyboru samolotu i odczytu liczników.
         </AppText>
-        <ActionButton label="ROZPOCZNIJ PREFLIGHT" tone="green" variant="solid" onPress={onStart} />
+        <ActionButton label="ROZPOCZNIJ LOT" tone="green" variant="solid" onPress={onStart} />
         {lastError != null && (
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}

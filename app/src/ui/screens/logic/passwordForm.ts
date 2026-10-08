@@ -49,7 +49,7 @@ export interface PasswordVerdict {
   canSave: boolean;
 }
 
-const POLICY_HINT = `co najmniej ${PASSWORD_MIN_LENGTH} znaków · bez wymogów co do znaków`;
+const POLICY_HINT = `co najmniej ${PASSWORD_MIN_LENGTH} znaków · cyfry i symbole nie są wymagane`;
 
 /**
  * Werdykt arkusza.

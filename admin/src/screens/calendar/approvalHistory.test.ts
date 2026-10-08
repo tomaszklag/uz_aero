@@ -64,7 +64,7 @@ describe('wiersze historii', () => {
       ],
     };
     const rows = historyRows(view, osoba, TZ);
-    expect(rows[0]).toMatchObject({ value: 'przeszedł sam', note: 'rezerwujący jest na liście kroku', who: null });
+    expect(rows[0]).toMatchObject({ value: 'pominięty', note: 'osoba rezerwująca jest na liście kroku', who: null });
     // Osoby nie ma na liście członków: kreska, nigdy surowy identyfikator.
     expect(rows[1]).toMatchObject({ value: 'odmowa', who: { name: '—', code: null }, note: 'Po przeglądzie dopiero w poniedziałek.' });
     expect(rows[2]).toMatchObject({ value: '—', tone: 'dim' });

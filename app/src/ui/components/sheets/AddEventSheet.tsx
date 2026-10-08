@@ -185,7 +185,7 @@ export function AddEventSheet({
           <AppText variant="mono" tone="muted" style={styles.note}>
             {after == null
               ? 'Podaj stan przed tankowaniem i ilość dolaną - stan po policzymy sami.'
-              : `Stan po tankowaniu: ${after} L. Liczymy go z pary wyżej, żeby wpis nie mógł być wewnętrznie sprzeczny.`}
+              : `Stan po tankowaniu: ${after} L.`}
           </AppText>
         </>
       )}
@@ -206,7 +206,7 @@ export function AddEventSheet({
       <ReasonField
         value={note}
         onChangeText={setNote}
-        placeholder="np. telefon stracił fixa na pasie"
+        placeholder="np. telefon stracił sygnał GPS na pasie"
       />
     </Sheet>
   );

@@ -87,12 +87,14 @@ describe('katalog zdolności', () => {
 
 describe('podpis karty', () => {
   it('pusty zbiór mówi zdaniem, a nie „0 z 9" - to stan domyślny, nie usterka', () => {
-    expect(scopeSummary([])).toContain('Bez zdolności');
+    // Od „panelu dla wszystkich" (#216) pusty zakres to kalendarz, zlecenia i własne konto
+    // w panelu - „wyłącznie aplikacja na telefonie" przestało być prawdą.
+    expect(scopeSummary([])).toBe('Bez dodatkowych uprawnień - w panelu kalendarz, zlecenia i własne konto.');
   });
 
   it('podaje LICZBĘ i nazwy, a przy długiej liście skraca', () => {
     expect(scopeSummary(['reservations.manage'])).toBe(
-      'Nadane 1 z 12 zdolności · Cudze rezerwacje',
+      'Nadane 1 z 12 uprawnień · Cudze rezerwacje',
     );
     expect(scopeSummary(CLUB_CAPABILITIES)).toContain('12 z 12');
     expect(scopeSummary(CLUB_CAPABILITIES)).toContain('i 9 więcej');
@@ -100,7 +102,7 @@ describe('podpis karty', () => {
 
   it('zdolność NIEZNANA panelowi nie wywraca podpisu - po prostu się nie liczy', () => {
     const fromFuture: Capability[] = ['reservations.manage', 'nowa.zdolnosc' as Capability];
-    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 12 zdolności · Cudze rezerwacje');
+    expect(scopeSummary(fromFuture)).toBe('Nadane 1 z 12 uprawnień · Cudze rezerwacje');
   });
 });
 

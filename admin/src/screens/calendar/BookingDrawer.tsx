@@ -73,6 +73,7 @@ import {
   type OrderRowVm,
 } from './orderBooking';
 import { ownBookingState } from './ownBookingForm';
+import { sessionPath } from '../logbook/logbookPaths';
 
 interface Props {
   booking: BookingDto;
@@ -80,6 +81,8 @@ interface Props {
   timezone: string;
   person: PersonLookup;
   canManage: boolean;
+  /** „Podgląd klubu" - operacja z karty „Realizacja" otwiera się w dzienniku. */
+  canSeeLog: boolean;
   /** Zalogowany - jego rezerwacja dostaje widok własny (K2b). */
   viewerId: string | null;
   /** Flota klubu - znak i typ maszyny do skrótu zlecenia (K2c). */
@@ -97,6 +100,7 @@ export function BookingDrawer({
   timezone,
   person,
   canManage,
+  canSeeLog,
   viewerId,
   aircraft,
   onEdit,
@@ -271,8 +275,16 @@ export function BookingDrawer({
               note="Po zdaniu samolotu stanie tu operacja z dziennika."
             />
           ) : (
+            // Operacja jako DRZWI do dziennika, nie identyfikator - do 4.0.0 stał tu surowy
+            // uuid (przegląd treści 2026-10-08). Bez „Podglądu klubu" dziennika nie ma.
             <Row label="Operacja">
-              <span className="mono">{booking.sessionUuid}</span>
+              {canSeeLog ? (
+                <Link className="cell-link" to={sessionPath(reg, booking.sessionUuid, { from: '', to: '' })}>
+                  Pokaż w dzienniku
+                </Link>
+              ) : (
+                'zapisana w dzienniku klubu'
+              )}
             </Row>
           )}
         </Card>
@@ -303,7 +315,7 @@ export function BookingDrawer({
                 </p>
               ) : (
                 <p className="card-note">
-                  Poprawka wraca do formularza z Twoim wpisem. Inna maszyna to nowa rezerwacja.
+                  Otworzy się formularz z Twoją rezerwacją. Zmiana maszyny zakłada nową rezerwację.
                 </p>
               )}
               <Button onClick={() => onEdit(booking)}>Przesuń i popraw</Button>
@@ -311,7 +323,7 @@ export function BookingDrawer({
           )}
           {state === 'closed' ? (
             <Card title="Co dalej">
-              <p className="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
+              <p className="card-note">Termin się zwolnił. Zadanie i trasa przejdą do nowej rezerwacji.</p>
               <Button onClick={() => onRebook(booking)}>Zarezerwuj inny termin</Button>
             </Card>
           ) : (
@@ -468,12 +480,11 @@ function CrewRows({
   fromOrder: boolean;
 }) {
   const sought = booking.order?.seeking ?? [];
-  const dualIsMe = viewerId != null && booking.dualId === viewerId;
   const label = (id: string | null) =>
     id != null && id === viewerId && own ? ownLabel(id, person) : personLabel(id, person);
   return (
     <>
-      <Row label={fromOrder && dualIsMe ? SEAT_LABEL.pic : 'Pilot'}>
+      <Row label={SEAT_LABEL.pic}>
         {booking.pilotId == null && sought.includes('pic') ? 'szukany' : label(booking.pilotId)}
       </Row>
       {booking.dualId == null ? (
@@ -518,7 +529,7 @@ function CancelOrderCard({
   const cancel = useCancelOrder(orderId);
   return (
     <Card title="Odwołanie zlecenia" tone="danger">
-      <p className="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+      <p className="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
       <Field htmlFor="k2c-reason" label="Powód" action={<span className="pill dim">opcjonalne</span>}>
         <TextInput
           id="k2c-reason"
@@ -534,7 +545,7 @@ function CancelOrderCard({
         disabled={cancel.isPending}
         onClick={() => cancel.mutate(reason.trim() === '' ? null : reason.trim(), { onSuccess: onDone })}
       >
-        {cancel.isPending ? 'Odwołuję…' : 'Odwołaj zlecenie'}
+        {cancel.isPending ? 'Odwoływanie…' : 'Odwołaj zlecenie'}
       </Button>
     </Card>
   );
@@ -579,7 +590,7 @@ function ResignCard({
         disabled={withdraw.isPending}
         onClick={() => withdraw.mutate(reason.trim() === '' ? null : reason.trim(), { onSuccess: onDone })}
       >
-        {withdraw.isPending ? 'Rezygnuję…' : 'Rezygnuję'}
+        {withdraw.isPending ? 'Rezygnacja…' : 'Rezygnuję'}
       </Button>
     </Card>
   );

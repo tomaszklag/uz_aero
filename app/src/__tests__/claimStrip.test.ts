@@ -56,20 +56,22 @@ describe('pasek operacji - cudzy samolot (04B)', () => {
     // o samolocie i nie wnosi nic do decyzji o przejęciu.
     const vm = buildPeekStrip(
       session({
-        aircraftId: 'SP-FGK',
+        aircraftId: 'a-fgk',
         claimedAt: at('07:10'),
         flights: [flight('07:35', '08:20')],
       }),
       'KRZ',
+      'SP-FGK',
     )!;
 
+    // Znak z pamięci floty, nie identyfikator maszyny z sesji.
     expect(vm.label).toBe('SP-FGK · KRZ od 07:10 UTC');
     expect(vm.flights).toBe('1 lot');
     expect(vm.trailing).toBe('zajęty');
   });
 
   it('maszyna, która dziś nic nie zrobiła, mówi to wprost - zero nie jest wynikiem', () => {
-    expect(buildPeekStrip(session({ aircraftId: 'SP-FGK' }), 'KRZ')!.flights).toBe(
+    expect(buildPeekStrip(session({ aircraftId: 'a-fgk' }), 'KRZ', 'SP-FGK')!.flights).toBe(
       'jeszcze żadnego lotu',
     );
   });
@@ -79,6 +81,7 @@ describe('pasek operacji - cudzy samolot (04B)', () => {
       buildPeekStrip(
         session({ flights: Array.from({ length: n }, () => flight('08:00', '08:30')) }),
         'KRZ',
+        'SP-AXA',
       )!.flights;
 
     expect(withFlights(1)).toBe('1 lot');
@@ -90,13 +93,19 @@ describe('pasek operacji - cudzy samolot (04B)', () => {
     const vm = buildPeekStrip(
       session({ claimedAt: null, flights: [flight('08:12', '09:05')] }),
       'KRZ',
+      'SP-AXA',
     )!;
 
     expect(vm.label).toBe('SP-AXA · KRZ od - UTC');
   });
 
+  it('maszyny spoza pamięci floty pasek nie podpisuje identyfikatorem - zaczyna od pilota', () => {
+    const vm = buildPeekStrip(session({ aircraftId: 'a-obcy', claimedAt: at('07:10') }), 'KRZ', null)!;
+    expect(vm.label).toBe('KRZ od 07:10 UTC');
+  });
+
   it('brak samolotu to brak paska', () => {
-    expect(buildPeekStrip(emptySessionState(), 'KRZ')).toBeNull();
+    expect(buildPeekStrip(emptySessionState(), 'KRZ', 'SP-AXA')).toBeNull();
   });
 });
 

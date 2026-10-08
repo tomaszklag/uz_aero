@@ -54,6 +54,6 @@ describe('wiersze listy obserwowanych', () => {
       list([{ aircraftId: 'a1', reg: 'SP-AXA', type: 'C172', serviceStatus: 'disabled', watching: true, now: { kind: 'free', next: null } }]),
       opts,
     );
-    expect(row).toMatchObject({ sub: 'Wycofana z użytku', tone: 'amber' });
+    expect(row).toMatchObject({ sub: 'Poza służbą', tone: 'amber' });
   });
 });

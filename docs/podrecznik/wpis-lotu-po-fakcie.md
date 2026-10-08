@@ -1,75 +1,65 @@
 # Wpis lotu po fakcie
 
-> Lot odbyty bez telefonu wpisuje się w czterech krokach - o to samo, o co pyta zapis automatyczny: data i samolot, zadanie, czasy na osi operacji, liczniki.
+> Lot odbyty bez telefonu wpisujesz w czterech krokach: data i samolot, zadanie, przebieg lotu, liczniki. Aplikacja pyta o to samo, co zapisuje w kokpicie.
 
-Wejście jest jedno: **DODAJ LOT RĘCZNIE** na ekranie [Mój dzień](moj-dzien) - także wtedy, gdy dzień jest jeszcze pusty. Ekran nazywa się „Lot ręczny" i prowadzi przez cztery kroki; ostatni kończy przycisk **ZAPISZ LOT**.
+Wpis zaczynasz przyciskiem **DODAJ LOT RĘCZNIE** na [Pulpicie](moj-dzien) - także wtedy, gdy dzień jest jeszcze pusty. Ostatni krok kończy przycisk **ZAPISZ LOT**.
 
-## Krok 1 · data, samolot, załoga
+## Krok 1 · data, samolot, drugi pilot
 
-Data jest pierwszym pytaniem - kalendarz miesięczny ze skrótami **Wczoraj** i **Dzisiaj**, bez dni przyszłych. Doba liczy się od uruchomienia silnika w czasie UTC, a zmiana daty przesuwa razem z nią wpisane już godziny. Samolot wybiera się z listy floty klubu; drugi pilot (Dual) jest opcjonalny, chyba że maszyna wymaga załogi dwuosobowej - wtedy powód blokady stoi w przycisku **DALEJ**.
+Najpierw wybierasz datę lotu z kalendarza - skróty **Wczoraj** i **Dzisiaj** stoją nad nim, a dni przyszłych wybrać się nie da. Doba liczy się w UTC od uruchomienia silnika. Potem wybierasz samolot z listy floty klubu i, jeśli trzeba, drugiego pilota. Gdy samolot wymaga załogi dwuosobowej, bez drugiego pilota przycisk **DALEJ** powie, czego brakuje.
 
-@screen 15-reczny-lot "Wybór maszyny i drugiego pilota" | 15e-reczny-data "Kalendarz miesięczny ze skrótami"
+@screen 15-reczny-lot "Samolot i drugi pilot" | 15e-reczny-data "Wybór daty"
 
 ## Krok 2 · zadanie
 
-Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu lotu. **Trasa jest tu wymagana**: przy skokach jedno lotnisko, przy pozostałych operacjach para skąd → dokąd. Klient i notatka są opcjonalne i mówi to oznaczenie przy ich nagłówkach.
+Rodzaj operacji, lotniska, klient i notatka - te same pola, co przy rozpoczęciu lotu. **Trasa jest tu wymagana**: przy skokach jedno lotnisko, przy pozostałych operacjach - skąd i dokąd. Klient i notatka są opcjonalne.
 
 @screen 15a-reczny-zadanie "Rodzaj operacji i lotniska"
 
-## Krok 3 · przebieg operacji
+## Krok 3 · przebieg lotu
 
-Oś zaczyna się od dwóch pustych wierszy: **uruchomienie** i **wyłączenie** silnika. Tapnięcie w wiersz otwiera okienko godziny - wpis z klawiatury (kropka i przecinek znaczą dwukropek, więc `8.30` to `08:30`) albo przyciski ±1 min; przy etykiecie stoi czas lokalny.
+Przebieg zaczyna się od dwóch pustych wierszy: **Uruchomienie** i **Wyłączenie** silnika. Tapnij wiersz, żeby wpisać godzinę - z klawiatury (kropka i przecinek działają jak dwukropek, więc `8.30` to `08:30`) albo przyciskami o minutę. Przy etykiecie widać czas lokalny.
 
-- **DODAJ LOT** pojawia się dopiero wtedy, gdy oba końce biegu mają godzinę. Pierwszy lot dostaje granice całego biegu, każdy kolejny zaczyna się od ostatniego lądowania.
-- **Kręgi (touch and go)** wpisuje się liczbą przy lądowaniu, a podpis mówi, ile z tego wychodzi lądowań. Nie trzeba wpisywać pięciu par godzin.
-- **Zrzuty** (dzień skokowy) stoją między startem a lądowaniem swojego lotu i noszą jego numer; kolejny dziedziczy skład i wysokość po poprzednim. Zrzut poza wszystkimi lotami dostaje ostrzeżenie - popraw godzinę albo dopisz lot, w którym się odbył.
-- **Stopka z sumami Loty · Blok · Lot** liczy się na żywo.
+- **DODAJ LOT** pojawia się, gdy oba wiersze silnika mają godzinę. Pierwszy lot dostaje cały czas pracy silnika, a każdy kolejny zaczyna się od ostatniego lądowania - poprawiasz tylko to, co się różni.
+- **Kręgi (touch and go)** wpisujesz liczbą przy lądowaniu, zamiast dodawać każdą parę startu i lądowania.
+- **DODAJ ZRZUT** - w dniu skokowym. Zrzut stoi w swoim locie i dostaje jego numer, a kolejny podpowiada skład i wysokość z poprzedniego.
+- Sumy - liczba lotów, czas blokowy i czas lotu - liczą się na bieżąco.
 
-@screen 15h-reczny-czasy-bez-biegu "Pusta oś przed godzinami biegu" | 15b-reczny-czasy "Loty i zrzuty na osi" | 15i-reczny-dodaj-lot "Dodanie lotu z kręgami"
+@screen 15h-reczny-czasy-bez-biegu "Przed wpisaniem godzin silnika" | 15b-reczny-czasy "Loty i zrzuty" | 15i-reczny-dodaj-lot "Lot z kręgami"
 
-Bieg bez ani jednego lotu (uruchomiłem, wyłączyłem, nie poleciałem) da się zapisać - ekran tylko ostrzega. Tak samo dzień skokowy bez zrzutu: składu i wysokości wyniesienia nie odtworzy nikt poza pilotem, który leciał.
+Wpis bez żadnego lotu (silnik pracował, ale samolot nie poleciał) możesz zapisać - aplikacja tylko ostrzeże. Tak samo przy dniu skokowym bez zrzutu albo przy zrzucie poza wszystkimi lotami.
 
 ## Krok 4 · liczniki
 
-- **Paliwo to trzy liczby**: zastane, dolane, po locie. Godzin się nie podaje - wynikają z chwili uruchomienia i wyłączenia silnika, a dolewkę zapisuje się przy zatrzymanym śmigle.
-- **Motogodziny** z obu stron biegu: przed uruchomieniem i po locie.
-- **Olej** jest tu opcjonalny (inaczej niż przy przejęciu na żywo): pomiar z bagnetu i ewentualna dolewka.
-- **Zastane paliwo i licznik podpowiada operacja poprzedzająca** na tej maszynie - z podpisem, skąd liczba pochodzi (`z poprzedniego lotu · BNO`). Podpowiedź można nadpisać, a odczytów po locie nie podpowiada nic: to na nie odpowiadasz.
-- **Karty pokazują werdykt wobec normy** maszyny od razu; tapnięcie w oznaczenie otwiera rachunek. Więcej: [norma zużycia](norma-zuzycia).
+- **Paliwo** to trzy liczby: **Zastane**, **Dolane** i **Po locie**. Godzin nie podajesz.
+- **Motogodziny** wpisujesz przed uruchomieniem i po locie.
+- **Olej** jest tu opcjonalny: pomiar z bagnetu i ewentualna dolewka.
+- **Zastane paliwo i licznik** aplikacja podpowiada z poprzedniego lotu tego samolotu, z podpisem, skąd pochodzą, na przykład „z poprzedniego lotu · BNO". Podpowiedź możesz zmienić. Wartości po locie wpisujesz sam.
+- Przy paliwie i motogodzinach od razu widać ocenę wobec normy samolotu. Tapnięcie w nią otwiera wyliczenie.
 
 @screen 15c-reczny-liczniki "Paliwo, motogodziny i olej"
 
-## Co blokuje, a co tylko ostrzega
+## Co blokuje zapis, a co tylko ostrzega
 
-| Blokuje (z powodem w przycisku) | Ostrzega (można zapisać) |
+| Blokuje (przycisk mówi dlaczego) | Ostrzega (zapis jest możliwy) |
 |---|---|
-| lądowanie przed startem, loty nachodzące na siebie | bieg bez lotu, dzień skokowy bez zrzutu |
-| lot wypadający poza biegiem silnika | zrzut poza wszystkimi lotami |
-| cofnięty licznik motogodzin | rozjazd odczytów z sąsiednią operacją tej maszyny |
-| paliwa po locie więcej niż zastane plus dolane | zużycie poza normą maszyny |
-| stan ponad pojemność zbiorników | nakładanie się czasów z Twoją inną operacją |
+| lądowanie przed startem, loty nachodzące na siebie | wpis bez lotu, dzień skokowy bez zrzutu |
+| lot poza czasem pracy silnika | zrzut poza wszystkimi lotami |
+| licznik motogodzin niższy niż przed lotem | odczyty niezgodne z sąsiednim lotem tego samolotu |
+| paliwa po locie więcej niż zastane i dolane razem | zużycie poza normą samolotu |
+| paliwa więcej, niż mieszczą zbiorniki | godziny nachodzące na Twój inny lot |
 
-@screen 15g-reczny-czas-kolejnosc "Blokada odwróconej pary godzin" | 15f-reczny-czas-pusty "Okienko czasu bez wartości"
+@screen 15g-reczny-czas-kolejnosc "Blokada: lądowanie przed startem"
 
-## Jak to działa
+Zapisany wpis ma oznaczenie **RĘCZNIE** w Historii i na [ekranie operacji](operacja-i-korekty). Nie ma śladu na mapie.
 
-Wpis nie jest osobnym rodzajem dokumentu - aplikacja składa z niego dokładnie takie same zapisy, jakie powstałyby w kokpicie: przejęcie z odczytami, tankowanie, uruchomienie, każdy start i lądowanie, zrzuty, wyłączenie i zdanie samolotu. Cały przebieg sprawdzany jest **w całości przed zapisem** - albo zapisuje się wszystko, albo nic - i dlatego blokada mówi o problemie już w formularzu, zamiast odmówić po tapnięciu w **ZAPISZ LOT**. Ostrzeżenia liczą się bez sieci: kolizje z Twoimi własnymi operacjami biorą się z zapisu na telefonie, a łańcuch paliwa i licznika z kopii z ostatniego połączenia, z adnotacją o jej wieku. Połączenia potrzebuje jedno: podpowiedź „z poprzedniego lotu", bo pyta klub o sąsiada tej maszyny w tej konkretnej chwili. Gotowa operacja dostaje oznaczenie **RĘCZNIE** na kafelku i w nagłówku [ekranu operacji](operacja-i-korekty).
-
-> **Uwaga.** Wstecz z pierwszego kroku przy wypełnionym formularzu pyta o rezygnację i czyści szkic; z kolejnych cofa o jeden krok. Przycisk sprzętowy i gest cofania robią to samo, co strzałka w nagłówku.
-
-## Dlaczego tak to działa
-
-> **Dlaczego tutaj trasa jest wymagana.** Przy rozpoczęciu lotu trasę wolno zostawić pustą, bo start silnika ma trwać sekundy. Wpis po fakcie opisuje lot, który **już się odbył** - „jeszcze nie wiem, dokąd" tu nie istnieje.
-
-> **Dlaczego kręgi to liczba, a nie osobne loty.** Kręgi to jedna liczba, a nie pięć wymyślonych par godzin: rozdzielone na równe odcinki wyglądałyby na osi jak zapisane fakty. To świadoma cena - ten sam dzień zapisany automatem da pięć lotów, a skrótem jeden lot i pięć lądowań.
-
-> **Dlaczego ostrzeżenia nie blokują zapisu.** Pilot wpisujący lot z kartki tydzień później często ma dane niepełne, a lot z jedną niepewną liczbą jest wart więcej niż lot, którego w dokumentacji nie ma wcale.
+> **Uwaga.** Przycisk wstecz w pierwszym kroku pyta przy wypełnionym formularzu, czy zrezygnować z wpisu. W kolejnych krokach cofa o jeden krok.
 
 ## Częste problemy
 
-- **DALEJ jest nieaktywne** → powód stoi w samym przycisku i zmienia się z krokiem: wybierz samolot albo drugiego pilota, wskaż lotnisko, wpisz godziny biegu, uzupełnij odczyty.
-- **Nie widzę DODAJ LOT** → oba końce biegu silnika muszą mieć godzinę. To brak akcji, nie wyszarzony przycisk.
-- **Pole „Zastane" jest puste i nic nie podpowiada** → telefon nie miał połączenia albo to pierwszy lot tej maszyny. Wpisz to, co pokazywały przyrządy; zgadywanie zepsułoby [łańcuch odczytów](lancuch-odczytow) następnemu pilotowi.
-- **Ostrzeżenie „nie zgadza się z następnym lotem"** → wpis nie pasuje do sąsiedniej operacji tej maszyny. Jeśli tak pokazywały przyrządy - zapisz; rozstrzygnie klub.
-- **„Czasy zachodzą na Twoją operację…"** → według zapisu byłeś wtedy na innej maszynie. Popraw godziny albo zapisz świadomie, jeśli błędny jest tamten wpis.
-- **Zapisałem lot, którego nie było** → otwórz operację, **EDYTUJ DANE**, usunięcie całego wpisu na dole ekranu.
+- **DALEJ jest nieaktywne** → przycisk mówi, czego brakuje w danym kroku: samolotu, drugiego pilota, lotniska, godzin pracy silnika albo odczytów.
+- **Nie widzę DODAJ LOT** → najpierw wpisz godzinę uruchomienia i wyłączenia silnika.
+- **Pole „Zastane" jest puste** → aplikacja nie ma internetu albo to pierwszy lot tego samolotu. Wpisz to, co pokazywały przyrządy.
+- **Ostrzeżenie „nie zgadza się z następnym lotem"** → Twój wpis nie pasuje do lotu, który był po nim. Jeśli tak pokazywały przyrządy - zapisz, a klub wyjaśni różnicę.
+- **„Czasy nakładają się na Twoją operację…"** → w tym czasie trwała Twoja inna operacja, na innym samolocie. Popraw godziny albo zapisz świadomie, jeśli błędny jest tamten wpis.
+- **Zapisany został lot, którego nie było** → otwórz operację, tapnij **EDYTUJ DANE** i usuń cały wpis przyciskiem na dole ekranu.

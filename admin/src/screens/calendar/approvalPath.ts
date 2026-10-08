@@ -155,8 +155,8 @@ export function moveStep<T>(list: readonly T[], from: number, to: number): T[] {
  * nie jest zaznaczona) - stąd zdanie, dokładnie jak w makiecie K4a.
  */
 export function stepBlocker(draft: StepDraft): string | null {
-  if (draft.label.trim() === '') return 'wpisz nazwę kroku';
-  if (draft.memberIds.length === 0) return 'wskaż przynajmniej jedną osobę';
+  if (draft.label.trim() === '') return 'Wpisz nazwę kroku.';
+  if (draft.memberIds.length === 0) return 'Wskaż przynajmniej jedną osobę.';
   return null;
 }
 
