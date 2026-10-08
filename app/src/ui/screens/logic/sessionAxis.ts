@@ -264,7 +264,7 @@ export function buildSessionAxis(
          przejęcie faktycznie poprzedza wszystko. */
       at: firstEventAt(events, projection.claimedAt),
       time: declaredTime(projection.claimedAt, projection.manualEntry, true),
-      name: 'Przejęcie',
+      name: 'Rozpoczęcie',
       sub: claimReadingLine(projection, mhFormat),
       flight: null,
       duration: null,

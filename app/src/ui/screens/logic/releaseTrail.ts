@@ -64,7 +64,7 @@ export function fuelReleaseTrail(
   if (state.fuel.startL != null && state.claimedAt != null) {
     rows.push({
       id: 'claim',
-      title: `Przejęcie · ${timeUtc(state.claimedAt)}`,
+      title: `Rozpoczęcie · ${timeUtc(state.claimedAt)}`,
       meta: `zastane ${litres(state.fuel.startL)}`,
     });
   }
@@ -131,7 +131,7 @@ export function mhReleaseTrail(
   if (state.mh.start != null && state.claimedAt != null) {
     rows.push({
       id: 'claim',
-      title: `Przejęcie · ${timeUtc(state.claimedAt)}`,
+      title: `Rozpoczęcie · ${timeUtc(state.claimedAt)}`,
       meta: `licznik ${motoHours(state.mh.start, format)} MH`,
     });
   }

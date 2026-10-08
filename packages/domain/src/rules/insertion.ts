@@ -106,9 +106,9 @@ function inPastTense(v: RuleViolation, candidate: Event): RuleViolation {
 
 const PAST_TENSE: Partial<Record<RuleViolation['code'], (type: Event['type']) => string>> = {
   SESSION_NOT_CLAIMED: () =>
-    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po rozpoczęciu lotu.',
   PREFLIGHT_REQUIRED: () =>
-    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po rozpoczęciu lotu.',
   DAY_CLOSED: () =>
     'O tej godzinie samolot był już zdany - fakt po zdaniu należy do następnej operacji.',
   ENGINE_NOT_RUNNING: () =>

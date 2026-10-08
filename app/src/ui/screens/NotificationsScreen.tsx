@@ -95,7 +95,7 @@ export function NotificationsScreen({
   const header = (
     <ScreenHeader
       title="POWIADOMIENIA"
-      subtitle="CZASY KLUBU"
+      subtitle="CZAS KLUBU"
       size="md"
       backLabel="Pulpit"
       onBack={() => navigation.goBack()}
@@ -134,7 +134,7 @@ export function NotificationsScreen({
             icon="offline"
             title="BRAK POŁĄCZENIA"
             lines={[
-              [{ text: 'Powiadomienia ' }, { text: 'trzyma serwer', bold: true }, { text: ' - telefon nie ma ich u siebie.' }],
+              [{ text: 'Powiadomienia ' }, { text: 'wymagają połączenia z internetem', bold: true }, { text: '.' }],
               [{ text: 'Wróć tu z zasięgiem. Lot rozpoczniesz bez tego ekranu - wystarczy „ROZPOCZNIJ LOT" na Pulpicie.' }],
             ]}
           />
@@ -146,8 +146,8 @@ export function NotificationsScreen({
             lines={[
               [
                 { text: 'Tu trafiają ' },
-                { text: 'decyzje o Twoich rezerwacjach', bold: true },
-                { text: ' i prośby o Twoją zgodę, jeśli rozstrzygasz cudze.' },
+                { text: 'wiadomości z klubu', bold: true },
+                { text: ': o Twoich rezerwacjach, zleceniach lotów i obserwowanych samolotach.' },
               ],
             ]}
           />

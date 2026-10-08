@@ -44,9 +44,9 @@ export function emptyReleaseWarning(
   if (!isEmptyOperation(wouldBe)) return null;
 
   return (
-    'Silnik nie ruszył, a odczyty stoją na wartościach z przejęcia - nic się nie ' +
-    'zmieniło, więc nic nie zostanie zapisane: wpis nie pojawi się w Twoim dniu ' +
-    'ani w panelu. Jeśli coś się jednak zmieniło, popraw odczyt ołówkiem powyżej.'
+    'Silnik nie ruszył, a odczyty są takie same jak przy rozpoczęciu lotu - nic nie ' +
+    'zostanie zapisane i wpis nie pojawi się w Twoim dniu. Jeśli coś się zmieniło, ' +
+    'popraw odczyt ołówkiem powyżej.'
   );
 }
 

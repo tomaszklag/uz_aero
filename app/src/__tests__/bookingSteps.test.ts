@@ -216,7 +216,7 @@ describe('podpisy', () => {
 
   it('plan krótszy niż termin mówi, ile zostaje na obsługę', () => {
     expect(planNote(draft())).toEqual({
-      text: 'Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
+      text: 'Termin 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
       tone: 'muted',
     });
   });

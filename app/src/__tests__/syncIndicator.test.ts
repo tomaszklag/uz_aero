@@ -117,16 +117,16 @@ describe('syncReport - baner arkusza', () => {
   it('udana wysyłka melduje LICZBĘ i stan kolejki po niej', () => {
     // Arkusz zostaje otwarty po udanym ponowieniu (pill gaśnie, treść nie) - to jest
     // jedyny moment, w którym pilot dostaje dobrą wiadomość, więc musi ją przeczytać.
-    expect(syncReport('hidden', 0, SYNCED).text).toBe('Wysłano 3 zdarzenia - kolejka jest pusta.');
+    expect(syncReport('hidden', 0, SYNCED).text).toBe('Wysłano 3 zapisy - kolejka jest pusta.');
     expect(syncReport('hidden', 1, SYNCED).text).toBe(
-      'Wysłano 3 zdarzenia. W kolejce zostało 1 zdarzenie.',
+      'Wysłano 3 zapisy. W kolejce został 1 zapis.',
     );
   });
 
-  it('odmienia liczebniki: 1 zdarzenie czeka, 2 zdarzenia czekają, 5 zdarzeń czeka', () => {
-    expect(syncReport('offline', 1, OFFLINE).text).toContain('1 zdarzenie czeka w kolejce');
-    expect(syncReport('offline', 2, OFFLINE).text).toContain('2 zdarzenia czekają w kolejce');
-    expect(syncReport('offline', 5, OFFLINE).text).toContain('5 zdarzeń czeka w kolejce');
+  it('odmienia liczebniki: 1 zapis czeka, 2 zapisy czekają, 5 zapisów czeka', () => {
+    expect(syncReport('offline', 1, OFFLINE).text).toContain('1 zapis czeka w kolejce');
+    expect(syncReport('offline', 2, OFFLINE).text).toContain('2 zapisy czekają w kolejce');
+    expect(syncReport('offline', 5, OFFLINE).text).toContain('5 zapisów czeka w kolejce');
   });
 });
 

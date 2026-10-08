@@ -94,9 +94,9 @@ describe('clubSwitchBlock', () => {
 
   it('zaległe zapisy KLUBU BIEŻĄCEGO: powód mówi ile i dlaczego', () => {
     expect(clubSwitchBlock(3, false)).toBe(
-      'Najpierw wyślij 3 zapisy - należą do klubu, w którym powstały',
+      'Poczekaj, aż wyślą się 3 zapisy z tego klubu',
     );
-    expect(clubSwitchBlock(1, false)).toContain('1 zapis -');
+    expect(clubSwitchBlock(1, false)).toBe('Poczekaj, aż wyśle się 1 zapis z tego klubu');
     expect(clubSwitchBlock(5, false)).toContain('5 zapisów');
   });
 
@@ -109,6 +109,6 @@ describe('clubSwitchBlock', () => {
   });
 
   it('zaległe zapisy wygrywają z brakiem sieci - to pilot musi je wysłać, nie zasięg', () => {
-    expect(clubSwitchBlock(2, true)).toContain('Najpierw wyślij');
+    expect(clubSwitchBlock(2, true)).toContain('Poczekaj, aż wyślą się 2 zapisy');
   });
 });

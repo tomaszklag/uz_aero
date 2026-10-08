@@ -84,10 +84,10 @@ export function OrderScreen({
             lines={[
               [
                 { text: 'Zlecenie i rozmowa ' },
-                { text: 'wymagają połączenia', bold: true },
+                { text: 'wymagają połączenia z internetem', bold: true },
                 { text: ' - termin, załoga i odpowiedzi zmieniają się na bieżąco.' },
               ],
-              [{ text: 'Wróć tu z zasięgiem. Lot z przyjętego zlecenia rozpoczniesz bez sieci - „ROZPOCZNIJ LOT" na Pulpicie.' }],
+              [{ text: 'Wróć tu z zasięgiem. Lot z przyjętego zlecenia rozpoczniesz także bez zasięgu - „ROZPOCZNIJ LOT" na Pulpicie.' }],
             ]}
           />
         </ScrollView>

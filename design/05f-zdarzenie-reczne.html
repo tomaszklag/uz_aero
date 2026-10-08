@@ -158,7 +158,7 @@
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 11
         </div>
-        <div class="running-badge"><span class="live-dot"></span>RUNNING</div>
+        <div class="running-badge"><span class="live-dot"></span>SILNIK</div>
       </div>
     </div>
 
@@ -168,7 +168,7 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5,19H21.5V21H2.5V19M22.07,9.64C21.86,8.84 21.03,8.36 20.23,8.58L14.92,10L8,3.57L6.09,4.08L10.23,11.25L5.26,12.58L3.29,11.04L1.84,11.43L3.66,14.59L4.43,15.92L6.03,15.5L11.34,14.07L15.69,12.91L21,11.5C21.81,11.26 22.28,10.44 22.07,9.64Z"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name">Climb</div>
+          <div class="phase-hero-name">Wznoszenie</div>
           <div class="phase-hero-sub">GPS wykrył start dopiero teraz</div>
         </div>
       </div>
@@ -203,26 +203,11 @@
             <span class="time-val" id="tv">14:10</span>
             <div class="step-btn" onclick="bump(1)">+1 min</div>
           </div>
-          <div class="time-delta" id="td">4 min temu - tyle trwało, zanim zauważyłeś</div>
+          <div class="time-delta" id="td">4 min temu</div>
         </div>
 
-        <div class="note-box" id="eduManual">
-          <!-- Pytajnik, nie wykrzyknik (uwaga z urządzenia, 2026-08-27): pouczający PYTA;
-               ta sama ikona co w zwiniętym chipie - reguła DS dla banerów typu C. -->
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <!-- Zdanie o zapisie lokalnym wchodzi TUTAJ (issue #19), zamiast osobnej
-               plakietki na dole arkusza: to dokończenie tej samej myśli („co się dzieje
-               z moim wpisem"), a nie druga informacja. Dwa komunikaty o jednym zapisie
-               kazały pilotowi czytać dwa razy, żeby dowiedzieć się raz. -->
-          <span class="note-text">Wpis zostanie oznaczony jako <b>ręczny</b> - w statystykach i arkuszu widać, które zdarzenia pochodzą z GPS, a które od pilota. <b>Zapis jest lokalny:</b> działa bez zasięgu i wyśle się sam.</span>
-          <button class="edu-dismiss" onclick="eduCollapse('eduManual')" title="Rozumiem - schowaj wyjaśnienie">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <button class="edu-mini" id="eduManual-mini" onclick="eduExpand('eduManual')" title="Pokaż wyjaśnienie">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Wpis ręczny - co to znaczy?
-        </button>
+        <!-- Baner „Wpis zostanie oznaczony jako ręczny… zapis jest lokalny" USUNIĘTY
+             (przegląd treści 2026-10-08): opisywał budowę aplikacji komuś, kto zapisuje start. -->
 
         <div class="sheet-actions">
           <a href="05-cockpit-running.html" class="btn-cancel">Anuluj</a>
@@ -242,7 +227,7 @@
     <span class="vp-badge amber">05F</span>
     <span class="vp-body">
       <span class="vp-name">Zdarzenie ręczne (w locie)</span>
-      <span class="vp-when">GPS <b>nie wykrył</b> startu/lądowania albo wykrył za późno. Otwierane przyciskiem <b>Take off</b> lub <b>Landing</b> w kokpicie - i to przycisk decyduje, co się zapisuje: arkusz nie pyta o typ, tylko go ogłasza w tytule. Czas cofalny stepperami 46 px, bo pilot orientuje się po fakcie.</span>
+      <span class="vp-when">GPS <b>nie wykrył</b> startu/lądowania albo wykrył za późno. Otwierane przyciskiem <b>Start</b> lub <b>Lądowanie</b> w kokpicie - i to przycisk decyduje, co się zapisuje: arkusz nie pyta o typ, tylko go ogłasza w tytule. Czas cofalny stepperami 46 px, bo pilot orientuje się po fakcie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -263,8 +248,8 @@
   <a class="vp-item" href="05g-cockpit-no-gps.html">
     <span class="vp-badge" style="color:var(--red);background:var(--red-muted);border-color:var(--red-border);">05G</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit bez fixa GPS</span>
-      <span class="vp-when">GPS stracił sygnał w locie - baner statusowy, parametry - -, a ten arkusz staje się <b>jedyną</b> drogą zapisu T/O i LAND (autodetekcja wstrzymana).</span>
+      <span class="vp-name">Kokpit bez sygnału GPS</span>
+      <span class="vp-when">GPS stracił sygnał w locie - baner statusowy, parametry - -, a ten arkusz staje się <b>jedyną</b> drogą zapisu startu i lądowania (wykrywanie wstrzymane).</span>
     </span>
   </a>
 </aside>
@@ -272,7 +257,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05-cockpit-running.html">← 05 In Flight</a>
+  <a href="05-cockpit-running.html">← 05 W locie</a>
   <a href="05f-zdarzenie-reczne.html" class="active">05F Zdarzenie ręczne</a>
   <a href="05g-cockpit-no-gps.html">05G No GPS</a>
   <a href="10d-edycja.html">10D Edycja operacji</a>
@@ -292,7 +277,7 @@
     // Czas lokalny idzie za zegarem UTC - dwie liczby o jednej chwili nie mogą się rozjechać.
     document.getElementById('tvl').textContent = fmt(mins + LT_OFFSET) + ' LT';
     const diff = nowMins - mins;
-    document.getElementById('td').textContent = diff === 0 ? 'teraz' : diff + ' min temu - tyle trwało, zanim zauważyłeś';
+    document.getElementById('td').textContent = diff === 0 ? 'teraz' : diff + ' min temu';
   }
   // Baner pouczający (Typ C) - w aplikacji stan „schowany" zapamiętany na stałe per pilot.
   function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }

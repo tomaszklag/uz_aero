@@ -298,19 +298,19 @@ export function orderInboxRow(input: OrderInboxInput): InboxRowVm | null {
         tone: 'info',
         glyph: 'removed',
         title: `Zlecenie nieaktualne · ${regTitle}`,
-        parts: [{ text: reason == null ? 'Zlecenie cofnięte.' : `Zlecenie cofnięte - ${quote(reason)}.` }],
+        parts: [{ text: reason == null ? 'Zlecenie nie jest już do Ciebie.' : `Zlecenie nie jest już do Ciebie - ${quote(reason)}.` }],
       });
     }
 
     case 'order_withdrawn': {
-      // Do autora: fotel wrócił do szukania - coś przepadło, więc bursztyn (25C).
+      // Do autora: fotel znów jest do obsadzenia - coś przepadło, więc bursztyn (25C).
       const reason = str(p.reason);
       return row({
         tone: 'warn',
         glyph: 'resign',
         title: `Rezygnacja z lotu · ${regTitle}`,
         sub: termSeat(seatOf(p.seat)),
-        parts: withName(name(p.pilotId), [{ text: reason == null ? 'fotel wrócił do szukania' : quote(reason) }]),
+        parts: withName(name(p.pilotId), [{ text: reason == null ? 'fotel znów jest do obsadzenia' : quote(reason) }]),
       });
     }
 
@@ -335,7 +335,7 @@ export function orderInboxRow(input: OrderInboxInput): InboxRowVm | null {
         title: `Zlecenie odwołane · ${regTitle}`,
         parts:
           who == null
-            ? [{ text: reason == null ? 'Termin wrócił do puli.' : quote(reason) }]
+            ? [{ text: reason == null ? 'Termin się zwolnił.' : quote(reason) }]
             : withName(who, reason == null ? [] : [{ text: quote(reason) }]),
       });
     }
@@ -349,7 +349,7 @@ export function orderInboxRow(input: OrderInboxInput): InboxRowVm | null {
       return row({
         tone: 'warn',
         title: `Zlecenie bez kompletu załogi · ${regTitle}`,
-        parts: [{ text: `${missing}. Z początkiem terminu zlecenie wygaśnie w całości, a termin wróci do puli.` }],
+        parts: [{ text: `${missing}. Jeśli do początku terminu nikt się nie znajdzie, zlecenie wygaśnie, a termin się zwolni.` }],
       });
     }
 
@@ -359,7 +359,7 @@ export function orderInboxRow(input: OrderInboxInput): InboxRowVm | null {
         tone: 'info',
         glyph: 'expired',
         title: `Zlecenie wygasło · ${regTitle}`,
-        parts: [{ text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.' }],
+        parts: [{ text: 'Do początku terminu nie zebrała się cała załoga - termin się zwolnił.' }],
       });
 
     case 'order_message': {

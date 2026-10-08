@@ -80,7 +80,7 @@ export function claimRetimePlan(
 ): ClaimRetimePlan {
   const effective = applyCorrections(events);
   const claim = effective.find((e) => e.uuid === claimUuid);
-  if (claim == null) return { kind: 'refused', note: 'Nie znaleziono zdarzenia przejęcia.' };
+  if (claim == null) return { kind: 'refused', note: 'Nie znaleziono rozpoczęcia lotu.' };
   if (at(claim) === newTime) return { kind: 'unchanged' };
 
   const engineStartAt = state.legs[0]?.startedAt ?? null;
@@ -103,8 +103,8 @@ export function claimRetimePlan(
         kind: 'refused',
         note:
           `Przy tej godzinie bieg silnika kończyłby się po zdaniu samolotu ` +
-          `(${timeUtc(state.closedAt)}). Cofnij przejęcie albo popraw najpierw czas ` +
-          `wyłączenia silnika.`,
+          `(${timeUtc(state.closedAt)}). Wybierz wcześniejszą godzinę rozpoczęcia albo ` +
+          `najpierw popraw czas wyłączenia silnika.`,
       };
     }
   }
@@ -120,8 +120,8 @@ export function claimRetimePlan(
     steps,
     deltaMs,
     note:
-      `Przejęcie wypada po uruchomieniu silnika, więc przesuniemy CAŁY bieg o ` +
-      `${Math.round(deltaMs / 60_000)} min: uruchomienie stanie się ${timeUtc(newTime)}, ` +
-      `a starty, lądowania i zrzuty pojadą za nim. Zdanie samolotu zostaje bez zmian.`,
+      `Rozpoczęcie wypada po uruchomieniu silnika, więc cały bieg silnika przesunie się o ` +
+      `${Math.round(deltaMs / 60_000)} min: uruchomienie będzie o ${timeUtc(newTime)}, ` +
+      `a starty, lądowania i zrzuty przesuną się razem z nim. Zdanie samolotu zostaje bez zmian.`,
   };
 }

@@ -86,7 +86,6 @@ export function RefuelScreen({
   const projection = useSessionStore((s) => s.projection);
   const events = useSessionStore((s) => s.events);
   const queries = useSessionStore((s) => s.queries);
-  const synced = useSessionStore((s) => s.synced);
   // Jak w kokpicie: flagi diagnostyczne (rozjazd zegara) zostają w rejestrze i w panelu,
   // a nie na ekranie pilota - `logic/pilotWarnings.ts`, issue #84.
   const warnings = pilotWarnings(useSessionStore((s) => s.warnings));
@@ -270,7 +269,6 @@ export function RefuelScreen({
           variant="solid"
           size="lg"
           icon="check"
-          hint={synced ? undefined : 'Zapis lokalny - wyśle się, gdy wróci sieć'}
           busy={busy}
           disabledReason={disabledReason}
           onPress={() => void save()}
@@ -354,9 +352,8 @@ export function RefuelScreen({
             hint={
               maxAdd != null
                 ? `maks. dolewka: ${Math.round(maxAdd)} L (do pełna) · zbiorniki ${capacityL} L`
-                // Tu „konfiguracja" zostaje: to nie ozdobnik, tylko POWÓD, dla którego
-                // ekran nie zna pojemności - pilot ma wiedzieć, że pilnuje jej sam.
-                : 'brak konfiguracji w cache - pojemności nie znamy, kontroluj dolewkę z paliwomierza'
+                // Bez pojemności pilot pilnuje dolewki sam - i ma to wiedzieć.
+                : 'pojemność zbiorników nieznana - pilnuj dolewki na paliwomierzu'
             }
           >
             <Stepper
@@ -462,7 +459,7 @@ export function RefuelScreen({
           if (reference != null && v > reference.fuelL) {
             return (
               `Paliwa jest więcej niż przy ostatnim odczycie (${litres(reference.fuelL)}). ` +
-              'Sprawdź, czy ktoś nie tankował poza aplikacją - zapis dostanie flagę do wyjaśnienia.'
+              'Sprawdź, czy ktoś nie tankował poza aplikacją.'
             );
           }
           return null;

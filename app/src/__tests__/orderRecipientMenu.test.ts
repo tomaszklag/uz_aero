@@ -47,13 +47,13 @@ describe('32D - arkusz adresata', () => {
       thread: { title: 'Napisz wiadomość', sub: 'Rozmowa · Jakub Wrona', readOnly: false },
       action: { kind: 'remove', swapSeat: 'pic' },
     });
-    expect(flat(menu!.note)).toBe('[Jakub Wrona] dostanie wiadomość, że zlecenie jest nieaktualne - przy zamianie i przy odebraniu. Rozmowa zostaje do odczytu.');
+    expect(flat(menu!.note)).toBe('[Jakub Wrona] dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostaje do odczytu.');
   });
 
   it('adresat z grupy: nazwa grupy zamiast „imiennie", bez zamiany osoby', () => {
     const menu = recipientMenuVm({ card: c, source: { kind: 'row', row: dual!.rows[0]!, block: 'dual' }, viewerId: 'MZI', nameOf, codeOf });
     expect(menu).toMatchObject({ role: 'Drugi pilot · Piloci An-2 · AKW', action: { kind: 'remove', swapSeat: null } });
-    expect(flat(menu!.note)).toBe('[Anna Kowal] dostanie wiadomość, że zlecenie jest nieaktualne. Rozmowa zostaje do odczytu.');
+    expect(flat(menu!.note)).toBe('[Anna Kowal] dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostaje do odczytu.');
   });
 
   it('koordynator prowadzący cudze zlecenie czyta rozmowę; bez wątku - nie ma czego otworzyć', () => {
@@ -77,7 +77,7 @@ describe('32D - arkusz adresata', () => {
       state: 'Leci · przydział 22:12',
       action: { kind: 'unassign', seat: 'dual' },
     });
-    expect(flat(menu!.note)).toBe('[Anna Kowal] dostanie wiadomość, że przydział cofnięto - fotel wróci do szukania, a zgłoszenia pozostałych dalej się liczą.');
+    expect(flat(menu!.note)).toBe('[Anna Kowal] dostanie wiadomość, że przydział cofnięto - fotel znów będzie do obsadzenia, a zgłoszenia pozostałych nadal się liczą.');
   });
 
   it('fotel „ja" i fotel szukany nie mają menu', () => {

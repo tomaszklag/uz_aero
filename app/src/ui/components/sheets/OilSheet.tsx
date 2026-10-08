@@ -148,7 +148,7 @@ export function OilSheet({
       {...(warning != null ? { warning } : {})}
       trail={trail}
       confirmLabel="ZAPISZ"
-      confirmDisabledReason={invalid ? 'Nie rozumiem tej wartości - popraw wpis' : null}
+      confirmDisabledReason={invalid ? 'Popraw wpis - tej wartości nie da się odczytać' : null}
       onConfirm={() => onConfirm(level.value, added.value)}
       onCancel={onCancel}
       onShow={onShow}

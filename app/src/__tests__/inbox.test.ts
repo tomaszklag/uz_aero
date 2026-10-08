@@ -110,7 +110,7 @@ describe('wiersze skrzynki', () => {
       todo: false,
       opens: 'booking',
     });
-    expect(wlasna).toMatchObject({ title: 'Rezerwacja odwołana · Jakub Wrona', reason: 'Termin wrócił do puli.' });
+    expect(wlasna).toMatchObject({ title: 'Rezerwacja odwołana · Jakub Wrona', reason: 'Termin się zwolnił.' });
     // Osoba spoza cache'u członków - tytuł ogólny, nigdy surowy identyfikator.
     expect(bezNazwiska!.title).toBe('Rezerwacja odwołana');
   });
@@ -169,7 +169,7 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
     expect(notTaken).toMatchObject({
       tone: 'warn',
       title: 'Nie odebrano · SP-AXA',
-      reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+      reason: 'Przez godzinę nikt nie rozpoczął lotu - termin się zwolnił.',
       opens: 'aircraft',
     });
   });
@@ -241,10 +241,10 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
       tone: 'warn',
       title: 'Odwołany lot · SP-AXA',
       sub: 'sob 26 WRZ 09:00-12:00 · Jakub Wrona',
-      reason: 'Odwołany 40 min przed startem - po przypomnieniu.',
+      reason: 'Odwołany 40 min przed startem, już po przypomnieniu.',
       opens: 'aircraft',
     });
-    expect(moved!.reason).toBe('Przesunięty 40 min przed startem - nowy termin nd 27 WRZ 09:00-11:00, po przypomnieniu.');
+    expect(moved!.reason).toBe('Przesunięty 40 min przed startem, już po przypomnieniu - nowy termin nd 27 WRZ 09:00-11:00.');
   });
 
   it('dopisek o zwłoce pada dopiero ponad kwadrans; maszyna poza cache’em dostaje słowo, nie identyfikator', () => {

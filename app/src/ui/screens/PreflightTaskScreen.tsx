@@ -323,13 +323,13 @@ export function PreflightTaskScreen({
             </Field>
           )}
 
-          <Field label="Oznaczenie klienta" tag={{ label: 'opcjonalne' }}>
+          <Field label="Klient" tag={{ label: 'opcjonalne' }}>
             <ValueBox
               variant="text"
               value={draft.client ?? ''}
               placeholder="Bez oznaczenia"
               actionIcon="edit"
-              accessibilityLabel={`Oznaczenie klienta ${draft.client ?? 'puste'} - zmień`}
+              accessibilityLabel={`Klient ${draft.client ?? 'puste'} - zmień`}
               onPress={() => openEditor('client')}
             />
           </Field>
@@ -370,9 +370,9 @@ export function PreflightTaskScreen({
       {/* ── arkusz oznaczenia klienta i notatki ─────────────────────────── */}
       <TextEntrySheet
         visible={editor === 'client'}
-        title="Oznaczenie klienta"
+        title="Klient"
         initialText={draft.client ?? ''}
-        placeholder="np. SKY CAMP · zlec. 2026/114"
+        placeholder="np. SKY CAMP · nr 2026/114"
         maxLength={200}
         suggestions={clientSuggestions}
         onConfirm={(text) => {

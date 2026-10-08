@@ -363,7 +363,7 @@
       <!-- Termin samodzielnej korekty (status - nie do zamknięcia) -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Poprawiasz samodzielnie do <b>07 SIE 11:20 UTC</b> - 24 h od zdania samolotu. Później korektę nanosi administrator.</span>
+        <span class="cw-text">Poprawiasz samodzielnie do <b>07 SIE 11:20 UTC</b> - 24 h od zdania samolotu. Później poprawki wprowadza administrator klubu.</span>
       </div>
 
       <!-- ══ PRZEBIEG OPERACJI ═══════════════════════════════════════════════════
@@ -387,7 +387,7 @@
             <span class="axis-time dim">08:04</span>
             <span class="axis-mark"><span class="axis-dot hollow"></span></span>
             <span class="axis-label">
-              <span class="axis-name muted">Przejęcie</span>
+              <span class="axis-name muted">Rozpoczęcie</span>
               <span class="axis-sub">paliwo 150 L · 1 234:30</span>
             </span>
             <span class="axis-right"></span>
@@ -590,7 +590,7 @@
       <div class="section-card">
         <div class="section-card-head amber">Paliwo</div>
         <div class="calc-row">
-          <span class="calc-key"><span class="op"></span>Odczyt przy przejęciu</span>
+          <span class="calc-key"><span class="op"></span>Odczyt przy rozpoczęciu</span>
           <span class="calc-val">150 L</span>
         </div>
         <div class="calc-row">
@@ -605,11 +605,11 @@
           <span class="calc-total-key">Zużyte</span>
           <span class="calc-total-val amber">27 L</span>
         </div>
-        <div class="calc-foot-note">Odczyty poprawisz na osi wyżej - przy przejęciu i przy zdaniu. Werdykt normy wraca, gdy log przestanie być sprzeczny.</div>
+        <div class="calc-foot-note">Odczyty poprawisz na osi wyżej - przy rozpoczęciu i przy zdaniu. Werdykt normy wraca, gdy log przestanie być sprzeczny.</div>
       </div>
 
       <!-- ══ ZAŁOGA ══════════════════════════════════════════════════════════
-           Ołówek stoi w NAGŁÓWKU karty, nie przy wierszu „Dual": PIC-a nie da się
+           Ołówek stoi w NAGŁÓWKU karty, nie przy wierszu „Dual": dowódcy nie da się
            zmienić (to przelogowanie, nie korekta - `PIC_CHANGE_NOT_ALLOWED`), więc
            edytowalny wiersz jest tu jeden, a dwa ołówki obok siebie sugerowałyby,
            że oba są celami.
@@ -627,12 +627,12 @@
              przelogowanie, nie korekta (`PIC_CHANGE_NOT_ALLOWED`). Pusta kolumna
              ołówka czyta się tak samo jak na osi - brak celu widać od razu. -->
         <div class="info-row">
-          <span class="info-key">PIC</span>
+          <span class="info-key">Dowódca</span>
           <span class="info-val">AKO · Adam Kowalski (Ty)</span>
           <span class="row-pen"></span>
         </div>
         <a href="10j-korekta-zalogi.html" class="info-row editable">
-          <span class="info-key">Dual</span>
+          <span class="info-key">Drugi pilot</span>
           <!-- Plakietka jest OSOBNYM celem dotknięcia: prowadzi do historii (10I),
                a nie do korekty. W mockupie zostaje `span`, bo cały wiersz jest tu
                linkiem do arkusza korekty, a link w linku nie istnieje w HTML -
@@ -759,14 +759,14 @@
              obietnicą, której rejestr append-only nie umie dotrzymać. -->
         <div class="hold-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 20h20L12 2Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
-          <span class="hold-text">Wpis zniknie z Twojego dnia, z historii i z sum. <b>Zapis zostaje
-          w rejestrze</b> i widzi go administrator - razem z powodem, jeśli go podasz.</span>
+          <span class="hold-text">Wpis zniknie z Twojego dnia, z historii i z sum. <b>Administrator
+          klubu nadal go zobaczy</b> - razem z powodem, jeśli go podasz.</span>
         </div>
 
         <!-- POWÓD OPCJONALNY, jak przy każdej korekcie (issue #43): wymagany byłby
              tarciem w polu, a bez niego administrator patrzący na wycofany wpis nie
              ma jak się dowiedzieć dlaczego. -->
-        <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. wpisałem ten lot dwa razy" />
+        <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) - np. ten lot jest wpisany dwa razy" />
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Zostaw</a>
@@ -834,7 +834,7 @@
     <span class="vp-badge amber">10J</span>
     <span class="vp-body">
       <span class="vp-name">Arkusz - korekta załogi</span>
-      <span class="vp-when">Ołówek w nagłówku karty „Załoga": drugi pilot CAŁEJ sesji. Poprawka działa wstecz i przepisuje czas blokowy na wskazaną osobę; PIC-a nie da się zmienić (to przelogowanie, nie korekta). Zmianę załogi w TRAKCIE zapisuje kokpit (07).</span>
+      <span class="vp-when">Ołówek w nagłówku karty „Załoga": drugi pilot CAŁEJ sesji. Poprawka działa wstecz i przepisuje czas blokowy na wskazaną osobę; dowódcy nie da się zmienić (to przelogowanie, nie korekta). Zmianę załogi w TRAKCIE zapisuje kokpit (07).</span>
     </span>
   </a>
   <a class="vp-item" href="10k-korekta-notatki.html">

@@ -239,7 +239,7 @@ export interface PlanWords {
   overflow: string;
 }
 
-export const BOOKING_PLAN_WORDS: PlanWords = { lead: 'Slot', overflow: 'nie mieści się w rezerwacji' };
+export const BOOKING_PLAN_WORDS: PlanWords = { lead: 'Termin', overflow: 'nie mieści się w rezerwacji' };
 
 export function planNote(
   draft: Pick<BookingDraft, 'startsAt' | 'endsAt' | 'plannedAirMin'>,

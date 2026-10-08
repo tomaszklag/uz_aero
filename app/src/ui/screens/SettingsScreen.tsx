@@ -77,7 +77,7 @@ import { watchRows, type WatchRowVm } from './logic/watchList';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
-import { formatLatLon, timeUtc } from '../format';
+import { formatLatLon, plural, timeUtc } from '../format';
 import { versionRowValue } from './logic/appVersion';
 import { probeTimeZones, type ProbeCheck } from './logic/timeZoneProbe';
 import { fixAge } from './logic/gpsLoss';
@@ -165,7 +165,7 @@ export function SettingsScreen({
       const done = await watches.setWatch(row.aircraftId, !row.on);
       setWatchBusy(null);
       if (!done) {
-        setWatchError('Obserwowanie zapisuje serwer - potrzebne połączenie.');
+        setWatchError('Obserwowanie wymaga połączenia z internetem.');
         return;
       }
       void askForPush(optInAfterWatch(!row.on));
@@ -287,7 +287,7 @@ export function SettingsScreen({
   const doLogout = useCallback(async () => {
     const block = await logout(outboxCount);
     if (block != null) {
-      setLogoutError('Wylogowanie zablokowane - kolejka wysyłki nie jest pusta.');
+      setLogoutError('Wylogujesz się, gdy zapisy z telefonu się wyślą.');
       return;
     }
     // Wylogowanie czyści też stan sesji w pamięci (dane w SQLite zostają - to rejestr
@@ -467,7 +467,7 @@ export function SettingsScreen({
           <KeyValueRow
             divider
             label="Kolejka wysyłki"
-            value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} czeka`}
+            value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} ${plural(outboxCount, 'czeka', 'czekają', 'czeka')}`}
             valueTone={outboxCount === 0 ? 'green' : 'amber'}
           />
           {/* JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): wysyłka i pobranie danych
@@ -500,12 +500,12 @@ export function SettingsScreen({
           <KeyValueRow
             divider
             label="Status"
-            value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'FIX' : 'BRAK FIXA'}
+            value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'SYGNAŁ' : 'BRAK SYGNAŁU'}
             valueTone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
           />
           <KeyValueRow
             divider
-            label="Ostatni fix"
+            label="Ostatni odczyt GPS"
             value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '-'}
           />
           <KeyValueRow
@@ -663,7 +663,7 @@ export function SettingsScreen({
             name="Wyloguj i zmień konto"
             sub={
               logoutBlocked
-                ? `niedostępne - ${eventsCount(outboxCount)} czeka na wysyłkę`
+                ? `niedostępne - ${eventsCount(outboxCount)} ${plural(outboxCount, 'czeka', 'czekają', 'czeka')} na wysyłkę`
                 : 'ponowne logowanie wymaga internetu'
             }
             disabled={logoutBlocked}
@@ -748,7 +748,7 @@ function TraceRow() {
       divider
       label="Rejestrator śladu"
       pendingWidth={132}
-      value={stats == null ? null : `${stats.total} fixów · ${stats.pendingUpload} do wysłania`}
+      value={stats == null ? null : `${stats.total} ${plural(stats.total, 'punkt', 'punkty', 'punktów')} · ${stats.pendingUpload} do wysłania`}
     />
   );
 }

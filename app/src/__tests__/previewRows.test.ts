@@ -263,7 +263,7 @@ describe('podgląd samolotu (26B)', () => {
   it('podtytuł i liczniki ze źródłem odczytu', () => {
     const vm = aircraftPreviewVm(aircraftWire(), opts);
     expect(vm.title).toBe('SP-AXA');
-    expect(vm.sub).toBe('Cessna 172 · w użytku · zbiornik 180 L');
+    expect(vm.sub).toBe('Cessna 172 · w służbie · zbiornik 180 L');
     expect(vm.groups[0]!.rows).toEqual([
       { label: 'Motogodziny', value: '1236:30', sub: null },
       { label: 'Paliwo', value: '112 L', sub: '· zbiornik 180 L' },

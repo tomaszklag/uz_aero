@@ -69,7 +69,7 @@ const SERIES_DAYS = 90;
 const DAY_MS = 86_400_000;
 
 /** Powód, dla którego przełącznik nie zapisał się - WEWNĄTRZ karty, nie pod nią (issue #55). */
-const WATCH_OFFLINE = 'Obserwowanie zapisuje serwer - potrzebne połączenie.';
+const WATCH_OFFLINE = 'Obserwowanie wymaga połączenia z internetem.';
 
 export function AircraftCardScreen({
   navigation,
@@ -262,7 +262,7 @@ export function AircraftCardScreen({
               days={SERIES_DAYS}
               nameOf={nameOf}
               legend={[
-                { color: 'green', label: 'odczyt przejęcia / zdania' },
+                { color: 'green', label: 'odczyt przy rozpoczęciu / zdaniu' },
                 { color: 'blue', label: 'wpis administratora' },
                 { color: 'dash', label: 'maszyna stała' },
               ]}
@@ -495,8 +495,7 @@ function Offline({ theme }: { theme: Theme }) {
           BRAK POŁĄCZENIA
         </AppText>
         <AppText variant="body" style={s.warningText}>
-          Karta maszyny pokazuje cudze operacje, terminy i odczyty - a tego telefon nie wie
-          bez połączenia z serwerem.
+          Karta samolotu wymaga połączenia z internetem.
         </AppText>
         <AppText variant="body" style={s.warningText}>
           Wróć tu z zasięgiem. Lot rozpoczniesz bez tego ekranu - wystarczy „ROZPOCZNIJ LOT" na Pulpicie.

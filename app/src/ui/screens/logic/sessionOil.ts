@@ -49,7 +49,7 @@ export function oilCard(projection: SessionState): OilCardView {
       {
         id: 'level',
         op: '',
-        label: 'Odczyt przy przejęciu',
+        label: 'Odczyt przy rozpoczęciu',
         value: oilLitres(levelL),
       },
       {

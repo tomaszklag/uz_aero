@@ -241,13 +241,13 @@ export function CockpitReadonlyScreen({
         {/* ── log cudzej operacji - ta sama oś, co we własnym kokpicie (issue #44), bez
             ołówków: podgląd niczego nie zapisuje. Ale też niczego nie upraszcza -
             to na podstawie tego logu zapada decyzja o przejęciu maszyny. ───── */}
-        <Card title={peekLogTitle(aircraft?.reg ?? aircraftId, picCode, projection)} flush>
+        <Card title={peekLogTitle(aircraft?.reg ?? null, picCode, projection)} flush>
           <SessionAxis
             rows={logRows}
             emptyText={
               snapshot == null
-                ? 'Nie mamy migawki tej operacji - log pojawi się po połączeniu z serwerem.'
-                : 'Serwer nie zna jeszcze żadnego zdarzenia z tej operacji.'
+                ? 'Przebieg pokażemy, gdy telefon złapie zasięg.'
+                : 'Z tej operacji nie ma jeszcze żadnego zapisu.'
             }
           />
         </Card>
@@ -277,7 +277,7 @@ export function CockpitReadonlyScreen({
           // Przejęcie = wypełnienie SZKICU preflightu (stan UI) i powrót na krok 1.
           // Do rejestru nic tu nie trafia - `session_claim` powstaje przy potwierdzeniu
           // na ekranie 3, więc zasada „zero akcji zapisu" na tym ekranie stoi.
-          disabledReason={aircraft == null ? 'Czekamy na dane samolotu z cache' : null}
+          disabledReason={aircraft == null ? 'Wczytywanie danych samolotu…' : null}
           onPress={() => {
             if (aircraft == null) return;
             takeAircraft(aircraft);

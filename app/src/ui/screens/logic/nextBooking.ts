@@ -77,7 +77,7 @@ function crewOf(b: CalendarBooking, input: NextBookingInput): string | null {
     return pic == null ? null : `Dowódca: ${pic}`;
   }
   const dual = b.dualId == null ? null : input.codeOf(b.dualId);
-  return dual == null ? null : `Dual: ${dual}`;
+  return dual == null ? null : `Drugi pilot: ${dual}`;
 }
 
 function route(b: CalendarBooking): string | null {

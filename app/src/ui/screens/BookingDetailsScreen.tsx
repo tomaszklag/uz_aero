@@ -78,8 +78,8 @@ const BANNER_ICON: Partial<Record<ApprovalState, IconName>> = {
 const REASON_MAX = 500;
 
 /** Zapis, który NIE DOJECHAŁ: slot i fotel zwalnia serwer, więc dopóki nie odpowiedział, nic się nie stało. */
-const CANCEL_OFFLINE = 'Odwołanie wymaga połączenia - slot zwalnia serwer.';
-const RESIGN_OFFLINE = 'Rezygnację zapisuje serwer - potrzebne połączenie.';
+const CANCEL_OFFLINE = 'Odwołanie wymaga połączenia z internetem.';
+const RESIGN_OFFLINE = 'Rezygnacja wymaga połączenia z internetem.';
 
 type Nav = HomeNavigator & {
   navigate: (screen: string, params?: object) => void;

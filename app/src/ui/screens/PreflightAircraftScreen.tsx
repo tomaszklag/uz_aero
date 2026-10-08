@@ -222,7 +222,7 @@ export function PreflightAircraftScreen({
           // jeszcze trwa - stąd godzina blokady w tej samej linii.
           peek: claimed,
           note: claimed ? `Prowadzi ${leadPilot(holder, a.claimSince)}` : undefined,
-          disabledReason: grounded ? 'Wyłączony ze służby' : undefined,
+          disabledReason: grounded ? 'Poza służbą' : undefined,
           // Powód niesie już czerwony tag - druga linia byłaby powtórzeniem.
           disabledTagged: grounded,
         };
@@ -335,9 +335,9 @@ export function PreflightAircraftScreen({
               .
             </AppText>
             <AppText variant="body" tone="secondary" style={styles.emptyText}>
-              Lista pobiera się z serwera automatycznie, gdy jest internet - sprawdź
-              połączenie. Jeśli to nie pomaga, poproś administratora o dodanie samolotów
-              do floty.
+              Lista samolotów pobiera się sama, gdy telefon ma internet - sprawdź
+              połączenie. Jeśli to nie pomaga, poproś administratora klubu o dodanie
+              samolotów do floty.
             </AppText>
           </View>
         </View>
@@ -355,7 +355,7 @@ export function PreflightAircraftScreen({
           <IdentityStrip
             name={pilotProfile?.name ?? pilotId}
             subtitle={pilotProfile?.code ?? pilotId}
-            badge="PIC"
+            badge="Dowódca"
           />
 
           {/* ── samolot ─────────────────────────────────────────────────── */}

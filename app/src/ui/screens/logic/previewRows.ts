@@ -243,7 +243,7 @@ export function aircraftPreviewVm(wire: RemoteAircraftPreview, opts: PreviewOpti
 
   const sub = [
     a.type,
-    a.serviceStatus === 'active' ? 'w użytku' : 'wyłączona z użytku',
+    a.serviceStatus === 'active' ? 'w służbie' : 'poza służbą',
     `zbiornik ${litres(a.capacityL)}`,
   ].join(' · ');
 

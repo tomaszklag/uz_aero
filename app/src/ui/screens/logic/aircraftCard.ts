@@ -59,7 +59,7 @@ export interface HeroVm {
   /** „W locie", „Wolna", „Wyłączona z użytku" - plakietka w tonie karty. */
   badge: string;
   badgeTone: 'green' | 'amber' | 'blue' | 'dim';
-  /** Duży napis display: nazwisko, „Stoi w hangarze", „Przegląd". */
+  /** Duży napis display: nazwisko, „Stoi wolna", „Przegląd". */
   main: string;
   /** Mono obok napisu: „skoki · EPBK", „od wczoraj 18:20". */
   small: string | null;
@@ -229,16 +229,16 @@ function planNote(
 function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
   const last = parse(card.lastRecordAt);
   const recordsNote =
-    last == null ? 'rejestr tej maszyny jest jeszcze pusty' : `wg zapisów, które dotarły do ${timeUtc(last)} UTC`;
+    last == null ? 'tej maszyny nie ma jeszcze żadnego zapisu' : `wg zapisów, które dotarły do ${timeUtc(last)} UTC`;
   const n = card.now;
 
   switch (n.kind) {
     case 'retired':
       return {
         tone: 'off',
-        badge: 'Wycofana',
+        badge: 'Poza służbą',
         badgeTone: 'dim',
-        main: 'Wycofana z użytku',
+        main: 'Maszyna poza służbą',
         small: null,
         zone: null,
         zoneValue: null,
@@ -254,8 +254,8 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
       const small = [task == null ? null : task.toLowerCase(), n.departureIcao]
         .filter((x): x is string => x != null)
         .join(' · ');
-      const badge = n.kind === 'flying' ? 'W locie' : n.kind === 'claimed' ? 'Przejęta' : 'Po locie';
-      const zone = n.kind === 'flying' ? 'uruchomienie' : n.kind === 'claimed' ? 'przejęcie' : 'wyłączenie';
+      const badge = n.kind === 'flying' ? 'W locie' : n.kind === 'claimed' ? 'Przed lotem' : 'Po locie';
+      const zone = n.kind === 'flying' ? 'uruchomienie' : n.kind === 'claimed' ? 'rozpoczęcie' : 'wyłączenie';
       // „1:42 SILNIKA" - czas od uruchomienia liczony zegarem; że to stan wg ostatniego
       // zapisu, mówi wiersz pod kreską. Po locie licznik mówi, jak długo maszyna
       // czeka na zdanie.
@@ -352,7 +352,7 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
         tone: 'off',
         badge: 'Wolna',
         badgeTone: 'dim',
-        main: 'Stoi w hangarze',
+        main: 'Stoi wolna',
         small: stood,
         zone: nextValue == null ? null : 'następny termin',
         zoneValue: nextValue,
@@ -475,7 +475,7 @@ export function aircraftCardVm(card: RemoteAircraftCard, opts: AircraftCardOptio
   const a = card.aircraft;
   return {
     title: a.reg,
-    sub: [a.type, a.serviceStatus === 'active' ? 'w użytku' : 'wyłączona z użytku', `zbiornik ${litres(a.capacityL)}`].join(' · '),
+    sub: [a.type, a.serviceStatus === 'active' ? 'w służbie' : 'poza służbą', `zbiornik ${litres(a.capacityL)}`].join(' · '),
     hero: heroOf(card, opts),
     watch: watchVm(card.watching),
     counters: counterRows(card, opts),

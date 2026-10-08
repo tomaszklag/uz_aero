@@ -290,8 +290,8 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           title: `Odwołany lot · ${regTitle}`,
           reason:
             newTerm != null
-              ? `Przesunięty${before} - nowy termin ${newTerm}, po przypomnieniu.`
-              : `Odwołany${before} - po przypomnieniu.`,
+              ? `Przesunięty${before}, już po przypomnieniu - nowy termin ${newTerm}.`
+              : `Odwołany${before}, już po przypomnieniu.`,
           todo: false,
           opens: opensAircraft,
         };
@@ -366,7 +366,7 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           sub: termWho === '' ? null : termWho,
           tone: 'warn',
           title: `Nie odebrano · ${regTitle}`,
-          reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+          reason: 'Przez godzinę nikt nie rozpoczął lotu - termin się zwolnił.',
           todo: false,
           opens: opensAircraft,
         };
@@ -426,7 +426,7 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           ...base,
           tone: 'no',
           title: name == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${name}`,
-          reason: str(n.payload.reason) ?? 'Termin wrócił do puli.',
+          reason: str(n.payload.reason) ?? 'Termin się zwolnił.',
           todo: false,
           opens: opensBooking,
         };
@@ -436,7 +436,7 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           ...base,
           tone: 'warn',
           title: 'Termin minął, zanim ktokolwiek zdecydował',
-          reason: 'Maszyna wróciła do puli - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.',
+          reason: 'Termin się zwolnił - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.',
           todo: false,
           opens: opensBooking,
         };

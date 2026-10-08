@@ -309,7 +309,7 @@
   <span class="flow-sep">→</span>
   <a href="04a-cockpit-ground.html" class="flow-step">04A Przed startem</a>
   <span class="flow-sep">→</span>
-  <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / Running</a>
+  <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / W locie</a>
   <span class="flow-sep">→</span>
   <a href="04-cockpit-ground.html" class="flow-step">04 Po zatrzymaniu</a>
   <span class="flow-sep">→</span>
@@ -594,8 +594,8 @@
     <div class="card-num">00</div>
     <div class="card-body">
       <div class="card-title">00-login</div>
-      <div class="card-desc">Logowanie - codzienne odblokowanie PIN-em (działa offline); do klubu wchodzi się kodem klubu z zatwierdzeniem. Tożsamość PIC znana dla całej operacji. Druga ramka: sesja zakończona przez administratora - baner Status nad klawiaturą, PIN dalej otwiera aplikację, wysyłka stoi do ponownego zalogowania (2.1.0)</div>
-      <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span><span class="tag amber">sesja</span></div>
+      <div class="card-desc">Logowanie - codzienne odblokowanie PIN-em (działa offline); do klubu wchodzi się kodem klubu z zatwierdzeniem. Tożsamość dowódcy znana dla całej operacji. Druga ramka: sesja zakończona przez administratora - baner Status nad klawiaturą, PIN dalej otwiera aplikację, wysyłka stoi do ponownego zalogowania (2.1.0)</div>
+      <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">dowódca</span><span class="tag amber">sesja</span></div>
     </div>
   </a>
   <a href="01-moj-dzien.html" class="card">
@@ -610,8 +610,8 @@
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Nowy lot krok 1/3 - czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA - dzień pilota to lista operacji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
-      <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
+      <div class="card-desc">Nowy lot krok 1/3 - czym i z kim: samolot (karty + zajęty samolot + przejęcie) i drugi pilot. Czasu meldowania TU NIE MA - dzień pilota to lista operacji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
+      <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">zajęty samolot</span><span class="tag">drugi pilot</span></div>
     </div>
   </a>
   <a href="02e-preflight-zadanie.html" class="card">
@@ -642,7 +642,7 @@
     <div class="card-num">04A</div>
     <div class="card-body">
       <div class="card-title">04a-cockpit-ground</div>
-      <div class="card-desc">Kokpit PRZED uruchomieniem silnika - pusty log operacji, START ENGINE, tankowanie, załadunek skoczków (dzień skokowy, issue #21) i zmiana załogi; zdanie bez lotu prowadzi na 09C. Kokpit jest stanem modalnym bez wyjścia na „Mój dzień", a operacja = jeden bieg silnika: po STOP wraca się do 04, nie tutaj</div>
+      <div class="card-desc">Kokpit PRZED uruchomieniem silnika - pusty log operacji, URUCHOM SILNIK, tankowanie, załadunek skoczków (dzień skokowy, issue #21) i zmiana załogi; zdanie bez lotu prowadzi na 09C. Kokpit jest stanem modalnym bez wyjścia na „Mój dzień", a operacja = jeden bieg silnika: po STOP wraca się do 04, nie tutaj</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">przed startem</span></div>
     </div>
   </a>
@@ -650,7 +650,7 @@
     <div class="card-num">04</div>
     <div class="card-body">
       <div class="card-title">04-cockpit-ground</div>
-      <div class="card-desc">Kokpit PO zatrzymaniu silnika - operacja zakończona: hero ZDAJ SAMOLOT (drugiego START ENGINE nie ma), log operacji jako ta sama oś, co w rozliczeniu (10), ze stopką sum; tankowanie dozwolone przed zdaniem</div>
+      <div class="card-desc">Kokpit PO zatrzymaniu silnika - operacja zakończona: hero ZDAJ SAMOLOT (drugiego URUCHOM SILNIK nie ma), log operacji jako ta sama oś, co w rozliczeniu (10), ze stopką sum; tankowanie dozwolone przed zdaniem</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">główny</span></div>
     </div>
   </a>
@@ -658,7 +658,7 @@
     <div class="card-num">05</div>
     <div class="card-body">
       <div class="card-title">05-cockpit-running</div>
-      <div class="card-desc">Kokpit - silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań, buforowanie offline</div>
+      <div class="card-desc">Kokpit - silnik uruchomiony. Timery, GPS live, liczniki startów i lądowań, buforowanie offline</div>
       <div class="card-tags"><span class="tag green">running state</span><span class="tag green">w locie</span></div>
     </div>
   </a>
@@ -679,7 +679,7 @@
     <div class="card-num">28B</div>
     <div class="card-body">
       <div class="card-title">28b-zlecenie-nieaktualne</div>
-      <div class="card-desc">Zlecenie NIEAKTUALNE i ODWOŁANE - cztery ramki: fotel obsadził ktoś inny, odwołanie z powodem, wygasło z początkiem terminu, zlecenie cofnięte. Jedno wyjście, bez akcji; rozmowa zostaje do odczytu. Bez nazwiska osoby, która dostała fotel</div>
+      <div class="card-desc">Zlecenie NIEAKTUALNE i ODWOŁANE - cztery ramki: fotel obsadził ktoś inny, odwołanie z powodem, wygasło z początkiem terminu, usunięcie z adresatów. Jedno wyjście, bez akcji; rozmowa zostaje do odczytu. Bez nazwiska osoby, która dostała fotel</div>
       <div class="card-tags"><span class="tag amber">nieaktualne</span><span class="tag">odwołane</span></div>
     </div>
   </a>
@@ -783,7 +783,7 @@
     <div class="card-num">32D</div>
     <div class="card-body">
       <div class="card-title">32d-zlecenie-adresat</div>
-      <div class="card-desc">Menu adresata (decyzja 29): „ZAMIEŃ OSOBĘ" przy fotelu imiennym, „ODBIERZ ZLECENIE", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ". Usunięty dostaje „Zlecenie nieaktualne"</div>
+      <div class="card-desc">Menu adresata (decyzja 29): „ZAMIEŃ OSOBĘ" przy fotelu imiennym, „USUŃ Z ADRESATÓW", przy osobie przydzielonej „COFNIJ PRZYDZIAŁ". Usunięty dostaje „Zlecenie nieaktualne"</div>
       <div class="card-tags"><span class="tag amber">adresat</span><span class="tag">zamiana</span></div>
     </div>
   </a>
@@ -992,7 +992,7 @@
     <div class="card-body">
       <div class="card-title">02d-preflight-offline</div>
       <div class="card-desc">Preflight offline - chip OFFLINE, dane z cache z adnotacją wieku, claim "wg cache", modal przejęcia w wariancie offline (liczniki jako prawda)</div>
-      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">cache</span><span class="tag amber">przejęcie</span></div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">cache</span><span class="tag amber">nowy lot</span></div>
     </div>
   </a>
   <a href="02g-preflight-brak-floty.html" class="card amber">
@@ -1055,7 +1055,7 @@
     <div class="card-num">05H</div>
     <div class="card-body">
       <div class="card-title">05h-cockpit-idle</div>
-      <div class="card-desc">Kokpit - Engine idle zaraz po START ENGINE: samolot stoi, pasek akcji podpowiada Taxi (sekwencja idle → Taxi → Take off → Landing); bez karty logu (nic operacyjnego się jeszcze nie wydarzyło) i bez Zrzutu</div>
+      <div class="card-desc">Kokpit - silnik pracuje zaraz po URUCHOM SILNIK: samolot stoi, pasek akcji podpowiada Kołowanie (sekwencja: Kołowanie → Start → Lądowanie); bez karty logu (nic operacyjnego się jeszcze nie wydarzyło) i bez Zrzutu</div>
       <div class="card-tags"><span class="tag green">idle</span><span class="tag">sekwencja akcji</span></div>
     </div>
   </a>
@@ -1071,16 +1071,16 @@
     <div class="card-num">05B</div>
     <div class="card-body">
       <div class="card-title">05b-cockpit-inflight-toast</div>
-      <div class="card-desc">Toast autodetekcji startu (GPS) - 4 s na korektę przed zapisem</div>
-      <div class="card-tags"><span class="tag green">autodetect T/O</span><span class="tag">toast</span></div>
+      <div class="card-desc">Komunikat o wykrytym starcie (GPS) - 4 s na korektę przed zapisem</div>
+      <div class="card-tags"><span class="tag green">wykryty start</span><span class="tag">toast</span></div>
     </div>
   </a>
   <a href="05c-cockpit-toast-ldg.html" class="card green">
     <div class="card-num">05C</div>
     <div class="card-body">
       <div class="card-title">05c-cockpit-toast-ldg</div>
-      <div class="card-desc">Toast autodetekcji lądowania - GPS wykrywa GS ≤ 30 KT podczas lotu</div>
-      <div class="card-tags"><span class="tag green">autodetect LDG</span><span class="tag">toast</span></div>
+      <div class="card-desc">Komunikat o wykrytym lądowaniu - GPS wykrywa prędkość ≤ 30 KT podczas lotu</div>
+      <div class="card-tags"><span class="tag green">wykryte lądowanie</span><span class="tag">toast</span></div>
     </div>
   </a>
   <a href="05d-cockpit-taxi-post.html" class="card green">
@@ -1119,7 +1119,7 @@
     <div class="card-num">05G</div>
     <div class="card-body">
       <div class="card-title">05g-cockpit-no-gps</div>
-      <div class="card-desc">Kokpit bez fixa GPS - degradacja czujnika (nie sieci!): amberowy baner statusowy (jeden kolor dla wszystkich trzech stanów GPS), parametry „- -" z wiekiem fixa, autodetekcja wstrzymana, zapis z paska akcji jak zawsze; SyncChip osobno pokazuje sieć (tu: zielony SYNC)</div>
+      <div class="card-desc">Kokpit bez sygnału GPS - degradacja czujnika (nie sieci!): amberowy baner statusowy (jeden kolor dla wszystkich trzech stanów GPS), parametry „- -" z wiekiem fixa, autodetekcja wstrzymana, zapis z paska akcji jak zawsze; SyncChip osobno pokazuje sieć (tu: zielony SYNC)</div>
       <div class="card-tags"><span class="tag amber">no GPS</span><span class="tag">degradacja czujnika</span><span class="tag amber">fallback ręczny</span></div>
     </div>
   </a>
@@ -1201,7 +1201,7 @@
     <div class="card-num">10J</div>
     <div class="card-body">
       <div class="card-title">10j-korekta-zalogi</div>
-      <div class="card-desc">Poprawka drugiego pilota CAŁEJ operacji - lista kart z cache'u referencyjnego (bez PIC-a, bo `DUAL_IS_PIC`), opcja „bez Duala", powód i historia zmian. Działa wstecz: czas blokowy przypisuje się wskazanej osobie. Zmiana załogi w TRAKCIE to inne zdarzenie i inny ekran (07)</div>
+      <div class="card-desc">Poprawka drugiego pilota CAŁEJ operacji - lista kart z cache'u referencyjnego (bez dowódcy, bo `DUAL_IS_PIC`), opcja „bez drugiego pilota", powód i historia zmian. Działa wstecz: czas blokowy przypisuje się wskazanej osobie. Zmiana załogi w TRAKCIE to inne zdarzenie i inny ekran (07)</div>
       <div class="card-tags"><span class="tag amber">załoga</span><span class="tag">cała operacja</span></div>
     </div>
   </a>
@@ -1343,8 +1343,8 @@
     <div class="card-num">07</div>
     <div class="card-body">
       <div class="card-title">07-zmiana-zalogi</div>
-      <div class="card-desc">Zmiana PIC i/lub Dual - czas zmiany, osobne liczniki czasu blokowego; zmiana PIC = przelogowanie</div>
-      <div class="card-tags"><span class="tag">załoga</span><span class="tag green">PIC / Dual</span></div>
+      <div class="card-desc">Zmiana drugiego pilota - czas zmiany, osobne liczniki czasu blokowego; nowy dowódca rozpoczyna lot na swoim telefonie</div>
+      <div class="card-tags"><span class="tag">załoga</span><span class="tag green">dowódca / drugi pilot</span></div>
     </div>
   </a>
   <a href="13-ustawienia.html" class="card">
@@ -1373,7 +1373,7 @@
     <div class="card-num">09B</div>
     <div class="card-body">
       <div class="card-title">09b-zdaj-samolot</div>
-      <div class="card-desc">Zdanie samolotu po STOP ENGINE - przegląd lotów operacji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej operacji. Zdajesz samolot, nie kończysz dnia - kolejna maszyna dopisze się do listy operacji</div>
+      <div class="card-desc">Zdanie samolotu po wyłączeniu silnika - przegląd lotów operacji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej operacji. Zdajesz samolot, nie kończysz dnia - kolejna maszyna dopisze się do listy operacji</div>
       <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -1421,7 +1421,7 @@
     <div class="card-num">15</div>
     <div class="card-body">
       <div class="card-title">15-reczny-lot</div>
-      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) - KROK 1/4: DATA LOTU pierwsza (domyślnie dzisiejsza), samolot i Dual - opcjonalny, chyba że samolot wymaga załogi 2-os. (issue #58). Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną operację z oknem korekty 24 h</div>
+      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) - KROK 1/4: DATA LOTU pierwsza (domyślnie dzisiejsza), samolot i drugi pilot - opcjonalny, chyba że samolot wymaga załogi 2-os. (issue #58). Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną operację z oknem korekty 24 h</div>
       <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna operacja</span><span class="tag">krok 1/4</span></div>
     </div>
   </a>

@@ -390,7 +390,7 @@ export function OrderLeaderView({ card, navigation, canCreate, onCard, reload }:
         visible={cancelOpen}
         title="ODWOŁANIE ZLECENIA"
         rows={reference == null ? [] : [{ label: 'Zlecenie', value: reference }]}
-        warning="Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość - z powodem, jeśli go podasz."
+        warning="Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość - z powodem, jeśli go podasz."
         confirmLabel="ODWOŁAJ"
         confirmTone="red"
         confirmDisabled={busy != null}
@@ -466,7 +466,7 @@ export function OrderLeaderView({ card, navigation, canCreate, onCard, reload }:
             )}
             {menuVm.action.kind === 'remove' ? (
               <ActionButton
-                label="ODBIERZ ZLECENIE"
+                label="USUŃ Z ADRESATÓW"
                 icon="clear"
                 tone="red"
                 variant="secondary"

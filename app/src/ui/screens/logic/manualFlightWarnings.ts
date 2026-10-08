@@ -80,7 +80,7 @@ export function manualFlightWarnings(
         warnings.push({
           id: 'session-overlap',
           text:
-            `Czasy zachodzą na Twoją OPERACJĘ ${s.index} na ${ctx.regOf?.(s.aircraftId) ?? 'innej maszynie'} ` +
+            `Czasy nakładają się na Twoją operację ${s.index} na ${ctx.regOf?.(s.aircraftId) ?? 'innej maszynie'} ` +
             `(${timeUtc(s.startedAt)} → ${s.stoppedAt != null ? timeUtc(s.stoppedAt) : '…'}). ` +
             'Jeden pilot nie leci dwiema maszynami naraz.',
         });
@@ -90,15 +90,15 @@ export function manualFlightWarnings(
 
   // ── łańcuch MH wobec ostatniego przekazania (cache referencyjny) ───────────
   const src =
-    ctx.fetchedAt != null ? `z cache · sync ${dateTimeUtcShort(ctx.fetchedAt)}` : undefined;
+    ctx.fetchedAt != null ? `dane z ${dateTimeUtcShort(ctx.fetchedAt)}` : undefined;
   if (draft.mhBefore != null && ctx.handover != null) {
     const delta = Math.abs(draft.mhBefore - ctx.handover.reading.mh);
     if (delta > MH_CHAIN_TOLERANCE_H) {
       warnings.push({
         id: 'mh-chain',
         text:
-          `Licznik nie zgadza się z łańcuchem - ostatnie przekazanie to ` +
-          `${motoHours(ctx.handover.reading.mh, ctx.mhFormat)}, a wpis zaczyna od ` +
+          `Licznik nie zgadza się z ostatnim przekazaniem samolotu - przekazano ` +
+          `${motoHours(ctx.handover.reading.mh, ctx.mhFormat)}, a wpis zaczyna się od ` +
           `${motoHours(draft.mhBefore, ctx.mhFormat)}.`,
         ...(src != null ? { src } : {}),
       });
@@ -115,8 +115,8 @@ export function manualFlightWarnings(
       warnings.push({
         id: 'fuel-chain',
         text:
-          `Paliwo nie zgadza się z przekazaniem - poprzedni pilot zostawił ` +
-          `${litres(ctx.handover.reading.fuelL)}, a wpis zaczyna od ${litres(draft.fuel.foundL)}.`,
+          `Paliwo nie zgadza się z przekazaniem - w zbiornikach zostało ` +
+          `${litres(ctx.handover.reading.fuelL)}, a wpis zaczyna się od ${litres(draft.fuel.foundL)}.`,
         ...(src != null ? { src } : {}),
       });
     }
@@ -144,8 +144,8 @@ export function manualFlightWarnings(
     warnings.push({
       id: 'no-flight',
       text:
-        'Nie dodałeś ani jednego lotu - operacja zapisze się jako bieg silnika bez lotu. ' +
-        'Dopisz lot, jeśli go pominąłeś.',
+        'W tym wpisie nie ma ani jednego lotu - zapisze się jako bieg silnika bez lotu. ' +
+        'Dopisz brakujący lot, jeśli był.',
     });
   }
 
@@ -153,8 +153,8 @@ export function manualFlightWarnings(
     warnings.push({
       id: 'jump-without-drop',
       text:
-        'Zadanie to skoki, a w logu nie ma ani jednego zrzutu - dopisz go na osi ' +
-        'albo zostaw, jeśli wyniesienie się nie odbyło.',
+        'Zadanie to skoki, a we wpisie nie ma ani jednego zrzutu - dopisz go albo ' +
+        'zostaw tak, jeśli skoków nie było.',
     });
   }
 

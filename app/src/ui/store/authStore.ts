@@ -420,7 +420,7 @@ export const useAuthStore = create<AuthStore>((set) => {
             set({ busy: false });
             return {
               kind: 'error',
-              message: 'Nie znam takiego kodu. Sprawdź, czy przepisujesz go w całości.',
+              message: 'Takiego kodu klubu nie ma. Sprawdź, czy przepisujesz go w całości.',
             };
           case 'already_member':
             set({ busy: false });

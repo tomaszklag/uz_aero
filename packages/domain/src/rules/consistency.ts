@@ -185,7 +185,7 @@ function checkReadings(state: SessionState, limits: AircraftLimits): RuleViolati
     v.push(
       warning(
         'MH_REGRESSION',
-        `Licznik przy zdaniu (${mh.end}) jest niższy niż przy przejęciu (${mh.start}).`,
+        `Licznik przy zdaniu (${mh.end}) jest niższy niż przy rozpoczęciu (${mh.start}).`,
         { start: mh.start, end: mh.end },
       ),
     );
@@ -207,7 +207,7 @@ function checkReadings(state: SessionState, limits: AircraftLimits): RuleViolati
 
   if (limits.capacityL != null) {
     for (const [label, value] of [
-      ['przy przejęciu', fuel.startL],
+      ['przy rozpoczęciu', fuel.startL],
       ['przy zdaniu', fuel.endL],
     ] as const) {
       if (value != null && value > limits.capacityL + FUEL_EPSILON_L) {

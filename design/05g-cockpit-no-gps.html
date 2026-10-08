@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ninerdeck - 05G Cockpit / brak GPS</title>
+<title>Ninerdeck - 05G Kokpit / brak GPS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -290,7 +290,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">NINERDECK - 05G</span>
-  <span class="slug">cockpit · GPS bez fixa · degradacja czujnika</span>
+  <span class="slug">kokpit · bez sygnału GPS</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 05</span>
 </header>
 
@@ -318,7 +318,7 @@
       <div class="compact-right">
         <div class="running-badge">
           <span class="live-dot"></span>
-          RUNNING
+          SILNIK
         </div>
         <!-- Zębatka USUNIĘTA (issue #82): ustawienia mają jedno wejście, na „Mój dzień".
              W jej miejscu przełącznik jasności - w locie pilot nie może zejść
@@ -333,19 +333,19 @@
     <div class="no-gps">
       <div class="no-gps-head">
         <span class="no-gps-dot"></span>
-        <span class="no-gps-title">GPS: brak sygnału · autodetekcja wstrzymana</span>
+        <span class="no-gps-title">GPS: brak sygnału</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M12 2a9.94 9.94 0 0 1 7.5 3.4M4.4 5.5A9.96 9.96 0 0 0 2 12c0 5.5 10 10 10 10s2.53-1.14 5.03-3"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
       <!-- Zdanie o sieci przeniesione TUTAJ z chipa SYNC. Ekran uczył rozdziału osi
            czujnik/łączność zielonym chipem, ale reguła jest twarda: online nie rysuje
            nic (issue #12). Lekcja zostaje, wskaźnik znika - inaczej jeden ekran miałby
            plakietkę, której nie ma nigdzie indziej, i uczyłby czegoś odwrotnego. -->
-      <div class="no-gps-sub">Ostatni fix <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy - <b>zapisuj je ręcznie</b> przyciskiem Landing / Take off. Timery i log samolotu liczą dalej z zegara. <b>Sieć działa normalnie</b> - awaria czujnika to nie awaria łączności, zdarzenia wysyłają się na bieżąco.</div>
+      <div class="no-gps-sub">Ostatni sygnał <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy - <b>zapisuj je ręcznie</b> przyciskiem Lądowanie / Start. Czasy liczą się dalej z zegara.</div>
       <!-- BEZ PRZYCISKÓW (2026-08-12). Stały tu dwa: „Zapisz zdarzenie" (05F)
            i „Lista ręczna" (08) - pomyślane jako dwie skale problemu, a na urządzeniu
            czytane jako drugi pasek akcji nad tym prawdziwym. Pierwszy otwierał
            dokładnie ten sam arkusz, co przycisk główny na dole; drugi dublował kafelek
-           z 04, który i tak pojawia się dopiero po STOP ENGINE - bo przegapione loty
+           z 04, który i tak pojawia się dopiero po wyłączeniu silnika - bo przegapione loty
            odtwarza się PO biegu, nie w powietrzu. Baner jest przyrządem: mówi, co się
            stało z czujnikiem, i wskazuje pasek akcji zdaniem, nie własnym przyciskiem. -->
     </div>
@@ -357,8 +357,8 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(-45deg);opacity:0.6"><path d="M20.56 3.91C21.15 4.5 21.15 5.45 20.56 6.03L16.67 9.92L18.79 19.11L17.38 20.53L13.5 13.1L9.6 17L9.96 19.47L8.89 20.53L7.13 17.35L3.94 15.58L5 14.5L7.5 14.87L11.37 11L3.94 7.09L5.36 5.68L14.55 7.8L18.44 3.91C19 3.33 20 3.33 20.56 3.91Z"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name air">In Flight</div>
-          <div class="phase-hero-sub">FAZA NIEZNANA · <b>BEZ FIXA OD 15:58</b></div>
+          <div class="phase-hero-name air">W locie</div>
+          <div class="phase-hero-sub">FAZA NIEZNANA · <b>BEZ SYGNAŁU OD 15:58</b></div>
         </div>
       </div>
     </div>
@@ -366,26 +366,26 @@
     <!-- GPS PARAMS GRID - czujnik martwy → - - z adnotacją; FOB i zegar to dane lokalne -->
     <div class="param-grid">
       <div class="param-cell">
-        <div class="param-label">Ground Speed</div>
+        <div class="param-label">Prędkość</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
           <div class="param-value stale">- -</div>
           <div class="param-unit">KT</div>
         </div>
-        <div class="param-stale-note">brak fixa od 15:58</div>
+        <div class="param-stale-note">brak sygnału od 15:58</div>
       </div>
       <div class="param-cell">
-        <div class="param-label">Altitude</div>
+        <div class="param-label">Wysokość</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
           <div class="param-value stale">- -</div>
           <div class="param-unit">FT</div>
         </div>
-        <div class="param-stale-note">brak fixa od 15:58</div>
+        <div class="param-stale-note">brak sygnału od 15:58</div>
       </div>
       <!-- Paliwo i czas lotu bez wyróżnienia (issue #19): to odczyty, a nie stany
            wymagające uwagi. Podpisy pod spodem mówią, skąd wartość pochodzi - i to one
            niosą różnicę wobec martwych komórek GPS wyżej, nie kolor. -->
       <div class="param-cell">
-        <div class="param-label">Fuel on Board</div>
+        <div class="param-label">Paliwo</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
           <div class="param-value">~90</div>
           <div class="param-unit">L</div>
@@ -396,11 +396,11 @@
            tym kafelku w 05. Bez fixa liczy się tak samo: to zegar, nie czujnik, a loty
            dopisane RĘCZNIE (jedyna droga zapisu w tym stanie) wchodzą do sumy od razu. -->
       <div class="param-cell">
-        <div class="param-label">Flight Time</div>
+        <div class="param-label">Czas lotu</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
           <div class="param-value">02:19</div>
         </div>
-        <div class="param-stale-note" style="color:var(--text-muted)">zegar - liczy normalnie</div>
+        <div class="param-stale-note" style="color:var(--text-muted)">liczony z zegara</div>
       </div>
     </div>
 
@@ -421,7 +421,7 @@
         <div class="axis-row">
           <span class="axis-time dim">12:58</span>
           <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-          <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">paliwo 141 L · 1 238:05</span></span>
+          <span class="axis-label"><span class="axis-name muted">Rozpoczęcie</span><span class="axis-sub">paliwo 141 L · 1 238:05</span></span>
           <span class="axis-right"></span>
         </div>
         <div class="axis-row">
@@ -503,21 +503,21 @@
       <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi - lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami · przytrzymaj 1 s aby potwierdzić">
         <span class="primary-btn-main">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-          Landing
+          Lądowanie
         </span>
         <span class="hold-lbl">przytrzymaj 1 s</span>
       </a>
       <!-- Zrzut AKTYWNY mimo reguły „tylko w Cruise" (2026-08-11): bez fixa faza jest
            nieznana, a ręczny zapis to jedyna droga - bramka fazy bez danych o fazie
            byłaby blokadą zapisu zdarzenia, które naprawdę zaszło. -->
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa - bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu); bramka fazy (Cruise) nie działa bez GPS">
+      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa - bez sygnału wysokość wpiszesz z wysokościomierza; ograniczenie do lotu poziomego nie działa bez GPS">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </a>
-      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu - engine_stop w locie byłby fałszywym wpisem">
+      <span class="stop-btn disabled" title="Silnik wyłączysz po wylądowaniu i zakończeniu dobiegu">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-        STOP
-        <span class="stop-btn-lbl">po LDG</span>
+        WYŁĄCZ
+        <span class="stop-btn-lbl">po lądowaniu</span>
       </span>
     </div>
 
@@ -525,15 +525,15 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi - przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) - przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html" title="Kiedy: w locie - phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON - kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik pracuje, samolot jeszcze stoi - przycisk Kołowanie otwiera sekwencję; ruch zapisze też wykrywanie automatyczne"><span class="dot"></span>Silnik pracuje</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane automatycznie albo przyciskiem Kołowanie) - przycisk podpowiada Start"><span class="dot"></span>Kołowanie przed startem</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie - faza lotu (wznoszenie / lot poziomy / zniżanie), GPS na żywo, log operacji"><span class="dot"></span>W locie</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) - komunikat z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Wykryty start</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) - toast z Cofnij podczas rolloutu"><span class="dot"></span>Wykryte lądowanie</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal pracuje - kołowanie; kolejny start albo WYŁĄCZ SILNIK"><span class="dot"></span>Kołowanie po lądowaniu</a>
   <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem - potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
   <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego - skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
-  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił fixa - parametry - -, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
+  <a href="05g-cockpit-no-gps.html" class="active" title="Kiedy: GPS stracił sygnał - parametry - -, wykrywanie wstrzymane, zapis ręczny aktywny; sieć osobno"><span class="dot"></span>No GPS</a>
 </nav>
 </div>
 
@@ -542,7 +542,7 @@
   <a class="vp-item active" href="05g-cockpit-no-gps.html">
     <span class="vp-badge amber">05G</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit bez fixa GPS</span>
+      <span class="vp-name">Kokpit bez sygnału GPS</span>
       <span class="vp-when">Silnik ON / w locie, a GPS stracił sygnał. To awaria <b>czujnika</b>, nie łączności - sieć może działać, więc SyncChip zostaje zielony (jak tutaj), a wysyłka zdarzeń biegnie dalej. Autodetekcja staje (ryzyko 🔴 z sekcji 8: niezauważone = niezapisane lądowanie), wejścia ręczne przejmują; timery i log liczą z zegara. Baner to Typ A - przyrząd, znika sam z powrotem fixa.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
@@ -551,21 +551,21 @@
     <span class="vp-badge amber">05F</span>
     <span class="vp-body">
       <span class="vp-name">Zdarzenie ręczne (arkusz)</span>
-      <span class="vp-when">Pojedynczy zapis T/O lub LAND, którego GPS nie wykrył - czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem „Landing" w pasku akcji - jedynym wejściem, bo baner akcji nie ma.</span>
+      <span class="vp-when">Pojedynczy zapis startu lub lądowania, którego GPS nie wykrył - czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem „Lądowanie" w pasku akcji - jedynym wejściem, bo baner akcji nie ma.</span>
     </span>
   </a>
   <a class="vp-item" href="10d-edycja.html">
     <span class="vp-badge">10D</span>
     <span class="vp-body">
       <span class="vp-name">Popraw dane operacji (tryb edycji)</span>
-      <span class="vp-when">GPS milczał dłużej - brakujące starty i lądowania dopisuje się po biegu (§3.8). Wejście jest na 04 <b>po STOP ENGINE</b>, nie stąd: przegapione loty odtwarza się po zatrzymaniu silnika, a nie w powietrzu.</span>
+      <span class="vp-when">GPS milczał dłużej - brakujące starty i lądowania dopisuje się po biegu (§3.8). Wejście jest na 04 <b>po wyłączeniu silnika</b>, nie stąd: przegapione loty odtwarza się po zatrzymaniu silnika, a nie w powietrzu.</span>
     </span>
   </a>
   <a class="vp-item" href="05-cockpit-running.html">
     <span class="vp-badge">05</span>
     <span class="vp-body">
-      <span class="vp-name">In Flight (fix wrócił)</span>
-      <span class="vp-when">Powrót fixa gasi baner i wznawia autodetekcję - parametry znów live, bez żadnej akcji pilota.</span>
+      <span class="vp-name">W locie (sygnał wrócił)</span>
+      <span class="vp-when">Powrót sygnału gasi baner i wznawia wykrywanie - parametry znów live, bez żadnej akcji pilota.</span>
     </span>
   </a>
 </aside>
@@ -573,7 +573,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05-cockpit-running.html">← 05 In Flight</a>
+  <a href="05-cockpit-running.html">← 05 W locie</a>
   <a href="05g-cockpit-no-gps.html" class="active">05G No GPS</a>
   <a href="05f-zdarzenie-reczne.html">05F Zdarzenie ręczne</a>
   <a href="10d-edycja.html">10D Edycja operacji</a>

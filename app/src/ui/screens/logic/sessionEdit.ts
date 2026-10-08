@@ -61,7 +61,7 @@ const SHEET_BY_TYPE: Partial<Record<EventType, EditSheet>> = {
 
 /** Nazwy zdarzeń w nagłówku arkusza - słownik ekranu, nie rejestru. */
 const EVENT_LABEL: Partial<Record<EventType, string>> = {
-  preflight_confirm: 'Przejęcie samolotu',
+  preflight_confirm: 'Rozpoczęcie lotu',
   day_close: 'Zdanie samolotu',
   engine_start: 'Uruchomienie silnika',
   engine_stop: 'Wyłączenie silnika',
@@ -134,7 +134,7 @@ const ISSUE_HINT: Record<string, string> = {
   ZERO_LENGTH_FLIGHT: 'lądowanie nie później niż start',
   EVENT_OUTSIDE_RUN: 'poza pracą silnika - sprawdź czas',
   DROP_ON_GROUND: 'na ziemi - sprawdź czas',
-  MH_REGRESSION: 'licznik niższy niż przy przejęciu',
+  MH_REGRESSION: 'licznik niższy niż przy rozpoczęciu',
   MH_DELTA_MISMATCH: 'przyrost licznika ponad czas pracy silnika',
   FUEL_OVER_CAPACITY: 'odczyt ponad pojemność zbiorników',
   FUEL_INCREASE_WITHOUT_REFUEL: 'więcej paliwa, niż mogło zostać',

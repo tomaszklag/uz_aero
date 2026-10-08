@@ -299,7 +299,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
     expect(v.banner).toEqual({
       kind: 'expired',
       title: 'Zlecenie wygasło',
-      text: 'Początek terminu bez kompletu załogi - termin wrócił do puli.',
+      text: 'Do początku terminu nie zebrała się cała załoga - termin się zwolnił.',
       quote: null,
       meta: 'dziś 09:00',
       tone: 'neutral',
@@ -318,7 +318,7 @@ describe('28B - nieaktualne, odwołane, wygasłe, cofnięte', () => {
     );
     expect(v.banner).toEqual({
       kind: 'removed',
-      title: 'Zlecenie cofnięte',
+      title: 'Zlecenie nie jest już do Ciebie',
       text: null,
       quote: 'W tym czasie masz przelot SP-AXA - zostawiam ten fotel innym.',
       meta: 'dziś 21:58',

@@ -179,7 +179,7 @@ export function HistoryScreen({
             z lotem, którego okno już minęło. */}
         {vm != null && !empty && (
           <AppText variant="body" tone="muted" style={s.footNote}>
-            Po oknie korekty zmiany wprowadza administrator - zgłoś mu, co poprawić.
+            Po 24 h od zdania samolotu zmiany wprowadza administrator klubu - zgłoś mu, co poprawić.
           </AppText>
         )}
       </View>
@@ -324,7 +324,7 @@ function EmptyHistory() {
           BRAK OPERACJI
         </AppText>
         <AppText variant="body" tone="muted" style={s.emptyDesc}>
-          Po pierwszym locie stanie tu jego komplet: czasy, loty i okno korekty 24 h.
+          Po pierwszym locie zobaczysz tu jego czasy i loty - przez 24 h od zdania samolotu możesz je jeszcze poprawić.
         </AppText>
       </View>
     </Card>

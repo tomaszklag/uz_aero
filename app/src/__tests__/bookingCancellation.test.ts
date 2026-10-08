@@ -31,7 +31,7 @@ describe('kiedy baner stoi', () => {
 
   it('bez powodu baner mówi skutek, a nie zmyśla zdania', () => {
     for (const closeReason of [null, undefined, '', '   ']) {
-      expect(banner({ closeReason })!.text).toBe('Termin wrócił do puli.');
+      expect(banner({ closeReason })!.text).toBe('Termin się zwolnił.');
     }
   });
 

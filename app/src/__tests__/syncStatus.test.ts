@@ -18,14 +18,14 @@ const NOON = Date.UTC(2026, 8, 4, 12, 0);
 
 describe('eventsCount - polska liczba mnoga', () => {
   it.each([
-    [1, '1 zdarzenie'],
-    [2, '2 zdarzenia'],
-    [4, '4 zdarzenia'],
-    [5, '5 zdarzeń'],
-    [12, '12 zdarzeń'], // 12–14 to zawsze „zdarzeń", mimo końcówki 2–4
-    [14, '14 zdarzeń'],
-    [22, '22 zdarzenia'],
-    [47, '47 zdarzeń'],
+    [1, '1 zapis'],
+    [2, '2 zapisy'],
+    [4, '4 zapisy'],
+    [5, '5 zapisów'],
+    [12, '12 zapisów'], // 12–14 to zawsze „zapisów", mimo końcówki 2–4
+    [14, '14 zapisów'],
+    [22, '22 zapisy'],
+    [47, '47 zapisów'],
   ])('%i → %s', (n, expected) => {
     expect(eventsCount(n)).toBe(expected);
   });

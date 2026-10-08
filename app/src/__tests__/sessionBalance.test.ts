@@ -76,7 +76,7 @@ describe('rachunek paliwa', () => {
     const view = fuelBalance(session(), norm(), 2, null);
 
     expect(view.rows.map((row) => `${row.op}${row.label} = ${row.value}`)).toEqual([
-      'Odczyt przy przejęciu = 150 L',
+      'Odczyt przy rozpoczęciu = 150 L',
       '+Dolane · 2 tankowania = 48 L',
       '−Odczyt przy zdaniu = 171 L',
     ]);
@@ -140,7 +140,7 @@ describe('rachunek paliwa', () => {
     expect(detail(view, 'Norma')).toBe('15 L/h pracy silnika');
     // Arkusz mówi wprost, że model nie rozdzielił faz - to słabsza odpowiedź niż
     // stawki fazowe i pilot ma prawo o tym wiedzieć.
-    expect(view.details?.summary).toContain('nie rozdzielił jeszcze faz');
+    expect(view.details?.summary).toContain('podziału na ziemię i lot jeszcze nie ma');
   });
 
   it('silnik, który nie pracował, nie ma z czym porównywać - i mówi to wprost', () => {
@@ -184,7 +184,7 @@ describe('rachunek motogodzin', () => {
     const view = mhBalance(session(), norm());
 
     expect(view.rows.map((row) => `${row.op}${row.label} = ${row.value}`)).toEqual([
-      'Licznik przy przejęciu = 1234:30',
+      'Licznik przy rozpoczęciu = 1234:30',
       '−Licznik przy zdaniu = 1236:05',
     ]);
     expect(view.totalLabel).toBe('Przyrost');
@@ -253,7 +253,7 @@ describe('norma z dokumentacji na karcie rachunku (issue #66)', () => {
     // Podstawa mówi WPROST, skąd ta liczba - to najważniejsza różnica między tym
     // werdyktem a wszystkimi pozostałymi: pasmo jest zadeklarowane, nie zmierzone.
     expect(detail(view, 'Podstawa')).toBe('dokumentacja jednostki');
-    expect(view.details?.summary).toContain('Pasmo pochodzi z dokumentacji jednostki');
+    expect(view.details?.summary).toContain('Pasmo pochodzi z dokumentacji samolotu');
   });
 
   it('MODEL WYGRYWA, a dokumentacja zostaje odniesieniem z odchyłką', () => {

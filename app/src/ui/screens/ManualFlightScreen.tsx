@@ -390,7 +390,7 @@ export function ManualFlightScreen({
         // Wyłączony ze służby - jak w preflightcie. Cudzy claim NIE blokuje:
         // wpis dotyczy przeszłości, a nie prawa zapisu „tu i teraz" (§4.4 chroni
         // sesję bieżącą, nie historię).
-        disabledReason: a.serviceStatus === 'disabled' ? 'Wyłączony ze służby' : undefined,
+        disabledReason: a.serviceStatus === 'disabled' ? 'Poza służbą' : undefined,
         tags:
           a.serviceStatus === 'disabled'
             ? [{ label: 'Wyłączony', tone: 'red' as const }]
@@ -609,7 +609,7 @@ export function ManualFlightScreen({
                 dwuosobowa" USUNIĘTY: powód blokady ma jedno miejsce w całej
                 aplikacji - wnętrze przycisku, który nie działa. */}
             <Card
-              title="Drugi pilot (Dual)"
+              title="Drugi pilot"
               header="inline"
               headerRight={
                 <Tag
@@ -808,7 +808,7 @@ export function ManualFlightScreen({
                   kind="warning"
                   tone="amber"
                   icon="warning"
-                  text="Nie dodałeś ani jednego lotu - operacja zapisze się jako bieg silnika bez lotu. Dopisz lot, jeśli go pominąłeś."
+                  text="W tym wpisie nie ma ani jednego lotu - zapisze się jako bieg silnika bez lotu. Dopisz brakujący lot, jeśli był."
                 />
               )}
 
@@ -854,7 +854,7 @@ export function ManualFlightScreen({
               <Field label="Dolane">
                 <ValueBox
                   value={draft.fuel.addedL > 0 ? String(Math.round(draft.fuel.addedL)) : ''}
-                  placeholder="nie tankowałem"
+                  placeholder="bez tankowania"
                   unit="L"
                   tone="amber"
                   actionIcon="edit"
@@ -978,7 +978,7 @@ export function ManualFlightScreen({
               <Field label="Dolewka">
                 <ValueBox
                   value={oilValueText(draft.oilAddedL)}
-                  placeholder="nie dolewałem"
+                  placeholder="bez dolewki"
                   unit="L"
                   actionIcon="edit"
                   onPress={() => setSheet({ kind: 'oil' })}

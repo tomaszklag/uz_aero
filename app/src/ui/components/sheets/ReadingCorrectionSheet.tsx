@@ -190,7 +190,7 @@ export function ReadingCorrectionSheet({
    * da się przeczytać, potem zmień cokolwiek, na końcu ustąp twardej regule czasu.
    */
   const blocker = !readable
-    ? 'Nie rozumiem którejś z wartości - popraw wpis'
+    ? 'Popraw wpis - którejś z wartości nie da się odczytać'
     : blocked
       ? (timeNote?.text ?? 'Tej korekty nie da się zapisać')
       : null;
@@ -242,6 +242,7 @@ export function ReadingCorrectionSheet({
           wykraczająca poza uruchomienie silnika. */}
       {time != null && (
         <TimeStepper
+          label="Godzina rozpoczęcia (UTC)"
           value={at}
           onChange={setAt}
           format={time.format}
@@ -322,7 +323,7 @@ export function ReadingCorrectionSheet({
 
       {changed && !readable && (
         <AppText variant="mono" tone="red" style={styles.error}>
-          Nie umiem odczytać wpisanej wartości - sprawdź format.
+          Tej wartości nie da się odczytać - sprawdź format.
         </AppText>
       )}
 

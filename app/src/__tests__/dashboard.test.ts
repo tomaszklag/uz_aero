@@ -34,7 +34,7 @@ const rezerwacja = (over: Partial<NextBooking> = {}): NextBooking => ({
   operation: 'Przelot',
   pending: false,
   route: 'EPKK → EPRJ',
-  crew: 'Dual: BNO',
+  crew: 'Drugi pilot: BNO',
   ...over,
 });
 
@@ -89,7 +89,7 @@ describe('odliczanie do rezerwacji', () => {
 
 describe('podpis pod „ROZPOCZNIJ LOT"', () => {
   it('mówi, czym wypełni się krok 1 - bo karta rezerwacji nie ma własnego startu', () => {
-    expect(startHint(rezerwacja())).toBe('Wypełni się rezerwacją 09:00 · SP-AXA');
+    expect(startHint(rezerwacja())).toBe('Z Twojej rezerwacji: 09:00 · SP-AXA');
   });
 
   it('bez rezerwacji podpisu NIE MA', () => {

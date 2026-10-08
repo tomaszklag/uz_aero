@@ -636,11 +636,11 @@ function Offline({ theme }: { theme: Theme }) {
           BRAK POŁĄCZENIA
         </AppText>
         <AppText variant="body" style={s.warningText}>
-          Termin potwierdza serwer - bez połączenia telefon nie wie, co jest wolne,
-          i nie ma jak zająć godzin.
+          Rezerwację zapiszesz tylko z zasięgiem - bez połączenia nie widać, które godziny
+          są wolne.
         </AppText>
         <AppText variant="body" style={s.warningText}>
-          Wróć tu z zasięgiem. Lot możesz rozpocząć bez rezerwacji.
+          Lot możesz rozpocząć bez rezerwacji.
         </AppText>
       </View>
     </Card>

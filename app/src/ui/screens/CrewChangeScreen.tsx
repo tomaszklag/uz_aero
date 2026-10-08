@@ -42,7 +42,7 @@ import { useTheme } from '../theme';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { duration, timeUtc } from '../format';
-import { NO_DUAL, crewRows, dualChangeBlocker } from './logic/crewChange';
+import { NO_DUAL, crewRows, dualChangeBlocker, dualChangeUnchanged } from './logic/crewChange';
 import type { ReferenceAircraft, ReferencePilot } from '../../domain';
 
 export function CrewChangeScreen({
@@ -139,7 +139,7 @@ export function CrewChangeScreen({
       detail: '-',
       disabledReason:
         aircraft?.dualRequired === true
-          ? `${aircraft.type} wymaga załogi 2-osobowej`
+          ? `${aircraft.type} wymaga załogi dwuosobowej`
           : undefined,
     });
     return list;
@@ -151,6 +151,8 @@ export function CrewChangeScreen({
     aircraft?.dualRequired ?? false,
     aircraft?.type ?? 'Ten samolot',
   );
+  // Wybór, który niczego nie zmienia, blokuje BEZ zdania - widać go na liście nad przyciskiem.
+  const unchanged = dualChangeUnchanged(selected, projection.dualId);
 
   const openSheet = useCallback(() => {
     // Każde otwarcie zaczyna bez wyboru - arkusz nie pamięta porzuconej edycji
@@ -160,7 +162,7 @@ export function CrewChangeScreen({
   }, []);
 
   const save = useCallback(async () => {
-    if (busy || selected == null || blocker != null) return;
+    if (busy || selected == null || unchanged || blocker != null) return;
     setBusy(true);
     try {
       await crewChange({
@@ -175,7 +177,7 @@ export function CrewChangeScreen({
     } finally {
       setBusy(false);
     }
-  }, [blocker, busy, crewChange, navigation, projection.dualId, selected]);
+  }, [blocker, busy, crewChange, navigation, projection.dualId, selected, unchanged]);
 
   return (
     <Screen
@@ -211,7 +213,7 @@ export function CrewChangeScreen({
               pilotId={row.pilotId == null ? null : (codeOf(row.pilotId) ?? '-')}
               you={row.pilotId === pilotId}
               metaTop={row.since != null ? `od ${timeUtc(row.since)}` : undefined}
-              metaBottom={row.since != null ? `block: ${duration(row.blockMs)}` : undefined}
+              metaBottom={row.since != null ? `blok: ${duration(row.blockMs)}` : undefined}
             />
           ))}
 
@@ -228,18 +230,17 @@ export function CrewChangeScreen({
           />
         </Card>
 
-        {/* ── przekazanie samolotu innemu PIC ───────────────────────────────
+        {/* ── przekazanie samolotu innemu dowódcy ───────────────────────────
             Bez litery „B" i plakietki (przegląd 2026-09-02): sekcja jest jedna,
             a nagłówek nazywa czynność - reszta to była typografia architektury. */}
-        <Card title="Przekazanie samolotu innemu PIC" header="inline">
+        <Card title="Przekazanie samolotu innemu dowódcy" header="inline">
           <AppText variant="body" tone="secondary" style={styles.explain}>
             <AppText variant="body" tone="primary" style={styles.explain}>
               Nie wybierasz tu nowego dowódcy.
             </AppText>
-            {' Dane operacji zapisuje wyłącznie telefon aktywnego PIC, więc nowy dowódca '}
-            {'przejmuje samolot '}
+            {' Nowy dowódca przejmuje samolot '}
             <AppText variant="body" tone="primary" style={styles.explain}>
-              ze swojego telefonu.
+              na swoim telefonie.
             </AppText>
           </AppText>
 
@@ -249,7 +250,7 @@ export function CrewChangeScreen({
                 parts: [
                   { text: 'Zdajesz samolot odczytami końcowymi', emphasis: true },
                   {
-                    text: ' - paliwomierz i licznik MH. To one są przekazaniem dla następnego dowódcy.',
+                    text: ' - paliwa i motogodzin. To one są przekazaniem dla następnego dowódcy.',
                   },
                 ],
               },
@@ -262,11 +263,8 @@ export function CrewChangeScreen({
               },
               {
                 parts: [
-                  {
-                    text: 'Rozliczenie tego samolotu idzie do wysyłki, a ten telefon przestaje zapisywać jego dane. ',
-                  },
                   { text: 'Twój dzień trwa dalej', emphasis: true },
-                  { text: ' - kolejna maszyna dopisze się do listy operacji.' },
+                  { text: ' - kolejny lot dopisze się do Historii.' },
                 ],
               },
             ]}
@@ -295,14 +293,14 @@ export function CrewChangeScreen({
         visible={sheetOpen}
         title="Zmiana drugiego pilota"
         confirmLabel="ZAPISZ ZMIANĘ"
-        confirmDisabled={selected == null}
+        confirmDisabled={selected == null || unchanged}
         confirmDisabledReason={selected != null ? blocker : null}
         onConfirm={() => void save()}
         onCancel={() => setSheetOpen(false)}
       >
         <View style={{ gap: 5 }}>
           <AppText variant="micro" tone="muted">
-            Wychodzący DUAL
+            Obecny drugi pilot
           </AppText>
           {/* Odczyt, nie kontrolka - kto wychodzi, wynika ze stanu operacji. */}
           <View style={styles.readonly}>
@@ -316,7 +314,7 @@ export function CrewChangeScreen({
 
         <View style={{ gap: 7 }}>
           <AppText variant="micro" tone="muted">
-            Nowy DUAL
+            Nowy drugi pilot
           </AppText>
           {!loaded ? (
             skeleton ? (

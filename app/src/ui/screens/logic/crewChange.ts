@@ -11,7 +11,8 @@
 import type { EpochMillis, Event, Leg, SessionState } from '../../../domain';
 
 export interface CrewRowModel {
-  role: 'PIC' | 'DUAL';
+  /** Napis roli w wierszu - po polsku, jak w całej aplikacji (2026-10-08). */
+  role: 'Dowódca' | 'Drugi pilot';
   /** Kod pilota; null = miejsce Duala puste. */
   pilotId: string | null;
   /** Od kiedy w załodze (UTC); null gdy nie dotyczy. */
@@ -73,7 +74,7 @@ export function crewRows(
   const picSince = projection.claimedAt;
   const rows: CrewRowModel[] = [
     {
-      role: 'PIC',
+      role: 'Dowódca',
       pilotId: projection.picId,
       since: picSince,
       blockMs: picSince != null ? blockSince(projection.legs, picSince, now) : 0,
@@ -82,7 +83,7 @@ export function crewRows(
 
   const dSince = projection.dualId != null ? dualSince(events, projection.claimedAt) : null;
   rows.push({
-    role: 'DUAL',
+    role: 'Drugi pilot',
     pilotId: projection.dualId,
     since: dSince,
     blockMs: dSince != null ? blockSince(projection.legs, dSince, now) : 0,
@@ -100,10 +101,11 @@ export function crewRows(
 export const NO_DUAL = '__none__' as const;
 
 /**
- * Powód blokady zapisu zmiany Duala; `null` = wolno zapisać.
+ * Powód blokady zapisu zmiany drugiego pilota; `null` = ten powód nie stoi na drodze.
  *
- * Kolejność sprawdzeń odpowiada wadze: brak wyboru → wymóg załogi 2-osobowej (An-2)
- * → zmiana, która niczego nie zmienia.
+ * Zdanie dostaje WYŁĄCZNIE wymóg załogi dwuosobowej - blokada, której nie widać z samej
+ * listy. Pusty wybór i wybór, który niczego nie zmienia (`dualChangeUnchanged`), blokują
+ * bez zdania: oba widać na liście tuż nad przyciskiem (wąski wyjątek issue #55).
  */
 export function dualChangeBlocker(
   selected: string | null,
@@ -111,11 +113,16 @@ export function dualChangeBlocker(
   dualRequired: boolean,
   aircraftLabel: string,
 ): string | null {
-  if (selected == null) return 'Wybierz nowego Duala albo „Bez drugiego pilota"';
+  if (selected == null) return null;
   const next = selected === NO_DUAL ? null : selected;
-  if (next == null && dualRequired) {
-    return `${aircraftLabel} wymaga załogi 2-osobowej - miejsce Duala nie może zostać puste`;
+  if (next == null && currentDualId != null && dualRequired) {
+    return `${aircraftLabel} wymaga załogi dwuosobowej - wybierz drugiego pilota.`;
   }
-  if (next === currentDualId) return 'Wybrany pilot już jest Dualem - nie ma czego zmieniać';
   return null;
+}
+
+/** Wybór, który zostawia załogę taką, jaka jest - zapis nie miałby czego zapisać. */
+export function dualChangeUnchanged(selected: string | null, currentDualId: string | null): boolean {
+  if (selected == null) return false;
+  return (selected === NO_DUAL ? null : selected) === currentDualId;
 }

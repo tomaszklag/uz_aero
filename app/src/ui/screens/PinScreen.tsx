@@ -140,7 +140,7 @@ export function PinScreen() {
             tone="amber"
             icon="warning"
             title="Sesja zakończona - zaloguj się ponownie"
-            text="PIN dalej otwiera aplikację, ale wysyłka stoi do ponownego zalogowania."
+            text="PIN nadal otwiera aplikację, ale zapisy wyślą się dopiero po ponownym zalogowaniu."
             style={styles.session}
           />
         )}
@@ -182,7 +182,7 @@ export function PinScreen() {
             {reloginBlocked && (
               <OutboxGuard
                 count={outboxCount}
-                tail=" czeka na wysyłkę. Odblokuj PIN-em i poczekaj na synchronizację - inaczej dane dnia zostałyby bez właściciela."
+                tail=". Ponowne logowanie będzie możliwe, gdy się wyślą - odblokuj aplikację PIN-em i połącz się z internetem."
                 style={styles.guard}
               />
             )}

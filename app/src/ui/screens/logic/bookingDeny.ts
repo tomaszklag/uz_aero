@@ -67,7 +67,7 @@ export interface BookingDenyVm {
  */
 export const BOOKING_OFFLINE: BookingDenyVm = {
   title: 'Rezerwacja wymaga połączenia',
-  body: 'Slot potwierdza serwer - bez zasięgu nie ma jak sprawdzić, czy termin jest wolny.',
+  body: 'Rezerwację zapiszesz tylko z zasięgiem - bez połączenia nie da się sprawdzić, czy termin jest wolny.',
   offerFix: false,
 };
 
@@ -80,8 +80,8 @@ export function bookingDeny(input: BookingDenyInput): BookingDenyVm {
 
     case 'aircraft_disabled':
       return {
-        title: 'Maszyna wyłączona z użytku',
-        body: `${reg} nie jest w tej chwili dostępna. Wybierz inny samolot.`,
+        title: 'Maszyna poza służbą',
+        body: `${reg} jest wyłączona z floty klubu. Wybierz inny samolot.`,
         offerFix: false,
       };
 
@@ -89,7 +89,7 @@ export function bookingDeny(input: BookingDenyInput): BookingDenyVm {
       // Flota zmieniła się między wczytaniem ekranu a zapisem - wskazanie maszyny
       // przestało cokolwiek znaczyć, więc krok wraca do wyboru.
       return {
-        title: 'Nie znam tej maszyny',
+        title: 'Tej maszyny nie ma we flocie',
         body: 'Wybierz samolot jeszcze raz - flota klubu mogła się w międzyczasie zmienić.',
         offerFix: false,
       };
@@ -123,7 +123,7 @@ export function bookingDeny(input: BookingDenyInput): BookingDenyVm {
       // pilot przeczyta go administratorowi - tak samo jak przy zablokowanej wysyłce.
       return {
         title: 'Nie udało się zarezerwować',
-        body: `Serwer odmówił zapisu (${input.refusal}).`,
+        body: `Spróbuj jeszcze raz albo zgłoś to administratorowi klubu - kod: ${input.refusal}.`,
         offerFix: false,
       };
   }
@@ -134,7 +134,7 @@ function takenVm(input: BookingDenyInput, reg: string): BookingDenyVm {
   if (taken == null) {
     return {
       title: 'Ten termin jest już zajęty',
-      body: `${reg} ma w tych godzinach inną zajętość.`,
+      body: `${reg} jest w tych godzinach zajęta.`,
       offerFix: true,
     };
   }
@@ -158,7 +158,7 @@ function takenVm(input: BookingDenyInput, reg: string): BookingDenyVm {
   const seeking = taken.order?.seeking ?? [];
   if (seeking.length > 0) {
     const age =
-      input.takenAt == null ? '' : ` Zlecenie weszło ${relativeAge(Math.max(0, input.now - input.takenAt))} temu.`;
+      input.takenAt == null ? '' : ` Zlecenie dodano ${relativeAge(Math.max(0, input.now - input.takenAt))} temu.`;
     return {
       title:
         input.takenAt != null && input.now - input.takenAt < FRESH_MS
@@ -182,7 +182,7 @@ function takenVm(input: BookingDenyInput, reg: string): BookingDenyVm {
   const name = input.nameOf(taken.pilotId);
   const who = name == null ? 'inny pilot' : shortName(name);
   const age =
-    input.takenAt == null ? '' : ` Weszła ${relativeAge(Math.max(0, input.now - input.takenAt))} temu.`;
+    input.takenAt == null ? '' : ` Rezerwację dodano ${relativeAge(Math.max(0, input.now - input.takenAt))} temu.`;
 
   return {
     title:

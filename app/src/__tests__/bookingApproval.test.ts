@@ -41,7 +41,7 @@ describe('ścieżka na karcie rezerwacji', () => {
     expect(vm.banner?.title).toBe('Czeka na zgodę · krok 1 z 2');
     expect(vm.steps).toEqual([
       { id: 's1', label: 'Mechanik', mark: 'now', when: 'czeka od 16 h temu' },
-      { id: 's2', label: 'Szef', mark: 'idle', when: 'nie zaczął' },
+      { id: 's2', label: 'Szef', mark: 'idle', when: 'jeszcze nie pytany' },
     ]);
     expect(vm).toMatchObject({ badge: 'Czeka na zgodę', badgeTone: 'amber', heroTone: 'amber', stepOfN: 'krok 1 z 2' });
   });
@@ -80,16 +80,16 @@ describe('ścieżka na karcie rezerwacji', () => {
     expect(vm.state).toBe('rejected');
     expect(vm.banner).toEqual({ tone: 'red', title: 'Odmowa zgody · krok „Mechanik"', text: 'Przegląd 100 h.' });
     expect(vm.steps.map((s) => s.mark)).toEqual(['no', 'idle']);
-    expect(vm.steps[1]!.when).toBe('nie zaczął');
+    expect(vm.steps[1]!.when).toBe('jeszcze nie pytany');
     expect(vm).toMatchObject({ badge: 'Odrzucona', badgeTone: 'red', heroTone: 'off', stepOfN: null });
   });
 
   it('wygasła: pierwszy niezdecydowany „nie zdecydował", dalsi „nie zaczął"', () => {
     const vm = view({ outcome: 'pending', steps: [step('s1', 'Mechanik', { current: true }), step('s2', 'Szef')] }, 'expired');
     expect(vm.state).toBe('expired');
-    expect(vm.steps.map((s) => s.when)).toEqual(['nie zdecydował', 'nie zaczął']);
+    expect(vm.steps.map((s) => s.when)).toEqual(['bez decyzji', 'jeszcze nie pytany']);
     expect(vm).toMatchObject({ badge: 'Wygasła', badgeTone: 'dim', heroTone: 'off' });
-    expect(vm.banner?.text).toContain('milczenie nie znaczy zgody');
+    expect(vm.banner?.text).toContain('brak decyzji nie oznacza zgody');
   });
 
   it('potwierdzona: pominięcie jest zapisem „przeszedł sam", banera nie ma', () => {
@@ -99,7 +99,7 @@ describe('ścieżka na karcie rezerwacji', () => {
     );
     expect(vm.state).toBe('confirmed');
     expect(vm.banner).toBeNull();
-    expect(vm.steps.map((s) => s.when)).toEqual(['przeszedł sam', '1 h temu']);
+    expect(vm.steps.map((s) => s.when)).toEqual(['pominięty - Twój krok', '1 h temu']);
     expect(vm).toMatchObject({ badge: 'Potwierdzona', badgeTone: 'green', heroTone: 'green' });
   });
 

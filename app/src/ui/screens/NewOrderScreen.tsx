@@ -445,8 +445,8 @@ export function NewOrderScreen({
             lines={[
               [
                 { text: 'Zlecenie ' },
-                { text: 'wymaga połączenia', bold: true },
-                { text: ' - termin potwierdza serwer, a bez zajętości floty telefon nie wie, co jest wolne.' },
+                { text: 'wymaga połączenia z internetem', bold: true },
+                { text: ' - bez niego nie widać, które godziny są wolne.' },
               ],
               [{ text: 'Wróć tu z zasięgiem.' }],
             ]}

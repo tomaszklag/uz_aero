@@ -273,7 +273,7 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val amber">3 zdarzenia czekają</span>
+            <span class="diag-val amber">3 zapisy czekają</span>
           </div>
           <!-- JEDEN STEMPEL ZAMIAST DWÓCH (issue #82): „czemu mam dwa czasy, które się
                różnią, czyli «ostatnia wysyłka» i «data synchronizacji»? To nie powinno
@@ -308,10 +308,10 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Status</span>
-            <span class="diag-val green">FIX 3D · 11 satelitów</span>
+            <span class="diag-val green">SYGNAŁ · 11 satelitów</span>
           </div>
           <div class="diag-row">
-            <span class="diag-key">Ostatni fix</span>
+            <span class="diag-key">Ostatni odczyt GPS</span>
             <span class="diag-val" id="fixTime">12:47:29 UTC <small id="fixAge">· 2 s temu</small></span>
           </div>
           <div class="diag-row">
@@ -425,7 +425,7 @@
              bo sesja żyje; stan domyślny nie dostaje zdania (issue #12). -->
 
         <!-- Wylogowanie zablokowane: niepusty outbox (3.0) - disabled Z POWODEM, nigdy cichy błąd -->
-        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
+        <button class="action-item disabled" title="Zablokowane: 3 zapisy czekają na wysyłkę" aria-disabled="true">
           <span class="action-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </span>
@@ -437,7 +437,7 @@
 
         <div class="outbox-guard">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer - wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
+          <span><b>3 zapisy czekają na wysyłkę</b>. Wylogujesz się, gdy się wyślą - wystarczy zasięg, wysyłka ruszy sama.</span>
         </div>
         <!-- Przypis „Ponowne logowanie wymaga internetu - konta zakłada administrator"
              USUNIĘTY (2.1.0): po logowaniu hasłem druga połowa jest nieprawdziwa (osoba
@@ -621,7 +621,7 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Kolejka wysyłki</span>
-            <span class="diag-val red">3 zdarzenia czekają</span>
+            <span class="diag-val red">3 zapisy czekają</span>
           </div>
           <div class="diag-row">
             <span class="diag-key">Ostatnia synchronizacja</span>
@@ -639,10 +639,10 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Status</span>
-            <span class="diag-val green">FIX 3D · 11 satelitów</span>
+            <span class="diag-val green">SYGNAŁ · 11 satelitów</span>
           </div>
           <div class="diag-row">
-            <span class="diag-key">Ostatni fix</span>
+            <span class="diag-key">Ostatni odczyt GPS</span>
             <span class="diag-val">12:52:04 UTC <small>· 2 s temu</small></span>
           </div>
           <div class="diag-row">
@@ -732,7 +732,7 @@
         </a>
 
         <!-- Strażnik outboxa zostaje (D10); jego amber-box - nie (powód nad ramką). -->
-        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej operacji nie dotarły jeszcze na serwer" aria-disabled="true">
+        <button class="action-item disabled" title="Zablokowane: 3 zapisy czekają na wysyłkę" aria-disabled="true">
           <span class="action-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </span>
@@ -851,10 +851,10 @@
         <div>
           <div class="diag-row">
             <span class="diag-key">Status</span>
-            <span class="diag-val green">FIX 3D · 9 satelitów</span>
+            <span class="diag-val green">SYGNAŁ · 9 satelitów</span>
           </div>
           <div class="diag-row">
-            <span class="diag-key">Ostatni fix</span>
+            <span class="diag-key">Ostatni odczyt GPS</span>
             <span class="diag-val">18:05:11 UTC <small>· 3 s temu</small></span>
           </div>
           <div class="diag-row">

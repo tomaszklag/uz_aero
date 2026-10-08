@@ -7,7 +7,14 @@
  * nikt nie zauważy aż do kontroli.
  */
 
-import { NO_DUAL, blockSince, crewRows, dualChangeBlocker, dualSince } from '../ui/screens/logic/crewChange';
+import {
+  NO_DUAL,
+  blockSince,
+  crewRows,
+  dualChangeBlocker,
+  dualChangeUnchanged,
+  dualSince,
+} from '../ui/screens/logic/crewChange';
 import type { Leg, Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
@@ -74,7 +81,7 @@ describe('od kiedy Dual jest w załodze', () => {
 
 describe('wiersze aktualnej załogi', () => {
   it('puste miejsce Duala jest wierszem, nie brakiem wiersza', () => {
-    // Mockup zawsze pokazuje dwa wiersze - pusty DUAL to informacja, nie cisza.
+    // Mockup zawsze pokazuje dwa wiersze - puste miejsce drugiego pilota to informacja, nie cisza.
     const projection = {
       picId: 'AKO',
       dualId: null,
@@ -82,7 +89,7 @@ describe('wiersze aktualnej załogi', () => {
     } as unknown as SessionState;
 
     const rows = crewRows(projection, [], at(9, 0));
-    expect(rows.map((r) => r.role)).toEqual(['PIC', 'DUAL']);
+    expect(rows.map((r) => r.role)).toEqual(['Dowódca', 'Drugi pilot']);
     expect(rows[1]!.pilotId).toBeNull();
     expect(rows[1]!.blockMs).toBe(0);
   });
@@ -91,15 +98,25 @@ describe('wiersze aktualnej załogi', () => {
 describe('blokada zapisu zmiany Duala', () => {
   it('wymóg załogi 2-osobowej nie pozwala zostawić pustego miejsca', () => {
     const reason = dualChangeBlocker(NO_DUAL, 'BNO', true, 'Antonov An-2');
-    expect(reason).toContain('2-osobowej');
+    expect(reason).toBe('Antonov An-2 wymaga załogi dwuosobowej - wybierz drugiego pilota.');
   });
 
   it('bez wymogu - rezygnacja z Duala jest legalna', () => {
     expect(dualChangeBlocker(NO_DUAL, 'BNO', false, 'Cessna 182')).toBeNull();
   });
 
-  it('zmiana na tę samą osobę nie jest zmianą', () => {
-    expect(dualChangeBlocker('BNO', 'BNO', false, 'Cessna 182')).not.toBeNull();
+  it('zmiana na tę samą osobę nie jest zmianą - blokuje bez zdania (widać z listy)', () => {
+    expect(dualChangeUnchanged('BNO', 'BNO')).toBe(true);
+    expect(dualChangeBlocker('BNO', 'BNO', false, 'Cessna 182')).toBeNull();
+    // „Bez drugiego pilota" przy pustym fotelu też niczego nie zmienia - i nie jest
+    // naruszeniem wymogu załogi: tego stanu ten zapis nie tworzy.
+    expect(dualChangeUnchanged(NO_DUAL, null)).toBe(true);
+    expect(dualChangeBlocker(NO_DUAL, null, true, 'Antonov An-2')).toBeNull();
+  });
+
+  it('pusty wybór nie dostaje zdania - przycisk stoi, bo nic nie wybrano', () => {
+    expect(dualChangeBlocker(null, 'BNO', true, 'Antonov An-2')).toBeNull();
+    expect(dualChangeUnchanged(null, 'BNO')).toBe(false);
   });
 
   it('zwykła podmiana przechodzi', () => {

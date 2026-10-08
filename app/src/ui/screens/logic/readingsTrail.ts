@@ -66,7 +66,7 @@ export function fuelChainTrail(
       {
         id: 'chain-before',
         title: `Poprzedni lot · ${who(link, codeOf)}`,
-        meta: `zdał maszynę z ${litres(link.fuelL)}`,
+        meta: `po locie zostało ${litres(link.fuelL)}`,
       },
     ];
   }
@@ -77,7 +77,7 @@ export function fuelChainTrail(
     {
       id: 'chain-after',
       title: `Następny lot · ${who(link, codeOf)}`,
-      meta: `zastał ${litres(link.fuelL)}`,
+      meta: `na początku lotu było ${litres(link.fuelL)}`,
     },
   ];
 }
@@ -102,7 +102,7 @@ export function mhChainTrail(
       {
         id: 'chain-before',
         title: `Poprzedni lot · ${who(link, codeOf)}`,
-        meta: `zdał maszynę na ${motoHours(link.mh, format)} MH`,
+        meta: `po locie licznik ${motoHours(link.mh, format)} MH`,
       },
     ];
   }
@@ -113,7 +113,7 @@ export function mhChainTrail(
     {
       id: 'chain-after',
       title: `Następny lot · ${who(link, codeOf)}`,
-      meta: `zastał ${motoHours(link.mh, format)} MH`,
+      meta: `na początku lotu licznik ${motoHours(link.mh, format)} MH`,
     },
   ];
 }

@@ -214,7 +214,7 @@
             <span class="axis-time amber">08:04</span>
             <span class="axis-mark"><span class="axis-dot hollow amber"></span></span>
             <span class="axis-label">
-              <span class="axis-name amber">Przejęcie · korygowane</span>
+              <span class="axis-name amber">Rozpoczęcie · korygowane</span>
               <span class="axis-sub">paliwo 150 L · 1 234:30</span>
             </span>
             <span></span>
@@ -243,7 +243,7 @@
              2026-09-04). Godzina dokleja się do tej samej linii w arkuszu ZDANIA - tam
              pola czasu nie ma (`day_close` nie przyjmuje `retime`), więc jest jedynym
              miejscem, w którym widać, czego dotyczy poprawka. -->
-        <div class="target-line">PRZEJĘCIE SAMOLOTU</div>
+        <div class="target-line">ROZPOCZĘCIE LOTU</div>
 
         <!-- ══ GODZINA PRZEJĘCIA (uwaga z urządzenia) ═══════════════════════
              Zwykły fakt („wziąłem samolot o 9:00, nie o 8:04") i pilot musi umieć go
@@ -254,7 +254,7 @@
              24-godzinne okno korekty, więc przesuwanie go własną poprawką pozwalałoby
              pilotowi przedłużyć sobie termin - regułę, która ma go ograniczać. -->
         <div>
-          <div class="field-label">Godzina przejęcia (UTC)</div>
+          <div class="field-label">Godzina rozpoczęcia (UTC)</div>
           <div class="time-stepper">
             <button class="min-btn">−1 min</button>
             <span class="time-val">09:00</span>
@@ -267,7 +267,7 @@
              `logic/claimRetime.ts` liczy tę samą treść, którą potem wykonuje. -->
         <div class="warn-box">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span class="warn-text"><b>Przesuniemy cały bieg silnika.</b> Przejęcie wypada po uruchomieniu, więc wszystkie zdarzenia pojadą o <b>48 min</b>: uruchomienie stanie się 09:00, a starty, lądowania i zrzuty za nim. Czasy trwania zostają - przesuwamy, nie skracamy. Zdanie samolotu bez zmian.</span>
+          <span class="warn-text"><b>Przesuniemy cały bieg silnika.</b> Rozpoczęcie wypada po uruchomieniu silnika, więc cały bieg silnika przesunie się o <b>48 min</b>: uruchomienie będzie o 09:00, a starty, lądowania i zrzuty przesuną się razem z nim. Zdanie samolotu zostaje bez zmian.</span>
         </div>
 
         <div>

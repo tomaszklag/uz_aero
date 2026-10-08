@@ -62,7 +62,7 @@ export function AddressChip({ kind, code, name, sub, status = 'draft', onClear }
         )}
       </View>
       {status === 'sent' || onClear == null ? (
-        <View style={s.lock} accessible accessibilityLabel={`${name}: wysłane - odebrać można w menu przy adresacie`}>
+        <View style={s.lock} accessible accessibilityLabel={`${name}: wysłane - usunąć z adresatów można w menu przy osobie`}>
           <Icon name="lock" size={13} color={theme.colors.textMuted} />
         </View>
       ) : (

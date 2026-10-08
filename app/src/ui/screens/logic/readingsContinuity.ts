@@ -184,7 +184,7 @@ export function fuelContinuityWarnings(
           `Paliwo nie zgadza się z poprzednim lotem - maszynę zdano z ` +
           `${litres(chain.before.fuelL)}, a wpis zaczyna od ${litres(startL)}. ` +
           'Ktoś tankował poza aplikacją?',
-        src: `z rejestru · ${who(chain.before, codeOf)}`,
+        src: `z historii samolotu · ${who(chain.before, codeOf)}`,
       });
     }
   }
@@ -195,9 +195,9 @@ export function fuelContinuityWarnings(
       warnings.push({
         id: 'continuity-after',
         text:
-          `Paliwo nie zgadza się z następnym lotem - następny pilot zastał ` +
-          `${litres(chain.after.fuelL)}, a wpis kończy na ${litres(endL)}.`,
-        src: `z rejestru · ${who(chain.after, codeOf)}`,
+          `Paliwo nie zgadza się z następnym lotem - następny lot zaczął się od ` +
+          `${litres(chain.after.fuelL)}, a wpis kończy się na ${litres(endL)}.`,
+        src: `z historii samolotu · ${who(chain.after, codeOf)}`,
       });
     }
   }
@@ -230,7 +230,7 @@ export function mhContinuityWarnings(
         text:
           `Licznik nie zgadza się z poprzednim lotem - maszynę zdano na ` +
           `${motoHours(chain.before.mh, format)}, a wpis zaczyna od ${motoHours(startMh, format)}.`,
-        src: `z rejestru · ${who(chain.before, codeOf)}`,
+        src: `z historii samolotu · ${who(chain.before, codeOf)}`,
       });
     }
   }
@@ -240,9 +240,9 @@ export function mhContinuityWarnings(
       warnings.push({
         id: 'continuity-mh-after',
         text:
-          `Licznik nie zgadza się z następnym lotem - następny pilot zastał ` +
-          `${motoHours(chain.after.mh, format)}, a wpis kończy na ${motoHours(endMh, format)}.`,
-        src: `z rejestru · ${who(chain.after, codeOf)}`,
+          `Licznik nie zgadza się z następnym lotem - następny lot zaczął się od ` +
+          `${motoHours(chain.after.mh, format)}, a wpis kończy się na ${motoHours(endMh, format)}.`,
+        src: `z historii samolotu · ${who(chain.after, codeOf)}`,
       });
     }
   }
@@ -280,7 +280,7 @@ export function oilContinuityWarnings(
         `Oleju jest więcej niż przy ostatnim pomiarze - było ${oilLitres(oil.levelL)}` +
         (oil.addedSinceL > 0 ? ` i dolano ${oilLitres(oil.addedSinceL)}` : '') +
         `, a wpis podaje ${oilLitres(levelL)}. Brakuje dolewki?`,
-      src: `z rejestru · ${dateTimeUtcShort(oil.at)}`,
+      src: `z historii samolotu · ${dateTimeUtcShort(oil.at)}`,
     },
   ];
 }

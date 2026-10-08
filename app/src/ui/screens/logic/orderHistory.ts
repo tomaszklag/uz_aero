@@ -100,7 +100,7 @@ function whatOf(entry: RemoteOrderHistoryEntry, input: HistoryInput): ChangePart
     case 'recipients_added':
       return title('Nowi adresaci', people(ids(p.pilotIds), input));
     case 'recipients_removed':
-      return title('Zlecenie cofnięte', people(ids(p.pilotIds), input));
+      return title('Usunięcie z adresatów', people(ids(p.pilotIds), input));
     case 'resent':
       return title('Wysłano ponownie', resentDetail(ids(p.added).length, ids(p.reminded).length));
     case 'assigned': {

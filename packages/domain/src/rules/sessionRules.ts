@@ -703,7 +703,7 @@ function checkByType(
         v.push(
           error(
             'CORRECTION_TARGET_NOT_ALLOWED',
-            'Przejęcia nie da się unieważnić - operacja zostałaby bez właściciela. Poprawić można jego godzinę.',
+            'Rozpoczęcia lotu nie da się unieważnić - poprawić można jego godzinę.',
           ),
         );
       }
@@ -721,7 +721,7 @@ function checkByType(
         v.push(
           error(
             'CORRECTION_TARGET_NOT_ALLOWED',
-            'Przejęcia i zdania samolotu nie da się przesunąć w czasie ani unieważnić - poprawić można odczyt paliwa i motogodzin.',
+            'Odczytów z rozpoczęcia lotu i ze zdania samolotu nie da się przesunąć w czasie ani unieważnić - poprawić można paliwo i motogodziny.',
           ),
         );
       }
@@ -821,7 +821,7 @@ function checkByType(
           v.push(
             warning(
               'MH_DELTA_MISMATCH',
-              `Przyrost MH (${round2(deltaH)} h) różni się od czasu blokowego (${round2(blockH)} h).`,
+              `Przyrost motogodzin (${round2(deltaH)} h) różni się od czasu blokowego (${round2(blockH)} h).`,
               { deltaH, blockH },
             ),
           );
@@ -917,7 +917,7 @@ export interface KnownMh {
  * jak błąd aplikacji, nie jak literówka pilota.
  */
 export function lastKnownMh(state: SessionState): KnownMh | null {
-  return state.mh.start != null ? { value: state.mh.start, since: 'przy przejęciu' } : null;
+  return state.mh.start != null ? { value: state.mh.start, since: 'przy rozpoczęciu' } : null;
 }
 
 /**

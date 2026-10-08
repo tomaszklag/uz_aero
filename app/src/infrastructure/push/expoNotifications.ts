@@ -82,7 +82,7 @@ export function configureNotifications(): void {
   });
   if (Platform.OS === 'android') {
     void Notifications.setNotificationChannelAsync(PUSH_CHANNEL_ID, {
-      name: 'Rezerwacje i zgody',
+      name: 'Wiadomości z klubu',
       importance: Notifications.AndroidImportance.HIGH,
       sound: 'default',
     }).catch(() => {
