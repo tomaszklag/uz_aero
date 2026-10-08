@@ -1,79 +1,64 @@
 # Czym jest Ninerdeck
 
-> Elektroniczny chronometraż i kalendarz floty dla aeroklubów, stref zrzutu i szkół latania: pilot rezerwuje samolot, odczytuje liczniki przy przejęciu i zdaniu, resztę zapisuje telefon, a klub widzi flotę w panelu.
+> Dziennik lotów, kalendarz floty i zlecenia lotów dla aeroklubów, stref zrzutu i szkół latania. Pilot zapisuje lot w telefonie, a klub widzi całą flotę w przeglądarce.
 
 ## Aplikacja w telefonie, panel w przeglądarce
 
-Ninerdeck składa się z **aplikacji pilota** na Androida i **panelu klubu** w przeglądarce. Obie pracują na tym samym dzienniku operacji.
+Ninerdeck ma dwie części, które pracują na tym samym dzienniku lotów:
 
-- **Aplikacja pilota** prowadzi przez dzień lotny: przejęcie samolotu z odczytami, kokpit z automatycznym wykrywaniem startów i lądowań, tankowanie, zdanie samolotu. Działa bez zasięgu - zapis zostaje na telefonie i wysyła się sam, gdy wróci sieć. Obok lotu ma **[kalendarz floty](rezerwacja-samolotu)** z rezerwacją, a pod dzwonkiem na pulpicie **[skrzynkę powiadomień](powiadomienia)** - te dwie rzeczy potrzebują zasięgu.
-- **[Panel klubu](panel-wprowadzenie)** otwiera się każdemu członkowi klubu, a to, co kto widzi, wyznacza jego [zakres uprawnień](uprawnienia): [dziennik](panel-dziennik) operacji po maszynach albo po pilotach, z osią zdarzeń, śladem GPS, poprawkami i dopisywaniem brakujących faktów; lista spraw [do sprawdzenia](panel-do-sprawdzenia) - rozjazdy, karty dnia, operacje wiszące; [kalendarz floty](panel-kalendarz), w którym każdy rezerwuje tak samo jak w aplikacji, ze [ścieżką akceptacji](akceptacja-rezerwacji); [statystyki](panel-statystyki) nalotu klubu; konta pilotów do zatwierdzenia i karty samolotów z normami i zużyciem z lotów, a na czas testów także zgłoszenia wysłane z aplikacji.
+- **Aplikacja pilota** na Androida prowadzi przez dzień lotny: rozpoczęcie lotu z odczytami liczników, kokpit, który sam zapisuje starty i lądowania, tankowanie i zdanie samolotu. Ma też kalendarz floty z rezerwacją, zlecenia lotów i powiadomienia.
+- **[Panel klubu](panel-wprowadzenie)** otwiera się w przeglądarce każdemu członkowi klubu. Każdy ma w nim kalendarz floty i zlecenia. Uprawnienia otwierają kolejne części: dziennik lotów, sprawy do sprawdzenia, statystyki, konta pilotów i karty samolotów ([kto co widzi](uprawnienia)).
 
-@screen 20-pulpit "Ekran domowy aplikacji pilota"
+@screen 20-pulpit "Pulpit - ekran startowy aplikacji"
 
 ## Trzy słowa, które warto znać
 
 | Słowo | Znaczenie |
 |---|---|
-| **Operacja** | Jeden bieg silnika - od przejęcia samolotu do jego zdania. W jednej operacji może być wiele lotów. |
-| **Lot** | Od startu do lądowania. Aplikacja liczy loty sama z GPS, także kręgi z touch and go. |
-| **Zdanie samolotu** | Zakończenie operacji z obowiązkowym odczytem paliwa i motogodzin. Zatwierdza log operacji i przekazuje maszynę następnemu pilotowi. |
+| **Operacja** | Jedno uruchomienie silnika: od rozpoczęcia lotu do zdania samolotu. W jednej operacji może być wiele lotów. |
+| **Lot** | Od startu do lądowania. Aplikacja liczy loty sama, także kręgi z touch and go. |
+| **Zdanie samolotu** | Koniec operacji z odczytem paliwa i motogodzin. Zatwierdza zapis lotu i przekazuje maszynę następnemu pilotowi. |
+
+Pozostałe pojęcia wyjaśnia [słownik](slownik).
 
 @screen 10-statystyki "Operacja z lotami na osi"
 
-Pełna lista pojęć: [słownik](slownik). Model w całości: [model operacji](model-operacji).
-
 ## Jak wygląda dzień pilota
 
-1. **Rezerwacja** (jeśli chcesz mieć termin pewny) - w kalendarzu, zwykle dzień wcześniej, przy zasięgu. W klubie ze ścieżką akceptacji termin czeka na zgodę wskazanych osób. Rezerwacja nigdy nie jest warunkiem lotu.
-2. **Rozpoczęcie lotu** - trzy kroki: samolot i załoga, zadanie i trasa, liczniki. Wartości z ostatniego przekazania są już wpisane; pilot porównuje je z przyrządami. Rezerwacja na tę godzinę wypełnia pierwszy krok sama.
-3. **Kokpit** - START ENGINE i aplikacja pracuje sama: kołowanie, start, lądowanie, kolejne loty. Tankowanie, załadunek skoczków i zmiana załogi są pod ręką.
-4. **Zdanie samolotu** - STOP ENGINE, odczyty paliwa i motogodzin, gotowe. Operacja trafia na listę dnia z sumami; przez 24 godziny pilot może poprawić własne wpisy.
+1. **Rezerwacja albo zlecenie** - termin rezerwujesz w kalendarzu, zwykle dzień wcześniej, albo dostajesz [zlecenie lotu](zlecenia-na-lot) od koordynatora czy instruktora. Do latania nie jest potrzebne ani jedno, ani drugie.
+2. **[Rozpoczęcie lotu](rozpoczecie-lotu)** - trzy kroki: samolot i załoga, zadanie i trasa, liczniki. Wartości od poprzedniego pilota są już wpisane, a Ty porównujesz je z przyrządami.
+3. **[Kokpit](kokpit)** - przytrzymujesz **URUCHOM SILNIK** i aplikacja pracuje sama: kołowanie, start, lądowanie, kolejne loty. Tankowanie, załadunek skoczków i zmiana drugiego pilota są pod ręką.
+4. **[Zdanie samolotu](zdanie-samolotu)** - wyłączasz silnik, wpisujesz paliwo i motogodziny, gotowe. Przez 24 godziny możesz jeszcze poprawić własne wpisy.
 
-@screen 02-preflight "Trzy kroki przed lotem" | 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Odczyty przy zdaniu"
+@screen 02-preflight "Pierwszy krok rozpoczęcia lotu" | 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Odczyty przy zdaniu"
 
-## Jak to działa
+## Co zyskuje klub
 
-Każde zdarzenie dnia lotnego - przejęcie, uruchomienie silnika, start, lądowanie, tankowanie, zdanie - jest wpisem w rejestrze na telefonie pilota. Wpis powstaje natychmiast, bez pytania serwera o zgodę, i nigdy nie jest nadpisywany: poprawka dopisuje się obok niego, a stara wartość zostaje. Z tego rejestru telefon sam liczy czas blokowy, liczbę lotów, rachunek paliwa i motogodzin oraz sygnaturę operacji. Kolejka wysyłki przekazuje wpisy do klubu, gdy jest sieć; tam łączą się w dziennik floty, dostają oznaczenia niespójności do wyjaśnienia i trafiają na kartę dnia samolotu. Panel klubu czyta ten sam dziennik - administrator widzi każdą operację razem z historią poprawek.
+- **Jeden dziennik** całej floty i wszystkich pilotów, bez przepisywania z kartek.
+- **Ciągłość liczników** - paliwo i motogodziny przechodzą z pilota na pilota, a każda różnica jest od razu widoczna.
+- **Normę zużycia** każdej maszyny - najpierw z dokumentacji, z czasem z lotów tego egzemplarza.
+- **Plan floty** - kalendarz wszystkich maszyn, rezerwacje z podpowiedzią wolnych godzin, wyłączanie maszyn na przegląd, a jeśli klub chce - zgodę wskazanych osób na każdą rezerwację.
+- **Zlecenia lotów** - koordynator wysyła lot do wybranych pilotów albo grup, a oni odpowiadają z telefonu.
+- **Kontrolę nad samolotem** - technik i koordynator widzą, co się dzieje z maszyną, i dostają powiadomienie, gdy ktoś ją bierze albo oddaje ([karta samolotu i obserwowanie](obserwowanie-samolotu)).
+- **Ostatnie słowo w klubie** - administrator przyjmuje pilotów, nadaje uprawnienia, poprawia wpisy w dowolnej chwili i kończy loty, których pilot nie zamknął.
 
-@screen 20c-pulpit-offline "Kolejka wysyłki bez sieci"
+## Godziny w UTC, kalendarz w czasie klubu
 
-Więcej o mechanizmach: [łańcuch odczytów](lancuch-odczytow), [synchronizacja](synchronizacja), [korekty i rejestr](korekty-i-rejestr).
+Godziny lotów są w UTC - w aplikacji, w panelu i w dokumentach klubu. Czas lokalny pojawia się tylko jako podpowiedź przy wpisywanej godzinie.
 
-## Co dostaje klub
-
-- **Jeden dziennik** dla całej floty i wszystkich pilotów, bez przepisywania z kartek.
-- **Ciągłość liczników**: motogodziny i paliwo przechodzą z pilota na pilota jako łańcuch odczytów, a rozjazdy widać od razu.
-- **Norma zużycia** dla każdej maszyny - z dokumentacji, a z czasem z lotów tej konkretnej jednostki.
-- **Plan floty**: kalendarz wszystkich maszyn, rezerwacje z podpowiedzią wolnych terminów, wyłączenie maszyny z użytku na czas przeglądu - i jeśli klub chce, zgoda wskazanych osób na każdą rezerwację, wydawana z telefonu.
-- **Oko na samolot**: technik i koordynator lotów widzą na karcie maszyny, co się z nią dzieje teraz, i dostają powiadomienie, gdy ktoś ją bierze, gdy wraca z odczytami i gdy zbliża się zarezerwowany lot ([obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu)).
-- **Decyzja zostaje w klubie**: administrator zatwierdza konta, nadaje uprawnienia, poprawia wpisy w każdej chwili i kończy operacje, których pilot nie zamknął.
-
-## Jeden czas dla wszystkich
-
-Godziny lotu w aplikacji i w panelu są w UTC: w logu operacji, przy startach i lądowaniach, na karcie dnia. Czas lokalny pojawia się tylko jako podpis przy wpisywanej godzinie.
-
-Wyjątkiem jest **kalendarz**: rezerwacja to umowa między ludźmi o godzinie, więc siatka i terminy idą czasem klubu - „w sobotę o dziewiątej", a nie „o 07:00 UTC".
+Kalendarz i zlecenia używają **czasu klubu**: rezerwacja to umowa między ludźmi, więc mówi „w sobotę o dziewiątej", a nie „o 07:00 UTC".
 
 ## Czego aplikacja nie robi
 
-- **Nie zastępuje przyrządów.** Paliwomierz i licznik motogodzin mają rację; aplikacja zapisuje ich wskazania i pilnuje, żeby nie zginęły po drodze.
-- **Nie blokuje pilota.** Jedyne odmowy dotyczą zapisów, których dokumentacja nie może przyjąć - jak cofnięty licznik. Wszystko inne jest ostrzeżeniem do wyjaśnienia w klubie.
-- **Nie każe niczego wysyłać ręcznie.** Zdanie samolotu zatwierdza log operacji, a dokumenty klubu składają się po jego stronie - pilot niczego nie eksportuje.
-
-## Dlaczego tak to działa
-
-> **Dlaczego telefon rozstrzyga o locie, a klub o flocie.** Telefon dowódcy rozstrzyga o przebiegu operacji, a klub - o flocie i historii. Dlatego brak zasięgu nie blokuje lotu, a decyzje o kontach, samolotach i spornych wpisach zapadają w panelu.
-
-> **Dlaczego przyrządy są ważniejsze niż podpowiedzi.** Aplikacja podsuwa wartości z ostatniego przekazania i z normy zużycia, ale zapisuje to, co pilot odczytał z paliwomierza i licznika motogodzin. Rozjazd jest ostrzeżeniem dla pilota i sygnałem dla klubu, nigdy blokadą.
-
-> **Dlaczego zapis lotu w UTC.** Pilot, panel i karta dnia mają czytać tę samą godzinę - bez przeliczania stref i bez skoku przy zmianie czasu na letni. Doba pilota i doba samolotu liczą się od północy UTC.
+- **Nie zastępuje przyrządów.** Paliwomierz i licznik motogodzin mają rację - aplikacja zapisuje ich wskazania i pilnuje, żeby nie zginęły.
+- **Nie zatrzymuje lotu z powodu braku sieci.** Lot rozpoczniesz, poprowadzisz i zdasz także bez zasięgu ([praca bez zasięgu](praca-bez-zasiegu)).
+- **Nie każe niczego wysyłać ręcznie.** Zapisy wychodzą do klubu same, a dokumenty klubu powstają bez udziału pilota.
 
 ## Częste problemy
 
-- **Nie wiem, czym różni się lot od operacji** → operacja to jeden bieg silnika, lot to odcinek od startu do lądowania. W jednej operacji może być ich kilkanaście. Więcej: [model operacji](model-operacji), [słownik](slownik).
-- **Zainstalowałem aplikację, ale nie mogę wejść** → konto zakłada się kontem Google albo adresem e-mail z hasłem, a dostęp daje kod klubu i zatwierdzenie w klubie: [pierwsze logowanie](pierwsze-logowanie).
-- **Nie mam zasięgu na lotnisku** → lotu to nie dotyczy: przejęcie, kokpit, zdanie i wpis po fakcie działają bez sieci. Zasięgu potrzebują pierwsze logowanie, kalendarz z rezerwacją, skrzynka powiadomień i obejrzenie śladu: [praca bez zasięgu](praca-bez-zasiegu).
-- **Poleciałem bez telefonu** → lot wpisuje się po fakcie, z tymi samymi danymi co zapis automatyczny: [wpis lotu po fakcie](wpis-lotu-po-fakcie).
+- **Nie wiem, czym różni się lot od operacji** → operacja to jedno uruchomienie silnika, lot to odcinek od startu do lądowania. W jednej operacji bywa ich kilkanaście.
+- **Aplikacja jest zainstalowana, ale nie mogę wejść** → konto zakłada się kontem Google albo adresem e-mail z hasłem, a do klubu wchodzi się kodem klubu i decyzją administratora: [pierwsze logowanie](pierwsze-logowanie).
+- **Na lotnisku nie ma zasięgu** → lotu to nie dotyczy. Zasięgu potrzebują logowanie, kalendarz, zlecenia, powiadomienia i podgląd śladu na mapie.
+- **Lot odbył się bez telefonu** → wpisz go po fakcie, z tymi samymi danymi, co zapis automatyczny: [wpis lotu po fakcie](wpis-lotu-po-fakcie).
 
 Gdzie dalej: [instalacja](instalacja) → [pierwsze logowanie](pierwsze-logowanie) → [rozpoczęcie lotu](rozpoczecie-lotu).

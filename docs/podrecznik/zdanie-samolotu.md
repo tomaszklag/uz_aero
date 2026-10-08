@@ -1,56 +1,49 @@
 # Zdanie samolotu
 
-> Zdanie kończy operację: odczyt paliwa i motogodzin jest obowiązkowy, bo zatwierdza log operacji i przekazuje maszynę następnemu pilotowi.
+> Zdanie kończy operację. Odczyt paliwa i motogodzin jest obowiązkowy: zatwierdza zapis lotu i przekazuje samolot następnemu pilotowi.
 
-## Przegląd lotów
+## Jak zdać samolot
 
-Na górze ekranu stoi podsumowanie operacji (Loty · Blok · Lot i godzina przejęcia), lista lotów z czasami z wykrywania oraz klamra silnika: uruchomienie → wyłączenie · blok. To ostatnia chwila na sprawdzenie, czy log się zgadza. Jeśli brakuje lądowania albo czas jest zły, tapnij **JESZCZE NIE - WRÓĆ DO KOKPITU** i popraw kafelkiem **Popraw dane operacji**; po zdaniu zostaje jeszcze [czas na poprawki](operacja-i-korekty) - 24 godziny.
+1. Po wyłączeniu silnika tapnij w kokpicie **ZDAJ SAMOLOT**.
+2. Sprawdź podsumowanie na górze ekranu: liczbę lotów, czas blokowy, czas lotu, godziny każdego lotu i pracy silnika. To ostatnia chwila na wychwycenie brakującego lądowania albo złej godziny - wtedy tapnij **JESZCZE NIE - WRÓĆ DO KOKPITU** i popraw dane przez **Popraw dane operacji**.
+3. Wpisz **odczyt końcowy**:
+   - **Paliwo na pokładzie** - pole jest puste, a podpis podpowiada szacunek, na przykład „szacunek z normy: ~60 L". Wpisz to, co pokazuje paliwomierz. Okienko pokazuje odczyt sprzed lotu, ile latano i ile mogło się spalić.
+   - **Motogodziny** - odczyt licznika w formacie tego samolotu. Podpis pokazuje stan przy rozpoczęciu i przyrost.
+4. Tapnij **ZDAJ I ZATWIERDŹ LOG**. Operacja trafi do Historii, a Ty wrócisz na Pulpit.
 
-@screen 09b-zdaj-samolot "Odczyty i klamra silnika"
+Oleju przy zdaniu się nie mierzy - zmierzy go następny pilot przy rozpoczęciu lotu.
 
-## Odczyty przy zdaniu
+@screen 09b-zdaj-samolot "Odczyty przy zdaniu samolotu"
 
-- **Paliwo na pokładzie** - po biegu silnika pole startuje puste, a podpis podpowiada szacunek z normy maszyny („szacunek z normy: ~60 L"). W okienku stoi rozpiska: odczyt sprzed lotu, ile latano i ile według normy mogło się spalić, na końcu szacunek. Wpisz to, co pokazuje paliwomierz. Po wpisaniu podpis podsumowuje: przy przejęciu, tankowania, zużyte.
-- **Motogodziny** - odczyt licznika w formacie maszyny; podpis pokazuje stan przy przejęciu i przyrost. Wartość niższa niż przy przejęciu jest blokadą z powodem: licznik nie cofa się sam.
-- **Oleju przy zdaniu się nie mierzy** - bagnet tuż po locie kłamie. Olej zmierzy następny pilot przy przejęciu.
-
-Okienko odczytu ostrzega na miejscu, nad przyciskiem: odczyt przekracza pojemność zbiorników, po locie nie mogło zostać tyle paliwa, ile wpisujesz, albo wartość odbiega od tego, co zapisano wcześniej. Ostrzeżenie nie blokuje - przyrząd ma rację.
-
-**ZDAJ I ZATWIERDŹ LOG** zapisuje zdanie i wraca na Mój dzień. Sygnaturę operacja ma od uruchomienia silnika; zdanie zamyka ją odczytami.
+Okienko odczytu ostrzega od razu, gdy wartość wygląda podejrzanie: paliwa jest więcej, niż mieszczą zbiorniki, więcej, niż mogło zostać po locie, albo odczyt odbiega od wcześniejszych zapisów. Ostrzeżenie nie blokuje zapisu - przyrząd ma rację. Zapisu nie da się zrobić tylko z licznikiem niższym niż przy rozpoczęciu lotu.
 
 ## Zdanie bez lotu
 
-Gdy silnik nie ruszył (pogoda, usterka, zmiana planów), zdajesz samolot z kafelka „Zdaj samolot" w kokpicie przed uruchomieniem. Ekran pokazuje, jak długo maszyna była trzymana, liczniki „bez zmian" z ołówkami do poprawki i pyta o powód: **Pogoda**, **Usterka**, **Odwołane**, **Inne**. Komentarz jest opcjonalny, ale „usterka" bez słowa, która, jest dla klubu pytaniem - dopisz je.
+Jeśli silnik nie ruszył (pogoda, usterka, zmiana planów), zdajesz samolot kafelkiem **Zdaj samolot** w kokpicie, przed uruchomieniem silnika.
 
-@screen 09c-zdaj-bez-lotu "Cztery powody i komentarz" | 10a-statystyki-zero "Rozliczenie z zerową osią"
+1. Ekran pokazuje, jak długo trzymasz samolot, i liczniki - zwykle „bez zmian". Jeśli coś się zmieniło, popraw odczyt ołówkiem.
+2. Wybierz powód: **Pogoda**, **Usterka**, **Odwołane** albo **Inne**.
+3. Opcjonalnie dopisz komentarz - przy usterce warto napisać, jaka to usterka.
+4. Tapnij **ZDAJ SAMOLOT**.
 
-> **Uwaga.** Zdanie bez lotu i bez żadnej zmiany odczytów nie tworzy operacji: ekran ostrzega przed zapisem, że nic nie zostanie zapisane i wpis nie pojawi się w Twoim dniu ani w panelu. Zmieniony odczyt paliwa lub licznika albo dolewka robią z zapisu operację - z numerem, sygnaturą i kafelkiem z godzinami zajęcia maszyny oraz trójką `0 · 0:00 · 0:00`.
+@screen 09c-zdaj-bez-lotu "Zdanie bez lotu" | 10a-statystyki-zero "Operacja bez lotu"
 
-## Jak to działa
-
-Zdanie dopisuje do rejestru ostatni wpis operacji: odczyty końcowe. Ten wpis robi trzy rzeczy naraz. Zamyka rachunek Twojej operacji: odczyt przy przejęciu, tankowania i odczyt przy zdaniu dają zużycie i werdykt wobec normy. Staje się przekazaniem dla następnego pilota - zobaczy Twoje liczby w kroku 3, z podpisem, kto i kiedy zdał. Jest wreszcie ogniwem łańcucha motogodzin, po którym klub porządkuje operacje tej maszyny. Zatwierdzenia logu nie robi się osobno - jest nim właśnie zdanie, i od tej chwili liczy się czas na poprawki. Szacunek w podpisie to ostatni pewny odczyt pomniejszony o zużycie z normy za czas pracy silnika - z osobną stawką w locie i na ziemi, gdy klub ją ma. Więcej: [łańcuch odczytów](lancuch-odczytow), [norma zużycia](norma-zuzycia).
+> **Uwaga.** Jeśli silnik nie ruszył, a odczyty się nie zmieniły, ekran uprzedza, że nic nie zostanie zapisane i wpis nie pojawi się w Twoim dniu. Samolot i tak zostanie zdany. Jeśli coś dolano albo odczyt jest inny, popraw go - wtedy zdanie zapisze się jako operacja.
 
 ## Co dzieje się po zdaniu
 
-- Zapis czeka w kolejce i wychodzi do klubu, gdy tylko jest sieć - aplikację możesz zamknąć.
-- Twoje odczyty stają się przekazaniem dla następnego pilota.
-- Operacja stoi na Mój dzień z trójką Loty · Blok · Lot, a po północy UTC przechodzi do [poprzednich dni](poprzednie-dni). Przez 24 godziny poprawisz ją sam, potem robi to administrator.
+- Zapis wysyła się do klubu sam, gdy jest internet - możesz zamknąć aplikację.
+- Twoje odczyty stają się punktem wyjścia dla następnego pilota.
+- Operacja stoi w [Historii](poprzednie-dni) z liczbą lotów, czasem blokowym i czasem lotu, a jej sumy dochodzą do Pulpitu.
+- Przez 24 godziny możesz poprawić własne wpisy ([ekran operacji i poprawki](operacja-i-korekty)). Potem poprawki wprowadza administrator.
 
-@screen 20-pulpit "Sumy doby po zdaniu" | 24-historia "Operacja w Historii"
+Zdanie samolotu nie kończy Twojego dnia - kolejny lot, także innym samolotem, dopisze się do listy.
 
-## Dlaczego tak to działa
-
-> **Dlaczego odczyt przy zdaniu jest obowiązkowy.** Bez niego następny pilot nie wie, z czym startuje, a klub traci ogniwo łańcucha. Dzień skokowy na tym nie cierpi: dziesięć wyniesień to jeden bieg silnika, czyli jedno przejęcie i jeden odczyt na końcu.
-
-> **Dlaczego szacunek nie wpisuje się sam.** Szacunek stoi w podpisie, nie w polu. Podstawiona liczba dałaby się zatwierdzić bez spojrzenia na paliwomierz - a wtedy w rejestrze byłby model, nie pomiar.
-
-> **Dlaczego zdanie samolotu nie kończy dnia.** Kolejna maszyna dopisze się do listy operacji. Zdanie nie ma też własnej godziny do poprawiania, bo od niego liczy się termin korekty.
+@screen 24-historia "Operacja w Historii"
 
 ## Częste problemy
 
-- **ZDAJ I ZATWIERDŹ LOG jest nieaktywny** → w przycisku stoi powód: brak odczytu paliwa lub licznika, albo licznik niższy niż przy przejęciu - popraw odczyt.
-- **W przeglądzie brakuje lądowania albo lot ma zły czas** → **JESZCZE NIE - WRÓĆ DO KOKPITU** → **Popraw dane operacji**. Zdanie zatwierdza log, więc lepiej poprawić przed nim - choć czas na poprawki zostaje.
-- **Odjechałem od samolotu bez odczytów** → jeśli masz je w notatce albo na zdjęciu, zdaj z miejsca, w którym jesteś; czas blokowy liczy się z biegu silnika, nie z chwili zdania. Jeśli nie masz - poproś administratora o zakończenie operacji z panelu; do tego czasu maszyna jest dla innych zajęta.
-- **Ekran ostrzega, że „nic nie zostanie zapisane"** → to zdanie bez lotu bez żadnej zmiany; jeśli coś jednak dolałeś albo odczyt jest inny, popraw go ołówkiem przy licznikach.
-
-@screen 10d-edycja "Tryb edycji danych operacji"
+- **ZDAJ I ZATWIERDŹ LOG jest nieaktywny** → przycisk mówi, czego brakuje: odczytu paliwa albo licznika. Może też być tak, że licznik jest niższy niż przy rozpoczęciu lotu - popraw odczyt.
+- **W podsumowaniu brakuje lądowania albo lot ma złą godzinę** → tapnij **JESZCZE NIE - WRÓĆ DO KOKPITU**, a potem **Popraw dane operacji**. Poprawki są możliwe także po zdaniu, przez 24 godziny.
+- **Pilot odjechał od samolotu bez odczytów** → jeśli odczyty są zapisane (zdjęcie, notatka), zdaj samolot z miejsca, w którym jesteś - czas lotu liczy się z pracy silnika, a nie z chwili zdania. Jeśli odczytów nie ma, poproś administratora o zakończenie operacji w panelu. Do tego czasu samolot jest dla innych zajęty.
+- **Ekran ostrzega, że „nic nie zostanie zapisane"** → silnik nie ruszył, a odczyty się nie zmieniły. Jeśli jednak coś dolano albo odczyt jest inny, popraw go ołówkiem przy licznikach.

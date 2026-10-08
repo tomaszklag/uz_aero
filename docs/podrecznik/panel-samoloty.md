@@ -1,80 +1,70 @@
 # Samoloty
 
-> Karta samolotu to konfiguracja, której aplikacja pilnuje u każdego pilota: pojemności, normy z dokumentacji, minimum oleju i format licznika. Tu wpisuje się też stan maszyny, dopóki nie prowadzi go dziennik.
+> Karta każdego samolotu klubu: pojemności, normy zużycia z dokumentacji, minimum oleju, format licznika i aktualny stan. Tu sprawdzisz też, ile samolot naprawdę zużywa paliwa.
 
-## Lista floty
+Moduł otwiera uprawnienie **Podgląd klubu**, a zmiany w kartach - **Flota** ([kto co widzi](uprawnienia)).
 
-Kolumny: rejestracja z typem, rok, pojemność zbiorników, format licznika, wymóg drugiego pilota i stan służby; wyszukiwarka po rejestracji i typie, filtr zawężający do maszyn w służbie. Wyłączone są przygaszone i stoją na końcu.
+## Lista samolotów
 
-Jedyny sygnał operacyjny na tym ekranie to maszyna **wyłączona, na której ktoś jeszcze lata** - jej wiersz mówi to wprost. Znaczy dokładnie tyle, że jednostka zniknęła pilotom z listy wyboru w połowie czyjegoś dnia. Reszta stanu bieżącego - kto trzyma maszynę teraz, ostatnie odczyty, ile latała - należy do [dziennika](panel-dziennik); tutaj ustawia się samolot raz na sezon.
+Kolumny: znaki z typem, rok produkcji, pojemność zbiorników, format licznika, wymóg drugiego pilota i stan - **W służbie** albo **Poza służbą**. Wyszukiwarka znajduje samolot po znakach i typie, a filtr pokazuje tylko samoloty w służbie.
 
-@panel samoloty-lista "Lista floty klubu"
+Jeśli samolot jest poza służbą, a ktoś wciąż nim leci, wiersz mówi o tym wprost. Bieżący stan floty - kto ma który samolot i co pokazują liczniki - znajdziesz w [dzienniku](panel-dziennik).
 
-## Karta samolotu
+@panel samoloty-lista "Lista samolotów klubu"
 
-Sekcje idą mediami, bo administrator myśli „olej", a nie „kategoria liczby":
+## Jak dodać albo zmienić samolot
+
+Kliknij **Dodaj samolot** albo **Edytuj** przy samolocie. Karta ma sekcje:
 
 | Sekcja | Pola |
 |---|---|
-| **Samolot** | rejestracja, typ, rok produkcji (można zostawić puste) |
-| **Ustawienia dla pilota** | drugi pilot: nieobowiązkowy albo wymagany; stan: w służbie albo wyłączony |
+| **Samolot** | znaki rejestracyjne, typ, rok produkcji (opcjonalny) |
+| **Ustawienia dla pilota** | drugi pilot - nieobowiązkowy albo wymagany; stan - w służbie albo poza służbą |
 | **Paliwo** | pojemność zbiorników, zużycie z dokumentacji, aktualny stan |
 | **Olej** | zbiornik, minimum przed lotem, zużycie z dokumentacji, aktualny stan |
 | **Motogodziny** | format licznika, aktualny stan |
 
-Pojemności, minimum oleju i obie normy są **wymagane** - puste pole blokuje zapis samym brakiem, bez zdania nad przyciskiem. Obie normy podaje się w litrach na **godzinę pracy silnika**, także olejową. Format licznika mówi tylko, jak jednostka wyświetla wartość: dziesiętnie (`3907.8`) albo godzinami i minutami (`3907:48`) - w polach karty możesz wpisać jedno i drugie, panel rozumie oba zapisy.
+Pojemności, minimum oleju i obie normy zużycia są wymagane. Normy podajesz w litrach na godzinę pracy silnika. Format licznika mówi, jak samolot pokazuje motogodziny: dziesiętnie (`3907.8`) albo w godzinach i minutach (`3907:48`) - w polach karty możesz wpisać oba zapisy.
 
-Zmiana pojemności zbiorników zmienia przy okazji próg, od którego klub dostaje sygnał o rozjeździe paliwa między operacjami; panel pisze wtedy pod polem nową i dotychczasową wartość progu.
+> **Uwaga.** Gdy samolot wymaga drugiego pilota, aplikacja nie pozwoli rozpocząć na nim lotu ani wpisać lotu po fakcie bez drugiego pilota.
 
-> **Uwaga.** Wymóg drugiego pilota jest regułą aplikacji: bez wskazanego drugiego pilota nie da się na takiej maszynie rozpocząć lotu ani wpisać go po fakcie. Nie jest to jednak dopuszczenie do lotu - o tym decyduje klub, nie karta samolotu.
+@panel samoloty-karta "Karta samolotu"
 
-@panel samoloty-karta "Karta samolotu · sekcje mediami"
+## Aktualny stan
 
-## Aktualny stan: zerowe ogniwo łańcucha
-
-Zakładając maszynę, wpisujesz, co pokazują przyrządy: licznik, paliwo i olej. To jest pierwsze ogniwo [łańcucha odczytów](lancuch-odczytow) - pierwszy pilot zobaczy te liczby przy rozpoczęciu lotu jako **stan początkowy z panelu**, bez nazwiska poprzednika, bo nikt tej maszyny jeszcze nie przekazał. Jego zdanie samolotu stanie się przekazaniem dla następnego i od tej chwili łańcuch prowadzi się sam.
-
-Od chwili, gdy maszynę prowadzi dziennik, te same pola są **do odczytu**: pokazują ostatni odczyt z podpisem, skąd pochodzi - z dziennika albo z ręki administratora, razem z jego komentarzem. Olej ma własną datę i własny brak pomiaru: bywa dużo starszy niż odczyt paliwa, bo mierzy się go tylko przy przejęciu, a maszyna potrafi latać bez ani jednego pomiaru w dzienniku.
+Zakładając samolot, wpisz to, co pokazują przyrządy: licznik motogodzin, paliwo i olej. Pierwszy pilot zobaczy te liczby przy rozpoczęciu lotu jako stan początkowy. Po pierwszym zdaniu samolotu stan prowadzi już dziennik: pola „Aktualny stan" pokazują wtedy ostatni odczyt z informacją, skąd pochodzi, i nie da się ich zmienić w karcie.
 
 ## Poprawa odczytów
 
-Bywa, że stan w dzienniku rozjeżdża się z rzeczywistością: operacja zakończona przez administratora bez odczytów, tankowanie poza aplikacją, remont, pomyłka pilota zauważona po terminie korekty. Na takie sytuacje karta ma osobną akcję **Popraw odczyty**: licznik, paliwo, opcjonalnie olej i **wymagany komentarz**, skąd te liczby. Wpis jest trwały i zostaje w klubie razem z autorem i komentarzem.
+Gdy stan w dzienniku nie zgadza się z rzeczywistością - na przykład po zakończeniu operacji bez odczytów, tankowaniu poza aplikacją albo remoncie - użyj **Popraw odczyty** w karcie samolotu. Wpisz aktualny stan licznika, paliwa i opcjonalnie oleju oraz komentarz, skąd te liczby.
 
-Wchodzi do łańcucha jako konkurent ostatniego zdania: przekazaniem zostaje ten, kto stoi **dalej w łańcuchu** - wyższy licznik motogodzin, a przy remisie późniejszy wpis. Kolejne zdanie samolotu z wyższym licznikiem wypiera go samo, bez kasowania czegokolwiek. Pilot zobaczy przy przejęciu adnotację, że odczyty wpisał administrator.
+Następny pilot zobaczy je przy rozpoczęciu lotu z dopiskiem „odczyty wpisał administrator". Poprawa odczytów nie zmienia zapisów żadnej operacji - błąd w konkretnym locie poprawia się w [dzienniku](panel-dziennik).
 
 ## Norma z dokumentacji
 
-Zużycie wpisane w karcie działa **od pierwszego lotu**: aplikacja liczy z niego szacunek „ile zostało" i werdykt, czy operacja mieści się w paśmie. Pasmo jest wtedy zadeklarowane wokół wpisanej wartości, a nie zmierzone - instrukcja podaje punkt, nie rozrzut, i okienko rachunku mówi to pilotowi wprost. Gdy maszyna ma dość zamkniętych operacji, norma wyliczona z **jej własnych lotów** wygrywa z wpisaną, a dokumentacja zostaje wartością odniesienia. Cała mechanika: [norma zużycia](norma-zuzycia).
-
-Do dziennika nic z tego nie wchodzi - tam stoją wyłącznie odczyty.
+Zużycie wpisane w karcie działa od pierwszego lotu. Aplikacja liczy z niego szacunek „ile zostało" i ocenę, czy zużycie w operacji mieści się w normie - z marginesem około 15% w obie strony. Gdy samolot ma za sobą wystarczająco dużo lotów, aplikacja liczy normę z jego własnych lotów i ta norma ma pierwszeństwo, a dokumentacja zostaje do porównania.
 
 ## Zużycie z lotów
 
-Gdy maszyna ma dość zamkniętych operacji z odczytami paliwa, jej karta dostaje kartę **Zużycie z lotów** - i tylko wtedy: młoda maszyna nie widzi ani zer, ani zdania o braku danych. Plakietka w tytule mówi, z ilu operacji i od kiedy liczy się rachunek.
+Gdy samolot ma wystarczająco dużo lotów z odczytami paliwa, jego karta dostaje część **Zużycie z lotów**. W tytule stoi, z ilu operacji i od kiedy liczono.
 
-- **Pasmo zużycia** - przedział, w którym mieści się 80 % zmierzonych operacji (10.–90. centyl), w litrach na godzinę pracy silnika; na pasku pod spodem stoi jako wypełnienie na osi w pełnych dziesiątkach.
-- **Z dokumentacji** - norma wpisana w sekcji Paliwo, bursztynem, jako marker na tym samym pasku; obok odchyłka zmierzonego zużycia od zadeklarowanego („z lotów +3 %"). To są dwie różne liczby - jedna zmierzona, druga zadeklarowana - i karta nazywa, którą pokazuje.
-- **W locie / na ziemi** - stawki fazowe, dokładnie te, z których aplikacja pilota liczy oczekiwanie dla konkretnej operacji; **Na godzinę lotu** - zużycie liczone wyłącznie czasem w powietrzu.
-- **Motogodziny** - o ile rośnie licznik na godzinę lotu i godzinę na ziemi, z rozpoznanym rodzajem licznika (obrotomierz albo licznik godzinowy). Wiersz gaśnie osobno, gdy przeliczników jeszcze nie ma - inne wejście, inny próg.
-- **Obserwacje** - ile operacji, ile pomiarów między odczytami (operacja z tankowaniem daje dwa), ile ze śladem GPS i ile odstających pominięto; **Ostatni miesiąc** - zużycie z ostatnich pomiarów, do porównania z pasmem.
+- **Pasmo zużycia** - przedział, w którym mieści się 80% operacji tego samolotu, w litrach na godzinę pracy silnika.
+- **Z dokumentacji** - norma z sekcji Paliwo, zaznaczona na tym samym pasku, i różnica między zużyciem zmierzonym a dokumentacją, na przykład „z lotów +3%".
+- **W locie / na ziemi** - osobne stawki dla czasu w powietrzu i na ziemi. Z nich aplikacja liczy oczekiwane zużycie dla każdej operacji.
+- **Motogodziny** - o ile rośnie licznik na godzinę lotu i na godzinę na ziemi, z rozpoznanym rodzajem licznika.
+- **Obserwacje** i **Ostatni miesiąc** - na ilu pomiarach opiera się wynik i jak wygląda zużycie z ostatnich tygodni.
 
-Karta jest odczytem: żadnej liczby nie da się tu zmienić, a norma z dokumentacji zmienia się w sekcji Paliwo. Skąd biorą się te liczby i kiedy zużycie z lotów wygrywa z dokumentacją: [norma zużycia](norma-zuzycia).
+Młody samolot, który ma jeszcze za mało lotów, tej części nie ma.
 
 ## Wyłączenie i usunięcie
 
-Maszyny wycofanej z klubu się nie kasuje - wyłącza. Wyłączona znika pilotom z listy wyboru, a jej dziennik zostaje w komplecie. Nie da się wyłączyć jednostki, którą ktoś właśnie trzyma; panel mówi to przy przycisku („Ktoś ma teraz ten samolot"), zanim stracisz wypełniony formularz. Trwałe usunięcie działa dopiero wtedy, gdy maszyna jest **już wyłączona** i nie ma za sobą ani jednego zapisu.
+Samolotu wycofanego z klubu nie usuwa się, tylko ustawia **Poza służbą**. Znika wtedy pilotom z listy samolotów, a jego dziennik zostaje. Nie da się tego zrobić, gdy ktoś właśnie ma ten samolot - przycisk mówi wtedy „Ktoś ma teraz ten samolot". Samolot można usunąć na stałe dopiero wtedy, gdy jest poza służbą i nie ma ani jednego zapisanego lotu.
 
-## Dlaczego tak to działa
-
-> **Dlaczego stan początkowy przestaje być polem.** Liczba, którą prowadzi dziennik, ma jednego właściciela naraz. Dopóki jedynym źródłem jest wpis z panelu, wolno go poprawić - to nadal Twoja własna literówka. Gdy maszyna zaczęła latać, wpis nic już nie znaczy, a pole edytowalne nad wartością, której edycja niczego nie zmienia, kierowałoby administratorem w złą stronę. Zero jest przy tym **wartością, nie brakiem**: nowy silnik ma zero na liczniku, maszyna przyjęta z pustymi zbiornikami - zero litrów. Dlatego stan początkowy zera nie zabrania, a normy z dokumentacji owszem: zero litrów na godzinę nie jest stanem świata, tylko literówką.
-
-> **Dlaczego to nie zmienia zapisów operacji.** Są to dwie różne rzeczy. Operacja jest tym, co pilot zapisał w konkretnym locie; odczyt administratora mówi „tyle jest teraz na przyrządach". Wpis z karty samolotu nie dotyka ani jednego zapisu w dzienniku - nie zmienia czasów, cudzych odczytów przy przejęciu i zdaniu ani rachunku zużycia w zamkniętych operacjach. Zmienia wyłącznie punkt, od którego zacznie następny pilot. Poprawka konkretnej liczby w konkretnym locie to [korekta](korekty-i-rejestr), którą przez 24 godziny od zdania robi pilot w aplikacji.
-
-> **Dlaczego najpierw wyłączyć, a dopiero potem usuwać.** Telefony pracują na kopii floty pobranej z panelu, a ta kopia się dopisuje i poprawia - nigdy nie kasuje wierszy. Maszyna usunięta „na gorąco" zostałaby na każdym telefonie, który zdążył ją pobrać, i to **dalej wybieralna**: pilot zacząłby lot na jednostce, której klub już nie zna. Wyłączenie jedzie tą samą drogą, co reszta zmian, i aplikacja je rozumie - więc kolejność „wyłącz, poczekaj, aż telefony pobiorą zmianę, usuń" zamyka tę dziurę mechanizmem, który już działa.
+Krótką niedostępność - przegląd albo usterkę na kilka dni - ustawia się inaczej: w [kalendarzu](panel-kalendarz), przyciskiem **Wyłącz maszynę z użytku**.
 
 ## Częste problemy
 
-- **„Ktoś ma teraz ten samolot" przy wyłączaniu** → maszyna ma otwartą operację. Poczekaj, aż pilot ją zda, albo zakończ ją w [dzienniku](panel-dziennik), jeśli pilot już tego nie zrobi.
-- **Nie da się zapisać drobnej zmiany na starszej maszynie** → w sekcji Paliwo, Olej albo Motogodziny brakuje wymaganego pola. Uzupełnij normy i konfigurację oleju - dopiero wtedy zapis ruszy.
-- **Pola „Aktualny stan" są szare** → maszynę prowadzi już dziennik, więc liczby biorą się z ostatniego odczytu. Do zmiany służy **Popraw odczyty**, z komentarzem.
-- **Pilot widzi w aplikacji inne liczby niż karta** → telefon pracuje na kopii z ostatniego połączenia; przy przekazaniu z pamięci pokazuje adnotację z datą. Odświeży się sam przy najbliższej sieci albo od razu po **SYNCHRONIZUJ TERAZ** ([synchronizacja](synchronizacja)).
+- **„Ktoś ma teraz ten samolot" przy zmianie stanu** → samolot ma niezdaną operację. Poczekaj, aż pilot go zda, albo zakończ operację w [dzienniku](panel-dziennik).
+- **Nie da się zapisać drobnej zmiany na starszym samolocie** → brakuje wymaganego pola w sekcji Paliwo, Olej albo Motogodziny. Uzupełnij je.
+- **Pola „Aktualny stan" są szare** → stan prowadzi już dziennik. Do zmiany służy **Popraw odczyty**.
+- **Pilot widzi w aplikacji inne liczby niż karta** → telefon pobiera dane klubu przy najbliższym połączeniu. Pilot może to przyspieszyć przyciskiem **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji.

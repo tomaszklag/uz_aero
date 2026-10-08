@@ -1,109 +1,104 @@
 # Dziennik
 
-> Trzy poziomy i dwie osie: flota albo piloci w zakresie dat → operacje jednej maszyny albo jednej osoby, pogrupowane dniami → jedna operacja z osią zdarzeń, śladem GPS i trybem edycji. W dzienniku stoją wyłącznie odczyty; brak odczytu jest kreską, nigdy zerem.
+> Loty klubu na trzech poziomach: cała flota albo wszyscy piloci w wybranym okresie, potem operacje jednego samolotu albo jednej osoby, na końcu jedna operacja z przebiegiem i śladem. Z odpowiednim uprawnieniem poprawisz tu każdy wpis.
 
-## Zakres dat
+Dziennik otwiera uprawnienie **Podgląd klubu**, a poprawki - **Korekty w dzienniku** ([kto co widzi](uprawnienia)).
 
-Nad każdą listą stoi para pól „od → do" i szybkie zakresy: **Dzisiaj**, **Weekend**, **30 dni**, **Ten miesiąc**, **Poprzedni miesiąc**. Weekend znaczy trwający, gdy jest sobota albo niedziela, a od poniedziałku - ten, który właśnie minął: klub lata w weekend i rozlicza go w tygodniu.
+## Wybór okresu
 
-Wszystko liczy się w dobach UTC, jak reszta produktu, a zakres jedzie w adresie zawsze - także domyślny. Dzięki temu link z paska przeglądarki pokazuje dokładnie to samo, co widzisz.
+Nad listą stoją pola „od → do" i gotowe okresy: **Dzisiaj**, **Weekend**, **30 dni**, **Ten miesiąc**, **Poprzedni miesiąc**. „Weekend" w sobotę i niedzielę oznacza bieżący weekend, a od poniedziałku - ten, który właśnie minął. Daty liczą się w UTC.
 
-## Dwie osie: Samoloty i Piloci
+Wybrany okres zapisuje się w adresie strony - link wysłany koledze pokaże mu dokładnie ten sam widok.
 
-Nad listą stoi przełącznik osi. **Samoloty** odpowiadają na „co latało", **Piloci** na „kto latał" - o ten sam zakres dat i ten sam zbiór operacji, więc sumy nalotu dowódców na obu osiach są równe co do minuty. Oś maszyn jest domyślna; oś pilotów stoi w adresie, żeby link do niej dało się wkleić.
+## Samoloty albo piloci
 
-**Sumy na obu osiach liczą wyłącznie operacje zdane.** Operacja w toku nie dokłada się do nalotu, dopóki samolot nie zostanie zdany - zamiast tego wiersz nazywa ją wprost („leci teraz", „trzyma SP-KLM od …"), nagłówek doby mówi „· 1 w toku", a maszyna albo osoba z samą operacją w toku stoi na liście z zerami. Ta sama podstawa liczenia obowiązuje w [statystykach](panel-statystyki).
+Przełącznik nad listą pokazuje dziennik według **samolotów** („co latało") albo według **pilotów** („kto latał"). Obie strony liczą te same operacje, więc suma nalotu dowódców jest na obu taka sama.
+
+**Do sum wchodzą tylko zdane operacje.** Operacja, która jeszcze trwa, nie dolicza się do nalotu - zamiast tego wiersz mówi wprost „leci teraz" albo „zajęty od …". Te same zasady liczenia mają [statystyki](panel-statystyki).
 
 ## Poziom 1 · flota
 
-Wszystkie maszyny klubu w wybranym zakresie, także te, które nie latały: wiersz zer jest odpowiedzią, po którą się przyszło („czy ta maszyna w ogóle ruszyła w sierpniu"). Kolumny: **dni** pracy, **starty**, czas pracy **silnika**, czas **w powietrzu**, zużyte **paliwo** i przyrost **motogodzin**. Maszyna, na której ktoś właśnie lata, ma o tym adnotację przy znakach. Wiersz prowadzi do poziomu 2.
+Lista wszystkich samolotów klubu w wybranym okresie - także tych, które nie latały. Kolumny: **Dni** pracy, **Starty**, czas pracy **silnika**, czas **w powietrzu**, zużyte **paliwo** i przyrost **motogodzin**. Kliknięcie w wiersz otwiera operacje tego samolotu.
 
-- **Dni liczą się po dobie przejęcia**, nie po liczbie operacji: dwie zmiany jednego dnia to jeden dzień pracy maszyny.
-- **Kolumna paliwa bywa kreską i to nie jest usterka.** Gdy choć jedna operacja zakresu nie ma bilansu - trwa albo nie ma odczytu końcowego - suma byłaby liczbą mniejszą od prawdy podaną jako prawda. Motogodziny sumują się mimo to, bo mają własny bilans.
-- Operacje unieważnione i puste zapisy nie liczą się do żadnej z tych sum.
+- **Dzień liczy się raz**, nawet jeśli samolot miał tego dnia kilka operacji.
+- **Paliwo bywa kreską.** Gdy choć jedna operacja z okresu nie ma odczytu końcowego, suma byłaby niepełna - dlatego zamiast niej stoi kreska.
+- Operacje unieważnione i puste zapisy nie wchodzą do żadnej sumy.
 
-@panel dziennik-flota "Poziom 1 · cała flota w zakresie dat"
+@panel dziennik-flota "Cała flota w wybranym okresie"
 
 ## Poziom 1 · piloci
 
-Wiersz na osobę, która w zakresie latała - jako dowódca **albo** drugi pilot: **Dni** (z jakimkolwiek lotem), **Operacje**, **Loty**, **Blok** i **Lot** liczą się dowódcy, jak w książce lotów, a czas w prawym fotelu ma własną kolumnę **Drugi pilot** z własną sumą. Uczeń bez ani jednej operacji jako dowódca ma wiersz z zerami nalotu, liczbą w kolumnie „Drugi pilot" i podpisem „tylko jako drugi pilot". **Samoloty** wymienia maszyny z obu foteli. Wiersz mówi też, kto właśnie leci albo trzyma maszynę nieoddaną - niezależnie od zakresu dat, bo to jest o teraz.
+Wiersz na każdą osobę, która w okresie latała - jako dowódca albo drugi pilot. **Operacje**, **Loty**, **Blok** i **Lot** liczą się dowódcy, jak w książce lotów, a czas w prawym fotelu ma własną kolumnę **Drugi pilot**. Uczeń, który latał tylko jako drugi pilot, ma zera w nalocie i podpis „tylko jako drugi pilot". Wiersz mówi też, kto właśnie leci albo trzyma niezdany samolot.
 
-Członkowie bez lotów w zakresie są zwinięci w jeden wiersz pod listą z liczbą w napisie („+3 członków bez lotów w tym zakresie") i rozwijają się kliknięciem - klub z sześćdziesięcioma członkami nie dostaje czterdziestu pięciu wierszy zer, a odpowiedź na „kto nie latał w tym miesiącu" zostaje na ekranie. Członek wyłączony, który w zakresie latał, zostaje na liście z podpisem „członkostwo wyłączone".
+Członkowie, którzy w okresie nie latali, są zwinięci w jeden wiersz pod listą, na przykład „+3 członków bez lotów w tym zakresie". Kliknięcie go rozwija.
 
-> **Uwaga.** Kolumn **Blok** i **Drugi pilot** nie dodaje się do siebie: tę samą godzinę lotu szkolnego niesie wiersz instruktora i wiersz ucznia. Nalot floty to suma kolumny „Blok".
+> **Uwaga.** Kolumn **Blok** i **Drugi pilot** nie dodaje się do siebie: ta sama godzina lotu szkolnego jest w wierszu instruktora i w wierszu ucznia. Nalot floty to suma kolumny „Blok".
 
-@panel dziennik-piloci "Poziom 1 · oś pilotów ze zwiniętymi bez lotów"
+@panel dziennik-piloci "Dziennik według pilotów"
 
-## Poziom 2 · operacje jednej maszyny albo jednej osoby
+## Poziom 2 · operacje jednego samolotu albo jednej osoby
 
-W adresie stoi rejestracja albo kod pilota, nie wewnętrzny numer - `SP-KLM` i `AKO` człowiek przeczyta przez telefon i wpisze z pamięci. **Doba jest nagłówkiem, nie kolumną**: operacje grupują się dniami, a nagłówek doby niesie sumy (operacje, loty, blok, lot) policzone przez serwer nad całą dobą - także wtedy, gdy lista jest przycięta i doba rozcina się na dwie strony. Operacje w toku nagłówek nazywa osobno („· 1 w toku"); doba z lotem w prawym fotelu dostaje piątą sumę po separatorze („· 2:12 drugi pilot"). Kolumny obu stron różnią się dokładnie jedną - Pilot na osi maszyny, Samolot na osi osoby:
+Operacje są pogrupowane dniami. Nagłówek dnia podaje sumy - liczbę operacji, lotów, czas blokowy i czas lotu - a operacje w toku osobno („· 1 w toku").
 
 | Kolumna | Co pokazuje |
 |---|---|
-| **Operacja** | godziny biegu silnika (uruchomienie → wyłączenie), pod nimi sygnatura; oznaczenie **ręcznie** przy wpisie po fakcie, plakietka rozjazdu, gdy operacja ma otwartą sprawę |
-| **Lot** | pierwszy start → ostatnie lądowanie, druga linia mówi, dokąd |
-| **Loty** | ile lotów w tej operacji |
-| **Blok** | ile trwał bieg silnika; kreska, dopóki śmigło pracuje |
-| **Pilot** / **Samolot** | dowódca, pod nim drugi pilot - albo maszyna, pod nią załoga („z A. Kowal", „dowódca B. Nowak") |
+| **Operacja** | godziny pracy silnika i sygnatura; oznaczenie **ręcznie** przy wpisie po fakcie i oznaczenie rozjazdu, gdy operacja ma sprawę do sprawdzenia |
+| **Lot** | pierwszy start → ostatnie lądowanie, i dokąd |
+| **Loty** | liczba lotów w operacji |
+| **Blok** | czas pracy silnika; kreska, dopóki silnik pracuje |
+| **Pilot** albo **Samolot** | dowódca i drugi pilot - albo samolot i załoga |
 | **Zadanie** | Skoki, Przelot, Egzamin, Lot tech., Inne |
-| **Paliwo** | odczyt przy przejęciu → przy zdaniu, druga linia mówi, ile dolano; podpis bursztynem, gdy sprawa dotyczy tej pary |
-| **Motogodziny** | licznik przy przejęciu → przy zdaniu, w formacie tej maszyny |
-| **Olej do lotu** | stan, z którym ruszył silnik; pod nim pomiar i dolewka |
+| **Paliwo** | odczyt przy rozpoczęciu → przy zdaniu, i ile dolano |
+| **Motogodziny** | licznik przy rozpoczęciu → przy zdaniu |
+| **Olej do lotu** | stan oleju przy uruchomieniu silnika: pomiar i dolewka |
 
-Na stronie pilota lot w prawym fotelu jest zwykłym wierszem z plakietką „drugi pilot" - pełnym tonem, bo to jego lot, tylko nie jego nalot. Para stoi w jednej komórce, bo jest jednym pytaniem: godzina uruchomienia bez godziny wyłączenia nie odpowiada na nic. Przy parze bez jednej strony kreska zostaje przy strzałce, więc widać, którego odczytu brakuje. Operacja jeszcze trwająca mówi **w toku** - to nie jest brak odczytu, tylko fakt, że jeszcze nie nastąpił. Wpis unieważniony zostaje w liście, przekreślony. Olej pary nie ma i mieć nie może: przy zdaniu samolotu się go nie mierzy, bo bagnet tuż po locie kłamie ([łańcuch odczytów](lancuch-odczytow)).
+Brak odczytu to kreska, nigdy zero. Operacja, która jeszcze trwa, ma napis **w toku**. Unieważniony wpis zostaje na liście, przekreślony. Na stronie pilota lot w prawym fotelu ma oznaczenie „drugi pilot".
 
-Gdy zakres obejmuje więcej operacji, niż lista pokazuje, stopka mówi to wprost i prosi o zawężenie dat - lista ucięta po cichu wyglądałaby jak komplet.
+Jeśli w okresie jest więcej operacji, niż mieści lista, stopka o tym mówi - zawęź wtedy daty.
 
-@panel dziennik-maszyna "Poziom 2 · operacje jednej maszyny, dniami" | dziennik-pilot "Poziom 2 · operacje jednej osoby, z lotem w prawym fotelu"
+@panel dziennik-maszyna "Operacje jednego samolotu" | dziennik-pilot "Operacje jednej osoby"
 
 ## Poziom 3 · jedna operacja
 
-W nagłówku stoją znaki, sygnatura i godziny biegu silnika, a obok stan wpisu: **ręcznie**, **w toku**, **unieważniona** albo **zakończona przez administratora**. Dwa ostatnie dokłada baner, który mówi, co z tego wynika dla rachunków klubu.
+W nagłówku stoją znaki samolotu, sygnatura i godziny pracy silnika, a obok stan: **ręcznie**, **w toku**, **unieważniona** albo **zakończona przez administratora**.
 
-- **Log zdarzeń** - ten sam przebieg, który widzi pilot: przejęcie z odczytami, zadanie, tankowania, uruchomienie, kołowanie, starty, lądowania, zrzuty, dolewki oleju, wyłączenie, zdanie. Czasy z sekundami, bo to jedyne miejsce, gdzie różnica sekund rozstrzyga, o które zdarzenie chodzi. Kolumna **Zapis** mówi, czy zdarzenie wykrył automat, czy zapisał je pilot ręcznie. Poprawiona godzina jest przekreślona, a pod nią stoi nowa; korekta administratora jest podpisana; zdarzenie unieważnione zostaje przekreślone w wierszu.
-- **Szczegóły** - pilot i drugi pilot, zadanie, klient, trasa, liczba lotów, starty i lądowania, paliwo z dolewką, motogodziny i trzy liczby oleju: pomiar przed lotem, dolewka i stan do lotu.
-- **Ślad GPS** - cały bieg silnika na mapie: kołowanie przerywaną szarą linią, loty pełną zieloną, znaczniki startów i lądowań. Pod mapą trzy liczby (dystans, pułap, prędkość maksymalna) i profil wysokości z przerwami na czas na ziemi. Brak rysunku ma powód i powody się nie zwijają do jednego: lot wpisany po fakcie nie miał nagrania z definicji, a operacja bez nagrania to co innego.
+- **Przebieg operacji** - te same zdarzenia, które widzi pilot: rozpoczęcie z odczytami, zadanie, tankowania, uruchomienie, kołowanie, starty, lądowania, zrzuty, dolewki oleju, wyłączenie i zdanie. Godziny mają sekundy. Kolumna **Zapis** mówi, czy zdarzenie rozpoznała aplikacja, czy zapisał je pilot ręcznie. Poprawiona wartość ma oznaczenie **popr.** z historią zmian.
+- **Szczegóły** - załoga, zadanie, klient, trasa, loty, paliwo, motogodziny i olej.
+- **Ślad GPS** - mapa z kołowaniem i lotami, profil wysokości oraz dystans, pułap i największa prędkość.
 
-Z operacji wychodzi się w dwie strony: okruszki prowadzą na oś maszyny, a nazwisko pilota i drugiego pilota - na oś tej osoby. Otwarty rozjazd tej operacji stoi banerem nad osią z linkiem do sprawy w [Do sprawdzenia](panel-do-sprawdzenia).
+Ścieżka nad tytułem („Dziennik / SP-AXA") prowadzi z powrotem do samolotu, a nazwiska pilotów - do ich operacji. Jeśli operacja ma otwarty rozjazd, nad przebiegiem stoi komunikat z linkiem do sprawy w [Do sprawdzenia](panel-do-sprawdzenia).
 
-### Tryb edycji: korekty i dopisywanie
+@panel dziennik-operacja "Jedna operacja: przebieg i ślad"
 
-Pilot poprawia własne wpisy w aplikacji przez 24 godziny od zdania ([korekty i rejestr](korekty-i-rejestr)). Administrator ze zdolnością **Korekty w dzienniku** poprawia je z panelu w dowolnej chwili: przycisk **Popraw zdarzenia** w nagłówku przełącza stronę operacji w tryb edycji pod własnym adresem (do wklejenia w rozmowie), a **Zakończ edycję** wraca do odczytu bez zapisywania czegokolwiek - to odnośnik, nie przycisk zapisu.
+### Jak poprawić operację
 
-- **Każdy wiersz osi ma ołówek** i otwiera szufladę właściwą dla swojego zdarzenia: godzina przy starcie, lądowaniu, kołowaniu i uruchomieniu; odczyty paliwa i licznika przy przejęciu i zdaniu; czas i skład (tandem, AFF, solo) przy zrzucie; drugi pilot i notatka przy zadaniu. Korekta i unieważnienie nie mają ołówka - poprawia się zdarzenie, nie poprawkę.
-- **Podgląd „przed → po" liczy serwer** i pokazuje go w szufladzie, zanim zapiszesz: czas lotu, blok, bilans paliwa, i którą rewizję dostanie karta dnia. **Powód jest wymagany** - pilot przeczyta go w historii zmian na telefonie, a klub w dzienniku akcji.
-- **Kolizja z pilotem jest ostrzeżeniem, nie odmową**: operacja w toku albo trwający czas pilota na poprawki dają bursztynowy baner nad formularzem („Twoja korekta zapisze się mimo to"). Odmowy reguł dziennika - wyłączenie przed uruchomieniem, cofnięty licznik - blokują zapis czerwonym banerem, tak samo jak pilotowi.
-- **Zdarzenie, którego nie było, unieważnia kosz w linii tytułu szuflady.** Poprawiona wartość dostaje plakietkę „popr." w obu trybach, a szuflada pokazuje historię dotychczasowych poprawek z nazwiskiem i powodem; zapis pierwotny stoi jako ostatnia kropka.
-- **Nad osią stoją te same ostrzeżenia o niespójnościach, które pilot widzi na telefonie** - lot bez lądowania, zdarzenie poza pracą silnika - z tym, czym się je naprawia. Wiersz, którego dotyczą, jest podświetlony.
-- **Brakujący fakt dopisuje ostatni wiersz osi „Dodaj wpis"**: lądowanie, start, kołowanie, tankowanie (stan przed i dolano - stan po liczy serwer), zrzut, załadunek albo dolewka oleju, z godziną i powodem. Fakt ocenia się tak, jak wyglądała operacja **w tej chwili** - lądowanie musi mieć start, tankowanie stojący silnik, fakt po zdaniu należy już do następnej operacji - a podgląd mówi, który lot domyka i ile niespójności znika. Uruchomienia i wyłączenia silnika dopisać się nie da: to granice operacji.
+1. Na stronie operacji kliknij **Popraw zdarzenia**. Strona przejdzie w tryb edycji.
+2. Kliknij wiersz zdarzenia. Z boku otworzy się okno poprawki - dla startu, lądowania i kołowania godzina, dla rozpoczęcia i zdania odczyty, dla zrzutu godzina i skład, dla zadania drugi pilot i notatka.
+3. Wpisz nową wartość i **powód** - jest wymagany, bo pilot zobaczy go w historii zmian. Okno pokazuje skutek przed zapisem: czas lotu, czas blokowy, bilans paliwa.
+4. Zapisz. Gotowe poprawki zakończ przyciskiem **Zakończ edycję**.
 
-Po zapisie baner nad osią mówi, co zapisano i którą rewizję dostała karta dnia; pilot zobaczy zmianę na telefonie przy najbliższym połączeniu. Dwa wyjścia awaryjne - zakończenie i unieważnienie - zostają na dole ekranu operacji.
+- **Zdarzenie, którego nie było**, usuwasz ikoną kosza w nagłówku okna poprawki.
+- **Brakujące zdarzenie** dopiszesz ostatnim wierszem przebiegu, **Dodaj wpis**: lądowanie, start, kołowanie, tankowanie, zrzut, załadunek albo dolewka oleju. Godzina musi pasować do przebiegu - na przykład lądowanie musi mieć wcześniejszy start, a tankowanie wypaść przy wyłączonym silniku.
+- **Nad przebiegiem stoją te same ostrzeżenia, które widzi pilot** - na przykład lot bez lądowania - z podpowiedzią, jak je naprawić.
+- **Gdy pilot wciąż leci albo może jeszcze sam poprawiać**, panel ostrzega, ale zapis jest możliwy. Zapisu nie da się zrobić tylko wtedy, gdy przeczy faktom - na przykład wyłączenie silnika przed uruchomieniem albo cofnięty licznik.
 
-@panel dziennik-edycja "Tryb edycji: ołówki, szuflada korekty z podglądem" | dziennik-dopisanie "Dopisanie brakującego faktu z osi"
+Po zapisie komunikat mówi, co się zmieniło i którą wersję dostała karta dnia. Pilot zobaczy poprawkę w aplikacji przy najbliższym połączeniu.
+
+@panel dziennik-edycja "Tryb edycji i poprawka z podglądem skutku" | dziennik-dopisanie "Dopisanie brakującego zdarzenia"
 
 ### Zakończenie operacji
 
-Operacja, której pilot nie zdał - telefon padł, został w kabinie, pilot odjechał - trzyma maszynę jako zajętą i nie kończy się sama. Karta **Zakończenie operacji** kończy ją z wymaganym powodem i jednym wyborem: zostawić w dzienniku (lot był prawdziwy) albo od razu unieważnić (wpis otwarty przez pomyłkę). Potwierdzenie nazywa konkretny wpis, bo dwie operacje tej samej maszyny w jednej dobie różnią się wyłącznie godzinami.
+Operacja, której pilot nie zdał - telefon się rozładował, pilot odjechał - trzyma samolot jako zajęty. Karta **Zakończenie operacji** kończy ją z wymaganym powodem. Wybierasz przy tym, czy operacja zostaje w dzienniku (lot się odbył), czy od razu ją unieważnić (wpis powstał przez pomyłkę).
 
-Po zakończeniu maszyna jest wolna, a pilot dostaje na telefonie baner z powodem. Zaległych zapisów tej operacji jego telefon już nie wyśle i nie naniesie w niej poprawek.
+Po zakończeniu samolot jest wolny, a pilot dostaje w aplikacji komunikat z powodem. Zakończona operacja nie ma odczytów końcowych - aktualny stan samolotu wpisz w [karcie samolotu](panel-samoloty#poprawa-odczytow).
 
 ### Unieważnienie wpisu
 
-Operację zakończoną można wycofać - z **wymaganym** powodem. Przestaje się liczyć do nalotu pilota, do sum dziennika i do karty dnia maszyny, znika z list w aplikacji pilota i przestaje trzymać samolot. Sam zapis zostaje razem z powodem.
-
-@panel dziennik-operacja "Poziom 3 · oś zdarzeń i ślad"
-
-## Dlaczego tak to działa
-
-> **Dlaczego zakończenie nie udaje zdania.** Zdanie samolotu wymaga odczytów paliwa i licznika - to one są przekazaniem dla następnego pilota. Administrator przy biurku nie wie, co pokazują przyrządy, a wpisanie zmyślonych liczb byłoby najgorszą rzeczą, jaką można zrobić dziennikowi. Zakończona operacja liczy się więc do nalotu i do sum, ale **nie jest ogniwem łańcucha**: aktualny stan maszyny wpisuje się osobno, w [karcie samolotu](panel-samoloty).
-
-> **Dlaczego powód jest tu wymagany, a w telefonie nie.** W aplikacji pilot wycofuje własny wpis i wie, co zrobił. Z panelu wycofuje się cudzy lot: powód czyta pilot na swoim telefonie, stoi na osi zdarzeń i zostaje w klubie. Nic przy tym nie znika - powstaje nowy fakt („ten wpis został wycofany"), bo dziennik lotów ma pokazywać, że lot był i że go wycofano.
-
-> **Dlaczego dziennik nie pokazuje szacunków.** W dzienniku stoją wyłącznie wartości zmierzone albo policzone z faktów - liczba lotów, czas trwania biegu, suma pomiaru i dolewki. Normy zużycia, szacunki „ile powinno zostać" i werdykty nie wchodzą tu ani teraz, ani później: to jest narzędzie nadzoru, a nie druga opinia o cudzym locie. Dlatego `0 L` znaczy pusty zbiornik, a kreska - „nikt tego nie zapisał".
+Zakończoną operację możesz unieważnić - z wymaganym powodem. Przestaje się wtedy liczyć do nalotu, sum dziennika i karty dnia, znika z list w aplikacji pilota i przestaje zajmować samolot. Wpis zostaje w dzienniku, przekreślony, razem z powodem.
 
 ## Częste problemy
 
-- **Samolot jest zajęty, a pilot już go nie zda** → otwórz jego operację (poziom 2 → **Szczegóły**) i użyj **Zakończenia operacji**. Potem wpisz aktualny stan licznika, paliwa i oleju w karcie samolotu - zakończona operacja nie przekazuje maszyny nikomu.
-- **Pilot mówi, że zapisał lot, a w dzienniku go nie ma** → zapisy powstają na telefonie i czekają tam, dopóki nie ma sieci. Poproś o zajrzenie do ustawień aplikacji: wskaźnik przy nagłówku i **SYNCHRONIZUJ TERAZ** mówią, czy kolejka stoi. Jeśli pilot zdał maszynę, nic nie zmieniając i nie uruchamiając silnika, taki pusty zapis nie wchodzi do dziennika w ogóle ([model operacji](model-operacji)).
-- **Odczyt zdania jednej operacji nie zgadza się z przejęciem następnej** → ktoś tankował poza aplikacją, pomylił cyfrę albo operacja została zakończona bez odczytów; taki rozjazd ma też sprawę w [Do sprawdzenia](panel-do-sprawdzenia). Poprawkę w konkretnej operacji nanosi pilot w oknie 24 godzin albo administrator w trybie edycji (błędny odczyt - korekta przy przejęciu lub zdaniu; tankowanie poza aplikacją - **Dodaj wpis**); stan maszyny na teraz ustawia **Popraw odczyty** w [karcie samolotu](panel-samoloty), z komentarzem.
-- **Operacji nie ma na liście, choć pilot pokazuje ją na telefonie** → sprawdź zakres dat (doba liczy się w UTC od uruchomienia silnika) i stopkę o przyciętej liście. Wpis unieważniony zostaje w liście przekreślony; pusty zapis nie pojawi się wcale, ale link do niego nadal otworzy poziom 3.
+- **Samolot jest zajęty, a pilot go już nie zda** → otwórz jego operację i użyj **Zakończenia operacji**. Potem wpisz aktualny stan liczników w karcie samolotu.
+- **Pilot zapisał lot, a w dzienniku go nie ma** → zapisy czekają w telefonie pilota, dopóki nie ma internetu. Poproś pilota o sprawdzenie oznaczenia łączności i przycisk **SYNCHRONIZUJ TERAZ** w ustawieniach aplikacji. Zdanie samolotu bez lotu i bez żadnej zmiany odczytów nie trafia do dziennika.
+- **Odczyt przy zdaniu jednej operacji nie zgadza się z rozpoczęciem następnej** → ktoś tankował poza aplikacją, pomylił cyfrę albo operację zakończono bez odczytów. Taka różnica ma też sprawę w [Do sprawdzenia](panel-do-sprawdzenia). Popraw odczyt w konkretnej operacji albo dopisz tankowanie; aktualny stan samolotu ustawisz w jego karcie.
+- **Operacji nie ma na liście, choć pilot ją widzi** → sprawdź wybrany okres (daty liczą się w UTC od uruchomienia silnika) i stopkę o skróconej liście.

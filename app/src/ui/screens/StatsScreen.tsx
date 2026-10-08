@@ -338,7 +338,9 @@ export function StatsScreen({
           // w React Navigation 7 `navigate` do trasy leżącej pod spodem kładzie na wierzch
           // DRUGI jej egzemplarz (drugi kokpit, drugie zakładki).
           onBack={() => navigation.goBack()}
-          backLabel={readOnly ? 'Dni' : 'Dzień'}
+          // „Wróć", bo cel powrotu bywa trojaki (Historia, karta samolotu, kokpit) -
+          // „Dzień" i „Dni" zostały po ekranach 01 i 12 sprzed 3.0.0.
+          backLabel="Wróć"
           subtitle={header.subtitle}
           right={
             <>

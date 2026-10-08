@@ -1,73 +1,91 @@
 # Kokpit
 
-> Od uruchomienia do zatrzymania silnika telefon zapisuje sam kołowanie, starty i lądowania. Pilot ma pod ręką tankowanie, załadunek, zmianę załogi i przyciski ręczne na wypadek braku GPS.
+> Od uruchomienia do wyłączenia silnika telefon sam zapisuje kołowanie, starty i lądowania. Pod ręką masz tankowanie, załadunek, zmianę drugiego pilota i przyciski do ręcznego zapisu.
 
 ## Przed uruchomieniem silnika
 
-Pasek górny pokazuje znak samolotu, lotnisko i zadanie; sygnatura operacji pojawi się w nim po uruchomieniu silnika. Kafelki na ziemi:
+Na górze ekranu stoją znaki samolotu, lotnisko i zadanie. Pod nimi kafelki:
 
-- **Tankowanie** - dolewka przed lotem ([tankowanie i olej](tankowanie-i-olej)).
-- **Dolej olej** - kafelek pokazuje, ile oleju jest w silniku („W silniku 9,2 L": pomiar z przejęcia plus dolewki).
-- **Załadunek** (tylko w dniu skokowym) - wejście skoczków na pokład, ze składem albo bez; skład wypełni potem okienko zrzutu.
-- **Zmiana załogi** - drugi pilot wchodzi albo schodzi. Dowódcy nie zmienia się w trakcie: nowy dowódca to zdanie samolotu i nowe przejęcie z jego telefonu.
-- **Zdaj samolot · Nie lecisz? Zdanie bez lotu** - pogoda, usterka, próba silnika: maszyna wraca do klubu z powodem i opcjonalnym komentarzem.
+- **Tankowanie** - dolewka paliwa przed lotem ([tankowanie i olej](tankowanie-i-olej)).
+- **Dolej olej** - kafelek pokazuje, ile oleju jest w silniku, na przykład „W silniku 9,2 L".
+- **Załadunek** - tylko w dniu skokowym: skoczkowie wchodzą na pokład. Skład możesz podać albo pominąć; jeśli go podasz, podpowie się przy zrzucie.
+- **Zmiana załogi** - zmiana albo usunięcie drugiego pilota. Dowódcy w trakcie operacji się nie zmienia: nowy dowódca zaczyna własny lot na swoim telefonie, po zdaniu samolotu.
+- **Zdaj samolot** - gdy jednak nie lecisz (pogoda, usterka, próba silnika). Podajesz powód i opcjonalny komentarz ([zdanie samolotu](zdanie-samolotu#zdanie-bez-lotu)).
 
-@screen 04a-cockpit-ground "Kafelki na ziemi" | 05i-zaladunek "Załadunek skoczków" | 07-zmiana-zalogi "Zmiana drugiego pilota"
+Jeśli samolot ma normę zużycia, nad logiem stoi pasek paliwa z ostatnim odczytem i szacunkiem, na przykład „wystarczy na ~6 wyniesień do rezerwy 45 min". O ilości paliwa zawsze decyduje paliwomierz.
 
-Jeśli maszyna ma normę zużycia, nad logiem stoi pasek paliwa: ostatni odczyt i szacunek wystarczalności (np. „wystarczy na ~6 wyniesień do rezerwy 45 min") z podpisem, że decyduje paliwomierz.
+@screen 04a-cockpit-ground "Kokpit przed uruchomieniem" | 07-zmiana-zalogi "Zmiana drugiego pilota"
 
-**START ENGINE** wymaga **przytrzymania przez sekundę** - tak samo jak STOP ENGINE i przyciski ręczne. Przypadkowe tapnięcie niczego nie uruchomi.
+Aby uruchomić silnik, **przytrzymaj przycisk URUCHOM SILNIK przez sekundę**. Tak samo działają przycisk wyłączenia i przyciski ręcznego zapisu - przypadkowe tapnięcie niczego nie zapisze.
 
 ## W locie
 
-Po uruchomieniu silnika aplikacja wykrywa z GPS **kołowanie, start i lądowanie** i dopisuje je do osi operacji. W jednej operacji może być wiele lotów - także kręgi z touch and go, każdy liczony osobno. Duży wskaźnik na górze nazywa fazę (Engine idle, Taxi, Climb, Cruise, Descent) i liczy czas; pod nim stoją prędkość nad ziemią, wysokość, paliwo na pokładzie i czas lotu.
+Po uruchomieniu silnika aplikacja sama rozpoznaje **kołowanie, start i lądowanie** i dopisuje je do logu operacji. W jednej operacji może być wiele lotów - każdy krąg z touch and go liczy się jako osobny lot.
 
-@screen 05-cockpit-running "Faza lotu i parametry" | 05b-cockpit-inflight-toast "Odliczanie po wykryciu startu"
+Duży napis na górze mówi, co się dzieje: **Silnik pracuje**, **Kołowanie**, **Wznoszenie**, **Lot poziomy**, **Zniżanie**. Pod nim stoją prędkość nad ziemią, wysokość, paliwo na pokładzie i czas lotu.
 
-- **Wykryty start albo lądowanie najpierw pokazuje się jako komunikat z odliczaniem 5 sekund** i przyciskiem cofnięcia („COFNIJ - NIE BYŁO STARTU", „COFNIJ - TO PRZELOT"). Brak reakcji = zapis. Kołowanie zapisuje się od razu, bez odliczania.
-- **Zrzut skoczków** (dzień skokowy) - przycisk w locie; okienko podpowiada skład z załadunku, a wysokość bierze z GPS jako średnią z ostatnich 15 sekund. Skład jest opcjonalny, więc zapis zrzutu nigdy nie jest zablokowany.
-- **Przyciski ręczne** - „Take off" i „Landing" z przytrzymania. Okienko ogłasza typ zdarzenia w tytule i pozwala cofnąć godzinę przyciskami ±1 min, jeśli zauważyłeś je po fakcie.
-- **Paliwo i olej po uruchomieniu to szacunki** - kafelki mówią „około" i odświeżają się co 5 minut na podstawie normy maszyny i czasu pracy silnika. Przed uruchomieniem pokazują odczyty.
+@screen 05-cockpit-running "Kokpit w locie" | 05a-cockpit-taxi "Kołowanie"
 
-Gdy GPS zamilknie na kilkanaście sekund, kokpit pokazuje baner „GPS: brak sygnału · autodetekcja wstrzymana", parametry zmieniają się w kreski, a start i lądowanie zapisuje się przyciskami. Zegary liczą dalej, a wysyłka danych działa - to awaria czujnika, nie łączności. Powrót sygnału gasi baner bez Twojego udziału.
+### Jak aplikacja rozpoznaje start i lądowanie
 
-@screen 05f-zdarzenie-reczne "Ręczny zapis zdarzenia" | 05g-cockpit-no-gps "Bez sygnału GPS" | 05e-zrzut "Okienko zrzutu skoczków"
+- **Kołowanie** - gdy samolot odjedzie kilkadziesiąt metrów od miejsca postoju. Zapisuje się od razu.
+- **Start** - gdy samolot rozpędzi się do prędkości startowej albo wzniesie kilkadziesiąt stóp nad lotnisko.
+- **Lądowanie** - gdy samolot jest jednocześnie wolny i nisko nad lotniskiem. W dniu skokowym aplikacja uznaje lądowanie tylko w pobliżu lotniska skoków.
 
-> **Wskazówka.** Przełącznik w prawym górnym rogu przełącza ciemny i jasny motyw - jasny jest na pełne słońce. Ustawień w kokpicie nie ma; są na Pulpicie.
+Wykryty start albo lądowanie najpierw pokazuje komunikat „Wykryto: Start" z pięciosekundowym odliczaniem. Jeśli nic nie zrobisz, zdarzenie się zapisze. Jeśli to pomyłka, tapnij **COFNIJ - NIE BYŁO STARTU** (albo **COFNIJ - NIE BYŁO LĄDOWANIA** - na przykład przy niskim przelocie nad lotniskiem). Na osi zapisuje się godzina oderwania albo przyziemienia, a nie chwila komunikatu.
 
-## Jak to działa
+@screen 05b-cockpit-inflight-toast "Odliczanie po wykryciu startu" | 05c-cockpit-toast-ldg "Wykryte lądowanie"
 
-Automat patrzy na kolejne odczyty GPS i odrzuca te, które nie zasługują na zaufanie (zła dokładność, nieprawdopodobny skok pozycji). Kołowanie rozpoznaje po tym, że samolot oddalił się od miejsca postoju o ponad 25 metrów. Start wymaga prędkości około 50 węzłów bez hamowania albo wzniesienia ponad 50 stóp nad poziom lotniska, utrzymanych przez kilka sekund; lądowanie - jednocześnie małej prędkości i wysokości blisko ziemi, poza ciasnym zakrętem, a w dniu skokowym dodatkowo w pobliżu pola. Poziom lotniska aplikacja bierze z wysokości GPS w chwili uruchomienia silnika, nie z mapy - dzięki temu błąd odbiornika skraca się w rachunku. Do rejestru trafia nie chwila potwierdzenia, lecz odszukana wstecz chwila oderwania albo przyziemienia; po każdym wykryciu automat na chwilę ślepnie, żeby dobieg nie udawał rozbiegu. Progi i pełny opis: [wykrywanie faz lotu](wykrywanie-faz-lotu).
+### Ręczny zapis
 
-## Po zatrzymaniu silnika
+Na dole ekranu zawsze stoi przycisk następnego zdarzenia: **Kołowanie**, **Start** albo **Lądowanie**. Przytrzymaj go przez sekundę, jeśli aplikacja nie rozpoznała zdarzenia. W okienku możesz cofnąć godzinę o minutę albo wpisać ją z klawiatury - przydaje się, gdy zauważasz to po fakcie.
 
-**STOP ENGINE** kończy bieg silnika i operację. Drugiego startu w tej operacji nie ma - kolejny lot to nowe przejęcie z Pulpitu. Na ziemi zostają: tankowanie, dolewka oleju, kafelek **Popraw dane operacji** (brakujące lądowanie, zły czas - zanim zatwierdzisz log) i główny przycisk **ZDAJ SAMOLOT** → [zdanie samolotu](zdanie-samolotu). Pod osią stoi stopka z sumami: blok, czas lotu, starty.
+### Zrzut skoczków
 
-@screen 04-cockpit-ground "Główny przycisk ZDAJ SAMOLOT"
+W dniu skokowym w locie poziomym aktywny jest przycisk **Zrzut**. Okienko podpowiada skład z załadunku do potwierdzenia albo poprawienia, a wysokość bierze z GPS. Skład nie jest obowiązkowy - zrzut zapiszesz zawsze.
 
-## Z kokpitu nie ma wyjścia bokiem
+@screen 05f-zdarzenie-reczne "Ręczny zapis startu" | 05e-zrzut "Zapis zrzutu"
 
-Dopóki trzymasz samolot, przycisk wstecz i gest cofania nie prowadzą na Pulpit - pokazują okienko **TRZYMASZ SP-AXA** z wyborem: zostań albo zdaj samolot. Maszynę oddaje się wyłącznie przez zdanie, żeby żadna operacja nie została otwarta przez przypadek, a następny pilot zawsze dostał przekazanie. Jedyny wyjątek robi administrator: gdy zakończy albo unieważni Twoją operację z panelu, kokpit sam wraca na Pulpit z banerem.
+### Paliwo i olej w trakcie lotu
 
-@screen 04d-wyjscie-z-kokpitu "Zostań albo zdaj samolot"
+Po uruchomieniu silnika ilość paliwa i oleju to szacunki - kafelki mówią „około" i odświeżają się co 5 minut według normy samolotu i czasu pracy silnika.
 
-## Oś operacji
+### Gdy zniknie sygnał GPS
 
-Pod wskaźnikiem stoi oś zdarzeń tej operacji: przejęcie z odczytami, tankowania i dolewki oleju, uruchomienie, kołowanie, każdy start i lądowanie z czasem lotu, zrzuty, wyłączenie. To ta sama oś, którą zobaczysz później na [ekranie operacji](operacja-i-korekty) - kokpit dokłada tylko wiersz „na żywo" z bieżącym czasem.
+Po kilkunastu sekundach bez sygnału kokpit pokazuje komunikat „GPS: brak sygnału", a prędkość i wysokość zamieniają się w kreski. Starty i lądowania zapisujesz wtedy przyciskiem. Czasy liczą się dalej, a zapisy wysyłają się normalnie. Gdy sygnał wróci, komunikat zniknie sam.
 
-## Dlaczego tak to działa
+> **Wskazówka.** Ikona w prawym górnym rogu przełącza ekran między ciemnym a jasnym - jasny jest na pełne słońce.
 
-> **Dlaczego przyciski wymagają przytrzymania.** Zdarzenie zapisuje się dopiero po odliczeniu, bo rejestru się nie kasuje - cofnięcie zapisu musiałoby być kolejną poprawką. Pięć sekund kosztuje mniej niż fałszywy start w dokumentach.
+## Po wyłączeniu silnika
 
-> **Dlaczego bez pewnej wysokości nie ma lądowania.** Automat woli przemilczeć lądowanie, niż je zmyślić. Brakujące zdarzenie dopisuje pilot - przyciskiem w locie albo poprawką po zatrzymaniu silnika.
+Silnik wyłączasz, przytrzymując **WYŁĄCZ** - po wylądowaniu i zakończeniu dobiegu. Wyłączenie silnika kończy operację: drugiego uruchomienia w niej nie ma, a kolejny lot zaczniesz od nowa z Pulpitu, po zdaniu samolotu.
 
-> **Dlaczego po zatrzymaniu silnika zostaje już tylko zdanie.** Operacja to dokładnie jeden bieg silnika. Każda jest domknięta odczytami z obu stron - przejęcia i zdania - więc rachunek paliwa i motogodzin ma zawsze pełne dane, a log zatwierdza się raz, przy zdaniu. Więcej: [model operacji](model-operacji).
+Na ziemi zostają:
+
+- **ZDAJ SAMOLOT** - główny przycisk, prowadzi do [zdania samolotu](zdanie-samolotu),
+- **Tankowanie** i **Dolej olej**,
+- **Popraw dane operacji** - brakujące lądowanie, zła godzina - zanim zdasz samolot.
+
+Pod logiem stoją sumy operacji: czas blokowy, czas lotu i liczba startów.
+
+## Z kokpitu wychodzi się przez zdanie samolotu
+
+Dopóki masz samolot, przycisk wstecz nie prowadzi na Pulpit. Pokazuje okienko **TRZYMASZ SP-AXA** z wyborem: **Zostań** albo **Zdaj samolot**. Dzięki temu żaden samolot nie zostanie przez przypadek bez zdania, a następny pilot zawsze dostanie odczyty.
+
+Wyjątek: jeśli administrator zakończy albo unieważni Twoją operację w panelu, kokpit sam wróci na Pulpit z komunikatem.
+
+@screen 04-cockpit-ground "Po wyłączeniu silnika" | 04d-wyjscie-z-kokpitu "Zostań albo zdaj samolot"
+
+
+## Log operacji
+
+Pod kafelkami stoi log tej operacji: rozpoczęcie z odczytami, tankowania i dolewki oleju, uruchomienie, kołowanie, każdy start i lądowanie z czasem lotu, zrzuty i wyłączenie. Ten sam przebieg zobaczysz później na [ekranie operacji](operacja-i-korekty).
 
 ## Częste problemy
 
-- **Nie wykryło startu albo lądowania** → w locie przytrzymaj „Take off" / „Landing" i cofnij godzinę w okienku, jeśli minęło kilka minut. Po zatrzymaniu silnika brakujące zdarzenie dopisze **Popraw dane operacji** → **DODAJ WPIS**.
-- **Wykryło start, którego nie było** → tapnij COFNIJ w czasie odliczania. Po zapisie: **Popraw dane operacji**, ołówek przy wierszu, „tego nie było".
-- **Baner „GPS: brak sygnału"** → zapisuj start i lądowanie przyciskami; sygnał zwykle wraca sam. Stan odbiornika sprawdzisz w [ustawieniach](ustawienia), w sekcji „Diagnostyka GPS".
-- **Nie mogę wrócić na Pulpit** → zdaj samolot: ZDAJ SAMOLOT po locie, „Zdanie bez lotu" przed uruchomieniem. Zakładki wrócą po zdaniu - w kokpicie paska nie ma.
-- **Po STOP ENGINE nie ma START ENGINE** → to nie błąd: kolejny lot to nowe przejęcie. Zdaj samolot i rozpocznij lot jeszcze raz.
-- **Kokpit sam wrócił na Pulpit** → administrator zakończył albo unieważnił operację; baner mówi, która i dlaczego.
+- **Aplikacja nie rozpoznała startu albo lądowania** → przytrzymaj przycisk **Start** albo **Lądowanie** i w razie potrzeby cofnij godzinę w okienku. Po wyłączeniu silnika brakujące zdarzenie dopiszesz przez **Popraw dane operacji** → **DODAJ WPIS**.
+- **Aplikacja zapisała start, którego nie było** → tapnij **COFNIJ** w czasie odliczania. Jeśli już się zapisał: **Popraw dane operacji**, ołówek przy wierszu i „tego nie było".
+- **Komunikat „GPS: brak sygnału"** → zapisuj start i lądowanie przyciskami. Stan odbiornika sprawdzisz w [ustawieniach](ustawienia), w sekcji „Diagnostyka GPS".
+- **Nie mogę wrócić na Pulpit** → zdaj samolot: po locie **ZDAJ SAMOLOT**, przed uruchomieniem kafelek **Zdaj samolot**.
+- **Po wyłączeniu silnika nie ma URUCHOM SILNIK** → tak ma być. Zdaj samolot i rozpocznij nowy lot z Pulpitu.
+- **Kokpit sam wrócił na Pulpit** → administrator zakończył albo unieważnił operację. Komunikat na Pulpicie mówi, którą i dlaczego.

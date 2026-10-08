@@ -2,8 +2,9 @@
 
 <!--
 Ten katalog jest ŹRÓDŁEM modułu „Dokumentacja" strony Ninerdeck (/dokumentacja/).
-Piszemy dla pilotów i administratorów klubu - instrukcja obsługi, bez nazw plików,
-identyfikatorów i opisu budowy aplikacji.
+Piszemy dla pilotów i administratorów klubu - samouczek: jak coś zrobić i co zobaczysz,
+bez nazw plików, identyfikatorów, opisu budowy aplikacji i uzasadnień decyzji projektowych.
+Słownik i zasady języka: CLAUDE.md, sekcja „Przegląd treści 4.0.0".
 
 Renderuje go site/tools/render-docs.mjs (od 2026-09-07 w TYM repozytorium):
   npm run site                     - cała strona do site/dist, podgląd w przeglądarce
@@ -26,15 +27,18 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 - czym-jest-ninerdeck
 - instalacja
 - pierwsze-logowanie
+- kluby-i-dolaczanie
 
 ## Dzień lotny
 - moj-dzien
 - rezerwacja-samolotu
 - akceptacja-rezerwacji
+- zlecenia-na-lot
+- obserwowanie-samolotu
 - rozpoczecie-lotu
 - kokpit
-- zdanie-samolotu
 - tankowanie-i-olej
+- zdanie-samolotu
 - wpis-lotu-po-fakcie
 
 ## Po locie
@@ -47,27 +51,16 @@ Strona: „# Tytuł", opcjonalnie „> jedno zdanie" tuż pod tytułem, dalej Ma
 - powiadomienia
 - ustawienia
 
-## Jak to działa
-- model-operacji
-- wykrywanie-faz-lotu
-- lancuch-odczytow
-- norma-zuzycia
-- synchronizacja
-- korekty-i-rejestr
-- konta-i-bezpieczenstwo
-
-## Kluby i dołączanie
-- kluby-i-dolaczanie
-
 ## Panel klubu
 - panel-wprowadzenie
 - uprawnienia
-- panel-piloci
-- panel-samoloty
 - panel-dziennik
 - panel-do-sprawdzenia
-- panel-kalendarz
 - panel-statystyki
+- panel-kalendarz
+- panel-zlecenia
+- panel-piloci
+- panel-samoloty
 
 ## Pomoc
 - czeste-pytania
