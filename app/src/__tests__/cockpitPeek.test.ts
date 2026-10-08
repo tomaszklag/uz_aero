@@ -16,7 +16,9 @@
 
 import {
   LIVE_MAX_AGE_MS,
+  leadPilot,
   peekBanner,
+  peekFacts,
   peekFreshness,
   peekLogTitle,
   peekStatusChip,
@@ -107,20 +109,20 @@ describe('baner podglądu', () => {
     const model = peekBanner({ ...base, freshness: 'live' });
     expect(model.tone).toBe('blue');
     expect(model.warning).toBeNull();
-    expect(model.meta).toBe('Dane z serwera · pobrano 09:41 · ostatnia aktywność KRZ 08:31');
+    expect(model.meta).toBe('Pobrano 09:41 UTC · ostatni zapis KRZ 08:31');
     expect(model.text.find((s) => s.strong === true)?.text).toBe('KRZ · od 07:10');
   });
 
   it('cache: ostrzega, czego ten stan może już nie obejmować', () => {
     const model = peekBanner({ ...base, freshness: 'cache', now: at(9, 41) + 30 * 3_600_000 });
     expect(model.tone).toBe('amber');
-    expect(model.meta).toBe('Ostatnie pobrane dane · 22 CZE 09:41 · stan sprzed ponad doby');
+    expect(model.meta).toBe('Dane z 22 CZE 09:41 UTC · sprzed ponad doby');
     expect(model.warning).toContain('ostatni znany stan');
   });
 
   it('brak: mówi wprost, że przebiegu dnia nie znamy - zamiast pustego logu', () => {
     const model = peekBanner({ ...base, freshness: 'brak', fetchedAt: null, lastActivityAt: null });
-    expect(model.meta).toContain('Brak danych z serwera');
+    expect(model.meta).toContain('Brak danych');
     expect(model.warning).not.toBeNull();
   });
 
@@ -154,22 +156,43 @@ describe('nagłówek logu', () => {
   });
 });
 
+describe('stan samolotu w podglądzie (04B, decyzja 2026-10-08)', () => {
+  it('paliwo względem pojemności i załoga kodami - nigdy identyfikatorem', () => {
+    expect(peekFacts({ fuelL: 156.4, capacityL: 330, picCode: 'KRZ', dualCode: 'BNO' })).toEqual([
+      { label: 'Paliwo', value: '156 / 330 L' },
+      { label: 'Załoga', value: 'Dowódca KRZ · Drugi pilot BNO' },
+    ]);
+  });
+
+  it('bez odczytu paliwa i bez drugiego pilota - mówi to wprost, bez zmyślania', () => {
+    expect(peekFacts({ fuelL: null, capacityL: 330, picCode: null, dualCode: null })).toEqual([
+      { label: 'Paliwo', value: 'nieznany' },
+      { label: 'Załoga', value: 'Dowódca -' },
+    ]);
+  });
+
+  it('kto trzyma maszynę - kod i godzina, a poza pamięcią klubu „inny pilot"', () => {
+    expect(leadPilot('KRZ', Date.parse('2026-10-08T07:10:00Z'))).toBe('KRZ · od 07:10');
+    expect(leadPilot(null, null)).toBe('inny pilot');
+  });
+});
+
 describe('chip stanu', () => {
-  it('po zamkniętym cyklu: ziemia, silnik wyłączony - zawsze z adnotacją „wg serwera"', () => {
+  it('po zamkniętym cyklu: ziemia, silnik wyłączony', () => {
     expect(peekStatusChip(krzState)).toEqual({
-      label: 'Ground · silnik wyłączony · wg serwera',
+      label: 'Na ziemi · silnik wyłączony',
       tone: 'neutral',
     });
   });
 
-  it('otwarty cykl to RUNNING', () => {
+  it('otwarty cykl: silnik pracuje', () => {
     const running = projectSession(krzEvents.slice(0, 2));
-    expect(peekStatusChip(running).label).toContain('Running');
+    expect(peekStatusChip(running).label).toBe('Silnik pracuje');
   });
 
   it('otwarty lot bije otwarty cykl - pilot ma wiedzieć, że samolot jest w powietrzu', () => {
     const airborne = projectSession(krzEvents.slice(0, 3));
-    expect(peekStatusChip(airborne)).toEqual({ label: 'W powietrzu · wg serwera', tone: 'blue' });
+    expect(peekStatusChip(airborne)).toEqual({ label: 'W powietrzu', tone: 'blue' });
   });
 
   it('operacja zamknięta mówi o SAMOLOCIE, nie o dniu poprzednika', () => {
@@ -182,7 +205,7 @@ describe('chip stanu', () => {
     ]);
 
     expect(peekStatusChip(released)).toEqual({
-      label: 'Samolot zdany · wg serwera',
+      label: 'Samolot zdany',
       tone: 'neutral',
     });
   });
@@ -193,18 +216,18 @@ describe('chip stanu', () => {
 });
 
 describe('przejęcie samolotu z podglądu (issue #12)', () => {
-  it('ostrzeżenie zawsze mówi o niewysłanych danych poprzednika', () => {
-    expect(takeoverWarning('live', 'KRZ')).toContain('niewysłane dane');
+  it('ostrzeżenie zawsze mówi o zapisach poprzednika, które mogą jeszcze nie dotrzeć', () => {
+    expect(takeoverWarning('live', 'KRZ')).toContain('mogą jeszcze nie dotrzeć');
     expect(takeoverWarning('live', 'KRZ')).toContain('KRZ');
   });
 
   it('offline mówi wprost, że przejęcie DZIAŁA - claim jest optymistyczny (§4.4)', () => {
-    expect(takeoverWarning('cache', 'KRZ')).toContain('bez sieci');
-    expect(takeoverWarning('brak', 'KRZ')).toContain('bez sieci');
+    expect(takeoverWarning('cache', 'KRZ')).toContain('bez zasięgu');
+    expect(takeoverWarning('brak', 'KRZ')).toContain('bez zasięgu');
   });
 
   it('bez kodu poprzednika ostrzeżenie nadal jest zdaniem, nie dziurą', () => {
-    expect(takeoverWarning('live', null)).toContain('poprzedni PIC');
+    expect(takeoverWarning('live', null)).toContain('poprzedniego pilota');
   });
 
   it('podpis pod przyciskiem mówi, że rejestru to jeszcze nie dotyka', () => {

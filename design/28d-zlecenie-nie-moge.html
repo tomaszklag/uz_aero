@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 28D Nie mogę</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ═══ EKRAN POD ARKUSZEM = karta 28 1:1 ═══
+     Arkusz jest WSTAWKĄ nad kartą, więc pod przyciemnieniem stoi dokładnie ekran,
+     z którego wyszło „NIE MOGĘ" - pilot widzi, na co odpowiada. */
+  .app-header {
+    display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:8px;
+    padding:6px 12px 6px 4px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .icon-btn { width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; border-radius:12px; color:var(--text-muted); text-decoration:none; }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+  .screen-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); text-align:center; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  .hero {
+    background:linear-gradient(180deg, rgba(52,152,219,0.08) 0%, var(--surface) 55%);
+    border:1px solid var(--blue-border); border-radius:16px;
+    padding:15px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .hero-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:5px; padding:3px 7px; }
+  .hero-hours { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .hero-meta { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .hero-dur { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); }
+  .hero-count { font-family:var(--font-display); font-size:17px; letter-spacing:1.5px; color:var(--blue); }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .seat { display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:10px; padding:12px 13px; border-bottom:1px solid var(--border); }
+  .seat:last-child { border-bottom:none; }
+  .seat-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .seat-v { font-size:13px; color:var(--text-primary); line-height:1.35; }
+  .seat.you { background:linear-gradient(90deg, rgba(52,152,219,0.09) 0%, transparent 70%); box-shadow:inset 3px 0 0 var(--blue); }
+  .seat.you .seat-v { font-weight:600; }
+  .seat-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.3px; text-transform:uppercase; border-radius:5px; padding:3px 6px; white-space:nowrap; }
+  .seat-tag.blue { color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); }
+
+  .kv { display:grid; grid-template-columns:96px 1fr; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding-top:2px; }
+  .kv-v { font-size:13px; color:var(--text-primary); line-height:1.4; }
+  .kv-v .mono { font-family:var(--font-mono); font-size:12.5px; letter-spacing:1px; }
+  .kv-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); display:block; margin-top:2px; }
+  .section-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  .thread-row {
+    display:grid; grid-template-columns:32px 1fr 14px; align-items:center; gap:10px;
+    padding:11px 13px; text-decoration:none; color:inherit;
+  }
+  .tr-icon { width:32px; height:32px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border-strong); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); }
+  .tr-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tr-title { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tr-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  .tr-go { font-family:var(--font-mono); font-size:15px; color:var(--text-muted); }
+
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; padding:14px; border-radius:14px;
+    background:var(--green); color:#0D0D0D; border:none;
+    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; text-decoration:none;
+    box-shadow:0 0 28px rgba(46,204,113,0.28);
+  }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:13px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
+  }
+  .foot-note { display:flex; align-items:flex-start; gap:8px; padding:2px 4px 0; font-size:10.5px; color:var(--text-muted); line-height:1.5; }
+  .foot-note b { color:var(--text-secondary); font-weight:600; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ARKUSZ „NIE MOGĘ" - rama z 26C
+     Sufit 56 px nad bezpiecznym obszarem, treść przewija się w środku, akcje przypięte
+     na dole: arkusz jest WSTAWKĄ nad kartą i musi to być widać - bez sufitu czyta się
+     jak nowy ekran (SheetSurface).
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 16px 30px; display:flex; flex-direction:column; gap:14px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow:hidden; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  /* OPCJONALNOŚĆ MÓWI PLAKIETKA w linii etykiety (Field.tag), nigdy słowo doklejone do
+     nazwy pola - „Powód · opcjonalnie" czytałoby się jak część nazwy (wzorzec 02I). */
+  .modal-field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:-6px; }
+  .modal-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  /* Pole ma FOKUS od otwarcia (zielona ramka, kursor): arkusz z polem wpisu wchodzi
+     razem z klawiaturą (useSheetInputFocus). Klawiatury makieta nie rysuje - jak 26C;
+     akcje stoją nad nią, więc „NIE MOGĘ" zostaje w zasięgu kciuka także z nią.
+     Placeholder jest zdaniem-przykładem w kolorze instrukcji, nie wartości (issue #58). */
+  .modal-field {
+    border:1px solid var(--green-border); background:var(--surface); border-radius:12px;
+    padding:12px 13px; min-height:86px; font-size:13px; line-height:1.5; color:var(--text-placeholder);
+  }
+  .modal-cursor { display:inline-block; width:2px; height:16px; background:var(--text-primary); vertical-align:-3px; margin-right:1px; animation:blink 1s step-end infinite; }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+  .modal-ref { display:flex; justify-content:space-between; gap:10px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  .modal-ref-val { color:var(--text-secondary); text-align:right; }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
+  /* „NIE MOGĘ" jest AKTYWNY od pierwszej chwili, bo powód jest opcjonalny (decyzja 16) -
+     inaczej niż odmowa zgody na 26C, gdzie pusty powód blokuje przycisk. WYCISZONY
+     i nie czerwony: odmowa nikomu niczego nie zabiera, a zielony wypełniony obiecywałby,
+     że to akcja, którą aplikacja poleca. Od „ANULUJ" różni go szerokość (2/3 pasa)
+     i pełny kolor napisu - nie przygaszenie, które czytałoby się jak blokada. */
+  .modal-btn-quiet { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface-hover); color:var(--text-primary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; }
+  .modal-btn-quiet:hover { border-color:var(--text-muted); }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 28D</span>
+  <span class="slug">zlecenie · nie mogę · powód opcjonalny</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Arkusz odpowiedzi Nie mogę">
+  <div class="status-bar">
+    <span>19:13</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="30-zlecenia.html" class="icon-btn" title="Wróć" aria-label="Wróć">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <span class="screen-title">ZLECENIE</span>
+      <span></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="hero">
+        <div class="hero-top">
+          <span class="hero-date">Sobota · 3 października</span>
+          <span class="hero-badge">Czeka na odpowiedź</span>
+        </div>
+        <div class="hero-hours">09:00 → 11:00</div>
+        <div class="hero-meta">
+          <span class="hero-zone">czas klubu</span>
+          <span class="hero-dur">2 h</span>
+          <span class="hero-count">ZA 1 DZIEŃ 13 H</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Załoga</div>
+      <div class="card">
+        <div class="seat you">
+          <span class="seat-k">Dowódca</span>
+          <span class="seat-v">Ty</span>
+          <span class="seat-tag blue">Proponowany fotel</span>
+        </div>
+      </div>
+
+      <div class="section-lbl">Zlecenie</div>
+      <div class="card">
+        <div class="kv">
+          <span class="kv-k">Samolot</span>
+          <span class="kv-v"><span class="mono">SP-AXA</span><span class="kv-sub">Cessna 172 · C172</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zadanie</span>
+          <span class="kv-v">Przelot</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Trasa</span>
+          <span class="kv-v"><span class="mono">EPKK → EPRJ</span><span class="kv-sub">Kraków-Balice → Rzeszów-Jasionka</span></span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Plan lotu</span>
+          <span class="kv-v">1:30 · paliwo 120 L</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Opis</span>
+          <span class="kv-v">Odbiór części z serwisu w Jasionce, powrót tego samego dnia.</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Zleca</span>
+          <span class="kv-v">Marta Zięba<span class="kv-sub">MZI · wysłane dziś 18:40</span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a class="thread-row" href="29-watek.html">
+          <span class="tr-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+          </span>
+          <span class="tr-body">
+            <span class="tr-title">Napisz wiadomość</span>
+            <span class="tr-sub">Marta Zięba · zleca</span>
+          </span>
+          <span class="tr-go">&#8250;</span>
+        </a>
+      </div>
+
+      <a class="btn-primary" href="23f-rezerwacja-ze-zlecenia.html">PRZYJMUJĘ</a>
+      <a class="btn-secondary" href="28d-zlecenie-nie-moge.html">NIE MOGĘ</a>
+
+      <div class="foot-note">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg>
+        <span>Po przyjęciu lot jest <b>Twoją rezerwacją</b> - zobaczysz go na Pulpicie i w kalendarzu.</span>
+      </div>
+
+    </div>
+
+    <!-- ══ ARKUSZ „NIE MOGĘ" ══
+         POWÓD JEST OPCJONALNY (decyzja 16): jedno tapnięcie wystarczy, żeby odpowiedzieć -
+         pilot, który po prostu nie może, nie ma wymyślać uzasadnienia. Jeśli coś wpisze,
+         prowadzący przeczytają to przy jego odpowiedzi („Nie może · 19:48" + powód, 32).
+         Zdania o tym, kto czyta powód, w arkuszu nie ma: widzą go wszyscy prowadzący
+         zlecenie, a jedno nazwisko w zdaniu byłoby nieprawdą.
+
+         Wiersz odniesienia mówi, NA CO odpowiadasz - maszyna i termin w jednej linii mono,
+         jak w arkuszu odmowy zgody (26C). Termin czasem klubu.
+
+         Ten sam arkusz obsługuje trzy wejścia: „NIE MOGĘ" z karty imiennej (28), z grupy
+         (28A - także wycofanie zgłoszenia) i po zmianie terminu (28C). Z karty rezerwacji
+         ze zlecenia (23F) otwiera się w tym samym kształcie z tytułem „REZYGNUJĘ"
+         i przyciskiem „REZYGNUJĘ" - tam obramowanym czerwienią, bo rezygnacja zwalnia
+         fotel, na który ktoś już liczy. -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">NIE MOGĘ</div>
+        <div class="modal-field-head">
+          <span class="modal-lbl">Powód</span>
+          <span class="optional-tag">opcjonalne</span>
+        </div>
+        <div class="modal-field"><span class="modal-cursor"></span>Np. w sobotę mam dyżur…</div>
+        <div class="modal-ref"><span>Zlecenie</span><span class="modal-ref-val">SP-AXA · sob 3 PAŹ 09:00-11:00</span></div>
+        <div class="modal-actions">
+          <a class="modal-btn-cancel" href="28-zlecenie.html">ANULUJ</a>
+          <a class="modal-btn-quiet" href="30-zlecenia.html">NIE MOGĘ</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item" href="28-zlecenie.html">
+    <span class="vp-badge blue">28</span>
+    <span class="vp-body">
+      <span class="vp-name">Fotel wskazany imiennie</span>
+      <span class="vp-when">Karta, z której otwiera się ten arkusz. „PRZYJMUJĘ" obsadza fotel od razu i lot staje się Twoją rezerwacją (23F).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28a-zlecenie-grupa.html">
+    <span class="vp-badge blue">28A</span>
+    <span class="vp-body">
+      <span class="vp-name">Grupa albo wspólna lista</span>
+      <span class="vp-when">„MOGĘ LECIEĆ" jest zgłoszeniem, a fotel wybiera osoba zlecająca (decyzja 11). Po zgłoszeniu ten arkusz je wycofuje.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28b-zlecenie-nieaktualne.html">
+    <span class="vp-badge amber">28B</span>
+    <span class="vp-body">
+      <span class="vp-name">Nieaktualne, odwołane, wygasłe</span>
+      <span class="vp-when">Zlecenie zamknięte nie przyjmuje już żadnej odpowiedzi - tam arkusza nie ma, bo nie ma pasa akcji.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
+    <span class="vp-badge amber">28C</span>
+    <span class="vp-body">
+      <span class="vp-name">Termin zmieniony</span>
+      <span class="vp-when">Poprzednia odpowiedź stoi przekreślona, a arkusz pyta od nowa - powód z poprzedniego terminu nie przechodzi, bo dotyczył innych godzin.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="28d-zlecenie-nie-moge.html">
+    <span class="vp-badge">28D</span>
+    <span class="vp-body">
+      <span class="vp-name">„Nie mogę" - arkusz, powód opcjonalny</span>
+      <span class="vp-when">Arkusz od dołu nad kartą (rama 26C). Powód jest OPCJONALNY (decyzja 16) - plakietka w linii etykiety, a „NIE MOGĘ" działa od razu, inaczej niż odmowa zgody na 26C. Przycisk wyciszony, nie czerwony: odmowa nikomu niczego nie zabiera. Po zapisie ekran wraca na listę zleceń (tak jak decyzja na 26 wraca do skrzynki); otwarta ponownie karta pokazuje „Twoja odpowiedź · Nie mogę" z godziną i przycisk odpowiedzi przeciwnej - tak samo jak „NIE MOGĘ" po zgłoszeniu na 28A. Ten sam kształt z tytułem „REZYGNUJĘ" otwiera się z karty rezerwacji ze zlecenia (23F).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="28e-zlecenie-offline.html">
+    <span class="vp-badge amber">28E</span>
+    <span class="vp-body">
+      <span class="vp-name">Bez połączenia</span>
+      <span class="vp-when">Cały moduł zleceń wymaga sieci (§2.2) - wzorzec 21B, bez przycisku ponowienia; ekran wraca sam.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29-watek.html">
+    <span class="vp-badge blue">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa z osobą zlecającą</span>
+      <span class="vp-when">Gdy „nie mogę" znaczy „nie mogę O TEJ godzinie" - negocjacja idzie w rozmowie, a termin zmienia edycja zlecenia (28C).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="23f-rezerwacja-ze-zlecenia.html">
+    <span class="vp-badge">23F</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezygnacja z lotu ze zlecenia</span>
+      <span class="vp-when">„REZYGNUJĘ" na karcie rezerwacji otwiera ten arkusz z tytułem „REZYGNUJĘ" - powód dalej opcjonalny, fotel wraca do szukania.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="20f-pulpit-zlecenia.html">20F Pulpit</a>
+  <a href="30-zlecenia.html">← 30 Zlecenia</a>
+  <span>·</span>
+  <a href="28-zlecenie.html">28 Imiennie</a>
+  <a href="28a-zlecenie-grupa.html">28A Grupa</a>
+  <a href="28b-zlecenie-nieaktualne.html">28B Nieaktualne</a>
+  <a href="28c-zlecenie-termin-zmieniony.html">28C Termin</a>
+  <a href="28d-zlecenie-nie-moge.html" class="active">28D Nie mogę</a>
+  <a href="28e-zlecenie-offline.html">28E Offline</a>
+  <span>·</span>
+  <a href="29-watek.html">29 Rozmowa</a>
+  <a href="23f-rezerwacja-ze-zlecenia.html">23F Rezerwacja →</a>
+</nav>
+
+</body>
+</html>

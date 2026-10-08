@@ -29,6 +29,7 @@
 import type { MhFormat } from '../../../domain';
 import type { RemoteReadingsChain, RemoteReadingsChainLink } from '../../../application';
 import { dateTimeUtcShort, litres, motoHours } from '../../format';
+import type { PilotCodeOf } from './readingsContinuity';
 
 /** Ogniwo szlaku - strukturalnie zgodne z `TrailRow` (logika nie importuje z UI). */
 export interface ReadingsTrailRow {
@@ -37,10 +38,13 @@ export interface ReadingsTrailRow {
   meta: string;
 }
 
-/** „BNO · 16 SIE 09:00" - kto zostawił maszynę i kiedy. */
-function who(link: RemoteReadingsChainLink): string {
-  return `${link.picId.toUpperCase()} · ${dateTimeUtcShort(link.at)}`;
+/** „BNO · 16 SIE 09:00" - kto zostawił maszynę i kiedy; poza pamięcią klubu sama data. */
+function who(link: RemoteReadingsChainLink, codeOf: PilotCodeOf): string {
+  const code = codeOf(link.picId);
+  return code == null ? dateTimeUtcShort(link.at) : `${code} · ${dateTimeUtcShort(link.at)}`;
 }
+
+const NO_CODE: PilotCodeOf = () => null;
 
 /**
  * Szlak pod polem PALIWA.
@@ -53,6 +57,7 @@ function who(link: RemoteReadingsChainLink): string {
 export function fuelChainTrail(
   chain: RemoteReadingsChain | null | undefined,
   which: 'found' | 'after',
+  codeOf: PilotCodeOf = NO_CODE,
 ): ReadingsTrailRow[] {
   if (which === 'found') {
     const link = chain?.before;
@@ -60,8 +65,8 @@ export function fuelChainTrail(
     return [
       {
         id: 'chain-before',
-        title: `Poprzedni lot · ${who(link)}`,
-        meta: `zdał maszynę z ${litres(link.fuelL)}`,
+        title: `Poprzedni lot · ${who(link, codeOf)}`,
+        meta: `po locie zostało ${litres(link.fuelL)}`,
       },
     ];
   }
@@ -71,8 +76,8 @@ export function fuelChainTrail(
   return [
     {
       id: 'chain-after',
-      title: `Następny lot · ${who(link)}`,
-      meta: `zastał ${litres(link.fuelL)}`,
+      title: `Następny lot · ${who(link, codeOf)}`,
+      meta: `na początku lotu było ${litres(link.fuelL)}`,
     },
   ];
 }
@@ -88,6 +93,7 @@ export function mhChainTrail(
   chain: RemoteReadingsChain | null | undefined,
   which: 'before' | 'after',
   format: MhFormat,
+  codeOf: PilotCodeOf = NO_CODE,
 ): ReadingsTrailRow[] {
   if (which === 'before') {
     const link = chain?.before;
@@ -95,8 +101,8 @@ export function mhChainTrail(
     return [
       {
         id: 'chain-before',
-        title: `Poprzedni lot · ${who(link)}`,
-        meta: `zdał maszynę na ${motoHours(link.mh, format)} MH`,
+        title: `Poprzedni lot · ${who(link, codeOf)}`,
+        meta: `po locie licznik ${motoHours(link.mh, format)} MH`,
       },
     ];
   }
@@ -106,8 +112,8 @@ export function mhChainTrail(
   return [
     {
       id: 'chain-after',
-      title: `Następny lot · ${who(link)}`,
-      meta: `zastał ${motoHours(link.mh, format)} MH`,
+      title: `Następny lot · ${who(link, codeOf)}`,
+      meta: `na początku lotu licznik ${motoHours(link.mh, format)} MH`,
     },
   ];
 }

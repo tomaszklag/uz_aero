@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - 25E Baner w aplikacji</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header - wzorzec z issue #23 pkt 7, bez zmian.
+     Zębatka stoi TYLKO tutaj (issue #82): to jedyny ekran aplikacji z wejściem
+     w ustawienia, a kokpit ma w tym miejscu przełącznik jasności. */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .icon-btn {
+    width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0;
+  }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+
+  /* Licznik nieprzeczytanych. ZAPALA SIĘ WYŁĄCZNIE Z TREŚCIĄ - dzwonek stoi
+     zawsze, bo jest wejściem, ale pusta skrzynka nie dostaje zera (reguła
+     SyncChipa z issue #12). Bez zasięgu licznika też nie ma: liczbę zna serwer,
+     a zapamiętana sprzed godziny mówiłaby o stanie, którego telefon nie zna.
+
+     Obwódka w kolorze tła WYCINA plakietkę z ikony - bez niej cyfra siada na
+     kresce dzwonka i obie przestają być czytelne. */
+  .bell { position:relative; }
+  .bell-count {
+    position:absolute; top:5px; right:4px; min-width:16px; height:16px; padding:0 4px;
+    border-radius:8px; background:var(--green); color:var(--bg); border:2px solid var(--bg);
+    font-family:var(--font-mono); font-size:9px; font-weight:700; line-height:12px; text-align:center;
+  }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+  .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NAJBLIŻSZA REZERWACJA (3.0.0, issue #145)
+
+     Stoi POD „Moim dniem" (decyzja właściciela 2026-09-19) - a od 4.0.0 także pod
+     kartą „Zlecenia", gdy ta istnieje: pilot otwiera aplikację w kontekście tego, co
+     dziś lata, a plan jest odpowiedzią na pytanie zadawane raz - rano albo przy
+     układaniu tygodnia.
+
+     KARTA NIE MA WŁASNEGO PRZYCISKU STARTU i to jest decyzja: „ROZPOCZNIJ LOT" ma
+     w tej aplikacji jedno miejsce i jeden wygląd przez cały dzień (issue #42), więc
+     drugi zielony przycisk w karcie uczyłby, że są dwa różne starty. Główny przycisk
+     BIERZE tę rezerwację i wypełnia nią kroki przejęcia - pilot, który chce lecieć
+     inaczej, zmienia wybór w kroku 1.
+
+     Zielona ramka i poświata zostają mimo przesunięcia w dół: karta nie jest pierwsza,
+     ale nadal jest jedyną rzeczą na tym ekranie, która mówi o WŁASNYM planie - a ekran
+     w całości mieści się bez przewijania, więc „pierwsza" i „druga" są tu o kolejności
+     czytania, nie o widoczności. */
+  .next-card {
+    background:linear-gradient(180deg, rgba(46,204,113,0.07) 0%, var(--surface) 55%);
+    border:1px solid var(--green-border); border-radius:16px;
+    padding:14px; display:flex; flex-direction:column; gap:11px;
+    text-decoration:none; color:inherit;
+  }
+  .next-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .next-badge {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
+    border-radius:5px; padding:3px 7px;
+  }
+  /* Odliczanie jest jedyną liczbą tej karty pisaną krojem display: to ono decyduje,
+     czy pilot ma jeszcze czas na kawę. */
+  .next-countdown { font-family:var(--font-display); font-size:19px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .next-when { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .next-hours { font-family:var(--font-mono); font-size:19px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .next-zone { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .next-ac { font-family:var(--font-mono); font-size:12px; letter-spacing:1.5px; color:var(--green); }
+  .next-task { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); }
+  .next-route { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
+  .next-dot { width:3px; height:3px; border-radius:50%; background:var(--border-strong); flex-shrink:0; }
+
+
+  /* ═══ PODSUMOWANIE DNIA ═══
+     Kafelka operacji na tym ekranie NIE MA (decyzja właściciela 2026-09-19) - zostaje
+     sama suma dnia. Komponent `DayCard` żyje dalej w zakładce Historia, gdzie opisuje
+     pojedynczą operację i prowadzi do jej korekty (issue #42: jeden kształt kafelka).
+
+     Karta jest linkiem, więc `cta-open` zostaje w tym samym kroju i kształcie, co pas
+     akcji kafelka operacji - to ta sama czynność (otwórz i popraw), tylko o jeden
+     poziom wyżej. */
+  .today-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px 13px; display:flex; flex-direction:column; gap:10px;
+    text-decoration:none; color:inherit;
+  }
+  .today-card:hover { border-color:var(--border-strong); }
+  .today-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .today-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); line-height:1; }
+  /* Podpis mówi, ILE i CZYM - bez tego suma „Blok 1:38" nie zdradza, że dzień miał
+     dwie maszyny, a to jest pierwsza rzecz, o którą pilot pyta patrząc na własną sumę. */
+  .today-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .cta-open {
+    display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
+    border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised);
+    color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+  }
+  .today-card:hover .cta-open { border-color:var(--text-muted); color:var(--text-primary); }
+
+  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:11px; overflow:hidden; }
+  .total-cell { background:var(--surface-raised); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
+  .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
+  .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ZLECENIA (4.0.0, zgłoszenie #239) - KARTA WYŁĄCZNIE Z TREŚCIĄ
+
+     Stoi POD „Moim dniem", NAD najbliższą rezerwacją. Rezerwacja jest informacją
+     o planie, a zlecenie czeka na DECYZJĘ: im dłużej bez odpowiedzi, tym bliżej do
+     tego, że fotel obsadzi ktoś inny albo zlecenie wygaśnie z początkiem terminu
+     (decyzja 15). Czwartej zakładki nie ma (decyzja 7) - ta karta jest wejściem do
+     listy zleceń (30), a o pojedynczym zleceniu mówią skrzynka i push.
+
+     KARTA ISTNIEJE WYŁĄCZNIE Z TREŚCIĄ: coś czeka na Twoją odpowiedź albo prowadzone
+     zlecenie szuka załogi. Zero nie dostaje karty (reguła SyncChipa, issue #12) - karta
+     „brak zleceń" byłaby zdaniem o niczym, a stojąc przy każdym otwarciu aplikacji
+     uczyłaby oko pomijać to miejsce. Wiersz z zerem też nie stoi: karta z jedną liczbą
+     ma jeden wiersz.
+
+     BEZ ZASIĘGU KARTY NIE MA, tak jak licznika przy dzwonku: liczby zna serwer,
+     a zapamiętane sprzed godziny mówiłyby o stanie, którego telefon nie zna (cache'u
+     zleceń nie ma, §2.2). Z zasięgiem liczby odświeżają się NA ŻYWO (decyzja 27) -
+     bez żadnego wskaźnika połączenia na ekranie.
+
+     LICZBA NAJPIERW, jedna na wiersz, w kroju i komórce sum „Mojego dnia" tuż wyżej -
+     kolumna liczb czyta się w pionie. BŁĘKIT WYŁĄCZNIE przy „czeka na Twoją odpowiedź":
+     to jedyna liczba, która czegoś od Ciebie chce (błękit = zlecenie, jak hero karty 28).
+     „Z prowadzonych" jest stanem, nie prośbą, więc zostaje w tonie neutralnym.
+     „Prowadzone", a nie „Twoje": koordynator prowadzi zlecenia całego klubu (decyzja 20),
+     więc „Twoje" byłoby u niego nieprawdą. Czasownik idzie za liczbą (1 czeka, 2 czekają,
+     5 czeka; 1 szuka, 2 szukają).
+
+     CAŁA KARTA PROWADZI NA LISTĘ (30), więc ma jeden szewron w nagłówku, a nie po jednym
+     przy wierszu: lista sama otwiera się na segmencie, w którym coś czeka. */
+  .orders-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:12px 13px; display:flex; flex-direction:column; gap:10px;
+    text-decoration:none; color:inherit;
+  }
+  .orders-card:hover { border-color:var(--border-strong); }
+  .orders-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .orders-title { font-family:var(--font-display); font-size:19px; letter-spacing:2px; color:var(--text-primary); line-height:1; }
+  .orders-go { font-family:var(--font-mono); font-size:18px; color:var(--text-muted); line-height:1; }
+  .orders-card:hover .orders-go { color:var(--text-secondary); }
+  .orders-rows { display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:11px; overflow:hidden; }
+  .orders-row { display:grid; grid-template-columns:30px 1fr; align-items:center; gap:10px; padding:9px 12px; background:var(--surface-raised); }
+  .orders-num { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); text-align:right; }
+  .orders-num.blue { color:var(--blue); }
+  .orders-text { font-size:12.5px; color:var(--text-secondary); line-height:1.35; }
+  .orders-text.ask { color:var(--text-primary); }
+
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--green); color:var(--bg);
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+  /* Podpis przycisku mówi, CZYM się poleci - to jedyne miejsce, w którym widać, że
+     start bierze rezerwację. Znika bez rezerwacji (wariant 20A), bo wtedy nie ma
+     czego zapowiadać. */
+  .btn-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-align:center; margin-top:-6px; }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:12px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ZAKŁADKI (3.0.0) - Pulpit · Kalendarz · Historia
+
+     Ekran startowy przestał być samym logiem dnia (zgłoszenie #145), więc aplikacja
+     dostaje dolny pasek. Trzy pozycje i ani jednej więcej: każda odpowiada na inne
+     pytanie w czasie - co mam dziś, co jest zaplanowane, co już poleciałem. Zlecenia
+     (4.0.0) zakładki NIE dostają (decyzja 7) - mieszkają w karcie wyżej, w skrzynce
+     i w pushu, a ich ekrany leżą NAD zakładkami.
+
+     KOKPITU W TYM PASKU NIE MA I BYĆ NIE MOŻE. Kokpit jest stanem modalnym (CLAUDE.md,
+     issue #82): dopóki pilot trzyma samolot, z kokpitu nie prowadzi żadna droga bokiem,
+     a flow lotu (02 → 02E → 02A → kokpit → 09B) żyje NAD zakładkami. Zakładka
+     wyprowadzająca z kokpitu nie byłaby zmianą nawigacji, tylko skasowaniem modalności.
+
+     Podział „Pulpit" / „Historia" idzie po CZASIE, nie po rodzaju zapisu - dlatego żadna
+     lista nie stoi na dwóch zakładkach naraz. Kafelek operacji jest ten sam po obu
+     stronach (issue #42). */
+  .tabbar {
+    display:grid; grid-template-columns:repeat(3, 1fr);
+    border-top:1px solid var(--border); background:var(--surface);
+    padding:6px 8px 22px; flex-shrink:0;
+  }
+  .tab {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 4px; border-radius:10px; text-decoration:none;
+    color:var(--text-muted); min-height:44px;
+  }
+  .tab.active { color:var(--green); }
+  .tab:hover { color:var(--text-secondary); }
+  .tab.active:hover { color:var(--green); }
+  .tab-label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BANER W APLIKACJI (4.0.0, kanał klubu - K5, `docs/kanal-klubu.md`)
+
+     Przy otwartej aplikacji powiadomienie nie przychodzi pushem (K4 - telefon jest
+     połączony), więc aplikacja pokazuje je SAMA: jeden komponent nad nawigacją, na
+     każdym ekranie poza trzema miejscami niżej.
+
+     GDZIE: pod paskiem systemowym, NAD nagłówkiem ekranu - tam, gdzie pilot zna baner
+     systemowy. Niczego nie przyciemnia i niczego nie blokuje: reszta ekranu działa dalej,
+     bo baner jest nowiną, nie pytaniem.
+
+     CO MÓWI: to samo, co wiersz skrzynki - ta sama ikona, ten sam tytuł rzeczownikiem ze
+     znakiem maszyny, ten sam podpis i ta sama linijka treści. Rozpoznanie działa w obie
+     strony: kto widział baner, znajdzie tę rzecz w skrzynce po kształcie. Treść może
+     nieść nazwiska i godziny, bo baner stoi w ODBLOKOWANEJ aplikacji, a ramka dochodzi
+     wyłącznie do adresata (push jest ich pozbawiony - ekran blokady widzi każdy).
+     Plakietki sprawy („Do odpowiedzi") baner NIE MA: sprawa stoi w skrzynce, dopóki nie
+     odpowiesz, a baner znika po kilku sekundach, więc sprawą być nie może. Co zrobić,
+     mówi linijka treści.
+
+     JAK ZNIKA: sam, po ok. 5 s; przesunięcie w górę zamyka od razu. „×" NIE MA - cel do
+     zamykania rzeczy, która i tak zaraz zniknie, stałby tuż obok tapnięcia, które ją
+     otwiera. BEZ DŹWIĘKU i bez wibracji: pilot i tak patrzy w ekran. Tapnięcie prowadzi
+     tam, gdzie tapnięcie w push (jedna mapa rodzaj → ekran dla obu dróg).
+
+     KILKA NARAZ: widać ostatni - nowy zastępuje poprzedni, a licznik przy dzwonku mówi
+     resztę. Kolejka banerów zasłaniałaby ekran dłużej, niż trwa ich czytanie.
+
+     GDZIE GO NIE MA:
+       - na ekranie, którego dotyczy (karta tego zlecenia, rozmowa tego wątku) - ten
+         ekran po prostu się odświeża (pkt 43 zleceń);
+       - w kokpicie - łącze jest tam rozłączone (K6), a push trafia po cichu na listę
+         systemową i do skrzynki (pkt 44);
+       - przy aplikacji w tle - wtedy łącza nie ma i przychodzi zwykły push.
+
+     Cień podnosi baner nad treść: bez niego zlewałby się z ciemnym nagłówkiem pod
+     spodem. W makiecie baner wjeżdża raz i ZOSTAJE, żeby dało się go przeczytać. */
+  .inapp {
+    position:absolute; top:58px; left:10px; right:10px; z-index:95;
+    display:grid; grid-template-columns:auto 1fr auto; align-items:start; gap:10px;
+    padding:11px 12px 11px 11px; border-radius:16px;
+    background:var(--surface-raised); border:1px solid var(--border-strong);
+    box-shadow:0 16px 40px rgba(0,0,0,0.7), 0 3px 10px rgba(0,0,0,0.45);
+    text-decoration:none; color:inherit;
+    animation:inapp-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .inapp:hover { border-color:var(--text-muted); }
+  @keyframes inapp-in { from { transform:translateY(-150%); opacity:0; } to { transform:none; opacity:1; } }
+  @media (prefers-reduced-motion: reduce) { .inapp { animation:none; } }
+  /* Ikona i jej tony 1:1 z wiersza skrzynki (25, 25D) - rozpoznanie ma iść kształtem. */
+  .inapp-icon {
+    width:28px; height:28px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--text-muted); flex-shrink:0;
+  }
+  .inapp-icon.warn { color:var(--amber); border-color:var(--amber-border); background:var(--amber-muted); }
+  .inapp-icon.ask  { color:var(--blue);  border-color:var(--blue-border);  background:var(--blue-muted); }
+  .inapp-body { min-width:0; display:flex; flex-direction:column; gap:3px; align-items:flex-start; }
+  /* Klub stoi WYŁĄCZNIE przy wiadomości z innego klubu - ta sama plakietka, co na
+     kafelku operacji pilota dwóch klubów (01E). Przy klubie aktywnym byłaby szumem. */
+  .inapp-club {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--text-secondary); border:1px solid var(--border-strong); border-radius:5px;
+    padding:2px 6px; white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;
+  }
+  .inapp-title { font-size:13px; font-weight:600; color:var(--text-primary); line-height:1.3; }
+  .inapp-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; }
+  .inapp-text { font-size:11.5px; color:var(--text-secondary); line-height:1.45; }
+  .inapp-text b { color:var(--text-primary); font-weight:600; }
+  .inapp-text s { color:var(--text-muted); }
+  .inapp-when { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; padding-top:2px; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">NINERDECK - 25E</span>
+  <span class="slug">baner w aplikacji · kanał klubu</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<!-- Stan: piątek 07:31. Adam Kowalski (AKO, Aeroklub Zielonogórski) ma otwarty Pulpit,
+     a Marta Zięba właśnie przesunęła sobotni przelot SP-AXA z 09:00-11:00 na 10:00-12:00.
+     Na czwartkowy termin Adam odpowiedział „nie mogę", więc zmiana terminu prosi go
+     o odpowiedź od nowa (decyzja 13).
+
+     Telefon jest połączony z kanałem klubu, więc pusha NIE MA (K4): ramka `notification`
+     rysuje baner, podnosi licznik przy dzwonku (pod banerem - 2: ta zmiana i poranna
+     edycja skoków z 07:10), a ramka `changed orders` przestawia kartę „Zlecenia" z 1 na 2
+     w tej samej chwili, bez odświeżania.
+
+     Adam nie tapie: baner znika sam po kilku sekundach. Chwilę później Marta dopisuje
+     w rozmowie „Przesunęłam na 10:00-12:00…" - ten baner zastąpiłby wtedy baner
+     „Wiadomość w zleceniu", a licznik przy dzwonku doszedłby do 3 (Pulpit 20F, 07:33).
+     Do zlecenia Adam wraca przez skrzynkę (25D, 07:36). -->
+<main class="phone" role="region" aria-label="Mockup - Pulpit z banerem w aplikacji">
+  <div class="status-bar">
+    <span>07:31</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <!-- ═══ BANER W APLIKACJI ═══ (K5) - wiersz „Zlecenie zmienione" ze skrzynki 25D,
+       słowo w słowo, bez plakietki sprawy. Tapnięcie: karta zlecenia po zmianie
+       terminu (28C) - tam, gdzie prowadzi push tego rodzaju. -->
+  <a class="inapp" href="28c-zlecenie-termin-zmieniony.html" role="status" aria-live="polite">
+    <span class="inapp-icon warn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+    <span class="inapp-body">
+      <span class="inapp-title">Zlecenie zmienione · SP-AXA</span>
+      <span class="inapp-sub">sob 3 PAŹ · przelot EPKK → EPRJ</span>
+      <span class="inapp-text">Termin <s>09:00-11:00</s> → <b>10:00-12:00</b>. Odpowiedz na nowy termin.</span>
+    </span>
+    <span class="inapp-when">teraz</span>
+  </a>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">PULPIT</span>
+        <span class="header-subtitle">AKO · 2 PAŹ 2026</span>
+      </div>
+      <div class="app-header-right">
+        <a href="25d-powiadomienia-zlecenia.html" class="icon-btn bell" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bell-count">2</span>
+        </a>
+        <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <a href="24-historia.html" class="today-card">
+        <div class="today-head">
+          <span class="today-title">MÓJ DZIEŃ</span>
+          <span class="today-sub">2 operacje · SP-AXA, SP-BKL</span>
+        </div>
+        <div class="totals">
+          <div class="total-cell">
+            <span class="total-key">Loty</span>
+            <span class="total-val">3</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Blok</span>
+            <span class="total-val">1:38</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Lot</span>
+            <span class="total-val">1:21</span>
+          </div>
+        </div>
+        <div class="cta-open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          OPERACJE DNIA
+        </div>
+      </a>
+
+      <a href="30-zlecenia.html" class="orders-card">
+        <div class="orders-head">
+          <span class="orders-title">ZLECENIA</span>
+          <span class="orders-go">&#8250;</span>
+        </div>
+        <div class="orders-rows">
+          <div class="orders-row">
+            <span class="orders-num blue">2</span>
+            <span class="orders-text ask">czekają na Twoją odpowiedź</span>
+          </div>
+          <div class="orders-row">
+            <span class="orders-num">1</span>
+            <span class="orders-text">z prowadzonych szuka załogi</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="23-rezerwacja-szczegoly.html" class="next-card">
+        <div class="next-top">
+          <span class="next-badge">Twoja rezerwacja</span>
+          <span class="next-countdown">ZA 1 H 29 MIN</span>
+        </div>
+        <div class="next-when">
+          <span class="next-hours">09:00 → 10:30</span>
+          <span class="next-zone">czas klubu</span>
+        </div>
+        <div class="next-ac">SP-BKL</div>
+        <div class="next-task">
+          <span>Lot tech.</span>
+          <span class="next-dot"></span>
+          <span class="next-route">EPKK</span>
+        </div>
+      </a>
+
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
+      <div class="btn-hint">Z Twojej rezerwacji: 09:00 · SP-BKL</div>
+
+      <a href="15-reczny-lot.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+        DODAJ LOT RĘCZNIE
+      </a>
+
+    </div>
+
+    <nav class="tabbar">
+      <a href="20-pulpit.html" class="tab active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tab-label">Pulpit</span>
+      </a>
+      <a href="21-kalendarz.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="tab-label">Kalendarz</span>
+      </a>
+      <a href="24-historia.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="tab-label">Historia</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu - kiedy który?</div>
+  <a class="vp-item active" href="25e-baner-w-aplikacji.html">
+    <span class="vp-badge blue">25E</span>
+    <span class="vp-body">
+      <span class="vp-name">Baner w aplikacji</span>
+      <span class="vp-when">Powiadomienie przyszło, gdy aplikacja jest otwarta i połączona z kanałem klubu - zamiast pusha stoi własny baner u góry ekranu (K5). Mówi to samo, co wiersz skrzynki, bez plakietki sprawy; znika sam po ok. 5 s, przesunięcie w górę zamyka od razu, tapnięcie otwiera rzecz. Bez dźwięku i bez „×". Kilka naraz: widać ostatni, licznik przy dzwonku mówi resztę. Stoi nad każdym ekranem, poza tym, którego dotyczy (tam ekran po prostu się odświeża - pkt 43), i poza kokpitem (łącze rozłączone, push po cichu - pkt 44).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#inny-klub">
+    <span class="vp-badge amber">25E</span>
+    <span class="vp-body">
+      <span class="vp-name">Wiadomość z innego klubu</span>
+      <span class="vp-when">Pilot dwóch klubów, aktywny jest jeden: wiadomość z drugiego przychodzi pushem, bo łącze należy do klubu aktywnego (K4). Przy otwartej aplikacji pokazuje ten sam baner - z nazwą klubu nad tytułem - a na liście systemowej zostaje po cichu, bo dzwonek liczy tylko klub aktywny. Tapnięcie otwiera skrzynkę z instrukcją przełączenia klubu (ramka 2 niżej).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="20f-pulpit-zlecenia.html">
+    <span class="vp-badge blue">20F</span>
+    <span class="vp-body">
+      <span class="vp-name">Pulpit dwie minuty później</span>
+      <span class="vp-when">Baner zniknął, przy dzwonku 3 nowe (doszła wiadomość w rozmowie), a karta „Zlecenia" liczy już zlecenie po zmianie terminu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="25d-powiadomienia-zlecenia.html">
+    <span class="vp-badge blue">25D</span>
+    <span class="vp-body">
+      <span class="vp-name">Skrzynka (dzwonek)</span>
+      <span class="vp-when">Źródło prawdy - baner tylko zapowiada wiersz, który tu stoi. Tu też plakietka „Do odpowiedzi", której baner nie ma.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="28c-zlecenie-termin-zmieniony.html">
+    <span class="vp-badge blue">28C</span>
+    <span class="vp-body">
+      <span class="vp-name">Cel tapnięcia</span>
+      <span class="vp-when">Karta zlecenia po zmianie terminu - ta sama, do której prowadzi push „Zlecenie zmienione".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="29-watek.html">
+    <span class="vp-badge blue">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Otwarta rozmowa - bez banera</span>
+      <span class="vp-when">Wiadomość w wątku, który jest właśnie otwarty, dopisuje się pod spodem - baner o rzeczy, na którą pilot patrzy, byłby powtórzeniem (pkt 43).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="05-cockpit-running.html">
+    <span class="vp-badge amber">05</span>
+    <span class="vp-body">
+      <span class="vp-name">Kokpit - cisza</span>
+      <span class="vp-when">Dopóki pilot trzyma samolot, łącza nie ma (K6): powiadomienia wszystkich rodzajów trafiają po cichu na listę systemową i do skrzynki - bez banera i bez dźwięku (pkt 44). Po oddaniu samolotu łącze wraca i dociąga zaległości.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="25-powiadomienia.html">25 Powiadomienia</a>
+  <a href="25a-powiadomienia-pusto.html">25A Pusto</a>
+  <a href="25b-powiadomienia-offline.html">25B Offline</a>
+  <a href="25c-powiadomienia-samolot.html">25C Maszyna</a>
+  <a href="25d-powiadomienia-zlecenia.html">25D Zlecenia</a>
+  <a href="25e-baner-w-aplikacji.html" class="active">25E Baner</a>
+  <span>·</span>
+  <a href="20f-pulpit-zlecenia.html">20F Pulpit</a>
+  <a href="28c-zlecenie-termin-zmieniony.html">28C Zlecenie →</a>
+</nav>
+
+<!-- ══ DRUGA RAMKA: WIADOMOŚĆ Z INNEGO KLUBU (K4, K5; obserwowanie samolotu R6) ══
+     Ten sam piątek, 07:20 - jeszcze przed zmianą przelotu. Adam lata też w Aeroklubie
+     Krakowskim (kod TOM, 01E), a tamtejszy koordynator właśnie wysłał mu zlecenie na
+     SP-KLM. Aktywny jest klub zielonogórski, więc:
+       - wiadomość przychodzi PUSHEM, nie ramką: łącze należy do klubu, którym telefon
+         się uwierzytelnił, i nie niesie danych innego klubu (K4);
+       - otwarta aplikacja pokazuje ją tym samym banerem, z nazwą klubu nad tytułem,
+         a na liście systemowej zostaje po cichu - dzwonek liczy tylko klub aktywny
+         (stoi przy 1), więc bez tego po pięciu sekundach nie zostałby żaden ślad;
+       - karta „Zlecenia" się NIE zmienia: liczy zlecenia klubu aktywnego;
+       - tapnięcie otwiera skrzynkę z bursztynowym banerem „Wiadomość z innego klubu"
+         - rzeczy z tamtego klubu telefon nie otworzy tokenem tego (odpowiedziałaby 404),
+         a przełączenie klubu jest decyzją pilota i wymaga sieci (13A). -->
+<header class="canvas-label" id="inny-klub">
+  <span class="film-strip">NINERDECK - 25E</span>
+  <span class="slug">stan: wiadomość z innego klubu</span>
+  <span class="canvas-meta"><span class="pulse"></span>4.0.0</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup - Pulpit z banerem z innego klubu">
+  <div class="status-bar">
+    <span>07:20</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <!-- ═══ BANER Z INNEGO KLUBU ═══ (K4, K5, R6) - przyszedł PUSHEM, bo łącze należy do
+       klubu aktywnego. Nazwa klubu nad tytułem; tytuł jest tytułem pusha, a znak maszyny
+       telefon dopisuje z pamięci floty tamtego klubu (bez niej tytuł stoi sam). Podpisu
+       z terminem nie ma - push godzin nie niesie. Linijka treści mówi zdaniem skrzynki
+       z instrukcją przełączenia, do której prowadzi tapnięcie. -->
+  <a class="inapp" href="25-powiadomienia.html" role="status" aria-live="polite">
+    <span class="inapp-icon ask"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h4"/></svg></span>
+    <span class="inapp-body">
+      <span class="inapp-club">Aeroklub Krakowski</span>
+      <span class="inapp-title">Zlecenie lotu · SP-KLM</span>
+      <span class="inapp-text">Przełącz klub w Ustawieniach, żeby je otworzyć.</span>
+    </span>
+    <span class="inapp-when">teraz</span>
+  </a>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">PULPIT</span>
+        <span class="header-subtitle">AKO · 2 PAŹ 2026</span>
+      </div>
+      <div class="app-header-right">
+        <a href="25d-powiadomienia-zlecenia.html" class="icon-btn bell" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bell-count">1</span>
+        </a>
+        <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <a href="24-historia.html" class="today-card">
+        <div class="today-head">
+          <span class="today-title">MÓJ DZIEŃ</span>
+          <span class="today-sub">2 operacje · SP-AXA, SP-BKL</span>
+        </div>
+        <div class="totals">
+          <div class="total-cell">
+            <span class="total-key">Loty</span>
+            <span class="total-val">3</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Blok</span>
+            <span class="total-val">1:38</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Lot</span>
+            <span class="total-val">1:21</span>
+          </div>
+        </div>
+        <div class="cta-open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          OPERACJE DNIA
+        </div>
+      </a>
+
+      <a href="30-zlecenia.html" class="orders-card">
+        <div class="orders-head">
+          <span class="orders-title">ZLECENIA</span>
+          <span class="orders-go">&#8250;</span>
+        </div>
+        <div class="orders-rows">
+          <div class="orders-row">
+            <span class="orders-num blue">1</span>
+            <span class="orders-text ask">czeka na Twoją odpowiedź</span>
+          </div>
+          <div class="orders-row">
+            <span class="orders-num">1</span>
+            <span class="orders-text">z prowadzonych szuka załogi</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="23-rezerwacja-szczegoly.html" class="next-card">
+        <div class="next-top">
+          <span class="next-badge">Twoja rezerwacja</span>
+          <span class="next-countdown">ZA 1 H 40 MIN</span>
+        </div>
+        <div class="next-when">
+          <span class="next-hours">09:00 → 10:30</span>
+          <span class="next-zone">czas klubu</span>
+        </div>
+        <div class="next-ac">SP-BKL</div>
+        <div class="next-task">
+          <span>Lot tech.</span>
+          <span class="next-dot"></span>
+          <span class="next-route">EPKK</span>
+        </div>
+      </a>
+
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
+      <div class="btn-hint">Z Twojej rezerwacji: 09:00 · SP-BKL</div>
+
+      <a href="15-reczny-lot.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+        DODAJ LOT RĘCZNIE
+      </a>
+
+    </div>
+
+    <nav class="tabbar">
+      <a href="20-pulpit.html" class="tab active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        <span class="tab-label">Pulpit</span>
+      </a>
+      <a href="21-kalendarz.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span class="tab-label">Kalendarz</span>
+      </a>
+      <a href="24-historia.html" class="tab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="tab-label">Historia</span>
+      </a>
+    </nav>
+
+  </div>
+</main>
+
+</body>
+</html>

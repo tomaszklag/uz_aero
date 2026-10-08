@@ -45,14 +45,15 @@ export class PgNotificationsRepo implements NotificationsPort {
     orgId: string,
     rows: readonly NewNotification[],
     at: Date,
-  ): Promise<void> {
+  ): Promise<string[]> {
     // Adresat MUSI dziś być w klubie (aktywne członkostwo, aktywna osoba). Obsady kroku
     // ani rezerwującego nikt nie czyści po cichu przy odejściu z klubu, więc bez tego
     // warunku wiadomość - i budzik za nią - szły do byłych członków (przegląd
     // bezpieczeństwa 3.1.0, issue #169). Skrzynki i tak by nie otworzyli; ten sam
     // warunek stoi w `PgPushTokensRepo.byPilots`, bo budzik idzie osobną drogą.
+    const written: string[] = [];
     for (const row of rows) {
-      await tx.query(
+      const { rows: out } = await tx.query<{ id: string }>(
         `INSERT INTO notifications (id, org_id, pilot_id, kind, payload, created_at)
          SELECT $1, $2, $3, $4, $5::jsonb, $6
           WHERE EXISTS (
@@ -60,10 +61,36 @@ export class PgNotificationsRepo implements NotificationsPort {
               JOIN pilots p ON p.id = m.pilot_id AND p.active
              WHERE m.org_id = $2 AND m.pilot_id = $3 AND m.status = 'active'
           )
-         ON CONFLICT (id) DO NOTHING`,
+         ON CONFLICT (id) DO NOTHING
+         RETURNING id`,
         [row.id, orgId, row.pilotId, row.kind, JSON.stringify(row.payload), at],
       );
+      if (out.length > 0) written.push(row.id);
     }
+    return written;
+  }
+
+  async collapseUnread(
+    tx: Queryable,
+    orgId: string,
+    row: NewNotification,
+    collapse: { field: string; value: string },
+    at: Date,
+  ): Promise<string | null> {
+    // Nazwa pola jedzie PARAMETREM (`payload ->> $5`), nie wklejką w SQL - to napis
+    // z kodu, ale zapytanie nie ma prawa zależeć od tego, że ktoś o tym pamięta.
+    // Chwila idzie do przodu razem z treścią: wiersz odświeżony ma stanąć na górze
+    // skrzynki, jak wiadomość, którą właśnie jest.
+    const { rows } = await tx.query<{ id: string }>(
+      `UPDATE notifications SET payload = $6::jsonb, created_at = $7
+        WHERE org_id = $1 AND pilot_id = $2 AND kind = $3 AND read_at IS NULL
+          AND payload ->> $4 = $5
+        RETURNING id`,
+      [orgId, row.pilotId, row.kind, collapse.field, collapse.value, JSON.stringify(row.payload), at],
+    );
+    if (rows.length > 0) return rows[0]!.id;
+    const [written] = await this.insert(tx, orgId, [row], at);
+    return written ?? null;
   }
 
   async list(

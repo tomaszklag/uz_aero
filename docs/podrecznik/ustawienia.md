@@ -1,74 +1,66 @@
 # Ustawienia
 
-> Wejście do ustawień jest jedno: zębatka na ekranie Mój dzień. Kokpit ma w tym miejscu przełącznik jasności.
+> Motyw ekranu, synchronizacja, diagnostyka GPS, PIN, hasło i wylogowanie. Ustawienia otwierasz zębatką na Pulpicie.
 
-@screen 13-ustawienia "Sekcje od motywu po konto"
+@screen 13-ustawienia "Ustawienia"
 
-## Co gdzie stoi
+## Co jest w ustawieniach
 
 | Sekcja | Co zawiera |
 |---|---|
-| **Motyw wyświetlacza** | Dwie pozycje obok siebie: **Ciemny** (domyślny) i **Jasny** - na pełne słońce. To samo przełącza ikona w prawym górnym rogu kokpitu. |
-| **Synchronizacja** | Stan kolejki wysyłki („pusta" albo „3 zdarzenia czeka"), godzina ostatniej synchronizacji i przycisk **SYNCHRONIZUJ TERAZ**. |
-| **Diagnostyka GPS** | Stan odbiornika, godzina i wiek ostatniego odczytu, dokładność w metrach, pozycja, licznik nagranych punktów śladu oraz **Odśwież**. |
-| **O aplikacji** | Wersja aplikacji - do porównania ze [stroną pobierania](~/pobierz/). |
-| **Bezpieczeństwo** | **Zmień PIN**: najpierw obecny, potem nowy. Po zmianie stary PIN przestaje działać od razu. |
-| **Hasło** | **Ustaw hasło** (gdy go jeszcze nie masz) albo **Zmień hasło**. Wymaga internetu - hasło sprawdza i zapisuje klub. |
-| **Konto** | Twoje imię i kod pilota oraz **Wyloguj i zmień konto** - na samym końcu ekranu. |
-| **Obserwowane samoloty** | Tylko dla osób z uprawnieniem „Obserwowanie samolotów": cała flota klubu z przełącznikiem przy każdej maszynie i jej stanem w tej chwili. Wiersz otwiera kartę maszyny. Sekcja wymaga zasięgu - reszta ustawień nie. Więcej: [obserwowanie samolotu](rezerwacja-samolotu#obserwowanie-samolotu). |
-
-@screen 20-pulpit "Zębatka na ekranie domowym" | 05-cockpit-running "Przełącznik jasności w kokpicie"
+| **Klub** | Tylko gdy należysz do kilku klubów: lista klubów z Twoim kodem w każdym, zmiana klubu i **Dołącz do innego klubu** ([kluby](kluby-i-dolaczanie)). |
+| **Motyw wyświetlacza** | **Ciemny** (domyślny) albo **Jasny** - na pełne słońce. To samo przełącza ikona w prawym górnym rogu kokpitu. |
+| **Obserwowane samoloty** | Tylko z uprawnieniem „Obserwowanie samolotów": cała flota klubu z przełącznikiem przy każdym samolocie ([karta samolotu i obserwowanie](obserwowanie-samolotu)). Wymaga internetu. |
+| **Synchronizacja** | Stan kolejki wysyłki („pusta" albo „3 zapisy czekają"), godzina ostatniej synchronizacji i przycisk **SYNCHRONIZUJ TERAZ**. |
+| **Diagnostyka GPS** | Stan odbiornika, godzina ostatniego odczytu, dokładność, pozycja i przycisk **Odśwież**. |
+| **O aplikacji** | Numer wersji - do porównania ze [stroną pobierania](~/pobierz/). |
+| **Bezpieczeństwo** | **Zmień PIN**: najpierw obecny, potem nowy. |
+| **Hasło** | **Ustaw hasło** albo **Zmień hasło**. Wymaga internetu. |
+| **Konto** | Twoje imię i nazwisko, kod pilota oraz **Wyloguj i zmień konto**. |
 
 ## Synchronizacja
 
-Wysyłka działa sama w tle, więc ten przycisk jest ponagleniem na wypadek, gdy coś stoi dłużej, niż powinno. **SYNCHRONIZUJ TERAZ** popycha kolejkę i w tej samej chwili pyta klub o świeże dane: flotę, pilotów, przekazania samolotów i decyzje administratora. Bez połączenia przycisk jest nieaktywny, a powód stoi w nim samym.
+Loty wysyłają się same, więc **SYNCHRONIZUJ TERAZ** przydaje się tylko wtedy, gdy coś czeka dłużej, niż powinno. Przycisk wysyła zaległe zapisy i od razu pobiera z klubu świeże dane: samoloty, pilotów, odczyty od poprzedniego pilota i decyzje administratora. Bez internetu jest nieaktywny i mówi dlaczego.
 
-Wiersz **Ostatnia synchronizacja** to godzina ostatniego udanego kontaktu z klubem - w którąkolwiek stronę. Poza dzisiejszą dobą UTC dochodzi do niej data, bo sama godzina przy stemplu sprzed dwóch dni niczego nie mówi.
+**Ostatnia synchronizacja** to godzina ostatniego udanego połączenia z klubem. Jeśli było to wcześniej niż dziś, obok godziny stoi data.
 
-> **Wskazówka.** Liczba zapisów w kolejce i wiek danych pobranych z panelu stoją w okienku pod oznaczeniem łączności w nagłówku, nie na tym ekranie. Więcej: [praca bez zasięgu](praca-bez-zasiegu).
-
-@screen 20c-pulpit-offline "Okienko pod oznaczeniem łączności" | 20d-pulpit-sync-stoi "Kolejka stoi po odmowie"
+@screen 20c-pulpit-offline "Okienko synchronizacji pod oznaczeniem łączności"
 
 ## Diagnostyka GPS
 
-Sekcja czyta odbiornik telefonu wprost i z siecią nie ma nic wspólnego. Zaglądasz tu wtedy, gdy kokpit przestał wykrywać starty i lądowania: **Status** mówi, czy jest ustalona pozycja (`FIX`), czy odbiornik milczy, czy aplikacja w ogóle nie dostała zgody na lokalizację. **Dokładność** poniżej kilkunastu metrów to normalna praca; **Ostatni fix** starszy niż kilkanaście sekund oznacza, że wykrywanie faz jest wstrzymane i start z lądowaniem trzeba zapisać przyciskami. Więcej: [wykrywanie faz lotu](wykrywanie-faz-lotu).
+Tu zaglądasz, gdy kokpit przestał rozpoznawać starty i lądowania. **Status** mówi, czy jest sygnał, czy go brak, czy aplikacja nie ma zgody na lokalizację. **Dokładność** do kilkunastu metrów to normalna praca. Jeśli **Ostatni odczyt GPS** jest starszy niż kilkanaście sekund, kokpit nie rozpozna startu ani lądowania - zapisuj je wtedy przyciskami.
 
-@screen 05g-cockpit-no-gps "Kokpit bez sygnału odbiornika"
+## PIN i hasło
 
-## PIN i konto
+**PIN** otwiera aplikację na tym telefonie, także bez internetu. Zmienisz go w sekcji **Bezpieczeństwo**: najpierw wpisujesz obecny, potem nowy. Stary przestaje działać od razu.
 
-Trzy sekcje dotyczą dostępu do aplikacji i dlatego stoją razem, na końcu.
+**Hasło** służy do logowania na innym urządzeniu - na wspólnym tablecie w samolocie albo w panelu klubu. Nie zastępuje PIN-u.
 
-**PIN** zmienia się bez internetu - sprawdza go telefon.
+- Okienko pyta o nowe hasło i jego powtórzenie, a gdy hasło już masz - najpierw o obecne.
+- Hasło musi mieć **co najmniej 12 znaków** - nic więcej nie jest wymagane. Hasło zawierające Twój adres e-mail albo nazwisko zostanie odrzucone.
+- Po zmianie hasła pozostałe urządzenia zostają wylogowane. Telefon, na którym zmieniasz hasło, zostaje zalogowany.
+- Jeśli hasła nie pamiętasz, użyj **Nie pamiętam hasła** na ekranie logowania ([pierwsze logowanie](pierwsze-logowanie#nie-pamietam-hasla)).
 
-**Hasło** internetu wymaga, bo sprawdza je i zapisuje klub. Nie zastępuje PIN-u: PIN otwiera ten telefon każdego dnia, hasło loguje Cię na **innym** urządzeniu - wspólnym tablecie w samolocie albo w panelu klubu. Okienko pyta o nowe hasło i powtórkę, a gdy hasło już masz - najpierw o obecne. Wymagane jest **co najmniej 12 znaków** i nic poza tym; hasło zawierające Twój adres albo nazwisko zostanie odrzucone. Zmiana wylogowuje pozostałe urządzenia, a to, na którym ją robisz, zostaje zalogowane. Jeśli hasła nie pamiętasz, nie zmieniasz go tutaj - używasz **Nie pamiętam hasła** na ekranie logowania ([pierwsze logowanie](pierwsze-logowanie)).
+## Wylogowanie
 
-**Wylogowanie** internetu wymaga, bo ponowne wejście to logowanie kontem Google albo hasłem.
+**Wyloguj i zmień konto** stoi na samym końcu ekranu. Działa dopiero wtedy, gdy wszystkie Twoje zapisy dotarły do klubu - niewysłane loty są tylko na tym telefonie i zginęłyby razem z kontem. Wylogowanie wymaga internetu, a ponowne zalogowanie - konta Google albo hasła.
 
-@screen 00-login "Codzienne wejście PIN-em" | 13-ustawienia "Hasło między PIN-em a kontem" | 00f-login-haslo "Logowanie hasłem"
+Na wspólnym tablecie po wylogowaniu następny pilot loguje się hasłem i ustawia własny PIN ([pierwsze logowanie](pierwsze-logowanie#wspolny-tablet-zmiana-pilota)).
 
-## Gdy administrator zakończył sesję
+## Gdy administrator Cię wyloguje
 
-W sekcji **Konto** może stanąć baner **Sesja zakończona przez administratora**. Znaczy dokładnie tyle: to urządzenie przestało wysyłać zapisy do klubu. **Nic z telefonu nie zniknęło** - PIN dalej otwiera aplikację, dzień lotny masz cały, a zapisy, które nie zdążyły dojść, wyjdą po ponownym zalogowaniu **tej samej osoby**. Ten sam baner stoi na ekranie PIN, a kolejka pokazuje wtedy czerwone **SYNC STOI**.
+Administrator może zdalnie wylogować Twoje urządzenie z panelu klubu. W sekcji **Konto** pojawi się wtedy komunikat **Sesja zakończona przez administratora**, a na Pulpicie czerwone **SYNC STOI**.
 
-Sekcja **Hasło** jest w tym stanie nieczynna z podanym powodem - hasło zapisuje klub, a klub tej sesji już nie uznaje. Zaloguj się ponownie.
+**Nic z telefonu nie znika.** PIN dalej otwiera aplikację, a zapisy, które nie zdążyły dotrzeć do klubu, wyślą się po ponownym zalogowaniu tej samej osoby. Do tego czasu nie zmienisz też hasła.
 
-## Jak to działa
+@screen 00-login "Ekran PIN" | 00f-login-haslo "Logowanie hasłem"
 
-Cały ekran pracuje na tym, co telefon ma u siebie: wybór motywu, PIN i stan odbiornika GPS nie potrzebują serwera ani przez chwilę. Motyw jest preferencją pilota, więc zapisuje się w Twoim profilu i wraca po zalogowaniu na innym telefonie. Godzina synchronizacji jest jedna, choć mechanizm ma dwa kierunki - wysyłkę zapisów i pobranie danych z panelu; ekran pokazuje ten późniejszy, bo pytanie brzmi „od kiedy nie mam kontaktu z klubem", a nie „który kierunek zadziałał". Jedyną akcją, która wymaga sieci, jest wylogowanie. Mechanizm w całości: [synchronizacja](synchronizacja).
-
-> **Wskazówka.** Zgłoszenia błędu nie szukaj w ustawieniach. Na czas testów z pilotami przycisk stoi w prawym górnym rogu każdego ekranu i każdego okienka - poza ekranem logowania i PIN-em.
-
-## Dlaczego tak to działa
-
-> **Dlaczego wylogowanie czeka na pustą kolejkę.** Wylogowanie jest zablokowane, dopóki w kolejce czeka choć jeden zapis. Niewysłane zapisy dnia istnieją wyłącznie na tym telefonie - wylogowanie zostawiłoby je bez właściciela. Wróć do zasięgu: wyślą się same i przycisk odblokuje się sam.
-
-> **Dlaczego w ustawieniach nie ma danych lotu.** W ustawieniach nie ma nic, co dotyczy bieżącej operacji - samolotu, trasy ani lotów. To są dane dnia lotnego i mieszkają w kokpicie oraz na ekranie Mój dzień.
+> **Wskazówka.** Zgłoszenie błędu nie jest w ustawieniach. Przycisk zgłoszenia stoi w prawym górnym rogu każdego ekranu i każdego okienka - poza logowaniem i ekranem PIN.
 
 ## Częste problemy
 
-- **SYNCHRONIZUJ TERAZ jest nieaktywny** → telefon nie ma połączenia; powód stoi w przycisku. Synchronizacja ruszy sama, gdy wróci zasięg.
-- **„Ostatnia synchronizacja" pokazuje godzinę sprzed wielu godzin** → tyle czasu telefon nie rozmawiał z klubem. Jeśli sieć jest, tapnij **SYNCHRONIZUJ TERAZ**; jeśli kolejka nadal stoi, sprawdź oznaczenie łączności w nagłówku.
-- **Diagnostyka pokazuje brak uprawnień do lokalizacji** → zgoda została cofnięta w ustawieniach Androida. Przywróć ją; do tego czasu starty i lądowania zapisuj przyciskami w kokpicie.
-- **Wyloguj i zmień konto jest nieaktywne** → w kolejce czekają zapisy. Wróć do zasięgu i poczekaj, aż oznaczenie łączności zniknie.
-- **Nie widzę zębatki** → jesteś w kokpicie. Ustawienia mają jedno wejście - ekran Mój dzień; w kokpicie w tym samym rogu stoi przełącznik jasności.
+- **SYNCHRONIZUJ TERAZ jest nieaktywny** → telefon nie ma internetu. Synchronizacja ruszy sama, gdy wróci zasięg.
+- **„Ostatnia synchronizacja" pokazuje godzinę sprzed wielu godzin** → tyle czasu telefon nie łączył się z klubem. Jeśli internet jest, tapnij **SYNCHRONIZUJ TERAZ**; jeśli coś dalej czeka, sprawdź oznaczenie łączności na Pulpicie.
+- **Diagnostyka pokazuje brak zgody na lokalizację** → zgoda została cofnięta w ustawieniach Androida. Przywróć ją; do tego czasu zapisuj starty i lądowania przyciskami w kokpicie.
+- **Wyloguj i zmień konto jest nieaktywne** → zapisy czekają na wysłanie. Wróć w zasięg i poczekaj, aż się wyślą.
+- **Nie widzę zębatki** → jesteś w kokpicie albo na innym ekranie. Zębatka stoi tylko na Pulpicie.

@@ -477,9 +477,9 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   (rezerwacja na TERAZ wypełnia krok 1; 23a ostrzega o cudzym planie, nigdy nie blokuje)
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
-→ START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
-→ STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
-  drugiego START ENGINE NIE MA - kolejny lot to nowe przejęcie)
+→ URUCHOM SILNIK → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej operacji)
+→ WYŁĄCZ → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
+  drugiego URUCHOM SILNIK NIE MA - kolejny lot to nowe rozpoczęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu operacji;
   wariant 09c: zdanie bez lotu) → 20-pulpit
 20-pulpit → 15-reczny-lot (wpis CAŁEGO lotu po fakcie - STEPPER 4 kroków od
@@ -565,7 +565,7 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
 - **operacja** = od URUCHOMIENIA do ZATRZYMANIA silnika - dokładnie jeden bieg na operację.
   **Lot** = od startu do lądowania; w jednej operacji wiele lotów (w tym touch and go).
   Słowo **„wzlot" jest WYCOFANE** ze słownika - zlało się z operacją.
-- po STOP ENGINE **nie ma drugiego startu**: hero kokpitu zmienia się w „ZDAJ SAMOLOT"
+- po wyłączeniu silnika (WYŁĄCZ) **nie ma drugiego startu**: hero kokpitu zmienia się w „ZDAJ SAMOLOT"
   (09b). Kolejny lot = NOWE przejęcie (02 → 02e → 02a).
 - odczyty paliwa i MH przy zdaniu są **OBOWIĄZKOWE** i są zatwierdzeniem logu operacji;
   trafiają do logu jako kolejne wpisy. `leg_close` znika z domeny, ekrany 09 i 09a
@@ -2107,8 +2107,8 @@ nie architekturą:
   identyfikatory UUID z panelu; ta sama klasa błędu, co guid w pasku kokpitu).
   Surowy id zostaje ostatnią deską ratunku dla pilota spoza cache'u.
   **Ta sama poprawka na kafelku „Zmiana załogi" w kokpicie** (2026-09-03: podpis
-  kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał
-  „PIC: AKO · DUAL: BNO") - kody rozwiązuje odtąd hook `usePilotCode`
+  kafelka sklejał surowe `picId`/`dualId`, choć mockup 04A od zawsze pisał kody
+  pilotów - dziś „Dowódca AKO · Drugi pilot BNO") - kody rozwiązuje odtąd hook `usePilotCode`
   (`hooks/usePilots.ts`, wzorzec `useAircraft`): `queries.pilots()` ładowało
   sobie już SZEŚĆ ekranów własnymi kopiami, siódma kopia byłaby dokładnie tym,
   przed czym ostrzega docblock tamtego hooka
@@ -2156,9 +2156,9 @@ potwierdzeniem użytkownika, aby nie było przypadkowego usunięcia."
   jedno zdarzenie, a ten przycisk CAŁY wpis
 - **arkusz nazywa KONKRETNY wpis** (maszyna, bieg silnika, Loty·Blok·Lot): dwie operacje
   tej samej maszyny w dobie różnią się wyłącznie godzinami. Baner mówi o SKUTKU
-  („zapis zostaje w rejestrze i widzi go administrator") - to NIE jest przypis o budowie
-  rejestru, tylko odpowiedź na pytanie, które pilot zada sobie przed tapnięciem
-  w czerwony przycisk. Powód OPCJONALNY, jak przy każdej korekcie
+  („Administrator klubu nadal go zobaczy - razem z powodem, jeśli go podasz") - to
+  odpowiedź na pytanie, które pilot zada sobie przed tapnięciem w czerwony przycisk;
+  słowa „rejestr" w nim nie ma (przegląd treści 2026-10-08). Powód OPCJONALNY, jak przy każdej korekcie
 - **ADMINISTRATOR MA DRUGĄ DROGĘ, BEZ OKNA** (zamówienie 2026-08-31: „z poziomu admina
   powinienem mieć możliwość w dowolnym momencie usunięcia operacji"). `POST
   /admin/api/sessions/:uuid/void` na zdolności `events.correct`, karta na dole ekranu
@@ -2344,7 +2344,8 @@ Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
   i ma na osi własny wiersz, a powtórzona w nawiasie mówiła to samo dwa razy
 - **słownik jest jeden i polski**: „Uruchomienie", „Kołowanie", „Start", „Lądowanie",
   „Wyłączenie" - zamiast „Start engine", „Taxi", „Takeoff", „Landing", „Stop engine".
-  Angielskie nazwy zostają tam, gdzie opisują FAZĘ lotu (hero 05), nie zapis w rejestrze
+  Od przeglądu treści 4.0.0 także fazy lotu w hero 05 są po polsku (Wznoszenie, Lot poziomy,
+  Zniżanie)
 - **wiersz „na żywo" nie ma godziny**: nie jest zdarzeniem rejestru, tylko czasem
   TRWANIA, a te w tej osi stoją po prawej (tam, gdzie czas lotu przy lądowaniu).
   W powietrzu liczy od startu, na ziemi od uruchomienia silnika
@@ -2482,6 +2483,11 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
   i zniżanie) norma zaniżała zużycie, a razem z nim rezerwę paliwa w kokpicie
 - `null` znaczy „nie ma czego pokazać" i ekran wtedy MILCZY: brak przeliczników MH nie
   unieważnia normy paliwa i odwrotnie (inne wejście, inny próg publikacji)
+- **ostrzeżenie `MH_DELTA_MISMATCH` przy zdaniu samolotu zapala się WYŁĄCZNIE przy przyroście
+  licznika WIĘKSZYM niż czas pracy silnika** (decyzja właściciela 2026-10-08): obrotomierz
+  na ziemi przyrasta wolniej niż zegar, więc mniejszy przyrost jest normą, a nie rozjazdem.
+  Ta sama reguła stoi w `sessionInconsistencies` (tryb poprawek i panel) - do 2026-10-08
+  reguła zdania ostrzegała w obie strony i była jedynym miejscem, które o tym nie wiedziało
 
 ## Zgłaszanie błędów z aplikacji (issue #87, 2026-09-04) - NA CZAS TESTÓW
 Zgłoszenie: „na każdym ekranie i w każdym popup dodaj w prawym górnym rogu przycisk
@@ -3497,10 +3503,11 @@ decyzję 5 z issue #97 („produkcja = migracja z backfillem"). Pełny zapis i k
 - **do rozstrzygnięcia po wygaszeniu starej instancji**: czy wyciąć backfill z migracji 8
   razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`
 
-## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 4.0.0 (decyzje 2026-09-15)
+## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 5.0.0 (decyzje 2026-09-15)
 Rebranding stawiamy od zera po OBU stronach naraz - serwer i aplikacja. Rozstrzyga to
 pytanie „nowy projekt EAS czy przemianowanie obecnego" (#120 §5) i zdejmuje Play z drogi
-krytycznej 2.0.0.
+krytycznej 2.0.0. **Numer wydania ze sklepem przesunął się z 4.0.0 na 5.0.0**, kiedy
+4.0.0 dostały zlecenia na lot (#239) - punkty niżej mówią już o 5.0.0.
 - **nowy projekt EAS**, nie przemianowanie: własny `projectId`, własny adres aktualizacji
   i własne kanały `production`/`development`
 - **nowy pakiet** `com.ninerdeck.app` = osobna instalacja, osobne dane lokalne, osobna
@@ -3510,17 +3517,18 @@ krytycznej 2.0.0.
 - **2.0.0 NIE JEST aktualizacją niczego** - to pierwsze wydanie nowej linii. OTA z niej
   do telefonów z 1.1.0 nie dojdzie i nie ma dojść; stara linia (projekt EAS, pakiet,
   instancja, klient OAuth) dożywa równolegle do W4
-- **PUBLIKACJA W PLAY SCHODZI DO 4.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
+- **PUBLIKACJA W PLAY SCHODZI DO 5.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
   strony pobierania. Dzięki temu **R3 potrzebuje JEDNEGO odcisku SHA-1** (klucz EAS);
   drugi odcisk, Play App Signing, był jedyną pozycją wiążącą wydanie z kontem organizacji
   w Play i procedurą D-U-N-S (do 30 dni)
-- **„klient Android z dwoma SHA-1" będzie przy 4.0.0 ZMIANĄ W KODZIE, nie wpisem
+- **„klient Android z dwoma SHA-1" będzie przy 5.0.0 ZMIANĄ W KODZIE, nie wpisem
   w konsoli**: aplikacja woła `Google.useAuthRequest({ androidClientId })`, więc `aud`
   tokenu to identyfikator klienta ANDROID, a konsola wiąże jeden klient z jednym odciskiem.
   Klucz EAS i klucz Play dają dwa różne `aud`, a serwer przyjmuje dziś dokładnie jeden
-  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 4.0.0
+  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 5.0.0
 
-- **WŁASNA DOMENA TEŻ SCHODZI DO 4.0.0** (ta sama decyzja): 2.0.0 stoi na adresie nadanym
+- **WŁASNA DOMENA MIAŁA ZEJŚĆ RAZEM ZE SKLEPEM** (ta sama decyzja; zrealizowana wcześniej,
+  w #124 - sekcja niżej, punkty tutaj są zapisem decyzji z 2026-09-15): 2.0.0 stoi na adresie nadanym
   przez Railway, a `ninerdeck.pl` (strona) i `app.ninerdeck.pl` (panel + API) przychodzą
   razem ze sklepem. `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta Web i adres
   polityki w ekranie zgody wskazują do tego czasu adres Railway. **R2 wypada z drogi
@@ -3529,12 +3537,13 @@ krytycznej 2.0.0.
   ani domen, ani D-U-N-S, ani konta Play
 - **przeniesienie będzie OTA, nie nowym APK**: `EXPO_PUBLIC_API_URL` jest wkompilowany
   w bundle, a `eas update` buduje nowy bundle (krok 0 skilla `wydanie`)
-- **co przeniesienie zostawia otwarte do 4.0.0**: (1) luka CSP z docblocka `staticSite.ts` -
+- **co przeniesienie zostawiało otwarte**: (1) luka CSP z docblocka `staticSite.ts` -
   strona ma luźniejszą politykę niż panel WYŁĄCZNIE dlatego, że dzielą origin, a rozdział
   hostów był jej jedynym domknięciem; (2) **linki do kart arkusza zapisane w dzienniku
   eksportu niosą adres BEZWZGLĘDNY** (`dayExporter` zapisuje `sheetUrl` złożony
   z `PUBLIC_BASE_URL`), więc po zmianie domeny stary host musi odpowiadać albo linki trzeba
-  przepisać - rozstrzygnięcie należy do 4.0.0
+  przepisać. Oba rozstrzygnęło #124: rozdział hostów zamyka lukę CSP, a linków nie było
+  komu przepisywać (instancja bez użytkowników)
 
 ## Własna domena WYKONANA W KODZIE (issue #124, 2026-09-16, gałąź `feature-124-wlasna-domena`)
 Domena kupiona 2026-09-16, a hostowana instancja 2.0.0 nie miała jeszcze użytkowników -
@@ -3752,9 +3761,10 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
 - **`docs/podrecznik/` jest ŹRÓDŁEM modułu „Dokumentacja"** (`/dokumentacja/`):
   `spis.md` (rozdziały i kolejność stron) + `<slug>.md` na stronę; renderuje
   `site/tools/render-docs.mjs` (drzewko, wyszukiwarka w przeglądarce, spis „na tej
-  stronie", żywe ekrany makiet przez dyrektywy `@screen` i `@panel`). Piszemy dla pilota i administratora, który szuka
-  pomocy: jak działa funkcja i jakie są założenia, ale językiem biznesowym - bez nazw
-  plików, identyfikatorów, numerów issue i żargonu (format i reguły: komentarz w `spis.md`).
+  stronie", żywe ekrany makiet przez dyrektywy `@screen` i `@panel`). Piszemy SAMOUCZEK
+  dla pilota i administratora: jak coś zrobić krok po kroku i co zobaczy na ekranie -
+  bez wykładu o założeniach, nazw plików, identyfikatorów, numerów issue i żargonu
+  (format i reguły: komentarz w `spis.md` i sekcja „Przegląd treści 4.0.0").
   Zmiana ekranu w PR = zmiana odpowiedniej strony podręcznika
 - **ŻYWY EKRAN STOI PRZY SEKCJI, KTÓREJ DOTYCZY** (uwaga użytkownika 2026-09-07:
   „w dokumentacji brakuje screenów, mamy przecież makiety"). Galeria hurtem na górze
@@ -3765,6 +3775,12 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   do design-first (`docs/panel-2.0.md` §3.7), zdanie „panel makiet NIE MA" jest
   nieaktualne. **`design/panel/` MUSI być zacommitowane**: obraz buduje stronę
   z repozytorium, więc brakująca makieta `@panel` wywraca build, a nie stronę
+- **polityka prywatności dzieli odpowiedzialność za dane** (decyzja właściciela 2026-10-08):
+  KLUB jest administratorem danych zapisanych w klubie (członkostwo, dziennik, kalendarz,
+  zlecenia, wiadomości), a operator - administratorem danych KONTA (logowanie, sesje, surowe
+  odczyty czujników, zgłoszenia błędów) i przetwarzającym dane klubu na podstawie umowy
+  powierzenia. Nowy rodzaj danych dopisuje się w punkcie 1 polityki po właściwej stronie
+  podziału; umowę powierzenia trzeba podpisać z każdym klubem, zanim zacznie pracować
 - **strona pobierania i landing mają jeden komponent przycisku** (`.dl`
   w `site/src/site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
@@ -3952,9 +3968,10 @@ Reguły obowiązujące odtąd KAŻDY nowy ekran aplikacji:
   byłaby zdaniem o niczym. Do epiku R-F (#162) ekran dostaje `null` i wygląda dokładnie
   jak ten wariant; zaślepki „wkrótce" nie ma
 - **POWRÓT NA EKRAN DOMOWY IDZIE PRZEZ `goHome()`** (`ui/navigation/goHome.ts`) - to
-  jedyne miejsce znające zagnieżdżony kształt trasy (`navigate('Tabs', { screen })`).
-  `navigate` przyjmuje dowolny napis, więc literówka w którymkolwiek z sześciu wyjść
-  z flow objawiłaby się dopiero w locie
+  jedyne miejsce znające zagnieżdżony kształt trasy (`{ screen }` w parametrach `Tabs`).
+  Nawigacja przyjmuje dowolny napis, więc literówka w którymkolwiek z wyjść z flow
+  objawiłaby się dopiero w locie. Od 4.0.0 powrót COFA stos - sekcja „Powrót cofa stos
+  ekranów" niżej (do tego czasu `navigate` dokładał drugie zakładki)
 - **HISTORIA: dzień NAGŁÓWKIEM, operacje zwartymi wierszami** (makieta `24`). Data pada
   RAZ, liczby stoją BEZ ETYKIET (kolejność Loty · Blok · Lot jest w aplikacji stała),
   suma doby wchodzi dopiero przy KILKU operacjach, a ikona po prawej niesie SKUTEK
@@ -4011,6 +4028,9 @@ KAŻDY ekran modułu rezerwacji:
 - **DWA KROKI TO JEDEN EKRAN NAWIGACJI** (wzorzec wpisu ręcznego): „wstecz" z kroku 2 cofa
   o krok, z kroku 1 przy niepustym szkicu pyta o rezygnację (`AbandonDraftSheet`). Termin
   i maszyna PODSTAWIONE przez nawigację nie liczą się jako wpis pilota
+- **ZAPIS WYCHODZI PRZEZ `exit.proceed`, A POPRAWIANY TERMIN WYPADA Z ZAJĘTOŚCI** -
+  dwa błędy z 3.0.0 (pusty formularz po „ZAREZERWUJ", zablokowane „DALEJ" przy
+  „PRZESUŃ I POPRAW"), naprawione w 4.0.0; reguły i strażnik w sekcji „epik Z-C"
 - **TAPNIĘCIE W WOLNE PASMO NIE USTAWIA TERMINU**, tylko przekazuje wskazaną godzinę jako
   PREFEROWANĄ PORĘ do zapytania o sugestie (`SLOT_PREFERRED_BONUS`). Podstawiona godzina
   wyglądałaby jak wpisana - to ta sama reguła, przez którą `Stepper` nie ma wartości
@@ -4038,8 +4058,9 @@ KAŻDY ekran modułu rezerwacji:
   w `bookingWire`): „weszła 3 min temu" znaczy wyścig o slot, a plan sprzed tygodnia -
   stan kalendarza, którego pilot nie zauważył; na siatce ta liczba nie znaczy nic
 - **ZAPIS, KTÓRY NIE DOJECHAŁ, TO INNA KATEGORIA NIŻ ODMOWA REGUŁY**: `null` z portu
-  znaczy „o terminie nie wiemy nic", więc ekran mówi, CZYJĄ decyzją jest slot
-  („Slot potwierdza serwer"), a nie „spróbuj ponownie". Preemptywnego powodu
+  znaczy „o terminie nie wiemy nic", więc ekran mówi, że termin rozstrzyga klub
+  („Rezerwację zapiszesz tylko z zasięgiem - bez połączenia nie da się sprawdzić, czy
+  termin jest wolny."), a nie „spróbuj ponownie". Preemptywnego powodu
   w przycisku NIE MA i to jest świadome: `syncIndicator` opisuje kolejkę ZDARZEŃ,
   więc przy pustym outboksie milczałby dokładnie u pilota bez zasięgu
 - **KARTA REZERWACJI (23) MA JEDNE DRZWI DO ZMIANY**: „PRZESUŃ I POPRAW" wraca do
@@ -4485,6 +4506,29 @@ rezerwacje w `pending` z kompletem zgód - nikt nie mógł ich domknąć (`refus
 - **czego #207 NIE ROBI**: powiadomienia o samej ZMIANIE ŚCIEŻKI (osoby dostają prośby
   o zgodę, nie „administrator przestawił kroki"), sprawdzenia w przeglądarce (→ #169)
 
+## Odwołanie rezerwacji zawiadamia osoby w fotelach (2026-10-06, gałąź `feature-odwolanie-rezerwacji-powiadomienie`)
+Panel pisał administratorowi „Pilot zobaczy powód w aplikacji", a powód nie docierał
+nigdzie. Decyzje właściciela (D1-D3) i stan: **`docs/rezerwacje.md` §12.9**; makieta `23G`.
+- **JEDNA REGUŁA**: odwołanie rezerwacji lotu zawiadamia osoby w fotelach POZA odwołującym -
+  przy odwołaniu przez klub dowódcę i drugiego pilota (z wymaganym powodem), przy własnej
+  drugiego pilota. Adresatów liczy wyłącznie `bookingCancelled` (`notify/bookingNotices.ts`);
+  rezerwacja zlecenia ma własne wiadomości, wyłączenie z użytku nie ma foteli
+- **JEDEN FAKT, JEDNA WIADOMOŚĆ NA OSOBĘ**: adresaci `booking_cancelled` są wykluczani
+  z „prośby wycofanej" (`ApprovalFlow.withdraw(…, alreadyTold)`) i z „Odwołano lot"
+  dla obserwujących (`audience(…, [odwołujący, ...told])`) - wiadomość z fotela ma powód
+  i jest pełniejsza. Nowy producent wiadomości o odwołaniu ma liczyć `told` tak samo
+- **`by` W `BookingsPort.close` JEST WYMAGANE** (`string | null`, kolumna `closed_by`,
+  migracja 17): człowiek zamyka swoim identyfikatorem (także przy odmowie), zegar `null`.
+  Nowe miejsce zamknięcia ma to świadomie zadeklarować - pominięte pole gasi baner 23G
+- **`closeReason` i `closedBy` jadą wyłącznie w PEŁNYM kształcie** rezerwacji telefonu
+  (`seesFull`) - zdanie człowieka do pilota, ta sama klasa treści, co powód odmowy (W7)
+- **karta 23G**: baner liczy `logic/bookingCancellation.ts` (niezależny od ścieżki),
+  stoi tylko, gdy odwołał KTOŚ INNY niż patrzący; drugi pilot dostaje na zamkniętej karcie
+  „WYBIERZ INNY TERMIN". Skutek przed kliknięciem: `bookingDetails.cancelWarning`
+  (telefon) i `screens/calendar/cancelNote.ts` (panel)
+- **poza zakresem, otwarte**: wiadomość przy zwolnieniu slotu przez zegar i przy rezerwacji
+  założonej ZA pilota; pole powodu przy odwołaniu własnej w panelu
+
 ## Obserwowanie samolotu - karta maszyny i powiadomienia o jej lotach (issue #205, projekt 2026-09-25, wydanie 3.1.0)
 Zgłoszenie: „mając odpowiednie uprawnienia chciałbym móc subskrybować zdarzenia na
 samolocie […] szczegółowa strona samolotu […] powiadomienia o tym, że zbliża się nowy lot,
@@ -4745,7 +4789,8 @@ CSS, `panel.css` przegenerowany. Decyzje makiet: **`docs/panel-3.2.md` §17**; o
 Reguły obowiązujące odtąd KAŻDY ekran panelu klubu:
 - **KOLUMNA KLUBU MA SZEŚĆ POZYCJI W STAŁEJ KOLEJNOŚCI**: Dziennik · Do sprawdzenia ·
   Kalendarz · Statystyki · Piloci · Samoloty (`homeFor` bierze pierwszą - Dziennik zostaje
-  ekranem startowym; lista płaska, grupy od siódmej). Plakietka `.nav-count` WYŁĄCZNIE przy
+  ekranem startowym; lista płaska, grupy od siódmej - od 4.0.0 TRZY GRUPY i Statystyki przed
+  Kalendarzem, sekcja „Epik Z-A" niżej). Plakietka `.nav-count` WYŁĄCZNIE przy
   „Do sprawdzenia" i WYŁĄCZNIE przy niezerowej sumie trzech źródeł `attention` (reguła
   SyncChipa). Makiety Kalendarza/Pilotów/Samolotów pokazują stan BEZ plakietki, dziennik
   i „Do sprawdzenia" - z „5": oba stany mają być widoczne w zestawie
@@ -5058,7 +5103,8 @@ Moduł Statystyki 1:1 z makiety `statystyki` (§8, §17 pkt 10) i karta „Zuży
 w szufladzie samolotu 1:1 z `samoloty-karta` S2c (§17 pkt 11), z plastrem serwera na obu
 trasach. Odstępstwa i ich powody: `docs/panel-3.2.md` §16. Reguły obowiązujące odtąd:
 - **STATYSTYKI TO CZWARTA POZYCJA KOLUMNY** (Dziennik · Do sprawdzenia · Kalendarz ·
-  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia), na „Podglądzie klubu";
+  Statystyki · Piloci · Samoloty; `homeFor` bez zmian znaczenia; od 4.0.0 stoją w grupie
+  „Loty", przed Kalendarzem - sekcja „Epik Z-A"), na „Podglądzie klubu";
   adres `#/statystyki?od=&do=` z zakresem ZAWSZE w adresie, jak w dzienniku. Analityka
   zużycia pozycji NIE dostaje - jest własnością maszyny i mieszka w jej karcie (§8)
 - **JEDNA PODSTAWA LICZENIA Z DZIENNIKIEM** (§4.5): operacje ZAMKNIĘTE, bez unieważnionych
@@ -5165,6 +5211,518 @@ powodu), wiadomość „prośba wycofana" DOŁOŻONA, wiersz „Założona" BEZ 
   i komponent nie mają prawa różnić się samą wielkością litery** - czysty nosi przyrostek
   (`…View`, `…Rows`, `…Labels`)
 
+## Zlecenia na lot 4.0.0 - PROJEKT (issue #239, 2026-09-27, gałąź `feature-239-zlecenia-projekt`)
+Koordynator (albo instruktor) tworzy zlecenie lotu - termin + maszyna - i wysyła je pilotom;
+ci odpowiadają, rozmawiają ze zlecającym, a zlecający widzi, kto odczytał. Dokument decyzji:
+**`docs/zlecenia.md`** (49 decyzji właściciela: 31 w czterech turach z 2026-09-27 i 18
+z przeglądu makiet 2026-09-28 w trzech turach, §1; od trzeciej tury pytane POJEDYNCZO).
+Epiki Z-A…Z-E + Z-W w milestone „Zlecenia na lot 4.0.0" (Z-E = kanał klubu, #246 - sekcja
+„Kanał klubu" niżej). Stan: PROJEKT -
+makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy implementacji:
+- **zlecenie = rezerwacja z pustymi fotelami + adresaci**: termin zajęty OD UTWORZENIA
+  (`bookings.order_id`, poluzowany CHECK `booking_flight_fields`), bez ścieżki akceptacji.
+  Druga tabela zajętości byłaby drugim wykluczeniem nakładania - nie powstaje
+- **dwa fotele, trzy stany** (dowódca: ja / szukany; drugi pilot: ja / szukany / brak),
+  **trzy sposoby adresowania**: imiennie na fotel (potwierdzenie obsadza), grupa na fotel
+  (zgłoszenia, wybiera prowadzący), wspólna lista (potwierdzają termin, fotele przydziela
+  prowadzący). **Trybu „kto pierwszy" NIE MA**, innego pilota nie wpisuje się bez jego
+  potwierdzenia; uczeń = drugi pilot, instruktor = dowódca „ja"
+- **osoba z list obu foteli dostaje TERMIN DO POTWIERDZENIA** - także wskazana imiennie na
+  jeden fotel i obecna w grupie drugiego (pkt 37, odwraca „imienne wygrywa z grupą"): jej
+  „tak" jest zgłoszeniem, prowadzący widzi ją przy OBU fotelach z „WYBIERZ" i dopiskiem
+  „także na …" (pkt 38), a formularz mówi to przed wysłaniem podpisem pod nazwiskiem
+  (pkt 39; bez blokady). Przełącznik „Wspólna lista" NIE GUBI wyboru: włączony przenosi
+  adresatów obu foteli na jedną listę, wyłączony przywraca podział sprzed włączenia
+  (pkt 47, 48)
+- **odpowiedzi zeruje WYŁĄCZNIE zmiana terminu**; każda inna zmiana = „edytowane · co"
+  bez nazwiska, bez potwierdzeń. Powód ZAWSZE opcjonalny. Wygaśnięcie W CAŁOŚCI na początku
+  terminu; ostrzeżenie „bez kompletu załogi" do zlecającego o 18:00 czasu klubu
+  W PRZEDDZIEŃ (pkt 45 - „3 h przed" przychodziło o świcie i za późno), zlecenie wysłane
+  później ostrzeżenia nie dostaje
+- **adresat nie wie NIC o innych adresatach**; „odczytane" = otwarcie karty zlecenia
+- **wątek prywatny autor ↔ adresat, ale czyta go `reservations.manage`** (bez pisania,
+  z jednym zdaniem w wątku); cudze zlecenia prowadzą wszyscy z `reservations.manage` naraz
+- **ODŚWIEŻANIE KANAŁEM KLUBU** (pkt 49 - odwraca pkt 42 z szóstej tury, przywraca „na
+  żywo" pkt 21 i 27): zlecenia i rozmowy są pierwszym klientem modułu klubu (sekcja „Kanał
+  klubu" niżej). Zapis RESTem, kanał rozsyła; wiadomość rozmowy idzie ramką `message`
+  w całości, zmiana zlecenia - sygnałem `changed order:<id>` bez treści (treść per widz
+  liczy REST). Powiadomienie dotyczące OTWARTEGO ekranu nie pokazuje banera, tylko go
+  odświeża (pkt 43). Push niesie same identyfikatory (`orderId`, `recipientId`) i idzie
+  wyłącznie na urządzenia bez połączenia. Moduł jest sieciowy - cache’u zleceń w SQLite
+  NIE MA
+- **CISZA W KOKPICIE** (pkt 44): dopóki pilot trzyma samolot, WSZYSTKIE powiadomienia
+  (także rezerwacji i obserwowania) idą bez banera i bez dźwięku - na listę systemową
+  i do skrzynki. Łącze kanału jest wtedy rozłączone (K6), więc przychodzą pushem.
+  **Rozstrzygnięte 2026-10-06**: wycisza SERWER - cichy kanał Androida `quiet` dla załogi
+  operacji w toku (dowódcy I drugiego pilota, w dowolnym klubie), bo w locie ekran gaśnie,
+  a aplikacja w tle nie ma jak wyciszyć się sama (sekcja KK-C niżej)
+- **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
+  `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
+- **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - sekcje
+  o sklepie i nowej instancji mówią już o 5.0.0 (poprawione w Z-W). 3.2.0 wydane
+  27 września 2026 (PR #240), więc brama integracyjna jest otwarta: `develop` niesie
+  odtąd 4.0.0
+
+### Epik Z-A: makiety zleceń (issue #244, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
+Design-first przed kodem: telefon `20f`, `21e`, `23f`, `25d`, `28`–`28e`, `29`–`29b`,
+`30`–`30a`, `31`–`31c`, `32`–`32d` (w szóstej turze doszły ramki: 28A termin do
+potwierdzenia, 28B wygasło i cofnięte, 31B imiennie i w grupie, 32 odwołane i osoba przy
+obu fotelach; w siódmej - `25e` baner w aplikacji, KK-A kanału klubu); panel
+`powiadomienia` (dzwonek w każdej ramie klubu, skrzynka, baner - KK-A), `zlecenia-lista` (ZL1/ZL1a), `zlecenia-nowe` (ZL2),
+`zlecenia-szczegoly` (ZL3–ZL3d), `zlecenia-watek`, `piloci-grupy` (P5) oraz ramki
+w istniejących (`kalendarz-flota`, `kalendarz-wpis` K2c, `piloci-lista`, `piloci-konto`,
+kolumna boczna wszystkich ram klubu). Spis: `docs/zlecenia.md` §14.2 i §15. Makiety przeszły
+przegląd spójności z aplikacją, architekturą i decyzjami; reguły z tego przeglądu:
+- **KOLUMNA PANELU W TRZECH GRUPACH** (pkt 32–34): **Loty** - Dziennik · Do sprawdzenia ·
+  Statystyki; **Planowanie** - Kalendarz · Zlecenia; **Klub** - Piloci · Samoloty.
+  Statystyki liczą te same zamknięte operacje, co Dziennik, więc stoją w jego grupie -
+  PRZED Kalendarzem (zmiana kolejności `NAV_ITEMS` w Z-D; `homeFor` bez zmian znaczenia,
+  pilnuje `nav.test.ts`). Nagłówek `.nav-group` jest SAMYM PODPISEM - grupy się nie
+  zwijają - i stoi WYŁĄCZNIE przy co najmniej dwóch widocznych grupach: pilot z pustym
+  zakresem (Kalendarz, Zlecenia) i rama superadministratora mają listę płaską, grupa bez
+  widocznej pozycji znika. Nie proponować zwijania ani grup przy jednej widocznej
+- **MENU WOLNEJ KOMÓRKI KALENDARZA PANELU** (pkt 35): osoba z `orders.create` po kliknięciu
+  dostaje „Zarezerwuj / Zleć lot", oba z maszyną i dniem komórki - ten sam wybór, co arkusz
+  wolnego pasma 21E w telefonie. Bez uprawnienia kliknięcie otwiera rezerwację wprost (menu
+  z jedną pozycją byłoby krokiem o nic); „Zleć lot" nad osią otwiera zlecenie BEZ terminu.
+  `.menu.cell-menu` + `.cal-cell:has(> .cell-menu)` (komórka zdejmuje `overflow: hidden`)
+- **LISTA ZLECEŃ STARTUJE TAM, GDZIE COŚ CZEKA - NA OBU POWIERZCHNIACH** (pkt 36): wejście
+  z Pulpitu (telefon) i z kolumny (`#/zlecenia` bez parametru, panel) otwiera „Do mnie",
+  gdy coś tam czeka na odpowiedź, inaczej „Zlecone" (przekierowanie na `?widok=zlecone`).
+  Segment niesie JAWNY parametr (`?widok=do-mnie` / `?widok=zlecone`), więc wklejony adres
+  znaczy to samo dla każdego; członek bez uprawnień segmentu nie ma
+- **„ZLEĆ LOT" / „NOWE ZLECENIE" WYŁĄCZNIE Z `orders.create`** - zakładkę „Zlecone" otwiera
+  też `reservations.manage` (prowadzenie cudzych), ale prowadzenie nie daje prawa wysyłania
+- **JEDNA OŚ CZASU DLA CAŁEGO ZESTAWU**: zlecenie A (przelot SP-AXA, Adam imiennie na
+  dowódcę; w piątek 07:31 termin 09:00-11:00 → 10:00-12:00, 07:40 przyjęte) i zlecenie B
+  (skoki SP-ANA; dowódca imiennie, drugi pilot z grupy „Piloci An-2"; piątek 07:10 edycja
+  planu lotu, 21:52 zgłoszenie Adama, 22:12 przydział Anny) mają te same chwile w telefonie
+  i w panelu, a ramy piszą „ten sam moment, co …". Zmieniasz chwilę w jednej ramie -
+  sprawdź ramy, które się na nią powołują, i skrzynkę 25D (jej wiersze są tą samą historią)
+- **„ZMIANA NIEODCZYTANA" U PROWADZĄCEGO**: adresat, który otworzył zlecenie przed ostatnią
+  edycją, ma przy statusie bursztynowe „zmiana z 07:10 nieodczytana" (`last_seen_at` <
+  ostatnia edycja, `docs/zlecenia.md` §8); wiersze sprzed doby piszą „wcz." / „wczoraj"
+- **DWUNASTA ZDOLNOŚĆ `orders.create` („Zlecanie lotów")** stoi w `piloci-konto` w zestawach
+  Koordynator lotów i Administrator; Akceptujący i Technik jej nie mają
+- **KLASY PANELU ZLECEŃ CZEKAŁY W `design/panel/rama.css`** i przeszły w Z-D (#248) do
+  `admin/src/styles/components/` (`orders.css`, `calendar.css`, `surfaces.css`,
+  `controls.css`) pod TĄ SAMĄ nazwą - sekcja „ZLECENIA (4.0.0)" zniknęła z `rama.css`.
+  `panel.css` po każdej zmianie przez `npm run panel:css` (strażnik
+  `panelCss.generated.test.ts`)
+- **STANY NIE ZOSTAJĄ „BEZ MAKIETY"** (pkt 46): stan, który aplikacja wdroży, dostaje ramkę -
+  jako „inny los" tego samego zlecenia w tym samym pliku, z kotwicą i pozycją w panelu
+  wariantów (wzorzec: 28B ramki 2-4, 32 ramki 2-3)
+- **czego Z-A NIE ROBI**: kodu (Z-B serwer, Z-C aplikacja, Z-D panel, Z-E kanał klubu) ani
+  podręcznika (Z-W)
+
+## Kanał klubu 4.0.0 - PROJEKT (zlecenia pkt 49, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
+Siódma tura przeglądu zleceń odwróciła „bez połączenia na żywo" (pkt 42): właściciel -
+„myśleć jak o module wymiany wiadomości w klubie, wszelkie powiadomienia po WebSocket,
+globalny moduł do zarządzania powiadomieniami oraz połączeniem z serwerem, nie chcę
+pollingu na każdej karcie". Dokument decyzji: **`docs/kanal-klubu.md`** (K1–K7, epik #246
+= Z-E, etapy KK-A…KK-D). Decyzje właściciela z 2026-09-28 - nie wracać:
+- **K1 JEDEN MODUŁ, JEDNO POŁĄCZENIE**: łącze na urządzenie (telefon) i na kartę przeglądarki
+  (panel) niesie wszystkie powiadomienia i odświeżenia ekranów; ekrany NICZEGO nie odpytują.
+  Funkcja podpina się tematami (`useLiveTopic` w aplikacji, mapa temat → klucze zapytań
+  w panelu) i o kanale nie wie nic więcej. Pętle `RETRY_MS` (60 s) w `useCalendar`,
+  `useInbox`, `useAircraftCard`, `useAircraftWatches` znikają
+- **K2 ZAPIS ZAWSZE RESTem, KANAŁ TYLKO ROZSYŁA** i nie jest źródłem prawdy (skrzynka
+  w bazie i odpowiedzi REST są). Od klienta przychodzą wyłącznie `auth` i podtrzymanie;
+  po każdym (ponownym) połączeniu ekran dociąga stan zwykłym odczytem, więc zgubiona ramka
+  niczego nie gubi. Sygnał `changed` nie niesie treści - treść per widz liczy REST
+- **K3 ZAKRES 4.0.0**: skrzynka i dzwonek (WSZYSTKIE rodzaje), zlecenia i rozmowy, kalendarz
+  z kolejką zgód, karta samolotu i lista obserwowanych, dziennik i „Do sprawdzenia" (panel).
+  Piloci, Samoloty, Statystyki, Organizacje, Zgłoszenia błędów - przy wejściu, jak dziś.
+  Platforma kanału nie ma
+- **K4 PUSH WYŁĄCZNIE DO URZĄDZEŃ BEZ POŁĄCZENIA - W KLUBIE POWIADOMIENIA**: sesja i łącze
+  należą do jednego klubu, więc wiadomość z innego klubu tej samej osoby idzie PUSHEM, jak
+  w 3.1.0 (poprawka przy rysowaniu 25E: ramka dałaby 5-sekundowy baner bez śladu, bo dzwonek
+  liczy tylko klub aktywny, a kanał niósłby dane klubu, którym się nie uwierzytelnił)
+- **K5 BANER W APLIKACJI** (makieta 25E): u góry, pod paskiem systemowym, ta sama treść, co
+  wiersz skrzynki BEZ plakietki sprawy; znika sam po ok. 5 s, bez dźwięku, bez „×",
+  przesunięcie w górę zamyka, tapnięcie = cel pusha. Kilka naraz - widać ostatni. Nie ma go
+  na ekranie, którego dotyczy (pkt 43), w kokpicie i przy aplikacji w tle. Dwa źródła,
+  jeden wygląd: ramka `notification` i push odebrany na wierzchu (inny klub - z nazwą klubu,
+  tapnięcie → skrzynka z instrukcją przełączenia; na liście systemowej zostaje po cichu)
+- **K6 W KOKPICIE ŁĄCZE SIĘ ROZŁĄCZA**: push przychodzi po cichu na listę systemową i do
+  skrzynki (pkt 44); po oddaniu samolotu łącze wraca i dociąga zaległości. Cichy kanał
+  wybiera serwer dla dowódcy i drugiego pilota operacji w toku (2026-10-06, sekcja KK-C)
+- **K7 PANEL DOSTAJE DZWONEK I SKRZYNKĘ** (makieta `design/panel/powiadomienia.html`):
+  dzwonek w pasku górnym KAŻDEJ ramy klubu, przed nazwiskiem (rama platformy - bez), licznik
+  tylko przy nowych; skrzynka w szufladzie BEZ własnego adresu (jest osobista), te same
+  rodzaje i kształt wiersza, co w telefonie, wspólny stan przeczytania; baner w LEWYM
+  DOLNYM rogu treści (prawy górny zasłaniałby akcje strony i nagłówek szuflady, prawy dolny -
+  stopkę szuflady), kursor wstrzymuje odliczanie. REST: `GET /admin/api/me/notifications`
+  + `POST …/:id/read` na tej samej `NotificationQueries`
+- **ARCHITEKTURA** (`docs/kanal-klubu.md` §3): `LivePort` + adapter w pamięci procesu
+  (druga instancja = `LISTEN/NOTIFY`), `@fastify/websocket` (nowa zależność serwera)
+  wyłącznie na hoście aplikacji; `GET /live` - token w PIERWSZEJ ramce (`auth`, 5 s),
+  nigdy w adresie; `GET /admin/api/live` - ciasteczko + ŚCISŁE `Origin` (Cross-Site
+  WebSocket Hijacking). `Notifier.record` bez zmian, `Notifier.wake` staje się
+  rozdzielnikiem; `LiveSignals.changed(orgId, tematy, odbiorcy)` po commicie. Połączenie
+  zamyka się przy każdym odebraniu dostępu (ramka `bye` z powodem). W aplikacji JEDEN plik
+  zna WebSocket (`infrastructure/live/liveSocket.ts`, exact-list), łącze tylko z aplikacją
+  na wierzchu i nigdy w kokpicie; w panelu moduł `admin/src/live/`
+- **makiety KK-A zrobione w PR Z-A (#251)**: telefon `25e-baner-w-aplikacji` (dwie ramki:
+  zmiana terminu, wiadomość z innego klubu), panel `powiadomienia` (PW1 baner, PW2
+  skrzynka, PW3 stany), dzwonek w 36 ramach klubu; klasy `.bell-btn`, `.bell-count`,
+  `.inbox*`, `.toast` czekają w `rama.css` (sekcja „KANAŁ KLUBU (4.0.0) - czekają na kod
+  epiku KK-D")
+
+## Zlecenia 4.0.0 - epik Z-B: serwer (issue #245, 2026-09-29/30, gałąź `feature-245-zlecenia-serwer`)
+Migracja 16 z backfillem „Zlecania lotów", czysta domena, porty i adaptery, komendy
+i zapytania zleceń, grup i rozmów, zegar zleceń, trasy obu powierzchni i lista §16.
+Decyzje z implementacji (pytane pojedynczo, 2026-09-29 i 2026-09-30): `docs/zlecenia.md`
+§1 pkt 50–57; architektura: `docs/architektura-panelu-serwer.md` §7.11. Reguły
+obowiązujące odtąd:
+- **JEDNA TABLICA TRAS NA DWIE POWIERZCHNIE** (`http/routes/common/orderEndpoints.ts`):
+  telefon i panel tylko rejestrują jej punkty końcowe. Nowa trasa zleceń dopisuje się
+  TAM, a o prawie rozstrzyga komenda - prowadzący (autor z `orders.create` albo każdy
+  z `reservations.manage`), adresat albo 404
+- **ADRESAT NIE DOSTAJE NIC O INNYCH ADRESATACH** - pola prowadzącego jadą `null`,
+  etykieta adresowania wyłącznie prowadzącemu, cudza rozmowa to 404
+- **KAŻDA REZERWACJA NA DRUCIE NIESIE `order`**: `null` przy zwykłej, `{ seeking }` dla
+  każdego członka, `{ seeking, id, createdBy }` dla prowadzącego i adresata
+  (`queries/bookingOrders.ts`). Funkcje kształtu rezerwacji mają trzeci argument
+  `orders` BEZ wartości domyślnej - trasa oddająca rezerwację dociąga
+  `bookingOrders.of(...)`, a `NO_ORDERS` podaje wyłącznie tam, gdzie zlecenia być nie może
+- **PEŁNY KSZTAŁT „WŁASNEJ" REZERWACJI LICZY OBA FOTELE** (pkt 23) - drugi pilot widzi
+  komplet, na telefonie i w panelu
+- **ODWOŁANIE Z TRAS REZERWACJI TO KOMENDA ZLECENIA** (`commands/orderBookings.ts`):
+  przydzielony rezygnuje z fotela, zlecający w swoim fotelu „ja" odwołuje zlecenie
+  (decyzja 2026-09-30), prowadzący z kalendarza panelu - też, z powodem opcjonalnym
+  i BEZ dziennika akcji. Poprawka rezerwacji zlecenia drogą rezerwacji to
+  `booking_from_order` (409) dla każdego, kto w niej JEST
+- **ZNACZNIK ZMIAN KALENDARZA TO DWA STEMPLE** (`BookingsPort.changeMark`: rezerwacje
+  i zlecenia osobno) - nie „późniejszy z nich", bo stemple nadają dwa zegary (baza przy
+  założeniu rezerwacji, aplikacja przy zmianie zlecenia)
+- **WYJĄTEK W `AuditedWrite` WYCOFUJE WPIS** - to wzorzec na „ten zapis nie trafia do
+  dziennika akcji" (`Repeated` przy ponowionym założeniu grupy, `OrderBookingCancelled`
+  przy odwołaniu zlecenia z kalendarza); zwrócona wartość tego nie umie
+- **KANAŁ KLUBU JEST PORTEM** - komendy ogłaszają tematy `order:<id>`/`orders` i ramki
+  `message`/`read` przez `OrderSignals`; od KK-B (#246) w produkcji prawdziwy rejestr
+  połączeń, w testach `FakeLiveSignals`, która zapisuje i przekazuje dalej (sekcja
+  „Kanał klubu 4.0.0 - epik KK-B" niżej)
+- **IZOLACJA ZLECEŃ MA DWIE WARSTWY** (zlecenie i jego rezerwacja czytane osobno
+  z klubem) - sonda regresji musi łamać obie; sondy zleceń w `tenantIsolation.test.ts`
+  biorą świeży token PWI w Alfie (`pwiInAlfa`), bo sonda „wyloguj wszędzie" zrywa jej
+  sesje w Alfie w połowie przebiegu
+- **KLIENCI DOGANIAJĄ W Z-C I Z-D**: `booking_from_order` w mapach odmów aplikacji
+  (`serverPort.ts`) i panelu (`bookingRefusal.ts`), pole `order` w `CalendarBooking`
+  i etykiecie paska, `nextBooking.ts` z oboma fotelami, „REZYGNUJĘ" zamiast „ODWOŁAJ"
+  na 23F - tabela w `docs/zlecenia.md` §16
+
+## Kanał klubu 4.0.0 - epik KK-B: serwer (issue #246, 2026-09-30/10-01, gałąź `feature-246-kanal-klubu`)
+Sześć etapów z przeglądem przed każdym commitem; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §11**, architektura: `docs/architektura-panelu-serwer.md` §7.12.
+Reguły obowiązujące odtąd:
+- **„KTO DOSTAJE CO" MA JEDNO MIEJSCE NA OBSZAR**: `ClubSignals` (kalendarz, rezerwacje,
+  samolot, dziennik, „Do sprawdzenia") i `OrderSignals` (zlecenia, rozmowy); nazwy tematów
+  w `application/common/live/topics.ts`. Producent podaje FAKT (termin, operację), nigdy
+  tematów ani odbiorców; `ClubSignals` jest WYMAGANYM parametrem konstruktora, więc
+  kompilator wskazuje każde miejsce kompozycji. Nowy temat = metoda w `ClubSignals`,
+  wywołanie PO commicie, przypadek w `liveTopics.test.ts` i sonda regresji
+- **BUDZIK JEST ROZDZIELNIKIEM**: `Notifier.record` (w transakcji) oddaje
+  `RecordedNotice[]`, a `Notifier.wake(orgId, recorded)` przyjmuje WYŁĄCZNIE to, co
+  zapisano - ramka `notification` do połączonych sesji odbiorcy, push do tokenów sesji
+  NIEpołączonych w klubie powiadomienia (K4). Awaria odczytu przed ramką = push do
+  wszystkich
+- **DECYZJA ODBIERAJĄCA DOSTĘP ZAMYKA POŁĄCZENIA SAMA** - przez `LiveAccess`
+  (`application/common/live/liveAccess.ts`), po commicie i tylko przy udanej decyzji:
+  `session_revoked` (wylogowania, sesje z karty członka, hasło), `membership_disabled`
+  (członkostwo, klub). Zmiana zakresu przestawia zdolności otwartych połączeń zamiast je
+  zamykać. Połączenie żyje najwyżej do terminu tokenu (`bye token_expired`). Nowa
+  decyzja tego rodzaju = metoda w `LiveAccess` i przypadek w `liveClose.test.ts`
+  z kontrolą, że połączenie spoza zakresu zostaje otwarte
+- **SKRZYNKA PANELU = SKRZYNKA TELEFONU**: `GET/POST /admin/api/me/notifications`
+  (każdy aktywny członek, bez zdolności; platforma 401), `NotificationQueries`
+  w `application/common/queries/`, stronę i odpowiedź składa wspólny
+  `http/routes/common/inboxWire.ts`. Bit `approver` dostaje wyłącznie telefon
+- **PUŁAPKI TESTÓW**: w `injectWS` gniazdo serwera nie dostaje `close` po zamknięciu
+  przez klienta (odłączenie - na prawdziwym porcie); sondy izolacji tras PWI w Alfie
+  biorą świeży token (`pwiInAlfa`), bo sonda „Wyloguj wszędzie" zrywa jej sesje
+  w połowie przebiegu; pomocniki połączeń w `test/liveClients.ts`
+- **czego KK-B NIE ROBI**: klienta kanału w aplikacji (KK-C) i panelu (KK-D), czyli
+  łącza, szyny, banerów, dzwonka, usunięcia pętli `RETRY_MS`; sprawdzenia CSP dla `wss:`
+  w przeglądarkach (KK-D)
+
+## Kanał klubu 4.0.0 - epik KK-D: panel (issue #246, 2026-10-01/05, gałąź `feature-246-kanal-klubu`)
+Łącze, dzwonek, skrzynka i baner w panelu; stan, mapa plików i przepisy:
+**`docs/kanal-klubu.md` §12**, warstwa `live/`: `docs/architektura-panelu-frontend.md` §2
+i §4.6. Reguły obowiązujące odtąd:
+- **PANEL NICZEGO NIE ODPYTUJE** (K1): `refetchInterval` i `setInterval` w `admin/src/`
+  wywala strażnik architektury. Ekran, który chce świeżości, dopisuje klucz w
+  `live/topicKeys.ts` z testem; tematu nie wymyśla panel - dopisuje go serwer
+  w `ClubSignals`. Licznik „Do sprawdzenia" przestał pytać serwer co minutę
+- **JEDNO POŁĄCZENIE NA KARTĘ, JEDNE DRZWI**: `WebSocket` wyłącznie w `live/liveSocket.ts`;
+  `live/` nie importuje ekranów, komponentów ani `api/` (kształt wiadomości bierze
+  z `queries/inboxCache.ts`), a `ui/` nie zna `live/`. Łącze woła `ShellRoute` wyłącznie
+  w sesji klubu
+- **SKRZYNKA PANELU MÓWI TO SAMO, CO SKRZYNKA TELEFONU**: zdanie wiersza składa
+  `screens/inbox/inboxRows.ts` tym samym słownikiem, co `app/src/ui/screens/logic/inbox.ts`,
+  więc nowy rodzaj wiadomości dostaje gałąź w OBU. „Nowe" gaśnie z otwarciem listy, każda
+  wiadomość przeczytuje się RAZ na wizytę (`notSentYet`), „Do decyzji" liczy się z kolejki
+  decyzji. Ramka `notification` wpisuje się w pamięć skrzynki bez drugiego żądania
+- **SZUFLADA I BANER CZEKAJĄ NA SŁOWNIK KLUBU** - zdanie bez nazwiska przeskakiwałoby
+  na pełne. Szuflada czeka przez `pending` wspólnego `Loadable` (liczy też słownik
+  i kolejkę decyzji), który od 2026-10-06 pod progiem plamek nie rysuje NIC - obejście
+  `pending ? null` zdjęte; baner czeka sam, bo plamek nie ma. Skrzynka, która się nie
+  wczytała, to zdanie o błędzie ODCZYTU (`loadErrorMessage`) bez stanu pustego pod nim
+- **BANER** (makieta PW1, czysty `screens/inbox/toast.ts`): zdanie wiersza bez plakietki
+  sprawy i z „teraz", lewy dolny róg treści, 5 s; kursor ALBO fokus wstrzymuje odliczanie,
+  zejście wznawia je od reszty; kilka naraz - ostatni. Nie stoi przy otwartej skrzynce ani
+  na ekranie, którego dotyczy (adres rzeczy i adresy pod nim), i taki znika na dobre.
+  Kliknięcie otwiera rzecz bez przeczytania; świeża prośba o zgodę prowadzi do kolejki
+  decyzji; przełączenie klubu kończy baner; słownik dociąga się przy pierwszym banerze
+- **REGION `role="status"` STOI W RAMIE KLUBU ZAWSZE**, a baner wchodzi do środka - jedyna
+  świadoma różnica wobec makiety, w której rola na linku odbierała mu rolę linku
+- **PRÓBY W PRZEGLĄDARCE**: nawigacja na ten sam adres z innym `#` NIE przeładowuje
+  strony (`location.reload()`); „204 … ERR_ABORTED" w logu podglądu to nieodczytane ciało
+  odpowiedzi, nie awaria; port 3000 bywa zajęty przez serwer innej rozmowy - wtedy serwer
+  na innym porcie podaje zbudowany panel sam (`Origin` kanału to `PUBLIC_BASE_URL` albo
+  `http://localhost:PORT`)
+- **czego KK-D NIE ROBI**: zleceń i rozmów w panelu (Z-D), kanału w aplikacji pilota (KK-C)
+
+## Kanał klubu 4.0.0 - epik KK-C: aplikacja (issue #246, 2026-10-05/06, gałąź `feature-246-kanal-klubu`)
+Łącze, szyna, odświeżanie ekranów i baner w aplikacji pilota; stan, mapa plików
+i przepisy: **`docs/kanal-klubu.md` §13**. Reguły obowiązujące odtąd:
+- **EKRAN APLIKACJI NICZEGO NIE ODPYTUJE** (K1): hak, który czyta serwer, podpina się
+  `useLiveTopic(tematy, odśwież)` i odświeża się CICHO (`quietResult` - bez plamek,
+  a odpowiedź, której nie było, nie kasuje danych). `setInterval` w pliku UI czytającym
+  serwer wywala strażnik architektury. Stan „nie wiem" wraca sam: KAŻDE powitanie łącza
+  (także pierwsze po starcie bez zasięgu) każe podpiętym ekranom dociągnąć stan
+- **JEDNO ŁĄCZE, JEDNE DRZWI**: `WebSocket` wyłącznie w `infrastructure/live/liveSocket.ts`;
+  kiedy łącze stoi, mówi czysta `linkTarget` (na wierzchu, po odblokowaniu, z żywą sesją,
+  poza kokpitem, dla klubu aktywnego - zmiana klubu to nowe połączenie). Binder
+  `useLiveLink` stoi obok usługi GPS: za bramką tożsamości i po `loadSession`
+- **KAŻDE `bye` = ODŚWIEŻENIE TOKENÓW**, jak REST po 401, a odświeżenie jest wspólne dla
+  wołających w tej samej chwili (`AuthService.rotate` dzieli obietnicę): drugie równoległe
+  zużyłoby refresh, a łącze wzięłoby odmowę za koniec poświadczeń
+- **PODPIĘTY JEST TYLKO EKRAN WIDOCZNY** (`useIsFocused`), a seria sygnałów jednej zmiany
+  to jedno odświeżenie (250 ms, osobno dla każdego podpięcia)
+- **SKRZYNKA I DZWONEK CZYTAJĄ OD NOWA na ramkę `notification`** (lokalny temat `inbox`),
+  zamiast brać jej treść wprost - „Do decyzji" liczy się z kolejki decyzji, której ramka
+  nie niesie
+- **BANER W APLIKACJI (25E) MA JEDNEGO GOSPODARZA** (`navigation/BannerHost.tsx`, nad
+  nawigacją i za bramką tożsamości) i dwa źródła: ramkę `notification` (zdanie wiersza
+  skrzynki przez `inboxRows`, bez plakietki sprawy, z „teraz") i push odebrany na wierzchu
+  (tytuł pusha ze znakiem z pamięci floty; inny klub - nazwa klubu i zdanie o przełączeniu).
+  Czy staje, liczy czysta `logic/inAppBanner.ts`: nie w kokpicie, nie w tle, nie na ekranie
+  rzeczy, której dotyczy (karta tej rezerwacji, decyzja o niej, karta tej maszyny, otwarta
+  skrzynka); wejście na taki ekran gasi baner, który już stoi. Wiadomość z innego klubu
+  staje zawsze
+- **PRZY OTWARTEJ APLIKACJI SYSTEM MILCZY** (handler bez banera systemowego i dźwięku,
+  wpis na liście zostaje). Push klubu aktywnego na wierzchu wchodzi na szynę jako ramka
+  BEZ pozycji (`isActiveClubPush`) - skrzynka i dzwonek się odświeżają, a baner pokazuje
+  sam push
+- **TAPNIĘCIE W PUSH I W BANER TO JEDNA DROGA** (`navigation/openTarget.ts`, cel
+  z `pushTarget`). Nowy ekran rzeczy (karta zlecenia w Z-C) dopisuje się w `pushTarget`,
+  w `targetThing`/`routeThing` banera - z testem „na ekranie tej rzeczy baner nie staje" -
+  i w `openTarget`
+- **TRASA NA CZUBKU STOSU NIESIE PARAMETRY** (`navigation/activeRoute.ts`) - po nich baner
+  poznaje ekran rzeczy; zgłoszenie błędu dostaje jak dotąd samą nazwę
+- **CISZĘ W KOKPICIE ROZSTRZYGA SERWER** (decyzje właściciela 2026-10-06, pkt 44): w locie
+  ekran gaśnie, a handler powiadomień działa tylko na wierzchu - więc `Notifier` przy
+  wysyłce pyta `SessionsProjectionPort.crewInOperation`, kto z adresatów siedzi w załodze
+  operacji w toku (dowódca ALBO drugi pilot, w DOWOLNYM klubie - imienny wyjątek
+  w strażniku `org_id`), i takiemu budzik idzie kanałem `quiet` bez dźwięku. Aplikacja
+  zakłada ten kanał przy starcie (niska ważność). Awaria odczytu załogi nie wycisza nikogo;
+  starsza aplikacja bez kanału dostaje budzik kanałem zapasowym `expo-notifications`
+- **ZAŁOGA NIE DOSTAJE TEŻ BANERA W APLIKACJI** (druga decyzja 2026-10-06): telefon drugiego
+  pilota nie jest w trybie kokpitu, więc jego łącze stoi i wiadomość przychodzi ramką. Ten
+  sam odczyt załogi (RAZ na `wake`) oznacza ramkę `notification` i dane pusha flagą
+  `quiet: true` (tylko z wartością), a `inAppBanner` pomija każdą cichą wiadomość.
+  Skrzynka i dzwonek odświeżają się jak zawsze; panel flagę ignoruje
+- **czego KK-C NIE ROBI**: zleceń i rozmów w aplikacji (Z-C), sprawdzenia na urządzeniu -
+  animacja, gest, czytnik ekranu, push przy otwartej aplikacji (Z-W)
+
+## Zlecenia 4.0.0 - epik Z-C: aplikacja (issue #247, 2026-10-06, gałąź `feature-247-zlecenia-aplikacja`)
+Ekrany zleceń w telefonie 1:1 z makiet Z-A: Pulpit 20F, lista 30, karta adresata 28,
+karta prowadzącego 32, rozmowa 29, formularz 31 z edycją, kalendarz 21E, karta 23F,
+skrzynka 25D, push i baner. Stan, etapy i decyzje pkt 58–65: **`docs/zlecenia.md` §1,
+§12, §14.5**. Reguły obowiązujące odtąd:
+- **MODUŁ SIECIOWY BEZ CACHE'U**: `OrderClient` (port `OrderServerPort`, adapter
+  `HttpOrderApi`, podany ekranom przez `useOrders`) oddaje `null` = „nie wiem", a ekran
+  rysuje „BRAK POŁĄCZENIA" bez przycisku i wraca z powitaniem łącza (temat kanału),
+  nigdy z pętli. Odmowa serwera jest TREŚCIĄ (`seat_filled`, `closed`), nie błędem
+- **KARTA ZLECENIA TO JEDNA TRASA** (`Order { orderId }`), a widok rozstrzyga sama
+  (`logic/orderCardMode.ts`): adresat 28, prowadzący 32, lot już Twój → karta rezerwacji
+  (23F). Push, baner, kalendarz i lista prowadzą tam bez wiedzy o patrzącym; wiadomość
+  rozmowy otwiera `OrderThread { orderId, recipientId }`
+- **NAPISY I STANY LICZĄ CZYSTE MODUŁY** (`ui/screens/logic/order*.ts`, `inboxOrders.ts`,
+  każdy z testem). Termin dobą klubu z granic doby z odpowiedzi (bez `Intl`), chwile
+  „dziś / wcz. / wczoraj" i wiekiem; zdania bez formy z płcią - rozstrzygnięcia
+  rzeczownikiem, nazwisko w mianowniku za separatorem
+- **JEDNA RZECZ, JEDEN KSZTAŁT - TAKŻE MIĘDZY MODUŁAMI**: karty 23 i 26 przeszły na klocki
+  karty zlecenia (`TermHero`, `StateBanner`, `DetailRow` z szewronem i podpisem w linii,
+  `FootNote`); ramka terminu zielona = moje i w normie, cudza potwierdzona - neutralna.
+  Nowa karta szczegółów zaczyna się od tych klocków, nie od własnej kopii
+- **KROK TERMINU JEST WSPÓLNY Z REZERWACJĄ** (`useTermPicker` + `TermStep`, bramki
+  `bookingSteps.ts` ze zdaniami `TermWords`/`PlanWords`): zlecenie jest rezerwacją
+  szukającą załogi. Termin, który formularz POPRAWIA, wypada z zajętości (`except` →
+  `bookingsExcept`) - inaczej zderza się sam ze sobą
+- **WYJŚCIE Z FORMULARZA PO ZAPISIE IDZIE PRZEZ `exit.proceed(akcja)`**, nigdy wprost
+  `navigation.replace`: bramka rezygnacji (`usePreventRemove`) czyta stan z OSTATNIEGO
+  renderu, w którym po zapisie wciąż stoi podniesiona, więc przechwyciłaby własne wyjście
+  formularza i cofnęła go o krok, choć zapis już się udał. Faza wyjścia to
+  `PROCEED_PHASE` w czystym `hooks/abandonExit.ts` (z testem), a strażnik
+  w `architecture.test.ts` nie przepuści ekranu z bramką, który woła `replace`, `dispatch`
+  albo `pop` prosto z `navigation`. Oba błędy formularza rezerwacji (ten i kolizja
+  poprawianego terminu) siedziały w 3.x od 3.0.0 i przychodzą z 4.0.0 - hotfixu dla 3.x
+  nie ma (decyzja właściciela 2026-10-07)
+- **EDYCJA ZLECENIA = TEN SAM FORMULARZ** ze szkicem z karty (`logic/orderEdit.ts`): zapis
+  niesie samą różnicę (`PATCH`), bez zmian wraca na kartę bez zapisu; wysłani adresaci
+  z kłódką, dopisani z „×", „Wspólna lista" zablokowana, skutek zmiany terminu stoi pod
+  godzinami i nad „ZAPISZ ZMIANY"
+- **NOWY RODZAJ WIADOMOŚCI `order_*` = gałąź w `logic/inboxOrders.ts` + pozycja
+  w `ORDER_KINDS` (`logic/pushTarget.ts`)** oraz gałąź w skrzynce panelu
+  (`admin/src/screens/inbox/inboxRows.ts`, od Z-D tym samym słownikiem).
+  Plakietka „Do odpowiedzi" liczy się z listy „Do mnie" (`awaitingAnswerIds`) - trzecie
+  pytanie tej samej wizyty skrzynki; lista, która nie dojechała, zdejmuje plakietki,
+  nie gasi skrzynki
+- **TREŚĆ WIADOMOŚCI SERWERA JEST DLA SKRZYNKI, NIE DLA BUDZIKA** (pkt 65): `seat`,
+  `fromIcao`/`toIcao`, `respond`, `preview` (do 200 znaków) jadą w `payload`, a push
+  dalej niesie same identyfikatory (`PUSH_DATA_KEYS` bez zmian)
+- **TELEFON ZDOLNOŚCI NIE ZNA**: arkusz wolnego pasma z „Zleć lot" otwiera bit
+  `viewer.order` z okna kalendarza (plaster serwera Z-C), segment „Zlecone" i „NOWE
+  ZLECENIE" - `canCreate`/`canManage` z `GET /orders/summary`
+- **czego Z-C NIE ROBI**: panelu (Z-D: moduł Zlecenia, K2c, grupy, zdania zleceń
+  w skrzynce panelu), podręcznika i sprawdzenia na urządzeniu (Z-W)
+
+## Zlecenia 4.0.0 - epik Z-D: panel (issue #248, 2026-10-07, gałąź `feature-248-zlecenia-panel`)
+Moduł Zlecenia, grupy klubu, rozmowa i zlecenie w kalendarzu - 1:1 z makiet Z-A
+(`zlecenia-*`, `piloci-grupy`, `kalendarz-flota`, `kalendarz-wpis` K2c). Stan, etapy,
+decyzje pkt 66–69 i odstępstwa od makiet: **`docs/zlecenia.md` §1, §15.1, §16**. Reguły
+obowiązujące odtąd:
+- **NAPISY I STANY ZLECENIA LICZĄ CZYSTE MODUŁY, SŁOWO W SŁOWO JAK TELEFON**
+  (`screens/orders/`: `orderListRows`, `leaderCard`, `recipientCard`, `orderHistory`,
+  `recipientMenu`, `orderForm`, `orderEdit`, `orderThread`, `orderLabels`; w kalendarzu
+  `orderBooking.ts`), każdy z testem. Zmieniasz zdanie w jednym miejscu - sprawdź jego
+  bliźniaka w `app/src/ui/screens/logic/order*.ts`, bo pilot i administrator czytają
+  o tym samym zleceniu
+- **SZUFLADA ZLECENIA MA JEDEN ADRES, WIDOK ROZSTRZYGA `orderView`** (`#/zlecenia/:id`
+  z `?widok=`): z „Zlecone" - prowadzący, inaczej adresat (reguła `orderCardMode`
+  z telefonu). Połowa i okres stoją jawnie w adresie (`orderPaths.ts`), rozmowa ma
+  `…/rozmowa/:adresat`, a FORMULARZ ADRESU NIE MA (pkt 69 - jak makieta i K7)
+- **KAŻDA REZERWACJA W PANELU NIESIE `order`** (`BookingDto.order`) i każdy napis
+  o zajętości pyta o nie: pasek osi i pasek doby („Zlecenie · szuka załogi", obsadzony
+  fotel dopisuje nazwisko), baner odmowy, zdanie kolizji, sugestia godziny („tuż po
+  zleceniu"). Pusty fotel nie dostaje kreski - mówi, kogo brakuje. Dokładając napis
+  o rezerwacji, sprawdź `orderSeeking` (`calendar/bookingLabels.ts`)
+- **SZUFLADA ZAJĘTOŚCI ZE ZLECENIEM (K2c) ROZSTRZYGA ROLĘ Z SAMEJ REZERWACJI**
+  (`orderBookingRole`), bez czekania na kartę zlecenia: autor prowadzi (także w fotelu
+  „ja"), osoba w fotelu patrzy na swój lot („Ze zlecenia" do rozmowy, bez zmiany terminu,
+  „Rezygnuję"), „Cudze rezerwacje" prowadzą, adresat dostaje drzwi do karty, członek spoza
+  adresatów - samo „Szuka". Odwołanie i rezygnacja idą KOMENDAMI ZLECENIA
+  (`POST /orders/:id/cancel`, `…/withdraw`) - działają autorowi bez „Cudzych rezerwacji"
+  i niosą powód, którego `DELETE /admin/api/me/bookings` nie ma
+- **MENU NICZEGO NIE ZAPISUJE, A KLAWIATURA MENU JEST JEDNA** (`ui/components/Menu.tsx`:
+  fokus na pierwszej pozycji, strzałki, Escape zamyka menu, nie szufladę): „⋯" przy
+  adresacie stawia pytanie w miejscu wiersza, menu wolnej komórki („Zarezerwuj / Zleć lot",
+  wyłącznie z `orders.create`) otwiera szufladę. Nowe menu w panelu idzie przez ten
+  komponent, nie przez kopię obsługi klawiatury
+- **KROKI 1–2 ZLECENIA SĄ KROKAMI WŁASNEJ REZERWACJI** (`TermCard`, `OperationCard`,
+  `PlanCard` w `screens/calendar/`) - zlecenie jest rezerwacją szukającą załogi, a termin,
+  który formularz POPRAWIA (`exceptId`), nie koliduje sam ze sobą. Edycja niesie samą
+  różnicę, „Powiel" - treść i adresatów bez godzin
+- **RAMKI `message` I `read` WPISUJĄ SIĘ WPROST DO PAMIĘCI ROZMOWY**
+  (`queries/threadCache.ts`), temat `order:<id>` czyta kartę i rozmowy od nowa - bez
+  odpytywania (K1). Szuflada (`Drawer`) trzyma `onClose` w ref, więc odświeżenie listy
+  pod spodem nie wyrywa fokusu z pola wiadomości; nowy komponent z nasłuchem na dokumencie
+  robi to samo
+- **GRUPY KLUBU MIESZKAJĄ W MODULE PILOCI** (`#/piloci/grupy[/:id]`, segment „Członkowie
+  · Grupy"): odczyt na `panel.access`, zmiany na `accounts.manage`, obsada w kolejności
+  z chwili otwarcia (karta nie ucieka spod kursora), członek wyłączony przygaszony
+- **PASEK JEST „MÓJ" DLA OBU FOTELI** (decyzja 23, jak w telefonie), ale zlecenie
+  szukające załogi nie jest jeszcze niczyim lotem - ma własny ton `.cal-item.order`.
+  Akcje własnej ZWYKŁEJ rezerwacji ma nadal wyłącznie dowódca
+- **czego Z-D NIE ROBI**: podręcznika (strona „Zlecenia na lot", `panel-wprowadzenie`
+  z kolumną w trzech grupach, `panel-kalendarz`, `panel-piloci`, „Kto co widzi") i sprawdzenia
+  na produkcji - Z-W (#249)
+
+## Powrót cofa stos ekranów (4.0.0, 2026-10-07, gałąź `feature-powrot-na-pulpit`)
+Błąd znaleziony przy formularzu rezerwacji: `goHome` robił `navigate('Tabs', …)`, a w React
+Navigation 7 (aplikacja stoi na 7.x od pierwszych ekranów) `navigate` cofa się do trasy
+wyłącznie wtedy, gdy jest BIEŻĄCA - inaczej dokłada nową. Każdy lot zostawiał pod Pulpitem
+całe flow z zamontowanym kokpitem (po trzech lotach 19 tras i trzy kokpity), a „wstecz"
+z Pulpitu wracało do zakończonego lotu - po locie ręcznym do wypełnionego formularza,
+którego ponowny zapis dublował lot. Reguły obowiązujące odtąd:
+- **NIGDY `navigate` DO EKRANU, KTÓRY LEŻY JUŻ POD SPODEM** - położy na wierzch drugi
+  egzemplarz. Powrót to `goBack` (tam, skąd się weszło), `popTo('Nazwa')` (do konkretnego
+  ekranu pod spodem) albo `navigate(…, …, { pop: true })` (jak `OrderThreadScreen`). Tak
+  wracają nagłówek ekranu operacji (`goBack` - do Historii, karty samolotu albo kokpitu;
+  parametr `from` usunięty) i „JESZCZE NIE - WRÓĆ DO KOKPITU" na 09B (`popTo`, także gdy
+  zdanie otworzyła zmiana załogi 07)
+- **`goHome` = `homeAction` wysłane od razu**: zakładki pod flow → `popTo` (te same
+  zakładki, bez przemontowania; parametry zawsze NOWYM obiektem, bo zagnieżdżony nawigator
+  konsumuje `screen` po tożsamości obiektu); zakładek pod spodem nie ma (wznowienie prosto
+  do kokpitu) → stos od nowa od zakładek. To jedyne zastąpienie całego stosu w aplikacji
+  i nie łamie reguły „żaden ekran nie kasuje stosu": pod spodem nie ma domu, a kokpit
+  trzymanej maszyny i tak je zatrzymuje
+- **COFNIĘCIE PRZECHODZI PRZEZ `beforeRemove` KAŻDEGO ZDEJMOWANEGO EKRANU**: kokpit
+  z trzymaną maszyną zatrzymuje powrót arkuszem 04D (modalność zostaje), a formularz
+  z bramką rezygnacji wychodzi przez `exit.proceed(homeAction(navigation.getState()))` -
+  strażnik w `architecture.test.ts` łapie odtąd także `goHome(` w ekranie z bramką. Lot
+  ręczny: zapis przez bramkę, strzałka „wstecz" z pierwszego kroku = `goBack` (nad
+  niepustym formularzem pyta bramka, jak przy przycisku sprzętowym)
+- **TEST NA PRAWDZIWYM ROUTERZE** (`__tests__/goHome.test.ts`): `@react-navigation/routers`
+  to czysty JS, więc Jest go transformuje (wyjątek w `transformIgnorePatterns`), a w teście
+  `@react-navigation/native` podmienia się na router. Sprawdza się STAN stosu, nie kształt
+  akcji - błąd siedział w zachowaniu routera
+- **do sprawdzenia na urządzeniu (Z-W)**: zdanie samolotu → Pulpit bez arkusza 04D (bramka
+  kokpitu czyta stan z ostatniego renderu, a store odświeża projekcję, zanim ekran wróci),
+  zapis lotu ręcznego → „wstecz" z Pulpitu nie otwiera formularza, wznowienie do kokpitu →
+  zdanie → Pulpit bez kokpitu pod spodem
+
+## Przegląd treści 4.0.0 - język aplikacji, panelu, podręcznika i strony (2026-10-07/08, PR #260)
+Zamówienie właściciela: teksty „bardziej biznesowe niż techniczne", bez wstawek z decyzjami
+i technicznych uzasadnień, poprawną polszczyzną; podręcznik ma być SAMOUCZKIEM, a strona
+główna WIZYTÓWKĄ. Trzynaście decyzji pytanych pojedynczo; robione etapami 9-12 w PR #260.
+Reguły obowiązują KAŻDY nowy napis - w aplikacji, panelu, makietach, podręczniku i na stronie:
+- **słownik** (stary zapis → obowiązujący):
+  | było | jest |
+  | --- | --- |
+  | PIC / Dual | **Dowódca / Drugi pilot** (wszędzie, także kokpit i zmiana załogi) |
+  | przejęcie (własny start) | **rozpoczęcie lotu**, „Odczyt przy rozpoczęciu"; „PRZEJMIJ SAMOLOT" WYŁĄCZNIE przy odbiorze od innego pilota (04B) |
+  | START ENGINE / STOP ENGINE, Take off / Landing / Taxi | **URUCHOM SILNIK / WYŁĄCZ** (czytnik: „Wyłącz silnik"), **Kołowanie / Start / Lądowanie**; fazy: Silnik pracuje, Kołowanie, Wznoszenie, Lot poziomy, Zniżanie |
+  | Wycofana z użytku / Wyłączony ze służby (maszyna wycofana na stałe) | **Poza służbą**; „Wyłączona z użytku" WYŁĄCZNIE czasowa blokada w kalendarzu |
+  | zdolność (panel) | **uprawnienie** („Pokaż uprawnienia", „Nadane 3 z 12 uprawnień") |
+  | Odbierz zlecenie | **Usuń z adresatów**; adresat czyta „Zlecenie nie jest już do Ciebie" |
+  | karta arkusza / karta doby, rewizja | **karta dnia**, **wersja** (filtr „Wysłane ponownie") |
+  | Log zdarzeń (panel) | **Przebieg operacji** |
+  | superadministrator, operator | **opiekun platformy** |
+  | slot, termin wraca do puli | **termin**, „termin się zwolni" |
+  | „· z cache · sync 21 JUN 17:30" | „Dane z 21 cze 17:30" |
+  | Wysyłam… / Zapisuję… | **Wysyłanie… / Zapisywanie… / Odwoływanie… / Rezygnacja…** (rzeczownik) |
+  | arkusz (popup), plakietka, szlak, szuflada, chip, okruszki | okienko, oznaczenie, rozpiska, okno boczne, filtr, ścieżka nad tytułem - w tekstach DLA UŻYTKOWNIKA; nazwy komponentów w kodzie i w tym pliku zostają |
+- **serwer, rejestr, kolejka, projekcja, lokalnie, cache** nie stoją w napisach dla pilota
+  ani w podręczniku - mówi się „klub", „internet", „zapis w telefonie". Wyjątek: nazwy
+  elementów, które ekran pokazuje („Kolejka wysyłki" i „W kolejce" przy synchronizacji)
+- **błąd = zdanie po ludzku + kod na końcu** („Nie udało się zapisać… - kod: 500") - kod
+  jest numerem do zgłoszenia, nie treścią; brak sieci jednym zdaniem: „Brak połączenia.
+  Sprawdź internet i spróbuj za chwilę."
+- **bez form z płcią** w zwrotach do czytelnika („latałeś", „zapomniałem") - przepisuje się
+  na formy bezosobowe albo czas teraźniejszy; rozstrzygnięcia rzeczownikiem
+- **podgląd cudzej maszyny (04B) bez siatki wyszarzonych kafelków** - stan paliwa i załoga
+  jako wiersze nad „PRZEJMIJ SAMOLOT"
+- **strażnik napisów panelu** (`admin/test/copy.test.ts`) czyta tekst JSX i szablony
+  z `${…}` przez drzewo składni TypeScriptu; pomija klasy CSS, komentarze i `new …Error`/`super`
+- **PODRĘCZNIK = SAMOUCZEK** (`docs/podrecznik/`): każda strona odpowiada „jak to zrobić"
+  krokami i „co zobaczysz", z `@screen`/`@panel` przy sekcji, i - poza Częstymi pytaniami
+  i Słownikiem - kończy się sekcją „Częste problemy". Bez sekcji „Jak to działa" i „Dlaczego tak to działa", bez historii wersji
+  („od 3.0.0…"), bez nazw plików i identyfikatorów. **Rozdziału „Jak to działa" NIE MA**
+  (decyzja 2026-10-08): siedem stron (model operacji, wykrywanie faz, łańcuch odczytów,
+  norma, synchronizacja, korekty, konta) wchłonęły strony zadań i Słownik; nowe strony:
+  „Zlecenia na lot", „Karta samolotu i obserwowanie", „Zlecenia w panelu". Rozdział o panelu
+  idzie w kolejności kolumny. Odnośniki do sekcji (`strona#kotwica`) renderer przepuszcza bez
+  sprawdzenia, a kotwica to nagłówek bez polskich znaków i z myślnikami - zmieniając nagłówek,
+  znajdź greppem odnośniki do niego
+- **STRONA GŁÓWNA = WIZYTÓWKA** (`site/src/index.html`): krótkie zdania o korzyściach dla
+  pilota i klubu; bez uzasadnień w rodzaju „termin przydziela klub, bo dwa telefony…"
+  i notacji „X = Y"
+- makiety osadzane w podręczniku przechodzą ten sam słownik - także podpowiedzi `title`
+  przy elementach telefonu, bo na stronie widać je po najechaniu myszą
+
 ## Pilot i samolot - UX
 - Pierwsze logowanie: **Google** na `00a-login-full.html` (decyzja 2026-09-04 odwraca 2026-07-22; wymaga sieci), a **od 2.1.0 także e-mail/kod pilota + hasło** na `00f` dla wspólnego tabletu (decyzja 2026-09-16 - sekcja „Logowanie hasłem i sesje logowania" niżej; zapomniane hasło = link z e-maila, kodów nie ma); codzienny powrót = odblokowanie PIN-em (działa offline). Rejestracja jest OTWARTA, ale dostęp daje dopiero **przyjęcie do KLUBU**: logowanie zakłada OSOBĘ bez klubu, a do klubu wchodzi się **kodem klubu** (`00e` → `pending` → `00c`; administrator zatwierdza z kodem pilota i rolą albo odrzuca z powodem czytanym na `00d`). Bramką jest brak CZŁONKOSTWA, nie rola i nie brak konta - patrz sekcje „Logowanie przez Google" i „Wielofirmowość … JEDNA droga dołączenia" niżej
 - **Rozpoczęcie lotu ma trwać kilka sekund** - trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
@@ -5185,7 +5743,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 - **Ślad GPS jest JEDYNYM świadomym wyjątkiem** (issue #47, 2026-08-14): nagranie idzie na serwer i telefon kasuje kopię, więc ekran 14 bez zasięgu nie narysuje trasy (wariant `14c` mówi to wprost i pokazuje czasy z lokalnego rejestru). Wyjątek dotyczy WYŁĄCZNIE geometrii - czasy, loty i rozliczenie operacji liczą się lokalnie jak dotąd. Sekcja „Ślad idzie z SERWERA" wyżej, pełny opis: `docs/_main.md.txt` §4.10
 - Komponenty dzielimy wg źródła danych:
   1. **dane operacji** (timery, log samolotu na `04`, lista operacji doby na `01`, liczniki, statystyki) - lokalne, zawsze świeże, zero wariantów offline
-  2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
+  2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) - 3 stany świeżości: `live` (bez adnotacji) / `cache` („Dane z 21 cze 17:30", amber) / `brak` ("brak danych - wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) - offline: disabled z podanym powodem, nigdy cichy błąd
 - Jeden globalny wskaźnik łączności: SyncChip - nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych - issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe. **Arkusz MA akcję „PONÓW PRÓBĘ"** (uwaga z urządzenia, 2026-08-30) - odwraca to zdanie z issue #23 („arkusz jest INFORMACYJNY, bez akcji: przycisk-atrapa uczyłby, że trzeba pomagać"), bo ponowienie NIE JEST atrapą: robi to samo, co „SYNCHRONIZUJ TERAZ" w ustawieniach (dopycha kolejkę i pyta o dane referencyjne z pominięciem bramy wieku, issue #55). Znikły za to stopka odsyłająca po ten przycisk do ustawień oraz zdanie „brak zasięgu niczego nie blokuje" - drugie odpowiadało na obawę, której pilot nie zgłosił, a przez to ją podsuwało
 - **„OFFLINE" ZNACZY WYNIK OSTATNIEJ PRÓBY, NIGDY NIEPUSTĄ KOLEJKĘ** (uwaga z urządzenia,

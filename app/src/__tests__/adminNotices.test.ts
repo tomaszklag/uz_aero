@@ -83,7 +83,7 @@ describe('adminNoticeText', () => {
       'SP-AXA/2026-09-03/AKO/1 · 3 WRZ 12:40 UTC',
       'Powód: Telefon padł w locie.',
       'Operacja liczy się dalej, ale bez odczytów końcowych - poprawek już nie naniesiesz.',
-      '3 zapisy z tego telefonu do tej operacji nie wyjdą na serwer.',
+      '3 zapisy z tego telefonu do tej operacji nie trafią do dziennika klubu.',
     ]);
   });
 
@@ -102,7 +102,7 @@ describe('adminNoticeText', () => {
     const one = day({ closed: true, closedAt: at(1, 0), closedByAdmin: true }, 1);
     const [notice] = buildAdminNotices([one], new Set());
     expect(adminNoticeText(notice!, regOf, () => null).text).toContain(
-      '1 zapis z tego telefonu do tej operacji nie wyjdzie na serwer.',
+      '1 zapis z tego telefonu do tej operacji nie trafi do dziennika klubu.',
     );
   });
 });

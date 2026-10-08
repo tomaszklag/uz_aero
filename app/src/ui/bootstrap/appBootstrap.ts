@@ -16,6 +16,8 @@ import { createEventsRepo, DeviceClubsStore, ThemePrefsStore } from '../../infra
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
+import { HttpOrderApi } from '../../infrastructure/api/httpOrderApi';
+import { HttpTransport } from '../../infrastructure/api/httpTransport';
 import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
 import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
@@ -25,6 +27,10 @@ import {
   EventRestore,
   FlightTrackQueries,
   HttpSessionTrackSource,
+  LiveBus,
+  LiveLink,
+  liveUrl,
+  OrderClient,
   ReferenceSync,
   SyncEngine,
   ThemePrefsSync,
@@ -32,6 +38,7 @@ import {
   TraceRecorder,
   TraceSync,
 } from '../../application';
+import { RnLiveSockets } from '../../infrastructure/live/liveSocket';
 import { deviceLabel } from '../../application/auth/deviceLabel';
 import { deviceRelease } from '../components/bug/deviceRelease';
 import { defaultClock } from '../../infrastructure/clock';
@@ -41,11 +48,12 @@ import type { GpsPort, SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { attachBugReporter } from '../components/bug/bugReporter';
+import type { LiveChannel } from './servicesContext';
 
 /** Stan startu aplikacji - UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
   | { phase: 'loading' }
-  | { phase: 'ready'; trace: TraceRecorder }
+  | { phase: 'ready'; trace: TraceRecorder; live: LiveChannel; orders: OrderClient }
   | { phase: 'error'; message: string };
 
 /**
@@ -103,7 +111,12 @@ export function useAppBootstrap(): BootstrapStatus {
         // `deviceRelease()` - ten sam moduł, co dla zgłoszeń błędów - bo warstwa
         // `infrastructure` nie ma prawa importować `ui`, a `Platform.constants` mieszka
         // tam. Composition root jest jedynym miejscem, w którym oba końce się widzą.
-        const server = new HttpServerApi(apiBaseUrl(), deviceLabel(deviceRelease()));
+        const apiBase = apiBaseUrl();
+        // JEDEN transport dla obu adapterów serwera: ten sam host, ta sama etykieta
+        // urządzenia, te same dwa limity czasu. Zlecenia (4.0.0) mają własny adapter,
+        // bo to osobny moduł, ale wysłanie żądania jest jedno.
+        const http = new HttpTransport(apiBase, deviceLabel(deviceRelease()));
+        const server = new HttpServerApi(http);
         // KLUB AKTYWNY (wielofirmowość §7): każda para tokenów jest parą DLA KLUBU,
         // więc serwis poświadczeń melduje go magazynowi - to nim stemplują się nowe
         // operacje i po nim zawęża się flota. Funkcja, nie port: `AuthService` nie ma
@@ -161,7 +174,30 @@ export function useAppBootstrap(): BootstrapStatus {
         // wie o composition root - dostaje jedno i drugie przez `attachBugReporter`.
         attachBugReporter({ store: storage, sync: new BugReportSync(storage, server, auth) });
 
-        setStatus({ phase: 'ready', trace });
+        // Kanał klubu (4.0.0, epik KK-C): JEDNO łącze na telefon (K1) - ten sam host, co
+        // REST, ten sam serwis poświadczeń, co sync (odświeżenia tokenów naraz dzielą jedno
+        // wywołanie serwera). Kiedy łącze stoi, rozstrzyga binder za bramką tożsamości;
+        // tutaj tylko składamy części. KAŻDE powitanie łącza każe ekranom dociągnąć stan,
+        // bo bez połączenia mogła przepaść dowolna ramka (K2) - to ono zastępuje pętle
+        // ponawiania, które ekrany miały przed kanałem. Zerwana sesja idzie tą samą
+        // ścieżką, co odmowa odświeżenia w syncu - znacznikiem w store, PIN dalej otwiera.
+        const bus = new LiveBus();
+        const link = new LiveLink({
+          url: liveUrl(apiBase),
+          auth,
+          sockets: new RnLiveSockets(),
+          onFrame: (frame) => bus.publish(frame),
+          onOpen: () => bus.reopened(),
+          onRevoked: () => useAuthStore.setState({ revoked: true }),
+        });
+
+        // Zlecenia na lot (4.0.0, epik Z-C #247): moduł SIECIOWY - cache'u w SQLite nie ma
+        // (`docs/zlecenia.md` §2.2), więc klient żyje obok synca, a nie w nim. Ten sam
+        // serwis poświadczeń, więc odświeżenie tokenów z ekranu zleceń, z łącza i z pętli
+        // synca w tej samej chwili dzieli jedno wywołanie serwera.
+        const orders = new OrderClient(new HttpOrderApi(http), auth);
+
+        setStatus({ phase: 'ready', trace, live: { link, bus }, orders });
       } catch (err) {
         if (cancelled) return;
         setStatus({

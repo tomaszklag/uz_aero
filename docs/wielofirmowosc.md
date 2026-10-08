@@ -504,34 +504,37 @@ aplikacji znaczy:
   APK. Stara linia (projekt EAS, pakiet, instancja serwera, klient OAuth) dożywa równolegle
   do sunsetu z §10 wyżej i W4 w #106.
 
-**Publikacja w Google Play schodzi do 4.0.0** (ta sama decyzja; drabina wydań w planie
-`docs/CHANGELOG.md`: 2.0.0 → 3.0.0 poprawki z testów → 4.0.0 sklep). Dwie konsekwencje
+**Publikacja w Google Play schodzi do 5.0.0** (ta sama decyzja; pierwotnie 4.0.0 - numer
+przesunął się, kiedy 4.0.0 dostały zlecenia na lot, `docs/zlecenia.md`). Dwie konsekwencje
 dla epiku R:
 
 - **R3 potrzebuje jednego odcisku SHA-1** - klucza EAS. Drugi, z Play App Signing, był jedyną
   pozycją wiążącą wydanie 2.0.0 z kontem organizacji w Play i procedurą D-U-N-S (do 30 dni);
-- **„klient Android z dwoma SHA-1" okaże się przy 4.0.0 zmianą w KODZIE, nie wpisem
+- **„klient Android z dwoma SHA-1" okaże się przy 5.0.0 zmianą w KODZIE, nie wpisem
   w konsoli.** Aplikacja woła `Google.useAuthRequest({ androidClientId })`, więc `aud`
   tokenu tożsamości to identyfikator klienta **Android**, a konsola Google wiąże jeden klient
   z jednym odciskiem. Klucz EAS i klucz Play dają więc dwa różne `aud`, podczas gdy serwer
   przyjmuje dokładnie jeden (`mobile: string | null` w `GoogleIdTokens`). Domknięcie -
-  lista odbiorców po stronie serwera albo wybór klienta per profil builda - należy do 4.0.0.
+  lista odbiorców po stronie serwera albo wybór klienta per profil builda - należy do 5.0.0.
 
-**Własna domena schodzi do 4.0.0 razem ze sklepem** (decyzja z 2026-09-15). 2.0.0 stoi na
+**Własna domena miała zejść razem ze sklepem** (decyzja z 2026-09-15). Zrealizowano ją
+wcześniej, w #124 (2026-09-16/17) - akapit zostaje jako zapis tamtej decyzji. 2.0.0 stało na
 adresie nadanym przez Railway; `ninerdeck.pl` (strona) i `app.ninerdeck.pl` (panel + API)
-przychodzą przy 4.0.0. Do tego czasu `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta
-Web i adres polityki prywatności w ekranie zgody wskazują adres Railway.
+miały przyjść razem ze sklepem. Do tego czasu `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta
+Web i adres polityki prywatności w ekranie zgody wskazywały adres Railway.
 
 - **R2 wypada z drogi krytycznej 2.0.0.** Zostają na niej dokładnie trzy rzeczy spoza
   repozytorium: nowy projekt Railway z pustą bazą, nowy projekt Google Cloud (klient Web
   i klient Android na jednym odcisku - kluczu EAS) oraz nowy projekt EAS;
 - **samo przeniesienie będzie aktualizacją OTA, nie nowym APK**: `EXPO_PUBLIC_API_URL` jest
   wkompilowany w bundle, a `eas update` buduje nowy bundle;
-- **zostaje otwarte do 4.0.0**: luka CSP z docblocka `staticSite.ts` (strona ma luźniejszą
+- **zostawało otwarte**: luka CSP z docblocka `staticSite.ts` (strona ma luźniejszą
   politykę niż panel wyłącznie dlatego, że dzielą origin - rozdział hostów był jej jedynym
   domknięciem) oraz **linki do kart arkusza zapisane w dzienniku eksportu**, bo `dayExporter`
   zapisuje `sheetUrl` jako adres bezwzględny złożony z `PUBLIC_BASE_URL`. Po zmianie domeny
-  stary host musi odpowiadać albo trzeba przepisać zapisane linki.
+  stary host musi odpowiadać albo trzeba przepisać zapisane linki. Oba rozstrzygnęło #124:
+  rozdział hostów (`hostSplit.ts`) zamyka lukę CSP, a linków nie przepisywano, bo instancja
+  nie miała jeszcze użytkowników.
 
 **Przeniesienie wykonane w kodzie 2026-09-16 (issue #124), wcześniej niż 4.0.0** - domena
 kupiona, a hostowana instancja 2.0.0 nie miała jeszcze użytkowników, więc adres dało się

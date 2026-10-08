@@ -27,6 +27,7 @@ import { describe, expect, it } from 'vitest';
 import { BookingClockJob } from '../src/application/common/commands/bookingClock.ts';
 import { PgBookingsRepo } from '../src/infrastructure/pg/common/bookingsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/common/sessionsProjection.ts';
+import { silentClubSignals } from './fakeLiveSignals.ts';
 import { silentNotifier } from './fakePush.ts';
 import { ADMIN_CSRF_HEADERS, testHarness } from './helpers.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
@@ -117,6 +118,14 @@ describe('rezerwacje: zapis z telefonu', () => {
     );
   });
 
+  it('okno niesie bity PATRZĄCEGO: karta maszyny i zlecanie lotów (21E) - telefon zdolności nie zna', async () => {
+    const { app } = await testHarness();
+    const ako = await login(app, 'AKO');
+    const pwi = await login(app, 'PWI');
+    expect((await calendar(app, ako)).json().viewer).toEqual({ watch: true, order: true });
+    expect((await calendar(app, pwi)).json().viewer).toEqual({ watch: false, order: false });
+  });
+
   it('CUDZA zajętość niesie tylko to, co ekran z niej czyta', async () => {
     const { app } = await testHarness();
     const ako = await login(app, 'AKO');
@@ -141,7 +150,9 @@ describe('rezerwacje: zapis z telefonu', () => {
     expect(moje.plannedFuelL).toBe(120);
 
     // KOLEGA z tego samego klubu dostaje pięć rzeczy, których używa oś floty,
-    // karta samolotu i ostrzeżenie o kolizji - i ani pola więcej.
+    // karta samolotu i ostrzeżenie o kolizji - i ani pola więcej. Szóste od 4.0.0 to
+    // `order` (`docs/zlecenia.md` §16 pkt 2): pasek pisze z niego „Zlecenie · szuka
+    // dowódcy", a przy zwykłej rezerwacji jest `null`.
     const cudze = (await calendar(app, pwi)).json().bookings[0];
     expect(Object.keys(cudze).sort()).toEqual([
       'aircraftId',
@@ -149,10 +160,12 @@ describe('rezerwacje: zapis z telefonu', () => {
       'endsAt',
       'id',
       'kind',
+      'order',
       'pilotId',
       'startsAt',
       'status',
     ]);
+    expect(cudze.order).toBeNull();
 
     // To samo na karcie rezerwacji: cudzy termin otwarty z osi mówi, KTO i KIEDY.
     const karta = await app.inject({
@@ -587,6 +600,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
         new PgSessionsProjection(),
         { now: () => now },
         silentNotifier(db),
+        silentClubSignals(db),
       ).run();
 
     // Pół godziny po starcie pilot jest po prostu spóźniony.
@@ -643,6 +657,7 @@ describe('rezerwacje: zetknięcie z rejestrem i z czasem', () => {
       new PgSessionsProjection(),
       { now: () => new Date(start + 70 * 60_000) },
       silentNotifier(db),
+      silentClubSignals(db),
     ).run();
     expect(run.released).toBe(0);
 

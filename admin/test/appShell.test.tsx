@@ -139,13 +139,24 @@ describe('AppShell - rama stylu lekkiego', () => {
     }
   });
 
-  it('członek z PUSTYM zakresem dostaje SAM Kalendarz, a marka prowadzi właśnie tam (issue #216)', () => {
-    // Panel jest dla każdego członka: bez „Podglądu klubu" kolumna ma jedną pozycję,
-    // a goły adres ląduje na niej - nie na dzienniku, który odpowiedziałby 403.
+  it('członek z PUSTYM zakresem dostaje Kalendarz i Zlecenia, a marka prowadzi do Kalendarza (issue #216)', () => {
+    // Panel jest dla każdego członka: bez „Podglądu klubu" kolumna ma dwie pozycje
+    // planowania (od 4.0.0), a goły adres ląduje na pierwszej - nie na dzienniku, który
+    // odpowiedziałby 403. Jedna widoczna grupa = lista płaska, bez nagłówka.
     const html = render('/kalendarz', clubScope('Aeroklub Alfa', null), []);
-    expect(html.match(/class="nav-item/g)).toHaveLength(1);
+    expect(html.match(/class="nav-item/g)).toHaveLength(2);
     expect(html).toContain('class="nav-item active" href="/kalendarz"');
+    expect(html).toContain('href="/zlecenia"');
+    expect(html).not.toContain('class="nav-group"');
     expect(html).toContain('class="brand" href="/kalendarz"');
+  });
+
+  it('administrator widzi kolumnę w trzech grupach - podpis przed pierwszą pozycją grupy (4.0.0)', () => {
+    const html = render(HOME, undefined, CLUB);
+    expect(html.match(/class="nav-group"/g)).toHaveLength(3);
+    expect(html).toMatch(/class="nav-group">Loty<\/span><a[^>]*href="\/dziennik"/);
+    expect(html).toMatch(/class="nav-group">Planowanie<\/span><a[^>]*href="\/kalendarz"/);
+    expect(html).toMatch(/class="nav-group">Klub<\/span><a[^>]*href="\/piloci"/);
   });
 
   it('sesja PLATFORMY bez ANI JEDNEJ zdolności dostaje pustą kolumnę, nie ramę bez adresu', () => {

@@ -29,11 +29,11 @@ function secondsAccusative(seconds: number): string {
 
 /**
  * Pełne zdanie do podpisu hero i `accessibilityHint`:
- * „Przytrzymaj 1 sekundę aby potwierdzić".
+ * „Przytrzymaj 1 sekundę, aby potwierdzić".
  */
 export function holdConfirmHint(holdMs: number): string {
   const seconds = Math.max(1, Math.round(holdMs / 1000));
-  return `Przytrzymaj ${seconds} ${secondsAccusative(seconds)} aby potwierdzić`;
+  return `Przytrzymaj ${seconds} ${secondsAccusative(seconds)}, aby potwierdzić`;
 }
 
 /**

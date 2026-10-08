@@ -14,7 +14,7 @@
  * w aplikacji (wybór drugiego pilota, pasek osi kalendarza), więc nic tu nie wycieka.
  */
 
-import type { ServiceStatus } from '@ninerdeck/domain';
+import type { MhFormat, ServiceStatus } from '@ninerdeck/domain';
 
 export interface DirectoryMember {
   /** Identyfikator OSOBY - klucz zajętości i zdarzeń. */
@@ -37,6 +37,12 @@ export interface DirectoryAircraft {
    * Właściwość maszyny, którą każdy członek widzi także w aplikacji.
    */
   dualRequired: boolean;
+  /**
+   * Format licznika motogodzin (4.0.0, skrzynka panelu): wiadomość „Zdana" niesie odczyt
+   * licznika, a ten sam licznik w formacie innym niż na tarczy maszyny czyta się jak inna
+   * liczba - telefon formatuje go tak samo z cache'u floty.
+   */
+  mhFormat: MhFormat;
 }
 
 export interface AdminDirectory {

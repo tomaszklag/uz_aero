@@ -148,7 +148,9 @@ function bookingRecord(over: Partial<BookingRecord> & { id: string }): BookingRe
     updatedAt: TERAZ,
     closedAt: null,
     closeReason: null,
+    closedBy: null,
     remindedAt: null,
+    orderId: null,
     ...over,
   };
 }

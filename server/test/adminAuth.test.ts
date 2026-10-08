@@ -32,6 +32,7 @@ const ADMIN_SCOPE = [
   'fleet.manage',
   'fleet.watch',
   'maintenance.run',
+  'orders.create',
   'panel.access',
   'reservations.approve',
   'reservations.manage',
@@ -92,6 +93,7 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         'fleet.manage',
         'fleet.watch',
         'maintenance.run',
+        'orders.create',
         'panel.access',
         'reservations.approve',
         'reservations.manage',
@@ -214,6 +216,11 @@ describe('panel dla KAŻDEGO członka klubu (issue #216)', () => {
 
     const directory = await app.inject({ method: 'GET', url: '/admin/api/directory', headers: { cookie } });
     expect(directory.statusCode).toBe(200);
+    // Format licznika jedzie w słowniku (4.0.0): skrzynka pisze odczyt z „Zdana" tak, jak
+    // stoi na tarczy maszyny - inaczej ten sam licznik czytałby się jak inna liczba.
+    expect(
+      (directory.json().aircraft as { reg: string; mhFormat: string }[]).find((a) => a.reg === 'SP-AXA')?.mhFormat,
+    ).toBe('hhmm');
 
     const logbook = await app.inject({ method: 'GET', url: '/admin/api/sessions', headers: { cookie } });
     expect(logbook.statusCode).toBe(403);

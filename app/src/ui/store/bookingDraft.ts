@@ -49,6 +49,8 @@ interface BookingDraftStore extends BookingDraft {
   /** Otwarcie formularza z podstawionym terminem i maszyną (tapnięcie w wolne pasmo). */
   start(seed: { date?: string | null; aircraftId?: string | null; startsAt?: number | null; endsAt?: number | null }): void;
   set<K extends keyof BookingDraft>(key: K, value: BookingDraft[K]): void;
+  /** Kilka pól jednym ruchem - slot z sugestii ustawia oba końce terminu naraz. */
+  patch(change: Partial<BookingDraft>): void;
   reset(): void;
 }
 
@@ -86,6 +88,10 @@ export const useBookingDraft = create<BookingDraftStore>((set) => ({
 
   set(key, value) {
     set((state) => withRouteShape({ ...state, [key]: value }));
+  },
+
+  patch(change) {
+    set((state) => withRouteShape({ ...state, ...change }));
   },
 
   reset() {

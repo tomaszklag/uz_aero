@@ -1,8 +1,7 @@
 /**
  * Ninerdeck - ManualEventSheet (mockup 05f „Zapisz ręcznie")
  *
- * Arkusz ręcznego zapisu startu albo lądowania: wybór typu, czas z krokiem minutowym
- * i informacja, że wpis zostanie oznaczony jako ręczny.
+ * Arkusz ręcznego zapisu startu albo lądowania: czas z krokiem minutowym.
  *
  * To jest **ratunek na fałszywą detekcję**, a nie droga na skróty. §8 klasyfikuje
  * pomyłki GPS klasy konsumenckiej jako ryzyko czerwone: przelot nad pasem bywa uznany
@@ -19,15 +18,11 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
-import { useEduBanner } from '../../store/eduBanners';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
-import { Banner } from '../status/Banner';
-import { Icon, type IconName } from '../foundation/Icon';
-import { InlineNote } from '../status/InlineNote';
 import { TimeStepper } from '../input/TimeStepper';
 import { BugButton } from '../bug/BugButton';
 import { SheetSurface } from './SheetSurface';
@@ -48,11 +43,6 @@ export interface ManualEventSheetProps {
   onCancel: () => void;
 }
 
-const TYPES: { value: ManualEventType; label: string; icon: IconName }[] = [
-  { value: 'takeoff', label: 'TAKEOFF', icon: 'takeoff' },
-  { value: 'landing', label: 'LANDING', icon: 'landing' },
-];
-
 /** Ile minut wstecz wolno cofnąć wpis - dalej niż godzina to już nie „po fakcie". */
 const MAX_BACK_MIN = 60;
 
@@ -71,8 +61,6 @@ export function ManualEventSheet({
   const [type, setType] = useState<ManualEventType>(initialType);
   /** Przesunięcie w minutach względem „teraz"; ujemne = w przeszłość. */
   const [offsetMin, setOffsetMin] = useState(0);
-  // Trwale per pilot - inaczej wyjaśnienie wracałoby przy każdym otwarciu arkusza.
-  const [eduDismissed, setEduDismissed] = useEduBanner('manual-entry');
 
   // Każde otwarcie zaczyna od „teraz" i typu wynikającego ze stanu lotu.
   useEffect(() => {
@@ -151,22 +139,9 @@ export function ManualEventSheet({
           <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
             {minutesAgo === 0
               ? 'teraz'
-              : `${minutesAgo} min temu - tyle trwało, zanim zauważyłeś`}
+              : `${minutesAgo} min temu`}
           </AppText>
         }
-      />
-
-      <Banner
-        kind="edu"
-        tone="blue"
-        text={
-          'Wpis zostanie oznaczony jako ręczny - w statystykach i arkuszu widać, ' +
-          'które zdarzenia pochodzą z GPS, a które od pilota. Zapis jest lokalny: ' +
-          'działa bez zasięgu i wyśle się sam.'
-        }
-        collapsedLabel="Wpis ręczny - co to znaczy?"
-        dismissed={eduDismissed}
-        onDismiss={setEduDismissed}
       />
     </SheetSurface>
   );
@@ -175,16 +150,5 @@ export function ManualEventSheet({
 const styles = StyleSheet.create({
   title: { fontSize: 23, lineHeight: 25, letterSpacing: 2 },
   lead: { fontSize: 12, lineHeight: 18 },
-  typeGrid: { flexDirection: 'row', gap: 9 },
-  typeCard: {
-    flex: 1,
-    minHeight: 74,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-  },
-  typeLabel: { fontSize: 19, lineHeight: 21, letterSpacing: 2 },
   delta: { fontSize: 10, letterSpacing: 0.5, textAlign: 'center', minHeight: 14 },
 });

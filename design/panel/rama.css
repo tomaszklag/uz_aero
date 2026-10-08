@@ -158,6 +158,15 @@ body {
   border-color: var(--amber-border);
 }
 
+/* Błękit = ekran modułu ZLECEŃ (4.0.0) - ten sam podział, co w panelach wariantów
+   makiet telefonu 28-32: zielony ekran zwykły, bursztynowy stan ostrzegawczy,
+   błękitny zlecenie („rzecz, która się dzieje"). Klasa kanwy, nie produktu. */
+.vp-badge.blue {
+  color: var(--blue);
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+}
+
 .vp-body {
   display: flex;
   flex-direction: column;

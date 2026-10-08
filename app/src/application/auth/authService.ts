@@ -125,6 +125,9 @@ export type LinkOutcome = { kind: 'sent' } | { kind: 'unreachable' };
 export type SetPasswordOutcome = SetPasswordResult | { kind: 'unreachable' };
 
 export class AuthService {
+  /** Odświeżenie tokenów w toku - wołający w tej samej chwili dostają TO SAMO (`rotate`). */
+  private rotating: Promise<string | null> | null = null;
+
   constructor(
     private readonly server: ServerPort,
     private readonly credentials: CredentialsPort,
@@ -470,8 +473,22 @@ export class AuthService {
    *
    * TU TEŻ MELDUJE SIĘ KLUB i to jest droga telefonu aktualizowanego z 1.x (§11): stary
    * profil klubu nie zna, a pierwsze odświeżenie tokenów przynosi go razem z parą.
+   *
+   * ODŚWIEŻENIA NARAZ DZIELĄ JEDNO WYWOŁANIE SERWERA (kanał klubu 4.0.0, KK-C): tokeny
+   * odświeża pętla synca po 401 i łącze kanału po `bye`. Serwer zużywa refresh atomowo,
+   * więc drugie równoległe wywołanie tym samym tokenem dostałoby `invalid_refresh` -
+   * a `null` znaczy dla łącza „nie ma poświadczeń", czyli koniec łączenia się.
    */
-  async rotate(): Promise<string | null> {
+  rotate(): Promise<string | null> {
+    if (this.rotating != null) return this.rotating;
+    const run = this.rotateOnce().finally(() => {
+      if (this.rotating === run) this.rotating = null;
+    });
+    this.rotating = run;
+    return run;
+  }
+
+  private async rotateOnce(): Promise<string | null> {
     const stored = await this.credentials.load();
     if (stored == null) return null;
 

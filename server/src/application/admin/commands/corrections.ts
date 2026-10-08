@@ -67,6 +67,7 @@ import type {
   FlagsPort,
   SessionsProjectionPort,
 } from '../../common/ports.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -212,6 +213,8 @@ export class AdminCorrectionCommands {
      * implementacji to koszt bez zysku.
      */
     private readonly newId: () => string,
+    /** Kanał klubu (4.0.0): dziennik, karta samolotu i „Do sprawdzenia" na żywo. */
+    private readonly signals: ClubSignals,
   ) {}
 
   async correct(actor: Actor, input: CorrectionInput): Promise<CorrectEventOutcome> {
@@ -340,7 +343,7 @@ export class AdminCorrectionCommands {
         recordedAt: at,
         state: applied.state,
         warnings: applied.warnings,
-        reexport: await this.reexport(actor.orgId, input.sessionUuid),
+        reexport: await this.afterCommit(actor.orgId, input.sessionUuid),
       },
     };
   }
@@ -428,9 +431,20 @@ export class AdminCorrectionCommands {
         state: applied.state,
         warnings: applied.warnings,
         consistency: applied.consistency,
-        reexport: await this.reexport(actor.orgId, input.sessionUuid),
+        reexport: await this.afterCommit(actor.orgId, input.sessionUuid),
       },
     };
+  }
+
+/**
+   * PO COMMICIE: karta dnia, potem kanał klubu - dziennik, karta samolotu i „Do
+   * sprawdzenia" mają zobaczyć stan łącznie z nową rewizją karty.
+   */
+  private async afterCommit(orgId: string, sessionUuid: string): Promise<ExportOutcome | null> {
+    const outcome = await this.reexport(orgId, sessionUuid);
+    await this.signals.operations(orgId, [sessionUuid]);
+    this.signals.attention(orgId);
+    return outcome;
   }
 
   /**

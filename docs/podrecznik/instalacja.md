@@ -1,55 +1,55 @@
 # Instalacja i aktualizacje
 
-> Aplikacja pilota to plik APK na Androida, instalowany bezpośrednio - bez sklepu Play. Nowa wersja pojawia się zawsze pod tym samym adresem.
+> Aplikacja pilota to plik na Androida, który instaluje się ze strony Ninerdeck, bez sklepu Play. Nowe wersje pojawiają się zawsze pod tym samym adresem.
 
-## Pobranie i instalacja
+## Jak zainstalować aplikację
 
-1. Na telefonie otwórz [stronę pobierania](~/pobierz/) i tapnij **Pobierz na Androida**. Strona podaje aktualną wersję i numer wydania, na przykład `1.0.0 (build 1)`.
-2. Otwórz pobrany plik. Android zapyta o zgodę na instalowanie aplikacji spoza sklepu Play dla tego źródła (przeglądarka albo menedżer plików) - zezwól.
+1. Na telefonie otwórz [stronę pobierania](~/pobierz/) i tapnij **Pobierz na Androida**. Strona podaje numer wersji - ten sam zobaczysz potem w ustawieniach aplikacji.
+2. Otwórz pobrany plik. Android zapyta, czy przeglądarka albo menedżer plików może instalować aplikacje spoza sklepu Play - zezwól.
 3. Uruchom Ninerdeck i przejdź do [pierwszego logowania](pierwsze-logowanie).
 
 @screen 00a-login-full "Pierwszy ekran po instalacji"
 
-> **Wskazówka.** Do pierwszego logowania i do wysyłki danych potrzebny jest internet. Do samego latania - nie. Zaloguj się przy sieci (hangar, dom), zanim pojedziesz w teren.
+> **Wskazówka.** Pierwsze logowanie wymaga internetu, a samo latanie - nie. Zaloguj się w domu albo w hangarze, zanim pojedziesz na lotnisko bez zasięgu.
 
-## Zgody, o które prosi aplikacja
+## Zgody, o które pyta aplikacja
 
-- **Lokalizacja** - aplikacja poprosi o nią przy rozpoczęciu lotu. Bez niej kokpit nie wykryje kołowania, startów ani lądowań i nie powstanie ślad na mapie. Wystarcza zgoda „podczas używania aplikacji".
-- **Powiadomienia** - podczas pracy silnika Android pokazuje powiadomienie „Ninerdeck - rejestracja lotu". To ono utrzymuje zapis śladu przy wygaszonym ekranie i gaśnie samo po zatrzymaniu silnika.
+- **Lokalizacja** - aplikacja zapyta o nią przy rozpoczęciu lotu. Bez niej kokpit nie rozpozna kołowania, startów ani lądowań i nie powstanie ślad lotu na mapie. Wystarczy zgoda „podczas używania aplikacji".
+- **Powiadomienia** - gdy silnik pracuje, telefon pokazuje powiadomienie „Ninerdeck - rejestracja lotu". Dzięki niemu zapis trwa także przy zgaszonym ekranie, a po wyłączeniu silnika znika samo. O zgodę na powiadomienia z klubu (rezerwacje, zlecenia) aplikacja zapyta dopiero wtedy, gdy zaczną Cię dotyczyć ([powiadomienia](powiadomienia)).
 
 @screen 05g-cockpit-no-gps "Kokpit bez sygnału GPS" | 05f-zdarzenie-reczne "Ręczny zapis startu"
 
-## Aktualizacja
+## Jak aktualizować
 
-Aktualizacja to instalacja nowego pliku z tej samej [strony pobierania](~/pobierz/) - na istniejącą aplikację, bez odinstalowywania. Dane na telefonie zostają: profil, PIN, zapis operacji i kolejka wysyłki. O nowych wersjach informuje strona [wydania i zmiany](~/wydania/); tam też stoi, kiedy aktualizacja wymaga czegoś więcej, na przykład ponownego zalogowania. Wersję, którą masz, podaje sekcja „O aplikacji" w [ustawieniach](ustawienia).
+Są dwa rodzaje aktualizacji:
+
+- **Drobne poprawki** aplikacja pobiera sama, gdy ma internet, i wprowadza przy następnym uruchomieniu. Nic nie musisz robić.
+- **Nowa wersja** wymaga zainstalowania nowego pliku z tej samej [strony pobierania](~/pobierz/) - na istniejącą aplikację, bez odinstalowywania. Twoje dane zostają: konto, PIN, zapisane loty i to, co czeka na wysłanie.
+
+Co zmienia każda wersja, opisuje strona [wydania i zmiany](~/wydania/). Numer Twojej wersji znajdziesz w [ustawieniach](ustawienia), w sekcji „O aplikacji".
 
 @screen 13-ustawienia "Wersja w sekcji O aplikacji"
 
-## Jak to działa
+## Zmiana telefonu albo ponowna instalacja
 
-Aplikacja trzyma na telefonie własny zapis Twoich operacji i wysyła go do klubu w tle. Nowa wersja instaluje się na ten sam zapis, więc nic z niego nie ginie - także wtedy, gdy w kolejce czekają niewysłane zdarzenia. Gdy aplikację odinstalujesz albo wyczyścisz jej dane, zapis na telefonie znika, ale to, co zdążyło dojść do klubu, wraca po ponownym zalogowaniu: aplikacja pobiera komplet Twoich operacji przy pierwszym połączeniu. Ślady GPS i tak ogląda się z serwera, więc wracają zawsze. Nie wracają tylko te zdarzenia, które nie zdążyły wyjść z kolejki wysyłki - ich jedynym egzemplarzem był stary telefon. Więcej: [synchronizacja](synchronizacja).
+Loty, które dotarły do klubu, wracają same: po zalogowaniu na nowym telefonie aplikacja pobiera je przy pierwszym połączeniu. Ślady lotów na mapie są przechowywane w klubie, więc też wracają.
 
-> **Uwaga.** Przed odinstalowaniem albo zmianą telefonu sprawdź, czy kolejka wysyłki jest pusta: brak oznaczenia łączności w nagłówku i wiersz „Kolejka wysyłki · pusta" w [ustawieniach](ustawienia).
+Nie wrócą tylko zapisy, które nie zdążyły wyjść ze starego telefonu.
 
-@screen 20c-pulpit-offline "Kolejka wysyłki przed zmianą telefonu"
+> **Uwaga.** Zanim odinstalujesz aplikację albo zmienisz telefon, upewnij się, że wszystko jest wysłane: w nagłówku nie ma oznaczenia **OFFLINE** ani **SYNC STOI**, a w [ustawieniach](ustawienia) wiersz „Kolejka wysyłki" mówi „pusta".
 
 ## Wymagania
 
-- Telefon z Androidem i konto Google - służy do pierwszego logowania; haseł w Ninerdeck nie ma.
-- Zgoda na dostęp do lokalizacji i na powiadomienia.
-- Internet przy pierwszym logowaniu i do wysyłki danych - nie w locie.
-
-## Dlaczego tak to działa
-
-> **Dlaczego aplikacja nie prosi o lokalizację „w tle".** Zapis przy wygaszonym ekranie utrzymuje właśnie to widoczne powiadomienie - pilot ma widzieć, że telefon nagrywa, a nie domyślać się tego. Nagrywanie w tle działa wyłącznie w czasie pracy silnika; po jego zatrzymaniu powiadomienie gaśnie samo.
-
-> **Dlaczego brak GPS nie zatrzymuje lotu.** Brak GPS nie blokuje pracy: kokpit ma przyciski ręczne do startu i lądowania, a lot można też [wpisać po fakcie](wpis-lotu-po-fakcie). Bez GPS nie powstanie tylko ślad na mapie i trzeba samemu zapisać starty i lądowania.
+- Telefon z Androidem.
+- Konto Google albo adres e-mail, na który przyjdzie link do ustawienia hasła.
+- Zgoda na lokalizację i na powiadomienia.
+- Internet przy pierwszym logowaniu i co jakiś czas do wysłania lotów - w powietrzu nie jest potrzebny.
 
 ## Częste problemy
 
-- **Android nie pozwala zainstalować pliku** → w komunikacie systemowym zezwól tej aplikacji (przeglądarce albo menedżerowi plików) na instalowanie aplikacji z nieznanych źródeł i otwórz plik jeszcze raz.
-- **Po tapnięciu „Kontynuuj z Google" aplikacja mówi, że ta wersja nie ma skonfigurowanego logowania** → zainstaluj aktualny plik ze strony pobierania; jeśli to nie pomaga, zgłoś administratorowi.
-- **Po ponownej instalacji aplikacja prosi o logowanie Google zamiast PIN-u** → to normalne: profil był w starej instalacji. Zaloguj się (wymaga internetu), ustaw PIN, a operacje wrócą z serwera przy pierwszym połączeniu.
-- **Kokpit nie wykrywa startów, a diagnostyka pokazuje brak uprawnień** → zgoda na lokalizację została cofnięta w ustawieniach Androida. Przywróć ją; do tego czasu starty i lądowania zapisuj przyciskami.
-- **Powiadomienie „rejestracja lotu" nie znika** → w aplikacji silnik jest wciąż uruchomiony. Zamknij bieg przyciskiem **STOP ENGINE** i [zdaj samolot](zdanie-samolotu).
-- **Nie wiem, którą wersję mam** → sekcja „O aplikacji" w [ustawieniach](ustawienia) podaje wersję; porównaj ją ze stroną pobierania.
+- **Android nie pozwala zainstalować pliku** → w komunikacie systemu zezwól przeglądarce albo menedżerowi plików na instalowanie aplikacji z nieznanych źródeł i otwórz plik jeszcze raz.
+- **Po tapnięciu „Kontynuuj z Google" aplikacja mówi, że logowanie nie jest skonfigurowane** → zainstaluj aktualną wersję ze strony pobierania. Jeśli to nie pomoże, napisz do administratora klubu.
+- **Po ponownej instalacji aplikacja prosi o logowanie zamiast PIN-u** → to normalne. Zaloguj się (z internetem) i ustaw PIN - loty wrócą przy pierwszym połączeniu.
+- **Kokpit nie rozpoznaje startów, a ustawienia pokazują brak zgody na lokalizację** → zgoda została cofnięta w ustawieniach Androida. Przywróć ją; do tego czasu zapisuj starty i lądowania przyciskami w kokpicie.
+- **Powiadomienie „rejestracja lotu" nie znika** → w aplikacji silnik wciąż pracuje. Wyłącz go przyciskiem **WYŁĄCZ** w kokpicie i [zdaj samolot](zdanie-samolotu).
+- **Nie wiem, którą wersję mam** → sekcja „O aplikacji" w [ustawieniach](ustawienia) podaje numer. Porównaj go z numerem na stronie pobierania.

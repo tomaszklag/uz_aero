@@ -12,6 +12,7 @@ import {
   abandonGuards,
   abandonSheetMounted,
   nextAbandonPhase,
+  PROCEED_PHASE,
   type AbandonPhase,
 } from '../ui/hooks/abandonExit';
 
@@ -58,5 +59,22 @@ describe('kolejność wyjścia po rezygnacji', () => {
 
   it('arkusz stoi wyłącznie w fazie pytania', () => {
     expect(PHASES.filter(abandonSheetMounted)).toEqual(['asking']);
+  });
+});
+
+describe('wyjście po zapisie (`proceed`)', () => {
+  /**
+   * Formularz rezerwacji (22) wychodził po zapisie wprost `navigation.replace`, a bramka
+   * czyta stan z OSTATNIEGO renderu - w kroku 2 podniesiony - więc przechwytywała własne
+   * wyjście formularza i cofała go do kroku 1, choć rezerwacja już stała na serwerze
+   * (błąd z 3.0.0). Wyjście po zapisie ma od razu opuścić bramkę i wypuścić akcję,
+   * bez arkusza - w formularzu rezerwacji i w formularzu zlecenia tak samo.
+   */
+  it('bramka już nie łapie, akcja jedzie, arkusza nie ma', () => {
+    expect(abandonGuards(PROCEED_PHASE)).toBe(false);
+    expect(abandonDispatches(PROCEED_PHASE)).toBe(true);
+    expect(abandonSheetMounted(PROCEED_PHASE)).toBe(false);
+    // Spoczynek, a nie krok w drodze: akcja jedzie z tej fazy raz, zegar niczego nie przesuwa.
+    expect(nextAbandonPhase(PROCEED_PHASE)).toBeNull();
   });
 });

@@ -54,8 +54,12 @@ export interface NextBooking {
   operation: string | null;
   /** Trasa („EPKK → EPRJ"); `null` = bez trasy. */
   route: string | null;
-  /** Kod drugiego pilota; `null` = lot bez Duala. */
-  dualCode: string | null;
+  /**
+   * Druga osoba w kabinie, gotowa do wyświetlenia: „Dual: BNO" u dowódcy, „Dowódca: MZI"
+   * u drugiego pilota (decyzja 23 zleceń - rezerwacja liczy oba fotele); `null` = lot
+   * bez drugiej osoby albo kod poza cache'em.
+   */
+  crew: string | null;
   /**
    * Czeka na zgodę (3.1.0, makieta 20E): karta traci zieleń, bo zielona obiecywałaby,
    * że lot jest pewny. Odliczanie zostaje - termin zbliża się niezależnie od decyzji.
@@ -101,7 +105,7 @@ export function bookingLead(startsAt: number, now: number): string {
 export function startHint(booking: NextBooking | null): string | undefined {
   if (booking == null) return undefined;
   const godzina = booking.clock.split('→')[0]?.trim() ?? '';
-  return `Wypełni się rezerwacją ${godzina} · ${booking.aircraft}`;
+  return `Z Twojej rezerwacji: ${godzina} · ${booking.aircraft}`;
 }
 
 /** Długość terminu („2 h", „1:30") - do wiersza szczegółów karty. */

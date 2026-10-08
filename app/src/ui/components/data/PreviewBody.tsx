@@ -101,7 +101,7 @@ export function PreviewMissing({ what }: { what: string }) {
           BRAK PODGLĄDU
         </AppText>
         <AppText variant="body" style={s.missingText}>
-          Podgląd {what} składa serwer. Wróć na ten ekran z zasięgiem.
+          Podgląd {what} wymaga połączenia z internetem. Wróć na ten ekran z zasięgiem.
         </AppText>
       </View>
     </Card>

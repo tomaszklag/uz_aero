@@ -163,7 +163,7 @@ export function fuelBalanceOf(
       {
         id: 'start',
         op: '',
-        label: 'Odczyt przy przejęciu',
+        label: 'Odczyt przy rozpoczęciu',
         value: litres(fuel.startL),
       },
       {
@@ -216,7 +216,7 @@ export function mhBalanceOf(
       {
         id: 'start',
         op: '',
-        label: 'Licznik przy przejęciu',
+        label: 'Licznik przy rozpoczęciu',
         value: motoHours(mh.start, format),
       },
       {
@@ -319,10 +319,9 @@ function fuelDetails(
       rows,
       note:
         `Jak to liczymy: ${blockTime(facts)} pracy silnika × ${round(rate)} L/h ≈ ` +
-        `${litres(expectation.value)}. Ta liczba pochodzi z instrukcji użytkowania, ` +
-        'a nie z lotów tej maszyny - własną normę policzymy, gdy uzbiera się historia, ' +
-        'i wtedy ona zastąpi tę tutaj. Werdykt niczego nie blokuje - to licznik ' +
-        'w samolocie ma rację, nie model.',
+        `${litres(expectation.value)}. Norma pochodzi z instrukcji użytkowania samolotu - ` +
+        'gdy uzbiera się historia lotów tej maszyny, zastąpi ją norma z jej własnych lotów. ' +
+        'Ocena niczego nie blokuje - rację mają przyrządy w samolocie.',
     };
   }
 
@@ -374,9 +373,9 @@ function fuelDetails(
     // sesji to RÓŻNICA dwóch odczytów paliwomierza - a każdy z nich ma własny błąd
     // (podłoga pasma, `consumption/policy.ts`).
     note:
-      `Jak to liczymy: ${equation}. Pasmo jest szersze niż rozrzut samego modelu, ` +
-      'bo zużycie operacji to różnica dwóch odczytów paliwomierza. Werdykt niczego nie ' +
-      'blokuje - to licznik w samolocie ma rację, nie model.',
+      `Jak to liczymy: ${equation}. Pasmo jest nieco szersze, bo zużycie operacji to ` +
+      'różnica dwóch odczytów paliwomierza. Ocena niczego nie blokuje - rację mają ' +
+      'przyrządy w samolocie.',
   };
 }
 
@@ -459,10 +458,10 @@ function summaryOf(
  * Pilot ma prawo o tym wiedzieć, zanim uzna werdykt za wyrok.
  */
 const BASIS_NOTE: Record<Expectation['basis'], string> = {
-  phases: 'Pasmo liczy się dla TEJ mieszanki faz, nie dla średniej operacji tego samolotu.',
-  engine: 'Model nie rozdzielił jeszcze faz, więc pasmo opisuje samą godzinę pracy silnika.',
+  phases: 'Norma uwzględnia, ile tej operacji przypadło na ziemię, a ile na lot.',
+  engine: 'Norma liczy się na godzinę pracy silnika - podziału na ziemię i lot jeszcze nie ma.',
   nominal:
-    'Pasmo pochodzi z dokumentacji jednostki, a nie z lotów tej maszyny - własną normę ' +
+    'Pasmo pochodzi z dokumentacji samolotu, a nie z jego lotów - własną normę ' +
     'policzymy, gdy uzbiera się historia.',
 };
 

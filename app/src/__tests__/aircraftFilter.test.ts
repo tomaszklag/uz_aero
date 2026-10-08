@@ -27,7 +27,7 @@ const serwis = {
   id: 'b1',
   aircraftId: 'a3',
   kind: 'block',
-  blockReason: 'Przegląd 100 h',
+  blockReason: 'maintenance',
 } as CalendarBooking;
 
 describe('napis chipa', () => {
@@ -75,7 +75,7 @@ describe('wiersze arkusza', () => {
 
   it('powód wyłączenia z użytku stoi przy maszynie', () => {
     const rows = buildFilterRows(FLEET, [], [serwis]);
-    expect(rows.map((r) => r.tag)).toEqual([null, null, 'Przegląd 100 h']);
+    expect(rows.map((r) => r.tag)).toEqual([null, null, 'Przegląd']);
   });
 });
 

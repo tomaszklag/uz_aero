@@ -38,9 +38,15 @@ export interface ClaimSeed {
   notes: string | null;
 }
 
-/** Czym wypełnić przejęcie; `null` = niczym (brak rezerwacji albo jest za wcześnie). */
-export function claimSeed(booking: CalendarBooking | null, now: number): ClaimSeed | null {
-  if (booking == null) return null;
+/**
+ * Czym wypełnić przejęcie; `null` = niczym (brak rezerwacji albo jest za wcześnie).
+ *
+ * Wyłącznie z rezerwacji, w której pilot siedzi jako DOWÓDCA: maszynę przejmuje dowódca,
+ * a drugi pilot ma ten lot jako swoją rezerwację (decyzja 23 zleceń), ale samolotu nie
+ * bierze - jego przejęcie wypełnione cudzym terminem byłoby wpisem nie tego lotu.
+ */
+export function claimSeed(booking: CalendarBooking | null, now: number, pilotId: string): ClaimSeed | null {
+  if (booking == null || booking.pilotId !== pilotId) return null;
   if (booking.kind !== 'flight') return null;
   if (now < booking.startsAt - CLAIM_LEAD_MS || now >= booking.endsAt) return null;
 

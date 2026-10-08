@@ -66,6 +66,7 @@ import {
   refuseOil,
   type FleetRefusal,
 } from '../../../domain/fleetGuards.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, AdminAircraft, AircraftPatch, FleetAdminPort } from '../ports.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -173,6 +174,11 @@ export class AdminFleetCommands {
      * niespójności w nazewnictwie.
      */
     private readonly newId: () => string,
+    /**
+     * Kanał klubu (4.0.0): karta samolotu i lista obserwowanych (cała flota klubu)
+     * odświeżają się, gdy maszyna przybyła, zmieniła się albo zniknęła.
+     */
+    private readonly signals: ClubSignals,
   ) {}
 
   async create(actor: Actor, input: CreateAircraftInput): Promise<FleetOutcome<AdminAircraft>> {
@@ -234,6 +240,7 @@ export class AdminFleetCommands {
         };
       });
 
+      this.signals.aircraft(actor.orgId, [aircraft.id]);
       return { ok: true, result: aircraft };
     } catch (err) {
       return this.asOutcome(err);
@@ -353,6 +360,7 @@ export class AdminFleetCommands {
         };
       });
 
+      this.signals.aircraft(actor.orgId, [aircraft.id]);
       return { ok: true, result: aircraft };
     } catch (err) {
       return this.asOutcome(err);
@@ -401,6 +409,7 @@ export class AdminFleetCommands {
         };
       });
 
+      this.signals.aircraft(actor.orgId, [aircraft.id]);
       return { ok: true, result: aircraft };
     } catch (err) {
       return this.asOutcome(err);

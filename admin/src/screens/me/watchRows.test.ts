@@ -80,7 +80,7 @@ describe('stan „teraz" jednym zdaniem - to samo brzmienie, co w ustawieniach t
         opts,
       ),
     ).toBe('Zarezerwowana · J. Nowak');
-    expect(nowLine({ kind: 'retired' }, TZ, opts)).toBe('Wycofana z użytku');
+    expect(nowLine({ kind: 'retired' }, TZ, opts)).toBe('Poza służbą');
   });
 });
 
@@ -124,7 +124,7 @@ describe('wiersze karty', () => {
     };
     expect(watchRows(list, opts)).toEqual([
       { aircraftId: 'a-1', name: 'SP-AXA · Cessna 172', desc: 'W locie · J. Nowak · od 08:12 UTC', on: true },
-      { aircraftId: 'a-2', name: 'SP-DKM · Cessna 152', desc: 'Wycofana z użytku', on: false },
+      { aircraftId: 'a-2', name: 'SP-DKM · Cessna 152', desc: 'Poza służbą', on: false },
     ]);
   });
 });

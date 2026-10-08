@@ -71,18 +71,18 @@ export function profileMarkers(
 
 function mapLabel(marker: SessionTrackMarker): string {
   const time = timeUtc(marker.at);
-  const peak = marker.alsoPeak === true ? ' · MAX' : '';
+  const peak = marker.alsoPeak === true ? ' · MAKS.' : '';
 
-  if (marker.kind === 'takeoff') return `T/O ${marker.index} · ${time}${peak}`;
-  if (marker.kind === 'landing') return `LDG ${marker.index} · ${time}${peak}`;
+  if (marker.kind === 'takeoff') return `START ${marker.index} · ${time}${peak}`;
+  if (marker.kind === 'landing') return `LĄDOWANIE ${marker.index} · ${time}${peak}`;
   if (marker.kind === 'drop') return `ZRZUT ${marker.index} · ${time}${peak}`;
-  return `MAX ${feet(marker.altitudeFt)} · ${time}`;
+  return `MAKS. ${feet(marker.altitudeFt)} · ${time}`;
 }
 
 /** Podpis maksimum przy znaczniku na profilu - tam liczba stóp ma oś, na której stoi. */
 function peakNote(marker: SessionTrackMarker): string | null {
-  if (marker.kind === 'peak') return `MAX ${feet(marker.altitudeFt)}`;
-  if (marker.alsoPeak === true) return `MAX ${feet(marker.altitudeFt)}`;
+  if (marker.kind === 'peak') return `MAKS. ${feet(marker.altitudeFt)}`;
+  if (marker.alsoPeak === true) return `MAKS. ${feet(marker.altitudeFt)}`;
   return null;
 }
 

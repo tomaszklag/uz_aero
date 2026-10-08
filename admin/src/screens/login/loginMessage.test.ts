@@ -67,7 +67,7 @@ describe('nieudane logowanie (Google)', () => {
 
   it('brak sieci to inne zdanie niż odmowa serwera', () => {
     const message = loginMessage(new TypeError('Failed to fetch'));
-    expect(message.text).toContain('Nie ma połączenia');
+    expect(message.text).toContain('Brak połączenia');
   });
 
   it('nieznana awaria niesie kod', () => {

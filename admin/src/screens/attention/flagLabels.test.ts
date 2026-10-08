@@ -84,11 +84,11 @@ describe('podpis z liczbami', () => {
 
   it('luka i cofnięty licznik formatują odczyty wg formatu licznika maszyny', () => {
     expect(flagSubtitle(flag({ type: 'mh_gap', details: { gapH: 0.8, prevEnd: 1238.87, nextStart: 1239.67 } }))).toBe(
-      'zdanie 1238:52, przejęcie 1239:40 · +0,8 h',
+      'zdanie 1238:52, rozpoczęcie 1239:40 · +0,8 h',
     );
     expect(
       flagSubtitle(flag({ type: 'mh_regression', mhFormat: 'decimal', details: { regressionH: 0.4, prevEnd: 1238.9, nextStart: 1238.5 } })),
-    ).toBe('przejęcie 1238.5 niższe niż zdanie 1238.9 · −0,4 h');
+    ).toBe('rozpoczęcie 1238.5 niższe niż zdanie 1238.9 · −0,4 h');
   });
 
   it('rozjazd zegara mówi sekundami i nazywa zapis po polsku', () => {
@@ -124,7 +124,7 @@ describe('karta „Co się nie zgadza"', () => {
     const facts = flagFacts(flag({ details: { diffL: 56, handoverL: 92, readingL: 148, toleranceL: 10 } }));
     expect(facts.map((f) => f.label)).toEqual([
       'Przekazanie · zdanie · 1 WRZ 11:12',
-      'Odczyt przy przejęciu · 2 WRZ 09:14',
+      'Odczyt przy rozpoczęciu · 2 WRZ 09:14',
       'Różnica',
       'Tolerancja',
     ]);
@@ -158,10 +158,10 @@ describe('podpis przy wierszu poziomu 2', () => {
   });
 
   it('licznik podpisuje kolumnę motogodzin w formacie maszyny', () => {
-    expect(rowFlagNote(gap, { fuelStartL: null, mhStart: 1239.67, mhFormat: 'hhmm' })).toEqual({ column: 'moto', text: 'zdanie 1238:52' });
+    expect(rowFlagNote(gap, { fuelStartL: null, mhStart: 1239.67, mhFormat: 'hhmm' })).toEqual({ column: 'moto', text: 'przekazano 1238:52' });
     expect(rowFlagNote(gap, { fuelStartL: null, mhStart: 1236, mhFormat: 'hhmm' })).toEqual({
       column: 'moto',
-      text: 'następne przejęcie 1239:40',
+      text: 'następna operacja odczytała 1239:40',
     });
   });
 

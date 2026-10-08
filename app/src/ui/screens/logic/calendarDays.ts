@@ -50,7 +50,7 @@ export function buildDayChips(input: DayChipsInput): DayChipVm[] {
     dow: capitalize(weekdayShortUtc(midday(day)).toLowerCase()),
     day: String(dayOfMonth(day)),
     mine: bookingsOnDay(input.bookings, day).some(
-      (b) => b.kind === 'flight' && b.pilotId === input.pilotId,
+      (b) => b.kind === 'flight' && (b.pilotId === input.pilotId || b.dualId === input.pilotId),
     ),
     selected: day.date === input.selected,
     today: input.now >= day.startsAt && input.now < day.endsAt,

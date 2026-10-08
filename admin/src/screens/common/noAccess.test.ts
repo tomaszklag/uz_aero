@@ -32,7 +32,7 @@ describe('brak dostępu - treść', () => {
     for (const access of ['club', 'panel.access'] as const) {
       const copy = noAccessCopy(access, 'platform');
       expect(copy.title).toBe('Ten ekran należy do klubu');
-      expect(copy.note).toContain('sesja klubu');
+      expect(copy.note).toContain('przejściu do klubu');
       expect(copy.reason).not.toContain('Nadaje');
     }
   });

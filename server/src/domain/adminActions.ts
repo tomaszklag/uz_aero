@@ -236,6 +236,17 @@ export const ADMIN_ACTIONS = [
    * a `admin_audit` opisuje akcje panelu i tym ma zostać.
    */
   'approval.steps',
+  /**
+   * GRUPA KLUBU ZAŁOŻONA, ZMIENIONA ALBO SKASOWANA (4.0.0, `docs/zlecenia.md` §6.1, pkt 40).
+   *
+   * Grupa rozdaje dostęp do treści zleceń (a z czasem ogłoszeń), więc pytanie „kto dopisał
+   * Jana do Instruktorów" ma mieć odpowiedź w dzienniku. `details` niosą nazwę i listę osób
+   * PRZED i PO. SAME ZLECENIA TU NIE TRAFIAJĄ - ich zapisem jest własna historia zmian
+   * (`order_changes`), tak jak decyzje ścieżki mają `booking_approvals`.
+   */
+  'group.create',
+  'group.update',
+  'group.remove',
 ] as const;
 
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];

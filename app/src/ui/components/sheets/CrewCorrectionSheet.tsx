@@ -89,7 +89,7 @@ export function CrewCorrectionSheet({
       */}
       <CardPicker
         options={[
-          { value: NONE, label: 'Bez Duala', note: 'operacja jednoosobowa' },
+          { value: NONE, label: 'Bez drugiego pilota', note: 'operacja jednoosobowa' },
           ...options.map((pilot) => ({
             value: pilot.id,
             label: pilot.name,
@@ -103,16 +103,15 @@ export function CrewCorrectionSheet({
       <ReasonField
         value={reason}
         onChangeText={setReason}
-        placeholder="np. w kabinie siedział kto inny, niż zapisałem"
+        placeholder="np. w kabinie siedział ktoś inny niż w zapisie"
       />
 
       {onOpenHistory != null && <HistoryLink count={historyCount} onPress={onOpenHistory} />}
 
       <View style={styles.note}>
         <AppText variant="mono" tone="muted" style={styles.noteText}>
-          Poprawka obejmuje CAŁĄ operację - czas blokowy przypisze się wskazanej osobie od
-          przejęcia do zdania. Jeśli drugi pilot zmienił się W TRAKCIE, to nie jest to
-          miejsce: taką zmianę zapisuje się w kokpicie, przed uruchomieniem silnika.
+          Poprawka obejmuje całą operację - od rozpoczęcia lotu do zdania samolotu. Zmianę
+          drugiego pilota w trakcie dnia zapisuje się w kokpicie, przed uruchomieniem silnika.
         </AppText>
       </View>
     </Sheet>

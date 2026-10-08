@@ -38,6 +38,13 @@ export type NotificationKind =
    * nie było już jak rozstrzygnąć, a kolejka „Do decyzji" gasła bez słowa dlaczego.
    */
   | 'approval_withdrawn'
+  /**
+   * „Rezerwacja odwołana" (§12.9, decyzje właściciela 2026-10-06) - do osób W FOTELACH
+   * rezerwacji poza odwołującym: przy odwołaniu przez klub dowódca i drugi pilot, przy
+   * odwołaniu własnej sam drugi pilot. Panel obiecywał „Pilot zobaczy powód w aplikacji",
+   * a do tej wiadomości powód nie docierał nigdzie.
+   */
+  | 'booking_cancelled'
   /*
    * OBSERWOWANIE SAMOLOTU (3.2.0, issue #205) - pięć rodzajów do obserwujących maszynę,
    * treści w `aircraftNotices.ts`. Stoją w TEJ unii, bo to jest kontrakt skrzynki:
@@ -52,7 +59,36 @@ export type NotificationKind =
   /** Maszyna zdana (z odczytami) albo operację zakończył administrator. */
   | 'aircraft_released'
   /** Nikt nie odebrał zarezerwowanej maszyny - slot wrócił do puli. */
-  | 'aircraft_not_taken';
+  | 'aircraft_not_taken'
+  /*
+   * ZLECENIA NA LOT (4.0.0, issue #245; `docs/zlecenia.md` §12) - treści w
+   * `orderNotices.ts`. Tapnięcie każdego z nich otwiera kartę zlecenia, a `order_message`
+   * od razu rozmowę; rodzaj nieznany starszej aplikacji ląduje w skrzynce.
+   */
+  /** „Zlecenie lotu" - wysłanie, dopisanie adresatów, „Wyślij ponownie". */
+  | 'order_offered'
+  /** „Zlecenie zmienione" (termin) albo „Zlecenie edytowane" (reszta). */
+  | 'order_changed'
+  /** „Odpowiedź na zlecenie" - wyłącznie do autora. */
+  | 'order_answered'
+  /** „Lot przydzielony" - wybrany z grupy albo listy. */
+  | 'order_assigned'
+  /** „Zlecenie nieaktualne" - fotel obsadzony (przy liście wspólnej: komplet). */
+  | 'order_filled'
+  /** „Zlecenie nieaktualne" - zlecenie odebrane adresatowi. */
+  | 'order_removed'
+  /** „Rezygnacja z lotu" - do autora. */
+  | 'order_withdrawn'
+  /** „Przydział cofnięty" - cofnięcie albo fotel przestawiony na „ja"/„brak". */
+  | 'order_unassigned'
+  /** „Zlecenie odwołane". */
+  | 'order_cancelled'
+  /** „Zlecenie bez kompletu załogi" - do autora, w przeddzień o 18:00 czasu klubu. */
+  | 'order_unfilled'
+  /** „Zlecenie wygasło" - termin nadszedł bez kompletu. */
+  | 'order_expired'
+  /** „Wiadomość w zleceniu" - jeden nieprzeczytany wiersz na wątek. */
+  | 'order_message';
 
 /** Rezerwacja w postaci, w jakiej opisuje ją wiadomość. */
 export interface NoticeBooking {
@@ -155,6 +191,36 @@ export function approvalWithdrawn(
     push: {
       title: 'Prośba wycofana',
       body: 'Rezerwacja, o którą Cię pytano, została odwołana.',
+    },
+  }));
+}
+
+/**
+ * Rezerwacja odwołana - do osób W FOTELACH poza odwołującym (§12.9). Jedna reguła dla
+ * odwołania przez klub i odwołania własnej: kto odwołał, wie o tym; kto siedział w fotelu
+ * obok, dowiaduje się stąd. Administrator siedzący w którymś fotelu nie słyszy o sobie.
+ *
+ * Powód bywa pusty - przy odwołaniu własnej jest opcjonalny (telefon) albo go nie ma
+ * (panel) - i wtedy budzik nie obiecuje powodu do przeczytania, tylko mówi skutek.
+ * Wyłączenie z użytku nie ma foteli, więc nie rodzi wiadomości z samej konstrukcji.
+ */
+export function bookingCancelled(
+  booking: NoticeBooking & { dualId: string | null },
+  cancel: { reason: string | null; cancelledBy: string },
+): NotificationDraft[] {
+  const reason = cancel.reason?.trim() ? cancel.reason.trim() : null;
+  const seats = new Set(
+    [booking.pilotId, booking.dualId].filter(
+      (id): id is string => id != null && id !== cancel.cancelledBy,
+    ),
+  );
+  return [...seats].map((pilotId) => ({
+    pilotId,
+    kind: 'booking_cancelled' as const,
+    payload: { ...about(booking), reason, cancelledBy: cancel.cancelledBy },
+    push: {
+      title: 'Rezerwacja odwołana',
+      body: reason == null ? 'Termin wrócił do puli.' : 'Otwórz, żeby przeczytać powód.',
     },
   }));
 }

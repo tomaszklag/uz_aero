@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 17;
 
 /**
  * Migracja bazowa - CAŁY schemat serwera.
@@ -1673,6 +1673,251 @@ export const MIGRATION_15 = `
   ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminded_at TIMESTAMPTZ;
 `;
 
+/**
+ * Migracja 16 - ZLECENIA NA LOT (4.0.0, issue #245; `docs/zlecenia.md` §10).
+ *
+ * ══ ZLECENIE = REZERWACJA, KTÓRA SZUKA ZAŁOGI, PLUS ADRESACI (§2.1) ══
+ * Termin trzyma rezerwacja (`bookings.order_id`), a nie osobna tabela zajętości: druga
+ * tabela znaczyłaby drugie wykluczenie nakładania, a ono działa wyłącznie w obrębie
+ * jednej tabeli. Zlecenie dokłada to, czego rezerwacja nie ma: kto zleca, które fotele
+ * szuka, do kogo trafiło, kto odczytał i co odpowiedział, historię zmian i prywatne wątki.
+ * Załoga żyje w `pilot_id`/`dual_id` rezerwacji - zlecenie jej nie powiela.
+ *
+ * ══ JEDYNY NOWY STAN REZERWACJI TO „FOTEL BEZ OSOBY" ══
+ * `booking_flight_fields` żądał pilota przy każdym locie. Rezerwacja wskazująca zlecenie
+ * może mieć oba fotele puste; statusy, predykat wykluczenia i indeksy częściowe BEZ ZMIAN
+ * (§10.4), a istniejące wiersze spełniają poluzowany warunek z definicji.
+ *
+ * ══ MIGRACJA ADDYTYWNA Z JEDNYM UZUPEŁNIENIEM (pkt 24, `docs/uprawnienia.md` §12) ══
+ * Nowa zdolność `orders.create` wchodzi do zestawów Koordynator lotów i Administrator,
+ * a `presetOf` w panelu i `scopeKey` na serwerze porównują zbiór CO DO POZYCJI - bez
+ * uzupełnienia każdy dzisiejszy koordynator i administrator czytałby się nazajutrz jako
+ * „Własny zakres". Zestawy stoją wypisane w SQL-u, nie wzięte z kodu: migracja opisuje
+ * stan z chwili wdrożenia i ma dawać ten sam wynik za rok.
+ */
+export const MIGRATION_16 = `
+  -- ═══ GRUPY KLUBU (§6.1) ═════════════════════════════════════════════════════════
+  -- Nazwa i lista członków, nic więcej. Zakłada, zmienia i kasuje wyłącznie
+  -- administrator klubu (accounts.manage); korzysta każdy, kto zleca. Skasowanie grupy
+  -- NIE rusza wysłanych zleceń - adresaci są zapisani imiennie przy wysłaniu (§6.2).
+  CREATE TABLE IF NOT EXISTS member_groups (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    name       TEXT NOT NULL,
+    created_by TEXT NOT NULL REFERENCES pilots(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  -- Nazwa jedyna W KLUBIE bez względu na wielkość liter: „Piloci An-2" i „piloci an-2"
+  -- to dla zlecającego ta sama grupa, a dwie takie na liście adresatów byłyby pułapką.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_member_groups_name ON member_groups (org_id, lower(name));
+
+  -- Członek WYŁĄCZONY zostaje na liście (konfiguracji nie czyścimy po cichu - ta sama
+  -- reguła, co obsada kroku ścieżki) i nie dostaje zleceń: rozwinięcie przy wysłaniu
+  -- bierze wyłącznie aktywne członkostwa. Klucz obcy celuje w pilots, jak lista kroku.
+  CREATE TABLE IF NOT EXISTS member_group_members (
+    org_id   TEXT NOT NULL REFERENCES organizations(id),
+    group_id TEXT NOT NULL REFERENCES member_groups(id) ON DELETE CASCADE,
+    pilot_id TEXT NOT NULL REFERENCES pilots(id),
+    PRIMARY KEY (group_id, pilot_id)
+  );
+  -- „W których grupach jest ta osoba" - podpis przy osobie w formularzu (pkt 39).
+  CREATE INDEX IF NOT EXISTS idx_member_group_members_pilot ON member_group_members (org_id, pilot_id);
+
+  -- ═══ WĄTKI (§10.5) - przed zleceniami, bo adresat wskazuje swój wątek ════════════
+  -- Wątek jest OGÓLNY: temat wskazuje para subject_kind/subject_id, a grupy dyskusyjne
+  -- (#11) dołożą własny rodzaj bez nowej tabeli wiadomości. subject_kind BEZ CHECK-a -
+  -- jak membership_capabilities.capability: katalog żyje w TypeScripcie.
+  CREATE TABLE IF NOT EXISTS threads (
+    id           TEXT PRIMARY KEY,
+    org_id       TEXT NOT NULL REFERENCES organizations(id),
+    subject_kind TEXT NOT NULL,
+    subject_id   TEXT NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  -- Piszący. Czytelnicy z reservations.manage NIE są uczestnikami (brak wiersza, dostęp
+  -- rozstrzyga warunek w zapytaniu), więc nie mają last_read_at i nie ruszają odczytów.
+  CREATE TABLE IF NOT EXISTS thread_participants (
+    org_id       TEXT NOT NULL REFERENCES organizations(id),
+    thread_id    TEXT NOT NULL REFERENCES threads(id),
+    pilot_id     TEXT NOT NULL REFERENCES pilots(id),
+    last_read_at TIMESTAMPTZ,
+    PRIMARY KEY (thread_id, pilot_id)
+  );
+
+  -- id nadaje KLIENT: powtórzony POST przy słabym łączu to ta sama wiadomość, nie druga.
+  -- Sam tekst, bez edycji i kasowania (v1, §7.2).
+  CREATE TABLE IF NOT EXISTS thread_messages (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    thread_id  TEXT NOT NULL REFERENCES threads(id),
+    author_id  TEXT NOT NULL REFERENCES pilots(id),
+    body       TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 2000),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  -- Strona rozmowy od najnowszej; id domyka kursor PARĄ, jak w skrzynce.
+  CREATE INDEX IF NOT EXISTS idx_thread_messages_page
+    ON thread_messages (thread_id, created_at DESC, id DESC);
+
+  -- ═══ ZLECENIA (§10.2) ═══════════════════════════════════════════════════════════
+  -- Fotele: dowódca ja/szukany, drugi pilot ja/szukany/brak (§4.1). Co najmniej jeden
+  -- szukany - bez tego zlecenie jest zwykłą rezerwacją - i „ja" tylko w jednym fotelu.
+  -- „Brak" przy wymogu załogi 2-os. odbija domena: to własność MASZYNY, a nie wiersza.
+  CREATE TABLE IF NOT EXISTS flight_orders (
+    id                 TEXT PRIMARY KEY,
+    org_id             TEXT NOT NULL REFERENCES organizations(id),
+    created_by         TEXT NOT NULL REFERENCES pilots(id),
+    pic_seat           TEXT NOT NULL CHECK (pic_seat IN ('self', 'sought')),
+    dual_seat          TEXT NOT NULL CHECK (dual_seat IN ('self', 'sought', 'none')),
+    addressing         TEXT NOT NULL CHECK (addressing IN ('per_seat', 'shared')),
+    status             TEXT NOT NULL CHECK (status IN ('open', 'filled', 'cancelled', 'expired')),
+    -- WERSJĘ podnosi wyłącznie zmiana TERMINU (§5.1): odpowiedzi i odczyty należą do
+    -- wersji, więc odmowa „nie mogę w sobotę" nie mówi nic o niedzieli.
+    revision           INTEGER NOT NULL DEFAULT 1,
+    -- „dowódca: Instruktorzy · drugi pilot: A. Nowak" - etykieta dla prowadzących,
+    -- złożona przy wysłaniu, bo grupa bywa potem przemianowana albo skasowana.
+    audience_label     TEXT NOT NULL,
+    -- DEFINICJA adresowania sprzed rozwinięcia: osoby i grupy per fotel albo wspólna
+    -- lista (\`OrderAudience\` w \`domain/orderAddressing.ts\`). Bez niej „Wyślij ponownie"
+    -- nie miałoby czego rozwinąć od nowa (pkt 41) - wiersze adresatów mówią, KTO dostał
+    -- zlecenie, a nie, JAKĄ grupę wybrano: grupa bez aktywnych członków nie zostawia
+    -- w nich śladu wcale.
+    audience           JSONB NOT NULL,
+    -- Ostatnia edycja INNA niż termin - „zmiana z 15:10 nieodczytana" (§8).
+    edited_at          TIMESTAMPTZ,
+    -- Ostrzeżenie „bez kompletu załogi" w przeddzień (pkt 45): idempotencja zadania
+    -- okresowego, jak reminded_at na rezerwacji.
+    unfilled_warned_at TIMESTAMPTZ,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    closed_at          TIMESTAMPTZ,
+    -- NULL przy wygaśnięciu - zamknął czas, nie człowiek.
+    closed_by          TEXT REFERENCES pilots(id),
+    close_reason       TEXT,
+    CONSTRAINT order_seats CHECK (
+      (pic_seat = 'sought' OR dual_seat = 'sought')
+      AND NOT (pic_seat = 'self' AND dual_seat = 'self')),
+    -- Sposób adresowania stoi dwa razy (kolumna do filtrów, definicja do rozwinięcia) -
+    -- i ma mówić to samo.
+    CONSTRAINT order_audience_kind CHECK (audience->>'kind' = addressing)
+  );
+  -- Listy „Zlecone" (własne i wszystkie klubu) i przebieg zegara po otwartych.
+  CREATE INDEX IF NOT EXISTS idx_flight_orders_club ON flight_orders (org_id, status);
+
+  -- Adresat zapisany IMIENNIE przy wysłaniu - grupy rozwijają się w osoby (§6.2).
+  -- Wiersz przeżywa odebranie zlecenia (removed_at): to zapis, nie kasowanie, a wątek
+  -- zostaje do odczytu.
+  CREATE TABLE IF NOT EXISTS order_recipients (
+    org_id            TEXT NOT NULL REFERENCES organizations(id),
+    order_id          TEXT NOT NULL REFERENCES flight_orders(id),
+    pilot_id          TEXT NOT NULL REFERENCES pilots(id),
+    -- Fotel, na który trafił; NULL = wspólna lista albo termin do potwierdzenia
+    -- (osoba z list obu foteli - także wskazana imiennie i obecna w grupie drugiego).
+    seat              TEXT CHECK (seat IN ('pic', 'dual')),
+    -- Fotel, na który wskazano ją imiennie, gdy dostała termin do potwierdzenia -
+    -- prowadzący widzi ją w bloku imiennym tego fotela (pkt 37, 38).
+    named_seat        TEXT CHECK (named_seat IN ('pic', 'dual')),
+    -- JEDYNY adresat fotela, wskazany imiennie: jego „tak" obsadza fotel od razu (§4.3).
+    direct            BOOLEAN NOT NULL DEFAULT false,
+    -- Bez klucza obcego: grupa bywa skasowana, a zapis ma zostać.
+    via_group_id      TEXT,
+    -- Pierwsze otwarcie karty w bieżącej WERSJI i ostatnie otwarcie w ogóle (§8).
+    seen_at           TIMESTAMPTZ,
+    seen_revision     INTEGER,
+    last_seen_at      TIMESTAMPTZ,
+    answer            TEXT CHECK (answer IN ('yes', 'no')),
+    answer_reason     TEXT,
+    answered_at       TIMESTAMPTZ,
+    -- Odpowiedź należy do WERSJI: liczy się tylko ta równa flight_orders.revision.
+    -- Poprzednia zostaje w wierszu jako zapis („Nie może · poprzedni termin").
+    answered_revision INTEGER,
+    thread_id         TEXT REFERENCES threads(id),
+    removed_at        TIMESTAMPTZ,
+    removed_by        TEXT REFERENCES pilots(id),
+    PRIMARY KEY (order_id, pilot_id),
+    CONSTRAINT recipient_direct CHECK (NOT direct OR seat IS NOT NULL),
+    -- Wskazanie imienne przy terminie do potwierdzenia - fotel stoi wtedy pusty.
+    CONSTRAINT recipient_named CHECK (named_seat IS NULL OR seat IS NULL),
+    -- Pary, które opisują JEDEN fakt, mają jedną obecność: odpowiedź bez chwili albo
+    -- wersji byłaby nieczytelna, a odebranie bez autora - anonimowe.
+    CONSTRAINT recipient_answer CHECK (
+      (answer IS NULL) = (answered_at IS NULL) AND (answer IS NULL) = (answered_revision IS NULL)),
+    CONSTRAINT recipient_seen CHECK ((seen_at IS NULL) = (seen_revision IS NULL)),
+    CONSTRAINT recipient_removed CHECK ((removed_at IS NULL) = (removed_by IS NULL))
+  );
+  -- „Do mnie" - zlecenia, które trafiły do tej osoby.
+  CREATE INDEX IF NOT EXISTS idx_order_recipients_inbox ON order_recipients (org_id, pilot_id);
+
+  -- ═══ HISTORIA ZMIAN ZLECENIA (§10.3) ════════════════════════════════════════════
+  -- Append-only i zamiast dziennika akcji (pkt 40): z niej karta adresata pisze
+  -- „Edytowane 15:10 · maszyna SP-AXA → SP-KLM" bez nazwiska, a prowadzący widzą, KTO -
+  -- przy prowadzeniu przez wielu naraz jedyna odpowiedź na „kto przestawił termin".
+  -- kind BEZ CHECK-a: zapis historyczny, jak admin_audit.action - przemianowanie rodzaju
+  -- nie może unieważnić tego, co zdarzyło się rok temu.
+  CREATE TABLE IF NOT EXISTS order_changes (
+    id         TEXT PRIMARY KEY,
+    org_id     TEXT NOT NULL REFERENCES organizations(id),
+    order_id   TEXT NOT NULL REFERENCES flight_orders(id),
+    -- NULL = zegar (wygaśnięcie).
+    actor_id   TEXT REFERENCES pilots(id),
+    kind       TEXT NOT NULL,
+    payload    JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_order_changes_order ON order_changes (order_id, created_at);
+
+  -- ═══ REZERWACJA WSKAZUJE ZLECENIE (§10.4) ═══════════════════════════════════════
+  -- Klucz biegnie z rezerwacji do zlecenia, bo to rezerwacja potrzebuje go w CHECK-u.
+  ALTER TABLE bookings ADD COLUMN IF NOT EXISTS order_id TEXT REFERENCES flight_orders(id);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_bookings_order ON bookings (order_id) WHERE order_id IS NOT NULL;
+  ALTER TABLE bookings DROP CONSTRAINT IF EXISTS booking_flight_fields;
+  ALTER TABLE bookings ADD CONSTRAINT booking_flight_fields CHECK (
+    kind <> 'flight' OR (operation IS NOT NULL AND (pilot_id IS NOT NULL OR order_id IS NOT NULL)));
+  -- Zlecenie szuka załogi do LOTU - wyłączenie z użytku zleceniem być nie może.
+  ALTER TABLE bookings ADD CONSTRAINT booking_order_is_flight CHECK (order_id IS NULL OR kind = 'flight');
+
+  -- ═══ „ZLECANIE LOTÓW" DLA KOORDYNATORÓW I ADMINISTRATORÓW (pkt 24) ═════════════
+  -- Uzupełnienie wyłącznie zbiorów DOKŁADNIE równych zestawowi Koordynator lotów albo
+  -- kompletowi z chwili wdrożenia (docs/uprawnienia.md §12). Zbiór własny zostaje
+  -- nietknięty: ktoś układał go ręcznie i nie wiemy, czy chciałby tej pozycji.
+  -- Równość zbiorów to zawieranie w obie strony (@> i <@) - kolejność pozycji w tablicy
+  -- nie ma wtedy znaczenia, więc wynik nie zależy od porządku sortowania bazy.
+  INSERT INTO membership_capabilities (org_id, pilot_id, capability)
+  SELECT s.org_id, s.pilot_id, 'orders.create'
+  FROM (
+    SELECT org_id, pilot_id, array_agg(capability) AS caps
+    FROM membership_capabilities
+    GROUP BY org_id, pilot_id
+  ) s
+  WHERE (s.caps @> ARRAY['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch']::text[]
+     AND s.caps <@ ARRAY['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch']::text[])
+     OR (s.caps @> ARRAY['panel.access', 'flags.resolve', 'events.correct', 'accounts.manage', 'fleet.manage',
+                         'thresholds.manage', 'audit.read', 'maintenance.run', 'reservations.manage',
+                         'reservations.approve', 'fleet.watch']::text[]
+     AND s.caps <@ ARRAY['panel.access', 'flags.resolve', 'events.correct', 'accounts.manage', 'fleet.manage',
+                         'thresholds.manage', 'audit.read', 'maintenance.run', 'reservations.manage',
+                         'reservations.approve', 'fleet.watch']::text[])
+  ON CONFLICT DO NOTHING;
+`;
+
+/**
+ * Migracja 17 - KTO ZAMKNĄŁ REZERWACJĘ (`docs/rezerwacje.md` §12.9, propozycja 2026-10-06).
+ *
+ * Odwołanie rezerwacji zawiadamia osoby w fotelach poza odwołującym, a karta rezerwacji
+ * w telefonie pokazuje im powód z nazwiskiem odwołującego. Z samego `close_reason` tego
+ * nie widać: pilot może podać powód także przy odwołaniu WŁASNEJ, więc karta nie
+ * odróżniłaby „odwołał klub" od „odwołałem sam". Kolumna jest lustrem
+ * `flight_orders.closed_by`.
+ *
+ * Addytywna: wiersze sprzed migracji mają `NULL` i karta pokazuje je jak dotąd - samą
+ * plakietką „Odwołana". `NULL` zostaje też przy zamknięciu przez CZAS (`released`,
+ * `expired`): zamknął czas, nie człowiek.
+ */
+export const MIGRATION_17 = `
+  ALTER TABLE bookings ADD COLUMN IF NOT EXISTS closed_by TEXT REFERENCES pilots(id);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -1689,6 +1934,8 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_13,
   MIGRATION_14,
   MIGRATION_15,
+  MIGRATION_16,
+  MIGRATION_17,
 ];
 
 /**
@@ -1725,4 +1972,6 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Akceptacja rezerwacji i powiadomienia (3.1.0, issue #164): ścieżka zgód klubu jako uporządkowane kroki z listą osób, decyzje zapisywane przy rezerwacji z powodem odmowy, skrzynka powiadomień pilota i tokeny push wygasające razem z sesją logowania',
   'Poprawka terminu czyści zgody (3.1.0, issue #166): decyzje na rezerwacji dostają własny klucz i stempel zastąpienia - przesunięcie terminu unieważnia dotychczasowe zgody i ścieżka rusza od nowa, a rejestr decyzji zostaje append-only',
   'Obserwowanie samolotu (3.2.0, issue #205): zapis obserwowania maszyny przez członka klubu (znika razem z członkostwem) i stempel przypomnienia „za godzinę" na rezerwacji - bez backfillu, sam DDL',
+  'Zlecenia na lot (4.0.0, issue #245): grupy członków klubu, zlecenie jako rezerwacja szukająca załogi z adresatami per fotel albo wspólną listą, odpowiedziami i odczytami per wersja, historia zmian zlecenia, prywatne wątki zlecający-adresat oraz zdolność „Zlecanie lotów" dopisana koordynatorom i administratorom',
+  'Kto zamknął rezerwację (§12.9): osoba, która odwołała albo odrzuciła rezerwację - karta w telefonie odróżnia odwołanie przez klub od własnego i pokazuje powód z nazwiskiem; bez backfillu, sam DDL',
 ];

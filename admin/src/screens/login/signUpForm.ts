@@ -68,12 +68,12 @@ export const SIGNUP_SENT: SignUpOutcome = {
 export function signUpOutcome(error: unknown): SignUpOutcome {
   if (error == null) return SIGNUP_SENT;
   if (!isHttpError(error)) {
-    return { tone: 'danger', text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
+    return { tone: 'danger', text: 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.' };
   }
   if (error.status === 400) {
     return {
       tone: 'danger',
-      text: 'Serwer nie przyjął tych danych - sprawdź imię i nazwisko oraz adres e-mail.',
+      text: 'Sprawdź imię i nazwisko oraz adres e-mail.',
     };
   }
   return SIGNUP_SENT;

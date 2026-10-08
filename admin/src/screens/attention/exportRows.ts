@@ -26,18 +26,20 @@ import { NONE, timeUtc } from '../common/values';
 const STATES: Record<ExportStateDto, { label: string; tone: PillTone; slug: string }> = {
   current: { label: 'W arkuszu', tone: 'green', slug: 'w-arkuszu' },
   missing: { label: 'Bez karty', tone: 'red', slug: 'bez-karty' },
-  blocked: { label: 'Wstrzymana flagą', tone: 'amber', slug: 'wstrzymane' },
+  blocked: { label: 'Wstrzymana rozjazdem', tone: 'amber', slug: 'wstrzymane' },
   waiting: { label: 'Czeka na zdanie', tone: 'dim', slug: 'czekaja' },
-  impossible: { label: 'Unieważniona', tone: 'dim', slug: 'uniewaznione' },
+  // „Poza kartą", nie „Unieważniona": stan obejmuje też operację bez godziny rozpoczęcia,
+  // której nikt nie unieważniał (przegląd treści 2026-10-08). Powód mówi druga linia.
+  impossible: { label: 'Poza kartą', tone: 'dim', slug: 'uniewaznione' },
 };
 
-/** Chipy w kolejności makiety; „Rewizje" jest WYMIAREM (karty wysłane więcej niż raz), nie stanem. */
+/** Filtry w kolejności makiety; „Wysłane ponownie" jest WYMIAREM (karty wysłane więcej niż raz), nie stanem. */
 export const EXPORT_CHIPS: readonly { slug: string; label: string; state: ExportStateDto | null }[] = [
   { slug: 'bez-karty', label: 'Bez karty', state: 'missing' },
   { slug: 'wstrzymane', label: 'Wstrzymane', state: 'blocked' },
   { slug: 'czekaja', label: 'Czekają na zdanie', state: 'waiting' },
   { slug: 'w-arkuszu', label: 'W arkuszu', state: 'current' },
-  { slug: 'rewizje', label: 'Rewizje', state: null },
+  { slug: 'rewizje', label: 'Wysłane ponownie', state: null },
 ];
 
 export const exportStateLabel = (state: ExportStateDto): string => STATES[state].label;
@@ -83,7 +85,9 @@ export function exportRow(item: ExportListItemDto, now: number, correctionWindow
       ? 'wysłana ponownie'
       : item.state === 'blocked'
         ? 'dwie operacje naraz'
-        : hanging;
+        : item.state === 'impossible' && item.sessionStatus !== 'voided'
+          ? 'bez godziny rozpoczęcia'
+          : hanging;
   return {
     sessionUuid: item.sessionUuid,
     tab: item.tab ?? NONE,
@@ -113,7 +117,7 @@ export function exportsSubtitle(counts: ExportCountsDto): string {
     counts.missing === 0 ? null : `${counts.missing} bez karty`,
     counts.blocked === 0 ? null : `${counts.blocked} ${plural(counts.blocked, 'wstrzymana', 'wstrzymane', 'wstrzymanych')}`,
     counts.waiting === 0 ? null : `${counts.waiting} ${plural(counts.waiting, 'czeka', 'czekają', 'czeka')} na zdanie`,
-    counts.impossible === 0 ? null : `${counts.impossible} ${plural(counts.impossible, 'unieważniona', 'unieważnione', 'unieważnionych')}`,
+    counts.impossible === 0 ? null : `${counts.impossible} poza kartą`,
   ];
   return parts.filter((part) => part != null).join(' · ');
 }
@@ -131,7 +135,7 @@ export interface Notice {
 }
 
 function refusalText(outcome: ExportOutcomeDto, tab: string | null): string {
-  if (outcome.exported) return `Karta ${outcome.tab} w arkuszu · rewizja ${outcome.revision}.`;
+  if (outcome.exported) return `Karta ${outcome.tab} w arkuszu · wersja ${outcome.revision}.`;
   switch (outcome.reason) {
     case 'session_open':
       return 'Karty jeszcze nie ma z czego zbudować: operacja trwa. Karta powstanie po zdaniu samolotu.';
@@ -148,7 +152,7 @@ function refusalText(outcome: ExportOutcomeDto, tab: string | null): string {
 export function retryNotice(result: ExportRetryResultDto): Notice {
   if (result.outcome?.exported === true) {
     const at = dateTimeUtcShort(Date.parse(result.retriedAt));
-    return { tone: 'ok', text: `Karta ${result.outcome.tab} w arkuszu · rewizja ${result.outcome.revision} · ${at} UTC.` };
+    return { tone: 'ok', text: `Karta ${result.outcome.tab} w arkuszu · wersja ${result.outcome.revision} · ${at} UTC.` };
   }
   if (result.outcome != null) return { tone: 'status', text: refusalText(result.outcome, result.tab) };
   if (result.failure === 'sheets_adapter') {
@@ -156,7 +160,7 @@ export function retryNotice(result: ExportRetryResultDto): Notice {
   }
   return {
     tone: 'danger',
-    text: `Eksport zatrzymał się po naszej stronie. Ponowienie tego nie naprawi - zgłoś operatorowi z nazwą karty ${result.tab ?? NONE}.`,
+    text: `Eksport zatrzymał się po naszej stronie. Ponowienie tego nie naprawi - zgłoś to opiekunowi platformy z nazwą karty ${result.tab ?? NONE}.`,
   };
 }
 
@@ -165,7 +169,7 @@ export function resolveNotice(result: ResolveFlagResultDto): Notice {
   const sent = result.exports.filter((attempt) => attempt.outcome?.exported === true);
   if (sent.length > 0) {
     const cards = sent
-      .map((attempt) => (attempt.outcome?.exported === true ? `${attempt.outcome.tab} (rewizja ${attempt.outcome.revision})` : ''))
+      .map((attempt) => (attempt.outcome?.exported === true ? `${attempt.outcome.tab} (wersja ${attempt.outcome.revision})` : ''))
       .filter((card) => card !== '');
     return { tone: 'ok', text: `Sprawa zamknięta. Karta ${cards.join(', ')} poszła do arkusza.` };
   }
@@ -186,9 +190,9 @@ export function alreadyResolvedText(by: string | null, at: string | null): strin
   return `Ta sprawa jest już rozstrzygnięta${who}${when}.`;
 }
 
-/** Wiersz rewizji w szufladzie: „Rewizja 2 · 7 WRZ 12:05 UTC". */
+/** Wiersz wersji karty w szufladzie: „Wersja 2 · 7 WRZ 12:05 UTC". */
 export const revisionLabel = (revision: number, exportedAt: string): string =>
-  `Rewizja ${revision} · ${dateTimeUtcShort(Date.parse(exportedAt))} UTC`;
+  `Wersja ${revision} · ${dateTimeUtcShort(Date.parse(exportedAt))} UTC`;
 
 /** Podtytuł szuflady karty: „6 września · SP-AXA · A. Kowalski · zdanie 09:52 UTC". */
 export function exportDrawerSub(item: ExportListItemDto): string {

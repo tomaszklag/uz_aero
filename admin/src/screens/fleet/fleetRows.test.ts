@@ -56,7 +56,7 @@ describe('stan służby', () => {
 
   it('wyłączona jednostka BEZ otwartej operacji też nie niesie ostrzeżenia', () => {
     const row = fleetRow({ ...aircraft, serviceStatus: 'disabled' });
-    expect(row.statusLabel).toBe('Wyłączony');
+    expect(row.statusLabel).toBe('Poza służbą');
     expect(row.warning).toBeNull();
     expect(row.muted).toBe(true);
   });

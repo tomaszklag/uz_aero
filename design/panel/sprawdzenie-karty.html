@@ -71,6 +71,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <a class="who" href="konto.html" title="Moje konto">
           <span class="avatar" aria-hidden="true">AK</span>
           <span class="who-name">Adam Kowalski</span>
@@ -94,6 +97,7 @@
           <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
         </a>
         <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
           <a class="nav-item" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
@@ -103,14 +107,20 @@
             Do sprawdzenia
             <span class="nav-count" aria-label="5 sprawy do sprawdzenia">5</span>
           </a>
-          <a class="nav-item" href="kalendarz-flota.html">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-            Kalendarz
-          </a>
           <a class="nav-item" href="statystyki.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
             Statystyki
           </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
           <a class="nav-item" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -161,7 +171,7 @@
         <button type="button" class="chip" aria-pressed="false">Wstrzymane</button>
         <button type="button" class="chip" aria-pressed="false">Czekają na zdanie</button>
         <button type="button" class="chip" aria-pressed="false">W arkuszu</button>
-        <button type="button" class="chip" aria-pressed="false">Rewizje</button>
+        <button type="button" class="chip" aria-pressed="false">Wysłane ponownie</button>
       </div>
 
       <!-- ══ DZIENNIK EKSPORTU ══
@@ -182,7 +192,7 @@
               <th>Karta</th>
               <th>Operacja</th>
               <th>Stan</th>
-              <th class="num">Rewizja</th>
+              <th class="num">Wersja</th>
               <th class="num">Wysłano</th>
               <th></th>
             </tr>
@@ -199,7 +209,7 @@
             <tr class="clickable">
               <td><span class="reg">2026-09-06_SP-AXA</span><span class="cell-sub">6 września · SP-AXA</span></td>
               <td><span class="cell-sub mono">SP-AXA/2026-09-06/AKO/1</span><span class="cell-sub">A. Kowalski</span></td>
-              <td><span class="pill green">W arkuszu</span><span class="cell-sub">rewizja po korekcie</span></td>
+              <td><span class="pill green">W arkuszu</span><span class="cell-sub">wersja po korekcie</span></td>
               <td class="num">2</td>
               <td class="num">7 WRZ 12:05</td>
               <td class="row-actions"><a class="btn ghost sm" href="#" title="Otwórz kartę w nowej karcie">Karta <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></td>
@@ -207,7 +217,7 @@
             <tr class="clickable">
               <td><span class="reg">2026-09-06_SP-KLM</span><span class="cell-sub">6 września · SP-KLM</span></td>
               <td><span class="cell-sub mono">SP-KLM/2026-09-06/MZI/1</span><span class="cell-sub">M. Zięba</span></td>
-              <td><span class="pill amber">Wstrzymana flagą</span><span class="cell-sub">dwie operacje naraz</span></td>
+              <td><span class="pill amber">Wstrzymana rozjazdem</span><span class="cell-sub">dwie operacje naraz</span></td>
               <td class="num">—</td>
               <td class="num">—</td>
               <td class="row-actions"><a class="btn ghost sm" href="sprawdzenie-rozjazdy.html">Do rozjazdu</a></td>
@@ -314,7 +324,7 @@
          eksporter. Rewizji nie ma, więc karty „Rewizje" NIE MA; adres karty też nie
          istnieje. Przycisk ponowienia wymaga `fleet.manage` - bez zdolności stopka
          jest pusta, nie wyszarzona. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Karta 2026-09-04_SP-AXA">
 
       <div class="drawer-head">
@@ -388,9 +398,9 @@
             </div>
             <div class="drawer-body">
               <div class="card">
-                <div class="card-title">Rewizje <span class="card-count">· 2</span></div>
-                <div class="kv"><span class="kv-k">Rewizja 2 · 7 WRZ 12:05 UTC</span><span class="kv-v"><small>po korekcie lądowania · A. Kowalski</small></span></div>
-                <div class="kv"><span class="kv-k">Rewizja 1 · 6 WRZ 11:12 UTC</span><span class="kv-v"><small>po zdaniu samolotu</small></span></div>
+                <div class="card-title">Wersje <span class="card-count">· 2</span></div>
+                <div class="kv"><span class="kv-k">Wersja 2 · 7 WRZ 12:05 UTC</span><span class="kv-v"><small>po korekcie lądowania · A. Kowalski</small></span></div>
+                <div class="kv"><span class="kv-k">Wersja 1 · 6 WRZ 11:12 UTC</span><span class="kv-v"><small>po zdaniu samolotu</small></span></div>
               </div>
               <div class="card">
                 <div class="card-title">Treść karty</div>
@@ -470,7 +480,7 @@
       <div class="inv-demo">
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-          <span>Karta <b>2026-09-04_SP-AXA</b> w arkuszu · rewizja 1 · 7 WRZ 19:12 UTC.</span>
+          <span>Karta <b>2026-09-04_SP-AXA</b> w arkuszu · wersja 1 · 7 WRZ 19:12 UTC.</span>
         </div>
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>

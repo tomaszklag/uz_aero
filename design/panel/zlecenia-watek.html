@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - panel: rozmowa w zleceniu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">ZLECENIA · ROZMOWA</span>
+  <span class="slug">panel/zlecenia-watek · #/zlecenia/&lt;id&gt;/rozmowa/&lt;adresat&gt; · ZL4</span>
+  <span class="canvas-meta"><span class="pulse"></span>Moduł zleceń · 4.0.0 · na żywo</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Moduł zleceń - kiedy który ekran</div>
+  <a class="vp-item" href="zlecenia-szczegoly.html">
+    <span class="vp-badge blue">ZL3</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie (wejście)</span>
+      <span class="vp-when">Adresat wchodzi wierszem „Napisz wiadomość" na swojej karcie; prowadzący - ikoną rozmowy przy każdym adresacie. Pasek zlecenia nad wiadomościami prowadzi z powrotem.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="zlecenia-watek.html">
+    <span class="vp-badge blue">ZL4</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa na żywo</span>
+      <span class="vp-when">Prywatna rozmowa osoby zlecającej z JEDNYM adresatem (decyzja 3) - negocjacja („mogę dopiero o 10") jest sprawą dwóch osób i nie myli pozostałych. Wiadomość pojawia się od razu, kanałem klubu (decyzje 21, 49), „Odczytane" stoi tylko pod ostatnią własną, a nad polem na stałe zdanie o koordynatorach (decyzja 19). Termin zmienia się edycją zlecenia, nie w rozmowie.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#do-czytania">
+    <span class="vp-badge">ZL4a</span>
+    <span class="vp-body">
+      <span class="vp-name">Do czytania - koordynator</span>
+      <span class="vp-when">Druga rama niżej: koordynator prowadzący cudze zlecenie czyta rozmowę bez pola wiadomości - pisze wyłącznie autor zlecenia (decyzja 20). Jego odczyt nie zapala „Odczytane".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="#stany">
+    <span class="vp-badge amber">ZL4b</span>
+    <span class="vp-body">
+      <span class="vp-name">Wiadomość nie wyszła, rozmowa zamknięta</span>
+      <span class="vp-when">Nieudana wysyłka zostawia tekst w polu i mówi dlaczego; osoba usunięta z adresatów czyta rozmowę bez pisania (decyzja 29).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="../29-watek.html">
+    <span class="vp-badge amber">29</span>
+    <span class="vp-body">
+      <span class="vp-name">Telefon: ta sama rozmowa</span>
+      <span class="vp-when">29 (na żywo), 29A (bez połączenia), 29B (do czytania). Ta sama rozmowa na obu powierzchniach - kto odpisze z panelu, ten odpisał w telefonie.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA 1: ADRESAT PISZE Z OSOBĄ ZLECAJĄCĄ ══
+     Adam Kowalski (pilot i instruktor - „Zlecanie lotów" przez własny zakres, więc nad
+     listą oba segmenty i „Zleć lot") otworzył rozmowę ze zlecenia przelotu. Treść 1:1
+     z makiety telefonu 29 - to JEDNA rozmowa, widoczna z dwóch powierzchni: negocjacja
+     z decyzji 3 - adresat nie może o 9, osoba zlecająca przesuwa termin EDYCJĄ zlecenia
+     (którą widzą wszyscy adresaci), a nie w rozmowie (§7.2). Chwila: piątek tuż po
+     07:41 - zlecenie jest już przyjęte, więc na liście stoi „Przyjęte", a pasek mówi
+     „Twój fotel" zamiast „proponowany". -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - rozmowa w zleceniu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/zlecenia/3b9d…e40/rozmowa/2f8c…a91
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="kalendarz-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">AK</span>
+          <span class="who-name">Adam Kowalski</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA Adama: Kalendarz i Zlecenia - „Zlecanie lotów" nie otwiera
+           modułów klubu. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item active" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Zlecenia</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="zlecenia-nowe.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Zleć lot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Które zlecenia">
+          <a class="seg-btn on" href="zlecenia-lista.html#do-mnie" aria-current="page">Do mnie</a>
+          <a class="seg-btn" href="zlecenia-lista.html">Zlecone</a>
+        </div>
+        <button type="button" class="chip on" aria-pressed="true">Nadchodzące</button>
+        <button type="button" class="chip" aria-pressed="false">Minione</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Zlecenia do mnie - nadchodzące terminy</caption>
+          <thead>
+            <tr>
+              <th>Termin</th>
+              <th>Samolot</th>
+              <th>Zadanie</th>
+              <th>Twój fotel</th>
+              <th>Zleca</th>
+              <th>Stan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span></td>
+              <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+              <td>Skoki<span class="cell-sub mono">EPKP</span></td>
+              <td>Drugi pilot</td>
+              <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+              <td><span class="pill blue">Czeka na odpowiedź</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#adresat-stany">Otwórz</a></td>
+            </tr>
+            <tr class="clickable opened">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">10:00 → 12:00</span> · jutro</span></td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">C172</span></td>
+              <td>Przelot<span class="cell-sub mono">EPKK → EPRJ</span></td>
+              <td>Dowódca</td>
+              <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+              <td><span class="pill green">Przyjęte</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="kalendarz-wpis.html#ze-zlecenia">Otwórz</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SZUFLADA ROZMOWY ══
+         TYTUŁEM JEST ROZMÓWCA, nie słowo „Rozmowa" - w rozmowie to jedyna rzecz, której
+         nie widać z treści. Nazwisko w mianowniku, bez „z" (odmiany nie da się złożyć).
+
+         PASEK ZLECENIA (`.order-strip`) przypięty pod nagłówkiem: rozmowa jest zawsze
+         o JEDNYM zleceniu, a bez punktu odniesienia „mogę dopiero o 10" traci sens po
+         przewinięciu. Prowadzi z powrotem do karty zlecenia.
+
+         WIADOMOŚCI NA ŻYWO (§11, kanał klubu): pojawiają się bez odświeżania, bez
+         wskaźnika połączenia - zerwane łącze nie jest awarią, po powrocie panel dociąga
+         przegapione zwykłym odczytem. Własne po prawej, jaśniejszym odcieniem, nie
+         zielenią (świeciłyby jak przyciski). „Odczytane" wyłącznie pod ostatnią własną.
+
+         STOPKA W MIEJSCU STOPKI SZUFLADY: zdanie o koordynatorach nad polem na stałe
+         (decyzja 19 - skutek dla piszącego, nie opis budowy aplikacji), pole i „Wyślij".
+         Pusty „Wyślij" blokuje BEZ zdania - puste pole widać obok (issue #55). Enter
+         wysyła, Shift+Enter łamie linię - wiadomość, nie formularz. -->
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Rozmowa · Marta Zięba">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Marta Zięba</div>
+          <div class="drawer-sub">zleca · <span class="mono">MZI</span></div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <a class="order-strip" href="kalendarz-wpis.html#ze-zlecenia">
+        <span class="order-strip-main">
+          <span class="order-strip-top">SP-AXA · sob 3 PAŹ · 10:00 → 12:00</span>
+          <span class="order-strip-sub">Przelot EPKK → EPRJ · Twój fotel: dowódca</span>
+        </span>
+        <span class="order-strip-go" aria-hidden="true">›</span>
+      </a>
+
+      <div class="drawer-body">
+        <div class="msgs" aria-live="polite">
+          <div class="day-sep">Wczoraj</div>
+
+          <div class="msg in">
+            <div class="bubble">Cześć, dasz radę w sobotę rano? Części trzeba odebrać przed południem.</div>
+            <span class="msg-time">19:02</span>
+          </div>
+
+          <div class="msg out">
+            <div class="bubble">Mogę, ale dopiero od 10. Da się przesunąć na 10-12?</div>
+            <span class="msg-time">19:10</span>
+          </div>
+
+          <div class="msg in">
+            <div class="bubble">Sprawdzę, czy SP-AXA jest wtedy wolna.</div>
+            <span class="msg-time">19:12</span>
+          </div>
+
+          <div class="day-sep">Dziś</div>
+
+          <div class="msg in">
+            <div class="bubble">Przesunęłam na 10:00-12:00 - nowy termin jest już w zleceniu.</div>
+            <span class="msg-time">07:31</span>
+          </div>
+
+          <div class="msg out">
+            <div class="bubble">Dzięki, w takim razie przyjmuję.</div>
+            <span class="msg-time">07:40</span>
+            <span class="msg-read">Odczytane 07:41</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Rozmowę widzą też koordynatorzy lotów klubu.
+        </div>
+        <div class="composer-row">
+          <textarea class="input area" rows="2" placeholder="Napisz wiadomość…" aria-label="Wiadomość do: Marta Zięba"></textarea>
+          <button type="button" class="btn primary" disabled>Wyślij</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html">ZL1 Zlecenia</a>
+  <a href="zlecenia-nowe.html">ZL2 Nowe</a>
+  <a href="zlecenia-szczegoly.html">ZL3 Zlecenie</a>
+  <a href="zlecenia-watek.html" class="active">ZL4 Rozmowa</a>
+  <span>·</span>
+  <a href="#do-czytania">↓ ZL4a Do czytania</a>
+  <a href="#stany">↓ ZL4b Stany</a>
+  <span>·</span>
+  <a href="../29-watek.html">Telefon · 29</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<header class="canvas-label" id="do-czytania">
+  <span class="film-strip">ZLECENIA · ROZMOWA DO CZYTANIA</span>
+  <span class="slug">panel/zlecenia-watek · #/zlecenia/&lt;id&gt;/rozmowa/&lt;adresat&gt; · ZL4a</span>
+  <span class="canvas-meta">Pisze autor zlecenia, koordynatorzy czytają</span>
+</header>
+
+<!-- ══ RAMA 2: KOORDYNATOR CZYTA CUDZĄ ROZMOWĘ ══
+     Paweł Wilk („Koordynator lotów", Cudze rezerwacje) prowadzi zlecenie Marty naraz
+     z nią (decyzja 20), ale rozmowy z adresatami prowadzi AUTOR. Dlatego szuflada nie
+     ma pola wiadomości, a w jego miejscu stoi jedno zdanie - kto prowadzi rozmowę.
+     Żadna strona nie jest tu „moja", więc nad dymkami stoją nazwiska; osoba zlecająca
+     po prawej (to ona prowadzi), adresat po lewej. Odczyt koordynatora NIE zapala
+     „Odczytane" i nie gasi nieprzeczytanych wiadomości uczestnikom (§7.1). -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - rozmowa w zleceniu, do czytania">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/zlecenia/3b9d…e40/rozmowa/2f8c…a91
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">PW</span>
+          <span class="who-name">Paweł Wilk</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA koordynatora (od 4.0.0 trzy grupy: Loty, Planowanie, Klub). -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item active" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Zlecenia</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="zlecenia-nowe.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Zleć lot
+          </a>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Które zlecenia">
+          <a class="seg-btn" href="zlecenia-lista.html#do-mnie">Do mnie</a>
+          <a class="seg-btn on" href="zlecenia-lista.html" aria-current="page">Zlecone</a>
+        </div>
+        <button type="button" class="chip on" aria-pressed="true">Nadchodzące</button>
+        <button type="button" class="chip" aria-pressed="false">Minione</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Zlecenia klubu - nadchodzące terminy</caption>
+          <thead>
+            <tr>
+              <th>Termin</th>
+              <th>Samolot</th>
+              <th>Zadanie</th>
+              <th>Fotele</th>
+              <th>Odpowiedzi</th>
+              <th>Stan</th>
+              <th>Zleca</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span></td>
+              <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+              <td>Skoki<span class="cell-sub mono">EPKP</span></td>
+              <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>J. Wrona</span><span class="order-seat-k">Drugi pilot</span><span>Piloci An-2</span></span></td>
+              <td>5 z 6 odczytało<span class="cell-sub ok">2 mogą lecieć</span></td>
+              <td><span class="pill blue">Szuka załogi</span></td>
+              <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html">Otwórz</a></td>
+            </tr>
+            <tr class="clickable opened">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">10:00 → 12:00</span> · jutro</span></td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">C172</span></td>
+              <td>Przelot<span class="cell-sub mono">EPKK → EPRJ</span></td>
+              <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>A. Kowalski</span></span></td>
+              <td>Przyjęte 07:40</td>
+              <td><span class="pill green">Komplet załogi</span></td>
+              <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#komplet">Otwórz</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">14:00 → 15:30</span> · jutro</span></td>
+              <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+              <td>Lot tech.<span class="cell-sub mono">EPKK</span></td>
+              <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>B. Nowak</span></span></td>
+              <td>Przyjęte 16:20</td>
+              <td><span class="pill green">Komplet załogi</span></td>
+              <td>Ty</td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#komplet">Otwórz</a></td>
+            </tr>
+            <tr class="clickable">
+              <td><span class="cell-strong">niedziela 4 PAŹ</span><span class="cell-sub"><span class="mono">10:00 → 11:30</span></span></td>
+              <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+              <td>Przelot<span class="cell-sub mono">EPKK → EPKP</span></td>
+              <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>A. Kowalski</span><span class="order-seat-k">Drugi pilot</span><span>E. Sowa</span></span></td>
+              <td class="dim">Nieodczytane</td>
+              <td><span class="pill blue">Szuka drugiego pilota</span></td>
+              <td>Adam Kowalski<span class="cell-sub mono">AKO</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html">Otwórz</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Rozmowa w zleceniu · Adam Kowalski">
+
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-title">Adam Kowalski</div>
+          <div class="drawer-sub">adresat · <span class="mono">AKO</span></div>
+        </div>
+        <button type="button" class="x-btn" aria-label="Zamknij">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <a class="order-strip" href="zlecenia-szczegoly.html#komplet">
+        <span class="order-strip-main">
+          <span class="order-strip-top">SP-AXA · sob 3 PAŹ · 10:00 → 12:00</span>
+          <span class="order-strip-sub">Przelot EPKK → EPRJ · zleca Marta Zięba</span>
+        </span>
+        <span class="order-strip-go" aria-hidden="true">›</span>
+      </a>
+
+      <div class="drawer-body">
+        <div class="msgs" aria-live="polite">
+          <div class="day-sep">Wczoraj</div>
+
+          <div class="msg out">
+            <span class="msg-who">Marta Zięba</span>
+            <div class="bubble">Cześć, dasz radę w sobotę rano? Części trzeba odebrać przed południem.</div>
+            <span class="msg-time">19:02</span>
+          </div>
+
+          <div class="msg in">
+            <span class="msg-who">Adam Kowalski</span>
+            <div class="bubble">Mogę, ale dopiero od 10. Da się przesunąć na 10-12?</div>
+            <span class="msg-time">19:10</span>
+          </div>
+
+          <div class="msg out">
+            <span class="msg-who">Marta Zięba</span>
+            <div class="bubble">Sprawdzę, czy SP-AXA jest wtedy wolna.</div>
+            <span class="msg-time">19:12</span>
+          </div>
+
+          <div class="day-sep">Dziś</div>
+
+          <div class="msg out">
+            <span class="msg-who">Marta Zięba</span>
+            <div class="bubble">Przesunęłam na 10:00-12:00 - nowy termin jest już w zleceniu.</div>
+            <span class="msg-time">07:31</span>
+          </div>
+
+          <div class="msg in">
+            <span class="msg-who">Adam Kowalski</span>
+            <div class="bubble">Dzięki, w takim razie przyjmuję.</div>
+            <span class="msg-time">07:40</span>
+            <span class="msg-read">Odczytane 07:41</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- W MIEJSCU POLA - jedno zdanie, kto prowadzi rozmowę. Nie wyszarzone pole ani
+           przycisk: pisanie nie jest tu zablokowane, tylko należy do kogoś innego. -->
+      <div class="composer">
+        <div class="composer-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Rozmowę prowadzi Marta Zięba.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-watek.html" class="active">ZL4 Rozmowa</a>
+  <a href="#do-czytania">ZL4a Do czytania</a>
+  <span>·</span>
+  <a href="../29-watek.html">Telefon · 29</a>
+</nav>
+
+<!-- ══ ZL4b · STANY ROZMOWY ══ -->
+<section class="canvas-section" id="stany">
+  <div class="canvas-section-title">ZL4b · wiadomość nie wyszła · rozmowa po usunięciu z adresatów</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Wiadomość nie wyszła - tekst zostaje w polu</span>
+        <span class="inv-when">Wysyłka, która nie dojechała, mówi o tym pod polem, tonem błędu, a tekst ZOSTAJE - pilot, który pisał dwa zdania, nie ma ich pisać drugi raz. Kolejki wiadomości na później nie ma (moduł jest sieciowy, §2.2), więc „Wyślij" po prostu próbuje jeszcze raz. Zerwane łącze kanału NIE jest tym stanem: zdanie pojawia się wyłącznie po odmowie wysyłki.</span>
+        <span class="inv-classes">.composer · .composer-row · .hint.danger</span>
+      </div>
+      <div class="inv-demo">
+        <div class="composer" style="padding: 0; border: 0;">
+          <div class="composer-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Rozmowę widzą też koordynatorzy lotów klubu.
+          </div>
+          <div class="composer-row">
+            <textarea class="input area" rows="2" aria-label="Wiadomość do: Marta Zięba">Mogę też w niedzielę rano, gdyby sobota nie wyszła.</textarea>
+            <button type="button" class="btn primary">Wyślij</button>
+          </div>
+          <span class="hint danger">Brak połączenia - wiadomość nie wyszła i zostaje w polu.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Rozmowa po usunięciu z adresatów - do odczytu</span>
+        <span class="inv-when">Osoba, którą prowadzący usunął z adresatów, zachowuje rozmowę do odczytu, ale bez pisania (decyzja 29). W miejscu pola jedno zdanie o stanie zlecenia - bez nazwiska tego, kto ją usunął, i bez niczego o innych adresatach (decyzja 18).</span>
+        <span class="inv-classes">.composer · .composer-note</span>
+      </div>
+      <div class="inv-demo">
+        <div class="msgs">
+          <div class="msg in">
+            <div class="bubble">Dam znać jutro rano, czy sobota jest aktualna.</div>
+            <span class="msg-time">wczoraj 20:14</span>
+          </div>
+        </div>
+        <div class="composer" style="padding: 10px 0 0;">
+          <div class="composer-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Zlecenie nie jest już dla Ciebie aktualne - rozmowa zostaje do odczytu.
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-szczegoly.html">← ZL3 Zlecenie</a>
+  <span>·</span>
+  <a href="zlecenia-watek.html" class="active">ZL4 Rozmowa</a>
+  <span>·</span>
+  <a href="piloci-grupy.html">P5 Grupy →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

@@ -21,6 +21,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import type { BookingQueries } from '../../../application/common/queries/bookings.ts';
+import type { BookingOrderQueries, BookingOrders } from '../../../application/common/queries/bookingOrders.ts';
+import { orderActorOf } from '../../../application/common/orderAccess.ts';
 import type { BookingCommands } from '../../../application/common/commands/bookings.ts';
 import type { BookingRecord } from '../../../application/common/ports.ts';
 import type { ApprovalFlow } from '../../../application/common/commands/approvals.ts';
@@ -29,6 +31,7 @@ import type { BookingRefusal } from '../../../domain/bookings.ts';
 import { can } from '../../../domain/roles.ts';
 import { memberFromRequest, type MemberGate } from '../../memberGate.ts';
 import { askSuggestions, suggestionsQuery, suggestionsWire } from '../common/suggestionsWire.ts';
+import { bookingOrderWire } from '../common/bookingOrderWire.ts';
 import { approvalWire } from './approvalWire.ts';
 
 const ICAO = z.string().trim().min(3).max(8);
@@ -71,8 +74,9 @@ const patch = z
 const cancel = z.object({ reason: z.string().trim().max(NOTE_MAX).nullable().optional() });
 
 /**
- * Zajętość na drucie. `createdBy`, `updatedAt` i `closeReason` zostają po stronie
- * serwera - telefon rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian.
+ * Zajętość na drucie. `createdBy` i `updatedAt` zostają po stronie serwera - telefon
+ * rysuje z tego siatkę i kartę rezerwacji, a nie dziennik zmian. `closeReason`
+ * i `closedBy` jadą od §12.9 wyłącznie w kształcie pełnym (karta odwołanej rezerwacji).
  *
  * ══ CUDZA ZAJĘTOŚĆ NIESIE TYLKO TO, CO EKRANY Z NIEJ CZYTAJĄ ══
  * (przegląd bezpieczeństwa W7, decyzja właściciela 2026-09-21). Oś floty, sugestie
@@ -113,10 +117,16 @@ export interface BookingViewer {
  * bezpieczeństwa 3.1.0, issue #169: karta oddawała ścieżkę każdemu członkowi klubu).
  */
 export function seesFull(row: BookingRecord, viewer: BookingViewer): boolean {
-  return row.pilotId === viewer.pilotId || viewer.approves;
+  // Drugi pilot też: „Twoja rezerwacja" liczy OBA fotele - dla zleceń i dla zwykłych
+  // rezerwacji (4.0.0, `docs/zlecenia.md` pkt 23, §16 pkt 8).
+  return row.pilotId === viewer.pilotId || row.dualId === viewer.pilotId || viewer.approves;
 }
 
-export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<string, unknown> {
+export function bookingWire(
+  row: BookingRecord,
+  viewer: BookingViewer,
+  orders: BookingOrders,
+): Record<string, unknown> {
   const wire: Record<string, unknown> = {
     id: row.id,
     aircraftId: row.aircraftId,
@@ -126,6 +136,9 @@ export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<s
     endsAt: new Date(row.endsAt).toISOString(),
     pilotId: row.pilotId,
     blockReason: row.blockReason,
+    // Zlecenie za rezerwacją (4.0.0, §16 pkt 2) - w WĄSKIM kształcie, bo to, kogo brakuje,
+    // widzi każdy członek („Zlecenie · szuka dowódcy"); treść zlecenia - nie.
+    order: bookingOrderWire(row, orders),
   };
 
   if (!seesFull(row, viewer)) return wire;
@@ -144,6 +157,11 @@ export function bookingWire(row: BookingRecord, viewer: BookingViewer): Record<s
     // rezerwacji - od kiedy stoi na kroku. W kształcie pełnym, bo pyta o to wyłącznie
     // ten, kto widzi komplet; na osi floty wiek wiersza nie znaczy nic.
     createdAt: new Date(row.createdAt).toISOString(),
+    // Powód zamknięcia i kto zamknął (§12.9): karta odwołanej rezerwacji pokazuje je
+    // osobom w fotelach, gdy odwołał ktoś inny. Ta sama klasa treści, co powód odmowy -
+    // zdanie człowieka DO PILOTA - więc wyłącznie w kształcie pełnym (przegląd W7).
+    closeReason: row.closeReason,
+    closedBy: row.closedBy,
   };
 }
 
@@ -157,6 +175,7 @@ const STATUS: Readonly<Record<BookingRefusal, number>> = {
   booking_order: 400,
   booking_closed: 409,
   reason_required: 400,
+  booking_from_order: 409,
 };
 
 export function registerBookingRoutes(
@@ -164,8 +183,20 @@ export function registerBookingRoutes(
   bookings: BookingCommands,
   calendar: BookingQueries,
   approvals: ApprovalFlow,
+  bookingOrders: BookingOrderQueries,
   gate: MemberGate,
 ): void {
+  /** Zlecenia za tymi rezerwacjami, widziane przez pytającego (§16 pkt 2). */
+  const ordersOf = (
+    who: MembershipAuthSnapshot,
+    rows: readonly (BookingRecord | null | undefined)[],
+  ): Promise<BookingOrders> =>
+    bookingOrders.of(
+      who.orgId,
+      orderActorOf(who.pilotId, who.capabilities),
+      rows.filter((row): row is BookingRecord => row != null),
+    );
+
   app.get('/bookings', async (req, reply) => {
     const who = await memberFromRequest(gate, req);
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
@@ -184,6 +215,7 @@ export function registerBookingRoutes(
     if (req.headers['if-none-match'] === view.etag) {
       return reply.code(304).header('etag', view.etag).send();
     }
+    const orders = await ordersOf(who, view.bookings);
     return reply.header('etag', view.etag).send({
       timezone: view.timezone,
       homeIcao: view.homeIcao,
@@ -191,13 +223,15 @@ export function registerBookingRoutes(
       // nie zna, a znak przy osi kalendarza jest celem dotknięcia tylko z `fleet.watch`.
       // Jedzie tu, bo ekran i tak pyta serwer o okno - osobna trasa byłaby drugim
       // żądaniem o jeden bit (ten sam rachunek, co `approver` w skrzynce).
-      viewer: { watch: can(who.capabilities, 'fleet.watch') },
+      // `order` (4.0.0, `docs/zlecenia.md` §14.1): tapnięcie w wolne pasmo otwiera arkusz
+      // „Zarezerwuj dla siebie / Zleć lot" wyłącznie przy „Zlecaniu lotów" (21E).
+      viewer: { watch: can(who.capabilities, 'fleet.watch'), order: can(who.capabilities, 'orders.create') },
       days: view.days.map((d) => ({
         date: d.date,
         startsAt: new Date(d.startsAt).toISOString(),
         endsAt: new Date(d.endsAt).toISOString(),
       })),
-      bookings: view.bookings.map((row) => bookingWire(row, viewerOf(who))),
+      bookings: view.bookings.map((row) => bookingWire(row, viewerOf(who), orders)),
     });
   });
 
@@ -245,7 +279,7 @@ export function registerBookingRoutes(
         startsAt: new Date(view.day.startsAt).toISOString(),
         endsAt: new Date(view.day.endsAt).toISOString(),
       },
-      booking: bookingWire(view.booking, viewer),
+      booking: bookingWire(view.booking, viewer, await ordersOf(who, [view.booking])),
       approval,
     });
   });
@@ -271,10 +305,12 @@ export function registerBookingRoutes(
       plannedFuelL: b.plannedFuelL ?? null,
       note: b.note ?? null,
     });
-    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
+    if (!result.ok) {
+      return refuse(reply, viewerOf(who), result.refusal, result.taken, await ordersOf(who, [result.taken]));
+    }
     // Powtórzony zapis (telefon ponowił przy słabym łączu) wraca `200` z tym samym
     // wierszem - `201` kłamałoby o tym, że coś właśnie powstało.
-    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking, viewerOf(who)));
+    return reply.code(result.created ? 201 : 200).send(bookingWire(result.booking, viewerOf(who), await ordersOf(who, [result.booking])));
   });
 
   app.patch<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -297,8 +333,10 @@ export function registerBookingRoutes(
       ...(p.note === undefined ? {} : { note: p.note }),
     });
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking, viewerOf(who)));
+    if (!result.ok) {
+      return refuse(reply, viewerOf(who), result.refusal, result.taken, await ordersOf(who, [result.taken]));
+    }
+    return reply.send(bookingWire(result.booking, viewerOf(who), await ordersOf(who, [result.booking])));
   });
 
   app.delete<{ Params: { id: string } }>('/bookings/:id', async (req, reply) => {
@@ -310,13 +348,15 @@ export function registerBookingRoutes(
 
     const result = await bookings.cancel(
       who.orgId,
-      who.pilotId,
+      orderActorOf(who.pilotId, who.capabilities),
       req.params.id,
       parsed.data.reason ?? null,
     );
     if (result == null) return reply.code(404).send({ error: 'not_found' });
-    if (!result.ok) return refuse(reply, viewerOf(who), result.refusal, result.taken);
-    return reply.send(bookingWire(result.booking, viewerOf(who)));
+    if (!result.ok) {
+      return refuse(reply, viewerOf(who), result.refusal, result.taken, await ordersOf(who, [result.taken]));
+    }
+    return reply.send(bookingWire(result.booking, viewerOf(who), await ordersOf(who, [result.booking])));
   });
 }
 
@@ -339,6 +379,7 @@ function refuse(
   viewer: BookingViewer,
   refusal: BookingRefusal,
   taken: BookingRecord | null | undefined,
+  orders: BookingOrders,
 ): unknown {
   return reply.code(STATUS[refusal]).send({
     error: refusal,
@@ -351,7 +392,7 @@ function refuse(
     ...(taken == null
       ? {}
       : {
-          taken: bookingWire(taken, viewer),
+          taken: bookingWire(taken, viewer, orders),
           takenAt: new Date(taken.createdAt).toISOString(),
         }),
   });

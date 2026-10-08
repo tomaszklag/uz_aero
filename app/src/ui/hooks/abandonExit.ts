@@ -82,3 +82,18 @@ export function abandonDispatches(phase: AbandonPhase): boolean {
 export function nextAbandonPhase(phase: AbandonPhase): AbandonPhase | null {
   return phase === 'closing' ? 'leaving' : null;
 }
+
+/**
+ * Faza, w którą wchodzi formularz, który SKOŃCZYŁ (zapisano) i wychodzi bez pytania
+ * (`useAbandonExit.proceed`; błąd z 3.0.0 w formularzu rezerwacji 22, naprawiony w 4.0.0).
+ *
+ * Wyjście po zapisie nie może iść wprost `navigation.replace`: bramka czyta stan
+ * z OSTATNIEGO renderu, a ten po zapisie wciąż ma ją podniesioną (krok 2 albo 3) - więc
+ * przechwyciłaby własne wyjście formularza i cofnęła go o krok, choć zapis już się udał.
+ * Pilot widział wtedy pusty formularz w kroku 1, a rezerwacja stała na serwerze.
+ *
+ * Od razu `leaving`, z pominięciem `closing`: arkusza nie ma, więc nie ma okna modala,
+ * które musiałoby zejść przed nawigacją. Bramka opada w tej fazie, a akcja jedzie po
+ * re-renderze - ta sama kolejność, co po potwierdzonej rezygnacji.
+ */
+export const PROCEED_PHASE: AbandonPhase = 'leaving';

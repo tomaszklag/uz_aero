@@ -176,7 +176,7 @@ const planSection = plan ? `
   <section class="plan" id="plan" aria-labelledby="plan-h">
     <div class="plan-head">
       <div><p class="kicker">Plan wydań</p><h2 class="h-display" id="plan-h">Co dalej</h2></div>
-      <p class="sub">Nad czym pracujemy i kiedy planujemy kolejne wydania. Terminy są orientacyjne: wydanie wychodzi, gdy przejdzie testy z pilotami.</p>
+      <p class="sub">Nad czym pracujemy i co planujemy w kolejnych wydaniach. Kolejność i terminy są orientacyjne.</p>
     </div>
     <div class="plan-grid">${milestones.map(milestoneCard).join('')}
     </div>
@@ -189,7 +189,7 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wydania i zmiany - Ninerdeck</title>
-<meta name="description" content="Co nowego w kolejnych wydaniach Ninerdeck: aktualna wersja, plan kolejnych wydań, nowości, poprawki i uwagi dla testerów.">
+<meta name="description" content="Co nowego w kolejnych wydaniach Ninerdeck: aktualna wersja, plan kolejnych wydań, nowości i poprawki.">
 <link rel="icon" href="../favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -212,7 +212,7 @@ const html = `<!doctype html>
   <section class="rel-hero">
     <p class="kicker">Wydania i zmiany</p>
     <h1 class="h-display">Co nowego<br>w Ninerdeck</h1>
-    <p class="sub">Strona dla pilotów, testerów i klubów: aktualna wersja aplikacji, co się zmieniło, co planujemy dalej i na co zwrócić uwagę w testach. Nowe wydanie pojawia się tu razem z buildem.</p>
+    <p class="sub">Strona dla pilotów i klubów: aktualna wersja aplikacji, co się zmieniło i co planujemy dalej. Nowe wydanie pojawia się tu w dniu publikacji.</p>
     ${intro.length ? `<div class="rel-intro">${renderBlocks(intro)}</div>` : ''}
   </section>
 

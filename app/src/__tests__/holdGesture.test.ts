@@ -15,20 +15,20 @@ describe('holdGesture', () => {
   });
 
   it('podpis kanoniczny odmienia „1 sekundę" (nie „1 sekundy")', () => {
-    expect(holdConfirmHint(HOLD_MS)).toBe('Przytrzymaj 1 sekundę aby potwierdzić');
+    expect(holdConfirmHint(HOLD_MS)).toBe('Przytrzymaj 1 sekundę, aby potwierdzić');
   });
 
   it('odmienia klasy liczebnika: 2-4 sekundy, 5+ i 12-14 sekund', () => {
-    expect(holdConfirmHint(2000)).toBe('Przytrzymaj 2 sekundy aby potwierdzić');
-    expect(holdConfirmHint(4000)).toBe('Przytrzymaj 4 sekundy aby potwierdzić');
-    expect(holdConfirmHint(5000)).toBe('Przytrzymaj 5 sekund aby potwierdzić');
-    expect(holdConfirmHint(12_000)).toBe('Przytrzymaj 12 sekund aby potwierdzić');
-    expect(holdConfirmHint(22_000)).toBe('Przytrzymaj 22 sekundy aby potwierdzić');
+    expect(holdConfirmHint(2000)).toBe('Przytrzymaj 2 sekundy, aby potwierdzić');
+    expect(holdConfirmHint(4000)).toBe('Przytrzymaj 4 sekundy, aby potwierdzić');
+    expect(holdConfirmHint(5000)).toBe('Przytrzymaj 5 sekund, aby potwierdzić');
+    expect(holdConfirmHint(12_000)).toBe('Przytrzymaj 12 sekund, aby potwierdzić');
+    expect(holdConfirmHint(22_000)).toBe('Przytrzymaj 22 sekundy, aby potwierdzić');
   });
 
   it('zaokrągla do pełnych sekund i nie schodzi poniżej 1', () => {
-    expect(holdConfirmHint(1499)).toBe('Przytrzymaj 1 sekundę aby potwierdzić');
-    expect(holdConfirmHint(200)).toBe('Przytrzymaj 1 sekundę aby potwierdzić');
+    expect(holdConfirmHint(1499)).toBe('Przytrzymaj 1 sekundę, aby potwierdzić');
+    expect(holdConfirmHint(200)).toBe('Przytrzymaj 1 sekundę, aby potwierdzić');
   });
 
   it('mikropodpis paska mówi skrótem: „przytrzymaj 1 s"', () => {

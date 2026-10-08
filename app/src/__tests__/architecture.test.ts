@@ -66,6 +66,20 @@ function importsFrom(base: string, file: string): string[] {
   return found;
 }
 
+/**
+ * KOD pliku bez komentarzy - dla reguł o obiektach GLOBALNYCH (`WebSocket`), których
+ * nie widać w importach. Bez zdejmowania komentarzy docblock, który tłumaczy, czemu
+ * plik NIE dotyka gniazda, liczyłby się jako jego użycie (wzorzec z panelu,
+ * `admin/test/architecture.test.ts`; `://` w adresach nie jest komentarzem).
+ */
+const codeOf = (file: string): string =>
+  readFileSync(join(SRC, file), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+/** Odczyt z serwera przez silnik synca (`sync.fetchCalendar(…)` i rodzina). */
+const SERVER_READ = /\.fetch[A-Z]\w*\(/;
+
 /** Pakiety spoza domeny: framework UI, natywne moduły, store. */
 const FRAMEWORK = [
   /^react$/,
@@ -104,6 +118,16 @@ describe('granice warstw', () => {
     // Shim w `app/src/domain` ma być JEDYNYM plikiem i tylko re-eksportem pakietu.
     expect(sourceFiles('domain')).toEqual(['domain/index.ts']);
     expect(importsOf('domain/index.ts')).toEqual(['@ninerdeck/domain']);
+
+    // Skaner gniazda widzi jedyne prawdziwe wystąpienie `WebSocket`…
+    expect(codeOf('infrastructure/live/liveSocket.ts')).toMatch(/\bWebSocket\b/);
+    // …a zdejmowanie komentarzy zjada prozę, nie kod: łącze opisuje gniazdo w docblocku
+    // i nie dotyka go ani razu.
+    expect(readFileSync(join(SRC, 'application/live/liveLink.ts'), 'utf8')).toMatch(/\bWebSocket\b/);
+    expect(codeOf('application/live/liveLink.ts')).not.toMatch(/\bWebSocket\b/);
+    expect(codeOf('infrastructure/api/apiBaseUrl.ts')).toContain('http://');
+    // Skaner odczytów serwera widzi hook, który pyta przez silnik synca.
+    expect(codeOf('ui/hooks/useCalendar.ts')).toMatch(SERVER_READ);
   });
 
   it('domain (packages/domain) nie importuje Reacta, RN, Expo, SQLite ani Zustanda', () => {
@@ -247,6 +271,31 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/push/expoNotifications.ts']);
   });
 
+  it('`WebSocket` występuje WYŁĄCZNIE w infrastructure/live/liveSocket.ts', () => {
+    // Kanał klubu ma jedne drzwi (K1, `docs/kanal-klubu.md` §3.4): „skąd przyszła ta
+    // ramka" ma mieć jedną odpowiedź, a drugie gniazdo w ekranie byłoby drugim
+    // połączeniem tego samego telefonu - dokładnie tym, czego K1 zabrania. `WebSocket`
+    // jest w RN obiektem GLOBALNYM, więc nie ma importu do policzenia - skaner czyta
+    // kod bez komentarzy. Testy pomija, bo ten plik sam pisze `WebSocket` w asercji.
+    const users = sourceFiles('.')
+      .filter((file) => !file.startsWith('__tests__/'))
+      .filter((file) => /\bWebSocket\b/.test(codeOf(file)))
+      .sort();
+    expect(users).toEqual(['infrastructure/live/liveSocket.ts']);
+  });
+
+  it('ekran z danymi z serwera NICZEGO nie odpytuje - świeżość daje kanał klubu (K1)', () => {
+    // Do 4.0.0 kalendarz, skrzynka, karta samolotu i lista obserwowanych pytały serwer
+    // co minutę, dopóki nie wiedziały. Od kanału klubu ekran podpina się tematem
+    // (`useLiveTopic`), a stan „nie wiem" wraca z powitaniem łącza, które przychodzi
+    // razem z zasięgiem. Plik, który czyta serwer przez silnik synca, pętli nie ma;
+    // tykające zegary ekranów i pętla synca to inne sprawy w innych plikach.
+    const offenders = sourceFiles('ui')
+      .filter((file) => SERVER_READ.test(codeOf(file)))
+      .filter((file) => /\bsetInterval\b/.test(codeOf(file)));
+    expect(offenders).toEqual([]);
+  });
+
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
     const barrel = importsOf('infrastructure/index.ts');
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
@@ -338,6 +387,34 @@ describe('nawigacja - decyzje zapisane w mockupach', () => {
         file,
         reset: false,
       });
+    }
+  });
+
+  it('formularz z bramką rezygnacji nie zdejmuje się sam - wyjście po zapisie idzie przez `exit.proceed`', () => {
+    // Bramka (`usePreventRemove`) czyta stan z OSTATNIEGO renderu, a ten po zapisie wciąż ma
+    // ją podniesioną (krok 2 albo 3) - więc akcja zdejmująca ekran prosto z `navigation`
+    // wracała jako „wstecz": rezerwacja stała na serwerze, a pilot widział pusty formularz
+    // w kroku 1 (błąd z 3.0.0). `goBack` zostaje wolne: przechwycenie „wstecz" przez bramkę
+    // JEST zamierzone (pytanie o rezygnację) - błędem było przechwycenie WŁASNEGO wyjścia.
+    // `goHome` też zdejmuje: od 4.0.0 cofa stos do zakładek, więc formularz oddaje bramce
+    // `homeAction` zamiast wołać go sam (lot ręczny po zapisie).
+    const dir = join(SRC, 'ui/screens');
+    const gated = readdirSync(dir)
+      .filter((f) => f.endsWith('.tsx'))
+      .filter((f) => readFileSync(join(dir, f), 'utf8').includes('useAbandonExit('));
+    // sanity: skan widzi wszystkie formularze z bramką
+    expect(gated).toEqual(
+      expect.arrayContaining([
+        'ManualFlightScreen.tsx',
+        'NewBookingScreen.tsx',
+        'NewOrderScreen.tsx',
+        'PreflightAircraftScreen.tsx',
+      ]),
+    );
+    for (const file of gated) {
+      const source = readFileSync(join(dir, file), 'utf8');
+      const removes = /navigation\.(?:replace|dispatch|pop|popTo|popToTop)\s*\(|\bgoHome\s*\(/.test(source);
+      expect({ file, removes }).toEqual({ file, removes: false });
     }
   });
 });

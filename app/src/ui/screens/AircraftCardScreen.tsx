@@ -15,7 +15,9 @@
  *
  * ══ CAŁY MODUŁ WYMAGA SIECI ══ (§2.2)
  * Karta czyta cudze operacje, terminy i odczyty innych pilotów - bez sieci mówi to
- * wprost (27C, wzorzec 21B) i ponawia co minutę; cache'u nie ma i nie będzie.
+ * wprost (27C, wzorzec 21B) i wraca sam z powitaniem łącza kanału klubu, które przychodzi
+ * razem z zasięgiem; cache'u nie ma i nie będzie. Na żywo odświeża się sygnałem
+ * `aircraft:<id>` (4.0.0) - lot się zaczął, zdano maszynę, przybył termin.
  * Przełącznik zapisuje się na serwerze WPROST, nie przez outbox: bez sieci karta niesie
  * POWÓD w sobie, nie cichy błąd (§6 pkt 3).
  *
@@ -67,7 +69,7 @@ const SERIES_DAYS = 90;
 const DAY_MS = 86_400_000;
 
 /** Powód, dla którego przełącznik nie zapisał się - WEWNĄTRZ karty, nie pod nią (issue #55). */
-const WATCH_OFFLINE = 'Obserwowanie zapisuje serwer - potrzebne połączenie.';
+const WATCH_OFFLINE = 'Obserwowanie wymaga połączenia z internetem.';
 
 export function AircraftCardScreen({
   navigation,
@@ -81,7 +83,7 @@ export function AircraftCardScreen({
   const now = useMinuteTicker();
 
   const aircraftId = route?.params?.aircraftId ?? null;
-  const { data, reload } = useAircraftCard(aircraftId);
+  const { data, refresh } = useAircraftCard(aircraftId);
   const ops = useAircraftOperations(aircraftId);
   const skeleton = useSkeleton(data === undefined);
 
@@ -119,15 +121,18 @@ export function AircraftCardScreen({
     setWatchError(null);
     const on = !data.watching;
     const done = await sync.setAircraftWatch(aircraftId, on);
-    setWatchBusy(false);
     if (!done) {
+      setWatchBusy(false);
       setWatchError(WATCH_OFFLINE);
       return;
     }
     // Trzeci moment prośby o zgodę na powiadomienia (§8): osoba właśnie poprosiła o budzik.
     void askForPush(optInAfterWatch(on));
-    reload();
-  }, [data, aircraftId, sync, watchBusy, reload]);
+    // Karta stoi przed oczami pilota: czyta się po cichu, a przełącznik przestaje być
+    // „zajęty" dopiero z nową kartą - inaczej mignąłby na chwilę starym stanem.
+    await refresh();
+    setWatchBusy(false);
+  }, [data, aircraftId, sync, watchBusy, refresh]);
 
   const openOperation = useCallback(
     async (row: OperationRow) => {
@@ -257,7 +262,7 @@ export function AircraftCardScreen({
               days={SERIES_DAYS}
               nameOf={nameOf}
               legend={[
-                { color: 'green', label: 'odczyt przejęcia / zdania' },
+                { color: 'green', label: 'odczyt przy rozpoczęciu / zdaniu' },
                 { color: 'blue', label: 'wpis administratora' },
                 { color: 'dash', label: 'maszyna stała' },
               ]}
@@ -316,7 +321,7 @@ export function AircraftCardScreen({
               </>
             ) : ops.data === null ? (
               <AppText variant="body" tone="muted" style={s.historyMissing}>
-                Historia tej maszyny nie dojechała - wróć na ten ekran z zasięgiem.
+                Nie udało się wczytać historii tej maszyny - wróć na ten ekran z zasięgiem.
               </AppText>
             ) : rows.length === 0 ? (
               <AppText variant="body" tone="muted" style={s.historyMissing}>
@@ -476,8 +481,8 @@ function OpRow({
 
 /**
  * Bez sieci - karta na cały ekran, ten sam prymityw, co kalendarz (21B) i pusta flota
- * (02G). Przycisku ponowienia NIE MA, ale ekran nie stoi: dopóki widać tę kartę, pyta
- * serwer co minutę i wraca sam. Przełącznika „Obserwuj" tu nie ma - zapis idzie na
+ * (02G). Przycisku ponowienia NIE MA, ale ekran nie stoi: wraca sam, gdy łącze kanału
+ * klubu przywita się razem z zasięgiem. Przełącznika „Obserwuj" tu nie ma - zapis idzie na
  * serwer wprost, więc bez sieci obiecywałby akcję, której nie da się wykonać.
  */
 function Offline({ theme }: { theme: Theme }) {
@@ -490,8 +495,7 @@ function Offline({ theme }: { theme: Theme }) {
           BRAK POŁĄCZENIA
         </AppText>
         <AppText variant="body" style={s.warningText}>
-          Karta maszyny pokazuje cudze operacje, terminy i odczyty - a tego telefon nie wie
-          bez połączenia z serwerem.
+          Karta samolotu wymaga połączenia z internetem.
         </AppText>
         <AppText variant="body" style={s.warningText}>
           Wróć tu z zasięgiem. Lot rozpoczniesz bez tego ekranu - wystarczy „ROZPOCZNIJ LOT" na Pulpicie.

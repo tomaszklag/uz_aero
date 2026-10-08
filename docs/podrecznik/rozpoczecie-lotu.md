@@ -1,80 +1,69 @@
 # Rozpoczęcie lotu
 
-> Trzy kroki i jesteś w kokpicie: samolot i załoga, zadanie i trasa, liczniki. Wartości z ostatniego przekazania są już wpisane - Ty porównujesz je z przyrządami.
+> Trzy kroki i jesteś w kokpicie: samolot i załoga, zadanie i trasa, liczniki. Wartości od poprzedniego pilota są już wpisane - Ty porównujesz je z przyrządami.
 
-Wchodzi się tu przyciskiem **ROZPOCZNIJ LOT** z [Pulpitu](moj-dzien). Jeśli masz na tę
-porę [rezerwację](rezerwacja-samolotu), pierwszy krok jest już wypełniony tym, co
-zaplanowałeś - maszyną, zadaniem, trasą i drugim pilotem. Sprawdzasz i idziesz dalej.
+Rozpoczęcie lotu otwierasz przyciskiem **ROZPOCZNIJ LOT** na [Pulpicie](moj-dzien). Jeśli masz na tę godzinę [rezerwację](rezerwacja-samolotu), pierwszy krok jest już wypełniony samolotem, zadaniem, trasą i drugim pilotem z rezerwacji.
 
 ## Krok 1 · samolot i załoga
 
-Wybierz samolot z listy floty klubu. Karta maszyny mówi, w jakim jest stanie: wolna, prowadzona przez innego pilota („Prowadzi PIC: KRZ · od 07:10") albo wyłączona ze służby. Jeśli maszyna wymaga załogi dwuosobowej, przy nagłówku stoi oznaczenie „wymagany · załoga 2-os.", a bez wybranego drugiego pilota przycisk **DALEJ** mówi dlaczego. W pozostałych przypadkach drugi pilot (Dual) jest opcjonalny; raz wybrany, zostaje także po zmianie samolotu.
+1. Wybierz samolot z listy floty klubu. Przy każdym samolocie widać jego stan: wolny, zajęty przez innego pilota („Prowadzi KRZ · od 07:10") albo wyłączony.
+2. Wybierz drugiego pilota, jeśli lecisz z kimś. Jeśli samolot wymaga załogi dwuosobowej, przy nagłówku stoi „wymagany · załoga 2-os.", a bez drugiego pilota przycisk **DALEJ** powie, czego brakuje.
+3. Tapnij **DALEJ**.
 
-@screen 02-preflight "Lista floty z Dualem"
+Jeśli wybrany samolot ma na najbliższe godziny cudzą rezerwację, nad formularzem pojawi się informacja, kto ją ma i na kiedy. To nie blokuje lotu.
 
-> **Wskazówka.** Lista samolotów pochodzi z panelu klubu. Pusta lista to ostrzeżenie na cały ekran „BRAK SAMOLOTÓW" z drogą wyjścia - aplikacja sama dopytuje o flotę, gdy tylko ma sieć, a formularz wraca bez Twojego udziału.
+@screen 02-preflight "Wybór samolotu i drugiego pilota" | 23a-rezerwacja-kolizja "Cudza rezerwacja na ten samolot"
 
-Samolot zajęty przez innego pilota otwiera się w **podglądzie**: jego log z serwera, bez możliwości zapisu, z przyciskiem **PRZEJMIJ SAMOLOT**. Przejęcie cudzej maszyny jest sytuacją awaryjną (poprzednik odjechał bez zdania): aplikacja ostrzega, że tamten może mieć niewysłane dane, a nakładające się operacje klub zobaczy jako sprawę do wyjaśnienia. Na co dzień samolot oddaje się przez zdanie.
+### Samolot zajęty przez innego pilota
 
-@screen 04b-cockpit-readonly "Podgląd zajętego samolotu" | 02g-preflight-brak-floty "Pusta flota"
+Zajęty samolot otwiera się w **podglądzie**: widzisz jego stan i dotychczasowy przebieg lotu, ale niczego nie zmienisz. Jeśli poprzedni pilot odjechał, nie zdając samolotu, tapnij **PRZEJMIJ SAMOLOT** i wpisz odczyty z przyrządów. Klub zobaczy dwie operacje naraz i wyjaśni to z poprzednim pilotem.
 
-Jeśli wybrana maszyna ma na najbliższe godziny **cudzą rezerwację**, nad formularzem
-stanie bursztynowy baner: kto ją ma i na kiedy. To informacja, nie blokada - lecisz
-dalej tak samo. Bez zasięgu banera nie ma, bo kalendarz klubu nie jest przechowywany
-na telefonie.
+Na co dzień samolot przekazuje się przez [zdanie samolotu](zdanie-samolotu) - wtedy nic nie trzeba przejmować.
 
-@screen 23a-rezerwacja-kolizja "Cudzy plan na tę maszynę"
+@screen 04b-cockpit-readonly "Podgląd zajętego samolotu"
 
 ## Krok 2 · zadanie i trasa
 
-- **Rodzaj operacji**: Skoki, Przelot, Egzamin, Lot tech., Inne. Skoki mają jedno lotnisko (start i lądowanie na tym samym placu), pozostałe operacje parę: skąd → dokąd.
-- **Lotniska** wybiera się z katalogu w telefonie po kodzie ICAO albo nazwie - działa bez sieci. Kod spoza katalogu też wchodzi, z oznaczeniem „spoza katalogu" (zapisze się sam kod, bez nazwy). Trasę można zostawić pustą.
-- **Klient i notatka** - opcjonalne. W dniu skokowym dochodzi **domyślny skład skoczków**, który podstawi się przy każdym załadunku.
-- Formularz podpowiada wartości z ostatniego dnia: rodzaj operacji i klienta - Twoje, trasę - tego samolotu. Sprawdź je, zanim pójdziesz dalej; **Wyczyść formularz** zaczyna od zera.
+- **Rodzaj operacji**: Skoki, Przelot, Egzamin, Lot tech., Inne. Przy skokach podajesz jedno lotnisko, przy pozostałych - skąd i dokąd.
+- **Lotniska** wybierasz po kodzie ICAO albo nazwie - lista działa bez internetu. Kod spoza listy też przejdzie, z oznaczeniem „spoza katalogu". Trasę możesz zostawić pustą.
+- **Klient i notatka** są opcjonalne. W dniu skokowym dochodzi **domyślny skład skoczków**, który podpowie się przy każdym załadunku.
 
-@screen 02e-preflight-zadanie "Rodzaj operacji i klient" | 02f-preflight-lotnisko "Okienko wyboru lotniska"
+Formularz podpowiada dane z ostatniego dnia: rodzaj operacji i klienta - Twoje, trasę - tego samolotu. Sprawdź je przed przejściem dalej albo tapnij **Wyczyść formularz**.
+
+@screen 02e-preflight-zadanie "Rodzaj operacji i klient" | 02f-preflight-lotnisko "Wybór lotniska"
 
 ## Krok 3 · liczniki
 
-Na górze ekranu stoi, skąd pochodzą wartości: **z ostatniego przekazania** (kto i kiedy zdał samolot), **ze stanu wpisanego w panelu** dla maszyny, której nikt jeszcze nie przekazał, albo z odczytów wpisanych przez administratora. Instrukcja jest jedna: zweryfikuj ilość paliwa w zbiornikach i aktualny stan licznika motogodzin.
+Na górze ekranu stoi, skąd pochodzą wpisane wartości:
 
-| Sekcja | Co wpisujesz |
+- **z ostatniego przekazania** - kto i kiedy zdał samolot,
+- **ze stanu początkowego** - dla samolotu, którego nikt jeszcze nie zdał, wpisanego przez administratora w panelu,
+- **od administratora** - gdy poprawił odczyty w panelu.
+
+Pod spodem jedna instrukcja: **zweryfikuj ilość paliwa w zbiornikach i aktualny stan licznika motogodzin.**
+
+| Sekcja | Co robisz |
 |---|---|
-| **Paliwo** | Stan w zbiornikach. W okienku stoi rozpiska przekazania: ile poprzednik zastał, ile dolał, ile latał i ile według normy powinno zostać - do porównania z paliwomierzem. |
-| **Motogodziny** | Odczyt licznika w formacie tej maszyny (podaje go okienko: `hh:mm` albo dziesiętny). Licznik niższy niż przekazany blokuje przejście z podanym powodem. |
-| **Olej** | Pomiar na bagnecie - obowiązkowy - i ewentualna dolewka. Podziałka pokazuje stan wobec zbiornika i minimum. Szczegóły: [tankowanie i olej](tankowanie-i-olej). |
+| **Paliwo** | Sprawdzasz stan w zbiornikach. W okienku widać, ile poprzedni pilot zastał, ile dolał, ile latał i ile według normy powinno zostać - porównaj to z paliwomierzem. |
+| **Motogodziny** | Sprawdzasz licznik. Okienko podpowiada format tej maszyny: godziny i minuty albo zapis dziesiętny. |
+| **Olej** | Mierzysz olej na bagnecie - to obowiązkowe - i wpisujesz ewentualną dolewkę. Podziałka pokazuje stan wobec zbiornika i minimum ([tankowanie i olej](tankowanie-i-olej)). |
 
-Odczyty z przyrządów są ważniejsze niż podpowiedź. Rozjazd z przekazaniem to **ostrzeżenie** („Odczyt różni się od przekazanego o −30 L"), nie blokada: paliwomierz i licznik mają rację, a różnicę wyjaśni później klub. Bez sieci wartości przekazania mają adnotację „Ostatnie pobrane" z datą ostatniego połączenia; gdy aplikacja nie ma nic - „Brak danych - wpisz z licznika".
+**Przyrządy mają rację.** Jeśli odczyt różni się od przekazanego, aplikacja ostrzega, na przykład „Odczyt różni się od przekazanego o −30 L" - ale przyjmuje Twój odczyt. Różnicę wyjaśni klub. Zapisu nie da się zrobić tylko wtedy, gdy licznik motogodzin jest niższy niż przekazany albo paliwa jest więcej, niż mieszczą zbiorniki.
 
-@screen 02a-preflight "Paliwo, motogodziny i olej" | 02b-preflight-paliwo "Rozpiska przekazania w okienku" | 02c-preflight-motogodziny "Okienko odczytu motogodzin"
+Bez internetu przy wartościach stoi data ostatniego pobrania („Dane z 21 CZE 17:30"). Gdy aplikacja nie ma żadnych danych, prosi: „Brak danych - wpisz z licznika".
 
-**ROZPOCZNIJ LOT** zapisuje przejęcie z odczytami i prowadzi wprost do [kokpitu](kokpit). Ekranu podsumowania nie ma - wszystko, co wpisałeś, stoi w kokpicie na osi operacji.
+@screen 02a-preflight "Paliwo, motogodziny i olej" | 02b-preflight-paliwo "Okienko odczytu paliwa" | 02c-preflight-motogodziny "Okienko odczytu motogodzin"
 
-## Jak to działa
+**ROZPOCZNIJ LOT** zapisuje odczyty i otwiera [kokpit](kokpit).
 
-Przekazanie to odczyty z ostatniego zdania tej maszyny - albo, gdy nikt jej jeszcze nie zdał, stan wpisany w panelu. Z siecią aplikacja pobiera je na żywo przy wejściu w krok 3; bez sieci pracuje na kopii z ostatniego połączenia i mówi o tym adnotacją z datą. Twoje odczyty przy przejęciu stają się kolejnym ogniwem łańcucha tej maszyny: paliwo i licznik od zdania poprzednika do Twojego przejęcia powinny się zgadzać, a różnica jest sygnałem - o literówce, o tankowaniu poza aplikacją albo o locie, którego nikt nie zapisał. Przejęcie zapisuje się na telefonie natychmiast, bez pytania serwera o zgodę; gdyby dwa telefony wzięły tę samą maszynę, klub dostanie to jako sprawę do wyjaśnienia, a nie Ty jako blokadę. Więcej: [łańcuch odczytów](lancuch-odczytow), [norma zużycia](norma-zuzycia).
+> **Uwaga.** Przycisk wstecz przy wypełnionym formularzu pyta, czy zrezygnować z lotu, i czyści wpisane dane. Pusty formularz zamyka się bez pytania.
 
-> **Uwaga.** Wyjście z formularza przyciskiem wstecz przy wypełnionych polach pyta o rezygnację i czyści szkic; pusty formularz wychodzi bez pytania.
-
-@screen 02h-preflight-rezygnacja "Pytanie o rezygnację" | 02d-preflight-offline "Wartości z ostatniego połączenia"
-
-## Dlaczego tak to działa
-
-> **Dlaczego rodzaj operacji zmienia resztę ekranów.** Rodzaj operacji wyznacza nie tylko pola trasy: w dniu skokowym kokpit dostaje załadunek i zrzut, a wykrywanie lądowania spodziewa się powrotu na to samo pole. Ten sam wybór ustawia formularz i automat.
-
-> **Dlaczego rezerwacja wypełnia formularz, ale go nie zastępuje.** Rezerwacja opisuje
-> zamiar, a lot - to, co naprawdę się dzieje: maszyna mogła zostać wymieniona, a odczyty
-> liczników i tak trzeba wpisać z przyrządów. Dlatego plan skraca wpisywanie, a nie
-> pomija kroków. Z tego samego powodu formularz wypełnia się terminem, który właśnie
-> trwa albo zaraz się zacznie - plan na przyszły weekend wyglądałby w polach jak Twój
-> dzisiejszy wpis.
-
-> **Dlaczego kroki są trzy, a trasę wolno pominąć.** Rozpoczęcie lotu ma trwać sekundy. Dlatego są trzy kroki, trasę wolno zostawić pustą, a formularz podpowiada wartości z wczoraj - fakt lotu jest cenniejszy niż kompletność formularza.
+@screen 02h-preflight-rezygnacja "Pytanie o rezygnację"
 
 ## Częste problemy
 
-- **Lista samolotów jest pusta („BRAK SAMOLOTÓW")** → telefon nie pobrał jeszcze floty: sprawdź połączenie. Jeśli sieć jest, a lista nie wraca, administrator nie dodał jeszcze samolotów w panelu.
-- **DALEJ jest nieaktywne** → powód stoi w przycisku: ten samolot wymaga drugiego pilota. Wybierz Duala z listy.
-- **ROZPOCZNIJ LOT jest nieaktywny** → w przycisku stoi jedno z trzech: wprowadź odczyty paliwa i motogodzin, zmierz olej i wpisz pomiar, albo licznik jest niższy niż przekazany - popraw odczyt.
-- **Samolot jest „zajęty", choć poprzedni pilot dawno poszedł do domu** → otwórz podgląd i **PRZEJMIJ SAMOLOT**; wpisz odczyty z przyrządów. Poproś administratora o zakończenie tamtej operacji z panelu.
-- **Wartości przekazania są stare** → adnotacja „Ostatnie pobrane" z datą oznacza brak sieci. Wpisz odczyty z przyrządów - to one się liczą.
+- **Lista samolotów jest pusta („BRAK SAMOLOTÓW")** → aplikacja nie pobrała jeszcze floty. Sprawdź internet - lista wróci sama. Jeśli sieć jest, a lista dalej jest pusta, administrator nie dodał jeszcze samolotów w panelu.
+- **DALEJ jest nieaktywne** → samolot wymaga drugiego pilota. Wybierz go z listy.
+- **ROZPOCZNIJ LOT jest nieaktywny** → przycisk mówi, czego brakuje: odczytów paliwa i motogodzin, pomiaru oleju albo licznik jest niższy niż przekazany.
+- **Samolot jest zajęty, choć poprzedni pilot już poszedł** → otwórz podgląd, tapnij **PRZEJMIJ SAMOLOT** i wpisz odczyty z przyrządów. Poproś administratora, żeby zakończył tamtą operację w panelu.
+- **Wartości przekazania są stare** → data przy wartości oznacza brak internetu. Wpisz to, co pokazują przyrządy.

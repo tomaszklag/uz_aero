@@ -332,7 +332,12 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
     const warnings = manualFlightWarnings(draft(), { ...emptyCtx, pilotDay: day });
 
     expect(warnings.map((w) => w.id)).toContain('session-overlap');
-    expect(warnings.find((w) => w.id === 'session-overlap')!.text).toContain('OPERACJĘ 2');
+    expect(warnings.find((w) => w.id === 'session-overlap')!.text).toContain('operację 2');
+    // Maszyna ZNAKIEM z pamięci floty, nie identyfikatorem (przegląd treści 2026-10-08).
+    const regOf = (id: string): string | null => (id === 'sp-klm' ? 'SP-KLM' : null);
+    const named = manualFlightWarnings(draft(), { ...emptyCtx, pilotDay: day, regOf });
+    expect(named.find((w) => w.id === 'session-overlap')!.text).toContain('na SP-KLM');
+    expect(warnings.find((w) => w.id === 'session-overlap')!.text).toContain('na innej maszynie');
   });
 
   it('operacja z innej godziny doby NIE ostrzega', () => {
@@ -366,7 +371,7 @@ describe('manualFlightWarnings - ostrzegają, nigdy nie blokują', () => {
 
     const mh = warnings.find((w) => w.id === 'mh-chain')!;
     expect(mh.text).toContain('przekazanie');
-    expect(mh.src).toContain('z cache');
+    expect(mh.src).toContain('dane z');
   });
 
   it('zgodny łańcuch (w granicach podziałki licznika) milczy', () => {

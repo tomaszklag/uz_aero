@@ -72,12 +72,16 @@ describe('wiersz monitora', () => {
 
   it('wstrzymana flagą prowadzi do sprawy, nie do ponowienia', () => {
     const row = exportRow(item({ state: 'blocked', revision: null, exportedAt: null, blockingFlagIds: [1046] }), NOW, 24 * HOUR);
-    expect(row).toMatchObject({ stateLabel: 'Wstrzymana flagą', stateNote: 'dwie operacje naraz', action: 'flag', blockingFlagId: 1046 });
+    expect(row).toMatchObject({ stateLabel: 'Wstrzymana rozjazdem', stateNote: 'dwie operacje naraz', action: 'flag', blockingFlagId: 1046 });
   });
 
   it('wpis unieważniony nie ma sygnatury - ma stan', () => {
     const row = exportRow(item({ state: 'impossible', sessionStatus: 'voided', signature: null }), NOW, 24 * HOUR);
-    expect(row).toMatchObject({ operation: 'wpis unieważniony', stateLabel: 'Unieważniona', voided: true, action: null });
+    expect(row).toMatchObject({ operation: 'wpis unieważniony', stateLabel: 'Poza kartą', stateNote: null, voided: true, action: null });
+    // Ten sam stan bez unieważnienia - operacja bez godziny rozpoczęcia. Plakietka nie
+    // mówi „Unieważniona", bo nikt jej nie unieważniał (przegląd treści 2026-10-08).
+    const noStart = exportRow(item({ state: 'impossible', sessionStatus: 'closed', claimedAt: null }), NOW, 24 * HOUR);
+    expect(noStart).toMatchObject({ stateLabel: 'Poza kartą', stateNote: 'bez godziny rozpoczęcia' });
   });
 });
 
@@ -86,7 +90,7 @@ describe('chipy i podtytuły', () => {
     expect(exportStateOfSlug('bez-karty')).toBe('missing');
     expect(exportStateOfSlug('rewizje')).toBeNull();
     expect(exportStateOfSlug(null)).toBeNull();
-    expect(EXPORT_CHIPS.map((chip) => chip.label)).toEqual(['Bez karty', 'Wstrzymane', 'Czekają na zdanie', 'W arkuszu', 'Rewizje']);
+    expect(EXPORT_CHIPS.map((chip) => chip.label)).toEqual(['Bez karty', 'Wstrzymane', 'Czekają na zdanie', 'W arkuszu', 'Wysłane ponownie']);
   });
 
   it('podtytuł kart pomija zera i odmienia', () => {
@@ -120,7 +124,7 @@ describe('zdania po ponowieniu', () => {
   it('sukces mówi kartę, rewizję i chwilę', () => {
     expect(retryNotice(result({ outcome: { exported: true, tab: '2026-09-04_SP-AXA', revision: 1, url: 'u' }, revisionAfter: 1 }))).toEqual({
       tone: 'ok',
-      text: 'Karta 2026-09-04_SP-AXA w arkuszu · rewizja 1 · 7 WRZ 19:12 UTC.',
+      text: 'Karta 2026-09-04_SP-AXA w arkuszu · wersja 1 · 7 WRZ 19:12 UTC.',
     });
   });
 
@@ -147,7 +151,7 @@ describe('zdania po zamknięciu sprawy', () => {
   it('flaga trzymająca kartę: rewizja arkusza w zdaniu', () => {
     expect(resolveNotice({ ...base, exports: [{ sessionUuid: 'a', outcome: { exported: true, tab: '2026-09-06_SP-KLM', revision: 1, url: 'u' } }] })).toEqual({
       tone: 'ok',
-      text: 'Sprawa zamknięta. Karta 2026-09-06_SP-KLM (rewizja 1) poszła do arkusza.',
+      text: 'Sprawa zamknięta. Karta 2026-09-06_SP-KLM (wersja 1) poszła do arkusza.',
     });
   });
 

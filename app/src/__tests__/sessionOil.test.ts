@@ -73,7 +73,7 @@ describe('karta oleju', () => {
     const view = card(events);
 
     expect(view.rows).toEqual([
-      { id: 'level', op: '', label: 'Odczyt przy przejęciu', value: '10,2 L' },
+      { id: 'level', op: '', label: 'Odczyt przy rozpoczęciu', value: '10,2 L' },
       { id: 'added', op: '+', label: 'Dolane', value: '1,0 L' },
     ]);
     expect(view.totalLabel).toBe('Po dolewkach');

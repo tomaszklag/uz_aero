@@ -9,9 +9,14 @@
  * `null` znaczy „nie wiem" i mówi się to wprost: cały moduł rezerwacji wymaga sieci
  * (§2.2), a karta bez odpowiedzi nie ma jak odróżnić rezerwacji odwołanej od takiej,
  * której telefon po prostu nie dosięgnął.
+ *
+ * NA ŻYWO Z KANAŁU KLUBU (4.0.0, K3): serwer mówi `booking:<id>` przy każdej zmianie
+ * tej rezerwacji - zgodzie, odmowie, przesunięciu, odwołaniu - i karta, ekran decyzji
+ * oraz karta na Pulpicie czytają się po cichu od nowa. Formularz poprawki podstawia
+ * rezerwację RAZ, więc ciche odświeżenie nie nadpisze tego, co pilot już zmienił.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
 import type { RemoteApproval, RemoteBookingDetail } from '../../application/ports';
@@ -19,6 +24,8 @@ import { useSessionStore } from '../store';
 
 import { toBooking, type CalendarBooking } from '../screens/logic/calendarData';
 import type { ClubDayBounds } from '../screens/logic/clubClock';
+import { quietResult } from '../screens/logic/liveRefresh';
+import { useLiveTopic } from './useLiveTopic';
 
 export interface BookingDetailData {
   booking: CalendarBooking;
@@ -46,25 +53,35 @@ export function useBooking(id: string | null): UseBooking {
     };
   }, []);
 
-  const load = useCallback(() => {
-    if (sync == null || id == null) {
-      setData(null);
-      return;
-    }
+  /** `quiet` = sygnał kanału: bez plamek, a brak odpowiedzi zostawia to, co było. */
+  const read = useCallback(
+    (quiet: boolean) => {
+      if (sync == null || id == null) {
+        setData(null);
+        return;
+      }
 
-    setData(undefined);
-    void sync
-      .fetchBooking(id)
-      .then((wire) => {
-        if (alive.current) setData(toDetail(wire));
-      })
-      .catch(() => {
-        // `authorizedFetch` zwija offline i odmowy do `null`; tu łapiemy resztę.
-        if (alive.current) setData(null);
-      });
-  }, [sync, id]);
+      if (!quiet) setData(undefined);
+      void sync
+        .fetchBooking(id)
+        .then((wire) => {
+          const next = toDetail(wire);
+          if (alive.current) setData((previous) => (quiet ? quietResult(previous, next) : next));
+        })
+        .catch(() => {
+          // `authorizedFetch` zwija offline i odmowy do `null`; tu łapiemy resztę.
+          if (alive.current && !quiet) setData(null);
+        });
+    },
+    [sync, id],
+  );
+
+  const load = useCallback(() => read(false), [read]);
+  const refresh = useCallback(() => read(true), [read]);
+  const topics = useMemo(() => (id == null ? null : [`booking:${id}`]), [id]);
 
   useFocusEffect(load);
+  useLiveTopic(topics, refresh);
 
   return { data, reload: load };
 }

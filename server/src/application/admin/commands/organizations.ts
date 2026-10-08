@@ -36,6 +36,7 @@
 import { airfieldByIcao } from '@ninerdeck/domain';
 import { CLUB_CODE_LENGTH, clubCodeFrom, formatClubCode } from '../../../domain/clubCode.ts';
 import { isKnownZone } from '../../../domain/clubTime.ts';
+import type { LiveAccess } from '../../common/live/liveAccess.ts';
 import type { Clock } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -105,6 +106,8 @@ export class PlatformOrganizationCommands {
     /** Losowe bajty kodu klubu - patrz `commands/clubCode.ts`. */
     private readonly randomBytes: (count: number) => Uint8Array,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): wyłączony klub zamyka otwarte połączenia swoich członków. */
+    private readonly access: LiveAccess,
   ) {}
 
   async create(
@@ -210,11 +213,15 @@ export class PlatformOrganizationCommands {
     active: boolean,
   ): Promise<OrganizationOutcome<OrganizationDetail>> {
     const action = active ? ('organization.update' as const) : ('organization.disable' as const);
-    return this.change(actor, id, action, async (tx, before) => {
+    const outcome = await this.change(actor, id, action, async (tx, before) => {
       if (before.active === active) throw new NoChanges();
       await this.organizations.setActive(tx, id, active);
       return { active: { from: before.active, to: active } };
     });
+    // Brama odbija już każde żądanie REST do tego klubu - kanał ma powiedzieć to samo
+    // otwartym połączeniom, zamiast czekać, aż ktoś odświeży ekran.
+    if (outcome.ok && !active) this.access.clubDisabled(id);
+    return outcome;
   }
 
   /**

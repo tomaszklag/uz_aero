@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ninerdeck - panel: zlecenia na lot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="panel.css">
+</head>
+
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">ZLECENIA · LISTA</span>
+  <span class="slug">panel/zlecenia-lista · #/zlecenia?widok=zlecone · ZL1</span>
+  <span class="canvas-meta"><span class="pulse"></span>Moduł zleceń · 4.0.0 · issue #244</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Moduł zleceń - kiedy który ekran</div>
+  <a class="vp-item active" href="zlecenia-lista.html">
+    <span class="vp-badge blue">ZL1</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista zleceń - „Zlecone"</span>
+      <span class="vp-when">Pozycja w grupie „Planowanie", zaraz po Kalendarzu (od 4.0.0 kolumna ma trzy grupy: Loty, Planowanie, Klub). Moduł widzi KAŻDY członek (zakładka „Do mnie"), a przełącznik z drugą połową - „Zlecone" - pojawia się przy uprawnieniu „Zlecanie lotów" albo „Cudze rezerwacje"; przycisk „Zleć lot" - wyłącznie przy „Zlecaniu lotów". Z „Cudzymi rezerwacjami" lista niesie WSZYSTKIE zlecenia klubu, także cudze (decyzja 20). Odczyty i odpowiedzi odświeżają się na żywo, bez wskaźnika połączenia.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="#do-mnie">
+    <span class="vp-badge blue">ZL1a</span>
+    <span class="vp-body">
+      <span class="vp-name">„Do mnie" - zlecenia, na które się odpowiada</span>
+      <span class="vp-when">Otwiera się z kolumny, gdy coś tu czeka na Twoją odpowiedź (inaczej lista startuje na „Zlecone"), i jest jedyną połową dla członka bez uprawnień: wtedy nie ma ani przełącznika, ani „Zleć lot". Kolumna „Twój fotel" zamiast listy adresatów - adresat nie wie nic o innych (decyzja 18).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-nowe.html">
+    <span class="vp-badge blue">ZL2</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowe zlecenie - szuflada szeroka</span>
+      <span class="vp-when">„Zleć lot" z tej listy albo z kalendarza. Te same pytania, co na telefonie (31-31B): termin i maszyna, zadanie, potem fotele i adresaci.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-szczegoly.html">
+    <span class="vp-badge blue">ZL3</span>
+    <span class="vp-body">
+      <span class="vp-name">Zlecenie - szuflada</span>
+      <span class="vp-when">Wiersz tej listy. Prowadzący widzi fotele z adresatami, odczytami i „Wybierz"; adresat - swoją propozycję i „Przyjmuję" / „Nie mogę", bez listy adresatów.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="zlecenia-watek.html">
+    <span class="vp-badge blue">ZL4</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozmowa</span>
+      <span class="vp-when">Prywatna rozmowa osoby zlecającej z jednym adresatem, na żywo; koordynatorzy czytają bez pisania.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="piloci-grupy.html">
+    <span class="vp-badge">P5</span>
+    <span class="vp-body">
+      <span class="vp-name">Grupy klubu (moduł Piloci)</span>
+      <span class="vp-when">Listy członków, do których wysyła się zlecenie jednym wyborem. Zakłada je administrator; koordynator z nich korzysta.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="kalendarz-flota.html">
+    <span class="vp-badge">K1</span>
+    <span class="vp-body">
+      <span class="vp-name">Kalendarz - pasek zlecenia i „Zleć lot"</span>
+      <span class="vp-when">Zlecenie trzyma termin od utworzenia, więc stoi na osi jako błękitny pasek z przerywaną ramką - „Zlecenie · szuka załogi".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="../30-zlecenia.html">
+    <span class="vp-badge amber">30</span>
+    <span class="vp-body">
+      <span class="vp-name">Telefon: ta sama lista</span>
+      <span class="vp-when">„Do mnie / Zlecone" i „Nowe zlecenie" w aplikacji pilota - te same zakładki pod tym samym warunkiem.</span>
+    </span>
+  </a>
+</aside>
+
+<!-- ══ RAMA: KOORDYNATORKA LOTÓW ══
+     Zalogowana jest Marta Zięba - zestaw „Koordynator lotów" (Podgląd klubu, Cudze
+     rezerwacje, Akceptacja, Obserwowanie samolotów i od 4.0.0 Zlecanie lotów). Stąd
+     pełna kolumna, przełącznik „Do mnie / Zlecone" i „Zleć lot". Z „Cudzymi
+     rezerwacjami" lista „Zlecone" niesie WSZYSTKIE zlecenia klubu, nie tylko własne
+     (decyzja 20: prowadzą wszyscy z tą zdolnością naraz, bez przejmowania) - dlatego
+     kolumna „Zleca" istnieje i dlatego stoi w niej Paweł Wilk. -->
+<main class="browser" role="region" aria-label="Panel Ninerdeck - lista zleceń na lot">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>app.ninerdeck.pl</b>/#/zlecenia?widok=zlecone
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <header class="topbar">
+      <a class="brand" href="dziennik-flota.html">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.1 8.1A6.1 6.1 0 1 0 14.8 13.52L14.8 22H18.1ZM14.8 8.1A2.8 2.8 0 0 1 9.2 8.1A2.8 2.8 0 0 1 14.8 8.1Z"/></svg>
+        </span>
+        <span class="brand-name">NINERDECK</span>
+      </a>
+
+      <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
+        <a class="who" href="konto.html" title="Moje konto">
+          <span class="avatar" aria-hidden="true">MZ</span>
+          <span class="who-name">Marta Zięba</span>
+        </a>
+        <button type="button" class="btn ghost sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="14 17 19 12 14 7"/><line x1="19" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+
+      <!-- KOLUMNA BOCZNA (od 4.0.0 trzy grupy - decyzja 2026-09-28): „Zlecenia" stoją
+           w grupie „Planowanie", zaraz po Kalendarzu (`docs/zlecenia.md` §15) - plan lotów
+           i szukanie do niego załogi czyta się razem. Plakietki z liczbą przy „Zlecenia" NIE MA: `.nav-count`
+           należy wyłącznie do „Do sprawdzenia", a zlecenie czekające na odpowiedź
+           budzi adresata skrzynką i powiadomieniem w telefonie. Kanoniczna postać
+           ramy: SZABLON.html. -->
+      <aside class="sidebar" aria-label="Nawigacja panelu">
+        <a class="sidebar-context" href="00a-wybor-klubu.html" title="Zmień klub">
+          <span class="context-mark" aria-hidden="true">AZ</span>
+          <span class="context-body">
+            <span class="context-kind">Klub</span>
+            <span class="context-name">Aeroklub Zielonogórski</span>
+          </span>
+          <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+        </a>
+        <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
+          <a class="nav-item" href="dziennik-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Dziennik
+          </a>
+          <a class="nav-item" href="sprawdzenie-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            Do sprawdzenia
+          </a>
+          <a class="nav-item" href="statystyki.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+            Statystyki
+          </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item active" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
+          <a class="nav-item" href="piloci-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Piloci
+          </a>
+          <a class="nav-item" href="samoloty-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+            Samoloty
+          </a>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="page">
+
+      <!-- JEDNA AKCJA GŁÓWNA: „Zleć lot" (tylko z uprawnieniem „Zlecanie lotów").
+           Podtytułu nie ma - przełącznik i chipy tuż pod nagłówkiem mówią, na co
+           patrzysz, a zdanie „zlecenia lotów klubu" opisywałoby tytuł. -->
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Zlecenia</h1>
+        </div>
+        <div class="page-actions">
+          <a class="btn primary" href="zlecenia-nowe.html">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Zleć lot
+          </a>
+        </div>
+      </div>
+
+      <!-- ══ PRZEŁĄCZNIK „DO MNIE / ZLECONE" TO SEGMENT, NIE CHIPY ══
+           Ten sam komponent, co oś dziennika (`.seg`): dwie połowy odpowiadają na DWA
+           pytania - „na co mam odpowiedzieć" i „czego szukam" - i dokładnie jedna jest
+           zawsze włączona. Chip zawęża listę, segment rozstrzyga, o czym ona jest.
+           Wejście z kolumny (`#/zlecenia` bez parametru) wybiera połowę tak jak
+           telefon (`docs/zlecenia.md` §1 pkt 36): „Do mnie", gdy coś tam czeka na
+           odpowiedź, a inaczej przekierowanie na „Zlecone" - do Marty nic nie
+           przyszło, więc ta rama wylądowała tutaj. Segment niesie JAWNY parametr
+           (`?widok=do-mnie`, `?widok=zlecone`), więc wklejony adres znaczy to samo
+           dla każdego; członek bez uprawnień segmentu nie ma i zostaje przy „Do mnie".
+
+           Chipy okresu stoją PO segmencie: zmieniają zakres, nie pytanie. Zapalony
+           jest ten, którego wartość RÓWNA SIĘ zakresowi (reguła z dziennika). -->
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Które zlecenia">
+          <a class="seg-btn" href="#do-mnie">Do mnie</a>
+          <a class="seg-btn on" href="zlecenia-lista.html" aria-current="page">Zlecone</a>
+        </div>
+        <button type="button" class="chip on" aria-pressed="true">Nadchodzące</button>
+        <button type="button" class="chip" aria-pressed="false">Minione</button>
+      </div>
+
+      <!-- ══ TABELA „ZLECONE" ══
+           Te same zlecenia i ten sam moment, co druga rama telefonu 30 (piątek, 21:45) -
+           to jedna lista widziana z dwóch powierzchni. Kolejność terminem, najbliższe na
+           górze - to one najszybciej wygasną, jeśli nikt ich nie obsadzi (§5.5).
+           Zlecenia ZAKOŃCZONE przed terminem (odwołane, wygasłe) stoją na końcu,
+           przygaszone, jak członkostwa wyłączone na liście pilotów - drugi koordynator
+           ma zobaczyć, że zlecenie było i dlaczego go nie ma; po terminie schodzą do
+           „Minione" (oba przykłady w #stany). Ikona rozmowy z kropką przed plakietką:
+           nowa wiadomość w rozmowie WŁASNEGO zlecenia (tu od Anny Kowal, ta sama kropka,
+           co przy jej wierszu w szufladzie ZL3).
+
+           KOLUMNY:
+           · Termin - dzień i godziny CZASEM KLUBU (jak kalendarz), a obok „jutro",
+             bo zlecenie bez załogi wygasa na początku terminu;
+           · Samolot, Zadanie - z trasą pod spodem (skoki = jedno lotnisko, issue #13);
+           · Fotele - etykieta adresowania z serwera (`audience_label`, §6.2): nazwisko
+             znaczy „imiennie" albo osobę już w fotelu, nazwa grupy - grupę, „Wspólna
+             lista" - sposób trzeci. Fotel w stanie „brak" wiersza nie ma;
+           · Odpowiedzi - „jak idzie", w dwóch kształtach, jak na telefonie: przy fotelu
+             z GRUPY albo kilku osób liczby („5 z 6 odczytało") i pod spodem jedyna
+             zielona liczba wiersza - ilu może lecieć, czyli czy jest z kogo wybrać;
+             przy JEDNEJ osobie imiennie - jej stan („Przyjęte 07:40", „Nieodczytane"),
+             bo „1 z 1 odczytało" mówiłoby to samo gorzej. Nazwisk adresatów lista nie
+             wypisuje - to treść szuflady;
+           · Stan - plakietka mówi, KOGO brakuje, tym samym słowem, co pasek na osi
+             kalendarza: „Szuka załogi" / „Szuka dowódcy" / „Szuka drugiego pilota"
+             (błękit - rzecz się dzieje), „Komplet załogi" (zieleń - stan w normie),
+             „Odwołane" (wygaszona, z powodem, jeśli ktoś go podał - decyzja 16);
+           · Zleca - „Ty" przy własnych, nazwisko z kodem przy cudzych.
+           Wiersz otwiera szufladę (ZL3); drogą właściwą jest „Otwórz", bo tylko link
+           daje „kopiuj adres linku". -->
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Zlecenia klubu - nadchodzące terminy</caption>
+          <thead>
+            <tr>
+              <th>Termin</th>
+              <th>Samolot</th>
+              <th>Zadanie</th>
+              <th>Fotele</th>
+              <th>Odpowiedzi</th>
+              <th>Stan</th>
+              <th>Zleca</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">sobota 3 PAŹ</span>
+                <span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span>
+              </td>
+              <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+              <td>Skoki<span class="cell-sub mono">EPKP</span></td>
+              <td>
+                <span class="order-seats">
+                  <span class="order-seat-k">Dowódca</span><span>J. Wrona</span>
+                  <span class="order-seat-k">Drugi pilot</span><span>Piloci An-2</span>
+                </span>
+              </td>
+              <td>5 z 6 odczytało<span class="cell-sub ok">2 mogą lecieć</span></td>
+              <td><span class="msg-ind" title="Nowa wiadomość w rozmowie" aria-label="Nowa wiadomość w rozmowie"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.5V4Z"/></svg></span><span class="pill blue">Szuka załogi</span></td>
+              <td>Ty</td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html">Otwórz</a></td>
+            </tr>
+            <!-- Zlecenie imienne, które się obsadziło: po przesunięciu terminu (rozmowa
+                 w ZL4) adresat przyjął i fotel jest jego. Wiersz zostaje na liście, bo
+                 termin jeszcze nie minął - pod spodem żyje już zwykła rezerwacja. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">sobota 3 PAŹ</span>
+                <span class="cell-sub"><span class="mono">10:00 → 12:00</span> · jutro</span>
+              </td>
+              <td><span class="reg">SP-AXA</span><span class="cell-sub">C172</span></td>
+              <td>Przelot<span class="cell-sub mono">EPKK → EPRJ</span></td>
+              <td>
+                <span class="order-seats">
+                  <span class="order-seat-k">Dowódca</span><span>A. Kowalski</span>
+                </span>
+              </td>
+              <td>Przyjęte 07:40</td>
+              <td><span class="pill green">Komplet załogi</span></td>
+              <td>Ty</td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#komplet">Otwórz</a></td>
+            </tr>
+            <!-- CUDZE ZLECENIE - Paweł Wilk. Marta prowadzi je tak samo jak własne
+                 (wybór, zmiana, odwołanie), ale rozmowy z adresatami prowadzi autor. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">sobota 3 PAŹ</span>
+                <span class="cell-sub"><span class="mono">14:00 → 15:30</span> · jutro</span>
+              </td>
+              <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+              <td>Lot tech.<span class="cell-sub mono">EPKK</span></td>
+              <td>
+                <span class="order-seats">
+                  <span class="order-seat-k">Dowódca</span><span>B. Nowak</span>
+                </span>
+              </td>
+              <td>Przyjęte 16:20</td>
+              <td><span class="pill green">Komplet załogi</span></td>
+              <td>Paweł Wilk<span class="cell-sub mono">PWI</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#komplet">Otwórz</a></td>
+            </tr>
+            <!-- ZLECENIE INSTRUKTORA: Adam Kowalski ma „Zlecanie lotów" przez własny
+                 zakres, siedzi w fotelu dowódcy („Ja") i wysłał drugi fotel imiennie do
+                 uczennicy. Szukany jest jeden fotel, więc plakietka mówi, który. -->
+            <tr class="clickable">
+              <td>
+                <span class="cell-strong">niedziela 4 PAŹ</span>
+                <span class="cell-sub"><span class="mono">10:00 → 11:30</span></span>
+              </td>
+              <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+              <td>Przelot<span class="cell-sub mono">EPKK → EPKP</span></td>
+              <td>
+                <span class="order-seats">
+                  <span class="order-seat-k">Dowódca</span><span>A. Kowalski</span>
+                  <span class="order-seat-k">Drugi pilot</span><span>E. Sowa</span>
+                </span>
+              </td>
+              <td class="dim">Nieodczytane</td>
+              <td><span class="pill blue">Szuka drugiego pilota</span></td>
+              <td>Adam Kowalski<span class="cell-sub mono">AKO</span></td>
+              <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html">Otwórz</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="kalendarz-flota.html">K1 Kalendarz</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html" class="active">ZL1 Zlecenia</a>
+  <a href="zlecenia-nowe.html">ZL2 Nowe</a>
+  <a href="zlecenia-szczegoly.html">ZL3 Zlecenie</a>
+  <a href="zlecenia-watek.html">ZL4 Rozmowa</a>
+  <span>·</span>
+  <a href="#do-mnie">↓ ZL1a Do mnie</a>
+  <a href="#stany">↓ Stany</a>
+  <span>·</span>
+  <a href="piloci-grupy.html">P5 Grupy</a>
+  <span>·</span>
+  <a href="../30-zlecenia.html">Telefon · 30</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+<!-- ══ ZL1a · „DO MNIE" ══
+     Ta sama lista oczami ADRESATA - każdego członka klubu. Te same zlecenia i ten sam
+     moment, co pierwsza rama telefonu 30 (piątek 21:50): zlecenie B odczytane, jeszcze
+     bez odpowiedzi, więc wejście z kolumny otworzyło właśnie „Do mnie" (pkt 36). Adam
+     Kowalski jest pilotem i instruktorem („Zlecanie lotów" przez własny zakres), więc
+     ma oba segmenty i „Zleć lot" - choć
+     w kolumnie ma tylko Kalendarz i Zlecenia, bo „Podglądu klubu" nie ma. Członek bez
+     uprawnień nie ma przełącznika (druga połowa nie istniałaby dla niego) ani „Zleć
+     lot" - brak uprawnienia znaczy brak przycisku, nie przycisk wyszarzony. -->
+<section class="canvas-section" id="do-mnie">
+  <div class="canvas-section-title">ZL1a · „Do mnie" · zlecenia, na które się odpowiada</div>
+  <div class="inv-grid">
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Lista adresata - bez adresatów, z własną odpowiedzią</span>
+        <span class="inv-when">Zamiast kolumn „Fotele" i „Odpowiedzi" stoi „Twój fotel" - fotel zaproponowany imiennie albo przez grupę, a przy wspólnej liście i przy osobie z list obu foteli „termin do potwierdzenia" (§4.2). O innych adresatach adresat nie wie nic: ani kto, ani ilu, ani przez którą grupę zlecenie do niego trafiło (decyzja 18). Stan mówi o JEGO odpowiedzi, formą bez płci: „Czeka na odpowiedź" (błękit - zlecenie pyta Ciebie), „Zgłoszone" (odpowiedź „Mogę lecieć" czeka na decyzję osoby zlecającej - neutralnie, bo to stan, nie prośba), „Przyjęte" (zieleń - lot jest Twoją rezerwacją, więc wiersz otwiera już REZERWACJĘ w kalendarzu, K2c - jak 23F w telefonie). Kolejność terminem; zlecenia nieaktualne, odwołane i wygasłe schodzą na koniec, przygaszone, a po terminie do „Minione".</span>
+        <span class="inv-classes">.seg (tylko z uprawnieniem) · .pill.blue · .pill.dim · .pill.green · .cell-sub · tr.muted</span>
+      </div>
+      <div class="inv-demo">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Zlecenia</h1>
+          </div>
+          <div class="page-actions">
+            <a class="btn primary" href="zlecenia-nowe.html">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Zleć lot
+            </a>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="seg" role="group" aria-label="Które zlecenia - przykład">
+            <a class="seg-btn on" href="#do-mnie" aria-current="page">Do mnie</a>
+            <a class="seg-btn" href="zlecenia-lista.html">Zlecone</a>
+          </div>
+          <button type="button" class="chip on" aria-pressed="true">Nadchodzące</button>
+          <button type="button" class="chip" aria-pressed="false">Minione</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zlecenia do mnie - nadchodzące terminy</caption>
+            <thead>
+              <tr>
+                <th>Termin</th>
+                <th>Samolot</th>
+                <th>Zadanie</th>
+                <th>Twój fotel</th>
+                <th>Zleca</th>
+                <th>Stan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="clickable">
+                <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span></td>
+                <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+                <td>Skoki<span class="cell-sub mono">EPKP</span></td>
+                <td>Drugi pilot</td>
+                <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+                <td><span class="pill blue">Czeka na odpowiedź</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#adresat-stany">Otwórz</a></td>
+              </tr>
+              <tr class="clickable">
+                <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">10:00 → 12:00</span> · jutro</span></td>
+                <td><span class="reg">SP-AXA</span><span class="cell-sub">C172</span></td>
+                <td>Przelot<span class="cell-sub mono">EPKK → EPRJ</span></td>
+                <td>Dowódca</td>
+                <td>Marta Zięba<span class="cell-sub mono">MZI</span></td>
+                <td><span class="pill green">Przyjęte</span><span class="cell-sub">lot jest Twoją rezerwacją</span></td>
+                <td class="row-actions"><a class="btn ghost sm" href="kalendarz-wpis.html#ze-zlecenia">Otwórz</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="inv-mark">Adam Kowalski - pilot i instruktor („Zlecanie lotów") · piątek 2 października, 21:50</span>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Członek bez uprawnień - sama zakładka „Do mnie"</span>
+        <span class="inv-when">Pilot z pustym zakresem (tu Barbara Nowak) ma „Zlecenia" w kolumnie, bo zlecenie trafia do każdego członka (`access: 'club'`), ale bez przełącznika i bez „Zleć lot": druga połowa listy nie istniałaby dla niego. Nagłówek bez akcji, od razu tabela „Do mnie".</span>
+        <span class="inv-classes">.page-head bez .page-actions · bez .seg</span>
+      </div>
+      <div class="inv-demo">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Zlecenia</h1>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zlecenia do mnie - przykład członka bez uprawnień</caption>
+            <thead>
+              <tr><th>Termin</th><th>Samolot</th><th>Twój fotel</th><th>Stan</th></tr>
+            </thead>
+            <tbody>
+              <tr class="clickable">
+                <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span></td>
+                <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+                <td>Drugi pilot</td>
+                <td><span class="pill dim">Zgłoszone</span></td>
+              </tr>
+              <tr class="clickable">
+                <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">14:00 → 15:30</span> · jutro</span></td>
+                <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+                <td>Dowódca</td>
+                <td><span class="pill green">Przyjęte</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="inv-mark">kolumny skrócone w przykładzie</span>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ STANY TEGO EKRANU ══
+     Nie inwentarz komponentów (ten mieszka w `SZABLON.html`), tylko pozostałe stany,
+     w których ta sama lista się pokazuje. Wskaźnika połączenia nie ma w żadnym:
+     lista odświeża się na żywo kanałem klubu (§11, `docs/kanal-klubu.md`), a zerwane
+     łącze nie jest awarią - po powrocie lista dociąga się zwykłym odczytem. -->
+<section class="canvas-section" id="stany">
+  <div class="canvas-section-title">Stany tego ekranu</div>
+  <div class="inv-grid">
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">„Do mnie" - nic nie czeka</span>
+        <span class="inv-when">Stan, w którym zakładka jest przez większość czasu - więc mówi o SYTUACJI, nie o braku danych. Zdanie o tym, gdzie zlecenie się pojawi, jest instrukcją dla kogoś, kto wszedł sprawdzić, czy coś do niego przyszło.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span>
+          <span class="empty-title">Nic nie czeka na Twoją odpowiedź</span>
+          <span class="empty-note">Zlecenie lotu od klubu pojawi się tutaj i w powiadomieniach.</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">„Zlecone" - jeszcze żadnego zlecenia</span>
+        <span class="inv-when">Stan pusty z drogą wyjścia: jedyna czynność, która tę listę wypełnia. Opis mówi o WARTOŚCI zlecenia jednym zdaniem - „nie musisz pisać do każdego osobno" to cały powód, dla którego ten moduł powstał (#239).</span>
+      </div>
+      <div class="inv-demo">
+        <div class="empty">
+          <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg></span>
+          <span class="empty-title">Nie zlecasz jeszcze żadnego lotu</span>
+          <span class="empty-note">Wskaż termin, maszynę i zadanie, a zlecenie trafi naraz do wybranych osób albo grup - odpowiedzi zobaczysz tutaj.</span>
+          <a class="btn primary" href="zlecenia-nowe.html">Zleć lot</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Zakończone przed terminem - na końcu listy, przygaszone</span>
+        <span class="inv-when">Zlecenie odwołane (albo takie, któremu adresaci wypadli wszyscy) zostaje w „Nadchodzących" do swojego terminu - drugi koordynator ma zobaczyć, że zlecenie było i dlaczego go nie ma. Stoi pod aktywnymi, przygaszone kolorami (bez przezroczystości), z plakietką wygaszoną i powodem, jeśli ktoś go podał (decyzja 16). „Odpowiedzi" mówią kreską: nikt już na nic nie odpowiada. Przykład to zlecenie B w wariancie odwołanym przez osobę zlecającą (telefon 28B, ramka 2).</span>
+        <span class="inv-classes">tr.muted · .pill.dim · .cell-sub</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zlecenie odwołane przed terminem - przykład</caption>
+            <thead>
+              <tr><th>Termin</th><th>Samolot</th><th>Zadanie</th><th>Fotele</th><th>Odpowiedzi</th><th>Stan</th><th>Zleca</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="clickable muted">
+                <td><span class="cell-strong">sobota 3 PAŹ</span><span class="cell-sub"><span class="mono">09:00 → 13:00</span> · jutro</span></td>
+                <td><span class="reg">SP-ANA</span><span class="cell-sub">AN-2</span></td>
+                <td>Skoki<span class="cell-sub mono">EPKP</span></td>
+                <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>J. Wrona</span><span class="order-seat-k">Drugi pilot</span><span>Piloci An-2</span></span></td>
+                <td>—</td>
+                <td><span class="pill dim">Odwołane</span><span class="cell-sub">„Maszyna idzie do serwisu, skoki przenosimy na przyszłą sobotę."</span></td>
+                <td>Ty</td>
+                <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#zamkniete">Otwórz</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="inv-mark">wariant: zlecenie B odwołane w piątek o 16:20</span>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">„Minione" - termin za nami</span>
+        <span class="inv-when">Po terminie zlecenie schodzi z „Nadchodzących" do „Minionych", najnowsze na górze - także obsadzone, bo pod spodem odbył się już zwykły lot i ślad zostaje w dzienniku. Wygasłe mówi, dlaczego się nie odbyło: „bez kompletu załogi" (§5.5 - zlecenie wygasa w całości, także przy jednym obsadzonym fotelu). Ten sam wiersz, co sekcja „Zakończone" na liście w telefonie 30.</span>
+        <span class="inv-classes">.chip.on · .pill.dim · .cell-sub</span>
+      </div>
+      <div class="inv-demo">
+        <div class="filters">
+          <div class="seg" role="group" aria-label="Które zlecenia - przykład minionych">
+            <a class="seg-btn" href="#do-mnie">Do mnie</a>
+            <a class="seg-btn on" href="zlecenia-lista.html" aria-current="page">Zlecone</a>
+          </div>
+          <button type="button" class="chip" aria-pressed="false">Nadchodzące</button>
+          <button type="button" class="chip on" aria-pressed="true">Minione</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Zlecenia klubu - minione terminy</caption>
+            <thead>
+              <tr><th>Termin</th><th>Samolot</th><th>Zadanie</th><th>Fotele</th><th>Odpowiedzi</th><th>Stan</th><th>Zleca</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="clickable">
+                <td><span class="cell-strong">czwartek 1 PAŹ</span><span class="cell-sub"><span class="mono">16:00 → 18:00</span></span></td>
+                <td><span class="reg">SP-BKL</span><span class="cell-sub">PA-28</span></td>
+                <td>Przelot<span class="cell-sub mono">EPKK → EPRJ</span></td>
+                <td><span class="order-seats"><span class="order-seat-k">Dowódca</span><span>J. Wrona</span></span></td>
+                <td>Odczytane 14:20</td>
+                <td><span class="pill dim">Wygasło</span><span class="cell-sub">bez kompletu załogi</span></td>
+                <td>Ty</td>
+                <td class="row-actions"><a class="btn ghost sm" href="zlecenia-szczegoly.html#zamkniete">Otwórz</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="inv-mark">piątek 2 października · zakładka „Minione"</span>
+      </div>
+    </article>
+
+    <article class="inv full">
+      <div class="inv-head">
+        <span class="inv-name">Wczytywanie - plamki w geometrii docelowej</span>
+        <span class="inv-when">Nagłówki kolumn znamy lokalnie, więc nie migoczą. Szerokości plamek dobrane do kolumn (znak maszyny krótki, fotele dwuwierszowe). Nigdy spinner i nigdy pustka; próg 180 ms, minimum 420 ms.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="table-wrap" aria-busy="true">
+          <table>
+            <caption class="visually-hidden">Wczytywanie listy zleceń</caption>
+            <thead>
+              <tr><th>Termin</th><th>Samolot</th><th>Zadanie</th><th>Fotele</th><th>Odpowiedzi</th><th>Stan</th><th>Zleca</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:56px"></span></td><td><span class="skeleton cell" style="width:64px"></span></td><td><span class="skeleton cell" style="width:140px"></span></td><td><span class="skeleton cell" style="width:104px"></span></td><td><span class="skeleton cell" style="width:88px"></span></td><td><span class="skeleton cell" style="width:70px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:56px"></span></td><td><span class="skeleton cell" style="width:64px"></span></td><td><span class="skeleton cell" style="width:140px"></span></td><td><span class="skeleton cell" style="width:104px"></span></td><td><span class="skeleton cell" style="width:88px"></span></td><td><span class="skeleton cell" style="width:70px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td></tr>
+              <tr><td><span class="skeleton cell" style="width:96px"></span></td><td><span class="skeleton cell" style="width:56px"></span></td><td><span class="skeleton cell" style="width:64px"></span></td><td><span class="skeleton cell" style="width:140px"></span></td><td><span class="skeleton cell" style="width:104px"></span></td><td><span class="skeleton cell" style="width:88px"></span></td><td><span class="skeleton cell" style="width:70px"></span></td><td><span class="skeleton cell" style="width:48px"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="inv">
+      <div class="inv-head">
+        <span class="inv-name">Odmowa serwera</span>
+        <span class="inv-when">Baner stoi NAD tabelą i pojawia się w reakcji na odpowiedź, która właśnie przyszła. Tabela zostaje pod nim z ostatnimi danymi - puste miejsce po awarii wyglądałoby jak klub bez zleceń.</span>
+      </div>
+      <div class="inv-demo">
+        <div class="banner danger">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span>Nie ma połączenia z serwerem. Spróbuj za chwilę.</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Spis makiet panelu</a>
+  <span>·</span>
+  <a href="zlecenia-lista.html" class="active">ZL1 Zlecenia</a>
+  <span>·</span>
+  <a href="zlecenia-nowe.html">ZL2 Nowe zlecenie →</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

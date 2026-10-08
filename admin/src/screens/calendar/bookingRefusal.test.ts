@@ -61,6 +61,16 @@ describe('zdanie pod przyciskiem', () => {
     );
   });
 
+  it('kolizja ze ZLECENIEM mówi, kogo szuka - pusty fotel nie ma nazwiska', () => {
+    const e = odmowa(409, {
+      error: 'slot_taken',
+      taken: kolidujaca({ pilotId: null, operation: 'skoki', order: { seeking: ['pic', 'dual'] } }),
+    });
+    expect(bookingErrorMessage(e, TZ, person)).toBe(
+      'Ten termin jest już zajęty. Od 21 wrz, 08:00 stoi zlecenie (szuka załogi).',
+    );
+  });
+
   it('bez dołączonego wiersza zostaje samo „zajęty" - nie zmyślamy, co tam stoi', () => {
     expect(bookingErrorMessage(odmowa(409, { error: 'slot_taken' }), TZ, person)).toBe(
       'Ten termin jest już zajęty.',
@@ -76,7 +86,8 @@ describe('zdanie pod przyciskiem', () => {
 
   it('każdy kod ma własne zdanie, żadne nie jest kodem HTTP', () => {
     const kody = ['aircraft_disabled', 'aircraft_not_found', 'not_your_booking',
-                  'booking_in_past', 'booking_order', 'booking_closed', 'reason_required'];
+                  'booking_in_past', 'booking_order', 'booking_closed', 'reason_required',
+                  'booking_from_order'];
     for (const kod of kody) {
       const zdanie = bookingErrorMessage(odmowa(409, { error: kod }), TZ, person);
       expect(zdanie).not.toMatch(/\d{3}/);

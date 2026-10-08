@@ -83,7 +83,7 @@ export function sessionRoleLabels(flag: FlagDto): string[] {
     case 'mh_gap':
     case 'mh_regression':
     case 'fuel_mismatch':
-      return flag.sessions.map((_, index) => (index === 0 ? 'Oddanie samolotu' : 'Przejęcie'));
+      return flag.sessions.map((_, index) => (index === 0 ? 'Oddanie samolotu' : 'Rozpoczęcie'));
     case 'clock_drift':
       return flag.sessions.map(() => 'Operacja');
   }

@@ -74,7 +74,7 @@ describe('karty własnych rezerwacji', () => {
     expect(mine([booking({ id: 'b1', dualId: 'bno' })])[0]!.meta).toEqual([
       'Przelot',
       'EPKK → EPRJ',
-      'Dual: BNO',
+      'Drugi pilot: BNO',
     ]);
   });
 
@@ -107,5 +107,13 @@ describe('karty własnych rezerwacji', () => {
   it('maszyna spoza cache floty zostaje przy identyfikatorze - nie zgadujemy znaku', () => {
     const rows = mine([booking({ id: 'b1', aircraftId: 'nieznana' })]);
     expect(rows[0]!.reg).toBe('nieznana');
+  });
+});
+
+describe('drugi pilot (decyzja 23 zleceń: rezerwacja liczy oba fotele)', () => {
+  it('lot, w którym siedzę jako drugi pilot, jest moją rezerwacją - z dowódcą w szczegółach', () => {
+    const rows = mine([booking({ id: 'jako-dual', pilotId: 'mzi', dualId: 'ja' })]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.meta).toEqual(['Przelot', 'EPKK → EPRJ', 'Dowódca: MZI']);
   });
 });

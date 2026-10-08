@@ -30,7 +30,7 @@ import {
 } from '../../ui/components';
 import { ChecklistIcon } from '../../ui/components/icons';
 import { personLookup } from '../calendar/directoryLookups';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { NONE } from '../common/values';
 import { ATTENTION, flagPath, flagsPath, type FlagFilter } from './attentionPaths';
 import { flagsSubtitle } from './exportRows';
@@ -177,10 +177,11 @@ export function FlagsScreen() {
         ))}
       </div>
 
-      {flags.error == null ? null : <Banner tone="danger">{errorMessage(flags.error)}</Banner>}
+      {flags.error == null ? null : <Banner tone="danger">{loadErrorMessage(flags.error)}</Banner>}
 
       <Loadable
         pending={flags.isPending}
+        loaded={flags.data != null}
         skeleton={<TableSkeleton headers={filter.resolved ? RESOLVED_HEADERS : OPEN_HEADERS} widths={[150, 64, 180, 90, 60, 80]} rows={4} />}
       >
         {rows.length === 0 ? (
@@ -195,10 +196,10 @@ export function FlagsScreen() {
             }
             note={
               type != null
-                ? 'Zdejmij chip rodzaju, żeby zobaczyć pozostałe sprawy.'
+                ? 'Zdejmij filtr rodzaju, żeby zobaczyć pozostałe sprawy.'
                 : filter.resolved
                   ? 'Zamknięte sprawy pojawią się tu razem z notatką rozstrzygnięcia.'
-                  : 'Rozstrzygnięte sprawy są pod chipem „Rozstrzygnięte".'
+                  : 'Rozstrzygnięte sprawy są pod filtrem „Rozstrzygnięte".'
             }
           />
         ) : (

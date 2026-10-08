@@ -1,67 +1,64 @@
 # Praca bez zasięgu
 
-> Brak sieci nigdy nie blokuje pracy pilota. Wszystko zapisuje się na telefonie i wychodzi do klubu samo, gdy wróci zasięg. Sieć jest okazją do wysyłki, nie warunkiem.
+> Brak internetu nie przeszkadza w lataniu. Wszystko, co dotyczy lotu, zapisuje się w telefonie i wysyła do klubu samo, gdy wróci zasięg.
 
 ## Co działa bez internetu
 
-Wszystko, co dotyczy operacji: wejście PIN-em, rozpoczęcie lotu, kokpit z wykrywaniem startów i lądowań, tankowanie i olej, zdanie samolotu, wpis lotu po fakcie, korekty, sumy na Pulpicie i Historia. Norma zużycia, werdykty i sygnatura operacji też liczą się na telefonie - z Twojego lokalnego zapisu, bez pytania serwera o cokolwiek.
+Wszystko, co dotyczy lotu: odblokowanie PIN-em, rozpoczęcie lotu, kokpit z rozpoznawaniem startów i lądowań, tankowanie i olej, zdanie samolotu, wpis lotu po fakcie, poprawki, Pulpit i Historia. Ocena zużycia wobec normy i sygnatura operacji też liczą się w telefonie.
 
-@screen 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Zdanie samolotu z odczytami"
+@screen 05-cockpit-running "Kokpit w locie" | 09b-zdaj-samolot "Zdanie samolotu"
 
-## Co wymaga sieci
+## Co wymaga internetu
 
-- **Pierwsze logowanie** i logowanie po „Nie pamiętam PIN" - to jedyny moment, w którym telefon musi potwierdzić, kim jesteś.
-- **Wylogowanie** - i dopiero wtedy, gdy kolejka wysyłki jest pusta.
-- **Ślad GPS na mapie** - wraca z serwera ([więcej](slad-gps)).
-- **Kalendarz i rezerwacja** - termin przydziela klub, więc zapis, przesunięcie i odwołanie potwierdza serwer; bez sieci kalendarz mówi to wprost i wraca sam, gdy zasięg wróci ([więcej](rezerwacja-samolotu#rezerwacja-wymaga-zasiegu)).
-- **Skrzynka powiadomień i decyzja o cudzej rezerwacji** - wiadomości przychodzą z klubu, a zgodę zapisuje serwer ([powiadomienia](powiadomienia), [akceptacja rezerwacji](akceptacja-rezerwacji)).
-- **Karta samolotu i obserwowanie** - pokazują cudze loty i terminy, których telefon nie ma u siebie.
-- **Przełączenie klubu** - dla osób w kilku klubach; wymaga też pustej kolejki wysyłki w klubie, z którego wychodzisz.
-- **Świeże dane z klubu**: lista floty i pilotów, przekazanie z ostatniego zdania cudzej operacji, podpowiedzi odczytów we wpisie po fakcie. Bez sieci aplikacja pracuje na kopii z ostatniego połączenia i mówi o tym przy samej wartości - bursztynową adnotacją **Ostatnie pobrane** z datą. Gdy nie ma nawet kopii, pisze „Brak danych - wpisz z licznika".
+- **Logowanie** - pierwsze i po „Nie pamiętam PIN".
+- **Wylogowanie** - i to dopiero wtedy, gdy wszystkie loty zostały wysłane.
+- **Kalendarz i rezerwacje** ([rezerwacja samolotu](rezerwacja-samolotu)).
+- **Zlecenia lotów i rozmowy** ([zlecenia na lot](zlecenia-na-lot)).
+- **Powiadomienia i decyzje o rezerwacjach** ([powiadomienia](powiadomienia)).
+- **Karta samolotu i obserwowanie** ([karta samolotu i obserwowanie](obserwowanie-samolotu)).
+- **Ślad lotu na mapie** ([ślad GPS](slad-gps)).
+- **Zmiana klubu** - dla osób latających w kilku klubach.
+- **Świeże dane z klubu** - lista samolotów i pilotów, odczyty od poprzedniego pilota, podpowiedzi przy wpisie po fakcie. Bez internetu aplikacja korzysta z danych z ostatniego połączenia i pokazuje przy wartości ich datę, na przykład „Dane z 21 CZE 17:30". Gdy nie ma żadnych danych, prosi o wpisanie wartości z przyrządów.
 
-Żadna z tych rzeczy nie zatrzymuje lotu - rezerwacja też nie: bez niej polecisz dokładnie tak samo. Odczyty z przyrządów są ważniejsze od podpowiedzi, a rozjazd z przekazaniem jest ostrzeżeniem, nie blokadą - patrz [łańcuch odczytów](lancuch-odczytow).
+Żadna z tych rzeczy nie blokuje lotu. Bez internetu rozpoczniesz lot, poprowadzisz go i zdasz samolot tak samo jak z zasięgiem.
 
-@screen 02d-preflight-offline "Wartości z ostatniego połączenia" | 14c-slad-offline "Ślad wymaga zasięgu"
+@screen 02d-preflight-offline "Dane z ostatniego połączenia" | 14c-slad-offline "Ślad wymaga internetu"
 
-## Wskaźnik łączności
+## Jak zapisy trafiają do klubu
 
-Oznaczenie w nagłówku istnieje tylko wtedy, gdy coś stoi. Stan „wszystko wysłane" nie dostaje żadnego znaku - świecąca cały czas oznaczenie uczyłaby oko pomijać ten róg ekranu.
+Każde zdarzenie - rozpoczęcie lotu, uruchomienie silnika, start, tankowanie, zdanie, poprawka - zapisuje się w telefonie w chwili, gdy się dzieje. Zapisy, które jeszcze nie dotarły do klubu, czekają w kolejce i wysyłają się same, gdy jest internet. Nic nie musisz wysyłać ręcznie.
 
-| Oznaczenie | Znaczenie | Co zrobić |
+W drugą stronę telefon pobiera z klubu:
+
+- **Twoje loty** - po ponownej instalacji albo na nowym telefonie,
+- **decyzje administratora** - zakończenie albo unieważnienie operacji i poprawione odczyty samolotu,
+- **dane klubu** - samoloty, pilotów i odczyty od poprzedniego pilota.
+
+Jeśli administrator zakończył albo unieważnił operację, którą właśnie prowadzisz, kokpit sam wraca na Pulpit, a komunikat z przyciskiem **ROZUMIEM** mówi, która to operacja, z jakiego powodu i ile zapisów z telefonu nie trafi do klubu.
+
+## Oznaczenie łączności
+
+Oznaczenie w nagłówku pojawia się tylko wtedy, gdy coś czeka na wysłanie.
+
+| Oznaczenie | Co znaczy | Co zrobić |
 |---|---|---|
-| brak oznaczenia | wszystko wysłane albo wyjdzie przy najbliższej okazji | nic |
-| **OFFLINE · n** (bursztyn) | ostatnia próba wysyłki nie dotarła do serwera; n zapisów czeka | nic - przejdzie samo z zasięgiem |
-| **SYNC STOI · n** (czerwony) | serwer odpowiedział i odmówił albo wygasła sesja; kolejka sama nie ruszy | tapnij oznaczenie: baner nazywa powód, podaje kod dla administratora i drogę wyjścia |
+| brak oznaczenia | wszystko wysłane | nic |
+| **OFFLINE · n** (bursztynowe) | n zapisów czeka, bo ostatnia próba nie dotarła do klubu | nic - wyślą się same, gdy wróci zasięg |
+| **SYNC STOI · n** (czerwone) | internet jest, ale wysyłka stoi i sama nie ruszy, na przykład trzeba zalogować się ponownie | tapnij oznaczenie i zrób to, co mówi komunikat |
 
-Tapnięcie otwiera okienko „Synchronizacja": ile zapisów czeka w kolejce, **Ostatnia próba** z godziną i wynikiem („brak sieci", „odrzucone"), **Ostatnia udana synchronizacja**, wiek danych pobranych z panelu oraz przycisk **PONÓW PRÓBĘ**. Ponowienie robi to samo, co **SYNCHRONIZUJ TERAZ** w [ustawieniach](ustawienia).
+Tapnięcie oznaczenia otwiera okienko **Synchronizacja**: liczba zapisów w kolejce, **Ostatnia próba** z godziną i wynikiem, **Ostatnia udana synchronizacja** oraz przycisk **PONÓW PRÓBĘ**. Ponowienie czeka na odpowiedź dłużej niż wysyłka w tle - klub czasem potrzebuje chwili, żeby odpowiedzieć. Każda próba zmienia wiersz „Ostatnia próba", więc zawsze widać, że przycisk zadziałał.
 
-@screen 20-pulpit "Brak oznaczenia · wszystko wysłane" | 20c-pulpit-offline "OFFLINE · okienko synchronizacji" | 20d-pulpit-sync-stoi "SYNC STOI · serwer odmówił"
+@screen 20c-pulpit-offline "OFFLINE i okienko synchronizacji" | 20d-pulpit-sync-stoi "SYNC STOI"
 
-## Ponowienie z ręki czeka dłużej
-
-Wysyłka w tle rezygnuje po kilku sekundach - przy słabym zasięgu lepiej szybko powiedzieć „offline" i wrócić za chwilę. **PONÓW PRÓBĘ** czeka nawet pół minuty, bo sięgasz po nie dokładnie wtedy, gdy długo nic nie szło, a serwer klubu potrzebuje chwili na obudzenie. Każda próba, także nieudana, zmienia wiersz **Ostatnia próba** - żeby dało się odróżnić przycisk, który nic nie zrobił, od próby, która się nie powiodła. Po udanej wysyłce okienko zostaje otwarty ze zdaniem o tym, ile zapisów poszło.
-
-## Decyzje administratora docierają przy pierwszym połączeniu
-
-Zanim telefon wyśle zaległe zapisy, **pyta klub o decyzje z panelu**. Jeśli administrator zakończył albo unieważnił operację, którą właśnie prowadzisz, kokpit sam wraca na Pulpit, a zaległe zapisy tej operacji nie wychodzą - baner z przyciskiem **ROZUMIEM** mówi, która to operacja, z jakiego powodu i ile zapisów zostanie tylko na telefonie.
-
-## Jak to działa
-
-Każde zdarzenie - przejęcie, uruchomienie silnika, wykryty start, tankowanie, zdanie, korekta - zapisuje się na telefonie w chwili, gdy zachodzi, i od razu liczy się do wszystkiego, co widzisz na ekranie. Zapisy, których klub jeszcze nie dostał, tworzą kolejkę: wysyła się sama, paczkami, po odzyskaniu sieci i co jakiś czas w tle. Paczka wysłana dwa razy niczego nie dubluje, bo serwer rozpoznaje zapis, który już ma. Klub nie odrzuca faktów z terenu - wpis, który nie zgadza się z resztą dziennika, dostaje oznaczenie do wyjaśnienia dla administratora, zamiast blokować pilota. Tą samą drogą, na końcu każdej wysyłki, wychodzą nagrania śladu i zgłoszenia z aplikacji. W drugą stronę telefon pobiera własne zapisy (po reinstalacji albo na nowym telefonie), decyzje administratora i dane referencyjne. Mechanizm w całości: [synchronizacja](synchronizacja).
-
-## Dlaczego tak to działa
-
-> **Dlaczego „OFFLINE" opisuje ostatnią próbę, a nie kolejkę.** „OFFLINE" znaczy wynik ostatniej próby, a nie samą obecność zapisów w kolejce. Bursztyn mówi w tej aplikacji „poczekaj, samo przejdzie", więc odmowy serwera nie wolno tak nazwać: sieć wtedy jest, a kolejka mimo to stoi i sama nie ruszy. Dlatego ten stan ma osobny, czerwony kolor.
-
-> **Dlaczego zapisy powstają na jednym telefonie.** Jeden telefon, jeden pilot. Zapisy Twojego dnia powstają na tym telefonie, na którym latasz - to on jest ich źródłem, dopóki nie wyśle ich do klubu. Dlatego jednego dnia lotnego nie prowadzi się na dwóch telefonach, a wylogowanie jest zablokowane przy niepustej kolejce: to, co jeszcze nie doszło, nie ma skąd wrócić.
+> **Uwaga.** Loty zapisują się w telefonie, na którym latasz, i dopiero stamtąd trafiają do klubu. Nie prowadź jednego dnia lotnego na dwóch telefonach i nie odinstalowuj aplikacji, dopóki coś czeka na wysłanie.
 
 ## Częste problemy
 
 @screen 13-ustawienia "SYNCHRONIZUJ TERAZ w ustawieniach"
 
-- **Oznaczenie mówi OFFLINE, choć mam zasięg** → ostatnia próba nie doszła; bywa tak przy słabym połączeniu albo gdy serwer klubu dopiero się budzi. Tapnij oznaczenie i **PONÓW PRÓBĘ** - to ponowienie czeka dłużej niż wysyłka w tle.
-- **Czerwone SYNC STOI** → serwer odpowiedział i odmówił albo trzeba zalogować się ponownie. Twoje zapisy są bezpieczne na telefonie. Zrób to, co mówi baner; przy odmowie przekaż administratorowi kod, który w nim stoi.
-- **Tapnąłem PONÓW PRÓBĘ i nic się nie zmieniło** → sprawdź wiersz **Ostatnia próba**: jeśli ma świeżą godzinę i wynik, przycisk zadziałał, a próba się nie powiodła.
-- **Zmieniam telefon albo odinstalowuję aplikację** → najpierw doprowadź kolejkę do stanu pustego. Zapisy, które nie zdążyły wyjść, istnieją wyłącznie na starym telefonie.
-- **Bez sieci nie widzę śladu lotu** → trasę rysuje serwer. Czasy, loty i rozliczenie operacji widać mimo to.
-- **Bez sieci kalendarz i skrzynka pokazują „BRAK POŁĄCZENIA"** → to nie awaria: oba ekrany wracają same, gdy zasięg wróci. Lot rozpoczniesz i zdasz bez nich.
+- **Oznaczenie mówi OFFLINE, choć mam zasięg** → ostatnia próba nie dotarła, na przykład przy słabym połączeniu. Tapnij oznaczenie i **PONÓW PRÓBĘ**.
+- **Czerwone SYNC STOI** → Twoje zapisy są bezpieczne w telefonie. Zrób to, co mówi komunikat. Jeśli podaje kod, przekaż go administratorowi.
+- **Po tapnięciu PONÓW PRÓBĘ nic się nie zmieniło** → sprawdź wiersz **Ostatnia próba**: jeśli ma świeżą godzinę, przycisk zadziałał, ale wysłanie się nie udało.
+- **Zmieniam telefon albo odinstalowuję aplikację** → najpierw poczekaj, aż wszystko się wyśle. Niewysłane zapisy są tylko na starym telefonie.
+- **Bez internetu nie widzę śladu lotu** → mapę pobiera się z klubu. Czasy, loty i rozliczenie widać mimo to.
+- **Kalendarz, zlecenia i powiadomienia pokazują „BRAK POŁĄCZENIA"** → to nie awaria. Ekrany wrócą same, gdy pojawi się zasięg.

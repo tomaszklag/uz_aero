@@ -40,7 +40,7 @@ const HOUR_MS = 3_600_000;
 export interface FuelReference {
   at: EpochMillis;
   fuelL: number;
-  /** Skąd pochodzi - steruje podpisem w UI („preflight 08:00 UTC"). */
+  /** Skąd pochodzi - steruje podpisem w UI („rozpoczęcie 08:00 UTC"). */
   source: 'preflight' | 'refuel';
 }
 
@@ -189,9 +189,12 @@ export function estimateFob(
   };
 }
 
-/** Podpis źródła odczytu odniesienia - „preflight 08:00 UTC" / „tankowanie 10:48 UTC". */
+/**
+ * Podpis źródła odczytu odniesienia - „rozpoczęcie 08:00 UTC" / „tankowanie 10:48 UTC".
+ * `source: 'preflight'` to nazwa w kodzie; na ekranie „rozpoczęcie" (słownik 2026-10-08).
+ */
 export function fuelReferenceLabel(reference: FuelReference): string {
-  return `${reference.source === 'preflight' ? 'preflight' : 'tankowanie'} ${timeUtc(reference.at)} UTC`;
+  return `${reference.source === 'preflight' ? 'rozpoczęcie' : 'tankowanie'} ${timeUtc(reference.at)} UTC`;
 }
 
 /** Ogniwo szlaku - strukturalnie zgodne z `TrailRow` (logika nie importuje z UI). */

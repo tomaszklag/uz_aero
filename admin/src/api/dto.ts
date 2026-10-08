@@ -64,6 +64,8 @@ export type Capability =
   | 'reservations.approve'
   /** Karta maszyny w aplikacji i powiadomienia o jej lotach (3.2.0, issue #205). */
   | 'fleet.watch'
+  /** Wysyłanie zleceń lotu i prowadzenie własnych (4.0.0, issue #239). */
+  | 'orders.create'
   | 'bugs.triage'
   /** Zakładanie klubów - rola PLATFORMOWA superadministratora (wielofirmowość, epik E). */
   | 'platform.manage';
@@ -1188,6 +1190,23 @@ export interface BookingDto {
   createdAt?: string;
   closedAt?: string | null;
   closeReason?: string | null;
+  /**
+   * Zlecenie za rezerwacją (4.0.0, `bookingOrderWire` na serwerze): `null` = zwykła
+   * rezerwacja. Zlecenie JEST rezerwacją z pustymi fotelami - na osi i w odmowie terminu
+   * mówi, KOGO brakuje („zlecenie · szuka załogi"), zamiast nazwiska (§16 pkt 3).
+   */
+  order?: BookingOrderDto | null;
+}
+
+/**
+ * Zlecenie widziane z rezerwacji. `seeking` - fotele, których szuka TERAZ (pusto po
+ * obsadzeniu i po zamknięciu); `id` i `createdBy` - wyłącznie dla prowadzącego i adresata,
+ * reszta klubu widzi tylko, kogo brakuje.
+ */
+export interface BookingOrderDto {
+  seeking: SeatDto[];
+  id?: string;
+  createdBy?: string;
 }
 
 /**
@@ -1262,6 +1281,8 @@ export interface DirectoryAircraftDto {
   serviceStatus: ServiceStatus;
   /** Wymóg załogi dwuosobowej - plakietka przy drugim pilocie w szufladzie rezerwacji (#233). */
   dualRequired: boolean;
+  /** Format licznika - odczyt w wiadomości „Zdana" w skrzynce, tak jak na tarczy maszyny. */
+  mhFormat: MhFormat;
 }
 
 export interface DirectoryDto {
@@ -1904,4 +1925,422 @@ export interface ConsumptionReportDto {
   /** Ta sama norma, którą dostaje telefon; `null` razem z niepublikowanym modelem. */
   norm: ConsumptionNorm | null;
   mh: MhModel;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * SKRZYNKA POWIADOMIEŃ (4.0.0, K7 `docs/kanal-klubu.md`; epik KK-D #246)
+ *
+ * Ta sama skrzynka, co w telefonie: `GET /admin/api/me/notifications` oddaje ten sam
+ * kształt wiersza, co ramka `notification` kanału klubu (`server/.../notify/inboxItem.ts`).
+ * `payload` wozi identyfikatory i czasy, nie zdania - nazwisko i znak maszyny panel
+ * rozwiązuje ze słownika klubu, a zdanie składa `screens/inbox/inboxRows.ts`.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Doba KLUBU terminu, o którym mówi wiadomość - granice jako chwile ISO. */
+export interface InboxTermDayDto {
+  date: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface InboxItemDto {
+  id: string;
+  /** Rodzaj wiadomości - napis z kontraktu skrzynki; nieznany dostaje wiersz ogólny. */
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  /** `null` = nieprzeczytana - zielona krawędź i liczba przy dzwonku. */
+  readAt: string | null;
+  day: InboxTermDayDto | null;
+}
+
+/** Strona skrzynki - najnowsze pierwsze; liczba nieprzeczytanych liczy CAŁĄ skrzynkę. */
+export interface InboxPageDto {
+  timezone: string;
+  unread: number;
+  items: InboxItemDto[];
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * ZLECENIA NA LOT (4.0.0, `docs/zlecenia.md` §13, §13.1; epik Z-D #248)
+ *
+ * Ten sam kształt, co w telefonie: trasy panelu (`/admin/api/orders…`) rejestrują TĘ SAMĄ
+ * tablicę punktów końcowych, co trasy aplikacji (`server/.../common/orderEndpoints.ts`),
+ * a kształt składa `orderWire.ts`. Kształt pyta, KTO PATRZY: pola prowadzącego
+ * (`audienceLabel`) przychodzą wyłącznie temu, kto zlecenie prowadzi - panel nie składa
+ * listy adresatów, której serwer mu nie dał (pkt 18).
+ *
+ * Unie niżej są lustrami `server/src/domain/orders.ts` i `orderAnswers.ts`, pilnowanymi
+ * przez `test/mirrors.test.ts`: stan dołożony na serwerze bez lustra wyszedłby na ekran
+ * surowym napisem.
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Lustro `Seat`: fotel dowódcy albo drugiego pilota. */
+export type SeatDto = 'pic' | 'dual';
+
+/** Lustro `PicSeatState`: dowódcą jest zlecający („Ja") albo fotel jest szukany. */
+export type PicSeatStateDto = 'self' | 'sought';
+
+/** Lustro `DualSeatState`: dochodzi „brak" - tylko bez wymogu załogi dwuosobowej. */
+export type DualSeatStateDto = 'self' | 'sought' | 'none';
+
+/** Lustro `OrderAddressing`: per fotel albo wspólna lista bez foteli (§4.2). */
+export type OrderAddressingDto = 'per_seat' | 'shared';
+
+/** Lustro `OrderStatus` (§5): dwa stany żywe i dwa końcowe. */
+export type OrderStatusDto = 'open' | 'filled' | 'cancelled' | 'expired';
+
+/** Lustro `OrderAnswer`: „Przyjmuję"/„Mogę lecieć" albo „Nie mogę". */
+export type OrderAnswerDto = 'yes' | 'no';
+
+/**
+ * Lustro `StaleReason`: dlaczego zlecenie przestało czekać na adresata - zamknięte,
+ * odebrane, fotel zniesiony albo obsadzony kimś innym.
+ */
+export type StaleReasonDto = 'closed' | 'removed' | 'seat_dropped' | 'seat_filled';
+
+/** Doba KLUBU terminu - granice jako chwile ISO, jak w kalendarzu (`docs/rezerwacje.md` §6.1). */
+export interface OrderDayDto {
+  date: string;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface OrderDto {
+  id: string;
+  status: OrderStatusDto;
+  /** Wersja - podnosi ją WYŁĄCZNIE zmiana terminu (§5.1). */
+  revision: number;
+  createdBy: string;
+  seats: { pic: PicSeatStateDto; dual: DualSeatStateDto };
+  addressing: OrderAddressingDto;
+  editedAt: string | null;
+  createdAt: string;
+  closedAt: string | null;
+  closedBy: string | null;
+  closeReason: string | null;
+  /**
+   * „dowódca: Instruktorzy · drugi pilot: Jan Wrona" - WYŁĄCZNIE dla prowadzącego.
+   * Składa ją serwer przy zapisie (`domain/orderAddressing.ts` `audienceLabel`), bo grupa
+   * bywa potem przemianowana albo skasowana, a etykieta ma mówić, do kogo zlecenie poszło.
+   */
+  audienceLabel?: string;
+}
+
+/** Termin zlecenia - treść zlecenia, więc w komplecie dla każdego, kto je widzi. */
+export interface OrderBookingDto {
+  id: string;
+  aircraftId: string;
+  status: BookingStatusDto;
+  startsAt: string;
+  endsAt: string;
+  operation: string | null;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  note: string | null;
+  /** Załoga z rezerwacji - `null` = fotel bez osoby. */
+  pilotId: string | null;
+  dualId: string | null;
+}
+
+/** Ja jako adresat - wiersz „Do mnie" i szuflada adresata. */
+export interface OrderMeDto {
+  /** Fotel zaproponowany; `null` = termin do potwierdzenia (wspólna lista albo obie listy, pkt 37). */
+  seat: SeatDto | null;
+  namedSeat: SeatDto | null;
+  /** Wskazany imiennie jako jedyny adresat fotela - jego „tak" obsadza fotel (§4.3). */
+  direct: boolean;
+  answer: OrderAnswerDto | null;
+  answerReason: string | null;
+  answeredAt: string | null;
+  previousAnswer: OrderAnswerDto | null;
+  previousAnswerAt: string | null;
+  previousAnswerReason: string | null;
+  seen: boolean;
+  removed: boolean;
+  removedAt: string | null;
+  removeReason: string | null;
+  /** Czy zlecenie jeszcze czeka na tę osobę - inaczej „Nieaktualne". */
+  inPlay: boolean;
+  staleReason: StaleReasonDto | null;
+  /** Fotel, w którym siedzę - lot jest już moją rezerwacją (§14.3). */
+  assignedSeat: SeatDto | null;
+  threadId: string | null;
+  unread: number;
+  lastUnreadAt: string | null;
+}
+
+/** Postęp w wierszu „Zlecone": liczby albo jedna osoba i jej stan. */
+export interface OrderProgressDto {
+  recipients: number;
+  seen: number;
+  volunteers: number;
+  single: { pilotId: string; seen: boolean; answer: OrderAnswerDto | null; answeredAt: string | null } | null;
+}
+
+export interface OrderListItemDto {
+  day: OrderDayDto;
+  order: OrderDto;
+  booking: OrderBookingDto;
+  /** „Do mnie" - moja odpowiedź; w „Zlecone" `null`. */
+  me: OrderMeDto | null;
+  /** „Zlecone" - postęp; w „Do mnie" `null`. */
+  progress: OrderProgressDto | null;
+  /** „Do mnie": nieprzeczytane w mojej rozmowie; „Zlecone": u autora suma z jego rozmów. */
+  unread: number;
+}
+
+/** Lista „Do mnie" albo „Zlecone" - ostatnie 14 dni po terminie i wszystko, co przed (pkt 55). */
+export interface OrderListDto {
+  timezone: string;
+  items: OrderListItemDto[];
+}
+
+/** Liczby modułu - pierwsza połowa listy wybiera się z nich (pkt 36). */
+export interface OrderSummaryDto {
+  awaitingAnswer: number;
+  seekingCrew: number;
+  canCreate: boolean;
+  canManage: boolean;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+ * GRUPY KLUBU (4.0.0, `docs/zlecenia.md` §6.1; makieta `piloci-grupy`; epik Z-D #248)
+ *
+ * Nazwa i lista członków - nic więcej. Odczyt na „Podglądzie klubu" albo „Zlecaniu
+ * lotów", zapis wyłącznie na „Kontach pilotów" (`accounts.manage`, decyzja 22) z wpisem
+ * w dzienniku akcji. Lista osób jedzie RAZEM z członkami wyłączonymi: grupa ich trzyma,
+ * a przygasić je jest sprawą ekranu, który zna stan członkostwa (słownik klubu).
+ * ══════════════════════════════════════════════════════════════════════════════ */
+
+export interface GroupDto {
+  id: string;
+  name: string;
+  memberIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupListDto {
+  groups: GroupDto[];
+}
+
+/**
+ * Lustro `MemberGroupRefusal` z `server/src/application/admin/commands/memberGroups.ts`:
+ * nazwa zajęta w klubie (bez względu na wielkość liter) i osoba spoza aktywnych członków.
+ * Kod jedzie w polu `error` odpowiedzi (409 i 400).
+ */
+export type GroupRefusalDto = 'name_taken' | 'member_not_in_org';
+
+// -- karta zlecenia (szuflada ZL3; `orderCardWire` na serwerze) -----------------------
+
+/**
+ * Lustro `OrderChangeKind` (`server/src/domain/orders.ts`) - rodzaje wpisów historii zmian.
+ * Zapis jest historyczny i w bazie nie ma CHECK-a, więc ekran musi przeżyć rodzaj, którego
+ * nie zna (wpis ogólny „Zmiana") - lustro mówi, co serwer dziś PISZE.
+ */
+export type OrderChangeKindDto =
+  | 'created'
+  | 'edited'
+  | 'recipients_added'
+  | 'recipients_removed'
+  | 'resent'
+  | 'assigned'
+  | 'unassigned'
+  | 'withdrawn'
+  | 'cancelled'
+  | 'expired';
+
+/** Adresat widziany przez PROWADZĄCEGO - wiersz karty fotela (ZL3). Adresat tej listy nie widzi. */
+export interface OrderLeaderRecipientDto {
+  pilotId: string;
+  /** Fotel zaproponowany; `null` = wspólna lista albo termin do potwierdzenia (obie listy). */
+  seat: SeatDto | null;
+  namedSeat: SeatDto | null;
+  direct: boolean;
+  viaGroupId: string | null;
+  answer: OrderAnswerDto | null;
+  previousAnswer: OrderAnswerDto | null;
+  answerReason: string | null;
+  answeredAt: string | null;
+  seen: boolean;
+  seenAt: string | null;
+  lastSeenAt: string | null;
+  /** Otworzył kartę PRZED ostatnią edycją inną niż termin - „zmiana z 07:10 nieodczytana". */
+  editUnseen: boolean;
+  inPlay: boolean;
+  staleReason: StaleReasonDto | null;
+  assignedSeat: SeatDto | null;
+  removed: boolean;
+  removedAt: string | null;
+  /** Inna rezerwacja tej osoby w terminie zlecenia - bursztyn przy wyborze, nie blokada. */
+  conflict: { bookingId: string; aircraftId: string; startsAt: string; endsAt: string } | null;
+  threadId: string | null;
+  /** Nieprzeczytane przez AUTORA wiadomości od tej osoby; u pozostałych prowadzących 0. */
+  unread: number;
+}
+
+/** Wpis historii zmian - z nazwiskiem (`actorId`) wyłącznie dla prowadzącego; `null` = zegar. */
+export interface OrderHistoryEntryDto {
+  id: string;
+  actorId: string | null;
+  kind: OrderChangeKindDto | string;
+  payload: Record<string, unknown>;
+  at: string;
+}
+
+export interface OrderCardDto {
+  timezone: string;
+  day: OrderDayDto;
+  order: OrderDto;
+  booking: OrderBookingDto;
+  /** Kto patrzy: prowadzący, adresat - albo oba naraz (koordynator, do którego zlecenie trafiło). */
+  viewer: { leads: boolean; recipient: OrderMeDto | null };
+  /** Ostatnia edycja inna niż termin - BEZ nazwiska (pkt 31). */
+  lastEdit: { at: string; changes: Record<string, unknown> } | null;
+  lastTermChange: { at: string; from: unknown; to: unknown } | null;
+  /** Moje inne rezerwacje w tym terminie - adresat widzi je przed odpowiedzią. */
+  myConflicts: { bookingId: string; aircraftId: string; startsAt: string; endsAt: string }[];
+  /** Wyłącznie prowadzący; adresat dostaje `null`. */
+  recipients: OrderLeaderRecipientDto[] | null;
+  history: OrderHistoryEntryDto[] | null;
+}
+
+/**
+ * Lustro `OrderRefusal` (`server/src/domain/orders.ts`) - odmowy reguł zlecenia. Kod jedzie
+ * w polu `error` odpowiedzi (409 stan, 400 treść, 403 prawo). Odmowy terminu
+ * (`slot_taken` i spółka) i „nie prowadzisz" (`not_leader`, 403) nazywa osobna mapa.
+ */
+export type OrderRefusalDto =
+  | 'no_seat_sought'
+  | 'dual_required'
+  | 'no_recipients'
+  | 'seat_not_sought'
+  | 'unknown_group'
+  | 'not_member'
+  | 'order_closed'
+  | 'not_recipient'
+  | 'seat_filled'
+  | 'not_volunteered'
+  | 'wrong_seat'
+  | 'same_person_both_seats'
+  | 'seat_empty'
+  | 'not_assigned'
+  | 'already_assigned'
+  | 'recipient_assigned';
+
+/**
+ * Lustro `AnswerOutcome` (`server/src/domain/orderAnswers.ts`) - wynik odpowiedzi adresata.
+ * ZAWSZE 200: „fotel już zajęty" i „zamknięte" są odpowiedzią o stanie zlecenia, nie awarią
+ * (§20 Z3). Unia obiektów - strażnik luster czyta wyłącznie unie napisów, więc nowy rodzaj
+ * ujawnia kompilator przy `switch` w szufladzie adresata.
+ */
+export type OrderAnswerOutcomeDto =
+  | { kind: 'assigned'; seat: SeatDto }
+  | { kind: 'volunteered' }
+  | { kind: 'declined' }
+  | { kind: 'seat_filled' }
+  | { kind: 'closed' };
+
+/** `POST /orders/:id/answer` - wynik i świeża karta, żeby ekran nie pytał drugi raz. */
+export interface OrderAnswerResultDto {
+  outcome: OrderAnswerOutcomeDto;
+  card: OrderCardDto | null;
+}
+
+// -- rozmowa w zleceniu (szuflada ZL4; `threadPageWire` na serwerze) -----------------
+
+/** Wiadomość rozmowy - identyfikator nadaje KLIENT, więc ponowiona wysyłka to ta sama wiadomość. */
+export interface ThreadMessageDto {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Kursor starszej strony rozmowy - PARA, jak w skrzynce. */
+export interface ThreadCursorDto {
+  beforeAt: string;
+  beforeId: string;
+}
+
+/**
+ * Strona rozmowy (`GET /orders/:id/threads/:pilotId/messages`). `role: 'reader'` - osoba
+ * z „Cudzymi rezerwacjami" czyta cudzą rozmowę bez pisania (pkt 19); `closed` mówi, czemu
+ * nie da się pisać (`null` = da się). Wiadomości od NAJNOWSZEJ; rozmowa bez ani jednej
+ * wiadomości nie ma jeszcze wątku (`threadId: null`).
+ */
+export interface ThreadPageDto {
+  role: 'participant' | 'reader';
+  closed: 'read_only' | 'thread_closed' | null;
+  threadId: string | null;
+  /** Uczestnicy z chwilą odczytu - „Odczytane 07:41" pod ostatnią wiadomością. */
+  participants: { pilotId: string; lastReadAt: string | null }[];
+  messages: ThreadMessageDto[];
+  /** Starsza strona; `null` = to już początek rozmowy. */
+  next: ThreadCursorDto | null;
+}
+
+/**
+ * Lustro `ThreadRefusal` (`server/src/application/common/commands/threads.ts`) - odmowa
+ * wysłania wiadomości. Kod jedzie w polu `error` odpowiedzi (403, 409, 400).
+ */
+export type ThreadRefusalDto = 'read_only' | 'thread_closed' | 'message_invalid' | 'message_exists';
+
+// -- nowe zlecenie (szuflada ZL2; `POST /orders`) ------------------------------------
+
+/** Lista adresatów fotela albo wspólnej listy - osoby imiennie i grupy klubu. */
+export interface AddressListDto {
+  pilotIds: string[];
+  groupIds: string[];
+}
+
+export interface OrderSeatsDto {
+  pic: PicSeatStateDto;
+  dual: DualSeatStateDto;
+}
+
+/**
+ * Adresowanie: per fotel (lista szukanego fotela; `null` przy fotelu, którego zlecenie nie
+ * szuka - inaczej odmowa `seat_not_sought`) albo jedna wspólna lista (§4.2).
+ */
+export type OrderAudienceDto =
+  | { kind: 'per_seat'; pic: AddressListDto | null; dual: AddressListDto | null }
+  | { kind: 'shared'; list: AddressListDto };
+
+/** Ciało `POST /orders` - identyfikator nadaje panel (powtórzony zapis to to samo zlecenie). */
+export interface NewOrderDto {
+  id: string;
+  aircraftId: string;
+  startsAt: string;
+  endsAt: string;
+  operation: string;
+  fromIcao: string | null;
+  toIcao: string | null;
+  plannedAirMin: number | null;
+  plannedFuelL: number | null;
+  note: string | null;
+  seats: OrderSeatsDto;
+  audience: OrderAudienceDto;
+}
+
+/**
+ * Ciało `PATCH /orders/:id` w edycji (ZL2c) - SAMA różnica. Zmiana terminu podnosi wersję
+ * zlecenia (odpowiedzi od nowa, §5.1); dopisani dostają zlecenie, pozostali - „Zlecenie
+ * edytowane" (§5.2). Sposobu adresowania poprawka nie zmienia.
+ */
+export interface OrderPatchDto {
+  aircraftId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  operation?: string;
+  fromIcao?: string | null;
+  toIcao?: string | null;
+  plannedAirMin?: number | null;
+  plannedFuelL?: number | null;
+  note?: string | null;
+  seats?: OrderSeatsDto;
+  addRecipients?: { seat: SeatDto | null; list: AddressListDto }[];
 }

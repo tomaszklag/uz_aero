@@ -37,7 +37,8 @@ export interface MyBookingsInput {
 
 export function buildMyBookings(input: MyBookingsInput): MyBookingVm[] {
   return bookingsOnDay(input.bookings, input.day)
-    .filter((b) => b.kind === 'flight' && b.pilotId === input.pilotId)
+    // Rezerwacja liczy OBA fotele (decyzja 23 zleceń): drugi pilot leci tym samym lotem.
+    .filter((b) => b.kind === 'flight' && (b.pilotId === input.pilotId || b.dualId === input.pilotId))
     .sort((a, b) => a.startsAt - b.startsAt)
     .map((b) => ({
       bookingId: b.id,
@@ -49,11 +50,11 @@ export function buildMyBookings(input: MyBookingsInput): MyBookingVm[] {
         input.day,
       )}`,
       reg: input.aircraft.find((a) => a.id === b.aircraftId)?.reg ?? b.aircraftId,
-      meta: meta(b, input.codeOf),
+      meta: meta(b, input.pilotId, input.codeOf),
     }));
 }
 
-function meta(booking: CalendarBooking, codeOf: (id: string | null) => string | null): string[] {
+function meta(booking: CalendarBooking, pilotId: string, codeOf: (id: string | null) => string | null): string[] {
   const rows: string[] = [];
 
   const operation = operationLabelOf(booking.operation);
@@ -65,8 +66,14 @@ function meta(booking: CalendarBooking, codeOf: (id: string | null) => string | 
   const route = routeLabel(operationTypeOf(booking.operation), booking.fromIcao, booking.toIcao);
   if (route !== '') rows.push(route);
 
-  const dual = codeOf(booking.dualId);
-  if (dual != null) rows.push(`Dual: ${dual}`);
+  // Drugi pilot widzi tu DOWÓDCĘ - „Drugi pilot: ja" byłoby zdaniem o sobie samym.
+  if (booking.dualId === pilotId) {
+    const pic = codeOf(booking.pilotId);
+    if (pic != null) rows.push(`Dowódca: ${pic}`);
+  } else {
+    const dual = codeOf(booking.dualId);
+    if (dual != null) rows.push(`Drugi pilot: ${dual}`);
+  }
 
   return rows;
 }

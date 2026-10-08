@@ -507,9 +507,12 @@ export function plural(n: number, one: string, few: string, many: string): strin
   return many;
 }
 
-/** „1 zdarzenie" / „3 zdarzenia" / „12 zdarzeń". */
+/**
+ * „1 zapis" / „3 zapisy" / „12 zapisów" - pozycje kolejki wysyłki. Słowem pilota, nie
+ * rejestru: to, co powstało na telefonie, pilot nazywa zapisem (przegląd treści 2026-10-08).
+ */
 export function eventsCount(n: number): string {
-  return `${n} ${plural(n, 'zdarzenie', 'zdarzenia', 'zdarzeń')}`;
+  return `${n} ${plural(n, 'zapis', 'zapisy', 'zapisów')}`;
 }
 
 /**

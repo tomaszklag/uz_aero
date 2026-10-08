@@ -77,7 +77,7 @@ export function statsSubtitle(report: StatsReportDto): string {
   const open = report.totals.openSessionsInRange;
   if (open > 0) parts.push(`${open} w toku poza sumami`);
   const undated = report.totals.openSessionsUndated;
-  if (undated > 0) parts.push(`${undated} bez daty przejęcia`);
+  if (undated > 0) parts.push(`${undated} bez daty rozpoczęcia`);
   return parts.join(' · ');
 }
 

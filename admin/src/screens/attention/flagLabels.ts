@@ -127,12 +127,12 @@ export function flagSubtitle(flag: FlagDto): string {
     }
     case 'mh_gap': {
       const gap = num(d, 'gapH');
-      const head = `zdanie ${mh(num(d, 'prevEnd'), flag.mhFormat)}, przejęcie ${mh(num(d, 'nextStart'), flag.mhFormat)}`;
+      const head = `zdanie ${mh(num(d, 'prevEnd'), flag.mhFormat)}, rozpoczęcie ${mh(num(d, 'nextStart'), flag.mhFormat)}`;
       return gap == null ? head : `${head} · ${signedHours(gap)}`;
     }
     case 'mh_regression': {
       const back = num(d, 'regressionH');
-      const head = `przejęcie ${mh(num(d, 'nextStart'), flag.mhFormat)} niższe niż zdanie ${mh(num(d, 'prevEnd'), flag.mhFormat)}`;
+      const head = `rozpoczęcie ${mh(num(d, 'nextStart'), flag.mhFormat)} niższe niż zdanie ${mh(num(d, 'prevEnd'), flag.mhFormat)}`;
       return back == null ? head : `${head} · ${signedHours(-back)}`;
     }
     case 'fuel_mismatch': {
@@ -170,27 +170,27 @@ export function flagAdvice(flag: FlagDto): string {
     case 'aircraft_overlap':
       return (
         'Zakończ operację wiszącą w dzienniku albo poczekaj na zdanie samolotu, potem zamknij sprawę. ' +
-        'Zamknięcie sprawy wyśle kartę doby do arkusza.'
+        'Zamknięcie sprawy wyśle kartę dnia do arkusza.'
       );
     case 'pilot_overlap':
       return (
-        'Sprawdź godziny przejęcia i zdania obu operacji i popraw tę, która ma je błędne. ' +
+        'Sprawdź godziny rozpoczęcia i zdania obu operacji i popraw tę, która ma je błędne. ' +
         'Zamknięcie sprawy nie zmienia żadnej liczby - mówi tylko, że ktoś to sprawdził.'
       );
     case 'mh_gap':
       return (
         'Ktoś latał bez aplikacji albo odczyt jest zawyżony. Lot bez aplikacji dopisuje pilot wpisem ręcznym, ' +
-        'błędny odczyt poprawia się przy przejęciu albo przy zdaniu.'
+        'błędny odczyt poprawia się przy rozpoczęciu albo przy zdaniu.'
       );
     case 'mh_regression':
       return (
-        'Źle odczytany licznik - popraw odczyt przy przejęciu albo przy zdaniu. ' +
+        'Źle odczytany licznik - popraw odczyt przy rozpoczęciu albo przy zdaniu. ' +
         'Zamknięcie sprawy nie zmienia żadnej liczby - mówi tylko, że ktoś to sprawdził.'
       );
     case 'fuel_mismatch':
       return (
         'Jeśli między operacjami tankowano poza aplikacją, dopisz tankowanie w operacji, która oddała samolot. ' +
-        'Jeśli odczyt jest błędny, popraw go przy przejęciu. Zamknięcie sprawy nie zmienia żadnej liczby.'
+        'Jeśli odczyt jest błędny, popraw go przy rozpoczęciu. Zamknięcie sprawy nie zmienia żadnej liczby.'
       );
     case 'clock_drift':
       return (
@@ -245,7 +245,7 @@ export function flagFacts(flag: FlagDto): FlagFact[] {
       const takenAt = second?.claimedAt ?? null;
       return [
         { label: stamped('Zdanie', handedAt), value: mh(num(d, 'prevEnd'), flag.mhFormat), tone: null },
-        { label: stamped('Przejęcie', takenAt), value: mh(num(d, 'nextStart'), flag.mhFormat), tone: null },
+        { label: stamped('Rozpoczęcie', takenAt), value: mh(num(d, 'nextStart'), flag.mhFormat), tone: null },
         {
           label: 'Różnica',
           value: delta == null ? NONE : signedHours(flag.type === 'mh_gap' ? delta : -delta),
@@ -260,7 +260,7 @@ export function flagFacts(flag: FlagDto): FlagFact[] {
       const takenAt = second?.claimedAt ?? null;
       return [
         { label: stamped('Przekazanie · zdanie', handedAt), value: litres(num(d, 'handoverL')), tone: null },
-        { label: stamped('Odczyt przy przejęciu', takenAt), value: litres(num(d, 'readingL')), tone: null },
+        { label: stamped('Odczyt przy rozpoczęciu', takenAt), value: litres(num(d, 'readingL')), tone: null },
         { label: 'Różnica', value: diff == null ? NONE : signedLitres(diff), tone: 'amber' },
         ...(tolerance == null ? [] : [{ label: 'Tolerancja', value: litres(tolerance), tone: null }]),
       ];
@@ -318,8 +318,8 @@ export function rowFlagNote(
       const nextStart = num(d, 'nextStart');
       if (prevEnd == null || nextStart == null) return null;
       return row.mhStart === nextStart
-        ? { column: 'moto', text: `zdanie ${mh(prevEnd, row.mhFormat)}` }
-        : { column: 'moto', text: `następne przejęcie ${mh(nextStart, row.mhFormat)}` };
+        ? { column: 'moto', text: `przekazano ${mh(prevEnd, row.mhFormat)}` }
+        : { column: 'moto', text: `następna operacja odczytała ${mh(nextStart, row.mhFormat)}` };
     }
     default:
       return null;

@@ -42,11 +42,17 @@ import { keys } from './keys';
  */
 export const SESSION_LIST_LIMIT = 200;
 
-/** Poziom 1: cała flota w zakresie dat. */
+/**
+ * Poziom 1: cała flota w zakresie dat. Poprzednia odpowiedź zostaje na ekranie, dopóki
+ * nie przyjdzie nowa - jak na osi pilotów. Bez tego pierwsze wejście mrugało tabelą:
+ * serwer oddaje zakres domyślny, ekran wpisuje go do adresu, klucz się zmienia i lista
+ * znikała do drugiej odpowiedzi.
+ */
 export function useLogFleet(range: LogRangeQuery) {
   return useQuery<LogReportDto>({
     queryKey: keys.log.fleet(range),
     queryFn: () => loadLog(range),
+    placeholderData: keepPreviousData,
   });
 }
 

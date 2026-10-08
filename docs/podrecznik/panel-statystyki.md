@@ -1,53 +1,43 @@
 # Statystyki
 
-> Ile latał klub w wybranym zakresie dat: sumy w jednym pasku, nalot dzień po dniu i trzy tabele tego samego zbioru operacji - samoloty, piloci, zadania - każda z wierszem „Razem". Ta sama podstawa liczenia, co w dzienniku: operacje zamknięte.
+> Ile latał klub w wybranym okresie: sumy w jednym pasku, nalot dzień po dniu i trzy tabele - według samolotów, pilotów i zadań.
 
-## Zakres dat
+Statystyki otwiera uprawnienie **Podgląd klubu** ([kto co widzi](uprawnienia)).
 
-Para pól „od → do" i szybkie zakresy: **30 dni**, **Ten miesiąc**, **Poprzedni miesiąc**, **Ten sezon**, **Poprzedni sezon**. Sezon liczy się jak rok kalendarzowy - od 1 stycznia do dziś, a poprzedni to cały ubiegły rok - bo tak rozlicza się nalot roczny. Zakres jedzie w adresie zawsze, także domyślny, więc link wklejony koledze pokazuje te same liczby.
+## Wybór okresu
 
-Podtytuł strony nazywa podstawę liczenia: **operacje zamknięte w zakresie**, a obok liczbę operacji **w toku poza sumami**. Operacja, której pilot jeszcze nie zdał, nie dokłada się do nalotu na żadnym ekranie panelu - ani tu, ani w dzienniku - dopóki nie zostanie zdana.
+Pola „od → do" i gotowe okresy: **30 dni**, **Ten miesiąc**, **Poprzedni miesiąc**, **Ten sezon** i **Poprzedni sezon**. Sezon to rok kalendarzowy: od 1 stycznia do dziś, a poprzedni sezon - cały ubiegły rok. Wybrany okres zapisuje się w adresie strony.
 
-## Razem
+Pod tytułem stoi, co wchodzi do sum: **operacje zamknięte w wybranym okresie**. Operacje, które jeszcze trwają, są wymienione osobno i nie wchodzą do sum - tak samo jak w [dzienniku](panel-dziennik).
 
-Osiem liczb w jednym pasku, bez kafli: **Operacje**, **Dni lotne** (z ilu dni zakresu), **Loty**, **Blok** (czas od uruchomienia do wyłączenia silnika), **Lot** (czas w powietrzu), **Paliwo** (zużyte według odczytów), **Δ MH** (przyrost licznika motogodzin w godzinach) i **Piloci** - ile osób latało w dowolnym fotelu, jako dowódca albo drugi pilot.
+## Sumy
 
-@panel statystyki "Statystyki: pasek sum, słupki i trzy tabele"
+Jeden pasek z ośmioma liczbami: **Operacje**, **Dni lotne** (z ilu dni okresu), **Loty**, **Blok** (czas pracy silnika), **Lot** (czas w powietrzu), **Paliwo** (zużyte według odczytów), **Δ MH** (przyrost motogodzin w godzinach) i **Piloci** - ile osób latało jako dowódca albo drugi pilot.
+
+@panel statystyki "Statystyki: sumy, wykres i tabele"
 
 ## Nalot dzień po dniu
 
-Słupek na każdy dzień zakresu, wysokość względem najwyższego dnia; dzień bez lotów to prawdziwe zero - kreska u podstawy, nie dziura. Podpis pod wykresem nazywa najwyższy dzień i jego czas blokowy. Przy zakresie do dwóch tygodni podpisany jest każdy dzień, przy dłuższym co siódmy.
+Słupek na każdy dzień okresu. Dzień bez lotów ma kreskę przy podstawie. Podpis pod wykresem wskazuje dzień z największym nalotem.
 
 ## Trzy tabele
 
-Wszystkie trzy liczą te same operacje - różnią się tym, po czym je grupują. Każda kończy się wierszem **Razem**, który sumuje wyłącznie to, co da się zsumować.
+Wszystkie trzy liczą te same operacje - różnią się tylko podziałem. Każda kończy się wierszem **Razem**.
 
-**Samoloty** - wiersz na maszynę, która w zakresie latała: **Operacje**, **Dni**, **Loty**, **Blok**, **Lot**, **Paliwo**, **Śr. L/h** (średnie zużycie na godzinę pracy silnika), **Δ MH** i **Wykorzystanie** - w ilu dniach zakresu maszyna latała, w procentach. Paliwo bywa kreską z tym samym powodem, co w dzienniku: gdy choć jedna operacja nie ma bilansu, suma byłaby liczbą mniejszą od prawdy podaną jako prawda.
+- **Samoloty** - operacje, dni, loty, blok, lot, paliwo, średnie zużycie na godzinę pracy silnika, przyrost motogodzin i **wykorzystanie**, czyli w ilu dniach okresu samolot latał.
+- **Piloci** - operacje, loty, blok i lot liczą się dowódcy, jak w książce lotów. Czas w prawym fotelu ma osobną kolumnę **Drugi pilot**. Uczeń, który latał tylko jako drugi pilot, ma zera w nalocie i podpis „tylko jako drugi pilot".
+- **Zadania** - Skoki, Przelot, Egzamin, Lot techniczny, Inne: operacje, loty, blok, lot, udział w nalocie floty i samoloty.
 
-**Piloci** - wiersz na osobę, która latała w dowolnym fotelu: **Operacje**, **Loty**, **Blok** i **Lot** liczą się **dowódcy**, jak w książce lotów, a czas w prawym fotelu ma własną kolumnę **Drugi pilot** z własną sumą. Uczeń bez ani jednej operacji jako dowódca ma swój wiersz z zerami nalotu, liczbą w kolumnie „Drugi pilot" i podpisem „tylko jako drugi pilot". Kolumna **Samoloty** wymienia maszyny z obu foteli.
+> **Uwaga.** Kolumn **Blok** i **Drugi pilot** nie dodaje się do siebie: ta sama godzina lotu szkolnego jest w wierszu instruktora i w wierszu ucznia. Nalot floty to suma kolumny „Blok".
 
-> **Uwaga.** Kolumn **Blok** i **Drugi pilot** nie dodaje się do siebie: tę samą godzinę lotu szkolnego niesie wiersz instruktora (jako dowódcy) i wiersz ucznia (jako drugiego pilota). Nalot floty to suma kolumny „Blok" - i zgadza się co do minuty z osią pilotów w dzienniku.
+Paliwo bywa kreską, jeśli choć jedna operacja z okresu nie ma odczytu końcowego - suma byłaby wtedy niepełna. Jeśli w okresie nie ma ani jednej zamkniętej operacji, zamiast tabel stoi informacja, żeby zmienić okres.
 
-**Zadania** - wiersz na rodzaj operacji (Skoki, Przelot, Egzamin, Lot techniczny, Inne): **Operacje**, **Loty**, **Blok**, **Lot**, **Udział** w nalocie floty w procentach i **Samoloty**.
+## Zużycie paliwa samolotu
 
-## Podstawa liczenia
-
-Do sum wchodzą operacje **zamknięte** (zdane albo zakończone przez administratora), **nieunieważnione** i **niepuste** - zdanie samolotu bez biegu silnika, bez lotów i bez zmiany odczytów nie jest lotem i nie liczy się nigdzie. Operacje bez daty przejęcia (stare zapisy) podtytuł nazywa osobno. Loty to loty od startu do lądowania, tak samo jak kolumna „Loty" w dzienniku.
-
-Gdy w zakresie nie ma ani jednej zamkniętej operacji, zamiast tabel z zerami stoi jedno zdanie i wskazówka, żeby zmienić zakres - tabela sum, w której każda liczba to zero, wyglądałaby jak awaria liczenia.
-
-## Analityka zużycia
-
-Statystyki mówią, ile klub latał. Ile maszyna **pali** - pasmo typowego zużycia zmierzone z jej lotów, stawki w locie i na ziemi, przeliczniki licznika - jest własnością maszyny i mieszka w jej karcie w module [Samoloty](panel-samoloty#zuzycie-z-lotow).
-
-## Dlaczego tak to działa
-
-> **Dlaczego bez kafli.** Osiem płytek z liczbami robiło z sum nagłówek gazety, a pytanie brzmi „ile" - odpowiada na nie pasek liczb w jednej linii, ten sam, którym karta śladu podaje dystans i pułap.
-
-> **Dlaczego panel niczego nie liczy sam.** Każda liczba na tym ekranie - także średnie, udziały i wiersze „Razem" - przychodzi policzona przez serwer tym samym rachunkiem, który zasila dziennik. Gdyby panel dodawał cokolwiek po swojemu, dwa ekrany pokazywałyby dwie sumy tego samego nalotu, a pierwsza poprawka jednej z nich rozjechałaby je na stałe.
+Ile pali konkretny samolot - jego zmierzone zużycie i porównanie z dokumentacją - znajdziesz w karcie samolotu, w module [Samoloty](panel-samoloty#zuzycie-z-lotow).
 
 ## Częste problemy
 
-- **Statystyki i dziennik dają różne liczby** → sprawdź, czy patrzysz na ten sam zakres dat i tę samą oś. Przy tym samym zakresie nalot dowódców w obu jest równy co do minuty; różnica bierze się zwykle z operacji w toku, którą dziennik nazywa w wierszu („leci teraz"), a statystyki wyłącznie w podtytule.
-- **Pilot ma zera, choć latał** → latał jako drugi pilot: jego czas stoi w kolumnie „Drugi pilot", a nalot dowódcy w wierszu instruktora.
-- **„Żadnej zamkniętej operacji w tym zakresie"** → operacje z tych dni trwają albo są unieważnione; zmień zakres albo zajrzyj do [dziennika](panel-dziennik).
+- **Statystyki i dziennik pokazują różne liczby** → sprawdź, czy okres jest ten sam. Różnicę daje zwykle operacja w toku: dziennik pokazuje ją w wierszu, a statystyki tylko pod tytułem.
+- **Pilot ma zera, choć latał** → latał jako drugi pilot. Jego czas jest w kolumnie „Drugi pilot", a nalot dowódcy - w wierszu instruktora.
+- **„Żadnej zamkniętej operacji w tym zakresie"** → operacje z tych dni jeszcze trwają albo zostały unieważnione. Zmień okres albo zajrzyj do [dziennika](panel-dziennik).

@@ -22,6 +22,7 @@
  * dziennik panelu; wiersz bez szewronu NIE jest wyszarzony (brak akcji, nie blokada).
  */
 
+import { blockReasonLabel } from './blockReason';
 import {
   dateTimeUtcShort,
   dateUtcDayMonth,
@@ -39,11 +40,13 @@ import type {
   RemoteAircraftOperation,
   RemoteAircraftUpcoming,
   RemoteAircraftWindow,
+  RemoteSeat,
 } from '../../../application';
 
 import { clubHhmm, clubInstant, type ClubDayBounds } from './clubClock';
 import { dayBounds } from './inbox';
 import { operationLabelOf } from './operations';
+import { seekingLabel } from './orderFormat';
 import { daysAgoLabel, type PreviewRow } from './previewRows';
 
 const NONE = '—';
@@ -56,7 +59,7 @@ export interface HeroVm {
   /** „W locie", „Wolna", „Wyłączona z użytku" - plakietka w tonie karty. */
   badge: string;
   badgeTone: 'green' | 'amber' | 'blue' | 'dim';
-  /** Duży napis display: nazwisko, „Stoi w hangarze", „Przegląd". */
+  /** Duży napis display: nazwisko, „Stoi wolna", „Przegląd". */
   main: string;
   /** Mono obok napisu: „skoki · EPBK", „od wczoraj 18:20". */
   small: string | null;
@@ -129,18 +132,6 @@ const SOURCE_LABEL: Readonly<Record<NonNullable<RemoteAircraftCard['counters']>[
   admin: 'wpis administratora',
 };
 
-/** Powód wyłączenia z użytku - kod z panelu po polsku; nieznany zostaje, jak przyszedł. */
-const BLOCK_LABEL: Readonly<Record<string, string>> = {
-  maintenance: 'przegląd',
-  defect: 'usterka',
-  other: 'wyłączona',
-};
-
-export function blockReasonLabel(reason: string | null): string {
-  if (reason == null || reason === '') return BLOCK_LABEL.other!;
-  return BLOCK_LABEL[reason] ?? reason;
-}
-
 const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 const parse = (iso: string | null | undefined): number | null => {
@@ -150,6 +141,21 @@ const parse = (iso: string | null | undefined): number | null => {
 };
 
 /** „Ty" dla patrzącego, nazwisko dla innych, kreska poza cache'em - jak na osi kalendarza. */
+/**
+ * Kto leci - a przy ZLECENIU bez dowódcy (4.0.0, §16 pkt 5) to, czego zlecenie szuka:
+ * „Zlecenie · szuka załogi" zamiast kreski, to samo zdanie, co pasek na osi kalendarza.
+ */
+function crewOf(
+  row: { order?: { seeking: readonly RemoteSeat[] } | null } | undefined,
+  pilotId: string | null,
+  opts: AircraftCardOptions,
+  short = true,
+): string {
+  const seeking = row?.order?.seeking ?? [];
+  if (pilotId == null && seeking.length > 0) return `Zlecenie · ${(seekingLabel(seeking) ?? '').toLowerCase()}`;
+  return person(pilotId, opts, short);
+}
+
 function person(pilotId: string | null, opts: AircraftCardOptions, short = true): string {
   if (pilotId == null) return NONE;
   if (pilotId === opts.pilotId) return 'Ty';
@@ -223,16 +229,16 @@ function planNote(
 function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
   const last = parse(card.lastRecordAt);
   const recordsNote =
-    last == null ? 'rejestr tej maszyny jest jeszcze pusty' : `wg zapisów, które dotarły do ${timeUtc(last)} UTC`;
+    last == null ? 'tej maszyny nie ma jeszcze żadnego zapisu' : `wg zapisów, które dotarły do ${timeUtc(last)} UTC`;
   const n = card.now;
 
   switch (n.kind) {
     case 'retired':
       return {
         tone: 'off',
-        badge: 'Wycofana',
+        badge: 'Poza służbą',
         badgeTone: 'dim',
-        main: 'Wycofana z użytku',
+        main: 'Maszyna poza służbą',
         small: null,
         zone: null,
         zoneValue: null,
@@ -248,8 +254,8 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
       const small = [task == null ? null : task.toLowerCase(), n.departureIcao]
         .filter((x): x is string => x != null)
         .join(' · ');
-      const badge = n.kind === 'flying' ? 'W locie' : n.kind === 'claimed' ? 'Przejęta' : 'Po locie';
-      const zone = n.kind === 'flying' ? 'uruchomienie' : n.kind === 'claimed' ? 'przejęcie' : 'wyłączenie';
+      const badge = n.kind === 'flying' ? 'W locie' : n.kind === 'claimed' ? 'Przed lotem' : 'Po locie';
+      const zone = n.kind === 'flying' ? 'uruchomienie' : n.kind === 'claimed' ? 'rozpoczęcie' : 'wyłączenie';
       // „1:42 SILNIKA" - czas od uruchomienia liczony zegarem; że to stan wg ostatniego
       // zapisu, mówi wiersz pod kreską. Po locie licznik mówi, jak długo maszyna
       // czeka na zdanie.
@@ -305,7 +311,7 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
         tone: 'blue',
         badge: 'Zarezerwowana',
         badgeTone: 'blue',
-        main: person(n.pilotId, opts),
+        main: crewOf(card.upcoming.find((u) => u.id === n.bookingId), n.pilotId, opts),
         small: hours,
         zone: 'termin',
         zoneValue: hours == null ? null : `dziś ${hours} · czas klubu`,
@@ -329,7 +335,7 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
           ? null
           : nextRow.kind === 'block'
             ? blockReasonLabel(nextRow.blockReason)
-            : person(nextRow.pilotId, opts);
+            : crewOf(nextRow, nextRow.pilotId, opts);
       const nextValue =
         nextAt == null || nextDay == null
           ? null
@@ -346,7 +352,7 @@ function heroOf(card: RemoteAircraftCard, opts: AircraftCardOptions): HeroVm {
         tone: 'off',
         badge: 'Wolna',
         badgeTone: 'dim',
-        main: 'Stoi w hangarze',
+        main: 'Stoi wolna',
         small: stood,
         zone: nextValue == null ? null : 'następny termin',
         zoneValue: nextValue,
@@ -449,7 +455,7 @@ export function upcomingRows(card: RemoteAircraftCard, opts: AircraftCardOptions
     const state = live ? 'trwa' : row.status === 'pending' ? 'czeka na zgodę' : mine ? 'potwierdzona' : null;
     return {
       label,
-      value: person(row.pilotId, opts, false),
+      value: crewOf(row, row.pilotId, opts, false),
       sub: state == null ? null : `· ${state}`,
       bookingId: mine ? row.id : null,
     };
@@ -469,7 +475,7 @@ export function aircraftCardVm(card: RemoteAircraftCard, opts: AircraftCardOptio
   const a = card.aircraft;
   return {
     title: a.reg,
-    sub: [a.type, a.serviceStatus === 'active' ? 'w użytku' : 'wyłączona z użytku', `zbiornik ${litres(a.capacityL)}`].join(' · '),
+    sub: [a.type, a.serviceStatus === 'active' ? 'w służbie' : 'poza służbą', `zbiornik ${litres(a.capacityL)}`].join(' · '),
     hero: heroOf(card, opts),
     watch: watchVm(card.watching),
     counters: counterRows(card, opts),

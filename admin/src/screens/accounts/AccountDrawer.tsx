@@ -59,7 +59,7 @@ import {
   TextInput,
 } from '../../ui/components';
 import { CheckIcon } from '../../ui/components/icons';
-import { conflictField, errorMessage, refusalOf } from '../common/apiMessage';
+import { conflictField, errorMessage, loadErrorMessage, refusalOf } from '../common/apiMessage';
 import { SessionList } from '../common/SessionList';
 import { linkBlocker, linkFailureText, linkSentText, methodLabels } from './passwordAccess';
 import { lastSeenText, sessionRows } from './sessionRows';
@@ -222,7 +222,7 @@ export function AccountDrawer({
               disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : 'Zapisz'}
+              {pending ? 'Zapisywanie…' : 'Zapisz'}
             </Button>
           </>
         )
@@ -350,7 +350,7 @@ export function AccountDrawer({
         <div className="access-row">
           <span className="cell-sub">{scopeSummary(draft.capabilities)}</span>
           <Button variant="ghost" size="sm" onClick={() => setScopeOpen(!scopeOpen)}>
-            {scopeOpen ? 'Ukryj zdolności' : 'Pokaż zdolności'}
+            {scopeOpen ? 'Ukryj uprawnienia' : 'Pokaż uprawnienia'}
           </Button>
         </div>
 
@@ -528,8 +528,13 @@ export function AccountDrawer({
           że zapisy na urządzeniu NIE ZNIKAJĄ. */}
       {pilot == null || readOnly ? null : (
         <Card title="Sesje">
+          {/* Odczyt, który padł, nie jest „brakiem sesji" - mówi o sobie sam. */}
+          {sessions.error == null ? null : (
+            <p className="hint danger">{loadErrorMessage(sessions.error)}</p>
+          )}
           <Loadable
             pending={sessions.isPending}
+            loaded={sessions.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 48 }} />}
           >
             {(sessions.data ?? []).length === 0 ? (
@@ -558,8 +563,8 @@ export function AccountDrawer({
             </Button>
           </div>
           <span className="hint">
-            Zdalne wylogowanie zatrzymuje wysyłkę z urządzenia; zapisy zostają na nim do
-            ponownego zalogowania. Sesje tej osoby w innych klubach bez zmian.
+            Wylogowane urządzenie przestaje wysyłać zapisy, ale ich nie traci - wyślą się po
+            ponownym zalogowaniu. W innych klubach ta osoba zostaje zalogowana.
           </span>
         </Card>
       )}

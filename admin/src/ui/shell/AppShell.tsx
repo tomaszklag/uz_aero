@@ -25,25 +25,29 @@ import { Link, NavLink } from 'react-router-dom';
 
 import type { Capability } from '../../api/dto';
 import {
+  BellIcon,
   CalendarIcon,
   BookIcon,
   BugIcon,
   BuildingIcon,
   ChartIcon,
   InboxIcon,
+  OrdersIcon,
   PeopleIcon,
   PlaneIcon,
   SignOutIcon,
   SwitchIcon,
 } from '../components/icons';
+import { bellLabel } from './bell';
 import { initials } from './initials';
-import { ACCOUNT, COUNTED, homeFor, navItemsFor, type NavIcon } from './nav';
+import { ACCOUNT, COUNTED, homeFor, navSectionsFor, type NavIcon } from './nav';
 import type { ShellScope } from './scope';
 
 const ICONS: Record<NavIcon, (props: { size?: number }) => React.ReactNode> = {
   logbook: BookIcon,
   inbox: InboxIcon,
   calendar: CalendarIcon,
+  orders: OrdersIcon,
   chart: ChartIcon,
   people: PeopleIcon,
   plane: PlaneIcon,
@@ -69,6 +73,13 @@ interface AppShellProps {
    * nie dostaje ozdoby (reguła SyncChipa, issue #12). Liczbę liczy serwer.
    */
   attentionCount?: number | null;
+  /**
+   * Dzwonek skrzynki (4.0.0, K7) - stoi w KAŻDEJ ramie klubu, przed nazwiskiem; rama
+   * platformy go nie ma (`null`), bo kanału i skrzynki tam nie ma. Liczba wyłącznie przy
+   * nowych (reguła SyncChipa) - `null` i zero wyglądają tak samo. Otwarta skrzynka trzyma
+   * dzwonek wciśniętym.
+   */
+  bell?: { count: number | null; open: boolean; onToggle: () => void } | null;
   onLogout: () => void;
   logoutPending: boolean;
   children: React.ReactNode;
@@ -79,6 +90,7 @@ export function AppShell({
   scope,
   capabilities,
   attentionCount = null,
+  bell = null,
   onLogout,
   logoutPending,
   children,
@@ -87,7 +99,7 @@ export function AppShell({
   // z pustym zakresem - a platforma nie ma go wcale. Bez kafla zakresu (rama w testach)
   // rysujemy ramę klubu, bo platforma ZAWSZE ma kafel.
   const kind = scope?.kind ?? 'org';
-  const items = navItemsFor(capabilities, kind);
+  const sections = navSectionsFor(capabilities, kind);
   return (
     <>
       <header className="topbar">
@@ -99,6 +111,19 @@ export function AppShell({
         </Link>
 
         <div className="topbar-right">
+          {bell == null ? null : (
+            <button
+              type="button"
+              className="bell-btn"
+              title="Powiadomienia"
+              aria-label={bellLabel(bell.count)}
+              aria-expanded={bell.open}
+              onClick={bell.onToggle}
+            >
+              <BellIcon size={16} />
+              {bell.count != null && bell.count > 0 ? <span className="bell-count">{bell.count}</span> : null}
+            </button>
+          )}
           {/* NAZWISKO JEST WEJŚCIEM NA `#/konto` (2.1.0, issue #134 D6). Konto nie jest
               modułem klubu, więc nie ma pozycji w kolumnie - a wejście z nazwiska w pasku
               jest tym miejscem, w którym każdy szuka go z innych aplikacji web. */}
@@ -119,25 +144,34 @@ export function AppShell({
         <aside className="sidebar" aria-label="Nawigacja panelu">
           {scope == null ? null : <ScopeTile scope={scope} />}
 
+          {/* Grupy (4.0.0): nagłówek jest SAMYM PODPISEM, rodzeństwem pozycji w jednej
+              liście - jak w makietach - a nie listą zagnieżdżoną; grupy się nie zwijają. */}
           <nav className="sidebar-nav" aria-label="Sekcje panelu">
-            {items.map((item) => {
-              const Icon = ICONS[item.icon];
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
-                >
-                  <Icon size={16} />
-                  {item.label}
-                  {item.to === COUNTED && attentionCount != null && attentionCount > 0 ? (
-                    <span className="nav-count" aria-label={`${attentionCount} do sprawdzenia`}>
-                      {attentionCount}
-                    </span>
-                  ) : null}
-                </NavLink>
-              );
-            })}
+            {sections.flatMap((section) => [
+              section.label == null ? null : (
+                <span key={`group-${section.key}`} className="nav-group">
+                  {section.label}
+                </span>
+              ),
+              ...section.items.map((item) => {
+                const Icon = ICONS[item.icon];
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                    {item.to === COUNTED && attentionCount != null && attentionCount > 0 ? (
+                      <span className="nav-count" aria-label={`${attentionCount} do sprawdzenia`}>
+                        {attentionCount}
+                      </span>
+                    ) : null}
+                  </NavLink>
+                );
+              }),
+            ])}
           </nav>
         </aside>
 
@@ -175,7 +209,7 @@ function ScopeTile({ scope }: { scope: ShellScope }) {
   if (scope.switchTo == null) return <div className={className}>{body}</div>;
 
   return (
-    <Link className={className} to={scope.switchTo} title="Zmień zakres">
+    <Link className={className} to={scope.switchTo} title="Zmień klub">
       {body}
     </Link>
   );

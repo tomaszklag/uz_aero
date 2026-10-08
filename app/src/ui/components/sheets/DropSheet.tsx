@@ -229,7 +229,7 @@ export function DropSheet({
 
       {client != null && client.length > 0 && (
         <AppText variant="mono" tone="muted" style={styles.client}>
-          {`Rozliczenie trafi do klienta ${client} (z preflightu)`}
+          {`Rozliczenie trafi do klienta ${client} (z zadania lotu)`}
         </AppText>
       )}
 

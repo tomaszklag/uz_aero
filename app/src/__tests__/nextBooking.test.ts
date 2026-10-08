@@ -115,30 +115,30 @@ describe('karta', () => {
 
 describe('czym wypełnić przejęcie', () => {
   it('termin, do którego pilot właśnie siada, wypełnia formularz', () => {
-    const seed = claimSeed(booking({ id: 'b1' }), at(11) - CLAIM_LEAD_MS + 60_000);
+    const seed = claimSeed(booking({ id: 'b1' }), at(11) - CLAIM_LEAD_MS + 60_000, 'ako');
     expect(seed?.reservationId).toBe('b1');
     expect(seed?.operation).toBe('ferry');
     expect(seed?.departureIcao).toBe('EPKK');
   });
 
   it('plan na przyszły tydzień NIE wypełnia niczego - podstawiony wyglądałby jak wpis', () => {
-    expect(claimSeed(booking({ id: 'b1' }), at(11) - CLAIM_LEAD_MS - 60_000)).toBeNull();
+    expect(claimSeed(booking({ id: 'b1' }), at(11) - CLAIM_LEAD_MS - 60_000, 'ako')).toBeNull();
   });
 
   it('termin, który TRWA, dalej wypełnia - pilot spóźniony lata ze swojej rezerwacji', () => {
-    expect(claimSeed(booking({ id: 'b1' }), at(12))?.reservationId).toBe('b1');
+    expect(claimSeed(booking({ id: 'b1' }), at(12), 'ako')?.reservationId).toBe('b1');
   });
 
   it('po terminie ziarna nie ma', () => {
-    expect(claimSeed(booking({ id: 'b1' }), at(13))).toBeNull();
+    expect(claimSeed(booking({ id: 'b1' }), at(13), 'ako')).toBeNull();
   });
 
   it('brak rezerwacji to brak ziarna, a nie blokada - formularz otwiera się pusty', () => {
-    expect(claimSeed(null, at(11))).toBeNull();
+    expect(claimSeed(null, at(11), 'ako')).toBeNull();
   });
 
   it('rodzaj spoza tego wydania zostawia wybór pilotowi', () => {
-    const seed = claimSeed(booking({ id: 'b1', operation: 'jakies_nowe' }), at(11));
+    const seed = claimSeed(booking({ id: 'b1', operation: 'jakies_nowe' }), at(11), 'ako');
     expect(seed).not.toBeNull();
     expect(seed?.operation).toBeNull();
   });
@@ -149,5 +149,21 @@ describe('rezerwacja czekająca na zgodę (3.1.0)', () => {
     // Potwierdzona: zieleń. Czekająca: ton ostrzeżenia, bo zielona obiecywałaby pewny lot.
     expect(nextBooking(input([booking({ id: 'b1' })]))?.pending).toBe(false);
     expect(nextBooking(input([booking({ id: 'b2', status: 'pending' })]))?.pending).toBe(true);
+  });
+});
+
+describe('drugi pilot (decyzja 23 zleceń: rezerwacja liczy oba fotele)', () => {
+  it('lot, w którym siedzę jako drugi pilot, jest moim najbliższym - z dowódcą na karcie', () => {
+    const vm = nextBooking(input([booking({ id: 'jako-dual', pilotId: 'bno', dualId: 'ako' })]));
+    expect(vm?.id).toBe('jako-dual');
+    expect(vm?.crew).toBe('Dowódca: BNO');
+  });
+
+  it('u dowódcy - drugi pilot', () => {
+    expect(nextBooking(input([booking({ id: 'b1', dualId: 'bno' })]))?.crew).toBe('Drugi pilot: BNO');
+  });
+
+  it('przejęcia NIE wypełnia - maszynę bierze dowódca', () => {
+    expect(claimSeed(booking({ id: 'jako-dual', pilotId: 'bno', dualId: 'ako' }), at(12), 'ako')).toBeNull();
   });
 });

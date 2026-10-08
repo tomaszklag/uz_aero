@@ -114,7 +114,7 @@ export function syncReport(
       tone: 'green',
       text:
         outboxCount > 0
-          ? `Wysłano ${eventsCount(last.pushed)}. W kolejce zostało ${queued}.`
+          ? `Wysłano ${eventsCount(last.pushed)}. W kolejce ${plural(outboxCount, 'został', 'zostały', 'zostało')} ${queued}.`
           : `Wysłano ${eventsCount(last.pushed)} - kolejka jest pusta.`,
     };
   }
@@ -141,9 +141,9 @@ export function syncReport(
       : {
           tone: 'red',
           text:
-            `Serwer odmówił przyjęcia - ${queued} ${wait} w kolejce i nie wyślą się same. ` +
-            'Twoje zapisy są bezpieczne w telefonie. Zgłoś to administratorowi' +
-            `${last?.kind === 'rejected' ? ` (kod: ${last.code})` : ''}.`,
+            `Wysyłka zatrzymana - ${queued} ${wait} w kolejce i nie wyślą się same. ` +
+            'Twoje zapisy są bezpieczne w telefonie. Zgłoś to administratorowi klubu' +
+            `${last?.kind === 'rejected' ? ` - kod: ${last.code}` : ''}.`,
         };
   }
 

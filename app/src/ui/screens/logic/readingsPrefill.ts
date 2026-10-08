@@ -25,6 +25,7 @@
  */
 
 import type { RemoteReadingsChainLink } from '../../../application';
+import type { PilotCodeOf } from './readingsContinuity';
 
 /** Ślad po naszej podpowiedzi - czym była i z czego wynikała. */
 export interface AppliedPrefill {
@@ -100,7 +101,11 @@ export function prefillSource(
   link: RemoteReadingsChainLink | null | undefined,
   field: 'fuelL' | 'mh',
   value: number | null,
+  codeOf: PilotCodeOf = () => null,
 ): string | undefined {
   if (link == null || value == null || value !== link[field]) return undefined;
-  return `z poprzedniego lotu · ${link.picId.toUpperCase()}`;
+  // Kod z pamięci klubu; poza nią sam podpis pochodzenia - identyfikator osoby (od 2.0.0
+  // długi ciąg znaków) nie mówiłby nic.
+  const code = codeOf(link.picId);
+  return code == null ? 'z poprzedniego lotu' : `z poprzedniego lotu · ${code}`;
 }

@@ -38,6 +38,7 @@ import { useGps } from './src/ui/bootstrap/servicesContext';
 import { useAuthStore } from './src/ui/store/authStore';
 import { useSessionStore } from './src/ui/store/sessionStore';
 import { useBackgroundTracking } from './src/ui/hooks/useBackgroundTracking';
+import { useLiveLink } from './src/ui/hooks/useLiveLink';
 import { useSkeleton } from './src/ui/hooks/useSkeleton';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { SignInFlow } from './src/ui/navigation/SignInFlow';
@@ -146,7 +147,13 @@ function AppRoot() {
   }
 
   return (
-    <ServicesProvider gps={gps} sensors={sensors} trace={boot.trace}>
+    <ServicesProvider
+      gps={gps}
+      sensors={sensors}
+      trace={boot.trace}
+      live={boot.live}
+      orders={boot.orders}
+    >
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       {/*
         Nieprzezroczyste tło POD nawigatorem.
@@ -250,6 +257,7 @@ function ResumeGate() {
   return (
     <>
       <BackgroundTrackingBinder />
+      <LiveLinkBinder />
       <RootNavigator initialRouteName={initial} />
     </>
   );
@@ -265,6 +273,18 @@ function ResumeGate() {
  */
 function BackgroundTrackingBinder() {
   useBackgroundTracking(useGps());
+  return null;
+}
+
+/**
+ * Łącze kanału klubu (4.0.0, K1, K6) chodzi za `linkTarget`: na wierzchu, po
+ * odblokowaniu, poza kokpitem. Tutaj z tego samego powodu, co usługa GPS: dopiero po
+ * `loadSession` projekcja mówi prawdę o trzymanej maszynie - zamontowany wyżej binder
+ * otworzyłby łącze pilotowi, który przy restarcie wraca prosto do kokpitu, i zamknął
+ * je ułamek sekundy później. Za bramką tożsamości łącze nie istnieje wcale.
+ */
+function LiveLinkBinder() {
+  useLiveLink();
   return null;
 }
 

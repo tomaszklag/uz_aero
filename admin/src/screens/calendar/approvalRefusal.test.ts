@@ -12,10 +12,10 @@ const http = (status: number, body: Record<string, unknown>): HttpError => new H
 
 describe('odmowy decyzji', () => {
   it('kod z serwera dostaje zdanie, reszta schodzi na komunikat ogólny', () => {
-    expect(decisionErrorMessage(http(403, { error: 'not_your_step' }))).toContain('nie jest Twój krok');
+    expect(decisionErrorMessage(http(403, { error: 'not_your_step' }))).toContain('zatwierdza teraz ktoś inny');
     expect(decisionErrorMessage(http(400, { error: 'reason_required' }))).toContain('Podaj powód');
     expect(decisionErrorMessage(http(409, { error: 'booking_closed' }))).toContain('przed chwilą');
-    expect(decisionErrorMessage(new TypeError('sieć'))).toBe('Nie ma połączenia z serwerem. Spróbuj za chwilę.');
+    expect(decisionErrorMessage(new TypeError('sieć'))).toBe('Brak połączenia. Sprawdź internet i spróbuj za chwilę.');
   });
 });
 
@@ -27,6 +27,6 @@ describe('odmowy zapisu ścieżki', () => {
     expect(stepsErrorMessage(http(400, { error: 'member_not_in_org', stepLabel: 'Mechanik' }))).toContain(
       'Mechanik',
     );
-    expect(stepsErrorMessage(http(500, { error: 'boom' }))).toContain('kod 500');
+    expect(stepsErrorMessage(http(500, { error: 'boom' }))).toContain('kod: 500');
   });
 });

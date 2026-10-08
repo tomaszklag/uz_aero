@@ -43,7 +43,7 @@ import {
   TableSkeleton,
 } from '../../ui/components';
 import { ChecklistIcon, DragHandleIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import {
   asInput,
   moveStep,
@@ -117,7 +117,7 @@ export function ApprovalPathScreen() {
 
       {error == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(error)}
+          {loadErrorMessage(error)}
         </Banner>
       )}
       {replace.error == null ? null : (
@@ -143,9 +143,8 @@ export function ApprovalPathScreen() {
             </LinkButton>
           }
         >
-          <b>Kroku „{n.stepLabel}" nie ma kto zatwierdzić.</b> {namesSentence(n.lost)} nie ma już
-          zdolności „Akceptacja rezerwacji", a nikt inny w tym kroku nie stoi. Nowe rezerwacje
-          zatrzymają się na nim.
+          <b>Kroku „{n.stepLabel}" nie ma kto zatwierdzić.</b> Bez uprawnienia „Akceptacja
+          rezerwacji": {namesSentence(n.lost)}. Nowe rezerwacje zatrzymają się na tym kroku.
         </Banner>
       ))}
 
@@ -154,13 +153,16 @@ export function ApprovalPathScreen() {
       {steps.length === 0 ? null : (
         <Banner tone="status">
           <b>{pathSentence(steps.map((s) => s.label))}</b> Wystarczy zgoda jednej osoby z kroku.
-          Pierwsza odmowa jest ostateczna: rezerwacja zostaje odrzucona, termin wraca do puli
-          i nie idzie już do kolejnych kroków.
+          Pierwsza odmowa jest ostateczna: rezerwacja zostaje odrzucona i nie idzie już do
+          kolejnych kroków, a termin się zwalnia.
         </Banner>
       )}
 
+      {/* Bez odczytu ścieżki pusta tabela mówiłaby „rezerwacje potwierdzają się od razu"
+          i proponowała pierwszy krok - zdanie o ścieżce, której nie znamy. */}
       <Loadable
         pending={path.isPending || pilots.isPending}
+        loaded={path.data != null && pilots.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[28, 32, 150, 220, 54]} rows={2} />}
       >
         {steps.length === 0 ? (
@@ -181,9 +183,9 @@ export function ApprovalPathScreen() {
                 zdanie pod tabelą mówi, KTO i CO dalej. */}
             {partial.map((n) => (
               <p className="hint" key={n.stepId}>
-                <b>{namesSentence(n.lost)}</b> nie ma już zdolności „Akceptacja rezerwacji" i nie
-                rozstrzygnie kroku „{n.stepLabel}". Krok zostaje z {ableText(n)} - nadaj jej zdolność
-                z powrotem (<Link to="/piloci">Piloci</Link>) albo zdejmij ją z listy.
+                <b>Bez uprawnienia „Akceptacja rezerwacji": {namesSentence(n.lost)}.</b> Krok
+                „{n.stepLabel}" zostaje z {ableText(n)} - przywróć uprawnienie
+                (<Link to="/piloci">Piloci</Link>) albo zdejmij z kroku osoby bez niego.
               </p>
             ))}
             {/* Cena ZMIANY stoi pod tym, co się zmienia: czyta ją ten, kto przestawia

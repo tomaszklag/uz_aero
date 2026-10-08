@@ -236,6 +236,27 @@
   color: var(--bg);
 }
 
+/* ── GRUPY KOLUMNY BOCZNEJ (4.0.0, decyzja właściciela 2026-09-28, `docs/zlecenia.md` §15) ──
+   Zlecenia są siódmym modułem klubu, a `docs/panel-3.2.md` §3 kazał przy siódmym wrócić
+   do decyzji o grupach: pozycje stoją odtąd w trzech - Loty (Dziennik, Do sprawdzenia,
+   Statystyki), Planowanie (Kalendarz, Zlecenia), Klub (Piloci, Samoloty). Nagłówek jest
+   SAMYM PODPISEM: grupy się nie zwijają, bo siedem pozycji mieści się w kolumnie, a przycisk
+   bez funkcji nie wchodzi (to samo zdanie, przez które w pasku nie ma wyszukiwarki).
+   Nagłówki istnieją WYŁĄCZNIE przy co najmniej dwóch widocznych grupach - pilot z samym
+   Kalendarzem i Zleceniami ma listę płaską, tak samo rama superadministratora - a grupa
+   bez widocznej pozycji znika w całości (`ui/shell/nav.ts`, `navSectionsFor`). Krój
+   tekstowy w pisowni zdaniowej, nie mono-wersaliki (styl lekki, issue #107). */
+.nav-group {
+  padding: 14px 10px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nav-group:first-child {
+  padding-top: 2px;
+}
+
 /* ── okruszki ──
    Wyłącznie tam, gdzie ekran leży POD innym ekranem (dziennik: flota → maszyna →
    operacja). Na liście modułu okruszek opisywałby jedno kliknięcie w kolumnie obok -
@@ -305,4 +326,53 @@
 .nav-item.active .nav-count {
   background: var(--bg);
   color: var(--text-primary);
+}
+
+/* ── DZWONEK W PASKU GÓRNYM (K7) ──
+   Stoi w KAŻDEJ ramie klubu, przed nazwiskiem zalogowanego: skrzynka należy do osoby
+   W KLUBIE, więc rama platformy dzwonka nie ma (kanału tam nie ma, K3). Cichy, jak
+   „Wyloguj" obok - ton chrome'u, bez ramki; o nowych mówi licznik, nie kolor ikony.
+   Licznik WYŁĄCZNIE przy liczbie dodatniej (reguła SyncChipa, issue #12), zielony
+   jak na Pulpicie telefonu i wycięty z ikony obwódką w kolorze tła - bez niej cyfra
+   siada na kresce dzwonka. Otwarta skrzynka trzyma dzwonek wciśniętym (tło jak pod
+   kursorem), a licznik gaśnie w chwili otwarcia listy - „nowe" to wiadomości od
+   ostatniego zajrzenia, nie sprawy do załatwienia. */
+.bell-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.bell-btn:hover,
+.bell-btn[aria-expanded="true"] {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+.bell-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--green);
+  color: var(--bg);
+  border: 2px solid var(--bg);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
 }

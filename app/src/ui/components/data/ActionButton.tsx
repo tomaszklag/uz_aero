@@ -34,8 +34,13 @@ import { holdConfirmHint } from './holdGesture';
  * `primary` - `.start-engine`: przygaszone tło akcentu i akcentowany napis. Akcje kokpitu,
  *             gdzie pełna zieleń świeciłaby w nocy prosto w oczy.
  * `secondary` - sam kontur (Anuluj, Wstecz).
+ * `quiet`   - `.modal-btn-quiet` z 28D: pełny jasny napis na tle o stopień jaśniejszym.
+ *             Odpowiedź PRZECZĄCA („NIE MOGĘ") - nie zielona, bo aplikacja jej nie
+ *             poleca, i nie czerwona, bo nikomu niczego nie zabiera. Od „ANULUJ" obok
+ *             różni ją szerokość i pełny kolor napisu, nie przygaszenie, które czytałoby
+ *             się jak blokada.
  */
-export type ActionVariant = 'solid' | 'primary' | 'secondary';
+export type ActionVariant = 'solid' | 'primary' | 'secondary' | 'quiet';
 
 /**
  * Rozmiar etykiety i celu dotykowego - z mockupów:
@@ -137,6 +142,7 @@ export function ActionButton({
   const { holding, progress, pressProps } = useHold({ holdMs, disabled, onTrigger: onPress });
 
   const solid = variant === 'solid';
+  const quiet = variant === 'quiet';
   const hero = size === 'hero';
   const splash = size === 'splash';
   // Pressed-fill `.start-btn:hover` (01) - opt-in przez rozmiar `splash` i tylko przy
@@ -147,14 +153,18 @@ export function ActionButton({
     ? theme.colors.surfaceHover
     : solid
       ? c.accent
-      : variant === 'primary'
-        ? c.muted
-        : 'transparent';
+      : quiet
+        ? theme.colors.surfaceHover
+        : variant === 'primary'
+          ? c.muted
+          : 'transparent';
   const labelColor = disabled
     ? theme.colors.textMuted
     : solid
       ? theme.colors.bg // ciemny napis na pełnym akcencie - kontrast w każdym motywie
-      : c.accent;
+      : quiet
+        ? theme.colors.textPrimary
+        : c.accent;
 
   return (
     <View style={style}>
@@ -183,7 +193,13 @@ export function ActionButton({
                     : theme.spacing.sm,
               borderRadius: hero ? 20 : size === 'md' ? theme.radius.md : theme.radius.lg,
               borderWidth: theme.borderWidth,
-              borderColor: disabled ? theme.colors.border : solid || filled ? c.accent : c.border,
+              borderColor: disabled
+                ? theme.colors.border
+                : solid || filled
+                  ? c.accent
+                  : quiet
+                    ? theme.colors.borderStrong
+                    : c.border,
               backgroundColor: filled ? c.accent : background,
               // Przycisk z powodem blokady NIE dostaje przygaszenia: powód ma być
               // czytelny, a bursztyn pod opacity 0.45 przestaje być ostrzeżeniem.

@@ -17,7 +17,7 @@
 import type { BookingDto } from '../../api/dto';
 import { isHttpError } from '../../api/httpClient';
 import { errorMessage } from '../common/apiMessage';
-import { operationLabel, stempel, type PersonLookup } from './bookingLabels';
+import { operationLabel, orderSeeking, stempel, type PersonLookup } from './bookingLabels';
 
 export type BookingRefusalCode =
   | 'slot_taken'
@@ -27,18 +27,22 @@ export type BookingRefusalCode =
   | 'booking_in_past'
   | 'booking_order'
   | 'booking_closed'
-  | 'reason_required';
+  | 'reason_required'
+  | 'booking_from_order';
 
 const ZDANIA: Readonly<Record<BookingRefusalCode, string>> = {
   slot_taken: 'Ten termin jest już zajęty.',
-  aircraft_disabled: 'Ta maszyna jest wyłączona ze służby - nie da się zaplanować nią lotu.',
+  aircraft_disabled: 'Ta maszyna jest poza służbą - nie da się zaplanować nią lotu.',
   // Skasowana albo z innego klubu - serwer nie rozróżnia tego celowo, więc i my nie.
   aircraft_not_found: 'Nie ma już takiej maszyny w klubie. Odśwież stronę i wybierz inną.',
   not_your_booking: 'To nie jest Twoja rezerwacja.',
   booking_in_past: 'Ten termin już minął. Wybierz późniejszy.',
   booking_order: 'Koniec terminu musi wypadać po jego początku.',
-  booking_closed: 'Ta zajętość jest już zamknięta - ktoś rozstrzygnął ją przed chwilą.',
-  reason_required: 'Podaj powód - pilot przeczyta go w aplikacji.',
+  booking_closed: 'Ten termin jest już zamknięty - ktoś rozstrzygnął go przed chwilą.',
+  reason_required: 'Podaj powód - pilot zobaczy go w aplikacji.',
+  // Termin rezerwacji ze zlecenia prowadzi zlecenie (4.0.0, §16 pkt 7) - to samo zdanie,
+  // co w telefonie. Szuflada poprawki nie oferuje, więc dojdzie tu tylko wyścigiem.
+  booking_from_order: 'Termin zmienia osoba zlecająca - edycją zlecenia.',
 };
 
 const KODY = new Set<string>(Object.keys(ZDANIA));
@@ -74,10 +78,16 @@ export function bookingErrorMessage(
   return stoi == null ? ZDANIA.slot_taken : `${ZDANIA.slot_taken} ${opis(stoi, timezone, person)}`;
 }
 
-/** „Od 23 wrz, 06:00 stoi przegląd." / „Od 21 wrz, 08:00 lata B. Nowak (egzamin)." */
+/**
+ * „Od 23 wrz, 06:00 stoi przegląd." / „Od 21 wrz, 08:00 lata B. Nowak (egzamin)." /
+ * „Od 20 wrz, 09:00 stoi zlecenie (szuka załogi)." - zlecenie bez kompletu załogi nie jest
+ * niczyim lotem, a pusty fotel nie ma nazwiska.
+ */
 function opis(taken: BookingDto, timezone: string, person: PersonLookup): string {
   const od = stempel(new Date(taken.startsAt), timezone);
   if (taken.kind === 'block') return `Od ${od} maszyna jest wyłączona z użytku.`;
+  const seeking = orderSeeking(taken);
+  if (seeking != null) return `Od ${od} stoi zlecenie (${seeking}).`;
   const kto = taken.pilotId == null ? null : person(taken.pilotId);
   const zadanie = taken.operation == null ? '' : ` (${operationLabel(taken.operation).toLowerCase()})`;
   return kto == null ? `Od ${od} stoi inna rezerwacja.` : `Od ${od} lata ${kto.name}${zadanie}.`;

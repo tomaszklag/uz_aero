@@ -264,7 +264,7 @@ export function PreflightReadingsScreen({
       if (e.kind === 'claim') {
         mh.push({
           id: `m-${e.at}`,
-          title: `Przejęcie · ${stamp(e.at)}`,
+          title: `Rozpoczęcie · ${stamp(e.at)}`,
           meta: `przed włączeniem ${motoHours(e.mhAfter, mhFormat)} MH`,
         });
         // Paliwo ZASTANE przy przejęciu, czyli poprzednie przekazanie (uwaga
@@ -273,7 +273,7 @@ export function PreflightReadingsScreen({
         if (e.fuelAfterL != null) {
           fuel.push({
             id: `f-${e.at}`,
-            title: `Przejęcie · ${stamp(e.at)}`,
+            title: `Rozpoczęcie · ${stamp(e.at)}`,
             meta: `zastane ${litres(e.fuelAfterL)} z przekazania`,
           });
         }
@@ -282,7 +282,7 @@ export function PreflightReadingsScreen({
       if (e.kind === 'flight') {
         const flown = e.durationMs != null ? duration(e.durationMs) : null;
         const hours = e.durationMs != null ? e.durationMs / 3_600_000 : null;
-        const title = `${pilotName(e.pilotId)} latał${flown != null ? ` · ${flown}` : ''}`;
+        const title = `Lot · ${pilotName(e.pilotId)}${flown != null ? ` · ${flown}` : ''}`;
 
         // Średnie liczymy z danych, nie przepisujemy - inaczej rozjechałyby się
         // z wartościami obok, gdy serwer przyśle inne liczby.
@@ -422,9 +422,8 @@ export function PreflightReadingsScreen({
             icon="warning"
             tone="amber"
             text={
-              `Brak danych przekazania dla ${aircraft.reg} (pusty cache / przejęcie offline). ` +
-              'Wpisz odczyty z fizycznych liczników - Twój odczyt rozpocznie nowe ogniwo ' +
-              'łańcucha; serwer scali dane po synchronizacji.'
+              `Brak danych z ostatniego przekazania ${aircraft.reg}. ` +
+              'Wpisz odczyty z przyrządów w samolocie.'
             }
           />
         )}
@@ -455,18 +454,18 @@ export function PreflightReadingsScreen({
               // ZDECYDOWAŁ, co pokazują przyrządy, np. po zakończeniu operacji osieroconej.
               handover.byPilotId == null
                 ? handover.origin === 'admin'
-                  ? 'Odczyty wpisał administrator'
+                  ? 'Odczyty z panelu klubu'
                   : 'Stan początkowy z panelu'
                 : 'Wartości z ostatniego przekazania'
             }
             text={[
               handover.byPilotId == null
                 ? handover.origin === 'admin'
-                  ? `Aktualny stan ${aircraft.reg} ustawiono w panelu - nadrzędnie wobec ostatniego zdania.`
-                  : `To pierwszy lot ${aircraft.reg} w Ninerdeck - odczyty wpisał administrator.`
+                  ? `Odczyty ${aircraft.reg} poprawiono w panelu klubu.`
+                  : `To pierwszy lot ${aircraft.reg} w Ninerdeck - odczyty pochodzą z karty samolotu w panelu klubu.`
                 : handover.byPilotId === pilotId
-                  ? `To Twoje własne odczyty z ostatniego dnia na ${aircraft.reg}.`
-                  : `${aircraft.reg} przekazał ${pilotName(handover.byPilotId)}.`,
+                  ? `To Twoje odczyty z ostatniego lotu na ${aircraft.reg}.`
+                  : `Ostatnie przekazanie ${aircraft.reg}: ${pilotName(handover.byPilotId)}.`,
               // Przy wpisie z panelu `at` jest chwilą ZAPISU W PANELU, nie pomiaru.
               handover.byPilotId == null
                 ? `Wpis z ${stampUtcLt(handover.at)}`
@@ -576,12 +575,12 @@ export function PreflightReadingsScreen({
             kind="warning"
             icon="warning"
             title={`Przejmujesz samolot od ${pilotName(aircraft.claimPicId)}`}
-            text="Jeśli poprzedni pilot nadal prowadzi ten samolot, serwer oznaczy nakładkę do wyjaśnienia."
+            text="Jeśli poprzedni pilot nadal leci tym samolotem, administrator klubu dostanie to do wyjaśnienia."
           />
         )}
 
         {lastError != null && (
-          <Banner kind="warning" tone="red" icon="warning" title="Nie przejęto" text={lastError} />
+          <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
       </View>
 

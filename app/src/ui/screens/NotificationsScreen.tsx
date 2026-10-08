@@ -19,9 +19,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
-import { AppText, Banner, Icon, InboxRow, Screen, ScreenHeader, Skeleton, type IconName } from '../components';
+import { Banner, EmptyState, InboxRow, Screen, ScreenHeader, Skeleton } from '../components';
 import { useAircraftRegistrations } from '../hooks/useAircraftRegistrations';
 import { useFleet } from '../hooks/useFleet';
 import { useInbox } from '../hooks/useInbox';
@@ -61,6 +61,7 @@ export function NotificationsScreen({
     return inboxRows({
       items: data.items,
       todoIds: data.todoIds,
+      answerIds: data.answerIds,
       now,
       regOf,
       nameOf: (id) => pilots.find((p) => p.id === id)?.name ?? null,
@@ -74,6 +75,17 @@ export function NotificationsScreen({
       if (row.aircraftId != null) navigation.navigate('Aircraft', { aircraftId: row.aircraftId });
       return;
     }
+    // Zlecenie (4.0.0): karta sama rozstrzyga, kogo pokazuje (28, 32 albo 23F); wiersz
+    // rozmowy otwiera od razu rozmowę - tę samą parę zlecenie × adresat, co budzik.
+    if (row.opens === 'order' || row.opens === 'thread') {
+      if (row.orderId == null) return;
+      if (row.opens === 'thread' && row.recipientId != null) {
+        navigation.navigate('OrderThread', { orderId: row.orderId, recipientId: row.recipientId });
+      } else {
+        navigation.navigate('Order', { orderId: row.orderId });
+      }
+      return;
+    }
     if (row.bookingId == null) return;
     navigation.navigate(row.opens === 'decision' ? 'Decision' : 'BookingDetails', {
       bookingId: row.bookingId,
@@ -83,7 +95,7 @@ export function NotificationsScreen({
   const header = (
     <ScreenHeader
       title="POWIADOMIENIA"
-      subtitle="CZASY KLUBU"
+      subtitle="CZAS KLUBU"
       size="md"
       backLabel="Pulpit"
       onBack={() => navigation.goBack()}
@@ -118,26 +130,24 @@ export function NotificationsScreen({
           ) : null
         ) : data === null ? (
           <EmptyState
-            theme={theme}
             tone="amber"
             icon="offline"
             title="BRAK POŁĄCZENIA"
             lines={[
-              [{ text: 'Powiadomienia ' }, { text: 'trzyma serwer', bold: true }, { text: ' - telefon nie ma ich u siebie.' }],
+              [{ text: 'Powiadomienia ' }, { text: 'wymagają połączenia z internetem', bold: true }, { text: '.' }],
               [{ text: 'Wróć tu z zasięgiem. Lot rozpoczniesz bez tego ekranu - wystarczy „ROZPOCZNIJ LOT" na Pulpicie.' }],
             ]}
           />
         ) : rows.length === 0 ? (
           <EmptyState
-            theme={theme}
             tone="neutral"
             icon="bell"
-            title="NIC NIE PRZYSZŁO"
+            title="BRAK POWIADOMIEŃ"
             lines={[
               [
                 { text: 'Tu trafiają ' },
-                { text: 'decyzje o Twoich rezerwacjach', bold: true },
-                { text: ' i prośby o Twoją zgodę, jeśli rozstrzygasz cudze.' },
+                { text: 'wiadomości z klubu', bold: true },
+                { text: ': o Twoich rezerwacjach, zleceniach lotów i obserwowanych samolotach.' },
               ],
             ]}
           />
@@ -151,76 +161,8 @@ export function NotificationsScreen({
   );
 }
 
-type Line = { text: string; bold?: boolean }[];
-
-/**
- * Stan pusty i stan bez zasięgu (`.empty-wrap`) - ten sam układ, inny ton. Pusty mówi,
- * CO tu trafia, a nie „brak danych"; bez zasięgu mówi, KTO trzyma skrzynkę i że lot
- * się bez niej zaczyna.
- */
-function EmptyState({
-  theme,
-  tone,
-  icon,
-  title,
-  lines,
-}: {
-  theme: Theme;
-  tone: 'amber' | 'neutral';
-  icon: IconName;
-  title: string;
-  lines: Line[];
-}) {
-  const s = styles(theme);
-  const amber = tone === 'amber';
-  const accent = amber ? theme.colors.amber : theme.colors.textMuted;
-
-  return (
-    <View style={s.empty}>
-      <View style={[s.emptyIcon, amber && s.emptyIconAmber]}>
-        <Icon name={icon} size={26} color={accent} />
-      </View>
-      <AppText variant="display" style={[s.emptyTitle, amber && { color: theme.colors.amber }]}>
-        {title}
-      </AppText>
-      {lines.map((line, i) => (
-        <AppText key={i} variant="body" style={s.emptyText}>
-          {line.map((part, k) => (
-            <AppText key={k} variant="body" style={[s.emptyText, part.bold && s.emptyBold]}>
-              {part.text}
-            </AppText>
-          ))}
-        </AppText>
-      ))}
-    </View>
-  );
-}
-
-const styles = (t: Theme) =>
+const styles = (_t: Theme) =>
   StyleSheet.create({
     scroll: { flex: 1 },
     content: { flexGrow: 1, padding: 14, gap: 8, paddingBottom: 28 },
-
-    empty: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 14,
-      paddingHorizontal: 26,
-      paddingBottom: 60,
-    },
-    emptyIcon: {
-      width: 60,
-      height: 60,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: t.borderWidth,
-      borderColor: t.colors.borderStrong,
-      backgroundColor: t.colors.surface,
-    },
-    emptyIconAmber: { borderColor: t.colors.amberBorder, backgroundColor: t.colors.amberMuted },
-    emptyTitle: { fontSize: 30, lineHeight: 32, letterSpacing: 3, textAlign: 'center' },
-    emptyText: { fontSize: 13, lineHeight: 19, color: t.colors.textSecondary, textAlign: 'center' },
-    emptyBold: { color: t.colors.textPrimary, fontWeight: '600' },
   });

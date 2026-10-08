@@ -92,7 +92,7 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
         onSuccess: (change) => {
           setStep('decided');
           setOutcome(
-            `${change.pilot.name} jest w klubie jako ${change.pilot.code} (${scopeLabel(change.pilot.capabilities).toLowerCase()}). Kod i zakres zmienisz na jego karcie.`,
+            `${change.pilot.name} jest w klubie jako ${change.pilot.code} (${scopeLabel(change.pilot.capabilities).toLowerCase()}). Kod i zakres zmienisz w karcie członka.`,
           );
         },
       },
@@ -133,7 +133,7 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
               disabled={pending || !verdict.complete || verdict.blocker != null}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : 'Odrzuć zgłoszenie'}
+              {pending ? 'Zapisywanie…' : 'Odrzuć zgłoszenie'}
             </Button>
           </>
         ) : (
@@ -147,7 +147,7 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
               disabled={pending || !verdict.complete || verdict.blocker != null || request == null}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : 'Zatwierdź i przyjmij do klubu'}
+              {pending ? 'Zapisywanie…' : 'Zatwierdź i przyjmij do klubu'}
             </Button>
           </>
         )
@@ -268,7 +268,7 @@ export function RequestDrawer({ pilotId, queue, queuePending, onClose }: Request
                 <div className="access-row">
                   <span className="cell-sub">{scopeSummary(draft.capabilities)}</span>
                   <Button variant="ghost" size="sm" onClick={() => setScopeOpen(!scopeOpen)}>
-                    {scopeOpen ? 'Ukryj zdolności' : 'Pokaż zdolności'}
+                    {scopeOpen ? 'Ukryj uprawnienia' : 'Pokaż uprawnienia'}
                   </Button>
                 </div>
 

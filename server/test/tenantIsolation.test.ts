@@ -26,6 +26,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADMIN_CSRF_HEADERS, seedRefresh, TEST_BASE_URL, testHarness } from './helpers.ts';
+import { connectLive, sendFrame, type LiveInbox } from './liveClients.ts';
+import { panelSession } from './routeClients.ts';
 import { googleTokenFor } from './testIdentityProvider.ts';
 import { ORG_A, ORG_A_SHEETS_KEY, ORG_B, ORG_B_SHEETS_KEY, seedBetaFleet } from './testWorld.ts';
 
@@ -39,6 +41,9 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 const BOOK_FROM = DAY + 7 * 86_400_000 + 8 * 3_600_000;
 const bookWindow = (days = 3): string =>
   `from=${new Date(BOOK_FROM - 3_600_000).toISOString()}&to=${new Date(BOOK_FROM + days * 86_400_000).toISOString()}`;
+
+/** Termin zleceń obu klubów (4.0.0) - doba bez żadnej innej zajętości w świecie sond. */
+const ORDER_AT = BOOK_FROM + 10 * 86_400_000;
 
 let seq = 0;
 function event(
@@ -165,6 +170,13 @@ const B_MARKERS = [
   // Obserwowanie samolotu (3.2.0): wiersz obserwowania Bety i uuid jej operacji na
   // karcie maszyny nie mają prawa paść w żadnej odpowiedzi dla Alfy.
   'watch-b',
+  // Zlecenia na lot (4.0.0, issue #245): zlecenie Bety (jego uuid niesie też notatka
+  // „zlecenie order-b"), grupa klubu i wiadomość z rozmowy.
+  'order-b',
+  'group-b',
+  'Grupa Beta',
+  'msg-b',
+  'wiadomosc-beta',
 ] as const;
 
 interface World {
@@ -330,6 +342,44 @@ async function twoClubs(): Promise<World> {
     [ORG_A, ORG_B],
   );
 
+  // Zlecenia na lot (4.0.0, issue #245) - po jednym w każdym klubie, TYMI SAMYMI trasami,
+  // co u zlecającego. PWI - osoba w obu klubach - dostaje OBA: w Alfie imiennie, w Becie
+  // przez grupę. Sondy pytają więc tokenem Alfy o zlecenie Bety, którego ta osoba NAPRAWDĘ
+  // jest adresatem - i dopiero wtedy 404 dowodzi zawężenia klubu, a nie braku wiersza.
+  const group = (token: string, id: string, name: string, memberIds: string[]) =>
+    app.inject({ method: 'POST', url: '/admin/api/groups', headers: writer(token), payload: { id, name, memberIds } });
+  expect((await group(a, 'group-a', 'Grupa Alfa', ['PWI', 'KRZ'])).statusCode).toBe(201);
+  expect((await group(b, 'group-b', 'Grupa Beta', ['BPI', 'PWI'])).statusCode).toBe(201);
+  const order = (token: string, id: string, aircraftId: string, pic: { pilotIds: string[]; groupIds: string[] }) =>
+    app.inject({
+      method: 'POST',
+      url: '/orders',
+      headers: bearer(token),
+      payload: {
+        id,
+        aircraftId,
+        startsAt: new Date(ORDER_AT).toISOString(),
+        endsAt: new Date(ORDER_AT + 7_200_000).toISOString(),
+        operation: 'przelot',
+        note: `zlecenie ${id}`,
+        seats: { pic: 'sought', dual: 'none' },
+        audience: { kind: 'per_seat', pic, dual: null },
+      },
+    });
+  expect((await order(a, 'order-a', 'SP-AXA', { pilotIds: ['PWI'], groupIds: [] })).statusCode).toBe(201);
+  expect((await order(b, 'order-b', 'SP-BBB', { pilotIds: [], groupIds: ['group-b'] })).statusCode).toBe(201);
+  const inject = (token: string, url: string, payload: object) =>
+    app.inject({ method: 'POST', url, headers: bearer(token), payload });
+  // Beta żyje: BPI zgłasza się na fotel i pisze w swojej rozmowie - treść, której żadna
+  // odpowiedź dla Alfy nie ma prawa pokazać. Alfa też: zlecający pisze do PWI.
+  expect((await inject(bpi, '/orders/order-b/answer', { answer: 'yes' })).statusCode).toBe(200);
+  expect(
+    (await inject(bpi, '/orders/order-b/threads/BPI/messages', { id: 'msg-b', body: 'wiadomosc-beta' })).statusCode,
+  ).toBe(201);
+  expect(
+    (await inject(a, '/orders/order-a/threads/PWI/messages', { id: 'msg-a', body: 'wiadomosc-alfa' })).statusCode,
+  ).toBe(201);
+
   return { app, db, a, b, pwiA, pwiB, flagA, flagB, pendingB: 'kandydat-b' };
 }
 
@@ -344,6 +394,351 @@ function expectClean(res: { statusCode: number; body: string }, label: string): 
 // ══ PRZYPADKI IZOLACJI - jeden na trasę z rejestru ═════════════════════════════════
 
 type Probe = (w: World) => Promise<void>;
+
+/**
+ * Stan zlecenia, rozmów i grup Bety w bazie - sondy zapisu porównują go przed i po.
+ * Odpowiedź 404 to DWIE własności: trasa nie zdradza, że zlecenie jest, i niczego w nim
+ * nie rusza. Sama liczba 404 dowodziłaby tylko pierwszej.
+ */
+async function betaOrderState(db: Harness['db']): Promise<string> {
+  const rows = async (sql: string): Promise<string> => JSON.stringify((await db.query(sql)).rows);
+  return [
+    await rows(`SELECT status, revision, edited_at, closed_at FROM flight_orders WHERE id = 'order-b'`),
+    await rows(`SELECT pilot_id, dual_id, starts_at, ends_at, status, note FROM bookings WHERE order_id = 'order-b'`),
+    await rows(
+      `SELECT pilot_id, seat, answer, seen_at, last_seen_at, removed_at FROM order_recipients
+        WHERE order_id = 'order-b' ORDER BY pilot_id`,
+    ),
+    await rows(`SELECT kind FROM order_changes WHERE order_id = 'order-b' ORDER BY created_at, kind`),
+    await rows(`SELECT id, body FROM thread_messages WHERE org_id = '${ORG_B}' ORDER BY id`),
+    await rows(`SELECT pilot_id, last_read_at FROM thread_participants WHERE org_id = '${ORG_B}' ORDER BY pilot_id`),
+    await rows(
+      `SELECT g.id, g.name, array_agg(m.pilot_id ORDER BY m.pilot_id) AS members
+         FROM member_groups g LEFT JOIN member_group_members m ON m.group_id = g.id
+        WHERE g.org_id = '${ORG_B}' GROUP BY g.id, g.name`,
+    ),
+  ].join(' | ');
+}
+
+/** Zapis tokenem Alfy w dane Bety: 404, żadnego znacznika w ciele, ZERO skutku w bazie. */
+async function expectUntouched(
+  w: World,
+  label: string,
+  send: () => Promise<{ statusCode: number; body: string }>,
+): Promise<void> {
+  const before = await betaOrderState(w.db);
+  const res = await send();
+  expect(res.statusCode, `${label}: ${res.body}`).toBe(404);
+  for (const marker of B_MARKERS) {
+    expect(res.body, `${label} zdradza „${marker}"`).not.toContain(marker);
+  }
+  expect(await betaOrderState(w.db), `${label} ruszyło dane Bety`).toBe(before);
+}
+
+const orderIds = (res: { json(): { items: { order: { id: string } }[] } }): string[] =>
+  res.json().items.map((i) => i.order.id);
+
+/**
+ * Zlecenia i rozmowy (4.0.0, issue #245). Obie powierzchnie rejestrują TĘ SAMĄ tablicę
+ * punktów końcowych (`common/orderEndpoints.ts`), więc sondy też są jedne - różni je
+ * prefiks i nagłówek zapisu (panel wymaga nagłówka CSRF). Klucz = `METHOD prefiks+ścieżka`,
+ * dokładnie jak w rejestrze Fastify.
+ */
+/**
+ * Świeży token PWI w KLUBIE A. Sonda „Wyloguj wszędzie w tym klubie" (2.1.0) zrywa w połowie
+ * przebiegu wszystkie sesje PWI w Alfie, a sondy zleceń pytają właśnie tą osobą - więc
+ * biorą token przełączeniem z żywej sesji w Becie, zamiast polegać na tym ze świata.
+ */
+async function pwiInAlfa({ app, pwiB }: World): Promise<string> {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/auth/switch',
+    headers: bearer(pwiB),
+    payload: { orgId: ORG_A },
+  });
+  expect(res.statusCode, `przełączenie PWI do Alfy: ${res.body}`).toBe(200);
+  return res.json().token as string;
+}
+
+function orderCases(prefix: '' | '/admin/api'): Record<string, Probe> {
+  const on = (path: string): string => `${prefix}${path}`;
+  const key = (method: string, path: string): string => `${method} ${prefix}${path}`;
+  const write = prefix === '' ? bearer : writer;
+  const post = (w: World, token: string, path: string, payload: object = {}) =>
+    w.app.inject({ method: 'POST', url: on(path), headers: write(token), payload });
+
+  return {
+    [key('GET', '/orders/summary')]: async (w) => {
+      const { app, a } = w;
+      const pwiA = await pwiInAlfa(w);
+      // PWI dostaje zlecenie w OBU klubach - licznik Alfy liczy wyłącznie Alfę.
+      const mine = await app.inject({ url: on('/orders/summary'), headers: bearer(pwiA) });
+      expectClean(mine, on('/orders/summary'));
+      expect(mine.json().awaitingAnswer).toBe(1);
+      const lead = await app.inject({ url: on('/orders/summary'), headers: bearer(a) });
+      expectClean(lead, on('/orders/summary'));
+      expect(lead.json().seekingCrew).toBe(1);
+    },
+
+    [key('GET', '/orders')]: async (w) => {
+      const { app, a } = w;
+      const pwiA = await pwiInAlfa(w);
+      const inbox = await app.inject({ url: on('/orders?box=inbox'), headers: bearer(pwiA) });
+      expectClean(inbox, on('/orders'));
+      expect(orderIds(inbox)).toEqual(['order-a']);
+      const managed = await app.inject({ url: on('/orders?box=managed'), headers: bearer(a) });
+      expectClean(managed, on('/orders'));
+      expect(orderIds(managed)).toEqual(['order-a']);
+    },
+
+    [key('GET', '/orders/:id')]: async (w) => {
+      const { app, a } = w;
+      const pwiA = await pwiInAlfa(w);
+      // Adresat zlecenia Bety pod tokenem Alfy dostaje to samo, co administrator Alfy:
+      // zlecenia nie ma. `403` potwierdzałoby, że jest.
+      for (const token of [a, pwiA]) {
+        const res = await app.inject({ url: on('/orders/order-b'), headers: bearer(token) });
+        expect(res.statusCode, res.body).toBe(404);
+      }
+      const own = await app.inject({ url: on('/orders/order-a'), headers: bearer(a) });
+      expectClean(own, on('/orders/:id'));
+      expect(own.json().order.id).toBe('order-a');
+    },
+
+    [key('POST', '/orders')]: async (w) => {
+      const draft = (over: Record<string, unknown>) => ({
+        id: 'iso-order',
+        aircraftId: 'SP-AXA',
+        startsAt: new Date(ORDER_AT + 86_400_000).toISOString(),
+        endsAt: new Date(ORDER_AT + 86_400_000 + 3_600_000).toISOString(),
+        operation: 'przelot',
+        seats: { pic: 'sought', dual: 'none' },
+        audience: { kind: 'per_seat', pic: { pilotIds: ['PWI'], groupIds: [] }, dual: null },
+        ...over,
+      });
+      const before = await betaOrderState(w.db);
+      // Maszyna Bety jest dla tego tokenu nieistniejąca - jak przy rezerwacji.
+      const aircraft = await post(w, w.a, '/orders', draft({ aircraftId: 'SP-BBB' }));
+      expect(aircraft.statusCode, aircraft.body).toBe(404);
+      expect(aircraft.json().error).toBe('aircraft_not_found');
+      // Grupa i członek Bety jako adresaci - odmowa jak dla nieznanych.
+      const foreignGroup = await post(
+        w,
+        w.a,
+        '/orders',
+        draft({ audience: { kind: 'per_seat', pic: { pilotIds: [], groupIds: ['group-b'] }, dual: null } }),
+      );
+      expect(foreignGroup.statusCode, foreignGroup.body).toBe(400);
+      expect(foreignGroup.json().error).toBe('unknown_group');
+      const foreignPilot = await post(
+        w,
+        w.a,
+        '/orders',
+        draft({ audience: { kind: 'per_seat', pic: { pilotIds: ['BPI'], groupIds: [] }, dual: null } }),
+      );
+      expect(foreignPilot.statusCode, foreignPilot.body).toBe(400);
+      expect(foreignPilot.json().error).toBe('not_member');
+      // Uuid zlecenia Bety: jak zajęty termin BEZ wskazania czym - wzorzec rezerwacji.
+      const foreignId = await post(w, w.a, '/orders', draft({ id: 'order-b' }));
+      expect(foreignId.statusCode, foreignId.body).toBe(409);
+      expect(foreignId.json()).toEqual({ error: 'slot_taken' });
+
+      expect(await betaOrderState(w.db)).toBe(before);
+      const { rows } = await w.db.query<{ n: string }>(
+        `SELECT COUNT(*) AS n FROM flight_orders WHERE id = 'iso-order'`,
+      );
+      expect(Number(rows[0]!.n)).toBe(0);
+    },
+
+    [key('PATCH', '/orders/:id')]: async (w) => {
+      for (const token of [w.a, await pwiInAlfa(w)]) {
+        await expectUntouched(w, on('/orders/:id'), () =>
+          w.app.inject({
+            method: 'PATCH',
+            url: on('/orders/order-b'),
+            headers: write(token),
+            payload: { note: 'przejęte', startsAt: new Date(ORDER_AT + 3_600_000).toISOString() },
+          }),
+        );
+      }
+    },
+
+    [key('POST', '/orders/:id/cancel')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/cancel'), () =>
+        post(w, w.a, '/orders/order-b/cancel', { reason: 'z Alfy' }),
+      );
+    },
+
+    [key('POST', '/orders/:id/seen')]: async (w) => {
+      // Zlecenie Bety PWI naprawdę dostało - a mimo to token Alfy go nie stempluje.
+      await expectUntouched(w, on('/orders/:id/seen'), async () => post(w, await pwiInAlfa(w), '/orders/order-b/seen'));
+      // Kontrola pozytywna: własne zlecenie stempluje się jak zwykle.
+      expect((await post(w, await pwiInAlfa(w), '/orders/order-a/seen')).statusCode).toBe(204);
+    },
+
+    [key('POST', '/orders/:id/answer')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/answer'), async () =>
+        post(w, await pwiInAlfa(w), '/orders/order-b/answer', { answer: 'yes' }),
+      );
+    },
+
+    [key('POST', '/orders/:id/assign')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/assign'), () =>
+        post(w, w.a, '/orders/order-b/assign', { pilotId: 'BPI', seat: 'pic' }),
+      );
+    },
+
+    [key('POST', '/orders/:id/unassign')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/unassign'), () =>
+        post(w, w.a, '/orders/order-b/unassign', { seat: 'pic' }),
+      );
+    },
+
+    [key('POST', '/orders/:id/withdraw')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/withdraw'), async () => post(w, await pwiInAlfa(w), '/orders/order-b/withdraw'));
+    },
+
+    [key('GET', '/orders/:id/threads/:pilotId/messages')]: async (w) => {
+      const { app, a } = w;
+      const pwiA = await pwiInAlfa(w);
+      for (const [token, pilotId] of [
+        [a, 'BPI'],
+        [pwiA, 'PWI'],
+      ] as const) {
+        const res = await app.inject({
+          url: on(`/orders/order-b/threads/${pilotId}/messages`),
+          headers: bearer(token),
+        });
+        expect(res.statusCode, res.body).toBe(404);
+      }
+      // Kontrola pozytywna: rozmowa w zleceniu Alfy - ta sama osoba, własny klub.
+      const own = await app.inject({ url: on('/orders/order-a/threads/PWI/messages'), headers: bearer(pwiA) });
+      expectClean(own, on('/orders/:id/threads/:pilotId/messages'));
+      expect((own.json().messages as { body: string }[]).map((m) => m.body)).toEqual(['wiadomosc-alfa']);
+    },
+
+    [key('POST', '/orders/:id/threads/:pilotId/messages')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/threads/:pilotId/messages'), async () =>
+        post(w, await pwiInAlfa(w), '/orders/order-b/threads/PWI/messages', { id: 'iso-msg', body: 'z Alfy' }),
+      );
+      await expectUntouched(w, on('/orders/:id/threads/:pilotId/messages'), () =>
+        post(w, w.a, '/orders/order-b/threads/BPI/messages', { id: 'iso-msg', body: 'z Alfy' }),
+      );
+    },
+
+    [key('POST', '/orders/:id/threads/:pilotId/read')]: async (w) => {
+      await expectUntouched(w, on('/orders/:id/threads/:pilotId/read'), async () =>
+        post(w, await pwiInAlfa(w), '/orders/order-b/threads/PWI/read'),
+      );
+      await expectUntouched(w, on('/orders/:id/threads/:pilotId/read'), () =>
+        post(w, w.a, '/orders/order-b/threads/BPI/read'),
+      );
+    },
+  };
+}
+
+const groupIds = (res: { json(): { groups: { id: string }[] } }): string[] => res.json().groups.map((g) => g.id);
+
+let liveNote = 0;
+
+/**
+ * Kanał klubu (4.0.0, epik Z-E #246, `docs/kanal-klubu.md` §5): połączenie uwierzytelnione
+ * w ALFIE nie dostaje ani sygnału o zmianie w BECIE, ani wiadomości z rozmowy Bety, choć
+ * wszystko idzie przez jeden rejestr połączeń - a to samo z Alfy dostaje (kontrola
+ * pozytywna). Zmiany to prawdziwe zapisy obu klubów: notatka zlecenia za każdym razem inna,
+ * bo zapis bez zmiany niczego nie ogłasza, i wiadomość w wątku, w którym autor zlecenia
+ * rozmawia z adresatem.
+ */
+async function expectLiveIsolation(w: World, inbox: LiveInbox): Promise<void> {
+  const post = (token: string, url: string, method: 'PATCH' | 'POST', payload: object) =>
+    w.app.inject({ method, url, headers: bearer(token), payload });
+  const next = () => (liveNote += 1);
+
+  expect((await post(w.b, '/orders/order-b', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.b, '/orders/order-b/threads/BPI/messages', 'POST', {
+        id: `live-msg-b-${next()}`,
+        body: 'wiadomosc-beta z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+  expect((await post(w.a, '/orders/order-a', 'PATCH', { note: `notatka z kanału ${next()}` })).statusCode).toBe(200);
+  expect(
+    (
+      await post(w.a, '/orders/order-a/threads/PWI/messages', 'POST', {
+        id: `live-msg-a-${next()}`,
+        body: 'wiadomosc-alfa z kanału',
+      })
+    ).statusCode,
+  ).toBe(201);
+
+  await inbox.waitFor((f) => f.type === 'changed' && (f.topics as string[]).includes('order:order-a'));
+  await inbox.waitFor((f) => f.type === 'message' && f.orderId === 'order-a');
+  for (const frame of inbox.frames) {
+    const text = JSON.stringify(frame);
+    for (const marker of B_MARKERS) expect(text, `ramka kanału zdradza „${marker}"`).not.toContain(marker);
+  }
+}
+
+/** Grupy klubu (4.0.0, issue #245): odczyt na obu powierzchniach, zapis wyłącznie w panelu. */
+function groupCases(): Record<string, Probe> {
+  return {
+    'GET /groups': async (w) => {
+      const { app, a } = w;
+      const pwiA = await pwiInAlfa(w);
+      const res = await app.inject({ url: '/groups', headers: bearer(a) });
+      expectClean(res, '/groups');
+      expect(groupIds(res)).toEqual(['group-a']);
+      // Bez „Zlecania lotów" grup w telefonie nie ma - to brak prawa, nie cudzy zasób.
+      expect((await app.inject({ url: '/groups', headers: bearer(pwiA) })).statusCode).toBe(403);
+    },
+
+    'GET /admin/api/groups': async ({ app, a }) => {
+      const res = await app.inject({ url: '/admin/api/groups', headers: bearer(a) });
+      expectClean(res, '/admin/api/groups');
+      expect(groupIds(res)).toEqual(['group-a']);
+    },
+
+    'POST /admin/api/groups': async ({ app, db, a }) => {
+      const create = (payload: object) =>
+        app.inject({ method: 'POST', url: '/admin/api/groups', headers: writer(a), payload });
+      const before = await betaOrderState(db);
+      const foreignMember = await create({ id: 'iso-group', name: 'Z Alfy', memberIds: ['BPI'] });
+      expect(foreignMember.statusCode, foreignMember.body).toBe(400);
+      expect(foreignMember.json().error).toBe('member_not_in_org');
+      // Uuid grupy Bety: dla tego klubu grupy nie ma - odmowa bez jej treści.
+      const foreignId = await create({ id: 'group-b', name: 'Z Alfy', memberIds: [] });
+      expect(foreignId.statusCode, foreignId.body).toBe(409);
+      expect(foreignId.json()).toEqual({ error: 'name_taken' });
+      expect(await betaOrderState(db)).toBe(before);
+      const { rows } = await db.query<{ n: string }>(`SELECT COUNT(*) AS n FROM member_groups WHERE id = 'iso-group'`);
+      expect(Number(rows[0]!.n)).toBe(0);
+
+      // Kontrola pozytywna: powtórzony zapis własnej grupy wraca nią samą - `200`, nie `201`.
+      const again = await create({ id: 'group-a', name: 'Grupa Alfa', memberIds: ['PWI', 'KRZ'] });
+      expectClean(again, '/admin/api/groups');
+      expect(again.json().id).toBe('group-a');
+    },
+
+    'PATCH /admin/api/groups/:id': async (w) => {
+      await expectUntouched(w, '/admin/api/groups/:id', () =>
+        w.app.inject({
+          method: 'PATCH',
+          url: '/admin/api/groups/group-b',
+          headers: writer(w.a),
+          payload: { name: 'Przejęta', memberIds: ['KRZ'] },
+        }),
+      );
+    },
+
+    'DELETE /admin/api/groups/:id': async (w) => {
+      await expectUntouched(w, '/admin/api/groups/:id', () =>
+        w.app.inject({ method: 'DELETE', url: '/admin/api/groups/group-b', headers: writer(w.a) }),
+      );
+    },
+  };
+}
 
 /**
  * Klucz = `METHOD url` dokładnie tak, jak trasa stoi w rejestrze Fastify. Każdy przypadek
@@ -1229,16 +1624,29 @@ const CASES: Record<string, Probe> = {
       [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
     );
 
+    // Zlecenia świata (4.0.0) zostawiają PWI wiadomości w OBU klubach, więc skrzynkę
+    // porównujemy ze stanem bazy per klub, a nie z liczbą wpisaną w test.
+    const idsIn = async (orgId: string): Promise<string[]> =>
+      (
+        await db.query<{ id: string }>(`SELECT id FROM notifications WHERE org_id = $1 AND pilot_id = 'PWI'`, [orgId])
+      ).rows
+        .map((r) => r.id)
+        .sort();
+    const idsOf = (body: { json(): { items: { id: string }[] } }): string[] =>
+      body.json().items.map((i) => i.id).sort();
+
     const res = await app.inject({ url: '/me/notifications', headers: bearer(pwiA) });
     expectClean(res, '/me/notifications');
-    expect(res.json().items).toHaveLength(0);
-    expect(res.json().unread).toBe(0);
+    const alfa = await idsIn(ORG_A);
+    expect(idsOf(res)).toEqual(alfa);
+    expect(res.json().unread).toBe(alfa.length);
 
     // Kontrola pozytywna: TA SAMA OSOBA pod tokenem klubu B widzi ją natychmiast -
-    // pusta skrzynka wyżej jest zawężeniem klubu, a nie brakiem wiersza.
+    // jej brak wyżej jest zawężeniem klubu, a nie brakiem wiersza.
     const wBecie = await app.inject({ url: '/me/notifications', headers: bearer(pwiB) });
     expect(wBecie.statusCode, wBecie.body).toBe(200);
-    expect(wBecie.json().items).toHaveLength(1);
+    expect(idsOf(wBecie)).toEqual(await idsIn(ORG_B));
+    expect(idsOf(wBecie)).toContain('note-b');
   },
 
   'POST /me/notifications/:id/read': async ({ app, db, pwiA }) => {
@@ -1820,6 +2228,57 @@ const CASES: Record<string, Probe> = {
     expect(Number(rows[0]!.n)).toBe(1);
   },
 
+  'GET /admin/api/me/notifications': async (w) => {
+    const { app, db, pwiB } = w;
+    // Skrzynka panelu (4.0.0, K7) - ta sama reguła, co w telefonie: jedna osoba w DWÓCH
+    // klubach, a wiadomość z Bety nie ma prawa pokazać się w panelu Alfy. Świeży token
+    // Alfy, bo sonda „Wyloguj wszędzie" zrywa sesje PWI w Alfie w połowie przebiegu.
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel', $1, 'PWI', 'approval_requested', $2::jsonb)`,
+      [ORG_B, JSON.stringify({ bookingId: 'book-b', aircraftId: 'SP-BBB' })],
+    );
+    const idsIn = async (orgId: string): Promise<string[]> =>
+      (
+        await db.query<{ id: string }>(`SELECT id FROM notifications WHERE org_id = $1 AND pilot_id = 'PWI'`, [orgId])
+      ).rows
+        .map((r) => r.id)
+        .sort();
+    const idsOf = (body: { json(): { items: { id: string }[] } }): string[] =>
+      body.json().items.map((i) => i.id).sort();
+
+    const res = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiA) });
+    expectClean(res, '/admin/api/me/notifications');
+    expect(idsOf(res)).toEqual(await idsIn(ORG_A));
+
+    // Kontrola pozytywna: ta sama osoba w sesji klubu B widzi ją od razu.
+    const wBecie = await app.inject({ url: '/admin/api/me/notifications', headers: bearer(pwiB) });
+    expect(wBecie.statusCode, wBecie.body).toBe(200);
+    expect(idsOf(wBecie)).toContain('note-b-panel');
+  },
+
+  'POST /admin/api/me/notifications/:id/read': async (w) => {
+    const { app, db } = w;
+    const pwiA = await pwiInAlfa(w);
+    await db.query(
+      `INSERT INTO notifications (id, org_id, pilot_id, kind, payload)
+       VALUES ('note-b-panel-read', $1, 'PWI', 'booking_approved', '{}'::jsonb)`,
+      [ORG_B],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/api/me/notifications/note-b-panel-read/read',
+      headers: writer(pwiA),
+    });
+    // Cudzy klub odpowiada tak samo jak wiersz nieistniejący, a stempel NIE PADA.
+    expect(res.statusCode).toBe(404);
+    const { rows } = await db.query<{ read_at: string | null }>(
+      `SELECT read_at FROM notifications WHERE id = 'note-b-panel-read'`,
+    );
+    expect(rows[0]!.read_at).toBeNull();
+  },
+
   'GET /admin/api/bookings/:id/preview/pilot/:pilotId': async ({ app, a }) => {
     expect(
       (await app.inject({ url: '/admin/api/bookings/book-b/preview/pilot/BPI', headers: bearer(a) }))
@@ -1838,6 +2297,32 @@ const CASES: Record<string, Probe> = {
     const res = await app.inject({ url: '/admin/api/bookings/book-a/preview/aircraft', headers: bearer(a) });
     expectClean(res, '/admin/api/bookings/:id/preview/aircraft');
     expect(res.json().aircraft.id).toBe('SP-AXA');
+  },
+
+  // ── zlecenia, rozmowy i grupy (4.0.0, issue #245) ─────────────────────────────
+  // Jedna tablica punktów końcowych na dwie powierzchnie - więc jedne sondy z prefiksem.
+  ...orderCases(''),
+  ...orderCases('/admin/api'),
+  ...groupCases(),
+
+  // ── kanał klubu (4.0.0, epik Z-E #246) ──────────────────────────────────────
+  'GET /live': async (w) => {
+    const { ws, inbox } = await connectLive(w.app, '/live');
+    sendFrame(ws, { type: 'auth', token: w.a });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
+  },
+
+  'GET /admin/api/live': async (w) => {
+    const session = await panelSession(w.app, 'AKO');
+    const { ws, inbox } = await connectLive(w.app, '/admin/api/live', {
+      cookie: session.cookie ?? '',
+      origin: new URL(TEST_BASE_URL).origin,
+    });
+    await inbox.waitFor((f) => f.type === 'hello');
+    await expectLiveIsolation(w, inbox);
+    ws.close();
   },
 };
 
@@ -1919,7 +2404,16 @@ describe('izolacja klubów - każda trasa z rejestru Fastify', () => {
     expect(await probe(`SELECT COUNT(*) AS n FROM bug_reports WHERE org_id = '${ORG_B}'`)).toBe(1);
     // Dwie karty, bo dwie doby maszyny SP-BBB (karta = doba SAMOLOTU).
     expect(await probe(`SELECT COUNT(*) AS n FROM exported_sheets WHERE org_id = '${ORG_B}'`)).toBe(2);
-    expect(await probe(`SELECT COUNT(*) AS n FROM admin_audit WHERE org_id = '${ORG_B}'`)).toBe(1);
+    // Odczyt administratora i założenie grupy (4.0.0) - dwa ślady w dzienniku Bety.
+    expect(await probe(`SELECT COUNT(*) AS n FROM admin_audit WHERE org_id = '${ORG_B}'`)).toBe(2);
+    // Zlecenie, grupa i rozmowa Bety są w bazie, a PWI JEST adresatem zlecenia Bety -
+    // to na tej osobie stoją sondy zleceń, więc „czysta" odpowiedź coś dowodzi.
+    expect(await probe(`SELECT COUNT(*) AS n FROM flight_orders WHERE org_id = '${ORG_B}'`)).toBe(1);
+    expect(
+      await probe(`SELECT COUNT(*) AS n FROM order_recipients WHERE org_id = '${ORG_B}' AND pilot_id = 'PWI'`),
+    ).toBe(1);
+    expect(await probe(`SELECT COUNT(*) AS n FROM member_groups WHERE org_id = '${ORG_B}'`)).toBe(1);
+    expect(await probe(`SELECT COUNT(*) AS n FROM thread_messages WHERE org_id = '${ORG_B}'`)).toBe(1);
 
     // Kontrola pozytywna: klub B widzi SWOJE dane (skopowanie nie znaczy „nikt nic nie widzi").
     const ownB = await world.app.inject({ method: 'GET', url: '/admin/api/sessions', headers: bearer(world.b) });

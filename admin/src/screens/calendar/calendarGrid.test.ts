@@ -139,6 +139,44 @@ describe('siatka kalendarza', () => {
     ]);
   });
 
+  // Decyzja 23 zleceń: rezerwacja liczy OBA fotele - jak na telefonie.
+  it('drugi pilot leci tym samym lotem, więc i dla niego pasek jest „mój"', () => {
+    const rows = buildCalendarGrid({
+      days: DNI,
+      aircraft: FLOTA,
+      person: osoba,
+      viewerId: 'p1',
+      today: null,
+      bookings: [booking({ id: 'z-drugim', pilotId: 'p2', dualId: 'p1' })],
+    });
+    expect(rows[0]!.cells[0]!.items[0]).toMatchObject({ mine: true, order: false });
+  });
+
+  it('ZLECENIE bez kompletu załogi ma własny ton - nie jest jeszcze niczyim lotem', () => {
+    const rows = buildCalendarGrid({
+      days: DNI,
+      aircraft: FLOTA,
+      person: osoba,
+      viewerId: 'p1',
+      today: null,
+      bookings: [
+        booking({ id: 'szuka', pilotId: 'p1', order: { seeking: ['dual'], id: 'o1', createdBy: 'p2' } }),
+        booking({
+          id: 'komplet',
+          pilotId: 'p1',
+          dualId: 'p2',
+          startsAt: '2026-09-15T10:00:00Z',
+          endsAt: '2026-09-15T11:00:00Z',
+          order: { seeking: [], id: 'o2', createdBy: 'p2' },
+        }),
+      ],
+    });
+    expect(rows[0]!.cells[0]!.items.map((i) => [i.id, i.label, i.order, i.mine])).toEqual([
+      ['szuka', 'A. Kowalski · szuka drugiego pilota', true, false],
+      ['komplet', 'A. Kowalski', false, true],
+    ]);
+  });
+
   it('WEJŚCIE W REZERWACJĘ: od dziś w przód, nie na maszynie poza służbą i nie w dobie zajętej w całości przeglądem', () => {
     const rows = buildCalendarGrid({
       days: DNI,

@@ -74,7 +74,7 @@ export function BookingAircraftCard({
             style={[
               s.busy,
               { left: `${bar.leftPct}%`, width: `${bar.widthPct}%` },
-              bar.tone === 'block' ? s.busyBlock : null,
+              bar.tone === 'block' ? s.busyBlock : bar.tone === 'order' ? s.busyOrder : null,
             ]}
           />
         ))}
@@ -136,6 +136,9 @@ const styles = (t: Theme) =>
       borderColor: t.colors.borderStrong,
     },
     busyBlock: { backgroundColor: t.colors.amberMuted, borderColor: t.colors.amberBorder },
+    // Cudze zlecenie bez kompletu załogi (31): kształt zlecenia - przerywana błękitna ramka,
+    // jak na osi 21E. Dla wybierającego maszynę to zajętość jak każda inna.
+    busyOrder: { backgroundColor: t.colors.blueMuted, borderColor: t.colors.blueBorder, borderStyle: 'dashed' },
     free: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.5, color: t.colors.textMuted },
     freeOff: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.5, color: t.colors.amber },
   });

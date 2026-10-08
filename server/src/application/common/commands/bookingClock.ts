@@ -27,10 +27,15 @@
  *  2. **rezerwacja POTWIERDZONA, której nikt nie odebrał** przez godzinę - slot wraca
  *     do puli jako `released` (§4.1), a obserwujący maszynę dostają „nie odebrano";
  *  3. **rezerwacja POTWIERDZONA, do której zostało mniej niż `FLIGHT_SOON_MS`** - raz,
- *     ze stemplem `reminded_at`: obserwujący dostają „zbliża się lot". Idzie OSTATNIE,
- *     po zwolnieniu: rezerwacja, którą przebieg właśnie zwolnił, nie jest już
+ *     ze stemplem `reminded_at`: obserwujący dostają „zbliża się lot". Idzie po
+ *     zwolnieniu: rezerwacja, którą przebieg właśnie zwolnił, nie jest już
  *     potwierdzona i nie ma o czym przypominać - w odwrotnej kolejności ten sam
- *     przebieg mówiłby „za godzinę" i „nie odebrano" o jednym terminie naraz.
+ *     przebieg mówiłby „za godzinę" i „nie odebrano" o jednym terminie naraz;
+ *  4. **ZLECENIA** (4.0.0, `orderClock.ts`) - zlecenie bez kompletu załogi wygasa na
+ *     początku terminu, a zlecający dostaje ostrzeżenie o 18:00 czasu klubu
+ *     w przeddzień. Idzie OSTATNIE: rezerwacji zlecenia bez kompletu trzy pierwsze
+ *     pytania nie dotyczą (nie zwalnia się jej po godzinie ani o niej nie przypomina),
+ *     więc o jej losie rozstrzyga dopiero ono.
  *
  * Stany `released` i `expired` są OSOBNE i to jest ich cała różnica: tam maszyny nie
  * przejęto, tu zgody nie wydano - a pilot ma usłyszeć, którą z tych dwóch rzeczy
@@ -61,7 +66,9 @@ import {
 } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
 import { bookingExpired, type NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
+import type { OrderClock } from './orderClock.ts';
 
 /** Co ile sprawdzamy. Rezerwacja zwalnia się po godzinie, więc kwadrans dokładności wystarczy. */
 export const RELEASE_TICK_MS = 5 * 60_000;
@@ -73,6 +80,10 @@ export interface ClockRun {
   expired: number;
   /** Terminy, o których przypomniano obserwującym (3.2.0) - osobno, bo to nie zmiana stanu. */
   reminded: number;
+  /** Zlecenia wygaszone bez kompletu załogi (4.0.0). */
+  ordersExpired: number;
+  /** Zlecający ostrzeżeni o niepełnej załodze (4.0.0). */
+  ordersWarned: number;
 }
 
 export class BookingClockJob {
@@ -82,12 +93,16 @@ export class BookingClockJob {
     private readonly sessions: SessionsProjectionPort,
     private readonly clock: Clock,
     private readonly notifier: Notifier,
+    /** Kanał klubu (4.0.0): zwolniony i wygaszony termin znika z kalendarza na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0) - `null` = wyłączone: przebieg dalej zwalnia
      * i wygasza, tylko nikogo o maszynie nie budzi. Stempel przypomnienia pada mimo to
      * (idempotencja zadania nie zależy od tego, czy ktoś obserwuje).
      */
     private readonly watching: AircraftWatching | null = null,
+    /** Zegar zleceń (4.0.0) - `null` = zlecenia wyłączone; trzy pierwsze pytania bez zmian. */
+    private readonly orderClock: OrderClock | null = null,
   ) {}
 
   /**
@@ -99,7 +114,8 @@ export class BookingClockJob {
     const expired = await this.expire(now);
     const { checked, released } = await this.release(now);
     const reminded = await this.remind(now);
-    return { checked, released, expired, reminded };
+    const orders = this.orderClock == null ? { expired: 0, warned: 0 } : await this.orderClock.run(now);
+    return { checked, released, expired, reminded, ordersExpired: orders.expired, ordersWarned: orders.warned };
   }
 
   private async release(now: Date): Promise<{ checked: number; released: number }> {
@@ -132,8 +148,10 @@ export class BookingClockJob {
           // nie powiedział - upłynął czas. Sam status `released` mówi wszystko, a napis
           // „zwolniono automatycznie" udawałby uzasadnienie.
           reason: null,
+          // Zamknął czas, nie człowiek - karta pilota nie ma kogo nazwać (§12.9).
+          by: null,
         });
-        if (row == null) return { closed: null, notices: [] as NotificationDraft[] };
+        if (row == null) return { closed: null, notices: [] as RecordedNotice[] };
         // „Nie odebrano" do obserwujących (§5.5) - tą samą transakcją, co zwolnienie,
         // bez PIC-a i Duala rezerwacji: to oni nie przyszli, nie ich budzimy.
         const notices = await this.aircraftNotices(tx, candidate.orgId, row, (audience) =>
@@ -145,6 +163,7 @@ export class BookingClockJob {
 
       released += 1;
       await this.watching?.wake(candidate.orgId, notices);
+      await this.signals.booking(candidate.orgId, closed);
     }
     return { checked: candidates.length, released };
   }
@@ -168,22 +187,23 @@ export class BookingClockJob {
       if (booking == null || booking.status !== 'pending' || booking.pilotId == null) continue;
 
       const notice = bookingExpired(booking, booking.pilotId);
-      const closed = await this.db.transaction(async (tx) => {
+      const written = await this.db.transaction(async (tx) => {
         const row = await this.bookings.close(tx, candidate.orgId, candidate.id, {
           status: 'expired',
           at: now,
           reason: null,
+          by: null,
         });
         if (row == null) return null;
         // Wiadomość TĄ SAMĄ transakcją, co wygaszenie: pilot, który stracił termin,
         // ma się o tym dowiedzieć zawsze, a nie „jeśli drugi zapis też się uda".
-        await this.notifier.record(tx, candidate.orgId, [notice], now);
-        return row;
+        return { row, recorded: await this.notifier.record(tx, candidate.orgId, [notice], now) };
       });
-      if (closed == null) continue;
+      if (written == null) continue;
 
       expired += 1;
-      await this.notifier.wake(candidate.orgId, [notice]);
+      await this.notifier.wake(candidate.orgId, written.recorded);
+      await this.signals.booking(candidate.orgId, written.row);
     }
     return expired;
   }
@@ -210,7 +230,7 @@ export class BookingClockJob {
     for (const candidate of due) {
       const { stamped, notices } = await this.db.transaction(async (tx) => {
         const row = await this.bookings.markReminded(tx, candidate.orgId, candidate.id, now);
-        if (row == null) return { stamped: null, notices: [] as NotificationDraft[] };
+        if (row == null) return { stamped: null, notices: [] as RecordedNotice[] };
         const notices = await this.aircraftNotices(tx, candidate.orgId, row, (audience) =>
           aircraftFlightSoon(audience, row, now.getTime()),
         );
@@ -234,7 +254,7 @@ export class BookingClockJob {
     orgId: string,
     booking: BookingRecord,
     draft: (audience: WatchAudience) => NotificationDraft[],
-  ): Promise<NotificationDraft[]> {
+  ): Promise<RecordedNotice[]> {
     if (this.watching == null) return [];
     // Klub z KANDYDATA: `BookingRecord` klubu nie niesie (czytelnicy znają go z tokenu
     // albo z aktora), a zadanie okresowe zna go wyłącznie z wiersza `due`/`dueReminders`.
@@ -243,9 +263,7 @@ export class BookingClockJob {
       booking.dualId,
     ]);
     if (audience == null) return [];
-    const notices = draft(audience);
-    await this.watching.record(tx, orgId, notices, this.clock.now());
-    return notices;
+    return this.watching.record(tx, orgId, draft(audience), this.clock.now());
   }
 
   /** Uruchamia pętlę i oddaje funkcję, która ją zatrzymuje. */

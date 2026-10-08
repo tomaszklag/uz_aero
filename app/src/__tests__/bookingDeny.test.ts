@@ -58,7 +58,7 @@ describe('termin zajęty', () => {
   it('mówi CO stoi w tym czasie, a nazwisko daje w MIANOWNIKU za separatorem', () => {
     const vm = bookingDeny(input());
     // Odmiany nazwiska nie da się wyprowadzić regułą, więc zdanie nie próbuje.
-    expect(vm.body).toBe('SP-AXA jest zajęta 11:00 → 13:00 · rezerwację ma J. Nowak. Weszła 3 min temu.');
+    expect(vm.body).toBe('SP-AXA jest zajęta 11:00 → 13:00 · rezerwację ma J. Nowak. Rezerwację dodano 3 min temu.');
     expect(vm.offerFix).toBe(true);
   });
 
@@ -88,10 +88,10 @@ describe('termin zajęty', () => {
 
   it('wyłączenie z użytku nazywa POWÓD - nie ma właściciela', () => {
     const vm = bookingDeny(
-      input({ taken: booking({ kind: 'block', pilotId: null, blockReason: 'Przegląd 100 h' }) }),
+      input({ taken: booking({ kind: 'block', pilotId: null, blockReason: 'maintenance' }) }),
     );
     expect(vm.title).toBe('Maszyna jest w tych godzinach wyłączona');
-    expect(vm.body).toBe('SP-AXA jest wyłączona z użytku 11:00 → 13:00 · Przegląd 100 h.');
+    expect(vm.body).toBe('SP-AXA jest wyłączona z użytku 11:00 → 13:00 · przegląd.');
   });
 });
 
@@ -101,6 +101,14 @@ describe('pozostałe odmowy', () => {
     const vm = bookingDeny(input({ refusal: 'aircraft_disabled', taken: null }));
     expect(vm.offerFix).toBe(false);
     expect(vm.body).toContain('Wybierz inny samolot');
+  });
+
+  it('termin prowadzony przez zlecenie mówi, KTO go zmienia - bez nazwy reguły w nawiasie', () => {
+    const vm = bookingDeny(input({ refusal: 'booking_from_order', taken: null }));
+    expect(vm.title).toBe('Termin prowadzi zlecenie');
+    expect(vm.body).toContain('osoba zlecająca');
+    expect(vm.body).not.toContain('booking_from_order');
+    expect(vm.offerFix).toBe(false);
   });
 
   it('odmowa nieznana temu wydaniu niesie KOD - pilot przeczyta go administratorowi', () => {
@@ -115,9 +123,25 @@ describe('pozostałe odmowy', () => {
 });
 
 describe('zapis, który nie dojechał', () => {
-  it('mówi, CZYJĄ decyzją jest slot - nie „spróbuj ponownie"', () => {
+  it('mówi, że rezerwację zapisuje się z zasięgiem - nie „spróbuj ponownie"', () => {
     expect(BOOKING_OFFLINE.title).toBe('Rezerwacja wymaga połączenia');
-    expect(BOOKING_OFFLINE.body).toContain('Slot potwierdza serwer');
+    expect(BOOKING_OFFLINE.body).toContain('tylko z zasięgiem');
+    expect(BOOKING_OFFLINE.body).not.toMatch(/slot|serwer/i);
     expect(BOOKING_OFFLINE.offerFix).toBe(false);
+  });
+});
+
+describe('termin zajęty przez zlecenie (22C; zlecenia 4.0.0, §16 pkt 3)', () => {
+  it('zamiast nazwiska - to samo zdanie, co pasek na osi; bez adresatów', () => {
+    const vm = bookingDeny(
+      input({ taken: booking({ pilotId: null, order: { seeking: ['pic', 'dual'], id: null, createdBy: null } }) }),
+    );
+    expect(vm.body).toBe('SP-AXA jest zajęta 11:00 → 13:00 · zlecenie · szuka załogi. Zlecenie dodano 3 min temu.');
+    expect(vm.offerFix).toBe(true);
+  });
+
+  it('zlecenie z kompletem załogi jest zwykłą rezerwacją', () => {
+    const vm = bookingDeny(input({ taken: booking({ order: { seeking: [], id: null, createdBy: null } }) }));
+    expect(vm.body).toContain('rezerwację ma J. Nowak');
   });
 });

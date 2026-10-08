@@ -8,7 +8,8 @@
  * trzyma STAN MODUŁU - inaczej każde ponowne zamontowanie nawigatora (wylogowanie
  * i logowanie) otwierałoby tę samą rezerwację jeszcze raz.
  *
- * Dokąd - liczy `logic/pushTarget.ts`; tu jest wyłącznie wołanie nawigatora.
+ * Dokąd - liczy `logic/pushTarget.ts`, a otwiera `navigation/openTarget.ts` (ta sama
+ * droga, co tapnięcie w baner w aplikacji).
  */
 
 import { useEffect } from 'react';
@@ -19,6 +20,7 @@ import {
   onNotificationTap,
   type NotificationTap,
 } from '../../infrastructure/push/expoNotifications';
+import { openTarget } from '../navigation/openTarget';
 import type { RootStackParamList } from '../navigation/RootNavigator';
 import { pushTarget } from '../screens/logic/pushTarget';
 import { useAuthStore } from '../store/authStore';
@@ -37,11 +39,7 @@ export function usePushNavigation(
       consumed = tap.id;
       // Klub aktywny czytamy W CHWILI tapnięcia, nie przy montowaniu: pilot mógł go
       // przełączyć, odkąd nawigator stoi.
-      const target = pushTarget(tap.data, useAuthStore.getState().org?.id ?? null);
-      if (target.screen === 'Decision') ref.navigate('Decision', target.params);
-      else if (target.screen === 'BookingDetails') ref.navigate('BookingDetails', target.params);
-      else if (target.screen === 'Aircraft') ref.navigate('Aircraft', target.params);
-      else ref.navigate('Notifications', target.params);
+      openTarget(ref, pushTarget(tap.data, useAuthStore.getState().org?.id ?? null));
     };
 
     void lastNotificationTap().then((tap) => {

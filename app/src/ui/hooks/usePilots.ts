@@ -37,13 +37,16 @@ export function usePilots(): ReferencePilot[] {
 }
 
 /**
- * KOD pilota z cache floty; surowy identyfikator zostaje ostatnią deską ratunku
- * dla pilota spoza cache'u (reguła z 07, przegląd 2026-09-02).
+ * KOD pilota z cache floty; `null` dla pilota spoza cache'u - ekran stawia wtedy kreskę.
+ *
+ * Do 4.0.0 zapasem był surowy identyfikator (reguła z 07, przegląd 2026-09-02), ale od
+ * wielofirmowości 2.0 to długi ciąg znaków, który na ekranie nie mówi nic nikomu
+ * (przegląd treści 2026-10-08).
  */
 export function usePilotCode(): (id: string | null) => string | null {
   const pilots = usePilots();
   return useCallback(
-    (id: string | null) => (id == null ? null : (pilots.find((p) => p.id === id)?.code ?? id)),
+    (id: string | null) => (id == null ? null : (pilots.find((p) => p.id === id)?.code ?? null)),
     [pilots],
   );
 }

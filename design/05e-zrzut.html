@@ -155,11 +155,11 @@
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci - zrzut zapisze się lokalnie i wyśle po odzyskaniu zasięgu">
+        <div class="offline-badge" title="Brak sieci - zrzut wyśle się sam po powrocie zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           Offline · 14
         </div>
-        <div class="running-badge"><span class="live-dot"></span>RUNNING</div>
+        <div class="running-badge"><span class="live-dot"></span>SILNIK</div>
       </div>
     </div>
 
@@ -169,7 +169,7 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(-45deg)"><path d="M20.56 3.91C21.15 4.5 21.15 5.45 20.56 6.03L16.67 9.92L18.79 19.11L17.38 20.53L13.5 13.1L9.6 17L9.96 19.47L8.89 20.53L7.13 17.35L3.94 15.58L5 14.5L7.5 14.87L11.37 11L3.94 7.09L5.36 5.68L14.55 7.8L18.44 3.91C19 3.33 20 3.33 20.56 3.91Z"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name">Cruise</div>
+          <div class="phase-hero-name">Lot poziomy</div>
           <div class="phase-hero-sub">Lot 6 · nad zrzutowiskiem</div>
         </div>
       </div>
@@ -177,11 +177,11 @@
 
     <div class="param-grid">
       <div class="param-cell">
-        <div class="param-label">Ground Speed</div>
+        <div class="param-label">Prędkość</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">78</div><div class="param-unit">KT</div></div>
       </div>
       <div class="param-cell">
-        <div class="param-label">Altitude</div>
+        <div class="param-label">Wysokość</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">3 200</div><div class="param-unit">FT</div></div>
       </div>
     </div>
@@ -251,7 +251,7 @@
              dawny napis „Ustaw listę skoczków" szarpał layoutem i wyleciał (pkt 4). -->
         <div class="prefill-note">Skład z załadunku 15:12 UTC - potwierdź albo popraw</div>
 
-        <div class="client-note">Rozliczenie trafi do klienta <b>SKY CAMP · zlec. 2026/114</b> (z preflightu)</div>
+        <div class="client-note">Rozliczenie trafi do klienta <b>SKY CAMP · nr 2026/114</b> (z zadania lotu)</div>
 
         <div class="sheet-actions">
           <a href="05-cockpit-running.html" class="btn-cancel">Anuluj</a>
@@ -270,7 +270,7 @@
   <a class="vp-item" href="05-cockpit-running.html">
     <span class="vp-badge">05</span>
     <span class="vp-body">
-      <span class="vp-name">In flight</span>
+      <span class="vp-name">W locie</span>
       <span class="vp-when">Lot w toku - phase hero, GPS live, log zdarzeń. Przycisk <b>Zrzut</b> w pasku akcji otwiera ten arkusz.</span>
     </span>
   </a>
@@ -278,7 +278,7 @@
     <span class="vp-badge blue">05E</span>
     <span class="vp-body">
       <span class="vp-name">Zapis zrzutu (rozliczenie)</span>
-      <span class="vp-when">Po tapnięciu „Zrzut" nad zrzutowiskiem. Wysokość podstawia GPS jako <b>średnią z okna 15 s</b> (pojedynczy fix niósł szum - issue #21), a liczniki otwierają się <b>wypełnione składem z załadunku</b> (05I) - w locie pilot tylko potwierdza. Liczby są opcjonalne: zapis bez nich też przechodzi, więc ZAPISZ ZRZUT nigdy nie jest zablokowany. Klient dziedziczony z preflightu.</span>
+      <span class="vp-when">Po tapnięciu „Zrzut" nad zrzutowiskiem. Wysokość podstawia GPS jako <b>średnią z okna 15 s</b> (pojedynczy odczyt niósł szum - issue #21), a liczniki otwierają się <b>wypełnione składem z załadunku</b> (05I) - w locie pilot tylko potwierdza. Liczby są opcjonalne: zapis bez nich też przechodzi, więc ZAPISZ ZRZUT nigdy nie jest zablokowany. Klient dziedziczony z preflightu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -292,8 +292,8 @@
   <a class="vp-item" href="05g-cockpit-no-gps.html">
     <span class="vp-badge" style="color:var(--red);background:var(--red-muted);border-color:var(--red-border);">05G</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit bez fixa GPS</span>
-      <span class="vp-when">GPS stracił sygnał w locie - autodetekcja wstrzymana, zapis ręczny. Zrzut działa dalej, ale wysokość wpisujesz z wysokościomierza (GPS jej nie podpowie).</span>
+      <span class="vp-name">Kokpit bez sygnału GPS</span>
+      <span class="vp-when">GPS stracił sygnał w locie - wykrywanie wstrzymane, zapis ręczny. Zrzut działa dalej, ale wysokość wpisujesz z wysokościomierza (GPS jej nie podpowie).</span>
     </span>
   </a>
 </aside>
@@ -301,7 +301,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05-cockpit-running.html">← 05 In Flight</a>
+  <a href="05-cockpit-running.html">← 05 W locie</a>
   <a href="05e-zrzut.html" class="active">05E Zrzut</a>
   <a href="05i-zaladunek.html">05I Załadunek</a>
   <span>·</span>

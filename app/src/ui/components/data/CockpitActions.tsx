@@ -158,10 +158,11 @@ export function CockpitActions({
 
       <SideButton
         icon="stop"
-        label="STOP"
-        // Powód blokady wygrywa z podpisem gestu (issue #67) - dopóki STOP nie działa,
-        // odpowiedzią na tapnięcie jest „po LDG", nie instrukcja przytrzymania.
-        sublabel={stopDisabledReason != null ? 'po LDG' : holdShortLabel(HOLD_MS)}
+        label="WYŁĄCZ"
+        a11yLabel="Wyłącz silnik"
+        // Powód blokady wygrywa z podpisem gestu (issue #67) - dopóki przycisk nie działa,
+        // odpowiedzią na tapnięcie jest „po lądowaniu", nie instrukcja przytrzymania.
+        sublabel={stopDisabledReason != null ? 'po lądowaniu' : holdShortLabel(HOLD_MS)}
         colors={red}
         display
         disabledReason={stopDisabledReason}
@@ -175,6 +176,7 @@ export function CockpitActions({
 function SideButton({
   icon,
   label,
+  a11yLabel,
   sublabel,
   colors,
   display = false,
@@ -184,6 +186,8 @@ function SideButton({
 }: {
   icon: IconName;
   label: string;
+  /** Pełna nazwa dla czytnika ekranu, gdy napis na przycisku jest skrócony („WYŁĄCZ"). */
+  a11yLabel?: string;
   sublabel?: string;
   colors: { accent: string; muted: string; border: string };
   display?: boolean;
@@ -199,7 +203,7 @@ function SideButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={a11yLabel ?? label}
       accessibilityState={{ disabled }}
       accessibilityHint={disabledReason ?? (holdMs > 0 ? holdConfirmHint(holdMs) : undefined)}
       disabled={disabled}

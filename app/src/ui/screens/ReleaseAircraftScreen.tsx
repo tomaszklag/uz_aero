@@ -71,7 +71,7 @@ import { fuelReleaseTrail, mhReleaseTrail } from './logic/releaseTrail';
 import { emptyReleaseWarning, readingsUntouched } from './logic/releaseWarnings';
 import { engineTimeInWindow, estimateFob, lastFuelReference } from './logic/refuelMath';
 import type { NoFlightReason } from '../../domain';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 
 /**
  * Siatka powodów (`.reason-grid` z 09C) - karty z ikonami, nigdy natywny `<select>`
@@ -108,7 +108,7 @@ function useHalfMinuteTicker(): number {
 export function ReleaseAircraftScreen({
   navigation,
 }: {
-  navigation: { navigate: (s: string) => void; goBack: () => void };
+  navigation: HomeNavigator & { goBack: () => void; popTo: (screen: string) => void };
 }) {
   const { theme } = useTheme();
   const projection = useSessionStore((s) => s.projection);
@@ -181,8 +181,9 @@ export function ReleaseAircraftScreen({
       await releaseAircraft(
         releasePayload({ fuelL: reading.fuelL, mh: reading.mh }, reason, note),
       );
-      // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
-      // a dzień pilota trwa dalej.
+      // Wszystko wraca na Pulpit, nie do kokpitu: samolotu już nie ma w ręce, a dzień
+      // pilota trwa dalej. Powrót zdejmuje kokpit ze stosu, a jego bramka (04D) puszcza,
+      // bo zdana maszyna przestała być trzymana (`holdsAircraft`).
       goHome(navigation);
     } catch {
       // Powód jest w `lastError` - pokazany banerem niżej.
@@ -225,7 +226,7 @@ export function ReleaseAircraftScreen({
                 { value: vm.summary.flights, label: 'Loty' },
                 { value: vm.summary.blockLabel, label: 'Blok' },
                 { value: vm.summary.flightLabel, label: 'Lot' },
-                { value: vm.summary.heldAt, label: 'Przejęty' },
+                { value: vm.summary.heldAt, label: 'Rozpoczęcie' },
               ]}
             />
           )}
@@ -244,12 +245,15 @@ export function ReleaseAircraftScreen({
             disabledReason={blocker}
             onPress={release}
           />
+          {/* `popTo`, nie `navigate`: kokpit leży już pod spodem, a `navigate` w React
+              Navigation 7 położyłby na wierzch DRUGI kokpit. `popTo` wraca do tego samego
+              także wtedy, gdy zdanie otworzyła zmiana załogi (07). */}
           <ActionButton
             label="JESZCZE NIE - WRÓĆ DO KOKPITU"
             tone="neutral"
             variant="secondary"
             size="md"
-            onPress={() => navigation.navigate('Cockpit')}
+            onPress={() => navigation.popTo('Cockpit')}
           />
         </View>
       }
@@ -293,7 +297,7 @@ export function ReleaseAircraftScreen({
                 bo fakt zajęcia maszyny jest cenniejszy od kompletności formularza -
                 ale pilot stoi przy samolocie i odpowie w sekundę, a administrator
                 czytający rejestr tydzień później nie ma już kogo zapytać. */}
-            <Card title="Dlaczego nie poleciałeś?" flush>
+            <Card title="Dlaczego nie było lotu?" flush>
               <View style={styles.reasons}>
                 <OptionGrid options={REASONS} value={reason} onChange={setReason} />
               </View>
@@ -333,7 +337,7 @@ export function ReleaseAircraftScreen({
                 w logu kokpitu (04c), zanim zapis tego ekranu zatwierdzi log. Stoi NAD
                 odczytami, bo kolejność pytań brzmi: najpierw „czy to się zgadza",
                 potem „ile zostało". ── */}
-            <Card title="Loty tej operacji · czasy UTC · z detekcji" flush>
+            <Card title="Loty tej operacji · czasy UTC" flush>
               <View style={styles.balance}>
                 {vm.flightReview.map((row) => (
                   <KeyValueRow key={row.key} label={row.key} value={row.value} />
@@ -554,7 +558,7 @@ function UnchangedRow({
           z ołówka drugi przycisk obok wartości. */}
       <IconAction
         name="edit"
-        accessibilityLabel={`${label} ${value} ${unit} - popraw, jeśli różni się od stanu przy przejęciu`}
+        accessibilityLabel={`${label} ${value} ${unit} - popraw, jeśli różni się od stanu przy rozpoczęciu`}
         onPress={onEdit}
       />
     </View>
@@ -577,11 +581,11 @@ function NoAircraft({ onBack }: { onBack: () => void }) {
           NIE TRZYMASZ SAMOLOTU
         </AppText>
         <AppText variant="body" tone="muted" style={styles.emptyDesc}>
-          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma - zacznij
-          od przejęcia.
+          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma - najpierw
+          rozpocznij lot.
         </AppText>
         <ActionButton
-          label={'WRÓĆ DO „MÓJ DZIEŃ”'}
+          label="WRÓĆ NA PULPIT"
           tone="neutral"
           variant="secondary"
           size="md"

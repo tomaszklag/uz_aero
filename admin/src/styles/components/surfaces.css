@@ -396,6 +396,63 @@
 }
 
 /**
+ * MENU CZYNNOŚCI PRZY WIERSZU (zlecenia §5.2, §5.3; makieta `zlecenia-szczegoly`, ZL3b).
+ * Czynności, które zmieniają czyjś udział w zleceniu - zamiana osoby, odebranie zlecenia,
+ * cofnięcie przydziału - stoją pod „⋯", a nie jako trzy przyciski w każdym wierszu: sześć
+ * wierszy razy trzy przyciski to farma guzików. Menu ma WYŁĄCZNIE to, co dla wiersza jest
+ * możliwe, bez pozycji wyszarzonych, a skutek czynności pada przed zapisem, w miejscu
+ * wiersza (`.confirm`). Cień jak szuflady: menu jest warstwą nad kartą, nie jej częścią.
+ * Tę samą warstwę bierze menu wolnej komórki kalendarza (`.menu.cell-menu`).
+ */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--surface-raised);
+}
+
+.menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.menu-item.danger,
+.menu-item.danger svg {
+  color: var(--red);
+}
+
+
+/**
  * KOD KLUBU - jedyna droga do klubu (`docs/wielofirmowosc.md` §3.8; issue #101, E3).
  *
  * Duży, mono, z odstępem między znakami: administrator odczytuje go z ekranu i DYKTUJE

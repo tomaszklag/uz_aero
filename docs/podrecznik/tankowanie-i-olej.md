@@ -1,49 +1,45 @@
 # Tankowanie i olej
 
-> Tankowanie zapisuje się w kokpicie przy zatrzymanym śmigle: przed uruchomieniem albo po zatrzymaniu silnika. Olej mierzy się przy przejęciu, a dolewkę zapisuje osobno.
+> Tankowanie zapisujesz w kokpicie przy zatrzymanym silniku - przed uruchomieniem albo po wyłączeniu. Olej mierzysz przy rozpoczęciu lotu, a dolewkę zapisujesz osobno.
 
-## Tankowanie
+## Jak zapisać tankowanie
 
-Ekran tankowania ma trzy części:
+W kokpicie tapnij kafelek **Tankowanie**. Ekran ma trzy części:
 
-1. **Paliwo na pokładzie przed tankowaniem.** Jeśli samolot nie latał od ostatniego odczytu (tankowanie przed lotem - najczęstszy przypadek), wartość jest już wpisana z przekazania potwierdzonego przy przejęciu. Jeśli latał, pole jest puste i wymaga pomiaru z paliwomierza; podpis podpowiada szacunek („szacunek z normy samolotu: ~112 L"), a okienko pomiaru pokazuje rozpiskę: ile miał, ile latał, ile mógł spalić, ile powinno zostać.
-2. **Dolano** - litry z dystrybutora, przyciskami po pełnym litrze albo z klawiatury z miejscami po przecinku (np. `48,7`). Miejsca po przecinku zostają w rachunku. Podpis mówi, ile mieści się do pełna i jaką pojemność mają zbiorniki.
-3. **Stan po tankowaniu** z miarką na tle pojemności zbiorników: szarym to, co było, bursztynem to, co dolano. Stan ponad pojemność blokuje zapis z powodem.
+1. **FOB przed tankowaniem** - paliwo na pokładzie przed dolaniem.
+   - Jeśli samolot nie latał od ostatniego odczytu - najczęściej przy tankowaniu przed lotem - wartość jest już wpisana.
+   - Jeśli latał, pole jest puste: odczytaj paliwomierz i wpisz wynik. Podpis podpowiada szacunek, na przykład „szacunek z normy samolotu: ~112 L", a okienko pokazuje, ile było, ile latano i ile mogło się spalić.
+2. **Dolano** - litry z dystrybutora. Przyciski zmieniają wartość o pełny litr, a z klawiatury wpiszesz też części litra, na przykład `48,7`. Podpis mówi, ile zmieści się do pełna.
+3. **Stan po tankowaniu** z miarką na tle pojemności zbiorników: szarym to, co było, bursztynem to, co dolano.
 
-Po pomiarze paliwa ekran pokazuje pod kartą **rzeczywiste zużycie** od ostatniego odczytu: odczyt odniesienia, czas pracy silnika, litry, średnią na godzinę i werdykt wobec normy maszyny - kontrolę wiarygodności liczby wyżej. Bez pomiaru, bez normy albo bez pracy silnika rachunku nie ma: aplikacja nie zgaduje.
+**ZAPISZ TANKOWANIE** zapisuje dolewkę. Jeśli czegoś brakuje albo paliwa byłoby więcej, niż mieszczą zbiorniki, przycisk powie dlaczego.
 
-@screen 06-tankowanie "Dolewka i miarka pojemności" | 02b-preflight-paliwo "Rozpiska paliwa w okienku"
+Po wpisaniu pomiaru pod kartą pojawia się **rzeczywiste zużycie** od ostatniego odczytu: czas pracy silnika, zużyte litry, średnia na godzinę i ocena wobec normy samolotu.
 
-> **Uwaga.** Tankowanie przy pracującym silniku jest niemożliwe - przycisk mówi to wprost. Dolewa się przy zatrzymanym śmigle; to samo dotyczy dolewki oleju.
+@screen 06-tankowanie "Tankowanie" | 02b-preflight-paliwo "Okienko odczytu paliwa"
+
+> **Uwaga.** Przy pracującym silniku tankowania nie zapiszesz - paliwo i olej dolewa się przy zatrzymanym śmigle.
 
 ## Olej
 
-- **Pomiar przy przejęciu jest obowiązkowy** (krok 3 rozpoczęcia lotu; we [wpisie po fakcie](wpis-lotu-po-fakcie) - opcjonalny). Sekcja pokazuje stan w silniku dużą liczbą i podziałkę wobec zbiornika; bursztynowa kreska to minimum przed lotem z karty samolotu. Pod minimum sekcja ostrzega („dolej przed lotem") - nie blokuje.
-- **Dolewka** to osobne zdarzenie: przy przejęciu (w tym samym okienku co pomiar, pole „Dolano") albo z kokpitu kafelkiem **Dolej olej**. Dolewka ma własny wiersz na osi operacji („Dolewka oleju · +0,5 L") i poprawia się jak tankowanie: przez unieważnienie i dopisanie.
-- **Rozpiska w okienku**: ostatni pomiar (kto, kiedy, przy jakim liczniku), ile motogodzin od tego czasu latano i ile oleju według normy powinno być na bagnecie. Odczyt wyraźnie niższy od oczekiwania dostaje ostrzeżenie: sprawdź, czy silnik nie traci oleju.
-- **Przy zdaniu samolotu oleju się nie mierzy** - odczyt tuż po locie nie jest wiarygodny.
+- **Pomiar przy rozpoczęciu lotu jest obowiązkowy.** W kroku 3 rozpoczęcia lotu mierzysz olej na bagnecie. Sekcja pokazuje stan w silniku i podziałkę wobec zbiornika; bursztynowa kreska to minimum przed lotem. Pod minimum aplikacja ostrzega „dolej przed lotem", ale nie blokuje lotu.
+- **Dolewkę zapisujesz osobno** - w tym samym okienku co pomiar (pole „Dolano") albo z kokpitu kafelkiem **Dolej olej**. Dolewka ma własny wiersz w logu operacji.
+- **Okienko pomiaru podpowiada**: ostatni pomiar (kto, kiedy, przy jakim liczniku), ile motogodzin od tego czasu latano i ile oleju powinno być na bagnecie według normy. Gdy odczyt jest wyraźnie niższy, okienko radzi sprawdzić, czy silnik nie traci oleju.
+- **Przy zdaniu samolotu oleju się nie mierzy** - tuż po locie odczyt z bagnetu nie jest wiarygodny.
 
-W kokpicie kafelek **Dolej olej** pokazuje, ile oleju jest w silniku (pomiar plus dolewki); po uruchomieniu silnika - z dopiskiem „około", odświeżanym co 5 minut.
+W kokpicie kafelek **Dolej olej** pokazuje, ile oleju jest w silniku. Po uruchomieniu silnika to szacunek z dopiskiem „około", odświeżany co 5 minut.
 
-@screen 02i-preflight-olej "Pomiar poniżej minimum" | 04a-cockpit-ground "Kafelek dolewki w kokpicie"
+@screen 02i-preflight-olej "Pomiar oleju poniżej minimum" | 04a-cockpit-ground "Kafelek Dolej olej w kokpicie"
 
-## Jak to działa
+## Zapomniane tankowanie
 
-Paliwo liczy się między odczytami. Każdy odczyt paliwomierza (przejęcie, pomiar przed tankowaniem, zdanie) i każde tankowanie (stan przed, dolano, stan po) jest punktem na osi paliwa tej maszyny; między dwoma punktami aplikacja zna czas pracy silnika, więc umie policzyć średnie zużycie i porównać je z normą. Szacunek „ile zostało" to ostatni pewny odczyt pomniejszony o zużycie z normy za czas pracy silnika - podpowiedź, nie pomiar. Olej idzie własną osią: od pomiaru do pomiaru, przez wiele operacji, bo bagnet tuż po locie kłamie. Oczekiwanie na bagnecie to ostatni pomiar plus dolewki minus norma oleju pomnożona przez motogodziny od tego pomiaru. Więcej: [norma zużycia](norma-zuzycia), [łańcuch odczytów](lancuch-odczytow).
+Tankowanie, którego nie zapisano w kokpicie, dopiszesz później: na ekranie operacji **EDYTUJ DANE** → **DODAJ WPIS** → **Tankowanie**. Podajesz stan przed tankowaniem i ile dolano - stan po tankowaniu policzy się sam.
 
-> **Wskazówka.** Tankowanie zapomniane w kokpicie dopiszesz później: na ekranie operacji **EDYTUJ DANE** → **DODAJ WPIS** → Tankowanie (stan przed i dolano; stan po liczy się sam).
-
-@screen 10h-dodaj-wpis "Dopisanie zapomnianego tankowania"
-
-## Dlaczego tak to działa
-
-> **Dlaczego po locie pole paliwa startuje puste.** Po locie pole „przed tankowaniem" jest puste, choć aplikacja umie policzyć szacunek. Podstawiona liczba dałaby się zatwierdzić bez spojrzenia na paliwomierz, a rachunek zużycia ma liczyć się z pomiaru - nie z modelu.
-
-> **Dlaczego olej mierzy się tylko przy przejęciu.** Oleju nie mierzy się po locie, bo poziom na bagnecie ustala się dopiero po ostygnięciu silnika. Dlatego zużycie oleju jednej operacji nie ma werdyktu - ma go dopiero odcinek od pomiaru do pomiaru.
+@screen 10h-dodaj-wpis "Dopisanie tankowania"
 
 ## Częste problemy
 
-- **ZAPISZ TANKOWANIE jest nieaktywny** → w przycisku stoi powód: wpisz stan paliwa w zbiornikach (po locie pole jest puste), ustaw ilość dolanego paliwa, albo stan po tankowaniu przekracza pojemność zbiorników.
-- **Pole „przed tankowaniem" jest puste, choć przed chwilą podałem odczyt** → od tego odczytu silnik pracował, więc liczba jest już nieaktualna. Odczytaj paliwomierz jeszcze raz; szacunek w podpisie mówi, czego się spodziewać.
-- **Pomiar oleju jest poniżej minimum** → to ostrzeżenie, nie blokada: dolej i wpisz dolewkę w tym samym okienku. Stan po dolewce liczy się sam.
-- **Kafelek mówi „W silniku około"** → po uruchomieniu silnika to szacunek; dokładną liczbę da dopiero następny pomiar przy przejęciu.
+- **ZAPISZ TANKOWANIE jest nieaktywny** → przycisk mówi, czego brakuje: stanu paliwa w zbiornikach (po locie pole jest puste) albo ilości dolanego paliwa. Może też być tak, że po tankowaniu paliwa byłoby więcej, niż mieszczą zbiorniki.
+- **Pole przed tankowaniem jest puste, choć niedawno był odczyt** → od tego odczytu silnik pracował, więc liczba jest już nieaktualna. Odczytaj paliwomierz jeszcze raz - podpis podpowiada, czego się spodziewać.
+- **Pomiar oleju jest poniżej minimum** → to ostrzeżenie, nie blokada. Dolej olej i wpisz dolewkę w tym samym okienku.
+- **Kafelek mówi „W silniku około…"** → po uruchomieniu silnika to szacunek. Dokładną wartość da następny pomiar przy rozpoczęciu lotu.

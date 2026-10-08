@@ -40,7 +40,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../../theme';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { AppText } from '../foundation/AppText';
-import { ActionButton } from '../data/ActionButton';
+import { ActionButton, type ActionVariant } from '../data/ActionButton';
 import { InlineNote } from '../status/InlineNote';
 import { Trail, type TrailRow } from '../readouts/Trail';
 import { BugButton } from '../bug/BugButton';
@@ -83,6 +83,12 @@ export interface SheetProps {
    */
   confirmLabel?: string;
   confirmTone?: Tone;
+  /**
+   * Wariant akcji potwierdzającej - domyślnie pełny (`solid`). Odpowiedź PRZECZĄCA
+   * („NIE MOGĘ", 28D) idzie wyciszona (`quiet`): nie jest czynnością, którą aplikacja
+   * poleca, a pełna zieleń by ją polecała.
+   */
+  confirmVariant?: ActionVariant;
   /**
    * Powód, dla którego potwierdzenie nie zadziała - bursztynem WEWNĄTRZ przycisku
    * (issue #55). Arkusz, który sam waliduje treść (`FlightTimesSheet`), mówi tu
@@ -132,6 +138,7 @@ export function Sheet({
   trail = [],
   confirmLabel,
   confirmTone = 'green',
+  confirmVariant = 'solid',
   confirmDisabledReason = null,
   confirmDisabled = false,
   onConfirm,
@@ -173,7 +180,7 @@ export function Sheet({
               <ActionButton
                 label={confirmLabel}
                 tone={confirmTone}
-                variant="solid"
+                variant={confirmVariant}
                 size="md"
                 disabledReason={confirmDisabledReason}
                 disabled={confirmDisabled}

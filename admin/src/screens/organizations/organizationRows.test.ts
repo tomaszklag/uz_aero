@@ -55,7 +55,7 @@ describe('wiersz listy klubów', () => {
     // Pod zielonym „Aktywny" byłby nie do odróżnienia od klubu, który po prostu działa.
     const row = organizationRow(organization({ admins: [admin('Piotr', false)], members: 0 }));
 
-    expect(row.statusLabel).toBe('Administrator nie wszedł');
+    expect(row.statusLabel).toBe('Czeka na pierwsze logowanie');
     expect(row.statusTone).toBe('amber');
     expect(row.adminPending).toBe(true);
   });

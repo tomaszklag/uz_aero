@@ -81,7 +81,15 @@ export function ruleViolationMessage(error: unknown): string | null {
 }
 
 /**
- * Zdanie dla wszystkiego, czego ekran nie umiał nazwać sam.
+ * Zdania, które znaczą TO SAMO przy zapisie i przy odczycie - dlatego stoją raz, a obie
+ * funkcje niżej sięgają po nie zamiast trzymać własne kopie.
+ */
+const NO_CONNECTION = 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.';
+const SESSION_EXPIRED = 'Sesja wygasła. Zaloguj się jeszcze raz.';
+const GONE = 'Tego już nie ma - odśwież listę.';
+
+/**
+ * Zdanie po nieudanym ZAPISIE - dla wszystkiego, czego ekran nie umiał nazwać sam.
  *
  * `400 no_changes` ma tu swoje zdanie mimo że ekran pilnuje tego wcześniej (przycisk
  * jest nieaktywny bez zmian): wyścig jest realny - ktoś inny mógł zapisać dokładnie
@@ -90,13 +98,33 @@ export function ruleViolationMessage(error: unknown): string | null {
 export function errorMessage(error: unknown): string {
   // Awaria sieci to NIE jest odpowiedź serwera - `fetch` rzuca `TypeError` i wtedy
   // nie ma żadnego statusu. Te dwa przypadki wymagają dwóch różnych zdań.
-  if (!isHttpError(error)) return 'Nie ma połączenia z serwerem. Spróbuj za chwilę.';
+  if (!isHttpError(error)) return NO_CONNECTION;
 
-  if (error.status === 401) return 'Sesja wygasła. Zaloguj się jeszcze raz.';
+  if (error.status === 401) return SESSION_EXPIRED;
   if (error.status === 403) return 'Twoje konto nie ma uprawnień do tej zmiany.';
-  if (error.status === 404) return 'Tego już nie ma - odśwież listę.';
+  if (error.status === 404) return GONE;
   if (error.status === 400 && error.body.error === 'no_changes') return 'Nic się nie zmieniło.';
   if (error.status === 400) return 'Popraw zaznaczone pola.';
 
-  return `Nie udało się zapisać (kod ${error.status}). Zgłoś to, jeśli się powtórzy.`;
+  return `Nie udało się zapisać. Jeśli to się powtórzy, zgłoś to - kod: ${error.status}.`;
+}
+
+/**
+ * Zdanie po nieudanym ODCZYCIE - lista, karta albo szuflada, która nie dojechała
+ * (decyzja właściciela 2026-10-06).
+ *
+ * Osobno od `errorMessage`, bo tamto mówi o zapisie: „Nie udało się zapisać" przy
+ * liście, która się nie wczytała, nazywało czynność, której nikt nie wykonał, a 403
+ * mówiło o „zmianie", której nie było. Przy zapisie to samo zdanie niesie najważniejszą
+ * wiadomość - zmiana nie weszła - więc tam zostaje. `400` nie każe poprawiać pól, bo
+ * odczyt ich nie ma: to usterka po naszej stronie i dostaje kod do zgłoszenia.
+ */
+export function loadErrorMessage(error: unknown): string {
+  if (!isHttpError(error)) return NO_CONNECTION;
+
+  if (error.status === 401) return SESSION_EXPIRED;
+  if (error.status === 403) return 'Nie masz dostępu do tych danych.';
+  if (error.status === 404) return GONE;
+
+  return `Nie udało się wczytać. Odśwież stronę, a jeśli to się powtórzy, zgłoś to - kod: ${error.status}.`;
 }

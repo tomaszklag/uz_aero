@@ -2,7 +2,7 @@
  * Ninerdeck - CrewRow (`.crew-row` z mockupu 07)
  *
  * Wiersz aktualnej załogi: badge roli, kod pilota dużym mono, opcjonalny znacznik
- * „zalogowany · Ty" i metadane po prawej (od kiedy, block time).
+ * „Ty" i metadane po prawej (od kiedy, czas blokowy).
  *
  * Czym różni się od `CrewCard` (ekran 10): karta jest PODSUMOWANIEM dnia - statystyki
  * w pionie, do przepisania do dokumentów. Wiersz jest STANEM „kto teraz siedzi w kabinie"
@@ -21,11 +21,11 @@ import { Tag } from './Tag';
 import { toneColors } from '../tone';
 
 export interface CrewRowProps {
-  /** Badge roli - „PIC" / „DUAL". */
+  /** Badge roli - „Dowódca" / „Drugi pilot". */
   role: string;
   /** Kod pilota; null = miejsce puste. */
   pilotId: string | null;
-  /** Znacznik „zalogowany · Ty" przy wierszu zalogowanego pilota. */
+  /** Znacznik „Ty" przy wierszu zalogowanego pilota. */
   you?: boolean;
   /** Pierwsza linia metadanych po prawej (np. „od 08:00"). */
   metaTop?: string;
@@ -85,7 +85,7 @@ export function CrewRow({ role, pilotId, you = false, metaTop, metaBottom, style
         {pilotId ?? 'brak drugiego pilota'}
       </AppText>
 
-      {you && <Tag label="zalogowany · Ty" tone="green" />}
+      {you && <Tag label="Ty" tone="green" />}
 
       {(metaTop != null || metaBottom != null) && (
         <View style={styles.meta}>
@@ -107,8 +107,16 @@ export function CrewRow({ role, pilotId, you = false, metaTop, metaBottom, style
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  roleBadge: { width: 44, borderRadius: 6, paddingVertical: 3, alignItems: 'center', flexShrink: 0 },
-  roleLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
+  // Szerokość z napisu, nie stała: „DRUGI PILOT" nie mieści się w 44 px po „PIC"/„DUAL".
+  roleBadge: {
+    minWidth: 44,
+    borderRadius: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  roleLabel: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
   name: { flexShrink: 1, fontSize: 18, letterSpacing: 1.5 },
   meta: { marginLeft: 'auto', alignItems: 'flex-end', gap: 1 },
   metaLine: { fontSize: 10, lineHeight: 14, letterSpacing: 0.3 },

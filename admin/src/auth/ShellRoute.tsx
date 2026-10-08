@@ -16,10 +16,16 @@
  * (`skeletonGate.ts`): typowe `GET /me` wraca szybciej.
  */
 
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
+import { useLiveChannel } from '../live/useLiveChannel';
+import { unreadCount } from '../queries/inboxCache';
 import { useAttention } from '../queries/useAttention';
+import { useInbox } from '../queries/useNotifications';
 import { useLogout } from '../queries/useSession';
+import { InboxDrawer } from '../screens/inbox/InboxDrawer';
+import { InboxToast, type ToastNotice } from '../screens/inbox/InboxToast';
 import { Loadable } from '../ui/components';
 import { AppShell } from '../ui/shell/AppShell';
 import { kindOf } from '../ui/shell/nav';
@@ -35,11 +41,35 @@ export function ShellRoute() {
   // nic złego się nie stało. Hook stoi tu, bo rama (`ui/`) nie zna zapytań.
   const counted = session != null && kindOf(session) === 'org' && can(session.capabilities, 'panel.access');
   const attention = useAttention(counted);
+  // Baner nowego powiadomienia (K7): ostatnia wiadomość z kanału. Kilka naraz - widać
+  // ostatnią, licznik przy dzwonku mówi resztę.
+  const [notice, setNotice] = useState<ToastNotice | null>(null);
+  const dismissNotice = useCallback(() => setNotice(null), []);
+  const showNotice = useCallback(
+    (item: ToastNotice['item']) => setNotice((previous) => ({ seq: (previous?.seq ?? 0) + 1, item })),
+    [],
+  );
+  // Kanał klubu (4.0.0, K3): jedno połączenie na kartę, wyłącznie w sesji klubu. Klub
+  // i osoba są tożsamością połączenia - przełączenie klubu otwiera nowe.
+  const scopeKey = session?.org == null ? null : `${session.org.id}:${session.pilot.id}`;
+  useLiveChannel(scopeKey, showNotice);
+  // Przełączenie klubu kończy baner poprzedniego - jego wiadomość należy do tamtego klubu,
+  // a słownik nowego nie zna jej nazwisk.
+  useEffect(() => {
+    setNotice(null);
+  }, [scopeKey]);
+  // Skrzynka (K7): dzwonek w każdej ramie KLUBU - liczba z pierwszej strony, którą kanał
+  // trzyma świeżą; szuflada bez własnego adresu, więc jej stan mieszka tutaj.
+  const club = session?.org != null;
+  const inbox = useInbox(club);
+  const [inboxOpen, setInboxOpen] = useState(false);
 
   if (loading) {
     return (
       <Loadable
         pending
+        // Treści przed odpowiedzią nie ma - po niej ekran wychodzi z tej gałęzi.
+        loaded={false}
         skeleton={
           <div className="centered">
             <span className="skeleton" style={{ width: 220, height: 12 }} />
@@ -59,10 +89,22 @@ export function ShellRoute() {
       scope={shellScope(session)}
       capabilities={session.capabilities}
       attentionCount={counted ? (attention.data?.counts.attention ?? null) : null}
+      bell={
+        club ? { count: unreadCount(inbox.data), open: inboxOpen, onToggle: () => setInboxOpen((open) => !open) } : null
+      }
       onLogout={() => logout.mutate()}
       logoutPending={logout.isPending}
     >
       <Outlet />
+      {club && inboxOpen ? <InboxDrawer onClose={() => setInboxOpen(false)} /> : null}
+      {club ? (
+        <InboxToast
+          notice={notice}
+          inboxOpen={inboxOpen}
+          timezone={inbox.data?.pages[0]?.timezone ?? ''}
+          onDismiss={dismissNotice}
+        />
+      ) : null}
     </AppShell>
   );
 }

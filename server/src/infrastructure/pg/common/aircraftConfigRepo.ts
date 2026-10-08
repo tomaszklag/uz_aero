@@ -35,6 +35,14 @@ export class PgAircraftConfigRepo implements AircraftConfigPort {
     return rows[0]?.reg ?? null;
   }
 
+  async dualRequired(db: Queryable, orgId: string, aircraftId: string): Promise<boolean | null> {
+    const { rows } = await db.query<{ dual_required: boolean }>(
+      'SELECT dual_required FROM aircraft WHERE org_id = $1 AND id = $2',
+      [orgId, aircraftId],
+    );
+    return rows[0] == null ? null : rows[0].dual_required;
+  }
+
   async serviceStatusOf(
     db: Queryable,
     orgId: string,

@@ -197,7 +197,7 @@ export interface CursorReading {
 }
 
 const SOURCE_LABEL: Readonly<Record<RemoteSeriesPoint['source'], string>> = {
-  claim: 'przejęcie',
+  claim: 'rozpoczęcie lotu',
   release: 'zdanie samolotu',
   refuel: 'tankowanie',
   admin: 'wpis administratora',

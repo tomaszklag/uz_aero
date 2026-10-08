@@ -28,9 +28,10 @@ import {
   ActionButton,
   AppText,
   Card,
+  DetailRow,
+  FootNote,
   GroupLabel,
   Icon,
-  KeyValueRow,
   Screen,
   ScreenHeader,
   Sheet,
@@ -111,7 +112,7 @@ export function DecisionScreen({
         // `null` = decyzja NIE DOJECHAŁA. Rozstrzyga serwer, więc dopóki nie odpowiedział,
         // sprawa dalej czeka - i tak ma się to czytać.
         if (result == null) {
-          setFailed('Decyzję zapisuje serwer - potrzebne połączenie.');
+          setFailed('Decyzja wymaga połączenia z internetem.');
           return;
         }
         if (!result.ok) {
@@ -160,17 +161,22 @@ export function DecisionScreen({
         ) : (
           <>
             <GroupLabel text="Rezerwacja do rozpatrzenia" />
-            <Card>
-              {vm.rows.map((row) => {
+            {/* Te same wiersze, co karta rezerwacji (23) i zlecenia (28, 32) - jedna rzecz,
+                jeden kształt (decyzja właściciela 2026-10-06). */}
+            <Card flush>
+              {vm.rows.map((row, i) => {
                 // Samolot i obie osoby prowadzą w podgląd (26A/26B, issue #206) -
                 // jedyne trzy wiersze karty z szewronem.
                 const link = row.opens;
                 return (
-                  <KeyValueRow
+                  <DetailRow
                     key={row.label}
                     label={row.label}
                     value={row.value}
                     sub={row.sub}
+                    subInline={row.subInline}
+                    mono={row.mono}
+                    divider={i < vm.rows.length - 1}
                     onPress={link == null ? undefined : () => openPreview(link)}
                     pressLabel={
                       link?.kind === 'aircraft'
@@ -206,12 +212,7 @@ export function DecisionScreen({
                   disabled={busy}
                   onPress={() => setRefuseOpen(true)}
                 />
-                <View style={s.foot}>
-                  <Icon name="info" size={13} color={theme.colors.textMuted} />
-                  <AppText variant="body" style={s.footText}>
-                    {vm.footnote}
-                  </AppText>
-                </View>
+                <FootNote icon="message" parts={vm.footnote} />
               </>
             )}
           </>
@@ -269,13 +270,9 @@ function Missing({ theme }: { theme: Theme }) {
 const styles = (t: Theme) =>
   StyleSheet.create({
     scroll: { flex: 1 },
-    content: { padding: 16, gap: 12, paddingBottom: 28 },
+    content: { padding: 14, gap: 12, paddingBottom: 28 },
 
     failed: { fontSize: 12, lineHeight: 17, color: t.colors.amber },
-
-    // `.foot-note`: zdanie o skutku decyzji - przypis do pasa akcji, nie baner.
-    foot: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingHorizontal: 4 },
-    footText: { flex: 1, fontSize: 11, lineHeight: 16, color: t.colors.textSecondary },
 
     missing: { alignItems: 'center', gap: 10, padding: 22 },
     missingTitle: { fontSize: 22, letterSpacing: 2, color: t.colors.amber, textAlign: 'center' },

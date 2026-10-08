@@ -250,7 +250,7 @@ export function BugReportSheet({ visible, sheet, onClose }: BugReportSheetProps)
               onChangeText={setDescription}
               multiline
               maxLength={DESCRIPTION_MAX}
-              placeholder="Co się stało? Co robiłeś tuż przedtem?"
+              placeholder="Co się stało? Co działo się tuż przedtem?"
               placeholderTextColor={theme.colors.textPlaceholder}
               selectionColor={theme.colors.selection}
               cursorColor={theme.colors.textPrimary}

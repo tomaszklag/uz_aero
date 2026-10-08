@@ -28,7 +28,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { ChartIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { NONE } from '../common/values';
 import { DateRange } from '../logbook/DateRange';
 import { dayOf, STATS_QUICK, type DayRange } from '../logbook/dateRanges';
@@ -64,9 +64,9 @@ export function StatsScreen() {
         <DateRange range={range} now={now} quick={STATS_QUICK} onChange={setRange} />
       </div>
 
-      {report.error == null ? null : <Banner tone="danger">{errorMessage(report.error)}</Banner>}
+      {report.error == null ? null : <Banner tone="danger">{loadErrorMessage(report.error)}</Banner>}
 
-      <Loadable pending={report.isPending} skeleton={<StatsSkeleton />}>
+      <Loadable pending={report.isPending} loaded={report.data != null} skeleton={<StatsSkeleton />}>
         {report.data == null ? null : report.data.totals.sessions === 0 ? (
           // Stan pusty mówi o ZAKRESIE, nie o klubie - i wskazuje kontrolkę, która go
           // zmienia. Bez tabel z samymi zerami: tabela sum, w której każda liczba to zero,
@@ -216,7 +216,7 @@ function AircraftTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per samolot"
+      caption="Nalot według samolotów"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.aircraftId}
@@ -252,7 +252,7 @@ function PilotTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per pilot"
+      caption="Nalot według pilotów"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.pilotId}
@@ -276,7 +276,7 @@ function OperationTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per zadanie"
+      caption="Nalot według zadań"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.key}

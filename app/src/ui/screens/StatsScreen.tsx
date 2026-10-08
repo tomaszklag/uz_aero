@@ -88,7 +88,7 @@ import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { oilCard } from './logic/sessionOil';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
-import { goHome } from '../navigation/goHome';
+import { goHome, type HomeNavigator } from '../navigation/goHome';
 
 /** Wysokość miniatury śladu - proporcje z mockupu 10 przy szerokości telefonu. */
 const THUMB_HEIGHT = 168;
@@ -97,14 +97,13 @@ export function StatsScreen({
   navigation,
   route,
 }: {
-  navigation: { navigate: (screen: string, params?: object) => void };
+  navigation: HomeNavigator & { navigate: (screen: string, params?: object) => void; goBack: () => void };
   /**
-   * `edit` - wejść od razu w tryb edycji (kafelek „Popraw dane sesji" w kokpicie),
-   * `from` - dokąd wraca nagłówek. Kokpit jest stanem modalnym, więc wejście stamtąd
-   * musi wracać DO KOKPITU, a nie na „Mój dzień": inaczej pilot trzymający samolot
-   * wychodziłby z niego bokiem (`CLAUDE.md`, sekcja o modalności).
+   * `edit` - wejść od razu w tryb edycji (kafelek „Popraw dane operacji" w kokpicie).
+   * Dokąd wraca nagłówek, mówi sam stos (`goBack`) - parametr `from` z nazwą ekranu
+   * powrotu zniknął razem z `navigate`, który zamiast wracać do kokpitu dokładał drugi.
    */
-  route?: { params?: { edit?: boolean; from?: string } };
+  route?: { params?: { edit?: boolean } };
 }) {
   const { theme } = useTheme();
 
@@ -202,16 +201,6 @@ export function StatsScreen({
    * okno odbiera prawo do zmiany danych, nie do ich zrozumienia.
    */
   const readOnly = !window24h.open;
-  /**
-   * Wyjście wraca do HISTORII, bo stamtąd się tu wchodzi - od 3.0.0 lista operacji
-   * ma jedno miejsce i jest nim ta zakładka (Pulpit pokazuje same sumy, §9.1).
-   * Do 3.0.0 wejście w okno korekty prowadziło z „Mojego dnia", a po oknie
-   * z „Poprzednich dni" - dwa ekrany, więc i dwa wyjścia.
-   *
-   * Wejście z KOKPITU (issue #43) podaje `from` i wraca dokładnie tam, skąd przyszło:
-   * kokpit jest stanem modalnym, więc poprawka danych nie ma prawa z niego wyprowadzić.
-   */
-  const backTo = route?.params?.from;
 
   /**
    * Tryb edycji (issue #43). Po oknie 24 h nie da się w niego wejść - nie ma przycisku,
@@ -257,8 +246,8 @@ export function StatsScreen({
   );
 
   const axis = useMemo(
-    () => buildSessionAxis(projection, events, Date.now()),
-    [projection, events],
+    () => buildSessionAxis(projection, events, Date.now(), codeOf),
+    [projection, events, codeOf],
   );
   const axisRows = useMemo(() => withIssues(axis.rows, issues), [axis.rows, issues]);
 
@@ -318,8 +307,7 @@ export function StatsScreen({
             BRAK DANYCH OPERACJI
           </AppText>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo -
-            również bez zasięgu.
+            Tu zobaczysz przebieg operacji, gdy rozpoczniesz lot - także bez zasięgu.
           </AppText>
         </View>
       </Screen>
@@ -343,10 +331,16 @@ export function StatsScreen({
         <ScreenHeader
           title={header.title}
           size="md"
-          // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
-          // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
-          onBack={() => (backTo != null ? navigation.navigate(backTo) : goHome(navigation, 'History'))}
-          backLabel={readOnly ? 'Dni' : 'Dzień'}
+          // Powrót JEST i prowadzi tam, skąd się tu weszło: do Historii (od 3.0.0 jedyna
+          // lista operacji, §9.1), do karty samolotu (27) albo - przy poprawce przed
+          // zdaniem samolotu (issue #43) - do kokpitu, który jest stanem modalnym i nie ma
+          // prawa wypuścić pilota bokiem. Dlatego `goBack`, a nie `navigate` z nazwą ekranu:
+          // w React Navigation 7 `navigate` do trasy leżącej pod spodem kładzie na wierzch
+          // DRUGI jej egzemplarz (drugi kokpit, drugie zakładki).
+          onBack={() => navigation.goBack()}
+          // „Wróć", bo cel powrotu bywa trojaki (Historia, karta samolotu, kokpit) -
+          // „Dzień" i „Dni" zostały po ekranach 01 i 12 sprzed 3.0.0.
+          backLabel="Wróć"
           subtitle={header.subtitle}
           right={
             <>
@@ -565,7 +559,7 @@ export function StatsScreen({
           <SessionAxis
             rows={axisRows}
             foot={axis.foot}
-            emptyText="Ta operacja nie ma jeszcze ani jednego zdarzenia."
+            emptyText="Ta operacja nie ma jeszcze żadnego wpisu."
             onCorrect={editing ? edit.openRow : undefined}
             /* Historia otwiera się z plakietki „popr." w OBU trybach - patrz
                `CorrectedTag`. W odczycie to jedyne wejście, bo arkusza korekty
@@ -691,7 +685,7 @@ export function StatsScreen({
         */}
         <Card title="Załoga" flush>
           <ResultRow
-            label="PIC"
+            label="Dowódca"
             value={crewLabel(projection.picId, currentPilotId, codeOf)}
             tone="neutral"
             style={styles.firstRow}
@@ -876,7 +870,7 @@ export function StatsScreen({
             value: `${projection.flights.length} · ${duration(projection.blockTimeMs)} · ${duration(projection.flightTimeMs)}`,
           },
         ]}
-        warning="Wpis zniknie z Twojego dnia, z historii i z sum. Zapis zostaje w rejestrze i widzi go administrator - razem z powodem, jeśli go podasz."
+        warning="Wpis zniknie z Twojego dnia, z historii i z sum. Administrator klubu nadal go zobaczy - razem z powodem, jeśli go podasz."
         warningTone="amber"
         confirmLabel="USUŃ WPIS"
         confirmTone="red"
@@ -885,7 +879,7 @@ export function StatsScreen({
         cancelLabel="ZOSTAW"
         onCancel={() => setVoidOpen(false)}
       >
-        <ReasonField value={voidReason} onChangeText={setVoidReason} />
+        <ReasonField value={voidReason} onChangeText={setVoidReason} placeholder="np. ten lot jest wpisany dwa razy" />
       </Sheet>
 
     </Screen>
@@ -966,7 +960,7 @@ function CrewRow({
   const content = (
     <>
       <AppText variant="mono" tone="muted" style={styles.crewLabel}>
-        DUAL
+        DRUGI PILOT
       </AppText>
       {corrected && <CorrectedTag accessibilityContext="drugi pilot" onPress={onHistory} />}
       <AppText variant="mono" tone="primary" style={styles.crewValue}>
@@ -1055,7 +1049,7 @@ function CorrectionWindowBanner({
    * zrzutu, notatkę i drugiego pilota. Instrukcja obsługi przycisku, który stoi
    * na tym samym ekranie i nazywa się „EDYTUJ DANE", i tak była zbędna.
    */
-  const tail = 'Później korektę nanosi administrator.';
+  const tail = 'Później poprawki wprowadza administrator klubu.';
 
   if (!confirmed) {
     return (
@@ -1063,7 +1057,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h od zdania samolotu"
+        title="Czas na poprawki: 24 h od zdania samolotu"
         text={`Do zdania poprawiasz dane bez limitu; po zdaniu masz na to 24 h. ${tail}`}
       />
     );
@@ -1075,7 +1069,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h od zdania samolotu"
+        title="Czas na poprawki: 24 h od zdania samolotu"
         text={`Dane możesz poprawiać jeszcze do ${dateTimeUtcShort(closesAt)} UTC. ${tail}`}
       />
     );
@@ -1086,8 +1080,8 @@ function CorrectionWindowBanner({
       kind="status"
       tone="amber"
       icon="clock"
-      title="Okno korekty zamknięte"
-      text="Minęły 24 godziny od zdania samolotu - dalsze poprawki wprowadza administrator."
+      title="Czas na poprawki minął"
+      text="Minęły 24 godziny od zdania samolotu - dalsze poprawki wprowadza administrator klubu."
     />
   );
 }

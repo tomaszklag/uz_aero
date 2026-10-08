@@ -98,7 +98,7 @@ export function StepDrawer({ step, steps, pilots, onClose, onSaved }: Props) {
             disabled={blocker != null || unchanged || replace.isPending}
             reason={blocker ?? undefined}
           >
-            {replace.isPending ? 'Zapisuję…' : 'Zapisz'}
+            {replace.isPending ? 'Zapisywanie…' : 'Zapisz'}
           </Button>
         </>
       }
@@ -140,15 +140,15 @@ export function StepDrawer({ step, steps, pilots, onClose, onSaved }: Props) {
               key={m.id}
               multiple
               name={m.name}
-              desc={m.code == null ? 'nie jest już członkiem klubu' : `${m.code} · nie ma już zdolności akceptacji`}
+              desc={m.code == null ? 'nie jest już członkiem klubu' : `${m.code} · bez uprawnienia do akceptacji`}
               selected
               onSelect={() => setDraft({ ...draft, memberIds: toggleMember(draft.memberIds, m.id) })}
             />
           ))}
         </div>
         <p className="hint">
-          Na liście stoją wyłącznie osoby ze zdolnością <b>Akceptacja rezerwacji</b>. Kogo tu
-          brakuje, temu nadaj ją w karcie członka (<Link to="/piloci">Piloci</Link>).
+          Na liście stoją wyłącznie osoby z uprawnieniem <b>Akceptacja rezerwacji</b>. Kogo tu
+          brakuje, temu nadaj je w karcie członka (<Link to="/piloci">Piloci</Link>).
         </p>
 
         {replace.error == null ? null : (
@@ -163,9 +163,8 @@ export function StepDrawer({ step, steps, pilots, onClose, onSaved }: Props) {
       {step == null ? null : (
         <Card title="Zdjęcie kroku ze ścieżki" tone="danger">
           <p className="card-note">
-            Rezerwacje czekające na ten krok przejdą do następnego od razu, a jego osoby
-            dostaną prośbę o zgodę. Ta, która ma już komplet pozostałych zgód, zostaje
-            potwierdzona. Zgody już wydane zostają w historii.
+            Rezerwacje czekające na ten krok od razu przejdą do następnego, a te z kompletem
+            pozostałych zgód zostaną potwierdzone. Wydane zgody zostają w historii.
           </p>
           {removing ? (
             <div className="drawer-foot">

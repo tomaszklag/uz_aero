@@ -35,6 +35,7 @@ import {
 } from '../../queries/useSession';
 import { Banner, Button, Card, Field, Loadable, PageHead, PasswordInput, Pill } from '../../ui/components';
 import { sessionRows } from '../accounts/sessionRows';
+import { loadErrorMessage } from '../common/apiMessage';
 import { SessionList } from '../common/SessionList';
 import { NONE } from '../common/values';
 import { EMPTY_PASSWORD, passwordFailure, verdictOf } from './passwordForm';
@@ -101,6 +102,9 @@ export function AccountScreen() {
           {failure.banner}
         </Banner>
       )}
+      {/* Konto, które nie dojechało, nie mówi, CZY osoba ma hasło - a od tego zależy cały
+          formularz obok. Karty o koncie milczą, a baner mówi dlaczego. */}
+      {account.error == null ? null : <Banner tone="danger">{loadErrorMessage(account.error)}</Banner>}
 
       <div className="card-grid">
         {/* LOGOWANIE - czym ta osoba wchodzi. Adres DO ODCZYTU (jest tożsamością, nie
@@ -109,98 +113,110 @@ export function AccountScreen() {
         <Card title="Logowanie">
           <Loadable
             pending={account.isPending}
+            loaded={account.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 44 }} />}
           >
-            <>
-              <div className="kv">
-                <span className="kv-k">E-mail</span>
-                <span className="kv-v">{account.data?.email ?? NONE}</span>
-              </div>
-              <div className="kv">
-                <span className="kv-k">Metody</span>
-                <span className="pill-row" aria-label="Metody logowania">
-                  {methods.length === 0 ? (
-                    <span className="cell-sub">jeszcze żadnej</span>
-                  ) : (
-                    methods.map((method) => (
-                      <Pill key={method} tone="dim">
-                        {method === 'google' ? 'Google' : 'hasło'}
-                      </Pill>
-                    ))
-                  )}
-                </span>
-              </div>
-            </>
+            {/* Bez odczytu nie ma czego pokazać: „jeszcze żadnej" przy metodach byłoby
+                zdaniem o osobie, a jest tylko brakiem odpowiedzi. */}
+            {account.data == null ? null : (
+              <>
+                <div className="kv">
+                  <span className="kv-k">E-mail</span>
+                  <span className="kv-v">{account.data.email ?? NONE}</span>
+                </div>
+                <div className="kv">
+                  <span className="kv-k">Metody</span>
+                  <span className="pill-row" aria-label="Metody logowania">
+                    {methods.length === 0 ? (
+                      <span className="cell-sub">jeszcze żadnej</span>
+                    ) : (
+                      methods.map((method) => (
+                        <Pill key={method} tone="dim">
+                          {method === 'google' ? 'Google' : 'hasło'}
+                        </Pill>
+                      ))
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </Loadable>
         </Card>
 
         {/* HASŁO. Osoba Z hasłem podaje obecne; osoba BEZ hasła nie ma tego pola, bo nie
             ma czego podać - a karta nazywa wtedy CZYNNOŚĆ, nie rzecz. Polityka to JEDNO
-            zdanie pod nowym hasłem (D4): minimum długości i nic więcej. */}
-        <Card title={hasPassword ? 'Hasło' : 'Ustaw hasło'}>
-          {!hasPassword ? null : (
-            <Field htmlFor="password-current" label="Obecne hasło">
-              <PasswordInput
-                id="password-current"
-                autoComplete="current-password"
-                value={draft.current}
-                onChange={(event) => setDraft({ ...draft, current: event.target.value })}
-              />
-            </Field>
+            zdanie pod nowym hasłem (D4): minimum długości i nic więcej.
+            Wariant wynika z odczytu konta, więc karta czeka na niego W CAŁOŚCI, a bez
+            odczytu nie rysuje się wcale: zgadnięty wariant mówił osobie Z hasłem „Ustaw
+            hasło" i wysłałby zapis bez obecnego. */}
+        <Loadable pending={account.isPending} loaded={account.data != null} skeleton={<PasswordSkeleton />}>
+          {account.data == null ? null : (
+            <Card title={hasPassword ? 'Hasło' : 'Ustaw hasło'}>
+              {!hasPassword ? null : (
+                <Field htmlFor="password-current" label="Obecne hasło">
+                  <PasswordInput
+                    id="password-current"
+                    autoComplete="current-password"
+                    value={draft.current}
+                    onChange={(event) => setDraft({ ...draft, current: event.target.value })}
+                  />
+                </Field>
+              )}
+
+              <Field
+                htmlFor="password-next"
+                label="Nowe hasło"
+                hint="Co najmniej 12 znaków. Bez wymogów co do rodzaju znaków."
+              >
+                <PasswordInput
+                  id="password-next"
+                  autoComplete="new-password"
+                  invalid={nextFieldError != null}
+                  value={draft.next}
+                  onChange={(event) => {
+                    setSaved(false);
+                    setDraft({ ...draft, next: event.target.value });
+                  }}
+                />
+              </Field>
+              {/* JEDNO zdanie pod polem, nie dwa: polityka liczona w przeglądarce i odmowa
+                  serwera mówią o tej samej wartości tym samym zdaniem (jedna implementacja
+                  reguły), więc obok siebie byłyby powtórzeniem. */}
+              {nextFieldError == null ? null : <p className="hint danger">{nextFieldError}</p>}
+
+              <Field htmlFor="password-repeat" label="Powtórz hasło">
+                <PasswordInput
+                  id="password-repeat"
+                  autoComplete="new-password"
+                  invalid={verdict.repeatError != null}
+                  value={draft.repeat}
+                  onChange={(event) => setDraft({ ...draft, repeat: event.target.value })}
+                />
+              </Field>
+              {verdict.repeatError == null ? null : (
+                <p className="hint danger">{verdict.repeatError}</p>
+              )}
+
+              <div className="access-row">
+                {/* Skutek, który trzeba znać PRZED kliknięciem - stąd pod przyciskiem,
+                    a nie w banerze po zapisie. */}
+                <span className="hint">
+                  {hasPassword
+                    ? 'Zapis wyloguje pozostałe urządzenia - to okno zostaje.'
+                    : 'Od tej chwili zalogujesz się też hasłem - w panelu i na wspólnym tablecie.'}
+                </span>
+                {/* Przycisk zablokowany BEZ powodu: pusty formularz widać z pól nad nim. */}
+                <Button
+                  variant="primary"
+                  disabled={!verdict.canSave || change.isPending}
+                  onClick={save}
+                >
+                  {change.isPending ? 'Zapisywanie…' : hasPassword ? 'Zapisz hasło' : 'Ustaw hasło'}
+                </Button>
+              </div>
+            </Card>
           )}
-
-          <Field
-            htmlFor="password-next"
-            label="Nowe hasło"
-            hint="Co najmniej 12 znaków. Bez wymogów co do rodzaju znaków."
-          >
-            <PasswordInput
-              id="password-next"
-              autoComplete="new-password"
-              invalid={nextFieldError != null}
-              value={draft.next}
-              onChange={(event) => {
-                setSaved(false);
-                setDraft({ ...draft, next: event.target.value });
-              }}
-            />
-          </Field>
-          {/* JEDNO zdanie pod polem, nie dwa: polityka liczona w przeglądarce i odmowa
-              serwera mówią o tej samej wartości tym samym zdaniem (jedna implementacja
-              reguły), więc obok siebie byłyby powtórzeniem. */}
-          {nextFieldError == null ? null : <p className="hint danger">{nextFieldError}</p>}
-
-          <Field htmlFor="password-repeat" label="Powtórz hasło">
-            <PasswordInput
-              id="password-repeat"
-              autoComplete="new-password"
-              invalid={verdict.repeatError != null}
-              value={draft.repeat}
-              onChange={(event) => setDraft({ ...draft, repeat: event.target.value })}
-            />
-          </Field>
-          {verdict.repeatError == null ? null : (
-            <p className="hint danger">{verdict.repeatError}</p>
-          )}
-
-          <div className="access-row">
-            {/* Skutek, który trzeba znać PRZED kliknięciem - stąd pod przyciskiem,
-                a nie w banerze po zapisie. */}
-            <span className="hint">
-              {hasPassword
-                ? 'Zapis wyloguje pozostałe urządzenia - to okno zostaje.'
-                : 'Od tej chwili zalogujesz się też hasłem - w panelu i na wspólnym tablecie.'}
-            </span>
-            {/* Przycisk zablokowany BEZ powodu: pusty formularz widać z pól nad nim. */}
-            <Button
-              variant="primary"
-              disabled={!verdict.canSave || change.isPending}
-              onClick={save}
-            >
-              {change.isPending ? 'Zapisuję…' : hasPassword ? 'Zapisz hasło' : 'Ustaw hasło'}
-            </Button>
-          </div>
-        </Card>
+        </Loadable>
 
         {/* OBSERWOWANE SAMOLOTY (3.2.0): ustawienie osoby W KLUBIE, więc wyłącznie w sesji
             klubu i przy zdolności. Karta pyta serwer sama - stąd osobny komponent, który
@@ -210,8 +226,13 @@ export function AccountScreen() {
         {/* MOJE SESJE: własne urządzenia ze WSZYSTKICH powierzchni i klubów - to są moje
             urządzenia, a nie dane klubu. Bieżąca przeglądarka ma plakietkę i ŻADNEJ akcji. */}
         <Card title="Moje sesje" span2>
+          {/* Odczyt, który padł, nie jest pustą listą urządzeń - mówi o sobie sam. */}
+          {sessions.error == null ? null : (
+            <p className="hint danger">{loadErrorMessage(sessions.error)}</p>
+          )}
           <Loadable
             pending={sessions.isPending}
+            loaded={sessions.data != null}
             skeleton={<span className="skeleton" style={{ width: '100%', height: 48 }} />}
           >
             <SessionList
@@ -231,15 +252,41 @@ export function AccountScreen() {
 }
 
 /**
- * „administrator w klubie Aeroklub Zielonogórski" albo „superadministrator".
+ * „administrator w klubie Aeroklub Zielonogórski" albo „opiekun platformy".
  *
  * Zakres stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
  * Sesja platformowa nie ma klubu i nie ma go z czego wziąć - zostaje sama rola.
  */
 function scopeText(session: PanelSessionDto | null): string | null {
   if (session == null) return null;
-  if (session.org == null) return 'superadministrator';
+  if (session.org == null) return 'opiekun platformy';
   // Zakres, nie rola (epik #197): ten sam człowiek bywa technikiem w jednym klubie
   // i administratorem w drugim, a nazwa liczy się ze zbioru zdolności TEJ sesji.
   return `${scopeLabel(session.capabilities).toLowerCase()} w klubie ${session.org.name}`;
+}
+
+/**
+ * Plamki karty hasła - część WSPÓLNA obu wariantów („Hasło" i „Ustaw hasło"): tytuł,
+ * pole nowego hasła z podpowiedzią, pole powtórzenia i rząd zapisu. Pole „Obecne hasło"
+ * ma tylko jeden wariant, a tytuł zależy od odczytu, więc plamki nie obiecują ani jednego,
+ * ani drugiego.
+ */
+function PasswordSkeleton() {
+  return (
+    <Card title={<span className="skeleton" style={{ width: 90, height: 14 }} />}>
+      <div className="field">
+        <span className="skeleton cell" style={{ width: 110 }} />
+        <span className="skeleton" style={{ height: 34 }} />
+        <span className="skeleton cell" style={{ width: 260 }} />
+      </div>
+      <div className="field">
+        <span className="skeleton cell" style={{ width: 110 }} />
+        <span className="skeleton" style={{ height: 34 }} />
+      </div>
+      <div className="access-row">
+        <span className="skeleton cell" style={{ width: 240 }} />
+        <span className="skeleton" style={{ width: 110, height: 32 }} />
+      </div>
+    </Card>
+  );
 }

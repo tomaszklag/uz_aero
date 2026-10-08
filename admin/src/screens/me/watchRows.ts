@@ -80,7 +80,7 @@ function who(pilotId: string | null, opts: WatchRowOptions): string | null {
 export function nowLine(now: AircraftNowDto, tz: string, opts: WatchRowOptions): string {
   switch (now.kind) {
     case 'retired':
-      return 'Wycofana z użytku';
+      return 'Poza służbą';
     case 'flying':
     case 'claimed':
     case 'after_flight': {

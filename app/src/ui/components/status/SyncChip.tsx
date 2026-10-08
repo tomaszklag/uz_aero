@@ -144,8 +144,8 @@ export function SyncChip({ status, outboxCount, lastSyncAt, refCheckedAt, style 
     ...(refCheckedAt !== undefined
       ? [
           {
-            label: 'Dane referencyjne',
-            value: refCheckedAt != null ? `sync ${timeUtc(refCheckedAt)} UTC` : 'jeszcze bez synca',
+            label: 'Flota i piloci klubu',
+            value: refCheckedAt != null ? `pobrane ${timeUtc(refCheckedAt)} UTC` : 'jeszcze nie pobrano',
           },
         ]
       : []),

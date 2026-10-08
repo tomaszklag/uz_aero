@@ -14,6 +14,7 @@ import {
   readingsLine,
   untilLabel,
   upcomingLabel,
+  upcomingRows,
   watchVm,
 } from '../ui/screens/logic/aircraftCard';
 
@@ -102,7 +103,7 @@ describe('hero - siedem zdań', () => {
     expect(vm.hero.small).toBeNull();
   });
 
-  it('wolna: „Stoi w hangarze" od ostatniego odczytu, następny termin i ostatni zapis pod kreską', () => {
+  it('wolna: „Stoi wolna" od ostatniego odczytu, następny termin i ostatni zapis pod kreską', () => {
     const vm = aircraftCardVm(
       card({
         now: { kind: 'free', next: { bookingId: 'b2', kind: 'flight', startsAt: iso(TODAY + 14 * H) } },
@@ -116,7 +117,7 @@ describe('hero - siedem zdań', () => {
       tone: 'off',
       badge: 'Wolna',
       badgeTone: 'dim',
-      main: 'Stoi w hangarze',
+      main: 'Stoi wolna',
       small: 'od wczoraj 18:20',
       zone: 'następny termin',
       zoneValue: 'dziś 14:00-16:00 · Ty',
@@ -154,13 +155,13 @@ describe('hero - siedem zdań', () => {
     // Godziny CZASEM KLUBU (UTC+2): 06:00-10:00 UTC to 08:00-12:00.
     expect(booked).toMatchObject({ tone: 'blue', badge: 'Zarezerwowana', main: 'A. Kowalski', small: '08:00-12:00', count: 'DO 12:00' });
 
-    expect(aircraftCardVm(card({ now: { kind: 'retired' } }), opts).hero).toMatchObject({ tone: 'off', main: 'Wycofana z użytku' });
+    expect(aircraftCardVm(card({ now: { kind: 'retired' } }), opts).hero).toMatchObject({ tone: 'off', main: 'Maszyna poza służbą' });
 
     const claimed = aircraftCardVm(
       card({ now: { kind: 'claimed', sessionUuid: 's1', pilotId: 'ako', dualId: null, operation: 'ferry', departureIcao: null, since: iso(NOW - 12 * 60_000) } }),
       opts,
     ).hero;
-    expect(claimed).toMatchObject({ badge: 'Przejęta', zone: 'przejęcie', small: 'przelot', count: null });
+    expect(claimed).toMatchObject({ badge: 'Przed lotem', zone: 'rozpoczęcie', small: 'przelot', count: null });
 
     const after = aircraftCardVm(
       card({ now: { kind: 'after_flight', sessionUuid: 's1', pilotId: 'ako', dualId: null, operation: null, departureIcao: null, since: iso(NOW - 25 * 60_000) } }),
@@ -170,7 +171,7 @@ describe('hero - siedem zdań', () => {
   });
 
   it('pusty rejestr mówi to wprost zamiast udawać godzinę', () => {
-    expect(aircraftCardVm(card({ lastRecordAt: null, counters: null }), opts).hero.note).toBe('rejestr tej maszyny jest jeszcze pusty');
+    expect(aircraftCardVm(card({ lastRecordAt: null, counters: null }), opts).hero.note).toBe('tej maszyny nie ma jeszcze żadnego zapisu');
   });
 
   it('„ZA …" liczy dni, potem godziny, potem minuty; termin miniony to brak licznika', () => {
@@ -186,7 +187,7 @@ describe('liczniki, terminy, sumy', () => {
   it('liczniki ze źródłem i podpisem osoby; olej z przecinkiem; brak = kreska', () => {
     const vm = aircraftCardVm(card(), opts);
     expect(vm.title).toBe('SP-AXA');
-    expect(vm.sub).toBe('Cessna 172 · w użytku · zbiornik 180 L');
+    expect(vm.sub).toBe('Cessna 172 · w służbie · zbiornik 180 L');
     expect(vm.counters.map((r) => [r.label, r.value, r.sub])).toEqual([
       ['Motogodziny', '1236:30', null],
       ['Paliwo', '168 L', '· zbiornik 180 L'],
@@ -278,5 +279,25 @@ describe('historia', () => {
     expect(historyLabel(218)).toBe('218 operacji · UTC');
     expect(historyLabel(3)).toBe('3 operacje · UTC');
     expect(historyLabel(1)).toBe('1 operacja · UTC');
+  });
+});
+
+describe('zlecenie bez dowódcy (zlecenia 4.0.0, §16 pkt 5)', () => {
+  const order = { seeking: ['pic', 'dual'] as ('pic' | 'dual')[] };
+
+  it('heros „zarezerwowana" mówi, czego zlecenie szuka - zamiast kreski', () => {
+    const vm = aircraftCardVm(
+      card({
+        now: { kind: 'booked', bookingId: 'b1', pilotId: null, startsAt: iso(TODAY + 8 * H), endsAt: iso(TODAY + 12 * H) },
+        upcoming: [upcoming({ pilotId: null, order })],
+      }),
+      opts,
+    );
+    expect(vm?.hero.main).toBe('Zlecenie · szuka załogi');
+  });
+
+  it('wiersz najbliższych terminów - to samo zdanie', () => {
+    const rows = upcomingRows(card({ upcoming: [upcoming({ pilotId: null, order })] }), opts);
+    expect(rows[0]!.value).toBe('Zlecenie · szuka załogi');
   });
 });

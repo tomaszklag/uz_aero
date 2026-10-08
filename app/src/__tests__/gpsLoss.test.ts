@@ -27,23 +27,24 @@ describe('gpsLoss - baner i adnotacje 05g', () => {
 
   it('baner z ostatnim fixem: czas UTC + wiek + instrukcja ręcznego zapisu', () => {
     const text = gpsLossText(T, T + 12 * 60_000);
-    expect(text).toContain('Ostatni fix 15:58 UTC (12 min temu).');
+    expect(text).toContain('Ostatni sygnał 15:58 UTC (12 min temu).');
     expect(text).toContain('zapisuj je ręcznie');
     // Baner nazywa przyciski tak, jak są podpisane w pasku akcji - od 2026-08-12
     // to on niesie całe ostrzeżenie, bo z przycisku znikł dopisek „· ręcznie".
-    expect(text).toContain('przyciskiem Landing / Take off');
-    expect(text).toContain('Timery i log dnia liczą dalej z zegara.');
+    expect(text).toContain('przyciskiem Lądowanie / Start');
+    expect(text).toContain('Czasy liczą się dalej z zegara.');
+    expect(text).not.toMatch(/fix|log dnia|Landing|Take off/);
   });
 
   it('bez ani jednego fixa nie datujemy pustki', () => {
-    expect(gpsLossText(null, T)).toContain('Ani jednego fixa od startu silnika.');
-    expect(staleCellNote(null)).toBe('brak fixa');
-    expect(unknownPhaseDetail(null)).toBe('FAZA NIEZNANA · BEZ FIXA OD STARTU SILNIKA');
+    expect(gpsLossText(null, T)).toContain('Brak sygnału od uruchomienia silnika.');
+    expect(staleCellNote(null)).toBe('brak sygnału');
+    expect(unknownPhaseDetail(null)).toBe('FAZA NIEZNANA · BEZ SYGNAŁU GPS');
   });
 
   it('adnotacje siatki i fazy niosą czas ostatniego fixa', () => {
-    expect(staleCellNote(T)).toBe('brak fixa od 15:58');
-    expect(unknownPhaseDetail(T)).toBe('FAZA NIEZNANA · BEZ FIXA OD 15:58');
+    expect(staleCellNote(T)).toBe('brak sygnału od 15:58');
+    expect(unknownPhaseDetail(T)).toBe('FAZA NIEZNANA · BEZ SYGNAŁU OD 15:58');
   });
 });
 
@@ -67,12 +68,12 @@ describe('gpsSignalState - rozruch to nie awaria (decyzja UX 2026-08-04)', () =>
   });
 
   it('treści rozruchu i uprawnień mówią, co robić, bez języka awarii', () => {
-    expect(gpsAcquiringText()).toContain('wyszukuje sygnał');
+    expect(gpsAcquiringText()).toContain('szuka sygnału');
     // Przyciski nazywane tak, jak są podpisane w pasku akcji - skróty „T-O / LAND"
     // odsyłały do napisów, których nie ma na ekranie od issue #19.
-    expect(gpsAcquiringText()).toContain('przyciskiem Take off / Landing');
+    expect(gpsAcquiringText()).toContain('przyciskiem Start / Lądowanie');
     expect(gpsAcquiringText()).not.toMatch(/brak sygnału|awari/i);
-    expect(gpsPermissionText()).toContain('uprawnienia lokalizacji');
+    expect(gpsPermissionText()).toContain('uprawnienia do lokalizacji');
     expect(gpsPermissionText()).toContain('ustawieniach systemu');
   });
 });

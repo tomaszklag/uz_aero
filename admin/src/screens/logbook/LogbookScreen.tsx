@@ -32,7 +32,7 @@ import {
   type RowFold,
 } from '../../ui/components';
 import { PeopleIcon, PlaneIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { NONE } from '../common/values';
 import { DateRange } from './DateRange';
 import type { DayRange } from './dateRanges';
@@ -160,10 +160,11 @@ function FleetAxis() {
         <DateRange range={range} now={now} onChange={setRange} />
       </div>
 
-      {report.error == null ? null : <Banner tone="danger">{errorMessage(report.error)}</Banner>}
+      {report.error == null ? null : <Banner tone="danger">{loadErrorMessage(report.error)}</Banner>}
 
       <Loadable
         pending={report.isPending}
+        loaded={report.data != null}
         skeleton={
           <TableSkeleton headers={FLEET_HEADERS} widths={[86, 30, 34, 48, 48, 56, 60, 20]} rows={5} />
         }
@@ -281,10 +282,11 @@ function PilotAxis() {
         <DateRange range={range} now={now} onChange={setRange} />
       </div>
 
-      {report.error == null ? null : <Banner tone="danger">{errorMessage(report.error)}</Banner>}
+      {report.error == null ? null : <Banner tone="danger">{loadErrorMessage(report.error)}</Banner>}
 
       <Loadable
         pending={report.isPending}
+        loaded={report.data != null}
         skeleton={
           <TableSkeleton headers={PILOT_HEADERS} widths={[120, 24, 40, 30, 44, 44, 44, 110, 20]} rows={5} />
         }

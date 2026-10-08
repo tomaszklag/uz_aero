@@ -35,14 +35,14 @@ import {
   type Column,
 } from '../../ui/components';
 import { ChecklistIcon, SheetIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { DateRange } from '../logbook/DateRange';
 import { defaultRange, type DayRange } from '../logbook/dateRanges';
 import { ATTENTION, exportPath, exportsPath, flagPath, type ExportFilter } from './attentionPaths';
 import { ExportDrawer } from './ExportDrawer';
 import { EXPORT_CHIPS, exportRow, exportsSubtitle, exportStateOfSlug, type ExportRow } from './exportRows';
 
-const HEADERS = ['Karta', 'Operacja', 'Stan', 'Rewizja', 'Wysłano', ''];
+const HEADERS = ['Karta', 'Operacja', 'Stan', 'Wersja', 'Wysłano', ''];
 const NO_FLAG = { resolved: false, kind: null };
 
 export function ExportsScreen() {
@@ -123,7 +123,7 @@ export function ExportsScreen() {
         </>
       ),
     },
-    { key: 'revision', header: 'Rewizja', align: 'num', render: (row) => row.revision },
+    { key: 'revision', header: 'Wersja', align: 'num', render: (row) => row.revision },
     { key: 'exportedAt', header: 'Wysłano', align: 'num', render: (row) => row.exportedAt },
     {
       key: 'actions',
@@ -164,10 +164,11 @@ export function ExportsScreen() {
         ))}
       </div>
 
-      {exports.error == null ? null : <Banner tone="danger">{errorMessage(exports.error)}</Banner>}
+      {exports.error == null ? null : <Banner tone="danger">{loadErrorMessage(exports.error)}</Banner>}
 
       <Loadable
         pending={exports.isPending}
+        loaded={exports.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[150, 170, 110, 40, 80, 60]} rows={6} />}
       >
         {rows.length === 0 ? (
@@ -181,7 +182,7 @@ export function ExportsScreen() {
             <EmptyState
               icon={<SheetIcon size={20} />}
               title={filter.state == null ? 'Nikt nie latał w tym zakresie' : 'Nic w tym zawężeniu'}
-              note={filter.state == null ? 'Zmień zakres dat.' : 'Zdejmij chip stanu albo zmień zakres dat.'}
+              note={filter.state == null ? 'Zmień zakres dat.' : 'Zdejmij filtr stanu albo zmień zakres dat.'}
             />
           )
         ) : (

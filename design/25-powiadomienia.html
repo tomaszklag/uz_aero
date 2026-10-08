@@ -301,7 +301,7 @@
       </a>
       <div class="app-header-left" style="flex:1;">
         <span class="screen-title">POWIADOMIENIA</span>
-        <span class="header-subtitle">CZASY KLUBU</span>
+        <span class="header-subtitle">CZAS KLUBU</span>
       </div>
     </div>
 
@@ -321,6 +321,19 @@
           </span>
           <span class="n-when">12 min temu</span>
         </a>
+        <!-- ODWOŁANIE PRZEZ KLUB (§12.9, 2026-10-06) - ten sam kształt, co odmowa
+             zgody niżej: rzeczownik z nazwiskiem za separatorem, termin, powód jako treść.
+             Powód jest w panelu WYMAGANY przy odwołaniu cudzej rezerwacji właśnie po to,
+             żeby stanął tutaj. Tapnięcie otwiera kartę rezerwacji w stanie 23G. -->
+        <a class="n new" href="23g-rezerwacja-odwolana.html">
+          <span class="n-icon no"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+          <span class="n-body">
+            <span class="n-title">Rezerwacja odwołana · Jan Bąk</span>
+            <span class="n-sub">SP-DKM · pt 25 WRZ 14:00-16:00</span>
+            <span class="n-reason">SP-DKM idzie w piątek na przegląd 100 h - przesunięty z poniedziałku. Wolne są SP-AXA i SP-BKL.</span>
+          </span>
+          <span class="n-when">2 h temu</span>
+        </a>
         <a class="n new" href="26-decyzja.html">
           <span class="n-icon ask"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
           <span class="n-body">
@@ -335,7 +348,7 @@
           <span class="n-body">
             <span class="n-title">Termin minął, zanim ktokolwiek zdecydował</span>
             <span class="n-sub">SP-BKL · pon 22 WRZ 10:00-12:00</span>
-            <span class="n-reason">Maszyna wróciła do puli - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.</span>
+            <span class="n-reason">Termin się zwolnił - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.</span>
           </span>
           <span class="n-when">wczoraj 10:00</span>
         </a>
@@ -377,14 +390,14 @@
     <span class="vp-badge">25</span>
     <span class="vp-body">
       <span class="vp-name">Skrzynka - decyzje i prośby</span>
-      <span class="vp-when">Wejście z dzwonka na Pulpicie. Dwie prośby o zgodę czekają (plakietka „Do decyzji" stoi, dopóki nie zapadnie decyzja), a niżej wiadomości już przeczytane: zgoda, odmowa z powodem, zmiana ścieżki i termin, który wygasł. Zielona krawędź = nowe od ostatniego wejścia i gaśnie z chwilą otwarcia listy.</span>
+      <span class="vp-when">Wejście z dzwonka na Pulpicie. Dwie prośby o zgodę czekają (plakietka „Do decyzji" stoi, dopóki nie zapadnie decyzja), między nimi nowa wiadomość o rezerwacji odwołanej przez klub - z powodem, prowadzi do 23G (§12.9), a niżej wiadomości już przeczytane: zgoda, odmowa z powodem, zmiana ścieżki i termin, który wygasł. Zielona krawędź = nowe od ostatniego wejścia i gaśnie z chwilą otwarcia listy.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="25a-powiadomienia-pusto.html">
     <span class="vp-badge blue">25A</span>
     <span class="vp-body">
-      <span class="vp-name">Nic nie przyszło</span>
+      <span class="vp-name">Brak powiadomień</span>
       <span class="vp-when">Stan pusty mówi, CO tu trafia - decyzje o Twoich rezerwacjach i prośby o Twoją zgodę - a nie „brak danych". Dzwonek na Pulpicie stoi mimo to: znika licznik, nie wejście.</span>
     </span>
   </a>

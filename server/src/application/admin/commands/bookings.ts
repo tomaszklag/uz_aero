@@ -36,10 +36,13 @@ import type {
   NewBooking,
 } from '../../common/ports.ts';
 import type { ApprovalFlow } from '../../common/commands/approvals.ts';
+import type { OrderBookingCommands } from '../../common/commands/orderBookings.ts';
+import { orderActorOf } from '../../common/orderAccess.ts';
 import { aircraftFlightCancelled } from '../../common/notify/aircraftNotices.ts';
-import type { Notifier } from '../../common/notify/notifier.ts';
+import { bookingCancelled } from '../../common/notify/bookingNotices.ts';
+import type { ClubSignals } from '../../common/notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../../common/notify/notifier.ts';
 import type { AircraftWatching } from '../../common/notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../../common/notify/bookingNotices.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 
@@ -74,6 +77,18 @@ export type AdminBookingOutcome =
 
 class BookingNotFound extends Error {}
 
+/**
+ * Rezerwacja ZLECENIA w odwołaniu z kalendarza (§16 pkt 9). Wyjątek, bo `AuditedWrite`
+ * dopisuje ślad do KAŻDEGO skutku, a odwołanie zlecenia do dziennika akcji nie trafia
+ * (zlecenia mają własną historię zmian, §10.3) - rzucony w transakcji wycofuje ją razem
+ * z wpisem, a odwołanie idzie komendą zlecenia.
+ */
+class OrderBookingCancelled extends Error {
+  constructor(readonly orderId: string) {
+    super('rezerwacja zlecenia');
+  }
+}
+
 class Refused extends Error {
   constructor(
     readonly refusal: BookingRefusal,
@@ -95,6 +110,10 @@ export class AdminBookingCommands {
      */
     private readonly approvals: ApprovalFlow,
     private readonly notifier: Notifier,
+    /** Rezerwacja zlecenia (4.0.0): odwołanie z kalendarza jest odwołaniem zlecenia (§16 pkt 9). */
+    private readonly orderBookings: OrderBookingCommands,
+    /** Kanał klubu (4.0.0): termin na osi kalendarza i na karcie samolotu odświeża się na żywo. */
+    private readonly signals: ClubSignals,
     /** Obserwowanie samolotu (3.2.0): odwołanie przypomnianego terminu budzi obserwujących, bez administratora. */
     private readonly watching: AircraftWatching | null = null,
   ) {}
@@ -158,12 +177,15 @@ export class AdminBookingCommands {
     reason: string | null,
   ): Promise<AdminBookingOutcome> {
     const at = this.clock.now();
-    let watchNotices: NotificationDraft[] = [];
-    let withdrawn: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let withdrawn: RecordedNotice[] = [];
+    let cancelled: RecordedNotice[] = [];
     try {
       const booking = await this.write.run(actor, async (tx) => {
         const current = await this.bookings.byId(tx, actor.orgId, id);
         if (current == null) throw new BookingNotFound();
+        // Z jego wiadomościami i powodem OPCJONALNYM (§5.6) - inaczej niż cudza rezerwacja.
+        if (current.orderId != null) throw new OrderBookingCancelled(current.orderId);
 
         const refusal = refuseCancel(current, { pilotId: actor.pilotId, manages: true }, reason);
         if (refusal != null) throw new Refused(refusal);
@@ -172,24 +194,34 @@ export class AdminBookingCommands {
           status: 'cancelled',
           at,
           reason,
+          by: actor.pilotId,
         });
         // Wiersz przestał być czynny między odczytem a zapisem (telefon pilota, zadanie
         // okresowe). Ta sama odpowiedź, co przy rezerwacji już zamkniętej.
         if (closed == null) throw new Refused('booking_closed');
 
+        // Obietnica „Pilot zobaczy powód w aplikacji" (§12.9): oba fotele dostają powód
+        // tą samą transakcją, co odwołanie i ślad audytu. Wyłączenie z użytku nie ma
+        // foteli, więc wiadomości nie rodzi. Kto dostał tę wiadomość, nie dostaje drugiej
+        // o tym samym fakcie w innej roli (krok zgody, obserwujący).
+        const seated = bookingCancelled(current, { reason, cancelledBy: actor.pilotId });
+        const told = seated.map((d) => d.pilotId);
+        cancelled = await this.notifier.record(tx, actor.orgId, seated, at);
+
         // Czekająca sprawa: osoby kroku bieżącego dowiadują się, że prośba jest wycofana
         // (issue #233) - administrator nie budzi przy tym sam siebie.
-        withdrawn = await this.approvals.withdraw(tx, actor.orgId, current, actor.pilotId);
+        withdrawn = await this.approvals.withdraw(tx, actor.orgId, current, actor.pilotId, told);
 
         // „Co ogłosiłeś, to odwołaj" (obserwowanie §5.2) - tą samą transakcją, co
         // odwołanie i ślad audytu; administrator o własnej decyzji nie słyszy.
         if (this.watching != null && current.remindedAt != null) {
           const audience = await this.watching.audience(tx, actor.orgId, current.aircraftId, [
             actor.pilotId,
+            ...told,
           ]);
           if (audience != null) {
-            watchNotices = aircraftFlightCancelled(audience, current, null);
-            await this.watching.record(tx, actor.orgId, watchNotices, at);
+            const drafts = aircraftFlightCancelled(audience, current, null);
+            watchNotices = await this.watching.record(tx, actor.orgId, drafts, at);
           }
         }
 
@@ -210,12 +242,27 @@ export class AdminBookingCommands {
           },
         };
       });
-      if (withdrawn.length > 0) await this.notifier.wake(actor.orgId, withdrawn);
+      await this.notifier.wake(actor.orgId, [...withdrawn, ...cancelled]);
       if (watchNotices.length > 0) await this.watching?.wake(actor.orgId, watchNotices);
+      await this.signals.booking(actor.orgId, booking);
       return { ok: true, booking };
     } catch (err) {
+      if (err instanceof OrderBookingCancelled) return this.cancelOrder(actor, err.orderId, reason);
       return outcomeOf(err);
     }
+  }
+
+  private async cancelOrder(actor: Actor, orderId: string, reason: string | null): Promise<AdminBookingOutcome> {
+    const outcome = await this.orderBookings.cancelAsLeader(
+      actor.orgId,
+      orderActorOf(actor.pilotId, actor.capabilities),
+      orderId,
+      reason,
+    );
+    if (outcome == null) return { ok: false, reason: 'not_found' };
+    return outcome.ok
+      ? { ok: true, booking: outcome.booking }
+      : { ok: false, reason: 'refused', refusal: outcome.refusal, taken: null };
   }
 
   private async insert(
@@ -255,6 +302,7 @@ export class AdminBookingCommands {
           },
         };
       });
+      await this.signals.booking(actor.orgId, booking);
       return { ok: true, booking };
     } catch (err) {
       return outcomeOf(err);

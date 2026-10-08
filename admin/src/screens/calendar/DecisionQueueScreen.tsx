@@ -31,7 +31,7 @@ import { useApprovalQueue, useDecideBooking } from '../../queries/useApprovals';
 import { useDirectory } from '../../queries/useDirectory';
 import { Banner, Breadcrumbs, Button, EmptyState, LinkButton, Loadable, PageHead } from '../../ui/components';
 import { ChecklistIcon, PreviewIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { decisionErrorMessage } from './approvalRefusal';
 import { personLookup, regLookup } from './directoryLookups';
 import { PreviewDrawer } from './PreviewDrawer';
@@ -89,7 +89,7 @@ export function DecisionQueueScreen() {
 
       {error == null ? null : (
         <Banner tone="danger" live>
-          {errorMessage(error)}
+          {loadErrorMessage(error)}
         </Banner>
       )}
       {done == null ? null : (
@@ -98,7 +98,13 @@ export function DecisionQueueScreen() {
         </Banner>
       )}
 
-      <Loadable pending={queue.isPending} skeleton={<QueueSkeleton />}>
+      {/* Karty biorą nazwiska i znaki ze SŁOWNIKA, więc czekają także na niego - inaczej
+          kolejka, która przyszła pierwsza, weszłaby z kreskami zamiast nazwisk. */}
+      <Loadable
+        pending={queue.isPending || directory.isPending}
+        loaded={queue.data != null && directory.data != null}
+        skeleton={<QueueSkeleton />}
+      >
         {cards.length === 0 ? (
           <EmptyState
             icon={<ChecklistIcon />}
@@ -165,8 +171,8 @@ export function DecisionQueueScreen() {
                       />
                     </div>
                     <p className="hint">
-                      Pilot zobaczy ten powód w telefonie. Odmowa jest ostateczna: rezerwacja
-                      zostaje odrzucona, a termin wraca do puli.
+                      Pilot zobaczy ten powód w aplikacji. Odmowa jest ostateczna: rezerwacja
+                      zostaje odrzucona, a termin się zwalnia.
                     </p>
                     <div className="drawer-foot">
                       <Button
@@ -184,7 +190,7 @@ export function DecisionQueueScreen() {
                         disabled={reason.trim() === '' || decide.isPending}
                         onClick={() => settle(card, 'rejected')}
                       >
-                        {decide.isPending ? 'Zapisuję…' : 'Odmów'}
+                        {decide.isPending ? 'Zapisywanie…' : 'Odmów'}
                       </Button>
                     </div>
                   </>

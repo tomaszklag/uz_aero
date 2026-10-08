@@ -34,6 +34,12 @@ const CLUB_CAPABILITIES = [
   'thresholds.manage',
   'audit.read',
   'maintenance.run',
+  // Dopisane przy 4.0.0 (issue #245): lista nie znała rezerwacji ani obserwowania,
+  // choć komentarz wyżej obiecuje „każdy nowy wpis" - uzupełniona razem z dwunastą.
+  'reservations.manage',
+  'reservations.approve',
+  'fleet.watch',
+  'orders.create',
 ] as const;
 
 /**
@@ -370,6 +376,8 @@ describe('tokeny sprzed wielofirmowości i tokeny bez `iat`', () => {
       // …a brak `iat` czyta się jako `0`, czyli „wydany przed czasem" - wartość, która
       // przegrywa z każdym znacznikiem unieważnienia (przypadek niżej).
       issuedAt: 0,
+      // Termin z ręcznie złożonego tokenu (`handRolled`: godzina od chwili zegara).
+      expiresAt: Math.floor(clock.now().getTime() / 1000) + 3600,
       // Brak `sid` = token sprzed 2.1.0. `null`, a nie pusty napis, bo brama musi
       // odróżnić „ten token nie zna sesji" od „wskazuje sesję, której nie ma": pierwsze
       // przechodzi do wygaśnięcia, drugie odbija (`loginSessions.test.ts`).

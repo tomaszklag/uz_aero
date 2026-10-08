@@ -49,6 +49,7 @@ import {
   type PlatformRole,
 } from '../../../domain/roles.ts';
 import type { AttemptLimiter } from '../attemptLimiter.ts';
+import type { LiveAccess } from '../live/liveAccess.ts';
 import type {
   Clock,
   Database,
@@ -420,6 +421,8 @@ export class AuthCommands {
      * portami, bo reszta pisze do jednej tabeli naraz.
      */
     private readonly db: Database,
+    /** Kanał klubu (4.0.0): wylogowane urządzenie traci też otwarte połączenie. */
+    private readonly access: LiveAccess,
   ) {}
 
   /**
@@ -435,16 +438,18 @@ export class AuthCommands {
    */
   async logout(refreshToken: string): Promise<void> {
     const now = this.clock.now();
-    await this.db.transaction(async (tx) => {
+    const sessionId = await this.db.transaction(async (tx) => {
       const revoked = await this.refreshTokens.revoke(tx, refreshToken);
-      if (revoked == null) return;
+      if (revoked == null) return null;
       await this.sessions.revoke(
         tx,
         { id: revoked.sessionId, pilotId: revoked.pilotId },
         now,
         'self',
       );
+      return revoked.sessionId;
     });
+    if (sessionId != null) this.access.sessionRevoked(sessionId);
   }
 
   /**
@@ -466,7 +471,9 @@ export class AuthCommands {
     currentSessionId: string | null,
   ): Promise<boolean> {
     if (sessionId === currentSessionId) return false;
-    return this.sessions.revoke(this.db, { id: sessionId, pilotId }, this.clock.now(), 'self');
+    const done = await this.sessions.revoke(this.db, { id: sessionId, pilotId }, this.clock.now(), 'self');
+    if (done) this.access.sessionRevoked(sessionId);
+    return done;
   }
 
   /**
@@ -479,12 +486,13 @@ export class AuthCommands {
   async panelLogout(request: PanelRequest | null): Promise<void> {
     const sessionId = request?.sessionId;
     if (request == null || sessionId == null) return;
-    await this.sessions.revoke(
+    const done = await this.sessions.revoke(
       this.db,
       { id: sessionId, pilotId: request.pilotId },
       this.clock.now(),
       'self',
     );
+    if (done) this.access.sessionRevoked(sessionId);
   }
 
   /** Logowanie telefonu (§3.0) - prowisioning urządzenia albo token osoby bez klubu. */

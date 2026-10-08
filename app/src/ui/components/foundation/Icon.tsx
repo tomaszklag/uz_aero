@@ -151,6 +151,72 @@ const REGISTRY = {
   settings: f('settings'),
   // Skrzynka powiadomień (3.1.0) - dzwonek w nagłówku Pulpitu, obok zębatki (makieta 20E).
   bell: f('bell'),
+  /**
+   * Zlecenia na lot (4.0.0): rozmowa w zleceniu (ikona z kropką nowej wiadomości - 30, 32)
+   * i stan pusty listy „nic nie przyszło" (30A) - te same glify, co w makietach.
+   */
+  message: f('message-square'),
+  inbox: f('inbox'),
+  /**
+   * Linijka „Edytowane · co" pod kartą zlecenia (28A, 28C) - ołówek z podkreśleniem
+   * jest tu GLIFEM „zmieniono", nie akcją; `edit` (bez podkreślenia) obiecuje poprawkę.
+   */
+  edited: f('edit-3'),
+  /**
+   * Banery stanu zlecenia nieaktualnego (28B) - cztery losy, cztery glify z makiety:
+   * „i" (fotel obsadzony - nic złego się nie stało, więc nie wykrzyknik `info`),
+   * przekreślone koło (odwołanie), klepsydra (wygasło - zrobił to zegar) i strzałka
+   * cofnięcia (zlecenie odebrane).
+   */
+  'order-filled': f('info'),
+  'order-cancelled': f('x-circle'),
+  'order-expired': m('timer-sand-empty'),
+  'order-removed': m('undo-variant'),
+  /**
+   * Skrzynka (25D): „Zlecenie lotu" - kartka z podkładką (prośba, która czeka na odpowiedź),
+   * „Zlecenie nieaktualne" - przekreślone koło (zlecenie przestało dotyczyć Ciebie, nic się
+   * nie zepsuło) i „Odpowiedź na zlecenie · nie może" - sylwetka z krzyżykiem.
+   */
+  order: f('clipboard'),
+  'order-stale': f('slash'),
+  'person-off': f('user-x'),
+  /**
+   * Karta prowadzącego (32, 32D): „Powiel" w nagłówku (kopia - ta sama treść z pustym
+   * terminem), menu ⋯ przy adresacie, „ZAMIEŃ OSOBĘ" (dwie strzałki) i „COFNIJ PRZYDZIAŁ"
+   * (strzałka cofnięcia - fotel wraca do szukania).
+   */
+  duplicate: f('copy'),
+  overflow: f('more-horizontal'),
+  /** Rozwinięcie w miejscu (`.expand`, 32B) - szewron w dół, obrócony przy otwartej liście. */
+  expand: f('chevron-down'),
+  /**
+   * Rozmowa w zleceniu (29): papierowy samolot na WYŚLIJ i oko przy zdaniu o tym, KTO
+   * jeszcze czyta rozmowę (koordynatorzy - 29; „możesz ją czytać" - 29B).
+   */
+  send: f('send'),
+  readers: f('eye'),
+  /**
+   * Formularz zlecenia, krok 3 (31B, 31C): „Ja" i „Osoba · imiennie" (sylwetka), „Grupa
+   * · lub kilka osób" i awatar grupy (dwie sylwetki), „Brak" (przekreślone koło) oraz
+   * podpis o terminie do potwierdzenia - „i" informacji, nie wykrzyknik ostrzeżenia.
+   */
+  person: f('user'),
+  group: f('users'),
+  'seat-none': f('slash'),
+  hint: f('info'),
+  /**
+   * Arkusz wolnego pasma (21E): „Zarezerwuj dla siebie" (kalendarz z ptaszkiem - termin
+   * na Twoje nazwisko) i „Zleć lot" (sylwetka z plusem - szukasz załogi).
+   */
+  'book-self': m('calendar-check-outline'),
+  'order-new': f('user-plus'),
+  /**
+   * Rezygnacja z lotu ze zlecenia (23F) - drzwi ze strzałką, jak w makiecie: wychodzisz
+   * z załogi, ale termin zostaje zajęty, więc to nie jest kosz odwołania.
+   */
+  resign: f('log-out'),
+  swap: f('repeat'),
+  unassign: m('undo-variant'),
   lock: f('lock'), // dni po oknie korekty (12) - „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 

@@ -24,14 +24,18 @@ import {
   refuseCancel,
   refuseChange,
   refuseCreate,
+  refuseOrderBookingChange,
   refuseWindow,
   type BookingRefusal,
 } from '../../../domain/bookings.ts';
+import type { OrderActor } from '../orderAccess.ts';
 import type { ApprovalFlow } from './approvals.ts';
+import type { OrderBookingCommands } from './orderBookings.ts';
 import { aircraftFlightCancelled } from '../notify/aircraftNotices.ts';
 import type { AircraftWatching } from '../notify/aircraftWatching.ts';
-import type { NotificationDraft } from '../notify/bookingNotices.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import { bookingCancelled } from '../notify/bookingNotices.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import type {
   AircraftConfigPort,
   BookingPatch,
@@ -69,6 +73,13 @@ export class BookingCommands {
     private readonly clock: Clock,
     private readonly approvals: ApprovalFlow,
     private readonly notifier: Notifier,
+    /**
+     * Rezerwacja ZLECENIA (4.0.0, `docs/zlecenia.md` §16 pkt 6): jej odwołanie jest
+     * rezygnacją z fotela albo odwołaniem zlecenia - decyduje, kim jest odwołujący.
+     */
+    private readonly orderBookings: OrderBookingCommands,
+    /** Kanał klubu (4.0.0): termin na osi kalendarza i na karcie samolotu odświeża się na żywo. */
+    private readonly signals: ClubSignals,
     /**
      * Obserwowanie samolotu (3.2.0, issue #205) - `null` = wyłączone. Odwołanie albo
      * przesunięcie terminu, o którym JUŻ przypomniano obserwującym, rodzi „odwołany lot"
@@ -121,20 +132,26 @@ export class BookingCommands {
       note: draft.note,
       createdBy: pilotId,
     };
+    let requested: RecordedNotice[] = [];
     const write = await this.db.transaction(async (tx) => {
       const result = await this.bookings.insert(tx, orgId, row);
       // Pominięcia kroków i prośby o zgodę idą TĄ SAMĄ transakcją, co rezerwacja -
       // inaczej prośba istnieje, a nikt o niej nie wie, albo odwrotnie (§12.1).
       // Tylko przy wierszu NOWYM: powtórzony zapis (telefon ponowił przy słabym łączu)
       // nie ma prawa wysłać drugiej prośby o tę samą zgodę.
-      if (result.ok && result.created) await this.approvals.recordPlan(tx, orgId, draft.id, plan);
+      if (result.ok && result.created) {
+        requested = await this.approvals.recordPlan(tx, orgId, draft.id, plan);
+      }
       return result;
     });
     if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
 
     // Budzik PO commicie i nigdy przed: push jest budzikiem, nie treścią, więc jego
     // awaria ma kosztować ciszę w telefonie, a nie utraconą rezerwację.
-    if (write.created) await this.notifier.wake(orgId, plan.notices);
+    if (write.created) {
+      await this.notifier.wake(orgId, requested);
+      await this.signals.booking(orgId, write.booking);
+    }
     return write;
   }
 
@@ -154,6 +171,8 @@ export class BookingCommands {
     const now = this.clock.now().getTime();
     const actor = { pilotId, manages: false };
     const refusal =
+      // Termin zlecenia prowadzi zlecenie (§16 pkt 7) - także dla załogi, która w nim siedzi.
+      refuseOrderBookingChange(current, pilotId) ??
       refuseChange(current, actor, now) ??
       // Nowe okno sprawdzamy osobno: przesunięcie w przeszłość jest odmową o czym innym
       // niż „to już minęło" (tamto mówi o wierszu, to o wpisanych godzinach).
@@ -188,7 +207,8 @@ export class BookingCommands {
     const watching = this.watching;
     const announce =
       watching != null && current.remindedAt != null && startsAt !== current.startsAt;
-    let watchNotices: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let requested: RecordedNotice[] = [];
 
     const write = await this.db.transaction(async (tx) => {
       const result = await this.bookings.update(tx, orgId, id, patch);
@@ -196,13 +216,13 @@ export class BookingCommands {
       if (announce && watching != null) {
         const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
         if (audience != null) {
-          watchNotices = aircraftFlightCancelled(audience, current, { startsAt, endsAt });
-          await watching.record(tx, orgId, watchNotices, this.clock.now());
+          const drafts = aircraftFlightCancelled(audience, current, { startsAt, endsAt });
+          watchNotices = await watching.record(tx, orgId, drafts, this.clock.now());
         }
       }
       if (plan == null || !restart) return result;
 
-      await this.approvals.restart(tx, orgId, id, plan);
+      requested = await this.approvals.restart(tx, orgId, id, plan);
       // Stan wiersza idzie ZA planem: czeka, gdy jest o co pytać; potwierdza się od
       // razu, gdy rezerwujący stoi na każdym kroku. `null` = ktoś zamknął ją w międzyczasie.
       const row =
@@ -215,8 +235,10 @@ export class BookingCommands {
     if (!write.ok) return { ok: false, refusal: 'slot_taken', taken: write.taken };
 
     // Budzik PO commicie: prośby o zgodę na NOWY termin idą do osób kroku bieżącego.
-    if (plan != null && restart) await this.notifier.wake(orgId, plan.notices);
+    if (requested.length > 0) await this.notifier.wake(orgId, requested);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    // Przesunięcie odświeża OBIE doby i - przy zmianie maszyny - obie karty samolotu.
+    await this.signals.booking(orgId, write.booking, current);
     return write;
   }
 
@@ -226,45 +248,66 @@ export class BookingCommands {
    */
   async cancel(
     orgId: string,
-    pilotId: string,
+    actor: OrderActor,
     id: string,
     reason: string | null,
   ): Promise<BookingResult | null> {
     const current = await this.bookings.byId(this.db, orgId, id);
     if (current == null) return null;
 
+    // ══ REZERWACJA ZLECENIA (4.0.0, §16 pkt 6) ══
+    // Nie oddaje slotu: przydzielony rezygnuje z fotela, a zlecający odwołuje zlecenie.
+    // Obie czynności mają własne wiadomości, więc idą komendami zlecenia, nie zamknięciem wiersza.
+    if (current.orderId != null) {
+      const outcome = await this.orderBookings.cancelOwn(orgId, actor, current.orderId, reason);
+      if (outcome == null) return null;
+      return outcome.ok
+        ? { ok: true, booking: outcome.booking, created: false }
+        : { ok: false, refusal: outcome.refusal };
+    }
+
+    const pilotId = actor.pilotId;
     const refusal = refuseCancel(current, { pilotId, manages: false }, reason);
     if (refusal != null) return { ok: false, refusal };
 
     const watching = this.watching;
-    let watchNotices: NotificationDraft[] = [];
-    let withdrawn: NotificationDraft[] = [];
+    let watchNotices: RecordedNotice[] = [];
+    let withdrawn: RecordedNotice[] = [];
+    let cancelled: RecordedNotice[] = [];
     const closed = await this.db.transaction(async (tx) => {
       const row = await this.bookings.close(tx, orgId, id, {
         status: 'cancelled',
         at: this.clock.now(),
         reason,
+        by: pilotId,
       });
       if (row == null) return row;
+      // Drugi pilot traci ten sam lot, więc dowiaduje się o tym tą samą transakcją
+      // (§12.9, D2) - odwołujący o sobie nie słyszy. Kto dostał tę wiadomość, nie
+      // dostaje drugiej o tym samym fakcie w innej roli (krok zgody, obserwujący).
+      const seated = bookingCancelled(current, { reason, cancelledBy: pilotId });
+      const told = seated.map((d) => d.pilotId);
+      cancelled = await this.notifier.record(tx, orgId, seated, this.clock.now());
       // Czekająca sprawa miała otwartą prośbę o zgodę - jej osoby dowiadują się, że nie
       // ma już czego rozstrzygać (issue #233). Stan SPRZED odwołania, bo to on mówi,
       // kogo pytano.
-      withdrawn = await this.approvals.withdraw(tx, orgId, current, pilotId);
+      withdrawn = await this.approvals.withdraw(tx, orgId, current, pilotId, told);
       // Obserwujący słyszą o odwołaniu WYŁĄCZNIE terminu, o którym już im przypomniano
       // (§5.2) - i nigdy o własnym; wiadomość idzie tą samą transakcją, co odwołanie.
       if (current.remindedAt == null || watching == null) return row;
-      const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId]);
+      const audience = await watching.audience(tx, orgId, current.aircraftId, [pilotId, ...told]);
       if (audience != null) {
-        watchNotices = aircraftFlightCancelled(audience, current, null);
-        await watching.record(tx, orgId, watchNotices, this.clock.now());
+        const drafts = aircraftFlightCancelled(audience, current, null);
+        watchNotices = await watching.record(tx, orgId, drafts, this.clock.now());
       }
       return row;
     });
     // Przegrany wyścig z zadaniem okresowym albo z panelem: wiersz przestał być czynny
     // między odczytem a zapisem. To nie jest awaria - to jest ta sama odpowiedź.
     if (closed == null) return { ok: false, refusal: 'booking_closed' };
-    if (withdrawn.length > 0) await this.notifier.wake(orgId, withdrawn);
+    await this.notifier.wake(orgId, [...withdrawn, ...cancelled]);
     if (watchNotices.length > 0) await watching?.wake(orgId, watchNotices);
+    await this.signals.booking(orgId, closed);
     return { ok: true, booking: closed, created: false };
   }
 }

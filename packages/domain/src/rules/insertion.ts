@@ -89,8 +89,8 @@ export function checkInsert(
  * ODMOWA NAZWANA JĘZYKIEM FAKTU Z PRZESZŁOŚCI (issue #234).
  *
  * Komunikaty `checkAppend` są pisane dla kokpitu, w którym zdarzenie zachodzi TERAZ:
- * „Tankowanie przy pracującym silniku - wyłącz silnik", „Lądowanie bez startu. Dopisz
- * start albo użyj listy ręcznej". Przy dopisywaniu faktu sprzed dwóch godzin ta sama
+ * „Tankowanie przy pracującym silniku - wyłącz silnik", „Lądowanie bez startu - najpierw
+ * zapisz start". Przy dopisywaniu faktu sprzed dwóch godzin ta sama
  * reguła odbija się o STAN Z TAMTEJ CHWILI, a rada „wyłącz silnik" nie ma sensu -
  * silnik dawno stoi, to godzina jest zła. Kod reguły zostaje ten sam (rejestr, testy
  * i panel pytają o kod), zmienia się wyłącznie zdanie, które czyta człowiek - i zmienia
@@ -106,9 +106,9 @@ function inPastTense(v: RuleViolation, candidate: Event): RuleViolation {
 
 const PAST_TENSE: Partial<Record<RuleViolation['code'], (type: Event['type']) => string>> = {
   SESSION_NOT_CLAIMED: () =>
-    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po rozpoczęciu lotu.',
   PREFLIGHT_REQUIRED: () =>
-    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po przejęciu samolotu.',
+    'O tej godzinie operacja jeszcze się nie zaczęła - wpis musi przypadać po rozpoczęciu lotu.',
   DAY_CLOSED: () =>
     'O tej godzinie samolot był już zdany - fakt po zdaniu należy do następnej operacji.',
   ENGINE_NOT_RUNNING: () =>

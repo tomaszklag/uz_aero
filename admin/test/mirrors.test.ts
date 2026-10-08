@@ -46,6 +46,20 @@ const APPROVAL_STEPS = join(
  * eksportera są uniami W KONTRAKCIE panelu po stronie serwera, nie w domenie.
  */
 const EXPORTS = join(__dirname, '..', '..', 'server', 'src', 'application', 'admin', 'contracts', 'exports.ts');
+/** Komenda rozmowy w zleceniu (4.0.0) - powody odmowy wysłania wiadomości. */
+const THREADS = join(__dirname, '..', '..', 'server', 'src', 'application', 'common', 'commands', 'threads.ts');
+/** Komenda grup klubu (4.0.0) - powody odmowy zapisu grupy. */
+const MEMBER_GROUPS = join(
+  __dirname,
+  '..',
+  '..',
+  'server',
+  'src',
+  'application',
+  'admin',
+  'commands',
+  'memberGroups.ts',
+);
 const DTO = join(__dirname, '..', 'src', 'api', 'dto.ts');
 
 /**
@@ -87,7 +101,7 @@ const unionIn = (file: string, name: string): string[] =>
 const constIn = (file: string, name: string): string[] =>
   literalsInBlock(file, new RegExp(String.raw`export const ${name} = \[([\s\S]*?)\]`), name);
 
-/** Sześć luster: unia w panelu -> deklaracja na serwerze. */
+/** Lustra: unia w panelu -> deklaracja na serwerze. */
 const MIRRORS = [
   {
     panel: 'Capability',
@@ -210,6 +224,68 @@ const MIRRORS = [
     panel: 'ExportFailureDto',
     server: 'ExportFailureDto',
     read: () => unionIn(EXPORTS, 'ExportFailureDto'),
+  },
+  // ZLECENIA NA LOT (4.0.0, epik Z-D #248). Fotel, stany foteli, sposób adresowania,
+  // stan zlecenia, odpowiedź i powód „nieaktualne" - z każdego panel pisze napis przy
+  // wierszu listy albo w szufladzie, więc pozycja dodana na serwerze bez lustra
+  // wyszłaby na ekran surowym `seat_dropped`.
+  {
+    panel: 'SeatDto',
+    server: 'Seat',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'Seat'),
+  },
+  {
+    panel: 'PicSeatStateDto',
+    server: 'PicSeatState',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'PicSeatState'),
+  },
+  {
+    panel: 'DualSeatStateDto',
+    server: 'DualSeatState',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'DualSeatState'),
+  },
+  {
+    panel: 'OrderAddressingDto',
+    server: 'OrderAddressing',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderAddressing'),
+  },
+  {
+    panel: 'OrderStatusDto',
+    server: 'OrderStatus',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderStatus'),
+  },
+  {
+    panel: 'OrderAnswerDto',
+    server: 'OrderAnswer',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderAnswer'),
+  },
+  {
+    panel: 'StaleReasonDto',
+    server: 'StaleReason',
+    read: () => unionIn(join(SERVER, 'orderAnswers.ts'), 'StaleReason'),
+  },
+  {
+    panel: 'OrderChangeKindDto',
+    server: 'OrderChangeKind',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderChangeKind'),
+  },
+  {
+    panel: 'OrderRefusalDto',
+    server: 'OrderRefusal',
+    read: () => unionIn(join(SERVER, 'orders.ts'), 'OrderRefusal'),
+  },
+  // Grupy klubu: powód odmowy zapisu stoi pod polem nazwy albo w karcie obsady - bez
+  // lustra kod dopisany na serwerze wyszedłby na ekran surowym napisem.
+  {
+    panel: 'GroupRefusalDto',
+    server: 'MemberGroupRefusal',
+    read: () => unionIn(MEMBER_GROUPS, 'MemberGroupRefusal'),
+  },
+  // Rozmowa w zleceniu: powód odmowy wysłania stoi pod polem wiadomości.
+  {
+    panel: 'ThreadRefusalDto',
+    server: 'ThreadRefusal',
+    read: () => unionIn(THREADS, 'ThreadRefusal'),
   },
 ] as const;
 

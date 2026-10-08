@@ -7,7 +7,7 @@
  */
 
 import type { RemoteNotification } from '../application';
-import { agoLabel, inboxRows, lateNote, termLabel, unreadIds } from '../ui/screens/logic/inbox';
+import { agoLabel, inboxRows, keepVisitNew, lateNote, termLabel, unreadIds } from '../ui/screens/logic/inbox';
 
 const H = 3_600_000;
 const NOW = Date.UTC(2026, 8, 24, 8, 0);
@@ -96,6 +96,25 @@ describe('wiersze skrzynki', () => {
     expect(wygasla!.reason).toContain('złóż rezerwację jeszcze raz');
   });
 
+  it('rezerwacja odwołana (§12.9): rzeczownik z odwołującym, powód jako treść; bez powodu - skutek', () => {
+    const [przezKlub, wlasna, bezNazwiska] = rows([
+      note({ kind: 'booking_cancelled', payload: { ...TERM, reason: 'SP-AXA idzie na przegląd 100 h.', cancelledBy: 'akw' } }),
+      note({ id: 'n2', kind: 'booking_cancelled', payload: { ...TERM, reason: null, cancelledBy: 'jwr' } }),
+      note({ id: 'n3', kind: 'booking_cancelled', payload: { ...TERM, reason: null, cancelledBy: 'ghost' } }),
+    ]);
+    expect(przezKlub).toMatchObject({
+      tone: 'no',
+      title: 'Rezerwacja odwołana · Anna Kowal',
+      sub: 'SP-AXA · sob 26 WRZ 09:00-12:00',
+      reason: 'SP-AXA idzie na przegląd 100 h.',
+      todo: false,
+      opens: 'booking',
+    });
+    expect(wlasna).toMatchObject({ title: 'Rezerwacja odwołana · Jakub Wrona', reason: 'Termin się zwolnił.' });
+    // Osoba spoza cache'u członków - tytuł ogólny, nigdy surowy identyfikator.
+    expect(bezNazwiska!.title).toBe('Rezerwacja odwołana');
+  });
+
   it('prośba wycofana (issue #233): rzeczownik z rezerwującym, bez „do decyzji", także z sprawą w kolejce', () => {
     const [wycofana, bezNazwiska] = rows(
       [
@@ -150,7 +169,7 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
     expect(notTaken).toMatchObject({
       tone: 'warn',
       title: 'Nie odebrano · SP-AXA',
-      reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+      reason: 'Przez godzinę nikt nie rozpoczął lotu - termin się zwolnił.',
       opens: 'aircraft',
     });
   });
@@ -222,10 +241,10 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
       tone: 'warn',
       title: 'Odwołany lot · SP-AXA',
       sub: 'sob 26 WRZ 09:00-12:00 · Jakub Wrona',
-      reason: 'Odwołany 40 min przed startem - po przypomnieniu.',
+      reason: 'Odwołany 40 min przed startem, już po przypomnieniu.',
       opens: 'aircraft',
     });
-    expect(moved!.reason).toBe('Przesunięty 40 min przed startem - nowy termin nd 27 WRZ 09:00-11:00, po przypomnieniu.');
+    expect(moved!.reason).toBe('Przesunięty 40 min przed startem, już po przypomnieniu - nowy termin nd 27 WRZ 09:00-11:00.');
   });
 
   it('dopisek o zwłoce pada dopiero ponad kwadrans; maszyna poza cache’em dostaje słowo, nie identyfikator', () => {
@@ -239,5 +258,31 @@ describe('wiadomości o obserwowanej maszynie (3.2.0)', () => {
 
   it('przeczytane liczą się jak dotąd', () => {
     expect(unreadIds([note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })])).toEqual(['n1']);
+  });
+});
+
+describe('„nowe" do końca wizyty (kanał klubu 4.0.0)', () => {
+  const READ = '2026-09-24T08:00:30Z';
+
+  it('wiadomość, którą pilot zobaczył jako nową, zostaje nowa po cichym odświeżeniu', () => {
+    // Skrzynka oznacza przeczytanie zaraz po odczycie, więc serwer zna je już przy
+    // pierwszym sygnale z kanału - a zielona krawędź ma trwać do końca wizyty.
+    const shown = [note(), note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' })];
+    const fresh = [
+      note({ id: 'n3' }),
+      note({ readAt: READ }),
+      note({ id: 'n2', readAt: '2026-09-24T07:00:00Z' }),
+    ];
+    expect(keepVisitNew(shown, fresh).map((n) => [n.id, n.readAt])).toEqual([
+      ['n3', null],
+      ['n1', null],
+      ['n2', '2026-09-24T07:00:00Z'],
+    ]);
+  });
+
+  it('przeczytana przed wizytą zostaje przeczytana; nowa z kanału przychodzi jako nowa', () => {
+    const shown = [note({ readAt: READ })];
+    const fresh = [note({ id: 'n9' }), note({ readAt: READ })];
+    expect(unreadIds(keepVisitNew(shown, fresh))).toEqual(['n9']);
   });
 });

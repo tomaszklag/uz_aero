@@ -44,9 +44,19 @@ export interface ContinuityRow {
  */
 export const CONTINUITY_TOLERANCE_L = 6;
 
+/**
+ * Kod pilota z pamięci klubu. `picId` i `byPilotId` z serwera to od 2.0.0 identyfikatory
+ * osób (długi ciąg znaków) - do 4.0.0 szły na ekran wielkimi literami („z poprzedniego lotu
+ * · 3F2A9C1E-…"). Poza pamięcią klubu podpis milczy o osobie zamiast pisać identyfikator.
+ */
+export type PilotCodeOf = (pilotId: string) => string | null;
+
+const NO_CODE: PilotCodeOf = () => null;
+
 /** Kto i kiedy - do etykiety wiersza i do treści ostrzeżenia. */
-function who(link: RemoteReadingsChainLink): string {
-  return `${link.picId.toUpperCase()} · ${dateTimeUtcShort(link.at)}`;
+function who(link: RemoteReadingsChainLink, codeOf: PilotCodeOf): string {
+  const code = codeOf(link.picId);
+  return code == null ? dateTimeUtcShort(link.at) : `${code} · ${dateTimeUtcShort(link.at)}`;
 }
 
 /**
@@ -54,10 +64,13 @@ function who(link: RemoteReadingsChainLink): string {
  * w zbiorniku. `null` = serwer nie wie albo nie było kogo pytać (pierwszy lot maszyny,
  * brak sieci) - arkusz nie pokazuje wtedy nic, zamiast pokazywać kreskę.
  */
-export function fuelBeforeReference(chain: RemoteReadingsChain | null | undefined): ContinuityRow | null {
+export function fuelBeforeReference(
+  chain: RemoteReadingsChain | null | undefined,
+  codeOf: PilotCodeOf = NO_CODE,
+): ContinuityRow | null {
   const link = chain?.before;
   if (link == null) return null;
-  return { label: `Zostawione przed lotem · ${who(link)}`, value: litres(link.fuelL) };
+  return { label: `Zostawione przed lotem · ${who(link, codeOf)}`, value: litres(link.fuelL) };
 }
 
 /**
@@ -65,10 +78,13 @@ export function fuelBeforeReference(chain: RemoteReadingsChain | null | undefine
  * później. To jest liczba, którą pilot POWINIEN był zostawić - o ile nikt nie tankował
  * w międzyczasie poza aplikacją.
  */
-export function fuelAfterReference(chain: RemoteReadingsChain | null | undefined): ContinuityRow | null {
+export function fuelAfterReference(
+  chain: RemoteReadingsChain | null | undefined,
+  codeOf: PilotCodeOf = NO_CODE,
+): ContinuityRow | null {
   const link = chain?.after;
   if (link == null) return null;
-  return { label: `Zastane po locie · ${who(link)}`, value: litres(link.fuelL) };
+  return { label: `Zastane po locie · ${who(link, codeOf)}`, value: litres(link.fuelL) };
 }
 
 /**
@@ -81,19 +97,21 @@ export function fuelAfterReference(chain: RemoteReadingsChain | null | undefined
 export function mhBeforeReference(
   chain: RemoteReadingsChain | null | undefined,
   format: MhFormat,
+  codeOf: PilotCodeOf = NO_CODE,
 ): ContinuityRow | null {
   const link = chain?.before;
   if (link == null) return null;
-  return { label: `Zostawione przed lotem · ${who(link)}`, value: motoHours(link.mh, format) };
+  return { label: `Zostawione przed lotem · ${who(link, codeOf)}`, value: motoHours(link.mh, format) };
 }
 
 export function mhAfterReference(
   chain: RemoteReadingsChain | null | undefined,
   format: MhFormat,
+  codeOf: PilotCodeOf = NO_CODE,
 ): ContinuityRow | null {
   const link = chain?.after;
   if (link == null) return null;
-  return { label: `Zastane po locie · ${who(link)}`, value: motoHours(link.mh, format) };
+  return { label: `Zastane po locie · ${who(link, codeOf)}`, value: motoHours(link.mh, format) };
 }
 
 /**
@@ -107,13 +125,22 @@ export function mhAfterReference(
  *
  * Dolewki zapisane po kotwicy wchodzą do wiersza, bo podnoszą poziom bez pomiaru.
  */
-export function oilReference(chain: RemoteReadingsChain | null | undefined): ContinuityRow | null {
+export function oilReference(
+  chain: RemoteReadingsChain | null | undefined,
+  codeOf: PilotCodeOf = NO_CODE,
+): ContinuityRow | null {
   const oil = chain?.oil;
   if (oil == null) return null;
 
   const added = oil.addedSinceL > 0 ? ` · dolano ${oilLitres(oil.addedSinceL)}` : '';
   return {
-    label: `Ostatni pomiar · ${oil.byPilotId?.toUpperCase() ?? '-'} · ${dateTimeUtcShort(oil.at)}${added}`,
+    label: [
+      'Ostatni pomiar',
+      oil.byPilotId == null ? null : codeOf(oil.byPilotId),
+      `${dateTimeUtcShort(oil.at)}${added}`,
+    ]
+      .filter((x): x is string => x != null)
+      .join(' · '),
     value: oilLitres(oil.levelL),
   };
 }
@@ -143,6 +170,7 @@ export function fuelContinuityWarnings(
   chain: RemoteReadingsChain | null | undefined,
   startL: number | null,
   endL: number | null,
+  codeOf: PilotCodeOf = NO_CODE,
 ): ContinuityWarning[] {
   const warnings: ContinuityWarning[] = [];
   if (chain == null) return warnings;
@@ -156,7 +184,7 @@ export function fuelContinuityWarnings(
           `Paliwo nie zgadza się z poprzednim lotem - maszynę zdano z ` +
           `${litres(chain.before.fuelL)}, a wpis zaczyna od ${litres(startL)}. ` +
           'Ktoś tankował poza aplikacją?',
-        src: `z rejestru · ${who(chain.before)}`,
+        src: `z historii samolotu · ${who(chain.before, codeOf)}`,
       });
     }
   }
@@ -167,9 +195,9 @@ export function fuelContinuityWarnings(
       warnings.push({
         id: 'continuity-after',
         text:
-          `Paliwo nie zgadza się z następnym lotem - następny pilot zastał ` +
-          `${litres(chain.after.fuelL)}, a wpis kończy na ${litres(endL)}.`,
-        src: `z rejestru · ${who(chain.after)}`,
+          `Paliwo nie zgadza się z następnym lotem - następny lot zaczął się od ` +
+          `${litres(chain.after.fuelL)}, a wpis kończy się na ${litres(endL)}.`,
+        src: `z historii samolotu · ${who(chain.after, codeOf)}`,
       });
     }
   }
@@ -190,6 +218,7 @@ export function mhContinuityWarnings(
   format: MhFormat,
   startMh: number | null,
   endMh: number | null,
+  codeOf: PilotCodeOf = NO_CODE,
 ): ContinuityWarning[] {
   const warnings: ContinuityWarning[] = [];
   if (chain == null) return warnings;
@@ -201,7 +230,7 @@ export function mhContinuityWarnings(
         text:
           `Licznik nie zgadza się z poprzednim lotem - maszynę zdano na ` +
           `${motoHours(chain.before.mh, format)}, a wpis zaczyna od ${motoHours(startMh, format)}.`,
-        src: `z rejestru · ${who(chain.before)}`,
+        src: `z historii samolotu · ${who(chain.before, codeOf)}`,
       });
     }
   }
@@ -211,9 +240,9 @@ export function mhContinuityWarnings(
       warnings.push({
         id: 'continuity-mh-after',
         text:
-          `Licznik nie zgadza się z następnym lotem - następny pilot zastał ` +
-          `${motoHours(chain.after.mh, format)}, a wpis kończy na ${motoHours(endMh, format)}.`,
-        src: `z rejestru · ${who(chain.after)}`,
+          `Licznik nie zgadza się z następnym lotem - następny lot zaczął się od ` +
+          `${motoHours(chain.after.mh, format)}, a wpis kończy się na ${motoHours(endMh, format)}.`,
+        src: `z historii samolotu · ${who(chain.after, codeOf)}`,
       });
     }
   }
@@ -251,7 +280,7 @@ export function oilContinuityWarnings(
         `Oleju jest więcej niż przy ostatnim pomiarze - było ${oilLitres(oil.levelL)}` +
         (oil.addedSinceL > 0 ? ` i dolano ${oilLitres(oil.addedSinceL)}` : '') +
         `, a wpis podaje ${oilLitres(levelL)}. Brakuje dolewki?`,
-      src: `z rejestru · ${dateTimeUtcShort(oil.at)}`,
+      src: `z historii samolotu · ${dateTimeUtcShort(oil.at)}`,
     },
   ];
 }

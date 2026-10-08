@@ -167,7 +167,7 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
               disabled={pending || !verdict.complete || blocker != null || !changed}
               reason={blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : creating ? 'Dodaj samolot' : 'Zapisz'}
+              {pending ? 'Zapisywanie…' : creating ? 'Dodaj samolot' : 'Zapisz'}
             </Button>
           </>
         )
@@ -265,7 +265,7 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
             onSelect={() => setDraft({ ...draft, serviceStatus: 'active' })}
           />
           <OptionButton
-            name="Wyłączony"
+            name="Poza służbą"
             desc="Znika z listy. Zapisane loty zostają."
             selected={draft.serviceStatus === 'disabled'}
             disabled={readOnly}
@@ -477,8 +477,8 @@ export function AircraftDrawer({ id, fleet, listPending, manages, onClose }: Air
             <div className="confirm">
               <p className="confirm-q">Usunąć {aircraft.reg}?</p>
               <p className="hint">
-                Zniknie z rejestru floty na zawsze - tego nie da się cofnąć. Jeśli ma
-                zapisane loty, zostanie tylko wyłączony.
+                Zniknie z floty na zawsze - tego nie da się cofnąć. Jeśli ma zapisane loty,
+                trafi tylko poza służbę.
               </p>
               <div className="confirm-actions">
                 <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>

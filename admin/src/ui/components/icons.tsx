@@ -301,6 +301,30 @@ export function CalendarIcon({ size = 16 }: IconProps) {
   );
 }
 
+/** Kartka kalendarza z plusem - „Zarezerwuj" w menu wolnej komórki (K1, 4.0.0). */
+export function CalendarPlusIcon({ size = 14 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+    </Stroke>
+  );
+}
+
+/**
+ * Podkładka z ptaszkiem - moduł Zlecenia (4.0.0, kolumna boczna wszystkich ram klubu
+ * w `design/panel/`). Zlecenie to zadanie do odhaczenia: ktoś je przyjmie albo nie.
+ */
+export function OrdersIcon({ size = 16 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14 2 2 4-4" />
+    </Stroke>
+  );
+}
+
 /** Budynek - klub w kolumnie i moduł Organizacje (wielofirmowość 2.0.0). */
 export function BuildingIcon({ size = 16 }: IconProps) {
   return (
@@ -415,5 +439,105 @@ export function PreviewIcon({ size = 12 }: IconProps) {
       <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
       <line x1="15" y1="4" x2="15" y2="20" strokeLinecap="round" />
     </Stroke>
+  );
+}
+
+/*
+ * ══ SKRZYNKA POWIADOMIEŃ (4.0.0, K7) - ścieżki 1:1 z makiety `design/panel/powiadomienia.html` ══
+ * Ikona wiersza niesie RODZAJ wiadomości; ton (kolor ramki) dokłada `.inbox-icon.ok/ask/…`.
+ */
+
+/** Dzwonek - wejście w skrzynkę w pasku górnym i ikona pustej skrzynki. */
+export function BellIcon({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </svg>
+  );
+}
+
+/** Dymek - wiadomość w rozmowie o zleceniu. */
+export function ChatIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 4h16v12H5.2L4 17.5V4Z" />
+    </svg>
+  );
+}
+
+/** Osoba z ptaszkiem - zgoda na zlecenie, lot przydzielony. */
+export function PersonCheckIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
+  );
+}
+
+/** Osoba z krzyżykiem - odmowa, rezygnacja, cofnięty przydział. */
+export function PersonXIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <line x1="17" y1="9" x2="21" y2="13" />
+      <line x1="21" y1="9" x2="17" y2="13" />
+    </svg>
+  );
+}
+
+/** Ołówek wiersza skrzynki - zlecenie edytowane cudzą ręką. */
+export function PencilIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4Z" />
+    </svg>
+  );
+}
+
+/** Trzy kropki - menu czynności przy wierszu („⋯" przy adresacie zlecenia). */
+export function MoreIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+
+/** Dwie strzałki na skos - zamiana osoby w fotelu imiennym. */
+export function SwapIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 3h5v5" />
+      <path d="M21 3l-7 7" />
+      <path d="M8 21H3v-5" />
+      <path d="M3 21l7-7" />
+    </svg>
+  );
+}
+
+/** Osoba z minusem - odebranie zlecenia adresatowi. */
+export function PersonMinusIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="7" r="4" />
+      <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+      <line x1="17" y1="11" x2="23" y2="11" />
+    </svg>
+  );
+}
+
+/** Dwie kartki - „Powiel zlecenie" (ta sama treść z pustymi godzinami). */
+export function CopyIcon({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </svg>
   );
 }

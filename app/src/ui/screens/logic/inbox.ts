@@ -41,7 +41,10 @@ import type { RemoteCalendarDay, RemoteNotification } from '../../../application
 
 import { dayShort } from './calendarHeading';
 import { clubHhmm, type ClubDayBounds } from './clubClock';
+import { orderInboxRow } from './inboxOrders';
 import { operationLabelOf } from './operations';
+
+const NO_ANSWERS: ReadonlySet<string> = new Set();
 
 /**
  * Ton ikony wiersza - kolory z makiety: prośba błękitem, zgoda zielenią, odmowa
@@ -55,6 +58,35 @@ export interface InboxLead {
   text: string;
   tone: 'amber' | 'green';
 }
+
+/**
+ * Kawałek zdania wiersza zlecenia (25D): nazwisko pogrubione, wartość sprzed zmiany
+ * przekreślona, nowa pogrubiona - para „było → jest" z historii zmian - a odpowiedź
+ * „może lecieć" zielenią.
+ */
+export interface InboxPart {
+  text: string;
+  strong?: boolean;
+  strike?: boolean;
+  tone?: 'ok';
+}
+
+/**
+ * Własny znak w ikonie wiersza (zlecenia, 25D) - klucz, a nie nazwa z rejestru ikon, bo
+ * moduł jest czysty. Bez niego ikona niesie znak TONU (zegar prośby, ptaszek, krzyżyk).
+ */
+export type InboxGlyph =
+  | 'order'
+  | 'message'
+  | 'edit'
+  | 'clock'
+  | 'expired'
+  | 'removed'
+  | 'stale'
+  | 'person-ok'
+  | 'person-off'
+  | 'resign'
+  | 'unassign';
 
 export interface InboxRowVm {
   id: string;
@@ -74,10 +106,28 @@ export interface InboxRowVm {
   isNew: boolean;
   /** Sprawa czeka na MOJĄ decyzję - plakietka „Do decyzji"; stoi do decyzji. */
   todo: boolean;
+  /** Napis plakietki sprawy - „Do odpowiedzi" przy zleceniu (25D); bez niego „Do decyzji". */
+  todoLabel?: string;
   bookingId: string | null;
   aircraftId: string | null;
-  /** Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23), karta maszyny (27) albo nigdzie. */
-  opens: 'decision' | 'booking' | 'aircraft' | null;
+  /**
+   * Dokąd prowadzi tapnięcie: ekran decyzji (26), karta rezerwacji (23), karta maszyny (27),
+   * karta zlecenia (28/32), rozmowa w zleceniu (29) albo nigdzie.
+   */
+  opens: 'decision' | 'booking' | 'aircraft' | 'order' | 'thread' | null;
+  /** Zdanie wiersza w kawałkach (zlecenia, 25D) - wypiera `lead` i `reason`. */
+  parts?: readonly InboxPart[] | null;
+  /** Własny znak w ikonie; bez niego - znak tonu. */
+  glyph?: InboxGlyph | null;
+  /**
+   * „1 nowa wiadomość" - licznik rozmowy (25D). Błękit, nie zieleń: nieprzeczytana
+   * wiadomość jest nowiną, nie sprawą - czytanie jej niczego nie rozstrzyga.
+   */
+  count?: string | null;
+  /** Zlecenie, w które prowadzi wiersz (`opens: 'order' | 'thread'`). */
+  orderId?: string | null;
+  /** Adresat rozmowy - rozmowa to para zlecenie × adresat (§7.1); przy `opens: 'thread'`. */
+  recipientId?: string | null;
 }
 
 export interface InboxInput {
@@ -91,6 +141,11 @@ export interface InboxInput {
   nameOf: (pilotId: string) => string | null;
   /** Format licznika maszyny z cache floty - do odczytu przy „zdana"; `null` = poza cache'em. */
   mhFormatOf?: (aircraftId: string) => 'hhmm' | 'decimal' | null;
+  /**
+   * Zlecenia czekające na MOJĄ odpowiedź - z listy „Do mnie" (4.0.0); plakietka „Do
+   * odpowiedzi" stoi, dopóki odpowiedź nie padnie, także na przeczytanym wierszu.
+   */
+  answerIds?: ReadonlySet<string>;
 }
 
 const str = (value: unknown): string | null =>
@@ -185,6 +240,18 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
       bookingId,
       aircraftId,
     };
+    // Zlecenia (4.0.0) mają własny słownik i własny kształt wiersza (25D) - osobny moduł.
+    const order = orderInboxRow({
+      n,
+      base: { id: base.id, when: base.when, isNew: base.isNew, bookingId, aircraftId },
+      // Surowy identyfikator maszyny nie staje w tytule zlecenia - poza pamięcią floty „samolot".
+      regTitle: (aircraftId == null ? null : input.regOf(aircraftId)) ?? 'samolot',
+      regOf: input.regOf,
+      nameOf: input.nameOf,
+      answerIds: input.answerIds ?? NO_ANSWERS,
+    });
+    if (order != null) return order;
+
     const opensBooking = bookingId == null ? null : ('booking' as const);
     const opensAircraft = aircraftId == null ? null : ('aircraft' as const);
     const regTitle = reg ?? 'samolot';
@@ -223,8 +290,8 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           title: `Odwołany lot · ${regTitle}`,
           reason:
             newTerm != null
-              ? `Przesunięty${before} - nowy termin ${newTerm}, po przypomnieniu.`
-              : `Odwołany${before} - po przypomnieniu.`,
+              ? `Przesunięty${before}, już po przypomnieniu - nowy termin ${newTerm}.`
+              : `Odwołany${before}, już po przypomnieniu.`,
           todo: false,
           opens: opensAircraft,
         };
@@ -299,7 +366,7 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           sub: termWho === '' ? null : termWho,
           tone: 'warn',
           title: `Nie odebrano · ${regTitle}`,
-          reason: 'Maszyna stała godzinę bez przejęcia - termin wrócił do puli.',
+          reason: 'Przez godzinę nikt nie rozpoczął lotu - termin się zwolnił.',
           todo: false,
           opens: opensAircraft,
         };
@@ -350,12 +417,26 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
           opens: opensBooking,
         };
       }
+      case 'booking_cancelled': {
+        // Odwołanie rezerwacji - do osób w fotelach poza odwołującym (§12.9, `design/23g`).
+        // Rzeczownik i nazwisko za separatorem, jak przy odmowie: czasownika nie da się
+        // odmienić bez płci. Powód bywa pusty (odwołanie własnej) - wtedy mówi skutek.
+        const name = who(str(n.payload.cancelledBy));
+        return {
+          ...base,
+          tone: 'no',
+          title: name == null ? 'Rezerwacja odwołana' : `Rezerwacja odwołana · ${name}`,
+          reason: str(n.payload.reason) ?? 'Termin się zwolnił.',
+          todo: false,
+          opens: opensBooking,
+        };
+      }
       case 'booking_expired':
         return {
           ...base,
           tone: 'warn',
           title: 'Termin minął, zanim ktokolwiek zdecydował',
-          reason: 'Maszyna wróciła do puli - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.',
+          reason: 'Termin się zwolnił - jeśli nadal chcesz lecieć, złóż rezerwację jeszcze raz.',
           todo: false,
           opens: opensBooking,
         };
@@ -375,3 +456,18 @@ export function inboxRows(input: InboxInput): InboxRowVm[] {
 /** Identyfikatory wiadomości do przeczytania przy otwarciu listy. */
 export const unreadIds = (items: readonly RemoteNotification[]): string[] =>
   items.filter((n) => n.readAt == null).map((n) => n.id);
+
+/**
+ * Wiadomość, którą pilot zobaczył w tej wizycie jako NOWĄ, zostaje nowa do jej końca -
+ * także po cichym odświeżeniu z kanału klubu (4.0.0), choć serwer zna już jej
+ * przeczytanie: lista oznacza je w tle zaraz po odczycie. Bez tego zielona krawędź
+ * gasłaby pod palcem przy pierwszej cudzej decyzji w klubie. Następne wejście czyta
+ * skrzynkę od nowa i wtedy przeczytane są już przeczytane.
+ */
+export function keepVisitNew(
+  shown: readonly RemoteNotification[],
+  fresh: readonly RemoteNotification[],
+): RemoteNotification[] {
+  const wasNew = new Set(unreadIds(shown));
+  return fresh.map((n) => (n.readAt != null && wasNew.has(n.id) ? { ...n, readAt: null } : n));
+}

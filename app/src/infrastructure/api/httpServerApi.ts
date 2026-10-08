@@ -5,18 +5,9 @@
  *  • wyjątek fetch / timeout → `ServerUnreachableError` - normalny stan pracy w terenie,
  *  • odpowiedź poza 2xx → `ServerRejectedError(status, code)` - serwer żyje i odmawia.
  *
- * DWA LIMITY CZASU, bo dwa różne pytania (uwaga z urządzenia, 2026-08-30).
- * W tle limit jest krótki: pętla okazji woła nas co minutę, więc lepiej szybko
- * powiedzieć „offline" i wrócić za chwilę, niż wisieć na słabym zasięgu i blokować
- * kolejne okazje. Pod przyciskiem „PONÓW PRÓBĘ" ten sam rachunek jest odwrotny -
- * nikt nie wróci za minutę, bo to pilot właśnie poprosił i patrzy na ekran, a poprosił
- * dokładnie wtedy, gdy długo nic nie szło, czyli gdy serwer zdążył się uśpić.
- * Zimny start bywa dłuższy niż 8 s i to zamieniało udaną wysyłkę w „brak sieci":
- * telefon przerywał, serwer w tym samym czasie przyjmował paczkę i zapisywał ją,
- * a w logach API zostawał sukces przy pilotze patrzącym na napis OFFLINE.
- *
- * Który limit obowiązuje, wynika z `SyncTrigger` - warstwa aplikacji mówi, KTO
- * poprosił, a sekundy zostają tutaj, bo są własnością transportu.
+ * Samo wysłanie żądania, nagłówek urządzenia i DWA LIMITY CZASU (tło kontra ręka pilota)
+ * mieszkają we wspólnym transporcie (`httpTransport.ts`) - zleceniom (4.0.0) służy ten
+ * sam, przez osobny adapter `HttpOrderApi`.
  */
 
 import type {
@@ -61,35 +52,14 @@ import type {
   ServerPort,
   SessionSyncStatus,
 } from '../../application/ports';
-import { ServerRejectedError, ServerUnreachableError } from '../../application/ports';
+import { ServerRejectedError } from '../../application/ports';
 import type { SyncTrigger } from '../../application/ports';
 import type { Event, PasswordWeakness, SessionTrackPayload } from '../../domain';
-
-/** Pętla okazji - krótko, bo zaraz wróci. */
-const TIMEOUT_MS = 8_000;
-/** Ponowienie z ręki pilota - tyle, ile trwa obudzenie uśpionej instancji. */
-const MANUAL_TIMEOUT_MS = 30_000;
-
-function timeoutFor(trigger: SyncTrigger | undefined): number {
-  return trigger === 'manual' ? MANUAL_TIMEOUT_MS : TIMEOUT_MS;
-}
+import { errorCode, MANUAL_TIMEOUT_MS, timeoutFor, type HttpTransport } from './httpTransport';
 
 export class HttpServerApi implements ServerPort {
-  /**
-   * `device` to napis, po którym CZŁOWIEK rozpozna swój tablet na liście sesji
-   * w panelu („Android 14 · Pixel 7 · Ninerdeck 2.1.0"). Jedzie z KAŻDYM żądaniem,
-   * bo serwer używa go dwa razy: przy zakładaniu sesji i przy odświeżaniu stempla
-   * „ostatnio aktywny" w bramie (2.1.0, §6).
-   *
-   * Podaje go WOŁAJĄCY, a nie ten adapter: model i wersję zna React Native, a warstwa
-   * infrastruktury nie importuje UI (`architecture.test.ts`). `null` = nie wiemy -
-   * wtedy nagłówka po prostu nie ma i panel napisze „urządzenie nieznane", zamiast
-   * dostać zmyśloną nazwę.
-   */
-  constructor(
-    private readonly baseUrl: string,
-    private readonly device: string | null = null,
-  ) {}
+  /** Transport podaje composition root - jeden dla wszystkich adapterów serwera. */
+  constructor(private readonly http: HttpTransport) {}
 
   /**
    * Dwie odpowiedzi serwera, dwa stany - i to jest jedyne miejsce w aplikacji, które
@@ -100,7 +70,7 @@ export class HttpServerApi implements ServerPort {
    * pilot stoi i patrzy.
    */
   async loginWithGoogle(idToken: string): Promise<GoogleLoginResult> {
-    const response = await this.send('POST', '/auth/google', {
+    const response = await this.http.send('POST', '/auth/google', {
       body: { idToken },
       timeoutMs: MANUAL_TIMEOUT_MS,
     });
@@ -117,14 +87,14 @@ export class HttpServerApi implements ServerPort {
 
   /** Co to wdrożenie umie - publiczne, bo pyta o to ekran bez sesji. */
   async methods(): Promise<LoginMethods> {
-    return this.request<LoginMethods>('GET', '/auth/methods', {
+    return this.http.request<LoginMethods>('GET', '/auth/methods', {
       timeoutMs: MANUAL_TIMEOUT_MS,
     });
   }
 
   /** Czym może się zalogować TA osoba - ustawienia, sekcja „Hasło" (§5.3). */
   async account(token: string): Promise<AccountMethods> {
-    return this.request<AccountMethods>('GET', '/me/account', { token });
+    return this.http.request<AccountMethods>('GET', '/me/account', { token });
   }
 
   /**
@@ -140,7 +110,7 @@ export class HttpServerApi implements ServerPort {
     password: string;
     orgId?: string | null;
   }): Promise<PasswordLoginResult> {
-    const response = await this.send('POST', '/auth/password', {
+    const response = await this.http.send('POST', '/auth/password', {
       body: {
         login: input.login,
         password: input.password,
@@ -199,7 +169,7 @@ export class HttpServerApi implements ServerPort {
    * tak samo - rozjazd między nimi wyliczałby konta jedną stroną formularza.
    */
   private async sendLink(path: string, body: Record<string, string>): Promise<void> {
-    const response = await this.send('POST', path, { body, timeoutMs: MANUAL_TIMEOUT_MS });
+    const response = await this.http.send('POST', path, { body, timeoutMs: MANUAL_TIMEOUT_MS });
     if (response.ok || response.status === 429) return;
     throw new ServerRejectedError(response.status, await errorCode(response));
   }
@@ -213,7 +183,7 @@ export class HttpServerApi implements ServerPort {
     token: string,
     input: { current?: string; next: string },
   ): Promise<SetPasswordResult> {
-    const response = await this.send('PUT', '/me/password', {
+    const response = await this.http.send('PUT', '/me/password', {
       token,
       body: { ...(input.current != null ? { current: input.current } : {}), next: input.next },
       timeoutMs: MANUAL_TIMEOUT_MS,
@@ -252,14 +222,14 @@ export class HttpServerApi implements ServerPort {
    * wyłącznie przy BRAKU SIECI (`send` rzuca `ServerUnreachableError`).
    */
   async logout(refreshToken: string): Promise<void> {
-    await this.send('POST', '/auth/logout', {
+    await this.http.send('POST', '/auth/logout', {
       body: { refreshToken },
       timeoutMs: MANUAL_TIMEOUT_MS,
     });
   }
 
   async membershipStatus(token: string): Promise<MembershipStatusResult> {
-    const body = await this.request<ClubsWire & { tokens?: AuthTokens }>(
+    const body = await this.http.request<ClubsWire & { tokens?: AuthTokens }>(
       'GET',
       '/auth/memberships',
       { token, timeoutMs: MANUAL_TIMEOUT_MS },
@@ -280,7 +250,7 @@ export class HttpServerApi implements ServerPort {
    * zamiast `request`. Limit jak przy logowaniu: pilot właśnie przepisał kod z kartki.
    */
   async joinClub(token: string, code: string): Promise<JoinClubResult> {
-    const response = await this.send('POST', '/auth/join', {
+    const response = await this.http.send('POST', '/auth/join', {
       token,
       body: { code },
       timeoutMs: MANUAL_TIMEOUT_MS,
@@ -319,7 +289,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   async switchClub(token: string, orgId: string): Promise<AuthTokens | null> {
-    const response = await this.send('POST', '/auth/switch', {
+    const response = await this.http.send('POST', '/auth/switch', {
       token,
       body: { orgId },
       timeoutMs: MANUAL_TIMEOUT_MS,
@@ -332,7 +302,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   refresh(refreshToken: string): Promise<AuthTokens> {
-    return this.request('POST', '/auth/refresh', { body: { refreshToken } });
+    return this.http.request('POST', '/auth/refresh', { body: { refreshToken } });
   }
 
   pushEvents(
@@ -343,7 +313,7 @@ export class HttpServerApi implements ServerPort {
   ): Promise<PushResult> {
     // `syncedAt` jest księgowością TEGO telefonu - kopercie serwera nic po nim.
     const wire = events.map(({ syncedAt: _local, ...event }) => event);
-    return this.request('POST', '/events', {
+    return this.http.request('POST', '/events', {
       token,
       body: sourceDevice != null ? { events: wire, sourceDevice } : { events: wire },
       timeoutMs: timeoutFor(trigger),
@@ -363,7 +333,7 @@ export class HttpServerApi implements ServerPort {
     if (params.cursor != null) query.set('cursor', params.cursor);
     if (params.limit != null) query.set('limit', String(params.limit));
     const suffix = query.toString();
-    return this.request('GET', `/me/events${suffix !== '' ? `?${suffix}` : ''}`, { token });
+    return this.http.request('GET', `/me/events${suffix !== '' ? `?${suffix}` : ''}`, { token });
   }
 
   /**
@@ -375,7 +345,7 @@ export class HttpServerApi implements ServerPort {
     etag: string | null = null,
     trigger?: SyncTrigger,
   ): Promise<ReferenceFetch> {
-    const response = await this.send('GET', '/reference', {
+    const response = await this.http.send('GET', '/reference', {
       token,
       headers: etag != null ? { 'if-none-match': etag } : {},
       timeoutMs: timeoutFor(trigger),
@@ -386,7 +356,7 @@ export class HttpServerApi implements ServerPort {
   }
 
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState> {
-    return this.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/state`, { token });
+    return this.http.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/state`, { token });
   }
 
   /**
@@ -403,7 +373,7 @@ export class HttpServerApi implements ServerPort {
   ): Promise<RemoteReadingsChain> {
     const query = new URLSearchParams({ at: String(params.at) });
     if (params.exceptSessionUuid != null) query.set('except', params.exceptSessionUuid);
-    return this.request(
+    return this.http.request(
       'GET',
       `/aircraft/${encodeURIComponent(aircraftId)}/readings-chain?${query.toString()}`,
       { token },
@@ -411,36 +381,36 @@ export class HttpServerApi implements ServerPort {
   }
 
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus> {
-    return this.request('GET', `/sessions/${encodeURIComponent(sessionUuid)}/sync-status`, {
+    return this.http.request('GET', `/sessions/${encodeURIComponent(sessionUuid)}/sync-status`, {
       token,
     });
   }
 
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }> {
-    return this.request('POST', '/traces', { token, body: { entries } });
+    return this.http.request('POST', '/traces', { token, body: { entries } });
   }
 
   pushBugReports(token: string, reports: RemoteBugReport[]): Promise<BugReportPushResult> {
-    return this.request('POST', '/me/bug-reports', { token, body: { reports } });
+    return this.http.request('POST', '/me/bug-reports', { token, body: { reports } });
   }
 
   getSessionTrack(token: string, sessionUuid: string): Promise<SessionTrackPayload> {
-    return this.request('GET', `/me/sessions/${encodeURIComponent(sessionUuid)}/track`, { token });
+    return this.http.request('GET', `/me/sessions/${encodeURIComponent(sessionUuid)}/track`, { token });
   }
 
   getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions> {
-    return this.request('GET', '/me/task-suggestions', { token });
+    return this.http.request('GET', '/me/task-suggestions', { token });
   }
 
   getPrefs(token: string): Promise<RemoteThemePrefs> {
-    return this.request('GET', '/me/prefs', { token });
+    return this.http.request('GET', '/me/prefs', { token });
   }
 
   putPrefs(
     token: string,
     prefs: { theme: string; themeUpdatedAt: string },
   ): Promise<RemoteThemePrefs> {
-    return this.request('PUT', '/me/prefs', { token, body: prefs });
+    return this.http.request('PUT', '/me/prefs', { token, body: prefs });
   }
 
   /** Ścieżka standardowa: 2xx z JSON-em albo wyjątek portu. */
@@ -453,15 +423,15 @@ export class HttpServerApi implements ServerPort {
       to: new Date(params.to).toISOString(),
     });
     if (params.aircraftId != null) query.set('aircraftId', params.aircraftId);
-    return this.request('GET', `/bookings?${query.toString()}`, { token });
+    return this.http.request('GET', `/bookings?${query.toString()}`, { token });
   }
 
   getBooking(token: string, id: string): Promise<RemoteBookingDetail> {
-    return this.request('GET', `/bookings/${encodeURIComponent(id)}`, { token });
+    return this.http.request('GET', `/bookings/${encodeURIComponent(id)}`, { token });
   }
 
   getPilotPreview(token: string, bookingId: string, pilotId: string): Promise<RemotePilotPreview> {
-    return this.request(
+    return this.http.request(
       'GET',
       `/bookings/${encodeURIComponent(bookingId)}/preview/pilot/${encodeURIComponent(pilotId)}`,
       { token },
@@ -469,13 +439,13 @@ export class HttpServerApi implements ServerPort {
   }
 
   getAircraftPreview(token: string, bookingId: string): Promise<RemoteAircraftPreview> {
-    return this.request('GET', `/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`, {
+    return this.http.request('GET', `/bookings/${encodeURIComponent(bookingId)}/preview/aircraft`, {
       token,
     });
   }
 
   getAircraftCard(token: string, aircraftId: string): Promise<RemoteAircraftCard> {
-    return this.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/card`, { token });
+    return this.http.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/card`, { token });
   }
 
   getAircraftOperations(
@@ -491,15 +461,15 @@ export class HttpServerApi implements ServerPort {
     }
     const suffix = query.toString();
     const path = `/aircraft/${encodeURIComponent(aircraftId)}/operations`;
-    return this.request('GET', suffix === '' ? path : `${path}?${suffix}`, { token });
+    return this.http.request('GET', suffix === '' ? path : `${path}?${suffix}`, { token });
   }
 
   getAircraftWatches(token: string): Promise<RemoteWatchList> {
-    return this.request('GET', '/aircraft/watches', { token });
+    return this.http.request('GET', '/aircraft/watches', { token });
   }
 
   async setAircraftWatch(token: string, aircraftId: string, on: boolean): Promise<void> {
-    const response = await this.send(
+    const response = await this.http.send(
       on ? 'PUT' : 'DELETE',
       `/aircraft/${encodeURIComponent(aircraftId)}/watch`,
       { token },
@@ -519,7 +489,7 @@ export class HttpServerApi implements ServerPort {
     if (params.preferredAt != null) {
       query.set('preferredAt', new Date(params.preferredAt).toISOString());
     }
-    return this.request('GET', `/bookings/suggestions?${query.toString()}`, { token });
+    return this.http.request('GET', `/bookings/suggestions?${query.toString()}`, { token });
   }
 
   /**
@@ -532,7 +502,7 @@ export class HttpServerApi implements ServerPort {
    * „nie wiem, czy zapisano" to inna wiadomość niż „slot zajęty".
    */
   async createBooking(token: string, draft: RemoteBookingDraft): Promise<BookingWriteResult> {
-    return this.write(await this.send('POST', '/bookings', { token, body: draft }));
+    return this.write(await this.http.send('POST', '/bookings', { token, body: draft }));
   }
 
   async patchBooking(
@@ -540,7 +510,7 @@ export class HttpServerApi implements ServerPort {
     id: string,
     patch: RemoteBookingPatch,
   ): Promise<BookingWriteResult> {
-    const response = await this.send('PATCH', `/bookings/${encodeURIComponent(id)}`, {
+    const response = await this.http.send('PATCH', `/bookings/${encodeURIComponent(id)}`, {
       token,
       body: patch,
     });
@@ -552,7 +522,7 @@ export class HttpServerApi implements ServerPort {
     id: string,
     reason: string | null,
   ): Promise<BookingWriteResult> {
-    const response = await this.send(
+    const response = await this.http.send(
       'DELETE',
       `/bookings/${encodeURIComponent(id)}`,
       { token, body: reason == null ? {} : { reason } },
@@ -568,24 +538,24 @@ export class HttpServerApi implements ServerPort {
       query.set('beforeId', page.before.beforeId);
     }
     const suffix = query.toString();
-    return this.request('GET', suffix === '' ? '/me/notifications' : `/me/notifications?${suffix}`, {
+    return this.http.request('GET', suffix === '' ? '/me/notifications' : `/me/notifications?${suffix}`, {
       token,
     });
   }
 
   async markNotificationRead(token: string, id: string): Promise<void> {
-    const response = await this.send('POST', `/me/notifications/${encodeURIComponent(id)}/read`, {
+    const response = await this.http.send('POST', `/me/notifications/${encodeURIComponent(id)}/read`, {
       token,
     });
     if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
   }
 
   getApprovalQueue(token: string): Promise<RemoteApprovalQueue> {
-    return this.request('GET', '/me/approvals/queue', { token });
+    return this.http.request('GET', '/me/approvals/queue', { token });
   }
 
   async registerPushToken(token: string, deviceToken: string): Promise<void> {
-    const response = await this.send('POST', '/me/push-token', { token, body: { token: deviceToken } });
+    const response = await this.http.send('POST', '/me/push-token', { token, body: { token: deviceToken } });
     if (!response.ok) throw new ServerRejectedError(response.status, await errorCode(response));
   }
 
@@ -600,7 +570,7 @@ export class HttpServerApi implements ServerPort {
     id: string,
     body: { decision: 'approved' | 'rejected'; reason: string | null },
   ): Promise<DecisionResult> {
-    const response = await this.send('POST', `/bookings/${encodeURIComponent(id)}/decision`, {
+    const response = await this.http.send('POST', `/bookings/${encodeURIComponent(id)}/decision`, {
       token,
       body,
     });
@@ -646,59 +616,6 @@ export class HttpServerApi implements ServerPort {
       takenAt: takenAt == null || Number.isNaN(takenAt) ? null : takenAt,
     };
   }
-
-  private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    path: string,
-    options: { token?: string; body?: unknown; timeoutMs?: number },
-  ): Promise<T> {
-    const response = await this.send(method, path, options);
-    if (!response.ok) {
-      const code = await errorCode(response);
-      throw new ServerRejectedError(response.status, code);
-    }
-    return (await response.json()) as T;
-  }
-
-  /**
-   * Surowe wysłanie żądania: mapuje wyłącznie awarie SIECI (`ServerUnreachableError`);
-   * interpretację statusu zostawia wołającemu - `getReference` musi odróżnić 304 od błędu.
-   */
-  private async send(
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    path: string,
-    options: {
-      token?: string;
-      body?: unknown;
-      headers?: Record<string, string>;
-      /** Brak = limit tła; patrz nota na górze pliku. */
-      timeoutMs?: number;
-    },
-  ): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? TIMEOUT_MS);
-
-    try {
-      return await fetch(`${this.baseUrl}${path}`, {
-        method,
-        signal: controller.signal,
-        headers: {
-          ...(options.body != null ? { 'content-type': 'application/json' } : {}),
-          ...(options.token != null ? { authorization: `Bearer ${options.token}` } : {}),
-          // Telefon PODAJE SIĘ SAM - przeglądarka nie ma jak, więc serwer składa jej
-          // etykietę z `User-Agent`. Nasza jest krótka i rozpoznawalna, bo ma
-          // odpowiedzieć na jedno pytanie: „czy to moje urządzenie".
-          ...(this.device != null ? { 'x-ninerdeck-device': this.device } : {}),
-          ...options.headers,
-        },
-        ...(options.body != null ? { body: JSON.stringify(options.body) } : {}),
-      });
-    } catch (error) {
-      throw new ServerUnreachableError(error);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
 }
 
 /**
@@ -719,7 +636,6 @@ const clubsOf = (body: ClubsWire): ClubsView => ({
   person: body.person ?? { name: '', email: null },
 });
 
-/** Kod błędu z ciała odpowiedzi; brak/nie-JSON → sam status wystarczy. */
 /**
  * Ile odczekać po `429`. Bez `retryAfterSec` w ciele zostaje nagłówek `Retry-After`,
  * a bez niego minuta: powód w przycisku ma podać CZAS, a nie powiedzieć „kiedyś".
@@ -731,13 +647,4 @@ function retryAfterOf(response: Response, body: { retryAfterSec?: number } | nul
   const header = Number(response.headers.get('retry-after'));
   const sec = body?.retryAfterSec ?? (Number.isFinite(header) ? header : 60);
   return Math.max(1, Math.round(sec));
-}
-
-async function errorCode(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: string };
-    return body.error ?? `http_${response.status}`;
-  } catch {
-    return `http_${response.status}`;
-  }
 }

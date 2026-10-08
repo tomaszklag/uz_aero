@@ -45,6 +45,7 @@ import { checkPassword, type PasswordWeakness } from '@ninerdeck/domain';
 
 import { normalizeEmail } from '../../../domain/email.ts';
 import type { AttemptLimiter } from '../attemptLimiter.ts';
+import type { LiveAccess } from '../live/liveAccess.ts';
 import { existingAccountMail, inviteMail, resetMail, signupMail } from '../mail/passwordMails.ts';
 import type {
   Clock,
@@ -128,6 +129,8 @@ export class PasswordCommands {
      * przeżywała zmianę hasła o osiem godzin.
      */
     private readonly sessions: LoginSessionsPort,
+    /** Kanał klubu (4.0.0): urządzenia wylogowane hasłem tracą też otwarte połączenia. */
+    private readonly access: LiveAccess,
   ) {}
 
   /**
@@ -194,9 +197,9 @@ export class PasswordCommands {
     // Skrót PRZED transakcją: ~100 ms scryptu nie ma po co trzymać połączenia.
     const hash = await this.hasher.hash(password);
 
-    const done = await this.db.transaction(async (tx) => {
+    const signedOut = await this.db.transaction(async (tx) => {
       const consumed = await this.resetTokens.consume(tx, token, now);
-      if (consumed == null) return false;
+      if (consumed == null) return null;
 
       const pilotId =
         consumed.kind === 'reset'
@@ -212,9 +215,11 @@ export class PasswordCommands {
       await this.refreshTokens.revokeAllOf(tx, pilotId);
       await this.sessions.revokeAll(tx, { pilotId }, now, 'system');
       await this.pilots.revokeCredentials(tx, pilotId, now);
-      return true;
+      return pilotId;
     });
-    return done ? { ok: true } : { ok: false, reason: 'invalid_token' };
+    if (signedOut == null) return { ok: false, reason: 'invalid_token' };
+    this.access.personSessionsRevoked(signedOut, null);
+    return { ok: true };
   }
 
   /**
@@ -262,6 +267,7 @@ export class PasswordCommands {
       await this.credentials.upsert(tx, { pilotId, hash, setVia: 'self', at: now });
       await this.sessions.revokeAll(tx, { pilotId, exceptId: currentSessionId ?? undefined }, now, 'system');
     });
+    this.access.personSessionsRevoked(pilotId, currentSessionId);
     return { ok: true };
   }
 

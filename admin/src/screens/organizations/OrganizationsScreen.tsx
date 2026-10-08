@@ -28,7 +28,7 @@ import {
   type Column,
 } from '../../ui/components';
 import { BuildingIcon, PlusIcon } from '../../ui/components/icons';
-import { errorMessage } from '../common/apiMessage';
+import { loadErrorMessage } from '../common/apiMessage';
 import { OrganizationDrawer } from './OrganizationDrawer';
 import { NEW_ORGANIZATION } from './organizationForm';
 import { organizationRow, type OrganizationRow } from './organizationRows';
@@ -84,7 +84,7 @@ export function OrganizationsScreen() {
         <>
           {row.admin}
           {row.adminExtra == null ? null : <span className="cell-sub">{row.adminExtra}</span>}
-          {row.adminPending ? <span className="cell-sub warn">nie zalogował się</span> : null}
+          {row.adminPending ? <span className="cell-sub warn">bez logowania</span> : null}
         </>
       ),
     },
@@ -121,7 +121,7 @@ export function OrganizationsScreen() {
     <>
       <PageHead
         title="Organizacje"
-        sub="Kluby na tym serwerze. Każdy klub widzi wyłącznie swoje dane - ta lista jest jedynym miejscem, z którego widać je wszystkie naraz, i pokazuje same liczby."
+        sub="Wszystkie kluby w Ninerdeck. Każdy klub widzi wyłącznie swoje dane - tutaj widać same liczby."
         actions={
           <LinkButton to={`/organizacje/${NEW_ORGANIZATION}`} variant="primary">
             <PlusIcon size={13} />
@@ -147,11 +147,12 @@ export function OrganizationsScreen() {
       </div>
 
       {organizations.error == null ? null : (
-        <Banner tone="danger">{errorMessage(organizations.error)}</Banner>
+        <Banner tone="danger">{loadErrorMessage(organizations.error)}</Banner>
       )}
 
       <Loadable
         pending={organizations.isPending}
+        loaded={organizations.data != null}
         skeleton={<TableSkeleton headers={HEADERS} widths={[190, 78, 70, 140, 90, 96, 54]} rows={4} />}
       >
         {rows.length === 0 ? (

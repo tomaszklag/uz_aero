@@ -15,7 +15,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
 import { Numpad } from '../input/Numpad';
 import { PinDots } from '../input/PinDots';
 import { BugButton } from '../bug/BugButton';
@@ -166,14 +165,6 @@ export function PinChangeSheet({
       <PinDots filled={entry.length} length={PIN_LENGTH} error={error > 0} />
 
       <Numpad onDigit={onDigit} onBackspace={onBackspace} disabled={busy && error === 0} />
-
-      {/* `.sheet-offline-note` - zmiana PIN-u nie dotyka sieci, mówimy to wprost. */}
-      <View style={styles.noteRow}>
-        <Icon name="check" size={10} color={theme.colors.green} />
-        <AppText variant="mono" style={[styles.note, { color: theme.colors.green }]}>
-          Działa w 100% offline
-        </AppText>
-      </View>
     </SheetSurface>
   );
 }
@@ -181,8 +172,6 @@ export function PinChangeSheet({
 const styles = StyleSheet.create({
   title: { fontSize: 23, letterSpacing: 2, alignSelf: 'flex-start' },
   step: { fontSize: 9, letterSpacing: 2.5, textTransform: 'uppercase' },
-  noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  note: { fontSize: 8.5, letterSpacing: 0.8 },
   cancel: { minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' },
   cancelLabel: { fontSize: 11, letterSpacing: 1 },
 });

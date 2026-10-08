@@ -178,7 +178,7 @@ const ISSUE_HINT: Record<string, string> = {
   ZERO_LENGTH_FLIGHT: 'lądowanie nie później niż start',
   EVENT_OUTSIDE_RUN: 'poza pracą silnika',
   DROP_ON_GROUND: 'na ziemi',
-  MH_REGRESSION: 'licznik niższy niż przy przejęciu',
+  MH_REGRESSION: 'licznik niższy niż przy rozpoczęciu',
   MH_DELTA_MISMATCH: 'przyrost licznika ponad czas pracy silnika',
   FUEL_OVER_CAPACITY: 'odczyt ponad pojemność zbiorników',
   FUEL_INCREASE_WITHOUT_REFUEL: 'więcej paliwa, niż mogło zostać',
@@ -190,7 +190,7 @@ const FIX_HINT: Record<string, string> = {
   ZERO_LENGTH_FLIGHT: 'Popraw czas startu albo lądowania.',
   EVENT_OUTSIDE_RUN: 'Popraw czas zdarzenia albo czas uruchomienia i wyłączenia silnika.',
   DROP_ON_GROUND: 'Popraw czas zrzutu albo czasy lotu.',
-  MH_REGRESSION: 'Popraw odczyt licznika przy przejęciu albo przy zdaniu.',
+  MH_REGRESSION: 'Popraw odczyt licznika przy rozpoczęciu albo przy zdaniu.',
   MH_DELTA_MISMATCH: 'Popraw odczyt licznika albo czasy biegu silnika.',
   FUEL_OVER_CAPACITY: 'Popraw odczyt paliwa.',
   FUEL_INCREASE_WITHOUT_REFUEL: 'Dopisz tankowanie albo popraw odczyt paliwa.',
@@ -454,20 +454,20 @@ export function correctedUuids(timeline: readonly TimelineEntryDto[]): Set<strin
   return out;
 }
 
-// ── karta arkusza, potwierdzenia, podpisy autora ──────────────────────────────
+// ── karta dnia, potwierdzenia, podpisy autora ─────────────────────────────────
 
 /**
- * Wiersz „Karta arkusza" w skutku: korekta i dopisanie uruchamiają nową rewizję
- * dokumentu klubu (§5.2). Bez dotychczasowej rewizji karta dopiero POWSTANIE.
+ * Wiersz „Karta dnia" w skutku: korekta i dopisanie wysyłają nową wersję dokumentu
+ * klubu (§5.2). Bez dotychczasowej wersji karta dopiero POWSTANIE.
  */
 export function sheetRevisionRow(exportRevision: number | null): EffectRow {
   if (exportRevision == null) {
-    return { label: 'Karta arkusza', was: null, now: 'powstanie po zapisie', same: false };
+    return { label: 'Karta dnia', was: null, now: 'powstanie po zapisie', same: false };
   }
   return {
-    label: 'Karta arkusza',
-    was: `rewizja ${exportRevision}`,
-    now: `rewizja ${exportRevision + 1}`,
+    label: 'Karta dnia',
+    was: `wersja ${exportRevision}`,
+    now: `wersja ${exportRevision + 1}`,
     same: false,
   };
 }
@@ -479,10 +479,10 @@ interface ReexportLike {
 
 const sheetNote = (reexport: ReexportLike | null): string =>
   reexport?.exported === true && reexport.revision != null
-    ? ` · karta arkusza → rewizja ${reexport.revision}`
-    : ' · karta arkusza bez zmian';
+    ? ` · karta dnia → wersja ${reexport.revision}`
+    : ' · karta dnia bez zmian';
 
-/** Baner po zapisie korekty: co poprawiono i co z kartą arkusza. */
+/** Baner po zapisie korekty: co poprawiono i co z kartą dnia. */
 export function correctedMessage(
   title: string,
   action: 'retime' | 'void' | 'amend',
@@ -499,7 +499,7 @@ export function correctedMessage(
 
 /** Baner po dopisaniu faktu - nazywa OBA skutki: kartę arkusza i telefon pilota (C12). */
 export function addedMessage(type: AddableType, at: number, reexport: ReexportLike | null): string {
-  return `Dopisano: ${eventName(type)} ${timeUtcSeconds(at)} UTC${sheetNote(reexport)} · pilot zobaczy wpis na telefonie`;
+  return `Dopisano: ${eventName(type)} ${timeUtcSeconds(at)} UTC${sheetNote(reexport)} · pilot zobaczy wpis w aplikacji`;
 }
 
 /**

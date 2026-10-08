@@ -87,7 +87,7 @@
       <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst zakresu superadministratora
            nad pozycjami modułów. Kanoniczna postać: SZABLON.html. -->
       <aside class="sidebar" aria-label="Nawigacja panelu">
-        <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień zakres">
+        <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień klub">
           <span class="context-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
           <span class="context-body">
             <span class="context-kind">Superadministrator</span>
@@ -134,7 +134,7 @@
       </div>
     </div>
 
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Nowy klub">
 
       <div class="drawer-head">
@@ -161,7 +161,7 @@
           <div class="field">
             <label class="label" for="n-slug">Adres</label>
             <input class="input mono" id="n-slug" value="ks-gliwice">
-            <span class="hint">Podpowiedziany z nazwy. Po założeniu już się nie zmienia - stoi w adresach kart arkusza.</span>
+            <span class="hint">Podpowiedziany z nazwy. Po założeniu już się nie zmienia - jest częścią adresów kart dnia.</span>
           </div>
         </div>
 
@@ -198,7 +198,7 @@
              tylko, że będzie. Karta z nim stoi po założeniu (O2a niżej). -->
         <div class="card">
           <div class="card-title">Kod klubu</div>
-          <span class="hint">Wygeneruje się razem z klubem - przekaż go administratorowi razem z dostępem. Nowe kody generuje potem on sam.</span>
+          <span class="hint">Wygeneruje się razem z klubem - przekaż go administratorowi razem z dostępem. Kolejne kody wygeneruje już administrator w panelu klubu.</span>
         </div>
 
       </div>
@@ -272,7 +272,7 @@
       <!-- KOLUMNA BOCZNA (styl lekki, issue #107): kontekst zakresu superadministratora
            nad pozycjami modułów. Kanoniczna postać: SZABLON.html. -->
       <aside class="sidebar" aria-label="Nawigacja panelu">
-        <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień zakres">
+        <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień klub">
           <span class="context-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
           <span class="context-body">
             <span class="context-kind">Superadministrator</span>
@@ -309,7 +309,7 @@
                  się stało i czego się czeka - list wyszedł, administrator ma go otworzyć.
                  Bursztyn zostaje, bo to jedyny stan klubu, w którym superadministrator ma
                  coś do zrobienia (przypomnieć się, poprawić adres, wysłać ponownie). -->
-            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">zaproszenie wysłane</span></td><td><span class="pill amber"><span class="dot"></span>Administrator nie wszedł</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
+            <tr class="clickable opened"><td><span class="cell-strong">Klub Spadochronowy Gliwice</span><span class="cell-sub mono">ks-gliwice</span></td><td class="num">0</td><td class="num">0</td><td>Piotr Wróbel <span class="cell-sub warn">zaproszenie wysłane</span></td><td><span class="pill amber"><span class="dot"></span>Czeka na pierwsze logowanie</span></td><td class="row-actions"><a class="btn ghost sm" href="#karta">Otwórz</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -317,7 +317,7 @@
       </div>
     </div>
 
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Klub Spadochronowy Gliwice">
 
       <div class="drawer-head">
@@ -341,7 +341,7 @@
           <div class="field">
             <label class="label" for="k-slug">Adres</label>
             <input class="input mono" id="k-slug" value="ks-gliwice" disabled>
-            <span class="hint">Stały od założenia - stoi w adresach kart arkusza.</span>
+            <span class="hint">Stały od założenia - jest częścią adresów kart dnia.</span>
           </div>
           <div class="kv"><span class="kv-k">Członkowie</span><span class="kv-v">0</span></div>
           <div class="kv"><span class="kv-k">Samoloty</span><span class="kv-v">0</span></div>
@@ -372,7 +372,7 @@
               <option>Europe/London</option>
               <option>UTC</option>
             </select>
-            <span class="hint">Godziny kalendarza i rezerwacji. Log operacji zostaje w UTC.</span>
+            <span class="hint">Godziny kalendarza i rezerwacji. Dziennik operacji zostaje w UTC.</span>
           </div>
         </div>
 
@@ -390,7 +390,7 @@
           <div class="card-title">
             Administratorzy
             <span class="spacer"></span>
-            <span class="pill amber">Nie zalogował się</span>
+            <span class="pill amber">Bez logowania</span>
           </div>
           <div class="access-row">
             <span>Piotr Wróbel <span class="cell-sub">piotr.wrobel@example.pl · kod PWR</span></span>
@@ -400,7 +400,7 @@
               zaproszenie wysłano 8 WRZ 2026 · ważne 72 h
             </span>
           </div>
-          <span class="hint">Administrator wchodzi z linku w e-mailu - ustawia hasło i loguje się do panelu. Adres można poprawić, dopóki nie wszedł.</span>
+          <span class="hint">Administrator wchodzi z linku w e-mailu - ustawia hasło i loguje się do panelu. Adres można poprawić do pierwszego logowania.</span>
         </div>
 
         <!-- KOD KLUBU powstaje razem z klubem (2026-09-09, docs/wielofirmowosc.md §3.8):
@@ -419,7 +419,7 @@
         <div class="card">
           <div class="card-title">Dostęp</div>
           <div class="access-row">
-            <span>Klub na serwerze</span>
+            <span>Klub działa</span>
             <button type="button" class="btn danger sm">Wyłącz klub</button>
           </div>
           <div class="confirm">

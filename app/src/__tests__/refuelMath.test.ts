@@ -258,7 +258,7 @@ describe('szlak szacunku (wspólny dla 06 i 09B)', () => {
     const rows = fuelEstimateTrail(est, 90);
 
     expect(rows.map((r) => r.title)).toEqual([
-      'Ostatni odczyt · preflight 08:00 UTC',
+      'Ostatni odczyt · rozpoczęcie 08:00 UTC',
       'Latano · 2h 22 min',
       'Szacunkowo zostało ~112 L',
     ]);
@@ -269,7 +269,7 @@ describe('szlak szacunku (wspólny dla 06 i 09B)', () => {
 
   it('podpis źródła odróżnia preflight od tankowania', () => {
     expect(fuelReferenceLabel({ at: at(8, 0), fuelL: 150, source: 'preflight' })).toBe(
-      'preflight 08:00 UTC',
+      'rozpoczęcie 08:00 UTC',
     );
     expect(fuelReferenceLabel({ at: at(10, 48), fuelL: 160, source: 'refuel' })).toBe(
       'tankowanie 10:48 UTC',

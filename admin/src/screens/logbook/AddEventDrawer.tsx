@@ -116,7 +116,7 @@ export function AddEventDrawer({ session, state, onClose, onSaved }: Props) {
   return (
     <Drawer
       title="Dodaj wpis"
-      sub={`${session.signature ?? session.reg ?? ''} · pilot zobaczy wpis na telefonie`}
+      sub={`${session.signature ?? session.reg ?? ''} · pilot zobaczy wpis w aplikacji`}
       wide
       onClose={onClose}
       footer={
@@ -289,7 +289,7 @@ export function AddEventDrawer({ session, state, onClose, onSaved }: Props) {
         <Field
           htmlFor="a-reason"
           label="Powód dopisania"
-          hint="Zobaczy go pilot w historii zmian; zostaje w dzienniku."
+          hint="Pilot zobaczy go w aplikacji, w historii zmian."
         >
           <textarea
             id="a-reason"

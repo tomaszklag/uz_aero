@@ -10,9 +10,12 @@ import type { ReferenceAircraft } from '../domain';
 import type { CalendarBooking } from '../ui/screens/logic/calendarData';
 import type { ClubDayBounds } from '../ui/screens/logic/clubClock';
 import {
+  bookingsExcept,
   confirmLabel,
   overlapping,
+  planBlocker,
   planNote,
+  routeBlocker,
   slotNote,
   step1Blocker,
   step2Blocker,
@@ -213,7 +216,7 @@ describe('podpisy', () => {
 
   it('plan krótszy niż termin mówi, ile zostaje na obsługę', () => {
     expect(planNote(draft())).toEqual({
-      text: 'Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
+      text: 'Termin 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
       tone: 'muted',
     });
   });
@@ -232,5 +235,40 @@ describe('podpisy', () => {
     expect(step2Subtitle(draft(), day, AXA, 'Niedziela 20 września')).toBe(
       'Niedziela 20 września · 11:00 → 13:00 · SP-AXA',
     );
+  });
+});
+
+describe('krok terminu wspólny ze zleceniem (31; epik Z-C #247)', () => {
+  it('poprawiany termin nie zderza się sam ze sobą', () => {
+    const own = booking({ id: 'moja', startsAt: at(11), endsAt: at(13) });
+    expect(step1Blocker(gate({ bookings: [own] }))).toBe('SP-AXA jest w tych godzinach zajęta.');
+    expect(step1Blocker(gate({ bookings: bookingsExcept([own], 'moja') }))).toBeNull();
+    expect(bookingsExcept([own], null)).toEqual([own]);
+  });
+
+  it('wyjęty jest WYŁĄCZNIE poprawiany termin - cudza zajętość dalej blokuje', () => {
+    const own = booking({ id: 'moja', startsAt: at(11), endsAt: at(13) });
+    const other = booking({ id: 'cudza', startsAt: at(12), endsAt: at(14) });
+    expect(step1Blocker(gate({ bookings: bookingsExcept([own, other], 'moja') }))).toBe(
+      'SP-AXA jest w tych godzinach zajęta.',
+    );
+  });
+
+  it('zlecenie mówi o terminie swoimi słowami - reguły te same', () => {
+    const words = { noDay: 'Wybierz dzień lotu.', noHours: 'Ustaw godziny lotu.', reversed: 'Koniec terminu wypada przed jego początkiem.' };
+    expect(step1Blocker(gate({ words, draft: draft({ date: null }) }))).toBe('Wybierz dzień lotu.');
+    expect(step1Blocker(gate({ words, draft: draft({ startsAt: at(13), endsAt: at(11) }) }))).toBe(
+      'Koniec terminu wypada przed jego początkiem.',
+    );
+    expect(planNote(draft(), { lead: 'Termin', overflow: 'nie mieści się w terminie' })?.text).toBe(
+      'Termin 2 h · plan lotu 1:30 zostawia 30 min na obsługę',
+    );
+  });
+
+  it('zadanie i trasa bez drugiego pilota - kolejność pól na ekranie', () => {
+    expect(routeBlocker(draft({ operation: null }), false)).toBe('Wybierz rodzaj operacji.');
+    expect(routeBlocker(draft({ departureIcao: '' }), true)).toBe('Wybierz lotnisko.');
+    expect(routeBlocker(draft(), false)).toBeNull();
+    expect(planBlocker(draft({ plannedAirMin: null }))).toBe('Podaj planowany czas lotu.');
   });
 });

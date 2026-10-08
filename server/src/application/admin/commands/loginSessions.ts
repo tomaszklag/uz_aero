@@ -23,6 +23,7 @@
  * `test/architecture.test.ts`): nie ma jak zapisać z pominięciem śladu.
  */
 
+import type { LiveAccess } from '../../common/live/liveAccess.ts';
 import type { Clock, LoginSessionsPort } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, PilotsAdminPort } from '../ports.ts';
@@ -45,13 +46,15 @@ export class AdminLoginSessionCommands {
     private readonly pilots: PilotsAdminPort,
     private readonly sessions: LoginSessionsPort,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): wylogowane urządzenie traci też otwarte połączenie. */
+    private readonly access: LiveAccess,
   ) {}
 
   /** „Wyloguj to urządzenie" z karty członka. */
   async revoke(actor: Actor, pilotId: string, sessionId: string): Promise<RevokeSessionOutcome> {
     const now = this.clock.now();
     try {
-      return await this.write.run(actor, async (tx) => {
+      const outcome = await this.write.run(actor, async (tx) => {
         const member = await this.pilots.byId(tx, actor.orgId, pilotId);
         // Osoba spoza klubu administratora jest dla niego NIEISTNIEJĄCA - jak wszędzie
         // od epiku C (issue #99): 404, nie 403.
@@ -85,6 +88,8 @@ export class AdminLoginSessionCommands {
           },
         };
       });
+      this.access.sessionRevoked(sessionId);
+      return outcome;
     } catch (err) {
       if (err instanceof SessionNotFound) return { ok: false, reason: 'not_found' };
       throw err;
@@ -100,7 +105,7 @@ export class AdminLoginSessionCommands {
   async revokeAll(actor: Actor, pilotId: string): Promise<RevokeSessionOutcome> {
     const now = this.clock.now();
     try {
-      return await this.write.run(actor, async (tx) => {
+      const outcome = await this.write.run(actor, async (tx) => {
         const member = await this.pilots.byId(tx, actor.orgId, pilotId);
         if (member == null) throw new SessionNotFound();
 
@@ -120,6 +125,8 @@ export class AdminLoginSessionCommands {
           },
         };
       });
+      this.access.memberSessionsRevoked(actor.orgId, pilotId);
+      return outcome;
     } catch (err) {
       if (err instanceof SessionNotFound) return { ok: false, reason: 'not_found' };
       throw err;

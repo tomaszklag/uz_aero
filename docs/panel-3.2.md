@@ -149,7 +149,8 @@ Trzy ograniczenia z `admin/src/ui/shell/nav.ts`, których nie wolno naruszyć:
 1. **kolejność tablicy JEST ekranem startowym** - `homeFor` bierze pierwszą dostępną
    pozycję. Dziennik zostaje pierwszy;
 2. **grupy mają sens od siedmiu pozycji w górę** - przy sześciu lista zostaje płaska;
-   pierwszy siódmy moduł wraca do tej decyzji;
+   pierwszy siódmy moduł wraca do tej decyzji (wrócił z Zleceniami 4.0.0: trzy grupy -
+   Loty, Planowanie, Klub, decyzja 2026-09-28, `docs/zlecenia.md` §15);
 3. **pozycja należy do zdolności** - moduł bez prawa wejścia nie jest wyszarzony, tylko
    go nie ma.
 
@@ -473,7 +474,7 @@ na sklep.
 
 Uzasadnienie: panel i serwer wdrażają się jednym obrazem na Railway, a **aplikacji pilota
 ten milestone nie rusza w ogóle** - nie ma więc ani nowego APK, ani aktualizacji OTA.
-Publikacja w Google Play (milestone „Google Play i własna domena 4.0.0", issue #104 i #105)
+Publikacja w Google Play (milestone „Google Play i własna domena 4.0.0", dziś 5.0.0 - issue #104 i #105)
 zależy od rzeczy, które nie zależą od tempa pracy: konta organizacji, weryfikacji firmy
 D-U-N-S (do 30 dni) i karty bezpieczeństwa danych. Wiązanie panelu z tym terminem
 przesuwałoby gotowy panel o tygodnie.
@@ -482,7 +483,8 @@ Konsekwencje, które musi obsłużyć epik P-W:
 
 - **numer wydania: 3.2.0** (potwierdzone 22 września 2026), a kamień milowy przemianowany
   na „Panel admina 3.2.0". Numer 4.0.0 zostaje wyłącznie dla publikacji w sklepie, więc
-  nazwa kamienia milowego zgadza się z tym, co pokaże strona wydań;
+  nazwa kamienia milowego zgadza się z tym, co pokaże strona wydań (później 4.0.0 dostały
+  zlecenia na lot, a sklep przesunął się na 5.0.0);
 - **`app/app.json` NIE ROŚNIE** - reguła z `CLAUDE.md` jest twarda: `version` podnosi się
   wyłącznie przy nowym APK, bo przy `runtimeVersion: appVersion` numer wersji jest kluczem
   aktualizacji i podbicie go bez builda osierociłoby wszystkie zainstalowane aplikacje;
@@ -572,7 +574,7 @@ P-A projekt i makiety ──┬─► P-B dziennik: oś pilota + doby ──► 
 | R3 | **Kontrakty pisane pod makiety 1.0** | Przy każdym epiku sprawdzić, czy trasa odpowiada na TO pytanie; cienki plaster serwera jest tańszy niż ekran naginany do cudzej odpowiedzi |
 | R4 | **Makiet jest realnie 8-12** i to jest praca, nie formalność | Cała w P-A, przed kodem; inwentarz komponentów w `SZABLON.html` rośnie razem z nimi |
 | R5 | **Doba rozcięta stroną** (§4.4) | Sumy doby liczy serwer; test na dobę przeciętą granicą strony |
-| R6 | **Kolumna rośnie do sześciu pozycji** (§3) | Lista zostaje płaska; siódmy moduł wraca do decyzji o grupach |
+| R6 | **Kolumna rośnie do sześciu pozycji** (§3) | Lista zostaje płaska; siódmy moduł wraca do decyzji o grupach (4.0.0: trzy grupy, `docs/zlecenia.md` §15) |
 | R7 | **Nowe odczyty a izolacja klubów** | Każda nowa trasa płaci za obu strażników epiku C - inaczej `tenantIsolation.test.ts` nie przejdzie i to jest zamierzone |
 | R8 | **Dopisywanie zdarzeń z panelu** (§5.4) - pierwsza droga, którą do rejestru trafia fakt niezaobserwowany przez telefon | Wąska biała lista typów, powód wymagany, audyt `event.add`, te same twarde reguły domeny (`writeAuthority.test.ts`) i ta sama przebudowa projekcji oraz flag, co przy korekcie |
 
@@ -593,7 +595,7 @@ Komplet siedmiu punktów rozstrzygnięty PRZED startem P-A; nic nie zostaje otwa
    operacji za ten sam tydzień na dwóch ekranach jednego panelu są jednak nie do obrony.
 4. **Administrator DOPISUJE brakujące zdarzenie** (właściciel) - nowa trasa serwera na
    istniejącej zdolności `events.correct`; granice i reguły w §5.4, ryzyko jako R8.
-5. **Numer wydania 3.2.0, kamień milowy przemianowany** (właściciel); 4.0.0 zostaje dla
+5. **Numer wydania 3.2.0, kamień milowy przemianowany** (właściciel); 4.0.0 (dziś 5.0.0) zostaje dla
    publikacji w sklepie (§11).
 6. **Surowy rejestr zdarzeń (`A04`) NIE wraca w tym wydaniu** (właściciel) - oś operacji
    na poziomie 3 odpowiada na to samo pytanie językiem człowieka, a trasa `GET /events`

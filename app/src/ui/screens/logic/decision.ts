@@ -47,13 +47,21 @@ export type PreviewLink = { kind: 'pilot'; pilotId: string } | { kind: 'aircraft
 
 export interface DecisionRow extends BookingDetailRow {
   opens?: PreviewLink;
+  /**
+   * Rozwinięcie w linii wartości („SP-AXA · C172", „Jakub Wrona · JWR" - `.cell-sub` z 26):
+   * przy samolocie i osobach podpis tylko odróżnia, więc nie dostaje własnej linii.
+   */
+  subInline?: boolean;
 }
 
 export interface DecisionVm {
   /** Karta „Rezerwacja do rozpatrzenia" - wiersze z wartością; puste pola nie stoją z kreską. */
   rows: DecisionRow[];
-  /** Zdanie pod pasem akcji: co się stanie po zgodzie i po odmowie. */
-  footnote: string;
+  /**
+   * Zdanie pod pasem akcji: co się stanie po zgodzie i po odmowie. Nazwa następnego kroku
+   * jest pogrubionym członem (`.foot-note b` z 26) - to ona jest sednem zdania.
+   */
+  footnote: readonly { text: string; strong?: boolean }[];
   /** Sprawa naprawdę czeka - inaczej pasa akcji nie ma (rozstrzygnięta, odwołana). */
   decidable: boolean;
   /** „SP-AXA · sob 26 WRZ 09:00-12:00" - wiersz odniesienia w arkuszu odmowy. */
@@ -68,7 +76,7 @@ export function decisionView(input: DecisionInput): DecisionVm {
   const reg = input.aircraft?.reg ?? b.aircraftId;
 
   const rows: DecisionRow[] = [
-    { label: 'Samolot', value: reg, sub: input.aircraft?.type ?? null, opens: { kind: 'aircraft' } },
+    { label: 'Samolot', value: reg, sub: input.aircraft?.type ?? null, subInline: true, opens: { kind: 'aircraft' } },
     { label: 'Termin', value: term, sub: null },
     // Rezerwujący: nazwisko czyta się bez zaglądania do listy członków, kod odróżnia
     // dwóch Nowaków. Poza cache'em zostaje kod z rezerwacji - surowy identyfikator
@@ -77,6 +85,7 @@ export function decisionView(input: DecisionInput): DecisionVm {
       label: 'Pilot',
       value: input.pilot?.name ?? '—',
       sub: input.pilot?.code ?? null,
+      subInline: true,
       ...(b.pilotId == null ? {} : { opens: { kind: 'pilot' as const, pilotId: b.pilotId } }),
     },
   ];
@@ -85,6 +94,7 @@ export function decisionView(input: DecisionInput): DecisionVm {
       label: 'Drugi pilot',
       value: input.dual?.name ?? '—',
       sub: input.dual?.code ?? null,
+      subInline: true,
       opens: { kind: 'pilot', pilotId: b.dualId },
     });
   }
@@ -92,7 +102,7 @@ export function decisionView(input: DecisionInput): DecisionVm {
   if (zadanie != null) rows.push({ label: 'Zadanie', value: zadanie, sub: null });
 
   const trasa = route(b);
-  if (trasa != null) rows.push({ label: 'Trasa', value: trasa, sub: null });
+  if (trasa != null) rows.push({ label: 'Trasa', value: trasa, sub: null, mono: true });
 
   const plan = [
     b.plannedAirMin == null ? null : duration(b.plannedAirMin * 60_000),
@@ -126,21 +136,19 @@ function route(b: CalendarBooking): string | null {
   return `${b.fromIcao} → ${b.toIcao}`;
 }
 
-function footnote(approval: RemoteApproval | null | undefined): string {
+function footnote(approval: RemoteApproval | null | undefined): DecisionVm['footnote'] {
   const steps = approval?.steps ?? [];
   const at = steps.findIndex((s) => s.current);
   const next = at >= 0 ? (steps[at + 1]?.label ?? null) : null;
-  const zgoda =
-    next == null
-      ? 'Po zgodzie rezerwacja jest potwierdzona.'
-      : `Po zgodzie rezerwacja idzie do kroku „${next}".`;
-  return `${zgoda} Po odmowie termin wraca do puli, a pilot dostaje powód.`;
+  const odmowa = { text: ' Po odmowie termin się zwalnia, a pilot dostaje powód.' };
+  if (next == null) return [{ text: 'Po zgodzie rezerwacja jest potwierdzona.' }, odmowa];
+  return [{ text: 'Po zgodzie rezerwacja idzie do kroku ' }, { text: next, strong: true }, { text: '.' }, odmowa];
 }
 
 /** Odmowa serwera → zdanie przy przycisku. Kody surowe nazywa ekran, nie serwer. */
 export const DECISION_REFUSAL_TEXT: Readonly<Record<DecisionRefusal, string>> = {
   not_pending: 'Ta rezerwacja nie czeka już na decyzję.',
-  not_your_step: 'To nie jest Twój krok - decyduje ktoś z listy kroku bieżącego.',
+  not_your_step: 'Tę rezerwację zatwierdza teraz ktoś inny.',
   reason_required: 'Napisz, dlaczego nie - pilot przeczyta to na swoim telefonie.',
   booking_closed: 'Ktoś rozstrzygnął tę rezerwację przed chwilą.',
   forbidden: 'Nie masz prawa akceptacji rezerwacji - nadaje je administrator klubu.',

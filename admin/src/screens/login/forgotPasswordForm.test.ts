@@ -37,6 +37,6 @@ describe('co ekran mówi po wysłaniu', () => {
   it('awaria SIECI jest jedynym stanem, w którym to zdanie byłoby nieprawdą', () => {
     const offline = forgotOutcome(new TypeError('Failed to fetch'));
     expect(offline.tone).toBe('danger');
-    expect(offline.text).toContain('Nie ma połączenia');
+    expect(offline.text).toContain('Brak połączenia');
   });
 });

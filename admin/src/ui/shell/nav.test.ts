@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Capability } from '../../api/dto';
-import { HOME, NAV_ITEMS, hasAccess, homeFor, navItemsFor } from './nav';
+import { HOME, NAV_ITEMS, hasAccess, homeFor, navItemsFor, navSectionsFor } from './nav';
 
 const CLUB: readonly Capability[] = ['panel.access', 'fleet.manage', 'accounts.manage'];
 const PLATFORM: readonly Capability[] = ['platform.manage', 'bugs.triage'];
@@ -21,23 +21,24 @@ const routes = (capabilities: readonly Capability[] | undefined, kind: 'org' | '
 
 describe('pozycje kolumny bocznej', () => {
   it('sesja KLUBU z Podglądem klubu dostaje moduły klubu i ani jednego modułu platformy', () => {
-    // Sześć pozycji w stałej kolejności (3.2.0, §17): Dziennik · Do sprawdzenia ·
-    // Kalendarz · Statystyki · Piloci · Samoloty. Dziennik pierwszy = startowy.
+    // Siedem pozycji w stałej kolejności (4.0.0, pkt 32): Dziennik · Do sprawdzenia ·
+    // Statystyki | Kalendarz · Zlecenia | Piloci · Samoloty. Dziennik pierwszy = startowy.
     expect(routes(CLUB, 'org')).toEqual([
       '/dziennik',
       '/do-sprawdzenia',
-      '/kalendarz',
       '/statystyki',
+      '/kalendarz',
+      '/zlecenia',
       '/piloci',
       '/samoloty',
     ]);
   });
 
   // Numer zgłoszenia zostaje w komentarzu: strażnik hexów czyta napisy testów jak kolory.
-  it('członek z PUSTYM zakresem dostaje SAM Kalendarz - jak w aplikacji', () => {
-    expect(routes([], 'org')).toEqual(['/kalendarz']);
-    // Akceptujący bez Podglądu klubu: też tylko kalendarz - kolejka decyzji stoi w nim.
-    expect(routes(['reservations.approve', 'fleet.watch'], 'org')).toEqual(['/kalendarz']);
+  it('członek z PUSTYM zakresem dostaje Kalendarz i Zlecenia - jak w aplikacji', () => {
+    expect(routes([], 'org')).toEqual(['/kalendarz', '/zlecenia']);
+    // Akceptujący bez Podglądu klubu: też tylko planowanie - kolejka decyzji stoi w kalendarzu.
+    expect(routes(['reservations.approve', 'fleet.watch'], 'org')).toEqual(['/kalendarz', '/zlecenia']);
   });
 
   it('sesja PLATFORMY dostaje wyłącznie swoje moduły - Kalendarz nie jest jej', () => {
@@ -56,6 +57,45 @@ describe('pozycje kolumny bocznej', () => {
   it('brak sesji znaczy PUSTĄ kolumnę, nie kolumnę z kłódkami', () => {
     expect(routes(undefined, 'platform')).toEqual([]);
     expect(routes([], 'platform')).toEqual([]);
+  });
+});
+
+describe('grupy kolumny (4.0.0, pkt 32-34)', () => {
+  const sections = (capabilities: readonly Capability[] | undefined, kind: 'org' | 'platform') =>
+    navSectionsFor(capabilities, kind).map((s) => ({ label: s.label, items: s.items.map((i) => i.to) }));
+
+  it('administrator widzi TRZY grupy z podpisami: Loty, Planowanie, Klub', () => {
+    expect(sections(CLUB, 'org')).toEqual([
+      { label: 'Loty', items: ['/dziennik', '/do-sprawdzenia', '/statystyki'] },
+      { label: 'Planowanie', items: ['/kalendarz', '/zlecenia'] },
+      { label: 'Klub', items: ['/piloci', '/samoloty'] },
+    ]);
+  });
+
+  it('pilot z pustym zakresem ma listę PŁASKĄ - jedna grupa nie dostaje nagłówka', () => {
+    expect(sections([], 'org')).toEqual([{ label: null, items: ['/kalendarz', '/zlecenia'] }]);
+  });
+
+  it('rama superadministratora jest płaska', () => {
+    expect(sections(PLATFORM, 'platform')).toEqual([{ label: null, items: ['/organizacje', '/zgloszenia'] }]);
+  });
+
+  it('grupa bez widocznej pozycji znika w całości - Loty i Klub bez Podglądu klubu', () => {
+    // Koordynator bez „Podglądu klubu" ma same moduły planowania: nagłówków Loty i Klub
+    // nie ma, a jedyna zostająca grupa traci podpis.
+    expect(sections(['reservations.manage', 'orders.create'], 'org')).toEqual([
+      { label: null, items: ['/kalendarz', '/zlecenia'] },
+    ]);
+    expect(sections(['panel.access'], 'org').map((s) => s.label)).toEqual(['Loty', 'Planowanie', 'Klub']);
+  });
+
+  it('pozycje jednej grupy stoją w NAV_ITEMS obok siebie - inaczej grupa rozpadłaby się na dwie', () => {
+    const groups = NAV_ITEMS.map((item) => item.group);
+    const seen = new Set<string>();
+    groups.forEach((group, index) => {
+      if (index > 0 && groups[index - 1] !== group) expect(seen.has(group)).toBe(false);
+      seen.add(group);
+    });
   });
 });
 

@@ -355,6 +355,7 @@ admin/
       memberships.ts    kolejka zgłoszeń kodem klubu i trzy decyzje (issue #101)
       clubCode.ts       kod klubu: odczyt, rotacja, wyłączenie
       organizations.ts  moduł PLATFORMY - kluby na serwerze
+      notifications.ts  skrzynka zalogowanego - strona z kursorem-parą, przeczytanie (4.0.0, K7)
                         (jeden plik = jeden zasób = jeden prefiks trasy - jak server/src/http/routes/)
 
     queries/            ── klucze i hooki TanStack ──────────────────────────────
@@ -364,6 +365,14 @@ admin/
       useApprovals.ts · useAttention.ts · useBugReports.ts · useCalendar.ts · useClubCode.ts · useDirectory.ts · useFleet.ts · useLog.ts · useLogCommands.ts · useMemberships.ts · useOrganizations.ts · usePilotCommands.ts · usePilots.ts · useSession.ts · useStats.ts · useWatches.ts
       useMemberships.ts · useClubCode.ts · useOrganizations.ts
                         mutacja deklaruje SWOJE unieważnienia tutaj, nie na ekranie
+      useNotifications.ts · inboxCache.ts
+                        skrzynka w stronach; ramka kanału wpisuje się w TĘ SAMĄ pamięć (4.0.0)
+
+    live/               ── KANAŁ KLUBU (4.0.0, `docs/kanal-klubu.md` §3.4, §12) ──────
+      liveSocket.ts     JEDYNE miejsce z WebSocket: pong na ping, wznowienie z rozrzutem, minuta ciszy
+      frames.ts · reconnect.ts · liveUrl.ts   (czyste, z testami obok)
+      topicKeys.ts      temat → klucze zapytań; ekran odświeżany na żywo dopisuje się TUTAJ
+      useLiveChannel.ts jedno połączenie na kartę, wyłącznie w sesji klubu (woła je ShellRoute)
 
     screens/            ── jeden katalog na MODUŁ ──────────────────────────────
       logbook/          DZIENNIK, dwie osie (maszyny / piloci) × trzy poziomy → operacja
@@ -376,6 +385,15 @@ admin/
       stats/            STATYSTYKI (3.2.0): pasek sum, słupki, trzy tabele z tfoot
         StatsScreen.tsx
         statsRows.ts
+      orders/           ZLECENIA (4.0.0, epik Z-D): lista Do mnie / Zlecone, JEDNA szuflada zlecenia
+                        (widok rozstrzyga orderView), rozmowa, formularz bez adresu
+        OrdersScreen.tsx · OrderDrawer.tsx · LeaderDrawer.tsx · RecipientDrawer.tsx · RecipientConfirm.tsx
+        RowMenu.tsx · SwapForm.tsx · ThreadDrawer.tsx · OrderFormDrawer.tsx
+        orderListRows.ts · leaderCard.ts · recipientCard.ts · recipientMenu.ts · orderHistory.ts · orderChanges.ts
+        orderForm.ts · orderEdit.ts · orderThread.ts · orderLabels.ts · orderLookups.ts · orderPaths.ts
+        orderRefusal.ts · orderView.ts   (napisy słowo w słowo jak telefon - app/src/ui/screens/logic/order*.ts)
+      groups/           GRUPY KLUBU w module Piloci (#/piloci/grupy, 4.0.0)
+        GroupsScreen.tsx · GroupDrawer.tsx · groupForm.ts · groupRefusal.ts · groupRows.ts
       accounts/         PILOCI = członkowie klubu (+ kolejka zgłoszeń i kod klubu)
         AccountsScreen.tsx  lista + JEDNA z trzech szuflad (którą - mówi trasa)
         AccountDrawer.tsx · RequestDrawer.tsx · ClubCodeDrawer.tsx · PendingCard.tsx
@@ -391,13 +409,16 @@ admin/
         ScopePickScreen.tsx · scopeOptions.ts
       bugs/             ZGŁOSZENIA błędów - moduł PLATFORMY, na czas testów (issue #87)
         BugsScreen.tsx · BugDrawer.tsx · bugRows.ts · bugStatus.ts
+      inbox/            SKRZYNKA pod dzwonkiem i BANER nowego powiadomienia (4.0.0, K7)
+        InboxDrawer.tsx · InboxRow.tsx · InboxToast.tsx
+        inboxRows.ts · inboxLookups.ts · toast.ts
       login/            LoginScreen.tsx · loginMessage.ts
-      common/           wspólne dla ekranów: apiMessage.ts (odmowy) · values.ts (kreska braku)
+      common/           wspólne dla ekranów: apiMessage.ts (odmowy; zdanie błędu zapisu i odczytu) · values.ts (kreska braku)
 
     ui/
       components/       DESIGN SYSTEM PANELU - 1:1 z SZABLON.html (§3)
         Button.tsx · LinkButton.tsx · Card.tsx · DataTable.tsx · Pill.tsx · Banner.tsx
-        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx
+        Drawer.tsx · EmptyState.tsx · TableSkeleton.tsx · Loadable.tsx · NoAccess.tsx · Menu.tsx
         Field.tsx · TextInput.tsx · OptionButton.tsx · SearchInput.tsx · FilterChip.tsx
         PageHead.tsx · Breadcrumbs.tsx · TrackMap.tsx · VerticalProfile.tsx
         icons.tsx · index.ts
@@ -406,6 +427,7 @@ admin/
         AppShell.tsx      pasek górny + kolumna boczna + treść (styl lekki, issue #107)
         nav.ts            KANONICZNA nawigacja: pozycja NALEŻY DO ZDOLNOŚCI
         scope.ts          kontekst sesji w kolumnie: klub albo platforma (issue #101)
+        bell.ts           etykieta dzwonka: liczba nowych i jej odmiana (4.0.0)
         initials.ts
 
     auth/               ── brama i tożsamość ───────────────────────────────────
@@ -455,7 +477,8 @@ admin/
 | Ekrany | `src/screens/` | - (spina wszystko, ale patrz reguła modułów czystych niżej) |
 | Zapytania | `src/queries/` | `screens/`, `ui/` |
 | API | `src/api/` | React, `queries/`, `screens/`, `ui/` |
-| Komponenty | `src/ui/` | `api/`, `queries/`, `screens/` |
+| Komponenty | `src/ui/` | `api/`, `queries/`, `screens/`, `live/` |
+| Kanał klubu | `src/live/` | `screens/`, `ui/`, `api/` (kształt wiadomości dostaje przez `queries/`) |
 | Moduły czyste | `src/screens/**/*.ts` (bez `.tsx`) | React, `queries/`, `api/` |
 
 Kierunek jest ten sam co w `app/` i `server/`: **do środka**, a to, co najbardziej stabilne
@@ -750,6 +773,22 @@ retry: (n, e) => n < 2 && !isHttpError(e)   4xx nie powtarzamy (403 nie naprawi 
 Błąd sieci **wolno** pokazać jako blokadę - to jedyne miejsce w systemie, gdzie wolno
 (`ANALIZA` §7). Baner `danger` nad treścią z przyciskiem „Ponów", dane zostają w ostatnim
 znanym stanie z adnotacją wieku.
+
+### 4.6 Świeżość daje kanał klubu, nie odpytywanie (4.0.0)
+
+Panel trzyma JEDNO połączenie WebSocket na kartę (`live/`, `docs/kanal-klubu.md` §3.4).
+Ramka `changed` niesie same TEMATY, a `live/topicKeys.ts` zamienia je na klucze z §4.2
+i woła `invalidateQueries` - React Query pobiera od nowa wyłącznie to, co stoi na ekranie.
+Ramka `notification` wpisuje wiadomość wprost do pamięci skrzynki (`queries/inboxCache.ts`),
+bez drugiego żądania. Po wznowionym połączeniu unieważnia się wszystko poza tożsamością,
+więc zgubiona ramka niczego nie gubi.
+
+- **`refetchInterval` i `setInterval` nie występują w `src/`** - pilnuje tego
+  `test/architecture.test.ts`. Ekran, który chce świeżości, dopisuje klucz w
+  `topicKeys.ts` (z testem), a nie pętlę. Tykający zegar dostałby imienny wyjątek
+- **`staleTime` zostaje** - chroni przed żądaniem przy każdej zmianie ekranu, a o świeżość
+  danych już widocznych dba kanał
+- **zapis idzie RESTem jak dotąd** - kanał tylko rozsyła i nie jest źródłem prawdy
 
 ---
 

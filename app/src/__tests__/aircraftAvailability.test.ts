@@ -87,7 +87,7 @@ describe('maszyna wyłączona z użytku', () => {
     aircraftId: 'a2',
     kind: 'block',
     pilotId: null,
-    blockReason: 'Przegląd 100 h',
+    blockReason: 'maintenance',
     startsAt: day.startsAt - 24 * HOUR,
     // Granica WYŁĄCZAJĄCA: to jest północ klubu z 24 na 25 września, więc ostatnim
     // dniem OBJĘTYM przeglądem jest 24 - i tak ma się nazywać na karcie.
@@ -97,7 +97,7 @@ describe('maszyna wyłączona z użytku', () => {
   it('wyłączenie na CAŁE okno gasi kartę i mówi powód', () => {
     const card = build([serwis])[1]!;
     expect(card.blocked).toEqual({
-      reason: 'Przegląd 100 h',
+      reason: 'Przegląd',
       until: 'wyłączony z użytku do 24 września',
     });
     // Wolnych pasm nie wypisujemy - nie ma czego wziąć.

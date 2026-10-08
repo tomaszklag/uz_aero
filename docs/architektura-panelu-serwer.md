@@ -1606,6 +1606,78 @@ po tamtej stronie „czysta" odpowiedź kolejki i karty kodu nie dowodziłaby ni
 
 ---
 
+### 7.11 Zlecenia na lot - jedna tablica tras, kształt per widz, rezerwacja z pustymi fotelami (epik Z-B, 2026-09-29/30)
+
+Zlecenie to rezerwacja z pustymi fotelami plus adresaci (`docs/zlecenia.md` §2.1), więc
+serwer nie dostał nowej zajętości - dostał nowe TRASY i nowe pole na starych. Cztery
+rzeczy warto znać przed dopisaniem czegokolwiek w tym obszarze:
+
+1. **Jedna tablica punktów końcowych na dwie powierzchnie**
+   (`http/routes/common/orderEndpoints.ts`): czternaście tras zleceń i rozmów trzyma
+   ścieżki WZGLĘDNE, a telefon (`mobile/orders.ts`, brama członkostwa) i panel
+   (`admin/orders.ts`, `adminRoute` z `capability: null`) tylko je rejestrują. O prawie
+   rozstrzyga KOMENDA - prowadzący, adresat albo 404 - bo pytanie brzmi „prowadzi albo
+   jest adresatem", a brama zna jedną zdolność. Kolizję `slot_taken` każda powierzchnia
+   pisze w SWOIM kształcie cudzej rezerwacji (`OrderSurface.takenWire`).
+2. **Kształt pyta, kto patrzy** (§13.1 zleceń): adresat nie dostaje listy adresatów,
+   historii ani etykiety adresowania (`orderWire.ts` - `audienceLabel` wyłącznie dla
+   prowadzącego), a cudza rozmowa jest 404, nie 403.
+3. **Każda rezerwacja na drucie niesie pole `order`** (`queries/bookingOrders.ts`
+   + `common/bookingOrderWire.ts`): `null` przy zwykłej, `{ seeking }` dla każdego
+   członka, `{ seeking, id, createdBy }` dla prowadzącego i adresata. Funkcje kształtu
+   rezerwacji na obu powierzchniach mają trzeci argument `orders` BEZ wartości domyślnej -
+   kompilator wskazał każde miejsce, a te, w których zlecenia być nie może (kolejka
+   decyzji), podają `NO_ORDERS` jawnie. Znacznik zmian kalendarza
+   (`BookingsPort.changeMark`) niesie DWA stemple - rezerwacji i zleceń - bo przestawienie
+   fotela na „brak" zmienia zlecenie bez dotykania wiersza rezerwacji, a „późniejszy z nich"
+   porównywałby stemple z dwóch zegarów (baza przy założeniu rezerwacji, aplikacja przy
+   zmianie zlecenia). Test znacznika złapał to przy pierwszej wersji.
+4. **Odwołanie z tras REZERWACJI idzie komendami ZLECENIA** (`commands/orderBookings.ts`):
+   przydzielony rezygnuje z fotela, zlecający w fotelu „ja" odwołuje zlecenie, prowadzący
+   z kalendarza panelu - też. Panelowe odwołanie cudzej rezerwacji stoi w `AuditedWrite`,
+   a zlecenia do dziennika akcji nie trafiają, więc rezerwacja zlecenia rzuca wyjątek
+   W transakcji (wycofuje ją razem z wpisem) i odwołanie idzie obok - ten sam wzorzec, co
+   ponowione założenie grupy (`Repeated` w `admin/commands/memberGroups.ts`). Poprawka
+   rezerwacji zlecenia drogą rezerwacji to odmowa `booking_from_order` (409) dla każdego,
+   kto w niej JEST.
+
+**Izolacja klubów ma tu DWIE warstwy**: zlecenie czytane z klubem ORAZ jego rezerwacja
+czytana osobno z klubem (`OrderRecords`, `OrderQueries.loadMany`). Zepsucie jednej nie
+daje wycieku - sonda regresji musi złamać obie naraz. W świecie `tenantIsolation.test.ts`
+zlecenia stoją w obu klubach, a PWI jest adresatem w obu; sondy zleceń biorą ŚWIEŻY token
+PWI w Alfie (przełączeniem z sesji w Becie - `pwiInAlfa`), bo wcześniejsza sonda „wyloguj
+wszędzie w tym klubie" zrywa jej sesje w Alfie w połowie przebiegu.
+
+### 7.12 Kanał klubu - rejestr połączeń, rozdzielnik, sygnały, zamykanie (epik KK-B, 2026-09-30/10-01)
+
+Pełny opis, mapa plików i przepisy: `docs/kanal-klubu.md` §3.1 i §11. Cztery rzeczy warto
+znać przed dopisaniem czegokolwiek w tym obszarze:
+
+1. **Brama sprawdza połączenie RAZ** (przy nawiązaniu), a REST przy każdym żądaniu. Stąd
+   trzy obowiązki, których REST nie ma: decyzja odbierająca dostęp zamyka połączenia
+   sama (`application/common/live/liveAccess.ts` - powód i zakres w jednym miejscu),
+   zmiana zakresu przestawia zdolności otwartych połączeń
+   (`LivePort.updateCapabilities`), a połączenie kończy się razem z tokenem, którym je
+   otwarto (`serveLive`, `bye token_expired` - termin z `VerifiedIdentity.expiresAt`).
+2. **Wszystko PO commicie i nic nie rzuca.** Sygnał wysłany przed commitem ogłosiłby
+   zmianę, która może się wycofać, a połączenie zamknięte przed commitem zdążyłoby wrócić
+   przez bramę, która jeszcze nie widzi decyzji. Wyjątek z kanału wróciłby do komendy,
+   która JUŻ zapisała - rejestr połączeń połyka awarie gniazd, a `ClubSignals` łapie
+   i loguje własne odczyty.
+3. **Odbiorców i tematy liczy jedno miejsce na obszar** (`notify/clubSignals.ts`,
+   `notify/orderSignals.ts`): producent podaje FAKT, a sygnał nie niesie treści, bo
+   kształt per widz liczy wyłącznie REST. Ingest ogłasza tylko operacje z NAPRAWDĘ
+   wstawionymi zdarzeniami (`insertBatch` oddaje uuidy przyjęte) - ponowiona paczka
+   milczy - a wiersz rezerwacji zrealizowanej przejęciem czyta w transakcji zapisu, żeby
+   sygnał po commicie nie miał już czego czytać i czym się wywrócić.
+4. **Trasy WebSocket nie idą przez `adminRoute`** (ta odpowiada JEDNĄ odpowiedzią HTTP,
+   a tu po bramie zostaje otwarte połączenie) - imienny wyjątek w
+   `test/architecture.test.ts`. Rejestr tras widzi je mimo to, więc obie mają sondy
+   w `tenantIsolation.test.ts`. W testach przez `injectWS` gniazdo serwera po zamknięciu
+   przez klienta dostaje `end`, ale nigdy `close` - odłączenie z rejestru sprawdza się
+   na prawdziwym porcie, a test, który zamknął połączenie pomocnicze, nie może potem
+   pytać rejestru o tę samą osobę.
+
 ## 8. Sesja przeglądarkowa - dwa źródła tokenu, jedna autoryzacja
 
 ### 8.1 Zmiana: `authorize` przestaje czytać nagłówek

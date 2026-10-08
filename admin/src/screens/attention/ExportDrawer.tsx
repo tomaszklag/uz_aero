@@ -19,8 +19,8 @@ import { Link } from 'react-router-dom';
 import type { ExportListItemDto } from '../../api/dto';
 import { useExportHistory, useRetryExport, useSheetPreview } from '../../queries/useAttention';
 import { useAircraftSessions } from '../../queries/useLog';
-import { Banner, Button, Card, Drawer, LinkButton, Pill } from '../../ui/components';
-import { errorMessage } from '../common/apiMessage';
+import { Banner, Button, Card, Drawer, LinkButton, Loadable, Pill } from '../../ui/components';
+import { errorMessage, loadErrorMessage } from '../common/apiMessage';
 import { NONE, timeUtc } from '../common/values';
 import { sessionPath } from '../logbook/logbookPaths';
 import { operationLabel } from '../logbook/sessionRows';
@@ -80,7 +80,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         }
       >
         {listPending ? null : (
-          <Banner tone="warn">Nie ma takiej operacji w bieżącym zakresie. Zmień zakres dat albo chip stanu.</Banner>
+          <Banner tone="warn">Nie ma takiej operacji w bieżącym zakresie. Zmień zakres dat albo filtr stanu.</Banner>
         )}
       </Drawer>
     );
@@ -140,7 +140,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
       {item.state === 'missing' ? (
         <Banner tone="danger">
           <b>Karta nie powstała.</b> Samolot zdano{item.closeTime == null ? '' : ` ${timeUtc(item.closeTime)} UTC`}, a eksport
-          się nie zapisał - w arkuszu nie ma tej doby. Ponów, żeby zbudować kartę jeszcze raz.
+          się nie zapisał - w arkuszu nie ma tego dnia. Ponów, żeby zbudować kartę jeszcze raz.
         </Banner>
       ) : null}
       {item.state === 'blocked' ? (
@@ -150,54 +150,68 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         </Banner>
       ) : null}
       {item.state === 'waiting' ? (
-        <Banner tone="status">Karta doby powstaje po zdaniu samolotu. Ta operacja jeszcze trwa.</Banner>
+        <Banner tone="status">Karta dnia powstaje po zdaniu samolotu. Ta operacja jeszcze trwa.</Banner>
       ) : null}
       {item.state === 'impossible' ? (
         <Banner tone="status">
           {item.sessionStatus === 'voided'
-            ? 'Wpis unieważniony - nie wchodzi do karty doby.'
-            : 'Operacja bez chwili przejęcia - karty nie da się nazwać ani zbudować.'}
+            ? 'Wpis unieważniony - nie wchodzi do karty dnia.'
+            : 'Operacja nie ma godziny rozpoczęcia - karty nie da się utworzyć.'}
         </Banner>
       ) : null}
       {item.overwrittenBy == null ? null : (
         <Banner tone="status">
-          Treść pod tą nazwą zapisała później operacja{' '}
+          Treść pod tą nazwą zapisała później{' '}
           <Link className="cell-link" to={sessionPath(item.reg ?? item.aircraftId, item.overwrittenBy.sessionUuid, EMPTY_RANGE)}>
-            {item.overwrittenBy.sessionUuid}
+            inna operacja
           </Link>{' '}
           ({stamp(item.overwrittenBy.exportedAt)}). Podgląd niżej pokazuje tamten zapis.
         </Banner>
       )}
 
+      {/* Plamki zamiast „Wczytywanie…", a po nieudanym odczycie zdanie o nim zamiast
+          „Brak operacji w tej dobie" - to byłoby zdanie o dobie, której nie znamy. */}
       <Card title="Operacje w tej dobie">
-        {dayRows.length === 0 ? (
-          <p className="hint">{sessions.isPending ? 'Wczytywanie…' : 'Brak operacji w tej dobie.'}</p>
-        ) : (
-          dayRows.map((session) => (
-            <div className="kv" key={session.sessionUuid}>
-              <span className="kv-k">
-                {timeUtc(session.engineStartAt)} → {session.status === 'active' ? 'w toku' : timeUtc(session.engineStopAt)}
-              </span>
-              <span className="kv-v">
-                {session.status === 'voided' ? (
-                  <>
-                    <span className="was">wpis unieważniony</span> <small>nie wchodzi do karty</small>
-                  </>
-                ) : (
-                  <>
-                    <Link className="cell-link" to={sessionPath(session.reg ?? session.aircraftId, session.sessionUuid, EMPTY_RANGE)}>
-                      {session.signature ?? session.reg ?? NONE}
-                    </Link>{' '}
-                    <small>
-                      {operationLabel(session.operation).toLowerCase()} · {session.flightsCount}{' '}
-                      {session.flightsCount === 1 ? 'lot' : session.flightsCount >= 2 && session.flightsCount <= 4 ? 'loty' : 'lotów'}
-                    </small>
-                  </>
-                )}
-              </span>
+        {sessions.error == null ? null : <p className="hint danger">{loadErrorMessage(sessions.error)}</p>}
+        <Loadable
+          pending={sessions.isPending}
+          loaded={sessions.data != null}
+          skeleton={[0, 1].map((row) => (
+            <div className="kv" key={row}>
+              <span className="skeleton cell" style={{ width: 110 }} />
+              <span className="skeleton cell" style={{ width: 180 }} />
             </div>
-          ))
-        )}
+          ))}
+        >
+          {dayRows.length === 0 ? (
+            <p className="hint">Brak operacji w tej dobie.</p>
+          ) : (
+            dayRows.map((session) => (
+              <div className="kv" key={session.sessionUuid}>
+                <span className="kv-k">
+                  {timeUtc(session.engineStartAt)} → {session.status === 'active' ? 'w toku' : timeUtc(session.engineStopAt)}
+                </span>
+                <span className="kv-v">
+                  {session.status === 'voided' ? (
+                    <>
+                      <span className="was">wpis unieważniony</span> <small>nie wchodzi do karty</small>
+                    </>
+                  ) : (
+                    <>
+                      <Link className="cell-link" to={sessionPath(session.reg ?? session.aircraftId, session.sessionUuid, EMPTY_RANGE)}>
+                        {session.signature ?? session.reg ?? NONE}
+                      </Link>{' '}
+                      <small>
+                        {operationLabel(session.operation).toLowerCase()} · {session.flightsCount}{' '}
+                        {session.flightsCount === 1 ? 'lot' : session.flightsCount >= 2 && session.flightsCount <= 4 ? 'loty' : 'lotów'}
+                      </small>
+                    </>
+                  )}
+                </span>
+              </div>
+            ))
+          )}
+        </Loadable>
         <div className="kv">
           <span className="kv-k">Ostatni zapis z telefonu</span>
           <span className="kv-v">{stamp(item.updatedAt)}</span>
@@ -208,7 +222,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         <Card
           title={
             <>
-              Rewizje <span className="card-count">· {history.data.revisions.length}</span>
+              Wersje <span className="card-count">· {history.data.revisions.length}</span>
             </>
           }
         >

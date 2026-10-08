@@ -79,6 +79,9 @@
       </a>
 
       <div class="topbar-right">
+        <a class="bell-btn" href="powiadomienia.html#skrzynka" title="Powiadomienia" aria-label="Powiadomienia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </a>
         <!-- Nazwisko w pasku jest LINKIEM na własne konto (`#/konto`, 2.1.0): hasło i sesje
              zalogowanego. Wejście z nazwiska, jak w każdej aplikacji web. -->
         <a class="who" href="konto.html" title="Moje konto">
@@ -106,6 +109,7 @@
           <svg class="context-switch" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
         </a>
         <nav class="sidebar-nav" aria-label="Sekcje panelu">
+          <span class="nav-group">Loty</span>
           <a class="nav-item" href="dziennik-flota.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Dziennik
@@ -114,14 +118,20 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
             Do sprawdzenia
           </a>
-          <a class="nav-item" href="kalendarz-flota.html">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-            Kalendarz
-          </a>
           <a class="nav-item" href="statystyki.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
             Statystyki
           </a>
+          <span class="nav-group">Planowanie</span>
+          <a class="nav-item" href="kalendarz-flota.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            Kalendarz
+          </a>
+          <a class="nav-item" href="zlecenia-lista.html">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+            Zlecenia
+          </a>
+          <span class="nav-group">Klub</span>
           <a class="nav-item active" href="piloci-lista.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Piloci
@@ -232,7 +242,7 @@
          mechanizm). Zerwanie dostępu w klubie ma odtąd DWA stopnie: „Wyloguj" (sesja,
          odwracalne ponownym zalogowaniem) i „Wyłącz członkostwo" (dostęp); inne kluby
          tej osoby nie widzą ani jednego, ani drugiego. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Anna Kowal">
 
       <div class="drawer-head">
@@ -315,7 +325,7 @@
              w panelu (od issue #216 kalendarz i kolejka decyzji są dla każdego członka).
              Zakres pilota jest tu pusty poza jedną pozycją, więc etykieta mówi „Własny zakres".
 
-             Lista kart, nie `<select>` ani przełączniki: zdolności jest dziesięć i jest
+             Lista kart, nie `<select>` ani przełączniki: zdolności jest dwanaście i jest
              to zbiór ZAMKNIĘTY, więc widoczność wszystkich naraz jest całą wartością
              (wyjątek `<select>` z 2026-09-20 dotyczy zbiorów rosnących z klubem). -->
         <div class="card">
@@ -345,20 +355,25 @@
                  • Pilot - nic (stan domyślny; aplikacja, a w panelu Moje konto i kalendarz)
                  • Akceptujący - Akceptacja rezerwacji + Obserwowanie samolotów
                  • Koordynator lotów - Podgląd klubu + Cudze rezerwacje + Akceptacja
-                   + Obserwowanie samolotów
+                   + Obserwowanie samolotów + Zlecanie lotów
                  • Technik - Podgląd klubu + Flota + Obserwowanie samolotów
 
                „PODGLĄD KLUBU" TO DAWNE „WEJŚCIE DO PANELU" (issue #216, 2026-09-25):
                do panelu wchodzi odtąd KAŻDY członek, więc ta zdolność przestała być
                drzwiami i została podglądem trzech modułów (dziennik, piloci, samoloty).
                Klucz w bazie ten sam, zmieniła się nazwa i opis (`scope.ts`).
-                 • Administrator - komplet (jedenaście pozycji)
+                 • Administrator - komplet (dwanaście pozycji)
                  • Własny zakres - cokolwiek innego
 
                OBSERWOWANIE SAMOLOTÓW doszło 2026-09-25 (zgłoszenie #205, 3.2.0,
                docs/obserwowanie-samolotu.md §3): karta maszyny w aplikacji i powiadomienia
                o jej lotach. Wchodzi do TRZECH zestawów naraz decyzją właściciela, więc
-               „Akceptujący" przestał nazywać jedną rzecz - jego opis mówi o dwóch. -->
+               „Akceptujący" przestał nazywać jedną rzecz - jego opis mówi o dwóch.
+
+               ZLECANIE LOTÓW doszło 2026-09-27 (zgłoszenie #239, 4.0.0, docs/zlecenia.md
+               §9): wysyłanie zleceń lotu i prowadzenie WŁASNYCH. Zestawy Koordynator lotów
+               i Administrator; instruktor dostaje je przez „Własny zakres". Wszystkie
+               zlecenia klubu prowadzi dalej „Cudze rezerwacje" - stąd druga połowa jej opisu. -->
           <label class="field">
             <span class="field-label">Zestaw uprawnień</span>
             <select class="input">
@@ -382,8 +397,8 @@
                wchodzący na ekran NIE SZUKA. Administrator otwiera kartę członka po kod
                pilota, sesje albo hasło - zakres poprawia rzadziej. -->
           <div class="access-row">
-            <span class="cell-sub">Nadane 1 z 10 zdolności · Akceptacja rezerwacji</span>
-            <button type="button" class="btn ghost">Pokaż zdolności</button>
+            <span class="cell-sub">Nadane 1 z 12 uprawnień · Akceptacja rezerwacji</span>
+            <button type="button" class="btn ghost">Pokaż uprawnienia</button>
           </div>
 
         </div>
@@ -428,7 +443,7 @@
             <!-- Trzy rzeczy, po które sięga administrator: dostęp (od razu), dane
                  (zostają) i INNE KLUBY tej osoby (bez zmian) - trzecia jest nowa
                  i bez niej wyłączenie czytałoby się jak zablokowanie człowieka. -->
-            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; członkostwa w innych klubach bez zmian.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
               <button type="button" class="btn danger sm">Wyłącz członkostwo</button>
@@ -567,8 +582,8 @@
                kontrolce, po którą administrator sięga pierwszą. -->
           <p class="hint"><b>Zestawu nie da się tu zmienić</b> - Marek jest ostatnią aktywną osobą w klubie ze zdolnością „Konta i kod klubu", a bez niej nikt nie wpuści nikogo do panelu ani nie nada zakresu. Nadaj ją komuś innemu, zanim odbierzesz mu tę.</p>
           <div class="access-row">
-            <span class="cell-sub">Nadane 11 z 11 zdolności</span>
-            <button type="button" class="btn ghost">Ukryj zdolności</button>
+            <span class="cell-sub">Nadane 12 z 12 zdolności</span>
+            <button type="button" class="btn ghost">Ukryj uprawnienia</button>
           </div>
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
@@ -581,48 +596,48 @@
             <button type="button" class="opt selected" role="checkbox" aria-checked="true" disabled>
               <span class="opt-body">
                 <span class="opt-name">Konta i kod klubu</span>
-                <span class="opt-desc">Przyjmowanie do klubu, zakresy uprawnień, kod klubu, wylogowywanie cudzych urządzeń.</span>
+                <span class="opt-desc">Przyjmowanie do klubu, zakresy uprawnień, grupy pilotów, kod klubu, wylogowywanie cudzych urządzeń.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Flota</span>
-                <span class="opt-desc">Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku.</span>
+                <span class="opt-desc">Samoloty, normy zużycia, pojemności, format licznika, wyłączanie maszyn z użytku i ze służby.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Korekty w dzienniku</span>
-                <span class="opt-desc">Poprawianie i unieważnianie cudzych operacji, także po oknie 24 godzin.</span>
+                <span class="opt-desc">Poprawianie i unieważnianie cudzych operacji, także po upływie 24 godzin.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
-                <span class="opt-name">Uwagi serwera</span>
-                <span class="opt-desc">Rozstrzyganie tego, co serwer zgłasza przy operacjach: nakładki, rozjazdy liczników.</span>
+                <span class="opt-name">Rozjazdy</span>
+                <span class="opt-desc">Rozstrzyganie spraw z „Do sprawdzenia": dwie operacje naraz, luki w liczniku, rozjazdy paliwa.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Cudze rezerwacje</span>
-                <span class="opt-desc">Odwoływanie i przesuwanie cudzych terminów oraz wpisanie rezerwacji za pilota.</span>
+                <span class="opt-desc">Odwoływanie i przesuwanie cudzych terminów, wpisanie rezerwacji za pilota i prowadzenie wszystkich zleceń lotów klubu.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Progi i reguły</span>
-                <span class="opt-desc">Strojenie progów analityki zużycia.</span>
+                <span class="opt-desc">Ustawianie progów, według których ocenia się zużycie paliwa.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
-                <span class="opt-name">Dziennik zmian</span>
+                <span class="opt-name">Historia zmian</span>
                 <span class="opt-desc">Odczyt tego, kto i co zmienił w panelu.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -630,7 +645,7 @@
             <button type="button" class="opt selected" role="checkbox" aria-checked="true">
               <span class="opt-body">
                 <span class="opt-name">Narzędzia serwisowe</span>
-                <span class="opt-desc">Przebudowa danych dziennika ze strumienia zdarzeń i odczyt stanu bazy.</span>
+                <span class="opt-desc">Przeliczanie dziennika od nowa i podgląd stanu danych.</span>
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
@@ -653,6 +668,17 @@
               </span>
               <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
             </button>
+            <!-- DWUNASTA ZDOLNOŚĆ (4.0.0, #239): zlecenie lotu to nowy RODZAJ władzy nad planem -
+                 zajęcie terminu dla KOGOŚ, kto dopiero się zgłosi. Żadna istniejąca pozycja tego
+                 nie dawała: „Cudze rezerwacje" poprawia terminy już zajęte, a instruktor, który
+                 zleca loty uczniom, nie potrzebuje władzy nad cudzymi rezerwacjami. -->
+            <button type="button" class="opt selected" role="checkbox" aria-checked="true">
+              <span class="opt-body">
+                <span class="opt-name">Zlecanie lotów</span>
+                <span class="opt-desc">Wysyłanie zleceń lotu do pilotów i grup oraz prowadzenie własnych: wybór załogi, zmiany i odwołanie.</span>
+              </span>
+              <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
           </div>
         </div>
       </div>
@@ -660,7 +686,7 @@
     <article class="inv">
       <div class="inv-head">
         <span class="inv-name">Zestaw pusty - stan, w którym jest większość klubu</span>
-        <span class="inv-when">Tak wygląda karta zwykłego pilota i tak wygląda większość klubu. Podpis mówi wprost, co znaczy zbiór pusty, zamiast pokazywać dziesięć wygaszonych przełączników - zwinięcie nie ukrywa niczego, bo nie ma czego ukrywać. Tknięcie którejkolwiek zdolności po rozwinięciu przestawia listę zestawów na „Własny zakres" w tej samej chwili: zestaw jest SKRÓTEM do zbioru, a nie etykietą przyklejoną do osoby.</span>
+        <span class="inv-when">Tak wygląda karta zwykłego pilota i tak wygląda większość klubu. Podpis mówi wprost, co znaczy zbiór pusty, zamiast pokazywać dwanaście wygaszonych przełączników - zwinięcie nie ukrywa niczego, bo nie ma czego ukrywać. Tknięcie którejkolwiek zdolności po rozwinięciu przestawia listę zestawów na „Własny zakres" w tej samej chwili: zestaw jest SKRÓTEM do zbioru, a nie etykietą przyklejoną do osoby.</span>
       </div>
       <div class="inv-demo">
         <div class="card">
@@ -678,7 +704,7 @@
           </label>
           <div class="access-row">
             <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
-            <button type="button" class="btn ghost">Pokaż zdolności</button>
+            <button type="button" class="btn ghost">Pokaż uprawnienia</button>
           </div>
         </div>
       </div>
@@ -704,7 +730,7 @@
           </label>
           <div class="access-row">
             <span class="cell-sub">Bez zdolności - wyłącznie aplikacja na telefonie</span>
-            <button type="button" class="btn ghost">Ukryj zdolności</button>
+            <button type="button" class="btn ghost">Ukryj uprawnienia</button>
           </div>
           <div class="opt-list" role="group" aria-label="Zdolności w tym klubie">
             <button type="button" class="opt" role="checkbox" aria-checked="false">
@@ -763,7 +789,7 @@
           </div>
           <div class="confirm">
             <p class="confirm-q">Wyłączyć członkostwo: Anna Kowal?</p>
-            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; jej członkostwa w innych klubach bez zmian.</p>
+            <p class="hint">Przestanie się logować w tym klubie od razu - na telefonie i w panelu. Loty zostają w dzienniku klubu; członkostwa w innych klubach bez zmian.</p>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
               <button type="button" class="btn danger sm">Wyłącz członkostwo</button>

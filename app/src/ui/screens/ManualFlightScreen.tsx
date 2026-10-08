@@ -23,7 +23,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { CommonActions, type NavigationAction } from '@react-navigation/native';
+import type { NavigationAction } from '@react-navigation/native';
 
 import {
   AbandonDraftSheet,
@@ -110,6 +110,7 @@ import {
   mhBeforeReference,
   mhContinuityWarnings,
   oilContinuityWarnings,
+  type PilotCodeOf,
 } from './logic/readingsContinuity';
 import {
   prefillSource,
@@ -127,7 +128,7 @@ import { fuelSheetWarning, mhSheetWarning } from './logic/readingSheetWarning';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" - ta sama, co na 02E (issue #62 pkt 1). */
 import { airfieldValueProps } from '../components/input/airfieldMark';
-import { goHome } from '../navigation/goHome';
+import { homeAction, type HomeStack } from '../navigation/goHome';
 
 /** Kolejność kroków - indeks w tej tablicy jest numerem w plakietce „n / 4". */
 const STEPS: ManualFlightStep[] = ['aircraft', 'task', 'times', 'readings'];
@@ -145,11 +146,12 @@ const MIN = 60_000;
 export function ManualFlightScreen({
   navigation,
 }: {
-  // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02.
+  // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji - jak na 02,
+  // a `getState` mówi akcji powrotu, czy zakładki leżą pod spodem (`homeAction`).
   navigation: {
-    navigate: (screen: string) => void;
     goBack: () => void;
     dispatch: (action: NavigationAction) => void;
+    getState: () => HomeStack;
   };
 }) {
   const { theme } = useTheme();
@@ -196,6 +198,11 @@ export function ManualFlightScreen({
   // ── dane referencyjne: flota i piloci (do wyboru Duala) ────────────────────
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
+  // Kod pilota z pamięci klubu do rozpisek odczytów - serwer podaje identyfikatory osób.
+  const codeOf = useCallback(
+    (id: string): string | null => pilots.find((p) => p.id === id)?.code ?? null,
+    [pilots],
+  );
   useEffect(() => {
     if (!queries) return;
     let alive = true;
@@ -318,8 +325,8 @@ export function ManualFlightScreen({
   }, [chain, draft.aircraftId, draft.fuel.foundL, draft.mhBefore]);
   // Źródło stoi przy polu, żeby liczba nie udawała odczytu z przyrządu - i gaśnie, gdy
   // pilot ją poprawi: przy jego własnym odczycie byłoby zwyczajnie nieprawdziwe.
-  const foundSrc = prefillSource(chain?.before, 'fuelL', draft.fuel.foundL);
-  const mhBeforeSrc = prefillSource(chain?.before, 'mh', draft.mhBefore);
+  const foundSrc = prefillSource(chain?.before, 'fuelL', draft.fuel.foundL, codeOf);
+  const mhBeforeSrc = prefillSource(chain?.before, 'mh', draft.mhBefore, codeOf);
 
   const warnings = useMemo(
     () => {
@@ -329,6 +336,7 @@ export function ManualFlightScreen({
         handover: aircraft?.handover ?? null,
         mhFormat,
         fetchedAt: aircraft?.fetchedAt ?? null,
+        regOf: (id) => fleet.find((a) => a.id === id)?.reg ?? null,
       });
       /* Ciągłość idzie PIERWSZA: mówi o rozjeździe z cudzym odczytem, czyli o czymś,
          czego pilot nie widzi nigdzie indziej. Reszta ostrzeżeń dotyczy jego własnych
@@ -337,8 +345,8 @@ export function ManualFlightScreen({
         /* Ogniwem łańcucha jest ZASTANE - dokładnie ta liczba, którą poprzedni pilot
            zostawił w zbiorniku. Odkąd szkic trzyma ją wprost, nie trzeba już niczego
            cofać o poranne dolewki (issue #62, siódma tura). */
-        ...fuelContinuityWarnings(chain, draft.fuel.foundL, draft.fuel.afterL),
-        ...mhContinuityWarnings(chain, mhFormat, draft.mhBefore, draft.mhAfter),
+        ...fuelContinuityWarnings(chain, draft.fuel.foundL, draft.fuel.afterL, codeOf),
+        ...mhContinuityWarnings(chain, mhFormat, draft.mhBefore, draft.mhAfter, codeOf),
         ...oilContinuityWarnings(chain, draft.oilL),
       ];
 
@@ -351,7 +359,7 @@ export function ManualFlightScreen({
 
       return [...continuity, ...superseded];
     },
-    [step, draft, pilotDay, aircraft, mhFormat, chain],
+    [step, draft, pilotDay, aircraft, mhFormat, chain, codeOf, fleet],
   );
 
   const save = useCallback(async () => {
@@ -361,14 +369,16 @@ export function ManualFlightScreen({
     setError(null);
     try {
       await manualFlight(input);
-      goHome(navigation);
+      // Przez bramkę, nie wprost: powrót cofa stos, więc przechodzi przez `beforeRemove`
+      // tego ekranu, a bramka stoi jeszcze podniesiona (krok 4) - złapałaby własne wyjście.
+      exit.proceed(homeAction(navigation.getState()));
     } catch (e) {
       // Powód odmowy domeny wprost przy przycisku - nigdy cichy błąd (§6 pkt 3).
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
-  }, [draft, manualFlight, navigation, pilotId]);
+  }, [draft, manualFlight, navigation, pilotId, exit]);
 
   // ── opcje list ─────────────────────────────────────────────────────────────
   const aircraftOptions: PickerOption<string>[] = useMemo(
@@ -380,7 +390,7 @@ export function ManualFlightScreen({
         // Wyłączony ze służby - jak w preflightcie. Cudzy claim NIE blokuje:
         // wpis dotyczy przeszłości, a nie prawa zapisu „tu i teraz" (§4.4 chroni
         // sesję bieżącą, nie historię).
-        disabledReason: a.serviceStatus === 'disabled' ? 'Wyłączony ze służby' : undefined,
+        disabledReason: a.serviceStatus === 'disabled' ? 'Poza służbą' : undefined,
         tags:
           a.serviceStatus === 'disabled'
             ? [{ label: 'Wyłączony', tone: 'red' as const }]
@@ -446,7 +456,8 @@ export function ManualFlightScreen({
         mhFormat,
         enteredL: draft.oilL,
         addedL: draft.oilAddedL,
-        pilotName: (id) => pilots.find((p) => p.id === id)?.name ?? id ?? 'Poprzedni pilot',
+        // Bez nazwiska w pamięci klubu - „Poprzedni pilot", nigdy identyfikator osoby.
+        pilotName: (id) => pilots.find((p) => p.id === id)?.name ?? 'Poprzedni pilot',
       }),
     // `oilConfig` powstaje przy każdym renderze - do zależności wchodzą jego pola.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -486,10 +497,10 @@ export function ManualFlightScreen({
      bez jedynego punktu odniesienia, jaki wtedy istnieje - przekazania z cache. */
   const fuelChainRows =
     sheet?.kind === 'fuel' && sheet.which !== 'added'
-      ? fuelChainTrail(chain, sheet.which === 'after' ? 'after' : 'found')
+      ? fuelChainTrail(chain, sheet.which === 'after' ? 'after' : 'found', codeOf)
       : [];
   const mhChainRows =
-    sheet?.kind === 'mh' ? mhChainTrail(chain, sheet.which ?? 'before', mhFormat) : [];
+    sheet?.kind === 'mh' ? mhChainTrail(chain, sheet.which ?? 'before', mhFormat, codeOf) : [];
   const fuelTrail =
     sheet?.kind === 'fuel' && sheet.which === 'after'
       ? [...manualFuelTrail(draft, norm, fuelNominal, foundSrc ?? null), ...fuelChainRows]
@@ -522,11 +533,12 @@ export function ManualFlightScreen({
           step={`${stepIndex + 1} / ${STEPS.length}`}
           /* Strzałka robi DOKŁADNIE to samo, co przycisk sprzętowy - łącznie z pytaniem
              o rezygnację nad niepustym formularzem. Dwa „wstecz" na jednym ekranie,
-             które zachowują się różnie, to była pierwsza połowa zgłoszenia. */
+             które zachowują się różnie, to była pierwsza połowa zgłoszenia. Z pierwszego
+             kroku to jest więc zwykłe `goBack`: nad niepustym formularzem pyta bramka,
+             a wejście jest jedno - z Pulpitu - więc „wstecz" ląduje tam, gdzie mówi napis. */
           onBack={() => {
             if (stepIndex > 0) setStepIndex(stepIndex - 1);
-            else if (dirty) exit.ask(CommonActions.navigate('Tabs'));
-            else goHome(navigation);
+            else navigation.goBack();
           }}
           backLabel={stepIndex === 0 ? 'Pulpit' : 'Wróć'}
           right={<SyncChip />}
@@ -597,7 +609,7 @@ export function ManualFlightScreen({
                 dwuosobowa" USUNIĘTY: powód blokady ma jedno miejsce w całej
                 aplikacji - wnętrze przycisku, który nie działa. */}
             <Card
-              title="Drugi pilot (Dual)"
+              title="Drugi pilot"
               header="inline"
               headerRight={
                 <Tag
@@ -796,7 +808,7 @@ export function ManualFlightScreen({
                   kind="warning"
                   tone="amber"
                   icon="warning"
-                  text="Nie dodałeś ani jednego lotu - operacja zapisze się jako bieg silnika bez lotu. Dopisz lot, jeśli go pominąłeś."
+                  text="W tym wpisie nie ma ani jednego lotu - zapisze się jako bieg silnika bez lotu. Dopisz brakujący lot, jeśli był."
                 />
               )}
 
@@ -842,7 +854,7 @@ export function ManualFlightScreen({
               <Field label="Dolane">
                 <ValueBox
                   value={draft.fuel.addedL > 0 ? String(Math.round(draft.fuel.addedL)) : ''}
-                  placeholder="nie tankowałem"
+                  placeholder="bez tankowania"
                   unit="L"
                   tone="amber"
                   actionIcon="edit"
@@ -966,7 +978,7 @@ export function ManualFlightScreen({
               <Field label="Dolewka">
                 <ValueBox
                   value={oilValueText(draft.oilAddedL)}
-                  placeholder="nie dolewałem"
+                  placeholder="bez dolewki"
                   unit="L"
                   actionIcon="edit"
                   onPress={() => setSheet({ kind: 'oil' })}
@@ -1008,7 +1020,7 @@ export function ManualFlightScreen({
         sessionsInfo={
           pilotDay != null && pilotDay.sessions.length > 0
             ? `${pilotDay.sessions.length} · ${pilotDay.sessions
-                .map((s) => s.aircraftId.toUpperCase())
+                .map((s) => fleet.find((a) => a.id === s.aircraftId)?.reg ?? '?')
                 .join(', ')}`
             : null
         }
@@ -1234,7 +1246,7 @@ export function ManualFlightScreen({
            odniesienia zostaje wyłącznie tam, gdzie szlaku nie ma - inaczej ta sama
            liczba stałaby w arkuszu dwa razy. */
         trail={fuelTrail}
-        rows={fuelChainRows.length > 0 ? [] : fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
+        rows={fuelChainRows.length > 0 ? [] : fuelSheetRows(sheet, chain, aircraft?.handover ?? null, codeOf)}
         /* Ostrzeżenie o WPISYWANEJ liczbie (uwaga z urządzenia, 2026-08-29): sufit
            zbiornika i rozjazd z sąsiadem w łańcuchu. Do tej pory jedno i drugie
            odzywało się dopiero na kroku 4 - czyli po zamknięciu arkusza, gdy liczby
@@ -1280,7 +1292,7 @@ export function ManualFlightScreen({
         rows={
           mhChainRows.length > 0
             ? []
-            : mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)
+            : mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null, codeOf)
         }
         /* Jak przy paliwie: cofnięty licznik i rozjazd z sąsiadem mówią przy polu,
            a nie dopiero w podsumowaniu kroku 4. */
@@ -1600,11 +1612,12 @@ function fuelSheetRows(
   sheet: { kind: string; which?: string } | null,
   chain: RemoteReadingsChain | null | undefined,
   handover: { reading: { fuelL: number } } | null,
+  codeOf: PilotCodeOf,
 ): { label: string; value: string }[] {
   if (sheet == null || sheet.kind !== 'fuel' || sheet.which === 'added') return [];
 
   const reference =
-    sheet.which === 'after' ? fuelAfterReference(chain) : fuelBeforeReference(chain);
+    sheet.which === 'after' ? fuelAfterReference(chain, codeOf) : fuelBeforeReference(chain, codeOf);
   if (reference != null) return [reference];
 
   // Bez łańcucha (offline, pierwszy lot maszyny, starszy serwer) zostaje to, co było.
@@ -1619,12 +1632,13 @@ function mhSheetRows(
   chain: RemoteReadingsChain | null | undefined,
   format: MhFormat,
   handover: { reading: { mh: number } } | null,
+  codeOf: PilotCodeOf,
 ): { label: string; value: string }[] {
   if (sheet == null || sheet.kind !== 'mh') return [];
   const which = sheet.which ?? 'before';
 
   const reference =
-    which === 'before' ? mhBeforeReference(chain, format) : mhAfterReference(chain, format);
+    which === 'before' ? mhBeforeReference(chain, format, codeOf) : mhAfterReference(chain, format, codeOf);
   if (reference != null) return [reference];
 
   return handover != null

@@ -60,6 +60,25 @@ describe('parsowanie koperty', () => {
     expect(toBooking(wire({ endsAt: '2026-09-19T06:00:00Z' }))).toBeNull();
   });
 
+  it('zlecenie za rezerwacją: fotele bez osoby każdemu, wskazanie zlecenia tylko prowadzącemu i adresatowi', () => {
+    // 4.0.0, `docs/zlecenia.md` §13.1: rezerwacja zlecenia ma pusty fotel (`pilotId: null`).
+    expect(toBooking(wire({ pilotId: null, order: { seeking: ['pic', 'dual'] } }))?.order).toEqual({
+      seeking: ['pic', 'dual'],
+      id: null,
+      createdBy: null,
+    });
+    expect(
+      toBooking(wire({ pilotId: null, order: { seeking: ['pic'], id: 'o1', createdBy: 'p9' } }))?.order,
+    ).toEqual({ seeking: ['pic'], id: 'o1', createdBy: 'p9' });
+    // Komplet załogi: lista pusta, fotele niosą nazwiska.
+    expect(toBooking(wire({ order: { seeking: [], id: 'o1', createdBy: 'p9' } }))?.order?.seeking).toEqual([]);
+  });
+
+  it('zwykła rezerwacja i serwer sprzed 4.0.0 nie mają zlecenia', () => {
+    expect(toBooking(wire({ order: null }))?.order).toBeNull();
+    expect(toBooking(wire())?.order).toBeNull();
+  });
+
   it('cała koperta: doby i zajętości przechodzą przez ten sam filtr', () => {
     const remote: RemoteCalendar = {
       timezone: 'Europe/Warsaw',

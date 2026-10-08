@@ -161,7 +161,7 @@ describe('buildRelease - który wariant i co wiemy', () => {
 describe('podpowiedzi pod odczytem końcowym', () => {
   it('paliwo: zużycie liczone z wartości WPISYWANEJ, bo projekcja go jeszcze nie zna', () => {
     expect(session().fuel.consumedL).toBeNull();
-    expect(finalFuelHint(session(), 62)).toBe('przy przejęciu 96 L · bez tankowania · zużyte 34 L');
+    expect(finalFuelHint(session(), 62)).toBe('przy rozpoczęciu 96 L · bez tankowania · zużyte 34 L');
   });
 
   it('paliwo: tankowanie wchodzi do bilansu', () => {
@@ -169,7 +169,7 @@ describe('podpowiedzi pod odczytem końcowym', () => {
       fuel: { startL: 96, addedL: 40, endL: null, consumedL: null, lastReadingL: 130 },
     });
 
-    expect(finalFuelHint(state, 100)).toBe('przy przejęciu 96 L · dolane 40 L · zużyte 36 L');
+    expect(finalFuelHint(state, 100)).toBe('przy rozpoczęciu 96 L · dolane 40 L · zużyte 36 L');
   });
 
   it('paliwo: przyrost mówi wprost, że coś się nie zgadza - zamiast ujemnego zużycia', () => {
@@ -179,7 +179,7 @@ describe('podpowiedzi pod odczytem końcowym', () => {
   it('motogodziny: Δ i czas bloku obok siebie - inwariant §4.5 do sprawdzenia wzrokiem', () => {
     // 1239.65 → 1241.15 to +1:30, dokładnie tyle, ile czas blokowy.
     expect(finalMhHint(session(), 1241.15)).toBe(
-      'format hh:mm · przy przejęciu 1239:39 · Δ +1:30 · blok 1:30',
+      'format hh:mm · przy rozpoczęciu 1239:39 · Δ +1:30 · blok 1:30',
     );
   });
 
@@ -187,7 +187,7 @@ describe('podpowiedzi pod odczytem końcowym', () => {
     const state = session({ mh: { start: null, end: null, deltaH: null } });
 
     expect(finalMhHint(state, 1241)).toBe(
-      'format hh:mm · brak odczytu przy przejęciu - wpisz z licznika',
+      'format hh:mm · brak odczytu przy rozpoczęciu - wpisz z licznika',
     );
   });
 
@@ -221,7 +221,7 @@ describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
 
   it('cofnięty licznik jest zatrzymany PRZED zapisem, a nie odrzucony po fakcie', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1200 })).toBe(
-      'Licznik nie może się cofnąć - przy przejęciu 1239:39.',
+      'Licznik nie może się cofnąć - przy rozpoczęciu 1239:39.',
     );
   });
 
@@ -231,7 +231,7 @@ describe('releaseBlocker - odczyt jest tu WYMAGANY (§3.6)', () => {
     const state = session({ legs: [leg('13:40', '15:10')] });
 
     expect(releaseBlocker(state, { fuelL: 62, mh: 1239 })).toBe(
-      'Licznik nie może się cofnąć - przy przejęciu 1239:39.',
+      'Licznik nie może się cofnąć - przy rozpoczęciu 1239:39.',
     );
     expect(releaseBlocker(state, { fuelL: 62, mh: 1242 })).toBeNull();
   });

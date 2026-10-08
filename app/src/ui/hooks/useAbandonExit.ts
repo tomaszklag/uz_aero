@@ -11,6 +11,10 @@
  * należy do formularza - preflight pyta o niepusty szkic, a stepper wpisu ręcznego
  * najpierw cofa krok i pyta dopiero z pierwszego. Ta różnica jest treścią obu ekranów,
  * nie wspólną mechaniką.
+ *
+ * Formularz, który ZAPISAŁ i wychodzi, też wychodzi przez hook (`proceed`), nigdy wprost
+ * przez `navigation` - inaczej bramka przechwyciłaby jego własne wyjście (`PROCEED_PHASE`;
+ * pilnuje tego strażnik w `architecture.test.ts`).
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -21,6 +25,7 @@ import {
   abandonGuards,
   abandonSheetMounted,
   nextAbandonPhase,
+  PROCEED_PHASE,
   type AbandonPhase,
 } from './abandonExit';
 
@@ -33,6 +38,16 @@ export interface UseAbandonExit {
   stay: () => void;
   /** Pilot potwierdził rezygnację - rusza sekwencja wyjścia. */
   leave: () => void;
+  /**
+   * Formularz SKOŃCZYŁ (zapisano) - wyjdź bez pytania, akcją podaną przez formularz.
+   *
+   * Wyjście po zapisie nie może iść wprost `navigation.replace`/`goBack`: bramka czyta
+   * stan z OSTATNIEGO renderu, a ten wciąż ma podniesioną bramkę (krok 2 albo 3) - więc
+   * przechwyciłaby własne wyjście formularza i cofnęła go o krok, choć zapis już się
+   * udał. Tu bramka opada najpierw, a akcja jedzie po re-renderze - ta sama kolejność,
+   * co po potwierdzonej rezygnacji.
+   */
+  proceed: (action: NavigationAction) => void;
 }
 
 /**
@@ -67,6 +82,13 @@ export function useAbandonExit(
     onLeave?.();
   }, [onLeave]);
 
+  // Bez arkusza nie ma okna do zamknięcia, więc faza `closing` jest zbędna - od razu
+  // faza, w której bramka już nie łapie, a akcja czeka na re-render (`PROCEED_PHASE`).
+  const proceed = useCallback((next: NavigationAction) => {
+    setAction(next);
+    setPhase(PROCEED_PHASE);
+  }, []);
+
   /*
    * Bramka opada z chwilą potwierdzenia (`abandonGuards`), więc zatrzymana akcja ma
    * już czym wyjechać. Warunek `when` liczy formularz - hook go tylko przepuszcza.
@@ -95,5 +117,5 @@ export function useAbandonExit(
     if (abandonDispatches(phase) && action != null) navigation.dispatch(action);
   }, [phase, action, navigation]);
 
-  return { sheetMounted: abandonSheetMounted(phase), ask, stay, leave };
+  return { sheetMounted: abandonSheetMounted(phase), ask, stay, leave, proceed };
 }

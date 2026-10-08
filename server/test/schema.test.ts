@@ -99,7 +99,9 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     [
       'bookings',
       // `reminded_at` na końcu - migracja 15 (obserwowanie samolotu): stempel „za godzinę".
-      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at'],
+      // `order_id` za nim - migracja 16 (zlecenia na lot): rezerwacja szukająca załogi.
+      // `closed_by` na końcu - migracja 17 (§12.9): kto odwołał albo odrzucił.
+      ['id', 'org_id', 'aircraft_id', 'kind', 'status', 'starts_at', 'ends_at', 'pilot_id', 'dual_id', 'operation', 'from_icao', 'to_icao', 'planned_air_min', 'planned_fuel_l', 'session_uuid', 'block_reason', 'note', 'created_by', 'created_at', 'updated_at', 'closed_at', 'close_reason', 'reminded_at', 'order_id', 'closed_by'],
     ],
     // Obserwowanie samolotu (migracja 15, issue #205): ZAMIAR osoby, bez statusu i bez
     // rodzajów - prawo do powiadomienia sprawdza się przy wysyłce, nie w wierszu.
@@ -123,6 +125,26 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     // Token push BEZ `org_id`: opisuje URZĄDZENIE osoby, a ta bywa w kilku klubach
     // naraz i przełącza je bez wylogowania. Klub niesie powiadomienie.
     ['push_tokens', ['token', 'session_id', 'pilot_id', 'created_at']],
+    // Zlecenia na lot (migracja 16, issue #245). Grupa to NAZWA i LISTA OSÓB, nic więcej;
+    // zlecenie trzyma fotele i sposób adresowania, a ZAŁOGA żyje w rezerwacji
+    // (`bookings.order_id`) - zlecenie jej nie powiela.
+    ['member_groups', ['id', 'org_id', 'name', 'created_by', 'created_at', 'updated_at']],
+    ['member_group_members', ['org_id', 'group_id', 'pilot_id']],
+    [
+      'flight_orders',
+      ['id', 'org_id', 'created_by', 'pic_seat', 'dual_seat', 'addressing', 'status', 'revision', 'audience_label', 'audience', 'edited_at', 'unfilled_warned_at', 'created_at', 'updated_at', 'closed_at', 'closed_by', 'close_reason'],
+    ],
+    // Adresat zapisany IMIENNIE przy wysłaniu; odpowiedź i odczyt należą do WERSJI.
+    [
+      'order_recipients',
+      ['org_id', 'order_id', 'pilot_id', 'seat', 'named_seat', 'direct', 'via_group_id', 'seen_at', 'seen_revision', 'last_seen_at', 'answer', 'answer_reason', 'answered_at', 'answered_revision', 'thread_id', 'removed_at', 'removed_by'],
+    ],
+    // Historia zmian zamiast dziennika akcji (pkt 40) - append-only, `actor_id` NULL = zegar.
+    ['order_changes', ['id', 'org_id', 'order_id', 'actor_id', 'kind', 'payload', 'created_at']],
+    // Wątki są OGÓLNE (temat = para rodzaj/identyfikator), piszą wyłącznie uczestnicy.
+    ['threads', ['id', 'org_id', 'subject_kind', 'subject_id', 'created_at']],
+    ['thread_participants', ['org_id', 'thread_id', 'pilot_id', 'last_read_at']],
+    ['thread_messages', ['id', 'org_id', 'thread_id', 'author_id', 'body', 'created_at']],
     // Tokeny linku „ustaw hasło": `kind`/`email`/`display_name` niosą rejestrację e-mailem
     // (osoba powstaje przy realizacji), `triggered_by` - który z czterech wyzwalaczy.
     [
@@ -209,12 +231,20 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'export_log',
       'exported_sheets',
       'flags',
+      'flight_orders',
       'login_sessions',
+      'member_group_members',
+      'member_groups',
       'membership_capabilities',
       'memberships',
       'notifications',
+      'order_changes',
+      'order_recipients',
       'refresh_tokens',
       'sessions',
+      'thread_messages',
+      'thread_participants',
+      'threads',
     ]);
   });
 
@@ -583,5 +613,201 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       const { rows } = await db.query(`SELECT 1 FROM push_tokens WHERE session_id = 'ses-w'`);
       expect(rows).toHaveLength(0);
     });
+  });
+
+  /**
+   * ZLECENIA NA LOT (migracja 16, issue #245) - co trzyma baza, a co zostaje domenie.
+   *
+   * Baza pilnuje KSZTAŁTU: rezerwacja bez pilota istnieje wyłącznie jako rezerwacja
+   * zlecenia, zlecenie ma szukany fotel i „ja" w jednym, jedno zlecenie trzyma jeden
+   * termin, a pary faktów adresata mają jedną obecność. Reguły zależne od MASZYNY albo
+   * od CZŁONKOSTWA (wymóg załogi 2-os., adresat spoza klubu) należą do domeny.
+   */
+  describe('zlecenia na lot: co trzyma baza (migracja 16)', () => {
+    let db: Awaited<ReturnType<typeof migrated>>;
+    let seq = 0;
+
+    beforeAll(async () => {
+      db = await migrated();
+      await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org-z', 'Klub Z', 'klub-z')`);
+      await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org-y', 'Klub Y', 'klub-y')`);
+      await db.query(`INSERT INTO pilots (id, name) VALUES ('plt-z', 'Adam Kowalski'), ('plt-y', 'Ewa Nowak')`);
+      await db.query(
+        `INSERT INTO aircraft (id, reg, type, capacity_l, mh_format, org_id)
+         VALUES ('ac-z', 'SP-ZZZ', 'C172', 200, 'decimal', 'org-z')`,
+      );
+    });
+
+    const order = (id: string, pic = 'sought', dual = 'none', addressing = 'per_seat', audienceKind = addressing) =>
+      db.query(
+        `INSERT INTO flight_orders (id, org_id, created_by, pic_seat, dual_seat, addressing, status, audience_label, audience)
+         VALUES ($1, 'org-z', 'plt-z', $2, $3, $4, 'open', 'dowódca: A. Kowalski', $5)`,
+        [id, pic, dual, addressing, JSON.stringify({ kind: audienceKind })],
+      );
+
+    // Każda rezerwacja w WŁASNEJ dobie - bloki rozdziela dzień, więc wykluczenie
+    // nakładania nie ma jak zmieszać przypadków z sąsiednich testów.
+    const booking = (orderId: string | null, pilotId: string | null) => {
+      const day = String(++seq).padStart(2, '0');
+      return db.query(
+        `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, pilot_id, operation, created_by, order_id)
+         VALUES (gen_random_uuid()::text, 'org-z', 'ac-z', 'flight', 'confirmed', $1, $2, $3, 'przelot', 'plt-z', $4)`,
+        [`2026-12-${day}T08:00:00Z`, `2026-12-${day}T09:00:00Z`, pilotId, orderId],
+      );
+    };
+
+    it('rezerwacja BEZ PILOTA istnieje wyłącznie jako rezerwacja zlecenia (poluzowany CHECK)', async () => {
+      await order('o-1');
+      await expect(booking('o-1', null)).resolves.toBeDefined();
+      // Poza zleceniem stara reguła stoi: lot bez pilota nie istnieje.
+      await expect(booking(null, null)).rejects.toThrow(/booking_flight_fields/);
+    });
+
+    it('JEDNO zlecenie trzyma JEDEN termin - druga rezerwacja tego samego zlecenia odbija', async () => {
+      await order('o-2');
+      await booking('o-2', null);
+      await expect(booking('o-2', null)).rejects.toThrow(/idx_bookings_order|duplicate key/);
+    });
+
+    it('wyłączenie z użytku nie może wskazywać zlecenia - zlecenie szuka załogi do LOTU', async () => {
+      await order('o-3');
+      await expect(
+        db.query(
+          `INSERT INTO bookings (id, org_id, aircraft_id, kind, status, starts_at, ends_at, block_reason, created_by, order_id)
+           VALUES (gen_random_uuid()::text, 'org-z', 'ac-z', 'block', 'confirmed', '2027-01-05T06:00:00Z', '2027-01-06T06:00:00Z', 'maintenance', 'plt-z', 'o-3')`,
+        ),
+      ).rejects.toThrow(/booking_order_is_flight/);
+    });
+
+    it('zlecenie BEZ SZUKANEGO FOTELA albo z „ja" w obu fotelach odbija (`order_seats`)', async () => {
+      await expect(order('o-4', 'self', 'none')).rejects.toThrow(/order_seats/);
+      await expect(order('o-5', 'self', 'self')).rejects.toThrow(/order_seats/);
+      // Instruktor → uczeń: dowódca „ja", drugi pilot szukany - przechodzi.
+      await expect(order('o-6', 'self', 'sought')).resolves.toBeDefined();
+      await expect(order('o-7', 'sought', 'sought')).resolves.toBeDefined();
+    });
+
+    it('sposób adresowania i definicja adresowania mówią to samo (`order_audience_kind`)', async () => {
+      await expect(order('o-10', 'sought', 'sought', 'shared', 'per_seat')).rejects.toThrow(/order_audience_kind/);
+      await expect(order('o-11', 'sought', 'sought', 'shared')).resolves.toBeDefined();
+    });
+
+    it('adresat: „imiennie" wymaga fotela, a wskazanie przy terminie do potwierdzenia - pustego', async () => {
+      await order('o-8', 'sought', 'sought');
+      const recipient = (pilot: string, seat: string | null, named: string | null, direct: boolean) =>
+        db.query(
+          `INSERT INTO order_recipients (org_id, order_id, pilot_id, seat, named_seat, direct)
+           VALUES ('org-z', 'o-8', $1, $2, $3, $4)`,
+          [pilot, seat, named, direct],
+        );
+      await expect(recipient('plt-y', null, null, true)).rejects.toThrow(/recipient_direct/);
+      await expect(recipient('plt-y', 'pic', 'dual', false)).rejects.toThrow(/recipient_named/);
+      // Termin do potwierdzenia: bez fotela, z fotelem wskazania imiennego (pkt 37).
+      await expect(recipient('plt-y', null, 'pic', false)).resolves.toBeDefined();
+    });
+
+    it('odpowiedź, odczyt i odebranie to PARY faktów - połowa pary nie wchodzi', async () => {
+      await order('o-9', 'sought', 'none');
+      await db.query(
+        `INSERT INTO order_recipients (org_id, order_id, pilot_id, seat) VALUES ('org-z', 'o-9', 'plt-y', 'pic')`,
+      );
+      const set = (sql: string) => db.query(`UPDATE order_recipients SET ${sql} WHERE order_id = 'o-9'`);
+      await expect(set(`answer = 'yes'`)).rejects.toThrow(/recipient_answer/);
+      await expect(set(`seen_at = now()`)).rejects.toThrow(/recipient_seen/);
+      await expect(set(`removed_at = now()`)).rejects.toThrow(/recipient_removed/);
+      await expect(set(`answer = 'yes', answered_at = now(), answered_revision = 1`)).resolves.toBeDefined();
+    });
+
+    it('nazwa grupy jest jedyna W KLUBIE bez względu na wielkość liter - drugi klub ma własną', async () => {
+      await db.query(
+        `INSERT INTO member_groups (id, org_id, name, created_by) VALUES ('g-1', 'org-z', 'Piloci An-2', 'plt-z')`,
+      );
+      await expect(
+        db.query(`INSERT INTO member_groups (id, org_id, name, created_by) VALUES ('g-2', 'org-z', 'piloci an-2', 'plt-z')`),
+      ).rejects.toThrow(/idx_member_groups_name|duplicate key/);
+      await expect(
+        db.query(`INSERT INTO member_groups (id, org_id, name, created_by) VALUES ('g-3', 'org-y', 'Piloci An-2', 'plt-y')`),
+      ).resolves.toBeDefined();
+    });
+
+    it('skasowanie grupy zabiera jej listę osób - wysłane zlecenia mają adresatów imiennie', async () => {
+      await db.query(
+        `INSERT INTO member_groups (id, org_id, name, created_by) VALUES ('g-4', 'org-z', 'Instruktorzy', 'plt-z')`,
+      );
+      await db.query(`INSERT INTO member_group_members (org_id, group_id, pilot_id) VALUES ('org-z', 'g-4', 'plt-y')`);
+      await db.query(`DELETE FROM member_groups WHERE id = 'g-4'`);
+      const { rows } = await db.query(`SELECT 1 FROM member_group_members WHERE group_id = 'g-4'`);
+      expect(rows).toHaveLength(0);
+    });
+
+    it('wiadomość w wątku ma od 1 do 2000 znaków', async () => {
+      await db.query(
+        `INSERT INTO threads (id, org_id, subject_kind, subject_id) VALUES ('t-1', 'org-z', 'order', 'o-9')`,
+      );
+      const message = (id: string, body: string) =>
+        db.query(
+          `INSERT INTO thread_messages (id, org_id, thread_id, author_id, body) VALUES ($1, 'org-z', 't-1', 'plt-z', $2)`,
+          [id, body],
+        );
+      await expect(message('m-1', '')).rejects.toThrow(/check/i);
+      await expect(message('m-2', 'x'.repeat(2001))).rejects.toThrow(/check/i);
+      await expect(message('m-3', 'Mogę dopiero o 14.')).resolves.toBeDefined();
+    });
+  });
+});
+
+/**
+ * UZUPEŁNIENIE „ZLECANIA LOTÓW" (migracja 16, pkt 24; `docs/uprawnienia.md` §12).
+ *
+ * Po członkostwie na każdy zestaw w brzmieniu SPRZED 4.0.0 plus jedno z własnym zbiorem:
+ * pozycję dostają WYŁĄCZNIE zbiory dokładnie równe Koordynatorowi lotów i kompletowi.
+ * Zbiór własny zostaje nietknięty, choć zawiera cały zestaw Koordynatora i jeszcze
+ * jedną pozycję - to jest przypadek, który „zawiera zestaw" przepuściłoby po cichu.
+ */
+describe('migracja 16 dopisuje „Zlecanie lotów" koordynatorom i administratorom', () => {
+  it('pozycję dostają wyłącznie zbiory DOKŁADNIE równe zestawowi albo kompletowi', async () => {
+    const pglite = newPglite();
+    const db = {
+      query: (text: string, params?: unknown[]) => pglite.query(text, params as never) as never,
+      exec: (sql: string) => pglite.exec(sql),
+    } as Queryable & { exec(sql: string): Promise<unknown> };
+    await migrate(db, MIGRATIONS.slice(0, 15));
+
+    const scopes: Record<string, string[]> = {
+      pilot: [],
+      approver: ['reservations.approve', 'fleet.watch'],
+      dispatcher: ['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch'],
+      tech: ['panel.access', 'fleet.manage', 'fleet.watch'],
+      admin: [
+        'panel.access', 'flags.resolve', 'events.correct', 'accounts.manage', 'fleet.manage',
+        'thresholds.manage', 'audit.read', 'maintenance.run', 'reservations.manage',
+        'reservations.approve', 'fleet.watch',
+      ],
+      custom: ['panel.access', 'reservations.manage', 'reservations.approve', 'fleet.watch', 'audit.read'],
+    };
+
+    await db.query(`INSERT INTO organizations (id, name, slug) VALUES ('org', 'Klub', 'klub')`);
+    let n = 0;
+    for (const [who, capabilities] of Object.entries(scopes)) {
+      n += 1;
+      await db.query(`INSERT INTO pilots (id, name) VALUES ($1, $1)`, [who]);
+      await db.query(
+        `INSERT INTO memberships (org_id, pilot_id, code, status, joined_via) VALUES ('org', $1, $2, 'active', 'code')`,
+        [who, `P${String(n).padStart(2, '0')}`],
+      );
+      for (const capability of capabilities) {
+        await db.query(
+          `INSERT INTO membership_capabilities (org_id, pilot_id, capability) VALUES ('org', $1, $2)`,
+          [who, capability],
+        );
+      }
+    }
+
+    await migrate(db);
+
+    const { rows } = await db.query<{ pilot_id: string }>(
+      `SELECT pilot_id FROM membership_capabilities WHERE capability = 'orders.create' ORDER BY pilot_id`,
+    );
+    expect(rows.map((r) => r.pilot_id)).toEqual(['admin', 'dispatcher']);
   });
 });

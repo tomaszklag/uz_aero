@@ -110,9 +110,9 @@ describe('przestawianie', () => {
 
 describe('szuflada kroku', () => {
   it('blokada w przycisku: bez nazwy, potem bez osób', () => {
-    expect(stepBlocker({ id: null, label: '  ', memberIds: ['jba'] })).toBe('wpisz nazwę kroku');
+    expect(stepBlocker({ id: null, label: '  ', memberIds: ['jba'] })).toBe('Wpisz nazwę kroku.');
     expect(stepBlocker({ id: null, label: 'Mechanik', memberIds: [] })).toBe(
-      'wskaż przynajmniej jedną osobę',
+      'Wskaż przynajmniej jedną osobę.',
     );
     expect(stepBlocker({ id: null, label: 'Mechanik', memberIds: ['jba'] })).toBeNull();
   });

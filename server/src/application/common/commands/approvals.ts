@@ -43,7 +43,8 @@ import type {
   NewApproval,
   Queryable,
 } from '../ports.ts';
-import type { Notifier } from '../notify/notifier.ts';
+import type { ClubSignals } from '../notify/clubSignals.ts';
+import type { Notifier, RecordedNotice } from '../notify/notifier.ts';
 import {
   approvalRequested,
   approvalWithdrawn,
@@ -125,8 +126,14 @@ export interface PathReconcile {
   confirmed: number;
   /** Sprawy, które czekają teraz na INNY krok - jego osoby dostały prośbę o zgodę. */
   moved: number;
-  /** Do budzika PO commicie - zostaje wołającemu, jak przy `recordPlan`. */
-  notices: NotificationDraft[];
+  /** Zapisane wiadomości do budzika PO commicie - zostają wołającemu, jak przy `recordPlan`. */
+  notices: RecordedNotice[];
+  /**
+   * Sprawy w toku, których karta się zmieniła - dla kanału klubu PO commicie. Ścieżka
+   * jest zawsze bieżąca (§11.2), więc jej zmiana przerysowuje kroki KAŻDEJ czekającej
+   * rezerwacji, nie tylko potwierdzonej albo przekierowanej.
+   */
+  touched: BookingRecord[];
 }
 
 export class ApprovalFlow {
@@ -137,6 +144,8 @@ export class ApprovalFlow {
     private readonly bookings: BookingsPort,
     private readonly notifier: Notifier,
     private readonly clock: Clock,
+    /** Kanał klubu (4.0.0): decyzja przerysowuje kartę rezerwacji i pasek w kalendarzu. */
+    private readonly signals: ClubSignals,
   ) {}
 
   /**
@@ -179,17 +188,17 @@ export class ApprovalFlow {
 
   /**
    * Zapis planu - W TEJ SAMEJ transakcji, co powstanie rezerwacji. Budzik (`wake`)
-   * zostaje wołającemu, bo idzie PO commicie.
+   * zostaje wołającemu, bo idzie PO commicie - z tym, co ten zapis oddał.
    */
   async recordPlan(
     tx: Queryable,
     orgId: string,
     bookingId: string,
     plan: ApprovalPlan,
-  ): Promise<void> {
+  ): Promise<RecordedNotice[]> {
     const at = this.clock.now();
     await this.approvals.insert(tx, orgId, bookingId, plan.selfApproved, at);
-    await this.notifier.record(tx, orgId, plan.notices, at);
+    return this.notifier.record(tx, orgId, plan.notices, at);
   }
 
   /**
@@ -210,11 +219,11 @@ export class ApprovalFlow {
     orgId: string,
     bookingId: string,
     plan: ApprovalPlan,
-  ): Promise<void> {
+  ): Promise<RecordedNotice[]> {
     const at = this.clock.now();
     await this.approvals.supersede(tx, orgId, bookingId, at);
     await this.approvals.insert(tx, orgId, bookingId, plan.selfApproved, at);
-    await this.notifier.record(tx, orgId, plan.notices, at);
+    return this.notifier.record(tx, orgId, plan.notices, at);
   }
 
   /**
@@ -246,11 +255,14 @@ export class ApprovalFlow {
     after: readonly ApprovalStep[],
   ): Promise<PathReconcile> {
     const at = this.clock.now();
-    const out: PathReconcile = { confirmed: 0, moved: 0, notices: [] };
+    const out = { confirmed: 0, moved: 0 };
+    const drafts: NotificationDraft[] = [];
+    const touched: BookingRecord[] = [];
 
     for (const booking of await this.bookings.pending(tx, orgId)) {
       const requester = booking.pilotId;
       if (requester == null) continue;
+      touched.push(booking);
       const had = await this.approvals.listFor(tx, orgId, booking.id);
       const wasAt = currentStep(before, had);
 
@@ -276,19 +288,18 @@ export class ApprovalFlow {
       const about = noticeOf(booking);
       if (outcome === 'confirmed') {
         if ((await this.bookings.confirm(tx, orgId, booking.id, at)) == null) continue;
-        out.notices.push(bookingApproved(about, requester));
+        drafts.push(bookingApproved(about, requester));
         out.confirmed += 1;
         continue;
       }
 
       const nowAt = currentStep(after, decisions);
       if (nowAt == null || nowAt.id === wasAt?.id) continue;
-      out.notices.push(...approvalRequested(about, pendingApprovers(after, decisions), nowAt));
+      drafts.push(...approvalRequested(about, pendingApprovers(after, decisions), nowAt));
       out.moved += 1;
     }
 
-    await this.notifier.record(tx, orgId, out.notices, at);
-    return out;
+    return { ...out, touched, notices: await this.notifier.record(tx, orgId, drafts, at) };
   }
 
   /**
@@ -303,13 +314,18 @@ export class ApprovalFlow {
    *
    * Wołający przekazuje wiersz SPRZED odwołania, bo to jego stan decyduje: rezerwacja
    * potwierdzona nikogo o nic nie pyta. Budzik (`wake`) zostaje wołającemu - po commicie.
+   *
+   * `alreadyTold` - osoby, które o TYM odwołaniu dostają już wiadomość w innej roli
+   * (fotel rezerwacji, `booking_cancelled`, §12.9). Drugi pilot stojący na kroku zgody
+   * dostaje jedną wiadomość o jednym fakcie - tę z powodem, nie dwie.
    */
   async withdraw(
     tx: Queryable,
     orgId: string,
     booking: BookingRecord,
     cancelledBy: string,
-  ): Promise<NotificationDraft[]> {
+    alreadyTold: readonly string[],
+  ): Promise<RecordedNotice[]> {
     if (booking.kind !== 'flight' || booking.status !== 'pending') return [];
 
     const path = await this.steps.path(tx, orgId);
@@ -317,10 +333,11 @@ export class ApprovalFlow {
     const step = currentStep(path, decisions);
     if (step == null) return [];
 
-    const to = pendingApprovers(path, decisions).filter((id) => id !== cancelledBy);
+    const to = pendingApprovers(path, decisions).filter(
+      (id) => id !== cancelledBy && !alreadyTold.includes(id),
+    );
     const notices = approvalWithdrawn(noticeOf(booking), to, step, cancelledBy);
-    await this.notifier.record(tx, orgId, notices, this.clock.now());
-    return notices;
+    return this.notifier.record(tx, orgId, notices, this.clock.now());
   }
 
   /**
@@ -437,7 +454,7 @@ export class ApprovalFlow {
 
     const at = this.clock.now();
     const written = await this.db.transaction(async (tx): Promise<
-      | { ok: true; row: BookingRecord; notices: NotificationDraft[] }
+      | { ok: true; row: BookingRecord; notices: RecordedNotice[] }
       | { ok: false; refusal: ApprovalRefusal | 'booking_closed' }
     > => {
       const locked = await this.bookings.lock(tx, orgId, bookingId);
@@ -498,19 +515,20 @@ export class ApprovalFlow {
                 // właściwym miejscem - inaczej niż przy zwolnieniu slotu i wygaśnięciu,
                 // gdzie nikt nic nie powiedział (§11.5).
                 reason: input.reason,
+                by: actor.pilotId,
               })
             : locked;
       // Pod blokadą wiersz jest `pending`, więc `confirm`/`close` zawsze coś oddają;
       // gałąź zostaje na wypadek zmiany tych zapytań.
       if (row == null) return { ok: false, refusal: 'booking_closed' };
 
-      await this.notifier.record(tx, orgId, notices, at);
-      return { ok: true, row, notices };
+      return { ok: true, row, notices: await this.notifier.record(tx, orgId, notices, at) };
     });
 
     if (!written.ok) return written;
 
     await this.notifier.wake(orgId, written.notices);
+    await this.signals.booking(orgId, written.row);
     return { ok: true, booking: written.row, view: await this.view(orgId, bookingId) };
   }
 }

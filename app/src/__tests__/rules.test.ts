@@ -362,6 +362,14 @@ describe('zamknięcie dnia', () => {
     expect(soft(v)).toEqual(['MH_DELTA_MISMATCH']);
   });
 
+  it('licznik przyrósł MNIEJ niż pracował silnik - bez ostrzeżenia (obrotomierz na ziemi)', () => {
+    // 2:22 pracy silnika, licznik +2:00: obrotomierz na niskich obrotach przyrasta wolniej
+    // niż zegar, więc to stan normalny, a nie rozjazd - ta sama reguła, co w trybie poprawek
+    // (`sessionInconsistencies`). Decyzja właściciela 2026-10-08.
+    const v = check(afterCycle(), dayClose({ finalReading: { fuelL: 112, mh: MH_START + 2 } }));
+    expect(codes(v)).toEqual([]);
+  });
+
   it('paliwo nie może wzrosnąć bez tankowania (twardo)', () => {
     const v = check(afterCycle(), dayClose({ finalReading: { fuelL: 200, mh: MH_END } }));
     expect(hard(v)).toContain('FUEL_INCREASE_WITHOUT_REFUEL');

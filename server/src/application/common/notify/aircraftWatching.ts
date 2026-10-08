@@ -22,7 +22,7 @@
 import type { AircraftConfigPort, AircraftWatchesPort, Queryable } from '../ports.ts';
 import type { WatchAudience } from './aircraftNotices.ts';
 import type { NotificationDraft } from './bookingNotices.ts';
-import type { Notifier } from './notifier.ts';
+import type { Notifier, RecordedNotice } from './notifier.ts';
 
 export class AircraftWatching {
   constructor(
@@ -49,18 +49,18 @@ export class AircraftWatching {
     return { pilotIds, reg };
   }
 
-  /** Wiersze skrzynki - w transakcji rzeczy, o której mówią. */
+  /** Wiersze skrzynki - w transakcji rzeczy, o której mówią; oddaje to, co zapisał. */
   record(
     tx: Queryable,
     orgId: string,
     drafts: readonly NotificationDraft[],
     at: Date,
-  ): Promise<void> {
+  ): Promise<RecordedNotice[]> {
     return this.notifier.record(tx, orgId, drafts, at);
   }
 
-  /** Budzik PO commicie; nigdy nie rzuca. */
-  wake(orgId: string, drafts: readonly NotificationDraft[]): Promise<void> {
-    return this.notifier.wake(orgId, drafts);
+  /** Rozdzielnik PO commicie (ramka albo push); nigdy nie rzuca. */
+  wake(orgId: string, notices: readonly RecordedNotice[]): Promise<void> {
+    return this.notifier.wake(orgId, notices);
   }
 }
