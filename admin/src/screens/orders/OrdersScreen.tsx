@@ -154,6 +154,7 @@ export function OrdersScreen() {
             rows={managedRows(list.data?.items ?? [], period, context)}
             openedId={id ?? null}
             past={period === 'past'}
+            canCreate={canCreate}
             onOpen={(href) => navigate(href)}
           />
         ) : (
@@ -325,8 +326,12 @@ interface TableProps<Row> {
   onOpen: (href: string) => void;
 }
 
-/** „Zlecone" - zlecenia oczami prowadzącego. */
-function ManagedTable({ rows, openedId, past, onOpen }: TableProps<ManagedRowVm>) {
+/**
+ * „Zlecone" - zlecenia oczami prowadzącego. `canCreate` rozstrzyga pusty stan: osoba,
+ * która prowadzi cudze zlecenia, ale sama ich nie wysyła, nie dostaje instrukcji
+ * wysyłania - przycisku „Nowe zlecenie" i tak nie ma.
+ */
+function ManagedTable({ rows, openedId, past, canCreate, onOpen }: TableProps<ManagedRowVm> & { canCreate: boolean }) {
   const columns: Column<ManagedRowVm>[] = [
     termColumn,
     aircraftColumn,
@@ -365,14 +370,20 @@ function ManagedTable({ rows, openedId, past, onOpen }: TableProps<ManagedRowVm>
     return past ? (
       <EmptyState
         icon={<OrdersIcon size={20} />}
-        title="Nic tu jeszcze nie minęło"
-        note="Zlecenie schodzi tutaj po swoim terminie i zostaje przez dwa tygodnie."
+        title="Brak minionych zleceń"
+        note="Zlecenia trafiają tutaj po swoim terminie i zostają przez dwa tygodnie."
+      />
+    ) : canCreate ? (
+      <EmptyState
+        icon={<OrdersIcon size={20} />}
+        title="Nie zlecasz jeszcze żadnego lotu"
+        note="Wskaż termin, maszynę i zadanie, a zlecenie trafi naraz do wybranych osób albo grup - odpowiedzi zobaczysz tutaj."
       />
     ) : (
       <EmptyState
         icon={<OrdersIcon size={20} />}
-        title="Nie zlecasz jeszcze żadnego lotu"
-        note="Wskaż termin, maszynę i zadanie, a zlecenie trafi do wybranych osób albo grup naraz - odpowiedzi zobaczysz tutaj."
+        title="Klub nie zleca teraz żadnego lotu"
+        note="Zlecenia lotów wysłane w klubie pojawią się tutaj."
       />
     );
   }
@@ -405,14 +416,14 @@ function InboxTable({ rows, openedId, past, onOpen }: TableProps<InboxRowVm>) {
     return past ? (
       <EmptyState
         icon={<OrdersIcon size={20} />}
-        title="Nic tu jeszcze nie minęło"
-        note="Zlecenie schodzi tutaj po swoim terminie i zostaje przez dwa tygodnie."
+        title="Brak minionych zleceń"
+        note="Zlecenia trafiają tutaj po swoim terminie i zostają przez dwa tygodnie."
       />
     ) : (
       <EmptyState
         icon={<OrdersIcon size={20} />}
         title="Nic nie czeka na Twoją odpowiedź"
-        note="Zlecenie lotu od klubu pojawi się tutaj i w skrzynce aplikacji."
+        note="Zlecenie lotu od klubu pojawi się tutaj i w powiadomieniach."
       />
     );
   }

@@ -49,13 +49,13 @@ describe('historia zmian zlecenia - słowa jak w telefonie', () => {
 
   it('adresaci: dwie osoby nazwiskami, więcej - liczbą', () => {
     expect(rows(entry('recipients_added', { pilotIds: ['eso', 'pli'] }))[0]!.verdict).toBe('Nowi adresaci · Ewa Sowa, Piotr Lis');
-    expect(rows(entry('recipients_removed', { pilotIds: ['eso', 'pli', 'akw'] }))[0]!.verdict).toBe('Zlecenie cofnięte · 3 osoby');
+    expect(rows(entry('recipients_removed', { pilotIds: ['eso', 'pli', 'akw'] }))[0]!.verdict).toBe('Usunięcie z adresatów · 3 osoby');
   });
 
   it('odwołanie jest wpisem niszczącym; wygaśnięcie robi zegar, bez nazwiska', () => {
     const [expired, cancelled] = rows(entry('cancelled', { reason: 'Serwis.' }), entry('expired', {}, null));
     expect(cancelled).toMatchObject({ verdict: 'Odwołanie', reason: 'Serwis.', void: true, who: 'Ty' });
-    expect(expired).toMatchObject({ verdict: 'Wygasło · początek terminu bez kompletu załogi', who: null, void: false });
+    expect(expired).toMatchObject({ verdict: 'Wygasło · bez kompletu załogi', who: null, void: false });
   });
 
   it('edycja: pary „było → jest" w stałej kolejności pól; termin z innej doby z datą', () => {

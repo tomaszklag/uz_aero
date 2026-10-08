@@ -58,8 +58,8 @@ const GRANTED_BY: Record<Capability, string> = {
   // Triaż zgłoszeń przeszedł do PLATFORMY przy issue #99 (C6): opis błędu niesie
   // kontekst okna razem z danymi operacji, a poprawia go jedna osoba dla całego
   // serwera - więc decyzja o cudzym zgłoszeniu nie należy do klubu.
-  'bugs.triage': 'superadministrator',
-  'platform.manage': 'superadministrator',
+  'bugs.triage': 'opiekun platformy',
+  'platform.manage': 'opiekun platformy',
 };
 
 /** Napis przy kłódce - kto tę zdolność nadaje. */

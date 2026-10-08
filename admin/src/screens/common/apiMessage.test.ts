@@ -51,8 +51,8 @@ describe('rozpoznanie odmowy', () => {
 describe('zdanie dla człowieka', () => {
   it('brak sieci i odpowiedź serwera to DWA różne zdania', () => {
     // `fetch` rzuca `TypeError` bez statusu - „kod 0" byłby wymysłem panelu.
-    expect(errorMessage(new TypeError('Failed to fetch'))).toContain('Nie ma połączenia');
-    expect(errorMessage(http(500, { error: 'oops' }))).not.toContain('Nie ma połączenia');
+    expect(errorMessage(new TypeError('Failed to fetch'))).toContain('Brak połączenia');
+    expect(errorMessage(http(500, { error: 'oops' }))).not.toContain('Brak połączenia');
   });
 
   it('401 prowadzi do logowania, a nie do „popraw pola"', () => {

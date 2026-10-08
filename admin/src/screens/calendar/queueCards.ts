@@ -145,7 +145,7 @@ export function queueCards(items: readonly ApprovalQueueItemDto[], opts: QueueOp
       const rows: QueueRow[] = [];
       const pilot = who(booking.pilotId, opts.person);
       rows.push({
-        label: 'Pilot',
+        label: 'Dowódca',
         value: pilot.value,
         sub: pilot.sub,
         subMono: true,
@@ -236,7 +236,7 @@ export function decisionHint(items: readonly ApprovalQueueItemDto[]): string {
   const steps = [...new Map(items.map((i) => [i.step.id, i.step])).values()];
   const step = steps.length === 1 ? steps[0]! : null;
   if (step == null) {
-    return 'Wystarczy Twoja zgoda - w każdym kroku rozstrzyga pierwsza osoba z listy. Po odmowie rezerwacja zostaje odrzucona, a termin wraca do puli.';
+    return 'Wystarczy Twoja zgoda - w każdym kroku rozstrzyga pierwsza osoba z listy. Po odmowie rezerwacja zostaje odrzucona, a termin się zwalnia.';
   }
   const zgoda =
     step.members <= 1
@@ -246,5 +246,5 @@ export function decisionHint(items: readonly ApprovalQueueItemDto[]): string {
     step.next == null
       ? 'Po zatwierdzeniu rezerwacja jest potwierdzona.'
       : `Po zatwierdzeniu rezerwacja idzie do kroku „${step.next}".`;
-  return `${zgoda} ${dalej} Po odmowie zostaje odrzucona, termin wraca do puli i nikt jej już nie ogląda.`;
+  return `${zgoda} ${dalej} Po odmowie zostaje odrzucona, termin się zwalnia i nikt jej już nie ogląda.`;
 }

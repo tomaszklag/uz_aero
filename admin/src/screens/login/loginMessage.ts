@@ -45,7 +45,7 @@ export function retryAfterText(seconds: number | undefined): string {
 export function loginMessage(error: unknown): LoginMessage {
   // Awaria sieci to nie odpowiedź serwera - `fetch` rzuca `TypeError`, statusu nie ma.
   if (!isHttpError(error)) {
-    return { tone: 'danger', text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
+    return { tone: 'danger', text: 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.' };
   }
 
   if (error.status === 401 && error.body.error === 'invalid_credentials') {
@@ -77,5 +77,5 @@ export function loginMessage(error: unknown): LoginMessage {
 
   // Kod zostaje w zdaniu, bo przy nieznanej awarii jest jedyną rzeczą, którą człowiek
   // może przekazać dalej - a „coś poszło nie tak" nie pomaga nikomu.
-  return { tone: 'danger', text: `Logowanie nie powiodło się (kod ${error.status}).` };
+  return { tone: 'danger', text: `Nie udało się zalogować - kod: ${error.status}.` };
 }

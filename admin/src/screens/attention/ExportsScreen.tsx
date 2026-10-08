@@ -42,7 +42,7 @@ import { ATTENTION, exportPath, exportsPath, flagPath, type ExportFilter } from 
 import { ExportDrawer } from './ExportDrawer';
 import { EXPORT_CHIPS, exportRow, exportsSubtitle, exportStateOfSlug, type ExportRow } from './exportRows';
 
-const HEADERS = ['Karta', 'Operacja', 'Stan', 'Rewizja', 'Wysłano', ''];
+const HEADERS = ['Karta', 'Operacja', 'Stan', 'Wersja', 'Wysłano', ''];
 const NO_FLAG = { resolved: false, kind: null };
 
 export function ExportsScreen() {
@@ -123,7 +123,7 @@ export function ExportsScreen() {
         </>
       ),
     },
-    { key: 'revision', header: 'Rewizja', align: 'num', render: (row) => row.revision },
+    { key: 'revision', header: 'Wersja', align: 'num', render: (row) => row.revision },
     { key: 'exportedAt', header: 'Wysłano', align: 'num', render: (row) => row.exportedAt },
     {
       key: 'actions',
@@ -182,7 +182,7 @@ export function ExportsScreen() {
             <EmptyState
               icon={<SheetIcon size={20} />}
               title={filter.state == null ? 'Nikt nie latał w tym zakresie' : 'Nic w tym zawężeniu'}
-              note={filter.state == null ? 'Zmień zakres dat.' : 'Zdejmij chip stanu albo zmień zakres dat.'}
+              note={filter.state == null ? 'Zmień zakres dat.' : 'Zdejmij filtr stanu albo zmień zakres dat.'}
             />
           )
         ) : (

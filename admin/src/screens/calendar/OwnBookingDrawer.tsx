@@ -281,7 +281,7 @@ export function OwnBookingDrawer({
 
           <Card title="Załoga">
             <div className="kv">
-              <span className="kv-k">Pilot</span>
+              <span className="kv-k">Dowódca</span>
               <span className="kv-v">
                 {viewer.name} {viewer.code == null ? null : <span className="cell-sub mono">{viewer.code}</span>}
               </span>

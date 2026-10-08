@@ -73,5 +73,5 @@ export function aircraftConflictMessage(field: ConflictField | null): string | n
   // unia odmowy jest wspólna dla całego panelu, więc odpowiadamy milczeniem zamiast
   // rzucania wyjątku w formularzu, który klient właśnie wypełnia.
   if (field !== 'reg') return null;
-  return 'Ten samolot już jest w rejestrze - sprawdź też wyłączone.';
+  return 'Ten samolot już jest we flocie - sprawdź też maszyny poza służbą.';
 }

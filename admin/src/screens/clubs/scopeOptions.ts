@@ -39,7 +39,7 @@ export function scopeOptions(scopes: PanelScopesDto): ScopeOption[] {
         {
           orgId: null,
           name: 'Organizacje',
-          desc: 'superadministrator · wszystkie kluby na serwerze',
+          desc: 'opiekun platformy · wszystkie kluby',
         },
       ]
     : [];

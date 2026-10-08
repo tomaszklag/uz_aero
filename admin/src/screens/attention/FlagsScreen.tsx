@@ -196,10 +196,10 @@ export function FlagsScreen() {
             }
             note={
               type != null
-                ? 'Zdejmij chip rodzaju, żeby zobaczyć pozostałe sprawy.'
+                ? 'Zdejmij filtr rodzaju, żeby zobaczyć pozostałe sprawy.'
                 : filter.resolved
                   ? 'Zamknięte sprawy pojawią się tu razem z notatką rozstrzygnięcia.'
-                  : 'Rozstrzygnięte sprawy są pod chipem „Rozstrzygnięte".'
+                  : 'Rozstrzygnięte sprawy są pod filtrem „Rozstrzygnięte".'
             }
           />
         ) : (

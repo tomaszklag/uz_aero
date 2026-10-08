@@ -393,7 +393,7 @@
          Odwołanie WYMAGA POWODU - administrator odwołuje CUDZY plan, a pilot czyta ten
          powód w aplikacji. To ta sama asymetria, co przy unieważnieniu operacji: w telefonie
          powód jest opcjonalny (wycofujesz własny wpis), w panelu wymagany. -->
-    <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+    <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
     <div class="drawer" role="dialog" aria-modal="true" aria-label="Rezerwacja SP-AXA">
 
       <div class="drawer-head">
@@ -409,7 +409,7 @@
       <div class="drawer-body">
         <section class="card">
           <h2 class="card-title">Rezerwacja</h2>
-          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Adam Kowalski <span class="cell-sub mono">AKO</span></span></div>
+          <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">Adam Kowalski <span class="cell-sub mono">AKO</span></span></div>
           <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Barbara Nowak <span class="cell-sub mono">BNO</span></span></div>
           <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
           <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPKK → EPRJ</span></div>
@@ -430,7 +430,7 @@
           <h2 class="card-title">Odwołanie rezerwacji</h2>
           <!-- Rezerwacje §12.9 (decyzja D1, 2026-10-06): wiadomość z powodem dostają OBA
                fotele. Bez drugiego pilota zdanie mówi o samym pilocie. -->
-          <p class="card-note">Pilot i drugi pilot dostaną wiadomość z powodem. Termin zwolni się natychmiast.</p>
+          <p class="card-note">Dowódca i drugi pilot dostaną wiadomość z powodem. Termin zwolni się natychmiast.</p>
           <label class="field">
             <span class="field-label">Powód</span>
             <input class="input" type="text" value="" placeholder="Np. przegląd przesunięty na piątek" />
@@ -533,7 +533,7 @@
       <div class="inv-demo">
         <section class="card">
           <h2 class="card-title">Ścieżka akceptacji <span class="spacer"></span><span class="pill dim">Odrzucona</span></h2>
-          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">przeszedł sam <span class="cell-sub">· rezerwujący jest na liście kroku</span></span></div>
+          <div class="kv"><span class="kv-k">1 · Mechanik</span><span class="kv-v">pominięty <span class="cell-sub">· osoba rezerwująca jest na liście kroku</span></span></div>
           <div class="kv"><span class="kv-k">2 · Szef wyszkolenia</span><span class="kv-v">odmowa · Marek Sowa <span class="cell-sub mono">MSO</span> <span class="cell-sub">· 24 WRZ 19:02</span><br><span class="cell-sub">Maszyna po przeglądzie dopiero w poniedziałek.</span></span></div>
           <div class="kv"><span class="kv-k">3 · Prezes</span><span class="kv-v"><span class="cell-sub">—</span></span></div>
         </section>
@@ -552,7 +552,7 @@
             <span class="field-label">Powód odmowy</span>
             <textarea class="input" rows="3" placeholder="Np. maszyna po przeglądzie dopiero w poniedziałek."></textarea>
           </label>
-          <p class="hint">Pilot zobaczy ten powód w telefonie. Odmowa jest ostateczna: rezerwacja zostaje odrzucona, a termin wraca do puli.</p>
+          <p class="hint">Pilot zobaczy ten powód w aplikacji. Odmowa jest ostateczna: rezerwacja zostaje odrzucona, a termin się zwalnia.</p>
           <div class="drawer-foot">
             <button type="button" class="btn ghost">Wróć</button>
             <button type="button" class="btn danger" disabled>Odmów</button>
@@ -606,7 +606,7 @@
       <div class="inv-demo">
         <section class="card">
           <h2 class="card-title">Rezerwacja</h2>
-          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Ty <span class="cell-sub">· Michał Wilk <span class="mono">MWI</span></span></span></div>
+          <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">Ty <span class="cell-sub">· Michał Wilk <span class="mono">MWI</span></span></span></div>
           <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">Barbara Nowak <span class="cell-sub mono">BNO</span></span></div>
           <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
           <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPZG → EPKK</span></div>
@@ -615,7 +615,7 @@
         </section>
         <section class="card">
           <h2 class="card-title">Zmiana terminu</h2>
-          <p class="card-note">Poprawka wraca do formularza z Twoim wpisem. Inna maszyna to nowa rezerwacja.</p>
+          <p class="card-note">Otworzy się formularz z Twoją rezerwacją. Zmiana maszyny zakłada nową rezerwację.</p>
           <a class="btn" href="kalendarz-rezerwacja.html#stany">Przesuń i popraw</a>
         </section>
         <!-- Rezerwacje §12.9 (decyzja D2, 2026-10-06): odwołanie zawiadamia osoby
@@ -648,7 +648,7 @@
         </section>
         <section class="card danger">
           <h2 class="card-title">Odwołanie rezerwacji</h2>
-          <p class="card-note">Osoby z kroku dostaną wiadomość, że prośba została wycofana.</p>
+          <p class="card-note">Osoby zatwierdzające dostaną wiadomość, że prośba została wycofana.</p>
           <button type="button" class="btn danger">Odwołaj rezerwację</button>
         </section>
       </div>
@@ -668,7 +668,7 @@
         </section>
         <section class="card">
           <h2 class="card-title">Co dalej</h2>
-          <p class="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
+          <p class="card-note">Termin się zwolnił. Zadanie i trasa przejdą do nowej rezerwacji.</p>
           <a class="btn" href="kalendarz-rezerwacja.html">Zarezerwuj inny termin</a>
         </section>
       </div>
@@ -738,7 +738,7 @@
               </section>
               <section class="card danger">
                 <h2 class="card-title">Odwołanie zlecenia</h2>
-                <p class="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+                <p class="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
                 <div class="field">
                   <div class="label-row"><label class="label" for="k2c-reason">Powód</label><span class="pill dim">opcjonalne</span></div>
                   <input class="input" id="k2c-reason" type="text" value="" placeholder="Np. prognoza - front od zachodu" />
@@ -816,7 +816,7 @@
             <div class="drawer-body">
               <section class="card">
                 <h2 class="card-title">Rezerwacja</h2>
-                <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Ty <span class="cell-sub">· Adam Kowalski <span class="mono">AKO</span></span></span></div>
+                <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">Ty <span class="cell-sub">· Adam Kowalski <span class="mono">AKO</span></span></span></div>
                 <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Przelot</span></div>
                 <div class="kv"><span class="kv-k">Trasa</span><span class="kv-v mono">EPKK → EPRJ</span></div>
                 <div class="kv"><span class="kv-k">Plan lotu</span><span class="kv-v">1:30 · paliwo 120 L</span></div>
@@ -825,7 +825,7 @@
               </section>
               <section class="card danger">
                 <h2 class="card-title">Rezygnacja z lotu</h2>
-                <p class="card-note">Fotel wróci do szukania, a Marta Zięba dostanie wiadomość. Termin zostaje zajęty.</p>
+                <p class="card-note">Fotel znów będzie do obsadzenia, a Marta Zięba dostanie wiadomość. Termin zostaje zajęty.</p>
                 <div class="field">
                   <div class="label-row"><label class="label" for="k2c-resign">Powód</label><span class="pill dim">opcjonalne</span></div>
                   <input class="input" id="k2c-resign" type="text" value="" placeholder="Np. w sobotę jednak nie dam rady" />
@@ -905,7 +905,7 @@
       <div class="inv-demo">
         <div class="card">
           <div class="card-title">Rezerwacja</div>
-          <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">Adam Kowalski <span class="cell-sub mono">AKO</span></span></div>
+          <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">Adam Kowalski <span class="cell-sub mono">AKO</span></span></div>
         </div>
       </div>
     </article>

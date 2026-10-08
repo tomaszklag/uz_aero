@@ -44,7 +44,7 @@ export function takenBanner(
 ): TakenBanner | null {
   if (bookingRefusal(error) !== 'slot_taken') return null;
   const taken: BookingDto | null = takenBooking(error);
-  if (taken == null) return { lead: 'Ten termin jest już zajęty.', body: `${ctx.reg} ma w tych godzinach inną zajętość.` };
+  if (taken == null) return { lead: 'Ten termin jest już zajęty.', body: `${ctx.reg} ma w tych godzinach inny wpis w kalendarzu.` };
 
   const hours = `${godzina(new Date(taken.startsAt), ctx.tz)} → ${godzina(new Date(taken.endsAt), ctx.tz)}`;
   if (taken.kind === 'block') {
@@ -75,11 +75,11 @@ export function takenBanner(
 
 /**
  * Zdanie pod krokiem przy każdej INNEJ odmowie. Zapis, który nie dojechał (awaria sieci),
- * mówi, czyją decyzją jest slot - a nie „coś poszło nie tak".
+ * mówi, dlaczego bez sieci nie ma rezerwacji - a nie „coś poszło nie tak".
  */
 export function ownRefusalMessage(error: unknown, tz: string, person: PersonLookup): string {
   if (!isHttpError(error)) {
-    return 'Nie ma połączenia z serwerem. Slot potwierdza serwer - spróbuj za chwilę, szkic zostaje.';
+    return 'Brak połączenia. Bez internetu nie da się sprawdzić, czy termin jest wolny - spróbuj za chwilę, szkic zostaje.';
   }
   return bookingErrorMessage(error, tz, person);
 }

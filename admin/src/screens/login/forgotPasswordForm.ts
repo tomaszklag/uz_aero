@@ -56,7 +56,7 @@ export const LINK_SENT: ForgotOutcome = {
 export function forgotOutcome(error: unknown): ForgotOutcome {
   if (error == null) return LINK_SENT;
   if (!isHttpError(error)) {
-    return { tone: 'danger', text: 'Nie ma połączenia z serwerem. Spróbuj za chwilę.' };
+    return { tone: 'danger', text: 'Brak połączenia. Sprawdź internet i spróbuj za chwilę.' };
   }
   return LINK_SENT;
 }

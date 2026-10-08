@@ -15,8 +15,8 @@ import { errorMessage } from '../common/apiMessage';
 
 const DECISION: Readonly<Record<ApprovalRefusalDto | 'booking_closed', string>> = {
   not_pending: 'Ta rezerwacja nie czeka już na decyzję - ktoś ją rozstrzygnął albo odwołał.',
-  not_your_step: 'To nie jest Twój krok - decyzję ma osoba z listy kroku bieżącego.',
-  reason_required: 'Podaj powód - pilot przeczyta go w telefonie.',
+  not_your_step: 'Tę rezerwację zatwierdza teraz ktoś inny.',
+  reason_required: 'Podaj powód - pilot zobaczy go w aplikacji.',
   booking_closed: 'Ktoś rozstrzygnął tę rezerwację przed chwilą. Odśwież kalendarz.',
 };
 

@@ -36,13 +36,13 @@ export interface OrganizationRow {
  * superadministrator ma coś do zrobienia (przypomnieć się), więc mockup nazywa go
  * wprost zamiast chować pod zielonym „Aktywny".
  *
- * „Aktywny" jest `green`, bo to stan w normie; „Administrator nie wszedł" bursztynem -
+ * „Aktywny" jest `green`, bo to stan w normie; „Czeka na pierwsze logowanie" bursztynem -
  * czekamy, nic się nie zepsuło; wyłączony `dim`, bo to nie jest awaria, tylko decyzja.
  */
 function status(organization: OrganizationListItemDto): { label: string; tone: PillTone } {
   if (!organization.active) return { label: 'Wyłączony', tone: 'dim' };
   if (organization.admins.length > 0 && organization.admins.every((a) => !a.signedIn)) {
-    return { label: 'Administrator nie wszedł', tone: 'amber' };
+    return { label: 'Czeka na pierwsze logowanie', tone: 'amber' };
   }
   return { label: 'Aktywny', tone: 'green' };
 }

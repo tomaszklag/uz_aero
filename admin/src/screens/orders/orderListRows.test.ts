@@ -386,7 +386,7 @@ describe('„Do mnie" - zlecenia oczami adresata (Adam Kowalski)', () => {
       ADAM,
     );
     expect(rows.map((r) => r.key)).toEqual(['B', 'R', 'D']);
-    expect(rows[1]).toMatchObject({ muted: true, pill: { text: 'Nieaktualne', tone: 'dim' }, pillSub: 'Zlecenie cofnięte' });
+    expect(rows[1]).toMatchObject({ muted: true, pill: { text: 'Nieaktualne', tone: 'dim' }, pillSub: 'Nie jest już do Ciebie' });
     // Fotel zniesiony wygląda jak obsadzony (decyzja 2026-10-06).
     expect(rows[2]!.pillSub).toBe('Fotel obsadzony');
   });

@@ -17,8 +17,8 @@ import type { ConflictField } from '../common/apiMessage';
 
 const REFUSALS: Record<PilotRefusalDto, string> = {
   self_deactivate: 'To Twoje członkostwo - nie możesz wyłączyć sobie dostępu.',
-  self_demote: 'To Twoje członkostwo - nie możesz odebrać sobie zdolności „Konta i kod klubu".',
-  last_admin: 'To jedyna aktywna osoba w klubie ze zdolnością „Konta i kod klubu", a bez niej nikt nie przyjmie nowych członków ani nie nada uprawnień. Nadaj ją komuś jeszcze.',
+  self_demote: 'To Twoje członkostwo - nie możesz odebrać sobie uprawnienia „Konta i kod klubu".',
+  last_admin: 'To jedyna aktywna osoba w klubie z uprawnieniem „Konta i kod klubu" - bez niej nikt nie przyjmie nowych członków ani nie nada uprawnień. Nadaj je komuś jeszcze.',
   inactive_account: 'Członkostwo jest wyłączone - najpierw je włącz.',
   self_delete: 'To Twoje członkostwo - nie możesz go usunąć.',
   account_active: 'Najpierw wyłącz członkostwo.',

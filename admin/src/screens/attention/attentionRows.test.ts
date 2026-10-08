@@ -143,7 +143,7 @@ describe('trzy karty', () => {
       to: '/do-sprawdzenia/rozjazdy/7',
       tone: 'red',
       title: 'Dwie operacje naraz · SP-KLM',
-      meta: 'B. Nowak trzyma maszynę od 6 WRZ 08:15 · M. Zięba: przejęcie 15:40, zdanie 16:10 · trzyma kartę 2026-09-06_SP-KLM poza arkuszem',
+      meta: 'B. Nowak trzyma maszynę od 6 WRZ 08:15 · M. Zięba: rozpoczęcie 15:40, zdanie 16:10 · trzyma kartę 2026-09-06_SP-KLM poza arkuszem',
       age: '1 dzień 2 h',
       old: true,
     });
@@ -169,7 +169,7 @@ describe('trzy karty', () => {
       to: '/dziennik/SP-KLM/s-1',
       tone: 'amber',
       title: 'SP-KLM/2026-09-06/BNO/1 · B. Nowak · samolot niezdany',
-      meta: 'przejęcie 6 WRZ 08:15 · silnik 08:40 → ? · ostatni zapis 6 WRZ 11:52 · zakończ w dzienniku',
+      meta: 'rozpoczęcie 6 WRZ 08:15 · silnik 08:40 → ? · ostatni zapis 6 WRZ 11:52 · zakończ w dzienniku',
       age: '1 dzień 9 h',
       old: true,
     });

@@ -112,8 +112,8 @@ export function ApprovalCard({ bookingId, view, person, timezone, canDecide }: P
                 />
               </div>
               <p className="hint">
-                Pilot zobaczy ten powód w telefonie. Odmowa jest ostateczna: rezerwacja zostaje
-                odrzucona, a termin wraca do puli.
+                Pilot zobaczy ten powód w aplikacji. Odmowa jest ostateczna: rezerwacja zostaje
+                odrzucona, a termin się zwalnia.
               </p>
               <div className="drawer-foot">
                 <Button variant="ghost" disabled={decide.isPending} onClick={() => setRefusing(false)}>
@@ -124,7 +124,7 @@ export function ApprovalCard({ bookingId, view, person, timezone, canDecide }: P
                   disabled={reason.trim() === '' || decide.isPending}
                   onClick={() => settle('rejected')}
                 >
-                  {decide.isPending ? 'Zapisuję…' : 'Odmów'}
+                  {decide.isPending ? 'Zapisywanie…' : 'Odmów'}
                 </Button>
               </div>
             </>
@@ -139,7 +139,7 @@ export function ApprovalCard({ bookingId, view, person, timezone, canDecide }: P
                   Odmów
                 </Button>
                 <Button variant="primary" disabled={decide.isPending} onClick={() => settle('approved')}>
-                  {decide.isPending ? 'Zapisuję…' : 'Zatwierdź'}
+                  {decide.isPending ? 'Zapisywanie…' : 'Zatwierdź'}
                 </Button>
               </div>
             </>

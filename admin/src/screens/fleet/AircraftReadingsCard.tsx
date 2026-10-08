@@ -54,10 +54,8 @@ export function AircraftReadingsCard({ aircraft, mhFormat }: AircraftReadingsCar
   return (
     <Card title="Poprawa odczytów">
       <p className="hint">
-        Nowy stan licznika, paliwa i oleju wpisany ręką administratora - nadrzędny wobec
-        ostatniego zdania, dopóki kolejne zdanie nie pokaże wyższego licznika. Pilot
-        zobaczy go przy przejęciu jako „odczyty wpisał administrator". Wpis zostaje
-        w dzienniku z komentarzem.
+        Wpisz aktualny stan z przyrządów - zastąpi ostatnie zdanie samolotu. Pilot zobaczy
+        go przy rozpoczęciu lotu z dopiskiem „odczyty wpisał administrator".
       </p>
 
       {done == null ? null : <Banner tone="ok">{done}</Banner>}
@@ -97,7 +95,7 @@ export function AircraftReadingsCard({ aircraft, mhFormat }: AircraftReadingsCar
             </Field>
           </div>
 
-          <Field htmlFor="reading-oil" label="Olej (L)" hint="Puste = stan oleju nieznany.">
+          <Field htmlFor="reading-oil" label="Olej (L)" hint="Zostaw puste, gdy stanu oleju nie znasz.">
             <TextInput
               id="reading-oil"
               mono

@@ -211,7 +211,7 @@ export function AccountScreen() {
                   disabled={!verdict.canSave || change.isPending}
                   onClick={save}
                 >
-                  {change.isPending ? 'Zapisuję…' : hasPassword ? 'Zapisz hasło' : 'Ustaw hasło'}
+                  {change.isPending ? 'Zapisywanie…' : hasPassword ? 'Zapisz hasło' : 'Ustaw hasło'}
                 </Button>
               </div>
             </Card>
@@ -252,14 +252,14 @@ export function AccountScreen() {
 }
 
 /**
- * „administrator w klubie Aeroklub Zielonogórski" albo „superadministrator".
+ * „administrator w klubie Aeroklub Zielonogórski" albo „opiekun platformy".
  *
  * Zakres stoi PRZED klubem, bo odpowiada na pierwsze pytanie tej strony: czym tu jestem.
  * Sesja platformowa nie ma klubu i nie ma go z czego wziąć - zostaje sama rola.
  */
 function scopeText(session: PanelSessionDto | null): string | null {
   if (session == null) return null;
-  if (session.org == null) return 'superadministrator';
+  if (session.org == null) return 'opiekun platformy';
   // Zakres, nie rola (epik #197): ten sam człowiek bywa technikiem w jednym klubie
   // i administratorem w drugim, a nazwa liczy się ze zbioru zdolności TEJ sesji.
   return `${scopeLabel(session.capabilities).toLowerCase()} w klubie ${session.org.name}`;

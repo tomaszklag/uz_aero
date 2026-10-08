@@ -118,7 +118,7 @@ function GroupForm({ group, directory, onClose }: { group: GroupDto | null; dire
             Anuluj
           </Button>
           <Button variant="primary" onClick={save} disabled={blocked || saving}>
-            {saving ? 'Zapisuję…' : group == null ? 'Utwórz grupę' : 'Zapisz'}
+            {saving ? 'Zapisywanie…' : group == null ? 'Utwórz grupę' : 'Zapisz'}
           </Button>
         </>
       }

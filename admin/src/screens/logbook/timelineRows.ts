@@ -25,7 +25,7 @@ import type { TimelineEntryDto } from '../../api/dto';
  * w rejestrze.
  */
 const NAMES: Record<EventType, string> = {
-  session_claim: 'Przejęcie',
+  session_claim: 'Rozpoczęcie',
   preflight_confirm: 'Zadanie',
   engine_start: 'Uruchomienie',
   engine_stop: 'Wyłączenie',

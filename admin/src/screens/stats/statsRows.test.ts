@@ -67,9 +67,9 @@ describe('podtytuł nazywa podstawę liczenia', () => {
     );
   });
 
-  it('operacja bez daty przejęcia (rejestr niekompletny) jest nazwana osobno', () => {
+  it('operacja bez daty rozpoczęcia (rejestr niekompletny) jest nazwana osobno', () => {
     expect(statsSubtitle(report({ openSessionsInRange: 0, openSessionsUndated: 1 }))).toContain(
-      '1 bez daty przejęcia',
+      '1 bez daty rozpoczęcia',
     );
   });
 });

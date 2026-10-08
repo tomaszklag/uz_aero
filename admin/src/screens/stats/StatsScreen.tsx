@@ -216,7 +216,7 @@ function AircraftTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per samolot"
+      caption="Nalot według samolotów"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.aircraftId}
@@ -252,7 +252,7 @@ function PilotTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per pilot"
+      caption="Nalot według pilotów"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.pilotId}
@@ -276,7 +276,7 @@ function OperationTable({ report }: { report: StatsReportDto }) {
 
   return (
     <DataTable
-      caption="Nalot per zadanie"
+      caption="Nalot według zadań"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.key}

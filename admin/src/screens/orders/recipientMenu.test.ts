@@ -81,15 +81,15 @@ const row = (over: Partial<LeaderRowVm>): LeaderRowVm => ({
 });
 
 describe('pozycje menu - tylko to, co dla wiersza możliwe', () => {
-  it('fotel imienny: „Zamień osobę" i „Odbierz zlecenie", najcięższa niżej', () => {
+  it('fotel imienny: „Zamień osobę" i „Usuń z adresatów", najcięższa niżej', () => {
     expect(rowMenu(row({})).map((e) => [e.label, e.danger, e.action])).toEqual([
       ['Zamień osobę', false, { kind: 'swap', pilotId: 'jwr', seat: 'pic' }],
-      ['Odbierz zlecenie', true, { kind: 'remove', pilotId: 'jwr' }],
+      ['Usuń z adresatów', true, { kind: 'remove', pilotId: 'jwr' }],
     ]);
   });
 
-  it('grupa i wspólna lista: samo „Odbierz zlecenie" - nie ma jednej osoby do podmiany', () => {
-    expect(rowMenu(row({ pilotId: 'eso', menu: { swapSeat: null } })).map((e) => e.label)).toEqual(['Odbierz zlecenie']);
+  it('grupa i wspólna lista: samo „Usuń z adresatów" - nie ma jednej osoby do podmiany', () => {
+    expect(rowMenu(row({ pilotId: 'eso', menu: { swapSeat: null } })).map((e) => e.label)).toEqual(['Usuń z adresatów']);
   });
 
   it('zlecenie zamknięte i wiersz zwinięty - bez „⋯"', () => {
@@ -107,10 +107,10 @@ describe('pozycje menu - tylko to, co dla wiersza możliwe', () => {
 describe('pytanie w miejscu wiersza - słowa z makiety', () => {
   it('odebranie zlecenia', () => {
     expect(confirmCopy({ kind: 'remove', pilotId: 'eso' }, 'Ewa Sowa')).toEqual({
-      question: 'Odebrać zlecenie: Ewa Sowa?',
-      hint: 'Dostanie wiadomość „Zlecenie nieaktualne". Rozmowa zostanie do odczytu.',
+      question: 'Usunąć z adresatów: Ewa Sowa?',
+      hint: 'Dostanie wiadomość „Zlecenie nie jest już do Ciebie". Rozmowa zostanie do odczytu.',
       placeholder: 'Np. fotel obsadzamy z innej grupy',
-      confirm: 'Odbierz zlecenie',
+      confirm: 'Usuń z adresatów',
     });
   });
 
@@ -118,7 +118,7 @@ describe('pytanie w miejscu wiersza - słowa z makiety', () => {
     const copy = confirmCopy({ kind: 'unassign', pilotId: 'akw', seat: 'dual' }, 'Anna Kowal');
     expect([copy.question, copy.hint, copy.confirm]).toEqual([
       'Cofnąć przydział: Anna Kowal?',
-      'Fotel drugiego pilota wróci do szukania, a Anna Kowal dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób dalej się liczą.',
+      'Fotel drugiego pilota znów będzie do obsadzenia, a Anna Kowal dostanie wiadomość „Przydział cofnięty". Zgłoszenia pozostałych osób nadal się liczą.',
       'Cofnij przydział',
     ]);
   });
@@ -159,18 +159,18 @@ describe('„Zamień na" - reguła telefonu', () => {
 
 describe('zdanie pod polami zamiany', () => {
   it('bez wyboru mówi o stronie wychodzącej', () => {
-    expect(swapHint('Jakub Wrona', null, 'pic')).toBe('Jakub Wrona dostanie wiadomość „Zlecenie nieaktualne".');
+    expect(swapHint('Jakub Wrona', null, 'pic')).toBe('Jakub Wrona dostanie wiadomość „Zlecenie nie jest już do Ciebie".');
   });
 
   it('z wyborem - co dostanie każda ze stron (makieta)', () => {
     expect(swapHint('Jakub Wrona', { name: 'Paweł Wilk', bothSeats: false }, 'pic')).toBe(
-      'Jakub Wrona dostanie wiadomość „Zlecenie nieaktualne", a Paweł Wilk - to zlecenie z propozycją fotela dowódcy.',
+      'Jakub Wrona dostanie wiadomość „Zlecenie nie jest już do Ciebie", a Paweł Wilk dostanie to zlecenie z propozycją fotela dowódcy.',
     );
   });
 
   it('osoba z listy drugiego fotela zostaje przy obu z terminem do potwierdzenia (pkt 37, 39)', () => {
     expect(swapHint('Jakub Wrona', { name: 'Anna Kowal', bothSeats: true }, 'pic')).toBe(
-      'Jakub Wrona dostanie wiadomość „Zlecenie nieaktualne". Anna Kowal ma już to zlecenie - zostanie przy obu fotelach z terminem do potwierdzenia.',
+      'Jakub Wrona dostanie wiadomość „Zlecenie nie jest już do Ciebie". Anna Kowal ma już to zlecenie - zostanie przy obu fotelach z terminem do potwierdzenia.',
     );
   });
 });

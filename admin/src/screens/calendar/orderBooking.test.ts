@@ -226,7 +226,7 @@ describe('adresat, okres i rezygnacja', () => {
 
   it('rezygnacja mówi, kto dostanie wiadomość i co z terminem', () => {
     expect(resignNote(booking({ pilotId: 'jwr' }), person)).toBe(
-      'Fotel wróci do szukania, a Marta Zięba dostanie wiadomość. Termin zostaje zajęty.',
+      'Fotel znów będzie do obsadzenia, a Marta Zięba dostanie wiadomość. Termin zostaje zajęty.',
     );
   });
 });

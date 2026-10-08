@@ -402,8 +402,8 @@ export function SettingsScreen({
                 <SkeletonRows rows={3} height={52} radius={12} gap={8} />
               ) : (
                 <AppText variant="mono" tone="amber" style={styles.watchOff}>
-                  Lista obserwowanych maszyn i jej przełączniki wymagają połączenia z serwerem -
-                  wróć tu z zasięgiem.
+                  Lista obserwowanych maszyn wymaga połączenia z internetem - wróć tu
+                  z zasięgiem.
                 </AppText>
               )
             ) : (

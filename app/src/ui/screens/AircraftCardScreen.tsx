@@ -321,7 +321,7 @@ export function AircraftCardScreen({
               </>
             ) : ops.data === null ? (
               <AppText variant="body" tone="muted" style={s.historyMissing}>
-                Historia tej maszyny nie dojechała - wróć na ten ekran z zasięgiem.
+                Nie udało się wczytać historii tej maszyny - wróć na ten ekran z zasięgiem.
               </AppText>
             ) : rows.length === 0 ? (
               <AppText variant="body" tone="muted" style={s.historyMissing}>

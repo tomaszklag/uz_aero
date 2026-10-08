@@ -3,12 +3,12 @@
  * ZL3, ZL3c; 4.0.0, epik Z-D #248).
  *
  * Treść liczy `leaderCard.ts`; ten plik ją rysuje i wysyła czynności: przydział („Wybierz",
- * „Na dowódcę"), menu ⋯ przy adresacie (zamiana osoby, odebranie zlecenia, cofnięcie
+ * „Na dowódcę"), menu ⋯ przy adresacie (zamiana osoby, usunięcie z adresatów, cofnięcie
  * przydziału - ZL3b), „Wyślij ponownie" i odwołanie. Każda oddaje świeżą kartę, a sygnał
  * `order:<id>` kanału klubu odświeża szufladę także po cudzych zmianach.
  *
  * ══ CZYNNOŚĆ Z MENU PYTA W MIEJSCU WIERSZA ══
- * Wybór z „⋯" niczego nie zapisuje: pod wierszem staje pytanie (odebranie, cofnięcie) albo
+ * Wybór z „⋯" niczego nie zapisuje: pod wierszem staje pytanie (usunięcie, cofnięcie) albo
  * formularz zamiany, ze skutkiem PRZED kliknięciem i opcjonalnym powodem. Otwarte jest
  * jedno naraz - kolejny wybór zastępuje poprzedni, a udany zapis je zamyka. Ta sama osoba
  * bywa przy dwóch fotelach (termin do potwierdzenia), więc pytanie przypina się do WIERSZA
@@ -181,7 +181,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
             {vm.resend?.note == null ? null : <span className="drawer-note">{vm.resend.note}</span>}
             {vm.resend == null ? null : (
               <Button variant="ghost" onClick={() => resend.mutate(undefined)} disabled={busy}>
-                {resend.isPending ? 'Wysyłam…' : 'Wyślij ponownie'}
+                {resend.isPending ? 'Wysyłanie…' : 'Wyślij ponownie'}
               </Button>
             )}
             <Button onClick={onEdit} disabled={busy}>
@@ -301,7 +301,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
 
       {!vm.cancellable ? null : (
         <Card title="Odwołanie zlecenia" tone="danger">
-          <p className="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+          <p className="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
           <Field htmlFor="order-cancel-reason" label="Powód" action={<span className="pill dim">opcjonalne</span>}>
             <TextInput
               id="order-cancel-reason"
@@ -315,7 +315,7 @@ export function LeaderDrawer({ card, orderId, viewerId, person, aircraft, member
             <p className="card-note danger">{orderErrorMessage(cancel.error, card.timezone, person)}</p>
           )}
           <Button variant="danger" onClick={() => cancel.mutate(reason.trim() === '' ? null : reason.trim())} disabled={busy}>
-            {cancel.isPending ? 'Odwołuję…' : 'Odwołaj zlecenie'}
+            {cancel.isPending ? 'Odwoływanie…' : 'Odwołaj zlecenie'}
           </Button>
         </Card>
       )}

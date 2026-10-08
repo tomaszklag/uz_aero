@@ -103,7 +103,7 @@ function verdictOf(kind: string, p: Json, ctx: HistoryContext): string {
     case 'recipients_added':
       return titled('Nowi adresaci', people(ids(p.pilotIds), ctx));
     case 'recipients_removed':
-      return titled('Zlecenie cofnięte', people(ids(p.pilotIds), ctx));
+      return titled('Usunięcie z adresatów', people(ids(p.pilotIds), ctx));
     case 'resent':
       return titled('Wysłano ponownie', resentDetail(ids(p.added).length, ids(p.reminded).length));
     case 'assigned': {
@@ -120,7 +120,7 @@ function verdictOf(kind: string, p: Json, ctx: HistoryContext): string {
     case 'cancelled':
       return 'Odwołanie';
     case 'expired':
-      return 'Wygasło · początek terminu bez kompletu załogi';
+      return 'Wygasło · bez kompletu załogi';
     default:
       return 'Zmiana';
   }

@@ -142,7 +142,7 @@ export function NotificationsScreen({
           <EmptyState
             tone="neutral"
             icon="bell"
-            title="NIC NIE PRZYSZŁO"
+            title="BRAK POWIADOMIEŃ"
             lines={[
               [
                 { text: 'Tu trafiają ' },

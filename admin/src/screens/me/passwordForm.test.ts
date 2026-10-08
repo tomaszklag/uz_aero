@@ -80,7 +80,7 @@ describe('odmowa serwera', () => {
   it('złe obecne hasło i limit prób mówią o sobie w banerze', () => {
     expect(passwordFailure(http(401, 'invalid_credentials')).banner).toContain('obecne hasło');
     expect(passwordFailure(http(429, 'too_many_attempts')).banner).toContain('Za dużo prób');
-    expect(passwordFailure(new TypeError('Failed to fetch')).banner).toContain('Nie ma połączenia');
+    expect(passwordFailure(new TypeError('Failed to fetch')).banner).toContain('Brak połączenia');
     expect(passwordFailure(http(500, 'boom')).banner).toContain('500');
   });
 });

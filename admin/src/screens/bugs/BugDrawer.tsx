@@ -153,7 +153,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
         <Field
           htmlFor="bug-note"
           label="Komentarz"
-          hint="Co ustalono - zostaje przy zgłoszeniu i w dzienniku akcji."
+          hint="Co ustalono - zostaje przy zgłoszeniu."
         >
           <textarea
             id="bug-note"
@@ -209,7 +209,7 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
             a kolejka jest wspólna dla całego serwera).
           */}
           <div className="kv">
-            <span className="kv-k">Przyjęte przez serwer</span>
+            <span className="kv-k">Odebrane</span>
             <span className="kv-v">{stamp(bug.receivedAt)}</span>
           </div>
           <div className="kv">

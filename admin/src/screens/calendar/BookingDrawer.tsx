@@ -315,7 +315,7 @@ export function BookingDrawer({
                 </p>
               ) : (
                 <p className="card-note">
-                  Poprawka wraca do formularza z Twoim wpisem. Inna maszyna to nowa rezerwacja.
+                  Otworzy się formularz z Twoją rezerwacją. Zmiana maszyny zakłada nową rezerwację.
                 </p>
               )}
               <Button onClick={() => onEdit(booking)}>Przesuń i popraw</Button>
@@ -323,7 +323,7 @@ export function BookingDrawer({
           )}
           {state === 'closed' ? (
             <Card title="Co dalej">
-              <p className="card-note">Termin wrócił do puli. Zadanie i trasa przejdą do nowej rezerwacji.</p>
+              <p className="card-note">Termin się zwolnił. Zadanie i trasa przejdą do nowej rezerwacji.</p>
               <Button onClick={() => onRebook(booking)}>Zarezerwuj inny termin</Button>
             </Card>
           ) : (
@@ -480,12 +480,11 @@ function CrewRows({
   fromOrder: boolean;
 }) {
   const sought = booking.order?.seeking ?? [];
-  const dualIsMe = viewerId != null && booking.dualId === viewerId;
   const label = (id: string | null) =>
     id != null && id === viewerId && own ? ownLabel(id, person) : personLabel(id, person);
   return (
     <>
-      <Row label={fromOrder && dualIsMe ? SEAT_LABEL.pic : 'Pilot'}>
+      <Row label={SEAT_LABEL.pic}>
         {booking.pilotId == null && sought.includes('pic') ? 'szukany' : label(booking.pilotId)}
       </Row>
       {booking.dualId == null ? (
@@ -530,7 +529,7 @@ function CancelOrderCard({
   const cancel = useCancelOrder(orderId);
   return (
     <Card title="Odwołanie zlecenia" tone="danger">
-      <p className="card-note">Termin wróci do puli, a adresaci bez odmowy dostaną wiadomość „Zlecenie odwołane".</p>
+      <p className="card-note">Termin się zwolni, a adresaci, którzy nie odmówili, dostaną wiadomość „Zlecenie odwołane".</p>
       <Field htmlFor="k2c-reason" label="Powód" action={<span className="pill dim">opcjonalne</span>}>
         <TextInput
           id="k2c-reason"
@@ -546,7 +545,7 @@ function CancelOrderCard({
         disabled={cancel.isPending}
         onClick={() => cancel.mutate(reason.trim() === '' ? null : reason.trim(), { onSuccess: onDone })}
       >
-        {cancel.isPending ? 'Odwołuję…' : 'Odwołaj zlecenie'}
+        {cancel.isPending ? 'Odwoływanie…' : 'Odwołaj zlecenie'}
       </Button>
     </Card>
   );
@@ -591,7 +590,7 @@ function ResignCard({
         disabled={withdraw.isPending}
         onClick={() => withdraw.mutate(reason.trim() === '' ? null : reason.trim(), { onSuccess: onDone })}
       >
-        {withdraw.isPending ? 'Rezygnuję…' : 'Rezygnuję'}
+        {withdraw.isPending ? 'Rezygnacja…' : 'Rezygnuję'}
       </Button>
     </Card>
   );

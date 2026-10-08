@@ -154,7 +154,7 @@ export function OrdersScreen({
             <EmptyState
               tone="neutral"
               icon="inbox"
-              title="NIC NIE PRZYSZŁO"
+              title="BRAK ZLECEŃ"
               lines={[
                 [
                   { text: 'Tu trafią ' },

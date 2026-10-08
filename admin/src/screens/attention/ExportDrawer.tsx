@@ -80,7 +80,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         }
       >
         {listPending ? null : (
-          <Banner tone="warn">Nie ma takiej operacji w bieżącym zakresie. Zmień zakres dat albo chip stanu.</Banner>
+          <Banner tone="warn">Nie ma takiej operacji w bieżącym zakresie. Zmień zakres dat albo filtr stanu.</Banner>
         )}
       </Drawer>
     );
@@ -140,7 +140,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
       {item.state === 'missing' ? (
         <Banner tone="danger">
           <b>Karta nie powstała.</b> Samolot zdano{item.closeTime == null ? '' : ` ${timeUtc(item.closeTime)} UTC`}, a eksport
-          się nie zapisał - w arkuszu nie ma tej doby. Ponów, żeby zbudować kartę jeszcze raz.
+          się nie zapisał - w arkuszu nie ma tego dnia. Ponów, żeby zbudować kartę jeszcze raz.
         </Banner>
       ) : null}
       {item.state === 'blocked' ? (
@@ -150,7 +150,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         </Banner>
       ) : null}
       {item.state === 'waiting' ? (
-        <Banner tone="status">Karta doby powstaje po zdaniu samolotu. Ta operacja jeszcze trwa.</Banner>
+        <Banner tone="status">Karta dnia powstaje po zdaniu samolotu. Ta operacja jeszcze trwa.</Banner>
       ) : null}
       {item.state === 'impossible' ? (
         <Banner tone="status">
@@ -161,9 +161,9 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
       ) : null}
       {item.overwrittenBy == null ? null : (
         <Banner tone="status">
-          Treść pod tą nazwą zapisała później operacja{' '}
+          Treść pod tą nazwą zapisała później{' '}
           <Link className="cell-link" to={sessionPath(item.reg ?? item.aircraftId, item.overwrittenBy.sessionUuid, EMPTY_RANGE)}>
-            {item.overwrittenBy.sessionUuid}
+            inna operacja
           </Link>{' '}
           ({stamp(item.overwrittenBy.exportedAt)}). Podgląd niżej pokazuje tamten zapis.
         </Banner>
@@ -222,7 +222,7 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
         <Card
           title={
             <>
-              Rewizje <span className="card-count">· {history.data.revisions.length}</span>
+              Wersje <span className="card-count">· {history.data.revisions.length}</span>
             </>
           }
         >

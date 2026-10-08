@@ -96,7 +96,7 @@ describe('wiersz skrzynki panelu', () => {
       input([item('booking_cancelled', { bookingId: 'b2', aircraftId: 'a2', ...TERM, pilotId: 'PLI', reason: null, cancelledBy: 'ghost' })]),
     );
     expect(own!.title).toBe('Rezerwacja odwołana');
-    expect(text(own!.text)).toBe('Termin wrócił do puli.');
+    expect(text(own!.text)).toBe('Termin się zwolnił.');
   });
 
   it('zdana maszyna: chwila z rejestru w UTC, blok i loty, odczyty w formacie licznika maszyny', () => {
@@ -218,7 +218,7 @@ describe('wiersz skrzynki panelu', () => {
   it('brak kompletu: brakujące fotele w dopełniaczu', () => {
     const [row] = inboxRows(input([item('order_unfilled', { aircraftId: 'a1', ...TERM, openSeats: ['dual'] })]));
     expect(text(row!.text)).toBe(
-      'Brakuje drugiego pilota. Z początkiem terminu zlecenie wygaśnie w całości, a termin wróci do puli.',
+      'Brakuje drugiego pilota. Jeśli do początku terminu nikt się nie znajdzie, zlecenie wygaśnie, a termin się zwolni.',
     );
   });
 

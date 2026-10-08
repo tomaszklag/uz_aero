@@ -44,7 +44,7 @@ describe('co ekran mówi po wysłaniu', () => {
   it('awaria SIECI i odmowa KSZTAŁTU danych są jedynymi stanami, w których to zdanie byłoby nieprawdą', () => {
     const offline = signUpOutcome(new TypeError('Failed to fetch'));
     expect(offline.tone).toBe('danger');
-    expect(offline.text).toContain('Nie ma połączenia');
+    expect(offline.text).toContain('Brak połączenia');
 
     // 400 mówi o polach, nie o koncie - „link już idzie" byłoby wtedy kłamstwem.
     const rejected = signUpOutcome(new HttpError(400, { error: 'bad_request' } as never));

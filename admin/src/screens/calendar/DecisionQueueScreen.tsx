@@ -171,8 +171,8 @@ export function DecisionQueueScreen() {
                       />
                     </div>
                     <p className="hint">
-                      Pilot zobaczy ten powód w telefonie. Odmowa jest ostateczna: rezerwacja
-                      zostaje odrzucona, a termin wraca do puli.
+                      Pilot zobaczy ten powód w aplikacji. Odmowa jest ostateczna: rezerwacja
+                      zostaje odrzucona, a termin się zwalnia.
                     </p>
                     <div className="drawer-foot">
                       <Button
@@ -190,7 +190,7 @@ export function DecisionQueueScreen() {
                         disabled={reason.trim() === '' || decide.isPending}
                         onClick={() => settle(card, 'rejected')}
                       >
-                        {decide.isPending ? 'Zapisuję…' : 'Odmów'}
+                        {decide.isPending ? 'Zapisywanie…' : 'Odmów'}
                       </Button>
                     </div>
                   </>

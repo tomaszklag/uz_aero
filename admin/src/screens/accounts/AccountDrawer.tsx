@@ -222,7 +222,7 @@ export function AccountDrawer({
               disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : 'Zapisz'}
+              {pending ? 'Zapisywanie…' : 'Zapisz'}
             </Button>
           </>
         )
@@ -350,7 +350,7 @@ export function AccountDrawer({
         <div className="access-row">
           <span className="cell-sub">{scopeSummary(draft.capabilities)}</span>
           <Button variant="ghost" size="sm" onClick={() => setScopeOpen(!scopeOpen)}>
-            {scopeOpen ? 'Ukryj zdolności' : 'Pokaż zdolności'}
+            {scopeOpen ? 'Ukryj uprawnienia' : 'Pokaż uprawnienia'}
           </Button>
         </div>
 
@@ -563,8 +563,8 @@ export function AccountDrawer({
             </Button>
           </div>
           <span className="hint">
-            Zdalne wylogowanie zatrzymuje wysyłkę z urządzenia; zapisy zostają na nim do
-            ponownego zalogowania. Sesje tej osoby w innych klubach bez zmian.
+            Wylogowane urządzenie przestaje wysyłać zapisy, ale ich nie traci - wyślą się po
+            ponownym zalogowaniu. W innych klubach ta osoba zostaje zalogowana.
           </span>
         </Card>
       )}

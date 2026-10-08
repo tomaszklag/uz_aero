@@ -164,7 +164,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
               disabled={pending || !verdict.complete || verdict.blocker != null || !changed}
               reason={verdict.blocker ?? undefined}
             >
-              {pending ? 'Zapisuję…' : creating ? 'Załóż klub' : 'Zapisz'}
+              {pending ? 'Zapisywanie…' : creating ? 'Załóż klub' : 'Zapisz'}
             </Button>
           )}
         </>
@@ -204,8 +204,8 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
           label="Adres"
           hint={
             creating
-              ? 'Podpowiedziany z nazwy. Po założeniu już się nie zmienia - stoi w adresach kart arkusza.'
-              : 'Stały od założenia - stoi w adresach kart arkusza.'
+              ? 'Podpowiedziany z nazwy. Po założeniu już się nie zmienia - jest częścią adresów kart dnia.'
+              : 'Stały od założenia - jest częścią adresów kart dnia.'
           }
         >
           <TextInput
@@ -253,7 +253,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
               normalizeIcao(draft.homeIcao) === (created.homeIcao ?? '') &&
               created.homeAirfieldName != null
                 ? created.homeAirfieldName
-                : 'Z jego współrzędnych liczy się doba lotna. Puste = kalendarz stoi na 06:00-21:00.'
+                : 'Z jego położenia kalendarz liczy wschód i zachód słońca. Bez lotniska pokazuje 06:00-21:00.'
             }
           >
             <TextInput
@@ -274,7 +274,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
           <Field
             htmlFor="org-tz"
             label="Strefa czasu"
-            hint="Godziny kalendarza i rezerwacji. Log operacji zostaje w UTC."
+            hint="Godziny kalendarza i rezerwacji. Dziennik operacji zostaje w UTC."
           >
             <select
               id="org-tz"
@@ -305,7 +305,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
               że będzie. Zapytanie o kod byłoby pytaniem o liczbę losową. */}
           <span className="hint">
             Wygeneruje się razem z klubem - przekaż go administratorowi razem z dostępem.
-            Nowe kody generuje potem on sam.
+            Kolejne kody wygeneruje już administrator w panelu klubu.
           </span>
         </Card>
       ) : (
@@ -329,7 +329,7 @@ export function OrganizationDrawer({ id, onClose }: OrganizationDrawerProps) {
           {creating ? null : (
             <Card title="Dostęp">
               <div className="access-row">
-                <span>Klub na serwerze</span>
+                <span>{created.active ? 'Klub działa' : 'Klub wyłączony'}</span>
                 {created.active ? (
                   <Button
                     variant="danger"
@@ -516,7 +516,7 @@ function AdminsCard({
   return (
     <Card
       title="Administratorzy"
-      actions={waiting ? <Pill tone="amber">Nie zalogował się</Pill> : undefined}
+      actions={waiting ? <Pill tone="amber">Bez logowania</Pill> : undefined}
     >
       {resend.error == null ? null : (
         <Banner tone="warn" live>
@@ -570,7 +570,7 @@ function AdminsCard({
       {!waiting ? null : (
         <span className="hint">
           Administrator wchodzi z linku w e-mailu - ustawia hasło i loguje się do panelu.
-          Adres można poprawić, dopóki nie wszedł.
+          Adres można poprawić do pierwszego logowania.
         </span>
       )}
     </Card>

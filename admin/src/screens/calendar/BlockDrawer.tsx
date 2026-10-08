@@ -112,7 +112,7 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
       sub={
         isBlock
           ? 'W wybranym czasie nikt nie zarezerwuje tej maszyny'
-          : 'Rezerwacja trafi do pilota jak jego własna'
+          : 'Pilot zobaczy ją w aplikacji jak własną rezerwację'
       }
       wide
       onClose={onClose}
@@ -188,7 +188,7 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
         </Card>
       ) : (
         <Card title="Kto i po co">
-          <Field htmlFor="cal-pilot" label="Pilot">
+          <Field htmlFor="cal-pilot" label="Dowódca">
             <select
               id="cal-pilot"
               className="input"
@@ -245,8 +245,8 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
             ))}
           <p className="card-note">
             {isBlock
-              ? 'Wyłączenie tego nie odwoła. Zdejmij to z kalendarza albo skróć zakres.'
-              : 'Ten termin jest zajęty. Wybierz inny albo zdejmij to, co tam stoi.'}
+              ? 'Wyłączenie nie odwoła tych terminów - odwołaj je w kalendarzu albo skróć zakres.'
+              : 'Ten termin jest zajęty. Wybierz inny albo najpierw odwołaj to, co tam stoi.'}
           </p>
         </Card>
       )}

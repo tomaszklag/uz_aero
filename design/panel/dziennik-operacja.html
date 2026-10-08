@@ -208,7 +208,7 @@
            Nazwy są polskie i te same, co w aplikacji pilota („Uruchomienie", nie
            „Start engine"). -->
       <div class="card">
-        <div class="card-title">Log zdarzeń</div>
+        <div class="card-title">Przebieg operacji</div>
         <div class="table-wrap plain">
           <table>
             <caption class="visually-hidden">Zdarzenia operacji</caption>
@@ -223,7 +223,7 @@
             <tbody>
               <tr>
                 <td class="num">08:31:06</td>
-                <td class="cell-strong">Przejęcie</td>
+                <td class="cell-strong">Rozpoczęcie</td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
               </tr>
@@ -326,7 +326,7 @@
                 </td>
                 <td class="cell-strong">
                   Lądowanie <a class="tag-corrected" href="dziennik-edycja.html#historia" title="Historia zmian">popr.</a>
-                  <span class="cell-sub">poprawił administrator · 7 WRZ 12:05</span>
+                  <span class="cell-sub">poprawka administratora · 7 WRZ 12:05</span>
                 </td>
                 <td><span class="cell-sub"></span></td>
                 <td><span class="cell-sub">auto</span></td>
@@ -407,7 +407,7 @@
              nazwisko - na oś PILOTA (`#/dziennik/pilot/AKO`). Tym „powiązaniem list"
              z zamówienia jest link w obie strony, nie trzecia lista. Link w treści
              komórki (`.cell-link`), nie przycisk: to jest przejście, nie akcja. -->
-        <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v"><a class="cell-link" href="dziennik-pilot.html">Adam Kowalski</a> <small>AKO</small></span></div>
+        <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v"><a class="cell-link" href="dziennik-pilot.html">Adam Kowalski</a> <small>AKO</small></span></div>
         <div class="kv"><span class="kv-k">Drugi pilot</span><span class="kv-v">—</span></div>
         <div class="kv"><span class="kv-k">Zadanie</span><span class="kv-v">Skoki</span></div>
         <div class="kv"><span class="kv-k">Klient</span><span class="kv-v">Strefa Spadochronowa Przylep</span></div>
@@ -642,8 +642,8 @@
       <div class="card">
         <div class="card-title">Unieważnienie wpisu</div>
         <p class="hint">
-          Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
-          zostaje razem z powodem - widać, że lot był i że go wycofano.
+          Wycofany wpis wypada z nalotu pilota, sum dziennika i karty dnia. Zostaje w dzienniku
+          razem z powodem - widać, że lot był i że go wycofano.
         </p>
         <div>
           <button type="button" class="btn danger sm">Unieważnij wpis</button>
@@ -704,8 +704,8 @@
         <div class="card">
           <div class="card-title">Unieważnienie wpisu</div>
           <p class="hint">
-            Wycofany wpis wypada z nalotu pilota, z sum dziennika i z karty arkusza. Sam zapis
-            zostaje razem z powodem - widać, że lot był i że go wycofano.
+            Wycofany wpis wypada z nalotu pilota, sum dziennika i karty dnia. Zostaje w dzienniku
+            razem z powodem - widać, że lot był i że go wycofano.
           </p>
           <div class="confirm">
             <p class="confirm-q">Unieważnić ten wpis?</p>
@@ -716,13 +716,13 @@
             <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKO/1</span></div>
             <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
             <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">08:42 → 11:04</span></div>
-            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">A. Kowalski</span></div>
+            <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">A. Kowalski</span></div>
             <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">6</span></div>
             <div class="kv"><span class="kv-k">Czas blokowy</span><span class="kv-v">2:22</span></div>
             <div class="field">
               <label class="label" for="void-reason">Powód</label>
               <input class="input" id="void-reason" value="" placeholder="np. wpis otwarty przez pomyłkę na tej maszynie">
-              <span class="hint">Zobaczy go pilot na telefonie; zostaje w dzienniku.</span>
+              <span class="hint">Pilot zobaczy go w aplikacji.</span>
             </div>
             <div class="confirm-actions">
               <button type="button" class="btn ghost sm">Anuluj</button>
@@ -771,7 +771,7 @@
             <div class="kv"><span class="kv-k">Operacja</span><span class="kv-v">SP-AXA/2026-09-06/AKW/1</span></div>
             <div class="kv"><span class="kv-k">Dzień</span><span class="kv-v">6 WRZEŚNIA</span></div>
             <div class="kv"><span class="kv-k">Silnik</span><span class="kv-v">13:10 → w toku</span></div>
-            <div class="kv"><span class="kv-k">Pilot</span><span class="kv-v">A. Kowal</span></div>
+            <div class="kv"><span class="kv-k">Dowódca</span><span class="kv-v">A. Kowal</span></div>
             <div class="kv"><span class="kv-k">Loty</span><span class="kv-v">1</span></div>
             <!-- Kreska, nie zero: operacja bez wyłączenia silnika nie ma czasu
                  blokowego, a `0:00` czytałoby się jak zmierzone zero. -->
@@ -780,7 +780,7 @@
             <div class="field">
               <label class="label" for="close-reason">Powód</label>
               <input class="input" id="close-reason" value="Telefon pilota padł w locie, maszyna stoi w hangarze.">
-              <span class="hint">Zobaczy go pilot na telefonie; zostaje w dzienniku.</span>
+              <span class="hint">Pilot zobaczy go w aplikacji.</span>
             </div>
 
             <span class="label">Co z wpisem</span>
@@ -795,7 +795,7 @@
               <button type="button" class="opt" role="radio" aria-checked="false">
                 <span class="opt-body">
                   <span class="opt-name">Zakończ i od razu unieważnij</span>
-                  <span class="opt-desc">Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty arkusza.</span>
+                  <span class="opt-desc">Wpis otwarty przez pomyłkę - wypada z nalotu, sum dziennika i karty dnia.</span>
                 </span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
@@ -832,12 +832,12 @@
         <span class="inv-mark">wpis wycofany - plakietka <b>red</b> + ten baner</span>
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Wpis wycofany - nie liczy się do nalotu pilota, do sum dziennika ani do karty arkusza. Powód stoi na osi zdarzeń.</span>
+          <span>Wpis wycofany - nie liczy się do nalotu pilota, sum dziennika ani karty dnia. Powód widać w przebiegu operacji.</span>
         </div>
         <span class="inv-mark">zakończona przez administratora - plakietka <b>amber</b> + ten baner</span>
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Operację zakończył administrator - bez odczytów końcowych. Liczy się do nalotu i sum dziennika, ale nie jest ogniwem przekazania: aktualny stan maszyny wpisuje się w karcie samolotu. Zaległe zapisy pilota do tej operacji telefon wstrzymuje. Powód stoi na osi zdarzeń.</span>
+          <span>Operację zakończył administrator, bez odczytów końcowych. Liczy się do nalotu i sum dziennika, a aktualny stan maszyny wpisuje się w karcie samolotu.</span>
         </div>
         <span class="inv-mark">odmowa reguł domeny po tapnięciu w „unieważnij" - ktoś wycofał ten wpis w drugim oknie</span>
         <div class="banner danger">
@@ -895,7 +895,7 @@
       </div>
       <div class="inv-demo">
         <div class="card">
-          <div class="card-title">Log zdarzeń</div>
+          <div class="card-title">Przebieg operacji</div>
           <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
           <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>
           <span class="skeleton cell" style="width:320px; margin-bottom:10px"></span>

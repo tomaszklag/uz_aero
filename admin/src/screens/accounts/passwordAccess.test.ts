@@ -67,7 +67,7 @@ describe('nieudana wysyłka', () => {
   });
 
   it('awaria sieci to inne zdanie niż odmowa serwera; nieznana odmowa niesie kod', () => {
-    expect(linkFailureText(new TypeError('Failed to fetch'))).toContain('Nie ma połączenia');
+    expect(linkFailureText(new TypeError('Failed to fetch'))).toContain('Brak połączenia');
     expect(linkFailureText(http(500, 'boom'))).toContain('500');
   });
 });

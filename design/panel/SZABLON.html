@@ -390,7 +390,7 @@
                nie ma wcale. -->
 
           <aside class="sidebar" aria-label="Rama superadministratora - przykład">
-            <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień zakres">
+            <a class="sidebar-context scope" href="00a-wybor-klubu.html" title="Zmień klub">
               <span class="context-mark" aria-hidden="true">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
               </span>
@@ -1047,7 +1047,7 @@
         <!-- `.drawer-demo` to pudełko WYŁĄCZNIE makiety: jego `transform` sprawia, że
              `position: fixed` szuflady przypina się do tego prostokąta. -->
         <div class="drawer-demo">
-          <button type="button" class="drawer-scrim" aria-label="Zamknij szufladę"></button>
+          <button type="button" class="drawer-scrim" aria-label="Zamknij"></button>
           <div class="drawer" role="dialog" aria-modal="true" aria-label="SP-AXA">
             <div class="drawer-head">
               <div>
@@ -1397,7 +1397,7 @@
     <article class="inv full">
       <div class="inv-head">
         <span class="inv-name">Wiersz adresata · menu adresata</span>
-        <span class="inv-when">Widok prowadzącego (<code>zlecenia-szczegoly</code>): kształt wiersza sesji - treść po lewej, akcje w stałej kolumnie po prawej. Status jest zdaniem BEZ PŁCI („Może lecieć", „Nie może", „Leci", „Odczytane 18:52"), kolor mają wyłącznie odpowiedzi, na które prowadzący czeka; bursztyn - to, co trzeba zauważyć przed wyborem (kolizja z inną rezerwacją tej osoby, zmiana nieodczytana). Ikona rozmowy i „⋯" ciche, jak ołówek osi; kropka = nieprzeczytana wiadomość. „Wybierz" (<code>.btn.ok.sm</code>) WYŁĄCZNIE przy „Może lecieć" w fotelu z grupy albo przy terminie do potwierdzenia - osoba z list obu foteli stoi wtedy przy KAŻDYM z nich z błękitnym dopiskiem, na który fotel może jeszcze trafić (<code>.rcp-status.blue</code>, decyzja 38). „⋯" stoi przy KAŻDYM adresacie, a menu ma tylko to, co dla wiersza możliwe - przy grupie samo „Odbierz zlecenie", przy fotelu imiennym dochodzi „Zamień osobę", przy osobie w fotelu jest samo „Cofnij przydział"; pozycji wyszarzonych nie ma, a skutek czynności pada w miejscu wiersza (<code>.confirm</code>).</span>
+        <span class="inv-when">Widok prowadzącego (<code>zlecenia-szczegoly</code>): kształt wiersza sesji - treść po lewej, akcje w stałej kolumnie po prawej. Status jest zdaniem BEZ PŁCI („Może lecieć", „Nie może", „Leci", „Odczytane 18:52"), kolor mają wyłącznie odpowiedzi, na które prowadzący czeka; bursztyn - to, co trzeba zauważyć przed wyborem (kolizja z inną rezerwacją tej osoby, zmiana nieodczytana). Ikona rozmowy i „⋯" ciche, jak ołówek osi; kropka = nieprzeczytana wiadomość. „Wybierz" (<code>.btn.ok.sm</code>) WYŁĄCZNIE przy „Może lecieć" w fotelu z grupy albo przy terminie do potwierdzenia - osoba z list obu foteli stoi wtedy przy KAŻDYM z nich z błękitnym dopiskiem, na który fotel może jeszcze trafić (<code>.rcp-status.blue</code>, decyzja 38). „⋯" stoi przy KAŻDYM adresacie, a menu ma tylko to, co dla wiersza możliwe - przy grupie samo „Usuń z adresatów", przy fotelu imiennym dochodzi „Zamień osobę", przy osobie w fotelu jest samo „Cofnij przydział"; pozycji wyszarzonych nie ma, a skutek czynności pada w miejscu wiersza (<code>.confirm</code>).</span>
         <span class="inv-classes"><b>.rcp-list</b> · <b>.rcp</b> · .rcp-body · .rcp-name · .rcp-code · <b>.rcp-status</b> · .rcp-status.ok · .rcp-status.no · .rcp-status.unread · .rcp-status.warn · .rcp-status.blue · .rcp-reason · .rcp-actions · <b>.rcp-icon</b> · .rcp-icon .dot · <b>.menu</b> · .menu-item · .menu-item.danger</span>
       </div>
       <div class="inv-demo">
@@ -1414,7 +1414,7 @@
                 <a class="btn ok sm" href="zlecenia-szczegoly.html#komplet">Wybierz</a>
                 <button type="button" class="rcp-icon" aria-label="Więcej · Anna Kowal" aria-haspopup="menu" aria-expanded="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
                 <span class="menu" role="menu" aria-label="Czynności · Anna Kowal">
-                  <a class="menu-item danger" role="menuitem" href="zlecenia-szczegoly.html#menu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="17" y1="11" x2="23" y2="11"/></svg>Odbierz zlecenie</a>
+                  <a class="menu-item danger" role="menuitem" href="zlecenia-szczegoly.html#menu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="17" y1="11" x2="23" y2="11"/></svg>Usuń z adresatów</a>
                 </span>
               </span>
             </div>

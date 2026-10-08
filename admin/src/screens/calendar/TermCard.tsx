@@ -184,7 +184,7 @@ export function TermCard({
         {track == null || dayAt == null ? null : (
           <div className="field">
             <span className="label">
-              Zajętość {reg} {onWeekday(dayAt, tz)}
+              Terminy {reg} {onWeekday(dayAt, tz)}
             </span>
             <div className="daytrack">
               <div className="daytrack-bar" role="img" aria-label={track.aria}>

@@ -90,8 +90,8 @@ export function WatchCard() {
         )}
       </Loadable>
       <span className="hint">
-        Zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach przychodzą na
-        telefon - w skrzynce aplikacji.
+        Zmiana zapisuje się od razu. Powiadomienia o obserwowanych maszynach zobaczysz
+        w aplikacji i pod dzwonkiem w panelu.
       </span>
     </Card>
   );

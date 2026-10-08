@@ -134,7 +134,7 @@ export function Drawer({ title, sub, footer, wide = false, actions, label, pinne
 
   return (
     <>
-      <button type="button" className="drawer-scrim" aria-label="Zamknij szufladę" onClick={onClose} />
+      <button type="button" className="drawer-scrim" aria-label="Zamknij" onClick={onClose} />
       <div
         ref={panel}
         className={wide ? 'drawer wide' : 'drawer'}

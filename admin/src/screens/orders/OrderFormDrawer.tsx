@@ -327,7 +327,7 @@ export function OrderFormDrawer({ aircraft, members, viewerId, person, timezone:
 
           <OptionButton
             multiple
-            name="Wspólna lista · fotele przydzielę po odpowiedziach"
+            name="Wspólna lista · fotele przydzielasz po odpowiedziach"
             desc="Adresaci potwierdzają termin, a Ty decydujesz, kto siedzi na którym fotelu."
             selected={draft.shared}
             // Poprawka sposobu adresowania nie zmienia - to nowe zlecenie przez „Powiel".
@@ -452,13 +452,13 @@ function SeatCard({ seat, draft, setDraft, machine, members, groups, ctx, viewer
             <div className="field-pair" role="radiogroup" aria-label={`Do kogo idzie fotel ${SEAT_GENITIVE[seat]}`}>
               <OptionButton
                 name="Osoba"
-                desc={'Imiennie - jej „Przyjmuję" od razu obsadza fotel'}
+                desc={'Imiennie - „Przyjmuję" od razu obsadza fotel'}
                 selected={address.mode === 'person'}
                 onSelect={() => setDraft((d) => withMode(d, seat, 'person'))}
               />
               <OptionButton
                 name="Grupa"
-                desc="Lub kilka osób - zbierasz zgłoszenia i wybierasz osobę"
+                desc="Albo kilka osób - zbierasz zgłoszenia i wybierasz jedną"
                 selected={address.mode === 'group'}
                 onSelect={() => setDraft((d) => withMode(d, seat, 'group'))}
               />

@@ -89,7 +89,7 @@ export function InboxDrawer({ onClose }: InboxDrawerProps) {
         {rows.length === 0 ? (
           <EmptyState
             icon={<BellIcon size={20} />}
-            title="Nic nie przyszło"
+            title="Brak powiadomień"
             note="Tu trafiają zlecenia lotów, decyzje o Twoich rezerwacjach i wiadomości o obserwowanych samolotach, a jeśli rozstrzygasz cudze rezerwacje - prośby o zgodę."
           />
         ) : (

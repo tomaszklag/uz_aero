@@ -179,16 +179,16 @@ export function ownStep2Blocker(draft: OwnDraft, dualRequired: boolean): Blocker
   return routeBlocker(draft) ?? (dualRequired && draft.dualId === '' ? 'incomplete' : planBlocker(draft));
 }
 
-/** Słowa podpisu planu - rezerwacja ma „slot", zlecenie „termin" (makieta ZL2a). */
+/** Słowa podpisu planu - różni je zdanie o planie dłuższym niż termin (makieta ZL2a). */
 export interface PlanWords {
   lead: string;
   overflow: string;
 }
 
-export const OWN_PLAN_WORDS: PlanWords = { lead: 'Slot', overflow: 'nie mieści się w rezerwacji' };
+export const OWN_PLAN_WORDS: PlanWords = { lead: 'Termin', overflow: 'nie mieści się w rezerwacji' };
 
 /**
- * Podpis pod planem lotu: „Slot 2 h · plan lotu 1:30 zostawia 30 min na obsługę".
+ * Podpis pod planem lotu: „Termin 2 h · plan lotu 1:30 zostawia 30 min na obsługę".
  * Plan dłuższy niż termin jest sprzecznością do zauważenia, nie blokadą - ton bursztynowy.
  */
 export function planNote(

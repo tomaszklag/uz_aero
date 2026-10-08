@@ -221,7 +221,7 @@ describe('ZL3d - nieaktualne: dlaczego, bez stopki', () => {
     expect(expired.pill).toEqual({ text: 'Wygasło', tone: 'dim' });
     expect(expired.outcome?.title).toBe('Zlecenie wygasło');
     const removed = vmOf(card(me({ inPlay: false, staleReason: 'removed', removed: true, removedAt: '2026-10-01T15:00:00Z', removeReason: 'Fotel obsadzamy z innej grupy.' })));
-    expect(removed.outcome).toEqual({ kind: 'removed', title: 'Zlecenie cofnięte', text: null, quote: '„Fotel obsadzamy z innej grupy."', meta: 'dziś 17:00' });
+    expect(removed.outcome).toEqual({ kind: 'removed', title: 'Zlecenie nie jest już do Ciebie', text: null, quote: '„Fotel obsadzamy z innej grupy."', meta: 'dziś 17:00' });
   });
 });
 

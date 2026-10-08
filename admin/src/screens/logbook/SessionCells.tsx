@@ -70,7 +70,7 @@ export function OperationCell({ row, asDualRow = false }: { row: SessionRow; asD
       {row.flags.map((flag) => (
         <span key={flag.id}>
           {' '}
-          <Link className="pill amber" to={flagPath(flag.id, NO_FLAG_FILTER)} title="Otwarty rozjazd - przejdź do skrzynki">
+          <Link className="pill amber" to={flagPath(flag.id, NO_FLAG_FILTER)} title="Otwarty rozjazd - przejdź do sprawy">
             {flag.label}
           </Link>
         </span>
