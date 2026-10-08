@@ -35,6 +35,10 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 ## W przygotowaniu
 
+## 4.0.0 (build 7) · 8 października 2026
+
+> Zlecenia lotów: koordynator albo instruktor pyta pilotów o lot w aplikacji i w panelu, zamiast dzwonić do każdego po kolei. Do tego wiadomości na żywo i prostszy język w całej aplikacji.
+
 ### Nowości
 
 - **Zlecenia lotów w aplikacji.** Koordynator albo instruktor wysyła zlecenie lotu - termin,
@@ -569,34 +573,55 @@ z każdym buildem. Aktualną wersję i numer builda podaje strona pobierania.
 
 <!-- Terminy są orientacyjne i zostają na stronie do potwierdzenia przez właściciela projektu. -->
 
-### 4.0.0 · planowane na koniec października 2026
-
-> Zlecenia lotów: koordynator pyta pilotów o lot w aplikacji, zamiast dzwonić do każdego po kolei.
-
-- [x] Zlecenie lotu z terminem i samolotem - termin od razu zajęty w kalendarzu
-- [x] Wysyłka do konkretnej osoby, do grupy albo do listy pilotów, na fotel dowódcy lub drugiego pilota
-- [x] Odpowiedź w aplikacji i w panelu; przy grupie zlecający wybiera spośród chętnych
-- [x] Rozmowa ze zlecającym przy każdym zleceniu, na żywo
-- [x] Zlecający widzi, kto już odczytał zlecenie
-- [x] Grupy pilotów w klubie
-- [x] Instruktor umawia lot z uczniem jednym zleceniem
-- [x] Wiadomości i zmiany na żywo: dzwonek i skrzynka w panelu, baner w aplikacji, ekrany odświeżają się same w telefonie i w panelu
-- [x] Prostszy język w aplikacji i w panelu, kokpit po polsku
-- [x] Podręcznik jako samouczek, ze stronami o zleceniach
-
 ### 5.0.0 · termin do ustalenia
 
 > Aplikacja w sklepie Google Play.
 
-- [ ] Publikacja u Google - instalacja ze sklepu i logowanie dowolnym kontem, bez listy testerów
-- [ ] Wymagane przez sklep: karta bezpieczeństwa danych i ścieżka usunięcia konta
+- [ ] Instalacja i aktualizacje ze sklepu Google Play
+- [ ] Logowanie dowolnym kontem Google
+- [ ] Karta bezpieczeństwa danych w sklepie i usunięcie konta z poziomu aplikacji
+
+### Układy na tablet
+
+> Ekrany ułożone pod szeroki ekran - na tabletach z Androidem i na iPadzie.
+
+- [ ] Własne układy aplikacji na tablet, w pionie i w poziomie
+- [ ] Najpierw na tabletach z Androidem
+
+### Aplikacja na iPhone
+
+> Ninerdeck w App Store - na iPhone i iPad.
+
+- [ ] Instalacja z App Store
+- [ ] Logowanie kontem Apple, Google albo e-mailem i hasłem
+- [ ] Zapis śladu lotu i powiadomienia także na iPhonie
+
+### Piloci i ważność dokumentów
+
+> Licencje, badania i uprawnienia pilotów z datami ważności - w panelu klubu i w aplikacji.
+
+### Samoloty i przeglądy
+
+> Przeglądy i terminy obsługi technicznej każdego samolotu floty.
+
+### Wyważanie samolotu
+
+> Masa i wyważenie samolotu przed lotem.
+
+### Program szkolenia
+
+> Program szkolenia w klubie: zadania ucznia i jego postęp.
+
+### Ogłoszenia w klubie
+
+> Komunikaty dla wszystkich członków klubu - w aplikacji i w panelu.
+
+### Grupy dyskusyjne
+
+> Rozmowy w grupach pilotów klubu.
 
 ### Dalej
 
-> Bez terminu: część z tego czeka na dane z testów z pilotami.
-
-- [ ] Poprawki zgłoszone przez pilotów w testach
 - [ ] Kalibracja normy paliwa i motogodzin na danych z prawdziwych lotów
 - [ ] Analityka oleju: zużycie między pomiarami i norma z lotów maszyny
 - [ ] Eksport karty dnia do arkusza Google klubu
-- [ ] Wdrożenie produkcyjne po sezonie testowym

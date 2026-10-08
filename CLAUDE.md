@@ -3503,10 +3503,11 @@ decyzję 5 z issue #97 („produkcja = migracja z backfillem"). Pełny zapis i k
 - **do rozstrzygnięcia po wygaszeniu starej instancji**: czy wyciąć backfill z migracji 8
   razem z imiennym wyjątkiem na `UPDATE` w `architecture.test.ts`
 
-## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 4.0.0 (decyzje 2026-09-15)
+## Nowa instancja dotyczy TEŻ APLIKACJI, Play schodzi do 5.0.0 (decyzje 2026-09-15)
 Rebranding stawiamy od zera po OBU stronach naraz - serwer i aplikacja. Rozstrzyga to
 pytanie „nowy projekt EAS czy przemianowanie obecnego" (#120 §5) i zdejmuje Play z drogi
-krytycznej 2.0.0.
+krytycznej 2.0.0. **Numer wydania ze sklepem przesunął się z 4.0.0 na 5.0.0**, kiedy
+4.0.0 dostały zlecenia na lot (#239) - punkty niżej mówią już o 5.0.0.
 - **nowy projekt EAS**, nie przemianowanie: własny `projectId`, własny adres aktualizacji
   i własne kanały `production`/`development`
 - **nowy pakiet** `com.ninerdeck.app` = osobna instalacja, osobne dane lokalne, osobna
@@ -3516,17 +3517,18 @@ krytycznej 2.0.0.
 - **2.0.0 NIE JEST aktualizacją niczego** - to pierwsze wydanie nowej linii. OTA z niej
   do telefonów z 1.1.0 nie dojdzie i nie ma dojść; stara linia (projekt EAS, pakiet,
   instancja, klient OAuth) dożywa równolegle do W4
-- **PUBLIKACJA W PLAY SCHODZI DO 4.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
+- **PUBLIKACJA W PLAY SCHODZI DO 5.0.0**: 2.0.0 rozchodzi się jak 1.1.0 - plikiem APK ze
   strony pobierania. Dzięki temu **R3 potrzebuje JEDNEGO odcisku SHA-1** (klucz EAS);
   drugi odcisk, Play App Signing, był jedyną pozycją wiążącą wydanie z kontem organizacji
   w Play i procedurą D-U-N-S (do 30 dni)
-- **„klient Android z dwoma SHA-1" będzie przy 4.0.0 ZMIANĄ W KODZIE, nie wpisem
+- **„klient Android z dwoma SHA-1" będzie przy 5.0.0 ZMIANĄ W KODZIE, nie wpisem
   w konsoli**: aplikacja woła `Google.useAuthRequest({ androidClientId })`, więc `aud`
   tokenu to identyfikator klienta ANDROID, a konsola wiąże jeden klient z jednym odciskiem.
   Klucz EAS i klucz Play dają dwa różne `aud`, a serwer przyjmuje dziś dokładnie jeden
-  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 4.0.0
+  (`mobile: string | null` w `GoogleIdTokens`). Do sprawdzenia i domknięcia przy 5.0.0
 
-- **WŁASNA DOMENA TEŻ SCHODZI DO 4.0.0** (ta sama decyzja): 2.0.0 stoi na adresie nadanym
+- **WŁASNA DOMENA MIAŁA ZEJŚĆ RAZEM ZE SKLEPEM** (ta sama decyzja; zrealizowana wcześniej,
+  w #124 - sekcja niżej, punkty tutaj są zapisem decyzji z 2026-09-15): 2.0.0 stoi na adresie nadanym
   przez Railway, a `ninerdeck.pl` (strona) i `app.ninerdeck.pl` (panel + API) przychodzą
   razem ze sklepem. `PUBLIC_BASE_URL`, `EXPO_PUBLIC_API_URL`, origin klienta Web i adres
   polityki w ekranie zgody wskazują do tego czasu adres Railway. **R2 wypada z drogi
@@ -3535,12 +3537,13 @@ krytycznej 2.0.0.
   ani domen, ani D-U-N-S, ani konta Play
 - **przeniesienie będzie OTA, nie nowym APK**: `EXPO_PUBLIC_API_URL` jest wkompilowany
   w bundle, a `eas update` buduje nowy bundle (krok 0 skilla `wydanie`)
-- **co przeniesienie zostawia otwarte do 4.0.0**: (1) luka CSP z docblocka `staticSite.ts` -
+- **co przeniesienie zostawiało otwarte**: (1) luka CSP z docblocka `staticSite.ts` -
   strona ma luźniejszą politykę niż panel WYŁĄCZNIE dlatego, że dzielą origin, a rozdział
   hostów był jej jedynym domknięciem; (2) **linki do kart arkusza zapisane w dzienniku
   eksportu niosą adres BEZWZGLĘDNY** (`dayExporter` zapisuje `sheetUrl` złożony
   z `PUBLIC_BASE_URL`), więc po zmianie domeny stary host musi odpowiadać albo linki trzeba
-  przepisać - rozstrzygnięcie należy do 4.0.0
+  przepisać. Oba rozstrzygnęło #124: rozdział hostów zamyka lukę CSP, a linków nie było
+  komu przepisywać (instancja bez użytkowników)
 
 ## Własna domena WYKONANA W KODZIE (issue #124, 2026-09-16, gałąź `feature-124-wlasna-domena`)
 Domena kupiona 2026-09-16, a hostowana instancja 2.0.0 nie miała jeszcze użytkowników -
@@ -5255,10 +5258,10 @@ makiety (Z-A) przed kodem, jak zawsze. Reguły, których nie wolno zgubić przy 
   a aplikacja w tle nie ma jak wyciszyć się sama (sekcja KK-C niżej)
 - **nowa zdolność `orders.create`** (Koordynator lotów + Administrator, backfill wg
   `docs/uprawnienia.md` §12); grupy klubu zmienia wyłącznie `accounts.manage`
-- **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - zapisy
-  „Play schodzi do 4.0.0" w sekcjach o sklepie i nowej instancji czytaj jako 5.0.0
-  (poprawka w Z-W). 3.2.0 wydane 27 września 2026 (PR #240), więc brama integracyjna jest
-  otwarta: `develop` niesie odtąd 4.0.0
+- **numeracja**: 4.0.0 = zlecenia (nowy APK); **Google Play przeszedł na 5.0.0** - sekcje
+  o sklepie i nowej instancji mówią już o 5.0.0 (poprawione w Z-W). 3.2.0 wydane
+  27 września 2026 (PR #240), więc brama integracyjna jest otwarta: `develop` niesie
+  odtąd 4.0.0
 
 ### Epik Z-A: makiety zleceń (issue #244, 2026-09-28, gałąź `feature-244-zlecenia-makiety`)
 Design-first przed kodem: telefon `20f`, `21e`, `23f`, `25d`, `28`–`28e`, `29`–`29b`,

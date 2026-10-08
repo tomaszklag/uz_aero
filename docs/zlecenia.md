@@ -1281,6 +1281,29 @@ i z niego, jak zawsze, nie buduje się APK ani nie wysyła aktualizacji w tle.
   a plan wydań w `docs/CHANGELOG.md` przestawia kamienie (4.0.0 zlecenia, 5.0.0 sklep).
 - Changelog: sekcja „W przygotowaniu" dostaje punkty z każdym PR-em Z-C/Z-D.
 
+**Przegląd bezpieczeństwa (Z-W, 2026-10-08) - bez znalezisk**, wzorzec §17/§19 rezerwacji.
+Sprawdzone w kodzie i pokryte testami, które przechodzą na gałęzi wydaniowej:
+
+- **izolacja klubów**: każda trasa zleceń, grup, rozmów i obu wejść kanału ma przypadek
+  w `tenantIsolation.test.ts` (lista z rejestru tras), a adaptery mówią `org_id` w każdej
+  metodzie (strażnik w `architecture.test.ts`); zlecenie i jego rezerwacja czytane osobno,
+  każde z klubem;
+- **kanał klubu**: panel - ścisłe `Origin` równe `PUBLIC_BASE_URL` PRZED przejściem na
+  WebSocket (ochrona przed przejęciem kanału ciasteczkiem z obcej strony), brama
+  `authorizeOrg`; telefon - token w pierwszej ramce, 5 s na `auth`, ta sama brama, co REST.
+  Ramka binarna, większa niż 4 KB albo za częsta zamyka połączenie; połączenie nie
+  przeżywa terminu tokenu; `LiveAccess` zamyka je przy wylogowaniu i wyłączeniu
+  członkostwa; rejestr wysyła ramkę wyłącznie połączeniom klubu `orgId`; CSP panelu
+  dopuszcza `wss:` tylko własnego hosta;
+- **prywatność rozmów i odczytów**: adresat widzi wyłącznie własną rozmowę, autor pisze,
+  gdy prowadzi zlecenie, `reservations.manage` tylko czyta, a jego odczyt nie zapala
+  „Odczytane"; cudza rozmowa to 404;
+- **kształty per widz**: adresat nie dostaje pól prowadzącego ani nic o innych adresatach;
+- **dwa przydziały naraz**: komendy blokują wiersz zlecenia (`flight_orders … FOR UPDATE`),
+  więc drugi przydział widzi stan pierwszego i dostaje „fotel już obsadzony";
+- **push bez treści**: dane budzika to rodzaj, klub i identyfikatory (`PUSH_DATA_KEYS`), treść
+  zostaje w skrzynce.
+
 ## 20. Ryzyka
 
 | # | Ryzyko | Co z nim robimy |

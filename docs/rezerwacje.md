@@ -1465,6 +1465,16 @@ z §4.1 dostaje przy tym trzecie pytanie - przypomnienie „za godzinę" ze stem
 `bookings.reminded_at` - a jego plik zmienia nazwę na mówiącą o trzech pytaniach.
 Przepis „nowy rodzaj powiadomienia": `docs/architektura-kodu.md` §7.
 
+**Zlecenia na lot (4.0.0) dokładają dwanaście rodzajów `order_*`** - tabela, adresaci
+i tytuły push: `docs/zlecenia.md` §12. Reguły tego rozdziału przechodzą na nie bez zmian
+(skrzynka źródłem prawdy, push z samymi identyfikatorami - `PUSH_DATA_KEYS` dostał
+`orderId` i `recipientId`, sprawca nie budzi sam siebie, rodzaj nieznany aplikacji trafia
+do skrzynki). Dochodzi jedno rozróżnienie: TREŚĆ dla skrzynki (trasa, fotel, początek
+wiadomości z rozmowy) jedzie w `payload`, ale do pusha nie trafia nic z niej. Zegar
+z §4.1 dostał przy tym czwarte pytanie - wygaszanie zlecenia bez kompletu załogi
+i ostrzeżenie w przeddzień (`orderClock.ts`, wołany z `BookingClockJob`). Odwołanie
+rezerwacji z osobami w fotelach (`booking_cancelled`) opisuje §12.9.
+
 ### 12.8 Kanał klubu: powiadomienie na żywo, push tylko bez połączenia (4.0.0, projekt 2026-09-28)
 
 Od 4.0.0 powiadomienia idą rozdzielnikiem **kanału klubu** (`docs/kanal-klubu.md`).
