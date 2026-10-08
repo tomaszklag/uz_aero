@@ -207,7 +207,8 @@ export function CrewChangeScreen({
             <CrewRow
               key={row.role}
               role={row.role}
-              pilotId={codeOf(row.pilotId)}
+              // Pilot spoza pamięci klubu dostaje kreskę - `null` znaczy tu „fotel pusty".
+              pilotId={row.pilotId == null ? null : (codeOf(row.pilotId) ?? '-')}
               you={row.pilotId === pilotId}
               metaTop={row.since != null ? `od ${timeUtc(row.since)}` : undefined}
               metaBottom={row.since != null ? `block: ${duration(row.blockMs)}` : undefined}

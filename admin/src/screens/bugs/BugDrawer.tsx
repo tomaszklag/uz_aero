@@ -97,7 +97,8 @@ export function BugDrawer({ uuid, reports, listPending, onClose }: BugDrawerProp
   return (
     <Drawer
       wide
-      title={`Zgłoszenie · ${bug.pilotCode ?? bug.pilotId}`}
+      // Pilot spoza klubu nie ma kodu - tytuł mówi to słowami, nie identyfikatorem osoby.
+      title={`Zgłoszenie · ${bug.pilotCode ?? 'pilot spoza klubu'}`}
       // KLUB pierwszy w podtytule (issue #99 C6): kod pilota w tytule jest jedyny
       // W KLUBIE, więc `AKO` bez nazwy klubu może być dwiema różnymi osobami.
       sub={

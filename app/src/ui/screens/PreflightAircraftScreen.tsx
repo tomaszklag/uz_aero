@@ -71,6 +71,7 @@ import { useSkeleton } from '../hooks/useSkeleton';
 import { useCalendar } from '../hooks/useCalendar';
 import { useMinuteTicker } from '../hooks/useMinuteTicker';
 import { claimConflict } from './logic/claimConflict';
+import { leadPilot } from './logic/cockpitPeek';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dualRequirementBlocker } from './logic/dualRequirement';
 import { timeUtc } from '../format';
@@ -206,6 +207,8 @@ export function PreflightAircraftScreen({
       fleet.map((a) => {
         const grounded = a.serviceStatus === 'disabled';
         const claimed = a.claimPicId != null && a.claimPicId !== pilotId;
+        // Kod z pamięci klubu - `claimPicId` to identyfikator osoby (od 2.0.0 długi ciąg znaków).
+        const holder = pilots.find((p) => p.id === a.claimPicId)?.code ?? null;
 
         return {
           value: a.id,
@@ -218,17 +221,13 @@ export function PreflightAircraftScreen({
           // Sama informacja „kto" bez „od kiedy" nie pozwala ocenić, czy tamten dzień
           // jeszcze trwa - stąd godzina blokady w tej samej linii.
           peek: claimed,
-          note: claimed
-            ? a.claimSince != null
-              ? `Prowadzi PIC: ${a.claimPicId} · od ${timeUtc(a.claimSince)}`
-              : `Prowadzi PIC: ${a.claimPicId}`
-            : undefined,
+          note: claimed ? `Prowadzi ${leadPilot(holder, a.claimSince)}` : undefined,
           disabledReason: grounded ? 'Wyłączony ze służby' : undefined,
           // Powód niesie już czerwony tag - druga linia byłaby powtórzeniem.
           disabledTagged: grounded,
         };
       }),
-    [fleet, pilotId],
+    [fleet, pilotId, pilots],
   );
 
   // Pilot zalogowany nie może być jednocześnie Dualem - filtrujemy go z listy.
@@ -440,7 +439,7 @@ export function PreflightAircraftScreen({
               ? [
                   {
                     label: 'Drugi pilot',
-                    value: pilots.find((p) => p.id === draft.dualId)?.name ?? draft.dualId,
+                    value: pilots.find((p) => p.id === draft.dualId)?.name ?? '-',
                   },
                 ]
               : []),

@@ -10,9 +10,18 @@
 import { fuelChainTrail, mhChainTrail } from '../ui/screens/logic/readingsTrail';
 import type { RemoteReadingsChain, RemoteReadingsChainLink } from '../application';
 
+
+/**
+ * Serwer podaje IDENTYFIKATORY osób (od 2.0.0 długie ciągi znaków), a kod pilota bierze się
+ * z pamięci klubu na telefonie. Do 4.0.0 rozpiska pisała identyfikator wielkimi literami
+ * (przegląd treści 2026-10-08).
+ */
+const CODES: Record<string, string> = { 'p-bno': 'BNO', 'p-jkw': 'JKW', 'p-ako': 'AKO' };
+const codeOf = (id: string): string | null => CODES[id] ?? null;
+
 const before: RemoteReadingsChainLink = {
   sessionUuid: 'rano',
-  picId: 'bno',
+  picId: 'p-bno',
   at: Date.UTC(2026, 7, 16, 9, 0),
   fuelL: 140,
   mh: 1232.4,
@@ -20,7 +29,7 @@ const before: RemoteReadingsChainLink = {
 
 const after: RemoteReadingsChainLink = {
   sessionUuid: 'wieczor',
-  picId: 'ako',
+  picId: 'p-ako',
   at: Date.UTC(2026, 7, 16, 17, 30),
   fuelL: 96,
   mh: 1234.9,
@@ -30,7 +39,7 @@ const chain: RemoteReadingsChain = { before, after, oil: null };
 
 describe('szlak paliwa', () => {
   it('pole „zastane" opowiada o POPRZEDNIM locie', () => {
-    const rows = fuelChainTrail(chain, 'found');
+    const rows = fuelChainTrail(chain, 'found', codeOf);
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.title).toContain('Poprzedni lot');
@@ -39,7 +48,7 @@ describe('szlak paliwa', () => {
   });
 
   it('pole „po locie" opowiada o NASTĘPNYM locie', () => {
-    const rows = fuelChainTrail(chain, 'after');
+    const rows = fuelChainTrail(chain, 'after', codeOf);
 
     expect(rows[0]!.title).toContain('Następny lot');
     expect(rows[0]!.title).toContain('AKO');

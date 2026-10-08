@@ -46,6 +46,11 @@ export interface ManualFlightWarningContext {
   mhFormat: 'decimal' | 'hhmm' | null;
   /** Kiedy rekord samolotu pobrano z serwera - adnotacja wieku (§4.8). */
   fetchedAt: number | null;
+  /**
+   * Znak rejestracyjny maszyny z pamięci floty - do zdania o kolizji z inną operacją.
+   * Do 4.0.0 stał tam identyfikator maszyny wielkimi literami (przegląd 2026-10-08).
+   */
+  regOf?: (aircraftId: string) => string | null;
 }
 
 /**
@@ -75,7 +80,7 @@ export function manualFlightWarnings(
         warnings.push({
           id: 'session-overlap',
           text:
-            `Czasy zachodzą na Twoją OPERACJĘ ${s.index} na ${s.aircraftId.toUpperCase()} ` +
+            `Czasy zachodzą na Twoją OPERACJĘ ${s.index} na ${ctx.regOf?.(s.aircraftId) ?? 'innej maszynie'} ` +
             `(${timeUtc(s.startedAt)} → ${s.stoppedAt != null ? timeUtc(s.stoppedAt) : '…'}). ` +
             'Jeden pilot nie leci dwiema maszynami naraz.',
         });

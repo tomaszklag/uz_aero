@@ -73,6 +73,7 @@ import {
   type OrderRowVm,
 } from './orderBooking';
 import { ownBookingState } from './ownBookingForm';
+import { sessionPath } from '../logbook/logbookPaths';
 
 interface Props {
   booking: BookingDto;
@@ -80,6 +81,8 @@ interface Props {
   timezone: string;
   person: PersonLookup;
   canManage: boolean;
+  /** „Podgląd klubu" - operacja z karty „Realizacja" otwiera się w dzienniku. */
+  canSeeLog: boolean;
   /** Zalogowany - jego rezerwacja dostaje widok własny (K2b). */
   viewerId: string | null;
   /** Flota klubu - znak i typ maszyny do skrótu zlecenia (K2c). */
@@ -97,6 +100,7 @@ export function BookingDrawer({
   timezone,
   person,
   canManage,
+  canSeeLog,
   viewerId,
   aircraft,
   onEdit,
@@ -271,8 +275,16 @@ export function BookingDrawer({
               note="Po zdaniu samolotu stanie tu operacja z dziennika."
             />
           ) : (
+            // Operacja jako DRZWI do dziennika, nie identyfikator - do 4.0.0 stał tu surowy
+            // uuid (przegląd treści 2026-10-08). Bez „Podglądu klubu" dziennika nie ma.
             <Row label="Operacja">
-              <span className="mono">{booking.sessionUuid}</span>
+              {canSeeLog ? (
+                <Link className="cell-link" to={sessionPath(reg, booking.sessionUuid, { from: '', to: '' })}>
+                  Pokaż w dzienniku
+                </Link>
+              ) : (
+                'zapisana w dzienniku klubu'
+              )}
             </Row>
           )}
         </Card>

@@ -128,7 +128,7 @@ export function HistoryScreen({
           size="md"
           // Znacznik strefy stoi TUTAJ, bo cała lista jest w UTC - wiersz z godzinami
           // nie powtarza go przy każdej operacji.
-          subtitle={`${pilotCode ?? pilotId} · CZASY UTC`}
+          subtitle={pilotCode == null ? 'CZASY UTC' : `${pilotCode} · CZASY UTC`}
           right={<SyncChip />}
         />
       }

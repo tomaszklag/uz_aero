@@ -77,7 +77,11 @@ describe('wiersz monitora', () => {
 
   it('wpis unieważniony nie ma sygnatury - ma stan', () => {
     const row = exportRow(item({ state: 'impossible', sessionStatus: 'voided', signature: null }), NOW, 24 * HOUR);
-    expect(row).toMatchObject({ operation: 'wpis unieważniony', stateLabel: 'Unieważniona', voided: true, action: null });
+    expect(row).toMatchObject({ operation: 'wpis unieważniony', stateLabel: 'Poza kartą', stateNote: null, voided: true, action: null });
+    // Ten sam stan bez unieważnienia - operacja bez godziny rozpoczęcia. Plakietka nie
+    // mówi „Unieważniona", bo nikt jej nie unieważniał (przegląd treści 2026-10-08).
+    const noStart = exportRow(item({ state: 'impossible', sessionStatus: 'closed', claimedAt: null }), NOW, 24 * HOUR);
+    expect(noStart).toMatchObject({ stateLabel: 'Poza kartą', stateNote: 'bez godziny rozpoczęcia' });
   });
 });
 

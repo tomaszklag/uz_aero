@@ -26,7 +26,8 @@ import { Sheet } from './Sheet';
 export interface LeaveCockpitSheetProps {
   visible: boolean;
   /** Rejestracja trzymanej maszyny - tytuł mówi wprost, o co chodzi. */
-  aircraftId: string;
+  /** Znak rejestracyjny z pamięci floty - nigdy identyfikator maszyny. */
+  reg: string;
   /** Godzina przejęcia („09:11 UTC") albo `null`, gdy strumień jej nie zna. */
   since: string | null;
   /** Liczba LOTÓW sesji - ile pracy jest już w tej sesji zapisane. */
@@ -39,7 +40,7 @@ export interface LeaveCockpitSheetProps {
 
 export function LeaveCockpitSheet({
   visible,
-  aircraftId,
+  reg,
   since,
   flightCount,
   onStay,
@@ -48,18 +49,16 @@ export function LeaveCockpitSheet({
   return (
     <Sheet
       visible={visible}
-      title={`TRZYMASZ ${aircraftId}`}
+      title={`TRZYMASZ ${reg}`}
       rows={[
         // Godzinę pomijamy, gdy jej nie znamy, zamiast pokazywać „-": wiersz odniesienia
         // ma przypominać kontekst sesji, a kreska niczego nie przypomina.
         ...(since != null ? [{ label: 'W Twoich rękach od', value: since }] : []),
         { label: 'Zapisane w tej operacji', value: flightsLine(flightCount) },
       ]}
-      warning={
-        'Dopóki maszyna jest przejęta, ekranem pracy jest kokpit - „Mój dzień" otworzy się ' +
-        'po jej oddaniu. Zdanie samolotu to odczyt liczników i przekazanie następnemu ' +
-        'pilotowi; Twój dzień biegnie dalej - kolejna maszyna dopisze się do listy operacji.'
-      }
+      // „Mój dzień" nie istnieje od 3.0.0 (jest Pulpit), a zdanie o liście operacji
+      // opisywało budowę aplikacji (przegląd treści 2026-10-08).
+      warning="Samolot jest w Twoich rękach - kokpit opuścisz, zdając go odczytami liczników."
       warningTone="amber"
       confirmLabel="ZDAJ SAMOLOT"
       confirmTone="red"

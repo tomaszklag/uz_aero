@@ -16,7 +16,9 @@
 
 import {
   LIVE_MAX_AGE_MS,
+  leadPilot,
   peekBanner,
+  peekFacts,
   peekFreshness,
   peekLogTitle,
   peekStatusChip,
@@ -151,6 +153,27 @@ describe('nagłówek logu', () => {
     // Jedyny stan, który nagłówek nadal niesie - bo osi wtedy nie ma czym zapełnić,
     // a puste miejsce po logu czyta się jak „pilot nic nie zrobił".
     expect(peekLogTitle('SP-FGK', 'KRZ', null)).toBe('Log SP-FGK · KRZ · UTC · brak danych');
+  });
+});
+
+describe('stan samolotu w podglądzie (04B, decyzja 2026-10-08)', () => {
+  it('paliwo względem pojemności i załoga kodami - nigdy identyfikatorem', () => {
+    expect(peekFacts({ fuelL: 156.4, capacityL: 330, picCode: 'KRZ', dualCode: 'BNO' })).toEqual([
+      { label: 'Paliwo', value: '156 / 330 L' },
+      { label: 'Załoga', value: 'Dowódca KRZ · Drugi pilot BNO' },
+    ]);
+  });
+
+  it('bez odczytu paliwa i bez drugiego pilota - mówi to wprost, bez zmyślania', () => {
+    expect(peekFacts({ fuelL: null, capacityL: 330, picCode: null, dualCode: null })).toEqual([
+      { label: 'Paliwo', value: 'nieznany' },
+      { label: 'Załoga', value: 'Dowódca -' },
+    ]);
+  });
+
+  it('kto trzyma maszynę - kod i godzina, a poza pamięcią klubu „inny pilot"', () => {
+    expect(leadPilot('KRZ', Date.parse('2026-10-08T07:10:00Z'))).toBe('KRZ · od 07:10');
+    expect(leadPilot(null, null)).toBe('inny pilot');
   });
 });
 

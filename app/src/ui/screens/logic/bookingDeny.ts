@@ -22,6 +22,7 @@
 import { relativeAge, shortName } from '@ninerdeck/format';
 
 import type { CalendarBooking } from './calendarData';
+import { blockReasonSuffix } from './blockReason';
 import { clubHhmm, type ClubDayBounds } from './clubClock';
 import { seekingLabel } from './orderFormat';
 
@@ -143,7 +144,7 @@ function takenVm(input: BookingDenyInput, reg: string): BookingDenyVm {
   if (taken.kind === 'block') {
     // Wyłączenie z użytku nie ma właściciela, więc nazywa je POWÓD - ten sam napis,
     // który stoi na pasku osi i na karcie maszyny.
-    const why = taken.blockReason == null ? '' : ` · ${taken.blockReason}`;
+    const why = blockReasonSuffix(taken.blockReason);
     return {
       title: 'Maszyna jest w tych godzinach wyłączona',
       body: `${reg} jest wyłączona z użytku ${hours}${why}.`,

@@ -195,7 +195,7 @@ function checkEnvelope(
       v.push(
         error(
           'SESSION_NOT_CLAIMED',
-          'Operacja nie została rozpoczęta - najpierw przejmij samolot (preflight).',
+          'Operacja nie została rozpoczęta - najpierw rozpocznij lot.',
           { type: candidate.type },
         ),
       );
@@ -205,7 +205,7 @@ function checkEnvelope(
 
   if (candidate.type === 'session_claim') {
     v.push(
-      error('SESSION_ALREADY_CLAIMED', 'Ta operacja jest już rozpoczęta - drugi claim nie jest możliwy.'),
+      error('SESSION_ALREADY_CLAIMED', 'Ta operacja jest już rozpoczęta.'),
     );
   }
   if (candidate.sessionUuid !== state.sessionUuid) {
@@ -227,7 +227,7 @@ function checkEnvelope(
   // Single-writer (§4.1 pkt 3): w ramach sesji pisze wyłącznie telefon jej PIC-a.
   if (state.sessionPicId != null && candidate.picId !== state.sessionPicId) {
     v.push(
-      error('WRITER_MISMATCH', 'Operację prowadzi inny PIC - tylko on może zapisywać zdarzenia.', {
+      error('WRITER_MISMATCH', 'Operację prowadzi inny dowódca - zapisy przyjmuje wyłącznie jego telefon.', {
         expected: state.sessionPicId,
         got: candidate.picId,
       }),
@@ -415,7 +415,7 @@ function checkByType(
       // i `fuel.startL`, czyli POCZĄTEK ŁAŃCUCHA MH (§4.5).
       if (state.preflightAt != null) {
         v.push(
-          error('PREFLIGHT_ALREADY_CONFIRMED', 'Preflight tego dnia jest już potwierdzony.'),
+          error('PREFLIGHT_ALREADY_CONFIRMED', 'Ta operacja ma już odczyty z rozpoczęcia lotu.'),
         );
       }
       v.push(...checkFuelReading(p.reading.fuelL, limits, 'Odczyt paliwa'));
@@ -433,7 +433,7 @@ function checkByType(
       // jak trzeba.
       if (state.preflightAt == null) {
         v.push(
-          error('PREFLIGHT_REQUIRED', 'Najpierw potwierdź preflight - bez odczytu MH i paliwa nie ma dnia.'),
+          error('PREFLIGHT_REQUIRED', 'Najpierw wpisz odczyt paliwa i motogodzin.'),
         );
       }
       if (state.engineRunning) {
@@ -448,7 +448,7 @@ function checkByType(
         v.push(
           error(
             'SESSION_ALREADY_RAN',
-            'Ta operacja miała już swój bieg silnika - zdaj samolot; kolejny lot to nowe przejęcie.',
+            'Ta operacja miała już swój bieg silnika - zdaj samolot, a kolejny lot rozpocznij od nowa.',
           ),
         );
       }
@@ -500,7 +500,7 @@ function checkByType(
         v.push(
           error(
             'ENGINE_NOT_RUNNING',
-            'Start bez pracującego silnika. Uruchom silnik albo dopisz lot listą ręczną.',
+            'Start bez pracującego silnika - najpierw uruchom silnik.',
           ),
         );
       }
@@ -515,7 +515,7 @@ function checkByType(
         v.push(
           error(
             'NOT_IN_FLIGHT',
-            'Lądowanie bez startu. Dopisz start albo użyj listy ręcznej (fallback GPS).',
+            'Lądowanie bez startu - najpierw zapisz start.',
           ),
         );
       }
@@ -611,7 +611,7 @@ function checkByType(
       }
       if (state.operation != null && state.operation !== 'skoki') {
         v.push(
-          warning('DROP_OUTSIDE_JUMP_OPERATION', `Zrzut przy operacji „${state.operation}".`, {
+          warning('DROP_OUTSIDE_JUMP_OPERATION', 'Zrzut poza zadaniem skokowym - sprawdź, czy to właściwy lot.', {
             operation: state.operation,
           }),
         );
@@ -646,7 +646,7 @@ function checkByType(
         v.push(
           warning(
             'BOARDING_OUTSIDE_JUMP_OPERATION',
-            `Załadunek przy operacji „${state.operation}".`,
+            'Załadunek poza zadaniem skokowym - sprawdź, czy to właściwy lot.',
             { operation: state.operation },
           ),
         );
@@ -660,12 +660,12 @@ function checkByType(
         v.push(
           error(
             'PIC_CHANGE_NOT_ALLOWED',
-            'Zmiana PIC = przejęcie operacji na telefonie nowego pilota: zamknij dzień, nowy PIC robi własny preflight.',
+            'Dowódcy nie zmienia się w trakcie operacji - zdaj samolot, a nowy dowódca rozpocznie lot na swoim telefonie.',
           ),
         );
       }
       if (p.role === 'dual' && p.pilotInId != null && p.pilotInId === state.sessionPicId) {
-        v.push(error('DUAL_IS_PIC', 'Dual nie może być tą samą osobą co PIC.'));
+        v.push(error('DUAL_IS_PIC', 'Drugi pilot nie może być tą samą osobą co dowódca.'));
       }
       break;
     }
@@ -772,7 +772,7 @@ function checkByType(
     case 'day_close': {
       const p = candidate.payload;
       if (state.preflightAt == null) {
-        v.push(error('PREFLIGHT_REQUIRED', 'Samolot nie został przejęty - brak preflightu.'));
+        v.push(error('PREFLIGHT_REQUIRED', 'Najpierw rozpocznij lot.'));
       }
       if (state.engineRunning || state.inFlight) {
         v.push(
@@ -839,7 +839,7 @@ function checkByType(
           v.push(
             error(
               'FUEL_INCREASE_WITHOUT_REFUEL',
-              `Paliwa jest więcej niż przed lotem (${round1(p.finalReading.fuelL)} L vs ${round1(state.fuel.lastReadingL)} L) - zapisz tankowanie.`,
+              `Paliwa jest więcej niż przed lotem (${round1(p.finalReading.fuelL)} L, a przed lotem ${round1(state.fuel.lastReadingL)} L) - zapisz tankowanie.`,
               { endL: p.finalReading.fuelL, expectedL: state.fuel.lastReadingL, toleranceL: tolerance },
             ),
           );
@@ -1029,7 +1029,7 @@ function checkAmendFields(
   // Ta sama reguła, co przy `crew_change`: jedna osoba nie leci sama ze sobą w dwóch
   // rolach, a czas blokowy policzony dwa razy temu samemu pilotowi jest nalotem z niczego.
   if (fields.dualId != null && fields.dualId === sessionPicId) {
-    v.push(error('DUAL_IS_PIC', 'Dual nie może być tą samą osobą co PIC.'));
+    v.push(error('DUAL_IS_PIC', 'Drugi pilot nie może być tą samą osobą co dowódca.'));
   }
   return v;
 }

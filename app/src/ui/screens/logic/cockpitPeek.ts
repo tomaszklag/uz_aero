@@ -18,7 +18,7 @@
  */
 
 import type { EpochMillis, Event, SessionState } from '../../../domain';
-import { timeUtc } from '../../format';
+import { litres, timeUtc } from '../../format';
 // Ten sam format daty co w oknie korekty na ekranie 10 („21 JUN 17:30"). Drugi zestaw
 // skrótów miesięcy dałby dwa różne zapisy tej samej rzeczy w jednej aplikacji.
 import { dateTimeUtcShort } from './statsDay';
@@ -107,7 +107,11 @@ export interface PeekBannerModel {
 }
 
 /** „KRZ · od 07:10" - wyróżniony fragment zdania o prowadzącym. */
-function leadPilot(picCode: string | null, claimSince: EpochMillis | null): string {
+/**
+ * „KRZ · od 08:00" - kto trzyma maszynę i od kiedy. Wspólne z listą wyboru samolotu (02):
+ * kod pilota z pamięci klubu, nigdy identyfikator (od 2.0.0 to długi ciąg znaków).
+ */
+export function leadPilot(picCode: string | null, claimSince: EpochMillis | null): string {
   const who = picCode ?? 'inny pilot';
   return claimSince != null ? `${who} · od ${timeUtc(claimSince)}` : who;
 }
@@ -189,6 +193,36 @@ export function peekLogTitle(
   const who = picCode ?? 'prowadzącego';
   if (state == null) return `Log ${machine} · ${who} · UTC · brak danych`;
   return `Log ${machine} · ${who} · UTC`;
+}
+
+/** Wiersz karty „Stan samolotu" w podglądzie cudzej maszyny. */
+export interface PeekFactRow {
+  label: string;
+  value: string;
+}
+
+/**
+ * „Stan samolotu" w podglądzie (04B): paliwo i załoga - dwie rzeczy, które pilot chce
+ * wiedzieć przed przejęciem. Do 4.0.0 stały w siatce WYSZARZONYCH kafelków akcji, a reguła
+ * projektu zakazuje przycisków obiecujących niedostępną czynność (decyzja właściciela
+ * 2026-10-08) - więc są zwykłymi wierszami informacji. Kody pilotów, nigdy identyfikatory.
+ */
+export function peekFacts(input: {
+  fuelL: number | null;
+  capacityL: number | null;
+  picCode: string | null;
+  dualCode: string | null;
+}): PeekFactRow[] {
+  const { fuelL, capacityL, picCode, dualCode } = input;
+  const fuel =
+    fuelL == null ? 'nieznany' : capacityL != null ? `${Math.round(fuelL)} / ${capacityL} L` : litres(fuelL);
+  const crew = [`Dowódca ${picCode ?? '-'}`, dualCode == null ? null : `Drugi pilot ${dualCode}`]
+    .filter((x): x is string => x != null)
+    .join(' · ');
+  return [
+    { label: 'Paliwo', value: fuel },
+    { label: 'Załoga', value: crew },
+  ];
 }
 
 export interface PeekStatus {

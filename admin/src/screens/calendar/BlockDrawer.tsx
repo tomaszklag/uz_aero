@@ -111,8 +111,8 @@ export function BlockDrawer({ mode, aircraft, bookings, person, timezone, onClos
       title={isBlock ? 'Wyłącz maszynę z użytku' : 'Zarezerwuj za pilota'}
       sub={
         isBlock
-          ? 'Maszyna zniknie pilotom z kalendarza na wybrany czas'
-          : 'Rezerwacja stanie na koncie pilota, tak jakby założył ją sam'
+          ? 'W wybranym czasie nikt nie zarezerwuje tej maszyny'
+          : 'Rezerwacja trafi do pilota jak jego własna'
       }
       wide
       onClose={onClose}

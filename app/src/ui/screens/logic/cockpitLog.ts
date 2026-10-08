@@ -69,13 +69,15 @@ const QUIET: ReadonlySet<AxisRow['kind']> = new Set(['live']);
  * @param events strumień sesji (surowy - korekty nakłada `buildSessionAxis`).
  * @param projection stan sesji policzony z tego samego strumienia.
  * @param now „teraz" z tykającego zegara - do licznika „na żywo" i czasu trzymania.
+ * @param codeOf kod pilota z pamięci klubu - do wiersza zmiany załogi.
  */
 export function buildCockpitAxis(
   events: Event[],
   projection: SessionState,
   now: number,
+  codeOf?: (pilotId: string) => string | null,
 ): CockpitAxis {
-  const axis = buildSessionAxis(projection, events, now);
+  const axis = buildSessionAxis(projection, events, now, codeOf);
   const rows = withPending(axis.rows, events);
 
   const live = liveRow(projection, now);
@@ -98,8 +100,13 @@ export function buildCockpitAxis(
  * z chwili ostatniego syncu, a zielony licznik sugerowałby, że patrzymy na żywo.
  * Sumy niesie pasek sesji nad logiem, więc stopki też nie ma.
  */
-export function buildPeekAxis(events: Event[], projection: SessionState, now: number): AxisRow[] {
-  return buildSessionAxis(projection, events, now).rows;
+export function buildPeekAxis(
+  events: Event[],
+  projection: SessionState,
+  now: number,
+  codeOf?: (pilotId: string) => string | null,
+): AxisRow[] {
+  return buildSessionAxis(projection, events, now, codeOf).rows;
 }
 
 /**

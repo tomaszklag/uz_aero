@@ -226,11 +226,13 @@ const RANK: Record<AxisKind, number> = {
  * @param projection stan sesji (odczyty, loty, sumy).
  * @param events surowy strumień sesji - korekty nakładamy tutaj.
  * @param now do policzenia „trzymany", gdy sesja jeszcze nie została zdana.
+ * @param codeOf kod pilota z pamięci klubu (wiersz zmiany załogi); `null` = poza pamięcią.
  */
 export function buildSessionAxis(
   projection: SessionState,
   events: Event[],
   now: number,
+  codeOf: (pilotId: string) => string | null = () => null,
 ): SessionAxis {
   const effective = applyCorrections(events);
   const mhFormat: MhFormat = projection.mhFormat ?? 'decimal';
@@ -414,7 +416,7 @@ export function buildSessionAxis(
         at: at(crew),
         time: timeUtc(at(crew)),
         name: 'Zmiana załogi',
-        sub: crewLine(crew.payload),
+        sub: crewLine(crew.payload, codeOf),
         flight: null,
         duration: null,
         targetUuid: crew.uuid,
@@ -651,14 +653,16 @@ function jumpersLine(jumpers: EventOf<'drop'>['payload']['jumpers']): string | n
 }
 
 /**
- * Podpis zmiany załogi: „PIC: KRZ → AKO", „DUAL: - → ADM".
+ * Podpis zmiany załogi: „Dowódca: KRZ → AKO", „Drugi pilot: - → ADM".
  *
  * Myślnik po którejś stronie znaczy, że fotela wtedy nie było zajętego (dodanie albo
- * zdjęcie Duala) - nie że pilota nie znamy.
+ * zdjęcie drugiego pilota). Pilot spoza pamięci klubu to „?", a nie identyfikator - od
+ * 2.0.0 to długi ciąg znaków (przegląd treści 2026-10-08).
  */
-function crewLine(payload: EventOf<'crew_change'>['payload']): string {
-  const role = payload.role === 'pic' ? 'PIC' : 'DUAL';
-  return `${role}: ${payload.pilotOutId ?? '-'} → ${payload.pilotInId ?? '-'}`;
+function crewLine(payload: EventOf<'crew_change'>['payload'], codeOf: (pilotId: string) => string | null): string {
+  const role = payload.role === 'pic' ? 'Dowódca' : 'Drugi pilot';
+  const who = (id: string | null | undefined): string => (id == null ? '-' : (codeOf(id) ?? '?'));
+  return `${role}: ${who(payload.pilotOutId)} → ${who(payload.pilotInId)}`;
 }
 
 /** Czas rośnie w dół; przy remisie decyduje porządek przyczynowy. */

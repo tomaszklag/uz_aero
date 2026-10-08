@@ -89,8 +89,8 @@ export function checkInsert(
  * ODMOWA NAZWANA JĘZYKIEM FAKTU Z PRZESZŁOŚCI (issue #234).
  *
  * Komunikaty `checkAppend` są pisane dla kokpitu, w którym zdarzenie zachodzi TERAZ:
- * „Tankowanie przy pracującym silniku - wyłącz silnik", „Lądowanie bez startu. Dopisz
- * start albo użyj listy ręcznej". Przy dopisywaniu faktu sprzed dwóch godzin ta sama
+ * „Tankowanie przy pracującym silniku - wyłącz silnik", „Lądowanie bez startu - najpierw
+ * zapisz start". Przy dopisywaniu faktu sprzed dwóch godzin ta sama
  * reguła odbija się o STAN Z TAMTEJ CHWILI, a rada „wyłącz silnik" nie ma sensu -
  * silnik dawno stoi, to godzina jest zła. Kod reguły zostaje ten sam (rejestr, testy
  * i panel pytają o kod), zmienia się wyłącznie zdanie, które czyta człowiek - i zmienia

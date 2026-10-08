@@ -15,6 +15,7 @@
 
 import type { ReferenceAircraft } from '../../../domain';
 
+import { blockReasonTitle } from './blockReason';
 import type { CalendarBooking } from './calendarData';
 
 export interface FilterRowVm {
@@ -62,10 +63,14 @@ export function buildFilterRows(
     aircraftId: a.id,
     reg: a.reg,
     type: a.type,
-    tag: blocks.find((b) => b.kind === 'block' && b.aircraftId === a.id)?.blockReason ?? null,
+    tag: tagOf(blocks.find((b) => b.kind === 'block' && b.aircraftId === a.id)),
     shown: !out.has(a.id),
   }));
 }
+
+/** Plakietka maszyny wyłączonej z użytku - powód po polsku; bez wyłączenia plakietki nie ma. */
+const tagOf = (block: CalendarBooking | undefined): string | null =>
+  block == null ? null : blockReasonTitle(block.blockReason);
 
 /** Przełączenie jednej maszyny w szkicu wyboru. */
 export function toggleHidden(hidden: readonly string[], aircraftId: string): string[] {

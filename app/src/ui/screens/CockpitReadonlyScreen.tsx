@@ -4,10 +4,10 @@
  * Odwzorowanie mockupu `design/04b-cockpit-readonly.html`, sekcja po sekcji:
  * [AppBar: samolot · trasa · SyncChip] → [baner „PODGLĄD - TYLKO ODCZYT" ze stopką
  * o pochodzeniu danych] → [chip stanu wg serwera] → [duty prowadzącego] → [log jego dnia]
- * → [PRZEJMIJ SAMOLOT + podpis] → [siatka akcji, cała zablokowana, z powodem pod spodem].
+ * → [stan samolotu: paliwo i załoga] → [PRZEJMIJ SAMOLOT + podpis].
  *
  * Po co ten ekran istnieje: na liście samolotów (02) maszyna prowadzona przez kogoś innego
- * NIE JEST pozycją do wyboru - cały jej wiersz („Prowadzi PIC: KRZ · od 07:10", ikona oka)
+ * NIE JEST pozycją do wyboru - cały jej wiersz („Prowadzi KRZ · od 07:10", ikona oka)
  * prowadzi tutaj. Przejęcie odbiera poprzednikowi prawo zapisu (§4.4, optymistyczny claim),
  * więc od issue #12 zapada wyłącznie na TYM ekranie: tu widać stan samolotu, log cudzego
  * dnia i wiek danych, na których pilot opiera decyzję. Arkusz potwierdzenia, który pytał
@@ -30,17 +30,16 @@ import { View } from 'react-native';
 
 import {
   ActionButton,
-  ActionGrid,
   AppBar,
   AppText,
   Banner,
   Card,
   ClaimStrip,
+  DetailRow,
   Screen,
   SessionAxis,
   StatusChip,
   SyncChip,
-  type ActionCardSpec,
 } from '../components';
 // `PeekBanner` i `Caption` są nowe w Design Systemie - do `components/index.ts` dopisuje
 // je właściciel barrela (patrz raport), więc na razie importujemy je wprost z plików.
@@ -49,10 +48,10 @@ import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { litres } from '../format';
 import { buildPeekAxis } from './logic/cockpitLog';
 import {
   peekBanner,
+  peekFacts,
   peekFreshness,
   peekLogTitle,
   peekStatusChip,
@@ -131,8 +130,9 @@ export function CockpitReadonlyScreen({
     // Format motogodzin dokładamy do projekcji, bo migawka bywa BEZ preflightu (sesja
     // odtworzona z serwera), a wtedy zna go tylko cache referencyjny samolotu. Licznik
     // pokazany w złym formacie to liczba, której pilot nie porówna z tarczą.
-    return buildPeekAxis(snapshot.events, { ...projection, mhFormat }, Date.now());
-  }, [snapshot, projection, mhFormat]);
+    const codeOf = (id: string): string | null => pilots.find((p) => p.id === id)?.code ?? null;
+    return buildPeekAxis(snapshot.events, { ...projection, mhFormat }, Date.now(), codeOf);
+  }, [snapshot, projection, mhFormat, pilots]);
 
   if (aircraftId == null) {
     return (
@@ -154,8 +154,11 @@ export function CockpitReadonlyScreen({
     );
   }
 
-  const picCode =
-    pilots.find((p) => p.id === aircraft?.claimPicId)?.code ?? aircraft?.claimPicId ?? null;
+  // Kod z pamięci klubu; poza nią - nic. `claimPicId` to identyfikator osoby (od 2.0.0
+  // długi ciąg znaków), więc jako zapas na ekranie byłby szumem, nie informacją.
+  const picCode = pilots.find((p) => p.id === aircraft?.claimPicId)?.code ?? null;
+  const dualCode =
+    projection?.dualId == null ? null : (pilots.find((p) => p.id === projection.dualId)?.code ?? '-');
   const freshness = peekFreshness(snapshot, synced, openedAt);
   const banner = peekBanner({
     freshness,
@@ -168,56 +171,20 @@ export function CockpitReadonlyScreen({
   const status = peekStatusChip(projection);
 
   const peekStrip =
-    projection != null ? buildPeekStrip(projection, picCode ?? 'prowadzący') : null;
-
-  const capacityL = aircraft?.capacityL ?? null;
-  const fobL = projection?.fuel.lastReadingL ?? null;
-  const fuelSub =
-    fobL == null
-      ? 'Stan paliwa nieznany'
-      : capacityL != null
-        ? `Stan: ${Math.round(fobL)} / ${capacityL} L`
-        : `Stan: ${litres(fobL)}`;
+    projection != null ? buildPeekStrip(projection, picCode ?? 'prowadzący', aircraft?.reg ?? null) : null;
 
   /**
-   * Siatka akcji naziemnych z mockupu - pokazana, ale w całości zablokowana.
-   *
-   * Ukrycie kafelków byłoby gorsze: pilot nie dowiedziałby się, czym ten samolot dziś
-   * żyje (ile ma paliwa, kto siedzi w załodze). Każdy powód blokady niesie więc stan,
-   * a wspólne wyjaśnienie „dlaczego wszystkie naraz" stoi pod siatką (`.actions-reason`).
+   * Paliwo i załoga - to, co pilot chce wiedzieć przed przejęciem. Do 4.0.0 stały w siatce
+   * WYSZARZONYCH kafelków akcji (dwa z nich - „Lista ręczna" i „Zakończ dzień" - opisywały
+   * funkcje usunięte wiele wydań wcześniej), a wyszarzony przycisk obiecuje czynność,
+   * której reguły nie dopuszczą. Decyzja właściciela 2026-10-08: zwykłe wiersze informacji.
    */
-  const readonlyActions: ActionCardSpec[] = [
-    {
-      id: 'refuel',
-      icon: 'refuel',
-      label: 'Tankowanie',
-      tone: 'amber',
-      disabledReason: `${fuelSub} · tylko odczyt`,
-      onPress: () => undefined,
-    },
-    {
-      id: 'crew',
-      icon: 'crew',
-      label: 'Zmiana załogi',
-      disabledReason: `PIC: ${picCode ?? '-'} · DUAL: ${projection?.dualId ?? '-'} · tylko odczyt`,
-      onPress: () => undefined,
-    },
-    {
-      id: 'manual',
-      icon: 'manual-log',
-      label: 'Lista ręczna',
-      disabledReason: 'Fallback GPS · tylko odczyt',
-      onPress: () => undefined,
-    },
-    {
-      id: 'end-day',
-      icon: 'end-day',
-      label: 'Zakończ dzień',
-      tone: 'red',
-      disabledReason: 'Statystyki + synchronizacja · tylko odczyt',
-      onPress: () => undefined,
-    },
-  ];
+  const facts = peekFacts({
+    fuelL: projection?.fuel.lastReadingL ?? null,
+    capacityL: aircraft?.capacityL ?? null,
+    picCode,
+    dualCode,
+  });
 
   const subtitle = [
     routeLabel(
@@ -285,6 +252,13 @@ export function CockpitReadonlyScreen({
           />
         </Card>
 
+        {/* ── stan samolotu: paliwo i załoga (`.ro-facts`) ──────────────────── */}
+        <Card title="Stan samolotu" header="inline">
+          {facts.map((row, i) => (
+            <DetailRow key={row.label} label={row.label} value={row.value} divider={i < facts.length - 1} />
+          ))}
+        </Card>
+
         {/* ── przejęcie (`.takeover-warn` + `.takeover-btn` + `.takeover-hint`) ──
             Ostrzeżenie stoi NAD przyciskiem, nie w arkuszu po tapnięciu: pilot ma je
             przeczytać, zanim naciśnie, a nie zdejmować kolejną warstwę potwierdzeń. */}
@@ -311,13 +285,6 @@ export function CockpitReadonlyScreen({
           }}
         />
         <Caption text={takeoverHint(aircraft?.reg ?? null)} style={{ marginTop: -6 }} />
-
-        {/* ── akcje naziemne: widoczne, ale zablokowane (`.action-grid`) ─────── */}
-        <ActionGrid actions={readonlyActions} />
-        <Caption
-          text="Akcje niedostępne w podglądzie - zapisywać może tylko pilot, który prowadzi samolot"
-          style={{ marginTop: -6 }}
-        />
       </View>
     </Screen>
   );

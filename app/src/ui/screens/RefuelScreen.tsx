@@ -184,7 +184,7 @@ export function RefuelScreen({
       <Screen header={<ScreenHeader title="TANKOWANIE" backLabel="Kokpit" onBack={navigation.goBack} />}>
         <View style={{ flex: 1, justifyContent: 'center', gap: theme.spacing.md }}>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Tankowanie zapisujemy w otwartym dniu lotnym - najpierw preflight.
+            Tankowanie zapiszesz po rozpoczęciu lotu - najpierw „ROZPOCZNIJ LOT" na Pulpicie.
           </AppText>
         </View>
       </Screen>

@@ -581,11 +581,11 @@ function NoAircraft({ onBack }: { onBack: () => void }) {
           NIE TRZYMASZ SAMOLOTU
         </AppText>
         <AppText variant="body" tone="muted" style={styles.emptyDesc}>
-          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma - zacznij
-          od przejęcia.
+          Zdanie dotyczy maszyny, którą masz w ręce. Żadnej teraz nie ma - najpierw
+          rozpocznij lot.
         </AppText>
         <ActionButton
-          label={'WRÓĆ DO „MÓJ DZIEŃ”'}
+          label="WRÓĆ NA PULPIT"
           tone="neutral"
           variant="secondary"
           size="md"

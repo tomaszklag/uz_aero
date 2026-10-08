@@ -246,8 +246,8 @@ export function StatsScreen({
   );
 
   const axis = useMemo(
-    () => buildSessionAxis(projection, events, Date.now()),
-    [projection, events],
+    () => buildSessionAxis(projection, events, Date.now(), codeOf),
+    [projection, events, codeOf],
   );
   const axisRows = useMemo(() => withIssues(axis.rows, issues), [axis.rows, issues]);
 

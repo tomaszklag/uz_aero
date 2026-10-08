@@ -196,7 +196,7 @@ export function DashboardScreen({ navigation }: { navigation: Nav }) {
         <ScreenHeader
           title="PULPIT"
           size="md"
-          subtitle={`${pilotCode ?? pilotId} · ${dateUtcLong(now)}`}
+          subtitle={pilotCode == null ? dateUtcLong(now) : `${pilotCode} · ${dateUtcLong(now)}`}
           onNotifications={() => navigation.navigate('Notifications')}
           unread={glance.unread}
           onSettings={() => navigation.navigate('Settings')}

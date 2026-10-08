@@ -88,10 +88,10 @@ describe('termin zajęty', () => {
 
   it('wyłączenie z użytku nazywa POWÓD - nie ma właściciela', () => {
     const vm = bookingDeny(
-      input({ taken: booking({ kind: 'block', pilotId: null, blockReason: 'Przegląd 100 h' }) }),
+      input({ taken: booking({ kind: 'block', pilotId: null, blockReason: 'maintenance' }) }),
     );
     expect(vm.title).toBe('Maszyna jest w tych godzinach wyłączona');
-    expect(vm.body).toBe('SP-AXA jest wyłączona z użytku 11:00 → 13:00 · Przegląd 100 h.');
+    expect(vm.body).toBe('SP-AXA jest wyłączona z użytku 11:00 → 13:00 · przegląd.');
   });
 });
 

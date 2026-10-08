@@ -56,7 +56,7 @@ export const CAPABILITY_LABELS: Record<Capability, { label: string; desc: string
   // techniczny zostaje (`panel.access` = dostęp do modułów panelu), zmienia się nazwa.
   'panel.access': {
     label: 'Podgląd klubu',
-    desc: 'Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to Moje konto i kalendarz.',
+    desc: 'Dziennik operacji całej floty, lista pilotów i karty samolotów do odczytu - bez tego panel to kalendarz, zlecenia i Moje konto.',
   },
   'accounts.manage': {
     label: 'Konta i kod klubu',
@@ -194,7 +194,7 @@ export function scopeTone(capabilities: readonly Capability[]): 'blue' | 'amber'
  */
 export function scopeSummary(capabilities: readonly Capability[]): string {
   const known = capabilities.filter((c) => c in CAPABILITY_LABELS);
-  if (known.length === 0) return 'Bez zdolności panelu - wyłącznie aplikacja na telefonie.';
+  if (known.length === 0) return 'Bez dodatkowych uprawnień - w panelu kalendarz, zlecenia i własne konto.';
 
   const names = known.slice(0, 3).map((c) => CAPABILITY_LABELS[c].label);
   const tail = known.length > 3 ? ` i ${known.length - 3} więcej` : '';

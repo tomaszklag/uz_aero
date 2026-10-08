@@ -28,7 +28,9 @@ const STATES: Record<ExportStateDto, { label: string; tone: PillTone; slug: stri
   missing: { label: 'Bez karty', tone: 'red', slug: 'bez-karty' },
   blocked: { label: 'Wstrzymana flagą', tone: 'amber', slug: 'wstrzymane' },
   waiting: { label: 'Czeka na zdanie', tone: 'dim', slug: 'czekaja' },
-  impossible: { label: 'Unieważniona', tone: 'dim', slug: 'uniewaznione' },
+  // „Poza kartą", nie „Unieważniona": stan obejmuje też operację bez godziny rozpoczęcia,
+  // której nikt nie unieważniał (przegląd treści 2026-10-08). Powód mówi druga linia.
+  impossible: { label: 'Poza kartą', tone: 'dim', slug: 'uniewaznione' },
 };
 
 /** Chipy w kolejności makiety; „Rewizje" jest WYMIAREM (karty wysłane więcej niż raz), nie stanem. */
@@ -83,7 +85,9 @@ export function exportRow(item: ExportListItemDto, now: number, correctionWindow
       ? 'wysłana ponownie'
       : item.state === 'blocked'
         ? 'dwie operacje naraz'
-        : hanging;
+        : item.state === 'impossible' && item.sessionStatus !== 'voided'
+          ? 'bez godziny rozpoczęcia'
+          : hanging;
   return {
     sessionUuid: item.sessionUuid,
     tab: item.tab ?? NONE,
@@ -113,7 +117,7 @@ export function exportsSubtitle(counts: ExportCountsDto): string {
     counts.missing === 0 ? null : `${counts.missing} bez karty`,
     counts.blocked === 0 ? null : `${counts.blocked} ${plural(counts.blocked, 'wstrzymana', 'wstrzymane', 'wstrzymanych')}`,
     counts.waiting === 0 ? null : `${counts.waiting} ${plural(counts.waiting, 'czeka', 'czekają', 'czeka')} na zdanie`,
-    counts.impossible === 0 ? null : `${counts.impossible} ${plural(counts.impossible, 'unieważniona', 'unieważnione', 'unieważnionych')}`,
+    counts.impossible === 0 ? null : `${counts.impossible} poza kartą`,
   ];
   return parts.filter((part) => part != null).join(' · ');
 }

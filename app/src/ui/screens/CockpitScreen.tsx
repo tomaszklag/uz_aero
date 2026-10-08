@@ -302,7 +302,7 @@ export function CockpitScreen({
    * i znaczniki outboxa. Format motogodzin bierze z projekcji sam builder, więc ekran
    * nie przekazuje go już osobno.
    */
-  const axis = buildCockpitAxis(events, projection, now);
+  const axis = buildCockpitAxis(events, projection, now, pilotCode);
 
   /**
    * Czas lotu SESJI: loty zamknięte (wszystko jedno, czy z GPS, czy dopisane ręcznie)
@@ -404,7 +404,7 @@ export function CockpitScreen({
   const leaveSheet = (
     <LeaveCockpitSheet
       visible={leaveOpen}
-      aircraftId={projection.aircraftId ?? '-'}
+      reg={aircraft?.reg ?? '-'}
       since={projection.claimedAt != null ? `${timeUtc(projection.claimedAt)} UTC` : null}
       flightCount={projection.flights.length}
       onStay={() => setLeaveOpen(false)}
@@ -852,7 +852,7 @@ export function CockpitScreen({
           label: 'Zmiana załogi',
           // KODY pilotów, nie surowe identyfikatory (uwaga z urządzenia,
           // 2026-09-03) - w produkcji id to uuid z panelu.
-          sub: `PIC: ${pilotCode(projection.picId) ?? '-'}${projection.dualId != null ? ` · DUAL: ${pilotCode(projection.dualId)}` : ''}`,
+          sub: `PIC: ${pilotCode(projection.picId) ?? '-'}${projection.dualId != null ? ` · DUAL: ${pilotCode(projection.dualId) ?? '-'}` : ''}`,
           onPress: () => navigation.navigate('CrewChange'),
         },
         {
@@ -993,9 +993,9 @@ function NoSession({ onStart }: { onStart: () => void }) {
           BRAK OPERACJI
         </AppText>
         <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-          Dzień lotny zaczyna się od preflightu - wyboru samolotu i odczytu liczników.
+          Lot zaczyna się od wyboru samolotu i odczytu liczników.
         </AppText>
-        <ActionButton label="ROZPOCZNIJ PREFLIGHT" tone="green" variant="solid" onPress={onStart} />
+        <ActionButton label="ROZPOCZNIJ LOT" tone="green" variant="solid" onPress={onStart} />
         {lastError != null && (
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}

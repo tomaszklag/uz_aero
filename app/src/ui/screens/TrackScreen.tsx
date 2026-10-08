@@ -195,8 +195,7 @@ export function TrackScreen({
         <View style={styles.content}>
           <Card title="Nie ma takiej operacji">
             <AppText variant="body" tone="muted">
-              Tej operacji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
-              operację z listy.
+              Tej operacji nie ma na tym telefonie. Otwórz ją z Historii.
             </AppText>
           </Card>
         </View>

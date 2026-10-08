@@ -17,6 +17,7 @@ import { dateUtcDayMonthLong } from '@ninerdeck/format';
 
 import type { ReferenceAircraft } from '../../../domain';
 
+import { blockReasonTitle } from './blockReason';
 import type { CalendarBooking } from './calendarData';
 import { clubHhmm, clubInstant, type ClubDayBounds } from './clubClock';
 
@@ -56,7 +57,7 @@ export function buildAircraftOptions(input: AircraftOptionsInput): AircraftOptio
         block == null
           ? null
           : {
-              reason: block.blockReason ?? 'Wyłączony z użytku',
+              reason: blockReasonTitle(block.blockReason),
               // Granica jest WYŁĄCZAJĄCA (klamra `[)`, jak wszędzie w tym module),
               // więc nazywamy ostatnią chwilę OBJĘTĄ wyłączeniem - inaczej maszyna
               // „wyłączona do 25 września" byłaby 25 września wolna.

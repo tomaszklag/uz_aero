@@ -12,7 +12,8 @@ import { timeUtc } from '@ninerdeck/format';
 
 import type { RemoteAircraftNow, RemoteWatchList } from '../../../application';
 
-import { blockReasonLabel, clubMomentLabel } from './aircraftCard';
+import { clubMomentLabel } from './aircraftCard';
+import { blockReasonLabel } from './blockReason';
 import type { ClubDayBounds } from './clubClock';
 
 export interface WatchRowVm {

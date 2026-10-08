@@ -168,22 +168,12 @@
      Stopki sum też nie ma: operacja trwa, więc nie ma czego sumować. */
   /* read-only: BEZ kolumny edycji - podgląd nie edytuje logu */
 
-  /* ===== ACTION GRID (disabled w podglądzie) ===== */
-  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .action-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px;
-    display: flex; flex-direction: column; gap: 10px;
-    text-decoration: none; color: var(--text-primary);
-    position: relative; overflow: hidden;
-  }
-  .action-card.disabled { opacity: 0.35; filter: saturate(0.4); pointer-events: none; }
-  .action-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-raised); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-  .action-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-primary); }
-  .action-sub { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
-  .actions-reason {
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text-muted); text-align: center; line-height: 1.6; margin-top: -6px;
-  }
+  /* ===== STAN SAMOLOTU - wiersze informacji (zamiast wyszarzonej siatki akcji, 2026-10-08) ===== */
+  .facts { padding: 4px 12px; }
+  .fact-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .fact-row:last-child { border-bottom: none; }
+  .fact-k { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .fact-v { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
 
   /* ===== STANY ŚWIEŻOŚCI danych z serwera (przełącznik na canvasie) ===== */
   .phone[data-state="live"]  .only-cache { display:none !important; }
@@ -368,6 +358,21 @@
         </div>
       </div>
 
+      <!-- STAN SAMOLOTU (decyzja właściciela 2026-10-08) - paliwo i załoga jako zwykłe wiersze
+           informacji, to, co pilot chce wiedzieć przed przejęciem. Do 4.0.0 stała tu siatka
+           WYSZARZONYCH kafelków akcji (dwa z nich - „Lista ręczna" i „Zdaj samolot · dzień trwa
+           dalej" - opisywały model sprzed wielu wydań), a wyszarzony przycisk obiecuje czynność,
+           której reguły nie dopuszczą. Kody pilotów, nigdy identyfikatory. -->
+      <div class="session-log">
+        <div class="session-log-header">
+          <span class="session-log-title">Stan samolotu</span>
+        </div>
+        <div class="facts">
+          <div class="fact-row"><span class="fact-k">Paliwo</span><span class="fact-v">156 / 330 L</span></div>
+          <div class="fact-row"><span class="fact-k">Załoga</span><span class="fact-v">Dowódca KRZ</span></div>
+        </div>
+      </div>
+
       <!-- PRZEJMIJ -->
       <!-- Ostrzeżenie przeniesione z popupu przejęcia na 02 (2026-08-06): modala już nie ma,
            a decyzja zapada TUTAJ - po zobaczeniu stanu i logu dnia. Kto prowadzi samolot,
@@ -391,46 +396,6 @@
       </a>
       <div class="takeover-hint only-cache">Wrócisz do nowego lotu z wybranym SP-FGK - zapisze się dopiero po potwierdzeniu odczytów</div>
 
-      <!-- ACTIONS (disabled) -->
-      <div class="action-grid">
-        <span class="action-card disabled">
-          <div class="action-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6M9 22V10h6v12"/><path d="M17 6h1a2 2 0 0 1 2 2v3l-2 2"/></svg>
-          </div>
-          <div>
-            <div class="action-label">Tankowanie</div>
-            <div class="action-sub">Stan: 156 / 330 L</div>
-          </div>
-        </span>
-        <span class="action-card disabled">
-          <div class="action-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 11l2 2 4-4"/></svg>
-          </div>
-          <div>
-            <div class="action-label">Zmiana załogi</div>
-            <div class="action-sub">PIC: KRZ · DUAL: -</div>
-          </div>
-        </span>
-        <span class="action-card disabled">
-          <div class="action-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
-          </div>
-          <div>
-            <div class="action-label">Lista ręczna</div>
-            <div class="action-sub">Fallback GPS</div>
-          </div>
-        </span>
-        <span class="action-card disabled">
-          <div class="action-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </div>
-          <div>
-            <div class="action-label">Zdaj samolot</div>
-            <div class="action-sub">Odczyt końcowy - dzień trwa dalej</div>
-          </div>
-        </span>
-      </div>
-      <div class="actions-reason">Akcje niedostępne w podglądzie - zapisywać może tylko pilot, który prowadzi samolot</div>
 
     </div><!-- end scroll -->
   </div><!-- end screen -->

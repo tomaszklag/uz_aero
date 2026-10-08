@@ -155,8 +155,8 @@ export function ExportDrawer({ sessionUuid, items, listPending, canRetry, onClos
       {item.state === 'impossible' ? (
         <Banner tone="status">
           {item.sessionStatus === 'voided'
-            ? 'Wpis unieważniony - nie wchodzi do karty doby.'
-            : 'Operacja bez chwili przejęcia - karty nie da się nazwać ani zbudować.'}
+            ? 'Wpis unieważniony - nie wchodzi do karty dnia.'
+            : 'Operacja nie ma godziny rozpoczęcia - karty nie da się utworzyć.'}
         </Banner>
       ) : null}
       {item.overwrittenBy == null ? null : (

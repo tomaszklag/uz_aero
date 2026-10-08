@@ -316,7 +316,7 @@ export function SettingsScreen({
           title="USTAWIENIA"
           size="md"
           onBack={navigation.goBack}
-          backLabel="Mój dzień"
+          backLabel="Pulpit"
           right={<SyncChip />}
         />
       }

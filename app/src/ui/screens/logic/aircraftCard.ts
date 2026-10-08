@@ -22,6 +22,7 @@
  * dziennik panelu; wiersz bez szewronu NIE jest wyszarzony (brak akcji, nie blokada).
  */
 
+import { blockReasonLabel } from './blockReason';
 import {
   dateTimeUtcShort,
   dateUtcDayMonth,
@@ -130,18 +131,6 @@ const SOURCE_LABEL: Readonly<Record<NonNullable<RemoteAircraftCard['counters']>[
   initial: 'stan początkowy z panelu',
   admin: 'wpis administratora',
 };
-
-/** Powód wyłączenia z użytku - kod z panelu po polsku; nieznany zostaje, jak przyszedł. */
-const BLOCK_LABEL: Readonly<Record<string, string>> = {
-  maintenance: 'przegląd',
-  defect: 'usterka',
-  other: 'wyłączona',
-};
-
-export function blockReasonLabel(reason: string | null): string {
-  if (reason == null || reason === '') return BLOCK_LABEL.other!;
-  return BLOCK_LABEL[reason] ?? reason;
-}
 
 const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
