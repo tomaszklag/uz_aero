@@ -812,16 +812,19 @@ function checkByType(
           ),
         );
       }
-      // Δ MH vs block time - miękko: rozbieżność bywa legalna (wpisy ręczne, przegapiony
-      // cykl), a rozstrzyga to serwer po całym łańcuchu sesji (§4.5).
+      // Δ MH wyraźnie WIĘKSZA niż czas blokowy - miękko: rozbieżność bywa legalna (wpisy
+      // ręczne, przegapiony cykl), a rozstrzyga to serwer po całym łańcuchu sesji (§4.5).
+      // Tylko w tę stronę (decyzja właściciela 2026-10-08): obrotomierz na ziemi przyrasta
+      // WOLNIEJ niż zegar, więc mniejszy przyrost jest stanem normalnym, a nie rozjazdem -
+      // ta sama reguła, co w `sessionInconsistencies` (tryb poprawek i panel).
       if (state.mh.start != null && p.finalReading.mh >= state.mh.start) {
         const deltaH = p.finalReading.mh - state.mh.start;
         const blockH = state.blockTimeMs / HOUR_MS;
-        if (Math.abs(deltaH - blockH) > MH_TOLERANCE_H) {
+        if (deltaH > blockH + MH_TOLERANCE_H) {
           v.push(
             warning(
               'MH_DELTA_MISMATCH',
-              `Przyrost motogodzin (${round2(deltaH)} h) różni się od czasu blokowego (${round2(blockH)} h).`,
+              `Przyrost licznika (${round2(deltaH)} h) przekracza czas pracy silnika (${round2(blockH)} h).`,
               { deltaH, blockH },
             ),
           );

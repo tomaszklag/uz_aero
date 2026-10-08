@@ -2483,6 +2483,11 @@ nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokow
   i zniżanie) norma zaniżała zużycie, a razem z nim rezerwę paliwa w kokpicie
 - `null` znaczy „nie ma czego pokazać" i ekran wtedy MILCZY: brak przeliczników MH nie
   unieważnia normy paliwa i odwrotnie (inne wejście, inny próg publikacji)
+- **ostrzeżenie `MH_DELTA_MISMATCH` przy zdaniu samolotu zapala się WYŁĄCZNIE przy przyroście
+  licznika WIĘKSZYM niż czas pracy silnika** (decyzja właściciela 2026-10-08): obrotomierz
+  na ziemi przyrasta wolniej niż zegar, więc mniejszy przyrost jest normą, a nie rozjazdem.
+  Ta sama reguła stoi w `sessionInconsistencies` (tryb poprawek i panel) - do 2026-10-08
+  reguła zdania ostrzegała w obie strony i była jedynym miejscem, które o tym nie wiedziało
 
 ## Zgłaszanie błędów z aplikacji (issue #87, 2026-09-04) - NA CZAS TESTÓW
 Zgłoszenie: „na każdym ekranie i w każdym popup dodaj w prawym górnym rogu przycisk
@@ -3767,6 +3772,12 @@ bez `npm ci` - skrypty jadą na samej stdlib node).
   do design-first (`docs/panel-2.0.md` §3.7), zdanie „panel makiet NIE MA" jest
   nieaktualne. **`design/panel/` MUSI być zacommitowane**: obraz buduje stronę
   z repozytorium, więc brakująca makieta `@panel` wywraca build, a nie stronę
+- **polityka prywatności dzieli odpowiedzialność za dane** (decyzja właściciela 2026-10-08):
+  KLUB jest administratorem danych zapisanych w klubie (członkostwo, dziennik, kalendarz,
+  zlecenia, wiadomości), a operator - administratorem danych KONTA (logowanie, sesje, surowe
+  odczyty czujników, zgłoszenia błędów) i przetwarzającym dane klubu na podstawie umowy
+  powierzenia. Nowy rodzaj danych dopisuje się w punkcie 1 polityki po właściwej stronie
+  podziału; umowę powierzenia trzeba podpisać z każdym klubem, zanim zacznie pracować
 - **strona pobierania i landing mają jeden komponent przycisku** (`.dl`
   w `site/src/site.css`);
   `update-download.mjs` dalej podmienia `#apk-link` i `#apk-meta` - te znaczniki siedzą
