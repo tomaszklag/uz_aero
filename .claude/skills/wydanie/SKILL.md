@@ -183,6 +183,21 @@ i przepisuje `site/src/pobierz/index.html` na trwały adres
 artefakt EAS, a te wygasają po kilku tygodniach — build z 16 sierpnia 2026 zwracał 404
 już 6 września i strona pobierania była martwa, nie dając po sobie znaku.
 
+**Gdy nowa aplikacja wymaga nowego serwera** (migracje, nowe trasy - tak było przy 4.0.0),
+`--release` NIE idzie od razu: release jest natychmiast pod adresem
+`releases/latest/…`, a obecna strona już na niego wskazuje, więc pilot pobrałby nowy APK
+rozmawiający ze starym serwerem. Kolejność wtedy:
+
+```bash
+node site/tools/update-download.mjs --url https://github.com/tomaszklag/uz_aero/releases/latest/download/ninerdeck.apk --version <wersja> --build <N>
+```
+
+przepisuje stronę bez publikowania pliku; commit, merge do `main`, wdrożenie
+i sprawdzenia (krok 4); **dopiero potem** `node site/tools/update-download.mjs --release`.
+Drugi przebieg zastaje stronę aktualną i mówi „bez zmian" - to stan poprawny, a commit
+nie jest już potrzebny. Przez kilka minut między merge'em a release'em link podaje
+jeszcze poprzedni plik, co jest bezpieczne.
+
 ### 4. Wypuść stronę
 
 ```bash

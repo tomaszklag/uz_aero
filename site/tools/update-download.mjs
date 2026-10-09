@@ -20,6 +20,14 @@
  * a razem z nim stronę.
  *
  * `--url <adres> --version 1.0.1 --build 2` pozwala podać cel ręcznie (bez EAS).
+ *
+ * Wydanie z serwerem PRZED APK (nowe trasy, migracje - 4.0.0): strona przepisuje się
+ * na trwały adres BEZ publikowania pliku, a plik idzie dopiero po wdrożeniu serwera:
+ *   node site/tools/update-download.mjs --url <adres stałego pliku> --version 4.0.0 --build 7
+ *   … commit, merge do main, wdrożenie, sprawdzenia …
+ *   node site/tools/update-download.mjs --release
+ * Drugi przebieg zastaje stronę aktualną i tylko to mówi - strona już wskazuje ten plik.
+ * Przepisanie strony i reguły podpisu: `download-page.mjs`.
  */
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -27,8 +35,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const RELEASE_REPO = 'tomaszklag/uz_aero';
-const RELEASE_URL = `https://github.com/${RELEASE_REPO}/releases/latest/download/ninerdeck.apk`;
+import { RELEASE_REPO, RELEASE_URL, rewriteDownloadPage } from './download-page.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const page = resolve(here, '../src/pobierz/index.html');
@@ -75,17 +82,10 @@ if (flag('release')) {
   console.log(`release ${tag} opublikowany → ${RELEASE_URL}`);
 }
 
-const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
-const date = `${build.date.getDate()} ${months[build.date.getMonth()]} ${build.date.getFullYear()}`;
-// Stały plik wydania nie dostaje dopisku: miejsce przechowywania nie jest informacją dla pilota.
-const meta = `wersja ${build.version} (build ${build.number}) · ${date}${flag('release') ? '' : ' · build EAS'}`;
-
-let html = readFileSync(page, 'utf8');
-const before = html;
-html = html
-  .replace(/content="2;url=[^"]+"/, `content="2;url=${build.url}"`)
-  .replace(/id="apk-link" href="[^"]+"/, `id="apk-link" href="${build.url}"`)
-  .replace(/id="apk-meta">[^<]*</, `id="apk-meta">${meta}<`);
-if (html === before) throw new Error('Strona pobierania nie ma oczekiwanych znaczników - sprawdź site/src/pobierz/index.html.');
-writeFileSync(page, html);
-console.log(`OK: ${meta}\n    ${build.url}`);
+const result = rewriteDownloadPage(readFileSync(page, 'utf8'), build);
+if (result.changed) {
+  writeFileSync(page, result.html);
+  console.log(`OK: ${result.meta}\n    ${build.url}`);
+} else {
+  console.log(`OK: strona pobierania już wskazuje ten plik - bez zmian.\n    ${result.meta}\n    ${build.url}`);
+}
